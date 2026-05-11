@@ -1941,7 +1941,7 @@ router.get(
   (req: Request, res: Response) => {
     try {
       if (!requireMockRoutesEnabled(res)) return;
-      const { projectId } = req.params;
+      const projectId = String(req.params.projectId ?? '');
       const store = getOrCreateProjectMemory(projectId);
 
       res.json({
@@ -1966,7 +1966,7 @@ router.post(
   (req: Request, res: Response) => {
     try {
       if (!requireMockRoutesEnabled(res)) return;
-      const { projectId } = req.params;
+      const projectId = String(req.params.projectId ?? '');
       const { type, content } = req.body as {
         type: 'preference' | 'fact' | 'decision' | 'context';
         content: string;
@@ -2037,7 +2037,8 @@ router.delete(
   (req: Request, res: Response) => {
     try {
       if (!requireMockRoutesEnabled(res)) return;
-      const { projectId, memoryId } = req.params;
+      const projectId = String(req.params.projectId ?? '');
+      const memoryId = String(req.params.memoryId ?? '');
       const store = getOrCreateProjectMemory(projectId);
 
       const index = store.memories.findIndex(m => m.id === memoryId);
@@ -2055,6 +2056,3499 @@ router.delete(
       res.status(500).json({
         error: 'Failed to delete memory',
         details: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+);
+
+// ---------------------------------------------------------------------------
+// 5. Submission-Chat — post-draft, cross-dossier provenance interrogation
+// ---------------------------------------------------------------------------
+//
+// Once AnA has generated a section, the user stays in the same thread and
+// asks follow-up questions about provenance. The Truth Engine answers across
+// the ENTIRE project dossier, not just the active document.
+//
+// POST /api/ana/submission-chat
+//   body: { threadId, artifactId, question }
+//   returns: { answer, citations[], retrieval, model, provider, ... }
+
+const submissionChatRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 60 * 1000,
+    maxRequests: 30,
+    message: 'Too many submission-chat requests, please slow down.',
+  },
+});
+
+const submissionChatSchema = z.object({
+  threadId: z.string().min(1, 'threadId is required'),
+  artifactId: z.string().min(1, 'artifactId is required'),
+  question: z.string().min(1, 'question is required').max(4000),
+});
+
+// Tighter rate limit on the governed mutation than on the read-only chat
+// path — apply-rewrite mutates an artifact and writes audit rows.
+const submissionChatApplyRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 60 * 1000,
+    maxRequests: 10,
+    message: 'Too many rewrite-apply requests, please slow down.',
+  },
+});
+
+const applyRewriteSchema = z.object({
+  artifactId: z.string().min(1, 'artifactId is required'),
+  proposedContent: z
+    .string()
+    .min(8, 'proposedContent is too short')
+    .max(200_000, 'proposedContent exceeds the size limit')
+    .optional(),
+  proposalId: z.string().uuid().optional(),
+  reasonForChange: z
+    .string()
+    .min(8, 'reasonForChange must explain WHY the rewrite is being applied')
+    .max(2000, 'reasonForChange exceeds the size limit'),
+  sectionCode: z.string().max(64).nullable().optional(),
+  targetAgency: z.string().max(32).nullable().optional(),
+  rationale: z.string().max(4000).nullable().optional(),
+  threadId: z.string().max(128).nullable().optional(),
+  /**
+   * Optional 21 CFR Part 11 e-signature. Required when the artifact's
+   * metadata flags requiresSignature; otherwise recorded if supplied.
+   */
+  signature: z
+    .object({
+      meaning: z
+        .string()
+        .min(8, 'signature.meaning must attest to what is being signed')
+        .max(2000),
+      signerName: z.string().max(255).nullable().optional(),
+      signerEmail: z.string().email().nullable().optional(),
+      authenticationMethod: z
+        .enum(['password', 'sso', 'mfa', 'session'])
+        .optional(),
+      secondFactorVerified: z.boolean().optional(),
+    })
+    .nullable()
+    .optional(),
+  /**
+   * Acknowledge that the proposed content has uncited paragraphs. Required
+   * when the verification pass blocks; the acknowledgment is audit-logged.
+   */
+  acknowledgeUnsupported: z.boolean().optional(),
+});
+
+// Preview-rewrite is read-only — same rate limit as the chat path is fine.
+const previewRewriteSchema = z
+  .object({
+    artifactId: z.string().min(1, 'artifactId is required'),
+    proposedContent: z
+      .string()
+      .min(8, 'proposedContent is too short')
+      .max(200_000, 'proposedContent exceeds the size limit')
+      .optional(),
+    proposalId: z.string().uuid().optional(),
+  })
+  .refine(d => !!d.proposedContent || !!d.proposalId, {
+    message: 'proposedContent or proposalId is required',
+  });
+
+router.post(
+  '/submission-chat/preview-rewrite',
+  authenticateToken,
+  requireOrganizationContext,
+  submissionChatRateLimiter,
+  async (req: Request, res: Response) => {
+    const parsed = previewRewriteSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res.status(401).json({
+        error: 'Authenticated tenant required',
+        code: 'AUTH_REQUIRED',
+      });
+    }
+    try {
+      const { previewRewrite } = await import(
+        '../services/ana/submission-chat-apply-rewrite'
+      );
+      const result = await previewRewrite({
+        artifactId: parsed.data.artifactId,
+        proposedContent: parsed.data.proposedContent,
+        proposalId: parsed.data.proposalId,
+        organizationId,
+      });
+      return res.json(result);
+    } catch (error: any) {
+      const code = error?.code;
+      if (code === 'ARTIFACT_NOT_FOUND' || code === 'PROPOSAL_NOT_FOUND') {
+        return res.status(404).json({ error: error.message, code });
+      }
+      if (
+        code === 'ARTIFACT_ORG_MISMATCH' ||
+        code === 'PROPOSAL_ARTIFACT_MISMATCH'
+      ) {
+        return res.status(403).json({ error: error.message, code });
+      }
+      if (code === 'INVALID_REQUEST') {
+        return res.status(400).json({ error: error.message, code });
+      }
+      console.error(
+        '[AnA submission-chat preview-rewrite] failed:',
+        error?.message || error
+      );
+      return res.status(500).json({
+        error: 'Failed to preview rewrite',
+        code: 'PREVIEW_REWRITE_ERROR',
+      });
+    }
+  }
+);
+
+router.post(
+  '/submission-chat/apply-rewrite',
+  authenticateToken,
+  requireOrganizationContext,
+  submissionChatApplyRateLimiter,
+  async (req: Request, res: Response) => {
+    const parsed = applyRewriteSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const userId = (req as any).userId || (req as any).user?.id;
+    if (!organizationId || !userId) {
+      return res.status(401).json({
+        error: 'Authenticated tenant + user required',
+        code: 'AUTH_REQUIRED',
+      });
+    }
+
+    try {
+      const { applyRewrite } = await import(
+        '../services/ana/submission-chat-apply-rewrite'
+      );
+      const result = await applyRewrite({
+        artifactId: parsed.data.artifactId,
+        proposedContent: parsed.data.proposedContent,
+        proposalId: parsed.data.proposalId,
+        reasonForChange: parsed.data.reasonForChange,
+        sectionCode: parsed.data.sectionCode ?? null,
+        targetAgency: parsed.data.targetAgency ?? null,
+        rationale: parsed.data.rationale ?? null,
+        threadId: parsed.data.threadId ?? null,
+        signature: parsed.data.signature ?? null,
+        acknowledgeUnsupported: parsed.data.acknowledgeUnsupported ?? false,
+        organizationId,
+        userId,
+        userName:
+          (req as any).user?.name ||
+          (req as any).user?.email ||
+          `user-${userId}`,
+        userEmail: (req as any).user?.email ?? null,
+        userRole: (req as any).user?.role ?? 'regulatory',
+        ipAddress:
+          req.ip ||
+          (req.headers['x-forwarded-for'] as string | undefined) ||
+          'ip-not-captured',
+        userAgent: (req.headers['user-agent'] as string | undefined) ?? null,
+      });
+      return res.json({
+        ok: true,
+        ...result,
+      });
+    } catch (error: any) {
+      const code = error?.code;
+      if (code === 'ARTIFACT_NOT_FOUND' || code === 'PROPOSAL_NOT_FOUND') {
+        return res.status(404).json({ error: error.message, code });
+      }
+      if (
+        code === 'ARTIFACT_ORG_MISMATCH' ||
+        code === 'PROPOSAL_ARTIFACT_MISMATCH'
+      ) {
+        return res.status(403).json({ error: error.message, code });
+      }
+      if (
+        code === 'ARTIFACT_LOCKED' ||
+        code === 'REWRITE_NOOP' ||
+        code === 'REASON_REQUIRED' ||
+        code === 'SIGNATURE_REQUIRED' ||
+        code === 'UNSUPPORTED_REWRITE' ||
+        code === 'PROPOSAL_ALREADY_APPLIED' ||
+        code === 'PROPOSAL_SUPERSEDED' ||
+        code === 'PROPOSAL_EXPIRED' ||
+        code === 'PROPOSAL_HASH_MISMATCH'
+      ) {
+        return res.status(409).json({ error: error.message, code });
+      }
+      if (code === 'INVALID_REQUEST') {
+        return res.status(400).json({ error: error.message, code });
+      }
+      console.error(
+        '[AnA submission-chat apply-rewrite] failed:',
+        error?.message || error
+      );
+      return res.status(500).json({
+        error: 'Failed to apply rewrite',
+        code: 'APPLY_REWRITE_ERROR',
+      });
+    }
+  }
+);
+
+// ── Sentence-level citation endpoints (Feature 2.1 + 2.2) ───────────────
+//
+// Run / read / list / inspect-rules surface for the citation engine.
+// All tenant-scoped via requireOrganizationContext.
+
+const runCitationsSchema = z.object({
+  artifactId: z.string().min(1, 'artifactId is required').max(128),
+  ctdSectionOverride: z.string().max(64).nullable().optional(),
+});
+
+const runCitationsRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 60 * 1000,
+    maxRequests: 6, // engine call is heavy; throttle hard
+    message: 'Too many citation-engine runs, please slow down.',
+  },
+});
+
+router.post(
+  '/citations/run',
+  authenticateToken,
+  requireOrganizationContext,
+  runCitationsRateLimiter,
+  async (req: Request, res: Response) => {
+    const parsed = runCitationsSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const organizationUuid =
+      (req as any).tenantContext?.organizationUuid ||
+      (req.headers['x-org-uuid'] as string | undefined);
+    const userId = (req as any).userId || (req as any).user?.id;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { runCitationEngine } = await import(
+        '../services/ana/citation-engine'
+      );
+      const result = await runCitationEngine(
+        parsed.data.artifactId,
+        organizationId,
+        {
+          persist: true,
+          ctdSectionOverride: parsed.data.ctdSectionOverride ?? undefined,
+          organizationUuid: organizationUuid ?? undefined,
+          userId: userId ?? null,
+        }
+      );
+      return res.json(result);
+    } catch (err: any) {
+      const code = err?.code;
+      if (code === 'ARTIFACT_NOT_FOUND') {
+        return res.status(404).json({ error: err.message, code });
+      }
+      console.error(
+        '[AnA citations run] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to run citation engine',
+        code: 'CITATIONS_RUN_ERROR',
+      });
+    }
+  }
+);
+
+router.get(
+  '/citations/gap-rules',
+  authenticateToken,
+  async (_req: Request, res: Response) => {
+    const { listAllGapRules } = await import(
+      '../services/ana/gap-classifier'
+    );
+    return res.json({ rules: listAllGapRules() });
+  }
+);
+
+router.get(
+  '/citations/gap-rules/:sectionCode',
+  authenticateToken,
+  async (req: Request, res: Response) => {
+    const sectionCode = String(req.params.sectionCode || '');
+    if (!sectionCode || sectionCode.length > 64) {
+      return res.status(400).json({
+        error: 'sectionCode is required',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const { getGapRulesForSection } = await import(
+      '../services/ana/gap-classifier'
+    );
+    return res.json({
+      sectionCode,
+      rules: getGapRulesForSection(sectionCode),
+    });
+  }
+);
+
+router.get(
+  '/citations/:artifactId',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId || artifactId.length > 128) {
+      return res
+        .status(400)
+        .json({ error: 'artifactId is required (max 128 chars)', code: 'INVALID_REQUEST' });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getCitationsForArtifact } = await import(
+        '../services/ana/citation-engine'
+      );
+      const result = await getCitationsForArtifact(artifactId, organizationId);
+      if (!result) {
+        return res.status(404).json({
+          error: 'Artifact not found',
+          code: 'ARTIFACT_NOT_FOUND',
+        });
+      }
+      return res.json(result);
+    } catch (err: any) {
+      console.error('[AnA citations get] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to load citations',
+        code: 'CITATIONS_GET_ERROR',
+      });
+    }
+  }
+);
+
+// ─── Project-level citation operations ──────────────────────────────────
+//
+// Rollup, stale-list, and batch re-cite for a whole project. The single-
+// artifact endpoints above stay as-is; these are for readiness dashboards
+// and ops flows that operate on the full dossier.
+
+const projectIdParam = z.coerce.number().int().positive();
+
+router.get(
+  '/citations/projects/:projectId/rollup',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = projectIdParam.safeParse(req.params.projectId);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getProjectCitationsRollup } = await import(
+        '../services/ana/citation-engine'
+      );
+      const result = await getProjectCitationsRollup(parsed.data, organizationId);
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations project-rollup] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to load project rollup', code: 'PROJECT_ROLLUP_ERROR' });
+    }
+  }
+);
+
+router.get(
+  '/citations/projects/:projectId/stale',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = projectIdParam.safeParse(req.params.projectId);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { listStaleCitedArtifacts } = await import(
+        '../services/ana/citation-engine'
+      );
+      const stale = await listStaleCitedArtifacts(parsed.data, organizationId);
+      return res.json({
+        projectId: parsed.data,
+        organizationId,
+        staleCount: stale.length,
+        artifacts: stale,
+      });
+    } catch (err: any) {
+      console.error(
+        '[AnA citations project-stale] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to load stale list', code: 'PROJECT_STALE_ERROR' });
+    }
+  }
+);
+
+const batchRunSchema = z.object({
+  staleOnly: z.boolean().optional(),
+  ctdSectionPrefix: z.string().max(64).optional(),
+  concurrency: z.number().int().min(1).max(4).optional(),
+});
+
+// Tighter rate limiter — batch is the heaviest endpoint we expose.
+const batchRunRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 5 * 60 * 1000,
+    maxRequests: 2,
+    message: 'Batch citation runs are limited to 2 per 5 minutes.',
+  },
+});
+
+router.post(
+  '/citations/projects/:projectId/batch-run',
+  authenticateToken,
+  requireOrganizationContext,
+  batchRunRateLimiter,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const bodyParsed = batchRunSchema.safeParse(req.body ?? {});
+    if (!bodyParsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: bodyParsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const organizationUuid =
+      (req as any).tenantContext?.organizationUuid ||
+      (req.headers['x-org-uuid'] as string | undefined);
+    const userId = (req as any).userId || (req as any).user?.id;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { runCitationEngineForProject } = await import(
+        '../services/ana/citation-engine'
+      );
+      const result = await runCitationEngineForProject(
+        projectIdParsed.data,
+        organizationId,
+        {
+          staleOnly: bodyParsed.data.staleOnly ?? true,
+          ctdSectionPrefix: bodyParsed.data.ctdSectionPrefix,
+          concurrency: bodyParsed.data.concurrency,
+          organizationUuid: organizationUuid ?? undefined,
+          userId: userId ?? null,
+        }
+      );
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations project-batch-run] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to run batch citations',
+        code: 'PROJECT_BATCH_ERROR',
+      });
+    }
+  }
+);
+
+// ── Citation run history + readiness bridge ────────────────────────────
+
+router.get(
+  '/citations/runs/:runId',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const runId = String(req.params.runId || '');
+    if (!/^[0-9a-f-]{36}$/i.test(runId)) {
+      return res
+        .status(400)
+        .json({ error: 'runId must be a uuid', code: 'INVALID_REQUEST' });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getCitationRunById } = await import(
+        '../services/ana/citation-engine'
+      );
+      const result = await getCitationRunById(runId, organizationId);
+      if (!result) {
+        return res.status(404).json({
+          error: 'Run not found',
+          code: 'CITATION_RUN_NOT_FOUND',
+        });
+      }
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations get-run] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to load run', code: 'GET_RUN_ERROR' });
+    }
+  }
+);
+
+const listRunsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+});
+
+router.get(
+  '/citations/:artifactId/runs',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId || artifactId.length > 128) {
+      return res
+        .status(400)
+        .json({ error: 'artifactId is required (max 128 chars)', code: 'INVALID_REQUEST' });
+    }
+    const parsed = listRunsQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid query',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { listCitationRunsForArtifact } = await import(
+        '../services/ana/citation-engine'
+      );
+      const { rows, total } = await listCitationRunsForArtifact(
+        artifactId,
+        organizationId,
+        { limit: parsed.data.limit, offset: parsed.data.offset }
+      );
+      return res.json({ artifactId, total, runs: rows });
+    } catch (err: any) {
+      console.error(
+        '[AnA citations list-runs] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to list runs', code: 'LIST_RUNS_ERROR' });
+    }
+  }
+);
+
+// Org-wide readiness overview — every project in the caller's org with
+// its readiness aggregate + the top urgent actions across all projects.
+const orgReadinessOverviewQuerySchema = z.object({
+  submissionType: z.enum(['IND', 'NDA', 'BLA', 'ALL']).optional(),
+  atRiskThreshold: z.coerce.number().int().min(0).max(100).optional(),
+  concurrency: z.coerce.number().int().min(1).max(8).optional(),
+  projectStatus: z.string().max(64).optional(),
+  excludeArchived: z.coerce.boolean().optional(),
+});
+
+const orgReadinessOverviewRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 60 * 1000,
+    maxRequests: 10,
+    message: 'Org readiness overview is limited to 10 per minute (heavy compute).',
+  },
+});
+
+router.get(
+  '/projects/readiness-overview',
+  authenticateToken,
+  requireOrganizationContext,
+  orgReadinessOverviewRateLimiter,
+  async (req: Request, res: Response) => {
+    const queryParsed = orgReadinessOverviewQuerySchema.safeParse(req.query);
+    if (!queryParsed.success) {
+      return res.status(400).json({
+        error: 'Invalid query',
+        code: 'INVALID_REQUEST',
+        details: queryParsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getOrgReadinessOverview } = await import(
+        '../services/ana/org-readiness-overview'
+      );
+      const result = await getOrgReadinessOverview(organizationId, {
+        submissionType: queryParsed.data.submissionType,
+        atRiskThreshold: queryParsed.data.atRiskThreshold,
+        concurrency: queryParsed.data.concurrency,
+        projectStatus: queryParsed.data.projectStatus,
+        excludeArchived: queryParsed.data.excludeArchived,
+      });
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA org readiness-overview] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to compute org readiness overview',
+        code: 'ORG_READINESS_OVERVIEW_ERROR',
+      });
+    }
+  }
+);
+
+// ─── Project readiness aggregator ─────────────────────────────────────
+//
+// Synthesizes section coverage + citation engine + consistency alerts +
+// guidance alerts + therapeutic context into a single 0-100 score with
+// ranked next-action list. The dashboard endpoint.
+
+const readinessAggregateQuerySchema = z.object({
+  submissionType: z.enum(['IND', 'NDA', 'BLA', 'ALL']).optional(),
+});
+
+router.get(
+  '/projects/:projectId/readiness-aggregate',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const queryParsed = readinessAggregateQuerySchema.safeParse(req.query);
+    if (!queryParsed.success) {
+      return res.status(400).json({
+        error: 'Invalid query',
+        code: 'INVALID_REQUEST',
+        details: queryParsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getProjectReadinessAggregate } = await import(
+        '../services/ana/project-readiness-aggregator'
+      );
+      const result = await getProjectReadinessAggregate(
+        projectIdParsed.data,
+        organizationId,
+        { submissionType: queryParsed.data.submissionType }
+      );
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA project readiness-aggregate] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to compute readiness aggregate',
+        code: 'READINESS_AGGREGATE_ERROR',
+      });
+    }
+  }
+);
+
+// ─── Therapeutic Area Context Injection (Feature 2.7) ─────────────────
+//
+// Profiles live in server/services/ana/therapeutic-area-profiles/.
+// Each profile exports contextRules / riskFactors / commonGaps /
+// guidanceRefs / reviewerExpectations / pathwayHints — injected into
+// the system prompt at runtime when a project has a therapeutic_area
+// set.
+
+router.get(
+  '/therapeutic-areas',
+  authenticateToken,
+  async (_req: Request, res: Response) => {
+    try {
+      const { listProfiles, listAcceptedSlugs } = await import(
+        '../services/ana/therapeutic-area-profiles/index'
+      );
+      const profiles = listProfiles().map(p => ({
+        id: p.id,
+        displayName: p.displayName,
+        description: p.description,
+        contextRuleCount: p.contextRules.length,
+        riskFactorCount: p.riskFactors.length,
+        commonGapCount: p.commonGaps.length,
+        guidanceRefCount: p.guidanceRefs.length,
+        reviewerExpectationCount: p.reviewerExpectations.length,
+        pathwayHintCount: p.pathwayHints.length,
+      }));
+      return res.json({
+        profiles,
+        acceptedSlugs: listAcceptedSlugs(),
+      });
+    } catch (err: any) {
+      console.error(
+        '[AnA therapeutic-areas list] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to list therapeutic areas',
+        code: 'THERAPEUTIC_AREAS_LIST_ERROR',
+      });
+    }
+  }
+);
+
+router.get(
+  '/therapeutic-areas/:slug',
+  authenticateToken,
+  async (req: Request, res: Response) => {
+    const slug = String(req.params.slug || '');
+    try {
+      const { getProfile, renderProfileForPrompt, profileRetrievalBoost } =
+        await import('../services/ana/therapeutic-area-profiles/index');
+      const profile = getProfile(slug);
+      if (!profile) {
+        return res.status(404).json({
+          error: 'Therapeutic area profile not found',
+          code: 'THERAPEUTIC_AREA_NOT_FOUND',
+        });
+      }
+      return res.json({
+        profile,
+        contextBlock: renderProfileForPrompt(profile),
+        retrievalBoost: profileRetrievalBoost(profile),
+      });
+    } catch (err: any) {
+      console.error(
+        '[AnA therapeutic-areas get] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to load therapeutic area profile',
+        code: 'THERAPEUTIC_AREA_GET_ERROR',
+      });
+    }
+  }
+);
+
+const projectTherapeuticContextQuerySchema = z.object({
+  activeCtdSection: z.string().max(64).optional(),
+  activePathway: z
+    .enum([
+      'accelerated_approval',
+      'breakthrough_therapy',
+      'fast_track',
+      'orphan_drug',
+      'priority_review',
+      'conditional_marketing_authorization',
+      'rmat',
+      'prime',
+    ])
+    .optional(),
+});
+
+router.get(
+  '/projects/:projectId/therapeutic-context',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const queryParsed = projectTherapeuticContextQuerySchema.safeParse(req.query);
+    if (!queryParsed.success) {
+      return res.status(400).json({
+        error: 'Invalid query',
+        code: 'INVALID_REQUEST',
+        details: queryParsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getProjectTherapeuticContext } = await import(
+        '../services/ana/therapeutic-area-context'
+      );
+      const result = await getProjectTherapeuticContext(
+        projectIdParsed.data,
+        organizationId,
+        {
+          activeCtdSection: queryParsed.data.activeCtdSection,
+          activePathway: queryParsed.data.activePathway,
+        }
+      );
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA project therapeutic-context] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to load therapeutic context',
+        code: 'THERAPEUTIC_CONTEXT_ERROR',
+      });
+    }
+  }
+);
+
+const setTherapeuticAreaSchema = z.object({
+  therapeuticArea: z.string().max(64).nullable(),
+});
+
+router.patch(
+  '/projects/:projectId/therapeutic-area',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const parsed = setTherapeuticAreaSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { setProjectTherapeuticArea } = await import(
+        '../services/ana/therapeutic-area-context'
+      );
+      const result = await setProjectTherapeuticArea(
+        projectIdParsed.data,
+        organizationId,
+        parsed.data.therapeuticArea
+      );
+      if (!result.ok) {
+        return res
+          .status(404)
+          .json({ error: 'Project not found', code: 'PROJECT_NOT_FOUND' });
+      }
+      return res.json(result);
+    } catch (err: any) {
+      const code = err?.code;
+      if (code === 'INVALID_REQUEST') {
+        return res.status(400).json({ error: err.message, code });
+      }
+      if (code === 'MIGRATION_PENDING') {
+        return res.status(503).json({
+          error: 'therapeutic_area column not migrated — apply 20260508_project_therapeutic_area.sql',
+          code,
+        });
+      }
+      console.error(
+        '[AnA project set therapeutic-area] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to set therapeutic area',
+        code: 'SET_THERAPEUTIC_AREA_ERROR',
+      });
+    }
+  }
+);
+
+// ─── Cross-artifact consistency scanner ───────────────────────────────
+//
+// Walks the project's contradicts edges from the citation engine and
+// persists each as an alert in cross_artifact_consistency_alerts. Same
+// pattern as the guidance scanner, but for dossier-internal
+// contradictions surfaced by the citation engine.
+
+const consistencyScanRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 5 * 60 * 1000,
+    maxRequests: 4,
+    message: 'Consistency scans are limited to 4 per 5 minutes.',
+  },
+});
+
+router.post(
+  '/consistency/projects/:projectId/scan',
+  authenticateToken,
+  requireOrganizationContext,
+  consistencyScanRateLimiter,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { scanProjectConsistency } = await import(
+        '../services/intelligence/cross-artifact-consistency-scanner'
+      );
+      const result = await scanProjectConsistency(
+        projectIdParsed.data,
+        organizationId
+      );
+      return res.json(result);
+    } catch (err: any) {
+      console.error('[AnA consistency scan] failed:', err?.message || err);
+      return res
+        .status(500)
+        .json({ error: 'Failed to scan project consistency', code: 'CONSISTENCY_SCAN_ERROR' });
+    }
+  }
+);
+
+const consistencyAlertsQuerySchema = z.object({
+  projectId: z.coerce.number().int().positive().optional(),
+  artifactId: z.string().max(128).optional(),
+  status: z.enum(['open', 'acknowledged', 'resolved']).optional(),
+  severity: z.enum(['critical', 'major', 'minor', 'info']).optional(),
+  limit: z.coerce.number().int().min(1).max(200).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+});
+
+router.get(
+  '/consistency/alerts',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = consistencyAlertsQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid query',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { listConsistencyAlerts } = await import(
+        '../services/intelligence/cross-artifact-consistency-scanner'
+      );
+      const { rows, total } = await listConsistencyAlerts({
+        organizationId,
+        projectId: parsed.data.projectId,
+        artifactId: parsed.data.artifactId,
+        status: parsed.data.status,
+        severity: parsed.data.severity,
+        limit: parsed.data.limit,
+        offset: parsed.data.offset,
+      });
+      return res.json({ organizationId, total, alerts: rows });
+    } catch (err: any) {
+      console.error(
+        '[AnA consistency alerts list] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to list consistency alerts',
+        code: 'CONSISTENCY_ALERTS_ERROR',
+      });
+    }
+  }
+);
+
+router.get(
+  '/consistency/alerts/summary',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getConsistencyAlertsSummary } = await import(
+        '../services/intelligence/cross-artifact-consistency-scanner'
+      );
+      const result = await getConsistencyAlertsSummary(organizationId);
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA consistency summary] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to load consistency summary',
+        code: 'CONSISTENCY_SUMMARY_ERROR',
+      });
+    }
+  }
+);
+
+router.post(
+  '/consistency/alerts/:alertId/acknowledge',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const alertId = String(req.params.alertId || '');
+    if (!/^[0-9a-f-]{36}$/i.test(alertId)) {
+      return res.status(400).json({
+        error: 'alertId must be a uuid',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const userId = (req as any).userId || (req as any).user?.id || null;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { acknowledgeConsistencyAlert } = await import(
+        '../services/intelligence/cross-artifact-consistency-scanner'
+      );
+      const result = await acknowledgeConsistencyAlert(
+        alertId,
+        organizationId,
+        userId
+      );
+      if (!result.ok) {
+        return res.status(404).json({
+          error: 'Alert not found',
+          code: 'CONSISTENCY_ALERT_NOT_FOUND',
+        });
+      }
+      return res.json({ ok: true, alert: result.row });
+    } catch (err: any) {
+      console.error(
+        '[AnA consistency ack] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to acknowledge alert',
+        code: 'CONSISTENCY_ALERT_ACK_ERROR',
+      });
+    }
+  }
+);
+
+router.post(
+  '/consistency/alerts/:alertId/resolve',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const alertId = String(req.params.alertId || '');
+    if (!/^[0-9a-f-]{36}$/i.test(alertId)) {
+      return res.status(400).json({
+        error: 'alertId must be a uuid',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const userId = (req as any).userId || (req as any).user?.id || null;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { resolveConsistencyAlert } = await import(
+        '../services/intelligence/cross-artifact-consistency-scanner'
+      );
+      const result = await resolveConsistencyAlert(
+        alertId,
+        organizationId,
+        userId
+      );
+      if (!result.ok) {
+        return res.status(404).json({
+          error: 'Alert not found',
+          code: 'CONSISTENCY_ALERT_NOT_FOUND',
+        });
+      }
+      return res.json({ ok: true, alert: result.row });
+    } catch (err: any) {
+      console.error(
+        '[AnA consistency resolve] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to resolve alert',
+        code: 'CONSISTENCY_ALERT_RESOLVE_ERROR',
+      });
+    }
+  }
+);
+
+// ─── Guidance Change Impact Scanner (Feature 2.6) ──────────────────────
+//
+// Detects when a regulatory guidance document's version changes and
+// flags every artifact whose CTD section is mapped to it via the gap-
+// classifier rules or IND section registry.
+
+const guidanceAuthorityEnum = z.enum([
+  'ICH',
+  'FDA',
+  'EMA',
+  'PMDA',
+  'HC',
+  'MHRA',
+  'ICH-MULTIREGIONAL',
+]);
+
+const guidanceUpsertSchema = z.object({
+  guidanceCode: z.string().min(1).max(128),
+  authority: guidanceAuthorityEnum,
+  newVersion: z.string().min(1).max(64),
+  sourceUrl: z.string().url().max(500).nullable().optional(),
+  metadata: z.record(z.unknown()).nullable().optional(),
+  /** When set, also run the scan scoped to this org. */
+  scanOrganizationId: z.number().int().positive().optional(),
+});
+
+const guidanceScanRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 60 * 1000,
+    maxRequests: 6,
+    message: 'Guidance scans are limited to 6 per minute.',
+  },
+});
+
+router.post(
+  '/guidance/upsert-version',
+  authenticateToken,
+  requireOrganizationContext,
+  guidanceScanRateLimiter,
+  async (req: Request, res: Response) => {
+    const parsed = guidanceUpsertSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const callerOrgId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!callerOrgId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    // Cross-org scans are intentionally blocked at the route layer:
+    // the caller can only scan their own org. (Global / cross-tenant
+    // scans are an admin-only path that the system scheduler runs.)
+    const scanOrg =
+      typeof parsed.data.scanOrganizationId === 'number'
+        ? parsed.data.scanOrganizationId
+        : callerOrgId;
+    if (scanOrg !== callerOrgId) {
+      return res.status(403).json({
+        error: 'Cannot scan another organization',
+        code: 'CROSS_TENANT_BLOCKED',
+      });
+    }
+    try {
+      const { ingestGuidanceUpdate } = await import(
+        '../services/intelligence/guidance-impact-scanner'
+      );
+      const result = await ingestGuidanceUpdate({
+        guidanceCode: parsed.data.guidanceCode,
+        authority: parsed.data.authority,
+        newVersion: parsed.data.newVersion,
+        sourceUrl: parsed.data.sourceUrl ?? null,
+        metadata: parsed.data.metadata ?? null,
+        organizationId: scanOrg,
+      });
+      return res.json(result);
+    } catch (err: any) {
+      const code = err?.code;
+      if (code === 'INVALID_REQUEST') {
+        return res.status(400).json({ error: err.message, code });
+      }
+      console.error(
+        '[AnA guidance upsert-version] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to upsert guidance version', code: 'GUIDANCE_UPSERT_ERROR' });
+    }
+  }
+);
+
+const guidanceManualScanSchema = z.object({
+  guidanceCode: z.string().min(1).max(128),
+  authority: guidanceAuthorityEnum,
+  prevVersion: z.string().max(64).nullable().optional(),
+  newVersion: z.string().min(1).max(64),
+});
+
+router.post(
+  '/guidance/scan',
+  authenticateToken,
+  requireOrganizationContext,
+  guidanceScanRateLimiter,
+  async (req: Request, res: Response) => {
+    const parsed = guidanceManualScanSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { scanArtifactsForGuidanceChange } = await import(
+        '../services/intelligence/guidance-impact-scanner'
+      );
+      const result = await scanArtifactsForGuidanceChange({
+        guidanceCode: parsed.data.guidanceCode,
+        prevVersion: parsed.data.prevVersion ?? null,
+        newVersion: parsed.data.newVersion,
+        authority: parsed.data.authority,
+        organizationId,
+      });
+      return res.json(result);
+    } catch (err: any) {
+      console.error('[AnA guidance scan] failed:', err?.message || err);
+      return res
+        .status(500)
+        .json({ error: 'Failed to scan guidance change', code: 'GUIDANCE_SCAN_ERROR' });
+    }
+  }
+);
+
+const guidanceAlertsQuerySchema = z.object({
+  projectId: z.coerce.number().int().positive().optional(),
+  artifactId: z.string().max(128).optional(),
+  status: z
+    .enum(['open', 'acknowledged', 'resolved'])
+    .optional(),
+  severity: z.enum(['critical', 'major', 'minor', 'info']).optional(),
+  limit: z.coerce.number().int().min(1).max(200).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+});
+
+router.get(
+  '/guidance/alerts',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = guidanceAlertsQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid query',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { listGuidanceAlerts } = await import(
+        '../services/intelligence/guidance-impact-scanner'
+      );
+      const { rows, total } = await listGuidanceAlerts({
+        organizationId,
+        projectId: parsed.data.projectId,
+        artifactId: parsed.data.artifactId,
+        status: parsed.data.status,
+        severity: parsed.data.severity,
+        limit: parsed.data.limit,
+        offset: parsed.data.offset,
+      });
+      return res.json({
+        organizationId,
+        total,
+        alerts: rows,
+      });
+    } catch (err: any) {
+      console.error(
+        '[AnA guidance alerts list] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to list guidance alerts', code: 'GUIDANCE_ALERTS_ERROR' });
+    }
+  }
+);
+
+router.post(
+  '/guidance/alerts/:alertId/acknowledge',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const alertId = String(req.params.alertId || '');
+    if (!/^[0-9a-f-]{36}$/i.test(alertId)) {
+      return res.status(400).json({
+        error: 'alertId must be a uuid',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const userId = (req as any).userId || (req as any).user?.id || null;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { acknowledgeGuidanceAlert } = await import(
+        '../services/intelligence/guidance-impact-scanner'
+      );
+      const result = await acknowledgeGuidanceAlert(alertId, organizationId, userId);
+      if (!result.ok) {
+        return res.status(404).json({
+          error: 'Alert not found',
+          code: 'GUIDANCE_ALERT_NOT_FOUND',
+        });
+      }
+      return res.json({ ok: true, alert: result.row });
+    } catch (err: any) {
+      console.error('[AnA guidance ack] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to acknowledge alert',
+        code: 'GUIDANCE_ALERT_ACK_ERROR',
+      });
+    }
+  }
+);
+
+router.post(
+  '/guidance/alerts/:alertId/resolve',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const alertId = String(req.params.alertId || '');
+    if (!/^[0-9a-f-]{36}$/i.test(alertId)) {
+      return res.status(400).json({
+        error: 'alertId must be a uuid',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const userId = (req as any).userId || (req as any).user?.id || null;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { resolveGuidanceAlert } = await import(
+        '../services/intelligence/guidance-impact-scanner'
+      );
+      const result = await resolveGuidanceAlert(alertId, organizationId, userId);
+      if (!result.ok) {
+        return res.status(404).json({
+          error: 'Alert not found',
+          code: 'GUIDANCE_ALERT_NOT_FOUND',
+        });
+      }
+      return res.json({ ok: true, alert: result.row });
+    } catch (err: any) {
+      console.error('[AnA guidance resolve] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to resolve alert',
+        code: 'GUIDANCE_ALERT_RESOLVE_ERROR',
+      });
+    }
+  }
+);
+
+router.get(
+  '/guidance/alerts/summary',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getGuidanceAlertsSummary } = await import(
+        '../services/intelligence/guidance-impact-scanner'
+      );
+      const result = await getGuidanceAlertsSummary(organizationId);
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA guidance alerts summary] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to load guidance alerts summary',
+        code: 'GUIDANCE_ALERTS_SUMMARY_ERROR',
+      });
+    }
+  }
+);
+
+router.get(
+  '/guidance/catalog',
+  authenticateToken,
+  async (_req: Request, res: Response) => {
+    try {
+      const { getMonitoredGuidanceCatalog } = await import(
+        '../services/intelligence/guidance-impact-scanner'
+      );
+      const result = await getMonitoredGuidanceCatalog();
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA guidance catalog] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to load monitored guidance catalog',
+        code: 'GUIDANCE_CATALOG_ERROR',
+      });
+    }
+  }
+);
+
+const bulkAlertActionSchema = z.object({
+  alertIds: z.array(z.string().uuid()).min(1).max(500),
+});
+
+router.post(
+  '/guidance/alerts/bulk-acknowledge',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = bulkAlertActionSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'alertIds is required (1..500 uuids)',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const userId = (req as any).userId || (req as any).user?.id || null;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { bulkAcknowledgeGuidanceAlerts } = await import(
+        '../services/intelligence/guidance-impact-scanner'
+      );
+      const result = await bulkAcknowledgeGuidanceAlerts(
+        parsed.data.alertIds,
+        organizationId,
+        userId
+      );
+      return res.json({ ok: true, ...result });
+    } catch (err: any) {
+      console.error(
+        '[AnA guidance bulk-acknowledge] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to bulk acknowledge alerts',
+        code: 'GUIDANCE_BULK_ACK_ERROR',
+      });
+    }
+  }
+);
+
+router.post(
+  '/guidance/alerts/bulk-resolve',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = bulkAlertActionSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'alertIds is required (1..500 uuids)',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const userId = (req as any).userId || (req as any).user?.id || null;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { bulkResolveGuidanceAlerts } = await import(
+        '../services/intelligence/guidance-impact-scanner'
+      );
+      const result = await bulkResolveGuidanceAlerts(
+        parsed.data.alertIds,
+        organizationId,
+        userId
+      );
+      return res.json({ ok: true, ...result });
+    } catch (err: any) {
+      console.error(
+        '[AnA guidance bulk-resolve] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to bulk resolve alerts',
+        code: 'GUIDANCE_BULK_RESOLVE_ERROR',
+      });
+    }
+  }
+);
+
+// Webhook ingest — accepts a batched feed update and runs the scanner
+// for every entry. Tenant-scoped: scans only the caller's org. The
+// payload is authenticated via the same authenticateToken middleware
+// the rest of the surface uses; consumers wire their own HMAC at the
+// edge if they need additional verification.
+const webhookIngestSchema = z.object({
+  updates: z
+    .array(
+      z.object({
+        guidanceCode: z.string().min(1).max(128),
+        authority: guidanceAuthorityEnum,
+        newVersion: z.string().min(1).max(64),
+        sourceUrl: z.string().url().max(500).nullable().optional(),
+        metadata: z.record(z.unknown()).nullable().optional(),
+      })
+    )
+    .min(1)
+    .max(100),
+});
+
+router.post(
+  '/guidance/webhook',
+  authenticateToken,
+  requireOrganizationContext,
+  guidanceScanRateLimiter,
+  async (req: Request, res: Response) => {
+    const parsed = webhookIngestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid webhook payload',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { ingestGuidanceUpdate } = await import(
+        '../services/intelligence/guidance-impact-scanner'
+      );
+      const ingested: Array<{
+        guidanceCode: string;
+        changed: boolean;
+        prevVersion: string | null;
+        newVersion: string;
+        alertsCreated: number | null;
+        alertsSkippedDuplicate: number | null;
+        artifactsAffected: number | null;
+      }> = [];
+      // Process sequentially — concurrent upserts on the same code
+      // would hit the SELECT FOR UPDATE lock; sequential keeps it
+      // predictable.
+      for (const update of parsed.data.updates) {
+        try {
+          const { upsert, scan } = await ingestGuidanceUpdate({
+            guidanceCode: update.guidanceCode,
+            authority: update.authority,
+            newVersion: update.newVersion,
+            sourceUrl: update.sourceUrl ?? null,
+            metadata: update.metadata ?? null,
+            organizationId,
+          });
+          ingested.push({
+            guidanceCode: upsert.guidanceCode,
+            changed: upsert.changed,
+            prevVersion: upsert.prevVersion,
+            newVersion: upsert.newVersion,
+            alertsCreated: scan?.alertsCreated ?? null,
+            alertsSkippedDuplicate: scan?.alertsSkippedDuplicate ?? null,
+            artifactsAffected: scan?.artifactsAffected ?? null,
+          });
+        } catch (innerErr: any) {
+          console.warn(
+            '[AnA guidance webhook] update failed:',
+            update.guidanceCode,
+            innerErr?.message || innerErr
+          );
+          ingested.push({
+            guidanceCode: update.guidanceCode,
+            changed: false,
+            prevVersion: null,
+            newVersion: update.newVersion,
+            alertsCreated: null,
+            alertsSkippedDuplicate: null,
+            artifactsAffected: null,
+          });
+        }
+      }
+      return res.json({
+        ok: true,
+        organizationId,
+        received: parsed.data.updates.length,
+        ingested,
+      });
+    } catch (err: any) {
+      console.error(
+        '[AnA guidance webhook] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to ingest webhook',
+        code: 'GUIDANCE_WEBHOOK_ERROR',
+      });
+    }
+  }
+);
+
+// Document-Embedded Audit Ledger — export an artifact as .docx with the
+// AnALedger XML embedded as a custom XML part (Open XML customXml/).
+const docxExportSchema = z.object({
+  includeProvenanceSummary: z.coerce.boolean().optional(),
+});
+
+const docxExportRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 5 * 60 * 1000,
+    maxRequests: 10,
+    message: 'Docx-with-ledger exports are limited to 10 per 5 minutes.',
+  },
+});
+
+router.post(
+  '/citations/:artifactId/export.docx',
+  authenticateToken,
+  requireOrganizationContext,
+  docxExportRateLimiter,
+  async (req: Request, res: Response) => {
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId || artifactId.length > 128) {
+      return res.status(400).json({
+        error: 'artifactId is required (max 128 chars)',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const parsed = docxExportSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { exportArtifactWithLedger } = await import(
+        '../services/export/docx-ledger-export'
+      );
+      const result = await exportArtifactWithLedger(artifactId, organizationId, {
+        includeProvenanceSummary: parsed.data.includeProvenanceSummary,
+      });
+      if (!result) {
+        return res
+          .status(404)
+          .json({ error: 'Artifact not found', code: 'ARTIFACT_NOT_FOUND' });
+      }
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      );
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${result.filename}"`
+      );
+      res.setHeader(
+        'X-AnALedger-Bytes',
+        String(result.ledgerXmlByteLength)
+      );
+      res.setHeader(
+        'X-AnALedger-Schema',
+        result.ledger.schemaVersion
+      );
+      return res.send(result.buffer);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations export.docx] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to export docx', code: 'DOCX_LEDGER_EXPORT_ERROR' });
+    }
+  }
+);
+
+// Citation engine health (org-scoped status + aggregates)
+router.get(
+  '/citations/health',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getCitationHealth } = await import(
+        '../services/ana/citation-health'
+      );
+      const result = await getCitationHealth(organizationId);
+      return res.json(result);
+    } catch (err: any) {
+      console.error('[AnA citations health] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to load citation health',
+        code: 'CITATION_HEALTH_ERROR',
+      });
+    }
+  }
+);
+
+const trendQuerySchema = z.object({
+  windowDays: z.coerce.number().int().min(1).max(365).optional(),
+  bucket: z.enum(['day', 'week', 'month']).optional(),
+});
+
+router.get(
+  '/citations/projects/:projectId/trends',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const queryParsed = trendQuerySchema.safeParse(req.query);
+    if (!queryParsed.success) {
+      return res.status(400).json({
+        error: 'Invalid query',
+        code: 'INVALID_REQUEST',
+        details: queryParsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getProjectCitationTrend } = await import(
+        '../services/ana/citation-trends'
+      );
+      const result = await getProjectCitationTrend(
+        projectIdParsed.data,
+        organizationId,
+        {
+          windowDays: queryParsed.data.windowDays,
+          bucket: queryParsed.data.bucket,
+        }
+      );
+      return res.json(result);
+    } catch (err: any) {
+      console.error('[AnA citations trends] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to load trends',
+        code: 'CITATION_TRENDS_ERROR',
+      });
+    }
+  }
+);
+
+// Section coverage — "is this dossier even well-formed?"
+const sectionCoverageQuerySchema = z.object({
+  submissionType: z.enum(['IND', 'NDA', 'BLA', 'ALL']).optional(),
+});
+
+router.get(
+  '/citations/projects/:projectId/section-coverage',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const queryParsed = sectionCoverageQuerySchema.safeParse(req.query);
+    if (!queryParsed.success) {
+      return res.status(400).json({
+        error: 'submissionType must be IND, NDA, BLA, or ALL',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getProjectSectionCoverage } = await import(
+        '../services/ana/citation-section-coverage'
+      );
+      const result = await getProjectSectionCoverage(
+        projectIdParsed.data,
+        organizationId,
+        queryParsed.data.submissionType ?? 'IND'
+      );
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations section-coverage] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to load section coverage',
+        code: 'SECTION_COVERAGE_ERROR',
+      });
+    }
+  }
+);
+
+router.get(
+  '/citations/projects/:projectId/graph',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = projectIdParam.safeParse(req.params.projectId);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getProjectCitationGraph } = await import(
+        '../services/ana/citation-graph'
+      );
+      const result = await getProjectCitationGraph(parsed.data, organizationId);
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations graph] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to build citation graph',
+        code: 'CITATION_GRAPH_ERROR',
+      });
+    }
+  }
+);
+
+// Per-section expectations — "what's expected here, and how am I doing?"
+router.get(
+  '/citations/:artifactId/expectations',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId || artifactId.length > 128) {
+      return res.status(400).json({
+        error: 'artifactId is required (max 128 chars)',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getArtifactSectionExpectations } = await import(
+        '../services/ana/citation-expectations'
+      );
+      const result = await getArtifactSectionExpectations(
+        artifactId,
+        organizationId
+      );
+      if (!result) {
+        return res.status(404).json({
+          error: 'Artifact not found',
+          code: 'ARTIFACT_NOT_FOUND',
+        });
+      }
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations expectations] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to load expectations', code: 'EXPECTATIONS_ERROR' });
+    }
+  }
+);
+
+// Citation search (filter the persisted citations across a project)
+const citationSearchSchema = z.object({
+  q: z.string().max(500).optional(),
+  status: z.enum(['supported', 'contradicted', 'gap']).optional(),
+  rule: z.string().max(64).optional(),
+  severity: z.enum(['critical', 'major', 'minor', 'info']).optional(),
+  artifactId: z.string().max(128).optional(),
+  ctdSectionPrefix: z.string().max(64).optional(),
+  sourceArtifactId: z.string().max(128).optional(),
+  limit: z.coerce.number().int().min(1).max(500).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+});
+
+router.get(
+  '/citations/projects/:projectId/search',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const queryParsed = citationSearchSchema.safeParse(req.query);
+    if (!queryParsed.success) {
+      return res.status(400).json({
+        error: 'Invalid search parameters',
+        code: 'INVALID_REQUEST',
+        details: queryParsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { searchProjectCitations } = await import(
+        '../services/ana/citation-search'
+      );
+      const result = await searchProjectCitations({
+        projectId: projectIdParsed.data,
+        organizationId,
+        filters: {
+          query: queryParsed.data.q,
+          status: queryParsed.data.status,
+          rule: queryParsed.data.rule,
+          severity: queryParsed.data.severity,
+          artifactId: queryParsed.data.artifactId,
+          ctdSectionPrefix: queryParsed.data.ctdSectionPrefix,
+          sourceArtifactId: queryParsed.data.sourceArtifactId,
+        },
+        limit: queryParsed.data.limit,
+        offset: queryParsed.data.offset,
+      });
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations search] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to search citations',
+        code: 'CITATION_SEARCH_ERROR',
+      });
+    }
+  }
+);
+
+// Run-history pruning (admin-triggerable, also runs on a scheduler)
+const pruneRunsSchema = z.object({
+  keepLastN: z.number().int().min(1).max(100).optional(),
+});
+
+const pruneRunsRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 5 * 60 * 1000,
+    maxRequests: 2,
+    message: 'Run pruning is limited to 2 per 5 minutes.',
+  },
+});
+
+router.post(
+  '/citations/runs/prune',
+  authenticateToken,
+  requireOrganizationContext,
+  pruneRunsRateLimiter,
+  async (req: Request, res: Response) => {
+    const parsed = pruneRunsSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { pruneOldCitationRuns } = await import(
+        '../services/ana/citation-run-pruner'
+      );
+      const result = await pruneOldCitationRuns({
+        keepLastN: parsed.data.keepLastN,
+        organizationId,
+      });
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations prune] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to prune runs',
+        code: 'CITATION_PRUNE_ERROR',
+      });
+    }
+  }
+);
+
+// Per-rule gap inventory + citation export
+
+router.get(
+  '/citations/projects/:projectId/gaps-by-rule',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = projectIdParam.safeParse(req.params.projectId);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getProjectGapsByRule } = await import(
+        '../services/ana/citation-export'
+      );
+      const result = await getProjectGapsByRule(parsed.data, organizationId);
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations gaps-by-rule] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to load gaps-by-rule', code: 'GAPS_BY_RULE_ERROR' });
+    }
+  }
+);
+
+const exportFormatSchema = z.enum(['json', 'csv']);
+
+router.get(
+  '/citations/projects/:projectId/export',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = projectIdParam.safeParse(req.params.projectId);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const formatParsed = exportFormatSchema.safeParse(req.query.format ?? 'json');
+    if (!formatParsed.success) {
+      return res
+        .status(400)
+        .json({ error: 'format must be json or csv', code: 'INVALID_REQUEST' });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { exportProjectCitations, formatCitationsCsv, formatCitationsJsonExport } =
+        await import('../services/ana/citation-export');
+      const rows = await exportProjectCitations(parsed.data, organizationId);
+      if (formatParsed.data === 'csv') {
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename="project-${parsed.data}-citations.csv"`
+        );
+        return res.send(formatCitationsCsv(rows));
+      }
+      return res.json({
+        projectId: parsed.data,
+        organizationId,
+        ...formatCitationsJsonExport(rows),
+      });
+    } catch (err: any) {
+      console.error(
+        '[AnA citations project-export] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to export project citations',
+        code: 'PROJECT_EXPORT_ERROR',
+      });
+    }
+  }
+);
+
+router.get(
+  '/citations/:artifactId/export',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId || artifactId.length > 128) {
+      return res.status(400).json({
+        error: 'artifactId is required (max 128 chars)',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const formatParsed = exportFormatSchema.safeParse(req.query.format ?? 'json');
+    if (!formatParsed.success) {
+      return res
+        .status(400)
+        .json({ error: 'format must be json or csv', code: 'INVALID_REQUEST' });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { exportArtifactCitations, formatCitationsCsv, formatCitationsJsonExport } =
+        await import('../services/ana/citation-export');
+      const rows = await exportArtifactCitations(artifactId, organizationId);
+      if (rows === null) {
+        return res
+          .status(404)
+          .json({ error: 'Artifact not found', code: 'ARTIFACT_NOT_FOUND' });
+      }
+      if (formatParsed.data === 'csv') {
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename="${artifactId}-citations.csv"`
+        );
+        return res.send(formatCitationsCsv(rows));
+      }
+      return res.json({
+        artifactId,
+        organizationId,
+        ...formatCitationsJsonExport(rows),
+      });
+    } catch (err: any) {
+      console.error(
+        '[AnA citations artifact-export] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to export artifact citations',
+        code: 'ARTIFACT_EXPORT_ERROR',
+      });
+    }
+  }
+);
+
+// Project-level snapshot + diff
+const isoDateString = z
+  .string()
+  .refine(s => !Number.isNaN(new Date(s).getTime()), {
+    message: 'must be a valid ISO date string',
+  });
+
+router.get(
+  '/citations/projects/:projectId/snapshot',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const asOfRaw = (req.query.asOf as string | undefined) ?? undefined;
+    let asOfDate: Date | undefined;
+    if (asOfRaw) {
+      const parsed = isoDateString.safeParse(asOfRaw);
+      if (!parsed.success) {
+        return res.status(400).json({
+          error: 'asOf must be a valid ISO date string',
+          code: 'INVALID_REQUEST',
+        });
+      }
+      asOfDate = new Date(parsed.data);
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getProjectCitationSnapshot } = await import(
+        '../services/ana/citation-engine'
+      );
+      const result = await getProjectCitationSnapshot(
+        projectIdParsed.data,
+        organizationId,
+        asOfDate
+      );
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations project-snapshot] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to load snapshot',
+        code: 'PROJECT_SNAPSHOT_ERROR',
+      });
+    }
+  }
+);
+
+const projectDiffQuerySchema = z.object({
+  from: isoDateString,
+  to: isoDateString.optional(),
+});
+
+router.get(
+  '/citations/projects/:projectId/diff',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const queryParsed = projectDiffQuerySchema.safeParse(req.query);
+    if (!queryParsed.success) {
+      return res.status(400).json({
+        error: '?from is required (ISO date); ?to is optional',
+        code: 'INVALID_REQUEST',
+        details: queryParsed.error.flatten(),
+      });
+    }
+    const fromDate = new Date(queryParsed.data.from);
+    const toDate = queryParsed.data.to ? new Date(queryParsed.data.to) : new Date();
+    if (fromDate.getTime() > toDate.getTime()) {
+      return res.status(400).json({
+        error: '?from must be earlier than ?to',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { diffProjectCitationSnapshots } = await import(
+        '../services/ana/citation-engine'
+      );
+      const result = await diffProjectCitationSnapshots(
+        projectIdParsed.data,
+        organizationId,
+        fromDate,
+        toDate
+      );
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations project-diff] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to diff project',
+        code: 'PROJECT_DIFF_ERROR',
+      });
+    }
+  }
+);
+
+router.get(
+  '/citations/runs/:runId/diff',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const fromRunId = String(req.params.runId || '');
+    const toRunId = String(req.query.against || '');
+    if (!/^[0-9a-f-]{36}$/i.test(fromRunId) || !/^[0-9a-f-]{36}$/i.test(toRunId)) {
+      return res.status(400).json({
+        error: 'runId and ?against must both be uuids',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { diffCitationRuns } = await import(
+        '../services/ana/citation-engine'
+      );
+      const result = await diffCitationRuns(fromRunId, toRunId, organizationId);
+      if (!result) {
+        return res.status(404).json({
+          error: 'One or both runs not found, or runs are for different artifacts',
+          code: 'CITATION_RUN_DIFF_NOT_FOUND',
+        });
+      }
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations diff] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to diff runs', code: 'CITATION_DIFF_ERROR' });
+    }
+  }
+);
+
+router.get(
+  '/citations/projects/:projectId/readiness-impact',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = projectIdParam.safeParse(req.params.projectId);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getCitationReadinessImpact } = await import(
+        '../services/ana/citation-readiness-bridge'
+      );
+      const result = await getCitationReadinessImpact(parsed.data, organizationId);
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations readiness-impact] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to derive readiness impact',
+        code: 'READINESS_IMPACT_ERROR',
+      });
+    }
+  }
+);
+
+router.get(
+  '/citations/:artifactId/gaps',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId || artifactId.length > 128) {
+      return res
+        .status(400)
+        .json({ error: 'artifactId is required (max 128 chars)', code: 'INVALID_REQUEST' });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getGapsForArtifact } = await import(
+        '../services/ana/citation-engine'
+      );
+      const result = await getGapsForArtifact(artifactId, organizationId);
+      if (!result) {
+        return res.status(404).json({
+          error: 'Artifact not found',
+          code: 'ARTIFACT_NOT_FOUND',
+        });
+      }
+      return res.json(result);
+    } catch (err: any) {
+      console.error('[AnA citations gaps] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to load gaps',
+        code: 'CITATIONS_GAPS_ERROR',
+      });
+    }
+  }
+);
+
+// ── Proposal management endpoints ──────────────────────────────────────
+//
+// Read-only views into ana_submission_chat_proposals + a janitor sweep.
+// Tenant-scoped via requireOrganizationContext; the service layer
+// double-checks organization_id on every row.
+
+const listProposalsQuerySchema = z.object({
+  threadId: z.string().max(128).optional(),
+  artifactId: z.string().max(128).optional(),
+  status: z
+    .enum(['pending', 'applied', 'superseded', 'expired'])
+    .optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+});
+
+router.get(
+  '/submission-chat/proposals',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = listProposalsQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid query',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { listProposals } = await import(
+        '../services/ana/submission-chat-proposal-store'
+      );
+      const { rows, total } = await listProposals(organizationId, {
+        threadId: parsed.data.threadId,
+        artifactId: parsed.data.artifactId,
+        status: parsed.data.status,
+        limit: parsed.data.limit,
+        offset: parsed.data.offset,
+      });
+      return res.json({ total, proposals: rows });
+    } catch (err: any) {
+      console.error(
+        '[AnA submission-chat list-proposals] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to list proposals', code: 'LIST_PROPOSALS_ERROR' });
+    }
+  }
+);
+
+router.get(
+  '/submission-chat/proposals/:proposalId',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const proposalId = String(req.params.proposalId || '');
+    if (!/^[0-9a-f-]{36}$/i.test(proposalId)) {
+      return res.status(400).json({
+        error: 'proposalId must be a uuid',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getProposalWithLinkage } = await import(
+        '../services/ana/submission-chat-proposal-store'
+      );
+      const linkage = await getProposalWithLinkage(proposalId, organizationId);
+      if (!linkage) {
+        return res
+          .status(404)
+          .json({ error: 'Proposal not found', code: 'PROPOSAL_NOT_FOUND' });
+      }
+      return res.json(linkage);
+    } catch (err: any) {
+      console.error(
+        '[AnA submission-chat get-proposal] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to load proposal',
+        code: 'GET_PROPOSAL_ERROR',
+      });
+    }
+  }
+);
+
+// Janitor sweep — marks past-TTL pending proposals as expired. Scoped to the
+// caller's org. Idempotent + safe to call repeatedly. Tighter rate limit
+// because it's normally invoked by a scheduled task, not a user.
+const sweepProposalsRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 60 * 1000,
+    maxRequests: 4,
+    message: 'Too many sweep requests, please slow down.',
+  },
+});
+
+router.post(
+  '/submission-chat/proposals/sweep',
+  authenticateToken,
+  requireOrganizationContext,
+  sweepProposalsRateLimiter,
+  async (req: Request, res: Response) => {
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { sweepExpiredProposals } = await import(
+        '../services/ana/submission-chat-proposal-store'
+      );
+      const result = await sweepExpiredProposals({ organizationId });
+      return res.json({ ok: true, ...result });
+    } catch (err: any) {
+      console.error(
+        '[AnA submission-chat sweep] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Sweep failed', code: 'SWEEP_PROPOSALS_ERROR' });
+    }
+  }
+);
+
+router.get(
+  '/submission-chat/threads/:threadId/timeline',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const threadId = String(req.params.threadId || '');
+    if (!threadId || threadId.length > 128) {
+      return res.status(400).json({
+        error: 'threadId is required',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getThreadTimeline } = await import(
+        '../services/ana/submission-chat-timeline'
+      );
+      const result = await getThreadTimeline(threadId, organizationId);
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA submission-chat thread-timeline] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to load thread timeline',
+        code: 'TIMELINE_ERROR',
+      });
+    }
+  }
+);
+
+// Streaming variant — same retrieval/scope/verification pipeline as the
+// one-shot route, but the LLM call streams tagged-output sections as SSE
+// events so a chat UI can render answer + rewrite progressively.
+router.post(
+  '/submission-chat/stream',
+  authenticateToken,
+  requireOrganizationContext,
+  submissionChatRateLimiter,
+  async (req: Request, res: Response) => {
+    const parsed = submissionChatSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const organizationUuid =
+      (req as any).tenantContext?.organizationUuid ||
+      (req.headers['x-org-uuid'] as string | undefined);
+    const userId = (req as any).userId || (req as any).user?.id;
+
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+
+    let clientClosed = false;
+    req.on('close', () => {
+      clientClosed = true;
+    });
+
+    const writeEvent = (event: any) => {
+      if (clientClosed) return;
+      try {
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
+      } catch {
+        clientClosed = true;
+      }
+    };
+
+    try {
+      const { handleSubmissionChatStream } = await import(
+        '../services/ana/submission-chat-stream-handler'
+      );
+      await handleSubmissionChatStream(
+        {
+          threadId: parsed.data.threadId,
+          artifactId: parsed.data.artifactId,
+          question: parsed.data.question,
+          organizationId: organizationId ?? null,
+          organizationUuid: organizationUuid ?? null,
+          userId: userId ?? null,
+        },
+        writeEvent
+      );
+    } catch (err: any) {
+      writeEvent({
+        type: 'error',
+        code: 'SUBMISSION_CHAT_STREAM_ERROR',
+        message: err?.message || 'Streaming submission-chat failed',
+      });
+      console.error(
+        '[AnA submission-chat stream] failed:',
+        err?.message || err
+      );
+    } finally {
+      if (!clientClosed) res.end();
+    }
+  }
+);
+
+router.post(
+  '/submission-chat',
+  authenticateToken,
+  requireOrganizationContext,
+  submissionChatRateLimiter,
+  async (req: Request, res: Response) => {
+    const parsed = submissionChatSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const organizationUuid =
+      (req as any).tenantContext?.organizationUuid ||
+      (req.headers['x-org-uuid'] as string | undefined);
+    const userId = (req as any).userId || (req as any).user?.id;
+
+    try {
+      const { handleSubmissionChat } = await import(
+        '../services/ana/submission-chat-handler'
+      );
+      const result = await handleSubmissionChat({
+        threadId: parsed.data.threadId,
+        artifactId: parsed.data.artifactId,
+        question: parsed.data.question,
+        organizationId: organizationId ?? null,
+        organizationUuid: organizationUuid ?? null,
+        userId: userId ?? null,
+      });
+      return res.json(result);
+    } catch (error: any) {
+      const code = error?.code;
+      if (code === 'ARTIFACT_NOT_FOUND') {
+        return res.status(404).json({ error: error.message, code });
+      }
+      if (code === 'ARTIFACT_ORG_MISMATCH') {
+        return res.status(403).json({ error: error.message, code });
+      }
+      if (code === 'INVALID_REQUEST') {
+        return res.status(400).json({ error: error.message, code });
+      }
+      if (code === 'AI_PROVIDER_UNAVAILABLE') {
+        return res.status(503).json({ error: error.message, code });
+      }
+      console.error('[AnA submission-chat] failed:', error?.message || error);
+      return res.status(500).json({
+        error: 'Failed to process submission-chat request',
+        code: 'SUBMISSION_CHAT_ERROR',
+      });
+    }
+  }
+);
+
+// ─── Regulatory Authoring Plan (Feature 2.4) ──────────────────────────
+//
+// Generate, retrieve, list, approve, reject, and execute authoring plans.
+// Plans capture the AI-assembled "what we'll write" before an artifact is
+// drafted: sources to cite, cross-references, risk factors from Shadow
+// Review, contradictions from a Truth Engine pre-scan, reviewer
+// expectations from the therapeutic-area profile.
+
+const generateAuthoringPlanSchema = z.object({
+  projectId: z.coerce.number().int().positive(),
+  ctdSection: z.string().trim().min(1).max(64),
+  submissionType: z.enum(['IND', 'NDA', 'BLA', 'ALL']).optional(),
+  artifactId: z.string().trim().max(255).nullable().optional(),
+  seedQuery: z.string().trim().max(2000).optional(),
+  initialStatus: z.enum(['draft', 'pending_approval']).optional(),
+  persist: z.boolean().optional(),
+});
+
+const authoringPlanRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 60 * 1000,
+    maxRequests: 8,
+    message: 'Authoring plan generation is limited to 8 per minute (heavy compute).',
+  },
+});
+
+router.post(
+  '/authoring-plan',
+  authenticateToken,
+  requireOrganizationContext,
+  authoringPlanRateLimiter,
+  async (req: Request, res: Response) => {
+    const parsed = generateAuthoringPlanSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const organizationUuid =
+      (req as any).tenantContext?.organizationUuid ||
+      (req.headers['x-org-uuid'] as string | undefined);
+    const userId = (req as any).userId || (req as any).user?.id || null;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { generateAuthoringPlan } = await import(
+        '../services/ana/authoring-plan-generator'
+      );
+      const plan = await generateAuthoringPlan({
+        projectId: parsed.data.projectId,
+        organizationId,
+        organizationUuid: organizationUuid ?? null,
+        ctdSection: parsed.data.ctdSection,
+        submissionType: parsed.data.submissionType,
+        artifactId: parsed.data.artifactId ?? null,
+        seedQuery: parsed.data.seedQuery,
+        persist: parsed.data.persist !== false,
+        initialStatus: parsed.data.initialStatus ?? 'draft',
+        createdBy: userId,
+      });
+      return res.json(plan);
+    } catch (err: any) {
+      const code = err?.code;
+      if (code === 'INVALID_REQUEST') {
+        return res.status(400).json({ error: err.message, code });
+      }
+      if (code === 'MIGRATION_PENDING') {
+        return res.status(503).json({
+          error: err.message,
+          code,
+        });
+      }
+      console.error('[AnA authoring-plan generate] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to generate authoring plan',
+        code: 'AUTHORING_PLAN_ERROR',
+      });
+    }
+  }
+);
+
+const listAuthoringPlansQuery = z.object({
+  projectId: z.coerce.number().int().positive().optional(),
+  ctdSection: z.string().trim().min(1).max(64).optional(),
+  status: z
+    .union([
+      z.enum(['draft', 'pending_approval', 'approved', 'rejected', 'executed']),
+      z.array(z.enum(['draft', 'pending_approval', 'approved', 'rejected', 'executed'])),
+    ])
+    .optional(),
+  limit: z.coerce.number().int().min(1).max(200).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+});
+
+router.get(
+  '/authoring-plan',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = listAuthoringPlansQuery.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid query',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { listAuthoringPlans } = await import(
+        '../services/ana/authoring-plan-generator'
+      );
+      const result = await listAuthoringPlans({
+        organizationId,
+        projectId: parsed.data.projectId,
+        ctdSection: parsed.data.ctdSection,
+        status: parsed.data.status,
+        limit: parsed.data.limit,
+        offset: parsed.data.offset,
+      });
+      return res.json(result);
+    } catch (err: any) {
+      console.error('[AnA authoring-plan list] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to list authoring plans',
+        code: 'AUTHORING_PLAN_LIST_ERROR',
+      });
+    }
+  }
+);
+
+const authoringPlanIdParam = z
+  .string()
+  .uuid({ message: 'planId must be a UUID' });
+
+router.get(
+  '/authoring-plan/:planId',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const idParsed = authoringPlanIdParam.safeParse(req.params.planId);
+    if (!idParsed.success) {
+      return res.status(400).json({
+        error: 'planId must be a UUID',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getAuthoringPlan } = await import(
+        '../services/ana/authoring-plan-generator'
+      );
+      const plan = await getAuthoringPlan(idParsed.data, organizationId);
+      if (!plan) {
+        return res
+          .status(404)
+          .json({ error: 'Authoring plan not found', code: 'NOT_FOUND' });
+      }
+      return res.json(plan);
+    } catch (err: any) {
+      console.error('[AnA authoring-plan get] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to load authoring plan',
+        code: 'AUTHORING_PLAN_GET_ERROR',
+      });
+    }
+  }
+);
+
+router.patch(
+  '/authoring-plan/:planId/submit',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const idParsed = authoringPlanIdParam.safeParse(req.params.planId);
+    if (!idParsed.success) {
+      return res.status(400).json({
+        error: 'planId must be a UUID',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { submitForApproval } = await import(
+        '../services/ana/authoring-plan-generator'
+      );
+      const plan = await submitForApproval(idParsed.data, organizationId);
+      if (!plan) {
+        return res.status(409).json({
+          error: 'Plan not found or not in draft status',
+          code: 'INVALID_TRANSITION',
+        });
+      }
+      return res.json(plan);
+    } catch (err: any) {
+      console.error('[AnA authoring-plan submit] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to submit authoring plan',
+        code: 'AUTHORING_PLAN_SUBMIT_ERROR',
+      });
+    }
+  }
+);
+
+router.patch(
+  '/authoring-plan/:planId/approve',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const idParsed = authoringPlanIdParam.safeParse(req.params.planId);
+    if (!idParsed.success) {
+      return res.status(400).json({
+        error: 'planId must be a UUID',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const userId = (req as any).userId || (req as any).user?.id || null;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { approveAuthoringPlan } = await import(
+        '../services/ana/authoring-plan-generator'
+      );
+      const plan = await approveAuthoringPlan(
+        idParsed.data,
+        organizationId,
+        userId
+      );
+      if (!plan) {
+        return res.status(409).json({
+          error: 'Plan not found or not in an approvable state',
+          code: 'INVALID_TRANSITION',
+        });
+      }
+      return res.json(plan);
+    } catch (err: any) {
+      console.error('[AnA authoring-plan approve] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to approve authoring plan',
+        code: 'AUTHORING_PLAN_APPROVE_ERROR',
+      });
+    }
+  }
+);
+
+const rejectAuthoringPlanSchema = z.object({
+  reason: z.string().trim().max(2000).optional(),
+});
+
+router.patch(
+  '/authoring-plan/:planId/reject',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const idParsed = authoringPlanIdParam.safeParse(req.params.planId);
+    if (!idParsed.success) {
+      return res.status(400).json({
+        error: 'planId must be a UUID',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const bodyParsed = rejectAuthoringPlanSchema.safeParse(req.body ?? {});
+    if (!bodyParsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: bodyParsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const userId = (req as any).userId || (req as any).user?.id || null;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { rejectAuthoringPlan } = await import(
+        '../services/ana/authoring-plan-generator'
+      );
+      const plan = await rejectAuthoringPlan(
+        idParsed.data,
+        organizationId,
+        userId,
+        bodyParsed.data.reason ?? null
+      );
+      if (!plan) {
+        return res.status(409).json({
+          error: 'Plan not found or not in a rejectable state',
+          code: 'INVALID_TRANSITION',
+        });
+      }
+      return res.json(plan);
+    } catch (err: any) {
+      console.error('[AnA authoring-plan reject] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to reject authoring plan',
+        code: 'AUTHORING_PLAN_REJECT_ERROR',
+      });
+    }
+  }
+);
+
+const executeAuthoringPlanSchema = z.object({
+  executedArtifactId: z.string().trim().max(255).nullable().optional(),
+});
+
+router.patch(
+  '/authoring-plan/:planId/execute',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const idParsed = authoringPlanIdParam.safeParse(req.params.planId);
+    if (!idParsed.success) {
+      return res.status(400).json({
+        error: 'planId must be a UUID',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const bodyParsed = executeAuthoringPlanSchema.safeParse(req.body ?? {});
+    if (!bodyParsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: bodyParsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { markAuthoringPlanExecuted } = await import(
+        '../services/ana/authoring-plan-generator'
+      );
+      const plan = await markAuthoringPlanExecuted(
+        idParsed.data,
+        organizationId,
+        bodyParsed.data.executedArtifactId ?? null
+      );
+      if (!plan) {
+        return res.status(409).json({
+          error: 'Plan not found or not in an executable state',
+          code: 'INVALID_TRANSITION',
+        });
+      }
+      return res.json(plan);
+    } catch (err: any) {
+      console.error('[AnA authoring-plan execute] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to mark authoring plan executed',
+        code: 'AUTHORING_PLAN_EXECUTE_ERROR',
+      });
+    }
+  }
+);
+
+router.get(
+  '/projects/:projectId/authoring-plans/active',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const ctdSection = String(req.query.ctdSection ?? '').trim();
+    if (!ctdSection || ctdSection.length > 64) {
+      return res.status(400).json({
+        error: 'ctdSection is required',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getActiveAuthoringPlanForSection } = await import(
+        '../services/ana/authoring-plan-generator'
+      );
+      const plan = await getActiveAuthoringPlanForSection(
+        projectIdParsed.data,
+        organizationId,
+        ctdSection
+      );
+      if (!plan) {
+        return res
+          .status(404)
+          .json({ error: 'No active plan for that section', code: 'NOT_FOUND' });
+      }
+      return res.json(plan);
+    } catch (err: any) {
+      console.error('[AnA authoring-plan active] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to load active authoring plan',
+        code: 'AUTHORING_PLAN_ACTIVE_ERROR',
       });
     }
   }

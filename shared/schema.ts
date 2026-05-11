@@ -5073,6 +5073,13 @@ export const projects = pgTable(
     ownerId: integer('owner_id').references(() => users.id),
     sponsors: text('sponsors').array(), // List of sponsor IDs or names
     tags: text('tags').array(),
+    /**
+     * Therapeutic area slug (Feature 2.7) — resolves to a profile in
+     * server/services/ana/therapeutic-area-profiles/. Free-form string
+     * so adding a new profile is module-only (no migration). Null means
+     * "no profile injected".
+     */
+    therapeuticArea: text('therapeutic_area'),
     criticalToQualityFactors: json('critical_to_quality_factors'), // CtQ factors array
     riskLevel: text('risk_level').default('medium'), // low, medium, high
     riskAssessment: json('risk_assessment'),
@@ -5301,6 +5308,11 @@ export const concept2cureArtifacts = pgTable(
     lockedById: integer('locked_by_id').references(() => users.id),
     createdById: integer('created_by_id').references(() => users.id),
     metadata: json('metadata'),
+    // Sentence-level citations (Feature 2.1): latest computed citation array
+    // produced by the citation engine. See ana/citation-engine.ts.
+    citations: jsonb('citations').default(sql`'[]'::jsonb`),
+    citationRunId: uuid('citation_run_id'),
+    citationsAt: timestamp('citations_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -18318,6 +18330,222 @@ export const evidenceChainRecords = pgTable('evidence_chain_records', {
 }));
 
 export type EvidenceChainRecord = InferSelectModel<typeof evidenceChainRecords>;
+
+// ═══════════════════════════════════════════════════════════════════════
+// Guidance Change Impact Scanner (Feature 2.6)
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Tracks the current version of every regulatory guidance document AnA
+ * can detect changes against. When a new version is upserted, the row's
+ * previous current_version becomes the "prev" reference for any alerts
+ * that fire on the change.
+ */
+export const guidanceReferenceIndex = pgTable(
+  'guidance_reference_index',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    guidanceCode: text('guidance_code').notNull().unique(),
+    authority: text('authority').notNull(),
+    currentVersion: text('current_version').notNull(),
+    currentVersionAt: timestamp('current_version_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    sourceUrl: text('source_url'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  table => ({
+    authorityIdx: index('idx_guidance_reference_authority').on(table.authority),
+  })
+);
+
+/**
+ * Section-level impact alert produced by the guidance-impact-scanner
+ * when an artifact's CTD section is mapped (via gap-classifier rules
+ * or the IND section registry) to a guidance whose version moved.
+ */
+export const guidanceAlerts = pgTable(
+  'guidance_alerts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    organizationId: integer('organization_id').notNull(),
+    projectId: integer('project_id').notNull(),
+    artifactId: text('artifact_id').notNull(),
+    artifactPk: integer('artifact_pk').notNull(),
+    guidanceCode: text('guidance_code').notNull(),
+    guidanceAuthority: text('guidance_authority').notNull(),
+    prevVersion: text('prev_version'),
+    newVersion: text('new_version').notNull(),
+    severity: text('severity').notNull(),
+    affectedSections: jsonb('affected_sections').notNull(),
+    status: text('status').notNull().default('open'),
+    acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
+    acknowledgedBy: integer('acknowledged_by'),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    resolvedBy: integer('resolved_by'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  table => ({
+    orgIdx: index('idx_guidance_alerts_org').on(table.organizationId),
+    projectIdx: index('idx_guidance_alerts_project').on(
+      table.organizationId,
+      table.projectId
+    ),
+    artifactIdx: index('idx_guidance_alerts_artifact').on(table.artifactId),
+  })
+);
+
+export type GuidanceReferenceIndexRow = InferSelectModel<typeof guidanceReferenceIndex>;
+export type GuidanceAlertRow = InferSelectModel<typeof guidanceAlerts>;
+
+// ═══════════════════════════════════════════════════════════════════════
+// Cross-artifact consistency alerts
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * One row per dossier-internal contradiction surfaced by
+ * cross-artifact-consistency-scanner. Idempotent re-scans via the unique
+ * partial index on (project, artifactA, artifactB, sentenceContentHash)
+ * WHERE status IN ('open','acknowledged') — see the migration.
+ */
+export const crossArtifactConsistencyAlerts = pgTable(
+  'cross_artifact_consistency_alerts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    organizationId: integer('organization_id').notNull(),
+    projectId: integer('project_id').notNull(),
+    artifactAId: text('artifact_a_id').notNull(),
+    artifactAPk: integer('artifact_a_pk').notNull(),
+    artifactACtdSection: text('artifact_a_ctd_section'),
+    sentenceContentHash: text('sentence_content_hash').notNull(),
+    sentenceText: text('sentence_text').notNull(),
+    artifactBId: text('artifact_b_id').notNull(),
+    artifactBPk: integer('artifact_b_pk').notNull(),
+    artifactBCtdSection: text('artifact_b_ctd_section'),
+    contradictingPassage: text('contradicting_passage'),
+    severity: text('severity').notNull(),
+    severityRuleId: text('severity_rule_id'),
+    status: text('status').notNull().default('open'),
+    acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
+    acknowledgedBy: integer('acknowledged_by'),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    resolvedBy: integer('resolved_by'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  table => ({
+    orgIdx: index('idx_consistency_alerts_org').on(table.organizationId),
+    projectIdx: index('idx_consistency_alerts_project').on(
+      table.organizationId,
+      table.projectId
+    ),
+    artifactAIdx: index('idx_consistency_alerts_artifact_a').on(
+      table.artifactAId
+    ),
+    artifactBIdx: index('idx_consistency_alerts_artifact_b').on(
+      table.artifactBId
+    ),
+  })
+);
+
+export type CrossArtifactConsistencyAlertRow = InferSelectModel<
+  typeof crossArtifactConsistencyAlerts
+>;
+
+// ═══════════════════════════════════════════════════════════════════════
+// Regulatory Authoring Plans (Feature 2.4)
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * One row per (project, ctd_section) authoring plan.
+ *
+ * Captures the AI-assembled "what we'll write" before the artifact is
+ * drafted: source artifacts to cite, cross-references, risk factors from
+ * Shadow Review, contradictions from a Truth Engine pre-scan, and
+ * therapeutic-area-driven reviewer expectations.
+ *
+ * Status flow: draft -> pending_approval -> approved -> executed
+ *                                       -> rejected
+ *
+ * Active uniqueness (draft + pending_approval) is enforced by a partial
+ * unique index — see the migration. Approved/rejected/executed plans are
+ * historical and may co-exist with a fresh active plan.
+ */
+export const authoringPlans = pgTable(
+  'authoring_plans',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    organizationId: integer('organization_id').notNull(),
+    projectId: integer('project_id').notNull(),
+    artifactId: text('artifact_id'),
+    artifactPk: integer('artifact_pk'),
+    ctdSection: text('ctd_section').notNull(),
+    submissionType: text('submission_type'),
+    status: text('status').notNull().default('draft'),
+    title: text('title'),
+    summary: text('summary'),
+    sources: jsonb('sources').notNull().default([]),
+    crossRefs: jsonb('cross_refs').notNull().default([]),
+    riskFactors: jsonb('risk_factors').notNull().default([]),
+    contradictions: jsonb('contradictions').notNull().default([]),
+    reviewerExpectations: jsonb('reviewer_expectations').notNull().default([]),
+    guidanceRefs: jsonb('guidance_refs').notNull().default([]),
+    outline: jsonb('outline').notNull().default([]),
+    therapeuticArea: text('therapeutic_area'),
+    approvedAt: timestamp('approved_at', { withTimezone: true }),
+    approvedBy: integer('approved_by'),
+    rejectedAt: timestamp('rejected_at', { withTimezone: true }),
+    rejectedBy: integer('rejected_by'),
+    rejectedReason: text('rejected_reason'),
+    executedAt: timestamp('executed_at', { withTimezone: true }),
+    executedArtifactId: text('executed_artifact_id'),
+    generatorVersion: text('generator_version'),
+    score: integer('score'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdBy: integer('created_by'),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  table => ({
+    orgIdx: index('idx_authoring_plans_org').on(table.organizationId),
+    projectIdx: index('idx_authoring_plans_project').on(
+      table.organizationId,
+      table.projectId
+    ),
+    sectionIdx: index('idx_authoring_plans_section').on(
+      table.organizationId,
+      table.projectId,
+      table.ctdSection
+    ),
+    statusIdx: index('idx_authoring_plans_status').on(
+      table.organizationId,
+      table.status
+    ),
+  })
+);
+
+export type AuthoringPlanRow = InferSelectModel<typeof authoringPlans>;
 
 /**
  * Saved precedent queries — user-saved searches over the predicate /
