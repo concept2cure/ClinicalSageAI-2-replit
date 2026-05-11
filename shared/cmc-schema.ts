@@ -16,7 +16,7 @@ import { z } from 'zod';
 // CMC Projects - Core project management
 export const cmcProjects = pgTable('cmc_projects', {
   id: uuid('id').defaultRandom().primaryKey(),
-  organizationId: text('organization_id').notNull(),
+  organizationId: integer('organization_id').notNull(),
   name: text('name').notNull(),
   drugName: text('drug_name').notNull(),
   drugType: text('drug_type').notNull(), // Small Molecule, mAb, etc.
@@ -177,7 +177,7 @@ export const complianceTracking = pgTable('compliance_tracking', {
 // Workflow Templates
 export const workflowTemplates = pgTable('workflow_templates', {
   id: uuid('id').defaultRandom().primaryKey(),
-  organizationId: text('organization_id').notNull(),
+  organizationId: integer('organization_id').notNull(),
   name: text('name').notNull(),
   description: text('description'),
   category: text('category').notNull(), // Development, Manufacturing, Submission

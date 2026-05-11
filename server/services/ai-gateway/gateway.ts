@@ -25,8 +25,8 @@ import type {
   ModelConfig,
   ProviderHealth,
   GatewayUsage,
-  ClaudeEnhancedResponse,
-  ClaudeToolUse,
+  AnaGatewayResponse,
+  AnaToolUse,
   StreamCallback,
   ContentBlock,
 } from './types';
@@ -623,7 +623,7 @@ export class AIGateway {
     request: GatewayRequest,
     requestId: string,
     startTime: number
-  ): Promise<ClaudeEnhancedResponse> {
+  ): Promise<AnaGatewayResponse> {
     if (!this.anthropicClient) {
       throw new Error('Anthropic client not initialized (missing ANTHROPIC_API_KEY)');
     }
@@ -747,7 +747,7 @@ export class AIGateway {
     // Extract text, thinking, and tool use blocks
     let content = '';
     let thinking = '';
-    const toolUses: ClaudeToolUse[] = [];
+    const toolUses: AnaToolUse[] = [];
 
     for (const block of response.content || []) {
       if (block.type === 'text') {
@@ -805,7 +805,7 @@ export class AIGateway {
     request: GatewayRequest,
     requestId: string,
     startTime: number
-  ): Promise<ClaudeEnhancedResponse> {
+  ): Promise<AnaGatewayResponse> {
     if (!this.anthropicClient) {
       throw new Error('Anthropic client not initialized (missing ANTHROPIC_API_KEY)');
     }
@@ -893,7 +893,7 @@ export class AIGateway {
 
     let content = '';
     let thinking = '';
-    const toolUses: ClaudeToolUse[] = [];
+    const toolUses: AnaToolUse[] = [];
     let inputTokens = 0;
     let outputTokens = 0;
     let cacheCreationInputTokens = 0;
@@ -1000,7 +1000,7 @@ export class AIGateway {
       finishReason: stopReason,
       cacheHit: streamCacheStats ? cacheReadInputTokens > 0 : undefined,
       cacheStats: streamCacheStats,
-    } as ClaudeEnhancedResponse;
+    } as AnaGatewayResponse;
   }
 
   private async executeMoonshot(

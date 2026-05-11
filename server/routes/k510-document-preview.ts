@@ -60,6 +60,9 @@ interface SectionRow {
   level: number | null;
   displayOrder: number;
   updatedAt: Date | null;
+  draftSource: string | null;
+  draftedAt: Date | null;
+  draftedSummary: string | null;
 }
 
 router.get('/:projectIdent/document-preview', async (req: Request, res: Response) => {
@@ -169,6 +172,9 @@ router.get('/:projectIdent/document-preview', async (req: Request, res: Response
         level: cerv2510kSections.level,
         displayOrder: cerv2510kSections.displayOrder,
         updatedAt: cerv2510kSections.updatedAt,
+        draftSource: cerv2510kSections.draftSource,
+        draftedAt: cerv2510kSections.draftedAt,
+        draftedSummary: cerv2510kSections.draftedSummary,
       })
       .from(cerv2510kSections)
       .where(eq(cerv2510kSections.organizationId, orgId))
@@ -266,6 +272,12 @@ router.get('/:projectIdent/document-preview', async (req: Request, res: Response
       level: s.level ?? 1,
       displayOrder: s.displayOrder,
       updatedAt: s.updatedAt?.toISOString?.() ?? null,
+      /* Draft provenance — populated when AnA drafted via write_kit_section
+         and not yet accepted. Surfaces the kit's "drafted by AnA — accept /
+         refine" affordance. */
+      draftSource: s.draftSource ?? null,
+      draftedAt: s.draftedAt?.toISOString?.() ?? null,
+      draftedSummary: s.draftedSummary ?? null,
     })),
     assembledMarkdown,
   });

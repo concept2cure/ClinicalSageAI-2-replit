@@ -7,7 +7,9 @@ import * as React from 'react';
 import { I } from '../icons';
 import { K510_ESTAR, K510_PREDICATES, K510_SE_ROWS, K510_STAGES } from '../data/k510';
 import type { Program } from '../data/programs';
+import { useK510EstarSections, useK510Predicates, useK510SeMatrix } from '../hooks/useK510';
 import { AskAnaChip } from './AskAnaChip';
+import { AnaDraftBanner } from '../components/AnaDraftBanner';
 
 export interface K510SurfaceProps {
   program: Program | null;
@@ -18,8 +20,38 @@ export interface K510SurfaceProps {
 export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProps) {
   const activeStageIdx = program ? program.stageIdx : 4;
   const programStatus = program ? program.status : 'active';
-  const [selected, setSelected] = React.useState<Set<string>>(new Set(['K221847']));
+  const programId = program?.id ?? null;
+
+  /* Live data — three independent fetches that fall back to the kit
+     fixtures during load and on error. The eSTAR fetch hits a local DB
+     endpoint; predicates + SE matrix proxy to the shadow service and
+     can 502 in dev — when they do, the fixture renders so the surface
+     remains usable. */
+  const estar     = useK510EstarSections(programId);
+  const predicates = useK510Predicates(programId);
+  const seMatrix  = useK510SeMatrix(programId);
+
+  const sourcePredicates = predicates.rows ?? K510_PREDICATES;
+  const sourceSeRows     = seMatrix.rows  ?? K510_SE_ROWS;
+  const sourceEstar      = estar.rows     ?? K510_ESTAR;
+  const estarBlockerCount = estar.rows ? estar.blockerCount : K510_ESTAR.filter(s => s.blocker).length;
+  const estarTotal = sourceEstar.length;
+
+  const initialSelectedKey = sourcePredicates[0]?.k ?? '';
+  const [selected, setSelected] = React.useState<Set<string>>(() => new Set(initialSelectedKey ? [initialSelectedKey] : []));
   const [showSelectedOnly, setShowSelectedOnly] = React.useState(false);
+
+  /* Re-seed selection when the live predicate set changes — switching
+     program (or shadow coming online) should not leave a stale K-number
+     selected from a different program. */
+  React.useEffect(() => {
+    if (!sourcePredicates.length) return;
+    setSelected((prev) => {
+      const survivors = new Set([...prev].filter((k) => sourcePredicates.some((p) => p.k === k)));
+      if (survivors.size === 0) survivors.add(sourcePredicates[0].k);
+      return survivors;
+    });
+  }, [sourcePredicates]);
 
   const toggle = (k: string) => {
     const n = new Set(selected);
@@ -29,7 +61,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
     setSelected(n);
   };
 
-  const selectedList = K510_PREDICATES.filter(p => selected.has(p.k));
+  const selectedList = sourcePredicates.filter(p => selected.has(p.k));
   const multi = selectedList.length > 1;
   const subjectName = program ? program.title : 'BX-204 CGM';
 
@@ -82,6 +114,39 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
         })}
       </div>
 
+      {/* Predicate intelligence is provisioned by a shadow service. When
+          the live fetch errors (typical: shadow service not configured in
+          this environment) we surface an explicit banner instead of
+          silently rendering the kit fixture's example K-numbers — paying
+          clients should not see another vendor's predicates as if they
+          were their own. */}
+      {predicates.error && !predicates.rows && (
+        <div
+          className="banner-warn"
+          style={{
+            margin: '12px 0',
+            padding: '10px 14px',
+            background: 'var(--bg-050)',
+            border: '1px solid var(--border-100)',
+            borderLeft: '3px solid var(--accent-100)',
+            borderRadius: 6,
+            fontSize: 12,
+            color: 'var(--text-200)',
+            display: 'flex',
+            gap: 8,
+            alignItems: 'center',
+          }}
+          role="status"
+        >
+          <span style={{ color: 'var(--accent-100)' }}>{I.alertCircle}</span>
+          <span>
+            Predicate intelligence is configuring for your tenant. The table below shows the canonical
+            example data so you can preview the workflow; live K-number candidates appear here once the
+            shadow service is reachable.
+          </span>
+        </div>
+      )}
+
       <div className="col2">
         <div>
           <div className="panel">
@@ -89,7 +154,10 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
               <div>
                 <div className="t">Predicate search · K-numbers</div>
                 <div className="s">
-                  {selected.size} of 6 selected · ranked by similarity · check 2+ for side-by-side
+                  {selected.size} of {sourcePredicates.length} selected · ranked by similarity · check 2+ for side-by-side
+                  {predicates.rows === null && !predicates.error && (
+                    <span style={{ marginLeft: 6, color: 'var(--text-400)' }}>· loading…</span>
+                  )}
                 </div>
               </div>
               <div className="actions">
@@ -106,7 +174,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                   onClick={() =>
                     onAskAna(
                       `Refine the predicate search for ${subjectName}. ` +
-                        `Currently ${selected.size} of ${K510_PREDICATES.length} candidates selected — ` +
+                        `Currently ${selected.size} of ${sourcePredicates.length} candidates selected — ` +
                         `suggest tighter filters and any K-numbers I might be missing.`,
                     )
                   }
@@ -128,7 +196,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                 </tr>
               </thead>
               <tbody>
-                {K510_PREDICATES.filter(p => !showSelectedOnly || selected.has(p.k)).map(p => {
+                {sourcePredicates.filter(p => !showSelectedOnly || selected.has(p.k)).map(p => {
                   const isSel = selected.has(p.k);
                   return (
                     <tr key={p.k} className={isSel ? 'multi-selected' : ''} onClick={() => toggle(p.k)}>
@@ -197,7 +265,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                     const headers = multi
                       ? ['Attribute', 'Subject', ...selectedList.map(p => p.k)]
                       : ['Attribute', 'Subject', 'Verdict', 'Predicate', 'Note'];
-                    const rows = K510_SE_ROWS.map(r =>
+                    const rows = sourceSeRows.map(r =>
                       multi
                         ? [r.attr, r.subject, ...selectedList.map(() => r.predicate)]
                         : [r.attr, r.subject, r.verdict, r.predicate, r.note ?? ''],
@@ -236,7 +304,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                     </div>
                   ))}
                 </div>
-                {K510_SE_ROWS.map((r, i) => (
+                {sourceSeRows.map((r, i) => (
                   <div
                     key={i}
                     className="se-matrix-multi"
@@ -262,7 +330,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                   <div style={{ textAlign: 'center' }}>Verdict</div>
                   <div>{selectedList[0]?.k} (Predicate)</div>
                 </div>
-                {K510_SE_ROWS.map((r, i) => (
+                {sourceSeRows.map((r, i) => (
                   <div key={i} className="se-row">
                     <div className="se-attr">{r.attr}</div>
                     <div className="se-val">{r.subject}</div>
@@ -285,7 +353,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
             <div className="panel-hdr">
               <div>
                 <div className="t">eSTAR sections</div>
-                <div className="s">20 sections · 1 blocker</div>
+                <div className="s">{estarTotal} sections · {estarBlockerCount} blocker{estarBlockerCount === 1 ? '' : 's'}</div>
               </div>
               <div className="actions">
                 <button
@@ -303,18 +371,30 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
               </div>
             </div>
             <div className="estar">
-              {K510_ESTAR.map(s => (
-                <button
-                  key={s.id}
-                  className={`estar-row ${s.blocker ? 'blocker' : ''}`}
-                  onClick={() => onOpenEditor && onOpenEditor(s.id)}
-                  title={`Open ${s.label} in editor`}
-                >
-                  <div className="estar-num">§{String(s.id).padStart(2, '0')}</div>
-                  <div className="estar-label">{s.label}</div>
-                  <span className={`status-pill ${s.status}`}>{s.status}</span>
-                  <span className="estar-open">{I.arrowRight}</span>
-                </button>
+              {sourceEstar.map(s => (
+                <React.Fragment key={s.id}>
+                  <button
+                    className={`estar-row ${s.blocker ? 'blocker' : ''}`}
+                    onClick={() => onOpenEditor && onOpenEditor(s.id)}
+                    title={`Open ${s.label} in editor`}
+                  >
+                    <div className="estar-num">§{String(s.id).padStart(2, '0')}</div>
+                    <div className="estar-label">{s.label}</div>
+                    <span className={`status-pill ${s.status}`}>{s.status}</span>
+                    <span className="estar-open">{I.arrowRight}</span>
+                  </button>
+                  {/* Surface AnA's pending draft so the user can accept or
+                      open the editor to refine. The banner reads the live
+                      draft provenance from the hook and disappears after
+                      a successful accept (estar.refresh re-fetches). */}
+                  {s.draft ? (
+                    <AnaDraftBanner
+                      draft={s.draft}
+                      onRefine={() => onOpenEditor && onOpenEditor(s.id)}
+                      onAccepted={estar.refresh}
+                    />
+                  ) : null}
+                </React.Fragment>
               ))}
             </div>
           </div>

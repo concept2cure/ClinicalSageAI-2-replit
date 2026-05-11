@@ -9,6 +9,7 @@ import * as React from 'react';
 import { I } from '../icons';
 import { ANA_MODES, type AnaMode } from '../data/nav';
 import { useLiveSections } from '../hooks/useLiveSections';
+import { AnaDraftBanner } from '../components/AnaDraftBanner';
 import {
   EDITOR_COMMENTS,
   EDITOR_CONTENT_11,
@@ -329,6 +330,9 @@ interface DocumentPaneProps {
   onShowHistory?: () => void;
   /** Comments button onClick — flips the right rail to Comments tab. */
   onShowComments?: () => void;
+  /** Re-fetch the live section list — called after the user accepts an
+   *  AnA draft so the affordance disappears from the editor. */
+  onRefreshLive?: () => void;
 }
 
 function DocumentPane({
@@ -345,6 +349,7 @@ function DocumentPane({
   isLocked,
   onShowHistory,
   onShowComments,
+  onRefreshLive,
 }: DocumentPaneProps) {
   const errs = validation.filter(v => v.severity === 'err').length;
   const warns = validation.filter(v => v.severity === 'warn').length;
@@ -401,6 +406,18 @@ function DocumentPane({
               ))}
             </div>
           </div>
+
+          {/* Inline AnA-draft affordance — appears between masthead and
+              prose when AnA drafted via write_kit_section and the user
+              hasn't accepted yet. Refine = stay in the editor (no-op,
+              the prose below is already editable); Accept = clear
+              draft_source + flip status + record audit row. */}
+          {content.anaDraft ? (
+            <AnaDraftBanner
+              draft={content.anaDraft}
+              onAccepted={onRefreshLive}
+            />
+          ) : null}
 
           {content.blocks.map((b: EditorBlock) => {
             if (b.kind === 'h2') return <h2 key={b.id} className="ed-h2">{b.text}</h2>;
@@ -801,6 +818,7 @@ export function EstarEditor({ initialMode = 'deep-research', programIdent }: Est
         isLocked={isLocked}
         onShowHistory={() => onAsk(`Show the version history for ${content.num} — last edits, who changed what, and the diff per version.`)}
         onShowComments={() => setRailTab('comments')}
+        onRefreshLive={isLive ? live.refresh : undefined}
       />
       <ClaudeRail
         mode={mode}

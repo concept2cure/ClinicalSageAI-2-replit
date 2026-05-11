@@ -796,13 +796,17 @@ router.get('/health', async (req: Request, res: Response, next: NextFunction) =>
     try {
       const pool = await getPool();
       const client = await pool.connect();
-      const result = await client.query('SELECT NOW()');
-      client.release();
-
-      healthStatus.database = {
-        status: 'connected',
-        timestamp: result.rows[0].now,
-      };
+      try {
+        const result = await client.query('SELECT NOW()');
+        healthStatus.database = {
+          status: 'connected',
+          timestamp: result.rows[0].now,
+        };
+      } finally {
+        // Always release — without try/finally, a thrown client.query()
+        // would skip release() and hold the pool connection forever.
+        client.release();
+      }
     } catch (dbError: any) {
       healthStatus.database = {
         status: 'disconnected',

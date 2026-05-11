@@ -38,6 +38,9 @@ import esignatureRouter from '../routes/esignature';
 import dossierReadinessRouter from '../routes/dossier-readiness';
 import regulatorySubmissionsRoutes from '../routes/regulatorySubmissions';
 import submissionOpsRoutes from '../routes/submission-ops';
+import regulatoryProgramsRoutes from '../routes/regulatory-programs';
+import savedPrecedentQueriesRoutes from '../routes/saved-precedent-queries';
+import mdxRoutes from '../routes/mdx';
 import regulatoryCorrespondenceRoutes from '../routes/regulatory-correspondence';
 import { create510kWorkflowRoutes } from '../routes/510k-workflow-routes';
 import { createPMAWorkflowRoutes } from '../routes/pma-workflow-routes';
@@ -318,10 +321,17 @@ export function registerInlineSubmissionWorkflowRoutes({
   app.use('/api/regulatory-submissions', regulatorySubmissionsRoutes);
   console.log('✅ Regulatory Submissions API routes mounted successfully (feature-gated)');
 
-  // Submission Ops + Regulatory Correspondence.
+  // Submission Ops + Regulatory Correspondence + Regulatory Programs +
+  // Saved Precedent Queries + MDX module health.
   app.use('/api/submission-ops', submissionOpsRoutes);
+  app.use('/api/regulatory-programs', regulatoryProgramsRoutes);
+  app.use('/api/saved-precedent-queries', savedPrecedentQueriesRoutes);
+  app.use('/api/mdx', mdxRoutes);
   app.use('/api/regulatory-correspondence', regulatoryCorrespondenceRoutes);
   console.log('✅ Submission Ops API routes mounted successfully');
+  console.log('✅ Regulatory Programs API routes mounted successfully');
+  console.log('✅ Saved Precedent Queries API routes mounted successfully');
+  console.log('✅ MDX module health endpoint mounted successfully');
   console.log('✅ Regulatory Correspondence API routes mounted successfully');
 
   // 510k + PMA workflow routes.

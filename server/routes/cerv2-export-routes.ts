@@ -242,11 +242,19 @@ async function buildZipBuffer(
     archive.append(buf, { name: `attachments/${sanitizeFilename(att.filename)}` });
   }
 
-  await archive.finalize();
-  await new Promise<void>((resolve, reject) => {
+  // Register the end/error listener BEFORE finalize() so the promise
+  // captures the 'end' event regardless of how quickly the archive
+  // flushes. Earlier ordering (finalize then await new Promise) had a
+  // race: under fast stream completion (and consistently under vitest
+  // mocks) 'end' fired before the listener was attached, leaving the
+  // promise pending forever — surfaced as the cerv2-export ZIP test
+  // timing out at 10s.
+  const finalized = new Promise<void>((resolve, reject) => {
     pass.on('end', () => resolve());
     pass.on('error', reject);
   });
+  await archive.finalize();
+  await finalized;
 
   if (archiveError) throw archiveError;
   return Buffer.concat(chunks);

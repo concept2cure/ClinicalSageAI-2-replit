@@ -1,4 +1,3 @@
-// @ts-nocheck - TenantContext type conflicts with tenantDbHelper declarations
 /**
  * Tenant Context Middleware
  *
@@ -16,6 +15,10 @@ import { db } from '../db';
 import { getPool } from '../db';
 import { and, eq } from 'drizzle-orm';
 import { organizations, organizationUsers } from '../../shared/schema';
+import { runWithTenantScope } from '../db/tenantStore';
+import { createScopedLogger } from '../utils/logger';
+
+const logger = createScopedLogger('tenant-context');
 
 // Define the tenant context interface to be attached to the request
 export interface TenantContext {
@@ -98,11 +101,12 @@ export function tenantContextMiddleware(req: Request, res: Response, next: NextF
   // from the JWT org ID. This may indicate a tenant impersonation attempt.
   const headerOrgId = (req.headers['x-org-id'] as string) || null;
   if (headerOrgId && jwtOrganizationId && headerOrgId !== jwtOrganizationId) {
-    console.warn(
-      `[SECURITY] Tenant impersonation attempt blocked: ` +
-      `JWT orgId=${jwtOrganizationId}, header x-org-id=${headerOrgId}, ` +
-      `userId=${req.user?.id || 'unknown'}, path=${req.path}`
-    );
+    logger.warn('Tenant impersonation attempt blocked', {
+      jwtOrgId: jwtOrganizationId,
+      headerOrgId,
+      userId: req.user?.id ?? 'unknown',
+      path: req.path,
+    });
   }
 
   // Non-sensitive supplemental context may come from headers
@@ -122,11 +126,6 @@ export function tenantContextMiddleware(req: Request, res: Response, next: NextF
   // Attach to request
   req.tenantContext = tenantContext;
 
-  // Log tenant context for debugging (remove in production)
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('Tenant Context:', JSON.stringify(tenantContext));
-  }
-
   // Continue to next middleware or route handler
   next();
 }
@@ -143,8 +142,11 @@ export function requireOrganizationContext(req: Request, res: Response, next: Ne
   }
 
   if (req.user?.tenantId) {
-    const contextOrgId = parseInt(req.tenantContext.organizationId, 10);
-    if (Number.isFinite(contextOrgId) && contextOrgId !== req.user.tenantId) {
+    const contextOrgId = parseInt(String(req.tenantContext.organizationId ?? ''), 10);
+    const userTenantId = typeof req.user.tenantId === 'number'
+      ? req.user.tenantId
+      : parseInt(String(req.user.tenantId), 10);
+    if (Number.isFinite(contextOrgId) && contextOrgId !== userTenantId) {
       return res.status(403).json({
         error: 'Organization mismatch',
         message: 'Organization context does not match authenticated tenant',
@@ -276,7 +278,20 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
       void releaseDbClient(req);
     });
 
-    return next();
+    // Establish a tenant AsyncLocalStorage scope for the rest of the request.
+    // Pool instrumentation reads this on every query so we can count which
+    // queries run without a tenant boundary — the gap that would silently
+    // turn into "zero rows" once RLS is enabled in PR B.
+    return runWithTenantScope(
+      {
+        tenantId: organizationId,
+        orgUuid: organizationUuid || null,
+        role: resolvedRole || null,
+        source: 'request',
+        caller: req.path,
+      },
+      () => next()
+    );
   } catch (error) {
     return res.status(401).json({
       error: 'Authentication required',
@@ -314,10 +329,21 @@ export function requireModuleContext(req: Request, res: Response, next: NextFunc
 }
 
 /**
- * Helper to get current tenant context from request
+ * Helper to get current tenant context from request. Throws if no
+ * tenant context is attached — call only after the request has been
+ * through `tenantContextMiddleware` or `requireTenantContext`.
  */
 export function getTenantContext(req: Request): TenantContext {
-  return req.tenantContext;
+  const ctx = req.tenantContext;
+  if (!ctx) {
+    throw new Error('getTenantContext called before tenant context was set on the request');
+  }
+  return {
+    organizationId: ctx.organizationId == null ? null : String(ctx.organizationId),
+    organizationUuid: ctx.organizationUuid ?? null,
+    clientWorkspaceId: ctx.clientWorkspaceId == null ? null : String(ctx.clientWorkspaceId),
+    module: ctx.module ?? null,
+  };
 }
 
 export function getRequestDbClient(req: Request): PoolClient | Pool {

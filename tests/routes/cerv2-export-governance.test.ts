@@ -142,6 +142,12 @@ describe('CERV2 export governance gate', () => {
 
     const req = createMockRequest({ body: baseBody() }) as any;
     req.userRole = 'editor';
+    // getUserId(req) is called inside the handler before createGovernedExportConsequence
+    // and throws when userId is missing/non-numeric — that throw is caught by the
+    // route's try/catch and returns 500 silently, which is why earlier this test
+    // saw the consequence spy "called 0 times". Sister tests (165, 199, 217) all
+    // set this; 140 was missed when the userId enforcement landed.
+    req.userId = 46;
     req.header = (name: string) => (name === 'x-organization-id' ? '1' : undefined);
     const res = createMockResponse();
 

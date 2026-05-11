@@ -31,11 +31,30 @@ export interface SeRow {
   note?: string;
 }
 
+/** Draft provenance for a section row. Populated when AnA drafted via the
+ *  write_kit_section tool and the user has not yet accepted. Drives the
+ *  "drafted by AnA — accept / refine" affordance in K510Surface,
+ *  PmaSurface, CerSurface. Null on legacy + human-typed sections. */
+export interface DraftProvenance {
+  /** 'ana' for AnA-authored drafts (only source today); future-proofed for
+   *  template-only drafts ('ana_template') if we split that path later. */
+  source: 'ana';
+  /** ISO timestamp the draft was written. */
+  at: string;
+  /** One-line note describing what the draft covers (from
+   *  write_kit_section's summary_note). */
+  summary?: string;
+  /** Backing cerv2_510k_sections.id, used to POST the accept call. */
+  rowId: number;
+}
+
 export interface EstarRow {
   id: number;
   label: string;
   status: EstarStatus;
   blocker?: boolean;
+  /** Set when AnA has drafted the section but the user hasn't accepted. */
+  draft?: DraftProvenance | null;
 }
 
 export const K510_STAGES: K510Stage[] = [

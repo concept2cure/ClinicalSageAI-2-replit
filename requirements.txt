@@ -14,17 +14,17 @@ pdf2image>=1.17.0             # Strategy 6: pdf->image via poppler (OCR fallback
 python-docx>=0.8.11           # Read/write DOCX (extraction + generation)
 openpyxl>=3.1.0               # Read XLSX spreadsheets
 mammoth>=1.12.0                # DOCX plain-text extraction
-docx2txt>=0.8                 # DOCX fallback extractor
+docx2txt>=0.9                 # DOCX fallback extractor
 tiktoken>=0.5.0               # Token counting for context window trimming
 
 # === Analytics Engine / API Bridge ===
-fastapi>=0.110.0              # HTTP API bridge for analytics engine
-uvicorn>=0.27.0               # ASGI server for FastAPI
+fastapi>=0.136.1              # HTTP API bridge for analytics engine
+uvicorn>=0.46.0               # ASGI server for FastAPI
 httpx>=0.27.0                 # Async HTTP client
 pydantic>=2.13.3               # Data validation
-python-multipart>=0.0.9       # FastAPI multipart/form-data uploads
+python-multipart>=0.0.27       # FastAPI multipart/form-data uploads
 
 # === Data / AI ===
-openai>=1.0.0                 # LLM API client (section generation)
+openai>=2.35.1                 # LLM API client (section generation)
 numpy>=1.24.0                 # Numerical processing
 pandas>=2.0.0                 # Data manipulation

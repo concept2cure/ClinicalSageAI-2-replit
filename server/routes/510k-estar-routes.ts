@@ -102,11 +102,17 @@ async function buildZipBuffer(
     archive.append(buffer, { name: `attachments/${safeName}` });
   }
 
-  await archive.finalize();
-  await new Promise<void>((resolve, reject) => {
+  // Register the end/error listener BEFORE finalize() so the promise
+  // captures the 'end' event regardless of how quickly the archive
+  // flushes. Same race fix as buildZipBuffer in cerv2-export-routes.ts
+  // (PR #488). Earlier ordering hung the route under fast stream
+  // completion (and consistently under vitest mocks).
+  const finalized = new Promise<void>((resolve, reject) => {
     pass.on('end', () => resolve());
     pass.on('error', reject);
   });
+  await archive.finalize();
+  await finalized;
   if (archiveError) throw archiveError;
   return Buffer.concat(chunks);
 }

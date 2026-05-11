@@ -27,10 +27,10 @@ import {
   recordKernelPolicyOutcome,
 } from '../../services/kernel-adaptive-policy.js';
 import { interceptChatResponse } from '../../services/intelligence/rim-interceptors.js';
-import { getAllEnabledTools } from '../../services/claude/ClaudeToolDefinitions.js';
-import { executeAgenticLoop } from '../../services/claude/ClaudeToolExecutor.js';
+import { getAllEnabledTools } from '../../services/ana/AnaToolDefinitions.js';
+import { executeAgenticLoop } from '../../services/ana/AnaToolExecutor.js';
 import { logToolRun } from '../../services/toolRegistry.js';
-import type { ClaudeEnhancedResponse } from '../../services/ai-gateway/types.js';
+import type { AnaGatewayResponse } from '../../services/ai-gateway/types.js';
 import { buildMemoryContextForChat, type MemoryAssemblyDiagnostics } from '../../services/memory-context-assembler.js';
 import { summarizeAndStoreWorkingMemoryForThread } from '../../services/working-memory.js';
 import { getCachedSignalReliability } from '../../services/intelligence/learning-loop-service.js';
@@ -607,7 +607,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       };
 
       // Use agentic loop for multi-turn tool execution (max 5 rounds)
-      const gwResponse: ClaudeEnhancedResponse = await executeAgenticLoop(baseRequest, {
+      const gwResponse: AnaGatewayResponse = await executeAgenticLoop(baseRequest, {
         maxRounds: 5,
         toolContext: {
           organizationId: numericOrgId,
@@ -620,7 +620,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           // because the agentic-loop hook fires post-success without a
           // start timestamp; the streaming path captures real latency.
           // Errors aren't surfaced through this hook either — see
-          // ClaudeToolExecutor.executeAgenticLoop's catch branch.
+          // AnaToolExecutor.executeAgenticLoop's catch branch.
           void logToolRun({
             threadId,
             projectId: typeof project_id === 'string' ? parseInt(project_id, 10) || null : project_id || null,

@@ -63,8 +63,16 @@ describe('project-modules tenant/workspace enforcement', () => {
 
     await handler!(req, res);
 
-    expect(bridgeMocks.unlinkModule).toHaveBeenCalledWith(12, 'cer', 44, 3, 9);
-    expect(res.json).toHaveBeenCalledWith({ message: 'Module unlinked successfully' });
+    // unlinkModule signature was tightened to (projectId, organizationId,
+    // moduleType, moduleInstanceId) — was previously
+    // (projectId, moduleType, moduleInstanceId, organizationId, clientWorkspaceId).
+    // The two trailing args were dropped when workspace-scope was unified into
+    // the org-scope check inside the bridge service. Test updated to match.
+    expect(bridgeMocks.unlinkModule).toHaveBeenCalledWith(12, 3, 'cer', 44);
+    // Response shape was simplified to { success: true } from the prior
+    // { message: 'Module unlinked successfully' }. The DELETE route now
+    // mirrors the POST/PATCH conventions.
+    expect(res.json).toHaveBeenCalledWith({ success: true });
   });
 
   it('passes tenant org to updateModuleLink', async () => {

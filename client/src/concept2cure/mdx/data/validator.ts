@@ -6,6 +6,13 @@
  * current vs expected values, evidence pointers, and concrete fix actions
  * so a reviewer never has to leave the drawer to know what's wrong and
  * what would clear it.
+ *
+ * @kit-registry-no-consumer-yet
+ * The current ValidationSurface (Workbench.tsx) reads live data via
+ * useWorkbenchValidation against /api/submission-ops/blockers. The kit's
+ * per-section validation DRAWER (with FDA refs / fix actions) hasn't
+ * been ported yet — when it lands, it will import these closed-enum
+ * rules. Removed marker the day a consumer ships.
  */
 
 // ─── Section catalogue (the FDA template, mirrored 1:1) ────────────────────

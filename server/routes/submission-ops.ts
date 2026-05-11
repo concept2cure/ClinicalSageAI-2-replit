@@ -672,7 +672,30 @@ router.get('/packages/:packageId/readiness', async (req: Request, res: Response)
       // RIM enrichment is non-critical
     }
 
-    res.json({ data: readiness, rimSignals, rimCrossArtifact });
+    /* Surface a flat transmit-gate map at the root so the kit's submission
+       detail hook (useSubmissionDetail) renders gate counts without having
+       to peek into readiness.totalBlockers et al. The mapping:
+         errs  ← totalBlockers          (hard fails — open blockers)
+         warns ← totalOverdue           (soft fails — overdue items)
+         ok    ← ready_artifacts share  (passed validations)
+       This is the "validation gate" the user sees in the kit's submissions
+       row, computed live rather than read from program.metadata.gate*. */
+    const okCount = Math.max(
+      0,
+      Math.round(
+        (readiness.overallReadinessPercent / 100) *
+          readiness.sections.reduce((s, r) => s + r.totalArtifacts, 0),
+      ),
+    );
+
+    res.json({
+      data: readiness,
+      errs:  readiness.totalBlockers,
+      warns: readiness.totalOverdue,
+      ok:    okCount,
+      rimSignals,
+      rimCrossArtifact,
+    });
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }

@@ -172,9 +172,16 @@ router.post('/multi-download', async (req: Request, res: Response) => {
       { name: 'package_manifest.json' }
     );
 
+    // Register the 'finish' listener BEFORE finalize() to avoid a race
+    // where fast-flushing archives emit the event before the listener
+    // attaches and the promise stays pending forever. Same fix as
+    // buildZipBuffer in cerv2-export-routes.ts (PR #488).
+    const finished = new Promise<void>((resolve, reject) => {
+      writable.on('finish', () => resolve());
+      writable.on('error', reject);
+    });
     await archive.finalize();
-
-    await new Promise<void>((resolve) => writable.on('finish', resolve));
+    await finished;
 
     const zipBuffer = Buffer.concat(chunks);
     const zipFileName = `${request.title.replace(/[^a-zA-Z0-9]/g, '_')}_package.zip`;

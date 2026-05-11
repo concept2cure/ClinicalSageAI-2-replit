@@ -10,9 +10,10 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { authenticateToken } from '../middleware/auth';
-import { requireOrganizationContext } from '../middleware/tenantContext';
+import { requireOrganizationContext, requireTenantContext } from '../middleware/tenantContext';
 import { createRateLimiter } from '../middleware/rateLimiter';
 import { db } from '../db';
+import { requestDb } from '../db/requestDb';
 import { eq, and, desc, or, inArray } from 'drizzle-orm';
 import {
   gapAnalysisResults,
@@ -1378,7 +1379,11 @@ const gapAnalysisRequestSchema = z.object({
 router.post(
   '/gap-analysis',
   authenticateToken,
-  requireOrganizationContext,
+  // requireTenantContext (heavier than requireOrganizationContext) sets up
+  // req.dbClient with app.current_tenant_id loaded — needed because this
+  // route persists a row via requestDb(req) and the RLS policy from 0021
+  // requires the session var to accept it once RLS_ENFORCE=on.
+  requireTenantContext,
   analysisRateLimiter,
   async (req: Request, res: Response) => {
     try {
@@ -1501,11 +1506,15 @@ router.post(
         recommendations,
       };
 
-      // Persist result to database (non-blocking — don't fail the request if DB save fails)
+      // Persist result to database (non-blocking — don't fail the request if DB save fails).
+      // Uses requestDb(req) so the insert runs on the request-scoped client where
+      // requireTenantContext set app.current_tenant_id; the RLS policy from 0021 needs
+      // that to accept the row once RLS_ENFORCE=on.
       try {
-        if (db) {
-          await db.insert(gapAnalysisResults).values({
-            organizationId: String(organizationId),
+        const orgIdNum = Number(organizationId);
+        if (Number.isFinite(orgIdNum)) {
+          await requestDb(req).insert(gapAnalysisResults).values({
+            organizationId: orgIdNum,
             userId: String(userId || 'unknown'),
             submissionType: normalizedType,
             projectId: projectId || null,

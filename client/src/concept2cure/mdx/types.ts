@@ -1,15 +1,16 @@
 /**
  * MDX type barrel.
  *
- * Re-exports the canonical interfaces already declared inline in `data/*.ts`,
- * and forward-declares the new shapes referenced in
- * `PROJECT_PLAN_PHASE_2.md` / `MDX_BETA_ANSWERS.md` so v2 surfaces can compile
- * against the contract before the kit files (`data-pathway-tabs.jsx`,
- * `data-correspondence-detail.jsx`, `data-submissions.jsx`,
- * `dossier-store.jsx`) sync into `design-system/ui_kits/mdx/`.
+ * Re-exports the canonical interfaces declared inline in `data/*.ts`,
+ * plus the closed-enum types that are consumed today by the kit data
+ * registries (`data/submissions.ts`, `data/pathwayTabs.ts`).
  *
- * Every forward-declared interface is marked TBD. Replace with the kit's
- * actual shape on sync.
+ * Anything else from the kit's contract — full Submission row shape,
+ * AuditEvent shape, Correspondence/CorrespondenceDetail, Approval,
+ * DossierSectionView, etc. — lands here in the same PR as the pane
+ * that consumes it. We don't pre-declare types ahead of consumers
+ * (it leaves dead code in the bundle and drifts from the kit before
+ * anyone notices).
  */
 
 export type {
@@ -30,28 +31,88 @@ export type {
 
 export type { AnaMode } from './data/nav';
 
-/* ─── Forward declarations ─────────────────────────────────────────
-   TBD — confirm with design-system Claude when the corresponding
-   kit file ships. Field names mirror the strategic message
-   (workstream + type + gateway + state machine; AIC hash chain;
-   pathway sub-tabs).
-   ────────────────────────────────────────────────────────────────── */
+/* ─── Closed-enum types consumed by data/submissions.ts ─────────────────── */
 
-/** TBD — `data-submissions.jsx`. */
-export type SubmissionWorkstream = 'k510' | 'pma' | 'cer';
+/** Top-level workstream filter pinned at the Submission Center topbar. */
+export type SubmissionWorkstream = 'mdx' | 'biotech' | 'pharma' | 'cro';
 
-/** TBD — `data-submissions.jsx`. */
-export type SubmissionType = string;
+/** Closed list of submission types — see `SUBMISSION_TYPES` in data/submissions.ts. */
+export type SubmissionType =
+  | '510k'
+  | 'denovo'
+  | 'pma'
+  | 'pma-s'
+  | 'cer'
+  | 'eudamed'
+  | 'ind'
+  | 'bla'
+  | 'ind-amend'
+  | 'nda'
+  | 'anda'
+  | 'maa'
+  | 'jnda'
+  | 'ide'
+  | 'ctd-cta';
 
-/** TBD — `data-submissions.jsx`. Real today: `fda-esg`. Shaped: `cesp` | `eudamed` | `cesg`. Roadmap: 7 more. */
+/** Build-outline shape selected by the submission type. */
+export type SubmissionBuildShape =
+  | 'estar'
+  | 'ectd'
+  | 'ectd-pma'
+  | 'cer'
+  | 'eudamed'
+  | 'ide';
+
+export interface SubmissionTypeDef {
+  id: SubmissionType;
+  workstream: SubmissionWorkstream;
+  label: string;
+  shape: SubmissionBuildShape;
+  desc: string;
+}
+
+/** Closed list of agency gateways — see `SUBMISSION_GATEWAYS` in data/submissions.ts.
+ *  v1 ships full receipt detail for `fda-esg`, `ema-cesp`, `eu-eudamed`, `hc-cesg`. */
 export type SubmissionGateway =
   | 'fda-esg'
+  | 'ema-cesp'
+  | 'eu-eudamed'
+  | 'hc-cesg'
+  | 'pmda-gw'
+  | 'mhra-gw'
+  | 'nmpa-portal'
+  | 'mfds-portal'
+  | 'tga-trams'
+  | 'anvisa-peticionamento'
+  | 'who-prequal';
+
+/** Receipt shape selected by the gateway. */
+export type SubmissionReceiptShape =
+  | 'esg'
   | 'cesp'
   | 'eudamed'
   | 'cesg'
-  | string;
+  | 'pmda'
+  | 'mhra'
+  | 'nmpa'
+  | 'mfds'
+  | 'tga'
+  | 'anvisa'
+  | 'who';
 
-/** TBD — `data-submissions.jsx`. The 7-stage universal pipeline. */
+export interface SubmissionGatewayDef {
+  id: SubmissionGateway;
+  agency: string;
+  region: string;
+  label: string;
+  shape: SubmissionReceiptShape;
+  v1: boolean;
+  desc: string;
+  receiptFields?: string[];
+  accepts: SubmissionType[];
+}
+
+/** Universal 7-stage submission pipeline. */
 export type SubmissionStage =
   | 'build'
   | 'validate'
@@ -61,57 +122,23 @@ export type SubmissionStage =
   | 'receipt'
   | 'aic';
 
-/** TBD — `data-submissions.jsx`. */
-export interface Submission {
-  id: string;
-  programId: string;
-  workstream: SubmissionWorkstream;
-  type: SubmissionType;
-  gateway: SubmissionGateway;
-  stage: SubmissionStage;
-  createdAt: string;
-  updatedAt: string;
-}
+/* ─── Closed-enum types consumed by data/pathwayTabs.ts ─────────────────── */
 
-/** TBD — `data-pathway-tabs.jsx`. AIC chain entry: prev_hash → event_json → sha-256(prev || event). */
-export interface AuditEvent {
-  id: string;
-  prevHash: string | null;
-  hash: string;
-  actor: string;
-  action: string;
-  target: string;
-  reason?: string;
-  payload: Record<string, unknown>;
-  at: string;
-}
+export type AuditKind =
+  | 'section.edit'
+  | 'section.lock'
+  | 'section.unlock'
+  | 'review.start'
+  | 'review.complete'
+  | 'sign'
+  | 'comment'
+  | 'attach'
+  | 'export'
+  | 'access';
 
-/** TBD — `data-correspondence-detail.jsx`. */
-export interface Correspondence {
-  id: string;
-  direction: 'inbound' | 'outbound';
-  agency: string;
-  subject: string;
-  receivedAt: string;
-  body?: string;
-  attachments?: string[];
-}
+export type AuditTone = 'neutral' | 'warn' | 'success' | 'accent';
 
-/** TBD — `data-pathway-tabs.jsx`. */
-export interface Approval {
-  id: string;
-  documentPath: string;
-  signer: string;
-  role: string;
-  status: 'pending' | 'signed' | 'rejected';
-  reason?: string;
-  signedAt?: string;
-}
-
-/** TBD — `dossier-store.jsx`. In-memory filesystem entry: path → content + meta. */
-export interface DossierEntry {
-  path: string;
-  body: string;
-  attachments: string[];
-  meta: Record<string, unknown>;
+export interface AuditKindMeta {
+  label: string;
+  tone: AuditTone;
 }

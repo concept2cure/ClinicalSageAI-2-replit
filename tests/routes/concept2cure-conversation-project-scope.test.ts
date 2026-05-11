@@ -30,6 +30,14 @@ vi.mock('../../shared/schema', () => ({
   projects: schemaTableStub,
   users: schemaTableStub,
   organizationUsers: schemaTableStub,
+  // projectMembers + projectVisibilitySettings are read by
+  // loadProjectSharingState during verifyProjectAccess; without these
+  // stubs the eq(projectVisibilitySettings.projectId, ...) call throws
+  // TypeError accessing undefined.projectId, the verify catch returns
+  // false, and the handler responds "Project not found" before the
+  // conversation lookup the test is actually exercising.
+  projectMembers: schemaTableStub,
+  projectVisibilitySettings: schemaTableStub,
   concept2cureConversations: schemaTableStub,
   concept2cureMessages: schemaTableStub,
   concept2cureArtifacts: schemaTableStub,
