@@ -7,6 +7,7 @@ import path from 'path';
 import fs from 'fs';
 // documentPreview stub removed — was a placeholder with no functionality
 import { randomUUID } from 'crypto';
+import { requireAuthedOrgId } from '../utils/authedOrgId';
 // Use cryptographically secure UUID for regulatory document identifiers
 const uuidv4 = () => randomUUID();
 
@@ -76,11 +77,19 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get a single document by ID
+// Get a single document by ID.
+//
+// SECURITY: storage.getDocument now requires an organizationId — the
+// helper sources it from the JWT (req.user) and refuses with 403 if
+// no tenant context is present. Foreign-tenant documents come back
+// as `undefined` from storage and surface here as 404 (existence
+// not enumerable).
 router.get('/:id', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const { id } = req.params;
-    const document = await storage.getDocument(id);
+    const document = await storage.getDocument(id, guard.orgId);
 
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
@@ -160,13 +169,17 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-// Update a document
+// Update a document. Tenant gate first: the existence check uses the
+// JWT-bound getDocument so a foreign-tenant id is indistinguishable
+// from "not found", and the update PK lookup in storage is then on a
+// known-in-scope id.
 router.patch('/:id', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const { id } = req.params;
 
-    // Get existing document to ensure it exists
-    const existingDocument = await storage.getDocument(id);
+    const existingDocument = await storage.getDocument(id, guard.orgId);
     if (!existingDocument) {
       return res.status(404).json({ error: 'Document not found' });
     }
@@ -181,13 +194,14 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
-// Delete a document
+// Delete a document — same tenant gate as PATCH.
 router.delete('/:id', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const { id } = req.params;
 
-    // Get existing document to ensure it exists
-    const existingDocument = await storage.getDocument(id);
+    const existingDocument = await storage.getDocument(id, guard.orgId);
     if (!existingDocument) {
       return res.status(404).json({ error: 'Document not found' });
     }
@@ -205,10 +219,14 @@ router.delete('/:id', async (req, res) => {
 // Download a document
 router.get('/:id/download', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const { id } = req.params;
 
-    // Get document to ensure it exists
-    const document = await storage.getDocument(id);
+    // Tenant-scoped fetch — a foreign-tenant document is "not found".
+    // Without this, a download URL with a guessed id could serve
+    // another tenant's file content (the worst class of leak here).
+    const document = await storage.getDocument(id, guard.orgId);
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
     }

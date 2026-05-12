@@ -64,8 +64,16 @@ export interface IStorage {
   updateTrial(id: number, trialData: any): Promise<any | undefined>;
   deleteTrial(id: number): Promise<boolean>;
 
-  // Document methods
-  getDocument(id: string): Promise<schema.Document | undefined>;
+  // Document methods.
+  //
+  // SECURITY: getDocument requires an organizationId. Pre-fix this
+  // method took only the id, and the DB implementation queried
+  // `WHERE id = ?` without a tenant filter — meaning any caller that
+  // forgot to verify org membership separately could leak a document
+  // across tenants. Making the parameter mandatory forces every
+  // caller to source the org id from the JWT (req.user.organizationId)
+  // rather than letting it default away silently.
+  getDocument(id: string, organizationId: number | string): Promise<schema.Document | undefined>;
   getDocumentByName(name: string): Promise<schema.Document | undefined>;
   getDocuments(options?: {
     limit?: number;
@@ -755,8 +763,11 @@ export class MemStorage {
   }
 
   // Document methods
-  async getDocument(id: string): Promise<schema.Document | undefined> {
-    return this.documents.find(d => d.id === id) as schema.Document | undefined;
+  async getDocument(id: string, organizationId: number | string): Promise<schema.Document | undefined> {
+    const orgId = Number(organizationId);
+    return this.documents.find(
+      d => d.id === id && Number((d as any).organizationId) === orgId,
+    ) as schema.Document | undefined;
   }
 
   async getDocumentByName(name: string): Promise<schema.Document | undefined> {
@@ -2265,15 +2276,29 @@ export class DatabaseStorage {
   }
 
   // Document methods
-  async getDocument(id: string): Promise<schema.Document | undefined> {
+  async getDocument(
+    id: string,
+    organizationId: number | string,
+  ): Promise<schema.Document | undefined> {
     if (!db) return undefined;
 
     try {
       const numericId = Number(id);
+      const orgId = Number(organizationId);
+      // Tenant-scoped lookup. The org filter is mandatory — a missing
+      // or non-finite orgId returns no rows, which is the safe default
+      // (better to surface "not found" than to silently widen the
+      // query).
+      if (!Number.isFinite(orgId)) return undefined;
       const documents = await db
         .select()
         .from(schema.documents)
-        .where(eq(schema.documents.id, numericId));
+        .where(
+          and(
+            eq(schema.documents.id, numericId),
+            eq(schema.documents.organizationId, orgId),
+          ),
+        );
       return documents[0];
     } catch (error) {
       logger.error('Failed to get document', { id, error });
