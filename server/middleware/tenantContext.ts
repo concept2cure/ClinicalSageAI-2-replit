@@ -60,6 +60,23 @@ declare global {
   }
 }
 
+/**
+ * Coerce a JWT numeric claim to a strict positive integer, or null if the
+ * value isn't a clean integer string. Rejects:
+ *   - missing / null / non-string non-number values
+ *   - the literal 0
+ *   - decimal points, scientific notation, leading "+", whitespace
+ *   - mixed strings like '42abc' that parseInt would silently truncate
+ */
+export function strictPositiveInt(value: unknown): number | null {
+  if (value === null || value === undefined) return null;
+  const str = typeof value === 'number' ? String(value) : value;
+  if (typeof str !== 'string') return null;
+  if (!/^[1-9]\d*$/.test(str)) return null;
+  const n = Number(str);
+  return Number.isSafeInteger(n) ? n : null;
+}
+
 async function releaseDbClient(req: Request): Promise<void> {
   const client = req.dbClient;
   if (!client) {
@@ -200,9 +217,13 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
       });
     }
 
-    const userId = parseInt(decoded.userId, 10);
-    const orgIdInt = parseInt(organizationId, 10);
-    if (!Number.isFinite(userId) || !Number.isFinite(orgIdInt)) {
+    // Reject non-integer / zero / truncated numeric claims. parseInt is
+    // intentionally lax — parseInt('42abc', 10) returns 42, which would let
+    // a malformed claim resolve to a real user or organization id. Require
+    // a strict positive-integer string for both.
+    const userId = strictPositiveInt(decoded.userId);
+    const orgIdInt = strictPositiveInt(organizationId);
+    if (userId === null || orgIdInt === null) {
       return res.status(401).json({
         error: 'Authentication required',
         message: 'Invalid token claims',
