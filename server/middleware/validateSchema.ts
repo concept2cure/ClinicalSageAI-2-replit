@@ -17,21 +17,42 @@ interface ValidationResult {
   errors: ValidationError[];
 }
 
+const SCHEMA_ROOT = path.resolve('client/src/schemas');
+const SCHEMA_NAME_PATTERN = /^[A-Za-z0-9._-]+$/;
+const schemaCache = new Map<string, any>();
+
 /**
- * Load a schema from the file system
- * @param schemaName Name of the schema file without extension
- * @returns The schema object
+ * Load a schema from the file system. Schemas are cached after first load
+ * (they ship with the build and don't change at runtime). The schema name is
+ * restricted to a safe character set and the resolved path is checked to live
+ * under the schema root, so a caller passing `../../etc/passwd` (or similar)
+ * cannot escape the schema directory.
  */
-function loadSchema(schemaName: string): any {
-  try {
-    // In ES modules, use a relative path from project root
-    const schemaPath = `./client/src/schemas/${schemaName}.json`;
-    const schemaData = fs.readFileSync(schemaPath, 'utf8');
-    return JSON.parse(schemaData);
-  } catch (error) {
-    console.error(`Failed to load schema ${schemaName}:`, error);
-    throw new Error(`Schema ${schemaName} not found`);
+export function loadSchema(schemaName: string): any {
+  if (!SCHEMA_NAME_PATTERN.test(schemaName)) {
+    throw new Error(`Invalid schema name: ${schemaName}`);
   }
+
+  const cached = schemaCache.get(schemaName);
+  if (cached) return cached;
+
+  const schemaPath = path.resolve(SCHEMA_ROOT, `${schemaName}.json`);
+  // Resolve guards against `..` traversal even if the regex above is loosened.
+  if (!schemaPath.startsWith(SCHEMA_ROOT + path.sep) && schemaPath !== SCHEMA_ROOT) {
+    throw new Error(`Schema path escapes schema root: ${schemaName}`);
+  }
+
+  const schemaData = fs.readFileSync(schemaPath, 'utf8');
+  const schema = JSON.parse(schemaData);
+  schemaCache.set(schemaName, schema);
+  return schema;
+}
+
+/**
+ * Test-only: clear the schema cache.
+ */
+export function _clearSchemaCacheForTests(): void {
+  schemaCache.clear();
 }
 
 /**
@@ -138,26 +159,40 @@ function validateAgainstSchema(data: any, schema: any): ValidationResult {
  * @returns Express middleware function
  */
 export function validateSchema(schemaName: string) {
+  // Resolve and cache the schema at middleware-construction time so that a
+  // misconfiguration (missing file, bad name) fails fast on startup instead
+  // of on the first request, and so the disk read doesn't happen per request.
+  let cachedSchema: any | null = null;
+  let loadError: Error | null = null;
+  try {
+    cachedSchema = loadSchema(schemaName);
+  } catch (err) {
+    loadError = err as Error;
+    console.error(`[validateSchema] Failed to load schema "${schemaName}":`, err);
+  }
+
   return (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const schema = loadSchema(schemaName);
-      const validationResult = validateAgainstSchema(req.body, schema);
-
-      if (!validationResult.isValid) {
-        return res.status(400).json({
-          error: 'Validation failed',
-          details: validationResult.errors,
-        });
-      }
-
-      next();
-    } catch (error) {
-      console.error('Schema validation error:', error);
+    if (!cachedSchema) {
+      // Log the underlying cause server-side but never expose disk paths or
+      // exception messages to the client.
+      console.error(
+        `[validateSchema] Cannot validate request — schema "${schemaName}" failed to load`,
+        loadError
+      );
       return res.status(500).json({
-        error: 'Schema validation error',
-        message: (error as Error).message,
+        error: 'Schema validation unavailable',
+        code: 'SCHEMA_UNAVAILABLE',
       });
     }
+
+    const validationResult = validateAgainstSchema(req.body, cachedSchema);
+    if (!validationResult.isValid) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: validationResult.errors,
+      });
+    }
+    next();
   };
 }
 
