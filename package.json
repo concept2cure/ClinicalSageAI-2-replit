@@ -125,8 +125,7 @@
     "beta:seed:510k": "node scripts/seed-beta-510k-workspace.mjs",
     "beta:typecheck": "NODE_OPTIONS=\"--max-old-space-size=4096\" tsc --noEmit -p tsconfig.beta-slice.json",
     "beta:founder-proof": "npx playwright test tests/e2e/510k-founder-path.e2e.spec.ts",
-    "beta:proof": "node scripts/run-beta-founder-proof.mjs",
-    "beta:middleware-harness-check": "node scripts/beta/check-middleware-harness-readiness.mjs"
+    "beta:proof": "node scripts/run-beta-founder-proof.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
