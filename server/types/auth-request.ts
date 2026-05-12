@@ -1,8 +1,10 @@
 /**
  * Org / user resolvers for routes mounted under /api.
  *
- * The middleware chain in server/middleware/setup.ts populates four
- * different shapes of org context on `req` before any route handler runs:
+ * The middleware chain wired in server/startup/middleware.ts (composing
+ * server/middleware/enterprise-security.ts and the tenant-context layer)
+ * populates four different shapes of org context on `req` before any route
+ * handler runs:
  *
  *   - req.user.organizationId        (from authMiddleware)
  *   - req.tenantContext.organizationId (from tenantContextMiddleware)
