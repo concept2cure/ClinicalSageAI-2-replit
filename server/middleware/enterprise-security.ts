@@ -404,7 +404,16 @@ export function auditLog(req: Request, res: Response, next: NextFunction) {
   if (!config.enableAuditLog) return next();
 
   const startTime = Date.now();
-  const requestId = (req.headers['x-request-id'] as string) || randomBytes(8).toString('hex');
+  // Prefer the validated id set by the requestId middleware. Only fall back
+  // to a fresh value if this middleware ran without it (unusual ordering).
+  const existingId = (req as any).requestId;
+  const supplied = req.headers['x-request-id'];
+  const requestId: string =
+    typeof existingId === 'string' && existingId.length > 0
+      ? existingId
+      : isValidClientRequestId(supplied)
+        ? supplied
+        : randomBytes(16).toString('hex');
 
   // Add request ID to response headers
   res.setHeader('X-Request-Id', requestId);
@@ -493,8 +502,21 @@ export async function validateApiKey(req: Request, res: Response, next: NextFunc
 // REQUEST ID MIDDLEWARE
 // ============================================================================
 
+// Accept a client-provided request id only if it matches a conservative,
+// log-safe shape (alphanumeric, dashes, underscores, dots, bounded length).
+// Otherwise the value is replaced with a server-generated id. Without this
+// guard, callers can supply arbitrary strings — spoofing correlation ids,
+// polluting log search, or injecting odd characters that the downstream log
+// pipeline may not handle cleanly.
+const REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{1,128}$/;
+
+export function isValidClientRequestId(value: unknown): value is string {
+  return typeof value === 'string' && REQUEST_ID_PATTERN.test(value);
+}
+
 export function requestId(req: Request, res: Response, next: NextFunction) {
-  const id = (req.headers['x-request-id'] as string) || randomBytes(16).toString('hex');
+  const supplied = req.headers['x-request-id'];
+  const id = isValidClientRequestId(supplied) ? supplied : randomBytes(16).toString('hex');
   (req as any).requestId = id;
   res.setHeader('X-Request-Id', id);
   next();
