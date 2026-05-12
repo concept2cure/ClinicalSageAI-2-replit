@@ -16,9 +16,35 @@
 
 import { Router, type Request, type Response } from 'express';
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import { createScopedLogger } from '../utils/logger';
 
 const logger = createScopedLogger('csp-report');
+
+/**
+ * Generous-but-bounded rate limit. A correctly-behaving browser sends a
+ * handful of reports per page load at most; the cap blunts the impact of
+ * a misbehaving extension or an attacker firing fake reports to flood our
+ * logs. Keyed by IP because the endpoint is unauthenticated by design
+ * (browsers send reports with no Authorization header).
+ */
+const reportRateLimit = rateLimit({
+  windowMs: 60_000,
+  max: 120,
+  standardHeaders: false,
+  legacyHeaders: false,
+  validate: false,
+  // Always respond 204 even when limited — a 429 would just have the
+  // browser drop the report. The log noise is what we're optimizing for.
+  handler: (_req: Request, res: Response) => {
+    res.status(204).end();
+  },
+  keyGenerator: (req: Request) => {
+    const forwarded = req.headers['x-forwarded-for'];
+    const ip = Array.isArray(forwarded) ? forwarded[0] : forwarded?.split(',')[0] || req.ip;
+    return ip || 'unknown';
+  },
+});
 
 interface NormalizedReport {
   documentUri?: string;
@@ -76,7 +102,9 @@ const router = Router();
 // Browsers send CSP reports with content-type `application/csp-report` or
 // `application/reports+json`. The global JSON parser only handles
 // `application/json`, so install a dedicated parser here that accepts all
-// three.
+// three. Rate limit fires before the parser so a flood of huge bodies
+// doesn't pin memory.
+router.use(reportRateLimit);
 router.use(
   express.json({
     type: ['application/csp-report', 'application/reports+json', 'application/json'],

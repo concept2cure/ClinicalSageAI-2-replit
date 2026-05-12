@@ -14,12 +14,13 @@
 import express from 'express';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { cspNonce, securityHeaders } from '../enterprise-security';
+import { cspNonce, permissionsPolicy, securityHeaders } from '../enterprise-security';
 
 function buildApp() {
   const app = express();
   app.use(cspNonce);
   app.use(securityHeaders);
+  app.use(permissionsPolicy);
   app.get('/', (_req, res) => res.status(200).send('ok'));
   return app;
 }
@@ -99,5 +100,46 @@ describe('CSP violation reporting', () => {
     const res = await request(buildApp()).get('/');
     const csp = getCspHeader(res.headers);
     expect(findDirective(csp, 'report-uri')).toMatch(/\/api\/csp-report/);
+  });
+});
+
+describe('CSP hardening directives', () => {
+  it('locks base-uri to self', async () => {
+    const res = await request(buildApp()).get('/');
+    const csp = getCspHeader(res.headers);
+    expect(findDirective(csp, 'base-uri')).toMatch(/'self'/);
+  });
+
+  it('restricts form-action to self', async () => {
+    const res = await request(buildApp()).get('/');
+    const csp = getCspHeader(res.headers);
+    expect(findDirective(csp, 'form-action')).toMatch(/'self'/);
+  });
+
+  it('sets frame-ancestors to self (clickjacking defense)', async () => {
+    const res = await request(buildApp()).get('/');
+    const csp = getCspHeader(res.headers);
+    expect(findDirective(csp, 'frame-ancestors')).toMatch(/'self'/);
+  });
+});
+
+describe('Permissions-Policy', () => {
+  it('emits a Permissions-Policy header', async () => {
+    const res = await request(buildApp()).get('/');
+    expect(res.headers['permissions-policy']).toBeTruthy();
+  });
+
+  it('denies camera, microphone, geolocation by default', async () => {
+    const res = await request(buildApp()).get('/');
+    const policy = res.headers['permissions-policy'] as string;
+    expect(policy).toContain('camera=()');
+    expect(policy).toContain('microphone=()');
+    expect(policy).toContain('geolocation=()');
+  });
+
+  it('allows clipboard-write on self (editor copy actions)', async () => {
+    const res = await request(buildApp()).get('/');
+    const policy = res.headers['permissions-policy'] as string;
+    expect(policy).toContain('clipboard-write=(self)');
   });
 });

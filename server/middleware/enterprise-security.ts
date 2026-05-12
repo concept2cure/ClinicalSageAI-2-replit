@@ -147,6 +147,16 @@ export const securityHeaders = config.isDevelopment
           connectSrc: ["'self'", 'ws:', 'wss:', 'http://localhost:*'],
           imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
           frameSrc: ["'self'"],
+          // Hardening directives (defense-in-depth, report-only in dev):
+          //   base-uri locks <base href> so an injected element can't
+          //     re-root every relative URL on the page.
+          //   form-action restricts where forms can POST/GET, blocking
+          //     phishing pages that inject a form into our DOM.
+          //   frame-ancestors stops other origins from iframing the
+          //     app — defense against clickjacking. Mirrors frameguard.
+          baseUri: ["'self'"],
+          formAction: ["'self'"],
+          frameAncestors: ["'self'"],
           reportUri: [CSP_REPORT_URI],
         },
       },
@@ -183,6 +193,16 @@ export const securityHeaders = config.isDevelopment
           connectSrc: ["'self'", 'https://api.openai.com', 'https://*.neon.tech', 'wss:', 'ws:'],
           frameSrc: ["'self'"],
           objectSrc: ["'none'"],
+          // Hardening directives (enforced in prod):
+          //   base-uri 'self' blocks <base href> injection from rewriting
+          //     every relative URL on the page.
+          //   form-action 'self' confines form posts to our origin,
+          //     killing phishing forms that an XSS could inject.
+          //   frame-ancestors 'self' is the CSP-spec replacement for
+          //     X-Frame-Options; defense against clickjacking.
+          baseUri: ["'self'"],
+          formAction: ["'self'"],
+          frameAncestors: ["'self'"],
           upgradeInsecureRequests: [],
           reportUri: [CSP_REPORT_URI],
         },
@@ -202,6 +222,49 @@ export const securityHeaders = config.isDevelopment
       frameguard: { action: 'sameorigin' },
       permittedCrossDomainPolicies: { permittedPolicies: 'none' },
     });
+
+/**
+ * Permissions-Policy (formerly Feature-Policy) — opt out of browser
+ * features we don't use. Reduces the blast radius of a successful XSS
+ * by denying access to powerful APIs even after script execution.
+ *
+ * Defaults are restrictive; we explicitly allow clipboard-write on
+ * self because the editor's "copy as markdown" / "copy citation"
+ * actions need it. Everything else is `()` (disabled for all origins).
+ */
+export function permissionsPolicy(_req: Request, res: Response, next: NextFunction) {
+  res.setHeader(
+    'Permissions-Policy',
+    [
+      'accelerometer=()',
+      'autoplay=()',
+      'camera=()',
+      'clipboard-read=()',
+      'clipboard-write=(self)',
+      'cross-origin-isolated=()',
+      'display-capture=()',
+      'encrypted-media=()',
+      'fullscreen=(self)',
+      'geolocation=()',
+      'gyroscope=()',
+      'hid=()',
+      'idle-detection=()',
+      'magnetometer=()',
+      'microphone=()',
+      'midi=()',
+      'payment=()',
+      'picture-in-picture=()',
+      'publickey-credentials-get=()',
+      'screen-wake-lock=()',
+      'serial=()',
+      'sync-xhr=()',
+      'usb=()',
+      'web-share=()',
+      'xr-spatial-tracking=()',
+    ].join(', '),
+  );
+  next();
+}
 
 // ============================================================================
 // CORS CONFIGURATION
@@ -658,6 +721,10 @@ export function applySecurityMiddleware(app: any) {
   // Security headers (must be first after HTTPS)
   app.use(securityHeaders);
 
+  // Permissions-Policy — runs after CSP so it can't shadow any of the
+  // helmet-emitted headers. Deny most browser features by default.
+  app.use(permissionsPolicy);
+
   // Request ID for correlation
   app.use(requestId);
 
@@ -697,6 +764,7 @@ export function applySecurityMiddleware(app: any) {
 export default {
   securityHeaders,
   cspNonce,
+  permissionsPolicy,
   corsMiddleware,
   rateLimiters,
   sanitizeInput,
