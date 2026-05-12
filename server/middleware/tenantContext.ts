@@ -170,8 +170,14 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
       });
     }
 
+    // Accept only the canonical `Bearer <token>` shape (case-insensitive
+    // scheme, single token, no extra whitespace tricks). The previous
+    // `authHeader.replace('Bearer ', '').trim()` would strip the substring
+    // anywhere in the value, so a header like `Foo Bearer realtoken` would
+    // parse to `Foo realtoken` and propagate junk into jwt.verify.
     const authHeader = req.headers.authorization;
-    const token = authHeader?.replace('Bearer ', '').trim();
+    const bearerMatch = authHeader ? /^Bearer\s+(\S+)$/i.exec(authHeader) : null;
+    const token = bearerMatch ? bearerMatch[1] : null;
 
     if (!token) {
       return res.status(401).json({

@@ -36,16 +36,38 @@ interface UserUsage {
   date: string; // YYYY-MM-DD
 }
 
+// Hard cap on the number of users tracked in-memory. Without this, every new
+// anonymous IP (especially before auth attaches a real userId) creates a fresh
+// entry and the map grows without bound.
+const USAGE_MAP_MAX_USERS = 50_000;
 const usageMap = new Map<string, UserUsage>();
 
 function getTodayKey(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+function pruneStaleUsage(today: string): void {
+  for (const [userId, entry] of usageMap) {
+    if (entry.date !== today) usageMap.delete(userId);
+  }
+}
+
+function evictOldestUsage(): void {
+  // Map preserves insertion order; the first key is the least-recently-added.
+  const oldest = usageMap.keys().next().value;
+  if (oldest !== undefined) usageMap.delete(oldest);
+}
+
 function getUserUsage(userId: string): UserUsage {
   const today = getTodayKey();
   let usage = usageMap.get(userId);
   if (!usage || usage.date !== today) {
+    if (usageMap.size >= USAGE_MAP_MAX_USERS) {
+      // First try cheap pruning of yesterday's entries; if still saturated,
+      // evict the oldest entry to make room for this one.
+      pruneStaleUsage(today);
+      if (usageMap.size >= USAGE_MAP_MAX_USERS) evictOldestUsage();
+    }
     usage = { images: 0, presentations: 0, date: today };
     usageMap.set(userId, usage);
   }

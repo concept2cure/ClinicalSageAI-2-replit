@@ -14,6 +14,23 @@ import { config } from '../config/environment';
 
 // SECURITY FIX: isDev variable removed — no more dev-mode auth bypasses.
 
+/**
+ * Extract the JWT from an Authorization header value, accepting only the
+ * canonical `Bearer <token>` form (case-insensitive scheme, exactly one
+ * space). Returns null if the header is missing, malformed, or the token is
+ * empty. Previously the code used `authHeader.replace('Bearer ', '')` which
+ * stripped the substring anywhere in the value and accepted exotic shapes
+ * like `Foo Bearer realtoken`.
+ */
+function extractBearerToken(authHeader: string | undefined): string | null {
+  if (!authHeader) return null;
+  // Match the entire header against the canonical shape.
+  const match = /^Bearer\s+(\S+)$/i.exec(authHeader);
+  if (!match) return null;
+  const token = match[1];
+  return token.length > 0 ? token : null;
+}
+
 // JWT token payload interface
 interface JWTPayload {
   userId?: number | string;
@@ -65,8 +82,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   // SECURITY FIX: Dev auto-auth removed. All requests must provide a valid JWT.
   // To test locally, create a user via POST /api/auth/signup then login normally.
 
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.replace('Bearer ', '');
+  const token = extractBearerToken(req.headers.authorization);
 
   if (!token) {
     return res.status(401).json({
@@ -218,8 +234,7 @@ export const requirePermission = (resource: string, action: string) => {
  * Optional authentication - attaches user if token present, continues if not
  */
 export const optionalAuth = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.replace('Bearer ', '');
+  const token = extractBearerToken(req.headers.authorization);
 
   if (!token) {
     // SECURITY FIX: Dev auto-auth removed from optional auth path.
@@ -249,6 +264,8 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
   next();
 };
 
+export { extractBearerToken };
+
 export default {
   authenticateToken,
   authenticateJWT,
@@ -259,4 +276,5 @@ export default {
   requireSameOrganization,
   requirePermission,
   optionalAuth,
+  extractBearerToken,
 };
