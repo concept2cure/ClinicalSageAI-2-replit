@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
 import { getAuthHeaders, getOrgId } from '@/utils/authToken';
 import { marked } from 'marked';
-import DOMPurify from 'dompurify';
+import { renderSafeMarkdown } from './renderSafeMarkdown';
 import { useAIAction } from '../../hooks/useAIAction';
 import { useAnaQueueState } from '../../hooks/useAnaQueueState';
 import type { AIActionType, AIActionSourceSurface } from '../../hooks/useAIAction';
@@ -73,72 +73,10 @@ import { ALL_DOMAIN_GROUPS } from '../../config/domain-prompts';
 
 marked.setOptions({ breaks: true, gfm: true });
 
-// ─── Markdown render cache — avoids re-parsing on every React re-render ─────
-const _mdCache = new Map<string, string>();
-const MD_CACHE_MAX = 200;
-
-const SANITIZE_CONFIG = {
-  ALLOWED_TAGS: [
-    'p',
-    'br',
-    'strong',
-    'em',
-    'b',
-    'i',
-    'u',
-    'a',
-    'ul',
-    'ol',
-    'li',
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6',
-    'blockquote',
-    'pre',
-    'code',
-    'table',
-    'thead',
-    'tbody',
-    'tr',
-    'th',
-    'td',
-    'span',
-    'div',
-    'hr',
-    'sup',
-    'sub',
-  ],
-  ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'id'],
-} as const;
-
-const renderMarkdown = (content: string): string => {
-  const cached = _mdCache.get(content);
-  if (cached !== undefined) return cached;
-
-  let result: string;
-  try {
-    const rawHtml = marked.parse(content) as string;
-    result = DOMPurify.sanitize(rawHtml, SANITIZE_CONFIG);
-  } catch {
-    result = content
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#x27;');
-  }
-
-  // Evict oldest entry when cache is full
-  if (_mdCache.size >= MD_CACHE_MAX) {
-    const firstKey = _mdCache.keys().next().value;
-    if (firstKey !== undefined) _mdCache.delete(firstKey);
-  }
-  _mdCache.set(content, result);
-  return result;
-};
+// renderMarkdown moved to ./renderSafeMarkdown.ts so the ana/Message
+// component can share the exact same allowlist. Re-exported here as a
+// local alias so the (large) call sites below don't need to change.
+const renderMarkdown = renderSafeMarkdown;
 
 // ─── Verdict & Confidence Signal Detection ──────────────────────────────────
 

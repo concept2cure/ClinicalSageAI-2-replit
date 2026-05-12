@@ -96,10 +96,24 @@ describe('CSP style-src split', () => {
 });
 
 describe('CSP violation reporting', () => {
-  it('includes report-uri pointing at /api/csp-report', async () => {
+  it('includes report-uri pointing at /api/csp-report (legacy browsers)', async () => {
     const res = await request(buildApp()).get('/');
     const csp = getCspHeader(res.headers);
     expect(findDirective(csp, 'report-uri')).toMatch(/\/api\/csp-report/);
+  });
+
+  it('includes report-to referencing the csp-endpoint group (modern API)', async () => {
+    const res = await request(buildApp()).get('/');
+    const csp = getCspHeader(res.headers);
+    expect(findDirective(csp, 'report-to')).toMatch(/csp-endpoint/);
+  });
+
+  it('emits a Reporting-Endpoints header binding csp-endpoint to /api/csp-report', async () => {
+    const res = await request(buildApp()).get('/');
+    const header = res.headers['reporting-endpoints'] as string | undefined;
+    expect(header).toBeTruthy();
+    expect(header).toMatch(/csp-endpoint=/);
+    expect(header).toMatch(/\/api\/csp-report/);
   });
 });
 

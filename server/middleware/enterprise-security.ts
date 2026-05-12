@@ -126,6 +126,16 @@ const scriptSrcDirective = (_req: IncomingMessage, res: ServerResponse) => {
  */
 export const CSP_REPORT_URI = '/api/csp-report';
 
+/**
+ * Reporting Endpoints group name. Referenced by the `report-to` CSP
+ * directive and by the `Reporting-Endpoints` response header in
+ * `permissionsPolicy`. Two layers because:
+ *   - `report-uri` (legacy) — Firefox, Safari today.
+ *   - `report-to` + `Reporting-Endpoints` (modern API) — Chrome/Edge.
+ * Keeping both means reports land regardless of browser.
+ */
+export const CSP_REPORT_TO_GROUP = 'csp-endpoint';
+
 export const securityHeaders = config.isDevelopment
   ? helmet({
       contentSecurityPolicy: {
@@ -158,6 +168,7 @@ export const securityHeaders = config.isDevelopment
           formAction: ["'self'"],
           frameAncestors: ["'self'"],
           reportUri: [CSP_REPORT_URI],
+          reportTo: [CSP_REPORT_TO_GROUP],
         },
       },
       crossOriginEmbedderPolicy: false,
@@ -205,6 +216,7 @@ export const securityHeaders = config.isDevelopment
           frameAncestors: ["'self'"],
           upgradeInsecureRequests: [],
           reportUri: [CSP_REPORT_URI],
+          reportTo: [CSP_REPORT_TO_GROUP],
         },
       },
       crossOriginEmbedderPolicy: false, // Disable for PDF rendering
@@ -233,6 +245,15 @@ export const securityHeaders = config.isDevelopment
  * actions need it. Everything else is `()` (disabled for all origins).
  */
 export function permissionsPolicy(_req: Request, res: Response, next: NextFunction) {
+  // Reporting-Endpoints — the modern Reporting API binding. CSP's
+  // `report-to <group>` directive resolves to this URL. Browsers that
+  // understand this header use it; older ones fall back to `report-uri`.
+  // Single quoted-string form per spec.
+  res.setHeader(
+    'Reporting-Endpoints',
+    `${CSP_REPORT_TO_GROUP}="${CSP_REPORT_URI}"`,
+  );
+
   res.setHeader(
     'Permissions-Policy',
     [
