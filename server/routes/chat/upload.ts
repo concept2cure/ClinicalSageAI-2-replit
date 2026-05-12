@@ -17,6 +17,9 @@ import type { Request, Response } from 'express';
 import { pool } from '../../db.js';
 import { resolveGovernedContext } from '../../services/concept2cure/governedDocumentContractService.js';
 import { sha256 } from './provenance.js';
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('chat-upload');
 
 export const uploadHandler = async (req: Request, res: Response) => {
   try {
@@ -29,8 +32,17 @@ export const uploadHandler = async (req: Request, res: Response) => {
     const userId = (req as any).user?.id || null;
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
 
-    // Store in uploads directory
-    const storagePath = `uploads/${fileId}`;
+    // SECURITY: tenant-scoped storage path. The legacy `uploads/${fileId}`
+    // flat layout meant any process that read by file id alone could
+    // retrieve another tenant's file — and the file id, while
+    // timestamp-suffixed, is enumerable. By prefixing the org id we
+    // ensure a foreign-tenant lookup hits a path the caller's org
+    // doesn't own. `orgId` here is the JWT-derived value from
+    // req.tenantId / req.tenantContext.organizationId (never body /
+    // query). When no org is available we anchor under `unscoped/` so
+    // those rows never collide with a real tenant's namespace.
+    const orgSegment = orgId != null ? `org-${Number(orgId)}` : 'unscoped';
+    const storagePath = `uploads/${orgSegment}/${fileId}`;
 
     // Save metadata to DB
     await pool.query(
@@ -138,7 +150,13 @@ export const uploadHandler = async (req: Request, res: Response) => {
         );
         artifactId = artId;
       } catch (artErr: any) {
-        console.error('[AnA] Chat upload governed artifact persistence failed:', artErr.message);
+        // Log the raw cause through the scoped logger (redacted by
+        // SENSITIVE_KEYS) — never echo it back to the client.
+        logger.error('Governed artifact persistence failed', {
+          err: artErr?.message,
+          fileId,
+          orgId,
+        });
         return res.status(500).json({
           error: 'Governed artifact persistence failed for upload',
           code: 'ARTIFACT_CONSEQUENCE_REQUIRED',
@@ -161,7 +179,10 @@ export const uploadHandler = async (req: Request, res: Response) => {
           await embeddingService.embedAtom(atomResult.rows[0].id);
         }
       } catch (embedErr: any) {
-        console.warn('[AnA] Chat upload embedding failed (non-fatal):', embedErr.message);
+        logger.warn('Chat upload embedding failed (non-fatal)', {
+          err: embedErr?.message,
+          fileId,
+        });
       }
     }
 
@@ -173,7 +194,7 @@ export const uploadHandler = async (req: Request, res: Response) => {
       artifactId,
     });
   } catch (error: any) {
-    console.error('[AnA] Upload error:', error);
+    logger.error('Upload error', { err: error?.message });
     res.status(500).json({
       error: 'Failed to upload file',
       code: 'UPLOAD_ERROR',
