@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Request } from 'express';
 import { storage } from '../storage';
 import { z } from 'zod';
 import { insertDocumentSchema, insertDocumentFolderSchema } from '@shared/schema';
@@ -8,6 +8,43 @@ import fs from 'fs';
 // documentPreview stub removed — was a placeholder with no functionality
 import { randomUUID } from 'crypto';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
+import auditService from '../services/auditService';
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('document-routes');
+
+/**
+ * Fire-and-forget document-access audit. 21 CFR Part 11 §11.10(e)
+ * requires every view of regulated content to be logged. Treat audit-
+ * write failures as non-fatal so a transient pipeline issue never
+ * blocks a legitimate download.
+ */
+async function auditDocumentAccess(
+  req: Request,
+  orgId: number,
+  documentId: string,
+  action: 'document_download' | 'document_view',
+): Promise<void> {
+  try {
+    const user = (req as any).user;
+    await auditService.logAction({
+      tenantId: orgId,
+      userId: user?.id ?? user?.userId,
+      action,
+      resourceType: 'document',
+      resourceId: documentId,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: { route: req.path },
+    });
+  } catch (err) {
+    logger.warn('Document-access audit write failed (non-fatal)', {
+      err: err instanceof Error ? err.message : String(err),
+      action,
+      documentId,
+    });
+  }
+}
 // Use cryptographically secure UUID for regulatory document identifiers
 const uuidv4 = () => randomUUID();
 
@@ -94,6 +131,10 @@ router.get('/:id', async (req, res) => {
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
     }
+
+    // Audit document view — 21 CFR Part 11 §11.10(e) requires every
+    // read of regulated content to be logged.
+    await auditDocumentAccess(req, guard.orgId, id, 'document_view');
 
     res.json(document);
   } catch (error) {
@@ -230,6 +271,11 @@ router.get('/:id/download', async (req, res) => {
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
     }
+
+    // Audit BEFORE serving the bytes. 21 CFR Part 11 requires the
+    // download to be recorded even if the response stream later
+    // fails — the user requested it, that's the event.
+    await auditDocumentAccess(req, guard.orgId, id, 'document_download');
 
     // If the document has a filePath, send the file
     if (document.filePath && fs.existsSync(document.filePath)) {
