@@ -15,10 +15,13 @@
  *   tenant-keyed table, because the policy can't read a tenant id from
  *   a connection that never had one set.
  *
- *   `requestDb(req)` returns a Drizzle wrapped around the dedicated
- *   per-request client. Queries through it run on the same connection
- *   the middleware already loaded with `app.current_tenant_id` etc.,
- *   so the policy filter matches.
+ *   `requestDb(req)` returns a Drizzle wrapped around the request-scoped
+ *   lazy wrapper. Drizzle's node-postgres driver only calls `.query()` on
+ *   the client, which our lazy wrapper exposes — first call acquires a
+ *   pool connection and runs `SET LOCAL app.current_tenant_id` on it,
+ *   then delegates. So all queries through this Drizzle instance run on
+ *   the same connection with the RLS session vars set, and connection
+ *   acquisition is deferred until the first DB hit.
  *
  * Use it any time you would have written `db.select().from(...)` inside
  * a route handler:
@@ -55,8 +58,12 @@ export function requestDb(req: Request): RequestDb {
   if (cached) return cached;
 
   const client = (req as Request & { dbClient?: unknown }).dbClient;
+  // Drizzle's node-postgres driver only needs `.query()` on the client.
+  // The lazy wrapper installed by requireTenantContext satisfies that;
+  // we cast to `any` here so we don't have to pull pg types into the
+  // Drizzle type parameter just to widen the constructor signature.
   const built: RequestDb = client
-    ? (drizzle(client as never, { schema }) as RequestDb)
+    ? (drizzle(client as any, { schema }) as RequestDb)
     : (poolBoundDb as unknown as RequestDb);
 
   (req as RequestWithCachedDb).__requestDb = built;

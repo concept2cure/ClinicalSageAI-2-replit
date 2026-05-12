@@ -20,6 +20,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import type { IncomingMessage, ServerResponse } from 'http';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { createHash, randomBytes } from 'crypto';
@@ -89,15 +90,45 @@ const config = {
 // SECURITY HEADERS (Helmet Configuration)
 // ============================================================================
 
-// In development, use a permissive (but present) security policy.
-// CSP is set to report-only so issues are visible without breaking HMR/iframes.
+/**
+ * Per-request CSP nonce middleware. Stashes a 128-bit base64 nonce on
+ * `res.locals.cspNonce` so:
+ *   - the helmet CSP directive below can emit `'nonce-<value>'` in
+ *     `script-src`, allowing the SPA's bundled module loader to run
+ *     without needing `'unsafe-inline'`;
+ *   - the HTML serving layer (server/vite.ts) can inject the same nonce
+ *     into every `<script>` tag in index.html.
+ *
+ * Strict-dynamic propagates trust from the nonced loader to scripts it
+ * imports, so we don't need to enumerate every chunk URL.
+ */
+export function cspNonce(req: Request, res: Response, next: NextFunction) {
+  res.locals.cspNonce = randomBytes(16).toString('base64');
+  next();
+}
+
+// Helmet types the directive function as (IncomingMessage, ServerResponse) so
+// we have to match that exactly — Express's narrower types would fail TS's
+// contravariant parameter check. The `as` cast at call time recovers locals.
+const scriptSrcDirective = (_req: IncomingMessage, res: ServerResponse) => {
+  const locals = (res as ServerResponse & { locals?: { cspNonce?: string } }).locals;
+  return `'nonce-${locals?.cspNonce ?? ''}'`;
+};
+
+// In development, keep CSP report-only so HMR/Vite injections don't break
+// the dev loop — violations still surface in the browser console where we
+// can act on them. Production enforces.
 export const securityHeaders = config.isDevelopment
   ? helmet({
       contentSecurityPolicy: {
-        reportOnly: true, // Don't block, but log violations in browser console
+        reportOnly: true,
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+          // Even in dev we drop 'unsafe-inline' from script-src so the
+          // report-only signal is meaningful. Vite's dev HMR injects its
+          // own scripts through its middleware — those get the nonce via
+          // setupVite's transformIndexHtml hook.
+          scriptSrc: ["'self'", scriptSrcDirective, "'strict-dynamic'", "'unsafe-eval'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
           connectSrc: ["'self'", 'ws:', 'wss:', 'http://localhost:*'],
           imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
@@ -109,13 +140,21 @@ export const securityHeaders = config.isDevelopment
       crossOriginResourcePolicy: false,
       hsts: false, // No HSTS in dev (no TLS locally)
       frameguard: false, // Allow iframes (VS Code Simple Browser)
-      xssFilter: true, // Keep XSS filter active even in dev
+      xssFilter: true,
     })
   : helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.jsdelivr.net'],
+          // Hardened: per-request nonce + strict-dynamic. Drops both
+          // 'unsafe-inline' and 'unsafe-eval' for scripts. The nonce is
+          // injected into <script> tags by the HTML serving layer
+          // (server/vite.ts), and strict-dynamic propagates trust to
+          // imported chunks so we don't have to whitelist them.
+          scriptSrc: ["'self'", scriptSrcDirective, "'strict-dynamic'"],
+          // style-src 'unsafe-inline' stays — Radix UI, Framer Motion, and
+          // React `style={{...}}` props all require it. Removing it is a
+          // separate UI-wide refactor.
           styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
           imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
@@ -588,6 +627,10 @@ export function applySecurityMiddleware(app: any) {
   // HTTPS enforcement (must be before everything else)
   app.use(enforceHttps);
 
+  // CSP nonce — must run before securityHeaders so the directive function
+  // can read res.locals.cspNonce.
+  app.use(cspNonce);
+
   // Security headers (must be first after HTTPS)
   app.use(securityHeaders);
 
@@ -629,6 +672,7 @@ export function applySecurityMiddleware(app: any) {
 
 export default {
   securityHeaders,
+  cspNonce,
   corsMiddleware,
   rateLimiters,
   sanitizeInput,

@@ -20,6 +20,98 @@ import { createScopedLogger } from '../utils/logger';
 
 const logger = createScopedLogger('tenant-context');
 
+/**
+ * Minimal contract the request-scoped DB client exposes to route handlers.
+ * Pinned to `Pool['query']` so its overload set is identical to `pg.Pool` —
+ * existing call sites (`await req.dbClient.query(...)`) keep working with
+ * every overload variant (string, QueryConfig, with/without params), and
+ * the union `RequestDbClient | Pool` resolves to a callable `.query`.
+ * Drizzle's node-postgres driver only calls `.query()` on the client, so
+ * the lazy wrapper satisfies it.
+ */
+export type RequestDbClient = {
+  query: Pool['query'];
+};
+
+/**
+ * Lazy wrapper around a pooled Postgres client. The first `.query()` call
+ * acquires a connection from the pool, sets the three RLS session vars
+ * (`app.current_tenant_id`, `app.current_user_role`, `app.current_org_id`),
+ * then runs the query. Subsequent `.query()` calls reuse the cached client.
+ * `release()` clears the session vars and returns the client to the pool;
+ * it is a no-op if no connection was ever acquired.
+ *
+ * The point is to stop spending a pool slot on every authenticated request
+ * regardless of whether the handler actually touches the database — before
+ * this change, `requireTenantContext` acquired eagerly and held the client
+ * for the full request lifecycle.
+ */
+class LazyRequestDbClient implements RequestDbClient {
+  private acquired: Promise<PoolClient> | null = null;
+  private released = false;
+
+  // Declared as a field so its overload signature is structurally identical
+  // to `pg.Pool['query']` — a method with a single overload wouldn't satisfy
+  // pg's multi-overload interface.
+  readonly query: Pool['query'];
+
+  constructor(
+    private readonly pool: Pool,
+    private readonly applySessionVars: (client: PoolClient) => Promise<void>,
+  ) {
+    this.query = ((...args: unknown[]) => {
+      return this.ensure().then((client) =>
+        (client.query as (...a: unknown[]) => unknown)(...args),
+      );
+    }) as Pool['query'];
+  }
+
+  private ensure(): Promise<PoolClient> {
+    if (this.released) {
+      throw new Error('Cannot query a released request DB client');
+    }
+    if (!this.acquired) {
+      this.acquired = (async () => {
+        const client = await this.pool.connect();
+        try {
+          await this.applySessionVars(client);
+        } catch (err) {
+          client.release();
+          throw err;
+        }
+        return client;
+      })();
+    }
+    return this.acquired;
+  }
+
+  async release(): Promise<void> {
+    if (this.released) return;
+    this.released = true;
+    if (!this.acquired) return;
+
+    let client: PoolClient;
+    try {
+      client = await this.acquired;
+    } catch {
+      // Acquisition itself failed — nothing to release.
+      return;
+    }
+
+    try {
+      await client.query("SELECT set_config('app.current_tenant_id', '', false)");
+      await client.query("SELECT set_config('app.current_user_role', '', false)");
+      await client.query("SELECT set_config('app.current_org_id', '', false)");
+    } catch (err) {
+      logger.warn('Failed to clear tenant session vars on release', {
+        error: (err as Error).message,
+      });
+    } finally {
+      client.release();
+    }
+  }
+}
+
 // Define the tenant context interface to be attached to the request
 export interface TenantContext {
   organizationId: string | null;
@@ -55,24 +147,8 @@ declare global {
       tenantId?: number | string;
       userRole?: string;
       userEmail?: string;
-      dbClient?: PoolClient | null;
+      dbClient?: RequestDbClient | null;
     }
-  }
-}
-
-async function releaseDbClient(req: Request): Promise<void> {
-  const client = req.dbClient;
-  if (!client) {
-    return;
-  }
-  req.dbClient = null;
-
-  try {
-    await client.query("SELECT set_config('app.current_tenant_id', '', false)");
-    await client.query("SELECT set_config('app.current_user_role', '', false)");
-    await client.query("SELECT set_config('app.current_org_id', '', false)");
-  } finally {
-    client.release();
   }
 }
 
@@ -255,28 +331,26 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
     req.userId = req.user.id;
     req.tenantId = req.user.tenantId;
 
-    const pool = getPool();
-    const client = await pool.connect();
-    try {
-      await client.query("SELECT set_config('app.current_tenant_id', $1, false)", [organizationId]);
-      await client.query("SELECT set_config('app.current_user_role', $1, false)", [
-        resolvedRole,
+    // Lazy: do not acquire a pooled client up front. The wrapper acquires on
+    // first `.query()` call and runs the RLS session vars on that connection,
+    // so requests that never touch the DB don't tie up a pool slot.
+    const lazy = new LazyRequestDbClient(getPool(), async (client) => {
+      await client.query("SELECT set_config('app.current_tenant_id', $1, false)", [
+        organizationId,
       ]);
+      await client.query("SELECT set_config('app.current_user_role', $1, false)", [resolvedRole]);
       await client.query("SELECT set_config('app.current_org_id', $1, false)", [
         organizationUuid || '',
       ]);
-    } catch (error) {
-      client.release();
-      throw error;
-    }
+    });
 
-    req.dbClient = client;
-    res.on('finish', () => {
-      void releaseDbClient(req);
-    });
-    res.on('close', () => {
-      void releaseDbClient(req);
-    });
+    req.dbClient = lazy;
+    const release = () => {
+      req.dbClient = null;
+      void lazy.release();
+    };
+    res.on('finish', release);
+    res.on('close', release);
 
     // Establish a tenant AsyncLocalStorage scope for the rest of the request.
     // Pool instrumentation reads this on every query so we can count which
@@ -346,7 +420,14 @@ export function getTenantContext(req: Request): TenantContext {
   };
 }
 
-export function getRequestDbClient(req: Request): PoolClient | Pool {
+/**
+ * Get the DB client to use for the current request. Returns the lazy
+ * request-scoped wrapper installed by `requireTenantContext` when present,
+ * or the shared pool as a fallback (which will NOT have RLS session vars
+ * set — caller must accept that or route through `requireTenantContext`
+ * upstream).
+ */
+export function getRequestDbClient(req: Request): RequestDbClient | Pool {
   return req.dbClient ?? getPool();
 }
 
