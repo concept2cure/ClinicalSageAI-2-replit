@@ -474,13 +474,43 @@ export function validateTenantContext(req: Request, res: Response, next: NextFun
   const headerOrgId = req.headers['x-organization-id'] as string | undefined;
 
   if (user?.organizationId) {
-    // Detect and block header-based impersonation attempts
+    // Detect and block header-based impersonation attempts.
+    // Audit AND log: this is a security-significant event — a valid
+    // JWT user actively trying to access another tenant's data. The
+    // audit pipeline gives regulators an authoritative record;
+    // logger.warn gives ops live visibility.
     if (headerOrgId && String(headerOrgId) !== String(user.organizationId)) {
-      console.warn(
-        `[SECURITY] Tenant impersonation attempt blocked: ` +
-          `JWT org=${user.organizationId}, Header org=${headerOrgId}, ` +
-          `userId=${user.id || user.userId || 'unknown'}, path=${req.path}`
-      );
+      const impersonationDetail = {
+        jwtOrg: user.organizationId,
+        headerOrg: headerOrgId,
+        userId: user.id || user.userId || 'unknown',
+        path: req.path,
+        method: req.method,
+        ipAddress: req.ip,
+      };
+      // Fire-and-forget audit. Dynamic import keeps this middleware
+      // free of a top-level audit-service dependency (which itself
+      // imports DB code and would slow boot).
+      (async () => {
+        try {
+          const { default: auditService } = await import('../services/auditService');
+          await auditService.logAction({
+            tenantId: user.organizationId,
+            userId: user.id || user.userId,
+            action: 'tenant_impersonation_attempt',
+            resourceType: 'security_event',
+            resourceId: String(headerOrgId),
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+            details: impersonationDetail,
+          });
+        } catch {
+          /* audit failure is non-fatal */
+        }
+      })();
+      // Keep the structured-log line as well for ops dashboards.
+      // eslint-disable-next-line no-console
+      console.warn('[SECURITY] Tenant impersonation attempt blocked', impersonationDetail);
       return res.status(403).json({
         error: 'Organization mismatch',
         code: 'TENANT_MISMATCH',

@@ -15,11 +15,52 @@ import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
 import { db } from '../db';
 import { createScopedLogger } from '../utils/logger.js';
+import auditService from '../services/auditService';
 
 // Scoped logger — every log line flows through the redaction walker in
 // server/utils/logger so credentials, tokens, MFA secrets, etc. are
 // scrubbed even if they accidentally appear in a context object.
 const logger = createScopedLogger('auth');
+
+/**
+ * Best-effort audit-log call for authentication events. 21 CFR Part 11
+ * §11.10(e) requires an independent, tamper-evident audit trail for
+ * every login attempt, logout, and credential-changing event. We swallow
+ * errors here so a transient audit-pipeline failure never breaks the
+ * auth path itself; auditService logs its own failures internally.
+ */
+async function auditAuthEvent(entry: {
+  action: string;
+  userId?: number | string | null;
+  tenantId?: number | string | null;
+  email?: string;
+  outcome: 'success' | 'failure';
+  reason?: string;
+  ipAddress?: string;
+  userAgent?: string;
+}): Promise<void> {
+  try {
+    await auditService.logAction({
+      tenantId: entry.tenantId ?? undefined,
+      userId: entry.userId ?? undefined,
+      action: entry.action,
+      resourceType: 'user',
+      resourceId: entry.userId?.toString() ?? entry.email ?? 'unknown',
+      ipAddress: entry.ipAddress,
+      userAgent: entry.userAgent,
+      details: {
+        outcome: entry.outcome,
+        reason: entry.reason,
+        email: entry.email,
+      },
+    });
+  } catch (err) {
+    logger.warn('Audit log write failed (non-fatal)', {
+      err: err instanceof Error ? err.message : String(err),
+      action: entry.action,
+    });
+  }
+}
 import { sql } from 'drizzle-orm';
 import { eq, and } from 'drizzle-orm';
 import { users, organizations, organizationUsers } from '../../shared/schema';
@@ -303,6 +344,19 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     const user = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
 
     if (!user.length) {
+      // Audit: unknown-email login attempt. Log with the attempted email
+      // (no userId since none exists) so SOC tooling can correlate
+      // credential-stuffing attempts. We deliberately store the email
+      // (not just the hash) on the audit row — regulators want to see
+      // the literal attacker-supplied value.
+      await auditAuthEvent({
+        action: 'user_login',
+        email: normalizedEmail,
+        outcome: 'failure',
+        reason: 'unknown_email',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_001', message: 'Invalid credentials' },
@@ -314,6 +368,16 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     // ── Account Lockout Check ─────────────────────────────────────────────
     const lockStatus = await isAccountLocked(userData.id);
     if (lockStatus.locked) {
+      await auditAuthEvent({
+        action: 'user_login',
+        userId: userData.id,
+        tenantId: userData.defaultOrganizationId,
+        email: userData.email,
+        outcome: 'failure',
+        reason: 'account_locked',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(423).json({
         success: false,
         error: {
@@ -336,6 +400,16 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     if (!isPasswordValid) {
       // Record failed attempt and potentially lock
       const failResult = await recordFailedLogin(userData.id);
+      await auditAuthEvent({
+        action: 'user_login',
+        userId: userData.id,
+        tenantId: userData.defaultOrganizationId,
+        email: userData.email,
+        outcome: 'failure',
+        reason: failResult?.locked ? 'wrong_password_threshold_exceeded' : 'wrong_password',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_001', message: 'Invalid credentials' },
@@ -345,6 +419,10 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 
     // Successful password check — reset lockout counter
     await resetFailedLogins(userData.id);
+    // NOTE: the final "success" audit fires below after JWT issuance,
+    // so that MFA-required logins are recorded as challenge-issued, not
+    // session-created. See the audit call near `res.json({ success:
+    // true, accessToken, ... })`.
 
     const defaultOrganizationId = userData.defaultOrganizationId || null;
     let organizationId = defaultOrganizationId;
@@ -429,6 +507,19 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
         { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
       );
       logger.info('Dev mode — MFA skipped', { userId: userData.id });
+      // Audit: successful login (dev path, MFA bypassed). The bypass
+      // itself is recorded as part of `reason` so an inspector can
+      // distinguish dev-mode sessions from production logins.
+      await auditAuthEvent({
+        action: 'user_login',
+        userId: userData.id,
+        tenantId: organizationId,
+        email: userData.email,
+        outcome: 'success',
+        reason: 'dev_mfa_skipped',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.json({
         success: true,
         accessToken,
@@ -461,6 +552,20 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       organization?.uuid || null,
       jwtRole
     );
+
+    // Audit: password verified, MFA challenge issued. Recorded as a
+    // separate event from the eventual session creation (which happens
+    // on /mfa/verify). Inspectors can correlate the two via userId.
+    await auditAuthEvent({
+      action: 'user_login_mfa_challenge',
+      userId: userData.id,
+      tenantId: organizationId,
+      email: userData.email,
+      outcome: 'success',
+      reason: hasTotpSetup ? 'mfa_challenge_totp' : 'mfa_challenge_email',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
 
     if (hasTotpSetup) {
       // TOTP users get the authenticator app flow
@@ -799,10 +904,25 @@ router.post('/logout', async (req: Request, res: Response) => {
   try {
     const { revokeToken } = await import('../services/token-revocation.js');
 
-    // Extract token from Authorization header and revoke it
+    // Extract token from Authorization header and revoke it. We also
+    // try to decode the token (without verifying — it might be
+    // expired) so we can attribute the logout audit event to the
+    // user/tenant whose session ended.
     const authHeader = req.headers.authorization;
+    let auditUserId: string | number | undefined;
+    let auditOrgId: string | number | undefined;
+    let auditEmail: string | undefined;
+
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.slice(7);
+      try {
+        const decoded = jwt.decode(token) as Record<string, unknown> | null;
+        auditUserId = (decoded?.userId as string) ?? (decoded?.sub as string);
+        auditOrgId = decoded?.organizationId as string | undefined;
+        auditEmail = decoded?.email as string | undefined;
+      } catch {
+        /* decode failed — log anonymous logout */
+      }
       await revokeToken(token);
     }
 
@@ -810,6 +930,20 @@ router.post('/logout', async (req: Request, res: Response) => {
     if (req.body?.refreshToken) {
       await revokeToken(req.body.refreshToken);
     }
+
+    // Audit: session termination. Recorded regardless of whether the
+    // token was valid — a logout request from an expired session is
+    // still a meaningful event for inspectors (e.g. shows the user
+    // explicitly ended the session vs. just walking away).
+    await auditAuthEvent({
+      action: 'user_logout',
+      userId: auditUserId,
+      tenantId: auditOrgId,
+      email: auditEmail,
+      outcome: 'success',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
 
     res.json({ success: true, message: 'Logged out successfully. Tokens invalidated.' });
   } catch (error: any) {
