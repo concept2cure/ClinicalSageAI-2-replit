@@ -51,7 +51,10 @@ const DEFAULT_RULES: Record<string, RateLimitRule> = {
 };
 
 // In-memory store for rate limit tracking
-// In a production environment, consider using Redis for distributed rate limiting
+// In a production environment, consider using Redis for distributed rate limiting.
+// A hard cap on the number of tracked IPs prevents unbounded memory growth from
+// a flood of unique source IPs (intentional or accidental).
+const IP_LIMITER_MAX_KEYS = 10_000;
 const ipLimiters: Record<string, Record<string, RateLimitTracker>> = {};
 
 /**
@@ -91,8 +94,12 @@ export function createRateLimiter(customRules?: Record<string, RateLimitRule>) {
       return next();
     }
 
-    // Get client IP, fallback to a default if not available
-    const clientIp = req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
+    // Get client IP. Trust req.ip first (Express resolves trust-proxy config),
+    // then take only the LEFTMOST X-Forwarded-For entry — the rightmost ones
+    // are attacker-controllable for any client that can set the header.
+    const forwardedHeader = req.headers['x-forwarded-for'];
+    const forwarded = Array.isArray(forwardedHeader) ? forwardedHeader[0] : forwardedHeader;
+    const clientIp = req.ip || forwarded?.split(',')[0]?.trim() || 'unknown';
 
     // Determine appropriate rate limit category based on request path
     const category = getRateLimitCategory(req.path);
@@ -105,8 +112,19 @@ export function createRateLimiter(customRules?: Record<string, RateLimitRule>) {
 
     const now = Date.now();
 
-    // Initialize rate limit tracking for this IP if it doesn't exist
+    // Initialize rate limit tracking for this IP if it doesn't exist.
+    // Apply a hard cap on the number of tracked IPs to prevent unbounded
+    // growth under flood conditions; force a cleanup pass when at the cap and
+    // refuse to track a new IP until the cleanup makes room.
     if (!ipLimiters[clientIp]) {
+      if (Object.keys(ipLimiters).length >= IP_LIMITER_MAX_KEYS) {
+        cleanupOldEntries();
+        if (Object.keys(ipLimiters).length >= IP_LIMITER_MAX_KEYS) {
+          // Fail closed: do not allocate new state, but still allow the request
+          // (rate limiting is best-effort once the table is saturated).
+          return next();
+        }
+      }
       ipLimiters[clientIp] = {};
     }
 

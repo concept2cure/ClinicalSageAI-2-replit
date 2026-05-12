@@ -27,16 +27,28 @@ export class ApiError extends Error {
   }
 }
 
+const GENERIC_SERVER_ERROR_MESSAGE = 'Internal server error';
+
+function isProduction(): boolean {
+  return process.env.NODE_ENV === 'production';
+}
+
 /**
- * Formats HTTP error responses consistently
+ * Formats HTTP error responses consistently. In production, 5xx responses are
+ * scrubbed to a generic message with no `details` payload so internal state
+ * (stack traces, SQL fragments, file paths, PII) cannot leak to clients. The
+ * full error is still logged server-side with the request_id for correlation.
  */
 function formatError(error: any, req: Request) {
   // Default values
   const statusCode = error.statusCode || 500;
-  const message = error.message || 'Internal server error';
-  const errorCode = error.code || 'UNKNOWN_ERROR';
+  const rawMessage = error.message || GENERIC_SERVER_ERROR_MESSAGE;
+  const errorCode = error.code || (statusCode >= 500 ? 'SERVER_ERROR' : 'UNKNOWN_ERROR');
 
-  // Return formatted error response
+  const exposeInternals = !isProduction() || statusCode < 500;
+  const message = exposeInternals ? rawMessage : GENERIC_SERVER_ERROR_MESSAGE;
+  const details = exposeInternals ? error.details || undefined : undefined;
+
   return {
     error: {
       status: statusCode,
@@ -46,7 +58,7 @@ function formatError(error: any, req: Request) {
       method: req.method,
       timestamp: new Date().toISOString(),
       request_id: (req as any).id,
-      details: error.details || undefined,
+      details,
     },
   };
 }
