@@ -115,12 +115,28 @@ export const securityHeaders = config.isDevelopment
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
+          // TODO(hardening): scriptSrc still ships 'unsafe-inline' + 'unsafe-eval'
+          // because removing them requires either (a) replacing every inline
+          // <script> in the SPA build output with a nonce/hash or (b) moving
+          // to strict-dynamic with a per-request nonce threaded through the
+          // HTML response. Both are SPA-build coordination tasks, not
+          // middleware changes. Tracked as a follow-up to this branch.
           scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.jsdelivr.net'],
           styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
           imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
-          connectSrc: ["'self'", 'https://api.openai.com', 'https://*.neon.tech', 'wss:', 'ws:'],
+          // Only wss:// in production; ws:// would let MITM observers see
+          // socket traffic from a downgraded page.
+          connectSrc: ["'self'", 'https://api.openai.com', 'https://*.neon.tech', 'wss:'],
           frameSrc: ["'self'"],
+          // Restrict <base href="..."> injection — without this, an attacker
+          // who plants any HTML on the page can re-anchor every relative URL.
+          baseUri: ["'self'"],
+          // Restrict who can embed THIS app in an iframe — modern equivalent
+          // of frameguard. Matches the existing frameguard: sameorigin below.
+          frameAncestors: ["'self'"],
+          // Restrict where <form action="..."> can submit to.
+          formAction: ["'self'"],
           objectSrc: ["'none'"],
           upgradeInsecureRequests: [],
         },
@@ -237,62 +253,49 @@ export const rateLimiters = {
 
 // ============================================================================
 // INPUT SANITIZATION
+//
+// This middleware exists for ONE purpose: scrub prototype-pollution keys
+// (__proto__, constructor, prototype) from incoming objects so a malicious
+// JSON payload can't poison Object.prototype.
+//
+// It deliberately does NOT HTML-encode string values. Encoding at the input
+// boundary is a known anti-pattern: it corrupts stored data, double-encodes
+// on render, breaks JSON API consumers, and gives a false sense of XSS
+// protection. The correct defense is encoding at the output boundary, which
+// the SPA and templates already do. SQL injection is prevented by Drizzle's
+// parameterized queries, not by regex.
 // ============================================================================
 
-// Sanitize string to prevent XSS
-function sanitizeString(value: string): string {
-  if (typeof value !== 'string') return value;
+const SANITIZE_MAX_DEPTH = 10;
 
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .replace(/\//g, '&#x2F;')
-    .replace(/`/g, '&#96;');
-  // NOTE: SQL keyword stripping removed — Drizzle ORM uses parameterized queries,
-  // making regex-based SQL keyword removal unnecessary and harmful to legitimate content.
-}
+// Deep-scrub an object, dropping prototype-pollution keys. Strings, numbers,
+// booleans, and nulls are returned unchanged.
+export function scrubProtoKeys(obj: any, depth = 0): any {
+  if (depth > SANITIZE_MAX_DEPTH) return obj;
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(item => scrubProtoKeys(item, depth + 1));
 
-// Deep sanitize object
-function sanitizeObject(obj: any, depth = 0): any {
-  if (depth > 10) return obj; // Prevent infinite recursion
-
-  if (typeof obj === 'string') {
-    return sanitizeString(obj);
-  }
-
-  if (Array.isArray(obj)) {
-    return obj.map(item => sanitizeObject(item, depth + 1));
-  }
-
-  if (obj && typeof obj === 'object') {
-    const sanitized: any = {};
-    for (const [key, value] of Object.entries(obj)) {
-      // Skip prototype pollution attempts
-      if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
-        console.warn(`[SECURITY] Blocked prototype pollution attempt: ${key}`);
-        continue;
-      }
-      sanitized[key] = sanitizeObject(value, depth + 1);
+  const sanitized: any = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+      console.warn(`[SECURITY] Blocked prototype pollution attempt: ${key}`);
+      continue;
     }
-    return sanitized;
+    sanitized[key] = scrubProtoKeys(value, depth + 1);
   }
-
-  return obj;
+  return sanitized;
 }
 
 export function sanitizeInput(req: Request, res: Response, next: NextFunction) {
   try {
     if (req.body && typeof req.body === 'object') {
-      req.body = sanitizeObject(req.body);
+      req.body = scrubProtoKeys(req.body);
     }
     if (req.query && typeof req.query === 'object') {
-      req.query = sanitizeObject(req.query);
+      req.query = scrubProtoKeys(req.query);
     }
     if (req.params && typeof req.params === 'object') {
-      req.params = sanitizeObject(req.params);
+      req.params = scrubProtoKeys(req.params);
     }
     next();
   } catch (error) {
