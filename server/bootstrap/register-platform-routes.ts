@@ -1,7 +1,14 @@
 import type { NextFunction, Request, Response } from 'express';
 import type { PlatformBootstrapContext } from './types';
+import cspReportRouter from '../routes/csp-report';
+import { CSP_REPORT_URI } from '../middleware/enterprise-security';
 
 export async function registerPlatformRoutes({ app, pool, authMiddleware }: PlatformBootstrapContext) {
+  // CSP violation reporting — must match the report-uri set on the policy.
+  // Mounted on the platform router so it's available before any auth-gated
+  // routes need it, and so it survives the validateTenantContext skip list.
+  app.use(CSP_REPORT_URI, cspReportRouter);
+
   app.get('/healthz', (_req, res) => res.json({ ok: true, ts: Date.now() }));
   app.get('/readyz', async (_req, res) => {
     try {

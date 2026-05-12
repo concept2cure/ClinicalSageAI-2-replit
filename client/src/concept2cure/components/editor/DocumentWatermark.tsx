@@ -12,6 +12,7 @@
  */
 
 import React, { useMemo, useState, useCallback } from 'react';
+import { useCspNonce } from '@/hooks/useCspNonce';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -215,7 +216,8 @@ function TopBannerWatermark({
 const PRINT_STYLE = `@media print { [data-watermark] { display: none !important; } }`;
 
 function PrintHideStyle() {
-  return <style dangerouslySetInnerHTML={{ __html: PRINT_STYLE }} />;
+  const nonce = useCspNonce();
+  return <style nonce={nonce || undefined} dangerouslySetInnerHTML={{ __html: PRINT_STYLE }} />;
 }
 
 // ---------------------------------------------------------------------------

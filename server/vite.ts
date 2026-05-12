@@ -9,14 +9,20 @@ import { nanoid } from 'nanoid';
 const viteLogger = createLogger();
 
 /**
- * Inject `nonce="..."` into every `<script>` tag in the SPA template so
- * the per-request CSP nonce (set by `cspNonce` middleware in
- * server/middleware/enterprise-security.ts) authorizes the module loader.
- * No-op if the tag already has a nonce attribute.
+ * Inject the per-request CSP nonce into the SPA template:
+ *   1. Add `nonce="..."` to every <script> tag (authorizes the module
+ *      loader under script-src).
+ *   2. Replace the `__CSP_NONCE__` placeholder in the
+ *      `<meta name="csp-nonce">` tag so client-side code (cspNonce.ts)
+ *      can read it and apply it to runtime-injected <style> elements.
+ *
+ * No-op on the script transform if a script tag already has a nonce.
  */
 function injectCspNonce(html: string, nonce: string): string {
   if (!nonce) return html;
-  return html.replace(/<script\b(?![^>]*\bnonce=)([^>]*)>/gi, `<script nonce="${nonce}"$1>`);
+  return html
+    .replace(/<script\b(?![^>]*\bnonce=)([^>]*)>/gi, `<script nonce="${nonce}"$1>`)
+    .replace(/__CSP_NONCE__/g, nonce);
 }
 
 function readNonce(res: Response): string {

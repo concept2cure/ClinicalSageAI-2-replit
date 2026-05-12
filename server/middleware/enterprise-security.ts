@@ -118,6 +118,14 @@ const scriptSrcDirective = (_req: IncomingMessage, res: ServerResponse) => {
 // In development, keep CSP report-only so HMR/Vite injections don't break
 // the dev loop — violations still surface in the browser console where we
 // can act on them. Production enforces.
+/**
+ * CSP violation report endpoint path. Browsers POST to this URL when a
+ * directive is violated; the handler in server/routes/csp-report.ts logs
+ * the report. Defined as a constant so the middleware directive and the
+ * handler mount path stay in sync.
+ */
+export const CSP_REPORT_URI = '/api/csp-report';
+
 export const securityHeaders = config.isDevelopment
   ? helmet({
       contentSecurityPolicy: {
@@ -129,10 +137,17 @@ export const securityHeaders = config.isDevelopment
           // own scripts through its middleware — those get the nonce via
           // setupVite's transformIndexHtml hook.
           scriptSrc: ["'self'", scriptSrcDirective, "'strict-dynamic'", "'unsafe-eval'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
+          // Split style-src into elem (for <style> and <link>) and attr
+          // (for inline style="..."). React style={{...}} props are the
+          // pervasive case and stay allowed via style-src-attr; runtime
+          // <style> injection from Tiptap/Radix is nonced by the boot-time
+          // patch in client/src/cspNonce.ts.
+          styleSrcElem: ["'self'", scriptSrcDirective, "'unsafe-inline'"],
+          styleSrcAttr: ["'unsafe-inline'"],
           connectSrc: ["'self'", 'ws:', 'wss:', 'http://localhost:*'],
           imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
           frameSrc: ["'self'"],
+          reportUri: [CSP_REPORT_URI],
         },
       },
       crossOriginEmbedderPolicy: false,
@@ -152,16 +167,24 @@ export const securityHeaders = config.isDevelopment
           // (server/vite.ts), and strict-dynamic propagates trust to
           // imported chunks so we don't have to whitelist them.
           scriptSrc: ["'self'", scriptSrcDirective, "'strict-dynamic'"],
-          // style-src 'unsafe-inline' stays — Radix UI, Framer Motion, and
-          // React `style={{...}}` props all require it. Removing it is a
-          // separate UI-wide refactor.
-          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+          // style-src split: elem requires a nonce (no 'unsafe-inline'),
+          // attr keeps 'unsafe-inline' so React style={{...}} props work.
+          // Runtime <style> injection from Tiptap/Radix is auto-nonced by
+          // the boot-time createElement patch in client/src/cspNonce.ts.
+          // Google Fonts stylesheet is loaded via <link> from index.html.
+          styleSrcElem: [
+            "'self'",
+            scriptSrcDirective,
+            'https://fonts.googleapis.com',
+          ],
+          styleSrcAttr: ["'unsafe-inline'"],
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
           imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
           connectSrc: ["'self'", 'https://api.openai.com', 'https://*.neon.tech', 'wss:', 'ws:'],
           frameSrc: ["'self'"],
           objectSrc: ["'none'"],
           upgradeInsecureRequests: [],
+          reportUri: [CSP_REPORT_URI],
         },
       },
       crossOriginEmbedderPolicy: false, // Disable for PDF rendering
@@ -353,6 +376,7 @@ export function validateTenantContext(req: Request, res: Response, next: NextFun
     '/api/auth/login',
     '/api/auth/register',
     '/api/auth/signup',
+    '/api/csp-report',
   ];
   if (publicPaths.some(p => req.path.startsWith(p))) {
     return next();
