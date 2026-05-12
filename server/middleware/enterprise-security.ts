@@ -626,8 +626,11 @@ export function applySecurityMiddleware(app: any) {
   // category-based limits with persistence across restarts. Keeping per-path limiters below
   // for defense-in-depth on sensitive endpoints.
 
-  // Input sanitization
-  app.use(sanitizeInput);
+  // NOTE: sanitizeInput was previously mounted here. It is now mounted by
+  // server/startup/middleware.ts AFTER the body parsers — its prototype-
+  // pollution scrub needs req.body to be populated, and Express does not
+  // populate it until express.json runs. Mounting here ran the scrub on an
+  // undefined body, making the body-side protection a no-op.
 
   // CSRF protection (origin/referer validation for state-changing requests)
   app.use(csrfProtection);
