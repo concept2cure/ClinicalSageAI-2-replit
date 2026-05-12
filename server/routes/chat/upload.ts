@@ -18,11 +18,13 @@ import { pool } from '../../db.js';
 import { resolveGovernedContext } from '../../services/concept2cure/governedDocumentContractService.js';
 import { sha256 } from './provenance.js';
 import { createScopedLogger } from '../../utils/logger.js';
+import { verifyFileSignature } from '../../utils/fileSignature';
 
 const logger = createScopedLogger('chat-upload');
 
 export const uploadHandler = async (req: Request, res: Response) => {
   try {
+    const fileBuffer: Buffer | undefined = (req as any).file?.buffer;
     const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     const fileName = (req as any).file?.originalname || req.body?.fileName || 'uploaded_file';
     const mimeType =
@@ -31,6 +33,28 @@ export const uploadHandler = async (req: Request, res: Response) => {
     const projectId = req.body?.projectId || req.body?.project_id;
     const userId = (req as any).user?.id || null;
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+
+    // SECURITY: verify the actual file bytes match the declared MIME
+    // type. multer's `file.mimetype` comes from the request's
+    // Content-Type header — an attacker can set it to anything. The
+    // magic-number check catches an executable uploaded as
+    // `application/pdf`, an HTML phishing payload uploaded as
+    // `image/png`, etc. Only applied when we have a real buffer
+    // (memory-storage uploads); body-only requests skip this gate.
+    if (fileBuffer && fileBuffer.length > 0) {
+      const sig = verifyFileSignature(fileBuffer, mimeType);
+      if (!sig.ok) {
+        logger.warn('Upload rejected by signature check', {
+          fileName,
+          declaredMime: mimeType,
+          reason: sig.reason,
+        });
+        return res.status(400).json({
+          error: 'File content does not match declared type',
+          code: 'FILE_SIGNATURE_MISMATCH',
+        });
+      }
+    }
 
     // SECURITY: tenant-scoped storage path. The legacy `uploads/${fileId}`
     // flat layout meant any process that read by file id alone could
@@ -64,7 +88,6 @@ export const uploadHandler = async (req: Request, res: Response) => {
       }
 
       const artId = `artifact_chat_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-      const fileBuffer = (req as any).file?.buffer;
       const extractedText = fileBuffer && mimeType.startsWith('text/')
         ? fileBuffer.toString('utf8')
         : `[Uploaded via chat: ${fileName}] (${mimeType}, ${fileSize} bytes)`;
