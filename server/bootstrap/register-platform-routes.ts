@@ -172,6 +172,12 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
       '/api/billing/webhooks',
       // Firecrawl webhooks — signature verification (also mounted before body parser)
       '/api/firecrawl-webhooks',
+      // CSP violation reports — sent by browsers from any origin (the
+      // reporting endpoint must accept cross-origin POSTs by spec).
+      // No session auth; rate-limited at the route level.
+      '/api/csp-report',
+      // DTC pricing — public marketing page reads this. No tenant data.
+      '/api/billing/dtc-pricing',
     ];
     const fullPath = req.baseUrl + req.path;
     const isOpen = openPrefixes.some(p => fullPath === p || fullPath.startsWith(p + '/'));
