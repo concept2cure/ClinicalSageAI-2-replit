@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import express from 'express';
 import type { Pool } from 'pg';
+import { authenticateToken } from '../middleware/auth.js';
 
 export interface RegulatoryBootstrapContext {
   app: express.Express;
@@ -8,6 +9,12 @@ export interface RegulatoryBootstrapContext {
 }
 
 export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstrapContext) {
+  // SECURITY: every regulatory route family is tenant-scoped. FDA 510(k)
+  // payloads, CER reports, manufacturing batch records, PV case files,
+  // clinical operations data — all per-org. None should reach the
+  // public internet unauthenticated. The two "no path" mounts
+  // (documentOrchestration, esgSubmission) attach to the root router,
+  // so they get auth applied at app.use() level.
   // ── FDA/CERV2/Device regulatory routes (parallelized) ──
   {
     const regulatoryRouteResults = await Promise.allSettled([
@@ -37,11 +44,12 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
       if (result.status === 'fulfilled') {
         const router = result.value.default;
         if (mountPath) {
-          app.use(mountPath, router);
+          app.use(mountPath, authenticateToken, router);
         } else {
-          app.use(router);
+          // No path: mount at app root with auth required.
+          app.use(authenticateToken, router);
         }
-        console.log(`✅ ${label} routes mounted`);
+        console.log(`✅ ${label} routes mounted (auth-gated)`);
       } else {
         console.error(`❌ Failed to mount ${label} routes:`, result.reason);
       }
@@ -49,6 +57,10 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   }
 
   // ── IVDR (In Vitro Diagnostic Regulation EU 2017/746) ──
+  // Already auth-gated via the requireIVDRAccess wrapper below, which
+  // checks `req.userId` and rejects with 401 if missing. authenticateToken
+  // is still added in front so the JWT is parsed (and the role/perms
+  // claims become available) before requireIVDRAccess fires.
   try {
     const ivdrModule = await import('../routes/ivdr-routes');
     const createIVDRRoutes = ivdrModule.default;
@@ -169,7 +181,7 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
       console.error('❌ Failed to mount IVDR Binder routes:', binderErr);
     }
 
-    app.use('/api/ivdr', requireIVDRAccess, ivdrGateway);
+    app.use('/api/ivdr', authenticateToken, requireIVDRAccess, ivdrGateway);
     console.log('✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)');
 
     try {
@@ -187,7 +199,7 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   try {
     const mfgModule = await import('../routes/manufacturing-routes');
     const createManufacturingRoutes = mfgModule.default;
-    app.use('/api/manufacturing', createManufacturingRoutes(pool));
+    app.use('/api/manufacturing', authenticateToken, createManufacturingRoutes(pool));
     console.log('✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)');
   } catch (error) {
     console.error('❌ Failed to mount Manufacturing routes:', error);
@@ -197,7 +209,7 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   try {
     const pvModule = await import('../routes/pharmacovigilance-routes');
     const createPharmacovigilanceRoutes = pvModule.default;
-    app.use('/api/pharmacovigilance', createPharmacovigilanceRoutes());
+    app.use('/api/pharmacovigilance', authenticateToken, createPharmacovigilanceRoutes());
     console.log('✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)');
   } catch (error) {
     console.error('❌ Failed to mount Pharmacovigilance routes:', error);
@@ -207,7 +219,7 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   try {
     const clinOpsModule = await import('../routes/clinical-operations-routes');
     const createClinicalOperationsRoutes = clinOpsModule.default;
-    app.use('/api/clinical-operations', createClinicalOperationsRoutes(pool));
+    app.use('/api/clinical-operations', authenticateToken, createClinicalOperationsRoutes(pool));
     console.log(
       '✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)'
     );
@@ -218,7 +230,7 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   // ── CER (Clinical Evaluation Report) ──
   try {
     const cerModule = await import('../routes/cer-routes.js');
-    app.use('/api/cer', cerModule.default);
+    app.use('/api/cer', authenticateToken, cerModule.default);
     console.log('✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)');
   } catch (error) {
     console.error('❌ Failed to mount CER routes:', error);
@@ -229,7 +241,7 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   // PRECLINICAL_INGEST_ENABLED is unset so the deny is uniform per env.
   try {
     const preclinicalModule = await import('../routes/preclinical');
-    app.use('/api/preclinical', preclinicalModule.default);
+    app.use('/api/preclinical', authenticateToken, preclinicalModule.default);
     console.log('✅ Preclinical (Module 4) ingestion routes mounted');
   } catch (error) {
     console.error('❌ Failed to mount Preclinical routes:', error);
@@ -238,7 +250,7 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   // ── PDF task + compression ──
   try {
     const pdfTasksModule = await import('../routes/pdf-task-routes');
-    app.use('/api/pdf-tasks', pdfTasksModule.default);
+    app.use('/api/pdf-tasks', authenticateToken, pdfTasksModule.default);
     console.log('✅ PDF task + compression routes mounted');
   } catch (error) {
     console.error('❌ Failed to mount PDF task routes:', error);
@@ -247,7 +259,7 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   // ── GRDHE (Global Regulatory Data Harmonization Engine) ──
   try {
     const grdheModule = await import('../routes/grdheRoutes.js');
-    app.use('/api/grdhe', grdheModule.default);
+    app.use('/api/grdhe', authenticateToken, grdheModule.default);
     console.log('✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)');
   } catch (error) {
     console.error('❌ Failed to mount GRDHE routes:', error);
@@ -256,7 +268,7 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   // ── CERV2 Unified Document Routes ──
   try {
     const cerv2DocumentModule = await import('../routes/cerv2-document-routes');
-    app.use('/api/cerv2', cerv2DocumentModule.default);
+    app.use('/api/cerv2', authenticateToken, cerv2DocumentModule.default);
     console.log('✅ CERV2 unified document routes mounted');
   } catch (error) {
     console.error('❌ Failed to mount CERV2 document routes:', error);
