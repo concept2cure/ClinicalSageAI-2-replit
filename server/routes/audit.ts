@@ -17,11 +17,39 @@
  *  - Chain integrity monitoring is available on-demand.
  */
 
-import { Router, type Request, type Response } from 'express';
+import { Router, type Request, type Response, type NextFunction } from 'express';
 import { getPool } from '../db';
 
 const pool = getPool();
 const router = Router();
+
+/**
+ * Extract the authenticated org id from the JWT. Returns -1 on missing
+ * context so the caller can short-circuit with 403. We never default to
+ * a hardcoded org id (the legacy `?? 1` pattern we just removed
+ * elsewhere) — for audit data, that's the worst possible failure mode:
+ * silently mixing tenant histories.
+ */
+function authedOrgId(req: Request): number {
+  const raw =
+    (req as any).user?.organizationId ??
+    (req as any).tenantContext?.organizationId ??
+    (req as any).organizationId;
+  const n = raw == null ? NaN : Number(raw);
+  return Number.isFinite(n) ? n : -1;
+}
+
+/**
+ * Router-level guard: every audit endpoint MUST have a JWT-derived
+ * organization id. Reject with 403 once here so individual handlers
+ * can rely on the value being present.
+ */
+router.use((req: Request, res: Response, next: NextFunction) => {
+  if (authedOrgId(req) < 0) {
+    return res.status(403).json({ error: 'Tenant context required' });
+  }
+  next();
+});
 
 // ---------------------------------------------------------------------------
 // Helper: queryAuditEvents
@@ -119,7 +147,12 @@ router.get('/logs', async (req: Request, res: Response) => {
   try {
     const limit = Math.max(1, parseInt(String(req.query.limit || '10'), 10));
     const offset = Math.max(0, parseInt(String(req.query.offset || '0'), 10));
-    const { rows, total } = await queryAuditEvents(req.query, limit, offset);
+    // Force the org filter to the JWT-derived value. Any
+    // ?org_id=N or ?tenantId=N in the query is ignored — those were the
+    // attacker-controlled fields that let any user read any tenant's
+    // audit history.
+    const queryParams = { ...req.query, org_id: authedOrgId(req), tenantId: undefined };
+    const { rows, total } = await queryAuditEvents(queryParams, limit, offset);
 
     return res.json({
       logs: rows.map(formatAuditRow),
@@ -139,7 +172,9 @@ router.get('/logs', async (req: Request, res: Response) => {
 
 router.get('/events', async (req: Request, res: Response) => {
   try {
-    const { rows, total } = await queryAuditEvents(req.query, 50, 0);
+    // Same JWT-org override as /logs — query/tenantId are ignored.
+    const queryParams = { ...req.query, org_id: authedOrgId(req), tenantId: undefined };
+    const { rows, total } = await queryAuditEvents(queryParams, 50, 0);
     return res.json({
       success: true,
       events: rows.map((row: any) => ({
@@ -172,21 +207,29 @@ router.get('/events', async (req: Request, res: Response) => {
 router.post('/events', async (req: Request, res: Response) => {
   try {
     const body = req.body || {};
-    if (!body.organizationId) {
-      return res.status(401).json({ error: 'Organization context required' });
-    }
+    // SECURITY: organization_id, user_id, and ip_address are sourced
+    // from the request context — NEVER from the request body. Audit
+    // record integrity demands the actor be the actual JWT principal,
+    // not a value the caller asserts. The previous code took
+    // body.organizationId verbatim, which would have let a caller
+    // write fake audit events under any tenant id and any user id.
+    const organizationId = authedOrgId(req);
+    const userId = Number((req as any).user?.id ?? (req as any).user?.userId ?? 0);
+    const userName = (req as any).user?.email ?? 'System';
+    const userRole = (req as any).user?.role ?? 'user';
+
     const result = await pool.query(
       `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, $11, $12, NOW()) RETURNING id`,
       [
-        body.organizationId,
+        organizationId,
         body.eventType || body.event_type || 'general',
         body.entityType || body.entity_type || 'system',
         body.entityId || body.entity_id || 0,
-        body.userId || body.user_id || 0,
-        body.userName || body.user_name || 'System',
-        body.userRole || body.user_role || 'user',
-        body.ipAddress || body.ip_address || req.ip || '',
+        userId,
+        userName,
+        userRole,
+        req.ip || '',
         body.reason || body.details || null,
         JSON.stringify(body.metadata || body.payload || {}),
         body.regulatorySignificant || false,
@@ -216,6 +259,16 @@ router.post('/events/batch', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'events array is required and must not be empty' });
     }
 
+    // SECURITY: same contract as POST /events — every record in the
+    // batch is stamped with the JWT-derived org/user. Per-event
+    // organizationId / userId in the body are ignored. This means a
+    // single batch can ONLY write audit events for the caller's own
+    // tenant, regardless of what the payload claims.
+    const organizationId = authedOrgId(req);
+    const userId = Number((req as any).user?.id ?? (req as any).user?.userId ?? 0);
+    const userName = (req as any).user?.email ?? 'System';
+    const userRole = (req as any).user?.role ?? 'user';
+
     // Limit batch size to prevent abuse
     const batch = events.slice(0, 50);
     const results: { eventId: number; action: string }[] = [];
@@ -226,13 +279,13 @@ router.post('/events/batch', async (req: Request, res: Response) => {
           `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant, created_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, $11, $12, NOW()) RETURNING id`,
           [
-            evt.organizationId,
+            organizationId,
             evt.eventType || evt.action || 'general',
             evt.entityType || 'document',
             evt.entityId || 0,
-            evt.userId || evt.user?.id || 0,
-            evt.userName || evt.user?.name || 'System',
-            evt.userRole || evt.user?.role || 'user',
+            userId,
+            userName,
+            userRole,
             req.ip || '',
             evt.reason || null,
             JSON.stringify(evt.metadata || evt.details || {}),
@@ -266,17 +319,26 @@ router.post('/events/batch', async (req: Request, res: Response) => {
 router.post('/signatures', async (req: Request, res: Response) => {
   try {
     const body = req.body || {};
-    // Store signature as an audit event with signature metadata
+    // SECURITY: signatures carry the strongest evidentiary weight in
+    // the audit trail (21 CFR Part 11). The signer is the JWT user
+    // verbatim — body.userId / body.signedBy are ignored to prevent a
+    // caller from claiming a signature on behalf of someone else, and
+    // organizationId is JWT-bound so a signature can only be applied
+    // to the caller's own tenant's documents.
+    const organizationId = authedOrgId(req);
+    const userId = Number((req as any).user?.id ?? (req as any).user?.userId ?? 0);
+    const signedBy = String((req as any).user?.email ?? userId);
+
     const result = await pool.query(
       `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, ip_address, timestamp,
        signature_status, signed_by, signed_date, signature_meaning, reason, metadata, regulatory_significant, gxp_relevant, created_at)
        VALUES ($1, 'signature.create', $2, $3, $4, $5, $6, NOW(), 'signed', $5, NOW(), $7, $8, $9, true, true, NOW()) RETURNING id`,
       [
-        body.organizationId,
+        organizationId,
         body.entityType || 'document',
         body.entityId || 0,
-        body.userId || 0,
-        body.signedBy || body.userId || 'system',
+        userId,
+        signedBy,
         req.ip || '',
         body.meaning || 'Electronically signed',
         body.reason || null,
@@ -309,10 +371,15 @@ router.post('/signatures', async (req: Request, res: Response) => {
 router.get('/signatures/:signatureId/verify', async (req: Request, res: Response) => {
   try {
     const sigId = req.params.signatureId.replace('SIG_', '');
+    // SECURITY: tenant-isolate the lookup. Without the org filter,
+    // ANY authenticated user could verify (and thereby read details
+    // of) another tenant's regulatory signatures by enumerating ids.
+    // Foreign tenant ⇒ 404, same as missing.
+    const organizationId = authedOrgId(req);
     const result = await pool.query(
       `SELECT id, entity_type, entity_id, signed_by, signed_date, signature_meaning, reason, signature_status
-       FROM audit_events WHERE id = $1 AND event_type = 'signature.create'`,
-      [parseInt(sigId) || 0]
+       FROM audit_events WHERE id = $1 AND organization_id = $2 AND event_type = 'signature.create'`,
+      [parseInt(sigId) || 0, organizationId]
     );
 
     if (result.rows.length === 0) {
@@ -351,7 +418,9 @@ router.get('/', async (req: Request, res: Response) => {
     const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
     const limit = Math.max(1, parseInt(String(req.query.limit || '10'), 10));
     const offset = (page - 1) * limit;
-    const { rows, total } = await queryAuditEvents(req.query, limit, offset);
+    // JWT-bound org filter; ignore any ?org_id= / ?tenantId= override.
+    const queryParams = { ...req.query, org_id: authedOrgId(req), tenantId: undefined };
+    const { rows, total } = await queryAuditEvents(queryParams, limit, offset);
 
     return res.json({
       logs: rows.map(formatAuditRow),
@@ -381,7 +450,10 @@ router.get('/export', async (req: Request, res: Response) => {
     const userName = (req as any).user?.name || (req as any).user?.email || String(userId);
 
     const signedExport = await generateSignedAuditExport(pool, {
-      organizationId: req.query.org_id ? parseInt(String(req.query.org_id), 10) : undefined,
+      // SECURITY: JWT-bound. Any ?org_id= override is ignored — an
+      // attacker would otherwise be able to export another tenant's
+      // entire signed audit history.
+      organizationId: authedOrgId(req),
       startDate: req.query.start_date ? String(req.query.start_date) : undefined,
       endDate: req.query.end_date ? String(req.query.end_date) : undefined,
       eventType: req.query.event_type ? String(req.query.event_type) : undefined,
@@ -422,7 +494,10 @@ router.get('/export/signed', async (req: Request, res: Response) => {
     const userName = (req as any).user?.name || (req as any).user?.email || String(userId);
 
     const signedExport = await generateSignedAuditExport(pool, {
-      organizationId: req.query.org_id ? parseInt(String(req.query.org_id), 10) : undefined,
+      // SECURITY: JWT-bound. Any ?org_id= override is ignored — an
+      // attacker would otherwise be able to export another tenant's
+      // entire signed audit history.
+      organizationId: authedOrgId(req),
       startDate: req.query.start_date ? String(req.query.start_date) : undefined,
       endDate: req.query.end_date ? String(req.query.end_date) : undefined,
       eventType: req.query.event_type ? String(req.query.event_type) : undefined,
