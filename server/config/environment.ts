@@ -79,25 +79,35 @@ const getDatabaseUrl = (): string => {
   return url;
 };
 
+// Minimum entropy for the HMAC secret used to sign JWTs. 32 bytes is the
+// floor for HS256 — a shorter secret is brute-forceable. Enforced at
+// config-load time so a misconfigured deployment fails fast rather than
+// silently issuing weak tokens.
+const JWT_SECRET_MIN_LENGTH = 32;
+
 const getJwtSecret = (): string => {
   const suffix = ENV_MAP[ENV];
   const envVar = `JWT_SECRET_${suffix}`;
-  const secret = process.env[envVar];
+  const candidate = process.env[envVar] ?? process.env.JWT_SECRET;
 
-  // If the environment-specific secret is set, use it
-  if (secret) {
-    return secret;
+  if (!candidate) {
+    throw new Error(
+      `[FATAL] Missing required JWT secret. ` +
+        `Set ${envVar} or JWT_SECRET to a secure random string of at least ${JWT_SECRET_MIN_LENGTH} characters.`,
+    );
   }
 
-  // Fall back to generic JWT_SECRET
-  if (process.env.JWT_SECRET) {
-    return process.env.JWT_SECRET;
+  if (candidate.length < JWT_SECRET_MIN_LENGTH) {
+    // Don't echo the value or even the source env var in the message —
+    // log messages flow to many destinations and the source var name
+    // narrows where to look for the leak.
+    throw new Error(
+      `[FATAL] JWT secret too short: ${candidate.length} characters. ` +
+        `Minimum is ${JWT_SECRET_MIN_LENGTH}. Use a cryptographically random value.`,
+    );
   }
 
-  throw new Error(
-    `[FATAL] Missing required JWT secret. ` +
-      `Set ${envVar} or JWT_SECRET to a secure random string of at least 32 characters.`
-  );
+  return candidate;
 };
 
 // Export configuration for the current environment

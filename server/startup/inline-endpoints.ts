@@ -13,6 +13,9 @@
 
 import type { Express, Request, Response } from 'express';
 import type { Pool } from 'pg';
+import { createScopedLogger } from '../utils/logger';
+
+const logger = createScopedLogger('inline-endpoints');
 
 /**
  * Mount fast-path health endpoints BEFORE security/rate-limit/compression.
@@ -45,7 +48,11 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
       const status = result.status === 'healthy' ? 200 : result.status === 'degraded' ? 200 : 503;
       res.status(status).json(result);
     } catch (err: any) {
-      res.status(500).json({ status: 'error', message: err?.message });
+      // Log the raw cause server-side; never echo it back. Exception
+      // messages from the health checker can carry DB DSN fragments,
+      // file paths, env var names — all leakage on a public endpoint.
+      logger.error('Health check failed', { err: err?.message ?? String(err) });
+      res.status(500).json({ status: 'error' });
     }
   });
 
