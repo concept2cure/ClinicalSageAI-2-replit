@@ -92,11 +92,11 @@ export function applyCoreMiddleware(app: Express, debugLog: DebugLogger): void {
  */
 export function applyDebugRequestLogging(app: Express, debugLog: DebugLogger): void {
   app.use((req: Request, _res: Response, next) => {
-    const isConcept2cureRoute = req.url.startsWith('/api/concept2cure');
+    const isConcept2cureRoute = isConcept2cureApiRoute(req);
     debugLog(`${req.method} ${req.url}`, {
       headers: req.headers,
       query: req.query,
-      body: req.method !== 'GET' && !isConcept2cureRoute ? req.body : undefined,
+      body: shouldLogRequestBody(req, isConcept2cureRoute) ? req.body : undefined,
       bodyRedacted: isConcept2cureRoute ? true : undefined,
     });
     next();
@@ -110,8 +110,7 @@ const IMMUTABLE_ROUTE_PATTERNS = [
 
 function applyImmutabilityPolicy(app: Express): void {
   app.use((req: Request, res: Response, next: NextFunction) => {
-    const isDestructive =
-      req.method === 'DELETE' || (req.method === 'POST' && req.path.includes('bulk-delete'));
+    const isDestructive = isDestructiveAuditMutation(req);
     if (isDestructive) {
       const isImmutable = IMMUTABLE_ROUTE_PATTERNS.some(pattern => pattern.test(req.path));
       if (isImmutable) {
@@ -129,4 +128,24 @@ function applyImmutabilityPolicy(app: Express): void {
     }
     next();
   });
+}
+
+export function isConcept2cureApiRoute(req: Pick<Request, 'originalUrl' | 'path' | 'url'>): boolean {
+  const requestPath = req.originalUrl || req.path || req.url || '';
+  return /^\/api\/concept2cure(?:\/|\?|$)/.test(requestPath);
+}
+
+export function shouldLogRequestBody(
+  req: Pick<Request, 'method'>,
+  isConcept2cureRoute: boolean
+): boolean {
+  if (isConcept2cureRoute) return false;
+  return !['GET', 'HEAD', 'OPTIONS'].includes(req.method.toUpperCase());
+}
+
+export function isDestructiveAuditMutation(req: Pick<Request, 'method' | 'path'>): boolean {
+  return (
+    req.method === 'DELETE' ||
+    (req.method === 'POST' && /(?:^|\/)bulk-delete(?:\/|$)/i.test(req.path))
+  );
 }
