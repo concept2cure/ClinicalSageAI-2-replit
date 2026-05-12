@@ -132,12 +132,19 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
       }
     }
 
-    // Register governed export (fail-closed for regulated export path)
+    // Register governed export (fail-closed for regulated export path).
+    // SECURITY: the org/user attribution on the export audit record
+    // must be the JWT principal, not a `|| 1` / `|| 0` fallback that
+    // would have stamped exports with a placeholder identity.
     const user = (req as any).user;
+    const govOrgId = user?.organizationId ?? (req as any).tenantContext?.organizationId;
+    if (govOrgId == null || user?.id == null) {
+      return res.status(403).json({ error: 'Tenant context required for governed export' });
+    }
     const governanceResult = await registerExportGovernanceQuick({
-      organizationId: user?.organizationId || 1,
+      organizationId: Number(govOrgId),
       projectId: submissionId,
-      userId: user?.id || 0,
+      userId: Number(user.id),
       userName: user?.name || user?.email || 'unknown',
       title: `eCTD Package: ${result.filename}`,
       exportFormat: 'zip',
@@ -232,14 +239,18 @@ router.get('/:submissionId/preview', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Valid numeric submission ID required' });
   }
 
+  // SECURITY: JWT-bound. The legacy chain that fell back to
+  // `?organizationId=` and then to `|| 1` was a double IDOR: pre-auth
+  // requests would generate an eCTD package for org 1, and post-auth
+  // requests could target any org via the query string.
   const organizationId =
-    (req as any).organizationId ||
-    (req as any).user?.organizationId ||
-    parseInt(req.query.organizationId as string) ||
-    1;
+    (req as any).user?.organizationId ?? (req as any).tenantContext?.organizationId;
+  if (organizationId == null) {
+    return res.status(403).json({ error: 'Tenant context required' });
+  }
 
   try {
-    const result = await generateEctdPackage(submissionId, organizationId, {
+    const result = await generateEctdPackage(submissionId, Number(organizationId), {
       region: (req.query.region as string) || 'FDA',
     });
 

@@ -167,9 +167,11 @@ router.get('/pricing', async (req: Request, res: Response) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/dtc-checkout', authenticateToken, async (req: Request, res: Response) => {
   try {
-    const orgId = req.body.organizationId
-      || (req as any).tenantContext?.organizationId
-      || (req as any).user?.organizationId;
+    // SECURITY: a body-supplied organizationId would have let a caller
+    // start a DTC checkout that bills another tenant's payment method.
+    // Source the org from the JWT only.
+    const orgId =
+      (req as any).tenantContext?.organizationId ?? (req as any).user?.organizationId;
 
     if (!orgId) {
       return res.status(401).json({ error: 'Organization context required' });
