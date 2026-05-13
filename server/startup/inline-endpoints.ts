@@ -99,6 +99,23 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // Security health gauges. Sourced from the periodic scheduler's
+      // cached result so /api/metrics scrapes don't trigger a full
+      // panel run (which would do an EICAR scan, chain verify, etc.).
+      // Empty when the scheduler hasn't run yet.
+      try {
+        const { renderSecurityHealthMetrics } = await import(
+          '../services/securityHealthScheduler.js'
+        );
+        const securityMetrics = renderSecurityHealthMetrics();
+        if (securityMetrics) {
+          // Strip trailing newline; the join below will re-add it.
+          lines.push(securityMetrics.trimEnd());
+        }
+      } catch {
+        /* scheduler not loaded yet — skip */
+      }
+
       res.set('Content-Type', 'text/plain; version=0.0.4');
       res.send(lines.join('\n') + '\n');
     } catch (_err: any) {

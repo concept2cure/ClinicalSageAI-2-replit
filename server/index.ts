@@ -147,6 +147,18 @@ async function startServer() {
     await runBootSecuritySelfTest(pool);
   }
 
+  // Periodic posture monitor — re-runs the self-test panel on a
+  // fixed interval so drift (clamd down, audit chain broken, etc.)
+  // is observed without an operator manually probing the admin
+  // endpoint. Idempotent — safe across hot-reload. Disabled via
+  // SECURITY_HEALTH_DISABLE_SCHEDULER=true (used in tests).
+  {
+    const { startSecurityHealthScheduler } = await import(
+      './services/securityHealthScheduler'
+    );
+    startSecurityHealthScheduler(pool);
+  }
+
   debugLog('Initializing Python backend...');
   pythonProcess = await startPythonBackend();
   debugLog('Python backend initialization complete');
