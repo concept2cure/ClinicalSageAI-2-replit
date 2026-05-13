@@ -16,6 +16,45 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { generateEctdPackage, validateEctdPackage } from '../services/ectdExportService';
 import { registerExportGovernanceQuick } from '../services/compute/exportGovernance';
+import auditService from '../services/auditService';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('ectd-export');
+
+/**
+ * Fire-and-forget audit for eCTD content access. 21 CFR Part 11
+ * §11.10(e) requires every view / generation of regulated submission
+ * content to be logged with attribution. Non-fatal on failure — the
+ * response stream is the user value, the audit row is the regulator
+ * value.
+ */
+async function auditEctdAccess(
+  req: Request,
+  organizationId: number,
+  submissionId: number,
+  action: 'ectd_export_generated' | 'ectd_export_previewed' | 'ectd_export_validated',
+  details: Record<string, unknown> = {},
+): Promise<void> {
+  try {
+    const user = (req as any).user;
+    await auditService.logAction({
+      tenantId: organizationId,
+      userId: user?.id ?? user?.userId,
+      action,
+      resourceType: 'ectd_submission',
+      resourceId: String(submissionId),
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details,
+    });
+  } catch (err) {
+    log.warn('eCTD audit write failed (non-fatal)', {
+      err: err instanceof Error ? err.message : String(err),
+      action,
+      submissionId,
+    });
+  }
+}
 
 const router = Router();
 
@@ -72,15 +111,15 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Valid numeric submission ID required' });
   }
 
-  // SECURITY: Always derive org from authenticated context — never from body
+  // SECURITY: org id from JWT only — the legacy `|| 1` fallback at the
+  // end of the chain would have generated and emitted another tenant's
+  // eCTD package when JWT context was missing. Even if upstream auth
+  // catches the missing JWT today, the defense-in-depth keeps a future
+  // misconfiguration from leaking.
   const organizationId =
-    (req as any).organizationId ||
-    (req as any).user?.organizationId ||
-    (req as any).tenantId ||
-    (req as any).tenantContext?.organizationId ||
-    1;
+    (req as any).user?.organizationId ?? (req as any).tenantContext?.organizationId;
 
-  if (!organizationId) {
+  if (organizationId == null) {
     return res.status(403).json({ error: 'Organization context required' });
   }
 
@@ -161,9 +200,19 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
       });
     }
 
+    // Audit the export BEFORE returning the buffer. Even if the
+    // response stream fails downstream, the user-requested
+    // generation is the §11.10(e) event we need to record.
+    await auditEctdAccess(req, Number(organizationId), submissionId, 'ectd_export_generated', {
+      packageSizeBytes: result.buffer?.length,
+      region: req.body?.region ?? 'FDA',
+    });
+
     return res.send(result.buffer);
   } catch (error: any) {
-    console.error('[eCTD Export] Failed:', error);
+    log.error('eCTD Export failed', {
+      err: error instanceof Error ? error.message : String(error),
+    });
     return res.status(500).json({
       error: 'eCTD package generation failed',
       message: error.message,
@@ -195,16 +244,25 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
     const zipBuffer = Buffer.concat(chunks);
 
     if (zipBuffer.length === 0) {
-      // If no body, generate a package and validate it
+      // If no body, generate a package and validate it. SECURITY:
+      // org id from JWT only — the legacy `|| 1` fallback would have
+      // generated another tenant's package on an unauth request.
       const organizationId =
-        (req as any).organizationId ||
-        (req as any).user?.organizationId ||
-        (req as any).tenantId ||
-        (req as any).tenantContext?.organizationId ||
-        1;
+        (req as any).user?.organizationId ?? (req as any).tenantContext?.organizationId;
+      if (organizationId == null) {
+        return res.status(403).json({ error: 'Organization context required' });
+      }
 
-      const result = await generateEctdPackage(submissionId, organizationId);
+      const result = await generateEctdPackage(submissionId, Number(organizationId));
       const validation = await validateEctdPackage(result.buffer);
+
+      await auditEctdAccess(
+        req,
+        Number(organizationId),
+        submissionId,
+        'ectd_export_validated',
+        { mode: 'generated-then-validated', valid: validation?.valid },
+      );
 
       return res.json({
         submissionId,
@@ -214,6 +272,20 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
     }
 
     const validation = await validateEctdPackage(zipBuffer);
+
+    // Validation of a user-supplied buffer is also a §11.10(e) view
+    // event — recorded under the JWT-bound tenant when available.
+    const orgIdForAudit =
+      (req as any).user?.organizationId ?? (req as any).tenantContext?.organizationId;
+    if (orgIdForAudit != null) {
+      await auditEctdAccess(
+        req,
+        Number(orgIdForAudit),
+        submissionId,
+        'ectd_export_validated',
+        { mode: 'user-supplied-buffer', valid: validation?.valid },
+      );
+    }
 
     return res.json({
       submissionId,
@@ -264,6 +336,11 @@ router.get('/:submissionId/preview', async (req: Request, res: Response) => {
     const folders = Object.keys(zip.files)
       .filter(f => zip.files[f].dir)
       .sort();
+
+    await auditEctdAccess(req, Number(organizationId), submissionId, 'ectd_export_previewed', {
+      region: (req.query.region as string) || 'FDA',
+      fileCount: files.length,
+    });
 
     return res.json({
       submissionId,
