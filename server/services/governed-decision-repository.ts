@@ -168,10 +168,20 @@ export async function recordGovernedDecision(
     timestamp,
   };
 
+  const orgIdNumeric = Number(evaluation.context.organizationId);
+  if (!Number.isFinite(orgIdNumeric) || orgIdNumeric <= 0) {
+    throw new Error(
+      `recordGovernedDecision: invalid organizationId ${JSON.stringify(
+        evaluation.context.organizationId,
+      )}. Refusing to write a governance record without a valid tenant — ` +
+        `defaulting to a hardcoded org id is the bug class that PRs #496-#499 fixed.`,
+    );
+  }
+
   try {
     const { decisionRecordService } = await import('./decision-record-service.js');
     await decisionRecordService.create({
-      organizationId: Number(evaluation.context.organizationId) || 1,
+      organizationId: orgIdNumeric,
       projectId: Number(evaluation.context.projectId) || 0,
       decisionCode: `governed-fabric:${decisionId}`,
       title: `Governed ${evaluation.context.intendedAction}: ${evaluation.decision.outcome}`.slice(0, 200),

@@ -14,14 +14,13 @@
  */
 
 import { Router, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
-import { config } from '../config/environment';
 import { approvalOrchestrator } from '../services/workflow/ApprovalOrchestrator';
 import { db } from '../db';
 import { eq, and } from 'drizzle-orm';
 import { workflowTemplates, workflowSteps } from '../../shared/schema/unified_workflow';
 
 import { createScopedLogger } from '../utils/logger.js';
+import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 
 const logger = createScopedLogger('approval-workflow');
 
@@ -42,7 +41,7 @@ function getUser(req: Request): { userId: string; organizationId: string } | nul
   if (!token) return null;
 
   try {
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
+    const decoded = verifyJwtWithRotation(token) as {
       userId: string;
       organizationId?: string;
     };

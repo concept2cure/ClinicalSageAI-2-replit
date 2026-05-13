@@ -10,7 +10,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import type { Pool } from 'pg';
-import jwt from 'jsonwebtoken';
+import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { db } from '../db';
 import { getPool } from '../db';
 import { and, eq } from 'drizzle-orm';
@@ -167,7 +167,7 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ["HS256"] }) as {
+    const decoded = verifyJwtWithRotation(token) as {
       userId: string;
       organizationId: string;
       organizationUuid?: string;

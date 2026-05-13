@@ -13,6 +13,7 @@
 
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
+import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { db } from '../db';
 import { eq } from 'drizzle-orm';
 import { users } from '../../shared/schema';
@@ -497,9 +498,7 @@ export function verifyMfaChallengeToken(token: string): {
   role: string;
 } | null {
   try {
-    const jwtSecret = requireJwtSecret();
-
-    const decoded = jwt.verify(token, jwtSecret, { algorithms: ["HS256"] }) as {
+    const decoded = verifyJwtWithRotation(token) as {
       userId: string;
       email: string;
       organizationId: string;
