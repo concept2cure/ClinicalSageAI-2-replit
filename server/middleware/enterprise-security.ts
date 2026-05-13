@@ -700,6 +700,36 @@ export function requireJwtSecret(): void {
  * adds defense-in-depth by validating Origin/Referer on state-changing
  * requests in production.
  */
+/**
+ * Fire-and-forget audit-event writer for security middleware. Dynamic
+ * import of auditService keeps boot fast and avoids a cycle between
+ * security middleware and the service that depends on the DB pool.
+ */
+function auditSecurityEvent(
+  req: Request,
+  action: string,
+  details: Record<string, unknown>,
+): void {
+  (async () => {
+    try {
+      const { default: auditService } = await import('../services/auditService');
+      const user = (req as any).user;
+      await auditService.logAction({
+        tenantId: user?.organizationId,
+        userId: user?.id ?? user?.userId,
+        action,
+        resourceType: 'security_event',
+        resourceId: req.path,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details,
+      });
+    } catch {
+      /* audit failure is non-fatal for security middleware */
+    }
+  })();
+}
+
 export function csrfProtection(req: Request, res: Response, next: NextFunction) {
   // Only check state-changing methods
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
@@ -727,6 +757,14 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     if (req.headers.authorization?.startsWith('Bearer ')) {
       return next();
     }
+    // Audit + log. Repeated CSRF failures from a single IP suggest
+    // active attack; recording them gives SOC visibility and gives
+    // regulators a queryable surface for the failure rate.
+    auditSecurityEvent(req, 'csrf_validation_failed', {
+      reason: 'no_origin_no_referer_no_bearer',
+      method: req.method,
+    });
+    // eslint-disable-next-line no-console
     console.warn(
       `[SECURITY] CSRF: state-changing request without Origin/Referer/Bearer on ${req.path}`
     );
@@ -737,6 +775,12 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     !config.allowedOrigins.includes(source) &&
     !(source.endsWith('.app.github.dev') && !config.isProduction)
   ) {
+    auditSecurityEvent(req, 'csrf_validation_failed', {
+      reason: 'origin_mismatch',
+      method: req.method,
+      origin: source,
+    });
+    // eslint-disable-next-line no-console
     console.warn(
       `[SECURITY] CSRF: origin mismatch — ${source} not in allowedOrigins for ${req.path}`
     );

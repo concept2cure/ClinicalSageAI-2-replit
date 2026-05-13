@@ -600,7 +600,33 @@ router.post('/chain-monitor/check', async (_req: Request, res: Response) => {
 // Bulk-delete is permanently disabled.
 // ---------------------------------------------------------------------------
 
-router.post('/bulk-delete', async (_req: Request, res: Response) => {
+router.post('/bulk-delete', async (req: Request, res: Response) => {
+  // SECURITY: the request itself is a regulatory red flag. Someone is
+  // asking the server to violate Part 11 append-only — record WHO
+  // tried and WHEN before responding. The audit event lands in the
+  // same table they tried to delete from, by design.
+  try {
+    const user = (req as any).user;
+    await pool.query(
+      `INSERT INTO audit_events (
+         organization_id, event_type, entity_type, entity_id, user_id, user_name,
+         user_role, ip_address, timestamp, reason, regulatory_significant,
+         gxp_relevant, created_at
+       ) VALUES ($1, 'audit_bulk_delete_attempt', 'audit_trail', 0, $2, $3, $4, $5,
+                 NOW(), 'Part 11 immutability violation attempt', true, true, NOW())`,
+      [
+        authedOrgId(req),
+        Number(user?.id ?? user?.userId ?? 0),
+        user?.email ?? 'unknown',
+        user?.role ?? 'user',
+        req.ip || '',
+      ],
+    );
+  } catch {
+    /* audit failure is non-fatal — the 403 response below is the
+       enforcement; the audit write is the regulatory record */
+  }
+
   return res.status(403).json({
     error: 'IMMUTABILITY_VIOLATION',
     message:
