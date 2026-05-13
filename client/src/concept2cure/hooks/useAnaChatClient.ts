@@ -35,8 +35,30 @@ export interface AnaChatRequest {
   idempotency_key?: string;
 }
 
+export interface AnaToolCallRecord {
+  /** Tool name as registered server-side (see AnaToolDefinitions.ts). */
+  name: string;
+  /** LLM-generated arguments. Always read tenant id from JWT, never here. */
+  input: Record<string, unknown>;
+  /** Raw JSON-string result from the handler, or undefined if still running. */
+  result?: string;
+  /** Lifecycle. */
+  status: 'running' | 'success' | 'error';
+}
+
 export interface AnaStreamEvent {
-  type: 'text' | 'thread_id' | 'orchestration' | 'grounding_strip' | 'warning' | 'done' | 'error';
+  type:
+    | 'text'
+    | 'thread_id'
+    | 'orchestration'
+    | 'grounding_strip'
+    | 'warning'
+    | 'done'
+    | 'error'
+    | 'tool_use'
+    | 'tool_result'
+    | 'thinking'
+    | 'status';
   content?: string;
   thread_id?: string;
   orchestration?: Record<string, unknown>;
@@ -47,6 +69,12 @@ export interface AnaStreamEvent {
   executedActions?: unknown[];
   executedCommands?: unknown[];
   enrichmentSources?: string[];
+  /** tool_use / tool_result event fields. */
+  name?: string;
+  input?: Record<string, unknown>;
+  result?: string;
+  /** status event field — orchestration phase label. */
+  phase?: string;
   queueMeta?: {
     thread_id: string | null;
     handoff_ready: boolean;
@@ -70,6 +98,12 @@ export interface AnaChatResult {
   executedCommands: unknown[];
   enrichmentSources: string[];
   queueMeta: AnaStreamEvent['queueMeta'] | null;
+  /**
+   * Tool invocations captured during the stream, in order. Empty when
+   * AnA produced a text-only response. Useful for rendering inline
+   * tool-call cards in the chat (see AnaToolCallCard).
+   */
+  toolCalls: AnaToolCallRecord[];
   /** Whether this result came from the fallback (non-streaming) path */
   fallback: boolean;
   fallbackReason: string | null;
@@ -84,6 +118,25 @@ export interface UseAnaChatClientReturn {
   isStreaming: boolean;
   /** Stream event callback ref — set to get real-time events */
   onStreamEvent: { current: ((event: AnaStreamEvent) => void) | null };
+}
+
+/**
+ * Detect whether a tool result string represents an error. Server tool
+ * handlers consistently return JSON; an error payload has shape
+ * `{ error: "..." }`. Anything else is treated as success.
+ */
+function parseToolStatus(result: string | undefined): 'success' | 'error' {
+  if (!result) return 'success';
+  try {
+    const parsed = JSON.parse(result);
+    if (parsed && typeof parsed === 'object' && 'error' in parsed) {
+      return 'error';
+    }
+  } catch {
+    // Non-JSON result — treat as success rather than masking an
+    // un-classifiable response as an error.
+  }
+  return 'success';
 }
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
@@ -133,6 +186,7 @@ export function useAnaChatClient(): UseAnaChatClientReturn {
       executedCommands: [],
       enrichmentSources: [],
       queueMeta: null,
+      toolCalls: [],
       fallback: false,
       fallbackReason: null,
     };
@@ -173,6 +227,41 @@ export function useAnaChatClient(): UseAnaChatClientReturn {
               break;
             case 'grounding_strip':
               result.evidence = event.evidence || null;
+              break;
+            case 'tool_use': {
+              // Announce a tool invocation. Subsequent `tool_result` with
+              // the same name closes it out.
+              if (event.name) {
+                result.toolCalls.push({
+                  name: event.name,
+                  input: event.input || {},
+                  status: 'running',
+                });
+              }
+              break;
+            }
+            case 'tool_result': {
+              // Match against the most recent running call with the same
+              // name. We can't reliably match by tool_use_id from the
+              // current server contract, but FIFO-by-name is sufficient
+              // because a single AnA turn never invokes the same tool
+              // twice concurrently.
+              if (event.name) {
+                for (let i = result.toolCalls.length - 1; i >= 0; i--) {
+                  const candidate = result.toolCalls[i];
+                  if (candidate.name === event.name && candidate.status === 'running') {
+                    candidate.result = event.result;
+                    candidate.status = parseToolStatus(event.result);
+                    break;
+                  }
+                }
+              }
+              break;
+            }
+            case 'thinking':
+            case 'status':
+              // Captured for observers via onStreamEvent; no aggregate
+              // state needed on the result.
               break;
             case 'done':
               result.model = event.model || null;
@@ -225,6 +314,10 @@ export function useAnaChatClient(): UseAnaChatClientReturn {
       executedCommands: data.executedCommands || [],
       enrichmentSources: data.enrichmentSources || [],
       queueMeta: data.queueMeta || null,
+      // Non-streaming path doesn't surface per-tool events; the multi-
+      // round tool loop happens server-side. Callers see an empty
+      // toolCalls list for fallback responses.
+      toolCalls: [],
       fallback: true,
       fallbackReason: 'stream_unavailable',
     };
