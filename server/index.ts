@@ -67,6 +67,22 @@ validateEnvironment();
 const flags = resolveStartupFlags();
 const debugLog = createDebugLogger(flags.debug);
 
+// Install the console → logger bridge before any further code logs
+// anything in production. The bridge passes object arguments through
+// the HIPAA-aware redaction walker so legacy `console.error(req.body)`
+// call sites can't leak credentials / PHI to stdout. No-op outside
+// production so dev / test traces stay readable.
+//
+// Dynamic import (top-level await isn't on by default for this file)
+// kept synchronous via a separate require — `consoleBridge.ts` has no
+// async deps. We do this AFTER validateEnvironment so a missing-env
+// hard-exit message reaches stderr unbridged.
+{
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { installConsoleBridge } = require('./utils/consoleBridge');
+  installConsoleBridge();
+}
+
 const app = express();
 const pool = getPool();
 
