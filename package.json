@@ -33,6 +33,7 @@
     "start": "NODE_ENV=production node dist/index.js",
     "check": "NODE_OPTIONS=\"--max-old-space-size=6144\" tsc",
     "typecheck": "NODE_OPTIONS=\"--max-old-space-size=6144\" tsc --noEmit",
+    "check:security-patterns": "tsx scripts/check-security-patterns.ts",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern scripts --ignore-pattern client/src --ignore-pattern tests/integration/api/vault.test.js --ignore-pattern server/events/eventBus.js --ignore-pattern server/routes/fda510k-routes.ts --ignore-pattern server/services/pdfGenerator.js",
     "lint:fix": "eslint . --fix --ignore-pattern dist --ignore-pattern scripts --ignore-pattern client/src --ignore-pattern tests/integration/api/vault.test.js --ignore-pattern server/events/eventBus.js --ignore-pattern server/routes/fda510k-routes.ts --ignore-pattern server/services/pdfGenerator.js",
     "test": "jest --config scripts/jest.config.js && NODE_OPTIONS=\"--max-old-space-size=4096\" vitest run --config vitest.config.ts",
