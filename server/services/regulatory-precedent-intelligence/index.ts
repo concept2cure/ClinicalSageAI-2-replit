@@ -76,6 +76,21 @@ export type { SeedAdvisoryCommitteeResult } from './seeds/seed-advisory-committe
 export { ADVISORY_COMMITTEE_PATTERNS } from './seeds/advisory-committee-patterns';
 export type { AdvisoryCommitteeSeed } from './seeds/advisory-committee-patterns';
 
+export { seedEmaQuestions } from './seeds/seed-ema-questions';
+export type { SeedEmaQuestionsResult } from './seeds/seed-ema-questions';
+export { EMA_QUESTION_PATTERNS } from './seeds/ema-question-patterns';
+export type { EmaQuestionSeed } from './seeds/ema-question-patterns';
+
+export { seedCrossJurisdictional } from './seeds/seed-cross-jurisdictional';
+export type { SeedCrossJurisdictionalResult } from './seeds/seed-cross-jurisdictional';
+export { CROSS_JURISDICTIONAL_FRAMEWORKS } from './seeds/cross-jurisdictional-frameworks';
+export type { CrossJurisdictionalSeed } from './seeds/cross-jurisdictional-frameworks';
+
+export { seedConfidenceCalibration } from './seeds/seed-confidence-calibration';
+export type { SeedConfidenceCalibrationResult } from './seeds/seed-confidence-calibration';
+export { PRECEDENT_APPLICATION_RULES } from './seeds/precedent-application-rules';
+export type { PrecedentApplicationRuleSeed } from './seeds/precedent-application-rules';
+
 // Central orchestrator — call once per org on creation.
 export { seedAllRegulatoryPatterns } from './seeds/seed-all-regulatory-patterns';
 export type { SeedAllResult } from './seeds/seed-all-regulatory-patterns';

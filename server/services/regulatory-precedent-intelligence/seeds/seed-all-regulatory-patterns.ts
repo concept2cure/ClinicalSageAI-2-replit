@@ -14,6 +14,9 @@ import { seedCrlTriggers } from './seed-crl-triggers';
 import { seedNonclinicalRtf } from './seed-nonclinical-rtf';
 import { seedCmcRtf } from './seed-cmc-rtf';
 import { seedAdvisoryCommittee } from './seed-advisory-committee';
+import { seedEmaQuestions } from './seed-ema-questions';
+import { seedCrossJurisdictional } from './seed-cross-jurisdictional';
+import { seedConfidenceCalibration } from './seed-confidence-calibration';
 
 const log = createScopedLogger('seed-all-regulatory-patterns');
 
@@ -22,6 +25,9 @@ export interface SeedAllResult {
   rtfNonclinical: { inserted: number; skipped: number; error?: string };
   rtfCmc: { inserted: number; skipped: number; error?: string };
   advisoryCommittee: { inserted: number; skipped: number; error?: string };
+  emaQuestions: { inserted: number; skipped: number; error?: string };
+  crossJurisdictional: { inserted: number; skipped: number; error?: string };
+  confidenceCalibration: { inserted: number; skipped: number; error?: string };
 }
 
 export async function seedAllRegulatoryPatterns(
@@ -29,11 +35,14 @@ export async function seedAllRegulatoryPatterns(
 ): Promise<SeedAllResult> {
   log.info('Starting regulatory pattern seed for org', { organizationId });
 
-  const [crl, rtfNonclinical, rtfCmc, ac] = await Promise.all([
+  const [crl, rtfNonclinical, rtfCmc, ac, ema, xj, cc] = await Promise.all([
     safeSeed(() => seedCrlTriggers(organizationId), 'crl'),
     safeSeed(() => seedNonclinicalRtf(organizationId), 'rtf-nonclinical'),
     safeSeed(() => seedCmcRtf(organizationId), 'rtf-cmc'),
     safeSeed(() => seedAdvisoryCommittee(organizationId), 'advisory-committee'),
+    safeSeed(() => seedEmaQuestions(organizationId), 'ema-questions'),
+    safeSeed(() => seedCrossJurisdictional(organizationId), 'cross-jurisdictional'),
+    safeSeed(() => seedConfidenceCalibration(organizationId), 'confidence-calibration'),
   ]);
 
   const result: SeedAllResult = {
@@ -41,6 +50,9 @@ export async function seedAllRegulatoryPatterns(
     rtfNonclinical,
     rtfCmc,
     advisoryCommittee: ac,
+    emaQuestions: ema,
+    crossJurisdictional: xj,
+    confidenceCalibration: cc,
   };
 
   log.info('Regulatory pattern seed complete', {
@@ -50,6 +62,9 @@ export async function seedAllRegulatoryPatterns(
       rtfNonclinical: rtfNonclinical.inserted,
       rtfCmc: rtfCmc.inserted,
       advisoryCommittee: ac.inserted,
+      emaQuestions: ema.inserted,
+      crossJurisdictional: xj.inserted,
+      confidenceCalibration: cc.inserted,
     },
   });
 

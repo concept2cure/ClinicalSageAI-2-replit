@@ -79,6 +79,7 @@
     "db:seed:mdx-beta": "node scripts/seed-mdx-beta.mjs",
     "db:seed:mdx-content": "node scripts/seed-mdx-content.mjs",
     "db:seed:mdx-templates": "node scripts/seed-mdx-templates.mjs",
+    "db:seed:regulatory-patterns": "node scripts/seed-regulatory-patterns.mjs",
     "audit:archive": "tsx scripts/run-audit-archive.mjs",
     "audit:verify:24h": "node scripts/run-chain-verify.mjs --window=24h",
     "audit:verify:full": "node scripts/run-chain-verify.mjs --window=full",

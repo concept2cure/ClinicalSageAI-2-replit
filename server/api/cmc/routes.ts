@@ -711,4 +711,68 @@ router.post('/ich-compliance', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/cmc/variations/classify
+ * Deterministic SUPAC / variations classifier. Takes a proposed change
+ * description and returns the FDA reporting category, EMA variation
+ * category, SUPAC tier, bioequivalence requirement, impacted CTD
+ * sections, validation requirements, estimated timeline, and the
+ * cross-module impact analysis. Grounded in 21 CFR 314.70, SUPAC-IR /
+ * MR / SS, Commission Regulation 1234/2008, and ICH Q12.
+ */
+router.post('/variations/classify', async (req, res) => {
+  try {
+    getOrgId(req); // tenant scope enforcement
+    const { classifyVariation } = await import('../../services/cmc/supac-classifier');
+    const input = req.body ?? {};
+    if (!input.dosageFormFamily || !input.changeCategory) {
+      return res.status(400).json({
+        success: false,
+        error: 'dosageFormFamily and changeCategory are required',
+      });
+    }
+    const classification = classifyVariation(input);
+    res.json({ success: true, data: classification });
+  } catch (error) {
+    console.error('Variations classifier error:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Classification failed',
+    });
+  }
+});
+
+/**
+ * POST /api/cmc/control-strategy
+ * Deterministic ICH Q8/Q9/Q10/Q11-grade control strategy generator.
+ * Reads CMC source objects, specs, methods, stability — produces a
+ * structured control strategy with risk-based justifications and
+ * cited guidance. Replaces the fallback playbook string.
+ */
+router.post('/control-strategy', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const projectId = req.body?.projectId;
+    const scope = req.body?.scope ?? 'both';
+    if (!projectId || typeof projectId !== 'string') {
+      return res.status(400).json({ success: false, error: 'projectId (string UUID) is required' });
+    }
+    if (scope !== 'drug_substance' && scope !== 'drug_product' && scope !== 'both') {
+      return res.status(400).json({
+        success: false,
+        error: 'scope must be one of drug_substance | drug_product | both',
+      });
+    }
+    const { generateControlStrategy } = await import('../../services/cmc/control-strategy-generator');
+    const strategy = await generateControlStrategy(orgId, projectId, scope);
+    res.json({ success: true, data: strategy });
+  } catch (error) {
+    console.error('Control strategy generator error:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Control strategy generation failed',
+    });
+  }
+});
+
 export default router;

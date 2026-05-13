@@ -217,8 +217,30 @@ router.post('/templates', async (req, res) => {
 
 async function generateAIBlueprint(params: any) {
   try {
-    const { drugName, drugType, dosageForm, indication, developmentStage, regulatoryRegion } =
-      params;
+    const {
+      drugName, drugType, dosageForm, indication, developmentStage, regulatoryRegion,
+      organizationId: paramOrgId, projectId: paramProjectId,
+    } = params;
+
+    // If an existing project is supplied AND it has CMC source data, the
+    // QbD analyzer derives CQAs and CPPs from the actual records instead
+    // of the drug-type heuristics below. New-project blueprints still use
+    // the heuristics because no source data exists yet.
+    let qbdAnalysis: { cqas: Array<{ name: string }>; cpps: Array<{ name: string }> } | null = null;
+    if (paramOrgId && paramProjectId && typeof paramProjectId === 'string') {
+      try {
+        const { analyzeQbdFromSources } = await import(
+          '../../services/cmc/qbd-analyzer'
+        );
+        const result = await analyzeQbdFromSources(Number(paramOrgId), paramProjectId);
+        if (result.cqas.length > 0 || result.cpps.length > 0) {
+          qbdAnalysis = { cqas: result.cqas, cpps: result.cpps };
+        }
+      } catch {
+        // Analyzer failure falls through to the type-based heuristics.
+      }
+    }
+    params.__qbdAnalysis = qbdAnalysis;
 
     const prompt = `Generate a comprehensive CMC (Chemistry, Manufacturing, and Controls) blueprint for the following pharmaceutical product:
 
@@ -300,9 +322,12 @@ Structure the response as a comprehensive regulatory strategy document.`;
         },
         qualityByDesign: {
           title: 'Quality by Design',
-          cqas: extractCQAs(blueprintText, drugType),
-          cpps: extractCPPs(blueprintText, dosageForm),
-          designSpace: 'To be established during development',
+          cqas: extractCQAs(blueprintText, drugType, params.__qbdAnalysis),
+          cpps: extractCPPs(blueprintText, dosageForm, params.__qbdAnalysis),
+          designSpace: params.__qbdAnalysis
+            ? 'Derived from project source-object analysis (see /api/cmc/quality/qbd)'
+            : 'To be established during development',
+          source: params.__qbdAnalysis ? 'data_driven' : 'heuristic',
         },
         analyticalMethods: {
           title: 'Analytical Methods',
@@ -512,7 +537,21 @@ function extractCriticalItems(text: string, context: string): string[] {
   ];
 }
 
-function extractCQAs(text: string, drugType: string): string[] {
+/**
+ * Extract CQAs. When the caller supplied a real projectId+orgId AND the
+ * project has CMC source objects, generateAIBlueprint will have populated
+ * `qbdAnalysis` via the deterministic analyzer; that result takes
+ * precedence over the drug-type heuristics below. The heuristics are the
+ * fallback for upfront blueprints where no source data exists yet.
+ */
+function extractCQAs(
+  _text: string,
+  drugType: string,
+  qbdAnalysis?: { cqas: Array<{ name: string }> } | null,
+): string[] {
+  if (qbdAnalysis && qbdAnalysis.cqas.length > 0) {
+    return Array.from(new Set(qbdAnalysis.cqas.map(c => c.name)));
+  }
   const baseCQAs = ['Identity', 'Purity', 'Potency', 'Stability'];
 
   if (drugType === 'Monoclonal Antibody') {
@@ -526,7 +565,14 @@ function extractCQAs(text: string, drugType: string): string[] {
   return baseCQAs;
 }
 
-function extractCPPs(text: string, dosageForm: string): string[] {
+function extractCPPs(
+  _text: string,
+  dosageForm: string,
+  qbdAnalysis?: { cpps: Array<{ name: string }> } | null,
+): string[] {
+  if (qbdAnalysis && qbdAnalysis.cpps.length > 0) {
+    return Array.from(new Set(qbdAnalysis.cpps.map(c => c.name)));
+  }
   const baseCPPs = ['Temperature', 'pH', 'Mixing time'];
 
   if (dosageForm.includes('Tablet')) {
