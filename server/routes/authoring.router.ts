@@ -10,6 +10,7 @@ import { PDFDocument } from 'pdf-lib';
 import * as jose from 'jose';
 import { getPool } from '../db';
 import auditService from '../services/auditService';
+import { authedOrgId } from '../utils/authedOrgId';
 
 const router = Router();
 
@@ -154,15 +155,12 @@ router.use('/sections/:sectionId', async (req: Request, res: Response, next: any
   next();
 });
 
-// Helper function to get tenant_id from request
+// Source tenant id from the verified JWT. The previous header / query /
+// body fallback was attacker-controlled and is the IDOR shape PRs
+// #496-#499 closed.
 const getTenantId = (req: Request): number => {
-  // Try different headers/query params for tenant_id
-  const tenantId =
-    parseInt(req.headers['x-tenant-id'] as string) ||
-    parseInt(req.query.tenant_id as string) ||
-    parseInt(req.body?.tenant_id) ||
-    0;
-  if (!tenantId) {
+  const tenantId = authedOrgId(req);
+  if (tenantId == null) {
     throw new Error('Tenant context required');
   }
   return tenantId;

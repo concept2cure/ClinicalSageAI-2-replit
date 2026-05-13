@@ -75,21 +75,26 @@ const asyncHandler = (fn: Function) => (req: Request, res: Response, next: NextF
 };
 
 /**
- * Validate tenant ID middleware
+ * Validate tenant ID middleware.
+ *
+ * The URL-path `:tenantId` is the addressed tenant. It MUST match the
+ * organizationUuid carried by the verified JWT — accepting it from the
+ * body or query (as the previous implementation did) is exactly the
+ * IDOR shape PRs #496-#499 closed.
  */
 const validateTenantId = (req: Request, res: Response, next: NextFunction) => {
-  const tenantId = req.params.tenantId || req.body.tenantId || req.query.tenantId;
-  
+  const tenantId = String(req.params.tenantId ?? '');
+
   if (!tenantId) {
     return res.status(400).json({
       success: false,
       error: {
         code: 'MISSING_TENANT_ID',
-        message: 'Tenant ID is required'
-      }
+        message: 'Tenant ID is required',
+      },
     });
   }
-  
+
   // Validate UUID format
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(tenantId)) {
@@ -97,11 +102,24 @@ const validateTenantId = (req: Request, res: Response, next: NextFunction) => {
       success: false,
       error: {
         code: 'INVALID_TENANT_ID',
-        message: 'Tenant ID must be a valid UUID'
-      }
+        message: 'Tenant ID must be a valid UUID',
+      },
     });
   }
-  
+
+  const authedUuid =
+    (req as any).user?.organizationUuid ??
+    (req as any).tenantContext?.organizationUuid;
+  if (!authedUuid || String(authedUuid).toLowerCase() !== tenantId.toLowerCase()) {
+    return res.status(403).json({
+      success: false,
+      error: {
+        code: 'TENANT_MISMATCH',
+        message: 'Authenticated tenant does not match the requested tenant',
+      },
+    });
+  }
+
   next();
 };
 

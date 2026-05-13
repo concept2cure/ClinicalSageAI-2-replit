@@ -1,20 +1,23 @@
 import express from 'express';
 import rbacService from '../../services/roleBasedAccess.js';
 import auditService from '../../services/auditService.js';
+import { authenticateToken } from '../../middleware/auth.js';
+import { authedOrgId } from '../../utils/authedOrgId.js';
 
 const router = express.Router();
 
-// Middleware to extract tenant and user info
-const extractTenantUser = (req, res, next) => {
-  req.tenantId = req.headers['x-tenant-id'] || req.query.tenantId;
-  if (!req.tenantId) {
-    return res.status(401).json({ error: 'Tenant context required' });
+// Every route is tenant-scoped. Source tenant + user from the verified
+// JWT — the previous header/query path was attacker-controlled.
+router.use(authenticateToken);
+router.use((req, res, next) => {
+  const orgId = authedOrgId(req);
+  if (orgId == null) {
+    return res.status(403).json({ error: 'Tenant context required' });
   }
-  req.userId = req.headers['x-user-id'] || req.query.userId;
+  req.tenantId = orgId;
+  req.userId = req.user?.id ?? req.user?.userId;
   next();
-};
-
-router.use(extractTenantUser);
+});
 
 // Get all available roles with hierarchy
 router.get('/roles', async (req, res) => {
