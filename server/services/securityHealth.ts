@@ -45,6 +45,7 @@ import { join, resolve } from 'node:path';
 import type { Pool } from 'pg';
 import { createScopedLogger } from '../utils/logger';
 import { scanBuffer } from '../utils/virusScan';
+import { isJwtRotationInProgress } from '../utils/jwtVerify';
 
 const log = createScopedLogger('security-health');
 
@@ -89,6 +90,38 @@ const NEW_AUDIT_ACTIONS = [
 // ---------------------------------------------------------------------------
 // JWT secret strength
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// JWT rotation visibility
+// ---------------------------------------------------------------------------
+
+async function checkJwtRotation(): Promise<SecurityCheckResult> {
+  const start = Date.now();
+  const inProgress = isJwtRotationInProgress();
+  const durationMs = Date.now() - start;
+
+  // Non-critical: rotation-in-progress is the normal operational
+  // state during a planned rotation, not a fault. We surface it as
+  // warn so dashboards can see "yes, rotation is in flight" without
+  // paging anyone. An operator who left the previous secret set
+  // beyond the 24h access-token TTL will see this warning and clean
+  // it up.
+  if (inProgress) {
+    return {
+      name: 'jwt_rotation_status',
+      status: 'warn',
+      critical: false,
+      reason: 'rotation in progress — clear JWT_SECRET_PREVIOUS after access-token TTL elapses',
+      durationMs,
+    };
+  }
+  return {
+    name: 'jwt_rotation_status',
+    status: 'pass',
+    critical: false,
+    durationMs,
+  };
+}
 
 async function checkJwtSecretStrength(): Promise<SecurityCheckResult> {
   const start = Date.now();
@@ -423,6 +456,7 @@ async function checkCerReportMigration(): Promise<SecurityCheckResult> {
 export async function runSecurityHealthChecks(pool: Pool): Promise<SecurityHealthReport> {
   const results = await Promise.all([
     checkJwtSecretStrength(),
+    checkJwtRotation(),
     checkCspMiddleware(),
     checkClamavConnectivity(),
     checkAuditChainIntegrity(pool),
@@ -470,6 +504,7 @@ export async function runSecuritySelfTest(pool: Pool): Promise<SecurityHealthRep
 /** Test-only export of the individual checks. */
 export const __testing = {
   checkJwtSecretStrength,
+  checkJwtRotation,
   checkCspMiddleware,
   checkClamavConnectivity,
   checkAuditChainIntegrity,

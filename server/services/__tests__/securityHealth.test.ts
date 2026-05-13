@@ -17,9 +17,17 @@ import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const ORIGINAL_ENV = { ...process.env };
+// Snapshot the env AFTER the global tests/setup.ts beforeAll fires
+// (it sets DATABASE_URL). Without the lazy snapshot, the afterEach
+// reset below would clear DATABASE_URL and the next test's config
+// load would throw.
+let ORIGINAL_ENV: NodeJS.ProcessEnv = {};
 
 beforeEach(() => {
+  // First-time snapshot — happens after global beforeAll has run.
+  if (Object.keys(ORIGINAL_ENV).length === 0) {
+    ORIGINAL_ENV = { ...process.env };
+  }
   // securityHealth's checks dynamically import server modules that
   // read process.env at module load time. If a prior test set a bad
   // env (e.g. short JWT secret) and that module was loaded into the
@@ -31,6 +39,33 @@ beforeEach(() => {
 
 afterEach(() => {
   process.env = { ...ORIGINAL_ENV };
+});
+
+describe('checkJwtRotation', () => {
+  it('passes when no previous secret is set (no rotation)', async () => {
+    process.env.NODE_ENV = 'development';
+    process.env.JWT_SECRET = 'a'.repeat(40);
+    delete process.env.JWT_SECRET_PREVIOUS;
+    delete process.env.JWT_SECRET_DEV;
+    delete process.env.JWT_SECRET_PREVIOUS_DEV;
+    const { __testing } = await import('../securityHealth');
+    const r = await __testing.checkJwtRotation();
+    expect(r.status).toBe('pass');
+    expect(r.critical).toBe(false);
+  });
+
+  it('warns (non-critical) when rotation is in progress', async () => {
+    process.env.NODE_ENV = 'development';
+    process.env.JWT_SECRET = 'a'.repeat(40);
+    process.env.JWT_SECRET_PREVIOUS = 'b'.repeat(40);
+    delete process.env.JWT_SECRET_DEV;
+    delete process.env.JWT_SECRET_PREVIOUS_DEV;
+    const { __testing } = await import('../securityHealth');
+    const r = await __testing.checkJwtRotation();
+    expect(r.status).toBe('warn');
+    expect(r.critical).toBe(false);
+    expect(r.reason).toMatch(/rotation in progress/);
+  });
 });
 
 describe('checkJwtSecretStrength', () => {

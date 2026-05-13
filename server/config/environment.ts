@@ -110,6 +110,47 @@ const getJwtSecret = (): string => {
   return candidate;
 };
 
+/**
+ * Previous JWT secret used during zero-downtime rotation.
+ *
+ * Rotation procedure:
+ *   1. Operator sets JWT_SECRET_PREVIOUS (or _PREVIOUS_<ENV>) to the
+ *      current secret.
+ *   2. Operator sets JWT_SECRET (or _<ENV>) to a fresh random value.
+ *   3. Deploy. From here, every NEW token is signed with the new
+ *      secret; every EXISTING token still verifies because the
+ *      verifier tries the current then falls back to the previous.
+ *   4. After at least 24h (the access-token TTL — see
+ *      server/routes/auth.ts JWT_EXPIRES_IN), clear
+ *      JWT_SECRET_PREVIOUS. From there, only tokens signed with the
+ *      new secret will verify.
+ *
+ * Without the previous-secret slot, a rotation invalidates every
+ * active session simultaneously — a 401 storm with no graceful
+ * transition. This is the operational tool that makes rotation
+ * feasible.
+ *
+ * Returns undefined when rotation isn't in progress.
+ */
+const getJwtPreviousSecret = (): string | undefined => {
+  const suffix = ENV_MAP[ENV];
+  const envVar = `JWT_SECRET_PREVIOUS_${suffix}`;
+  const candidate = process.env[envVar] ?? process.env.JWT_SECRET_PREVIOUS;
+
+  if (!candidate) return undefined;
+
+  if (candidate.length < JWT_SECRET_MIN_LENGTH) {
+    // Same posture as the primary secret — too-short means
+    // misconfigured rotation, fail loud.
+    throw new Error(
+      `[FATAL] JWT previous secret too short: ${candidate.length} characters. ` +
+        `Minimum is ${JWT_SECRET_MIN_LENGTH}.`,
+    );
+  }
+
+  return candidate;
+};
+
 // Export configuration for the current environment
 export const config = {
   env: ENV,
@@ -121,6 +162,8 @@ export const config = {
   },
   jwt: {
     secret: getJwtSecret(),
+    /** Active during zero-downtime rotation only — see getJwtPreviousSecret. */
+    previousSecret: getJwtPreviousSecret(),
     expiresIn: '1d', // Default JWT expiration
   },
   api: {
