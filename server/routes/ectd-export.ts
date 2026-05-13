@@ -293,7 +293,7 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
       packageSize: zipBuffer.length,
     });
   } catch (error: any) {
-    console.error('[eCTD Validate] Failed:', error);
+    logger.error('Failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({
       error: 'eCTD validation failed',
       message: error.message,
@@ -354,7 +354,7 @@ router.get('/:submissionId/preview', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error('[eCTD Preview] Failed:', error);
+    logger.error('Failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({
       error: 'eCTD preview failed',
       message: error.message,

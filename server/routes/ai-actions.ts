@@ -28,6 +28,10 @@ import { getRedisHealth } from '../services/ai-actions/redis-manager';
 import { handleSSEStream, getSSEConnectionCount } from '../services/ai-actions/sse-stream';
 import type { AIActionRequest, AIActionResponse, AIActionSourceSurface } from '../../shared/types/ai-actions';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('ai-actions');
+
 const router = Router();
 
 // ---------------------------------------------------------------------------
@@ -252,7 +256,7 @@ router.post('/execute', async (req: Request, res: Response) => {
       _meta: { ...(response as any)._meta, correlationId },
     });
   } catch (err: any) {
-    console.error('[AI Actions Route] Unhandled error:', err);
+    logger.error('Unhandled error', { err: err instanceof Error ? err.message : String(err) });
     return res.status(500).json(
       buildRouteError(
         req.body?.actionType || 'unknown',

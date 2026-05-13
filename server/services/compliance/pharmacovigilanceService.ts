@@ -25,6 +25,10 @@
 
 import { pool } from '../../db';
 
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('pharmacovigilanceService');
+
 // ---------------------------------------------------------------------------
 // Type Definitions
 // ---------------------------------------------------------------------------
@@ -363,7 +367,7 @@ export async function reportAdverseEvent(
 
   try {
     if (!pool) {
-      console.warn('[pharmacovigilance] Database pool not available — returning in-memory record');
+      logger.warn('Database pool not available — returning in-memory record');
       return adverseEvent;
     }
 
@@ -400,7 +404,7 @@ export async function reportAdverseEvent(
   } catch (error: any) {
     // Graceful handling when the table does not yet exist
     if (error?.code === '42P01') {
-      console.warn('[pharmacovigilance] adverse_events table does not exist — returning in-memory record');
+      logger.warn('adverse_events table does not exist — returning in-memory record');
       return adverseEvent;
     }
     throw error;
@@ -420,7 +424,7 @@ export async function getAdverseEvents(
 ): Promise<AdverseEvent[]> {
   try {
     if (!pool) {
-      console.warn('[pharmacovigilance] Database pool not available');
+      logger.warn('Database pool not available');
       return [];
     }
 
@@ -462,7 +466,7 @@ export async function getAdverseEvents(
     return result.rows.map(mapRowToAdverseEvent);
   } catch (error: any) {
     if (error?.code === '42P01') {
-      console.warn('[pharmacovigilance] adverse_events table does not exist');
+      logger.warn('adverse_events table does not exist');
       return [];
     }
     throw error;
@@ -479,7 +483,7 @@ export async function getAdverseEvents(
 export async function getOverdueReports(organizationId: string): Promise<AdverseEvent[]> {
   try {
     if (!pool) {
-      console.warn('[pharmacovigilance] Database pool not available');
+      logger.warn('Database pool not available');
       return [];
     }
 
@@ -495,7 +499,7 @@ export async function getOverdueReports(organizationId: string): Promise<Adverse
     return result.rows.map(mapRowToAdverseEvent);
   } catch (error: any) {
     if (error?.code === '42P01') {
-      console.warn('[pharmacovigilance] adverse_events table does not exist');
+      logger.warn('adverse_events table does not exist');
       return [];
     }
     throw error;
@@ -534,7 +538,7 @@ export async function generateICSR(adverseEventId: string): Promise<ICSR> {
     if (error?.code !== '42P01') {
       throw error;
     }
-    console.warn('[pharmacovigilance] adverse_events table does not exist — generating ICSR from minimal data');
+    logger.warn('adverse_events table does not exist — generating ICSR from minimal data');
   }
 
   const icsr: ICSR = {
@@ -576,7 +580,7 @@ export async function generateICSR(adverseEventId: string): Promise<ICSR> {
     }
   } catch (error: any) {
     if (error?.code === '42P01') {
-      console.warn('[pharmacovigilance] icsrs table does not exist — returning in-memory record');
+      logger.warn('icsrs table does not exist — returning in-memory record');
     } else {
       throw error;
     }
@@ -613,7 +617,7 @@ export async function createPeriodicReport(
 
   try {
     if (!pool) {
-      console.warn('[pharmacovigilance] Database pool not available — returning in-memory record');
+      logger.warn('Database pool not available — returning in-memory record');
       return periodicReport;
     }
 
@@ -639,7 +643,7 @@ export async function createPeriodicReport(
     return periodicReport;
   } catch (error: any) {
     if (error?.code === '42P01') {
-      console.warn('[pharmacovigilance] periodic_safety_reports table does not exist — returning in-memory record');
+      logger.warn('periodic_safety_reports table does not exist — returning in-memory record');
       return periodicReport;
     }
     throw error;
@@ -656,7 +660,7 @@ export async function createPeriodicReport(
 export async function getUpcomingReports(organizationId: string): Promise<PeriodicSafetyReport[]> {
   try {
     if (!pool) {
-      console.warn('[pharmacovigilance] Database pool not available');
+      logger.warn('Database pool not available');
       return [];
     }
 
@@ -675,7 +679,7 @@ export async function getUpcomingReports(organizationId: string): Promise<Period
     return result.rows.map(mapRowToPeriodicReport);
   } catch (error: any) {
     if (error?.code === '42P01') {
-      console.warn('[pharmacovigilance] periodic_safety_reports table does not exist');
+      logger.warn('periodic_safety_reports table does not exist');
       return [];
     }
     throw error;
@@ -709,7 +713,7 @@ export async function reportSignal(
 
   try {
     if (!pool) {
-      console.warn('[pharmacovigilance] Database pool not available — returning in-memory record');
+      logger.warn('Database pool not available — returning in-memory record');
       return safetySignal;
     }
 
@@ -734,7 +738,7 @@ export async function reportSignal(
     return safetySignal;
   } catch (error: any) {
     if (error?.code === '42P01') {
-      console.warn('[pharmacovigilance] safety_signals table does not exist — returning in-memory record');
+      logger.warn('safety_signals table does not exist — returning in-memory record');
       return safetySignal;
     }
     throw error;
@@ -752,7 +756,7 @@ export async function reportSignal(
 export async function getPendingSignals(organizationId: string): Promise<SafetySignal[]> {
   try {
     if (!pool) {
-      console.warn('[pharmacovigilance] Database pool not available');
+      logger.warn('Database pool not available');
       return [];
     }
 
@@ -767,7 +771,7 @@ export async function getPendingSignals(organizationId: string): Promise<SafetyS
     return result.rows.map(mapRowToSafetySignal);
   } catch (error: any) {
     if (error?.code === '42P01') {
-      console.warn('[pharmacovigilance] safety_signals table does not exist');
+      logger.warn('safety_signals table does not exist');
       return [];
     }
     throw error;
@@ -799,7 +803,7 @@ export async function createRMP(
 
   try {
     if (!pool) {
-      console.warn('[pharmacovigilance] Database pool not available — returning in-memory record');
+      logger.warn('Database pool not available — returning in-memory record');
       return plan;
     }
 
@@ -827,7 +831,7 @@ export async function createRMP(
     return plan;
   } catch (error: any) {
     if (error?.code === '42P01') {
-      console.warn('[pharmacovigilance] risk_management_plans table does not exist — returning in-memory record');
+      logger.warn('risk_management_plans table does not exist — returning in-memory record');
       return plan;
     }
     throw error;
@@ -843,7 +847,7 @@ export async function createRMP(
 export async function getRMPsForProject(projectId: string): Promise<RiskManagementPlan[]> {
   try {
     if (!pool) {
-      console.warn('[pharmacovigilance] Database pool not available');
+      logger.warn('Database pool not available');
       return [];
     }
 
@@ -857,7 +861,7 @@ export async function getRMPsForProject(projectId: string): Promise<RiskManageme
     return result.rows.map(mapRowToRMP);
   } catch (error: any) {
     if (error?.code === '42P01') {
-      console.warn('[pharmacovigilance] risk_management_plans table does not exist');
+      logger.warn('risk_management_plans table does not exist');
       return [];
     }
     throw error;

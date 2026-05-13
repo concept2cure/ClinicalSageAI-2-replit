@@ -12,6 +12,10 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { authMiddleware } from '../auth.js';
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('ctd-onboarding');
+
 import {
   createCTDProject,
   listCTDProjects,
@@ -94,7 +98,7 @@ router.post('/projects', async (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[ctd-onboarding] Create project error:', message);
+    logger.error('Create project error', { err: message instanceof Error ? message.message : String(message) });
     return res.status(500).json({ error: 'Failed to create CTD project' });
   }
 });
@@ -113,7 +117,7 @@ router.get('/projects', async (req: Request, res: Response) => {
     return res.json({ projects, total: projects.length });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[ctd-onboarding] List projects error:', message);
+    logger.error('List projects error', { err: message instanceof Error ? message.message : String(message) });
     return res.status(500).json({ error: 'Failed to list CTD projects' });
   }
 });
@@ -143,7 +147,7 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
     return res.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[ctd-onboarding] Get project error:', message);
+    logger.error('Get project error', { err: message instanceof Error ? message.message : String(message) });
     return res.status(500).json({ error: 'Failed to get CTD project' });
   }
 });
@@ -194,7 +198,7 @@ router.post('/projects/:id/upload', upload.single('file'), async (req: Request, 
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[ctd-onboarding] Upload error:', message);
+    logger.error('Upload error', { err: message instanceof Error ? message.message : String(message) });
     if (req.file?.path) {
       fs.unlink(req.file.path, () => {
         // Best-effort cleanup for orphaned uploads.
@@ -232,7 +236,7 @@ router.post('/projects/:id/validate', async (req: Request, res: Response) => {
     return res.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[ctd-onboarding] Validation error:', message);
+    logger.error('Validation error', { err: message instanceof Error ? message.message : String(message) });
     return res.status(500).json({ error: 'Failed to validate CTD completeness' });
   }
 });
@@ -264,7 +268,7 @@ router.post('/projects/:id/detect-section', async (req: Request, res: Response) 
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[ctd-onboarding] Section detection error:', message);
+    logger.error('Section detection error', { err: message instanceof Error ? message.message : String(message) });
     return res.status(500).json({ error: 'Failed to detect section' });
   }
 });

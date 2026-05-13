@@ -27,6 +27,10 @@ import OutcomeBasedTemplateLearningService from '../services/innovation/outcome-
 import RegulatoryNegotiationLogbookService from '../services/innovation/regulatory-negotiation-logbook-service';
 import ComplianceGuardrailsSDKService from '../services/innovation/compliance-guardrails-sdk-service';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('innovation-routes');
+
 const router: Router = express.Router();
 
 // Service instances (will be initialized with pool)
@@ -777,7 +781,7 @@ router.get('/guardrails/statistics', asyncHandler(async (req: Request, res: Resp
 
 // Error handler
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  console.error('[Innovation Routes] Error:', err);
+  logger.error('Error', { err: err instanceof Error ? err.message : String(err) });
   res.status(err.status || 500).json({
     success: false,
     error: err.message || 'Internal server error',

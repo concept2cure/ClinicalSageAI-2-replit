@@ -21,6 +21,10 @@ import { getTenantContext } from '../utils/tenantContext';
 import { getSentinelScheduler } from '../services/sentinel/scheduler';
 import type { SentinelAnalyzerType } from '../services/sentinel/types';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('sentinel-routes');
+
 const router = Router();
 const pool = getPool();
 
@@ -55,7 +59,7 @@ router.get('/status', async (req: Request, res: Response) => {
       summary,
     });
   } catch (error) {
-    console.error('[SentinelAPI] Error fetching status:', error);
+    logger.error('Error fetching status', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to fetch sentinel status' });
   }
 });
@@ -84,7 +88,7 @@ router.get('/findings', async (req: Request, res: Response) => {
 
     res.json(result);
   } catch (error) {
-    console.error('[SentinelAPI] Error fetching findings:', error);
+    logger.error('Error fetching findings', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to fetch findings' });
   }
 });
@@ -118,7 +122,7 @@ router.patch('/findings/:findingId', async (req: Request, res: Response) => {
     if (!updated) return res.status(404).json({ error: 'Finding not found' });
     res.json(updated);
   } catch (error) {
-    console.error('[SentinelAPI] Error updating finding:', error);
+    logger.error('Error updating finding', { err: error instanceof Error ? error.message : String(error) });
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid update data', details: error.errors });
     }
@@ -176,7 +180,7 @@ router.post('/scan', async (req: Request, res: Response) => {
       })),
     });
   } catch (error) {
-    console.error('[SentinelAPI] Error running scan:', error);
+    logger.error('Error running scan', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to run scan' });
   }
 });
@@ -212,7 +216,7 @@ router.post('/scan/:type', async (req: Request, res: Response) => {
       findings: result.findings,
     });
   } catch (error) {
-    console.error('[SentinelAPI] Error running single scan:', error);
+    logger.error('Error running single scan', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to run scan' });
   }
 });
@@ -233,7 +237,7 @@ router.get('/config', async (req: Request, res: Response) => {
 
     res.json(config);
   } catch (error) {
-    console.error('[SentinelAPI] Error fetching config:', error);
+    logger.error('Error fetching config', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to fetch config' });
   }
 });
@@ -283,7 +287,7 @@ router.patch('/config', async (req: Request, res: Response) => {
 
     res.json(updated);
   } catch (error) {
-    console.error('[SentinelAPI] Error updating config:', error);
+    logger.error('Error updating config', { err: error instanceof Error ? error.message : String(error) });
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid config data', details: error.errors });
     }

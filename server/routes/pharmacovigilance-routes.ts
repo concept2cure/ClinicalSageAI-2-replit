@@ -19,6 +19,10 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('pharmacovigilance-routes');
+
 // Service imports — the service uses the shared pool internally
 import {
   reportAdverseEvent,
@@ -181,7 +185,7 @@ export default function createPharmacovigilanceRoutes(): Router {
         },
       });
     } catch (error) {
-      console.error('[Pharmacovigilance] overview error:', error);
+      logger.error('overview error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to generate PV overview' });
     }
   });
@@ -236,7 +240,7 @@ export default function createPharmacovigilanceRoutes(): Router {
         total: events.length,
       });
     } catch (error) {
-      console.error('[Pharmacovigilance] get adverse events error:', error);
+      logger.error('get adverse events error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to retrieve adverse events' });
     }
   });
@@ -276,7 +280,7 @@ export default function createPharmacovigilanceRoutes(): Router {
 
       return res.status(201).json({ success: true, data: event });
     } catch (error) {
-      console.error('[Pharmacovigilance] report adverse event error:', error);
+      logger.error('report adverse event error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to report adverse event' });
     }
   });
@@ -291,7 +295,7 @@ export default function createPharmacovigilanceRoutes(): Router {
       const overdue = await getOverdueReports(orgId);
       return res.json({ success: true, data: overdue, total: overdue.length });
     } catch (error) {
-      console.error('[Pharmacovigilance] overdue reports error:', error);
+      logger.error('overdue reports error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to retrieve overdue reports' });
     }
   });
@@ -320,7 +324,7 @@ export default function createPharmacovigilanceRoutes(): Router {
       if (error?.message?.includes('not found')) {
         return res.status(404).json({ success: false, error: 'Adverse event not found' });
       }
-      console.error('[Pharmacovigilance] ICSR generation error:', error);
+      logger.error('ICSR generation error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to generate ICSR' });
     }
   });
@@ -339,7 +343,7 @@ export default function createPharmacovigilanceRoutes(): Router {
       const reports = await getUpcomingReports(orgId);
       return res.json({ success: true, data: reports, total: reports.length });
     } catch (error) {
-      console.error('[Pharmacovigilance] periodic reports error:', error);
+      logger.error('periodic reports error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to retrieve periodic reports' });
     }
   });
@@ -374,7 +378,7 @@ export default function createPharmacovigilanceRoutes(): Router {
 
       res.status(201).json({ success: true, data: report });
     } catch (error) {
-      console.error('[Pharmacovigilance] create periodic report error:', error);
+      logger.error('create periodic report error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to create periodic report' });
     }
   });
@@ -393,7 +397,7 @@ export default function createPharmacovigilanceRoutes(): Router {
       const signals = await getPendingSignals(orgId);
       return res.json({ success: true, data: signals, total: signals.length });
     } catch (error) {
-      console.error('[Pharmacovigilance] get signals error:', error);
+      logger.error('get signals error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to retrieve safety signals' });
     }
   });
@@ -427,7 +431,7 @@ export default function createPharmacovigilanceRoutes(): Router {
 
       res.status(201).json({ success: true, data: signal });
     } catch (error) {
-      console.error('[Pharmacovigilance] report signal error:', error);
+      logger.error('report signal error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to report safety signal' });
     }
   });
@@ -450,7 +454,7 @@ export default function createPharmacovigilanceRoutes(): Router {
       const plans = await getRMPsForProject(projectId);
       return res.json({ success: true, data: plans, total: plans.length });
     } catch (error) {
-      console.error('[Pharmacovigilance] get RMPs error:', error);
+      logger.error('get RMPs error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to retrieve RMPs' });
     }
   });
@@ -486,7 +490,7 @@ export default function createPharmacovigilanceRoutes(): Router {
 
       res.status(201).json({ success: true, data: rmp });
     } catch (error) {
-      console.error('[Pharmacovigilance] create RMP error:', error);
+      logger.error('create RMP error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to create RMP' });
     }
   });
@@ -533,7 +537,7 @@ export default function createPharmacovigilanceRoutes(): Router {
         },
       });
     } catch (error) {
-      console.error('[Pharmacovigilance] calculate deadline error:', error);
+      logger.error('calculate deadline error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to calculate deadline' });
     }
   });
@@ -574,7 +578,7 @@ export default function createPharmacovigilanceRoutes(): Router {
 
       return res.json({ success: true, data: matrix });
     } catch (error) {
-      console.error('[Pharmacovigilance] compliance matrix error:', error);
+      logger.error('compliance matrix error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to generate compliance matrix' });
     }
   });

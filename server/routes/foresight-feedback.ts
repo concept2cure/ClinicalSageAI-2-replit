@@ -13,6 +13,10 @@ import {
 } from '@shared/schema';
 import { eq, desc, and, gte } from 'drizzle-orm';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('foresight-feedback');
+
 const router = Router();
 
 /**
@@ -59,7 +63,7 @@ router.post('/feedback/submit', async (req, res) => {
       recommendations: result.recommendations
     });
   } catch (error) {
-    console.error('[FeedbackAPI] Error submitting feedback:', error);
+    logger.error('Error submitting feedback', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       error: 'Failed to process clinical feedback',
       message: error instanceof Error ? error.message : 'Unknown error'
@@ -89,7 +93,7 @@ router.get('/feedback/history/:organizationId', async (req, res) => {
       total: feedbackHistory.length
     });
   } catch (error) {
-    console.error('[FeedbackAPI] Error fetching feedback history:', error);
+    logger.error('Error fetching feedback history', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       error: 'Failed to fetch feedback history',
       message: error instanceof Error ? error.message : 'Unknown error'
@@ -117,7 +121,7 @@ router.post('/feedback/monitor', async (req, res) => {
       monitoring: monitoringResult
     });
   } catch (error) {
-    console.error('[FeedbackAPI] Error in continuous monitoring:', error);
+    logger.error('Error in continuous monitoring', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       error: 'Failed to perform continuous monitoring',
       message: error instanceof Error ? error.message : 'Unknown error'
@@ -145,7 +149,7 @@ router.post('/feedback/meta-learning', async (req, res) => {
       metaLearning: metaLearningResult
     });
   } catch (error) {
-    console.error('[FeedbackAPI] Error in meta-learning:', error);
+    logger.error('Error in meta-learning', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       error: 'Failed to perform meta-learning',
       message: error instanceof Error ? error.message : 'Unknown error'
@@ -176,7 +180,7 @@ router.post('/feedback/hypotheses', async (req, res) => {
       hypotheses
     });
   } catch (error) {
-    console.error('[FeedbackAPI] Error generating hypotheses:', error);
+    logger.error('Error generating hypotheses', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       error: 'Failed to generate adaptive hypotheses',
       message: error instanceof Error ? error.message : 'Unknown error'
@@ -229,7 +233,7 @@ router.get('/feedback/metrics/:organizationId', async (req, res) => {
       period: `Last ${days} days`
     });
   } catch (error) {
-    console.error('[FeedbackAPI] Error fetching metrics:', error);
+    logger.error('Error fetching metrics', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       error: 'Failed to fetch learning metrics',
       message: error instanceof Error ? error.message : 'Unknown error'
@@ -282,7 +286,7 @@ router.post('/feedback/outcome', async (req, res) => {
       outcome
     });
   } catch (error) {
-    console.error('[FeedbackAPI] Error storing outcome:', error);
+    logger.error('Error storing outcome', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       error: 'Failed to store clinical outcome',
       message: error instanceof Error ? error.message : 'Unknown error'

@@ -19,6 +19,10 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('cognitive-ecosystem');
+
 import {
   AgentRuntimeService,
   CheckpointManager,
@@ -71,7 +75,7 @@ router.post('/agents', async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    console.error('[CognitiveRoutes] Agent creation error:', error);
+    logger.error('Agent creation error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to create agent session'
@@ -128,7 +132,7 @@ router.post('/workflows', async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    console.error('[CognitiveRoutes] Workflow creation error:', error);
+    logger.error('Workflow creation error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to start workflow'
@@ -529,7 +533,7 @@ const ensureFederatedTables = async () => {
 
     flTablesInitialized = true;
   } catch (err) {
-    console.error('[CognitiveRoutes] Failed to initialize federated tables:', err);
+    logger.error('Failed to initialize federated tables', { err: err instanceof Error ? err.message : String(err) });
     // Don't set initialized — retry next request
   }
 };
@@ -675,7 +679,7 @@ router.get('/federated/dashboard', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error('[CognitiveRoutes] Federated dashboard error:', error);
+    logger.error('Federated dashboard error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to load federated learning dashboard',

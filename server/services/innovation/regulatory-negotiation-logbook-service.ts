@@ -18,6 +18,10 @@ import { ai } from '../../lib/unified-ai-client';
 import { getOpenAIClient } from '../openai-client';
 import crypto from 'crypto';
 
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('regulatory-negotiation-logbook-service');
+
 // Types
 export interface NegotiationThread {
   id: string;
@@ -377,7 +381,7 @@ export class RegulatoryNegotiationLogbookService {
         });
         embedding = embeddingResponse.data[0].embedding;
       } catch (error) {
-        console.error('[NegotiationLogbook] Failed to generate embedding:', error);
+        logger.error('Failed to generate embedding', { err: error instanceof Error ? error.message : String(error) });
       }
     }
 
@@ -495,7 +499,7 @@ export class RegulatoryNegotiationLogbookService {
         params.push(`[${embeddingResponse.data[0].embedding.join(',')}]`);
         fields.push(`content_embedding = $${params.length}`);
       } catch (error) {
-        console.error('[NegotiationLogbook] Failed to update embedding:', error);
+        logger.error('Failed to update embedding', { err: error instanceof Error ? error.message : String(error) });
       }
     }
 
@@ -548,7 +552,7 @@ export class RegulatoryNegotiationLogbookService {
       });
       embedding = embeddingResponse.data[0].embedding;
     } catch (error) {
-      console.error('[NegotiationLogbook] Failed to generate position embedding:', error);
+      logger.error('Failed to generate position embedding', { err: error instanceof Error ? error.message : String(error) });
     }
 
     if (position.id) {
@@ -721,7 +725,7 @@ export class RegulatoryNegotiationLogbookService {
       });
       queryEmbedding = embeddingResponse.data[0].embedding;
     } catch (error) {
-      console.error('[NegotiationLogbook] Search embedding failed:', error);
+      logger.error('Search embedding failed', { err: error instanceof Error ? error.message : String(error) });
       return { results: [] };
     }
 
