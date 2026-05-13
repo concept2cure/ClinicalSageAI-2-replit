@@ -33,20 +33,50 @@ import { Router, type Request, type Response } from 'express';
 import { authMiddleware, requireAdminRole } from '../auth.js';
 import { getPool } from '../db.js';
 import { runSecurityHealthChecks } from '../services/securityHealth';
+import { getLastSecurityHealthReport } from '../services/securityHealthScheduler';
 import auditService from '../services/auditService';
 import { createScopedLogger } from '../utils/logger.js';
 
 const log = createScopedLogger('admin-security');
 const router = Router();
 
+/**
+ * Maximum age (ms) of a cached report we'll serve without re-running.
+ * Default matches the scheduler's prod interval so the cached value is
+ * always "fresh" by scheduler standards. Callers wanting a guaranteed-
+ * fresh result can pass ?fresh=1 to bypass the cache.
+ */
+const MAX_CACHED_AGE_MS = 5 * 60 * 1000;
+
 router.use(authMiddleware);
 router.use(requireAdminRole);
 
 router.get('/security-health', async (req: Request, res: Response) => {
   const pool = getPool();
+  const forceFresh = req.query.fresh === '1';
+
   try {
-    const report = await runSecurityHealthChecks(pool);
+    // Prefer the cached result from the periodic scheduler when it's
+    // recent enough — running the full panel (EICAR scan, chain
+    // verify) costs ~1s with clamd and a few hundred ms otherwise.
+    // Callers that need a guaranteed-fresh value pass ?fresh=1.
+    let report;
+    let fromCache = false;
+    if (!forceFresh) {
+      const cached = getLastSecurityHealthReport();
+      if (cached.report && cached.ageMs != null && cached.ageMs < MAX_CACHED_AGE_MS) {
+        report = cached.report;
+        fromCache = true;
+      }
+    }
+    if (!report) {
+      report = await runSecurityHealthChecks(pool);
+    }
+
     const httpStatus = report.overall === 'failing' ? 503 : 200;
+    if (fromCache) {
+      res.setHeader('X-Security-Health-Cached', '1');
+    }
 
     // Audit who looked. The check itself can reveal posture (e.g.
     // ClamAV reachable / unreachable) which is useful for SOC.
