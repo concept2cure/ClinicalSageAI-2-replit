@@ -16,6 +16,10 @@ import { getPool } from '../../db';
 import { ProjectRulesEngine } from './engine';
 import { registerAllHandlers } from './actions';
 
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('index');
+
 export type {
   RuleEventPayload,
   RuleExecutionResult,
@@ -34,7 +38,7 @@ export function getRulesEngine(): ProjectRulesEngine {
     const pool = getPool();
     instance = new ProjectRulesEngine(pool);
     registerAllHandlers(instance, pool);
-    console.log('[RulesEngine] Singleton initialized with all action handlers');
+    logger.info('Singleton initialized with all action handlers');
   }
   return instance;
 }

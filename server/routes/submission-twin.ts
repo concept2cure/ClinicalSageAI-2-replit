@@ -12,6 +12,10 @@ import { authenticateToken } from '../middleware/auth';
 import { submissionTwinService } from '../services/submission-twin-service';
 import { enrichChangeImpact } from '../services/intelligence/rim-change-impact.js';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('submission-twin');
+
 const router = Router();
 const auth = authenticateToken;
 
@@ -43,7 +47,7 @@ function parseIntParam(val: string, name: string): number {
 
 function handleError(res: Response, error: any) {
   const status = error instanceof ValidationError ? 400 : 500;
-  if (status === 500) console.error('[SubmissionTwin] Error:', error);
+  if (status === 500) logger.error('Error', { err: error instanceof Error ? error.message : String(error) });
   res.status(status).json({ success: false, error: error.message });
 }
 

@@ -14,6 +14,53 @@ import crypto from 'crypto';
 import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
 import { db } from '../db';
+import { createScopedLogger } from '../utils/logger.js';
+import auditService from '../services/auditService';
+
+// Scoped logger — every log line flows through the redaction walker in
+// server/utils/logger so credentials, tokens, MFA secrets, etc. are
+// scrubbed even if they accidentally appear in a context object.
+const logger = createScopedLogger('auth');
+
+/**
+ * Best-effort audit-log call for authentication events. 21 CFR Part 11
+ * §11.10(e) requires an independent, tamper-evident audit trail for
+ * every login attempt, logout, and credential-changing event. We swallow
+ * errors here so a transient audit-pipeline failure never breaks the
+ * auth path itself; auditService logs its own failures internally.
+ */
+async function auditAuthEvent(entry: {
+  action: string;
+  userId?: number | string | null;
+  tenantId?: number | string | null;
+  email?: string;
+  outcome: 'success' | 'failure';
+  reason?: string;
+  ipAddress?: string;
+  userAgent?: string;
+}): Promise<void> {
+  try {
+    await auditService.logAction({
+      tenantId: entry.tenantId ?? undefined,
+      userId: entry.userId ?? undefined,
+      action: entry.action,
+      resourceType: 'user',
+      resourceId: entry.userId?.toString() ?? entry.email ?? 'unknown',
+      ipAddress: entry.ipAddress,
+      userAgent: entry.userAgent,
+      details: {
+        outcome: entry.outcome,
+        reason: entry.reason,
+        email: entry.email,
+      },
+    });
+  } catch (err) {
+    logger.warn('Audit log write failed (non-fatal)', {
+      err: err instanceof Error ? err.message : String(err),
+      action: entry.action,
+    });
+  }
+}
 import { sql } from 'drizzle-orm';
 import { eq, and } from 'drizzle-orm';
 import { users, organizations, organizationUsers } from '../../shared/schema';
@@ -265,7 +312,7 @@ router.get('/session', async (req: Request, res: Response) => {
       });
     }
 
-    console.error('[auth] Session check error:', error);
+    logger.error('Session check error', { err: error?.message ?? String(error) });
 
     // CRIT-02c FIX: Removed error-path dev bypass that returned mock admin on DB errors
 
@@ -297,6 +344,19 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     const user = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
 
     if (!user.length) {
+      // Audit: unknown-email login attempt. Log with the attempted email
+      // (no userId since none exists) so SOC tooling can correlate
+      // credential-stuffing attempts. We deliberately store the email
+      // (not just the hash) on the audit row — regulators want to see
+      // the literal attacker-supplied value.
+      await auditAuthEvent({
+        action: 'user_login',
+        email: normalizedEmail,
+        outcome: 'failure',
+        reason: 'unknown_email',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_001', message: 'Invalid credentials' },
@@ -308,6 +368,16 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     // ── Account Lockout Check ─────────────────────────────────────────────
     const lockStatus = await isAccountLocked(userData.id);
     if (lockStatus.locked) {
+      await auditAuthEvent({
+        action: 'user_login',
+        userId: userData.id,
+        tenantId: userData.defaultOrganizationId,
+        email: userData.email,
+        outcome: 'failure',
+        reason: 'account_locked',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(423).json({
         success: false,
         error: {
@@ -319,7 +389,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     }
 
     if (!userData.passwordHash) {
-      console.error('[auth] User has no password hash:', userData.email);
+      logger.error('User has no password hash', { email: userData.email });
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_001', message: 'Invalid credentials' },
@@ -330,6 +400,16 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     if (!isPasswordValid) {
       // Record failed attempt and potentially lock
       const failResult = await recordFailedLogin(userData.id);
+      await auditAuthEvent({
+        action: 'user_login',
+        userId: userData.id,
+        tenantId: userData.defaultOrganizationId,
+        email: userData.email,
+        outcome: 'failure',
+        reason: failResult?.locked ? 'wrong_password_threshold_exceeded' : 'wrong_password',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_001', message: 'Invalid credentials' },
@@ -339,6 +419,10 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 
     // Successful password check — reset lockout counter
     await resetFailedLogins(userData.id);
+    // NOTE: the final "success" audit fires below after JWT issuance,
+    // so that MFA-required logins are recorded as challenge-issued, not
+    // session-created. See the audit call near `res.json({ success:
+    // true, accessToken, ... })`.
 
     const defaultOrganizationId = userData.defaultOrganizationId || null;
     let organizationId = defaultOrganizationId;
@@ -422,7 +506,20 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
         getRefreshTokenSecret(),
         { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
       );
-      console.log(`[auth] Dev mode — MFA skipped for user ${userData.id}`);
+      logger.info('Dev mode — MFA skipped', { userId: userData.id });
+      // Audit: successful login (dev path, MFA bypassed). The bypass
+      // itself is recorded as part of `reason` so an inspector can
+      // distinguish dev-mode sessions from production logins.
+      await auditAuthEvent({
+        action: 'user_login',
+        userId: userData.id,
+        tenantId: organizationId,
+        email: userData.email,
+        outcome: 'success',
+        reason: 'dev_mfa_skipped',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.json({
         success: true,
         accessToken,
@@ -456,6 +553,20 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       jwtRole
     );
 
+    // Audit: password verified, MFA challenge issued. Recorded as a
+    // separate event from the eventual session creation (which happens
+    // on /mfa/verify). Inspectors can correlate the two via userId.
+    await auditAuthEvent({
+      action: 'user_login_mfa_challenge',
+      userId: userData.id,
+      tenantId: organizationId,
+      email: userData.email,
+      outcome: 'success',
+      reason: hasTotpSetup ? 'mfa_challenge_totp' : 'mfa_challenge_email',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+
     if (hasTotpSetup) {
       // TOTP users get the authenticator app flow
       return res.json({
@@ -473,7 +584,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 
       // Send the code (async, don't block response)
       sendLoginOtpEmail(userData.email, otp).catch(err => {
-        console.error('[auth] Failed to send login OTP email:', err);
+        logger.error('Failed to send login OTP email', { err: err?.message ?? String(err) });
       });
 
       return res.json({
@@ -490,7 +601,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
   } catch (error: any) {
-    console.error('[auth] Login error:', error);
+    logger.error('Login error', { err: error?.message ?? String(error) });
     res.status(500).json({
       success: false,
       error: { code: 'AUTH_010', message: 'Login failed' },
@@ -509,7 +620,7 @@ router.post('/dev-login', async (req: Request, res: Response) => {
   // endpoint is invisible from any environment that hasn't explicitly
   // enabled dev-auth.
   if (!isDevAuthAllowed()) {
-    console.warn(`[auth] /dev-login refused: ${devAuthDenialReason()}`);
+    logger.warn('/dev-login refused', { reason: devAuthDenialReason() });
     return res
       .status(404)
       .json({ success: false, error: { code: 'NOT_FOUND', message: 'Not found' } });
@@ -595,7 +706,7 @@ router.post('/dev-login', async (req: Request, res: Response) => {
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
 
-    console.log(`[auth] Dev login successful for user ${userData.id}`);
+    logger.info('Dev login successful', { userId: userData.id });
 
     res.json({
       success: true,
@@ -620,7 +731,7 @@ router.post('/dev-login', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error('[auth] Dev login error:', error);
+    logger.error('Dev login error', { err: error?.message ?? String(error) });
     res.status(500).json({
       success: false,
       error: { code: 'AUTH_010', message: 'Dev login failed' },
@@ -744,7 +855,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
       const { sendWelcomeEmail } = await import('../services/emailService.js');
       const userName = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0];
       sendWelcomeEmail(email, userName).catch(err =>
-        console.error('[auth] Welcome email failed (non-blocking):', err)
+        logger.error('Welcome email failed (non-blocking)', { err: err?.message ?? String(err) })
       );
     } catch {
       // Email service not available — continue
@@ -766,7 +877,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error('[auth] Signup error:', error);
+    logger.error('Signup error', { err: error?.message ?? String(error) });
     return res.status(500).json({
       success: false,
       error: { code: 'AUTH_010', message: 'Internal server error' },
@@ -793,10 +904,25 @@ router.post('/logout', async (req: Request, res: Response) => {
   try {
     const { revokeToken } = await import('../services/token-revocation.js');
 
-    // Extract token from Authorization header and revoke it
+    // Extract token from Authorization header and revoke it. We also
+    // try to decode the token (without verifying — it might be
+    // expired) so we can attribute the logout audit event to the
+    // user/tenant whose session ended.
     const authHeader = req.headers.authorization;
+    let auditUserId: string | number | undefined;
+    let auditOrgId: string | number | undefined;
+    let auditEmail: string | undefined;
+
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.slice(7);
+      try {
+        const decoded = jwt.decode(token) as Record<string, unknown> | null;
+        auditUserId = (decoded?.userId as string) ?? (decoded?.sub as string);
+        auditOrgId = decoded?.organizationId as string | undefined;
+        auditEmail = decoded?.email as string | undefined;
+      } catch {
+        /* decode failed — log anonymous logout */
+      }
       await revokeToken(token);
     }
 
@@ -805,9 +931,23 @@ router.post('/logout', async (req: Request, res: Response) => {
       await revokeToken(req.body.refreshToken);
     }
 
+    // Audit: session termination. Recorded regardless of whether the
+    // token was valid — a logout request from an expired session is
+    // still a meaningful event for inspectors (e.g. shows the user
+    // explicitly ended the session vs. just walking away).
+    await auditAuthEvent({
+      action: 'user_logout',
+      userId: auditUserId,
+      tenantId: auditOrgId,
+      email: auditEmail,
+      outcome: 'success',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+
     res.json({ success: true, message: 'Logged out successfully. Tokens invalidated.' });
   } catch (error: any) {
-    console.error('[auth] Logout error:', error);
+    logger.error('Logout error', { err: error?.message ?? String(error) });
     res.status(500).json({
       success: false,
       error: { code: 'AUTH_010', message: 'Logout failed' },
@@ -934,7 +1074,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
       });
     }
 
-    console.error('[auth] Token refresh error:', error);
+    logger.error('Token refresh error', { err: error?.message ?? String(error) });
     res.status(500).json({
       success: false,
       error: { code: 'AUTH_010', message: 'Token refresh failed' },
@@ -1038,7 +1178,7 @@ router.get('/me', async (req: Request, res: Response) => {
       });
     }
 
-    console.error('[auth] Get user error:', error);
+    logger.error('Get user error', { err: error?.message ?? String(error) });
 
     // CRIT-02f FIX: Removed error-path dev bypass for GET /me
 
@@ -1176,7 +1316,7 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
       mfaRequired: false,
     });
   } catch (error: any) {
-    console.error('[auth] MFA verify error:', error);
+    logger.error('MFA verify error', { err: error?.message ?? String(error) });
     res.status(500).json({
       success: false,
       error: { code: 'AUTH_010', message: 'MFA verification failed' },
@@ -1215,7 +1355,7 @@ router.post('/mfa/resend', mfaLimiter, async (req: Request, res: Response) => {
     const maskedEmail = maskEmail(challenge.email);
 
     sendLoginOtpEmail(challenge.email, otp).catch(err => {
-      console.error('[auth] Failed to resend login OTP email:', err);
+      logger.error('Failed to resend login OTP email', { err: err?.message ?? String(err) });
     });
 
     res.json({
@@ -1224,7 +1364,7 @@ router.post('/mfa/resend', mfaLimiter, async (req: Request, res: Response) => {
       maskedEmail,
     });
   } catch (error: any) {
-    console.error('[auth] MFA resend error:', error);
+    logger.error('MFA resend error', { err: error?.message ?? String(error) });
     res.status(500).json({
       success: false,
       error: { code: 'AUTH_010', message: 'Failed to resend code' },
@@ -1265,7 +1405,7 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
       qrCode: result.qrCodeDataUrl,
     });
   } catch (error: any) {
-    console.error('[auth] MFA setup error:', error);
+    logger.error('MFA setup error', { err: error?.message ?? String(error) });
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
       return res.status(401).json({
         success: false,
@@ -1329,7 +1469,7 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
       backupCodes: result.backupCodes,
     });
   } catch (error: any) {
-    console.error('[auth] MFA enable error:', error);
+    logger.error('MFA enable error', { err: error?.message ?? String(error) });
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
       return res.status(401).json({
         success: false,
@@ -1388,7 +1528,7 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
       message: 'MFA has been disabled',
     });
   } catch (error: any) {
-    console.error('[auth] MFA disable error:', error);
+    logger.error('MFA disable error', { err: error?.message ?? String(error) });
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
       return res.status(401).json({
         success: false,
@@ -1465,7 +1605,7 @@ async function handleForgotPassword(req: Request, res: Response) {
 
     return res.json(successResponse);
   } catch (error: any) {
-    console.error('[auth] Forgot password error:', error);
+    logger.error('Forgot password error', { err: error?.message ?? String(error) });
     return res.status(500).json({
       success: false,
       error: { code: 'AUTH_010', message: 'Password reset request failed' },
@@ -1555,14 +1695,14 @@ async function handleResetPassword(req: Request, res: Response) {
       })
       .where(eq(users.id, userData.id));
 
-    console.log(`[auth] Password reset completed for user ${userData.id}`);
+    logger.info('Password reset completed', { userId: userData.id });
 
     return res.json({
       success: true,
       message: 'Password reset successfully',
     });
   } catch (error: any) {
-    console.error('[auth] Reset password error:', error);
+    logger.error('Reset password error', { err: error?.message ?? String(error) });
     return res.status(500).json({
       success: false,
       error: { code: 'AUTH_010', message: 'Password reset failed' },
@@ -1696,7 +1836,7 @@ router.post('/password/change', async (req: Request, res: Response) => {
       })
       .where(eq(users.id, userData.id));
 
-    console.log(`[auth] Password changed for user ${userData.id}`);
+    logger.info('Password changed', { userId: userData.id });
 
     return res.json({
       success: true,
@@ -1710,7 +1850,7 @@ router.post('/password/change', async (req: Request, res: Response) => {
       });
     }
 
-    console.error('[auth] Password change error:', error);
+    logger.error('Password change error', { err: error?.message ?? String(error) });
     return res.status(500).json({
       success: false,
       error: { code: 'AUTH_010', message: 'Password change failed' },
@@ -1768,16 +1908,18 @@ router.post('/license-request', licenseRequestLimiter, async (req: Request, res:
         await db.execute(sql`INSERT INTO license_requests (name, email, organization, message, status, created_at)
                 VALUES (${name}, ${email}, ${organization}, ${message}, 'pending', NOW())`);
       } else {
-        console.error('[auth] License request DB error:', dbErr);
+        logger.error('License request DB error', { err: dbErr?.message ?? String(dbErr) });
         // Still return success to the user — we log the request
       }
     }
 
-    console.log(`[auth] License request from ${email} (${organization})`);
+    logger.info('License request received', { email, organization });
 
     return res.json({ success: true, message: 'License request submitted.' });
   } catch (error) {
-    console.error('[auth] License request error:', error);
+    logger.error('License request error', {
+      err: error instanceof Error ? error.message : String(error),
+    });
     return res.status(500).json({
       success: false,
       error: { message: 'Unable to submit request. Please try again.' },

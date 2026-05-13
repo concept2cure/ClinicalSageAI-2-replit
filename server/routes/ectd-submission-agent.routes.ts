@@ -11,6 +11,10 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { ectdSubmissionAgent } from '../services/ectd-submission-agent';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('ectd-submission-agent');
+
 const router = Router();
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -81,7 +85,7 @@ router.post('/prepare', async (req: Request, res: Response) => {
     const submission = await ectdSubmissionAgent.prepareSubmission(orgId, parsed.data);
     return res.json({ data: submission });
   } catch (err) {
-    console.error('[ectd-submission-agent] prepare error:', err);
+    logger.error('prepare error', { err: err instanceof Error ? err.message : String(err) });
     return res.status(500).json({ error: 'Failed to prepare submission' });
   }
 });
@@ -100,7 +104,7 @@ router.post('/:id/documents', async (req: Request, res: Response) => {
     const doc = await ectdSubmissionAgent.addDocument(orgId, submissionId, parsed.data);
     return res.json({ data: doc });
   } catch (err) {
-    console.error('[ectd-submission-agent] addDocument error:', err);
+    logger.error('addDocument error', { err: err instanceof Error ? err.message : String(err) });
     return res.status(500).json({ error: 'Failed to add document' });
   }
 });
@@ -115,7 +119,7 @@ router.post('/:id/validate', async (req: Request, res: Response) => {
     const result = await ectdSubmissionAgent.validateSubmission(orgId, submissionId);
     return res.json({ data: result });
   } catch (err) {
-    console.error('[ectd-submission-agent] validate error:', err);
+    logger.error('validate error', { err: err instanceof Error ? err.message : String(err) });
     return res.status(500).json({ error: 'Failed to validate submission' });
   }
 });
@@ -130,7 +134,7 @@ router.post('/:id/submit', async (req: Request, res: Response) => {
     const result = await ectdSubmissionAgent.submitToGateway(orgId, submissionId);
     return res.json({ data: result });
   } catch (err) {
-    console.error('[ectd-submission-agent] submit error:', err);
+    logger.error('submit error', { err: err instanceof Error ? err.message : String(err) });
     return res.status(500).json({ error: 'Failed to submit to gateway' });
   }
 });
@@ -146,7 +150,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     if (!submission) return res.status(404).json({ error: 'Submission not found' });
     return res.json({ data: submission });
   } catch (err) {
-    console.error('[ectd-submission-agent] getSubmission error:', err);
+    logger.error('getSubmission error', { err: err instanceof Error ? err.message : String(err) });
     return res.status(500).json({ error: 'Failed to retrieve submission' });
   }
 });
@@ -165,7 +169,7 @@ router.get('/', async (req: Request, res: Response) => {
     const submissions = await ectdSubmissionAgent.listSubmissions(orgId, filters);
     return res.json({ data: submissions });
   } catch (err) {
-    console.error('[ectd-submission-agent] listSubmissions error:', err);
+    logger.error('listSubmissions error', { err: err instanceof Error ? err.message : String(err) });
     return res.status(500).json({ error: 'Failed to list submissions' });
   }
 });
@@ -180,7 +184,7 @@ router.get('/:id/status', async (req: Request, res: Response) => {
     const statusInfo = await ectdSubmissionAgent.getSubmissionStatus(orgId, submissionId);
     return res.json({ data: statusInfo });
   } catch (err) {
-    console.error('[ectd-submission-agent] getStatus error:', err);
+    logger.error('getStatus error', { err: err instanceof Error ? err.message : String(err) });
     return res.status(500).json({ error: 'Failed to retrieve submission status' });
   }
 });
@@ -199,7 +203,7 @@ router.post('/:id/amend', async (req: Request, res: Response) => {
     const amendment = await ectdSubmissionAgent.createAmendment(orgId, parentId, parsed.data);
     return res.json({ data: amendment });
   } catch (err) {
-    console.error('[ectd-submission-agent] amend error:', err);
+    logger.error('amend error', { err: err instanceof Error ? err.message : String(err) });
     return res.status(500).json({ error: 'Failed to create amendment' });
   }
 });

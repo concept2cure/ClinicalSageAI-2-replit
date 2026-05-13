@@ -28,6 +28,10 @@ import { authenticateToken } from '../middleware/auth.js';
 import { getSecureOrgId } from '../utils/tenantContext.js';
 import Stripe from 'stripe';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('billing-dashboard');
+
 const router = Router();
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -125,7 +129,7 @@ router.get('/usage', authenticateToken, async (req: Request, res: Response) => {
       endDate: end,
     });
   } catch (error) {
-    console.error('[Billing Dashboard] Usage error:', error);
+    logger.error('Usage error', { err: error instanceof Error ? error.message : String(error) });
     const message = error instanceof Error ? error.message : 'Failed to fetch usage data';
     res.status(500).json({ error: message });
   }
@@ -203,7 +207,7 @@ router.get('/usage/summary', authenticateToken, async (req: Request, res: Respon
       periodStart,
     });
   } catch (error) {
-    console.error('[Billing Dashboard] Usage summary error:', error);
+    logger.error('Usage summary error', { err: error instanceof Error ? error.message : String(error) });
     const message = error instanceof Error ? error.message : 'Failed to fetch usage summary';
     res.status(500).json({ error: message });
   }
@@ -269,7 +273,7 @@ router.get('/invoices', authenticateToken, async (req: Request, res: Response) =
       total: stripeInvoices.data.length,
     });
   } catch (error) {
-    console.error('[Billing Dashboard] Invoices error:', error);
+    logger.error('Invoices error', { err: error instanceof Error ? error.message : String(error) });
     const message = error instanceof Error ? error.message : 'Failed to fetch invoices';
     res.status(500).json({ error: message });
   }
@@ -332,7 +336,7 @@ router.get('/budgets', authenticateToken, async (req: Request, res: Response) =>
         : null,
     });
   } catch (error) {
-    console.error('[Billing Dashboard] Budgets error:', error);
+    logger.error('Budgets error', { err: error instanceof Error ? error.message : String(error) });
     const message = error instanceof Error ? error.message : 'Failed to fetch budget settings';
     res.status(500).json({ error: message });
   }
@@ -400,7 +404,7 @@ router.post('/budgets', authenticateToken, async (req: Request, res: Response) =
       alerts: row.alert_thresholds || [],
     });
   } catch (error) {
-    console.error('[Billing Dashboard] Update budget error:', error);
+    logger.error('Update budget error', { err: error instanceof Error ? error.message : String(error) });
     const message = error instanceof Error ? error.message : 'Failed to update budget settings';
     res.status(500).json({ error: message });
   }
@@ -451,7 +455,7 @@ router.get('/alerts/history', authenticateToken, async (req: Request, res: Respo
       hasMore: offset + limit < total,
     });
   } catch (error) {
-    console.error('[Billing Dashboard] Alerts history error:', error);
+    logger.error('Alerts history error', { err: error instanceof Error ? error.message : String(error) });
     const message = error instanceof Error ? error.message : 'Failed to fetch alert history';
     res.status(500).json({ error: message });
   }
@@ -495,7 +499,7 @@ router.post('/alerts/:id/acknowledge', authenticateToken, async (req: Request, r
       acknowledgedAt: r.acknowledged_at,
     });
   } catch (error) {
-    console.error('[Billing Dashboard] Acknowledge alert error:', error);
+    logger.error('Acknowledge alert error', { err: error instanceof Error ? error.message : String(error) });
     const message = error instanceof Error ? error.message : 'Failed to acknowledge alert';
     res.status(500).json({ error: message });
   }
@@ -584,7 +588,7 @@ router.get('/rate-limits', authenticateToken, async (req: Request, res: Response
       limits,
     });
   } catch (error) {
-    console.error('[Billing Dashboard] Rate limits error:', error);
+    logger.error('Rate limits error', { err: error instanceof Error ? error.message : String(error) });
     const message = error instanceof Error ? error.message : 'Failed to fetch rate limits';
     res.status(500).json({ error: message });
   }
@@ -655,7 +659,7 @@ router.get('/activity', authenticateToken, async (req: Request, res: Response) =
 
     res.json({ activity });
   } catch (error) {
-    console.error('[Billing Dashboard] Activity error:', error);
+    logger.error('Activity error', { err: error instanceof Error ? error.message : String(error) });
     const message = error instanceof Error ? error.message : 'Failed to fetch billing activity';
     res.status(500).json({ error: message });
   }

@@ -7,6 +7,10 @@ import { renderPdfBuffersFor510k } from '../export/renderers';
 import { authMiddleware } from '../auth';
 import { createGovernedExportConsequence } from '../services/export/governedExportConsequence';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('510k-estar-routes');
+
 const router = Router();
 
 const allowedRoles = new Set(['admin', 'owner', 'editor', 'super_admin']);
@@ -178,7 +182,7 @@ router.post('/build', authMiddleware, requireEditorAccess, async (req, res) => {
 
     return res.status(200).json(consequence);
   } catch (error: any) {
-    console.error('[eSTAR] governed export failure:', error);
+    logger.error('governed export failure', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({
       error: 'GOVERNED_EXPORT_FAILED',
       message: error.message || 'Governed eSTAR export failed before consequence persistence',

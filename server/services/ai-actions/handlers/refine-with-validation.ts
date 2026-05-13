@@ -25,6 +25,10 @@ import type {
 import { AIActionHandlerError } from '../../../../shared/types/ai-actions';
 import { resolveGovernedContext } from '../../concept2cure/governedDocumentContractService.js';
 
+import { createScopedLogger } from '../../../utils/logger.js';
+
+const logger = createScopedLogger('refine-with-validation');
+
 const handler: AIActionHandler = {
   actionType: 'refine_with_validation',
 
@@ -99,7 +103,7 @@ const handler: AIActionHandler = {
         }
       );
     } catch (err) {
-      console.error('[AI Actions] AI refinement call failed:', err);
+      logger.error('AI refinement call failed', { err: err instanceof Error ? err.message : String(err) });
       throw new AIActionHandlerError(
         'AI_REFINEMENT_FAILED',
         'Failed to generate refined content via AI gateway',

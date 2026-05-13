@@ -382,8 +382,15 @@ export async function generateHtmlPreview(
   documentId: number,
   organizationId: number | null
 ): Promise<PreviewResult> {
-  // Fetch document from storage
-  const doc = await storage.getDocument(String(documentId));
+  // The caller declared a tenant context but pre-fix this lookup
+  // ignored it — `storage.getDocument(String(documentId))` queried
+  // by id alone. Now we require the org id and pass it through; a
+  // null tenant context maps to "not found" rather than silently
+  // returning a foreign-tenant preview.
+  if (organizationId == null) {
+    throw new DocumentPreviewError('Document not found', 404);
+  }
+  const doc = await storage.getDocument(String(documentId), organizationId);
 
   if (!doc) {
     throw new DocumentPreviewError('Document not found', 404);

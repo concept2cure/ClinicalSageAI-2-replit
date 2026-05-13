@@ -9,7 +9,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import type { Pool, PoolClient } from 'pg';
+import type { Pool } from 'pg';
 import jwt from 'jsonwebtoken';
 import { db } from '../db';
 import { getPool } from '../db';
@@ -17,6 +17,9 @@ import { and, eq } from 'drizzle-orm';
 import { organizations, organizationUsers } from '../../shared/schema';
 import { runWithTenantScope } from '../db/tenantStore';
 import { createScopedLogger } from '../utils/logger';
+import { LazyRequestDbClient, type RequestDbClient } from './lazyRequestDbClient';
+
+export { LazyRequestDbClient, type RequestDbClient } from './lazyRequestDbClient';
 
 const logger = createScopedLogger('tenant-context');
 
@@ -55,24 +58,8 @@ declare global {
       tenantId?: number | string;
       userRole?: string;
       userEmail?: string;
-      dbClient?: PoolClient | null;
+      dbClient?: RequestDbClient | null;
     }
-  }
-}
-
-async function releaseDbClient(req: Request): Promise<void> {
-  const client = req.dbClient;
-  if (!client) {
-    return;
-  }
-  req.dbClient = null;
-
-  try {
-    await client.query("SELECT set_config('app.current_tenant_id', '', false)");
-    await client.query("SELECT set_config('app.current_user_role', '', false)");
-    await client.query("SELECT set_config('app.current_org_id', '', false)");
-  } finally {
-    client.release();
   }
 }
 
@@ -255,28 +242,26 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
     req.userId = req.user.id;
     req.tenantId = req.user.tenantId;
 
-    const pool = getPool();
-    const client = await pool.connect();
-    try {
-      await client.query("SELECT set_config('app.current_tenant_id', $1, false)", [organizationId]);
-      await client.query("SELECT set_config('app.current_user_role', $1, false)", [
-        resolvedRole,
+    // Lazy: do not acquire a pooled client up front. The wrapper acquires on
+    // first `.query()` call and runs the RLS session vars on that connection,
+    // so requests that never touch the DB don't tie up a pool slot.
+    const lazy = new LazyRequestDbClient(getPool(), async (client) => {
+      await client.query("SELECT set_config('app.current_tenant_id', $1, false)", [
+        organizationId,
       ]);
+      await client.query("SELECT set_config('app.current_user_role', $1, false)", [resolvedRole]);
       await client.query("SELECT set_config('app.current_org_id', $1, false)", [
         organizationUuid || '',
       ]);
-    } catch (error) {
-      client.release();
-      throw error;
-    }
+    });
 
-    req.dbClient = client;
-    res.on('finish', () => {
-      void releaseDbClient(req);
-    });
-    res.on('close', () => {
-      void releaseDbClient(req);
-    });
+    req.dbClient = lazy;
+    const release = () => {
+      req.dbClient = null;
+      void lazy.release();
+    };
+    res.on('finish', release);
+    res.on('close', release);
 
     // Establish a tenant AsyncLocalStorage scope for the rest of the request.
     // Pool instrumentation reads this on every query so we can count which
@@ -346,7 +331,14 @@ export function getTenantContext(req: Request): TenantContext {
   };
 }
 
-export function getRequestDbClient(req: Request): PoolClient | Pool {
+/**
+ * Get the DB client to use for the current request. Returns the lazy
+ * request-scoped wrapper installed by `requireTenantContext` when present,
+ * or the shared pool as a fallback (which will NOT have RLS session vars
+ * set — caller must accept that or route through `requireTenantContext`
+ * upstream).
+ */
+export function getRequestDbClient(req: Request): RequestDbClient | Pool {
   return req.dbClient ?? getPool();
 }
 

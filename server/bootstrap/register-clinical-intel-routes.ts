@@ -1,5 +1,6 @@
 import express from 'express';
 import type { Pool } from 'pg';
+import { authenticateToken } from '../middleware/auth.js';
 
 export interface ClinicalIntelBootstrapContext {
   app: express.Express;
@@ -11,6 +12,14 @@ export async function registerClinicalIntelRoutes({
   pool,
 }: ClinicalIntelBootstrapContext) {
   // ── IND Family (parallelized) ──
+  //
+  // SECURITY: All IND routes are tenant-scoped and must be
+  // authenticated. Pre-fix, this entire family was reachable from the
+  // public internet without a JWT — the routers themselves had no auth
+  // middleware. Mounting `authenticateToken` at the path here is the
+  // backstop: even if an individual router file forgets to add its own
+  // auth (and most do), the bootstrap forces it. Tenant isolation
+  // inside each handler is a separate concern audited per-file.
   {
     const indConfig = [
       { path: '/api/ind', mod: '../routes/ind', name: 'IND' },
@@ -31,8 +40,8 @@ export async function registerClinicalIntelRoutes({
     const indResults = await Promise.allSettled(indConfig.map(c => import(c.mod)));
     indResults.forEach((r, i) => {
       if (r.status === 'fulfilled') {
-        app.use(indConfig[i].path, r.value.default);
-        console.log(`✅ ${indConfig[i].name} routes mounted`);
+        app.use(indConfig[i].path, authenticateToken, r.value.default);
+        console.log(`✅ ${indConfig[i].name} routes mounted (auth-gated)`);
       } else {
         console.error(`❌ Failed to mount ${indConfig[i].name} routes:`, r.reason);
       }
@@ -61,10 +70,16 @@ export async function registerClinicalIntelRoutes({
   }
 
   // ── RTM Export ──
+  //
+  // SECURITY: RTM export exposes the full requirements trace matrix for
+  // a program — competitive intelligence for a regulated-pharma client.
+  // Pre-fix this was mounted at /api with NO auth, meaning every
+  // /api/programs/:programId/rtm* endpoint (read + snapshot CSV) was
+  // reachable from the public internet. Auth-gated now.
   try {
     const rtmExportRoutes = await import('../routes/rtm-export');
-    app.use('/api', rtmExportRoutes.default);
-    console.log('✅ RTM Export routes mounted at /api/programs/:programId/rtm');
+    app.use('/api', authenticateToken, rtmExportRoutes.default);
+    console.log('✅ RTM Export routes mounted at /api/programs/:programId/rtm (auth-gated)');
   } catch (error) {
     console.error('Failed to mount RTM export routes:', error);
   }

@@ -23,6 +23,10 @@
 
 import { Router, type Request, type Response } from 'express';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('cro');
+
 const router = Router();
 
 // ── Dashboard ──────────────────────────────────────────────────────────────────
@@ -41,7 +45,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
     };
     res.json(dashboardData);
   } catch (error) {
-    console.error('[ERROR] Failed to fetch CRO dashboard:', error);
+    logger.error('Failed to fetch CRO dashboard', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -93,7 +97,7 @@ router.get('/clients', async (req: Request, res: Response) => {
     ];
     res.json(clients);
   } catch (error) {
-    console.error('[ERROR] Failed to fetch CRO clients:', error);
+    logger.error('Failed to fetch CRO clients', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -109,7 +113,7 @@ router.post('/clients', async (req: Request, res: Response) => {
     };
     res.status(201).json(newClient);
   } catch (error) {
-    console.error('[ERROR] Failed to create CRO client:', error);
+    logger.error('Failed to create CRO client', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -125,7 +129,7 @@ router.put('/clients/:id', async (req: Request, res: Response) => {
     };
     res.json(updatedClient);
   } catch (error) {
-    console.error('[ERROR] Failed to update CRO client:', error);
+    logger.error('Failed to update CRO client', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -135,7 +139,7 @@ router.delete('/clients/:id', async (req: Request, res: Response) => {
     const clientId = parseInt(req.params.id);
     res.status(204).send();
   } catch (error) {
-    console.error('[ERROR] Failed to delete CRO client:', error);
+    logger.error('Failed to delete CRO client', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -199,7 +203,7 @@ router.get('/studies', async (req: Request, res: Response) => {
     ];
     res.json(studies);
   } catch (error) {
-    console.error('[ERROR] Failed to fetch CRO studies:', error);
+    logger.error('Failed to fetch CRO studies', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -215,7 +219,7 @@ router.post('/studies', async (req: Request, res: Response) => {
     };
     res.status(201).json(newStudy);
   } catch (error) {
-    console.error('[ERROR] Failed to create CRO study:', error);
+    logger.error('Failed to create CRO study', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -231,7 +235,7 @@ router.put('/studies/:id', async (req: Request, res: Response) => {
     };
     res.json(updatedStudy);
   } catch (error) {
-    console.error('[ERROR] Failed to update CRO study:', error);
+    logger.error('Failed to update CRO study', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -283,7 +287,7 @@ router.get('/submissions', async (req: Request, res: Response) => {
     ];
     res.json(submissions);
   } catch (error) {
-    console.error('[ERROR] Failed to fetch CRO submissions:', error);
+    logger.error('Failed to fetch CRO submissions', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -299,7 +303,7 @@ router.post('/submissions', async (req: Request, res: Response) => {
     };
     res.status(201).json(newSubmission);
   } catch (error) {
-    console.error('[ERROR] Failed to create CRO submission:', error);
+    logger.error('Failed to create CRO submission', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -315,7 +319,7 @@ router.put('/submissions/:id', async (req: Request, res: Response) => {
     };
     res.json(updatedSubmission);
   } catch (error) {
-    console.error('[ERROR] Failed to update CRO submission:', error);
+    logger.error('Failed to update CRO submission', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -376,7 +380,7 @@ router.get('/milestones', async (req: Request, res: Response) => {
     ];
     res.json(milestones);
   } catch (error) {
-    console.error('[ERROR] Failed to fetch CRO milestones:', error);
+    logger.error('Failed to fetch CRO milestones', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -392,7 +396,7 @@ router.post('/milestones', async (req: Request, res: Response) => {
     };
     res.status(201).json(newMilestone);
   } catch (error) {
-    console.error('[ERROR] Failed to create CRO milestone:', error);
+    logger.error('Failed to create CRO milestone', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -408,7 +412,7 @@ router.put('/milestones/:id', async (req: Request, res: Response) => {
     };
     res.json(updatedMilestone);
   } catch (error) {
-    console.error('[ERROR] Failed to update CRO milestone:', error);
+    logger.error('Failed to update CRO milestone', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Internal server error' });
   }
 });

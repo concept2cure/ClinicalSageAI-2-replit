@@ -20,6 +20,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import type { IncomingMessage, ServerResponse } from 'http';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { createHash, randomBytes } from 'crypto';
@@ -89,19 +90,85 @@ const config = {
 // SECURITY HEADERS (Helmet Configuration)
 // ============================================================================
 
-// In development, use a permissive (but present) security policy.
-// CSP is set to report-only so issues are visible without breaking HMR/iframes.
+/**
+ * Per-request CSP nonce middleware. Stashes a 128-bit base64 nonce on
+ * `res.locals.cspNonce` so:
+ *   - the helmet CSP directive below can emit `'nonce-<value>'` in
+ *     `script-src`, allowing the SPA's bundled module loader to run
+ *     without needing `'unsafe-inline'`;
+ *   - the HTML serving layer (server/vite.ts) can inject the same nonce
+ *     into every `<script>` tag in index.html.
+ *
+ * Strict-dynamic propagates trust from the nonced loader to scripts it
+ * imports, so we don't need to enumerate every chunk URL.
+ */
+export function cspNonce(req: Request, res: Response, next: NextFunction) {
+  res.locals.cspNonce = randomBytes(16).toString('base64');
+  next();
+}
+
+// Helmet types the directive function as (IncomingMessage, ServerResponse) so
+// we have to match that exactly — Express's narrower types would fail TS's
+// contravariant parameter check. The `as` cast at call time recovers locals.
+const scriptSrcDirective = (_req: IncomingMessage, res: ServerResponse) => {
+  const locals = (res as ServerResponse & { locals?: { cspNonce?: string } }).locals;
+  return `'nonce-${locals?.cspNonce ?? ''}'`;
+};
+
+// In development, keep CSP report-only so HMR/Vite injections don't break
+// the dev loop — violations still surface in the browser console where we
+// can act on them. Production enforces.
+/**
+ * CSP violation report endpoint path. Browsers POST to this URL when a
+ * directive is violated; the handler in server/routes/csp-report.ts logs
+ * the report. Defined as a constant so the middleware directive and the
+ * handler mount path stay in sync.
+ */
+export const CSP_REPORT_URI = '/api/csp-report';
+
+/**
+ * Reporting Endpoints group name. Referenced by the `report-to` CSP
+ * directive and by the `Reporting-Endpoints` response header in
+ * `permissionsPolicy`. Two layers because:
+ *   - `report-uri` (legacy) — Firefox, Safari today.
+ *   - `report-to` + `Reporting-Endpoints` (modern API) — Chrome/Edge.
+ * Keeping both means reports land regardless of browser.
+ */
+export const CSP_REPORT_TO_GROUP = 'csp-endpoint';
+
 export const securityHeaders = config.isDevelopment
   ? helmet({
       contentSecurityPolicy: {
-        reportOnly: true, // Don't block, but log violations in browser console
+        reportOnly: true,
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
+          // Even in dev we drop 'unsafe-inline' from script-src so the
+          // report-only signal is meaningful. Vite's dev HMR injects its
+          // own scripts through its middleware — those get the nonce via
+          // setupVite's transformIndexHtml hook.
+          scriptSrc: ["'self'", scriptSrcDirective, "'strict-dynamic'", "'unsafe-eval'"],
+          // Split style-src into elem (for <style> and <link>) and attr
+          // (for inline style="..."). React style={{...}} props are the
+          // pervasive case and stay allowed via style-src-attr; runtime
+          // <style> injection from Tiptap/Radix is nonced by the boot-time
+          // patch in client/src/cspNonce.ts.
+          styleSrcElem: ["'self'", scriptSrcDirective, "'unsafe-inline'"],
+          styleSrcAttr: ["'unsafe-inline'"],
           connectSrc: ["'self'", 'ws:', 'wss:', 'http://localhost:*'],
           imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
           frameSrc: ["'self'"],
+          // Hardening directives (defense-in-depth, report-only in dev):
+          //   base-uri locks <base href> so an injected element can't
+          //     re-root every relative URL on the page.
+          //   form-action restricts where forms can POST/GET, blocking
+          //     phishing pages that inject a form into our DOM.
+          //   frame-ancestors stops other origins from iframing the
+          //     app — defense against clickjacking. Mirrors frameguard.
+          baseUri: ["'self'"],
+          formAction: ["'self'"],
+          frameAncestors: ["'self'"],
+          reportUri: [CSP_REPORT_URI],
+          reportTo: [CSP_REPORT_TO_GROUP],
         },
       },
       crossOriginEmbedderPolicy: false,
@@ -109,20 +176,47 @@ export const securityHeaders = config.isDevelopment
       crossOriginResourcePolicy: false,
       hsts: false, // No HSTS in dev (no TLS locally)
       frameguard: false, // Allow iframes (VS Code Simple Browser)
-      xssFilter: true, // Keep XSS filter active even in dev
+      xssFilter: true,
     })
   : helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.jsdelivr.net'],
-          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+          // Hardened: per-request nonce + strict-dynamic. Drops both
+          // 'unsafe-inline' and 'unsafe-eval' for scripts. The nonce is
+          // injected into <script> tags by the HTML serving layer
+          // (server/vite.ts), and strict-dynamic propagates trust to
+          // imported chunks so we don't have to whitelist them.
+          scriptSrc: ["'self'", scriptSrcDirective, "'strict-dynamic'"],
+          // style-src split: elem requires a nonce (no 'unsafe-inline'),
+          // attr keeps 'unsafe-inline' so React style={{...}} props work.
+          // Runtime <style> injection from Tiptap/Radix is auto-nonced by
+          // the boot-time createElement patch in client/src/cspNonce.ts.
+          // Google Fonts stylesheet is loaded via <link> from index.html.
+          styleSrcElem: [
+            "'self'",
+            scriptSrcDirective,
+            'https://fonts.googleapis.com',
+          ],
+          styleSrcAttr: ["'unsafe-inline'"],
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
           imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
           connectSrc: ["'self'", 'https://api.openai.com', 'https://*.neon.tech', 'wss:', 'ws:'],
           frameSrc: ["'self'"],
           objectSrc: ["'none'"],
+          // Hardening directives (enforced in prod):
+          //   base-uri 'self' blocks <base href> injection from rewriting
+          //     every relative URL on the page.
+          //   form-action 'self' confines form posts to our origin,
+          //     killing phishing forms that an XSS could inject.
+          //   frame-ancestors 'self' is the CSP-spec replacement for
+          //     X-Frame-Options; defense against clickjacking.
+          baseUri: ["'self'"],
+          formAction: ["'self'"],
+          frameAncestors: ["'self'"],
           upgradeInsecureRequests: [],
+          reportUri: [CSP_REPORT_URI],
+          reportTo: [CSP_REPORT_TO_GROUP],
         },
       },
       crossOriginEmbedderPolicy: false, // Disable for PDF rendering
@@ -140,6 +234,58 @@ export const securityHeaders = config.isDevelopment
       frameguard: { action: 'sameorigin' },
       permittedCrossDomainPolicies: { permittedPolicies: 'none' },
     });
+
+/**
+ * Permissions-Policy (formerly Feature-Policy) — opt out of browser
+ * features we don't use. Reduces the blast radius of a successful XSS
+ * by denying access to powerful APIs even after script execution.
+ *
+ * Defaults are restrictive; we explicitly allow clipboard-write on
+ * self because the editor's "copy as markdown" / "copy citation"
+ * actions need it. Everything else is `()` (disabled for all origins).
+ */
+export function permissionsPolicy(_req: Request, res: Response, next: NextFunction) {
+  // Reporting-Endpoints — the modern Reporting API binding. CSP's
+  // `report-to <group>` directive resolves to this URL. Browsers that
+  // understand this header use it; older ones fall back to `report-uri`.
+  // Single quoted-string form per spec.
+  res.setHeader(
+    'Reporting-Endpoints',
+    `${CSP_REPORT_TO_GROUP}="${CSP_REPORT_URI}"`,
+  );
+
+  res.setHeader(
+    'Permissions-Policy',
+    [
+      'accelerometer=()',
+      'autoplay=()',
+      'camera=()',
+      'clipboard-read=()',
+      'clipboard-write=(self)',
+      'cross-origin-isolated=()',
+      'display-capture=()',
+      'encrypted-media=()',
+      'fullscreen=(self)',
+      'geolocation=()',
+      'gyroscope=()',
+      'hid=()',
+      'idle-detection=()',
+      'magnetometer=()',
+      'microphone=()',
+      'midi=()',
+      'payment=()',
+      'picture-in-picture=()',
+      'publickey-credentials-get=()',
+      'screen-wake-lock=()',
+      'serial=()',
+      'sync-xhr=()',
+      'usb=()',
+      'web-share=()',
+      'xr-spatial-tracking=()',
+    ].join(', '),
+  );
+  next();
+}
 
 // ============================================================================
 // CORS CONFIGURATION
@@ -314,6 +460,7 @@ export function validateTenantContext(req: Request, res: Response, next: NextFun
     '/api/auth/login',
     '/api/auth/register',
     '/api/auth/signup',
+    '/api/csp-report',
   ];
   if (publicPaths.some(p => req.path.startsWith(p))) {
     return next();
@@ -327,13 +474,43 @@ export function validateTenantContext(req: Request, res: Response, next: NextFun
   const headerOrgId = req.headers['x-organization-id'] as string | undefined;
 
   if (user?.organizationId) {
-    // Detect and block header-based impersonation attempts
+    // Detect and block header-based impersonation attempts.
+    // Audit AND log: this is a security-significant event — a valid
+    // JWT user actively trying to access another tenant's data. The
+    // audit pipeline gives regulators an authoritative record;
+    // logger.warn gives ops live visibility.
     if (headerOrgId && String(headerOrgId) !== String(user.organizationId)) {
-      console.warn(
-        `[SECURITY] Tenant impersonation attempt blocked: ` +
-          `JWT org=${user.organizationId}, Header org=${headerOrgId}, ` +
-          `userId=${user.id || user.userId || 'unknown'}, path=${req.path}`
-      );
+      const impersonationDetail = {
+        jwtOrg: user.organizationId,
+        headerOrg: headerOrgId,
+        userId: user.id || user.userId || 'unknown',
+        path: req.path,
+        method: req.method,
+        ipAddress: req.ip,
+      };
+      // Fire-and-forget audit. Dynamic import keeps this middleware
+      // free of a top-level audit-service dependency (which itself
+      // imports DB code and would slow boot).
+      (async () => {
+        try {
+          const { default: auditService } = await import('../services/auditService');
+          await auditService.logAction({
+            tenantId: user.organizationId,
+            userId: user.id || user.userId,
+            action: 'tenant_impersonation_attempt',
+            resourceType: 'security_event',
+            resourceId: String(headerOrgId),
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+            details: impersonationDetail,
+          });
+        } catch {
+          /* audit failure is non-fatal */
+        }
+      })();
+      // Keep the structured-log line as well for ops dashboards.
+      // eslint-disable-next-line no-console
+      console.warn('[SECURITY] Tenant impersonation attempt blocked', impersonationDetail);
       return res.status(403).json({
         error: 'Organization mismatch',
         code: 'TENANT_MISMATCH',
@@ -523,6 +700,36 @@ export function requireJwtSecret(): void {
  * adds defense-in-depth by validating Origin/Referer on state-changing
  * requests in production.
  */
+/**
+ * Fire-and-forget audit-event writer for security middleware. Dynamic
+ * import of auditService keeps boot fast and avoids a cycle between
+ * security middleware and the service that depends on the DB pool.
+ */
+function auditSecurityEvent(
+  req: Request,
+  action: string,
+  details: Record<string, unknown>,
+): void {
+  (async () => {
+    try {
+      const { default: auditService } = await import('../services/auditService');
+      const user = (req as any).user;
+      await auditService.logAction({
+        tenantId: user?.organizationId,
+        userId: user?.id ?? user?.userId,
+        action,
+        resourceType: 'security_event',
+        resourceId: req.path,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details,
+      });
+    } catch {
+      /* audit failure is non-fatal for security middleware */
+    }
+  })();
+}
+
 export function csrfProtection(req: Request, res: Response, next: NextFunction) {
   // Only check state-changing methods
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
@@ -550,6 +757,14 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     if (req.headers.authorization?.startsWith('Bearer ')) {
       return next();
     }
+    // Audit + log. Repeated CSRF failures from a single IP suggest
+    // active attack; recording them gives SOC visibility and gives
+    // regulators a queryable surface for the failure rate.
+    auditSecurityEvent(req, 'csrf_validation_failed', {
+      reason: 'no_origin_no_referer_no_bearer',
+      method: req.method,
+    });
+    // eslint-disable-next-line no-console
     console.warn(
       `[SECURITY] CSRF: state-changing request without Origin/Referer/Bearer on ${req.path}`
     );
@@ -560,6 +775,12 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     !config.allowedOrigins.includes(source) &&
     !(source.endsWith('.app.github.dev') && !config.isProduction)
   ) {
+    auditSecurityEvent(req, 'csrf_validation_failed', {
+      reason: 'origin_mismatch',
+      method: req.method,
+      origin: source,
+    });
+    // eslint-disable-next-line no-console
     console.warn(
       `[SECURITY] CSRF: origin mismatch — ${source} not in allowedOrigins for ${req.path}`
     );
@@ -588,8 +809,16 @@ export function applySecurityMiddleware(app: any) {
   // HTTPS enforcement (must be before everything else)
   app.use(enforceHttps);
 
+  // CSP nonce — must run before securityHeaders so the directive function
+  // can read res.locals.cspNonce.
+  app.use(cspNonce);
+
   // Security headers (must be first after HTTPS)
   app.use(securityHeaders);
+
+  // Permissions-Policy — runs after CSP so it can't shadow any of the
+  // helmet-emitted headers. Deny most browser features by default.
+  app.use(permissionsPolicy);
 
   // Request ID for correlation
   app.use(requestId);
@@ -629,6 +858,8 @@ export function applySecurityMiddleware(app: any) {
 
 export default {
   securityHeaders,
+  cspNonce,
+  permissionsPolicy,
   corsMiddleware,
   rateLimiters,
   sanitizeInput,

@@ -12,6 +12,10 @@ import type { Request, Response, Router } from 'express';
 
 import { sendSuccess, sendError, extractRequestContext } from './shared.js';
 
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('generate-execute');
+
 /** Register /generate and /execute endpoints on the given router. */
 export function mountGenerateExecuteRoutes(router: Router): void {
   // ─────────────────────────────────────────────────────────────────────────
@@ -105,7 +109,7 @@ export function mountGenerateExecuteRoutes(router: Router): void {
         model: result.model,
       });
     } catch (error: any) {
-      console.error('[AnA RI] Generate error:', error);
+      logger.error('Generate error', { err: error instanceof Error ? error.message : String(error) });
       return sendError(res, 500, error?.message || 'Internal server error', null, 'INTERNAL_ERROR');
     }
   });
@@ -160,7 +164,7 @@ export function mountGenerateExecuteRoutes(router: Router): void {
         }
       );
     } catch (error: any) {
-      console.error('[AnA RI] Command execution error:', error);
+      logger.error('Command execution error', { err: error instanceof Error ? error.message : String(error) });
       return sendError(
         res,
         500,
