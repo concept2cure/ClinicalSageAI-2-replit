@@ -21,6 +21,23 @@ import { LazyRequestDbClient, type RequestDbClient } from './lazyRequestDbClient
 
 export { LazyRequestDbClient, type RequestDbClient } from './lazyRequestDbClient';
 
+/**
+ * Coerce a JWT numeric claim to a strict positive integer, or null if the
+ * value isn't a clean integer string. Rejects:
+ *   - missing / null / non-string non-number values
+ *   - the literal 0
+ *   - decimal points, scientific notation, leading "+", whitespace
+ *   - mixed strings like '42abc' that parseInt would silently truncate
+ */
+export function strictPositiveInt(value: unknown): number | null {
+  if (value === null || value === undefined) return null;
+  const str = typeof value === 'number' ? String(value) : value;
+  if (typeof str !== 'string') return null;
+  if (!/^[1-9]\d*$/.test(str)) return null;
+  const n = Number(str);
+  return Number.isSafeInteger(n) ? n : null;
+}
+
 const logger = createScopedLogger('tenant-context');
 
 // Define the tenant context interface to be attached to the request
@@ -157,8 +174,14 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
       });
     }
 
+    // Accept only the canonical `Bearer <token>` shape (case-insensitive
+    // scheme, single token, no extra whitespace). The previous
+    // `authHeader.replace('Bearer ', '').trim()` would strip the substring
+    // anywhere in the value, so `Foo Bearer realtoken` parsed to
+    // `Foo realtoken` and propagated junk into the verifier.
     const authHeader = req.headers.authorization;
-    const token = authHeader?.replace('Bearer ', '').trim();
+    const bearerMatch = authHeader ? /^Bearer\s+(\S+)$/i.exec(authHeader) : null;
+    const token = bearerMatch ? bearerMatch[1] : null;
 
     if (!token) {
       return res.status(401).json({
@@ -181,9 +204,13 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
       });
     }
 
-    const userId = parseInt(decoded.userId, 10);
-    const orgIdInt = parseInt(organizationId, 10);
-    if (!Number.isFinite(userId) || !Number.isFinite(orgIdInt)) {
+    // Reject non-integer / zero / truncated numeric claims. parseInt is
+    // intentionally lax — parseInt('42abc', 10) returns 42, which would let
+    // a malformed claim resolve to a real user or organization id. Require
+    // a strict positive-integer string for both.
+    const userId = strictPositiveInt(decoded.userId);
+    const orgIdInt = strictPositiveInt(organizationId);
+    if (userId === null || orgIdInt === null) {
       return res.status(401).json({
         error: 'Authentication required',
         message: 'Invalid token claims',
