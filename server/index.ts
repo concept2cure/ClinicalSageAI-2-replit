@@ -137,6 +137,16 @@ async function startServer() {
   await verifyDatabaseConnection(pool);
   await initializeEarlyServices();
 
+  // Security self-test — run AFTER the DB connection is verified
+  // (so the audit-chain check can query) but BEFORE any other
+  // startup work or HTTP listen. In production a critical failure
+  // here exits the process; in dev / non-blocking mode it logs
+  // and continues. See server/startup/security-self-test.ts.
+  {
+    const { runBootSecuritySelfTest } = await import('./startup/security-self-test');
+    await runBootSecuritySelfTest(pool);
+  }
+
   debugLog('Initializing Python backend...');
   pythonProcess = await startPythonBackend();
   debugLog('Python backend initialization complete');

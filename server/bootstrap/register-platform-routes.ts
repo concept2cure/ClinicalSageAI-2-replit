@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import type { PlatformBootstrapContext } from './types';
 import cspReportRouter from '../routes/csp-report';
+import adminSecurityRouter from '../routes/admin-security';
 import { CSP_REPORT_URI } from '../middleware/enterprise-security';
 
 export async function registerPlatformRoutes({ app, pool, authMiddleware }: PlatformBootstrapContext) {
@@ -8,6 +9,12 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
   // Mounted on the platform router so it's available before any auth-gated
   // routes need it, and so it survives the validateTenantContext skip list.
   app.use(CSP_REPORT_URI, cspReportRouter);
+
+  // Admin security-health endpoint. Lives under /api/admin so the
+  // global /api auth gate runs first (auth + admin role enforced
+  // by the router itself). Returns the security self-test report
+  // on demand for ops dashboards and SOC tooling.
+  app.use('/api/admin', adminSecurityRouter);
 
   app.get('/healthz', (_req, res) => res.json({ ok: true, ts: Date.now() }));
   app.get('/readyz', async (_req, res) => {
