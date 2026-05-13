@@ -19,6 +19,7 @@ import { resolveGovernedContext } from '../../services/concept2cure/governedDocu
 import { sha256 } from './provenance.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { verifyFileSignature } from '../../utils/fileSignature';
+import { scanBuffer as scanForViruses } from '../../utils/virusScan';
 
 const logger = createScopedLogger('chat-upload');
 
@@ -52,6 +53,35 @@ export const uploadHandler = async (req: Request, res: Response) => {
         return res.status(400).json({
           error: 'File content does not match declared type',
           code: 'FILE_SIGNATURE_MISMATCH',
+        });
+      }
+
+      // Antivirus scan. No-op when CLAMAV_HOST is unset (returns
+      // scanned=false, clean=true) — production must set the env var
+      // for the scanner to engage. When the scan finds something,
+      // reject with a generic 400 and a specific log entry. We do
+      // NOT echo the signature name back to the client (it would
+      // help an attacker craft a payload that evades the scanner).
+      const scan = await scanForViruses(fileBuffer);
+      if (!scan.clean) {
+        logger.warn('Upload rejected by virus scanner', {
+          fileName,
+          declaredMime: mimeType,
+          signature: scan.signature,
+          orgId,
+        });
+        return res.status(400).json({
+          error: 'File rejected by content scan',
+          code: 'FILE_SCAN_REJECTED',
+        });
+      }
+      if (!scan.scanned) {
+        // Fail-open path: we let the upload through but record the
+        // miss so ops can monitor scanner reachability. Log volume
+        // is bounded by upload volume.
+        logger.warn('Virus scan bypassed', {
+          fileName,
+          reason: scan.reason,
         });
       }
     }
