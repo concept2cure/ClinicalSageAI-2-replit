@@ -15,6 +15,7 @@ import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
 import { db } from '../db';
 import { createScopedLogger } from '../utils/logger.js';
+import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import auditService from '../services/auditService';
 
 // Scoped logger — every log line flows through the redaction walker in
@@ -214,7 +215,7 @@ router.get('/session', async (req: Request, res: Response) => {
     }
 
     // Verify JWT token
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
+    const decoded = verifyJwtWithRotation(token) as {
       userId: string;
       email: string;
       organizationId: string;
@@ -979,6 +980,10 @@ router.post('/refresh', async (req: Request, res: Response) => {
       });
     }
 
+    // Refresh tokens use a separate refresh-token secret with its
+    // own lifecycle; not part of the JWT_SECRET rotation window.
+    // See getRefreshTokenSecret.
+    // security-allow: refresh-token-secret
     const decoded = jwt.verify(refreshToken, getRefreshTokenSecret(), { algorithms: ["HS256"] }) as {
       userId: string;
       email: string;
@@ -1099,7 +1104,7 @@ router.get('/me', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
+    const decoded = verifyJwtWithRotation(token) as {
       userId: string;
       email: string;
       organizationId?: string;
@@ -1389,7 +1394,7 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
+    const decoded = verifyJwtWithRotation(token) as {
       userId: string;
       email: string;
     };
@@ -1436,7 +1441,7 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
+    const decoded = verifyJwtWithRotation(token) as {
       userId: string;
       email: string;
     };
@@ -1499,7 +1504,7 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
+    const decoded = verifyJwtWithRotation(token) as {
       userId: string;
       email: string;
     };
@@ -1738,7 +1743,7 @@ router.post('/password/change', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
+    const decoded = verifyJwtWithRotation(token) as {
       userId: string;
       email: string;
     };

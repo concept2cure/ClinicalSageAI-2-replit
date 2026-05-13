@@ -27,6 +27,7 @@ import {
 } from '../services/auth-security-service';
 
 import { config } from '../config/environment';
+import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { authMiddleware } from '../auth';
 import * as emailOtpService from '../services/emailOtpService';
 import { sendLoginOtpEmail } from '../services/emailService';
@@ -61,7 +62,7 @@ function extractJwtUser(
   const token = authHeader?.replace('Bearer ', '');
   if (!token) return null;
   try {
-    return jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
+    return verifyJwtWithRotation(token) as {
       userId: string;
       email: string;
       organizationId?: string;
@@ -313,7 +314,7 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
     // Verify the partial token to get user identity
     let decoded: any;
     try {
-      decoded = jwt.verify(partialToken, config.jwt.secret, { algorithms: ["HS256"] }) as any;
+      decoded = verifyJwtWithRotation(partialToken) as any;
     } catch {
       return res.status(401).json({
         error: 'TOKEN_EXPIRED',
@@ -609,7 +610,7 @@ router.post('/select-organization', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(existingToken, config.jwt.secret, { algorithms: ["HS256"] }) as any;
+    const decoded = verifyJwtWithRotation(existingToken) as any;
     const userId: string = decoded.userId;
     const email: string = decoded.email;
 
@@ -700,7 +701,7 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = jwt.verify(oldToken, config.jwt.secret, { algorithms: ["HS256"] }) as any;
+    const decoded = verifyJwtWithRotation(oldToken) as any;
 
     // Re-query actual role from DB instead of trusting stale JWT claim
     const refreshOrgId = decoded.organizationId ? parseInt(decoded.organizationId) : null;
@@ -746,7 +747,7 @@ router.get('/session', async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as any;
+    const decoded = verifyJwtWithRotation(token) as any;
     res.json({
       authenticated: true,
       user: {
