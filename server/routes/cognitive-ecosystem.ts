@@ -20,6 +20,7 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { createScopedLogger } from '../utils/logger.js';
+import { authedOrgId } from '../utils/authedOrgId';
 
 const logger = createScopedLogger('cognitive-ecosystem');
 
@@ -37,12 +38,25 @@ import {
 
 const router = Router();
 
-// Middleware for extracting user context
+// Middleware for extracting user context. Tenant id is sourced from
+// the verified JWT, never from headers/query (previous code accepted
+// attacker-controlled `x-tenant-id` and `tenantId` query, the IDOR
+// shape PRs #496-#499 closed). The session id is allowed from
+// `x-session-id` since it is per-request correlation only and is
+// never used as an authority for tenant access.
 const extractUserContext = (req: Request, res: Response, next: NextFunction) => {
+  const tenantId = authedOrgId(req);
+  if (tenantId == null) {
+    return res.status(403).json({ error: 'Tenant context required' });
+  }
+  const userId = (req as any).user?.id ?? (req as any).user?.userId ?? null;
+  if (userId == null) {
+    return res.status(403).json({ error: 'User context required' });
+  }
   (req as any).userContext = {
-    userId: req.headers['x-user-id'] || req.query.userId || 'anonymous',
-    tenantId: req.headers['x-tenant-id'] || req.query.tenantId || 'default',
-    sessionId: req.headers['x-session-id'] || req.query.sessionId || `session-${Date.now()}`
+    userId,
+    tenantId,
+    sessionId: req.headers['x-session-id'] || `session-${Date.now()}`,
   };
   next();
 };

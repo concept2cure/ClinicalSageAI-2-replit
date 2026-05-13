@@ -8,6 +8,7 @@ import { evaluateFirecrawlPolicy } from '../integrations/firecrawl/policy';
 import { getPool } from '../db.ts';
 import { firecrawlError } from '../integrations/firecrawl/errors';
 import { authMiddleware } from '../auth';
+import { requireAuthedOrgId } from '../utils/authedOrgId';
 import { normalizeEvidence, persistEvidence } from '../services/research-intelligence';
 import { indexGovernedDocument } from '../services/search/opensearchClient';
 
@@ -16,8 +17,9 @@ router.use(authMiddleware);
 
 router.get('/quota-status', async (req, res) => {
   try {
-    const tenantId = Number((req as any).tenantId || req.query.tenantId || 0);
-    if (!tenantId) return res.status(400).json({ success: false, error: { code: 'INVALID_INPUT' } });
+    const orgGuard = requireAuthedOrgId(req, res);
+    if (!orgGuard.ok) return;
+    const tenantId = orgGuard.orgId;
     const quota = await getFirecrawlQuotaStatus(tenantId);
     return res.json({ success: true, data: quota });
   } catch (err: any) {
@@ -28,11 +30,13 @@ router.get('/quota-status', async (req, res) => {
 
 router.post('/scrape', async (req, res) => {
   try {
+    const orgGuard = requireAuthedOrgId(req, res);
+    if (!orgGuard.ok) return;
+    const tenantId = orgGuard.orgId;
     const correlationId =
       String(req.header('x-correlation-id') || '') || `fc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const tenantId = Number((req as any).tenantId || req.body.tenantId || 0);
     const { url } = req.body || {};
-    if (!tenantId || !url) return res.status(400).json({ success: false, error: { code: 'INVALID_INPUT' } });
+    if (!url) return res.status(400).json({ success: false, error: { code: 'INVALID_INPUT' } });
 
     const pool = getPool();
     let canonicalUrl = url;
