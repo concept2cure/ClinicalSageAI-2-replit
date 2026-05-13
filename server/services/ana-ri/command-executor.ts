@@ -37,7 +37,7 @@ import {
   module3BuildAll, module3BuildSection, module3MissingInputs,
   module3StaleSections, module3RefreshStale, module3Readiness,
   module3Contradictions, module3Lineage, module3ClassifySource,
-  cmcStatus,
+  cmcStatus, ichCompliance, controlStrategy, variationsClassify,
 } from './module3-command-handlers.js';
 import { MDX_COMMAND_HANDLERS, MDX_COMMAND_METADATA } from './mdx-command-handlers';
 import {
@@ -3845,8 +3845,11 @@ export type CommandName =
   // CMS + Diagnostics
   | 'analyze_cms_strategy'
   | 'assess_diagnostic_validation'
-  // CMC status
-  | 'cmc_status';
+  // CMC status + quality
+  | 'cmc_status'
+  | 'ich_compliance'
+  | 'control_strategy'
+  | 'variations_classify';
 
 export interface CommandDefinition {
   name: CommandName;
@@ -4203,6 +4206,27 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
     parameters: 'projectId?',
     example: '"What is the CMC status of this project?" or "/cmc"',
   },
+  {
+    name: 'ich_compliance',
+    description:
+      'Run deterministic ICH compliance check (Q1A, Q2, Q3A/B, Q3D, Q6A/B, Q8, Q9, Q10) against the project\'s stored CMC data. Each finding cites the controlling guideline and underlying SQL evidence.',
+    parameters: 'projectId?',
+    example: '"Run an ICH compliance check on this project"',
+  },
+  {
+    name: 'control_strategy',
+    description:
+      'Generate a deterministic ICH Q8/Q9/Q10/Q11-grade control strategy from the project\'s CMC source data: release tests linked to validated methods, in-process controls per CPP, stability monitoring, raw material controls — with risk-based justification per element.',
+    parameters: 'projectId?, scope? (drug_substance | drug_product | both)',
+    example: '"Draft a control strategy for this project"',
+  },
+  {
+    name: 'variations_classify',
+    description:
+      'Classify a proposed CMC change against FDA SUPAC + 21 CFR 314.70 + EMA Commission Reg 1234/2008. Returns reporting category (annual_report / CBE-0 / CBE-30 / PAS), SUPAC tier, EMA variation, BE requirement, impacted CTD sections, cross-module impact, and citations.',
+    parameters: 'dosageFormFamily, changeCategory, scaleChangeFactor?, excipientLevelChange?, siteChangeKind?, processChangeKind?, touchesCriticalStep?, affects?',
+    example: '"Classify a scale-up from 100kg to 1500kg for our IR tablet"',
+  },
 
   // ── Cross-Jurisdictional Intelligence ─────────────────────────────────────
   {
@@ -4526,9 +4550,12 @@ export async function executeCommands(
     module3_classify_source: module3ClassifySource,
     // Top-level CMC status — what `/cmc` dispatches with no args. The
     // underlying handler lives in module3-command-handlers, which defines
-    // CommandContext / CommandResult locally; cast through `any` to match
-    // the same pattern used by the other module3_* entries above.
+    // CommandContext / CommandResult locally; cast through to match the
+    // same pattern used by the other module3_* entries above.
     cmc_status: cmcStatus as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+    ich_compliance: ichCompliance as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+    control_strategy: controlStrategy as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+    variations_classify: variationsClassify as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
     // MDX governed mutations — phase 1 (Q-Sub, eSTAR, pre-flight, ESG transmit).
     ...MDX_COMMAND_HANDLERS,
     // MDX governed mutations — phase 2 (GSPR, post-market, evidence-sufficiency,

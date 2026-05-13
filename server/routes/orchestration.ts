@@ -385,6 +385,78 @@ interface PreSubmissionGateRequest {
   cmcProjectId?: string;
 }
 
+// ---------------------------------------------------------------------------
+// GET /api/orchestration/pre-submission-gate/history/:projectId
+//
+// Returns the audit-logged history of pre-submission gate evaluations for
+// the project, newest first. Reads regulatory_audit_logs where
+// entityType='pre_submission_gate' so the 21 CFR Part 11 trail is queryable
+// from the same endpoint that recorded it. Read-only.
+// ---------------------------------------------------------------------------
+
+router.get('/pre-submission-gate/history/:projectId', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrganizationId(req);
+    const projectId = parseInt(String(req.params.projectId), 10);
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      return res.status(400).json({ error: 'projectId must be a positive integer' });
+    }
+    const limit = Math.min(parseInt(String(req.query.limit ?? '20'), 10) || 20, 100);
+
+    const { db } = await import('../db.js');
+    const { regulatoryAuditLogs } = await import('../../shared/schema.js');
+    const { and, eq, desc } = await import('drizzle-orm');
+
+    const rows = await db
+      .select({
+        auditId: regulatoryAuditLogs.auditId,
+        timestamp: regulatoryAuditLogs.timestamp,
+        userId: regulatoryAuditLogs.userId,
+        userName: regulatoryAuditLogs.userName,
+        userRole: regulatoryAuditLogs.userRole,
+        newValue: regulatoryAuditLogs.newValue,
+        metadata: regulatoryAuditLogs.metadata,
+      })
+      .from(regulatoryAuditLogs)
+      .where(and(
+        eq(regulatoryAuditLogs.organizationId, orgId),
+        eq(regulatoryAuditLogs.entityType, 'pre_submission_gate'),
+        eq(regulatoryAuditLogs.entityId, String(projectId)),
+      ))
+      .orderBy(desc(regulatoryAuditLogs.timestamp))
+      .limit(limit);
+
+    const history = rows.map(r => {
+      const v = (r.newValue ?? {}) as Record<string, unknown>;
+      return {
+        auditId: r.auditId,
+        timestamp: r.timestamp?.toISOString() ?? null,
+        evaluatedBy: { userId: r.userId, userName: r.userName, userRole: r.userRole },
+        submissionType: v.submissionType ?? null,
+        verdict: v.verdict ?? null,
+        verdictRationale: v.verdictRationale ?? [],
+        readinessScore: v.readinessScore ?? null,
+        readinessStatus: v.readinessStatus ?? null,
+        cmcOpenCritical: v.cmcOpenCritical ?? 0,
+        crlRisk: v.crlRisk ?? null,
+        rtfRisk: v.rtfRisk ?? null,
+        ichStatus: v.ichStatus ?? null,
+      };
+    });
+
+    res.json({
+      projectId,
+      organizationId: orgId,
+      historyCount: history.length,
+      history,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Gate history query failed';
+    logger.error('Gate history error', { err: err instanceof Error ? err.message : String(err) });
+    res.status(500).json({ error: message });
+  }
+});
+
 router.post('/pre-submission-gate', async (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
