@@ -14,8 +14,18 @@ import {
   insertQcReferenceStandardSchema,
 } from '../../shared/schema/qc-schemas';
 import { storage } from '../storage';
+import { requireAuthedOrgId } from '../utils/authedOrgId';
 
 const router = Router();
+
+// SECURITY: every single-row QC getter requires a JWT-derived
+// organizationId. Pre-fix the route called storage.getQcSpecification(id)
+// with no tenant filter — when the storage layer's implementation is
+// real (today it's a stub returning undefined), this would have been
+// a cross-tenant IDOR on regulated content (specs, OOS investigations,
+// batch releases, deviations, micro tests, reference standards). The
+// hardened storage interface forces the orgId at the compile boundary;
+// these route updates source it from the verified JWT.
 
 // ============================================================================
 // SPECIFICATION MANAGEMENT APIS
@@ -41,7 +51,8 @@ router.get('/specifications', async (req: Request, res: Response) => {
 // Get single specification
 router.get('/specifications/:id', async (req: Request, res: Response) => {
   try {
-    const specification = await storage.getQcSpecification(Number(req.params.id));
+    const guardSpec = requireAuthedOrgId(req, res); if (!guardSpec.ok) return;
+    const specification = await storage.getQcSpecification(Number(req.params.id), guardSpec.orgId);
     if (!specification) {
       return res.status(404).json({ error: 'Specification not found' });
     }
@@ -94,7 +105,8 @@ router.post('/specifications/:id/version', async (req: Request, res: Response) =
 // Get specification versions
 router.get('/specifications/:id/versions', async (req: Request, res: Response) => {
   try {
-    const versions = await storage.getSpecificationVersions(Number(req.params.id));
+    const guardVer = requireAuthedOrgId(req, res); if (!guardVer.ok) return;
+    const versions = await storage.getSpecificationVersions(Number(req.params.id), guardVer.orgId);
     res.json(versions);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch specification versions' });
@@ -124,7 +136,8 @@ router.get('/oos-investigations', async (req: Request, res: Response) => {
 // Get single OOS investigation
 router.get('/oos-investigations/:id', async (req: Request, res: Response) => {
   try {
-    const investigation = await storage.getOosInvestigation(Number(req.params.id));
+    const guardOos = requireAuthedOrgId(req, res); if (!guardOos.ok) return;
+    const investigation = await storage.getOosInvestigation(Number(req.params.id), guardOos.orgId);
     if (!investigation) {
       return res.status(404).json({ error: 'OOS investigation not found' });
     }
@@ -229,7 +242,8 @@ router.get('/batch-releases', async (req: Request, res: Response) => {
 // Get single batch release
 router.get('/batch-releases/:id', async (req: Request, res: Response) => {
   try {
-    const release = await storage.getBatchRelease(Number(req.params.id));
+    const guardRel = requireAuthedOrgId(req, res); if (!guardRel.ok) return;
+    const release = await storage.getBatchRelease(Number(req.params.id), guardRel.orgId);
     if (!release) {
       return res.status(404).json({ error: 'Batch release not found' });
     }
@@ -294,7 +308,8 @@ router.post('/batch-releases/:id/coa', async (req: Request, res: Response) => {
 // Get batch genealogy
 router.get('/batch-releases/:id/genealogy', async (req: Request, res: Response) => {
   try {
-    const genealogy = await storage.getBatchGenealogy(Number(req.params.id));
+    const guardGen = requireAuthedOrgId(req, res); if (!guardGen.ok) return;
+    const genealogy = await storage.getBatchGenealogy(Number(req.params.id), guardGen.orgId);
     res.json(genealogy);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch batch genealogy' });
@@ -351,7 +366,8 @@ router.get('/deviations', async (req: Request, res: Response) => {
 // Get single deviation
 router.get('/deviations/:id', async (req: Request, res: Response) => {
   try {
-    const deviation = await storage.getQcDeviation(Number(req.params.id));
+    const guardDev = requireAuthedOrgId(req, res); if (!guardDev.ok) return;
+    const deviation = await storage.getQcDeviation(Number(req.params.id), guardDev.orgId);
     if (!deviation) {
       return res.status(404).json({ error: 'Deviation not found' });
     }
@@ -451,7 +467,8 @@ router.get('/microbiological-tests', async (req: Request, res: Response) => {
 // Get single microbiological test
 router.get('/microbiological-tests/:id', async (req: Request, res: Response) => {
   try {
-    const test = await storage.getMicrobiologicalTest(Number(req.params.id));
+    const guardTest = requireAuthedOrgId(req, res); if (!guardTest.ok) return;
+    const test = await storage.getMicrobiologicalTest(Number(req.params.id), guardTest.orgId);
     if (!test) {
       return res.status(404).json({ error: 'Microbiological test not found' });
     }
@@ -555,7 +572,8 @@ router.get('/reference-standards', async (req: Request, res: Response) => {
 // Get single reference standard
 router.get('/reference-standards/:id', async (req: Request, res: Response) => {
   try {
-    const standard = await storage.getReferenceStandard(Number(req.params.id));
+    const guardStd = requireAuthedOrgId(req, res); if (!guardStd.ok) return;
+    const standard = await storage.getReferenceStandard(Number(req.params.id), guardStd.orgId);
     if (!standard) {
       return res.status(404).json({ error: 'Reference standard not found' });
     }
@@ -655,7 +673,8 @@ router.post('/reference-standards/:id/dispose', async (req: Request, res: Respon
 // Get usage logs
 router.get('/reference-standards/:id/usage-logs', async (req: Request, res: Response) => {
   try {
-    const logs = await storage.getStandardUsageLogs(Number(req.params.id));
+    const guardLog = requireAuthedOrgId(req, res); if (!guardLog.ok) return;
+    const logs = await storage.getStandardUsageLogs(Number(req.params.id), guardLog.orgId);
     res.json(logs);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch usage logs' });

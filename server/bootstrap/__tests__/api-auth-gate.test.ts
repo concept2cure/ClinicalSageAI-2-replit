@@ -37,6 +37,12 @@ vi.mock('../../routes/authEnterprise', () => ({
 vi.mock('../../routes/sso', () => ({
   default: express.Router(),
 }));
+// Admin security router pulls in auth.js → config/environment which
+// hard-fails on missing JWT_SECRET. Stub it for this test — the
+// admin-security behavior is covered by its own test file.
+vi.mock('../../routes/admin-security', () => ({
+  default: express.Router(),
+}));
 vi.mock('../../middleware/enterprise-security', () => ({
   CSP_REPORT_URI: '/api/csp-report',
 }));
