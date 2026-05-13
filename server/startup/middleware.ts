@@ -22,7 +22,7 @@ import type { Express, NextFunction, Request, Response } from 'express';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import { betaFlowTelemetryMiddleware } from '../middleware/betaFlowTelemetry';
-import { applySecurityMiddleware } from '../middleware/enterprise-security.js';
+import { applySecurityMiddleware, sanitizeInput } from '../middleware/enterprise-security.js';
 import { applyPerformanceMiddleware } from '../middleware/enterprise-performance.js';
 import { createRedisRateLimiter } from '../middleware/redisRateLimiter';
 import { httpLogger } from '../src/mw/observability.js';
@@ -66,6 +66,13 @@ export function applyCoreMiddleware(app: Express, debugLog: DebugLogger): void {
   app.use('/api/concept2cure', express.json({ limit: '50mb' }));
   app.use('/api', express.json({ limit: '2mb' }));
   app.use('/api', express.urlencoded({ extended: true, limit: '2mb' }));
+
+  // 6b. Prototype-pollution scrub. MUST run after the body parsers —
+  //     Express does not populate req.body until express.json /
+  //     express.urlencoded execute, so mounting this any earlier (as
+  //     applySecurityMiddleware used to) made the body-side scrub a
+  //     silent no-op.
+  app.use('/api', sanitizeInput);
 
   // 7. Beta route fence (mock/scaffold families blocked by default).
   app.use('/api', createBetaRouteFence());

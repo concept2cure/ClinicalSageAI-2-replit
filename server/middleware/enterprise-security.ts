@@ -201,7 +201,9 @@ export const securityHeaders = config.isDevelopment
           styleSrcAttr: ["'unsafe-inline'"],
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
           imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
-          connectSrc: ["'self'", 'https://api.openai.com', 'https://*.neon.tech', 'wss:', 'ws:'],
+          // Only wss:// in production. ws:// would let a MITM observer see
+          // socket traffic from a downgraded page — production has TLS.
+          connectSrc: ["'self'", 'https://api.openai.com', 'https://*.neon.tech', 'wss:'],
           frameSrc: ["'self'"],
           objectSrc: ["'none'"],
           // Hardening directives (enforced in prod):
@@ -385,29 +387,19 @@ export const rateLimiters = {
 // INPUT SANITIZATION
 // ============================================================================
 
-// Sanitize string to prevent XSS
-function sanitizeString(value: string): string {
-  if (typeof value !== 'string') return value;
-
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .replace(/\//g, '&#x2F;')
-    .replace(/`/g, '&#96;');
-  // NOTE: SQL keyword stripping removed — Drizzle ORM uses parameterized queries,
-  // making regex-based SQL keyword removal unnecessary and harmful to legitimate content.
-}
-
-// Deep sanitize object
+// Deep sanitize object.
+//
+// HTML-encoding at the input boundary used to live here. It's a well-
+// documented anti-pattern: it corrupts stored data, double-encodes on
+// render, breaks JSON API consumers (an attacker payload would be
+// stored as `&lt;script&gt;` and shipped as that string to any consumer
+// that doesn't HTML-decode), and gives a false sense of XSS protection.
+// The correct defense is encoding at the output boundary, which the SPA
+// and server-rendered templates already do. SQL injection is prevented
+// by Drizzle's parameterized queries, not by regex. This walker keeps
+// only the prototype-pollution scrub.
 function sanitizeObject(obj: any, depth = 0): any {
   if (depth > 10) return obj; // Prevent infinite recursion
-
-  if (typeof obj === 'string') {
-    return sanitizeString(obj);
-  }
 
   if (Array.isArray(obj)) {
     return obj.map(item => sanitizeObject(item, depth + 1));
@@ -416,7 +408,7 @@ function sanitizeObject(obj: any, depth = 0): any {
   if (obj && typeof obj === 'object') {
     const sanitized: any = {};
     for (const [key, value] of Object.entries(obj)) {
-      // Skip prototype pollution attempts
+      // Block prototype-pollution keys.
       if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
         console.warn(`[SECURITY] Blocked prototype pollution attempt: ${key}`);
         continue;
@@ -578,7 +570,17 @@ export function auditLog(req: Request, res: Response, next: NextFunction) {
   if (!config.enableAuditLog) return next();
 
   const startTime = Date.now();
-  const requestId = (req.headers['x-request-id'] as string) || randomBytes(8).toString('hex');
+  // Prefer the validated id set by the requestId middleware. Only fall
+  // back to a fresh value if this middleware ran without it (unusual
+  // ordering). Never trust the raw header — see isValidClientRequestId.
+  const existingId = (req as any).requestId;
+  const supplied = req.headers['x-request-id'];
+  const requestId: string =
+    typeof existingId === 'string' && existingId.length > 0
+      ? existingId
+      : isValidClientRequestId(supplied)
+        ? supplied
+        : randomBytes(16).toString('hex');
 
   // Add request ID to response headers
   res.setHeader('X-Request-Id', requestId);
@@ -667,8 +669,21 @@ export async function validateApiKey(req: Request, res: Response, next: NextFunc
 // REQUEST ID MIDDLEWARE
 // ============================================================================
 
+// Accept a client-provided request id only if it matches a conservative,
+// log-safe shape (alphanumeric, dashes, underscores, dots, bounded
+// length). Otherwise the value is replaced with a server-generated id.
+// Without this guard callers can supply arbitrary strings — spoofing
+// correlation ids, polluting log search, or injecting odd characters
+// that the downstream log pipeline may not handle cleanly.
+const REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{1,128}$/;
+
+export function isValidClientRequestId(value: unknown): value is string {
+  return typeof value === 'string' && REQUEST_ID_PATTERN.test(value);
+}
+
 export function requestId(req: Request, res: Response, next: NextFunction) {
-  const id = (req.headers['x-request-id'] as string) || randomBytes(16).toString('hex');
+  const supplied = req.headers['x-request-id'];
+  const id = isValidClientRequestId(supplied) ? supplied : randomBytes(16).toString('hex');
   (req as any).requestId = id;
   res.setHeader('X-Request-Id', id);
   next();
@@ -830,8 +845,11 @@ export function applySecurityMiddleware(app: any) {
   // category-based limits with persistence across restarts. Keeping per-path limiters below
   // for defense-in-depth on sensitive endpoints.
 
-  // Input sanitization
-  app.use(sanitizeInput);
+  // Input sanitization is mounted by server/startup/middleware.ts AFTER
+  // the body parsers — Express does not populate req.body until
+  // express.json/urlencoded execute, so mounting sanitizeInput here
+  // would make the body-side scrub a silent no-op (the bug shape that
+  // motivated this fix).
 
   // CSRF protection (origin/referer validation for state-changing requests)
   app.use(csrfProtection);
