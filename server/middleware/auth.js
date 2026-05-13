@@ -16,6 +16,7 @@
 import jwt from 'jsonwebtoken';
 import { config } from '../config/environment.js';
 import { createLogger } from '../utils/monitoring.js';
+import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 
 const logger = createLogger('auth');
 
@@ -44,7 +45,7 @@ const authenticateJWT = (req, res, next) => {
 
   try {
     // Verify the token with appropriate secret for current environment
-    const user = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] });
+    const user = verifyJwtWithRotation(token);
 
     // CRITICAL SECURITY CHECK: Ensure organizationId is in JWT payload
     if (!user.organizationId) {

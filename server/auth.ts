@@ -11,6 +11,7 @@ import { createScopedLogger } from './utils/logger';
 import { db } from './db';
 import jwt from 'jsonwebtoken';
 import { config } from './config/environment';
+import { verifyJwtWithRotation } from './utils/jwtVerify';
 
 const logger = createScopedLogger('auth');
 
@@ -83,11 +84,11 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 
   const authenticate = async () => {
     try {
-      const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
+      const decoded = verifyJwtWithRotation<{
         userId?: string;
         email?: string;
         organizationId?: string;
-      };
+      }>(token);
 
       if (!decoded.userId || !decoded.organizationId) {
         return res.status(401).json({ error: 'Invalid token payload' });
