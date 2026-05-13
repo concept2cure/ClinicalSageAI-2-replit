@@ -315,7 +315,13 @@ export interface IStorage {
     organizationId: number;
     clientWorkspaceId: number;
   }): Promise<any[]>;
-  getQcSpecification(id: number): Promise<any | undefined>;
+  // SECURITY: every QC getter requires organizationId — the QC family
+  // is tenant-scoped regulated content (specs, OOS investigations,
+  // batch releases, deviations, micro tests, reference standards).
+  // Today's implementations are stubs (return undefined), but the
+  // interface contract is set so a future real implementation can't
+  // forget the tenant filter.
+  getQcSpecification(id: number, organizationId: number | string): Promise<any | undefined>;
   createQcSpecification(spec: any): Promise<any>;
   updateQcSpecification(id: number, spec: any): Promise<any>;
   createSpecificationVersion(
@@ -323,7 +329,7 @@ export interface IStorage {
     changeReason: string,
     changeDescription: string
   ): Promise<any>;
-  getSpecificationVersions(id: number): Promise<any[]>;
+  getSpecificationVersions(id: number, organizationId: number | string): Promise<any[]>;
 
   // OOS Investigation methods
   getOosInvestigations(params: {
@@ -332,7 +338,7 @@ export interface IStorage {
     status?: string;
     priority?: string;
   }): Promise<any[]>;
-  getOosInvestigation(id: number): Promise<any | undefined>;
+  getOosInvestigation(id: number, organizationId: number | string): Promise<any | undefined>;
   createOosInvestigation(investigation: any): Promise<any>;
   updateOosInvestigation(id: number, investigation: any): Promise<any>;
   addOosTimelineEvent(id: number, event: any): Promise<any>;
@@ -345,12 +351,12 @@ export interface IStorage {
     clientWorkspaceId: number;
     releaseStatus?: string;
   }): Promise<any[]>;
-  getBatchRelease(id: number): Promise<any | undefined>;
+  getBatchRelease(id: number, organizationId: number | string): Promise<any | undefined>;
   createBatchRelease(release: any): Promise<any>;
   updateBatchRelease(id: number, release: any): Promise<any>;
   reviewBatchRecord(id: number, review: any): Promise<any>;
   generateCertificateOfAnalysis(id: number): Promise<any>;
-  getBatchGenealogy(id: number): Promise<any>;
+  getBatchGenealogy(id: number, organizationId: number | string): Promise<any>;
   validateReleaseCriteria(id: number): Promise<any>;
   releaseBatch(id: number, params: any): Promise<any>;
 
@@ -361,7 +367,7 @@ export interface IStorage {
     deviationType?: string;
     severity?: string;
   }): Promise<any[]>;
-  getQcDeviation(id: number): Promise<any | undefined>;
+  getQcDeviation(id: number, organizationId: number | string): Promise<any | undefined>;
   createQcDeviation(deviation: any): Promise<any>;
   updateQcDeviation(id: number, deviation: any): Promise<any>;
   performImpactAssessment(id: number, assessment: any): Promise<any>;
@@ -375,7 +381,7 @@ export interface IStorage {
     testType?: string;
     sampleType?: string;
   }): Promise<any[]>;
-  getMicrobiologicalTest(id: number): Promise<any | undefined>;
+  getMicrobiologicalTest(id: number, organizationId: number | string): Promise<any | undefined>;
   createMicrobiologicalTest(test: any): Promise<any>;
   updateMicrobiologicalTest(id: number, test: any): Promise<any>;
   getEnvironmentalMonitoringSchedule(params: any): Promise<any>;
@@ -389,14 +395,14 @@ export interface IStorage {
     standardType?: string;
     status?: string;
   }): Promise<any[]>;
-  getReferenceStandard(id: number): Promise<any | undefined>;
+  getReferenceStandard(id: number, organizationId: number | string): Promise<any | undefined>;
   createReferenceStandard(standard: any): Promise<any>;
   updateReferenceStandard(id: number, standard: any): Promise<any>;
   recordStandardUsage(id: number, usage: any): Promise<any>;
   getExpiringStandards(params: any): Promise<any[]>;
   qualifyReferenceStandard(id: number, qualification: any): Promise<any>;
   disposeReferenceStandard(id: number, disposal: any): Promise<any>;
-  getStandardUsageLogs(id: number): Promise<any[]>;
+  getStandardUsageLogs(id: number, organizationId: number | string): Promise<any[]>;
 
   // Section Graph methods
   // SECURITY: getSection / getSectionLeaf require organizationId. The
@@ -1383,7 +1389,7 @@ export class MemStorage {
     return [];
   }
 
-  async getQcSpecification(id: number): Promise<any | undefined> {
+  async getQcSpecification(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -1403,7 +1409,7 @@ export class MemStorage {
     return {};
   }
 
-  async getSpecificationVersions(id: number): Promise<any[]> {
+  async getSpecificationVersions(id: number, _organizationId: number | string): Promise<any[]> {
     return [];
   }
 
@@ -1417,7 +1423,7 @@ export class MemStorage {
     return [];
   }
 
-  async getOosInvestigation(id: number): Promise<any | undefined> {
+  async getOosInvestigation(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -1450,7 +1456,7 @@ export class MemStorage {
     return [];
   }
 
-  async getBatchRelease(id: number): Promise<any | undefined> {
+  async getBatchRelease(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -1470,7 +1476,7 @@ export class MemStorage {
     return {};
   }
 
-  async getBatchGenealogy(id: number): Promise<any> {
+  async getBatchGenealogy(id: number, _organizationId: number | string): Promise<any> {
     return {};
   }
 
@@ -1492,7 +1498,7 @@ export class MemStorage {
     return [];
   }
 
-  async getQcDeviation(id: number): Promise<any | undefined> {
+  async getQcDeviation(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -1526,7 +1532,7 @@ export class MemStorage {
     return [];
   }
 
-  async getMicrobiologicalTest(id: number): Promise<any | undefined> {
+  async getMicrobiologicalTest(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -1560,7 +1566,7 @@ export class MemStorage {
     return [];
   }
 
-  async getReferenceStandard(id: number): Promise<any | undefined> {
+  async getReferenceStandard(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -1588,7 +1594,7 @@ export class MemStorage {
     return disposal;
   }
 
-  async getStandardUsageLogs(id: number): Promise<any[]> {
+  async getStandardUsageLogs(id: number, _organizationId: number | string): Promise<any[]> {
     return [];
   }
 
@@ -3543,7 +3549,7 @@ export class DatabaseStorage {
     return [];
   }
 
-  async getQcSpecification(id: number): Promise<any | undefined> {
+  async getQcSpecification(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -3563,7 +3569,7 @@ export class DatabaseStorage {
     return {};
   }
 
-  async getSpecificationVersions(id: number): Promise<any[]> {
+  async getSpecificationVersions(id: number, _organizationId: number | string): Promise<any[]> {
     return [];
   }
 
@@ -3577,7 +3583,7 @@ export class DatabaseStorage {
     return [];
   }
 
-  async getOosInvestigation(id: number): Promise<any | undefined> {
+  async getOosInvestigation(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -3610,7 +3616,7 @@ export class DatabaseStorage {
     return [];
   }
 
-  async getBatchRelease(id: number): Promise<any | undefined> {
+  async getBatchRelease(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -3630,7 +3636,7 @@ export class DatabaseStorage {
     return {};
   }
 
-  async getBatchGenealogy(id: number): Promise<any> {
+  async getBatchGenealogy(id: number, _organizationId: number | string): Promise<any> {
     return {};
   }
 
@@ -3652,7 +3658,7 @@ export class DatabaseStorage {
     return [];
   }
 
-  async getQcDeviation(id: number): Promise<any | undefined> {
+  async getQcDeviation(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -3686,7 +3692,7 @@ export class DatabaseStorage {
     return [];
   }
 
-  async getMicrobiologicalTest(id: number): Promise<any | undefined> {
+  async getMicrobiologicalTest(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -3720,7 +3726,7 @@ export class DatabaseStorage {
     return [];
   }
 
-  async getReferenceStandard(id: number): Promise<any | undefined> {
+  async getReferenceStandard(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -3748,7 +3754,7 @@ export class DatabaseStorage {
     return disposal;
   }
 
-  async getStandardUsageLogs(id: number): Promise<any[]> {
+  async getStandardUsageLogs(id: number, _organizationId: number | string): Promise<any[]> {
     return [];
   }
 
