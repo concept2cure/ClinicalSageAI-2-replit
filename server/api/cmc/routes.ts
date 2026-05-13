@@ -655,4 +655,60 @@ Write a comprehensive draft for this CMC section following ICH guidelines.`,
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// DATA-DRIVEN QUALITY ANALYSIS (replaces hardcoded CQA/CPP heuristics for
+// projects that have CMC source data). The blueprint-generator route keeps
+// its type-string heuristics for upfront blueprint creation where no
+// project data exists yet.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/cmc/quality/qbd/:projectId
+ * Derive CQAs and CPPs from the project's actual stored data
+ * (specifications, methods, stability, processes, source objects).
+ */
+router.get('/quality/qbd/:projectId', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const projectId = req.params.projectId;
+    if (!projectId) {
+      return res.status(400).json({ success: false, error: 'projectId is required' });
+    }
+    const { analyzeQbdFromSources } = await import('../../services/cmc/qbd-analyzer');
+    const result = await analyzeQbdFromSources(orgId, projectId);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('QbD analysis error:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'QbD analysis failed',
+    });
+  }
+});
+
+/**
+ * POST /api/cmc/ich-compliance
+ * Deterministic ICH compliance check for a project. Runs rule-based
+ * checks across Q1A/Q2/Q3A-B/Q3D/Q6A-B/Q8/Q9/Q10 against the project's
+ * actual stored data. Every finding cites the underlying guideline.
+ */
+router.post('/ich-compliance', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const projectId = req.body?.projectId;
+    if (!projectId || typeof projectId !== 'string') {
+      return res.status(400).json({ success: false, error: 'projectId (string UUID) is required' });
+    }
+    const { runIchComplianceCheck } = await import('../../services/cmc/ich-compliance-checker');
+    const report = await runIchComplianceCheck(orgId, projectId);
+    res.json({ success: true, data: report });
+  } catch (error) {
+    console.error('ICH compliance check error:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'ICH compliance check failed',
+    });
+  }
+});
+
 export default router;

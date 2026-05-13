@@ -148,6 +148,38 @@ router.post('/', async (req, res) => {
 
     const newTenant = result[0];
     log.debug('Created tenant in database:', newTenant);
+
+    // Fire-and-forget: seed every regulatory precedent pattern library for
+    // the new org. The seeders are idempotent and the orchestrator never
+    // rejects, so failure here cannot block tenant creation. Real FDA / ICH
+    // citations land per org so the CRL/RTF/AC engines have data to score
+    // against from day one.
+    if (newTenant?.id != null) {
+      const orgIdStr = String(newTenant.id);
+      void (async () => {
+        try {
+          const { seedAllRegulatoryPatterns } = await import(
+            '../services/regulatory-precedent-intelligence'
+          );
+          const r = await seedAllRegulatoryPatterns(orgIdStr);
+          log.debug('Regulatory patterns seeded for new tenant', {
+            tenantId: newTenant.id,
+            inserted: {
+              crl: r.crl.inserted,
+              rtfNonclinical: r.rtfNonclinical.inserted,
+              rtfCmc: r.rtfCmc.inserted,
+              advisoryCommittee: r.advisoryCommittee.inserted,
+            },
+          });
+        } catch (seedErr) {
+          log.error('Regulatory pattern seed failed for new tenant', {
+            tenantId: newTenant.id,
+            error: seedErr instanceof Error ? seedErr.message : String(seedErr),
+          });
+        }
+      })();
+    }
+
     res.status(201).json(newTenant);
   } catch (error) {
     log.error('Error creating tenant:', error);

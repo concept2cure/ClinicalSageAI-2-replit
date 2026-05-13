@@ -65,3 +65,17 @@ export { seedNonclinicalRtf } from './seeds/seed-nonclinical-rtf';
 export type { SeedNonclinicalRtfResult } from './seeds/seed-nonclinical-rtf';
 export { NONCLINICAL_RTF_PATTERNS } from './seeds/nonclinical-rtf-patterns';
 export type { NonclinicalRtfSeed } from './seeds/nonclinical-rtf-patterns';
+
+export { seedCmcRtf } from './seeds/seed-cmc-rtf';
+export type { SeedCmcRtfResult } from './seeds/seed-cmc-rtf';
+export { CMC_RTF_PATTERNS } from './seeds/cmc-rtf-patterns';
+export type { CmcRtfSeed } from './seeds/cmc-rtf-patterns';
+
+export { seedAdvisoryCommittee } from './seeds/seed-advisory-committee';
+export type { SeedAdvisoryCommitteeResult } from './seeds/seed-advisory-committee';
+export { ADVISORY_COMMITTEE_PATTERNS } from './seeds/advisory-committee-patterns';
+export type { AdvisoryCommitteeSeed } from './seeds/advisory-committee-patterns';
+
+// Central orchestrator — call once per org on creation.
+export { seedAllRegulatoryPatterns } from './seeds/seed-all-regulatory-patterns';
+export type { SeedAllResult } from './seeds/seed-all-regulatory-patterns';

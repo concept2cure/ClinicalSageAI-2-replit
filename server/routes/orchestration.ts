@@ -31,6 +31,7 @@ import {
   generateContinuitySnapshot,
   getLatestSnapshot,
 } from '../services/orchestration';
+import { deriveVerdict } from '../services/orchestration/pre-submission-gate-verdict';
 import type {
   OrchestrationStartRequest,
   ReadinessRequest,
@@ -376,6 +377,12 @@ interface PreSubmissionGateRequest {
   indication?: string;
   center?: string;             // CDER | CBER
   module?: string;
+  /**
+   * UUID of the CMC project (cmc_projects.id) to include in the gate.
+   * When omitted, the ICH compliance check is skipped but the rest of the
+   * gate still runs against the integer projectId.
+   */
+  cmcProjectId?: string;
 }
 
 router.post('/pre-submission-gate', async (req: Request, res: Response) => {
@@ -392,12 +399,27 @@ router.post('/pre-submission-gate', async (req: Request, res: Response) => {
 
     const orgIdStr = String(orgId);
     const submissionType = body.submissionType ?? 'NDA';
+    const cmcProjectId = typeof body.cmcProjectId === 'string' && body.cmcProjectId.length > 0
+      ? body.cmcProjectId
+      : null;
 
     const { crlTriggerService, rtfTriggerService } = await import(
       '../services/regulatory-precedent-intelligence'
     );
+    const { runIchComplianceCheck } = await import(
+      '../services/cmc/ich-compliance-checker'
+    );
 
-    const [payload, crlAssessment, rtfReport] = await Promise.all([
+    const ichPromise = cmcProjectId
+      ? runIchComplianceCheck(orgId, cmcProjectId).catch(err => {
+          logger.warn('ICH check failed within pre-submission gate', {
+            err: err instanceof Error ? err.message : String(err),
+          });
+          return null;
+        })
+      : Promise.resolve(null);
+
+    const [payload, crlAssessment, rtfReport, ichReport] = await Promise.all([
       assembleCrossObjectPayload({
         organizationId: orgId,
         projectId,
@@ -414,6 +436,7 @@ router.post('/pre-submission-gate', async (req: Request, res: Response) => {
         submissionType,
         center: body.center,
       }),
+      ichPromise,
     ]);
 
     const readiness = computeReadinessAssessment(payload);
@@ -425,9 +448,11 @@ router.post('/pre-submission-gate', async (req: Request, res: Response) => {
       crlRisk: crlAssessment.overallRisk,
       rtfRisk: rtfReport.overallRisk,
       cmcOpenCritical: payload.cmcSignals.contradictionCounts.critical,
+      ichStatus: ichReport?.overallStatus,
+      ichFailCount: ichReport?.counts.fail ?? 0,
     });
 
-    res.json({
+    const response = {
       projectId,
       organizationId: orgId,
       submissionType,
@@ -448,6 +473,14 @@ router.post('/pre-submission-gate', async (req: Request, res: Response) => {
         contradictionCounts: payload.cmcSignals.contradictionCounts,
         topContradictions: payload.cmcSignals.contradictions.slice(0, 10),
       },
+      ich: ichReport ? {
+        cmcProjectId,
+        overallStatus: ichReport.overallStatus,
+        guidelineStatus: ichReport.guidelineStatus,
+        counts: ichReport.counts,
+        failingFindings: ichReport.findings.filter(f => f.status === 'fail').slice(0, 10),
+        warnings: ichReport.findings.filter(f => f.status === 'warning').slice(0, 10),
+      } : null,
       crl: {
         overallRisk: crlAssessment.overallRisk,
         riskScore: crlAssessment.riskScore,
@@ -471,7 +504,17 @@ router.post('/pre-submission-gate', async (req: Request, res: Response) => {
       },
       lastSignalAt: payload.lastSignalAt,
       assessedAt: new Date().toISOString(),
+    };
+
+    // Audit the verdict so "why did the system say ready" is traceable.
+    // Fire-and-forget — audit failure must not break the gate response.
+    void recordGateAudit(req, response).catch(err => {
+      logger.warn('Pre-submission gate audit failed', {
+        err: err instanceof Error ? err.message : String(err),
+      });
     });
+
+    res.json(response);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Pre-submission gate failed';
     logger.error('Pre-submission gate error', { err: err instanceof Error ? err.message : String(err) });
@@ -479,52 +522,74 @@ router.post('/pre-submission-gate', async (req: Request, res: Response) => {
   }
 });
 
-type GateVerdict = 'ready' | 'conditional' | 'hold';
-
-function deriveVerdict(input: {
-  readinessStatus: string;
-  readinessScore: number;
-  readinessBlockers: Array<{ severity: string }>;
-  crlRisk: string;
-  rtfRisk: string;
-  cmcOpenCritical: number;
-}): { verdict: GateVerdict; rationale: string[] } {
-  const rationale: string[] = [];
-  let verdict: GateVerdict = 'ready';
-
-  const hasCriticalReadiness = input.readinessBlockers.some(b => b.severity === 'critical');
-  if (hasCriticalReadiness) {
-    verdict = 'hold';
-    rationale.push('Readiness has critical blockers');
+/**
+ * Persist the gate verdict to `regulatory_audit_logs` so the regulatory
+ * trail can later answer "what did the system say, when, and based on
+ * what inputs". GxP-relevant entry; safe to call fire-and-forget.
+ */
+async function recordGateAudit(req: Request, response: {
+  projectId: number;
+  organizationId: number;
+  submissionType: string;
+  verdict: string;
+  verdictRationale: string[];
+  readiness: { overallScore: number; status: string };
+  cmc: { contradictionCounts: Record<string, number> };
+  crl: { overallRisk: string; riskScore: number };
+  rtf: { overallRisk: string; riskScore: number };
+  ich: { overallStatus: string; counts: Record<string, number> } | null;
+  assessedAt: string;
+}): Promise<void> {
+  let userId: number;
+  let userName: string;
+  try {
+    userId = getUserId(req);
+    userName = getUserName(req);
+  } catch {
+    // System / unauthenticated callers (internal jobs) still get audited
+    // but with a sentinel user. The route auth middleware should normally
+    // prevent this branch in production.
+    userId = 0;
+    userName = 'system';
   }
+  const { db } = await import('../db.js');
+  const { regulatoryAuditLogs } = await import('../../shared/schema.js');
+  const auditId = `gate-${response.projectId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const ipAddress = (req.ip || req.headers['x-forwarded-for'] || 'unknown').toString();
+  const userAgent = (req.headers['user-agent'] || 'unknown').toString();
 
-  if (input.cmcOpenCritical > 0) {
-    verdict = 'hold';
-    rationale.push(`${input.cmcOpenCritical} open critical CMC contradiction(s)`);
-  }
-
-  if (input.crlRisk === 'critical' || input.rtfRisk === 'critical') {
-    verdict = 'hold';
-    if (input.crlRisk === 'critical') rationale.push('CRL risk is critical');
-    if (input.rtfRisk === 'critical') rationale.push('RTF risk is critical');
-  }
-
-  if (verdict !== 'hold') {
-    const moderateRisk = input.crlRisk === 'high' || input.rtfRisk === 'high'
-      || input.readinessScore < 70 || input.readinessStatus === 'needs_attention';
-    if (moderateRisk) {
-      verdict = 'conditional';
-      if (input.crlRisk === 'high') rationale.push('CRL risk is high');
-      if (input.rtfRisk === 'high') rationale.push('RTF risk is high');
-      if (input.readinessScore < 70) rationale.push(`Readiness score is ${input.readinessScore} (<70)`);
-    }
-  }
-
-  if (verdict === 'ready') {
-    rationale.push('Readiness on track, no critical blockers, CRL/RTF risk acceptable');
-  }
-
-  return { verdict, rationale };
+  await db.insert(regulatoryAuditLogs).values({
+    auditId,
+    organizationId: response.organizationId,
+    entityType: 'pre_submission_gate',
+    entityId: String(response.projectId),
+    action: 'gate_evaluated',
+    actionCategory: 'system',
+    newValue: {
+      submissionType: response.submissionType,
+      verdict: response.verdict,
+      verdictRationale: response.verdictRationale,
+      readinessScore: response.readiness.overallScore,
+      readinessStatus: response.readiness.status,
+      cmcOpenCritical: response.cmc.contradictionCounts?.critical ?? 0,
+      crlRisk: response.crl.overallRisk,
+      crlScore: response.crl.riskScore,
+      rtfRisk: response.rtf.overallRisk,
+      rtfScore: response.rtf.riskScore,
+      ichStatus: response.ich?.overallStatus ?? null,
+      ichCounts: response.ich?.counts ?? null,
+    },
+    userId,
+    userName,
+    userRole: getUserRole(req),
+    ipAddress,
+    userAgent,
+    isGxpRelevant: true,
+    metadata: {
+      assessedAt: response.assessedAt,
+      source: 'pre_submission_gate',
+    },
+  });
 }
 
 export default router;
