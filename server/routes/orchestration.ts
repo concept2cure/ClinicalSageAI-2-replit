@@ -321,4 +321,210 @@ router.get('/continuity/:projectId', (req: Request, res: Response) => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// GET /api/orchestration/readiness/freshness/:projectId
+//
+// Returns the timestamp of the most recent underlying-data change for the
+// project (artifacts, CMC source objects, CMC contradictions). Consumers
+// poll this to decide whether to recompute readiness; the score itself is
+// stateless and recomputes on every POST /readiness call.
+// ---------------------------------------------------------------------------
+
+router.get('/readiness/freshness/:projectId', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrganizationId(req);
+    const projectId = parseInt(String(req.params.projectId), 10);
+    if (isNaN(projectId) || projectId <= 0) {
+      return res.status(400).json({ error: 'projectId must be a positive integer' });
+    }
+
+    const payload = await assembleCrossObjectPayload({
+      organizationId: orgId,
+      projectId,
+    });
+
+    res.json({
+      projectId,
+      organizationId: orgId,
+      lastSignalAt: payload.lastSignalAt,
+      assembledAt: payload.assembledAt,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Freshness query failed';
+    logger.error('Readiness freshness error', { err: err instanceof Error ? err.message : String(err) });
+    res.status(500).json({ error: message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/orchestration/pre-submission-gate
+//
+// Unified pre-submission quality gate. Combines:
+//   - readiness assessment (with CMC signals)
+//   - CMC contradiction list
+//   - CRL risk assessment against the seeded trigger pattern library
+//   - RTF prevention report against the seeded trigger pattern library
+//
+// Returns a single go/no-go report with the strictest verdict across all
+// engines, so a reviewer can run one check before transmitting.
+// ---------------------------------------------------------------------------
+
+interface PreSubmissionGateRequest {
+  projectId: number | string;
+  submissionType?: string;     // IND | NDA | BLA | sNDA | sBLA | ANDA
+  therapeuticArea?: string;
+  indication?: string;
+  center?: string;             // CDER | CBER
+  module?: string;
+}
+
+router.post('/pre-submission-gate', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrganizationId(req);
+    const body = req.body as PreSubmissionGateRequest;
+
+    const projectId = typeof body.projectId === 'number'
+      ? body.projectId
+      : parseInt(String(body.projectId), 10);
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      return res.status(400).json({ error: 'projectId must be a positive integer' });
+    }
+
+    const orgIdStr = String(orgId);
+    const submissionType = body.submissionType ?? 'NDA';
+
+    const { crlTriggerService, rtfTriggerService } = await import(
+      '../services/regulatory-precedent-intelligence'
+    );
+
+    const [payload, crlAssessment, rtfReport] = await Promise.all([
+      assembleCrossObjectPayload({
+        organizationId: orgId,
+        projectId,
+        module: body.module,
+      }),
+      crlTriggerService.assessCRLRisk({
+        organizationId: orgIdStr,
+        submissionType,
+        therapeuticArea: body.therapeuticArea,
+        indication: body.indication,
+      }),
+      rtfTriggerService.generatePreventionReport({
+        organizationId: orgIdStr,
+        submissionType,
+        center: body.center,
+      }),
+    ]);
+
+    const readiness = computeReadinessAssessment(payload);
+
+    const verdict = deriveVerdict({
+      readinessStatus: readiness.status,
+      readinessScore: readiness.overallScore,
+      readinessBlockers: readiness.blockers,
+      crlRisk: crlAssessment.overallRisk,
+      rtfRisk: rtfReport.overallRisk,
+      cmcOpenCritical: payload.cmcSignals.contradictionCounts.critical,
+    });
+
+    res.json({
+      projectId,
+      organizationId: orgId,
+      submissionType,
+      verdict: verdict.verdict,
+      verdictRationale: verdict.rationale,
+      readiness: {
+        overallScore: readiness.overallScore,
+        status: readiness.status,
+        scores: readiness.scores,
+        blockers: readiness.blockers,
+        moduleBreakdown: readiness.moduleBreakdown,
+      },
+      cmc: {
+        sourceObjectCount: payload.cmcSignals.sourceObjectCount,
+        sourceTypeBreakdown: payload.cmcSignals.sourceTypeBreakdown,
+        sectionCount: payload.cmcSignals.sectionCount,
+        staleSectionCount: payload.cmcSignals.staleSectionCount,
+        contradictionCounts: payload.cmcSignals.contradictionCounts,
+        topContradictions: payload.cmcSignals.contradictions.slice(0, 10),
+      },
+      crl: {
+        overallRisk: crlAssessment.overallRisk,
+        riskScore: crlAssessment.riskScore,
+        matchedPatternCount: crlAssessment.matchedPatterns.length,
+        topPatterns: crlAssessment.matchedPatterns.slice(0, 5).map(p => ({
+          patternCode: p.patternCode,
+          patternName: p.patternName,
+          category: p.category,
+          frequencyRate: p.frequencyRate,
+          resolutionDifficulty: p.resolutionDifficulty,
+        })),
+        trajectoryPrediction: crlAssessment.trajectoryPrediction,
+        mitigationStrategies: crlAssessment.mitigationStrategies.slice(0, 8),
+      },
+      rtf: {
+        overallRisk: rtfReport.overallRisk,
+        riskScore: rtfReport.riskScore,
+        matchedPatternCount: rtfReport.matchedPatterns.length,
+        preventionChecklist: rtfReport.preventionChecklist.slice(0, 15),
+        estimatedRecoveryDays: rtfReport.estimatedRecoveryDays,
+      },
+      lastSignalAt: payload.lastSignalAt,
+      assessedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Pre-submission gate failed';
+    logger.error('Pre-submission gate error', { err: err instanceof Error ? err.message : String(err) });
+    res.status(500).json({ error: message });
+  }
+});
+
+type GateVerdict = 'ready' | 'conditional' | 'hold';
+
+function deriveVerdict(input: {
+  readinessStatus: string;
+  readinessScore: number;
+  readinessBlockers: Array<{ severity: string }>;
+  crlRisk: string;
+  rtfRisk: string;
+  cmcOpenCritical: number;
+}): { verdict: GateVerdict; rationale: string[] } {
+  const rationale: string[] = [];
+  let verdict: GateVerdict = 'ready';
+
+  const hasCriticalReadiness = input.readinessBlockers.some(b => b.severity === 'critical');
+  if (hasCriticalReadiness) {
+    verdict = 'hold';
+    rationale.push('Readiness has critical blockers');
+  }
+
+  if (input.cmcOpenCritical > 0) {
+    verdict = 'hold';
+    rationale.push(`${input.cmcOpenCritical} open critical CMC contradiction(s)`);
+  }
+
+  if (input.crlRisk === 'critical' || input.rtfRisk === 'critical') {
+    verdict = 'hold';
+    if (input.crlRisk === 'critical') rationale.push('CRL risk is critical');
+    if (input.rtfRisk === 'critical') rationale.push('RTF risk is critical');
+  }
+
+  if (verdict !== 'hold') {
+    const moderateRisk = input.crlRisk === 'high' || input.rtfRisk === 'high'
+      || input.readinessScore < 70 || input.readinessStatus === 'needs_attention';
+    if (moderateRisk) {
+      verdict = 'conditional';
+      if (input.crlRisk === 'high') rationale.push('CRL risk is high');
+      if (input.rtfRisk === 'high') rationale.push('RTF risk is high');
+      if (input.readinessScore < 70) rationale.push(`Readiness score is ${input.readinessScore} (<70)`);
+    }
+  }
+
+  if (verdict === 'ready') {
+    rationale.push('Readiness on track, no critical blockers, CRL/RTF risk acceptable');
+  }
+
+  return { verdict, rationale };
+}
+
 export default router;

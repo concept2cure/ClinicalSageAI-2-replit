@@ -52,3 +52,16 @@ export type {
   FilingSequenceStrategy, FilingStep, ParallelWindow,
   FilingOptimizationResult
 } from './cross-jurisdictional-service';
+
+// Seed loaders — idempotent per organization. Real FDA / ICH citations,
+// not placeholders. Re-runs skip patterns whose patternCode is already
+// present so onboarding scripts can call them without guarding.
+export { seedCrlTriggers } from './seeds/seed-crl-triggers';
+export type { SeedCrlTriggersResult } from './seeds/seed-crl-triggers';
+export { CRL_TRIGGER_PATTERNS } from './seeds/crl-trigger-patterns';
+export type { CrlTriggerSeed } from './seeds/crl-trigger-patterns';
+
+export { seedNonclinicalRtf } from './seeds/seed-nonclinical-rtf';
+export type { SeedNonclinicalRtfResult } from './seeds/seed-nonclinical-rtf';
+export { NONCLINICAL_RTF_PATTERNS } from './seeds/nonclinical-rtf-patterns';
+export type { NonclinicalRtfSeed } from './seeds/nonclinical-rtf-patterns';

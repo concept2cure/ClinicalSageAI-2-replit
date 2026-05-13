@@ -375,6 +375,107 @@ export async function module3Lineage(ctx: CommandContext, params: Record<string,
   };
 }
 
+// ── cmc_status ────────────────────────────────────────────────────────────────
+//
+// Single-call CMC status for a project. Combines source-object inventory,
+// section approval state, stale counts, and open contradictions in one
+// message — what a CMC lead wants to see when the user types `/cmc` with
+// no further arguments.
+
+export async function cmcStatus(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+  const pool = getPool();
+  const orgId = ctx.organizationId;
+  const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
+  if (!projectId) return { success: false, action: 'cmc_status', message: 'Project ID required' };
+
+  const [sourcesRes, sectionsRes, contradictionsRes] = await Promise.all([
+    pool.query(
+      `SELECT source_type AS "sourceType", COUNT(*)::int AS "count"
+       FROM cmc_source_objects
+       WHERE organization_id = $1 AND project_id = $2
+       GROUP BY source_type`,
+      [orgId, projectId],
+    ),
+    pool.query(
+      `SELECT approval_state AS "approvalState", stale
+       FROM cmc_module3_sections
+       WHERE organization_id = $1 AND project_id = $2`,
+      [orgId, projectId],
+    ),
+    pool.query(
+      `SELECT severity, status
+       FROM cmc_contradictions
+       WHERE organization_id = $1 AND project_id = $2`,
+      [orgId, projectId],
+    ),
+  ]);
+
+  const sourceTypeBreakdown: Record<string, number> = {};
+  let totalSources = 0;
+  for (const row of sourcesRes.rows) {
+    const t = String(row.sourceType ?? 'unknown');
+    const n = Number(row.count ?? 0);
+    sourceTypeBreakdown[t] = n;
+    totalSources += n;
+  }
+
+  const totalSections = sectionsRes.rows.length;
+  const approvedSections = sectionsRes.rows.filter((r: any) => r.approvalState === 'approved').length;
+  const staleSections = sectionsRes.rows.filter((r: any) => r.stale).length;
+
+  const openContradictions = contradictionsRes.rows.filter(
+    (r: any) => r.status !== 'resolved' && r.status !== 'closed',
+  );
+  const openCritical = openContradictions.filter((r: any) => r.severity === 'critical').length;
+  const openHigh = openContradictions.filter((r: any) => r.severity === 'high').length;
+
+  const exportReady = totalSections > 0
+    && approvedSections === totalSections
+    && staleSections === 0
+    && openCritical === 0;
+
+  const sourceLines = totalSources === 0
+    ? '_No CMC source objects uploaded._'
+    : Object.entries(sourceTypeBreakdown)
+        .map(([t, n]) => `- ${t}: ${n}`)
+        .join('\n');
+
+  const blockerLines: string[] = [];
+  if (staleSections > 0) blockerLines.push(`${staleSections} stale section${staleSections > 1 ? 's' : ''} — \`/m3 refresh\` to recompile`);
+  if (openCritical > 0) blockerLines.push(`${openCritical} unresolved critical contradiction${openCritical > 1 ? 's' : ''} — \`/m3 contradictions\` to review`);
+  if (openHigh > 0) blockerLines.push(`${openHigh} unresolved high-severity contradiction${openHigh > 1 ? 's' : ''}`);
+  if (totalSections > 0 && approvedSections < totalSections) {
+    blockerLines.push(`${totalSections - approvedSections} section${totalSections - approvedSections > 1 ? 's' : ''} not yet approved`);
+  }
+  const blockerBlock = blockerLines.length > 0
+    ? `\n\n**Blockers:**\n${blockerLines.map(b => `- ${b}`).join('\n')}`
+    : '';
+
+  const message =
+    `**CMC status**\n` +
+    `Sources (${totalSources}):\n${sourceLines}\n\n` +
+    `Module 3 sections: ${approvedSections}/${totalSections} approved, ${staleSections} stale\n` +
+    `Open contradictions: ${openCritical} critical, ${openHigh} high\n\n` +
+    `Module 3 export: ${exportReady ? '**READY**' : '**BLOCKED**'}` +
+    blockerBlock;
+
+  return {
+    success: true,
+    action: 'cmc_status',
+    message,
+    data: {
+      totalSources,
+      sourceTypeBreakdown,
+      totalSections,
+      approvedSections,
+      staleSections,
+      openCritical,
+      openHigh,
+      exportReady,
+    },
+  };
+}
+
 // ── module3_classify_source ───────────────────────────────────────────────────
 
 export async function module3ClassifySource(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {

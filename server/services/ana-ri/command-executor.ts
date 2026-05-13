@@ -37,6 +37,7 @@ import {
   module3BuildAll, module3BuildSection, module3MissingInputs,
   module3StaleSections, module3RefreshStale, module3Readiness,
   module3Contradictions, module3Lineage, module3ClassifySource,
+  cmcStatus,
 } from './module3-command-handlers.js';
 import { MDX_COMMAND_HANDLERS, MDX_COMMAND_METADATA } from './mdx-command-handlers';
 import {
@@ -3843,7 +3844,9 @@ export type CommandName =
   | 'analyze_cross_document'
   // CMS + Diagnostics
   | 'analyze_cms_strategy'
-  | 'assess_diagnostic_validation';
+  | 'assess_diagnostic_validation'
+  // CMC status
+  | 'cmc_status';
 
 export interface CommandDefinition {
   name: CommandName;
@@ -4192,6 +4195,15 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
     example: '"Can I promote artifact 12 or are there blockers?"',
   },
 
+  // ── CMC Status (top-level dispatch for `/cmc` with no args) ───────────────
+  {
+    name: 'cmc_status',
+    description:
+      'Return Module 3 status for the active project: CMC source-object inventory by type, section approval state, stale section count, open contradictions by severity, and an export-ready verdict.',
+    parameters: 'projectId?',
+    example: '"What is the CMC status of this project?" or "/cmc"',
+  },
+
   // ── Cross-Jurisdictional Intelligence ─────────────────────────────────────
   {
     name: 'analyze_jurisdictions',
@@ -4512,6 +4524,11 @@ export async function executeCommands(
     module3_contradictions: module3Contradictions,
     module3_lineage: module3Lineage,
     module3_classify_source: module3ClassifySource,
+    // Top-level CMC status — what `/cmc` dispatches with no args. The
+    // underlying handler lives in module3-command-handlers, which defines
+    // CommandContext / CommandResult locally; cast through `any` to match
+    // the same pattern used by the other module3_* entries above.
+    cmc_status: cmcStatus as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
     // MDX governed mutations — phase 1 (Q-Sub, eSTAR, pre-flight, ESG transmit).
     ...MDX_COMMAND_HANDLERS,
     // MDX governed mutations — phase 2 (GSPR, post-market, evidence-sufficiency,
