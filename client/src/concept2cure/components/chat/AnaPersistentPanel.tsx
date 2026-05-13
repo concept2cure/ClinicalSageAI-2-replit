@@ -78,6 +78,9 @@ marked.setOptions({ breaks: true, gfm: true });
 // local alias so the (large) call sites below don't need to change.
 const renderMarkdown = renderSafeMarkdown;
 
+import { AnaToolCallCard } from './AnaToolCallCard';
+import type { AnaToolCallRecord } from '../../hooks/useAnaChatClient';
+
 // ─── Verdict & Confidence Signal Detection ──────────────────────────────────
 
 interface VerdictSignal {
@@ -280,6 +283,13 @@ interface AnaMessage {
   };
   /** Flag to highlight prompts restored for inline editing */
   recalledToInput?: boolean;
+  /**
+   * Tool invocations that fired while AnA produced this response. Each
+   * card surfaces the tool name, arguments, and result inline so the
+   * user can audit what the assistant actually did. Empty for text-only
+   * responses or fallback-path (non-streaming) results.
+   */
+  toolCalls?: AnaToolCallRecord[];
 }
 
 interface DecisionStatusRailState {
@@ -825,12 +835,57 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const [slashMenuIndex, setSlashMenuIndex] = useState(0);
   const slashMenuRef = useRef<HTMLDivElement>(null);
   const initialMessageSentRef = useRef(false);
-  // Thread persistence — reuse thread_id across messages for continuous conversation
+  // Thread persistence — reuse thread_id across messages for continuous
+  // conversation. Mirrored to localStorage so a browser refresh, a cross-day
+  // return, or any unmount/remount preserves the same conversation thread
+  // server-side instead of starting a new one (which would orphan memory and
+  // make the user re-establish context).
   const threadIdRef = useRef<string | null>(null);
   const draftStorageKey = useMemo(() => {
     const projectScope = contextProfile?.projectId || 'global';
     return `ana:persistent:draft:${projectScope}:${mode}:${chatMode}`;
   }, [contextProfile?.projectId, mode, chatMode]);
+  const threadStorageKey = useMemo(() => {
+    const projectScope = contextProfile?.projectId || 'global';
+    return `ana:persistent:thread:${projectScope}:${mode}:${chatMode}`;
+  }, [contextProfile?.projectId, mode, chatMode]);
+
+  // Hydrate the thread id from storage on mount / when the scoping key
+  // changes. The contextProfile.threadId resume path below takes
+  // precedence — this only fills in when the parent hasn't named a
+  // specific thread to resume.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const saved = window.localStorage.getItem(threadStorageKey);
+      if (saved && !threadIdRef.current) {
+        threadIdRef.current = saved;
+      }
+    } catch {
+      // Quota / disabled storage — non-fatal.
+    }
+  }, [threadStorageKey]);
+
+  /**
+   * Set the thread id and mirror to localStorage so it survives refresh.
+   * Pass null to clear (e.g. on conversation reset).
+   */
+  const persistThreadId = useCallback(
+    (id: string | null) => {
+      threadIdRef.current = id;
+      if (typeof window === 'undefined') return;
+      try {
+        if (id) {
+          window.localStorage.setItem(threadStorageKey, id);
+        } else {
+          window.localStorage.removeItem(threadStorageKey);
+        }
+      } catch {
+        // Quota / disabled storage — non-fatal.
+      }
+    },
+    [threadStorageKey],
+  );
 
   const screenName = contextProfile?.screenName || 'default';
   const screenLabel = SCREEN_LABELS[screenName] || '';
@@ -1077,7 +1132,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         }));
 
         setMessages(hydrated);
-        threadIdRef.current = selectedThreadId;
+        persistThreadId(selectedThreadId);
         onThreadChange?.(selectedThreadId);
       } catch {
         // Non-blocking: if hydration fails, existing chat still works.
@@ -1500,29 +1555,138 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             })),
           });
 
-          // ── Attempt 1: AnA RI endpoint ──
+          // ── Attempt 1: AnA RI streaming endpoint ──
+          //
+          // Routes through /api/ana-ri/stream so tokens land in the UI as
+          // they arrive (not after the full generation) AND the server's
+          // `tool_use` / `tool_result` SSE events are captured into the
+          // assistant message's toolCalls array, which the AnaToolCallCard
+          // renderer surfaces inline. The existing chat envelope shape
+          // (`{ success, data: { ... } }`) is reconstructed locally from
+          // the SSE events so the downstream unwrap logic doesn't change.
+          //
+          // On any streaming failure (network, 5xx, parse) the Cortex
+          // fallback below takes over — same failure mode as before.
+          const capturedStreamingToolCalls: AnaToolCallRecord[] = [];
           try {
-            const anaRes = await fetch('/api/ana-ri/chat', {
+            const anaStreamRes = await fetch('/api/ana-ri/stream', {
               method: 'POST',
               headers: chatHeaders,
               credentials: 'include',
               body: chatBody,
             });
-            if (anaRes.ok) {
-              rawData = await anaRes.json();
+
+            if (anaStreamRes.ok && anaStreamRes.body) {
+              const reader = anaStreamRes.body.getReader();
+              const decoder = new TextDecoder();
+              let buffer = '';
+
+              const streamData: Record<string, any> = {
+                response: '',
+                thread_id: null,
+                orchestration: null,
+                evidence: null,
+                evidenceUsage: undefined,
+                executedActions: undefined,
+                model: null,
+                provider: null,
+              };
+
+              let streamDone = false;
+              while (!streamDone) {
+                const readResult = await reader.read();
+                streamDone = readResult.done;
+                if (streamDone) break;
+                buffer += decoder.decode(readResult.value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || '';
+                for (const line of lines) {
+                  if (!line.startsWith('data: ')) continue;
+                  const dataStr = line.slice(6).trim();
+                  if (!dataStr) continue;
+                  try {
+                    const ev = JSON.parse(dataStr);
+                    switch (ev.type) {
+                      case 'text':
+                        streamData.response += ev.content || '';
+                        break;
+                      case 'thread_id':
+                        streamData.thread_id = ev.thread_id || null;
+                        break;
+                      case 'orchestration':
+                        streamData.orchestration = ev.orchestration || null;
+                        break;
+                      case 'grounding_strip':
+                        streamData.evidence = ev.evidence || streamData.evidence;
+                        break;
+                      case 'tool_use': {
+                        if (ev.name) {
+                          capturedStreamingToolCalls.push({
+                            name: ev.name,
+                            input: ev.input || {},
+                            status: 'running',
+                          });
+                        }
+                        break;
+                      }
+                      case 'tool_result': {
+                        if (ev.name) {
+                          for (let i = capturedStreamingToolCalls.length - 1; i >= 0; i--) {
+                            const c = capturedStreamingToolCalls[i];
+                            if (c.name === ev.name && c.status === 'running') {
+                              c.result = ev.result;
+                              try {
+                                const parsed = JSON.parse(ev.result || '');
+                                c.status =
+                                  parsed && typeof parsed === 'object' && 'error' in parsed
+                                    ? 'error'
+                                    : 'success';
+                              } catch {
+                                c.status = 'success';
+                              }
+                              break;
+                            }
+                          }
+                        }
+                        break;
+                      }
+                      case 'done':
+                        streamData.model = ev.model || null;
+                        streamData.provider = ev.provider || null;
+                        streamData.usage = ev.usage || null;
+                        streamData.executedActions = ev.executedActions;
+                        streamData.executedCommands = ev.executedCommands;
+                        streamData.enrichmentSources = ev.enrichmentSources;
+                        if (ev.evidence && !streamData.evidence) {
+                          streamData.evidence = ev.evidence;
+                        }
+                        break;
+                      case 'error':
+                        throw new Error(ev.error || 'Stream error');
+                    }
+                  } catch (parseErr) {
+                    if (parseErr instanceof Error && parseErr.message === 'Stream error') {
+                      throw parseErr;
+                    }
+                    // Malformed line — skip.
+                  }
+                }
+              }
+
+              rawData = { success: true, data: streamData };
               chatSucceeded = true;
             } else {
-              const errBody = await anaRes.text().catch(() => '');
+              const errBody = await anaStreamRes.text().catch(() => '');
               try {
                 const parsed = JSON.parse(errBody);
                 anaErrorCode = parsed?.error?.code || parsed?.code || null;
               } catch {
                 // ignore parse failures
               }
-              console.warn(`[AnA RI] ${anaRes.status}: ${errBody.slice(0, 200)}`);
+              console.warn(`[AnA RI stream] ${anaStreamRes.status}: ${errBody.slice(0, 200)}`);
             }
           } catch (anaErr: any) {
-            console.warn('[AnA RI] Network error:', anaErr?.message);
+            console.warn('[AnA RI stream] Network/parse error:', anaErr?.message);
           }
 
           // ── Attempt 2: Cortex fallback (degraded — no orchestration/memory/RIM) ──
@@ -1603,7 +1767,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
           // Capture thread_id for conversation continuity
           if (data.thread_id) {
-            threadIdRef.current = data.thread_id;
+            persistThreadId(data.thread_id);
             onThreadChange?.(data.thread_id);
           }
 
@@ -1629,6 +1793,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               modelProvider: data.provider || data.modelProvider || undefined,
               modelName: data.model || data.modelName || undefined,
               evidenceUsage: data.evidenceUsage || undefined,
+              toolCalls:
+                capturedStreamingToolCalls.length > 0 ? capturedStreamingToolCalls : undefined,
             },
           ]);
 
@@ -1695,7 +1861,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             fallbackData?.answer ||
             'I received your message but had no response content.';
           if (fallbackData?.thread_id) {
-            threadIdRef.current = fallbackData.thread_id;
+            persistThreadId(fallbackData.thread_id);
             onThreadChange?.(fallbackData.thread_id);
           }
           setMessages(prev => [
@@ -1716,11 +1882,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               role: 'assistant',
               content: `Sorry, I encountered an error: ${
                 err?.message || 'Unknown error'
-              }. Please try again.`,
+              }. Your prompt has been restored to the input box — press Send to try again.`,
               timestamp: new Date(),
               isError: true,
             },
           ]);
+          // Restore the failed prompt so the user doesn't have to retype.
+          // The conversation queue completes below in `finally`, so re-
+          // entering the input is safe and the previous prompt is right
+          // there ready to resend.
+          setInput(text);
         }
       } finally {
         queue.completeTurn();
@@ -1897,7 +2068,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
 
     if (cmd.command === '/clear') {
-      threadIdRef.current = null;
+      persistThreadId(null);
       setMessages([]);
       setInput('');
       setSlashMenuOpen(false);
@@ -3882,7 +4053,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <button
                   onClick={() => {
                     setMessages([]);
-                    threadIdRef.current = null;
+                    persistThreadId(null);
                     // Keep selection state in sync with cleared local thread context.
                     onThreadChange?.(undefined);
                   }}
@@ -4432,6 +4603,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               ))}
                             </div>
                           )}
+                          {/* AnA tool-call cards — what AnA actually ran to produce this response */}
+                          {msg.toolCalls && msg.toolCalls.length > 0 && (
+                            <div className="mt-2">
+                              {msg.toolCalls.map((tc, i) => (
+                                <AnaToolCallCard key={i} call={tc} />
+                              ))}
+                            </div>
+                          )}
                           {/* Nano Banana PPTX download button */}
                           {msg.pptx && (
                             <button
@@ -4902,7 +5081,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               <button
                 onClick={() => {
                   setMessages([]);
-                  threadIdRef.current = null;
+                  persistThreadId(null);
                   // Keep selection state in sync with cleared local thread context.
                   onThreadChange?.(undefined);
                 }}
