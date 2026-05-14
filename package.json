@@ -190,7 +190,7 @@
     "@tiptap/extension-heading": "3.22.3",
     "@tiptap/extension-highlight": "3.22.3",
     "@tiptap/extension-link": "3.22.3",
-    "@tiptap/extension-list": "3.22.3",
+    "@tiptap/extension-list": "3.23.4",
     "@tiptap/extension-mention": "3.22.3",
     "@tiptap/extension-placeholder": "3.22.3",
     "@tiptap/extension-subscript": "3.22.4",
