@@ -100,6 +100,8 @@ import { AnaMessageBubble } from './AnaMessageBubble';
 import { AnaIntentLensStrip } from './AnaIntentLensStrip';
 import { AnaProviderPicker } from './AnaProviderPicker';
 import { AnaToolsDropdown } from './AnaToolsDropdown';
+import { AnaSlashCommandMenu } from './AnaSlashCommandMenu';
+import { AnaThinkingIndicator } from './AnaThinkingIndicator';
 import { serializeContextForChat } from '../../services/authoring-context-resolver';
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -176,7 +178,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   // Slash command autocomplete
   const [slashMenuOpen, setSlashMenuOpen] = useState(false);
   const [slashMenuIndex, setSlashMenuIndex] = useState(0);
-  const slashMenuRef = useRef<HTMLDivElement>(null);
   const initialMessageSentRef = useRef(false);
   // Thread persistence — reuse thread_id across messages for continuous
   // conversation. Mirrored to localStorage so a browser refresh, a cross-day
@@ -3243,24 +3244,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               </button>
             </div>
             {isThinking && (
-              <div className="px-4 py-3 bg-white">
-                <div className="flex gap-2.5 max-w-3xl mx-auto">
-                  <div className="w-6 h-6 rounded-full bg-[#D97757] flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Sparkles className="w-3 h-3 text-white" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold text-[#2D2C28]">AnA</span>
-                    <div className="flex items-center gap-1 mt-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_infinite]" />
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
-                    </div>
-                    <p className="mt-1 text-[11px] text-[#8A8880]">
-                      {THINKING_STATUS_PHASES[statusPhaseIndex]}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <AnaThinkingIndicator
+                statusPhase={THINKING_STATUS_PHASES[statusPhaseIndex]}
+                message=""
+              />
             )}
             <div ref={messagesEndRef} />
           </div>
@@ -3270,47 +3257,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         <div className="px-4 py-2.5 bg-white relative">
           <div className="max-w-3xl mx-auto relative">
             {/* Slash command autocomplete dropdown */}
-            {slashMenuOpen && filteredSlashCommands.length > 0 && (
-              <div
-                ref={slashMenuRef}
-                className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-[#E8E6DC] shadow-lg max-h-[280px] overflow-y-auto z-50"
-                role="listbox"
-                aria-label="Slash commands"
-              >
-                {filteredSlashCommands.map((cmd, i) => (
-                  <button
-                    key={cmd.command}
-                    type="button"
-                    role="option"
-                    aria-selected={i === slashMenuIndex}
-                    onMouseDown={e => {
-                      e.preventDefault();
-                      selectSlashCommand(cmd);
-                    }}
-                    onMouseEnter={() => setSlashMenuIndex(i)}
-                    className={cn(
-                      'w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors',
-                      i === slashMenuIndex ? 'bg-[#FAF9F5]' : 'hover:bg-[#FAF9F5]/50'
-                    )}
-                  >
-                    <code className="text-xs font-mono font-semibold text-[#141413] min-w-[100px]">
-                      {cmd.command}
-                    </code>
-                    <span className="text-xs text-[#6B6962] flex-1 truncate">
-                      {cmd.description}
-                    </span>
-                    <span
-                      className={cn(
-                        'text-[10px] font-medium',
-                        SLASH_CATEGORY_COLORS[cmd.category] || 'text-zinc-400'
-                      )}
-                    >
-                      {cmd.category}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
+            <AnaSlashCommandMenu
+              open={slashMenuOpen}
+              commands={filteredSlashCommands}
+              highlightedIndex={slashMenuIndex}
+              onHover={setSlashMenuIndex}
+              onSelect={selectSlashCommand}
+            />
             <div
               className={cn(
                 'flex items-end gap-2 px-3.5 py-2.5 bg-[#FAF9F5] border rounded-2xl transition-colors duration-150',
@@ -3738,29 +3691,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
             {/* Thinking indicator */}
             {isThinking && (
-              <div className="px-4 py-3 bg-white">
-                <div className="flex gap-2.5 max-w-3xl mx-auto">
-                  <div className="w-6 h-6 rounded-full bg-[#D97757] flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Sparkles className="w-3 h-3 text-white" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold text-[#2D2C28]">AnA</span>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex items-center gap-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_infinite]" />
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
-                      </div>
-                      <span className="text-xs text-[#D97757] font-medium">
-                        {thinkingMsg || 'Thinking...'}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-[11px] text-[#8A8880]">
-                      {THINKING_STATUS_PHASES[statusPhaseIndex]}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <AnaThinkingIndicator
+                statusPhase={THINKING_STATUS_PHASES[statusPhaseIndex]}
+                message={thinkingMsg || 'Thinking...'}
+              />
             )}
             <div ref={messagesEndRef} />
           </div>
@@ -3811,45 +3745,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           )}
 
           {/* Slash command autocomplete dropdown (full mode) */}
-          {slashMenuOpen && filteredSlashCommands.length > 0 && (
-            <div
-              ref={slashMenuRef}
-              className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-[#E8E6DC] shadow-lg max-h-[280px] overflow-y-auto z-50"
-              role="listbox"
-              aria-label="Slash commands"
-            >
-              {filteredSlashCommands.map((cmd, i) => (
-                <button
-                  key={cmd.command}
-                  type="button"
-                  role="option"
-                  aria-selected={i === slashMenuIndex}
-                  onMouseDown={e => {
-                    e.preventDefault();
-                    selectSlashCommand(cmd);
-                  }}
-                  onMouseEnter={() => setSlashMenuIndex(i)}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors',
-                    i === slashMenuIndex ? 'bg-[#FAF9F5]' : 'hover:bg-[#FAF9F5]/50'
-                  )}
-                >
-                  <code className="text-xs font-mono font-semibold text-[#141413] min-w-[100px]">
-                    {cmd.command}
-                  </code>
-                  <span className="text-xs text-[#6B6962] flex-1 truncate">{cmd.description}</span>
-                  <span
-                    className={cn(
-                      'text-[10px] font-medium',
-                      SLASH_CATEGORY_COLORS[cmd.category] || 'text-zinc-400'
-                    )}
-                  >
-                    {cmd.category}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
+          <AnaSlashCommandMenu
+            open={slashMenuOpen}
+            commands={filteredSlashCommands}
+            highlightedIndex={slashMenuIndex}
+            onHover={setSlashMenuIndex}
+            onSelect={selectSlashCommand}
+          />
 
           <div
             className={cn(
