@@ -97,6 +97,9 @@ const renderMarkdown = renderSafeMarkdown;
 import { AnaToolCallCard } from './AnaToolCallCard';
 import { AnaQueueStatusBanner } from './AnaQueueStatusBanner';
 import { AnaMessageBubble } from './AnaMessageBubble';
+import { AnaIntentLensStrip } from './AnaIntentLensStrip';
+import { AnaProviderPicker } from './AnaProviderPicker';
+import { AnaToolsDropdown } from './AnaToolsDropdown';
 import { serializeContextForChat } from '../../services/authoring-context-resolver';
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -149,14 +152,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   // AnA RI state
   const [intentLens, setIntentLens] = useState<IntentLens>('auto');
   const [lastOrchestration, setLastOrchestration] = useState<AnaRIOrchestration | null>(null);
-  const [showLensDropdown, setShowLensDropdown] = useState(false);
-  const lensDropdownRef = useRef<HTMLDivElement>(null);
-  // AI Provider / Model selector
+  // AI Provider / Model selector (the dropdown itself owns its open/closed state
+  // via AnaProviderPicker; the panel only tracks the selected provider).
   const [selectedProvider, setSelectedProvider] = useState<AIProviderChoice>('auto');
-  const [showProviderDropdown, setShowProviderDropdown] = useState(false);
-  const providerDropdownRef = useRef<HTMLDivElement>(null);
   const [useFirecrawl, setUseFirecrawl] = useState(false);
-  const [showToolDropdown, setShowToolDropdown] = useState(false);
   const [firecrawlQuotaRemaining, setFirecrawlQuotaRemaining] = useState<number | null>(null);
   const [firecrawlDisabledReason, setFirecrawlDisabledReason] = useState<
     'admin_disabled' | 'quota_exhausted' | null
@@ -170,7 +169,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     count: 0,
     lastId: null,
   });
-  const toolsDropdownRef = useRef<HTMLDivElement>(null);
   const conversationViewportRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -381,43 +379,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
   }, [showModeDropdown]);
 
-  // Close lens dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (lensDropdownRef.current && !lensDropdownRef.current.contains(e.target as Node)) {
-        setShowLensDropdown(false);
-      }
-    };
-    if (showLensDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showLensDropdown]);
-
-  // Close provider dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (providerDropdownRef.current && !providerDropdownRef.current.contains(e.target as Node)) {
-        setShowProviderDropdown(false);
-      }
-    };
-    if (showProviderDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showProviderDropdown]);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (toolsDropdownRef.current && !toolsDropdownRef.current.contains(e.target as Node)) {
-        setShowToolDropdown(false);
-      }
-    };
-    if (showToolDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showToolDropdown]);
+  // Lens / Provider / Tools dropdowns each own their own open state +
+  // click-outside handling via useClickOutside; no panel-level wiring
+  // is needed for them.
 
   // AnA personality — rotating thinking messages
   const [thinkingMsg, setThinkingMsg] = useState('');
@@ -4000,115 +3964,15 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               )}
             </div>
 
-            {/* External tool selector (+) */}
-            <div className="relative flex-shrink-0 self-center" ref={toolsDropdownRef}>
-              <button
-                type="button"
-                onClick={() => setShowToolDropdown(prev => !prev)}
-                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]"
-                title="Add tools"
-              >
-                <FolderPlus className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Tools</span>
-              </button>
-              {showToolDropdown && (
-                <div className="absolute bottom-full left-0 mb-1.5 w-64 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (firecrawlDisabledReason) return;
-                      setUseFirecrawl(v => !v);
-                      setShowToolDropdown(false);
-                    }}
-                    className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2 text-left transition-colors',
-                      firecrawlDisabledReason
-                        ? 'opacity-60 cursor-not-allowed'
-                        : 'hover:bg-[#FAF9F5]',
-                      useFirecrawl && 'bg-[#FAF9F5]'
-                    )}
-                  >
-                    <Search className="w-4 h-4 mt-0.5 text-[#D97757] flex-shrink-0" />
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-[#141413]">Use Firecrawl</div>
-                      <div className="text-[10px] text-[#8A8880] leading-tight">
-                        {firecrawlDisabledReason === 'quota_exhausted'
-                          ? 'On but quota exhausted'
-                          : firecrawlDisabledReason === 'admin_disabled'
-                          ? 'On but admin-disabled for workspace'
-                          : firecrawlQuotaRemaining !== null
-                          ? `Optional open-web evidence (${firecrawlQuotaRemaining} free remaining)`
-                          : 'Optional governed open-web evidence'}
-                      </div>
-                    </div>
-                    {useFirecrawl && <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5" />}
-                  </button>
-                </div>
-              )}
-            </div>
+            <AnaToolsDropdown
+              useFirecrawl={useFirecrawl}
+              onToggleFirecrawl={() => setUseFirecrawl(v => !v)}
+              firecrawlDisabledReason={firecrawlDisabledReason}
+              firecrawlQuotaRemaining={firecrawlQuotaRemaining}
+            />
 
             {/* AI Provider / Model Selector — clean, minimal like Claude.ai */}
-            <div className="relative flex-shrink-0 self-center" ref={providerDropdownRef}>
-              <button
-                type="button"
-                onClick={() => setShowProviderDropdown(prev => !prev)}
-                className={cn(
-                  'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
-                  selectedProvider !== 'auto'
-                    ? `bg-[#F5F4EF] ${
-                        AI_PROVIDERS.find(p => p.id === selectedProvider)?.activeColor ||
-                        'text-[#D97757]'
-                      } hover:bg-[#EDEAE0]`
-                    : 'text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]'
-                )}
-                title="Select AI model"
-              >
-                <Bot className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">
-                  {AI_PROVIDERS.find(p => p.id === selectedProvider)?.label}
-                </span>
-                <ChevronDown className="w-3 h-3 opacity-50" />
-              </button>
-
-              {showProviderDropdown && (
-                <div className="absolute bottom-full left-0 mb-1.5 w-52 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
-                  {AI_PROVIDERS.map(prov => (
-                    <button
-                      key={prov.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedProvider(prov.id);
-                        setShowProviderDropdown(false);
-                      }}
-                      className={cn(
-                        'w-full flex items-start gap-3 px-3 py-2 text-left hover:bg-[#FAF9F5] transition-colors',
-                        selectedProvider === prov.id && 'bg-[#FAF9F5]'
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          'mt-0.5 flex-shrink-0',
-                          selectedProvider === prov.id ? prov.activeColor : prov.color
-                        )}
-                      >
-                        <Bot className="w-3.5 h-3.5" />
-                      </span>
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-[#141413]">{prov.label}</div>
-                        <div className="text-[10px] text-[#B0AEA5] leading-tight">
-                          {prov.description}
-                        </div>
-                      </div>
-                      {selectedProvider === prov.id && (
-                        <Check
-                          className={cn('w-4 h-4 ml-auto mt-0.5 flex-shrink-0', prov.activeColor)}
-                        />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <AnaProviderPicker value={selectedProvider} onChange={setSelectedProvider} />
 
             {/* Input */}
             <AnaQueueStatusBanner
@@ -4170,25 +4034,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
           {/* ── Intent lens strip — subtle pills below input (Claude.ai clean) ── */}
           {chatMode === 'standard' && hasMessages && (
-            <div className="flex items-center gap-1.5 mt-1.5 pl-1" ref={lensDropdownRef}>
-              {INTENT_LENSES.map(lens => (
-                <button
-                  key={lens.id}
-                  type="button"
-                  onClick={() => setIntentLens(lens.id)}
-                  className={cn(
-                    'flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors',
-                    intentLens === lens.id
-                      ? 'bg-[#FBF0EB] text-[#D97757]'
-                      : 'text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]'
-                  )}
-                  title={lens.description}
-                >
-                  {lens.icon}
-                  <span className="hidden sm:inline">{lens.label}</span>
-                </button>
-              ))}
-            </div>
+            <AnaIntentLensStrip value={intentLens} onChange={setIntentLens} />
           )}
           {hasMessages && (
             <p className="mt-1.5 pl-1 text-[11px] text-[#B0AEA5]">
