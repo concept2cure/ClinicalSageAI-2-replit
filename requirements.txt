@@ -2,7 +2,7 @@
 # Multi-strategy PDF text extraction with OCR fallback
 # System requirements: tesseract-ocr, mupdf (see replit.nix)
 
-PyMuPDF>=1.27.0               # Strategy 1: best layout preservation for native PDFs
+PyMuPDF>=1.27.2.3               # Strategy 1: best layout preservation for native PDFs
 PyPDF2>=3.0.0                 # Strategy 2: native PDF fallback
 pdfminer.six>=20260107        # Strategy 3: layout-aware extraction with LAParams
 pytesseract>=0.3.13           # Strategy 4 & 5: OCR for scanned PDFs
