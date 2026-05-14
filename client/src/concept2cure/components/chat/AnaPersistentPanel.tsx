@@ -102,6 +102,8 @@ import { AnaProviderPicker } from './AnaProviderPicker';
 import { AnaToolsDropdown } from './AnaToolsDropdown';
 import { AnaSlashCommandMenu } from './AnaSlashCommandMenu';
 import { AnaThinkingIndicator } from './AnaThinkingIndicator';
+import { streamAnaResponse } from './anaStreamingClient';
+import { requestCortexFallback } from './anaCortexClient';
 import { serializeContextForChat } from '../../services/authoring-context-resolver';
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -867,187 +869,41 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
           // ── Attempt 1: AnA RI streaming endpoint ──
           //
-          // Routes through /api/ana-ri/stream so tokens land in the UI as
-          // they arrive (not after the full generation) AND the server's
-          // `tool_use` / `tool_result` SSE events are captured into the
-          // assistant message's toolCalls array, which the AnaToolCallCard
-          // renderer surfaces inline. The existing chat envelope shape
-          // (`{ success, data: { ... } }`) is reconstructed locally from
-          // the SSE events so the downstream unwrap logic doesn't change.
-          //
-          // On any streaming failure (network, 5xx, parse) the Cortex
-          // fallback below takes over — same failure mode as before.
-          const capturedStreamingToolCalls: AnaToolCallRecord[] = [];
-          try {
-            const anaStreamRes = await fetch('/api/ana-ri/stream', {
-              method: 'POST',
-              headers: chatHeaders,
-              credentials: 'include',
-              body: chatBody,
-            });
-
-            if (anaStreamRes.ok && anaStreamRes.body) {
-              const reader = anaStreamRes.body.getReader();
-              const decoder = new TextDecoder();
-              let buffer = '';
-
-              const streamData: Record<string, any> = {
-                response: '',
-                thread_id: null,
-                orchestration: null,
-                evidence: null,
-                evidenceUsage: undefined,
-                executedActions: undefined,
-                model: null,
-                provider: null,
-              };
-
-              let streamDone = false;
-              while (!streamDone) {
-                const readResult = await reader.read();
-                streamDone = readResult.done;
-                if (streamDone) break;
-                buffer += decoder.decode(readResult.value, { stream: true });
-                const lines = buffer.split('\n');
-                buffer = lines.pop() || '';
-                for (const line of lines) {
-                  if (!line.startsWith('data: ')) continue;
-                  const dataStr = line.slice(6).trim();
-                  if (!dataStr) continue;
-                  try {
-                    const ev = JSON.parse(dataStr);
-                    switch (ev.type) {
-                      case 'text':
-                        streamData.response += ev.content || '';
-                        break;
-                      case 'thread_id':
-                        streamData.thread_id = ev.thread_id || null;
-                        break;
-                      case 'orchestration':
-                        streamData.orchestration = ev.orchestration || null;
-                        break;
-                      case 'grounding_strip':
-                        streamData.evidence = ev.evidence || streamData.evidence;
-                        break;
-                      case 'tool_use': {
-                        if (ev.name) {
-                          capturedStreamingToolCalls.push({
-                            name: ev.name,
-                            input: ev.input || {},
-                            status: 'running',
-                          });
-                        }
-                        break;
-                      }
-                      case 'tool_result': {
-                        if (ev.name) {
-                          for (let i = capturedStreamingToolCalls.length - 1; i >= 0; i--) {
-                            const c = capturedStreamingToolCalls[i];
-                            if (c.name === ev.name && c.status === 'running') {
-                              c.result = ev.result;
-                              try {
-                                const parsed = JSON.parse(ev.result || '');
-                                c.status =
-                                  parsed && typeof parsed === 'object' && 'error' in parsed
-                                    ? 'error'
-                                    : 'success';
-                              } catch {
-                                c.status = 'success';
-                              }
-                              break;
-                            }
-                          }
-                        }
-                        break;
-                      }
-                      case 'done':
-                        streamData.model = ev.model || null;
-                        streamData.provider = ev.provider || null;
-                        streamData.usage = ev.usage || null;
-                        streamData.executedActions = ev.executedActions;
-                        streamData.executedCommands = ev.executedCommands;
-                        streamData.enrichmentSources = ev.enrichmentSources;
-                        if (ev.evidence && !streamData.evidence) {
-                          streamData.evidence = ev.evidence;
-                        }
-                        break;
-                      case 'error':
-                        throw new Error(ev.error || 'Stream error');
-                    }
-                  } catch (parseErr) {
-                    if (parseErr instanceof Error && parseErr.message === 'Stream error') {
-                      throw parseErr;
-                    }
-                    // Malformed line — skip.
-                  }
-                }
-              }
-
-              rawData = { success: true, data: streamData };
-              chatSucceeded = true;
-            } else {
-              const errBody = await anaStreamRes.text().catch(() => '');
-              try {
-                const parsed = JSON.parse(errBody);
-                anaErrorCode = parsed?.error?.code || parsed?.code || null;
-              } catch {
-                // ignore parse failures
-              }
-              console.warn(`[AnA RI stream] ${anaStreamRes.status}: ${errBody.slice(0, 200)}`);
-            }
-          } catch (anaErr: any) {
-            console.warn('[AnA RI stream] Network/parse error:', anaErr?.message);
+          // streamAnaResponse handles the SSE plumbing: opening the
+          // stream, parsing each event type, capturing tool_use /
+          // tool_result events into a toolCalls array, and assembling
+          // an envelope shape compatible with the legacy non-streaming
+          // chat response. On any failure (network, 5xx, mid-stream
+          // error) it returns envelope:null and the Cortex fallback
+          // below takes over — same failure mode as before.
+          const streamResult = await streamAnaResponse({
+            body: chatBody,
+            headers: chatHeaders,
+          });
+          const capturedStreamingToolCalls: AnaToolCallRecord[] = streamResult.toolCalls;
+          if (streamResult.envelope) {
+            rawData = streamResult.envelope;
+            chatSucceeded = true;
+          } else if (streamResult.errorCode) {
+            anaErrorCode = streamResult.errorCode;
           }
 
           // ── Attempt 2: Cortex fallback (degraded — no orchestration/memory/RIM) ──
           if (!chatSucceeded) {
-            try {
-              const cortexRes = await fetch('/api/cortex/chat', {
-                method: 'POST',
-                headers: chatHeaders,
-                credentials: 'include',
-                body: JSON.stringify({
-                  message: text,
-                  chatMode,
-                  project_id: contextProfile?.projectId || undefined,
-                  submission_type: contextProfile?.productType || undefined,
-                  preferred_provider: selectedProvider !== 'auto' ? selectedProvider : undefined,
-                  context: {
-                    screen: contextProfile?.screenName,
-                    project: contextProfile?.activeProject,
-                    projectId: contextProfile?.projectId,
-                    productType: contextProfile?.productType,
-                    userRole: contextProfile?.userRole,
-                  },
-                  conversationHistory: messages.slice(-10).map(m => ({
-                    role: m.role,
-                    content: m.content,
-                  })),
-                }),
-              });
-              if (cortexRes.ok) {
-                rawData = await cortexRes.json();
-                chatSucceeded = true;
-                // Mark as fallback so UI knows capabilities are degraded
-                if (rawData?.data) {
-                  rawData.data._fallback = {
-                    active: true,
-                    reason: 'ana_ri_unavailable',
-                    original_path: '/api/ana-ri/chat',
-                    degraded_capabilities: [
-                      'orchestration',
-                      'memory_injection',
-                      'rim_interception',
-                      'evidence_validation',
-                    ],
-                  };
-                }
-              } else {
-                const errBody = await cortexRes.text().catch(() => '');
-                console.warn(`[Cortex] ${cortexRes.status}: ${errBody.slice(0, 200)}`);
-              }
-            } catch (cortexErr: any) {
-              console.warn('[Cortex] Network error:', cortexErr?.message);
+            const cortexResult = await requestCortexFallback({
+              text,
+              headers: chatHeaders,
+              chatMode,
+              contextProfile,
+              selectedProvider,
+              conversationHistory: messages.slice(-10).map(m => ({
+                role: m.role,
+                content: m.content,
+              })),
+            });
+            if (cortexResult.rawData) {
+              rawData = cortexResult.rawData;
+              chatSucceeded = true;
             }
           }
 
