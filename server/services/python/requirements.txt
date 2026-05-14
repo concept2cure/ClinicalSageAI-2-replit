@@ -2,7 +2,7 @@
 # FastAPI and web framework dependencies
 fastapi==0.136.1
 uvicorn[standard]==0.46.0
-pydantic[email]==2.13.3
+pydantic[email]==2.13.4
 pydantic-settings>=2.14.1
 python-multipart==0.0.27
 starlette>=1.0.0
