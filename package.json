@@ -134,7 +134,7 @@
     ]
   },
   "dependencies": {
-    "@ant-design/icons": "^6.1.1",
+    "@ant-design/icons": "^6.2.3",
     "@anthropic-ai/sdk": "^0.82.0",
     "@aws-sdk/client-s3": "^3.758.0",
     "@aws-sdk/s3-request-presigner": "^3.1044.0",
