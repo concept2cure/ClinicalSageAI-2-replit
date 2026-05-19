@@ -993,6 +993,179 @@ export const WRITE_Q_SUB_SECTION: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// IVD + diagnostic surface mutation tools — backs the 4 diagnostic-specific
+// surfaces in the gap inventory (IVD pathway, EU IVDR, companion diagnostics,
+// lab-developed tests). Tenant-scoped via ToolContext.organizationId.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const RECORD_ANALYTICAL_PERFORMANCE_STUDY: AnaTool = {
+  name: 'record_analytical_performance_study',
+  description:
+    "Log an IVD analytical performance study (accuracy, precision, linearity, LoD, LoQ, analytical specificity, interference, matrix comparison, reagent stability, sample stability, carryover). Captures study_type, acceptance_criterion, result, pass/fail, n_samples, sites, analytes. Use after the user runs (or AnA reviews) a performance study.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id:           { type: 'string' },
+      study_type:           { type: 'string', enum: ['accuracy', 'precision', 'linearity', 'limit_of_detection', 'limit_of_quantitation', 'analytical_specificity', 'interference', 'matrix_comparison', 'reagent_stability', 'sample_stability', 'carryover'] },
+      study_id:             { type: 'string' },
+      title:                { type: 'string' },
+      acceptance_criterion: { type: 'string' },
+      result_summary:       { type: 'string' },
+      pass_fail:            { type: 'string', enum: ['pass', 'fail', 'pending'] },
+      n_samples:            { type: 'number' },
+      n_replicates:         { type: 'number' },
+      sites:                { type: 'array', items: { type: 'string' } },
+      analytes:             { type: 'array', items: { type: 'string' } },
+      matrix_type:          { type: 'string' },
+    },
+    required: ['study_type', 'title'],
+  },
+};
+
+export const RECORD_CLINICAL_PERFORMANCE_STUDY: AnaTool = {
+  name: 'record_clinical_performance_study',
+  description:
+    "Log an IVD clinical performance study (sensitivity, specificity, PPV, NPV, AUC-ROC). Captures the comparator (predicate, clinical_truth, composite, follow_up), study population, total subjects, and the 95% confidence intervals. Use after a clinical study completes or when adapting a prior study's results into the regulatory record.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id:               { type: 'string' },
+      study_id:                 { type: 'string' },
+      title:                    { type: 'string' },
+      intended_population:      { type: 'string' },
+      comparator:               { type: 'string' },
+      comparator_kind:          { type: 'string', enum: ['predicate', 'clinical_truth', 'composite', 'follow_up'] },
+      total_subjects:           { type: 'number' },
+      positive_n:               { type: 'number' },
+      negative_n:               { type: 'number' },
+      sensitivity_pct:          { type: 'number', minimum: 0, maximum: 100 },
+      sensitivity_lower:        { type: 'number', minimum: 0, maximum: 100 },
+      sensitivity_upper:        { type: 'number', minimum: 0, maximum: 100 },
+      specificity_pct:          { type: 'number', minimum: 0, maximum: 100 },
+      specificity_lower:        { type: 'number', minimum: 0, maximum: 100 },
+      specificity_upper:        { type: 'number', minimum: 0, maximum: 100 },
+      ppv_pct:                  { type: 'number', minimum: 0, maximum: 100 },
+      npv_pct:                  { type: 'number', minimum: 0, maximum: 100 },
+      prevalence_pct:           { type: 'number', minimum: 0, maximum: 100 },
+      auc_roc:                  { type: 'number', minimum: 0, maximum: 1 },
+      pre_specified_endpoint_met: { type: 'boolean' },
+    },
+    required: ['title'],
+  },
+};
+
+export const CLASSIFY_IVD_DEVICE: AnaTool = {
+  name: 'classify_ivd_device',
+  description:
+    "Assign the EU IVDR Class A/B/C/D classification + Annex VIII rule to a device. Notified body requirement is server-computed (Class A = no NB; Class B/C/D = NB required). Use this when the user or AnA has worked through the Annex VIII decision tree.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id:           { type: 'string' },
+      device_name:          { type: 'string' },
+      ivdr_class:           { type: 'string', enum: ['A', 'B', 'C', 'D'] },
+      classification_rule:  { type: 'string', enum: ['1', '2', '3', '4', '5', '6', '7'] },
+      rationale:            { type: 'string' },
+      companion_diagnostic: { type: 'boolean' },
+      self_test:            { type: 'boolean' },
+      near_patient_test:    { type: 'boolean' },
+      notified_body_name:   { type: 'string' },
+      notified_body_id:     { type: 'string', description: '4-digit NB id (e.g. 0123).' },
+    },
+    required: ['device_name', 'ivdr_class'],
+  },
+};
+
+export const CREATE_PER_DOCUMENT: AnaTool = {
+  name: 'create_per_document',
+  description:
+    "Start a Performance Evaluation Report (PER) record for an IVDR device — distinct from the medical-device CER. PER covers scientific validity, analytical performance, and clinical performance per IVDR Annex XIII. Use this when the user begins (or AnA helps assemble) a PER. Author name + qualifications required for compliance.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id:                    { type: 'string' },
+      device_name:                   { type: 'string' },
+      per_version:                   { type: 'string' },
+      per_status:                    { type: 'string', enum: ['draft', 'review', 'approved', 'superseded'] },
+      scientific_validity_done:      { type: 'boolean' },
+      analytical_performance_done:   { type: 'boolean' },
+      clinical_performance_done:     { type: 'boolean' },
+      benefit_risk_conclusion:       { type: 'string' },
+      pmpf_plan_attached:            { type: 'boolean', description: 'Post-Market Performance Follow-up plan attached.' },
+      author_name:                   { type: 'string' },
+      author_qualifications:         { type: 'string' },
+      per_date:                      { type: 'string', description: 'ISO date.' },
+    },
+    required: ['device_name', 'per_version'],
+  },
+};
+
+export const CATEGORIZE_CLIA_COMPLEXITY: AnaTool = {
+  name: 'categorize_clia_complexity',
+  description:
+    "Record the CLIA complexity categorization (waived, moderate, high) for an IVD test. CMS issues a categorization letter for each FDA-cleared test; capture the letter reference + date so the lab knows which tests need a moderate/high-complexity CLIA certificate. To track a CLIA waiver application, follow up with apply_clia_waiver.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id:       { type: 'string' },
+      test_name:        { type: 'string' },
+      analyte:          { type: 'string' },
+      clia_complexity:  { type: 'string', enum: ['waived', 'moderate', 'high'] },
+      cms_letter_date:  { type: 'string', description: 'ISO date of the CMS letter.' },
+      cms_letter_ref:   { type: 'string' },
+    },
+    required: ['test_name', 'clia_complexity'],
+  },
+};
+
+export const PAIR_COMPANION_DIAGNOSTIC: AnaTool = {
+  name: 'pair_companion_diagnostic',
+  description:
+    "Register a drug ↔ companion-diagnostic-device pairing. Links the device program (regulatory_programs.id) to a drug application (NDA/BLA/ANDA/foreign) so the team can track concordance studies, paired-approval timeline, and CDx-claim alignment with the drug label. Use whenever a CDx is in scope for a program.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      device_program_id:     { type: 'string' },
+      drug_name:             { type: 'string' },
+      drug_innn:             { type: 'string', description: 'International Nonproprietary Name.' },
+      drug_application_type: { type: 'string', enum: ['nda', 'bla', 'anda', 'foreign'] },
+      drug_application_no:   { type: 'string', description: 'e.g. NDA 214567.' },
+      drug_sponsor:          { type: 'string' },
+      indication:            { type: 'string' },
+      biomarker:             { type: 'string', description: 'e.g. EGFR, BRAF V600E, PD-L1.' },
+      approval_status:       { type: 'string', enum: ['planned', 'submitted', 'approved', 'withdrawn'] },
+      fda_approval_date:     { type: 'string' },
+      ema_approval_date:     { type: 'string' },
+      cdx_label_text:        { type: 'string', description: 'Exact CDx claim on the drug labeling.' },
+    },
+    required: ['drug_name'],
+  },
+};
+
+export const REGISTER_LDT: AnaTool = {
+  name: 'register_ldt',
+  description:
+    "Register a laboratory-developed test in the LDT inventory. Tracks lab name, CLIA certificate, intended use, first-offered date (used for grandfathering eligibility per FDA 2024 LDT final rule), and FDA pathway. current_phase starts at 1 per the rule's phased transition schedule; use set_ldt_phase_milestone to log specific milestone progress.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      lab_name:                       { type: 'string' },
+      clia_certificate_no:            { type: 'string' },
+      test_name:                      { type: 'string' },
+      analyte:                        { type: 'string' },
+      intended_use:                   { type: 'string' },
+      first_offered_date:             { type: 'string', description: 'ISO date — pre-rule date supports grandfathering.' },
+      grandfathered:                  { type: 'boolean' },
+      enforcement_discretion_eligible: { type: 'boolean' },
+      enforcement_discretion_basis:   { type: 'string', enum: ['unmet_need', 'hde_companion', 'forensic', 'cf_blood_banking', 'public_health'] },
+      fda_pathway:                    { type: 'string', enum: ['510k', 'pma', 'de_novo', 'none', 'enforcement_discretion'] },
+      current_phase:                  { type: 'number', minimum: 1, maximum: 5 },
+    },
+    required: ['lab_name', 'test_name'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Native python-docx authoring — canonical Word-grade authoring path.
 // Spawns workers/artifact-compute/docx-python-runtime.py inside the isolated
 // compute worker (no network egress, bounded timeout) which uses python-docx
@@ -1286,6 +1459,13 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CREATE_RISK_ITEM,
   ADD_RISK_CONTROL,
   CREATE_SOFTWARE_LIFECYCLE_ITEM,
+  RECORD_ANALYTICAL_PERFORMANCE_STUDY,
+  RECORD_CLINICAL_PERFORMANCE_STUDY,
+  CLASSIFY_IVD_DEVICE,
+  CREATE_PER_DOCUMENT,
+  CATEGORIZE_CLIA_COMPLEXITY,
+  PAIR_COMPANION_DIAGNOSTIC,
+  REGISTER_LDT,
   ASSEMBLE_ECTD_MODULE_FROM_ARTIFACTS,
   DRAFT_510K_SUBSTANTIAL_EQUIVALENCE,
   DRAFT_CLINICAL_OVERVIEW_M2_5,

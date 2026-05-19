@@ -99,6 +99,18 @@ const PROBED_TABLES: Array<{ name: string; role: string; required: boolean }> = 
   { name: 'public.risk_controls',                 role: 'Risk control measures (per risk item)',       required: true  },
   { name: 'public.software_lifecycle_items',      role: 'Software lifecycle IEC 62304 deliverables',   required: true  },
   { name: 'public.q_sub_section_bodies',          role: 'Q-Sub briefing-document section bodies',      required: true  },
+  /* IVD + diagnostic tables (migration 20260508). Required when serving
+     IVD / CDx / LDT clients; classed as 'required' so the health probe
+     keeps the operator honest about applying the migration. */
+  { name: 'public.ivd_analytical_performance',    role: 'IVD analytical performance studies',          required: true  },
+  { name: 'public.ivd_clinical_performance',      role: 'IVD clinical performance studies',            required: true  },
+  { name: 'public.ivdr_classifications',          role: 'EU IVDR Class A/B/C/D classifications',       required: true  },
+  { name: 'public.ivdr_per_documents',            role: 'IVDR Performance Evaluation Reports',         required: true  },
+  { name: 'public.ivd_clia_categorization',       role: 'CLIA complexity + waiver tracking',           required: true  },
+  { name: 'public.cdx_pairings',                  role: 'Companion diagnostic pairings (drug ↔ device)', required: true },
+  { name: 'public.cdx_concordance_studies',       role: 'CDx concordance to trial assay',              required: true  },
+  { name: 'public.ldt_inventory',                 role: 'Laboratory-developed test inventory',         required: true  },
+  { name: 'public.ldt_phase_milestones',          role: 'FDA LDT phase tracker milestones',            required: true  },
 ];
 
 /* Shadow services we proxy to. Configured = env var present; we don't

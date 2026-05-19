@@ -18521,3 +18521,283 @@ export const qSubSectionBodies = pgTable(
   }),
 );
 export type QSubSectionBody = InferSelectModel<typeof qSubSectionBodies>;
+
+/* ════════════════════════════════════════════════════════════════════
+   IVD + diagnostic surface tables (migration 20260508)
+
+   Distinct from medtech tables because IVDs have their own regulatory
+   pathways (FDA 510(k)/PMA for IVDs, EU IVDR vs MDR, CLIA, CDx
+   pairing, LDT phases). Tenant-scoped via organizationId; soft-delete
+   via deletedAt. ════════════════════════════════════════════════════ */
+
+export const ivdAnalyticalPerformance = pgTable(
+  'ivd_analytical_performance',
+  {
+    id:                 serial('id').primaryKey(),
+    organizationId:     integer('organization_id').notNull().references(() => organizations.id),
+    programId:          uuid('program_id'),
+    studyType:          text('study_type').notNull(),
+    studyId:            text('study_id'),
+    title:              text('title').notNull(),
+    protocolRef:        text('protocol_ref'),
+    acceptanceCriterion: text('acceptance_criterion'),
+    resultSummary:      text('result_summary'),
+    passFail:           text('pass_fail'),
+    nSamples:           integer('n_samples'),
+    nReplicates:        integer('n_replicates'),
+    sites:              text('sites').array(),
+    analytes:           text('analytes').array(),
+    matrixType:         text('matrix_type'),
+    reportArtifactId:   integer('report_artifact_id'),
+    metadata:           jsonb('metadata').default('{}'),
+    startedAt:          date('started_at'),
+    completedAt:        date('completed_at'),
+    createdAt:          timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:          timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:          timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:     index('ivd_anal_perf_org_idx').on(table.organizationId),
+    programIdx: index('ivd_anal_perf_program_idx').on(table.programId),
+    typeIdx:    index('ivd_anal_perf_type_idx').on(table.organizationId, table.studyType),
+  }),
+);
+export type IvdAnalyticalPerformance = InferSelectModel<typeof ivdAnalyticalPerformance>;
+
+export const ivdClinicalPerformance = pgTable(
+  'ivd_clinical_performance',
+  {
+    id:                       serial('id').primaryKey(),
+    organizationId:           integer('organization_id').notNull().references(() => organizations.id),
+    programId:                uuid('program_id'),
+    studyId:                  text('study_id'),
+    title:                    text('title').notNull(),
+    intendedPopulation:       text('intended_population'),
+    comparator:               text('comparator'),
+    comparatorKind:           text('comparator_kind'),
+    totalSubjects:            integer('total_subjects'),
+    positiveN:                integer('positive_n'),
+    negativeN:                integer('negative_n'),
+    sensitivityPct:           decimal('sensitivity_pct', { precision: 5, scale: 2 }),
+    sensitivityLower:         decimal('sensitivity_lower', { precision: 5, scale: 2 }),
+    sensitivityUpper:         decimal('sensitivity_upper', { precision: 5, scale: 2 }),
+    specificityPct:           decimal('specificity_pct', { precision: 5, scale: 2 }),
+    specificityLower:         decimal('specificity_lower', { precision: 5, scale: 2 }),
+    specificityUpper:         decimal('specificity_upper', { precision: 5, scale: 2 }),
+    ppvPct:                   decimal('ppv_pct', { precision: 5, scale: 2 }),
+    npvPct:                   decimal('npv_pct', { precision: 5, scale: 2 }),
+    prevalencePct:            decimal('prevalence_pct', { precision: 5, scale: 2 }),
+    aucRoc:                   decimal('auc_roc', { precision: 5, scale: 3 }),
+    preSpecifiedEndpointMet:  boolean('pre_specified_endpoint_met'),
+    reportArtifactId:         integer('report_artifact_id'),
+    metadata:                 jsonb('metadata').default('{}'),
+    createdAt:                timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:                timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:                timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:     index('ivd_clin_perf_org_idx').on(table.organizationId),
+    programIdx: index('ivd_clin_perf_program_idx').on(table.programId),
+  }),
+);
+export type IvdClinicalPerformance = InferSelectModel<typeof ivdClinicalPerformance>;
+
+export const ivdrClassifications = pgTable(
+  'ivdr_classifications',
+  {
+    id:                      serial('id').primaryKey(),
+    organizationId:          integer('organization_id').notNull().references(() => organizations.id),
+    programId:               uuid('program_id'),
+    deviceName:              text('device_name').notNull(),
+    ivdrClass:               text('ivdr_class').notNull(),
+    classificationRule:      text('classification_rule'),
+    rationale:               text('rationale'),
+    companionDiagnostic:     boolean('companion_diagnostic').default(false),
+    selfTest:                boolean('self_test').default(false),
+    nearPatientTest:         boolean('near_patient_test').default(false),
+    notifiedBodyRequired:    boolean('notified_body_required'),
+    notifiedBodyName:        text('notified_body_name'),
+    notifiedBodyId:          text('notified_body_id'),
+    certificateNo:           text('certificate_no'),
+    certificateExpiry:       date('certificate_expiry'),
+    metadata:                jsonb('metadata').default('{}'),
+    createdAt:               timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:               timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:               timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:     index('ivdr_class_org_idx').on(table.organizationId),
+    programIdx: index('ivdr_class_program_idx').on(table.programId),
+  }),
+);
+export type IvdrClassification = InferSelectModel<typeof ivdrClassifications>;
+
+export const ivdrPerDocuments = pgTable(
+  'ivdr_per_documents',
+  {
+    id:                          serial('id').primaryKey(),
+    organizationId:              integer('organization_id').notNull().references(() => organizations.id),
+    programId:                   uuid('program_id'),
+    deviceName:                  text('device_name').notNull(),
+    perVersion:                  text('per_version').notNull(),
+    perStatus:                   text('per_status').default('draft'),
+    scientificValidityDone:      boolean('scientific_validity_done').default(false),
+    analyticalPerformanceDone:   boolean('analytical_performance_done').default(false),
+    clinicalPerformanceDone:     boolean('clinical_performance_done').default(false),
+    benefitRiskConclusion:       text('benefit_risk_conclusion'),
+    pmpfPlanAttached:            boolean('pmpf_plan_attached').default(false),
+    authorName:                  text('author_name'),
+    authorQualifications:        text('author_qualifications'),
+    perDate:                     date('per_date'),
+    artifactId:                  integer('artifact_id'),
+    metadata:                    jsonb('metadata').default('{}'),
+    createdAt:                   timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:                   timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:                   timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:     index('ivdr_per_org_idx').on(table.organizationId),
+    programIdx: index('ivdr_per_program_idx').on(table.programId),
+  }),
+);
+export type IvdrPerDocument = InferSelectModel<typeof ivdrPerDocuments>;
+
+export const ivdCliaCategorization = pgTable(
+  'ivd_clia_categorization',
+  {
+    id:                       serial('id').primaryKey(),
+    organizationId:           integer('organization_id').notNull().references(() => organizations.id),
+    programId:                uuid('program_id'),
+    testName:                 text('test_name').notNull(),
+    analyte:                  text('analyte'),
+    cliaComplexity:           text('clia_complexity').notNull(),
+    cmsLetterDate:            date('cms_letter_date'),
+    cmsLetterRef:             text('cms_letter_ref'),
+    waiverApplied:            boolean('waiver_applied').default(false),
+    waiverApplicationDate:    date('waiver_application_date'),
+    waiverGranted:            boolean('waiver_granted'),
+    waiverGrantedDate:        date('waiver_granted_date'),
+    waiverRevocationDate:     date('waiver_revocation_date'),
+    ppmpStatus:               text('ppmp_status'),
+    metadata:                 jsonb('metadata').default('{}'),
+    createdAt:                timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:                timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:                timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:     index('clia_cat_org_idx').on(table.organizationId),
+    programIdx: index('clia_cat_program_idx').on(table.programId),
+  }),
+);
+export type IvdCliaCategorization = InferSelectModel<typeof ivdCliaCategorization>;
+
+export const cdxPairings = pgTable(
+  'cdx_pairings',
+  {
+    id:                   serial('id').primaryKey(),
+    organizationId:       integer('organization_id').notNull().references(() => organizations.id),
+    deviceProgramId:      uuid('device_program_id'),
+    drugName:             text('drug_name').notNull(),
+    drugInnn:             text('drug_innn'),
+    drugApplicationType:  text('drug_application_type'),
+    drugApplicationNo:    text('drug_application_no'),
+    drugSponsor:          text('drug_sponsor'),
+    indication:           text('indication'),
+    biomarker:            text('biomarker'),
+    approvalStatus:       text('approval_status').default('planned'),
+    fdaApprovalDate:      date('fda_approval_date'),
+    emaApprovalDate:      date('ema_approval_date'),
+    cdxLabelText:         text('cdx_label_text'),
+    metadata:             jsonb('metadata').default('{}'),
+    createdAt:            timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:            timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:            timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:       index('cdx_pairings_org_idx').on(table.organizationId),
+    programIdx:   index('cdx_pairings_program_idx').on(table.deviceProgramId),
+    biomarkerIdx: index('cdx_pairings_biomarker_idx').on(table.organizationId, table.biomarker),
+  }),
+);
+export type CdxPairing = InferSelectModel<typeof cdxPairings>;
+
+export const cdxConcordanceStudies = pgTable(
+  'cdx_concordance_studies',
+  {
+    id:                     serial('id').primaryKey(),
+    organizationId:         integer('organization_id').notNull().references(() => organizations.id),
+    cdxPairingId:           integer('cdx_pairing_id').notNull().references(() => cdxPairings.id, { onDelete: 'cascade' }),
+    studyId:                text('study_id'),
+    referenceAssay:         text('reference_assay').notNull(),
+    candidateAssay:         text('candidate_assay').notNull(),
+    nSamples:               integer('n_samples'),
+    ppaPct:                 decimal('ppa_pct', { precision: 5, scale: 2 }),
+    ppaLower:               decimal('ppa_lower', { precision: 5, scale: 2 }),
+    ppaUpper:               decimal('ppa_upper', { precision: 5, scale: 2 }),
+    npaPct:                 decimal('npa_pct', { precision: 5, scale: 2 }),
+    npaLower:               decimal('npa_lower', { precision: 5, scale: 2 }),
+    npaUpper:               decimal('npa_upper', { precision: 5, scale: 2 }),
+    opaPct:                 decimal('opa_pct', { precision: 5, scale: 2 }),
+    discordantResolution:   text('discordant_resolution'),
+    reportArtifactId:       integer('report_artifact_id'),
+    metadata:               jsonb('metadata').default('{}'),
+    createdAt:              timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:              timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:     index('cdx_concord_org_idx').on(table.organizationId),
+    pairingIdx: index('cdx_concord_pairing_idx').on(table.cdxPairingId),
+  }),
+);
+export type CdxConcordanceStudy = InferSelectModel<typeof cdxConcordanceStudies>;
+
+export const ldtInventory = pgTable(
+  'ldt_inventory',
+  {
+    id:                              serial('id').primaryKey(),
+    organizationId:                  integer('organization_id').notNull().references(() => organizations.id),
+    labName:                         text('lab_name').notNull(),
+    cliaCertificateNo:               text('clia_certificate_no'),
+    testName:                        text('test_name').notNull(),
+    analyte:                         text('analyte'),
+    intendedUse:                     text('intended_use'),
+    firstOfferedDate:                date('first_offered_date'),
+    grandfathered:                   boolean('grandfathered').default(false),
+    enforcementDiscretionEligible:   boolean('enforcement_discretion_eligible'),
+    enforcementDiscretionBasis:      text('enforcement_discretion_basis'),
+    fdaPathway:                      text('fda_pathway'),
+    currentPhase:                    integer('current_phase').default(1),
+    metadata:                        jsonb('metadata').default('{}'),
+    createdAt:                       timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:                       timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:                       timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:   index('ldt_inv_org_idx').on(table.organizationId),
+    phaseIdx: index('ldt_inv_phase_idx').on(table.organizationId, table.currentPhase),
+  }),
+);
+export type LdtInventory = InferSelectModel<typeof ldtInventory>;
+
+export const ldtPhaseMilestones = pgTable(
+  'ldt_phase_milestones',
+  {
+    id:                serial('id').primaryKey(),
+    ldtId:             integer('ldt_id').notNull().references(() => ldtInventory.id, { onDelete: 'cascade' }),
+    organizationId:    integer('organization_id').notNull().references(() => organizations.id),
+    phase:             integer('phase').notNull(),
+    requirement:       text('requirement').notNull(),
+    dueDate:           date('due_date'),
+    completedAt:       date('completed_at'),
+    evidenceRef:       text('evidence_ref'),
+    status:            text('status').default('pending'),
+    createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    ldtIdx:    index('ldt_ms_ldt_idx').on(table.ldtId),
+    orgIdx:    index('ldt_ms_org_idx').on(table.organizationId),
+    phaseIdx:  index('ldt_ms_phase_idx').on(table.organizationId, table.phase, table.status),
+  }),
+);
+export type LdtPhaseMilestone = InferSelectModel<typeof ldtPhaseMilestones>;

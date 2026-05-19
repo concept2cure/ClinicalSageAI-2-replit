@@ -1716,6 +1716,353 @@ registerToolHandler('write_q_sub_section', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// IVD + diagnostic surface mutation handlers — backs the 7 IVD-specific
+// AnA tools added with migration 20260508. Each adapter takes AnA-style
+// snake_case input + tenant-scopes via ToolContext.organizationId, routes
+// through the existing pool, and returns a compact JSON envelope.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ANAL_STUDY_TYPES = new Set([
+  'accuracy', 'precision', 'linearity', 'limit_of_detection',
+  'limit_of_quantitation', 'analytical_specificity', 'interference',
+  'matrix_comparison', 'reagent_stability', 'sample_stability', 'carryover',
+]);
+
+registerToolHandler('record_analytical_performance_study', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'record_analytical_performance_study requires tenant context.' });
+  }
+  const studyType = typeof input.study_type === 'string' ? input.study_type : '';
+  const title     = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!ANAL_STUDY_TYPES.has(studyType)) {
+    return JSON.stringify({ error: `study_type must be one of: ${Array.from(ANAL_STUDY_TYPES).join(', ')}.` });
+  }
+  if (!title) {
+    return JSON.stringify({ error: 'title is required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+    const { rows } = await getPool().query(
+      `INSERT INTO ivd_analytical_performance (
+         organization_id, program_id, study_type, study_id, title,
+         acceptance_criterion, result_summary, pass_fail, n_samples,
+         n_replicates, sites, analytes, matrix_type
+       ) VALUES (
+         $1,$2,$3,$4,$5,$6,$7,COALESCE($8,'pending'),$9,$10,$11,$12,$13
+       )
+       RETURNING id, study_type, title, pass_fail`,
+      [
+        ctx.organizationId, programId, studyType,
+        typeof input.study_id === 'string' ? input.study_id : null,
+        title,
+        typeof input.acceptance_criterion === 'string' ? input.acceptance_criterion : null,
+        typeof input.result_summary === 'string' ? input.result_summary : null,
+        typeof input.pass_fail === 'string' ? input.pass_fail : null,
+        typeof input.n_samples === 'number' ? Math.round(input.n_samples) : null,
+        typeof input.n_replicates === 'number' ? Math.round(input.n_replicates) : null,
+        Array.isArray(input.sites) ? input.sites.filter((s) => typeof s === 'string') : null,
+        Array.isArray(input.analytes) ? input.analytes.filter((s) => typeof s === 'string') : null,
+        typeof input.matrix_type === 'string' ? input.matrix_type : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Logged ${studyType} study: ${title}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `record_analytical_performance_study failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('record_clinical_performance_study', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'record_clinical_performance_study requires tenant context.' });
+  }
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!title) {
+    return JSON.stringify({ error: 'title is required.' });
+  }
+  const numOrNull = (k: string): number | null =>
+    typeof (input as Record<string, unknown>)[k] === 'number'
+      ? ((input as Record<string, unknown>)[k] as number)
+      : null;
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+    const { rows } = await getPool().query(
+      `INSERT INTO ivd_clinical_performance (
+         organization_id, program_id, study_id, title, intended_population,
+         comparator, comparator_kind, total_subjects, positive_n, negative_n,
+         sensitivity_pct, sensitivity_lower, sensitivity_upper,
+         specificity_pct, specificity_lower, specificity_upper,
+         ppv_pct, npv_pct, prevalence_pct, auc_roc, pre_specified_endpoint_met
+       ) VALUES (
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21
+       )
+       RETURNING id, title, sensitivity_pct, specificity_pct`,
+      [
+        ctx.organizationId, programId,
+        typeof input.study_id === 'string' ? input.study_id : null,
+        title,
+        typeof input.intended_population === 'string' ? input.intended_population : null,
+        typeof input.comparator === 'string' ? input.comparator : null,
+        typeof input.comparator_kind === 'string' ? input.comparator_kind : null,
+        numOrNull('total_subjects'), numOrNull('positive_n'), numOrNull('negative_n'),
+        numOrNull('sensitivity_pct'), numOrNull('sensitivity_lower'), numOrNull('sensitivity_upper'),
+        numOrNull('specificity_pct'), numOrNull('specificity_lower'), numOrNull('specificity_upper'),
+        numOrNull('ppv_pct'), numOrNull('npv_pct'), numOrNull('prevalence_pct'),
+        numOrNull('auc_roc'),
+        typeof input.pre_specified_endpoint_met === 'boolean' ? input.pre_specified_endpoint_met : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Logged clinical performance study: ${title}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `record_clinical_performance_study failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('classify_ivd_device', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'classify_ivd_device requires tenant context.' });
+  }
+  const deviceName = typeof input.device_name === 'string' ? input.device_name.trim() : '';
+  const ivdrClass  = typeof input.ivdr_class === 'string' ? input.ivdr_class : '';
+  if (!deviceName) {
+    return JSON.stringify({ error: 'device_name is required.' });
+  }
+  if (!['A', 'B', 'C', 'D'].includes(ivdrClass)) {
+    return JSON.stringify({ error: 'ivdr_class must be A / B / C / D.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+    const nbRequired = ivdrClass !== 'A';
+    const { rows } = await getPool().query(
+      `INSERT INTO ivdr_classifications (
+         organization_id, program_id, device_name, ivdr_class, classification_rule,
+         rationale, companion_diagnostic, self_test, near_patient_test,
+         notified_body_required, notified_body_name, notified_body_id
+       ) VALUES (
+         $1,$2,$3,$4,$5,$6,COALESCE($7,false),COALESCE($8,false),COALESCE($9,false),
+         $10,$11,$12
+       )
+       RETURNING id, device_name, ivdr_class, notified_body_required`,
+      [
+        ctx.organizationId, programId, deviceName, ivdrClass,
+        typeof input.classification_rule === 'string' ? input.classification_rule : null,
+        typeof input.rationale === 'string' ? input.rationale : null,
+        input.companion_diagnostic === true,
+        input.self_test === true,
+        input.near_patient_test === true,
+        nbRequired,
+        typeof input.notified_body_name === 'string' ? input.notified_body_name : null,
+        typeof input.notified_body_id === 'string' ? input.notified_body_id : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Classified ${deviceName} as IVDR Class ${ivdrClass}${nbRequired ? ' (notified body required)' : ' (self-declaration)'}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `classify_ivd_device failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('create_per_document', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'create_per_document requires tenant context.' });
+  }
+  const deviceName = typeof input.device_name === 'string' ? input.device_name.trim() : '';
+  const version    = typeof input.per_version === 'string' ? input.per_version.trim() : '';
+  if (!deviceName || !version) {
+    return JSON.stringify({ error: 'device_name and per_version are required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+    const { rows } = await getPool().query(
+      `INSERT INTO ivdr_per_documents (
+         organization_id, program_id, device_name, per_version, per_status,
+         scientific_validity_done, analytical_performance_done, clinical_performance_done,
+         benefit_risk_conclusion, pmpf_plan_attached, author_name, author_qualifications,
+         per_date
+       ) VALUES (
+         $1,$2,$3,$4,COALESCE($5,'draft'),
+         COALESCE($6,false),COALESCE($7,false),COALESCE($8,false),
+         $9,COALESCE($10,false),$11,$12,$13
+       )
+       RETURNING id, device_name, per_version, per_status`,
+      [
+        ctx.organizationId, programId, deviceName, version,
+        typeof input.per_status === 'string' ? input.per_status : null,
+        input.scientific_validity_done === true,
+        input.analytical_performance_done === true,
+        input.clinical_performance_done === true,
+        typeof input.benefit_risk_conclusion === 'string' ? input.benefit_risk_conclusion : null,
+        input.pmpf_plan_attached === true,
+        typeof input.author_name === 'string' ? input.author_name : null,
+        typeof input.author_qualifications === 'string' ? input.author_qualifications : null,
+        typeof input.per_date === 'string' ? input.per_date : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Started PER ${version} for ${deviceName}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `create_per_document failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('categorize_clia_complexity', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'categorize_clia_complexity requires tenant context.' });
+  }
+  const testName = typeof input.test_name === 'string' ? input.test_name.trim() : '';
+  const complexity = typeof input.clia_complexity === 'string' ? input.clia_complexity : '';
+  if (!testName) return JSON.stringify({ error: 'test_name is required.' });
+  if (!['waived', 'moderate', 'high'].includes(complexity)) {
+    return JSON.stringify({ error: "clia_complexity must be 'waived', 'moderate', or 'high'." });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+    const { rows } = await getPool().query(
+      `INSERT INTO ivd_clia_categorization (
+         organization_id, program_id, test_name, analyte, clia_complexity,
+         cms_letter_date, cms_letter_ref
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7)
+       RETURNING id, test_name, clia_complexity`,
+      [
+        ctx.organizationId, programId, testName,
+        typeof input.analyte === 'string' ? input.analyte : null,
+        complexity,
+        typeof input.cms_letter_date === 'string' ? input.cms_letter_date : null,
+        typeof input.cms_letter_ref === 'string' ? input.cms_letter_ref : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Categorized ${testName} as CLIA ${complexity}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `categorize_clia_complexity failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('pair_companion_diagnostic', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'pair_companion_diagnostic requires tenant context.' });
+  }
+  const drugName = typeof input.drug_name === 'string' ? input.drug_name.trim() : '';
+  if (!drugName) {
+    return JSON.stringify({ error: 'drug_name is required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.device_program_id === 'string' && UUID_RE.test(input.device_program_id)
+      ? input.device_program_id : null;
+    const { rows } = await getPool().query(
+      `INSERT INTO cdx_pairings (
+         organization_id, device_program_id, drug_name, drug_innn,
+         drug_application_type, drug_application_no, drug_sponsor,
+         indication, biomarker, approval_status, fda_approval_date,
+         ema_approval_date, cdx_label_text
+       ) VALUES (
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,'planned'),$11,$12,$13
+       )
+       RETURNING id, drug_name, biomarker, approval_status`,
+      [
+        ctx.organizationId, programId, drugName,
+        typeof input.drug_innn === 'string' ? input.drug_innn : null,
+        typeof input.drug_application_type === 'string' ? input.drug_application_type : null,
+        typeof input.drug_application_no === 'string' ? input.drug_application_no : null,
+        typeof input.drug_sponsor === 'string' ? input.drug_sponsor : null,
+        typeof input.indication === 'string' ? input.indication : null,
+        typeof input.biomarker === 'string' ? input.biomarker : null,
+        typeof input.approval_status === 'string' ? input.approval_status : null,
+        typeof input.fda_approval_date === 'string' ? input.fda_approval_date : null,
+        typeof input.ema_approval_date === 'string' ? input.ema_approval_date : null,
+        typeof input.cdx_label_text === 'string' ? input.cdx_label_text : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Paired ${drugName} with the device program.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `pair_companion_diagnostic failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('register_ldt', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'register_ldt requires tenant context.' });
+  }
+  const labName  = typeof input.lab_name === 'string' ? input.lab_name.trim() : '';
+  const testName = typeof input.test_name === 'string' ? input.test_name.trim() : '';
+  if (!labName || !testName) {
+    return JSON.stringify({ error: 'lab_name and test_name are required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const { rows } = await getPool().query(
+      `INSERT INTO ldt_inventory (
+         organization_id, lab_name, clia_certificate_no, test_name, analyte,
+         intended_use, first_offered_date, grandfathered,
+         enforcement_discretion_eligible, enforcement_discretion_basis,
+         fda_pathway, current_phase
+       ) VALUES (
+         $1,$2,$3,$4,$5,$6,$7,COALESCE($8,false),$9,$10,$11,COALESCE($12,1)
+       )
+       RETURNING id, lab_name, test_name, current_phase`,
+      [
+        ctx.organizationId, labName,
+        typeof input.clia_certificate_no === 'string' ? input.clia_certificate_no : null,
+        testName,
+        typeof input.analyte === 'string' ? input.analyte : null,
+        typeof input.intended_use === 'string' ? input.intended_use : null,
+        typeof input.first_offered_date === 'string' ? input.first_offered_date : null,
+        input.grandfathered === true,
+        typeof input.enforcement_discretion_eligible === 'boolean' ? input.enforcement_discretion_eligible : null,
+        typeof input.enforcement_discretion_basis === 'string' ? input.enforcement_discretion_basis : null,
+        typeof input.fda_pathway === 'string' ? input.fda_pathway : null,
+        typeof input.current_phase === 'number' ? Math.round(input.current_phase) : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Registered LDT "${testName}" at ${labName}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `register_ldt failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MDX kit-section write-back handler — closes the loop between AnA's drafting
 // and the kit's section editors. Persists drafted content into
 // cerv2_510k_sections with draft_source='ana' so the MDX surfaces can render

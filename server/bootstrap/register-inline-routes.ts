@@ -47,6 +47,11 @@ import mdxEngineeringRoutes from '../routes/mdx-engineering';
 import mdxUdiRoutes from '../routes/mdx-udi';
 import mdxRiskRoutes from '../routes/mdx-risk-management';
 import mdxSoftwareRoutes from '../routes/mdx-software';
+import mdxIvdPerformanceRoutes from '../routes/mdx-ivd-performance';
+import mdxIvdrRoutes from '../routes/mdx-ivdr';
+import mdxCliaRoutes from '../routes/mdx-clia';
+import mdxCdxRoutes from '../routes/mdx-cdx';
+import mdxLdtRoutes from '../routes/mdx-ldt';
 import regulatoryCorrespondenceRoutes from '../routes/regulatory-correspondence';
 import { create510kWorkflowRoutes } from '../routes/510k-workflow-routes';
 import { createPMAWorkflowRoutes } from '../routes/pma-workflow-routes';
@@ -343,6 +348,14 @@ export function registerInlineSubmissionWorkflowRoutes({
   app.use('/api/mdx', mdxUdiRoutes);
   app.use('/api/mdx', mdxRiskRoutes);
   app.use('/api/mdx', mdxSoftwareRoutes);
+  /* IVD + diagnostic surfaces (migration 20260508). Backs the 4
+     diagnostic-specific surfaces in the gap inventory: IVD pathway,
+     EU IVDR, companion diagnostics, lab-developed tests. */
+  app.use('/api/mdx', mdxIvdPerformanceRoutes);
+  app.use('/api/mdx', mdxIvdrRoutes);
+  app.use('/api/mdx', mdxCliaRoutes);
+  app.use('/api/mdx', mdxCdxRoutes);
+  app.use('/api/mdx', mdxLdtRoutes);
   app.use('/api/regulatory-correspondence', regulatoryCorrespondenceRoutes);
   console.log('✅ Submission Ops API routes mounted successfully');
   console.log('✅ Regulatory Programs API routes mounted successfully');
