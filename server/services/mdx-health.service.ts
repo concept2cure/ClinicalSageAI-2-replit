@@ -115,6 +115,14 @@ const PROBED_TABLES: Array<{ name: string; role: string; required: boolean }> = 
   { name: 'public.submission_transmittals',       role: 'Multi-region submission transmittal log',     required: true  },
   { name: 'public.submission_validation_findings',role: 'Per-transmittal validator findings',          required: true  },
   { name: 'public.submission_gateway_credentials',role: 'Per-org gateway credentials registry',        required: true  },
+  /* Notifications + clinical study tables (migration 20260510). */
+  { name: 'public.mdx_notifications',             role: 'Cross-cutting MDX notification inbox',        required: true  },
+  { name: 'public.mdx_notification_subscriptions',role: 'Per-user MDX notification opt-in matrix',     required: true  },
+  { name: 'public.clinical_studies',              role: 'PMA / 510(k) clinical study records',         required: true  },
+  { name: 'public.clinical_study_sites',          role: 'Study site list + enrollment counts',         required: true  },
+  { name: 'public.clinical_study_deviations',     role: 'Study deviation log',                         required: true  },
+  { name: 'public.clinical_study_aes',            role: 'Adverse event log + UADE flag',               required: true  },
+  { name: 'public.clinical_study_endpoints',      role: 'Pre-specified endpoint results',              required: true  },
 ];
 
 /* Shadow services we proxy to. Configured = env var present; we don't

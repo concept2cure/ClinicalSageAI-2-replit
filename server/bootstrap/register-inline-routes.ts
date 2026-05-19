@@ -53,6 +53,9 @@ import mdxCliaRoutes from '../routes/mdx-clia';
 import mdxCdxRoutes from '../routes/mdx-cdx';
 import mdxLdtRoutes from '../routes/mdx-ldt';
 import mdxSubmissionGatewayRoutes from '../routes/mdx-submission-gateway';
+import mdxNotificationsRoutes from '../routes/mdx-notifications';
+import mdxClinicalStudiesRoutes from '../routes/mdx-clinical-studies';
+import mdxAnaMemoryRoutes from '../routes/mdx-ana-memory';
 import regulatoryCorrespondenceRoutes from '../routes/regulatory-correspondence';
 import { create510kWorkflowRoutes } from '../routes/510k-workflow-routes';
 import { createPMAWorkflowRoutes } from '../routes/pma-workflow-routes';
@@ -361,6 +364,10 @@ export function registerInlineSubmissionWorkflowRoutes({
      FDA ESG (AS2 + SFTP), EMA CESP / EUDAMED, and PMDA Gateway. Real
      transports — credential-gated; throws 412 when env vars missing. */
   app.use('/api/mdx', mdxSubmissionGatewayRoutes);
+  /* Notifications + clinical studies + AnA memory (migration 20260510). */
+  app.use('/api/mdx', mdxNotificationsRoutes);
+  app.use('/api/mdx', mdxClinicalStudiesRoutes);
+  app.use('/api/mdx', mdxAnaMemoryRoutes);
   app.use('/api/regulatory-correspondence', regulatoryCorrespondenceRoutes);
   console.log('✅ Submission Ops API routes mounted successfully');
   console.log('✅ Regulatory Programs API routes mounted successfully');

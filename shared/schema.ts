@@ -18903,3 +18903,208 @@ export const submissionGatewayCredentials = pgTable(
   }),
 );
 export type SubmissionGatewayCredential = InferSelectModel<typeof submissionGatewayCredentials>;
+
+/* ════════════════════════════════════════════════════════════════════
+   Notifications + clinical-study tables (migration 20260510)
+   ════════════════════════════════════════════════════════════════ */
+
+export const mdxNotifications = pgTable(
+  'mdx_notifications',
+  {
+    id:                  serial('id').primaryKey(),
+    organizationId:      integer('organization_id').notNull().references(() => organizations.id),
+    recipientUserId:     integer('recipient_user_id').references(() => users.id),
+    recipientRole:       text('recipient_role'),
+    category:            text('category').notNull(),
+    severity:            text('severity').notNull(),
+    title:               text('title').notNull(),
+    body:                text('body'),
+    resourceType:        text('resource_type'),
+    resourceId:          text('resource_id'),
+    actionUrl:           text('action_url'),
+    readAt:              timestamp('read_at', { withTimezone: true }),
+    archivedAt:          timestamp('archived_at', { withTimezone: true }),
+    metadata:            jsonb('metadata').default('{}'),
+    expiresAt:           timestamp('expires_at', { withTimezone: true }),
+    createdAt:           timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:       index('mdx_notif_org_idx').on(table.organizationId),
+    categoryIdx:  index('mdx_notif_category_idx').on(table.organizationId, table.category),
+  }),
+);
+export type MdxNotification = InferSelectModel<typeof mdxNotifications>;
+
+export const mdxNotificationSubscriptions = pgTable(
+  'mdx_notification_subscriptions',
+  {
+    id:                serial('id').primaryKey(),
+    organizationId:    integer('organization_id').notNull().references(() => organizations.id),
+    userId:            integer('user_id').notNull().references(() => users.id),
+    category:          text('category').notNull(),
+    emailEnabled:      boolean('email_enabled').default(false),
+    pushEnabled:       boolean('push_enabled').default(false),
+    inAppEnabled:      boolean('in_app_enabled').default(true),
+    createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('mdx_notif_sub_org_idx').on(table.organizationId),
+  }),
+);
+export type MdxNotificationSubscription = InferSelectModel<typeof mdxNotificationSubscriptions>;
+
+export const clinicalStudies = pgTable(
+  'clinical_studies',
+  {
+    id:                  serial('id').primaryKey(),
+    organizationId:      integer('organization_id').notNull().references(() => organizations.id),
+    programId:           uuid('program_id'),
+    studyId:             text('study_id').notNull(),
+    nctId:               text('nct_id'),
+    title:               text('title').notNull(),
+    phase:               text('phase'),
+    studyType:           text('study_type'),
+    intendedUse:         text('intended_use'),
+    primaryEndpoint:     text('primary_endpoint'),
+    primaryEndpointMet:  boolean('primary_endpoint_met'),
+    sampleSizePlanned:   integer('sample_size_planned'),
+    sampleSizeEnrolled:  integer('sample_size_enrolled').default(0),
+    sampleSizeAnalyzed:  integer('sample_size_analyzed').default(0),
+    status:              text('status').default('planning'),
+    startDate:           date('start_date'),
+    pcd:                 date('pcd'),
+    scd:                 date('scd'),
+    ideNumber:           text('ide_number'),
+    irbApproved:         boolean('irb_approved').default(false),
+    irbApprovalDate:     date('irb_approval_date'),
+    protocolVersion:     text('protocol_version'),
+    sapVersion:          text('sap_version'),
+    bimoReady:           boolean('bimo_ready').default(false),
+    metadata:            jsonb('metadata').default('{}'),
+    createdAt:           timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:           timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:           timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:     index('clin_study_org_idx').on(table.organizationId),
+    programIdx: index('clin_study_program_idx').on(table.programId),
+    statusIdx:  index('clin_study_status_idx').on(table.organizationId, table.status),
+  }),
+);
+export type ClinicalStudy = InferSelectModel<typeof clinicalStudies>;
+
+export const clinicalStudySites = pgTable(
+  'clinical_study_sites',
+  {
+    id:                       serial('id').primaryKey(),
+    studyId:                  integer('study_id').notNull().references(() => clinicalStudies.id, { onDelete: 'cascade' }),
+    organizationId:           integer('organization_id').notNull().references(() => organizations.id),
+    siteNumber:               text('site_number').notNull(),
+    siteName:                 text('site_name').notNull(),
+    country:                  text('country'),
+    city:                     text('city'),
+    principalInvestigator:    text('principal_investigator'),
+    irbStatus:                text('irb_status').default('pending'),
+    irbApprovalDate:          date('irb_approval_date'),
+    activatedAt:              date('activated_at'),
+    closedAt:                 date('closed_at'),
+    enrolledCount:            integer('enrolled_count').default(0),
+    screenFailures:           integer('screen_failures').default(0),
+    withdrawals:              integer('withdrawals').default(0),
+    metadata:                 jsonb('metadata').default('{}'),
+    createdAt:                timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:                timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    studyIdx: index('clin_site_study_idx').on(table.studyId),
+    orgIdx:   index('clin_site_org_idx').on(table.organizationId),
+  }),
+);
+export type ClinicalStudySite = InferSelectModel<typeof clinicalStudySites>;
+
+export const clinicalStudyDeviations = pgTable(
+  'clinical_study_deviations',
+  {
+    id:                serial('id').primaryKey(),
+    studyId:           integer('study_id').notNull().references(() => clinicalStudies.id, { onDelete: 'cascade' }),
+    siteId:            integer('site_id').references(() => clinicalStudySites.id),
+    organizationId:    integer('organization_id').notNull().references(() => organizations.id),
+    deviationDate:     date('deviation_date').notNull(),
+    category:          text('category').notNull(),
+    description:       text('description').notNull(),
+    subjectId:         text('subject_id'),
+    reportedBy:        integer('reported_by').references(() => users.id),
+    resolvedAt:        date('resolved_at'),
+    resolutionNote:    text('resolution_note'),
+    capaRequired:      boolean('capa_required').default(false),
+    metadata:          jsonb('metadata').default('{}'),
+    createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    studyIdx:    index('clin_dev_study_idx').on(table.studyId),
+    orgIdx:      index('clin_dev_org_idx').on(table.organizationId),
+    categoryIdx: index('clin_dev_category_idx').on(table.organizationId, table.category),
+  }),
+);
+export type ClinicalStudyDeviation = InferSelectModel<typeof clinicalStudyDeviations>;
+
+export const clinicalStudyAes = pgTable(
+  'clinical_study_aes',
+  {
+    id:                  serial('id').primaryKey(),
+    studyId:             integer('study_id').notNull().references(() => clinicalStudies.id, { onDelete: 'cascade' }),
+    siteId:              integer('site_id').references(() => clinicalStudySites.id),
+    organizationId:      integer('organization_id').notNull().references(() => organizations.id),
+    aeId:                text('ae_id').notNull(),
+    subjectId:           text('subject_id'),
+    aeDate:              date('ae_date').notNull(),
+    serious:             boolean('serious').default(false),
+    unanticipated:       boolean('unanticipated').default(false),
+    deviceRelated:       text('device_related'),
+    severity:            text('severity'),
+    outcome:             text('outcome'),
+    preferredTerm:       text('preferred_term'),
+    soc:                 text('soc'),
+    reportedToFdaAt:     date('reported_to_fda_at'),
+    reportedToIrbAt:     date('reported_to_irb_at'),
+    mdrEventNumber:      text('mdr_event_number'),
+    metadata:            jsonb('metadata').default('{}'),
+    createdAt:           timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:           timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    studyIdx: index('clin_ae_study_idx').on(table.studyId),
+    orgIdx:   index('clin_ae_org_idx').on(table.organizationId),
+  }),
+);
+export type ClinicalStudyAe = InferSelectModel<typeof clinicalStudyAes>;
+
+export const clinicalStudyEndpoints = pgTable(
+  'clinical_study_endpoints',
+  {
+    id:                 serial('id').primaryKey(),
+    studyId:            integer('study_id').notNull().references(() => clinicalStudies.id, { onDelete: 'cascade' }),
+    organizationId:     integer('organization_id').notNull().references(() => organizations.id),
+    endpointKind:       text('endpoint_kind').notNull(),
+    name:               text('name').notNull(),
+    description:        text('description'),
+    preSpecified:       boolean('pre_specified').default(true),
+    targetValue:        text('target_value'),
+    observedValue:      text('observed_value'),
+    ciLower:            text('ci_lower'),
+    ciUpper:            text('ci_upper'),
+    pValue:             decimal('p_value', { precision: 8, scale: 5 }),
+    met:                boolean('met'),
+    analysisNote:       text('analysis_note'),
+    metadata:           jsonb('metadata').default('{}'),
+    createdAt:          timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:          timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    studyIdx: index('clin_endpoint_study_idx').on(table.studyId),
+    orgIdx:   index('clin_endpoint_org_idx').on(table.organizationId),
+  }),
+);
+export type ClinicalStudyEndpoint = InferSelectModel<typeof clinicalStudyEndpoints>;

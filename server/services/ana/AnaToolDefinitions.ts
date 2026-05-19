@@ -1301,6 +1301,144 @@ export const GATEWAY_CONFIGURATION_STATUS: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Notifications + clinical-study + memory tools (migration 20260510).
+// AnA fires notifications when she identifies actionable state, logs
+// clinical study events as she ingests them, and curates her own memory.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const FIRE_NOTIFICATION: AnaTool = {
+  name: 'fire_notification',
+  description:
+    "Create a notification row that lands in the user's inbox + the kit's notification badge. Use when AnA detects something a human needs to act on: a transmittal rejected, a deviation marked major, an LDT milestone due, a residual risk above the acceptance threshold. recipient_user_id targets a person; recipient_role targets a team; both null = org-wide notice. Severity drives sort + visual treatment in the inbox.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      recipient_user_id: { type: 'number' },
+      recipient_role:    { type: 'string' },
+      category: {
+        type: 'string',
+        enum: [
+          'submission_status', 'validation_finding', 'q_sub_response',
+          'cdx_pairing', 'ldt_milestone_due', 'gateway_credential_expiring',
+          'ana_draft_pending', 'risk_residual_high', 'capa_due',
+          'study_deviation', 'enrollment_milestone', 'admin', 'system',
+        ],
+      },
+      severity:      { type: 'string', enum: ['info', 'warning', 'critical'] },
+      title:         { type: 'string', description: 'Short one-line headline.' },
+      body:          { type: 'string', description: 'Paragraph of context.' },
+      resource_type: { type: 'string', description: 'e.g. submission_transmittal, risk_item.' },
+      resource_id:   { type: 'string' },
+      action_url:    { type: 'string', description: 'In-kit deeplink, e.g. /submissions/42.' },
+    },
+    required: ['category', 'severity', 'title'],
+  },
+};
+
+export const CREATE_CLINICAL_STUDY: AnaTool = {
+  name: 'create_clinical_study',
+  description:
+    "Open a new clinical study record (pivotal, feasibility, pilot, post-market, PMS). Phase + study_type are the canonical taxonomy. Returns the study id for follow-up calls (sites, deviations, AEs, endpoints).",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id:           { type: 'string' },
+      study_id:             { type: 'string', description: "Sponsor's internal id." },
+      nct_id:               { type: 'string' },
+      title:                { type: 'string' },
+      phase:                { type: 'string', enum: ['pivotal', 'feasibility', 'pilot', 'post_market', 'pms'] },
+      study_type:           { type: 'string', enum: ['rct', 'single_arm', 'observational', 'registry'] },
+      primary_endpoint:     { type: 'string' },
+      sample_size_planned:  { type: 'number' },
+      start_date:           { type: 'string' },
+      ide_number:           { type: 'string' },
+      irb_approved:         { type: 'boolean' },
+    },
+    required: ['study_id', 'title'],
+  },
+};
+
+export const LOG_STUDY_DEVIATION: AnaTool = {
+  name: 'log_study_deviation',
+  description:
+    "Log a clinical study deviation. Category drives how severely the kit highlights it (major = orange row, minor = neutral). When capa_required=true the kit cross-posts to the CAPA queue via capa-mdr.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      study_id:        { type: 'number' },
+      site_id:         { type: 'number' },
+      deviation_date:  { type: 'string', description: 'ISO date.' },
+      category:        { type: 'string', enum: ['major', 'minor', 'inclusion_exclusion', 'visit_window', 'consent', 'protocol', 'other'] },
+      description:     { type: 'string' },
+      subject_id:      { type: 'string', description: 'Sponsor internal subject identifier (no PHI).' },
+      capa_required:   { type: 'boolean' },
+    },
+    required: ['study_id', 'deviation_date', 'category', 'description'],
+  },
+};
+
+export const LOG_STUDY_AE: AnaTool = {
+  name: 'log_study_ae',
+  description:
+    "Log an adverse event in a clinical study. Captures seriousness, unanticipated-device-effect (UADE) flag per 21 CFR 812.150(b), device relationship, severity, outcome, and MedDRA preferred term + SOC. AnA can later mark reported-to-FDA / reported-to-IRB dates.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      study_id:        { type: 'number' },
+      site_id:         { type: 'number' },
+      ae_id:           { type: 'string', description: "Sponsor's internal AE id." },
+      subject_id:      { type: 'string' },
+      ae_date:         { type: 'string' },
+      serious:         { type: 'boolean' },
+      unanticipated:   { type: 'boolean', description: 'UADE per 21 CFR 812.150(b).' },
+      device_related:  { type: 'string', enum: ['yes', 'no', 'possibly', 'probably', 'definitely', 'unrelated'] },
+      severity:        { type: 'string', enum: ['mild', 'moderate', 'severe'] },
+      outcome:         { type: 'string', enum: ['recovered', 'recovering', 'not_recovered', 'fatal', 'unknown'] },
+      preferred_term:  { type: 'string', description: 'MedDRA preferred term.' },
+      soc:             { type: 'string', description: 'MedDRA system organ class.' },
+    },
+    required: ['study_id', 'ae_id', 'ae_date'],
+  },
+};
+
+export const RECORD_ENDPOINT_RESULT: AnaTool = {
+  name: 'record_endpoint_result',
+  description:
+    "Record the result of a pre-specified clinical study endpoint. Captures observed value, 95% CI, p-value, and met/not-met. Use after the SAP analysis completes.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      study_id:        { type: 'number' },
+      endpoint_kind:   { type: 'string', enum: ['primary', 'secondary', 'exploratory', 'safety'] },
+      name:            { type: 'string' },
+      description:     { type: 'string' },
+      target_value:    { type: 'string' },
+      observed_value:  { type: 'string' },
+      ci_lower:        { type: 'string' },
+      ci_upper:        { type: 'string' },
+      p_value:         { type: 'number', minimum: 0, maximum: 1 },
+      met:             { type: 'boolean' },
+      analysis_note:   { type: 'string' },
+    },
+    required: ['study_id', 'endpoint_kind', 'name'],
+  },
+};
+
+export const VERIFY_MEMORY_ATOM: AnaTool = {
+  name: 'verify_memory_atom',
+  description:
+    "Mark an AnA memory atom as verified by a human user (records verified_by + verified_at). When bump_importance is true and the current importance is low/medium, the importance is bumped to high so the atom surfaces more aggressively in future conversations.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      memory_id:       { type: 'number' },
+      bump_importance: { type: 'boolean', description: 'Bump importance to high.' },
+    },
+    required: ['memory_id'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Native python-docx authoring — canonical Word-grade authoring path.
 // Spawns workers/artifact-compute/docx-python-runtime.py inside the isolated
 // compute worker (no network egress, bounded timeout) which uses python-docx
@@ -1608,6 +1746,12 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   RECORD_VALIDATION_FINDING,
   RESOLVE_VALIDATION_FINDING,
   GATEWAY_CONFIGURATION_STATUS,
+  FIRE_NOTIFICATION,
+  CREATE_CLINICAL_STUDY,
+  LOG_STUDY_DEVIATION,
+  LOG_STUDY_AE,
+  RECORD_ENDPOINT_RESULT,
+  VERIFY_MEMORY_ATOM,
   ASSEMBLE_ECTD_MODULE_FROM_ARTIFACTS,
   DRAFT_510K_SUBSTANTIAL_EQUIVALENCE,
   DRAFT_CLINICAL_OVERVIEW_M2_5,
