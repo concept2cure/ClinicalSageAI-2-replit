@@ -111,6 +111,10 @@ const PROBED_TABLES: Array<{ name: string; role: string; required: boolean }> = 
   { name: 'public.cdx_concordance_studies',       role: 'CDx concordance to trial assay',              required: true  },
   { name: 'public.ldt_inventory',                 role: 'Laboratory-developed test inventory',         required: true  },
   { name: 'public.ldt_phase_milestones',          role: 'FDA LDT phase tracker milestones',            required: true  },
+  /* Submission gateway tables (migration 20260509). */
+  { name: 'public.submission_transmittals',       role: 'Multi-region submission transmittal log',     required: true  },
+  { name: 'public.submission_validation_findings',role: 'Per-transmittal validator findings',          required: true  },
+  { name: 'public.submission_gateway_credentials',role: 'Per-org gateway credentials registry',        required: true  },
 ];
 
 /* Shadow services we proxy to. Configured = env var present; we don't

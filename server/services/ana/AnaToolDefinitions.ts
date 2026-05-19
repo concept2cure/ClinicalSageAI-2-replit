@@ -1166,6 +1166,141 @@ export const REGISTER_LDT: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Submission gateway tools — package an eCTD bundle for a region, transmit
+// to FDA ESG / EMA CESP / EMA EUDAMED / PMDA Gateway, poll status, and
+// download acknowledgements. Backed by server/services/submission-gateways/.
+// Tenant-scoped via ToolContext.organizationId. All transports are real
+// protocol code, credential-gated through env vars.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
+  name: 'package_ectd_for_region',
+  description:
+    "Assemble a regional eCTD zip (FDA us-regional.xml / EMA eu-regional.xml / PMDA jp-regional.xml) from a set of CTD leaves. Produces the correct Module 1 folder structure per region, computes SHA-256, and returns the bundle metadata for downstream transmit. Use after AnA has gathered the leaf manifest for a submission.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      region:          { type: 'string', enum: ['fda', 'ema', 'pmda'] },
+      application_id:  { type: 'string', description: 'IND/NDA number (FDA), procedure number (EMA), application number (PMDA).' },
+      sequence:        { type: 'string', description: '4-digit submission sequence, e.g. 0001.' },
+      submission_type: { type: 'string', description: 'original | amendment | response | annual_report | safety.' },
+      sponsor_id:      { type: 'string', description: 'DUNS / EMA org id / PMDA applicant id.' },
+      sponsor_name:    { type: 'string' },
+      product_name:    { type: 'string' },
+      leaves: {
+        type: 'array',
+        description: 'List of eCTD leaves. Each leaf is { ctd_section, operation, source_path, file_name, title }.',
+        items: {
+          type: 'object',
+          properties: {
+            ctd_section: { type: 'string' },
+            operation:   { type: 'string', enum: ['new', 'append', 'replace', 'delete'] },
+            source_path: { type: 'string' },
+            file_name:   { type: 'string' },
+            title:       { type: 'string' },
+          },
+          required: ['ctd_section', 'operation', 'source_path', 'file_name', 'title'],
+        },
+      },
+      output_dir: { type: 'string', description: 'Where to write the zip. Defaults to tmp/submissions.' },
+    },
+    required: ['region', 'application_id', 'sequence', 'submission_type', 'sponsor_id', 'sponsor_name', 'product_name', 'leaves'],
+  },
+};
+
+export const TRANSMIT_SUBMISSION: AnaTool = {
+  name: 'transmit_submission',
+  description:
+    "Transmit an already-packaged bundle to a regulatory gateway (FDA ESG, EMA CESP, EMA EUDAMED, or PMDA Gateway). Returns the transmittal id and gateway-issued tracking number. Throws when credentials are not configured for the org × environment. Use after package_ectd_for_region or after assembling a region-specific deliverable like an eSTAR or a EUDAMED device-registration JSON.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      region:      { type: 'string', enum: ['fda', 'ema', 'pmda'] },
+      gateway:     { type: 'string', enum: ['esg', 'cesp', 'eudamed', 'pmda_gateway'] },
+      environment: { type: 'string', enum: ['staging', 'production'], description: "Default 'production'." },
+      bundle_path: { type: 'string', description: 'Absolute path to the package on disk.' },
+      bundle_sha256: { type: 'string', description: '64-char hex SHA-256.' },
+      bundle_size_bytes: { type: 'number' },
+      format:      { type: 'string', enum: ['ectd', 'estar', 'eudamed_register', 'pmda_ectd'] },
+      program_id:  { type: 'string', description: 'regulatory_programs.id (UUID).' },
+      package_id:  { type: 'number', description: 'c2c_submission_packages.id (when applicable).' },
+      submission_type: { type: 'string' },
+      application_id:  { type: 'string', description: 'Stored on metadata; consumed by gateway-specific transports.' },
+      sequence:    { type: 'string', description: 'Stored on metadata.' },
+    },
+    required: ['region', 'gateway', 'bundle_path', 'bundle_sha256', 'bundle_size_bytes', 'format'],
+  },
+};
+
+export const CHECK_SUBMISSION_STATUS: AnaTool = {
+  name: 'check_submission_status',
+  description:
+    "Poll the latest status for a transmitted submission. For FDA ESG, fetches the AS2 MDN / SFTP ack chain. For EMA CESP, polls /baskets/{id}. For EUDAMED, returns the most recent stored state. For PMDA Gateway, polls /receipts/{id}. Status transitions surface from the gateway's domain language (received → ack1 → ack2 → ack3 → validation_passed → review_started etc.).",
+  input_schema: {
+    type: 'object',
+    properties: { transmittal_id: { type: 'number' } },
+    required: ['transmittal_id'],
+  },
+};
+
+export const GET_SUBMISSION_ACK: AnaTool = {
+  name: 'get_submission_ack',
+  description:
+    "Download the latest acknowledgment for a transmittal as a text summary. Includes the gateway's transmission id, current status, ack timestamp, and (when present) the raw acknowledgment payload. Use when the user wants to inspect the receipt or attach it to the audit trail.",
+  input_schema: {
+    type: 'object',
+    properties: { transmittal_id: { type: 'number' } },
+    required: ['transmittal_id'],
+  },
+};
+
+export const RECORD_VALIDATION_FINDING: AnaTool = {
+  name: 'record_validation_finding',
+  description:
+    "Record a validator finding against a transmittal (FDA eValidator, EMA-validator, PMDA pre-check, commercial validators Lorenz / GlobalSubmit, or AnA's internal pre-check). Severity 'error' blocks acceptance; 'warning' is advisory; 'info' is contextual. After the finding lands, the kit's transmittal view shows it; use resolve_validation_finding to mark it addressed.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      transmittal_id: { type: 'number' },
+      validator:      { type: 'string', enum: ['fda_evalidator', 'ema_validator', 'pmda_precheck', 'lorenz', 'globalsubmit', 'internal'] },
+      severity:       { type: 'string', enum: ['error', 'warning', 'info'] },
+      rule_id:        { type: 'string' },
+      rule_title:     { type: 'string' },
+      message:        { type: 'string' },
+      file_path:      { type: 'string' },
+      line_number:    { type: 'number' },
+    },
+    required: ['transmittal_id', 'validator', 'severity', 'message'],
+  },
+};
+
+export const RESOLVE_VALIDATION_FINDING: AnaTool = {
+  name: 'resolve_validation_finding',
+  description:
+    "Mark a validator finding as resolved with a short note describing how the issue was addressed. Captures resolved_by + resolved_at for the 21 CFR Part 11 audit trail.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      finding_id:       { type: 'number' },
+      resolution_note:  { type: 'string' },
+    },
+    required: ['finding_id'],
+  },
+};
+
+export const GATEWAY_CONFIGURATION_STATUS: AnaTool = {
+  name: 'gateway_configuration_status',
+  description:
+    "Report which submission gateways are configured for the caller's organization × environment. Returns one row per (region, gateway) with a boolean configured flag. Use before transmitting to give the user a clear answer to 'which regions can we submit to today?'.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      environment: { type: 'string', enum: ['staging', 'production'], description: "Default 'production'." },
+    },
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Native python-docx authoring — canonical Word-grade authoring path.
 // Spawns workers/artifact-compute/docx-python-runtime.py inside the isolated
 // compute worker (no network egress, bounded timeout) which uses python-docx
@@ -1466,6 +1601,13 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CATEGORIZE_CLIA_COMPLEXITY,
   PAIR_COMPANION_DIAGNOSTIC,
   REGISTER_LDT,
+  PACKAGE_ECTD_FOR_REGION,
+  TRANSMIT_SUBMISSION,
+  CHECK_SUBMISSION_STATUS,
+  GET_SUBMISSION_ACK,
+  RECORD_VALIDATION_FINDING,
+  RESOLVE_VALIDATION_FINDING,
+  GATEWAY_CONFIGURATION_STATUS,
   ASSEMBLE_ECTD_MODULE_FROM_ARTIFACTS,
   DRAFT_510K_SUBSTANTIAL_EQUIVALENCE,
   DRAFT_CLINICAL_OVERVIEW_M2_5,

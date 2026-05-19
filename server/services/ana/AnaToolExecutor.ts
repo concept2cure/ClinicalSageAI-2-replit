@@ -2063,6 +2063,295 @@ registerToolHandler('register_ldt', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Submission-gateway handlers — package + transmit to FDA ESG / EMA CESP /
+// EUDAMED / PMDA Gateway. Wraps server/services/submission-gateways/.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('package_ectd_for_region', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'package_ectd_for_region requires tenant context.' });
+  }
+  const region = typeof input.region === 'string' ? input.region : '';
+  if (!['fda', 'ema', 'pmda'].includes(region)) {
+    return JSON.stringify({ error: 'region must be fda / ema / pmda.' });
+  }
+  const leaves = Array.isArray(input.leaves) ? (input.leaves as Array<Record<string, unknown>>) : [];
+  if (leaves.length === 0) {
+    return JSON.stringify({ error: 'leaves[] is required and must be non-empty.' });
+  }
+  try {
+    const { packageEctdSubmission } = await import('../submission-gateways/index.js');
+    const path = await import('path');
+    const outputDir =
+      typeof input.output_dir === 'string'
+        ? input.output_dir
+        : path.resolve(process.cwd(), 'tmp', 'submissions', String(ctx.organizationId));
+    const bundle = await packageEctdSubmission({
+      region: region as 'fda' | 'ema' | 'pmda',
+      applicationId: String(input.application_id),
+      sequence:      String(input.sequence),
+      submissionType: String(input.submission_type),
+      sponsorId:     String(input.sponsor_id),
+      sponsorName:   String(input.sponsor_name),
+      productName:   String(input.product_name),
+      leaves: leaves.map((l) => ({
+        ctdSection: String(l.ctd_section),
+        operation:  (String(l.operation) as 'new' | 'append' | 'replace' | 'delete'),
+        sourcePath: String(l.source_path),
+        fileName:   String(l.file_name),
+        title:      String(l.title),
+      })),
+      outputDir,
+    });
+    return JSON.stringify({
+      ok: true,
+      bundlePath:    bundle.path,
+      sha256:        bundle.sha256,
+      sizeBytes:     bundle.sizeBytes,
+      format:        bundle.format,
+      displayName:   bundle.displayName,
+      message: `Packaged ${leaves.length} leaves into a ${region.toUpperCase()} eCTD zip.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `package_ectd_for_region failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('transmit_submission', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'transmit_submission requires tenant context.' });
+  }
+  const region  = typeof input.region === 'string' ? input.region : '';
+  const gateway = typeof input.gateway === 'string' ? input.gateway : '';
+  if (!['fda', 'ema', 'pmda'].includes(region)) {
+    return JSON.stringify({ error: 'region must be fda / ema / pmda.' });
+  }
+  if (!['esg', 'cesp', 'eudamed', 'pmda_gateway'].includes(gateway)) {
+    return JSON.stringify({ error: 'gateway must be esg / cesp / eudamed / pmda_gateway.' });
+  }
+  try {
+    const { getGateway, CredentialError, GatewayError, TransportError } = await import('../submission-gateways/index.js');
+    const gw = getGateway(region as 'fda' | 'ema' | 'pmda', gateway as 'esg' | 'cesp' | 'eudamed' | 'pmda_gateway');
+    const environment = input.environment === 'staging' ? 'staging' : 'production';
+    const result = await gw.transmit({
+      organizationId: ctx.organizationId,
+      userId:         ctx.userId ?? null,
+      programId:      typeof input.program_id === 'string' && UUID_RE.test(input.program_id) ? input.program_id : null,
+      packageId:      typeof input.package_id === 'number' ? input.package_id : null,
+      bundle: {
+        path:        String(input.bundle_path),
+        sha256:      String(input.bundle_sha256),
+        sizeBytes:   Number(input.bundle_size_bytes),
+        format:      String(input.format) as 'ectd' | 'estar' | 'eudamed_register' | 'pmda_ectd',
+      },
+      environment,
+      submissionType: typeof input.submission_type === 'string' ? input.submission_type : undefined,
+      metadata: {
+        applicationId: input.application_id,
+        sequence:      input.sequence,
+        environment,
+      },
+    });
+    return JSON.stringify({ ok: true, ...result });
+  } catch (err: unknown) {
+    /* CredentialError / GatewayError / TransportError surfaced as user-
+       readable messages with the original class preserved so AnA can
+       suggest the right remediation (set env var vs. retry vs. validate). */
+    if (err instanceof Error && err.name === 'CredentialError') {
+      return JSON.stringify({ error: err.message, errorClass: 'auth' });
+    }
+    if (err instanceof Error && err.name === 'TransportError') {
+      return JSON.stringify({ error: err.message, errorClass: 'transport' });
+    }
+    if (err instanceof Error && err.name === 'GatewayError') {
+      return JSON.stringify({ error: err.message, errorClass: 'gateway' });
+    }
+    return JSON.stringify({
+      error: `transmit_submission failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('check_submission_status', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'check_submission_status requires tenant context.' });
+  }
+  const id = typeof input.transmittal_id === 'number' ? input.transmittal_id : NaN;
+  if (!Number.isFinite(id)) {
+    return JSON.stringify({ error: 'transmittal_id (number) is required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const own = await getPool().query<{ region: string; gateway: string }>(
+      `SELECT region, gateway FROM submission_transmittals WHERE id = $1 AND organization_id = $2`,
+      [id, ctx.organizationId],
+    );
+    if (own.rows.length === 0) {
+      return JSON.stringify({ error: `Transmittal ${id} not found in this organization.` });
+    }
+    const { getGateway } = await import('../submission-gateways/index.js');
+    const gw = getGateway(own.rows[0].region as 'fda' | 'ema' | 'pmda', own.rows[0].gateway as 'esg' | 'cesp' | 'eudamed' | 'pmda_gateway');
+    const result = await gw.checkStatus(id);
+    return JSON.stringify({ ok: true, ...result });
+  } catch (err) {
+    return JSON.stringify({
+      error: `check_submission_status failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('get_submission_ack', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'get_submission_ack requires tenant context.' });
+  }
+  const id = typeof input.transmittal_id === 'number' ? input.transmittal_id : NaN;
+  if (!Number.isFinite(id)) {
+    return JSON.stringify({ error: 'transmittal_id (number) is required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const own = await getPool().query<{ region: string; gateway: string }>(
+      `SELECT region, gateway FROM submission_transmittals WHERE id = $1 AND organization_id = $2`,
+      [id, ctx.organizationId],
+    );
+    if (own.rows.length === 0) {
+      return JSON.stringify({ error: `Transmittal ${id} not found in this organization.` });
+    }
+    const { getGateway } = await import('../submission-gateways/index.js');
+    const gw = getGateway(own.rows[0].region as 'fda' | 'ema' | 'pmda', own.rows[0].gateway as 'esg' | 'cesp' | 'eudamed' | 'pmda_gateway');
+    const ack = await gw.downloadAcknowledgment(id);
+    return JSON.stringify({
+      ok: true,
+      transmittalId:   ack.transmittalId,
+      transmissionId:  ack.transmissionId,
+      contentType:     ack.contentType,
+      ackText:         ack.buffer.toString('utf8').slice(0, 4000),
+      receivedAt:      ack.receivedAt,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `get_submission_ack failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('record_validation_finding', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'record_validation_finding requires tenant context.' });
+  }
+  const id = typeof input.transmittal_id === 'number' ? input.transmittal_id : NaN;
+  const validator = typeof input.validator === 'string' ? input.validator : '';
+  const severity  = typeof input.severity === 'string' ? input.severity : '';
+  const message   = typeof input.message === 'string' ? input.message : '';
+  if (!Number.isFinite(id)) {
+    return JSON.stringify({ error: 'transmittal_id (number) is required.' });
+  }
+  if (!['fda_evalidator', 'ema_validator', 'pmda_precheck', 'lorenz', 'globalsubmit', 'internal'].includes(validator)) {
+    return JSON.stringify({ error: 'validator must be one of fda_evalidator | ema_validator | pmda_precheck | lorenz | globalsubmit | internal.' });
+  }
+  if (!['error', 'warning', 'info'].includes(severity)) {
+    return JSON.stringify({ error: 'severity must be error | warning | info.' });
+  }
+  if (!message) {
+    return JSON.stringify({ error: 'message is required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const own = await getPool().query(
+      `SELECT 1 FROM submission_transmittals WHERE id = $1 AND organization_id = $2`,
+      [id, ctx.organizationId],
+    );
+    if (own.rows.length === 0) {
+      return JSON.stringify({ error: `Transmittal ${id} not found in this organization.` });
+    }
+    const { rows } = await getPool().query(
+      `INSERT INTO submission_validation_findings (
+         transmittal_id, organization_id, validator, severity, rule_id, rule_title,
+         message, file_path, line_number
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING id, severity, message`,
+      [
+        id, ctx.organizationId, validator, severity,
+        typeof input.rule_id === 'string' ? input.rule_id : null,
+        typeof input.rule_title === 'string' ? input.rule_title : null,
+        message,
+        typeof input.file_path === 'string' ? input.file_path : null,
+        typeof input.line_number === 'number' ? Math.round(input.line_number) : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Recorded ${severity} finding from ${validator} against transmittal ${id}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `record_validation_finding failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('resolve_validation_finding', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'resolve_validation_finding requires tenant context.' });
+  }
+  const id = typeof input.finding_id === 'number' ? input.finding_id : NaN;
+  if (!Number.isFinite(id)) {
+    return JSON.stringify({ error: 'finding_id (number) is required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const { rows } = await getPool().query(
+      `UPDATE submission_validation_findings
+          SET resolved        = true,
+              resolved_at     = NOW(),
+              resolved_by     = $3,
+              resolution_note = $4
+        WHERE id = $1 AND organization_id = $2 AND resolved = false
+        RETURNING id, resolved_at`,
+      [
+        id, ctx.organizationId,
+        ctx.userId ?? null,
+        typeof input.resolution_note === 'string' ? input.resolution_note : null,
+      ],
+    );
+    if (rows.length === 0) {
+      return JSON.stringify({ error: `Finding ${id} not found, or already resolved.` });
+    }
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Resolved validation finding ${id}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `resolve_validation_finding failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('gateway_configuration_status', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'gateway_configuration_status requires tenant context.' });
+  }
+  try {
+    const { gatewayConfigurationStatus } = await import('../submission-gateways/index.js');
+    const environment = input.environment === 'staging' ? 'staging' : 'production';
+    const status = await gatewayConfigurationStatus(ctx.organizationId, environment);
+    return JSON.stringify({
+      ok: true,
+      environment,
+      gateways: status,
+      message: `${status.filter((s) => s.configured).length} of ${status.length} gateways configured for ${environment}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `gateway_configuration_status failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MDX kit-section write-back handler — closes the loop between AnA's drafting
 // and the kit's section editors. Persists drafted content into
 // cerv2_510k_sections with draft_source='ana' so the MDX surfaces can render

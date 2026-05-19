@@ -10,6 +10,7 @@
  */
 import { relations, InferSelectModel } from 'drizzle-orm';
 import {
+  bigint,
   integer,
   pgTable,
   pgEnum,
@@ -18801,3 +18802,104 @@ export const ldtPhaseMilestones = pgTable(
   }),
 );
 export type LdtPhaseMilestone = InferSelectModel<typeof ldtPhaseMilestones>;
+
+/* ════════════════════════════════════════════════════════════════════
+   Submission gateway tables (migration 20260509)
+
+   Tracks every transmit attempt to FDA ESG, EMA CESP / EUDAMED, and
+   PMDA Gateway in a single table so ops, audit, and AnA share one
+   source of truth. Validation findings hang off transmittals. ════ */
+
+export const submissionTransmittals = pgTable(
+  'submission_transmittals',
+  {
+    id:                   serial('id').primaryKey(),
+    organizationId:       integer('organization_id').notNull().references(() => organizations.id),
+    programId:            uuid('program_id'),
+    packageId:            integer('package_id'),
+    parentTransmittalId:  integer('parent_transmittal_id'),
+    region:               text('region').notNull(),
+    gateway:              text('gateway').notNull(),
+    format:               text('format').notNull(),
+    submissionType:       text('submission_type'),
+    transport:            text('transport'),
+    bundlePath:           text('bundle_path'),
+    bundleSha256:         text('bundle_sha256'),
+    bundleSizeBytes:      bigint('bundle_size_bytes', { mode: 'number' }),
+    transmissionId:       text('transmission_id'),
+    status:               text('status').default('pending').notNull(),
+    httpStatus:           integer('http_status'),
+    errorClass:           text('error_class'),
+    errorMessage:         text('error_message'),
+    submittedBy:          integer('submitted_by').references(() => users.id),
+    submittedAt:          timestamp('submitted_at', { withTimezone: true }).defaultNow().notNull(),
+    ackReceivedAt:        timestamp('ack_received_at', { withTimezone: true }),
+    completedAt:          timestamp('completed_at', { withTimezone: true }),
+    metadata:             jsonb('metadata').default('{}'),
+    auditTrailRef:        text('audit_trail_ref'),
+    createdAt:            timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:            timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:     index('sub_trans_org_idx').on(table.organizationId),
+    programIdx: index('sub_trans_program_idx').on(table.programId),
+    packageIdx: index('sub_trans_package_idx').on(table.packageId),
+    regionIdx:  index('sub_trans_region_idx').on(table.organizationId, table.region),
+    statusIdx:  index('sub_trans_status_idx').on(table.organizationId, table.status),
+    txnIdx:     index('sub_trans_txn_idx').on(table.transmissionId),
+  }),
+);
+export type SubmissionTransmittal = InferSelectModel<typeof submissionTransmittals>;
+
+export const submissionValidationFindings = pgTable(
+  'submission_validation_findings',
+  {
+    id:               serial('id').primaryKey(),
+    transmittalId:    integer('transmittal_id').notNull().references(() => submissionTransmittals.id, { onDelete: 'cascade' }),
+    organizationId:   integer('organization_id').notNull().references(() => organizations.id),
+    validator:        text('validator').notNull(),
+    severity:         text('severity').notNull(),
+    ruleId:           text('rule_id'),
+    ruleTitle:        text('rule_title'),
+    message:          text('message').notNull(),
+    filePath:         text('file_path'),
+    lineNumber:       integer('line_number'),
+    resolved:         boolean('resolved').default(false),
+    resolvedAt:       timestamp('resolved_at', { withTimezone: true }),
+    resolvedBy:       integer('resolved_by').references(() => users.id),
+    resolutionNote:   text('resolution_note'),
+    metadata:         jsonb('metadata').default('{}'),
+    createdAt:        timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    transIdx:  index('sub_val_trans_idx').on(table.transmittalId),
+    orgIdx:    index('sub_val_org_idx').on(table.organizationId),
+    sevIdx:    index('sub_val_sev_idx').on(table.organizationId, table.severity, table.resolved),
+  }),
+);
+export type SubmissionValidationFinding = InferSelectModel<typeof submissionValidationFindings>;
+
+export const submissionGatewayCredentials = pgTable(
+  'submission_gateway_credentials',
+  {
+    id:               serial('id').primaryKey(),
+    organizationId:   integer('organization_id').notNull().references(() => organizations.id),
+    region:           text('region').notNull(),
+    gateway:          text('gateway').notNull(),
+    environment:      text('environment').default('production').notNull(),
+    credentialKind:   text('credential_kind').notNull(),
+    identifier:       text('identifier').notNull(),
+    secretsRef:       text('secrets_ref').notNull(),
+    expiresAt:        timestamp('expires_at', { withTimezone: true }),
+    lastRotatedAt:    timestamp('last_rotated_at', { withTimezone: true }),
+    status:           text('status').default('active').notNull(),
+    metadata:         jsonb('metadata').default('{}'),
+    createdAt:        timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:        timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:    index('sub_cred_org_idx').on(table.organizationId),
+    statusIdx: index('sub_cred_status_idx').on(table.organizationId, table.status),
+  }),
+);
+export type SubmissionGatewayCredential = InferSelectModel<typeof submissionGatewayCredentials>;

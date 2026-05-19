@@ -52,6 +52,7 @@ import mdxIvdrRoutes from '../routes/mdx-ivdr';
 import mdxCliaRoutes from '../routes/mdx-clia';
 import mdxCdxRoutes from '../routes/mdx-cdx';
 import mdxLdtRoutes from '../routes/mdx-ldt';
+import mdxSubmissionGatewayRoutes from '../routes/mdx-submission-gateway';
 import regulatoryCorrespondenceRoutes from '../routes/regulatory-correspondence';
 import { create510kWorkflowRoutes } from '../routes/510k-workflow-routes';
 import { createPMAWorkflowRoutes } from '../routes/pma-workflow-routes';
@@ -356,6 +357,10 @@ export function registerInlineSubmissionWorkflowRoutes({
   app.use('/api/mdx', mdxCliaRoutes);
   app.use('/api/mdx', mdxCdxRoutes);
   app.use('/api/mdx', mdxLdtRoutes);
+  /* Submission gateway router (migration 20260509). Single surface over
+     FDA ESG (AS2 + SFTP), EMA CESP / EUDAMED, and PMDA Gateway. Real
+     transports — credential-gated; throws 412 when env vars missing. */
+  app.use('/api/mdx', mdxSubmissionGatewayRoutes);
   app.use('/api/regulatory-correspondence', regulatoryCorrespondenceRoutes);
   console.log('✅ Submission Ops API routes mounted successfully');
   console.log('✅ Regulatory Programs API routes mounted successfully');
