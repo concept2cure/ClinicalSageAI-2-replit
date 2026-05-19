@@ -91,6 +91,14 @@ const PROBED_TABLES: Array<{ name: string; role: string; required: boolean }> = 
   { name: 'clinical_ops.studies',                 role: 'PmaSurface trial metrics (Enrolled/Sites)',   required: false },
   { name: 'clinical_ops.deviations',              role: 'PmaSurface AE rate KPI',                      required: false },
   { name: 'clinical_ops.endpoint_results',        role: 'PmaSurface endpoints-achieved KPI',           required: false },
+  /* Beta-surface tables (migration 20260507). Required for the kit
+     surfaces UDI, Risk Management, Software lifecycle, and the Q-Sub
+     briefing-document editor. */
+  { name: 'public.udi_records',                   role: 'UdiSurface device records table',             required: true  },
+  { name: 'public.risk_items',                    role: 'Risk management ISO 14971 hazard matrix',     required: true  },
+  { name: 'public.risk_controls',                 role: 'Risk control measures (per risk item)',       required: true  },
+  { name: 'public.software_lifecycle_items',      role: 'Software lifecycle IEC 62304 deliverables',   required: true  },
+  { name: 'public.q_sub_section_bodies',          role: 'Q-Sub briefing-document section bodies',      required: true  },
 ];
 
 /* Shadow services we proxy to. Configured = env var present; we don't

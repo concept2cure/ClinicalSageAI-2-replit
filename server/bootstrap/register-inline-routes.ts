@@ -41,6 +41,12 @@ import submissionOpsRoutes from '../routes/submission-ops';
 import regulatoryProgramsRoutes from '../routes/regulatory-programs';
 import savedPrecedentQueriesRoutes from '../routes/saved-precedent-queries';
 import mdxRoutes from '../routes/mdx';
+import mdxAnaDraftsRoutes from '../routes/mdx-ana-drafts';
+import mdxVaultRoutes from '../routes/mdx-vault';
+import mdxEngineeringRoutes from '../routes/mdx-engineering';
+import mdxUdiRoutes from '../routes/mdx-udi';
+import mdxRiskRoutes from '../routes/mdx-risk-management';
+import mdxSoftwareRoutes from '../routes/mdx-software';
 import regulatoryCorrespondenceRoutes from '../routes/regulatory-correspondence';
 import { create510kWorkflowRoutes } from '../routes/510k-workflow-routes';
 import { createPMAWorkflowRoutes } from '../routes/pma-workflow-routes';
@@ -327,6 +333,16 @@ export function registerInlineSubmissionWorkflowRoutes({
   app.use('/api/regulatory-programs', regulatoryProgramsRoutes);
   app.use('/api/saved-precedent-queries', savedPrecedentQueriesRoutes);
   app.use('/api/mdx', mdxRoutes);
+  /* MDX beta-surface routers — each one backs a kit surface (see brief to
+     Claude Design). Stacking multiple routers at the same /api/mdx prefix
+     keeps the kit's URL space coherent without consolidating into a single
+     mega-router. Each module owns its own audit + tenant-scope. */
+  app.use('/api/mdx', mdxAnaDraftsRoutes);
+  app.use('/api/mdx', mdxVaultRoutes);
+  app.use('/api/mdx', mdxEngineeringRoutes);
+  app.use('/api/mdx', mdxUdiRoutes);
+  app.use('/api/mdx', mdxRiskRoutes);
+  app.use('/api/mdx', mdxSoftwareRoutes);
   app.use('/api/regulatory-correspondence', regulatoryCorrespondenceRoutes);
   console.log('✅ Submission Ops API routes mounted successfully');
   console.log('✅ Regulatory Programs API routes mounted successfully');

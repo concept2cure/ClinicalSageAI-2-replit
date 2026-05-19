@@ -18356,3 +18356,168 @@ export const savedPrecedentQueries = pgTable('saved_precedent_queries', {
 }));
 
 export type SavedPrecedentQuery = InferSelectModel<typeof savedPrecedentQueries>;
+
+/* ════════════════════════════════════════════════════════════════════
+   MDX beta-surface tables (migration 20260507_mdx_beta_surfaces.sql)
+
+   - udi_records             : per-device UDI assignment + GUDID state
+   - risk_items              : ISO 14971 hazard / harm / risk row
+   - risk_controls           : per-risk control measure with V&V evidence
+   - software_lifecycle_items: IEC 62304 deliverable (SRS / SDS / SBOM / ...)
+   - q_sub_section_bodies    : Q-Sub briefing-doc per-section content
+
+   All tenant-scoped via organizationId; program-scoped where applicable
+   via the regulatory_programs UUID. ════════════════════════════════ */
+
+export const udiRecords = pgTable(
+  'udi_records',
+  {
+    id:               serial('id').primaryKey(),
+    organizationId:   integer('organization_id').notNull().references(() => organizations.id),
+    programId:        uuid('program_id'),
+    deviceName:       text('device_name').notNull(),
+    udiDi:            text('udi_di').notNull(),
+    udiPiFormat:      text('udi_pi_format'),
+    issuingAgency:    text('issuing_agency').notNull(),
+    gmdnCode:         text('gmdn_code'),
+    deviceClass:      text('device_class'),
+    productCode:      text('product_code'),
+    brandName:        text('brand_name'),
+    catalogNumber:    text('catalog_number'),
+    versionOrModel:   text('version_or_model'),
+    packageQty:       integer('package_qty'),
+    packageType:      text('package_type'),
+    mriSafety:        text('mri_safety'),
+    lotSerial:        text('lot_serial'),
+    prescriptionUse:  boolean('prescription_use').default(true),
+    hctp:             boolean('hctp').default(false),
+    kit:              boolean('kit').default(false),
+    singleUse:        boolean('single_use').default(false),
+    rxOnly:           boolean('rx_only').default(true),
+    gudidSubmittedAt: timestamp('gudid_submitted_at', { withTimezone: true }),
+    gudidStatus:      text('gudid_status').default('draft'),
+    gudidPayload:     jsonb('gudid_payload'),
+    metadata:         jsonb('metadata').default('{}'),
+    createdAt:        timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:        timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:        timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('udi_records_org_idx').on(table.organizationId),
+    programIdx:    index('udi_records_program_idx').on(table.programId),
+    orgProgramIdx: index('udi_records_org_program_idx').on(table.organizationId, table.programId),
+  }),
+);
+export type UdiRecord = InferSelectModel<typeof udiRecords>;
+
+export const riskItems = pgTable(
+  'risk_items',
+  {
+    id:                  serial('id').primaryKey(),
+    organizationId:      integer('organization_id').notNull().references(() => organizations.id),
+    programId:           uuid('program_id'),
+    refCode:             text('ref_code'),
+    hazard:              text('hazard').notNull(),
+    hazardousSituation:  text('hazardous_situation'),
+    harm:                text('harm').notNull(),
+    sequenceOfEvents:    text('sequence_of_events'),
+    severity:            integer('severity').notNull(),
+    probability:         integer('probability').notNull(),
+    detectability:       integer('detectability'),
+    initialRisk:         integer('initial_risk'),
+    residualSeverity:    integer('residual_severity'),
+    residualProbability: integer('residual_probability'),
+    residualRisk:        integer('residual_risk'),
+    controlStrategy:     text('control_strategy'),
+    acceptable:          boolean('acceptable'),
+    benefitRiskRationale: text('benefit_risk_rationale'),
+    status:              text('status').default('open').notNull(),
+    source:              text('source'),
+    assignedTo:          integer('assigned_to').references(() => users.id),
+    metadata:            jsonb('metadata').default('{}'),
+    createdAt:           timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:           timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:           timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('risk_items_org_idx').on(table.organizationId),
+    programIdx:    index('risk_items_program_idx').on(table.programId),
+    statusIdx:     index('risk_items_status_idx').on(table.organizationId, table.status),
+    orgProgramIdx: index('risk_items_org_program_idx').on(table.organizationId, table.programId),
+  }),
+);
+export type RiskItem = InferSelectModel<typeof riskItems>;
+
+export const riskControls = pgTable(
+  'risk_controls',
+  {
+    id:                     serial('id').primaryKey(),
+    riskItemId:             integer('risk_item_id').notNull().references(() => riskItems.id, { onDelete: 'cascade' }),
+    organizationId:         integer('organization_id').notNull().references(() => organizations.id),
+    description:            text('description').notNull(),
+    controlType:            text('control_type').notNull(),
+    implementationEvidence: text('implementation_evidence'),
+    verificationEvidence:   text('verification_evidence'),
+    effectivenessEvidence:  text('effectiveness_evidence'),
+    introducesNewRisk:      boolean('introduces_new_risk').default(false),
+    newRiskItemId:          integer('new_risk_item_id'),
+    status:                 text('status').default('proposed').notNull(),
+    createdAt:              timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:              timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    itemIdx: index('risk_controls_item_idx').on(table.riskItemId),
+    orgIdx:  index('risk_controls_org_idx').on(table.organizationId),
+  }),
+);
+export type RiskControl = InferSelectModel<typeof riskControls>;
+
+export const softwareLifecycleItems = pgTable(
+  'software_lifecycle_items',
+  {
+    id:                  serial('id').primaryKey(),
+    organizationId:      integer('organization_id').notNull().references(() => organizations.id),
+    programId:           uuid('program_id'),
+    docLevel:            text('doc_level').notNull(),
+    safetyClass:         text('safety_class'),
+    itemKind:            text('item_kind').notNull(),
+    title:               text('title').notNull(),
+    identifier:          text('identifier'),
+    status:              text('status').default('draft').notNull(),
+    evidenceArtifactId:  integer('evidence_artifact_id'),
+    notes:               text('notes'),
+    metadata:            jsonb('metadata').default('{}'),
+    createdAt:           timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:           timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:           timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('software_items_org_idx').on(table.organizationId),
+    programIdx:    index('software_items_program_idx').on(table.programId),
+    kindIdx:       index('software_items_kind_idx').on(table.organizationId, table.itemKind),
+    orgProgramIdx: index('software_items_org_program_idx').on(table.organizationId, table.programId),
+  }),
+);
+export type SoftwareLifecycleItem = InferSelectModel<typeof softwareLifecycleItems>;
+
+export const qSubSectionBodies = pgTable(
+  'q_sub_section_bodies',
+  {
+    id:               serial('id').primaryKey(),
+    qSubmissionId:    uuid('q_submission_id').notNull(),
+    organizationId:   integer('organization_id').notNull().references(() => organizations.id),
+    sectionKey:       text('section_key').notNull(),
+    content:          text('content'),
+    draftSource:      text('draft_source'),
+    draftedAt:        timestamp('drafted_at', { withTimezone: true }),
+    draftedSummary:   text('drafted_summary'),
+    acceptedAt:       timestamp('accepted_at', { withTimezone: true }),
+    acceptedBy:       integer('accepted_by').references(() => users.id),
+    createdAt:        timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:        timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('q_sub_section_org_idx').on(table.organizationId),
+  }),
+);
+export type QSubSectionBody = InferSelectModel<typeof qSubSectionBodies>;

@@ -866,6 +866,133 @@ export const SET_PROGRAM_METADATA: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Beta-surface mutation tools — let AnA author into the new MDX domain
+// surfaces: UDI records, risk management (ISO 14971), software lifecycle
+// (IEC 62304), Q-Sub briefing-doc sections. Every tool tenant-scoped via
+// ToolContext.organizationId; backing tables ship in migration 20260507.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const CREATE_UDI_RECORD: AnaTool = {
+  name: 'create_udi_record',
+  description:
+    "Create a UDI device record under the caller's organization, optionally bound to a regulatory program. Use after the user identifies a device variant that needs a UDI-DI assignment (or after AnA has gathered the device's classification + brand + catalog data). Issuing agency must be one of GS1 / HIBCC / ICCBBA. The record starts in gudid_status='draft'; later use submit_udi_record to flip to 'submitted' once payload is ready.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id:      { type: 'string', description: 'regulatory_programs.id (UUID), optional.' },
+      device_name:     { type: 'string' },
+      udi_di:          { type: 'string', description: 'Device identifier (UDI-DI).' },
+      issuing_agency:  { type: 'string', enum: ['GS1', 'HIBCC', 'ICCBBA'] },
+      device_class:    { type: 'string', description: 'Risk class (e.g. I, IIa, IIb, III).' },
+      product_code:    { type: 'string', description: 'FDA 3-letter product code.' },
+      gmdn_code:       { type: 'string' },
+      brand_name:      { type: 'string' },
+      catalog_number:  { type: 'string' },
+      version_or_model: { type: 'string' },
+      mri_safety:      { type: 'string', enum: ['mri_safe', 'mri_conditional', 'mri_unsafe', 'not_evaluated'] },
+      lot_serial:      { type: 'string', enum: ['lot', 'serial', 'none'] },
+      single_use:      { type: 'boolean' },
+    },
+    required: ['device_name', 'udi_di', 'issuing_agency'],
+  },
+};
+
+export const CREATE_RISK_ITEM: AnaTool = {
+  name: 'create_risk_item',
+  description:
+    "Add a new ISO 14971 risk row (hazard + harm + severity × probability) under a regulatory program. Severity and probability are 1..5 scales (5 = most severe / most frequent). initial_risk = severity × probability is computed server-side. After creation, attach risk_controls via add_risk_control. Status starts 'open' unless explicitly set.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id:           { type: 'string', description: 'regulatory_programs.id (UUID), optional.' },
+      ref_code:             { type: 'string', description: 'Display id, e.g. RISK-0042.' },
+      hazard:               { type: 'string' },
+      hazardous_situation:  { type: 'string' },
+      harm:                 { type: 'string' },
+      sequence_of_events:   { type: 'string', description: 'How hazard becomes harm.' },
+      severity:             { type: 'number', minimum: 1, maximum: 5 },
+      probability:          { type: 'number', minimum: 1, maximum: 5 },
+      detectability:        { type: 'number', minimum: 1, maximum: 5 },
+      control_strategy:     { type: 'string', enum: ['design_eliminate', 'design_reduce', 'protective', 'information'] },
+      source:               { type: 'string', enum: ['fmea', 'pha', 'fault_tree', 'literature', 'complaint', 'capa', 'other'] },
+    },
+    required: ['hazard', 'harm', 'severity', 'probability'],
+  },
+};
+
+export const ADD_RISK_CONTROL: AnaTool = {
+  name: 'add_risk_control',
+  description:
+    "Attach a risk control measure (per ISO 14971 §7) to an existing risk_item. control_type maps to the 14971 hierarchy: inherent_safety (design changes that remove the hazard), protective_measure (alarms, interlocks), information_safety (labeling, training). Provide evidence references (test reports, design docs) when available. If the control introduces a new hazard, set introduces_new_risk=true and link the new risk_item via new_risk_item_id.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      risk_item_id:            { type: 'number' },
+      description:             { type: 'string' },
+      control_type:            { type: 'string', enum: ['inherent_safety', 'protective_measure', 'information_safety'] },
+      implementation_evidence: { type: 'string' },
+      verification_evidence:   { type: 'string' },
+      effectiveness_evidence:  { type: 'string' },
+      introduces_new_risk:     { type: 'boolean' },
+      new_risk_item_id:        { type: 'number' },
+      status:                  { type: 'string', enum: ['proposed', 'implemented', 'verified', 'effective'] },
+    },
+    required: ['risk_item_id', 'description', 'control_type'],
+  },
+};
+
+export const CREATE_SOFTWARE_LIFECYCLE_ITEM: AnaTool = {
+  name: 'create_software_lifecycle_item',
+  description:
+    "Create an IEC 62304 / FDA 2023 software guidance deliverable under a program. item_kind selects the document type from the canonical set: srs (software requirements specification), sds (software design specification — Enhanced level only), arch (architecture), unit_test / integration_test / system_test, release_note, anomaly_log, ots_list (off-the-shelf software list), sbom (CycloneDX/SPDX), pentest, threat_model, risk_control, use_error, cybersecurity_label. doc_level is 'basic' or 'enhanced' per the FDA 2023 software guidance. safety_class is A / B / C per IEC 62304. Optionally link to a backing concept2cure_artifact via evidence_artifact_id.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id:           { type: 'string', description: 'regulatory_programs.id (UUID), optional.' },
+      doc_level:            { type: 'string', enum: ['basic', 'enhanced'] },
+      safety_class:         { type: 'string', enum: ['A', 'B', 'C'] },
+      item_kind: {
+        type: 'string',
+        enum: [
+          'srs', 'sds', 'arch', 'unit_test', 'integration_test', 'system_test',
+          'release_note', 'anomaly_log', 'ots_list', 'sbom', 'pentest',
+          'threat_model', 'risk_control', 'use_error', 'cybersecurity_label',
+        ],
+      },
+      title:                { type: 'string' },
+      identifier:           { type: 'string', description: 'e.g. SRS-1.0, SBOM-2026Q2.' },
+      status:               { type: 'string', enum: ['draft', 'in_review', 'approved', 'superseded'] },
+      evidence_artifact_id: { type: 'number', description: 'concept2cure_artifacts.id.' },
+      notes:                { type: 'string' },
+    },
+    required: ['doc_level', 'item_kind', 'title'],
+  },
+};
+
+export const WRITE_Q_SUB_SECTION: AnaTool = {
+  name: 'write_q_sub_section',
+  description:
+    "Write drafted content into a Q-Sub briefing-document section. section_key is one of the 8 canonical briefing sections: 'submission_type', 'sponsor_information', 'device_description', 'regulatory_history', 'issues_for_discussion', 'specific_questions_for_fda', 'proposed_meeting_format', 'supporting_information'. Marks the section as draft_source='ana'; the kit surfaces an Accept/Refine affordance after this writes. Tenant-scoped via the parent Q-Sub's program org.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      q_sub_id:    { type: 'string', description: 'q_submissions.id (UUID).' },
+      section_key: {
+        type: 'string',
+        enum: [
+          'submission_type', 'sponsor_information', 'device_description',
+          'regulatory_history', 'issues_for_discussion', 'specific_questions_for_fda',
+          'proposed_meeting_format', 'supporting_information',
+        ],
+      },
+      content:     { type: 'string', description: 'Markdown-style content (≥ 40 chars).' },
+      summary_note: { type: 'string', description: 'Optional one-line note for the audit trail.' },
+    },
+    required: ['q_sub_id', 'section_key', 'content'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Native python-docx authoring — canonical Word-grade authoring path.
 // Spawns workers/artifact-compute/docx-python-runtime.py inside the isolated
 // compute worker (no network egress, bounded timeout) which uses python-docx
@@ -1154,6 +1281,11 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   UPDATE_Q_SUB_COMMITMENT_ROLLED_IN,
   LINK_PROGRAM_CLINICAL_STUDY,
   SET_PROGRAM_METADATA,
+  WRITE_Q_SUB_SECTION,
+  CREATE_UDI_RECORD,
+  CREATE_RISK_ITEM,
+  ADD_RISK_CONTROL,
+  CREATE_SOFTWARE_LIFECYCLE_ITEM,
   ASSEMBLE_ECTD_MODULE_FROM_ARTIFACTS,
   DRAFT_510K_SUBSTANTIAL_EQUIVALENCE,
   DRAFT_CLINICAL_OVERVIEW_M2_5,

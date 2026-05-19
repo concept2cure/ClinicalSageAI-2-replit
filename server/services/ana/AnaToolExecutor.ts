@@ -1440,6 +1440,282 @@ registerToolHandler('set_program_metadata', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Beta-surface mutation handlers — backing for the 5 new AnA tools that
+// write into the MDX domain surfaces (UDI, risk management, software
+// lifecycle, Q-Sub briefing section). Tenant-scoped via ToolContext.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_udi_record', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'create_udi_record requires tenant context (organizationId).' });
+  }
+  const deviceName = typeof input.device_name === 'string' ? input.device_name.trim() : '';
+  const udiDi      = typeof input.udi_di === 'string' ? input.udi_di.trim() : '';
+  const agency     = typeof input.issuing_agency === 'string' ? input.issuing_agency : '';
+  if (!deviceName || !udiDi) {
+    return JSON.stringify({ error: 'create_udi_record: device_name and udi_di are required.' });
+  }
+  if (!['GS1', 'HIBCC', 'ICCBBA'].includes(agency)) {
+    return JSON.stringify({ error: "create_udi_record: issuing_agency must be GS1 / HIBCC / ICCBBA." });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+    const { rows } = await getPool().query(
+      `INSERT INTO udi_records (
+         organization_id, program_id, device_name, udi_di, issuing_agency,
+         device_class, product_code, gmdn_code, brand_name, catalog_number,
+         version_or_model, mri_safety, lot_serial, single_use
+       ) VALUES (
+         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, COALESCE($14, false)
+       )
+       RETURNING id, device_name, udi_di, issuing_agency, gudid_status`,
+      [
+        ctx.organizationId, programId, deviceName, udiDi, agency,
+        input.device_class ?? null, input.product_code ?? null, input.gmdn_code ?? null,
+        input.brand_name ?? null, input.catalog_number ?? null,
+        input.version_or_model ?? null, input.mri_safety ?? null, input.lot_serial ?? null,
+        input.single_use ?? null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Created UDI record for "${deviceName}" (${udiDi}, ${agency}).`,
+    });
+  } catch (err: unknown) {
+    const code = (err as { code?: string }).code;
+    if (code === '23505') {
+      return JSON.stringify({ error: 'A UDI record with that UDI-DI already exists in this org.' });
+    }
+    return JSON.stringify({
+      error: `create_udi_record failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('create_risk_item', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'create_risk_item requires tenant context (organizationId).' });
+  }
+  const hazard = typeof input.hazard === 'string' ? input.hazard : '';
+  const harm   = typeof input.harm === 'string' ? input.harm : '';
+  const sev    = typeof input.severity === 'number' ? Math.round(input.severity) : NaN;
+  const prob   = typeof input.probability === 'number' ? Math.round(input.probability) : NaN;
+  if (!hazard || !harm) {
+    return JSON.stringify({ error: 'create_risk_item: hazard and harm are required.' });
+  }
+  if (!Number.isFinite(sev) || sev < 1 || sev > 5) {
+    return JSON.stringify({ error: 'create_risk_item: severity must be 1..5.' });
+  }
+  if (!Number.isFinite(prob) || prob < 1 || prob > 5) {
+    return JSON.stringify({ error: 'create_risk_item: probability must be 1..5.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+    const { rows } = await getPool().query(
+      `INSERT INTO risk_items (
+         organization_id, program_id, ref_code, hazard, hazardous_situation, harm,
+         sequence_of_events, severity, probability, detectability, initial_risk,
+         control_strategy, source, status
+       ) VALUES (
+         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'open'
+       )
+       RETURNING id, ref_code, hazard, harm, severity, probability, initial_risk, status`,
+      [
+        ctx.organizationId, programId,
+        input.ref_code ?? null, hazard, input.hazardous_situation ?? null, harm,
+        input.sequence_of_events ?? null, sev, prob,
+        typeof input.detectability === 'number' ? Math.round(input.detectability) : null,
+        sev * prob,
+        input.control_strategy ?? null, input.source ?? null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Created risk item (initial risk ${sev * prob}). Add risk_controls via add_risk_control to drive residual risk down.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `create_risk_item failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('add_risk_control', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'add_risk_control requires tenant context (organizationId).' });
+  }
+  const itemId = typeof input.risk_item_id === 'number' ? input.risk_item_id : NaN;
+  const desc   = typeof input.description === 'string' ? input.description : '';
+  const ctype  = typeof input.control_type === 'string' ? input.control_type : '';
+  if (!Number.isFinite(itemId) || itemId <= 0) {
+    return JSON.stringify({ error: 'add_risk_control: risk_item_id (positive integer) required.' });
+  }
+  if (!desc) {
+    return JSON.stringify({ error: 'add_risk_control: description required.' });
+  }
+  if (!['inherent_safety', 'protective_measure', 'information_safety'].includes(ctype)) {
+    return JSON.stringify({ error: 'add_risk_control: control_type must be one of inherent_safety / protective_measure / information_safety.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const pool = getPool();
+    /* Tenant gate. */
+    const own = await pool.query(
+      `SELECT 1 FROM risk_items WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [itemId, ctx.organizationId],
+    );
+    if (own.rows.length === 0) {
+      return JSON.stringify({ error: `risk_item ${itemId} not found in this organization.` });
+    }
+    const { rows } = await pool.query(
+      `INSERT INTO risk_controls (
+         risk_item_id, organization_id, description, control_type,
+         implementation_evidence, verification_evidence, effectiveness_evidence,
+         introduces_new_risk, new_risk_item_id, status
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10, 'proposed'))
+       RETURNING id, description, control_type, status`,
+      [
+        itemId, ctx.organizationId, desc, ctype,
+        input.implementation_evidence ?? null,
+        input.verification_evidence ?? null,
+        input.effectiveness_evidence ?? null,
+        input.introduces_new_risk === true,
+        typeof input.new_risk_item_id === 'number' ? input.new_risk_item_id : null,
+        typeof input.status === 'string' ? input.status : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Added ${ctype} control to risk item ${itemId}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `add_risk_control failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('create_software_lifecycle_item', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'create_software_lifecycle_item requires tenant context.' });
+  }
+  const docLevel = typeof input.doc_level === 'string' ? input.doc_level : '';
+  const kind     = typeof input.item_kind === 'string' ? input.item_kind : '';
+  const title    = typeof input.title === 'string' ? input.title : '';
+  if (!['basic', 'enhanced'].includes(docLevel)) {
+    return JSON.stringify({ error: "doc_level must be 'basic' or 'enhanced'." });
+  }
+  if (!title) {
+    return JSON.stringify({ error: 'title is required.' });
+  }
+  const allowedKinds = new Set([
+    'srs', 'sds', 'arch', 'unit_test', 'integration_test', 'system_test',
+    'release_note', 'anomaly_log', 'ots_list', 'sbom', 'pentest',
+    'threat_model', 'risk_control', 'use_error', 'cybersecurity_label',
+  ]);
+  if (!allowedKinds.has(kind)) {
+    return JSON.stringify({ error: `item_kind must be one of: ${Array.from(allowedKinds).join(', ')}.` });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+    const { rows } = await getPool().query(
+      `INSERT INTO software_lifecycle_items (
+         organization_id, program_id, doc_level, safety_class, item_kind,
+         title, identifier, status, evidence_artifact_id, notes
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, 'draft'), $9, $10)
+       RETURNING id, item_kind, title, identifier, status`,
+      [
+        ctx.organizationId, programId, docLevel,
+        typeof input.safety_class === 'string' ? input.safety_class : null,
+        kind, title, input.identifier ?? null,
+        typeof input.status === 'string' ? input.status : null,
+        typeof input.evidence_artifact_id === 'number' ? input.evidence_artifact_id : null,
+        input.notes ?? null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Created ${kind} deliverable (${docLevel} doc level): ${title}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `create_software_lifecycle_item failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('write_q_sub_section', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'write_q_sub_section requires tenant context.' });
+  }
+  const qSubId     = typeof input.q_sub_id === 'string' ? input.q_sub_id : '';
+  const sectionKey = typeof input.section_key === 'string' ? input.section_key : '';
+  const content    = typeof input.content === 'string' ? input.content : '';
+  const note       = typeof input.summary_note === 'string' ? input.summary_note : '';
+  if (!UUID_RE.test(qSubId)) {
+    return JSON.stringify({ error: 'q_sub_id must be a UUID.' });
+  }
+  const allowed = new Set([
+    'submission_type', 'sponsor_information', 'device_description',
+    'regulatory_history', 'issues_for_discussion', 'specific_questions_for_fda',
+    'proposed_meeting_format', 'supporting_information',
+  ]);
+  if (!allowed.has(sectionKey)) {
+    return JSON.stringify({
+      error: `section_key must be one of: ${Array.from(allowed).join(', ')}.`,
+    });
+  }
+  if (!content || content.length < 40) {
+    return JSON.stringify({ error: 'content (string ≥ 40 chars) is required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const pool = getPool();
+    /* Tenant gate: the q_submission's program must belong to the org. */
+    const own = await pool.query(
+      `SELECT 1
+         FROM q_submissions qs
+         JOIN regulatory_programs p ON p.id = qs.program_id::uuid
+        WHERE qs.id = $1 AND p.organization_id = $2`,
+      [qSubId, ctx.organizationId],
+    );
+    if (own.rows.length === 0) {
+      return JSON.stringify({ error: 'Q-Sub not found in this organization.' });
+    }
+    const { rows } = await pool.query(
+      `INSERT INTO q_sub_section_bodies (
+         q_submission_id, organization_id, section_key, content,
+         draft_source, drafted_at, drafted_summary
+       ) VALUES ($1, $2, $3, $4, 'ana', NOW(), NULLIF($5, ''))
+       ON CONFLICT (q_submission_id, section_key) DO UPDATE SET
+         content         = EXCLUDED.content,
+         draft_source    = 'ana',
+         drafted_at      = NOW(),
+         drafted_summary = COALESCE(EXCLUDED.drafted_summary, q_sub_section_bodies.drafted_summary),
+         accepted_at     = NULL,
+         accepted_by     = NULL,
+         updated_at      = NOW()
+       RETURNING id, section_key, draft_source, drafted_at`,
+      [qSubId, ctx.organizationId, sectionKey, content, note],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Wrote ${sectionKey} into Q-Sub ${qSubId}. Awaiting human accept.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `write_q_sub_section failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MDX kit-section write-back handler — closes the loop between AnA's drafting
 // and the kit's section editors. Persists drafted content into
 // cerv2_510k_sections with draft_source='ana' so the MDX surfaces can render
