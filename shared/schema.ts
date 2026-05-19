@@ -19348,3 +19348,94 @@ export const labelingSymbols = pgTable(
   }),
 );
 export type LabelingSymbol = InferSelectModel<typeof labelingSymbols>;
+
+/* ════════════════════════════════════════════════════════════════════
+   Legacy archive importer tables (migration 20260512) ════════════════ */
+
+export const importJobs = pgTable(
+  'import_jobs',
+  {
+    id:                       serial('id').primaryKey(),
+    organizationId:           integer('organization_id').notNull().references(() => organizations.id),
+    programId:                uuid('program_id'),
+    sourcePath:               text('source_path').notNull(),
+    sourceKind:               text('source_kind').notNull(),
+    sourceSizeBytes:          bigint('source_size_bytes', { mode: 'number' }),
+    sourceSha256:             text('source_sha256'),
+    sourceFilename:           text('source_filename'),
+    detectedFormat:           text('detected_format'),
+    detectedRegion:           text('detected_region'),
+    detectedApplicationId:    text('detected_application_id'),
+    detectedSequence:         text('detected_sequence'),
+    detectedSponsor:          text('detected_sponsor'),
+    status:                   text('status').default('pending').notNull(),
+    fileCount:                integer('file_count').default(0),
+    mappedCount:              integer('mapped_count').default(0),
+    skippedCount:             integer('skipped_count').default(0),
+    errorCount:               integer('error_count').default(0),
+    artifactsCreated:         integer('artifacts_created').default(0),
+    requestedBy:              integer('requested_by').references(() => users.id),
+    approvedBy:               integer('approved_by').references(() => users.id),
+    approvedAt:               timestamp('approved_at', { withTimezone: true }),
+    errorMessage:             text('error_message'),
+    metadata:                 jsonb('metadata').default('{}'),
+    createdAt:                timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:                timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:     index('imp_job_org_idx').on(table.organizationId),
+    programIdx: index('imp_job_program_idx').on(table.programId),
+    statusIdx:  index('imp_job_status_idx').on(table.organizationId, table.status),
+  }),
+);
+export type ImportJob = InferSelectModel<typeof importJobs>;
+
+export const importJobFiles = pgTable(
+  'import_job_files',
+  {
+    id:                  serial('id').primaryKey(),
+    importJobId:         integer('import_job_id').notNull().references(() => importJobs.id, { onDelete: 'cascade' }),
+    organizationId:      integer('organization_id').notNull().references(() => organizations.id),
+    relativePath:        text('relative_path').notNull(),
+    fileName:            text('file_name').notNull(),
+    sizeBytes:           bigint('size_bytes', { mode: 'number' }),
+    sha256:              text('sha256'),
+    detectedKind:        text('detected_kind'),
+    mappedCtdSection:    text('mapped_ctd_section'),
+    mappedSectionKey:    text('mapped_section_key'),
+    mappedArtifactKind:  text('mapped_artifact_kind'),
+    mappingConfidence:   decimal('mapping_confidence', { precision: 3, scale: 2 }),
+    mappingSource:       text('mapping_source'),
+    artifactId:          integer('artifact_id'),
+    status:              text('status').default('pending').notNull(),
+    errorMessage:        text('error_message'),
+    metadata:            jsonb('metadata').default('{}'),
+    createdAt:           timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    jobIdx:    index('imp_file_job_idx').on(table.importJobId),
+    orgIdx:    index('imp_file_org_idx').on(table.organizationId),
+    statusIdx: index('imp_file_status_idx').on(table.importJobId, table.status),
+  }),
+);
+export type ImportJobFile = InferSelectModel<typeof importJobFiles>;
+
+export const importJobFindings = pgTable(
+  'import_job_findings',
+  {
+    id:              serial('id').primaryKey(),
+    importJobId:     integer('import_job_id').notNull().references(() => importJobs.id, { onDelete: 'cascade' }),
+    organizationId:  integer('organization_id').notNull().references(() => organizations.id),
+    severity:        text('severity').notNull(),
+    code:            text('code'),
+    message:         text('message').notNull(),
+    filePath:        text('file_path'),
+    resolved:        boolean('resolved').default(false),
+    resolutionNote:  text('resolution_note'),
+    createdAt:       timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    jobIdx: index('imp_find_job_idx').on(table.importJobId),
+  }),
+);
+export type ImportJobFinding = InferSelectModel<typeof importJobFindings>;

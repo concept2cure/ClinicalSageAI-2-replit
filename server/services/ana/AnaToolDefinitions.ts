@@ -1590,6 +1590,58 @@ export const GLOBAL_SEARCH: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Legacy-import tools (migration 20260512).
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const START_LEGACY_IMPORT: AnaTool = {
+  name: 'start_legacy_import',
+  description:
+    "Kick off an import of a legacy archive (eCTD zip from FDA/EMA/PMDA, eSTAR bundle, raw 510(k) folder, raw PMA module). The detector sniffs the backbone XML or falls back to filename heuristics and produces a per-file mapping into the kit's canonical sections. Returns the job id; use override_import_mapping for any low-confidence rows and then approve_import to materialize artifacts.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      source_path:    { type: 'string', description: 'Absolute path to the uploaded zip / folder.' },
+      source_kind:    { type: 'string', enum: ['zip', 'folder', 'tar', 'rar'] },
+      source_filename:{ type: 'string', description: 'Original filename for display.' },
+      program_id:     { type: 'string', description: 'Optional program (UUID) the archive belongs to.' },
+    },
+    required: ['source_path'],
+  },
+};
+
+export const OVERRIDE_IMPORT_MAPPING: AnaTool = {
+  name: 'override_import_mapping',
+  description:
+    "Override the detector's mapping on a specific file in an import job. Use when AnA recognizes a file the detector bucketed as 'attachment' or assigned a wrong CTD section. Sets mapping_source='manual' and confidence=1.0.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      import_job_id:        { type: 'number' },
+      file_id:              { type: 'number' },
+      mapped_ctd_section:   { type: 'string' },
+      mapped_section_key:   { type: 'string' },
+      mapped_artifact_kind: { type: 'string' },
+      status:               { type: 'string', enum: ['pending', 'mapped', 'skipped'] },
+    },
+    required: ['import_job_id', 'file_id'],
+  },
+};
+
+export const APPROVE_IMPORT: AnaTool = {
+  name: 'approve_import',
+  description:
+    "Finalize an import job — materialize one concept2cure_artifacts row per file that's in 'mapped' status, attached to the specified projectId. Marks the import job 'completed' and stamps approved_by + approved_at for the 21 CFR Part 11 audit trail.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      import_job_id: { type: 'number' },
+      project_id:    { type: 'number', description: 'projects.id the imported artifacts will hang off.' },
+    },
+    required: ['import_job_id', 'project_id'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Native python-docx authoring — canonical Word-grade authoring path.
 // Spawns workers/artifact-compute/docx-python-runtime.py inside the isolated
 // compute worker (no network egress, bounded timeout) which uses python-docx
@@ -1912,6 +1964,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ADD_LABELING_TRANSLATION,
   ADD_LABELING_SYMBOL,
   GLOBAL_SEARCH,
+  START_LEGACY_IMPORT,
+  OVERRIDE_IMPORT_MAPPING,
+  APPROVE_IMPORT,
   ASSEMBLE_ECTD_MODULE_FROM_ARTIFACTS,
   DRAFT_510K_SUBSTANTIAL_EQUIVALENCE,
   DRAFT_CLINICAL_OVERVIEW_M2_5,

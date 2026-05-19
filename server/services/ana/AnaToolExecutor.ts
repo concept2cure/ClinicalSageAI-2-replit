@@ -2981,6 +2981,217 @@ registerToolHandler('global_search', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Legacy-import handlers (migration 20260512).
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('start_legacy_import', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'start_legacy_import requires tenant context.' });
+  const sourcePath = typeof input.source_path === 'string' ? input.source_path : '';
+  if (!sourcePath) return JSON.stringify({ error: 'source_path (string) is required.' });
+  try {
+    const { getPool } = await import('../../db.js');
+    const { detectArchive } = await import('../legacy-importer/detector.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+
+    /* Create job row. */
+    const jobInsert = await getPool().query<{ id: number }>(
+      `INSERT INTO import_jobs (
+         organization_id, program_id, source_path, source_kind, source_filename,
+         status, requested_by
+       ) VALUES ($1, $2, $3, COALESCE($4,'zip'), $5, 'detecting', $6)
+       RETURNING id`,
+      [
+        ctx.organizationId, programId, sourcePath,
+        typeof input.source_kind === 'string' ? input.source_kind : null,
+        typeof input.source_filename === 'string' ? input.source_filename : null,
+        ctx.userId ?? null,
+      ],
+    );
+    const jobId = jobInsert.rows[0].id;
+
+    /* Run detection. */
+    const detected = await detectArchive(sourcePath);
+    let mappedCount = 0;
+    for (const f of detected.files) {
+      const status = f.detectedKind === 'leaf' && f.mappingConfidence >= 0.5 ? 'mapped'
+                   : f.detectedKind === 'leaf' ? 'pending'
+                   : 'skipped';
+      if (status === 'mapped') mappedCount++;
+      await getPool().query(
+        `INSERT INTO import_job_files (
+           import_job_id, organization_id, relative_path, file_name, size_bytes,
+           sha256, detected_kind, mapped_ctd_section, mapped_section_key,
+           mapped_artifact_kind, mapping_confidence, mapping_source, status
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+        [
+          jobId, ctx.organizationId, f.relativePath, f.fileName, f.sizeBytes,
+          f.sha256, f.detectedKind, f.mappedCtdSection, f.mappedSectionKey,
+          f.mappedArtifactKind, f.mappingConfidence, f.mappingSource, status,
+        ],
+      );
+    }
+    for (const fnd of detected.findings) {
+      await getPool().query(
+        `INSERT INTO import_job_findings (import_job_id, organization_id, severity, code, message, file_path)
+         VALUES ($1,$2,$3,$4,$5,$6)`,
+        [jobId, ctx.organizationId, fnd.severity, fnd.code, fnd.message, fnd.filePath ?? null],
+      );
+    }
+    const errorCount = detected.findings.filter((f) => f.severity === 'error').length;
+    await getPool().query(
+      `UPDATE import_jobs
+          SET detected_format = $2, detected_region = $3,
+              detected_application_id = $4, detected_sequence = $5, detected_sponsor = $6,
+              file_count = $7, mapped_count = $8,
+              error_count = $9, status = 'ready_for_review', updated_at = NOW()
+        WHERE id = $1`,
+      [
+        jobId, detected.format, detected.region,
+        detected.applicationId, detected.sequence, detected.sponsor,
+        detected.files.length, mappedCount, errorCount,
+      ],
+    );
+
+    return JSON.stringify({
+      ok: true,
+      jobId,
+      detectedFormat: detected.format,
+      detectedRegion: detected.region,
+      fileCount: detected.files.length,
+      mappedCount,
+      errorCount,
+      message: `Detected ${detected.format} archive · ${detected.files.length} files (${mappedCount} mapped, ${errorCount} errors). Review then call approve_import.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `start_legacy_import failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('override_import_mapping', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'override_import_mapping requires tenant context.' });
+  const jobId  = typeof input.import_job_id === 'number' ? input.import_job_id : NaN;
+  const fileId = typeof input.file_id === 'number' ? input.file_id : NaN;
+  if (!Number.isFinite(jobId) || !Number.isFinite(fileId)) {
+    return JSON.stringify({ error: 'import_job_id and file_id (numbers) are required.' });
+  }
+  const COL: Record<string, string> = {
+    mapped_ctd_section: 'mapped_ctd_section',
+    mapped_section_key: 'mapped_section_key',
+    mapped_artifact_kind: 'mapped_artifact_kind',
+    status: 'status',
+  };
+  const setFrags: string[] = []; const args: unknown[] = [];
+  for (const [k, v] of Object.entries(input)) {
+    if (k === 'import_job_id' || k === 'file_id') continue;
+    const col = COL[k]; if (!col || v === undefined) continue;
+    args.push(v); setFrags.push(`${col} = $${args.length}`);
+  }
+  setFrags.push(`mapping_source = 'ana'`, `mapping_confidence = 1.00`);
+  if (setFrags.length === 0) return JSON.stringify({ error: 'No fields to update.' });
+  args.push(fileId, jobId, ctx.organizationId);
+  try {
+    const { getPool } = await import('../../db.js');
+    const { rows } = await getPool().query(
+      `UPDATE import_job_files SET ${setFrags.join(', ')}
+        WHERE id = $${args.length - 2} AND import_job_id = $${args.length - 1}
+          AND organization_id = $${args.length}
+        RETURNING id, status, mapped_ctd_section, mapped_section_key`,
+      args,
+    );
+    if (rows.length === 0) {
+      return JSON.stringify({ error: `Import file ${fileId} not found in job ${jobId}.` });
+    }
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Overrode mapping on file ${fileId} (status ${rows[0].status}).`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `override_import_mapping failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('approve_import', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'approve_import requires tenant context.' });
+  if (!ctx.userId) return JSON.stringify({ error: 'approve_import requires user context.' });
+  const jobId     = typeof input.import_job_id === 'number' ? input.import_job_id : NaN;
+  const projectId = typeof input.project_id === 'number' ? input.project_id : NaN;
+  if (!Number.isFinite(jobId) || !Number.isFinite(projectId)) {
+    return JSON.stringify({ error: 'import_job_id and project_id (numbers) are required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const pool = getPool();
+    const own = await pool.query<{ status: string }>(
+      `SELECT status FROM import_jobs WHERE id = $1 AND organization_id = $2`,
+      [jobId, ctx.organizationId],
+    );
+    if (own.rows.length === 0) {
+      return JSON.stringify({ error: `Import job ${jobId} not found.` });
+    }
+    if (own.rows[0].status !== 'ready_for_review') {
+      return JSON.stringify({ error: `Job is not in ready_for_review state (current: ${own.rows[0].status}).` });
+    }
+    const files = await pool.query<{
+      id: number; relative_path: string; file_name: string;
+      mapped_ctd_section: string | null; mapped_artifact_kind: string | null;
+      sha256: string | null;
+    }>(
+      `SELECT id, relative_path, file_name, mapped_ctd_section,
+              mapped_artifact_kind, sha256
+         FROM import_job_files
+        WHERE import_job_id = $1 AND status = 'mapped'`,
+      [jobId],
+    );
+    let createdCount = 0;
+    for (const f of files.rows) {
+      try {
+        const ins = await pool.query<{ id: number }>(
+          `INSERT INTO concept2cure_artifacts (
+             artifact_id, project_id, organization_id, type, category, title,
+             content, content_hash, ctd_section, status, created_by_id, metadata
+           ) VALUES ($1, $2, $3, 'imported', 'document', $4, '', $5, $6, 'draft', $7,
+             jsonb_build_object('importJobId', $8, 'sourcePath', $9, 'artifactKind', $10))
+           RETURNING id`,
+          [
+            `import-${jobId}-${f.id}`, projectId, ctx.organizationId,
+            f.mapped_artifact_kind ? `${f.mapped_artifact_kind.replace(/_/g, ' ')} — ${f.file_name}` : f.file_name,
+            f.sha256, f.mapped_ctd_section, ctx.userId,
+            jobId, f.relative_path, f.mapped_artifact_kind,
+          ],
+        );
+        await pool.query(
+          `UPDATE import_job_files SET artifact_id = $1, status = 'imported' WHERE id = $2`,
+          [ins.rows[0].id, f.id],
+        );
+        createdCount++;
+      } catch {
+        /* per-file error already swallowed; surface count below. */
+      }
+    }
+    await pool.query(
+      `UPDATE import_jobs
+          SET status = 'completed', approved_by = $2, approved_at = NOW(),
+              artifacts_created = $3, updated_at = NOW()
+        WHERE id = $1`,
+      [jobId, ctx.userId, createdCount],
+    );
+    return JSON.stringify({
+      ok: true, jobId, artifactsCreated: createdCount,
+      message: `Imported ${createdCount} artifact(s) from job ${jobId} into project ${projectId}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `approve_import failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MDX kit-section write-back handler — closes the loop between AnA's drafting
 // and the kit's section editors. Persists drafted content into
 // cerv2_510k_sections with draft_source='ana' so the MDX surfaces can render

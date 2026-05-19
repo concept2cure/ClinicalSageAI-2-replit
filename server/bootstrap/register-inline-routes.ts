@@ -60,6 +60,7 @@ import mdxQmsRoutes from '../routes/mdx-qms';
 import mdxLabelingRoutes from '../routes/mdx-labeling';
 import mdxSearchRoutes from '../routes/mdx-search';
 import mdxAnalyticsRoutes from '../routes/mdx-analytics';
+import mdxImportsRoutes from '../routes/mdx-imports';
 import regulatoryCorrespondenceRoutes from '../routes/regulatory-correspondence';
 import { create510kWorkflowRoutes } from '../routes/510k-workflow-routes';
 import { createPMAWorkflowRoutes } from '../routes/pma-workflow-routes';
@@ -377,6 +378,8 @@ export function registerInlineSubmissionWorkflowRoutes({
   app.use('/api/mdx', mdxLabelingRoutes);
   app.use('/api/mdx', mdxSearchRoutes);
   app.use('/api/mdx', mdxAnalyticsRoutes);
+  /* Legacy archive importer (migration 20260512). */
+  app.use('/api/mdx', mdxImportsRoutes);
   app.use('/api/regulatory-correspondence', regulatoryCorrespondenceRoutes);
   console.log('✅ Submission Ops API routes mounted successfully');
   console.log('✅ Regulatory Programs API routes mounted successfully');

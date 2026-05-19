@@ -133,6 +133,10 @@ const PROBED_TABLES: Array<{ name: string; role: string; required: boolean }> = 
   { name: 'public.labeling_documents',            role: 'IFU / package insert / patient label / manual', required: true },
   { name: 'public.labeling_translations',         role: 'Language variants per labeling document',     required: true  },
   { name: 'public.labeling_symbols',              role: 'ISO 15223-1 symbols per labeling document',   required: true  },
+  /* Legacy archive importer (migration 20260512). */
+  { name: 'public.import_jobs',                   role: 'Legacy archive import jobs',                  required: true  },
+  { name: 'public.import_job_files',              role: 'Per-file mapping outcome for imports',        required: true  },
+  { name: 'public.import_job_findings',           role: 'Import job validation findings',              required: true  },
 ];
 
 /* Shadow services we proxy to. Configured = env var present; we don't
