@@ -56,6 +56,10 @@ import mdxSubmissionGatewayRoutes from '../routes/mdx-submission-gateway';
 import mdxNotificationsRoutes from '../routes/mdx-notifications';
 import mdxClinicalStudiesRoutes from '../routes/mdx-clinical-studies';
 import mdxAnaMemoryRoutes from '../routes/mdx-ana-memory';
+import mdxQmsRoutes from '../routes/mdx-qms';
+import mdxLabelingRoutes from '../routes/mdx-labeling';
+import mdxSearchRoutes from '../routes/mdx-search';
+import mdxAnalyticsRoutes from '../routes/mdx-analytics';
 import regulatoryCorrespondenceRoutes from '../routes/regulatory-correspondence';
 import { create510kWorkflowRoutes } from '../routes/510k-workflow-routes';
 import { createPMAWorkflowRoutes } from '../routes/pma-workflow-routes';
@@ -368,6 +372,11 @@ export function registerInlineSubmissionWorkflowRoutes({
   app.use('/api/mdx', mdxNotificationsRoutes);
   app.use('/api/mdx', mdxClinicalStudiesRoutes);
   app.use('/api/mdx', mdxAnaMemoryRoutes);
+  /* QMS + Labeling + Global search + Analytics (migration 20260511). */
+  app.use('/api/mdx', mdxQmsRoutes);
+  app.use('/api/mdx', mdxLabelingRoutes);
+  app.use('/api/mdx', mdxSearchRoutes);
+  app.use('/api/mdx', mdxAnalyticsRoutes);
   app.use('/api/regulatory-correspondence', regulatoryCorrespondenceRoutes);
   console.log('✅ Submission Ops API routes mounted successfully');
   console.log('✅ Regulatory Programs API routes mounted successfully');

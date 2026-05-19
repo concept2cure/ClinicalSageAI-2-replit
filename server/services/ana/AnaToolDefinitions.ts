@@ -1439,6 +1439,157 @@ export const VERIFY_MEMORY_ATOM: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// QMS + Labeling + Search + Analytics tools (migration 20260511).
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const CREATE_QMS_DOCUMENT: AnaTool = {
+  name: 'create_qms_document',
+  description:
+    "Create a controlled QMS document (SOP, WI, form, spec, policy, manual, protocol). Starts in draft; flip to effective via approve_qms_document. Use when the user agrees to write a new procedure or AnA derives one from regulatory analysis.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      doc_number: { type: 'string' },
+      title:      { type: 'string' },
+      doc_type:   { type: 'string', enum: ['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol'] },
+      category:   { type: 'string', description: "e.g. design / production / capa / training." },
+      version:    { type: 'string' },
+    },
+    required: ['doc_number', 'title', 'doc_type'],
+  },
+};
+
+export const APPROVE_QMS_DOCUMENT: AnaTool = {
+  name: 'approve_qms_document',
+  description:
+    "Approve a draft / in-review QMS document and flip status to 'effective'. Stamps approver_id + approved_at; sets effective_date to today (or to the provided override).",
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_id:    { type: 'number' },
+      effective_date: { type: 'string', description: 'Optional ISO date override.' },
+    },
+    required: ['document_id'],
+  },
+};
+
+export const ACK_TRAINING: AnaTool = {
+  name: 'ack_training',
+  description:
+    "Record that a user acknowledged training on a specific QMS document version. Captures method (electronic_signature / attestation / trainer_verified) and optional quiz score. Expires in 365 days for periodic refresh.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_id: { type: 'number' },
+      method:      { type: 'string', enum: ['electronic_signature', 'attestation', 'trainer_verified'] },
+      quiz_score:  { type: 'number', minimum: 0, maximum: 100 },
+    },
+    required: ['document_id'],
+  },
+};
+
+export const REGISTER_SUPPLIER: AnaTool = {
+  name: 'register_supplier',
+  description:
+    "Add a supplier to the approved supplier list. Criticality drives the kit's audit schedule + supplier-quality-agreement requirements (critical = annual audit + signed QA mandatory).",
+  input_schema: {
+    type: 'object',
+    properties: {
+      supplier_name:      { type: 'string' },
+      supplier_code:      { type: 'string' },
+      scope:              { type: 'string' },
+      criticality:        { type: 'string', enum: ['critical', 'major', 'minor'] },
+      iso_certifications: { type: 'array', items: { type: 'string' } },
+    },
+    required: ['supplier_name', 'criticality'],
+  },
+};
+
+export const LOG_NONCONFORMING_PRODUCT: AnaTool = {
+  name: 'log_nonconforming_product',
+  description:
+    "Log a nonconforming product. After creation, dispositions are set via the disposition endpoint. AnA can chain to fire_notification when source is 'complaint' or 'supplier' to alert reg-affairs.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      nc_number:     { type: 'string' },
+      device_name:   { type: 'string' },
+      lot_or_serial: { type: 'string' },
+      source:        { type: 'string', enum: ['in_process', 'final_inspection', 'complaint', 'audit', 'supplier'] },
+      description:   { type: 'string' },
+    },
+    required: ['nc_number', 'description'],
+  },
+};
+
+export const CREATE_LABELING_DOCUMENT: AnaTool = {
+  name: 'create_labeling_document',
+  description:
+    "Open a new labeling document — IFU, package insert, patient label, operator/service manual, quick reference, or box label. Primary language defaults to 'en'; add translations via add_labeling_translation.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id:    { type: 'string' },
+      device_name:   { type: 'string' },
+      doc_kind:      { type: 'string', enum: ['ifu', 'package_insert', 'patient_label', 'operator_manual', 'service_manual', 'quick_ref', 'box_label'] },
+      language:      { type: 'string', description: 'BCP 47 (e.g. en, de-DE).' },
+      region:        { type: 'string', enum: ['us', 'eu', 'jp', 'global'] },
+      udi_di:        { type: 'string' },
+    },
+    required: ['device_name', 'doc_kind'],
+  },
+};
+
+export const ADD_LABELING_TRANSLATION: AnaTool = {
+  name: 'add_labeling_translation',
+  description:
+    "Add a translation of an existing labeling document. translation_method covers human, mt_postedited, machine. Set back_translation_verified=true when verified — required for EU MDR Class IIb+ in most member states.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      labeling_document_id:       { type: 'number' },
+      language:                   { type: 'string', description: 'BCP 47 tag.' },
+      translator:                 { type: 'string' },
+      translation_method:         { type: 'string', enum: ['human', 'mt_postedited', 'machine'] },
+      back_translation_verified:  { type: 'boolean' },
+    },
+    required: ['labeling_document_id', 'language'],
+  },
+};
+
+export const ADD_LABELING_SYMBOL: AnaTool = {
+  name: 'add_labeling_symbol',
+  description:
+    "Record an ISO 15223-1 symbol used on a labeling document. symbol_code is the standard's reference number (e.g. '5.4.3' for Caution). required_by lists which regulators require the symbol for this device type.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      labeling_document_id: { type: 'number' },
+      symbol_code:          { type: 'string' },
+      symbol_name:          { type: 'string' },
+      description:          { type: 'string' },
+      required_by:          { type: 'array', items: { type: 'string' } },
+    },
+    required: ['labeling_document_id', 'symbol_code', 'symbol_name'],
+  },
+};
+
+export const GLOBAL_SEARCH: AnaTool = {
+  name: 'global_search',
+  description:
+    "Search across the MDX corpus — programs, artifacts, Q-Subs, audit log, AnA threads, labeling, risk items, clinical studies, UDI records, CDx, LDT, QMS documents. Returns results grouped by type. Use to answer 'find everything about X' user queries before drafting an answer.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      q:    { type: 'string', minLength: 2 },
+      type: { type: 'string', description: 'Optional CSV of types to restrict to (e.g. program,artifact).' },
+      limit:{ type: 'number', minimum: 1, maximum: 100 },
+    },
+    required: ['q'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Native python-docx authoring — canonical Word-grade authoring path.
 // Spawns workers/artifact-compute/docx-python-runtime.py inside the isolated
 // compute worker (no network egress, bounded timeout) which uses python-docx
@@ -1752,6 +1903,15 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,
   VERIFY_MEMORY_ATOM,
+  CREATE_QMS_DOCUMENT,
+  APPROVE_QMS_DOCUMENT,
+  ACK_TRAINING,
+  REGISTER_SUPPLIER,
+  LOG_NONCONFORMING_PRODUCT,
+  CREATE_LABELING_DOCUMENT,
+  ADD_LABELING_TRANSLATION,
+  ADD_LABELING_SYMBOL,
+  GLOBAL_SEARCH,
   ASSEMBLE_ECTD_MODULE_FROM_ARTIFACTS,
   DRAFT_510K_SUBSTANTIAL_EQUIVALENCE,
   DRAFT_CLINICAL_OVERVIEW_M2_5,

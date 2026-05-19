@@ -2640,6 +2640,347 @@ registerToolHandler('verify_memory_atom', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// QMS + Labeling + Search handlers (migration 20260511).
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_qms_document', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'create_qms_document requires tenant context.' });
+  const docNumber = typeof input.doc_number === 'string' ? input.doc_number.trim() : '';
+  const title     = typeof input.title === 'string' ? input.title.trim() : '';
+  const docType   = typeof input.doc_type === 'string' ? input.doc_type : '';
+  if (!docNumber || !title) return JSON.stringify({ error: 'doc_number and title are required.' });
+  if (!['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol'].includes(docType)) {
+    return JSON.stringify({ error: 'doc_type invalid.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const { rows } = await getPool().query(
+      `INSERT INTO qms_documents (
+         organization_id, doc_number, title, doc_type, category, version, status,
+         author_id
+       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,'1.0'),'draft',$7)
+       RETURNING id, doc_number, title, status`,
+      [
+        ctx.organizationId, docNumber, title, docType,
+        typeof input.category === 'string' ? input.category : null,
+        typeof input.version === 'string' ? input.version : null,
+        ctx.userId ?? null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Created QMS document ${docNumber} (${docType}, draft).`,
+    });
+  } catch (err: unknown) {
+    const code = (err as { code?: string }).code;
+    if (code === '23505') return JSON.stringify({ error: 'A document with that number already exists.' });
+    return JSON.stringify({
+      error: `create_qms_document failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('approve_qms_document', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'approve_qms_document requires tenant context.' });
+  const id = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
+  try {
+    const { getPool } = await import('../../db.js');
+    const { rows } = await getPool().query(
+      `UPDATE qms_documents
+          SET status = 'effective',
+              approver_id = $3,
+              approved_at = NOW(),
+              effective_date = COALESCE($4::date, effective_date, NOW()::date),
+              updated_at = NOW()
+        WHERE id = $1 AND organization_id = $2
+          AND status IN ('draft','in_review')
+          AND deleted_at IS NULL
+        RETURNING id, status, effective_date`,
+      [id, ctx.organizationId, ctx.userId ?? null,
+       typeof input.effective_date === 'string' ? input.effective_date : null],
+    );
+    if (rows.length === 0) {
+      return JSON.stringify({ error: 'Document not found, or not in draft/in_review state.' });
+    }
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Approved document ${id} — effective ${rows[0].effective_date}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `approve_qms_document failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('ack_training', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'ack_training requires tenant context.' });
+  if (!ctx.userId) return JSON.stringify({ error: 'ack_training requires user context.' });
+  const docId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isFinite(docId)) return JSON.stringify({ error: 'document_id (number) is required.' });
+  try {
+    const { getPool } = await import('../../db.js');
+    const doc = await getPool().query<{ version: string }>(
+      `SELECT version FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [docId, ctx.organizationId],
+    );
+    if (doc.rows.length === 0) {
+      return JSON.stringify({ error: `Document ${docId} not found in this organization.` });
+    }
+    const { rows } = await getPool().query(
+      `INSERT INTO qms_training_records (
+         organization_id, user_id, document_id, document_version,
+         acknowledgment_method, quiz_score, expires_at
+       ) VALUES ($1, $2, $3, $4, COALESCE($5,'attestation'), $6, NOW() + INTERVAL '365 days')
+       RETURNING id, document_version, expires_at`,
+      [
+        ctx.organizationId, ctx.userId, docId, doc.rows[0].version,
+        typeof input.method === 'string' ? input.method : null,
+        typeof input.quiz_score === 'number' ? Math.round(input.quiz_score) : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Recorded training acknowledgment for document ${docId} version ${doc.rows[0].version}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `ack_training failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('register_supplier', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'register_supplier requires tenant context.' });
+  const name = typeof input.supplier_name === 'string' ? input.supplier_name.trim() : '';
+  const crit = typeof input.criticality === 'string' ? input.criticality : '';
+  if (!name) return JSON.stringify({ error: 'supplier_name is required.' });
+  if (!['critical', 'major', 'minor'].includes(crit)) {
+    return JSON.stringify({ error: 'criticality must be critical | major | minor.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const { rows } = await getPool().query(
+      `INSERT INTO qms_suppliers (
+         organization_id, supplier_name, supplier_code, scope, criticality,
+         approval_status, iso_certifications
+       ) VALUES ($1,$2,$3,$4,$5,'pending',$6)
+       RETURNING id, supplier_name, criticality, approval_status`,
+      [
+        ctx.organizationId, name,
+        typeof input.supplier_code === 'string' ? input.supplier_code : null,
+        typeof input.scope === 'string' ? input.scope : null,
+        crit,
+        Array.isArray(input.iso_certifications)
+          ? (input.iso_certifications as unknown[]).filter((s) => typeof s === 'string')
+          : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Registered ${crit} supplier "${name}" (pending approval).`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `register_supplier failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('log_nonconforming_product', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'log_nonconforming_product requires tenant context.' });
+  const ncNumber = typeof input.nc_number === 'string' ? input.nc_number.trim() : '';
+  const description = typeof input.description === 'string' ? input.description : '';
+  if (!ncNumber || !description) {
+    return JSON.stringify({ error: 'nc_number and description are required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const { rows } = await getPool().query(
+      `INSERT INTO qms_nonconforming_products (
+         organization_id, nc_number, device_name, lot_or_serial, source, description,
+         detected_by, disposition
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,'pending')
+       RETURNING id, nc_number, source, disposition`,
+      [
+        ctx.organizationId, ncNumber,
+        typeof input.device_name === 'string' ? input.device_name : null,
+        typeof input.lot_or_serial === 'string' ? input.lot_or_serial : null,
+        typeof input.source === 'string' ? input.source : null,
+        description, ctx.userId ?? null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Logged NC ${ncNumber} (disposition pending).`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `log_nonconforming_product failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('create_labeling_document', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'create_labeling_document requires tenant context.' });
+  const deviceName = typeof input.device_name === 'string' ? input.device_name.trim() : '';
+  const docKind    = typeof input.doc_kind === 'string' ? input.doc_kind : '';
+  const allowedKind = new Set(['ifu', 'package_insert', 'patient_label', 'operator_manual', 'service_manual', 'quick_ref', 'box_label']);
+  if (!deviceName) return JSON.stringify({ error: 'device_name is required.' });
+  if (!allowedKind.has(docKind)) return JSON.stringify({ error: 'doc_kind invalid.' });
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+    const { rows } = await getPool().query(
+      `INSERT INTO labeling_documents (
+         organization_id, program_id, device_name, doc_kind, language, region, udi_di
+       ) VALUES ($1,$2,$3,$4,COALESCE($5,'en'),$6,$7)
+       RETURNING id, device_name, doc_kind, language`,
+      [
+        ctx.organizationId, programId, deviceName, docKind,
+        typeof input.language === 'string' ? input.language : null,
+        typeof input.region === 'string' ? input.region : null,
+        typeof input.udi_di === 'string' ? input.udi_di : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Created ${docKind} for ${deviceName}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `create_labeling_document failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('add_labeling_translation', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'add_labeling_translation requires tenant context.' });
+  const docId = typeof input.labeling_document_id === 'number' ? input.labeling_document_id : NaN;
+  const lang  = typeof input.language === 'string' ? input.language.trim() : '';
+  if (!Number.isFinite(docId)) return JSON.stringify({ error: 'labeling_document_id (number) is required.' });
+  if (!lang) return JSON.stringify({ error: 'language is required.' });
+  try {
+    const { getPool } = await import('../../db.js');
+    const own = await getPool().query(
+      `SELECT 1 FROM labeling_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [docId, ctx.organizationId],
+    );
+    if (own.rows.length === 0) {
+      return JSON.stringify({ error: `Labeling document ${docId} not found.` });
+    }
+    const { rows } = await getPool().query(
+      `INSERT INTO labeling_translations (
+         labeling_document_id, organization_id, language, translator,
+         translation_method, back_translation_verified, status
+       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,false),'pending')
+       RETURNING id, language, status`,
+      [
+        docId, ctx.organizationId, lang,
+        typeof input.translator === 'string' ? input.translator : null,
+        typeof input.translation_method === 'string' ? input.translation_method : null,
+        input.back_translation_verified === true,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Added ${lang} translation for document ${docId}.`,
+    });
+  } catch (err: unknown) {
+    const code = (err as { code?: string }).code;
+    if (code === '23505') {
+      return JSON.stringify({ error: `A translation for ${lang} already exists on document ${docId}.` });
+    }
+    return JSON.stringify({
+      error: `add_labeling_translation failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('add_labeling_symbol', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'add_labeling_symbol requires tenant context.' });
+  const docId = typeof input.labeling_document_id === 'number' ? input.labeling_document_id : NaN;
+  const code  = typeof input.symbol_code === 'string' ? input.symbol_code.trim() : '';
+  const sname = typeof input.symbol_name === 'string' ? input.symbol_name.trim() : '';
+  if (!Number.isFinite(docId)) return JSON.stringify({ error: 'labeling_document_id (number) is required.' });
+  if (!code || !sname) return JSON.stringify({ error: 'symbol_code and symbol_name are required.' });
+  try {
+    const { getPool } = await import('../../db.js');
+    const own = await getPool().query(
+      `SELECT 1 FROM labeling_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [docId, ctx.organizationId],
+    );
+    if (own.rows.length === 0) {
+      return JSON.stringify({ error: `Labeling document ${docId} not found.` });
+    }
+    const { rows } = await getPool().query(
+      `INSERT INTO labeling_symbols (
+         labeling_document_id, organization_id, symbol_code, symbol_name,
+         description, required_by
+       ) VALUES ($1,$2,$3,$4,$5,$6)
+       RETURNING id, symbol_code, symbol_name`,
+      [
+        docId, ctx.organizationId, code, sname,
+        typeof input.description === 'string' ? input.description : null,
+        Array.isArray(input.required_by)
+          ? (input.required_by as unknown[]).filter((s) => typeof s === 'string')
+          : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Added symbol ${code} (${sname}) to document ${docId}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `add_labeling_symbol failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('global_search', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'global_search requires tenant context.' });
+  const q = typeof input.q === 'string' ? input.q.trim() : '';
+  if (q.length < 2) return JSON.stringify({ error: 'q must be at least 2 chars.' });
+  try {
+    /* Forward to the route layer's search function. We reuse the routes
+       module's exported router only indirectly — calling the underlying
+       SQL is simpler than re-exporting the route handler. */
+    const { getPool } = await import('../../db.js');
+    const ilike = `%${q.replace(/[%_]/g, (m) => `\\${m}`)}%`;
+    const limit = typeof input.limit === 'number' ? Math.min(100, Math.max(1, Math.round(input.limit))) : 25;
+    const fanout = await Promise.allSettled([
+      getPool().query(
+        `SELECT id, name, code, status FROM regulatory_programs
+          WHERE organization_id = $1 AND deleted_at IS NULL
+            AND (name ILIKE $2 OR COALESCE(code,'') ILIKE $2 OR COALESCE(description,'') ILIKE $2)
+          LIMIT $3`, [ctx.organizationId, ilike, limit]),
+      getPool().query(
+        `SELECT id, title, ctd_section, status FROM concept2cure_artifacts
+          WHERE organization_id = $1 AND status != 'archived' AND title ILIKE $2
+          ORDER BY updated_at DESC LIMIT $3`, [ctx.organizationId, ilike, limit]),
+    ]);
+    const hits: Array<Record<string, unknown>> = [];
+    if (fanout[0].status === 'fulfilled') {
+      for (const r of fanout[0].value.rows) hits.push({ type: 'program', ...r });
+    }
+    if (fanout[1].status === 'fulfilled') {
+      for (const r of fanout[1].value.rows) hits.push({ type: 'artifact', ...r });
+    }
+    return JSON.stringify({
+      ok: true, query: q, hits, count: hits.length,
+      message: `Found ${hits.length} hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `global_search failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MDX kit-section write-back handler — closes the loop between AnA's drafting
 // and the kit's section editors. Persists drafted content into
 // cerv2_510k_sections with draft_source='ana' so the MDX surfaces can render

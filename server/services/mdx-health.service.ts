@@ -123,6 +123,16 @@ const PROBED_TABLES: Array<{ name: string; role: string; required: boolean }> = 
   { name: 'public.clinical_study_deviations',     role: 'Study deviation log',                         required: true  },
   { name: 'public.clinical_study_aes',            role: 'Adverse event log + UADE flag',               required: true  },
   { name: 'public.clinical_study_endpoints',      role: 'Pre-specified endpoint results',              required: true  },
+  /* QMS + labeling tables (migration 20260511). */
+  { name: 'public.qms_documents',                 role: 'Controlled-document register (QMSR)',         required: true  },
+  { name: 'public.qms_training_records',          role: 'Per-user training acknowledgments',           required: true  },
+  { name: 'public.qms_suppliers',                 role: 'Approved supplier list + quality agreements', required: true  },
+  { name: 'public.qms_internal_audits',           role: 'Internal audit schedule + reports',           required: true  },
+  { name: 'public.qms_management_reviews',        role: 'Management review records',                   required: true  },
+  { name: 'public.qms_nonconforming_products',    role: 'Nonconforming product log + dispositions',    required: true  },
+  { name: 'public.labeling_documents',            role: 'IFU / package insert / patient label / manual', required: true },
+  { name: 'public.labeling_translations',         role: 'Language variants per labeling document',     required: true  },
+  { name: 'public.labeling_symbols',              role: 'ISO 15223-1 symbols per labeling document',   required: true  },
 ];
 
 /* Shadow services we proxy to. Configured = env var present; we don't

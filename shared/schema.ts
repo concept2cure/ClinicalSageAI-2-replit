@@ -19108,3 +19108,243 @@ export const clinicalStudyEndpoints = pgTable(
   }),
 );
 export type ClinicalStudyEndpoint = InferSelectModel<typeof clinicalStudyEndpoints>;
+
+/* ════════════════════════════════════════════════════════════════════
+   QMS + labeling tables (migration 20260511) ════════════════════════ */
+
+export const qmsDocuments = pgTable(
+  'qms_documents',
+  {
+    id:                serial('id').primaryKey(),
+    organizationId:    integer('organization_id').notNull().references(() => organizations.id),
+    docNumber:         text('doc_number').notNull(),
+    title:             text('title').notNull(),
+    docType:           text('doc_type').notNull(),
+    category:          text('category'),
+    version:           text('version').default('1.0').notNull(),
+    status:            text('status').default('draft').notNull(),
+    effectiveDate:     date('effective_date'),
+    nextReviewDate:    date('next_review_date'),
+    authorId:          integer('author_id').references(() => users.id),
+    approverId:        integer('approver_id').references(() => users.id),
+    approvedAt:        timestamp('approved_at', { withTimezone: true }),
+    supersededById:    integer('superseded_by_id'),
+    artifactId:        integer('artifact_id'),
+    metadata:          jsonb('metadata').default('{}'),
+    createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:         timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:    index('qms_doc_org_idx').on(table.organizationId),
+    statusIdx: index('qms_doc_status_idx').on(table.organizationId, table.status),
+  }),
+);
+export type QmsDocument = InferSelectModel<typeof qmsDocuments>;
+
+export const qmsTrainingRecords = pgTable(
+  'qms_training_records',
+  {
+    id:                     serial('id').primaryKey(),
+    organizationId:         integer('organization_id').notNull().references(() => organizations.id),
+    userId:                 integer('user_id').notNull().references(() => users.id),
+    documentId:             integer('document_id').notNull().references(() => qmsDocuments.id, { onDelete: 'cascade' }),
+    documentVersion:        text('document_version').notNull(),
+    acknowledgedAt:         timestamp('acknowledged_at', { withTimezone: true }).defaultNow().notNull(),
+    acknowledgmentMethod:   text('acknowledgment_method'),
+    trainerId:              integer('trainer_id').references(() => users.id),
+    quizScore:              integer('quiz_score'),
+    expiresAt:              timestamp('expires_at', { withTimezone: true }),
+    metadata:               jsonb('metadata').default('{}'),
+    createdAt:              timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    userIdx: index('qms_train_user_idx').on(table.userId),
+    docIdx:  index('qms_train_doc_idx').on(table.documentId),
+    orgIdx:  index('qms_train_org_idx').on(table.organizationId),
+  }),
+);
+export type QmsTrainingRecord = InferSelectModel<typeof qmsTrainingRecords>;
+
+export const qmsSuppliers = pgTable(
+  'qms_suppliers',
+  {
+    id:                  serial('id').primaryKey(),
+    organizationId:      integer('organization_id').notNull().references(() => organizations.id),
+    supplierName:        text('supplier_name').notNull(),
+    supplierCode:        text('supplier_code'),
+    scope:               text('scope'),
+    criticality:         text('criticality').notNull(),
+    approvalStatus:      text('approval_status').default('pending').notNull(),
+    approvalDate:        date('approval_date'),
+    reapprovalDate:      date('reapproval_date'),
+    qualityAgreementId:  integer('quality_agreement_id'),
+    lastAuditDate:       date('last_audit_date'),
+    nextAuditDate:       date('next_audit_date'),
+    isoCertifications:   text('iso_certifications').array(),
+    metadata:            jsonb('metadata').default('{}'),
+    createdAt:           timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:           timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:           timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:    index('qms_supp_org_idx').on(table.organizationId),
+    statusIdx: index('qms_supp_status_idx').on(table.organizationId, table.approvalStatus),
+  }),
+);
+export type QmsSupplier = InferSelectModel<typeof qmsSuppliers>;
+
+export const qmsInternalAudits = pgTable(
+  'qms_internal_audits',
+  {
+    id:                serial('id').primaryKey(),
+    organizationId:    integer('organization_id').notNull().references(() => organizations.id),
+    auditNumber:       text('audit_number').notNull(),
+    scope:             text('scope').notNull(),
+    auditStandard:     text('audit_standard'),
+    auditorLeadId:     integer('auditor_lead_id').references(() => users.id),
+    auditorTeam:       integer('auditor_team').array(),
+    plannedDate:       date('planned_date'),
+    startedAt:         date('started_at'),
+    completedAt:       date('completed_at'),
+    status:            text('status').default('planned').notNull(),
+    findingCount:      integer('finding_count').default(0),
+    majorFindings:     integer('major_findings').default(0),
+    minorFindings:     integer('minor_findings').default(0),
+    observations:      integer('observations').default(0),
+    reportArtifactId:  integer('report_artifact_id'),
+    metadata:          jsonb('metadata').default('{}'),
+    createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:    index('qms_audit_org_idx').on(table.organizationId),
+    statusIdx: index('qms_audit_status_idx').on(table.organizationId, table.status),
+  }),
+);
+export type QmsInternalAudit = InferSelectModel<typeof qmsInternalAudits>;
+
+export const qmsManagementReviews = pgTable(
+  'qms_management_reviews',
+  {
+    id:                  serial('id').primaryKey(),
+    organizationId:      integer('organization_id').notNull().references(() => organizations.id),
+    reviewDate:          date('review_date').notNull(),
+    period:              text('period').notNull(),
+    chairId:             integer('chair_id').references(() => users.id),
+    attendees:           integer('attendees').array(),
+    inputs:              jsonb('inputs'),
+    outputs:             jsonb('outputs'),
+    openActionCount:     integer('open_action_count').default(0),
+    closedActionCount:   integer('closed_action_count').default(0),
+    minutesArtifactId:   integer('minutes_artifact_id'),
+    metadata:            jsonb('metadata').default('{}'),
+    createdAt:           timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:           timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:  index('qms_mr_org_idx').on(table.organizationId),
+  }),
+);
+export type QmsManagementReview = InferSelectModel<typeof qmsManagementReviews>;
+
+export const qmsNonconformingProducts = pgTable(
+  'qms_nonconforming_products',
+  {
+    id:                       serial('id').primaryKey(),
+    organizationId:           integer('organization_id').notNull().references(() => organizations.id),
+    ncNumber:                 text('nc_number').notNull(),
+    deviceName:               text('device_name'),
+    lotOrSerial:              text('lot_or_serial'),
+    detectedAt:               timestamp('detected_at', { withTimezone: true }).defaultNow().notNull(),
+    detectedBy:               integer('detected_by').references(() => users.id),
+    source:                   text('source'),
+    description:              text('description').notNull(),
+    disposition:              text('disposition'),
+    dispositionRationale:     text('disposition_rationale'),
+    dispositionAt:            timestamp('disposition_at', { withTimezone: true }),
+    capaLinked:               boolean('capa_linked').default(false),
+    metadata:                 jsonb('metadata').default('{}'),
+    createdAt:                timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:                timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:   index('qms_nc_org_idx').on(table.organizationId),
+    dispoIdx: index('qms_nc_dispo_idx').on(table.organizationId, table.disposition),
+  }),
+);
+export type QmsNonconformingProduct = InferSelectModel<typeof qmsNonconformingProducts>;
+
+export const labelingDocuments = pgTable(
+  'labeling_documents',
+  {
+    id:                serial('id').primaryKey(),
+    organizationId:    integer('organization_id').notNull().references(() => organizations.id),
+    programId:         uuid('program_id'),
+    deviceName:        text('device_name').notNull(),
+    docKind:           text('doc_kind').notNull(),
+    version:           text('version').default('1.0').notNull(),
+    status:            text('status').default('draft').notNull(),
+    language:          text('language').default('en').notNull(),
+    region:            text('region'),
+    udiDi:             text('udi_di'),
+    effectiveDate:     date('effective_date'),
+    expiresAt:         date('expires_at'),
+    artifactId:        integer('artifact_id'),
+    metadata:          jsonb('metadata').default('{}'),
+    createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:         timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:     index('lbl_doc_org_idx').on(table.organizationId),
+    programIdx: index('lbl_doc_program_idx').on(table.programId),
+    kindIdx:    index('lbl_doc_kind_idx').on(table.organizationId, table.docKind),
+  }),
+);
+export type LabelingDocument = InferSelectModel<typeof labelingDocuments>;
+
+export const labelingTranslations = pgTable(
+  'labeling_translations',
+  {
+    id:                       serial('id').primaryKey(),
+    labelingDocumentId:       integer('labeling_document_id').notNull().references(() => labelingDocuments.id, { onDelete: 'cascade' }),
+    organizationId:           integer('organization_id').notNull().references(() => organizations.id),
+    language:                 text('language').notNull(),
+    translator:               text('translator'),
+    translationMethod:        text('translation_method'),
+    backTranslationVerified:  boolean('back_translation_verified').default(false),
+    status:                   text('status').default('pending').notNull(),
+    artifactId:               integer('artifact_id'),
+    approvedAt:               timestamp('approved_at', { withTimezone: true }),
+    approvedBy:               integer('approved_by').references(() => users.id),
+    metadata:                 jsonb('metadata').default('{}'),
+    createdAt:                timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:                timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('lbl_trans_org_idx').on(table.organizationId),
+  }),
+);
+export type LabelingTranslation = InferSelectModel<typeof labelingTranslations>;
+
+export const labelingSymbols = pgTable(
+  'labeling_symbols',
+  {
+    id:                  serial('id').primaryKey(),
+    labelingDocumentId:  integer('labeling_document_id').notNull().references(() => labelingDocuments.id, { onDelete: 'cascade' }),
+    organizationId:      integer('organization_id').notNull().references(() => organizations.id),
+    symbolCode:          text('symbol_code').notNull(),
+    symbolName:          text('symbol_name').notNull(),
+    description:         text('description'),
+    requiredBy:          text('required_by').array(),
+    metadata:            jsonb('metadata').default('{}'),
+    createdAt:           timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    docIdx:  index('lbl_sym_doc_idx').on(table.labelingDocumentId),
+    orgIdx:  index('lbl_sym_org_idx').on(table.organizationId),
+    codeIdx: index('lbl_sym_code_idx').on(table.organizationId, table.symbolCode),
+  }),
+);
+export type LabelingSymbol = InferSelectModel<typeof labelingSymbols>;
