@@ -192,14 +192,52 @@ export interface CrossObjectReasoningPayload {
   recentActions: ActionHistoryEntry[];
   /** Evidence objects. */
   evidence: EvidenceSnapshot[];
+  /** CMC quality signals (Module 3 source objects, sections, contradictions). */
+  cmcSignals: CmcSignalSnapshot;
   /** Assembled at timestamp. */
   assembledAt: string;
+  /**
+   * Timestamp of the most recent underlying-data change observed across
+   * artifacts, CMC source objects, and CMC contradictions. Lets consumers
+   * decide whether a cached score is stale without recomputing.
+   */
+  lastSignalAt: string | null;
   /** Scope metadata. */
   scope: {
     organizationId: number;
     projectId: number;
     module?: string;
   };
+}
+
+/**
+ * Aggregate of the Module 3 / CMC operating-system tables, scoped to the
+ * project. Empty arrays + zero counts when the project has no CMC data —
+ * readiness scoring treats that as "CMC not in scope," not as "failing."
+ */
+export interface CmcSignalSnapshot {
+  sourceObjectCount: number;
+  sourceTypeBreakdown: Record<string, number>;
+  sectionCount: number;
+  staleSectionCount: number;
+  contradictions: CmcContradictionSnapshot[];
+  contradictionCounts: {
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+    open: number;
+    resolved: number;
+  };
+}
+
+export interface CmcContradictionSnapshot {
+  id: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  contradictionType: string;
+  details: string;
+  impactedSections: string[];
+  status: string;
 }
 
 export interface ProjectSnapshot {

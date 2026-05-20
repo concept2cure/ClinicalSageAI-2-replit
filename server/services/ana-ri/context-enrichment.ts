@@ -1080,7 +1080,9 @@ export async function enrichContextForChat(params: {
       defensibility: 'Run a statistical defensibility assessment on this project. Score across 7 dimensions: evidence sufficiency, defensibility, reviewer sensitivity, claim risk, cross-section consistency, submission risk. Generate reviewer risk annotations.',
       design: slash.args ? `Design a clinical trial for: ${slash.args}` : 'Help design the optimal clinical trial. Ask about: indication, phase, primary endpoint, comparator, and whether they need adaptive, basket, umbrella, or platform design features.',
       safety: slash.args ? `Generate safety narrative for: ${slash.args}` : 'Help with safety narrative work. Ask what format they need: CSR safety section, Investigator\'s Brochure, CER, briefing book, or DSUR. Gather adverse event context.',
-      cmc: slash.args ? `Evaluate CMC for: ${slash.args}` : 'Help with CMC/manufacturing work. Ask about: manufacturing change type, CQA impact, comparability assessment needs, or Module 3 documentation.',
+      cmc: slash.args
+        ? `Evaluate CMC for: ${slash.args}`
+        : 'Run the cmc_status command for the active project, then summarise the resulting CMC source-object inventory, section approval state, stale sections, open contradictions, and the export-ready verdict. After the summary, suggest the highest-leverage next action (e.g. /m3 refresh, /m3 contradictions, classify an unmapped source).',
       csr: slash.args ? `Analyze CSR for: ${slash.args}` : 'Help with Clinical Study Report work. Ask which section (efficacy, safety, disposition, demographics) or whether they need ICH E3 validation.',
       device: slash.args ? `Analyze device submission for: ${slash.args}` : 'Help with medical device submission. Ask about: submission type (510(k), PMA, De Novo, EU MDR), predicate device, and classification.',
       diagnostics: slash.args ? `Analyze diagnostics/IVD strategy for: ${slash.args}` : 'Help with diagnostics and IVD strategy. Ask about intended use, analytical validation, clinical performance, cutoff strategy, and companion diagnostic requirements.',
