@@ -98,7 +98,10 @@ const upload = multer({
 const pool = getPool();
 
 // Section-level permission enforcement helper
-async function canEditSection(req: Request, sectionId: string): Promise<boolean> {
+async function canEditSection(
+  req: Request,
+  sectionId: string | string[] | undefined
+): Promise<boolean> {
   if (process.env.AUTH_ENFORCE_SECTION_PERMS !== '1') return true;
   const email = ((req.headers as any)['x-user-email'] || '').toString();
   if (!email) return false;
@@ -167,7 +170,10 @@ const getTenantId = (req: Request): number => {
 };
 
 // Helper function to compute document hash for signatures
-const computeDocHash = async (docId: string, tenantId: number): Promise<string> => {
+const computeDocHash = async (
+  docId: string | string[] | undefined,
+  tenantId: number
+): Promise<string> => {
   const sections = await pool.query(
     'SELECT code, content FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
     [docId, tenantId]
@@ -179,8 +185,8 @@ const computeDocHash = async (docId: string, tenantId: number): Promise<string> 
 // Comprehensive audit logging for 21 CFR Part 11 compliance
 const createAuditTrail = async (
   req: Request,
-  docId: string,
-  sectionId: string | null,
+  docId: string | string[] | undefined,
+  sectionId: string | string[] | undefined | null,
   operationType: string,
   beforeContent: string | null,
   afterContent: string | null,
@@ -239,7 +245,7 @@ const createAuditTrail = async (
       userId: actorEmail,
       action: `authoring.section.${operationType}`,
       resourceType: sectionId ? 'authoring_section' : 'authoring_document',
-      resourceId: sectionId ?? docId,
+      resourceId: String(sectionId ?? docId ?? ''),
       ipAddress,
       userAgent,
       details: {
@@ -264,7 +270,7 @@ const createAuditTrail = async (
 
 // Legacy wrapper for backward compatibility
 const createAuditEvent = async (
-  docId: string,
+  docId: string | string[] | undefined,
   eventType: string,
   actor: string,
   metadata: any,
@@ -392,7 +398,7 @@ const verifyUserPin = async (email: string, pin: string, tenantId: number): Prom
       [email, tenantId]
     );
 
-    if (result.rowCount === 0) {
+    if (((result.rowCount ?? 0) === 0)) {
       console.warn(`PIN verification failed: No PIN record for ${email}`);
       return false;
     }
@@ -467,7 +473,7 @@ const createUserPin = async (email: string, pin: string, tenantId: number): Prom
 
 // Helper function to create revision automatically
 const createRevision = async (
-  sectionId: string,
+  sectionId: string | string[] | undefined,
   content: string,
   updatedBy: string,
   tenantId: number
@@ -545,7 +551,7 @@ router.delete('/sections/:sectionId/tokens/:citeId', async (req: Request, res: R
 
     res.json({
       success: true,
-      deleted: result.rowCount > 0,
+      deleted: ((result.rowCount ?? 0) > 0),
     });
   } catch (error) {
     console.error('Error deleting token:', error);
@@ -635,7 +641,7 @@ router.get('/templates/:id', async (req: Request, res: Response) => {
       [id, tenantId]
     );
 
-    if (templateResult.rowCount === 0) {
+    if (((templateResult.rowCount ?? 0) === 0)) {
       return res.status(404).json({ error: 'Template not found' });
     }
 
@@ -722,7 +728,7 @@ router.post('/templates/apply/:id', async (req: Request, res: Response) => {
       [id, tenantId]
     );
 
-    if (templateResult.rowCount === 0) {
+    if (((templateResult.rowCount ?? 0) === 0)) {
       return res.status(404).json({ error: 'Template not found' });
     }
 
@@ -986,7 +992,7 @@ router.get('/docs/:docId', async (req: Request, res: Response) => {
       [docId, tenantId]
     );
 
-    if (docResult.rowCount === 0) {
+    if (((docResult.rowCount ?? 0) === 0)) {
       return res.status(404).json({
         success: false,
         error: 'Document not found',
@@ -1099,7 +1105,7 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       [sectionId, tenantId]
     );
 
-    if (currentSection.rowCount === 0) {
+    if (((currentSection.rowCount ?? 0) === 0)) {
       return res.status(404).json({
         success: false,
         error: 'Section not found',
@@ -1227,7 +1233,7 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
       [rev_id, sectionId, tenantId]
     );
 
-    if (revResult.rowCount === 0) {
+    if (((revResult.rowCount ?? 0) === 0)) {
       return res.status(404).json({
         success: false,
         error: 'Revision not found',
@@ -1242,7 +1248,7 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
       [sectionId, tenantId]
     );
 
-    if (currentSection.rowCount && currentSection.rowCount > 0) {
+    if (currentSection.rowCount && ((currentSection.rowCount ?? 0) > 0)) {
       await createRevision(sectionId, currentSection.rows[0].content, revertedBy, tenantId);
     }
 
@@ -1360,7 +1366,7 @@ router.patch('/comments/:commentId', async (req: Request, res: Response) => {
       values
     );
 
-    if (result.rowCount === 0) {
+    if (((result.rowCount ?? 0) === 0)) {
       return res.status(404).json({
         success: false,
         error: 'Comment not found',
@@ -1648,7 +1654,7 @@ router.put('/comments/:id', async (req: Request, res: Response) => {
       params
     );
 
-    if (result.rowCount === 0) {
+    if (((result.rowCount ?? 0) === 0)) {
       return res.status(404).json({
         success: false,
         error: 'Comment not found',
@@ -1707,7 +1713,7 @@ router.delete('/comments/:id', async (req: Request, res: Response) => {
       [id, tenantId]
     );
 
-    if (commentResult.rowCount === 0) {
+    if (((commentResult.rowCount ?? 0) === 0)) {
       return res.status(404).json({
         success: false,
         error: 'Comment not found',
@@ -1801,7 +1807,7 @@ router.post('/documents/:id/review', async (req: Request, res: Response) => {
     );
 
     let result;
-    if (existingReview.rowCount > 0) {
+    if (((existingReview.rowCount ?? 0) > 0)) {
       // Update existing review
       result = await pool.query(
         `UPDATE authoring_reviews
@@ -1941,7 +1947,7 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       [sectionId, tenantId]
     );
 
-    if (sectionResult.rowCount === 0) {
+    if (((sectionResult.rowCount ?? 0) === 0)) {
       return res.status(404).json({
         success: false,
         error: 'Section not found',
@@ -2171,7 +2177,7 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
       [sectionId, tenantId]
     );
 
-    if (sectionResult.rowCount === 0) {
+    if (((sectionResult.rowCount ?? 0) === 0)) {
       return res.status(404).json({
         success: false,
         error: 'Section not found',
@@ -2450,9 +2456,13 @@ async function buildDocx(
             indent: { left: 720 },
           }),
           new Paragraph({
-            text: `Document Hash at Signing: ${sig.document_hash}`,
+            children: [
+              new TextRun({
+                text: `Document Hash at Signing: ${sig.document_hash}`,
+                size: 18,
+              }),
+            ],
             indent: { left: 720 },
-            size: 18,
           }),
           new Paragraph({ text: '' })
         );
@@ -2537,10 +2547,14 @@ async function buildDocx(
           if (c.anchor || c.reference_id) {
             children.push(
               new Paragraph({
-                text: `  Reference: ${c.reference_id || ''} ${c.anchor ? `(${c.anchor})` : ''}`,
+                children: [
+                  new TextRun({
+                    text: `  Reference: ${c.reference_id || ''} ${c.anchor ? `(${c.anchor})` : ''}`,
+                    italics: true,
+                    size: 20,
+                  }),
+                ],
                 indent: { left: 720 },
-                italics: true,
-                size: 20,
               })
             );
           }
@@ -2561,8 +2575,12 @@ async function buildDocx(
         text: 'This document was generated in compliance with 21 CFR Part 11 requirements for electronic records and electronic signatures.',
       }),
       new Paragraph({
-        text: `Document Hash: ${docHash || 'CALCULATION PENDING'}`,
-        bold: true,
+        children: [
+          new TextRun({
+            text: `Document Hash: ${docHash || 'CALCULATION PENDING'}`,
+            bold: true,
+          }),
+        ],
       }),
       new Paragraph({
         text: `Export Timestamp: ${new Date().toISOString()}`,
@@ -2575,9 +2593,13 @@ async function buildDocx(
       }),
       new Paragraph({ text: '' }),
       new Paragraph({
-        text: '--- END OF COMPLIANT DOCUMENT ---',
+        children: [
+          new TextRun({
+            text: '--- END OF COMPLIANT DOCUMENT ---',
+            bold: true,
+          }),
+        ],
         alignment: AlignmentType.CENTER,
-        bold: true,
       })
     );
 
@@ -2588,7 +2610,7 @@ async function buildDocx(
       sections: [
         {
           properties: {},
-          children: children,
+          children: children as any,
         },
       ],
       customProperties: [
@@ -2707,7 +2729,7 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
       [docId, tenantId]
     );
 
-    if (docResult.rowCount === 0) {
+    if (((docResult.rowCount ?? 0) === 0)) {
       return res.status(404).json({ error: 'Document not found' });
     }
 
@@ -2889,7 +2911,7 @@ router.get('/docs/:docId/frozen', async (req: Request, res: Response) => {
 
     const result = await pool.query(query, params);
 
-    if (result.rowCount === 0) {
+    if (((result.rowCount ?? 0) === 0)) {
       return res.status(404).json({ error: 'No frozen version found' });
     }
 
@@ -3054,7 +3076,7 @@ router.post('/sections/:sectionId/refresh-token', async (req: Request, res: Resp
       [cite_id, sectionId, tenantId]
     );
 
-    if (result.rowCount === 0) {
+    if (((result.rowCount ?? 0) === 0)) {
       return res.status(404).json({
         success: false,
         error: 'Citation not found',
@@ -3162,7 +3184,7 @@ async function logExport(
 }
 
 // Helper: list tokens for a whole doc (with section metadata)
-async function listDocTokens(docId: string) {
+async function listDocTokens(docId: string | string[] | undefined) {
   const result = await pool.query(
     `
     SELECT c.id, c.section_id, c.source, c.anchor, c.citation_text, c.reference_id, c.created_by, c.created_at, c.tenant_id, c.payload_sha256, c.frozen_at, s.id as section_id, s.section_number as section_code, s.title as section_title
@@ -3270,7 +3292,7 @@ router.delete('/export-history/:id', async (req: Request, res: Response) => {
       [id, tenantId]
     );
 
-    if (exportEntry.rowCount === 0) {
+    if (((exportEntry.rowCount ?? 0) === 0)) {
       return res.status(404).json({ error: 'Export entry not found' });
     }
 
@@ -3317,7 +3339,7 @@ router.get('/docs/:docId/diff-since-export', async (req: Request, res: Response)
       [req.params.docId]
     );
 
-    if (lastExportResult.rowCount === 0) {
+    if (((lastExportResult.rowCount ?? 0) === 0)) {
       return res.json({ baseline: null, changed: [] });
     }
 
@@ -3436,7 +3458,7 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
       req.params.docId,
     ]);
 
-    if (docResult.rowCount === 0) {
+    if (((docResult.rowCount ?? 0) === 0)) {
       return res.status(404).json({ error: 'Document not found' });
     }
 
@@ -4103,7 +4125,7 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
       [docId, tenantId]
     );
 
-    if (docResult.rowCount === 0) {
+    if (((docResult.rowCount ?? 0) === 0)) {
       return res.status(404).json({ error: 'Document not found' });
     }
 
@@ -4134,9 +4156,9 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
     );
 
     // Generate export based on format
-    let fileContent;
-    let fileName;
-    let contentType;
+    let fileContent: Buffer | undefined;
+    let fileName: string = 'export';
+    let contentType: string = 'application/octet-stream';
 
     if (format === 'xml') {
       // XML export
@@ -4226,7 +4248,7 @@ router.post('/docs/:docId/submit', async (req: Request, res: Response) => {
       [docId, tenantId]
     );
 
-    if (docResult.rowCount === 0) {
+    if (((docResult.rowCount ?? 0) === 0)) {
       return res.status(404).json({ error: 'Document not found' });
     }
 
@@ -4300,7 +4322,7 @@ router.get('/docs/:docId/workflow', async (req: Request, res: Response) => {
       [docId, tenantId]
     );
 
-    if (docResult.rowCount === 0 || !docResult.rows[0].current_workflow_id) {
+    if (((docResult.rowCount ?? 0) === 0) || !docResult.rows[0].current_workflow_id) {
       return res.json({ success: true, workflow: null });
     }
 
@@ -4459,7 +4481,7 @@ router.post(
         [docId, tenantId]
       );
 
-      if (docResult.rowCount === 0) {
+      if (((docResult.rowCount ?? 0) === 0)) {
         return res.status(404).json({ error: 'Document not found' });
       }
 
@@ -4544,7 +4566,7 @@ router.post('/users/pin', async (req: Request, res: Response) => {
       [email, tenantId]
     );
 
-    if (existing.rowCount > 0) {
+    if (((existing.rowCount ?? 0) > 0)) {
       // Verify old PIN if updating
       if (old_pin) {
         const valid = await bcrypt.compare(old_pin, existing.rows[0].pin_hash);
@@ -4558,7 +4580,7 @@ router.post('/users/pin', async (req: Request, res: Response) => {
     const pinHash = await bcrypt.hash(pin, 10);
 
     // Insert or update
-    if (existing.rowCount === 0) {
+    if (((existing.rowCount ?? 0) === 0)) {
       await pool.query(
         `INSERT INTO user_pins (email, pin_hash, tenant_id, created_at, last_changed)
          VALUES ($1, $2, $3, NOW(), NOW())`,
@@ -4779,7 +4801,7 @@ router.post('/ai/suggestions', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Text is required' });
     }
 
-    const suggestions = [];
+    const suggestions: any[] = [];
 
     // Quick grammar checks
     const grammarIssues = [
@@ -4850,7 +4872,13 @@ router.post('/ai/validate-compliance', async (req: Request, res: Response) => {
     const { document_id, section_code, content } = req.body;
     const tenantId = getTenantId(req);
 
-    const validationResults = {
+    const validationResults: {
+      ich_compliance: any[];
+      fda_compliance: any[];
+      ctd_structure: any[];
+      missing_elements: any[];
+      recommendations: any[];
+    } = {
       ich_compliance: [],
       fda_compliance: [],
       ctd_structure: [],
@@ -4860,7 +4888,7 @@ router.post('/ai/validate-compliance', async (req: Request, res: Response) => {
 
     // Check CTD structure requirements
     if (section_code && section_code.startsWith('3.2.')) {
-      const requiredSections = {
+      const requiredSections: Record<string, string[]> = {
         '3.2.S.1': ['nomenclature', 'structure', 'general properties'],
         '3.2.S.2': ['manufacturer', 'manufacturing process', 'controls'],
         '3.2.S.3': ['elucidation of structure', 'impurities'],
@@ -4989,7 +5017,7 @@ router.get('/ai/suggestions/:documentId', async (req: Request, res: Response) =>
       [documentId, status, tenantId]
     );
 
-    const grouped = {
+    const grouped: Record<string, any[]> = {
       critical: [],
       important: [],
       enhancement: [],
@@ -5029,7 +5057,7 @@ router.get('/ai/compliance-scores/:documentId', async (req: Request, res: Respon
       [documentId, tenantId]
     );
 
-    if (result.rowCount === 0) {
+    if (((result.rowCount ?? 0) === 0)) {
       return res.json({
         success: true,
         scores: {

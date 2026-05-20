@@ -181,8 +181,10 @@ interface AuditEntry {
     | 'SIGN'
     | 'APPROVE'
     | 'AI_EDIT'
+    | 'AI_TEMPLATE_GENERATE'
     | 'DUPLICATE'
-    | 'TRANSFER';
+    | 'TRANSFER'
+    | 'FEEDBACK';
   entityType:
     | 'project'
     | 'conversation'
@@ -191,7 +193,14 @@ interface AuditEntry {
     | 'artifact_status'
     | 'audit_report_export'
     | 'review_comment'
+    | 'review_assignment'
+    | 'review_decision'
+    | 'signature'
+    | 'vault_registration'
+    | 'prompt_template'
+    | 'submission_package'
     | 'document_section'
+    | 'ai_response'
     | 'system_error';
   entityId: string;
   previousValue?: unknown;
@@ -240,8 +249,12 @@ async function ensureCommunicationCenterTables(): Promise<void> {
   communicationCenterSchemaCheck = 'ready';
 }
 
-function parseProjectParam(projectParam: string): number {
-  const numericId = Number.parseInt(projectParam.replace('proj_', ''), 10);
+function parseProjectParam(projectParam: string | string[] | undefined): number {
+  const raw = Array.isArray(projectParam) ? projectParam[0] : projectParam;
+  if (typeof raw !== 'string') {
+    throw new Error('Invalid project ID');
+  }
+  const numericId = Number.parseInt(raw.replace('proj_', ''), 10);
   if (!Number.isFinite(numericId) || numericId <= 0) {
     throw new Error('Invalid project ID');
   }
@@ -289,10 +302,11 @@ async function logAuditEntry(
   req: Request,
   action: AuditEntry['action'],
   entityType: AuditEntry['entityType'],
-  entityId: string,
+  entityIdRaw: string | string[] | undefined,
   previousValue?: unknown,
   newValue?: unknown
 ): Promise<void> {
+  const entityId = Array.isArray(entityIdRaw) ? entityIdRaw[0] ?? '' : entityIdRaw ?? '';
   try {
     const auditId = `audit_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
     const timestamp = new Date();
@@ -312,6 +326,12 @@ async function logAuditEntry(
     const integrityHash = crypto.createHash('sha256').update(hashData).digest('hex');
 
     // Persist to regulatory audit log table
+    const userIdNum =
+      typeof req.userId === 'number'
+        ? req.userId
+        : req.userId !== undefined
+          ? parseInt(String(req.userId), 10)
+          : 0;
     await db.insert(regulatoryAuditLogs).values({
       auditId,
       organizationId: orgId,
@@ -321,7 +341,7 @@ async function logAuditEntry(
       actionCategory: getActionCategory(action),
       previousValue: previousValue ?? null,
       newValue: newValue ?? null,
-      userId: req.userId,
+      userId: Number.isFinite(userIdNum) ? userIdNum : 0,
       userName: req.userEmail || 'unknown',
       userRole: req.userRole || 'user',
       ipAddress: getClientIp(req),
@@ -947,7 +967,7 @@ interface Artifact {
   projectId: string;
   conversationId?: string;
   type: string;
-  category: 'document' | 'interactive' | 'visualization' | 'compliance';
+  category: 'document' | 'interactive' | 'visualization' | 'compliance' | 'source' | 'evidence';
   title: string;
   content: string;
   ctdSection?: string | null;
@@ -955,7 +975,6 @@ interface Artifact {
   versions: Array<{ version: number; content: string; createdAt: Date }>;
   metadata?: Record<string, unknown>;
   status?: string;
-  ctdSection?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -978,6 +997,16 @@ interface ProjectKnowledge {
   customInstructions?: string;
   context?: string;
 }
+
+interface OwnershipReportRef {
+  id: string;
+  title: string;
+  kind: 'artifact_report' | 'submission_snapshot';
+  status: 'draft' | 'in_review' | 'approved' | 'published';
+  updatedAt?: string;
+}
+
+type WorkbenchMode = 'draft' | 'review' | 'compliance' | 'submission' | 'analysis' | string;
 
 interface ProjectOwnership {
   chatHistory: Conversation[];
@@ -1063,8 +1092,10 @@ function getOrganizationId(req: Request): number {
   }
 
   // Fall back to tenantId
-  if (req.tenantId && !isNaN(req.tenantId)) {
-    return req.tenantId;
+  if (req.tenantId !== undefined && req.tenantId !== null) {
+    const tid =
+      typeof req.tenantId === 'number' ? req.tenantId : parseInt(String(req.tenantId), 10);
+    if (!isNaN(tid)) return tid;
   }
 
   throw new Error('Organization context required');
@@ -1077,7 +1108,11 @@ function getUserId(req: Request): number {
   if (!req.userId) {
     throw new Error('Authentication required: userId not set on request');
   }
-  return req.userId;
+  const uid = typeof req.userId === 'number' ? req.userId : parseInt(String(req.userId), 10);
+  if (isNaN(uid)) {
+    throw new Error('Authentication required: userId not numeric');
+  }
+  return uid;
 }
 
 /**
@@ -1115,13 +1150,23 @@ function isMissingTableError(error: unknown): boolean {
   );
 }
 
-function getProjectScope(projectParam: string): { numericId: number } | null {
-  const projectId = projectParam.replace('proj_', '');
+function getProjectScope(
+  projectParam: string | string[] | undefined
+): { numericId: number } | null {
+  const raw = Array.isArray(projectParam) ? projectParam[0] : projectParam;
+  if (typeof raw !== 'string') return null;
+  const projectId = raw.replace('proj_', '');
   const numericId = parseInt(projectId, 10);
   if (isNaN(numericId)) {
     return null;
   }
   return { numericId };
+}
+
+function paramStr(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value) && typeof value[0] === 'string') return value[0];
+  return '';
 }
 
 async function loadProjectAccessRow(params: {
@@ -2368,7 +2413,7 @@ router.post('/projects', async (req: Request, res: Response) => {
 router.put('/projects/:id', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const projectId = req.params.id.replace('proj_', '');
+    const projectId = paramStr(req.params.id).replace('proj_', '');
     const numericId = parseInt(projectId, 10);
 
     if (isNaN(numericId)) {
@@ -2450,7 +2495,7 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
     // Transform response with DB conversations
     const conversations = await getConversationsFromDb(numericId, organizationId);
     const response = {
-      id: req.params.id,
+      id: paramStr(req.params.id),
       name: updated.name,
       submissionType: (updated.metadata as any)?.submissionType || 'IND',
       description: updated.description,
@@ -2480,7 +2525,7 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
 router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const projectId = req.params.id.replace('proj_', '');
+    const projectId = paramStr(req.params.id).replace('proj_', '');
     const numericId = parseInt(projectId, 10);
     if (isNaN(numericId)) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
@@ -2578,7 +2623,7 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
 router.get('/projects/:projectId/collaborators', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const projectId = req.params.projectId.replace('proj_', '');
+    const projectId = paramStr(req.params.projectId).replace('proj_', '');
     const numericId = parseInt(projectId, 10);
 
     if (isNaN(numericId)) {
@@ -2638,7 +2683,7 @@ router.get('/projects/:projectId/collaborators', async (req: Request, res: Respo
   } catch (error: any) {
     logger.error('Failed to fetch project collaborators', {
       error: error.message,
-      projectId: req.params.projectId,
+      projectId: paramStr(req.params.projectId),
     });
     return sendError(res, 500, 'Failed to fetch project collaborators');
   }
@@ -2698,7 +2743,7 @@ router.get('/projects/:id/sharing', async (req: Request, res: Response) => {
   } catch (error: any) {
     logger.error('Failed to fetch project sharing', {
       error: error.message,
-      projectId: req.params.id,
+      projectId: paramStr(req.params.id),
     });
     return sendError(res, 500, 'Failed to fetch project sharing');
   }
@@ -2712,7 +2757,7 @@ router.get('/projects/:id/sharing', async (req: Request, res: Response) => {
 router.put('/projects/:projectId/collaborators', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const projectId = req.params.projectId.replace('proj_', '');
+    const projectId = paramStr(req.params.projectId).replace('proj_', '');
     const numericId = parseInt(projectId, 10);
 
     if (isNaN(numericId)) {
@@ -2798,7 +2843,7 @@ router.put('/projects/:projectId/collaborators', async (req: Request, res: Respo
     }
     logger.error('Failed to update project collaborators', {
       error: error.message,
-      projectId: req.params.projectId,
+      projectId: paramStr(req.params.projectId),
     });
     return sendError(res, 500, 'Failed to update project collaborators');
   }
@@ -2886,7 +2931,7 @@ router.patch('/projects/:id/sharing/visibility', async (req: Request, res: Respo
     }
     logger.error('Failed to update project sharing visibility', {
       error: error.message,
-      projectId: req.params.id,
+      projectId: paramStr(req.params.id),
     });
     return sendError(res, 500, 'Failed to update project sharing visibility');
   }
@@ -2906,7 +2951,7 @@ router.put('/projects/:id/sharing/members/:userId', async (req: Request, res: Re
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
-    const pathUserId = Number.parseInt(req.params.userId, 10);
+    const pathUserId = Number.parseInt(paramStr(req.params.userId), 10);
     if (!Number.isFinite(pathUserId) || pathUserId <= 0) {
       return sendError(res, 400, 'Invalid member userId', undefined, 'INVALID_ID');
     }
@@ -3016,7 +3061,7 @@ router.put('/projects/:id/sharing/members/:userId', async (req: Request, res: Re
     }
     logger.error('Failed to upsert project member', {
       error: error.message,
-      projectId: req.params.id,
+      projectId: paramStr(req.params.id),
     });
     return sendError(res, 500, 'Failed to upsert project member');
   }
@@ -3035,7 +3080,7 @@ router.delete('/projects/:id/sharing/members/:userId', async (req: Request, res:
     if (!scope) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
-    const targetUserId = Number.parseInt(req.params.userId, 10);
+    const targetUserId = Number.parseInt(paramStr(req.params.userId), 10);
 
     if (!Number.isFinite(targetUserId) || targetUserId <= 0) {
       return sendError(res, 400, 'Invalid member userId', undefined, 'INVALID_ID');
@@ -3084,7 +3129,7 @@ router.delete('/projects/:id/sharing/members/:userId', async (req: Request, res:
   } catch (error: any) {
     logger.error('Failed to remove project member', {
       error: error.message,
-      projectId: req.params.id,
+      projectId: paramStr(req.params.id),
     });
     return sendError(res, 500, 'Failed to remove project member');
   }
@@ -3397,7 +3442,7 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
+      const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
 
       if (isNaN(numericProjectId)) {
         return sendError(res, 400, 'Invalid project ID');
@@ -3492,7 +3537,7 @@ router.get('/projects/:projectId/governance/decisions', async (req: Request, res
     );
     const entries = await getRecentGovernedDecisions({
       organizationId: String(organizationId),
-      projectId: req.params.projectId,
+      projectId: paramStr(req.params.projectId),
       limit,
     });
 
@@ -3518,8 +3563,7 @@ router.get('/projects/:projectId/governance/summary', async (req: Request, res: 
     );
     const summary = await getGovernedDecisionSummary({
       organizationId: String(organizationId),
-      projectId: req.params.projectId,
-      since: typeof req.query.since === 'string' ? req.query.since : undefined,
+      projectId: paramStr(req.params.projectId),
     });
 
     return sendSuccess(res, { summary });
@@ -3542,8 +3586,8 @@ router.get('/projects/:projectId/governance/artifacts/:artifactId/trace', async 
       '../services/governed-decision-repository.js'
     );
     const trace = await getArtifactDecisionTrace(
-      req.params.projectId,
-      req.params.artifactId
+      paramStr(req.params.projectId),
+      paramStr(req.params.artifactId)
     );
 
     return sendSuccess(res, { trace, count: trace.length });
@@ -3577,7 +3621,7 @@ router.post('/projects/:projectId/governance/decisions/:decisionId/transition', 
 
     const { handleTransition } = await import('../controllers/governance-controller.js');
     const result = await handleTransition({
-      decisionId: req.params.decisionId,
+      decisionId: paramStr(req.params.decisionId),
       organizationId,
       projectId: Number(req.params.projectId),
       actorId: String(userId),
@@ -3610,7 +3654,7 @@ router.get('/projects/:projectId/governance/decisions/:decisionId/history', asyn
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
     const { handleGetHistory } = await import('../controllers/governance-controller.js');
-    const result = await handleGetHistory(req.params.decisionId, organizationId);
+    const result = await handleGetHistory(paramStr(req.params.decisionId), organizationId);
 
     return sendSuccess(res, result);
   } catch (error: any) {
@@ -3861,7 +3905,7 @@ function syncKnowledgeAppContext(
 router.get('/projects/:projectId/apps', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const projectId = req.params.projectId.replace('proj_', '');
+    const projectId = paramStr(req.params.projectId).replace('proj_', '');
     const numericId = parseInt(projectId, 10);
 
     if (isNaN(numericId)) {
@@ -3899,7 +3943,7 @@ router.get('/projects/:projectId/apps', async (req: Request, res: Response) => {
 router.post('/projects/:projectId/apps', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const projectId = req.params.projectId.replace('proj_', '');
+    const projectId = paramStr(req.params.projectId).replace('proj_', '');
     const numericId = parseInt(projectId, 10);
 
     if (isNaN(numericId)) {
@@ -3993,7 +4037,7 @@ router.post('/projects/:projectId/apps', async (req: Request, res: Response) => 
 router.delete('/projects/:projectId/apps/:appId', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const projectId = req.params.projectId.replace('proj_', '');
+    const projectId = paramStr(req.params.projectId).replace('proj_', '');
     const numericId = parseInt(projectId, 10);
 
     if (isNaN(numericId)) {
@@ -4803,9 +4847,9 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
             gwResponse.model || 'unknown',
             gwResponse.provider || 'unknown',
             answerHash,
-            gwResponse.usage?.prompt_tokens || 0,
-            gwResponse.usage?.completion_tokens || 0,
-            gwResponse.usage?.total_tokens || 0,
+            gwResponse.usage?.inputTokens || 0,
+            gwResponse.usage?.outputTokens || 0,
+            gwResponse.usage?.totalTokens || 0,
             latencyMs,
           ]
         );
@@ -6312,7 +6356,10 @@ router.post('/errors', async (req: Request, res: Response) => {
 /**
  * Verify project ownership before conversation operations.
  */
-async function verifyProjectAccess(req: Request, projectId: string): Promise<boolean> {
+async function verifyProjectAccess(
+  req: Request,
+  projectId: string | string[] | undefined
+): Promise<boolean> {
   const organizationId = getOrganizationId(req);
   const userId = getUserId(req);
   const actorRole = getActorRole(req);
@@ -6343,7 +6390,7 @@ router.post('/projects/:projectId/conversations', async (req: Request, res: Resp
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
-    const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
+    const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
 
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess || isNaN(numericProjectId)) {
@@ -6421,7 +6468,7 @@ router.post('/projects/:projectId/conversations', async (req: Request, res: Resp
 
     const newConversation: Conversation = {
       id: conversationId,
-      projectId: req.params.projectId,
+      projectId: paramStr(req.params.projectId),
       title: newDbConversation.title,
       messages: messagesToCopy,
       parentConversationId: data.parentConversationId,
@@ -6432,7 +6479,7 @@ router.post('/projects/:projectId/conversations', async (req: Request, res: Resp
 
     // Log audit entry
     await logAuditEntry(req, 'CREATE', 'conversation', conversationId, null, {
-      projectId: req.params.projectId,
+      projectId: paramStr(req.params.projectId),
       title: newConversation.title,
       forkedFrom: data.parentConversationId,
     });
@@ -6472,7 +6519,7 @@ router.post(
         .from(concept2cureConversations)
         .where(
           and(
-            eq(concept2cureConversations.conversationId, req.params.conversationId),
+            eq(concept2cureConversations.conversationId, paramStr(req.params.conversationId)),
             eq(concept2cureConversations.organizationId, organizationId),
             eq(concept2cureConversations.status, 'active')
           )
@@ -6509,7 +6556,6 @@ router.post(
           contentHash,
           attachments: attachments || null,
           artifactId: data.artifactId || null,
-          createdById: userId,
         })
         .returning();
 
@@ -6530,7 +6576,7 @@ router.post(
 
       // Log audit entry with content hash for integrity verification
       await logAuditEntry(req, 'CREATE', 'message', messageId, null, {
-        conversationId: req.params.conversationId,
+        conversationId: paramStr(req.params.conversationId),
         role: newMessage.role,
         contentLength: sanitizedContent.length,
         contentHash,
@@ -6556,7 +6602,7 @@ router.patch(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
+      const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
       if (!hasAccess || Number.isNaN(numericProjectId)) {
         return sendError(res, 404, 'Project not found');
@@ -6573,7 +6619,7 @@ router.patch(
         .from(concept2cureConversations)
         .where(
           and(
-            eq(concept2cureConversations.conversationId, req.params.conversationId),
+            eq(concept2cureConversations.conversationId, paramStr(req.params.conversationId)),
             eq(concept2cureConversations.projectId, numericProjectId),
             eq(concept2cureConversations.organizationId, organizationId),
             eq(concept2cureConversations.status, 'active')
@@ -6607,7 +6653,7 @@ router.patch(
 
       return sendSuccess(res, {
         id: updated.conversationId,
-        projectId: req.params.projectId,
+        projectId: paramStr(req.params.projectId),
         title: updated.title,
         updatedAt: updated.updatedAt,
       });
@@ -6616,8 +6662,8 @@ router.patch(
         return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
       }
       logConcept2cureError('update conversation', error, {
-        projectId: req.params.projectId,
-        conversationId: req.params.conversationId,
+        projectId: paramStr(req.params.projectId),
+        conversationId: paramStr(req.params.conversationId),
       });
       return sendError(res, 500, 'Failed to update conversation');
     }
@@ -6633,7 +6679,7 @@ router.delete(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
+      const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
       if (!hasAccess || Number.isNaN(numericProjectId)) {
         return sendError(res, 404, 'Project not found');
@@ -6644,7 +6690,7 @@ router.delete(
         .from(concept2cureConversations)
         .where(
           and(
-            eq(concept2cureConversations.conversationId, req.params.conversationId),
+            eq(concept2cureConversations.conversationId, paramStr(req.params.conversationId)),
             eq(concept2cureConversations.projectId, numericProjectId),
             eq(concept2cureConversations.organizationId, organizationId),
             eq(concept2cureConversations.status, 'active')
@@ -6673,13 +6719,13 @@ router.delete(
         null
       );
       return sendSuccess(res, {
-        conversationId: req.params.conversationId,
+        conversationId: paramStr(req.params.conversationId),
         archived: true,
       });
     } catch (error: any) {
       logConcept2cureError('delete conversation', error, {
-        projectId: req.params.projectId,
-        conversationId: req.params.conversationId,
+        projectId: paramStr(req.params.projectId),
+        conversationId: paramStr(req.params.conversationId),
       });
       return sendError(res, 500, 'Failed to delete conversation');
     }
@@ -6780,7 +6826,7 @@ router.get('/projects/all/artifacts-summary', async (req: Request, res: Response
 router.get('/projects/:projectId/artifacts', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
+    const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
 
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess || isNaN(numericProjectId)) {
@@ -6807,7 +6853,7 @@ router.post(
     try {
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
-      const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
+      const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
 
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
       if (!hasAccess || isNaN(numericProjectId)) {
@@ -6941,7 +6987,7 @@ router.post(
 
       const newArtifact: Artifact = {
         id: artifactId,
-        projectId: req.params.projectId,
+        projectId: paramStr(req.params.projectId),
         conversationId: data.conversationId,
         type: data.type,
         category: data.category,
@@ -6957,7 +7003,7 @@ router.post(
 
       // Log audit entry with content hash
       await logAuditEntry(req, 'CREATE', 'artifact', artifactId, null, {
-        projectId: req.params.projectId,
+        projectId: paramStr(req.params.projectId),
         type: newArtifact.type,
         title: newArtifact.title,
         templateId: data.templateId || null,
@@ -6995,7 +7041,7 @@ router.post(
       // RIM: capture artifact creation signal (non-blocking)
       interceptArtifactChange({
         organizationId,
-        projectId: parseInt(req.params.projectId, 10),
+        projectId: parseInt(paramStr(req.params.projectId), 10),
         userId,
         artifactId,
         artifactVersionId: newDbArtifact.id?.toString(),
@@ -7126,7 +7172,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       .from(concept2cureArtifacts)
       .where(
         and(
-          eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+          eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
           eq(concept2cureArtifacts.organizationId, organizationId)
         )
       )
@@ -7284,7 +7330,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
 
     const artifact: Artifact = {
       id: updatedArtifact.artifactId,
-      projectId: req.params.projectId,
+      projectId: paramStr(req.params.projectId),
       conversationId: dbArtifact.conversationId?.toString(),
       type: updatedArtifact.type,
       category: updatedArtifact.category as Artifact['category'],
@@ -7339,9 +7385,9 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
     // RIM: capture artifact update signal (non-blocking)
     interceptArtifactChange({
       organizationId,
-      projectId: parseInt(req.params.projectId, 10),
+      projectId: parseInt(paramStr(req.params.projectId), 10),
       userId,
-      artifactId: req.params.artifactId,
+      artifactId: paramStr(req.params.artifactId),
       artifactVersionId: dbArtifact.id?.toString(),
       sectionCode: newCtdSection || undefined,
       changeType: 'update',
@@ -7378,7 +7424,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
     }
 
     logger.info('Updated artifact', {
-      artifactId: req.params.artifactId,
+      artifactId: paramStr(req.params.artifactId),
       version: artifact.version,
     });
     return sendSuccess(res, artifact);
@@ -7457,7 +7503,7 @@ router.put(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -7581,7 +7627,7 @@ router.put(
       });
 
       logger.info('Artifact placement updated', {
-        artifactId: req.params.artifactId,
+        artifactId: paramStr(req.params.artifactId),
         operation,
         from: previousSection,
         to: toSection,
@@ -7592,9 +7638,9 @@ router.put(
       try {
         const fabricResult = evaluateAndInterceptGovernedDocument({
           context: {
-            organizationId,
-            projectId: dbArtifact.projectId,
-            actorId: userId,
+            organizationId: String(organizationId),
+            projectId: String(dbArtifact.projectId),
+            actorId: String(userId),
             intendedAction: operation === 'relocate' ? 'relocate' : 'place',
             artifactId: dbArtifact.artifactId,
             documentType: dbArtifact.type || undefined,
@@ -7639,7 +7685,7 @@ router.put(
       });
     } catch (error: any) {
       logConcept2cureError('artifact placement', error, {
-        artifactId: req.params.artifactId,
+        artifactId: paramStr(req.params.artifactId),
       });
       return sendError(res, 500, 'Failed to update placement');
     }
@@ -7668,7 +7714,7 @@ router.get(
       }
 
       // Get project DB id
-      const projectDbIdStr = req.params.projectId;
+      const projectDbIdStr = paramStr(req.params.projectId);
       const projectDbId = parseInt(projectDbIdStr, 10);
       if (isNaN(projectDbId)) {
         return sendError(res, 400, 'Invalid project ID');
@@ -7829,7 +7875,7 @@ router.post(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -7908,7 +7954,7 @@ router.post(
         .returning();
 
       await logAuditEntry(req, 'CREATE', 'signature', signatureId, null, {
-        artifactId: req.params.artifactId,
+        artifactId: paramStr(req.params.artifactId),
         version: targetVersion,
         signatureType,
         signaturePurpose,
@@ -7918,7 +7964,7 @@ router.post(
       res.status(201);
       return sendSuccess(res, {
         id: signature.signatureId,
-        artifactId: req.params.artifactId,
+        artifactId: paramStr(req.params.artifactId),
         version: targetVersion,
         signatureType,
         signaturePurpose,
@@ -7956,7 +8002,7 @@ router.get(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -8011,7 +8057,7 @@ router.get(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -8088,7 +8134,7 @@ router.get(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -8314,7 +8360,7 @@ router.get(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -8373,7 +8419,7 @@ router.get(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -8418,7 +8464,7 @@ router.get(
 
       // Emit export provenance event
       await emitProvenanceEvent({
-        artifactId: artifact.id,
+        artifactDbId: artifact.id,
         organizationId,
         eventType: 'export',
         eventAction: 'audit_report_export',
@@ -8427,7 +8473,7 @@ router.get(
         details: { mode, format: 'json' },
         backendRoute: req.originalUrl,
         backendService: 'concept2cure',
-        ipAddress: req.ip || null,
+        ipAddress: req.ip,
       });
 
       // Build report
@@ -8577,7 +8623,7 @@ router.post(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -8808,7 +8854,6 @@ router.post(
         actorId: userId,
         actorName: (req as any).userName || req.userEmail || 'unknown',
         actorEmail: req.userEmail || 'unknown',
-        actorType: 'human',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/audit-report/export`,
         backendService: 'concept2cure-api',
         ipAddress: getClientIp(req),
@@ -8820,7 +8865,7 @@ router.post(
       });
 
       await logAuditEntry(req, 'CREATE', 'audit_report_export', exportArtifactId, null, {
-        sourceArtifactId: req.params.artifactId,
+        sourceArtifactId: paramStr(req.params.artifactId),
         exportedArtifactId: exportArtifactId,
       });
 
@@ -8949,7 +8994,7 @@ router.put(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -9278,7 +9323,7 @@ router.put(
           };
 
           await logAuditEntry(req, 'SIGN', 'signature', signatureId, null, {
-            artifactId: req.params.artifactId,
+            artifactId: paramStr(req.params.artifactId),
             version: artifact.version,
             signatureType: sig.signatureType,
             signaturePurpose,
@@ -9390,9 +9435,9 @@ router.put(
       if (feedbackType) {
         interceptFeedback({
           organizationId,
-          projectId: parseInt(req.params.projectId, 10),
+          projectId: parseInt(paramStr(req.params.projectId), 10),
           userId,
-          artifactId: req.params.artifactId,
+          artifactId: paramStr(req.params.artifactId),
           artifactVersionId: artifact.id?.toString(),
           sectionCode: artifact.ctdSection || undefined,
           feedbackType,
@@ -9441,7 +9486,7 @@ router.put(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -9538,7 +9583,6 @@ router.put(
         actorId: userId,
         actorName: (req as any).userName || req.userEmail || 'unknown',
         actorEmail: req.userEmail || 'unknown',
-        actorType: 'human',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/ctd-section`,
         backendService: 'concept2cure-api',
         ipAddress: getClientIp(req),
@@ -9579,7 +9623,7 @@ router.get(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -9659,7 +9703,7 @@ router.post(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -9795,7 +9839,6 @@ router.post(
         actorId: userId,
         actorName: (req as any).userName || req.userEmail || 'unknown',
         actorEmail: req.userEmail || 'unknown',
-        actorType: 'human',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/rollback`,
         backendService: 'concept2cure-api',
         ipAddress: getClientIp(req),
@@ -9866,7 +9909,7 @@ router.post(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -9902,7 +9945,6 @@ router.post(
         actorId: userId,
         actorName: (req as any).userName || req.userEmail || 'unknown',
         actorEmail: req.userEmail || 'unknown',
-        actorType: 'human',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/comments`,
         backendService: 'concept2cure-api',
         ipAddress: getClientIp(req),
@@ -9910,14 +9952,14 @@ router.post(
       });
 
       await logAuditEntry(req, 'CREATE', 'review_comment', commentId, null, {
-        artifactId: req.params.artifactId,
+        artifactId: paramStr(req.params.artifactId),
         version: artifact.version,
         comment: sanitizedComment,
       });
 
       return sendSuccess(res, {
         commentId: inserted.commentId,
-        artifactId: req.params.artifactId,
+        artifactId: paramStr(req.params.artifactId),
         version: inserted.version,
         status: inserted.status,
         comment: inserted.comment,
@@ -9948,7 +9990,7 @@ router.get(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -9968,7 +10010,7 @@ router.get(
         .orderBy(desc(concept2cureReviewComments.createdAt));
 
       return sendSuccess(res, {
-        artifactId: req.params.artifactId,
+        artifactId: paramStr(req.params.artifactId),
         totalComments: comments.length,
         openComments: comments.filter(c => c.status === 'open').length,
         comments: comments.map(c => ({
@@ -10006,7 +10048,7 @@ router.put(
         .from(concept2cureReviewComments)
         .where(
           and(
-            eq(concept2cureReviewComments.commentId, req.params.commentId),
+            eq(concept2cureReviewComments.commentId, paramStr(req.params.commentId)),
             eq(concept2cureReviewComments.organizationId, organizationId)
           )
         )
@@ -10094,7 +10136,7 @@ router.post(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -10195,7 +10237,6 @@ router.post(
         actorId: userId,
         actorName: (req as any).userName || req.userEmail || 'unknown',
         actorEmail: req.userEmail || 'unknown',
-        actorType: 'human',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/reviewers`,
         backendService: 'concept2cure-api',
         ipAddress: getClientIp(req),
@@ -10214,7 +10255,7 @@ router.post(
       });
 
       return sendSuccess(res, {
-        artifactId: req.params.artifactId,
+        artifactId: paramStr(req.params.artifactId),
         reviewRound,
         assignments: results,
       });
@@ -10242,7 +10283,7 @@ router.get(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -10292,7 +10333,7 @@ router.get(
       }
 
       return sendSuccess(res, {
-        artifactId: req.params.artifactId,
+        artifactId: paramStr(req.params.artifactId),
         totalAssignments: assignments.length,
         assignments: assignments.map(a => ({
           assignmentId: a.assignmentId,
@@ -10345,7 +10386,7 @@ router.delete(
         .from(concept2cureReviewAssignments)
         .where(
           and(
-            eq(concept2cureReviewAssignments.assignmentId, req.params.assignmentId),
+            eq(concept2cureReviewAssignments.assignmentId, paramStr(req.params.assignmentId)),
             eq(concept2cureReviewAssignments.organizationId, organizationId)
           )
         )
@@ -10359,7 +10400,7 @@ router.delete(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -10396,7 +10437,6 @@ router.delete(
         actorId: userId,
         actorName: (req as any).userName || req.userEmail || 'unknown',
         actorEmail: req.userEmail || 'unknown',
-        actorType: 'human',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/reviewers/${req.params.assignmentId}`,
         backendService: 'concept2cure-api',
         ipAddress: getClientIp(req),
@@ -10410,7 +10450,7 @@ router.delete(
       });
 
       return sendSuccess(res, {
-        assignmentId: req.params.assignmentId,
+        assignmentId: paramStr(req.params.assignmentId),
         status: 'withdrawn',
         reviewerId: assignment.reviewerId,
       });
@@ -10487,7 +10527,7 @@ router.post(
         .from(concept2cureReviewAssignments)
         .where(
           and(
-            eq(concept2cureReviewAssignments.assignmentId, req.params.assignmentId),
+            eq(concept2cureReviewAssignments.assignmentId, paramStr(req.params.assignmentId)),
             eq(concept2cureReviewAssignments.organizationId, organizationId)
           )
         )
@@ -10523,13 +10563,13 @@ router.post(
       });
 
       return sendSuccess(res, {
-        assignmentId: req.params.assignmentId,
+        assignmentId: paramStr(req.params.assignmentId),
         reminded: true,
         reviewerId: assignment.reviewerId,
       });
     } catch (error: any) {
       logConcept2cureError('send review reminder', error, {
-        assignmentId: req.params.assignmentId,
+        assignmentId: paramStr(req.params.assignmentId),
       });
       return sendError(res, 500, 'Failed to send reminder');
     }
@@ -10572,7 +10612,7 @@ router.post(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -10657,7 +10697,6 @@ router.post(
         actorId: userId,
         actorName: (req as any).userName || req.userEmail || 'unknown',
         actorEmail: req.userEmail || 'unknown',
-        actorType: 'human',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/reviews/submit`,
         backendService: 'concept2cure-api',
         ipAddress: getClientIp(req),
@@ -10670,7 +10709,7 @@ router.post(
       });
 
       await logAuditEntry(req, 'CREATE', 'review_decision', decisionId, null, {
-        artifactId: req.params.artifactId,
+        artifactId: paramStr(req.params.artifactId),
         decision,
         reviewRound: assignment.reviewRound,
         versionReviewed: artifact.version,
@@ -10748,7 +10787,7 @@ router.get(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -10770,7 +10809,7 @@ router.get(
 
       if (allAssignments.length === 0) {
         return sendSuccess(res, {
-          artifactId: req.params.artifactId,
+          artifactId: paramStr(req.params.artifactId),
           artifactStatus: artifact.status,
           hasReviewers: false,
           currentRound: 0,
@@ -10820,7 +10859,7 @@ router.get(
         activeDecisions.every(d => d.decision === 'approve');
 
       return sendSuccess(res, {
-        artifactId: req.params.artifactId,
+        artifactId: paramStr(req.params.artifactId),
         artifactStatus: artifact.status,
         hasReviewers: true,
         currentRound,
@@ -12182,7 +12221,7 @@ router.get('/documents/download/:filename', async (req: Request, res: Response) 
       return sendError(res, 403, 'Your role does not permit document exports');
     }
 
-    const { filename } = req.params;
+    const filename = paramStr(req.params.filename);
     // Sanitize: only allow alphanumeric, dashes, underscores, dots
     const safe = filename.replace(/[^a-zA-Z0-9_.\-]/g, '');
     if (!safe || safe !== filename || safe.includes('..')) {
@@ -12239,7 +12278,7 @@ router.get('/documents/download/:filename', async (req: Request, res: Response) 
         backendService: 'concept2cure-api',
         ipAddress: getClientIp(req),
         details: { filename: safe, fileSize: fileStat.size, exportHash },
-      });
+      } as never);
 
       // ── Snapshot: create export snapshot record ─────────────────────
       // Try to find matching artifact by filename pattern
@@ -12327,7 +12366,7 @@ router.get('/projects/:projectId/program-twin', async (req: Request, res: Respon
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-    const projectDbId = parseInt(req.params.projectId, 10);
+    const projectDbId = parseInt(paramStr(req.params.projectId), 10);
     if (isNaN(projectDbId)) return sendError(res, 400, 'Invalid project ID');
 
     // Fetch all artifacts
@@ -12529,7 +12568,7 @@ router.get(
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
       if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-      const projectDbId = parseInt(req.params.projectId, 10);
+      const projectDbId = parseInt(paramStr(req.params.projectId), 10);
       if (isNaN(projectDbId)) return sendError(res, 400, 'Invalid project ID');
 
       // Find the artifact
@@ -12540,7 +12579,7 @@ router.get(
           and(
             eq(concept2cureArtifacts.projectId, projectDbId),
             eq(concept2cureArtifacts.organizationId, organizationId),
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId)
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId))
           )
         );
 
@@ -12739,8 +12778,8 @@ router.get(
       });
     } catch (error: any) {
       logConcept2cureError('artifact-verification', error, {
-        projectId: req.params.projectId,
-        artifactId: req.params.artifactId,
+        projectId: paramStr(req.params.projectId),
+        artifactId: paramStr(req.params.artifactId),
       });
       return sendError(res, 500, 'Failed to run verification');
     }
@@ -12758,7 +12797,7 @@ router.get('/projects/:projectId/change-impact', async (req: Request, res: Respo
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-    const projectDbId = parseInt(req.params.projectId, 10);
+    const projectDbId = parseInt(paramStr(req.params.projectId), 10);
     if (isNaN(projectDbId)) return sendError(res, 400, 'Invalid project ID');
 
     const scenarioType = (req.query.scenarioType as string) || 'section_move';
@@ -12981,7 +13020,7 @@ const SUBMISSION_MILESTONES: Record<
 // GET /api/concept2cure/projects/:projectId/tasks
 router.get('/projects/:projectId/tasks', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(paramStr(req.params.projectId), 10);
     if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
 
     const { status, priority, category } = req.query;
@@ -13006,7 +13045,7 @@ router.get('/projects/:projectId/tasks', async (req: Request, res: Response) => 
 // POST /api/concept2cure/projects/:projectId/tasks
 router.post('/projects/:projectId/tasks', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(paramStr(req.params.projectId), 10);
     if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
 
     const taskSchema = z.object({
@@ -13059,7 +13098,7 @@ router.post('/projects/:projectId/tasks', async (req: Request, res: Response) =>
 // PUT /api/concept2cure/projects/:projectId/tasks/:taskId
 router.put('/projects/:projectId/tasks/:taskId', async (req: Request, res: Response) => {
   try {
-    const taskId = parseInt(req.params.taskId, 10);
+    const taskId = parseInt(paramStr(req.params.taskId), 10);
     if (isNaN(taskId)) return sendError(res, 400, 'Invalid task ID');
 
     const updates = req.body;
@@ -13083,7 +13122,7 @@ router.put('/projects/:projectId/tasks/:taskId', async (req: Request, res: Respo
 // DELETE /api/concept2cure/projects/:projectId/tasks/:taskId
 router.delete('/projects/:projectId/tasks/:taskId', async (req: Request, res: Response) => {
   try {
-    const taskId = parseInt(req.params.taskId, 10);
+    const taskId = parseInt(paramStr(req.params.taskId), 10);
     if (isNaN(taskId)) return sendError(res, 400, 'Invalid task ID');
 
     const [deleted] = await db.delete(projectTasks).where(eq(projectTasks.id, taskId)).returning();
@@ -13099,7 +13138,7 @@ router.delete('/projects/:projectId/tasks/:taskId', async (req: Request, res: Re
 // AI-powered bulk task generation from submission type milestones
 router.post('/projects/:projectId/tasks/bulk', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(paramStr(req.params.projectId), 10);
     if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
 
     const { submissionType, targetDate } = req.body;
@@ -13149,7 +13188,7 @@ router.post('/projects/:projectId/tasks/bulk', async (req: Request, res: Respons
       };
     });
 
-    const created = await db.insert(projectTasks).values(taskValues).returning();
+    const created = (await db.insert(projectTasks).values(taskValues).returning()) as any[];
 
     return sendSuccess(res, created, {
       total: created.length,
@@ -13166,7 +13205,7 @@ router.post('/projects/:projectId/tasks/bulk', async (req: Request, res: Respons
 // Task summary with counts by status, overdue count, health score
 router.get('/projects/:projectId/tasks/summary', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(paramStr(req.params.projectId), 10);
     if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
 
     const tasks = await db
@@ -13685,7 +13724,7 @@ router.patch(
 // GET /api/concept2cure/submission-milestones/:type
 // Get available milestones for a submission type
 router.get('/submission-milestones/:type', (req: Request, res: Response) => {
-  const type = req.params.type.toUpperCase();
+  const type = paramStr(req.params.type).toUpperCase();
   const milestones = SUBMISSION_MILESTONES[type];
   if (!milestones) {
     return sendError(
@@ -13750,11 +13789,11 @@ const cmcDataSchema = z.object({
 // GET CMC data for a project
 router.get('/projects/:projectId/cmc', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
-    if (isNaN(projectId)) return sendError(res, 'Invalid project ID', 400);
+    const projectId = parseInt(paramStr(req.params.projectId), 10);
+    if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
 
     const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
-    if (!project) return sendError(res, 'Project not found', 404);
+    if (!project) return sendError(res, 404, 'Project not found');
 
     const metadata = (project.metadata as Record<string, any>) || {};
     return sendSuccess(res, {
@@ -13767,21 +13806,21 @@ router.get('/projects/:projectId/cmc', async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error('Failed to get CMC data', { error });
-    return sendError(res, 'Failed to get CMC data', 500);
+    return sendError(res, 500, 'Failed to get CMC data');
   }
 });
 
 // SAVE CMC data for a project
 router.put('/projects/:projectId/cmc', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
-    if (isNaN(projectId)) return sendError(res, 'Invalid project ID', 400);
+    const projectId = parseInt(paramStr(req.params.projectId), 10);
+    if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
 
     const parsed = cmcDataSchema.safeParse(req.body);
-    if (!parsed.success) return sendError(res, `Invalid CMC data: ${parsed.error.message}`, 400);
+    if (!parsed.success) return sendError(res, 400, `Invalid CMC data: ${parsed.error.message}`);
 
     const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
-    if (!project) return sendError(res, 'Project not found', 404);
+    if (!project) return sendError(res, 404, 'Project not found');
 
     const existingMetadata = (project.metadata as Record<string, any>) || {};
     const updatedMetadata = {
@@ -13800,7 +13839,7 @@ router.put('/projects/:projectId/cmc', async (req: Request, res: Response) => {
     return sendSuccess(res, { saved: true, lastUpdated: updatedMetadata.cmcLastUpdated });
   } catch (error) {
     logger.error('Failed to save CMC data', { error });
-    return sendError(res, 'Failed to save CMC data', 500);
+    return sendError(res, 500, 'Failed to save CMC data');
   }
 });
 
@@ -13811,11 +13850,11 @@ router.put('/projects/:projectId/cmc', async (req: Request, res: Response) => {
 
 router.get('/projects/:projectId/context', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
-    if (isNaN(projectId)) return sendError(res, 'Invalid project ID', 400);
+    const projectId = parseInt(paramStr(req.params.projectId), 10);
+    if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
 
     const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
-    if (!project) return sendError(res, 'Project not found', 404);
+    if (!project) return sendError(res, 404, 'Project not found');
 
     // Fetch tasks (limit to recent 50 — only 10 are returned to client)
     const tasks = await db
@@ -13882,7 +13921,7 @@ router.get('/projects/:projectId/context', async (req: Request, res: Response) =
     });
   } catch (error) {
     logger.error('Failed to get project context', { error });
-    return sendError(res, 'Failed to get project context', 500);
+    return sendError(res, 500, 'Failed to get project context');
   }
 });
 
@@ -13897,7 +13936,7 @@ router.get('/projects/:projectId/transform-context', async (req: Request, res: R
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-    const projectDbId = parseInt(req.params.projectId, 10);
+    const projectDbId = parseInt(paramStr(req.params.projectId), 10);
     if (isNaN(projectDbId)) return sendError(res, 400, 'Invalid project ID');
 
     // Fetch project
@@ -13950,11 +13989,11 @@ router.get('/projects/:projectId/transform-context', async (req: Request, res: R
     return sendSuccess(res, {
       project: {
         id: project.id,
-        name: project.title,
-        submissionType: project.submissionType,
-        sponsor: project.sponsor,
+        name: project.name,
+        submissionType: (project.metadata as Record<string, any> | null)?.submissionType ?? null,
+        sponsor: project.sponsors?.[0] ?? null,
         indication: project.therapeuticArea,
-        region: project.regulatoryRegion,
+        region: (project.metadata as Record<string, any> | null)?.regulatoryRegion ?? null,
       },
       artifacts: {
         total: allArtifacts.length,
@@ -13986,11 +14025,11 @@ router.get('/projects/:projectId/transform-context', async (req: Request, res: R
 
 router.post('/projects/:projectId/tasks/assess', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
-    if (isNaN(projectId)) return sendError(res, 'Invalid project ID', 400);
+    const projectId = parseInt(paramStr(req.params.projectId), 10);
+    if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
 
     const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
-    if (!project) return sendError(res, 'Project not found', 404);
+    if (!project) return sendError(res, 404, 'Project not found');
 
     const tasks = await db
       .select()
@@ -14102,7 +14141,7 @@ router.post('/projects/:projectId/tasks/assess', async (req: Request, res: Respo
     });
   } catch (error) {
     logger.error('Failed to assess tasks', { error });
-    return sendError(res, 'Failed to assess tasks', 500);
+    return sendError(res, 500, 'Failed to assess tasks');
   }
 });
 
@@ -14188,7 +14227,7 @@ router.get(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -14234,7 +14273,7 @@ router.get(
       }
 
       return sendSuccess(res, {
-        artifactId: req.params.artifactId,
+        artifactId: paramStr(req.params.artifactId),
         totalThreads: threads.length,
         threads: threads.map(t => ({
           threadId: t.threadId,
@@ -14284,7 +14323,7 @@ router.post(
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
       if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-      const projectDbId = parseInt(req.params.projectId, 10);
+      const projectDbId = parseInt(paramStr(req.params.projectId), 10);
       if (isNaN(projectDbId)) return sendError(res, 400, 'Invalid project ID');
 
       const [artifact] = await db
@@ -14292,7 +14331,7 @@ router.post(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -14413,7 +14452,6 @@ router.post(
         actorId: userId,
         actorName,
         actorEmail: req.userEmail || 'unknown',
-        actorType: 'human',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/review-threads`,
         backendService: 'concept2cure-api',
         ipAddress: getClientIp(req),
@@ -14431,7 +14469,7 @@ router.post(
         description: `Review thread opened on "${artifact.title}": ${title.trim()}`,
         details: {
           threadId: threadIdStr,
-          artifactId: req.params.artifactId,
+          artifactId: paramStr(req.params.artifactId),
           artifactTitle: artifact.title,
           priority: priority || null,
           assigneeId: assigneeId ? Number(assigneeId) : null,
@@ -14517,7 +14555,7 @@ router.patch('/review-threads/:threadId', async (req: Request, res: Response) =>
       .from(concept2cureReviewThreads)
       .where(
         and(
-          eq(concept2cureReviewThreads.threadId, req.params.threadId),
+          eq(concept2cureReviewThreads.threadId, paramStr(req.params.threadId)),
           eq(concept2cureReviewThreads.orgId, organizationId)
         )
       )
@@ -14596,7 +14634,7 @@ router.post('/review-threads/:threadId/resolve', async (req: Request, res: Respo
       .from(concept2cureReviewThreads)
       .where(
         and(
-          eq(concept2cureReviewThreads.threadId, req.params.threadId),
+          eq(concept2cureReviewThreads.threadId, paramStr(req.params.threadId)),
           eq(concept2cureReviewThreads.orgId, organizationId)
         )
       )
@@ -14644,7 +14682,6 @@ router.post('/review-threads/:threadId/resolve', async (req: Request, res: Respo
       actorId: userId,
       actorName,
       actorEmail: req.userEmail || 'unknown',
-      actorType: 'human',
       backendRoute: `/review-threads/${req.params.threadId}/resolve`,
       backendService: 'concept2cure-api',
       ipAddress: getClientIp(req),
@@ -14725,7 +14762,7 @@ router.post('/review-threads/:threadId/reopen', async (req: Request, res: Respon
       .from(concept2cureReviewThreads)
       .where(
         and(
-          eq(concept2cureReviewThreads.threadId, req.params.threadId),
+          eq(concept2cureReviewThreads.threadId, paramStr(req.params.threadId)),
           eq(concept2cureReviewThreads.orgId, organizationId)
         )
       )
@@ -14773,7 +14810,6 @@ router.post('/review-threads/:threadId/reopen', async (req: Request, res: Respon
       actorId: userId,
       actorName,
       actorEmail: req.userEmail || 'unknown',
-      actorType: 'human',
       backendRoute: `/review-threads/${req.params.threadId}/reopen`,
       backendService: 'concept2cure-api',
       ipAddress: getClientIp(req),
@@ -14852,7 +14888,7 @@ router.get('/review-threads/:threadId/comments', async (req: Request, res: Respo
       .from(concept2cureReviewThreads)
       .where(
         and(
-          eq(concept2cureReviewThreads.threadId, req.params.threadId),
+          eq(concept2cureReviewThreads.threadId, paramStr(req.params.threadId)),
           eq(concept2cureReviewThreads.orgId, organizationId)
         )
       )
@@ -14931,7 +14967,7 @@ router.post('/review-threads/:threadId/comments', async (req: Request, res: Resp
       .from(concept2cureReviewThreads)
       .where(
         and(
-          eq(concept2cureReviewThreads.threadId, req.params.threadId),
+          eq(concept2cureReviewThreads.threadId, paramStr(req.params.threadId)),
           eq(concept2cureReviewThreads.orgId, organizationId)
         )
       )
@@ -14976,7 +15012,6 @@ router.post('/review-threads/:threadId/comments', async (req: Request, res: Resp
       actorId: userId,
       actorName,
       actorEmail: req.userEmail || 'unknown',
-      actorType: 'human',
       backendRoute: `/review-threads/${req.params.threadId}/comments`,
       backendService: 'concept2cure-api',
       ipAddress: getClientIp(req),
@@ -15068,7 +15103,7 @@ router.patch('/review-comments/:commentId', async (req: Request, res: Response) 
       .from(concept2cureThreadComments)
       .where(
         and(
-          eq(concept2cureThreadComments.commentId, req.params.commentId),
+          eq(concept2cureThreadComments.commentId, paramStr(req.params.commentId)),
           eq(concept2cureThreadComments.orgId, organizationId),
           isNull(concept2cureThreadComments.deletedAt)
         )
@@ -15125,7 +15160,7 @@ router.delete('/review-comments/:commentId', async (req: Request, res: Response)
       .from(concept2cureThreadComments)
       .where(
         and(
-          eq(concept2cureThreadComments.commentId, req.params.commentId),
+          eq(concept2cureThreadComments.commentId, paramStr(req.params.commentId)),
           eq(concept2cureThreadComments.orgId, organizationId),
           isNull(concept2cureThreadComments.deletedAt)
         )
@@ -15173,7 +15208,7 @@ router.get(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -15197,7 +15232,7 @@ router.get(
         .orderBy(desc(concept2cureReviewTasks.createdAt));
 
       return sendSuccess(res, {
-        artifactId: req.params.artifactId,
+        artifactId: paramStr(req.params.artifactId),
         totalTasks: tasks.length,
         tasks: tasks.map(t => ({
           taskId: t.taskId,
@@ -15245,7 +15280,7 @@ router.post(
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
       if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-      const projectDbId = parseInt(req.params.projectId, 10);
+      const projectDbId = parseInt(paramStr(req.params.projectId), 10);
       if (isNaN(projectDbId)) return sendError(res, 400, 'Invalid project ID');
 
       const [artifact] = await db
@@ -15253,7 +15288,7 @@ router.post(
         .from(concept2cureArtifacts)
         .where(
           and(
-            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
             eq(concept2cureArtifacts.organizationId, organizationId)
           )
         )
@@ -15336,7 +15371,6 @@ router.post(
         actorId: userId,
         actorName,
         actorEmail: req.userEmail || 'unknown',
-        actorType: 'human',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/review-tasks`,
         backendService: 'concept2cure-api',
         ipAddress: getClientIp(req),
@@ -15354,7 +15388,7 @@ router.post(
         description: `Review task created on "${artifact.title}": ${title.trim()}`,
         details: {
           taskId: taskIdStr,
-          artifactId: req.params.artifactId,
+          artifactId: paramStr(req.params.artifactId),
           artifactTitle: artifact.title,
           taskType: resolvedType,
           dueAt: dueAt || null,
@@ -15449,7 +15483,7 @@ router.patch('/review-tasks/:taskId', async (req: Request, res: Response) => {
       .from(concept2cureReviewTasks)
       .where(
         and(
-          eq(concept2cureReviewTasks.taskId, req.params.taskId),
+          eq(concept2cureReviewTasks.taskId, paramStr(req.params.taskId)),
           eq(concept2cureReviewTasks.orgId, organizationId)
         )
       )
@@ -15534,7 +15568,7 @@ router.post('/review-tasks/:taskId/resolve', async (req: Request, res: Response)
       .from(concept2cureReviewTasks)
       .where(
         and(
-          eq(concept2cureReviewTasks.taskId, req.params.taskId),
+          eq(concept2cureReviewTasks.taskId, paramStr(req.params.taskId)),
           eq(concept2cureReviewTasks.orgId, organizationId)
         )
       )
@@ -15574,7 +15608,6 @@ router.post('/review-tasks/:taskId/resolve', async (req: Request, res: Response)
       actorId: userId,
       actorName,
       actorEmail: req.userEmail || 'unknown',
-      actorType: 'human',
       backendRoute: `/review-tasks/${req.params.taskId}/resolve`,
       backendService: 'concept2cure-api',
       ipAddress: getClientIp(req),
@@ -15655,7 +15688,7 @@ router.post('/review-tasks/:taskId/reopen', async (req: Request, res: Response) 
       .from(concept2cureReviewTasks)
       .where(
         and(
-          eq(concept2cureReviewTasks.taskId, req.params.taskId),
+          eq(concept2cureReviewTasks.taskId, paramStr(req.params.taskId)),
           eq(concept2cureReviewTasks.orgId, organizationId)
         )
       )
@@ -15689,7 +15722,6 @@ router.post('/review-tasks/:taskId/reopen', async (req: Request, res: Response) 
       actorId: userId,
       actorName: (req as any).userName || req.userEmail || 'unknown',
       actorEmail: req.userEmail || 'unknown',
-      actorType: 'human',
       backendRoute: `/review-tasks/${req.params.taskId}/reopen`,
       backendService: 'concept2cure-api',
       ipAddress: getClientIp(req),
@@ -15862,7 +15894,7 @@ router.get('/projects/:projectId/reviews/project-queue', async (req: Request, re
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-    const projectDbId = parseInt(req.params.projectId, 10);
+    const projectDbId = parseInt(paramStr(req.params.projectId), 10);
     if (isNaN(projectDbId)) return sendError(res, 400, 'Invalid project ID');
 
     // All open threads in project
@@ -15974,7 +16006,7 @@ router.get('/projects/:projectId/reviews/project-queue', async (req: Request, re
     }
 
     return sendSuccess(res, {
-      projectId: req.params.projectId,
+      projectId: paramStr(req.params.projectId),
       threads: projectThreads,
       tasks: projectTasks,
       totalThreads: projectThreads.length,
@@ -16018,7 +16050,7 @@ router.get('/projects/:projectId/review-pulse', async (req: Request, res: Respon
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-    const projectDbId = parseInt(req.params.projectId, 10);
+    const projectDbId = parseInt(paramStr(req.params.projectId), 10);
     if (isNaN(projectDbId)) return sendError(res, 400, 'Invalid project ID');
 
     const now = new Date();
@@ -16203,7 +16235,7 @@ router.get('/projects/:projectId/review-pulse', async (req: Request, res: Respon
     }
 
     return sendSuccess(res, {
-      projectId: req.params.projectId,
+      projectId: paramStr(req.params.projectId),
       generatedAt: now.toISOString(),
 
       summary: {
@@ -16493,7 +16525,7 @@ router.post('/notifications/:id/read', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
-    const notifId = parseInt(req.params.id, 10);
+    const notifId = parseInt(paramStr(req.params.id), 10);
     if (isNaN(notifId)) return sendError(res, 400, 'Invalid notification ID');
 
     const [notif] = await db
@@ -16529,7 +16561,7 @@ router.post('/notifications/:id/dismiss', async (req: Request, res: Response) =>
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
-    const notifId = parseInt(req.params.id, 10);
+    const notifId = parseInt(paramStr(req.params.id), 10);
     if (isNaN(notifId)) return sendError(res, 400, 'Invalid notification ID');
 
     const [notif] = await db
@@ -16631,7 +16663,7 @@ router.get('/projects/:projectId/work-items', async (req: Request, res: Response
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-    const projectDbId = parseInt(req.params.projectId, 10);
+    const projectDbId = parseInt(paramStr(req.params.projectId), 10);
     if (isNaN(projectDbId)) return sendError(res, 400, 'Invalid project ID');
 
     const statusFilter = req.query.status as string | undefined;
@@ -16666,7 +16698,7 @@ router.get('/projects/:projectId/readiness-summary', async (req: Request, res: R
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-    const projectDbId = parseInt(req.params.projectId, 10);
+    const projectDbId = parseInt(paramStr(req.params.projectId), 10);
     if (isNaN(projectDbId)) return sendError(res, 400, 'Invalid project ID');
 
     const now = new Date();
@@ -16854,17 +16886,17 @@ router.post('/projects/:projectId/submission-package', async (req: Request, res:
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-    const projectDbId = parseInt(req.params.projectId, 10);
+    const projectDbId = parseInt(paramStr(req.params.projectId), 10);
     if (isNaN(projectDbId)) return sendError(res, 400, 'Invalid project ID');
 
     // Fetch the project
     const [project] = await db
       .select()
-      .from(concept2cureProjects)
+      .from(projects)
       .where(
         and(
-          eq(concept2cureProjects.id, projectDbId),
-          eq(concept2cureProjects.organizationId, organizationId)
+          eq(projects.id, projectDbId),
+          eq(projects.organizationId, organizationId)
         )
       );
 
@@ -17262,7 +17294,7 @@ router.get(
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const conversationId = parseInt(req.params.conversationId, 10);
+      const conversationId = parseInt(paramStr(req.params.conversationId), 10);
       const organizationId =
         Number((req as any).tenantContext?.organizationId) ||
         Number((req as any).tenantId) ||
@@ -17293,7 +17325,7 @@ router.get(
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const conversationId = parseInt(req.params.conversationId, 10);
+      const conversationId = parseInt(paramStr(req.params.conversationId), 10);
       const organizationId =
         Number((req as any).tenantContext?.organizationId) ||
         Number((req as any).tenantId) ||
@@ -17332,7 +17364,7 @@ router.post(
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const conversationId = parseInt(req.params.conversationId, 10);
+      const conversationId = parseInt(paramStr(req.params.conversationId), 10);
       const organizationId =
         Number((req as any).tenantContext?.organizationId) ||
         Number((req as any).tenantId) ||
@@ -17469,7 +17501,7 @@ router.post(
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const conversationId = parseInt(req.params.conversationId, 10);
+      const conversationId = parseInt(paramStr(req.params.conversationId), 10);
       const organizationId =
         Number((req as any).tenantContext?.organizationId) ||
         Number((req as any).tenantId) ||
@@ -17733,7 +17765,7 @@ router.post(
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const conversationId = parseInt(req.params.conversationId, 10);
+      const conversationId = parseInt(paramStr(req.params.conversationId), 10);
       const organizationId =
         Number(
           (req as any).organizationId || (req as any).user?.organizationId || (req as any).tenantId
@@ -18120,7 +18152,7 @@ router.post('/feedback', authMiddleware, async (req: Request, res: Response) => 
       const { interceptFeedback } = await import('../services/intelligence/rim-interceptors.js');
       interceptFeedback({
         organizationId,
-        projectId: req.body.projectId ? Number(req.body.projectId) : undefined,
+        projectId: req.body.projectId ? Number(req.body.projectId) : 0,
         userId,
         feedbackType: positive ? 'accepted' : 'rejected',
       });
