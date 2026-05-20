@@ -1,10 +1,6 @@
 # Route Ownership Matrix (Required Review Artifact)
 
-- Generated from: `docs/reports/route-mount-audit-latest.json`
-- Source timestamp: 2026-05-20T14:21:46.851Z
-- Total mounts: 0
-- Errors: 0
-- Warnings: 0
+- Source: `docs/reports/route-mount-audit-latest.json`
 
 ## Prefix Ownership
 
