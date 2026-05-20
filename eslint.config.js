@@ -5,6 +5,22 @@ import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 
 export default [
+  {
+    // Project-wide ignores. Mirrors the --ignore-pattern flags in the
+    // npm `lint` script plus paths the script can't reach (the
+    // design-system mirror under client/public, Claude Code agent skills
+    // under .claude, and the vanilla-JS admin UI under server/frontend
+    // which legitimately uses browser APIs that don't apply to a
+    // server-side lint config). Keeping these here rather than in
+    // package.json avoids re-triggering the ops-audit workflow on every
+    // lint tweak (ops-audit's path filter listens on package.json).
+    ignores: [
+      '.claude/**',
+      'client/public/**',
+      'design-system/**',
+      'server/frontend/**',
+    ],
+  },
   js.configs.recommended,
   {
     files: ['**/*.{js,jsx,ts,tsx,cjs,mjs}'],
