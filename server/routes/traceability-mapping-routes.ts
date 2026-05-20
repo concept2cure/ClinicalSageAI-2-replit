@@ -45,14 +45,14 @@ async function tableExists(req: any, tableName: string): Promise<boolean> {
 router.get('/:qmpId', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
     const { qmpId } = req.params;
-    const { organizationId } = req.tenantContext || {};
+    const { organizationId: organizationIdRaw } = req.tenantContext || {}; const organizationId = typeof organizationIdRaw === 'string' ? parseInt(organizationIdRaw, 10) : organizationIdRaw;
 
     if (!organizationId) {
       return res.status(400).json({ error: 'Missing tenant context' });
     }
 
     // Convert to number
-    const qmpIdNumber = parseInt(qmpId, 10);
+    const qmpIdNumber = parseInt(String(qmpId), 10);
     if (isNaN(qmpIdNumber)) {
       return res.status(400).json({ error: 'Invalid QMP ID' });
     }
@@ -170,14 +170,14 @@ router.get('/:qmpId', authMiddleware, requireOrganizationContext, async (req, re
 router.post('/:qmpId', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
     const { qmpId } = req.params;
-    const { organizationId } = req.tenantContext || {};
+    const { organizationId: organizationIdRaw } = req.tenantContext || {}; const organizationId = typeof organizationIdRaw === 'string' ? parseInt(organizationIdRaw, 10) : organizationIdRaw;
 
     if (!organizationId) {
       return res.status(400).json({ error: 'Missing tenant context' });
     }
 
     // Convert to number
-    const qmpIdNumber = parseInt(qmpId, 10);
+    const qmpIdNumber = parseInt(String(qmpId), 10);
     if (isNaN(qmpIdNumber)) {
       return res.status(400).json({ error: 'Invalid QMP ID' });
     }
@@ -288,15 +288,15 @@ router.post('/:qmpId', authMiddleware, requireOrganizationContext, async (req, r
 router.get('/:qmpId/item/:itemId', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
     const { qmpId, itemId } = req.params;
-    const { organizationId } = req.tenantContext || {};
+    const { organizationId: organizationIdRaw } = req.tenantContext || {}; const organizationId = typeof organizationIdRaw === 'string' ? parseInt(organizationIdRaw, 10) : organizationIdRaw;
 
     if (!organizationId) {
       return res.status(400).json({ error: 'Missing tenant context' });
     }
 
     // Convert to numbers
-    const qmpIdNumber = parseInt(qmpId, 10);
-    const itemIdNumber = parseInt(itemId, 10);
+    const qmpIdNumber = parseInt(String(qmpId), 10);
+    const itemIdNumber = parseInt(String(itemId), 10);
     if (isNaN(qmpIdNumber) || isNaN(itemIdNumber)) {
       return res.status(400).json({ error: 'Invalid ID format' });
     }
@@ -347,7 +347,7 @@ router.get('/:qmpId/item/:itemId', authMiddleware, requireOrganizationContext, a
           item = {
             ...item,
             ctqFactor: factors[0],
-          };
+          } as any;
         }
       }
     }
@@ -374,15 +374,15 @@ router.patch(
   async (req, res) => {
     try {
       const { qmpId, itemId } = req.params;
-      const { organizationId } = req.tenantContext || {};
+      const { organizationId: organizationIdRaw } = req.tenantContext || {}; const organizationId = typeof organizationIdRaw === 'string' ? parseInt(organizationIdRaw, 10) : organizationIdRaw;
 
       if (!organizationId) {
         return res.status(400).json({ error: 'Missing tenant context' });
       }
 
       // Convert to numbers
-      const qmpIdNumber = parseInt(qmpId, 10);
-      const itemIdNumber = parseInt(itemId, 10);
+      const qmpIdNumber = parseInt(String(qmpId), 10);
+      const itemIdNumber = parseInt(String(itemId), 10);
       if (isNaN(qmpIdNumber) || isNaN(itemIdNumber)) {
         return res.status(400).json({ error: 'Invalid ID format' });
       }
@@ -467,8 +467,8 @@ router.patch(
 
       // If updating verification status to 'verified', set verification timestamp
       if (updateData.verificationStatus === 'verified') {
-        updateData.verifiedAt = new Date();
-        updateData.verifiedById = req.userId;
+        (updateData as any).verifiedAt = new Date();
+        (updateData as any).verifiedById = req.userId;
       }
 
       // Update the traceability item
@@ -509,15 +509,15 @@ router.delete(
   async (req, res) => {
     try {
       const { qmpId, itemId } = req.params;
-      const { organizationId } = req.tenantContext || {};
+      const { organizationId: organizationIdRaw } = req.tenantContext || {}; const organizationId = typeof organizationIdRaw === 'string' ? parseInt(organizationIdRaw, 10) : organizationIdRaw;
 
       if (!organizationId) {
         return res.status(400).json({ error: 'Missing tenant context' });
       }
 
       // Convert to numbers
-      const qmpIdNumber = parseInt(qmpId, 10);
-      const itemIdNumber = parseInt(itemId, 10);
+      const qmpIdNumber = parseInt(String(qmpId), 10);
+      const itemIdNumber = parseInt(String(itemId), 10);
       if (isNaN(qmpIdNumber) || isNaN(itemIdNumber)) {
         return res.status(400).json({ error: 'Invalid ID format' });
       }
@@ -581,14 +581,14 @@ router.delete(
 router.get('/:qmpId/stats', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
     const { qmpId } = req.params;
-    const { organizationId } = req.tenantContext || {};
+    const { organizationId: organizationIdRaw } = req.tenantContext || {}; const organizationId = typeof organizationIdRaw === 'string' ? parseInt(organizationIdRaw, 10) : organizationIdRaw;
 
     if (!organizationId) {
       return res.status(400).json({ error: 'Missing tenant context' });
     }
 
     // Convert to number
-    const qmpIdNumber = parseInt(qmpId, 10);
+    const qmpIdNumber = parseInt(String(qmpId), 10);
     if (isNaN(qmpIdNumber)) {
       return res.status(400).json({ error: 'Invalid QMP ID' });
     }
@@ -634,7 +634,7 @@ router.get('/:qmpId/stats', authMiddleware, requireOrganizationContext, async (r
       totalRequirements > 0 ? Math.round((verifiedRequirements / totalRequirements) * 100) : 0;
 
     // Calculate stats by requirement source
-    const bySource = {};
+    const bySource: Record<string, { total: number; verified: number }> = {};
     items.forEach((item: any) => {
       const source = item.requirementSource || 'Unknown';
       if (!bySource[source]) {
@@ -647,7 +647,7 @@ router.get('/:qmpId/stats', authMiddleware, requireOrganizationContext, async (r
     });
 
     // Calculate stats by verification method
-    const byMethod = {};
+    const byMethod: Record<string, { total: number; verified: number }> = {};
     items.forEach((item: any) => {
       const method = item.verificationMethod || 'Unknown';
       if (!byMethod[method]) {
