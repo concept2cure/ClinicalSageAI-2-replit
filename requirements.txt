@@ -15,7 +15,7 @@ python-docx>=0.8.11           # Read/write DOCX (extraction + generation)
 openpyxl>=3.1.0               # Read XLSX spreadsheets
 mammoth>=1.12.0                # DOCX plain-text extraction
 docx2txt>=0.9                 # DOCX fallback extractor
-tiktoken>=0.5.0               # Token counting for context window trimming
+tiktoken>=0.12.0               # Token counting for context window trimming
 
 # === Analytics Engine / API Bridge ===
 fastapi>=0.136.1              # HTTP API bridge for analytics engine
