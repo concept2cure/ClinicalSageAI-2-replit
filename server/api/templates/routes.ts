@@ -103,12 +103,13 @@ router.get('/catalog', async (req: Request, res: Response) => {
     
     // Add search filter
     if (search) {
-      conditions.push(
-        or(
-          like(ectdTemplates.templateName, `%${search}%`),
-          like(ectdTemplates.content, `%${search}%`)
-        )
+      const searchClause = or(
+        like(ectdTemplates.templateName, `%${search}%`),
+        like(ectdTemplates.content, `%${search}%`)
       );
+      if (searchClause) {
+        conditions.push(searchClause);
+      }
     }
     
     // Get all templates matching base conditions
@@ -219,25 +220,27 @@ router.get('/:id', async (req: Request, res: Response) => {
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    const { id } = req.params;
-    
-    let template = null;
-    
+    const idRaw = req.params.id;
+    const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? '');
+
+    let template: any = null;
+
     // Try numeric ID first
     const numericId = parseInt(id);
     if (!isNaN(numericId)) {
       template = await templateService.getTemplateById(numericId, organizationId);
     }
-    
+
     // If not found with numeric ID or ID is not numeric, try string-based search
     if (!template) {
       // Try to get template by templateName or match string ID against id
+      const matchClause = or(
+        eq(ectdTemplates.templateName, id),
+        eq(sql`CAST(${ectdTemplates.id} AS TEXT)`, id)
+      );
       const templates = await db.select().from(ectdTemplates)
         .where(and(
-          or(
-            eq(ectdTemplates.templateName, id),
-            eq(sql`CAST(${ectdTemplates.id} AS TEXT)`, id)
-          ),
+          matchClause as any,
           eq(ectdTemplates.organizationId, organizationId)
         ));
       
@@ -266,24 +269,25 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
 
     // Return template in expected format
+    const t = template as any;
     res.json({
       success: true,
       template: {
-        id: template.id || template.templateId,
-        templateName: template.templateName || template.name,
-        description: template.description || '',
-        content: template.content || template.structure || '',
-        sections: template.sections || [],
-        category: template.category || 'General',
-        tags: template.tags || [],
-        agency: template.agency || '',
-        format: template.format || 'html',
-        moduleNumber: template.moduleNumber,
-        version: template.version || '1.0.0',
+        id: t.id || t.templateId,
+        templateName: t.templateName || t.name,
+        description: t.description || '',
+        content: t.content || t.structure || '',
+        sections: t.sections || [],
+        category: t.category || 'General',
+        tags: t.tags || [],
+        agency: t.agency || '',
+        format: t.format || 'html',
+        moduleNumber: t.moduleNumber,
+        version: t.version || '1.0.0',
         metadata: {
-          createdAt: template.createdAt || template.created_at || new Date().toISOString(),
-          updatedAt: template.updatedAt || template.updated_at || new Date().toISOString(),
-          status: template.status || template.isActive ? 'active' : 'inactive'
+          createdAt: t.createdAt || t.created_at || new Date().toISOString(),
+          updatedAt: t.updatedAt || t.updated_at || new Date().toISOString(),
+          status: t.status || t.isActive ? 'active' : 'inactive'
         }
       },
     });
@@ -405,7 +409,7 @@ router.put('/:id', async (req: Request, res: Response) => {
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    const templateId = parseInt(req.params.id);
+    const templateId = parseInt(String(req.params.id));
 
     const updatedTemplate = await templateService.updateTemplate(
       templateId,
@@ -443,7 +447,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    const templateId = parseInt(req.params.id);
+    const templateId = parseInt(String(req.params.id));
 
     const deletedTemplate = await templateService.deleteTemplate(templateId, organizationId);
 
@@ -477,7 +481,7 @@ router.post('/:id/use', async (req: Request, res: Response) => {
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    const templateId = parseInt(req.params.id);
+    const templateId = parseInt(String(req.params.id));
     const userId = parseInt(req.headers['x-user-id'] as string);
     if (!userId) {
       return res.status(401).json({ error: 'User context required (x-user-id header)' });
@@ -491,7 +495,7 @@ router.post('/:id/use', async (req: Request, res: Response) => {
       documentTitle: req.body.documentTitle,
     };
 
-    const usage = await templateService.trackTemplateUsage(usageData);
+    const usage = await templateService.trackTemplateUsage(templateId, usageData.usageType);
 
     res.json({
       success: true,

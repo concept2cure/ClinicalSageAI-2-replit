@@ -212,14 +212,15 @@ function writeIdempotencyResponse(
 function buildExecutionReceipt(
   action: string,
   tenantId: string,
-  integrationId: string,
+  integrationId: string | string[] | undefined,
   idempotentReplay = false
 ): ExecutionReceipt {
+  const id = Array.isArray(integrationId) ? integrationId[0] : (integrationId ?? '');
   return {
     executionId: randomUUID(),
     action,
     tenantId,
-    integrationId,
+    integrationId: id,
     timestamp: new Date().toISOString(),
     ...(idempotentReplay ? { idempotentReplay: true } : {}),
   };
@@ -229,10 +230,11 @@ async function emitIntegrationAudit(
   req: Request,
   tenantId: string,
   action: string,
-  integrationId: string,
+  integrationId: string | string[] | undefined,
   success: boolean,
   metadata?: Record<string, unknown>
 ): Promise<void> {
+  const id = Array.isArray(integrationId) ? integrationId[0] : (integrationId ?? '');
   try {
     await logAuditEvent({
       category: 'workflow',
@@ -242,7 +244,7 @@ async function emitIntegrationAudit(
       userName: (req as any).user?.email || (req as any).userEmail || 'unknown',
       organizationId: tenantId,
       resourceType: 'enterprise_integration',
-      resourceId: integrationId,
+      resourceId: id,
       metadata: metadata || {},
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'],
@@ -326,7 +328,12 @@ async function listIntegrations(tenantId: string): Promise<IntegrationConfig[]> 
   }));
 }
 
-async function getIntegration(tenantId: string, integrationId: string): Promise<IntegrationConfig | null> {
+async function getIntegration(
+  tenantId: string,
+  integrationId: string | string[] | undefined
+): Promise<IntegrationConfig | null> {
+  if (Array.isArray(integrationId)) integrationId = integrationId[0];
+  if (!integrationId) return null;
   const hasDb = await ensureIntegrationTables();
   if (!hasDb || !pool) {
     return getTenantIntegrations(tenantId).get(integrationId) || null;
@@ -405,7 +412,12 @@ async function upsertIntegration(tenantId: string, integration: IntegrationConfi
   };
 }
 
-async function deleteIntegration(tenantId: string, integrationId: string): Promise<boolean> {
+async function deleteIntegration(
+  tenantId: string,
+  integrationId: string | string[] | undefined
+): Promise<boolean> {
+  if (Array.isArray(integrationId)) integrationId = integrationId[0];
+  if (!integrationId) return false;
   const hasDb = await ensureIntegrationTables();
   if (!hasDb || !pool) {
     return getTenantIntegrations(tenantId).delete(integrationId);
@@ -521,7 +533,12 @@ async function getTenantSyncMetrics(
   };
 }
 
-function validateProviderConfig(integrationId: string, config: Record<string, string>): string[] {
+function validateProviderConfig(
+  integrationId: string | string[] | undefined,
+  config: Record<string, string>
+): string[] {
+  if (Array.isArray(integrationId)) integrationId = integrationId[0];
+  if (!integrationId) return [];
   const required = providerRequiredFields[integrationId] || [];
   return required.filter(field => !config[field] || !String(config[field]).trim());
 }
@@ -658,7 +675,10 @@ router.get('/:integrationId', async (req: Request, res: Response) => {
 router.get('/:integrationId/health', async (req: Request, res: Response) => {
   try {
     const tenantId = getTenantId(req);
-    const { integrationId } = req.params;
+    const integrationIdRaw = req.params.integrationId;
+    const integrationId = Array.isArray(integrationIdRaw)
+      ? integrationIdRaw[0]
+      : (integrationIdRaw ?? '');
     const integration = await getIntegration(tenantId, integrationId);
 
     if (!integration) {
@@ -697,7 +717,10 @@ router.post('/:integrationId/connect', async (req: Request, res: Response) => {
       });
     }
 
-    const { integrationId } = req.params;
+    const integrationIdRaw = req.params.integrationId;
+    const integrationId = Array.isArray(integrationIdRaw)
+      ? integrationIdRaw[0]
+      : (integrationIdRaw ?? '');
     const parsed = ConnectSchema.safeParse(req.body || {});
 
     if (!parsed.success) {
@@ -806,7 +829,10 @@ router.post('/:integrationId/disconnect', async (req: Request, res: Response) =>
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.post('/:integrationId/test', async (req: Request, res: Response) => {
-  const { integrationId } = req.params;
+  const integrationIdRaw = req.params.integrationId;
+  const integrationId = Array.isArray(integrationIdRaw)
+    ? integrationIdRaw[0]
+    : (integrationIdRaw ?? '');
   const parsed = ConnectSchema.safeParse(req.body || {});
 
   if (!parsed.success) {
@@ -871,7 +897,10 @@ router.post('/:integrationId/sync', async (req: Request, res: Response) => {
       });
     }
 
-    const { integrationId } = req.params;
+    const integrationIdRaw = req.params.integrationId;
+    const integrationId = Array.isArray(integrationIdRaw)
+      ? integrationIdRaw[0]
+      : (integrationIdRaw ?? '');
 
     const integration = await getIntegration(tenantId, integrationId);
     if (!integration) {
@@ -936,7 +965,10 @@ router.post('/:integrationId/sync', async (req: Request, res: Response) => {
 router.get('/:integrationId/sync/runs', async (req: Request, res: Response) => {
   try {
     const tenantId = getTenantId(req);
-    const { integrationId } = req.params;
+    const integrationIdRaw = req.params.integrationId;
+    const integrationId = Array.isArray(integrationIdRaw)
+      ? integrationIdRaw[0]
+      : (integrationIdRaw ?? '');
     const parsed = SyncRunsQuerySchema.safeParse(req.query || {});
 
     if (!parsed.success) {
