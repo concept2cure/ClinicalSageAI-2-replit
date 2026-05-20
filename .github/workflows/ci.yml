@@ -194,10 +194,18 @@ jobs:
           DATABASE_URL_SMOKE: postgresql://postgres:${{ env.TEST_DB_PASSWORD }}@localhost:5432/concept2cure-ri_rls_smoke
 
       - name: Run integration tests
+        # vitest tests read DATABASE_URL via server/db/runtime.ts (per
+        # server/db/getDatabaseUrl.ts the env-var fallback order is
+        # DATABASE_URL → NEON_DATABASE_URL → DATABASE_NEON_NEW_SECRET).
+        # The job had only TEST_DATABASE_URL set, so the pool couldn't
+        # connect and ~100 server-side test files failed with
+        # "Database connection not available." Mirror the value to
+        # DATABASE_URL so the runtime actually sees it.
         run: npm test -- --passWithNoTests
         env:
           CI: true
           RUN_INTEGRATION_TESTS: 'true'
+          DATABASE_URL: postgresql://postgres:${{ env.TEST_DB_PASSWORD }}@localhost:5432/concept2cure-ri_test
           TEST_DATABASE_URL: postgresql://postgres:${{ env.TEST_DB_PASSWORD }}@localhost:5432/concept2cure-ri_test
 
   aios-audit-assets:
