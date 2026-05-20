@@ -14,10 +14,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Mock drizzle-orm operators used by the service
 // ---------------------------------------------------------------------------
 
-vi.mock('drizzle-orm', () => ({
-  eq: vi.fn((_col: any, val: any) => ({ type: 'eq', val })),
-  and: vi.fn((...conds: any[]) => ({ type: 'and', conds })),
-}));
+vi.mock('drizzle-orm', async (importOriginal) => {
+  const actual = await importOriginal() as any;
+  return {
+    ...actual,
+    eq: vi.fn((_col: any, val: any) => ({ type: 'eq', val })),
+    and: vi.fn((...conds: any[]) => ({ type: 'and', conds })),
+    or: vi.fn((...conds: any[]) => ({ type: 'or', conds })),
+    gte: vi.fn((_col: any, val: any) => ({ type: 'gte', val })),
+    lte: vi.fn((_col: any, val: any) => ({ type: 'lte', val })),
+    desc: vi.fn((col: any) => ({ type: 'desc', col })),
+    asc: vi.fn((col: any) => ({ type: 'asc', col })),
+  };
+});
 
 // ---------------------------------------------------------------------------
 // Mock DB and schema — we control what the DB returns per test
