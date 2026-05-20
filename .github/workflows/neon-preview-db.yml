@@ -73,13 +73,38 @@ jobs:
       - name: Apply migrations + verify schema
         if: steps.check_secrets.outputs.skip != 'true' && steps.db_url.outputs.skip_db != 'true'
         run: |
-          chmod +x scripts/db_migrate.sh
-          ./scripts/db_migrate.sh
-          # Optional post-migration schema verifier. The workflow used to
-          # reference scripts/db_verify.sql unconditionally; that file
-          # was never authored and broke this step on every PR. Guard
-          # the call so the workflow degrades gracefully when the
-          # verifier isn't present.
+          # The Neon preview branch inherits from the project's default
+          # parent (which already has the full migration history applied).
+          # Running `scripts/db_migrate.sh` here would re-apply all ~166
+          # migrations from scratch — most aren't idempotent, so the
+          # whole step fails on something like a duplicate CREATE TABLE.
+          #
+          # The workflow's stated purpose is "verify the PR's migrations
+          # parse + apply cleanly on top of prod schema". Limit the run
+          # to migrations added in this PR's diff (relative to the merge
+          # base with the base branch).
+          set -e
+          git fetch --depth=1 origin "${{ github.event.pull_request.base.ref }}"
+          BASE_SHA=$(git merge-base HEAD "origin/${{ github.event.pull_request.base.ref }}" || echo "")
+          if [ -z "$BASE_SHA" ]; then
+            echo "::notice::No merge-base detected; skipping migration apply."
+            exit 0
+          fi
+          NEW_MIGRATIONS=$(git diff --name-only --diff-filter=A "$BASE_SHA" HEAD -- 'db/migrations/*.sql' 'migrations/*.sql' | sort)
+          if [ -z "$NEW_MIGRATIONS" ]; then
+            echo "::notice::No new migrations introduced by this PR."
+          else
+            echo "Applying new migrations:"
+            for m in $NEW_MIGRATIONS; do echo "  - $m"; done
+            for m in $NEW_MIGRATIONS; do
+              echo "==> $m"
+              PAGER=cat psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$m"
+            done
+          fi
+
+          # Optional post-migration schema verifier. Guarded because
+          # scripts/db_verify.sql is referenced by the workflow but was
+          # never authored.
           if [ -f scripts/db_verify.sql ]; then
             psql "$DATABASE_URL" -f scripts/db_verify.sql
           else
