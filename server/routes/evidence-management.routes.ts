@@ -76,11 +76,11 @@ router.use((req: Request, res: Response, next) => {
  */
 router.get('/requirements/:projectId', async (req: Request, res: Response) => {
   try {
-    const { projectId } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const organizationId = req.organizationId;
 
     // Get all files mapped to requirements
-    const files = await db.execute(sql`
+    const filesResult: any = await db.execute(sql`
       SELECT
         fda_requirement,
         fda_section,
@@ -99,6 +99,7 @@ router.get('/requirements/:projectId', async (req: Request, res: Response) => {
     const totalRequired = 8; // Number of required FDA categories
     let completedCount = 0;
 
+    const files: any[] = Array.isArray(filesResult) ? filesResult : (filesResult.rows ?? []);
     // Process files by requirement
     for (const file of files) {
       if (!requirements[file.fda_requirement]) {
@@ -234,7 +235,7 @@ router.post('/upload', upload.array('files', 5), async (req: Request, res: Respo
         // Index in OpenSearch for governed full-text search (non-blocking)
         indexGovernedDocument({
           id: fileId,
-          organizationId,
+          organizationId: organizationId!,
           projectId: project_id ? Number(project_id) : null,
           docType: 'evidence',
           section: fda_section || null,
@@ -280,10 +281,10 @@ router.post('/upload', upload.array('files', 5), async (req: Request, res: Respo
  */
 router.get('/gap-analysis/:projectId', async (req: Request, res: Response) => {
   try {
-    const { projectId } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const organizationId = req.organizationId;
 
-    const analysis = await evidenceService.performGapAnalysis(projectId, organizationId);
+    const analysis = await evidenceService.performGapAnalysis(projectId, organizationId!);
 
     res.json({
       success: true,
@@ -348,9 +349,12 @@ router.post('/link-workflow', async (req: Request, res: Response) => {
  */
 router.get('/stage-evidence/:projectId/:stage', async (req: Request, res: Response) => {
   try {
-    const { projectId, stage } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? ""); const stageRaw = req.params.stage; const stage = Array.isArray(stageRaw) ? stageRaw[0] : (stageRaw ?? "");
 
-    const evidence = await evidenceService.getStageEvidence(projectId, parseInt(stage));
+    const evidenceResult: any = await evidenceService.getStageEvidence(projectId, parseInt(stage));
+    const evidence: any[] = Array.isArray(evidenceResult)
+      ? evidenceResult
+      : (evidenceResult?.rows ?? []);
 
     res.json({
       success: true,
@@ -371,7 +375,7 @@ router.get('/stage-evidence/:projectId/:stage', async (req: Request, res: Respon
  */
 router.post('/auto-populate/:formId', async (req: Request, res: Response) => {
   try {
-    const { formId } = req.params;
+    const formIdRaw = req.params.formId; const formId = Array.isArray(formIdRaw) ? formIdRaw[0] : (formIdRaw ?? "");
     const { projectId } = req.body;
 
     const formData = await evidenceService.autoPopulateForm(formId, projectId);
@@ -394,7 +398,7 @@ router.post('/auto-populate/:formId', async (req: Request, res: Response) => {
  */
 router.post('/review/submit/:fileId', async (req: Request, res: Response) => {
   try {
-    const { fileId } = req.params;
+    const fileIdRaw = req.params.fileId; const fileId = Array.isArray(fileIdRaw) ? fileIdRaw[0] : (fileIdRaw ?? "");
     const { reviewerId } = req.body;
 
     await evidenceService.submitForReview(fileId, reviewerId || 'system');
@@ -415,7 +419,7 @@ router.post('/review/submit/:fileId', async (req: Request, res: Response) => {
  */
 router.post('/review/approve/:fileId', async (req: Request, res: Response) => {
   try {
-    const { fileId } = req.params;
+    const fileIdRaw = req.params.fileId; const fileId = Array.isArray(fileIdRaw) ? fileIdRaw[0] : (fileIdRaw ?? "");
     const { reviewerId, comments } = req.body;
 
     await evidenceService.approveEvidence(fileId, reviewerId || 'system', comments);
@@ -436,7 +440,7 @@ router.post('/review/approve/:fileId', async (req: Request, res: Response) => {
  */
 router.post('/review/request-changes/:fileId', async (req: Request, res: Response) => {
   try {
-    const { fileId } = req.params;
+    const fileIdRaw = req.params.fileId; const fileId = Array.isArray(fileIdRaw) ? fileIdRaw[0] : (fileIdRaw ?? "");
     const { reviewerId, comments } = req.body;
 
     if (!comments) {
@@ -461,10 +465,10 @@ router.post('/review/request-changes/:fileId', async (req: Request, res: Respons
  */
 router.get('/export/:projectId', async (req: Request, res: Response) => {
   try {
-    const { projectId } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const organizationId = req.organizationId;
 
-    const evidencePackage = await evidenceService.exportEvidencePackage(projectId, organizationId);
+    const evidencePackage = await evidenceService.exportEvidencePackage(projectId, organizationId!);
 
     res.json({
       success: true,
@@ -482,10 +486,10 @@ router.get('/export/:projectId', async (req: Request, res: Response) => {
  */
 router.get('/analytics/:projectId', async (req: Request, res: Response) => {
   try {
-    const { projectId } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const organizationId = req.organizationId;
 
-    const analytics = await db.execute(sql`
+    const analyticsResult: any = await db.execute(sql`
       SELECT
         COUNT(*) as total_files,
         COUNT(CASE WHEN regulatory_status = 'approved' THEN 1 END) as approved_files,
@@ -498,9 +502,12 @@ router.get('/analytics/:projectId', async (req: Request, res: Response) => {
         project_id = ${projectId}
         AND organization_id = ${organizationId}
     `);
+    const analytics: any[] = Array.isArray(analyticsResult)
+      ? analyticsResult
+      : (analyticsResult?.rows ?? []);
 
     // Get gap analysis
-    const gapAnalysis = await evidenceService.performGapAnalysis(projectId, organizationId);
+    const gapAnalysis = await evidenceService.performGapAnalysis(projectId, organizationId!);
 
     res.json({
       success: true,

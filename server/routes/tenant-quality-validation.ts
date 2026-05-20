@@ -6,7 +6,7 @@
  */
 import { Router, Request } from 'express';
 import { z } from 'zod';
-import { eq, and, SQL } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { qmpSectionGating, ctqFactors, qualityManagementPlans } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 import { requireOrganizationContext } from '../middleware/tenantContext';
@@ -21,7 +21,10 @@ const router = Router();
  */
 router.post('/validate-section', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
-    const { organizationId } = req.tenantContext;
+    const { organizationId: organizationIdRaw } = req.tenantContext ?? {};
+    const organizationId = typeof organizationIdRaw === 'string'
+      ? parseInt(organizationIdRaw, 10)
+      : (organizationIdRaw ?? 0);
 
     // Validate request payload
     const validationSchema = z.object({
@@ -49,8 +52,7 @@ router.post('/validate-section', authMiddleware, requireOrganizationContext, asy
         and(
           eq(qmpSectionGating.organizationId, organizationId),
           eq(qmpSectionGating.qmpId, qmpId),
-          eq(qmpSectionGating.sectionCode, sectionCode),
-          eq(qmpSectionGating.active, true)
+          eq(qmpSectionGating.sectionKey, sectionCode)
         )
       );
 
@@ -66,15 +68,16 @@ router.post('/validate-section', authMiddleware, requireOrganizationContext, asy
     const gatingRule = gatingRules[0];
 
     // Get all CTQ factors referenced by this gating rule
-    let ctqFactorDetails = [];
-    if (gatingRule.ctqFactors && gatingRule.ctqFactors.length > 0) {
+    let ctqFactorDetails: any[] = [];
+    const ruleCtqFactors = ((gatingRule as any).ctqFactors ?? gatingRule.requiredCtqFactorIds) as any[] | undefined;
+    if (ruleCtqFactors && ruleCtqFactors.length > 0) {
       ctqFactorDetails = await getDb(req)
         .select()
         .from(ctqFactors)
         .where(
           and(
             eq(ctqFactors.organizationId, organizationId),
-            SQL`${ctqFactors.id} = ANY(${gatingRule.ctqFactors})`
+            sql`${ctqFactors.id} = ANY(${ruleCtqFactors})`
           )
         );
     }
@@ -134,8 +137,9 @@ router.post('/validate-section', authMiddleware, requireOrganizationContext, asy
     }
 
     // Also check custom validations defined in the gating rule
-    if (gatingRule.customValidations && gatingRule.customValidations.length > 0) {
-      for (const customRule of gatingRule.customValidations) {
+    const customValidations = (gatingRule as any).customValidations as any[] | undefined;
+    if (customValidations && customValidations.length > 0) {
+      for (const customRule of customValidations) {
         let validationPassed = true;
         let validationMessage = '';
 
@@ -181,13 +185,14 @@ router.post('/validate-section', authMiddleware, requireOrganizationContext, asy
     let valid = true;
     let gatingStatusMessage = 'Section meets quality requirements';
 
-    if (gatingRule.requiredLevel === 'hard') {
+    const requiredLevel = (gatingRule as any).requiredLevel as string | undefined;
+    if (requiredLevel === 'hard') {
       // Hard gate - any high risk failures block
       if (hasHardFailures) {
         valid = false;
         gatingStatusMessage = 'Section contains critical quality issues';
       }
-    } else if (gatingRule.requiredLevel === 'soft') {
+    } else if (requiredLevel === 'soft') {
       // Soft gate - high risk failures block, medium risk warn
       if (hasHardFailures) {
         valid = false;
@@ -209,7 +214,7 @@ router.post('/validate-section', authMiddleware, requireOrganizationContext, asy
     // Return validation results
     return res.json({
       valid,
-      gatingLevel: gatingRule.requiredLevel,
+      gatingLevel: requiredLevel,
       message: gatingStatusMessage,
       validations: validationResults,
     });
@@ -224,7 +229,12 @@ router.post('/validate-section', authMiddleware, requireOrganizationContext, asy
  */
 router.post('/request-waiver', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
-    const { organizationId, userId } = req.tenantContext;
+    const tc = req.tenantContext ?? {};
+    const organizationIdRaw = tc.organizationId;
+    const organizationId = typeof organizationIdRaw === 'string'
+      ? parseInt(organizationIdRaw, 10)
+      : (organizationIdRaw ?? 0);
+    const userId = tc.userId;
 
     // Validate request payload
     const waiverSchema = z.object({
@@ -255,7 +265,7 @@ router.post('/request-waiver', authMiddleware, requireOrganizationContext, async
         and(
           eq(qmpSectionGating.organizationId, organizationId),
           eq(qmpSectionGating.qmpId, qmpId),
-          eq(qmpSectionGating.sectionCode, sectionCode)
+          eq(qmpSectionGating.sectionKey, sectionCode)
         )
       );
 
@@ -281,7 +291,7 @@ router.post('/request-waiver', authMiddleware, requireOrganizationContext, async
 
     const qmp = qmps[0];
 
-    if (qmp.allowWaivers === false) {
+    if ((qmp as any).allowWaivers === false) {
       return res.status(403).json({ error: 'Quality waivers are not allowed for this QMP' });
     }
 
@@ -318,10 +328,13 @@ router.post('/request-waiver', authMiddleware, requireOrganizationContext, async
 router.get('/stats/:qmpId', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
     const { qmpId } = req.params;
-    const { organizationId } = req.tenantContext;
+    const { organizationId: organizationIdRaw } = req.tenantContext ?? {};
+    const organizationId = typeof organizationIdRaw === 'string'
+      ? parseInt(organizationIdRaw, 10)
+      : (organizationIdRaw ?? 0);
 
     // Convert to number
-    const qmpIdNumber = parseInt(qmpId, 10);
+    const qmpIdNumber = parseInt(String(qmpId), 10);
     if (isNaN(qmpIdNumber)) {
       return res.status(400).json({ error: 'Invalid QMP ID' });
     }
