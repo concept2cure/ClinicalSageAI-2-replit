@@ -8,6 +8,10 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('csr-builder-routes');
+
 import {
   launchCSRBuild,
   getICHE3Structure,
@@ -26,7 +30,7 @@ try {
   const mod = await import('../lib/unified-ai-client.js');
   aiClient = mod.ai;
 } catch {
-  console.warn('[CSR Builder Routes] AI client not available — narrative/benefit-risk will use templates');
+  logger.warn('AI client not available — narrative/benefit-risk will use templates');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -210,7 +214,7 @@ router.post('/build', async (req: Request, res: Response) => {
       sections: job.sections,
     });
   } catch (err) {
-    console.error('[CSR Builder] Build failed:', err);
+    logger.error('Build failed', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: safeErrorMessage(err, 'CSR build failed') });
   }
 });
@@ -237,7 +241,7 @@ router.post('/draft-section', async (req: Request, res: Response) => {
       provider: result.isAI ? 'claude-ai-gateway' : 'template',
     });
   } catch (err) {
-    console.error('[CSR Builder] Section draft failed:', err);
+    logger.error('Section draft failed', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: safeErrorMessage(err, 'Section draft failed') });
   }
 });
@@ -264,7 +268,7 @@ router.post('/compare', async (req: Request, res: Response) => {
       comparisons,
     });
   } catch (err) {
-    console.error('[CSR Builder] Comparison failed:', err);
+    logger.error('Comparison failed', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: safeErrorMessage(err, 'Comparison failed') });
   }
 });
@@ -292,7 +296,7 @@ router.post('/safety-signals', async (req: Request, res: Response) => {
       summary: result.summary,
     });
   } catch (err) {
-    console.error('[CSR Builder] Safety analysis failed:', err);
+    logger.error('Safety analysis failed', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: safeErrorMessage(err, 'Safety analysis failed') });
   }
 });
@@ -358,7 +362,7 @@ Concomitant Medications: ${concomitantMeds || 'Not provided'}`,
       patientId: patientId || null,
     });
   } catch (err) {
-    console.error('[CSR Builder] Narrative generation failed:', err);
+    logger.error('Narrative generation failed', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: safeErrorMessage(err, 'Narrative generation failed') });
   }
 });
@@ -426,7 +430,7 @@ Return JSON with: { "benefitSummary": "...", "riskSummary": "...", "overallAsses
 
     res.json({ success: true, isAI, ...result });
   } catch (err) {
-    console.error('[CSR Builder] Benefit-risk analysis failed:', err);
+    logger.error('Benefit-risk analysis failed', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: safeErrorMessage(err, 'Benefit-risk analysis failed') });
   }
 });

@@ -1,19 +1,72 @@
 /**
- * Simple logger utility for the application
+ * Application logger with HIPAA/pharma-aware redaction.
+ *
+ * Mirrors server/utils/logger.ts. The two files are kept in sync by
+ * hand because much of the codebase imports the .js extension
+ * explicitly. If you edit one, edit the other or the redaction list
+ * drifts and PHI starts leaking into logs.
+ *
+ * SENSITIVE_KEYS is matched case-insensitively as a substring of the
+ * key name, so `userPassword`, `currentPasswordHash`, `MRN`,
+ * `bearerToken` are all caught by the corresponding base entries.
  */
 
 const SENSITIVE_KEYS = [
+  // Auth credentials
   'password',
   'passwordhash',
+  'password_hash',
   'secret',
   'token',
-  'apikey',
-  'api_key',
-  'authorization',
+  'bearer',
+  'jwt',
+  'access_token',
+  'accesstoken',
+  'refresh_token',
+  'refreshtoken',
+  'id_token',
+  'idtoken',
+  'mfa',
+  'otp',
+  'totp',
   'cookie',
   'set-cookie',
+  'session',
+  'sessionid',
+  'session_id',
+  'csrf',
+  // API keys
+  'apikey',
+  'api_key',
+  'x-api-key',
+  // PHI identifiers (HIPAA-protected health information)
+  'mrn',
+  'medical_record_number',
+  'patient_id',
+  'patientid',
+  'subject_id',
+  'subjectid',
+  'nih_id',
+  'clinical_id',
+  'clinicalid',
+  'phi',
+  'phn',
+  // PII
   'ssn',
   'dob',
+  'date_of_birth',
+  'dateofbirth',
+  // Payment data
+  'card_number',
+  'cardnumber',
+  'cvv',
+  'cvc',
+  'payment_token',
+  'paymenttoken',
+  'stripe_secret',
+  'stripe_token',
+  // Generic request artifacts that frequently carry the above
+  'authorization',
 ];
 
 const redactValue = value => {
@@ -26,8 +79,9 @@ const redactValue = value => {
 const redactContext = (context, depth = 0) => {
   if (!context || typeof context !== 'object') return context;
   if (depth > 6) return context;
+  if (Array.isArray(context)) return context;
 
-  const output = Array.isArray(context) ? [] : {};
+  const output = {};
   for (const [key, value] of Object.entries(context)) {
     const lowerKey = key.toLowerCase();
     const shouldRedact = SENSITIVE_KEYS.some(sensitive => lowerKey.includes(sensitive));
@@ -108,12 +162,6 @@ const baseLogger = {
   },
 };
 
-/**
- * Creates a scoped logger for a specific module or component
- *
- * @param {string} scope The scope/name of the module using the logger
- * @returns A logger instance that includes the scope in all messages
- */
 export const createScopedLogger = scope => ({
   info: (message, context = {}) => baseLogger.info(`[${scope}] ${message}`, context),
   error: (message, context = {}) => baseLogger.error(`[${scope}] ${message}`, context),
@@ -124,6 +172,9 @@ export const createScopedLogger = scope => ({
 export const createContextLogger = createScopedLogger;
 
 const logger = baseLogger;
+
+// Exported for parity with logger.ts; do not call from app code.
+export const __testing = { SENSITIVE_KEYS, redactContext };
 
 // Named export so files can use: import { logger } from '../utils/logger.js'
 export { logger };

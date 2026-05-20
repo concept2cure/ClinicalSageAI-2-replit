@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { db, getPool } from '../db';
+import { authedOrgId } from '../utils/authedOrgId';
 import {
   reportProgramGroups,
   reportProgramGroupProjects,
@@ -757,7 +758,12 @@ router.get('/taxonomy', async (_req: Request, res: Response) => {
 
 router.get('/program-groups', async (req: Request, res: Response) => {
   try {
-    const organizationId = Number(req.query.organizationId);
+    // SECURITY: JWT-bound; the legacy ?organizationId= query param is
+    // ignored to prevent cross-tenant report enumeration.
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(400).json({ error: 'organizationId query parameter is required' });
     }
@@ -903,7 +909,12 @@ router.patch('/program-groups/:id', async (req: Request, res: Response) => {
 router.get('/program-groups/:id/snapshots', async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
-    const organizationId = Number(req.query.organizationId);
+    // SECURITY: JWT-bound; the legacy ?organizationId= query param is
+    // ignored to prevent cross-tenant report enumeration.
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(400).json({ error: 'organizationId query parameter is required' });
     }
@@ -1104,7 +1115,12 @@ router.post('/runs', async (req: Request, res: Response) => {
 router.get('/runs/:id/dependencies', async (req: Request, res: Response) => {
   try {
     const runId = Number(req.params.id);
-    const organizationId = Number(req.query.organizationId);
+    // SECURITY: JWT-bound; the legacy ?organizationId= query param is
+    // ignored to prevent cross-tenant report enumeration.
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(400).json({ error: 'organizationId query parameter is required' });
     }
@@ -1128,7 +1144,12 @@ router.get('/runs/:id/dependencies', async (req: Request, res: Response) => {
 router.get('/runs/:id/export.pdf', async (req: Request, res: Response) => {
   try {
     const runId = Number(req.params.id);
-    const organizationId = Number(req.query.organizationId);
+    // SECURITY: JWT-bound; the legacy ?organizationId= query param is
+    // ignored to prevent cross-tenant report enumeration.
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     if (!Number.isFinite(runId) || runId <= 0) return res.status(400).json({ error: 'Invalid run id' });
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(400).json({ error: 'organizationId query parameter is required' });
@@ -1308,7 +1329,12 @@ router.post('/bundles', async (req: Request, res: Response) => {
 
 router.get('/bundles', async (req: Request, res: Response) => {
   try {
-    const organizationId = Number(req.query.organizationId);
+    // SECURITY: JWT-bound; the legacy ?organizationId= query param is
+    // ignored to prevent cross-tenant report enumeration.
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(400).json({ error: 'organizationId query parameter is required' });
     }
@@ -1321,7 +1347,12 @@ router.get('/bundles', async (req: Request, res: Response) => {
 
 router.get('/bundles/:bundleId/export.pdf', async (req: Request, res: Response) => {
   try {
-    const organizationId = Number(req.query.organizationId);
+    // SECURITY: JWT-bound; the legacy ?organizationId= query param is
+    // ignored to prevent cross-tenant report enumeration.
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(400).json({ error: 'organizationId query parameter is required' });
     }
@@ -1345,7 +1376,12 @@ router.get('/bundles/:bundleId/export.pdf', async (req: Request, res: Response) 
 
 router.get('/deliveries', async (req: Request, res: Response) => {
   try {
-    const organizationId = Number(req.query.organizationId);
+    // SECURITY: JWT-bound; the legacy ?organizationId= query param is
+    // ignored to prevent cross-tenant report enumeration.
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(400).json({ error: 'organizationId query parameter is required' });
     }

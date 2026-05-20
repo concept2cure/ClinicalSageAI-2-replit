@@ -58,9 +58,12 @@ router.post(
   '/folders',
   asyncHandler(async (req, res) => {
     const validated = createFolderBody.parse(req.body);
-    const organizationId = req.body.organizationId;
+    // SECURITY: JWT-bound. Pre-fix, body.organizationId was used as
+    // the new folder's tenant — a caller could create folders inside
+    // any tenant they named.
+    const organizationId = req.user?.organizationId ?? req.tenantContext?.organizationId;
     if (!organizationId) {
-      return res.status(401).json({ error: 'Organization context required' });
+      return res.status(403).json({ error: 'Tenant context required' });
     }
 
     const result = await pool.query(

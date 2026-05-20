@@ -1,5 +1,5 @@
 import express from 'express';
-import jwt from 'jsonwebtoken';
+import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { dynamicContentAssembly } from '../services/DynamicContentAssembly.js';
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -18,14 +18,8 @@ function authenticateSse(req: express.Request, res: express.Response): boolean {
     res.status(401).json({ success: false, error: 'Bearer token required' });
     return false;
   }
-  const jwtSecret = process.env.JWT_SECRET || process.env.AUTH_JWT_SECRET;
-  if (!jwtSecret) {
-    res.status(500).json({ success: false, error: 'Server misconfiguration: missing JWT secret' });
-    return false;
-  }
   try {
-    const jwtAlgorithm = process.env.JWT_ALGORITHM || 'HS256';
-    jwt.verify(auth.slice(7), jwtSecret, { algorithms: [jwtAlgorithm] });
+    verifyJwtWithRotation(auth.slice(7));
     return true;
   } catch {
     res.status(401).json({ success: false, error: 'Invalid authentication token' });

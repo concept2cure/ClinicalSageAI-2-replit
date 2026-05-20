@@ -1,5 +1,13 @@
 import type { Express } from 'express';
 import type { Pool } from 'pg';
+import { authenticateToken } from '../middleware/auth.js';
+
+// SECURITY: nearly every router mounted here is tenant-scoped — task
+// management, approvals, branding, lineage, workspace projects. The
+// few exceptions (integration-test, notifications-as-function-app) are
+// either dev-only or perform their own auth via app.METHOD handlers,
+// where authenticateToken would not be the right gate. Bulk-apply
+// authenticateToken to every config-driven mount below.
 
 export interface AdvancedPlatformBootstrapContext {
   app: Express;
@@ -17,10 +25,22 @@ export async function registerAdvancedPlatformRoutes({
   // ── Innovation + Notifications ──
   try {
     const innovationRoutes = await import('../routes/innovation-routes');
-    app.use('/api/innovation', innovationRoutes.default);
+    app.use('/api/innovation', authenticateToken, innovationRoutes.default);
     console.log('✅ Innovation routes mounted at /api/innovation');
   } catch (error) {
     console.error('Failed to mount innovation routes:', error);
+  }
+
+  // ── Regulatory Intelligence (AnA 1.0 RI) ──
+  // Predictive CRL/RTF layer: closes the submission-outcome feedback loop,
+  // exposes cross-tenant DP-anonymized priors, and surfaces a blended
+  // readiness score that compounds as more outcomes flow through the platform.
+  try {
+    const regulatoryIntelligenceRoutes = await import('../routes/regulatory-intelligence');
+    app.use('/api/regulatory-intelligence', authenticateToken, regulatoryIntelligenceRoutes.default);
+    console.log('✅ Regulatory Intelligence routes mounted at /api/regulatory-intelligence');
+  } catch (error) {
+    console.error('Failed to mount Regulatory Intelligence routes:', error);
   }
 
   try {
@@ -32,7 +52,7 @@ export async function registerAdvancedPlatformRoutes({
     ) {
       notificationRoutes.default(app);
     } else {
-      app.use('/api/notifications', notificationRoutes.default);
+      app.use('/api/notifications', authenticateToken, notificationRoutes.default);
     }
     console.log('✅ Notification routes mounted at /api/notifications');
   } catch (error) {
@@ -66,7 +86,7 @@ export async function registerAdvancedPlatformRoutes({
     const auditIntegResults = await Promise.allSettled(auditIntegConfig.map(c => import(c.mod)));
     auditIntegResults.forEach((r, i) => {
       if (r.status === 'fulfilled') {
-        app.use(auditIntegConfig[i].path, r.value.default);
+        app.use(auditIntegConfig[i].path, authenticateToken, r.value.default);
         console.log(`✅ ${auditIntegConfig[i].name} routes mounted`);
       } else {
         console.error(`❌ Failed to mount ${auditIntegConfig[i].name} routes:`, r.reason);
@@ -89,7 +109,7 @@ export async function registerAdvancedPlatformRoutes({
     const advancedResults = await Promise.allSettled(advancedConfig.map(c => import(c.mod)));
     advancedResults.forEach((r, i) => {
       if (r.status === 'fulfilled') {
-        app.use(advancedConfig[i].path, r.value.default);
+        app.use(advancedConfig[i].path, authenticateToken, r.value.default);
         console.log(`✅ ${advancedConfig[i].name} routes mounted`);
       } else {
         console.error(`❌ Failed to mount ${advancedConfig[i].name} routes:`, r.reason);
@@ -101,7 +121,7 @@ export async function registerAdvancedPlatformRoutes({
   try {
     const part11Routes = await import('../routes/part11-compliance');
     if (part11Routes.setAuditPool) part11Routes.setAuditPool(pool);
-    app.use('/api/part11', part11Routes.default);
+    app.use('/api/part11', authenticateToken, part11Routes.default);
     console.log('✅ 21 CFR Part 11 Compliance routes mounted at /api/part11');
   } catch (error) {
     console.error('❌ Failed to mount Part 11 compliance routes:', error);
@@ -111,7 +131,7 @@ export async function registerAdvancedPlatformRoutes({
   try {
     const missionControlRoutes = await import('../routes/mission-control');
     if (isStaticDataEnabled('ENABLE_MISSION_CONTROL_STATIC_DATA')) {
-      app.use('/api/mission-control', missionControlRoutes.default);
+      app.use('/api/mission-control', authenticateToken, missionControlRoutes.default);
       console.log('✅ Mission Control routes mounted at /api/mission-control');
     } else {
       mountStaticBusinessDataGuard(
@@ -122,7 +142,7 @@ export async function registerAdvancedPlatformRoutes({
     }
 
     const snowglobeRoutes = await import('../routes/snowglobe');
-    app.use('/api/snowglobe', snowglobeRoutes.default);
+    app.use('/api/snowglobe', authenticateToken, snowglobeRoutes.default);
     console.log('✅ Snow Globe routes mounted at /api/snowglobe');
   } catch (error) {
     console.error('❌ Failed to mount Mission Control routes:', error);
@@ -150,7 +170,7 @@ export async function registerAdvancedPlatformRoutes({
     const taskResults = await Promise.allSettled(taskConfig.map(c => import(c.mod)));
     taskResults.forEach((r, i) => {
       if (r.status === 'fulfilled') {
-        app.use(taskConfig[i].path, r.value.default);
+        app.use(taskConfig[i].path, authenticateToken, r.value.default);
         console.log(`✅ ${taskConfig[i].name} routes mounted`);
       } else {
         console.error(`❌ Failed to mount ${taskConfig[i].name} routes:`, r.reason);
@@ -177,7 +197,7 @@ export async function registerAdvancedPlatformRoutes({
     const workflowResults = await Promise.allSettled(workflowConfig.map(c => import(c.mod)));
     workflowResults.forEach((r, i) => {
       if (r.status === 'fulfilled') {
-        app.use(workflowConfig[i].path, r.value.default);
+        app.use(workflowConfig[i].path, authenticateToken, r.value.default);
         console.log(`✅ ${workflowConfig[i].name} routes mounted`);
       } else {
         console.error(`❌ Failed to mount ${workflowConfig[i].name} routes:`, r.reason);
@@ -199,7 +219,7 @@ export async function registerAdvancedPlatformRoutes({
     const wsResults = await Promise.allSettled(wsConfig.map(c => import(c.mod)));
     wsResults.forEach((r, i) => {
       if (r.status === 'fulfilled') {
-        app.use(wsConfig[i].path, r.value.default);
+        app.use(wsConfig[i].path, authenticateToken, r.value.default);
         console.log(`✅ ${wsConfig[i].name} routes mounted`);
       } else {
         console.error(`❌ Failed to mount ${wsConfig[i].name} routes:`, r.reason);
@@ -208,7 +228,9 @@ export async function registerAdvancedPlatformRoutes({
   }
 
   // ── Workspace Projects (inline handlers — use pool directly) ──
-  app.post('/api/workspace/projects', async (req: any, res: any) => {
+  // authenticateToken runs first to populate req.user; the handler's
+  // own org-context check then enforces tenant presence.
+  app.post('/api/workspace/projects', authenticateToken, async (req: any, res: any) => {
     const rawOrgId =
       req.tenantContext?.organizationId ||
       req.organizationId ||
@@ -287,7 +309,7 @@ export async function registerAdvancedPlatformRoutes({
     }
   });
 
-  app.get('/api/workspace/projects', async (req: any, res: any) => {
+  app.get('/api/workspace/projects', authenticateToken, async (req: any, res: any) => {
     const rawOrgId =
       req.tenantContext?.organizationId ||
       req.organizationId ||

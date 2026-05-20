@@ -13,6 +13,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+import { useCspNonce } from '@/hooks/useCspNonce';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -719,7 +720,9 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
   // Editor Setup
   // ─────────────────────────────────────────────────────────────────────────
 
+  const cspNonce = useCspNonce();
   const editor = useEditor({
+    injectNonce: cspNonce || undefined,
     extensions: [
       StarterKit,
       Highlight.configure({ multicolor: true }),

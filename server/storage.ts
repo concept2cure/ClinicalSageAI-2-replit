@@ -64,8 +64,16 @@ export interface IStorage {
   updateTrial(id: number, trialData: any): Promise<any | undefined>;
   deleteTrial(id: number): Promise<boolean>;
 
-  // Document methods
-  getDocument(id: string): Promise<schema.Document | undefined>;
+  // Document methods.
+  //
+  // SECURITY: getDocument requires an organizationId. Pre-fix this
+  // method took only the id, and the DB implementation queried
+  // `WHERE id = ?` without a tenant filter — meaning any caller that
+  // forgot to verify org membership separately could leak a document
+  // across tenants. Making the parameter mandatory forces every
+  // caller to source the org id from the JWT (req.user.organizationId)
+  // rather than letting it default away silently.
+  getDocument(id: string, organizationId: number | string): Promise<schema.Document | undefined>;
   getDocumentByName(name: string): Promise<schema.Document | undefined>;
   getDocuments(options?: {
     limit?: number;
@@ -83,7 +91,15 @@ export interface IStorage {
   deleteDocument(id: string): Promise<boolean>;
 
   // Document folder methods
-  getFolder(id: string): Promise<schema.DocumentFolder | undefined>;
+  // Document folder methods.
+  //
+  // SECURITY: getFolder requires organizationId. Same shape as
+  // getDocument's hardening — pre-fix the DB impl queried by id alone
+  // and would silently leak folder metadata cross-tenant if any caller
+  // forgot to verify scope. No live callers exist today (verified via
+  // grep), but making this mandatory means a future code path can't
+  // silently regress.
+  getFolder(id: string, organizationId: number | string): Promise<schema.DocumentFolder | undefined>;
   getFolders(options?: { parentId?: string | null }): Promise<schema.DocumentFolder[]>;
   createFolder(folder: schema.InsertDocumentFolder): Promise<schema.DocumentFolder>;
   updateFolder(
@@ -93,7 +109,12 @@ export interface IStorage {
   deleteFolder(id: string): Promise<boolean>;
 
   // CER Report methods
-  getCerReport(id: string): Promise<schema.CerReport | undefined>;
+  // SECURITY: CER reports are regulated tenant-scoped content (Clinical
+  // Evaluation Reports under MDR / IVDR). getCerReport requires
+  // organizationId for the same reason as getDocument — silent cross-
+  // tenant leakage of a CER is a contract-breaking event for paying
+  // pharma clients.
+  getCerReport(id: string, organizationId: number | string): Promise<schema.CerReport | undefined>;
   getCerReports(options?: {
     limit?: number;
     offset?: number;
@@ -170,7 +191,12 @@ export interface IStorage {
   createCerExport(export_: schema.InsertCerExport): Promise<schema.CerExport>;
 
   // Project Management methods
-  getProject(id: number): Promise<schema.Project | undefined>;
+  // SECURITY: getProject requires organizationId. The interface
+  // method has no implementation and no callers today, but routes
+  // accessing projects (which contain regulatory submissions, CMC
+  // data, study designs) are tenant-scoped. Documenting the contract
+  // ensures any future implementer can't expose the bug.
+  getProject(id: number, organizationId: number | string): Promise<schema.Project | undefined>;
   getProjects(options?: {
     limit?: number;
     offset?: number;
@@ -289,7 +315,13 @@ export interface IStorage {
     organizationId: number;
     clientWorkspaceId: number;
   }): Promise<any[]>;
-  getQcSpecification(id: number): Promise<any | undefined>;
+  // SECURITY: every QC getter requires organizationId — the QC family
+  // is tenant-scoped regulated content (specs, OOS investigations,
+  // batch releases, deviations, micro tests, reference standards).
+  // Today's implementations are stubs (return undefined), but the
+  // interface contract is set so a future real implementation can't
+  // forget the tenant filter.
+  getQcSpecification(id: number, organizationId: number | string): Promise<any | undefined>;
   createQcSpecification(spec: any): Promise<any>;
   updateQcSpecification(id: number, spec: any): Promise<any>;
   createSpecificationVersion(
@@ -297,7 +329,7 @@ export interface IStorage {
     changeReason: string,
     changeDescription: string
   ): Promise<any>;
-  getSpecificationVersions(id: number): Promise<any[]>;
+  getSpecificationVersions(id: number, organizationId: number | string): Promise<any[]>;
 
   // OOS Investigation methods
   getOosInvestigations(params: {
@@ -306,7 +338,7 @@ export interface IStorage {
     status?: string;
     priority?: string;
   }): Promise<any[]>;
-  getOosInvestigation(id: number): Promise<any | undefined>;
+  getOosInvestigation(id: number, organizationId: number | string): Promise<any | undefined>;
   createOosInvestigation(investigation: any): Promise<any>;
   updateOosInvestigation(id: number, investigation: any): Promise<any>;
   addOosTimelineEvent(id: number, event: any): Promise<any>;
@@ -319,12 +351,12 @@ export interface IStorage {
     clientWorkspaceId: number;
     releaseStatus?: string;
   }): Promise<any[]>;
-  getBatchRelease(id: number): Promise<any | undefined>;
+  getBatchRelease(id: number, organizationId: number | string): Promise<any | undefined>;
   createBatchRelease(release: any): Promise<any>;
   updateBatchRelease(id: number, release: any): Promise<any>;
   reviewBatchRecord(id: number, review: any): Promise<any>;
   generateCertificateOfAnalysis(id: number): Promise<any>;
-  getBatchGenealogy(id: number): Promise<any>;
+  getBatchGenealogy(id: number, organizationId: number | string): Promise<any>;
   validateReleaseCriteria(id: number): Promise<any>;
   releaseBatch(id: number, params: any): Promise<any>;
 
@@ -335,7 +367,7 @@ export interface IStorage {
     deviationType?: string;
     severity?: string;
   }): Promise<any[]>;
-  getQcDeviation(id: number): Promise<any | undefined>;
+  getQcDeviation(id: number, organizationId: number | string): Promise<any | undefined>;
   createQcDeviation(deviation: any): Promise<any>;
   updateQcDeviation(id: number, deviation: any): Promise<any>;
   performImpactAssessment(id: number, assessment: any): Promise<any>;
@@ -349,7 +381,7 @@ export interface IStorage {
     testType?: string;
     sampleType?: string;
   }): Promise<any[]>;
-  getMicrobiologicalTest(id: number): Promise<any | undefined>;
+  getMicrobiologicalTest(id: number, organizationId: number | string): Promise<any | undefined>;
   createMicrobiologicalTest(test: any): Promise<any>;
   updateMicrobiologicalTest(id: number, test: any): Promise<any>;
   getEnvironmentalMonitoringSchedule(params: any): Promise<any>;
@@ -363,17 +395,24 @@ export interface IStorage {
     standardType?: string;
     status?: string;
   }): Promise<any[]>;
-  getReferenceStandard(id: number): Promise<any | undefined>;
+  getReferenceStandard(id: number, organizationId: number | string): Promise<any | undefined>;
   createReferenceStandard(standard: any): Promise<any>;
   updateReferenceStandard(id: number, standard: any): Promise<any>;
   recordStandardUsage(id: number, usage: any): Promise<any>;
   getExpiringStandards(params: any): Promise<any[]>;
   qualifyReferenceStandard(id: number, qualification: any): Promise<any>;
   disposeReferenceStandard(id: number, disposal: any): Promise<any>;
-  getStandardUsageLogs(id: number): Promise<any[]>;
+  getStandardUsageLogs(id: number, organizationId: number | string): Promise<any[]>;
 
   // Section Graph methods
-  getSection(id: number): Promise<schema.Section | undefined>;
+  // SECURITY: getSection / getSectionLeaf require organizationId. The
+  // section graph is the hierarchical structure of regulatory content
+  // for a tenant; leaking a single section's metadata across tenants
+  // can expose another customer's regulatory roadmap.
+  getSection(
+    id: number,
+    organizationId: number | string,
+  ): Promise<schema.Section | undefined>;
   getSections(options?: {
     organizationId?: number;
     clientWorkspaceId?: number;
@@ -400,7 +439,10 @@ export interface IStorage {
   reorderDocumentSections(documentId: number, sectionIds: number[]): Promise<boolean>;
 
   // Section Leaf methods
-  getSectionLeaf(id: number): Promise<schema.SectionLeaf | undefined>;
+  getSectionLeaf(
+    id: number,
+    organizationId: number | string,
+  ): Promise<schema.SectionLeaf | undefined>;
   getSectionLeaves(options?: {
     organizationId?: number;
     clientWorkspaceId?: number;
@@ -755,8 +797,11 @@ export class MemStorage {
   }
 
   // Document methods
-  async getDocument(id: string): Promise<schema.Document | undefined> {
-    return this.documents.find(d => d.id === id) as schema.Document | undefined;
+  async getDocument(id: string, organizationId: number | string): Promise<schema.Document | undefined> {
+    const orgId = Number(organizationId);
+    return this.documents.find(
+      d => d.id === id && Number((d as any).organizationId) === orgId,
+    ) as schema.Document | undefined;
   }
 
   async getDocumentByName(name: string): Promise<schema.Document | undefined> {
@@ -852,8 +897,14 @@ export class MemStorage {
   }
 
   // Document folder methods
-  async getFolder(id: string): Promise<schema.DocumentFolder | undefined> {
-    return this.folders.find(f => f.id === id);
+  async getFolder(
+    id: string,
+    organizationId: number | string,
+  ): Promise<schema.DocumentFolder | undefined> {
+    const orgId = Number(organizationId);
+    return this.folders.find(
+      f => f.id === id && Number((f as any).organizationId) === orgId,
+    );
   }
 
   async getFolders(options: { parentId?: string | null } = {}): Promise<schema.DocumentFolder[]> {
@@ -914,9 +965,15 @@ export class MemStorage {
   }
 
   // CER Report methods
-  async getCerReport(id: string): Promise<schema.CerReport | undefined> {
+  async getCerReport(
+    id: string,
+    organizationId: number | string,
+  ): Promise<schema.CerReport | undefined> {
     // CerReport has numeric id, but reportId is string
-    return this.cerReports.find(r => r.reportId === id);
+    const orgId = Number(organizationId);
+    return this.cerReports.find(
+      r => r.reportId === id && Number((r as any).organizationId) === orgId,
+    );
   }
 
   async getCerReports(
@@ -1332,7 +1389,7 @@ export class MemStorage {
     return [];
   }
 
-  async getQcSpecification(id: number): Promise<any | undefined> {
+  async getQcSpecification(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -1352,7 +1409,7 @@ export class MemStorage {
     return {};
   }
 
-  async getSpecificationVersions(id: number): Promise<any[]> {
+  async getSpecificationVersions(id: number, _organizationId: number | string): Promise<any[]> {
     return [];
   }
 
@@ -1366,7 +1423,7 @@ export class MemStorage {
     return [];
   }
 
-  async getOosInvestigation(id: number): Promise<any | undefined> {
+  async getOosInvestigation(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -1399,7 +1456,7 @@ export class MemStorage {
     return [];
   }
 
-  async getBatchRelease(id: number): Promise<any | undefined> {
+  async getBatchRelease(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -1419,7 +1476,7 @@ export class MemStorage {
     return {};
   }
 
-  async getBatchGenealogy(id: number): Promise<any> {
+  async getBatchGenealogy(id: number, _organizationId: number | string): Promise<any> {
     return {};
   }
 
@@ -1441,7 +1498,7 @@ export class MemStorage {
     return [];
   }
 
-  async getQcDeviation(id: number): Promise<any | undefined> {
+  async getQcDeviation(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -1475,7 +1532,7 @@ export class MemStorage {
     return [];
   }
 
-  async getMicrobiologicalTest(id: number): Promise<any | undefined> {
+  async getMicrobiologicalTest(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -1509,7 +1566,7 @@ export class MemStorage {
     return [];
   }
 
-  async getReferenceStandard(id: number): Promise<any | undefined> {
+  async getReferenceStandard(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -1537,13 +1594,19 @@ export class MemStorage {
     return disposal;
   }
 
-  async getStandardUsageLogs(id: number): Promise<any[]> {
+  async getStandardUsageLogs(id: number, _organizationId: number | string): Promise<any[]> {
     return [];
   }
 
   // Section Graph methods - in-memory implementation
-  async getSection(id: number): Promise<schema.Section | undefined> {
-    return this.sections.find(s => s.id === id);
+  async getSection(
+    id: number,
+    organizationId: number | string,
+  ): Promise<schema.Section | undefined> {
+    const orgId = Number(organizationId);
+    return this.sections.find(
+      s => s.id === id && Number((s as any).organizationId) === orgId,
+    );
   }
 
   async getSections(
@@ -1672,8 +1735,14 @@ export class MemStorage {
   }
 
   // Section Leaf methods
-  async getSectionLeaf(id: number): Promise<schema.SectionLeaf | undefined> {
-    return this.sectionLeaves.find(sl => sl.id === id);
+  async getSectionLeaf(
+    id: number,
+    organizationId: number | string,
+  ): Promise<schema.SectionLeaf | undefined> {
+    const orgId = Number(organizationId);
+    return this.sectionLeaves.find(
+      sl => sl.id === id && Number((sl as any).organizationId) === orgId,
+    );
   }
 
   async getSectionLeaves(
@@ -2265,15 +2334,29 @@ export class DatabaseStorage {
   }
 
   // Document methods
-  async getDocument(id: string): Promise<schema.Document | undefined> {
+  async getDocument(
+    id: string,
+    organizationId: number | string,
+  ): Promise<schema.Document | undefined> {
     if (!db) return undefined;
 
     try {
       const numericId = Number(id);
+      const orgId = Number(organizationId);
+      // Tenant-scoped lookup. The org filter is mandatory — a missing
+      // or non-finite orgId returns no rows, which is the safe default
+      // (better to surface "not found" than to silently widen the
+      // query).
+      if (!Number.isFinite(orgId)) return undefined;
       const documents = await db
         .select()
         .from(schema.documents)
-        .where(eq(schema.documents.id, numericId));
+        .where(
+          and(
+            eq(schema.documents.id, numericId),
+            eq(schema.documents.organizationId, orgId),
+          ),
+        );
       return documents[0];
     } catch (error) {
       logger.error('Failed to get document', { id, error });
@@ -2437,15 +2520,25 @@ export class DatabaseStorage {
     }
   }
 
-  async getFolder(id: string): Promise<schema.DocumentFolder | undefined> {
+  async getFolder(
+    id: string,
+    organizationId: number | string,
+  ): Promise<schema.DocumentFolder | undefined> {
     if (!db) return undefined;
 
     try {
       const numericId = Number(id);
+      const orgId = Number(organizationId);
+      if (!Number.isFinite(orgId)) return undefined;
       const folders = await db
         .select()
         .from(schema.documentFolders)
-        .where(eq(schema.documentFolders.id, numericId));
+        .where(
+          and(
+            eq(schema.documentFolders.id, numericId),
+            eq(schema.documentFolders.organizationId, orgId),
+          ),
+        );
 
       return folders[0];
     } catch (error) {
@@ -2525,15 +2618,25 @@ export class DatabaseStorage {
   }
 
   // CER Report methods
-  async getCerReport(id: string): Promise<schema.CerReport | undefined> {
+  async getCerReport(
+    id: string,
+    organizationId: number | string,
+  ): Promise<schema.CerReport | undefined> {
     if (!db) return undefined;
 
     try {
       const numericId = Number(id);
+      const orgId = Number(organizationId);
+      if (!Number.isFinite(orgId)) return undefined;
       const reports = await db
         .select()
         .from(schema.cerReports)
-        .where(eq(schema.cerReports.id, numericId));
+        .where(
+          and(
+            eq(schema.cerReports.id, numericId),
+            eq(schema.cerReports.organizationId, orgId),
+          ),
+        );
       return reports[0];
     } catch (error) {
       logger.error('Failed to get CER report', { id, error });
@@ -3446,7 +3549,7 @@ export class DatabaseStorage {
     return [];
   }
 
-  async getQcSpecification(id: number): Promise<any | undefined> {
+  async getQcSpecification(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -3466,7 +3569,7 @@ export class DatabaseStorage {
     return {};
   }
 
-  async getSpecificationVersions(id: number): Promise<any[]> {
+  async getSpecificationVersions(id: number, _organizationId: number | string): Promise<any[]> {
     return [];
   }
 
@@ -3480,7 +3583,7 @@ export class DatabaseStorage {
     return [];
   }
 
-  async getOosInvestigation(id: number): Promise<any | undefined> {
+  async getOosInvestigation(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -3513,7 +3616,7 @@ export class DatabaseStorage {
     return [];
   }
 
-  async getBatchRelease(id: number): Promise<any | undefined> {
+  async getBatchRelease(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -3533,7 +3636,7 @@ export class DatabaseStorage {
     return {};
   }
 
-  async getBatchGenealogy(id: number): Promise<any> {
+  async getBatchGenealogy(id: number, _organizationId: number | string): Promise<any> {
     return {};
   }
 
@@ -3555,7 +3658,7 @@ export class DatabaseStorage {
     return [];
   }
 
-  async getQcDeviation(id: number): Promise<any | undefined> {
+  async getQcDeviation(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -3589,7 +3692,7 @@ export class DatabaseStorage {
     return [];
   }
 
-  async getMicrobiologicalTest(id: number): Promise<any | undefined> {
+  async getMicrobiologicalTest(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -3623,7 +3726,7 @@ export class DatabaseStorage {
     return [];
   }
 
-  async getReferenceStandard(id: number): Promise<any | undefined> {
+  async getReferenceStandard(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
@@ -3651,7 +3754,7 @@ export class DatabaseStorage {
     return disposal;
   }
 
-  async getStandardUsageLogs(id: number): Promise<any[]> {
+  async getStandardUsageLogs(id: number, _organizationId: number | string): Promise<any[]> {
     return [];
   }
 

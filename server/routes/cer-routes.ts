@@ -4,6 +4,21 @@ import fs from 'fs';
 import path from 'path';
 import { pool } from '../db';
 import { getGateway } from '../services/ai-gateway';
+import auditService from '../services/auditService';
+import { createScopedLogger } from '../utils/logger.js';
+import { requireAuthedOrgId } from '../utils/authedOrgId';
+
+const cerLog = createScopedLogger('cer-routes');
+
+/**
+ * Strictly validate a CER report id used to build a filesystem path.
+ * Rejects anything that isn't a UUID-like / alphanumeric token so a
+ * caller can't supply `../../etc/passwd` or `../other-tenant/abc` and
+ * traverse outside the per-tenant report directory.
+ */
+function isSafeReportId(id: unknown): id is string {
+  return typeof id === 'string' && /^[A-Za-z0-9_.-]{1,128}$/.test(id) && !id.includes('..');
+}
 
 const router = express.Router();
 
@@ -399,20 +414,91 @@ router.get('/reports', async (req, res) => {
   }
 });
 
-// Get a specific CER report by ID
+// Get a specific CER report by ID.
+//
+// SECURITY: pre-fix this route had two distinct vulnerabilities.
+//
+//   1. PATH TRAVERSAL — the report id flowed from req.params straight
+//      into path.join(cwd, 'data/cer_reports', `${id}.json`). path.join
+//      normalises `..` segments, so an id of `../../etc/passwd` would
+//      resolve out of the cer_reports directory entirely. The id is
+//      now validated against a strict allowlist regex before any
+//      filesystem lookup.
+//
+//   2. NO TENANT ISOLATION — every report was stored in a flat
+//      `data/cer_reports/` directory readable by any authenticated
+//      user. Reports are now anchored under a per-tenant subdirectory
+//      `data/cer_reports/org-{orgId}/{id}.json` so a caller probing
+//      another tenant's id sees "not found".
+//
+// Every successful read writes a `cer_report_view` audit event —
+// 21 CFR Part 11 §11.10(e) requirement, same shape as the
+// document_view event landed in 51a9ade.
 router.get('/reports/:id', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
     const { id } = req.params;
-    const reportPath = path.join(process.cwd(), 'data', 'cer_reports', `${id}.json`);
+    if (!isSafeReportId(id)) {
+      // Don't echo the input value — log it for triage and return a
+      // generic 400 so probing can't fingerprint the validator.
+      // The type guard narrows `id` to `never` here; coerce to
+      // string for the truncated sample.
+      const rawId = String(id ?? '');
+      cerLog.warn('CER report request rejected by id validator', {
+        // Truncate so a long payload doesn't bloat the log line.
+        idSample: rawId.slice(0, 64),
+        orgId: guard.orgId,
+      });
+      return res.status(400).json({ error: 'Invalid report id' });
+    }
+
+    // Resolve under the tenant's directory. `path.resolve` returns an
+    // absolute path; verify it still lives under the tenant root after
+    // normalisation as a belt-and-suspenders check (the regex above
+    // already rules out the traversal vector, but defence-in-depth).
+    const tenantRoot = path.resolve(
+      process.cwd(),
+      'data',
+      'cer_reports',
+      `org-${guard.orgId}`,
+    );
+    const reportPath = path.resolve(tenantRoot, `${id}.json`);
+    if (!reportPath.startsWith(tenantRoot + path.sep) && reportPath !== tenantRoot) {
+      cerLog.warn('CER report path escaped tenant root', { idSample: id, orgId: guard.orgId });
+      return res.status(400).json({ error: 'Invalid report id' });
+    }
 
     if (!fs.existsSync(reportPath)) {
       return res.status(404).json({ error: 'Report not found' });
     }
 
     const reportData = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+
+    // Audit BEFORE serving content. Even if the response stream
+    // later fails, the user-requested access is the §11.10(e) event.
+    try {
+      const user = (req as any).user;
+      await auditService.logAction({
+        tenantId: guard.orgId,
+        userId: user?.id ?? user?.userId,
+        action: 'cer_report_view',
+        resourceType: 'cer_report',
+        resourceId: id,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: { route: req.path },
+      });
+    } catch {
+      /* audit failure is non-fatal */
+    }
+
     res.json(reportData);
   } catch (error) {
-    console.error('Error fetching CER report:', error);
+    cerLog.error('Error fetching CER report', {
+      err: error instanceof Error ? error.message : String(error),
+    });
     res.status(500).json({ error: 'Failed to fetch CER report' });
   }
 });

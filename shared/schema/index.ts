@@ -210,6 +210,25 @@ export type {
   InsertReviewerSimulationRun,
 } from './reviewer-simulation';
 
+// PDEV → IND Workflow — per-program activity state + readiness snapshots
+// See PDEV_IND_WORKFLOW_AUDIT.md (repo root) for the audit that justifies
+// these tables existing alongside the existing IND / regulatory primitives.
+export {
+  pdevProgramActivities,
+  pdevReadinessSnapshots,
+  pdevProgramActivitiesRelations,
+  pdevReadinessSnapshotsRelations,
+  insertPdevProgramActivitySchema,
+  insertPdevReadinessSnapshotSchema,
+} from './pdev-workflow';
+export type {
+  PdevProgramActivity,
+  PdevReadinessSnapshot,
+  PdevReadinessFinding,
+  InsertPdevProgramActivity,
+  InsertPdevReadinessSnapshot,
+} from './pdev-workflow';
+
 // AI/ML Predetermined Change Control Plan (PCCP)
 export {
   aiMlPccpPlans,

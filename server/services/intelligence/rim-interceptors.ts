@@ -208,7 +208,7 @@ export interface ArtifactChangeInterceptInput {
   changeType: 'create' | 'update' | 'delete';
   title: string;
   contentLength: number;
-  source: 'ana_cortex' | 'manual' | 'import' | 'template';
+  source: 'ana_cortex' | 'manual' | 'import' | 'template' | 'lumen_cortex';
   content?: string;
 }
 

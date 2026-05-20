@@ -25,14 +25,16 @@ for (const warning of warnings) {
   warningByPath.get(pathKey).add(warning.type || 'unknown');
 }
 
+// Build matrix lines. Note: deliberately exclude any per-run metadata
+// (generatedAt, mount/error/warning counts) from the markdown — those drift
+// every time the audit re-runs and would make this gate fail forever in CI
+// where the audit JSON is regenerated immediately before the matrix check.
+// The matrix is review evidence about *ownership*; the JSON next to it
+// carries the run-specific metadata.
 const lines = [
   '# Route Ownership Matrix (Required Review Artifact)',
   '',
-  `- Generated from: \`docs/reports/route-mount-audit-latest.json\``,
-  `- Source timestamp: ${audit.generatedAt || 'unknown'}`,
-  `- Total mounts: ${audit.mounts ?? 'unknown'}`,
-  `- Errors: ${audit.errors ?? 0}`,
-  `- Warnings: ${audit.warnings ?? 0}`,
+  '- Source: `docs/reports/route-mount-audit-latest.json`',
   '',
   '## Prefix Ownership',
   '',

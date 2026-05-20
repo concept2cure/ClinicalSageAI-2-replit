@@ -9,6 +9,10 @@ import { eq, desc, and, like, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { coauthorDocuments } from '../../shared/schema';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('ectd-documents');
+
 const router = Router();
 
 /**
@@ -83,7 +87,7 @@ router.get('/', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error('[eCTD-Documents] List error:', error);
+    logger.error('List error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to fetch eCTD documents', message: error.message });
   }
 });
@@ -137,7 +141,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error('[eCTD-Documents] Get error:', error);
+    logger.error('Get error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to fetch eCTD document', message: error.message });
   }
 });
@@ -196,7 +200,7 @@ router.post('/', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error('[eCTD-Documents] Create error:', error);
+    logger.error('Create error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to create eCTD document', message: error.message });
   }
 });
@@ -282,7 +286,7 @@ router.put('/:id', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error('[eCTD-Documents] Update error:', error);
+    logger.error('Update error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to update eCTD document', message: error.message });
   }
 });
@@ -314,7 +318,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
 
     res.json({ success: true, deletedId: deleted.id });
   } catch (error: any) {
-    console.error('[eCTD-Documents] Delete error:', error);
+    logger.error('Delete error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to delete eCTD document', message: error.message });
   }
 });

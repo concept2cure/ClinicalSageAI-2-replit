@@ -29,10 +29,12 @@ export function sendStaticDataDisabled(
   requiredFlag: string
 ): Response {
   res.setHeader('X-Route-Hardening', 'static-business-data-blocked');
+  res.setHeader('X-Route-Enable-Flag', requiredFlag);
   return res.status(503).json({
     success: false,
-    error: 'Endpoint temporarily unavailable',
+    error: `${routeName} is temporarily unavailable`,
     code: 'STATIC_BUSINESS_DATA_DISABLED',
+    requiredFlag,
     timestamp: new Date().toISOString(),
   });
 }

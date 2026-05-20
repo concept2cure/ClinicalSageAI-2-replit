@@ -53,6 +53,7 @@ router.get('/', async (req, res) => {
       '🔍 GET projects request - organizationId:',
       organizationId,
       'from:',
+      // security-allow: source-telemetry
       req.headers['x-organization-id'] ? 'header' : 'query'
     );
 

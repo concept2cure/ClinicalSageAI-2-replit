@@ -14,7 +14,6 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { Parser } from 'expr-eval';
 import { logger } from '../utils/logger.js';
 // import { dataHarvester } from './dataHarvester.js';
 
@@ -23,13 +22,130 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Initialize expression parser
-const parser = new Parser({
-  operators: {
-    logical: true,
-    comparison: true,
-  },
-});
+// ─── Safe expression evaluator ──────────────────────────────────────────────
+//
+// Replaces expr-eval, which has unpatched prototype-pollution + arbitrary-
+// function-execution advisories (GHSA-8gw3-rxh4-v6jx, GHSA-jc85-fpwf-qm7x).
+// This evaluator handles the actual surface used by harvest-rule conditions:
+//   • identifiers resolved against a flat context object (own-properties only)
+//   • string and numeric literals
+//   • comparison operators ==, !=, ===, !==, <, <=, >, >=
+//   • logical operators &&, ||, !
+//   • parentheses for grouping
+// It does NOT support function calls, member access, or array literals — none
+// of which the harvest-rule grammar uses. Anything outside the supported
+// grammar throws a SyntaxError before evaluation, so malicious payloads
+// cannot reach a JS-level eval boundary.
+
+function tokenizeExpr(input) {
+  const tokens = [];
+  let i = 0;
+  const TWO_CHAR = ['==', '!=', '<=', '>=', '&&', '||'];
+  while (i < input.length) {
+    const c = input[i];
+    if (c === ' ' || c === '\t' || c === '\n' || c === '\r') { i += 1; continue; }
+    if (c === '(' || c === ')' || c === '!' || c === '<' || c === '>') {
+      const two = input.slice(i, i + 2);
+      if (TWO_CHAR.includes(two)) { tokens.push({ t: 'op', v: two }); i += 2; continue; }
+      if (c === '!') { tokens.push({ t: 'op', v: '!' }); i += 1; continue; }
+      tokens.push({ t: 'op', v: c }); i += 1; continue;
+    }
+    if (c === '=' || c === '&' || c === '|') {
+      const two = input.slice(i, i + 2);
+      const three = input.slice(i, i + 3);
+      if (three === '===' || three === '!==') { tokens.push({ t: 'op', v: three }); i += 3; continue; }
+      if (TWO_CHAR.includes(two)) { tokens.push({ t: 'op', v: two }); i += 2; continue; }
+      throw new SyntaxError(`Unexpected character "${c}" at position ${i}`);
+    }
+    if (c === '"' || c === "'") {
+      const quote = c; i += 1;
+      let s = '';
+      while (i < input.length && input[i] !== quote) {
+        if (input[i] === '\\' && i + 1 < input.length) { s += input[i + 1]; i += 2; continue; }
+        s += input[i]; i += 1;
+      }
+      if (input[i] !== quote) throw new SyntaxError('Unterminated string literal');
+      i += 1;
+      tokens.push({ t: 'str', v: s });
+      continue;
+    }
+    if (/[0-9]/.test(c)) {
+      let j = i; while (j < input.length && /[0-9.]/.test(input[j])) j += 1;
+      tokens.push({ t: 'num', v: Number(input.slice(i, j)) }); i = j; continue;
+    }
+    if (/[A-Za-z_]/.test(c)) {
+      let j = i; while (j < input.length && /[A-Za-z0-9_]/.test(input[j])) j += 1;
+      const id = input.slice(i, j);
+      if (id === 'true') tokens.push({ t: 'bool', v: true });
+      else if (id === 'false') tokens.push({ t: 'bool', v: false });
+      else if (id === 'null') tokens.push({ t: 'null', v: null });
+      else tokens.push({ t: 'id', v: id });
+      i = j; continue;
+    }
+    throw new SyntaxError(`Unexpected character "${c}" at position ${i}`);
+  }
+  return tokens;
+}
+
+function parseExpr(tokens, context) {
+  let pos = 0;
+  // Pratt parser with explicit precedences: ! > comparison > && > ||
+  function peek() { return tokens[pos]; }
+  function consume() { return tokens[pos++]; }
+  function expect(op) {
+    const t = peek();
+    if (!t || t.t !== 'op' || t.v !== op) throw new SyntaxError(`Expected "${op}"`);
+    return consume();
+  }
+  function lookupId(name) {
+    if (!Object.prototype.hasOwnProperty.call(context, name)) return undefined;
+    return context[name];
+  }
+  function parsePrimary() {
+    const t = consume();
+    if (!t) throw new SyntaxError('Unexpected end of expression');
+    if (t.t === 'op' && t.v === '(') { const v = parseOr(); expect(')'); return v; }
+    if (t.t === 'op' && t.v === '!') return !parsePrimary();
+    if (t.t === 'num' || t.t === 'str' || t.t === 'bool' || t.t === 'null') return t.v;
+    if (t.t === 'id') return lookupId(t.v);
+    throw new SyntaxError(`Unexpected token: ${JSON.stringify(t)}`);
+  }
+  function parseComparison() {
+    let left = parsePrimary();
+    while (peek() && peek().t === 'op' && ['==', '!=', '===', '!==', '<', '<=', '>', '>='].includes(peek().v)) {
+      const op = consume().v; const right = parsePrimary();
+      switch (op) {
+        case '==': left = left == right; break;       // eslint-disable-line eqeqeq
+        case '!=': left = left != right; break;       // eslint-disable-line eqeqeq
+        case '===': left = left === right; break;
+        case '!==': left = left !== right; break;
+        case '<': left = left < right; break;
+        case '<=': left = left <= right; break;
+        case '>': left = left > right; break;
+        case '>=': left = left >= right; break;
+      }
+    }
+    return left;
+  }
+  function parseAnd() {
+    let left = parseComparison();
+    while (peek() && peek().t === 'op' && peek().v === '&&') { consume(); const right = parseComparison(); left = left && right; }
+    return left;
+  }
+  function parseOr() {
+    let left = parseAnd();
+    while (peek() && peek().t === 'op' && peek().v === '||') { consume(); const right = parseAnd(); left = left || right; }
+    return left;
+  }
+  const result = parseOr();
+  if (pos < tokens.length) throw new SyntaxError(`Unexpected trailing tokens: ${JSON.stringify(tokens.slice(pos))}`);
+  return result;
+}
+
+function evalSafeExpression(expression, context) {
+  const tokens = tokenizeExpr(expression);
+  return parseExpr(tokens, context);
+}
 
 /**
  * Execute harvest rules for a submission
@@ -299,9 +415,10 @@ function evaluateCondition(condition, context) {
       }, {}),
     };
 
-    // Parse and evaluate
-    const expr = parser.parse(condition);
-    return expr.evaluate(flatContext);
+    // Parse and evaluate using the safe expression evaluator (replaces
+    // expr-eval which has unpatched prototype-pollution + arbitrary-function
+    // execution advisories — see the evaluator's header comment).
+    return Boolean(evalSafeExpression(condition, flatContext));
   } catch (error) {
     logger.error(`Error evaluating condition "${condition}": ${error.message}`, error);
     throw new Error(`Failed to evaluate condition: ${error.message}`);

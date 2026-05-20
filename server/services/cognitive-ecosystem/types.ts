@@ -1039,18 +1039,79 @@ export interface RiskFactor {
   direction: 'positive' | 'negative';
 }
 
+export enum FHIRValidationRuleType {
+  REQUIRED = 'required',
+  CARDINALITY = 'cardinality',
+  PATTERN = 'pattern',
+  VALUE_SET = 'value-set',
+  VALUESET = 'valueset',
+  INVARIANT = 'invariant',
+  PROFILE = 'profile',
+  REFERENCE = 'reference',
+  STRUCTURE = 'structure',
+  TERMINOLOGY = 'terminology',
+  EXPRESSION = 'expression',
+  EXTENSION = 'extension',
+  SLICE = 'slice',
+  CUSTOM = 'custom',
+}
+
+export enum FHIRSeverity {
+  FATAL = 'fatal',
+  ERROR = 'error',
+  WARNING = 'warning',
+  INFORMATION = 'information',
+}
+
+export enum FHIRValidationStatus {
+  PASSED = 'passed',
+  FAILED = 'failed',
+  WARNING = 'warning',
+  SKIPPED = 'skipped',
+}
+
+export interface FHIRValidationIssue {
+  severity: FHIRSeverity;
+  code: string;
+  message?: string;
+  diagnostics?: string;
+  location?: string | string[];
+  expression?: string;
+  ruleId?: string;
+}
+
+export interface FHIRValidationResult {
+  id: string;
+  tenantId: string;
+  resourceType: string;
+  resourceId?: string;
+  status?: FHIRValidationStatus;
+  validationStatus?: FHIRValidationStatus;
+  issues: FHIRValidationIssue[];
+  ruleIds?: string[];
+  validatedAt: Date;
+  profileUrl?: string;
+  metadata?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
 export interface FHIRValidationRule {
   id: string;
   tenantId: string;
   ruleName: string;
-  ruleDescription: string;
-  fhirResourceType: string;
-  fhirPath: string;
-  validationExpression: string;
-  severity: ValidationSeverity;
+  ruleDescription?: string;
+  ruleType: FHIRValidationRuleType;
+  resourceType: string;
+  fhirResourceType?: string;
+  fhirPath?: string;
+  expression?: string;
+  validationExpression?: string;
+  severity: FHIRSeverity;
   errorMessage: string;
+  profileUrl?: string;
   regulationReference?: string;
-  active: boolean;
+  isActive?: boolean;
+  active?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -1078,6 +1139,10 @@ export interface ResultMetadata {
   affectedRows?: number;
   warnings?: string[];
   auditEventId?: string;
+  cached?: boolean;
+  rulesEvaluated?: number;
+  processedCount?: number;
+  [key: string]: unknown;
 }
 
 export interface PaginatedResult<T> {

@@ -11,15 +11,24 @@ import { Router, Request, Response } from 'express';
 import auditService from '../services/auditService';
 import { createScopedLogger } from '../utils/logger';
 import { createFeatureStore } from '../utils/feature-persistence';
+import { requireAuthedOrgId } from '../utils/authedOrgId';
 
 const logger = createScopedLogger('client-branding');
 const router = Router();
 const store = createFeatureStore('client_branding');
 
+// SECURITY: every handler in this router reads/writes per-org branding
+// assets. Pre-fix, each one took `req.query.organizationId` or
+// `req.body.organizationId` verbatim — a query-param IDOR that let
+// any authenticated user read or overwrite another tenant's branding
+// (logo, colors, custom templates). The orgId now comes from the JWT
+// only, via requireAuthedOrgId; the query/body field is ignored.
+
 router.get('/settings', async (req: Request, res: Response) => {
   try {
-    const orgId = Number(req.query.organizationId);
-    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const orgId = guard.orgId;
 
     const rows = await store.query(orgId, 'settings');
     if (rows.length > 0) {
@@ -49,8 +58,9 @@ router.get('/settings', async (req: Request, res: Response) => {
 
 router.patch('/settings', async (req: Request, res: Response) => {
   try {
-    const orgId = Number(req.body.organizationId);
-    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const orgId = guard.orgId;
 
     const rows = await store.query(orgId, 'settings');
     const existing = rows.length > 0 ? rows[0] : null;
@@ -190,8 +200,9 @@ router.post('/upload-letterhead', async (req: Request, res: Response) => {
 
 router.get('/templates', async (req: Request, res: Response) => {
   try {
-    const orgId = Number(req.query.organizationId);
-    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const orgId = guard.orgId;
 
     const category = req.query.category as string | undefined;
     let templates = await store.query(orgId, 'template');
@@ -207,8 +218,9 @@ router.get('/templates', async (req: Request, res: Response) => {
 router.get('/templates/:id', async (req: Request, res: Response) => {
   try {
     const templateId = parseInt(req.params.id, 10);
-    const orgId = Number(req.query.organizationId);
-    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const orgId = guard.orgId;
 
     const template = await store.getById(templateId, orgId);
     if (!template) return res.status(404).json({ error: 'Template not found' });
@@ -264,8 +276,9 @@ router.post('/templates', async (req: Request, res: Response) => {
 router.patch('/templates/:id', async (req: Request, res: Response) => {
   try {
     const templateId = parseInt(req.params.id, 10);
-    const orgId = Number(req.body.organizationId);
-    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const orgId = guard.orgId;
 
     const existing = await store.getById(templateId, orgId);
     if (!existing) return res.status(404).json({ error: 'Template not found' });
@@ -297,8 +310,9 @@ router.patch('/templates/:id', async (req: Request, res: Response) => {
 router.delete('/templates/:id', async (req: Request, res: Response) => {
   try {
     const templateId = parseInt(req.params.id, 10);
-    const orgId = Number(req.query.organizationId);
-    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const orgId = guard.orgId;
 
     const existing = await store.getById(templateId, orgId);
     if (!existing) return res.status(404).json({ error: 'Template not found' });
@@ -322,8 +336,9 @@ router.delete('/templates/:id', async (req: Request, res: Response) => {
 router.post('/render-template/:id', async (req: Request, res: Response) => {
   try {
     const templateId = parseInt(req.params.id, 10);
-    const orgId = Number(req.body.organizationId);
-    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const orgId = guard.orgId;
     const values = req.body.values || {};
 
     const template = await store.getById(templateId, orgId);

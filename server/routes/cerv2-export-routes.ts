@@ -29,6 +29,10 @@ import { mockVault } from '../services/mockVault';
 import { authMiddleware } from '../auth';
 import { createGovernedExportConsequence } from '../services/export/governedExportConsequence';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('cerv2-export-routes');
+
 const router = Router();
 
 // ── Rate limiting for export endpoints ──────────────────────────────────────
@@ -285,7 +289,7 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
     try {
       pdfBuffer = await renderCombinedPdf(docType, content);
     } catch (renderErr: any) {
-      console.error('[CERV2 Export] PDF render failed:', renderErr);
+      logger.error('PDF render failed', { err: renderErr instanceof Error ? renderErr.message : String(renderErr) });
       return res.status(500).json({
         error: 'PDF rendering failed',
         message: renderErr.message || 'The document could not be converted to PDF',
@@ -316,7 +320,7 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
 
     return res.status(200).json(consequence);
   } catch (err: any) {
-    console.error('[CERV2 Export] PDF error:', err);
+    logger.error('PDF error', { err: err instanceof Error ? err.message : String(err) });
     if (!res.headersSent) {
       res.status(500).json({
         error: 'GOVERNED_EXPORT_FAILED',
@@ -351,7 +355,7 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
     try {
       docxBuffer = await renderCombinedDocx(docType, content);
     } catch (renderErr: any) {
-      console.error('[CERV2 Export] DOCX render failed:', renderErr);
+      logger.error('DOCX render failed', { err: renderErr instanceof Error ? renderErr.message : String(renderErr) });
       return res.status(500).json({
         error: 'DOCX rendering failed',
         message: renderErr.message || 'The document could not be converted to DOCX',
@@ -382,7 +386,7 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
 
     return res.status(200).json(consequence);
   } catch (err: any) {
-    console.error('[CERV2 Export] DOCX error:', err);
+    logger.error('DOCX error', { err: err instanceof Error ? err.message : String(err) });
     if (!res.headersSent) {
       res.status(500).json({
         error: 'GOVERNED_EXPORT_FAILED',
@@ -446,7 +450,7 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
 
     return res.status(200).json(consequence);
   } catch (err: any) {
-    console.error('[CERV2 Export] ZIP error:', err);
+    logger.error('ZIP error', { err: err instanceof Error ? err.message : String(err) });
     if (!res.headersSent) {
       res.status(500).json({
         error: 'GOVERNED_EXPORT_FAILED',
@@ -476,7 +480,7 @@ router.get('/sample/:docType', async (req: Request, res: Response) => {
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(pdfBuffer);
   } catch (err: any) {
-    console.error('[CERV2 Export] Sample export error:', err);
+    logger.error('Sample export error', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: 'Sample export failed', message: err.message });
   }
 });
@@ -500,7 +504,7 @@ router.get('/sample/:docType/zip', async (req: Request, res: Response) => {
 
     const archive = archiver('zip', { zlib: { level: 9 } });
     archive.on('error', err => {
-      console.error('[CERV2 Export] Sample ZIP error:', err);
+      logger.error('Sample ZIP error', { err: err instanceof Error ? err.message : String(err) });
       if (!res.headersSent) res.status(500).end();
     });
     archive.pipe(res);
@@ -535,7 +539,7 @@ router.get('/sample/:docType/zip', async (req: Request, res: Response) => {
 
     await archive.finalize();
   } catch (err: any) {
-    console.error('[CERV2 Export] Sample ZIP error:', err);
+    logger.error('Sample ZIP error', { err: err instanceof Error ? err.message : String(err) });
     if (!res.headersSent) {
       res.status(500).json({ error: 'Sample ZIP failed', message: err.message });
     }
@@ -565,7 +569,7 @@ router.get('/sample/:docType/docx', async (req: Request, res: Response) => {
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(docxBuffer);
   } catch (err: any) {
-    console.error('[CERV2 Export] Sample DOCX error:', err);
+    logger.error('Sample DOCX error', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: 'Sample DOCX export failed', message: err.message });
   }
 });
@@ -597,7 +601,7 @@ router.get('/sample/:docType/json', async (req: Request, res: Response) => {
         : null,
     });
   } catch (err: any) {
-    console.error('[CERV2 Export] Sample JSON error:', err);
+    logger.error('Sample JSON error', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: 'Sample JSON retrieval failed', message: err.message });
   }
 });
@@ -733,7 +737,7 @@ router.post(
         nodeCount: contentNodes.length,
       });
     } catch (err: any) {
-      console.error('[CERV2 Export] AI-to-editor error:', err);
+      logger.error('AI-to-editor error', { err: err instanceof Error ? err.message : String(err) });
       res.status(500).json({ error: 'AI-to-editor conversion failed', message: err.message });
     }
   }
@@ -808,7 +812,7 @@ router.post(
         },
       });
     } catch (err: any) {
-      console.error('[CERV2 Export] eCTD assembly error:', err);
+      logger.error('eCTD assembly error', { err: err instanceof Error ? err.message : String(err) });
       res.status(500).json({ error: 'eCTD package assembly failed', message: err.message });
     }
   }

@@ -11,13 +11,16 @@ import { getPool } from '../db';
 const router = Router();
 
 /**
- * Helper: extract organizationId from request (query, body, or user session)
+ * Helper: extract organizationId from the verified JWT context. The
+ * legacy chain `req.query.organizationId || req.body?.organizationId ||
+ * req.user?.organizationId` was a textbook IDOR — query and body are
+ * attacker-controlled. The JWT is the only source we trust here.
  */
 function getOrgId(req: any): number | null {
-  const orgId = parseInt(req.query.organizationId as string)
-    || req.body?.organizationId
-    || req.user?.organizationId;
-  return orgId && !isNaN(orgId) ? orgId : null;
+  const raw = req.user?.organizationId ?? req.tenantContext?.organizationId;
+  if (raw == null) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
 }
 
 // ============================================================================

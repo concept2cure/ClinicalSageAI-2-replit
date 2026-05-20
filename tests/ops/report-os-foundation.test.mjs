@@ -81,20 +81,23 @@ test('report-os route captures regional context in run metadata', () => {
   assert.ok(routeSource.includes('summary: computed.summary'));
 });
 
-test('server index imports bootstrap registrars used at startup callsites', () => {
+test('server index imports route registrars used at startup callsites', () => {
+  // The server has been refactored from a per-domain bootstrap module
+  // (registerCoreRoutes / registerAiRoutes / etc.) to the
+  // registerPre/PostStartRoutes pair under ./startup/routes. The contract
+  // this test enforces is still "server/index.ts wires routes through a
+  // named registrar, not inline" — what's changed is the registrar names.
   const serverIndexSource = readFileSync('server/index.ts', 'utf8');
-  const requiredBootstrapImports = [
-    "import { registerCoreRoutes } from './bootstrap/register-core-routes';",
-    "import { registerIntegrationRoutes } from './bootstrap/register-integrations-routes';",
-    "import { registerAiRoutes } from './bootstrap/register-ai-routes';",
-    "import { registerConcept2CureRoutes } from './bootstrap/register-concept2cure-routes';",
-    "import { registerAdminRoutes } from './bootstrap/register-admin-routes';",
+  const requiredRegistrars = [
+    'registerPreStartRoutes',
+    'registerPostStartRoutes',
+    "from './startup/routes'",
   ];
 
-  for (const requiredImport of requiredBootstrapImports) {
+  for (const required of requiredRegistrars) {
     assert.ok(
-      serverIndexSource.includes(requiredImport),
-      `missing bootstrap import in server/index.ts: ${requiredImport}`,
+      serverIndexSource.includes(required),
+      `missing route registrar reference in server/index.ts: ${required}`,
     );
   }
 });

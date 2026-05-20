@@ -114,12 +114,31 @@ export async function generateApiKey(
  * On success, increments the request count and updates lastUsedAt.
  * Returns the associated organization, scopes, and rate limit.
  */
+/**
+ * Always-hash design: we compute the SHA-256 of whatever bytes the
+ * caller sent, then look up the resulting hash. Pre-fix the function
+ * short-circuited with `return invalid` if the raw key didn't start
+ * with `csai_`, which leaked "wrong format" vs "valid format but no
+ * match" via response timing — an attacker probing the system could
+ * detect when their guess had the right prefix.
+ *
+ * Now: the format check is folded into the same "key not found"
+ * branch. A wrong-prefix key still hashes to a value that won't be
+ * in the database (we never store hashes of non-`csai_`-prefixed
+ * inputs), so the lookup naturally returns zero rows. The reason
+ * string ("Invalid key format" vs "API key not found") is preserved
+ * for caller observability but does NOT branch the SQL path, so the
+ * timing is identical for both failure modes.
+ */
 export async function validateApiKey(rawKey: string): Promise<ApiKeyValidationResult> {
-  if (!rawKey || !rawKey.startsWith('csai_')) {
-    return { valid: false, reason: 'Invalid key format' };
-  }
+  const safeRawKey = typeof rawKey === 'string' ? rawKey : '';
+  const formatOk = safeRawKey.startsWith('csai_');
 
-  const keyHash = createHash('sha256').update(rawKey).digest('hex');
+  // Always hash and always query, regardless of format. A non-csai_
+  // input hashes to something that won't be in the table, so the
+  // result.rows check below catches it — without revealing via
+  // timing that the format check failed first.
+  const keyHash = createHash('sha256').update(safeRawKey).digest('hex');
 
   const result = await pool.query(
     `SELECT id, organization_id, scopes, status, expires_at, rate_limit
@@ -129,7 +148,10 @@ export async function validateApiKey(rawKey: string): Promise<ApiKeyValidationRe
   );
 
   if (result.rows.length === 0) {
-    return { valid: false, reason: 'API key not found' };
+    return {
+      valid: false,
+      reason: formatOk ? 'API key not found' : 'Invalid key format',
+    };
   }
 
   const key = result.rows[0];
@@ -143,13 +165,37 @@ export async function validateApiKey(rawKey: string): Promise<ApiKeyValidationRe
     return { valid: false, reason: 'API key has expired' };
   }
 
-  // Check expiration
+  // Check expiration: the key was active but is now past its
+  // expires_at timestamp. Mark it expired AND record an audit event
+  // for the state transition — admins need to see "key X expired
+  // at Y" in the official audit trail, not just discover it via a
+  // 401 in their downstream service.
   if (key.expires_at && new Date(key.expires_at) < new Date()) {
-    // Mark as expired in the database
     await pool.query(
       `UPDATE api_keys SET status = 'expired' WHERE id = $1`,
       [key.id]
     );
+    // Fire-and-forget audit write. Dynamic import so this module
+    // doesn't pull the auditService chain at load time (it would
+    // create a cycle via the db pool import).
+    (async () => {
+      try {
+        const { default: auditService } = await import('./auditService');
+        await auditService.logAction({
+          tenantId: key.organization_id,
+          action: 'api_key_expired',
+          resourceType: 'api_key',
+          resourceId: String(key.id),
+          details: {
+            outcome: 'expired',
+            reason: 'past_expires_at',
+            expiresAt: key.expires_at,
+          },
+        });
+      } catch {
+        /* audit failure is non-fatal */
+      }
+    })();
     return { valid: false, reason: 'API key has expired' };
   }
 

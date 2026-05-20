@@ -8,6 +8,10 @@ import { cerv2SectionVersions, cerv2510kSections } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 import { db } from '../db';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('cerv2-versions');
+
 const router = Router();
 
 const resolveOrganizationId = (req: any) => {
@@ -45,7 +49,7 @@ router.get('/', authMiddleware, async (req: any, res) => {
 
     return res.json({ versions, count: versions.length });
   } catch (error: any) {
-    console.error('[CERV2 Versions] List error:', error);
+    logger.error('List error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to fetch versions', message: 'An unexpected error occurred' });
   }
 });
@@ -82,7 +86,7 @@ router.get('/:versionId', authMiddleware, async (req: any, res) => {
 
     return res.json({ version });
   } catch (error: any) {
-    console.error('[CERV2 Versions] Get error:', error);
+    logger.error('Get error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to fetch version', message: 'An unexpected error occurred' });
   }
 });
@@ -116,7 +120,7 @@ router.get('/section/:sectionId/history', authMiddleware, async (req: any, res) 
 
     return res.json({ versions, count: versions.length, sectionId });
   } catch (error: any) {
-    console.error('[CERV2 Versions] Section history error:', error);
+    logger.error('Section history error', { err: error instanceof Error ? error.message : String(error) });
     return res
       .status(500)
       .json({ error: 'Failed to fetch section history', message: 'An unexpected error occurred' });
