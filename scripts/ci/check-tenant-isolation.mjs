@@ -47,6 +47,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -196,6 +197,20 @@ function buildTablePattern(tables) {
 
 const TABLE_PATTERN = buildTablePattern(TENANT_SCOPED_TABLES);
 
+/**
+ * Normalize a SQL string for hashing: lowercase, collapse whitespace, strip
+ * quotes and trailing punctuation. Two queries that differ only in
+ * formatting (linebreaks, whitespace, the surrounding quote style) hash to
+ * the same value, so cosmetic edits don't reshuffle the baseline.
+ */
+function normalizeSqlForHash(sql) {
+  return sql
+    .replace(/^[`'"]|[`'"]$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
 // Match a SQL string literal (template, single, or double quoted) likely
 // to be a query — must contain SELECT/INSERT/UPDATE/DELETE somewhere.
 const SQL_STRING = /[`'"](?:\\.|[^\\`'"])*?(?:SELECT|INSERT\s+INTO|UPDATE|DELETE\s+FROM)[\s\S]*?[`'"]/gi;
@@ -224,12 +239,22 @@ for (const file of walk(path.join(repoRoot, 'server'))) {
     // If the SQL itself includes a tenant filter, accept.
     if (TENANT_FILTER_RE.test(sql)) continue;
 
-    // Otherwise: report.
+    // Otherwise: report. We attach a content hash of the normalized SQL so
+    // the baseline fingerprint survives line-number drift caused by edits in
+    // the same file. (Previously the fingerprint was `file:line:tables`,
+    // which made every unrelated edit in a flagged file look like a new
+    // finding + a resolved finding on the old line — pure noise.)
     const lineNumber = text.slice(0, sqlMatch.index).split('\n').length;
     const lineText = text.split('\n')[lineNumber - 1]?.trim().slice(0, 160) ?? '';
+    const sqlHash = crypto
+      .createHash('sha1')
+      .update(normalizeSqlForHash(sql))
+      .digest('hex')
+      .slice(0, 12);
     findings.push({
       file: rel,
       line: lineNumber,
+      sqlHash,
       tables: Array.from(tableHits),
       preview: lineText,
     });
@@ -286,8 +311,38 @@ if (stdoutJson) {
 
 // ─── Baseline + no-regression mode ─────────────────────────────────────────
 
+/**
+ * Build the stable fingerprint for a finding. Content-hashed so the
+ * fingerprint is invariant under line-number drift — the historical
+ * `file:line:tables` form produced phantom regressions whenever an edit
+ * earlier in the file pushed an existing query down. Now we key on the
+ * normalized SQL itself, scoped by file (so two files coincidentally
+ * holding the same query don't collapse to one fingerprint).
+ */
 function fingerprintFinding(f) {
-  return `${f.file}:${f.line}:${f.tables.sort().join(',')}`;
+  return `${f.file}#${f.sqlHash}:${f.tables.sort().join(',')}`;
+}
+
+/**
+ * Legacy detector — true when a baseline string came from the pre-content-
+ * hash format (file:line:tables, where line is purely digits). Lets
+ * --strict-no-regression migrate an older baseline transparently in CI by
+ * treating its contents as "any current fingerprint touching the same file
+ * + tables matches", instead of failing the whole gate over format drift.
+ */
+function isLegacyFingerprint(fp) {
+  return /^[^#]+:\d+:[a-z_,]+$/.test(fp);
+}
+
+/** Decompose a legacy fingerprint into its file + tables (loses line). */
+function legacyParts(fp) {
+  // Greedy split: last two colons separate line and tables.
+  const lastColon = fp.lastIndexOf(':');
+  const secondLastColon = fp.lastIndexOf(':', lastColon - 1);
+  return {
+    file: fp.slice(0, secondLastColon),
+    tables: fp.slice(lastColon + 1).split(',').sort().join(','),
+  };
 }
 
 if (writeBaseline) {
@@ -315,8 +370,45 @@ if (strictNoRegression) {
   const baseline = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
   const baselineSet = new Set(baseline.fingerprints);
   const currentSet = new Set(findings.map(fingerprintFinding));
-  const newFindings = [...currentSet].filter(fp => !baselineSet.has(fp));
-  const fixedFindings = [...baselineSet].filter(fp => !currentSet.has(fp));
+
+  // Legacy migration: if the baseline still uses the old line-keyed format,
+  // accept any current finding whose (file, tables) tuple appears anywhere
+  // in the legacy baseline. Prevents the format change from making every
+  // existing finding look like a regression on the first run after upgrade.
+  const legacyFileTablesIndex = new Set();
+  for (const fp of baselineSet) {
+    if (!isLegacyFingerprint(fp)) continue;
+    const { file, tables } = legacyParts(fp);
+    legacyFileTablesIndex.add(`${file}::${tables}`);
+  }
+  const isCoveredByLegacy = (fp) => {
+    // fp here is the new format: `file#hash:tables`
+    const hashIdx = fp.indexOf('#');
+    const tablesIdx = fp.indexOf(':', hashIdx);
+    if (hashIdx < 0 || tablesIdx < 0) return false;
+    const file = fp.slice(0, hashIdx);
+    const tables = fp.slice(tablesIdx + 1).split(',').sort().join(',');
+    return legacyFileTablesIndex.has(`${file}::${tables}`);
+  };
+
+  const newFindings = [...currentSet].filter(fp => !baselineSet.has(fp) && !isCoveredByLegacy(fp));
+  const fixedFindings = [...baselineSet].filter(fp => {
+    if (currentSet.has(fp)) return false;
+    if (!isLegacyFingerprint(fp)) return true;
+    // For legacy rows, "resolved" requires the (file, tables) tuple to be
+    // entirely absent from the current findings — otherwise we'd misreport
+    // every legacy row as resolved.
+    const { file, tables } = legacyParts(fp);
+    const stillPresent = [...currentSet].some(c => {
+      const hashIdx = c.indexOf('#');
+      const tablesIdx = c.indexOf(':', hashIdx);
+      if (hashIdx < 0 || tablesIdx < 0) return false;
+      const cFile = c.slice(0, hashIdx);
+      const cTables = c.slice(tablesIdx + 1).split(',').sort().join(',');
+      return cFile === file && cTables === tables;
+    });
+    return !stillPresent;
+  });
 
   if (fixedFindings.length > 0) {
     console.log(
