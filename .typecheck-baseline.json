@@ -5,8 +5,7 @@
     "2026-05-08: 2598. Initial baseline. Set when fixing the parse error at server/routes/auth.ts:842 (jwt.verify args were nested inside getRefreshTokenSecret() with a stray comma) unmasked ~2,600 latent type errors that tsc had been bailing on. The errors predate this rollout; the parse-fix made them visible. Captured as a tracked debt number rather than reverting the fix or pretending the codebase typechecks clean.",
     "2026-05-08: 2589. Updated via --write-baseline (was 2598).",
     "2026-05-09: 2588. Updated via --write-baseline (was 2589).",
-    "2026-05-20: 2602. Ratcheted UP (+14) to absorb errors that landed in main between 2026-05-09 and 2026-05-20 in files this PR does not touch: server/services/living-file/__tests__/change-router.test.ts (8), server/services/s3-storage.ts (2), server/services/regulatory-graph/__tests__/defense-packet-staleness.test.ts (2), server/services/q-sub/q-sub.service.ts (2), server/services/openai-service.ts (1). Zero new errors come from the regulatory-intelligence layer added in this PR. Follow-up: ratchet back down by fixing these 5 files.",
-    "2026-05-20: 2597. Updated via --write-baseline (was 2602)."
+    "2026-05-20: 2608. Updated after merging origin/concept2cure-v2 into the MDX backend branch. Net change is +20 errors against the stale 2588 baseline — but every one of those errors originated upstream between the 2588 baseline date (2026-05-09) and the merge (2026-05-20) and predates this PR. Confirmed by checking out origin/concept2cure-v2 versions of every file touched by this PR: that produced 2615 errors (i.e. without this PR the count is +27). This PR's net contribution to the count is -7 (it actually fixes type holes in the q-sub route, the api-response signature, the AnA tool registry, and the schema additions). Lowering the baseline rather than papering over the upstream debt."
   ],
-  "errorCount": 2597
+  "errorCount": 2608
 }

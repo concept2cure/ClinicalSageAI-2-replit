@@ -37,6 +37,7 @@ import {
   module3BuildAll, module3BuildSection, module3MissingInputs,
   module3StaleSections, module3RefreshStale, module3Readiness,
   module3Contradictions, module3Lineage, module3ClassifySource,
+  cmcStatus, ichCompliance, controlStrategy, variationsClassify,
 } from './module3-command-handlers.js';
 import { MDX_COMMAND_HANDLERS, MDX_COMMAND_METADATA } from './mdx-command-handlers';
 import {
@@ -47,6 +48,10 @@ import {
   MDX_COMMAND_HANDLERS_PHASE3,
   MDX_COMMAND_METADATA_PHASE3,
 } from './mdx-command-handlers-phase3';
+import {
+  PDEV_COMMAND_HANDLERS,
+  PDEV_COMMAND_METADATA,
+} from './pdev-command-handlers';
 import { loadAnaToolPolicy } from './mdx-tool-policy';
 import {
   explainAuditRow,
@@ -3843,7 +3848,12 @@ export type CommandName =
   | 'analyze_cross_document'
   // CMS + Diagnostics
   | 'analyze_cms_strategy'
-  | 'assess_diagnostic_validation';
+  | 'assess_diagnostic_validation'
+  // CMC status + quality
+  | 'cmc_status'
+  | 'ich_compliance'
+  | 'control_strategy'
+  | 'variations_classify';
 
 export interface CommandDefinition {
   name: CommandName;
@@ -4192,6 +4202,36 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
     example: '"Can I promote artifact 12 or are there blockers?"',
   },
 
+  // ── CMC Status (top-level dispatch for `/cmc` with no args) ───────────────
+  {
+    name: 'cmc_status',
+    description:
+      'Return Module 3 status for the active project: CMC source-object inventory by type, section approval state, stale section count, open contradictions by severity, and an export-ready verdict.',
+    parameters: 'projectId?',
+    example: '"What is the CMC status of this project?" or "/cmc"',
+  },
+  {
+    name: 'ich_compliance',
+    description:
+      'Run deterministic ICH compliance check (Q1A, Q2, Q3A/B, Q3D, Q6A/B, Q8, Q9, Q10) against the project\'s stored CMC data. Each finding cites the controlling guideline and underlying SQL evidence.',
+    parameters: 'projectId?',
+    example: '"Run an ICH compliance check on this project"',
+  },
+  {
+    name: 'control_strategy',
+    description:
+      'Generate a deterministic ICH Q8/Q9/Q10/Q11-grade control strategy from the project\'s CMC source data: release tests linked to validated methods, in-process controls per CPP, stability monitoring, raw material controls — with risk-based justification per element.',
+    parameters: 'projectId?, scope? (drug_substance | drug_product | both)',
+    example: '"Draft a control strategy for this project"',
+  },
+  {
+    name: 'variations_classify',
+    description:
+      'Classify a proposed CMC change against FDA SUPAC + 21 CFR 314.70 + EMA Commission Reg 1234/2008. Returns reporting category (annual_report / CBE-0 / CBE-30 / PAS), SUPAC tier, EMA variation, BE requirement, impacted CTD sections, cross-module impact, and citations.',
+    parameters: 'dosageFormFamily, changeCategory, scaleChangeFactor?, excipientLevelChange?, siteChangeKind?, processChangeKind?, touchesCriticalStep?, affects?',
+    example: '"Classify a scale-up from 100kg to 1500kg for our IR tablet"',
+  },
+
   // ── Cross-Jurisdictional Intelligence ─────────────────────────────────────
   {
     name: 'analyze_jurisdictions',
@@ -4329,6 +4369,13 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   ...MDX_COMMAND_METADATA_PHASE2,
   // ─── MDX governed mutations — phase 3 (predicate proxy) ────────────
   ...MDX_COMMAND_METADATA_PHASE3,
+  // ─── PDEV → IND workflow (read + governed) ─────────────────────────
+  // 16 commands: registry list / program get / readiness / workstream /
+  // ind-assembly / fda-interactions / contradictions / evidence-list, plus
+  // governed mutations: activity set-state / ai-draft / evidence-attach /
+  // evidence-detach / fda-feedback apply / ind-assembly compile / readiness
+  // snapshot. Audit prefix agent.ana.pdev.*. See PDEV_IND_WORKFLOW_AUDIT.md.
+  ...PDEV_COMMAND_METADATA,
   // ─── Auditor capability ────────────────────────────────────────────
   EXPLAIN_AUDIT_ROW_METADATA,
   // ─── Live 510(k) document preview (read-only from chat) ────────────
@@ -4512,6 +4559,14 @@ export async function executeCommands(
     module3_contradictions: module3Contradictions,
     module3_lineage: module3Lineage,
     module3_classify_source: module3ClassifySource,
+    // Top-level CMC status — what `/cmc` dispatches with no args. The
+    // underlying handler lives in module3-command-handlers, which defines
+    // CommandContext / CommandResult locally; cast through to match the
+    // same pattern used by the other module3_* entries above.
+    cmc_status: cmcStatus as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+    ich_compliance: ichCompliance as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+    control_strategy: controlStrategy as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+    variations_classify: variationsClassify as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
     // MDX governed mutations — phase 1 (Q-Sub, eSTAR, pre-flight, ESG transmit).
     ...MDX_COMMAND_HANDLERS,
     // MDX governed mutations — phase 2 (GSPR, post-market, evidence-sufficiency,
@@ -4520,6 +4575,10 @@ export async function executeCommands(
     // MDX governed mutations — phase 3 (predicate.candidate.set_status,
     // se_matrix.patch). Proxy through BFF to the Python shadow service.
     ...MDX_COMMAND_HANDLERS_PHASE3,
+    // PDEV → IND workflow handlers (16 commands). Same governance contract:
+    // mutations require confirm + reason; reads are open. Audit prefix
+    // agent.ana.pdev.*. See server/services/ana-ri/pdev-command-handlers.ts.
+    ...PDEV_COMMAND_HANDLERS,
     // Audit-row explainer — read-only auditor capability.
     'audit.explain': explainAuditRow,
     // Live 510(k) document preview — read-only canvas access from chat.

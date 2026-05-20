@@ -274,5 +274,18 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
     console.error('❌ Failed to mount CERV2 document routes:', error);
   }
 
+  // ── PDEV → IND workflow (read-side orchestrator + state writes) ──
+  // See PDEV_IND_WORKFLOW_AUDIT.md (repo root) for the architecture
+  // finding. The route family is a thin layer over existing primitives
+  // (regulatoryPrograms, q_submissions, fda_communications,
+  // contradiction engine, ind_package_plans, etc.).
+  try {
+    const pdevModule = await import('../routes/pdev/pdev-routes');
+    app.use('/api/pdev', authenticateToken, pdevModule.default);
+    console.log('✅ PDEV → IND workflow routes mounted');
+  } catch (error) {
+    console.error('❌ Failed to mount PDEV → IND routes:', error);
+  }
+
   console.log('✅ Regulatory route family registered');
 }
