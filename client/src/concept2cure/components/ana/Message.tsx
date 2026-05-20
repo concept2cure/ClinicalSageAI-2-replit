@@ -16,11 +16,15 @@
  * No new tokens or selectors — every style used is already in the bundle.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { marked, setOptions } from 'marked';
+import { setOptions } from 'marked';
 
 import { I } from './icons';
 import { Composer } from './Composer';
 import styles from './styles.module.css';
+import {
+  renderSafeMarkdown,
+  sanitizeChatHtml,
+} from '../chat/renderSafeMarkdown';
 
 // Configure marked once: GitHub-flavoured markdown, no line-break collapsing.
 setOptions({ gfm: true, breaks: false });
@@ -143,11 +147,12 @@ export function Message({
   // plain paragraph text during streaming.
   const renderedHtml = useMemo(() => {
     if (role !== 'assistant' || !text) return undefined;
-    try {
-      return marked.parse(text) as string;
-    } catch {
-      return undefined;
-    }
+    // renderSafeMarkdown runs marked.parse(...) then DOMPurify with the
+    // chat allowlist — strips <script>, inline event handlers, javascript:
+    // URLs, and any tag/attr not on the whitelist. Required before
+    // injection because the assistant text is attacker-controllable input
+    // from the model's perspective (prompt injection can emit raw HTML).
+    return renderSafeMarkdown(text);
   }, [role, text]);
 
   // After the markdown HTML mounts, decorate each <pre> block with a copy
@@ -348,7 +353,13 @@ export function Message({
             )}
           </div>
         ) : html ? (
-          <div className={styles.aiProse} dangerouslySetInnerHTML={{ __html: html }} />
+          // Server-provided HTML — sanitize against the same chat
+          // allowlist so it can never introduce <script> tags or inline
+          // event handlers, regardless of trust in the source.
+          <div
+            className={styles.aiProse}
+            dangerouslySetInnerHTML={{ __html: sanitizeChatHtml(html) }}
+          />
         ) : streaming && text === '' ? (
           /* Show progress phase label before the first token arrives */
           <div className={styles.aiProse}>

@@ -168,11 +168,24 @@ export async function initializeParallelServices(httpServer: Server, pool: Pool)
   ]);
 
   if (chainMon.status === 'fulfilled') {
-    try {
-      chainMon.value.startChainMonitor(pool, 5 * 60 * 1000);
-      console.log('✅ Audit chain integrity monitor started (5-min interval)');
-    } catch (err) {
-      console.warn('⚠️ Chain integrity monitor failed to start:', err);
+    // Gate the monitor by the same AUDIT_TRAIL_ENABLED flag that gates
+    // the audit-trail middleware (server/startup/audit-trail.ts). Running
+    // the monitor without the schema provisioned produces a noisy 5-min
+    // log spam loop in dev environments. When the flag is on, the monitor
+    // self-verifies the chain in-process every 5 minutes — no operator
+    // cron required, which is the win that closes the ALCOA+ end-to-end
+    // story for 21 CFR Part 11 §11.10(e).
+    if (process.env.AUDIT_TRAIL_ENABLED === 'true') {
+      try {
+        chainMon.value.startChainMonitor(pool, 5 * 60 * 1000);
+        console.log('✅ Audit chain integrity monitor started (5-min interval, in-process)');
+      } catch (err) {
+        console.warn('⚠️ Chain integrity monitor failed to start:', err);
+      }
+    } else {
+      console.log(
+        'ℹ️ Audit chain integrity monitor skipped (AUDIT_TRAIL_ENABLED is not "true")'
+      );
     }
   } else {
     console.warn('⚠️ Chain integrity monitor failed to load:', chainMon.reason);

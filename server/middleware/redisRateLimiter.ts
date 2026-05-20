@@ -321,30 +321,34 @@ const DEFAULT_RULES: Record<string, RateLimitRule> = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Determine the rate limit category for a request path.
+ * Match against a full path segment (anchored on '/') rather than a raw
+ * substring. The previous `path.includes('/auth')` pattern routed
+ * `/api/audit/events`, `/api/oauth-clients`, and
+ * `/api/data/authoritative-record` into the strict auth bucket
+ * (5 requests / 15 min in production), locking legitimate users out.
  */
-function getCategory(path: string): string {
-  if (path.includes('/login') || path.includes('/register') || path.includes('/auth')) {
+function hasSegment(path: string, ...segments: string[]): boolean {
+  const padded = path.endsWith('/') ? path : `${path}/`;
+  return segments.some(seg => padded.includes(`/${seg}/`));
+}
+
+export function getCategory(path: string): string {
+  if (hasSegment(path, 'login', 'register', 'auth')) {
     return 'auth';
   }
-  if (
-    path.includes('/ai') ||
-    path.includes('/generate') ||
-    path.includes('/openai') ||
-    path.includes('/anthropic')
-  ) {
+  if (hasSegment(path, 'ai', 'generate', 'openai', 'anthropic')) {
     return 'ai';
   }
-  if (path.includes('/concept2cure')) {
+  if (hasSegment(path, 'concept2cure')) {
     return 'concept2cure';
   }
-  if (path.includes('/document') || path.includes('/export') || path.includes('/pdf')) {
+  if (hasSegment(path, 'document', 'documents', 'export', 'pdf')) {
     return 'documents';
   }
-  if (path.includes('/validate')) {
+  if (hasSegment(path, 'validate')) {
     return 'validation';
   }
-  if (path.includes('/upload')) {
+  if (hasSegment(path, 'upload')) {
     return 'upload';
   }
   return 'api';

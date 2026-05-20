@@ -13,6 +13,7 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { create510kDeprecationNotice } from '../middleware/deprecation';
+import { authedOrgId } from '../utils/authedOrgId';
 import literatureAggregator, { LITERATURE_SOURCES } from '../services/LiteratureAggregatorService';
 import literatureSummarizer from '../services/LiteratureSummarizerService';
 import { getSecureOrgId } from '../utils/tenantContext';
@@ -223,7 +224,7 @@ router.post('/search', extractTenantContext, async (req: Request, res: Response)
       return res.status(400).json({ errors });
     }
 
-    const searchParams = {
+    const searchParams: any = {
       query: req.body.query,
       sources: req.body.sources,
       startDate: req.body.startDate,
@@ -232,7 +233,12 @@ router.post('/search', extractTenantContext, async (req: Request, res: Response)
       filters: req.body.filters || {},
       limit: req.body.limit || 20,
       offset: req.body.offset || 0,
-      organizationId: req.body.organizationId,
+      // SECURITY: pre-fix the route trusted body.organizationId as
+      // the literature-scope filter, letting a caller scope to
+      // another tenant. The underlying LiteratureSearchParams type
+      // doesn't actually carry an organizationId field — the value
+      // was silently dropped. Removing the field entirely closes the
+      // potential leak path if the type ever gains the field again.
     };
 
     const results = await literatureAggregator.searchLiterature(searchParams);
@@ -379,7 +385,8 @@ router.post('/cite', extractTenantContext, async (req: Request, res: Response) =
       req.body.sectionId,
       req.body.sectionName,
       req.body.citationText || '',
-      req.body.organizationId
+      // JWT-bound; citations are stamped to the caller's tenant only.
+      String(authedOrgId(req) ?? '')
     );
 
     res.json({

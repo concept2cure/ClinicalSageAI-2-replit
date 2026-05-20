@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import express from 'express';
 import type { Pool } from 'pg';
+import { authenticateToken } from '../middleware/auth.js';
 
 export interface DocumentBootstrapContext {
   app: express.Express;
@@ -29,15 +30,27 @@ export async function registerDocumentRoutes({
   }
 
   // ── Document Authoring (21 CFR Part 11 compliant) ──
+  //
+  // SECURITY: Document authoring routes are tenant-scoped and many
+  // expose document IDs in the URL. The router's internal
+  // checkDocumentPermission already filters by JWT org, but
+  // authenticateToken at the mount is the backstop so reachability
+  // never precedes authentication.
   try {
     const documentAuthoringModule = await import('../routes/documentAuthoring.routes.js');
-    app.use('/api/document-authoring', documentAuthoringModule.default);
-    console.log('✅ Document Authoring API routes mounted (21 CFR Part 11 compliant)');
+    app.use('/api/document-authoring', authenticateToken, documentAuthoringModule.default);
+    console.log('✅ Document Authoring API routes mounted (21 CFR Part 11 compliant, auth-gated)');
   } catch (error) {
     console.error('❌ Failed to mount Document Authoring routes:', error);
   }
 
   // ── eCTD Routes (parallelized) ──
+  //
+  // SECURITY: eCTD payloads ARE regulatory submissions — IP, study data,
+  // CMC. Pre-fix every endpoint in this family (coauthor, documents,
+  // compile, export, submission-agent) was reachable unauthenticated.
+  // Mounted with authenticateToken so the JWT is required before any
+  // handler runs; per-handler tenant scoping is a separate audit.
   {
     const ectdConfig = [
       { path: '/api/coauthor', mod: '../routes/coauthor', name: 'eCTD Co-Author' },
@@ -53,8 +66,8 @@ export async function registerDocumentRoutes({
     const ectdResults = await Promise.allSettled(ectdConfig.map(c => import(c.mod)));
     ectdResults.forEach((r, i) => {
       if (r.status === 'fulfilled') {
-        app.use(ectdConfig[i].path, r.value.default);
-        console.log(`✅ ${ectdConfig[i].name} routes mounted successfully`);
+        app.use(ectdConfig[i].path, authenticateToken, r.value.default);
+        console.log(`✅ ${ectdConfig[i].name} routes mounted (auth-gated)`);
       } else {
         console.error(`❌ Failed to mount ${ectdConfig[i].name} routes:`, r.reason);
       }

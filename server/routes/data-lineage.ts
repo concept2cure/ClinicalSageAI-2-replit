@@ -27,6 +27,10 @@ import {
 } from '../services/data-lineage-service';
 import { authMiddleware } from '../auth';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('data-lineage');
+
 const router = Router();
 router.use(authMiddleware);
 
@@ -55,7 +59,7 @@ router.get('/trace/upstream/:objectType/:objectId', async (req: Request, res: Re
       meta: { perspective: 'upstream', maxDepth },
     });
   } catch (err) {
-    console.error('[DataLineage] Upstream trace error:', err);
+    logger.error('Upstream trace error', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: 'Failed to trace upstream lineage' });
   }
 });
@@ -81,7 +85,7 @@ router.get('/trace/downstream/:objectType/:objectId', async (req: Request, res: 
       meta: { perspective: 'downstream', maxDepth },
     });
   } catch (err) {
-    console.error('[DataLineage] Downstream trace error:', err);
+    logger.error('Downstream trace error', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: 'Failed to trace downstream lineage' });
   }
 });
@@ -109,7 +113,7 @@ router.get('/coverage/:objectType/:objectId', async (req: Request, res: Response
       meta: { perspective: 'coverage' },
     });
   } catch (err) {
-    console.error('[DataLineage] Coverage report error:', err);
+    logger.error('Coverage report error', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: 'Failed to generate coverage report' });
   }
 });
@@ -137,7 +141,7 @@ router.get('/cross-module', async (req: Request, res: Response) => {
       meta: { perspective: 'cross-module' },
     });
   } catch (err) {
-    console.error('[DataLineage] Cross-module report error:', err);
+    logger.error('Cross-module report error', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: 'Failed to generate cross-module report' });
   }
 });
@@ -168,7 +172,7 @@ router.get('/evidence/:objectType/:objectId', async (req: Request, res: Response
       },
     });
   } catch (err) {
-    console.error('[DataLineage] Evidence chain report error:', err);
+    logger.error('Evidence chain report error', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: 'Failed to retrieve evidence chains' });
   }
 });
@@ -197,7 +201,7 @@ router.get('/integrity', async (req: Request, res: Response) => {
       meta: { perspective: 'integrity' },
     });
   } catch (err) {
-    console.error('[DataLineage] Integrity check error:', err);
+    logger.error('Integrity check error', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: 'Failed to check lineage integrity' });
   }
 });
@@ -226,7 +230,7 @@ router.get('/summary', async (req: Request, res: Response) => {
       meta: { perspective: 'summary' },
     });
   } catch (err) {
-    console.error('[DataLineage] Summary error:', err);
+    logger.error('Summary error', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: 'Failed to generate lineage summary' });
   }
 });

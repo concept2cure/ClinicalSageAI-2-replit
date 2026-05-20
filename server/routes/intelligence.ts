@@ -15,6 +15,10 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('intelligence');
+
 import {
   generateRecommendations,
   computeReadinessScore,
@@ -75,7 +79,7 @@ router.get('/projects/:projectId/recommendations', async (req: Request, res: Res
 
     return res.json(result);
   } catch (error) {
-    console.error('[intelligence] Recommendation generation failed:', error);
+    logger.error('Recommendation generation failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to generate recommendations' });
   }
 });
@@ -108,7 +112,7 @@ router.get('/projects/:projectId/readiness', async (req: Request, res: Response)
 
     return res.json(result);
   } catch (error) {
-    console.error('[intelligence] Readiness scoring failed:', error);
+    logger.error('Readiness scoring failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to compute readiness score' });
   }
 });
@@ -139,7 +143,7 @@ router.get('/projects/:projectId/profile', async (req: Request, res: Response) =
 
     return res.json(profile);
   } catch (error) {
-    console.error('[intelligence] Profile fetch failed:', error);
+    logger.error('Profile fetch failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to fetch project intelligence' });
   }
 });
@@ -198,7 +202,7 @@ router.post('/projects/:projectId/profile/enrich', async (req: Request, res: Res
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid payload', details: error.errors });
     }
-    console.error('[intelligence] Profile enrichment failed:', error);
+    logger.error('Profile enrichment failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to enrich project intelligence' });
   }
 });
@@ -224,7 +228,7 @@ router.get('/projects/:projectId/memory', async (req: Request, res: Response) =>
 
     return res.json({ entries: memory, total: memory.length });
   } catch (error) {
-    console.error('[intelligence] Memory fetch failed:', error);
+    logger.error('Memory fetch failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to fetch project memory' });
   }
 });
@@ -260,7 +264,7 @@ router.get('/projects/:projectId/next-actions', async (req: Request, res: Respon
 
     return res.json(result);
   } catch (error) {
-    console.error('[intelligence] Next actions generation failed:', error);
+    logger.error('Next actions generation failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to generate next actions' });
   }
 });
@@ -307,7 +311,7 @@ router.post('/projects/:projectId/feedback', async (req: Request, res: Response)
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid payload', details: error.errors });
     }
-    console.error('[intelligence] Feedback recording failed:', error);
+    logger.error('Feedback recording failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to record feedback' });
   }
 });
@@ -329,7 +333,7 @@ router.get('/projects/:projectId/feedback/summary', async (req: Request, res: Re
     const summary = await getFeedbackSummary(projectId, organizationId);
     return res.json(summary);
   } catch (error) {
-    console.error('[intelligence] Feedback summary failed:', error);
+    logger.error('Feedback summary failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to get feedback summary' });
   }
 });
@@ -359,7 +363,7 @@ router.get('/projects/:projectId/cross-module', async (req: Request, res: Respon
 
     return res.json(report);
   } catch (error) {
-    console.error('[intelligence] Cross-module analysis failed:', error);
+    logger.error('Cross-module analysis failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to analyze cross-module relationships' });
   }
 });
@@ -410,7 +414,7 @@ router.get('/projects/:projectId/dashboard', async (req: Request, res: Response)
       generatedAt: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('[intelligence] Dashboard generation failed:', error);
+    logger.error('Dashboard generation failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to generate intelligence dashboard' });
   }
 });
@@ -450,7 +454,7 @@ router.post('/projects/:projectId/rim/assess', async (req: Request, res: Respons
 
     return res.json(assessment);
   } catch (error) {
-    console.error('[intelligence] RIM assessment failed:', error);
+    logger.error('RIM assessment failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to run RIM assessment' });
   }
 });
@@ -472,7 +476,7 @@ router.get('/projects/:projectId/rim/signals', async (req: Request, res: Respons
     const summary = await getProjectSignals(organizationId, projectId);
     return res.json(summary);
   } catch (error) {
-    console.error('[intelligence] Signal summary failed:', error);
+    logger.error('Signal summary failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to get signal summary' });
   }
 });
@@ -494,7 +498,7 @@ router.get('/projects/:projectId/rim/cross-artifact', async (req: Request, res: 
     const report = await analyzeCrossArtifactIntelligence(organizationId, projectId);
     return res.json(report);
   } catch (error) {
-    console.error('[intelligence] Cross-artifact analysis failed:', error);
+    logger.error('Cross-artifact analysis failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to analyze cross-artifact intelligence' });
   }
 });
@@ -517,7 +521,7 @@ router.get('/projects/:projectId/rim/section/:sectionCode', async (req: Request,
     const enrichment = await enrichChangeImpact(organizationId, projectId, sectionCode);
     return res.json(enrichment);
   } catch (error) {
-    console.error('[intelligence] Section enrichment failed:', error);
+    logger.error('Section enrichment failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to get section intelligence' });
   }
 });

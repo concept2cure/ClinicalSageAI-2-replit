@@ -20,6 +20,13 @@ import { Router, Request, Response } from 'express';
 import { decisionLineageService, type ExportFormat } from '../services/workflow/DecisionLineageService';
 import auditService from '../services/auditService';
 import { createScopedLogger } from '../utils/logger';
+import { authedOrgId } from '../utils/authedOrgId';
+
+// SECURITY: decision lineage exposes the regulatory decision graph
+// (who decided what, when, with what evidence). Pre-fix the
+// orgId filter was sourced from req.query.organizationId — a
+// query-param IDOR. The JWT-bound org now overrides whatever the
+// query says.
 
 const logger = createScopedLogger('decision-lineage-api');
 const router = Router();
@@ -29,7 +36,7 @@ const router = Router();
 router.get('/:entityType/:entityId', async (req: Request, res: Response) => {
   try {
     const { entityType, entityId } = req.params;
-    const orgId = req.query.organizationId ? Number(req.query.organizationId) : undefined;
+    const orgId = authedOrgId(req) ?? undefined;
     const id = parseInt(entityId, 10);
 
     if (isNaN(id) || id <= 0) {
@@ -50,7 +57,7 @@ router.get('/:entityType/:entityId/export', async (req: Request, res: Response) 
   try {
     const { entityType, entityId } = req.params;
     const format = (req.query.format as ExportFormat) || 'json';
-    const orgId = req.query.organizationId ? Number(req.query.organizationId) : undefined;
+    const orgId = authedOrgId(req) ?? undefined;
     const id = parseInt(entityId, 10);
 
     if (isNaN(id) || id <= 0) {
@@ -88,7 +95,7 @@ router.get('/query', async (req: Request, res: Response) => {
     const filters = {
       entityType: req.query.entityType as string | undefined,
       entityId: req.query.entityId ? Number(req.query.entityId) : undefined,
-      organizationId: req.query.organizationId ? Number(req.query.organizationId) : undefined,
+      organizationId: authedOrgId(req) ?? undefined,
       userId: req.query.userId as string | undefined,
       fromDate: req.query.fromDate ? new Date(req.query.fromDate as string) : undefined,
       toDate: req.query.toDate ? new Date(req.query.toDate as string) : undefined,
@@ -177,7 +184,7 @@ router.get('/verify-chain', async (_req: Request, res: Response) => {
 // Generate a compliance summary across all decision lineage data.
 router.get('/compliance-report', async (req: Request, res: Response) => {
   try {
-    const orgId = req.query.organizationId ? Number(req.query.organizationId) : undefined;
+    const orgId = authedOrgId(req) ?? undefined;
     const fromDate = req.query.fromDate ? new Date(req.query.fromDate as string) : undefined;
     const toDate = req.query.toDate ? new Date(req.query.toDate as string) : undefined;
 

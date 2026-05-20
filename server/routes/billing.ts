@@ -29,7 +29,9 @@ import {
   DTC_PRICING,
 } from '../services/billing.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { createScopedLogger } from '../utils/logger';
 
+const logger = createScopedLogger('billing');
 const router = Router();
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -85,9 +87,8 @@ router.post('/checkout', authenticateToken, async (req: Request, res: Response) 
       sessionId: result.sessionId,
     });
   } catch (error) {
-    console.error('[Billing] Checkout error:', error);
-    const message = error instanceof Error ? error.message : 'Failed to create checkout session';
-    res.status(500).json({ error: message });
+    logger.error('Checkout error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to create checkout session' });
   }
 });
 
@@ -110,9 +111,8 @@ router.post('/portal', authenticateToken, async (req: Request, res: Response) =>
 
     res.json({ portalUrl });
   } catch (error) {
-    console.error('[Billing] Portal error:', error);
-    const message = error instanceof Error ? error.message : 'Failed to create portal session';
-    res.status(500).json({ error: message });
+    logger.error('Portal error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to create portal session' });
   }
 });
 
@@ -131,7 +131,7 @@ router.get('/status', authenticateToken, async (req: Request, res: Response) => 
     const status = await getSubscriptionStatus(Number(orgId));
     res.json(status);
   } catch (error) {
-    console.error('[Billing] Status error:', error);
+    logger.error('Status error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to fetch subscription status' });
   }
 });
@@ -167,9 +167,11 @@ router.get('/pricing', async (req: Request, res: Response) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/dtc-checkout', authenticateToken, async (req: Request, res: Response) => {
   try {
-    const orgId = req.body.organizationId
-      || (req as any).tenantContext?.organizationId
-      || (req as any).user?.organizationId;
+    // SECURITY: a body-supplied organizationId would have let a caller
+    // start a DTC checkout that bills another tenant's payment method.
+    // Source the org from the JWT only.
+    const orgId =
+      (req as any).tenantContext?.organizationId ?? (req as any).user?.organizationId;
 
     if (!orgId) {
       return res.status(401).json({ error: 'Organization context required' });
@@ -191,9 +193,8 @@ router.post('/dtc-checkout', authenticateToken, async (req: Request, res: Respon
 
     res.json(result);
   } catch (error) {
-    console.error('[Billing] DTC checkout error:', error);
-    const message = error instanceof Error ? error.message : 'Failed to create DTC checkout';
-    res.status(500).json({ error: message });
+    logger.error('DTC checkout error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to create DTC checkout' });
   }
 });
 
@@ -225,7 +226,7 @@ router.post('/webhooks/stripe', raw({ type: 'application/json' }), async (req: R
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!webhookSecret) {
-    console.error('[Billing] STRIPE_WEBHOOK_SECRET not configured');
+    logger.error('STRIPE_WEBHOOK_SECRET not configured');
     return res.status(500).json({ error: 'Webhook not configured' });
   }
 
@@ -240,18 +241,26 @@ router.post('/webhooks/stripe', raw({ type: 'application/json' }), async (req: R
     const stripe = new Stripe(stripeKey!, { apiVersion: '2023-10-16' as any });
     event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Invalid signature';
-    console.error('[Billing] Webhook signature verification failed:', message);
-    return res.status(400).json({ error: `Webhook Error: ${message}` });
+    // Log details server-side for triage but never echo the SDK message
+    // back — that fingerprints our implementation (Stripe library version,
+    // exact verification path) for whoever is probing the endpoint.
+    logger.error('Webhook signature verification failed', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(400).json({ error: 'Invalid signature' });
   }
 
   try {
     await processWebhookEvent(event);
     res.json({ received: true });
   } catch (error) {
-    console.error('[Billing] Webhook processing error:', error);
-    // Return 200 to prevent Stripe retries for processing errors
-    // The error is logged and stored in stripe_events table
+    logger.error('Webhook processing error', {
+      err: error instanceof Error ? error.message : String(error),
+      eventType: event?.type,
+    });
+    // Return 200 to prevent Stripe retries for processing errors —
+    // the error is logged and the event was already stored in
+    // stripe_events for replay.
     res.json({ received: true, error: 'Processing error logged' });
   }
 });

@@ -16,6 +16,10 @@ import crypto from 'node:crypto';
 import { getPool } from '../../db.ts';
 import { emitTraceEvent, createTraceId } from '../generation-guard.js';
 
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('exportGovernance');
+
 export interface ExportGovernanceInput {
   organizationId: number;
   projectId: number;
@@ -290,7 +294,7 @@ export async function registerGovernedExport(
     };
   } catch (error) {
     await client.query('ROLLBACK').catch(() => {});
-    console.error('[ExportGovernance] Failed to register governed export:', error);
+    logger.error('Failed to register governed export', { err: error instanceof Error ? error.message : String(error) });
 
     // Trace: export_failure
     emitTraceEvent({
@@ -366,7 +370,7 @@ export async function registerExportGovernanceQuick(opts: {
       ipAddress: opts.ipAddress,
     });
   } catch (err) {
-    console.error('[ExportGovernanceQuick] Governance registration failed:', err);
+    logger.error('Governance registration failed', { err: err instanceof Error ? err.message : String(err) });
     if (opts.allowDegradedMode) {
       return null;
     }

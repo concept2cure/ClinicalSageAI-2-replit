@@ -13,7 +13,7 @@
 import { Router, Request, Response } from 'express';
 import type { Pool, PoolClient } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
-import { getRequestDbClient } from '../../middleware/tenantContext';
+import { getRequestDbClient, type RequestDbClient } from '../../middleware/tenantContext';
 import { ai } from '../../lib/unified-ai-client';
 
 // Types
@@ -95,7 +95,7 @@ const CONFIG = {
   tableBoost: 1.5,
 };
 
-type Queryable = Pool | PoolClient;
+type Queryable = Pool | RequestDbClient;
 
 // OpenAI client
 // GxP-Hardened System Prompt

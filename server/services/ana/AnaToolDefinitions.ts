@@ -761,7 +761,7 @@ export const FETCH_TEMPLATE_AND_FILL: AnaTool = {
 // once AnA has gathered the facts and drafted the deliverable, she can
 // also commit state changes back into the system of record. Every
 // mutation is tenant-scoped via ToolContext.organizationId and audit-logged
-// through the global mutation-audit middleware (server/middleware/setup.ts).
+// through the global mutation-audit middleware (server/startup/middleware.ts).
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const CREATE_Q_SUB: AnaTool = {

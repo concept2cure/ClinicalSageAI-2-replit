@@ -8,6 +8,10 @@ import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { users } from '../../shared/schema';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('collaboration');
+
 const router = Router();
 
 /**
@@ -41,7 +45,7 @@ router.get('/activities', async (req: Request, res: Response) => {
 
     res.json({ activities });
   } catch (error) {
-    console.error('[collaboration] Activities error:', error);
+    logger.error('Activities error', { err: error instanceof Error ? error.message : String(error) });
     // Graceful fallback
     res.json({ activities: [] });
   }
@@ -88,7 +92,7 @@ router.get('/team', async (req: Request, res: Response) => {
 
     res.json({ members });
   } catch (error) {
-    console.error('[collaboration] Team error:', error);
+    logger.error('Team error', { err: error instanceof Error ? error.message : String(error) });
     // Fail closed instead of returning demo/fabricated presence data
     res.json({ members: [] });
   }

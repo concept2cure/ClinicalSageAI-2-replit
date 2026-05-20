@@ -36,6 +36,10 @@ import {
 } from '../services/user-intelligence.js';
 import { pool } from '../db.js';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('module-subscriptions');
+
 const router = Router();
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -52,7 +56,7 @@ router.get('/catalog', async (req: Request, res: Response) => {
     const catalog = await getModuleCatalog(Number(orgId));
     return res.json({ modules: catalog });
   } catch (error) {
-    console.error('[ModuleSubscriptions] catalog error:', error);
+    logger.error('catalog error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to load module catalog' });
   }
 });
@@ -79,7 +83,7 @@ router.get('/enabled', async (req: Request, res: Response) => {
       industryMode: license.industryMode,
     });
   } catch (error) {
-    console.error('[ModuleSubscriptions] enabled error:', error);
+    logger.error('enabled error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to load enabled modules' });
   }
 });
@@ -114,7 +118,7 @@ router.get('/license', async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('[ModuleSubscriptions] license error:', error);
+    logger.error('license error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to load license info' });
   }
 });
@@ -145,7 +149,7 @@ router.post('/provision', async (req: Request, res: Response) => {
       enabledModules: license?.enabledModules || [],
     });
   } catch (error) {
-    console.error('[ModuleSubscriptions] provision error:', error);
+    logger.error('provision error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to provision modules' });
   }
 });
@@ -194,7 +198,7 @@ router.put('/:moduleId/toggle', async (req: Request, res: Response) => {
       message: `Module ${enabled !== false ? 'enabled' : 'disabled'} successfully`,
     });
   } catch (error) {
-    console.error('[ModuleSubscriptions] toggle error:', error);
+    logger.error('toggle error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to toggle module' });
   }
 });
@@ -213,7 +217,7 @@ router.get('/check/:moduleId', async (req: Request, res: Response) => {
     const result = await canAccessModule(Number(orgId), req.params.moduleId);
     return res.json(result);
   } catch (error) {
-    console.error('[ModuleSubscriptions] check error:', error);
+    logger.error('check error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to check module access' });
   }
 });
@@ -249,7 +253,7 @@ router.get('/user-intelligence', async (req: Request, res: Response) => {
 
     return res.json(intelligence);
   } catch (error) {
-    console.error('[ModuleSubscriptions] user-intelligence error:', error);
+    logger.error('user-intelligence error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to load user intelligence' });
   }
 });
@@ -287,7 +291,7 @@ router.get('/work-queue', async (req: Request, res: Response) => {
       activeProject: intelligence?.activeProject || null,
     });
   } catch (error) {
-    console.error('[ModuleSubscriptions] work-queue error:', error);
+    logger.error('work-queue error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to load work queue' });
   }
 });
@@ -316,7 +320,7 @@ router.post('/work-session', async (req: Request, res: Response) => {
 
     return res.json({ sessionId });
   } catch (error) {
-    console.error('[ModuleSubscriptions] work-session error:', error);
+    logger.error('work-session error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to update work session' });
   }
 });
@@ -350,7 +354,7 @@ router.post('/work-queue/add', async (req: Request, res: Response) => {
 
     return res.json({ id: taskId });
   } catch (error) {
-    console.error('[ModuleSubscriptions] work-queue/add error:', error);
+    logger.error('work-queue/add error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to add task' });
   }
 });
@@ -398,7 +402,7 @@ router.patch('/work-queue/:id/status', async (req: Request, res: Response) => {
 
     return res.json({ id: Number(id), status });
   } catch (error) {
-    console.error('[ModuleSubscriptions] work-queue status error:', error);
+    logger.error('work-queue status error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to update task status' });
   }
 });

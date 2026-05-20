@@ -27,6 +27,11 @@ import OutcomeBasedTemplateLearningService from '../services/innovation/outcome-
 import RegulatoryNegotiationLogbookService from '../services/innovation/regulatory-negotiation-logbook-service';
 import ComplianceGuardrailsSDKService from '../services/innovation/compliance-guardrails-sdk-service';
 
+import { createScopedLogger } from '../utils/logger.js';
+import { requireAuthedOrgId } from '../utils/authedOrgId';
+
+const logger = createScopedLogger('innovation-routes');
+
 const router: Router = express.Router();
 
 // Service instances (will be initialized with pool)
@@ -148,8 +153,10 @@ router.post('/evidence-heatmap/config', asyncHandler(async (req: Request, res: R
  * Get scoring configs
  */
 router.get('/evidence-heatmap/config', asyncHandler(async (req: Request, res: Response) => {
+  const orgGuard = requireAuthedOrgId(req, res);
+  if (!orgGuard.ok) return;
   const configs = await heatmapService.getConfigs({
-    orgId: req.query.orgId as string,
+    orgId: String(orgGuard.orgId),
     submissionType: req.query.submissionType as string
   });
   res.json({ success: true, data: configs });
@@ -344,10 +351,12 @@ router.get('/workspace/roles', asyncHandler(async (req: Request, res: Response) 
  * Get workspace presets
  */
 router.get('/workspace/presets', asyncHandler(async (req: Request, res: Response) => {
+  const orgGuard = requireAuthedOrgId(req, res);
+  if (!orgGuard.ok) return;
   const presets = await workspaceService.getPresets({
     roleId: req.query.roleId as string,
     submissionType: req.query.submissionType as string,
-    orgId: req.query.orgId as string
+    orgId: String(orgGuard.orgId)
   });
   res.json({ success: true, data: presets });
 }));
@@ -419,8 +428,10 @@ router.post('/templates', asyncHandler(async (req: Request, res: Response) => {
  * Get templates
  */
 router.get('/templates', asyncHandler(async (req: Request, res: Response) => {
+  const orgGuard = requireAuthedOrgId(req, res);
+  if (!orgGuard.ok) return;
   const templates = await templateLearningService.getTemplates({
-    orgId: req.query.orgId as string,
+    orgId: String(orgGuard.orgId),
     templateType: req.query.templateType as string,
     submissionType: req.query.submissionType as string,
     modulePath: req.query.modulePath as string,
@@ -460,11 +471,13 @@ router.post('/templates/outcomes', asyncHandler(async (req: Request, res: Respon
  * Get template recommendations
  */
 router.get('/templates/recommendations', asyncHandler(async (req: Request, res: Response) => {
+  const orgGuard = requireAuthedOrgId(req, res);
+  if (!orgGuard.ok) return;
   const recommendations = await templateLearningService.getRecommendations({
     submissionType: req.query.submissionType as string,
     modulePath: req.query.modulePath as string,
     therapeuticArea: req.query.therapeuticArea as string,
-    orgId: req.query.orgId as string,
+    orgId: String(orgGuard.orgId),
     limit: parseInt(req.query.limit as string) || 5
   });
   res.json({ success: true, data: recommendations });
@@ -638,8 +651,10 @@ router.post('/guardrails/rules', asyncHandler(async (req: Request, res: Response
  * Get guardrail rules
  */
 router.get('/guardrails/rules', asyncHandler(async (req: Request, res: Response) => {
+  const orgGuard = requireAuthedOrgId(req, res);
+  if (!orgGuard.ok) return;
   const rules = await guardrailsService.getRules({
-    orgId: req.query.orgId as string,
+    orgId: String(orgGuard.orgId),
     category: req.query.category as string,
     severity: req.query.severity as string,
     submissionType: req.query.submissionType as string,
@@ -672,8 +687,10 @@ router.post('/guardrails/profiles', asyncHandler(async (req: Request, res: Respo
  * Get guardrail profiles
  */
 router.get('/guardrails/profiles', asyncHandler(async (req: Request, res: Response) => {
+  const orgGuard = requireAuthedOrgId(req, res);
+  if (!orgGuard.ok) return;
   const profiles = await guardrailsService.getProfiles({
-    orgId: req.query.orgId as string,
+    orgId: String(orgGuard.orgId),
     submissionType: req.query.submissionType as string,
     agency: req.query.agency as string
   });
@@ -777,7 +794,7 @@ router.get('/guardrails/statistics', asyncHandler(async (req: Request, res: Resp
 
 // Error handler
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  console.error('[Innovation Routes] Error:', err);
+  logger.error('Error', { err: err instanceof Error ? err.message : String(err) });
   res.status(err.status || 500).json({
     success: false,
     error: err.message || 'Internal server error',

@@ -14,6 +14,7 @@
 
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+import { useCspNonce } from '@/hooks/useCspNonce';
 // @ts-expect-error -- moduleResolution:node can't resolve package.json exports subpath
 import { BubbleMenu } from '@tiptap/react/menus';
 import {
@@ -1742,8 +1743,10 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
 
   // Slash command extension (memoized to avoid re-creation)
   const slashCommandExt = useMemo(() => createSlashCommandExtension(onAIAction), [onAIAction]);
+  const cspNonce = useCspNonce();
 
   const editor = useEditor({
+    injectNonce: cspNonce || undefined,
     extensions: [
       StarterKit.configure({ heading: false }),
       HeadingWithId,

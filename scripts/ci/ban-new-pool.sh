@@ -9,6 +9,8 @@ cd "$ROOT"
 ALLOWLIST_FILES=(
   "server/db.ts"
   "server/db/pool.ts"
+  "server/db/runtime.ts"
+  "server/db/ensureCoreTables.ts"
   "server/utils/database.js"
 )
 
@@ -21,6 +23,8 @@ SEARCH_DIRS=(
   "server/middleware"
   "server/repositories"
   "server/utils"
+  "server/database"
+  "server/db"
 )
 
 PATTERN="new[[:space:]]+([a-zA-Z0-9_]*\.)?Pool[[:space:]]*\("

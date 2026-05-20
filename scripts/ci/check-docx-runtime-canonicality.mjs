@@ -34,7 +34,6 @@ const APPROVED_JS = new Set([
   'server/services/cerGenerationService.ts',
   'server/services/pmaDocumentGenerator.js',
   'server/services/universal-packager.ts',
-  'server/generate-all-submissions.js',
   'server/routes/authoring.router.ts',
   'server/routes/ind-templates.ts',
   'scripts/generate_sso_spec.js',

@@ -80,8 +80,13 @@ function setupMetricsEndpoint() {
   const metricsApp = express();
 
   metricsApp.get('/metrics', async (req, res) => {
-    res.set('Content-Type', register.contentType);
-    res.end(await register.metrics());
+    // Merge our custom registry with the global default — counters
+    // registered via prom-client's `getSingleMetric`/global pattern (e.g.
+    // server/db/tenantSessionMetrics.ts) live there, and would otherwise
+    // be invisible to scrape.
+    const merged = client.Registry.merge([register, client.register]);
+    res.set('Content-Type', merged.contentType);
+    res.end(await merged.metrics());
   });
 
   // Add health check endpoint

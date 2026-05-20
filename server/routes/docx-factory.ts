@@ -421,12 +421,19 @@ router.get(
         res.setHeader('X-Artifact-SHA256', sha256Header);
       }
 
-      // Register governed export (fail-closed for regulated exports)
+      // Register governed export (fail-closed for regulated exports).
+      // SECURITY: audit attribution must be the JWT principal — a
+      // `|| 1` / `|| 0` fallback would stamp every export from an
+      // unauth path under org 1 / userId 0, polluting the audit trail.
       const user = (req as any).user;
+      const orgIdRaw = user?.organizationId ?? (req as any).tenantContext?.organizationId;
+      if (orgIdRaw == null || user?.id == null) {
+        return res.status(403).json({ error: 'Tenant context required for governed export' });
+      }
       await registerExportGovernanceQuick({
-        organizationId: user?.organizationId || 1,
+        organizationId: Number(orgIdRaw),
         projectId: Number(programId) || 0,
-        userId: user?.id || 0,
+        userId: Number(user.id),
         userName: user?.name || user?.email || 'unknown',
         title: `DOCX Artifact: ${req.params.artifactId}`,
         exportFormat: 'docx',

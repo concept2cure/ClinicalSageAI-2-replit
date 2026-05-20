@@ -29,6 +29,14 @@ jobs:
       - name: Set PR base ref
         run: echo "BASE_REF=${{ github.base_ref }}" >> $GITHUB_ENV
 
+      - name: Security pattern check
+        # Hard gate. Scans server/ for the bug classes PRs #496-#503 fixed:
+        # tenant-trust from req.body / req.query / x-*-id headers, direct
+        # jwt.verify (must use verifyJwtWithRotation), and hardcoded org-id
+        # fallbacks. Inline `// security-allow: <reason>` annotations are
+        # honored for deliberate, audited exceptions.
+        run: npm run check:security-patterns
+
       - name: Verify tests for changed code
         run: bash scripts/ai/verify-tests.sh
 

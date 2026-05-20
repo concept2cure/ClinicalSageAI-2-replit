@@ -1,8 +1,7 @@
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import { Server } from 'http';
-import jwt from 'jsonwebtoken';
 import { createScopedLogger } from './utils/logger.js';
-import { config } from './config/environment.js';
+import { verifyJwtWithRotation } from './utils/jwtVerify.js';
 const log = createScopedLogger('socket-server');
 
 // Define types for socket events
@@ -201,7 +200,7 @@ export function initializeSocketServer(server: Server) {
         return next(new Error('Missing bearer token'));
       }
 
-      const decoded = jwt.verify(token as string, config.jwt.secret) as any;
+      const decoded = verifyJwtWithRotation(token as string) as any;
       if (!decoded.organizationId || !decoded.userId) {
         return next(new Error('Invalid token claims'));
       }

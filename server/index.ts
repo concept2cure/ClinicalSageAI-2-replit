@@ -43,6 +43,7 @@ import {
   applyCoreMiddleware,
   applyDebugRequestLogging,
 } from './startup/middleware';
+import { applyAuditTrailMiddleware } from './startup/audit-trail';
 import {
   mountFastPathHealthEndpoints,
   mountDiagnosticEndpoints,
@@ -65,6 +66,22 @@ import { setupFrontendServing } from './startup/frontend';
 validateEnvironment();
 const flags = resolveStartupFlags();
 const debugLog = createDebugLogger(flags.debug);
+
+// Install the console → logger bridge before any further code logs
+// anything in production. The bridge passes object arguments through
+// the HIPAA-aware redaction walker so legacy `console.error(req.body)`
+// call sites can't leak credentials / PHI to stdout. No-op outside
+// production so dev / test traces stay readable.
+//
+// Dynamic import (top-level await isn't on by default for this file)
+// kept synchronous via a separate require — `consoleBridge.ts` has no
+// async deps. We do this AFTER validateEnvironment so a missing-env
+// hard-exit message reaches stderr unbridged.
+{
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { installConsoleBridge } = require('./utils/consoleBridge');
+  installConsoleBridge();
+}
 
 const app = express();
 const pool = getPool();
@@ -92,6 +109,12 @@ mountFastPathHealthEndpoints(app, pool);
 
 applyCoreMiddleware(app, debugLog);
 
+// Tamper-proof audit trail (21 CFR Part 11 §11.10(e)). Mounted after the
+// core middleware so user/auth context is populated before observation,
+// but before route registration so it observes every /api request that
+// reaches a handler. No-op unless AUDIT_TRAIL_ENABLED=true.
+applyAuditTrailMiddleware(app, pool, debugLog);
+
 // Diagnostic endpoints after the security stack so they inherit CORS,
 // rate-limit, structured logging, etc.
 mountDiagnosticEndpoints(app, pool);
@@ -113,6 +136,28 @@ async function startServer() {
 
   await verifyDatabaseConnection(pool);
   await initializeEarlyServices();
+
+  // Security self-test — run AFTER the DB connection is verified
+  // (so the audit-chain check can query) but BEFORE any other
+  // startup work or HTTP listen. In production a critical failure
+  // here exits the process; in dev / non-blocking mode it logs
+  // and continues. See server/startup/security-self-test.ts.
+  {
+    const { runBootSecuritySelfTest } = await import('./startup/security-self-test');
+    await runBootSecuritySelfTest(pool);
+  }
+
+  // Periodic posture monitor — re-runs the self-test panel on a
+  // fixed interval so drift (clamd down, audit chain broken, etc.)
+  // is observed without an operator manually probing the admin
+  // endpoint. Idempotent — safe across hot-reload. Disabled via
+  // SECURITY_HEALTH_DISABLE_SCHEDULER=true (used in tests).
+  {
+    const { startSecurityHealthScheduler } = await import(
+      './services/securityHealthScheduler'
+    );
+    startSecurityHealthScheduler(pool);
+  }
 
   debugLog('Initializing Python backend...');
   pythonProcess = await startPythonBackend();

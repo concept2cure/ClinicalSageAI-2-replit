@@ -15,6 +15,10 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('orchestration');
+
 import {
   executeWorkflow,
   cancelWorkflow,
@@ -107,7 +111,7 @@ router.post('/execute', async (req: Request, res: Response) => {
     res.json(execution);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Workflow execution failed';
-    console.error('[Orchestration] Execute error:', err);
+    logger.error('Execute error', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: message });
   }
 });
@@ -209,7 +213,7 @@ router.get('/projects/:projectId/readiness', async (req: Request, res: Response)
     res.json(assessment);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Readiness assessment failed';
-    console.error('[Orchestration] GET readiness error:', err);
+    logger.error('GET readiness error', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: message });
   }
 });
@@ -238,7 +242,7 @@ router.post('/readiness', async (req: Request, res: Response) => {
     res.json(assessment);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Readiness assessment failed';
-    console.error('[Orchestration] Readiness error:', err);
+    logger.error('Readiness error', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: message });
   }
 });
@@ -267,7 +271,7 @@ router.post('/recommendations', async (req: Request, res: Response) => {
     res.json(recSet);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Recommendation generation failed';
-    console.error('[Orchestration] Recommendations error:', err);
+    logger.error('Recommendations error', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: message });
   }
 });
@@ -290,7 +294,7 @@ router.post('/continuity', async (req: Request, res: Response) => {
     res.json(snapshot);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Continuity snapshot failed';
-    console.error('[Orchestration] Continuity error:', err);
+    logger.error('Continuity error', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: message });
   }
 });

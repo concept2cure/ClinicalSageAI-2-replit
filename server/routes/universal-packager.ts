@@ -8,6 +8,10 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('universal-packager');
+
 import {
   packageDeliverable,
   packageSingleFormat,
@@ -71,7 +75,7 @@ router.post('/generate', async (req: Request, res: Response) => {
       })),
     });
   } catch (err: any) {
-    console.error('[UniversalPackager] POST /generate error:', err);
+    logger.error('POST /generate error', { err: err instanceof Error ? err.message : String(err) });
     return res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -115,7 +119,7 @@ router.post('/download/:format', async (req: Request, res: Response) => {
 
     return res.send(output.buffer);
   } catch (err: any) {
-    console.error('[UniversalPackager] POST /download/:format error:', err);
+    logger.error('POST /download/:format error', { err: err instanceof Error ? err.message : String(err) });
     return res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -172,9 +176,16 @@ router.post('/multi-download', async (req: Request, res: Response) => {
       { name: 'package_manifest.json' }
     );
 
+    // Register the 'finish' listener BEFORE finalize() to avoid a race
+    // where fast-flushing archives emit the event before the listener
+    // attaches and the promise stays pending forever. Same fix as
+    // buildZipBuffer in cerv2-export-routes.ts (PR #488).
+    const finished = new Promise<void>((resolve, reject) => {
+      writable.on('finish', () => resolve());
+      writable.on('error', reject);
+    });
     await archive.finalize();
-
-    await new Promise<void>((resolve) => writable.on('finish', resolve));
+    await finished;
 
     const zipBuffer = Buffer.concat(chunks);
     const zipFileName = `${request.title.replace(/[^a-zA-Z0-9]/g, '_')}_package.zip`;
@@ -185,7 +196,7 @@ router.post('/multi-download', async (req: Request, res: Response) => {
 
     return res.send(zipBuffer);
   } catch (err: any) {
-    console.error('[UniversalPackager] POST /multi-download error:', err);
+    logger.error('POST /multi-download error', { err: err instanceof Error ? err.message : String(err) });
     return res.status(500).json({ success: false, error: err.message });
   }
 });

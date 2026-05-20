@@ -77,6 +77,10 @@ describe('510(k) eSTAR governed export', () => {
     const req = createMockRequest({ body: body() }) as any;
     req.userRole = 'editor';
     req.userId = 9;
+    // requireEditorAccess middleware (which would normally set this) is
+    // bypassed because the test grabs only the final handler. Set the
+    // resolved id directly so getOrganizationId(req) doesn't throw.
+    req.resolvedOrganizationId = 2;
     req.header = (name: string) => (name === 'x-organization-id' ? '2' : undefined);
 
     const res = createMockResponse() as any;

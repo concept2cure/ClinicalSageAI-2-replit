@@ -3,11 +3,26 @@
  *
  * Provides consistent error handling, logging, and response formatting
  * for all application errors.
+ *
+ * Production safety: 5xx responses NEVER echo the raw error.message back
+ * to the client. Internal exceptions routinely contain SQL fragments,
+ * column names, file paths, env var names, and stack trace data — none
+ * of which should reach a customer browser. The full error is logged
+ * server-side with the request_id, so support can correlate without
+ * exposing internals.
+ *
+ * 4xx responses keep their message because those are user-actionable
+ * (validation failures, missing fields, etc.) — but only when the error
+ * was raised as an `ApiError` with a curated message. Generic 4xx with
+ * a raw message gets the same scrubbing.
  */
 import { Request, Response, NextFunction } from 'express';
 import { createContextLogger } from '../utils/logger';
+import { config } from '../config/environment';
 
 const logger = createContextLogger({ module: 'error-handler' });
+
+const GENERIC_5XX_MESSAGE = 'Internal server error';
 
 // Custom error class with status code
 export class ApiError extends Error {
@@ -28,13 +43,48 @@ export class ApiError extends Error {
 }
 
 /**
+ * Whether to expose the raw `error.message` to the client for this error.
+ *
+ * Rules:
+ *   - Production 5xx: NEVER. Log it, return GENERIC_5XX_MESSAGE.
+ *   - Production 4xx: only if the error is an ApiError with a curated
+ *     code. Unanticipated 4xx (e.g. third-party SDK validation errors
+ *     surfacing through us) get the generic 4xx message for the code.
+ *   - Non-production: always echo the message — it's the dev feedback
+ *     loop. We rely on prod env detection, not on hopeful sanitization.
+ *
+ * `details` follows the same rule. ApiError carries curated details
+ * (validation errors etc.); generic errors with `.details` get dropped.
+ */
+function shouldExposeRawMessage(error: any, statusCode: number): boolean {
+  if (!config.isProduction) return true;
+  if (statusCode >= 500) return false;
+  // 4xx: only expose if the error was raised through our ApiError helpers
+  // (which means a developer curated the message for a user audience).
+  return error instanceof ApiError;
+}
+
+function genericMessageForStatus(statusCode: number): string {
+  if (statusCode >= 500) return GENERIC_5XX_MESSAGE;
+  if (statusCode === 401) return 'Unauthorized';
+  if (statusCode === 403) return 'Forbidden';
+  if (statusCode === 404) return 'Not found';
+  if (statusCode === 409) return 'Conflict';
+  if (statusCode === 429) return 'Too many requests';
+  return 'Bad request';
+}
+
+/**
  * Formats HTTP error responses consistently
  */
 function formatError(error: any, req: Request) {
   // Default values
   const statusCode = error.statusCode || 500;
-  const message = error.message || 'Internal server error';
   const errorCode = error.code || 'UNKNOWN_ERROR';
+  const expose = shouldExposeRawMessage(error, statusCode);
+  const message = expose
+    ? error.message || genericMessageForStatus(statusCode)
+    : genericMessageForStatus(statusCode);
 
   // Return formatted error response
   return {
@@ -46,7 +96,7 @@ function formatError(error: any, req: Request) {
       method: req.method,
       timestamp: new Date().toISOString(),
       request_id: (req as any).id,
-      details: error.details || undefined,
+      details: expose ? error.details || undefined : undefined,
     },
   };
 }

@@ -4,28 +4,34 @@ import semanticEmbeddingService from '../services/semanticEmbeddingService.js';
 import { db } from '../db';
 import { documentVectors } from '../../shared/schema.js';
 import { eq, sql } from 'drizzle-orm';
+import { authenticateToken } from '../middleware/auth.js';
+import { requireAuthedOrgId } from '../utils/authedOrgId.js';
 
 const router = express.Router();
+
+// Every route in this file is tenant-scoped. Gate the whole router with
+// the JWT verifier so req.user.organizationId is the authority — the
+// previous code read organizationId from req.body / req.query, which
+// is the IDOR shape PRs #496-#499 closed.
+router.use(authenticateToken);
 
 /**
  * Semantic Search API Routes
  * Implements Phase 3 RAG capabilities with pgvector
  */
 
-// Validation schemas
+// Validation schemas. organizationId is derived from the JWT via
+// requireAuthedOrgId; the request body never names a tenant.
 const generateEmbeddingSchema = z.object({
   componentId: z.number().int().positive(),
-  organizationId: z.number().int().positive()
 });
 
 const generateDocumentEmbeddingsSchema = z.object({
   documentId: z.number().int().positive(),
-  organizationId: z.number().int().positive()
 });
 
 const semanticSearchSchema = z.object({
   query: z.string().min(1).max(5000),
-  organizationId: z.number().int().positive(),
   limit: z.number().int().min(1).max(100).default(10),
   threshold: z.number().min(0).max(1).default(0.7),
   moduleContext: z.string().optional(),
@@ -38,8 +44,10 @@ const semanticSearchSchema = z.object({
  */
 router.post('/embeddings/component', async (req, res) => {
   try {
+    const orgGuard = requireAuthedOrgId(req, res);
+    if (!orgGuard.ok) return;
     const validation = generateEmbeddingSchema.safeParse(req.body);
-    
+
     if (!validation.success) {
       return res.status(400).json({
         success: false,
@@ -47,12 +55,12 @@ router.post('/embeddings/component', async (req, res) => {
         details: validation.error.errors
       });
     }
-    
-    const { componentId, organizationId } = validation.data;
-    
+
+    const { componentId } = validation.data;
+
     const result = await semanticEmbeddingService.generateComponentEmbeddings(
       componentId,
-      organizationId
+      orgGuard.orgId
     );
     
     res.json(result);
@@ -72,16 +80,11 @@ router.post('/embeddings/component', async (req, res) => {
  */
 router.post('/embeddings/document', async (req, res) => {
   try {
-    // Early null guard for organizationId
-    if (!req.body.organizationId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Organization ID is required. Please select an organization from the top navigation bar.'
-      });
-    }
+    const orgGuard = requireAuthedOrgId(req, res);
+    if (!orgGuard.ok) return;
 
     const validation = generateDocumentEmbeddingsSchema.safeParse(req.body);
-    
+
     if (!validation.success) {
       return res.status(400).json({
         success: false,
@@ -89,12 +92,12 @@ router.post('/embeddings/document', async (req, res) => {
         details: validation.error.errors
       });
     }
-    
-    const { documentId, organizationId } = validation.data;
-    
+
+    const { documentId } = validation.data;
+
     const result = await semanticEmbeddingService.generateDocumentEmbeddings(
       documentId,
-      organizationId
+      orgGuard.orgId
     );
     
     res.json(result);
@@ -114,16 +117,11 @@ router.post('/embeddings/document', async (req, res) => {
  */
 router.post('/search', async (req, res) => {
   try {
-    // Early null guard for organizationId
-    if (!req.body.organizationId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Organization ID is required. Please select an organization from the top navigation bar.'
-      });
-    }
+    const orgGuard = requireAuthedOrgId(req, res);
+    if (!orgGuard.ok) return;
 
     const validation = semanticSearchSchema.safeParse(req.body);
-    
+
     if (!validation.success) {
       return res.status(400).json({
         success: false,
@@ -131,13 +129,13 @@ router.post('/search', async (req, res) => {
         details: validation.error.errors
       });
     }
-    
-    const { query, organizationId, limit, threshold, moduleContext, tags } = validation.data;
-    
+
+    const { query, limit, threshold, moduleContext, tags } = validation.data;
+
     // Perform semantic search
     const searchResult = await semanticEmbeddingService.semanticSearch(
       query,
-      organizationId,
+      orgGuard.orgId,
       limit,
       threshold
     );
@@ -176,15 +174,10 @@ router.post('/search', async (req, res) => {
  */
 router.get('/embeddings/stats', async (req, res) => {
   try {
-    const organizationId = parseInt(req.query.organizationId);
-    
-    if (!organizationId) {
-      return res.status(400).json({
-        success: false,
-        error: 'organizationId is required'
-      });
-    }
-    
+    const orgGuard = requireAuthedOrgId(req, res);
+    if (!orgGuard.ok) return;
+    const organizationId = orgGuard.orgId;
+
     // Get embedding statistics
     const stats = await db.execute(sql`
       SELECT 
@@ -234,19 +227,20 @@ router.get('/embeddings/stats', async (req, res) => {
  */
 router.delete('/embeddings/component/:componentId', async (req, res) => {
   try {
+    const orgGuard = requireAuthedOrgId(req, res);
+    if (!orgGuard.ok) return;
     const componentId = parseInt(req.params.componentId);
-    const organizationId = parseInt(req.query.organizationId);
-    
-    if (!componentId || !organizationId) {
+
+    if (!componentId) {
       return res.status(400).json({
         success: false,
-        error: 'componentId and organizationId are required'
+        error: 'componentId is required'
       });
     }
-    
+
     const result = await semanticEmbeddingService.deleteComponentEmbeddings(
       componentId,
-      organizationId
+      orgGuard.orgId
     );
     
     res.json(result);
@@ -266,15 +260,10 @@ router.delete('/embeddings/component/:componentId', async (req, res) => {
  */
 router.post('/reindex', async (req, res) => {
   try {
-    const organizationId = parseInt(req.body.organizationId);
-    
-    if (!organizationId) {
-      return res.status(400).json({
-        success: false,
-        error: 'organizationId is required'
-      });
-    }
-    
+    const orgGuard = requireAuthedOrgId(req, res);
+    if (!orgGuard.ok) return;
+    const organizationId = orgGuard.orgId;
+
     // Get all components for the organization
     const components = await db.execute(sql`
       SELECT id FROM components 

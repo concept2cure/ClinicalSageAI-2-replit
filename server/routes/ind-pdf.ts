@@ -444,12 +444,18 @@ router.post('/:projectId/generate', async (req: Request, res: Response) => {
 
     console.log(`[IND-PDF] Generated ${pdfBuffer.length} bytes → ${filepath}`);
 
-    // Register governed export (fail-closed for regulated outputs)
+    // Register governed export (fail-closed for regulated outputs).
+    // SECURITY: JWT-bound. The previous `|| 1` / `|| 0` fallback
+    // attributed exports to org 1 / user 0 when JWT was missing.
     const user = (req as any).user;
+    const govOrgId = user?.organizationId ?? (req as any).tenantContext?.organizationId;
+    if (govOrgId == null || user?.id == null) {
+      return res.status(403).json({ error: 'Tenant context required for governed export' });
+    }
     await registerExportGovernanceQuick({
-      organizationId: user?.organizationId || 1,
+      organizationId: Number(govOrgId),
       projectId: Number(projectId) || 0,
-      userId: user?.id || 0,
+      userId: Number(user.id),
       userName: user?.name || user?.email || 'unknown',
       title: `IND PDF: Project ${projectId}`,
       exportFormat: 'pdf',
@@ -545,12 +551,17 @@ router.post('/:projectId/section', async (req: Request, res: Response) => {
     );
     res.setHeader('Content-Length', String(pdfBuffer.length));
 
-    // Register governed export (fail-closed for regulated outputs)
+    // Register governed export (fail-closed for regulated outputs).
+    // SECURITY: JWT-bound — see the export above.
     const secUser = (req as any).user;
+    const secOrgId = secUser?.organizationId ?? (req as any).tenantContext?.organizationId;
+    if (secOrgId == null || secUser?.id == null) {
+      return res.status(403).json({ error: 'Tenant context required for governed export' });
+    }
     await registerExportGovernanceQuick({
-      organizationId: secUser?.organizationId || 1,
+      organizationId: Number(secOrgId),
       projectId: Number(projectId) || 0,
-      userId: secUser?.id || 0,
+      userId: Number(secUser.id),
       userName: secUser?.name || secUser?.email || 'unknown',
       title: `IND Section PDF: ${sectionCode}`,
       exportFormat: 'pdf',

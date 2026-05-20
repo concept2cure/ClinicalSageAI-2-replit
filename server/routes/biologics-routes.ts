@@ -12,6 +12,10 @@ import { authMiddleware } from '../auth.js';
 import { biologicsIntelligence } from '../services/biologics-intelligence-service.js';
 import { combinationProductService } from '../services/combination-product-service.js';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('biologics-routes');
+
 const router = Router();
 router.use(authMiddleware);
 
@@ -41,7 +45,7 @@ router.get('/pathway', (req: Request, res: Response) => {
     return res.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[biologics] Pathway error:', message);
+    logger.error('Pathway error', { err: message instanceof Error ? message.message : String(message) });
     return res.status(500).json({ error: 'Failed to get biologic pathway' });
   }
 });
@@ -67,7 +71,7 @@ router.get('/biosimilar-requirements', (req: Request, res: Response) => {
     return res.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[biologics] Biosimilar requirements error:', message);
+    logger.error('Biosimilar requirements error', { err: message instanceof Error ? message.message : String(message) });
     return res.status(500).json({ error: 'Failed to get biosimilar requirements' });
   }
 });
@@ -94,7 +98,7 @@ router.get('/expedited-pathways', (req: Request, res: Response) => {
     return res.json({ pathways: result });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[biologics] Expedited pathways error:', message);
+    logger.error('Expedited pathways error', { err: message instanceof Error ? message.message : String(message) });
     return res.status(500).json({ error: 'Failed to get expedited pathways' });
   }
 });
@@ -120,7 +124,7 @@ router.get('/comparability', (req: Request, res: Response) => {
     return res.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[biologics] Comparability error:', message);
+    logger.error('Comparability error', { err: message instanceof Error ? message.message : String(message) });
     return res.status(500).json({ error: 'Failed to get comparability design' });
   }
 });
@@ -146,7 +150,7 @@ router.get('/combination-products/classify', (req: Request, res: Response) => {
     return res.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[combination] Classify error:', message);
+    logger.error('Classify error', { err: message instanceof Error ? message.message : String(message) });
     return res.status(500).json({ error: 'Failed to classify combination product' });
   }
 });
@@ -177,7 +181,7 @@ router.get('/combination-products/requirements', (req: Request, res: Response) =
     return res.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[combination] Requirements error:', message);
+    logger.error('Requirements error', { err: message instanceof Error ? message.message : String(message) });
     return res.status(500).json({ error: 'Failed to get combination requirements' });
   }
 });

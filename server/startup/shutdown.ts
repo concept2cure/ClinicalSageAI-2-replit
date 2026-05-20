@@ -70,6 +70,16 @@ export async function gracefulShutdown(signal: string, ctx: ShutdownContext): Pr
 
   cleanupPerformance();
 
+  // Stop the audit chain integrity monitor before closing the DB pool —
+  // it queries through the pool on its 5-min cycle and would error if a
+  // check happened to fire mid-shutdown.
+  try {
+    const { stopChainMonitor } = await import('../services/audit/chainIntegrityMonitor.js');
+    stopChainMonitor();
+  } catch (error: any) {
+    console.warn('⚠️ Chain integrity monitor stop failed:', error.message);
+  }
+
   try {
     if (ctx.pool) await ctx.pool.end();
     console.log('✅ Database connections closed');

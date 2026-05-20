@@ -603,12 +603,21 @@ router.post('/audit-trail', (req: Request, res: Response) => {
  */
 router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) => {
   const pool: Pool = (req as any).pool || (req.app as any).pool;
-  const orgId = req.query.org_id || req.query.organizationId;
+  // SECURITY: pre-fix the orgId came from req.query, so any caller
+  // could verify the chain integrity of any tenant's audit trail.
+  // When the query was empty the filter was OMITTED entirely — meaning
+  // the verifier ran across all tenants combined, which would fail
+  // chain consistency and leak hash data from foreign rows. JWT-bound now.
+  const orgIdRaw =
+    (req as any).user?.organizationId ?? (req as any).tenantContext?.organizationId;
+  if (orgIdRaw == null) {
+    return res.status(403).json({ error: 'Tenant context required' });
+  }
+  const orgId = Number(orgIdRaw);
 
   try {
-    // Build WHERE clause scoped by org if provided
-    const orgFilter = orgId ? `WHERE organization_id = $1` : '';
-    const params = orgId ? [parseInt(String(orgId), 10)] : [];
+    const orgFilter = `WHERE organization_id = $1`;
+    const params = [orgId];
 
     // Fetch all audit_events rows in chain order
     const { rows } = await pool.query(

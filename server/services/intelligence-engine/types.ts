@@ -96,7 +96,9 @@ export type ReviewerPersonaCode =
   | 'ivdr_performance_evaluator'
   | 'biostat_reviewer'
   | 'labeling_reviewer'
-  | 'quality_systems_reviewer';
+  | 'quality_systems_reviewer'
+  | 'preclinical_toxicologist'
+  | 'glp_auditor';
 
 // ─── Module 5: Risk Classification ───────────────────────────────────────────
 

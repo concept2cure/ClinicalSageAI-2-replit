@@ -15,6 +15,10 @@
 
 import { pool } from '../../db';
 
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('gdprComplianceService');
+
 // ---------------------------------------------------------------------------
 // Types & Interfaces
 // ---------------------------------------------------------------------------
@@ -252,7 +256,7 @@ async function ensureTables(): Promise<void> {
   try {
     await pool.query(ENSURE_TABLES_SQL);
   } catch (error) {
-    console.error('[GDPR] Failed to ensure tables:', error);
+    logger.error('Failed to ensure tables', { err: error instanceof Error ? error.message : String(error) });
     throw error;
   }
 }
@@ -301,7 +305,7 @@ export async function createProcessingActivity(
 
     return mapProcessingActivityRow(result.rows[0]);
   } catch (error) {
-    console.error('[GDPR] createProcessingActivity failed:', error);
+    logger.error('createProcessingActivity failed', { err: error instanceof Error ? error.message : String(error) });
     throw error;
   }
 }
@@ -328,7 +332,7 @@ export async function getProcessingActivities(
 
     return result.rows.map(mapProcessingActivityRow);
   } catch (error) {
-    console.error('[GDPR] getProcessingActivities failed:', error);
+    logger.error('getProcessingActivities failed', { err: error instanceof Error ? error.message : String(error) });
     throw error;
   }
 }
@@ -406,7 +410,7 @@ export async function updateProcessingActivity(
 
     return mapProcessingActivityRow(result.rows[0]);
   } catch (error) {
-    console.error('[GDPR] updateProcessingActivity failed:', error);
+    logger.error('updateProcessingActivity failed', { err: error instanceof Error ? error.message : String(error) });
     throw error;
   }
 }
@@ -454,7 +458,7 @@ export async function createDPIA(
 
     return mapDPIARow(result.rows[0]);
   } catch (error) {
-    console.error('[GDPR] createDPIA failed:', error);
+    logger.error('createDPIA failed', { err: error instanceof Error ? error.message : String(error) });
     throw error;
   }
 }
@@ -479,7 +483,7 @@ export async function getDPIAsForActivity(activityId: string): Promise<DPIA[]> {
 
     return result.rows.map(mapDPIARow);
   } catch (error) {
-    console.error('[GDPR] getDPIAsForActivity failed:', error);
+    logger.error('getDPIAsForActivity failed', { err: error instanceof Error ? error.message : String(error) });
     throw error;
   }
 }
@@ -519,7 +523,7 @@ export async function recordConsent(
 
     return mapConsentRow(result.rows[0]);
   } catch (error) {
-    console.error('[GDPR] recordConsent failed:', error);
+    logger.error('recordConsent failed', { err: error instanceof Error ? error.message : String(error) });
     throw error;
   }
 }
@@ -560,7 +564,7 @@ export async function withdrawConsent(
 
     return mapConsentRow(result.rows[0]);
   } catch (error) {
-    console.error('[GDPR] withdrawConsent failed:', error);
+    logger.error('withdrawConsent failed', { err: error instanceof Error ? error.message : String(error) });
     throw error;
   }
 }
@@ -585,7 +589,7 @@ export async function getConsentStatus(dataSubjectId: string): Promise<ConsentRe
 
     return result.rows.map(mapConsentRow);
   } catch (error) {
-    console.error('[GDPR] getConsentStatus failed:', error);
+    logger.error('getConsentStatus failed', { err: error instanceof Error ? error.message : String(error) });
     throw error;
   }
 }
@@ -629,7 +633,7 @@ export async function createDataSubjectRequest(
 
     return mapDataSubjectRequestRow(result.rows[0]);
   } catch (error) {
-    console.error('[GDPR] createDataSubjectRequest failed:', error);
+    logger.error('createDataSubjectRequest failed', { err: error instanceof Error ? error.message : String(error) });
     throw error;
   }
 }
@@ -666,7 +670,7 @@ export async function completeDataSubjectRequest(
 
     return mapDataSubjectRequestRow(result.rows[0]);
   } catch (error) {
-    console.error('[GDPR] completeDataSubjectRequest failed:', error);
+    logger.error('completeDataSubjectRequest failed', { err: error instanceof Error ? error.message : String(error) });
     throw error;
   }
 }
@@ -698,7 +702,7 @@ export async function getOverdueRequests(
 
     return result.rows.map(mapDataSubjectRequestRow);
   } catch (error) {
-    console.error('[GDPR] getOverdueRequests failed:', error);
+    logger.error('getOverdueRequests failed', { err: error instanceof Error ? error.message : String(error) });
     throw error;
   }
 }
@@ -742,7 +746,7 @@ export async function assessTransfer(
 
     return mapTransferAssessmentRow(result.rows[0]);
   } catch (error) {
-    console.error('[GDPR] assessTransfer failed:', error);
+    logger.error('assessTransfer failed', { err: error instanceof Error ? error.message : String(error) });
     throw error;
   }
 }
@@ -769,7 +773,7 @@ export async function getTransfersForOrg(
 
     return result.rows.map(mapTransferAssessmentRow);
   } catch (error) {
-    console.error('[GDPR] getTransfersForOrg failed:', error);
+    logger.error('getTransfersForOrg failed', { err: error instanceof Error ? error.message : String(error) });
     throw error;
   }
 }
@@ -822,7 +826,7 @@ export async function reportBreach(
 
     return mapDataBreachRow(result.rows[0]);
   } catch (error) {
-    console.error('[GDPR] reportBreach failed:', error);
+    logger.error('reportBreach failed', { err: error instanceof Error ? error.message : String(error) });
     throw error;
   }
 }

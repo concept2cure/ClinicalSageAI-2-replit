@@ -15,25 +15,41 @@ import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
 import { getAuthHeaders, getOrgId } from '@/utils/authToken';
 import { marked } from 'marked';
-import DOMPurify from 'dompurify';
+import { renderSafeMarkdown } from './renderSafeMarkdown';
 import { useAIAction } from '../../hooks/useAIAction';
 import { useAnaQueueState } from '../../hooks/useAnaQueueState';
 import type { AIActionType, AIActionSourceSurface } from '../../hooks/useAIAction';
 
-// ── Conversation Queue ──────────────────────────────────────────────────────
-type QueueWorkStatus = 'queued' | 'working' | 'waiting_action' | 'completed' | 'blocked' | 'failed';
-
-interface ConversationQueueItem {
-  id: string;
-  prompt: string;
-  contextSnapshot: { projectId?: number | null; sectionCode?: string | null };
-  status: QueueWorkStatus;
-  enqueuedAt: number;
-  startedAt?: number;
-  completedAt?: number;
-  result?: string;
-  error?: string;
-}
+// ── Extracted modules — type contracts, static data, pure helpers ───────────
+import type {
+  AnaMessage,
+  AnaPersistentPanelProps,
+  AnaRIOrchestration,
+  AnaToolCallRecord,
+  AIProviderChoice,
+  ConversationQueueItem,
+  DecisionStatusRailState,
+  IntentLens,
+  QueueWorkStatus,
+  SlashCommand,
+  SuggestedAction,
+} from './anaPanelTypes';
+import {
+  AI_PROVIDERS,
+  DOCUMENT_ACTION_CONFIGS,
+  EMPTY_DECISION_STATUS,
+  INTENT_LENSES,
+  SCREEN_LABELS,
+  SLASH_CATEGORY_COLORS,
+  SLASH_COMMANDS,
+  THINKING_STATUS_PHASES,
+} from './anaPanelConstants';
+import {
+  buildAssistantPreview,
+  buildFollowUpChips,
+  detectVerdictSignals,
+  normalizeOrchestrationPayload,
+} from './anaPanelUtils';
 
 import {
   Sparkles,
@@ -73,738 +89,22 @@ import { ALL_DOMAIN_GROUPS } from '../../config/domain-prompts';
 
 marked.setOptions({ breaks: true, gfm: true });
 
-// ─── Markdown render cache — avoids re-parsing on every React re-render ─────
-const _mdCache = new Map<string, string>();
-const MD_CACHE_MAX = 200;
+// renderMarkdown moved to ./renderSafeMarkdown.ts so the ana/Message
+// component can share the exact same allowlist. Re-exported here as a
+// local alias so the (large) call sites below don't need to change.
+const renderMarkdown = renderSafeMarkdown;
 
-const SANITIZE_CONFIG = {
-  ALLOWED_TAGS: [
-    'p',
-    'br',
-    'strong',
-    'em',
-    'b',
-    'i',
-    'u',
-    'a',
-    'ul',
-    'ol',
-    'li',
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6',
-    'blockquote',
-    'pre',
-    'code',
-    'table',
-    'thead',
-    'tbody',
-    'tr',
-    'th',
-    'td',
-    'span',
-    'div',
-    'hr',
-    'sup',
-    'sub',
-  ],
-  ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'id'],
-} as const;
-
-const renderMarkdown = (content: string): string => {
-  const cached = _mdCache.get(content);
-  if (cached !== undefined) return cached;
-
-  let result: string;
-  try {
-    const rawHtml = marked.parse(content) as string;
-    result = DOMPurify.sanitize(rawHtml, SANITIZE_CONFIG);
-  } catch {
-    result = content
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#x27;');
-  }
-
-  // Evict oldest entry when cache is full
-  if (_mdCache.size >= MD_CACHE_MAX) {
-    const firstKey = _mdCache.keys().next().value;
-    if (firstKey !== undefined) _mdCache.delete(firstKey);
-  }
-  _mdCache.set(content, result);
-  return result;
-};
-
-// ─── Verdict & Confidence Signal Detection ──────────────────────────────────
-
-interface VerdictSignal {
-  type: 'verdict' | 'priority' | 'confidence' | 'action';
-  label: string;
-  color: string;
-  bgColor: string;
-}
-
-interface FollowUpChip {
-  id: string;
-  label: string;
-  prompt: string;
-}
-
-/**
- * Detects AnA 1.0 RI seniority signals in response text and returns
- * badges to render beneath the message. Matches the verdict vocabulary,
- * prioritization hierarchy, and confidence levels from the AnA doctrine.
- */
-function detectVerdictSignals(content: string): VerdictSignal[] {
-  const signals: VerdictSignal[] = [];
-  const lower = content.toLowerCase();
-
-  // Verdict detection
-  if (/\bdefensible\b/.test(lower) && /\bverdict\b/i.test(content))
-    signals.push({
-      type: 'verdict',
-      label: 'Defensible',
-      color: 'text-emerald-700',
-      bgColor: 'bg-emerald-50 border-emerald-200',
-    });
-  else if (/\bvulnerable\b/.test(lower) && /\bverdict\b/i.test(content))
-    signals.push({
-      type: 'verdict',
-      label: 'Vulnerable',
-      color: 'text-amber-700',
-      bgColor: 'bg-amber-50 border-amber-200',
-    });
-  else if (/\boverclaimed\b/.test(lower))
-    signals.push({
-      type: 'verdict',
-      label: 'Overclaimed',
-      color: 'text-red-700',
-      bgColor: 'bg-red-50 border-red-200',
-    });
-  else if (/\bsupportable with revision\b/.test(lower))
-    signals.push({
-      type: 'verdict',
-      label: 'Supportable with Revision',
-      color: 'text-blue-700',
-      bgColor: 'bg-blue-50 border-blue-200',
-    });
-
-  // Priority detection
-  if (
-    /\bblocker\b/.test(lower) &&
-    (/\bfix before\b/.test(lower) || /\brtf\b/.test(lower) || /\bcrl\b/.test(lower))
-  )
-    signals.push({
-      type: 'priority',
-      label: 'Blocker Identified',
-      color: 'text-red-700',
-      bgColor: 'bg-red-50 border-red-200',
-    });
-  else if (/\breviewer friction\b/.test(lower))
-    signals.push({
-      type: 'priority',
-      label: 'Reviewer Friction',
-      color: 'text-amber-700',
-      bgColor: 'bg-amber-50 border-amber-200',
-    });
-
-  // Confidence detection
-  if (/\bstrong\b.*\bact on this\b/.test(lower))
-    signals.push({
-      type: 'confidence',
-      label: 'High Confidence',
-      color: 'text-emerald-700',
-      bgColor: 'bg-emerald-50 border-emerald-200',
-    });
-  else if (/\bprovisional\b.*\bpending\b/.test(lower))
-    signals.push({
-      type: 'confidence',
-      label: 'Provisional',
-      color: 'text-amber-700',
-      bgColor: 'bg-amber-50 border-amber-200',
-    });
-
-  // Action detection
-  if (/\bescalat(e|ion)\b/.test(lower) && /\bwarrant\b/.test(lower))
-    signals.push({
-      type: 'action',
-      label: 'Escalation Recommended',
-      color: 'text-violet-700',
-      bgColor: 'bg-violet-50 border-violet-200',
-    });
-  else if (/\bno[- ]go\b/.test(lower))
-    signals.push({
-      type: 'action',
-      label: 'No-Go',
-      color: 'text-red-700',
-      bgColor: 'bg-red-50 border-red-200',
-    });
-  else if (/\bproceed\b/.test(lower) && /\bmitigation\b/.test(lower))
-    signals.push({
-      type: 'action',
-      label: 'Proceed with Mitigation',
-      color: 'text-blue-700',
-      bgColor: 'bg-blue-50 border-blue-200',
-    });
-
-  return signals;
-}
-
-function buildAssistantPreview(content: string): { bottomLine: string; details: string } {
-  const normalized = content.trim();
-  if (!normalized) return { bottomLine: '', details: '' };
-
-  const paragraphs = normalized.split(/\n\s*\n/).filter(Boolean);
-  const firstParagraph = paragraphs[0] || normalized;
-  const firstSentence = firstParagraph
-    .split(/(?<=[.!?])\s+/)
-    .find(sentence => sentence.trim().length > 0);
-
-  const bottomLine = (firstSentence || firstParagraph).trim();
-  const details = normalized.startsWith(bottomLine)
-    ? normalized.slice(bottomLine.length).trim()
-    : normalized;
-
-  return { bottomLine, details };
-}
-
-function buildFollowUpChips(args: {
-  intentLens: IntentLens;
-  hasProject: boolean;
-  assistantContent: string;
-}): FollowUpChip[] {
-  const { intentLens, hasProject, assistantContent } = args;
-  const chips: FollowUpChip[] = [];
-  const lc = assistantContent.toLowerCase();
-
-  const pushChip = (id: string, label: string, prompt: string) => {
-    if (chips.some(c => c.id === id)) return;
-    chips.push({ id, label, prompt });
-  };
-
-  pushChip('next-step', 'Give me next steps', 'Give me the top 3 next steps from your answer.');
-  pushChip('risk-gaps', 'Identify risk gaps', 'Identify the biggest risk gaps from this answer.');
-
-  if (hasProject) {
-    pushChip('draft-artifact', 'Turn into draft', 'Turn this into a draft artifact I can review.');
-  }
-
-  if (intentLens === 'compare' || /\bcompare|versus|vs\.\b/.test(lc)) {
-    pushChip('compare-options', 'Compare options', 'Compare the best two options with pros/cons.');
-  }
-
-  if (intentLens === 'audit' || /\bcompliance|audit|readiness\b/.test(lc)) {
-    pushChip(
-      'readiness-check',
-      'Run readiness check',
-      'Run a readiness check based on this guidance.'
-    );
-  }
-
-  if (intentLens === 'strategy' || /\bstrategy|pathway|plan\b/.test(lc)) {
-    pushChip(
-      'timeline',
-      'Build a timeline',
-      'Build a practical execution timeline from this strategy.'
-    );
-  }
-
-  return chips.slice(0, 3);
-}
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-interface AnaMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-  /** Base64 images from Nano Banana */
-  images?: Array<{ base64: string; mimeType: string }>;
-  /** Downloadable PPTX from Nano Banana */
-  pptx?: { base64: string; filename: string; mimeType: string };
-  /** Whether this message has been saved as an artifact */
-  savedAsArtifact?: boolean;
-  /** AI provider that generated this response */
-  modelProvider?: string;
-  /** AI model name that generated this response */
-  modelName?: string;
-  evidenceUsage?: {
-    firecrawlRequested?: boolean;
-    firecrawlUsed?: boolean;
-    quotaConsumed?: number;
-    quotaRemaining?: number;
-  };
-  /** Flag to highlight prompts restored for inline editing */
-  recalledToInput?: boolean;
-}
-
-interface DecisionStatusRailState {
-  loading: boolean;
-  error: string | null;
-  summary: string;
-  pendingApprovals: number;
-  pendingConfirmations: number;
-  unresolvedContradictions: boolean;
-  provisional: boolean;
-  needsReapproval: boolean;
-  needsEscalation: boolean;
-  blockedCount: number;
-  count: number;
-  details: Array<{
-    id: string;
-    status: string;
-    kind: string;
-    summary: string;
-  }>;
-}
-
-const EMPTY_DECISION_STATUS: DecisionStatusRailState = {
-  loading: false,
-  error: null,
-  summary: 'No pending decisions',
-  pendingApprovals: 0,
-  pendingConfirmations: 0,
-  unresolvedContradictions: false,
-  provisional: false,
-  needsReapproval: false,
-  needsEscalation: false,
-  blockedCount: 0,
-  count: 0,
-  details: [],
-};
-
-interface SuggestedAction {
-  id: string;
-  label: string;
-  intent?: string;
-  description?: string;
-}
-
-// ─── AnA RI Types ─────────────────────────────────────────────────────────────
-
-type IntentLens = 'auto' | 'audit' | 'improve' | 'risk' | 'strategy' | 'compare';
-
-// ─── AI Provider / Model Selection ───────────────────────────────────────────
-
-type AIProviderChoice = 'auto' | 'anthropic' | 'openai' | 'moonshot';
-
-const THINKING_STATUS_PHASES = [
-  'Reading project context',
-  'Checking prior thread memory',
-  'Drafting recommendation',
-] as const;
-
-interface AIProviderOption {
-  id: AIProviderChoice;
-  label: string;
-  description: string;
-  color: string;
-  activeColor: string;
-}
-
-const AI_PROVIDERS: AIProviderOption[] = [
-  {
-    id: 'auto',
-    label: 'Auto',
-    description: 'Best model for the task',
-    color: 'text-[#8A8880]',
-    activeColor: 'text-[#D97757]',
-  },
-  {
-    id: 'anthropic',
-    label: 'Claude',
-    description: 'Anthropic Claude Sonnet 4',
-    color: 'text-[#8A8880]',
-    activeColor: 'text-[#CC785C]',
-  },
-  {
-    id: 'openai',
-    label: 'GPT-4o',
-    description: 'OpenAI GPT-4o',
-    color: 'text-[#8A8880]',
-    activeColor: 'text-[#10A37F]',
-  },
-  {
-    id: 'moonshot',
-    label: 'Kimi',
-    description: 'Moonshot Kimi K2',
-    color: 'text-[#8A8880]',
-    activeColor: 'text-[#6366F1]',
-  },
-];
-
-interface IntentLensOption {
-  id: IntentLens;
-  label: string;
-  description: string;
-  icon: React.ReactNode;
-}
-
-const INTENT_LENSES: IntentLensOption[] = [
-  {
-    id: 'auto',
-    label: 'Auto',
-    description: 'AnA detects intent automatically',
-    icon: <Sparkles className="w-3.5 h-3.5" />,
-  },
-  {
-    id: 'audit',
-    label: 'Audit',
-    description: 'Review like a regulator',
-    icon: <Search className="w-3.5 h-3.5" />,
-  },
-  {
-    id: 'improve',
-    label: 'Improve',
-    description: 'Strengthen writing and structure',
-    icon: <PenTool className="w-3.5 h-3.5" />,
-  },
-  {
-    id: 'risk',
-    label: 'Risk',
-    description: 'Predict deficiencies and rejections',
-    icon: <AlertTriangle className="w-3.5 h-3.5" />,
-  },
-  {
-    id: 'strategy',
-    label: 'Strategy',
-    description: 'Regulatory pathway analysis',
-    icon: <Target className="w-3.5 h-3.5" />,
-  },
-  {
-    id: 'compare',
-    label: 'Compare',
-    description: 'Side-by-side analysis',
-    icon: <GitCompare className="w-3.5 h-3.5" />,
-  },
-];
-
-interface AnaRIOrchestration {
-  detectedIntent: { lens: IntentLens; confidence: number; signals: string[] };
-  detectedSubmissionType: string | null;
-  appliedRole: string;
-  activeWorkstream?: {
-    stream: string;
-    phase: string;
-    objective: string;
-    currentFocus?: string;
-    blockers?: string[];
-    nextStep?: string;
-    collaborationMode?: 'drive' | 'coauthor' | 'advise';
-  };
-  workstreamHandoff?: {
-    from: string;
-    to: string;
-    carryForward: string[];
-    openLoops: string[];
-    transitionReason: string;
-  } | null;
-  suggestedActions: string[];
-  meta?: {
-    workstreamContextInjected?: boolean;
-    workstreamHandoffInjected?: boolean;
-  };
-}
-
-function normalizeOrchestrationPayload(payload: any): AnaRIOrchestration | null {
-  if (payload?.orchestration) {
-    return payload.orchestration as AnaRIOrchestration;
-  }
-
-  if (payload?.intelligence) {
-    return {
-      detectedIntent: {
-        lens: payload.intelligence.intent || 'auto',
-        confidence: payload.intelligence.intentConfidence || 0,
-        signals: [],
-      },
-      detectedSubmissionType: payload.intelligence.submissionType || null,
-      appliedRole: payload.intelligence.role || 'general',
-      activeWorkstream: payload.intelligence.activeWorkstream,
-      workstreamHandoff: payload.intelligence.workstreamHandoff || null,
-      suggestedActions: payload.intelligence.suggestedActions || [],
-    };
-  }
-
-  return null;
-}
-
-type DocumentActionType =
-  | 'risk_memo'
-  | 'deficiency_preemption_memo'
-  | 'evidence_memo'
-  | 'strategy_note'
-  | 'reviewer_question_brief'
-  | 'rewritten_section'
-  | 'revised_artifact'
-  | 'attach_to_dossier';
-
-interface DocumentActionConfig {
-  type: DocumentActionType;
-  label: string;
-  icon: React.ReactNode;
-}
-
-const DOCUMENT_ACTION_CONFIGS: DocumentActionConfig[] = [
-  {
-    type: 'revised_artifact',
-    label: 'Revise Document',
-    icon: <FileEdit className="w-3.5 h-3.5" />,
-  },
-  { type: 'risk_memo', label: 'Create Risk Memo', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
-  {
-    type: 'deficiency_preemption_memo',
-    label: 'Deficiency Preemption',
-    icon: <Shield className="w-3.5 h-3.5" />,
-  },
-  {
-    type: 'rewritten_section',
-    label: 'Rewrite Section',
-    icon: <PenTool className="w-3.5 h-3.5" />,
-  },
-  { type: 'strategy_note', label: 'Strategy Note', icon: <Target className="w-3.5 h-3.5" /> },
-  { type: 'evidence_memo', label: 'Evidence Memo', icon: <FileSearch className="w-3.5 h-3.5" /> },
-  {
-    type: 'reviewer_question_brief',
-    label: 'Reviewer Brief',
-    icon: <HelpCircle className="w-3.5 h-3.5" />,
-  },
-  {
-    type: 'attach_to_dossier',
-    label: 'Attach to Dossier',
-    icon: <FolderPlus className="w-3.5 h-3.5" />,
-  },
-];
-
-// ─── Slash Command Autocomplete — 45 AnA 1.0 RI commands ──────────────────────
-
-interface SlashCommand {
-  command: string;
-  description: string;
-  category: string;
-}
-
-const SLASH_COMMANDS: SlashCommand[] = [
-  // Intelligence
-  { command: '/assess', description: 'Full project assessment', category: 'Intelligence' },
-  {
-    command: '/readiness',
-    description: 'Readiness score + dimensions + gaps',
-    category: 'Intelligence',
-  },
-  { command: '/risk', description: 'Risk profile with predictions', category: 'Intelligence' },
-  { command: '/recommend', description: 'Prioritized action list', category: 'Intelligence' },
-  { command: '/next', description: 'What should I do next?', category: 'Intelligence' },
-  {
-    command: '/signals',
-    description: 'Accumulated intelligence signals',
-    category: 'Intelligence',
-  },
-  { command: '/status', description: 'Quick 5-line project briefing', category: 'Intelligence' },
-  // Analysis
-  { command: '/twin', description: 'Submission twin analysis', category: 'Analysis' },
-  { command: '/consistency', description: 'Cross-module consistency check', category: 'Analysis' },
-  { command: '/claims', description: 'Evidence chain strength + confidence', category: 'Analysis' },
-  { command: '/deficiencies', description: 'Known deficiency patterns', category: 'Analysis' },
-  { command: '/simulate', description: 'Simulate reviewer challenges', category: 'Analysis' },
-  { command: '/precedent', description: 'Similar products / predicates', category: 'Analysis' },
-  // Biostatistics
-  { command: '/sap', description: 'Generate Statistical Analysis Plan', category: 'Biostatistics' },
-  {
-    command: '/power',
-    description: 'Sample size and power calculation',
-    category: 'Biostatistics',
-  },
-  { command: '/dose', description: 'Dose escalation design', category: 'Biostatistics' },
-  {
-    command: '/defensibility',
-    description: 'Statistical defensibility audit',
-    category: 'Biostatistics',
-  },
-  { command: '/design', description: 'Clinical trial design', category: 'Biostatistics' },
-  // Subspecialties
-  {
-    command: '/safety',
-    description: 'TEAE, SAE, benefit-risk analysis',
-    category: 'Subspecialties',
-  },
-  { command: '/cmc', description: 'Manufacturing / Module 3', category: 'Subspecialties' },
-  { command: '/csr', description: 'Clinical study report analysis', category: 'Subspecialties' },
-  {
-    command: '/device',
-    description: '510(k), PMA, De Novo intelligence',
-    category: 'Subspecialties',
-  },
-  {
-    command: '/diagnostics',
-    description: 'Diagnostics/IVD validation and strategy',
-    category: 'Subspecialties',
-  },
-  {
-    command: '/cms',
-    description: 'CMS coverage and reimbursement strategy',
-    category: 'Subspecialties',
-  },
-  {
-    command: '/ectd',
-    description: 'Module structure / artifact placement',
-    category: 'Subspecialties',
-  },
-  // Document Authoring
-  { command: '/draft', description: 'Draft submission-ready CTD section', category: 'Authoring' },
-  { command: '/audit', description: 'Hostile reviewer audit', category: 'Authoring' },
-  { command: '/amend', description: 'Change tracking with impact analysis', category: 'Authoring' },
-  {
-    command: '/review',
-    description: 'Regulatory review from reviewer perspective',
-    category: 'Authoring',
-  },
-  { command: '/scan', description: 'Deficiency scanning', category: 'Authoring' },
-  { command: '/memo', description: 'Risk assessment memo (go/no-go)', category: 'Authoring' },
-  { command: '/brief', description: 'Reviewer question anticipation brief', category: 'Authoring' },
-  { command: '/strategy', description: 'Regulatory strategy note', category: 'Authoring' },
-  // Document Lifecycle
-  { command: '/checklist', description: 'Compliance checklist generation', category: 'Lifecycle' },
-  {
-    command: '/freeze',
-    description: 'Freeze document (immutable snapshot)',
-    category: 'Lifecycle',
-  },
-  { command: '/sign', description: 'Electronic signature (21 CFR Part 11)', category: 'Lifecycle' },
-  { command: '/submit', description: 'Submit to regulatory workflow', category: 'Lifecycle' },
-  { command: '/preflight', description: 'Section/module/dossier preflight', category: 'Lifecycle' },
-  // HAQ & Data Room
-  {
-    command: '/haq',
-    description: 'Draft Health Authority Question response',
-    category: 'Authoring',
-  },
-  { command: '/ask', description: 'Query project data room with AI', category: 'Analysis' },
-  // Navigation & Meta
-  {
-    command: '/workflow',
-    description: 'Full submission workflow progress',
-    category: 'Navigation',
-  },
-  { command: '/knowledge', description: 'Search knowledge base', category: 'Navigation' },
-  { command: '/decisions', description: 'Decision audit trail', category: 'Navigation' },
-  { command: '/help', description: 'Show all capabilities', category: 'Navigation' },
-  { command: '/export', description: 'Download conversation as markdown', category: 'Navigation' },
-];
-
-const SLASH_CATEGORY_COLORS: Record<string, string> = {
-  Intelligence: 'text-violet-600',
-  Analysis: 'text-blue-600',
-  Biostatistics: 'text-emerald-600',
-  Subspecialties: 'text-amber-600',
-  Authoring: 'text-rose-600',
-  Lifecycle: 'text-teal-600',
-  Navigation: 'text-zinc-500',
-};
-
-// ─── Authoring context import ────────────────────────────────────────────────
-import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
+import { AnaToolCallCard } from './AnaToolCallCard';
+import { AnaQueueStatusBanner } from './AnaQueueStatusBanner';
+import { AnaMessageBubble } from './AnaMessageBubble';
+import { AnaIntentLensStrip } from './AnaIntentLensStrip';
+import { AnaProviderPicker } from './AnaProviderPicker';
+import { AnaToolsDropdown } from './AnaToolsDropdown';
+import { AnaSlashCommandMenu } from './AnaSlashCommandMenu';
+import { AnaThinkingIndicator } from './AnaThinkingIndicator';
+import { streamAnaResponse } from './anaStreamingClient';
+import { requestCortexFallback } from './anaCortexClient';
 import { serializeContextForChat } from '../../services/authoring-context-resolver';
-
-interface AnaPersistentPanelProps {
-  contextProfile?: {
-    productType?: string;
-    userRole?: string;
-    screenName?: string;
-    activeProject?: string;
-    projectId?: string;
-    organizationId?: string | number;
-    customInstructions?: string;
-    /** Page-specific context for deeper awareness (active tab, filters, etc.) */
-    moduleContext?: Record<string, unknown>;
-    /** Optional thread to hydrate on mount/switch for deterministic resume */
-    threadId?: string;
-  };
-  /** Canonical authoring context — section/artifact/workflow awareness for AnA */
-  authoringContext?: AuthoringContextPack | null;
-  /** Suggested actions shown as quick-start chips when conversation is empty */
-  suggestedActions?: SuggestedAction[];
-  /** Greeting text shown when no messages */
-  greeting?: string;
-  /** Initial message to auto-send on mount */
-  initialMessage?: string | null;
-  /** Callback when user triggers a suggested action */
-  onActionRun?: (entry: {
-    id: string;
-    intent: string;
-    label: string;
-    status: 'running' | 'done' | 'failed';
-    ts: number;
-  }) => void;
-  /** Navigate to a layout mode or path */
-  onNavigate?: (path: string) => void;
-  /** Open the new-project modal */
-  onCreateProject?: () => void;
-  /** Projects list for home display */
-  projects?: Array<{ id: string; name: string; type: string; updatedAt?: string | Date }>;
-  /** Navigate to a specific project */
-  onSelectProject?: (projectId: string) => void;
-  /** Insert draft content into the governed editor (P1) */
-  onDraftInsert?: (content: string, title: string, ctdSection?: string) => void;
-  /** Navigate to a specific section (P2) */
-  onNavigateToSection?: (sectionCode: string) => void;
-  /** Open a specific artifact in the editor (P2) */
-  onOpenArtifact?: (artifactId: string) => void;
-  /** Request governed promotion of current artifact (P5) */
-  onRequestPromotion?: (artifactId: string) => Promise<{ promoted: boolean; message: string }>;
-  /** Open the version compare inspector panel (P4) */
-  onOpenCompareInspector?: () => void;
-  /** Refresh authoring intelligence (readiness/contradictions) after actions */
-  onRefreshIntelligence?: () => void;
-  /** Notify parent when active thread context changes */
-  onThreadChange?: (threadId?: string) => void;
-  /**
-   * "full" = fills all available space with full conversation + composer
-   * "compact" = just the input bar at bottom, conversation expands as overlay
-   */
-  mode?: 'full' | 'compact';
-  /** Pre-select the chat mode (standard, deep-research, or nano-banana) */
-  defaultChatMode?: 'standard' | 'deep-research' | 'nano-banana';
-  /** Project intelligence stats for enriched greeting */
-  projectIntelligence?: {
-    documentCount: number;
-    signalCount: number;
-    readinessScore: number | null;
-    memoryAtomCount: number;
-    /** Enriched from useProjectIntelligence + useNextBestActions */
-    recommendations?: Array<{ id: string; title: string; severity: string; category: string }>;
-    nextActions?: Array<{ id: string; title: string; priority: string; reason: string }>;
-    riskFactors?: Array<{ description: string; likelihood: string; impact: string }>;
-    openQuestions?: Array<{ question: string; priority: string; context: string }>;
-  };
-}
-
-// ─── Context labels ──────────────────────────────────────────────────────────
-
-// [BATCH 4] Trimmed to surviving first-class + specialist modes only
-const SCREEN_LABELS: Record<string, string> = {
-  projects: 'Home',
-  'project-home': 'Project Home',
-  'dossier-map': 'Dossier',
-  documents: 'Documents',
-  review: 'Review',
-  submissions: 'Submissions',
-  'section-workspace': 'Section Workspace',
-  'regulatory-workspace': 'Workspace',
-  'review-readiness': 'Review & Readiness',
-  biostatistics: 'Biostatistics',
-  'deep-research': 'Deep Research',
-  'precedent-intelligence': 'Precedent Intelligence',
-  'report-engine': 'Report Engine',
-  'safety-narrative': 'Safety Narrative',
-};
-
 // ─── Component ───────────────────────────────────────────────────────────────
 
 const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
@@ -856,14 +156,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   // AnA RI state
   const [intentLens, setIntentLens] = useState<IntentLens>('auto');
   const [lastOrchestration, setLastOrchestration] = useState<AnaRIOrchestration | null>(null);
-  const [showLensDropdown, setShowLensDropdown] = useState(false);
-  const lensDropdownRef = useRef<HTMLDivElement>(null);
-  // AI Provider / Model selector
+  // AI Provider / Model selector (the dropdown itself owns its open/closed state
+  // via AnaProviderPicker; the panel only tracks the selected provider).
   const [selectedProvider, setSelectedProvider] = useState<AIProviderChoice>('auto');
-  const [showProviderDropdown, setShowProviderDropdown] = useState(false);
-  const providerDropdownRef = useRef<HTMLDivElement>(null);
   const [useFirecrawl, setUseFirecrawl] = useState(false);
-  const [showToolDropdown, setShowToolDropdown] = useState(false);
   const [firecrawlQuotaRemaining, setFirecrawlQuotaRemaining] = useState<number | null>(null);
   const [firecrawlDisabledReason, setFirecrawlDisabledReason] = useState<
     'admin_disabled' | 'quota_exhausted' | null
@@ -877,7 +173,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     count: 0,
     lastId: null,
   });
-  const toolsDropdownRef = useRef<HTMLDivElement>(null);
   const conversationViewportRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -885,14 +180,58 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   // Slash command autocomplete
   const [slashMenuOpen, setSlashMenuOpen] = useState(false);
   const [slashMenuIndex, setSlashMenuIndex] = useState(0);
-  const slashMenuRef = useRef<HTMLDivElement>(null);
   const initialMessageSentRef = useRef(false);
-  // Thread persistence — reuse thread_id across messages for continuous conversation
+  // Thread persistence — reuse thread_id across messages for continuous
+  // conversation. Mirrored to localStorage so a browser refresh, a cross-day
+  // return, or any unmount/remount preserves the same conversation thread
+  // server-side instead of starting a new one (which would orphan memory and
+  // make the user re-establish context).
   const threadIdRef = useRef<string | null>(null);
   const draftStorageKey = useMemo(() => {
     const projectScope = contextProfile?.projectId || 'global';
     return `ana:persistent:draft:${projectScope}:${mode}:${chatMode}`;
   }, [contextProfile?.projectId, mode, chatMode]);
+  const threadStorageKey = useMemo(() => {
+    const projectScope = contextProfile?.projectId || 'global';
+    return `ana:persistent:thread:${projectScope}:${mode}:${chatMode}`;
+  }, [contextProfile?.projectId, mode, chatMode]);
+
+  // Hydrate the thread id from storage on mount / when the scoping key
+  // changes. The contextProfile.threadId resume path below takes
+  // precedence — this only fills in when the parent hasn't named a
+  // specific thread to resume.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const saved = window.localStorage.getItem(threadStorageKey);
+      if (saved && !threadIdRef.current) {
+        threadIdRef.current = saved;
+      }
+    } catch {
+      // Quota / disabled storage — non-fatal.
+    }
+  }, [threadStorageKey]);
+
+  /**
+   * Set the thread id and mirror to localStorage so it survives refresh.
+   * Pass null to clear (e.g. on conversation reset).
+   */
+  const persistThreadId = useCallback(
+    (id: string | null) => {
+      threadIdRef.current = id;
+      if (typeof window === 'undefined') return;
+      try {
+        if (id) {
+          window.localStorage.setItem(threadStorageKey, id);
+        } else {
+          window.localStorage.removeItem(threadStorageKey);
+        }
+      } catch {
+        // Quota / disabled storage — non-fatal.
+      }
+    },
+    [threadStorageKey],
+  );
 
   const screenName = contextProfile?.screenName || 'default';
   const screenLabel = SCREEN_LABELS[screenName] || '';
@@ -1043,43 +382,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
   }, [showModeDropdown]);
 
-  // Close lens dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (lensDropdownRef.current && !lensDropdownRef.current.contains(e.target as Node)) {
-        setShowLensDropdown(false);
-      }
-    };
-    if (showLensDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showLensDropdown]);
-
-  // Close provider dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (providerDropdownRef.current && !providerDropdownRef.current.contains(e.target as Node)) {
-        setShowProviderDropdown(false);
-      }
-    };
-    if (showProviderDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showProviderDropdown]);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (toolsDropdownRef.current && !toolsDropdownRef.current.contains(e.target as Node)) {
-        setShowToolDropdown(false);
-      }
-    };
-    if (showToolDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showToolDropdown]);
+  // Lens / Provider / Tools dropdowns each own their own open state +
+  // click-outside handling via useClickOutside; no panel-level wiring
+  // is needed for them.
 
   // AnA personality — rotating thinking messages
   const [thinkingMsg, setThinkingMsg] = useState('');
@@ -1139,7 +444,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         }));
 
         setMessages(hydrated);
-        threadIdRef.current = selectedThreadId;
+        persistThreadId(selectedThreadId);
         onThreadChange?.(selectedThreadId);
       } catch {
         // Non-blocking: if hydration fails, existing chat still works.
@@ -1562,80 +867,43 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             })),
           });
 
-          // ── Attempt 1: AnA RI endpoint ──
-          try {
-            const anaRes = await fetch('/api/ana-ri/chat', {
-              method: 'POST',
-              headers: chatHeaders,
-              credentials: 'include',
-              body: chatBody,
-            });
-            if (anaRes.ok) {
-              rawData = await anaRes.json();
-              chatSucceeded = true;
-            } else {
-              const errBody = await anaRes.text().catch(() => '');
-              try {
-                const parsed = JSON.parse(errBody);
-                anaErrorCode = parsed?.error?.code || parsed?.code || null;
-              } catch {
-                // ignore parse failures
-              }
-              console.warn(`[AnA RI] ${anaRes.status}: ${errBody.slice(0, 200)}`);
-            }
-          } catch (anaErr: any) {
-            console.warn('[AnA RI] Network error:', anaErr?.message);
+          // ── Attempt 1: AnA RI streaming endpoint ──
+          //
+          // streamAnaResponse handles the SSE plumbing: opening the
+          // stream, parsing each event type, capturing tool_use /
+          // tool_result events into a toolCalls array, and assembling
+          // an envelope shape compatible with the legacy non-streaming
+          // chat response. On any failure (network, 5xx, mid-stream
+          // error) it returns envelope:null and the Cortex fallback
+          // below takes over — same failure mode as before.
+          const streamResult = await streamAnaResponse({
+            body: chatBody,
+            headers: chatHeaders,
+          });
+          const capturedStreamingToolCalls: AnaToolCallRecord[] = streamResult.toolCalls;
+          if (streamResult.envelope) {
+            rawData = streamResult.envelope;
+            chatSucceeded = true;
+          } else if (streamResult.errorCode) {
+            anaErrorCode = streamResult.errorCode;
           }
 
           // ── Attempt 2: Cortex fallback (degraded — no orchestration/memory/RIM) ──
           if (!chatSucceeded) {
-            try {
-              const cortexRes = await fetch('/api/cortex/chat', {
-                method: 'POST',
-                headers: chatHeaders,
-                credentials: 'include',
-                body: JSON.stringify({
-                  message: text,
-                  chatMode,
-                  project_id: contextProfile?.projectId || undefined,
-                  submission_type: contextProfile?.productType || undefined,
-                  preferred_provider: selectedProvider !== 'auto' ? selectedProvider : undefined,
-                  context: {
-                    screen: contextProfile?.screenName,
-                    project: contextProfile?.activeProject,
-                    projectId: contextProfile?.projectId,
-                    productType: contextProfile?.productType,
-                    userRole: contextProfile?.userRole,
-                  },
-                  conversationHistory: messages.slice(-10).map(m => ({
-                    role: m.role,
-                    content: m.content,
-                  })),
-                }),
-              });
-              if (cortexRes.ok) {
-                rawData = await cortexRes.json();
-                chatSucceeded = true;
-                // Mark as fallback so UI knows capabilities are degraded
-                if (rawData?.data) {
-                  rawData.data._fallback = {
-                    active: true,
-                    reason: 'ana_ri_unavailable',
-                    original_path: '/api/ana-ri/chat',
-                    degraded_capabilities: [
-                      'orchestration',
-                      'memory_injection',
-                      'rim_interception',
-                      'evidence_validation',
-                    ],
-                  };
-                }
-              } else {
-                const errBody = await cortexRes.text().catch(() => '');
-                console.warn(`[Cortex] ${cortexRes.status}: ${errBody.slice(0, 200)}`);
-              }
-            } catch (cortexErr: any) {
-              console.warn('[Cortex] Network error:', cortexErr?.message);
+            const cortexResult = await requestCortexFallback({
+              text,
+              headers: chatHeaders,
+              chatMode,
+              contextProfile,
+              selectedProvider,
+              conversationHistory: messages.slice(-10).map(m => ({
+                role: m.role,
+                content: m.content,
+              })),
+            });
+            if (cortexResult.rawData) {
+              rawData = cortexResult.rawData;
+              chatSucceeded = true;
             }
           }
 
@@ -1665,7 +933,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
           // Capture thread_id for conversation continuity
           if (data.thread_id) {
-            threadIdRef.current = data.thread_id;
+            persistThreadId(data.thread_id);
             onThreadChange?.(data.thread_id);
           }
 
@@ -1691,6 +959,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               modelProvider: data.provider || data.modelProvider || undefined,
               modelName: data.model || data.modelName || undefined,
               evidenceUsage: data.evidenceUsage || undefined,
+              toolCalls:
+                capturedStreamingToolCalls.length > 0 ? capturedStreamingToolCalls : undefined,
             },
           ]);
 
@@ -1757,7 +1027,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             fallbackData?.answer ||
             'I received your message but had no response content.';
           if (fallbackData?.thread_id) {
-            threadIdRef.current = fallbackData.thread_id;
+            persistThreadId(fallbackData.thread_id);
             onThreadChange?.(fallbackData.thread_id);
           }
           setMessages(prev => [
@@ -1778,11 +1048,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               role: 'assistant',
               content: `Sorry, I encountered an error: ${
                 err?.message || 'Unknown error'
-              }. Please try again.`,
+              }. Your prompt has been restored to the input box — press Send to try again.`,
               timestamp: new Date(),
               isError: true,
             },
           ]);
+          // Restore the failed prompt so the user doesn't have to retype.
+          // The conversation queue completes below in `finally`, so re-
+          // entering the input is safe and the previous prompt is right
+          // there ready to resend.
+          setInput(text);
         }
       } finally {
         queue.completeTurn();
@@ -1959,7 +1234,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
 
     if (cmd.command === '/clear') {
-      threadIdRef.current = null;
+      persistThreadId(null);
       setMessages([]);
       setInput('');
       setSlashMenuOpen(false);
@@ -3825,24 +3100,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               </button>
             </div>
             {isThinking && (
-              <div className="px-4 py-3 bg-white">
-                <div className="flex gap-2.5 max-w-3xl mx-auto">
-                  <div className="w-6 h-6 rounded-full bg-[#D97757] flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Sparkles className="w-3 h-3 text-white" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold text-[#2D2C28]">AnA</span>
-                    <div className="flex items-center gap-1 mt-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_infinite]" />
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
-                    </div>
-                    <p className="mt-1 text-[11px] text-[#8A8880]">
-                      {THINKING_STATUS_PHASES[statusPhaseIndex]}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <AnaThinkingIndicator
+                statusPhase={THINKING_STATUS_PHASES[statusPhaseIndex]}
+                message=""
+              />
             )}
             <div ref={messagesEndRef} />
           </div>
@@ -3852,47 +3113,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         <div className="px-4 py-2.5 bg-white relative">
           <div className="max-w-3xl mx-auto relative">
             {/* Slash command autocomplete dropdown */}
-            {slashMenuOpen && filteredSlashCommands.length > 0 && (
-              <div
-                ref={slashMenuRef}
-                className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-[#E8E6DC] shadow-lg max-h-[280px] overflow-y-auto z-50"
-                role="listbox"
-                aria-label="Slash commands"
-              >
-                {filteredSlashCommands.map((cmd, i) => (
-                  <button
-                    key={cmd.command}
-                    type="button"
-                    role="option"
-                    aria-selected={i === slashMenuIndex}
-                    onMouseDown={e => {
-                      e.preventDefault();
-                      selectSlashCommand(cmd);
-                    }}
-                    onMouseEnter={() => setSlashMenuIndex(i)}
-                    className={cn(
-                      'w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors',
-                      i === slashMenuIndex ? 'bg-[#FAF9F5]' : 'hover:bg-[#FAF9F5]/50'
-                    )}
-                  >
-                    <code className="text-xs font-mono font-semibold text-[#141413] min-w-[100px]">
-                      {cmd.command}
-                    </code>
-                    <span className="text-xs text-[#6B6962] flex-1 truncate">
-                      {cmd.description}
-                    </span>
-                    <span
-                      className={cn(
-                        'text-[10px] font-medium',
-                        SLASH_CATEGORY_COLORS[cmd.category] || 'text-zinc-400'
-                      )}
-                    >
-                      {cmd.category}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
+            <AnaSlashCommandMenu
+              open={slashMenuOpen}
+              commands={filteredSlashCommands}
+              highlightedIndex={slashMenuIndex}
+              onHover={setSlashMenuIndex}
+              onSelect={selectSlashCommand}
+            />
             <div
               className={cn(
                 'flex items-end gap-2 px-3.5 py-2.5 bg-[#FAF9F5] border rounded-2xl transition-colors duration-150',
@@ -3909,23 +3136,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   </span>
                 )}
               </div>
-              {/* Queue Status Banner */}
-              {conversationQueue.length > 0 && (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-stone-50 border-t border-stone-100 text-[11px] text-stone-500">
-                  {activeQueueItemId && <span className="text-amber-600">● Working</span>}
-                  {conversationQueue.filter(i => i.status === 'queued').length > 0 && (
-                    <span>
-                      Queued: {conversationQueue.filter(i => i.status === 'queued').length}
-                    </span>
-                  )}
-                  <button
-                    onClick={() => setConversationQueue([])}
-                    className="ml-auto text-stone-400 hover:text-stone-600"
-                  >
-                    Clear
-                  </button>
-                </div>
-              )}
+              <AnaQueueStatusBanner
+                queue={conversationQueue}
+                activeQueueItemId={activeQueueItemId}
+                onClear={() => setConversationQueue([])}
+              />
               <textarea
                 ref={inputRef}
                 value={input}
@@ -3944,7 +3159,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <button
                   onClick={() => {
                     setMessages([]);
-                    threadIdRef.current = null;
+                    persistThreadId(null);
                     // Keep selection state in sync with cleared local thread context.
                     onThreadChange?.(undefined);
                   }}
@@ -4301,632 +3516,41 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 !isUser &&
                 (expandedAssistantMessages[msg.id] ||
                   (assistantPreview?.details?.length || 0) < 180);
-              const followUpChips =
-                !isUser && msg.id === messages[messages.length - 1]?.id
-                  ? buildFollowUpChips({
-                      intentLens,
-                      hasProject: Boolean(contextProfile?.activeProject),
-                      assistantContent: msg.content,
-                    })
-                  : [];
 
               return (
-                <div
+                <AnaMessageBubble
                   key={msg.id}
-                  className={cn('group px-4 py-3', 'bg-white')}
-                  onMouseEnter={() => !isUser && setShowActions(msg.id)}
-                  onMouseLeave={() => setShowActions(null)}
-                >
-                  <div
-                    className={cn(
-                      'flex gap-2.5 max-w-3xl mx-auto',
-                      isUser && 'justify-end pl-10 sm:pl-16'
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        'w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5',
-                        isUser ? 'hidden' : 'bg-[#141413]'
-                      )}
-                    >
-                      {!isUser && <Sparkles className="w-3 h-3 text-white" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      {isUser ? (
-                        <>
-                          <div className="flex justify-end">
-                            <p className="inline-block max-w-[min(92%,680px)] text-[15px] text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5 bg-[#F1F1F1] px-4 py-3 rounded-[22px]">
-                              {msg.content}
-                            </p>
-                          </div>
-                          {(msg as any).recalledToInput && (
-                            <p className="mt-1 text-[10px] font-medium text-[#D97757]">
-                              Editing prompt in composer
-                            </p>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          {assistantPreview?.bottomLine && (
-                            <div className="mb-2 rounded-xl border border-[#ECEADF] bg-[#F8F7F3] px-3 py-2">
-                              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8A8880]">
-                                Bottom line
-                              </p>
-                              <p className="mt-1 text-sm text-[#2D2C28] leading-relaxed">
-                                {assistantPreview.bottomLine}
-                              </p>
-                            </div>
-                          )}
-                          <div
-                            className="prose prose-sm prose-zinc max-w-none mt-0.5
-                              prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-2
-                              prose-strong:text-zinc-900
-                              prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
-                              prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3.5 prose-pre:text-xs
-                              prose-blockquote:border-l-stone-300 prose-blockquote:text-zinc-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
-                              prose-ul:text-zinc-700 prose-ol:text-zinc-700 prose-ul:my-2 prose-ol:my-2 prose-li:my-1
-                              prose-a:text-[#D97757] prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
-                              [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
-                            dangerouslySetInnerHTML={{
-                              __html: renderMarkdown(
-                                isExpanded && assistantPreview?.details
-                                  ? assistantPreview.details
-                                  : msg.content
-                              ),
-                            }}
-                          />
-                          {!isExpanded && assistantPreview?.details && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setExpandedAssistantMessages(prev => ({ ...prev, [msg.id]: true }))
-                              }
-                              className="mt-1 text-xs font-medium text-[#6B6962] hover:text-[#2D2C28]"
-                            >
-                              Show details
-                            </button>
-                          )}
-                          {followUpChips.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1.5">
-                              {followUpChips.map(chip => (
-                                <button
-                                  key={chip.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setInput(chip.prompt);
-                                    requestAnimationFrame(() => inputRef.current?.focus());
-                                  }}
-                                  className="inline-flex items-center rounded-full border border-[#E8E6DC] bg-white px-2.5 py-1 text-[11px] font-medium text-[#4D4B45] hover:bg-[#F5F4EF]"
-                                >
-                                  {chip.label}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                          {/* Nano Banana generated images */}
-                          {msg.images && msg.images.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {msg.images.map((img, idx) => (
-                                <img
-                                  key={idx}
-                                  src={`data:${img.mimeType};base64,${img.base64}`}
-                                  alt={`Generated image ${idx + 1}`}
-                                  className="rounded-lg border border-zinc-200 max-w-sm shadow-sm"
-                                />
-                              ))}
-                            </div>
-                          )}
-                          {/* AnA 1.0 RI — Verdict & Confidence Signals */}
-                          {(() => {
-                            const signals = detectVerdictSignals(msg.content);
-                            if (signals.length === 0) return null;
-                            return (
-                              <div className="flex flex-wrap gap-1.5 mt-2">
-                                {signals.map((s, i) => (
-                                  <span
-                                    key={i}
-                                    className={cn(
-                                      'inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full border',
-                                      s.color,
-                                      s.bgColor
-                                    )}
-                                  >
-                                    {s.type === 'verdict' && (
-                                      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
-                                    )}
-                                    {s.type === 'priority' && (
-                                      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
-                                    )}
-                                    {s.type === 'confidence' && (
-                                      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
-                                    )}
-                                    {s.type === 'action' && <Zap className="w-2.5 h-2.5" />}
-                                    {s.label}
-                                  </span>
-                                ))}
-                              </div>
-                            );
-                          })()}
-                          {/* AnA 1.0 RI — Executed Guidance Actions */}
-                          {msg.executedActions && msg.executedActions.length > 0 && (
-                            <div className="mt-2 space-y-1.5">
-                              {msg.executedActions.map((action: any, i: any) => (
-                                <div
-                                  key={i}
-                                  className={cn(
-                                    'flex items-center gap-2 px-3 py-2 rounded-lg border text-xs',
-                                    action.executed && !action.error
-                                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                                      : action.error
-                                      ? 'bg-red-50 border-red-200 text-red-800'
-                                      : 'bg-zinc-50 border-zinc-200 text-zinc-600'
-                                  )}
-                                >
-                                  {action.executed && !action.error ? (
-                                    <Check className="w-3.5 h-3.5 flex-shrink-0" />
-                                  ) : action.error ? (
-                                    <span className="w-3.5 h-3.5 flex-shrink-0 text-red-500">
-                                      !
-                                    </span>
-                                  ) : (
-                                    <Zap className="w-3.5 h-3.5 flex-shrink-0" />
-                                  )}
-                                  <span className="font-medium">
-                                    {action.executed
-                                      ? `Created ${action.actionType.replace(/_/g, ' ')}`
-                                      : action.error
-                                      ? `Failed: ${action.error}`
-                                      : `Prepared ${action.actionType.replace(/_/g, ' ')} (${
-                                          action.confidence
-                                        })`}
-                                  </span>
-                                  {action.artifactId && (
-                                    <span className="text-emerald-600 font-mono text-[10px]">
-                                      {action.artifactId}
-                                    </span>
-                                  )}
-                                  {action.threadId && (
-                                    <span className="text-emerald-600 font-mono text-[10px]">
-                                      thread:{action.threadId.slice(0, 8)}
-                                    </span>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          {/* Nano Banana PPTX download button */}
-                          {msg.pptx && (
-                            <button
-                              onClick={() => {
-                                const blob = new Blob(
-                                  [Uint8Array.from(atob(msg.pptx!.base64), c => c.charCodeAt(0))],
-                                  { type: msg.pptx!.mimeType }
-                                );
-                                const url = URL.createObjectURL(blob);
-                                const a = document.createElement('a');
-                                a.href = url;
-                                a.download = msg.pptx!.filename;
-                                a.click();
-                                URL.revokeObjectURL(url);
-                              }}
-                              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors"
-                            >
-                              <Download className="w-3.5 h-3.5" />
-                              {msg.pptx.filename}
-                            </button>
-                          )}
-                        </>
-                      )}
-                      {isUser && (
-                        <div
-                          className={cn(
-                            'flex items-center gap-1 mt-1.5 transition-opacity duration-150',
-                            showActions === msg.id ? 'opacity-100' : 'opacity-0'
-                          )}
-                        >
-                          <button
-                            onClick={() => handleRecallPrompt(msg.id, msg.content)}
-                            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
-                            title="Recall this prompt to edit"
-                            aria-label="Recall this prompt to edit"
-                          >
-                            <RotateCcw className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={() => handleCopy(msg.id, msg.content)}
-                            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
-                            title="Copy"
-                          >
-                            {copiedId === msg.id ? (
-                              <Check className="w-3 h-3 text-green-600" />
-                            ) : (
-                              <Copy className="w-3 h-3" />
-                            )}
-                          </button>
-                          {(msg as any).recalledToInput && (
-                            <span className="text-[11px] text-stone-600 font-medium ml-1">
-                              Loaded to input
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      {!isUser && (
-                        <div
-                          className={cn(
-                            'flex items-center gap-1 mt-1.5 transition-opacity duration-150',
-                            showActions === msg.id ? 'opacity-100' : 'opacity-0'
-                          )}
-                        >
-                          {/* Model badge */}
-                          {msg.modelProvider && (
-                            <span
-                              className={cn(
-                                'text-[11px] font-medium px-1.5 py-0.5 rounded mr-1',
-                                msg.modelProvider === 'anthropic'
-                                  ? 'text-[#CC785C] bg-[#FBF0EB]'
-                                  : msg.modelProvider === 'openai'
-                                  ? 'text-[#10A37F] bg-emerald-50'
-                                  : msg.modelProvider === 'moonshot'
-                                  ? 'text-[#6366F1] bg-indigo-50'
-                                  : 'text-zinc-500 bg-zinc-50'
-                              )}
-                            >
-                              {msg.modelProvider === 'anthropic'
-                                ? 'Claude'
-                                : msg.modelProvider === 'openai'
-                                ? 'GPT-4o'
-                                : msg.modelProvider === 'moonshot'
-                                ? 'Kimi'
-                                : msg.modelProvider}
-                            </span>
-                          )}
-                          {msg.evidenceUsage?.firecrawlRequested && (
-                            <span
-                              className={cn(
-                                'text-[11px] font-medium px-1.5 py-0.5 rounded mr-1',
-                                msg.evidenceUsage.firecrawlUsed
-                                  ? 'text-[#D97757] bg-[#FBF0EB]'
-                                  : 'text-zinc-500 bg-zinc-50'
-                              )}
-                              title="External evidence usage"
-                            >
-                              {msg.evidenceUsage.firecrawlUsed
-                                ? `Firecrawl used • -${msg.evidenceUsage.quotaConsumed ?? 0}`
-                                : 'Firecrawl requested'}
-                            </span>
-                          )}
-                          <button
-                            onClick={() => handleCopy(msg.id, msg.content)}
-                            className="p-1 text-[#B0AEA5] hover:text-[#4D4B45] hover:bg-[#F5F4EF] rounded transition-colors"
-                            title="Copy"
-                          >
-                            {copiedId === msg.id ? (
-                              <Check className="w-3 h-3 text-green-600" />
-                            ) : (
-                              <Copy className="w-3 h-3" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => {
-                              apiRequest('POST', '/api/concept2cure/feedback', {
-                                messageId: msg.id,
-                                positive: true,
-                              }).catch(() => {});
-                            }}
-                            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
-                            title="Good"
-                          >
-                            <ThumbsUp className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              apiRequest('POST', '/api/concept2cure/feedback', {
-                                messageId: msg.id,
-                                positive: false,
-                              }).catch(() => {});
-                            }}
-                            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
-                            title="Bad"
-                          >
-                            <ThumbsDown className="w-3 h-3" />
-                          </button>
-                          {/* Save to Vault — persist AI response as a governed artifact */}
-                          {contextProfile?.projectId &&
-                            msg.content.length > 100 &&
-                            !msg.savedAsArtifact && (
-                              <button
-                                onClick={async () => {
-                                  const numProjId = String(contextProfile.projectId).replace(
-                                    /^proj_/,
-                                    ''
-                                  );
-                                  try {
-                                    const saveRes = await apiRequest(
-                                      'POST',
-                                      `/api/concept2cure/projects/${numProjId}/artifacts`,
-                                      {
-                                        title: `AnA Response — ${
-                                          new Date().toISOString().split('T')[0]
-                                        }`,
-                                        content: msg.content,
-                                        type: 'document_section',
-                                        category: 'document',
-                                      }
-                                    );
-                                    if (saveRes.ok) {
-                                      setMessages(prev =>
-                                        prev.map(m =>
-                                          m.id === msg.id ? { ...m, savedAsArtifact: true } : m
-                                        )
-                                      );
-                                    }
-                                  } catch {
-                                    /* non-blocking */
-                                  }
-                                }}
-                                className="p-1 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
-                                title="Save to Vault"
-                              >
-                                <Download className="w-3 h-3" />
-                              </button>
-                            )}
-                          {/* Insert into Editor — when onDraftInsert is available and content is substantial */}
-                          {onDraftInsert &&
-                            contextProfile?.projectId &&
-                            msg.content.length > 100 &&
-                            authoringContext?.sectionCode && (
-                              <button
-                                onClick={() => {
-                                  // Extract draft content: try code block, then content after "---", then strip markdown metadata
-                                  let insertContent = msg.content;
-                                  const codeBlockMatch = msg.content.match(
-                                    /```(?:\w+)?\n([\s\S]*?)```/
-                                  );
-                                  if (codeBlockMatch && codeBlockMatch[1].trim().length > 50) {
-                                    insertContent = codeBlockMatch[1].trim();
-                                  } else {
-                                    // Strip markdown headers that look like meta commentary (not section content)
-                                    insertContent = insertContent
-                                      .replace(/^\*\*[A-Z][^*]+\*\*\s*[-—]\s*/gm, '') // "**Draft Ready** —" prefix
-                                      .replace(
-                                        /^#{1,3}\s+(?:Draft|Note|Summary|Action)\b[^\n]*/gm,
-                                        ''
-                                      ) // Meta headers
-                                      .trim();
-                                  }
-                                  // Wrap in HTML paragraphs for TipTap consumption
-                                  if (!insertContent.startsWith('<')) {
-                                    insertContent = insertContent
-                                      .split('\n\n')
-                                      .filter(p => p.trim())
-                                      .map(p => `<p>${p.trim()}</p>`)
-                                      .join('\n');
-                                  }
-                                  const title = authoringContext.sectionTitle
-                                    ? `${authoringContext.sectionCode} — ${authoringContext.sectionTitle}`
-                                    : `Section ${authoringContext.sectionCode} Draft`;
-                                  onDraftInsert(insertContent, title, authoringContext.sectionCode);
-                                  setMessages(prev =>
-                                    prev.map(m =>
-                                      m.id === msg.id ? { ...m, insertedToEditor: true } : m
-                                    )
-                                  );
-                                }}
-                                className="p-1 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                title="Insert into Editor"
-                              >
-                                <FileEdit className="w-3 h-3" />
-                              </button>
-                            )}
-                          {(msg as any).insertedToEditor && (
-                            <span className="text-[11px] text-blue-600 font-medium ml-1">
-                              Inserted
-                            </span>
-                          )}
-                          {msg.savedAsArtifact && (
-                            <span className="text-[11px] text-emerald-600 font-medium ml-1">
-                              Saved
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      {/* AnA RI Document Action Row — shown on the last assistant message */}
-                      {!isUser &&
-                        msg.id === messages.filter(m => m.role === 'assistant').at(-1)?.id &&
-                        lastOrchestration && (
-                          <div className="mt-3 pt-3 border-t border-[#F5F4EF]">
-                            <p className="text-[10px] font-medium text-[#B0AEA5] uppercase tracking-wide mb-2">
-                              Document Actions
-                            </p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {DOCUMENT_ACTION_CONFIGS.filter(
-                                a =>
-                                  !lastOrchestration.suggestedActions.length ||
-                                  lastOrchestration.suggestedActions.includes(a.type) ||
-                                  ['revised_artifact', 'attach_to_dossier'].includes(a.type)
-                              )
-                                .slice(0, 5)
-                                .map(action => (
-                                  <button
-                                    key={action.type}
-                                    disabled={isThinking}
-                                    onClick={async () => {
-                                      if (isThinking) return;
-                                      if (!contextProfile?.projectId) {
-                                        setMessages(prev => [
-                                          ...prev,
-                                          {
-                                            id: `a-${Date.now()}`,
-                                            role: 'assistant',
-                                            content: `**Cannot create artifact** — No project selected. Please open a project first, then try again.`,
-                                            timestamp: new Date(),
-                                          },
-                                        ]);
-                                        return;
-                                      }
-                                      queue.startTurn();
-                                      try {
-                                        const res = await apiRequest(
-                                          'POST',
-                                          '/api/ana-ri/generate',
-                                          {
-                                            action_type: action.type,
-                                            conversation_context: messages.slice(-20).map(m => ({
-                                              role: m.role,
-                                              content: m.content,
-                                            })),
-                                            project_id: contextProfile.projectId,
-                                            user_role: contextProfile?.userRole || undefined,
-                                            intent_lens:
-                                              intentLens !== 'auto' ? intentLens : undefined,
-                                          }
-                                        );
-                                        if (res.ok) {
-                                          const data = await res.json();
-                                          let statusLine = '';
-                                          if (data.artifactId) {
-                                            statusLine = `\n\n---\n**${
-                                              action.label
-                                            } created** | Artifact #${data.artifactId} | Quality: ${
-                                              data.qualityGrade || 'draft'
-                                            } | ${data.isNew ? 'New' : 'Updated'}`;
-                                          } else if (data.persisted === false) {
-                                            statusLine =
-                                              '\n\n---\n**Warning:** Content generated but could not be saved to project. Please copy this content.';
-                                          }
-                                          setMessages(prev => [
-                                            ...prev,
-                                            {
-                                              id: `a-${Date.now()}`,
-                                              role: 'assistant',
-                                              content: data.content + statusLine,
-                                              timestamp: new Date(),
-                                            },
-                                          ]);
-                                          queue.completeTurn();
-                                        } else {
-                                          // Fallback: send as chat prompt (handleSend manages queue)
-                                          handleSend(
-                                            `Please generate a ${action.label.toLowerCase()} based on our conversation above.`
-                                          );
-                                        }
-                                      } catch {
-                                        // Fallback: send as chat prompt (handleSend manages queue)
-                                        handleSend(
-                                          `Please generate a ${action.label.toLowerCase()} based on our conversation above.`
-                                        );
-                                      }
-                                    }}
-                                    className={cn(
-                                      'inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors',
-                                      isThinking
-                                        ? 'border-[#E8E6DC] text-[#D8D5CA] cursor-not-allowed'
-                                        : 'border-[#E8E6DC] text-[#6B6962] hover:bg-[#FAF9F5] hover:border-[#D8D5CA] hover:text-[#4D4B45]'
-                                    )}
-                                  >
-                                    {action.icon}
-                                    {action.label}
-                                  </button>
-                                ))}
-                            </div>
-                            {lastOrchestration.detectedSubmissionType && (
-                              <p className="text-[10px] text-[#B0AEA5] mt-2">
-                                Detected: {lastOrchestration.detectedSubmissionType.toUpperCase()}{' '}
-                                submission
-                                {lastOrchestration.detectedIntent.lens !== 'auto' &&
-                                  ` | ${lastOrchestration.detectedIntent.lens} lens`}
-                              </p>
-                            )}
-                            {lastOrchestration.activeWorkstream && (
-                              <div className="mt-2 rounded-lg border border-[#E8E6DC] bg-[#FAF9F5] px-3 py-2">
-                                <p className="text-[10px] font-medium text-[#8A877D] uppercase tracking-wide">
-                                  Active Workstream
-                                </p>
-                                <p className="mt-1 text-[12px] text-[#4D4B45]">
-                                  <span className="font-medium">
-                                    {lastOrchestration.activeWorkstream.stream.replace(/_/g, ' ')}
-                                  </span>
-                                  {' · '}
-                                  {lastOrchestration.activeWorkstream.phase}
-                                  {lastOrchestration.activeWorkstream.collaborationMode && (
-                                    <>
-                                      {' · '}
-                                      {lastOrchestration.activeWorkstream.collaborationMode}
-                                    </>
-                                  )}
-                                </p>
-                                {lastOrchestration.activeWorkstream.currentFocus && (
-                                  <p className="mt-1 text-[11px] text-[#6B6962]">
-                                    Focus: {lastOrchestration.activeWorkstream.currentFocus}
-                                  </p>
-                                )}
-                                {lastOrchestration.activeWorkstream.nextStep && (
-                                  <p className="mt-1 text-[11px] text-[#6B6962]">
-                                    Next: {lastOrchestration.activeWorkstream.nextStep}
-                                  </p>
-                                )}
-                                {lastOrchestration.activeWorkstream.blockers &&
-                                  lastOrchestration.activeWorkstream.blockers.length > 0 && (
-                                    <p className="mt-1 text-[11px] text-[#8A877D]">
-                                      Blockers:{' '}
-                                      {lastOrchestration.activeWorkstream.blockers.join(' | ')}
-                                    </p>
-                                  )}
-                              </div>
-                            )}
-                            {lastOrchestration.workstreamHandoff && (
-                              <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
-                                <p className="text-[10px] font-medium text-amber-700 uppercase tracking-wide">
-                                  Workstream Handoff
-                                </p>
-                                <p className="mt-1 text-[11px] text-amber-900">
-                                  {lastOrchestration.workstreamHandoff.from.replace(/_/g, ' ')} to{' '}
-                                  {lastOrchestration.workstreamHandoff.to.replace(/_/g, ' ')}
-                                </p>
-                                <p className="mt-1 text-[11px] text-amber-800">
-                                  {lastOrchestration.workstreamHandoff.transitionReason}
-                                </p>
-                                {lastOrchestration.workstreamHandoff.openLoops.length > 0 && (
-                                  <p className="mt-1 text-[11px] text-amber-800">
-                                    Open loops:{' '}
-                                    {lastOrchestration.workstreamHandoff.openLoops.join(' | ')}
-                                  </p>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                    </div>
-                  </div>
-                </div>
+                  msg={msg}
+                  messages={messages}
+                  isExpanded={isExpanded}
+                  isHovered={showActions === msg.id}
+                  copiedId={copiedId}
+                  isThinking={isThinking}
+                  intentLens={intentLens}
+                  lastOrchestration={lastOrchestration}
+                  setMessages={setMessages}
+                  setExpandedAssistantMessages={setExpandedAssistantMessages}
+                  onHoverChange={setShowActions}
+                  onCopy={handleCopy}
+                  onRecallPrompt={handleRecallPrompt}
+                  onComposerSet={setInput}
+                  onComposerFocus={() => inputRef.current?.focus()}
+                  contextProfile={contextProfile}
+                  authoringContext={authoringContext}
+                  onDraftInsert={onDraftInsert}
+                  handleSend={handleSend}
+                  queueStartTurn={() => queue.startTurn()}
+                  queueCompleteTurn={() => queue.completeTurn()}
+                />
               );
             })}
 
             {/* Thinking indicator */}
             {isThinking && (
-              <div className="px-4 py-3 bg-white">
-                <div className="flex gap-2.5 max-w-3xl mx-auto">
-                  <div className="w-6 h-6 rounded-full bg-[#D97757] flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Sparkles className="w-3 h-3 text-white" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold text-[#2D2C28]">AnA</span>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex items-center gap-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_infinite]" />
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
-                      </div>
-                      <span className="text-xs text-[#D97757] font-medium">
-                        {thinkingMsg || 'Thinking...'}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-[11px] text-[#8A8880]">
-                      {THINKING_STATUS_PHASES[statusPhaseIndex]}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <AnaThinkingIndicator
+                statusPhase={THINKING_STATUS_PHASES[statusPhaseIndex]}
+                message={thinkingMsg || 'Thinking...'}
+              />
             )}
             <div ref={messagesEndRef} />
           </div>
@@ -4964,7 +3588,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               <button
                 onClick={() => {
                   setMessages([]);
-                  threadIdRef.current = null;
+                  persistThreadId(null);
                   // Keep selection state in sync with cleared local thread context.
                   onThreadChange?.(undefined);
                 }}
@@ -4977,45 +3601,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           )}
 
           {/* Slash command autocomplete dropdown (full mode) */}
-          {slashMenuOpen && filteredSlashCommands.length > 0 && (
-            <div
-              ref={slashMenuRef}
-              className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-[#E8E6DC] shadow-lg max-h-[280px] overflow-y-auto z-50"
-              role="listbox"
-              aria-label="Slash commands"
-            >
-              {filteredSlashCommands.map((cmd, i) => (
-                <button
-                  key={cmd.command}
-                  type="button"
-                  role="option"
-                  aria-selected={i === slashMenuIndex}
-                  onMouseDown={e => {
-                    e.preventDefault();
-                    selectSlashCommand(cmd);
-                  }}
-                  onMouseEnter={() => setSlashMenuIndex(i)}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors',
-                    i === slashMenuIndex ? 'bg-[#FAF9F5]' : 'hover:bg-[#FAF9F5]/50'
-                  )}
-                >
-                  <code className="text-xs font-mono font-semibold text-[#141413] min-w-[100px]">
-                    {cmd.command}
-                  </code>
-                  <span className="text-xs text-[#6B6962] flex-1 truncate">{cmd.description}</span>
-                  <span
-                    className={cn(
-                      'text-[10px] font-medium',
-                      SLASH_CATEGORY_COLORS[cmd.category] || 'text-zinc-400'
-                    )}
-                  >
-                    {cmd.category}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
+          <AnaSlashCommandMenu
+            open={slashMenuOpen}
+            commands={filteredSlashCommands}
+            highlightedIndex={slashMenuIndex}
+            onHover={setSlashMenuIndex}
+            onSelect={selectSlashCommand}
+          />
 
           <div
             className={cn(
@@ -5130,132 +3722,22 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               )}
             </div>
 
-            {/* External tool selector (+) */}
-            <div className="relative flex-shrink-0 self-center" ref={toolsDropdownRef}>
-              <button
-                type="button"
-                onClick={() => setShowToolDropdown(prev => !prev)}
-                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]"
-                title="Add tools"
-              >
-                <FolderPlus className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Tools</span>
-              </button>
-              {showToolDropdown && (
-                <div className="absolute bottom-full left-0 mb-1.5 w-64 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (firecrawlDisabledReason) return;
-                      setUseFirecrawl(v => !v);
-                      setShowToolDropdown(false);
-                    }}
-                    className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2 text-left transition-colors',
-                      firecrawlDisabledReason
-                        ? 'opacity-60 cursor-not-allowed'
-                        : 'hover:bg-[#FAF9F5]',
-                      useFirecrawl && 'bg-[#FAF9F5]'
-                    )}
-                  >
-                    <Search className="w-4 h-4 mt-0.5 text-[#D97757] flex-shrink-0" />
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-[#141413]">Use Firecrawl</div>
-                      <div className="text-[10px] text-[#8A8880] leading-tight">
-                        {firecrawlDisabledReason === 'quota_exhausted'
-                          ? 'On but quota exhausted'
-                          : firecrawlDisabledReason === 'admin_disabled'
-                          ? 'On but admin-disabled for workspace'
-                          : firecrawlQuotaRemaining !== null
-                          ? `Optional open-web evidence (${firecrawlQuotaRemaining} free remaining)`
-                          : 'Optional governed open-web evidence'}
-                      </div>
-                    </div>
-                    {useFirecrawl && <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5" />}
-                  </button>
-                </div>
-              )}
-            </div>
+            <AnaToolsDropdown
+              useFirecrawl={useFirecrawl}
+              onToggleFirecrawl={() => setUseFirecrawl(v => !v)}
+              firecrawlDisabledReason={firecrawlDisabledReason}
+              firecrawlQuotaRemaining={firecrawlQuotaRemaining}
+            />
 
             {/* AI Provider / Model Selector — clean, minimal like Claude.ai */}
-            <div className="relative flex-shrink-0 self-center" ref={providerDropdownRef}>
-              <button
-                type="button"
-                onClick={() => setShowProviderDropdown(prev => !prev)}
-                className={cn(
-                  'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
-                  selectedProvider !== 'auto'
-                    ? `bg-[#F5F4EF] ${
-                        AI_PROVIDERS.find(p => p.id === selectedProvider)?.activeColor ||
-                        'text-[#D97757]'
-                      } hover:bg-[#EDEAE0]`
-                    : 'text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]'
-                )}
-                title="Select AI model"
-              >
-                <Bot className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">
-                  {AI_PROVIDERS.find(p => p.id === selectedProvider)?.label}
-                </span>
-                <ChevronDown className="w-3 h-3 opacity-50" />
-              </button>
-
-              {showProviderDropdown && (
-                <div className="absolute bottom-full left-0 mb-1.5 w-52 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
-                  {AI_PROVIDERS.map(prov => (
-                    <button
-                      key={prov.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedProvider(prov.id);
-                        setShowProviderDropdown(false);
-                      }}
-                      className={cn(
-                        'w-full flex items-start gap-3 px-3 py-2 text-left hover:bg-[#FAF9F5] transition-colors',
-                        selectedProvider === prov.id && 'bg-[#FAF9F5]'
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          'mt-0.5 flex-shrink-0',
-                          selectedProvider === prov.id ? prov.activeColor : prov.color
-                        )}
-                      >
-                        <Bot className="w-3.5 h-3.5" />
-                      </span>
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-[#141413]">{prov.label}</div>
-                        <div className="text-[10px] text-[#B0AEA5] leading-tight">
-                          {prov.description}
-                        </div>
-                      </div>
-                      {selectedProvider === prov.id && (
-                        <Check
-                          className={cn('w-4 h-4 ml-auto mt-0.5 flex-shrink-0', prov.activeColor)}
-                        />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <AnaProviderPicker value={selectedProvider} onChange={setSelectedProvider} />
 
             {/* Input */}
-            {/* Queue Status Banner */}
-            {conversationQueue.length > 0 && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-stone-50 border-t border-stone-100 text-[11px] text-stone-500">
-                {activeQueueItemId && <span className="text-amber-600">● Working</span>}
-                {conversationQueue.filter(i => i.status === 'queued').length > 0 && (
-                  <span>Queued: {conversationQueue.filter(i => i.status === 'queued').length}</span>
-                )}
-                <button
-                  onClick={() => setConversationQueue([])}
-                  className="ml-auto text-stone-400 hover:text-stone-600"
-                >
-                  Clear
-                </button>
-              </div>
-            )}
+            <AnaQueueStatusBanner
+              queue={conversationQueue}
+              activeQueueItemId={activeQueueItemId}
+              onClear={() => setConversationQueue([])}
+            />
             <textarea
               ref={inputRef}
               value={input}
@@ -5310,25 +3792,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
           {/* ── Intent lens strip — subtle pills below input (Claude.ai clean) ── */}
           {chatMode === 'standard' && hasMessages && (
-            <div className="flex items-center gap-1.5 mt-1.5 pl-1" ref={lensDropdownRef}>
-              {INTENT_LENSES.map(lens => (
-                <button
-                  key={lens.id}
-                  type="button"
-                  onClick={() => setIntentLens(lens.id)}
-                  className={cn(
-                    'flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors',
-                    intentLens === lens.id
-                      ? 'bg-[#FBF0EB] text-[#D97757]'
-                      : 'text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]'
-                  )}
-                  title={lens.description}
-                >
-                  {lens.icon}
-                  <span className="hidden sm:inline">{lens.label}</span>
-                </button>
-              ))}
-            </div>
+            <AnaIntentLensStrip value={intentLens} onChange={setIntentLens} />
           )}
           {hasMessages && (
             <p className="mt-1.5 pl-1 text-[11px] text-[#B0AEA5]">

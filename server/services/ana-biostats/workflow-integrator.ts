@@ -14,6 +14,10 @@
 
 import crypto from 'crypto';
 
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('workflow-integrator');
+
 // DB and schema imports — lazy loaded to avoid circular dependencies
 // and allow the module to work in test environments without DB
 let _db: any = null;
@@ -212,7 +216,7 @@ export class WorkflowIntegrator {
         message: `Statistical document persisted: ${document.title} (ID: ${newArtifact.id})`,
       };
     } catch (error: any) {
-      console.error('[AnA Biostats] Artifact creation failed:', error);
+      logger.error('Artifact creation failed', { err: error instanceof Error ? error.message : String(error) });
       return {
         action: 'create_artifact',
         success: false,
@@ -290,7 +294,7 @@ export class WorkflowIntegrator {
         message: `Review thread created with ${urgency} priority: ${reason}`,
       };
     } catch (error: any) {
-      console.error('[AnA Biostats] Review thread creation failed:', error);
+      logger.error('Review thread creation failed', { err: error instanceof Error ? error.message : String(error) });
       return {
         action: 'create_review_thread',
         success: false,
@@ -340,7 +344,7 @@ export class WorkflowIntegrator {
         message: `Artifact attached to dossier section ${dossierSectionId}`,
       };
     } catch (error: any) {
-      console.error('[AnA Biostats] Dossier attachment failed:', error);
+      logger.error('Dossier attachment failed', { err: error instanceof Error ? error.message : String(error) });
       return {
         action: 'attach_to_dossier',
         success: false,
@@ -412,7 +416,7 @@ export class WorkflowIntegrator {
         message: `Escalation task created: Statistical Escalation — ${document.title} (ID: ${task?.id})`,
       };
     } catch (error: any) {
-      console.error('[AnA Biostats] Escalation task creation failed:', error);
+      logger.error('Escalation task creation failed', { err: error instanceof Error ? error.message : String(error) });
       return {
         action: 'create_follow_up_task',
         success: false,

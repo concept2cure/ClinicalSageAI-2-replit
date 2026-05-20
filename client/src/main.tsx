@@ -1,3 +1,9 @@
+// CSP nonce plumbing MUST load first — installs document.createElement
+// patch so every runtime-injected <style> (Tiptap, Radix, our own React
+// components) gets nonced before any other import has a chance to create
+// one.
+import './cspNonce';
+
 // Initialize Sentry error monitoring early, before other imports
 import './utils/sentry';
 

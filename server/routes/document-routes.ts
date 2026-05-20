@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Request } from 'express';
 import { storage } from '../storage';
 import { z } from 'zod';
 import { insertDocumentSchema, insertDocumentFolderSchema } from '@shared/schema';
@@ -7,6 +7,44 @@ import path from 'path';
 import fs from 'fs';
 // documentPreview stub removed — was a placeholder with no functionality
 import { randomUUID } from 'crypto';
+import { requireAuthedOrgId } from '../utils/authedOrgId';
+import auditService from '../services/auditService';
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('document-routes');
+
+/**
+ * Fire-and-forget document-access audit. 21 CFR Part 11 §11.10(e)
+ * requires every view of regulated content to be logged. Treat audit-
+ * write failures as non-fatal so a transient pipeline issue never
+ * blocks a legitimate download.
+ */
+async function auditDocumentAccess(
+  req: Request,
+  orgId: number,
+  documentId: string,
+  action: 'document_download' | 'document_view',
+): Promise<void> {
+  try {
+    const user = (req as any).user;
+    await auditService.logAction({
+      tenantId: orgId,
+      userId: user?.id ?? user?.userId,
+      action,
+      resourceType: 'document',
+      resourceId: documentId,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: { route: req.path },
+    });
+  } catch (err) {
+    logger.warn('Document-access audit write failed (non-fatal)', {
+      err: err instanceof Error ? err.message : String(err),
+      action,
+      documentId,
+    });
+  }
+}
 // Use cryptographically secure UUID for regulatory document identifiers
 const uuidv4 = () => randomUUID();
 
@@ -76,15 +114,27 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get a single document by ID
+// Get a single document by ID.
+//
+// SECURITY: storage.getDocument now requires an organizationId — the
+// helper sources it from the JWT (req.user) and refuses with 403 if
+// no tenant context is present. Foreign-tenant documents come back
+// as `undefined` from storage and surface here as 404 (existence
+// not enumerable).
 router.get('/:id', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const { id } = req.params;
-    const document = await storage.getDocument(id);
+    const document = await storage.getDocument(id, guard.orgId);
 
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
     }
+
+    // Audit document view — 21 CFR Part 11 §11.10(e) requires every
+    // read of regulated content to be logged.
+    await auditDocumentAccess(req, guard.orgId, id, 'document_view');
 
     res.json(document);
   } catch (error) {
@@ -160,13 +210,17 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-// Update a document
+// Update a document. Tenant gate first: the existence check uses the
+// JWT-bound getDocument so a foreign-tenant id is indistinguishable
+// from "not found", and the update PK lookup in storage is then on a
+// known-in-scope id.
 router.patch('/:id', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const { id } = req.params;
 
-    // Get existing document to ensure it exists
-    const existingDocument = await storage.getDocument(id);
+    const existingDocument = await storage.getDocument(id, guard.orgId);
     if (!existingDocument) {
       return res.status(404).json({ error: 'Document not found' });
     }
@@ -181,13 +235,14 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
-// Delete a document
+// Delete a document — same tenant gate as PATCH.
 router.delete('/:id', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const { id } = req.params;
 
-    // Get existing document to ensure it exists
-    const existingDocument = await storage.getDocument(id);
+    const existingDocument = await storage.getDocument(id, guard.orgId);
     if (!existingDocument) {
       return res.status(404).json({ error: 'Document not found' });
     }
@@ -205,13 +260,22 @@ router.delete('/:id', async (req, res) => {
 // Download a document
 router.get('/:id/download', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const { id } = req.params;
 
-    // Get document to ensure it exists
-    const document = await storage.getDocument(id);
+    // Tenant-scoped fetch — a foreign-tenant document is "not found".
+    // Without this, a download URL with a guessed id could serve
+    // another tenant's file content (the worst class of leak here).
+    const document = await storage.getDocument(id, guard.orgId);
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
     }
+
+    // Audit BEFORE serving the bytes. 21 CFR Part 11 requires the
+    // download to be recorded even if the response stream later
+    // fails — the user requested it, that's the event.
+    await auditDocumentAccess(req, guard.orgId, id, 'document_download');
 
     // If the document has a filePath, send the file
     if (document.filePath && fs.existsSync(document.filePath)) {

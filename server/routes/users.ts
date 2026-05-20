@@ -15,6 +15,7 @@ import { eq } from 'drizzle-orm';
 import { users, organizations, notificationPreferences } from '../../shared/schema';
 
 import { config } from '../config/environment';
+import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 
 /** Login: 10 attempts per 15 minutes per IP */
 const loginLimiter = rateLimit({
@@ -87,7 +88,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string; email: string };
+    const decoded = verifyJwtWithRotation(token) as { userId: string; email: string };
     const user = await db
       .select()
       .from(users)
@@ -131,7 +132,7 @@ router.get('/me', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret) as {
+    const decoded = verifyJwtWithRotation(token) as {
       userId: string;
       email: string;
       organizationId: string;
@@ -218,7 +219,7 @@ router.patch('/me', async (req: Request, res: Response) => {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string };
+    const decoded = verifyJwtWithRotation(token) as { userId: string };
     const userId = parseInt(decoded.userId);
 
     const { name, title, department, bio, avatar, preferences } = req.body;
@@ -286,7 +287,7 @@ router.get('/me/notifications', async (req: Request, res: Response) => {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string };
+    const decoded = verifyJwtWithRotation(token) as { userId: string };
     const userId = parseInt(decoded.userId);
 
     const prefs = await db
@@ -341,7 +342,7 @@ router.patch('/me/notifications', async (req: Request, res: Response) => {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string };
+    const decoded = verifyJwtWithRotation(token) as { userId: string };
     const userId = parseInt(decoded.userId);
 
     const updates = req.body;
@@ -394,7 +395,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret) as {
+    const decoded = verifyJwtWithRotation(token) as {
       userId: string;
       organizationId?: string;
     };

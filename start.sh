@@ -32,9 +32,19 @@ export DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/trialsage?ssl
 export SKIP_DB_STARTUP_TEST=true
 export NODE_ENV=development
 export PORT=5000
-export JWT_SECRET=trialsage-codespace-jwt-secret-2026
-export SESSION_SECRET=trialsage-codespace-session-secret-2026
 export FASTAPI_SERVER=http://localhost:8001
+
+# Use env-provided secrets if set; otherwise mint ephemeral ones per run.
+# Never commit secrets — sessions issued under an ephemeral secret are
+# invalidated on the next restart, which is the correct behavior for dev.
+if [ -z "${JWT_SECRET:-}" ]; then
+  export JWT_SECRET="$(head -c 48 /dev/urandom | base64 | tr -d '\n=' | tr '/+' '_-')"
+  echo "  ⚠️  JWT_SECRET unset — generated ephemeral secret for this run."
+fi
+if [ -z "${SESSION_SECRET:-}" ]; then
+  export SESSION_SECRET="$(head -c 48 /dev/urandom | base64 | tr -d '\n=' | tr '/+' '_-')"
+  echo "  ⚠️  SESSION_SECRET unset — generated ephemeral secret for this run."
+fi
 
 node_modules/.bin/tsx server/index.ts > /tmp/app.log 2>&1 &
 APP_PID=$!

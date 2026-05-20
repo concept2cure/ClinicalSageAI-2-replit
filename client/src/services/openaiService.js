@@ -208,17 +208,6 @@ export async function analyzeRegulatoryCompliance(documentContent, moduleType, s
 }
 
 /**
- * Simulate AI response for development/testing
- */
-export async function simulateOpenAIResponse(prompt) {
-  return {
-    content: `Simulated response for: ${prompt}`,
-    status: 'simulated',
-    timestamp: new Date().toISOString(),
-  };
-}
-
-/**
  * Generate batch documentation
  */
 export async function generateBatchDocumentation(batchData) {
@@ -247,6 +236,5 @@ export default {
   generateMethodValidationProtocol,
   assessRegulatoryCompliance,
   analyzeRegulatoryCompliance,
-  simulateOpenAIResponse,
   generateBatchDocumentation,
 };

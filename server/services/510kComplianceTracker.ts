@@ -17,6 +17,10 @@ import part11ComplianceService from './part11ComplianceService';
 import { TemplateMapper } from './documentTemplateMapper';
 import crypto from 'crypto';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('510kComplianceTracker');
+
 interface ComplianceIssue {
   severity: 'critical' | 'major' | 'minor' | 'suggestion';
   section: string;
@@ -94,7 +98,7 @@ export class FDA510kComplianceTracker {
         completeness: this.calculateCompleteness(data)
       };
     } catch (error) {
-      console.error('[510kComplianceTracker] Error tracking workflow action:', error);
+      logger.error('Error tracking workflow action', { err: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -228,7 +232,7 @@ export class FDA510kComplianceTracker {
         changes: JSON.parse(versionEntry.changes)
       };
     } catch (error) {
-      console.error('[510kComplianceTracker] Error creating document version:', error);
+      logger.error('Error creating document version', { err: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -425,7 +429,7 @@ export class FDA510kComplianceTracker {
         }))
       };
     } catch (error) {
-      console.error('[510kComplianceTracker] Error getting audit trail:', error);
+      logger.error('Error getting audit trail', { err: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         count: 0,
@@ -467,7 +471,7 @@ export class FDA510kComplianceTracker {
         }))
       };
     } catch (error) {
-      console.error('[510kComplianceTracker] Error getting data lineage:', error);
+      logger.error('Error getting data lineage', { err: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         totalMappings: 0,
@@ -505,7 +509,7 @@ export class FDA510kComplianceTracker {
         })
       };
     } catch (error) {
-      console.error('[510kComplianceTracker] Error getting version history:', error);
+      logger.error('Error getting version history', { err: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         currentVersion: 0,

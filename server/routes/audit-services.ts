@@ -15,6 +15,10 @@
 import { Router, Request, Response } from 'express';
 import * as crypto from 'crypto';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('audit-services');
+
 const router = Router();
 
 // Lazy-import services to avoid startup crashes if deps are missing
@@ -52,7 +56,7 @@ router.post('/figures/generate', async (req: Request, res: Response) => {
 
     res.json({ success: true, figure: result });
   } catch (error: any) {
-    console.error('[AuditServices] Figure generation failed:', error);
+    logger.error('Figure generation failed', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: error.message || 'Figure generation failed' });
   }
 });
@@ -81,7 +85,7 @@ router.post('/figures/auto-insert', async (req: Request, res: Response) => {
 
     res.json({ success: true, figures: result });
   } catch (error: any) {
-    console.error('[AuditServices] Auto figure insert failed:', error);
+    logger.error('Auto figure insert failed', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: error.message || 'Auto figure insert failed' });
   }
 });
@@ -124,7 +128,7 @@ router.post('/export/pdf', async (req: Request, res: Response) => {
     res.setHeader('X-Export-Page-Count', String(result.pageCount));
     return res.send(result.buffer);
   } catch (error: any) {
-    console.error('[AuditServices] PDF export failed:', error);
+    logger.error('PDF export failed', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: error.message || 'PDF export failed' });
   }
 });
@@ -169,7 +173,7 @@ router.post('/export/ectd', async (req: Request, res: Response) => {
     }
     return res.send(result.buffer);
   } catch (error: any) {
-    console.error('[AuditServices] eCTD export failed:', error);
+    logger.error('eCTD export failed', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: error.message || 'eCTD export failed' });
   }
 });
@@ -212,7 +216,7 @@ router.post('/traceability/map', async (req: Request, res: Response) => {
 
     return res.json({ success: true, sentences: sentences.length, traceLinks, persisted });
   } catch (error: any) {
-    console.error('[AuditServices] Traceability mapping failed:', error);
+    logger.error('Traceability mapping failed', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: error.message || 'Traceability mapping failed' });
   }
 });
@@ -243,7 +247,7 @@ router.post('/traceability/click-through', async (req: Request, res: Response) =
 
     return res.json({ success: true, clickThrough: result });
   } catch (error: any) {
-    console.error('[AuditServices] Click-through failed:', error);
+    logger.error('Click-through failed', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: error.message || 'Click-through resolution failed' });
   }
 });
@@ -272,7 +276,7 @@ router.post('/traceability/report', async (req: Request, res: Response) => {
 
     return res.json({ success: true, report });
   } catch (error: any) {
-    console.error('[AuditServices] Traceability report failed:', error);
+    logger.error('Traceability report failed', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: error.message || 'Traceability report generation failed' });
   }
 });
@@ -301,7 +305,7 @@ router.post('/keywords/extract', async (req: Request, res: Response) => {
 
     res.json({ success: true, keywords });
   } catch (error: any) {
-    console.error('[AuditServices] Keyword extraction failed:', error);
+    logger.error('Keyword extraction failed', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: error.message || 'Keyword extraction failed' });
   }
 });
@@ -331,7 +335,7 @@ router.post('/keywords/consistency', async (req: Request, res: Response) => {
 
     res.json({ success: true, consistency: result });
   } catch (error: any) {
-    console.error('[AuditServices] Keyword consistency check failed:', error);
+    logger.error('Keyword consistency check failed', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: error.message || 'Keyword consistency check failed' });
   }
 });
@@ -366,7 +370,7 @@ router.post('/extraction/queue', async (req: Request, res: Response) => {
 
     res.json({ success: true, jobId });
   } catch (error: any) {
-    console.error('[AuditServices] Extraction queue failed:', error);
+    logger.error('Extraction queue failed', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: error.message || 'Extraction queue failed' });
   }
 });
@@ -426,7 +430,7 @@ router.post('/confidence/compute', async (req: Request, res: Response) => {
 
     res.json({ success: true, score });
   } catch (error: any) {
-    console.error('[AuditServices] Confidence computation failed:', error);
+    logger.error('Confidence computation failed', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: error.message || 'Confidence computation failed' });
   }
 });
@@ -448,7 +452,7 @@ router.post('/confidence/batch', async (req: Request, res: Response) => {
 
     res.json({ success: true, ...result });
   } catch (error: any) {
-    console.error('[AuditServices] Batch confidence failed:', error);
+    logger.error('Batch confidence failed', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: error.message || 'Batch confidence computation failed' });
   }
 });
@@ -476,7 +480,7 @@ router.post('/verification/verify-claim', async (req: Request, res: Response) =>
 
     res.json({ success: true, verification: result });
   } catch (error: any) {
-    console.error('[AuditServices] Claim verification failed:', error);
+    logger.error('Claim verification failed', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: error.message || 'Claim verification failed' });
   }
 });
@@ -503,7 +507,7 @@ router.post('/verification/batch-verify', async (req: Request, res: Response) =>
 
     res.json({ success: true, verification: result });
   } catch (error: any) {
-    console.error('[AuditServices] Batch verification failed:', error);
+    logger.error('Batch verification failed', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: error.message || 'Batch verification failed' });
   }
 });

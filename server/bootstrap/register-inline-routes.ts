@@ -347,27 +347,23 @@ export function registerInlineSubmissionWorkflowRoutes({
   app.use('/api/regulatory-programs', regulatoryProgramsRoutes);
   app.use('/api/saved-precedent-queries', savedPrecedentQueriesRoutes);
   app.use('/api/mdx', mdxRoutes);
-  /* MDX beta-surface routers — each one backs a kit surface (see brief to
-     Claude Design). Stacking multiple routers at the same /api/mdx prefix
-     keeps the kit's URL space coherent without consolidating into a single
-     mega-router. Each module owns its own audit + tenant-scope. */
+  /* MDX beta-surface routers — each one backs a kit surface. Stacking
+     multiple routers at the same /api/mdx prefix keeps the kit's URL
+     space coherent without consolidating into a single mega-router.
+     Each module owns its own audit + tenant-scope. */
   app.use('/api/mdx', mdxAnaDraftsRoutes);
   app.use('/api/mdx', mdxVaultRoutes);
   app.use('/api/mdx', mdxEngineeringRoutes);
   app.use('/api/mdx', mdxUdiRoutes);
   app.use('/api/mdx', mdxRiskRoutes);
   app.use('/api/mdx', mdxSoftwareRoutes);
-  /* IVD + diagnostic surfaces (migration 20260508). Backs the 4
-     diagnostic-specific surfaces in the gap inventory: IVD pathway,
-     EU IVDR, companion diagnostics, lab-developed tests. */
+  /* IVD + diagnostic surfaces (migration 20260508). */
   app.use('/api/mdx', mdxIvdPerformanceRoutes);
   app.use('/api/mdx', mdxIvdrRoutes);
   app.use('/api/mdx', mdxCliaRoutes);
   app.use('/api/mdx', mdxCdxRoutes);
   app.use('/api/mdx', mdxLdtRoutes);
-  /* Submission gateway router (migration 20260509). Single surface over
-     FDA ESG (AS2 + SFTP), EMA CESP / EUDAMED, and PMDA Gateway. Real
-     transports — credential-gated; throws 412 when env vars missing. */
+  /* Multi-region submission gateway (migration 20260509). */
   app.use('/api/mdx', mdxSubmissionGatewayRoutes);
   /* Notifications + clinical studies + AnA memory (migration 20260510). */
   app.use('/api/mdx', mdxNotificationsRoutes);

@@ -91,6 +91,7 @@ const PROBED_TABLES: Array<{ name: string; role: string; required: boolean }> = 
   { name: 'clinical_ops.studies',                 role: 'PmaSurface trial metrics (Enrolled/Sites)',   required: false },
   { name: 'clinical_ops.deviations',              role: 'PmaSurface AE rate KPI',                      required: false },
   { name: 'clinical_ops.endpoint_results',        role: 'PmaSurface endpoints-achieved KPI',           required: false },
+
   /* Beta-surface tables (migration 20260507). Required for the kit
      surfaces UDI, Risk Management, Software lifecycle, and the Q-Sub
      briefing-document editor. */
@@ -137,6 +138,8 @@ const PROBED_TABLES: Array<{ name: string; role: string; required: boolean }> = 
   { name: 'public.import_jobs',                   role: 'Legacy archive import jobs',                  required: true  },
   { name: 'public.import_job_files',              role: 'Per-file mapping outcome for imports',        required: true  },
   { name: 'public.import_job_findings',           role: 'Import job validation findings',              required: true  },
+
+
 ];
 
 /* Shadow services we proxy to. Configured = env var present; we don't
