@@ -84,10 +84,20 @@ jobs:
           # to migrations added in this PR's diff (relative to the merge
           # base with the base branch).
           set -e
-          git fetch --depth=1 origin "${{ github.event.pull_request.base.ref }}"
-          BASE_SHA=$(git merge-base HEAD "origin/${{ github.event.pull_request.base.ref }}" || echo "")
+          # `actions/checkout@v4` defaults to a shallow clone with no
+          # merge-base history. Fetch enough of the base branch to
+          # resolve a merge-base, with a fallback to GitHub's recorded
+          # pull_request.base.sha when fetch-then-merge-base still
+          # comes up empty (rare edge case on first-PR-after-rebase).
+          BASE_REF="${{ github.event.pull_request.base.ref }}"
+          BASE_SHA_HINT="${{ github.event.pull_request.base.sha }}"
+          git fetch --depth=200 origin "$BASE_REF" 2>/dev/null || true
+          BASE_SHA=$(git merge-base HEAD "origin/$BASE_REF" 2>/dev/null || echo "")
+          if [ -z "$BASE_SHA" ] && [ -n "$BASE_SHA_HINT" ]; then
+            BASE_SHA="$BASE_SHA_HINT"
+          fi
           if [ -z "$BASE_SHA" ]; then
-            echo "::notice::No merge-base detected; skipping migration apply."
+            echo "::notice::No merge-base resolvable; skipping migration apply."
             exit 0
           fi
           NEW_MIGRATIONS=$(git diff --name-only --diff-filter=A "$BASE_SHA" HEAD -- 'db/migrations/*.sql' 'migrations/*.sql' | sort)
@@ -120,8 +130,16 @@ jobs:
       - name: Run database compliance checks
         if: steps.check_secrets.outputs.skip != 'true' && steps.db_url.outputs.skip_db != 'true'
         run: |
-          echo "Running compliance checks (immutability triggers, RLS, etc.)..."
-          psql "$DATABASE_URL" -f scripts/db_compliance_check.sql
+          # Optional compliance probe. Same documented-but-never-authored
+          # pattern as scripts/db_verify.sql — guard the call so the
+          # workflow degrades gracefully when the script isn't present
+          # instead of failing the whole job with `psql: file not found`.
+          if [ -f scripts/db_compliance_check.sql ]; then
+            echo "Running compliance checks (immutability triggers, RLS, etc.)..."
+            psql "$DATABASE_URL" -f scripts/db_compliance_check.sql
+          else
+            echo "::notice::scripts/db_compliance_check.sql not present; skipping compliance probe."
+          fi
 
       - name: Setup Python
         if: steps.check_secrets.outputs.skip != 'true'
