@@ -49,6 +49,15 @@ import {
 } from '../services/intelligence/regulatory-intelligence.js';
 import type { RiskTarget } from '../services/intelligence/risk-model.js';
 import type { CompletenessBin } from '../services/intelligence/outcome-feature-extraction.js';
+import {
+  recordInteraction,
+  extractFailurePatterns,
+  getSuggestedCorrections,
+  getAgencyRequirements,
+  promotePatternToRequirement,
+  OUTCOMES,
+  type Outcome,
+} from '../services/intelligence/ana-failure-learning.js';
 
 const log = createScopedLogger('regulatory-intelligence-routes');
 const router: Router = express.Router();
@@ -196,6 +205,123 @@ router.get('/model-info', asyncHandler(async (req: Request, res: Response) => {
   if (!guard.ok) return;
   const info = await getModelInfo();
   res.json({ success: true, data: info, engineVersion: REGULATORY_INTELLIGENCE_VERSION });
+}));
+
+// ─── AnA Failure Learning ────────────────────────────────────────────────────
+//
+// POST  /interactions               record an AnA interaction outcome
+// GET   /corrections                retrieve cross-tenant corrections matching
+//                                   (agency, documentType, intent)
+// POST  /patterns/extract           run the cluster-promotion job
+// GET   /agency-requirements        discovered per-agency rules
+// POST  /patterns/:id/promote       promote a pattern into a requirement
+//
+// These let AnA's chat path self-correct: on every turn, hit /corrections to
+// fetch any known fixes for the (agency × doc_type × intent) tuple and
+// prepend them to the system prompt. After the user responds, POST the
+// outcome back to /interactions so the loop closes.
+
+function isOutcome(v: unknown): v is Outcome {
+  return typeof v === 'string' && (OUTCOMES as readonly string[]).includes(v);
+}
+
+router.post('/interactions', asyncHandler(async (req: Request, res: Response) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const body = req.body ?? {};
+  if (!isOutcome(body.outcome)) {
+    return res.status(400).json({
+      error: 'invalid_request',
+      message: `outcome must be one of ${OUTCOMES.join(', ')}`,
+    });
+  }
+  if (typeof body.agency !== 'string' || typeof body.documentType !== 'string' || typeof body.intent !== 'string') {
+    return res.status(400).json({
+      error: 'invalid_request',
+      message: 'agency, documentType, and intent are required strings',
+    });
+  }
+  const result = await recordInteraction({
+    organizationId: guard.orgId,
+    projectId: Number.isFinite(Number(body.projectId)) ? Number(body.projectId) : undefined,
+    userId: Number.isFinite(Number(body.userId)) ? Number(body.userId) : undefined,
+    sessionId: typeof body.sessionId === 'string' ? body.sessionId : undefined,
+    artifactId: typeof body.artifactId === 'string' ? body.artifactId : undefined,
+    agency: body.agency,
+    documentType: body.documentType,
+    submissionType: typeof body.submissionType === 'string' ? body.submissionType : undefined,
+    intent: body.intent,
+    outcome: body.outcome,
+    anaConfidence: Number.isFinite(Number(body.anaConfidence)) ? Number(body.anaConfidence) : undefined,
+    userCorrected: typeof body.userCorrected === 'boolean' ? body.userCorrected : undefined,
+    promptSummary: typeof body.promptSummary === 'string' ? body.promptSummary : undefined,
+    responseSummary: typeof body.responseSummary === 'string' ? body.responseSummary : undefined,
+    correctionText: typeof body.correctionText === 'string' ? body.correctionText : undefined,
+  });
+  res.status(201).json({ success: true, data: result });
+}));
+
+router.get('/corrections', asyncHandler(async (req: Request, res: Response) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const agency = req.query.agency;
+  const documentType = req.query.documentType;
+  const intent = req.query.intent;
+  if (typeof agency !== 'string' || typeof documentType !== 'string' || typeof intent !== 'string') {
+    return res.status(400).json({ error: 'invalid_request', message: 'agency, documentType, intent are required' });
+  }
+  const limit = Number.isFinite(Number(req.query.limit)) ? Number(req.query.limit) : undefined;
+  const data = await getSuggestedCorrections({ agency, documentType, intent, limit });
+  res.json({ success: true, data });
+}));
+
+router.post('/patterns/extract', asyncHandler(async (req: Request, res: Response) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const body = req.body ?? {};
+  const result = await extractFailurePatterns({
+    minTenantCount: Number.isFinite(Number(body.minTenantCount)) ? Number(body.minTenantCount) : undefined,
+    minFailureCount: Number.isFinite(Number(body.minFailureCount)) ? Number(body.minFailureCount) : undefined,
+    correctionQuorum: Number.isFinite(Number(body.correctionQuorum)) ? Number(body.correctionQuorum) : undefined,
+    lookbackDays: Number.isFinite(Number(body.lookbackDays)) ? Number(body.lookbackDays) : undefined,
+  });
+  log.info(`Pattern extraction triggered by org=${guard.orgId} evaluated=${result.evaluated} promoted=${result.promoted}`);
+  res.json({ success: true, data: result });
+}));
+
+router.get('/agency-requirements', asyncHandler(async (req: Request, res: Response) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const agency = req.query.agency;
+  if (typeof agency !== 'string') {
+    return res.status(400).json({ error: 'invalid_request', message: 'agency is required' });
+  }
+  const documentType = typeof req.query.documentType === 'string' ? req.query.documentType : undefined;
+  const includeUnvalidated = req.query.includeUnvalidated === 'false' ? false : true;
+  const data = await getAgencyRequirements({ agency, documentType, includeUnvalidated });
+  res.json({ success: true, data });
+}));
+
+router.post('/patterns/:id/promote', asyncHandler(async (req: Request, res: Response) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const patternId = req.params.id;
+  if (typeof patternId !== 'string' || patternId.length === 0) {
+    return res.status(400).json({ error: 'invalid_request', message: 'pattern id is required' });
+  }
+  const body = req.body ?? {};
+  if (typeof body.requirementSummary !== 'string' || body.requirementSummary.trim().length === 0) {
+    return res.status(400).json({ error: 'invalid_request', message: 'requirementSummary is required' });
+  }
+  const result = await promotePatternToRequirement({
+    patternId,
+    requirementSummary: body.requirementSummary,
+    requirementDetail: typeof body.requirementDetail === 'string' ? body.requirementDetail : undefined,
+    submissionType: typeof body.submissionType === 'string' ? body.submissionType : undefined,
+    validateImmediately: !!body.validateImmediately,
+    validatedBy: typeof body.validatedBy === 'string' ? body.validatedBy : `org:${guard.orgId}`,
+  });
+  res.status(201).json({ success: true, data: result });
 }));
 
 export default router;
