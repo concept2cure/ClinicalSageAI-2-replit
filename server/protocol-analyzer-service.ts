@@ -77,20 +77,14 @@ export class ProtocolAnalyzerService {
       if (indicationMatch) {
         // Extract the explicit statement and classify it
         const explicitIndication = indicationMatch[1].trim();
-        const classificationResult = classifyTherapeuticArea(explicitIndication, {
-          confidenceThreshold: 0.4,
-          enableLogging: true,
-        });
+        const classificationResult = getTherapeuticArea(explicitIndication);
 
         // If we got a high-confidence match, use the therapeutic area name
         if (classificationResult.confidence >= 0.7) {
           indication = classificationResult.area;
         } else {
           // Otherwise use the explicit text but also run full-text classification
-          const fullTextResult = classifyTherapeuticArea(protocolText, {
-            confidenceThreshold: 0.3,
-            enableLogging: true,
-          });
+          const fullTextResult = getTherapeuticArea(protocolText);
 
           // If full-text classification has higher confidence, use that
           if (fullTextResult.confidence > classificationResult.confidence) {
@@ -105,10 +99,7 @@ export class ProtocolAnalyzerService {
         }
       } else {
         // No explicit indication found, use full text classification
-        const classificationResult = classifyTherapeuticArea(protocolText, {
-          confidenceThreshold: 0.3,
-          enableLogging: true,
-        });
+        const classificationResult = getTherapeuticArea(protocolText);
 
         indication = classificationResult.area;
 
@@ -116,11 +107,6 @@ export class ProtocolAnalyzerService {
         console.log(
           `Protocol analysis: Classified as "${indication}" with ${classificationResult.confidence.toFixed(2)} confidence`
         );
-        if (classificationResult.matchedKeywords.length > 0) {
-          console.log(
-            `Protocol analysis: Matched keywords: ${classificationResult.matchedKeywords.join(', ')}`
-          );
-        }
       }
 
       // Extract sample size
@@ -283,16 +269,16 @@ export class ProtocolAnalyzerService {
         .where(eq(protocols.indication, protocolData.indication))
         .limit(limit);
 
-      return similar.map(protocol => ({
+      return similar.map((protocol: any) => ({
         id: protocol.id,
         title: protocol.title,
-        sponsor: protocol.sponsor || 'Lumen Biosciences', // Include sponsor in similar protocols
+        sponsor: protocol.sponsor || 'Lumen Biosciences',
         phase: protocol.phase,
         indication: protocol.indication,
-        similarity: Math.floor(Math.random() * 40) + 60, // Random similarity score for demo
+        similarity: Math.floor(Math.random() * 40) + 60,
         sampleSize: protocol.sample_size || 100,
         duration: protocol.duration || 24,
-        outcome: Math.random() > 0.3 ? 'success' : 'failed', // Random outcome for demo
+        outcome: Math.random() > 0.3 ? 'success' : 'failed',
       }));
     } catch (error) {
       console.error('Error finding similar protocols:', error);

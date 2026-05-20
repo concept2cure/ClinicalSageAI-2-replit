@@ -39,7 +39,9 @@ class ValidationError extends Error {
   }
 }
 
-function parseIntParam(val: string, name: string): number {
+function parseIntParam(val: string | string[] | undefined, name: string): number {
+  if (Array.isArray(val)) val = val[0];
+  if (!val) throw new Error(`Missing required parameter: ${name}`);
   const n = parseInt(val, 10);
   if (isNaN(n) || n <= 0) throw new ValidationError(`Invalid ${name}: ${val}`);
   return n;

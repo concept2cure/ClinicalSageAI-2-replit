@@ -351,7 +351,7 @@ router.get('/memory/context-assemble', async (req: Request, res: Response) => {
 router.post('/memory/:id/verify', async (req: Request, res: Response) => {
   try {
     const { userId } = getRequestContext(req);
-    const entryId = parseInt(req.params.id, 10);
+    const entryId = parseInt(String(req.params.id), 10);
 
     await verifyMemoryEntry(entryId, userId);
     return sendSuccess(res);
@@ -368,7 +368,7 @@ router.post('/memory/:id/verify', async (req: Request, res: Response) => {
 router.post('/memory/:id/supersede', async (req: Request, res: Response) => {
   try {
     const { organizationId } = getRequestContext(req);
-    const entryId = parseInt(req.params.id, 10);
+    const entryId = parseInt(String(req.params.id), 10);
     const supersededById = req.body?.supersededById
       ? parseInt(String(req.body.supersededById), 10)
       : undefined;
@@ -387,7 +387,7 @@ router.post('/memory/:id/supersede', async (req: Request, res: Response) => {
  */
 router.delete('/memory/:id', async (req: Request, res: Response) => {
   try {
-    const entryId = parseInt(req.params.id, 10);
+    const entryId = parseInt(String(req.params.id), 10);
     await archiveMemoryEntry(entryId);
     return sendSuccess(res);
   } catch (err: any) {
@@ -426,7 +426,7 @@ router.get('/context', async (req: Request, res: Response) => {
  */
 router.get('/project/:projectId/profile', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     const profile = await getProjectIntelligence(projectId);
     return sendSuccess(res, { profile });
   } catch (err: any) {
@@ -442,7 +442,7 @@ router.get('/project/:projectId/profile', async (req: Request, res: Response) =>
 router.post('/project/:projectId/profile', async (req: Request, res: Response) => {
   try {
     const { organizationId, userId } = getRequestContext(req);
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     const profile = await upsertProjectIntelligence(projectId, organizationId, req.body, userId);
     return sendSuccess(res, { profile });
   } catch (err: any) {
@@ -461,7 +461,7 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const { organizationId, userId } = getRequestContext(req);
-      const projectId = parseInt(req.params.projectId, 10);
+      const projectId = parseInt(String(req.params.projectId), 10);
       const file = req.file;
 
       if (!file) {
@@ -496,7 +496,7 @@ router.post(
  */
 router.get('/project/:projectId/documents', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     const profile = await getProjectIntelligence(projectId);
     if (!profile) return sendSuccess(res, { documents: [] });
 
@@ -514,7 +514,7 @@ router.get('/project/:projectId/documents', async (req: Request, res: Response) 
  */
 router.get('/project/:projectId/memory', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     const profile = await getProjectIntelligence(projectId);
     if (!profile) return sendSuccess(res, { entries: [], totalCount: 0 });
 
@@ -535,7 +535,7 @@ router.get('/project/:projectId/memory', async (req: Request, res: Response) => 
 router.get('/project/:projectId/memory/semantic-search', async (req: Request, res: Response) => {
   try {
     const { organizationId } = getRequestContext(req);
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     const query = (req.query.query as string)?.trim();
 
     if (!query) {
@@ -573,8 +573,8 @@ router.get('/project/:projectId/memory/semantic-search', async (req: Request, re
 router.post('/project/:projectId/memory/:id/supersede', async (req: Request, res: Response) => {
   try {
     const { organizationId } = getRequestContext(req);
-    const projectId = parseInt(req.params.projectId, 10);
-    const entryId = parseInt(req.params.id, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
+    const entryId = parseInt(String(req.params.id), 10);
 
     await supersedeProjectMemoryEntry(entryId, projectId, organizationId);
     return sendSuccess(res);
@@ -618,7 +618,7 @@ router.get('/memory/shared-pool', async (req: Request, res: Response) => {
  */
 router.get('/project/:projectId/context', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     const context = await buildProjectIntelligenceContext(projectId);
     return sendSuccess(res, { context });
   } catch (err: any) {
@@ -650,7 +650,7 @@ router.get('/ana/user-profile', async (req: Request, res: Response) => {
     }
 
     const { db } = await import('../db');
-    const { userIntelligenceProfiles } = await import('shared/schema');
+    const { userIntelligenceProfiles } = (await import('shared/schema')) as any;
     const { eq, and } = await import('drizzle-orm');
 
     const [profile] = await db
@@ -727,7 +727,7 @@ router.get('/ana/merged-context', async (req: Request, res: Response) => {
 router.get('/ana/capabilities', async (req: Request, res: Response) => {
   try {
     const { db } = await import('../db');
-    const { anaCapabilityRegistry } = await import('shared/schema');
+    const { anaCapabilityRegistry } = (await import('shared/schema')) as any;
     const { eq, desc } = await import('drizzle-orm');
 
     const projectId = req.query.projectId
@@ -761,7 +761,7 @@ router.post('/ana/log-outcome', async (req: Request, res: Response) => {
     }
 
     const { db } = await import('../db');
-    const { anaOutcomeLog, anaCapabilityRegistry } = await import('shared/schema');
+    const { anaOutcomeLog, anaCapabilityRegistry } = (await import('shared/schema')) as any;
     const { eq, sql } = await import('drizzle-orm');
 
     const {
@@ -828,7 +828,7 @@ router.post('/ana/log-outcome', async (req: Request, res: Response) => {
 router.get('/ana/wisdom', async (req: Request, res: Response) => {
   try {
     const { db } = await import('../db');
-    const { anaPlatformWisdom } = await import('shared/schema');
+    const { anaPlatformWisdom } = (await import('shared/schema')) as any;
     const { eq, and, desc, sql } = await import('drizzle-orm');
 
     const projectType = req.query.projectType as string | undefined;
@@ -872,7 +872,7 @@ router.get('/ana/objectives', async (req: Request, res: Response) => {
     }
 
     const { db } = await import('../db');
-    const { anaClientObjectives } = await import('shared/schema');
+    const { anaClientObjectives } = (await import('shared/schema')) as any;
     const { eq, and, desc } = await import('drizzle-orm');
 
     const projectId = req.query.projectId
@@ -911,7 +911,7 @@ router.post('/ana/objectives', async (req: Request, res: Response) => {
     }
 
     const { db } = await import('../db');
-    const { anaClientObjectives } = await import('shared/schema');
+    const { anaClientObjectives } = (await import('shared/schema')) as any;
 
     const [objective] = await db
       .insert(anaClientObjectives)

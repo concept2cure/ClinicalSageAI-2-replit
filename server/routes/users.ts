@@ -104,10 +104,10 @@ router.get('/', async (req: Request, res: Response) => {
       id: userData.id,
       username: userData.email?.split('@')[0] || 'user',
       email: userData.email,
-      firstName: userData.firstName || '',
-      lastName: userData.lastName || '',
+      firstName: (userData as any).firstName || '',
+      lastName: (userData as any).lastName || '',
       displayName:
-        `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
+        `${(userData as any).firstName || ''} ${(userData as any).lastName || ''}`.trim() || userData.email,
       role: 'user',
       roles: ['user'],
       organizationId: '2',
@@ -168,10 +168,10 @@ router.get('/me', async (req: Request, res: Response) => {
     res.json({
       id: userData.id.toString(),
       email: userData.email,
-      firstName: userData.firstName || '',
-      lastName: userData.lastName || '',
+      firstName: (userData as any).firstName || '',
+      lastName: (userData as any).lastName || '',
       displayName:
-        `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
+        `${(userData as any).firstName || ''} ${(userData as any).lastName || ''}`.trim() || userData.email,
       title: userData.title || '',
       department: userData.department || '',
       bio: userData.bio || '',
@@ -400,7 +400,8 @@ router.get('/:id', async (req: Request, res: Response) => {
       organizationId?: string;
     };
 
-    const { id } = req.params;
+    const idRaw = req.params.id;
+    const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? '');
 
     const user = await db
       .select()
@@ -418,7 +419,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     // Tenant isolation: only return user if they belong to the same org
     const requestorOrgId = decoded.organizationId;
-    const targetOrgId = userData.organizationId?.toString();
+    const targetOrgId = (userData as any).organizationId?.toString();
     if (requestorOrgId !== targetOrgId) {
       return res.status(404).json({
         error: { code: 'USER_NOT_FOUND', message: 'User not found' },
@@ -428,10 +429,10 @@ router.get('/:id', async (req: Request, res: Response) => {
     res.json({
       id: userData.id.toString(),
       email: userData.email,
-      firstName: userData.firstName || '',
-      lastName: userData.lastName || '',
+      firstName: (userData as any).firstName || '',
+      lastName: (userData as any).lastName || '',
       displayName:
-        `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
+        `${(userData as any).firstName || ''} ${(userData as any).lastName || ''}`.trim() || userData.email,
       roles: ['user'],
       organizationId: targetOrgId,
     });
@@ -499,7 +500,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       {
         userId: String(userData.id),
         email: userData.email,
-        organizationId: userData.organizationId ? String(userData.organizationId) : '2',
+        organizationId: (userData as any).organizationId ? String((userData as any).organizationId) : '2',
       },
       config.jwt.secret,
       { expiresIn: '24h' }
