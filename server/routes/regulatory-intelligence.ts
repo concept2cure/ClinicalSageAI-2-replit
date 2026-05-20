@@ -73,6 +73,14 @@ import {
   applyDecay,
   detectContradictions,
 } from '../services/intelligence/pattern-maintenance.js';
+import {
+  resolveTemplate,
+  getTemplateById,
+  listTemplates,
+  compareAcrossAgencies,
+} from '../services/intelligence/template-registry.js';
+import { validateDraft, type DraftSection } from '../services/intelligence/template-validator.js';
+import { seedTemplates } from '../services/intelligence/template-seeds.js';
 
 const log = createScopedLogger('regulatory-intelligence-routes');
 const router: Router = express.Router();
@@ -445,6 +453,95 @@ router.post('/patterns/maintenance', asyncHandler(async (req: Request, res: Resp
   });
   const contradictionResult = await detectContradictions();
   res.json({ success: true, data: { decay: decayResult, contradictions: contradictionResult } });
+}));
+
+// ─── Document templates ─────────────────────────────────────────────────────
+//
+// GET   /templates                     directory listing (filterable)
+// GET   /templates/resolve             resolve the best template for a context
+// GET   /templates/:id                 full template (with sections)
+// POST  /templates/validate            check a draft against a template
+// GET   /templates/compare             cross-agency diff for a (doc_type, sub_type)
+// POST  /templates/seed                run / refresh seed data (closed-enum)
+
+router.get('/templates', asyncHandler(async (req: Request, res: Response) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const agency = typeof req.query.agency === 'string' ? req.query.agency : undefined;
+  const documentType = typeof req.query.documentType === 'string' ? req.query.documentType : undefined;
+  const submissionType = typeof req.query.submissionType === 'string' ? req.query.submissionType : undefined;
+  const data = await listTemplates({ agency, documentType, submissionType });
+  res.json({ success: true, data });
+}));
+
+router.get('/templates/resolve', asyncHandler(async (req: Request, res: Response) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const agency = req.query.agency;
+  const documentType = req.query.documentType;
+  if (typeof agency !== 'string' || typeof documentType !== 'string') {
+    return res.status(400).json({ error: 'invalid_request', message: 'agency and documentType are required' });
+  }
+  const submissionType = typeof req.query.submissionType === 'string' ? req.query.submissionType : null;
+  const indicationArea = typeof req.query.indicationArea === 'string' ? req.query.indicationArea : null;
+  const data = await resolveTemplate({ agency, documentType, submissionType, indicationArea });
+  res.json({ success: true, data });
+}));
+
+router.get('/templates/compare', asyncHandler(async (req: Request, res: Response) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const documentType = req.query.documentType;
+  if (typeof documentType !== 'string') {
+    return res.status(400).json({ error: 'invalid_request', message: 'documentType is required' });
+  }
+  const submissionType = typeof req.query.submissionType === 'string' ? req.query.submissionType : null;
+  const data = await compareAcrossAgencies({ documentType, submissionType });
+  res.json({ success: true, data });
+}));
+
+router.get('/templates/:id', asyncHandler(async (req: Request, res: Response) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const templateId = req.params.id;
+  if (typeof templateId !== 'string' || templateId.length === 0) {
+    return res.status(400).json({ error: 'invalid_request', message: 'template id is required' });
+  }
+  const data = await getTemplateById(templateId);
+  if (!data) return res.status(404).json({ error: 'not_found' });
+  res.json({ success: true, data });
+}));
+
+router.post('/templates/validate', asyncHandler(async (req: Request, res: Response) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const body = req.body ?? {};
+  const templateId = body.templateId;
+  if (typeof templateId !== 'string' || templateId.length === 0) {
+    return res.status(400).json({ error: 'invalid_request', message: 'templateId is required' });
+  }
+  if (!Array.isArray(body.sections)) {
+    return res.status(400).json({ error: 'invalid_request', message: 'sections must be an array of { identifier, body }' });
+  }
+  const sections: DraftSection[] = body.sections
+    .filter((s: any) => s && typeof s.identifier === 'string' && typeof s.body === 'string')
+    .map((s: any) => ({ identifier: s.identifier, body: s.body }));
+  const data = await validateDraft({
+    templateId,
+    sections,
+    organizationId: guard.orgId,
+    projectId: Number.isFinite(Number(body.projectId)) ? Number(body.projectId) : undefined,
+    artifactId: typeof body.artifactId === 'string' ? body.artifactId : undefined,
+  });
+  res.json({ success: true, data });
+}));
+
+router.post('/templates/seed', asyncHandler(async (req: Request, res: Response) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const data = await seedTemplates();
+  log.info(`Template seeding by org=${guard.orgId}: ${JSON.stringify(data)}`);
+  res.json({ success: true, data });
 }));
 
 export default router;
