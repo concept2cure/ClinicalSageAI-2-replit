@@ -42,6 +42,7 @@ import { pdevEctdCompileService } from '../pdev/pdev-ectd-compile';
 import { pdevFdaFeedbackRollupService } from '../pdev/pdev-fda-feedback-rollup';
 import { pdevEvidenceAttachService } from '../pdev/pdev-evidence-attach';
 import { pdevProvenanceTraceService } from '../pdev/pdev-provenance-trace';
+import { pdevWorkflowBridge } from '../pdev/pdev-workflow-bridge';
 import {
   PDEV_ACTIVITIES,
   PDEV_WORKSTREAMS,
@@ -908,6 +909,188 @@ export async function pdevReadinessSnapshot(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// WORKFLOW BRIDGE — multi-step approval chains
+// ═══════════════════════════════════════════════════════════════════════════
+
+export async function pdevWorkflowKickoff(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
+  const action = 'pdev.workflow.kickoff';
+  const gate = requireGovernedToolGate(action, ctx, params);
+  if (!gate.ok) return gate.result;
+
+  const programIdOrErr = requireProgramId(action, params);
+  if (typeof programIdOrErr !== 'string') return programIdOrErr;
+  const activityKeyOrErr = requireActivityKey(action, params);
+  if (typeof activityKeyOrErr !== 'string') return activityKeyOrErr;
+
+  const targetState = strParam(params, 'targetState');
+  const completedStates = ['approved', 'locked', 'submission_ready', 'submitted'];
+  if (!targetState || !completedStates.includes(targetState)) {
+    return {
+      success: false,
+      action,
+      message: `targetState must be one of: ${completedStates.join(', ')}.`,
+      error: 'INVALID_INPUT',
+    };
+  }
+
+  try {
+    const result = await pdevWorkflowBridge.kickoff({
+      programId: programIdOrErr,
+      organizationId: ctx.organizationId,
+      activityKey: activityKeyOrErr,
+      targetState: targetState as PdevActivityState,
+      requestedByUserId: ctx.userId,
+      requestedByRole: ctx.userRole,
+      reason: typeof params.reason === 'string' ? params.reason : undefined,
+    });
+    void auditService.logAction({
+      tenantId: ctx.organizationId,
+      userId: ctx.userId,
+      action: 'agent.ana.pdev.workflow.kickoff',
+      resourceType: 'workflow_run',
+      resourceId: result.workflowRunId,
+      details: { ...agentAuditDetails(ctx, gate),
+        programId: programIdOrErr,
+        activityKey: activityKeyOrErr,
+        targetState,
+        checkpointCount: result.checkpointIds.length,
+      },
+    });
+    return {
+      success: true,
+      action,
+      message: `Started ${result.checkpointIds.length}-step approval chain for ${activityKeyOrErr} → ${targetState}. Activity held at ${result.holdingState}.`,
+      data: result as unknown as Record<string, unknown>,
+    };
+  } catch (err) {
+    return mapServiceError(action, err);
+  }
+}
+
+export async function pdevWorkflowStatus(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
+  const action = 'pdev.workflow.status';
+  const programIdOrErr = requireProgramId(action, params);
+  if (typeof programIdOrErr !== 'string') return programIdOrErr;
+  const activityKeyOrErr = requireActivityKey(action, params);
+  if (typeof activityKeyOrErr !== 'string') return activityKeyOrErr;
+  try {
+    const status = await pdevWorkflowBridge.getChainStatus(
+      programIdOrErr,
+      ctx.organizationId,
+      activityKeyOrErr
+    );
+    if (!status) {
+      return {
+        success: true,
+        action,
+        message: `No workflow run on record for ${activityKeyOrErr}.`,
+        data: { workflowRunId: null, checkpoints: [] },
+      };
+    }
+    return {
+      success: true,
+      action,
+      message: `Workflow ${status.workflowStatus}; step ${
+        status.checkpoints.findIndex(c => c.status === 'awaiting_review') + 1
+      } of ${status.checkpoints.length} awaiting review.`,
+      data: { status },
+    };
+  } catch (err) {
+    return mapServiceError(action, err);
+  }
+}
+
+export async function pdevWorkflowDecide(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
+  const action = 'pdev.workflow.decide';
+  const gate = requireGovernedToolGate(action, ctx, params);
+  if (!gate.ok) return gate.result;
+
+  const workflowRunId = strParam(params, 'workflowRunId');
+  const checkpointId = strParam(params, 'checkpointId');
+  const decision = strParam(params, 'decision');
+  if (!workflowRunId || !UUID_RE.test(workflowRunId)) {
+    return {
+      success: false,
+      action,
+      message: 'workflowRunId is required and must be a UUID.',
+      error: 'INVALID_INPUT',
+    };
+  }
+  if (!checkpointId || !UUID_RE.test(checkpointId)) {
+    return {
+      success: false,
+      action,
+      message: 'checkpointId is required and must be a UUID.',
+      error: 'INVALID_INPUT',
+    };
+  }
+  if (!decision || (decision !== 'approve' && decision !== 'reject')) {
+    return {
+      success: false,
+      action,
+      message: 'decision must be one of: approve, reject.',
+      error: 'INVALID_INPUT',
+    };
+  }
+  const reason = typeof params.reason === 'string' ? params.reason.trim() : '';
+  if (reason.length < 10) {
+    return {
+      success: false,
+      action,
+      message: 'reason is required (≥10 chars).',
+      error: 'INVALID_INPUT',
+    };
+  }
+  try {
+    const result = await pdevWorkflowBridge.recordDecision({
+      workflowRunId,
+      checkpointId,
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      userRole: ctx.userRole,
+      decision: decision as 'approve' | 'reject',
+      reason,
+    });
+    void auditService.logAction({
+      tenantId: ctx.organizationId,
+      userId: ctx.userId,
+      action: `agent.ana.pdev.workflow.${decision}`,
+      resourceType: 'approval_checkpoint',
+      resourceId: checkpointId,
+      details: { ...agentAuditDetails(ctx, gate),
+        workflowRunId,
+        decision,
+        finalState: result.activityFinalState,
+      },
+    });
+    return {
+      success: result.checkpointStatus !== 'failed',
+      action,
+      message:
+        result.activityFinalState
+          ? `Chain complete; activity advanced to ${result.activityFinalState}.`
+          : result.nextCheckpointId
+          ? `Checkpoint approved; next checkpoint ${result.nextCheckpointId} awaiting review.`
+          : result.checkpointStatus === 'failed'
+          ? `Rejected: ${result.rejectionReason ?? reason}.`
+          : `Decision recorded (status=${result.checkpointStatus}).`,
+      data: result as unknown as Record<string, unknown>,
+    };
+  } catch (err) {
+    return mapServiceError(action, err);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // METADATA — used by the AnA intent parser / OpenAI tool-use surface
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -1067,6 +1250,41 @@ export const PDEV_COMMAND_METADATA = [
       '"Compile the IND eCTD assembly for OR-801, submission 12, reason: cleared all blockers and RA sign-off complete this week."',
   },
   {
+    name: 'pdev.workflow.kickoff',
+    description:
+      'Start a multi-step approval chain for promoting a PDEV activity to a ' +
+      'completed state (approved / locked / submission_ready / submitted). ' +
+      'Activity is held at human_review_required until every checkpoint is ' +
+      'approved. Default chain is 2 steps (reviewer + approver). ' +
+      'Requires confirm + reason.',
+    parameters:
+      'programId, activityKey, targetState, confirm="yes", reason',
+    example:
+      '"Start the approval chain for nonclinical.glp_tox to approved, reason: RA review complete and tox data clean."',
+  },
+  {
+    name: 'pdev.workflow.status',
+    description:
+      'Read the current approval chain status for a PDEV activity — every ' +
+      'checkpoint, its state, who has approved, what is awaiting. Read-only.',
+    parameters: 'programId, activityKey',
+    example:
+      '"What is the workflow status of nonclinical.glp_tox on OR-801?"',
+  },
+  {
+    name: 'pdev.workflow.decide',
+    description:
+      'Record an approve or reject decision on one approval checkpoint. ' +
+      'On approve, the next checkpoint activates (or the activity advances ' +
+      'to its target state when the chain completes). On reject, the run is ' +
+      'marked failed and the activity moves to revision_required. ' +
+      'Requires confirm + reason (≥10 chars).',
+    parameters:
+      'workflowRunId, checkpointId, decision (approve|reject), confirm="yes", reason',
+    example:
+      '"Approve checkpoint <uuid> on workflow <uuid>, reason: reviewer sign-off complete and supplementary tox tables uploaded."',
+  },
+  {
     name: 'pdev.readiness.snapshot',
     description:
       'Materialize a point-in-time readiness snapshot for the program ' +
@@ -1099,4 +1317,7 @@ export const PDEV_COMMAND_HANDLERS: Record<
   'pdev.fda_feedback.apply': pdevFdaFeedbackApply,
   'pdev.ind_assembly.compile': pdevIndAssemblyCompile,
   'pdev.readiness.snapshot': pdevReadinessSnapshot,
+  'pdev.workflow.kickoff': pdevWorkflowKickoff,
+  'pdev.workflow.status': pdevWorkflowStatus,
+  'pdev.workflow.decide': pdevWorkflowDecide,
 };

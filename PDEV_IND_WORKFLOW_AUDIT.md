@@ -201,6 +201,21 @@ In dependency order, when the relevant design phase ships:
 - `server/routes/pdev/pdev-routes.ts` (edited — adds 7 routes for the new services).
 - `server/services/pdev/__tests__/{pdev-ai-drafting,pdev-fda-feedback-rollup}.test.ts` (new).
 
+**Pass 5 — workflow / approval-chain bridge:**
+
+PDEV activity promotions now route through the existing `workflow_runs`
++ `approval_checkpoints` infrastructure. When a user (or AnA) wants to
+move an activity into a completed state (approved / locked /
+submission_ready / submitted), they kick off a multi-step chain
+instead of mutating state directly. Default chain is 2 steps
+(workstream reviewer + regulatory approver). Activity is held at
+`human_review_required` until every checkpoint resolves; rejection
+returns it to `revision_required`.
+
+- `server/services/pdev/pdev-workflow-bridge.ts` (new — kickoff + status + decide).
+- `server/routes/pdev/pdev-routes.ts` (edited — adds `/workflow/kickoff`, `/workflow`, `/workflow-runs/:runId/checkpoints/:cpId/decision`).
+- `server/services/ana-ri/pdev-command-handlers.ts` (edited — adds `pdev.workflow.kickoff`, `pdev.workflow.status`, `pdev.workflow.decide`; 20 commands total).
+
 **Pass 4 — depth + verification:**
 
 - `server/services/pdev/pdev-state-guard.ts` (new — dependency-graph gate for state promotions).

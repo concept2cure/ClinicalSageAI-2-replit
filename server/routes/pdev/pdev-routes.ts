@@ -78,6 +78,7 @@ import {
   describeBlockers,
 } from '../../services/pdev/pdev-state-guard';
 import { pdevProvenanceTraceService } from '../../services/pdev/pdev-provenance-trace';
+import { pdevWorkflowBridge } from '../../services/pdev/pdev-workflow-bridge';
 import {
   pdevFdaFeedbackRollupService,
 } from '../../services/pdev/pdev-fda-feedback-rollup';
@@ -829,6 +830,136 @@ router.get(
       return ok(res, { activityKey, evidence });
     } catch (err) {
       return serverError(res, log, 'Evidence list', err);
+    }
+  }
+);
+
+// ─── POST /api/pdev/programs/:programId/activities/:key/workflow/kickoff ───
+//
+// Kicks off a multi-step approval chain for promoting a PDEV activity to a
+// completed state. The activity is held at human_review_required until the
+// chain resolves (each checkpoint approved → activity moves to targetState;
+// any rejection → activity moves to revision_required and run is marked
+// failed).
+
+const workflowKickoffBodySchema = z.object({
+  targetState: z.enum(['approved', 'locked', 'submission_ready', 'submitted']),
+  reason: z.string().trim().min(10).max(8000),
+  requestedByRole: z.string().min(1).max(64).optional(),
+});
+
+router.post(
+  '/programs/:programId/activities/:activityKey/workflow/kickoff',
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req);
+    if (orgId === null) return orgRequired(res);
+    const userId = getUserId(req);
+    if (userId === null) return clientError(res, 403, 'User context required');
+
+    const programId = String(req.params.programId);
+    const activityKey = String(req.params.activityKey);
+    if (!UUID_RE.test(programId)) return clientError(res, 400, 'programId must be a UUID');
+
+    const parsed = workflowKickoffBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return clientError(res, 422, 'Validation failed', parsed.error.flatten().fieldErrors);
+    }
+
+    try {
+      const result = await pdevWorkflowBridge.kickoff({
+        programId,
+        organizationId: orgId,
+        activityKey,
+        targetState: parsed.data.targetState,
+        requestedByUserId: userId,
+        requestedByRole: parsed.data.requestedByRole,
+        reason: parsed.data.reason,
+      });
+      return created(res, result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Workflow kickoff failed';
+      if (
+        message.includes('not found in tenant') ||
+        message.includes('Unknown PDEV activity key')
+      ) {
+        return clientError(res, 404, message);
+      }
+      if (message.includes('only used for promotions')) {
+        return clientError(res, 422, message);
+      }
+      return serverError(res, log, 'Workflow kickoff', err);
+    }
+  }
+);
+
+// ─── GET /api/pdev/programs/:programId/activities/:key/workflow ─────────────
+
+router.get(
+  '/programs/:programId/activities/:activityKey/workflow',
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req);
+    if (orgId === null) return orgRequired(res);
+
+    const programId = String(req.params.programId);
+    const activityKey = String(req.params.activityKey);
+    if (!UUID_RE.test(programId)) return clientError(res, 400, 'programId must be a UUID');
+
+    try {
+      const status = await pdevWorkflowBridge.getChainStatus(programId, orgId, activityKey);
+      if (!status) return ok(res, { workflowRunId: null, checkpoints: [] });
+      return ok(res, status);
+    } catch (err) {
+      return serverError(res, log, 'Failed to load workflow status', err);
+    }
+  }
+);
+
+// ─── POST /api/pdev/workflow-runs/:runId/checkpoints/:checkpointId/decision ─
+
+const workflowDecisionBodySchema = z.object({
+  decision: z.enum(['approve', 'reject']),
+  reason: z.string().trim().min(10).max(8000),
+  userRole: z.string().min(1).max(64).optional(),
+});
+
+router.post(
+  '/workflow-runs/:runId/checkpoints/:checkpointId/decision',
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req);
+    if (orgId === null) return orgRequired(res);
+    const userId = getUserId(req);
+    if (userId === null) return clientError(res, 403, 'User context required');
+
+    const runId = String(req.params.runId);
+    const checkpointId = String(req.params.checkpointId);
+    if (!UUID_RE.test(runId)) return clientError(res, 400, 'runId must be a UUID');
+    if (!UUID_RE.test(checkpointId)) return clientError(res, 400, 'checkpointId must be a UUID');
+
+    const parsed = workflowDecisionBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return clientError(res, 422, 'Validation failed', parsed.error.flatten().fieldErrors);
+    }
+
+    try {
+      const result = await pdevWorkflowBridge.recordDecision({
+        workflowRunId: runId,
+        checkpointId,
+        organizationId: orgId,
+        userId,
+        userRole: parsed.data.userRole,
+        decision: parsed.data.decision,
+        reason: parsed.data.reason,
+      });
+      return ok(res, result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Decision failed';
+      if (
+        message.includes('not found') ||
+        message.includes('only awaiting_review is decidable')
+      ) {
+        return clientError(res, 409, message);
+      }
+      return serverError(res, log, 'Workflow checkpoint decision', err);
     }
   }
 );

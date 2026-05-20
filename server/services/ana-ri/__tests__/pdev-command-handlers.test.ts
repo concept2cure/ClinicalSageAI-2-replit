@@ -43,6 +43,9 @@ const EXPECTED_COMMANDS = [
   'pdev.fda_feedback.apply',
   'pdev.ind_assembly.compile',
   'pdev.readiness.snapshot',
+  'pdev.workflow.kickoff',
+  'pdev.workflow.status',
+  'pdev.workflow.decide',
 ];
 
 const GOVERNED_COMMANDS = [
@@ -53,6 +56,8 @@ const GOVERNED_COMMANDS = [
   'pdev.fda_feedback.apply',
   'pdev.ind_assembly.compile',
   'pdev.readiness.snapshot',
+  'pdev.workflow.kickoff',
+  'pdev.workflow.decide',
 ];
 
 describe('pdev command surface — metadata', () => {
