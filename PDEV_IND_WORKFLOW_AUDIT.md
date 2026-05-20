@@ -200,3 +200,37 @@ In dependency order, when the relevant design phase ships:
 - `server/services/pdev/pdev-evidence-attach.ts` (new — evidence_objects ↔ PDEV activity wiring).
 - `server/routes/pdev/pdev-routes.ts` (edited — adds 7 routes for the new services).
 - `server/services/pdev/__tests__/{pdev-ai-drafting,pdev-fda-feedback-rollup}.test.ts` (new).
+
+**Pass 3 — AnA conversational surface for PDEV:**
+
+The CIRM brief requires that "AnA drives everything through natural conversation."
+Every PDEV verb is now a registered AnA command, discoverable by the
+existing LLM tool-use surface via `COMMAND_REGISTRY` and dispatched via
+`command-executor.ts`. Same governance contract as the MDX commands:
+read-only verbs are open; mutations require `confirm: 'yes'` + `reason`;
+`pdev.ind_assembly.compile` enforces a 30-char reason floor.
+
+16 commands registered (audit prefix `agent.ana.pdev.*`):
+
+| Command | Class | What AnA can now do in conversation |
+|---|---|---|
+| `pdev.registry.list` | read | "What PDEV activities exist for Nonclinical?" |
+| `pdev.program.get` | read | "Show me the PDEV state for OR-801." |
+| `pdev.program.readiness` | read | "What is blocking IND for OR-801?" |
+| `pdev.program.workstream` | read | "What is the CMC status?" |
+| `pdev.program.ind_assembly` | read | "How ready is OR-801 for IND assembly?" |
+| `pdev.program.fda_interactions` | read | "Walk me through every FDA interaction on OR-801." |
+| `pdev.program.contradictions` | read | "Show me the critical contradictions." |
+| `pdev.fda_feedback.proposals` | read | "What FDA commitments need to be rolled into PDEV?" |
+| `pdev.activity.evidence_list` | read | "What evidence is attached to nonclinical.glp_tox?" |
+| `pdev.activity.set_state` | governed | "Mark cmc.formulation_development as approved." |
+| `pdev.activity.ai_draft` | governed | "Draft my GLP tox summary into Module 4." |
+| `pdev.activity.evidence_attach` | governed | "Attach PMID 12345678 to the endpoint rationale." |
+| `pdev.activity.evidence_detach` | governed | "Detach that evidence — it's been superseded." |
+| `pdev.fda_feedback.apply` | governed | "Roll up these two FDA commitments." |
+| `pdev.ind_assembly.compile` | governed (high) | "Compile the IND eCTD for OR-801." |
+| `pdev.readiness.snapshot` | governed | "Snapshot readiness now for the weekly RA review." |
+
+- `server/services/ana-ri/pdev-command-handlers.ts` (new).
+- `server/services/ana-ri/command-executor.ts` (edited — imports + merges PDEV metadata + handlers into the dispatch).
+- `server/services/ana-ri/__tests__/pdev-command-handlers.test.ts` (new).
