@@ -41,6 +41,26 @@ import submissionOpsRoutes from '../routes/submission-ops';
 import regulatoryProgramsRoutes from '../routes/regulatory-programs';
 import savedPrecedentQueriesRoutes from '../routes/saved-precedent-queries';
 import mdxRoutes from '../routes/mdx';
+import mdxAnaDraftsRoutes from '../routes/mdx-ana-drafts';
+import mdxVaultRoutes from '../routes/mdx-vault';
+import mdxEngineeringRoutes from '../routes/mdx-engineering';
+import mdxUdiRoutes from '../routes/mdx-udi';
+import mdxRiskRoutes from '../routes/mdx-risk-management';
+import mdxSoftwareRoutes from '../routes/mdx-software';
+import mdxIvdPerformanceRoutes from '../routes/mdx-ivd-performance';
+import mdxIvdrRoutes from '../routes/mdx-ivdr';
+import mdxCliaRoutes from '../routes/mdx-clia';
+import mdxCdxRoutes from '../routes/mdx-cdx';
+import mdxLdtRoutes from '../routes/mdx-ldt';
+import mdxSubmissionGatewayRoutes from '../routes/mdx-submission-gateway';
+import mdxNotificationsRoutes from '../routes/mdx-notifications';
+import mdxClinicalStudiesRoutes from '../routes/mdx-clinical-studies';
+import mdxAnaMemoryRoutes from '../routes/mdx-ana-memory';
+import mdxQmsRoutes from '../routes/mdx-qms';
+import mdxLabelingRoutes from '../routes/mdx-labeling';
+import mdxSearchRoutes from '../routes/mdx-search';
+import mdxAnalyticsRoutes from '../routes/mdx-analytics';
+import mdxImportsRoutes from '../routes/mdx-imports';
 import regulatoryCorrespondenceRoutes from '../routes/regulatory-correspondence';
 import { create510kWorkflowRoutes } from '../routes/510k-workflow-routes';
 import { createPMAWorkflowRoutes } from '../routes/pma-workflow-routes';
@@ -327,6 +347,35 @@ export function registerInlineSubmissionWorkflowRoutes({
   app.use('/api/regulatory-programs', regulatoryProgramsRoutes);
   app.use('/api/saved-precedent-queries', savedPrecedentQueriesRoutes);
   app.use('/api/mdx', mdxRoutes);
+  /* MDX beta-surface routers — each one backs a kit surface. Stacking
+     multiple routers at the same /api/mdx prefix keeps the kit's URL
+     space coherent without consolidating into a single mega-router.
+     Each module owns its own audit + tenant-scope. */
+  app.use('/api/mdx', mdxAnaDraftsRoutes);
+  app.use('/api/mdx', mdxVaultRoutes);
+  app.use('/api/mdx', mdxEngineeringRoutes);
+  app.use('/api/mdx', mdxUdiRoutes);
+  app.use('/api/mdx', mdxRiskRoutes);
+  app.use('/api/mdx', mdxSoftwareRoutes);
+  /* IVD + diagnostic surfaces (migration 20260508). */
+  app.use('/api/mdx', mdxIvdPerformanceRoutes);
+  app.use('/api/mdx', mdxIvdrRoutes);
+  app.use('/api/mdx', mdxCliaRoutes);
+  app.use('/api/mdx', mdxCdxRoutes);
+  app.use('/api/mdx', mdxLdtRoutes);
+  /* Multi-region submission gateway (migration 20260509). */
+  app.use('/api/mdx', mdxSubmissionGatewayRoutes);
+  /* Notifications + clinical studies + AnA memory (migration 20260510). */
+  app.use('/api/mdx', mdxNotificationsRoutes);
+  app.use('/api/mdx', mdxClinicalStudiesRoutes);
+  app.use('/api/mdx', mdxAnaMemoryRoutes);
+  /* QMS + Labeling + Global search + Analytics (migration 20260511). */
+  app.use('/api/mdx', mdxQmsRoutes);
+  app.use('/api/mdx', mdxLabelingRoutes);
+  app.use('/api/mdx', mdxSearchRoutes);
+  app.use('/api/mdx', mdxAnalyticsRoutes);
+  /* Legacy archive importer (migration 20260512). */
+  app.use('/api/mdx', mdxImportsRoutes);
   app.use('/api/regulatory-correspondence', regulatoryCorrespondenceRoutes);
   console.log('✅ Submission Ops API routes mounted successfully');
   console.log('✅ Regulatory Programs API routes mounted successfully');

@@ -1440,6 +1440,1758 @@ registerToolHandler('set_program_metadata', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Beta-surface mutation handlers — backing for the 5 new AnA tools that
+// write into the MDX domain surfaces (UDI, risk management, software
+// lifecycle, Q-Sub briefing section). Tenant-scoped via ToolContext.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_udi_record', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'create_udi_record requires tenant context (organizationId).' });
+  }
+  const deviceName = typeof input.device_name === 'string' ? input.device_name.trim() : '';
+  const udiDi      = typeof input.udi_di === 'string' ? input.udi_di.trim() : '';
+  const agency     = typeof input.issuing_agency === 'string' ? input.issuing_agency : '';
+  if (!deviceName || !udiDi) {
+    return JSON.stringify({ error: 'create_udi_record: device_name and udi_di are required.' });
+  }
+  if (!['GS1', 'HIBCC', 'ICCBBA'].includes(agency)) {
+    return JSON.stringify({ error: "create_udi_record: issuing_agency must be GS1 / HIBCC / ICCBBA." });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+    const { rows } = await getPool().query(
+      `INSERT INTO udi_records (
+         organization_id, program_id, device_name, udi_di, issuing_agency,
+         device_class, product_code, gmdn_code, brand_name, catalog_number,
+         version_or_model, mri_safety, lot_serial, single_use
+       ) VALUES (
+         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, COALESCE($14, false)
+       )
+       RETURNING id, device_name, udi_di, issuing_agency, gudid_status`,
+      [
+        ctx.organizationId, programId, deviceName, udiDi, agency,
+        input.device_class ?? null, input.product_code ?? null, input.gmdn_code ?? null,
+        input.brand_name ?? null, input.catalog_number ?? null,
+        input.version_or_model ?? null, input.mri_safety ?? null, input.lot_serial ?? null,
+        input.single_use ?? null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Created UDI record for "${deviceName}" (${udiDi}, ${agency}).`,
+    });
+  } catch (err: unknown) {
+    const code = (err as { code?: string }).code;
+    if (code === '23505') {
+      return JSON.stringify({ error: 'A UDI record with that UDI-DI already exists in this org.' });
+    }
+    return JSON.stringify({
+      error: `create_udi_record failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('create_risk_item', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'create_risk_item requires tenant context (organizationId).' });
+  }
+  const hazard = typeof input.hazard === 'string' ? input.hazard : '';
+  const harm   = typeof input.harm === 'string' ? input.harm : '';
+  const sev    = typeof input.severity === 'number' ? Math.round(input.severity) : NaN;
+  const prob   = typeof input.probability === 'number' ? Math.round(input.probability) : NaN;
+  if (!hazard || !harm) {
+    return JSON.stringify({ error: 'create_risk_item: hazard and harm are required.' });
+  }
+  if (!Number.isFinite(sev) || sev < 1 || sev > 5) {
+    return JSON.stringify({ error: 'create_risk_item: severity must be 1..5.' });
+  }
+  if (!Number.isFinite(prob) || prob < 1 || prob > 5) {
+    return JSON.stringify({ error: 'create_risk_item: probability must be 1..5.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+    const { rows } = await getPool().query(
+      `INSERT INTO risk_items (
+         organization_id, program_id, ref_code, hazard, hazardous_situation, harm,
+         sequence_of_events, severity, probability, detectability, initial_risk,
+         control_strategy, source, status
+       ) VALUES (
+         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'open'
+       )
+       RETURNING id, ref_code, hazard, harm, severity, probability, initial_risk, status`,
+      [
+        ctx.organizationId, programId,
+        input.ref_code ?? null, hazard, input.hazardous_situation ?? null, harm,
+        input.sequence_of_events ?? null, sev, prob,
+        typeof input.detectability === 'number' ? Math.round(input.detectability) : null,
+        sev * prob,
+        input.control_strategy ?? null, input.source ?? null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Created risk item (initial risk ${sev * prob}). Add risk_controls via add_risk_control to drive residual risk down.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `create_risk_item failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('add_risk_control', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'add_risk_control requires tenant context (organizationId).' });
+  }
+  const itemId = typeof input.risk_item_id === 'number' ? input.risk_item_id : NaN;
+  const desc   = typeof input.description === 'string' ? input.description : '';
+  const ctype  = typeof input.control_type === 'string' ? input.control_type : '';
+  if (!Number.isFinite(itemId) || itemId <= 0) {
+    return JSON.stringify({ error: 'add_risk_control: risk_item_id (positive integer) required.' });
+  }
+  if (!desc) {
+    return JSON.stringify({ error: 'add_risk_control: description required.' });
+  }
+  if (!['inherent_safety', 'protective_measure', 'information_safety'].includes(ctype)) {
+    return JSON.stringify({ error: 'add_risk_control: control_type must be one of inherent_safety / protective_measure / information_safety.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const pool = getPool();
+    /* Tenant gate. */
+    const own = await pool.query(
+      `SELECT 1 FROM risk_items WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [itemId, ctx.organizationId],
+    );
+    if (own.rows.length === 0) {
+      return JSON.stringify({ error: `risk_item ${itemId} not found in this organization.` });
+    }
+    const { rows } = await pool.query(
+      `INSERT INTO risk_controls (
+         risk_item_id, organization_id, description, control_type,
+         implementation_evidence, verification_evidence, effectiveness_evidence,
+         introduces_new_risk, new_risk_item_id, status
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10, 'proposed'))
+       RETURNING id, description, control_type, status`,
+      [
+        itemId, ctx.organizationId, desc, ctype,
+        input.implementation_evidence ?? null,
+        input.verification_evidence ?? null,
+        input.effectiveness_evidence ?? null,
+        input.introduces_new_risk === true,
+        typeof input.new_risk_item_id === 'number' ? input.new_risk_item_id : null,
+        typeof input.status === 'string' ? input.status : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Added ${ctype} control to risk item ${itemId}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `add_risk_control failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('create_software_lifecycle_item', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'create_software_lifecycle_item requires tenant context.' });
+  }
+  const docLevel = typeof input.doc_level === 'string' ? input.doc_level : '';
+  const kind     = typeof input.item_kind === 'string' ? input.item_kind : '';
+  const title    = typeof input.title === 'string' ? input.title : '';
+  if (!['basic', 'enhanced'].includes(docLevel)) {
+    return JSON.stringify({ error: "doc_level must be 'basic' or 'enhanced'." });
+  }
+  if (!title) {
+    return JSON.stringify({ error: 'title is required.' });
+  }
+  const allowedKinds = new Set([
+    'srs', 'sds', 'arch', 'unit_test', 'integration_test', 'system_test',
+    'release_note', 'anomaly_log', 'ots_list', 'sbom', 'pentest',
+    'threat_model', 'risk_control', 'use_error', 'cybersecurity_label',
+  ]);
+  if (!allowedKinds.has(kind)) {
+    return JSON.stringify({ error: `item_kind must be one of: ${Array.from(allowedKinds).join(', ')}.` });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+    const { rows } = await getPool().query(
+      `INSERT INTO software_lifecycle_items (
+         organization_id, program_id, doc_level, safety_class, item_kind,
+         title, identifier, status, evidence_artifact_id, notes
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, 'draft'), $9, $10)
+       RETURNING id, item_kind, title, identifier, status`,
+      [
+        ctx.organizationId, programId, docLevel,
+        typeof input.safety_class === 'string' ? input.safety_class : null,
+        kind, title, input.identifier ?? null,
+        typeof input.status === 'string' ? input.status : null,
+        typeof input.evidence_artifact_id === 'number' ? input.evidence_artifact_id : null,
+        input.notes ?? null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Created ${kind} deliverable (${docLevel} doc level): ${title}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `create_software_lifecycle_item failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('write_q_sub_section', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'write_q_sub_section requires tenant context.' });
+  }
+  const qSubId     = typeof input.q_sub_id === 'string' ? input.q_sub_id : '';
+  const sectionKey = typeof input.section_key === 'string' ? input.section_key : '';
+  const content    = typeof input.content === 'string' ? input.content : '';
+  const note       = typeof input.summary_note === 'string' ? input.summary_note : '';
+  if (!UUID_RE.test(qSubId)) {
+    return JSON.stringify({ error: 'q_sub_id must be a UUID.' });
+  }
+  const allowed = new Set([
+    'submission_type', 'sponsor_information', 'device_description',
+    'regulatory_history', 'issues_for_discussion', 'specific_questions_for_fda',
+    'proposed_meeting_format', 'supporting_information',
+  ]);
+  if (!allowed.has(sectionKey)) {
+    return JSON.stringify({
+      error: `section_key must be one of: ${Array.from(allowed).join(', ')}.`,
+    });
+  }
+  if (!content || content.length < 40) {
+    return JSON.stringify({ error: 'content (string ≥ 40 chars) is required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const pool = getPool();
+    /* Tenant gate: the q_submission's program must belong to the org. */
+    const own = await pool.query(
+      `SELECT 1
+         FROM q_submissions qs
+         JOIN regulatory_programs p ON p.id = qs.program_id::uuid
+        WHERE qs.id = $1 AND p.organization_id = $2`,
+      [qSubId, ctx.organizationId],
+    );
+    if (own.rows.length === 0) {
+      return JSON.stringify({ error: 'Q-Sub not found in this organization.' });
+    }
+    const { rows } = await pool.query(
+      `INSERT INTO q_sub_section_bodies (
+         q_submission_id, organization_id, section_key, content,
+         draft_source, drafted_at, drafted_summary
+       ) VALUES ($1, $2, $3, $4, 'ana', NOW(), NULLIF($5, ''))
+       ON CONFLICT (q_submission_id, section_key) DO UPDATE SET
+         content         = EXCLUDED.content,
+         draft_source    = 'ana',
+         drafted_at      = NOW(),
+         drafted_summary = COALESCE(EXCLUDED.drafted_summary, q_sub_section_bodies.drafted_summary),
+         accepted_at     = NULL,
+         accepted_by     = NULL,
+         updated_at      = NOW()
+       RETURNING id, section_key, draft_source, drafted_at`,
+      [qSubId, ctx.organizationId, sectionKey, content, note],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Wrote ${sectionKey} into Q-Sub ${qSubId}. Awaiting human accept.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `write_q_sub_section failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IVD + diagnostic surface mutation handlers — backs the 7 IVD-specific
+// AnA tools added with migration 20260508. Each adapter takes AnA-style
+// snake_case input + tenant-scopes via ToolContext.organizationId, routes
+// through the existing pool, and returns a compact JSON envelope.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ANAL_STUDY_TYPES = new Set([
+  'accuracy', 'precision', 'linearity', 'limit_of_detection',
+  'limit_of_quantitation', 'analytical_specificity', 'interference',
+  'matrix_comparison', 'reagent_stability', 'sample_stability', 'carryover',
+]);
+
+registerToolHandler('record_analytical_performance_study', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'record_analytical_performance_study requires tenant context.' });
+  }
+  const studyType = typeof input.study_type === 'string' ? input.study_type : '';
+  const title     = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!ANAL_STUDY_TYPES.has(studyType)) {
+    return JSON.stringify({ error: `study_type must be one of: ${Array.from(ANAL_STUDY_TYPES).join(', ')}.` });
+  }
+  if (!title) {
+    return JSON.stringify({ error: 'title is required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+    const { rows } = await getPool().query(
+      `INSERT INTO ivd_analytical_performance (
+         organization_id, program_id, study_type, study_id, title,
+         acceptance_criterion, result_summary, pass_fail, n_samples,
+         n_replicates, sites, analytes, matrix_type
+       ) VALUES (
+         $1,$2,$3,$4,$5,$6,$7,COALESCE($8,'pending'),$9,$10,$11,$12,$13
+       )
+       RETURNING id, study_type, title, pass_fail`,
+      [
+        ctx.organizationId, programId, studyType,
+        typeof input.study_id === 'string' ? input.study_id : null,
+        title,
+        typeof input.acceptance_criterion === 'string' ? input.acceptance_criterion : null,
+        typeof input.result_summary === 'string' ? input.result_summary : null,
+        typeof input.pass_fail === 'string' ? input.pass_fail : null,
+        typeof input.n_samples === 'number' ? Math.round(input.n_samples) : null,
+        typeof input.n_replicates === 'number' ? Math.round(input.n_replicates) : null,
+        Array.isArray(input.sites) ? input.sites.filter((s) => typeof s === 'string') : null,
+        Array.isArray(input.analytes) ? input.analytes.filter((s) => typeof s === 'string') : null,
+        typeof input.matrix_type === 'string' ? input.matrix_type : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Logged ${studyType} study: ${title}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `record_analytical_performance_study failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('record_clinical_performance_study', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'record_clinical_performance_study requires tenant context.' });
+  }
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!title) {
+    return JSON.stringify({ error: 'title is required.' });
+  }
+  const numOrNull = (k: string): number | null =>
+    typeof (input as Record<string, unknown>)[k] === 'number'
+      ? ((input as Record<string, unknown>)[k] as number)
+      : null;
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+    const { rows } = await getPool().query(
+      `INSERT INTO ivd_clinical_performance (
+         organization_id, program_id, study_id, title, intended_population,
+         comparator, comparator_kind, total_subjects, positive_n, negative_n,
+         sensitivity_pct, sensitivity_lower, sensitivity_upper,
+         specificity_pct, specificity_lower, specificity_upper,
+         ppv_pct, npv_pct, prevalence_pct, auc_roc, pre_specified_endpoint_met
+       ) VALUES (
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21
+       )
+       RETURNING id, title, sensitivity_pct, specificity_pct`,
+      [
+        ctx.organizationId, programId,
+        typeof input.study_id === 'string' ? input.study_id : null,
+        title,
+        typeof input.intended_population === 'string' ? input.intended_population : null,
+        typeof input.comparator === 'string' ? input.comparator : null,
+        typeof input.comparator_kind === 'string' ? input.comparator_kind : null,
+        numOrNull('total_subjects'), numOrNull('positive_n'), numOrNull('negative_n'),
+        numOrNull('sensitivity_pct'), numOrNull('sensitivity_lower'), numOrNull('sensitivity_upper'),
+        numOrNull('specificity_pct'), numOrNull('specificity_lower'), numOrNull('specificity_upper'),
+        numOrNull('ppv_pct'), numOrNull('npv_pct'), numOrNull('prevalence_pct'),
+        numOrNull('auc_roc'),
+        typeof input.pre_specified_endpoint_met === 'boolean' ? input.pre_specified_endpoint_met : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Logged clinical performance study: ${title}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `record_clinical_performance_study failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('classify_ivd_device', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'classify_ivd_device requires tenant context.' });
+  }
+  const deviceName = typeof input.device_name === 'string' ? input.device_name.trim() : '';
+  const ivdrClass  = typeof input.ivdr_class === 'string' ? input.ivdr_class : '';
+  if (!deviceName) {
+    return JSON.stringify({ error: 'device_name is required.' });
+  }
+  if (!['A', 'B', 'C', 'D'].includes(ivdrClass)) {
+    return JSON.stringify({ error: 'ivdr_class must be A / B / C / D.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+    const nbRequired = ivdrClass !== 'A';
+    const { rows } = await getPool().query(
+      `INSERT INTO ivdr_classifications (
+         organization_id, program_id, device_name, ivdr_class, classification_rule,
+         rationale, companion_diagnostic, self_test, near_patient_test,
+         notified_body_required, notified_body_name, notified_body_id
+       ) VALUES (
+         $1,$2,$3,$4,$5,$6,COALESCE($7,false),COALESCE($8,false),COALESCE($9,false),
+         $10,$11,$12
+       )
+       RETURNING id, device_name, ivdr_class, notified_body_required`,
+      [
+        ctx.organizationId, programId, deviceName, ivdrClass,
+        typeof input.classification_rule === 'string' ? input.classification_rule : null,
+        typeof input.rationale === 'string' ? input.rationale : null,
+        input.companion_diagnostic === true,
+        input.self_test === true,
+        input.near_patient_test === true,
+        nbRequired,
+        typeof input.notified_body_name === 'string' ? input.notified_body_name : null,
+        typeof input.notified_body_id === 'string' ? input.notified_body_id : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Classified ${deviceName} as IVDR Class ${ivdrClass}${nbRequired ? ' (notified body required)' : ' (self-declaration)'}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `classify_ivd_device failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('create_per_document', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'create_per_document requires tenant context.' });
+  }
+  const deviceName = typeof input.device_name === 'string' ? input.device_name.trim() : '';
+  const version    = typeof input.per_version === 'string' ? input.per_version.trim() : '';
+  if (!deviceName || !version) {
+    return JSON.stringify({ error: 'device_name and per_version are required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+    const { rows } = await getPool().query(
+      `INSERT INTO ivdr_per_documents (
+         organization_id, program_id, device_name, per_version, per_status,
+         scientific_validity_done, analytical_performance_done, clinical_performance_done,
+         benefit_risk_conclusion, pmpf_plan_attached, author_name, author_qualifications,
+         per_date
+       ) VALUES (
+         $1,$2,$3,$4,COALESCE($5,'draft'),
+         COALESCE($6,false),COALESCE($7,false),COALESCE($8,false),
+         $9,COALESCE($10,false),$11,$12,$13
+       )
+       RETURNING id, device_name, per_version, per_status`,
+      [
+        ctx.organizationId, programId, deviceName, version,
+        typeof input.per_status === 'string' ? input.per_status : null,
+        input.scientific_validity_done === true,
+        input.analytical_performance_done === true,
+        input.clinical_performance_done === true,
+        typeof input.benefit_risk_conclusion === 'string' ? input.benefit_risk_conclusion : null,
+        input.pmpf_plan_attached === true,
+        typeof input.author_name === 'string' ? input.author_name : null,
+        typeof input.author_qualifications === 'string' ? input.author_qualifications : null,
+        typeof input.per_date === 'string' ? input.per_date : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Started PER ${version} for ${deviceName}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `create_per_document failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('categorize_clia_complexity', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'categorize_clia_complexity requires tenant context.' });
+  }
+  const testName = typeof input.test_name === 'string' ? input.test_name.trim() : '';
+  const complexity = typeof input.clia_complexity === 'string' ? input.clia_complexity : '';
+  if (!testName) return JSON.stringify({ error: 'test_name is required.' });
+  if (!['waived', 'moderate', 'high'].includes(complexity)) {
+    return JSON.stringify({ error: "clia_complexity must be 'waived', 'moderate', or 'high'." });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+    const { rows } = await getPool().query(
+      `INSERT INTO ivd_clia_categorization (
+         organization_id, program_id, test_name, analyte, clia_complexity,
+         cms_letter_date, cms_letter_ref
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7)
+       RETURNING id, test_name, clia_complexity`,
+      [
+        ctx.organizationId, programId, testName,
+        typeof input.analyte === 'string' ? input.analyte : null,
+        complexity,
+        typeof input.cms_letter_date === 'string' ? input.cms_letter_date : null,
+        typeof input.cms_letter_ref === 'string' ? input.cms_letter_ref : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Categorized ${testName} as CLIA ${complexity}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `categorize_clia_complexity failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('pair_companion_diagnostic', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'pair_companion_diagnostic requires tenant context.' });
+  }
+  const drugName = typeof input.drug_name === 'string' ? input.drug_name.trim() : '';
+  if (!drugName) {
+    return JSON.stringify({ error: 'drug_name is required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.device_program_id === 'string' && UUID_RE.test(input.device_program_id)
+      ? input.device_program_id : null;
+    const { rows } = await getPool().query(
+      `INSERT INTO cdx_pairings (
+         organization_id, device_program_id, drug_name, drug_innn,
+         drug_application_type, drug_application_no, drug_sponsor,
+         indication, biomarker, approval_status, fda_approval_date,
+         ema_approval_date, cdx_label_text
+       ) VALUES (
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,'planned'),$11,$12,$13
+       )
+       RETURNING id, drug_name, biomarker, approval_status`,
+      [
+        ctx.organizationId, programId, drugName,
+        typeof input.drug_innn === 'string' ? input.drug_innn : null,
+        typeof input.drug_application_type === 'string' ? input.drug_application_type : null,
+        typeof input.drug_application_no === 'string' ? input.drug_application_no : null,
+        typeof input.drug_sponsor === 'string' ? input.drug_sponsor : null,
+        typeof input.indication === 'string' ? input.indication : null,
+        typeof input.biomarker === 'string' ? input.biomarker : null,
+        typeof input.approval_status === 'string' ? input.approval_status : null,
+        typeof input.fda_approval_date === 'string' ? input.fda_approval_date : null,
+        typeof input.ema_approval_date === 'string' ? input.ema_approval_date : null,
+        typeof input.cdx_label_text === 'string' ? input.cdx_label_text : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Paired ${drugName} with the device program.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `pair_companion_diagnostic failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('register_ldt', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'register_ldt requires tenant context.' });
+  }
+  const labName  = typeof input.lab_name === 'string' ? input.lab_name.trim() : '';
+  const testName = typeof input.test_name === 'string' ? input.test_name.trim() : '';
+  if (!labName || !testName) {
+    return JSON.stringify({ error: 'lab_name and test_name are required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const { rows } = await getPool().query(
+      `INSERT INTO ldt_inventory (
+         organization_id, lab_name, clia_certificate_no, test_name, analyte,
+         intended_use, first_offered_date, grandfathered,
+         enforcement_discretion_eligible, enforcement_discretion_basis,
+         fda_pathway, current_phase
+       ) VALUES (
+         $1,$2,$3,$4,$5,$6,$7,COALESCE($8,false),$9,$10,$11,COALESCE($12,1)
+       )
+       RETURNING id, lab_name, test_name, current_phase`,
+      [
+        ctx.organizationId, labName,
+        typeof input.clia_certificate_no === 'string' ? input.clia_certificate_no : null,
+        testName,
+        typeof input.analyte === 'string' ? input.analyte : null,
+        typeof input.intended_use === 'string' ? input.intended_use : null,
+        typeof input.first_offered_date === 'string' ? input.first_offered_date : null,
+        input.grandfathered === true,
+        typeof input.enforcement_discretion_eligible === 'boolean' ? input.enforcement_discretion_eligible : null,
+        typeof input.enforcement_discretion_basis === 'string' ? input.enforcement_discretion_basis : null,
+        typeof input.fda_pathway === 'string' ? input.fda_pathway : null,
+        typeof input.current_phase === 'number' ? Math.round(input.current_phase) : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Registered LDT "${testName}" at ${labName}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `register_ldt failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Submission-gateway handlers — package + transmit to FDA ESG / EMA CESP /
+// EUDAMED / PMDA Gateway. Wraps server/services/submission-gateways/.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('package_ectd_for_region', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'package_ectd_for_region requires tenant context.' });
+  }
+  const region = typeof input.region === 'string' ? input.region : '';
+  if (!['fda', 'ema', 'pmda'].includes(region)) {
+    return JSON.stringify({ error: 'region must be fda / ema / pmda.' });
+  }
+  const leaves = Array.isArray(input.leaves) ? (input.leaves as Array<Record<string, unknown>>) : [];
+  if (leaves.length === 0) {
+    return JSON.stringify({ error: 'leaves[] is required and must be non-empty.' });
+  }
+  try {
+    const { packageEctdSubmission } = await import('../submission-gateways/index.js');
+    const path = await import('path');
+    const outputDir =
+      typeof input.output_dir === 'string'
+        ? input.output_dir
+        : path.resolve(process.cwd(), 'tmp', 'submissions', String(ctx.organizationId));
+    const bundle = await packageEctdSubmission({
+      region: region as 'fda' | 'ema' | 'pmda',
+      applicationId: String(input.application_id),
+      sequence:      String(input.sequence),
+      submissionType: String(input.submission_type),
+      sponsorId:     String(input.sponsor_id),
+      sponsorName:   String(input.sponsor_name),
+      productName:   String(input.product_name),
+      leaves: leaves.map((l) => ({
+        ctdSection: String(l.ctd_section),
+        operation:  (String(l.operation) as 'new' | 'append' | 'replace' | 'delete'),
+        sourcePath: String(l.source_path),
+        fileName:   String(l.file_name),
+        title:      String(l.title),
+      })),
+      outputDir,
+    });
+    return JSON.stringify({
+      ok: true,
+      bundlePath:    bundle.path,
+      sha256:        bundle.sha256,
+      sizeBytes:     bundle.sizeBytes,
+      format:        bundle.format,
+      displayName:   bundle.displayName,
+      message: `Packaged ${leaves.length} leaves into a ${region.toUpperCase()} eCTD zip.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `package_ectd_for_region failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('transmit_submission', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'transmit_submission requires tenant context.' });
+  }
+  const region  = typeof input.region === 'string' ? input.region : '';
+  const gateway = typeof input.gateway === 'string' ? input.gateway : '';
+  if (!['fda', 'ema', 'pmda'].includes(region)) {
+    return JSON.stringify({ error: 'region must be fda / ema / pmda.' });
+  }
+  if (!['esg', 'cesp', 'eudamed', 'pmda_gateway'].includes(gateway)) {
+    return JSON.stringify({ error: 'gateway must be esg / cesp / eudamed / pmda_gateway.' });
+  }
+  try {
+    const { getGateway, CredentialError, GatewayError, TransportError } = await import('../submission-gateways/index.js');
+    const gw = getGateway(region as 'fda' | 'ema' | 'pmda', gateway as 'esg' | 'cesp' | 'eudamed' | 'pmda_gateway');
+    const environment = input.environment === 'staging' ? 'staging' : 'production';
+    const result = await gw.transmit({
+      organizationId: ctx.organizationId,
+      userId:         ctx.userId ?? null,
+      programId:      typeof input.program_id === 'string' && UUID_RE.test(input.program_id) ? input.program_id : null,
+      packageId:      typeof input.package_id === 'number' ? input.package_id : null,
+      bundle: {
+        path:        String(input.bundle_path),
+        sha256:      String(input.bundle_sha256),
+        sizeBytes:   Number(input.bundle_size_bytes),
+        format:      String(input.format) as 'ectd' | 'estar' | 'eudamed_register' | 'pmda_ectd',
+      },
+      environment,
+      submissionType: typeof input.submission_type === 'string' ? input.submission_type : undefined,
+      metadata: {
+        applicationId: input.application_id,
+        sequence:      input.sequence,
+        environment,
+      },
+    });
+    return JSON.stringify({ ok: true, ...result });
+  } catch (err: unknown) {
+    /* CredentialError / GatewayError / TransportError surfaced as user-
+       readable messages with the original class preserved so AnA can
+       suggest the right remediation (set env var vs. retry vs. validate). */
+    if (err instanceof Error && err.name === 'CredentialError') {
+      return JSON.stringify({ error: err.message, errorClass: 'auth' });
+    }
+    if (err instanceof Error && err.name === 'TransportError') {
+      return JSON.stringify({ error: err.message, errorClass: 'transport' });
+    }
+    if (err instanceof Error && err.name === 'GatewayError') {
+      return JSON.stringify({ error: err.message, errorClass: 'gateway' });
+    }
+    return JSON.stringify({
+      error: `transmit_submission failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('check_submission_status', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'check_submission_status requires tenant context.' });
+  }
+  const id = typeof input.transmittal_id === 'number' ? input.transmittal_id : NaN;
+  if (!Number.isFinite(id)) {
+    return JSON.stringify({ error: 'transmittal_id (number) is required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const own = await getPool().query<{ region: string; gateway: string }>(
+      `SELECT region, gateway FROM submission_transmittals WHERE id = $1 AND organization_id = $2`,
+      [id, ctx.organizationId],
+    );
+    if (own.rows.length === 0) {
+      return JSON.stringify({ error: `Transmittal ${id} not found in this organization.` });
+    }
+    const { getGateway } = await import('../submission-gateways/index.js');
+    const gw = getGateway(own.rows[0].region as 'fda' | 'ema' | 'pmda', own.rows[0].gateway as 'esg' | 'cesp' | 'eudamed' | 'pmda_gateway');
+    const result = await gw.checkStatus(id);
+    return JSON.stringify({ ok: true, ...result });
+  } catch (err) {
+    return JSON.stringify({
+      error: `check_submission_status failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('get_submission_ack', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'get_submission_ack requires tenant context.' });
+  }
+  const id = typeof input.transmittal_id === 'number' ? input.transmittal_id : NaN;
+  if (!Number.isFinite(id)) {
+    return JSON.stringify({ error: 'transmittal_id (number) is required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const own = await getPool().query<{ region: string; gateway: string }>(
+      `SELECT region, gateway FROM submission_transmittals WHERE id = $1 AND organization_id = $2`,
+      [id, ctx.organizationId],
+    );
+    if (own.rows.length === 0) {
+      return JSON.stringify({ error: `Transmittal ${id} not found in this organization.` });
+    }
+    const { getGateway } = await import('../submission-gateways/index.js');
+    const gw = getGateway(own.rows[0].region as 'fda' | 'ema' | 'pmda', own.rows[0].gateway as 'esg' | 'cesp' | 'eudamed' | 'pmda_gateway');
+    const ack = await gw.downloadAcknowledgment(id);
+    return JSON.stringify({
+      ok: true,
+      transmittalId:   ack.transmittalId,
+      transmissionId:  ack.transmissionId,
+      contentType:     ack.contentType,
+      ackText:         ack.buffer.toString('utf8').slice(0, 4000),
+      receivedAt:      ack.receivedAt,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `get_submission_ack failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('record_validation_finding', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'record_validation_finding requires tenant context.' });
+  }
+  const id = typeof input.transmittal_id === 'number' ? input.transmittal_id : NaN;
+  const validator = typeof input.validator === 'string' ? input.validator : '';
+  const severity  = typeof input.severity === 'string' ? input.severity : '';
+  const message   = typeof input.message === 'string' ? input.message : '';
+  if (!Number.isFinite(id)) {
+    return JSON.stringify({ error: 'transmittal_id (number) is required.' });
+  }
+  if (!['fda_evalidator', 'ema_validator', 'pmda_precheck', 'lorenz', 'globalsubmit', 'internal'].includes(validator)) {
+    return JSON.stringify({ error: 'validator must be one of fda_evalidator | ema_validator | pmda_precheck | lorenz | globalsubmit | internal.' });
+  }
+  if (!['error', 'warning', 'info'].includes(severity)) {
+    return JSON.stringify({ error: 'severity must be error | warning | info.' });
+  }
+  if (!message) {
+    return JSON.stringify({ error: 'message is required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const own = await getPool().query(
+      `SELECT 1 FROM submission_transmittals WHERE id = $1 AND organization_id = $2`,
+      [id, ctx.organizationId],
+    );
+    if (own.rows.length === 0) {
+      return JSON.stringify({ error: `Transmittal ${id} not found in this organization.` });
+    }
+    const { rows } = await getPool().query(
+      `INSERT INTO submission_validation_findings (
+         transmittal_id, organization_id, validator, severity, rule_id, rule_title,
+         message, file_path, line_number
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING id, severity, message`,
+      [
+        id, ctx.organizationId, validator, severity,
+        typeof input.rule_id === 'string' ? input.rule_id : null,
+        typeof input.rule_title === 'string' ? input.rule_title : null,
+        message,
+        typeof input.file_path === 'string' ? input.file_path : null,
+        typeof input.line_number === 'number' ? Math.round(input.line_number) : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Recorded ${severity} finding from ${validator} against transmittal ${id}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `record_validation_finding failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('resolve_validation_finding', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'resolve_validation_finding requires tenant context.' });
+  }
+  const id = typeof input.finding_id === 'number' ? input.finding_id : NaN;
+  if (!Number.isFinite(id)) {
+    return JSON.stringify({ error: 'finding_id (number) is required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const { rows } = await getPool().query(
+      `UPDATE submission_validation_findings
+          SET resolved        = true,
+              resolved_at     = NOW(),
+              resolved_by     = $3,
+              resolution_note = $4
+        WHERE id = $1 AND organization_id = $2 AND resolved = false
+        RETURNING id, resolved_at`,
+      [
+        id, ctx.organizationId,
+        ctx.userId ?? null,
+        typeof input.resolution_note === 'string' ? input.resolution_note : null,
+      ],
+    );
+    if (rows.length === 0) {
+      return JSON.stringify({ error: `Finding ${id} not found, or already resolved.` });
+    }
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Resolved validation finding ${id}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `resolve_validation_finding failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('gateway_configuration_status', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'gateway_configuration_status requires tenant context.' });
+  }
+  try {
+    const { gatewayConfigurationStatus } = await import('../submission-gateways/index.js');
+    const environment = input.environment === 'staging' ? 'staging' : 'production';
+    const status = await gatewayConfigurationStatus(ctx.organizationId, environment);
+    return JSON.stringify({
+      ok: true,
+      environment,
+      gateways: status,
+      message: `${status.filter((s) => s.configured).length} of ${status.length} gateways configured for ${environment}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `gateway_configuration_status failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Notifications + clinical-study + memory handlers (migration 20260510).
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('fire_notification', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'fire_notification requires tenant context.' });
+  }
+  const category = typeof input.category === 'string' ? input.category : '';
+  const severity = typeof input.severity === 'string' ? input.severity : '';
+  const title    = typeof input.title === 'string' ? input.title.trim() : '';
+  const allowedCat = new Set([
+    'submission_status', 'validation_finding', 'q_sub_response', 'cdx_pairing',
+    'ldt_milestone_due', 'gateway_credential_expiring', 'ana_draft_pending',
+    'risk_residual_high', 'capa_due', 'study_deviation', 'enrollment_milestone',
+    'admin', 'system',
+  ]);
+  if (!allowedCat.has(category)) {
+    return JSON.stringify({ error: `category must be one of: ${Array.from(allowedCat).join(', ')}.` });
+  }
+  if (!['info', 'warning', 'critical'].includes(severity)) {
+    return JSON.stringify({ error: 'severity must be info | warning | critical.' });
+  }
+  if (!title) {
+    return JSON.stringify({ error: 'title is required.' });
+  }
+  try {
+    const { createNotification } = await import('../notifications/notification-service.js');
+    const id = await createNotification({
+      organizationId:  ctx.organizationId,
+      recipientUserId: typeof input.recipient_user_id === 'number' ? input.recipient_user_id : null,
+      recipientRole:   typeof input.recipient_role === 'string' ? input.recipient_role : null,
+      category,
+      severity:        severity as 'info' | 'warning' | 'critical',
+      title,
+      body:            typeof input.body === 'string' ? input.body : null,
+      resourceType:    typeof input.resource_type === 'string' ? input.resource_type : null,
+      resourceId:      typeof input.resource_id === 'string' ? input.resource_id : null,
+      actionUrl:       typeof input.action_url === 'string' ? input.action_url : null,
+    });
+    return JSON.stringify({
+      ok: true, notificationId: id,
+      message: `Notification #${id} fired (${severity} · ${category}).`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `fire_notification failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('create_clinical_study', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'create_clinical_study requires tenant context.' });
+  }
+  const studyId = typeof input.study_id === 'string' ? input.study_id.trim() : '';
+  const title   = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!studyId || !title) {
+    return JSON.stringify({ error: 'study_id and title are required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+    const { rows } = await getPool().query(
+      `INSERT INTO clinical_studies (
+         organization_id, program_id, study_id, nct_id, title, phase, study_type,
+         primary_endpoint, sample_size_planned, start_date, ide_number, irb_approved
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,COALESCE($12,false))
+       RETURNING id, study_id, title, status`,
+      [
+        ctx.organizationId, programId, studyId,
+        typeof input.nct_id === 'string' ? input.nct_id : null,
+        title,
+        typeof input.phase === 'string' ? input.phase : null,
+        typeof input.study_type === 'string' ? input.study_type : null,
+        typeof input.primary_endpoint === 'string' ? input.primary_endpoint : null,
+        typeof input.sample_size_planned === 'number' ? Math.round(input.sample_size_planned) : null,
+        typeof input.start_date === 'string' ? input.start_date : null,
+        typeof input.ide_number === 'string' ? input.ide_number : null,
+        input.irb_approved === true,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Opened clinical study "${title}" (id ${rows[0].id}).`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `create_clinical_study failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('log_study_deviation', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'log_study_deviation requires tenant context.' });
+  }
+  const studyId = typeof input.study_id === 'number' ? input.study_id : NaN;
+  const date    = typeof input.deviation_date === 'string' ? input.deviation_date : '';
+  const cat     = typeof input.category === 'string' ? input.category : '';
+  const desc    = typeof input.description === 'string' ? input.description : '';
+  if (!Number.isFinite(studyId)) {
+    return JSON.stringify({ error: 'study_id (number) is required.' });
+  }
+  if (!date || !cat || !desc) {
+    return JSON.stringify({ error: 'deviation_date, category, and description are required.' });
+  }
+  if (!['major', 'minor', 'inclusion_exclusion', 'visit_window', 'consent', 'protocol', 'other'].includes(cat)) {
+    return JSON.stringify({ error: 'category invalid.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    /* Tenant gate. */
+    const own = await getPool().query(
+      `SELECT 1 FROM clinical_studies WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [studyId, ctx.organizationId],
+    );
+    if (own.rows.length === 0) {
+      return JSON.stringify({ error: `Study ${studyId} not found in this organization.` });
+    }
+    const { rows } = await getPool().query(
+      `INSERT INTO clinical_study_deviations (
+         study_id, site_id, organization_id, deviation_date, category, description,
+         subject_id, reported_by, capa_required
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,COALESCE($9,false))
+       RETURNING id, category`,
+      [
+        studyId,
+        typeof input.site_id === 'number' ? input.site_id : null,
+        ctx.organizationId, date, cat, desc,
+        typeof input.subject_id === 'string' ? input.subject_id : null,
+        ctx.userId ?? null,
+        input.capa_required === true,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Logged ${cat} deviation against study ${studyId}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `log_study_deviation failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('log_study_ae', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'log_study_ae requires tenant context.' });
+  }
+  const studyId = typeof input.study_id === 'number' ? input.study_id : NaN;
+  const aeId    = typeof input.ae_id === 'string' ? input.ae_id.trim() : '';
+  const date    = typeof input.ae_date === 'string' ? input.ae_date : '';
+  if (!Number.isFinite(studyId) || !aeId || !date) {
+    return JSON.stringify({ error: 'study_id, ae_id, and ae_date are required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const own = await getPool().query(
+      `SELECT 1 FROM clinical_studies WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [studyId, ctx.organizationId],
+    );
+    if (own.rows.length === 0) {
+      return JSON.stringify({ error: `Study ${studyId} not found in this organization.` });
+    }
+    const { rows } = await getPool().query(
+      `INSERT INTO clinical_study_aes (
+         study_id, site_id, organization_id, ae_id, subject_id, ae_date,
+         serious, unanticipated, device_related, severity, outcome,
+         preferred_term, soc
+       ) VALUES ($1,$2,$3,$4,$5,$6,COALESCE($7,false),COALESCE($8,false),$9,$10,$11,$12,$13)
+       RETURNING id, ae_id, serious, unanticipated`,
+      [
+        studyId,
+        typeof input.site_id === 'number' ? input.site_id : null,
+        ctx.organizationId, aeId,
+        typeof input.subject_id === 'string' ? input.subject_id : null,
+        date,
+        input.serious === true,
+        input.unanticipated === true,
+        typeof input.device_related === 'string' ? input.device_related : null,
+        typeof input.severity === 'string' ? input.severity : null,
+        typeof input.outcome === 'string' ? input.outcome : null,
+        typeof input.preferred_term === 'string' ? input.preferred_term : null,
+        typeof input.soc === 'string' ? input.soc : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Logged AE ${aeId} against study ${studyId}${input.serious === true ? ' (serious)' : ''}${input.unanticipated === true ? ' (UADE)' : ''}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `log_study_ae failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('record_endpoint_result', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'record_endpoint_result requires tenant context.' });
+  }
+  const studyId = typeof input.study_id === 'number' ? input.study_id : NaN;
+  const kind    = typeof input.endpoint_kind === 'string' ? input.endpoint_kind : '';
+  const name    = typeof input.name === 'string' ? input.name.trim() : '';
+  if (!Number.isFinite(studyId) || !name) {
+    return JSON.stringify({ error: 'study_id and name are required.' });
+  }
+  if (!['primary', 'secondary', 'exploratory', 'safety'].includes(kind)) {
+    return JSON.stringify({ error: 'endpoint_kind must be primary | secondary | exploratory | safety.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const own = await getPool().query(
+      `SELECT 1 FROM clinical_studies WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [studyId, ctx.organizationId],
+    );
+    if (own.rows.length === 0) {
+      return JSON.stringify({ error: `Study ${studyId} not found in this organization.` });
+    }
+    const { rows } = await getPool().query(
+      `INSERT INTO clinical_study_endpoints (
+         study_id, organization_id, endpoint_kind, name, description, pre_specified,
+         target_value, observed_value, ci_lower, ci_upper, p_value, met, analysis_note
+       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,true),$7,$8,$9,$10,$11,$12,$13)
+       RETURNING id, endpoint_kind, name, met`,
+      [
+        studyId, ctx.organizationId, kind, name,
+        typeof input.description === 'string' ? input.description : null,
+        typeof input.pre_specified === 'boolean' ? input.pre_specified : null,
+        typeof input.target_value === 'string' ? input.target_value : null,
+        typeof input.observed_value === 'string' ? input.observed_value : null,
+        typeof input.ci_lower === 'string' ? input.ci_lower : null,
+        typeof input.ci_upper === 'string' ? input.ci_upper : null,
+        typeof input.p_value === 'number' ? input.p_value : null,
+        typeof input.met === 'boolean' ? input.met : null,
+        typeof input.analysis_note === 'string' ? input.analysis_note : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Recorded ${kind} endpoint "${name}".`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `record_endpoint_result failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('verify_memory_atom', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'verify_memory_atom requires tenant context.' });
+  }
+  const id = typeof input.memory_id === 'number' ? input.memory_id : NaN;
+  if (!Number.isFinite(id)) {
+    return JSON.stringify({ error: 'memory_id (number) is required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const { rows } = await getPool().query(
+      `UPDATE client_memory_entries
+          SET is_verified_by_user = true,
+              verified_at = NOW(),
+              verified_by = $3,
+              importance_level = CASE WHEN $4 = true AND importance_level IN ('low','medium')
+                                      THEN 'high'
+                                      ELSE importance_level END,
+              updated_at = NOW()
+        WHERE id = $1 AND organization_id = $2
+        RETURNING id, importance_level, is_verified_by_user`,
+      [id, ctx.organizationId, ctx.userId ?? null, input.bump_importance === true],
+    );
+    if (rows.length === 0) {
+      return JSON.stringify({ error: `Memory atom ${id} not found in this organization.` });
+    }
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Verified memory atom ${id}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `verify_memory_atom failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// QMS + Labeling + Search handlers (migration 20260511).
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_qms_document', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'create_qms_document requires tenant context.' });
+  const docNumber = typeof input.doc_number === 'string' ? input.doc_number.trim() : '';
+  const title     = typeof input.title === 'string' ? input.title.trim() : '';
+  const docType   = typeof input.doc_type === 'string' ? input.doc_type : '';
+  if (!docNumber || !title) return JSON.stringify({ error: 'doc_number and title are required.' });
+  if (!['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol'].includes(docType)) {
+    return JSON.stringify({ error: 'doc_type invalid.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const { rows } = await getPool().query(
+      `INSERT INTO qms_documents (
+         organization_id, doc_number, title, doc_type, category, version, status,
+         author_id
+       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,'1.0'),'draft',$7)
+       RETURNING id, doc_number, title, status`,
+      [
+        ctx.organizationId, docNumber, title, docType,
+        typeof input.category === 'string' ? input.category : null,
+        typeof input.version === 'string' ? input.version : null,
+        ctx.userId ?? null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Created QMS document ${docNumber} (${docType}, draft).`,
+    });
+  } catch (err: unknown) {
+    const code = (err as { code?: string }).code;
+    if (code === '23505') return JSON.stringify({ error: 'A document with that number already exists.' });
+    return JSON.stringify({
+      error: `create_qms_document failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('approve_qms_document', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'approve_qms_document requires tenant context.' });
+  const id = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
+  try {
+    const { getPool } = await import('../../db.js');
+    const { rows } = await getPool().query(
+      `UPDATE qms_documents
+          SET status = 'effective',
+              approver_id = $3,
+              approved_at = NOW(),
+              effective_date = COALESCE($4::date, effective_date, NOW()::date),
+              updated_at = NOW()
+        WHERE id = $1 AND organization_id = $2
+          AND status IN ('draft','in_review')
+          AND deleted_at IS NULL
+        RETURNING id, status, effective_date`,
+      [id, ctx.organizationId, ctx.userId ?? null,
+       typeof input.effective_date === 'string' ? input.effective_date : null],
+    );
+    if (rows.length === 0) {
+      return JSON.stringify({ error: 'Document not found, or not in draft/in_review state.' });
+    }
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Approved document ${id} — effective ${rows[0].effective_date}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `approve_qms_document failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('ack_training', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'ack_training requires tenant context.' });
+  if (!ctx.userId) return JSON.stringify({ error: 'ack_training requires user context.' });
+  const docId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isFinite(docId)) return JSON.stringify({ error: 'document_id (number) is required.' });
+  try {
+    const { getPool } = await import('../../db.js');
+    const doc = await getPool().query<{ version: string }>(
+      `SELECT version FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [docId, ctx.organizationId],
+    );
+    if (doc.rows.length === 0) {
+      return JSON.stringify({ error: `Document ${docId} not found in this organization.` });
+    }
+    const { rows } = await getPool().query(
+      `INSERT INTO qms_training_records (
+         organization_id, user_id, document_id, document_version,
+         acknowledgment_method, quiz_score, expires_at
+       ) VALUES ($1, $2, $3, $4, COALESCE($5,'attestation'), $6, NOW() + INTERVAL '365 days')
+       RETURNING id, document_version, expires_at`,
+      [
+        ctx.organizationId, ctx.userId, docId, doc.rows[0].version,
+        typeof input.method === 'string' ? input.method : null,
+        typeof input.quiz_score === 'number' ? Math.round(input.quiz_score) : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Recorded training acknowledgment for document ${docId} version ${doc.rows[0].version}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `ack_training failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('register_supplier', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'register_supplier requires tenant context.' });
+  const name = typeof input.supplier_name === 'string' ? input.supplier_name.trim() : '';
+  const crit = typeof input.criticality === 'string' ? input.criticality : '';
+  if (!name) return JSON.stringify({ error: 'supplier_name is required.' });
+  if (!['critical', 'major', 'minor'].includes(crit)) {
+    return JSON.stringify({ error: 'criticality must be critical | major | minor.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const { rows } = await getPool().query(
+      `INSERT INTO qms_suppliers (
+         organization_id, supplier_name, supplier_code, scope, criticality,
+         approval_status, iso_certifications
+       ) VALUES ($1,$2,$3,$4,$5,'pending',$6)
+       RETURNING id, supplier_name, criticality, approval_status`,
+      [
+        ctx.organizationId, name,
+        typeof input.supplier_code === 'string' ? input.supplier_code : null,
+        typeof input.scope === 'string' ? input.scope : null,
+        crit,
+        Array.isArray(input.iso_certifications)
+          ? (input.iso_certifications as unknown[]).filter((s) => typeof s === 'string')
+          : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Registered ${crit} supplier "${name}" (pending approval).`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `register_supplier failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('log_nonconforming_product', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'log_nonconforming_product requires tenant context.' });
+  const ncNumber = typeof input.nc_number === 'string' ? input.nc_number.trim() : '';
+  const description = typeof input.description === 'string' ? input.description : '';
+  if (!ncNumber || !description) {
+    return JSON.stringify({ error: 'nc_number and description are required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const { rows } = await getPool().query(
+      `INSERT INTO qms_nonconforming_products (
+         organization_id, nc_number, device_name, lot_or_serial, source, description,
+         detected_by, disposition
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,'pending')
+       RETURNING id, nc_number, source, disposition`,
+      [
+        ctx.organizationId, ncNumber,
+        typeof input.device_name === 'string' ? input.device_name : null,
+        typeof input.lot_or_serial === 'string' ? input.lot_or_serial : null,
+        typeof input.source === 'string' ? input.source : null,
+        description, ctx.userId ?? null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Logged NC ${ncNumber} (disposition pending).`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `log_nonconforming_product failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('create_labeling_document', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'create_labeling_document requires tenant context.' });
+  const deviceName = typeof input.device_name === 'string' ? input.device_name.trim() : '';
+  const docKind    = typeof input.doc_kind === 'string' ? input.doc_kind : '';
+  const allowedKind = new Set(['ifu', 'package_insert', 'patient_label', 'operator_manual', 'service_manual', 'quick_ref', 'box_label']);
+  if (!deviceName) return JSON.stringify({ error: 'device_name is required.' });
+  if (!allowedKind.has(docKind)) return JSON.stringify({ error: 'doc_kind invalid.' });
+  try {
+    const { getPool } = await import('../../db.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+    const { rows } = await getPool().query(
+      `INSERT INTO labeling_documents (
+         organization_id, program_id, device_name, doc_kind, language, region, udi_di
+       ) VALUES ($1,$2,$3,$4,COALESCE($5,'en'),$6,$7)
+       RETURNING id, device_name, doc_kind, language`,
+      [
+        ctx.organizationId, programId, deviceName, docKind,
+        typeof input.language === 'string' ? input.language : null,
+        typeof input.region === 'string' ? input.region : null,
+        typeof input.udi_di === 'string' ? input.udi_di : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Created ${docKind} for ${deviceName}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `create_labeling_document failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('add_labeling_translation', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'add_labeling_translation requires tenant context.' });
+  const docId = typeof input.labeling_document_id === 'number' ? input.labeling_document_id : NaN;
+  const lang  = typeof input.language === 'string' ? input.language.trim() : '';
+  if (!Number.isFinite(docId)) return JSON.stringify({ error: 'labeling_document_id (number) is required.' });
+  if (!lang) return JSON.stringify({ error: 'language is required.' });
+  try {
+    const { getPool } = await import('../../db.js');
+    const own = await getPool().query(
+      `SELECT 1 FROM labeling_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [docId, ctx.organizationId],
+    );
+    if (own.rows.length === 0) {
+      return JSON.stringify({ error: `Labeling document ${docId} not found.` });
+    }
+    const { rows } = await getPool().query(
+      `INSERT INTO labeling_translations (
+         labeling_document_id, organization_id, language, translator,
+         translation_method, back_translation_verified, status
+       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,false),'pending')
+       RETURNING id, language, status`,
+      [
+        docId, ctx.organizationId, lang,
+        typeof input.translator === 'string' ? input.translator : null,
+        typeof input.translation_method === 'string' ? input.translation_method : null,
+        input.back_translation_verified === true,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Added ${lang} translation for document ${docId}.`,
+    });
+  } catch (err: unknown) {
+    const code = (err as { code?: string }).code;
+    if (code === '23505') {
+      return JSON.stringify({ error: `A translation for ${lang} already exists on document ${docId}.` });
+    }
+    return JSON.stringify({
+      error: `add_labeling_translation failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('add_labeling_symbol', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'add_labeling_symbol requires tenant context.' });
+  const docId = typeof input.labeling_document_id === 'number' ? input.labeling_document_id : NaN;
+  const code  = typeof input.symbol_code === 'string' ? input.symbol_code.trim() : '';
+  const sname = typeof input.symbol_name === 'string' ? input.symbol_name.trim() : '';
+  if (!Number.isFinite(docId)) return JSON.stringify({ error: 'labeling_document_id (number) is required.' });
+  if (!code || !sname) return JSON.stringify({ error: 'symbol_code and symbol_name are required.' });
+  try {
+    const { getPool } = await import('../../db.js');
+    const own = await getPool().query(
+      `SELECT 1 FROM labeling_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [docId, ctx.organizationId],
+    );
+    if (own.rows.length === 0) {
+      return JSON.stringify({ error: `Labeling document ${docId} not found.` });
+    }
+    const { rows } = await getPool().query(
+      `INSERT INTO labeling_symbols (
+         labeling_document_id, organization_id, symbol_code, symbol_name,
+         description, required_by
+       ) VALUES ($1,$2,$3,$4,$5,$6)
+       RETURNING id, symbol_code, symbol_name`,
+      [
+        docId, ctx.organizationId, code, sname,
+        typeof input.description === 'string' ? input.description : null,
+        Array.isArray(input.required_by)
+          ? (input.required_by as unknown[]).filter((s) => typeof s === 'string')
+          : null,
+      ],
+    );
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Added symbol ${code} (${sname}) to document ${docId}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `add_labeling_symbol failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('global_search', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'global_search requires tenant context.' });
+  const q = typeof input.q === 'string' ? input.q.trim() : '';
+  if (q.length < 2) return JSON.stringify({ error: 'q must be at least 2 chars.' });
+  try {
+    /* Forward to the route layer's search function. We reuse the routes
+       module's exported router only indirectly — calling the underlying
+       SQL is simpler than re-exporting the route handler. */
+    const { getPool } = await import('../../db.js');
+    const ilike = `%${q.replace(/[%_]/g, (m) => `\\${m}`)}%`;
+    const limit = typeof input.limit === 'number' ? Math.min(100, Math.max(1, Math.round(input.limit))) : 25;
+    const fanout = await Promise.allSettled([
+      getPool().query(
+        `SELECT id, name, code, status FROM regulatory_programs
+          WHERE organization_id = $1 AND deleted_at IS NULL
+            AND (name ILIKE $2 OR COALESCE(code,'') ILIKE $2 OR COALESCE(description,'') ILIKE $2)
+          LIMIT $3`, [ctx.organizationId, ilike, limit]),
+      getPool().query(
+        `SELECT id, title, ctd_section, status FROM concept2cure_artifacts
+          WHERE organization_id = $1 AND status != 'archived' AND title ILIKE $2
+          ORDER BY updated_at DESC LIMIT $3`, [ctx.organizationId, ilike, limit]),
+    ]);
+    const hits: Array<Record<string, unknown>> = [];
+    if (fanout[0].status === 'fulfilled') {
+      for (const r of fanout[0].value.rows) hits.push({ type: 'program', ...r });
+    }
+    if (fanout[1].status === 'fulfilled') {
+      for (const r of fanout[1].value.rows) hits.push({ type: 'artifact', ...r });
+    }
+    return JSON.stringify({
+      ok: true, query: q, hits, count: hits.length,
+      message: `Found ${hits.length} hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `global_search failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Legacy-import handlers (migration 20260512).
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('start_legacy_import', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'start_legacy_import requires tenant context.' });
+  const sourcePath = typeof input.source_path === 'string' ? input.source_path : '';
+  if (!sourcePath) return JSON.stringify({ error: 'source_path (string) is required.' });
+  try {
+    const { getPool } = await import('../../db.js');
+    const { detectArchive } = await import('../legacy-importer/detector.js');
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
+
+    /* Create job row. */
+    const jobInsert = await getPool().query<{ id: number }>(
+      `INSERT INTO import_jobs (
+         organization_id, program_id, source_path, source_kind, source_filename,
+         status, requested_by
+       ) VALUES ($1, $2, $3, COALESCE($4,'zip'), $5, 'detecting', $6)
+       RETURNING id`,
+      [
+        ctx.organizationId, programId, sourcePath,
+        typeof input.source_kind === 'string' ? input.source_kind : null,
+        typeof input.source_filename === 'string' ? input.source_filename : null,
+        ctx.userId ?? null,
+      ],
+    );
+    const jobId = jobInsert.rows[0].id;
+
+    /* Run detection. */
+    const detected = await detectArchive(sourcePath);
+    let mappedCount = 0;
+    for (const f of detected.files) {
+      const status = f.detectedKind === 'leaf' && f.mappingConfidence >= 0.5 ? 'mapped'
+                   : f.detectedKind === 'leaf' ? 'pending'
+                   : 'skipped';
+      if (status === 'mapped') mappedCount++;
+      await getPool().query(
+        `INSERT INTO import_job_files (
+           import_job_id, organization_id, relative_path, file_name, size_bytes,
+           sha256, detected_kind, mapped_ctd_section, mapped_section_key,
+           mapped_artifact_kind, mapping_confidence, mapping_source, status
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+        [
+          jobId, ctx.organizationId, f.relativePath, f.fileName, f.sizeBytes,
+          f.sha256, f.detectedKind, f.mappedCtdSection, f.mappedSectionKey,
+          f.mappedArtifactKind, f.mappingConfidence, f.mappingSource, status,
+        ],
+      );
+    }
+    for (const fnd of detected.findings) {
+      await getPool().query(
+        `INSERT INTO import_job_findings (import_job_id, organization_id, severity, code, message, file_path)
+         VALUES ($1,$2,$3,$4,$5,$6)`,
+        [jobId, ctx.organizationId, fnd.severity, fnd.code, fnd.message, fnd.filePath ?? null],
+      );
+    }
+    const errorCount = detected.findings.filter((f) => f.severity === 'error').length;
+    await getPool().query(
+      `UPDATE import_jobs
+          SET detected_format = $2, detected_region = $3,
+              detected_application_id = $4, detected_sequence = $5, detected_sponsor = $6,
+              file_count = $7, mapped_count = $8,
+              error_count = $9, status = 'ready_for_review', updated_at = NOW()
+        WHERE id = $1`,
+      [
+        jobId, detected.format, detected.region,
+        detected.applicationId, detected.sequence, detected.sponsor,
+        detected.files.length, mappedCount, errorCount,
+      ],
+    );
+
+    return JSON.stringify({
+      ok: true,
+      jobId,
+      detectedFormat: detected.format,
+      detectedRegion: detected.region,
+      fileCount: detected.files.length,
+      mappedCount,
+      errorCount,
+      message: `Detected ${detected.format} archive · ${detected.files.length} files (${mappedCount} mapped, ${errorCount} errors). Review then call approve_import.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `start_legacy_import failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('override_import_mapping', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'override_import_mapping requires tenant context.' });
+  const jobId  = typeof input.import_job_id === 'number' ? input.import_job_id : NaN;
+  const fileId = typeof input.file_id === 'number' ? input.file_id : NaN;
+  if (!Number.isFinite(jobId) || !Number.isFinite(fileId)) {
+    return JSON.stringify({ error: 'import_job_id and file_id (numbers) are required.' });
+  }
+  const COL: Record<string, string> = {
+    mapped_ctd_section: 'mapped_ctd_section',
+    mapped_section_key: 'mapped_section_key',
+    mapped_artifact_kind: 'mapped_artifact_kind',
+    status: 'status',
+  };
+  const setFrags: string[] = []; const args: unknown[] = [];
+  for (const [k, v] of Object.entries(input)) {
+    if (k === 'import_job_id' || k === 'file_id') continue;
+    const col = COL[k]; if (!col || v === undefined) continue;
+    args.push(v); setFrags.push(`${col} = $${args.length}`);
+  }
+  setFrags.push(`mapping_source = 'ana'`, `mapping_confidence = 1.00`);
+  if (setFrags.length === 0) return JSON.stringify({ error: 'No fields to update.' });
+  args.push(fileId, jobId, ctx.organizationId);
+  try {
+    const { getPool } = await import('../../db.js');
+    const { rows } = await getPool().query(
+      `UPDATE import_job_files SET ${setFrags.join(', ')}
+        WHERE id = $${args.length - 2} AND import_job_id = $${args.length - 1}
+          AND organization_id = $${args.length}
+        RETURNING id, status, mapped_ctd_section, mapped_section_key`,
+      args,
+    );
+    if (rows.length === 0) {
+      return JSON.stringify({ error: `Import file ${fileId} not found in job ${jobId}.` });
+    }
+    return JSON.stringify({
+      ok: true, ...rows[0],
+      message: `Overrode mapping on file ${fileId} (status ${rows[0].status}).`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `override_import_mapping failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('approve_import', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'approve_import requires tenant context.' });
+  if (!ctx.userId) return JSON.stringify({ error: 'approve_import requires user context.' });
+  const jobId     = typeof input.import_job_id === 'number' ? input.import_job_id : NaN;
+  const projectId = typeof input.project_id === 'number' ? input.project_id : NaN;
+  if (!Number.isFinite(jobId) || !Number.isFinite(projectId)) {
+    return JSON.stringify({ error: 'import_job_id and project_id (numbers) are required.' });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const pool = getPool();
+    const own = await pool.query<{ status: string }>(
+      `SELECT status FROM import_jobs WHERE id = $1 AND organization_id = $2`,
+      [jobId, ctx.organizationId],
+    );
+    if (own.rows.length === 0) {
+      return JSON.stringify({ error: `Import job ${jobId} not found.` });
+    }
+    if (own.rows[0].status !== 'ready_for_review') {
+      return JSON.stringify({ error: `Job is not in ready_for_review state (current: ${own.rows[0].status}).` });
+    }
+    const files = await pool.query<{
+      id: number; relative_path: string; file_name: string;
+      mapped_ctd_section: string | null; mapped_artifact_kind: string | null;
+      sha256: string | null;
+    }>(
+      `SELECT id, relative_path, file_name, mapped_ctd_section,
+              mapped_artifact_kind, sha256
+         FROM import_job_files
+        WHERE import_job_id = $1 AND status = 'mapped'`,
+      [jobId],
+    );
+    let createdCount = 0;
+    for (const f of files.rows) {
+      try {
+        const ins = await pool.query<{ id: number }>(
+          `INSERT INTO concept2cure_artifacts (
+             artifact_id, project_id, organization_id, type, category, title,
+             content, content_hash, ctd_section, status, created_by_id, metadata
+           ) VALUES ($1, $2, $3, 'imported', 'document', $4, '', $5, $6, 'draft', $7,
+             jsonb_build_object('importJobId', $8, 'sourcePath', $9, 'artifactKind', $10))
+           RETURNING id`,
+          [
+            `import-${jobId}-${f.id}`, projectId, ctx.organizationId,
+            f.mapped_artifact_kind ? `${f.mapped_artifact_kind.replace(/_/g, ' ')} — ${f.file_name}` : f.file_name,
+            f.sha256, f.mapped_ctd_section, ctx.userId,
+            jobId, f.relative_path, f.mapped_artifact_kind,
+          ],
+        );
+        await pool.query(
+          `UPDATE import_job_files SET artifact_id = $1, status = 'imported' WHERE id = $2`,
+          [ins.rows[0].id, f.id],
+        );
+        createdCount++;
+      } catch {
+        /* per-file error already swallowed; surface count below. */
+      }
+    }
+    await pool.query(
+      `UPDATE import_jobs
+          SET status = 'completed', approved_by = $2, approved_at = NOW(),
+              artifacts_created = $3, updated_at = NOW()
+        WHERE id = $1`,
+      [jobId, ctx.userId, createdCount],
+    );
+    return JSON.stringify({
+      ok: true, jobId, artifactsCreated: createdCount,
+      message: `Imported ${createdCount} artifact(s) from job ${jobId} into project ${projectId}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `approve_import failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MDX kit-section write-back handler — closes the loop between AnA's drafting
 // and the kit's section editors. Persists drafted content into
 // cerv2_510k_sections with draft_source='ana' so the MDX surfaces can render
