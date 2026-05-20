@@ -382,6 +382,130 @@ export async function getModelInfo(): Promise<ModelInfo[]> {
   return out;
 }
 
+// ─── Composite readiness (single-call enrichment of scoreSubmissionDraft) ────
+//
+// This is a thin enrichment on top of `scoreSubmissionDraft` — it adds the
+// three signals the UI also needs to render a "ready to file?" verdict:
+//   • latest template conformance (from `template_validations`)
+//   • active proactive warnings count + severity bucket (existing
+//     `getActiveWarnings`, no new infra)
+//   • signal reliability (existing `getCachedSignalReliability`, no new infra)
+//
+// Deliberately NOT a new orchestrator service. We already have the
+// orchestrator (`scoreSubmissionDraft`); this just attaches what's missing.
+
+export interface ReadinessSummary {
+  readonly engineVersion: string;
+  /** 0..100 composite score, null when nothing contributed. */
+  readonly compositeScore: number | null;
+  readonly band: 'critical' | 'high_risk' | 'caution' | 'ready';
+  readonly riskScores: ScoreDraftResult;
+  readonly templateConformance: number | null;
+  readonly templateName: string | null;
+  readonly activeWarnings: number;
+  readonly highSeverityWarnings: number;
+  readonly signalReliability: number | null;
+  readonly recommendations: readonly string[];
+}
+
+function bandFromScore(score: number | null): ReadinessSummary['band'] {
+  if (score === null) return 'caution';
+  if (score < 35) return 'critical';
+  if (score < 60) return 'high_risk';
+  if (score < 80) return 'caution';
+  return 'ready';
+}
+
+export async function computeReadiness(input: ScoreDraftInput & { artifactId?: string }): Promise<ReadinessSummary> {
+  // Delegate to the existing orchestrator for completeness + risk scoring.
+  const riskScores = await scoreSubmissionDraft(input);
+
+  // Pull the three missing pieces from existing services (no new tables, no
+  // new aggregation paths). All three return null/0 gracefully when there's
+  // no data.
+  const [warnings, reliability, templateLatest] = await Promise.all([
+    (async () => {
+      const { getActiveWarnings } = await import('./counterfactual-replay.js');
+      return getActiveWarnings({
+        organizationId: input.organizationId,
+        projectId: input.projectId,
+        artifactId: input.artifactId,
+      });
+    })(),
+    input.projectId
+      ? (async () => {
+          const { getCachedSignalReliability } = await import('./learning-loop-service.js');
+          return getCachedSignalReliability(input.projectId!, input.organizationId);
+        })()
+      : Promise.resolve(null),
+    pool.query<{ conformance_score: string; template_name: string }>(
+      `SELECT tv.conformance_score, dt.template_name
+         FROM intelligence.template_validations tv
+         JOIN intelligence.document_templates dt ON dt.id = tv.template_id
+        WHERE tv.organization_id = $1
+          AND ($2::bigint IS NULL OR tv.project_id = $2)
+          AND ($3::text IS NULL OR tv.artifact_id = $3)
+        ORDER BY tv.validated_at DESC
+        LIMIT 1`,
+      [input.organizationId, input.projectId ?? null, input.artifactId ?? null],
+    ),
+  ]);
+
+  const highSeverityWarnings = warnings.filter(w => w.severity === 'high').length;
+  const mediumSeverityWarnings = warnings.filter(w => w.severity === 'medium').length;
+
+  const templateConformance =
+    templateLatest.rows.length > 0
+      ? Math.round(parseFloat(templateLatest.rows[0].conformance_score) * 100)
+      : null;
+  const templateName = templateLatest.rows.length > 0 ? templateLatest.rows[0].template_name : null;
+  const reliabilityScore =
+    reliability && reliability.reliabilityIndex !== null
+      ? Math.round(reliability.reliabilityIndex * 100)
+      : null;
+  const warningsScore = warnings.length === 0
+    ? 100
+    : Math.max(0, 100 - (highSeverityWarnings * 25 + mediumSeverityWarnings * 10 + (warnings.length - highSeverityWarnings - mediumSeverityWarnings) * 4));
+
+  // Weighted composite over the components that returned data. Weights tuned
+  // by regulatory consequence — RTF and CRL probability matter most.
+  const components: Array<{ score: number | null; weight: number }> = [
+    { score: riskScores.rtf.source === 'cold_start' ? null : riskScores.rtf.score, weight: 0.30 },
+    { score: riskScores.crl.source === 'cold_start' ? null : riskScores.crl.score, weight: 0.20 },
+    { score: templateConformance, weight: 0.25 },
+    { score: warningsScore, weight: 0.15 },
+    { score: reliabilityScore, weight: 0.10 },
+  ];
+  const available = components.filter(c => c.score !== null);
+  const compositeScore = available.length > 0
+    ? Math.round(
+        available.reduce((sum, c) => sum + (c.score as number) * c.weight, 0)
+          / available.reduce((sum, c) => sum + c.weight, 0),
+      )
+    : null;
+  const band = bandFromScore(compositeScore);
+
+  const recommendations: string[] = [];
+  if (band === 'critical') recommendations.push('Do not file. Composite readiness is critical — resolve every blocking finding before submission.');
+  else if (band === 'high_risk') recommendations.push('High risk: request internal regulatory review before filing.');
+  if (templateConformance !== null && templateConformance < 70) recommendations.push(`Template conformance is ${templateConformance}%. Check missing sections.`);
+  if (highSeverityWarnings > 0) recommendations.push(`${highSeverityWarnings} high-severity proactive warning(s) match this draft.`);
+  for (const r of riskScores.recommendations.slice(0, 3)) recommendations.push(r);
+
+  return {
+    engineVersion: REGULATORY_INTELLIGENCE_VERSION,
+    compositeScore,
+    band,
+    riskScores,
+    templateConformance,
+    templateName,
+    activeWarnings: warnings.length,
+    highSeverityWarnings,
+    signalReliability: reliabilityScore,
+    recommendations,
+  };
+}
+
 // Re-exports for routes / tests.
 export {
   trainModel,

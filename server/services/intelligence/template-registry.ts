@@ -318,3 +318,155 @@ export async function compareAcrossAgencies(query: {
     sections: sortedSections,
   };
 }
+
+// ─── Prompt hints (generation-time) ──────────────────────────────────────────
+//
+// Returns a markdown system-prompt addendum derived from the resolved
+// template plus any cross-tenant `failure_patterns` that match the same
+// (agency × document_type × intent) tuple. Lives here rather than in a new
+// file so the registry is the single source of truth for everything
+// template-shaped.
+
+export interface PromptHints {
+  readonly templateId: string | null;
+  readonly templateName: string | null;
+  readonly templateSourceReference: string | null;
+  readonly matchSpecificity: TemplateLookupResult['matchSpecificity'];
+  readonly promptAddendum: string;
+  readonly sections: ReadonlyArray<{
+    sectionCode: string;
+    sectionTitle: string;
+    ordering: number;
+    required: boolean;
+    criticality: TemplateSection['criticality'];
+    requiredElements: readonly string[];
+    requiredPhrases: readonly string[];
+    forbiddenPhrases: readonly string[];
+    minWords: number | null;
+    maxWords: number | null;
+    agencyQuirks: string | null;
+  }>;
+  readonly approximateTokens: number;
+}
+
+const AGENCY_DISPLAY: Record<string, string> = {
+  fda: 'FDA', ema: 'EMA', pmda: 'PMDA (Japan)', mhra: 'MHRA (UK)',
+  hc: 'Health Canada', swissmedic: 'Swissmedic',
+  cross_agency: 'Cross-agency baseline (ICH)', other: 'Other / unspecified',
+};
+
+export async function buildPromptHints(input: {
+  agency: string;
+  documentType: string;
+  submissionType?: string | null;
+  indicationArea?: string | null;
+  intent?: string;
+  includeCorrections?: boolean;
+  maxCorrections?: number;
+}): Promise<PromptHints> {
+  const resolved = await resolveTemplate({
+    agency: input.agency,
+    documentType: input.documentType,
+    submissionType: input.submissionType,
+    indicationArea: input.indicationArea,
+  });
+
+  if (!resolved.template) {
+    const addendum =
+      '## Template constraints\n\nNo template registered for ' +
+      `${AGENCY_DISPLAY[input.agency.toLowerCase()] ?? input.agency} / ${input.documentType}` +
+      (input.submissionType ? ` / ${input.submissionType}` : '') +
+      '. Fall back to ICH CTD conventions and proceed with caution.';
+    return {
+      templateId: null,
+      templateName: null,
+      templateSourceReference: null,
+      matchSpecificity: 'none',
+      promptAddendum: addendum,
+      sections: [],
+      approximateTokens: Math.ceil(addendum.length / 4),
+    };
+  }
+
+  // Pull cross-tenant learned corrections from the existing failure-learning
+  // service — no duplication, just reuse the existing read path.
+  let corrections: Array<{ suggestedCorrection: string; confidence: number; tenantCount: number; failureCount: number }> = [];
+  if (input.includeCorrections !== false) {
+    const { getSuggestedCorrections } = await import('./ana-failure-learning.js');
+    corrections = await getSuggestedCorrections({
+      agency: input.agency,
+      documentType: input.documentType,
+      intent: input.intent ?? 'draft',
+      limit: Math.min(20, Math.max(1, input.maxCorrections ?? 5)),
+    });
+  }
+
+  const t = resolved.template;
+  const lines: string[] = [];
+  lines.push(`## Template constraints — ${t.templateName}`);
+  lines.push('');
+  lines.push(`**Agency:** ${AGENCY_DISPLAY[t.agency] ?? t.agency}`);
+  if (t.submissionType) lines.push(`**Submission type:** ${t.submissionType}`);
+  if (t.modulePath) lines.push(`**Module path:** ${t.modulePath}`);
+  if (t.sourceReference) lines.push(`**Source:** ${t.sourceReference}`);
+  if (t.agencySpecificNotes) {
+    lines.push('');
+    lines.push(`**Agency-specific notes:** ${t.agencySpecificNotes}`);
+  }
+  lines.push('');
+  lines.push('### Required section order');
+  lines.push('');
+  for (const s of t.sections.filter(s => s.required)) {
+    lines.push(`- ${s.sectionCode} — ${s.sectionTitle}${s.criticality === 'blocking' ? ' (blocking)' : ''}`);
+  }
+
+  const callouts: string[] = [];
+  for (const s of t.sections) {
+    if (s.requiredElements.length === 0 && !s.agencyQuirks && !s.minWords && s.forbiddenPhrases.length === 0) continue;
+    callouts.push(`**${s.sectionCode} ${s.sectionTitle}:**`);
+    if (s.requiredElements.length > 0) callouts.push(`- Must include: ${s.requiredElements.join(', ')}`);
+    if (s.agencyQuirks) callouts.push(`- Agency quirk: ${s.agencyQuirks}`);
+    if (s.minWords) callouts.push(`- Minimum length: ${s.minWords} words`);
+    if (s.forbiddenPhrases.length > 0) callouts.push(`- Do NOT use: ${s.forbiddenPhrases.map(p => `"${p}"`).join(', ')}`);
+  }
+  if (callouts.length > 0) {
+    lines.push('');
+    lines.push('### Per-section guidance');
+    lines.push('');
+    lines.push(callouts.join('\n'));
+  }
+
+  if (corrections.length > 0) {
+    lines.push('');
+    lines.push('### Learned corrections from the network');
+    lines.push('');
+    lines.push('These patterns were extracted after ≥ 3 tenants hit the same failure. Apply them when relevant:');
+    lines.push('');
+    for (const c of corrections) {
+      lines.push(`- ${c.suggestedCorrection} (confidence ${(c.confidence * 100).toFixed(0)}%, ${c.tenantCount} tenants, ${c.failureCount} prior failures)`);
+    }
+  }
+
+  const addendum = lines.join('\n');
+  return {
+    templateId: t.id,
+    templateName: t.templateName,
+    templateSourceReference: t.sourceReference,
+    matchSpecificity: resolved.matchSpecificity,
+    promptAddendum: addendum,
+    sections: t.sections.map(s => ({
+      sectionCode: s.sectionCode,
+      sectionTitle: s.sectionTitle,
+      ordering: s.ordering,
+      required: s.required,
+      criticality: s.criticality,
+      requiredElements: s.requiredElements,
+      requiredPhrases: s.requiredPhrases,
+      forbiddenPhrases: s.forbiddenPhrases,
+      minWords: s.minWords,
+      maxWords: s.maxWords,
+      agencyQuirks: s.agencyQuirks,
+    })),
+    approximateTokens: Math.ceil(addendum.length / 4),
+  };
+}

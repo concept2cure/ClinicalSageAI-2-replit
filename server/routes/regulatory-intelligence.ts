@@ -40,6 +40,7 @@ import { createScopedLogger } from '../utils/logger.js';
 import { requireAuthedOrgId } from '../utils/authedOrgId.js';
 import {
   scoreSubmissionDraft,
+  computeReadiness,
   onOutcomeRecorded,
   trainModel,
   rebuildNetworkPriors,
@@ -78,6 +79,7 @@ import {
   getTemplateById,
   listTemplates,
   compareAcrossAgencies,
+  buildPromptHints,
 } from '../services/intelligence/template-registry.js';
 import { validateDraft, type DraftSection } from '../services/intelligence/template-validator.js';
 import { seedTemplates } from '../services/intelligence/template-seeds.js';
@@ -541,6 +543,60 @@ router.post('/templates/seed', asyncHandler(async (req: Request, res: Response) 
   if (!guard.ok) return;
   const data = await seedTemplates();
   log.info(`Template seeding by org=${guard.orgId}: ${JSON.stringify(data)}`);
+  res.json({ success: true, data });
+}));
+
+router.get('/templates/prompt-hints', asyncHandler(async (req: Request, res: Response) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const agency = req.query.agency;
+  const documentType = req.query.documentType;
+  if (typeof agency !== 'string' || typeof documentType !== 'string') {
+    return res.status(400).json({ error: 'invalid_request', message: 'agency and documentType are required' });
+  }
+  const data = await buildPromptHints({
+    agency,
+    documentType,
+    submissionType: typeof req.query.submissionType === 'string' ? req.query.submissionType : null,
+    indicationArea: typeof req.query.indicationArea === 'string' ? req.query.indicationArea : null,
+    intent: typeof req.query.intent === 'string' ? req.query.intent : 'draft',
+    includeCorrections: req.query.includeCorrections === 'false' ? false : true,
+    maxCorrections: Number.isFinite(Number(req.query.maxCorrections)) ? Number(req.query.maxCorrections) : undefined,
+  });
+  res.json({ success: true, data });
+}));
+
+// ─── Composite readiness — thin enrichment on POST /score ────────────────────
+//
+// Calls the same `scoreSubmissionDraft` orchestrator and attaches the three
+// signals the UI needs to render a "ready to file?" verdict (template
+// conformance, active warnings, signal reliability) — no parallel scorer.
+
+router.post('/readiness', asyncHandler(async (req: Request, res: Response) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const body = req.body ?? {};
+  const submissionType = typeof body.submissionType === 'string' ? body.submissionType : null;
+  const presentSections = Array.isArray(body.presentSections) ? body.presentSections.map(String) : null;
+  if (!submissionType || !presentSections) {
+    return res.status(400).json({ error: 'invalid_request', message: 'submissionType and presentSections are required' });
+  }
+  const data = await computeReadiness({
+    organizationId: guard.orgId,
+    projectId: Number.isFinite(Number(body.projectId)) ? Number(body.projectId) : undefined,
+    submissionId: typeof body.submissionId === 'string' ? body.submissionId : undefined,
+    artifactId: typeof body.artifactId === 'string' ? body.artifactId : undefined,
+    submissionType,
+    targetAgency: typeof body.targetAgency === 'string' ? body.targetAgency : undefined,
+    therapeuticArea: typeof body.therapeuticArea === 'string' ? body.therapeuticArea : null,
+    presentSections,
+    sectionScores:
+      body.sectionScores && typeof body.sectionScores === 'object' && !Array.isArray(body.sectionScores)
+        ? (body.sectionScores as Record<string, number>)
+        : undefined,
+    harmonizeIssueCount: Number.isFinite(Number(body.harmonizeIssueCount)) ? Number(body.harmonizeIssueCount) : undefined,
+    openEscalations: Number.isFinite(Number(body.openEscalations)) ? Number(body.openEscalations) : undefined,
+  });
   res.json({ success: true, data });
 }));
 
