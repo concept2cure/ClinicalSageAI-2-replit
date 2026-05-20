@@ -151,7 +151,7 @@ export function writeMarkdownReport({ outputPath, options, preflightNotes, steps
     '',
     '## Plan',
     `1. Regenerate structural wiring audit for the latest ${options.limit} merged PRs.`,
-    '2. Run TypeScript validation (`npm run typecheck`).',
+    '2. Run TypeScript validation against the baseline (`npm run ci:typecheck:no-regression`).',
     '3. Run production build (`npm run build`).',
     '',
     '## Preflight',
@@ -231,7 +231,12 @@ function main(argv) {
 
   const stepCmds = [
     `node scripts/audits/generate-last-pr-wiring-audit.mjs --limit ${opts.limit} --date ${opts.date} --output docs/audits/LAST_${opts.limit}_PRS_WIRING_AUDIT_${opts.date}.md`,
-    'npm run typecheck',
+    // The strict-plan job's purpose is "did anything regress on this
+    // branch?". `npm run typecheck` is bare `tsc --noEmit`, which always
+    // fails on the codebase's ~2,600 latent type errors that predate
+    // this rollout (tracked by .typecheck-baseline.json). The
+    // baseline-aware gate is the right interpretation of "regressed".
+    'npm run ci:typecheck:no-regression',
     'npm run build',
   ];
 
