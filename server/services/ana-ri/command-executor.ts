@@ -48,6 +48,10 @@ import {
   MDX_COMMAND_HANDLERS_PHASE3,
   MDX_COMMAND_METADATA_PHASE3,
 } from './mdx-command-handlers-phase3';
+import {
+  PDEV_COMMAND_HANDLERS,
+  PDEV_COMMAND_METADATA,
+} from './pdev-command-handlers';
 import { loadAnaToolPolicy } from './mdx-tool-policy';
 import {
   explainAuditRow,
@@ -4365,6 +4369,13 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   ...MDX_COMMAND_METADATA_PHASE2,
   // ─── MDX governed mutations — phase 3 (predicate proxy) ────────────
   ...MDX_COMMAND_METADATA_PHASE3,
+  // ─── PDEV → IND workflow (read + governed) ─────────────────────────
+  // 16 commands: registry list / program get / readiness / workstream /
+  // ind-assembly / fda-interactions / contradictions / evidence-list, plus
+  // governed mutations: activity set-state / ai-draft / evidence-attach /
+  // evidence-detach / fda-feedback apply / ind-assembly compile / readiness
+  // snapshot. Audit prefix agent.ana.pdev.*. See PDEV_IND_WORKFLOW_AUDIT.md.
+  ...PDEV_COMMAND_METADATA,
   // ─── Auditor capability ────────────────────────────────────────────
   EXPLAIN_AUDIT_ROW_METADATA,
   // ─── Live 510(k) document preview (read-only from chat) ────────────
@@ -4564,6 +4575,10 @@ export async function executeCommands(
     // MDX governed mutations — phase 3 (predicate.candidate.set_status,
     // se_matrix.patch). Proxy through BFF to the Python shadow service.
     ...MDX_COMMAND_HANDLERS_PHASE3,
+    // PDEV → IND workflow handlers (16 commands). Same governance contract:
+    // mutations require confirm + reason; reads are open. Audit prefix
+    // agent.ana.pdev.*. See server/services/ana-ri/pdev-command-handlers.ts.
+    ...PDEV_COMMAND_HANDLERS,
     // Audit-row explainer — read-only auditor capability.
     'audit.explain': explainAuditRow,
     // Live 510(k) document preview — read-only canvas access from chat.
