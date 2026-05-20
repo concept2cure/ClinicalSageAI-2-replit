@@ -106,7 +106,7 @@ async function getWorkspaceMetrics(workspaceId: number): Promise<{
     const [memberCount] = await db
       .select({ count: count() })
       .from(users)
-      .where(eq(users.organizationId, workspaceId));
+      .where(eq(users.defaultOrganizationId, workspaceId));
 
     return {
       activeProjects: projectCount?.count ?? 0,
@@ -376,7 +376,7 @@ router.post('/', async (req, res) => {
  */
 router.get('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
 
     log.debug(`Fetching client details for ID: ${id}`);
 
@@ -484,7 +484,7 @@ router.get('/:id', async (req, res) => {
  */
 router.patch('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
     const updates = req.body;
 
     log.debug(`Updating client workspace ${id} with data:`, updates);
@@ -541,8 +541,8 @@ router.patch('/:id', async (req, res) => {
 
       if (existingSettings) {
         // Update existing workspace settings general section
-        const currentGeneralSettings = existingSettings.generalSettings || {};
-        const updatedGeneralSettings = {
+        const currentGeneralSettings = (existingSettings.generalSettings as Record<string, any>) || {};
+        const updatedGeneralSettings: Record<string, any> = {
           ...currentGeneralSettings,
         };
 
@@ -648,7 +648,7 @@ router.patch('/:id', async (req, res) => {
  */
 router.get('/:id/security-settings', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
 
     log.debug(`Fetching security settings for client: ${id}`);
 
@@ -718,23 +718,27 @@ router.get('/:id/security-settings', async (req, res) => {
     // Merge saved settings with defaults
     let settings = defaultSettings;
     if (existingSettings) {
+      const es = existingSettings as any;
       settings = {
         passwordPolicy: {
           ...defaultSettings.passwordPolicy,
-          ...existingSettings.passwordPolicySettings,
+          ...(es.passwordPolicySettings as Record<string, any> | undefined ?? {}),
         },
         sessionSettings: {
           ...defaultSettings.sessionSettings,
-          ...existingSettings.sessionSettings,
+          ...(es.sessionSettings as Record<string, any> | undefined ?? {}),
         },
         dataProtection: {
           ...defaultSettings.dataProtection,
-          ...existingSettings.dataProtectionSettings,
+          ...(es.dataProtectionSettings as Record<string, any> | undefined ?? {}),
         },
-        auditSettings: { ...defaultSettings.auditSettings, ...existingSettings.auditSettings },
+        auditSettings: {
+          ...defaultSettings.auditSettings,
+          ...(es.auditSettings as Record<string, any> | undefined ?? {}),
+        },
         fdaCompliance: {
           ...defaultSettings.fdaCompliance,
-          ...existingSettings.fdaComplianceSettings,
+          ...(es.fdaComplianceSettings as Record<string, any> | undefined ?? {}),
         },
       };
     }
@@ -758,10 +762,10 @@ router.get('/:id/security-settings', async (req, res) => {
  */
 router.patch('/:id/security-settings', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
     const settings = req.body;
 
-    log.debug('Updating security settings for client', id, ':', Object.keys(settings));
+    log.debug('Updating security settings for client', { id, settingsKeys: Object.keys(settings) });
 
     // Tenant guard — this is the MOST sensitive endpoint in the file.
     // Pre-fix it let any authenticated user weaken another tenant's
@@ -834,7 +838,7 @@ router.patch('/:id/security-settings', async (req, res) => {
  */
 router.delete('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
 
     log.debug(`Deleting client workspace ${id} with cascade deletion from database`);
 
@@ -933,7 +937,7 @@ router.delete('/:id', async (req, res) => {
  */
 router.get('/:id/settings', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
 
     log.debug(`Fetching workspace settings for client: ${id}`);
 
@@ -1014,15 +1018,16 @@ router.get('/:id/settings', async (req, res) => {
     // Merge saved settings with defaults
     let settings = defaultSettings;
     if (existingSettings) {
+      const es = existingSettings as any;
       settings = {
-        general: { ...defaultSettings.general, ...existingSettings.generalSettings },
-        quotas: { ...defaultSettings.quotas, ...existingSettings.quotaSettings },
-        modules: { ...defaultSettings.modules, ...existingSettings.moduleSettings },
-        integration: { ...defaultSettings.integration, ...existingSettings.integrationSettings },
-        appearance: { ...defaultSettings.appearance, ...existingSettings.appearanceSettings },
+        general: { ...defaultSettings.general, ...(es.generalSettings as Record<string, any> | undefined ?? {}) },
+        quotas: { ...defaultSettings.quotas, ...(es.quotaSettings as Record<string, any> | undefined ?? {}) },
+        modules: { ...defaultSettings.modules, ...(es.moduleSettings as Record<string, any> | undefined ?? {}) },
+        integration: { ...defaultSettings.integration, ...(es.integrationSettings as Record<string, any> | undefined ?? {}) },
+        appearance: { ...defaultSettings.appearance, ...(es.appearanceSettings as Record<string, any> | undefined ?? {}) },
         notifications: {
           ...defaultSettings.notifications,
-          ...existingSettings.notificationSettings,
+          ...(es.notificationSettings as Record<string, any> | undefined ?? {}),
         },
       };
     }
@@ -1046,7 +1051,7 @@ router.get('/:id/settings', async (req, res) => {
  */
 router.patch('/:id/settings', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
     const settings = req.body;
 
     log.debug('Updating workspace settings for client', id);

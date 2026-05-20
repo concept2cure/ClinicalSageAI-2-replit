@@ -201,7 +201,8 @@ export function mapWorkflowToTemplate(workflowData: any): any {
   };
 
   // Process each template section
-  for (const [sectionKey, sectionConfig] of Object.entries(ESTAR_TEMPLATE_MAPPING)) {
+  for (const [sectionKey, sectionConfigRaw] of Object.entries(ESTAR_TEMPLATE_MAPPING)) {
+    const sectionConfig = sectionConfigRaw as any;
     // Check conditional sections
     if (sectionConfig.conditional) {
       const shouldInclude = evaluateCondition(workflowData, sectionConfig.conditional);
@@ -247,7 +248,8 @@ function mapFields(workflowData: any, fieldMapping: any): any {
 function mapSubsections(workflowData: any, subsections: any): any {
   const mapped: any = {};
   
-  for (const [key, config] of Object.entries(subsections as any)) {
+  for (const [key, configRaw] of Object.entries(subsections as any)) {
+    const config = configRaw as any;
     // Check conditional subsections
     if (config.conditional) {
       const shouldInclude = evaluateCondition(workflowData, config.conditional);
@@ -256,7 +258,7 @@ function mapSubsections(workflowData: any, subsections: any): any {
 
     // Get value from workflow data
     const value = getNestedValue(workflowData, config.workflowPath);
-    
+
     // Apply transformation if needed
     if (config.transform) {
       mapped[key] = applyTransformation(value, config.transform, workflowData);
@@ -373,9 +375,11 @@ export const TemplateMapper = {
   getTemplateSections: () => Object.keys(ESTAR_TEMPLATE_MAPPING),
   getRequiredFields: () => {
     const required: string[] = [];
-    for (const [section, config] of Object.entries(ESTAR_TEMPLATE_MAPPING)) {
+    for (const [section, configRaw] of Object.entries(ESTAR_TEMPLATE_MAPPING)) {
+      const config = configRaw as any;
       if (config.subsections) {
-        for (const [key, subsection] of Object.entries(config.subsections as any)) {
+        for (const [key, subsectionRaw] of Object.entries(config.subsections as any)) {
+          const subsection = subsectionRaw as any;
           if (subsection.required) {
             required.push(`${section}.${key}`);
           }

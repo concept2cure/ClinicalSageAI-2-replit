@@ -110,7 +110,7 @@ router.post('/:id/approve', async (req: Request, res: Response) => {
   if (!user) return;
 
   try {
-    const approvalId = parseInt(req.params.id);
+    const approvalId = parseInt(String(req.params.id));
     const { comments } = req.body;
 
     const result = await approvalOrchestrator.processApproval({
@@ -145,7 +145,7 @@ router.post('/:id/reject', async (req: Request, res: Response) => {
   if (!user) return;
 
   try {
-    const approvalId = parseInt(req.params.id);
+    const approvalId = parseInt(String(req.params.id));
     const { comments } = req.body;
 
     if (!comments) {
@@ -182,7 +182,7 @@ router.post('/:id/delegate', async (req: Request, res: Response) => {
   if (!user) return;
 
   try {
-    const approvalId = parseInt(req.params.id);
+    const approvalId = parseInt(String(req.params.id));
     const { delegateTo, reason } = req.body;
 
     if (!delegateTo) {
@@ -244,7 +244,7 @@ router.get('/:workflowId/status', async (req: Request, res: Response) => {
   if (!user) return;
 
   try {
-    const workflowId = parseInt(req.params.workflowId);
+    const workflowId = parseInt(String(req.params.workflowId));
     const status = await approvalOrchestrator.getWorkflowStatus(workflowId);
 
     if (!status) {

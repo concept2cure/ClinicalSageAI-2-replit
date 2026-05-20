@@ -197,7 +197,7 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
    * Get entities for a document atom
    */
   router.get('/graph/entities/:atomId', asyncHandler(async (req: Request, res: Response) => {
-    const { atomId } = req.params;
+    const atomIdRaw = req.params.atomId; const atomId = Array.isArray(atomIdRaw) ? atomIdRaw[0] : (atomIdRaw ?? "");
     validateUUID(atomId, 'atomId');
     
     const entities = await graphService.getEntities(atomId);
@@ -265,7 +265,7 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
    * Traverse graph from starting atom
    */
   router.get('/graph/traverse/:atomId', asyncHandler(async (req: Request, res: Response) => {
-    const { atomId } = req.params;
+    const atomIdRaw = req.params.atomId; const atomId = Array.isArray(atomIdRaw) ? atomIdRaw[0] : (atomIdRaw ?? "");
     validateUUID(atomId, 'atomId');
     
     const { maxDepth, direction, types } = req.query;
@@ -325,7 +325,7 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
    * Find supporting evidence for a claim
    */
   router.get('/graph/evidence/:claimAtomId', asyncHandler(async (req: Request, res: Response) => {
-    const { claimAtomId } = req.params;
+    const claimAtomIdRaw = req.params.claimAtomId; const claimAtomId = Array.isArray(claimAtomIdRaw) ? claimAtomIdRaw[0] : (claimAtomIdRaw ?? "");
     validateUUID(claimAtomId, 'claimAtomId');
     
     const evidence = await graphService.findSupportingEvidence(claimAtomId);
@@ -342,7 +342,7 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
    * Find all documents derived from a source
    */
   router.get('/graph/derived/:sourceAtomId', asyncHandler(async (req: Request, res: Response) => {
-    const { sourceAtomId } = req.params;
+    const sourceAtomIdRaw = req.params.sourceAtomId; const sourceAtomId = Array.isArray(sourceAtomIdRaw) ? sourceAtomIdRaw[0] : (sourceAtomIdRaw ?? "");
     validateUUID(sourceAtomId, 'sourceAtomId');
     
     const derived = await graphService.findDerivedDocuments(sourceAtomId);
@@ -433,7 +433,7 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
    * Mark a traceability entry as verified
    */
   router.post('/traceability/:entryId/verify', asyncHandler(async (req: Request, res: Response) => {
-    const { entryId } = req.params;
+    const entryIdRaw = req.params.entryId; const entryId = Array.isArray(entryIdRaw) ? entryIdRaw[0] : (entryIdRaw ?? "");
     validateUUID(entryId, 'entryId');
     
     const { verifiedBy } = req.body;
@@ -460,7 +460,7 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
    * Extract entities from a document atom
    */
   router.post('/extract/:atomId', asyncHandler(async (req: Request, res: Response) => {
-    const { atomId } = req.params;
+    const atomIdRaw = req.params.atomId; const atomId = Array.isArray(atomIdRaw) ? atomIdRaw[0] : (atomIdRaw ?? "");
     validateUUID(atomId, 'atomId');
     
     const { content } = req.body;
@@ -561,7 +561,7 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
       }
     }),
     asyncHandler(async (req: Request, res: Response) => {
-      const { sessionId } = req.params;
+      const sessionIdRaw = req.params.sessionId; const sessionId = Array.isArray(sessionIdRaw) ? sessionIdRaw[0] : (sessionIdRaw ?? "");
       validateUUID(sessionId, 'sessionId');
       
       // Check if AI features are available
@@ -602,7 +602,7 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
    * Get council session status and results
    */
   router.get('/council/sessions/:sessionId', asyncHandler(async (req: Request, res: Response) => {
-    const { sessionId } = req.params;
+    const sessionIdRaw = req.params.sessionId; const sessionId = Array.isArray(sessionIdRaw) ? sessionIdRaw[0] : (sessionIdRaw ?? "");
     validateUUID(sessionId, 'sessionId');
     
     const result = await pool.query(
@@ -629,7 +629,7 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
    * Get verification results from Statistician agent
    */
   router.get('/council/sessions/:sessionId/verifications', asyncHandler(async (req: Request, res: Response) => {
-    const { sessionId } = req.params;
+    const sessionIdRaw = req.params.sessionId; const sessionId = Array.isArray(sessionIdRaw) ? sessionIdRaw[0] : (sessionIdRaw ?? "");
     validateUUID(sessionId, 'sessionId');
     
     const result = await pool.query(

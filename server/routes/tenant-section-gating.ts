@@ -43,7 +43,7 @@ router.use(authMiddleware);
 // Get section gating for a QMP
 router.get('/api/tenant-section-gating/:qmpId', async (req, res) => {
   try {
-    const { qmpId } = req.params;
+    const qmpIdRaw = req.params.qmpId; const qmpId = Array.isArray(qmpIdRaw) ? qmpIdRaw[0] : (qmpIdRaw ?? "");
     const { organizationId } = req.tenant;
 
     if (!organizationId) {
@@ -79,7 +79,7 @@ router.get('/api/tenant-section-gating/:qmpId', async (req, res) => {
 // Update section gating for a QMP
 router.post('/api/tenant-section-gating/:qmpId/update', async (req, res) => {
   try {
-    const { qmpId } = req.params;
+    const qmpIdRaw = req.params.qmpId; const qmpId = Array.isArray(qmpIdRaw) ? qmpIdRaw[0] : (qmpIdRaw ?? "");
     const { organizationId } = req.tenant;
     const { sectionKey, requiredLevel, active } = req.body;
 
@@ -164,7 +164,7 @@ router.post('/api/tenant-section-gating/:qmpId/update', async (req, res) => {
 // Get CTQ factors for a specific applicable section
 router.get('/api/tenant-ctq-factors/:section', async (req, res) => {
   try {
-    const { section } = req.params;
+    const sectionRaw = req.params.section; const section = Array.isArray(sectionRaw) ? sectionRaw[0] : (sectionRaw ?? "");
     const { organizationId } = req.tenant;
 
     if (!organizationId) {
@@ -283,7 +283,7 @@ router.post('/api/tenant-ctq-factors', async (req, res) => {
 // Delete a CTQ factor
 router.delete('/api/tenant-ctq-factors/:id', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
     const { organizationId } = req.tenant;
 
     if (!organizationId) {

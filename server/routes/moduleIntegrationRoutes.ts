@@ -65,7 +65,7 @@ router.get('/document-exists', asyncHandler(async (req, res) => {
  * GET /api/module-integration/documents/:moduleType
  */
 router.get('/documents/:moduleType', asyncHandler(async (req, res) => {
-  const { moduleType } = req.params;
+  const moduleTypeRaw = req.params.moduleType; const moduleType = Array.isArray(moduleTypeRaw) ? moduleTypeRaw[0] : (moduleTypeRaw ?? "");
   const organizationId = req.tenantContext.organizationId;
   const documents = await moduleIntegrationService.getDocumentsByModule(
     moduleType,
@@ -80,7 +80,7 @@ router.get('/documents/:moduleType', asyncHandler(async (req, res) => {
  */
 router.get('/document/:id', asyncHandler(async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
     const document = await moduleIntegrationService.getDocument(parseInt(id));
 
     if (!document) {
@@ -102,7 +102,7 @@ router.get('/document/:id', asyncHandler(async (req, res) => {
  */
 router.patch('/documents/:id', asyncHandler(async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
     const document = await moduleIntegrationService.updateDocument(parseInt(id), req.body);
     res.json(document);
   } catch (error) {
@@ -118,7 +118,7 @@ router.patch('/documents/:id', asyncHandler(async (req, res) => {
  * GET /api/module-integration/templates/:moduleType
  */
 router.get('/templates/:moduleType', cacheResponse({ ttl: 60_000 }), asyncHandler(async (req, res) => {
-  const { moduleType } = req.params;
+  const moduleTypeRaw = req.params.moduleType; const moduleType = Array.isArray(moduleTypeRaw) ? moduleTypeRaw[0] : (moduleTypeRaw ?? "");
   const organizationId = req.tenantContext.organizationId;
   const templates = await workflowService.getWorkflowTemplatesByModule(
     moduleType,
@@ -144,7 +144,7 @@ router.post('/templates', asyncHandler(async (req, res) => {
  * GET /api/module-integration/templates/:id
  */
 router.get('/templates/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
   const template = await workflowService.getWorkflowTemplate(parseInt(id));
 
   if (!template) {
@@ -266,7 +266,7 @@ router.get('/pending-approvals', asyncHandler(async (req, res) => {
  * GET /api/module-integration/workflow-history/:id
  */
 router.get('/workflow-history/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
   const history = await workflowService.getWorkflowHistory(parseInt(id));
   res.json(history);
 }));
