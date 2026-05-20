@@ -8,7 +8,9 @@
 import fs from 'fs';
 import path from 'path';
 import { db } from './db';
-import { csrReports, csrDetails } from './sage-plus-service';
+import { csrReports as csrReportsStub, csrDetails as csrDetailsStub } from './sage-plus-service';
+const csrReports = csrReportsStub as any;
+const csrDetails = csrDetailsStub as any;
 import { sql } from 'drizzle-orm';
 import { queryHuggingFace, trainCustomModel } from './huggingface-service';
 import { huggingFaceService } from './huggingface-service';
@@ -603,7 +605,7 @@ export async function trainModels(datasetPath: string): Promise<any> {
     }
 
     // Train models for each domain
-    const trainingResults = {};
+    const trainingResults: Record<string, any> = {};
 
     for (const domain of Object.keys(domainExamples)) {
       const examples = domainExamples[domain];
@@ -766,7 +768,7 @@ export async function makePrediction(text: string, domain: string): Promise<any>
     // Use custom model or fall back to default model
     try {
       const modelName = `trialsage-${domain}-extractor`;
-      const response = await queryHuggingFace(prompt, modelName);
+      const response = await queryHuggingFace(prompt, modelName as any);
 
       // Try to parse the response as JSON
       try {

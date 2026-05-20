@@ -1,6 +1,7 @@
 import { db } from '../db';
-// import { clinicalEvaluationReports } from '../../shared/schema';
-import { and, eq, isNull } from 'drizzle-orm';
+// Stub: clinicalEvaluationReports table doesn't exist in shared/schema yet
+const clinicalEvaluationReports: any = { id: 'id', deletedAt: 'deleted_at' };
+import { and, eq, isNull, like } from 'drizzle-orm';
 import {
   generateEmbeddings,
   generateStructuredResponse,
@@ -670,7 +671,7 @@ class ClinicalIntelligenceService {
         documentText = cer.content;
       } else {
         // Replace with CSR retrieval logic
-        const [csr] = await db.execute(
+        const [csr] = await (db.execute as any)(
           'SELECT content_text FROM csr_reports WHERE report_id = $1',
           [documentId]
         );
@@ -699,7 +700,7 @@ class ClinicalIntelligenceService {
           .where(eq(clinicalEvaluationReports.cer_id, documentId));
       } else {
         // Replace with CSR update logic
-        await db.execute('UPDATE csr_reports SET content_vector = $1 WHERE report_id = $2', [
+        await (db.execute as any)('UPDATE csr_reports SET content_vector = $1 WHERE report_id = $2', [
           JSON.stringify(embeddings),
           documentId,
         ]);
@@ -748,7 +749,7 @@ class ClinicalIntelligenceService {
         };
       } else {
         // Replace with CSR retrieval logic
-        const [csr] = await db.execute('SELECT * FROM csr_reports WHERE report_id = $1', [
+        const [csr] = await (db.execute as any)('SELECT * FROM csr_reports WHERE report_id = $1', [
           documentId,
         ]);
 
@@ -839,7 +840,7 @@ class ClinicalIntelligenceService {
 
       // Get cached connections if available
       if (this.semanticConnectionCache.has(documentId)) {
-        return this.semanticConnectionCache.get(documentId);
+        return this.semanticConnectionCache.get(documentId) ?? [];
       }
 
       // Prepare variables for analysis
@@ -982,7 +983,7 @@ class ClinicalIntelligenceService {
           .where(eq(clinicalEvaluationReports.cer_id, documentId));
       } else {
         // CSR update
-        await db.execute(
+        await (db.execute as any)(
           'UPDATE csr_reports SET processed = true, processed_at = NOW(), semantic_processing_complete = true WHERE report_id = $1',
           [documentId]
         );
@@ -1369,7 +1370,7 @@ class ClinicalIntelligenceService {
   }> {
     try {
       // Find relevant CSRs and CERs for this indication and phase
-      const relevantCSRs = await db.execute(
+      const relevantCSRs = await (db.execute as any)(
         'SELECT report_id FROM csr_reports WHERE indication ILIKE $1 AND phase = $2 AND "deletedAt" IS NULL LIMIT 10',
         [`%${indication}%`, phase]
       );

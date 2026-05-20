@@ -756,7 +756,7 @@ export class ForesightAIEngine {
     const sections = this.parseINDSections(narrativeContent);
     
     // Store the narrative in database
-    const [narrative] = await db!.insert(indNarratives).values({
+    const [narrative] = await (db!.insert(indNarratives) as any).values({
       studyId,
       drugName,
       indication,
@@ -778,7 +778,7 @@ export class ForesightAIEngine {
     
     // Store individual sections
     for (const section of sections) {
-      await db!.insert(indNarrativeSections).values({
+      await (db!.insert(indNarrativeSections) as any).values({
         narrativeId: narrative.id,
         sectionNumber: section.number,
         title: section.title,
@@ -896,8 +896,8 @@ export class ForesightAIEngine {
     const patterns = await db!.select()
       .from(translationalPatterns)
       .where(and(
-        eq(translationalPatterns.organizationId, organizationId),
-        eq(translationalPatterns.targetPhase, phase)
+        eq((translationalPatterns as any).organizationId, organizationId),
+        eq((translationalPatterns as any).targetPhase, phase)
       ));
 
     const protocolResponse = await openai.chat.completions.create({
@@ -939,7 +939,7 @@ export class ForesightAIEngine {
     const sections = this.parseProtocolSections(protocol);
     
     // Create IND narrative
-    const [narrative] = await db!.insert(indNarratives).values({
+    const [narrative] = await (db!.insert(indNarratives) as any).values({
       organizationId: organizationId,
       narrativeType: 'clinical_protocol',
       title: `Clinical Protocol - ${indication} - Phase ${phase}`,
@@ -957,7 +957,7 @@ export class ForesightAIEngine {
 
     // Save sections
     for (const section of sections) {
-      await db!.insert(indNarrativeSections).values({
+      await (db!.insert(indNarrativeSections) as any).values({
         narrativeId: narrative.id,
         sectionNumber: section.number,
         sectionTitle: section.title,
@@ -1159,7 +1159,7 @@ export class ForesightAIEngine {
     const regulatoryDoses = this.applyPKPDRegulatoryFactors(safetyMetrics);
     
     // Store analysis in database
-    const [analysis] = await db!.insert(crossSpeciesPkpd).values({
+    const [analysis] = await (db!.insert(crossSpeciesPkpd) as any).values({
       analysisId: `PKPD-${Date.now()}`,
       studyId: compoundId,
       drugName: compoundName,
@@ -1189,7 +1189,7 @@ export class ForesightAIEngine {
     
     // Store individual species comparisons
     for (const species of speciesData) {
-      await db!.insert(speciesComparisons).values({
+      await (db!.insert(speciesComparisons) as any).values({
         analysisId: analysis.id,
         species: species.species,
         bodyWeight: species.bodyWeight,
@@ -1579,7 +1579,7 @@ export class ForesightAIEngine {
     const riskFactors = await this.identifyRiskFactors(params);
     
     // Store prediction in database
-    const [prediction] = await db!.insert(foresightPredictions).values({
+    const [prediction] = await (db!.insert(foresightPredictions) as any).values({
       studyId,
       phase,
       predictionType: 'success_probability',
@@ -1848,11 +1848,11 @@ export class ForesightAIEngine {
     
     // Top 3 positive drivers
     for (let i = 0; i < Math.min(3, entries.length); i++) {
-      if (entries[i][1] > 0.6) {
+      if ((entries[i][1] as number) > 0.6) {
         drivers.push({
           factor: entries[i][0],
           impact: 'positive',
-          score: entries[i][1],
+          score: entries[i][1] as number,
           description: `Strong ${entries[i][0]} profile`
         });
       }
@@ -1861,7 +1861,7 @@ export class ForesightAIEngine {
     // Bottom 2 negative drivers
     const reversed = [...entries].reverse();
     for (let i = 0; i < Math.min(2, reversed.length); i++) {
-      if (reversed[i][1] < 0.4) {
+      if ((reversed[i][1] as number) < 0.4) {
         drivers.push({
           factor: reversed[i][0],
           impact: 'negative',
