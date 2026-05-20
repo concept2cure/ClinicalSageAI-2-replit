@@ -171,21 +171,27 @@ jobs:
           DATABASE_URL: postgresql://postgres:${{ env.TEST_DB_PASSWORD }}@localhost:5432/concept2cure-ri_test
 
       - name: Smoke — apply RLS rollout migrations (0019/0020/0021)
-        # These migrations target the production schema. On a fresh test DB
-        # they each execute but find nothing to mutate (no tenant-keyed
-        # tables), so they prove the SQL parses and runs cleanly without
-        # changing behavior. This catches DO-block syntax bugs before
-        # staging/prod, where a botched migration would be far costlier.
+        # These migrations target the production schema. The smoke runs
+        # against a SEPARATE fresh DB (not the one the GCC migrations
+        # mutated above) so it tests "SQL parses + executes cleanly on
+        # an empty schema" — the original intent. Running it against
+        # the GCC-loaded DB would also exercise the seed-data drift the
+        # 0020 + 0021 coercers are supposed to catch in production,
+        # which is what 0019's audit step already covers separately.
         run: |
+          PAGER=cat psql "$DATABASE_URL_ADMIN" -v ON_ERROR_STOP=1 \
+            -c 'DROP DATABASE IF EXISTS "concept2cure-ri_rls_smoke"' \
+            -c 'CREATE DATABASE "concept2cure-ri_rls_smoke"'
           for f in \
             migrations/0019_tenant_column_audit.sql \
             migrations/0020_coerce_text_tenant_columns.sql \
             migrations/0021_enable_rls_everywhere.sql; do
             echo "Applying $f"
-            PAGER=cat psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"
+            PAGER=cat psql "$DATABASE_URL_SMOKE" -v ON_ERROR_STOP=1 -f "$f"
           done
         env:
-          DATABASE_URL: postgresql://postgres:${{ env.TEST_DB_PASSWORD }}@localhost:5432/concept2cure-ri_test
+          DATABASE_URL_ADMIN: postgresql://postgres:${{ env.TEST_DB_PASSWORD }}@localhost:5432/postgres
+          DATABASE_URL_SMOKE: postgresql://postgres:${{ env.TEST_DB_PASSWORD }}@localhost:5432/concept2cure-ri_rls_smoke
 
       - name: Run integration tests
         run: npm test -- --passWithNoTests
