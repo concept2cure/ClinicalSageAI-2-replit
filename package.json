@@ -29,6 +29,7 @@
     "db:ensure": "tsx server/db/ensureCoreTables.ts",
     "db:check-assembly": "node scripts/check_assembly_docs.mjs",
     "smoke:e2e-assembly": "node scripts/e2e_smoke_assembly.mjs",
+    "smoke:pdev": "node scripts/pdev_smoke.mjs",
     "build": "vite build && node scripts/build-server.mjs",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "NODE_OPTIONS=\"--max-old-space-size=6144\" tsc",

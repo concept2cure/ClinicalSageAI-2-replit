@@ -201,6 +201,16 @@ In dependency order, when the relevant design phase ships:
 - `server/routes/pdev/pdev-routes.ts` (edited — adds 7 routes for the new services).
 - `server/services/pdev/__tests__/{pdev-ai-drafting,pdev-fda-feedback-rollup}.test.ts` (new).
 
+**Pass 4 — depth + verification:**
+
+- `server/services/pdev/pdev-state-guard.ts` (new — dependency-graph gate for state promotions).
+- `server/services/pdev/pdev-provenance-trace.ts` (new — single trace tree across activity-state + evidence + artifacts + lineage + audit).
+- `server/routes/pdev/pdev-routes.ts` (edited — adds `force` to state body, adds `/provenance` route, gate-rejects with `409` blockers list).
+- `server/services/ana-ri/pdev-command-handlers.ts` (edited — adds `pdev.activity.provenance`, gate-rejects state mutations with `force`-override path; 17 commands total).
+- `server/services/pdev/__tests__/pdev-state-guard.test.ts` (new — 13 tests).
+- `scripts/pdev_smoke.mjs` (new — real-DB 8-step walkthrough covering the brief's smoke-test requirement; runs via `pnpm smoke:pdev`).
+- `package.json` (edited — adds `smoke:pdev` script).
+
 **Pass 3 — AnA conversational surface for PDEV:**
 
 The CIRM brief requires that "AnA drives everything through natural conversation."

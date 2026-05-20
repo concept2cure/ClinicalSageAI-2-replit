@@ -41,14 +41,20 @@ import { pdevAiDraftingService } from '../pdev/pdev-ai-drafting';
 import { pdevEctdCompileService } from '../pdev/pdev-ectd-compile';
 import { pdevFdaFeedbackRollupService } from '../pdev/pdev-fda-feedback-rollup';
 import { pdevEvidenceAttachService } from '../pdev/pdev-evidence-attach';
+import { pdevProvenanceTraceService } from '../pdev/pdev-provenance-trace';
 import {
   PDEV_ACTIVITIES,
   PDEV_WORKSTREAMS,
   PDEV_STAGES,
   PDEV_ACTIVITY_STATES,
   getActivityByKey,
+  type PdevActivityState,
   type PdevWorkstream,
 } from '../pdev/pdev-activity-registry';
+import {
+  checkStateTransition,
+  describeBlockers,
+} from '../pdev/pdev-state-guard';
 
 // ─── Local helpers ──────────────────────────────────────────────────────────
 
@@ -333,6 +339,40 @@ export async function pdevFdaFeedbackProposals(
   }
 }
 
+export async function pdevActivityProvenance(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
+  const action = 'pdev.activity.provenance';
+  const programIdOrErr = requireProgramId(action, params);
+  if (typeof programIdOrErr !== 'string') return programIdOrErr;
+  const activityKeyOrErr = requireActivityKey(action, params);
+  if (typeof activityKeyOrErr !== 'string') return activityKeyOrErr;
+  try {
+    const trace = await pdevProvenanceTraceService.trace(
+      programIdOrErr,
+      ctx.organizationId,
+      activityKeyOrErr
+    );
+    if (!trace) {
+      return {
+        success: false,
+        action,
+        message: 'Program or activity not found in tenant.',
+        error: 'NOT_FOUND',
+      };
+    }
+    return {
+      success: true,
+      action,
+      message: `Traced ${trace.counts.artifacts} artifact(s), ${trace.counts.evidence} evidence row(s), ${trace.counts.lineageEdges} lineage edge(s), ${trace.counts.auditEvents} audit event(s) for ${activityKeyOrErr}.`,
+      data: { trace },
+    };
+  } catch (err) {
+    return mapServiceError(action, err);
+  }
+}
+
 export async function pdevActivityEvidenceList(
   ctx: CommandContext,
   params: Record<string, unknown>
@@ -386,6 +426,26 @@ export async function pdevActivitySetState(
       action,
       message: `state must be one of: ${PDEV_ACTIVITY_STATES.join(', ')}.`,
       error: 'INVALID_INPUT',
+    };
+  }
+
+  // Dependency gate — same check the HTTP route runs.
+  const forced = boolParam(params, 'force');
+  const transitionGate = await checkStateTransition(
+    programIdOrErr,
+    activityKeyOrErr,
+    newState as PdevActivityState
+  );
+  if (!transitionGate.allowed && !forced) {
+    return {
+      success: false,
+      action,
+      message: describeBlockers(transitionGate.blockers),
+      error: 'DEPENDENCY_BLOCKERS',
+      data: {
+        blockers: transitionGate.blockers,
+        hint: 'Re-issue with force=true and a reason that documents why the override is justified.',
+      },
     };
   }
 
@@ -454,6 +514,10 @@ export async function pdevActivitySetState(
         activityKey: activityKeyOrErr,
         previousState,
         newState,
+        dependencyGateOverridden: forced && !transitionGate.allowed,
+        ...(forced && !transitionGate.allowed
+          ? { overriddenBlockers: transitionGate.blockers.map(b => b.activityKey) }
+          : {}),
       },
     });
 
@@ -922,12 +986,26 @@ export const PDEV_COMMAND_METADATA = [
     example: '"What evidence is attached to nonclinical.glp_tox on OR-801?"',
   },
   {
+    name: 'pdev.activity.provenance',
+    description:
+      'Full regulatory traceability trace for one PDEV activity — activity ' +
+      'state + attached evidence + AI-drafted artifacts + data-lineage edges + ' +
+      'audit events. Read-only. Single read across existing tables; no new ' +
+      'schema. Use when an auditor or reviewer asks "where did this come from?"',
+    parameters: 'programId (UUID), activityKey',
+    example:
+      '"Show me the full provenance trace for nonclinical.ind_enabling_summary on OR-801."',
+  },
+  {
     name: 'pdev.activity.set_state',
     description:
       'Move one PDEV activity to a new lifecycle state (draft / in_review / ' +
-      'approved / locked / superseded etc.). Audit-logged. Requires confirm + ' +
-      'reason.',
-    parameters: 'programId, activityKey, state, notes?, confirm="yes", reason',
+      'approved / locked / superseded etc.). Promotion into a completed state ' +
+      '(approved / locked / submission_ready / submitted) is dependency-gated: ' +
+      'the registry dependsOn chain must be satisfied, or pass force=true to ' +
+      'override. The override is audit-flagged. Requires confirm + reason.',
+    parameters:
+      'programId, activityKey, state, notes?, force?, confirm="yes", reason',
     example:
       '"Mark cmc.formulation_development as approved on OR-801, reason: SAP and stability data finalized."',
   },
@@ -1013,6 +1091,7 @@ export const PDEV_COMMAND_HANDLERS: Record<
   'pdev.program.contradictions': pdevProgramContradictions,
   'pdev.fda_feedback.proposals': pdevFdaFeedbackProposals,
   'pdev.activity.evidence_list': pdevActivityEvidenceList,
+  'pdev.activity.provenance': pdevActivityProvenance,
   'pdev.activity.set_state': pdevActivitySetState,
   'pdev.activity.ai_draft': pdevActivityAiDraft,
   'pdev.activity.evidence_attach': pdevActivityEvidenceAttach,

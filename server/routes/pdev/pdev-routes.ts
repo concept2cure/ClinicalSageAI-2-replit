@@ -74,6 +74,11 @@ import { pdevContradictionBridge } from '../../services/pdev/pdev-contradiction-
 import { pdevAiDraftingService } from '../../services/pdev/pdev-ai-drafting';
 import { pdevEctdCompileService } from '../../services/pdev/pdev-ectd-compile';
 import {
+  checkStateTransition,
+  describeBlockers,
+} from '../../services/pdev/pdev-state-guard';
+import { pdevProvenanceTraceService } from '../../services/pdev/pdev-provenance-trace';
+import {
   pdevFdaFeedbackRollupService,
 } from '../../services/pdev/pdev-fda-feedback-rollup';
 import { pdevEvidenceAttachService } from '../../services/pdev/pdev-evidence-attach';
@@ -344,6 +349,13 @@ const stateUpdateSchema = z.object({
   ownerUserId: z.number().int().positive().optional().nullable(),
   reviewerUserId: z.number().int().positive().optional().nullable(),
   dueDate: z.string().datetime({ offset: true }).optional().nullable(),
+  /**
+   * Force-override the dependency-gate guard. Used when a user has a
+   * legitimate reason to promote an activity even though its registry
+   * `dependsOn` chain isn't fully completed yet. Audit-flagged so an
+   * auditor can find every governance override.
+   */
+  force: z.boolean().optional(),
 });
 
 router.post(
@@ -367,6 +379,21 @@ router.post(
 
     const inOrg = await programBelongsToOrg(programId, orgId);
     if (!inOrg) return notFoundInTenant(res, 'program');
+
+    // Dependency gate: refuse promotion to completed states when the
+    // registry dependsOn chain isn't satisfied, unless caller forces.
+    const forced = Boolean(parsed.data.force);
+    const gate = await checkStateTransition(
+      programId,
+      activityKey,
+      parsed.data.state as (typeof PDEV_ACTIVITY_STATES)[number]
+    );
+    if (!gate.allowed && !forced) {
+      return clientError(res, 409, describeBlockers(gate.blockers), {
+        blockers: gate.blockers,
+        hint: 'Pass force=true with a justification in notes to override; the override is audit-flagged.',
+      });
+    }
 
     const now = new Date();
     const due = parsed.data.dueDate ? new Date(parsed.data.dueDate) : null;
@@ -433,6 +460,10 @@ router.post(
           newState: parsed.data.state,
           workstream: activity.workstream,
           stage: activity.stage,
+          dependencyGateOverridden: forced && !gate.allowed,
+          ...(forced && !gate.allowed
+            ? { overriddenBlockers: gate.blockers.map(b => b.activityKey) }
+            : {}),
         },
       });
 
@@ -744,6 +775,35 @@ router.delete(
         return clientError(res, 404, message);
       }
       return serverError(res, log, 'Evidence detach', err);
+    }
+  }
+);
+
+// ─── GET /api/pdev/programs/:programId/activities/:activityKey/provenance ───
+
+router.get(
+  '/programs/:programId/activities/:activityKey/provenance',
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req);
+    if (orgId === null) return orgRequired(res);
+
+    const programId = String(req.params.programId);
+    const activityKey = String(req.params.activityKey);
+    if (!UUID_RE.test(programId)) return clientError(res, 400, 'programId must be a UUID');
+
+    try {
+      const trace = await pdevProvenanceTraceService.trace(programId, orgId, activityKey);
+      if (!trace) return notFoundInTenant(res, 'program or activity');
+      return ok(res, trace, {
+        // Honest framing — read-only assembly across existing tables.
+        label: 'PDEV activity provenance trace',
+        note:
+          'Stitches activity state + evidence_links + concept2cure_artifacts + ' +
+          'data_lineage_records + audit_logs into a single regulatory traceability ' +
+          'view. No new schema; read-only.',
+      });
+    } catch (err) {
+      return serverError(res, log, 'Failed to load provenance trace', err);
     }
   }
 );

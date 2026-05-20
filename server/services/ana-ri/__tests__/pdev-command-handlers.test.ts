@@ -34,6 +34,7 @@ const EXPECTED_COMMANDS = [
   'pdev.program.contradictions',
   'pdev.fda_feedback.proposals',
   'pdev.activity.evidence_list',
+  'pdev.activity.provenance',
   // Governed mutations
   'pdev.activity.set_state',
   'pdev.activity.ai_draft',
@@ -55,7 +56,7 @@ const GOVERNED_COMMANDS = [
 ];
 
 describe('pdev command surface — metadata', () => {
-  test('exposes 16 commands', () => {
+  test('exposes the canonical command set', () => {
     expect(PDEV_COMMAND_METADATA).toHaveLength(EXPECTED_COMMANDS.length);
   });
 
