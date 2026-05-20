@@ -28,7 +28,7 @@ import {
   saveChatMessage,
 } from '../services/chat-thread-helpers.js';
 import { pool } from '../db.js';
-import jwt from 'jsonwebtoken';
+import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { getTool, toOpenAITools, fromOpenAIName, logToolRun } from '../services/toolRegistry';
 import '../services/tools/index'; // ensure tools are registered
 import { ai } from '../lib/unified-ai-client';
@@ -1297,9 +1297,7 @@ function extractUserId(req: Request): number | null {
   try {
     const token = (req.headers.authorization || '').replace('Bearer ', '');
     if (!token) return null;
-    const secret = process.env.JWT_SECRET;
-    if (!secret) return null;
-    const decoded = jwt.verify(token, secret, { algorithms: ["HS256"] }) as any;
+    const decoded = verifyJwtWithRotation(token) as any;
     return decoded?.userId ? Number(decoded.userId) : null;
   } catch {
     return null;

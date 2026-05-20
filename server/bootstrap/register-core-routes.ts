@@ -8,7 +8,6 @@ import rbacRoutes from '../api/enterprise/rbac-routes.js';
 import cmcProjectRoutes from '../api/cmc/projectRoutes';
 import cmcBlueprintRoutes from '../api/cmc/blueprintRoutes';
 import cmcAggregatorRoutes from '../api/cmc/index.js';
-import cmcDashboardPrisma from '../routes/cmc-dashboard-prisma';
 import cmcCoreRoutes from '../api/cmc/routes';
 import cmcSpecificationRoutes from '../api/cmc/specificationRoutes';
 import cmcStabilityRoutes from '../api/cmc/stabilityRoutes';
@@ -49,7 +48,8 @@ export function registerCoreRoutes({ app, pool, aiCircuitBreaker }: RouteBootstr
     app.use('/api/cmc/module3-os', cmcModule3ConvergenceRoutes);
     app.use('/api/cmc/collaboration', cmcCollaborationRoutes);
     app.use('/api/cmc/documents', cmcDocumentRoutes);
-    app.use('/api/cmc/dashboard', cmcDashboardPrisma);
+    // /api/cmc/dashboard removed — backed by Prisma which was excised in
+    // 066acdb. Route file (cmc-dashboard-prisma.ts) had zero callers.
     console.log('✅ CMC Module API routes mounted');
   } catch (error) {
     console.error('❌ Failed to mount CMC Module routes:', error);

@@ -1,0 +1,23 @@
+{
+  "0007": [
+    "0007_ctd_onboarding_pipeline.sql",
+    "0007_gap_analysis_results.sql",
+    "0007_orchestration_phase3.sql",
+    "0007_support_admin.sql",
+    "0007_tenant_isolation_fixes.sql"
+  ],
+  "0008": [
+    "0008_api_keys.sql",
+    "0008_critical_fk_delete_policies.sql",
+    "0008_ga_hardening.sql"
+  ],
+  "0010": [
+    "0010_biostats_signal_engine.sql",
+    "0010_operating_system_foundation.sql",
+    "0010_resolution_orchestration.sql"
+  ],
+  "0011": [
+    "0011_ai_threads_title.sql",
+    "0011_governed_decision_transitions.sql"
+  ]
+}

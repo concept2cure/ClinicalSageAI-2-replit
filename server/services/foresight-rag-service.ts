@@ -1,6 +1,10 @@
 import { getPool } from '../db';
 import { getRAGPipeline } from './advancedRAGPipeline.js';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('foresight-rag-service');
+
 export interface RAGQuery {
   query: string;
   context?: string;
@@ -61,7 +65,7 @@ export class ForesightRAGService {
         confidence: avgScore,
       };
     } catch (error) {
-      console.error('[ForesightRAG] Error processing query:', error);
+      logger.error('Error processing query', { err: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }

@@ -8,6 +8,10 @@ import { db } from '../db';
 import { coauthorDocuments, coauthorSections } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('coauthor');
+
 const router = Router();
 
 const resolveOrganizationId = (req: any): number | null => {
@@ -40,7 +44,7 @@ router.get('/sessions', authMiddleware, async (req: any, res: Response) => {
         sessions.length > 0 ? `Found ${sessions.length} session(s)` : 'No co-author sessions yet',
     });
   } catch (error: any) {
-    console.error('[Co-Author] List sessions error:', error);
+    logger.error('List sessions error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to fetch sessions', message: 'An unexpected error occurred' });
   }
 });
@@ -70,7 +74,7 @@ router.post('/sessions', authMiddleware, async (req: any, res: Response) => {
       session,
     });
   } catch (error: any) {
-    console.error('[Co-Author] Create session error:', error);
+    logger.error('Create session error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to create session', message: 'An unexpected error occurred' });
   }
 });
@@ -102,7 +106,7 @@ router.get('/documents', authMiddleware, async (req: any, res: Response) => {
           : 'No co-author documents yet',
     });
   } catch (error: any) {
-    console.error('[Co-Author] List documents error:', error);
+    logger.error('List documents error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to fetch documents', message: 'An unexpected error occurred' });
   }
 });
@@ -133,7 +137,7 @@ router.get('/documents/:id', authMiddleware, async (req: any, res: Response) => 
 
     return res.json({ document });
   } catch (error: any) {
-    console.error('[Co-Author] Get document error:', error);
+    logger.error('Get document error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to fetch document', message: 'An unexpected error occurred' });
   }
 });
@@ -171,7 +175,7 @@ router.post('/documents', authMiddleware, async (req: any, res: Response) => {
       document,
     });
   } catch (error: any) {
-    console.error('[Co-Author] Create document error:', error);
+    logger.error('Create document error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to create document', message: 'An unexpected error occurred' });
   }
 });
@@ -212,7 +216,7 @@ router.put('/documents/:id', authMiddleware, async (req: any, res: Response) => 
       document,
     });
   } catch (error: any) {
-    console.error('[Co-Author] Update document error:', error);
+    logger.error('Update document error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to update document', message: 'An unexpected error occurred' });
   }
 });
@@ -242,7 +246,7 @@ router.delete('/documents/:id', authMiddleware, async (req: any, res: Response) 
 
     return res.json({ success: true, deletedId: deleted.id });
   } catch (error: any) {
-    console.error('[Co-Author] Delete document error:', error);
+    logger.error('Delete document error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to delete document', message: 'An unexpected error occurred' });
   }
 });
@@ -295,7 +299,7 @@ router.get('/documents/:docId/sections', authMiddleware, async (req: any, res: R
       total: sections.length,
     });
   } catch (error: any) {
-    console.error('[Co-Author] List document sections error:', error);
+    logger.error('List document sections error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to fetch sections', message: 'An unexpected error occurred' });
   }
 });
@@ -360,7 +364,7 @@ router.post('/documents/:docId/sections', authMiddleware, async (req: any, res: 
       section,
     });
   } catch (error: any) {
-    console.error('[Co-Author] Create document section error:', error);
+    logger.error('Create document section error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to create section', message: 'An unexpected error occurred' });
   }
 });
@@ -420,7 +424,7 @@ router.put(
         section,
       });
     } catch (error: any) {
-      console.error('[Co-Author] Update document section error:', error);
+      logger.error('Update document section error', { err: error instanceof Error ? error.message : String(error) });
       return res.status(500).json({ error: 'Failed to update section', message: 'An unexpected error occurred' });
     }
   }
@@ -463,7 +467,7 @@ router.delete(
 
       return res.json({ success: true, deletedId: deleted.id });
     } catch (error: any) {
-      console.error('[Co-Author] Delete document section error:', error);
+      logger.error('Delete document section error', { err: error instanceof Error ? error.message : String(error) });
       return res.status(500).json({ error: 'Failed to delete section', message: 'An unexpected error occurred' });
     }
   }
@@ -621,7 +625,7 @@ router.post('/documents/:docId/validate', authMiddleware, async (req: any, res: 
       },
     });
   } catch (error: any) {
-    console.error('[Co-Author] Validate document error:', error);
+    logger.error('Validate document error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to validate document', message: 'An unexpected error occurred' });
   }
 });
@@ -724,7 +728,7 @@ router.post('/documents/:docId/compile', authMiddleware, async (req: any, res: R
       compiled: compiledStructure,
     });
   } catch (error: any) {
-    console.error('[Co-Author] Compile document error:', error);
+    logger.error('Compile document error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to compile document', message: 'An unexpected error occurred' });
   }
 });
@@ -846,7 +850,7 @@ router.get('/documents/:docId/compliance', authMiddleware, async (req: any, res:
       },
     });
   } catch (error: any) {
-    console.error('[Co-Author] Compliance check error:', error);
+    logger.error('Compliance check error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to check compliance', message: 'An unexpected error occurred' });
   }
 });

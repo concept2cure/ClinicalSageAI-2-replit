@@ -7,6 +7,10 @@ import { renderPdfBuffersFor510k } from '../export/renderers';
 import { authMiddleware } from '../auth';
 import { createGovernedExportConsequence } from '../services/export/governedExportConsequence';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('510k-estar-routes');
+
 const router = Router();
 
 const allowedRoles = new Set(['admin', 'owner', 'editor', 'super_admin']);
@@ -102,11 +106,17 @@ async function buildZipBuffer(
     archive.append(buffer, { name: `attachments/${safeName}` });
   }
 
-  await archive.finalize();
-  await new Promise<void>((resolve, reject) => {
+  // Register the end/error listener BEFORE finalize() so the promise
+  // captures the 'end' event regardless of how quickly the archive
+  // flushes. Same race fix as buildZipBuffer in cerv2-export-routes.ts
+  // (PR #488). Earlier ordering hung the route under fast stream
+  // completion (and consistently under vitest mocks).
+  const finalized = new Promise<void>((resolve, reject) => {
     pass.on('end', () => resolve());
     pass.on('error', reject);
   });
+  await archive.finalize();
+  await finalized;
   if (archiveError) throw archiveError;
   return Buffer.concat(chunks);
 }
@@ -172,7 +182,7 @@ router.post('/build', authMiddleware, requireEditorAccess, async (req, res) => {
 
     return res.status(200).json(consequence);
   } catch (error: any) {
-    console.error('[eSTAR] governed export failure:', error);
+    logger.error('governed export failure', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({
       error: 'GOVERNED_EXPORT_FAILED',
       message: error.message || 'Governed eSTAR export failed before consequence persistence',

@@ -121,15 +121,37 @@ function computeQualityScore(payload: CrossObjectReasoningPayload): number {
 }
 
 function computeComplianceScore(payload: CrossObjectReasoningPayload): number {
-  if (payload.validations.length === 0) return 50; // Unknown = neutral
+  const cmc = payload.cmcSignals;
+  const hasValidations = payload.validations.length > 0;
+  const hasCmcSignals = cmc.sourceObjectCount > 0 || cmc.contradictions.length > 0;
 
+  if (!hasValidations && !hasCmcSignals) return 50; // Unknown = neutral
+
+  let score = 100;
+
+  // Validation findings
   const totalCritical = payload.validations.reduce((s, v) => s + v.criticalCount, 0);
   const totalMajor = payload.validations.reduce((s, v) => s + v.majorCount, 0);
-
-  // Deduct points for findings
-  let score = 100;
   score -= totalCritical * 15;
   score -= totalMajor * 5;
+
+  // CMC contradictions — open ones only; closed/resolved do not penalize
+  const openCmc = cmc.contradictions.filter(
+    c => c.status.toLowerCase() !== 'resolved' && c.status.toLowerCase() !== 'closed',
+  );
+  for (const c of openCmc) {
+    switch (c.severity) {
+      case 'critical': score -= 15; break;
+      case 'high':     score -= 8;  break;
+      case 'medium':   score -= 3;  break;
+      case 'low':      score -= 1;  break;
+    }
+  }
+
+  // Stale Module 3 sections — compiled output that doesn't reflect current
+  // source objects. Soft penalty per stale section, capped so it can't
+  // sink an otherwise compliant project on its own.
+  score -= Math.min(cmc.staleSectionCount * 2, 10);
 
   return Math.max(0, Math.min(100, Math.round(score)));
 }
@@ -351,6 +373,28 @@ function computeBlockers(
       targetType: 'project',
       targetId: payload.scope.projectId,
       suggestedResolution: 'Resolve task dependencies or reassign blocked work',
+    });
+  }
+
+  // CMC contradictions — open critical/high become readiness blockers.
+  // These are produced by `cmc-impact-contradiction-engine` and reflect
+  // real Module 3 quality issues (batch rejected, comparability risk,
+  // open change controls, spec conflicts, etc.).
+  for (const c of payload.cmcSignals.contradictions) {
+    const status = c.status.toLowerCase();
+    if (status === 'resolved' || status === 'closed') continue;
+    if (c.severity !== 'critical' && c.severity !== 'high') continue;
+    const sections = c.impactedSections.length > 0
+      ? ` (sections ${c.impactedSections.slice(0, 3).join(', ')})`
+      : '';
+    blockers.push({
+      severity: c.severity === 'critical' ? 'critical' : 'major',
+      category: 'validation_failure',
+      message: `CMC ${c.contradictionType.replace(/_/g, ' ')}${sections}: ${c.details}`,
+      targetType: 'cmc_contradiction',
+      targetId: c.id,
+      module: 'Module 3',
+      suggestedResolution: 'Resolve the underlying CMC source data or close the change control before promoting Module 3 sections',
     });
   }
 

@@ -21,12 +21,21 @@ async function runDocxPythonIsolated(intent: ComputeIntent): Promise<ComputeOutp
   const inputPath = path.join(workdir, 'input.json');
   const outputPath = path.join(workdir, 'output.json');
 
+  /* The runtime accepts an optional `images` map (key → base64 PNG/JPEG)
+     referenced from content via ![alt](key). When the caller passed
+     metadata.images, forward it so inline imagery renders. */
+  const images =
+    intent.metadata && typeof intent.metadata.images === 'object'
+      ? intent.metadata.images
+      : undefined;
+
   await fs.writeFile(
     inputPath,
     JSON.stringify(
       {
         title: intent.title,
         content: intent.content,
+        images,
         output_path: outputPath,
         force_invalid_output: intent.metadata?.forceInvalidOutput === true,
       },

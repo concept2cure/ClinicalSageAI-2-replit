@@ -8,13 +8,16 @@ import { Router, Request, Response } from 'express';
 import type { Pool, PoolClient } from 'pg';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
-import { getRequestDbClient } from '../../middleware/tenantContext';
+import { getRequestDbClient, type RequestDbClient } from '../../middleware/tenantContext';
 import auditService from '../../services/auditService';
 
 const router = Router();
 
-type Queryable = Pool | PoolClient;
+type Queryable = Pool | RequestDbClient;
 
+// True when `db` is the shared pg.Pool fallback — i.e. no per-request client
+// is attached. The transaction handler uses this to call `.connect()` and
+// lock onto one connection for BEGIN/COMMIT.
 const isPool = (db: Queryable): db is Pool => 'connect' in db;
 
 // File upload configuration
@@ -430,7 +433,7 @@ router.post('/documents/:id/chunks', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'chunks array is required' });
     }
 
-    const client = isPool(db) ? await db.connect() : db;
+    const client: PoolClient | RequestDbClient = isPool(db) ? await db.connect() : db;
     const ownsClient = isPool(db);
     try {
       await client.query('BEGIN');
@@ -491,7 +494,9 @@ router.post('/documents/:id/chunks', async (req: Request, res: Response) => {
       throw error;
     } finally {
       if (ownsClient) {
-        client.release();
+        // Narrow: ownsClient is only true on the Pool branch where we
+        // called .connect() and got a real PoolClient.
+        (client as PoolClient).release();
       }
     }
   } catch (error: any) {

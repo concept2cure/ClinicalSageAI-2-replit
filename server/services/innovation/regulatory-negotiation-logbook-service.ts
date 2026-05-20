@@ -18,6 +18,10 @@ import { ai } from '../../lib/unified-ai-client';
 import { getOpenAIClient } from '../openai-client';
 import crypto from 'crypto';
 
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('regulatory-negotiation-logbook-service');
+
 // Types
 export interface NegotiationThread {
   id: string;
@@ -144,64 +148,69 @@ export class RegulatoryNegotiationLogbookService {
   async createThread(thread: Partial<NegotiationThread>): Promise<NegotiationThread> {
     const threadCode = await this.generateThreadCode(thread.programId!, thread.agency!);
     const client = await this.pool.connect();
-    await client.query("SET app.bypass_rls = 'true'");
-    await client.query("SET app.is_admin = 'true'");
-    const result = await client.query(`
-      INSERT INTO innovation.negotiation_threads (
-        program_id, submission_id, thread_code, title, agency, division,
-        meeting_type, topic, status, priority, request_date, meeting_date,
-        response_deadline, fda_project_manager, fda_reviewers, sponsor_lead,
-        sponsor_team, objectives_summary, tags, related_threads
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
-      RETURNING *
-    `, [
-      thread.programId,
-      thread.submissionId,
-      threadCode,
-      thread.title,
-      thread.agency,
-      thread.division,
-      thread.meetingType,
-      thread.topic,
-      thread.status || 'planning',
-      thread.priority || 'medium',
-      thread.requestDate,
-      thread.meetingDate,
-      thread.responseDeadline,
-      thread.fdaProjectManager,
-      thread.fdaReviewers,
-      thread.sponsorLead,
-      thread.sponsorTeam,
-      thread.objectivesSummary,
-      thread.tags,
-      thread.relatedThreads
-    ]);
-
-    const row = result?.rows?.[0];
-    if (!row) {
-      const fallback: NegotiationThread = {
-        id: crypto.randomUUID(),
-        programId: thread.programId || '',
-        submissionId: thread.submissionId,
+    try {
+      await client.query("SET app.bypass_rls = 'true'");
+      await client.query("SET app.is_admin = 'true'");
+      const result = await client.query(`
+        INSERT INTO innovation.negotiation_threads (
+          program_id, submission_id, thread_code, title, agency, division,
+          meeting_type, topic, status, priority, request_date, meeting_date,
+          response_deadline, fda_project_manager, fda_reviewers, sponsor_lead,
+          sponsor_team, objectives_summary, tags, related_threads
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+        RETURNING *
+      `, [
+        thread.programId,
+        thread.submissionId,
         threadCode,
-        title: thread.title || 'Thread',
-        agency: thread.agency || 'FDA',
-        topic: thread.topic || 'Topic',
-        status: (thread.status || 'planning') as any,
-        priority: (thread.priority || 'medium') as any,
-        sponsorLead: thread.sponsorLead || 'system',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      } as NegotiationThread;
-      RegulatoryNegotiationLogbookService.threadCache.push(fallback);
-      client.release();
-      return fallback;
-    }
+        thread.title,
+        thread.agency,
+        thread.division,
+        thread.meetingType,
+        thread.topic,
+        thread.status || 'planning',
+        thread.priority || 'medium',
+        thread.requestDate,
+        thread.meetingDate,
+        thread.responseDeadline,
+        thread.fdaProjectManager,
+        thread.fdaReviewers,
+        thread.sponsorLead,
+        thread.sponsorTeam,
+        thread.objectivesSummary,
+        thread.tags,
+        thread.relatedThreads
+      ]);
 
-    const mapped = this.mapThread(row);
-    RegulatoryNegotiationLogbookService.threadCache.push(mapped);
-    client.release();
-    return mapped;
+      const row = result?.rows?.[0];
+      if (!row) {
+        const fallback: NegotiationThread = {
+          id: crypto.randomUUID(),
+          programId: thread.programId || '',
+          submissionId: thread.submissionId,
+          threadCode,
+          title: thread.title || 'Thread',
+          agency: thread.agency || 'FDA',
+          topic: thread.topic || 'Topic',
+          status: (thread.status || 'planning') as any,
+          priority: (thread.priority || 'medium') as any,
+          sponsorLead: thread.sponsorLead || 'system',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        } as NegotiationThread;
+        RegulatoryNegotiationLogbookService.threadCache.push(fallback);
+        return fallback;
+      }
+
+      const mapped = this.mapThread(row);
+      RegulatoryNegotiationLogbookService.threadCache.push(mapped);
+      return mapped;
+    } finally {
+      // Always release. The previous code only released on the happy
+      // path; an INSERT throw (constraint violation, RLS rejection,
+      // network blip) leaked the connection forever.
+      client.release();
+    }
   }
 
   /**
@@ -372,7 +381,7 @@ export class RegulatoryNegotiationLogbookService {
         });
         embedding = embeddingResponse.data[0].embedding;
       } catch (error) {
-        console.error('[NegotiationLogbook] Failed to generate embedding:', error);
+        logger.error('Failed to generate embedding', { err: error instanceof Error ? error.message : String(error) });
       }
     }
 
@@ -490,7 +499,7 @@ export class RegulatoryNegotiationLogbookService {
         params.push(`[${embeddingResponse.data[0].embedding.join(',')}]`);
         fields.push(`content_embedding = $${params.length}`);
       } catch (error) {
-        console.error('[NegotiationLogbook] Failed to update embedding:', error);
+        logger.error('Failed to update embedding', { err: error instanceof Error ? error.message : String(error) });
       }
     }
 
@@ -543,7 +552,7 @@ export class RegulatoryNegotiationLogbookService {
       });
       embedding = embeddingResponse.data[0].embedding;
     } catch (error) {
-      console.error('[NegotiationLogbook] Failed to generate position embedding:', error);
+      logger.error('Failed to generate position embedding', { err: error instanceof Error ? error.message : String(error) });
     }
 
     if (position.id) {
@@ -716,7 +725,7 @@ export class RegulatoryNegotiationLogbookService {
       });
       queryEmbedding = embeddingResponse.data[0].embedding;
     } catch (error) {
-      console.error('[NegotiationLogbook] Search embedding failed:', error);
+      logger.error('Search embedding failed', { err: error instanceof Error ? error.message : String(error) });
       return { results: [] };
     }
 

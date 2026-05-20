@@ -9,6 +9,7 @@
 import { Router } from 'express';
 import type { Pool } from 'pg';
 import type { Request, Response } from 'express';
+import { requireAuthedOrgId } from '../utils/authedOrgId';
 
 // ---------------------------------------------------------------------------
 // Helper: build WHERE clause + run query against audit_events
@@ -29,6 +30,14 @@ async function queryAuditEvents(pool: Pool, queryParams: any, limitVal = 10, off
   if (queryParams.user_id || queryParams.userId) {
     conditions.push(`user_id = $${idx++}`);
     params.push(parseInt(String(queryParams.user_id || queryParams.userId)));
+  }
+  if (queryParams.entity_id || queryParams.entityId) {
+    conditions.push(`entity_id = $${idx++}`);
+    params.push(parseInt(String(queryParams.entity_id || queryParams.entityId)));
+  }
+  if (queryParams.entity_type || queryParams.entityType) {
+    conditions.push(`entity_type = $${idx++}`);
+    params.push(String(queryParams.entity_type || queryParams.entityType));
   }
   if (queryParams.start_date || queryParams.startDate) {
     conditions.push(`timestamp >= $${idx++}`);
@@ -77,11 +86,14 @@ function formatAuditRow(row: any) {
     userId: String(row.user_id || ''),
     user_id: String(row.user_id || ''),
     userName: row.user_name || 'System',
+    userRole: row.user_role || '',
     action,
     actionType: action.charAt(0) + action.slice(1).toLowerCase(),
     event_type: row.event_type || '',
     severity: row.regulatory_significant ? 'warning' : 'info',
     component: row.entity_type || 'System',
+    entityId: row.entity_id != null ? String(row.entity_id) : null,
+    entityType: row.entity_type || null,
     details: row.reason || row.comments || `${action} on ${row.entity_type || 'entity'}`,
     description: row.reason || row.comments || `${action} on ${row.entity_type || 'entity'}`,
     ipAddress: row.ip_address || '',
@@ -89,6 +101,7 @@ function formatAuditRow(row: any) {
     org_id: String(row.organization_id || ''),
     project_id: String(row.entity_id || ''),
     timestamp: row.timestamp || row.created_at,
+    metadata: row.metadata ?? null,
     // Hash chain fields for Part 11 chain integrity display
     hash: row.record_hash || null,
     sequenceNumber: row.sequence_number ?? null,
@@ -361,6 +374,8 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   // GET /api/audit/export — signed export (CSV/JSON)
   router.get('/audit/export', async (req: Request, res: Response) => {
     try {
+      const orgGuard = requireAuthedOrgId(req, res);
+      if (!orgGuard.ok) return;
       // Use signed export service for tamper-evident audit packages
       const { generateSignedAuditExport } = await import('../services/audit/signedAuditExport.js');
       const format = (req.query.format === 'json' ? 'json' : 'csv') as 'csv' | 'json';
@@ -368,7 +383,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
       const userName = (req as any).user?.name || (req as any).user?.email || String(userId);
 
       const signedExport = await generateSignedAuditExport(pool, {
-        organizationId: req.query.org_id ? parseInt(String(req.query.org_id), 10) : undefined,
+        organizationId: orgGuard.orgId,
         startDate: req.query.start_date ? String(req.query.start_date) : undefined,
         endDate: req.query.end_date ? String(req.query.end_date) : undefined,
         eventType: req.query.event_type ? String(req.query.event_type) : undefined,
@@ -402,13 +417,15 @@ export function createAuditTrailRoutes(pool: Pool): Router {
    */
   router.get('/audit/export/signed', async (req: Request, res: Response) => {
     try {
+      const orgGuard = requireAuthedOrgId(req, res);
+      if (!orgGuard.ok) return;
       const { generateSignedAuditExport } = await import('../services/audit/signedAuditExport.js');
       const format = (req.query.format === 'csv' ? 'csv' : 'json') as 'csv' | 'json';
       const userId = (req as any).userId || (req as any).user?.id || 'unknown';
       const userName = (req as any).user?.name || (req as any).user?.email || String(userId);
 
       const signedExport = await generateSignedAuditExport(pool, {
-        organizationId: req.query.org_id ? parseInt(String(req.query.org_id), 10) : undefined,
+        organizationId: orgGuard.orgId,
         startDate: req.query.start_date ? String(req.query.start_date) : undefined,
         endDate: req.query.end_date ? String(req.query.end_date) : undefined,
         eventType: req.query.event_type ? String(req.query.event_type) : undefined,

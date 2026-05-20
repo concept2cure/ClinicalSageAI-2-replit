@@ -655,4 +655,124 @@ Write a comprehensive draft for this CMC section following ICH guidelines.`,
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// DATA-DRIVEN QUALITY ANALYSIS (replaces hardcoded CQA/CPP heuristics for
+// projects that have CMC source data). The blueprint-generator route keeps
+// its type-string heuristics for upfront blueprint creation where no
+// project data exists yet.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/cmc/quality/qbd/:projectId
+ * Derive CQAs and CPPs from the project's actual stored data
+ * (specifications, methods, stability, processes, source objects).
+ */
+router.get('/quality/qbd/:projectId', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const projectId = req.params.projectId;
+    if (!projectId) {
+      return res.status(400).json({ success: false, error: 'projectId is required' });
+    }
+    const { analyzeQbdFromSources } = await import('../../services/cmc/qbd-analyzer');
+    const result = await analyzeQbdFromSources(orgId, projectId);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('QbD analysis error:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'QbD analysis failed',
+    });
+  }
+});
+
+/**
+ * POST /api/cmc/ich-compliance
+ * Deterministic ICH compliance check for a project. Runs rule-based
+ * checks across Q1A/Q2/Q3A-B/Q3D/Q6A-B/Q8/Q9/Q10 against the project's
+ * actual stored data. Every finding cites the underlying guideline.
+ */
+router.post('/ich-compliance', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const projectId = req.body?.projectId;
+    if (!projectId || typeof projectId !== 'string') {
+      return res.status(400).json({ success: false, error: 'projectId (string UUID) is required' });
+    }
+    const { runIchComplianceCheck } = await import('../../services/cmc/ich-compliance-checker');
+    const report = await runIchComplianceCheck(orgId, projectId);
+    res.json({ success: true, data: report });
+  } catch (error) {
+    console.error('ICH compliance check error:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'ICH compliance check failed',
+    });
+  }
+});
+
+/**
+ * POST /api/cmc/variations/classify
+ * Deterministic SUPAC / variations classifier. Takes a proposed change
+ * description and returns the FDA reporting category, EMA variation
+ * category, SUPAC tier, bioequivalence requirement, impacted CTD
+ * sections, validation requirements, estimated timeline, and the
+ * cross-module impact analysis. Grounded in 21 CFR 314.70, SUPAC-IR /
+ * MR / SS, Commission Regulation 1234/2008, and ICH Q12.
+ */
+router.post('/variations/classify', async (req, res) => {
+  try {
+    getOrgId(req); // tenant scope enforcement
+    const { classifyVariation } = await import('../../services/cmc/supac-classifier');
+    const input = req.body ?? {};
+    if (!input.dosageFormFamily || !input.changeCategory) {
+      return res.status(400).json({
+        success: false,
+        error: 'dosageFormFamily and changeCategory are required',
+      });
+    }
+    const classification = classifyVariation(input);
+    res.json({ success: true, data: classification });
+  } catch (error) {
+    console.error('Variations classifier error:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Classification failed',
+    });
+  }
+});
+
+/**
+ * POST /api/cmc/control-strategy
+ * Deterministic ICH Q8/Q9/Q10/Q11-grade control strategy generator.
+ * Reads CMC source objects, specs, methods, stability — produces a
+ * structured control strategy with risk-based justifications and
+ * cited guidance. Replaces the fallback playbook string.
+ */
+router.post('/control-strategy', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const projectId = req.body?.projectId;
+    const scope = req.body?.scope ?? 'both';
+    if (!projectId || typeof projectId !== 'string') {
+      return res.status(400).json({ success: false, error: 'projectId (string UUID) is required' });
+    }
+    if (scope !== 'drug_substance' && scope !== 'drug_product' && scope !== 'both') {
+      return res.status(400).json({
+        success: false,
+        error: 'scope must be one of drug_substance | drug_product | both',
+      });
+    }
+    const { generateControlStrategy } = await import('../../services/cmc/control-strategy-generator');
+    const strategy = await generateControlStrategy(orgId, projectId, scope);
+    res.json({ success: true, data: strategy });
+  } catch (error) {
+    console.error('Control strategy generator error:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Control strategy generation failed',
+    });
+  }
+});
+
 export default router;

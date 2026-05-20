@@ -77,11 +77,10 @@ const log = createScopedLogger('regulatory-precedent-intel-routes');
 // ─── Helper ──────────────────────────────────────────────────────────────────
 
 function getOrgId(req: Request): string {
-  return (
-    ((req as Record<string, unknown>).organizationId as string) ??
-    String((req as any).user?.organizationId || (req as any).tenantId) ??
-    'default'
-  );
+  const explicit = (req as Record<string, unknown>).organizationId as string | undefined;
+  if (explicit) return explicit;
+  const fromUser = (req as any).user?.organizationId || (req as any).tenantId;
+  return fromUser ? String(fromUser) : 'default';
 }
 
 function handleError(res: Response, error: unknown, context: string) {

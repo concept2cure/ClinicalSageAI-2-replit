@@ -7,7 +7,7 @@ function run(cmd) {
   return execSync(cmd, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
 }
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
   const opts = {
     limit: 20,
     output: null,
@@ -90,7 +90,7 @@ function collectPrMetrics(item) {
   };
 }
 
-function buildReport({ date, limit, results }) {
+export function buildReport({ date, limit, results }) {
   const successful = results.filter((r) => r.missingFiles === 0).length;
 
   const rows = results
@@ -152,4 +152,14 @@ function main() {
   process.stdout.write(`Wrote audit report: ${output}\n`);
 }
 
-main();
+// Run when invoked directly; remain importable for tests.
+const invokedDirectly = (() => {
+  try {
+    return import.meta.url === `file://${process.argv[1]}` || import.meta.url.endsWith(process.argv[1] ?? '');
+  } catch {
+    return false;
+  }
+})();
+if (invokedDirectly) {
+  main();
+}

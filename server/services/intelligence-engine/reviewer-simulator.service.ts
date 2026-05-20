@@ -56,6 +56,14 @@ export interface SimulatorRequest {
   defensePacketId?: string;
   /** If true, do not insert a row; just return the result. */
   dryRun?: boolean;
+  // ── Module 4 (preclinical) wiring ──────────────────────────────────────────
+  // The reviewer simulator's `programId` is a regulatory_programs uuid. The
+  // nonclinical study rows live under `ctd_programs.id` (integer). Callers
+  // pass that integer here when they want the preclinical persona to receive
+  // loaded intel from `ctd_nonclinical_studies`. No-op when
+  // PRECLINICAL_REVIEWER_ENABLED is unset; in that case the persona still
+  // runs and emits its info-level "data not loaded" stub.
+  ctdProgramId?: number;
 }
 
 export interface SimulatorResult {
@@ -83,11 +91,15 @@ function stableStringify(value: unknown): string {
   return `{${keys.map(k => `${JSON.stringify(k)}:${stableStringify(obj[k])}`).join(',')}}`;
 }
 
-function computeInputsHash(req: SimulatorRequest, scope: ReviewerPersonaCode[]): string {
+function computeInputsHash(
+  req: SimulatorRequest,
+  scope: ReviewerPersonaCode[],
+  resolvedIntel: PersonaIntelFacts,
+): string {
   const payload = {
     program: req.program,
     packet: req.packet ?? null,
-    intel: req.intel,
+    intel: resolvedIntel,
     personaScope: [...scope].sort(),
   };
   return createHash('sha256').update(stableStringify(payload)).digest('hex');
@@ -150,11 +162,31 @@ export async function runReviewerSimulation(
     );
   }
 
-  // 3. Run each in-scope persona
+  // 3. Resolve preclinical intel if the caller asked for it and the flag is on.
+  // Dynamic import keeps the simulator decoupled from the preclinical surface
+  // when it isn't wired up.
+  let intel: PersonaIntelFacts = req.intel;
+  if (req.ctdProgramId !== undefined && !intel.nonclinical) {
+    try {
+      const { loadPreclinicalIntel } = await import(
+        '../preclinical/preclinical-intel-loader'
+      );
+      const nc = await loadPreclinicalIntel(req.ctdProgramId, {
+        mrhdMgPerKgPerDay: req.program.mrhdMgPerKgPerDay ?? null,
+      });
+      if (nc) {
+        intel = { ...intel, nonclinical: nc };
+      }
+    } catch {
+      // Loader is best-effort; persona will emit its info-stub.
+    }
+  }
+
+  // 4. Run each in-scope persona
   const inputs: PersonaInputs = {
     program: req.program,
     packet: req.packet ?? null,
-    intel: req.intel,
+    intel,
   };
   const personaQuestions: ReviewerQuestion[] = [];
   const perPersonaCounts: Record<string, number> = {};
@@ -172,8 +204,8 @@ export async function runReviewerSimulation(
   const warningCount = questions.filter(q => q.severity === 'warning').length;
   const infoCount = questions.filter(q => q.severity === 'info').length;
 
-  // 6. Hash
-  const inputsHash = computeInputsHash(req, scope);
+  // 6. Hash — over the resolved intel so loaded nonclinical data is captured.
+  const inputsHash = computeInputsHash(req, scope, intel);
 
   // 7. Persist (unless dryRun)
   let runId: string | null = null;

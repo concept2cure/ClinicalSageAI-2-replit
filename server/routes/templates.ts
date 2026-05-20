@@ -44,6 +44,63 @@ templatesRouter.get('/', async (req: Request, res: Response) => {
 export const ectdTemplatesRouter = Router();
 const pool = getPool();
 
+/**
+ * PATCH /api/ectd/templates/:id/default — flip is_default within an org.
+ *
+ * Backs the kit's Templates browser "star a default per granule" action.
+ * The unique index `ectd_templates_default_uniq (organization_id,
+ * granule_id) WHERE is_default = true` (migration 20260507) guarantees
+ * at most one default per (org, granule). To avoid index conflicts we
+ * first clear any existing default for that granule, then set the
+ * requested row.
+ */
+ectdTemplatesRouter.patch('/:id/default', async (req: Request, res: Response) => {
+  const organizationId = getSecureOrgId(req);
+  if (!organizationId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) {
+    return res.status(422).json({ error: 'id must be numeric' });
+  }
+  const setDefault = req.body?.isDefault !== false;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const own = await client.query<{ granule_id: string | null }>(
+      `SELECT granule_id FROM ectd_templates
+        WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+      [id, organizationId],
+    );
+    if (own.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Template not found in this organization' });
+    }
+    const granule = own.rows[0].granule_id;
+    if (setDefault && granule) {
+      await client.query(
+        `UPDATE ectd_templates SET is_default = false, updated_at = NOW()
+          WHERE organization_id = $1 AND granule_id = $2 AND is_default = true AND id != $3`,
+        [organizationId, granule, id],
+      );
+    }
+    const result = await client.query(
+      `UPDATE ectd_templates SET is_default = $3, updated_at = NOW()
+        WHERE id = $1 AND organization_id = $2
+        RETURNING id, template_name, granule_id, is_default`,
+      [id, organizationId, setDefault],
+    );
+    await client.query('COMMIT');
+    return res.json({ data: result.rows[0] });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    console.error('[templates] set-default failed:', err);
+    return res.status(500).json({ error: 'Failed to set default' });
+  } finally {
+    client.release();
+  }
+});
+
 ectdTemplatesRouter.get('/', async (req: Request, res: Response) => {
   try {
     const organizationId = getSecureOrgId(req);

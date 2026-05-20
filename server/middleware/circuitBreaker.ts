@@ -338,14 +338,17 @@ export function createCircuitBreakerMiddleware(
       return;
     }
 
-    // Track 5xx responses as circuit breaker failures
-    const originalJson = res.json.bind(res);
-    res.json = function (body?: any): Response {
+    // Track 5xx responses as circuit breaker failures. The `finish`
+    // event fires on every response path — json, send, end, sendStatus,
+    // streaming, the error pipeline — so it observes failures that an
+    // `res.json` wrapper would silently miss.
+    res.on('finish', () => {
       if (res.statusCode >= 500) {
-        breaker.recordFailure(new Error(`Server error ${res.statusCode} on ${req.method} ${req.path}`));
+        breaker.recordFailure(
+          new Error(`Server error ${res.statusCode} on ${req.method} ${req.path}`),
+        );
       }
-      return originalJson(body);
-    };
+    });
 
     next();
   };

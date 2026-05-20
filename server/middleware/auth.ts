@@ -9,10 +9,25 @@
  */
 
 import type { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { config } from '../config/environment';
+import { verifyJwtWithRotation } from '../utils/jwtVerify';
 
 // SECURITY FIX: isDev variable removed — no more dev-mode auth bypasses.
+
+/**
+ * Extract the JWT from an Authorization header value, accepting only the
+ * canonical `Bearer <token>` form (case-insensitive scheme, exactly one
+ * space). Returns null if the header is missing, malformed, or the token
+ * is empty. Previously the code used `authHeader.replace('Bearer ', '')`
+ * which stripped the substring anywhere in the value and accepted exotic
+ * shapes like `Foo Bearer realtoken`.
+ */
+export function extractBearerToken(authHeader: string | undefined): string | null {
+  if (!authHeader) return null;
+  const match = /^Bearer\s+(\S+)$/i.exec(authHeader);
+  if (!match) return null;
+  const token = match[1];
+  return token.length > 0 ? token : null;
+}
 
 // JWT token payload interface
 interface JWTPayload {
@@ -65,8 +80,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   // SECURITY FIX: Dev auto-auth removed. All requests must provide a valid JWT.
   // To test locally, create a user via POST /api/auth/signup then login normally.
 
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.replace('Bearer ', '');
+  const token = extractBearerToken(req.headers.authorization);
 
   if (!token) {
     return res.status(401).json({
@@ -75,10 +89,20 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   }
 
   try {
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as JWTPayload;
+    const decoded = verifyJwtWithRotation(token) as JWTPayload;
+    const subject = decoded.userId ?? decoded.id ?? decoded.sub;
+    if (subject === undefined || subject === null || subject === '' || subject === 0) {
+      // A signed token with no usable subject claim must not authenticate.
+      // Falling back to id=0 (the previous behaviour) would otherwise let
+      // queries like `WHERE user_id = 0` produce inconsistent results and
+      // confuse downstream RBAC checks.
+      return res.status(401).json({
+        error: { code: 'AUTH_007', message: 'Token missing required subject claim' },
+      });
+    }
     req.user = {
-      id: decoded.userId || decoded.id || decoded.sub || 0,
-      userId: decoded.userId || decoded.id || decoded.sub,
+      id: subject,
+      userId: subject,
       email: decoded.email,
       role: decoded.role || 'user',
       roles: decoded.roles || [decoded.role || 'user'],
@@ -209,8 +233,7 @@ export const requirePermission = (resource: string, action: string) => {
  * Optional authentication - attaches user if token present, continues if not
  */
 export const optionalAuth = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.replace('Bearer ', '');
+  const token = extractBearerToken(req.headers.authorization);
 
   if (!token) {
     // SECURITY FIX: Dev auto-auth removed from optional auth path.
@@ -218,16 +241,21 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
   }
 
   try {
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as JWTPayload;
-    req.user = {
-      id: decoded.userId || decoded.id || decoded.sub || 0,
-      userId: decoded.userId || decoded.id || decoded.sub,
-      email: decoded.email,
-      role: decoded.role || 'user',
-      roles: decoded.roles || [decoded.role || 'user'],
-      organizationId: decoded.organizationId || decoded.orgId,
-      permissions: decoded.permissions || [],
-    };
+    const decoded = verifyJwtWithRotation(token) as JWTPayload;
+    const subject = decoded.userId ?? decoded.id ?? decoded.sub;
+    // Silently ignore tokens without a usable subject — optional auth
+    // continues unauthenticated rather than attaching a phantom user.
+    if (subject !== undefined && subject !== null && subject !== '' && subject !== 0) {
+      req.user = {
+        id: subject,
+        userId: subject,
+        email: decoded.email,
+        role: decoded.role || 'user',
+        roles: decoded.roles || [decoded.role || 'user'],
+        organizationId: decoded.organizationId || decoded.orgId,
+        permissions: decoded.permissions || [],
+      };
+    }
   } catch {
     // Token invalid but that's okay for optional auth
   }

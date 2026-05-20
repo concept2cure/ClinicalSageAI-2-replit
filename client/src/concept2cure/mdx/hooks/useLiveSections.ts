@@ -38,6 +38,10 @@ interface ServerSectionRow {
   level: number;
   displayOrder: number;
   updatedAt: string | null;
+  /* Draft provenance — set when AnA drafted via write_kit_section. */
+  draftSource?: string | null;
+  draftedAt?: string | null;
+  draftedSummary?: string | null;
 }
 
 interface DocumentPreviewPayload {
@@ -122,6 +126,15 @@ function rowToItem(r: ServerSectionRow): EditorSectionItem {
 }
 
 function rowToContent(r: ServerSectionRow): EditorContent {
+  const anaDraft =
+    r.draftSource === 'ana' && r.draftedAt
+      ? {
+          source: 'ana' as const,
+          at: r.draftedAt,
+          summary: r.draftedSummary ?? undefined,
+          rowId: r.id,
+        }
+      : null;
   return {
     id: r.id,
     num: `§${r.sectionNumber}`,
@@ -134,6 +147,7 @@ function rowToContent(r: ServerSectionRow): EditorContent {
       { lbl: 'Completion', val: `${r.completionPercentage ?? 0}%` },
     ],
     blocks: blocksFromContent(r.id, r.content ?? ''),
+    anaDraft,
   };
 }
 

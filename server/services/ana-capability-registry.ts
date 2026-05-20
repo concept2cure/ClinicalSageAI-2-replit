@@ -15,6 +15,10 @@ import { db } from '../db';
 import { anaCapabilityRegistry, anaOutcomeLog, anaProjectCapabilities } from 'shared/schema/ana-intelligence';
 import { eq, and, desc, sql, or, inArray } from 'drizzle-orm';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('ana-capability-registry');
+
 // ============================================================
 // SEED DATA — 33 Core Capabilities
 // ============================================================
@@ -588,7 +592,7 @@ export async function logOutcome(params: {
     }
   } catch (error) {
     // Non-blocking: log but never throw
-    console.error('[AnA Capability Registry] Failed to log outcome:', error);
+    logger.error('Failed to log outcome', { err: error instanceof Error ? error.message : String(error) });
   }
 }
 

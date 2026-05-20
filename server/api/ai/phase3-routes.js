@@ -5,6 +5,7 @@ import regulatoryAIPhase3 from '../../services/regulatoryAIServicePhase3.js';
 import { db } from '../../db';
 import { components, componentVersions, documentVersions } from '../../../shared/schema.js';
 import { eq, and, sql } from 'drizzle-orm';
+import { authedOrgId } from '../../utils/authedOrgId.js';
 
 const router = express.Router();
 
@@ -74,58 +75,29 @@ const extractOrgContext = (req, res, next) => {
     return next();
   }
 
-  // Check if organization ID header is present
-  const orgIdHeader = req.headers['x-organization-id'];
-
-  // In development mode, allow requests without org header and use default org ID
-  if (!orgIdHeader) {
-    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production') {
-      // Use default development organization ID
-      req.organizationId = req.organizationId || 2; // Default dev org (don't overwrite if already set)
-      // Only set userId if not already set by auth middleware (integer = valid JWT auth)
-      if (req.userId === undefined || req.userId === null || typeof req.userId === 'string') {
-        req.userId = req.headers['x-user-id'] || 'dev-user';
-      }
-      req.sessionId = req.headers['x-session-id'] || null;
-      req.ipAddress = req.headers['x-forwarded-for'] || req.connection?.remoteAddress;
-      console.log(
-        `[Phase3 AI] Using default org ID (${req.organizationId}) for dev mode - path: ${req.path}`
-      );
-      return next();
+  // Source organization id from the verified JWT, never from headers.
+  // The previous header path (`x-organization-id`) was attacker-
+  // controlled and is the IDOR shape PRs #496-#499 closed.
+  const jwtOrgId = authedOrgId(req);
+  if (jwtOrgId != null) {
+    req.organizationId = jwtOrgId;
+  } else if (process.env.NODE_ENV !== 'production') {
+    // Dev-mode escape hatch — preserves the existing developer ergonomics
+    // when no JWT is present (eg local curl). NEVER engaged in production.
+    req.organizationId = req.organizationId || 2;
+    if (req.userId === undefined || req.userId === null || typeof req.userId === 'string') {
+      req.userId = 'dev-user';
     }
-
-    // In production, require the header
+  } else {
     return res.status(403).json({
       success: false,
       error: 'Organization context required',
-      message: 'Missing x-organization-id header',
+      message: 'No org context on verified JWT',
     });
   }
 
-  // Parse organizationId - support both string and numeric values
-  const parsedOrgId = parseInt(orgIdHeader);
-  if (isNaN(parsedOrgId)) {
-    // If not a valid number, try using as string (for test environments)
-    // In production, this should be a numeric ID
-    req.organizationId = orgIdHeader === 'test-org' ? 1 : null;
-
-    if (!req.organizationId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid organization ID format',
-        message: 'x-organization-id must be a numeric value',
-      });
-    }
-  } else {
-    req.organizationId = parsedOrgId;
-  }
-
-  // Only set userId from header if not already set by auth middleware
-  if (req.userId === undefined || req.userId === null) {
-    req.userId = req.headers['x-user-id'] || null;
-  }
   req.sessionId = req.headers['x-session-id'] || null;
-  req.ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  req.ipAddress = req.headers['x-forwarded-for'] || req.connection?.remoteAddress;
   next();
 };
 

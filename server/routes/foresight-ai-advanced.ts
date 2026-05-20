@@ -7,6 +7,12 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { ForesightAIEngine } from '../services/foresight-ai-engine';
 import { db } from '../db';
+import { authedOrgId } from '../utils/authedOrgId';
+
+// SECURITY: foresight-ai endpoints query dose-escalation, cross-species
+// PKPD, and trial data — all per-org. Pre-fix the org filter was read
+// from req.query.organizationId, sometimes with an `|| 'default'`
+// fallback. Now sourced from the JWT.
 import { 
   doseEscalationStudies,
   doseLevels,
@@ -322,7 +328,10 @@ router.post('/hypothesis/generate', async (req, res) => {
 // Get all dose escalation studies for an organization
 router.get('/dose-escalation/studies', async (req, res) => {
   try {
-    const organizationId = req.query.organizationId as string;
+    const organizationId = String(authedOrgId(req) ?? '');
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     
     if (!organizationId) {
       return res.status(400).json({ error: 'organizationId is required' });
@@ -406,7 +415,10 @@ router.get('/dose-escalation/studies', async (req, res) => {
 // Get all IND narratives for an organization
 router.get('/ind-narratives', async (req, res) => {
   try {
-    const organizationId = req.query.organizationId as string;
+    const organizationId = String(authedOrgId(req) ?? '');
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     
     if (!organizationId) {
       return res.status(400).json({ error: 'organizationId is required' });
@@ -520,7 +532,10 @@ router.post('/ind-narrative/generate', async (req, res) => {
 // Get all cross-species analyses for an organization
 router.get('/cross-species/analyses', async (req, res) => {
   try {
-    const organizationId = req.query.organizationId as string;
+    const organizationId = String(authedOrgId(req) ?? '');
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     
     if (!organizationId) {
       return res.status(400).json({ error: 'organizationId is required' });
@@ -622,7 +637,10 @@ router.post('/csr/ingest', async (req, res) => {
 router.get('/csr/insights', async (req, res) => {
   try {
     const { csrForesightOrchestrator } = await import('../services/csr-foresight-orchestrator');
-    const organizationId = req.query.organizationId as string || 'default';
+    const organizationId = String(authedOrgId(req) ?? '');
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     
     const insights = await csrForesightOrchestrator.getCSRInsights(organizationId);
     
@@ -689,7 +707,10 @@ router.post('/predictions/recalibrate', async (req, res) => {
 router.get('/csr/status', async (req, res) => {
   try {
     const { csrForesightOrchestrator } = await import('../services/csr-foresight-orchestrator');
-    const organizationId = req.query.organizationId as string || 'default';
+    const organizationId = String(authedOrgId(req) ?? '');
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     
     const status = await csrForesightOrchestrator.getIntegrationStatus(organizationId);
     

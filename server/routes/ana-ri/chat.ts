@@ -48,7 +48,7 @@ import {
 } from '../../services/lumen-context-builder.js';
 import { interceptChatResponse } from '../../services/intelligence/rim-interceptors.js';
 import { getCachedSignalReliability } from '../../services/intelligence/learning-loop-service.js';
-import { getEnabledServerTools } from '../../services/claude/ClaudeToolDefinitions.js';
+import { getEnabledServerTools } from '../../services/ana/AnaToolDefinitions.js';
 import { enrichContextForChat } from '../../services/ana-ri/context-enrichment.js';
 import { processResponseActions } from '../../services/ana-guidance-executor.js';
 import {

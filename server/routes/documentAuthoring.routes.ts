@@ -186,11 +186,29 @@ const createAuditLog = async (data: {
   }
 };
 
-// Permission check middleware
+// Permission check middleware.
+//
+// Tenant isolation contract:
+//   1. The document lookup MUST filter by organization_id from the JWT,
+//      never by id alone. Querying by id alone is an IDOR — any
+//      authenticated user from any org could probe documents by
+//      enumerating IDs. The query below uses `and(eq(id), eq(org))` so
+//      a foreign-tenant document looks identical to "not found".
+//   2. The `admin` role is ORG-SCOPED — admins of org A still cannot
+//      reach org B's documents (the SQL filter eliminates them before
+//      role check). Only `super_admin` (platform staff) bypasses the
+//      tenant filter, and even then we require an explicit JWT role
+//      claim. Treat that role as the cross-org maintenance path.
 const checkDocumentPermission = (requiredPermission: string) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     const documentId = parseInt(req.params.documentId || req.params.id);
     const userId = Number(req.user?.id || req.userId);
+    const userRole = (req.user?.role || req.userRole) as string | undefined;
+    const userOrgIdRaw =
+      (req as any).user?.organizationId ??
+      (req as any).tenantContext?.organizationId ??
+      (req as any).organizationId;
+    const userOrgId = userOrgIdRaw != null ? Number(userOrgIdRaw) : undefined;
 
     if (!documentId || !userId) {
       return res.status(400).json({
@@ -199,13 +217,22 @@ const checkDocumentPermission = (requiredPermission: string) => {
       });
     }
 
+    // Platform super-admin path (Concept2Cure staff) — explicit cross-org
+    // access. Everything else requires an authenticated org context.
+    const isSuperAdmin = userRole === 'super_admin';
+    if (!isSuperAdmin && !userOrgId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required',
+      });
+    }
+
     try {
-      // Get document
-      const document = await db!
-        .select()
-        .from(documents)
-        .where(eq(documents.id, documentId))
-        .limit(1);
+      // Tenant-scoped lookup. super_admin bypasses the org filter.
+      const whereExpr = isSuperAdmin
+        ? eq(documents.id, documentId)
+        : and(eq(documents.id, documentId), eq(documents.organizationId, userOrgId as number));
+      const document = await db!.select().from(documents).where(whereExpr).limit(1);
 
       if (!document || document.length === 0) {
         return res.status(404).json({
@@ -219,10 +246,9 @@ const checkDocumentPermission = (requiredPermission: string) => {
       // Check permissions based on document access control list
       const acl = (doc.accessControlList as any) || {};
       const userPermissions = acl[userId] || [];
-      const userRole = req.user?.role || req.userRole;
 
-      // Admin always has access
-      if (userRole === 'admin' || userRole === 'super_admin') {
+      // Admin / super_admin within the tenant get unconditional access.
+      if (userRole === 'admin' || isSuperAdmin) {
         return next();
       }
 

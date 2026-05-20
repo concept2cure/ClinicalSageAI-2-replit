@@ -6,6 +6,9 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
+    <!-- Per-request CSP nonce. The server replaces __CSP_NONCE__ before
+         sending the document (server/vite.ts). Read by client/src/cspNonce.ts. -->
+    <meta name="csp-nonce" content="__CSP_NONCE__" />
     <title>Concept2Cure - AI-Powered Regulatory Intelligence Platform</title>
 
     <!-- Favicon & App Icons -->

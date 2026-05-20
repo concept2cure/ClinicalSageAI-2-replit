@@ -67,6 +67,19 @@ These come from `README.md`. Every PR that violates them is a bug.
 
 If an implementation decision requires trading off against what ships here — performance, framework constraints, a11y edge cases, anything — **raise it to the designer (this project) before coding around it**. Do not resolve UI trade-offs unilaterally. The designer will update `ui_kits/` and `HANDOFF.md` if the design needs to change.
 
+## Search-before-build (hard rule)
+
+Before adding **any** new server route, hook, data module, or component, you must search the codebase for an existing implementation that already covers the data domain. The platform already has substantial backend coverage (audit, approvals, correspondence, submissions, sections, programs, etc.); duplicating it leaves dead code paths and forks the canonical store of the same concept across multiple tables. Concrete checklist before writing a new file:
+
+1. `grep -rln '<thing>' server/routes server/services` — does an endpoint already exist?
+2. `grep -rln '<thing>' client/src/concept2cure` — does a hook / component already exist?
+3. `ls server/routes/ | grep -i '<topic>'` — sibling routes that hint at coverage?
+4. If an existing implementation is partial, **extend it** instead of creating a parallel one. New file is the last resort, never the default.
+
+If you do create a new file, it must have a real consumer in the same PR. The orphan-import check (`scripts/check-mdx-orphans.sh`) catches new client files with no importer and new server routes that no registrar mounts; it must pass before commit. Closed-enum registries waiting on a kit pane are exempt only when explicitly marked with `@kit-registry-no-consumer-yet` in the file header — and the marker comes off the day the consumer ships.
+
+Seed data fixtures (mock arrays of fake rows) must not land in v2. The kit's `data.jsx` files include both closed enums and demo rows; port the enums, leave the demo rows behind. Paying clients consume real data from the existing endpoints.
+
 ## What lives where
 
 | Location | What it owns |

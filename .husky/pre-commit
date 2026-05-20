@@ -95,4 +95,31 @@ if [ -n "$RISK_CHANGED" ]; then
   echo "✅ Risk code validation passed."
 fi
 
+# ── Security-pattern check ───────────────────────────────────────────────
+# Hard gate. Scans server/ for the bug classes PRs #496-#503 fixed:
+# tenant-trust from req.body/query/headers, direct jwt.verify (must use
+# verifyJwtWithRotation), and hardcoded org-id fallbacks. The check is
+# fast (~1s) and runs on every commit so a regression can't slip in.
+#
+# Only triggered when server-side files are staged — client-only commits
+# skip the cost.
+
+SERVER_CHANGED=$(git diff --cached --name-only | grep -E '^server/.*\.(ts|tsx|js|jsx|mjs|cjs)$' || true)
+
+if [ -n "$SERVER_CHANGED" ]; then
+  echo ""
+  echo "🔒 Server-side files changed — running security-pattern check..."
+  if ! npm run --silent check:security-patterns 2>&1; then
+    echo ""
+    echo "🚫 ERROR: Security-pattern check FAILED."
+    echo "   Review the violation list above and fix before committing."
+    echo "   For deliberate, audited exceptions, add an inline"
+    echo "   '// security-allow: <short reason>' comment on the offending"
+    echo "   line or the line directly above it."
+    echo ""
+    exit 1
+  fi
+  echo "✅ Security-pattern check passed."
+fi
+
 echo "✅ Pre-commit checks complete"

@@ -48,6 +48,23 @@ export interface RetrievalOptions {
     source?: string;
     dateRange?: { start: Date; end: Date };
   };
+  /**
+   * Constrain initial retrieval to atoms belonging to artifacts under a
+   * specific Concept2Cure project. When set, the pipeline routes through
+   * `lumen_data_atoms` with the project-scoped hybrid search (the same
+   * surface as `enhancedEmbeddingService.searchHybrid`) instead of the
+   * vault. HyDE / multi-query / rerank / MMR all run on top of that
+   * project-scoped candidate set, so cross-module retrieval stays inside
+   * the dossier.
+   *
+   * Required by submission-chat: `artifactScope.organizationUuid` plus
+   * `artifactScope.projectId` push the project filter into the SQL so
+   * we never leak cross-project chunks into a project's interrogation.
+   */
+  artifactScope?: {
+    projectId: number | string;
+    organizationUuid: string;
+  };
 }
 
 export interface RetrievedDocument {
@@ -151,6 +168,7 @@ export class AdvancedRAGPipeline {
     const startTime = Date.now();
     const limit = options.limit || 10;
     const threshold = options.threshold || 0.5;
+    const artifactScope = options.artifactScope;
 
     let candidates: RetrievedDocument[];
     let retrievalStrategy = options.strategy;
@@ -164,7 +182,8 @@ export class AdvancedRAGPipeline {
           limit * 3,
           threshold,
           options.filters,
-          options.organizationUuid
+          options.organizationUuid,
+          artifactScope
         );
         candidates = hydeResult.documents;
         tokensUsed += hydeResult.tokensUsed;
@@ -176,7 +195,8 @@ export class AdvancedRAGPipeline {
           limit * 3,
           threshold,
           options.filters,
-          options.organizationUuid
+          options.organizationUuid,
+          artifactScope
         );
         candidates = multiResult.documents;
         tokensUsed += multiResult.tokensUsed;
@@ -190,14 +210,16 @@ export class AdvancedRAGPipeline {
             limit * 2,
             threshold,
             options.filters,
-            options.organizationUuid
+            options.organizationUuid,
+            artifactScope
           ),
           this.multiQueryRetrieval(
             query,
             limit * 2,
             threshold,
             options.filters,
-            options.organizationUuid
+            options.organizationUuid,
+            artifactScope
           ),
         ]);
 
@@ -217,7 +239,8 @@ export class AdvancedRAGPipeline {
           limit * 3,
           threshold,
           options.filters,
-          options.organizationUuid
+          options.organizationUuid,
+          artifactScope
         );
         break;
     }
@@ -256,6 +279,59 @@ export class AdvancedRAGPipeline {
   }
 
   /**
+   * Initial-retrieval router. Picks project-scoped (lumen_data_atoms via the
+   * search_atoms_hybrid SQL function) when artifactScope is provided, falls
+   * back to vault chunks otherwise. All higher-level strategies (HyDE,
+   * multi_query, basic) call through this so a single project filter
+   * propagates through the whole pipeline.
+   */
+  private async searchInitial(
+    query: string,
+    limit: number,
+    threshold: number,
+    organizationUuid?: string,
+    artifactScope?: RetrievalOptions['artifactScope']
+  ): Promise<RetrievedDocument[]> {
+    if (artifactScope) {
+      return this.searchProjectAtoms(query, limit, threshold, artifactScope);
+    }
+    return this.searchVaultSimilar(query, limit, threshold, organizationUuid);
+  }
+
+  /**
+   * Project-scoped initial retrieval using the same hybrid (vector + BM25)
+   * path as enhancedEmbeddingService.searchHybrid, with the project_id
+   * filter pushed into SQL so cross-project chunks never appear in the
+   * candidate set. Maps results into RetrievedDocument so downstream
+   * reranking / MMR / compression all work transparently.
+   */
+  private async searchProjectAtoms(
+    query: string,
+    limit: number,
+    threshold: number,
+    artifactScope: NonNullable<RetrievalOptions['artifactScope']>
+  ): Promise<RetrievedDocument[]> {
+    const hits = await this.embeddingService.searchHybrid(
+      query,
+      limit,
+      0.7,
+      artifactScope.organizationUuid,
+      String(artifactScope.projectId)
+    );
+    return hits
+      .filter(h => Number.isFinite(h.score) && h.score >= threshold)
+      .map(h => ({
+        id: h.id,
+        chunkId: h.id,
+        content: h.content || '',
+        title: h.title || 'Untitled',
+        atomType: 'project_atom',
+        initialScore: h.score,
+        finalScore: h.score,
+      }));
+  }
+
+  /**
    * Basic semantic retrieval
    */
   private async basicRetrieval(
@@ -263,9 +339,10 @@ export class AdvancedRAGPipeline {
     limit: number,
     threshold: number,
     _filters?: RetrievalOptions['filters'],
-    organizationUuid?: string
+    organizationUuid?: string,
+    artifactScope?: RetrievalOptions['artifactScope']
   ): Promise<RetrievedDocument[]> {
-    return this.searchVaultSimilar(query, limit, threshold, organizationUuid);
+    return this.searchInitial(query, limit, threshold, organizationUuid, artifactScope);
   }
 
   /**
@@ -277,7 +354,8 @@ export class AdvancedRAGPipeline {
     limit: number,
     threshold: number,
     _filters?: RetrievalOptions['filters'],
-    organizationUuid?: string
+    organizationUuid?: string,
+    artifactScope?: RetrievalOptions['artifactScope']
   ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }> {
     // Generate hypothetical answer using Claude for better reasoning
     const hydeResponse = await this.aiRouter.route({
@@ -299,11 +377,12 @@ export class AdvancedRAGPipeline {
     const hypotheticalDoc = hydeResponse.content;
 
     // Search using the hypothetical document
-    const results = await this.searchVaultSimilar(
+    const results = await this.searchInitial(
       hypotheticalDoc,
       limit,
       threshold,
-      organizationUuid
+      organizationUuid,
+      artifactScope
     );
 
     return {
@@ -320,7 +399,8 @@ export class AdvancedRAGPipeline {
     limit: number,
     threshold: number,
     _filters?: RetrievalOptions['filters'],
-    organizationUuid?: string
+    organizationUuid?: string,
+    artifactScope?: RetrievalOptions['artifactScope']
   ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }> {
     // Generate alternative queries
     const queryExpansionResponse = await this.aiRouter.route({
@@ -353,7 +433,13 @@ export class AdvancedRAGPipeline {
 
     // Search with all queries in parallel
     const searchPromises = allQueries.map(q =>
-      this.searchVaultSimilar(q, Math.ceil(limit / allQueries.length), threshold, organizationUuid)
+      this.searchInitial(
+        q,
+        Math.ceil(limit / allQueries.length),
+        threshold,
+        organizationUuid,
+        artifactScope
+      )
     );
 
     const allResults = await Promise.all(searchPromises);

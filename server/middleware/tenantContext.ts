@@ -1,4 +1,3 @@
-// @ts-nocheck - TenantContext type conflicts with tenantDbHelper declarations
 /**
  * Tenant Context Middleware
  *
@@ -10,12 +9,36 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import type { Pool, PoolClient } from 'pg';
-import jwt from 'jsonwebtoken';
+import type { Pool } from 'pg';
+import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { db } from '../db';
 import { getPool } from '../db';
 import { and, eq } from 'drizzle-orm';
 import { organizations, organizationUsers } from '../../shared/schema';
+import { runWithTenantScope } from '../db/tenantStore';
+import { createScopedLogger } from '../utils/logger';
+import { LazyRequestDbClient, type RequestDbClient } from './lazyRequestDbClient';
+
+export { LazyRequestDbClient, type RequestDbClient } from './lazyRequestDbClient';
+
+/**
+ * Coerce a JWT numeric claim to a strict positive integer, or null if the
+ * value isn't a clean integer string. Rejects:
+ *   - missing / null / non-string non-number values
+ *   - the literal 0
+ *   - decimal points, scientific notation, leading "+", whitespace
+ *   - mixed strings like '42abc' that parseInt would silently truncate
+ */
+export function strictPositiveInt(value: unknown): number | null {
+  if (value === null || value === undefined) return null;
+  const str = typeof value === 'number' ? String(value) : value;
+  if (typeof str !== 'string') return null;
+  if (!/^[1-9]\d*$/.test(str)) return null;
+  const n = Number(str);
+  return Number.isSafeInteger(n) ? n : null;
+}
+
+const logger = createScopedLogger('tenant-context');
 
 // Define the tenant context interface to be attached to the request
 export interface TenantContext {
@@ -52,24 +75,8 @@ declare global {
       tenantId?: number | string;
       userRole?: string;
       userEmail?: string;
-      dbClient?: PoolClient | null;
+      dbClient?: RequestDbClient | null;
     }
-  }
-}
-
-async function releaseDbClient(req: Request): Promise<void> {
-  const client = req.dbClient;
-  if (!client) {
-    return;
-  }
-  req.dbClient = null;
-
-  try {
-    await client.query("SELECT set_config('app.current_tenant_id', '', false)");
-    await client.query("SELECT set_config('app.current_user_role', '', false)");
-    await client.query("SELECT set_config('app.current_org_id', '', false)");
-  } finally {
-    client.release();
   }
 }
 
@@ -98,11 +105,12 @@ export function tenantContextMiddleware(req: Request, res: Response, next: NextF
   // from the JWT org ID. This may indicate a tenant impersonation attempt.
   const headerOrgId = (req.headers['x-org-id'] as string) || null;
   if (headerOrgId && jwtOrganizationId && headerOrgId !== jwtOrganizationId) {
-    console.warn(
-      `[SECURITY] Tenant impersonation attempt blocked: ` +
-      `JWT orgId=${jwtOrganizationId}, header x-org-id=${headerOrgId}, ` +
-      `userId=${req.user?.id || 'unknown'}, path=${req.path}`
-    );
+    logger.warn('Tenant impersonation attempt blocked', {
+      jwtOrgId: jwtOrganizationId,
+      headerOrgId,
+      userId: req.user?.id ?? 'unknown',
+      path: req.path,
+    });
   }
 
   // Non-sensitive supplemental context may come from headers
@@ -122,11 +130,6 @@ export function tenantContextMiddleware(req: Request, res: Response, next: NextF
   // Attach to request
   req.tenantContext = tenantContext;
 
-  // Log tenant context for debugging (remove in production)
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('Tenant Context:', JSON.stringify(tenantContext));
-  }
-
   // Continue to next middleware or route handler
   next();
 }
@@ -143,8 +146,11 @@ export function requireOrganizationContext(req: Request, res: Response, next: Ne
   }
 
   if (req.user?.tenantId) {
-    const contextOrgId = parseInt(req.tenantContext.organizationId, 10);
-    if (Number.isFinite(contextOrgId) && contextOrgId !== req.user.tenantId) {
+    const contextOrgId = parseInt(String(req.tenantContext.organizationId ?? ''), 10);
+    const userTenantId = typeof req.user.tenantId === 'number'
+      ? req.user.tenantId
+      : parseInt(String(req.user.tenantId), 10);
+    if (Number.isFinite(contextOrgId) && contextOrgId !== userTenantId) {
       return res.status(403).json({
         error: 'Organization mismatch',
         message: 'Organization context does not match authenticated tenant',
@@ -168,8 +174,14 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
       });
     }
 
+    // Accept only the canonical `Bearer <token>` shape (case-insensitive
+    // scheme, single token, no extra whitespace). The previous
+    // `authHeader.replace('Bearer ', '').trim()` would strip the substring
+    // anywhere in the value, so `Foo Bearer realtoken` parsed to
+    // `Foo realtoken` and propagated junk into the verifier.
     const authHeader = req.headers.authorization;
-    const token = authHeader?.replace('Bearer ', '').trim();
+    const bearerMatch = authHeader ? /^Bearer\s+(\S+)$/i.exec(authHeader) : null;
+    const token = bearerMatch ? bearerMatch[1] : null;
 
     if (!token) {
       return res.status(401).json({
@@ -178,7 +190,7 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ["HS256"] }) as {
+    const decoded = verifyJwtWithRotation(token) as {
       userId: string;
       organizationId: string;
       organizationUuid?: string;
@@ -192,9 +204,13 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
       });
     }
 
-    const userId = parseInt(decoded.userId, 10);
-    const orgIdInt = parseInt(organizationId, 10);
-    if (!Number.isFinite(userId) || !Number.isFinite(orgIdInt)) {
+    // Reject non-integer / zero / truncated numeric claims. parseInt is
+    // intentionally lax — parseInt('42abc', 10) returns 42, which would let
+    // a malformed claim resolve to a real user or organization id. Require
+    // a strict positive-integer string for both.
+    const userId = strictPositiveInt(decoded.userId);
+    const orgIdInt = strictPositiveInt(organizationId);
+    if (userId === null || orgIdInt === null) {
       return res.status(401).json({
         error: 'Authentication required',
         message: 'Invalid token claims',
@@ -253,30 +269,41 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
     req.userId = req.user.id;
     req.tenantId = req.user.tenantId;
 
-    const pool = getPool();
-    const client = await pool.connect();
-    try {
-      await client.query("SELECT set_config('app.current_tenant_id', $1, false)", [organizationId]);
-      await client.query("SELECT set_config('app.current_user_role', $1, false)", [
-        resolvedRole,
+    // Lazy: do not acquire a pooled client up front. The wrapper acquires on
+    // first `.query()` call and runs the RLS session vars on that connection,
+    // so requests that never touch the DB don't tie up a pool slot.
+    const lazy = new LazyRequestDbClient(getPool(), async (client) => {
+      await client.query("SELECT set_config('app.current_tenant_id', $1, false)", [
+        organizationId,
       ]);
+      await client.query("SELECT set_config('app.current_user_role', $1, false)", [resolvedRole]);
       await client.query("SELECT set_config('app.current_org_id', $1, false)", [
         organizationUuid || '',
       ]);
-    } catch (error) {
-      client.release();
-      throw error;
-    }
-
-    req.dbClient = client;
-    res.on('finish', () => {
-      void releaseDbClient(req);
-    });
-    res.on('close', () => {
-      void releaseDbClient(req);
     });
 
-    return next();
+    req.dbClient = lazy;
+    const release = () => {
+      req.dbClient = null;
+      void lazy.release();
+    };
+    res.on('finish', release);
+    res.on('close', release);
+
+    // Establish a tenant AsyncLocalStorage scope for the rest of the request.
+    // Pool instrumentation reads this on every query so we can count which
+    // queries run without a tenant boundary — the gap that would silently
+    // turn into "zero rows" once RLS is enabled in PR B.
+    return runWithTenantScope(
+      {
+        tenantId: organizationId,
+        orgUuid: organizationUuid || null,
+        role: resolvedRole || null,
+        source: 'request',
+        caller: req.path,
+      },
+      () => next()
+    );
   } catch (error) {
     return res.status(401).json({
       error: 'Authentication required',
@@ -314,13 +341,31 @@ export function requireModuleContext(req: Request, res: Response, next: NextFunc
 }
 
 /**
- * Helper to get current tenant context from request
+ * Helper to get current tenant context from request. Throws if no
+ * tenant context is attached — call only after the request has been
+ * through `tenantContextMiddleware` or `requireTenantContext`.
  */
 export function getTenantContext(req: Request): TenantContext {
-  return req.tenantContext;
+  const ctx = req.tenantContext;
+  if (!ctx) {
+    throw new Error('getTenantContext called before tenant context was set on the request');
+  }
+  return {
+    organizationId: ctx.organizationId == null ? null : String(ctx.organizationId),
+    organizationUuid: ctx.organizationUuid ?? null,
+    clientWorkspaceId: ctx.clientWorkspaceId == null ? null : String(ctx.clientWorkspaceId),
+    module: ctx.module ?? null,
+  };
 }
 
-export function getRequestDbClient(req: Request): PoolClient | Pool {
+/**
+ * Get the DB client to use for the current request. Returns the lazy
+ * request-scoped wrapper installed by `requireTenantContext` when present,
+ * or the shared pool as a fallback (which will NOT have RLS session vars
+ * set — caller must accept that or route through `requireTenantContext`
+ * upstream).
+ */
+export function getRequestDbClient(req: Request): RequestDbClient | Pool {
   return req.dbClient ?? getPool();
 }
 

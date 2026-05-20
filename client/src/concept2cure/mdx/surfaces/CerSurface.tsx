@@ -10,26 +10,55 @@
 import * as React from 'react';
 import { I } from '../icons';
 import { CER_EXPORT, CER_LITERATURE, CER_SIGNALS } from '../data/cer';
+import type { Program } from '../data/programs';
+import { useK510EstarSections } from '../hooks/useK510';
+import { useProgramExtras } from '../hooks/useProgramExtras';
 
 export interface CerSurfaceProps {
+  /** Active CER program from App.tsx. Sections and title come from here. */
+  program: Program | null;
   onAskAna: (text: string) => void;
 }
 
-export function CerSurface({ onAskAna }: CerSurfaceProps) {
-  const maxHits = Math.max(...CER_LITERATURE.map(l => l.hits));
+export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
   const [includedOnly, setIncludedOnly] = React.useState(false);
+
+  /* CER sections live in the same cerv2_510k_sections table used by 510(k)
+     and PMA — the legacy table name spans all three pathways. */
+  const sectionsState = useK510EstarSections(program?.id ?? null);
+  const sourceSections = sectionsState.rows ?? CER_EXPORT.map((s, i) => ({
+    id: i + 1,
+    label: s.label,
+    status: s.status as never,
+    blocker: false,
+  }));
+
+  /* Live safety signals (FAERS / MAUDE / Eudamed / Spontaneous / Literature)
+     and year-bucketed literature corpus — both per-program. Falls back to
+     the kit fixture during initial fetch + on error. The kit's CerSignal
+     count is "n=" style (numeric), and live safety_signals doesn't carry
+     that directly; the endpoint approximates by source-grouped AE counts. */
+  const extras = useProgramExtras(program?.id ?? null);
+  const sourceSignals = extras.safetySignals ?? CER_SIGNALS;
+  const sourceLiterature = extras.literature && extras.literature.length > 0
+    ? extras.literature
+    : CER_LITERATURE;
+  const maxHits = Math.max(1, ...sourceLiterature.map((l) => l.hits));
   const visibleSignals = includedOnly
-    ? CER_SIGNALS.filter(s => s.status === 'included')
-    : CER_SIGNALS;
+    ? sourceSignals.filter(s => s.status === 'included')
+    : sourceSignals;
+  const literatureTotal = extras.literatureTotal > 0
+    ? extras.literatureTotal
+    : sourceLiterature.reduce((s, l) => s + l.hits, 0);
   return (
     <>
       <div className="section-hdr">
         <div>
           <div className="section-title">
-            Clinical Evaluation Report · IV-415 Companion Diagnostic
+            Clinical Evaluation Report · {program ? program.title : 'IV-415 Companion Diagnostic'}
           </div>
           <div className="section-sub">
-            EU MDR Article 61 · Notified body review Q1 2026
+            EU MDR Article 61 · {program ? program.dueLabel : 'Notified body review Q1 2026'}
           </div>
         </div>
         <button
@@ -51,7 +80,12 @@ export function CerSurface({ onAskAna }: CerSurfaceProps) {
             <div className="panel-hdr">
               <div>
                 <div className="t">Safety signals</div>
-                <div className="s">7 signals · 4 included · 1 excluded · 2 under review</div>
+                <div className="s">
+                  {sourceSignals.length} signal{sourceSignals.length === 1 ? '' : 's'} ·{' '}
+                  {sourceSignals.filter(s => s.status === 'included').length} included ·{' '}
+                  {sourceSignals.filter(s => s.status === 'excluded').length} excluded ·{' '}
+                  {sourceSignals.filter(s => s.status === 'review').length} under review
+                </div>
               </div>
               <div className="actions">
                 <button
@@ -75,6 +109,22 @@ export function CerSurface({ onAskAna }: CerSurfaceProps) {
                 </button>
               </div>
             </div>
+            {extras.safetySignals !== null && extras.safetySignals.length === 0 ? (
+              <div
+                style={{
+                  padding: '24px 16px',
+                  textAlign: 'center',
+                  fontSize: 12,
+                  color: 'var(--text-300)',
+                }}
+              >
+                <div style={{ fontWeight: 600, color: 'var(--text-200)', marginBottom: 4 }}>
+                  No safety signals reported yet
+                </div>
+                Signals appear here once your pharmacovigilance feed is connected and adverse events
+                from FAERS · MAUDE · Eudamed · literature start landing.
+              </div>
+            ) : (
             <table className="tbl">
               <thead>
                 <tr>
@@ -97,7 +147,7 @@ export function CerSurface({ onAskAna }: CerSurfaceProps) {
                       <div className="k-name" style={{ fontWeight: 400, fontSize: 12 }}>
                         {s.event}
                       </div>
-                      <div className="k-holder">{s.assess}</div>
+                      <div className="k-holder">{('assess' in s ? s.assess : '') || ''}</div>
                     </td>
                     <td
                       style={{
@@ -117,13 +167,16 @@ export function CerSurface({ onAskAna }: CerSurfaceProps) {
                 ))}
               </tbody>
             </table>
+            )}
           </div>
 
           <div className="panel">
             <div className="panel-hdr">
               <div>
                 <div className="t">Literature corpus</div>
-                <div className="s">2,326 hits · PubMed · Embase · Cochrane · 6-year window</div>
+                <div className="s">
+                  {literatureTotal.toLocaleString()} hits · PubMed · FDA · ClinicalTrials.gov · {sourceLiterature.length}-year window
+                </div>
               </div>
               <div className="actions">
                 <button
@@ -141,7 +194,22 @@ export function CerSurface({ onAskAna }: CerSurfaceProps) {
               </div>
             </div>
             <div style={{ padding: '12px 0' }}>
-              {CER_LITERATURE.map(l => (
+              {extras.literature !== null && literatureTotal === 0 ? (
+                <div
+                  style={{
+                    padding: '24px 16px',
+                    textAlign: 'center',
+                    fontSize: 12,
+                    color: 'var(--text-300)',
+                  }}
+                >
+                  <div style={{ fontWeight: 600, color: 'var(--text-200)', marginBottom: 4 }}>
+                    No literature corpus indexed yet
+                  </div>
+                  Run a literature search via PubMed · FDA · ClinicalTrials.gov to populate the
+                  6-year window.
+                </div>
+              ) : sourceLiterature.map(l => (
                 <div key={l.year} className="litbar">
                   <span className="yr">{l.year}</span>
                   <div className="bar">
@@ -159,7 +227,7 @@ export function CerSurface({ onAskAna }: CerSurfaceProps) {
             <div className="panel-hdr">
               <div>
                 <div className="t">CER sections</div>
-                <div className="s">Article 61 template · 6 sections</div>
+                <div className="s">Article 61 template · {sourceSections.length} sections</div>
               </div>
               <div className="actions">
                 <button
@@ -167,7 +235,7 @@ export function CerSurface({ onAskAna }: CerSurfaceProps) {
                   title="Export CER section status as CSV"
                   onClick={() => {
                     const headers = ['Section', 'Status'];
-                    const rows = CER_EXPORT.map(s => [s.label, s.status]);
+                    const rows = sourceSections.map(s => [s.label, String(s.status)]);
                     const csv = [headers, ...rows]
                       .map(line => line.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
                       .join('\r\n');
@@ -187,7 +255,7 @@ export function CerSurface({ onAskAna }: CerSurfaceProps) {
               </div>
             </div>
             <div className="estar">
-              {CER_EXPORT.map((s, i) => (
+              {sourceSections.map((s, i) => (
                 <div key={s.id} className="estar-row">
                   <div className="estar-num">{String(i + 1).padStart(2, '0')}</div>
                   <div className="estar-label">{s.label}</div>

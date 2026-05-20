@@ -26,6 +26,8 @@ import type {
   ModulePlacementSnapshot,
   ActionHistoryEntry,
   EvidenceSnapshot,
+  CmcSignalSnapshot,
+  CmcContradictionSnapshot,
 } from '../../../shared/types/orchestration';
 
 // ---------------------------------------------------------------------------
@@ -57,6 +59,8 @@ export async function assembleCrossObjectPayload(
     moduleMap,
     recentActions,
     evidence,
+    cmcSignals,
+    lastSignalAt,
   ] = await Promise.all([
     resolveProjectSnapshot(organizationId, projectId),
     resolveDocuments(organizationId, projectId, scope.module),
@@ -66,6 +70,8 @@ export async function assembleCrossObjectPayload(
     resolveModulePlacements(organizationId, projectId),
     resolveRecentActions(organizationId, projectId),
     resolveEvidence(organizationId, projectId),
+    resolveCmcSignals(organizationId, projectId),
+    resolveLastSignalAt(organizationId, projectId),
   ]);
 
   return {
@@ -77,7 +83,9 @@ export async function assembleCrossObjectPayload(
     moduleMap,
     recentActions,
     evidence,
+    cmcSignals,
     assembledAt: new Date().toISOString(),
+    lastSignalAt,
     scope: {
       organizationId,
       projectId,
@@ -409,6 +417,170 @@ async function resolveRecentActions(
   } catch (err) {
     console.warn('[Cross-Object Resolver] Resolver query failed:', err instanceof Error ? err.message : err);
     return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// CMC Signals — Module 3 source objects, sections, and contradictions
+// ---------------------------------------------------------------------------
+
+/**
+ * Aggregate CMC operating-system tables for a project. project_id in
+ * cmc_source_objects / cmc_module3_sections / cmc_contradictions is a UUID
+ * referencing cmc_projects; the resolver scope uses the integer projects.id.
+ * Cast both sides to text so the query is type-safe regardless of which
+ * project flavor (legacy integer or CMC UUID) the caller supplied. Returns
+ * an empty signal set when the project has no CMC rows — readiness treats
+ * that as "CMC not in scope," not as a failure.
+ */
+async function resolveCmcSignals(
+  orgId: number,
+  projectId: number,
+): Promise<CmcSignalSnapshot> {
+  const empty: CmcSignalSnapshot = {
+    sourceObjectCount: 0,
+    sourceTypeBreakdown: {},
+    sectionCount: 0,
+    staleSectionCount: 0,
+    contradictions: [],
+    contradictionCounts: {
+      critical: 0, high: 0, medium: 0, low: 0, open: 0, resolved: 0,
+    },
+  };
+
+  try {
+    const projectIdParam = String(projectId);
+
+    const [sourceRes, sectionRes, contradictionRes] = await Promise.all([
+      db.execute(sql`
+        SELECT source_type
+        FROM cmc_source_objects
+        WHERE organization_id = ${orgId}
+          AND project_id::text = ${projectIdParam}
+      `),
+      db.execute(sql`
+        SELECT stale
+        FROM cmc_module3_sections
+        WHERE organization_id = ${orgId}
+          AND project_id::text = ${projectIdParam}
+      `),
+      db.execute(sql`
+        SELECT id, severity, contradiction_type, details,
+               impacted_sections, status
+        FROM cmc_contradictions
+        WHERE organization_id = ${orgId}
+          AND project_id::text = ${projectIdParam}
+        ORDER BY
+          CASE severity
+            WHEN 'critical' THEN 0
+            WHEN 'high' THEN 1
+            WHEN 'medium' THEN 2
+            ELSE 3
+          END,
+          created_at DESC
+        LIMIT 100
+      `),
+    ]);
+
+    const sourceRows = sourceRes.rows as Array<Record<string, unknown>>;
+    const sectionRows = sectionRes.rows as Array<Record<string, unknown>>;
+    const contradictionRows = contradictionRes.rows as Array<Record<string, unknown>>;
+
+    const sourceTypeBreakdown: Record<string, number> = {};
+    for (const r of sourceRows) {
+      const t = String(r.source_type ?? 'unknown');
+      sourceTypeBreakdown[t] = (sourceTypeBreakdown[t] ?? 0) + 1;
+    }
+
+    const staleSectionCount = sectionRows.filter(r => r.stale === true).length;
+
+    const contradictions: CmcContradictionSnapshot[] = contradictionRows.map(r => {
+      const impacted = r.impacted_sections;
+      const impactedSections = Array.isArray(impacted)
+        ? (impacted as unknown[]).map(s => String(s))
+        : [];
+      const severity = String(r.severity ?? 'low').toLowerCase() as CmcContradictionSnapshot['severity'];
+      return {
+        id: String(r.id ?? ''),
+        severity: (['low','medium','high','critical'] as const).includes(severity as any)
+          ? severity
+          : 'low',
+        contradictionType: String(r.contradiction_type ?? ''),
+        details: String(r.details ?? ''),
+        impactedSections,
+        status: String(r.status ?? 'open'),
+      };
+    });
+
+    const counts = {
+      critical: 0, high: 0, medium: 0, low: 0, open: 0, resolved: 0,
+    };
+    for (const c of contradictions) {
+      counts[c.severity]++;
+      const s = c.status.toLowerCase();
+      if (s === 'resolved' || s === 'closed') counts.resolved++;
+      else counts.open++;
+    }
+
+    return {
+      sourceObjectCount: sourceRows.length,
+      sourceTypeBreakdown,
+      sectionCount: sectionRows.length,
+      staleSectionCount,
+      contradictions,
+      contradictionCounts: counts,
+    };
+  } catch (err) {
+    console.warn(
+      '[Cross-Object Resolver] CMC signal query failed:',
+      err instanceof Error ? err.message : err,
+    );
+    return empty;
+  }
+}
+
+/**
+ * Returns the most recent updated_at across the project's underlying data
+ * (artifacts, CMC source objects, CMC contradictions). Consumers compare
+ * this against their last cached `assessedAt` to detect stale scores
+ * without requiring an event bus subscription.
+ */
+async function resolveLastSignalAt(
+  orgId: number,
+  projectId: number,
+): Promise<string | null> {
+  try {
+    const projectIdParam = String(projectId);
+    const result = await db.execute(sql`
+      SELECT MAX(ts) AS last_signal_at
+      FROM (
+        SELECT MAX(updated_at) AS ts
+        FROM concept2cure_artifacts
+        WHERE organization_id = ${orgId}
+          AND project_id = ${projectId}
+        UNION ALL
+        SELECT MAX(updated_at) AS ts
+        FROM cmc_source_objects
+        WHERE organization_id = ${orgId}
+          AND project_id::text = ${projectIdParam}
+        UNION ALL
+        SELECT MAX(updated_at) AS ts
+        FROM cmc_contradictions
+        WHERE organization_id = ${orgId}
+          AND project_id::text = ${projectIdParam}
+      ) sub
+    `);
+    const row = result.rows[0] as Record<string, unknown> | undefined;
+    const ts = row?.last_signal_at;
+    if (!ts) return null;
+    if (ts instanceof Date) return ts.toISOString();
+    return new Date(String(ts)).toISOString();
+  } catch (err) {
+    console.warn(
+      '[Cross-Object Resolver] Last-signal query failed:',
+      err instanceof Error ? err.message : err,
+    );
+    return null;
   }
 }
 

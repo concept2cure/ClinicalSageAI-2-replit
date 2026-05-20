@@ -563,12 +563,15 @@ function CerPmsPmcf({ onAskAna }: CerPmsPmcfProps) {
 /* ═══════════ Wrapper ═══════════ */
 
 export interface CerWorkbenchProps {
+  /** Active CER program — threaded through to the embedded CerSurface so
+      the inner overview tab reads from live regulatory data. */
+  program: import('../../data/programs').Program | null;
   onAskAna: (text: string) => void;
   onOpenEditor?: () => void;
   initialTab?: CerTabId;
 }
 
-export function CerWorkbench({ onAskAna, onOpenEditor, initialTab = 'overview' }: CerWorkbenchProps) {
+export function CerWorkbench({ program, onAskAna, onOpenEditor, initialTab = 'overview' }: CerWorkbenchProps) {
   const [tab, setTab] = React.useState<CerTabId>(initialTab);
   return (
     <div className="cer-workbench">
@@ -577,7 +580,7 @@ export function CerWorkbench({ onAskAna, onOpenEditor, initialTab = 'overview' }
         <button className="section-more" onClick={onOpenEditor}>Open CER editor (§6) →</button>
       </div>
       <div className="cer-tab-body">
-        {tab === 'overview'    && <CerSurface onAskAna={onAskAna} />}
+        {tab === 'overview'    && <CerSurface program={program} onAskAna={onAskAna} />}
         {tab === 'conformity'  && <CerConformity onAskAna={onAskAna} />}
         {tab === 'equivalence' && <CerEquivalence onAskAna={onAskAna} />}
         {tab === 'pms'         && <CerPmsPmcf onAskAna={onAskAna} />}

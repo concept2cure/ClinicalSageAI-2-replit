@@ -64,6 +64,11 @@ const PROG = {
   RX_340: '11111111-2222-3333-4444-000000000340',
   PM_660: '11111111-2222-3333-4444-000000000660',
   NM_512: '11111111-2222-3333-4444-000000000512',
+  IV_415: '11111111-2222-3333-4444-000000000415', // CER program — needed for the
+                                                    // CER tab to find a program
+                                                    // when no row is preselected
+                                                    // (App.tsx programs.find by
+                                                    // pathway==='cer').
 };
 
 // Q-Submissions — keyed by fixture id.
@@ -96,12 +101,13 @@ async function upsertProgram(client, orgId, id, def) {
     `INSERT INTO regulatory_programs (
        id, organization_id, name, code, description, program_type, product_type,
        device_class, regulatory_path, primary_agency, product_name, status, phase,
-       priority, created_at, updated_at
+       priority, metadata, created_at, updated_at
      ) VALUES ($1, $2, $3, $4, $5, $6, 'device', $7, $8, 'FDA', $9, 'active',
-       'authoring', 'high', NOW(), NOW())
+       'authoring', 'high', $10::jsonb, NOW(), NOW())
      ON CONFLICT (id) DO UPDATE SET
        name        = EXCLUDED.name,
        description = EXCLUDED.description,
+       metadata    = EXCLUDED.metadata,
        updated_at  = NOW()`,
     [
       id,
@@ -113,6 +119,7 @@ async function upsertProgram(client, orgId, id, def) {
       def.deviceClass,
       def.regulatoryPath,
       def.productName,
+      JSON.stringify(def.metadata ?? null),
     ],
   );
 }
@@ -284,6 +291,23 @@ const PROGRAMS = [
     deviceClass: 'III',
     regulatoryPath: 'pma',
     productName: 'NM-512 Lead',
+  },
+  {
+    id: PROG.IV_415,
+    code: 'IV-415',
+    name: 'IV-415 Companion Diagnostic',
+    description: 'CDx assay supporting EU MDR Article 61 clinical evaluation.',
+    programType: 'CER',
+    deviceClass: 'III',
+    regulatoryPath: 'cer',
+    productName: 'IV-415 CoDx Assay',
+    /* Optional metadata the route handlers honour:
+        clinicalStudyId — explicit clinical_ops.studies UUID for PMA trial
+                          metrics (avoids the productName ILIKE indication
+                          fuzzy match that could pick up wrong studies).
+        ndcCode         — NDC code for FAERS adverse-event lookup.
+       Empty here; org admins set these via metadata edits on the program. */
+    metadata: { clinicalStudyId: null, ndcCode: null },
   },
 ];
 

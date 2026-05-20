@@ -30,10 +30,10 @@ import type {
   GatewayMessage,
   TaskType,
   ProviderName,
-  ClaudeEnhancedResponse,
+  AnaGatewayResponse,
   StreamCallback,
   ExtendedThinkingConfig,
-  ClaudeTool,
+  AnaTool,
 } from '../services/ai-gateway/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,7 +58,7 @@ export interface AICompletionOptions {
   /** Enable extended thinking */
   thinking?: ExtendedThinkingConfig;
   /** Tools for agentic workflows */
-  tools?: ClaudeTool[];
+  tools?: AnaTool[];
   /** Streaming callback */
   onStream?: StreamCallback;
   /** Enable prompt caching for system prompts */
@@ -124,7 +124,7 @@ class UnifiedAIClient {
   async chat(
     messages: MessageInput | Record<string, any>,
     options?: AICompletionOptions
-  ): Promise<ClaudeEnhancedResponse> {
+  ): Promise<AnaGatewayResponse> {
     // Handle OpenAI-compatible single-object argument: ai.chat({ model, messages, temperature, ... })
     if (
       messages &&
@@ -177,7 +177,7 @@ class UnifiedAIClient {
       callerModule: options?.callerModule,
     };
 
-    return (await gateway.route(request)) as ClaudeEnhancedResponse;
+    return (await gateway.route(request)) as AnaGatewayResponse;
   }
 
   /**
@@ -210,7 +210,7 @@ class UnifiedAIClient {
     systemPrompt: string,
     userPrompt: string,
     options?: AICompletionOptions
-  ): Promise<ClaudeEnhancedResponse> {
+  ): Promise<AnaGatewayResponse> {
     return this.chat(
       [
         { role: 'system', content: systemPrompt },
@@ -234,7 +234,7 @@ class UnifiedAIClient {
     systemPrompt: string,
     content: string,
     options?: AICompletionOptions
-  ): Promise<ClaudeEnhancedResponse> {
+  ): Promise<AnaGatewayResponse> {
     return this.chat(
       [
         { role: 'system', content: systemPrompt },

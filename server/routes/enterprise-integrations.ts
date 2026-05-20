@@ -25,6 +25,7 @@ import { pool } from '../db';
 import { createScopedLogger } from '../utils/logger';
 import { authMiddleware } from '../auth';
 import { tenantContextMiddleware, requireOrganizationContext } from '../middleware/tenantContext';
+import { authedOrgId } from '../utils/authedOrgId';
 import { createRedisRateLimiter } from '../middleware/redisRateLimiter';
 import { logAuditEvent } from '../services/audit/auditLoggerV2';
 
@@ -154,11 +155,14 @@ const MetricsQuerySchema = z.object({
 });
 
 function getTenantId(req: Request): string {
-  const fromTenantContext = (req as any).tenantContext?.organizationId;
-  const fromReqTenantId = (req as any).tenantId;
-  const fromHeader = req.headers['x-tenant-id'];
-  const normalizedHeader = Array.isArray(fromHeader) ? fromHeader[0] : fromHeader;
-  return String(fromTenantContext || fromReqTenantId || normalizedHeader || 'default');
+  // Source tenant from the verified JWT only. The previous header
+  // fallback (`x-tenant-id`) and `'default'` literal were the IDOR
+  // shape PRs #496-#499 closed.
+  const orgId = authedOrgId(req);
+  if (orgId == null) {
+    throw new Error('Tenant context required');
+  }
+  return String(orgId);
 }
 
 function getIdempotencyHeader(req: Request): string | null {

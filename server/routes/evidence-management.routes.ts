@@ -15,6 +15,10 @@ import { extractWithTika } from '../services/ingestion/tikaClient';
 import { extractWithGrobid, looksScholarlyDocument } from '../services/literature/grobidClient';
 import { indexGovernedDocument } from '../services/search/opensearchClient';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('evidence-management');
+
 const router = Router();
 const evidenceService = new EvidenceManagementService();
 
@@ -133,7 +137,7 @@ router.get('/requirements/:projectId', async (req: Request, res: Response) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('[Evidence Management] Error fetching requirements:', error);
+    logger.error('Error fetching requirements', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to fetch requirement status' });
   }
 });
@@ -265,7 +269,7 @@ router.post('/upload', upload.array('files', 5), async (req: Request, res: Respo
       message: `Successfully uploaded ${uploadedFiles.length} file(s)`,
     });
   } catch (error) {
-    console.error('[Evidence Management] Upload error:', error);
+    logger.error('Upload error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to upload files' });
   }
 });
@@ -288,7 +292,7 @@ router.get('/gap-analysis/:projectId', async (req: Request, res: Response) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('[Evidence Management] Gap analysis error:', error);
+    logger.error('Gap analysis error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to perform gap analysis' });
   }
 });
@@ -313,7 +317,7 @@ router.post('/generate-citations', async (req: Request, res: Response) => {
       count: citations.length,
     });
   } catch (error) {
-    console.error('[Evidence Management] Citation generation error:', error);
+    logger.error('Citation generation error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to generate citations' });
   }
 });
@@ -333,7 +337,7 @@ router.post('/link-workflow', async (req: Request, res: Response) => {
       message: `File linked to workflow stage ${workflowStage}`,
     });
   } catch (error) {
-    console.error('[Evidence Management] Workflow linking error:', error);
+    logger.error('Workflow linking error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to link to workflow' });
   }
 });
@@ -356,7 +360,7 @@ router.get('/stage-evidence/:projectId/:stage', async (req: Request, res: Respon
       count: evidence.length,
     });
   } catch (error) {
-    console.error('[Evidence Management] Stage evidence error:', error);
+    logger.error('Stage evidence error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to fetch stage evidence' });
   }
 });
@@ -379,7 +383,7 @@ router.post('/auto-populate/:formId', async (req: Request, res: Response) => {
       fieldsPopulated: Object.keys(formData).length,
     });
   } catch (error) {
-    console.error('[Evidence Management] Auto-populate error:', error);
+    logger.error('Auto-populate error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to auto-populate form' });
   }
 });
@@ -400,7 +404,7 @@ router.post('/review/submit/:fileId', async (req: Request, res: Response) => {
       message: 'Evidence submitted for review',
     });
   } catch (error) {
-    console.error('[Evidence Management] Review submission error:', error);
+    logger.error('Review submission error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to submit for review' });
   }
 });
@@ -421,7 +425,7 @@ router.post('/review/approve/:fileId', async (req: Request, res: Response) => {
       message: 'Evidence approved',
     });
   } catch (error) {
-    console.error('[Evidence Management] Approval error:', error);
+    logger.error('Approval error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to approve evidence' });
   }
 });
@@ -446,7 +450,7 @@ router.post('/review/request-changes/:fileId', async (req: Request, res: Respons
       message: 'Changes requested',
     });
   } catch (error) {
-    console.error('[Evidence Management] Change request error:', error);
+    logger.error('Change request error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to request changes' });
   }
 });
@@ -467,7 +471,7 @@ router.get('/export/:projectId', async (req: Request, res: Response) => {
       package: evidencePackage,
     });
   } catch (error) {
-    console.error('[Evidence Management] Export error:', error);
+    logger.error('Export error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to export evidence package' });
   }
 });
@@ -511,7 +515,7 @@ router.get('/analytics/:projectId', async (req: Request, res: Response) => {
       completeness: gapAnalysis.completeness,
     });
   } catch (error) {
-    console.error('[Evidence Management] Analytics error:', error);
+    logger.error('Analytics error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to fetch analytics' });
   }
 });
