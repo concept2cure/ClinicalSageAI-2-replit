@@ -25,6 +25,6 @@ pydantic>=2.13.4               # Data validation
 python-multipart>=0.0.27       # FastAPI multipart/form-data uploads
 
 # === Data / AI ===
-openai>=2.35.1                 # LLM API client (section generation)
+openai>=2.37.0                 # LLM API client (section generation)
 numpy>=2.4.4                 # Numerical processing
 pandas>=3.0.3                 # Data manipulation
