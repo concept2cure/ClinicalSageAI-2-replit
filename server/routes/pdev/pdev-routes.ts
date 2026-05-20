@@ -71,6 +71,12 @@ import {
 import { pdevIndAssemblyService } from '../../services/pdev/pdev-ind-assembly';
 import { pdevFdaInteractionsService } from '../../services/pdev/pdev-fda-interactions';
 import { pdevContradictionBridge } from '../../services/pdev/pdev-contradiction-bridge';
+import { pdevAiDraftingService } from '../../services/pdev/pdev-ai-drafting';
+import { pdevEctdCompileService } from '../../services/pdev/pdev-ectd-compile';
+import {
+  pdevFdaFeedbackRollupService,
+} from '../../services/pdev/pdev-fda-feedback-rollup';
+import { pdevEvidenceAttachService } from '../../services/pdev/pdev-evidence-attach';
 import {
   PDEV_ACTIVITIES,
   PDEV_WORKSTREAMS,
@@ -433,6 +439,336 @@ router.post(
       return ok(res, row);
     } catch (err) {
       return serverError(res, log, 'Failed to update activity state', err);
+    }
+  }
+);
+
+// ─── POST /api/pdev/programs/:programId/activities/:activityKey/ai-draft ────
+
+const aiDraftBodySchema = z.object({
+  projectId: z.number().int().positive(),
+  documentCode: z.string().min(1).max(128).optional(),
+  userPrompt: z.string().max(8000).optional(),
+  evidenceObjectIds: z.array(z.string().uuid()).max(32).optional(),
+});
+
+router.post(
+  '/programs/:programId/activities/:activityKey/ai-draft',
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req);
+    if (orgId === null) return orgRequired(res);
+    const userId = getUserId(req);
+    if (userId === null) return clientError(res, 403, 'User context required');
+
+    const programId = String(req.params.programId);
+    const activityKey = String(req.params.activityKey);
+    if (!UUID_RE.test(programId)) return clientError(res, 400, 'programId must be a UUID');
+
+    const parsed = aiDraftBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return clientError(res, 422, 'Validation failed', parsed.error.flatten().fieldErrors);
+    }
+
+    try {
+      const result = await pdevAiDraftingService.generateActivityDraft({
+        programId,
+        organizationId: orgId,
+        userId,
+        projectId: parsed.data.projectId,
+        activityKey,
+        documentCode: parsed.data.documentCode,
+        userPrompt: parsed.data.userPrompt,
+        evidenceObjectIds: parsed.data.evidenceObjectIds,
+      });
+      return created(res, result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'AI draft failed';
+      if (
+        message.includes('not found in tenant') ||
+        message.includes('Unknown PDEV activity key')
+      ) {
+        return clientError(res, 404, message);
+      }
+      if (message.includes('OpenAI API key not configured')) {
+        return clientError(res, 422, message);
+      }
+      return serverError(res, log, 'AI draft generation', err);
+    }
+  }
+);
+
+// ─── POST /api/pdev/programs/:programId/ind-assembly/compile ────────────────
+
+const ectdCompileBodySchema = z.object({
+  submissionId: z.number().int().positive(),
+  region: z.string().min(1).max(8).optional(),
+  submissionType: z.string().min(1).max(32).optional(),
+  sequenceNumber: z
+    .string()
+    .regex(/^\d{4}$/, 'sequenceNumber must be a 4-digit string')
+    .optional(),
+  applicationNumber: z.string().min(1).max(64).optional(),
+  readinessThreshold: z.number().min(0).max(100).optional(),
+  force: z.boolean().optional(),
+});
+
+router.post(
+  '/programs/:programId/ind-assembly/compile',
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req);
+    if (orgId === null) return orgRequired(res);
+    const userId = getUserId(req);
+    if (userId === null) return clientError(res, 403, 'User context required');
+
+    const programId = String(req.params.programId);
+    if (!UUID_RE.test(programId)) return clientError(res, 400, 'programId must be a UUID');
+
+    const parsed = ectdCompileBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return clientError(res, 422, 'Validation failed', parsed.error.flatten().fieldErrors);
+    }
+
+    try {
+      const result = await pdevEctdCompileService.compile({
+        programId,
+        organizationId: orgId,
+        userId,
+        submissionId: parsed.data.submissionId,
+        region: parsed.data.region,
+        submissionType: parsed.data.submissionType,
+        sequenceNumber: parsed.data.sequenceNumber,
+        applicationNumber: parsed.data.applicationNumber,
+        readinessThreshold: parsed.data.readinessThreshold,
+        force: parsed.data.force,
+      });
+      if (result.status === 'refused_low_readiness') {
+        return clientError(res, 409, result.refusalReason ?? 'Readiness too low', {
+          readinessSnapshot: result.readinessSnapshot,
+          thresholdApplied: result.thresholdApplied,
+        });
+      }
+      // Honest framing: route returns metadata only. Caller pulls the
+      // ZIP via the existing /api/ectd/export pipeline if they want the
+      // binary — the buffer here is dropped to keep the response shape
+      // JSON-friendly.
+      return created(res, {
+        status: result.status,
+        thresholdApplied: result.thresholdApplied,
+        forced: result.forced,
+        readinessAtCompile: result.readinessSnapshot.overallReadiness,
+        package: result.package
+          ? {
+              filename: result.package.filename,
+              sizeBytes: result.package.sizeBytes,
+              stats: result.package.stats,
+            }
+          : undefined,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Compile failed';
+      if (message.includes('not found in tenant')) {
+        return clientError(res, 404, message);
+      }
+      return serverError(res, log, 'eCTD compile', err);
+    }
+  }
+);
+
+// ─── GET /api/pdev/programs/:programId/fda-feedback/proposals ───────────────
+
+const fdaProposalQuerySchema = z.object({
+  minConfidence: z
+    .string()
+    .regex(/^0(?:\.\d+)?|1(?:\.0+)?$/)
+    .transform(s => Number.parseFloat(s))
+    .optional(),
+});
+
+router.get(
+  '/programs/:programId/fda-feedback/proposals',
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req);
+    if (orgId === null) return orgRequired(res);
+
+    const programId = String(req.params.programId);
+    if (!UUID_RE.test(programId)) return clientError(res, 400, 'programId must be a UUID');
+
+    const parsed = fdaProposalQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return clientError(res, 422, 'Validation failed', parsed.error.flatten().fieldErrors);
+    }
+
+    try {
+      const report = await pdevFdaFeedbackRollupService.proposeRollup(programId, orgId, {
+        minConfidence: parsed.data.minConfidence,
+      });
+      if (!report) return notFoundInTenant(res, 'program');
+      return ok(res, report);
+    } catch (err) {
+      return serverError(res, log, 'FDA feedback proposals', err);
+    }
+  }
+);
+
+// ─── POST /api/pdev/programs/:programId/fda-feedback/apply ──────────────────
+
+const fdaApplyBodySchema = z.object({
+  mappings: z
+    .array(
+      z.object({
+        commitmentId: z.string().uuid(),
+        activityKey: z.string().min(1).max(96),
+        forceState: z.boolean().optional(),
+      })
+    )
+    .min(1)
+    .max(100),
+});
+
+router.post(
+  '/programs/:programId/fda-feedback/apply',
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req);
+    if (orgId === null) return orgRequired(res);
+    const userId = getUserId(req);
+    if (userId === null) return clientError(res, 403, 'User context required');
+
+    const programId = String(req.params.programId);
+    if (!UUID_RE.test(programId)) return clientError(res, 400, 'programId must be a UUID');
+
+    const parsed = fdaApplyBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return clientError(res, 422, 'Validation failed', parsed.error.flatten().fieldErrors);
+    }
+
+    try {
+      const result = await pdevFdaFeedbackRollupService.applyRollup({
+        programId,
+        organizationId: orgId,
+        userId,
+        mappings: parsed.data.mappings,
+      });
+      return created(res, result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Apply failed';
+      if (message.includes('not found in tenant')) {
+        return clientError(res, 404, message);
+      }
+      return serverError(res, log, 'FDA feedback apply', err);
+    }
+  }
+);
+
+// ─── POST /api/pdev/programs/:programId/activities/:activityKey/evidence ────
+
+const evidenceAttachBodySchema = z.object({
+  evidenceObjectId: z.string().uuid(),
+  linkType: z.enum(['supports', 'contradicts', 'references', 'supersedes']).optional(),
+  strength: z.enum(['strong', 'moderate', 'weak']).optional(),
+  rationale: z.string().max(4000).optional(),
+});
+
+router.post(
+  '/programs/:programId/activities/:activityKey/evidence',
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req);
+    if (orgId === null) return orgRequired(res);
+    const userId = getUserId(req);
+    if (userId === null) return clientError(res, 403, 'User context required');
+
+    const programId = String(req.params.programId);
+    const activityKey = String(req.params.activityKey);
+    if (!UUID_RE.test(programId)) return clientError(res, 400, 'programId must be a UUID');
+
+    const parsed = evidenceAttachBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return clientError(res, 422, 'Validation failed', parsed.error.flatten().fieldErrors);
+    }
+
+    try {
+      const result = await pdevEvidenceAttachService.attach({
+        programId,
+        organizationId: orgId,
+        userId,
+        activityKey,
+        evidenceObjectId: parsed.data.evidenceObjectId,
+        linkType: parsed.data.linkType,
+        strength: parsed.data.strength,
+        rationale: parsed.data.rationale,
+      });
+      return created(res, result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Attach failed';
+      if (
+        message.includes('not found in tenant') ||
+        message.includes('Unknown PDEV activity key')
+      ) {
+        return clientError(res, 404, message);
+      }
+      return serverError(res, log, 'Evidence attach', err);
+    }
+  }
+);
+
+// ─── DELETE /api/pdev/programs/:programId/activities/:activityKey/evidence/:evidenceId ─
+
+router.delete(
+  '/programs/:programId/activities/:activityKey/evidence/:evidenceObjectId',
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req);
+    if (orgId === null) return orgRequired(res);
+    const userId = getUserId(req);
+    if (userId === null) return clientError(res, 403, 'User context required');
+
+    const programId = String(req.params.programId);
+    const activityKey = String(req.params.activityKey);
+    const evidenceObjectId = String(req.params.evidenceObjectId);
+    if (!UUID_RE.test(programId)) return clientError(res, 400, 'programId must be a UUID');
+    if (!UUID_RE.test(evidenceObjectId)) return clientError(res, 400, 'evidenceObjectId must be a UUID');
+
+    try {
+      const result = await pdevEvidenceAttachService.detach({
+        programId,
+        organizationId: orgId,
+        userId,
+        activityKey,
+        evidenceObjectId,
+      });
+      return ok(res, result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Detach failed';
+      if (
+        message.includes('not found in tenant') ||
+        message.includes('Unknown PDEV activity key')
+      ) {
+        return clientError(res, 404, message);
+      }
+      return serverError(res, log, 'Evidence detach', err);
+    }
+  }
+);
+
+// ─── GET /api/pdev/programs/:programId/activities/:activityKey/evidence ─────
+
+router.get(
+  '/programs/:programId/activities/:activityKey/evidence',
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req);
+    if (orgId === null) return orgRequired(res);
+
+    const programId = String(req.params.programId);
+    const activityKey = String(req.params.activityKey);
+    if (!UUID_RE.test(programId)) return clientError(res, 400, 'programId must be a UUID');
+
+    try {
+      const evidence = await pdevEvidenceAttachService.listForActivity(
+        programId,
+        orgId,
+        activityKey
+      );
+      return ok(res, { activityKey, evidence });
+    } catch (err) {
+      return serverError(res, log, 'Evidence list', err);
     }
   }
 );

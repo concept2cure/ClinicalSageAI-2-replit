@@ -153,8 +153,10 @@ This is honest scoping. Each deferral has a reason rooted in the project's own r
 | Brief item | Status here | Reason |
 |---|---|---|
 | PDEV dashboard, workstream drill-downs, contradiction registry, IND assembly view, FDA interaction tracker — all UI | **Not built** | Phase 3+ surfaces are "in design — do not pre-build" per `CLAUDE.md` / `HANDOFF.md`. Building UI without a kit violates the design-system contract and creates regression risk (see 2026-04-26 token bug). |
-| Full AI drafting hook into PDEV activities (`/draft this nonclinical IND summary into Module 4 of program X`) | **Hook point only** | The existing `concept2cure_artifacts` pipeline already promotes AI output into governed artifacts; the PDEV registry exposes the `targetActivityKey` slot AI generations can write to. The full orchestrator command is a follow-on when the AnA dock surface ships in v2. |
-| Real eCTD backbone publishing (XML lifecycle / sequence assembly / leaf operations) | **Not implemented** | Per the brief: "Do not pretend this is full publishing unless real eCTD backbone/lifecycle publishing exists." This branch labels the endpoint **IND assembly readiness**, not eCTD publishing. The existing `ectdCompilations` / `ectd_documents` / `ectd-export.ts` machinery is real but the readiness-vs-publishing distinction is preserved. |
+| Full AI drafting hook into PDEV activities (`/draft this nonclinical IND summary into Module 4 of program X`) | **Shipped (backend) — 2nd pass** | `pdev-ai-drafting` service generates a governed artifact bound to a PDEV activity via the existing `executeGovernedAnaOperation` pipeline. Route: `POST /api/pdev/programs/:id/activities/:key/ai-draft`. UI command-binding ships when the AnA dock pane lands. |
+| eCTD backbone *compile* invocation | **Shipped (backend) — 2nd pass** | `pdev-ectd-compile` calls the existing `generateEctdPackage` only when PDEV IND-assembly readiness ≥ threshold (default 90 %). The endpoint stays labelled as *compile* (readiness-gated, audit-logged), not new publishing. Route: `POST /api/pdev/programs/:id/ind-assembly/compile`. |
+| Auto-conversion of FDA feedback to downstream tasks | **Shipped (backend) — 2nd pass** | `pdev-fda-feedback-rollup` proposes activity matches for unrolled `q_sub_commitments` using a deterministic token-overlap heuristic; the apply step appends the commitment to activity notes, advances state to `agency_feedback_received`, and marks the commitment `rolled_in`. Routes: `GET /api/pdev/programs/:id/fda-feedback/proposals`, `POST /api/pdev/programs/:id/fda-feedback/apply`. |
+| Evidence-to-activity wiring | **Shipped (backend) — 2nd pass** | `pdev-evidence-attach` connects `evidence_objects` to PDEV activities via the existing `evidence_links` table (`targetType='pdev_activity'`). On first attach, advances activity state to `evidence_linked` if currently `not_started` / `drafting`. Routes: `POST/DELETE/GET /api/pdev/programs/:id/activities/:key/evidence`. |
 | Reason-for-change confirmation dialogs everywhere | **Not built** | E-sig backend supports it; the dialog is a `regulatory-compliance-ux` skill concern and ships with each governed mutation surface. |
 | "21 CFR Part 11 compliant" certification claim | **Not claimed** | Honest label is **Part 11-aligned electronic record governance**, per the project's own discipline (`AUDIT-AI-UBIQUITY.md`). |
 
@@ -174,6 +176,8 @@ In dependency order, when the relevant design phase ships:
 
 ## 7. Files touched in this PR
 
+**Pass 1 — spine:**
+
 - `PDEV_IND_WORKFLOW_AUDIT.md` (this file).
 - `shared/schema/pdev-workflow.ts` (new — Drizzle schema for activity state).
 - `migrations/20260520_pdev_workflow_activities.sql` (new).
@@ -186,4 +190,13 @@ In dependency order, when the relevant design phase ships:
 - `server/routes/pdev/pdev-routes.ts` (new — single router for the family).
 - `server/bootstrap/register-regulatory-routes.ts` (edited — mounts the family).
 - `shared/schema/index.ts` (edited — re-exports PDEV types).
-- `server/services/pdev/__tests__/*.test.ts` (new).
+- `server/services/pdev/__tests__/{pdev-activity-registry,pdev-orchestrator}.test.ts` (new).
+
+**Pass 2 — backend completion (everything but UI):**
+
+- `server/services/pdev/pdev-ai-drafting.ts` (new — governed AI draft bound to a PDEV activity).
+- `server/services/pdev/pdev-ectd-compile.ts` (new — readiness-gated eCTD compile bridge).
+- `server/services/pdev/pdev-fda-feedback-rollup.ts` (new — propose + apply Q-Sub commitment → activity rollup).
+- `server/services/pdev/pdev-evidence-attach.ts` (new — evidence_objects ↔ PDEV activity wiring).
+- `server/routes/pdev/pdev-routes.ts` (edited — adds 7 routes for the new services).
+- `server/services/pdev/__tests__/{pdev-ai-drafting,pdev-fda-feedback-rollup}.test.ts` (new).
