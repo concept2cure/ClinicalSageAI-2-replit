@@ -48,6 +48,23 @@ import {
   type EmbedFn,
 } from './outcome-precedent-ingestor.js';
 
+// Default embedding function — lazily imports the unified AI client so we
+// don't take a hard dependency on the LLM stack at module load. Returns
+// `null` when the embedding call fails so the ingestor still records the
+// precedent (just without a vector). Keep dim-1536 to match the existing
+// `precedent.regulatory_precedents.embedding vector(1536)` column.
+const defaultEmbedFn: EmbedFn = async (text: string) => {
+  try {
+    const { ai } = await import('../../lib/unified-ai-client.js');
+    const result = await ai.embeddings({ input: text, dimensions: 1536 });
+    if (!Array.isArray(result.embedding) || result.embedding.length === 0) return null;
+    return result.embedding;
+  } catch (err) {
+    log.warn('Default embed failed:', err instanceof Error ? err.message : err);
+    return null;
+  }
+};
+
 const log = createScopedLogger('regulatory-intelligence');
 
 export const REGULATORY_INTELLIGENCE_VERSION = '1.0.0';
@@ -293,7 +310,10 @@ export interface RecordOutcomeResult {
  */
 export async function onOutcomeRecorded(opts: RecordOutcomeOptions = {}): Promise<RecordOutcomeResult> {
   const featuresExtracted = await extractPendingOutcomeVectors({ limit: 500 });
-  const ingest = await ingestOutcomeAsPrecedent({ limit: 200, embedFn: opts.embedFn });
+  const ingest = await ingestOutcomeAsPrecedent({
+    limit: 200,
+    embedFn: opts.embedFn ?? defaultEmbedFn,
+  });
 
   const shouldRetrain = opts.retrain ?? true;
   const retrained = { rtf: false, crl: false, firstCycleApproval: false };
