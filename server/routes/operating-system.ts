@@ -42,7 +42,7 @@ router.post('/assumptions', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const service = AssumptionRegistryService.getInstance();
+    const service = AssumptionRegistryService.getInstance() as any;
 
     const record = await service.createAssumption({
       ...req.body,
@@ -63,7 +63,7 @@ router.post('/assumptions', async (req: Request, res: Response) => {
 router.get('/assumptions', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const service = AssumptionRegistryService.getInstance();
+    const service = AssumptionRegistryService.getInstance() as any;
 
     const projectId = parseInt(req.query.projectId as string, 10);
     if (isNaN(projectId)) {
@@ -94,7 +94,7 @@ router.get('/assumptions', async (req: Request, res: Response) => {
 router.get('/assumptions/:id', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const service = AssumptionRegistryService.getInstance();
+    const service = AssumptionRegistryService.getInstance() as any;
 
     const record = await service.getAssumption(req.params.id, orgId);
     if (!record) {
@@ -115,7 +115,7 @@ router.patch('/assumptions/:id', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const service = AssumptionRegistryService.getInstance();
+    const service = AssumptionRegistryService.getInstance() as any;
 
     const record = await service.updateAssumption(req.params.id, orgId, {
       ...req.body,
@@ -136,7 +136,7 @@ router.post('/assumptions/:id/review', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const service = AssumptionRegistryService.getInstance();
+    const service = AssumptionRegistryService.getInstance() as any;
 
     if (!userId) {
       return res.status(400).json({ success: false, error: 'Authenticated user required for review' });
@@ -157,7 +157,7 @@ router.post('/assumptions/:id/approve', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const service = AssumptionRegistryService.getInstance();
+    const service = AssumptionRegistryService.getInstance() as any;
 
     if (!userId) {
       return res.status(400).json({ success: false, error: 'Authenticated user required for approval' });
@@ -178,7 +178,7 @@ router.post('/assumptions/:id/reject', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const service = AssumptionRegistryService.getInstance();
+    const service = AssumptionRegistryService.getInstance() as any;
 
     if (!userId) {
       return res.status(400).json({ success: false, error: 'Authenticated user required for rejection' });
@@ -199,7 +199,7 @@ router.post('/assumptions/:id/supersede', async (req: Request, res: Response) =>
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const service = AssumptionRegistryService.getInstance();
+    const service = AssumptionRegistryService.getInstance() as any;
 
     const { replacement, reason } = req.body;
     if (!replacement || !reason) {
@@ -226,7 +226,7 @@ router.post('/assumptions/:id/supersede', async (req: Request, res: Response) =>
 router.get('/assumptions/:id/history', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const service = AssumptionRegistryService.getInstance();
+    const service = AssumptionRegistryService.getInstance() as any;
 
     const history = await service.getAssumptionHistory(req.params.id, orgId);
     res.json({ success: true, data: history });
@@ -242,7 +242,7 @@ router.get('/assumptions/:id/history', async (req: Request, res: Response) => {
 router.post('/assumptions/:id/link-artifact', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const service = AssumptionRegistryService.getInstance();
+    const service = AssumptionRegistryService.getInstance() as any;
 
     const { artifactId, artifactVersionId } = req.body;
     if (!artifactId) {
@@ -268,7 +268,7 @@ router.post('/decisions', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const service = DecisionRecordService.getInstance();
+    const service = DecisionRecordService.getInstance() as any;
 
     const record = await service.createDecision({
       ...req.body,
@@ -289,7 +289,7 @@ router.post('/decisions', async (req: Request, res: Response) => {
 router.get('/decisions', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const service = DecisionRecordService.getInstance();
+    const service = DecisionRecordService.getInstance() as any;
 
     const projectId = parseInt(req.query.projectId as string, 10);
     if (isNaN(projectId)) {
@@ -322,7 +322,7 @@ router.get('/decisions', async (req: Request, res: Response) => {
 router.get('/decisions/:id', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const service = DecisionRecordService.getInstance();
+    const service = DecisionRecordService.getInstance() as any;
 
     const record = await service.getDecision(req.params.id, orgId);
     if (!record) {
@@ -343,7 +343,7 @@ router.patch('/decisions/:id', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const service = DecisionRecordService.getInstance();
+    const service = DecisionRecordService.getInstance() as any;
 
     const record = await service.updateDecision(req.params.id, orgId, {
       ...req.body,
@@ -364,7 +364,7 @@ router.post('/decisions/:id/supersede', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const service = DecisionRecordService.getInstance();
+    const service = DecisionRecordService.getInstance() as any;
 
     const { replacement, reason } = req.body;
     if (!replacement || !reason) {
@@ -392,7 +392,7 @@ router.post('/decisions/:id/execute', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const service = DecisionRecordService.getInstance();
+    const service = DecisionRecordService.getInstance() as any;
 
     const { executedArtifactId, executedArtifactVersionId, actionDescription } = req.body;
     if (!executedArtifactId) {
@@ -417,7 +417,7 @@ router.post('/decisions/:id/approve', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const service = DecisionRecordService.getInstance();
+    const service = DecisionRecordService.getInstance() as any;
 
     if (!userId) {
       return res.status(400).json({ success: false, error: 'Authenticated user required' });
@@ -438,7 +438,7 @@ router.post('/decisions/:id/reject', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const service = DecisionRecordService.getInstance();
+    const service = DecisionRecordService.getInstance() as any;
 
     if (!userId) {
       return res.status(400).json({ success: false, error: 'Authenticated user required' });
@@ -459,7 +459,7 @@ router.post('/decisions/:id/escalate', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const service = DecisionRecordService.getInstance();
+    const service = DecisionRecordService.getInstance() as any;
 
     const { reason } = req.body;
     if (!reason) {
@@ -480,7 +480,7 @@ router.post('/decisions/:id/escalate', async (req: Request, res: Response) => {
 router.post('/decisions/:id/validate-governance', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const service = DecisionRecordService.getInstance();
+    const service = DecisionRecordService.getInstance() as any;
 
     const decision = await service.getDecision(req.params.id, orgId);
     if (!decision) {
@@ -612,7 +612,7 @@ router.post('/contradiction-links', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const service = AssumptionRegistryService.getInstance();
+    const service = AssumptionRegistryService.getInstance() as any;
 
     const { projectId, sourceType, sourceId, targetType, targetId, comparisonType, ...options } = req.body;
     if (!projectId || !sourceType || !sourceId || !targetType || !targetId || !comparisonType) {
@@ -640,7 +640,7 @@ router.post('/contradiction-links', async (req: Request, res: Response) => {
 router.get('/contradiction-links', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const service = AssumptionRegistryService.getInstance();
+    const service = AssumptionRegistryService.getInstance() as any;
 
     const projectId = parseInt(req.query.projectId as string, 10);
     if (isNaN(projectId)) {

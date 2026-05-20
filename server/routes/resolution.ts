@@ -98,13 +98,20 @@ function getOrganizationId(req: Request): number {
       ? (req as any).organizationId
       : parseInt((req as any).organizationId as string, 10);
   }
-  if (req.user?.organizationId) return req.user.organizationId;
+  if (req.user?.organizationId) {
+    const v = req.user.organizationId;
+    return typeof v === 'number' ? v : parseInt(String(v), 10);
+  }
   throw new Error('Organization context required');
 }
 
 function getUserId(req: Request): number {
-  if (req.userId) return req.userId;
-  if (req.user?.id) return req.user.id;
+  if (req.userId !== undefined && req.userId !== null) {
+    return typeof req.userId === 'number' ? req.userId : parseInt(String(req.userId), 10);
+  }
+  if (req.user?.id !== undefined && req.user?.id !== null) {
+    return typeof req.user.id === 'number' ? req.user.id : parseInt(String(req.user.id), 10);
+  }
   throw new Error('Authentication required');
 }
 
@@ -126,7 +133,7 @@ router.post('/plans', async (req: Request, res: Response) => {
 router.get('/plans/:projectId', async (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     const stateFilter = req.query.state as string | undefined;
     const plans = await getProjectResolutionPlans(orgId, projectId, stateFilter as any);
     res.json({ success: true, plans });
@@ -138,7 +145,7 @@ router.get('/plans/:projectId', async (req: Request, res: Response) => {
 router.get('/plans/:projectId/:id', async (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
-    const plan = await getResolutionPlan(orgId, req.params.id);
+    const plan = await getResolutionPlan(orgId, String(req.params.id ?? ""));
     if (!plan) return res.status(404).json({ success: false, error: 'Plan not found' });
     res.json({ success: true, plan });
   } catch (error: any) {
@@ -151,7 +158,7 @@ router.post('/plans/:id/transition', async (req: Request, res: Response) => {
     const orgId = getOrganizationId(req);
     const userId = getUserId(req);
     const { targetState, reason } = req.body;
-    const plan = await transitionResolutionState(orgId, userId, req.params.id, targetState, reason);
+    const plan = await transitionResolutionState(orgId, userId, String(req.params.id ?? ""), targetState, reason);
     res.json({ success: true, plan });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
@@ -161,7 +168,7 @@ router.post('/plans/:id/transition', async (req: Request, res: Response) => {
 router.post('/plans/:id/explain', async (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
-    const plan = await getResolutionPlan(orgId, req.params.id);
+    const plan = await getResolutionPlan(orgId, String(req.params.id ?? ""));
     if (!plan) return res.status(404).json({ success: false, error: 'Plan not found' });
     const explanation = explainResolutionPlan(plan);
     res.json({ success: true, explanation });
@@ -188,7 +195,7 @@ router.post('/bundles', async (req: Request, res: Response) => {
 router.get('/bundles/:projectId', async (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     const stateFilter = req.query.state as string | undefined;
     const bundles = await getProjectBundles(orgId, projectId, stateFilter as any);
     res.json({ success: true, bundles });
@@ -200,7 +207,7 @@ router.get('/bundles/:projectId', async (req: Request, res: Response) => {
 router.get('/bundles/:projectId/:id', async (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
-    const result = await getResolutionBundle(orgId, req.params.id);
+    const result = await getResolutionBundle(orgId, String(req.params.id ?? ""));
     if (!result) return res.status(404).json({ success: false, error: 'Bundle not found' });
     res.json({ success: true, ...result });
   } catch (error: any) {
@@ -213,7 +220,7 @@ router.post('/bundles/:id/transition', async (req: Request, res: Response) => {
     const orgId = getOrganizationId(req);
     const userId = getUserId(req);
     const { targetState, reason } = req.body;
-    const bundle = await transitionBundleState(orgId, userId, req.params.id, targetState, reason);
+    const bundle = await transitionBundleState(orgId, userId, String(req.params.id ?? ""), targetState, reason);
     res.json({ success: true, bundle });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
@@ -223,7 +230,7 @@ router.post('/bundles/:id/transition', async (req: Request, res: Response) => {
 router.post('/bundles/:id/items', async (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
-    const item = await addBundleItem(orgId, req.params.id, req.body);
+    const item = await addBundleItem(orgId, String(req.params.id ?? ""), req.body);
     res.status(201).json({ success: true, item });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
@@ -245,8 +252,8 @@ router.put('/bundles/:bundleId/items/:itemId', async (req: Request, res: Respons
     }
     const item = await updateBundleItemStatus(
       orgId,
-      req.params.bundleId,
-      req.params.itemId,
+      String(req.params.bundleId ?? ""),
+      String(req.params.itemId ?? ""),
       status,
       userId
     );
@@ -271,7 +278,7 @@ router.post('/bundles/from-plan', async (req: Request, res: Response) => {
 router.post('/bundles/:id/explain', async (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
-    const result = await getResolutionBundle(orgId, req.params.id);
+    const result = await getResolutionBundle(orgId, String(req.params.id ?? ""));
     if (!result) return res.status(404).json({ success: false, error: 'Bundle not found' });
     const summary = summarizeResolutionBundle(result.bundle, result.items);
     res.json({ success: true, summary });
@@ -288,7 +295,7 @@ router.post('/bundles/:id/execute', async (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
     const userId = getUserId(req);
-    const bundleId = req.params.id;
+    const bundleId = String(req.params.id ?? "");
     if (!bundleId || bundleId.trim().length === 0) {
       return res.status(400).json({ success: false, error: 'Bundle ID is required' });
     }
@@ -318,7 +325,7 @@ router.post('/supersessions', async (req: Request, res: Response) => {
 router.get('/supersessions/:projectId', async (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     const stateFilter = req.query.state as string | undefined;
     const records = await getProjectSupersessions(orgId, projectId, stateFilter as any);
     res.json({ success: true, supersessions: records });
@@ -331,7 +338,7 @@ router.post('/supersessions/:id/confirm', async (req: Request, res: Response) =>
   try {
     const orgId = getOrganizationId(req);
     const userId = getUserId(req);
-    const record = await confirmSupersession(orgId, userId, req.params.id);
+    const record = await confirmSupersession(orgId, userId, String(req.params.id ?? ""));
     res.json({ success: true, supersession: record });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
@@ -345,7 +352,7 @@ router.post('/supersessions/:id/revert', async (req: Request, res: Response) => 
     const { reason } = req.body;
     if (!reason)
       return res.status(400).json({ success: false, error: 'Reason required for revert' });
-    const record = await revertSupersession(orgId, userId, req.params.id, reason);
+    const record = await revertSupersession(orgId, userId, String(req.params.id ?? ""), reason);
     res.json({ success: true, supersession: record });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
@@ -355,7 +362,7 @@ router.post('/supersessions/:id/revert', async (req: Request, res: Response) => 
 router.get('/supersessions/chain/:objectType/:objectId', async (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
-    const chain = await getSupersessionChain(orgId, req.params.objectType, req.params.objectId);
+    const chain = await getSupersessionChain(orgId, String(req.params.objectType ?? ""), String(req.params.objectId ?? ""));
     res.json({ success: true, chain });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
@@ -365,7 +372,7 @@ router.get('/supersessions/chain/:objectType/:objectId', async (req: Request, re
 router.get('/supersessions/check/:objectType/:objectId', async (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
-    const result = await isSuperseded(orgId, req.params.objectType, req.params.objectId);
+    const result = await isSuperseded(orgId, String(req.params.objectType ?? ""), String(req.params.objectId ?? ""));
     res.json({ success: true, ...result });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
@@ -741,7 +748,7 @@ router.post('/contradiction/explain', async (req: Request, res: Response) => {
 router.get('/contradiction/status/:projectId', async (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
 
     const result = await getProjectResolutionStatus(orgId, projectId);
 
