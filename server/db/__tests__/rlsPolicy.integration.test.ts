@@ -41,7 +41,6 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 // inscrutably. Unmock has to come before the import.
 vi.unmock('pg');
 
-// eslint-disable-next-line import/first
 import { Pool, type PoolClient } from 'pg';
 
 const databaseUrl = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;

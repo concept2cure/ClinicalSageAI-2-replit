@@ -26,7 +26,6 @@ import {
 } from '../validate-completeness-engine.js';
 import {
   featuresForDraft,
-  buildFeatures,
   binCompleteness,
   extractPendingOutcomeVectors,
   type FeatureContext,
