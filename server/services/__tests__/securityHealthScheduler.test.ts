@@ -17,7 +17,8 @@ const ORIGINAL_ENV = { ...process.env };
 // Mock the underlying check runner so each test controls what the
 // scheduler observes without exercising the real (slow, infra-bound)
 // checks.
-const runChecksMock = vi.fn();
+
+const { runChecksMock } = vi.hoisted(() => ({ runChecksMock: vi.fn() }));
 vi.mock('../securityHealth', () => ({
   runSecurityHealthChecks: runChecksMock,
 }));

@@ -15,6 +15,8 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 // Mocks: auth + admin role pass through with a fake user; pool stubbed;
 // securityHealth replaced with a controllable producer.
+
+const { runChecksMock, cachedReportMock } = vi.hoisted(() => ({ runChecksMock: vi.fn(), cachedReportMock: vi.fn() }));
 vi.mock('../../auth.js', () => ({
   authMiddleware: (req: any, _res: any, next: any) => {
     req.user = { id: 1, organizationId: 7, role: 'admin' };
@@ -34,14 +36,13 @@ vi.mock('../../services/auditService', () => ({
   default: { logAction: auditLogAction },
 }));
 
-const runChecksMock = vi.fn();
 vi.mock('../../services/securityHealth', () => ({
   runSecurityHealthChecks: runChecksMock,
 }));
 
 // The route prefers the scheduler's cached report. Mock it so we can
 // flip between "no cache" and "fresh cache" per test.
-const cachedReportMock = vi.fn();
+
 vi.mock('../../services/securityHealthScheduler', () => ({
   getLastSecurityHealthReport: cachedReportMock,
 }));
