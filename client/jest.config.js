@@ -22,6 +22,12 @@ export default {
     '/concept2cure/components/workspace/__tests__/',
     '/concept2cure/router/__tests__/',
     '/portal-v2/',
+    // Individual vitest-flavored test files outside the listed dirs.
+    // Each imports from 'vitest', which Jest can't load. Vitest picks
+    // them up via vitest.config.ts's client/** include.
+    'renderSafeMarkdown\\.test\\.ts$',
+    'schemaValidator\\.test\\.ts$',
+    'cspNonce\\.test\\.ts$',
   ],
   transformIgnorePatterns: ['/node_modules/(?!wouter)'],
   transform: {

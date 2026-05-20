@@ -78,7 +78,7 @@ function makeEvaluationInput(overrides: Partial<GovernedEvaluationInput> = {}): 
 // ═══════════════════════════════════════════════════════════════════════
 
 describe('Phase 2 — RIM Context Hints', () => {
-  beforeEach(() => /* no-op: DB is authoritative */);
+  beforeEach(() => { /* no-op: DB is authoritative */ });
 
   it('evaluation includes rimContextHints', () => {
     const result = evaluateGovernedDocument(makeEvaluationInput());
@@ -125,7 +125,7 @@ describe('Phase 2 — RIM Context Hints', () => {
 // ═══════════════════════════════════════════════════════════════════════
 
 describe('Phase 2 — UI Presentation Hints', () => {
-  beforeEach(() => /* no-op: DB is authoritative */);
+  beforeEach(() => { /* no-op: DB is authoritative */ });
 
   it('evaluation includes uiPresentationHints', () => {
     const result = evaluateGovernedDocument(makeEvaluationInput());
@@ -382,7 +382,7 @@ describe('Phase 2 — Fabric Hook Types', () => {
 // ═══════════════════════════════════════════════════════════════════════
 
 describe('Phase 2 — Cross-Layer Integration', () => {
-  beforeEach(() => /* no-op: DB is authoritative */);
+  beforeEach(() => { /* no-op: DB is authoritative */ });
 
   it('full flow: evaluate → RIM hints → chat envelope → UI hints', () => {
     // 1. Fabric evaluation
