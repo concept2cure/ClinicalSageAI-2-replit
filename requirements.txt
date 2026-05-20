@@ -26,5 +26,5 @@ python-multipart>=0.0.27       # FastAPI multipart/form-data uploads
 
 # === Data / AI ===
 openai>=2.35.1                 # LLM API client (section generation)
-numpy>=1.24.0                 # Numerical processing
+numpy>=2.4.4                 # Numerical processing
 pandas>=2.0.0                 # Data manipulation
