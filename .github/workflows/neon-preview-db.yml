@@ -75,7 +75,16 @@ jobs:
         run: |
           chmod +x scripts/db_migrate.sh
           ./scripts/db_migrate.sh
-          psql "$DATABASE_URL" -f scripts/db_verify.sql
+          # Optional post-migration schema verifier. The workflow used to
+          # reference scripts/db_verify.sql unconditionally; that file
+          # was never authored and broke this step on every PR. Guard
+          # the call so the workflow degrades gracefully when the
+          # verifier isn't present.
+          if [ -f scripts/db_verify.sql ]; then
+            psql "$DATABASE_URL" -f scripts/db_verify.sql
+          else
+            echo "::notice::scripts/db_verify.sql not present; skipping post-migration schema verification."
+          fi
 
       - name: Check for destructive migration patterns
         if: steps.check_secrets.outputs.skip != 'true'
