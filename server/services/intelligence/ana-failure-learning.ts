@@ -402,6 +402,17 @@ export async function extractFailurePatterns(opts: ExtractPatternsOptions = {}):
   if (promoted > 0 || evaluated > 0) {
     log.info(`Failure patterns extracted: evaluated=${evaluated} promoted=${promoted} suppressed=${suppressed}`);
   }
+  // Counterfactual replay — proactively warn drafts that match newly-promoted
+  // patterns. Lazy import keeps the module graph acyclic (replay imports
+  // nothing from this file).
+  if (promoted > 0) {
+    try {
+      const { replayRecentlyPromoted } = await import('./counterfactual-replay.js');
+      await replayRecentlyPromoted({ since: new Date(Date.now() - 60 * 60 * 1000) });
+    } catch (err) {
+      log.warn('Counterfactual replay failed:', err instanceof Error ? err.message : err);
+    }
+  }
   return { evaluated, promoted, suppressed };
 }
 

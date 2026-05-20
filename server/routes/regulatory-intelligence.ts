@@ -58,6 +58,21 @@ import {
   OUTCOMES,
   type Outcome,
 } from '../services/intelligence/ana-failure-learning.js';
+import {
+  recomputeCalibration,
+  calibrateConfidence,
+  getCalibrationStats,
+} from '../services/intelligence/calibration.js';
+import {
+  replayPattern,
+  replayRecentlyPromoted,
+  getActiveWarnings,
+  resolveWarning,
+} from '../services/intelligence/counterfactual-replay.js';
+import {
+  applyDecay,
+  detectContradictions,
+} from '../services/intelligence/pattern-maintenance.js';
 
 const log = createScopedLogger('regulatory-intelligence-routes');
 const router: Router = express.Router();
@@ -322,6 +337,114 @@ router.post('/patterns/:id/promote', asyncHandler(async (req: Request, res: Resp
     validatedBy: typeof body.validatedBy === 'string' ? body.validatedBy : `org:${guard.orgId}`,
   });
   res.status(201).json({ success: true, data: result });
+}));
+
+// ─── Growth-mindset extensions ──────────────────────────────────────────────
+//
+// Three additions that compound the learning loop:
+//   1. Calibration  — re-map AnA's raw confidence to actual accuracy per
+//                     (agency × doc_type × intent) bucket.
+//   2. Warnings     — proactive flags on in-flight drafts that match a
+//                     freshly-promoted failure pattern.
+//   3. Maintenance  — decay stale patterns + detect contradictions when
+//                     newer evidence reverses older patterns.
+
+router.post('/calibration/recompute', asyncHandler(async (req: Request, res: Response) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const body = req.body ?? {};
+  const result = await recomputeCalibration({
+    lookbackDays: Number.isFinite(Number(body.lookbackDays)) ? Number(body.lookbackDays) : undefined,
+    minSamples: Number.isFinite(Number(body.minSamples)) ? Number(body.minSamples) : undefined,
+  });
+  res.json({ success: true, data: result });
+}));
+
+router.get('/calibration', asyncHandler(async (req: Request, res: Response) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const data = await getCalibrationStats();
+  res.json({ success: true, data });
+}));
+
+router.post('/calibration/apply', asyncHandler(async (req: Request, res: Response) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const body = req.body ?? {};
+  const raw = Number(body.rawConfidence);
+  if (!Number.isFinite(raw)) {
+    return res.status(400).json({ error: 'invalid_request', message: 'rawConfidence must be a finite number' });
+  }
+  if (typeof body.agency !== 'string' || typeof body.documentType !== 'string' || typeof body.intent !== 'string') {
+    return res.status(400).json({ error: 'invalid_request', message: 'agency, documentType, intent are required' });
+  }
+  const data = await calibrateConfidence({
+    rawConfidence: raw,
+    agency: body.agency,
+    documentType: body.documentType,
+    intent: body.intent,
+  });
+  res.json({ success: true, data });
+}));
+
+router.get('/warnings', asyncHandler(async (req: Request, res: Response) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const projectId = Number.isFinite(Number(req.query.projectId)) ? Number(req.query.projectId) : undefined;
+  const artifactId = typeof req.query.artifactId === 'string' ? req.query.artifactId : undefined;
+  const data = await getActiveWarnings({ organizationId: guard.orgId, projectId, artifactId });
+  res.json({ success: true, data });
+}));
+
+router.post('/warnings/:id/resolve', asyncHandler(async (req: Request, res: Response) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const warningId = req.params.id;
+  if (typeof warningId !== 'string' || warningId.length === 0) {
+    return res.status(400).json({ error: 'invalid_request', message: 'warning id is required' });
+  }
+  const body = req.body ?? {};
+  if (body.status !== 'fixed' && body.status !== 'dismissed') {
+    return res.status(400).json({ error: 'invalid_request', message: "status must be 'fixed' or 'dismissed'" });
+  }
+  const data = await resolveWarning({
+    warningId,
+    organizationId: guard.orgId,
+    status: body.status,
+    note: typeof body.note === 'string' ? body.note : undefined,
+  });
+  res.json({ success: true, data });
+}));
+
+router.post('/warnings/replay', asyncHandler(async (req: Request, res: Response) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const body = req.body ?? {};
+  if (typeof body.patternId === 'string' && body.patternId.length > 0) {
+    const data = await replayPattern(body.patternId, {
+      lookbackDays: Number.isFinite(Number(body.lookbackDays)) ? Number(body.lookbackDays) : undefined,
+      minConfidence: Number.isFinite(Number(body.minConfidence)) ? Number(body.minConfidence) : undefined,
+    });
+    return res.json({ success: true, data });
+  }
+  const data = await replayRecentlyPromoted({
+    lookbackDays: Number.isFinite(Number(body.lookbackDays)) ? Number(body.lookbackDays) : undefined,
+    minConfidence: Number.isFinite(Number(body.minConfidence)) ? Number(body.minConfidence) : undefined,
+    since: typeof body.since === 'string' ? new Date(body.since) : undefined,
+  });
+  res.json({ success: true, data });
+}));
+
+router.post('/patterns/maintenance', asyncHandler(async (req: Request, res: Response) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const body = req.body ?? {};
+  const decayResult = await applyDecay({
+    halfLifeDays: Number.isFinite(Number(body.halfLifeDays)) ? Number(body.halfLifeDays) : undefined,
+    dismissalPenalty: Number.isFinite(Number(body.dismissalPenalty)) ? Number(body.dismissalPenalty) : undefined,
+  });
+  const contradictionResult = await detectContradictions();
+  res.json({ success: true, data: { decay: decayResult, contradictions: contradictionResult } });
 }));
 
 export default router;
