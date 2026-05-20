@@ -39,6 +39,72 @@ export const SUBMISSION_CENTER_ITEM_STATES = [
 
 export type SubmissionCenterItemState = (typeof SUBMISSION_CENTER_ITEM_STATES)[number];
 
+export interface SubmissionCenterItemRecord {
+  id: string;
+  organizationId: number;
+  projectId: number;
+  itemId?: string;
+  itemType?: string;
+  state?: SubmissionCenterItemState;
+  status?: string;
+  title?: string;
+  description?: string;
+  authority?: string;
+  submissionType?: string;
+  sequenceNumber?: string;
+  gatewayProfile?: string;
+  ectdPath?: string;
+  dispatchReady?: boolean;
+  packageRef?: string;
+  submissionRef?: string;
+  gatewayRef?: string;
+  acknowledgmentRef?: string;
+  metadata?: Record<string, unknown>;
+  createdBy?: string | number;
+  createdAt: string;
+  updatedAt: string;
+  [key: string]: unknown;
+}
+
+export const REGULATORY_AUTHORITY_PROFILE_TEMPLATES = [
+  {
+    authority: 'FDA',
+    centerOrDivision: 'CDRH',
+    channelType: 'gateway' as const,
+    submissionTransport: 'FDA ESG',
+    acceptedFormats: ['eCTD', 'eSTAR'],
+    validationRequirements: ['eCTD validator', 'PDF Q&A'],
+    packageConstraints: ['10GB max'],
+    acknowledgmentModel: 'three-stage',
+    messageReceiptModel: 'gateway_email',
+    metadataRequirements: ['Submission Type', 'Submission Number'],
+  },
+  {
+    authority: 'FDA',
+    centerOrDivision: 'CDER',
+    channelType: 'gateway' as const,
+    submissionTransport: 'FDA ESG',
+    acceptedFormats: ['eCTD'],
+    validationRequirements: ['eCTD validator'],
+    packageConstraints: ['Standard eCTD'],
+    acknowledgmentModel: 'three-stage',
+    messageReceiptModel: 'gateway_email',
+    metadataRequirements: ['Submission Type', 'Application Number'],
+  },
+  {
+    authority: 'EMA',
+    centerOrDivision: 'CHMP',
+    channelType: 'gateway' as const,
+    submissionTransport: 'EMA Gateway',
+    acceptedFormats: ['eCTD'],
+    validationRequirements: ['EU eCTD validator'],
+    packageConstraints: ['EU eCTD'],
+    acknowledgmentModel: 'two-stage',
+    messageReceiptModel: 'gateway_portal',
+    metadataRequirements: ['Procedure Number'],
+  },
+] as const;
+
 export interface AuthorityProfileRecord {
   id: string;
   organizationId: number;

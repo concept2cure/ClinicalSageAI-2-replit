@@ -49,18 +49,7 @@ router.get('/analytical-methods', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const methods = await db
-      .select({
-        id: analyticalMethods.id,
-        projectId: analyticalMethods.projectId,
-        methodName: analyticalMethods.methodName,
-        methodType: analyticalMethods.methodType,
-        purpose: analyticalMethods.purpose,
-        procedure: analyticalMethods.procedure,
-        validationStatus: analyticalMethods.validationStatus,
-        organizationId: analyticalMethods.organizationId,
-        createdAt: analyticalMethods.createdAt,
-        updatedAt: analyticalMethods.updatedAt,
-      })
+      .select()
       .from(analyticalMethods)
       .where(eq(analyticalMethods.organizationId, orgId));
     res.json({ success: true, data: methods });
@@ -74,10 +63,11 @@ router.post('/analytical-methods', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertAnalyticalMethodSchema.parse(req.body);
-    const [method] = await db.insert(analyticalMethods).values({ ...validatedData, organizationId: orgId }).returning();
+    const [method] = (await db.insert(analyticalMethods).values({ ...validatedData, organizationId: orgId } as any).returning()) as any[];
     // Write-through: upsert canonical source object for Module 3
-    if (method.projectId) {
-      writeThroughAnalyticalMethod(orgId, method.projectId, String(method.id), method).catch(() => {});
+    const projectId = (method as any)?.projectId;
+    if (projectId) {
+      writeThroughAnalyticalMethod(orgId, projectId, String(method.id), method).catch(() => {});
     }
     res.json({ success: true, data: method });
   } catch (error) {
@@ -88,18 +78,19 @@ router.post('/analytical-methods', async (req, res) => {
 
 router.put('/analytical-methods/:id', async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = insertAnalyticalMethodSchema.partial().parse(req.body);
-    const { organizationId: _discard, ...safeData } = validatedData;
-    const [method] = await db
+    const { organizationId: _discard, ...safeData } = validatedData as any;
+    const [method] = (await db
       .update(analyticalMethods)
       .set({ ...safeData, updatedAt: new Date() })
       .where(and(eq(analyticalMethods.id, id), eq(analyticalMethods.organizationId, orgId)))
-      .returning();
+      .returning()) as any[];
     // Write-through: upsert canonical source object for Module 3
-    if (method?.projectId) {
-      writeThroughAnalyticalMethod(orgId, method.projectId, String(method.id), method).catch(() => {});
+    const projectId = (method as any)?.projectId;
+    if (projectId) {
+      writeThroughAnalyticalMethod(orgId, projectId, String(method.id), method).catch(() => {});
     }
     res.json({ success: true, data: method });
   } catch (error) {
@@ -127,10 +118,11 @@ router.post('/process-validation', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertProcessValidationSchema.parse(req.body);
-    const [validation] = await db.insert(processValidation).values({ ...validatedData, organizationId: orgId }).returning();
+    const [validation] = (await db.insert(processValidation).values({ ...validatedData, organizationId: orgId } as any).returning()) as any[];
     // Write-through: upsert canonical source object for Module 3
-    if (validation.projectId) {
-      writeThroughProcessValidation(orgId, validation.projectId, String(validation.id), validation).catch(() => {});
+    const validationProjectId = (validation as any)?.projectId;
+    if (validationProjectId) {
+      writeThroughProcessValidation(orgId, validationProjectId, String(validation.id), validation).catch(() => {});
     }
     res.json({ success: true, data: validation });
   } catch (error) {
@@ -144,18 +136,7 @@ router.get('/stability-studies', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const studies = await db
-      .select({
-        id: stabilityStudies.id,
-        projectId: stabilityStudies.projectId,
-        studyName: stabilityStudies.studyName,
-        studyType: stabilityStudies.studyType,
-        storageCondition: stabilityStudies.storageCondition,
-        duration: stabilityStudies.duration,
-        status: stabilityStudies.status,
-        organizationId: stabilityStudies.organizationId,
-        createdAt: stabilityStudies.createdAt,
-        updatedAt: stabilityStudies.updatedAt,
-      })
+      .select()
       .from(stabilityStudies)
       .where(eq(stabilityStudies.organizationId, orgId));
     res.json({ success: true, data: studies });
@@ -169,10 +150,11 @@ router.post('/stability-studies', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertStabilityStudySchema.parse(req.body);
-    const [study] = await db.insert(stabilityStudies).values({ ...validatedData, organizationId: orgId }).returning();
+    const [study] = (await db.insert(stabilityStudies).values({ ...validatedData, organizationId: orgId } as any).returning()) as any[];
     // Write-through: upsert canonical source object for Module 3
-    if (study.projectId) {
-      writeThroughStabilityStudy(orgId, study.projectId, String(study.id), study).catch(() => {});
+    const studyProjectId = (study as any)?.projectId;
+    if (studyProjectId) {
+      writeThroughStabilityStudy(orgId, studyProjectId, String(study.id), study).catch(() => {});
     }
     res.json({ success: true, data: study });
   } catch (error) {
@@ -197,7 +179,7 @@ router.post('/qc-testing', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertQcTestingSchema.parse(req.body);
-    const [test] = await db.insert(qcTesting).values({ ...validatedData, organizationId: orgId }).returning();
+    const [test] = (await db.insert(qcTesting).values({ ...validatedData, organizationId: orgId } as any).returning()) as any[];
     res.json({ success: true, data: test });
   } catch (error) {
     console.error('Error creating QC test:', error);
@@ -224,10 +206,11 @@ router.post('/change-control', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertCmcChangeControlSchema.parse(req.body);
-    const [change] = await db.insert(cmcChangeControl).values({ ...validatedData, organizationId: orgId }).returning();
+    const [change] = (await db.insert(cmcChangeControl).values({ ...validatedData, organizationId: orgId } as any).returning()) as any[];
     // Write-through: upsert canonical source object for Module 3
-    if (change.projectId) {
-      writeThroughChangeControl(orgId, change.projectId, String(change.id), change).catch(() => {});
+    const changeProjectId = (change as any)?.projectId;
+    if (changeProjectId) {
+      writeThroughChangeControl(orgId, changeProjectId, String(change.id), change).catch(() => {});
     }
     res.json({ success: true, data: change });
   } catch (error) {
@@ -241,18 +224,7 @@ router.get('/drug-substances', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const substances = await db
-      .select({
-        id: drugSubstances.id,
-        projectId: drugSubstances.projectId,
-        substanceName: drugSubstances.substanceName,
-        casNumber: drugSubstances.casNumber,
-        molecularFormula: drugSubstances.molecularFormula,
-        molecularWeight: drugSubstances.molecularWeight,
-        manufacturingRoute: drugSubstances.manufacturingRoute,
-        organizationId: drugSubstances.organizationId,
-        createdAt: drugSubstances.createdAt,
-        updatedAt: drugSubstances.updatedAt,
-      })
+      .select()
       .from(drugSubstances)
       .where(eq(drugSubstances.organizationId, orgId));
     res.json({ success: true, data: substances });
@@ -266,10 +238,11 @@ router.post('/drug-substances', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertDrugSubstanceSchema.parse(req.body);
-    const [substance] = await db.insert(drugSubstances).values({ ...validatedData, organizationId: orgId }).returning();
+    const [substance] = (await db.insert(drugSubstances).values({ ...validatedData, organizationId: orgId } as any).returning()) as any[];
     // Write-through: upsert canonical source object for Module 3
-    if (substance.projectId) {
-      writeThroughDrugSubstance(orgId, substance.projectId, String(substance.id), substance).catch(() => {});
+    const substanceProjectId = (substance as any)?.projectId;
+    if (substanceProjectId) {
+      writeThroughDrugSubstance(orgId, substanceProjectId, String(substance.id), substance).catch(() => {});
     }
     res.json({ success: true, data: substance });
   } catch (error) {
@@ -283,18 +256,7 @@ router.get('/drug-products', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const products = await db
-      .select({
-        id: drugProducts.id,
-        projectId: drugProducts.projectId,
-        productName: drugProducts.productName,
-        dosageForm: drugProducts.dosageForm,
-        strength: drugProducts.strength,
-        routeOfAdministration: drugProducts.routeOfAdministration,
-        manufacturingProcess: drugProducts.manufacturingProcess,
-        organizationId: drugProducts.organizationId,
-        createdAt: drugProducts.createdAt,
-        updatedAt: drugProducts.updatedAt,
-      })
+      .select()
       .from(drugProducts)
       .where(eq(drugProducts.organizationId, orgId));
     res.json({ success: true, data: products });
@@ -308,10 +270,11 @@ router.post('/drug-products', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertDrugProductSchema.parse(req.body);
-    const [product] = await db.insert(drugProducts).values({ ...validatedData, organizationId: orgId }).returning();
+    const [product] = (await db.insert(drugProducts).values({ ...validatedData, organizationId: orgId } as any).returning()) as any[];
     // Write-through: upsert canonical source object for Module 3
-    if (product.projectId) {
-      writeThroughDrugProduct(orgId, product.projectId, String(product.id), product).catch(() => {});
+    const productProjectId = (product as any)?.projectId;
+    if (productProjectId) {
+      writeThroughDrugProduct(orgId, productProjectId, String(product.id), product).catch(() => {});
     }
     res.json({ success: true, data: product });
   } catch (error) {

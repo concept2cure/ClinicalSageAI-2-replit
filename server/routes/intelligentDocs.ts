@@ -65,19 +65,19 @@ const CalculateComplianceSchema = z.object({
 // Middleware: Organization Context
 // ─────────────────────────────────────────────────────────────────────────────
 
-interface AuthenticatedRequest extends Request {
-  organizationId?: string;
-  userId?: string;
+type AuthenticatedRequest = Request & {
+  organizationId?: string | number;
+  userId?: string | number;
   [key: string]: any;
-}
+};
 
 const requireOrganization = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const orgId = getSecureOrgId(req);
   if (!orgId) {
     return res.status(401).json({ error: 'Organization context required' });
   }
-  req.organizationId = orgId;
-  req.userId = req.user?.id ? String(req.user.id) : req.userId || 'system';
+  (req as any).organizationId = orgId;
+  (req as any).userId = req.user?.id ? String(req.user.id) : req.userId || 'system';
   next();
 };
 
@@ -168,7 +168,7 @@ router.post('/sources', requireOrganization, asyncHandler(async (req: Authentica
  * Update source document (creates new version)
  */
 router.put('/sources/:id', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
+  const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
   const data = CreateSourceDocumentSchema.partial().parse(req.body);
 
   // Get current version
@@ -213,13 +213,13 @@ router.put('/sources/:id', requireOrganization, asyncHandler(async (req: Authent
   // Trigger change propagation if content changed
   if (newHash !== oldVersion.content_hash) {
     await triggerChangePropagation(
-      req.organizationId!,
+      String(req.organizationId!),
       id,
       oldVersion.version,
       newVersion,
       oldVersion.content_hash,
       newHash,
-      req.userId!
+      String(req.userId!)
     );
   }
 
@@ -333,7 +333,7 @@ router.post('/links', requireOrganization, asyncHandler(async (req: Authenticate
  * Verify a traceability link against current source
  */
 router.post('/links/:id/verify', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
+  const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
 
   // Get link and current source hash
   const result = await db.execute(sql`
@@ -418,7 +418,7 @@ router.get('/propagation-events', requireOrganization, asyncHandler(async (req: 
  * Get impacted sections for a propagation event
  */
 router.get('/propagation-events/:id/impacted', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
+  const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
 
   const result = await db.execute(sql`
     SELECT id, propagation_event_id, document_id, section_id, linked_text, link_id,
@@ -443,7 +443,7 @@ router.get('/propagation-events/:id/impacted', requireOrganization, asyncHandler
  * Resolve a propagation event
  */
 router.put('/propagation-events/:id/resolve', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
+  const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
 
   await db.execute(sql`
     UPDATE intelligent_docs.change_propagation_events
