@@ -2,13 +2,19 @@ import express from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const queryMock = vi.fn();
+const { queryMock } = vi.hoisted(() => ({ queryMock: vi.fn() }));
 
-vi.mock('../../db.js', () => ({
-  pool: {
+vi.mock('../../db.js', () => {
+  const pool = {
     query: (...args: unknown[]) => queryMock(...args),
-  },
-}));
+  };
+  return {
+    pool,
+    getPool: () => pool,
+    db: {},
+    getDb: () => ({}),
+  };
+});
 
 vi.mock('../../middleware/auth.js', () => ({
   requireAuth: (_req: unknown, _res: unknown, next: () => void) => next(),
