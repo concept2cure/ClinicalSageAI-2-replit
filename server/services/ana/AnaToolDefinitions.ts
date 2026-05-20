@@ -866,6 +866,782 @@ export const SET_PROGRAM_METADATA: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Beta-surface mutation tools — let AnA author into the new MDX domain
+// surfaces: UDI records, risk management (ISO 14971), software lifecycle
+// (IEC 62304), Q-Sub briefing-doc sections. Every tool tenant-scoped via
+// ToolContext.organizationId; backing tables ship in migration 20260507.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const CREATE_UDI_RECORD: AnaTool = {
+  name: 'create_udi_record',
+  description:
+    "Create a UDI device record under the caller's organization, optionally bound to a regulatory program. Use after the user identifies a device variant that needs a UDI-DI assignment (or after AnA has gathered the device's classification + brand + catalog data). Issuing agency must be one of GS1 / HIBCC / ICCBBA. The record starts in gudid_status='draft'; later use submit_udi_record to flip to 'submitted' once payload is ready.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id:      { type: 'string', description: 'regulatory_programs.id (UUID), optional.' },
+      device_name:     { type: 'string' },
+      udi_di:          { type: 'string', description: 'Device identifier (UDI-DI).' },
+      issuing_agency:  { type: 'string', enum: ['GS1', 'HIBCC', 'ICCBBA'] },
+      device_class:    { type: 'string', description: 'Risk class (e.g. I, IIa, IIb, III).' },
+      product_code:    { type: 'string', description: 'FDA 3-letter product code.' },
+      gmdn_code:       { type: 'string' },
+      brand_name:      { type: 'string' },
+      catalog_number:  { type: 'string' },
+      version_or_model: { type: 'string' },
+      mri_safety:      { type: 'string', enum: ['mri_safe', 'mri_conditional', 'mri_unsafe', 'not_evaluated'] },
+      lot_serial:      { type: 'string', enum: ['lot', 'serial', 'none'] },
+      single_use:      { type: 'boolean' },
+    },
+    required: ['device_name', 'udi_di', 'issuing_agency'],
+  },
+};
+
+export const CREATE_RISK_ITEM: AnaTool = {
+  name: 'create_risk_item',
+  description:
+    "Add a new ISO 14971 risk row (hazard + harm + severity × probability) under a regulatory program. Severity and probability are 1..5 scales (5 = most severe / most frequent). initial_risk = severity × probability is computed server-side. After creation, attach risk_controls via add_risk_control. Status starts 'open' unless explicitly set.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id:           { type: 'string', description: 'regulatory_programs.id (UUID), optional.' },
+      ref_code:             { type: 'string', description: 'Display id, e.g. RISK-0042.' },
+      hazard:               { type: 'string' },
+      hazardous_situation:  { type: 'string' },
+      harm:                 { type: 'string' },
+      sequence_of_events:   { type: 'string', description: 'How hazard becomes harm.' },
+      severity:             { type: 'number', minimum: 1, maximum: 5 },
+      probability:          { type: 'number', minimum: 1, maximum: 5 },
+      detectability:        { type: 'number', minimum: 1, maximum: 5 },
+      control_strategy:     { type: 'string', enum: ['design_eliminate', 'design_reduce', 'protective', 'information'] },
+      source:               { type: 'string', enum: ['fmea', 'pha', 'fault_tree', 'literature', 'complaint', 'capa', 'other'] },
+    },
+    required: ['hazard', 'harm', 'severity', 'probability'],
+  },
+};
+
+export const ADD_RISK_CONTROL: AnaTool = {
+  name: 'add_risk_control',
+  description:
+    "Attach a risk control measure (per ISO 14971 §7) to an existing risk_item. control_type maps to the 14971 hierarchy: inherent_safety (design changes that remove the hazard), protective_measure (alarms, interlocks), information_safety (labeling, training). Provide evidence references (test reports, design docs) when available. If the control introduces a new hazard, set introduces_new_risk=true and link the new risk_item via new_risk_item_id.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      risk_item_id:            { type: 'number' },
+      description:             { type: 'string' },
+      control_type:            { type: 'string', enum: ['inherent_safety', 'protective_measure', 'information_safety'] },
+      implementation_evidence: { type: 'string' },
+      verification_evidence:   { type: 'string' },
+      effectiveness_evidence:  { type: 'string' },
+      introduces_new_risk:     { type: 'boolean' },
+      new_risk_item_id:        { type: 'number' },
+      status:                  { type: 'string', enum: ['proposed', 'implemented', 'verified', 'effective'] },
+    },
+    required: ['risk_item_id', 'description', 'control_type'],
+  },
+};
+
+export const CREATE_SOFTWARE_LIFECYCLE_ITEM: AnaTool = {
+  name: 'create_software_lifecycle_item',
+  description:
+    "Create an IEC 62304 / FDA 2023 software guidance deliverable under a program. item_kind selects the document type from the canonical set: srs (software requirements specification), sds (software design specification — Enhanced level only), arch (architecture), unit_test / integration_test / system_test, release_note, anomaly_log, ots_list (off-the-shelf software list), sbom (CycloneDX/SPDX), pentest, threat_model, risk_control, use_error, cybersecurity_label. doc_level is 'basic' or 'enhanced' per the FDA 2023 software guidance. safety_class is A / B / C per IEC 62304. Optionally link to a backing concept2cure_artifact via evidence_artifact_id.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id:           { type: 'string', description: 'regulatory_programs.id (UUID), optional.' },
+      doc_level:            { type: 'string', enum: ['basic', 'enhanced'] },
+      safety_class:         { type: 'string', enum: ['A', 'B', 'C'] },
+      item_kind: {
+        type: 'string',
+        enum: [
+          'srs', 'sds', 'arch', 'unit_test', 'integration_test', 'system_test',
+          'release_note', 'anomaly_log', 'ots_list', 'sbom', 'pentest',
+          'threat_model', 'risk_control', 'use_error', 'cybersecurity_label',
+        ],
+      },
+      title:                { type: 'string' },
+      identifier:           { type: 'string', description: 'e.g. SRS-1.0, SBOM-2026Q2.' },
+      status:               { type: 'string', enum: ['draft', 'in_review', 'approved', 'superseded'] },
+      evidence_artifact_id: { type: 'number', description: 'concept2cure_artifacts.id.' },
+      notes:                { type: 'string' },
+    },
+    required: ['doc_level', 'item_kind', 'title'],
+  },
+};
+
+export const WRITE_Q_SUB_SECTION: AnaTool = {
+  name: 'write_q_sub_section',
+  description:
+    "Write drafted content into a Q-Sub briefing-document section. section_key is one of the 8 canonical briefing sections: 'submission_type', 'sponsor_information', 'device_description', 'regulatory_history', 'issues_for_discussion', 'specific_questions_for_fda', 'proposed_meeting_format', 'supporting_information'. Marks the section as draft_source='ana'; the kit surfaces an Accept/Refine affordance after this writes. Tenant-scoped via the parent Q-Sub's program org.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      q_sub_id:    { type: 'string', description: 'q_submissions.id (UUID).' },
+      section_key: {
+        type: 'string',
+        enum: [
+          'submission_type', 'sponsor_information', 'device_description',
+          'regulatory_history', 'issues_for_discussion', 'specific_questions_for_fda',
+          'proposed_meeting_format', 'supporting_information',
+        ],
+      },
+      content:     { type: 'string', description: 'Markdown-style content (≥ 40 chars).' },
+      summary_note: { type: 'string', description: 'Optional one-line note for the audit trail.' },
+    },
+    required: ['q_sub_id', 'section_key', 'content'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IVD + diagnostic surface mutation tools — backs the 4 diagnostic-specific
+// surfaces in the gap inventory (IVD pathway, EU IVDR, companion diagnostics,
+// lab-developed tests). Tenant-scoped via ToolContext.organizationId.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const RECORD_ANALYTICAL_PERFORMANCE_STUDY: AnaTool = {
+  name: 'record_analytical_performance_study',
+  description:
+    "Log an IVD analytical performance study (accuracy, precision, linearity, LoD, LoQ, analytical specificity, interference, matrix comparison, reagent stability, sample stability, carryover). Captures study_type, acceptance_criterion, result, pass/fail, n_samples, sites, analytes. Use after the user runs (or AnA reviews) a performance study.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id:           { type: 'string' },
+      study_type:           { type: 'string', enum: ['accuracy', 'precision', 'linearity', 'limit_of_detection', 'limit_of_quantitation', 'analytical_specificity', 'interference', 'matrix_comparison', 'reagent_stability', 'sample_stability', 'carryover'] },
+      study_id:             { type: 'string' },
+      title:                { type: 'string' },
+      acceptance_criterion: { type: 'string' },
+      result_summary:       { type: 'string' },
+      pass_fail:            { type: 'string', enum: ['pass', 'fail', 'pending'] },
+      n_samples:            { type: 'number' },
+      n_replicates:         { type: 'number' },
+      sites:                { type: 'array', items: { type: 'string' } },
+      analytes:             { type: 'array', items: { type: 'string' } },
+      matrix_type:          { type: 'string' },
+    },
+    required: ['study_type', 'title'],
+  },
+};
+
+export const RECORD_CLINICAL_PERFORMANCE_STUDY: AnaTool = {
+  name: 'record_clinical_performance_study',
+  description:
+    "Log an IVD clinical performance study (sensitivity, specificity, PPV, NPV, AUC-ROC). Captures the comparator (predicate, clinical_truth, composite, follow_up), study population, total subjects, and the 95% confidence intervals. Use after a clinical study completes or when adapting a prior study's results into the regulatory record.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id:               { type: 'string' },
+      study_id:                 { type: 'string' },
+      title:                    { type: 'string' },
+      intended_population:      { type: 'string' },
+      comparator:               { type: 'string' },
+      comparator_kind:          { type: 'string', enum: ['predicate', 'clinical_truth', 'composite', 'follow_up'] },
+      total_subjects:           { type: 'number' },
+      positive_n:               { type: 'number' },
+      negative_n:               { type: 'number' },
+      sensitivity_pct:          { type: 'number', minimum: 0, maximum: 100 },
+      sensitivity_lower:        { type: 'number', minimum: 0, maximum: 100 },
+      sensitivity_upper:        { type: 'number', minimum: 0, maximum: 100 },
+      specificity_pct:          { type: 'number', minimum: 0, maximum: 100 },
+      specificity_lower:        { type: 'number', minimum: 0, maximum: 100 },
+      specificity_upper:        { type: 'number', minimum: 0, maximum: 100 },
+      ppv_pct:                  { type: 'number', minimum: 0, maximum: 100 },
+      npv_pct:                  { type: 'number', minimum: 0, maximum: 100 },
+      prevalence_pct:           { type: 'number', minimum: 0, maximum: 100 },
+      auc_roc:                  { type: 'number', minimum: 0, maximum: 1 },
+      pre_specified_endpoint_met: { type: 'boolean' },
+    },
+    required: ['title'],
+  },
+};
+
+export const CLASSIFY_IVD_DEVICE: AnaTool = {
+  name: 'classify_ivd_device',
+  description:
+    "Assign the EU IVDR Class A/B/C/D classification + Annex VIII rule to a device. Notified body requirement is server-computed (Class A = no NB; Class B/C/D = NB required). Use this when the user or AnA has worked through the Annex VIII decision tree.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id:           { type: 'string' },
+      device_name:          { type: 'string' },
+      ivdr_class:           { type: 'string', enum: ['A', 'B', 'C', 'D'] },
+      classification_rule:  { type: 'string', enum: ['1', '2', '3', '4', '5', '6', '7'] },
+      rationale:            { type: 'string' },
+      companion_diagnostic: { type: 'boolean' },
+      self_test:            { type: 'boolean' },
+      near_patient_test:    { type: 'boolean' },
+      notified_body_name:   { type: 'string' },
+      notified_body_id:     { type: 'string', description: '4-digit NB id (e.g. 0123).' },
+    },
+    required: ['device_name', 'ivdr_class'],
+  },
+};
+
+export const CREATE_PER_DOCUMENT: AnaTool = {
+  name: 'create_per_document',
+  description:
+    "Start a Performance Evaluation Report (PER) record for an IVDR device — distinct from the medical-device CER. PER covers scientific validity, analytical performance, and clinical performance per IVDR Annex XIII. Use this when the user begins (or AnA helps assemble) a PER. Author name + qualifications required for compliance.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id:                    { type: 'string' },
+      device_name:                   { type: 'string' },
+      per_version:                   { type: 'string' },
+      per_status:                    { type: 'string', enum: ['draft', 'review', 'approved', 'superseded'] },
+      scientific_validity_done:      { type: 'boolean' },
+      analytical_performance_done:   { type: 'boolean' },
+      clinical_performance_done:     { type: 'boolean' },
+      benefit_risk_conclusion:       { type: 'string' },
+      pmpf_plan_attached:            { type: 'boolean', description: 'Post-Market Performance Follow-up plan attached.' },
+      author_name:                   { type: 'string' },
+      author_qualifications:         { type: 'string' },
+      per_date:                      { type: 'string', description: 'ISO date.' },
+    },
+    required: ['device_name', 'per_version'],
+  },
+};
+
+export const CATEGORIZE_CLIA_COMPLEXITY: AnaTool = {
+  name: 'categorize_clia_complexity',
+  description:
+    "Record the CLIA complexity categorization (waived, moderate, high) for an IVD test. CMS issues a categorization letter for each FDA-cleared test; capture the letter reference + date so the lab knows which tests need a moderate/high-complexity CLIA certificate. To track a CLIA waiver application, follow up with apply_clia_waiver.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id:       { type: 'string' },
+      test_name:        { type: 'string' },
+      analyte:          { type: 'string' },
+      clia_complexity:  { type: 'string', enum: ['waived', 'moderate', 'high'] },
+      cms_letter_date:  { type: 'string', description: 'ISO date of the CMS letter.' },
+      cms_letter_ref:   { type: 'string' },
+    },
+    required: ['test_name', 'clia_complexity'],
+  },
+};
+
+export const PAIR_COMPANION_DIAGNOSTIC: AnaTool = {
+  name: 'pair_companion_diagnostic',
+  description:
+    "Register a drug ↔ companion-diagnostic-device pairing. Links the device program (regulatory_programs.id) to a drug application (NDA/BLA/ANDA/foreign) so the team can track concordance studies, paired-approval timeline, and CDx-claim alignment with the drug label. Use whenever a CDx is in scope for a program.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      device_program_id:     { type: 'string' },
+      drug_name:             { type: 'string' },
+      drug_innn:             { type: 'string', description: 'International Nonproprietary Name.' },
+      drug_application_type: { type: 'string', enum: ['nda', 'bla', 'anda', 'foreign'] },
+      drug_application_no:   { type: 'string', description: 'e.g. NDA 214567.' },
+      drug_sponsor:          { type: 'string' },
+      indication:            { type: 'string' },
+      biomarker:             { type: 'string', description: 'e.g. EGFR, BRAF V600E, PD-L1.' },
+      approval_status:       { type: 'string', enum: ['planned', 'submitted', 'approved', 'withdrawn'] },
+      fda_approval_date:     { type: 'string' },
+      ema_approval_date:     { type: 'string' },
+      cdx_label_text:        { type: 'string', description: 'Exact CDx claim on the drug labeling.' },
+    },
+    required: ['drug_name'],
+  },
+};
+
+export const REGISTER_LDT: AnaTool = {
+  name: 'register_ldt',
+  description:
+    "Register a laboratory-developed test in the LDT inventory. Tracks lab name, CLIA certificate, intended use, first-offered date (used for grandfathering eligibility per FDA 2024 LDT final rule), and FDA pathway. current_phase starts at 1 per the rule's phased transition schedule; use set_ldt_phase_milestone to log specific milestone progress.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      lab_name:                       { type: 'string' },
+      clia_certificate_no:            { type: 'string' },
+      test_name:                      { type: 'string' },
+      analyte:                        { type: 'string' },
+      intended_use:                   { type: 'string' },
+      first_offered_date:             { type: 'string', description: 'ISO date — pre-rule date supports grandfathering.' },
+      grandfathered:                  { type: 'boolean' },
+      enforcement_discretion_eligible: { type: 'boolean' },
+      enforcement_discretion_basis:   { type: 'string', enum: ['unmet_need', 'hde_companion', 'forensic', 'cf_blood_banking', 'public_health'] },
+      fda_pathway:                    { type: 'string', enum: ['510k', 'pma', 'de_novo', 'none', 'enforcement_discretion'] },
+      current_phase:                  { type: 'number', minimum: 1, maximum: 5 },
+    },
+    required: ['lab_name', 'test_name'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Submission gateway tools — package an eCTD bundle for a region, transmit
+// to FDA ESG / EMA CESP / EMA EUDAMED / PMDA Gateway, poll status, and
+// download acknowledgements. Backed by server/services/submission-gateways/.
+// Tenant-scoped via ToolContext.organizationId. All transports are real
+// protocol code, credential-gated through env vars.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
+  name: 'package_ectd_for_region',
+  description:
+    "Assemble a regional eCTD zip (FDA us-regional.xml / EMA eu-regional.xml / PMDA jp-regional.xml) from a set of CTD leaves. Produces the correct Module 1 folder structure per region, computes SHA-256, and returns the bundle metadata for downstream transmit. Use after AnA has gathered the leaf manifest for a submission.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      region:          { type: 'string', enum: ['fda', 'ema', 'pmda'] },
+      application_id:  { type: 'string', description: 'IND/NDA number (FDA), procedure number (EMA), application number (PMDA).' },
+      sequence:        { type: 'string', description: '4-digit submission sequence, e.g. 0001.' },
+      submission_type: { type: 'string', description: 'original | amendment | response | annual_report | safety.' },
+      sponsor_id:      { type: 'string', description: 'DUNS / EMA org id / PMDA applicant id.' },
+      sponsor_name:    { type: 'string' },
+      product_name:    { type: 'string' },
+      leaves: {
+        type: 'array',
+        description: 'List of eCTD leaves. Each leaf is { ctd_section, operation, source_path, file_name, title }.',
+        items: {
+          type: 'object',
+          properties: {
+            ctd_section: { type: 'string' },
+            operation:   { type: 'string', enum: ['new', 'append', 'replace', 'delete'] },
+            source_path: { type: 'string' },
+            file_name:   { type: 'string' },
+            title:       { type: 'string' },
+          },
+          required: ['ctd_section', 'operation', 'source_path', 'file_name', 'title'],
+        },
+      },
+      output_dir: { type: 'string', description: 'Where to write the zip. Defaults to tmp/submissions.' },
+    },
+    required: ['region', 'application_id', 'sequence', 'submission_type', 'sponsor_id', 'sponsor_name', 'product_name', 'leaves'],
+  },
+};
+
+export const TRANSMIT_SUBMISSION: AnaTool = {
+  name: 'transmit_submission',
+  description:
+    "Transmit an already-packaged bundle to a regulatory gateway (FDA ESG, EMA CESP, EMA EUDAMED, or PMDA Gateway). Returns the transmittal id and gateway-issued tracking number. Throws when credentials are not configured for the org × environment. Use after package_ectd_for_region or after assembling a region-specific deliverable like an eSTAR or a EUDAMED device-registration JSON.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      region:      { type: 'string', enum: ['fda', 'ema', 'pmda'] },
+      gateway:     { type: 'string', enum: ['esg', 'cesp', 'eudamed', 'pmda_gateway'] },
+      environment: { type: 'string', enum: ['staging', 'production'], description: "Default 'production'." },
+      bundle_path: { type: 'string', description: 'Absolute path to the package on disk.' },
+      bundle_sha256: { type: 'string', description: '64-char hex SHA-256.' },
+      bundle_size_bytes: { type: 'number' },
+      format:      { type: 'string', enum: ['ectd', 'estar', 'eudamed_register', 'pmda_ectd'] },
+      program_id:  { type: 'string', description: 'regulatory_programs.id (UUID).' },
+      package_id:  { type: 'number', description: 'c2c_submission_packages.id (when applicable).' },
+      submission_type: { type: 'string' },
+      application_id:  { type: 'string', description: 'Stored on metadata; consumed by gateway-specific transports.' },
+      sequence:    { type: 'string', description: 'Stored on metadata.' },
+    },
+    required: ['region', 'gateway', 'bundle_path', 'bundle_sha256', 'bundle_size_bytes', 'format'],
+  },
+};
+
+export const CHECK_SUBMISSION_STATUS: AnaTool = {
+  name: 'check_submission_status',
+  description:
+    "Poll the latest status for a transmitted submission. For FDA ESG, fetches the AS2 MDN / SFTP ack chain. For EMA CESP, polls /baskets/{id}. For EUDAMED, returns the most recent stored state. For PMDA Gateway, polls /receipts/{id}. Status transitions surface from the gateway's domain language (received → ack1 → ack2 → ack3 → validation_passed → review_started etc.).",
+  input_schema: {
+    type: 'object',
+    properties: { transmittal_id: { type: 'number' } },
+    required: ['transmittal_id'],
+  },
+};
+
+export const GET_SUBMISSION_ACK: AnaTool = {
+  name: 'get_submission_ack',
+  description:
+    "Download the latest acknowledgment for a transmittal as a text summary. Includes the gateway's transmission id, current status, ack timestamp, and (when present) the raw acknowledgment payload. Use when the user wants to inspect the receipt or attach it to the audit trail.",
+  input_schema: {
+    type: 'object',
+    properties: { transmittal_id: { type: 'number' } },
+    required: ['transmittal_id'],
+  },
+};
+
+export const RECORD_VALIDATION_FINDING: AnaTool = {
+  name: 'record_validation_finding',
+  description:
+    "Record a validator finding against a transmittal (FDA eValidator, EMA-validator, PMDA pre-check, commercial validators Lorenz / GlobalSubmit, or AnA's internal pre-check). Severity 'error' blocks acceptance; 'warning' is advisory; 'info' is contextual. After the finding lands, the kit's transmittal view shows it; use resolve_validation_finding to mark it addressed.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      transmittal_id: { type: 'number' },
+      validator:      { type: 'string', enum: ['fda_evalidator', 'ema_validator', 'pmda_precheck', 'lorenz', 'globalsubmit', 'internal'] },
+      severity:       { type: 'string', enum: ['error', 'warning', 'info'] },
+      rule_id:        { type: 'string' },
+      rule_title:     { type: 'string' },
+      message:        { type: 'string' },
+      file_path:      { type: 'string' },
+      line_number:    { type: 'number' },
+    },
+    required: ['transmittal_id', 'validator', 'severity', 'message'],
+  },
+};
+
+export const RESOLVE_VALIDATION_FINDING: AnaTool = {
+  name: 'resolve_validation_finding',
+  description:
+    "Mark a validator finding as resolved with a short note describing how the issue was addressed. Captures resolved_by + resolved_at for the 21 CFR Part 11 audit trail.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      finding_id:       { type: 'number' },
+      resolution_note:  { type: 'string' },
+    },
+    required: ['finding_id'],
+  },
+};
+
+export const GATEWAY_CONFIGURATION_STATUS: AnaTool = {
+  name: 'gateway_configuration_status',
+  description:
+    "Report which submission gateways are configured for the caller's organization × environment. Returns one row per (region, gateway) with a boolean configured flag. Use before transmitting to give the user a clear answer to 'which regions can we submit to today?'.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      environment: { type: 'string', enum: ['staging', 'production'], description: "Default 'production'." },
+    },
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Notifications + clinical-study + memory tools (migration 20260510).
+// AnA fires notifications when she identifies actionable state, logs
+// clinical study events as she ingests them, and curates her own memory.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const FIRE_NOTIFICATION: AnaTool = {
+  name: 'fire_notification',
+  description:
+    "Create a notification row that lands in the user's inbox + the kit's notification badge. Use when AnA detects something a human needs to act on: a transmittal rejected, a deviation marked major, an LDT milestone due, a residual risk above the acceptance threshold. recipient_user_id targets a person; recipient_role targets a team; both null = org-wide notice. Severity drives sort + visual treatment in the inbox.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      recipient_user_id: { type: 'number' },
+      recipient_role:    { type: 'string' },
+      category: {
+        type: 'string',
+        enum: [
+          'submission_status', 'validation_finding', 'q_sub_response',
+          'cdx_pairing', 'ldt_milestone_due', 'gateway_credential_expiring',
+          'ana_draft_pending', 'risk_residual_high', 'capa_due',
+          'study_deviation', 'enrollment_milestone', 'admin', 'system',
+        ],
+      },
+      severity:      { type: 'string', enum: ['info', 'warning', 'critical'] },
+      title:         { type: 'string', description: 'Short one-line headline.' },
+      body:          { type: 'string', description: 'Paragraph of context.' },
+      resource_type: { type: 'string', description: 'e.g. submission_transmittal, risk_item.' },
+      resource_id:   { type: 'string' },
+      action_url:    { type: 'string', description: 'In-kit deeplink, e.g. /submissions/42.' },
+    },
+    required: ['category', 'severity', 'title'],
+  },
+};
+
+export const CREATE_CLINICAL_STUDY: AnaTool = {
+  name: 'create_clinical_study',
+  description:
+    "Open a new clinical study record (pivotal, feasibility, pilot, post-market, PMS). Phase + study_type are the canonical taxonomy. Returns the study id for follow-up calls (sites, deviations, AEs, endpoints).",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id:           { type: 'string' },
+      study_id:             { type: 'string', description: "Sponsor's internal id." },
+      nct_id:               { type: 'string' },
+      title:                { type: 'string' },
+      phase:                { type: 'string', enum: ['pivotal', 'feasibility', 'pilot', 'post_market', 'pms'] },
+      study_type:           { type: 'string', enum: ['rct', 'single_arm', 'observational', 'registry'] },
+      primary_endpoint:     { type: 'string' },
+      sample_size_planned:  { type: 'number' },
+      start_date:           { type: 'string' },
+      ide_number:           { type: 'string' },
+      irb_approved:         { type: 'boolean' },
+    },
+    required: ['study_id', 'title'],
+  },
+};
+
+export const LOG_STUDY_DEVIATION: AnaTool = {
+  name: 'log_study_deviation',
+  description:
+    "Log a clinical study deviation. Category drives how severely the kit highlights it (major = orange row, minor = neutral). When capa_required=true the kit cross-posts to the CAPA queue via capa-mdr.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      study_id:        { type: 'number' },
+      site_id:         { type: 'number' },
+      deviation_date:  { type: 'string', description: 'ISO date.' },
+      category:        { type: 'string', enum: ['major', 'minor', 'inclusion_exclusion', 'visit_window', 'consent', 'protocol', 'other'] },
+      description:     { type: 'string' },
+      subject_id:      { type: 'string', description: 'Sponsor internal subject identifier (no PHI).' },
+      capa_required:   { type: 'boolean' },
+    },
+    required: ['study_id', 'deviation_date', 'category', 'description'],
+  },
+};
+
+export const LOG_STUDY_AE: AnaTool = {
+  name: 'log_study_ae',
+  description:
+    "Log an adverse event in a clinical study. Captures seriousness, unanticipated-device-effect (UADE) flag per 21 CFR 812.150(b), device relationship, severity, outcome, and MedDRA preferred term + SOC. AnA can later mark reported-to-FDA / reported-to-IRB dates.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      study_id:        { type: 'number' },
+      site_id:         { type: 'number' },
+      ae_id:           { type: 'string', description: "Sponsor's internal AE id." },
+      subject_id:      { type: 'string' },
+      ae_date:         { type: 'string' },
+      serious:         { type: 'boolean' },
+      unanticipated:   { type: 'boolean', description: 'UADE per 21 CFR 812.150(b).' },
+      device_related:  { type: 'string', enum: ['yes', 'no', 'possibly', 'probably', 'definitely', 'unrelated'] },
+      severity:        { type: 'string', enum: ['mild', 'moderate', 'severe'] },
+      outcome:         { type: 'string', enum: ['recovered', 'recovering', 'not_recovered', 'fatal', 'unknown'] },
+      preferred_term:  { type: 'string', description: 'MedDRA preferred term.' },
+      soc:             { type: 'string', description: 'MedDRA system organ class.' },
+    },
+    required: ['study_id', 'ae_id', 'ae_date'],
+  },
+};
+
+export const RECORD_ENDPOINT_RESULT: AnaTool = {
+  name: 'record_endpoint_result',
+  description:
+    "Record the result of a pre-specified clinical study endpoint. Captures observed value, 95% CI, p-value, and met/not-met. Use after the SAP analysis completes.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      study_id:        { type: 'number' },
+      endpoint_kind:   { type: 'string', enum: ['primary', 'secondary', 'exploratory', 'safety'] },
+      name:            { type: 'string' },
+      description:     { type: 'string' },
+      target_value:    { type: 'string' },
+      observed_value:  { type: 'string' },
+      ci_lower:        { type: 'string' },
+      ci_upper:        { type: 'string' },
+      p_value:         { type: 'number', minimum: 0, maximum: 1 },
+      met:             { type: 'boolean' },
+      analysis_note:   { type: 'string' },
+    },
+    required: ['study_id', 'endpoint_kind', 'name'],
+  },
+};
+
+export const VERIFY_MEMORY_ATOM: AnaTool = {
+  name: 'verify_memory_atom',
+  description:
+    "Mark an AnA memory atom as verified by a human user (records verified_by + verified_at). When bump_importance is true and the current importance is low/medium, the importance is bumped to high so the atom surfaces more aggressively in future conversations.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      memory_id:       { type: 'number' },
+      bump_importance: { type: 'boolean', description: 'Bump importance to high.' },
+    },
+    required: ['memory_id'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// QMS + Labeling + Search + Analytics tools (migration 20260511).
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const CREATE_QMS_DOCUMENT: AnaTool = {
+  name: 'create_qms_document',
+  description:
+    "Create a controlled QMS document (SOP, WI, form, spec, policy, manual, protocol). Starts in draft; flip to effective via approve_qms_document. Use when the user agrees to write a new procedure or AnA derives one from regulatory analysis.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      doc_number: { type: 'string' },
+      title:      { type: 'string' },
+      doc_type:   { type: 'string', enum: ['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol'] },
+      category:   { type: 'string', description: "e.g. design / production / capa / training." },
+      version:    { type: 'string' },
+    },
+    required: ['doc_number', 'title', 'doc_type'],
+  },
+};
+
+export const APPROVE_QMS_DOCUMENT: AnaTool = {
+  name: 'approve_qms_document',
+  description:
+    "Approve a draft / in-review QMS document and flip status to 'effective'. Stamps approver_id + approved_at; sets effective_date to today (or to the provided override).",
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_id:    { type: 'number' },
+      effective_date: { type: 'string', description: 'Optional ISO date override.' },
+    },
+    required: ['document_id'],
+  },
+};
+
+export const ACK_TRAINING: AnaTool = {
+  name: 'ack_training',
+  description:
+    "Record that a user acknowledged training on a specific QMS document version. Captures method (electronic_signature / attestation / trainer_verified) and optional quiz score. Expires in 365 days for periodic refresh.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_id: { type: 'number' },
+      method:      { type: 'string', enum: ['electronic_signature', 'attestation', 'trainer_verified'] },
+      quiz_score:  { type: 'number', minimum: 0, maximum: 100 },
+    },
+    required: ['document_id'],
+  },
+};
+
+export const REGISTER_SUPPLIER: AnaTool = {
+  name: 'register_supplier',
+  description:
+    "Add a supplier to the approved supplier list. Criticality drives the kit's audit schedule + supplier-quality-agreement requirements (critical = annual audit + signed QA mandatory).",
+  input_schema: {
+    type: 'object',
+    properties: {
+      supplier_name:      { type: 'string' },
+      supplier_code:      { type: 'string' },
+      scope:              { type: 'string' },
+      criticality:        { type: 'string', enum: ['critical', 'major', 'minor'] },
+      iso_certifications: { type: 'array', items: { type: 'string' } },
+    },
+    required: ['supplier_name', 'criticality'],
+  },
+};
+
+export const LOG_NONCONFORMING_PRODUCT: AnaTool = {
+  name: 'log_nonconforming_product',
+  description:
+    "Log a nonconforming product. After creation, dispositions are set via the disposition endpoint. AnA can chain to fire_notification when source is 'complaint' or 'supplier' to alert reg-affairs.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      nc_number:     { type: 'string' },
+      device_name:   { type: 'string' },
+      lot_or_serial: { type: 'string' },
+      source:        { type: 'string', enum: ['in_process', 'final_inspection', 'complaint', 'audit', 'supplier'] },
+      description:   { type: 'string' },
+    },
+    required: ['nc_number', 'description'],
+  },
+};
+
+export const CREATE_LABELING_DOCUMENT: AnaTool = {
+  name: 'create_labeling_document',
+  description:
+    "Open a new labeling document — IFU, package insert, patient label, operator/service manual, quick reference, or box label. Primary language defaults to 'en'; add translations via add_labeling_translation.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id:    { type: 'string' },
+      device_name:   { type: 'string' },
+      doc_kind:      { type: 'string', enum: ['ifu', 'package_insert', 'patient_label', 'operator_manual', 'service_manual', 'quick_ref', 'box_label'] },
+      language:      { type: 'string', description: 'BCP 47 (e.g. en, de-DE).' },
+      region:        { type: 'string', enum: ['us', 'eu', 'jp', 'global'] },
+      udi_di:        { type: 'string' },
+    },
+    required: ['device_name', 'doc_kind'],
+  },
+};
+
+export const ADD_LABELING_TRANSLATION: AnaTool = {
+  name: 'add_labeling_translation',
+  description:
+    "Add a translation of an existing labeling document. translation_method covers human, mt_postedited, machine. Set back_translation_verified=true when verified — required for EU MDR Class IIb+ in most member states.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      labeling_document_id:       { type: 'number' },
+      language:                   { type: 'string', description: 'BCP 47 tag.' },
+      translator:                 { type: 'string' },
+      translation_method:         { type: 'string', enum: ['human', 'mt_postedited', 'machine'] },
+      back_translation_verified:  { type: 'boolean' },
+    },
+    required: ['labeling_document_id', 'language'],
+  },
+};
+
+export const ADD_LABELING_SYMBOL: AnaTool = {
+  name: 'add_labeling_symbol',
+  description:
+    "Record an ISO 15223-1 symbol used on a labeling document. symbol_code is the standard's reference number (e.g. '5.4.3' for Caution). required_by lists which regulators require the symbol for this device type.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      labeling_document_id: { type: 'number' },
+      symbol_code:          { type: 'string' },
+      symbol_name:          { type: 'string' },
+      description:          { type: 'string' },
+      required_by:          { type: 'array', items: { type: 'string' } },
+    },
+    required: ['labeling_document_id', 'symbol_code', 'symbol_name'],
+  },
+};
+
+export const GLOBAL_SEARCH: AnaTool = {
+  name: 'global_search',
+  description:
+    "Search across the MDX corpus — programs, artifacts, Q-Subs, audit log, AnA threads, labeling, risk items, clinical studies, UDI records, CDx, LDT, QMS documents. Returns results grouped by type. Use to answer 'find everything about X' user queries before drafting an answer.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      q:    { type: 'string', minLength: 2 },
+      type: { type: 'string', description: 'Optional CSV of types to restrict to (e.g. program,artifact).' },
+      limit:{ type: 'number', minimum: 1, maximum: 100 },
+    },
+    required: ['q'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Legacy-import tools (migration 20260512).
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const START_LEGACY_IMPORT: AnaTool = {
+  name: 'start_legacy_import',
+  description:
+    "Kick off an import of a legacy archive (eCTD zip from FDA/EMA/PMDA, eSTAR bundle, raw 510(k) folder, raw PMA module). The detector sniffs the backbone XML or falls back to filename heuristics and produces a per-file mapping into the kit's canonical sections. Returns the job id; use override_import_mapping for any low-confidence rows and then approve_import to materialize artifacts.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      source_path:    { type: 'string', description: 'Absolute path to the uploaded zip / folder.' },
+      source_kind:    { type: 'string', enum: ['zip', 'folder', 'tar', 'rar'] },
+      source_filename:{ type: 'string', description: 'Original filename for display.' },
+      program_id:     { type: 'string', description: 'Optional program (UUID) the archive belongs to.' },
+    },
+    required: ['source_path'],
+  },
+};
+
+export const OVERRIDE_IMPORT_MAPPING: AnaTool = {
+  name: 'override_import_mapping',
+  description:
+    "Override the detector's mapping on a specific file in an import job. Use when AnA recognizes a file the detector bucketed as 'attachment' or assigned a wrong CTD section. Sets mapping_source='manual' and confidence=1.0.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      import_job_id:        { type: 'number' },
+      file_id:              { type: 'number' },
+      mapped_ctd_section:   { type: 'string' },
+      mapped_section_key:   { type: 'string' },
+      mapped_artifact_kind: { type: 'string' },
+      status:               { type: 'string', enum: ['pending', 'mapped', 'skipped'] },
+    },
+    required: ['import_job_id', 'file_id'],
+  },
+};
+
+export const APPROVE_IMPORT: AnaTool = {
+  name: 'approve_import',
+  description:
+    "Finalize an import job — materialize one concept2cure_artifacts row per file that's in 'mapped' status, attached to the specified projectId. Marks the import job 'completed' and stamps approved_by + approved_at for the 21 CFR Part 11 audit trail.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      import_job_id: { type: 'number' },
+      project_id:    { type: 'number', description: 'projects.id the imported artifacts will hang off.' },
+    },
+    required: ['import_job_id', 'project_id'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Native python-docx authoring — canonical Word-grade authoring path.
 // Spawns workers/artifact-compute/docx-python-runtime.py inside the isolated
 // compute worker (no network egress, bounded timeout) which uses python-docx
@@ -1154,6 +1930,43 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   UPDATE_Q_SUB_COMMITMENT_ROLLED_IN,
   LINK_PROGRAM_CLINICAL_STUDY,
   SET_PROGRAM_METADATA,
+  WRITE_Q_SUB_SECTION,
+  CREATE_UDI_RECORD,
+  CREATE_RISK_ITEM,
+  ADD_RISK_CONTROL,
+  CREATE_SOFTWARE_LIFECYCLE_ITEM,
+  RECORD_ANALYTICAL_PERFORMANCE_STUDY,
+  RECORD_CLINICAL_PERFORMANCE_STUDY,
+  CLASSIFY_IVD_DEVICE,
+  CREATE_PER_DOCUMENT,
+  CATEGORIZE_CLIA_COMPLEXITY,
+  PAIR_COMPANION_DIAGNOSTIC,
+  REGISTER_LDT,
+  PACKAGE_ECTD_FOR_REGION,
+  TRANSMIT_SUBMISSION,
+  CHECK_SUBMISSION_STATUS,
+  GET_SUBMISSION_ACK,
+  RECORD_VALIDATION_FINDING,
+  RESOLVE_VALIDATION_FINDING,
+  GATEWAY_CONFIGURATION_STATUS,
+  FIRE_NOTIFICATION,
+  CREATE_CLINICAL_STUDY,
+  LOG_STUDY_DEVIATION,
+  LOG_STUDY_AE,
+  RECORD_ENDPOINT_RESULT,
+  VERIFY_MEMORY_ATOM,
+  CREATE_QMS_DOCUMENT,
+  APPROVE_QMS_DOCUMENT,
+  ACK_TRAINING,
+  REGISTER_SUPPLIER,
+  LOG_NONCONFORMING_PRODUCT,
+  CREATE_LABELING_DOCUMENT,
+  ADD_LABELING_TRANSLATION,
+  ADD_LABELING_SYMBOL,
+  GLOBAL_SEARCH,
+  START_LEGACY_IMPORT,
+  OVERRIDE_IMPORT_MAPPING,
+  APPROVE_IMPORT,
   ASSEMBLE_ECTD_MODULE_FROM_ARTIFACTS,
   DRAFT_510K_SUBSTANTIAL_EQUIVALENCE,
   DRAFT_CLINICAL_OVERVIEW_M2_5,
