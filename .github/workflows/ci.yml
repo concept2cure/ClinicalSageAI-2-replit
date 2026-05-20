@@ -89,29 +89,6 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     needs: lint
-    services:
-      # `npm test` runs jest + vitest. ~100 server-side vitest files
-      # touch `pool` from server/db/runtime.ts, which throws on import
-      # when DATABASE_URL is unset. Provide a Postgres service so those
-      # files load. Tests that need actual DB content gate themselves
-      # on RUN_INTEGRATION_TESTS; we leave that flag unset here to keep
-      # this job pure-unit + smoke.
-      # Auth method = trust so no credential literal lives in the
-      # workflow. The Postgres service is bound to localhost on the
-      # runner only.
-      postgres:
-        image: pgvector/pgvector:pg15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_DB: concept2cure-ri_test
-          POSTGRES_HOST_AUTH_METHOD: trust
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - uses: actions/checkout@v4
 
@@ -127,7 +104,6 @@ jobs:
         run: npm test -- --passWithNoTests
         env:
           CI: true
-          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
 
   ana-readiness-tests:
     name: AnA Readiness Tests
