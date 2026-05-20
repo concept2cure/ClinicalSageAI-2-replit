@@ -152,12 +152,13 @@ router.get('/promotion-blockers/:projectId', async (req: Request, res: Response)
         '../services/contradiction-engine-service.js'
       );
       if (contradictionEngineService?.scanProject) {
-        const findings = await contradictionEngineService.scanProject(
+        const scanResult = await contradictionEngineService.scanProject(
           orgId,
           Number(projectId)
         );
-        if (findings?.length) {
-          for (const f of findings) {
+        const findings = scanResult?.findings ?? [];
+        if (findings.length) {
+          for (const f of findings as any[]) {
             if (
               f.authorityState === 'blocks_promotion' ||
               f.authorityState === 'requires_approval'
@@ -183,11 +184,11 @@ router.get('/promotion-blockers/:projectId', async (req: Request, res: Response)
       );
       if (computeReadinessAssessment) {
         const assessment = await computeReadinessAssessment({
-          projectId: Number(projectId),
+          project: { id: Number(projectId) } as any,
           organizationId: String(orgId),
-        });
+        } as any);
         if (assessment?.blockers?.length) {
-          for (const b of assessment.blockers) {
+          for (const b of assessment.blockers as any[]) {
             blockers.push({
               type: b.type || 'readiness',
               severity: b.severity || 'major',
@@ -343,7 +344,7 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
           if (result?.blocked) {
             blocked = true;
             blockReasons.push(
-              ...((result.blockingFindings || result.findings || []).map(
+              ...((result.blockingFindings || (result as any).findings || []).map(
                 (f: any) => f.title || f.explanation || 'Unresolved blocking contradiction'
               ))
             );
@@ -1416,15 +1417,16 @@ router.get('/module-readiness/:projectId/:moduleCode', async (req: Request, res:
         const orgId = requireTenantId(req, res);
         if (orgId == null) return;
         const assessment = await computeReadinessAssessment({
-          projectId: Number(projectId),
+          project: { id: Number(projectId) } as any,
           organizationId: String(orgId),
-        });
+        } as any);
 
         // Find specific module in breakdown
         const moduleBreakdown = assessment?.moduleBreakdown || [];
-        const targetModule = moduleCode
+        const moduleCodeStr = Array.isArray(moduleCode) ? moduleCode[0] : moduleCode;
+        const targetModule = moduleCodeStr
           ? moduleBreakdown.find((m: any) =>
-              m.module === moduleCode || m.module === `Module ${moduleCode.replace('m', '')}`)
+              m.module === moduleCodeStr || m.module === `Module ${String(moduleCodeStr).replace('m', '')}`)
           : null;
 
         // Filter blockers relevant to this module
@@ -1499,7 +1501,8 @@ router.get('/section-evidence/:projectId/:sectionCode', async (req: Request, res
         if (svc.getStageEvidence) {
           // Map section code to stage number (approximate)
           const stageMap: Record<string, number> = { '1': 0, '2': 1, '3': 2, '4': 3, '5': 4 };
-          const major = sectionCode?.split('.')[0] || '2';
+          const sectionCodeStr = Array.isArray(sectionCode) ? sectionCode[0] : sectionCode;
+          const major = sectionCodeStr?.split('.')[0] || '2';
           const stage = stageMap[major] ?? 1;
           const stageEvidence = await svc.getStageEvidence(String(projectId), stage);
           if (stageEvidence && Array.isArray(stageEvidence)) {
@@ -1636,11 +1639,11 @@ router.post('/cross-section-consistency', async (req: Request, res: Response) =>
         '../services/contradiction-engine-service.js'
       );
       if (contradictionEngineService?.scanProject) {
-        const findings = await contradictionEngineService.scanProject(
-          'default',
+        const scanResult = await contradictionEngineService.scanProject(
+          0,
           Number(projectId)
         );
-        contradictions = (findings || [])
+        contradictions = ((scanResult?.findings as any[]) || [])
           .filter(
             (f: any) =>
               f.sectionCode === sectionCode ||
@@ -1716,7 +1719,7 @@ router.get('/section-expectations/:regulatorBody/:submissionType/:sectionCode', 
     }
 
     try {
-      const bodyAwareModule = await import('../services/body-aware-authoring.js');
+      const bodyAwareModule: any = await import('../services/body-aware-authoring.js');
       const service = bodyAwareModule.bodyAwareAuthoringService
         || bodyAwareModule.BodyAwareAuthoringService
         || bodyAwareModule.default;
@@ -1765,7 +1768,7 @@ router.post('/body-aware-gaps', async (req: Request, res: Response) => {
     }
 
     try {
-      const bodyAwareModule = await import('../services/body-aware-authoring.js');
+      const bodyAwareModule: any = await import('../services/body-aware-authoring.js');
       const service = bodyAwareModule.bodyAwareAuthoringService
         || bodyAwareModule.BodyAwareAuthoringService
         || bodyAwareModule.default;
@@ -1877,7 +1880,7 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
         try {
           const { computeReadinessAssessment } = await import('../services/orchestration/readiness-engine.js');
           if (computeReadinessAssessment) {
-            const assessment = await computeReadinessAssessment({ projectId: Number(projectId), organizationId: String(orgId) });
+            const assessment = await computeReadinessAssessment({ project: { id: Number(projectId) } as any, organizationId: String(orgId) } as any);
             const major = sec.ctdSection.split('.')[0];
             const blockers = (assessment?.blockers || [])
               .filter((b: any) => !b.module || b.module === `m${major}`)
@@ -1890,8 +1893,8 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
         try {
           const { contradictionEngineService } = await import('../services/contradiction-engine-service.js');
           if (contradictionEngineService?.scanProject) {
-            const findings = await contradictionEngineService.scanProject(orgId, Number(projectId));
-            const items = (findings || [])
+            const scanResult = await contradictionEngineService.scanProject(orgId, Number(projectId));
+            const items = ((scanResult?.findings as any[]) || [])
               .filter((f: any) => f.sectionCode === sec.ctdSection || (f.affectedSections || []).includes(sec.ctdSection))
               .slice(0, 5).map((f: any) => ({
                 id: f.id || String(Math.random()), severity: f.authorityState === 'blocks_promotion' ? 'critical' : f.severity || 'minor',
@@ -2145,7 +2148,7 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
     try {
       const { computeReadinessAssessment } = await import('../services/orchestration/readiness-engine.js');
       if (computeReadinessAssessment) {
-        const assessment = await computeReadinessAssessment({ projectId: Number(projectId), organizationId: String(orgId) });
+        const assessment = await computeReadinessAssessment({ project: { id: Number(projectId) } as any, organizationId: String(orgId) } as any);
         readinessBlockers = (assessment?.blockers || []).filter((b: any) => b.severity === 'critical' || b.severity === 'major')
           .slice(0, 10).map((b: any) => ({
             kind: 'readiness-blocker', severity: b.severity,
@@ -2316,9 +2319,9 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
             );
             if (!computeReadinessAssessment) return null;
             const assessment = await computeReadinessAssessment({
-              projectId: Number(projectId), organizationId: String(orgId),
-            });
-            const major = sectionCode.split('.')[0];
+              project: { id: Number(projectId) } as any, organizationId: String(orgId),
+            } as any);
+            const major = (Array.isArray(sectionCode) ? sectionCode[0] : sectionCode).split('.')[0];
             const moduleItem = (assessment?.moduleBreakdown || []).find(
               (m: any) => m.module === `Module ${major}` || m.module === `m${major}`
             );
@@ -2338,8 +2341,8 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
               '../services/contradiction-engine-service.js'
             );
             if (!contradictionEngineService?.scanProject) return null;
-            const findings = await contradictionEngineService.scanProject(orgId, Number(projectId));
-            const relevant = (findings || [])
+            const scanResult = await contradictionEngineService.scanProject(orgId, Number(projectId));
+            const relevant = ((scanResult?.findings as any[]) || [])
               .filter((f: any) => f.sectionCode === sectionCode || (f.affectedSections || []).includes(sectionCode))
               .slice(0, 10)
               .map((f: any) => ({
@@ -2547,7 +2550,7 @@ router.get('/section-context/:projectId/:sectionCode', async (req: Request, res:
       readiness: { score: number | null; blocked: boolean; blockers: any[] } | null;
       contradictions: any[];
     } = {
-      sectionCode,
+      sectionCode: Array.isArray(sectionCode) ? sectionCode[0] : sectionCode,
       readiness: null,
       contradictions: [],
     };
@@ -2559,13 +2562,14 @@ router.get('/section-context/:projectId/:sectionCode', async (req: Request, res:
       );
       if (computeReadinessAssessment) {
         const assessment = await computeReadinessAssessment({
-          projectId: Number(projectId),
+          project: { id: Number(projectId) } as any,
           organizationId: String(orgId),
-        });
+        } as any);
         // Extract section-level readiness from module breakdown
         const moduleBreakdown = assessment?.moduleBreakdown || [];
+        const sectionCodeStr = Array.isArray(sectionCode) ? sectionCode[0] : sectionCode;
         const moduleMatch = moduleBreakdown.find(
-          (m: any) => m.moduleCode === `m${sectionCode.split('.')[0]}`
+          (m: any) => m.moduleCode === `m${sectionCodeStr.split('.')[0]}`
         );
         result.readiness = {
           score: moduleMatch?.score ?? assessment?.overallScore ?? null,
@@ -2590,12 +2594,12 @@ router.get('/section-context/:projectId/:sectionCode', async (req: Request, res:
         '../services/contradiction-engine-service.js'
       );
       if (contradictionEngineService?.scanProject) {
-        const findings = await contradictionEngineService.scanProject(
-          'default',
+        const scanResult = await contradictionEngineService.scanProject(
+          0,
           Number(projectId)
         );
         // Filter to section-relevant contradictions
-        result.contradictions = (findings || [])
+        result.contradictions = ((scanResult?.findings as any[]) || [])
           .filter(
             (f: any) =>
               !sectionCode ||
@@ -2642,7 +2646,7 @@ router.get('/decisions/:projectId', async (req: Request, res: Response) => {
     );
 
     const decisions = decisionLifecycleService.getProjectDecisions(
-      projectId,
+      String(projectId ?? ''),
       {
         kind: kind as any || undefined,
         status: status as any || undefined,
@@ -2689,12 +2693,12 @@ router.get('/decision/:decisionId', async (req: Request, res: Response) => {
       '../services/decision-lifecycle-service.js'
     );
 
-    const decision = decisionLifecycleService.getDecision(decisionId);
+    const decision = decisionLifecycleService.getDecision(String(decisionId ?? ''));
     if (!decision) {
       return res.status(404).json({ error: 'Decision not found' });
     }
 
-    const receipt = decisionLifecycleService.getReceiptForDecision(decisionId);
+    const receipt = decisionLifecycleService.getReceiptForDecision(String(decisionId ?? ''));
 
     return res.json({
       decision,
@@ -2723,7 +2727,7 @@ router.post('/decision/:decisionId/confirm', async (req: Request, res: Response)
 
     const newStatus = accepted ? 'confirmed' : 'rejected';
     const result = decisionLifecycleService.transitionDecision(
-      decisionId,
+      String(decisionId ?? ''),
       newStatus as any,
       { actorId: userId, actorRole: userRole, reason }
     );
@@ -2756,7 +2760,7 @@ router.get('/decision-context/:projectId', async (req: Request, res: Response) =
     );
 
     const context = decisionLifecycleService.getDecisionContext(
-      projectId,
+      String(projectId ?? ''),
       {
         sectionCode: sectionCode as string || undefined,
         moduleCode: moduleCode as string || undefined,
@@ -3033,7 +3037,7 @@ router.get('/contradiction-context/:projectId', async (req: Request, res: Respon
         '../services/decision-lifecycle-service.js'
       );
       contradictionAwareStatus = await decisionLifecycleService.computeContradictionAwareStatus(
-        projectId,
+        String(projectId ?? ''),
         {
           moduleCode: moduleCode as string || undefined,
           regulatorBody: regulatorBody as string || undefined,
@@ -3168,7 +3172,10 @@ router.post('/explain-contradiction-resolution', async (req: Request, res: Respo
  */
 router.get('/project-resolution-status/:projectId', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectIdRaw = Array.isArray(req.params.projectId)
+      ? req.params.projectId[0]
+      : req.params.projectId;
+    const projectId = parseInt(String(projectIdRaw ?? ''), 10);
     if (isNaN(projectId)) {
       return res.status(400).json({ error: 'Invalid projectId' });
     }
