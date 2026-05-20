@@ -31,6 +31,18 @@ export async function registerAdvancedPlatformRoutes({
     console.error('Failed to mount innovation routes:', error);
   }
 
+  // ── Regulatory Intelligence (AnA 1.0 RI) ──
+  // Predictive CRL/RTF layer: closes the submission-outcome feedback loop,
+  // exposes cross-tenant DP-anonymized priors, and surfaces a blended
+  // readiness score that compounds as more outcomes flow through the platform.
+  try {
+    const regulatoryIntelligenceRoutes = await import('../routes/regulatory-intelligence');
+    app.use('/api/regulatory-intelligence', authenticateToken, regulatoryIntelligenceRoutes.default);
+    console.log('✅ Regulatory Intelligence routes mounted at /api/regulatory-intelligence');
+  } catch (error) {
+    console.error('Failed to mount Regulatory Intelligence routes:', error);
+  }
+
   try {
     const notificationRoutes = await import('../routes/notification_routes');
     // notification_routes exports a function(app) that registers routes directly
