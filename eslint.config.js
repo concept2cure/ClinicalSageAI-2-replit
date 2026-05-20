@@ -155,6 +155,18 @@ export default [
       'no-implied-eval': 'error',
       'prefer-const': 'warn',
       'no-var': 'error',
+
+      // Rules introduced as errors by ESLint v10 + @typescript-eslint v8.
+      // Each catches a real class of bug, but the codebase has ~190
+      // pre-existing instances across ~120 files that pre-date this
+      // bump. Downgraded to 'warn' here so the upgrade lands without
+      // demanding a 120-file cleanup in one PR. Follow-up PRs should
+      // fix them by file and then re-promote each rule to 'error' —
+      // same baseline-ratchet pattern as .typecheck-baseline.json.
+      'preserve-caught-error': 'warn',
+      'no-useless-assignment': 'warn',
+      'no-unassigned-vars': 'warn',
+
       'eqeqeq': ['warn', 'always', { null: 'ignore' }],
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',

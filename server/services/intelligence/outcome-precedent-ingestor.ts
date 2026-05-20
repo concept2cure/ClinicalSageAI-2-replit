@@ -152,7 +152,6 @@ export async function ingestOutcomeAsPrecedent(opts: IngestOptions = {}): Promis
   const limit = opts.limit ?? 200;
   const rows = await fetchUningestedOutcomes(limit);
   let ingested = 0;
-  let skipped = 0;
   let errors = 0;
 
   for (const outcome of rows) {
@@ -215,7 +214,7 @@ export async function ingestOutcomeAsPrecedent(opts: IngestOptions = {}): Promis
     }
   }
 
-  skipped = rows.length - ingested - errors;
+  const skipped = rows.length - ingested - errors;
   if (ingested > 0 || errors > 0) {
     log.info(`Outcome → precedent: ingested=${ingested} skipped=${skipped} errors=${errors}`);
   }

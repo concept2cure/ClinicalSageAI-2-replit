@@ -69,8 +69,8 @@ export function sanitizeSummary(text: string | null | undefined): string | null 
   // Strip control chars + collapse whitespace + truncate. The control-char
   // range is exactly what we mean to match here; eslint's no-control-regex
   // rule is too conservative for this sanitizer.
-  // eslint-disable-next-line no-control-regex
   const cleaned = text
+    // eslint-disable-next-line no-control-regex
     .replace(/[\x00-\x1f\x7f]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();

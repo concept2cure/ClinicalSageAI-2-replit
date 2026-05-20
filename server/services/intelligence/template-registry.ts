@@ -20,15 +20,12 @@
  */
 
 import { pool } from '../../db/runtime.js';
-import { createScopedLogger } from '../../utils/logger.js';
 import {
   binAgencyForInteraction,
   binDocumentType,
   type Agency,
   type DocumentType,
 } from './ana-failure-learning.js';
-
-const log = createScopedLogger('template-registry');
 
 export const TEMPLATE_REGISTRY_VERSION = '1.0.0';
 

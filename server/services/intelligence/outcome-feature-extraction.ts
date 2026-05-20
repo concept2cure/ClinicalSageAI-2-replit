@@ -41,8 +41,7 @@ const THERAPEUTIC_AREA_BINS = [
 ] as const;
 type TherapeuticAreaBin = typeof THERAPEUTIC_AREA_BINS[number];
 
-const COMPLETENESS_BINS = ['low', 'medium', 'high'] as const;
-export type CompletenessBin = typeof COMPLETENESS_BINS[number];
+export type CompletenessBin = 'low' | 'medium' | 'high';
 
 // ─── Bin helpers ─────────────────────────────────────────────────────────────
 

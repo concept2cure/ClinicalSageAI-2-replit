@@ -196,7 +196,7 @@ export function computeConformanceScore(params: {
   for (const m of params.missingRequired) {
     score -= m.criticality === 'blocking' ? 0.15 : m.criticality === 'important' ? 0.07 : 0.02;
   }
-  for (const _ of params.weakSections) score -= 0.02;
+  for (let i = 0; i < params.weakSections.length; i++) score -= 0.02;
   for (const v of params.violations) {
     score -= v.rule === 'missing_required_element' ? 0.04
       : v.rule === 'forbidden_phrase' ? 0.03
