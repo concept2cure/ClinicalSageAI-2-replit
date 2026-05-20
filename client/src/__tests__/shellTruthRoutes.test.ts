@@ -13,12 +13,18 @@ describe('stage 5 shell truth route smoke', () => {
   });
 
   it('keeps login aliases and concept2cure entry mounted in App shell', () => {
+    // After the App.jsx refactor, the explicit /concept2cure and
+    // /concept2cure/* Routes were replaced by a catch-all <Route>
+    // that delegates every other path to ZenRouter (which owns the
+    // /concept2cure routing internally). The contract this test
+    // enforces remains: login aliases redirect to the canonical
+    // /concept2cure/login, and the shell mounts ZenRouter as a
+    // catch-all for non-auth paths.
     const app = read('client/src/App.jsx');
     expect(app).toContain('<Route path="/sign-in">{() => <Redirect to="/concept2cure/login" />}</Route>');
     expect(app).toContain('<Route path="/auth">{() => <Redirect to="/concept2cure/login" />}</Route>');
     expect(app).toContain('<Route path="/login">{() => <Redirect to="/concept2cure/login" />}</Route>');
-    expect(app).toContain('<Route path="/concept2cure">');
-    expect(app).toContain('<Route path="/concept2cure/*">');
+    expect(app).toContain('<ZenRouter />');
   });
 
   it('fences legacy /client-portal routes to canonical shell', () => {
@@ -35,9 +41,13 @@ describe('stage 5 shell truth route smoke', () => {
     expect(router).toContain('<ProtectedZenApp />');
   });
 
-  it('keeps Zen workspace orchestration via ProjectWorkspaceShell', () => {
+  it('keeps Zen workspace orchestration on the regulatory-workspace layoutMode', () => {
+    // ProjectWorkspaceShell was inlined into ZenApp during the design
+    // refactor; the workspace surface is now selected by layoutMode
+    // rather than a wrapper component. The contract this test
+    // enforces — "the workspace path is selected by a known
+    // layoutMode value" — is intact.
     const zenApp = read('client/src/concept2cure/ZenApp.tsx');
-    expect(zenApp).toContain('ProjectWorkspaceShell');
     expect(zenApp).toContain("layoutMode === 'regulatory-workspace'");
   });
 });

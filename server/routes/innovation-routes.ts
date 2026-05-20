@@ -460,10 +460,25 @@ router.post('/templates/usage', asyncHandler(async (req: Request, res: Response)
 }));
 
 /**
- * Record submission outcome
+ * Record submission outcome.
+ *
+ * Side effect: triggers the Regulatory Intelligence feedback loop so the new
+ * outcome is feature-extracted, ingested as a precedent, and used to retrain
+ * the CRL/RTF risk model. The trigger is fire-and-forget — outcome creation
+ * succeeds whether or not the loop completes — but failures are logged.
  */
 router.post('/templates/outcomes', asyncHandler(async (req: Request, res: Response) => {
   const outcome = await templateLearningService.recordOutcome(req.body);
+  // Don't block the response on the loop; the closure runs asynchronously
+  // and emits its own logs.
+  void (async () => {
+    try {
+      const ri = await import('../services/intelligence/regulatory-intelligence');
+      await ri.onOutcomeRecorded({});
+    } catch (err) {
+      logger.warn('Regulatory Intelligence loop failed after outcome:', err instanceof Error ? err.message : err);
+    }
+  })();
   res.status(201).json({ success: true, data: outcome });
 }));
 

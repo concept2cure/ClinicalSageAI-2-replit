@@ -14,7 +14,7 @@
  * @module server/services/ana-ri/command-executor
  */
 
-import { getPool } from '../../db.ts';
+import { getPool } from '../../db';
 import { logGeneration, validateArtifactQuality } from './enforcement.js';
 import { executeGovernedAnaOperation } from '../governed-ana-execution.js';
 
@@ -2042,15 +2042,11 @@ If the change introduces NEW risks:
 ### Recommended Actions
 What should be done BEFORE this version is submitted? Be specific.`;
 
-    const response = await gw.chat({
-      taskType: 'regulatory_review',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: analysisPrompt },
-      ],
+    const response = await gw.chat(systemPrompt, analysisPrompt, {
+      taskType: 'regulatory_review' as any,
       maxTokens: 4096,
       temperature: 0.2,
-      routingStrategy: 'quality_optimized',
+      strategy: 'quality_optimized' as any,
     });
 
     if (!response.content) {
@@ -2439,10 +2435,10 @@ export async function generateSAP(
         projectId: Number(params.projectId || ctx.activeProjectId),
         clientTrack: normalizedClientTrack,
         regulatoryBody:
-          typeof params.regulatoryBody === 'string' ? params.regulatoryBody : undefined,
-        studyType: typeof params.studyType === 'string' ? params.studyType : 'superiority',
-        objectiveType: typeof params.objectiveType === 'string' ? params.objectiveType : 'efficacy',
-        endpointType: typeof params.endpointType === 'string' ? params.endpointType : 'continuous',
+          typeof params.regulatoryBody === 'string' ? (params.regulatoryBody as any) : undefined,
+        studyType: (typeof params.studyType === 'string' ? params.studyType : 'superiority') as any,
+        objectiveType: (typeof params.objectiveType === 'string' ? params.objectiveType : 'efficacy') as any,
+        endpointType: (typeof params.endpointType === 'string' ? params.endpointType : 'continuous') as any,
         alpha: Number(params.alpha || 0.05),
         powerTarget: Number(params.power || params.powerTarget || 0.8),
         effectSize: Number(params.effectSize || 0.5),
@@ -2513,9 +2509,9 @@ export async function computeSampleSize(
     const validation = inputNormalizer.normalize({
       projectId: Number(params.projectId || ctx.activeProjectId),
       clientTrack: normalizedClientTrack,
-      studyType: typeof params.studyType === 'string' ? params.studyType : 'superiority',
-      objectiveType: typeof params.objectiveType === 'string' ? params.objectiveType : 'efficacy',
-      endpointType: typeof params.endpointType === 'string' ? params.endpointType : 'continuous',
+      studyType: (typeof params.studyType === 'string' ? params.studyType : 'superiority') as any,
+      objectiveType: (typeof params.objectiveType === 'string' ? params.objectiveType : 'efficacy') as any,
+      endpointType: (typeof params.endpointType === 'string' ? params.endpointType : 'continuous') as any,
       alpha: Number(params.alpha || 0.05),
       powerTarget: Number(params.power || params.powerTarget || 0.8),
       effectSize: Number(params.effectSize || 0.5),
@@ -2585,7 +2581,9 @@ export async function computeDoseEscalation(
       };
     }
     const engine = new ForesightAIEngine();
-    const result = await engine.calculateOptimalDoseEscalation(params.studyId || 'design-mode');
+    const result: any = await engine.calculateOptimalDoseEscalation(
+      String(params.studyId || 'design-mode')
+    );
     return {
       success: true,
       action: 'compute_dose_escalation',
@@ -2616,7 +2614,7 @@ export async function assessDefensibility(
 
     // Use the statistical defensibility service
     const mod = await import('../statistical-defensibility-service.js').catch(() => null);
-    if (!mod || !mod.assessDefensibility) {
+    if (!mod || !mod.statisticalDefensibilityService) {
       return {
         success: false,
         action: 'assess_defensibility',
@@ -2624,11 +2622,11 @@ export async function assessDefensibility(
       };
     }
 
-    const result = await mod.assessDefensibility({
+    const result: any = await mod.statisticalDefensibilityService.assessDefensibility({
       projectId: Number(projectId),
       organizationId: ctx.organizationId,
-      artifactId: params.artifactId,
-    });
+      artifactId: params.artifactId as number | undefined,
+    } as any);
 
     return {
       success: true,
@@ -2817,7 +2815,7 @@ export async function exportDocument(
 ): Promise<CommandResult> {
   try {
     const docId = params.docId || params.documentId;
-    const format = params.format || 'docx';
+    const format = String(params.format || 'docx');
     if (!docId) return { success: false, action: 'export_document', message: 'docId required.' };
     // Log export event
     try {
@@ -2914,11 +2912,11 @@ export async function searchPrecedents(
   try {
     const results = await precedentEngine.search(
       {
-        submissionType: params.submissionType,
-        indication: params.indication,
-        therapeuticArea: params.therapeuticArea,
-        query: params.query,
-        limit: params.limit || 10,
+        submissionType: String(params.submissionType ?? ''),
+        indication: params.indication as string | undefined,
+        therapeuticArea: params.therapeuticArea as string | undefined,
+        query: params.query as string | undefined,
+        limit: (params.limit as number) || 10,
       },
       ctx.organizationId
     );
@@ -2945,10 +2943,10 @@ export async function analyzeCRLTriggers(
 ): Promise<CommandResult> {
   try {
     const result = await precedentEngine.analyzeCRLTriggers({
-      submissionType: params.submissionType || 'NDA',
-      indication: params.indication,
-      therapeuticArea: params.therapeuticArea,
-      query: params.query,
+      submissionType: String(params.submissionType || 'NDA'),
+      indication: params.indication as string | undefined,
+      therapeuticArea: params.therapeuticArea as string | undefined,
+      query: params.query as string | undefined,
     });
     return {
       success: true,
@@ -2973,10 +2971,10 @@ export async function analyzeRTFTriggers(
 ): Promise<CommandResult> {
   try {
     const result = await precedentEngine.analyzeRTFTriggers({
-      submissionType: params.submissionType || 'NDA',
-      indication: params.indication,
-      therapeuticArea: params.therapeuticArea,
-      query: params.query,
+      submissionType: String(params.submissionType || 'NDA'),
+      indication: params.indication as string | undefined,
+      therapeuticArea: params.therapeuticArea as string | undefined,
+      query: params.query as string | undefined,
     });
     return {
       success: true,
@@ -3001,10 +2999,10 @@ export async function recommendStrategy(
 ): Promise<CommandResult> {
   try {
     const result = await precedentEngine.recommendStrategy({
-      submissionType: params.submissionType,
-      indication: params.indication,
-      therapeuticArea: params.therapeuticArea,
-      query: params.query,
+      submissionType: String(params.submissionType ?? ''),
+      indication: params.indication as string | undefined,
+      therapeuticArea: params.therapeuticArea as string | undefined,
+      query: params.query as string | undefined,
     });
     return {
       success: true,
@@ -3030,10 +3028,10 @@ export async function checkClaim(
   try {
     if (!params.claim)
       return { success: false, action: 'check_claim', message: 'claim text is required.' };
-    const result = await precedentEngine.checkClaim(params.claim, {
-      submissionType: params.submissionType,
-      therapeuticArea: params.therapeuticArea,
-      indication: params.indication,
+    const result = await precedentEngine.checkClaim(String(params.claim), {
+      submissionType: String(params.submissionType ?? ''),
+      therapeuticArea: params.therapeuticArea as string | undefined,
+      indication: params.indication as string | undefined,
     });
     return {
       success: true,
@@ -3061,7 +3059,7 @@ export async function runSubmissionAssessment(
   params: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const packageId = params.packageId;
+    const packageId = Number(params.packageId);
     if (!packageId)
       return {
         success: false,
@@ -3099,8 +3097,8 @@ export async function simulateChallenges(
   params: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const packageId = params.packageId;
-    const assessmentId = params.assessmentId;
+    const packageId = Number(params.packageId);
+    const assessmentId = Number(params.assessmentId);
     if (!packageId)
       return { success: false, action: 'simulate_challenges', message: 'packageId is required.' };
     if (!assessmentId)
@@ -3109,7 +3107,7 @@ export async function simulateChallenges(
         action: 'simulate_challenges',
         message: 'assessmentId is required. Run run_submission_assessment first.',
       };
-    const lenses = params.lenses || ['clinical', 'statistical', 'cmc', 'safety'];
+    const lenses = (params.lenses as string[]) || ['clinical', 'statistical', 'cmc', 'safety'];
     const challenges = await submissionTwinService.simulateChallenges(
       packageId,
       ctx.organizationId,
@@ -3140,7 +3138,7 @@ export async function detectDrift(
   params: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const packageId = params.packageId;
+    const packageId = Number(params.packageId);
     if (!packageId)
       return { success: false, action: 'detect_drift', message: 'packageId is required.' };
     const drifts = await submissionTwinService.detectDrift(packageId, ctx.organizationId);
@@ -3169,7 +3167,7 @@ export async function predictNextArtifact(
   params: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const packageId = params.packageId;
+    const packageId = Number(params.packageId);
     if (!packageId)
       return { success: false, action: 'predict_next_artifact', message: 'packageId is required.' };
     const prediction = await submissionTwinService.predictNextBestArtifact(
@@ -3198,7 +3196,7 @@ export async function computeReadiness(
   params: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const packageId = params.packageId;
+    const packageId = Number(params.packageId);
     if (!packageId)
       return { success: false, action: 'compute_readiness', message: 'packageId is required.' };
     const result = await submissionTwinService.computeReadinessAndFragility(
@@ -3235,7 +3233,7 @@ export async function scanContradictions(
   params: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const projectId = params.projectId || ctx.activeProjectId;
+    const projectId = Number(params.projectId || ctx.activeProjectId);
     if (!projectId)
       return { success: false, action: 'scan_contradictions', message: 'projectId is required.' };
     const result = await contradictionEngineService.scanProject(ctx.organizationId, projectId);
@@ -3265,14 +3263,14 @@ export async function checkPromotionBlockers(
   params: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const artifactId = params.artifactId;
+    const artifactId = Number(params.artifactId);
     if (!artifactId)
       return {
         success: false,
         action: 'check_promotion_blockers',
         message: 'artifactId is required.',
       };
-    const projectId = params.projectId || ctx.activeProjectId || 0;
+    const projectId = Number(params.projectId || ctx.activeProjectId || 0);
     const result = await contradictionEngineService.checkPromotionBlocked(
       ctx.organizationId,
       projectId,
@@ -3307,12 +3305,12 @@ export async function analyzeJurisdictions(
   params: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const targetAgencies = params.targetAgencies || params.agencies || ['FDA', 'EMA'];
+    const targetAgencies = (params.targetAgencies || params.agencies || ['FDA', 'EMA']) as string[];
     const result = await crossJurisdictionalEngine.analyze({
-      submissionType: params.submissionType || 'NDA',
-      therapeuticArea: params.therapeuticArea,
+      submissionType: String(params.submissionType || 'NDA'),
+      therapeuticArea: params.therapeuticArea as string | undefined,
       targetAgencies,
-      productType: params.productType,
+      productType: params.productType as string | undefined,
     });
     return {
       success: true,
@@ -3354,10 +3352,10 @@ export async function recommendEndpoints(
       return { success: false, action: 'recommend_endpoints', message: 'indication is required.' };
     const service = getEndpointRecommenderService();
     const recommendations = await service.getComprehensiveEndpointRecommendations(
-      params.indication,
-      params.phase,
-      params.count || 10,
-      params.therapeuticArea
+      String(params.indication),
+      params.phase as string | undefined,
+      (params.count as number) || 10,
+      params.therapeuticArea as string | undefined
     );
     return {
       success: true,
@@ -3392,9 +3390,9 @@ export async function evaluateEndpoint(
     }
     const service = getEndpointRecommenderService();
     const evaluation = await service.evaluateEndpoint(
-      params.endpoint,
-      params.indication,
-      params.phase
+      String(params.endpoint),
+      String(params.indication),
+      params.phase as string | undefined
     );
     return {
       success: true,
@@ -3422,19 +3420,19 @@ export async function runRIMScan(
   params: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const projectId = params.projectId || ctx.activeProjectId;
+    const projectId = Number(params.projectId || ctx.activeProjectId);
     if (!projectId)
       return { success: false, action: 'run_rim_scan', message: 'projectId is required.' };
     const rimCtx: RIMContext = {
       organizationId: ctx.organizationId,
       projectId,
       userId: ctx.userId,
-      sectionCode: params.sectionCode,
-      submissionType: params.submissionType,
-      targetAgency: params.targetAgency,
-      textToScan: params.text || params.content,
-      artifactId: params.artifactId,
-      artifactVersionId: params.versionId,
+      sectionCode: params.sectionCode as string | undefined,
+      submissionType: params.submissionType as string | undefined,
+      targetAgency: params.targetAgency as string | undefined,
+      textToScan: (params.text || params.content) as string | undefined,
+      artifactId: params.artifactId as string | undefined,
+      artifactVersionId: params.versionId as string | undefined,
     };
     const assessment = await runRIMAssessment(rimCtx);
     return {
@@ -3529,8 +3527,8 @@ export async function generateClinicalInsights(
         message: 'indication is required.',
       };
     const insights = await clinicalIntelligenceService.generateClinicalTrialInsights(
-      params.indication,
-      params.phase || 'Phase 2'
+      String(params.indication),
+      String(params.phase || 'Phase 2')
     );
     return {
       success: true,
@@ -3565,8 +3563,8 @@ export async function analyzeCrossDocument(
       };
     }
     const result = await clinicalIntelligenceService.performCrossDocumentAnalysis(
-      documentIds,
-      params.documentType || 'CSR'
+      documentIds as string[],
+      (Array.isArray(params.documentType) ? params.documentType : [params.documentType || 'CSR']) as ('CSR' | 'CER')[]
     );
     return {
       success: true,
@@ -3849,6 +3847,17 @@ export type CommandName =
   // CMS + Diagnostics
   | 'analyze_cms_strategy'
   | 'assess_diagnostic_validation'
+  // Module 3 Workflow Convergence (Phase 7)
+  | 'module3_build_all'
+  | 'module3_build_section'
+  | 'module3_missing_inputs'
+  | 'module3_status'
+  | 'module3_stale_sections'
+  | 'module3_refresh_stale'
+  | 'module3_readiness'
+  | 'module3_contradictions'
+  | 'module3_lineage'
+  | 'module3_classify_source'
   // CMC status + quality
   | 'cmc_status'
   | 'ich_compliance'
@@ -3856,7 +3865,7 @@ export type CommandName =
   | 'variations_classify';
 
 export interface CommandDefinition {
-  name: CommandName;
+  name: CommandName | string;
   description: string;
   parameters: string;
   example: string;
@@ -4475,7 +4484,7 @@ export async function executeCommands(
 
   const commandMap: Record<
     string,
-    (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>
+    (ctx: CommandContext, params: any) => Promise<CommandResult>
   > = {
     create_project: createProject,
     list_projects: listProjects,

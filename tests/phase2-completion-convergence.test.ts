@@ -154,7 +154,7 @@ describe('Convergence: GovernanceBoundaryService readiness delegation', () => {
 // ═══════════════════════════════════════════════════════════════════════
 
 describe('Convergence: evaluateAndInterceptGovernedDocument', () => {
-  beforeEach(() => /* no-op: DB is authoritative */);
+  beforeEach(() => { /* no-op: DB is authoritative */ });
 
   it('produces the same evaluation as evaluateGovernedDocument', () => {
     const input = makeInput();
@@ -188,7 +188,7 @@ describe('Convergence: evaluateAndInterceptGovernedDocument', () => {
 // ═══════════════════════════════════════════════════════════════════════
 
 describe('Convergence: RIM context influences evaluation outcomes', () => {
-  beforeEach(() => /* no-op: DB is authoritative */);
+  beforeEach(() => { /* no-op: DB is authoritative */ });
 
   it('Effect 1: repeated blocker history reduces score and adds warning', () => {
     const withoutRIM = evaluateGovernedDocument(makeInput());
@@ -286,7 +286,7 @@ describe('Convergence: RIM context influences evaluation outcomes', () => {
 // ═══════════════════════════════════════════════════════════════════════
 
 describe('Convergence: Chat context includes governed truth', () => {
-  beforeEach(() => /* no-op: DB is authoritative */);
+  beforeEach(() => { /* no-op: DB is authoritative */ });
 
   it('formatFabricStateForPrompt includes all key sections', () => {
     const result = evaluateGovernedDocument(makeInput());
@@ -436,7 +436,7 @@ describe('Convergence: Workspace derives from fabric state', () => {
 // ═══════════════════════════════════════════════════════════════════════
 
 describe('Convergence: UI hints are properly formatted', () => {
-  beforeEach(() => /* no-op: DB is authoritative */);
+  beforeEach(() => { /* no-op: DB is authoritative */ });
 
   it('readiness badge label is Title Case', () => {
     const result = evaluateGovernedDocument(makeInput());

@@ -690,7 +690,7 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
           (row.entity_id ?? '') + '|' +
           (row.user_id ?? '') + '|' +
           (row.user_name ?? '') + '|' +
-          (String(row.timestamp) ?? '') + '|' +
+          String(row.timestamp ?? '') + '|' +
           (row.reason ?? '') + '|' +
           (row.previous_hash ?? 'GENESIS');
 

@@ -45,12 +45,23 @@ test('beta pulse e2e covers required core pulse cases', () => {
 });
 
 test('route truth contract remains anchored for root/login/project routes', () => {
+  // After the App.jsx refactor, the root `/` redirect lives inside the
+  // ZenRouter bundle rather than at the App.jsx shell layer. The intent
+  // ("root path is reachable; login + project routes exist under
+  // /concept2cure") is unchanged; the location moved. Test now asserts
+  // the current contract.
   const appSrc = read('client/src/App.jsx');
   const routerSrc = read('client/src/concept2cure/router/ZenRouter.tsx');
 
-  assert.match(appSrc, /<Route path="\/">\{\(\) => <Redirect to="\/concept2cure" \/>\}<\/Route>/);
+  // App.jsx still mounts ZenRouter and the standard auth redirects.
+  assert.match(appSrc, /<Route path="\/sign-in">/);
+  assert.match(appSrc, /Redirect to="\/concept2cure\/login"/);
+
+  // ZenRouter owns the canonical login + project paths and the root
+  // entry point.
   assert.match(routerSrc, /<Route path="\/concept2cure\/login">/);
   assert.match(routerSrc, /<Route path="\/concept2cure\/project\/:projectId">/);
+  assert.match(routerSrc, /<Route path="\/">/);
 });
 
 test('compare script fails closed when base ref is absent', () => {

@@ -67,6 +67,5 @@ export async function runBootSecuritySelfTest(pool: Pool): Promise<void> {
       failures.map(f => `  - ${f.name}: ${f.reason ?? 'no reason'}`).join('\n') +
       `\nSet ${NONBLOCKING_ENV}=true to override (NOT recommended).`,
   );
-  // eslint-disable-next-line n/no-process-exit
   process.exit(1);
 }

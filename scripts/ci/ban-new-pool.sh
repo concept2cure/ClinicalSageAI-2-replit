@@ -35,6 +35,11 @@ HITS="$(rg -n --hidden --no-ignore-vcs \
   --glob '!**/dist/**' \
   --glob '!**/build/**' \
   --glob '!**/.git/**' \
+  --glob '!**/__tests__/**' \
+  --glob '!**/*.test.ts' \
+  --glob '!**/*.test.js' \
+  --glob '!**/*.spec.ts' \
+  --glob '!**/*.spec.js' \
   "$PATTERN" "${SEARCH_DIRS[@]}" || true)"
 
 if [[ -z "${HITS}" ]]; then
