@@ -12,6 +12,10 @@ cd "$TMP_DIR"
 git init -q
 git config user.email "stage8@test.local"
 git config user.name "stage8-test"
+# Disable commit signing for the throw-away test repo. Some CI / sandbox
+# environments force signing globally; the self-test doesn't need it.
+git config commit.gpgsign false
+git config tag.gpgsign false
 
 echo "base" > shared.txt
 git add shared.txt

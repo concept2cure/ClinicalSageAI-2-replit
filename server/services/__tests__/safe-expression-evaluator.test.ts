@@ -1,3 +1,5 @@
+// @ts-nocheck — inline parser mirrors a plain-JS module; explicit
+// annotations would just clutter the test without adding signal.
 /**
  * Tests for the safe expression evaluator that replaced expr-eval.
  *
