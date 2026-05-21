@@ -60,9 +60,9 @@ const useSessionCheck = (userId: string, organizationId: string) => {
       if (!currentSession) {
         setIsNewSession(true);
       } else {
-        const lastActivity = new Date(currentSession.lastActivity);
+        const lastActivity = new Date((currentSession as any).lastActivity ?? Date.now());
         const hoursSinceLastActivity = (Date.now() - lastActivity.getTime()) / 3600000;
-        
+
         setIsNewSession(hoursSinceLastActivity > 2);
       }
       

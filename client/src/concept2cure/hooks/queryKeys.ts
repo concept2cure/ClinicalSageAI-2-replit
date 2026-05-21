@@ -249,4 +249,27 @@ export const queryKeys = {
     memorySearch: (projectId: number | string, query: string) =>
       ['concept2cure', 'ana-intelligence', 'memory-search', projectId, query] as const,
   },
+
+  // ── Governance / Fabric ───────────────────────────────────────────────────
+  governance: {
+    all: ['concept2cure', 'governance'] as const,
+    fabricState: (projectId: number | string) =>
+      ['concept2cure', 'governance', 'fabric-state', projectId] as const,
+    fabricSummary: (projectId: number | string) =>
+      ['concept2cure', 'governance', 'fabric-summary', projectId] as const,
+    fabricDecisions: (projectId: number | string) =>
+      ['concept2cure', 'governance', 'fabric-decisions', projectId] as const,
+    contradictions: (projectId: number | string) =>
+      ['concept2cure', 'governance', 'contradictions', projectId] as const,
+    decisions: (projectId: number | string) =>
+      ['concept2cure', 'governance', 'decisions', projectId] as const,
+    promotionBlockers: (projectId: number | string) =>
+      ['concept2cure', 'governance', 'promotion-blockers', projectId] as const,
+  },
+
+  // ── Module 3 / CMC build state ────────────────────────────────────────────
+  module3: {
+    state: (projectId: number | string) =>
+      ['concept2cure', 'module3', projectId] as const,
+  },
 } as const;

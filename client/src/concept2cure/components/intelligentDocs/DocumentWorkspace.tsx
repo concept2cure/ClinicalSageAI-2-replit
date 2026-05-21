@@ -615,7 +615,7 @@ const DataBridgeCard: React.FC<{
     missing: { icon: XCircle, color: 'text-stone-400', label: 'No Data' },
   };
   
-  const { icon: Icon, color, label } = statusConfig[bridge.status];
+  const { icon: Icon, color, label } = (statusConfig as Record<string, any>)[bridge.status] ?? statusConfig.missing;
   
   const moduleLabels: Record<DataModule, string> = {
     predicate_finder: 'Predicate Devices',
@@ -976,7 +976,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
     
     // Generate blockers based on missing dependencies
     const blockers: DocumentBlocker[] = [];
-    if ((submissionType === '510K' || submissionType === 'DE_NOVO') && predicateDevices.length === 0) {
+    if (((submissionType as string) === '510K' || (submissionType as string) === 'DE_NOVO') && predicateDevices.length === 0) {
       blockers.push({
         id: 'blocker-predicate',
         title: 'Predicate device not connected',

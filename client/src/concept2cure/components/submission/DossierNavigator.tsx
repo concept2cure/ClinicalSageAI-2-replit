@@ -640,7 +640,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                             name: typeof section === 'string' ? section : section.name,
                             ectdPath: sectionId,
                             type: 'section',
-                            status: (() => {
+                            status: ((): 'drafting' | 'published' | 'review' | 'not_started' | 'qc' | 'not_required' | 'final' | undefined => {
                               // Prefer real artifact data
                               const arts = sectionArtifacts?.[sectionId];
                               if (arts && arts.length > 0) {
@@ -649,7 +649,8 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                                 return 'drafting';
                               }
                               // Fallback to dossier sections
-                              return (dossier.sections || []).find((s: any) => s.ectdPath === sectionId || s.id === sectionId)?.status || 'not_started';
+                              const raw = (dossier.sections || []).find((s: any) => s.ectdPath === sectionId || s.id === sectionId)?.status;
+                              return (raw as any) || 'not_started';
                             })(),
                             children: hasSubsections ? [] : undefined,
                           }}
@@ -676,7 +677,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                                     name: subName as string,
                                     ectdPath: subId,
                                     type: 'subsection',
-                                    status: (() => {
+                                    status: ((): 'drafting' | 'published' | 'review' | 'not_started' | 'qc' | 'not_required' | 'final' | undefined => {
                                       // Prefer real artifact data
                                       const arts = sectionArtifacts?.[subId];
                                       if (arts && arts.length > 0) {
@@ -685,7 +686,8 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                                         return 'drafting';
                                       }
                                       // Fallback to dossier sections
-                                      return (dossier.sections || []).find((s: any) => s.ectdPath === subId || s.id === subId)?.status || 'not_started';
+                                      const raw = (dossier.sections || []).find((s: any) => s.ectdPath === subId || s.id === subId)?.status;
+                                      return (raw as any) || 'not_started';
                                     })(),
                                   }}
                                   level={1}

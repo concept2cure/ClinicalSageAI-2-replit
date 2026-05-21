@@ -588,7 +588,7 @@ export function Skeleton({ className }: SkeletonProps) {
 interface TextProps {
   readonly children: React.ReactNode;
   readonly className?: string;
-  readonly as?: 'p' | 'span' | 'div' | 'label';
+  readonly as?: 'p' | 'span' | 'div' | 'label' | 'h1' | 'h2' | 'h3' | 'h4';
 }
 
 /** Page title — text-lg font-semibold tracking-tight */

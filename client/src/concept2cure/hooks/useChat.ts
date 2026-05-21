@@ -98,6 +98,8 @@ function getSystemPrompt(submissionType: SubmissionType): string {
     'DE_NOVO': `\n\nYou're currently helping with a **De Novo classification request**. You know risk-based classification rationale, special controls development, performance testing for novel devices, and the strategic framework between De Novo vs. 510(k).`,
 
     'EUA': `\n\nYou're currently helping with an **EUA submission**. You know emergency use criteria, benefits/risks analysis, alternatives assessment, fact sheet requirements for HCPs and patients, and post-authorization commitments.`,
+
+    'IVDR': `\n\nYou're currently helping with an **EU IVDR submission**. You know IVDR classification rules, performance evaluation, CDx requirements, notified body interactions, and the IVDR transition timelines.`,
   };
 
   return ANA_CORE + (contexts[submissionType] || contexts['510K']);
@@ -148,7 +150,7 @@ function parseArtifacts(response: string, projectId: string): Artifact[] {
       id: `artifact_${Date.now()}_${index}`,
       projectId,
       title,
-      type,
+      type: type as any,
       content,
       version: 1,
       createdAt: new Date(),

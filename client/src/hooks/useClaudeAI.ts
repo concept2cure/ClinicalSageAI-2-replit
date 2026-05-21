@@ -82,14 +82,14 @@ export function useClaudeAI() {
 
   /** Draft a regulatory document section (non-streaming) */
   const draft = useCallback(
-    (req: DraftRequest) => post('draft', req as Record<string, unknown>),
+    (req: DraftRequest) => post('draft', req as unknown as Record<string, unknown>),
     [post]
   );
 
   /** Draft with streaming — use stream.streamingContent for real-time text */
   const draftStream = useCallback(
     (req: DraftRequest) => {
-      stream.startStream('/api/claude/draft/stream', req as Record<string, unknown>);
+      stream.startStream('/api/claude/draft/stream', req as unknown as Record<string, unknown>);
     },
     [stream]
   );

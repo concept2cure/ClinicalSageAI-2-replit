@@ -216,7 +216,7 @@ export function EnablementProvider({ children }: { children: React.ReactNode }) 
       const pathProgress = { ...prev.pathProgress };
       for (const path of LEARNING_PATHS) {
         const completed = path.moduleIds.filter(
-          (mid) => userProgress[mid]?.completed,
+          (mid: any) => userProgress[mid]?.completed,
         ).length;
         pathProgress[path.id] = {
           ...pathProgress[path.id],
@@ -229,7 +229,7 @@ export function EnablementProvider({ children }: { children: React.ReactNode }) 
       const certificationProgress = { ...prev.certificationProgress };
       for (const cert of CERTIFICATIONS) {
         const completed = cert.requiredModuleIds.filter(
-          (mid) => userProgress[mid]?.completed,
+          (mid: any) => userProgress[mid]?.completed,
         ).length;
         certificationProgress[cert.id] = {
           earned: completed >= cert.requiredModuleIds.length,
@@ -246,7 +246,7 @@ export function EnablementProvider({ children }: { children: React.ReactNode }) 
 
   const startPath = useCallback((pathId: string) => {
     setState((prev) => {
-      const path = LEARNING_PATHS.find((p) => p.id === pathId);
+      const path = LEARNING_PATHS.find((p: any) => p.id === pathId);
       if (!path) return prev;
 
       // Mark path as started

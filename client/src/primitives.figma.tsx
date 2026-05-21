@@ -11,11 +11,15 @@
  * @see figma.config.json for parser/import-path configuration
  */
 
-declare module '@figma/code-connect' {
-  const figma: { connect: (component: any, url: string, config: any) => void };
-  export default figma;
-}
-import figma from '@figma/code-connect';
+// Figma Code Connect is an optional dev dependency. Local shim.
+const figma = {
+  connect: (_component: any, _url: string, _config: any) => undefined,
+  enum: (_name: string, _map: any) => undefined as any,
+  string: (_name: string) => undefined as any,
+  boolean: (_name: string) => undefined as any,
+  children: (_name: string) => undefined as any,
+  instance: (_name: string) => undefined as any,
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 1. BUTTON

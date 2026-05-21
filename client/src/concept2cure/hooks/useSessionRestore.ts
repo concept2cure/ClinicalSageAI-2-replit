@@ -59,6 +59,7 @@ export interface SessionRestoreResult {
   // Getters
   getLastProject: () => { id: string; name: string; type: string; updatedAt?: string | Date } | null;
   getLastConversation: () => { id: string; threadId?: string } | null;
+  getSessionHistory: () => Array<{ id: string; startedAt?: string | Date; userId?: string }>;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -317,6 +318,7 @@ export function useSessionRestore(userId?: string, organizationId?: string): Ses
     clearSession,
     getLastProject,
     getLastConversation,
+    getSessionHistory: () => [],
   };
 }
 

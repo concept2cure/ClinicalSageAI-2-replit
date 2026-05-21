@@ -524,10 +524,10 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                     />
                   </div>
                   {/* Why this recommendation */}
-                  {strategyData.rationale && (
+                  {(strategyData as any).rationale && (
                     <div className="mt-1.5 pt-1.5 border-t border-blue-200/60">
                       <span className="text-[11px] font-semibold text-stone-700">Why: </span>
-                      <span className="text-[11px] text-blue-600">{strategyData.rationale}</span>
+                      <span className="text-[11px] text-blue-600">{(strategyData as any).rationale}</span>
                     </div>
                   )}
                   {strategyData.confidence != null && (
