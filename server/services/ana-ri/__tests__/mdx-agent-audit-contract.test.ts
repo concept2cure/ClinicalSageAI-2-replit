@@ -45,8 +45,8 @@ class TenantAccessError extends Error {
 }
 
 vi.mock('../../q-sub/q-sub.service', () => ({
-  createQSubmission: (...a: any[]) => svc.createQSubmission(...a),
-  setCommitmentRolledIn: (...a: any[]) => svc.setCommitmentRolledIn(...a),
+  createQSubmission: (...a: any[]) => (svc.createQSubmission as any)(...a),
+  setCommitmentRolledIn: (...a: any[]) => (svc.setCommitmentRolledIn as any)(...a),
   TenantAccessError,
   Q_SUB_TYPES: ['presub', 'sir', 'srd', 'agree', 'info'],
 }));
@@ -65,25 +65,25 @@ vi.mock('../../db', () => ({
   },
 }));
 const ESGSubmissionService = vi.fn(() => ({
-  submitToFDA: (...a: any[]) => svc.submitToFDA(...a),
+  submitToFDA: (...a: any[]) => (svc.submitToFDA as any)(...a),
 }));
 vi.mock('../../ESGSubmissionService', () => ({ default: ESGSubmissionService }));
 vi.mock('../../gspr-postmarket/gspr.service', () => ({
-  upsertMapping: (...a: any[]) => svc.upsertMapping(...a),
+  upsertMapping: (...a: any[]) => (svc.upsertMapping as any)(...a),
 }));
 vi.mock('../../gspr-postmarket/post-market.service', () => ({
-  approveDocument: (...a: any[]) => svc.approveDocument(...a),
-  createDocument: (...a: any[]) => svc.createDocument(...a),
-  supersedeDocument: (...a: any[]) => svc.supersedeDocument(...a),
-  updateDocument: (...a: any[]) => svc.updateDocument(...a),
-  validateDocument: (...a: any[]) => svc.validateDocument(...a),
-  getDocument: (...a: any[]) => svc.getDocument(...a),
+  approveDocument: (...a: any[]) => (svc.approveDocument as any)(...a),
+  createDocument: (...a: any[]) => (svc.createDocument as any)(...a),
+  supersedeDocument: (...a: any[]) => (svc.supersedeDocument as any)(...a),
+  updateDocument: (...a: any[]) => (svc.updateDocument as any)(...a),
+  validateDocument: (...a: any[]) => (svc.validateDocument as any)(...a),
+  getDocument: (...a: any[]) => (svc.getDocument as any)(...a),
 }));
 vi.mock('../../evidence-sufficiency/evidence-sufficiency.service', () => ({
-  assessSufficiency: (...a: any[]) => svc.assessSufficiency(...a),
+  assessSufficiency: (...a: any[]) => (svc.assessSufficiency as any)(...a),
 }));
 vi.mock('../../intelligence-engine/reviewer-simulator.service', () => ({
-  runReviewerSimulation: (...a: any[]) => svc.runReviewerSimulation(...a),
+  runReviewerSimulation: (...a: any[]) => (svc.runReviewerSimulation as any)(...a),
 }));
 
 import {
