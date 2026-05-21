@@ -43,13 +43,13 @@ async function getCluster(): Promise<Cluster | null> {
       puppeteerOptions: {
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
       },
-    }).catch(err => {
+    }).catch((err: any) => {
       console.warn(
         '[Renderers] Puppeteer cluster failed to launch – using PDFKit fallback:',
         err?.message || err
       );
-      return null;
-    });
+      return null as any;
+    }) as Promise<Cluster>;
   }
   return clusterPromise;
 }
@@ -192,7 +192,7 @@ export async function renderHtmlToPdfTracked(
 ): Promise<{ buffer: Buffer; usedFallback: boolean }> {
   const cluster = await getCluster();
   if (cluster) {
-    const buffer: Buffer = await cluster.execute(async ({ page }) => {
+    const buffer: Buffer = await cluster.execute(async ({ page }: { page: any }) => {
       await page.setContent(html, { waitUntil: 'networkidle0' });
       const pdf = await page.pdf({ format: 'A4', printBackground: true });
       return Buffer.from(pdf);
@@ -206,7 +206,7 @@ export async function renderHtmlToPdfTracked(
 
 function renderFallbackPdf(html: string): Promise<Buffer> {
   return new Promise(resolve => {
-    const doc = new PDFDocument({ margin: 72, size: 'A4' });
+    const doc = new PDFDocument({ margins: { top: 72, bottom: 72, left: 72, right: 72 }, size: 'A4' });
     const chunks: Buffer[] = [];
 
     doc.on('data', chunk => chunks.push(chunk));

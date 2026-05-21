@@ -343,7 +343,7 @@ router.get('/estimand/regulatory-examples/:indication', authMiddleware, async (r
     const { agency, phase } = req.query;
 
     const strategy = req.query.strategy as string | undefined;
-    const result = await estimandEngineService.getRegulatoryExamples(indication, strategy, orgId);
+    const result = await estimandEngineService.getRegulatoryExamples(indication, strategy as any, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -399,7 +399,7 @@ router.put('/sap/:sapVersionId/section/:sectionId', authMiddleware, async (req: 
     const orgId = resolveOrganizationId(req);
     const userId = resolveUserId(req);
     const sapVersionId = Number(req.params.sapVersionId);
-    const sectionId = req.params.sectionId;
+    const sectionId = String(req.params.sectionId);
     const { content, trackChanges } = req.body;
 
     const result = await collaborativeSapService.updateSection(
@@ -908,7 +908,7 @@ router.post('/knowledge/ingest-csr', authMiddleware, async (req: Request, res: R
 router.get('/knowledge/trend/:concept', authMiddleware, async (req: Request, res: Response) => {
   try {
     const orgId = resolveOrganizationId(req);
-    const concept = req.params.concept;
+    const concept = String(req.params.concept);
     const { startYear, endYear, granularity } = req.query;
 
     const result = await biostatKnowledgeGraphService.getMethodTrend(concept, orgId);

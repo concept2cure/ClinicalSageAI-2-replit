@@ -102,5 +102,4 @@ export async function closeDatabase(): Promise<void> {
   }
 }
 
-// Export the pool for reuse in other modules
-export { pool };
+// pool is already exported above; no need to re-export.

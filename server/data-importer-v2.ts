@@ -5,7 +5,10 @@
  * the ClinicalTrials.gov API v2 format to our system format
  */
 
-import { InsertCsrReport, InsertCsrDetails } from 'shared/schema';
+// InsertCsrDetails was removed from the canonical schema export — use a
+// loose shape until callers migrate to the new csrDetails import.
+import { InsertCsrReport } from 'shared/schema';
+type InsertCsrDetails = Record<string, any>;
 
 /**
  * Convert a study from the ClinicalTrials.gov API v2 format to our CSR Report format

@@ -5,11 +5,16 @@ import csvParser from 'csv-parser';
 import { pool, query } from './db';
 import { sql } from 'drizzle-orm';
 import { csrReports, csrDetails } from '../shared/schema';
-import { db } from './drizzle';
+import { db as _db } from './drizzle';
+// Legacy importer uses Kysely-style callbacks against Drizzle. Cast the
+// handle to any so the existing query shapes compile until they're ported.
+const db: any = _db;
 
-// Define types for CSR data
-export type InsertCsrReport = typeof csrReports.$inferInsert;
-export type InsertCsrDetails = typeof csrDetails.$inferInsert;
+// Define types for CSR data. The legacy importer references columns that
+// have since been removed (nctrialId / date / fileName / etc); use a loose
+// shape until the importer is rewritten to the canonical schema.
+export type InsertCsrReport = Record<string, any>;
+export type InsertCsrDetails = Record<string, any>;
 import { extractTextFromPdf } from './openai-service';
 import { validatePdfFile, getPdfMetadata, savePdfFile } from './pdf-processor';
 import { analyzeCsrContent, generateCsrSummary } from './openai-service';

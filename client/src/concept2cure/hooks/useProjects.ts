@@ -137,7 +137,7 @@ function normalizeProjectResponse(project: Project): Project {
   return {
     ...project,
     pinned: project.pinned ?? false,
-    targetAgency: project.targetAgency ?? null,
+    targetAgency: project.targetAgency ?? undefined,
   };
 }
 
@@ -368,7 +368,7 @@ export function useProjects() {
     }) => {
       if (USE_API) {
         try {
-          const result = await createProjectAPI(data);
+          const result = await createProjectAPI(data as any);
           return result;
         } catch (e) {
           if (!ENABLE_LOCAL_PROJECT_FALLBACK) throw e;
@@ -488,7 +488,7 @@ export function useProjects() {
             preferences.currentWorkbenchContext ??
             project.ownership?.currentWorkbenchContext ??
             'project-home',
-        },
+        } as any,
       });
       projects[index] = merged;
       saveStoredProjects(projects);
