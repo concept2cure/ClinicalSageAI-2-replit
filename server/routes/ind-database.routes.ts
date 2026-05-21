@@ -24,7 +24,7 @@ const DEFAULT_ORG_ID = 1;
  */
 router.get('/project', async (req, res) => {
   try {
-    const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
+    const organizationIdRaw = req.user?.organizationId; const organizationId = typeof organizationIdRaw === "string" ? parseInt(organizationIdRaw, 10) || DEFAULT_ORG_ID : (organizationIdRaw ?? DEFAULT_ORG_ID);
     
     // Get the most recent active project for this organization
     const projects = await db
@@ -65,8 +65,8 @@ router.get('/project', async (req, res) => {
  */
 router.post('/project', async (req, res) => {
   try {
-    const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
-    const userId = req.user?.id;
+    const organizationIdRaw = req.user?.organizationId; const organizationId = typeof organizationIdRaw === "string" ? parseInt(organizationIdRaw, 10) || DEFAULT_ORG_ID : (organizationIdRaw ?? DEFAULT_ORG_ID);
+    const userIdRaw = req.user?.id; const userId = typeof userIdRaw === "string" ? parseInt(userIdRaw, 10) : userIdRaw;
     const { projectData, stepData, currentStep, sections, cmcData, csrData } = req.body;
     
     // Calculate progress based on sections
@@ -162,7 +162,7 @@ router.post('/project', async (req, res) => {
  */
 router.get('/wizard/data', async (req, res) => {
   try {
-    const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
+    const organizationIdRaw = req.user?.organizationId; const organizationId = typeof organizationIdRaw === "string" ? parseInt(organizationIdRaw, 10) || DEFAULT_ORG_ID : (organizationIdRaw ?? DEFAULT_ORG_ID);
     
     // Get projects
     const projects = await db
@@ -230,7 +230,7 @@ router.post('/sections/:sectionId/generate', async (req, res) => {
   try {
     const { sectionId } = req.params;
     const { projectId, templateType = 'FDA', cmcData, csrData, indication, phase } = req.body;
-    const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
+    const organizationIdRaw = req.user?.organizationId; const organizationId = typeof organizationIdRaw === "string" ? parseInt(organizationIdRaw, 10) || DEFAULT_ORG_ID : (organizationIdRaw ?? DEFAULT_ORG_ID);
     
     // Get project if projectId provided
     let project = null;
@@ -268,7 +268,7 @@ router.post('/sections/:sectionId/generate', async (req, res) => {
  */
 router.get('/templates', async (req, res) => {
   try {
-    const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
+    const organizationIdRaw = req.user?.organizationId; const organizationId = typeof organizationIdRaw === "string" ? parseInt(organizationIdRaw, 10) || DEFAULT_ORG_ID : (organizationIdRaw ?? DEFAULT_ORG_ID);
     const { category, type, region } = req.query;
     
     const conditions = [
@@ -322,8 +322,8 @@ router.post('/templates/:templateId/use', async (req, res) => {
   try {
     const { templateId } = req.params;
     const { projectId } = req.body;
-    const userId = req.user?.id;
-    const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
+    const userIdRaw = req.user?.id; const userId = typeof userIdRaw === "string" ? parseInt(userIdRaw, 10) : userIdRaw;
+    const organizationIdRaw = req.user?.organizationId; const organizationId = typeof organizationIdRaw === "string" ? parseInt(organizationIdRaw, 10) || DEFAULT_ORG_ID : (organizationIdRaw ?? DEFAULT_ORG_ID);
     
     // Get template
     const templates = await db
@@ -342,7 +342,7 @@ router.post('/templates/:templateId/use', async (req, res) => {
     await db
       .update(schema.indTemplates)
       .set({
-        usageCount: template.usageCount + 1,
+        usageCount: (template.usageCount ?? 0) + 1,
         lastUsedAt: new Date()
       })
       .where(eq(schema.indTemplates.templateId, templateId));
@@ -383,9 +383,9 @@ router.post('/templates/:templateId/use', async (req, res) => {
 router.post('/workflow/save', async (req, res) => {
   try {
     const { module, entityType, entityId, currentState, completedSteps, pendingSteps, progressPercentage } = req.body;
-    const userId = req.user?.id;
-    const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
-    const sessionId = req.sessionID || generateUUID();
+    const userIdRaw = req.user?.id; const userId = typeof userIdRaw === "string" ? parseInt(userIdRaw, 10) : userIdRaw;
+    const organizationIdRaw = req.user?.organizationId; const organizationId = typeof organizationIdRaw === "string" ? parseInt(organizationIdRaw, 10) || DEFAULT_ORG_ID : (organizationIdRaw ?? DEFAULT_ORG_ID);
+    const sessionId = (req as any).sessionID || (req as any).sessionId || generateUUID();
     
     // Check if workflow exists
     const existing = await db
@@ -395,7 +395,7 @@ router.post('/workflow/save', async (req, res) => {
         and(
           eq(schema.workflowProgress.entityType, entityType),
           eq(schema.workflowProgress.entityId, entityId),
-          eq(schema.workflowProgress.userId, userId)
+          eq(schema.workflowProgress.userId, userId ?? 0)
         )
       )
       .limit(1);
@@ -437,7 +437,7 @@ router.post('/workflow/save', async (req, res) => {
           lastActivityAt: new Date(),
           resumeData: currentState,
           status: 'active',
-          userId
+          userId: userId ?? 0
         });
       
       res.json({ success: true, workflowId });
@@ -455,7 +455,7 @@ router.post('/workflow/save', async (req, res) => {
 router.get('/workflow/:entityId', async (req, res) => {
   try {
     const { entityId } = req.params;
-    const userId = req.user?.id;
+    const userIdRaw = req.user?.id; const userId = typeof userIdRaw === "string" ? parseInt(userIdRaw, 10) : userIdRaw;
     
     const workflows = await db
       .select()
@@ -463,7 +463,7 @@ router.get('/workflow/:entityId', async (req, res) => {
       .where(
         and(
           eq(schema.workflowProgress.entityId, entityId),
-          eq(schema.workflowProgress.userId, userId),
+          eq(schema.workflowProgress.userId, userId ?? 0),
           eq(schema.workflowProgress.status, 'active')
         )
       )

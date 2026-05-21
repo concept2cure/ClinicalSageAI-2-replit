@@ -44,7 +44,7 @@ router.use(authMiddleware);
 router.get('/api/tenant-section-gating/:qmpId', async (req, res) => {
   try {
     const qmpIdRaw = req.params.qmpId; const qmpId = Array.isArray(qmpIdRaw) ? qmpIdRaw[0] : (qmpIdRaw ?? "");
-    const { organizationId } = req.tenant;
+    const { organizationId } = (req.tenant ?? {}) as any;
 
     if (!organizationId) {
       return res.status(400).json({ error: 'Organization ID is required' });
@@ -61,7 +61,7 @@ router.get('/api/tenant-section-gating/:qmpId', async (req, res) => {
       values: [organizationId, qmpId],
     };
 
-    const result = await executeQuery(query);
+    const result = await (executeQuery as any)(query);
 
     res.json({
       status: 'success',
@@ -80,7 +80,7 @@ router.get('/api/tenant-section-gating/:qmpId', async (req, res) => {
 router.post('/api/tenant-section-gating/:qmpId/update', async (req, res) => {
   try {
     const qmpIdRaw = req.params.qmpId; const qmpId = Array.isArray(qmpIdRaw) ? qmpIdRaw[0] : (qmpIdRaw ?? "");
-    const { organizationId } = req.tenant;
+    const { organizationId } = (req.tenant ?? {}) as any;
     const { sectionKey, requiredLevel, active } = req.body;
 
     if (!organizationId) {
@@ -98,10 +98,10 @@ router.post('/api/tenant-section-gating/:qmpId/update', async (req, res) => {
       values: [organizationId, qmpId, sectionKey],
     };
 
-    const checkResult = await executeQuery(checkQuery);
+    const checkResult = await (executeQuery as any)(checkQuery);
 
     let result;
-    if (checkResult.rowCount > 0) {
+    if ((checkResult.rowCount ?? 0) > 0) {
       // Update existing record
       const updateQuery = {
         text: `
@@ -117,7 +117,7 @@ router.post('/api/tenant-section-gating/:qmpId/update', async (req, res) => {
         `,
         values: [requiredLevel, active, req.user?.id || null, organizationId, qmpId, sectionKey],
       };
-      result = await executeQuery(updateQuery);
+      result = await (executeQuery as any)(updateQuery);
     } else {
       // Insert new record
       const insertQuery = {
@@ -145,7 +145,7 @@ router.post('/api/tenant-section-gating/:qmpId/update', async (req, res) => {
           req.user?.id || null,
         ],
       };
-      result = await executeQuery(insertQuery);
+      result = await (executeQuery as any)(insertQuery);
     }
 
     res.json({
@@ -165,7 +165,7 @@ router.post('/api/tenant-section-gating/:qmpId/update', async (req, res) => {
 router.get('/api/tenant-ctq-factors/:section', async (req, res) => {
   try {
     const sectionRaw = req.params.section; const section = Array.isArray(sectionRaw) ? sectionRaw[0] : (sectionRaw ?? "");
-    const { organizationId } = req.tenant;
+    const { organizationId } = (req.tenant ?? {}) as any;
 
     if (!organizationId) {
       return res.status(400).json({ error: 'Organization ID is required' });
@@ -182,7 +182,7 @@ router.get('/api/tenant-ctq-factors/:section', async (req, res) => {
       values: [organizationId, section],
     };
 
-    const result = await executeQuery(query);
+    const result = await (executeQuery as any)(query);
 
     res.json({
       status: 'success',
@@ -202,7 +202,7 @@ router.post('/api/tenant-ctq-factors', async (req, res) => {
   try {
     const { id, name, description, riskLevel, mitigationStrategy, applicableSection, category } =
       req.body;
-    const { organizationId } = req.tenant;
+    const { organizationId } = (req.tenant ?? {}) as any;
 
     if (!organizationId) {
       return res.status(400).json({ error: 'Organization ID is required' });
@@ -236,7 +236,7 @@ router.post('/api/tenant-ctq-factors', async (req, res) => {
           organizationId,
         ],
       };
-      result = await executeQuery(updateQuery);
+      result = await (executeQuery as any)(updateQuery);
     } else {
       // Create new CTQ factor
       const insertQuery = {
@@ -264,7 +264,7 @@ router.post('/api/tenant-ctq-factors', async (req, res) => {
           category,
         ],
       };
-      result = await executeQuery(insertQuery);
+      result = await (executeQuery as any)(insertQuery);
     }
 
     res.json({
@@ -284,7 +284,7 @@ router.post('/api/tenant-ctq-factors', async (req, res) => {
 router.delete('/api/tenant-ctq-factors/:id', async (req, res) => {
   try {
     const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
-    const { organizationId } = req.tenant;
+    const { organizationId } = (req.tenant ?? {}) as any;
 
     if (!organizationId) {
       return res.status(400).json({ error: 'Organization ID is required' });
@@ -300,9 +300,9 @@ router.delete('/api/tenant-ctq-factors/:id', async (req, res) => {
       values: [id, organizationId],
     };
 
-    const result = await executeQuery(query);
+    const result = await (executeQuery as any)(query);
 
-    if (result.rowCount === 0) {
+    if ((result.rowCount ?? 0) === 0) {
       return res.status(404).json({
         status: 'error',
         message: 'CTQ factor not found',

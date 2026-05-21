@@ -762,7 +762,7 @@ router.post('/scenarios', async (req: Request, res: Response) => {
 router.get('/scenarios/:id', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const scenario = await store.getById(id, orgId);
     if (!scenario) return res.status(404).json({ error: 'Scenario not found' });
 
@@ -779,7 +779,7 @@ router.get('/scenarios/:id', async (req: Request, res: Response) => {
 router.patch('/scenarios/:id', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const scenario = await store.getById(id, orgId);
     if (!scenario) return res.status(404).json({ error: 'Scenario not found' });
 
@@ -804,7 +804,7 @@ router.patch('/scenarios/:id', async (req: Request, res: Response) => {
 router.post('/scenarios/:id/clone', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const sourceId = parseInt(req.params.id);
+    const sourceId = parseInt(String(req.params.id));
     const source = await store.getById(sourceId, orgId);
     if (!source) return res.status(404).json({ error: 'Scenario not found' });
 
@@ -840,7 +840,7 @@ async function createAndExecuteRun(
   runType: string
 ): Promise<void> {
   try {
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
     const orgId = getOrgId(req);
     const userId = getUserId(req);
     const scenarioId = req.body.scenarioId ? parseInt(req.body.scenarioId) : undefined;
@@ -896,7 +896,7 @@ router.post('/programs/:programId/audit-exposure-scan', (req: Request, res: Resp
 router.get('/runs/:runId', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const run = await store.getById(parseInt(req.params.runId), orgId);
+    const run = await store.getById(parseInt(String(req.params.runId)), orgId);
     if (!run) return res.status(404).json({ error: 'Run not found' });
     res.json({ data: run });
   } catch (err: any) {
@@ -907,7 +907,7 @@ router.get('/runs/:runId', async (req: Request, res: Response) => {
 router.get('/runs/:runId/results', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const runId = parseInt(req.params.runId);
+    const runId = parseInt(String(req.params.runId));
     const run = await store.getById(runId, orgId);
     if (!run) return res.status(404).json({ error: 'Run not found' });
 
@@ -942,7 +942,7 @@ router.get('/runs/:runId/results', async (req: Request, res: Response) => {
 router.get('/runs/:runId/delta-vs-baseline', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const runId = parseInt(req.params.runId);
+    const runId = parseInt(String(req.params.runId));
     const run = await store.getById(runId, orgId);
     if (!run) return res.status(404).json({ error: 'Run not found' });
 
@@ -1039,7 +1039,7 @@ router.get('/runs/:runId/delta-vs-baseline', async (req: Request, res: Response)
 router.get('/programs/:programId/scores', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
 
     const allScores = await store.query(orgId, 'score', (s: any) => s.programId === programId);
     allScores.sort(
@@ -1085,7 +1085,7 @@ router.get('/programs/:programId/scores', async (req: Request, res: Response) =>
 router.get('/artifacts/:artifactId/scores', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const artifactId = parseInt(req.params.artifactId);
+    const artifactId = parseInt(String(req.params.artifactId));
 
     const relevantFindings = await store.query(
       orgId,
@@ -1125,7 +1125,7 @@ router.get('/artifacts/:artifactId/scores', async (req: Request, res: Response) 
 });
 
 router.get('/dossier-nodes/:nodeId/scores', (req: Request, res: Response) => {
-  const nodeId = parseInt(req.params.nodeId);
+  const nodeId = parseInt(String(req.params.nodeId));
   const sectionScore = 40 + ((nodeId * 17) % 55);
   const completeness = 30 + ((nodeId * 23) % 65);
   const consistency = 35 + ((nodeId * 31) % 60);
@@ -1153,7 +1153,7 @@ router.get('/dossier-nodes/:nodeId/scores', (req: Request, res: Response) => {
 router.get('/programs/:programId/remediation-plan', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
 
     const plans = await store.query(
       orgId,
@@ -1184,7 +1184,7 @@ router.get('/programs/:programId/remediation-plan', async (req: Request, res: Re
 router.get('/programs/:programId/top-findings', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
 
     let findings = await store.query(orgId, 'finding', (f: any) => f.programId === programId);
@@ -1224,7 +1224,7 @@ router.get('/programs/:programId/top-findings', async (req: Request, res: Respon
 router.post('/runs/:runId/create-findings-memo', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const runId = parseInt(req.params.runId);
+    const runId = parseInt(String(req.params.runId));
     const userId = getUserId(req);
 
     const run = await store.getById(runId, orgId);
