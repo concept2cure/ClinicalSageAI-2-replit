@@ -101,7 +101,8 @@ Delete, after Phase 1 ships and is verified:
 
 Add unresolved questions here with your initials and the date. The designer answers by updating this file and the relevant `ui_kits/` surface.
 
-*(none yet)*
+- **2026-05-21 · CC** — Phase 7.1 Activity detail: kit has six tabs (State · Documents · Evidence · Workflow · Provenance · Audit). The four read-only routes called out for the first PR don't surface per-document state or per-activity audit history, so PR 1 ships only the State tab. Documents needs either an artifacts-per-activity endpoint or the existing artifacts feed filtered by `activityKey`; Audit needs `/api/pdev/.../provenance` (or the existing audit log filtered by `resourceId`). Should these tabs ship in 7.2 alongside the mutation pipeline, or earlier as a second read-only PR that adds the documents/audit endpoints first?
+- **2026-05-21 · CC** — Token shim (`--border-100`, `--border-200`, `--error-text`) currently scoped to `.pdev-shell` in the v2 port to avoid polluting the global token surface. The PDEV kit's `styles.css` declares them at `:root`. Per the design system's "Tokens from `colors_and_type.css` only" rule, should these be absorbed into `colors_and_type.css` as canonical aliases (and the shim deleted), or do they stay shim-only?
 
 ---
 

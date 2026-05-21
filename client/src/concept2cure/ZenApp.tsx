@@ -139,6 +139,7 @@ import { Ana } from './components/ana';
 import { useAnaChat } from './components/ana/useAnaChat';
 import { Concept2CureHome } from './components/concept2cure-home';
 import MdxRoute from './mdx/MdxRoute';
+import PdevRoute from './pdev/PdevRoute';
 
 /** Map MDX deep-link hashes (#k510, #pma, #cer, #vault, #admin, …) to the
  *  React MDX App's activeNav identifiers. Returns undefined when no hash is
@@ -1809,6 +1810,19 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // retired in Phase 2 (commit 4e5f63d4).
   if (layoutMode === 'mdx' && !embeddedModule) {
     return <MdxRoute initialNav={hashToMdxNav(mdxDeepLink)} />;
+  }
+
+  // Phase 7 — PDEV (Pharmaceutical Development) workstream for IND programs.
+  // Sub-phases 7.0 + 7.1: rail + Overview + Workstream drill + Activity
+  // detail State tab (read-only). Source: design-system/ui_kits/pdev/.
+  // Gated by ENABLE_PDEV_SURFACE — when off, the rail/launcher hides the
+  // tile and this branch is unreachable.
+  if (
+    layoutMode === 'pdev' &&
+    !embeddedModule &&
+    isFeatureEnabled('ENABLE_PDEV_SURFACE')
+  ) {
+    return <PdevRoute />;
   }
 
   // Project module deep-links route ONLY to bundle-designed surfaces.

@@ -28,6 +28,7 @@ export type LayoutMode =
   // ── Global destinations ──
   | 'projects'
   | 'mdx'
+  | 'pdev'
   | 'apps'
   | 'artifacts-center'
   | 'setup'
