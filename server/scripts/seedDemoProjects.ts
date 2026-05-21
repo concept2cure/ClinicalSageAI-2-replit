@@ -19,7 +19,7 @@ async function seedDemoProjects() {
     // ===== PROJECT 1: Early-Stage (Stage 3) - NeuroFlex TENS Patch =====
     console.log('Creating Project 1: NeuroFlex TENS Patch (Early-Stage)...');
     
-    const project1 = await db.insert(projects).values({
+    const project1 = await (db.insert(projects) as any).values({
       id: 'demo-neuroflex-' + Date.now(),
       tenant_id: tenantId,
       project_name: 'NeuroFlex TENS Patch - 510(k) Submission',
@@ -61,7 +61,7 @@ async function seedDemoProjects() {
     ];
 
     for (const stage of stages1) {
-      await db.insert(projectWorkflowStages).values({
+      await (db.insert(projectWorkflowStages) as any).values({
         project_id: project1[0].id,
         stage_number: stage.stage,
         stage_name: stage.name,
@@ -77,7 +77,7 @@ async function seedDemoProjects() {
     }
 
     // Add sample tasks for Project 1
-    await db.insert(projectTasks).values([
+    await (db.insert(projectTasks) as any).values([
       {
         project_id: project1[0].id,
         task_name: 'Complete electrical safety testing',
@@ -107,7 +107,7 @@ async function seedDemoProjects() {
     // ===== PROJECT 2: Mid-Stage (Stage 5) - AeroSpire Smart Spirometer =====
     console.log('Creating Project 2: AeroSpire Smart Spirometer (Mid-Stage)...');
     
-    const project2 = await db.insert(projects).values({
+    const project2 = await (db.insert(projects) as any).values({
       id: 'demo-aerospire-' + Date.now() + 1,
       tenant_id: tenantId,
       project_name: 'AeroSpire Smart Spirometer - 510(k) Submission',
@@ -149,7 +149,7 @@ async function seedDemoProjects() {
     ];
 
     for (const stage of stages2) {
-      await db.insert(projectWorkflowStages).values({
+      await (db.insert(projectWorkflowStages) as any).values({
         project_id: project2[0].id,
         stage_number: stage.stage,
         stage_name: stage.name,
@@ -165,7 +165,7 @@ async function seedDemoProjects() {
     }
 
     // Add sample tasks for Project 2
-    await db.insert(projectTasks).values([
+    await (db.insert(projectTasks) as any).values([
       {
         project_id: project2[0].id,
         task_name: 'FDA Pre-submission meeting preparation',
@@ -195,7 +195,7 @@ async function seedDemoProjects() {
     // ===== PROJECT 3: Late-Stage (Stage 7) - CardioGuardian Implantable Loop Recorder =====
     console.log('Creating Project 3: CardioGuardian ILR (Late-Stage)...');
     
-    const project3 = await db.insert(projects).values({
+    const project3 = await (db.insert(projects) as any).values({
       id: 'demo-cardioguardian-' + Date.now() + 2,
       tenant_id: tenantId,
       project_name: 'CardioGuardian ILR - 510(k) Submission',
@@ -237,7 +237,7 @@ async function seedDemoProjects() {
     ];
 
     for (const stage of stages3) {
-      await db.insert(projectWorkflowStages).values({
+      await (db.insert(projectWorkflowStages) as any).values({
         project_id: project3[0].id,
         stage_number: stage.stage,
         stage_name: stage.name,
@@ -254,7 +254,7 @@ async function seedDemoProjects() {
     }
 
     // Add sample tasks for Project 3
-    await db.insert(projectTasks).values([
+    await (db.insert(projectTasks) as any).values([
       {
         project_id: project3[0].id,
         task_name: 'FDA eCopy preparation',
@@ -342,7 +342,7 @@ async function seedDemoProjects() {
     // Add medical device records
     console.log('Adding medical device records...');
     
-    await db.insert(medicalDevices).values([
+    await (db.insert(medicalDevices) as any).values([
       {
         tenant_id: tenantId,
         device_name: 'NeuroFlex TENS Patch',

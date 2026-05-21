@@ -75,8 +75,8 @@ router.post('/create', asyncHandler(async (req: Request, res: Response) => {
   }
 
   // 1. First create the base project in projects table
-  const [baseProject] = await db
-      .insert(projects)
+  const [baseProject] = (await db
+      .insert(projects as any)
       .values({
         organizationId: organizationId,
         clientWorkspaceId: 1, // Default to first workspace
@@ -88,11 +88,11 @@ router.post('/create', asyncHandler(async (req: Request, res: Response) => {
         startDate: new Date(),
         targetEndDate: targetSubmissionDate ? new Date(targetSubmissionDate) : null,
       })
-      .returning();
+      .returning()) as any[];
 
     // 2. Create the FDA 510k specific project details
-    const [project] = await db
-      .insert(fda510kProjects)
+    const [project] = (await db
+      .insert(fda510kProjects as any)
       .values({
         organizationId: organizationId,
         projectId: baseProject.id,
@@ -130,7 +130,7 @@ router.post('/create', asyncHandler(async (req: Request, res: Response) => {
           createdViaWizard: true,
         },
       })
-      .returning();
+      .returning()) as any[];
 
     // 3. Create initial data forms using SQL
     await db.execute(sql`
@@ -213,7 +213,7 @@ router.post('/create', asyncHandler(async (req: Request, res: Response) => {
     }
 
     // 5. Create initial stage progress entry
-    await db.insert(fda510kStageProgress).values({
+    await (db.insert(fda510kStageProgress) as any).values({
       projectId: project.id,
       organizationId: organizationId,
       stageName: 'setup',
@@ -245,7 +245,7 @@ router.post('/create', asyncHandler(async (req: Request, res: Response) => {
         const template = templateResult.rows[0] as any;
 
         // Apply template settings
-        await db.insert(fda510kStageProgress).values({
+        await (db.insert(fda510kStageProgress) as any).values({
           projectId: project.id,
           organizationId: organizationId,
           stageName: 'setup',
@@ -275,7 +275,7 @@ router.post('/create', asyncHandler(async (req: Request, res: Response) => {
 
 // Get project stage data
 router.get('/:projectId/stage', asyncHandler(async (req: Request, res: Response) => {
-  const { projectId } = req.params;
+  const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
   const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
   if (!organizationId) {
     return res.status(401).json({ error: 'Organization context required' });
@@ -350,7 +350,7 @@ router.get('/:projectId/stage', asyncHandler(async (req: Request, res: Response)
 
 // Get project details
 router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
-  const { projectId } = req.params;
+  const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
   const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
   if (!organizationId) {
     return res.status(401).json({ error: 'Organization context required' });
@@ -391,7 +391,7 @@ router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
 
 // Update project team assignments
 router.post('/:projectId/team', asyncHandler(async (req: Request, res: Response) => {
-  const { projectId } = req.params;
+  const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
   const { assignments } = req.body;
 
   // Delete existing assignments using SQL
