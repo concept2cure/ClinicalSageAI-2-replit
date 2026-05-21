@@ -1,18 +1,24 @@
 /**
- * PDEV App composer — orchestrates the 3-pane shell, surface routing,
- * and AnA dock state for sub-phases 7.0 + 7.1.
+ * PDEV App composer — full Phase 7 (sub-phases 7.0 / 7.1 / 7.2 / 7.3 / 7.4).
  *
- * Mounted by PdevRoute. Reads from four endpoints:
- *   - GET /api/regulatory-programs (filtered to programType='IND' for
- *     the program selector — programs themselves live in the existing
- *     regulatoryPrograms table, not a new PDEV-specific list)
- *   - GET /api/pdev/programs/:id (the unified program view)
- *   - GET /api/pdev/programs/:id/readiness (live recompute)
- *   - GET /api/pdev/programs/:id/workstreams/:ws (workstream drill)
+ * 3-pane shell with surface routing for all 8 PDEV nav items, governed
+ * mutations through <PdevConfirmDialog>, and overlay sheets for
+ * Activity detail (6 tabs), AI drafting workbench, evidence picker.
  *
- * Mutations, FDA stream, contradictions, IND assembly, AI drafting,
- * evidence picker, and confirm dialog are intentionally absent — they
- * ship in later sub-phases (7.2, 7.3, 7.4).
+ * Data sources (all routes already live in server/routes/pdev/pdev-routes.ts):
+ *   /api/regulatory-programs           — IND program selector list
+ *   /api/pdev/programs/:id             — program view + workstream rollups + activities
+ *   /api/pdev/programs/:id/readiness   — live readiness recompute
+ *   /api/pdev/programs/:id/workstreams/:ws — workstream drill
+ *   /api/pdev/programs/:id/activities/:key/{evidence,workflow,provenance} — activity tabs
+ *   /api/pdev/programs/:id/{ind-assembly,fda-interactions,fda-feedback/proposals,contradictions}
+ *   POST /api/pdev/programs/:id/activities/:key/state — state-change mutation
+ *   POST /api/pdev/programs/:id/activities/:key/evidence — attach
+ *   DELETE /api/pdev/programs/:id/activities/:key/evidence/:evId — detach
+ *   POST /api/pdev/programs/:id/activities/:key/ai-draft
+ *   POST /api/pdev/programs/:id/ind-assembly/compile
+ *   POST /api/pdev/programs/:id/fda-feedback/apply
+ *   POST /api/pdev/workflow-runs/:runId/checkpoints/:cpId/decision
  */
 
 import * as React from 'react';
@@ -23,14 +29,28 @@ import { PdevAnaDock } from './shell/AnaDock';
 import { PdevOverview } from './surfaces/Overview';
 import { PdevWorkstreamSurface } from './surfaces/Workstream';
 import { PdevActivityDetail } from './surfaces/ActivityDetail';
+import { PdevAiDraftWorkbench } from './surfaces/AiDraftWorkbench';
+import { PdevEvidencePicker } from './surfaces/EvidencePicker';
+import { PdevAssemblySurface } from './surfaces/Assembly';
+import { PdevFdaStreamSurface } from './surfaces/FdaStream';
+import { PdevContradictionsSurface } from './surfaces/Contradictions';
 import {
+  usePdevContradictions,
+  usePdevFdaInteractions,
+  usePdevFdaProposals,
+  usePdevIndAssembly,
   usePdevProgram,
   usePdevReadiness,
+  usePdevReadinessSnapshot,
   usePdevWorkstream,
 } from './hooks/usePdevData';
 import { isWorkstreamNav } from './data/nav';
 import type { PdevActivityView } from './data/types';
 import type { PdevWorkstream } from './data/enums';
+import {
+  PdevConfirmDialog,
+  type ConfirmConfig,
+} from './components/ConfirmDialog';
 
 const HERE_LABEL: Record<string, string> = {
   overview: 'Program dashboard',
@@ -52,6 +72,7 @@ interface IndProgramRow {
   name: string;
   programType: string;
   status: string;
+  metadata?: Record<string, unknown> | null;
 }
 
 interface IndProgramListPayload {
@@ -59,19 +80,23 @@ interface IndProgramListPayload {
 }
 
 export interface PdevAppProps {
-  /** Initial nav id from a deep-link, e.g. 'cmc'. */
+  /** Initial nav id from a deep-link. */
   initialNav?: string;
-  /** Optional pre-selected program id (deep-link). */
   initialProgramId?: string | null;
   /** AnA gateway adapter. The dock collects prompts; routing them to
    *  the real chat surface is the host app's responsibility. */
-  onAskAna?: (text: string, context: { programCode: string | null; activityKey: string | null }) => void;
+  onAskAna?: (
+    text: string,
+    context: { programCode: string | null; activityKey: string | null },
+  ) => void;
 }
 
-export function PdevApp({ initialNav, initialProgramId, onAskAna }: PdevAppProps) {
-  // ── Program selector — list of IND programs from the existing
-  //    /api/regulatory-programs endpoint. The PDEV surfaces anchor to
-  //    one program at a time per brief §2.0.
+export function PdevApp({
+  initialNav,
+  initialProgramId,
+  onAskAna,
+}: PdevAppProps) {
+  // ── IND program list ──────────────────────────────────────────────
   const { data: programsList, loading: programsLoading } =
     useFetchJson<IndProgramListPayload>('/api/regulatory-programs');
   const indPrograms = React.useMemo(
@@ -81,7 +106,6 @@ export function PdevApp({ initialNav, initialProgramId, onAskAna }: PdevAppProps
       ),
     [programsList],
   );
-
   const [programId, setProgramId] = React.useState<string | null>(
     initialProgramId ?? null,
   );
@@ -91,57 +115,119 @@ export function PdevApp({ initialNav, initialProgramId, onAskAna }: PdevAppProps
     }
   }, [programId, indPrograms]);
 
-  // ── Surface routing ────────────────────────────────────────────────
+  const projectIdForProgram = React.useMemo(() => {
+    const row = indPrograms.find((p) => p.id === programId);
+    const meta = row?.metadata ?? null;
+    if (meta && typeof meta.projectId === 'number') return meta.projectId;
+    return null;
+  }, [programId, indPrograms]);
+
+  // ── Navigation + sheet state ──────────────────────────────────────
   const [activeNav, setActiveNav] = React.useState<string>(initialNav ?? 'overview');
   const [collapsed, setCollapsed] = React.useState(false);
   const [anaOpen, setAnaOpen] = React.useState(true);
-  const [activeActivity, setActiveActivity] = React.useState<PdevActivityView | null>(
-    null,
-  );
+  const [activeActivity, setActiveActivity] =
+    React.useState<PdevActivityView | null>(null);
+  const [aiDraftFor, setAiDraftFor] = React.useState<{
+    activity: PdevActivityView;
+    documentCode: string | null;
+  } | null>(null);
+  const [evidencePickerFor, setEvidencePickerFor] =
+    React.useState<PdevActivityView | null>(null);
 
-  // ── Data fetches gated by programId ───────────────────────────────
-  const { view: programView, loading: viewLoading, error: viewError } =
-    usePdevProgram(programId);
-  const { report: readinessReport } = usePdevReadiness(programId);
+  // ── Snapshot mutation (Overview "Snapshot readiness" CTA) ─────────
+  const snapshot = usePdevReadinessSnapshot();
+  const [snapshotConfirm, setSnapshotConfirm] =
+    React.useState<ConfirmConfig | null>(null);
+  const [snapshotError, setSnapshotError] = React.useState<string | null>(null);
+
+  // ── Data fetches gated by programId / activeNav ───────────────────
+  const program = usePdevProgram(programId);
+  const readiness = usePdevReadiness(programId);
   const workstreamId: PdevWorkstream | null = isWorkstreamNav(activeNav)
     ? activeNav
     : null;
-  const { payload: workstreamPayload, loading: wsLoading } = usePdevWorkstream(
-    programId,
-    workstreamId,
+  const workstream = usePdevWorkstream(programId, workstreamId);
+  const assembly = usePdevIndAssembly(
+    activeNav === 'ind_assembly' ? programId : null,
+  );
+  const fdaStream = usePdevFdaInteractions(
+    activeNav === 'fda_interactions' ? programId : null,
+  );
+  const fdaProposals = usePdevFdaProposals(
+    activeNav === 'fda_interactions' ? programId : null,
+  );
+  const contradictions = usePdevContradictions(
+    activeNav === 'contradictions' ? programId : null,
   );
 
-  // ── AnA bridge ─────────────────────────────────────────────────────
+  // ── AnA bridge ────────────────────────────────────────────────────
   const askAna = React.useCallback(
     (text: string) => {
       onAskAna?.(text, {
-        programCode: programView?.program.code ?? null,
+        programCode: program.view?.program.code ?? null,
         activityKey: activeActivity?.registry.key ?? null,
       });
       setAnaOpen(true);
     },
-    [onAskAna, programView, activeActivity],
+    [onAskAna, program.view, activeActivity],
   );
 
-  // ── Derived readiness ──────────────────────────────────────────────
+  // Refresh data after a mutation completes (state change, evidence
+  // attach/detach, workflow decisions, FDA rollups, compile, etc.).
+  const refreshAll = React.useCallback(() => {
+    program.refresh();
+    readiness.refresh();
+    workstream.refresh();
+    assembly.refresh();
+    fdaStream.refresh();
+    fdaProposals.refresh();
+    contradictions.refresh();
+  }, [program, readiness, workstream, assembly, fdaStream, fdaProposals, contradictions]);
+
+  // ── Derived ──────────────────────────────────────────────────────
   const effectiveReadiness =
-    readinessReport?.overall.readinessScore ??
-    programView?.latestSnapshots.find((s) => s.workstream === 'overall')?.readinessScore ??
-    programView?.program.progressPercent ??
+    readiness.report?.overall.readinessScore ??
+    program.view?.latestSnapshots.find((s) => s.workstream === 'overall')
+      ?.readinessScore ??
+    program.view?.program.progressPercent ??
     0;
 
   const topBlocker =
-    typeof programView?.program.metadata?.blocker === 'string'
-      ? (programView.program.metadata.blocker as string)
+    typeof program.view?.program.metadata?.blocker === 'string'
+      ? (program.view.program.metadata.blocker as string)
       : null;
 
-  // ── Render ─────────────────────────────────────────────────────────
+  const onSnapshot = () => {
+    if (!programId) return;
+    setSnapshotConfirm({
+      action: 'Snapshot readiness',
+      target: `${program.view?.program.code ?? programId}`,
+      resource: program.view?.program.code,
+      minReason: 10,
+      confirmWord: 'yes',
+    });
+  };
+
+  const onConfirmSnapshot = async ({ reason }: { reason: string }) => {
+    if (!programId) return;
+    setSnapshotError(null);
+    try {
+      await snapshot.run({ programId, reason });
+      setSnapshotConfirm(null);
+      refreshAll();
+    } catch (err) {
+      setSnapshotError(err instanceof Error ? err.message : 'Snapshot failed');
+    }
+  };
+
+  // ── Render: choose surface ───────────────────────────────────────
   let surface: React.ReactNode;
-  if (viewError) {
+  if (program.error) {
     surface = (
       <div className="pdev-page-error">
         <h2>Couldn't load this program</h2>
-        <p className="pdev-page-error-detail">{viewError}</p>
+        <p className="pdev-page-error-detail">{program.error}</p>
       </div>
     );
   } else if (!programId && !programsLoading && indPrograms.length === 0) {
@@ -154,7 +240,7 @@ export function PdevApp({ initialNav, initialProgramId, onAskAna }: PdevAppProps
         </p>
       </div>
     );
-  } else if (!programView) {
+  } else if (!program.view) {
     surface = (
       <div className="pdev-loading-state" aria-busy="true">
         <p>Loading PDEV program…</p>
@@ -163,16 +249,17 @@ export function PdevApp({ initialNav, initialProgramId, onAskAna }: PdevAppProps
   } else if (activeNav === 'overview') {
     surface = (
       <PdevOverview
-        view={programView}
+        view={program.view}
         readinessScore={effectiveReadiness}
         topBlocker={topBlocker}
         readinessThreshold={READINESS_THRESHOLD_DEFAULT}
         onAskAna={askAna}
         onSelectWorkstream={(ws) => setActiveNav(ws)}
+        onSnapshot={onSnapshot}
       />
     );
   } else if (workstreamId) {
-    if (wsLoading || !workstreamPayload) {
+    if (workstream.loading || !workstream.payload) {
       surface = (
         <div className="pdev-loading-state" aria-busy="true">
           <p>Loading {workstreamId}…</p>
@@ -182,10 +269,64 @@ export function PdevApp({ initialNav, initialProgramId, onAskAna }: PdevAppProps
       surface = (
         <PdevWorkstreamSurface
           ws={workstreamId}
-          programCode={programView.program.code}
-          payload={workstreamPayload}
+          programCode={program.view.program.code}
+          payload={workstream.payload}
           onAskAna={askAna}
           onSelectActivity={setActiveActivity}
+        />
+      );
+    }
+  } else if (activeNav === 'ind_assembly') {
+    if (assembly.loading || !assembly.payload) {
+      surface = (
+        <div className="pdev-loading-state" aria-busy="true">
+          <p>Loading IND assembly…</p>
+        </div>
+      );
+    } else {
+      surface = (
+        <PdevAssemblySurface
+          programId={programId!}
+          programCode={program.view.program.code}
+          projectId={projectIdForProgram}
+          payload={assembly.payload}
+          onAskAna={askAna}
+          onCompiled={refreshAll}
+        />
+      );
+    }
+  } else if (activeNav === 'fda_interactions') {
+    if (fdaStream.loading || !fdaStream.payload) {
+      surface = (
+        <div className="pdev-loading-state" aria-busy="true">
+          <p>Loading FDA interactions…</p>
+        </div>
+      );
+    } else {
+      surface = (
+        <PdevFdaStreamSurface
+          programId={programId!}
+          programCode={program.view.program.code}
+          stream={fdaStream.payload}
+          proposals={fdaProposals.payload}
+          onAskAna={askAna}
+          onApplied={refreshAll}
+        />
+      );
+    }
+  } else if (activeNav === 'contradictions') {
+    if (contradictions.loading || !contradictions.payload) {
+      surface = (
+        <div className="pdev-loading-state" aria-busy="true">
+          <p>Loading contradictions…</p>
+        </div>
+      );
+    } else {
+      surface = (
+        <PdevContradictionsSurface
+          programCode={program.view.program.code}
+          payload={contradictions.payload}
+          onAskAna={askAna}
         />
       );
     }
@@ -193,7 +334,7 @@ export function PdevApp({ initialNav, initialProgramId, onAskAna }: PdevAppProps
     surface = (
       <div className="pdev-coming-soon">
         <h2>{HERE_LABEL[activeNav] ?? 'Surface'}</h2>
-        <p>This surface ships in a later sub-phase of Phase 7.</p>
+        <p>This surface ships in a later sub-phase.</p>
       </div>
     );
   }
@@ -212,7 +353,7 @@ export function PdevApp({ initialNav, initialProgramId, onAskAna }: PdevAppProps
         }}
         collapsed={collapsed}
         setCollapsed={setCollapsed}
-        program={programView?.program ?? null}
+        program={program.view?.program ?? null}
         programs={indPrograms.map((p) => ({
           id: p.id,
           code: p.code,
@@ -226,24 +367,17 @@ export function PdevApp({ initialNav, initialProgramId, onAskAna }: PdevAppProps
       <main className="pdev-main">
         <PdevTopBar
           hereLabel={HERE_LABEL[activeNav] ?? 'PDEV'}
-          program={programView?.program ?? null}
+          program={program.view?.program ?? null}
           onOpenPalette={() => askAna('Open command palette')}
         />
         <div className="pdev-page">
-          <div className="pdev-page-inner">
-            {viewLoading && !programView && !viewError && (
-              <div className="pdev-loading-state" aria-busy="true">
-                <p>Loading PDEV program…</p>
-              </div>
-            )}
-            {surface}
-          </div>
+          <div className="pdev-page-inner">{surface}</div>
         </div>
       </main>
       <PdevAnaDock
         open={anaOpen}
         setOpen={setAnaOpen}
-        program={programView?.program ?? null}
+        program={program.view?.program ?? null}
         readinessScore={effectiveReadiness}
         topBlocker={topBlocker}
         activeNav={activeNav}
@@ -251,11 +385,71 @@ export function PdevApp({ initialNav, initialProgramId, onAskAna }: PdevAppProps
         onSend={askAna}
       />
 
-      {activeActivity && (
+      {activeActivity && programId && (
         <PdevActivityDetail
+          programId={programId}
           activity={activeActivity}
           onClose={() => setActiveActivity(null)}
           onAskAna={askAna}
+          onMutated={refreshAll}
+          onOpenDraft={(documentCode) =>
+            setAiDraftFor({ activity: activeActivity, documentCode })
+          }
+          onOpenEvidencePicker={() => setEvidencePickerFor(activeActivity)}
+        />
+      )}
+
+      {aiDraftFor && programId && projectIdForProgram !== null && (
+        <PdevAiDraftWorkbench
+          programId={programId}
+          projectId={projectIdForProgram}
+          activity={aiDraftFor.activity}
+          documentCode={aiDraftFor.documentCode}
+          onClose={() => setAiDraftFor(null)}
+        />
+      )}
+      {aiDraftFor && programId && projectIdForProgram === null && (
+        <div className="pdev-sheet-backdrop" onClick={() => setAiDraftFor(null)} role="presentation">
+          <aside className="pdev-sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+            <div className="pdev-sheet-head">
+              <div>
+                <div className="pdev-sheet-eyebrow">AI drafting workbench</div>
+                <div className="pdev-sheet-title">Project linkage required</div>
+              </div>
+              <button className="pdev-sheet-close" onClick={() => setAiDraftFor(null)} type="button" aria-label="Close">
+                ×
+              </button>
+            </div>
+            <div className="pdev-sheet-body">
+              <p>
+                AI drafting routes through the existing eCTD / ESG submission
+                pipeline, which requires a backing project. Set
+                <span className="mono"> metadata.projectId </span>
+                on the regulatory program to enable AI drafts for this program.
+              </p>
+            </div>
+          </aside>
+        </div>
+      )}
+      {evidencePickerFor && programId && (
+        <PdevEvidencePicker
+          programId={programId}
+          activity={evidencePickerFor}
+          onClose={() => setEvidencePickerFor(null)}
+          onAttached={refreshAll}
+        />
+      )}
+
+      {snapshotConfirm && programId && (
+        <PdevConfirmDialog
+          open={true}
+          {...snapshotConfirm}
+          onCancel={() => {
+            setSnapshotConfirm(null);
+            setSnapshotError(null);
+          }}
+          onConfirm={onConfirmSnapshot}
+          submitError={snapshotError}
         />
       )}
     </div>

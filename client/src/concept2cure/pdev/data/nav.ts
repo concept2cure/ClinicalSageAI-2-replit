@@ -39,9 +39,9 @@ export const PDEV_NAV_ITEMS: readonly PdevNavItem[] = [
   { id: 'nonclinical', label: 'Nonclinical', icon: 'microscope', group: 'workstream' },
   { id: 'clinical', label: 'Clinical', icon: 'stethoscope', group: 'workstream' },
   { id: 'regulatory', label: 'Regulatory', icon: 'shieldCheck', group: 'workstream' },
-  { id: 'ind_assembly', label: 'IND assembly', icon: 'rocket', group: 'workspace', comingSoon: true },
-  { id: 'contradictions', label: 'Contradictions', icon: 'alertCircle', group: 'workspace', comingSoon: true },
-  { id: 'fda_interactions', label: 'FDA interactions', icon: 'chat', group: 'workspace', comingSoon: true },
+  { id: 'ind_assembly', label: 'IND assembly', icon: 'rocket', group: 'workspace' },
+  { id: 'contradictions', label: 'Contradictions', icon: 'alertCircle', group: 'workspace' },
+  { id: 'fda_interactions', label: 'FDA interactions', icon: 'chat', group: 'workspace' },
 ];
 
 export type PdevNavId = (typeof PDEV_NAV_ITEMS)[number]['id'];

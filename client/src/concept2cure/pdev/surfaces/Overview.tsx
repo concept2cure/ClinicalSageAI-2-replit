@@ -32,6 +32,8 @@ interface OverviewProps {
   onAskAna: (text: string) => void;
   /** Switch the rail / surface to a workstream drill. */
   onSelectWorkstream: (ws: string) => void;
+  /** Open the snapshot-readiness confirm dialog. */
+  onSnapshot: () => void;
 }
 
 const IND_READINESS_THRESHOLD_DEFAULT = 85;
@@ -43,6 +45,7 @@ export function PdevOverview({
   readinessThreshold,
   onAskAna,
   onSelectWorkstream,
+  onSnapshot,
 }: OverviewProps) {
   const { program, workstreams } = view;
   const rollupByWs = React.useMemo(() => {
@@ -76,6 +79,9 @@ export function PdevOverview({
             type="button"
           >
             <PdevIcon name="sparkles" /> Ask AnA
+          </button>
+          <button className="pdev-btn primary" onClick={onSnapshot} type="button">
+            <PdevIcon name="zap" /> Snapshot readiness
           </button>
         </div>
       </div>
