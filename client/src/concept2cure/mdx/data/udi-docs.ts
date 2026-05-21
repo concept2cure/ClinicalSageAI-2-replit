@@ -1,0 +1,151 @@
+/**
+ * Documents the UDI / labeling surface produces.
+ *
+ * Labels are *the* document type here — IFU, package insert, on-device,
+ * patient labeling — one per device × region × language. Plus the GUDID
+ * submission file, EUDAMED submission file, UDI Master Record, MRI
+ * conditional statement, and labeling change records.
+ *
+ * Wire shape: GET /api/mdx/udi/documents
+ */
+
+export const UDI_DOC_FRAMEWORKS = [
+  { id: 'fda',    label: '21 CFR 801', desc: 'FDA labeling rules' },
+  { id: 'iso',    label: 'ISO 15223-1',desc: 'Medical-device symbols' },
+  { id: 'eu',     label: 'EU MDR',     desc: 'Annex I — labels + IFU' },
+  { id: 'mri',    label: 'ASTM F2503', desc: 'MRI safety labeling' },
+];
+
+export const UDI_DOCUMENTS = [
+  {
+    id: 'doc-ifu-bx204-en', framework: 'fda',
+    type: 'Instructions for use (IFU)',
+    title: 'BX-204 IFU — US English',
+    ver: 'v2.7', status: 'ready', completion: 100, blocker: false,
+    owner: 'JC', reviewers: ['SM','MW'], lastEdit: '6d ago',
+    esigRequired: true, esigState: 'signed', signedBy: 'JC · 2026-05-04',
+    sections: 8, sectionsComplete: 8,
+    editor: 'label',
+  },
+  {
+    id: 'doc-ifu-bx204-de', framework: 'eu',
+    type: 'Instructions for use (IFU)',
+    title: 'BX-204 IFU — EU German (DE)',
+    ver: 'v2.7', status: 'review', completion: 92, blocker: false,
+    owner: 'AM', reviewers: ['JC'], lastEdit: '2d ago',
+    esigRequired: true, esigState: 'pending',
+    sections: 8, sectionsComplete: 8, openComments: 3,
+    editor: 'label',
+  },
+  {
+    id: 'doc-ifu-bx204-fr', framework: 'eu',
+    type: 'Instructions for use (IFU)',
+    title: 'BX-204 IFU — EU French (FR)',
+    ver: 'v2.7', status: 'draft', completion: 41, blocker: false,
+    owner: 'AM', reviewers: [], lastEdit: '14h ago',
+    esigRequired: true, esigState: 'na',
+    sections: 8, sectionsComplete: 3,
+    editor: 'label',
+  },
+  {
+    id: 'doc-pkg-bx204-en', framework: 'fda',
+    type: 'Package label',
+    title: 'BX-204 package label — US English',
+    ver: 'v3.2', status: 'ready', completion: 100, blocker: false,
+    owner: 'JC', reviewers: ['SM'], lastEdit: '6d ago',
+    esigRequired: true, esigState: 'signed', signedBy: 'JC · 2026-05-04',
+    sections: 1, sectionsComplete: 1,
+    editor: 'label',
+  },
+  {
+    id: 'doc-pkg-bx204-de', framework: 'eu',
+    type: 'Package label',
+    title: 'BX-204 package label — EU German (DE)',
+    ver: 'v3.2', status: 'blocked', completion: 88, blocker: true,
+    owner: 'AM', reviewers: [], lastEdit: '2d ago',
+    esigRequired: true, esigState: 'na',
+    sections: 1, sectionsComplete: 1, blockerNote: 'ISO 15223-1 §5.4.4 (Consult IFU) symbol missing',
+    editor: 'label',
+  },
+  {
+    id: 'doc-dev-bx204-en', framework: 'fda',
+    type: 'On-device label',
+    title: 'BX-204 device label — UDI-DI carrier',
+    ver: 'v1.0', status: 'review', completion: 95, blocker: false,
+    owner: 'AK', reviewers: ['JC'], lastEdit: '11d ago',
+    esigRequired: true, esigState: 'pending',
+    sections: 1, sectionsComplete: 1, openComments: 1, blockerNote: 'UDI-DI checksum digit mismatch',
+    editor: 'label',
+  },
+  {
+    id: 'doc-mri-bx204', framework: 'mri',
+    type: 'MRI conditional statement',
+    title: 'BX-204 MRI conditional statement',
+    ver: 'v1.1', status: 'review', completion: 100, blocker: false,
+    owner: 'AK', reviewers: ['JC', 'MW'], lastEdit: '4d ago',
+    esigRequired: true, esigState: 'pending',
+    sections: 1, sectionsComplete: 1,
+    editor: 'label',
+  },
+  {
+    id: 'doc-gudid-bx204', framework: 'fda',
+    type: 'GUDID submission file',
+    title: 'GUDID submission — BX-204 (sensor + transmitter)',
+    ver: 'v1.4', status: 'locked', completion: 100, blocker: false,
+    owner: 'JC', reviewers: ['SM'], lastEdit: '2025-12-06',
+    esigRequired: true, esigState: 'signed', signedBy: 'JC · 2025-12-04',
+    sections: 62, sectionsComplete: 62,
+    editor: 'data-submission',
+  },
+  {
+    id: 'doc-eudamed-bx204', framework: 'eu',
+    type: 'EUDAMED submission file',
+    title: 'EUDAMED submission — BX-204 (sensor + transmitter)',
+    ver: 'v1.2', status: 'locked', completion: 100, blocker: false,
+    owner: 'AM', reviewers: ['JC'], lastEdit: '2025-12-11',
+    esigRequired: true, esigState: 'signed', signedBy: 'AM · 2025-12-08',
+    sections: 47, sectionsComplete: 47,
+    editor: 'data-submission',
+  },
+  {
+    id: 'doc-eudamed-bx204-rcv', framework: 'eu',
+    type: 'EUDAMED submission file',
+    title: 'EUDAMED submission — BX-204 receiver',
+    ver: 'v0.4', status: 'draft', completion: 32, blocker: true,
+    owner: 'AM', reviewers: [], lastEdit: '8d ago',
+    esigRequired: true, esigState: 'na',
+    sections: 47, sectionsComplete: 15, blockerNote: 'Receiver risk class not confirmed by notified body',
+    editor: 'data-submission',
+  },
+  {
+    id: 'doc-master-bx204', framework: 'fda',
+    type: 'UDI Master Record',
+    title: 'UDI Master Record — BX-204 family',
+    ver: 'v2.1', status: 'ready', completion: 100, blocker: false,
+    owner: 'JC', reviewers: ['SM','AM'], lastEdit: '11d ago',
+    esigRequired: true, esigState: 'signed', signedBy: 'JC · 2026-05-01',
+    sections: 12, sectionsComplete: 12,
+    editor: 'data-submission',
+  },
+  {
+    id: 'doc-pkg-or801-en', framework: 'fda',
+    type: 'Package label',
+    title: 'OR-801 package label — US English',
+    ver: 'v1.1', status: 'review', completion: 88, blocker: false,
+    owner: 'SM', reviewers: ['LT'], lastEdit: '1d ago',
+    esigRequired: true, esigState: 'pending',
+    sections: 1, sectionsComplete: 1, openComments: 2,
+    editor: 'label',
+  },
+  {
+    id: 'doc-ifu-or801-en', framework: 'fda',
+    type: 'Instructions for use (IFU)',
+    title: 'OR-801 IFU — US English',
+    ver: 'v1.1', status: 'draft', completion: 55, blocker: false,
+    owner: 'SM', reviewers: [], lastEdit: '4h ago',
+    esigRequired: true, esigState: 'na',
+    sections: 6, sectionsComplete: 3,
+    editor: 'label',
+  },
+];
+

@@ -70,6 +70,16 @@ export const MDX_SURFACE_REGISTRY: SurfaceRegistration[] = [
   { id: 'validation',       label: 'Validation center',       defaultMode: 'fixture',                            },
   { id: 'submissions',      label: 'Submission center',       defaultMode: 'fixture',                            },
   { id: 'templates',        label: 'Templates',               defaultMode: 'fixture',                            },
+  // Phase 4 — MDX lifecycle + system surfaces. Data modules ported from
+  // design-system/ui_kits/mdx/data/*.js to client/src/concept2cure/mdx/data/*.ts.
+  // Surface TSX ports + hook wiring ship in follow-up PRs; in the meantime
+  // each surface stays stub'd via MDX_STUBS until its port lands.
+  { id: 'engineering',      label: 'Device engineering',      defaultMode: 'fixture',  expectedLiveBy: '2026-09-01' },
+  { id: 'udi',              label: 'UDI and labeling',        defaultMode: 'fixture',  expectedLiveBy: '2026-09-15' },
+  { id: 'postmarket',       label: 'Post-market vigilance',   defaultMode: 'fixture',  expectedLiveBy: '2026-10-01' },
+  { id: 'analytics',        label: 'Analytics',               defaultMode: 'fixture',  expectedLiveBy: '2026-10-15' },
+  { id: 'memory',           label: 'AnA memory',              defaultMode: 'fixture',  expectedLiveBy: '2026-10-15' },
+  { id: 'admin',            label: 'Admin and access',        defaultMode: 'fixture',  expectedLiveBy: '2026-09-01' },
 ];
 
 const REGISTRY_BY_ID: Record<string, SurfaceRegistration> = MDX_SURFACE_REGISTRY.reduce(
