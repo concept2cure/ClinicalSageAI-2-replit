@@ -51,7 +51,7 @@ function getOrgId(req: express.Request): number {
 router.post('/source-objects/:projectId', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { projectId } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const data = upsertSourceObjectSchema.parse(req.body);
     const pool = getPool();
     const sourceHash = createSourceHash(data.sourcePayload as Record<string, any>);
@@ -83,7 +83,7 @@ router.post('/source-objects/:projectId', async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ success: false, error: 'Invalid source object payload', details: error.errors });
     }
-    if (String(error?.message || '').includes('Organization context required')) {
+    if (String((error as any)?.message || "").includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to upsert source object' });
@@ -93,7 +93,7 @@ router.post('/source-objects/:projectId', async (req, res) => {
 router.get('/sections/:projectId', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { projectId } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const pool = getPool();
     const { rows } = await pool.query(
       `SELECT section_key as "sectionKey", section_path as "sectionPath", stale, stale_reason as "staleReason",
@@ -105,7 +105,7 @@ router.get('/sections/:projectId', async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if (String((error as any)?.message || "").includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to fetch section map' });
@@ -117,7 +117,7 @@ router.post('/compile/:projectId', async (req, res) => {
   const client = await pool.connect();
   try {
     const orgId = getOrgId(req);
-    const { projectId } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     await client.query('BEGIN');
     const { rows } = await client.query(
       `SELECT id, source_type as "sourceType", source_payload as "sourcePayload", source_hash as "sourceHash"
@@ -208,7 +208,7 @@ router.post('/compile/:projectId', async (req, res) => {
     res.json({ success: true, compiledCount: compiled.length, sections: compiled, bridgedArtifacts });
   } catch (error) {
     await client.query('ROLLBACK');
-    if (String(error?.message || '').includes('Organization context required')) {
+    if (String((error as any)?.message || "").includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Compilation failed' });
@@ -220,7 +220,7 @@ router.post('/compile/:projectId', async (req, res) => {
 router.post('/source-changed/:projectId', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { projectId } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const { changedSourceType, reason } = req.body;
     const pool = getPool();
     const sectionsRes = await pool.query(
@@ -242,7 +242,7 @@ router.post('/source-changed/:projectId', async (req, res) => {
     }
     res.json({ success: true, staleSections: stale.filter((s) => s.stale).map((s) => s.sectionKey) });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if (String((error as any)?.message || "").includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Stale update failed' });
@@ -252,7 +252,7 @@ router.post('/source-changed/:projectId', async (req, res) => {
 router.post('/contradictions/:projectId', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { projectId } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const pool = getPool();
     const [specs, methods, stability, batch, comparability] = await Promise.all([
       pool.query(
@@ -309,7 +309,7 @@ router.post('/contradictions/:projectId', async (req, res) => {
 
     res.json({ success: true, contradictions, impactTasks: deriveImpactTasks(contradictions) });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if (String((error as any)?.message || "").includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Contradiction detection failed' });
@@ -319,7 +319,7 @@ router.post('/contradictions/:projectId', async (req, res) => {
 router.get('/contradictions/:projectId', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { projectId } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const pool = getPool();
     const { rows } = await pool.query(
       `SELECT id, severity, contradiction_type as "contradictionType", details,
@@ -332,7 +332,7 @@ router.get('/contradictions/:projectId', async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if (String((error as any)?.message || "").includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to fetch contradictions' });
@@ -342,7 +342,7 @@ router.get('/contradictions/:projectId', async (req, res) => {
 router.patch('/contradictions/:id/resolve', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
     const parsed = resolveContradictionSchema.parse(req.body || {});
     const pool = getPool();
     const updated = await pool.query(
@@ -372,7 +372,7 @@ router.patch('/contradictions/:id/resolve', async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ success: false, error: 'Invalid resolution payload', details: error.errors });
     }
-    if (String(error?.message || '').includes('Organization context required')) {
+    if (String((error as any)?.message || "").includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to resolve contradiction' });
@@ -382,7 +382,7 @@ router.patch('/contradictions/:id/resolve', async (req, res) => {
 router.get('/readiness/:projectId', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { projectId } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const pool = getPool();
     const [sections, contradictions] = await Promise.all([
       pool.query(
@@ -450,7 +450,7 @@ router.get('/readiness/:projectId', async (req, res) => {
       },
     });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if (String((error as any)?.message || "").includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to compute readiness' });
@@ -480,7 +480,7 @@ router.get('/provenance/:projectId/:sectionKey', async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if (String((error as any)?.message || "").includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to fetch provenance' });
@@ -589,7 +589,7 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
       canonicalGovernedState,
     });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if (String((error as any)?.message || "").includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Approval failed' });
@@ -630,7 +630,7 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
     );
     res.json({ success: true, sectionKey, state: 'draft', diffSummary });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if (String((error as any)?.message || "").includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Refresh failed' });
@@ -640,7 +640,7 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
 router.post('/guard/final-export/:projectId', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { projectId } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const pool = getPool();
     const [sectionsRes, contradictionsRes] = await Promise.all([
       pool.query(
@@ -730,7 +730,7 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
 
     return res.json({ success: true, message: 'Final export gate passed', canonicalGovernedState });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if (String((error as any)?.message || "").includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed final export guard check' });

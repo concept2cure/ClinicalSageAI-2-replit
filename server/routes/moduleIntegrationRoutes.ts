@@ -40,7 +40,7 @@ router.use(setTenantContext);
 router.post('/register-document', asyncHandler(async (req, res) => {
   const document = await moduleIntegrationService.registerDocument({
     ...req.body,
-    organizationId: req.tenantContext.organizationId,
+    organizationId: req.tenantContext!.organizationId,
   });
   res.status(201).json(document);
 }));
@@ -51,7 +51,7 @@ router.post('/register-document', asyncHandler(async (req, res) => {
  */
 router.get('/document-exists', asyncHandler(async (req, res) => {
   const { moduleType, originalId } = req.query;
-  const organizationId = req.tenantContext.organizationId;
+  const organizationId = req.tenantContext!.organizationId;
   const exists = await moduleIntegrationService.documentExists(
     moduleType as string,
     originalId as string,
@@ -66,7 +66,7 @@ router.get('/document-exists', asyncHandler(async (req, res) => {
  */
 router.get('/documents/:moduleType', asyncHandler(async (req, res) => {
   const moduleTypeRaw = req.params.moduleType; const moduleType = Array.isArray(moduleTypeRaw) ? moduleTypeRaw[0] : (moduleTypeRaw ?? "");
-  const organizationId = req.tenantContext.organizationId;
+  const organizationId = req.tenantContext!.organizationId;
   const documents = await moduleIntegrationService.getDocumentsByModule(
     moduleType,
     organizationId as string
@@ -119,7 +119,7 @@ router.patch('/documents/:id', asyncHandler(async (req, res) => {
  */
 router.get('/templates/:moduleType', cacheResponse({ ttl: 60_000 }), asyncHandler(async (req, res) => {
   const moduleTypeRaw = req.params.moduleType; const moduleType = Array.isArray(moduleTypeRaw) ? moduleTypeRaw[0] : (moduleTypeRaw ?? "");
-  const organizationId = req.tenantContext.organizationId;
+  const organizationId = req.tenantContext!.organizationId;
   const templates = await workflowService.getWorkflowTemplatesByModule(
     moduleType,
     organizationId as string
@@ -132,10 +132,12 @@ router.get('/templates/:moduleType', cacheResponse({ ttl: 60_000 }), asyncHandle
  * POST /api/module-integration/templates
  */
 router.post('/templates', asyncHandler(async (req, res) => {
-  const template = await workflowService.createWorkflowTemplate({
-    ...req.body,
-    organizationId: req.tenantContext.organizationId,
-  });
+  const template = await workflowService.createWorkflowTemplate(
+    req.body?.moduleType,
+    req.tenantContext!.organizationId,
+    (req as any).userId,
+    req.body
+  );
   res.status(201).json(template);
 }));
 
@@ -170,7 +172,7 @@ router.post('/workflows', asyncHandler(async (req, res) => {
     startedByUserId,
     {
       ...(metadata || {}),
-      organizationId: req.tenantContext.organizationId,
+      organizationId: req.tenantContext!.organizationId,
     }
   );
   res.status(201).json(workflow);
@@ -209,7 +211,7 @@ router.post('/reject-step', asyncHandler(async (req, res) => {
  * GET /api/module-integration/documents-in-review
  */
 router.get('/documents-in-review', asyncHandler(async (req, res) => {
-  const organizationId = req.tenantContext.organizationId;
+  const organizationId = req.tenantContext!.organizationId;
   const documents = await moduleIntegrationService.getDocumentsInReview(organizationId as string);
   res.json(documents);
 }));
@@ -220,7 +222,7 @@ router.get('/documents-in-review', asyncHandler(async (req, res) => {
  */
 router.get('/active-workflows', asyncHandler(async (req, res) => {
   const { page, pageSize } = req.query;
-  const organizationId = req.tenantContext.organizationId;
+  const organizationId = req.tenantContext!.organizationId;
   const workflows = await workflowService.getActiveWorkflows(
     organizationId as string,
     parseInt(page as string, 10) || 1,
@@ -235,7 +237,7 @@ router.get('/active-workflows', asyncHandler(async (req, res) => {
  */
 router.get('/completed-workflows', asyncHandler(async (req, res) => {
   const { page, pageSize } = req.query;
-  const organizationId = req.tenantContext.organizationId;
+  const organizationId = req.tenantContext!.organizationId;
   const workflows = await workflowService.getCompletedWorkflows(
     organizationId as string,
     parseInt(page as string, 10) || 1,
@@ -253,7 +255,7 @@ router.get('/pending-approvals', asyncHandler(async (req, res) => {
   if (!userId) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-  const organizationId = req.tenantContext.organizationId;
+  const organizationId = req.tenantContext!.organizationId;
   const approvals = await workflowService.getPendingApprovals(
     organizationId as string,
     userId as string

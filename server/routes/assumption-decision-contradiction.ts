@@ -47,7 +47,7 @@ const log = createScopedLogger('governed-intelligence-routes');
 
 function getOrgId(req: Request): number {
   const orgId = Number(
-    (req as Record<string, unknown>).organizationId ??
+    (req as unknown as Record<string, unknown>).organizationId ??
       (req as any).user?.organizationId ??
       (req as any).tenantId
   );
@@ -56,7 +56,9 @@ function getOrgId(req: Request): number {
 }
 
 function getUserId(req: Request): string {
-  return String((req as Record<string, unknown>).userId ?? (req as any).user?.id ?? 'system');
+  return String(
+    (req as unknown as Record<string, unknown>).userId ?? (req as any).user?.id ?? 'system'
+  );
 }
 
 function handleError(res: Response, error: unknown, context: string) {
@@ -102,7 +104,7 @@ router.post('/assumptions', async (req: Request, res: Response) => {
 
 router.get('/assumptions/:id', async (req: Request, res: Response) => {
   try {
-    const result = await assumptionRegistryService.getById(req.params.id, getOrgId(req));
+    const result = await assumptionRegistryService.getById(String(req.params.id ?? ""), getOrgId(req));
     if (!result) return res.status(404).json({ error: 'Assumption not found' });
     res.json(result);
   } catch (error) {
@@ -112,7 +114,7 @@ router.get('/assumptions/:id', async (req: Request, res: Response) => {
 
 router.post('/assumptions/:id/supersede', async (req: Request, res: Response) => {
   try {
-    const result = await assumptionRegistryService.supersede(req.params.id, {
+    const result = await assumptionRegistryService.supersede(String(req.params.id ?? ""), {
       organizationId: getOrgId(req),
       performedBy: getUserId(req),
       ...req.body,
@@ -127,7 +129,7 @@ router.post('/assumptions/:id/supersede', async (req: Request, res: Response) =>
 router.patch('/assumptions/:id/status', async (req: Request, res: Response) => {
   try {
     const result = await assumptionRegistryService.updateStatus(
-      req.params.id,
+      String(req.params.id ?? ""),
       getOrgId(req),
       req.body.status,
       getUserId(req)
@@ -143,7 +145,7 @@ router.get('/assumptions/project/:projectId/summary', async (req: Request, res: 
   try {
     const summary = await assumptionRegistryService.getByProject(
       getOrgId(req),
-      Number(req.params.projectId)
+      Number(String(req.params.projectId ?? ""))
     );
     res.json(summary);
   } catch (error) {
@@ -182,7 +184,7 @@ router.post('/decisions', async (req: Request, res: Response) => {
 
 router.get('/decisions/:id', async (req: Request, res: Response) => {
   try {
-    const result = await decisionRecordService.getById(req.params.id, getOrgId(req));
+    const result = await decisionRecordService.getById(String(req.params.id ?? ""), getOrgId(req));
     if (!result) return res.status(404).json({ error: 'Decision not found' });
     res.json(result);
   } catch (error) {
@@ -192,7 +194,7 @@ router.get('/decisions/:id', async (req: Request, res: Response) => {
 
 router.post('/decisions/:id/transition', async (req: Request, res: Response) => {
   try {
-    const result = await decisionRecordService.transition(req.params.id, {
+    const result = await decisionRecordService.transition(String(req.params.id ?? ""), {
       organizationId: getOrgId(req),
       performedBy: getUserId(req),
       ...req.body,
@@ -222,7 +224,7 @@ router.post('/contradictions/search', async (req: Request, res: Response) => {
 
 router.get('/contradictions/:id', async (req: Request, res: Response) => {
   try {
-    const result = await contradictionEngineService.getFinding(req.params.id, getOrgId(req));
+    const result = await contradictionEngineService.getFinding(String(req.params.id ?? ""), getOrgId(req));
     if (!result) return res.status(404).json({ error: 'Finding not found' });
     res.json(result);
   } catch (error) {
@@ -234,7 +236,7 @@ router.post('/contradictions/scan/:projectId', async (req: Request, res: Respons
   try {
     const result = await contradictionEngineService.scanProject(
       getOrgId(req),
-      Number(req.params.projectId)
+      Number(String(req.params.projectId ?? ""))
     );
     res.json(result);
   } catch (error) {
@@ -245,7 +247,7 @@ router.post('/contradictions/scan/:projectId', async (req: Request, res: Respons
 router.post('/contradictions/:id/review', async (req: Request, res: Response) => {
   try {
     const result = await contradictionEngineService.transitionReviewState(
-      req.params.id,
+      String(req.params.id ?? ""),
       getOrgId(req),
       req.body.reviewState,
       getUserId(req),
@@ -261,7 +263,7 @@ router.post('/contradictions/:id/review', async (req: Request, res: Response) =>
 router.post('/contradictions/:id/execute-consequence', async (req: Request, res: Response) => {
   try {
     const result = await contradictionEngineService.executeConsequence(
-      req.params.id,
+      String(req.params.id ?? ""),
       getOrgId(req),
       getUserId(req)
     );
@@ -306,8 +308,8 @@ router.get(
     try {
       const results = await reactiveDependencyService.getDownstream(
         getOrgId(req),
-        req.params.sourceType,
-        req.params.sourceId
+        String(req.params.sourceType ?? ''),
+        String(req.params.sourceId ?? '')
       );
       res.json({ dependencies: results, count: results.length });
     } catch (error) {
@@ -320,7 +322,7 @@ router.get('/dependencies/stale/:projectId', async (req: Request, res: Response)
   try {
     const results = await reactiveDependencyService.getStale(
       getOrgId(req),
-      Number(req.params.projectId)
+      Number(String(req.params.projectId ?? ""))
     );
     res.json({ stale: results, count: results.length });
   } catch (error) {
@@ -331,7 +333,7 @@ router.get('/dependencies/stale/:projectId', async (req: Request, res: Response)
 router.post('/dependencies/:id/resolve', async (req: Request, res: Response) => {
   try {
     const result = await reactiveDependencyService.resolveStale(
-      req.params.id,
+      String(req.params.id ?? ""),
       getOrgId(req),
       getUserId(req)
     );
@@ -346,7 +348,7 @@ router.get('/impact-summary/:projectId', async (req: Request, res: Response) => 
   try {
     const result = await reactiveDependencyService.getProjectImpactSummary(
       getOrgId(req),
-      Number(req.params.projectId)
+      Number(String(req.params.projectId ?? ""))
     );
     res.json(result);
   } catch (error) {
