@@ -52,10 +52,13 @@ export const MDX_NAV_V2: NavItem[] = [
   // Intelligence — read-only reporting + cross-cutting memory.
   { id: 'analytics',    label: 'Analytics',             icon: 'barChart3',    group: 'intelligence' },
   { id: 'memory',       label: 'AnA Memory',            icon: 'database',     group: 'intelligence' },
+  { id: 'conversations',label: 'AnA Conversations',     icon: 'chat',         group: 'intelligence' },
 
   // System — admin + the only link that exits the workstream.
+  { id: 'search',       label: 'Global Search',         icon: 'search',       group: 'system' },
   { id: 'notifications',label: 'Notifications',         icon: 'bell',         group: 'system' },
   { id: 'audit',        label: 'Audit Log',             icon: 'shield',       group: 'system' },
+  { id: 'onboarding',   label: 'Onboarding',            icon: 'upload',       group: 'system' },
   { id: 'admin',        label: 'Admin and Access',      icon: 'userCheck',    group: 'system' },
 ];
 
@@ -130,5 +133,9 @@ export const MDX_SUGGESTIONS: Record<string, string[]> = {
   ivdr:         ['Walk me through Annex VIII classification', 'Find the PER gap vs Annex II/III', 'Schedule the next BSI milestone'],
   cdx:          ['Verify label alignment with KEYTRUDA-9', 'Recompute concordance with the latest cohort', 'Map every NDA section to its PMA equivalent'],
   ldt:          ['Run enforcement-discretion decision for every LDT', 'Show LDTs due for Phase 2 registration', 'Draft the CV-IH401 De Novo Pre-Sub response'],
+  // Phase 8 — cross-cutting surfaces.
+  search:       ['Show every artifact signed by Jordan in Q2', 'Find every audit entry on CV-330 last 30 days', 'Surface MDR conversations across the portfolio'],
+  onboarding:   ['Resume AnA section mapping', 'Surface every unmappable artifact for manual review', 'Seed memory from style guides + RTA letters'],
+  conversations:['Find every conversation that produced a draft this week', 'Pin the IV-415 PER drafting thread', 'Export Q2 CV-330 conversations as PDF'],
   editor:       ['Draft this section from predicate', 'Check claim against evidence', 'Rewrite for FDA tone'],
 };

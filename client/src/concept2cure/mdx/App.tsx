@@ -44,6 +44,10 @@ import { IvdSurface } from './surfaces/IvdSurface';
 import { IvdrSurface } from './surfaces/IvdrSurface';
 import { CdxSurface } from './surfaces/CdxSurface';
 import { LdtSurface } from './surfaces/LdtSurface';
+/* Phase 8 — cross-cutting. */
+import { SearchSurface } from './surfaces/SearchSurface';
+import { OnboardingSurface } from './surfaces/OnboardingSurface';
+import { ConversationsSurface } from './surfaces/ConversationsSurface';
 import { ProjectHome } from './projectHome/ProjectHome';
 import { EstarEditor } from './editors/EstarEditor';
 import { PmaEditor } from './editors/PmaEditor';
@@ -345,6 +349,20 @@ export function App({ initialNav, projectName }: AppProps = {}) {
       case 'ldt':
         /* Phase 6 — LDT compliance (FDA 2024 rule phase tracker). */
         surface = <LdtSurface onAskAna={askAna} onOpenEditor={openEditor} />;
+        break;
+      case 'search':
+        /* Phase 8 — global cross-corpus search. */
+        surface = <SearchSurface program={programForContext} onAskAna={askAna} />;
+        break;
+      case 'onboarding':
+        /* Phase 8 — migration importer wizard. */
+        surface = <OnboardingSurface onAskAna={askAna} />;
+        break;
+      case 'conversations':
+        /* Phase 8 — AnA conversation history. */
+        surface = (
+          <ConversationsSurface program={programForContext} onAskAna={askAna} />
+        );
         break;
       case 'project-home':
         surface = (

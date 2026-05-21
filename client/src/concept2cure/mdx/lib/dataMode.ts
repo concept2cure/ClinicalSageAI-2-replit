@@ -95,6 +95,10 @@ export const MDX_SURFACE_REGISTRY: SurfaceRegistration[] = [
   { id: 'ivdr',             label: 'EU IVDR',                 defaultMode: 'fixture',  expectedLiveBy: '2026-11-15' },
   { id: 'cdx',              label: 'Companion diagnostic',    defaultMode: 'fixture',  expectedLiveBy: '2026-12-01' },
   { id: 'ldt',              label: 'LDT compliance',          defaultMode: 'fixture',  expectedLiveBy: '2026-10-15' },
+  // Phase 8 — cross-cutting surfaces.
+  { id: 'search',           label: 'Global search',           defaultMode: 'fixture',  expectedLiveBy: '2026-09-15' },
+  { id: 'onboarding',       label: 'Onboarding importer',     defaultMode: 'fixture',  expectedLiveBy: '2026-10-15' },
+  { id: 'conversations',    label: 'AnA conversations',       defaultMode: 'fixture',  expectedLiveBy: '2026-09-15' },
 ];
 
 const REGISTRY_BY_ID: Record<string, SurfaceRegistration> = MDX_SURFACE_REGISTRY.reduce(

@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-05-21T14:12:42.622Z",
+  "generatedAt": "2026-05-21T14:26:39.206Z",
   "git": {
-    "sha": "3252811f4f89b354a91386254c31da1d0d881bac",
-    "branch": "claude/integrate-design-system-UBjRE-mdx-phase6"
+    "sha": "e37ac501fabcdd9deac04516eab2920a89050f4b",
+    "branch": "claude/integrate-design-system-UBjRE-mdx-phase8"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -418,6 +418,15 @@
         ]
       },
       {
+        "basename": "cdx",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/mdx/data/cdx.ts",
+          "design-system/ui_kits/mdx/data/cdx.js",
+          "design-system/ui_kits/mdx/surfaces/Cdx.jsx"
+        ]
+      },
+      {
         "basename": "cer",
         "count": 3,
         "paths": [
@@ -481,12 +490,39 @@
         ]
       },
       {
+        "basename": "ivd",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/mdx/data/ivd.ts",
+          "design-system/ui_kits/mdx/data/ivd.js",
+          "design-system/ui_kits/mdx/surfaces/Ivd.jsx"
+        ]
+      },
+      {
+        "basename": "ivdr",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/mdx/data/ivdr.ts",
+          "design-system/ui_kits/mdx/data/ivdr.js",
+          "design-system/ui_kits/mdx/surfaces/Ivdr.jsx"
+        ]
+      },
+      {
         "basename": "jest.config",
         "count": 3,
         "paths": [
           "client/jest.config.js",
           "scripts/jest.config.js",
           "server/jest.config.js"
+        ]
+      },
+      {
+        "basename": "ldt",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/mdx/data/ldt.ts",
+          "design-system/ui_kits/mdx/data/ldt.js",
+          "design-system/ui_kits/mdx/surfaces/Ldt.jsx"
         ]
       },
       {
@@ -798,14 +834,6 @@
         "paths": [
           "server/routes/capa-mdr.ts",
           "shared/schema/capa-mdr.ts"
-        ]
-      },
-      {
-        "basename": "cdx",
-        "count": 2,
-        "paths": [
-          "design-system/ui_kits/mdx/data/cdx.js",
-          "design-system/ui_kits/mdx/surfaces/Cdx.jsx"
         ]
       },
       {
@@ -1145,22 +1173,6 @@
         ]
       },
       {
-        "basename": "ivd",
-        "count": 2,
-        "paths": [
-          "design-system/ui_kits/mdx/data/ivd.js",
-          "design-system/ui_kits/mdx/surfaces/Ivd.jsx"
-        ]
-      },
-      {
-        "basename": "ivdr",
-        "count": 2,
-        "paths": [
-          "design-system/ui_kits/mdx/data/ivdr.js",
-          "design-system/ui_kits/mdx/surfaces/Ivdr.jsx"
-        ]
-      },
-      {
         "basename": "jest.setup",
         "count": 2,
         "paths": [
@@ -1174,14 +1186,6 @@
         "paths": [
           "server/routes/ana-ri/kernel.ts",
           "server/src/control-plane/kernel.ts"
-        ]
-      },
-      {
-        "basename": "ldt",
-        "count": 2,
-        "paths": [
-          "design-system/ui_kits/mdx/data/ldt.js",
-          "design-system/ui_kits/mdx/surfaces/Ldt.jsx"
         ]
       },
       {
@@ -1917,7 +1921,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 99,
+      "duplicateGroups": 103,
       "largeByBytes": 3,
       "largeByLines": 5
     },
