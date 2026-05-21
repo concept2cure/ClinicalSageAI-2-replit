@@ -214,7 +214,7 @@ router.delete(
         params.moduleType,
         params.moduleInstanceId,
         tenant.organizationId,
-        tenant.clientWorkspaceId
+        tenant.clientWorkspaceId ?? undefined
       );
       if (!removed) {
         return res.status(404).json({ error: 'Module link not found' });
@@ -283,7 +283,7 @@ router.patch(
         params.moduleInstanceId,
         body.status,
         tenant.organizationId,
-        tenant.clientWorkspaceId
+        tenant.clientWorkspaceId ?? undefined
       );
 
       if (!updated) {
@@ -324,7 +324,7 @@ router.get('/find', async (req: Request, res: Response) => {
       moduleTypeResult.data,
       moduleInstanceId,
       tenant.organizationId,
-      tenant.clientWorkspaceId
+      tenant.clientWorkspaceId ?? undefined
     );
 
     res.json({ moduleType: moduleTypeResult.data, moduleInstanceId, projects: linkedProjects });
