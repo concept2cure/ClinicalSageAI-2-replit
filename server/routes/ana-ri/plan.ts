@@ -93,7 +93,7 @@ export function mountPlanRoutes(router: Router): void {
   // GET /api/ana-ri/plan/:planRunId — Fetch persisted goal plan run
   // ─────────────────────────────────────────────────────────────────────────
   router.get('/plan/:planRunId', async (req: Request, res: Response) => {
-    const planRun = await getGoalPlanRun(req.params.planRunId);
+    const planRun = await getGoalPlanRun(String(req.params.planRunId));
     if (!planRun) {
       return sendError(res, 404, 'Plan run not found', null, 'PLAN_NOT_FOUND');
     }
@@ -114,12 +114,12 @@ export function mountPlanRoutes(router: Router): void {
     }
 
     const result = await advanceGoalPlanStep({
-      planRunId: req.params.planRunId,
+      planRunId: String(req.params.planRunId),
       stepId,
       nextStatus,
     });
     if (!result.ok) {
-      return sendError(res, 400, result.message, null, 'PLAN_ADVANCE_FAILED');
+      return sendError(res, 400, result.message ?? 'plan advance failed', null, 'PLAN_ADVANCE_FAILED');
     }
     return sendSuccess(res, { ok: true });
   });
@@ -128,13 +128,13 @@ export function mountPlanRoutes(router: Router): void {
   // POST /api/ana-ri/plan/:planRunId/execute-next — Execute next runnable step
   // ─────────────────────────────────────────────────────────────────────────
   router.post('/plan/:planRunId/execute-next', async (req: Request, res: Response) => {
-    const result = await executeNextGoalPlanStep(req.params.planRunId);
+    const result = await executeNextGoalPlanStep(String(req.params.planRunId));
     if (!result.ok) {
-      return sendError(res, 400, result.message, null, 'PLAN_EXECUTION_FAILED');
+      return sendError(res, 400, result.message ?? 'plan execution failed', null, 'PLAN_EXECUTION_FAILED');
     }
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     await recordProtocolEvent({
-      planRunId: req.params.planRunId,
+      planRunId: String(req.params.planRunId),
       organizationId: orgId ? Number(orgId) : null,
       actorType: 'system',
       actorId: 'kernel-runtime',
@@ -152,7 +152,7 @@ export function mountPlanRoutes(router: Router): void {
   // GET /api/ana-ri/plan/:planRunId/events — Step event audit trail
   // ─────────────────────────────────────────────────────────────────────────
   router.get('/plan/:planRunId/events', async (req: Request, res: Response) => {
-    const events = await listGoalPlanEvents(req.params.planRunId);
+    const events = await listGoalPlanEvents(String(req.params.planRunId));
     return sendSuccess(res, { events });
   });
 
@@ -163,7 +163,7 @@ export function mountPlanRoutes(router: Router): void {
     const { actorType, actorId, messageType, payload, metadata } = req.body || {};
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     const event = {
-      planRunId: req.params.planRunId,
+      planRunId: String(req.params.planRunId),
       organizationId: orgId ? Number(orgId) : null,
       actorType,
       actorId,
@@ -173,7 +173,7 @@ export function mountPlanRoutes(router: Router): void {
     };
     const validation = validateProtocolEvent(event as any);
     if (!validation.ok) {
-      return sendError(res, 400, validation.message, null, 'INVALID_PROTOCOL_EVENT');
+      return sendError(res, 400, validation.message ?? 'invalid protocol event', null, 'INVALID_PROTOCOL_EVENT');
     }
 
     const recorded = await recordProtocolEvent(event as any);
@@ -187,7 +187,7 @@ export function mountPlanRoutes(router: Router): void {
   // GET /api/ana-ri/plan/:planRunId/protocol — List protocol events
   // ─────────────────────────────────────────────────────────────────────────
   router.get('/plan/:planRunId/protocol', async (req: Request, res: Response) => {
-    const events = await listProtocolEvents(req.params.planRunId);
+    const events = await listProtocolEvents(String(req.params.planRunId));
     return sendSuccess(res, { events });
   });
 }

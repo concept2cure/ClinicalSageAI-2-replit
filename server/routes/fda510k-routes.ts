@@ -1449,7 +1449,7 @@ router.get('/pma/device/:pmaNumber', async (req: Request, res: Response, next: N
     const tenantContext = (req as any).tenantContext;
 
     // Validate PMA number format
-    if (!/^P\d{6}$/i.test(pmaNumber)) {
+    if (!/^P\d{6}$/i.test(String(pmaNumber))) {
       throw new APIError(
         400,
         ErrorCode.VALIDATION_ERROR,
@@ -1542,7 +1542,7 @@ router.post('/pma/compare', async (req: Request, res: Response, next: NextFuncti
 
     // Validate all PMA numbers
     for (const pmaNumber of pmaNumbers) {
-      if (!/^P\d{6}$/i.test(pmaNumber)) {
+      if (!/^P\d{6}$/i.test(String(pmaNumber))) {
         throw new APIError(
           400,
           ErrorCode.VALIDATION_ERROR,
@@ -1626,11 +1626,12 @@ router.post('/pma/compare', async (req: Request, res: Response, next: NextFuncti
  * Get cache statistics
  */
 router.get('/cache/stats', async (req: Request, res: Response) => {
+  const stats = cache.getStats();
   res.json({
-    ...cacheStats,
-    keys: cache.size,
-    hitRate: cacheStats.hits / (cacheStats.hits + cacheStats.misses) || 0,
-    cacheKeys: cache.size,
+    ...stats,
+    keys: stats.size,
+    hitRate: stats.hits / (stats.hits + stats.misses) || 0,
+    cacheKeys: stats.size,
   });
 });
 
@@ -1647,7 +1648,7 @@ router.delete('/cache/clear', async (req: Request, res: Response, next: NextFunc
       organizationId: tenantContext.organizationId,
     });
 
-    clearCache();
+    cache.clear();
 
     res.json({
       message: 'Cache cleared successfully',
@@ -1667,7 +1668,7 @@ router.post(
   async (req: Request, res: Response, next: NextFunction) => {
     // Forward to predicate-search by rewriting the URL internally
     req.url = '/predicate-search';
-    router.handle(req, res, next);
+    (router as any).handle(req, res, next);
   }
 );
 

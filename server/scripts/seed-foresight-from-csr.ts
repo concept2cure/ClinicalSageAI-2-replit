@@ -171,7 +171,7 @@ async function seedForesightData() {
     console.log('📊 Seeding clinical outcomes from CSR data...');
     for (const csr of CSR_DATA) {
       // Insert ORR outcome
-      await db.insert(clinicalOutcomes).values({
+      await db.insert(clinicalOutcomes as any).values({
         organizationId,
         studyId: csr.nctId,
         outcomeType: 'efficacy',
@@ -189,7 +189,7 @@ async function seedForesightData() {
       });
 
       // Insert PFS outcome
-      await db.insert(clinicalOutcomes).values({
+      await db.insert(clinicalOutcomes as any).values({
         organizationId,
         studyId: csr.nctId,
         outcomeType: 'efficacy',
@@ -206,7 +206,7 @@ async function seedForesightData() {
       });
 
       // Insert OS outcome
-      await db.insert(clinicalOutcomes).values({
+      await db.insert(clinicalOutcomes as any).values({
         organizationId,
         studyId: csr.nctId,
         outcomeType: 'efficacy',
@@ -223,7 +223,7 @@ async function seedForesightData() {
       });
 
       // Insert safety outcomes
-      await db.insert(clinicalOutcomes).values({
+      await db.insert(clinicalOutcomes as any).values({
         organizationId,
         studyId: csr.nctId,
         outcomeType: 'safety',
@@ -243,9 +243,9 @@ async function seedForesightData() {
     console.log('🧬 Seeding biomarker endpoints from CSR data...');
     for (const csr of CSR_DATA) {
       const biomarkerKey = Object.keys(csr.biomarkers)[0];
-      const biomarker = csr.biomarkers[biomarkerKey];
+      const biomarker = (csr.biomarkers as Record<string, any>)[biomarkerKey];
 
-      await db.insert(biomarkerEndpoints).values({
+      await db.insert(biomarkerEndpoints as any).values({
         organizationId,
         biomarkerId: `BM-${biomarkerKey.toUpperCase()}-${csr.nctId}`,
         biomarkerName: biomarkerKey.toUpperCase(),
@@ -370,7 +370,7 @@ async function seedForesightData() {
     ];
 
     for (const pattern of patterns) {
-      await db.insert(translationalPatterns).values({
+      await db.insert(translationalPatterns as any).values({
         ...pattern
       });
     }
@@ -423,7 +423,7 @@ async function seedForesightData() {
     ];
 
     for (const study of doseStudies) {
-      await db.insert(doseEscalationStudies).values({
+      await db.insert(doseEscalationStudies as any).values({
         organizationId,
         ...study
       });
@@ -500,7 +500,7 @@ async function seedForesightData() {
     ];
 
     for (const pkpd of pkpdData) {
-      await db.insert(crossSpeciesPkpd).values({
+      await db.insert(crossSpeciesPkpd as any).values({
         organizationId,
         ...pkpd
       });
@@ -578,7 +578,7 @@ async function seedForesightData() {
     console.log(`[Seeding] Generated ${predictions.length} AnA Predictions entries`);
 
     for (const prediction of predictions) {
-      await db!.insert(foresightPredictions).values({
+      await db!.insert(foresightPredictions as any).values({
         organization_id: organizationId,
         study_id: prediction.studyId,
         phase: prediction.phase,

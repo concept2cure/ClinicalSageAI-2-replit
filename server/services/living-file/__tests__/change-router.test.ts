@@ -8,28 +8,28 @@
 import { describe, expect, test, vi, beforeEach } from 'vitest';
 
 // Capture all downstream propagator calls via mocks
-const propagateClaimChangeMock = vi.fn(async () => ({
+const propagateClaimChangeMock = vi.fn(async (..._args: any[]) => ({
   affectedPacketIds: ['pkt-1'],
   markedStaleCount: 1,
   alreadyStaleCount: 0,
   notRenderedCount: 0,
   reason: 'claim_changed',
 }));
-const propagateEvidenceChangeMock = vi.fn(async () => ({
+const propagateEvidenceChangeMock = vi.fn(async (..._args: any[]) => ({
   affectedPacketIds: [],
   markedStaleCount: 0,
   alreadyStaleCount: 0,
   notRenderedCount: 0,
   reason: 'evidence_changed',
 }));
-const propagatePredicateChangeMock = vi.fn(async () => ({
+const propagatePredicateChangeMock = vi.fn(async (..._args: any[]) => ({
   affectedPacketIds: [],
   markedStaleCount: 2,
   alreadyStaleCount: 0,
   notRenderedCount: 0,
   reason: 'predicate_changed',
 }));
-const propagateRiskVocabChangeMock = vi.fn(async () => ({
+const propagateRiskVocabChangeMock = vi.fn(async (..._args: any[]) => ({
   affectedPacketIds: [],
   markedStaleCount: 0,
   alreadyStaleCount: 0,
@@ -44,7 +44,7 @@ vi.mock('../../regulatory-graph/defense-packet-staleness.service', () => ({
   propagateRiskVocabChange: (...a: unknown[]) => propagateRiskVocabChangeMock(...(a as [any])),
 }));
 
-const reactivePropagateMock = vi.fn(async () => ({
+const reactivePropagateMock = vi.fn(async (..._args: any[]) => ({
   triggerType: 'assumption_updated',
   triggerObjectId: 'src-1',
   downstreamImpacted: 3,

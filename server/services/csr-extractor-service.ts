@@ -3,7 +3,10 @@ import path from 'path';
 import { sql } from 'drizzle-orm';
 import { db } from '../db';
 import { huggingFaceService } from '../huggingface-service';
+import * as openaiServiceModule from './openai-service';
 import { eq } from 'drizzle-orm';
+
+const openaiService: any = openaiServiceModule;
 
 // Constants
 const PROCESSED_CSR_DIR = path.join(process.cwd(), 'data/processed_csrs');
@@ -511,7 +514,7 @@ ${context}
   async processCSR(reportId: number): Promise<CSRMappingTemplate> {
     try {
       // Get the CSR report data from the database
-      const [report] = await db.execute<{
+      const [report] = (await db.execute<{
         id: number;
         title: string;
         nctrial_id?: string;
@@ -522,18 +525,18 @@ ${context}
         uploadDate?: Date;
         file_path?: string;
       }>(sql`
-        SELECT id, title, nctrial_id, sponsor, indication, phase, drug_name as "drugName", upload_date as "uploadDate", file_path 
-        FROM csr_reports 
-        WHERE id = ${reportId} 
+        SELECT id, title, nctrial_id, sponsor, indication, phase, drug_name as "drugName", upload_date as "uploadDate", file_path
+        FROM csr_reports
+        WHERE id = ${reportId}
         LIMIT 1
-      `);
+      `)).rows as any[];
 
       if (!report) {
         throw new Error(`CSR Report with ID ${reportId} not found`);
       }
 
       // Get the associated details
-      const [details] = await db.execute<{
+      const [details] = (await db.execute<{
         id: number;
         reportId: number;
         studyDesign?: string;
@@ -571,10 +574,10 @@ ${context}
         };
         processed?: boolean;
       }>(sql`
-        SELECT * FROM csr_details 
-        WHERE report_id = ${reportId} 
+        SELECT * FROM csr_details
+        WHERE report_id = ${reportId}
         LIMIT 1
-      `);
+      `)).rows as any[];
 
       // Create a new mapping object based on the template
       const mappedData: CSRMappingTemplate = JSON.parse(JSON.stringify(this.mappingTemplate));
@@ -915,7 +918,7 @@ ${context}
 
       // Get embeddings if HuggingFace service is available
       try {
-        const embedding = await huggingFaceService.getEmbedding(combinedText);
+        const embedding = await (huggingFaceService as any).getEmbedding(combinedText);
         if (embedding && embedding.length > 0) {
           mappedData.vector_embedding = embedding;
         }
@@ -951,12 +954,12 @@ ${context}
   async processUnprocessedCSRs(limit: number = 50): Promise<number> {
     try {
       // Find unprocessed CSRs with details
-      const unprocessedCSRs = await db.execute<{ report_id: number }>(sql`
-        SELECT report_id 
-        FROM csr_details 
+      const unprocessedCSRs = (await db.execute<{ report_id: number }>(sql`
+        SELECT report_id
+        FROM csr_details
         WHERE processed = false OR processed IS NULL
         LIMIT ${limit}
-      `);
+      `)).rows as Array<{ report_id: number }>;
 
       console.log(`Found ${unprocessedCSRs.length} unprocessed CSRs to process`);
 
@@ -983,14 +986,14 @@ ${context}
    */
   async getProcessingStats(): Promise<{ total: number; processed: number; unprocessed: number }> {
     try {
-      const [totalResult] = await db.execute<{ count: number }>(sql`
+      const [totalResult] = (await db.execute<{ count: number }>(sql`
         SELECT COUNT(*) as count FROM csr_reports
-      `);
+      `)).rows as Array<{ count: number }>;
 
-      const [processedResult] = await db.execute<{ count: number }>(sql`
+      const [processedResult] = (await db.execute<{ count: number }>(sql`
         SELECT COUNT(*) as count FROM csr_details
         WHERE processed = true
-      `);
+      `)).rows as Array<{ count: number }>;
 
       const total = totalResult?.count || 0;
       const processed = processedResult?.count || 0;

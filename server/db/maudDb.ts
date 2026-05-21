@@ -6,7 +6,7 @@
  */
 
 // Import the database pool - with fallback if not available
-let pool;
+let pool: any;
 try {
   const db = require('./index');
   pool = db.pool || db.default;

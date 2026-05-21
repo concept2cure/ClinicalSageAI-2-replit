@@ -176,7 +176,7 @@ router.post('/score', async (req, res) => {
       },
       riskFactors,
       recommendations,
-      similarTrials: similarTrials.map(t => ({
+      similarTrials: similarTrials.map((t: any) => ({
         id: t.nctId || t.id,
         title: t.title,
         similarity: 0.85, // Simplified - would use real similarity calculation
@@ -192,7 +192,7 @@ router.post('/score', async (req, res) => {
 
     const [savedPrediction] = await db
       .insert(foresightPredictions)
-      .values(predictionData)
+      .values(predictionData as any)
       .returning();
 
     res.json({
@@ -296,7 +296,14 @@ router.get('/recommendations', async (req, res) => {
     );
 
     // Build recommendations
-    const recommendations = {
+    type Recommendation = { priority: string; action: string; rationale: string };
+    const recommendations: {
+      protocol: Recommendation[];
+      enrollment: Recommendation[];
+      endpoints: Recommendation[];
+      biomarkers: Recommendation[];
+      safety: Recommendation[];
+    } = {
       protocol: [],
       enrollment: [],
       endpoints: [],
@@ -514,7 +521,7 @@ router.post('/feedback', async (req, res) => {
       organizationId: data.organizationId,
     };
 
-    const [savedFeedback] = await db.insert(clinicalFeedback).values(feedbackData).returning();
+    const [savedFeedback] = await db.insert(clinicalFeedback).values(feedbackData as any).returning();
 
     // Update patterns based on feedback
     if (data.actualOutcome === 'success' || data.actualOutcome === 'failure') {
@@ -564,8 +571,8 @@ router.get('/knowledge-graph', async (req, res) => {
       .limit(Number(limit));
 
     // Format for visualization
-    const nodes = new Map();
-    const edges = [];
+    const nodes = new Map<string, { id: string; label: string; type: string; group: string }>();
+    const edges: Array<{ source: string; target: string; weight: number; evidence: number }> = [];
 
     relationships.forEach(rel => {
       // Add biomarker node

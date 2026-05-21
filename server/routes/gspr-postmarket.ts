@@ -67,7 +67,7 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
     .select({ id: regulatoryPrograms.id })
     .from(regulatoryPrograms)
     .where(
-      and(eq(regulatoryPrograms.id, req.params.programId), eq(regulatoryPrograms.organizationId, orgId))
+      and(eq(regulatoryPrograms.id, String(req.params.programId)), eq(regulatoryPrograms.organizationId, orgId))
     )
     .limit(1);
   if (!row) {
@@ -100,7 +100,7 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const orgId = getOrgId(req)!;
-      const rows = await listProgramMappings(orgId, req.params.programId);
+      const rows = await listProgramMappings(orgId, String(req.params.programId));
       res.json({ programId: req.params.programId, mappings: rows, count: rows.length });
     } catch (err: any) {
       res.status(500).json({ error: 'Mappings fetch failed', detail: err?.message });
@@ -176,7 +176,7 @@ router.get(
       hasPatientContact: profile.hasPatientContact === 'true',
     };
     try {
-      const report = await computeCoverage(orgId, req.params.programId, built);
+      const report = await computeCoverage(orgId, String(req.params.programId), built);
       res.json(report);
     } catch (err: any) {
       res.status(500).json({ error: 'Coverage failed', detail: err?.message });
@@ -207,8 +207,8 @@ postMarketRouter.get(
       return res.status(422).json({ error: `type must be one of: ${[...VALID_DOC_TYPES].join(', ')}` });
     }
     try {
-      const rows = await listProgramDocuments(orgId, req.params.programId, t as any);
-      res.json({ programId: req.params.programId, documents: rows, count: rows.length });
+      const rows = await listProgramDocuments(orgId, String(req.params.programId), t as any);
+      res.json({ programId: String(req.params.programId), documents: rows, count: rows.length });
     } catch (err: any) {
       res.status(500).json({ error: 'List failed', detail: err?.message });
     }
@@ -275,7 +275,7 @@ async function loadDocOrFail(
     res.status(403).json({ error: 'Organization context required' });
     return null;
   }
-  const doc = await getDocument(orgId, req.params.documentId);
+  const doc = await getDocument(orgId, String(req.params.documentId));
   if (!doc) {
     res.status(404).json({ error: 'Document not found' });
     return null;
@@ -296,7 +296,7 @@ postMarketRouter.patch('/documents/:documentId', async (req: Request, res: Respo
     const userIdRaw = (req as any).user?.id;
     const updatedBy =
       typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
-    const updated = await updateDocument(ctx.orgId, req.params.documentId, {
+    const updated = await updateDocument(ctx.orgId, String(req.params.documentId), {
       ...req.body,
       updatedBy,
     });
@@ -307,7 +307,7 @@ postMarketRouter.patch('/documents/:documentId', async (req: Request, res: Respo
       userId: updatedBy,
       action: 'post_market.document.update',
       resourceType: 'post_market_document',
-      resourceId: req.params.documentId,
+      resourceId: String(req.params.documentId),
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'] as string | undefined,
       details: {
@@ -329,10 +329,10 @@ postMarketRouter.post('/documents/:documentId/validate', async (req: Request, re
 
   void auditService.logAction({
     tenantId: ctx.orgId,
-    userId: userIdFromReq(req),
+    userId: userIdFromReq(req) ?? undefined,
     action: 'post_market.document.validate',
     resourceType: 'post_market_document',
-    resourceId: req.params.documentId,
+    resourceId: String(req.params.documentId),
     ipAddress: req.ip,
     userAgent: req.headers['user-agent'] as string | undefined,
     details: {
