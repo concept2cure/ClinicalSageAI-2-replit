@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
@@ -135,7 +136,7 @@ describe('project module enterprise hooks', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(modules);
     expect(fetchSpy).toHaveBeenCalledWith(
-      '/api/projects/88/modules',
+      '/api/project-modules/88/modules',
       expect.objectContaining({
         headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
       })
@@ -178,7 +179,7 @@ describe('project module enterprise hooks', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(fetchSpy).toHaveBeenCalledWith(
-      '/api/projects/88/modules/pma/42',
+      '/api/project-modules/88/modules/pma/42',
       expect.objectContaining({
         method: 'PATCH',
         body: JSON.stringify({
@@ -208,7 +209,7 @@ describe('project module enterprise hooks', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(fetchSpy).toHaveBeenCalledWith(
-      '/api/projects/88/modules/pma/42',
+      '/api/project-modules/88/modules/pma/42',
       expect.objectContaining({
         method: 'DELETE',
       })

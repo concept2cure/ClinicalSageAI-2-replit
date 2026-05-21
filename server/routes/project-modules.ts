@@ -211,9 +211,10 @@ router.delete(
 
       const removed = await projectModuleBridge.unlinkModule(
         params.projectId,
-        tenant.organizationId,
         params.moduleType,
-        params.moduleInstanceId
+        params.moduleInstanceId,
+        tenant.organizationId,
+        tenant.clientWorkspaceId
       );
       if (!removed) {
         return res.status(404).json({ error: 'Module link not found' });
@@ -278,10 +279,11 @@ router.patch(
       const body = statusSchema.parse(req.body);
       const updated = await projectModuleBridge.updateModuleStatus(
         params.projectId,
-        tenant.organizationId,
         params.moduleType,
         params.moduleInstanceId,
-        body.status
+        body.status,
+        tenant.organizationId,
+        tenant.clientWorkspaceId
       );
 
       if (!updated) {
@@ -321,7 +323,8 @@ router.get('/find', async (req: Request, res: Response) => {
     const linkedProjects = await projectModuleBridge.findProjectsForModule(
       moduleTypeResult.data,
       moduleInstanceId,
-      tenant.organizationId
+      tenant.organizationId,
+      tenant.clientWorkspaceId
     );
 
     res.json({ moduleType: moduleTypeResult.data, moduleInstanceId, projects: linkedProjects });
