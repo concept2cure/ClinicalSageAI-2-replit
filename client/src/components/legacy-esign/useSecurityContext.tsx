@@ -194,8 +194,8 @@ export function SecurityProvider({ children, initialOrgId }: SecurityProviderPro
   // Compute permissions when membership changes
   useEffect(() => {
     if (state.membership) {
-      const rolePermissions = state.membership.roles.flatMap(
-        (role: any) => ROLE_PERMISSION_PRESETS[role] || []
+      const rolePermissions = (state.membership as any).roles.flatMap(
+        (role: any) => (ROLE_PERMISSION_PRESETS as any)[role] || []
       );
 
       // Merge role permissions with custom permissions
@@ -236,7 +236,7 @@ export function SecurityProvider({ children, initialOrgId }: SecurityProviderPro
   const can = useCallback(
     (resource: ResourceType, action: PermissionAction): boolean => {
       if (!state.user || !state.membership) return false;
-      if (state.membership.status !== 'ACTIVE') return false;
+      if ((state.membership as any).status !== 'ACTIVE') return false;
       return hasPermission(state.permissions, resource, action);
     },
     [state.user, state.membership, state.permissions]
@@ -246,7 +246,7 @@ export function SecurityProvider({ children, initialOrgId }: SecurityProviderPro
   const hasRole = useCallback(
     (...roles: UserRole[]): boolean => {
       if (!state.membership) return false;
-      return roles.some(role => state.membership!.roles.includes(role));
+      return roles.some(role => (state.membership as any).roles?.includes(role));
     },
     [state.membership]
   );
@@ -257,7 +257,7 @@ export function SecurityProvider({ children, initialOrgId }: SecurityProviderPro
       if (!state.membership) {
         return { isCompliant: true, conflicts: [], waiverRequired: false, waiverApprovers: [] };
       }
-      return validateSoD(state.membership.roles, proposedRole);
+      return validateSoD((state.membership as any).roles, proposedRole);
     },
     [state.membership]
   );
@@ -327,7 +327,7 @@ export function SecurityProvider({ children, initialOrgId }: SecurityProviderPro
   const logSecurityEvent = useCallback(
     (eventType: string, details: Record<string, unknown>): void => {
       const event: Partial<AuditLogEntry> = {
-        timestamp: new Date().toISOString(),
+        timestamp: new Date() as any,
         eventType: eventType as AuditLogEntry['eventType'],
         userId: state.user?.id || 'unknown',
         organizationId: state.organization?.id || 'unknown',
@@ -353,7 +353,7 @@ export function SecurityProvider({ children, initialOrgId }: SecurityProviderPro
   const isTrainingCurrent = useCallback((): boolean => {
     if (!state.user || !state.complianceConfig?.training.required) return true;
 
-    const lastTraining = state.user.trainingCompletedAt;
+    const lastTraining = (state.user as any).trainingCompletedAt;
     if (!lastTraining) return false;
 
     const refreshDays = state.complianceConfig.training.refreshIntervalDays;
@@ -367,7 +367,7 @@ export function SecurityProvider({ children, initialOrgId }: SecurityProviderPro
   const needsPasswordRotation = useCallback((): boolean => {
     if (!state.user || !state.complianceConfig) return false;
 
-    const lastChange = state.user.passwordLastChangedAt;
+    const lastChange = (state.user as any).passwordLastChangedAt;
     if (!lastChange) return true;
 
     const expirationDays = state.complianceConfig.accessControl.passwordPolicy.expirationDays;
@@ -445,7 +445,7 @@ export function useAuthorization({ resource, action }: UseAuthorizationOptions) 
       isAuthorized: can(resource, action),
       isAdmin: hasRole('admin'),
       isAuthenticated: !!user,
-      isActive: membership?.status === 'ACTIVE',
+      isActive: (membership?.status as string | undefined) === 'ACTIVE' || membership?.status === 'active',
     }),
     [can, hasRole, user, membership, resource, action]
   );
@@ -483,7 +483,7 @@ export function ProtectedRoute({
   }
 
   // Check membership status
-  if (!membership || membership.status !== 'ACTIVE') {
+  if (!membership || (membership as any).status !== 'ACTIVE') {
     return fallback || <div>Your account is not active in this organization.</div>;
   }
 
