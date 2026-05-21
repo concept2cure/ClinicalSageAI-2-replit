@@ -17,7 +17,8 @@ describe('module3OperatingSystemRoutes', () => {
   const app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
-    req.headers['x-organization-id'] = '101';
+    (req as any).tenantContext = { organizationId: 101 };
+    (req as any).tenantId = 101;
     next();
   });
   app.use('/api/cmc/module3-os', router);

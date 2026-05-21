@@ -11,7 +11,7 @@ const { audit, dbState } = vi.hoisted(() => ({
 
 vi.mock('../../auditService', () => ({ default: audit }));
 
-vi.mock('../../db', () => ({
+vi.mock('../../../db', () => ({
   pool: {
     query: vi.fn(async () => ({ rows: dbState.rows })),
   },

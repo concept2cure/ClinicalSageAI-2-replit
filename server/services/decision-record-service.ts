@@ -111,6 +111,34 @@ export class DecisionRecordService {
     return DecisionRecordService.instance;
   }
 
+  /**
+   * Pure gate that says whether a decision is allowed to execute given its
+   * governance boundary, confidence level, and approval state. Used by
+   * orchestration layers before performing any side-effect off a decision.
+   */
+  validateGovernanceBoundary(decision: {
+    governanceBoundary?: string;
+    confidence?: string;
+    approvalState?: string;
+  }): { canExecute: boolean; reason?: string } {
+    const { governanceBoundary, confidence, approvalState } = decision;
+
+    if (approvalState === 'rejected') {
+      return { canExecute: false, reason: 'Decision was rejected' };
+    }
+
+    if (approvalState === 'pending_review') {
+      return { canExecute: false, reason: 'Decision pending review' };
+    }
+
+    if (governanceBoundary === 'advisory'
+        && (confidence === 'uncertain' || confidence === 'provisional')) {
+      return { canExecute: false, reason: 'Advisory decision is provisional/uncertain' };
+    }
+
+    return { canExecute: true };
+  }
+
   async createDecision(input: Record<string, unknown>): Promise<DecisionRecord> {
     return this.create({
       organizationId: Number(input.organizationId),
