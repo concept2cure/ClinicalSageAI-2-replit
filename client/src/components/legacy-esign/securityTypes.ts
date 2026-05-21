@@ -461,6 +461,16 @@ export type SignatureType = 'approval' | 'review' | 'authorship' | 'witness';
 export type SignatureStatus = 'pending' | 'signed' | 'declined' | 'expired' | 'revoked';
 
 /** Electronic signature record */
+export type SignatureMeaning =
+  | 'authorship'
+  | 'approval'
+  | 'review'
+  | 'witness'
+  | 'verification'
+  | 'rejection'
+  | 'amendment'
+  | string;
+
 export interface ElectronicSignature {
   id: string;
   documentId: string;
@@ -481,6 +491,18 @@ export interface ElectronicSignature {
   certificateId?: string;
   hash: string; // Document hash at time of signature
   metadata?: Record<string, unknown>;
+  /** Optional metadata carried by older signature records */
+  userId?: string;
+  timestamp?: Date | string;
+  recordId?: string;
+  recordType?: string;
+  reason?: string;
+  signatureHash?: string;
+  hashAlgorithm?: string;
+  sessionId?: string;
+  mfaMethod?: string;
+  biometricVerified?: boolean;
+  [key: string]: unknown;
 }
 
 /** Signature request */
