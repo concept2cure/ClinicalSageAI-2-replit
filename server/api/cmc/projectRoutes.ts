@@ -32,7 +32,7 @@ async function verifyProjectOwnership(projectId: string, orgId: string) {
   const [project] = await db
     .select()
     .from(cmcProjects)
-    .where(and(eq(cmcProjects.id, projectId), eq(cmcProjects.organizationId, orgId)));
+    .where(and(eq(cmcProjects.id, projectId), eq(cmcProjects.organizationId, Number(orgId))));
   return project || null;
 }
 
@@ -96,7 +96,7 @@ router.get('/projects', async (req, res) => {
     const projects = await db
       .select()
       .from(cmcProjects)
-      .where(eq(cmcProjects.organizationId, orgId))
+      .where(eq(cmcProjects.organizationId, Number(orgId)))
       .orderBy(desc(cmcProjects.createdAt));
 
     res.json({ success: true, data: projects });
@@ -190,7 +190,7 @@ router.put('/projects/:id', async (req, res) => {
         organizationId: orgId, // Prevent org reassignment
         updatedAt: new Date(),
       })
-      .where(and(eq(cmcProjects.id, id), eq(cmcProjects.organizationId, orgId)))
+      .where(and(eq(cmcProjects.id, id), eq(cmcProjects.organizationId, Number(orgId))))
       .returning();
 
     res.json({ success: true, data: updatedProject });
@@ -222,7 +222,7 @@ router.delete('/projects/:id', async (req, res) => {
 
     await db
       .delete(cmcProjects)
-      .where(and(eq(cmcProjects.id, id), eq(cmcProjects.organizationId, orgId)));
+      .where(and(eq(cmcProjects.id, id), eq(cmcProjects.organizationId, Number(orgId))));
 
     res.json({ success: true, message: 'Project deleted successfully' });
   } catch (error) {
@@ -516,7 +516,7 @@ router.post('/projects/:projectId/documents', async (req, res) => {
         ...validatedDocumentData,
         createdAt: new Date(),
         updatedAt: new Date(),
-      })
+      } as any)
       .returning();
 
     res.json({ success: true, data: newDocument });
@@ -728,7 +728,7 @@ router.get('/drug-substances', async (req, res) => {
     const orgProjects = await db
       .select({ id: cmcProjects.id })
       .from(cmcProjects)
-      .where(eq(cmcProjects.organizationId, orgId));
+      .where(eq(cmcProjects.organizationId, Number(orgId)));
     const projectIds = orgProjects.map(p => p.id);
     const substances =
       projectIds.length > 0
@@ -755,7 +755,7 @@ router.get('/drug-products', async (req, res) => {
     const orgProjects = await db
       .select({ id: cmcProjects.id })
       .from(cmcProjects)
-      .where(eq(cmcProjects.organizationId, orgId));
+      .where(eq(cmcProjects.organizationId, Number(orgId)));
     const projectIds = orgProjects.map(p => p.id);
     const products =
       projectIds.length > 0

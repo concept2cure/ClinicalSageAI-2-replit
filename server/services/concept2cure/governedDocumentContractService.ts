@@ -344,7 +344,7 @@ function resolveApprovalPathType(
   if (documentClass === 'submission_component' || documentClass === 'module3_output') {
     return 'regulated_dual_review';
   }
-  return semantics.defaultApprovalPath;
+  return semantics!.defaultApprovalPath;
 }
 
 function evaluateExportGates(
@@ -436,7 +436,7 @@ function evaluateExportGates(
 
 export function resolveGovernedContext(context: GovernedMutationContext): GovernedResolutionResult {
   const now = new Date().toISOString();
-  const actorId = context.req.userId || context.req.userEmail || 'unknown';
+  const actorId = String(context.req.userId || context.req.userEmail || 'unknown');
   const body = (context.req.body || {}) as Record<string, unknown>;
   const metadata = (body.metadata || {}) as Record<string, unknown>;
   const traceId =
@@ -467,7 +467,7 @@ export function resolveGovernedContext(context: GovernedMutationContext): Govern
     evidenceMode,
     documentClass,
     readinessGate,
-    approvalPathType: context.approvalPathType || semantics.defaultApprovalPath,
+    approvalPathType: context.approvalPathType || semantics!.defaultApprovalPath,
     recommendationSource: resolveRecommendationSource(context, originSurface, submissionProgram),
     workspaceTarget,
     dossierContainerId: placement.dossierContainerId,

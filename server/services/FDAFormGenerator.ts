@@ -277,7 +277,7 @@ export default class FDAFormGenerator {
 
     // Calculate completeness
     const requiredFields = ['applicantName', 'deviceName', 'deviceClass', 'productCode'];
-    const filledFields = requiredFields.filter(field => formData3514[field] && formData3514[field] !== 'Not Specified');
+    const filledFields = requiredFields.filter(field => (formData3514 as any)[field] && (formData3514 as any)[field] !== 'Not Specified');
     const completeness = Math.round((filledFields.length / requiredFields.length) * 100);
 
     // Generate HTML content
@@ -310,7 +310,7 @@ export default class FDAFormGenerator {
 
     // Calculate completeness
     const requiredFields = ['applicantName', 'deviceName', 'feeCategory', 'paymentMethod', 'feeAmount'];
-    const filledFields = requiredFields.filter(field => formData3601[field] && formData3601[field] !== 'Not Specified');
+    const filledFields = requiredFields.filter(field => (formData3601 as any)[field] && (formData3601 as any)[field] !== 'Not Specified');
     const completeness = Math.round((filledFields.length / requiredFields.length) * 100);
 
     // Generate HTML content
@@ -355,7 +355,7 @@ export default class FDAFormGenerator {
 
     // Calculate completeness
     const requiredFields = ['deviceName', 'intendedUse', 'indications'];
-    const filledFields = requiredFields.filter(field => formData3881[field] && formData3881[field] !== 'Not Specified');
+    const filledFields = requiredFields.filter(field => (formData3881 as any)[field] && (formData3881 as any)[field] !== 'Not Specified');
     const completeness = Math.round((filledFields.length / requiredFields.length) * 100);
 
     // Generate HTML content
@@ -390,7 +390,7 @@ export default class FDAFormGenerator {
 
     // Calculate completeness
     const requiredFields = ['applicantName', 'deviceName', 'certifierName', 'certifierTitle'];
-    const filledFields = requiredFields.filter(field => formData3654[field] && formData3654[field] !== 'Not Specified');
+    const filledFields = requiredFields.filter(field => (formData3654 as any)[field] && (formData3654 as any)[field] !== 'Not Specified');
     const completeness = Math.round((filledFields.length / requiredFields.length) * 100);
 
     // Generate HTML content

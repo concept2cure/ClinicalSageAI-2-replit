@@ -44,7 +44,7 @@ function getOrgId(req: Request): number | null {
 }
 
 async function requireProgramAccess(req: Request, res: Response, next: NextFunction): Promise<void> {
-  const programId = req.params.programId;
+  const programId = String(String(req.params.programId));
   if (!programId) {
     res.status(422).json({ error: 'programId is required' });
     return;
@@ -119,7 +119,7 @@ router.get('/', async (req: Request, res: Response) => {
 
 router.get('/:standardId', async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.standardId, 10);
+    const id = parseInt(String(req.params.standardId), 10);
     if (!Number.isFinite(id)) return res.status(422).json({ error: 'standardId must be an integer' });
     const [row] = await db
       .select()
@@ -142,8 +142,8 @@ router.get(
   requireProgramAccess,
   async (req: Request, res: Response) => {
     try {
-      const rows = await listProgramApplicability(req.params.programId);
-      res.json({ programId: req.params.programId, applicability: rows, count: rows.length });
+      const rows = await listProgramApplicability(String(req.params.programId));
+      res.json({ programId: String(req.params.programId), applicability: rows, count: rows.length });
     } catch (err: any) {
       res.status(500).json({ error: 'Applicability fetch failed', detail: err?.message });
     }
@@ -156,13 +156,13 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const profile = await buildProgramProfile(
-        req.params.programId,
+        String(req.params.programId),
         parseProfileOverrides(req)
       );
       if (!profile) return res.status(404).json({ error: 'Program not found' });
       const recs = await recommendApplicability(profile);
       res.json({
-        programId: req.params.programId,
+        programId: String(req.params.programId),
         profile,
         recommendations: recs,
         applicableCount: recs.filter(r => r.applicability === 'applies').length,
@@ -179,11 +179,11 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const profile = await buildProgramProfile(
-        req.params.programId,
+        String(req.params.programId),
         parseProfileOverrides(req)
       );
       if (!profile) return res.status(404).json({ error: 'Program not found' });
-      const report = await applicabilityGapReport(req.params.programId, profile);
+      const report = await applicabilityGapReport(String(req.params.programId), profile);
       res.json(report);
     } catch (err: any) {
       res.status(500).json({ error: 'Gap report failed', detail: err?.message });
@@ -195,7 +195,7 @@ router.get(
   '/applicability/:applicabilityId/freshness',
   async (req: Request, res: Response) => {
     try {
-      const result = await checkConformanceFreshness(req.params.applicabilityId);
+      const result = await checkConformanceFreshness(String(req.params.applicabilityId));
       if (!result) return res.status(404).json({ error: 'Applicability row not found' });
       res.json(result);
     } catch (err: any) {

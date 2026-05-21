@@ -81,7 +81,8 @@ import {
 // Thin facade over getPool() so the extracted body keeps its `dbPool.query(...)`
 // shape without needing to touch the original handler.
 const dbPool = {
-  query: (...args: Parameters<ReturnType<typeof getPool>['query']>) => getPool().query(...args),
+  query: (text: string, values?: any[]): Promise<{ rows: any[]; rowCount: number }> =>
+    (getPool() as any).query(text, values),
 };
 
 /** Register POST /stream on the given router. */
@@ -106,7 +107,7 @@ router.post('/stream', async (req: Request, res: Response) => {
     }
 
     const gw = ensureGateway();
-    const deterministicMode = gw?.isDeterministicMode?.() || false;
+    const deterministicMode = (gw as any)?.isDeterministicMode?.() || false;
     if (!gw || (!deterministicMode && gw.getEnabledProviders().length === 0)) {
       return sendError(res, 503, 'No AI providers available.', null, 'GATEWAY_UNAVAILABLE');
     }
@@ -281,7 +282,7 @@ router.post('/stream', async (req: Request, res: Response) => {
     }
 
     // Use rewritten message if slash command or @app mention was detected
-    const effectiveMessage = enrichment.rewrittenMessage || message;
+    const effectiveMessage = (enrichment as any).rewrittenMessage || message;
 
     // Split into stable prefix (cached) + volatile suffix (per-turn) — see /chat
     // handler for rationale. The Claude gateway marks the stable block with
@@ -698,7 +699,7 @@ router.post('/stream', async (req: Request, res: Response) => {
             userRole: effectiveRole,
           };
           const { processCommandsInResponse } =
-            await import('../services/ana-ri/command-executor.js');
+            (await import('../../services/ana-ri/command-executor.js')) as any;
           const cmdResult = await processCommandsInResponse(contentForCommandProcessing, cmdCtx);
           executedCommands = cmdResult.executedCommands;
           cleanedFullContent = cmdResult.cleanedText ? cmdResult.cleanedText : contentForCommandProcessing;
@@ -828,7 +829,7 @@ router.post('/stream', async (req: Request, res: Response) => {
           executedActions: executedActions.length > 0 ? executedActions : undefined,
           executedCommands: executedCommands.length > 0 ? executedCommands : undefined,
           enrichmentSources: enrichment.sources.length > 0 ? enrichment.sources : undefined,
-          enrichmentMeta: enrichment.enrichmentMeta || undefined,
+          enrichmentMeta: (enrichment as any).enrichmentMeta || undefined,
           evidence: streamEvidenceVerdict || undefined,
           evidenceDiscipline: streamEvidenceCheck
             ? {

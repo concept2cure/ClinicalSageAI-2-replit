@@ -98,7 +98,7 @@ export class AcademicKnowledgeTracker {
         })
         .returning();
 
-      return newResource;
+      return newResource as unknown as AcademicResource;
     } catch (error) {
       console.error('Failed to add academic resource:', error);
       throw new Error('Failed to add academic resource to the knowledge base');
@@ -122,7 +122,7 @@ export class AcademicKnowledgeTracker {
         })
         .returning();
 
-      return newEmbedding;
+      return newEmbedding as unknown as AcademicEmbedding;
     } catch (error) {
       console.error('Failed to store embedding:', error);
       throw new Error('Failed to store academic resource embedding');
@@ -137,7 +137,7 @@ export class AcademicKnowledgeTracker {
    */
   async getResource(id: number): Promise<AcademicResource | undefined> {
     try {
-      const resource = await db.query.academicResources.findFirst({
+      const resource = await (db.query as any).academicResources.findFirst({
         where: eq(academicResources.id, id),
         with: {
           embeddings: true,
@@ -240,8 +240,8 @@ export class AcademicKnowledgeTracker {
   ): Promise<Array<AcademicResource & { similarity: number }>> {
     try {
       // Get embeddings with similarity scores above threshold
-      const results = await db.execute(
-        `SELECT e.*, r.*, 
+      const results = (await (db as any).execute(
+        `SELECT e.*, r.*,
          (e.vector <=> $1) as similarity
          FROM academic_embeddings e
          JOIN academic_resources r ON e.resource_id = r.id
@@ -249,11 +249,12 @@ export class AcademicKnowledgeTracker {
          ORDER BY similarity ASC
          LIMIT $3`,
         [embedVector, 1 - similarityThreshold, limit]
-      );
+      )) as { rows: any[] } | any[];
+      const rows: any[] = Array.isArray(results) ? results : results.rows ?? [];
 
       // Map results and update access counts for retrieved resources
       const resourceIds = new Set<number>();
-      const mappedResults = results.map((row: any) => {
+      const mappedResults = rows.map((row: any) => {
         resourceIds.add(row.resource_id);
         return {
           id: row.resource_id,
@@ -394,7 +395,9 @@ export class AcademicKnowledgeTracker {
         totalResources,
         resourcesByType,
         resourcesByCategory,
-        mostAccessedResources,
+        mostAccessedResources: mostAccessedResources as Array<
+          Pick<AcademicResource, 'id' | 'title' | 'accessCount'>
+        >,
         recentlyAddedResources,
       };
     } catch (error) {

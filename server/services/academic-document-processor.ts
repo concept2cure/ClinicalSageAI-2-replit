@@ -48,7 +48,7 @@ export class AcademicDocumentProcessor {
   private models = getHuggingfaceModels();
 
   constructor() {
-    this.huggingFaceService = new HuggingFaceService();
+    this.huggingFaceService = new HuggingFaceService(process.env.HF_API_KEY || '');
     this.academicKnowledgeBase = new Map();
     this.documentEmbeddings = new Map();
     this.documentMetadata = new Map();
@@ -121,13 +121,13 @@ export class AcademicDocumentProcessor {
       const base64Data = fileBuffer.toString('base64');
 
       // Extract text from PDF using Hugging Face
-      const extractTextResponse = await this.huggingFaceService.extractTextFromPdf(base64Data);
+      const extractTextResponse = await (this.huggingFaceService as any).extractTextFromPdf(fileBuffer);
 
-      if (!extractTextResponse || !extractTextResponse.text) {
+      if (!extractTextResponse || !(extractTextResponse as any).text) {
         throw new Error('Failed to extract text from PDF');
       }
 
-      const text = extractTextResponse.text;
+      const text = (extractTextResponse as any).text;
 
       // Extract document metadata using Hugging Face
       const documentInfo = await this.huggingFaceService.extractDocumentMetadata(text);
@@ -149,12 +149,12 @@ export class AcademicDocumentProcessor {
       }
 
       // Extract key insights
-      const insightsResponse = await this.huggingFaceService.extractKeyInsights(text);
-      const keyInsights = insightsResponse?.insights || [];
+      const insightsResponse = await (this.huggingFaceService as any).extractKeyInsights(text);
+      const keyInsights = (insightsResponse as any)?.insights || [];
 
       // Generate tags
-      const tagsResponse = await this.huggingFaceService.generateTags(text);
-      const tags = tagsResponse?.tags || [];
+      const tagsResponse = await (this.huggingFaceService as any).generateTags(text);
+      const tags = (tagsResponse as any)?.tags || [];
 
       // Generate embeddings for the document
       const embedding = await this.huggingFaceService.generateEmbeddings(text);
@@ -178,7 +178,7 @@ export class AcademicDocumentProcessor {
 
       // Save document data
       this.academicKnowledgeBase.set(documentId, documentData);
-      this.documentEmbeddings.set(documentId, embedding);
+      this.documentEmbeddings.set(documentId, new Float32Array(embedding || []));
       this.documentMetadata.set(documentId, {
         title,
         type,
@@ -224,7 +224,7 @@ export class AcademicDocumentProcessor {
       const similarityScores: { id: string; score: number }[] = [];
 
       for (const [documentId, embedding] of this.documentEmbeddings.entries()) {
-        const similarity = this.calculateCosineSimilarity(queryEmbedding, embedding);
+        const similarity = this.calculateCosineSimilarity(new Float32Array(queryEmbedding || []), embedding);
         similarityScores.push({ id: documentId, score: similarity });
       }
 

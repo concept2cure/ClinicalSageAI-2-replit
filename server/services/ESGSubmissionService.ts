@@ -10,6 +10,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import archiver from 'archiver';
+// @ts-ignore — xml2js has no bundled types
 import xml2js from 'xml2js';
 
 interface ESGSubmissionConfig {
@@ -141,13 +142,14 @@ class ESGSubmissionService {
     const packageId = `PKG-${Date.now()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 
     // Create submission package record
+    const proj = project as any;
     await db!.insert(fda510kSubmissionPackages).values({
       organizationId,
       projectId,
       packageId,
-      packageName: `510k_${project.projectName}_${new Date().toISOString().split('T')[0]}`,
+      packageName: `510k_${proj.projectName}_${new Date().toISOString().split('T')[0]}`,
       packageType: '510k',
-      documents: documents.map(d => ({
+      documents: documents.map((d: any) => ({
         documentId: d.documentId,
         title: d.title,
         type: d.documentType,
@@ -155,22 +157,22 @@ class ESGSubmissionService {
       })),
       attachments: [],
       estarData: {
-        projectName: project.projectName,
+        projectName: proj.projectName,
         submissionType: '510k',
-        deviceName: project.projectMetadata?.deviceName || '',
-        indicationsForUse: project.projectMetadata?.indicationsForUse || ''
+        deviceName: proj.projectMetadata?.deviceName || '',
+        indicationsForUse: proj.projectMetadata?.indicationsForUse || ''
       },
       submissionMethod: 'esg',
       status: 'ready',
       createdAt: new Date(),
       updatedAt: new Date()
-    });
+    } as any);
 
     return {
       projectId,
       packageId,
       documents,
-      metadata: project.projectMetadata
+      metadata: proj.projectMetadata
     };
   }
 
@@ -407,7 +409,7 @@ class ESGSubmissionService {
       organizationId,
       metadata: JSON.stringify(metadata),
       timestamp: new Date()
-    });
+    } as any);
   }
 
   /**

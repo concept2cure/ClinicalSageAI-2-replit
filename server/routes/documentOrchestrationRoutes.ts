@@ -182,7 +182,7 @@ router.get('/api/510k/documents/:documentId/pdf/3601', async (req, res) => {
       });
     }
 
-    const formData = JSON.parse(document.content);
+    const formData = JSON.parse(document.content ?? "{}");
     generateForm3601PDF(res, formData);
   } catch (error) {
     console.error('Error generating PDF:', error);
@@ -212,7 +212,7 @@ router.get('/api/510k/documents/:documentId/pdf/3514', async (req, res) => {
       });
     }
 
-    const formData = JSON.parse(document.content);
+    const formData = JSON.parse(document.content ?? "{}");
     generateForm3514PDF(res, formData);
   } catch (error) {
     console.error('Error generating PDF:', error);
@@ -242,7 +242,7 @@ router.get('/api/510k/documents/:documentId/pdf/3881', async (req, res) => {
       });
     }
 
-    const formData = JSON.parse(document.content);
+    const formData = JSON.parse(document.content ?? "{}");
     generateForm3881PDF(res, formData);
   } catch (error) {
     console.error('Error generating PDF:', error);
@@ -257,7 +257,7 @@ router.get('/api/510k/documents/:documentId/pdf/3881', async (req, res) => {
  * Helper function to generate FDA Form 3601 PDF
  */
 function generateForm3601PDF(res: Response, formData: any) {
-  const doc = new PDFDocument({ margin: 50 });
+  const doc = new PDFDocument({ margins: { top: 50, bottom: 50, left: 50, right: 50 } });
 
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', 'attachment; filename=FDA-Form-3601.pdf');
@@ -304,7 +304,7 @@ function generateForm3601PDF(res: Response, formData: any) {
  * Helper function to generate FDA Form 3514 PDF
  */
 function generateForm3514PDF(res: Response, formData: any) {
-  const doc = new PDFDocument({ margin: 50 });
+  const doc = new PDFDocument({ margins: { top: 50, bottom: 50, left: 50, right: 50 } });
 
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', 'attachment; filename=FDA-Form-3514.pdf');
@@ -344,7 +344,7 @@ function generateForm3514PDF(res: Response, formData: any) {
  * Helper function to generate FDA Form 3881 PDF
  */
 function generateForm3881PDF(res: Response, formData: any) {
-  const doc = new PDFDocument({ margin: 50 });
+  const doc = new PDFDocument({ margins: { top: 50, bottom: 50, left: 50, right: 50 } });
 
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', 'attachment; filename=FDA-Form-3881.pdf');

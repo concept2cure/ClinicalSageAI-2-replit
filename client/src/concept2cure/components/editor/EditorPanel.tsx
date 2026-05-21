@@ -1876,8 +1876,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           sentenceCounter += 1;
           nextLinks.push({
             id: `trace-${Date.now()}-${sentenceCounter}`,
-            sourceId: src.id,
-            sourceHash: src.sourceHash || src.id,
+            sourceId: src.id ?? '',
+            sourceHash: src.sourceHash || src.id || '',
             targetRange: { from: 0, to: 0 },
             linkedText: cleanSentence,
             createdAt: new Date().toISOString(),
@@ -1888,11 +1888,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       setTraceabilityLinks(nextLinks);
       setTraceabilitySources(
         aiProvenance.sources.map(src => ({
-          id: src.id,
-          title: src.name || src.title || src.id,
+          id: src.id ?? '',
+          title: src.name || src.title || src.id || '',
           type: src.type,
           version: src.version,
-          hash: src.sourceHash || src.id,
+          hash: src.sourceHash || src.id || '',
           confidence: src.confidence,
         }))
       );
@@ -3802,7 +3802,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             showCompliance={true}
             showTraceability={true}
             traceabilityLinks={traceabilityLinks}
-            sources={traceabilitySources}
+            sources={traceabilitySources as any}
             templateStructure={templateStructure}
             complianceIssues={complianceIssues as any}
             onComplianceIssuesFound={(issues: any[]) => {

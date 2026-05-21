@@ -16,8 +16,10 @@ import medicalDeviceService from '../services/medicalDeviceService';
 import predicateFinderService from '../services/PredicateFinderService';
 import { eSTARValidator } from '../services/eSTARValidator';
 import { UnifiedCERService } from '../services/cer';
-import { searchDeviceReports, analyzeMaudeData } from '../fda_maude_client.js';
-import { gatherIntegratedData } from '../data_integration.js';
+import fdaMaudeClient from '../fda_maude_client.js';
+import dataIntegration from '../data_integration.js';
+const { searchDeviceReports, analyzeMaudeData } = fdaMaudeClient as any;
+const { gatherIntegratedData } = dataIntegration as any;
 
 const logger = createScopedLogger('medical-device-api');
 const router = Router();
@@ -142,7 +144,7 @@ router.post('/predicates/search', async (req: Request, res: Response) => {
  */
 router.get('/predicates/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     
     logger.info('Fetching predicate details', { predicateId: id });
 
@@ -404,12 +406,12 @@ router.post('/submissions', async (req: Request, res: Response) => {
  */
 router.get('/submissions/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     logger.info('Fetching submission', { submissionId: id });
 
     const organizationId = Number((req as any).tenantContext?.organizationId || (req as any).organizationId);
-    const submission = await medicalDeviceService.get510kSubmission(organizationId, id);
+    const submission = await medicalDeviceService.get510kSubmission(organizationId, Number(id));
 
     if (!submission) {
       return res.status(404).json({ success: false, error: 'Submission not found' });
@@ -431,7 +433,7 @@ router.get('/submissions/:id', async (req: Request, res: Response) => {
  */
 router.patch('/submissions/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const validated = SubmissionUpdateSchema.parse(req.body);
     const organizationId = Number((req as any).tenantContext?.organizationId || (req as any).organizationId);
     const userId = (req as any).user?.id || 'system';
@@ -440,7 +442,7 @@ router.patch('/submissions/:id', async (req: Request, res: Response) => {
 
     const updated = await medicalDeviceService.update510kSubmission(
       organizationId,
-      id,
+      Number(id),
       validated,
       userId
     );
@@ -464,7 +466,7 @@ router.patch('/submissions/:id', async (req: Request, res: Response) => {
  */
 router.get('/submissions/:id/estar', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     res.json({
       success: true,
@@ -538,7 +540,7 @@ router.post('/submissions/:id/estar/:sectionId/generate', async (req: Request, r
  */
 router.post('/submissions/:id/estar/validate', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const { strictMode = false } = req.body || {};
 
     logger.info('Validating eSTAR package (submission)', { submissionId: id });
@@ -737,7 +739,7 @@ router.post('/cer', async (req: Request, res: Response) => {
  */
 router.get('/cer/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     res.json({
       success: true,

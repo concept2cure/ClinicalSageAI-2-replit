@@ -329,7 +329,7 @@ export class WorkflowService {
         and(
           // Using the SQL template string syntax to compare the moduleType column with the parameter
           sql`${workflowTemplates.moduleType} = ${moduleType}`,
-          eq(workflowTemplates.organizationId, organizationId),
+          eq(workflowTemplates.organizationId, Number(organizationId)),
           eq(workflowTemplates.isActive, true)
         )
       );
@@ -664,7 +664,7 @@ export class WorkflowService {
       .where(
         and(
           eq(documentWorkflows.status, 'active'),
-          eq(documentWorkflows.organizationId, organizationId)
+          eq(documentWorkflows.organizationId, Number(organizationId))
         )
       )
       .limit(pageSize)
@@ -689,7 +689,7 @@ export class WorkflowService {
     }
 
     // Templates are cached, so parallel fetches are fast (cache hits)
-    const uniqueTemplateIds = [...new Set(workflows.map((w: any) => w.templateId))];
+    const uniqueTemplateIds: number[] = [...new Set(workflows.map((w: any) => w.templateId as number))];
     const templateMap = new Map<number, any>();
     await Promise.all(
       uniqueTemplateIds.map(async (tid: number) => {
@@ -725,7 +725,7 @@ export class WorkflowService {
       .where(
         and(
           eq(documentWorkflows.status, 'completed'),
-          eq(documentWorkflows.organizationId, organizationId)
+          eq(documentWorkflows.organizationId, Number(organizationId))
         )
       )
       .orderBy(desc(documentWorkflows.completedAt))
@@ -750,7 +750,7 @@ export class WorkflowService {
     }
 
     // Templates are cached via LRU
-    const uniqueTemplateIds = [...new Set(workflows.map((w: any) => w.templateId))];
+    const uniqueTemplateIds: number[] = [...new Set(workflows.map((w: any) => w.templateId as number))];
     const templateMap = new Map<number, any>();
     await Promise.all(
       uniqueTemplateIds.map(async (tid: number) => {
@@ -781,7 +781,7 @@ export class WorkflowService {
       .where(
         and(
           eq(documentWorkflows.status, 'active'),
-          eq(documentWorkflows.organizationId, organizationId)
+          eq(documentWorkflows.organizationId, Number(organizationId))
         )
       );
 

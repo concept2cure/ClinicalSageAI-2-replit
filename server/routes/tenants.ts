@@ -80,7 +80,7 @@ router.get('/', async (req, res) => {
       })
       .from(organizationUsers)
       .innerJoin(organizations, eq(organizations.id, organizationUsers.organizationId))
-      .where(eq(organizationUsers.userId, req.userId));
+      .where(eq(organizationUsers.userId, typeof req.userId === 'number' ? req.userId : parseInt(String(req.userId), 10)));
 
     const tenants = userOrgs.map(row => row.organization);
     res.json(tenants);
@@ -95,7 +95,7 @@ router.get('/', async (req, res) => {
  * Get details for a specific tenant
  */
 router.get('/:id', validateTenantAccessMiddleware, async (req, res) => {
-  const tenantId = parseInt(req.params.id);
+  const tenantId = parseInt(String(req.params.id));
 
   try {
     const tenant = await db
@@ -184,7 +184,7 @@ router.post(
       if (req.userId && newTenant[0]) {
         await db.insert(organizationUsers).values({
           organizationId: newTenant[0].id,
-          userId: req.userId,
+          userId: typeof req.userId === 'number' ? req.userId : parseInt(String(req.userId), 10),
           role: 'admin',
           joinedAt: new Date(),
         });
@@ -207,7 +207,7 @@ router.post(
  * Requires admin role or super_admin role
  */
 router.patch('/:id', validateTenantAccessMiddleware, requireAdminRole, async (req, res) => {
-  const tenantId = parseInt(req.params.id);
+  const tenantId = parseInt(String(req.params.id));
 
   try {
     // Validate request body
@@ -263,7 +263,7 @@ router.patch('/:id', validateTenantAccessMiddleware, requireAdminRole, async (re
  * Requires super_admin role
  */
 router.delete('/:id', requireSuperAdminRole, async (req, res) => {
-  const tenantId = parseInt(req.params.id);
+  const tenantId = parseInt(String(req.params.id));
 
   try {
     // Check if tenant exists
@@ -293,7 +293,7 @@ router.delete('/:id', requireSuperAdminRole, async (req, res) => {
  * Requires admin role
  */
 router.post('/:id/api-key', validateTenantAccessMiddleware, requireAdminRole, async (req, res) => {
-  const tenantId = parseInt(req.params.id);
+  const tenantId = parseInt(String(req.params.id));
 
   try {
     // Check if tenant exists

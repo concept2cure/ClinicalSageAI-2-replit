@@ -77,7 +77,7 @@ const log = createScopedLogger('regulatory-precedent-intel-routes');
 // ─── Helper ──────────────────────────────────────────────────────────────────
 
 function getOrgId(req: Request): string {
-  const explicit = (req as Record<string, unknown>).organizationId as string | undefined;
+  const explicit = (req as unknown as Record<string, unknown>).organizationId as string | undefined;
   if (explicit) return explicit;
   const fromUser = (req as any).user?.organizationId || (req as any).tenantId;
   return fromUser ? String(fromUser) : 'default';
@@ -115,7 +115,7 @@ router.get('/crl/stats/by-category', async (req: Request, res: Response) => {
 
 router.get('/crl/:id', async (req: Request, res: Response) => {
   try {
-    const pattern = await crlTriggerService.getPattern(req.params.id, getOrgId(req));
+    const pattern = await crlTriggerService.getPattern(String(req.params.id), getOrgId(req));
     if (!pattern) return res.status(404).json({ error: 'Pattern not found' });
     res.json(pattern);
   } catch (error) {
@@ -198,7 +198,7 @@ router.get('/rtf/stats/by-center', async (req: Request, res: Response) => {
 
 router.get('/rtf/:id', async (req: Request, res: Response) => {
   try {
-    const pattern = await rtfTriggerService.getPattern(req.params.id, getOrgId(req));
+    const pattern = await rtfTriggerService.getPattern(String(req.params.id), getOrgId(req));
     if (!pattern) return res.status(404).json({ error: 'Pattern not found' });
     res.json(pattern);
   } catch (error) {
@@ -232,7 +232,7 @@ router.post('/rtf/prevention-report', async (req: Request, res: Response) => {
 
 router.get('/rtf/:id/recovery-playbook', async (req: Request, res: Response) => {
   try {
-    const playbook = await rtfTriggerService.getRecoveryPlaybook(req.params.id, getOrgId(req));
+    const playbook = await rtfTriggerService.getRecoveryPlaybook(String(req.params.id), getOrgId(req));
     if (!playbook) return res.status(404).json({ error: 'Pattern not found' });
     res.json(playbook);
   } catch (error) {
@@ -258,7 +258,7 @@ router.post('/ema/search', async (req: Request, res: Response) => {
 
 router.get('/ema/:id', async (req: Request, res: Response) => {
   try {
-    const pattern = await emaQuestionTaxonomyService.getPattern(req.params.id, getOrgId(req));
+    const pattern = await emaQuestionTaxonomyService.getPattern(String(req.params.id), getOrgId(req));
     if (!pattern) return res.status(404).json({ error: 'Pattern not found' });
     res.json(pattern);
   } catch (error) {
@@ -329,7 +329,7 @@ router.get('/advisory-committee/committee-types', async (req: Request, res: Resp
 
 router.get('/advisory-committee/:id', async (req: Request, res: Response) => {
   try {
-    const pattern = await advisoryCommitteeService.getPattern(req.params.id, getOrgId(req));
+    const pattern = await advisoryCommitteeService.getPattern(String(req.params.id), getOrgId(req));
     if (!pattern) return res.status(404).json({ error: 'Pattern not found' });
     res.json(pattern);
   } catch (error) {
@@ -416,7 +416,7 @@ router.post('/confidence/predictions', async (req: Request, res: Response) => {
 router.post('/confidence/predictions/:id/resolve', async (req: Request, res: Response) => {
   try {
     const entry = await confidenceCalibrationService.resolvePrediction({
-      id: req.params.id,
+      id: String(req.params.id),
       organizationId: getOrgId(req),
       ...req.body,
     });

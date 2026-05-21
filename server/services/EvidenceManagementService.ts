@@ -98,13 +98,13 @@ export class EvidenceManagementService {
         Return as JSON with these fields.
       `;
 
-      const response = await this.ai.chat({
+      const response = await (this as any).ai?.chat?.({
         model: 'gpt-4o',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3,
       });
 
-      const extracted = JSON.parse(aiResult.content || '{}');
+      const extracted = JSON.parse(response?.content || '{}');
 
       return {
         test_type: extracted.test_type || this.inferTestType(fileName),
@@ -229,7 +229,7 @@ export class EvidenceManagementService {
    */
   async performGapAnalysis(projectId: string, organizationId: number) {
     // Get all files for the project
-    const files = await db.execute(sql`
+    const files = (await db.execute(sql`
       SELECT
         fda_requirement,
         fda_section,
@@ -240,7 +240,7 @@ export class EvidenceManagementService {
         project_id = ${projectId}
         AND organization_id = ${organizationId}
       GROUP BY fda_requirement, fda_section, regulatory_status
-    `);
+    `)).rows as any[];
 
     // Analyze gaps
     const gaps = [];
@@ -292,10 +292,10 @@ export class EvidenceManagementService {
    * Generate citations for document editor
    */
   async generateCitations(fileIds: string[], format: 'apa' | 'ieee' | 'custom' = 'custom') {
-    const files = await db.execute(sql`
+    const files = ((await db.execute(sql`
       SELECT * FROM device_data_center
       WHERE id = ANY(${fileIds})
-    `);
+    `)).rows as any[]);
 
     const citations = files.map((file: any) => {
       const extracted = file.extracted_data || {};
@@ -370,7 +370,7 @@ export class EvidenceManagementService {
    */
   async autoPopulateForm(formId: string, projectId: string) {
     // Get relevant evidence files
-    const evidence = await db.execute(sql`
+    const evidence = ((await db.execute(sql`
       SELECT
         fda_requirement,
         fda_section,
@@ -382,7 +382,7 @@ export class EvidenceManagementService {
         project_id = ${projectId}
         AND regulatory_status = 'approved'
         AND extracted_data IS NOT NULL
-    `);
+    `)).rows as any[]);
 
     // Map evidence to form fields
     const formData: any = {};
@@ -476,7 +476,7 @@ export class EvidenceManagementService {
    * Export evidence package for submission
    */
   async exportEvidencePackage(projectId: string, organizationId: number) {
-    const evidence = await db.execute(sql`
+    const evidence = ((await db.execute(sql`
       SELECT
         fda_requirement,
         fda_section,
@@ -490,14 +490,14 @@ export class EvidenceManagementService {
         AND organization_id = ${organizationId}
         AND regulatory_status = 'approved'
       ORDER BY fda_requirement, fda_section
-    `);
+    `)).rows as any[]);
 
     // Organize by requirement
     const organized: any = {};
     for (const file of evidence) {
       if (!organized[file.fda_requirement]) {
         organized[file.fda_requirement] = {
-          requirement: FDA_REQUIREMENTS_MAP[file.fda_requirement]?.name,
+          requirement: (FDA_REQUIREMENTS_MAP as any)[file.fda_requirement]?.name,
           sections: {},
         };
       }

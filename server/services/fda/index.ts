@@ -63,7 +63,7 @@ export class UnifiedFDAService {
   }
 
   async generateForm(formNumber: string): Promise<FDAFormData> {
-    const { FDAFormGenerator } = await import('../FDAFormGenerator');
+    const { default: FDAFormGenerator } = await import('../FDAFormGenerator');
     const generator = new FDAFormGenerator();
     return generator.generate(formNumber, this.config);
   }

@@ -461,7 +461,11 @@ export async function computeSHA256(blob: Blob): Promise<string | null> {
     rawBuffer instanceof ArrayBuffer
       ? new Uint8Array(rawBuffer)
       : ArrayBuffer.isView(rawBuffer)
-        ? new Uint8Array(rawBuffer.buffer, rawBuffer.byteOffset, rawBuffer.byteLength)
+        ? new Uint8Array(
+            (rawBuffer as ArrayBufferView).buffer,
+            (rawBuffer as ArrayBufferView).byteOffset,
+            (rawBuffer as ArrayBufferView).byteLength
+          )
         : new TextEncoder().encode(String(rawBuffer));
 
   const hashBuffer = await crypto.subtle.digest('SHA-256', digestInput);
