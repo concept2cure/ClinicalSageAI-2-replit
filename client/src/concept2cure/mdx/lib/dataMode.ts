@@ -70,6 +70,35 @@ export const MDX_SURFACE_REGISTRY: SurfaceRegistration[] = [
   { id: 'validation',       label: 'Validation center',       defaultMode: 'fixture',                            },
   { id: 'submissions',      label: 'Submission center',       defaultMode: 'fixture',                            },
   { id: 'templates',        label: 'Templates',               defaultMode: 'fixture',                            },
+  // Phase 4 — MDX lifecycle + system surfaces. Data modules ported from
+  // design-system/ui_kits/mdx/data/*.js to client/src/concept2cure/mdx/data/*.ts.
+  // Surface TSX ports + hook wiring ship in follow-up PRs; in the meantime
+  // each surface stays stub'd via MDX_STUBS until its port lands.
+  { id: 'engineering',      label: 'Device engineering',      defaultMode: 'fixture',  expectedLiveBy: '2026-09-01' },
+  { id: 'udi',              label: 'UDI and labeling',        defaultMode: 'fixture',  expectedLiveBy: '2026-09-15' },
+  { id: 'postmarket',       label: 'Post-market vigilance',   defaultMode: 'fixture',  expectedLiveBy: '2026-10-01' },
+  { id: 'analytics',        label: 'Analytics',               defaultMode: 'fixture',  expectedLiveBy: '2026-10-15' },
+  { id: 'memory',           label: 'AnA memory',              defaultMode: 'fixture',  expectedLiveBy: '2026-10-15' },
+  { id: 'admin',            label: 'Admin and access',        defaultMode: 'fixture',  expectedLiveBy: '2026-09-01' },
+  // Phase 5 — must-have-for-beta surfaces (per PHASE_5_INSTALL.md §1.8).
+  // 'both' default: try live, fall back to fixture. E-signature is the
+  // exception — there is no acceptable fixture mode for a Part-11 signing,
+  // so the modal must error out if the backend is unreachable.
+  { id: 'vault',            label: 'Document vault',          defaultMode: 'both',     expectedLiveBy: '2026-08-15' },
+  { id: 'audit',            label: 'Audit log',               defaultMode: 'both',     expectedLiveBy: '2026-07-15' },
+  { id: 'notifications',    label: 'Notifications',           defaultMode: 'both',     expectedLiveBy: '2026-08-01' },
+  { id: 'templates-medtech',label: 'Templates (medtech)',     defaultMode: 'both',     expectedLiveBy: '2026-08-01' },
+  { id: 'quality',          label: 'Quality system',          defaultMode: 'both',     expectedLiveBy: '2026-09-15' },
+  { id: 'esig',             label: 'E-signature flow',        defaultMode: 'live',     expectedLiveBy: '2026-07-01' },
+  // Phase 6 — diagnostic-client surfaces (per PHASE_6_INSTALL.md).
+  { id: 'ivd',              label: 'IVD pathway',             defaultMode: 'fixture',  expectedLiveBy: '2026-11-01' },
+  { id: 'ivdr',             label: 'EU IVDR',                 defaultMode: 'fixture',  expectedLiveBy: '2026-11-15' },
+  { id: 'cdx',              label: 'Companion diagnostic',    defaultMode: 'fixture',  expectedLiveBy: '2026-12-01' },
+  { id: 'ldt',              label: 'LDT compliance',          defaultMode: 'fixture',  expectedLiveBy: '2026-10-15' },
+  // Phase 8 — cross-cutting surfaces.
+  { id: 'search',           label: 'Global search',           defaultMode: 'fixture',  expectedLiveBy: '2026-09-15' },
+  { id: 'onboarding',       label: 'Onboarding importer',     defaultMode: 'fixture',  expectedLiveBy: '2026-10-15' },
+  { id: 'conversations',    label: 'AnA conversations',       defaultMode: 'fixture',  expectedLiveBy: '2026-09-15' },
 ];
 
 const REGISTRY_BY_ID: Record<string, SurfaceRegistration> = MDX_SURFACE_REGISTRY.reduce(

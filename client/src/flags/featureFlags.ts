@@ -217,6 +217,22 @@ export const featureFlags: Record<string, FeatureFlag> = {
     defaultValue: true,
     enabled: true,
   },
+
+  // Phase 7 PDEV workstream — IND program lifecycle UI.
+  // Sub-phases 7.0 + 7.1 ship rail + Overview + Workstream drill + Activity
+  // detail State tab (read-only, no mutations). Wired against four routes:
+  //   /api/pdev/registry, /api/pdev/programs/:id,
+  //   /api/pdev/programs/:id/readiness, /api/pdev/programs/:id/workstreams/:ws.
+  // Default off in production; flip on per-tenant once Phase 7.2 mutations
+  // ship to make the surface actionable end-to-end.
+  ENABLE_PDEV_SURFACE: {
+    id: 'ENABLE_PDEV_SURFACE',
+    name: 'PDEV workstream surface',
+    description:
+      'Enables the Phase 7 PDEV (Pharmaceutical Development) UI under /concept2cure/pdev — IND program dashboard, workstream drill, and activity detail. Read-only in sub-phases 7.0 + 7.1; mutations land in later sub-phases.',
+    defaultValue: false,
+    enabled: false,
+  },
 };
 
 /**
