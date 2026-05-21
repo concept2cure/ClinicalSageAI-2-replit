@@ -16,33 +16,26 @@ describe('conversation proposal persistence consequence projection', () => {
   });
 
   it('hydrates proposal list with latest accepted governed consequence state', async () => {
-    queryMock
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: 'prop_1',
-            conversation_id: 'conv_1',
-            artifact_id: 'artifact_seed',
-            content: 'draft',
-            status: 'accepted',
-            created_at: new Date('2026-03-27T00:00:00.000Z'),
-          },
-        ],
-      })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            proposal_id: 'prop_1',
-            artifact_external_id: 'artifact_governed_1',
-            artifact_version: 3,
-            artifact_status: 'review',
-            placement_state: 'm5',
-            provenance_event_id: 'prov_1',
-            audit_id: 'audit_1',
-            governance_state: 'ACCEPTED_GOVERNED',
-          },
-        ],
-      });
+    // listProposals now uses a single JOIN-style query — the governance
+    // columns come back on the same row as the proposal.
+    queryMock.mockResolvedValueOnce({
+      rows: [
+        {
+          id: 'prop_1',
+          conversation_id: 'conv_1',
+          artifact_id: 'artifact_governed_1',
+          content: 'draft',
+          status: 'accepted',
+          created_at: new Date('2026-03-27T00:00:00.000Z'),
+          artifact_version: 3,
+          artifact_status: 'review',
+          placement_state: 'm5',
+          provenance_event_id: 'prov_1',
+          audit_id: 'audit_1',
+          governance_state: 'ACCEPTED_GOVERNED',
+        },
+      ],
+    });
 
     const proposals = await conversationPersistence.listProposals({
       projectId: '55',

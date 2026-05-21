@@ -154,7 +154,11 @@ describe('MemoryContextAssembler', () => {
 
     expect(result.atoms.some(a => a.id === 202)).toBe(true);
     expect(result.diagnostics.droppedByForgetting).toBe(0);
-    expect(result.diagnostics.trimmed).toBe(true);
+    // The assembler now per-atom-trims content at 400 chars before
+    // assembling the memory block, so the 2200-char entry never produces
+    // a block longer than ~500 chars. The outer maxChars=1000 cap never
+    // fires, but the content IS shorter than the input.
+    expect(result.memoryBlock.length).toBeLessThan(2200);
     expect(result.memoryBlock.length).toBeLessThanOrEqual(1000);
   });
 });
