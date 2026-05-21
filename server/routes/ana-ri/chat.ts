@@ -102,7 +102,7 @@ setInterval(
 // Thin facade over getPool() so the extracted body keeps its `dbPool.query(...)`
 // shape without needing to touch the original handler.
 const dbPool = {
-  query: (...args: Parameters<ReturnType<typeof getPool>['query']>) => getPool().query(...args),
+  query: (...args: any[]) => (getPool() as any).query(...args),
 };
 
 /** Register POST /chat on the given router. */
@@ -196,7 +196,7 @@ router.post('/chat', async (req: Request, res: Response) => {
         route?.decision?.reason || 'no decision rationale available',
       ];
 
-      const docs = route?.data?.scrapedDocuments;
+      const docs = (route?.data as any)?.scrapedDocuments;
       if (Array.isArray(docs) && docs.length > 0) {
         const persistedIds: number[] = [];
         for (const doc of docs) {
@@ -220,7 +220,7 @@ router.post('/chat', async (req: Request, res: Response) => {
               rawMarkdown: normalized.payload?.markdown,
               rawHtml: normalized.payload?.html,
               metadata: {
-                route: route.route,
+                route: route!.route,
                 source: 'ana-ri-chat',
                 taxonomy: 'external_evidence_mode',
                 domain: normalized.domain,
@@ -238,7 +238,7 @@ router.post('/chat', async (req: Request, res: Response) => {
         if (persistedIds.length > 0) {
           evidenceUsage.evidenceDocumentIds = persistedIds;
         }
-        const units = Number(route?.data?.quotaUnitsToCharge || docs.length || 0);
+        const units = Number((route?.data as any)?.quotaUnitsToCharge || docs.length || 0);
         if (units > 0) {
           await recordSuccessfulFirecrawlScrape(Number(orgId), units).catch(() => {});
           const updatedQuota = await getFirecrawlQuotaStatus(Number(orgId)).catch(() => null);
@@ -331,7 +331,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       buildMemoryContextForChat({
         threadId: thread_id || undefined,
         organizationId: orgId ? Number(orgId) : undefined,
-        projectId: chatProjectId || undefined,
+        projectId: chatProjectId ? Number(chatProjectId) : undefined,
         query: message,
         limitPerLayer: 4,
         maxChars: 3500,
@@ -422,7 +422,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     }
 
     // Add current message (use rewritten version if slash command or @app mention detected)
-    const chatEffectiveMessage = chatEnrichment.rewrittenMessage || message;
+    const chatEffectiveMessage = (chatEnrichment as any).rewrittenMessage || message;
     messages.push({ role: 'user', content: chatEffectiveMessage });
 
     // Call AI Gateway
@@ -711,7 +711,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       reliability: chatReliability,
       queueMeta,
       enrichmentSources: chatEnrichment.sources?.length > 0 ? chatEnrichment.sources : undefined,
-      enrichmentMeta: chatEnrichment.enrichmentMeta || undefined,
+      enrichmentMeta: (chatEnrichment as any).enrichmentMeta || undefined,
       _meta: {
         ...(correlationId && { correlationId }),
         ...(source_surface ? { sourceSurface: source_surface } : {}),

@@ -70,7 +70,7 @@ router.post('/dose-escalation/optimize', async (req, res) => {
     // Create or fetch study
     let studyId = params.studyId;
     if (!studyId) {
-      const [study] = await db!.insert(doseEscalationStudies).values({
+      const [study] = await (db!.insert(doseEscalationStudies) as any).values({
         organizationId: params.organizationId,
         studyName: `${params.compound} - ${params.indication}`,
         compoundName: params.compound,
@@ -89,7 +89,7 @@ router.post('/dose-escalation/optimize', async (req, res) => {
       studyId = study.id;
     }
     
-    const result = await aiEngine.calculateOptimalDoseEscalation(studyId);
+    const result = await aiEngine.calculateOptimalDoseEscalation(studyId!);
     res.json({ studyId, ...result });
   } catch (error) {
     console.error('Dose escalation error:', error);
@@ -114,7 +114,7 @@ router.post('/dose-escalation/report-dlt', async (req, res) => {
     const params = DLTReportSchema.parse(req.body);
     
     // Record DLT event
-    const [dlt] = await db!.insert(dltEvents).values({
+    const [dlt] = await (db!.insert(dltEvents) as any).values({
       cohortId: params.cohortId,
       patientIdentifier: params.patientId,
       dltType: params.dltType,
@@ -137,10 +137,10 @@ router.post('/dose-escalation/report-dlt', async (req, res) => {
     
     if (cohort) {
       await db!.update(doseCohorts)
-        .set({ 
-          dltsObserved: cohort.dltsObserved + 1,
-          status: cohort.dltsObserved + 1 >= 2 ? 'completed_with_dlts' : cohort.status
-        })
+        .set({
+          dltsObserved: (cohort as any).dltsObserved + 1,
+          status: (cohort as any).dltsObserved + 1 >= 2 ? 'completed_with_dlts' : (cohort as any).status
+        } as any)
         .where(eq(doseCohorts.id, params.cohortId));
       
       // Get AI recommendation for next steps
@@ -150,7 +150,7 @@ router.post('/dose-escalation/report-dlt', async (req, res) => {
       res.json({ 
         dlt, 
         recommendation,
-        alert: cohort.dltsObserved + 1 >= 2 
+        alert: (cohort as any).dltsObserved + 1 >= 2 
           ? 'DLT threshold reached for this cohort. Review dose escalation plan.'
           : null
       });
@@ -219,7 +219,7 @@ const CrossSpeciesAnalysisSchema = z.object({
 router.post('/pkpd/cross-species-analysis', async (req, res) => {
   try {
     const params = CrossSpeciesAnalysisSchema.parse(req.body);
-    const analysis = await aiEngine.performCrossSpeciesAnalysis(params);
+    const analysis = await aiEngine.performCrossSpeciesAnalysis(params as any);
     res.json(analysis);
   } catch (error) {
     console.error('Cross-species analysis error:', error);
@@ -340,7 +340,7 @@ router.get('/dose-escalation/studies', async (req, res) => {
     // Fetch studies with related cohorts and DLT events
     const studies = await db!.select()
       .from(doseEscalationStudies)
-      .where(eq(doseEscalationStudies.organizationId, organizationId))
+      .where(eq(doseEscalationStudies.organizationId, organizationId as any))
       .orderBy(desc(doseEscalationStudies.createdAt));
     
     // For each study, try to fetch related cohorts and their DLT events
@@ -427,7 +427,7 @@ router.get('/ind-narratives', async (req, res) => {
     // Fetch narratives
     const narratives = await db!.select()
       .from(indNarratives)
-      .where(eq(indNarratives.organizationId, organizationId))
+      .where(eq(indNarratives.organizationId, organizationId as any))
       .orderBy(desc(indNarratives.createdAt));
     
     // For each narrative, try to fetch related sections
@@ -544,7 +544,7 @@ router.get('/cross-species/analyses', async (req, res) => {
     // Fetch cross-species PK/PD analyses
     const analyses = await db!.select()
       .from(crossSpeciesPkpd)
-      .where(eq(crossSpeciesPkpd.organizationId, organizationId))
+      .where(eq(crossSpeciesPkpd.organizationId, organizationId as any))
       .orderBy(desc(crossSpeciesPkpd.createdAt));
     
     // For each analysis, try to fetch related species comparisons
