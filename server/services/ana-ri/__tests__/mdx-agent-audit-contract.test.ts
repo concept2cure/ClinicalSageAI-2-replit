@@ -16,33 +16,35 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { svc, audit } = vi.hoisted(() => ({
-  svc: {
-    createQSubmission: vi.fn(async () => ({
-      id: 'q-1', programId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
-      qSubType: 'presub', title: 'x', stage: 'plan',
-    })),
-    setCommitmentRolledIn: vi.fn(async () => ({
-      id: 'cccccccc-cccc-cccc-cccc-ccccccccccc1',
-      displayCode: 'cm-1', dossierLinkSectionId: '6', rolledIn: true,
-    })),
-    upsertMapping: vi.fn(async () => ({ id: 'm-1' })),
-    createDocument: vi.fn(async () => ({ id: 'd-1', code: 'PMCF-1' })),
-    updateDocument: vi.fn(async () => ({ id: 'd-1', updated: true })),
-    validateDocument: vi.fn(() => ({ valid: true, findings: [] })),
-    supersedeDocument: vi.fn(async () => ({ id: 'd-2' })),
-    getDocument: vi.fn(async () => ({ id: 'd-1' })),
-    approveDocument: vi.fn(async () => ({ ok: true })),
-    assessSufficiency: vi.fn(async () => ({ id: 'a-1', verdict: 'sufficient', overallScore: 90 })),
-    runReviewerSimulation: vi.fn(async () => ({ runId: 'rs-1' })),
-    submitToFDA: vi.fn(async () => ({ packageId: 'pkg-1', transactionId: 'tx-1' })),
-  },
-  audit: { logAction: vi.fn().mockResolvedValue(undefined) },
-}));
-
-class TenantAccessError extends Error {
-  constructor(m: string) { super(m); this.name = 'TenantAccessError'; }
-}
+const { svc, audit, TenantAccessError } = vi.hoisted(() => {
+  class TenantAccessError extends Error {
+    constructor(m: string) { super(m); this.name = 'TenantAccessError'; }
+  }
+  return {
+    svc: {
+      createQSubmission: vi.fn(async () => ({
+        id: 'q-1', programId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
+        qSubType: 'presub', title: 'x', stage: 'plan',
+      })),
+      setCommitmentRolledIn: vi.fn(async () => ({
+        id: 'cccccccc-cccc-cccc-cccc-ccccccccccc1',
+        displayCode: 'cm-1', dossierLinkSectionId: '6', rolledIn: true,
+      })),
+      upsertMapping: vi.fn(async () => ({ id: 'm-1' })),
+      createDocument: vi.fn(async () => ({ id: 'd-1', code: 'PMCF-1' })),
+      updateDocument: vi.fn(async () => ({ id: 'd-1', updated: true })),
+      validateDocument: vi.fn(() => ({ valid: true, findings: [] })),
+      supersedeDocument: vi.fn(async () => ({ id: 'd-2' })),
+      getDocument: vi.fn(async () => ({ id: 'd-1' })),
+      approveDocument: vi.fn(async () => ({ ok: true })),
+      assessSufficiency: vi.fn(async () => ({ id: 'a-1', verdict: 'sufficient', overallScore: 90 })),
+      runReviewerSimulation: vi.fn(async () => ({ runId: 'rs-1' })),
+      submitToFDA: vi.fn(async () => ({ packageId: 'pkg-1', transactionId: 'tx-1' })),
+    },
+    audit: { logAction: vi.fn().mockResolvedValue(undefined) },
+    TenantAccessError,
+  };
+});
 
 vi.mock('../../q-sub/q-sub.service', () => ({
   createQSubmission: (...a: any[]) => (svc.createQSubmission as any)(...a),
@@ -64,8 +66,10 @@ vi.mock('../../db', () => ({
     }),
   },
 }));
-const ESGSubmissionService = vi.fn(() => ({
-  submitToFDA: (...a: any[]) => (svc.submitToFDA as any)(...a),
+const { ESGSubmissionService } = vi.hoisted(() => ({
+  ESGSubmissionService: vi.fn(() => ({
+    submitToFDA: vi.fn(async () => ({ packageId: 'pkg-1', transactionId: 'tx-1' })),
+  })),
 }));
 vi.mock('../../ESGSubmissionService', () => ({ default: ESGSubmissionService }));
 vi.mock('../../gspr-postmarket/gspr.service', () => ({

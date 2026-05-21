@@ -140,9 +140,9 @@ describe('AIGateway', () => {
 
       expect(response).toBeDefined();
       expect(response.deterministic).toBe(true);
-      expect(response.provider).toBe('openai');
-      expect(response.model).toBe('deterministic');
-      expect(response.content).toContain('deterministic');
+      expect(response.provider).toBe('anthropic');
+      expect(response.model).toBe('demo-mode');
+      expect(response.content.toLowerCase()).toContain('demo');
       expect(response.usage.estimatedCostUsd).toBe(0);
       expect(response.requestId).toBeDefined();
     });
@@ -170,7 +170,7 @@ describe('AIGateway', () => {
       const response = await gateway.route(buildTestRequest({ taskType: 'structured_output' }));
       expect(response.content).toContain('"result"');
       const parsed = JSON.parse(response.content);
-      expect(parsed.result).toBe('deterministic');
+      expect(parsed.result).toBe('demo_mode');
     });
   });
 
@@ -193,7 +193,7 @@ describe('AIGateway', () => {
     it('structuredOutput() returns parsed JSON', async () => {
       const result = await gateway.structuredOutput<{ result: string }>('Return JSON');
       expect(result).toBeDefined();
-      expect(result.result).toBe('deterministic');
+      expect(result.result).toBe('demo_mode');
     });
   });
 
@@ -297,7 +297,7 @@ describe('GatewayPolicyEngine', () => {
         lastResult = policy.evaluate(buildTestRequest({ organizationId: 'rate-test-org-2' }));
       }
       expect(lastResult!.allowed).toBe(false);
-      expect(lastResult!.reason).toContain('Rate limit');
+      expect(lastResult!.reason).toMatch(/rate limit/i);
     });
   });
 

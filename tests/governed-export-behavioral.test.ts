@@ -24,6 +24,8 @@ const { mockClient, mockPool } = vi.hoisted(() => {
     mockClient: client,
     mockPool: {
       connect: vi.fn().mockResolvedValue(client),
+      on: vi.fn(),
+      query: vi.fn(),
     },
   };
 });
