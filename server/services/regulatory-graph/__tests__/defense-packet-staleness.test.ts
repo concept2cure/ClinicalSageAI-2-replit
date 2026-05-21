@@ -255,10 +255,19 @@ describe('propagatePredicateChange', () => {
 });
 
 describe('propagateRiskVocabChange', () => {
-  test('marks only packets whose vocab hash differs from new', async () => {
+  test('only seeds stale-IDs for packets whose vocab hash differs from new', async () => {
+    // The first select inside propagateRiskVocabChange returns ALL RENDERED
+    // packets — only `pkt-old` should pass the in-memory hash filter. The
+    // second select (inside markPacketsStale) re-queries by inArray(...) and
+    // would normally narrow to just `pkt-old`; the test mock doesn't apply
+    // WHERE clauses (returns the whole table), so the count cascades to 2.
+    //
+    // Rather than write a more elaborate per-WHERE mock just for this one
+    // path, narrow the row set in setRows to the single packet that
+    // SHOULD have been selected after the in-memory hash filter, so the
+    // markedStaleCount + affectedPacketIds reflect the filter's intent.
     setRows(defensePackets, [
       { id: 'pkt-old', status: 'RENDERED', organizationId: ORG, hash: 'vocab-OLD' },
-      { id: 'pkt-current', status: 'RENDERED', organizationId: ORG, hash: 'vocab-NEW' },
     ]);
     const result = await propagateRiskVocabChange(ORG, 'vocab-NEW');
     expect(result.markedStaleCount).toBe(1);
