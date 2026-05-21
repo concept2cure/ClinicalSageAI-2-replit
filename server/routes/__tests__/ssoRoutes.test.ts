@@ -3,7 +3,10 @@ import { vi } from 'vitest';
 
 // vi.hoisted to set env vars before any module load.
 vi.hoisted(() => {
-  process.env.NODE_ENV = 'test';
+  // SSO helper routes branch on `isDev = NODE_ENV === 'development'`.
+  // The dev-mode path redirects 302 to the callback (what the test
+  // expects); production returns 501 SSO_NOT_IMPLEMENTED.
+  process.env.NODE_ENV = 'development';
   process.env.DATABASE_URL_DEV =
     process.env.DATABASE_URL_DEV || 'postgresql://test:test@localhost:5432/test';
   process.env.DATABASE_URL =
@@ -37,8 +40,7 @@ import request from 'supertest';
 import express from 'express';
 import ssoRoutes from '../sso';
 
-// SSO routes now require provider-specific configuration env vars (SSO_OIDC_CLIENT_ID etc.) that the test doesn't set, so every initiate-call returns 501 not-configured instead of the asserted 302 redirect.
-describe.skip('SSO helper routes', () => {
+describe('SSO helper routes', () => {
   const app = express();
   app.use(express.json());
   app.use('/api/auth/sso', ssoRoutes);
@@ -51,11 +53,14 @@ describe.skip('SSO helper routes', () => {
   });
 
   it('GET /api/auth/sso/:provider/callback should return token and user in dev', async () => {
+    // The callback now redirects 302 to the frontend SSO handler page
+    // with the JWT in the sso_token query param (was: 200 JSON body).
+    // Verify the redirect carries an sso_token and an sso_email so the
+    // frontend can complete the SSO flow.
     const res = await request(app).get('/api/auth/sso/microsoft/callback?code=dev');
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.accessToken).toBeDefined();
-    expect(res.body.user).toBeDefined();
-    expect(res.body.user.email).toBeDefined();
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBeDefined();
+    expect(res.headers.location).toMatch(/sso_token=/);
+    expect(res.headers.location).toMatch(/sso_email=/);
   });
 });
