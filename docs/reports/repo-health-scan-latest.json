@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-05-21T14:26:39.206Z",
+  "generatedAt": "2026-05-21T16:22:46.014Z",
   "git": {
-    "sha": "e37ac501fabcdd9deac04516eab2920a89050f4b",
+    "sha": "6f2fb1e52065846251996cdc2857581b5eb6d938",
     "branch": "claude/integrate-design-system-UBjRE-mdx-phase8"
   },
   "thresholds": {
@@ -340,6 +340,16 @@
         ]
       },
       {
+        "basename": "search",
+        "count": 4,
+        "paths": [
+          "client/src/concept2cure/mdx/data/search.ts",
+          "design-system/ui_kits/mdx/data/search.js",
+          "design-system/ui_kits/mdx/surfaces/Search.jsx",
+          "server/integrations/firecrawl/search.ts"
+        ]
+      },
+      {
         "basename": "shell",
         "count": 4,
         "paths": [
@@ -442,6 +452,15 @@
           ".claude/skills/gstack/browse/src/config.ts",
           "client/src/concept2cure/components/concept2cure-projects/data/config.ts",
           "server/export/stylePacks/config.ts"
+        ]
+      },
+      {
+        "basename": "conversations",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/mdx/data/conversations.ts",
+          "design-system/ui_kits/mdx/data/conversations.js",
+          "design-system/ui_kits/mdx/surfaces/Conversations.jsx"
         ]
       },
       {
@@ -553,6 +572,15 @@
         ]
       },
       {
+        "basename": "onboarding",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/mdx/data/onboarding.ts",
+          "design-system/ui_kits/mdx/data/onboarding.js",
+          "design-system/ui_kits/mdx/surfaces/Onboarding.jsx"
+        ]
+      },
+      {
         "basename": "openai-service",
         "count": 3,
         "paths": [
@@ -604,15 +632,6 @@
           "server/routes/resolution.ts",
           "shared/schema/resolution.ts",
           "shared/types/resolution.ts"
-        ]
-      },
-      {
-        "basename": "search",
-        "count": 3,
-        "paths": [
-          "design-system/ui_kits/mdx/data/search.js",
-          "design-system/ui_kits/mdx/surfaces/Search.jsx",
-          "server/integrations/firecrawl/search.ts"
         ]
       },
       {
@@ -890,14 +909,6 @@
         "paths": [
           "server/routes/conversation-health.ts",
           "server/services/conversation-health.ts"
-        ]
-      },
-      {
-        "basename": "conversations",
-        "count": 2,
-        "paths": [
-          "design-system/ui_kits/mdx/data/conversations.js",
-          "design-system/ui_kits/mdx/surfaces/Conversations.jsx"
         ]
       },
       {
@@ -1226,14 +1237,6 @@
         "paths": [
           "server/services/notify.ts",
           "server/src/services/notify.ts"
-        ]
-      },
-      {
-        "basename": "onboarding",
-        "count": 2,
-        "paths": [
-          "design-system/ui_kits/mdx/data/onboarding.js",
-          "design-system/ui_kits/mdx/surfaces/Onboarding.jsx"
         ]
       },
       {
@@ -1921,7 +1924,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 103,
+      "duplicateGroups": 106,
       "largeByBytes": 3,
       "largeByLines": 5
     },
