@@ -1,8 +1,8 @@
 # Repo Health Scan
 
-Generated: 2026-05-21T16:56:39.849Z
-Branch: claude/middleware-tests-cherrypick
-SHA: d6f73f8cb030f6a9b5c79da7f959fd1ba457bae4
+Generated: 2026-05-21T17:12:02.296Z
+Branch: claude/integrate-design-system-UBjRE-mdx-phase8
+SHA: bedba04139c65394282746f0bafbd15b42786e02
 
 ## Summary
 
@@ -10,7 +10,7 @@ SHA: d6f73f8cb030f6a9b5c79da7f959fd1ba457bae4
 - Files over byte threshold: 16
 - Files over line threshold: 48
 - Baseline: docs/reports/repo-health-scan-latest.json
-- Delta duplicate basenames: -1
+- Delta duplicate basenames: 0
 - Delta files over byte threshold: 0
 - Delta files over line threshold: 0
 

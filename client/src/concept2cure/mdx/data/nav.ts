@@ -34,6 +34,12 @@ export const MDX_NAV_V2: NavItem[] = [
   { id: 'pma',          label: 'PMA Submissions',       icon: 'shieldCheck',  group: 'workstream' },
   { id: 'cer',          label: 'CER Generator',         icon: 'microscope',   group: 'workstream' },
   { id: 'predicate',    label: 'Precedent Intelligence',icon: 'scale',        group: 'workstream' },
+  // Phase 4 — restored to rail after the MDX_STUBS cleanup in d3dbcfa
+  // dropped them without adding rail entries. Without these the surfaces
+  // exist in App.tsx but are unreachable from the UI.
+  { id: 'engineering',  label: 'Device Engineering',    icon: 'wrench',       group: 'workstream' },
+  { id: 'udi',          label: 'UDI and Labeling',      icon: 'tag',          group: 'workstream' },
+  { id: 'postmarket',   label: 'Post-market Vigilance', icon: 'alertCircle',  group: 'workstream' },
   { id: 'quality',      label: 'Quality System',        icon: 'shieldCheck',  group: 'workstream' },
 
   // Workbench — cross-program work surfaces.

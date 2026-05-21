@@ -430,6 +430,27 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     }
   }, [projects.length, showFirstRun]);
 
+  /* Initial-load deep links via `?nav=<destination>` URL param.
+     Examples:
+       /concept2cure/?nav=mdx          → MDX workstream
+       /concept2cure/?nav=pdev         → PDEV (Phase 7, gated by ENABLE_PDEV_SURFACE)
+       /concept2cure/?nav=projects     → Projects list
+     Runs once on mount. Subsequent navigation is driven by handler clicks. */
+  const initialNavApplied = React.useRef(false);
+  useEffect(() => {
+    if (initialNavApplied.current) return;
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const dest = params.get('nav');
+    if (!dest) return;
+    initialNavApplied.current = true;
+    /* Dispatch through the same handler the home tiles use so the
+       routing rules (PDEV gating, MDX hash mapping, etc.) stay in
+       one place. */
+    handleAnaPanelNavigate(dest);
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, []);
+
   useEffect(() => {
     try {
       setExternalTestingMode(localStorage.getItem('concept2cure_external_testing_mode') === 'true');
@@ -1160,6 +1181,14 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       }
       if (normalizedPath === 'ectd-coauthor') {
         setLayoutMode('ectd-coauthor');
+        return;
+      }
+      if (normalizedPath === 'pdev') {
+        /* Phase 7 PDEV (Pharmaceutical Development) workstream.
+           Gated by isFeatureEnabled('ENABLE_PDEV_SURFACE') in the early
+           return at line ~1820. When the flag is off, the destination
+           falls through to the projects view. */
+        setLayoutMode('pdev');
         return;
       }
       if (normalizedPath in BUNDLE_MDX_HASH) {

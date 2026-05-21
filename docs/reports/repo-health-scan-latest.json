@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-05-21T16:56:39.849Z",
+  "generatedAt": "2026-05-21T17:12:02.296Z",
   "git": {
-    "sha": "d6f73f8cb030f6a9b5c79da7f959fd1ba457bae4",
-    "branch": "claude/middleware-tests-cherrypick"
+    "sha": "bedba04139c65394282746f0bafbd15b42786e02",
+    "branch": "claude/integrate-design-system-UBjRE-mdx-phase8"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -1777,7 +1777,7 @@
       },
       {
         "file": "client/src/concept2cure/ZenApp.tsx",
-        "lines": 2117
+        "lines": 2146
       },
       {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",
@@ -1896,7 +1896,7 @@
   "comparison": {
     "baseline": "docs/reports/repo-health-scan-latest.json",
     "delta": {
-      "duplicateBasenames": -1,
+      "duplicateBasenames": 0,
       "largeFilesByBytes": 0,
       "largeFilesByLines": 0
     }
