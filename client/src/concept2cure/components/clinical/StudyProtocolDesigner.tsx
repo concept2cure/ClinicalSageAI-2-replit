@@ -660,7 +660,7 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
   // Calculate sample size
   const sampleSizeResult = useMemo(() => {
     if (!primaryEndpoint) return null;
-    return calculateSampleSize(primaryEndpoint.measureType, power, alpha, effectSize, dropout);
+    return calculateSampleSize(primaryEndpoint.measureType as any, power, alpha, effectSize, dropout);
   }, [primaryEndpoint, power, alpha, effectSize, dropout]);
 
   // Protocol sections state

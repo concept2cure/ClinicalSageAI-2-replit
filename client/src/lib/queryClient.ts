@@ -94,7 +94,7 @@ export const queryClient = new QueryClient({
       gcTime: 1000 * 60 * 10, // Keep unused data for 10 minutes before GC
       refetchOnWindowFocus: false, // Avoid unnecessary refetches on tab switch
       refetchOnReconnect: true, // Refetch after network recovery
-      queryFn: getQueryFn(),
+      queryFn: getQueryFn() as any,
     },
     mutations: {
       retry: 0, // Don't auto-retry mutations

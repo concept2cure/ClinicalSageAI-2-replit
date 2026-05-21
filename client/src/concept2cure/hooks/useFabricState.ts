@@ -55,7 +55,7 @@ export function useFabricDecisions(
   options?: { limit?: number }
 ) {
   return useQuery({
-    queryKey: queryKeys.governance.fabricDecisions(projectId),
+    queryKey: queryKeys.governance.fabricDecisions(projectId ?? ''),
     queryFn: async () => {
       const params = new URLSearchParams();
       if (options?.limit) params.set('limit', String(options.limit));
@@ -76,7 +76,7 @@ export function useFabricDecisions(
  */
 export function useFabricSummary(projectId: string | undefined) {
   return useQuery({
-    queryKey: queryKeys.governance.fabricSummary(projectId),
+    queryKey: queryKeys.governance.fabricSummary(projectId ?? ''),
     queryFn: async () => {
       const res = await apiRequest(
         'GET',

@@ -271,5 +271,7 @@ export const queryKeys = {
   module3: {
     state: (projectId: number | string) =>
       ['concept2cure', 'module3', projectId] as const,
+    buildState: (projectId: string | number | undefined, cmcProjectId: string | number | undefined) =>
+      ['concept2cure', 'module3', 'build-state', projectId, cmcProjectId] as const,
   },
 } as const;

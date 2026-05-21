@@ -902,7 +902,9 @@ export function ECTDNavigator() {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Pull real artifacts from project context
-  const { activeProject, artifacts: projectArtifacts } = useProject();
+  const projectCtx = useProject() as any;
+  const activeProject = projectCtx.activeProject;
+  const projectArtifacts = projectCtx.artifacts ?? [];
 
   // Overlay real artifacts onto CTD structure when project is active
   const liveStructure = useMemo(() => {

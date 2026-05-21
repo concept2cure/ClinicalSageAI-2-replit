@@ -83,7 +83,7 @@ function confidenceLabel(c: TrendConfidence): string {
 
 function RiskBreakdown({ byRiskLevel }: { byRiskLevel: Partial<Record<string, number>> }) {
   const levels = ['critical', 'high', 'medium', 'low'] as const;
-  const total = Object.values(byRiskLevel).reduce((s, n) => s + (n ?? 0), 0);
+  const total = Object.values(byRiskLevel).reduce((s, n) => (s ?? 0) + (n ?? 0), 0) ?? 0;
   if (total === 0) return null;
 
   return (

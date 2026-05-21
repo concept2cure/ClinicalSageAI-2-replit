@@ -383,7 +383,7 @@ router.get('/', async (req, res) => {
     const rows = await db
       .select()
       .from(projectWorkflows)
-      .where(eq(projectWorkflows.organizationId, orgId))
+      .where(eq((projectWorkflows as any).organizationId, orgId as any))
       .orderBy(desc(projectWorkflows.createdAt))
       .limit(100);
 
@@ -495,7 +495,7 @@ router.get('/:id', async (req, res) => {
     const [workflow] = await db
       .select()
       .from(projectWorkflows)
-      .where(and(eq(projectWorkflows.id, id), eq(projectWorkflows.organizationId, orgId)));
+      .where(and(eq(projectWorkflows.id, id), eq((projectWorkflows as any).organizationId, orgId as any)));
 
     if (!workflow) {
       return res.status(404).json({ success: false, error: 'Workflow not found' });

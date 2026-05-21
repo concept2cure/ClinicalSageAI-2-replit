@@ -155,7 +155,7 @@ function parseArtifacts(response: string, projectId: string): Artifact[] {
       version: 1,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    } as any);
     
     index++;
   }

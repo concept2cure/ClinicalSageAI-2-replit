@@ -71,7 +71,7 @@ const getDatabaseUrl = (): string => {
     // Fallback to the generic DATABASE_URL if environment-specific one is not available
     if (process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL) {
       console.warn(`${envVar} not found, using DATABASE_URL as fallback`);
-      return process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL;
+      return (process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL) as string;
     }
     throw new Error(`Missing required environment variable: ${envVar}`);
   }

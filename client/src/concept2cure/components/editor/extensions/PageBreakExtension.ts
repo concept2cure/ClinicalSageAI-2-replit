@@ -64,7 +64,7 @@ export const PageBreak = Node.create({
         ({ commands }: any) => {
           return commands.insertContent({ type: this.name });
         },
-    };
+    } as any;
   },
 
   addKeyboardShortcuts() {

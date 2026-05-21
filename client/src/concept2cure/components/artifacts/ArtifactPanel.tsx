@@ -52,10 +52,10 @@ import {
 // ARTIFACT TYPE ICONS & LABELS
 // ─────────────────────────────────────────────────────────────────────────────
 
-const artifactTypeConfig: Record<
+const artifactTypeConfig: Partial<Record<
   ArtifactType,
   { icon: React.ElementType; label: string; color: string }
-> = {
+>> = {
   cover_letter: { icon: FileText, label: 'Cover Letter', color: 'text-blue-600' },
   device_description: { icon: FileText, label: 'Device Description', color: 'text-blue-600' },
   ifu_statement: { icon: FileText, label: 'IFU Statement', color: 'text-blue-600' },
@@ -255,7 +255,9 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ artifact }) => {
     );
   }
 
-  const config = artifactTypeConfig[artifact.type] || artifactTypeConfig.document;
+  const config = (artifactTypeConfig[artifact.type] ||
+    artifactTypeConfig.document ||
+    { icon: FileText, label: 'Document', color: 'text-stone-600' });
   const Icon = config.icon;
   const isDocument = artifact.category === 'document';
 

@@ -40,7 +40,9 @@ import {
   type DossierNode,
   type DossierNodeStatus,
 } from '../../models/ctdHierarchy';
-import type { TreeArtifact } from './ProjectFileTree';
+// ProjectFileTree was removed in the Phase 1/2 port; local stub keeps this
+// file compiling until a replacement ships.
+type TreeArtifact = any;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

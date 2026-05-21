@@ -1,4 +1,7 @@
-import { apiRequest, extractData } from './queryClient';
+import { apiRequest } from './queryClient';
+// extractData was removed from queryClient; provide a passthrough so legacy
+// callers continue to compile.
+const extractData: any = async (res: any) => res?.data ?? res;
 
 /**
  * Concept2Cure API Connector

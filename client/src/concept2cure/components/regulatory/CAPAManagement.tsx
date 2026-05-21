@@ -139,6 +139,8 @@ interface CAPA {
   targetCloseDate: string;
   actualCloseDate?: string;
   rootCauseAnalysis?: RootCauseAnalysis;
+  /** Free-form root cause summary surfaced in the CAPA list view. */
+  rootCause?: string;
   actions: CAPAAction[];
   effectivenessChecks: EffectivenessCheck[];
   relatedCAPAs: string[];

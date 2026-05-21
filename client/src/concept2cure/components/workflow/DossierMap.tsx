@@ -48,11 +48,11 @@ interface ProjectSectionsResponse {
 
 function normalizeProjectSections(payload: ProjectSectionsResponse | Array<{ code: string; title: string; status: string }>) {
   const rawSections = Array.isArray(payload) ? payload : payload?.sections || [];
-  return rawSections.map(sec => ({
+  return rawSections.map((sec: any) => ({
     code: sec.code || sec.section_code || '',
     title: sec.title,
     status: sec.status,
-  })).filter(sec => !!sec.code);
+  })).filter((sec: { code: string }) => !!sec.code);
 }
 
 // Default CTD structure used as fallback when no sections are initialized
