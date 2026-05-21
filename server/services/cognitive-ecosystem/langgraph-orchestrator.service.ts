@@ -285,7 +285,7 @@ export class LangGraphOrchestrator {
       const threadResult = await this.agentRuntime.createThread(
         context.agentId!,
         context.tenantId,
-        context.userId,
+        context.userId ?? 'system',
         { contextData: { graphId, graphVersion: graph.version } }
       );
 

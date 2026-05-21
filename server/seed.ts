@@ -57,7 +57,7 @@ async function seed() {
   ];
 
   // Insert reports
-  const insertedReports = await db.insert(csrReports).values(reports).returning();
+  const insertedReports = (await db.insert(csrReports).values(reports).returning()) as any[];
 
   // Add sample CSR details for the first two reports
   const details = [

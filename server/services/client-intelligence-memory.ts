@@ -219,14 +219,14 @@ export async function upsertClientProfile(
     return updated;
   }
 
-  const [created] = await db
+  const [created] = (await db
     .insert(clientIntelligenceProfiles as any)
     .values({
       ...profileData,
       createdBy: userId,
       profileStatus: 'active',
     })
-    .returning();
+    .returning()) as any[];
   return created;
 }
 
@@ -517,7 +517,7 @@ export async function ingestDocument(
   userId: number
 ): Promise<DocumentIngestionResult> {
   // 1. Create the ingested document record
-  const [docRecord] = await db
+  const [docRecord] = (await db
     .insert(clientIngestedDocuments as any)
     .values({
       profileId,
@@ -529,7 +529,7 @@ export async function ingestDocument(
       processingStatus: 'processing',
       uploadedBy: userId,
     })
-    .returning();
+    .returning()) as any[];
 
   try {
     // 2. Extract text
@@ -903,10 +903,10 @@ export async function upsertProjectIntelligence(
     return updated;
   }
 
-  const [created] = await db
+  const [created] = (await db
     .insert(projectIntelligenceProfiles as any)
     .values({ ...profileData, createdBy: userId, profileStatus: 'active' })
-    .returning();
+    .returning()) as any[];
   return created;
 }
 
@@ -934,7 +934,7 @@ export async function ingestProjectDocument(
   file: { buffer: Buffer; originalname: string; mimetype: string; size: number },
   userId: number
 ): Promise<DocumentIngestionResult> {
-  const [docRecord] = await db
+  const [docRecord] = (await db
     .insert(projectIngestedDocuments as any)
     .values({
       projectProfileId,
@@ -947,7 +947,7 @@ export async function ingestProjectDocument(
       processingStatus: 'processing',
       uploadedBy: userId,
     })
-    .returning();
+    .returning()) as any[];
 
   try {
     const { text, pageCount } = await extractTextFromFile(file.buffer, file.mimetype, file.originalname);

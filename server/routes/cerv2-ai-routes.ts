@@ -747,8 +747,8 @@ router.post(
       }
 
       // Fallback: enhanced section content, then base templates
-      const enhancedFn: ((ctx: any) => string) | undefined =
-        enhancedMockContent[docType]?.[sectionId];
+      const _enhancedFnLookup = enhancedMockContent[docType]?.[sectionId];
+      const enhancedFn: ((ctx: any) => string) | undefined = _enhancedFnLookup as any;
       let suggestion: string;
 
       if (enhancedFn) {

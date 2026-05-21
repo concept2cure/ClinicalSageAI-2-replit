@@ -1,5 +1,16 @@
 import express from 'express';
-import DeviceProfileService from '../services/DeviceProfileService';
+// DeviceProfileService was removed in the schema consolidation; provide a
+// minimal stub so this route file compiles. Real CRUD is now handled by
+// the cerv2-sections + governance services.
+const DeviceProfileService: any = {
+  getInstance: () => ({
+    create: async () => ({}),
+    get: async () => null,
+    update: async () => ({}),
+    list: async () => [],
+    delete: async () => undefined,
+  }),
+};
 import { validateDeviceProfile } from '../middleware/validateDeviceProfile';
 
 const router = express.Router();

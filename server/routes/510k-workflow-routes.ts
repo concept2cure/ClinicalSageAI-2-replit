@@ -222,7 +222,7 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
 
       void auditService.logAction({
         tenantId: parseInt(organizationId) || 0,
-        userId: parseInt((req.headers['x-user-id'] as string) || '') || null,
+        userId: parseInt((req.headers['x-user-id'] as string) || '') || undefined,
         action: 'k510_workflow.transition',
         resourceType: 'fda_510k_project',
         resourceId: String(projectId),

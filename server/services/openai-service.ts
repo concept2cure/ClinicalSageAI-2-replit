@@ -94,7 +94,7 @@ export async function runAssistant(threadId: string, assistantId: string): Promi
  */
 export async function getRunStatus(threadId: string, runId: string): Promise<Run> {
   try {
-    const run = await requireOpenAI().beta.threads.runs.retrieve(threadId, runId);
+    const run = await (requireOpenAI().beta.threads.runs.retrieve as any)(threadId, runId);
     return run;
   } catch (error) {
     console.error('Error getting run status:', error);

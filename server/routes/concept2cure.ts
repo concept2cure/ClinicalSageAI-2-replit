@@ -13068,7 +13068,7 @@ router.post('/projects/:projectId/tasks', async (req: Request, res: Response) =>
     const [project] = await db.select().from(projects).where(eq(projects.id, projectId));
     if (!project) return sendError(res, 404, 'Project not found');
 
-    const [task] = await db
+    const [task] = (await db
       .insert(projectTasks)
       .values({
         organizationId: project.organizationId,
@@ -13084,8 +13084,8 @@ router.post('/projects/:projectId/tasks', async (req: Request, res: Response) =>
         estimatedHours: data.estimatedHours || null,
         dependsOn: data.dependsOn || null,
         metadata: data.metadata || null,
-      })
-      .returning();
+      } as any)
+      .returning()) as any[];
 
     return sendSuccess(res, task);
   } catch (error: any) {
@@ -13125,7 +13125,7 @@ router.delete('/projects/:projectId/tasks/:taskId', async (req: Request, res: Re
     const taskId = parseInt(paramStr(req.params.taskId), 10);
     if (isNaN(taskId)) return sendError(res, 400, 'Invalid task ID');
 
-    const [deleted] = await db.delete(projectTasks).where(eq(projectTasks.id, taskId)).returning();
+    const [deleted] = (await db.delete(projectTasks).where(eq(projectTasks.id, taskId)).returning()) as any[];
     if (!deleted) return sendError(res, 404, 'Task not found');
     return sendSuccess(res, { deleted: true });
   } catch (error: any) {

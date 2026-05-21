@@ -63,7 +63,7 @@ export const academicUpload = multer({
 export async function processAcademicResource(filePath: string, metadata: any): Promise<number> {
   try {
     // Register the resource with the knowledge tracker
-    const resourceId = await academicKnowledgeTracker.registerResource(filePath, metadata);
+    const resourceId = await (academicKnowledgeTracker as any).registerResource(filePath, metadata);
     return resourceId;
   } catch (error) {
     console.error('Error processing academic resource:', error);

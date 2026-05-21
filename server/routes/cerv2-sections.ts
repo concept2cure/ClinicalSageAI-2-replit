@@ -457,7 +457,7 @@ router.delete('/:sectionId', authMiddleware, async (req, res) => {
 
     void auditService.logAction({
       tenantId: organizationId,
-      userId: resolveUserId(req) ?? null,
+      userId: resolveUserId(req) ?? undefined,
       action: 'section.delete',
       resourceType: 'cerv2_510k_section',
       resourceId: String(sectionId),

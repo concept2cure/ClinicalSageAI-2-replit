@@ -12,7 +12,7 @@ export interface CitationJsNormalization {
 export class CitationJsClient {
   async normalize(sourceText: string): Promise<CitationJsNormalization> {
     try {
-      const citationJs = await import('citation-js');
+      const citationJs = await import('citation-js' as any);
       const Ctor = (citationJs as any).default || (citationJs as any).Cite;
       if (!Ctor) {
         return {};

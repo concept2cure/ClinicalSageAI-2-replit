@@ -449,8 +449,8 @@ export function useDocumentEditor(options: UseDocumentEditorOptions) {
     if (!documentQuery.data) return null;
     
     const result = await generateMutation.mutateAsync({
-      documentId,
-      ctdSection: documentQuery.data.ctdSection,
+      documentId: documentId ?? undefined,
+      ctdSection: documentQuery.data.ctdSection ?? undefined,
       context: {
         projectId: '', // TODO: get from context
         submissionType: '',

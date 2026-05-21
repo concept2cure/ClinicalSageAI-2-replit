@@ -381,7 +381,7 @@ export class SMERouter {
     const notes: string[] = [];
 
     for (const condition of sme.escalationRules.humanReviewWhen) {
-      if (condition.includes('power < 70') && judgment.dimensions.find(d => d.name === 'Power Adequacy')?.score < 30) {
+      if (condition.includes('power < 70') && (judgment.dimensions.find(d => d.name === 'Power Adequacy')?.score ?? 100) < 30) {
         notes.push(`Escalation: ${condition}`);
       }
       if (condition.includes('fragility') && judgment.fragility.fragilityIndex > 65) {

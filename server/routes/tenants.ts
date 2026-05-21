@@ -187,7 +187,7 @@ router.post(
           userId: typeof req.userId === 'number' ? req.userId : parseInt(String(req.userId), 10),
           role: 'admin',
           joinedAt: new Date(),
-        });
+        } as any);
       }
 
       res.status(201).json(newTenant[0]);

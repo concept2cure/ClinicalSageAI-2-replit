@@ -183,7 +183,7 @@ export class ManufacturingService {
       switch (rule.mappingType) {
         case 'direct':
           // Direct mapping - copy value at path
-          fhirData = this.getNestedValue(isa95Data, mapping.isa95Path);
+          fhirData = (this.getNestedValue(isa95Data, mapping.isa95Path) ?? {}) as Record<string, unknown>;
           break;
 
         case 'computed':

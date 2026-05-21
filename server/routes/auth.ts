@@ -803,7 +803,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY;
     if (stripeSecretKey) {
       const Stripe = (await import('stripe')).default;
-      const stripe = new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' });
+      const stripe = new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' as any });
       const customer = await stripe.customers.create({
         email,
         name: companyName,

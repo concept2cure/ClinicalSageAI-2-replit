@@ -96,7 +96,7 @@ router.post('/', async (req, res) => {
     }
 
     // Use atomic user creation with quota enforcement
-    const { atomicCreateUser } = await import('../services/atomicQuotaService.js');
+    const { atomicCreateUser } = (await import('../services/atomicQuotaService.js')) as any;
     const result = await atomicCreateUser(organizationId, {
       email: validatedData.email,
       name: validatedData.name,

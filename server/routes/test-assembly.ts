@@ -172,7 +172,7 @@ export function testAssemblyRoutes(db: any): Router {
               });
           }
         } catch (e) {
-          logger.error('Failed to attach generated doc to project', { error: e?.message || e });
+          logger.error('Failed to attach generated doc to project', { error: (e as any)?.message || e });
         }
       }
 

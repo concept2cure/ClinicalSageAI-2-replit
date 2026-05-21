@@ -207,7 +207,7 @@ export class AcademicKnowledgeTracker {
         .then(result => result[0]?.count || 0);
 
       // Get filtered resources
-      const resources = await db.query.academicResources.findMany({
+      const resources = await (db.query as any).academicResources.findMany({
         where: conditions,
         orderBy: desc(academicResources.uploadDate),
         limit: filter?.limit || 100,

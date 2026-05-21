@@ -58,8 +58,8 @@ const handler: AIActionHandler = {
       .from(moduleDocuments)
       .where(
         and(
-          eq(moduleDocuments.unifiedDocumentId, documentId),
-          eq(moduleDocuments.moduleType, moduleType)
+          eq(moduleDocuments.unifiedDocumentId, documentId as any),
+          eq(moduleDocuments.moduleType, moduleType as any)
         )
       )
       .limit(1);

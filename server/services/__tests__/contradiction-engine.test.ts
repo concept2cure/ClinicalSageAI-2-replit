@@ -310,7 +310,7 @@ describe('Consequence Paths', () => {
 
     const paths: string[] = [consequenceType];
     if (severity === 'critical' || severity === 'high') {
-      if (consequenceType !== 'harmonization_rewrite') {
+      if ((consequenceType as string) !== 'harmonization_rewrite') {
         paths.push('prepare-correction-draft');
       }
     }

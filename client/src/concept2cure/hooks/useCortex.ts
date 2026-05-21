@@ -256,7 +256,7 @@ export function useCortexChat(options: UseCortexChatOptions = {}): UseCortexChat
         },
         onError: err => {
           setIsStreaming(false);
-          setError({ ...err, failedMessage: content });
+          setError(Object.assign(err, { failedMessage: content }));
           // Remove the empty assistant placeholder but keep the user message
           setMessages(prev => prev.slice(0, -1));
         },

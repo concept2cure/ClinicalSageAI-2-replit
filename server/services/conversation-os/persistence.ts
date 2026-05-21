@@ -1,4 +1,4 @@
-import { getPool } from '../../db.ts';
+import { getPool } from '../../db';
 import { allowConversationOsMemoryFallback } from './conversationKernel';
 import type { ArtifactProposal, PlanTrace, RetrievalChunk, ScoutFinding, ToolEvent, ToolManifest } from './types';
 

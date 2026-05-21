@@ -913,14 +913,14 @@ router.post('/ana/objectives', async (req: Request, res: Response) => {
     const { db } = await import('../db');
     const { anaClientObjectives } = (await import('shared/schema')) as any;
 
-    const [objective] = await db
+    const [objective] = (await db
       .insert(anaClientObjectives)
       .values({
         organizationId,
         createdBy: userId,
         ...req.body,
       })
-      .returning();
+      .returning()) as any[];
 
     return sendSuccess(res, { objective });
   } catch (err: any) {

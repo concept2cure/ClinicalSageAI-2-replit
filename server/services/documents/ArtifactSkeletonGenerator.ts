@@ -77,10 +77,10 @@ export interface ArtifactSkeleton {
  * Creates structured templates for regulatory documents
  */
 export class ArtifactSkeletonGenerator {
-  private auditLogger: AuditLogger;
+  private auditLogger: any;
 
   constructor() {
-    this.auditLogger = new AuditLogger();
+    this.auditLogger = AuditLogger;
   }
 
   /**

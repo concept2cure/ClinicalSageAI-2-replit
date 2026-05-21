@@ -61,7 +61,7 @@ export interface ReleasePackage {
  * Generates cryptographic hashes for regulatory submission packages
  */
 export class ReleaseHashGenerator {
-  private auditLogger: AuditLogger;
+  private auditLogger: any;
   private defaultAlgorithm: HashAlgorithm;
 
   constructor(algorithm: string = 'SHA-256') {

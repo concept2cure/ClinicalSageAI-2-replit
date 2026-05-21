@@ -187,10 +187,10 @@ router.post('/sign', async (req: Request, res: Response) => {
   }
 
   const signedAt = new Date();
-  const ipAddress =
+  const ipAddress: string | undefined =
     (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
     req.socket?.remoteAddress ||
-    null;
+    undefined;
 
   // Deterministic content hash (the bytes a regulator would re-derive to
   // verify integrity). Includes everything that defines the signing event;

@@ -179,7 +179,7 @@ router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Resp
       search,
       sortBy,
       sortOrder,
-    } = req.query as z.infer<typeof queryParamsSchema>;
+    } = req.query as unknown as z.infer<typeof queryParamsSchema>;
 
     const orgId = getSecureOrgId(req);
     if (!orgId) {

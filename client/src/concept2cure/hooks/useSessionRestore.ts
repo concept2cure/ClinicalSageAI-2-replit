@@ -142,7 +142,7 @@ export function useSessionRestore(userId?: string, organizationId?: string): Ses
         ...state,
         savedAt: new Date().toISOString(),
         userId,
-        organizationId: organizationId || existing.organizationId || '',
+        organizationId: organizationId || (existing as any).organizationId || '',
       };
       
       localStorage.setItem(key, JSON.stringify(newSession));

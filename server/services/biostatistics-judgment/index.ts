@@ -158,7 +158,8 @@ export function runPipelineForRole(
 ): { report: BiostatisticsJudgmentReport; interpretation: RoleAwareInterpretation } {
   const report = runJudgmentPipeline(input);
   const interpretation = generateForRole(role, {
-    input, ...report,
+    ...report,
+    input,
   });
   return { report, interpretation };
 }

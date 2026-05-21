@@ -197,7 +197,7 @@ class LiteratureSummarizerService {
     summaryType: string,
     focus?: string
   ): Promise<string> {
-    if (!openai) {
+    if (!ai) {
       return 'AI-powered summaries are not available. Please configure the OpenAI API key.';
     }
 

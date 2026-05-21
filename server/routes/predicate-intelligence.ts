@@ -389,7 +389,7 @@ router.patch('/se-matrix/:id', requireConfigured, requireProgramAccess, async (r
     logProxyMutation(req, result, {
       action: 'se_matrix.patch',
       resourceType: 'se_matrix_row',
-      resourceId: req.params.id,
+      resourceId: String(req.params.id),
       details: { fieldsChanged: Object.keys(req.body ?? {}) },
     });
     sendProxyResponse(res, result);

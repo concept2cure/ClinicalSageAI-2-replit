@@ -116,7 +116,7 @@ export async function documentPreview(
         `overall ${body.completionPercentage}% complete. ` +
         `Use the openModal hint if you want to surface the full canvas to the user.`,
       openModal: 'document-preview',
-    };
+    } as any;
   } catch (err) {
     return {
       success: false,

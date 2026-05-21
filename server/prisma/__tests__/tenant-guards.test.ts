@@ -10,7 +10,7 @@
  */
 import { describe, it, expect } from 'vitest';
 
-// @ts-expect-error — JS module, no .d.ts, intentional for the runtime guard test.
+// @ts-ignore — JS module, no .d.ts, intentional for the runtime guard test.
 import prisma from '../client.js';
 
 describe('prisma compat layer — tenant-isolation guards', () => {

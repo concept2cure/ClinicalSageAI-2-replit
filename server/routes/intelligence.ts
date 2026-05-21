@@ -512,7 +512,7 @@ router.get('/projects/:projectId/rim/section/:sectionCode', async (req: Request,
   try {
     const projectId = Number(req.params.projectId);
     const organizationId = getOrgId(req);
-    const sectionCode = req.params.sectionCode;
+    const sectionCode = String(req.params.sectionCode);
 
     if (!projectId || !organizationId || !sectionCode) {
       return res.status(400).json({ error: 'Missing required parameters' });

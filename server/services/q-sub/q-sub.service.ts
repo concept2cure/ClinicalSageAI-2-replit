@@ -486,7 +486,7 @@ export async function setCommitmentRolledIn(
 
   void auditService.logAction({
     tenantId: organizationId,
-    userId: input.rolledInBy ?? null,
+    userId: input.rolledInBy ?? undefined,
     action: input.rolledIn ? 'q_sub.commitment.rolled_in' : 'q_sub.commitment.rolled_out',
     resourceType: 'q_sub_commitment',
     resourceId: updated.id,

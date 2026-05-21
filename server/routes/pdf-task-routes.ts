@@ -173,7 +173,7 @@ router.get('/cer/:ndcCode/exports', async (req: Request, res: Response) => {
  */
 router.get('/download/:filename', async (req: Request, res: Response) => {
   try {
-    const { filename } = req.params;
+    const { filename } = req.params as { filename: string };
     const filePath = path.join(exportsDir, filename);
 
     // Check if file exists

@@ -108,7 +108,8 @@ export async function testCircuitBreaker() {
     name: 'TestBreaker',
     failureThreshold: 3,
     resetTimeoutMs: 1000,
-    successThreshold: 1
+    successThreshold: 1,
+    requestTimeoutMs: 30_000,
   });
 
   for (let i = 0; i < 5; i++) {

@@ -13,7 +13,7 @@
  *   5. concept2cure_submission_snapshots record (immutable export snapshot)
  */
 import crypto from 'node:crypto';
-import { getPool } from '../../db.ts';
+import { getPool } from '../../db';
 import { emitTraceEvent, createTraceId } from '../generation-guard.js';
 
 import { createScopedLogger } from '../../utils/logger.js';

@@ -24,7 +24,7 @@ async function generateDoseEscalationData(organizationId: string) {
   console.log('📊 Generating dose escalation study data...');
   
   // Create a dose escalation study for an oncology drug
-  const [study] = await db!.insert(doseEscalationStudies).values({
+  const [study] = (await db!.insert(doseEscalationStudies as any).values({
     organizationId,
     studyName: 'ONCO-2025 Phase I Dose Escalation',
     compoundName: 'ONX-4521',
@@ -40,7 +40,7 @@ async function generateDoseEscalationData(organizationId: string) {
       investigator: 'Dr. Sarah Johnson',
       site: 'Memorial Cancer Center'
     }
-  }).returning();
+  }).returning()) as any[];
   
   console.log(`✅ Created dose escalation study: ${study.id}`);
   
@@ -84,7 +84,7 @@ async function generateDoseEscalationData(organizationId: string) {
   const cohort2 = [cohort2Result.rows[0]];
   
   // Report a DLT event
-  await db!.insert(dltEvents).values({
+  await db!.insert(dltEvents as any).values({
     studyId: study.id,
     cohortId: cohort2[0].id,
     patientIdentifier: 'PT-002-003',

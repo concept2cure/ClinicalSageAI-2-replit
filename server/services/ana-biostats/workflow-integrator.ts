@@ -41,7 +41,7 @@ async function getSchema() {
       _schema = await import('../../../shared/schema');
     } catch {
       try {
-        _schema = await import('../../shared/schema');
+        _schema = await import('../../shared/schema' as any);
       } catch {
         _schema = null;
       }

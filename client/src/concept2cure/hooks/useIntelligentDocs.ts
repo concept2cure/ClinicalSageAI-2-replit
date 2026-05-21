@@ -413,7 +413,7 @@ export function useDocumentCompliance(documentId: string, submissionType?: strin
     if (submissionType) {
       await calculateMutation.mutateAsync({
         documentId,
-        submissionType: submissionType as ComplianceScore['submissionType'],
+        submissionType: submissionType as any,
       });
     }
   };

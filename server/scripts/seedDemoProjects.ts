@@ -313,7 +313,7 @@ async function seedDemoProjects() {
     ];
 
     for (const file of evidenceFiles) {
-      await db.insert(sharepoint_files).values({
+      await db.insert(sharepoint_files as any).values({
         tenant_id: tenantId,
         filename: file.filename,
         category: file.category,

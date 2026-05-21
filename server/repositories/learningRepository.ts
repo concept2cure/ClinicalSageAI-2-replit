@@ -40,7 +40,7 @@ export class LearningRepository {
   }
 
   async createLearningModule(data: InsertLearningModule) {
-    const [module] = await db.insert(learningModules).values(data).returning();
+    const [module] = (await db.insert(learningModules).values(data as any).returning()) as any[];
     return module;
   }
 
@@ -74,7 +74,7 @@ export class LearningRepository {
   }
 
   async createDocumentTemplate(data: InsertDocumentTemplate) {
-    const [template] = await db.insert(documentTemplates).values(data).returning();
+    const [template] = (await db.insert(documentTemplates).values(data as any).returning()) as any[];
     return template;
   }
 
@@ -144,7 +144,7 @@ export class LearningRepository {
       return updatedProgress;
     } else {
       // Create new progress entry
-      const [newProgress] = await db.insert(userProgress).values(data).returning();
+      const [newProgress] = (await db.insert(userProgress).values(data as any).returning()) as any[];
       return newProgress;
     }
   }
@@ -164,7 +164,7 @@ export class LearningRepository {
   }
 
   async createAiInsight(data: InsertAiInsight) {
-    const [insight] = await db.insert(aiInsights).values(data).returning();
+    const [insight] = (await db.insert(aiInsights).values(data as any).returning()) as any[];
     return insight;
   }
 
@@ -206,7 +206,7 @@ export class LearningRepository {
   }
 
   async logUserActivity(data: InsertUserActivity) {
-    const [activity] = await db.insert(userActivity).values(data).returning();
+    const [activity] = (await db.insert(userActivity).values(data as any).returning()) as any[];
     return activity;
   }
 
@@ -230,14 +230,14 @@ export class LearningRepository {
         .returning();
       return updatedMetrics;
     } else {
-      const [newMetrics] = await db
+      const [newMetrics] = (await db
         .insert(userMetrics)
         .values({
           userId,
           ...data,
           lastUpdated: new Date(),
-        })
-        .returning();
+        } as any)
+        .returning()) as any[];
       return newMetrics;
     }
   }
@@ -370,7 +370,7 @@ export class LearningRepository {
           id: `${item.activityType}-${item.resourceId}`,
           type: item.activityType,
           resourceId: item.resourceId,
-          title: resourceData?.title || 'Unknown Resource',
+          title: (resourceData as any)?.title || 'Unknown Resource',
           timestamp: item.timestamp,
           progress: progress,
         };

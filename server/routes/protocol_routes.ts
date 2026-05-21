@@ -859,7 +859,7 @@ router.post('/deep-analyze', express.json(), async (req, res) => {
       // Use HuggingFace service to enhance analysis with AI
       const enhancedAnalysis = await huggingFaceService.enhanceProtocolAnalysis(
         text,
-        basicAnalysis
+        basicAnalysis as any
       );
       log.debug('Deep AI analysis completed successfully');
       res.json(enhancedAnalysis);

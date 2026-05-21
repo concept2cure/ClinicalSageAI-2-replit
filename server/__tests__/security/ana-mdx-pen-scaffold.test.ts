@@ -25,7 +25,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock the underlying services so the gate can be exercised in isolation.
 const svc = {
-  createQSubmission: vi.fn(async () => ({
+  createQSubmission: vi.fn(async (..._args: any[]) => ({
     id: 'q-1',
     programId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
     qSubType: 'presub',

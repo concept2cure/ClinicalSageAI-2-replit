@@ -612,9 +612,11 @@ const csrTemplate: DocumentTemplate = {
 const indTemplate: DocumentTemplate = {
   id: 'ind-fda',
   name: 'IND Application (FDA)',
-  submissionType: 'IND',
-  region: 'FDA',
+  submissionType: 'IND' as any,
+  region: 'FDA' as any,
   version: '1.0',
+  standard: 'ICH M4',
+  requiredMetadata: [],
   sections: [
     // Module 1
     { sectionCode: '1.1', title: 'Cover Letter', required: true, instructionalText: 'Draft an FDA IND cover letter including applicant information, IND number, and submission description.' },

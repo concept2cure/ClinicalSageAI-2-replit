@@ -138,7 +138,7 @@ function requireQuota(featureId: string) {
       }
     } catch {
       // Quota check failure should not block the request — log and continue
-      log.warn('[public-api] Quota check failed for org', req.apiOrganizationId, featureId);
+      log.warn('[public-api] Quota check failed', { orgId: req.apiOrganizationId, featureId });
     }
 
     next();

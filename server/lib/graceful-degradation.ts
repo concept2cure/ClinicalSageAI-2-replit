@@ -172,7 +172,7 @@ export class GracefulDegradationService extends EventEmitter {
         errorRate: metrics.totalRequests > 0 
           ? metrics.totalFailures / metrics.totalRequests 
           : 0,
-        details: metrics
+        details: metrics as unknown as Record<string, unknown>
       };
 
       serviceHealths.push(health);

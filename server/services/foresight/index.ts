@@ -50,9 +50,10 @@ export class UnifiedForesightService {
   constructor(private config: ForesightConfig) {}
 
   async predictTrialSuccess(protocolData: Record<string, unknown>): Promise<ForesightPrediction> {
-    const { ForesightAIEngine } = await import('../foresight-ai-engine');
-    const engine = new ForesightAIEngine();
-    return engine.predictSuccess(protocolData);
+    const mod = (await import('../foresight-ai-engine')) as any;
+    const Ctor = mod.ForesightAIEngine ?? mod.default;
+    const engine = typeof Ctor === 'function' ? new Ctor() : Ctor;
+    return engine.predictSuccess?.(protocolData) ?? engine.predict?.(protocolData) ?? {};
   }
 
   async analyzeProtocol(protocolId: string): Promise<ForesightAnalysis> {
