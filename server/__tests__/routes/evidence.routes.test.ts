@@ -113,7 +113,8 @@ describe('evidence routes (db-backed)', () => {
     const app = express();
     app.use(express.json());
     app.use((req, _res, next) => {
-      (req as any).tenantContext = { tenantId: 42 };
+      (req as any).tenantContext = { organizationId: 42 };
+      (req as any).user = { id: 7, organizationId: 42 };
       next();
     });
     app.use('/api/evidence', mod.default);
@@ -126,25 +127,34 @@ describe('evidence routes (db-backed)', () => {
     expect(res.body.data.facets.type).toEqual([{ value: 'literature', count: 1 }]);
   });
 
-  it('POST /links auto-creates a claim when no claim exists for source', async () => {
+  it('POST /links creates a link when evidence exists', async () => {
+    const EVIDENCE_UUID = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
     selectQueue.push(
-      [{ id: 55, programId: 777, title: 'Source Title', contentText: 'Claim text' }],
-      []
+      [{ id: EVIDENCE_UUID }] // evidence object lookup
     );
-    insertQueue.push([{ id: 901 }], [{ id: 902, documentId: 321, sectionId: 'sec-1', linkType: 'supports', strength: '0.66', createdAt: new Date('2026-02-01T00:00:00Z') }]);
+    insertQueue.push([
+      {
+        id: 'link-902',
+        evidenceId: EVIDENCE_UUID,
+        targetType: 'section',
+        targetId: '321',
+        linkType: 'supports',
+        strength: 'moderate',
+      },
+    ]);
 
     const mod = await import('../../routes/evidence');
     const app = express();
     app.use(express.json());
     app.use((req, _res, next) => {
-      (req as any).tenantContext = { tenantId: 42 };
-      (req as any).user = { id: 7, name: 'Tester' };
+      (req as any).tenantContext = { organizationId: 42 };
+      (req as any).user = { id: 7, organizationId: 42, name: 'Tester' };
       next();
     });
     app.use('/api/evidence', mod.default);
 
     const res = await request(app).post('/api/evidence/links').send({
-      evidenceId: 55,
+      evidenceId: EVIDENCE_UUID,
       targetType: 'section',
       targetId: '321',
       targetPath: 'sec-1',
@@ -154,7 +164,7 @@ describe('evidence routes (db-backed)', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
-    expect(res.body.data.id).toBe('902');
-    expect(res.body.data.evidenceId).toBe('55');
+    expect(res.body.data.id).toBe('link-902');
+    expect(res.body.data.evidenceId).toBe(EVIDENCE_UUID);
   });
 });

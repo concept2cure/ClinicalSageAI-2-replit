@@ -18,7 +18,6 @@ const EXPORT_ROUTE_FILES = [
   'cerv2-export-routes.ts',
   '510k-estar-routes.ts',
   'export-routes.ts',
-  'export_routes.ts',
   'ectd-export.ts',
   'rtm-export.ts',
   'ind-pdf.ts',
@@ -38,6 +37,7 @@ const GOVERNED_FUNCTIONS = [
 /** Files that have been audited and granted a documented exemption */
 const EXEMPTED_FILES: Record<string, string> = {
   'ectd-compile.ts': 'No downloadable output — returns JSON compilation status only',
+  'tenant-export.ts': 'GDPR/Part 11 tenant data export uses auditService.logAction for governance, not artifact-level governance helpers',
 };
 
 describe('Export Governance Coverage Guard', () => {
