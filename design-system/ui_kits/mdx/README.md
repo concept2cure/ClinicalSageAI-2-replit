@@ -1,51 +1,66 @@
-# MDX Workstream — Medical Device and Diagnostics
+# MDX kit — Phase 4 surfaces
 
-Entered from the home rail by clicking **Medical Device and Diagnostics**. The workstream is a focused workspace with its own left rail (pathway navigation), a secondary tab bar (Overview · 510(k) · PMA · CER · Precedent), and a right-docked AnA panel.
+This kit is the source-of-truth for the six MDX surfaces that ship in Phase 4 of the Concept2Cure.RI rollout: **device engineering · UDI and labeling · post-market vigilance · analytics · AnA memory · admin and access**.
+
+Open `index.html` to review the surfaces side-by-side with the existing MDX shell.
 
 ## Layout
 
-**Three columns:**
+```
+ui_kits/mdx/
+├── index.html              Harness · loads React + Babel + every surface
+├── app.css                 Canonical class library — mirrored 1:1 from
+│                           client/src/concept2cure/mdx/app.css
+├── surfaces.css            Phase 4 additions on top of app.css. Merge into
+│                           app.css when porting (banners line up).
+├── tokens-shim.css         3 missing tokens (--border-100, --border-200,
+│                           --error-text). Move into colors_and_type.css
+│                           when porting (see HANDOFF.md step 6).
+├── icons.jsx               Lucide set — same names + shapes as icons.tsx
+├── shell.jsx               Rail + TopBar + TabBar + AnA seam (compressed)
+├── ask-ana-chip.jsx        Inline "ask AnA about this" affordance
+├── app.jsx                 Harness composer · toast surfaces AnA handoff
+├── data/                   Fixture data — schema contract for every hook
+│   ├── nav.js              Rail items + suggestions + AnA modes
+│   ├── programs.js         Portfolio (same 14 programs as codebase)
+│   ├── engineering.js      DHF · trace · risks · ECRs · NCs
+│   ├── udi.js              Devices · labels · symbols · MRI · issues
+│   ├── postmarket.js       Signals · MDRs · CAPAs · PMS · trends
+│   ├── analytics.js        KPIs · phases · blockers · reviewers · usage
+│   ├── memory.js           Atoms · categories · ingestion · effects
+│   └── admin.js            Members · roles · grants · SSO · keys · audit
+└── surfaces/
+    ├── Engineering.jsx
+    ├── Udi.jsx
+    ├── Postmarket.jsx
+    ├── Analytics.jsx
+    ├── Memory.jsx
+    └── Admin.jsx
+```
 
-| Column | Width | Content |
-|---|---|---|
-| Rail | 260 / 56 px | Workstream nav + back to home |
-| Main | fluid | TopBar · TabBar · page |
-| AnA Dock | 380 / 44 px | Context, suggestions, chat |
+## Non-negotiables, enforced
 
-Both side columns collapse. Content stays readable between 1200 and 1600 px. Below 1200 px the AnA dock should auto-collapse (future).
+Every surface in here was authored against `README.md` and `SKILL.md`:
 
-## Surfaces
+- Sentence case in all strings (titles, headings, buttons, menu items)
+- No emoji, no exclamation marks, no cheerleading copy
+- 13px body, 28px serif `--font-serif` page title (Claude.ai cadence)
+- Claude orange (`--accent-100`) used at most once per screen
+- Lucide icons only (set lives in `icons.jsx`, same as `icons.tsx`)
+- Numbers over adjectives — every status line cites counts, never adjectives
+- 200ms ease-out motion, no bounce, no spring
 
-1. **Overview** — portfolio health strip + active program cards. Click a program to jump into its pathway workspace with that program in context (topbar pill, AnA dock context block).
-2. **510(k) Submissions** — 7-stage pipeline strip, predicate search table with similarity scoring, SE matrix (subject vs predicate, verdict per attribute), eSTAR 20-section checklist with blocker highlighting.
-3. **PMA Submissions** — 10-phase workflow grid, pivotal-trial metrics, 6 PMA module cards (Preclinical, Clinical, Manufacturing, Labeling, Stats, Financial).
-4. **CER Generator** — FAERS/MAUDE/Literature signal table with inclusion status, literature-by-year bar chart, CER section checklist (Article 61), AnA generation plan.
-5. **Precedent Intelligence** — saved queries + cross-agency pattern summary.
+## Harness vs. codebase
 
-## Data model
+The kit harness runs in the browser via Babel-standalone:
+- Each `.jsx` is wrapped in an IIFE so top-level `const`s don't collide
+  (in-browser Babel evaluates all scripts in shared scope).
+- Each `data/*.js` exposes its exports via `window.X = X` for the harness;
+  in the codebase port these become ESM `export const` statements.
+- `onAskAna` is wired to a kit-only toast that shows the message text;
+  in the codebase port it routes through `useAnaChat` → `/api/ana-ri/stream`.
 
-All content lives in `data.jsx` so surfaces are pure presentation. Swap the arrays to drive different programs. The contract:
+When Claude Code mirrors the kit, drop the IIFE wrappers and the window-global
+plumbing — the surfaces become straight TSX modules.
 
-- `MDX_NAV_ITEMS` — rail items (workstream, work, system groups)
-- `MDX_PROGRAMS` — device programs (title, pathway, stage, readiness, owners, blocker)
-- `MDX_HEALTH` — portfolio metric cards
-- `K510_STAGES`, `K510_PREDICATES`, `K510_SE_ROWS`, `K510_ESTAR` — 510(k) pathway
-- `PMA_PHASES`, `PMA_MODULES`, `PMA_TRIAL_METRICS` — PMA pathway
-- `CER_SIGNALS`, `CER_LITERATURE`, `CER_EXPORT` — CER generator
-- `MDX_SUGGESTIONS` — AnA suggestions keyed by `activeNav`
-
-## Tokens and shell
-
-Mirrors the home kit — same `--bg-000` warm cream, terracotta accent, 13px body, Styrene B / Tiempos Text stack. Serif reserved for metric values. The only MDX-specific additions are tab bars, 7-node stage strips, predicate tables, the SE-matrix grid, and the right AnA dock.
-
-## Non-negotiables (inherited from `/README.md`)
-
-- Sentence case everywhere. No Title Case. No ALL CAPS except 10px metadata.
-- No emoji. No exclamation marks.
-- 200ms ease-out motion.
-- Claude orange one focal point per view — used on active stage node, selected predicate row, active phase, AnA suggestion hover.
-- Lucide icons, 1.75 stroke, 16 px.
-
-## Phase status
-
-Phase 2 of the product rollout. Preceded by `ui_kits/home/` (the front door). `HANDOFF.md` carries the full contract Claude Code follows when implementing.
+See `HANDOFF.md > Phase 4` for the full implementation contract per surface.

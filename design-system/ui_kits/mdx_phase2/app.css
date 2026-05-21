@@ -5,33 +5,56 @@
    docked AnA panel (380px, collapsible to 44px icon strip).
    ═════════════════════════════════════════════════════════════════ */
 
-/* ─── Token shim ─────────────────────────────────────────────────
-   Canonical tokens come from design-system/colors_and_type.css
-   (imported once at client/src/main.tsx). Two gaps to bridge:
-
-   1. Canonical names the brand accent --accent-main-{000,100,200}
-      while the kit's component CSS references --accent-{000,100,200}.
-      Alias here rather than mutating canonical.
-   2. Component-level layout constants (rail/topbar/tabbar/AnA widths)
-      are kit-local and don't belong in the canonical token surface.
-
-   Everything else (--bg-*, --text-*, --border, --success/--warning/
-   --error, --font-*, --radius-*, --ease, --dur, --shadow-*) is
-   supplied by canonical and intentionally not re-declared. */
 :root {
-  --accent-000: var(--accent-main-000);
-  --accent-100: var(--accent-main-100);
-  --accent-200: var(--accent-main-200);
+  --bg-000: #faf9f5; --bg-050: #f5f4ee; --bg-100: #f0eee6;
+  --bg-200: #e8e6dc; --bg-300: #d1cfc0; --bg-400: #b0aea5;
+  --text-100: #141413; --text-200: #3d3d3a; --text-300: #6b6963;
+  --text-400: #8a8880; --text-500: #b0aea5; --text-000: #ffffff;
+  --accent-100: #d97757; --accent-200: #c96442;
+  --accent-000: #faf0ec; --accent-muted: #f5ddd4;
+  --ai: #6a9bcc; --ai-muted: #dce8f3;
+  --success: #788c5d; --success-muted: #e4ebd8;
+  --warning: #c87d2e; --warning-muted: #f8e9d0;
+  --error: #b93a3a;   --error-muted: #f5dfdd;
+  --border: #e3e1d7; --border-strong: #d1cfc0;
 
-  --dur: var(--dur-normal);
+  --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px;
+  --radius-xl: 12px; --radius-2xl: 16px;
 
-  --rail-expanded:  260px;
+  --shadow-xs: 0 1px 2px 0 rgb(20 20 19 / 0.04);
+  --shadow-sm: 0 1px 3px 0 rgb(20 20 19 / 0.06), 0 1px 2px -1px rgb(20 20 19 / 0.06);
+  --shadow-md: 0 4px 8px -2px rgb(20 20 19 / 0.08), 0 2px 4px -2px rgb(20 20 19 / 0.06);
+
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur: 200ms;
+
+  --rail-expanded: 260px;
   --rail-collapsed: 56px;
-  --tabbar:         44px;
-  --ana-expanded:   400px;
-  --ana-seam:       32px;
+  --topbar: 48px;
+  --tabbar: 44px;
+  --ana-expanded: 400px;
+  --ana-seam: 32px;
 
-  --black: #141413;
+  --font-sans: 'Styrene B', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --font-serif: 'Tiempos Text', ui-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --font-mono: ui-monospace, 'JetBrains Mono', SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.dark {
+  --bg-000: #262624; --bg-050: #2b2b29; --bg-100: #1f1f1d;
+  --bg-200: #3d3d3a; --bg-300: #4a4a46; --bg-400: #6b6963;
+  --text-100: #faf9f5; --text-200: #e8e6dc; --text-300: #b0aea5;
+  --text-400: #8a8880; --text-500: #6b6963;
+  --accent-000: rgba(217, 119, 87, 0.12);
+  --accent-muted: #4a2e24;
+  --ai-muted: rgba(106, 155, 204, 0.18);
+  --success-muted: rgba(120, 140, 93, 0.18);
+  --warning-muted: rgba(200, 125, 46, 0.18);
+  --error-muted: rgba(185, 58, 58, 0.18);
+  --border: #3d3d3a; --border-strong: #4a4a46;
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.30);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.35), 0 1px 2px -1px rgb(0 0 0 / 0.35);
+  --shadow-md: 0 4px 8px -2px rgb(0 0 0 / 0.40), 0 2px 4px -2px rgb(0 0 0 / 0.40);
 }
 
 /* ─── Reset ─── */
@@ -1747,94 +1770,6 @@ svg { display: block; }
 .estar-row:hover { background: var(--bg-050); }
 
 
-/* ───────────────────────────────────────────────────────────────────
-   AnA draft banner — inline affordance shown on a section when AnA
-   has drafted via write_kit_section and the user hasn't accepted.
-   Single-row layout: meta + actions. Reuses existing tokens; the
-   only colored element is the Accept button (Claude orange).
-   ─────────────────────────────────────────────────────────────────── */
-.ana-draft-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 12px;
-  margin: 8px 0;
-  background: var(--accent-000);
-  border: 1px solid var(--accent-100);
-  border-radius: var(--radius-md);
-  font-size: 13px;
-  color: var(--text-200);
-  transition: background var(--dur) var(--ease);
-}
-.ana-draft-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-.ana-draft-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent-100);
-  flex-shrink: 0;
-}
-.ana-draft-label { font-weight: 500; color: var(--accent-200); }
-.ana-draft-summary {
-  color: var(--text-300);
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}
-.ana-draft-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-.ana-draft-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: var(--radius-md);
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition:
-    background var(--dur) var(--ease),
-    color var(--dur) var(--ease),
-    border-color var(--dur) var(--ease);
-}
-.ana-draft-btn.ghost {
-  background: transparent;
-  color: var(--text-300);
-  border-color: var(--bg-300);
-}
-.ana-draft-btn.ghost:hover { color: var(--text-200); border-color: var(--text-500); }
-.ana-draft-btn.primary {
-  background: var(--accent-100);
-  color: var(--text-000);
-  border-color: var(--accent-100);
-}
-.ana-draft-btn.primary:hover { background: var(--accent-200); border-color: var(--accent-200); }
-.ana-draft-btn[disabled] { opacity: 0.6; cursor: progress; }
-.ana-draft-btn .ana-draft-arrow svg { width: 12px; height: 12px; vertical-align: middle; }
-.ana-draft-error {
-  flex-basis: 100%;
-  font-size: 12px;
-  color: var(--error-text, #b91c1c);
-  margin-top: 4px;
-}
-@media (prefers-reduced-motion: reduce) {
-  .ana-draft-banner, .ana-draft-btn { transition: none; }
-}
-
-
 /* ═════════════════════════════════════════════════════════════════
    WORKBENCH — Tasks · Vault · Validation · Submissions · Templates
    Shared surface chrome (page header, metric row, ctable, section)
@@ -2661,177 +2596,3 @@ button.ctable-row { border-radius: 0; }
   cursor: pointer;
 }
 .ph-crumb-back:hover { color: var(--accent-200); }
-
-/* ─── DataState — empty / loading / error / unconfigured ─────────── */
-.data-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 56px 32px;
-  border-radius: var(--radius-lg);
-  background: var(--bg-050);
-  border: 1px solid var(--border);
-  text-align: center;
-  color: var(--text-200);
-}
-.data-state.compact { padding: 24px 20px; gap: 6px; }
-.data-state-glyph {
-  width: 32px; height: 32px;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--text-300);
-  margin-bottom: 4px;
-}
-.data-state[data-state="error"] .data-state-glyph,
-.data-state[data-state="unconfigured"] .data-state-glyph {
-  color: var(--accent-100);
-}
-.data-state-title {
-  font-size: 14px; font-weight: 500;
-  color: var(--text-100);
-  letter-spacing: -0.005em;
-}
-.data-state-hint {
-  font-size: 12.5px; line-height: 1.5;
-  color: var(--text-300);
-  max-width: 44ch;
-}
-.data-state-error-detail {
-  margin-top: 4px;
-  padding: 6px 10px;
-  border-radius: var(--radius-sm);
-  background: var(--bg-100);
-  border: 1px solid var(--border);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-300);
-  max-width: 60ch;
-  overflow-wrap: anywhere;
-}
-.data-state-actions { display: flex; gap: 8px; margin-top: 8px; }
-.data-state-btn {
-  height: 28px; padding: 0 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-200);
-  font-size: 12px;
-  cursor: pointer;
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
-}
-.data-state-btn:hover { background: var(--bg-100); color: var(--text-100); }
-.data-state-btn.primary {
-  background: var(--accent-100);
-  border-color: var(--accent-100);
-  color: var(--text-000);
-}
-.data-state-btn.primary:hover { background: var(--accent-200); border-color: var(--accent-200); }
-.data-state-spinner {
-  width: 18px; height: 18px;
-  border-radius: 50%;
-  border: 2px solid var(--bg-300);
-  border-top-color: var(--accent-100);
-  animation: data-state-spin 720ms linear infinite;
-}
-@keyframes data-state-spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) {
-  .data-state-spinner { animation-duration: 4s; }
-}
-
-/* ─── GovernedActionButton — Part 11 wrapped mutation ───────────── */
-.gov-action-btn {
-  height: 32px; padding: 0 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid transparent;
-  font-size: 12.5px; font-weight: 500;
-  letter-spacing: -0.005em;
-  cursor: pointer;
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
-}
-.gov-action-btn.small  { height: 28px; padding: 0 12px; font-size: 12px; }
-.gov-action-btn.medium { height: 32px; }
-.gov-action-btn.primary {
-  background: var(--accent-100);
-  border-color: var(--accent-100);
-  color: var(--text-000);
-}
-.gov-action-btn.primary:hover:not(:disabled) {
-  background: var(--accent-200);
-  border-color: var(--accent-200);
-}
-.gov-action-btn.ghost {
-  background: transparent;
-  border-color: var(--border);
-  color: var(--text-200);
-}
-.gov-action-btn.ghost:hover:not(:disabled) {
-  background: var(--bg-100);
-  color: var(--text-100);
-}
-.gov-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.gov-action-btn[aria-busy="true"] { cursor: progress; }
-
-/* Reason-for-change overlay */
-.gov-action-overlay {
-  position: fixed; inset: 0;
-  background: rgba(20, 20, 19, 0.32);
-  display: flex; align-items: center; justify-content: center;
-  padding: 24px;
-  z-index: 200;
-  animation: gov-action-fade var(--dur) var(--ease);
-}
-@keyframes gov-action-fade { from { opacity: 0; } to { opacity: 1; } }
-.gov-action-card {
-  width: 100%; max-width: 480px;
-  background: var(--bg-000);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: 24px;
-  display: flex; flex-direction: column; gap: 12px;
-}
-.gov-action-eyebrow {
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--accent-100);
-  font-weight: 500;
-}
-.gov-action-title {
-  margin: 0;
-  font-family: var(--font-serif);
-  font-size: 18px;
-  line-height: 1.3;
-  color: var(--text-100);
-  font-weight: 400;
-  letter-spacing: -0.01em;
-}
-.gov-action-textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  background: var(--bg-050);
-  font-family: var(--font-sans);
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--text-100);
-  resize: vertical;
-  min-height: 88px;
-  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
-}
-.gov-action-textarea:focus {
-  outline: none;
-  border-color: var(--accent-100);
-  background: var(--bg-000);
-}
-.gov-action-error {
-  font-size: 12px;
-  color: var(--error);
-  padding: 4px 0;
-}
-.gov-action-actions {
-  display: flex; justify-content: flex-end; gap: 8px;
-  margin-top: 4px;
-}
