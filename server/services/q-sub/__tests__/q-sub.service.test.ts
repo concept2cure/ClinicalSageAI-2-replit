@@ -17,6 +17,9 @@ const dbMock: { select: any; insert: any; update: any } = {
 
 vi.mock('../../../db', () => ({
   db: dbMock,
+  pool: { query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }) },
+  getPool: () => ({ query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }) }),
+  getDb: () => dbMock,
 }));
 
 vi.mock('../../auditService', () => ({
