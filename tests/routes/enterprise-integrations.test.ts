@@ -92,7 +92,7 @@ describe('Enterprise Integrations Routes', () => {
     const res = await request('POST', '/api/integrations/jira/connect', {
       authType: 'api_key',
       config: { apiToken: 'secret' },
-    }, { 'x-tenant-id': 'org-1' });
+    }, { 'x-tenant-id': '101' });
 
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
@@ -104,12 +104,12 @@ describe('Enterprise Integrations Routes', () => {
     const connect = await request('POST', '/api/integrations/slack/connect', {
       authType: 'api_key',
       config: { botToken: 'xoxb-123456-secret' },
-    }, { 'x-tenant-id': 'org-2' });
+    }, { 'x-tenant-id': '102' });
 
     expect(connect.status).toBe(200);
     expect(connect.body.success).toBe(true);
 
-    const list = await request('GET', '/api/integrations', undefined, { 'x-tenant-id': 'org-2' });
+    const list = await request('GET', '/api/integrations', undefined, { 'x-tenant-id': '102' });
     expect(list.status).toBe(200);
     expect(list.body.meta.total).toBeGreaterThanOrEqual(1);
 
@@ -123,10 +123,10 @@ describe('Enterprise Integrations Routes', () => {
     await request('POST', '/api/integrations/docusign/connect', {
       authType: 'oauth',
       config: { accountId: 'acc-1', clientId: 'cid-1' },
-    }, { 'x-tenant-id': 'tenant-a' });
+    }, { 'x-tenant-id': '103' });
 
-    const tenantA = await request('GET', '/api/integrations', undefined, { 'x-tenant-id': 'tenant-a' });
-    const tenantB = await request('GET', '/api/integrations', undefined, { 'x-tenant-id': 'tenant-b' });
+    const tenantA = await request('GET', '/api/integrations', undefined, { 'x-tenant-id': '103' });
+    const tenantB = await request('GET', '/api/integrations', undefined, { 'x-tenant-id': '104' });
 
     expect(tenantA.status).toBe(200);
     expect(tenantB.status).toBe(200);
@@ -135,7 +135,7 @@ describe('Enterprise Integrations Routes', () => {
   });
 
   it('returns provider catalog with required fields', async () => {
-    const res = await request('GET', '/api/integrations/catalog', undefined, { 'x-tenant-id': 'catalog-org' });
+    const res = await request('GET', '/api/integrations/catalog', undefined, { 'x-tenant-id': '105' });
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(Array.isArray(res.body.data)).toBe(true);
@@ -149,12 +149,12 @@ describe('Enterprise Integrations Routes', () => {
     await request('POST', '/api/integrations/slack/connect', {
       authType: 'api_key',
       config: { botToken: 'xoxb-metrics' },
-    }, { 'x-tenant-id': 'metrics-org' });
+    }, { 'x-tenant-id': '106' });
 
-    await request('POST', '/api/integrations/slack/sync', {}, { 'x-tenant-id': 'metrics-org' });
+    await request('POST', '/api/integrations/slack/sync', {}, { 'x-tenant-id': '106' });
 
     const metrics = await request('GET', '/api/integrations/metrics/summary?hours=24', undefined, {
-      'x-tenant-id': 'metrics-org',
+      'x-tenant-id': '106',
     });
 
     expect(metrics.status).toBe(200);
@@ -168,15 +168,15 @@ describe('Enterprise Integrations Routes', () => {
     await request('POST', '/api/integrations/slack/connect', {
       authType: 'api_key',
       config: { botToken: 'xoxb-token' },
-    }, { 'x-tenant-id': 'idempo-org' });
+    }, { 'x-tenant-id': '107' });
 
     const first = await request('POST', '/api/integrations/slack/sync', {}, {
-      'x-tenant-id': 'idempo-org',
+      'x-tenant-id': '107',
       'x-idempotency-key': 'sync-123',
     });
 
     const second = await request('POST', '/api/integrations/slack/sync', {}, {
-      'x-tenant-id': 'idempo-org',
+      'x-tenant-id': '107',
       'x-idempotency-key': 'sync-123',
     });
 
@@ -191,12 +191,12 @@ describe('Enterprise Integrations Routes', () => {
     await request('POST', '/api/integrations/sharepoint/connect', {
       authType: 'oauth',
       config: { tenantDomain: 'contoso', clientId: 'sp-client' },
-    }, { 'x-tenant-id': 'sync-org' });
+    }, { 'x-tenant-id': '108' });
 
-    await request('POST', '/api/integrations/sharepoint/sync', {}, { 'x-tenant-id': 'sync-org' });
+    await request('POST', '/api/integrations/sharepoint/sync', {}, { 'x-tenant-id': '108' });
 
     const runs = await request('GET', '/api/integrations/sharepoint/sync/runs?limit=5', undefined, {
-      'x-tenant-id': 'sync-org',
+      'x-tenant-id': '108',
     });
 
     expect(runs.status).toBe(200);
@@ -210,10 +210,10 @@ describe('Enterprise Integrations Routes', () => {
     await request('POST', '/api/integrations/slack/connect', {
       authType: 'api_key',
       config: { botToken: 'xoxb-health-token' },
-    }, { 'x-tenant-id': 'health-org' });
+    }, { 'x-tenant-id': '109' });
 
     const health = await request('GET', '/api/integrations/slack/health', undefined, {
-      'x-tenant-id': 'health-org',
+      'x-tenant-id': '109',
     });
 
     expect(health.status).toBe(200);

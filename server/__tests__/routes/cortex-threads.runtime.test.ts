@@ -8,17 +8,22 @@ vi.mock('../../db.js', () => ({
   pool: {
     query: (...args: unknown[]) => queryMock(...args),
   },
+  getPool: () => ({
+    query: (...args: unknown[]) => queryMock(...args),
+  }),
 }));
 
 vi.mock('../../middleware/auth.js', () => ({
   requireAuth: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 
-vi.mock('jsonwebtoken', () => ({
-  default: {
-    verify: vi.fn(),
-  },
-}));
+vi.mock('jsonwebtoken', () => {
+  const verify = vi.fn();
+  return {
+    default: { verify },
+    verify,
+  };
+});
 
 describe('cortex threads runtime contract', () => {
   beforeEach(() => {
@@ -41,7 +46,7 @@ describe('cortex threads runtime contract', () => {
     const jwt = (await import('jsonwebtoken')) as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 7 });
 
-    queryMock.mockResolvedValueOnce({
+    queryMock.mockResolvedValue({
       rows: [
         {
           id: 't-1',
@@ -119,7 +124,7 @@ describe('cortex threads runtime contract', () => {
   it('PATCH /threads/:threadId returns 403 when user does not own thread', async () => {
     const jwt = (await import('jsonwebtoken')) as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 17 });
-    queryMock.mockResolvedValueOnce({ rows: [] });
+    queryMock.mockResolvedValue({ rows: [] });
 
     const router = (await import('../../routes/cortex-unified')).default;
     const app = express();
@@ -138,7 +143,7 @@ describe('cortex threads runtime contract', () => {
   it('DELETE /threads/:threadId returns 403 when user does not own thread', async () => {
     const jwt = (await import('jsonwebtoken')) as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 17 });
-    queryMock.mockResolvedValueOnce({ rows: [] });
+    queryMock.mockResolvedValue({ rows: [] });
 
     const router = (await import('../../routes/cortex-unified')).default;
     const app = express();
