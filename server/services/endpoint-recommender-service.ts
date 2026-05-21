@@ -1,6 +1,8 @@
 import { eq, and, sql, desc, like, or } from 'drizzle-orm';
 import { db } from '../db';
-import { csrReports, csrDetails } from '../sage-plus-service';
+import { csrReports as csrReportsStub, csrDetails as csrDetailsStub } from '../sage-plus-service';
+const csrReports = csrReportsStub as any;
+const csrDetails = csrDetailsStub as any;
 import { huggingFaceService } from '../huggingface-service';
 import { academicDocumentProcessor } from './academic-document-processor';
 import * as fs from 'fs';
@@ -35,6 +37,13 @@ export interface RegulatoryGuidance {
   guidance_text: string;
   date?: string;
   url?: string;
+  /** Older shape carried by legacy guidance rows */
+  endpoint_text?: string;
+  phase?: string;
+  document?: string;
+  text?: string;
+  description?: string;
+  [key: string]: unknown;
 }
 
 export interface AcademicReference {
@@ -781,7 +790,7 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
       }
 
       // Convert to EndpointRecommendation format
-      return Array.from(endpointStats.values())
+      return (Array.from(endpointStats.values())
         .filter(stat => stat.totalTrials > 0)
         .map(stat => {
           const successRate =
@@ -818,7 +827,7 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
 
           // Then by occurrence count
           return b.occurrence_count - a.occurrence_count;
-        });
+        })) as unknown as EndpointRecommendation[];
     } catch (error) {
       console.error('Error getting endpoints with evidence:', error);
       return [];

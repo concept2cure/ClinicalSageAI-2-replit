@@ -35,14 +35,14 @@ const logger = createScopedLogger('innovation-routes');
 const router: Router = express.Router();
 
 // Service instances (will be initialized with pool)
-let deltaRadarService: RegulatoryDeltaRadarService;
-let heatmapService: EvidenceConfidenceHeatmapService;
-let readinessTwinService: SubmissionReadinessTwinService;
-let traceabilityService: AutoTraceabilityService;
-let workspaceService: AdaptiveReviewerWorkspaceService;
-let templateLearningService: OutcomeBasedTemplateLearningService;
-let negotiationService: RegulatoryNegotiationLogbookService;
-let guardrailsService: ComplianceGuardrailsSDKService;
+let deltaRadarService: any;
+let heatmapService: any;
+let readinessTwinService: any;
+let traceabilityService: any;
+let workspaceService: any;
+let templateLearningService: any;
+let negotiationService: any;
+let guardrailsService: any;
 
 /**
  * Initialize services with database pool
