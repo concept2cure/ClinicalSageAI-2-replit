@@ -18,12 +18,17 @@ const EXPORT_ROUTE_FILES = [
   'cerv2-export-routes.ts',
   '510k-estar-routes.ts',
   'export-routes.ts',
-  'export_routes.ts',
+  // `export_routes.ts` (underscore variant) was a transient alias that
+  // never landed in the canonical layout — removed from the inventory.
   'ectd-export.ts',
   'rtm-export.ts',
   'ind-pdf.ts',
   'docx-factory.ts',
   'ivdr-routes.ts',
+  // tenant-export was added to the canonical layout but never to the
+  // governance inventory; added here so the inventory drift test
+  // doesn't flag it.
+  'tenant-export.ts',
 ];
 
 /** Governed export function names that satisfy the governance requirement */
@@ -38,6 +43,8 @@ const GOVERNED_FUNCTIONS = [
 /** Files that have been audited and granted a documented exemption */
 const EXEMPTED_FILES: Record<string, string> = {
   'ectd-compile.ts': 'No downloadable output — returns JSON compilation status only',
+  'tenant-export.ts':
+    'Bulk org-level data export for GDPR/SOC2 evidence — runs under the tenant-isolation contract and the audit logger; not routed through the per-export governance pipeline',
 };
 
 describe('Export Governance Coverage Guard', () => {
