@@ -145,11 +145,11 @@ router.get('/pricing', async (req: Request, res: Response) => {
     const pricing = PRICING[industryMode] || PRICING.virtual_biotech;
 
     // Format for frontend display (convert cents to dollars)
-    const tiers = pricing.map(p => ({
+    const tiers = pricing.map((p: any) => ({
       name: p.name,
       tier: p.tier,
-      baseMonthly: p.baseMonthly / 100,
-      perSeatMonthly: p.perSeatMonthly / 100,
+      baseMonthly: (p.baseMonthly ?? 0) / 100,
+      perSeatMonthly: (p.perSeatMonthly ?? p.perUserMonthly ?? 0) / 100,
       annualDiscountPct: p.annualDiscountPct,
       maxUsers: p.maxUsers,
       maxProjects: p.maxProjects === -1 ? 'Unlimited' : p.maxProjects,
@@ -202,10 +202,10 @@ router.post('/dtc-checkout', authenticateToken, async (req: Request, res: Respon
 // GET /dtc-pricing — Get DTC pricing tiers (public, no auth)
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/dtc-pricing', async (_req: Request, res: Response) => {
-  const tiers = DTC_PRICING.map(p => ({
+  const tiers = DTC_PRICING.map((p: any) => ({
     name: p.name,
     tier: p.tier,
-    priceMonthly: p.baseMonthly / 100,
+    priceMonthly: (p.baseMonthly ?? 0) / 100,
     annualDiscountPct: p.annualDiscountPct,
     maxUsers: p.maxUsers === -1 ? 'Unlimited' : p.maxUsers,
     maxProjects: p.maxProjects === -1 ? 'Unlimited' : p.maxProjects,

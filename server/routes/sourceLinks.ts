@@ -59,7 +59,7 @@ const addSourceLinkSchema = z.object({
 router.get('/:id/sources', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const documentId = parseInt(req.params.id, 10);
+    const documentId = parseInt(String(req.params.id), 10);
 
     if (isNaN(documentId)) {
       return res.status(400).json({ error: 'Invalid document ID' });
@@ -85,7 +85,7 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
 router.post('/:id/sources', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const documentId = parseInt(req.params.id, 10);
+    const documentId = parseInt(String(req.params.id), 10);
 
     if (isNaN(documentId)) {
       return res.status(400).json({ error: 'Invalid document ID' });
@@ -124,7 +124,7 @@ router.post('/:id/sources', async (req: Request, res: Response) => {
 router.delete('/:id/sources/:linkId', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const linkId = parseInt(req.params.linkId, 10);
+    const linkId = parseInt(String(req.params.linkId), 10);
 
     if (isNaN(linkId)) {
       return res.status(400).json({ error: 'Invalid link ID' });
@@ -153,7 +153,7 @@ router.delete('/:id/sources/:linkId', async (req: Request, res: Response) => {
 router.post('/:id/sources/analyze', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const documentId = parseInt(req.params.id, 10);
+    const documentId = parseInt(String(req.params.id), 10);
 
     if (isNaN(documentId)) {
       return res.status(400).json({ error: 'Invalid document ID' });

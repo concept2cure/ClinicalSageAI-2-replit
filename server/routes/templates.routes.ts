@@ -324,7 +324,7 @@ router.post('/', async (req, res) => {
           sourceSystem: 'api',
           version: '1.0',
           createdBy: userId
-        })
+        } as any)
         .returning();
       
       createdTemplate = {
@@ -350,7 +350,7 @@ router.post('/', async (req, res) => {
           isPublic: false,
           createdById: userId,
           updatedById: userId
-        })
+        } as any)
         .returning();
       
       createdTemplate = template;
@@ -368,7 +368,7 @@ router.post('/', async (req, res) => {
           metadata,
           status: 'active',
           createdById: userId
-        })
+        } as any)
         .returning();
       
       createdTemplate = {
@@ -515,7 +515,7 @@ router.post('/:templateId/use', async (req, res) => {
           timeSpent: 0,
           changesCount: 0,
           completionScore: 0
-        });
+        } as any);
     }
     
     res.json({ success: true });

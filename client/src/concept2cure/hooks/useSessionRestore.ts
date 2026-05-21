@@ -57,7 +57,7 @@ export interface SessionRestoreResult {
   clearSession: () => void;
   
   // Getters
-  getLastProject: () => { id: string; name: string; type: string } | null;
+  getLastProject: () => { id: string; name: string; type: string; updatedAt?: string | Date } | null;
   getLastConversation: () => { id: string; threadId?: string } | null;
 }
 

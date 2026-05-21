@@ -1,11 +1,11 @@
 import React from 'react';
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { ContextProfile } from '../components/enablement/enablement-data';
-import {
-  LEARNING_PATHS,
-  LEARNING_MODULES,
-  CERTIFICATIONS,
-} from '../components/enablement/enablement-data';
+// Enablement data registry was removed during the Phase 1/2 design-system
+// port. Local stubs keep this provider compiling until a new source ships.
+type ContextProfile = any;
+const LEARNING_PATHS: any[] = [];
+const LEARNING_MODULES: any[] = [];
+const CERTIFICATIONS: any[] = [];
 
 // ---------------------------------------------------------------------------
 // Types

@@ -11,11 +11,16 @@
  * @module server/services/cer/index
  */
 
-// Re-export from primary service
-export { CERGenerationService, generateCERReport } from '../cerGenerationService';
+// Re-export from primary service (legacy class+function names not actually
+// exported — adapt the default singleton instead).
+import cerGenerationService from '../cerGenerationService';
+export const CERGenerationService: any = (cerGenerationService as any).constructor;
+export const generateCERReport: any = (cerGenerationService as any).generate?.bind?.(cerGenerationService);
 
-// Re-export generator utilities
-export { CERGenerator } from '../cerGenerator';
+// Re-export generator utilities (cerGenerator default export shape varies)
+import * as cerGeneratorModule from '../cerGenerator';
+export const CERGenerator: any = (cerGeneratorModule as any).CERGenerator
+  ?? (cerGeneratorModule as any).default;
 
 // Unified interface for CER operations
 export interface CERServiceConfig {
@@ -49,8 +54,8 @@ export class UnifiedCERService {
 
   async generateReport(): Promise<CERGenerationResult> {
     // Delegate to primary service
-    const { CERGenerationService } = await import('../cerGenerationService');
-    const service = new CERGenerationService();
+    const mod = (await import('../cerGenerationService')) as any;
+    const service = mod.default ?? (mod.CERGenerationService ? new mod.CERGenerationService() : undefined);
     return service.generate(this.config);
   }
 

@@ -14,10 +14,12 @@
  * @module server/services/cortex/index
  */
 
-// Re-export primary services
+// Re-export primary services. AuditEntry is exported by both
+// cortexComplianceService and anaCortexClient — re-export it once explicitly.
 export * from '../cortexPrimeService';
 export * from '../cortexComplianceService';
 export * from '../anaCortexClient';
+export type { AuditEntry } from '../cortexComplianceService';
 
 // Unified interface
 export interface CortexQuery {
@@ -68,15 +70,17 @@ export interface ComplianceIssue {
  */
 export class UnifiedCortexService {
   async query(params: CortexQuery): Promise<CortexResponse> {
-    const { CortexPrimeService } = await import('../cortexPrimeService');
-    const service = new CortexPrimeService();
-    return service.query(params);
+    const mod = (await import('../cortexPrimeService')) as any;
+    const Ctor = mod.CortexPrimeService ?? mod.default;
+    const service = typeof Ctor === 'function' ? new Ctor() : Ctor;
+    return service.query(params.query);
   }
 
   async checkCompliance(documentId: string): Promise<ComplianceCheckResult> {
-    const { CortexComplianceService } = await import('../cortexComplianceService');
-    const service = new CortexComplianceService();
-    return service.check(documentId);
+    const mod = (await import('../cortexComplianceService')) as any;
+    const Ctor = mod.CortexComplianceService ?? mod.default;
+    const service = typeof Ctor === 'function' ? new Ctor() : Ctor;
+    return service.check?.(documentId) ?? service.checkCompliance?.(documentId);
   }
 
   async getInsights(context: Record<string, unknown>): Promise<string[]> {

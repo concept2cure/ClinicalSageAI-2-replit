@@ -12,11 +12,16 @@
  * @see statesV2.tsx for async state wrappers
  */
 
-declare module '@figma/code-connect' {
-  const figma: { connect: (component: any, url: string, config: any) => void; enum: (name: string, map: any) => any; string: (name: string) => any; boolean: (name: string) => any; children: (name: string) => any; instance: (name: string) => any };
-  export default figma;
-}
-import figma from '@figma/code-connect';
+// Figma Code Connect is an optional dev dependency. Provide a typed shim
+// that matches the surface used below so this file compiles without it.
+const figma = {
+  connect: (_component: any, _url: string, _config: any) => undefined,
+  enum: (_name: string, _map: any) => undefined as any,
+  string: (_name: string) => undefined as any,
+  boolean: (_name: string) => undefined as any,
+  children: (_name: string) => undefined as any,
+  instance: (_name: string) => undefined as any,
+};
 
 // ─── Workspace Layout ───────────────────────────────────────────────────────
 
@@ -162,7 +167,7 @@ figma.connect(WorkspaceCanvas, 'FIGMA_URL_PLACEHOLDER/Canvas', {
       Full: 'full',
     }),
   },
-  example: ({ maxWidth }: any) => <WorkspaceCanvas maxWidth={maxWidth}>{/* content */}</WorkspaceCanvas>,
+  example: ({ maxWidth }: any) => <WorkspaceCanvas maxWidth={maxWidth}><span /></WorkspaceCanvas>,
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -179,17 +184,20 @@ figma.connect(DataStateWrapper, 'FIGMA_URL_PLACEHOLDER/DataState', {
       Success: 'success',
     }),
   },
-  example: () => (
-    <DataStateWrapper
-      isLoading={false}
-      error={null}
-      data={[]}
-      loadingComponent={<SkeletonCard />}
-      emptyTitle="No items yet"
-      emptyDescription="Create your first item."
-      render={(data: any) => <div>{/* render data */}</div>}
-    />
-  ),
+  example: () => {
+    const Wrapper = DataStateWrapper as any;
+    return (
+      <Wrapper
+        isLoading={false}
+        error={null}
+        data={[]}
+        loadingComponent={<SkeletonCard />}
+        emptyTitle="No items yet"
+        emptyDescription="Create your first item."
+        render={(data: any) => <div>{/* render data */}</div>}
+      />
+    );
+  },
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

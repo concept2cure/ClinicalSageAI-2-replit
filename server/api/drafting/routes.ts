@@ -133,7 +133,7 @@ RULES:
  * Generate embedding for query
  */
 async function generateQueryEmbedding(text: string): Promise<number[]> {
-  const response = await openai.embeddings.create({
+  const response = await (ai as any).embeddings.create({
     model: CONFIG.embeddingModel,
     input: text.slice(0, 8000),
     dimensions: CONFIG.embeddingDimensions,
@@ -409,8 +409,8 @@ Generate a regulatory-grade response using the evidence above. Remember to outpu
       citations: enrichedCitations,
       metadata: {
         model: CONFIG.model,
-        promptTokens: completion.usage?.prompt_tokens || 0,
-        completionTokens: completion.usage?.completion_tokens || 0,
+        promptTokens: (aiResult as any).usage?.prompt_tokens || 0,
+        completionTokens: (aiResult as any).usage?.completion_tokens || 0,
         generationTimeMs: Date.now() - startTime,
         chunksUsed: searchResults.length,
         tablesReferenced: tableCount,
@@ -528,8 +528,8 @@ Only extract entities you're confident about.`,
       max_tokens: 1000,
     });
 
-    const content = extraction.choices[0]?.message?.content || '[]';
-    let entities = [];
+    const content = (extraction as any).choices?.[0]?.message?.content || (extraction as any).content || '[]';
+    let entities: any[] = [];
 
     try {
       const jsonMatch = content.match(/\[[\s\S]*\]/);

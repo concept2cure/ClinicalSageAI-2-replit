@@ -253,11 +253,17 @@ export interface UploadedDocument {
   name: string;
   type: string;
   size: number;
-  uploadedAt: Date;
+  uploadedAt: Date | string;
   extractedText?: string;
   embedding?: number[];
   /** Whether this document is active in the AI context window (default: true) */
   isActive?: boolean;
+  /** Server-side processing status surfaced to the upload list */
+  status?: 'queued' | 'processing' | 'ready' | 'error' | string;
+  /** Page count once OCR / parsing has run */
+  pageCount?: number;
+  /** Token count once chunked / embedded */
+  tokenCount?: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

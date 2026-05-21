@@ -98,7 +98,7 @@ const ECTD_MODULE_DEFS: Record<string, { name: string; requiredSections: string[
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.post('/:projectId/compile', async (req: Request, res: Response) => {
-  const projectId = parseInt(req.params.projectId, 10);
+  const projectId = parseInt(String(req.params.projectId), 10);
   if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
 
   try {
@@ -236,7 +236,7 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.get('/:projectId/status', async (req: Request, res: Response) => {
-  const projectId = parseInt(req.params.projectId, 10);
+  const projectId = parseInt(String(req.params.projectId), 10);
   if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
 
   try {
@@ -313,7 +313,7 @@ router.get('/:projectId/status', async (req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.get('/:projectId/history', async (req: Request, res: Response) => {
-  const projectId = parseInt(req.params.projectId, 10);
+  const projectId = parseInt(String(req.params.projectId), 10);
   if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
 
   try {
@@ -345,7 +345,7 @@ router.get('/:projectId/history', async (req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.post('/:projectId/validate', async (req: Request, res: Response) => {
-  const projectId = parseInt(req.params.projectId, 10);
+  const projectId = parseInt(String(req.params.projectId), 10);
   if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
 
   try {

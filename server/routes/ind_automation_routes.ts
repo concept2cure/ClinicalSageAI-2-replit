@@ -174,7 +174,7 @@ router.post('/generate/module3', async (req, res) => {
     logger.info(`Generating Module 3 document for drug ${data.drug_name}`);
 
     // Generate the document through unified module rendering
-    const documentBytes = await indAutomationService.generateModuleDocument(3, data);
+    const documentBytes = await indAutomationService.generateModuleDocument(3, data as any);
 
     // Set headers and send response
     const filename = data.drug_name.replace(/\s+/g, '_');
@@ -519,7 +519,7 @@ router.post('/alert-preferences', (req, res) => {
     }
 
     // Create or update preferences
-    let preferences = { users: {} };
+    let preferences: { users: Record<string, any> } = { users: {} };
 
     if (fs.existsSync(PREFERENCES_FILE)) {
       const fileContent = fs.readFileSync(PREFERENCES_FILE, 'utf8');

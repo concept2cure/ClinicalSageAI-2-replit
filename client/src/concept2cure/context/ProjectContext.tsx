@@ -382,7 +382,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
               knowledge: { ...project.knowledge, ...knowledge },
               updatedAt: new Date(),
             },
-          },
+          } as any,
         });
       }
     },
@@ -416,7 +416,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
           payload: {
             id: projectId,
             updates: {
-              conversationCount: project.conversationCount + 1,
+              conversationCount: (project.conversationCount ?? 0) + 1,
               lastActiveAt: now,
             },
           },
@@ -450,7 +450,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
           context: '',
         },
         status: 'active',
-      };
+      } as Project;
 
       dispatch({ type: 'ADD_PROJECT', payload: project });
       dispatch({ type: 'SET_ACTIVE_PROJECT', payload: project.id });
@@ -571,7 +571,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
           type: 'UPDATE_PROJECT',
           payload: {
             id: artifactData.projectId,
-            updates: { artifactCount: project.artifactCount + 1 },
+            updates: { artifactCount: (project.artifactCount ?? 0) + 1 },
           },
         });
       }
