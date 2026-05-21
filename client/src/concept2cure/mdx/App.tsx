@@ -21,6 +21,8 @@ import { CerSurface } from './surfaces/CerSurface';
 import { PrecedentSurface } from './surfaces/PrecedentSurface';
 import { InDesignSurface } from './surfaces/InDesignSurface';
 import { EngineeringSurface } from './surfaces/EngineeringSurface';
+import { UdiSurface } from './surfaces/UdiSurface';
+import { PostmarketSurface } from './surfaces/PostmarketSurface';
 import {
   TasksSurface,
   VaultSurface,
@@ -237,6 +239,12 @@ export function App({ initialNav, projectName }: AppProps = {}) {
         onOpenEditor={openEditor}
       />
     );
+  } else if (activeNav === 'udi') {
+    /* Phase 4 — UDI and labeling surface (doc-first, cross-program). */
+    surface = <UdiSurface onAskAna={askAna} onOpenEditor={openEditor} />;
+  } else if (activeNav === 'postmarket') {
+    /* Phase 4 — Post-market vigilance surface (doc-first, cross-program). */
+    surface = <PostmarketSurface onAskAna={askAna} onOpenEditor={openEditor} />;
   } else if (MDX_STUBS[activeNav]) {
     surface = <InDesignSurface stub={MDX_STUBS[activeNav]} />;
   } else {
