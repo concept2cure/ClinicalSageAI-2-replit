@@ -80,6 +80,16 @@ export const MDX_SURFACE_REGISTRY: SurfaceRegistration[] = [
   { id: 'analytics',        label: 'Analytics',               defaultMode: 'fixture',  expectedLiveBy: '2026-10-15' },
   { id: 'memory',           label: 'AnA memory',              defaultMode: 'fixture',  expectedLiveBy: '2026-10-15' },
   { id: 'admin',            label: 'Admin and access',        defaultMode: 'fixture',  expectedLiveBy: '2026-09-01' },
+  // Phase 5 — must-have-for-beta surfaces (per PHASE_5_INSTALL.md §1.8).
+  // 'both' default: try live, fall back to fixture. E-signature is the
+  // exception — there is no acceptable fixture mode for a Part-11 signing,
+  // so the modal must error out if the backend is unreachable.
+  { id: 'vault',            label: 'Document vault',          defaultMode: 'both',     expectedLiveBy: '2026-08-15' },
+  { id: 'audit',            label: 'Audit log',               defaultMode: 'both',     expectedLiveBy: '2026-07-15' },
+  { id: 'notifications',    label: 'Notifications',           defaultMode: 'both',     expectedLiveBy: '2026-08-01' },
+  { id: 'templates-medtech',label: 'Templates (medtech)',     defaultMode: 'both',     expectedLiveBy: '2026-08-01' },
+  { id: 'quality',          label: 'Quality system',          defaultMode: 'both',     expectedLiveBy: '2026-09-15' },
+  { id: 'esig',             label: 'E-signature flow',        defaultMode: 'live',     expectedLiveBy: '2026-07-01' },
 ];
 
 const REGISTRY_BY_ID: Record<string, SurfaceRegistration> = MDX_SURFACE_REGISTRY.reduce(

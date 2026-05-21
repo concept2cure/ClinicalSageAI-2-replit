@@ -33,6 +33,7 @@ export const MDX_NAV_V2: NavItem[] = [
   { id: 'pma',          label: 'PMA Submissions',       icon: 'shieldCheck',  group: 'workstream' },
   { id: 'cer',          label: 'CER Generator',         icon: 'microscope',   group: 'workstream' },
   { id: 'predicate',    label: 'Precedent Intelligence',icon: 'scale',        group: 'workstream' },
+  { id: 'quality',      label: 'Quality System',        icon: 'shieldCheck',  group: 'workstream' },
 
   // Workbench — cross-program work surfaces.
   { id: 'tasks',        label: 'Tasks and Reviews',     icon: 'clipboardList',group: 'workbench' },
@@ -43,9 +44,11 @@ export const MDX_NAV_V2: NavItem[] = [
 
   // Intelligence — read-only reporting + cross-cutting memory.
   { id: 'analytics',    label: 'Analytics',             icon: 'barChart3',    group: 'intelligence' },
-  { id: 'memory',       label: 'Claude Memory',         icon: 'database',     group: 'intelligence' },
+  { id: 'memory',       label: 'AnA Memory',            icon: 'database',     group: 'intelligence' },
 
   // System — admin + the only link that exits the workstream.
+  { id: 'notifications',label: 'Notifications',         icon: 'bell',         group: 'system' },
+  { id: 'audit',        label: 'Audit Log',             icon: 'shield',       group: 'system' },
   { id: 'admin',        label: 'Admin and Access',      icon: 'userCheck',    group: 'system' },
 ];
 
@@ -56,44 +59,11 @@ export interface StubInfo {
   phase: string;
 }
 
-export const MDX_STUBS: Record<string, StubInfo> = {
-  engineering: {
-    title: 'Device engineering',
-    icon: 'wrench',
-    desc: 'Risk management (ISO 14971), biocompatibility, cybersecurity premarket submissions, and design controls traceability.',
-    phase: 'Phase 4',
-  },
-  udi: {
-    title: 'UDI and labeling',
-    icon: 'tag',
-    desc: 'UDI issuance, GUDID submission, labeling harmonization across regions, MRI-conditional statements.',
-    phase: 'Phase 4',
-  },
-  postmarket: {
-    title: 'Post-market vigilance',
-    icon: 'alertCircle',
-    desc: 'MDR tracking, trending adverse events, PMS plan execution, and notified-body reporting.',
-    phase: 'Phase 4',
-  },
-  analytics: {
-    title: 'Analytics',
-    icon: 'barChart3',
-    desc: 'Portfolio-wide metrics — cycle times, readiness trends, reviewer velocity, blocker root causes. Read-only.',
-    phase: 'Phase 4',
-  },
-  memory: {
-    title: 'Claude memory',
-    icon: 'database',
-    desc: "Your organization's shared Claude context — style guides, approved language, past review learnings. Pinned to every conversation.",
-    phase: 'Phase 4',
-  },
-  admin: {
-    title: 'Admin and access',
-    icon: 'userCheck',
-    desc: 'Org members, roles, program-level access grants, SSO, audit log. Required for any production rollout.',
-    phase: 'Phase 4',
-  },
-};
+// Phase 4 keys (engineering · udi · postmarket · analytics · memory · admin)
+// were removed from this stubs map after their surfaces shipped — each rail
+// item now resolves to its real surface in App.tsx. New stubs land here as
+// the kit designs surfaces for later phases.
+export const MDX_STUBS: Record<string, StubInfo> = {};
 
 export interface AnaMode {
   id: 'standard' | 'deep-research' | 'nano-banana';
@@ -131,13 +101,22 @@ export const ANA_TOOLS: AnaTool[] = [
 ];
 
 export const MDX_SUGGESTIONS: Record<string, string[]> = {
-  overview:   ['Find device-code precedents', 'Generate readiness report', 'Flag filing risks'],
-  k510:       ['Find more CGM predicates', 'Draft SE discussion', 'Check eSTAR validation'],
-  pma:        ['Summarize enrollment gap', 'Draft DSMB charter', 'Pull pivotal precedents'],
-  cer:        ['Run FAERS signal scan', 'Adjudicate lead dislodgement', 'Draft Article 61 section'],
-  predicate:  ['Compare K221847 vs subject', 'Find predicates for CGM', 'Cluster by product code'],
-  engineering:['ISO 14971 risk review', 'Cybersecurity premarket', 'Biocompatibility for 14-day'],
-  udi:        ['Generate UDI for BX-204', 'Labeling MRI statements', 'Multi-language harmonization'],
-  postmarket: ['This week signals', 'Open MDRs', 'Trending adverse events'],
-  editor:     ['Draft this section from predicate', 'Check claim against evidence', 'Rewrite for FDA tone'],
+  overview:     ['Find device-code precedents', 'Generate readiness report', 'Flag filing risks'],
+  k510:         ['Find more CGM predicates', 'Draft SE discussion', 'Check eSTAR validation'],
+  pma:          ['Summarize enrollment gap', 'Draft DSMB charter', 'Pull pivotal precedents'],
+  cer:          ['Run FAERS signal scan', 'Adjudicate lead dislodgement', 'Draft Article 61 section'],
+  predicate:    ['Compare K221847 vs subject', 'Find predicates for CGM', 'Cluster by product code'],
+  engineering:  ['ISO 14971 risk review', 'Cybersecurity premarket', 'Biocompatibility for 14-day'],
+  udi:          ['Generate UDI for BX-204', 'Labeling MRI statements', 'Multi-language harmonization'],
+  postmarket:   ['This week signals', 'Open MDRs', 'Trending adverse events'],
+  analytics:    ['Cycle time vs product code peers', 'Top 3 blockers this quarter', 'Reviewer velocity for OB-GYN devices'],
+  memory:       ['Show critical memories pinned to AnA', 'Ingest the style guide PDF', 'Supersede the 2024 deficiency learnings'],
+  admin:        ['Audit Jordan Chen access this week', 'Open seats by role', 'Rotate API key for ESG bridge'],
+  // Phase 5 — must-have-for-beta surfaces.
+  vault:        ['Find every artifact signed by Jordan in Q2', 'Verify SHA-256 chain across the vault', 'Show files approaching retention purge'],
+  audit:        ['Verify chain integrity for last 24h', 'Export Q2 signing manifest', 'Find every export by JC last 30d'],
+  notifications:['Mute vigilance signals below review severity', 'Show only AnA drafts pending review', 'Route MDR alerts to Marcus'],
+  templates:    ['Apply the eSTAR baseline to BX-204', 'Suggest the right template for a 30-day MDR', 'Compare PSUR v2.4 to last year'],
+  quality:      ['Pre-inspection check for Q3 notified-body audit', 'Open SOP-820-50 supplier controls', 'Surface every member missing current training'],
+  editor:       ['Draft this section from predicate', 'Check claim against evidence', 'Rewrite for FDA tone'],
 };
