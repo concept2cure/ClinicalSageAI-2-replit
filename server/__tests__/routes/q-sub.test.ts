@@ -88,7 +88,9 @@ describe('GET /api/q-sub', () => {
     svc.listQSubsForOrg.mockResolvedValue([{ id: 'q-1' }]);
     const res = await request(app).get('/api/q-sub?type=presub&stage=await&program_id=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1');
     expect(res.status).toBe(200);
-    expect(res.body.count).toBe(1);
+    // The route wraps in the canonical { data: ... } envelope via ok().
+    expect(res.body.data?.count).toBe(1);
+    expect(res.body.data?.rows).toEqual([{ id: 'q-1' }]);
     expect(svc.listQSubsForOrg).toHaveBeenCalledWith(7, {
       type: 'presub',
       stage: 'await',
@@ -110,7 +112,11 @@ describe('POST /api/q-sub', () => {
       .post('/api/q-sub')
       .send({ programId: 'not-a-uuid', qSubType: 'presub', title: 'x' });
     expect(res.status).toBe(422);
-    expect(res.body.error).toMatch(/UUID/i);
+    // The route returns `{ error: 'Invalid body', details: { programId: [...] } }`
+    // via clientError(res, 422, 'Invalid body', fieldErrors). The UUID-specific
+    // message lives in details.programId, not in the top-level error string.
+    expect(res.body.error).toBe('Invalid body');
+    expect(JSON.stringify(res.body.details ?? {})).toMatch(/uuid/i);
   });
 
   it('returns 422 when qSubType is invalid', async () => {
@@ -153,7 +159,8 @@ describe('POST /api/q-sub', () => {
       .post('/api/q-sub')
       .send({ programId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1', qSubType: 'presub', title: 'x' });
     expect(res.status).toBe(201);
-    expect(res.body.id).toBe('q-new');
+    // Wrapped in { data: ... } envelope by created() helper.
+    expect(res.body.data?.id).toBe('q-new');
   });
 });
 
@@ -168,7 +175,8 @@ describe('GET /api/q-sub/:id', () => {
     svc.getQSubDetail.mockResolvedValue({ id: 'q-1', summary: 'x' });
     const res = await request(app).get('/api/q-sub/q-1');
     expect(res.status).toBe(200);
-    expect(res.body.id).toBe('q-1');
+    // Wrapped in { data: ... } envelope by ok() helper.
+    expect(res.body.data?.id).toBe('q-1');
   });
 });
 

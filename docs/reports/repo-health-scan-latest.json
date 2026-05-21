@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-05-21T16:22:46.014Z",
+  "generatedAt": "2026-05-21T16:56:39.849Z",
   "git": {
-    "sha": "6f2fb1e52065846251996cdc2857581b5eb6d938",
-    "branch": "claude/integrate-design-system-UBjRE-mdx-phase8"
+    "sha": "d6f73f8cb030f6a9b5c79da7f959fd1ba457bae4",
+    "branch": "claude/middleware-tests-cherrypick"
   },
   "thresholds": {
     "maxBytes": 100000,
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 173,
+    "duplicateBasenames": 172,
     "largeFilesByBytes": 16,
     "largeFilesByLines": 48
   },
@@ -1288,14 +1288,6 @@
         ]
       },
       {
-        "basename": "predicate-intelligence.test",
-        "count": 2,
-        "paths": [
-          "server/__tests__/routes/predicate-intelligence.test.ts",
-          "tests/predicate-intelligence.test.ts"
-        ]
-      },
-      {
         "basename": "presub",
         "count": 2,
         "paths": [
@@ -1904,7 +1896,7 @@
   "comparison": {
     "baseline": "docs/reports/repo-health-scan-latest.json",
     "delta": {
-      "duplicateBasenames": 0,
+      "duplicateBasenames": -1,
       "largeFilesByBytes": 0,
       "largeFilesByLines": 0
     }
@@ -1912,13 +1904,13 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 232,
+      "duplicateGroups": 231,
       "largeByBytes": 10,
       "largeByLines": 31
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 135,
+      "duplicateGroups": 134,
       "largeByBytes": 2,
       "largeByLines": 7
     },

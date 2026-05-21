@@ -124,7 +124,10 @@ function runDocumentClassChecks(text: string, documentClass: RegulatoryDocumentC
 
 
 function runStatisticalClaimChecks(text: string): DocumentQualityIssue[] {
-  const hasPercentageClaim = /\b\d{1,3}(?:\.\d+)?%\b/.test(text);
+  // `\b` at the end won't match after `%` because % is a non-word char —
+  // there's no word↔non-word transition between `%` and the trailing
+  // whitespace. Dropping the trailing `\b` lets the regex catch "95%".
+  const hasPercentageClaim = /\b\d{1,3}(?:\.\d+)?%/.test(text);
   const hasCiMention = /confidence interval|\bCI\b/i.test(text);
   if (hasPercentageClaim && !hasCiMention) {
     return [{

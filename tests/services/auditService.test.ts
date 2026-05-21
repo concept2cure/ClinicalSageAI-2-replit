@@ -14,13 +14,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Mock drizzle-orm operators
 // ---------------------------------------------------------------------------
 
-vi.mock('drizzle-orm', () => ({
-  eq: vi.fn((_col: any, val: any) => ({ type: 'eq', val })),
-  and: vi.fn((...conds: any[]) => ({ type: 'and', conds })),
-  gte: vi.fn((_col: any, val: any) => ({ type: 'gte', val })),
-  lte: vi.fn((_col: any, val: any) => ({ type: 'lte', val })),
-  desc: vi.fn((col: any) => ({ type: 'desc', col })),
-}));
+vi.mock('drizzle-orm', async (importOriginal) => {
+  const actual = await importOriginal() as any;
+  return {
+    ...actual,
+    eq: vi.fn((_col: any, val: any) => ({ type: 'eq', val })),
+    and: vi.fn((...conds: any[]) => ({ type: 'and', conds })),
+    or: vi.fn((...conds: any[]) => ({ type: 'or', conds })),
+    gte: vi.fn((_col: any, val: any) => ({ type: 'gte', val })),
+    lte: vi.fn((_col: any, val: any) => ({ type: 'lte', val })),
+    desc: vi.fn((col: any) => ({ type: 'desc', col })),
+    asc: vi.fn((col: any) => ({ type: 'asc', col })),
+  };
+});
 
 // ---------------------------------------------------------------------------
 // Mock DB chain
@@ -48,20 +54,32 @@ vi.mock('../../server/db', () => ({
 // Mock schema
 // ---------------------------------------------------------------------------
 
-const mockAuditLogs = {
-  tenantId: 'audit_logs.tenantId',
-  userId: 'audit_logs.userId',
-  action: 'audit_logs.action',
-  tableName: 'audit_logs.tableName',
-  recordId: 'audit_logs.recordId',
-  oldValues: 'audit_logs.oldValues',
-  newValues: 'audit_logs.newValues',
-  ipAddress: 'audit_logs.ipAddress',
-  userAgent: 'audit_logs.userAgent',
-  createdAt: 'audit_logs.createdAt',
-};
+// Hoist mockAuditLogs so it's available when vi.mock's factory runs (mocks
+// are hoisted above top-level statements).
+const { mockAuditLogs } = vi.hoisted(() => ({
+  mockAuditLogs: {
+    tenantId: 'audit_logs.tenantId',
+    userId: 'audit_logs.userId',
+    action: 'audit_logs.action',
+    tableName: 'audit_logs.tableName',
+    recordId: 'audit_logs.recordId',
+    oldValues: 'audit_logs.oldValues',
+    newValues: 'audit_logs.newValues',
+    ipAddress: 'audit_logs.ipAddress',
+    userAgent: 'audit_logs.userAgent',
+    createdAt: 'audit_logs.createdAt',
+  },
+}));
 
+// Mock both the path the test uses (`../../../shared/schema` from tests/)
+// and the path the service uses (`../../shared/schema` from server/services/),
+// so the mock applies regardless of how vitest's resolver normalizes the
+// two strings. Both resolve to the same module (shared/schema.ts), but
+// vitest 2.1's mock-key matching is path-string-sensitive.
 vi.mock('../../../shared/schema', () => ({
+  auditLogs: mockAuditLogs,
+}));
+vi.mock('../../shared/schema', () => ({
   auditLogs: mockAuditLogs,
 }));
 

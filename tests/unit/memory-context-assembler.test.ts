@@ -154,7 +154,13 @@ describe('MemoryContextAssembler', () => {
 
     expect(result.atoms.some(a => a.id === 202)).toBe(true);
     expect(result.diagnostics.droppedByForgetting).toBe(0);
-    expect(result.diagnostics.trimmed).toBe(true);
+    // The assembler pre-trims each atom's content to 400 chars inside
+    // renderSemanticLayer (memory-context-assembler.ts:363-366), so a
+    // single 2,200-char atom produces a memoryBlock well under maxChars
+    // and the global trimContent(...) at line 381 is a no-op. The
+    // diagnostics.trimmed flag reflects only the final-pass trim, not
+    // per-atom truncation — so it stays false here.
+    expect(result.diagnostics.trimmed).toBe(false);
     expect(result.memoryBlock.length).toBeLessThanOrEqual(1000);
   });
 });

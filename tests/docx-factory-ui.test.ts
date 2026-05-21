@@ -274,12 +274,12 @@ describe('downloadArtifact', () => {
 // =============================================================================
 
 describe('DocxFactory page module', () => {
-  it('page file exists at expected path', async () => {
-    const { existsSync } = await import('fs');
-    const { resolve } = await import('path');
-    const pagePath = resolve(__dirname, '../client/src/pages/DocxFactory.tsx');
-    expect(existsSync(pagePath)).toBe(true);
-  });
+  // The DocxFactory page (client/src/pages/DocxFactory.tsx) was deleted
+  // upstream when the docx-factory UI surface was retired. Tests that
+  // depended on its existence are skipped rather than asserting against
+  // a stale file path. Hook-level tests below still exercise the
+  // remaining client/src/hooks/use-docx-factory.ts surface.
+  it.skip('page file exists at expected path', async () => {});
 
   it('hooks file exists at expected path', async () => {
     const { existsSync } = await import('fs');
@@ -487,16 +487,10 @@ describe('Render events', () => {
     expect(content).toContain('/renders/:renderId/events');
   });
 
-  it('Shadow router file includes events endpoint', async () => {
-    const { readFileSync } = await import('fs');
-    const { resolve } = await import('path');
-    const routerPath = resolve(
-      __dirname,
-      '../shadow_service/shadow_service/router_docx_factory.py'
-    );
-    const content = readFileSync(routerPath, 'utf-8');
-    expect(content).toContain('/renders/{render_id}/events');
-  });
+  // shadow_service/shadow_service/router_docx_factory.py was deleted
+  // when the shadow_service was decomposed; the events surface moved
+  // into server/routes/docx-factory.ts (covered by the test above).
+  it.skip('Shadow router file includes events endpoint', async () => {});
 });
 
 // =============================================================================
@@ -702,31 +696,9 @@ describe('Seed UI file checks', () => {
     expect(content).toContain('export function useDemoPacks');
   });
 
-  it('page file imports useSeedTemplates and useDemoPacks', async () => {
-    const { readFileSync } = await import('fs');
-    const { resolve } = await import('path');
-    const pagePath = resolve(__dirname, '../client/src/pages/DocxFactory.tsx');
-    const content = readFileSync(pagePath, 'utf-8');
-    expect(content).toContain('useSeedTemplates');
-    expect(content).toContain('useDemoPacks');
-  });
-
-  it('page file has Install Starter Templates button', async () => {
-    const { readFileSync } = await import('fs');
-    const { resolve } = await import('path');
-    const pagePath = resolve(__dirname, '../client/src/pages/DocxFactory.tsx');
-    const content = readFileSync(pagePath, 'utf-8');
-    expect(content).toContain('Install Starter Templates');
-    expect(content).toContain('seed-templates-btn');
-  });
-
-  it('page file has Use Demo Inputs section', async () => {
-    const { readFileSync } = await import('fs');
-    const { resolve } = await import('path');
-    const pagePath = resolve(__dirname, '../client/src/pages/DocxFactory.tsx');
-    const content = readFileSync(pagePath, 'utf-8');
-    expect(content).toContain('Use Demo Inputs');
-    expect(content).toContain('demo-packs-section');
-    expect(content).toContain('demo-doc-type-select');
-  });
+  // The DocxFactory page was deleted upstream (see comment above).
+  // Hook-export and structural assertions on its source are obsolete.
+  it.skip('page file imports useSeedTemplates and useDemoPacks', async () => {});
+  it.skip('page file has Install Starter Templates button', async () => {});
+  it.skip('page file has Use Demo Inputs section', async () => {});
 });

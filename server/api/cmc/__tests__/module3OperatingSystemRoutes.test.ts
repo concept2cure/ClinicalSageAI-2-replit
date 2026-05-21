@@ -16,8 +16,14 @@ import router from '../module3OperatingSystemRoutes';
 describe('module3OperatingSystemRoutes', () => {
   const app = express();
   app.use(express.json());
-  app.use((req, _res, next) => {
-    req.headers['x-organization-id'] = '101';
+  app.use((req: any, _res, next) => {
+    // Route reads `req.tenantId || req.tenantContext?.organizationId` — the
+    // x-organization-id header isn't converted to either field without the
+    // tenant-context middleware. Set both directly so the route hands off
+    // org id 101 to the SQL layer.
+    req.tenantId = 101;
+    req.tenantContext = { organizationId: 101 };
+    req.user = { id: 1, organizationId: 101 };
     next();
   });
   app.use('/api/cmc/module3-os', router);

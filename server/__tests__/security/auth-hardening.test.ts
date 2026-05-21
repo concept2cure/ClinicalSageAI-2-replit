@@ -1,4 +1,18 @@
 import { describe, it, expect, vi } from 'vitest';
+
+// vi.hoisted ensures env vars are set BEFORE any ESM imports (including
+// transitive ones) are evaluated. server/auth.ts loads
+// server/config/environment.ts (throws if JWT_SECRET <32 chars) and
+// server/db/runtime.ts (pool init reads DATABASE_URL once at load).
+vi.hoisted(() => {
+  process.env.NODE_ENV = process.env.NODE_ENV || 'test';
+  process.env.DATABASE_URL =
+    process.env.DATABASE_URL || 'postgresql://test:test@localhost:5432/test';
+  process.env.JWT_SECRET =
+    process.env.JWT_SECRET || 'stage3-test-secret-padded-to-32-chars-or-more-okay';
+  process.env.SKIP_DB_STARTUP_TEST = 'true';
+});
+
 import { authMiddleware } from '../../auth';
 import { getRequestActor } from '../../utils/tenantContext';
 

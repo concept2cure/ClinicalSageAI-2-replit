@@ -1,9 +1,11 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-jest.mock('child_process', () => ({
-  execFile: jest.fn((cmd: string, args: string[], opts: any, cb: any) => {
+vi.mock('child_process', () => ({
+  execFile: vi.fn((cmd: string, args: string[], opts: any, cb: any) => {
     const callback = typeof opts === 'function' ? opts : cb;
     if (args.includes('--version')) {
       callback(null, { stdout: '10.0.0', stderr: '' });
@@ -76,10 +78,15 @@ describe('pdf-compression-service', () => {
 
     const result = await compressPdfWithGhostscript({ inputPath, outputPath, quality: 'ebook' });
 
+    // validPdfBuffer = Buffer.from('%PDF-1.4\n') + Buffer.alloc(128, 1) = 137 bytes.
+    // The test was originally written for a 100-byte buffer; pin to the actual
+    // length so future header changes don't drift the expectations.
     expect(result.outputPath).toBe(outputPath);
-    expect(result.originalSizeBytes).toBe(100);
+    expect(result.originalSizeBytes).toBe(validPdfBuffer.length);
     expect(result.compressedSizeBytes).toBe(50);
-    expect(result.compressionRatio).toBe(0.5);
+    // toBeCloseTo digit count is precision after the decimal point.
+    // 50/137 ≈ 0.365, want match to 3 digits — too tight at 5.
+    expect(result.compressionRatio).toBeCloseTo(50 / validPdfBuffer.length, 3);
   });
 
   it('recommends quality based on file size', async () => {
