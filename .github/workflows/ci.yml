@@ -314,13 +314,16 @@ jobs:
           CI: true
 
       - name: SonarCloud Scan
-        # @v4 pins to a release that uses actions/cache@v4.0.2, which
-        # GitHub Actions auto-fails as of mid-2026. v5 wraps the latest
-        # cache version.
-        uses: SonarSource/sonarcloud-github-action@v5
+        # SonarSource/sonarcloud-github-action was archived 2025-10-22 and
+        # superseded by SonarSource/sonarqube-scan-action (unified for
+        # Server + Cloud). v5+ of that action wraps a non-deprecated
+        # actions/cache so GitHub Actions infra doesn't auto-fail it.
+        # For SonarCloud, host URL is https://sonarcloud.io.
+        uses: SonarSource/sonarqube-scan-action@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
         with:
           args: >
             -Dsonar.projectKey=concept2cure_Concept2Cure.RI-2-replit
