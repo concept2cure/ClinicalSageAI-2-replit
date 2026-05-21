@@ -147,13 +147,87 @@ export function usePdevActivityProvenance(
 
 // ─── Workspace reads (IND assembly · FDA stream · Contradictions) ──────────
 
+/** Server shape from the IND assembly service. The kit surface expects a
+ *  different shape — see adaptIndAssembly() below for the field map. */
+interface ServerIndAssemblyModule {
+  module: 'm1' | 'm2' | 'm3' | 'm4' | 'm5';
+  totalDocuments: number;
+  mandatoryDocuments: number;
+  presentDocuments: number;
+  presentMandatoryDocuments: number;
+  moduleReadiness: number;
+  documents: Array<{
+    code: string;
+    title: string;
+    ectdModule: string;
+    ectdSection?: string;
+    mandatoryForInd: boolean;
+    activityKey: string;
+    activityState: string;
+    isPresent: boolean;
+  }>;
+}
+
+interface ServerIndAssemblyPayload {
+  programId: string;
+  modules: ServerIndAssemblyModule[];
+  overallReadiness: number;
+  blockers?: string[];
+}
+
+const MODULE_LABELS: Record<ServerIndAssemblyModule['module'], string> = {
+  m1: 'Module 1',
+  m2: 'Module 2',
+  m3: 'Module 3',
+  m4: 'Module 4',
+  m5: 'Module 5',
+};
+
+const IND_READINESS_THRESHOLD = 85;
+
+function adaptIndAssembly(
+  server: ServerIndAssemblyPayload | null,
+): PdevIndAssemblyPayload | null {
+  if (!server) return null;
+  return {
+    overallReadiness: server.overallReadiness,
+    threshold: IND_READINESS_THRESHOLD,
+    modules: server.modules.map((m) => {
+      /* Per-module blockers — surface missing mandatory docs as blocker
+         strings so the kit's blockers feed renders something useful. */
+      const moduleBlockers = m.documents
+        .filter((d) => d.mandatoryForInd && !d.isPresent)
+        .map((d) => `${d.title} (${d.activityState})`);
+      return {
+        id: m.module,
+        label: MODULE_LABELS[m.module],
+        readiness: m.moduleReadiness,
+        mandatory: {
+          present: m.presentMandatoryDocuments,
+          total: m.mandatoryDocuments,
+        },
+        total: {
+          present: m.presentDocuments,
+          total: m.totalDocuments,
+        },
+        blockers: moduleBlockers,
+      };
+    }),
+  };
+}
+
 export function usePdevIndAssembly(programId: string | null) {
   const url = programId
     ? `/api/pdev/programs/${encodeURIComponent(programId)}/ind-assembly`
     : null;
   const { data, loading, error, refresh } =
-    useFetchJson<Envelope<PdevIndAssemblyPayload>>(url);
-  return { payload: data?.data ?? null, loading, error, refresh };
+    useFetchJson<Envelope<ServerIndAssemblyPayload>>(url);
+  return {
+    payload: adaptIndAssembly(data?.data ?? null),
+    loading,
+    error,
+    refresh,
+  };
 }
 
 export function usePdevFdaInteractions(programId: string | null) {
