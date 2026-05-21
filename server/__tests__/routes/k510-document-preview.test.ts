@@ -32,6 +32,8 @@ vi.mock('../../db', () => ({
   db: {
     select: () => ({
       from: () => ({
+        // Project lookup: select(...).from(table).where(...).limit(1)
+        // Section lookup: select(...).from(table).where(...).orderBy(...)
         where: () => ({
           limit: async () => {
             if (dbState.project === null) return [];
@@ -44,10 +46,8 @@ vi.mock('../../db', () => ({
               },
             ];
           },
-          orderBy: () => async () => dbState.sections,
+          orderBy: async () => dbState.sections,
         }),
-        // For the SECTIONS query
-        orderBy: () => Promise.resolve(dbState.sections),
       }),
     }),
   },

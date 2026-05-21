@@ -7,9 +7,13 @@ import { describe, it, expect, vi } from 'vitest';
 import { getMdxOnboardingMilestone } from '../mdx-onboarding-milestone';
 
 function clientWith(rowsByQuery: Map<string, any[]>) {
+  // Iterate in REVERSE insertion order so more-specific keys (added later,
+  // e.g. 'predicate_devices') win over the generic 'count(*) AS c FROM
+  // regulatory_programs' key that ALSO appears in the predicate-count query.
   return {
     query: vi.fn(async (sql: string) => {
-      for (const [key, rows] of rowsByQuery) {
+      const entries = Array.from(rowsByQuery.entries()).reverse();
+      for (const [key, rows] of entries) {
         if (sql.includes(key)) return { rows };
       }
       return { rows: [] };
@@ -118,7 +122,14 @@ describe('getMdxOnboardingMilestone', () => {
   it('is fail-soft when individual queries throw', async () => {
     const c = {
       query: vi.fn(async (sql: string) => {
-        if (sql.includes('count(*)::int AS c\n       FROM regulatory_programs')) {
+        // Only the bare regulatory_programs count succeeds; everything else
+        // (including the predicate-aware count, sections, q-subs, audits)
+        // throws. The bare count omits 'predicate_devices', so the matcher
+        // distinguishes them.
+        if (
+          sql.includes('count(*)::int AS c\n       FROM regulatory_programs') &&
+          !sql.includes('predicate_devices')
+        ) {
           return { rows: [{ c: 1 }] };
         }
         throw new Error('table missing on this tenant');
