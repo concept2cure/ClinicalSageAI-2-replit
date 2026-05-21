@@ -221,6 +221,31 @@ export {
   insertPdevProgramActivitySchema,
   insertPdevReadinessSnapshotSchema,
 } from './pdev-workflow';
+
+// Organization Lifecycle — beta self-serve trial state machine.
+// See /root/.claude/plans/mossy-dancing-dusk.md (Track A) for the rationale.
+// State map lives in shared/schema/org-lifecycle.ts; transition service is
+// server/services/lifecycle/org-lifecycle.ts.
+export {
+  orgLifecycleState,
+  orgLifecycleStateHistory,
+  orgLifecycleStateRelations,
+  orgLifecycleStateHistoryRelations,
+  insertOrgLifecycleStateSchema,
+  insertOrgLifecycleStateHistorySchema,
+  ORG_LIFECYCLE_STATES,
+  ORG_LIFECYCLE_TRANSITIONS,
+  ORG_LIFECYCLE_PRODUCTIVE_STATES,
+  ORG_LIFECYCLE_TRIGGERS,
+} from './org-lifecycle';
+export type {
+  OrgLifecycleState,
+  OrgLifecycleStateRow,
+  OrgLifecycleStateHistoryRow,
+  InsertOrgLifecycleState,
+  InsertOrgLifecycleStateHistory,
+  OrgLifecycleTrigger,
+} from './org-lifecycle';
 export type {
   PdevProgramActivity,
   PdevReadinessSnapshot,

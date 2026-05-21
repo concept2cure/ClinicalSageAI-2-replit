@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-05-21T17:34:20.514Z",
+  "generatedAt": "2026-05-21T23:22:10.726Z",
   "git": {
-    "sha": "2c6d75bd682421284c28e3284b663f866b6917f6",
-    "branch": "claude/integrate-design-system-UBjRE-mdx-phase8"
+    "sha": "b6ab3f917e2cd71ee667d0bd21af3a3e65927a37",
+    "branch": "claude/beta-readiness-assessment-F37Iv"
   },
   "thresholds": {
     "maxBytes": 100000,
