@@ -56,16 +56,25 @@ vi.mock('../../../shared/schema/q-sub', () => ({
   Q_SUB_TYPES: ['presub', 'sir', 'srd', 'agree', 'info'],
 }));
 vi.mock('../../auditService', () => ({ default: audit }));
-vi.mock('../../db', () => ({
-  pool: {
-    query: vi.fn(async (sql: string) => {
-      if (sql.includes('SELECT id, section_number')) {
-        return { rows: [{ id: 1, section_number: '6.0', section_title: 'SE', status: 'todo' }] };
-      }
-      return { rows: [] };
-    }),
-  },
+const { dbMockFactory } = vi.hoisted(() => ({
+  dbMockFactory: () => ({
+    pool: {
+      query: vi.fn(async (sql: string) => {
+        if (sql.includes('SELECT id, section_number')) {
+          return { rows: [{ id: 1, section_number: '6.0', section_title: 'SE', status: 'todo' }] };
+        }
+        return { rows: [] };
+      }),
+    },
+  }),
 }));
+// The handler imports '../../db' from its own location
+// (server/services/ana-ri/mdx-command-handlers.ts), which resolves to
+// server/db. From this test file (server/services/ana-ri/__tests__/),
+// the equivalent specifier is '../../../db'. Mock both so the resolution
+// works no matter how vitest keys the cache.
+vi.mock('../../db', () => dbMockFactory());
+vi.mock('../../../db', () => dbMockFactory());
 const { ESGSubmissionService } = vi.hoisted(() => ({
   ESGSubmissionService: vi.fn(() => ({
     submitToFDA: vi.fn(async () => ({ packageId: 'pkg-1', transactionId: 'tx-1' })),
@@ -303,9 +312,11 @@ const PROBES: Probe[] = [
     tool: 'audit.explain',
     expectedAction: 'agent.ana.audit.explain',
     invoke: () => {
-      // The handler reads from `pool` lazily via dynamic import. Stub
-      // a minimal db module that returns one row.
-      vi.doMock('../../db', () => ({
+      // The handler reads from `pool` lazily via dynamic import. Stub a
+      // minimal db module that returns one row. explainAuditRow lives in
+      // server/services/ana-ri/, so its '../../db' is server/db; from this
+      // test file that's '../../../db'. doMock both keys.
+      const explainDbFactory = () => ({
         pool: {
           query: vi.fn(async () => ({
             rows: [
@@ -324,7 +335,9 @@ const PROBES: Probe[] = [
             ],
           })),
         },
-      }));
+      });
+      vi.doMock('../../db', explainDbFactory);
+      vi.doMock('../../../db', explainDbFactory);
       return explainAuditRow(CTX, { auditRowId: 1 });
     },
   },
