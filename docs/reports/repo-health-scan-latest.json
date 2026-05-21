@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-05-21T04:45:12.061Z",
+  "generatedAt": "2026-05-21T05:11:13.711Z",
   "git": {
-    "sha": "7d6606828f009eb3d73b9fb54b94a639e69d44d9",
-    "branch": "claude/integrate-design-system-UBjRE-mdx-phase4"
+    "sha": "44c9109a3b5aacb014c39efdf0b475c88f79e609",
+    "branch": "claude/integrate-design-system-UBjRE-mdx-engineering"
   },
   "thresholds": {
     "maxBytes": 100000,
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 167,
+    "duplicateBasenames": 172,
     "largeFilesByBytes": 16,
     "largeFilesByLines": 48
   },
@@ -248,6 +248,16 @@
         ]
       },
       {
+        "basename": "analytics",
+        "count": 4,
+        "paths": [
+          ".claude/skills/gstack/scripts/analytics.ts",
+          "client/src/concept2cure/mdx/data/analytics.ts",
+          "design-system/ui_kits/mdx/data/analytics.js",
+          "design-system/ui_kits/mdx/surfaces/Analytics.jsx"
+        ]
+      },
+      {
         "basename": "audit",
         "count": 4,
         "paths": [
@@ -358,12 +368,12 @@
         ]
       },
       {
-        "basename": "analytics",
+        "basename": "admin",
         "count": 3,
         "paths": [
-          ".claude/skills/gstack/scripts/analytics.ts",
-          "design-system/ui_kits/mdx/data/analytics.js",
-          "design-system/ui_kits/mdx/surfaces/Analytics.jsx"
+          "client/src/concept2cure/mdx/data/admin.ts",
+          "design-system/ui_kits/mdx/data/admin.js",
+          "design-system/ui_kits/mdx/surfaces/Admin.jsx"
         ]
       },
       {
@@ -391,6 +401,15 @@
           ".claude/skills/gstack/browse/src/config.ts",
           "client/src/concept2cure/components/concept2cure-projects/data/config.ts",
           "server/export/stylePacks/config.ts"
+        ]
+      },
+      {
+        "basename": "engineering",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/mdx/data/engineering.ts",
+          "design-system/ui_kits/mdx/data/engineering.js",
+          "design-system/ui_kits/mdx/surfaces/Engineering.jsx"
         ]
       },
       {
@@ -448,6 +467,15 @@
         ]
       },
       {
+        "basename": "memory",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/mdx/data/memory.ts",
+          "design-system/ui_kits/mdx/data/memory.js",
+          "design-system/ui_kits/mdx/surfaces/Memory.jsx"
+        ]
+      },
+      {
         "basename": "nav",
         "count": 3,
         "paths": [
@@ -490,6 +518,15 @@
           "server/services/ana-biostats/orchestrator.ts",
           "server/services/ana-ri/orchestrator.ts",
           "server/services/report-os/orchestrator.ts"
+        ]
+      },
+      {
+        "basename": "postmarket",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/mdx/data/postmarket.ts",
+          "design-system/ui_kits/mdx/data/postmarket.js",
+          "design-system/ui_kits/mdx/surfaces/Postmarket.jsx"
         ]
       },
       {
@@ -556,6 +593,15 @@
         ]
       },
       {
+        "basename": "udi",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/mdx/data/udi.ts",
+          "design-system/ui_kits/mdx/data/udi.js",
+          "design-system/ui_kits/mdx/surfaces/Udi.jsx"
+        ]
+      },
+      {
         "basename": "useqcwebsocket",
         "count": 3,
         "paths": [
@@ -598,11 +644,11 @@
         ]
       },
       {
-        "basename": "admin",
+        "basename": "admin-docs",
         "count": 2,
         "paths": [
-          "design-system/ui_kits/mdx/data/admin.js",
-          "design-system/ui_kits/mdx/surfaces/Admin.jsx"
+          "client/src/concept2cure/mdx/data/admin-docs.ts",
+          "design-system/ui_kits/mdx/data/admin-docs.js"
         ]
       },
       {
@@ -635,6 +681,14 @@
         "paths": [
           "client/src/concept2cure/components/chat/anaCortexClient.ts",
           "server/services/anaCortexClient.ts"
+        ]
+      },
+      {
+        "basename": "analytics-docs",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/mdx/data/analytics-docs.ts",
+          "design-system/ui_kits/mdx/data/analytics-docs.js"
         ]
       },
       {
@@ -950,11 +1004,11 @@
         ]
       },
       {
-        "basename": "engineering",
+        "basename": "engineering-docs",
         "count": 2,
         "paths": [
-          "design-system/ui_kits/mdx/data/engineering.js",
-          "design-system/ui_kits/mdx/surfaces/Engineering.jsx"
+          "client/src/concept2cure/mdx/data/engineering-docs.ts",
+          "design-system/ui_kits/mdx/data/engineering-docs.js"
         ]
       },
       {
@@ -1158,14 +1212,6 @@
         ]
       },
       {
-        "basename": "memory",
-        "count": 2,
-        "paths": [
-          "design-system/ui_kits/mdx/data/memory.js",
-          "design-system/ui_kits/mdx/surfaces/Memory.jsx"
-        ]
-      },
-      {
         "basename": "notify",
         "count": 2,
         "paths": [
@@ -1198,11 +1244,11 @@
         ]
       },
       {
-        "basename": "postmarket",
+        "basename": "postmarket-docs",
         "count": 2,
         "paths": [
-          "design-system/ui_kits/mdx/data/postmarket.js",
-          "design-system/ui_kits/mdx/surfaces/Postmarket.jsx"
+          "client/src/concept2cure/mdx/data/postmarket-docs.ts",
+          "design-system/ui_kits/mdx/data/postmarket-docs.js"
         ]
       },
       {
@@ -1486,11 +1532,11 @@
         ]
       },
       {
-        "basename": "udi",
+        "basename": "udi-docs",
         "count": 2,
         "paths": [
-          "design-system/ui_kits/mdx/data/udi.js",
-          "design-system/ui_kits/mdx/surfaces/Udi.jsx"
+          "client/src/concept2cure/mdx/data/udi-docs.ts",
+          "design-system/ui_kits/mdx/data/udi-docs.js"
         ]
       },
       {
@@ -1852,13 +1898,13 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 130,
+      "duplicateGroups": 135,
       "largeByBytes": 2,
       "largeByLines": 7
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 81,
+      "duplicateGroups": 92,
       "largeByBytes": 3,
       "largeByLines": 5
     },

@@ -20,6 +20,7 @@ import { PmaSurface } from './surfaces/PmaSurface';
 import { CerSurface } from './surfaces/CerSurface';
 import { PrecedentSurface } from './surfaces/PrecedentSurface';
 import { InDesignSurface } from './surfaces/InDesignSurface';
+import { EngineeringSurface } from './surfaces/EngineeringSurface';
 import {
   TasksSurface,
   VaultSurface,
@@ -225,6 +226,17 @@ export function App({ initialNav, projectName }: AppProps = {}) {
     surface = <PmaEditor initialMode={anaMode} programIdent={programForContext?.code ?? programForContext?.id ?? null} />;
   } else if (editorRoute === 'cer') {
     surface = <CerEditor initialMode={anaMode} programIdent={programForContext?.code ?? programForContext?.id ?? null} />;
+  } else if (activeNav === 'engineering') {
+    /* Phase 4 — Device engineering surface (doc-first variant).
+       Lands ahead of the MDX_STUBS check so removing 'engineering' from
+       MDX_STUBS isn't required atomically. */
+    surface = (
+      <EngineeringSurface
+        program={programForContext}
+        onAskAna={askAna}
+        onOpenEditor={openEditor}
+      />
+    );
   } else if (MDX_STUBS[activeNav]) {
     surface = <InDesignSurface stub={MDX_STUBS[activeNav]} />;
   } else {
