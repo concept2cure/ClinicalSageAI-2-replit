@@ -103,7 +103,7 @@ const tenantSettingsSchema = z.object({
  */
 router.get('/:tenantId/settings', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
-    const tenantId = parseInt(req.params.tenantId);
+    const tenantId = parseInt(String(req.params.tenantId));
     if (isNaN(tenantId)) {
       return res.status(400).json({ error: 'Invalid tenant ID' });
     }
@@ -144,7 +144,7 @@ router.patch(
   requireOrganizationContext,
   async (req, res) => {
     try {
-      const tenantId = parseInt(req.params.tenantId);
+      const tenantId = parseInt(String(req.params.tenantId));
       if (isNaN(tenantId)) {
         return res.status(400).json({ error: 'Invalid tenant ID' });
       }
@@ -213,7 +213,7 @@ router.post(
   requireOrganizationContext,
   async (req, res) => {
     try {
-      const tenantId = parseInt(req.params.tenantId);
+      const tenantId = parseInt(String(req.params.tenantId));
       if (isNaN(tenantId)) {
         return res.status(400).json({ error: 'Invalid tenant ID' });
       }
@@ -313,12 +313,12 @@ router.patch(
   requireOrganizationContext,
   async (req, res) => {
     try {
-      const tenantId = parseInt(req.params.tenantId);
+      const tenantId = parseInt(String(req.params.tenantId));
       if (isNaN(tenantId)) {
         return res.status(400).json({ error: 'Invalid tenant ID' });
       }
 
-      const section = req.params.section;
+      const section = String(req.params.section ?? "");
       const validSections = [
         'branding',
         'security',
@@ -349,7 +349,7 @@ router.patch(
       }
 
       // Get schema for just this section
-      const sectionSchema = tenantSettingsSchema.shape[section];
+      const sectionSchema = (tenantSettingsSchema.shape as Record<string, any>)[section];
       if (!sectionSchema) {
         return res.status(400).json({ error: 'Invalid section schema' });
       }

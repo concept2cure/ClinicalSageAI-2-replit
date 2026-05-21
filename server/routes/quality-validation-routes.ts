@@ -44,7 +44,7 @@ async function tableExists(req: any, tableName: string): Promise<boolean> {
  */
 router.post('/validate-section', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
-    const { organizationId } = req.tenantContext || {};
+    const { organizationId: organizationIdRaw } = req.tenantContext ?? {}; const organizationId = typeof organizationIdRaw === 'string' ? parseInt(organizationIdRaw, 10) : (organizationIdRaw ?? 0);
 
     if (!organizationId) {
       return res.status(400).json({ error: 'Missing tenant context' });
@@ -182,7 +182,7 @@ router.post('/validate-section', authMiddleware, requireOrganizationContext, asy
     );
 
     // Determine the overall gating level based on rule
-    const gatingLevel = gatingRule.requiredLevel || (highRiskFactors.length > 0 ? 'hard' : 'soft');
+    const gatingLevel = (gatingRule as any).requiredLevel || (highRiskFactors.length > 0 ? 'hard' : 'soft');
 
     return res.json({
       valid: highRiskPassed,
@@ -210,7 +210,7 @@ router.post('/validate-section', authMiddleware, requireOrganizationContext, asy
  */
 router.post('/batch-validate', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
-    const { organizationId } = req.tenantContext || {};
+    const { organizationId: organizationIdRaw } = req.tenantContext ?? {}; const organizationId = typeof organizationIdRaw === 'string' ? parseInt(organizationIdRaw, 10) : (organizationIdRaw ?? 0);
 
     if (!organizationId) {
       return res.status(400).json({ error: 'Missing tenant context' });
@@ -422,8 +422,9 @@ router.post('/batch-validate', authMiddleware, requireOrganizationContext, async
  */
 router.get('/stats/:qmpId', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
-    const { qmpId } = req.params;
-    const { organizationId } = req.tenantContext || {};
+    const qmpIdRaw = req.params.qmpId;
+    const qmpId = Array.isArray(qmpIdRaw) ? qmpIdRaw[0] : (qmpIdRaw ?? '');
+    const { organizationId: organizationIdRaw } = req.tenantContext ?? {}; const organizationId = typeof organizationIdRaw === 'string' ? parseInt(organizationIdRaw, 10) : (organizationIdRaw ?? 0);
 
     if (!organizationId) {
       return res.status(400).json({ error: 'Missing tenant context' });
@@ -500,7 +501,7 @@ router.get('/stats/:qmpId', authMiddleware, requireOrganizationContext, async (r
         // Use a simple count query instead of referencing cerSections
         const sectionsCount = await getDb(req).execute(sql`SELECT COUNT(*) FROM cer_sections`);
 
-        totalSections = parseInt(sectionsCount.rows[0]?.count || '0', 10);
+        totalSections = parseInt(String(sectionsCount.rows[0]?.count ?? '0'), 10);
       }
     } catch (error: any) {
       logger.warn('Error counting CER sections', { error });

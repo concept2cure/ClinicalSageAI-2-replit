@@ -41,11 +41,11 @@ router.get('/authorities', (_req: Request, res: Response) => {
 router.get('/authorities/:code', (req: Request, res: Response) => {
   try {
     const engine = getRegulatoryPathwayIntelligence();
-    const authority = engine.getAuthority(req.params.code);
+    const authority = engine.getAuthority(String(req.params.code ?? ""));
     if (!authority) {
-      return res.status(404).json({ error: `Authority '${req.params.code}' not found` });
+      return res.status(404).json({ error: `Authority '${String(req.params.code ?? "")}' not found` });
     }
-    res.json({ code: req.params.code, ...authority });
+    res.json({ code: String(req.params.code ?? ""), ...authority });
   } catch (error) {
     res.status(500).json({ error: 'Failed to get authority details' });
   }
@@ -54,8 +54,8 @@ router.get('/authorities/:code', (req: Request, res: Response) => {
 router.get('/authorities/region/:region', (req: Request, res: Response) => {
   try {
     const engine = getRegulatoryPathwayIntelligence();
-    const authorities = engine.getAuthoritiesByRegion(req.params.region);
-    res.json({ region: req.params.region, count: authorities.length, authorities });
+    const authorities = engine.getAuthoritiesByRegion(String(req.params.region ?? ""));
+    res.json({ region: String(req.params.region ?? ""), count: authorities.length, authorities });
   } catch (error) {
     res.status(500).json({ error: 'Failed to get authorities by region' });
   }
@@ -64,11 +64,11 @@ router.get('/authorities/region/:region', (req: Request, res: Response) => {
 router.get('/authorities/:code/submission-types', (req: Request, res: Response) => {
   try {
     const engine = getRegulatoryPathwayIntelligence();
-    const types = engine.getSubmissionTypes(req.params.code);
+    const types = engine.getSubmissionTypes(String(req.params.code ?? ""));
     if (!types) {
-      return res.status(404).json({ error: `No submission types found for '${req.params.code}'` });
+      return res.status(404).json({ error: `No submission types found for '${String(req.params.code ?? "")}'` });
     }
-    res.json({ agency: req.params.code, submissionTypes: types });
+    res.json({ agency: String(req.params.code ?? ""), submissionTypes: types });
   } catch (error) {
     res.status(500).json({ error: 'Failed to get submission types' });
   }
@@ -77,11 +77,11 @@ router.get('/authorities/:code/submission-types', (req: Request, res: Response) 
 router.get('/authorities/:code/expedited-programs', (req: Request, res: Response) => {
   try {
     const engine = getRegulatoryPathwayIntelligence();
-    const programs = engine.getExpeditedPrograms(req.params.code);
+    const programs = engine.getExpeditedPrograms(String(req.params.code ?? ""));
     if (!programs) {
-      return res.status(404).json({ error: `No expedited programs found for '${req.params.code}'` });
+      return res.status(404).json({ error: `No expedited programs found for '${String(req.params.code ?? "")}'` });
     }
-    res.json({ agency: req.params.code, expeditedPrograms: programs });
+    res.json({ agency: String(req.params.code ?? ""), expeditedPrograms: programs });
   } catch (error) {
     res.status(500).json({ error: 'Failed to get expedited programs' });
   }
@@ -92,11 +92,11 @@ router.get('/authorities/:code/expedited-programs', (req: Request, res: Response
 router.get('/ich-guidelines/:id', (req: Request, res: Response) => {
   try {
     const engine = getRegulatoryPathwayIntelligence();
-    const guideline = engine.getICHGuideline(req.params.id);
+    const guideline = engine.getICHGuideline(String(req.params.id ?? ""));
     if (!guideline) {
-      return res.status(404).json({ error: `ICH guideline '${req.params.id}' not found` });
+      return res.status(404).json({ error: `ICH guideline '${String(req.params.id ?? "")}' not found` });
     }
-    res.json({ id: req.params.id, ...guideline });
+    res.json({ id: String(req.params.id ?? ""), ...guideline });
   } catch (error) {
     res.status(500).json({ error: 'Failed to get guideline' });
   }
@@ -106,12 +106,12 @@ router.get('/ich-guidelines/category/:category', (req: Request, res: Response) =
   try {
     const engine = getRegulatoryPathwayIntelligence();
     const validCategories = ['Q_Quality', 'S_Safety', 'E_Efficacy', 'M_Multidisciplinary'];
-    if (!validCategories.includes(req.params.category)) {
+    if (!validCategories.includes(String(req.params.category ?? ""))) {
       return res.status(400).json({ error: `Invalid category. Valid: ${validCategories.join(', ')}` });
     }
-    const guidelines = engine.getGuidelinesByCategory(req.params.category as any);
+    const guidelines = engine.getGuidelinesByCategory(String(req.params.category ?? "") as any);
     res.json({
-      category: req.params.category,
+      category: String(req.params.category ?? ""),
       count: Object.keys(guidelines).length,
       guidelines,
     });
@@ -123,9 +123,9 @@ router.get('/ich-guidelines/category/:category', (req: Request, res: Response) =
 router.get('/ich-guidelines/ctd-section/:section', (req: Request, res: Response) => {
   try {
     const engine = getRegulatoryPathwayIntelligence();
-    const guidelines = engine.getGuidelinesForCTDSection(req.params.section);
+    const guidelines = engine.getGuidelinesForCTDSection(String(req.params.section ?? ""));
     res.json({
-      ctdSection: req.params.section,
+      ctdSection: String(req.params.section ?? ""),
       count: guidelines.length,
       guidelines,
     });
@@ -163,9 +163,9 @@ router.get('/ich-guidelines/search', (req: Request, res: Response) => {
 router.get('/document-requirements/:submissionType', (req: Request, res: Response) => {
   try {
     const engine = getRegulatoryPathwayIntelligence();
-    const reqs = engine.getDocumentRequirements(req.params.submissionType);
+    const reqs = engine.getDocumentRequirements(String(req.params.submissionType ?? ""));
     if (!reqs) {
-      return res.status(404).json({ error: `No document requirements found for '${req.params.submissionType}'` });
+      return res.status(404).json({ error: `No document requirements found for '${String(req.params.submissionType ?? "")}'` });
     }
     res.json(reqs);
   } catch (error) {
@@ -185,11 +185,11 @@ router.get('/ctd-structure', (_req: Request, res: Response) => {
 router.get('/cross-agency-equivalents/:category', (req: Request, res: Response) => {
   try {
     const engine = getRegulatoryPathwayIntelligence();
-    const equivalents = engine.getCrossAgencyEquivalents(req.params.category);
+    const equivalents = engine.getCrossAgencyEquivalents(String(req.params.category ?? ""));
     if (!equivalents) {
-      return res.status(404).json({ error: `No cross-agency equivalents found for '${req.params.category}'` });
+      return res.status(404).json({ error: `No cross-agency equivalents found for '${String(req.params.category ?? "")}'` });
     }
-    res.json({ category: req.params.category, equivalents });
+    res.json({ category: String(req.params.category ?? ""), equivalents });
   } catch (error) {
     res.status(500).json({ error: 'Failed to get cross-agency equivalents' });
   }
@@ -261,7 +261,7 @@ router.post('/global-strategy', (req: Request, res: Response) => {
 router.get('/ctd-guidance/:section', (req: Request, res: Response) => {
   try {
     const engine = getRegulatoryPathwayIntelligence();
-    const guidance = engine.getCTDSectionGuidance(req.params.section);
+    const guidance = engine.getCTDSectionGuidance(String(req.params.section ?? ""));
     res.json(guidance);
   } catch (error) {
     res.status(500).json({ error: 'Failed to get CTD section guidance' });

@@ -151,7 +151,7 @@ const validateQuery =
 router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Response) => {
   try {
     const { page, limit, status, programType, productType, agency, search, sortBy, sortOrder } =
-      req.query as z.infer<typeof queryParamsSchema>;
+      req.query as unknown as z.infer<typeof queryParamsSchema>;
     const tenantId = (req as any).tenantContext?.tenantId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
@@ -198,9 +198,9 @@ router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Resp
       primaryAgency: row.regulatoryContext || 'FDA',
       productName: row.deviceName,
       status: row.status,
-      phase: row.metadata?.phase || 'planning',
-      priority: row.metadata?.priority || 'medium',
-      progressPercent: row.metadata?.progressPercent || 0,
+      phase: (row.metadata as any)?.phase || 'planning',
+      priority: (row.metadata as any)?.priority || 'medium',
+      progressPercent: (row.metadata as any)?.progressPercent || 0,
       targetSubmissionDate: row.dueDate,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -266,18 +266,18 @@ router.get('/:id', async (req: Request, res: Response) => {
       predicateDevices: [],
       equivalentDevices: [],
       status: row.status,
-      phase: row.metadata?.phase || 'planning',
-      priority: row.metadata?.priority || 'medium',
+      phase: (row.metadata as any)?.phase || 'planning',
+      priority: (row.metadata as any)?.priority || 'medium',
       targetSubmissionDate: row.dueDate,
       actualSubmissionDate: row.completionDate,
       approvalDate: row.reviewDate,
-      progressPercent: row.metadata?.progressPercent || 0,
-      completedMilestones: row.metadata?.completedMilestones || 0,
-      totalMilestones: row.metadata?.totalMilestones || 0,
+      progressPercent: (row.metadata as any)?.progressPercent || 0,
+      completedMilestones: (row.metadata as any)?.completedMilestones || 0,
+      totalMilestones: (row.metadata as any)?.totalMilestones || 0,
       leadUserId: row.createdById,
       teamMembers: [],
       settings: row.settings ?? {},
-      tags: row.metadata?.tags ?? [],
+      tags: (row.metadata as any)?.tags ?? [],
       createdBy: row.createdById,
       updatedBy: row.assignedToId,
       createdAt: row.createdAt,
