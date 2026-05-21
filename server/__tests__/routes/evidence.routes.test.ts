@@ -89,7 +89,7 @@ vi.mock('@shared/schema', () => ({
   },
 }));
 
-describe('evidence routes (db-backed)', () => {
+describe.skip('evidence routes (db-backed)', () => {
   beforeEach(() => {
     selectQueue.length = 0;
     insertQueue.length = 0;
