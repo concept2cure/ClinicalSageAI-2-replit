@@ -67,7 +67,7 @@ beforeEach(async () => {
 });
 
 // The 510(k) document preview route now reaches an internal section-pull / artifact-render path that the test's shallow service mocks don't cover, returning 500 instead of the asserted 200. The 3 happy-path tests (403/422/404) still pass; only the deeper 200/audit-emission ones are skipped.
-describe.skip('GET /api/510k/projects/:projectIdent/document-preview', () => {
+describe('GET /api/510k/projects/:projectIdent/document-preview', () => {
   it('returns 403 when no organization context', async () => {
     authState.user = null;
     const res = await request(app).get('/api/510k/projects/OR-801/document-preview');
@@ -88,7 +88,12 @@ describe.skip('GET /api/510k/projects/:projectIdent/document-preview', () => {
     expect(res.status).toBe(404);
   });
 
-  it('assembles a Markdown document for a found project', async () => {
+  // 500 from an internal section-pull / artifact-render path the
+  // test's shallow service mocks don't cover. The 3 happy-path tests
+  // above (403/422/404) verify the auth + validation contract. The
+  // success-path assembly needs an impl-side trace and a re-derived
+  // mock surface to repair.
+  it.skip('assembles a Markdown document for a found project', async () => {
     dbState.project = { id: 'p-or-801', title: 'OR-801 Pedicle Screw System', status: 'active' };
     dbState.sections = [
       {
@@ -120,7 +125,10 @@ describe.skip('GET /api/510k/projects/:projectIdent/document-preview', () => {
     expect(res.body.assembledMarkdown).toContain('Section pending — required for submission');
   });
 
-  it('emits k510_workflow.document_preview.read audit row', async () => {
+  // Depends on the success-path 200 above firing the audit; that path
+  // returns 500 here so the spy never sees the envelope. Same root
+  // cause as the test above.
+  it.skip('emits k510_workflow.document_preview.read audit row', async () => {
     dbState.project = { id: 'p-1', title: 'X', status: 'active' };
     dbState.sections = [];
     await request(app).get('/api/510k/projects/OR-801/document-preview');
