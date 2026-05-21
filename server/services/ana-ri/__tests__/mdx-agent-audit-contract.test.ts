@@ -16,6 +16,19 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// vi.hoisted ensures env vars are set BEFORE any ESM imports (including
+// transitive ones) are evaluated. Loading the auth/db/config chain at
+// module init requires these to be present, or the chain throws.
+vi.hoisted(() => {
+  process.env.NODE_ENV = process.env.NODE_ENV || 'test';
+  process.env.DATABASE_URL =
+    process.env.DATABASE_URL || 'postgresql://test:test@localhost:5432/test';
+  process.env.JWT_SECRET =
+    process.env.JWT_SECRET || 'stage3-test-secret-padded-to-32-chars-or-more-okay';
+  process.env.SKIP_DB_STARTUP_TEST = 'true';
+});
+
+
 const { svc, audit } = vi.hoisted(() => ({
   svc: {
     createQSubmission: vi.fn(async () => ({
@@ -40,9 +53,16 @@ const { svc, audit } = vi.hoisted(() => ({
   audit: { logAction: vi.fn().mockResolvedValue(undefined) },
 }));
 
-class TenantAccessError extends Error {
-  constructor(m: string) { super(m); this.name = 'TenantAccessError'; }
-}
+// vi.hoisted because TenantAccessError is referenced inside the
+// vi.mock factory below, which is hoisted above top-level statements.
+const { TenantAccessError } = vi.hoisted(() => ({
+  TenantAccessError: class extends Error {
+    constructor(m: string) {
+      super(m);
+      this.name = 'TenantAccessError';
+    }
+  },
+}));
 
 vi.mock('../../q-sub/q-sub.service', () => ({
   createQSubmission: (...a: any[]) => svc.createQSubmission(...a),
