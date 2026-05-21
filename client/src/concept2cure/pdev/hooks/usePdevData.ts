@@ -67,6 +67,35 @@ export function usePdevProgram(programId: string | null) {
   };
 }
 
+/** Server payload from /readiness. `workstreams` carries per-workstream
+ *  rollups, `overall` carries the aggregate as the same rollup shape
+ *  (with workstream: 'overall' or similar). adaptReadiness() bridges
+ *  it to the PdevReadinessReport shape the surface consumes. */
+interface ServerReadinessPayload {
+  workstreams: PdevWorkstreamRollup[];
+  overall: PdevWorkstreamRollup;
+  findings?: unknown[];
+}
+
+function adaptReadiness(
+  server: ServerReadinessPayload | null,
+  programId: string | null,
+): PdevReadinessReport | null {
+  if (!server) return null;
+  return {
+    programId: programId ?? '',
+    overall: {
+      readinessScore: server.overall.readinessScore,
+      completedActivities: server.overall.completedActivities,
+      totalActivities: server.overall.totalActivities,
+      blockingActivities: server.overall.blockingActivities,
+      blockingResolved: server.overall.blockingResolved,
+    },
+    byWorkstream: server.workstreams,
+    computedAt: new Date().toISOString(),
+  };
+}
+
 /** Standalone readiness report (live recompute). The program view
  *  already carries `latestSnapshots`; this hook exists for surfaces
  *  that want the freshly-computed score without re-fetching everything. */
@@ -75,9 +104,9 @@ export function usePdevReadiness(programId: string | null) {
     ? `/api/pdev/programs/${encodeURIComponent(programId)}/readiness`
     : null;
   const { data, loading, error, refresh } =
-    useFetchJson<Envelope<PdevReadinessReport>>(url);
+    useFetchJson<Envelope<ServerReadinessPayload>>(url);
   return {
-    report: data?.data ?? null,
+    report: adaptReadiness(data?.data ?? null, programId),
     loading,
     error,
     refresh,
@@ -119,6 +148,70 @@ export function usePdevActivityEvidence(
   return { payload: data?.data ?? null, loading, error, refresh };
 }
 
+interface ServerWorkflowPayload {
+  workflowRunId: string | null;
+  checkpoints: Array<{
+    id: string;
+    stepIndex: number;
+    name: string;
+    status: string;
+    requiredRoles?: string[];
+    approvals?: Array<{
+      id: string;
+      approverUserId: number | null;
+      approverDisplay?: string;
+      role?: string;
+      decidedAt?: string;
+      decision?: 'approve' | 'reject';
+      comment?: string | null;
+    }>;
+  }>;
+  workflowType?: string;
+  targetState?: string;
+  status?: string;
+  createdAt?: string;
+}
+
+function adaptWorkflow(
+  server: ServerWorkflowPayload | null,
+  activityKey: string | null,
+  programId: string | null,
+): PdevWorkflowPayload | null {
+  if (!server) return null;
+  if (!server.workflowRunId) return { run: null };
+  return {
+    run: {
+      runId: server.workflowRunId,
+      workflowType: server.workflowType ?? 'state_promotion',
+      activityKey: activityKey ?? '',
+      programId: programId ?? '',
+      targetState: (server.targetState ?? 'approved') as PdevWorkflowPayload['run'] extends infer R
+        ? R extends { targetState: infer T }
+          ? T
+          : never
+        : never,
+      status: (server.status ?? 'awaiting_approval') as never,
+      checkpoints: (server.checkpoints ?? []).map((cp) => ({
+        id: cp.id,
+        stepIndex: cp.stepIndex,
+        name: cp.name,
+        status: cp.status as never,
+        requiredRoles: cp.requiredRoles ?? [],
+        approvals: (cp.approvals ?? []).map((a) => ({
+          id: a.id,
+          approverUserId: a.approverUserId ?? null,
+          approverDisplay: a.approverDisplay ?? String(a.approverUserId ?? 'unknown'),
+          role: a.role ?? '',
+          decidedAt: a.decidedAt ?? '',
+          decision: a.decision ?? 'approve',
+          comment: a.comment ?? null,
+        })),
+      })),
+      createdAt: server.createdAt ?? new Date().toISOString(),
+    },
+  };
+}
+
 export function usePdevActivityWorkflow(
   programId: string | null,
   activityKey: string | null,
@@ -128,8 +221,13 @@ export function usePdevActivityWorkflow(
       ? `/api/pdev/programs/${encodeURIComponent(programId)}/activities/${encodeURIComponent(activityKey)}/workflow`
       : null;
   const { data, loading, error, refresh } =
-    useFetchJson<Envelope<PdevWorkflowPayload>>(url);
-  return { payload: data?.data ?? null, loading, error, refresh };
+    useFetchJson<Envelope<ServerWorkflowPayload>>(url);
+  return {
+    payload: adaptWorkflow(data?.data ?? null, activityKey, programId),
+    loading,
+    error,
+    refresh,
+  };
 }
 
 export function usePdevActivityProvenance(
