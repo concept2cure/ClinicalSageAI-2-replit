@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-05-21T05:58:09.123Z",
+  "generatedAt": "2026-05-21T14:00:14.059Z",
   "git": {
-    "sha": "d3dbcfa4d2d47333976c6524826c2d0d7ff78007",
-    "branch": "claude/integrate-design-system-UBjRE-mdx-phase4-cleanup-phase5"
+    "sha": "6d01cd631db93fb0a3b230a23d87b6343408800b",
+    "branch": "claude/integrate-design-system-UBjRE-mdx-phase5-rest"
   },
   "thresholds": {
     "maxBytes": 100000,

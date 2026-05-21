@@ -35,7 +35,10 @@ import {
    behind. The new full-feature VaultSurface lives at
    surfaces/VaultSurface.tsx; TemplatesSurface ships in a follow-up PR. */
 import { VaultSurface } from './surfaces/VaultSurface';
-import { TemplatesSurface } from './workbench/Workbench';
+import { AuditSurface } from './surfaces/AuditSurface';
+import { NotificationsSurface } from './surfaces/NotificationsSurface';
+import { TemplatesSurface } from './surfaces/TemplatesSurface';
+import { QualitySurface } from './surfaces/QualitySurface';
 import { ProjectHome } from './projectHome/ProjectHome';
 import { EstarEditor } from './editors/EstarEditor';
 import { PmaEditor } from './editors/PmaEditor';
@@ -289,7 +292,20 @@ export function App({ initialNav, projectName }: AppProps = {}) {
         surface = <SubmissionsSurface onAskAna={askAna} />;
         break;
       case 'templates':
-        surface = <TemplatesSurface onAskAna={askAna} />;
+        surface = <TemplatesSurface onAskAna={askAna} onOpenEditor={openEditor} />;
+        break;
+      case 'audit':
+        /* Phase 5 — dedicated audit log viewer (separate from the
+           24-hour band on Admin). */
+        surface = <AuditSurface onAskAna={askAna} onOpenEditor={openEditor} />;
+        break;
+      case 'notifications':
+        /* Phase 5 — cross-surface signal inbox. */
+        surface = <NotificationsSurface onAskAna={askAna} />;
+        break;
+      case 'quality':
+        /* Phase 5 — Quality system (QSR/QMSR + ISO 13485). */
+        surface = <QualitySurface onAskAna={askAna} onOpenEditor={openEditor} />;
         break;
       case 'project-home':
         surface = (
