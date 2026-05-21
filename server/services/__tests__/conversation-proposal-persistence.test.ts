@@ -4,7 +4,15 @@ const { queryMock } = vi.hoisted(() => ({
   queryMock: vi.fn(),
 }));
 
-vi.mock('../../../db.ts', () => ({
+vi.mock('../../../db', () => ({
+  getPool: () => ({ query: queryMock }),
+}));
+
+// The persistence module imports '../../db' (resolves to server/db).
+// vitest mocks are keyed by the import-specifier string, not the resolved
+// path, so we need a second entry that matches the consumer's literal
+// import path.
+vi.mock('../../db', () => ({
   getPool: () => ({ query: queryMock }),
 }));
 
