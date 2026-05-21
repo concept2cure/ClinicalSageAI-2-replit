@@ -166,7 +166,7 @@ router.post('/atoms',
   validateRequest(CreateAtomSchema),
   requireOrgAccess,
   asyncHandler(async (req, res) => {
-    const orgId = req.user?.organizationId;
+    const orgId = req.user?.organizationId !== undefined ? String(req.user.organizationId) : undefined;
     const atom = await cortex.createAtom({
       orgId,
       ...req.body
@@ -180,7 +180,7 @@ router.post('/atoms',
  * Get atom by ID
  */
 router.get('/atoms/:id', asyncHandler(async (req, res) => {
-  const atom = await cortex.getAtom(req.params.id);
+  const atom = await cortex.getAtom(String(req.params.id ?? ""));
   if (!atom) {
     return res.status(404).json({ error: 'Atom not found' });
   }
@@ -194,7 +194,7 @@ router.get('/atoms/:id', asyncHandler(async (req, res) => {
 router.patch('/atoms/:id',
   requireOrgAccess,
   asyncHandler(async (req, res) => {
-    const atom = await cortex.updateAtom(req.params.id, req.body);
+    const atom = await cortex.updateAtom(String(req.params.id ?? ""), req.body);
     if (!atom) {
       return res.status(404).json({ error: 'Atom not found' });
     }
@@ -209,7 +209,7 @@ router.patch('/atoms/:id',
 router.delete('/atoms/:id',
   requireOrgAccess,
   asyncHandler(async (req, res) => {
-    const deleted = await cortex.deleteAtom(req.params.id);
+    const deleted = await cortex.deleteAtom(String(req.params.id ?? ""));
     if (!deleted) {
       return res.status(404).json({ error: 'Atom not found' });
     }
@@ -228,7 +228,7 @@ router.delete('/atoms/:id',
 router.post('/search',
   validateRequest(SearchSchema),
   asyncHandler(async (req, res) => {
-    const orgId = req.user?.organizationId;
+    const orgId = req.user?.organizationId !== undefined ? String(req.user.organizationId) : undefined;
     const { query, queryEmbedding, ...options } = req.body;
     
     if (!queryEmbedding && !query) {
@@ -252,7 +252,7 @@ router.post('/search',
  */
 router.post('/search/fast',
   asyncHandler(async (req, res) => {
-    const orgId = req.user?.organizationId;
+    const orgId = req.user?.organizationId !== undefined ? String(req.user.organizationId) : undefined;
     const { queryEmbedding, atomTypes, limit } = req.body;
     
     if (!queryEmbedding) {
@@ -270,7 +270,7 @@ router.post('/search/fast',
  */
 router.post('/query',
   asyncHandler(async (req, res) => {
-    const orgId = req.user?.organizationId;
+    const orgId = req.user?.organizationId !== undefined ? String(req.user.organizationId) : undefined;
     const { query, queryEmbedding, ...options } = req.body;
     
     const results = await cortex.query(query, queryEmbedding, orgId, options);
@@ -320,7 +320,7 @@ router.post('/threads',
   validateRequest(CreateThreadSchema),
   requireOrgAccess,
   asyncHandler(async (req, res) => {
-    const orgId = req.user?.organizationId;
+    const orgId = req.user?.organizationId !== undefined ? String(req.user.organizationId) : undefined;
     const userId = req.user?.id;
     
     const thread = await cortex.createThread({
@@ -337,7 +337,7 @@ router.post('/threads',
  * Get thread by ID
  */
 router.get('/threads/:id', asyncHandler(async (req, res) => {
-  const thread = await cortex.getThread(req.params.id);
+  const thread = await cortex.getThread(String(req.params.id ?? ""));
   if (!thread) {
     return res.status(404).json({ error: 'Thread not found' });
   }
@@ -352,7 +352,7 @@ router.get('/threads/:id/context', asyncHandler(async (req, res) => {
   const maxTokens = parseInt(req.query.maxTokens as string) || 8000;
   const includeHistory = req.query.includeHistory !== 'false';
   
-  const context = await cortex.assembleContext(req.params.id, maxTokens, includeHistory);
+  const context = await cortex.assembleContext(String(req.params.id ?? ""), maxTokens, includeHistory);
   res.json({ context });
 }));
 
@@ -381,7 +381,7 @@ router.post('/traces/:id/complete',
   validateRequest(CompleteTraceSchema),
   asyncHandler(async (req, res) => {
     const { output, status, tokenUsage } = req.body;
-    const trace = await cortex.completeTrace(req.params.id, output, status, tokenUsage);
+    const trace = await cortex.completeTrace(String(req.params.id ?? ""), output, status, tokenUsage);
     if (!trace) {
       return res.status(404).json({ error: 'Trace not found' });
     }
@@ -400,7 +400,7 @@ router.post('/traces/:id/complete',
 router.post('/intuition/signals',
   requireOrgAccess,
   asyncHandler(async (req, res) => {
-    const orgId = req.user?.organizationId;
+    const orgId = req.user?.organizationId !== undefined ? String(req.user.organizationId) : undefined;
     const { documentId, documentContent, documentType } = req.body;
     
     if (!documentId || !documentContent || !documentType) {
@@ -408,7 +408,7 @@ router.post('/intuition/signals',
     }
     
     const signals = await cortex.extractRegulatorySignals(
-      orgId,
+      orgId!,
       documentId,
       documentContent,
       documentType
@@ -425,10 +425,10 @@ router.post('/intuition/predict',
   validateRequest(PredictionSchema),
   requireOrgAccess,
   asyncHandler(async (req, res) => {
-    const orgId = req.user?.organizationId;
+    const orgId = req.user?.organizationId !== undefined ? String(req.user.organizationId) : undefined;
     const { submissionId, predictionType } = req.body;
     
-    const prediction = await cortex.generatePrediction(orgId, submissionId, predictionType);
+    const prediction = await cortex.generatePrediction(orgId!, submissionId, predictionType);
     if (!prediction) {
       return res.status(404).json({ error: 'Could not generate prediction' });
     }
@@ -443,14 +443,14 @@ router.post('/intuition/predict',
 router.post('/intuition/match-patterns',
   requireOrgAccess,
   asyncHandler(async (req, res) => {
-    const orgId = req.user?.organizationId;
+    const orgId = req.user?.organizationId !== undefined ? String(req.user.organizationId) : undefined;
     const { submissionContent } = req.body;
     
     if (!submissionContent) {
       return res.status(400).json({ error: 'submissionContent required' });
     }
     
-    const patterns = await cortex.matchRejectionPatterns(orgId, submissionContent);
+    const patterns = await cortex.matchRejectionPatterns(orgId!, submissionContent);
     res.json({ patterns, count: patterns.length });
   })
 );
@@ -467,10 +467,10 @@ router.post('/epistemic/uncertainty',
   validateRequest(UncertaintySchema),
   requireOrgAccess,
   asyncHandler(async (req, res) => {
-    const orgId = req.user?.organizationId;
+    const orgId = req.user?.organizationId !== undefined ? String(req.user.organizationId) : undefined;
     const { contextType, contextId, inputData } = req.body;
     
-    const estimate = await cortex.estimateUncertainty(orgId, contextType, contextId, inputData);
+    const estimate = await cortex.estimateUncertainty(orgId!, contextType, contextId, inputData);
     if (!estimate) {
       return res.status(500).json({ error: 'Could not estimate uncertainty' });
     }
@@ -485,14 +485,14 @@ router.post('/epistemic/uncertainty',
 router.post('/epistemic/gaps',
   requireOrgAccess,
   asyncHandler(async (req, res) => {
-    const orgId = req.user?.organizationId;
+    const orgId = req.user?.organizationId !== undefined ? String(req.user.organizationId) : undefined;
     const { domain, queryEmbedding } = req.body;
     
     if (!domain) {
       return res.status(400).json({ error: 'domain required' });
     }
     
-    const gaps = await cortex.detectKnowledgeGaps(orgId, domain, queryEmbedding);
+    const gaps = await cortex.detectKnowledgeGaps(orgId!, domain, queryEmbedding);
     res.json({ gaps, count: gaps.length });
   })
 );
@@ -560,7 +560,7 @@ router.post('/causal/interventions',
 router.post('/evolution/experience',
   validateRequest(LearningExperienceSchema),
   asyncHandler(async (req, res) => {
-    const orgId = req.user?.organizationId;
+    const orgId = req.user?.organizationId !== undefined ? String(req.user.organizationId) : undefined;
     
     const experience = await cortex.recordLearningExperience({
       orgId,

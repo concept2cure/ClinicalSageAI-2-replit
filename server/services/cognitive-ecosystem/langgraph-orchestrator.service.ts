@@ -228,12 +228,12 @@ export class LangGraphOrchestrator {
     // Governance check
     this.registerHandler('__governance_check__', async (state, context) => {
       if (context.agentId) {
-        const result = await this.agentRuntime.validateGovernanceConstraints(
+        const result: any = await this.agentRuntime.validateGovernanceConstraints(
           context.agentId,
-          state.data
+          JSON.stringify(state.data) as any
         );
-        if (!result.success || !result.data?.passed) {
-          state.data._governanceViolation = result.data?.violations || ['Unknown violation'];
+        if (!result?.success || !(result?.data?.passed ?? result?.data?.allowed)) {
+          state.data._governanceViolation = result?.data?.violations || ['Unknown violation'];
         }
       }
       return state;
@@ -243,16 +243,16 @@ export class LangGraphOrchestrator {
     this.registerHandler('__audit_log__', async (state, context) => {
       await this.auditService.logEvent({
         tenantId: context.tenantId,
-        entityType: 'langgraph_execution',
         entityId: context.threadId,
         action: 'node_executed',
         actorType: 'agent',
         actorId: context.agentId || 'system',
         details: {
+          entityType: 'langgraph_execution',
           currentNode: state.currentNodeId,
           messageCount: state.messages.length
         }
-      });
+      } as any);
       return state;
     });
   }
@@ -282,13 +282,12 @@ export class LangGraphOrchestrator {
       }
 
       // Create thread
-      const threadResult = await this.agentRuntime.createThread({
-        tenantId: context.tenantId,
-        agentId: context.agentId,
-        userId: context.userId,
-        status: ThreadStatus.RUNNING,
-        metadata: { graphId, graphVersion: graph.version }
-      });
+      const threadResult = await this.agentRuntime.createThread(
+        context.agentId!,
+        context.tenantId,
+        context.userId,
+        { contextData: { graphId, graphVersion: graph.version } }
+      );
 
       if (!threadResult.success) {
         return {
@@ -384,7 +383,7 @@ export class LangGraphOrchestrator {
       }
 
       // Restore state from checkpoint
-      const state = checkpoint.checkpoint.channel_values as GraphState;
+      const state = checkpoint.checkpoint.channel_values as unknown as GraphState;
       
       // Merge additional data
       if (additionalData) {
@@ -566,12 +565,11 @@ export class LangGraphOrchestrator {
       context.threadId,
       context.checkpointId || 'current',
       {
-        step: state.nodeHistory.length + 1,
         nodeId: node.id,
         nodeName: node.name,
-        inputData: { ...state.data },
+        inputData: { ...state.data, step: state.nodeHistory.length + 1 },
         startTime: new Date()
-      }
+      } as any
     );
 
     const result = await handler(state, context);
@@ -630,7 +628,7 @@ export class LangGraphOrchestrator {
   ): Promise<string> {
     // In production, this would call the actual LLM
     const lastMessage = state.messages[state.messages.length - 1];
-    return `[${agent.agentName}] Processed: ${lastMessage?.content || 'No input message'}`;
+    return `[${agent.displayName}] Processed: ${lastMessage?.content || 'No input message'}`;
   }
 
   /**
@@ -741,7 +739,7 @@ export class LangGraphOrchestrator {
     const checkpointId = uuidv4();
     
     await this.checkpointManager.put(
-      { configurable: { thread_id: context.threadId, checkpoint_id: checkpointId } },
+      { configurable: { thread_id: context.threadId, checkpoint_id: checkpointId } } as any,
       {
         v: 1,
         id: checkpointId,
@@ -750,8 +748,9 @@ export class LangGraphOrchestrator {
         channel_versions: {},
         versions_seen: {},
         pending_sends: []
-      },
-      { source: 'langgraph_orchestrator', step: state.nodeHistory.length, writes: null }
+      } as any,
+      { source: 'langgraph_orchestrator', step: state.nodeHistory.length, writes: null } as any,
+      {} as any
     );
 
     // Update context with new checkpoint ID
@@ -766,15 +765,17 @@ export class LangGraphOrchestrator {
     state: GraphState,
     node: GraphNode
   ): Promise<void> {
-    await this.agentRuntime.createHITLBreakpoint({
-      threadId: context.threadId,
-      checkpointId: context.checkpointId || 'pending',
-      breakpointType: BreakpointType.APPROVAL,
-      status: BreakpointStatus.PENDING,
-      reason: node.config?.reason as string || `HITL required at node: ${node.name}`,
-      requiredApprovers: node.config?.approvers as string[] || [],
-      contextSnapshot: state.data
-    });
+    await this.agentRuntime.createHITLBreakpoint(
+      context.threadId,
+      context.checkpointId || 'pending',
+      {
+        breakpointType: BreakpointType.MANDATORY_REVIEW,
+        status: BreakpointStatus.PENDING,
+        reason: node.config?.reason as string || `HITL required at node: ${node.name}`,
+        requiredApprovers: node.config?.approvers as string[] || [],
+        contextSnapshot: state.data
+      } as any
+    );
   }
 
   // ===========================================================================
