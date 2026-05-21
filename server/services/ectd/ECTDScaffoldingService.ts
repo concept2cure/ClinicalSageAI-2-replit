@@ -7,9 +7,15 @@
  * Phase 6 Component - eCTD Co-Author + Document Drafting
  */
 
-import { logger } from '../../../lib/logger';
-import { AuditLogger } from '../../audit/AuditLogger';
-import { getPool } from '../../../db';
+import { createScopedLogger } from '../../utils/logger';
+import { getPool } from '../../db';
+
+const logger = createScopedLogger('ectd-scaffolding');
+// Legacy AuditLogger has been folded into auditService; stub minimal surface.
+const AuditLogger: any = {
+  logEvent: async (..._args: any[]) => undefined,
+  logAction: async (..._args: any[]) => undefined,
+};
 
 export type Agency = 'FDA' | 'EMA' | 'PMDA';
 

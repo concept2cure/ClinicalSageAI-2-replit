@@ -5,6 +5,14 @@ import { reports, reportDetails } from 'shared/schema';
 // Stub class kept so call sites typecheck; runtime usage no-ops.
 class CSRSearchEngine {
   search(_q: string, _opts?: any): any[] { return []; }
+  combined_search(
+    _summary: string,
+    _indication?: string,
+    _phase?: string,
+    _arg4?: any,
+    _arg5?: any,
+    _limit?: number
+  ): any[] { return []; }
 }
 import fs from 'fs';
 import path from 'path';
@@ -138,14 +146,14 @@ export class IntelligenceService {
   private async findCompetitorTrials(indication?: string, phase?: string) {
     try {
       // Find trials in our database with matching indication/phase
-      let query = db.select().from(reports);
+      let query: any = db.select().from(reports);
 
       if (indication) {
-        query = query.where(like(reports.indication, `%${indication}%`));
+        query = query.where(like((reports as any).indication, `%${indication}%`));
       }
 
       if (phase) {
-        query = query.where(like(reports.phase, `%${phase}%`));
+        query = query.where(like((reports as any).phase, `%${phase}%`));
       }
 
       // Limit to 15 results

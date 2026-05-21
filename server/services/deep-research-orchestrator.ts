@@ -263,9 +263,9 @@ async function generateSynthesis(
       system: systemPrompt,
     });
 
-    const text = response.content
-      .filter((block): block is { type: 'text'; text: string } => block.type === 'text')
-      .map(block => block.text)
+    const text = (response.content as any[])
+      .filter((block: any) => block?.type === 'text')
+      .map((block: any) => block.text)
       .join('\n');
 
     if (text.length > 0) return text;

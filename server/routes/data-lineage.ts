@@ -49,7 +49,7 @@ router.get('/trace/upstream/:objectType/:objectId', async (req: Request, res: Re
     const orgId = (req as any).user?.organizationId || (req as any).organizationId;
     if (!orgId) return res.status(401).json({ error: 'Organization context required' });
 
-    const { objectType, objectId } = req.params;
+    const { objectType, objectId } = req.params as { objectType: string; objectId: string };
     const maxDepth = Math.min(Number(req.query.maxDepth) || 5, 10);
 
     const graph = await traceUpstream(orgId, objectType, objectId, maxDepth);
@@ -75,7 +75,7 @@ router.get('/trace/downstream/:objectType/:objectId', async (req: Request, res: 
     const orgId = (req as any).user?.organizationId || (req as any).organizationId;
     if (!orgId) return res.status(401).json({ error: 'Organization context required' });
 
-    const { objectType, objectId } = req.params;
+    const { objectType, objectId } = req.params as { objectType: string; objectId: string };
     const maxDepth = Math.min(Number(req.query.maxDepth) || 5, 10);
 
     const graph = await traceDownstream(orgId, objectType, objectId, maxDepth);
@@ -105,7 +105,7 @@ router.get('/coverage/:objectType/:objectId', async (req: Request, res: Response
     const orgId = (req as any).user?.organizationId || (req as any).organizationId;
     if (!orgId) return res.status(401).json({ error: 'Organization context required' });
 
-    const { objectType, objectId } = req.params;
+    const { objectType, objectId } = req.params as { objectType: string; objectId: string };
     const report = await getLineageCoverage(orgId, objectType, objectId);
     res.json({
       success: true,
@@ -161,7 +161,7 @@ router.get('/evidence/:objectType/:objectId', async (req: Request, res: Response
     const orgId = (req as any).user?.organizationId || (req as any).organizationId;
     if (!orgId) return res.status(401).json({ error: 'Organization context required' });
 
-    const { objectType, objectId } = req.params;
+    const { objectType, objectId } = req.params as { objectType: string; objectId: string };
     const chains = await getEvidenceChainReport(orgId, objectType, objectId);
     res.json({
       success: true,

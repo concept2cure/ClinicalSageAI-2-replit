@@ -14,7 +14,7 @@ export function classifyTask(task: string) {
   const lowered = task.toLowerCase();
   const signalHits = HARD_TASK_KEYWORDS.filter(term => lowered.includes(term)).length;
   const isHard = task.length > 120 || signalHits >= 2;
-  return { class: isHard ? 'hard' : 'simple' as const, signalHits };
+  return { class: (isHard ? 'hard' : 'simple') as 'simple' | 'hard', signalHits };
 }
 
 export async function planAndExecute(params: { conversationId: string; task: string; projectId?: string; userId?: string }) {

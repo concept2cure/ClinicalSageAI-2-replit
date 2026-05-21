@@ -3,8 +3,8 @@ import { db } from './db';
 // import { csrReports, csrDetails } from "shared/schema";
 
 // Temporary empty tables for development
-const csrReports = { id: 'id' };
-const csrDetails = { id: 'id' };
+const csrReports: any = { id: 'id' };
+const csrDetails: any = { id: 'id' };
 
 async function seed() {
   console.log('Seeding database with sample data...');

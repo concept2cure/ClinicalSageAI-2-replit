@@ -19,7 +19,7 @@ import ragService from '../services/biotechRagService.js';
 import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
 
 // Initialize OpenAI for real AI generation
-let openai: OpenAI | null = null;
+let openai: any = null;
 try {
 
 } catch {
@@ -540,7 +540,7 @@ router.get(
   requireEditorAccess,
   (req: Request, res: Response) => {
     try {
-      const docType = req.params.docType;
+      const docType = String(req.params.docType);
       if (!validDocTypes.includes(docType as any)) {
         return res.status(400).json({
           error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,
@@ -549,7 +549,7 @@ router.get(
 
       return res.json({
         docType,
-        templates: sectionTemplates[docType] || {},
+        templates: (sectionTemplates as any)[docType] || {},
         note: 'Template text — fill in device-specific details before use.',
       });
     } catch (err: any) {
@@ -747,7 +747,8 @@ router.post(
       }
 
       // Fallback: enhanced section content, then base templates
-      const enhancedFn = enhancedMockContent[docType]?.[sectionId];
+      const enhancedFn: ((ctx: any) => string) | undefined =
+        enhancedMockContent[docType]?.[sectionId];
       let suggestion: string;
 
       if (enhancedFn) {

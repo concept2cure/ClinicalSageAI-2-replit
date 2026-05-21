@@ -31,7 +31,7 @@ export class ForesightKnowledgeGraph {
    * Create biomarker-endpoint relationship
    */
   async createBiomarkerEndpointRelationship(data: InsertBiomarkerEndpoint): Promise<BiomarkerEndpoint> {
-    const [relationship] = await db!.insert(biomarkerEndpoints).values(data).returning();
+    const [relationship] = await db!.insert(biomarkerEndpoints).values(data as any).returning();
     
     // Update correlation patterns
     await this.updateCorrelationPatterns(relationship.biomarkerId, relationship.endpointId);
@@ -43,7 +43,7 @@ export class ForesightKnowledgeGraph {
    * Record clinical outcome and update knowledge graph
    */
   async recordClinicalOutcome(data: InsertClinicalOutcome): Promise<ClinicalOutcome> {
-    const [outcome] = await db!.insert(clinicalOutcomes).values(data).returning();
+    const [outcome] = await db!.insert(clinicalOutcomes).values(data as any).returning();
     
     // If linked to biomarker-endpoint, update correlation score
     if (outcome.biomarkerEndpointId) {
@@ -111,7 +111,7 @@ export class ForesightKnowledgeGraph {
     const csr = await db
       .select()
       .from(csrReports)
-      .where(eq(csrReports.id, csrId))
+      .where(eq(csrReports.id, Number(csrId)))
       .limit(1);
     
     if (!csr.length) return;

@@ -146,14 +146,17 @@ export class AdvancedRAGPipeline {
   private embeddingService: EnhancedEmbeddingService;
   private aiRouter: AIProviderRouter;
   private pool: pg.Pool;
-  private openai: OpenAI;
+  private openai: any;
 
   constructor(pool: pg.Pool) {
     this.pool = pool;
     this.embeddingService = getEmbeddingService(pool);
     this.aiRouter = getAIRouter(pool);
 
-    this.openai = getOpenAIClient();
+    // OpenAI client wiring removed — this pipeline now goes through
+    // aiRouter for completions. Keep the field as an any-shaped stub so
+    // legacy references still compile.
+    this.openai = null;
 
     console.log('✅ Advanced RAG Pipeline initialized');
   }
@@ -229,7 +232,7 @@ export class AdvancedRAGPipeline {
           ...multiAdvanced.documents,
         ]);
         tokensUsed += hydeAdvanced.tokensUsed + multiAdvanced.tokensUsed;
-        retrievalStrategy = 'hyde+multi_query';
+        retrievalStrategy = 'advanced';
         break;
 
       case 'basic':

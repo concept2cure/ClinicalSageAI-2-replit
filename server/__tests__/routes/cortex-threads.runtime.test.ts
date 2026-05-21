@@ -38,7 +38,7 @@ describe('cortex threads runtime contract', () => {
   });
 
   it('GET /threads/:threadId returns 403 when caller does not own thread', async () => {
-    const jwt = (await import('jsonwebtoken')).default as { verify: ReturnType<typeof vi.fn> };
+    const jwt = (await import('jsonwebtoken')) as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 7 });
 
     queryMock.mockResolvedValueOnce({
@@ -67,7 +67,7 @@ describe('cortex threads runtime contract', () => {
   });
 
   it('GET /threads returns 500 fail-closed when storage throws', async () => {
-    const jwt = (await import('jsonwebtoken')).default as { verify: ReturnType<typeof vi.fn> };
+    const jwt = (await import('jsonwebtoken')) as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 99 });
 
     queryMock.mockRejectedValueOnce(new Error('db unavailable'));
@@ -117,7 +117,7 @@ describe('cortex threads runtime contract', () => {
   });
 
   it('PATCH /threads/:threadId returns 403 when user does not own thread', async () => {
-    const jwt = (await import('jsonwebtoken')).default as { verify: ReturnType<typeof vi.fn> };
+    const jwt = (await import('jsonwebtoken')) as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 17 });
     queryMock.mockResolvedValueOnce({ rows: [] });
 
@@ -136,7 +136,7 @@ describe('cortex threads runtime contract', () => {
   });
 
   it('DELETE /threads/:threadId returns 403 when user does not own thread', async () => {
-    const jwt = (await import('jsonwebtoken')).default as { verify: ReturnType<typeof vi.fn> };
+    const jwt = (await import('jsonwebtoken')) as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 17 });
     queryMock.mockResolvedValueOnce({ rows: [] });
 

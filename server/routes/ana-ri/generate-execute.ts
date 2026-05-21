@@ -74,16 +74,16 @@ export function mountGenerateExecuteRoutes(router: Router): void {
       const { generateArtifact } = await import('../../services/ana-ri/artifact-generator.js');
 
       const result = await generateArtifact({
-        actionType: action_type,
+        actionType: action_type as any,
         conversationContext: conversation_context,
         projectId: Number(project_id),
-        organizationId: orgId ? Number(orgId) : undefined,
+        organizationId: orgId ? Number(orgId) : 0,
         userId: userId ? Number(userId) : undefined,
         userRole: user_role,
         intentLens: intent_lens,
         title,
         sectionCode: section_code,
-      });
+      } as any);
 
       if (!result.success || result.persistenceStatus !== 'persisted') {
         return sendError(
@@ -153,7 +153,7 @@ export function mountGenerateExecuteRoutes(router: Router): void {
         );
       }
 
-      const [result] = await executor.executeCommands([{ command, params: params || {} }], ctx);
+      const [result] = await executor.executeCommands([{ command: command as any, params: params || {} }], ctx);
 
       return sendSuccess(
         res,

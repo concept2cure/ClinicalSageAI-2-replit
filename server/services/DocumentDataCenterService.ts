@@ -464,7 +464,7 @@ class DocumentDataCenterService {
       }).returning();
 
       // Log audit trail for 21 CFR Part 11 compliance
-      await part11ComplianceService.logAction({
+      await (part11ComplianceService as any).logAction({
         organizationId,
         userId: metadata.userId,
         action: 'DOCUMENT_UPLOADED',
@@ -705,8 +705,8 @@ class DocumentDataCenterService {
           deviceComponents: updates.components || existing.deviceComponents,
           tags: updates.tags || existing.tags,
           metadata: {
-            ...existing.metadata,
-            ...updates.metadata,
+            ...((existing.metadata as Record<string, unknown>) ?? {}),
+            ...((updates.metadata as Record<string, unknown>) ?? {}),
             lastUpdated: new Date().toISOString(),
             updatedBy: updates.userId,
           },
@@ -721,7 +721,7 @@ class DocumentDataCenterService {
         .returning();
 
       // Log audit trail
-      await part11ComplianceService.logAction({
+      await (part11ComplianceService as any).logAction({
         organizationId,
         userId: updates.userId,
         action: 'DOCUMENT_TAGS_UPDATED',

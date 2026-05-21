@@ -331,7 +331,7 @@ describe('ectd-regional-rules', () => {
       submissionType: 'IND',
     };
     const findings = validateRegionalPackage(ctx, []);
-    expect(findings.some(f => f.code === 'SEQ_FIRST_NOT_0000' || f.message.includes('not a 4-digit'))).toBe(true);
+    expect(findings.some(f => (f as any).code === 'SEQ_FIRST_NOT_0000' || f.message.includes('not a 4-digit'))).toBe(true);
   });
 
   it('flags package size over FDA 4 GB gateway limit', () => {

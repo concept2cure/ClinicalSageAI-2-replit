@@ -13,7 +13,7 @@ export function registerSubscriptionsRoutes(app: Express) {
    */
   app.get('/api/reports/download/:personaId/:filename', (req: Request, res: Response) => {
     try {
-      const { personaId, filename } = req.params;
+      const { personaId, filename } = req.params as { personaId: string; filename: string };
       const filePath = path.join(REPORTS_ROOT_DIR, personaId, 'files', filename);
 
       if (!fs.existsSync(filePath)) {
@@ -55,7 +55,7 @@ export function registerSubscriptionsRoutes(app: Express) {
    */
   app.get('/api/reports/preview/:personaId/:imageFile', (req: Request, res: Response) => {
     try {
-      const { personaId, imageFile } = req.params;
+      const { personaId, imageFile } = req.params as { personaId: string; imageFile: string };
       const imagePath = path.join(REPORTS_ROOT_DIR, personaId, 'images', imageFile);
 
       if (!fs.existsSync(imagePath)) {

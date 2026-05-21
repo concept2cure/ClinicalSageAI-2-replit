@@ -57,20 +57,22 @@ export class UnifiedFDAService {
   constructor(private config: FDASubmissionConfig) {}
 
   async checkCompliance(): Promise<FDAComplianceStatus> {
-    const { FDAComplianceTracker } = await import('../FDAComplianceTracker');
-    const tracker = new FDAComplianceTracker();
+    const mod = (await import('../FDAComplianceTracker')) as any;
+    const Ctor = mod.FDAComplianceTracker ?? mod.default;
+    const tracker = typeof Ctor === 'function' ? new Ctor() : Ctor;
     return tracker.check(this.config);
   }
 
   async generateForm(formNumber: string): Promise<FDAFormData> {
     const { default: FDAFormGenerator } = await import('../FDAFormGenerator');
     const generator = new FDAFormGenerator();
-    return generator.generate(formNumber, this.config);
+    return (generator as any).generate?.(formNumber, this.config);
   }
 
   async searchDatabase(query: string): Promise<unknown[]> {
-    const { FDAIntegrationService } = await import('../fdaIntegrationService');
-    const service = new FDAIntegrationService();
+    const mod = (await import('../fdaIntegrationService')) as any;
+    const Ctor = mod.FDAIntegrationService ?? mod.default;
+    const service = typeof Ctor === 'function' ? new Ctor() : Ctor;
     return service.search(query);
   }
 }

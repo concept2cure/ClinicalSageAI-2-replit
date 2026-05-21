@@ -157,7 +157,7 @@ router.post('/runs', async (req: Request, res: Response) => {
  * Get the state of an orchestrator run.
  */
 router.get('/runs/:runId', async (req: Request, res: Response) => {
-  const run = await getRun(req.params.runId);
+  const run = await getRun(String(req.params.runId));
   if (!run) return res.status(404).json({ error: 'run_not_found' });
   return res.json(run);
 });
@@ -166,15 +166,15 @@ router.get('/runs/:runId', async (req: Request, res: Response) => {
  * Get the append-only step audit for a run.
  */
 router.get('/runs/:runId/audit', async (req: Request, res: Response) => {
-  const events = await getRunAudit(req.params.runId);
-  return res.json({ runId: req.params.runId, events });
+  const events = await getRunAudit(String(req.params.runId));
+  return res.json({ runId: String(req.params.runId), events });
 });
 
 /**
  * Regenerate stale steps for a run.
  */
 router.post('/runs/:runId/regenerate', async (req: Request, res: Response) => {
-  const previousRun = await getRun(req.params.runId);
+  const previousRun = await getRun(String(req.params.runId));
   if (!previousRun) return res.status(404).json({ error: 'run_not_found' });
 
   const RegenSchema = RunSchema.extend({
