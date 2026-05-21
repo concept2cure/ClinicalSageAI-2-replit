@@ -76,11 +76,12 @@ export class CSRKnowledgeExtractor {
         .from(csrDetails)
         .where(eq(csrDetails.reportId, parseInt(csrId)));
 
-      if (!csr || !csr.safety) {
+      const csrAny = csr as any;
+      if (!csrAny || !csrAny.safety) {
         return [];
       }
 
-      const safetyData = csr.safety as any;
+      const safetyData = csrAny.safety as any;
       const signals: SafetySignal[] = [];
 
       // Extract adverse events
@@ -403,14 +404,14 @@ export class CSRKnowledgeExtractor {
             organizationId
           };
           
-          await db!.insert(biomarkerEndpoints)
+          await (db!.insert(biomarkerEndpoints) as any)
             .values(biomarkerEndpointData)
             .onConflictDoUpdate({
               target: [biomarkerEndpoints.biomarkerId, biomarkerEndpoints.endpointId],
               set: {
-                correlationScore: sql`(${biomarkerEndpoints.correlationScore} + ${biomarkerEndpointData.correlationScore}) / 2`,
+                correlationScore: sql`(${biomarkerEndpoints.correlationScore} + ${(biomarkerEndpointData as any).correlationScore}) / 2`,
                 evidenceCount: sql`${biomarkerEndpoints.evidenceCount} + 1`,
-                confidence: sql`(${biomarkerEndpoints.confidence} + ${biomarkerEndpointData.confidence}) / 2`
+                confidence: sql`(${biomarkerEndpoints.confidence} + ${(biomarkerEndpointData as any).confidence}) / 2`
               }
             });
         }
@@ -447,7 +448,7 @@ export class CSRKnowledgeExtractor {
           organizationId
         };
         
-        await db!.insert(clinicalOutcomes).values(clinicalOutcomeData);
+        await (db!.insert(clinicalOutcomes) as any).values(clinicalOutcomeData);
       }
 
       // Store translational patterns
@@ -482,20 +483,21 @@ export class CSRKnowledgeExtractor {
           }
         };
         
-        await db!.insert(translationalPatterns).values(pattern);
+        await (db!.insert(translationalPatterns) as any).values(pattern);
       }
 
       // Store dose escalation data if available
       if (doseRelationships.length > 0) {
         const [report] = await db!.select()
           .from(csrReports)
-          .where(eq(csrReports.id, csrId));
+          .where(eq(csrReports.id, csrId as any));
 
+        const reportAny = report as any;
         const studyData: InsertDoseEscalationStudy = {
           organizationId,
-          studyName: report?.title || `CSR Study ${csrId}`,
-          compoundName: report?.drugName || 'Unknown',
-          indication: report?.indication || 'Unknown',
+          studyName: reportAny?.title || `CSR Study ${csrId}`,
+          compoundName: reportAny?.drugName || 'Unknown',
+          indication: reportAny?.indication || 'Unknown',
           escalationMethod: '3_plus_3',
           startingDose: Math.min(...doseRelationships.map(d => d.doseLevel)),
           maxDose: Math.max(...doseRelationships.map(d => d.doseLevel)),
@@ -508,13 +510,13 @@ export class CSRKnowledgeExtractor {
           }
         };
         
-        const [study] = await db!.insert(doseEscalationStudies)
+        const [study] = await (db!.insert(doseEscalationStudies) as any)
           .values(studyData)
           .returning();
 
         // Store dose cohorts
         for (const doseRel of doseRelationships) {
-          const [doseLevel] = await db!.insert(doseLevels)
+          const [doseLevel] = await (db!.insert(doseLevels) as any)
             .values({
               studyId: study.id,
               levelNumber: doseRelationships.indexOf(doseRel) + 1,
@@ -524,7 +526,7 @@ export class CSRKnowledgeExtractor {
             })
             .returning();
 
-          await db!.insert(doseCohorts)
+          await (db!.insert(doseCohorts) as any)
             .values({
               studyId: study.id,
               doseLevelId: doseLevel.id,

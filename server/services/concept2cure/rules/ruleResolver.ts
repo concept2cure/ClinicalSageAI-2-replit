@@ -40,7 +40,7 @@ export function resolveRulePack(
     provenancePayload: contract.provenancePayload,
     placementTarget: contract.placementTarget,
   });
-  const documentSemantics = getDocumentClassSemantics(contract.documentClass);
+  const documentSemantics = getDocumentClassSemantics(contract.documentClass)!;
   const warnings: string[] = [...baseWarnings];
   const disallowedCombinations: string[] = [];
 
