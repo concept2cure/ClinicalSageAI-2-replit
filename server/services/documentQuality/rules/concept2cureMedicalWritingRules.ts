@@ -124,7 +124,9 @@ function runDocumentClassChecks(text: string, documentClass: RegulatoryDocumentC
 
 
 function runStatisticalClaimChecks(text: string): DocumentQualityIssue[] {
-  const hasPercentageClaim = /\b\d{1,3}(?:\.\d+)?%\b/.test(text);
+  // `%` is not a word character, so `%\b` would only match if followed by
+  // a word character — failing on "95% in" / "95%." Drop the trailing \b.
+  const hasPercentageClaim = /\b\d{1,3}(?:\.\d+)?%/.test(text);
   const hasCiMention = /confidence interval|\bCI\b/i.test(text);
   if (hasPercentageClaim && !hasCiMention) {
     return [{
