@@ -324,7 +324,7 @@ function renderFallbackPdf(html: string): Promise<Buffer> {
  * POST /:projectId/generate — Generate full IND PDF
  */
 router.post('/:projectId/generate', async (req: Request, res: Response) => {
-  const projectId = parseInt(req.params.projectId, 10);
+  const projectId = parseInt(String(String(req.params.projectId ?? "")), 10);
   if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
 
   try {
@@ -496,7 +496,7 @@ router.post('/:projectId/generate', async (req: Request, res: Response) => {
  * POST /:projectId/section — Generate PDF for a single section
  */
 router.post('/:projectId/section', async (req: Request, res: Response) => {
-  const projectId = parseInt(req.params.projectId, 10);
+  const projectId = parseInt(String(String(req.params.projectId ?? "")), 10);
   if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
 
   try {

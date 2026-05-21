@@ -52,7 +52,7 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
   const [row] = await db
     .select({ id: regulatoryPrograms.id })
     .from(regulatoryPrograms)
-    .where(and(eq(regulatoryPrograms.id, req.params.programId), eq(regulatoryPrograms.organizationId, orgId)))
+    .where(and(eq(regulatoryPrograms.id, String(req.params.programId ?? "")), eq(regulatoryPrograms.organizationId, orgId)))
     .limit(1);
   if (!row) {
     res.status(403).json({ error: 'Access denied' });
@@ -67,7 +67,7 @@ async function requirePlanAccess(req: Request, res: Response, next: NextFunction
     res.status(403).json({ error: 'Organization context required' });
     return;
   }
-  const plan = await getPlan(orgId, req.params.planId);
+  const plan = await getPlan(orgId, String(req.params.planId ?? ""));
   if (!plan) {
     res.status(404).json({ error: 'Plan not found' });
     return;
@@ -84,8 +84,8 @@ router.get(
   async (req: Request, res: Response) => {
     const orgId = getOrgId(req)!;
     try {
-      const plans = await listProgramPlans(orgId, req.params.programId);
-      res.json({ programId: req.params.programId, plans, count: plans.length });
+      const plans = await listProgramPlans(orgId, String(req.params.programId ?? ""));
+      res.json({ programId: String(req.params.programId ?? ""), plans, count: plans.length });
     } catch (err: any) {
       res.status(500).json({ error: 'List failed', detail: err?.message });
     }
@@ -108,7 +108,7 @@ router.post(
       const plan = await createPlan({
         ...body,
         organizationId: orgId,
-        programId: req.params.programId,
+        programId: String(req.params.programId ?? ""),
         createdBy,
         updatedBy: createdBy,
       });
@@ -129,7 +129,7 @@ router.patch('/plans/:planId', requirePlanAccess, async (req: Request, res: Resp
   const updatedBy =
     typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
   try {
-    const updated = await updatePlan(orgId, req.params.planId, {
+    const updated = await updatePlan(orgId, String(req.params.planId ?? ""), {
       ...req.body,
       updatedBy,
     });
@@ -148,8 +148,8 @@ router.get(
   requirePlanAccess,
   async (req: Request, res: Response) => {
     try {
-      const mods = await getModifications(req.params.planId);
-      res.json({ planId: req.params.planId, modifications: mods, count: mods.length });
+      const mods = await getModifications(String(req.params.planId ?? ""));
+      res.json({ planId: String(req.params.planId ?? ""), modifications: mods, count: mods.length });
     } catch (err: any) {
       res.status(500).json({ error: 'Fetch failed', detail: err?.message });
     }
@@ -169,7 +169,7 @@ router.post(
       });
     }
     try {
-      const mod = await addModification(orgId, req.params.planId, body);
+      const mod = await addModification(orgId, String(req.params.planId ?? ""), body);
       if (!mod) return res.status(404).json({ error: 'Plan not found' });
       res.status(201).json(mod);
     } catch (err: any) {
@@ -187,7 +187,7 @@ router.patch('/modifications/:modificationId', async (req: Request, res: Respons
   const [mod] = await db
     .select()
     .from(aiMlModifications)
-    .where(eq(aiMlModifications.id, req.params.modificationId))
+    .where(eq(aiMlModifications.id, String(req.params.modificationId ?? "")))
     .limit(1);
   if (!mod) return res.status(404).json({ error: 'Modification not found' });
 
@@ -202,7 +202,7 @@ router.patch('/modifications/:modificationId', async (req: Request, res: Respons
   if (plan.locked) return res.status(409).json({ error: 'Plan is locked' });
 
   try {
-    const updated = await updateModification(req.params.modificationId, req.body ?? {});
+    const updated = await updateModification(String(req.params.modificationId ?? ""), req.body ?? {});
     res.json(updated);
   } catch (err: any) {
     res.status(500).json({ error: 'Update failed', detail: err?.message });
@@ -214,7 +214,7 @@ router.patch('/modifications/:modificationId', async (req: Request, res: Respons
 router.post('/plans/:planId/validate', requirePlanAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req)!;
   try {
-    const result = await validatePlan(orgId, req.params.planId);
+    const result = await validatePlan(orgId, String(req.params.planId ?? ""));
     if (!result) return res.status(404).json({ error: 'Plan not found' });
     res.json(result);
   } catch (err: any) {
@@ -231,7 +231,7 @@ router.post('/plans/:planId/approve', requirePlanAccess, async (req: Request, re
   try {
     const result = await approvePlan({
       organizationId: orgId,
-      planId: req.params.planId,
+      planId: String(req.params.planId ?? ""),
       approvedBy,
       signatureId,
     });
@@ -259,7 +259,7 @@ router.post('/plans/:planId/supersede', requirePlanAccess, async (req: Request, 
   try {
     const result = await supersedePlan({
       organizationId: orgId,
-      oldPlanId: req.params.planId,
+      oldPlanId: String(req.params.planId ?? ""),
       newTitle: typeof req.body?.newTitle === 'string' ? req.body.newTitle : undefined,
       createdBy,
     });

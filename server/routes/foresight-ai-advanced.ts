@@ -281,7 +281,7 @@ router.post('/learning/adaptive', async (req, res) => {
 // Real-time study monitoring
 router.get('/monitor/study/:studyId', async (req, res) => {
   try {
-    const studyIdRaw = req.params.studyId; const studyId = Array.isArray(studyIdRaw) ? studyIdRaw[0] : (studyIdRaw ?? "");
+    const studyIdRaw = String(req.params.studyId ?? ""); const studyId = Array.isArray(studyIdRaw) ? studyIdRaw[0] : (studyIdRaw ?? "");
     const intelligence = await aiEngine.monitorStudyIntelligence(studyId);
     res.json(intelligence);
   } catch (error) {
