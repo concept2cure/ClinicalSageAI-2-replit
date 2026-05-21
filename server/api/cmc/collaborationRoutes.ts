@@ -76,7 +76,7 @@ router.post('/comments', async (req, res) => {
     const comment = {
       id: commentId,
       workflowId,
-      user: req.user?.name || 'Current User', // In production, get from auth context
+      user: (req.user as any)?.name || 'Current User', // In production, get from auth context
       userId: req.user?.id || 'current-user-id',
       userRole: req.user?.role || 'Team Member',
       message,

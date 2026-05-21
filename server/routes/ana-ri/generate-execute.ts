@@ -153,7 +153,7 @@ export function mountGenerateExecuteRoutes(router: Router): void {
         );
       }
 
-      const [result] = await executor.executeCommands([{ command: command as any, params: params || {} }], ctx);
+      const [result] = await executor.executeCommands([{ command: command as any, params: params || {} }], ctx as any);
 
       return sendSuccess(
         res,

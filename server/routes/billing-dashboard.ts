@@ -471,7 +471,7 @@ router.post('/alerts/:id/acknowledge', authenticateToken, async (req: Request, r
       return res.status(401).json({ error: 'Organization context required' });
     }
 
-    const alertId = parseInt(req.params.id, 10);
+    const alertId = parseInt(String(req.params.id), 10);
     if (isNaN(alertId)) {
       return res.status(400).json({ error: 'Invalid alert ID' });
     }

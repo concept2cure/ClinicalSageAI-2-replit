@@ -8,7 +8,7 @@ import { pool } from './db';
 import * as schema from '../shared/schema';
 import { createContextLogger } from './utils/logger';
 
-const logger = createContextLogger({ module: 'drizzle' });
+const logger = createContextLogger('drizzle');
 
 // Create a Drizzle instance with our schema and database pool
 export const db = pool ? drizzle(pool, { schema }) : null;

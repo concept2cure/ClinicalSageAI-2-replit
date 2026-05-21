@@ -259,7 +259,7 @@ router.post('/harvest/10k', async (req, res) => {
       includeAmended,
     });
 
-    res.json({ success: true, ...result });
+    res.json({ ...result, success: true });
   } catch (error) {
     console.error('10-K harvest failed:', error);
     res.status(500).json({
@@ -283,7 +283,7 @@ router.post('/observation-terms/csr', async (req, res) => {
 
     const result = await anaCortexService.syncObservationTermsFromCSR(Number(orgId), limit);
 
-    res.json({ success: true, ...result });
+    res.json({ ...result, success: true });
   } catch (error) {
     console.error('CSR observation term sync failed:', error);
     res.status(500).json({

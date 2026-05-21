@@ -382,7 +382,7 @@ router.post('/extraction/queue', async (req: Request, res: Response) => {
 router.get('/extraction/status/:jobId', async (req: Request, res: Response) => {
   try {
     const svc = await getSvc<any>('../services/autoExtractionPipeline.js');
-    const job = svc.getExtractionStatus(req.params.jobId);
+    const job = svc.getExtractionStatus(String(req.params.jobId));
 
     if (!job) {
       return res.status(404).json({ error: 'Job not found' });
@@ -401,7 +401,7 @@ router.get('/extraction/status/:jobId', async (req: Request, res: Response) => {
 router.get('/extraction/project/:projectId', async (req: Request, res: Response) => {
   try {
     const svc = await getSvc<any>('../services/autoExtractionPipeline.js');
-    const jobs = svc.getProjectExtractionJobs(parseInt(req.params.projectId));
+    const jobs = svc.getProjectExtractionJobs(parseInt(String(req.params.projectId)));
     res.json({ success: true, jobs });
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Job listing failed' });

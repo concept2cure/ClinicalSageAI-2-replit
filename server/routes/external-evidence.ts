@@ -3,7 +3,7 @@ import { routeEvidenceRequest } from '../services/research-intelligence';
 import { firecrawlError } from '../integrations/firecrawl/errors';
 import { authMiddleware } from '../auth';
 import { getFirecrawlQuotaStatus } from '../integrations/firecrawl/usage';
-import { getPool } from '../db.ts';
+import { getPool } from '../db';
 import { evaluateFirecrawlPolicy } from '../integrations/firecrawl/policy';
 import { sourceSelectionDecision } from '../services/research-intelligence/sourceSelectionPolicy';
 import { buildRegulatoryEvidenceBriefPackage } from '../services/research-intelligence/buildRegulatoryEvidenceBrief';

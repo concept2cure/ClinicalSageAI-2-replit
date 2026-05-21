@@ -279,7 +279,7 @@ router.post(
  */
 router.get('/predicate/:id', async (req: Request, res: Response) => {
   try {
-    const predicate = await PredicateFinderService.getPredicateById(req.params.id);
+    const predicate = await PredicateFinderService.getPredicateById(String(req.params.id));
 
     if (!predicate) {
       return res.status(404).json({
@@ -348,7 +348,7 @@ router.post(
  */
 router.get('/article/:pmid', async (req: Request, res: Response) => {
   try {
-    const article = await LiteratureService.getArticleById(req.params.pmid);
+    const article = await LiteratureService.getArticleById(String(req.params.pmid));
 
     if (!article) {
       return res.status(404).json({

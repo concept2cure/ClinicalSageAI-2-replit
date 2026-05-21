@@ -184,7 +184,7 @@ Provide specific, actionable recommendations with regulatory citations where app
           setTimeout(() => reject(new Error('AI request timeout')), 30000)
         );
 
-        const aiPromise = openaiService.generateCopilotResponse(message, []);
+        const aiPromise = (openaiService as any).generateCopilotResponse(message, []);
         suggestion = await Promise.race([aiPromise, timeoutPromise]);
         isRealAI = true;
         provider = 'legacy-openai';
@@ -319,7 +319,7 @@ router.post('/verify', async (req, res) => {
         );
 
         const aiResponse = await Promise.race([
-          openaiService.generateCopilotResponse(verifyMessage, []),
+          (openaiService as any).generateCopilotResponse(verifyMessage, []),
           timeoutPromise,
         ]);
 

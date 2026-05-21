@@ -96,7 +96,7 @@ export async function registerAiRoutes({ app, pool, aiCircuitBreaker }: RouteBoo
   }
 
   try {
-    const anaIntelligenceRoutes = await import('../routes/ana-intelligence.ts');
+    const anaIntelligenceRoutes = await import('../routes/ana-intelligence');
     app.use('/api/claude', authenticateToken, anaIntelligenceRoutes.default);
   } catch (error) {
     console.error('❌ Failed to mount Claude Intelligence routes:', error);

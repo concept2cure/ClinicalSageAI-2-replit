@@ -50,7 +50,7 @@ export function tenantIsolationMiddleware(req: Request, res: Response, next: Nex
       : null;
 
     // Fall back to session only if no JWT org (session is server-side, not user-controlled)
-    const organizationId = jwtOrganizationId || (req.session as any)?.organizationId || null;
+    const organizationId = jwtOrganizationId || ((req as any).session as any)?.organizationId || null;
 
     // SECURITY: Detect and log header-based impersonation attempts
     const headerOrgId = req.headers['x-organization-id'] as string;

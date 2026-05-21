@@ -469,10 +469,10 @@ This documentation has been prepared in accordance with ICH guidelines and regul
 // Regulatory guidance lookup endpoint
 router.get('/regulatory-guidance/:section', async (req: Request, res: Response) => {
   try {
-    const { section } = req.params;
+    const { section } = req.params as { section: string };
     const organizationId = (req as any).user?.organizationId || (req as any).tenantId;
 
-    const guidance = regulatoryKnowledgeBase[section];
+    const guidance = (regulatoryKnowledgeBase as Record<string, any>)[section];
 
     if (!guidance) {
       return res.status(404).json({

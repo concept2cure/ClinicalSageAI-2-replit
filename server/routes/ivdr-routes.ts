@@ -346,7 +346,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.get('/classify/:id/report', async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const { id } = req.params as { id: string };
       const orgId = getServerOrgId(req);
       const result = await pool.query(
         `SELECT id, device_name, intended_purpose, classification, is_cdx, is_self_test, is_near_patient, rule_trace, analytes, organization_id, created_at FROM ivdr_classifications WHERE id = $1 AND organization_id = $2`,
@@ -473,7 +473,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.put('/validations/:id/parameters', async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const { id } = req.params as { id: string };
       const orgId = getServerOrgId(req);
       const userId = (req as any).userId || (req as any).user?.id || 'system';
       const {
@@ -601,7 +601,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.get('/validations/:id/history', async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const { id } = req.params as { id: string };
       const orgId = getServerOrgId(req);
       const result = await pool.query(
         `SELECT h.* FROM ivdr_validation_parameter_history h
@@ -702,7 +702,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.put('/clinical-evidence/:id/results', async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const { id } = req.params as { id: string };
       const orgId = getServerOrgId(req);
       const {
         truePositive,
@@ -806,7 +806,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.get('/clinical-evidence/:id/history', async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const { id } = req.params as { id: string };
       const orgId = getServerOrgId(req);
       const result = await pool.query(
         `SELECT h.* FROM ivdr_evidence_result_history h
@@ -918,7 +918,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
         });
       }
 
-      const { id } = req.params;
+      const { id } = req.params as { id: string };
       const orgId = getServerOrgId(req);
       const { status, notes } = req.body;
       const userId = (req as any).userId || 'system';
@@ -963,7 +963,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.get('/cdx-workflows/:id/history', async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const { id } = req.params as { id: string };
       const orgId = getServerOrgId(req);
       const result = await pool.query(
         `SELECT h.* FROM ivdr_cdx_status_history h

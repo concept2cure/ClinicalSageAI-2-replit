@@ -32,7 +32,7 @@ export function mountUtilityRoutes(router: Router): void {
     const gw = ensureGateway();
     const enabledProviders = gw?.getEnabledProviders() || [];
     const providerHealth = gw?.getProviderHealth?.() || [];
-    const deterministicMode = gw?.isDeterministicMode?.() || false;
+    const deterministicMode = (gw as any)?.isDeterministicMode?.() || false;
     const databaseAvailable = await isDatabaseAvailable();
 
     const hasHealthyProvider = providerHealth.some((provider: any) => provider.healthy);

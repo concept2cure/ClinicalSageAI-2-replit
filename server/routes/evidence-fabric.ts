@@ -255,7 +255,7 @@ router.get(
 
     try {
       const result = await proxyToShadow(
-        `/evidence/contradiction-scans/${encodeURIComponent(req.params.scanId)}`,
+        `/evidence/contradiction-scans/${encodeURIComponent(String(req.params.scanId))}`,
         { query: { program_id: programId } }
       );
       res.status(result.status).type(result.contentType).send(result.body);

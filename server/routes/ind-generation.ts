@@ -56,7 +56,7 @@ router.get('/structure', (_req: Request, res: Response) => {
 
 router.get('/device-status/:type/:projectId', async (req: Request, res: Response) => {
   try {
-    const { type, projectId } = req.params;
+    const { type, projectId } = req.params as { type: string; projectId: string };
     const deviceType = type.toUpperCase() as '510K' | 'PMA' | 'DE_NOVO' | 'CER';
 
     if (!getDeviceSections) {
