@@ -19,6 +19,8 @@ import type {
   PdevEvidenceLinkType,
   PdevEvidencePayload,
   PdevEvidenceStrength,
+  PdevFdaInteraction,
+  PdevFdaInteractionKind,
   PdevFdaProposalsPayload,
   PdevFdaStreamPayload,
   PdevIndAssemblyPayload,
@@ -26,6 +28,7 @@ import type {
   PdevProvenancePayload,
   PdevReadinessReport,
   PdevRegistryPayload,
+  PdevWorkstreamRollup,
   PdevWorkflowPayload,
   PdevWorkstreamPayload,
 } from '../data/types';
@@ -328,13 +331,70 @@ export function usePdevIndAssembly(programId: string | null) {
   };
 }
 
+/** Server payload from /fda-interactions. The service fans out
+ *  q_submissions + meetings + questions + commitments + timeline +
+ *  fda_communications into a unified `items[]` list, each carrying
+ *  source-specific fields in `meta`. The kit surface expects
+ *  PdevFdaStreamPayload with derived status/blocker/rolled fields. */
+interface ServerFdaInteractionItem {
+  kind: PdevFdaInteractionKind;
+  sourceId: string | number;
+  at: string;
+  title: string;
+  summary?: string;
+  meta: Record<string, unknown>;
+}
+interface ServerFdaStreamPayload {
+  programId: string;
+  items: ServerFdaInteractionItem[];
+  counts?: Record<string, number>;
+}
+
+function deriveStatus(item: ServerFdaInteractionItem): PdevFdaInteraction['status'] {
+  const meta = item.meta;
+  if (meta.rolledIn === true) return 'closed';
+  if (typeof meta.fdaResponse === 'string' && meta.fdaResponse.trim()) return 'responded';
+  if (typeof meta.status === 'string') {
+    const s = meta.status.toLowerCase();
+    if (s.includes('closed') || s.includes('resolved')) return 'closed';
+    if (s.includes('response') || s.includes('answered')) return 'responded';
+    if (s.includes('pending') || s.includes('rollup')) return 'pending-rollup';
+  }
+  return 'open';
+}
+
+function adaptFdaInteractions(
+  server: ServerFdaStreamPayload | null,
+): PdevFdaStreamPayload | null {
+  if (!server) return null;
+  return {
+    interactions: server.items.map((item) => ({
+      id: `${item.kind}:${item.sourceId}`,
+      when: item.at,
+      kind: item.kind,
+      title: item.title,
+      summary: item.summary ?? '',
+      status: deriveStatus(item),
+      blocker: item.meta.blocker === true,
+      rolled: item.meta.rolledIn === true,
+      proposedKey: null,
+      confidence: null,
+    })),
+  };
+}
+
 export function usePdevFdaInteractions(programId: string | null) {
   const url = programId
     ? `/api/pdev/programs/${encodeURIComponent(programId)}/fda-interactions`
     : null;
   const { data, loading, error, refresh } =
-    useFetchJson<Envelope<PdevFdaStreamPayload>>(url);
-  return { payload: data?.data ?? null, loading, error, refresh };
+    useFetchJson<Envelope<ServerFdaStreamPayload>>(url);
+  return {
+    payload: adaptFdaInteractions(data?.data ?? null),
+    loading,
+    error,
+    refresh,
+  };
 }
 
 export function usePdevFdaProposals(programId: string | null) {
