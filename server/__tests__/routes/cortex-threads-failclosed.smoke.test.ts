@@ -8,7 +8,7 @@ describe('cortex threads fail-closed route contract', () => {
 
   it('requires authenticated user for GET /threads', () => {
     const content = fs.readFileSync(routeFile, 'utf8');
-    expect(content).toContain("code: 'CORTEX_THREADS_AUTH_REQUIRED'");
+    expect(content).toContain('CORTEX_THREADS_AUTH_REQUIRED');
     expect(content).toContain('Authentication required');
   });
 
@@ -27,7 +27,7 @@ describe('cortex threads fail-closed route contract', () => {
 
   it('requires authentication for GET /threads/:threadId', () => {
     const content = fs.readFileSync(routeFile, 'utf8');
-    expect(content).toContain("code: 'CORTEX_THREAD_AUTH_REQUIRED'");
+    expect(content).toContain('CORTEX_THREAD_AUTH_REQUIRED');
     expect(content).toContain('Authentication required');
   });
 
@@ -45,8 +45,10 @@ describe('cortex threads fail-closed route contract', () => {
 
   it('requires auth for create/update/delete thread mutations', () => {
     const content = fs.readFileSync(routeFile, 'utf8');
-    expect(content).toContain("code: 'CORTEX_THREAD_CREATE_AUTH_REQUIRED'");
-    expect(content).toContain("code: 'CORTEX_THREAD_UPDATE_AUTH_REQUIRED'");
-    expect(content).toContain("code: 'CORTEX_THREAD_DELETE_AUTH_REQUIRED'");
+    // Codes flow through requireAuthenticatedUserId helper, so check for the
+    // string regardless of literal-key formatting.
+    expect(content).toContain('CORTEX_THREAD_CREATE_AUTH_REQUIRED');
+    expect(content).toContain('CORTEX_THREAD_UPDATE_AUTH_REQUIRED');
+    expect(content).toContain('CORTEX_THREAD_DELETE_AUTH_REQUIRED');
   });
 });

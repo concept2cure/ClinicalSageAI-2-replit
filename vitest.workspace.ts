@@ -1,12 +1,16 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineWorkspace } from 'vitest/config';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineWorkspace([
   // Server + integration tests — need pg mock and setup
   {
     resolve: {
       alias: {
-        '@': './client/src',
-        '@shared': './shared',
+        '@': path.resolve(__dirname, 'client/src'),
+        '@shared': path.resolve(__dirname, 'shared'),
       },
     },
     test: {
@@ -31,8 +35,8 @@ export default defineWorkspace([
   {
     resolve: {
       alias: {
-        '@': './client/src',
-        '@shared': './shared',
+        '@': path.resolve(__dirname, 'client/src'),
+        '@shared': path.resolve(__dirname, 'shared'),
       },
     },
     test: {
