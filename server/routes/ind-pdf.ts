@@ -22,8 +22,8 @@ import { registerExportGovernanceQuick } from '../services/compute/exportGoverna
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
-import unifiedDocIngestionMod from '../services/unifiedDocumentIngestion.js';
-const { extractPdfWithPython } = unifiedDocIngestionMod as any;
+// @ts-ignore — JS module without bundled types
+import { extractPdfWithPython } from '../services/unifiedDocumentIngestion.js';
 
 const router = Router();
 
