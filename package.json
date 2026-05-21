@@ -139,7 +139,7 @@
     "@ant-design/icons": "^6.2.3",
     "@anthropic-ai/sdk": "^0.82.0",
     "@aws-sdk/client-s3": "^3.758.0",
-    "@aws-sdk/s3-request-presigner": "^3.1046.0",
+    "@aws-sdk/s3-request-presigner": "^3.1051.0",
     "@emotion/react": "^11.14.0",
     "@google/generative-ai": "0.24.1",
     "@hocuspocus/provider": "3.4.4",
