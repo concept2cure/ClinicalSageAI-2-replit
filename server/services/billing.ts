@@ -52,10 +52,16 @@ export interface PricingTier {
 // No enterprise sales cycles. Sign up, pay, use.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export interface DTCPricingTier extends PricingTier {
+export interface DTCPricingTier extends Partial<PricingTier> {
+  name: string;
+  tier: string;
   deepResearchCredits: number;  // per month (-1 = unlimited)
   builderCredits: number;       // per month (-1 = unlimited)
   trialDays: number;
+  annualDiscountPct: number;
+  baseMonthly?: number;
+  perSeatMonthly?: number;
+  maxUsers?: number;
 }
 
 export const DTC_PRICING: DTCPricingTier[] = [
@@ -480,7 +486,7 @@ export async function createDTCCheckoutSession(params: DTCCheckoutParams): Promi
   }
 
   // Calculate price
-  let unitAmount = dtcTier.baseMonthly;
+  let unitAmount = dtcTier.baseMonthly ?? 0;
   if (billingCycle === 'annual') {
     unitAmount = Math.round(unitAmount * (1 - dtcTier.annualDiscountPct / 100));
   }
@@ -725,7 +731,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Pro
       seats,
       maxProjects > 0 ? maxProjects : 99999,
       maxStorageGB,
-      new Date(subscription.current_period_end * 1000),
+      new Date((subscription as any).current_period_end * 1000),
       parseInt(organizationId, 10),
     ]
   );
@@ -754,9 +760,9 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Pro
 }
 
 async function handlePaymentSucceeded(invoice: Stripe.Invoice): Promise<void> {
-  if (!invoice.subscription) return;
+  if (!(invoice as any).subscription) return;
   const stripe = getStripe();
-  const sub = await stripe.subscriptions.retrieve(invoice.subscription as string);
+  const sub = await stripe.subscriptions.retrieve((invoice as any).subscription as string);
   const organizationId = sub.metadata?.organizationId;
   if (!organizationId) return;
 
@@ -766,14 +772,14 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice): Promise<void> {
        next_billing_date = $1,
        updated_at = NOW()
      WHERE id = $2`,
-    [new Date(sub.current_period_end * 1000), parseInt(organizationId, 10)]
+    [new Date((sub as any).current_period_end * 1000), parseInt(organizationId, 10)]
   );
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
-  if (!invoice.subscription) return;
+  if (!(invoice as any).subscription) return;
   const stripe = getStripe();
-  const sub = await stripe.subscriptions.retrieve(invoice.subscription as string);
+  const sub = await stripe.subscriptions.retrieve((invoice as any).subscription as string);
   const organizationId = sub.metadata?.organizationId;
   if (!organizationId) return;
 

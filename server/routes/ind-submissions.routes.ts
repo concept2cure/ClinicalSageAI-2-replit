@@ -160,7 +160,7 @@ router.get('/active', async (req: Request, res: Response) => {
  */
 router.get('/:submissionId', async (req: Request, res: Response) => {
   try {
-    const { submissionId } = req.params;
+    const submissionIdRaw = req.params.submissionId; const submissionId = Array.isArray(submissionIdRaw) ? submissionIdRaw[0] : (submissionIdRaw ?? "");
     const organizationId = getAuthedOrgId(req);
 
     const submission = await storage.getIndSubmission(submissionId);
@@ -262,7 +262,7 @@ router.post('/create', async (req: Request, res: Response) => {
  */
 router.put('/:submissionId', async (req: Request, res: Response) => {
   try {
-    const { submissionId } = req.params;
+    const submissionIdRaw = req.params.submissionId; const submissionId = Array.isArray(submissionIdRaw) ? submissionIdRaw[0] : (submissionIdRaw ?? "");
     const userId = getAuthedUserId(req);
     const organizationId = getAuthedOrgId(req);
     const updates = req.body;
@@ -316,7 +316,7 @@ router.put('/:submissionId', async (req: Request, res: Response) => {
  */
 router.post('/:submissionId/ind-step', async (req: Request, res: Response) => {
   try {
-    const { submissionId } = req.params;
+    const submissionIdRaw = req.params.submissionId; const submissionId = Array.isArray(submissionIdRaw) ? submissionIdRaw[0] : (submissionIdRaw ?? "");
     const { stepNumber, stepData, completed = false } = req.body;
     const userId = getAuthedUserId(req);
     const organizationId = getAuthedOrgId(req);
@@ -405,7 +405,7 @@ router.post('/:submissionId/ind-step', async (req: Request, res: Response) => {
  */
 router.post('/:submissionId/transition-to-ectd', async (req: Request, res: Response) => {
   try {
-    const { submissionId } = req.params;
+    const submissionIdRaw = req.params.submissionId; const submissionId = Array.isArray(submissionIdRaw) ? submissionIdRaw[0] : (submissionIdRaw ?? "");
     const userId = getAuthedUserId(req);
     const organizationId = getAuthedOrgId(req);
 

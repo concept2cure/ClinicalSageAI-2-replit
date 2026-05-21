@@ -57,7 +57,7 @@ export function createCortexManagementRoutes(pool: Pool): Router {
    */
   router.get('/graph/neighbors/:atomId', async (req: Request, res: Response) => {
     try {
-      const { atomId } = req.params;
+      const atomIdRaw = req.params.atomId; const atomId = Array.isArray(atomIdRaw) ? atomIdRaw[0] : (atomIdRaw ?? "");
       const depth = parseInt(req.query.depth as string) || 1;
       const relationshipTypes = req.query.types
         ? (req.query.types as string).split(',')
@@ -86,7 +86,7 @@ export function createCortexManagementRoutes(pool: Pool): Router {
    */
   router.get('/graph/subgraph/:atomId', async (req: Request, res: Response) => {
     try {
-      const { atomId } = req.params;
+      const atomIdRaw = req.params.atomId; const atomId = Array.isArray(atomIdRaw) ? atomIdRaw[0] : (atomIdRaw ?? "");
       const depth = parseInt(req.query.depth as string) || 2;
 
       const subgraph = await graphService.getSubgraph(atomId, depth);
@@ -140,7 +140,7 @@ export function createCortexManagementRoutes(pool: Pool): Router {
    */
   router.post('/graph/build/:atomId', async (req: Request, res: Response) => {
     try {
-      const { atomId } = req.params;
+      const atomIdRaw = req.params.atomId; const atomId = Array.isArray(atomIdRaw) ? atomIdRaw[0] : (atomIdRaw ?? "");
       const edgeCount = await graphService.buildEdgesForAtom(atomId);
 
       res.json({
@@ -279,7 +279,7 @@ export function createCortexManagementRoutes(pool: Pool): Router {
    */
   router.post('/quality/assess/:atomId', async (req: Request, res: Response) => {
     try {
-      const { atomId } = req.params;
+      const atomIdRaw = req.params.atomId; const atomId = Array.isArray(atomIdRaw) ? atomIdRaw[0] : (atomIdRaw ?? "");
       const report = await qualityService.assessAtom(atomId);
 
       res.json({
@@ -360,7 +360,7 @@ export function createCortexManagementRoutes(pool: Pool): Router {
    */
   router.post('/conflicts/detect/:atomId', async (req: Request, res: Response) => {
     try {
-      const { atomId } = req.params;
+      const atomIdRaw = req.params.atomId; const atomId = Array.isArray(atomIdRaw) ? atomIdRaw[0] : (atomIdRaw ?? "");
       const conflicts = await conflictService.detectConflictsForAtom(atomId);
 
       res.json({
@@ -420,7 +420,7 @@ export function createCortexManagementRoutes(pool: Pool): Router {
    */
   router.post('/conflicts/resolve/:conflictId', async (req: Request, res: Response) => {
     try {
-      const { conflictId } = req.params;
+      const conflictIdRaw = req.params.conflictId; const conflictId = Array.isArray(conflictIdRaw) ? conflictIdRaw[0] : (conflictIdRaw ?? "");
       const { resolvedBy, notes } = req.body;
 
       if (!resolvedBy || !notes) {
@@ -469,7 +469,7 @@ export function createCortexManagementRoutes(pool: Pool): Router {
    */
   router.get('/versions/:atomId', async (req: Request, res: Response) => {
     try {
-      const { atomId } = req.params;
+      const atomIdRaw = req.params.atomId; const atomId = Array.isArray(atomIdRaw) ? atomIdRaw[0] : (atomIdRaw ?? "");
       const versions = await versionService.getVersionHistory(atomId);
 
       res.json({
@@ -515,7 +515,7 @@ export function createCortexManagementRoutes(pool: Pool): Router {
    */
   router.get('/versions/:atomId/compare', async (req: Request, res: Response) => {
     try {
-      const { atomId } = req.params;
+      const atomIdRaw = req.params.atomId; const atomId = Array.isArray(atomIdRaw) ? atomIdRaw[0] : (atomIdRaw ?? "");
       const fromVersion = parseInt(req.query.from as string);
       const toVersion = parseInt(req.query.to as string);
 
@@ -544,7 +544,7 @@ export function createCortexManagementRoutes(pool: Pool): Router {
    */
   router.post('/versions/:atomId/rollback', async (req: Request, res: Response) => {
     try {
-      const { atomId } = req.params;
+      const atomIdRaw = req.params.atomId; const atomId = Array.isArray(atomIdRaw) ? atomIdRaw[0] : (atomIdRaw ?? "");
       const { targetVersion, rolledBackBy, reason } = req.body;
 
       if (!targetVersion || !rolledBackBy || !reason) {
@@ -580,7 +580,7 @@ export function createCortexManagementRoutes(pool: Pool): Router {
    */
   router.get('/versions/:atomId/audit', async (req: Request, res: Response) => {
     try {
-      const { atomId } = req.params;
+      const atomIdRaw = req.params.atomId; const atomId = Array.isArray(atomIdRaw) ? atomIdRaw[0] : (atomIdRaw ?? "");
       const auditTrail = await versionService.getAuditTrail(atomId);
 
       res.json({
@@ -602,7 +602,7 @@ export function createCortexManagementRoutes(pool: Pool): Router {
    */
   router.post('/versions/:atomId/verify/:versionId', async (req: Request, res: Response) => {
     try {
-      const { versionId } = req.params;
+      const versionIdRaw = req.params.versionId; const versionId = Array.isArray(versionIdRaw) ? versionIdRaw[0] : (versionIdRaw ?? "");
       const result = await versionService.verifyVersionIntegrity(versionId);
 
       res.json({
