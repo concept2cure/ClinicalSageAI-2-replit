@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-05-21T15:52:07.113Z",
+  "generatedAt": "2026-05-21T16:56:39.849Z",
   "git": {
-    "sha": "59578912cb0843692be64c9eb689f06aacd28588",
+    "sha": "d6f73f8cb030f6a9b5c79da7f959fd1ba457bae4",
     "branch": "claude/middleware-tests-cherrypick"
   },
   "thresholds": {
