@@ -23,6 +23,7 @@
 
 import * as React from 'react';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
+import { useAnaChat } from '../components/ana/useAnaChat';
 import { PdevRail } from './shell/Rail';
 import { PdevTopBar } from './shell/TopBar';
 import { PdevAnaDock } from './shell/AnaDock';
@@ -162,15 +163,40 @@ export function PdevApp({
   );
 
   // ── AnA bridge ────────────────────────────────────────────────────
+  // When the host doesn't override onAskAna, route through a local
+  // useAnaChat instance against /api/ana-ri/stream. The PDEV workstream,
+  // active program code, and active activity go into module_context so
+  // the orchestrator can ground its response. Streaming history surfaces
+  // in the AnA conversation panel (Phase 8) — the dock here only collects
+  // the prompt.
+  const programCodeForAna = program.view?.program.code ?? null;
+  const activityKeyForAna = activeActivity?.registry.key ?? null;
+  const anaChat = useAnaChat({
+    projectId: programId,
+    projectName: programCodeForAna,
+    screenName: `PDEV · ${activeNav}`,
+    submissionType: 'IND',
+    moduleContext: {
+      workstream: 'pdev',
+      activeNav,
+      programCode: programCodeForAna,
+      activityKey: activityKeyForAna,
+    },
+  });
   const askAna = React.useCallback(
     (text: string) => {
-      onAskAna?.(text, {
-        programCode: program.view?.program.code ?? null,
-        activityKey: activeActivity?.registry.key ?? null,
-      });
+      if (!text) return;
+      if (onAskAna) {
+        onAskAna(text, {
+          programCode: programCodeForAna,
+          activityKey: activityKeyForAna,
+        });
+      } else {
+        void anaChat.send(text);
+      }
       setAnaOpen(true);
     },
-    [onAskAna, program.view, activeActivity],
+    [onAskAna, anaChat, programCodeForAna, activityKeyForAna],
   );
 
   // Refresh data after a mutation completes (state change, evidence
@@ -383,6 +409,7 @@ export function PdevApp({
         activeNav={activeNav}
         activity={activeActivity}
         onSend={askAna}
+        isStreaming={!onAskAna && anaChat.isStreaming}
       />
 
       {activeActivity && programId && (

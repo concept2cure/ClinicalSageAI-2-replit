@@ -32,6 +32,11 @@ interface AnaDockProps {
   /** Send a draft prompt to AnA. The dock only collects the text; the
    *  app layer wires it to the AnA gateway. */
   onSend: (text: string) => void;
+  /** Streaming flag from the AnA gateway round-trip. When true the
+   *  composer locks and the footer status flips to "AnA is thinking…"
+   *  so the user has immediate feedback that the prompt was accepted.
+   *  Streaming response history surfaces in the Conversations panel. */
+  isStreaming?: boolean;
 }
 
 export function PdevAnaDock({
@@ -43,6 +48,7 @@ export function PdevAnaDock({
   activeNav,
   activity,
   onSend,
+  isStreaming = false,
 }: AnaDockProps) {
   const [draft, setDraft] = React.useState('');
   const suggestions = PDEV_SUGGESTIONS[activeNav] ?? PDEV_SUGGESTIONS.overview;
@@ -145,7 +151,7 @@ export function PdevAnaDock({
         <div className="pdev-ana-composer">
           <textarea
             rows={2}
-            placeholder="Ask AnA about this program…"
+            placeholder={isStreaming ? 'AnA is thinking…' : 'Ask AnA about this program…'}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
@@ -155,10 +161,11 @@ export function PdevAnaDock({
               }
             }}
             aria-label="Ask AnA"
+            disabled={isStreaming}
           />
           <button
             className="pdev-ana-send"
-            disabled={!draft.trim()}
+            disabled={!draft.trim() || isStreaming}
             onClick={handleSend}
             type="button"
             aria-label="Send"
@@ -166,7 +173,11 @@ export function PdevAnaDock({
             <PdevIcon name="arrowUp" />
           </button>
         </div>
-        <div className="pdev-ana-foot-meta">Routes via AnA gateway · Opus 4.5</div>
+        <div className="pdev-ana-foot-meta">
+          {isStreaming
+            ? 'Streaming · response will appear in Conversations'
+            : 'Routes via AnA gateway · Opus 4.5'}
+        </div>
       </div>
     </aside>
   );
