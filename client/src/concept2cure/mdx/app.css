@@ -4309,3 +4309,138 @@ button.ctable-row { border-radius: 0; }
 .qms-sup-head { display: flex; gap: 8px; align-items: center; }
 .qms-sup-meta { display: flex; gap: 4px; align-items: center; font-size: 11px; color: var(--text-400); }
 
+
+/* ════════════════════════════════════════════════════════════
+   PHASE 6 — IVDR · CDx · LDT diagnostic surfaces
+   Ported verbatim from design-system/ui_kits/mdx/surfaces.css
+   (IVD reuses ctable + status-pill — no surface-specific block)
+   ════════════════════════════════════════════════════════════ */
+
+/* ════════════════════════════════════════════════════════════
+   PHASE 6 — IVDR (classification + notified body)
+   ════════════════════════════════════════════════════════════ */
+
+.ivdr-classes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 14px; }
+.ivdr-class {
+  padding: 10px 12px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+}
+.ivdr-class[data-selected="true"] {
+  border-color: var(--accent-100);
+  background: var(--accent-000);
+}
+.ivdr-class-id { font-size: 11px; font-weight: 600; color: var(--text-200); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+.ivdr-class-desc { font-size: 11px; color: var(--text-400); line-height: 1.4; }
+
+.ivdr-timeline { display: flex; flex-direction: column; gap: 4px; }
+.ivdr-ms {
+  display: flex; gap: 10px; align-items: center;
+  padding: 10px 14px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+}
+.ivdr-ms-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--text-400); flex-shrink: 0; }
+.ivdr-ms[data-state="complete"]    .ivdr-ms-dot { background: var(--success); }
+.ivdr-ms[data-state="in-progress"] .ivdr-ms-dot { background: var(--accent-100); }
+.ivdr-ms[data-state="scheduled"]   .ivdr-ms-dot { background: var(--warning); }
+.ivdr-ms-body { flex: 1; min-width: 0; }
+.ivdr-ms-label { font-size: 13px; font-weight: 600; color: var(--text-100); }
+.ivdr-ms-date  { color: var(--text-400); margin-top: 2px; }
+
+/* ════════════════════════════════════════════════════════════
+   PHASE 6 — CDX paired timeline (the novel piece)
+   ════════════════════════════════════════════════════════════ */
+
+.cdx-timeline {
+  display: flex; flex-direction: column; gap: 4px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  padding: 14px;
+}
+.cdx-timeline-tracks {
+  display: grid;
+  grid-template-columns: 1fr 60px 1fr;
+  gap: 12px; padding-bottom: 8px; margin-bottom: 4px;
+  border-bottom: 1px solid var(--border-100);
+}
+.cdx-track-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-400); font-weight: 600;
+  text-align: center;
+}
+.cdx-track-label:first-child { text-align: right; }
+.cdx-track-label:last-child { text-align: left; }
+.cdx-ms {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--border-100);
+  width: 100%;
+  text-align: left;
+}
+.cdx-ms:last-child { border-bottom: 0; }
+.cdx-ms:hover { background: var(--bg-050); }
+.cdx-ms-grid {
+  display: grid;
+  grid-template-columns: 1fr 60px 1fr;
+  gap: 12px; align-items: center;
+}
+.cdx-track-cell { display: flex; align-items: center; gap: 6px; }
+.cdx-cell-drug   { justify-content: flex-end; }
+.cdx-cell-joint  { justify-content: center; }
+.cdx-cell-device { justify-content: flex-start; }
+.cdx-ms-dot { width: 10px; height: 10px; border-radius: 999px; }
+.cdx-dot-drug   { background: var(--accent-100); }
+.cdx-dot-device { background: #4a6b8f; }
+.cdx-ms-date { color: var(--text-400); font-size: 11px; }
+.cdx-ms-line {
+  flex: 1; height: 2px;
+  background: linear-gradient(to right, var(--accent-100), #4a6b8f);
+  border-radius: 999px;
+}
+.cdx-ms-label {
+  display: flex; gap: 8px; align-items: center;
+  margin-left: calc(50% - 60px);
+  padding-left: 12px;
+}
+.cdx-ms-title { font-size: 12px; font-weight: 500; color: var(--text-200); }
+.cdx-ms[data-state="complete"]   .cdx-ms-dot { box-shadow: 0 0 0 3px var(--success); }
+.cdx-ms[data-state="in-progress"].cdx-ms-dot { box-shadow: 0 0 0 3px var(--accent-100); }
+.cdx-ms[data-state="idle"] .cdx-ms-dot { opacity: 0.4; }
+
+/* ════════════════════════════════════════════════════════════
+   PHASE 6 — LDT phase tracker
+   ════════════════════════════════════════════════════════════ */
+
+.ldt-phases {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+.ldt-phase {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 12px 14px; text-align: left;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  transition: all var(--dur) var(--ease);
+}
+.ldt-phase:hover { box-shadow: var(--shadow-xs); border-color: var(--border); }
+.ldt-phase[data-on="true"] { border-color: var(--accent-100); background: var(--accent-000); }
+.ldt-phase[data-current="true"] { border-left: 3px solid var(--accent-100); padding-left: 11px; }
+.ldt-phase-edx { background: var(--bg-050); }
+.ldt-phase-head { display: flex; align-items: center; }
+.ldt-phase-id {
+  padding: 1px 6px; background: var(--bg-100); border-radius: 4px;
+  font-size: 11px; font-weight: 600; color: var(--text-300);
+}
+.ldt-phase[data-current="true"] .ldt-phase-id { background: var(--accent-100); color: white; }
+.ldt-phase-n { margin-left: auto; color: var(--text-400); font-size: 11px; }
+.ldt-phase-label { font-size: 13px; font-weight: 600; color: var(--text-100); }
+.ldt-phase-dates { color: var(--text-400); }
+.ldt-phase-deliv { font-size: 11px; color: var(--text-300); line-height: 1.4; }
+
+

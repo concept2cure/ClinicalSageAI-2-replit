@@ -90,6 +90,11 @@ export const MDX_SURFACE_REGISTRY: SurfaceRegistration[] = [
   { id: 'templates-medtech',label: 'Templates (medtech)',     defaultMode: 'both',     expectedLiveBy: '2026-08-01' },
   { id: 'quality',          label: 'Quality system',          defaultMode: 'both',     expectedLiveBy: '2026-09-15' },
   { id: 'esig',             label: 'E-signature flow',        defaultMode: 'live',     expectedLiveBy: '2026-07-01' },
+  // Phase 6 — diagnostic-client surfaces (per PHASE_6_INSTALL.md).
+  { id: 'ivd',              label: 'IVD pathway',             defaultMode: 'fixture',  expectedLiveBy: '2026-11-01' },
+  { id: 'ivdr',             label: 'EU IVDR',                 defaultMode: 'fixture',  expectedLiveBy: '2026-11-15' },
+  { id: 'cdx',              label: 'Companion diagnostic',    defaultMode: 'fixture',  expectedLiveBy: '2026-12-01' },
+  { id: 'ldt',              label: 'LDT compliance',          defaultMode: 'fixture',  expectedLiveBy: '2026-10-15' },
 ];
 
 const REGISTRY_BY_ID: Record<string, SurfaceRegistration> = MDX_SURFACE_REGISTRY.reduce(

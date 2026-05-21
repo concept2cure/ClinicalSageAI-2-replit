@@ -9,7 +9,7 @@ export interface NavItem {
   id: string;
   label: string;
   icon: IconKey;
-  group: 'workstream' | 'workbench' | 'intelligence' | 'system' | 'work';
+  group: 'workstream' | 'workbench' | 'diagnostics' | 'intelligence' | 'system' | 'work';
   href?: string;
   meta?: string;
 }
@@ -22,6 +22,7 @@ export interface NavGroup {
 export const MDX_NAV_GROUPS: NavGroup[] = [
   { id: 'workstream',   label: 'Workstream' },
   { id: 'workbench',    label: 'Workbench' },
+  { id: 'diagnostics',  label: 'Diagnostics' },
   { id: 'intelligence', label: 'Intelligence' },
   { id: 'system',       label: '' },
 ];
@@ -41,6 +42,12 @@ export const MDX_NAV_V2: NavItem[] = [
   { id: 'validation',   label: 'Validation Center',     icon: 'shieldAlert',  group: 'workbench' },
   { id: 'submissions',  label: 'Submission Center',     icon: 'rocket',       group: 'workbench' },
   { id: 'templates',    label: 'Templates',             icon: 'template',     group: 'workbench' },
+
+  // Diagnostics — Phase 6 paid-feature surfaces for IVD/CDx/LDT customers.
+  { id: 'ivd',          label: 'IVD Pathway',           icon: 'flask',        group: 'diagnostics' },
+  { id: 'ivdr',         label: 'EU IVDR',               icon: 'globe',        group: 'diagnostics' },
+  { id: 'cdx',          label: 'Companion Diagnostic',  icon: 'atom',         group: 'diagnostics' },
+  { id: 'ldt',          label: 'LDT Compliance',        icon: 'beaker',       group: 'diagnostics' },
 
   // Intelligence — read-only reporting + cross-cutting memory.
   { id: 'analytics',    label: 'Analytics',             icon: 'barChart3',    group: 'intelligence' },
@@ -118,5 +125,10 @@ export const MDX_SUGGESTIONS: Record<string, string[]> = {
   notifications:['Mute vigilance signals below review severity', 'Show only AnA drafts pending review', 'Route MDR alerts to Marcus'],
   templates:    ['Apply the eSTAR baseline to BX-204', 'Suggest the right template for a 30-day MDR', 'Compare PSUR v2.4 to last year'],
   quality:      ['Pre-inspection check for Q3 notified-body audit', 'Open SOP-820-50 supplier controls', 'Surface every member missing current training'],
+  // Phase 6 — diagnostic-client surfaces.
+  ivd:          ['Reconcile method comparison against EP09-A3', 'Draft the CLIA waiver flex-study', 'Surface analytical studies still in draft'],
+  ivdr:         ['Walk me through Annex VIII classification', 'Find the PER gap vs Annex II/III', 'Schedule the next BSI milestone'],
+  cdx:          ['Verify label alignment with KEYTRUDA-9', 'Recompute concordance with the latest cohort', 'Map every NDA section to its PMA equivalent'],
+  ldt:          ['Run enforcement-discretion decision for every LDT', 'Show LDTs due for Phase 2 registration', 'Draft the CV-IH401 De Novo Pre-Sub response'],
   editor:       ['Draft this section from predicate', 'Check claim against evidence', 'Rewrite for FDA tone'],
 };

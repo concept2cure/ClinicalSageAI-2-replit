@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-05-21T14:00:14.059Z",
+  "generatedAt": "2026-05-21T14:12:42.622Z",
   "git": {
-    "sha": "6d01cd631db93fb0a3b230a23d87b6343408800b",
-    "branch": "claude/integrate-design-system-UBjRE-mdx-phase5-rest"
+    "sha": "3252811f4f89b354a91386254c31da1d0d881bac",
+    "branch": "claude/integrate-design-system-UBjRE-mdx-phase6"
   },
   "thresholds": {
     "maxBytes": 100000,
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 172,
+    "duplicateBasenames": 173,
     "largeFilesByBytes": 16,
     "largeFilesByLines": 48
   },
@@ -1577,6 +1577,14 @@
         ]
       },
       {
+        "basename": "usetemplates",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/hooks/useTemplates.ts",
+          "client/src/concept2cure/mdx/hooks/useTemplates.ts"
+        ]
+      },
+      {
         "basename": "utility",
         "count": 2,
         "paths": [
@@ -1909,7 +1917,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 97,
+      "duplicateGroups": 99,
       "largeByBytes": 3,
       "largeByLines": 5
     },

@@ -39,6 +39,11 @@ import { AuditSurface } from './surfaces/AuditSurface';
 import { NotificationsSurface } from './surfaces/NotificationsSurface';
 import { TemplatesSurface } from './surfaces/TemplatesSurface';
 import { QualitySurface } from './surfaces/QualitySurface';
+/* Phase 6 — diagnostic clients. */
+import { IvdSurface } from './surfaces/IvdSurface';
+import { IvdrSurface } from './surfaces/IvdrSurface';
+import { CdxSurface } from './surfaces/CdxSurface';
+import { LdtSurface } from './surfaces/LdtSurface';
 import { ProjectHome } from './projectHome/ProjectHome';
 import { EstarEditor } from './editors/EstarEditor';
 import { PmaEditor } from './editors/PmaEditor';
@@ -306,6 +311,40 @@ export function App({ initialNav, projectName }: AppProps = {}) {
       case 'quality':
         /* Phase 5 — Quality system (QSR/QMSR + ISO 13485). */
         surface = <QualitySurface onAskAna={askAna} onOpenEditor={openEditor} />;
+        break;
+      case 'ivd':
+        /* Phase 6 — IVD pathway (analytical + clinical performance, CLIA, ISO 17511). */
+        surface = (
+          <IvdSurface
+            program={programForContext}
+            onAskAna={askAna}
+            onOpenEditor={openEditor}
+          />
+        );
+        break;
+      case 'ivdr':
+        /* Phase 6 — EU IVDR (PER, Annex VIII, notified body, EUDAMED IVD). */
+        surface = (
+          <IvdrSurface
+            program={programForContext}
+            onAskAna={askAna}
+            onOpenEditor={openEditor}
+          />
+        );
+        break;
+      case 'cdx':
+        /* Phase 6 — Companion diagnostic with paired drug-device timeline. */
+        surface = (
+          <CdxSurface
+            program={programForContext}
+            onAskAna={askAna}
+            onOpenEditor={openEditor}
+          />
+        );
+        break;
+      case 'ldt':
+        /* Phase 6 — LDT compliance (FDA 2024 rule phase tracker). */
+        surface = <LdtSurface onAskAna={askAna} onOpenEditor={openEditor} />;
         break;
       case 'project-home':
         surface = (
