@@ -231,7 +231,7 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
       try {
         const result = await fetchJobStatus(activeJobId!);
         setJobStatus(result);
-        if (result.status === 'COMPLETED' || result.status === 'FAILED') {
+        if (result.status === 'SUCCEEDED' || result.status === 'FAILED') {
           if (pollRef.current) clearInterval(pollRef.current);
           pollRef.current = null;
           queryClient.invalidateQueries({ queryKey: packListKey });
@@ -530,42 +530,48 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
                   <Spinner size="sm" /> Checking readiness…
                 </div>
               ) : readiness ? (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>
-                      Approved: {readiness.approvedCount} / {readiness.totalRequired}
-                    </span>
-                    <span>
-                      {readiness.ready ? (
-                        <CheckCircle2 className="inline h-4 w-4 text-green-600" />
-                      ) : (
-                        <AlertTriangle className="inline h-4 w-4 text-yellow-600" />
+                (() => {
+                  const r = readiness as any;
+                  const approvedCount = r.requiredClaims?.approved ?? r.approvedCount ?? 0;
+                  const totalRequired = r.requiredClaims?.total ?? r.totalRequired ?? 0;
+                  const missingClaims = r.missingClaims ?? r.reasons ?? [];
+                  return (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span>
+                          Approved: {approvedCount} / {totalRequired}
+                        </span>
+                        <span>
+                          {readiness.ready ? (
+                            <CheckCircle2 className="inline h-4 w-4 text-green-600" />
+                          ) : (
+                            <AlertTriangle className="inline h-4 w-4 text-yellow-600" />
+                          )}
+                        </span>
+                      </div>
+                      <Progress
+                        value={
+                          totalRequired > 0 ? (approvedCount / totalRequired) * 100 : 0
+                        }
+                        className="h-2"
+                      />
+                      {missingClaims && missingClaims.length > 0 && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          <p className="font-medium text-yellow-700">
+                            Missing approvals:
+                          </p>
+                          <ul className="list-disc list-inside">
+                            {missingClaims.map((c: any) => (
+                              <li key={c.id || c.claim_key || c.claimKey}>
+                                {c.claim_key || c.claimKey}: {c.title || c.code} ({c.status || ''})
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       )}
-                    </span>
-                  </div>
-                  <Progress
-                    value={
-                      readiness.totalRequired > 0
-                        ? (readiness.approvedCount / readiness.totalRequired) * 100
-                        : 0
-                    }
-                    className="h-2"
-                  />
-                  {readiness.missingClaims && readiness.missingClaims.length > 0 && (
-                    <div className="text-xs text-muted-foreground mt-1">
-                      <p className="font-medium text-yellow-700">
-                        Missing approvals:
-                      </p>
-                      <ul className="list-disc list-inside">
-                        {readiness.missingClaims.map((c: any) => (
-                          <li key={c.id || c.claim_key}>
-                            {c.claim_key}: {c.title} ({c.status})
-                          </li>
-                        ))}
-                      </ul>
                     </div>
-                  )}
-                </div>
+                  );
+                })()
               ) : (
                 <p className="text-sm text-muted-foreground">Unable to check readiness</p>
               )}

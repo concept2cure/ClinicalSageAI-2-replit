@@ -300,7 +300,7 @@ router.patch(
       logProxyMutation(req, result, {
         action: 'predicate.candidate.status',
         resourceType: 'predicate_candidate',
-        resourceId: req.params.id,
+        resourceId: String(req.params.id),
         details: { status: req.body?.status ?? null },
       });
       sendProxyResponse(res, result);
@@ -498,11 +498,11 @@ router.post('/render-se-docx', requireConfigured, requireProgramAccess, async (r
     const result = await proxyToShadow('/predicate/render-se-docx', {
       method: 'POST',
       body: req.body,
-      responseType: 'stream',
+      binary: true,
     });
     // Forward the binary stream directly
-    if (result.headers) {
-      const cd = result.headers['content-disposition'];
+    if (result.rawHeaders) {
+      const cd = result.rawHeaders['content-disposition'];
       if (cd) res.set('Content-Disposition', cd);
     }
     res.set(
@@ -528,10 +528,10 @@ router.post(
       const result = await proxyToShadow('/predicate/download-defense-packet', {
         method: 'POST',
         body: req.body,
-        responseType: 'stream',
+        binary: true,
       });
-      if (result.headers) {
-        const cd = result.headers['content-disposition'];
+      if (result.rawHeaders) {
+        const cd = result.rawHeaders['content-disposition'];
         if (cd) res.set('Content-Disposition', cd);
       }
       res.set('Content-Type', 'application/zip');

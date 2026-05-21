@@ -225,6 +225,7 @@ export interface AnaPersistentPanelProps {
     label: string;
     status: 'running' | 'done' | 'failed';
     ts: number;
+    error?: string;
   }) => void;
   /** Navigate to a layout mode or path */
   onNavigate?: (path: string) => void;
@@ -241,7 +242,15 @@ export interface AnaPersistentPanelProps {
   /** Open a specific artifact in the editor (P2) */
   onOpenArtifact?: (artifactId: string) => void;
   /** Request governed promotion of current artifact (P5) */
-  onRequestPromotion?: (artifactId: string) => Promise<{ promoted: boolean; message: string }>;
+  onRequestPromotion?: (
+    artifactId: string
+  ) => Promise<{
+    promoted: boolean;
+    message: string;
+    pendingApprovals?: Array<{ requiredRole?: string; reason?: string }>;
+    decisionId?: string;
+    authority?: { level?: string };
+  }>;
   /** Open the version compare inspector panel (P4) */
   onOpenCompareInspector?: () => void;
   /** Refresh authoring intelligence (readiness/contradictions) after actions */

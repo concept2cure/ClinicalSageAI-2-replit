@@ -98,7 +98,7 @@ const formatRelativeTime = (date: Date): string => {
   return formatDateTime(date);
 };
 
-const getChangeIcon = (changeType: string) => {
+const getChangeIcon = (changeType: string | undefined) => {
   switch (changeType) {
     case 'ai':
       return Sparkles;
@@ -109,7 +109,7 @@ const getChangeIcon = (changeType: string) => {
   }
 };
 
-const getChangeLabel = (changeType: string): string => {
+const getChangeLabel = (changeType: string | undefined): string => {
   switch (changeType) {
     case 'ai':
       return 'RI';
@@ -438,31 +438,33 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
                       (version.id === selectedVersionId || version.id === compareTargetId)
                     }
                     onSelect={() => {
+                      const vid = version.id ?? null;
                       if (compareMode) {
                         if (!selectedVersionId) {
-                          setSelectedVersionId(version.id);
-                        } else if (!compareTargetId && version.id !== selectedVersionId) {
-                          setCompareTargetId(version.id);
+                          setSelectedVersionId(vid);
+                        } else if (!compareTargetId && vid !== selectedVersionId) {
+                          setCompareTargetId(vid);
                         } else {
-                          setSelectedVersionId(version.id);
+                          setSelectedVersionId(vid);
                           setCompareTargetId(null);
                         }
                       } else {
-                        setSelectedVersionId(selectedVersionId === version.id ? null : version.id);
+                        setSelectedVersionId(selectedVersionId === vid ? null : vid);
                       }
                     }}
                     onRestore={() => {
-                      setRestoreTargetId(version.id);
+                      setRestoreTargetId(version.id ?? null);
                       setShowRestoreDialog(true);
                     }}
                     onCompare={
                       onCompareVersions
                         ? () => {
-                            if (selectedVersionId && selectedVersionId !== version.id) {
-                              setCompareTargetId(version.id);
+                            const vid = version.id ?? null;
+                            if (selectedVersionId && selectedVersionId !== vid) {
+                              setCompareTargetId(vid);
                               setShowDiffView(true);
                             } else {
-                              setSelectedVersionId(version.id);
+                              setSelectedVersionId(vid);
                               setCompareMode(true);
                             }
                           }

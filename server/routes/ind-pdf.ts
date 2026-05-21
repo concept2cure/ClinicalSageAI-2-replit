@@ -22,7 +22,8 @@ import { registerExportGovernanceQuick } from '../services/compute/exportGoverna
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
-import { extractPdfWithPython } from '../services/unifiedDocumentIngestion.js';
+import unifiedDocIngestionMod from '../services/unifiedDocumentIngestion.js';
+const { extractPdfWithPython } = unifiedDocIngestionMod as any;
 
 const router = Router();
 
@@ -251,7 +252,7 @@ function buildINDHtml(opts: {
 async function renderWithPuppeteer(html: string): Promise<Buffer> {
   const cluster = await getCluster();
   if (cluster) {
-    return cluster.execute(async ({ page }) => {
+    return cluster.execute(async ({ page }: { page: any }) => {
       await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
       const pdf = await page.pdf({
         format: 'Letter',
@@ -274,7 +275,7 @@ async function renderWithPuppeteer(html: string): Promise<Buffer> {
 
 function renderFallbackPdf(html: string): Promise<Buffer> {
   return new Promise(resolve => {
-    const doc = new PDFDocument({ margin: 72, size: 'LETTER' });
+    const doc = new PDFDocument({ margins: { top: 72, bottom: 72, left: 72, right: 72 }, size: 'LETTER' }) as any;
     const chunks: Buffer[] = [];
     doc.on('data', (chunk: Buffer) => chunks.push(chunk));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
@@ -585,7 +586,7 @@ router.post('/:projectId/section', async (req: Request, res: Response) => {
  */
 router.get('/:projectId/download/:filename', async (req: Request, res: Response) => {
   try {
-    const { filename } = req.params;
+    const { filename } = req.params as { filename: string };
 
     // Sanitize filename to prevent path traversal
     const safeName = path.basename(filename);
@@ -721,7 +722,8 @@ router.post('/:projectId/import-content', upload.single('file'), async (req: Req
  */
 router.get('/conversion/health', async (_req: Request, res: Response) => {
   try {
-    const { isPdfConversionAvailable } = await import('../services/pdfConversionService.js');
+    const mod = (await import('../services/pdfConversionService.js' as any)) as any;
+    const isPdfConversionAvailable = mod.isPdfConversionAvailable;
     const available = await isPdfConversionAvailable();
     res.json({
       service: 'docx-to-pdf',
@@ -763,7 +765,8 @@ router.post('/convert/docx-to-pdf', docxUpload.single('file'), async (req: Reque
       return res.status(400).json({ error: 'No DOCX file provided. Use field name "file".' });
     }
 
-    const { convertDocxToPdf } = await import('../services/pdfConversionService.js');
+    const mod = (await import('../services/pdfConversionService.js' as any)) as any;
+    const convertDocxToPdf = mod.convertDocxToPdf;
     const pdfBuffer = await convertDocxToPdf(req.file.buffer);
 
     const baseName = path.basename(req.file.originalname, '.docx');
