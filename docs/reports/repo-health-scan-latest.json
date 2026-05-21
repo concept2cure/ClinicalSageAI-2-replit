@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-05-21T05:52:24.666Z",
+  "generatedAt": "2026-05-21T05:58:09.123Z",
   "git": {
-    "sha": "7ed4ddd5819b904ef7a49dca11e7d84c0877638f",
+    "sha": "d3dbcfa4d2d47333976c6524826c2d0d7ff78007",
     "branch": "claude/integrate-design-system-UBjRE-mdx-phase4-cleanup-phase5"
   },
   "thresholds": {
@@ -248,6 +248,28 @@
         ]
       },
       {
+        "basename": "audit",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/mdx/data/audit.ts",
+          "design-system/ui_kits/mdx/data/audit.js",
+          "design-system/ui_kits/mdx/surfaces/Audit.jsx",
+          "server/routes/audit.ts",
+          "server/services/ai-gateway/audit.ts"
+        ]
+      },
+      {
+        "basename": "templates",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/components/concept2cure-projects/data/templates.ts",
+          "client/src/concept2cure/mdx/data/templates.ts",
+          "design-system/ui_kits/mdx/data/templates.js",
+          "design-system/ui_kits/mdx/surfaces/Templates.jsx",
+          "server/routes/templates.ts"
+        ]
+      },
+      {
         "basename": "analytics",
         "count": 4,
         "paths": [
@@ -255,16 +277,6 @@
           "client/src/concept2cure/mdx/data/analytics.ts",
           "design-system/ui_kits/mdx/data/analytics.js",
           "design-system/ui_kits/mdx/surfaces/Analytics.jsx"
-        ]
-      },
-      {
-        "basename": "audit",
-        "count": 4,
-        "paths": [
-          "design-system/ui_kits/mdx/data/audit.js",
-          "design-system/ui_kits/mdx/surfaces/Audit.jsx",
-          "server/routes/audit.ts",
-          "server/services/ai-gateway/audit.ts"
         ]
       },
       {
@@ -288,6 +300,16 @@
         ]
       },
       {
+        "basename": "notifications",
+        "count": 4,
+        "paths": [
+          "client/src/concept2cure/components/concept2cure-projects/data/notifications.ts",
+          "client/src/concept2cure/mdx/data/notifications.ts",
+          "design-system/ui_kits/mdx/data/notifications.js",
+          "design-system/ui_kits/mdx/surfaces/Notifications.jsx"
+        ]
+      },
+      {
         "basename": "policy",
         "count": 4,
         "paths": [
@@ -308,6 +330,16 @@
         ]
       },
       {
+        "basename": "quality",
+        "count": 4,
+        "paths": [
+          "client/src/concept2cure/mdx/data/quality.ts",
+          "design-system/ui_kits/mdx/data/quality.js",
+          "design-system/ui_kits/mdx/surfaces/Quality.jsx",
+          "server/src/services/ai/quality.js"
+        ]
+      },
+      {
         "basename": "shell",
         "count": 4,
         "paths": [
@@ -315,16 +347,6 @@
           "design-system/ui_kits/mdx/shell.jsx",
           "design-system/ui_kits/mdx_phase2/Shell.jsx",
           "design-system/ui_kits/pdev/Shell.jsx"
-        ]
-      },
-      {
-        "basename": "templates",
-        "count": 4,
-        "paths": [
-          "client/src/concept2cure/components/concept2cure-projects/data/templates.ts",
-          "design-system/ui_kits/mdx/data/templates.js",
-          "design-system/ui_kits/mdx/surfaces/Templates.jsx",
-          "server/routes/templates.ts"
         ]
       },
       {
@@ -355,6 +377,16 @@
           "server/middleware/validation.ts",
           "server/utils/validation.js",
           "services/proof/validation.ts"
+        ]
+      },
+      {
+        "basename": "vault",
+        "count": 4,
+        "paths": [
+          "client/src/concept2cure/mdx/data/vault.ts",
+          "design-system/ui_kits/mdx/data/vault.js",
+          "design-system/ui_kits/mdx/surfaces/Vault.jsx",
+          "shared/schema/vault.ts"
         ]
       },
       {
@@ -485,15 +517,6 @@
         ]
       },
       {
-        "basename": "notifications",
-        "count": 3,
-        "paths": [
-          "client/src/concept2cure/components/concept2cure-projects/data/notifications.ts",
-          "design-system/ui_kits/mdx/data/notifications.js",
-          "design-system/ui_kits/mdx/surfaces/Notifications.jsx"
-        ]
-      },
-      {
         "basename": "openai-service",
         "count": 3,
         "paths": [
@@ -536,15 +559,6 @@
           "client/src/concept2cure/components/concept2cure-projects/data/projects.ts",
           "database/schema/projects.ts",
           "design-system/ui_kits/home/Projects.jsx"
-        ]
-      },
-      {
-        "basename": "quality",
-        "count": 3,
-        "paths": [
-          "design-system/ui_kits/mdx/data/quality.js",
-          "design-system/ui_kits/mdx/surfaces/Quality.jsx",
-          "server/src/services/ai/quality.js"
         ]
       },
       {
@@ -608,15 +622,6 @@
           "client/src/hooks/useQCWebSocket.js",
           "client/src/hooks/useQCWebSocket.ts",
           "client/src/hooks/useQCWebSocket.tsx"
-        ]
-      },
-      {
-        "basename": "vault",
-        "count": 3,
-        "paths": [
-          "design-system/ui_kits/mdx/data/vault.js",
-          "design-system/ui_kits/mdx/surfaces/Vault.jsx",
-          "shared/schema/vault.ts"
         ]
       },
       {
@@ -1904,7 +1909,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 92,
+      "duplicateGroups": 97,
       "largeByBytes": 3,
       "largeByLines": 5
     },

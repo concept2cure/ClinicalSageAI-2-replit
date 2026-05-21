@@ -28,11 +28,14 @@ import { MemorySurface } from './surfaces/MemorySurface';
 import { AdminSurface } from './surfaces/AdminSurface';
 import {
   TasksSurface,
-  VaultSurface,
   ValidationSurface,
   SubmissionsSurface,
-  TemplatesSurface,
 } from './workbench/Workbench';
+/* Phase 5: vault + templates routing leaves the Workbench placeholder
+   behind. The new full-feature VaultSurface lives at
+   surfaces/VaultSurface.tsx; TemplatesSurface ships in a follow-up PR. */
+import { VaultSurface } from './surfaces/VaultSurface';
+import { TemplatesSurface } from './workbench/Workbench';
 import { ProjectHome } from './projectHome/ProjectHome';
 import { EstarEditor } from './editors/EstarEditor';
 import { PmaEditor } from './editors/PmaEditor';
@@ -277,7 +280,7 @@ export function App({ initialNav, projectName }: AppProps = {}) {
         surface = <TasksSurface onAskAna={askAna} />;
         break;
       case 'vault':
-        surface = <VaultSurface onAskAna={askAna} />;
+        surface = <VaultSurface onAskAna={askAna} onOpenEditor={openEditor} />;
         break;
       case 'validation':
         surface = <ValidationSurface onAskAna={askAna} />;
