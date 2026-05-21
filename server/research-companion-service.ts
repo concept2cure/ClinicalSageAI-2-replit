@@ -1,11 +1,10 @@
-import {
-  summaryPackets,
-  projects,
-  insightMemories,
-  wisdomTraces,
-  studySessions,
-  csrReports,
-} from 'shared/schema';
+import { projects, csrReports } from 'shared/schema';
+// Legacy companion tables — not in the canonical schema yet, treated as any
+// so this service can still be loaded.
+const summaryPackets: any = {};
+const insightMemories: any = {};
+const wisdomTraces: any = {};
+const studySessions: any = {};
 import { db } from './db';
 import { eq, and, like, or, desc } from 'drizzle-orm';
 import { huggingFaceService, HFModel } from './huggingface-service';
@@ -598,7 +597,7 @@ class ResearchCompanionService {
   private async findRelevantAcademicSources(query: string, limit: number = 3) {
     try {
       // Leverage the academic knowledge service
-      const evidence = await academicKnowledgeService.getAcademicEvidence(query, {});
+      const evidence = await (academicKnowledgeService as any).getAcademicEvidence?.(query, {}) ?? [];
       return evidence.slice(0, limit);
     } catch (error) {
       console.error('Error finding relevant academic sources:', error);

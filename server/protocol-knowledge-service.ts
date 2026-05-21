@@ -1,4 +1,6 @@
-import { queryHuggingFace, generateEmbeddings, HFModel } from './huggingface-service';
+import { queryHuggingFace, HFModel, huggingFaceService } from './huggingface-service';
+const generateEmbeddings = (text: string, model?: HFModel) =>
+  huggingFaceService.generateEmbeddings(text, model);
 import * as fs from 'fs';
 import * as path from 'path';
 import { db } from './db';
@@ -78,7 +80,7 @@ export class ProtocolKnowledgeService {
 
     try {
       // Query database for evidence
-      let dbQuery = db
+      let dbQuery: any = db
         .select()
         .from(csrReports)
         .innerJoin(csrDetails, sql`${csrReports.id} = ${csrDetails.reportId}`)
@@ -97,7 +99,7 @@ export class ProtocolKnowledgeService {
       const results = await dbQuery;
 
       // Process results into evidence items
-      const evidence = results.map(result => {
+      const evidence = results.map((result: any) => {
         const report = result.csr_reports;
         const details = result.csr_details;
 

@@ -1,7 +1,11 @@
 import { db } from './db';
 import { sql, eq, like, and } from 'drizzle-orm';
 import { reports, reportDetails } from 'shared/schema';
-import { CSRSearchEngine } from '../csr_search';
+// Legacy import — module not present in current tree.
+// Stub class kept so call sites typecheck; runtime usage no-ops.
+class CSRSearchEngine {
+  search(_q: string, _opts?: any): any[] { return []; }
+}
 import fs from 'fs';
 import path from 'path';
 

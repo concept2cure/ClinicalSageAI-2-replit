@@ -50,7 +50,7 @@ function requireConfigured(_req: Request, res: Response, next: NextFunction) {
 }
 
 async function requireProgramAccess(req: Request, res: Response, next: NextFunction) {
-  const programId = req.params.programId;
+  const programId = String(req.params.programId);
   if (!programId) {
     return res.status(422).json({ error: 'programId is required' });
   }
@@ -157,7 +157,7 @@ router.post(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const programId = req.params.programId;
+    const programId = String(req.params.programId);
     const userId = (req as any).user?.id || 'unknown';
     const organizationId = String((req as any).user?.organizationId || '');
 

@@ -278,19 +278,20 @@ router.get('/:id/download', async (req, res) => {
     await auditDocumentAccess(req, guard.orgId, id, 'document_download');
 
     // If the document has a filePath, send the file
-    if (document.filePath && fs.existsSync(document.filePath)) {
-      return res.download(document.filePath, document.fileName || `document-${id}.pdf`);
+    const doc = document as any;
+    if (doc.filePath && fs.existsSync(doc.filePath)) {
+      return res.download(doc.filePath, doc.fileName || `document-${id}.pdf`);
     }
 
     // For documents with content but no file, generate a PDF or HTML file
-    if (document.content) {
+    if (doc.content) {
       // This is a simplified example - in a real app, you'd use a PDF generation library
       const htmlContent = generateHtmlFromDocument(document);
 
       res.setHeader('Content-Type', 'text/html');
       res.setHeader(
         'Content-Disposition',
-        `attachment; filename="${document.name || 'document'}.html"`
+        `attachment; filename="${doc.name || doc.title || 'document'}.html"`
       );
       return res.send(htmlContent);
     }

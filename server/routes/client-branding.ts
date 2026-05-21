@@ -135,7 +135,7 @@ router.post('/upload-logo', async (req: Request, res: Response) => {
 
 router.get('/logo/:orgId', async (req: Request, res: Response) => {
   try {
-    const orgId = parseInt(req.params.orgId, 10);
+    const orgId = parseInt(String(req.params.orgId), 10);
     const rows = await store.query(orgId, 'settings');
     const settings = rows.length > 0 ? rows[0] : null;
 
@@ -217,7 +217,7 @@ router.get('/templates', async (req: Request, res: Response) => {
 
 router.get('/templates/:id', async (req: Request, res: Response) => {
   try {
-    const templateId = parseInt(req.params.id, 10);
+    const templateId = parseInt(String(req.params.id), 10);
     const guard = requireAuthedOrgId(req, res);
     if (!guard.ok) return;
     const orgId = guard.orgId;
@@ -275,7 +275,7 @@ router.post('/templates', async (req: Request, res: Response) => {
 
 router.patch('/templates/:id', async (req: Request, res: Response) => {
   try {
-    const templateId = parseInt(req.params.id, 10);
+    const templateId = parseInt(String(req.params.id), 10);
     const guard = requireAuthedOrgId(req, res);
     if (!guard.ok) return;
     const orgId = guard.orgId;
@@ -309,7 +309,7 @@ router.patch('/templates/:id', async (req: Request, res: Response) => {
 
 router.delete('/templates/:id', async (req: Request, res: Response) => {
   try {
-    const templateId = parseInt(req.params.id, 10);
+    const templateId = parseInt(String(req.params.id), 10);
     const guard = requireAuthedOrgId(req, res);
     if (!guard.ok) return;
     const orgId = guard.orgId;
@@ -335,7 +335,7 @@ router.delete('/templates/:id', async (req: Request, res: Response) => {
 
 router.post('/render-template/:id', async (req: Request, res: Response) => {
   try {
-    const templateId = parseInt(req.params.id, 10);
+    const templateId = parseInt(String(req.params.id), 10);
     const guard = requireAuthedOrgId(req, res);
     if (!guard.ok) return;
     const orgId = guard.orgId;

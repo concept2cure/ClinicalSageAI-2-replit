@@ -186,7 +186,7 @@ export async function recordGovernedDecision(
       decisionCode: `governed-fabric:${decisionId}`,
       title: `Governed ${evaluation.context.intendedAction}: ${evaluation.decision.outcome}`.slice(0, 200),
       domainTrack: 'governance',
-      recommendationType: 'governed_fabric_decision',
+      recommendationType: 'governed_fabric_decision' as any,
       recommendationSummary: evaluation.decision.rationale.slice(0, 500),
       recommendationRationale: evaluation.decision.rationale,
       confidenceLevel: evaluation.readiness.score >= 75 ? 'high' : evaluation.readiness.score >= 40 ? 'moderate' : 'low',
@@ -304,13 +304,13 @@ export async function getRecentGovernedDecisions(options: {
     const { decisionRecordService } = await import('./decision-record-service.js');
     const limit = Math.max(1, Math.min(options.limit ?? 50, 500));
     const records = await decisionRecordService.search({
-      organizationId: options.organizationId ? Number(options.organizationId) : undefined,
+      organizationId: options.organizationId ? Number(options.organizationId) : 0,
       projectId: options.projectId ? Number(options.projectId) : undefined,
-      recommendationType: 'governed_fabric_decision',
+      recommendationType: 'governed_fabric_decision' as any,
       limit,
     });
     governanceMetrics.recordQueryExecuted();
-    return records.map((r: Record<string, unknown>) => mapRow(r));
+    return records.map((r: any) => mapRow(r as Record<string, unknown>));
   } catch (err) {
     governanceMetrics.recordQueryFailure('getRecentGovernedDecisions', err);
     return [];
@@ -395,7 +395,7 @@ export async function transitionGovernedDecision(
 
     const transitioned = await decisionRecordService.transition(input.decisionId, {
       organizationId: input.organizationId,
-      actionState: input.targetState as string,
+      actionState: input.targetState as any,
       performedBy: input.performedBy,
       reason: input.reason,
       escalatedTo: input.escalatedTo,

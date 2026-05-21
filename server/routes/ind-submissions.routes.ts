@@ -331,13 +331,13 @@ router.post('/:submissionId/ind-step', async (req: Request, res: Response) => {
     }
     
     // Update step data
-    const indStepData = submission.indStepData || {};
+    const indStepData: Record<string, any> = (submission.indStepData as Record<string, any>) || {};
     indStepData[`step${stepNumber}`] = stepData;
-    
+
     // Update completion status
-    const indStepsCompleted = submission.indStepsCompleted || {};
+    const indStepsCompleted: Record<string, any> = (submission.indStepsCompleted as Record<string, any>) || {};
     indStepsCompleted[`step${stepNumber}`] = completed;
-    
+
     // Check if all steps are completed
     const allStepsCompleted = Object.keys(indStepsCompleted).every(
       key => key.startsWith('step') && indStepsCompleted[key]
@@ -368,7 +368,7 @@ router.post('/:submissionId/ind-step', async (req: Request, res: Response) => {
       
       // Update phase status
       updates.phases = {
-        ...submission.phases,
+        ...((submission.phases as Record<string, any>) ?? {}),
         'ind-wizard': { 
           status: 'completed', 
           completedAt: new Date().toISOString()
@@ -437,7 +437,7 @@ router.post('/:submissionId/transition-to-ectd', async (req: Request, res: Respo
       module3Data: extractModule3Data(indStepData),
       module5Data: extractModule5Data(indStepData),
       phases: {
-        ...submission.phases,
+        ...((submission.phases as Record<string, any>) ?? {}),
         'ectd-coauthor': { 
           status: 'in-progress', 
           startedAt: new Date().toISOString()

@@ -178,7 +178,7 @@ export class FDA510kComplianceTracker {
         .limit(1);
       
       const previousVersion = previousVersions[0];
-      const versionNumber = previousVersion ? (previousVersion.versionNumber || 1) + 1 : 1;
+      const versionNumber = previousVersion ? (Number(previousVersion.versionNumber) || 1) + 1 : 1;
       
       // Create version entry in database
       const versionEntry = {
@@ -201,7 +201,7 @@ export class FDA510kComplianceTracker {
       };
       
       const [savedVersion] = await db.insert(schema.documentVersions)
-        .values(versionEntry)
+        .values(versionEntry as any)
         .returning();
       
       // Create audit trail for version
@@ -496,13 +496,13 @@ export class FDA510kComplianceTracker {
       return {
         success: true,
         currentVersion: versions.length,
-        versions: versions.map(v => {
+        versions: versions.map((v: any) => {
           const metadata = v.metadata as any || {};
           return {
             versionNumber: v.versionNumber || 1,
             changeDescription: metadata.changeDescription || 'Version update',
             changesCount: Array.isArray(v.changes) ? v.changes.length : 0,
-            createdBy: v.createdBy,
+            createdBy: v.createdBy ?? v.createdById,
             createdAt: v.createdAt,
             hash: metadata.hash || this.calculateContentHash(v.content || '')
           };

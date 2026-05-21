@@ -167,7 +167,7 @@ For best results, please use PDF format.`;
       });
     }
 
-    let analysisResult;
+    let analysisResult: any;
     try {
       analysisResult = JSON.parse(analysisOutput);
 
@@ -327,7 +327,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
       log.error('Error cleaning up temp file:', e);
     }
 
-    let analysisResult;
+    let analysisResult: any;
     try {
       analysisResult = JSON.parse(analysisOutput);
 
@@ -440,10 +440,10 @@ interface ProtocolAnalysisResult {
 // Define type for similar CSR
 interface SimilarCSR {
   id: string;
-  title: string;
-  sponsor: string;
-  indication: string;
-  phase: string;
+  title: string | null;
+  sponsor: string | null;
+  indication: string | null;
+  phase: string | null;
   sample_size: number;
   primary_endpoint: string;
   duration_weeks: number;

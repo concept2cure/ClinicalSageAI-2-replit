@@ -115,13 +115,13 @@ export class ForesightCSRIntegration {
       for (const csr of csrs) {
         try {
           // Process each CSR through AnA Predictions pipeline
-          const result = await this.processCSRForForesight(csr.id);
-          
+          const result = await this.processCSRForForesight(String(csr.id));
+
           imported++;
           patterns += result.patterns.length;
-          
+
           // Build knowledge graph from CSR
-          await knowledgeGraph.buildFromCSRData(csr.id);
+          await knowledgeGraph.buildFromCSRData(String(csr.id));
         } catch (error) {
           console.error(`Failed to import CSR ${csr.id}:`, error);
           failed++;
@@ -345,7 +345,7 @@ export class ForesightCSRIntegration {
   
   private async fallbackCSRProcessing(csrId: string): Promise<any> {
     // Basic processing when Python service is unavailable
-    const csr = await db.select().from(csrReports).where(eq(csrReports.id, csrId)).limit(1);
+    const csr = await db.select().from(csrReports).where(eq(csrReports.id, Number(csrId))).limit(1);
     
     if (!csr.length) {
       throw new Error('CSR not found');
@@ -461,7 +461,7 @@ export class ForesightCSRIntegration {
     successFactors: any[],
     failurePatterns: any[]
   ): Array<any> {
-    const recommendations = [];
+    const recommendations: any[] = [];
     
     // Recommendations based on success factors
     successFactors.forEach(factor => {

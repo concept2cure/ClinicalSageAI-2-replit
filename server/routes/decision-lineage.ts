@@ -35,7 +35,7 @@ const router = Router();
 // Returns the full lineage graph for a document, workflow, or program.
 router.get('/:entityType/:entityId', async (req: Request, res: Response) => {
   try {
-    const { entityType, entityId } = req.params;
+    const { entityType, entityId } = req.params as { entityType: string; entityId: string };
     const orgId = authedOrgId(req) ?? undefined;
     const id = parseInt(entityId, 10);
 
@@ -55,7 +55,7 @@ router.get('/:entityType/:entityId', async (req: Request, res: Response) => {
 // Exports the lineage data in JSON, CSV, or eCTD-compatible XML.
 router.get('/:entityType/:entityId/export', async (req: Request, res: Response) => {
   try {
-    const { entityType, entityId } = req.params;
+    const { entityType, entityId } = req.params as { entityType: string; entityId: string };
     const format = (req.query.format as ExportFormat) || 'json';
     const orgId = authedOrgId(req) ?? undefined;
     const id = parseInt(entityId, 10);
