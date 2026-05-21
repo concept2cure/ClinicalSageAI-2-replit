@@ -99,11 +99,27 @@ vi.mock('../../db', () => ({
 }));
 
 // Service mocks — only enough surface to keep handlers reaching audit calls.
+//
+// The Q-Sub audit row is fired from inside `createQSubmission` (see
+// server/services/q-sub/q-sub.service.ts:425), not from the route. When the
+// service is mocked, the audit call is skipped — so the contract test that
+// "POST /api/q-sub logs q_sub.create" depends on the mock itself firing the
+// audit envelope. Without that, the actionsFromAudit() helper sees an empty
+// array.
 vi.mock('../../services/q-sub/q-sub.service', () => ({
   TenantAccessError: class extends Error {},
   listQSubsForOrg: vi.fn(async () => []),
   getQSubDetail: vi.fn(async () => ({ id: 'q' })),
-  createQSubmission: vi.fn(async () => ({ id: 'q-new', programId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1' })),
+  createQSubmission: vi.fn(async (_orgId: number, body: any, userId: number) => {
+    auditMock.logAction({
+      action: 'q_sub.create',
+      organizationId: _orgId,
+      userId,
+      resourceType: 'q_submission',
+      resourceId: 'q-new',
+    });
+    return { id: 'q-new', programId: body?.programId ?? 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1' };
+  }),
   setCommitmentRolledIn: vi.fn(async () => ({ id: 'c-1', rolledIn: true })),
   Q_SUB_TYPES: ['presub'],
   Q_SUB_STAGES: ['plan'],
