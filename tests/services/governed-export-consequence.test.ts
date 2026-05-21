@@ -1,6 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-const registerArtifactWithGovernance = vi.fn();
+const { registerArtifactWithGovernance } = vi.hoisted(() => ({
+  registerArtifactWithGovernance: vi.fn(),
+}));
 
 vi.mock('../../server/services/compute/artifactWriteback', () => ({
   registerArtifactWithGovernance,

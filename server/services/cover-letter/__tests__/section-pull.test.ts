@@ -4,7 +4,9 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const dbMock: { select: any } = { select: vi.fn() };
+const { dbMock } = vi.hoisted(() => ({
+  dbMock: { select: vi.fn() } as { select: any },
+}));
 
 vi.mock('../../../db', () => ({ db: dbMock }));
 

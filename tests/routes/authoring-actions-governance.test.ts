@@ -73,10 +73,14 @@ vi.mock('../../shared/schema/index.js', () => ({
   },
 }));
 
-vi.mock('drizzle-orm', () => ({
-  eq: (..._args: any[]) => ({}),
-  and: (..._args: any[]) => ({}),
-}));
+vi.mock('drizzle-orm', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('drizzle-orm')>();
+  return {
+    ...actual,
+    eq: (..._args: any[]) => ({}),
+    and: (..._args: any[]) => ({}),
+  };
+});
 
 import authoringActionsRouter from '../../server/routes/authoring-actions';
 

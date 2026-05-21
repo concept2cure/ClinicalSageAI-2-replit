@@ -40,20 +40,27 @@ const { svc, authState } = vi.hoisted(() => {
       this.name = 'TenantAccessError';
     }
   }
+  // Inline duplicates of the module-level constants — vi.hoisted runs before
+  // any other top-level statements, so we cannot reference outer consts here.
+  const ORG_B_LOCAL = 22;
+  const PROGRAM_ORG_B_LOCAL = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+  const QSUB_ORG_B_LOCAL = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
+  const COMMITMENT_ORG_B_LOCAL = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
+  const ORG_A_LOCAL = 11;
   return {
     svc: {
       // Resource ownership map — keyed by resource id, value is the org that
       // owns it. The mock service refuses access when caller's org doesn't
       // match.
       ownership: new Map<string, number>([
-        [PROGRAM_ORG_B, ORG_B],
-        [QSUB_ORG_B, ORG_B],
-        [COMMITMENT_ORG_B, ORG_B],
+        [PROGRAM_ORG_B_LOCAL, ORG_B_LOCAL],
+        [QSUB_ORG_B_LOCAL, ORG_B_LOCAL],
+        [COMMITMENT_ORG_B_LOCAL, ORG_B_LOCAL],
       ]),
       TenantAccessError,
     },
     authState: {
-      user: { id: 'u-A', organizationId: String(ORG_A) } as Record<string, any> | null,
+      user: { id: 'u-A', organizationId: String(ORG_A_LOCAL) } as Record<string, any> | null,
     },
   };
 });

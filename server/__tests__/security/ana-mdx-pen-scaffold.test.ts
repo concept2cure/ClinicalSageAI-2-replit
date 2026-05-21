@@ -24,19 +24,23 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock the underlying services so the gate can be exercised in isolation.
-const svc = {
-  createQSubmission: vi.fn(async (..._args: any[]) => ({
-    id: 'q-1',
-    programId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
-    qSubType: 'presub',
-    title: 't',
-    stage: 'plan',
-  })),
-};
-
-class TenantAccessError extends Error {
-  constructor(m: string) { super(m); this.name = 'TenantAccessError'; }
-}
+const { svc, TenantAccessError } = vi.hoisted(() => {
+  class TenantAccessError extends Error {
+    constructor(m: string) { super(m); this.name = 'TenantAccessError'; }
+  }
+  return {
+    svc: {
+      createQSubmission: vi.fn(async (..._args: any[]) => ({
+        id: 'q-1',
+        programId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
+        qSubType: 'presub',
+        title: 't',
+        stage: 'plan',
+      })),
+    },
+    TenantAccessError,
+  };
+});
 
 vi.mock('../../services/q-sub/q-sub.service', () => ({
   createQSubmission: (...a: any[]) => svc.createQSubmission(...a),

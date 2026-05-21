@@ -8,7 +8,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 
-const pullMock = vi.fn();
+const { pullMock } = vi.hoisted(() => ({ pullMock: vi.fn() }));
 
 vi.mock('../section-pull', () => ({
   pullEstarSections: pullMock,

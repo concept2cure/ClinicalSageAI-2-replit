@@ -14,30 +14,50 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Mock drizzle-orm operators
 // ---------------------------------------------------------------------------
 
-vi.mock('drizzle-orm', () => ({
-  eq: vi.fn((_col: any, val: any) => ({ type: 'eq', val })),
-  and: vi.fn((...conds: any[]) => ({ type: 'and', conds })),
-  gte: vi.fn((_col: any, val: any) => ({ type: 'gte', val })),
-  lte: vi.fn((_col: any, val: any) => ({ type: 'lte', val })),
-  desc: vi.fn((col: any) => ({ type: 'desc', col })),
-}));
+vi.mock('drizzle-orm', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('drizzle-orm')>();
+  return {
+    ...actual,
+    eq: vi.fn((_col: any, val: any) => ({ type: 'eq', val })),
+    and: vi.fn((...conds: any[]) => ({ type: 'and', conds })),
+    gte: vi.fn((_col: any, val: any) => ({ type: 'gte', val })),
+    lte: vi.fn((_col: any, val: any) => ({ type: 'lte', val })),
+    desc: vi.fn((col: any) => ({ type: 'desc', col })),
+  };
+});
 
 // ---------------------------------------------------------------------------
 // Mock DB chain
 // ---------------------------------------------------------------------------
 
-const mockInsertValues = vi.fn().mockResolvedValue(undefined);
-const mockInsert = vi.fn(() => ({ values: mockInsertValues }));
-const mockLimit = vi.fn();
-const mockOrderBy = vi.fn(() => ({ limit: mockLimit }));
-const mockWhere = vi.fn(() => ({ orderBy: mockOrderBy }));
-const mockFrom = vi.fn(() => ({ where: mockWhere, orderBy: mockOrderBy }));
-const mockSelect = vi.fn(() => ({ from: mockFrom }));
-
-const mockDb = {
-  insert: mockInsert,
-  select: mockSelect,
-};
+const {
+  mockInsertValues,
+  mockInsert,
+  mockLimit,
+  mockOrderBy,
+  mockWhere,
+  mockFrom,
+  mockSelect,
+  mockDb,
+} = vi.hoisted(() => {
+  const mockInsertValues = vi.fn().mockResolvedValue(undefined);
+  const mockInsert = vi.fn(() => ({ values: mockInsertValues }));
+  const mockLimit = vi.fn();
+  const mockOrderBy = vi.fn(() => ({ limit: mockLimit }));
+  const mockWhere = vi.fn(() => ({ orderBy: mockOrderBy }));
+  const mockFrom = vi.fn(() => ({ where: mockWhere, orderBy: mockOrderBy }));
+  const mockSelect = vi.fn(() => ({ from: mockFrom }));
+  return {
+    mockInsertValues,
+    mockInsert,
+    mockLimit,
+    mockOrderBy,
+    mockWhere,
+    mockFrom,
+    mockSelect,
+    mockDb: { insert: mockInsert, select: mockSelect },
+  };
+});
 
 vi.mock('../../server/db', () => ({
   db: mockDb,
@@ -48,20 +68,22 @@ vi.mock('../../server/db', () => ({
 // Mock schema
 // ---------------------------------------------------------------------------
 
-const mockAuditLogs = {
-  tenantId: 'audit_logs.tenantId',
-  userId: 'audit_logs.userId',
-  action: 'audit_logs.action',
-  tableName: 'audit_logs.tableName',
-  recordId: 'audit_logs.recordId',
-  oldValues: 'audit_logs.oldValues',
-  newValues: 'audit_logs.newValues',
-  ipAddress: 'audit_logs.ipAddress',
-  userAgent: 'audit_logs.userAgent',
-  createdAt: 'audit_logs.createdAt',
-};
+const { mockAuditLogs } = vi.hoisted(() => ({
+  mockAuditLogs: {
+    tenantId: 'audit_logs.tenantId',
+    userId: 'audit_logs.userId',
+    action: 'audit_logs.action',
+    tableName: 'audit_logs.tableName',
+    recordId: 'audit_logs.recordId',
+    oldValues: 'audit_logs.oldValues',
+    newValues: 'audit_logs.newValues',
+    ipAddress: 'audit_logs.ipAddress',
+    userAgent: 'audit_logs.userAgent',
+    createdAt: 'audit_logs.createdAt',
+  },
+}));
 
-vi.mock('../../../shared/schema', () => ({
+vi.mock('../../shared/schema', () => ({
   auditLogs: mockAuditLogs,
 }));
 

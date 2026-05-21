@@ -9,11 +9,13 @@
 import { describe, expect, test, vi, beforeEach } from 'vitest';
 
 // Reset before each suite — we re-mock per scenario.
-const dbMock: { select: any; insert: any; update: any } = {
-  select: vi.fn(),
-  insert: vi.fn(),
-  update: vi.fn(),
-};
+const { dbMock } = vi.hoisted(() => ({
+  dbMock: {
+    select: vi.fn(),
+    insert: vi.fn(),
+    update: vi.fn(),
+  } as { select: any; insert: any; update: any },
+}));
 
 vi.mock('../../../db', () => ({
   db: dbMock,

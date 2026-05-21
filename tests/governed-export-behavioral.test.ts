@@ -15,14 +15,18 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ── Mock getPool before import ────────────────────────────────────────────────
 
-const mockClient = {
-  query: vi.fn(),
-  release: vi.fn(),
-};
-
-const mockPool = {
-  connect: vi.fn().mockResolvedValue(mockClient),
-};
+const { mockClient, mockPool } = vi.hoisted(() => {
+  const client = {
+    query: vi.fn(),
+    release: vi.fn(),
+  };
+  return {
+    mockClient: client,
+    mockPool: {
+      connect: vi.fn().mockResolvedValue(client),
+    },
+  };
+});
 
 vi.mock('../server/db.ts', () => ({
   getPool: () => mockPool,

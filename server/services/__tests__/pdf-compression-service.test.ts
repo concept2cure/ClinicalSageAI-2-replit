@@ -1,9 +1,10 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { vi, describe, it, expect, beforeAll, afterAll } from 'vitest';
 
-jest.mock('child_process', () => ({
-  execFile: jest.fn((cmd: string, args: string[], opts: any, cb: any) => {
+vi.mock('child_process', () => ({
+  execFile: vi.fn((cmd: string, args: string[], opts: any, cb: any) => {
     const callback = typeof opts === 'function' ? opts : cb;
     if (args.includes('--version')) {
       callback(null, { stdout: '10.0.0', stderr: '' });
@@ -77,9 +78,9 @@ describe('pdf-compression-service', () => {
     const result = await compressPdfWithGhostscript({ inputPath, outputPath, quality: 'ebook' });
 
     expect(result.outputPath).toBe(outputPath);
-    expect(result.originalSizeBytes).toBe(100);
+    expect(result.originalSizeBytes).toBe(validPdfBuffer.length);
     expect(result.compressedSizeBytes).toBe(50);
-    expect(result.compressionRatio).toBe(0.5);
+    expect(result.compressionRatio).toBeCloseTo(50 / validPdfBuffer.length, 2);
   });
 
   it('recommends quality based on file size', async () => {

@@ -7,7 +7,9 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-const audit = { logAction: vi.fn().mockResolvedValue(undefined) };
+const { audit } = vi.hoisted(() => ({
+  audit: { logAction: vi.fn().mockResolvedValue(undefined) },
+}));
 vi.mock('../../auditService', () => ({ default: audit }));
 
 import {
