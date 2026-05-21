@@ -71,8 +71,8 @@ const SourceCard: React.FC<SourceCardProps> = ({ suggestion, onLink, isLinking }
               {suggestion.sourceTitle}
             </span>
           </div>
-          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getConfidenceColor(suggestion.matchConfidence)}`}>
-            {suggestion.matchConfidence}%
+          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getConfidenceColor(suggestion.matchConfidence ?? 0)}`}>
+            {suggestion.matchConfidence ?? 0}%
           </span>
         </div>
         
@@ -293,13 +293,13 @@ export const SourceSuggestionPanel: React.FC<SourceSuggestionPanelProps> = ({
         ) : filteredSuggestions.length > 0 ? (
           <div className="space-y-3">
             {filteredSuggestions
-              .sort((a, b) => b.matchConfidence - a.matchConfidence)
+              .sort((a, b) => (b.matchConfidence ?? 0) - (a.matchConfidence ?? 0))
               .map(suggestion => (
                 <SourceCard
-                  key={suggestion.sourceId}
+                  key={suggestion.sourceId ?? suggestion.id}
                   suggestion={suggestion}
-                  onLink={() => handleLink(suggestion.sourceId)}
-                  isLinking={linkingId === suggestion.sourceId}
+                  onLink={() => handleLink(suggestion.sourceId ?? suggestion.id)}
+                  isLinking={linkingId === (suggestion.sourceId ?? suggestion.id)}
                 />
               ))}
           </div>
@@ -360,8 +360,8 @@ export const InlineSuggestionTooltip: React.FC<{
     <div className="flex items-center justify-between mb-2">
       <div className="flex items-center gap-2">
         <span className="text-lg">{getSourceIcon(suggestion.sourceType)}</span>
-        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getConfidenceColor(suggestion.matchConfidence)}`}>
-          {suggestion.matchConfidence}% match
+        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getConfidenceColor(suggestion.matchConfidence ?? 0)}`}>
+          {suggestion.matchConfidence ?? 0}% match
         </span>
       </div>
       <button

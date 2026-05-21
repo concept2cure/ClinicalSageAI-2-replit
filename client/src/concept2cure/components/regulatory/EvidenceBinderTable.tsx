@@ -187,10 +187,10 @@ export default function EvidenceBinderTable({ projectId }: EvidenceBinderTablePr
       attachEvidence(attachTarget!, {
         projectId,
         vaultFileId: attachForm.vaultFileId,
-        vaultVersionId: attachForm.vaultVersionId || undefined,
+        vaultVersionId: attachForm.vaultVersionId || '',
         artifactType: attachForm.artifactType as any,
         notes: attachForm.notes || undefined,
-      }),
+      } as any),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
       setAttachTarget(null);
@@ -205,7 +205,7 @@ export default function EvidenceBinderTable({ projectId }: EvidenceBinderTablePr
   });
 
   const revokeMutation = useMutation({
-    mutationFn: (claimId: string) => revokeClaim(claimId, { projectId }),
+    mutationFn: (claimId: string) => revokeClaim(claimId, { projectId } as any),
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   });
 
@@ -291,29 +291,29 @@ export default function EvidenceBinderTable({ projectId }: EvidenceBinderTablePr
                             <ChevronRight className="h-4 w-4" />
                           )}
                         </TableCell>
-                        <TableCell className="font-mono text-xs">{claim.claim_key}</TableCell>
+                        <TableCell className="font-mono text-xs">{(claim as any).claim_key ?? claim.claimKey}</TableCell>
                         <TableCell className="font-medium">{claim.title}</TableCell>
                         <TableCell>
                           <StatusBadge status={claim.status} />
                         </TableCell>
-                        <TableCell>{packScopeLabel(claim.pack_scope)}</TableCell>
+                        <TableCell>{packScopeLabel((claim as any).pack_scope ?? claim.packScope)}</TableCell>
                         <TableCell>
                           <Badge variant="outline">{claim.evidence?.length ?? 0}</Badge>
                         </TableCell>
                         <TableCell className="text-right space-x-1" onClick={e => e.stopPropagation()}>
                           <InlineAIButton
                             actionType="explain_selection"
-                            content={`Claim: ${claim.title}\n\nDescription: ${claim.description || ''}\nKey: ${claim.claim_key}\nStatus: ${claim.status}\nScope: ${packScopeLabel(claim.pack_scope)}`}
-                            projectId={projectId || '1'}
-                            module="regulatory"
+                            content={`Claim: ${claim.title}\n\nDescription: ${claim.description || ''}\nKey: ${(claim as any).claim_key ?? claim.claimKey}\nStatus: ${claim.status}\nScope: ${packScopeLabel((claim as any).pack_scope ?? claim.packScope)}`}
+                            projectId={Number(projectId) || 1}
+                            module={'regulatory' as any}
                             size="sm"
                             label="Explain"
                           />
                           <InlineAIButton
                             actionType="extract_structured_data"
-                            content={`Claim: ${claim.title}\n\nDescription: ${claim.description || ''}\nKey: ${claim.claim_key}\nStatus: ${claim.status}\nScope: ${packScopeLabel(claim.pack_scope)}\nEvidence count: ${claim.evidence?.length ?? 0}`}
-                            projectId={projectId || '1'}
-                            module="regulatory"
+                            content={`Claim: ${claim.title}\n\nDescription: ${claim.description || ''}\nKey: ${(claim as any).claim_key ?? claim.claimKey}\nStatus: ${claim.status}\nScope: ${packScopeLabel((claim as any).pack_scope ?? claim.packScope)}\nEvidence count: ${claim.evidence?.length ?? 0}`}
+                            projectId={Number(projectId) || 1}
+                            module={'regulatory' as any}
                             size="sm"
                             label="Extract"
                           />
@@ -362,10 +362,10 @@ export default function EvidenceBinderTable({ projectId }: EvidenceBinderTablePr
                           <TableRow key={ev.id} className="bg-muted/30">
                             <TableCell />
                             <TableCell colSpan={2} className="text-xs">
-                              <span className="font-mono">{ev.vault_file_id}</span>
-                              {ev.vault_version_id && (
+                              <span className="font-mono">{(ev as any).vault_file_id ?? (ev as any).vaultFileId}</span>
+                              {((ev as any).vault_version_id ?? (ev as any).vaultVersionId) && (
                                 <span className="text-muted-foreground ml-1">
-                                  v{ev.vault_version_id}
+                                  v{(ev as any).vault_version_id ?? (ev as any).vaultVersionId}
                                 </span>
                               )}
                               {ev.notes && (
@@ -376,13 +376,13 @@ export default function EvidenceBinderTable({ projectId }: EvidenceBinderTablePr
                             </TableCell>
                             <TableCell>
                               <Badge variant="outline" className="text-xs">
-                                {ev.artifact_type}
+                                {(ev as any).artifact_type ?? (ev as any).artifactType}
                               </Badge>
                             </TableCell>
                             <TableCell colSpan={2}>
-                              {ev.excerpt_preview && (
+                              {((ev as any).excerpt_preview ?? (ev as any).excerptPreview) && (
                                 <span className="text-xs text-muted-foreground line-clamp-1">
-                                  "{ev.excerpt_preview}"
+                                  "{(ev as any).excerpt_preview ?? (ev as any).excerptPreview}"
                                 </span>
                               )}
                             </TableCell>
