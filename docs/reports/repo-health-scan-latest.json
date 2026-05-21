@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-05-21T15:10:38.405Z",
+  "generatedAt": "2026-05-21T19:21:24.800Z",
   "git": {
-    "sha": "170aed7800ee6d927337171c07f4bc1b0b96c028",
+    "sha": "cd2a7ec2dcb1ee12a83b72f7f1578e70a905d8d8",
     "branch": "claude/fix-typescript-errors-pass2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 144,
+    "duplicateBasenames": 145,
     "largeFilesByBytes": 16,
     "largeFilesByLines": 48
   },
@@ -806,6 +806,14 @@
         ]
       },
       {
+        "basename": "environment",
+        "count": 2,
+        "paths": [
+          "server/config/environment.js",
+          "server/config/environment.ts"
+        ]
+      },
+      {
         "basename": "errorhandling",
         "count": 2,
         "paths": [
@@ -950,6 +958,14 @@
         ]
       },
       {
+        "basename": "jwtverify",
+        "count": 2,
+        "paths": [
+          "server/utils/jwtVerify.js",
+          "server/utils/jwtVerify.ts"
+        ]
+      },
+      {
         "basename": "kernel",
         "count": 2,
         "paths": [
@@ -1027,14 +1043,6 @@
         "paths": [
           "server/routes/predicate-intelligence.ts",
           "shared/types/predicate-intelligence.ts"
-        ]
-      },
-      {
-        "basename": "predicate-intelligence.test",
-        "count": 2,
-        "paths": [
-          "server/__tests__/routes/predicate-intelligence.test.ts",
-          "tests/predicate-intelligence.test.ts"
         ]
       },
       {
@@ -1638,7 +1646,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 230,
+      "duplicateGroups": 233,
       "largeByBytes": 10,
       "largeByLines": 31
     },
@@ -1650,7 +1658,7 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 75,
+      "duplicateGroups": 74,
       "largeByBytes": 2,
       "largeByLines": 7
     },
