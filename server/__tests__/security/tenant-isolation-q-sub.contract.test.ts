@@ -118,9 +118,9 @@ describe('Tenant isolation — Q-Sub list', () => {
     svc.ownership.set('q-org-b-extra', ORG_B);
     const res = await request(app).get('/api/q-sub');
     expect(res.status).toBe(200);
-    expect(res.body.rows.every((r: { id: string }) => svc.ownership.get(r.id) === ORG_A)).toBe(
-      true,
-    );
+    // Route wraps the list in the canonical { data: { rows, count } } envelope.
+    const rows = res.body.data?.rows ?? res.body.rows ?? [];
+    expect(rows.every((r: { id: string }) => svc.ownership.get(r.id) === ORG_A)).toBe(true);
     // Cleanup
     svc.ownership.delete('q-org-b-extra');
   });

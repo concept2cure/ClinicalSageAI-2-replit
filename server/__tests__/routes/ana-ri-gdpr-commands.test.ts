@@ -30,8 +30,13 @@ describe('AnA RI GDPR command wiring', () => {
   });
 
   it('uses dynamic executeCommands routing in /api/ana-ri/execute handler', () => {
+    // ana-ri.ts split per-endpoint handlers into ./ana-ri/*. The execute
+    // dispatcher now lives in ana-ri/generate-execute.ts.
     const repoRoot = path.resolve(__dirname, '../../..');
-    const routeSource = fs.readFileSync(path.join(repoRoot, 'server/routes/ana-ri.ts'), 'utf8');
+    const routeSource = fs.readFileSync(
+      path.join(repoRoot, 'server/routes/ana-ri/generate-execute.ts'),
+      'utf8',
+    );
     expect(routeSource).toContain('executor.executeCommands');
     expect(routeSource).toContain('Unknown command: ${command}');
   });
