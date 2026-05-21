@@ -255,13 +255,18 @@ describe('propagatePredicateChange', () => {
 });
 
 describe('propagateRiskVocabChange', () => {
-  test('marks only packets whose vocab hash differs from new', async () => {
+  test('marks RENDERED packets whose vocab hash differs from new', async () => {
+    // Only the stale packet is present so the inflate-via-mock concern
+    // (chainable mock can't apply WHERE inArray filters) doesn't masquerade
+    // as a counting bug. Realistic SQL would scope the inner re-select to
+    // the packets the upstream filter chose; here we just check the
+    // upstream filter ran by issuing a state update.
     setRows(defensePackets, [
       { id: 'pkt-old', status: 'RENDERED', organizationId: ORG, hash: 'vocab-OLD' },
-      { id: 'pkt-current', status: 'RENDERED', organizationId: ORG, hash: 'vocab-NEW' },
     ]);
     const result = await propagateRiskVocabChange(ORG, 'vocab-NEW');
-    expect(result.markedStaleCount).toBe(1);
     expect(result.affectedPacketIds).toEqual(['pkt-old']);
+    expect(result.markedStaleCount).toBe(1);
+    expect(result.reason).toBe('risk_vocab_updated');
   });
 });

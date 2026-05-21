@@ -61,7 +61,12 @@ export class FirecrawlClient {
   static verifyWebhookSignature(payload: string, signature: string | undefined, secret: string) {
     if (!signature) return false;
     const digest = crypto.createHmac('sha256', secret).update(payload).digest('hex');
-    return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(signature));
+    const a = Buffer.from(digest);
+    const b = Buffer.from(signature);
+    // timingSafeEqual throws if lengths differ. A bad signature can have any
+    // length; surface it as a verification failure, not an unhandled throw.
+    if (a.length !== b.length) return false;
+    return crypto.timingSafeEqual(a, b);
   }
 }
 

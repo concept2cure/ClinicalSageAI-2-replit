@@ -55,12 +55,12 @@ describe('getDatabaseUrl', () => {
     );
   });
 
-  it('strips psql wrapper with channel_binding param', async () => {
+  it('strips psql wrapper AND channel_binding param (unsupported by node-pg)', async () => {
     process.env.DATABASE_URL =
       "psql 'postgresql://neondb_owner:pw@ep-wild-forest-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'";
     const { getDatabaseUrl } = await loadModule();
     expect(getDatabaseUrl()).toBe(
-      'postgresql://neondb_owner:pw@ep-wild-forest-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require',
+      'postgresql://neondb_owner:pw@ep-wild-forest-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require',
     );
   });
 
