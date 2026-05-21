@@ -13,9 +13,21 @@
  * @module server/services/__tests__/ana-ri.test
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+
+// The orchestrator transitively imports command-executor.ts which calls
+// `getPool()` at module-load. Without DATABASE_URL the pool init throws
+// before any test runs. Stub the db facade with a no-op pool so the import
+// chain completes; the orchestrator's intent-detection / lens-routing tests
+// don't actually query the DB.
+vi.mock('../../db', () => ({
+  db: {},
+  pool: { query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }) },
+  getPool: () => ({ query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }) }),
+  getDb: () => ({}),
+}));
 
 // ── Orchestrator Tests ───────────────────────────────────────────────────────
 
