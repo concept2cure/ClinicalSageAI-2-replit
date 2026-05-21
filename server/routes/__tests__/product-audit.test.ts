@@ -1,3 +1,26 @@
+
+import { vi } from 'vitest';
+
+// Auth middleware imports `../config/environment.js` which is a `.ts` file
+// in v2. Node ESM strict mode rejects the .js extension. Mock the
+// middleware so the import chain doesn't touch the .js → .ts resolution.
+vi.mock('../../middleware/auth.js', () => ({
+  authMiddleware: (_req: any, _res: any, next: any) => next(),
+  authenticateToken: (_req: any, _res: any, next: any) => next(),
+  requireAuth: (_req: any, _res: any, next: any) => next(),
+}));
+
+vi.mock('../../db', () => {
+  const pool = { query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }) };
+  return {
+    db: {},
+    pool,
+    getPool: () => pool,
+    getDb: () => ({}),
+  };
+});
+
+
 import request from 'supertest';
 import express from 'express';
 import productAuditRoutes from '../product-audit';

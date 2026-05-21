@@ -1,3 +1,44 @@
+
+import { vi } from 'vitest';
+
+// vi.hoisted to set env vars before any module load. `NODE_ENV='development'`
+// requires DATABASE_URL_DEV; we set both to avoid the env-config throw.
+vi.hoisted(() => {
+  process.env.NODE_ENV = 'test';
+  process.env.DATABASE_URL_DEV =
+    process.env.DATABASE_URL_DEV || 'postgresql://test:test@localhost:5432/test';
+  process.env.DATABASE_URL =
+    process.env.DATABASE_URL || 'postgresql://test:test@localhost:5432/test';
+  process.env.JWT_SECRET =
+    process.env.JWT_SECRET || 'stage3-test-secret-padded-to-32-chars-or-more-okay';
+  process.env.SKIP_DB_STARTUP_TEST = 'true';
+});
+
+// Vitest 2.1 doesn't reliably resolve the @shared alias during transitive
+// ESM loading. Mock the alias path so the route's transitive imports don't
+// touch the real schema (the test doesn't need it).
+vi.mock('@shared/schema', () => ({}));
+
+// Auth middleware imports `../config/environment.js` which is a `.ts` file
+// in v2. Node ESM strict mode rejects the .js extension. Mock the
+// middleware so the import chain doesn't touch the .js → .ts resolution.
+vi.mock('../../middleware/auth.js', () => ({
+  authMiddleware: (_req: any, _res: any, next: any) => next(),
+  authenticateToken: (_req: any, _res: any, next: any) => next(),
+  requireAuth: (_req: any, _res: any, next: any) => next(),
+}));
+
+vi.mock('../../db', () => {
+  const pool = { query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }) };
+  return {
+    db: {},
+    pool,
+    getPool: () => pool,
+    getDb: () => ({}),
+  };
+});
+
+
 import express from 'express';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
