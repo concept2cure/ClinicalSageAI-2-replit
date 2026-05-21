@@ -13,7 +13,10 @@ vi.hoisted(() => {
 });
 
 
-const registerArtifactWithGovernance = vi.fn();
+// vi.hoisted so the spy is initialized before the vi.mock factory runs.
+const { registerArtifactWithGovernance } = vi.hoisted(() => ({
+  registerArtifactWithGovernance: vi.fn(),
+}));
 
 vi.mock('../../server/services/compute/artifactWriteback', () => ({
   registerArtifactWithGovernance,

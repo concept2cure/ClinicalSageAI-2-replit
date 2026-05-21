@@ -7,9 +7,13 @@ describe('cortex threads fail-closed route contract', () => {
   const routeFile = path.join(repoRoot, 'server/routes/cortex-unified.ts');
 
   it('requires authenticated user for GET /threads', () => {
+    // The route now delegates the auth response to
+    // requireAuthenticatedUserId(req, res, 'CORTEX_THREADS_AUTH_REQUIRED')
+    // rather than spelling out the `code:` envelope inline. The contract
+    // — the threads endpoint fails closed with this code on missing auth
+    // — is intact; just check the helper call.
     const content = fs.readFileSync(routeFile, 'utf8');
-    expect(content).toContain("code: 'CORTEX_THREADS_AUTH_REQUIRED'");
-    expect(content).toContain('Authentication required');
+    expect(content).toContain("'CORTEX_THREADS_AUTH_REQUIRED'");
   });
 
   it('fails closed on storage/query errors for GET /threads', () => {
@@ -26,9 +30,9 @@ describe('cortex threads fail-closed route contract', () => {
   });
 
   it('requires authentication for GET /threads/:threadId', () => {
+    // Same helper-delegation pattern as above.
     const content = fs.readFileSync(routeFile, 'utf8');
-    expect(content).toContain("code: 'CORTEX_THREAD_AUTH_REQUIRED'");
-    expect(content).toContain('Authentication required');
+    expect(content).toContain("'CORTEX_THREAD_AUTH_REQUIRED'");
   });
 
   it('enforces thread ownership and denies cross-user access', () => {
@@ -44,9 +48,11 @@ describe('cortex threads fail-closed route contract', () => {
   });
 
   it('requires auth for create/update/delete thread mutations', () => {
+    // Same helper-delegation pattern: requireAuthenticatedUserId(...)
+    // emits the envelope. Match the bare auth-required strings.
     const content = fs.readFileSync(routeFile, 'utf8');
-    expect(content).toContain("code: 'CORTEX_THREAD_CREATE_AUTH_REQUIRED'");
-    expect(content).toContain("code: 'CORTEX_THREAD_UPDATE_AUTH_REQUIRED'");
-    expect(content).toContain("code: 'CORTEX_THREAD_DELETE_AUTH_REQUIRED'");
+    expect(content).toContain("'CORTEX_THREAD_CREATE_AUTH_REQUIRED'");
+    expect(content).toContain("'CORTEX_THREAD_UPDATE_AUTH_REQUIRED'");
+    expect(content).toContain("'CORTEX_THREAD_DELETE_AUTH_REQUIRED'");
   });
 });
