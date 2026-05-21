@@ -23,6 +23,9 @@ import { InDesignSurface } from './surfaces/InDesignSurface';
 import { EngineeringSurface } from './surfaces/EngineeringSurface';
 import { UdiSurface } from './surfaces/UdiSurface';
 import { PostmarketSurface } from './surfaces/PostmarketSurface';
+import { AnalyticsSurface } from './surfaces/AnalyticsSurface';
+import { MemorySurface } from './surfaces/MemorySurface';
+import { AdminSurface } from './surfaces/AdminSurface';
 import {
   TasksSurface,
   VaultSurface,
@@ -245,6 +248,15 @@ export function App({ initialNav, projectName }: AppProps = {}) {
   } else if (activeNav === 'postmarket') {
     /* Phase 4 — Post-market vigilance surface (doc-first, cross-program). */
     surface = <PostmarketSurface onAskAna={askAna} onOpenEditor={openEditor} />;
+  } else if (activeNav === 'analytics') {
+    /* Phase 4 — Analytics surface (hybrid, cross-program). */
+    surface = <AnalyticsSurface onAskAna={askAna} />;
+  } else if (activeNav === 'memory') {
+    /* Phase 4 — AnA memory surface (no-docs variant, cross-program). */
+    surface = <MemorySurface onAskAna={askAna} />;
+  } else if (activeNav === 'admin') {
+    /* Phase 4 — Admin and access surface (hybrid, cross-program). */
+    surface = <AdminSurface onAskAna={askAna} />;
   } else if (MDX_STUBS[activeNav]) {
     surface = <InDesignSurface stub={MDX_STUBS[activeNav]} />;
   } else {
