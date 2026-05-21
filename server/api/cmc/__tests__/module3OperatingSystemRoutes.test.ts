@@ -13,12 +13,17 @@ vi.mock('../../../db', () => ({
 
 import router from '../module3OperatingSystemRoutes';
 
-// Module 3 OS routes now use the requireOrganizationContext middleware which derives org from a verified JWT — the test's passthrough auth mock doesn't supply the verified claim, so all requests 401 before reaching the readiness/provenance logic. Contract is exercised by the CMC integration tests.
-describe.skip('module3OperatingSystemRoutes', () => {
+describe('module3OperatingSystemRoutes', () => {
   const app = express();
   app.use(express.json());
-  app.use((req, _res, next) => {
-    req.headers['x-organization-id'] = '101';
+  app.use((req: any, _res, next) => {
+    // Route reads `req.tenantId || req.tenantContext?.organizationId` — the
+    // x-organization-id header isn't converted to either field without the
+    // tenant-context middleware. Set both directly so the route hands off
+    // org id 101 to the SQL layer.
+    req.tenantId = 101;
+    req.tenantContext = { organizationId: 101 };
+    req.user = { id: 1, organizationId: 101 };
     next();
   });
   app.use('/api/cmc/module3-os', router);

@@ -10,10 +10,62 @@ vi.mock('../../middleware/auth.js', () => ({
   requireAuth: (_req: any, _res: any, next: any) => next(),
 }));
 
+// requireOrganizationContext (server/middleware/tenantContext.ts:140) checks
+// `req.tenantContext?.organizationId`. Stub it as a passthrough so the test's
+// own inline auth middleware (which sets req.user.organizationId) reaches
+// the route handler without the 403 short-circuit.
+vi.mock('../../middleware/tenantContext', () => ({
+  tenantContextMiddleware: (_req: any, _res: any, next: any) => next(),
+  requireOrganizationContext: (_req: any, _res: any, next: any) => next(),
+  requireClientWorkspaceContext: (_req: any, _res: any, next: any) => next(),
+  requireTenantMiddleware: (_req: any, _res: any, next: any) => next(),
+  validateTenantAccessMiddleware: (_req: any, _res: any, next: any) => next(),
+  tenantContext: (_req: any, _res: any, next: any) => next(),
+}));
+
+// In-memory feature-store backed by a Drizzle chain mock. The product-audit
+// route uses createFeatureStore('product_audit') which chains
+// db.select()/insert()/update()/...where()/orderBy()/limit(). Mock each
+// chain step so the route's query path resolves to deterministic data.
+const memStore: Array<{ id: number; organizationId: number; category: string; subcategory: string; title: string; content: any; updatedAt: Date }> = [];
+let memId = 1;
+
+const selectChain: any = {
+  from: () => selectChain,
+  where: () => selectChain,
+  orderBy: () => Promise.resolve(memStore.slice()),
+  limit: () => Promise.resolve(memStore.slice(0, 1)),
+  then: (resolve: any) => resolve(memStore.slice()),
+};
+
+const insertChain: any = {
+  values: (vals: any) => {
+    const row = { id: memId++, ...vals, updatedAt: new Date() };
+    memStore.push(row);
+    return { returning: () => Promise.resolve([row]) };
+  },
+};
+
+const updateChain: any = {
+  set: (vals: any) => ({
+    where: () => {
+      if (memStore[0]) Object.assign(memStore[0], vals);
+      return {
+        returning: () => Promise.resolve(memStore[0] ? [memStore[0]] : []),
+      };
+    },
+  }),
+};
+
 vi.mock('../../db', () => {
   const pool = { query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }) };
   return {
-    db: {},
+    db: {
+      select: () => selectChain,
+      insert: () => insertChain,
+      update: () => updateChain,
+      delete: () => ({ where: () => Promise.resolve() }),
+    },
     pool,
     getPool: () => pool,
     getDb: () => ({}),
@@ -25,8 +77,7 @@ import request from 'supertest';
 import express from 'express';
 import productAuditRoutes from '../product-audit';
 
-// The Product Audit routes now branch on a tenantContext that the test's inline auth/middleware stubs don't fully populate (req.tenantContext.organizationId is set but the downstream service checks a different field). Every request returns 403.
-describe.skip('Product Audit API', () => {
+describe('Product Audit API', () => {
   let app: express.Application;
   
   beforeEach(() => {
