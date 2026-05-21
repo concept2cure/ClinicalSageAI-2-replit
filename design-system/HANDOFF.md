@@ -15,95 +15,20 @@ This file is the **executable brief** for wiring the Concept2Cure Design System 
 
 ---
 
-## How Claude Code consumes this kit
-
-This design system lives in a **separate project**. Claude Code, running in the v2 repo, has shell-level filesystem access — it can only read paths that physically exist in the v2 working tree. So the design system has to be **mirrored into the v2 repo** as a read-only-by-convention folder, and kept in sync.
-
-### The mirror — `design-system/` in the v2 repo
-
-The v2 repo contains a folder at its root called `design-system/`. It is a verbatim copy of this project's files:
-
-```
-concept2cure-v2/design-system/
-├── CLAUDE.md
-├── HANDOFF.md
-├── README.md
-├── SKILL.md
-├── colors_and_type.css
-├── preview/
-└── ui_kits/
-    ├── home/        ← Phase 1 + Phase 3 (Projects lives inside the home kit)
-    ├── mdx/         ← Phase 2
-    └── …
-```
-
-**This folder is read-only by convention.** Claude Code reads it; Claude Code does not edit it. Edits are made in the canonical design-system project (this one) by the designer, and propagate to v2 via the sync job (see below). Any edit Claude Code makes to `design-system/` will be overwritten on the next sync — so don't.
-
-### Per-session read order (do not skip)
-
-Every session that touches UI:
-
-```
-1. design-system/CLAUDE.md          ← phase routing, non-negotiables, token-import warning
-2. design-system/HANDOFF.md         ← this file: phase status, surface inventory, contracts
-3. design-system/colors_and_type.css   ← canonical token surface (must be imported into v2's app root CSS)
-4. design-system/ui_kits/<surface>/    ← every JSX + CSS file for the surface you are porting
-5. design-system/preview/              ← per-token specimen cards for verification
-```
-
-Reading is free; do it for every file referenced in this contract before you start porting. **A single session that ports a surface without reading all of `design-system/ui_kits/<surface>/` first is a session that produces a regression** — that is exactly how the 2026-04-26 token-resolution bug shipped.
-
-### Keeping the mirror fresh
-
-`design-system/` is a snapshot. The canonical source is the design-system project (project id `7f3ac932-8a8b-4582-8748-5d4c31e8d0ed`). A sync job — git submodule, CI workflow, or scheduled rsync — pulls the canonical project's files into `design-system/` on every commit / on a schedule / on designer signal.
-
-If you suspect drift (e.g. a surface in `HANDOFF.md`'s changelog that isn't in the local mirror yet), trigger a re-sync before porting. The mirror's `HANDOFF.md` changelog is the source of truth for "what's the latest" — if its top entry is stale relative to what the designer announced, the mirror needs a refresh.
-
-### Porting a surface — the actual workflow
-
-For each surface listed in the Phase status table:
-
-1. **Read every file** in `design-system/ui_kits/<surface>/`. The full file list for each surface is enumerated in that phase's "Where this lives in the design system" section below.
-2. **Mirror the JSX 1:1** into the v2 codebase. Preserve:
-   - Component decomposition (one v2 component per JSX function in the kit).
-   - Class names exactly as written (`prj-list-row`, `pact-row`, `pcp-mem-row`, etc.). The CSS depends on these.
-   - Copy strings — every label, pill text, empty-state message — verbatim from `data.jsx` / inline JSX. Sentence case, no emoji, no exclamation marks.
-   - Interaction behavior — keyboard shortcuts, focus management, dismiss rules.
-3. **Lift the styles.** Two options, in order of preference:
-   - **Import the kit's CSS verbatim** into the v2 build (preferred — single source). The class-name prefixes (`prj-`, `pact-`, `pcp-`, …) are namespaced specifically so they don't collide with v2's existing styles. Configure your build (Vite / webpack / etc.) to resolve `design-system/ui_kits/<surface>/styles.css` as a regular import.
-   - If the v2 build forces CSS modules / Tailwind, convert each rule mechanically. **Do not "improve" values** — the kit's spacing, radii, motion durations, and color tokens are the design. If a value is wrong, raise it to the designer before changing it.
-4. **Wire `colors_and_type.css` once** at the v2 app root, before any component CSS. Import it directly from `design-system/colors_and_type.css` so token edits propagate automatically. Verify in DevTools that `--accent-100` resolves to `#d97757` and `--bg-000` to `#faf9f5` (this is the regression checklist from `CLAUDE.md`). If they're blank, your import is missing or scoped wrong — fix before continuing.
-5. **Run the per-phase acceptance checklist** at the bottom of that phase's section. Every box must be checked before opening a PR. The token-surface verification step is non-negotiable on every phase, every time.
-6. **Delete the legacy** files the phase replaces. The "What this replaces" list per phase is the deletion target. Remove feature flags in the same PR.
-
-### When the design changes
-
-The design system is a **living source**. When the designer ships a new revision in the canonical project:
-
-- The sync job propagates the change to `design-system/` in the v2 repo (next sync cycle, or trigger manually).
-- `design-system/HANDOFF.md`'s changelog records what changed. Read that first.
-- Re-read the affected `design-system/ui_kits/<surface>/` files and re-apply the diff to v2.
-- Token changes (any edit to `design-system/colors_and_type.css`) propagate automatically because v2 imports the file directly. **Never copy the file's contents into v2's own CSS** — that freezes the tokens at point-in-time and re-introduces the regression class.
-
-### What Claude Code must not do
-
-- **Do not** recreate Concept2Cure UI from screenshots, memory, or v2's existing legacy code. The kit is the only authority.
-- **Do not** edit files inside `design-system/`. The mirror is read-only by convention; edits will be overwritten on the next sync. UI change requests get raised to the human operator, who passes them to the designer (this project's seat). The designer updates the canonical source, the sync propagates.
-- **Do not** ship a phase before its acceptance checklist is fully checked. A half-shipped phase blocks the next one.
-- **Do not** invent surfaces that aren't in the kit. If v2 needs a screen that isn't designed yet, stop and ask. Phases are sequenced for a reason.
-
----
-
 ## Phase status
 
 | # | Surface                | Status                    | UI kit                  | Replaces (in `client/src/concept2cure/`)                                    |
 | - | ---------------------- | ------------------------- | ----------------------- | --------------------------------------------------------------------------- |
 | 1 | Home screen            | **Ready to implement**    | `ui_kits/home/`         | `ZenApp.tsx` shell + `AppsPage.tsx` + `IndustryAwareApp.tsx` home state      |
-| 2 | MDX workstream         | **Ready to implement**    | `ui_kits/mdx/`          | `components/medtech/**` home + any `*510kPage*`, `*PMAPage*`, `*CERPage*`   |
-| 3 | Projects (list + detail) | **Ready to implement**  | `ui_kits/home/` (Projects rail item) | `ZenApp.tsx` project-scoped shell + per-project chat/doc merge + project list state |
-| 4 | Artifact workbench     | In design — do not build  | —                       | —                                                                           |
-| 5 | Auth (login / signup)  | In design — do not build  | —                       | —                                                                           |
-| 6 | Admin surfaces         | In design — do not build  | —                       | —                                                                           |
+| 2 | Projects detail        | In design — do not build  | —                       | —                                                                           |
+| 3 | Artifact workbench     | In design — do not build  | —                       | —                                                                           |
+| 4 | Auth (login / signup)  | In design — do not build  | —                       | —                                                                           |
+| 5 | Admin surfaces         | **Ready to implement**    | `ui_kits/mdx/`          | Replaces `mdx/_stubs/ComingSoon.tsx` route for `admin` (Phase 4 below)      |
+| 6 | MDX · Engineering      | **Ready to implement**    | `ui_kits/mdx/`          | Replaces `InDesignSurface` route for `engineering` (Phase 4 below)         |
+| 7 | MDX · UDI / labeling   | **Ready to implement**    | `ui_kits/mdx/`          | Replaces `InDesignSurface` route for `udi` (Phase 4 below)                 |
+| 8 | MDX · Post-market      | **Ready to implement**    | `ui_kits/mdx/`          | Replaces `InDesignSurface` route for `postmarket` (Phase 4 below)          |
+| 9 | MDX · Analytics        | **Ready to implement**    | `ui_kits/mdx/`          | Replaces `InDesignSurface` route for `analytics` (Phase 4 below)           |
+|10 | MDX · AnA memory    | **Ready to implement**    | `ui_kits/mdx/`          | Replaces `InDesignSurface` route for `memory` (Phase 4 below)              |
 
 Everything else in `client/src/concept2cure/` is **legacy** — keep it running until its replacement phase ships, then delete it.
 
@@ -172,446 +97,155 @@ Delete, after Phase 1 ships and is verified:
 
 ---
 
-## Phase 2 · MDX workstream — implementation contract
-
-### What ships
-
-Authoritative reference: `ui_kits/mdx/index.html` + siblings (`App.jsx`, `Shell.jsx`, `Surfaces.jsx`, `data.jsx`, `Icons.jsx`, `styles.css`). Users reach it from the home rail (`mdx` item) or the launcher tile — both point to `ui_kits/mdx/index.html`. Mirror it pixel-for-pixel.
-
-**Layout**
-- Three-column shell: **rail** (260 / 56 px) · **main** · **AnA dock** (380 / 44 px). Main has a 48 px TopBar, a 44 px TabBar, then the page.
-- Rail groups: *Workstream* (8) → *Workspace* (2) → *System* (1 back-link). Workstream items are the pathway routes — `overview`, `k510`, `pma`, `cer`, `predicate`, `engineering`, `udi`, `postmarket`.
-- TabBar exposes the 5 primary surfaces with live counts on the pathway tabs. Selecting a tab sets `activeNav`; rail and tabs stay in sync.
-- AnA dock: context block (pinned to the active program), contextual suggestions (from `MDX_SUGGESTIONS[activeNav]`), recent AnA activity, composer. Collapses to a 44 px icon strip.
-
-**The 5 primary surfaces**
-1. **Overview** — 4 portfolio health cards + 4 program cards (2×2). Each program card shows stage progress, next blocker, owners, due pill. Clicking a program jumps to its pathway with that program in context.
-2. **510(k)** — 7-node stage strip (Intake → Submit), predicate search table (6 rows · similarity bar · selected/candidate/reviewed/rejected status pills), SE matrix (`180px 1fr 32px 1fr` grid · verdict chips), eSTAR 20-section checklist with `blocker` row style.
-3. **PMA** — 10-phase grid (each cell: label · progress bar · pct), 4 trial metrics, 6 module cards (3-col).
-4. **CER** — signal table (FAERS/MAUDE/Literature/Eudamed · severity · inclusion status), literature-by-year horizontal bar chart, CER section checklist, AnA generation plan panel.
-5. **Precedent Intelligence** — saved-queries list + cross-agency pattern summary. This is the new home of the legacy "precedent" surface pulled out of the main rail.
-
-**Data contract** (from `ui_kits/mdx/data.jsx` — names must match exactly):
-```
-MDX_NAV_ITEMS           MDX_PROGRAMS            MDX_HEALTH
-K510_STAGES             K510_PREDICATES         K510_SE_ROWS         K510_ESTAR
-PMA_PHASES              PMA_MODULES             PMA_TRIAL_METRICS
-CER_SIGNALS             CER_LITERATURE          CER_EXPORT
-MDX_SUGGESTIONS         (keyed by activeNav)
-```
-
-**Tokens**
-- Same `colors_and_type.css` surface as Home. No new colors. Serif reserved for metric values.
-- Claude orange once per view: active stage node · selected predicate row · active PMA phase · AnA send button · suggestion hover. Do not stack focal points.
-- Severity uses the semantic scale: serious → `--error-muted / --error`; non-serious → neutral `--bg-200 / --text-300`.
-
-**Motion**
-- All transitions 200 ms ease-out.
-- Predicate row `:hover` shifts `background` to `--bg-100`; selected row pins to `--accent-000`.
-- Stage-node dot gets a 3 px `box-shadow` halo in accent when active — no pulsing.
-
-**Copy — exact strings**
-Every pill, metric label, section header, tab label, program title, and blocker string comes from `data.jsx`. Do not paraphrase.
-
-### What this replaces
-
-Delete, after Phase 2 ships:
-- Any MDX-specific home surfaces under `client/src/concept2cure/components/medtech/` that rendered a dashboard, program list, or 510(k)/PMA/CER page.
-- Any legacy `*510kPage*`, `*PMAPage*`, `*CERPage*` routes and their feature flags.
-- Legacy predicate-search UI — subsumed by the in-kit predicate table + `predicate` surface.
-
-Inner MDX utilities (single-device detail views, specific validators) stay until their own phase if they don't overlap the 5 surfaces above.
-
-### Acceptance checklist (Phase 2)
-
-- [ ] Rail renders the 11 MDX items in the exact group/order from `MDX_NAV_ITEMS`. `Back to all modules` links to Home.
-- [ ] TabBar and rail stay in sync — clicking either updates the shared `activeNav` state.
-- [ ] Clicking a program card on Overview jumps to its pathway surface AND pins it in the topbar context pill AND the AnA context block.
-- [ ] 7-stage strip shows the correct node as `active` based on `program.stageIdx`; all prior nodes render as `done` with a check.
-- [ ] Predicate table rows are keyboard-focusable; the `selected` row has the accent-muted background.
-- [ ] SE matrix verdict chips use the three tokens only: `same` · `equivalent` · `different`. No ad-hoc colors.
-- [ ] eSTAR row with `blocker: true` gets the `--error-muted` background and remains a 12 px row.
-- [ ] 10-phase PMA grid renders at exactly 10 equal columns regardless of container width (grid-template-columns: repeat(10, 1fr)).
-- [ ] CER signal severity uses only `serious` / `non-serious` chips; inclusion uses `included` / `excluded` / `review`.
-- [ ] AnA dock suggestions swap when `activeNav` changes (verify all 5 surfaces surface different suggestion sets).
-- [ ] AnA dock collapses to 44 px; rail collapses to 56 px; both states persist independently.
-- [ ] No emoji except the AnA `✻` sparkle mark (exact character: U+273B). No exclamation marks anywhere.
-- [ ] Legacy MDX surfaces listed above are deleted, not hidden.
-
----
-
-## Phase 2 · MDX paying-client beta (shipped 2026-05-05)
-
-Every kit surface in `ui_kits/mdx/` now reads live data from real backend
-endpoints. Branch `claude/deploy-mdx-kits-6sIb9` carries the implementation.
-This section is the contract a paying-client beta operator follows on the
-v2 cluster.
-
-### Backend surface (server/routes/regulatory-programs.ts + saved-precedent-queries.ts)
-
-`/api/regulatory-programs` — list + get + 9 sidecar endpoints powering
-every per-program panel:
-
-| Endpoint | Backs |
-|---|---|
-| `GET /` | Overview KPIs + program grid; TabBar counts |
-| `GET /:id` | ProjectHome header + governance panel |
-| `GET /:id/activity` | ProjectHome activity feed (audit_logs by record_id UUID) |
-| `GET /:id/milestones` | ProjectHome milestone timeline (derived from q_sub_meetings + section completion + program status) |
-| `GET /:id/rim-recommendations` | ProjectHome "Claude recommendations" (derived from required-but-empty sections + open Q-Sub commitments + withdrawn standards refs + in-review-but-incomplete sections) |
-| `GET /:id/change-impact` | ProjectHome change-impact panel (audit_logs section edits + section cross-reference scan) |
-| `GET /:id/safety-signals` | CerSurface signals table (safety_signals, project-scoped) |
-| `GET /:id/literature` | CerSurface literature corpus chart (literature_entries, year-bucketed) |
-| `GET /:id/pma-modules` | PmaSurface module cards (cerv2_510k_sections grouped into PMA module taxonomy) |
-| `GET /:id/pma-trial-metrics` | PmaSurface KPIs (clinical_ops.studies + .deviations + .endpoint_results) |
-| `GET /portfolio-insights` | PrecedentSurface narrative panel (data-derived: pathway clearance ratio + most-common predicate K-numbers + literature density) |
-
-`/api/saved-precedent-queries` — full CRUD over `saved_precedent_queries`
-table. Backs PrecedentSurface "Saved queries" panel.
-
-All endpoints tenant-scoped via the global auth + tenant-context
-middleware on `/api`. All write endpoints validated with strict Zod
-schemas. Mutations write `audit_logs` rows via the global audit
-middleware (21 CFR Part 11 §11.10(e) compliant for the new surface).
-
-### Pre-deploy sequence (paying-client beta)
-
-```bash
-# 1. Apply schema changes (adds saved_precedent_queries + IV-415 metadata column)
-npm run db:push
-
-# 2. Seed programs + Q-Subs (6 programs spanning 510k / pma / cer pathways)
-npm run db:seed:mdx-beta
-
-# 3. Seed content data so every kit surface demos with real data
-npm run db:seed:mdx-content
-
-# 4. Run smoke + integration suites (58 tests total)
-npx vitest run tests/mdx-paying-client-smoke.test.ts tests/regulatory-programs-routes.test.ts
-
-# 5. Start dev server
-npm run dev
-
-# 6. Probe the module health endpoint to confirm provisioning
-curl -s http://localhost:5000/api/mdx/health | jq '.data.readiness, .data.warnings'
-
-# 7. Walk every surface in browser
-```
-
-### Module health endpoint — `GET /api/mdx/health`
-
-Production / ops tool — single round-trip probe of every backing table
-+ shadow service + pathway coverage. No auth required (deployment-wide
-state, not tenant data). Response shape:
-
-```jsonc
-{
-  "data": {
-    "module":          "mdx",
-    "version":         "abc123",       // GIT_COMMIT_SHA env var, or null
-    "readiness":       "ready",        // "ready" | "partial" | "not_ready"
-    "tables": [
-      { "name": "public.regulatory_programs",  "role": "Programs list…",   "exists": true,  "rowCount": 6, "required": true },
-      { "name": "public.saved_precedent_queries","role": "PrecedentSurface…","exists": true, "rowCount": 4, "required": true },
-      // …15 tables total
-    ],
-    "shadowServices": [
-      { "name": "predicate-intelligence", "configured": true, "affectsSurfaces": ["K510Surface predicate table", "K510Surface SE matrix"] }
-    ],
-    "pathwayCoverage": [
-      { "pathway": "k510", "hasPrograms": true,  "programCount": 4 },
-      { "pathway": "pma",  "hasPrograms": true,  "programCount": 1 },
-      { "pathway": "cer",  "hasPrograms": true,  "programCount": 1 }
-    ],
-    "warnings": [],                    // empty iff readiness === "ready"
-    "probedAt": "2026-05-06T17:00:00Z"
-  }
-}
-```
-
-`readiness` is one of:
- - **ready**     — all required tables present, no warnings
- - **partial**   — required tables present, but optional tables missing
-                   or shadow services not configured. Surfaces will render
-                   their fallback / empty-state copy. Beta-acceptable.
- - **not_ready** — required tables missing. The MDX module won't function;
-                   apply pending migrations.
-
-Use this endpoint as the canonical "is the platform ready" check before
-inviting a paying-client beta. Investors auditing the platform can
-verify health programmatically rather than walking surfaces by hand.
-
-### Surface coverage after content seed
-
-| Kit surface | Data source | Lights up after seed |
-|---|---|---|
-| Overview | regulatory_programs | ✓ 6 programs |
-| TabBar counts | useMdxPrograms | ✓ |
-| K510Surface eSTAR list | cerv2_510k_sections | ✓ 20 sections |
-| K510Surface predicates | predicate-intelligence shadow | banner if shadow not configured |
-| K510Surface SE matrix | predicate-intelligence shadow | banner if shadow not configured |
-| PmaSurface 10-phase grid | program.stageIdx | ✓ derived |
-| PmaSurface 6 modules | cerv2_510k_sections grouped by category | ✓ |
-| PmaSurface 4 trial KPIs | clinical_ops.studies (set program.metadata.clinicalStudyId) | empty until linked |
-| CerSurface sections | cerv2_510k_sections | ✓ |
-| CerSurface signals | safety_signals | ✓ 4 signals (IV-415) |
-| CerSurface literature | literature_entries | ✓ ~50 entries |
-| PrecedentSurface saved queries | saved_precedent_queries | ✓ 4 queries |
-| PrecedentSurface narrative | portfolio-insights computation | ✓ |
-| PreSubManager list + KPIs | q-submissions service | ✓ 7 Q-Subs |
-| PreSubManager detail | q-sub questions/commitments/timeline | ✓ |
-| ProjectHome readiness | program.readiness | ✓ |
-| ProjectHome tasks | submission-ops/workload (project_work_items) | empty until populated |
-| ProjectHome milestones | derived | ✓ |
-| ProjectHome RIM recs | derived | ✓ |
-| ProjectHome change-impact | audit_logs section edits | empty until edits |
-| ProjectHome governance | program.teamMembers | ✓ |
-| ProjectHome activity | audit_logs by program UUID | empty until activity |
-| Workbench Tasks | submission-ops/workload | empty until populated |
-| Workbench Validation | submission-ops/blockers + program join | ✓ |
-| Workbench Submissions | c2c_submission_packages | ✓ 5 packages |
-| Workbench Templates | /api/templates aggregator | ✓ |
-| EstarEditor / PmaEditor / CerEditor | useLiveSections + cerv2-sections PATCH | ✓ all three editors |
-| CerWorkbench tabs | composes CerSurface | ✓ |
-
-Vault (`Workbench.jsx > VaultSurface`) is intentionally not wired —
-needs its own design pass (concept2cureArtifacts has different auth +
-version semantics than the kit's VaultFile shape).
-
-### Production-recommended program metadata
-
-Set on `regulatory_programs.metadata` (jsonb) per program:
-
-| key | who reads it | why |
-|---|---|---|
-| `clinicalStudyId` | pma-trial-metrics endpoint | binds program to a specific clinical_ops.studies UUID; without it the endpoint falls back to a productName-ILIKE-indication fuzzy match that can pick up wrong studies in orgs running multiple trials |
-| `ndcCode` | (future) FAERS lookup | NDC code for FDA adverse-event API queries |
-| `programCode` | submissions adapter | preferred display code (falls back to `pkg-{packageId}`) |
-| `stage` | submissions adapter | overrides derived stage when richer state is needed |
-| `gateErrs`/`gateWarns`/`gateOk` | submissions list | per-package transmit gate counts for the row chips |
-| `fileCount` / `bytes` / `cover` / `esig` / `transmitAt` | submissions list | rich row fields; defaults are sensible when absent |
-
-### Auth + audit confirmed paths
-
-- Global auth on `/api`: `server/middleware/setup.ts:62-84` (authMiddleware
-  → tenantContextMiddleware → requireTenantContext)
-- Global mutation audit: `server/middleware/setup.ts:87` writes `audit_logs`
-  with tenant_id, user_id, action (CREATE/UPDATE/DELETE), table_name (URL),
-  record_id, new_values, ip_address, user_agent, timestamp
-
-### Smoke suite
-
-`tests/mdx-paying-client-smoke.test.ts` (20 vitest assertions):
-route modules load, drizzle schema registered, migration present,
-8 client hooks export expected functions, register-inline-routes mounts
-both new routes, kit fixtures stay structurally compatible with adapter
-outputs, content seed covers every kit-surface table, npm scripts
-register both seeds. Run via `npx vitest run tests/mdx-paying-client-smoke.test.ts`.
-
----
-
-## Phase 2 · MDX refinements (shipped 2026-04-23)
-
-These refinements tightened the kit after the initial Phase 2 ship. Contract addenda:
-
-- **Overview view mode.** Grid on first load when ≤ 12 programs; auto-switches to list when > 12. Toggle (`Grid` / `List`) lives top-right of the Programs section. Preference persists per user in `localStorage` under `mdx.viewMode`.
-- **Filter chips.** Two chipsets above the view — pathway (`All / 510(k) / PMA / CER`) and status (`All / Active / Blocked / Idle`) — with live counts. Filters are additive.
-- **List row spec.** Columns: `Program (title + code) | Pathway chip | Stage + readiness bar | Next blocker | Lead initials | Due + last activity`. Grid template `2.4fr 0.9fr 1.6fr 2fr 0.8fr 1fr`. Row clicks route the same as grid cards (opens the program in its pathway).
-- **Unified status vocabulary.** `idle · active · blocked · complete` applies to stage nodes (510k), phase cells (PMA), and program status chips. Status tokens: idle = `--text-500` on `--bg-100`; active = accent; blocked = `--warning`; complete = `--success`. Never use pathway (k510/pma/cer) as a status — it's orthogonal.
-- **Stage strip states.** `idle` (empty dot), `active` (accent dot + accent halo), `blocked` (warning dot + warning halo), `complete` (success dot with check). Always show whichever state the program's `status` + `stageIdx` imply.
-- **Predicate table multi-select.** First column is a checkbox. Clicking a row toggles its checkbox. When exactly one predicate is checked, the SE matrix renders in single-predicate mode. When two or more are checked, it swaps to a multi-column matrix (`160px | subject | one column per predicate`) with the subject pinned as the anchor column. Never drop to zero selected — toggling the last one off is a no-op.
-- **AnA dock state machine.**
-  - `anaCollapsed` default is `true`.
-  - On first-ever MDX visit (no `mdx.visited` localStorage key), force-expand once and set the key. Thereafter respect preference.
-  - When collapsed and a high-priority nudge exists (today: any blocked program), apply the `ana-pulse` keyframe class to the collapsed sparkle icon. Do not steal focus; do not auto-expand.
-- **Rail stubs.** `engineering`, `udi`, `postmarket` render via `InDesignSurface` with data from `MDX_STUBS`. Icon + phase chip + title + one-line description, centered, no CTAs, no "Coming soon" copy.
-
-## Phase 3 · Projects (list + detail) — implementation contract
-
-### Where this lives in the design system
-
-The Projects surface is **inside the home kit**, reachable from the rail (`projects` nav item). Authoritative source files, in load order from `ui_kits/home/index.html`:
-
-```
-ui_kits/home/Icons.jsx          ← shared icon set (Lucide-derived)
-ui_kits/home/data.jsx           ← shared data (rail items, modules, etc.)
-ui_kits/home/Extras.jsx         ← non-Projects extras (other tabs, dialogs)
-ui_kits/home/ProjectsExtras.jsx ← Projects Phase 3.5 surfaces (filters, bulk, audit, linked, switcher, notifications, internal search, archive modal)
-ui_kits/home/Projects.jsx       ← Projects core (list, detail shell, memory, instructions, files, timeline, config panel)
-ui_kits/home/App.jsx            ← shell wiring; renders <ProjectsScreen/> when rail = projects
-ui_kits/home/styles.css         ← all Projects styles, prefixed: prj-, pmem-, pinstr-, pfiles-, ptl-, pcp-, pact-, plnk-, parch-, plf-, plb-, ple-, pqs-, pnot-, pis-, pmm-
-```
-
-To port: read these files in this order, mirror the JSX structure 1:1 into the v2 codebase, and import `colors_and_type.css` once at the app root **before any component CSS** (see token-import warning in `CLAUDE.md`).
-
-### Surfaces shipped
-
-#### List view (`<ProjectsList/>` in `Projects.jsx`)
-- Header: title + count + "New project" CTA + view toggle (grid/list) + bell (notifications) + ⌘K hint.
-- **Filter chip rail** (`<ProjectsListFilters/>` from `ProjectsExtras.jsx`). Two rows:
-  - Row 1: saved-views pills (default + `+ Save view`) — see `PLF_SAVED_VIEWS` for the exact 4 default views and their filter shapes.
-  - Row 2: search input + 5 filter pills (Type / Status / Agency / Owner / Activity) — each opens a checkbox dropdown menu, shows count badge when active. + Clear-all button when any filter set.
-- **Bulk action bar** (`<ProjectsListBulkBar/>`) appears above the list when ≥1 row is checked. Count + Archive / Export / Transfer / Delete (danger) + Clear.
-- **Row** (`.prj-list-row`): checkbox · star · name · description · type pill · phase progress bar · last activity · ⋯ menu.
-- **Empty states** (`<ProjectsListEmpty/>`): zero projects (illustration + 4 onboarding suggestions tagged Setup/Import/Template/Demo) and zero results (clear-filters CTA).
-
-#### Detail view (`<ProjectDetail/>` in `Projects.jsx`)
-Header: back · star · project name (editable) · type pill · agency pill · status pill · gear (config) · ⋯ menu.
-Tabs: **Chats** (default) · **Memory** · **Instructions** · **Files** · **Timeline** · **Activity** · **Linked**.
-
-- **Chats** — chat list (left) + composer (right). Chat list shows recent threads, pinned, archived.
-- **Memory** (`<ProjectMemoryScreen/>`) — toggle, summary card, recent learnings (predicate / clinical / regulatory / process), entry controls.
-- **Instructions** (`<ProjectInstructionsScreen/>`) — 5,000-char monospace editor, char counter, active toggle, template picker (`PINSTR_TEMPLATES`: FDA 510(k), EU MDR, ICH M4Q, custom).
-- **Files** (`<ProjectFilesScreen/>`) — table with filter chips, sort, group-by, drag-drop affordance, capacity bar. Columns: name · author · when · size · lines.
-- **Timeline** (`<ProjectTimeline/>`) — pathway-aware default phases from `PHASE_PRESETS` (510K / IND / NDA / CER). Status dots, connector line, in-progress phase highlighted with accent ring + bar + %, days-to-target in head.
-- **Activity** (`<ProjectActivityScreen/>` from `ProjectsExtras.jsx`) — 21 CFR Part 11 audit log. Day-grouped rows, kind chips (Export / File / Memory / Instructions / E-sig / Comment / Lifecycle / Access), each row: time · kind · actor + role + verb + target · IP + e-sig pill + signature hash. "Tamper-evident · SHA-256" integrity badge in head.
-- **Linked** (`<ProjectLinkedScreen/>`) — relationship graph + grouped list (Predicate device / Parent IND / Child NDA / Cross-reference / Supplier). Each row: directional arrow (in/out) · other project name · type pill · status pill · via-relationship hint · open/unlink actions.
-
-#### Detail head — more menu (`<ProjectMoreMenu/>` in `Projects.jsx`)
-Dropdown from ⋯: Duplicate · Duplicate as template · Export ZIP · Export eCTD · Transfer · separator · Archive · Delete (danger). Click-outside dismiss.
-
-#### Project config panel (`<ProjectConfigPanel/>` in `Projects.jsx`)
-Right Sheet, 440px, opens from gear, dismisses on Esc / close button. Tabs:
-- **General** — Project name, Submission type (`PCP_SUBMISSION_TYPES`, 9 options), Product, Sponsor, Target agency (`PCP_AGENCIES` as radio chips), Target date, Status (`PCP_STATUSES`, 5 options), Description.
-- **Instructions** — 5,000-char textarea (mono), live char counter, "Active" badge, reset.
-- **Members** — invite row (email + role select + invite button), member list with role select per row + remove (disabled for last owner), role legend (Owner / Maintainer / Editor / Viewer), SSO group mapping list.
-- **Compliance** — 21 CFR Part 11 status card with audit-trail + e-signature counts, integrity pills (Append-only · SHA-256 integrity · Tamper-evident), regulatory lead assignment.
-- **Settings** — default templates picker, retention policy, eCTD/ZIP export buttons, danger zone (Archive / Transfer / Delete with type-to-confirm).
-
-#### Modals & overlays
-- **Archive / restore / delete modal** (`<ProjectArchiveModal/>`) — three modes (`archive` / `restore` / `delete`). Delete requires typing the project name to confirm. Lists side effects per mode.
-- **Project quick switcher** (`<ProjectQuickSwitcher/>`) — ⌘K within Projects. Fuzzy filter, type pill, last-activity meta, ↑↓ + Enter, "Create new project" footer CTA.
-- **Notifications** (`<ProjectNotifications/>`) — right sheet from bell. Tabs: All · Unread (count badge). Categories: agency / predicate / supplier / e-sig / mention. Each row: icon · title · sub · when · project link. Mark-all-read in foot.
-- **Project internal search** (`<ProjectInternalSearch/>`) — overlay, scoped to one project. Searches Memory + Instructions + Files + Chats. Group headers, kind pills, ↑↓ + Enter to jump.
-- **New project dialog** (`<NewProjectDialog/>`) — region → application type → confirm. Driven by `NPD_REGIONS`, `NPD_TYPES`, `NPD_PREVIEWS`, `NPD_DEFAULT_PREVIEW`. Bootstrap preview shows the section/module skeleton each registry id creates.
-
-### Data shapes (verbatim — copy into v2)
-
-The list of projects (`PR_PROJECTS` in `Projects.jsx`) is the seed data — Claude Code should replace it with the live API response, but the **shape** must match. Key fields:
-
-```js
-{
-  id, name, description, code, pathway,         // 'or-801' | 'or-802' | ...
-  type,                                          // '510(k)' | 'IND' | 'NDA' | 'BLA' | 'PMA' | 'EU MDR CER' | 'IVDR'
-  status,                                        // 'draft' | 'active' | 'in_review' | 'submitted' | 'archived'
-  agency,                                        // 'FDA' | 'EMA' | 'PMDA' | 'MHRA' | 'Health Canada'
-  owner, owners[], due, lastActivity,
-  starred, archived,
-  phases: [{ name, status, progress }],          // status: 'completed' | 'in_progress' | 'pending'
-  memory: { enabled, summary, learnings[] },
-  instructions: string,
-  files: [{ name, author, when, size, lines, kind }],
-}
-```
-
-Saved views, filter pill options, audit-log events, link relationships, and notifications all have authoritative shapes in `Projects.jsx` / `ProjectsExtras.jsx`. Lift them as-is; do not re-derive.
-
-### What this replaces
-
-Delete, after Phase 3 ships and is verified:
-
-- `client/src/concept2cure/ZenApp.tsx` — project-scoped routes, header, tab strip, modal stack.
-- The document-chat fork under `IndustryAwareApp.tsx` — Projects is the unified surface.
-- Any project-list page that lives outside `AppsPage.tsx` (kept until Phase 1 deletes that file too).
-- Per-industry project dashboards under `components/biologics|medtech|pharma|cro|biotech/` **only where they rendered the project workspace**.
-
-Feature flags gating any of the above must be removed in the same PR that deletes the files.
-
-### Non-goals for Phase 3
-
-- Cross-project search (Phase 5 alongside Admin).
-- Engineering / UDI / Post-market deep surfaces (Phase 4).
-- Submission center (already hinted in home rail; phase TBD).
-- The artifact workbench (Phase 4) — Projects deep-links to it but does not own it.
-
-### Acceptance checklist (Claude Code must verify before closing Phase 3)
-
-**Token surface (re-run before every phase, no exceptions):**
-- [ ] `colors_and_type.css` is imported once at the app root, before any component CSS.
-- [ ] In live DevTools, `:root` resolves `--accent-100` to `#d97757` and `--bg-000` to `#faf9f5`.
-- [ ] No hex codes, font-families, or magic spacing values hard-coded in any Projects component.
-
-**List view:**
-- [ ] Header bell shows the unread dot (`PNOT_NOTIFS` filter `unread === true`) — not blank.
-- [ ] All 4 default saved views render (My active 510(k)s, Pending agency response, Archived, …) with the filter shapes from `PLF_SAVED_VIEWS`.
-- [ ] All 5 filter pills work as multi-select dropdowns with count badges; Clear-all only appears when ≥1 filter is set.
-- [ ] Bulk-action bar only renders when ≥1 row is checked; rows highlight with the accent-tinted background when checked.
-- [ ] Empty states render for both zero-projects (with onboarding suggestions) and zero-results (with clear-filters CTA).
-
-**Detail view:**
-- [ ] All 7 tabs render in order: Chats · Memory · Instructions · Files · Timeline · Activity · Linked.
-- [ ] Timeline auto-selects the right preset from `PHASE_PRESETS` based on `project.type`.
-- [ ] Activity log groups events by day, shows kind chips with counts, e-sig pills, IP + signature hash.
-- [ ] Linked tab groups by relationship type, shows directional arrows for in/out links.
-- [ ] More menu (⋯) dismisses on click-outside; Delete row uses the danger style (red).
-
-**Config panel:**
-- [ ] All 5 tabs render (General / Instructions / Members / Compliance / Settings).
-- [ ] Esc and close button both dismiss; clicking outside the sheet does not (intentional — prevents accidental dismiss while editing).
-- [ ] Members tab disables the remove button on the last Owner row.
-- [ ] Settings danger zone uses the type-to-confirm flow from `<ProjectArchiveModal/>`, not a plain button.
-
-**Overlays:**
-- [ ] ⌘K opens `<ProjectQuickSwitcher/>` from anywhere inside Projects; Esc dismisses; ↑↓ + Enter navigate.
-- [ ] Bell icon opens `<ProjectNotifications/>` right sheet; All/Unread tabs filter correctly; Mark-all-read clears the unread count.
-- [ ] In-project search opens `<ProjectInternalSearch/>` and groups results by source (Memory / Instructions / Files / Chats).
-- [ ] Archive modal in `delete` mode disables the confirm button until the typed text matches the project name exactly.
-
-**Cleanup:**
-- [ ] Legacy `ZenApp.tsx` project routes deleted. Feature flags removed. No dead code paths.
-- [ ] Sentence case everywhere. No emoji. No exclamation marks. 13px body. 200ms ease-out. Lucide icons only.
-
----
-
 ## Open questions
 
 Add unresolved questions here with your initials and the date. The designer answers by updating this file and the relevant `ui_kits/` surface.
 
-### Phase 3 audit — items Claude Code will hit on port (raised by designer 2026-04-29)
+*(none yet)*
 
-The hi-fi prototype at `ui_kits/home/Projects.jsx` is a static, in-memory mock. Porting it surfaces real questions the design doesn't answer. Each item below states **what the prototype does**, **what's ambiguous**, and **the design's intent** so Claude Code has a single source to act on.
+---
 
-**1. Project ID generation.** *Prototype:* `pr-${Date.now().toString(36)}` (`NewProjectDialog.create`, line 1574). *Ambiguous:* not unique under burst create, not server-authoritative, leaks creation time. *Intent:* server-side opaque ID (UUIDv7 or KSUID) returned from the create mutation. Client never invents IDs. The `pr-` prefix is purely visual mock affordance — drop it.
+## Phase 4 · MDX lifecycle + system surfaces — implementation contract
 
-**2. Status enum drift between create and config.** *Prototype:* `NewProjectDialog` writes `status: 'planning'` (line 1588) but `ProjectConfigPanel`'s status select (`PCP_STATUSES`, line 916) only offers `draft / active / in_review / submitted / archived`. A freshly created project's status is therefore unrepresentable in the editor. *Intent:* canonical enum is `draft | active | in_review | submitted | archived`. Map create → `draft`. Drop `planning` everywhere.
+### What ships
 
-**3. `submissionType` slug normalization.** *Prototype:* `type.applicationType.toUpperCase().replace(/[^A-Z0-9]/g, '')` (line 1582) — collapses `510(k)` → `510K`, `EU MDR CER` → `EUMDRCER`, `IVDR` → `IVDR`. *Ambiguous:* this is a one-way display→slug derivation; any DB lookup needs the inverse. *Intent:* server stores a closed enum (`FDA_510K | FDA_PMA | FDA_IND | FDA_NDA | FDA_BLA | EU_MDR_CER | EU_IVDR | …`). The wizard's `NPD_TYPES` table is the canonical source — port it as a static lookup, **don't regenerate slugs by string-mangling display names**.
+Six surfaces that today route to `mdx/_stubs/ComingSoon.tsx` (rendered via
+`<InDesignSurface>`). After Phase 4:
 
-**4. `targetAgency` vocabulary collision.** *Prototype:* `PCP_AGENCIES` (config panel, line 915) lists `['FDA', 'EMA', 'PMDA', 'Health Canada']`. `NPD_REGIONS` (wizard, line 1361) uses `['FDA', 'EMA', 'MHRA', 'HC', 'PMDA', 'Swissmedic']`. A wizard-created `HC` project will not match the panel's `Health Canada` radio and will show no selection. *Intent:* unify on the wizard's six-agency code list (`FDA | EMA | MHRA | HC | PMDA | Swissmedic`). Update `PCP_AGENCIES` to match. Display labels via `agencyFullName`. Update `Projects.jsx` accordingly when porting; treat the wizard table as canonical.
+| Rail id      | Source of truth                              | Replaces                                      |
+| ------------ | -------------------------------------------- | --------------------------------------------- |
+| engineering  | `ui_kits/mdx/surfaces/Engineering.jsx`       | `MDX_STUBS.engineering` entry + stub route    |
+| udi          | `ui_kits/mdx/surfaces/Udi.jsx`               | `MDX_STUBS.udi` entry + stub route            |
+| postmarket   | `ui_kits/mdx/surfaces/Postmarket.jsx`        | `MDX_STUBS.postmarket` entry + stub route     |
+| analytics    | `ui_kits/mdx/surfaces/Analytics.jsx`         | `MDX_STUBS.analytics` entry + stub route      |
+| memory       | `ui_kits/mdx/surfaces/Memory.jsx`            | `MDX_STUBS.memory` entry + stub route         |
+| admin        | `ui_kits/mdx/surfaces/Admin.jsx`             | `MDX_STUBS.admin` entry + stub route          |
 
-**5. Mini progress bar = "completed phases" only, not weighted.** *Prototype:* list-row mini bar (line 245) shows `completed / total`, ignoring the `progress` value of the current phase. The full ProjectTimeline header (line 837) uses the same definition. *Ambiguous:* a project at "phase 5 of 9, 60% through it" reads as 44% in both views. *Intent:* keep "completed phases / total" as the at-a-glance metric — it's the contractually meaningful number. Do **not** switch to a weighted blend mid-port. If we want weighted later, that's a Phase 3.5 decision.
+### Code changes Claude Code makes to land Phase 4
 
-**6. `daysToTarget` source of truth.** *Prototype:* hardcoded numbers per project (`daysToTarget: 142`), unrelated to `targetDate`. *Intent:* derive at render time as `differenceInCalendarDays(targetDate, today)`. Negative = overdue (render with `--text-warn` tone). `null` when `targetDate` is unset. Drop the stored field.
+1. **Port six new surface files** into `client/src/concept2cure/mdx/surfaces/`
+   as TSX. Each kit JSX file is a 1:1 starting point — drop the IIFE wrapper,
+   convert `window.X = ...` imports to ES module imports, type the props
+   (props shape is documented in each file's header comment).
+2. **Port six new data files** from `ui_kits/mdx/data/{engineering,udi,
+   postmarket,analytics,memory,admin}.js` into `client/src/concept2cure/mdx/data/`
+   as TS. These are the fixture shapes — they describe the schemas the live
+   hooks must produce. Each top-level export becomes a TS `interface` +
+   `export const`; the kit harness uses them as window globals, the codebase
+   imports them as ESM.
+3. **Update `mdx/data/nav.ts`** — remove the six entries from `MDX_STUBS`.
+   The `MDX_NAV_V2` list keeps the same ids, labels, icons, and group order
+   (no rename, no reorder).
+4. **Update `mdx/App.tsx`** — add six `case` arms in the surface switch,
+   mirroring the existing K510 / PMA / CER pattern:
+   ```ts
+   case 'engineering': surface = <EngineeringSurface program={programForContext} onAskAna={askAna} />; break;
+   case 'udi':         surface = <UdiSurface onAskAna={askAna} />; break;
+   case 'postmarket':  surface = <PostmarketSurface onAskAna={askAna} />; break;
+   case 'analytics':   surface = <AnalyticsSurface onAskAna={askAna} />; break;
+   case 'memory':      surface = <MemorySurface onAskAna={askAna} />; break;
+   case 'admin':       surface = <AdminSurface onAskAna={askAna} />; break;
+   ```
+5. **Merge `ui_kits/mdx/surfaces.css`** into `mdx/app.css` under the
+   matching surface banner. The kit file is structured exactly the way
+   `app.css` is — banners, selector order, and value formatting all match.
+6. **Move `ui_kits/mdx/tokens-shim.css` tokens** (`--border-100`,
+   `--border-200`, `--error-text`) **into `design-system/colors_and_type.css`**
+   under "Raw Claude scales". They're referenced throughout `app.css` and
+   belong with the canonical surface, not in a per-kit shim.
+7. **Wire each surface to live data.** The shape contract is the kit fixture
+   in `mdx/data/<surface>.ts`. Per surface:
 
-**7. Two writers for `instructions`.** *Prototype:* `ProjectInstructionsScreen` (the dedicated tab, line 620) and `ProjectConfigPanel` General-tab textarea (line 927) both edit `project.instructions` with no coordination. *Intent:* single source. The **Instructions tab** is the editor; the **Config panel General tab textarea is read-only** and links out to the Instructions tab on click. Strip the editable textarea from the config panel during port.
+#### Engineering (`/api/mdx/engineering/:programId`)
+Returns `{ dhf: ENG_DHF[], trace: ENG_TRACE[], risks: ENG_RISKS[], ecrs: ENG_ECRS[], issues: ENG_ISSUES[] }`.
+The risk acceptability lookup `ENG_RISK_ACCEPT` is org-wide policy and may
+live in `c2c_risk_policy` (one row per org). The heatmap reads from there.
 
-**8. `instructions` "active" toggle is local state only.** *Prototype:* `ProjectInstructionsScreen` keeps `active` in `useState`, derived from `!!project.instructions` (line 622). Pause/Save/Save-and-activate flip local state but never write back. *Intent:* `active` is a persisted boolean on the project. Pause = `active: false` (text retained). Save = persist text + `active: true`. The Mini "Active" badge on the panel reads this field, not the text length.
+#### UDI (`/api/mdx/udi`)
+Returns `{ devices: UDI_DEVICES[], labels: UDI_LABELS[], symbols: UDI_SYMBOLS[],
+issues: UDI_ISSUES[], mri: UDI_MRI[] }`. Issues are computed server-side from
+label artifacts × symbol glossary × MRI matrix.
 
-**9. Save handler missing on Config panel.** *Prototype:* `ProjectConfigPanel` (line 924) takes `{ project, open, onClose }` — no `onSave`. Edits are discarded on close. *Intent:* add `onSave(form)` to the prop contract. Wire it to a single PATCH on the project. Close after success. Dirty-state confirm on Esc/close if unsaved edits.
+#### Post-market (`/api/mdx/postmarket`)
+Returns `{ metrics: PV_METRICS[], signals: PV_SIGNALS[], mdrs: PV_MDRS[],
+capas: PV_CAPAS[], pms: PV_PMS_PLAN[], trends: PV_TRENDS[] }`. Signal source
+feeds (MAUDE, FAERS, EUDAMED, support, social, literature) are existing
+ingestion jobs — wire those into `c2c_vigilance_signals`.
 
-**10. Modal handlers are stubs.** *Prototype:* `onArchive`, `onDelete`, `onExport`, `onTransfer`, `onDuplicate` (lines 208–211, 264, 315, 446, 469) all `() => {}` or `setArchiveTarget(null)`. *Intent:* each is its own server mutation. Wiring expectations:
-  - Archive → soft-delete, `status: 'archived'`, hidden from default list, recoverable from a "Show archived" filter.
-  - Delete → hard-delete, requires typed confirmation (already in `ProjectArchiveModal`), audit-trail entry.
-  - Export ZIP → backend job, returns signed URL, modal shows progress.
-  - Transfer → owner-only, picks target workspace, creates audit entry both sides.
-  - Duplicate as template → strips chats/files, copies phases + instructions + config, opens template editor.
+#### Analytics (`/api/mdx/analytics`)
+Returns `{ kpis: ANL_KPIS[], phases: ANL_CYCLE_PHASES[], blockers: ANL_BLOCKERS[],
+reviewers: ANL_REVIEWERS[], usage: ANL_ANA_USAGE[], pace: ANL_PACE_24M[] }`.
+Reviewer cohort data joins to public FDA decision data
+(`fda_510k_decisions`, `fda_pma_approvals`) by product code.
 
-**11. `targetDate` input type.** *Prototype:* plain text input. *Intent:* `<input type="date">` with locale-aware display. Server stores ISO 8601 (`YYYY-MM-DD`), no timezone (regulatory dates are calendar dates).
+#### AnA memory (`/api/mdx/memory`)
+Returns `{ categories: MEM_CATEGORIES[], atoms: MEM_ATOMS[], ingest: MEM_INGEST[],
+effects: MEM_EFFECTS[] }`. New tables: `c2c_memory_atoms`,
+`c2c_memory_ingestion_jobs`, `c2c_memory_effects`. The `pinned`,
+`importance`, `scope`, `supersedes`, and `verified` fields all index.
 
-**12. `chats` and `files` shapes are mock-only.** *Prototype:* inline arrays with ad-hoc shapes (`{id, title, last}` / `{name, lines, kind}`). *Intent:* both are server-paginated lists, not project fields. Port as separate `useChats(projectId)` / `useFiles(projectId)` queries. The list-row counts (`p.chats.length`, line 250) become a denormalized count on the project payload.
+#### Admin (`/api/mdx/admin`)
+Returns `{ kpis: ADM_KPIS[], members: ADM_MEMBERS[], roles: ADM_ROLES[],
+grants: ADM_GRANTS[], sso: ADM_SSO, apiKeys: ADM_API_KEYS[], audit: ADM_AUDIT[],
+settings: ADM_SETTINGS[] }`. Every mutation on this surface MUST emit a
+21 CFR Part 11 audit entry; the admin audit pane reads from
+`audit_logs WHERE actor_role IN ('admin') OR action LIKE 'admin.%'`.
 
-**13. `capacityPct` is unused decoration.** *Prototype:* present on every project, never read by any component. *Intent:* drop the field entirely on port.
+### Tokens, copy, motion — all unchanged
 
-**14. `PR_PROJECTS` is mutated in place.** *Prototype:* `NewProjectDialog.create` calls `PR_PROJECTS.unshift(...)` (line 1577) — module-scope mutation, not React state. *Intent:* obvious — server mutation + React Query invalidation. Flagged here only so Claude Code doesn't naively translate the array mutation into a `useState` array on the page component.
+- All six surfaces use only tokens declared in `colors_and_type.css` + the
+  shim (`--border-100`, `--border-200`, `--error-text`).
+- Claude orange (`--accent-100`) appears at most **once per screen** as an
+  active selection or focal CTA. Already enforced in each surface; do not
+  add extra accent usages during the port.
+- Body 13px, max title 28px serif (`--font-serif`) — matches the rest
+  of the MDX kit.
+- Motion: 200ms ease-out, no bounce — single global rule already in app.css.
+- Lucide icons only; the kit's `icons.tsx` already covers the new glyphs
+  (`pin`, `upload`, `key`, `link`, `shield`, `trendingDown`). Port any
+  additions verbatim.
+- No emoji, no exclamation marks. Verified in every string.
 
-— *all items above resolved by designer; no blocking ambiguities remain. Claude Code: treat the intent lines as the contract.*
+### Acceptance checklist
+
+- [ ] Six rail entries route to the new surfaces — no path falls through
+      to `<InDesignSurface>` anymore.
+- [ ] `MDX_STUBS` is empty (`{}`); the type signature reflects that.
+- [ ] Each surface fetches live data via its hook and falls back to the
+      ported fixture during load and on error (matches K510Surface's
+      `live ?? fixture` pattern).
+- [ ] No hard-coded colors / radii / fonts in any of the six surfaces —
+      all values come from tokens.
+- [ ] `colors_and_type.css` includes `--border-100`, `--border-200`,
+      `--error-text` under "Raw Claude scales". The kit's
+      `tokens-shim.css` is deleted.
+- [ ] Existing K510 / PMA / CER / Precedent / Overview / Workbench
+      surfaces unchanged. (Phase 4 is additive only.)
+- [ ] No new icon library introduced; Lucide remains the only icon source.
+- [ ] No console errors on any of the six routes.
+
+---
+
+## Inbound work — PDEV → IND (PR #550)
+
+- **Status:** Draft PR #550 opened in `concept2cure/ClinicalSageAI-2-replit` — `PDEV_IND_DESIGN_BRIEF.md` (691 lines) imported to this project root.
+- **Backend posture:** Registry · schema · services · routes (14) · AnA commands (20) · audit · governance are merged. UI is the only gap.
+- **Recommended phase number:** **Phase 7 — PDEV workstream.** Cross-cuts CMC + Nonclinical + Clinical + Regulatory; rail-slotted under the Domain tier alongside `mdx` and `biopharma`.
+- **Surface inventory:** 13 surfaces (Program dashboard · Workstream drill-down · Activity detail with 6 tabs · IND assembly · AI drafting workbench · Evidence picker · FDA interaction stream · Contradiction registry · Provenance trace · Approval chain detail · AnA dock PDEV context · Reason-for-change dialog · New PDEV program wizard).
+- **Closed enums:** 4 workstreams · 5 stages · 14 activity lifecycle states · 5 eCTD modules · contradiction + workflow-status enums + 20 AnA commands. Activity registry (52 entries) fetched at runtime from `GET /api/pdev/registry` — do not hard-code into `data.jsx`.
+- **Per-surface state-pill color map:** documented in `PDEV_IND_DESIGN_BRIEF.md §5`.
+- **Build sequence:** 10 sub-phases (7.0 → 7.9), each independently shippable.
+- **Open questions awaiting designer call:** 8 items in `PDEV_IND_DESIGN_BRIEF.md §9` — rail position, default view mode, provenance export shape, approval-chain configuration, reason-min-length affordance, suggestion ranking, superseded pill treatment, overview empty-state choice.
+
+When PR #550 merges, Phase 7 is the next phase to ship — slotted between the in-design Phase 4 (artifact workbench) and Phase 5 (auth). The brief's `§8 Acceptance checklist` is the contract Claude Code verifies against.
 
 ---
 
 ## Changelog
 
-- **2026-04-29** — Phase 3 audit. 14 ambiguities raised and resolved against `ui_kits/home/Projects.jsx`: ID generation, status-enum drift (`planning` vs. canonical 5), submissionType slug normalization, agency vocabulary collision (`HC` vs. `Health Canada`), mini-bar progress definition, `daysToTarget` derivation, dual writers on `instructions`, missing `onSave` on `ProjectConfigPanel`, stub modal handlers, `targetDate` input type, `chats`/`files` shapes, unused `capacityPct`, in-place `PR_PROJECTS` mutation. All resolutions documented in **Open questions**; no blocking items remain before port.
-- **2026-04-28** — Phase 3 Projects contract finalized. Full surface inventory: list (filter chip rail, saved views, bulk actions, empty states), detail (7 tabs incl. Activity 21 CFR Part 11 audit log + Linked relationship graph), config panel (5 tabs incl. Members + Settings + danger zone), overlays (⋯ menu, ⌘K quick switcher, notifications sheet, internal search, archive/restore/delete modal). All living under `ui_kits/home/` — `Projects.jsx` (core) + `ProjectsExtras.jsx` (Phase 3.5 surfaces) + `styles.css` (prefixed `.prj-` / `.pmem-` / `.pinstr-` / `.pfiles-` / `.ptl-` / `.pcp-` / `.pact-` / `.plnk-` / `.parch-` / `.plf-` / `.plb-` / `.ple-` / `.pqs-` / `.pnot-` / `.pis-` / `.pmm-`).
-- **2026-04-23 (PM)** — Phase 2 MDX refinements: Grid/List toggle on Overview (auto >12), pathway + status filter chips, unified status vocab across strip/grid/chips (idle/active/blocked/complete), predicate table multi-select driving multi-column SE matrix, AnA dock first-visit + pulse-nudge state machine, rail stubs render InDesignSurface. Phase 3 Projects contract scaffolded pending RIM framing.
-- **2026-04-23** — Phase 2 MDX workstream shipped. 5 surfaces (Overview, 510k, PMA, CER, Precedent), 11 rail items, 3-column shell with collapsible rail + AnA dock. Home rail `mdx` item + launcher tile now both point to `../mdx/index.html`.
+- **2026-05-20** — Phase 7 PDEV kit shipped to `ui_kits/pdev/` (8 surfaces + 3 overlays + universal confirm dialog). Answered "yes to all" on 8 brief open questions; see `ui_kits/pdev/PHASE_7_INSTALL.md §6` for resolved defaults. Inbound work card (PR #550) closed.
+- **2026-05-20** — PDEV → IND design brief inbound (PR #550). Imported `PDEV_IND_DESIGN_BRIEF.md` (691 lines) to project root. Awaiting designer review of 8 open questions (§9) before Phase 7 kit construction begins. See "Inbound work — PDEV → IND" above for the surface inventory + acceptance contract.
+- **2026-05-14** — Phase 6 diagnostic-client surfaces shipped: IVD pathway, EU IVDR, CDx co-development (paired drug-device timeline), LDT compliance (FDA 2024 rule phase tracker). New rail group "Diagnostics" between Workbench and Intelligence.
+- **2026-05-14** — Phase 5 must-have-for-beta surfaces shipped: Document vault (full), e-signature flow (`<EsignModal>`), audit log viewer, notifications inbox, templates (medtech corpus), quality system, ESG transmittal extension contract.
+- **2026-05-14** — Phase 4 MDX lifecycle + system surfaces shipped: device engineering, UDI and labeling, post-market vigilance, analytics, AnA memory, admin and access. All six rail items now resolve to real designs (`ui_kits/mdx/surfaces/*.jsx`) instead of falling through to `<InDesignSurface>`. New per-surface data shapes documented above.
 - **2026-04-21** — Phase 1 home screen finalized. Rail grew from 10 to 15 items (added Quality and Lifecycle, AnA Memory, Audit and Compliance; Reporting renamed to Reports). Precedent Intelligence removed from the rail per product direction — it will live inside the MDX workstream in a later phase.
