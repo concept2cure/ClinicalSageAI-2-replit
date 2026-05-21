@@ -5,7 +5,7 @@ import {
   recordSuccessfulFirecrawlScrape,
 } from '../integrations/firecrawl/usage';
 import { evaluateFirecrawlPolicy } from '../integrations/firecrawl/policy';
-import { getPool } from '../db.ts';
+import { getPool } from '../db';
 import { firecrawlError } from '../integrations/firecrawl/errors';
 import { authMiddleware } from '../auth';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
@@ -156,7 +156,7 @@ router.post('/scrape', async (req, res) => {
         title: normalized.title || normalized.url,
         source: 'firecrawl',
         provenance: normalized.canonicalUrl,
-        tags: normalized.regulatorySignals || [],
+        tags: (normalized.regulatorySignals as any) || [],
         lifecycleState: 'ingested',
         content: (normalized.payload?.markdown || normalized.payload?.html || '').slice(0, 30000),
       }).catch(() => undefined);

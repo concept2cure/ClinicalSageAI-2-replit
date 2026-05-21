@@ -296,7 +296,7 @@ router.post('/seed', async (req: Request, res: Response) => {
     ];
 
     for (const file of evidenceFiles) {
-      await db.insert(sharepoint_files).values({
+      await db.insert(sharepoint_files as any).values({
         tenant_id: tenantId,
         filename: file.filename,
         category: file.category,
@@ -323,7 +323,7 @@ router.post('/seed', async (req: Request, res: Response) => {
     }
 
     // Add medical device records
-    await db.insert(medicalDevices).values([
+    await db.insert(medicalDevices as any).values([
       {
         tenant_id: tenantId,
         device_name: 'NeuroFlex TENS Patch',

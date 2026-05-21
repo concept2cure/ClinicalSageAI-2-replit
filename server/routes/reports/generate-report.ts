@@ -110,7 +110,7 @@ router.post('/generate', async (req, res) => {
     }
 
     // Get related trials for the protocol/indication
-    let relatedTrials = [];
+    let relatedTrials: any[] = [];
     if (indication) {
       // Fetch related trials from database based on indication
       relatedTrials = await db

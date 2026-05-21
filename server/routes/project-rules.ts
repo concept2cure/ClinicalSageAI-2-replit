@@ -392,7 +392,7 @@ router.post('/:ruleId/test', asyncHandler(async (req: Request, res: Response) =>
 router.get('/logs', (req: Request, res: Response, next: Function) => {
   req.url =
     '/executions/log' + (req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '');
-  router.handle(req, res, next);
+  (router as any).handle(req, res, next);
 });
 
 router.get('/executions/log', asyncHandler(async (req: Request, res: Response) => {
@@ -456,7 +456,7 @@ router.get('/executions/log', asyncHandler(async (req: Request, res: Response) =
 // Alias: frontend calls /templates (shorthand)
 router.get('/templates', (req: Request, res: Response, next: Function) => {
   req.url = '/templates/catalog';
-  router.handle(req, res, next);
+  (router as any).handle(req, res, next);
 });
 
 router.get('/templates/catalog', async (_req: Request, res: Response) => {

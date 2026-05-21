@@ -244,7 +244,7 @@ export async function importTrialsFromCsv(
                 ? await db
                     .select()
                     .from(csrReports)
-                    .where(sql => sql`${csrReports.nctrialId} = ${reportData.nctrialId}`)
+                    .where((sql: any) => sql`${(csrReports as any).nctrialId} = ${reportData.nctrialId}`)
                     .limit(1)
                 : [];
 
@@ -278,7 +278,7 @@ export async function importTrialsFromCsv(
                   const existingDetails = await db
                     .select()
                     .from(csrDetails)
-                    .where(sql => sql`${csrDetails.reportId} = ${reportId}`)
+                    .where((sql: any) => sql`${csrDetails.reportId} = ${reportId}`)
                     .limit(1);
 
                   if (existingDetails.length === 0) {
@@ -445,7 +445,7 @@ export async function importTrialsFromJson(
           ? await db
               .select()
               .from(csrReports)
-              .where(sql => sql`${csrReports.nctrialId} = ${reportData.nctrialId}`)
+              .where((sql: any) => sql`${(csrReports as any).nctrialId} = ${reportData.nctrialId}`)
               .limit(1)
           : [];
 
@@ -487,7 +487,7 @@ export async function importTrialsFromJson(
             const existingDetails = await db
               .select()
               .from(csrDetails)
-              .where(sql => sql`${csrDetails.reportId} = ${reportId}`)
+              .where((sql: any) => sql`${csrDetails.reportId} = ${reportId}`)
               .limit(1);
 
             if (existingDetails.length === 0) {
@@ -587,9 +587,9 @@ export async function importTrialsFromApiV2(
 
   try {
     // Import the functions for processing API v2 data
-    const dataImporterV2 = await import('./data-importer-v2');
+    const dataImporterV2 = (await import('./data-importer-v2')) as any;
     const { processApiV2Data } = dataImporterV2;
-    const { studies } = processApiV2Data(data);
+    const { studies } = processApiV2Data(data) as { studies: any[] };
 
     if (studies.length === 0) {
       return { success: false, message: 'No valid studies found in API v2 data', count: 0 };
@@ -611,7 +611,7 @@ export async function importTrialsFromApiV2(
           ? await db
               .select()
               .from(csrReports)
-              .where(sql => sql`${csrReports.nctrialId} = ${report.nctrialId}`)
+              .where((sql: any) => sql`${(csrReports as any).nctrialId} = ${report.nctrialId}`)
               .limit(1)
           : [];
 
@@ -644,7 +644,7 @@ export async function importTrialsFromApiV2(
           const existingDetails = await db
             .select()
             .from(csrDetails)
-            .where(sql => sql`${csrDetails.reportId} = ${reportId}`)
+            .where((sql: any) => sql`${csrDetails.reportId} = ${reportId}`)
             .limit(1);
 
           if (existingDetails.length === 0) {

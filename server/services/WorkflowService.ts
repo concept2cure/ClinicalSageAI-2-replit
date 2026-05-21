@@ -689,7 +689,7 @@ export class WorkflowService {
     }
 
     // Templates are cached, so parallel fetches are fast (cache hits)
-    const uniqueTemplateIds: number[] = [...new Set(workflows.map((w: any) => w.templateId as number))];
+    const uniqueTemplateIds: number[] = Array.from(new Set(workflows.map((w: any) => w.templateId as number))) as number[];
     const templateMap = new Map<number, any>();
     await Promise.all(
       uniqueTemplateIds.map(async (tid: number) => {
@@ -750,7 +750,7 @@ export class WorkflowService {
     }
 
     // Templates are cached via LRU
-    const uniqueTemplateIds: number[] = [...new Set(workflows.map((w: any) => w.templateId as number))];
+    const uniqueTemplateIds: number[] = Array.from(new Set(workflows.map((w: any) => w.templateId as number))) as number[];
     const templateMap = new Map<number, any>();
     await Promise.all(
       uniqueTemplateIds.map(async (tid: number) => {

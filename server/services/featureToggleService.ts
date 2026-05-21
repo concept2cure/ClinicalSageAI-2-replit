@@ -7,7 +7,10 @@
  */
 import { db } from '../db';
 import { featureToggles } from '../../shared/schema';
-import { eq, and, or, array, contains } from 'drizzle-orm';
+import { eq, and, or, inArray, sql } from 'drizzle-orm';
+// Legacy aliases for the renamed/missing drizzle helpers.
+const array = inArray;
+const contains = (col: any, value: any) => sql`${col} @> ${value}`;
 
 export class FeatureToggleService {
   /**

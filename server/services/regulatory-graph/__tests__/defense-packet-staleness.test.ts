@@ -73,13 +73,13 @@ vi.mock('../../../db', () => ({
 
 // Stub the existing lineage + audit collaborators
 const recordLineageBatchMock = vi.fn(async (entries: unknown[]) => entries.length);
-const traceDownstreamMock = vi.fn(async () => ({ nodes: [], edges: [] } as any));
-const traceUpstreamMock = vi.fn(async () => ({ nodes: [], edges: [] } as any));
+const traceDownstreamMock = vi.fn(async (..._args: any[]) => ({ nodes: [], edges: [] } as any));
+const traceUpstreamMock = vi.fn(async (..._args: any[]) => ({ nodes: [], edges: [] } as any));
 
 vi.mock('../../data-lineage-service', () => ({
   recordLineageBatch: (e: unknown[]) => recordLineageBatchMock(e),
-  traceDownstream: (...args: unknown[]) => traceDownstreamMock(...args),
-  traceUpstream: (...args: unknown[]) => traceUpstreamMock(...args),
+  traceDownstream: (...args: any[]) => traceDownstreamMock(...args),
+  traceUpstream: (...args: any[]) => traceUpstreamMock(...args),
 }));
 
 vi.mock('../../audit/auditLogger', () => ({

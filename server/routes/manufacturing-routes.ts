@@ -95,7 +95,7 @@ let simulateDeficiency: ((snapshot: any, opts?: any) => Promise<any>) | null = n
 async function loadReviewer() {
   if (reviewManufacturing) return;
   try {
-    const mod = await import('../src/services/ai/manufacturingReviewer.js');
+    const mod = (await import('../src/services/ai/manufacturingReviewer.js')) as any;
     reviewManufacturing = mod.reviewManufacturing;
     simulateDeficiency = mod.simulateDeficiency;
   } catch (err) {

@@ -578,7 +578,7 @@ Return JSON:
   // GET /api/v1/drafting/task_status/:task_id — DB-backed with in-memory fallback
   router.get('/v1/drafting/task_status/:task_id', async (req: Request, res: Response) => {
     try {
-      const { task_id } = req.params;
+      const { task_id } = req.params as { task_id: string };
 
       try {
         const [task] = await db.select().from(draftingTasks).where(eq(draftingTasks.taskId, task_id));
@@ -599,7 +599,7 @@ Return JSON:
         // DB query failed — fall through to in-memory
       }
 
-      const memTask = (global as any).draftingTasks?.[task_id];
+      const memTask = (global as any).draftingTasks?.[task_id as any];
       if (!memTask) {
         return res.status(404).json({ error: 'Task not found' });
       }

@@ -355,7 +355,7 @@ class S3StorageService {
       Key: path,
     });
 
-    return getSignedUrl(this.client, command, { expiresIn });
+    return getSignedUrl(this.client as any, command, { expiresIn });
   }
 
   /**
@@ -375,7 +375,7 @@ class S3StorageService {
       ServerSideEncryption: 'AES256',
     });
 
-    return getSignedUrl(this.client, command, { expiresIn });
+    return getSignedUrl(this.client as any, command, { expiresIn });
   }
 
   /**

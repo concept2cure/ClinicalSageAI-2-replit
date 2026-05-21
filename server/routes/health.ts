@@ -11,7 +11,7 @@ import { CircuitState, getCircuitBreaker } from '../middleware/circuitBreaker';
 import { healthCheck as sagePlusHealthCheck } from '../sage-plus-service';
 
 const router = express.Router();
-const logger = createContextLogger({ module: 'health-routes' });
+const logger = createContextLogger('health-routes');
 
 // Endpoints
 
@@ -144,7 +144,7 @@ router.get('/health/deep', async (req: Request, res: Response) => {
         databaseResult.latency = Date.now() - startDb;
       } catch (error) {
         // Keep existing status but note latency error
-        databaseResult.latencyError = error instanceof Error ? error.message : String(error);
+        (databaseResult as any).latencyError = error instanceof Error ? error.message : String(error);
       }
     }
 

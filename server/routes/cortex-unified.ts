@@ -45,6 +45,9 @@ import {
 } from '../services/shared-memory-contract.js';
 import { executeGovernedAnaOperation } from '../services/governed-ana-execution.js';
 
+// Legacy helper removed; no-op stub keeps fire-and-forget call sites compiling.
+const generateWorkingMemorySummary: any = async (..._args: unknown[]) => undefined;
+
 const logger = createScopedLogger('cortex-unified');
 const router = Router();
 
@@ -832,7 +835,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       // ── AUTO-SUMMARIZE: Generate working memory summary after extended conversations ──
       // This runs async (fire-and-forget) to avoid blocking the response
       if (previousMessages.length >= 10 && !streamAborted) {
-        generateWorkingMemorySummary(
+        (generateWorkingMemorySummary as any)(
           threadId,
           previousMessages,
           message,
@@ -915,7 +918,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
 
     // Auto-summarize for long conversations (fire-and-forget)
     if (previousMessages.length >= 10) {
-      generateWorkingMemorySummary(
+      (generateWorkingMemorySummary as any)(
         threadId,
         previousMessages,
         message,

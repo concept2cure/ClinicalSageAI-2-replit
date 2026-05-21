@@ -581,7 +581,7 @@ router.get('/knowledge-graph', async (req, res) => {
           id: `bio_${rel.biomarkerId}`,
           label: rel.biomarkerName,
           type: 'biomarker',
-          group: rel.biomarkerType,
+          group: rel.biomarkerType ?? 'unknown',
         });
       }
 
@@ -591,7 +591,7 @@ router.get('/knowledge-graph', async (req, res) => {
           id: `end_${rel.endpointId}`,
           label: rel.endpointName,
           type: 'endpoint',
-          group: rel.endpointType,
+          group: rel.endpointType ?? 'unknown',
         });
       }
 

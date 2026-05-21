@@ -288,7 +288,7 @@ export async function generateFigure(
     });
 
     const content = aiResult.content || '';
-    const tokensUsed = completion.usage?.total_tokens;
+    const tokensUsed = (aiResult as any).usage?.total_tokens;
 
     // 6. Build figure spec
     const figure: FigureSpec = {
@@ -401,7 +401,7 @@ Only suggest figures that are standard for this section type in regulatory submi
       ],
     });
 
-    const analysisContent = analysis.choices[0]?.message?.content || '{}';
+    const analysisContent = (analysis as any).choices?.[0]?.message?.content || (analysis as any).content || '{}';
     let suggestions: {
       figures: Array<{
         figureType: string;

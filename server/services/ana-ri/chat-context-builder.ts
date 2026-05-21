@@ -325,7 +325,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     buildMemoryContextForChat({
       threadId: thread_id || undefined,
       organizationId: numericOrgId ?? undefined,
-      projectId: projectId || undefined,
+      projectId: typeof projectId === 'string' ? parseInt(projectId, 10) || undefined : projectId,
       query: message,
       limitPerLayer: 4,
       maxChars: 3500,
@@ -338,7 +338,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     }).catch(() => ({ block: '', sources: [] as string[] })),
   ]);
 
-  const effectiveMessage = enrichment.rewrittenMessage || message;
+  const effectiveMessage = (enrichment as any).rewrittenMessage || message;
 
   // === Governed context enrichment (fabric state) ===
   let governedContextBlock = '';

@@ -36,7 +36,7 @@ reportsManifestRoutes.get(['/personas', '/personas.json'], async (_req: Request,
  */
 reportsManifestRoutes.get('/persona/:personaId', async (req: Request, res: Response) => {
   try {
-    let { personaId } = req.params;
+    let { personaId } = req.params as { personaId: string };
 
     // Remove the .json suffix if present
     personaId = personaId.replace(/\.json$/, '');

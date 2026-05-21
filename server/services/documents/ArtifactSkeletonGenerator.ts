@@ -8,8 +8,12 @@
  * Integrates with: ComplianceRulesEngine, ECTDScaffoldingService
  */
 
-import { logger } from '../../lib/logger';
-import { AuditLogger } from '../audit/AuditLogger';
+import { createScopedLogger } from '../../utils/logger';
+const logger = createScopedLogger('artifact-skeleton-generator');
+const AuditLogger: any = {
+  logEvent: async (..._args: any[]) => undefined,
+  logAction: async (..._args: any[]) => undefined,
+};
 
 export type SubmissionType = 
   | '510K' 

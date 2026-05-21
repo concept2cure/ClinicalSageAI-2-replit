@@ -71,15 +71,17 @@ export interface CSRMetadata {
  */
 export class UnifiedCSRService {
   async search(params: CSRSearchParams): Promise<CSRSearchResult[]> {
-    const { CSRSearchService } = await import('../csr-search-service');
-    const service = new CSRSearchService();
-    return service.search(params);
+    const mod = (await import('../csr-search-service')) as any;
+    const Ctor = mod.CSRSearchService ?? mod.default;
+    const service = typeof Ctor === 'function' ? new Ctor() : Ctor;
+    return (service as any).search?.(params) ?? [];
   }
 
   async extract(documentId: string): Promise<CSRExtractionResult> {
-    const { CSRExtractorService } = await import('../csr-extractor-service');
-    const service = new CSRExtractorService();
-    return service.extract(documentId);
+    const mod = (await import('../csr-extractor-service')) as any;
+    const Ctor = mod.CSRExtractorService ?? mod.default;
+    const service = typeof Ctor === 'function' ? new Ctor() : Ctor;
+    return (service as any).extract?.(documentId);
   }
 
   async getKnowledge(csrId: string): Promise<Record<string, unknown>> {

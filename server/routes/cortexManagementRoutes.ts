@@ -492,7 +492,7 @@ export function createCortexManagementRoutes(pool: Pool): Router {
    */
   router.get('/versions/:atomId/:versionNumber', async (req: Request, res: Response) => {
     try {
-      const { atomId, versionNumber } = req.params;
+      const { atomId, versionNumber } = req.params as { atomId: string; versionNumber: string };
       const version = await versionService.getVersion(atomId, parseInt(versionNumber));
 
       if (!version) {

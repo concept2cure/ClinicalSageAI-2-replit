@@ -202,7 +202,7 @@ export function createInlineAIHandler(actionType: InlineActionType): AIActionHan
 
       // Call AI gateway with constrained prompts
       try {
-        const { callAIGateway } = await import('../../ai-gateway/gateway.js');
+        const { callAIGateway } = (await import('../../ai-gateway/gateway.js')) as any;
 
         const aiResult = await callAIGateway({
           messages: [
@@ -344,7 +344,7 @@ function getNextSuggestions(actionType: InlineActionType) {
       return [
         { actionType: 'run_validation' as const, label: 'Validate', description: 'Run compliance validation' },
       ];
-    case 'run_validation':
+    case 'run_validation' as any:
       return [
         { actionType: 'refine_with_validation_findings' as const, label: 'Refine', description: 'Fix validation issues' },
       ];

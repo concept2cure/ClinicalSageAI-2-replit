@@ -28,7 +28,7 @@ export async function featureToggleMiddleware(
     // Check if the feature is enabled for this tenant
     const isEnabled = await FeatureToggleService.isFeatureEnabled(
       featureKey,
-      organizationId,
+      typeof organizationId === 'string' ? parseInt(organizationId, 10) : organizationId,
       clientWorkspaceId
     );
 

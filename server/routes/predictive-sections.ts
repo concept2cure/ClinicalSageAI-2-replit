@@ -179,7 +179,7 @@ router.get('/templates/:sectionCode', async (req, res) => {
       },
     };
 
-    const sectionTemplates = templates[sectionCode];
+    const sectionTemplates = (templates as Record<string, any>)[sectionCode];
 
     if (!sectionTemplates) {
       return res.json({
@@ -275,7 +275,7 @@ router.get('/completion-status/:submissionType', async (req, res) => {
       regulatoryRegion: 'FDA' as any,
     };
 
-    const predictions = await predictiveSectionService.getSectionSuggestions(context);
+    const predictions = await predictiveSectionService.getSectionSuggestions(context as any);
 
     res.json({
       success: true,

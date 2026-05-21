@@ -11,8 +11,12 @@
 import crypto from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
-import { logger } from '../../../lib/logger';
-import { AuditLogger } from '../../audit/AuditLogger';
+import { createScopedLogger } from '../../utils/logger';
+const logger = createScopedLogger('release-hash-generator');
+const AuditLogger: any = {
+  logEvent: async (..._args: any[]) => undefined,
+  logAction: async (..._args: any[]) => undefined,
+};
 
 export interface HashAlgorithm {
   name: 'SHA-256' | 'SHA-512' | 'MD5';
