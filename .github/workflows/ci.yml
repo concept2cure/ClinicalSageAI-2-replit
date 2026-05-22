@@ -314,18 +314,21 @@ jobs:
         # coverage today. They've been masked for months because SonarCloud
         # runs `needs: [lint, test]` and either Lint or Test has consistently
         # been red. Now that both pass, the gate would block every PR until
-        # multi-month coverage work lands (plan Track F). Disable thresholds
-        # here only — vitest.config.ts retains the 70/70/70/60 aspiration
-        # for IDE / local visibility. Ratchet up via Track F.
-        run: |
-          npx jest --config scripts/jest.config.js --coverage --passWithNoTests
-          NODE_OPTIONS="--max-old-space-size=4096" npx vitest run \
-            --config vitest.config.ts \
-            --coverage --passWithNoTests \
-            --coverage.thresholds.lines=0 \
-            --coverage.thresholds.functions=0 \
-            --coverage.thresholds.statements=0 \
-            --coverage.thresholds.branches=0
+        # multi-month coverage work lands (plan Track F). Override thresholds
+        # only in this step — vitest.config.ts retains the 70/70/70/60
+        # aspiration for IDE / local visibility. Ratchet up via Track F.
+        #
+        # The extra args after `--` are appended to the END of the npm test
+        # script (`jest && vitest`), so they only reach vitest's argv.
+        # Jest does not see `--coverage.thresholds.*` and is unaffected.
+        run: >
+          npm test --
+          --coverage
+          --passWithNoTests
+          --coverage.thresholds.lines=0
+          --coverage.thresholds.functions=0
+          --coverage.thresholds.statements=0
+          --coverage.thresholds.branches=0
         env:
           CI: true
 
