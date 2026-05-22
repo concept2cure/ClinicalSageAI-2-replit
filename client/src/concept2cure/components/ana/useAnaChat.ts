@@ -20,7 +20,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 
-import { getAuthHeaders } from '@/utils/authToken';
+import { getAuthHeaders } from '../../../utils/authToken';
 import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
 
 /** Shape of an action chip produced by the server's guidance/command executors. */
