@@ -29,15 +29,21 @@ vi.mock('../../middleware/auth.js', () => ({
 }));
 
 describe('AnA Cortex compatibility', () => {
-  it('returns canonical headers for ana route mount', async () => {
+  it('sets canonical headers on the ana route mount', async () => {
     const { default: router } = await import('../../routes/ana-cortex');
     const app = express();
     app.use(express.json());
     app.use('/api/ana-cortex', router);
 
-    const res = await request(app).post('/api/ana-cortex/ich-e6r3-guidance').send({ query: 'x' });
+    // The /ich-e6r3-guidance endpoint previously returned a fabricated payload
+    // including ana_1_0_ri_ich_analysis. That endpoint now returns 501 because
+    // the hardcoded response builder was removed. Hit /health instead — it uses
+    // the mocked anaCortexService and exercises the same canonical route mount
+    // and middleware, so the contract under test (X-AnA-Cortex-Route header on
+    // every response) is preserved without depending on fabricated payload shape.
+    const res = await request(app).get('/api/ana-cortex/health');
     expect(res.status).toBe(200);
     expect(res.headers['x-ana-cortex-route']).toBe('canonical');
-    expect(res.body.ana_1_0_ri_ich_analysis).toBeDefined();
+    expect(res.body.success).toBe(true);
   });
 });
