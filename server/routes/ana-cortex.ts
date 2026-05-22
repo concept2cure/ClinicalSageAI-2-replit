@@ -12,162 +12,11 @@ router.use((req, res, next) => {
   next();
 });
 
-const buildRegulatoryAnalysisResponse = (payload: any) => {
-  const query = payload?.query || 'Regulatory readiness assessment';
-
-  return {
-    success: true,
-    regulatory_framework: 'ICH E6(R3)',
-    overall_confidence_score: 92,
-    regulatory_impact_summary:
-      'ICH E6(R3) alignment requires targeted remediation before submission.',
-    ana_1_0_ri_recommendations: [
-      'Prioritize quality management evidence mapped to ICH E6(R3) Section 5.0.',
-      'Address risk-based monitoring controls and data-integrity traceability.',
-      'Close critical documentation gaps before regulatory pre-submission review.',
-    ],
-    comprehensive_analysis: {
-      source_query: query,
-      regulatory_readiness_score: 84,
-      overall_risk_assessment: 'Moderate',
-      priority_level: 'High',
-      timeline_analysis: {
-        projected_delay_days: 21,
-      },
-      regulatory_gaps: [
-        {
-          regulation_section: 'ICH E6(R3) 5.0',
-          requirement_area: 'Quality Management System',
-          risk_level: 'high',
-          compliance_status: 'needs_review',
-        },
-        {
-          regulation_section: 'ICH E6(R3) 5.5.2',
-          requirement_area: 'Data Integrity and Traceability',
-          risk_level: 'high',
-          compliance_status: 'partial',
-        },
-        {
-          regulation_section: 'ICH E6(R3) 5.5.3',
-          requirement_area: 'Risk-Based Monitoring',
-          risk_level: 'medium',
-          compliance_status: 'needs_review',
-        },
-      ],
-      risk_factors: [
-        'Evidence trail incompleteness for key protocol decisions',
-        'Inconsistent risk-based monitoring documentation',
-        'Cross-functional review latency during submission assembly',
-      ],
-      regulatory_categories: {
-        'Quality Management': 'Critical Risk',
-        'Risk-Based Monitoring': 'High Risk',
-        'Data Integrity': 'High Risk',
-        'Patient Safety': 'Medium Risk',
-      },
-      ich_e6r3_assessment: {
-        framework: 'ICH E6(R3)',
-        coverage: 'partial',
-        critical_findings: 2,
-      },
-    },
-    cost_analysis: {
-      total_financial_impact: 280000,
-      total_impact: '$280K - $750K potential regulatory impact',
-      implementation_cost: 35000,
-      prevention_value: 520000,
-      roi_percentage: 1385,
-      payback_period: '3-4 weeks',
-      risk_avoidance: 285000,
-      compliance_value: 200000,
-      cost_breakdown: {
-        labor: 22000,
-        ich_training: 8000,
-        consulting: 3000,
-        technology: 2000,
-      },
-      regulatory_savings: {
-        fda_inspection_findings: 125000,
-        ich_gcp_violations: 85000,
-        clinical_hold_risk: 75000,
-      },
-    },
-    ana_1_0_ri_intelligence_summary: {
-      confidence_score: 92,
-      generated_at: new Date().toISOString(),
-      source: 'ana-ri',
-    },
-  };
-};
-
-const buildIchGuidanceResponse = (payload: any) => {
-  const query = payload?.query || 'ICH E6(R3) guidance request';
-
-  const sections = [
-    {
-      section_number: '5.0',
-      section_title: 'Quality Management',
-      relevance_score: 96,
-      regulatory_requirements: [
-        'Implement proportionate quality management system controls.',
-        'Define risk ownership and escalation pathways.',
-      ],
-      key_points: [
-        'Document risk identification and mitigation rationale.',
-        'Maintain auditable evidence for quality decisions.',
-      ],
-      compliance_priority: 'Critical',
-    },
-    {
-      section_number: '5.5.2',
-      section_title: 'Data Governance and Integrity',
-      relevance_score: 94,
-      regulatory_requirements: [
-        'Ensure traceability of source-to-submission data lineage.',
-        'Apply controls for data accuracy, completeness, and consistency.',
-      ],
-      key_points: [
-        'Version-controlled records for critical data transformations.',
-        'Role-based access and change audit trails.',
-      ],
-      compliance_priority: 'High',
-    },
-    {
-      section_number: '5.5.3',
-      section_title: 'Risk-Based Monitoring',
-      relevance_score: 93,
-      regulatory_requirements: [
-        'Use risk-proportionate monitoring strategy and thresholds.',
-        'Document trigger conditions and corrective actions.',
-      ],
-      key_points: [
-        'Centralized monitoring with predefined escalation criteria.',
-        'Periodic review of key risk indicators.',
-      ],
-      compliance_priority: 'High',
-    },
-  ];
-
-  return {
-    success: true,
-    regulatory_framework: 'ICH E6(R3)',
-    confidence_score: 95,
-    guidance_response: `ICH E6(R3) guidance prepared for: ${query}`,
-    comprehensive_guidance:
-      'Focus on quality management, data integrity, and risk-based monitoring with explicit evidence traceability for submission readiness.',
-    ich_e6r3_guidance: sections,
-    guidance_references: sections,
-    ich_e6r3_sections_covered: sections,
-    ana_1_0_ri_ich_analysis:
-      'Cross-checked requirements against the requested regulatory context and highlighted priority compliance actions.',
-    regulatory_impact_assessment:
-      'Current posture indicates moderate-to-high risk if critical controls are not remediated before submission.',
-    query_metadata: {
-      processing_time_ms: 1200,
-      generated_at: new Date().toISOString(),
-    },
-  };
-};
+// Two response builders previously lived here and returned hardcoded JSON
+// (fabricated confidence scores, dollar-impact estimates, ICH section coverage).
+// Removed because they returned the same fabricated values for every request
+// without any AI gateway call, data lookup, or analysis. The handlers below
+// now return 501 until a validated, gateway-routed implementation lands.
 
 router.get('/health', async (_req, res) => {
   try {
@@ -182,49 +31,28 @@ router.get('/health', async (_req, res) => {
   }
 });
 
-router.post('/regulatory-analysis', requireAuth, async (req, res) => {
-  try {
-    const response = buildRegulatoryAnalysisResponse(req.body || {});
-    res.json(response);
-  } catch (error) {
-    console.error('AnA RI regulatory analysis failed:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to generate regulatory analysis',
-    });
-  }
+router.post('/regulatory-analysis', requireAuth, async (_req, res) => {
+  res.status(501).json({
+    success: false,
+    error: 'Regulatory analysis is not available in this build. A validated, gateway-routed implementation is pending.',
+    code: 'NOT_IMPLEMENTED',
+  });
 });
 
-router.post('/ich-e6r3-guidance', async (req, res) => {
-  try {
-    const response = buildIchGuidanceResponse(req.body || {});
-    res.json(response);
-  } catch (error) {
-    console.error('AnA RI ICH guidance failed:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to generate ICH E6(R3) guidance',
-    });
-  }
+router.post('/ich-e6r3-guidance', async (_req, res) => {
+  res.status(501).json({
+    success: false,
+    error: 'ICH E6(R3) guidance is not available in this build. A validated, gateway-routed implementation is pending.',
+    code: 'NOT_IMPLEMENTED',
+  });
 });
 
 router.get('/intelligence', async (_req, res) => {
-  try {
-    res.json({
-      success: true,
-      feeds: [
-        {
-          id: 'regulatory-watch-001',
-          title: 'FDA/ICH regulatory intelligence summary',
-          priority: 'high',
-          updatedAt: new Date().toISOString(),
-        },
-      ],
-    });
-  } catch (error) {
-    console.error('AnA RI intelligence feed failed:', error);
-    res.status(500).json({ success: false, error: 'Failed to fetch intelligence feed' });
-  }
+  res.status(501).json({
+    success: false,
+    error: 'Regulatory intelligence feed is not available in this build. Live ingestion is pending.',
+    code: 'NOT_IMPLEMENTED',
+  });
 });
 
 router.get('/capabilities', async (_req, res) => {
