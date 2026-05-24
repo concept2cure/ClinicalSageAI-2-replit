@@ -450,7 +450,7 @@ interface SimilarCSR {
   sample_size: number;
   primary_endpoint: string;
   duration_weeks: number;
-  similarity: number;
+  similarity: number | null;
   success: boolean;
   [key: string]: any; // Allow for additional properties
 }
@@ -591,7 +591,7 @@ function generateRecommendations(
       recommendations += `   - Phase: ${study.phase}\n`;
       recommendations += `   - Sample Size: ${study.sample_size}\n`;
       recommendations += `   - Duration: ${study.duration_weeks} weeks\n`;
-      recommendations += `   - Similarity Score: ${(study.similarity * 100).toFixed(1)}%\n\n`;
+      recommendations += `   - Similarity Score: ${study.similarity != null ? `${(study.similarity * 100).toFixed(1)}%` : 'n/a'}\n\n`;
     });
   }
 

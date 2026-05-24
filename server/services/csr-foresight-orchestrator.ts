@@ -51,7 +51,8 @@ interface CSRIntegrationStatus {
   totalCSRsProcessed: number;
   lastSyncTime: string;
   activeModels: number;
-  predictionAccuracy: number;
+  /** null when no prediction-vs-outcome backtest has been run. */
+  predictionAccuracy: number | null;
   keyInsights: CSRInsight[];
   recentActivity: any[];
 }
