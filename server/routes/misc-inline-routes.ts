@@ -206,52 +206,34 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
         Expires: '0',
       });
 
+      // The numeric readiness assessment (score, delay days, submission
+      // date, per-gap estimatedDays / financialImpact) was fabricated — fixed
+      // constants returned regardless of any project's real state. There is
+      // no project/program context on this endpoint, so a real readiness
+      // score cannot be computed here. The real, program-scoped readiness
+      // engine lives in server/services/orchestration/readiness-engine.ts and
+      // server/services/pdev/pdev-readiness-service.ts; wiring it requires
+      // threading a programId from the client (tracked follow-on). Until then
+      // we return null for every computed metric and expose the playbook's
+      // required-section checklist (template reference, not a fabricated
+      // assessment).
       res.json({
         success: true,
         playbook: playbook,
-        readinessScore: 78,
-        overallScore: 78,
-        riskLevel: 'Medium',
-        readinessLevel: 'Medium',
-        estimatedDelayDays: 45,
-        estimatedSubmissionDate: 'September 15, 2025',
+        readinessScore: null,
+        overallScore: null,
+        riskLevel: null,
+        readinessLevel: null,
+        estimatedDelayDays: null,
+        estimatedSubmissionDate: null,
         playbookUsed: playbook,
+        readinessComputed: false,
         gaps: [
-          {
-            section: 'CMC Stability Study',
-            status: 'missing',
-            priority: 'high',
-            estimatedDays: 30,
-            financialImpact: 750000,
-          },
-          {
-            section: 'Clinical Study Reports (CSR)',
-            status: 'incomplete',
-            priority: 'high',
-            estimatedDays: 45,
-            financialImpact: 1000000,
-          },
-          {
-            section: 'Toxicology Reports',
-            status: 'missing',
-            priority: 'medium',
-            estimatedDays: 14,
-            financialImpact: 300000,
-          },
-          {
-            section: 'Drug Substance Specs',
-            status: 'incomplete',
-            priority: 'medium',
-            estimatedDays: 21,
-            financialImpact: 400000,
-          },
-          {
-            section: 'Quality Overall Summary',
-            status: 'missing',
-            priority: 'medium',
-            estimatedDays: 10,
-            financialImpact: 200000,
-          },
+          { section: 'CMC Stability Study', status: 'unknown', priority: 'high', estimatedDays: null, financialImpact: null },
+          { section: 'Clinical Study Reports (CSR)', status: 'unknown', priority: 'high', estimatedDays: null, financialImpact: null },
+          { section: 'Toxicology Reports', status: 'unknown', priority: 'medium', estimatedDays: null, financialImpact: null },
+          { section: 'Drug Substance Specs', status: 'unknown', priority: 'medium', estimatedDays: null, financialImpact: null },
+          { section: 'Quality Overall Summary', status: 'unknown', priority: 'medium', estimatedDays: null, financialImpact: null },
         ],
         missingSections: [
           'CMC Stability Study',
@@ -266,7 +248,7 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
           'Review toxicology data requirements',
         ],
         timeline: {
-          estimatedCompletionDays: 45,
+          estimatedCompletionDays: null,
           criticalPathItems: ['CMC Stability Study', 'Clinical Study Reports (CSR)'],
         },
       });
