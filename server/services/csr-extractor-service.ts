@@ -4,6 +4,7 @@ import { sql } from 'drizzle-orm';
 import { db } from '../db';
 import { huggingFaceService } from '../huggingface-service';
 import { eq } from 'drizzle-orm';
+import { getOpenAIClient } from './openai-client';
 
 // Constants
 const PROCESSED_CSR_DIR = path.join(process.cwd(), 'data/processed_csrs');
@@ -359,7 +360,7 @@ TEXT:
 ${text.slice(0, 8000)}
 `;
 
-        const response = await openaiService.createChatCompletion({
+        const response = await getOpenAIClient().chat.completions.create({
           model: 'gpt-4-turbo-preview',
           messages: [
             {
@@ -471,7 +472,7 @@ CSR TEXT:
 ${context}
 `;
 
-      const response = await openaiService.createChatCompletion({
+      const response = await getOpenAIClient().chat.completions.create({
         model: 'gpt-4-turbo-preview',
         messages: [
           {
@@ -487,7 +488,7 @@ ${context}
       });
 
       if (response.choices && response.choices.length > 0) {
-        const extractedInfo = JSON.parse(response.choices[0].message.content);
+        const extractedInfo = JSON.parse(response.choices[0].message.content || '{}');
         return {
           semantic: extractedInfo.semantic || {},
           pharmacology: extractedInfo.pharmacology || {},
@@ -511,7 +512,7 @@ ${context}
   async processCSR(reportId: number): Promise<CSRMappingTemplate> {
     try {
       // Get the CSR report data from the database
-      const [report] = await db.execute<{
+      const reportResult = await db.execute<{
         id: number;
         title: string;
         nctrial_id?: string;
@@ -522,18 +523,19 @@ ${context}
         uploadDate?: Date;
         file_path?: string;
       }>(sql`
-        SELECT id, title, nctrial_id, sponsor, indication, phase, drug_name as "drugName", upload_date as "uploadDate", file_path 
-        FROM csr_reports 
-        WHERE id = ${reportId} 
+        SELECT id, title, nctrial_id, sponsor, indication, phase, drug_name as "drugName", upload_date as "uploadDate", file_path
+        FROM csr_reports
+        WHERE id = ${reportId}
         LIMIT 1
       `);
+      const report = reportResult.rows[0];
 
       if (!report) {
         throw new Error(`CSR Report with ID ${reportId} not found`);
       }
 
       // Get the associated details
-      const [details] = await db.execute<{
+      const detailsResult = await db.execute<{
         id: number;
         reportId: number;
         studyDesign?: string;
@@ -571,10 +573,11 @@ ${context}
         };
         processed?: boolean;
       }>(sql`
-        SELECT * FROM csr_details 
-        WHERE report_id = ${reportId} 
+        SELECT * FROM csr_details
+        WHERE report_id = ${reportId}
         LIMIT 1
       `);
+      const details = detailsResult.rows[0];
 
       // Create a new mapping object based on the template
       const mappedData: CSRMappingTemplate = JSON.parse(JSON.stringify(this.mappingTemplate));
@@ -915,7 +918,7 @@ ${context}
 
       // Get embeddings if HuggingFace service is available
       try {
-        const embedding = await huggingFaceService.getEmbedding(combinedText);
+        const embedding = await huggingFaceService.generateEmbeddings(combinedText);
         if (embedding && embedding.length > 0) {
           mappedData.vector_embedding = embedding;
         }
@@ -951,12 +954,13 @@ ${context}
   async processUnprocessedCSRs(limit: number = 50): Promise<number> {
     try {
       // Find unprocessed CSRs with details
-      const unprocessedCSRs = await db.execute<{ report_id: number }>(sql`
-        SELECT report_id 
-        FROM csr_details 
+      const unprocessedResult = await db.execute<{ report_id: number }>(sql`
+        SELECT report_id
+        FROM csr_details
         WHERE processed = false OR processed IS NULL
         LIMIT ${limit}
       `);
+      const unprocessedCSRs = unprocessedResult.rows;
 
       console.log(`Found ${unprocessedCSRs.length} unprocessed CSRs to process`);
 
@@ -983,17 +987,17 @@ ${context}
    */
   async getProcessingStats(): Promise<{ total: number; processed: number; unprocessed: number }> {
     try {
-      const [totalResult] = await db.execute<{ count: number }>(sql`
+      const totalResult = await db.execute<{ count: number }>(sql`
         SELECT COUNT(*) as count FROM csr_reports
       `);
 
-      const [processedResult] = await db.execute<{ count: number }>(sql`
+      const processedResult = await db.execute<{ count: number }>(sql`
         SELECT COUNT(*) as count FROM csr_details
         WHERE processed = true
       `);
 
-      const total = totalResult?.count || 0;
-      const processed = processedResult?.count || 0;
+      const total = totalResult.rows[0]?.count || 0;
+      const processed = processedResult.rows[0]?.count || 0;
       const unprocessed = total - processed;
 
       return { total, processed, unprocessed };

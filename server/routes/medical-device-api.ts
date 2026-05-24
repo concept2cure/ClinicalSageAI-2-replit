@@ -16,8 +16,11 @@ import medicalDeviceService from '../services/medicalDeviceService';
 import predicateFinderService from '../services/PredicateFinderService';
 import { eSTARValidator } from '../services/eSTARValidator';
 import { UnifiedCERService } from '../services/cer';
-import { searchDeviceReports, analyzeMaudeData } from '../fda_maude_client.js';
-import { gatherIntegratedData } from '../data_integration.js';
+import fdaMaudeClient from '../fda_maude_client.js';
+import dataIntegration from '../data_integration.js';
+
+const { searchDeviceReports, analyzeMaudeData } = fdaMaudeClient;
+const { gatherIntegratedData } = dataIntegration;
 
 const logger = createScopedLogger('medical-device-api');
 const router = Router();
@@ -142,8 +145,8 @@ router.post('/predicates/search', async (req: Request, res: Response) => {
  */
 router.get('/predicates/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    
+    const id = String(req.params.id);
+
     logger.info('Fetching predicate details', { predicateId: id });
 
     const predicate = await predicateFinderService.getPredicateById(id);
@@ -404,7 +407,7 @@ router.post('/submissions', async (req: Request, res: Response) => {
  */
 router.get('/submissions/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
 
     logger.info('Fetching submission', { submissionId: id });
 
@@ -431,7 +434,7 @@ router.get('/submissions/:id', async (req: Request, res: Response) => {
  */
 router.patch('/submissions/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
     const validated = SubmissionUpdateSchema.parse(req.body);
     const organizationId = Number((req as any).tenantContext?.organizationId || (req as any).organizationId);
     const userId = (req as any).user?.id || 'system';
@@ -538,7 +541,7 @@ router.post('/submissions/:id/estar/:sectionId/generate', async (req: Request, r
  */
 router.post('/submissions/:id/estar/validate', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const { strictMode = false } = req.body || {};
 
     logger.info('Validating eSTAR package (submission)', { submissionId: id });

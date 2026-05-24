@@ -137,6 +137,13 @@ class ESGSubmissionService {
       throw new Error('Project not found');
     }
 
+    // metadata is an untyped JSON column; narrow it at this boundary
+    const projectMetadata = (project.metadata ?? {}) as {
+      deviceName?: string;
+      indicationsForUse?: string;
+      [key: string]: unknown;
+    };
+
     // Generate unique package ID
     const packageId = `PKG-${Date.now()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 
@@ -145,20 +152,20 @@ class ESGSubmissionService {
       organizationId,
       projectId,
       packageId,
-      packageName: `510k_${project.projectName}_${new Date().toISOString().split('T')[0]}`,
+      packageName: `510k_${project.deviceName}_${new Date().toISOString().split('T')[0]}`,
       packageType: '510k',
       documents: documents.map(d => ({
         documentId: d.documentId,
-        title: d.title,
+        title: d.documentName,
         type: d.documentType,
         version: d.version
       })),
       attachments: [],
       estarData: {
-        projectName: project.projectName,
+        projectName: project.deviceName,
         submissionType: '510k',
-        deviceName: project.projectMetadata?.deviceName || '',
-        indicationsForUse: project.projectMetadata?.indicationsForUse || ''
+        deviceName: projectMetadata?.deviceName || '',
+        indicationsForUse: projectMetadata?.indicationsForUse || ''
       },
       submissionMethod: 'esg',
       status: 'ready',
@@ -170,7 +177,7 @@ class ESGSubmissionService {
       projectId,
       packageId,
       documents,
-      metadata: project.projectMetadata
+      metadata: projectMetadata
     };
   }
 

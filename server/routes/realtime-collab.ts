@@ -384,7 +384,8 @@ router.post('/rooms', (req: Request, res: Response) => {
  * Leave a collaboration room
  */
 router.delete('/rooms/:roomKey/users/:userId', (req: Request, res: Response) => {
-  const { roomKey, userId } = req.params;
+  const roomKey = String(req.params.roomKey);
+  const userId = String(req.params.userId);
   const removed = roomManager.removeUser(decodeURIComponent(roomKey), userId);
   res.json({ success: true, removed });
 });
@@ -394,7 +395,7 @@ router.delete('/rooms/:roomKey/users/:userId', (req: Request, res: Response) => 
  * Update user awareness (cursor, selection, typing indicator)
  */
 router.put('/rooms/:roomKey/awareness', (req: Request, res: Response) => {
-  const { roomKey } = req.params;
+  const roomKey = String(req.params.roomKey);
   const { userId, cursor, selection, isTyping, focusedField } = req.body;
   if (!userId) return res.status(400).json({ error: 'userId required' });
 
@@ -418,7 +419,7 @@ router.put('/rooms/:roomKey/awareness', (req: Request, res: Response) => {
  * Persist Yjs CRDT state vector for recovery
  */
 router.post('/rooms/:roomKey/yjs-state', (req: Request, res: Response) => {
-  const { roomKey } = req.params;
+  const roomKey = String(req.params.roomKey);
   const { stateVector, document } = req.body;
   if (!stateVector || !document) {
     return res.status(400).json({ error: 'stateVector and document required' });
@@ -436,7 +437,7 @@ router.post('/rooms/:roomKey/yjs-state', (req: Request, res: Response) => {
  * Retrieve persisted Yjs CRDT state for reconnection
  */
 router.get('/rooms/:roomKey/yjs-state', (req: Request, res: Response) => {
-  const { roomKey } = req.params;
+  const roomKey = String(req.params.roomKey);
   const room = roomManager.getRoom(decodeURIComponent(roomKey));
   if (!room || !room.yjsDocument) {
     return res.json({ success: true, data: null, message: 'No persisted state — new document' });
@@ -483,7 +484,7 @@ router.post('/locks', (req: Request, res: Response) => {
  * Release a lock
  */
 router.delete('/locks/:documentId', (req: Request, res: Response) => {
-  const { documentId } = req.params;
+  const documentId = String(req.params.documentId);
   const { userId, sectionId } = req.body;
   if (!userId) return res.status(400).json({ error: 'userId required' });
 
@@ -496,7 +497,7 @@ router.delete('/locks/:documentId', (req: Request, res: Response) => {
  * Get all active locks for a document
  */
 router.get('/locks/:documentId', (req: Request, res: Response) => {
-  const { documentId } = req.params;
+  const documentId = String(req.params.documentId);
   const locks = lockManager.getDocumentLocks(documentId);
   res.json({ success: true, data: locks });
 });

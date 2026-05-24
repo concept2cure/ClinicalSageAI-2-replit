@@ -5,8 +5,18 @@
  * for GA-ready persistence.
  */
 
+// Minimal shape of the database pool that this module relies on. Both the
+// real pg pool and the in-memory fallback below satisfy this interface.
+interface MaudPool {
+  query(text: string, params?: unknown[]): Promise<{ rows: any[] }>;
+  connect?(): Promise<{
+    query(text: string, params?: unknown[]): Promise<{ rows: any[] }>;
+    release(): void;
+  }>;
+}
+
 // Import the database pool - with fallback if not available
-let pool;
+let pool: MaudPool;
 try {
   const db = require('./index');
   pool = db.pool || db.default;

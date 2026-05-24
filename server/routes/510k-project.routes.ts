@@ -105,7 +105,7 @@ router.post('/create', asyncHandler(async (req: Request, res: Response) => {
         hasSterility: hasSterility,
         hasBiocompatibility: hasBiocompatibility,
         hasClinicalData: hasClinicalData,
-        hasAi: hasAI,
+        hasAI: hasAI,
         projectLead:
           projectLead && projectLead !== '' && !isNaN(parseInt(projectLead))
             ? parseInt(projectLead)
@@ -215,7 +215,6 @@ router.post('/create', asyncHandler(async (req: Request, res: Response) => {
     // 5. Create initial stage progress entry
     await db.insert(fda510kStageProgress).values({
       projectId: project.id,
-      organizationId: organizationId,
       stageName: 'setup',
       sectionName: 'project_initialization',
       collectedData: {
@@ -247,7 +246,6 @@ router.post('/create', asyncHandler(async (req: Request, res: Response) => {
         // Apply template settings
         await db.insert(fda510kStageProgress).values({
           projectId: project.id,
-          organizationId: organizationId,
           stageName: 'setup',
           sectionName: 'template_application',
           collectedData: {
@@ -275,7 +273,7 @@ router.post('/create', asyncHandler(async (req: Request, res: Response) => {
 
 // Get project stage data
 router.get('/:projectId/stage', asyncHandler(async (req: Request, res: Response) => {
-  const { projectId } = req.params;
+  const projectId = String(req.params.projectId);
   const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
   if (!organizationId) {
     return res.status(401).json({ error: 'Organization context required' });
@@ -350,7 +348,7 @@ router.get('/:projectId/stage', asyncHandler(async (req: Request, res: Response)
 
 // Get project details
 router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
-  const { projectId } = req.params;
+  const projectId = String(req.params.projectId);
   const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
   if (!organizationId) {
     return res.status(401).json({ error: 'Organization context required' });
@@ -391,7 +389,7 @@ router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
 
 // Update project team assignments
 router.post('/:projectId/team', asyncHandler(async (req: Request, res: Response) => {
-  const { projectId } = req.params;
+  const projectId = String(req.params.projectId);
   const { assignments } = req.body;
 
   // Delete existing assignments using SQL

@@ -77,7 +77,7 @@ interface PackBuilderPanelProps {
 
 function JobStatusBadge({ status }: { status: string }) {
   switch (status) {
-    case 'COMPLETED':
+    case 'SUCCEEDED':
       return (
         <Badge className="bg-green-100 text-green-800">
           <CheckCircle2 className="mr-1 h-3 w-3" /> Completed
@@ -231,7 +231,7 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
       try {
         const result = await fetchJobStatus(activeJobId!);
         setJobStatus(result);
-        if (result.status === 'COMPLETED' || result.status === 'FAILED') {
+        if (result.status === 'SUCCEEDED' || result.status === 'FAILED') {
           if (pollRef.current) clearInterval(pollRef.current);
           pollRef.current = null;
           queryClient.invalidateQueries({ queryKey: packListKey });
@@ -533,7 +533,7 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span>
-                      Approved: {readiness.approvedCount} / {readiness.totalRequired}
+                      Approved: {readiness.requiredClaims.approved} / {readiness.requiredClaims.total}
                     </span>
                     <span>
                       {readiness.ready ? (
@@ -545,21 +545,21 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
                   </div>
                   <Progress
                     value={
-                      readiness.totalRequired > 0
-                        ? (readiness.approvedCount / readiness.totalRequired) * 100
+                      readiness.requiredClaims.total > 0
+                        ? (readiness.requiredClaims.approved / readiness.requiredClaims.total) * 100
                         : 0
                     }
                     className="h-2"
                   />
-                  {readiness.missingClaims && readiness.missingClaims.length > 0 && (
+                  {readiness.reasons && readiness.reasons.length > 0 && (
                     <div className="text-xs text-muted-foreground mt-1">
                       <p className="font-medium text-yellow-700">
                         Missing approvals:
                       </p>
                       <ul className="list-disc list-inside">
-                        {readiness.missingClaims.map((c: any) => (
-                          <li key={c.id || c.claim_key}>
-                            {c.claim_key}: {c.title} ({c.status})
+                        {readiness.reasons.map((r) => (
+                          <li key={`${r.claimKey}-${r.code}`}>
+                            {r.claimKey}: {r.code}
                           </li>
                         ))}
                       </ul>

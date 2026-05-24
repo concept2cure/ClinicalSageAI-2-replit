@@ -1445,7 +1445,7 @@ router.post('/pma/search', async (req: Request, res: Response, next: NextFunctio
  */
 router.get('/pma/device/:pmaNumber', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { pmaNumber } = req.params;
+    const pmaNumber = String(req.params.pmaNumber);
     const tenantContext = (req as any).tenantContext;
 
     // Validate PMA number format
@@ -1626,11 +1626,12 @@ router.post('/pma/compare', async (req: Request, res: Response, next: NextFuncti
  * Get cache statistics
  */
 router.get('/cache/stats', async (req: Request, res: Response) => {
+  const cacheStats = cache.getStats();
   res.json({
     ...cacheStats,
-    keys: cache.size,
+    keys: cacheStats.size,
     hitRate: cacheStats.hits / (cacheStats.hits + cacheStats.misses) || 0,
-    cacheKeys: cache.size,
+    cacheKeys: cacheStats.size,
   });
 });
 
@@ -1647,7 +1648,7 @@ router.delete('/cache/clear', async (req: Request, res: Response, next: NextFunc
       organizationId: tenantContext.organizationId,
     });
 
-    clearCache();
+    cache.clear();
 
     res.json({
       message: 'Cache cleared successfully',
@@ -1667,7 +1668,7 @@ router.post(
   async (req: Request, res: Response, next: NextFunction) => {
     // Forward to predicate-search by rewriting the URL internally
     req.url = '/predicate-search';
-    router.handle(req, res, next);
+    router(req, res, next);
   }
 );
 

@@ -57,18 +57,26 @@ function getOrganizationId(req: Request): number {
       ? (req as any).organizationId
       : parseInt((req as any).organizationId as string, 10);
   }
-  if (req.user?.organizationId) return req.user.organizationId;
+  if (req.user?.organizationId) {
+    const orgId = typeof req.user.organizationId === 'number'
+      ? req.user.organizationId
+      : parseInt(String(req.user.organizationId), 10);
+    if (!isNaN(orgId)) return orgId;
+  }
   throw new Error('Organization context required');
 }
 
 function getUserId(req: Request): number {
-  if (req.userId) return req.userId;
-  if (req.user?.id) return req.user.id;
+  const raw = req.userId ?? req.user?.id;
+  if (raw !== undefined) {
+    const userId = typeof raw === 'number' ? raw : parseInt(String(raw), 10);
+    if (!isNaN(userId)) return userId;
+  }
   throw new Error('Authentication required');
 }
 
 function getUserName(req: Request): string {
-  return req.user?.name || req.user?.email || `user-${getUserId(req)}`;
+  return req.user?.email || `user-${getUserId(req)}`;
 }
 
 function getUserRole(req: Request): string {
@@ -142,7 +150,7 @@ router.get('/templates', (_req: Request, res: Response) => {
 router.get('/executions/:id', (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
-    const execution = getWorkflowExecution(req.params.id);
+    const execution = getWorkflowExecution(String(req.params.id));
     if (!execution || execution.organizationId !== orgId) {
       return res.status(404).json({ error: 'Workflow execution not found' });
     }
@@ -160,7 +168,7 @@ router.get('/executions/:id', (req: Request, res: Response) => {
 router.get('/project/:id', (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
-    const projectId = parseInt(req.params.id, 10);
+    const projectId = parseInt(String(req.params.id), 10);
     if (isNaN(projectId)) {
       return res.status(400).json({ error: 'Invalid project ID' });
     }
@@ -179,7 +187,7 @@ router.get('/project/:id', (req: Request, res: Response) => {
 router.post('/cancel/:id', (req: Request, res: Response) => {
   try {
     const userId = getUserId(req);
-    const success = cancelWorkflow(req.params.id, userId);
+    const success = cancelWorkflow(String(req.params.id), userId);
     if (!success) {
       return res.status(404).json({ error: 'Workflow not found or not cancellable' });
     }
@@ -197,7 +205,7 @@ router.post('/cancel/:id', (req: Request, res: Response) => {
 router.get('/projects/:projectId/readiness', async (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     if (isNaN(projectId) || projectId <= 0) {
       return res.status(400).json({ error: 'projectId must be a positive integer' });
     }
@@ -307,7 +315,7 @@ router.post('/continuity', async (req: Request, res: Response) => {
 router.get('/continuity/:projectId', (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     if (isNaN(projectId)) {
       return res.status(400).json({ error: 'Invalid project ID' });
     }

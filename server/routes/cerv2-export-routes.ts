@@ -465,7 +465,7 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
 router.get('/sample/:docType', async (req: Request, res: Response) => {
   if (!isSampleExportEnabled()) return denySampleExportRoute(res);
   try {
-    const docType = req.params.docType;
+    const docType = String(req.params.docType);
     if (!validDocTypes.includes(docType as any)) {
       return res.status(400).json({
         error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,
@@ -489,7 +489,7 @@ router.get('/sample/:docType', async (req: Request, res: Response) => {
 router.get('/sample/:docType/zip', async (req: Request, res: Response) => {
   if (!isSampleExportEnabled()) return denySampleExportRoute(res);
   try {
-    const docType = req.params.docType;
+    const docType = String(req.params.docType);
     if (!validDocTypes.includes(docType as any)) {
       return res.status(400).json({
         error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,
@@ -551,7 +551,7 @@ router.get('/sample/:docType/zip', async (req: Request, res: Response) => {
 router.get('/sample/:docType/docx', async (req: Request, res: Response) => {
   if (!isSampleExportEnabled()) return denySampleExportRoute(res);
   try {
-    const docType = req.params.docType;
+    const docType = String(req.params.docType);
     if (!validDocTypes.includes(docType as any)) {
       return res.status(400).json({
         error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,
@@ -579,7 +579,7 @@ router.get('/sample/:docType/docx', async (req: Request, res: Response) => {
 router.get('/sample/:docType/json', async (req: Request, res: Response) => {
   if (!isSampleExportEnabled()) return denySampleExportRoute(res);
   try {
-    const docType = req.params.docType;
+    const docType = String(req.params.docType);
     if (!validDocTypes.includes(docType as any)) {
       return res.status(400).json({
         error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,

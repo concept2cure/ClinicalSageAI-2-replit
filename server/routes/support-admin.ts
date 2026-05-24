@@ -268,7 +268,7 @@ router.get('/tickets/:id', async (req: Request, res: Response) => {
     const orgId = getOrgId(req);
     if (!orgId) return res.status(400).json({ error: 'Organization context required' });
 
-    const ticketId = parseInt(req.params.id, 10);
+    const ticketId = parseInt(String(req.params.id), 10);
     if (isNaN(ticketId)) return res.status(400).json({ error: 'Invalid ticket ID' });
 
     // Fetch ticket and messages in parallel
@@ -386,7 +386,7 @@ router.patch('/tickets/:id', async (req: Request, res: Response) => {
     const orgId = getOrgId(req);
     if (!orgId) return res.status(400).json({ error: 'Organization context required' });
 
-    const ticketId = parseInt(req.params.id, 10);
+    const ticketId = parseInt(String(req.params.id), 10);
     if (isNaN(ticketId)) return res.status(400).json({ error: 'Invalid ticket ID' });
 
     const data = updateTicketSchema.parse(req.body);
@@ -478,7 +478,7 @@ router.delete('/tickets/:id', async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'Only admins can delete tickets' });
     }
 
-    const ticketId = parseInt(req.params.id, 10);
+    const ticketId = parseInt(String(req.params.id), 10);
     if (isNaN(ticketId)) return res.status(400).json({ error: 'Invalid ticket ID' });
 
     // Use a transaction to ensure atomicity and verify ownership before deleting messages
@@ -525,7 +525,7 @@ router.post('/tickets/:id/messages', async (req: Request, res: Response) => {
     const userId = getUserId(req);
     if (!orgId || !userId) return res.status(400).json({ error: 'Organization and user context required' });
 
-    const ticketId = parseInt(req.params.id, 10);
+    const ticketId = parseInt(String(req.params.id), 10);
     if (isNaN(ticketId)) return res.status(400).json({ error: 'Invalid ticket ID' });
 
     // Verify ticket belongs to this org
@@ -655,7 +655,7 @@ router.get('/articles/:id', async (req: Request, res: Response) => {
     const orgId = getOrgId(req);
     if (!orgId) return res.status(400).json({ error: 'Organization context required' });
 
-    const articleId = parseInt(req.params.id, 10);
+    const articleId = parseInt(String(req.params.id), 10);
     if (isNaN(articleId)) return res.status(400).json({ error: 'Invalid article ID' });
 
     // Increment view count and fetch in a single query (avoids blind UPDATE on missing articles)
@@ -744,7 +744,7 @@ router.patch('/articles/:id', async (req: Request, res: Response) => {
     const orgId = getOrgId(req);
     if (!orgId) return res.status(400).json({ error: 'Organization context required' });
 
-    const articleId = parseInt(req.params.id, 10);
+    const articleId = parseInt(String(req.params.id), 10);
     if (isNaN(articleId)) return res.status(400).json({ error: 'Invalid article ID' });
 
     const data = updateArticleSchema.parse(req.body);
@@ -821,7 +821,7 @@ router.delete('/articles/:id', async (req: Request, res: Response) => {
     const orgId = getOrgId(req);
     if (!orgId) return res.status(400).json({ error: 'Organization context required' });
 
-    const articleId = parseInt(req.params.id, 10);
+    const articleId = parseInt(String(req.params.id), 10);
     if (isNaN(articleId)) return res.status(400).json({ error: 'Invalid article ID' });
 
     const result = await pool.query(
@@ -850,7 +850,7 @@ router.post('/articles/:id/feedback', async (req: Request, res: Response) => {
     const orgId = getOrgId(req);
     if (!orgId) return res.status(400).json({ error: 'Organization context required' });
 
-    const articleId = parseInt(req.params.id, 10);
+    const articleId = parseInt(String(req.params.id), 10);
     if (isNaN(articleId)) return res.status(400).json({ error: 'Invalid article ID' });
 
     const { helpful } = z.object({ helpful: z.boolean() }).parse(req.body);
