@@ -850,7 +850,12 @@ For each recommendation, include specific citations to relevant regulatory guide
     // Create comprehensive IND assessment
     const indAnalysis = {
       title: 'IND Readiness Assessment',
-      score: Math.floor(Math.random() * 15) + 75, // 75-90 range
+      // No deterministic IND-readiness scorer is wired. The score was
+      // previously `Math.floor(Math.random()*15)+75` — a fabricated value.
+      // The qualitative strengths / improvement areas / citations below are
+      // static regulatory guidance and remain. Score is null until a real
+      // scorer is connected.
+      score: null as number | null,
       strengths: [
         'Well-defined primary and secondary endpoints',
         'Clear inclusion/exclusion criteria',
@@ -877,13 +882,15 @@ For each recommendation, include specific citations to relevant regulatory guide
       ],
     };
 
-    // Statistics-based dropout prediction with references
+    // Qualitative dropout-risk factors with references. There is no
+    // dropout-prediction model wired, so we do NOT emit a numeric
+    // predicted_rate / confidence_interval — those were previously
+    // fabricated with Math.random() yet dressed with academic citations,
+    // which is the dangerous case. The qualitative factors and mitigation
+    // strategies below are real guidance and remain.
     const dropoutPrediction = {
-      predicted_rate: (Math.random() * 0.1 + 0.1).toFixed(3), // 10-20%
-      confidence_interval: [
-        (Math.random() * 0.05 + 0.08).toFixed(3), // 8-13%
-        (Math.random() * 0.1 + 0.15).toFixed(3), // 15-25%
-      ],
+      predicted_rate: null as string | null,
+      confidence_interval: null as [string, string] | null,
       factors: [
         {
           name: 'Treatment duration',
