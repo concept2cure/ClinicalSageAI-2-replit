@@ -1124,7 +1124,7 @@ router.get('/export', async (req, res) => {
     let reportData: any = {};
 
     if (type === 'summary') {
-      // Get summary analytics data
+      // Get summary analytics data — all aggregated from real csrReports rows.
       const cohortData = await db
         .select({
           count: count(),
@@ -1136,29 +1136,38 @@ router.get('/export', async (req, res) => {
 
       const totalReports = cohortData.reduce((sum, item) => sum + Number(item.count), 0);
 
+      // Real breakdowns from the grouped rows (previously hardcoded).
+      const reportsByIndication: Record<string, number> = {};
+      const reportsByPhase: Record<string, number> = {};
+      for (const row of cohortData) {
+        const ind = row.indication || 'Unspecified';
+        const ph = row.phase || 'Unspecified';
+        reportsByIndication[ind] = (reportsByIndication[ind] || 0) + Number(row.count);
+        reportsByPhase[ph] = (reportsByPhase[ph] || 0) + Number(row.count);
+      }
+
+      // Real success rate = approved reports / total (csrReports.status).
+      // Previously hardcoded 94.5.
+      const statusRows = await db
+        .select({ count: count(), status: csrReports.status })
+        .from(csrReports)
+        .groupBy(csrReports.status);
+      const approved = statusRows
+        .filter(r => r.status === 'approved')
+        .reduce((s, r) => s + Number(r.count), 0);
+      const successRate = totalReports > 0 ? Number(((approved / totalReports) * 100).toFixed(1)) : null;
+
       reportData = {
         totalReports,
-        averageEndpoints: 3.2,
-        successRate: 94.5,
-        reportsByIndication: {
-          Oncology: 225,
-          Cardiovascular: 143,
-          Neurology: 98,
-          'Infectious Disease': 87,
-        },
-        reportsByPhase: {
-          '1': 105,
-          '2': 287,
-          '3': 325,
-          '4': 62,
-        },
-        mostCommonEndpoints: [
-          'Overall Survival',
-          'Progression-Free Survival',
-          'Objective Response Rate',
-          'Disease-Free Survival',
-          'Change in HbA1c',
-        ],
+        // averageEndpoints + mostCommonEndpoints require per-report endpoint
+        // data that isn't modeled on csrReports; omitted rather than
+        // fabricated. They return when an endpoints table is wired.
+        successRate,
+        reportsByIndication,
+        reportsByPhase,
+        reportsByStatus: Object.fromEntries(
+          statusRows.map(r => [r.status || 'unknown', Number(r.count)])
+        ),
       };
     } else if (type === 'predictive') {
       // Generate predictive analysis data
