@@ -411,7 +411,10 @@ async function findSimilarCsrs(indication: string, phase: string) {
       sample_size: 200, // Default value since property doesn't exist in schema
       primary_endpoint: 'Primary endpoint', // Would come from another table in a real implementation
       duration_weeks: 24, // Default value since property doesn't exist in schema
-      similarity: Math.random() * 0.3 + 0.7, // Simulated similarity score between 0.7 and 1.0
+      // No semantic-similarity engine is wired for this lookup (it's a
+      // LIKE match on indication), so we do not assert a similarity score.
+      // Previously `Math.random() * 0.3 + 0.7` — a fabricated rank.
+      similarity: null,
       success: true, // Assuming all CSRs in the database are from successful studies
     }));
   } catch (error) {

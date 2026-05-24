@@ -70,7 +70,11 @@ function extractFieldsFromText(text: string): Record<string, { value: string; co
     if (match && match[1]) {
       fields[fieldName] = {
         value: match[1].trim(),
-        confidence: 0.75 + Math.random() * 0.2,
+        // Deterministic regex extraction: the field is only populated when
+        // the pattern matched, so confidence is 1 (matched). Previously
+        // `0.75 + Math.random() * 0.2` — a fabricated per-request value with
+        // no relation to extraction quality.
+        confidence: 1,
         source: 'extracted',
       };
     }

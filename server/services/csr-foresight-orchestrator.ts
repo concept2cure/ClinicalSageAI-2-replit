@@ -372,8 +372,11 @@ export class CSRForesightOrchestrator {
           )
         ) as any);
 
-      // Calculate prediction accuracy (simulated for now)
-      const accuracy = 0.78 + Math.random() * 0.15;
+      // Prediction accuracy requires comparing past predictions to realized
+      // outcomes — that backtest is not wired, so we report null rather than
+      // fabricate it. Previously `0.78 + Math.random() * 0.15`, a random
+      // per-request KPI presented as real model accuracy.
+      const accuracy: number | null = null;
 
       // Get key insights
       const insights = await this.getCSRInsights(organizationId);
