@@ -1,13 +1,16 @@
 /**
  * Unit tests for the preclinical extractor.
  *
- * Mocks `pdf-parse` (the only filesystem-touching dependency) and the
- * unified AI client so the test runs offline and is fully deterministic.
+ * Mocks the pdf-parse wrapper (`server/utils/pdfParse` — the only
+ * filesystem-touching dependency) and the unified AI client so the test runs
+ * offline and is fully deterministic. The extractor imports the wrapper, not
+ * `pdf-parse` directly (the wrapper loads pdf-parse via createRequire for ESM
+ * interop), so the mock must target the wrapper module.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('pdf-parse', () => ({
+vi.mock('../../../utils/pdfParse', () => ({
   default: vi.fn(async (_buf: Buffer) => ({
     text: 'GLP repeat-dose tox study, 13 weeks, rat, NOAEL 50 mg/kg/day.',
   })),
