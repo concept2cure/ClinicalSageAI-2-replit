@@ -254,4 +254,75 @@ router.get('/analytics/ana-usage', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'ana-usage', err); }
 });
 
+/* ── GET /api/mdx/analytics — kit-shaped aggregate ───────────────────────────
+ * The Analytics surface (client useAnalytics) consumes a single payload
+ * { kpis, phases, blockers, reviewers, anaUsage, pace24m }. The per-facet
+ * routes above return server-native metric objects; this route assembles the
+ * exact kit shape from the tables we have. Facets with no backing source
+ * (reviewer velocity = FDA public decision corpus; per-tool AnA usage) return
+ * empty arrays — honest empties, not fixtures. Every query is empty-safe. */
+router.get('/analytics', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  try {
+    const prog = await safeAgg<{ total: number; active: number; submitted: number; approved: number }>(
+      `SELECT COUNT(*)::int AS total,
+              COUNT(*) FILTER (WHERE status = 'active')::int AS active,
+              COUNT(*) FILTER (WHERE status = 'submitted')::int AS submitted,
+              COUNT(*) FILTER (WHERE status = 'approved')::int AS approved
+         FROM regulatory_programs WHERE organization_id = $1 AND deleted_at IS NULL`,
+      [orgId], { total: 0, active: 0, submitted: 0, approved: 0 },
+    );
+    const draft = await safeAgg<{ pending: number; accepted: number }>(
+      `SELECT COUNT(*) FILTER (WHERE draft_source = 'ana' AND accepted_at IS NULL)::int AS pending,
+              COUNT(*) FILTER (WHERE draft_source = 'ana' AND accepted_at IS NOT NULL)::int AS accepted
+         FROM cerv2_510k_sections WHERE organization_id = $1`,
+      [orgId], { pending: 0, accepted: 0 },
+    );
+    const acceptRate = draft.accepted + draft.pending > 0
+      ? Math.round((draft.accepted / (draft.accepted + draft.pending)) * 100) : 0;
+
+    const kpis = [
+      { label: 'Programs', metric: String(prog.total), meta: `${prog.active} active` },
+      { label: 'Submissions cleared', metric: String(prog.approved), meta: `${prog.submitted} submitted` },
+      { label: 'AnA acceptance rate', metric: String(acceptRate), unit: '%', meta: `${draft.accepted} accepted · ${draft.pending} pending` },
+    ];
+
+    // Blockers grouped from the live c2c_blockers registry.
+    const blockerRows = await safeRows<{ cause: string; count: number; pathway: string | null }>(
+      `SELECT COALESCE(blocker_type, 'other') AS cause, COUNT(*)::int AS count,
+              MAX(document_family) AS pathway
+         FROM c2c_blockers WHERE org_id = $1 AND status = 'open'
+        GROUP BY blocker_type ORDER BY COUNT(*) DESC LIMIT 20`,
+      [orgId],
+    );
+    const blockers = blockerRows.map((b) => ({
+      cause: b.cause, count: b.count, median: 0, owner: '',
+      pathway: b.pathway ?? 'mixed', trend: 'flat',
+    }));
+
+    // 24-month submission pace from actual submission dates (oldest → newest).
+    const paceRows = await safeRows<{ ym: string; n: number }>(
+      `SELECT to_char(date_trunc('month', actual_submission_date), 'YYYY-MM') AS ym, COUNT(*)::int AS n
+         FROM regulatory_programs
+        WHERE organization_id = $1 AND actual_submission_date IS NOT NULL
+          AND actual_submission_date >= (now() - interval '24 months')
+        GROUP BY 1 ORDER BY 1`,
+      [orgId],
+    );
+    const paceMap = new Map(paceRows.map((r) => [r.ym, r.n]));
+    const pace24m: number[] = [];
+    for (let i = 23; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      pace24m.push(paceMap.get(d.toISOString().slice(0, 7)) ?? 0);
+    }
+
+    return ok(res, {
+      kpis, blockers, pace24m,
+      phases: [], reviewers: [], anaUsage: [],
+    });
+  } catch (err) { return serverError(res, log, 'analytics-aggregate', err); }
+});
+
 export default router;
