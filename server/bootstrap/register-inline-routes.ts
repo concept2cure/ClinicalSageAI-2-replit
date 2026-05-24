@@ -54,6 +54,8 @@ import mdxCdxRoutes from '../routes/mdx-cdx';
 import mdxLdtRoutes from '../routes/mdx-ldt';
 import mdxSubmissionGatewayRoutes from '../routes/mdx-submission-gateway';
 import mdxNotificationsRoutes from '../routes/mdx-notifications';
+import mdxAuditRoutes from '../routes/mdx-audit';
+import mdxAdminRoutes from '../routes/mdx-admin';
 import mdxClinicalStudiesRoutes from '../routes/mdx-clinical-studies';
 import mdxAnaMemoryRoutes from '../routes/mdx-ana-memory';
 import mdxQmsRoutes from '../routes/mdx-qms';
@@ -367,6 +369,8 @@ export function registerInlineSubmissionWorkflowRoutes({
   app.use('/api/mdx', mdxSubmissionGatewayRoutes);
   /* Notifications + clinical studies + AnA memory (migration 20260510). */
   app.use('/api/mdx', mdxNotificationsRoutes);
+  app.use('/api/mdx', mdxAuditRoutes);
+  app.use('/api/mdx', mdxAdminRoutes);
   app.use('/api/mdx', mdxClinicalStudiesRoutes);
   app.use('/api/mdx', mdxAnaMemoryRoutes);
   /* QMS + Labeling + Global search + Analytics (migration 20260511). */
