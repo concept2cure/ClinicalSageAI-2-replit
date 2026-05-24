@@ -17,6 +17,17 @@ import { PdevIcon } from '../icons';
 import { PDEV_SUGGESTIONS } from '../data/enums';
 import type { PdevProgramView, PdevActivityView } from '../data/types';
 
+/** Minimal transcript message for the dock. Mapped from useAnaChat in
+ *  PdevApp; mirrors the MDX AnaRail `ana-msg` shape. */
+export interface PdevAnaDockMessage {
+  role: 'user' | 'ana';
+  body: string;
+  /** Relative time chip (e.g. "just now"). */
+  when: string;
+  /** True while tokens are still arriving — renders a streaming caret. */
+  streaming?: boolean;
+}
+
 interface AnaDockProps {
   open: boolean;
   setOpen: (next: boolean) => void;
@@ -34,9 +45,12 @@ interface AnaDockProps {
   onSend: (text: string) => void;
   /** Streaming flag from the AnA gateway round-trip. When true the
    *  composer locks and the footer status flips to "AnA is thinking…"
-   *  so the user has immediate feedback that the prompt was accepted.
-   *  Streaming response history surfaces in the Conversations panel. */
+   *  so the user has immediate feedback that the prompt was accepted. */
   isStreaming?: boolean;
+  /** Conversation transcript for this dock session. When empty, the
+   *  suggestion chips show instead. Provisional inline treatment pending
+   *  a canonical viewport design in ui_kits/pdev. */
+  messages?: PdevAnaDockMessage[];
 }
 
 export function PdevAnaDock({
@@ -49,9 +63,18 @@ export function PdevAnaDock({
   activity,
   onSend,
   isStreaming = false,
+  messages = [],
 }: AnaDockProps) {
   const [draft, setDraft] = React.useState('');
   const suggestions = PDEV_SUGGESTIONS[activeNav] ?? PDEV_SUGGESTIONS.overview;
+  const hasTranscript = messages.length > 0;
+  const transcriptRef = React.useRef<HTMLDivElement>(null);
+
+  // Keep the transcript pinned to the latest message as tokens stream in.
+  React.useEffect(() => {
+    const el = transcriptRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages]);
 
   if (!open) {
     return (
@@ -130,22 +153,40 @@ export function PdevAnaDock({
         </div>
       )}
 
-      <div className="pdev-ana-section-label">Suggested for this surface</div>
-      {suggestions.slice(0, 3).map((s, i) => (
-        <button
-          key={i}
-          className="pdev-ana-suggestion"
-          onClick={() => setDraft(s)}
-          type="button"
-        >
-          <span className="ico">
-            <PdevIcon name="sparkles" />
-          </span>
-          <span>{s}</span>
-        </button>
-      ))}
+      {!hasTranscript && (
+        <>
+          <div className="pdev-ana-section-label">Suggested for this surface</div>
+          {suggestions.slice(0, 3).map((s, i) => (
+            <button
+              key={i}
+              className="pdev-ana-suggestion"
+              onClick={() => setDraft(s)}
+              type="button"
+            >
+              <span className="ico">
+                <PdevIcon name="sparkles" />
+              </span>
+              <span>{s}</span>
+            </button>
+          ))}
+        </>
+      )}
 
-      <div className="pdev-ana-spacer" />
+      {hasTranscript ? (
+        <div className="pdev-ana-transcript" ref={transcriptRef}>
+          {messages.map((m, i) => (
+            <div key={i} className={`pdev-ana-msg ${m.role}`}>
+              <div className="pdev-ana-msg-who">{m.role === 'ana' ? 'AnA' : 'You'} · {m.when}</div>
+              <div className="pdev-ana-msg-body">
+                {m.body}
+                {m.streaming && <span className="pdev-ana-caret" aria-hidden="true" />}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="pdev-ana-spacer" />
+      )}
 
       <div className="pdev-ana-foot">
         <div className="pdev-ana-composer">
