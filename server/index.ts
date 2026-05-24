@@ -16,13 +16,7 @@
 // dotenv MUST load before any env var read. `override: false` so
 // shell-exported values still win over .env.
 import { config as dotenvConfig } from 'dotenv';
-import { createRequire } from 'module';
 dotenvConfig({ override: false, quiet: true });
-
-// This file is an ES module (top-level await below), so a bare require()
-// is ambiguous under Node ESM and aborts boot with ERR_AMBIGUOUS_MODULE_SYNTAX.
-// createRequire gives us a synchronous CJS loader for the few interop spots.
-const require = createRequire(import.meta.url);
 
 // Initialize OpenTelemetry + Sentry + IPv4 DNS ordering early, before
 // anything that opens a DB connection or HTTP client.
@@ -44,6 +38,7 @@ import { getPool } from './db';
 
 import { validateEnvironment, resolveStartupFlags, createDebugLogger } from './startup/env';
 import { registerShutdownHandlers } from './startup/shutdown';
+import { installConsoleBridge } from './utils/consoleBridge';
 import {
   applyTelemetryMiddleware,
   applyCoreMiddleware,
@@ -79,14 +74,10 @@ const debugLog = createDebugLogger(flags.debug);
 // call sites can't leak credentials / PHI to stdout. No-op outside
 // production so dev / test traces stay readable.
 //
-// Dynamic import (top-level await isn't on by default for this file)
-// kept synchronous via a separate require — `consoleBridge.ts` has no
-// async deps. We do this AFTER validateEnvironment so a missing-env
-// hard-exit message reaches stderr unbridged.
-{
-  const { installConsoleBridge } = require('./utils/consoleBridge');
-  installConsoleBridge();
-}
+// Install AFTER validateEnvironment so a missing-env hard-exit message
+// reaches stderr unbridged. installConsoleBridge is statically imported (so
+// esbuild bundles it into dist/index.js); it has no effect until called here.
+installConsoleBridge();
 
 const app = express();
 const pool = getPool();

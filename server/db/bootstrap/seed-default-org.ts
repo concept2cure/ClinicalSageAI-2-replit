@@ -41,10 +41,27 @@ export async function seedOrganizations(client: PoolClient): Promise<void> {
 }
 
 /**
+ * Whether to seed the GA demo admin. The demo user carries a publicly-known
+ * password hash, so private / single-tenant installs must be able to opt out.
+ * Default preserves existing dev + hosted behavior (seeds unless explicitly
+ * disabled); self-host deployments set SEED_DEMO_USER=false.
+ */
+function demoUserSeedDisabled(): boolean {
+  const raw = (process.env.SEED_DEMO_USER ?? '').trim().toLowerCase();
+  return raw === 'false' || raw === '0' || raw === 'no' || raw === 'off';
+}
+
+/**
  * Seed the GA demo admin user on the Concept2Cure org. No-op if the org
- * wasn't created (some test environments strip the seed).
+ * wasn't created (some test environments strip the seed) or if demo seeding
+ * is disabled via SEED_DEMO_USER.
  */
 export async function seedGaDemoUser(client: PoolClient): Promise<void> {
+  if (demoUserSeedDisabled()) {
+    logger.info('ensureAuthTables: demo admin seed disabled (SEED_DEMO_USER=false)');
+    return;
+  }
+
   const c2cOrg = await client.query(
     `SELECT id FROM organizations WHERE slug = 'concept2cure' LIMIT 1`
   );
