@@ -87,18 +87,29 @@ function getOrganizationId(req: Request): number {
       ? (req as any).organizationId
       : parseInt((req as any).organizationId as string, 10);
   }
-  if (req.user?.organizationId) return req.user.organizationId;
+  if (req.user?.organizationId != null) {
+    const orgId = typeof req.user.organizationId === 'number'
+      ? req.user.organizationId
+      : parseInt(String(req.user.organizationId), 10);
+    if (!isNaN(orgId)) return orgId;
+  }
   throw new Error('Organization context required');
 }
 
 function getUserId(req: Request): number {
-  if (req.userId) return req.userId;
-  if (req.user?.id) return req.user.id;
+  if (req.userId != null) {
+    const id = typeof req.userId === 'number' ? req.userId : parseInt(String(req.userId), 10);
+    if (!isNaN(id)) return id;
+  }
+  if (req.user?.id != null) {
+    const id = typeof req.user.id === 'number' ? req.user.id : parseInt(String(req.user.id), 10);
+    if (!isNaN(id)) return id;
+  }
   throw new Error('Authentication required');
 }
 
 function getUserName(req: Request): string {
-  return req.user?.name || req.user?.email || `user-${getUserId(req)}`;
+  return (req.user as { name?: string } | undefined)?.name || req.user?.email || `user-${getUserId(req)}`;
 }
 
 function getUserRole(req: Request): string {
@@ -300,7 +311,7 @@ router.get('/jobs/:jobId', async (req: Request, res: Response) => {
     return res.status(401).json({ error: 'Authentication required' });
   }
 
-  const result = await getQueuedActionStatus(req.params.jobId);
+  const result = await getQueuedActionStatus(String(req.params.jobId));
   const httpStatus = result.status === 'completed' ? 200
     : result.status === 'failed' ? 422
     : result.status === 'active' ? 200
@@ -321,7 +332,7 @@ router.delete('/jobs/:jobId', async (req: Request, res: Response) => {
   }
 
   const { cancelQueuedAction } = await import('../services/ai-actions/action-queue');
-  const result = await cancelQueuedAction(req.params.jobId);
+  const result = await cancelQueuedAction(String(req.params.jobId));
 
   if (!result.success) {
     return res.status(result.status === 'not_found' ? 404 : 409).json(result);

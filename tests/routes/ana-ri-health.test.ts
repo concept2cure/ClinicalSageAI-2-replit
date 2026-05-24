@@ -46,7 +46,7 @@ function mockCommonDeps(options: {
         options.providerHealthReport ?? [
           { provider: 'anthropic', healthy: options.providerHealthy ?? true },
         ],
-      isDeterministicMode: () => options.deterministicMode ?? false,
+      isDeterministic: () => options.deterministicMode ?? false,
       route: vi.fn(
         async ({
           onStream,

@@ -120,7 +120,7 @@ router.post('/clients', async (req: Request, res: Response) => {
 
 router.put('/clients/:id', async (req: Request, res: Response) => {
   try {
-    const clientId = parseInt(req.params.id);
+    const clientId = parseInt(String(req.params.id));
     const updateData = req.body;
     const updatedClient = {
       id: clientId,
@@ -136,7 +136,7 @@ router.put('/clients/:id', async (req: Request, res: Response) => {
 
 router.delete('/clients/:id', async (req: Request, res: Response) => {
   try {
-    const clientId = parseInt(req.params.id);
+    const clientId = parseInt(String(req.params.id));
     res.status(204).send();
   } catch (error) {
     logger.error('Failed to delete CRO client', { err: error instanceof Error ? error.message : String(error) });
@@ -226,7 +226,7 @@ router.post('/studies', async (req: Request, res: Response) => {
 
 router.put('/studies/:id', async (req: Request, res: Response) => {
   try {
-    const studyId = parseInt(req.params.id);
+    const studyId = parseInt(String(req.params.id));
     const updateData = req.body;
     const updatedStudy = {
       id: studyId,
@@ -310,7 +310,7 @@ router.post('/submissions', async (req: Request, res: Response) => {
 
 router.put('/submissions/:id', async (req: Request, res: Response) => {
   try {
-    const submissionId = parseInt(req.params.id);
+    const submissionId = parseInt(String(req.params.id));
     const updateData = req.body;
     const updatedSubmission = {
       id: submissionId,
@@ -403,7 +403,7 @@ router.post('/milestones', async (req: Request, res: Response) => {
 
 router.put('/milestones/:id', async (req: Request, res: Response) => {
   try {
-    const milestoneId = parseInt(req.params.id);
+    const milestoneId = parseInt(String(req.params.id));
     const updateData = req.body;
     const updatedMilestone = {
       id: milestoneId,

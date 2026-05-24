@@ -8,7 +8,8 @@
     "2026-05-20: 2608. Updated after merging origin/concept2cure-v2 into the MDX backend branch. Net change is +20 errors against the stale 2588 baseline — but every one of those errors originated upstream between the 2588 baseline date (2026-05-09) and the merge (2026-05-20) and predates this PR. Confirmed by checking out origin/concept2cure-v2 versions of every file touched by this PR: that produced 2615 errors (i.e. without this PR the count is +27). This PR's net contribution to the count is -7 (it actually fixes type holes in the q-sub route, the api-response signature, the AnA tool registry, and the schema additions). Lowering the baseline rather than papering over the upstream debt.",
     "2026-05-24: 1490. Updated via --write-baseline (was 2608).",
     "2026-05-24: 1119. Updated via --write-baseline (was 1490).",
-    "2026-05-24: 847. Updated via --write-baseline (was 1119)."
+    "2026-05-24: 847. Updated via --write-baseline (was 1119).",
+    "2026-05-24: 714. Updated via --write-baseline (was 847)."
   ],
-  "errorCount": 847
+  "errorCount": 714
 }

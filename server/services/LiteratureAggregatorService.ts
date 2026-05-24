@@ -68,7 +68,7 @@ export interface LiteratureEntry {
   title: string;
   authors?: string[];
   abstract?: string;
-  publication_date?: string;
+  publication_date?: string | null;
   journal?: string;
   doi?: string;
   url?: string;
@@ -106,7 +106,7 @@ class LiteratureAggregatorService {
 
     try {
       // Generate embedding for query if semantic search is enabled
-      if (params.useSemanticSearch && openai) {
+      if (params.useSemanticSearch) {
         queryEmbedding = await this.generateEmbedding(params.query);
       }
 
@@ -618,19 +618,13 @@ class LiteratureAggregatorService {
    * Generate embedding for a query using OpenAI
    */
   private async generateEmbedding(text: string): Promise<number[] | null> {
-    if (!openai) {
-      console.log('OpenAI API key not configured, skipping embedding generation');
-      return null;
-    }
-
     try {
-      const response = await openai.embeddings.create({
+      const response = await ai.embeddings({
         model: 'text-embedding-3-small',
         input: text,
-        encoding_format: 'float',
       });
 
-      return response.data[0].embedding;
+      return response.embedding;
     } catch (error) {
       console.error('Error generating embedding:', error);
       return null;
@@ -668,7 +662,7 @@ class LiteratureAggregatorService {
 
           // Generate embedding for the entry
           let embedding = null;
-          if (openai && queryEmbedding) {
+          if (queryEmbedding) {
             const text = [entry.title, entry.abstract].filter(Boolean).join(' ');
             embedding = await this.generateEmbedding(text);
           }

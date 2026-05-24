@@ -10,15 +10,15 @@
  */
 
 import type { Request, Response, Router } from 'express';
+import type { QueryResult, QueryResultRow } from 'pg';
 
 import { getPool } from '../../db.js';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import {
   orchestrate,
   type OrchestratorInput,
-  type IntentLens,
-  type UserRole,
 } from '../../services/ana-ri/orchestrator.js';
+import type { IntentLens, UserRole } from '../../services/ana-ri/persona.js';
 import type { SubmissionType } from '../../services/ana-ri/deficiency-taxonomy.js';
 import { evaluateResponse } from '../../services/ana-ri/evaluation.js';
 import { inferRole } from '../../services/ana-ri/role-adapter.js';
@@ -102,7 +102,10 @@ setInterval(
 // Thin facade over getPool() so the extracted body keeps its `dbPool.query(...)`
 // shape without needing to touch the original handler.
 const dbPool = {
-  query: (...args: Parameters<ReturnType<typeof getPool>['query']>) => getPool().query(...args),
+  query: <R extends QueryResultRow = QueryResultRow>(
+    text: string,
+    values?: unknown[]
+  ): Promise<QueryResult<R>> => getPool().query<R>(text, values as unknown[]),
 };
 
 /** Register POST /chat on the given router. */
@@ -196,8 +199,22 @@ router.post('/chat', async (req: Request, res: Response) => {
         route?.decision?.reason || 'no decision rationale available',
       ];
 
-      const docs = route?.data?.scrapedDocuments;
-      if (Array.isArray(docs) && docs.length > 0) {
+      // route.data is a union across evidence routes; only the firecrawl branch
+      // carries scraped documents. Narrow it structurally at this boundary.
+      const firecrawlData = route?.data as
+        | {
+            scrapedDocuments?: Array<{
+              url: string;
+              title?: string;
+              markdown?: string;
+              html?: string;
+              metadata?: Record<string, unknown>;
+            }>;
+            quotaUnitsToCharge?: number;
+          }
+        | undefined;
+      const docs = firecrawlData?.scrapedDocuments;
+      if (route && Array.isArray(docs) && docs.length > 0) {
         const persistedIds: number[] = [];
         for (const doc of docs) {
           let id: number | null = null;
@@ -238,7 +255,7 @@ router.post('/chat', async (req: Request, res: Response) => {
         if (persistedIds.length > 0) {
           evidenceUsage.evidenceDocumentIds = persistedIds;
         }
-        const units = Number(route?.data?.quotaUnitsToCharge || docs.length || 0);
+        const units = Number(firecrawlData?.quotaUnitsToCharge || docs.length || 0);
         if (units > 0) {
           await recordSuccessfulFirecrawlScrape(Number(orgId), units).catch(() => {});
           const updatedQuota = await getFirecrawlQuotaStatus(Number(orgId)).catch(() => null);
@@ -331,7 +348,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       buildMemoryContextForChat({
         threadId: thread_id || undefined,
         organizationId: orgId ? Number(orgId) : undefined,
-        projectId: chatProjectId || undefined,
+        projectId: chatProjectId != null ? Number(chatProjectId) : undefined,
         query: message,
         limitPerLayer: 4,
         maxChars: 3500,
@@ -346,7 +363,14 @@ router.post('/chat', async (req: Request, res: Response) => {
         submissionType: orchestration.detectedSubmissionType || undefined,
       }).catch(err => {
         console.warn('[AnA RI] Context enrichment failed:', err?.message);
-        return { block: '', sources: [] as string[] };
+        return {
+          block: '',
+          sources: [] as string[],
+          rewrittenMessage: undefined as string | undefined,
+          enrichmentMeta: undefined as
+            | Awaited<ReturnType<typeof enrichContextForChat>>['enrichmentMeta']
+            | undefined,
+        };
       }),
     ]);
 

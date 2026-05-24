@@ -276,9 +276,10 @@ async function extractExcelText(buffer: Buffer): Promise<string> {
   workbook.eachSheet(worksheet => {
     const rows: string[] = [];
     worksheet.eachRow({ includeEmpty: false }, row => {
-      const values = row.values
+      const rowValues = Array.isArray(row.values) ? row.values : [];
+      const values = rowValues
         .slice(1)
-        .map((value: any) => (value === null || value === undefined ? '' : String(value)))
+        .map((value: unknown) => (value === null || value === undefined ? '' : String(value)))
         .join(', ')
         .trim();
       if (values.length > 0) rows.push(values);
@@ -988,8 +989,8 @@ router.post('/events', async (req, res) => {
 // Download template package
 router.get('/template/:id/download', async (req, res) => {
   try {
-    const templateId = parseInt(req.params.id);
-    const template = indTemplates[templateId];
+    const templateId = parseInt(String(req.params.id));
+    const template = indTemplates[templateId as keyof typeof indTemplates];
 
     if (!template) {
       return res.status(404).json({ error: 'Template not found' });
@@ -1047,8 +1048,8 @@ Template Package ID: ${templateId}
 // Download module package
 router.get('/module/:id/download', async (req, res) => {
   try {
-    const moduleId = parseInt(req.params.id);
-    const module = indModules[moduleId];
+    const moduleId = parseInt(String(req.params.id));
+    const module = indModules[moduleId as keyof typeof indModules];
 
     if (!module) {
       return res.status(404).json({ error: 'Module not found' });
@@ -1101,8 +1102,8 @@ Module Package ID: ${moduleId}
 // Create new project from template
 router.post('/template/:id/create', async (req, res) => {
   try {
-    const templateId = parseInt(req.params.id);
-    const template = indTemplates[templateId];
+    const templateId = parseInt(String(req.params.id));
+    const template = indTemplates[templateId as keyof typeof indTemplates];
 
     if (!template) {
       return res.status(404).json({ error: 'Template not found' });
@@ -1129,7 +1130,7 @@ router.post('/template/:id/create', async (req, res) => {
 
 router.post('/template/:id/create-with-documents', upload.array('files', 20), async (req, res) => {
   try {
-    const templateId = parseInt(req.params.id, 10);
+    const templateId = parseInt(String(req.params.id), 10);
     const template = indTemplates[templateId as keyof typeof indTemplates];
 
     if (!template) {

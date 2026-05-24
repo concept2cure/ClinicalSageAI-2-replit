@@ -49,11 +49,11 @@ const dbOps = {
 
       const preIndResult = await db.execute(preIndDataQuery);
 
-      if (!preIndResult.length) {
+      if (!preIndResult.rows.length) {
         return null; // Not found
       }
 
-      const preIndRecord = preIndResult[0];
+      const preIndRecord = preIndResult.rows[0];
 
       // Fetch associated milestones
       const milestonesQuery = sql`
@@ -66,7 +66,7 @@ const dbOps = {
       const milestones = await db.execute(milestonesQuery);
 
       // Format milestones for frontend
-      const formattedMilestones = milestones.map((ms: any) => ({
+      const formattedMilestones = milestones.rows.map((ms: any) => ({
         id: ms.id,
         title: ms.title,
         dueDate: ms.due_date,
@@ -255,7 +255,7 @@ const PreIndDataSchema = z.object({
  * Retrieves the Pre-IND data and associated milestones for a specific draft.
  */
 router.get('/', authMiddleware, async (req, res) => {
-  const { draftId } = req.params;
+  const draftId = String(req.params.draftId);
   const userId = (req as any).user?.id; // Type assertion for development - in production use proper typing
 
   try {
@@ -292,7 +292,7 @@ router.get('/', authMiddleware, async (req, res) => {
  * Creates or updates the Pre-IND data and milestones for a specific draft.
  */
 router.put('/', authMiddleware, async (req, res) => {
-  const { draftId } = req.params;
+  const draftId = String(req.params.draftId);
   const userId = (req as any).user?.id; // Type assertion for development
   const dataToSave = req.body;
 

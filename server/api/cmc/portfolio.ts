@@ -19,7 +19,7 @@ async function computeRPI(subId: string) {
 /** GET /overview — one row per submission with live metrics */
 router.get('/overview', async (_req: Request, res: Response) => {
   const subs = (
-    await q<any>(
+    await q(
       `select sub_id, product_id, region, sub_type as app_type from reg_submissions order by created_at desc`
     )
   ).rows;
@@ -27,7 +27,7 @@ router.get('/overview', async (_req: Request, res: Response) => {
   const out: any[] = [];
   for (const s of subs) {
     const ir = (
-      await q<any>(
+      await q(
         `select count(*)::int n, sum(case when due_date < now() then 1 else 0 end)::int overdue
                                from reg_questions where sub_id=$1 and status in ('OPEN','DRAFTED','IN_REVIEW')`,
         [s.sub_id]
@@ -35,7 +35,7 @@ router.get('/overview', async (_req: Request, res: Response) => {
     ).rows[0] || { n: 0, overdue: 0 };
 
     const obl = (
-      await q<any>(
+      await q(
         `select count(*)::int n, sum(case when due_date < now() then 1 else 0 end)::int overdue
                                 from reg_obligations where sub_id=$1 and status in ('OPEN','IN_PROGRESS')`,
         [s.sub_id]
@@ -77,7 +77,7 @@ router.get('/rpi-trend', async (req: Request, res: Response) => {
   const subId = (req.query.subId || '').toString();
   const days = parseInt((req.query.days || '60').toString(), 10);
   const rows = (
-    await q<any>(
+    await q(
       `select date_trunc('day', created_at) as d, avg(rpi)::int rpi
                                from reg_rpi_snapshots where sub_id=$1 and created_at >= now()-($2||' days')::interval
                                group by 1 order by 1 asc`,
@@ -89,7 +89,7 @@ router.get('/rpi-trend', async (req: Request, res: Response) => {
 
 /** POST /snapshot/save — write one snapshot per submission now */
 router.post('/snapshot/save', async (_req: Request, res: Response) => {
-  const subs = (await q<any>(`select sub_id from reg_submissions`)).rows;
+  const subs = (await q(`select sub_id from reg_submissions`)).rows;
   let saved = 0;
   for (const s of subs) {
     const rpi = await computeRPI(s.sub_id);
@@ -108,7 +108,7 @@ router.get('/export.csv', async (_req: Request, res: Response) => {
   try {
     // Get data directly instead of trying to fetch from self
     const subs = (
-      await q<any>(
+      await q(
         `select sub_id, product_id, region, sub_type as app_type from reg_submissions order by created_at desc`
       )
     ).rows;

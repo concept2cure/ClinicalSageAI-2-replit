@@ -105,7 +105,7 @@ router.get('/programs', async (req: Request, res: Response) => {
 
 router.get('/:projectId/tree', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenantContext = getTenantContext(req);
@@ -129,7 +129,7 @@ router.get('/:projectId/tree', async (req: Request, res: Response) => {
 
 router.get('/:projectId/ancestors', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenantContext = getTenantContext(req);
@@ -156,7 +156,7 @@ router.get('/:projectId/ancestors', async (req: Request, res: Response) => {
 
 router.get('/:projectId/children', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenantContext = getTenantContext(req);
@@ -191,7 +191,7 @@ router.get('/:projectId/children', async (req: Request, res: Response) => {
 
 router.post('/:projectId/children', async (req: Request, res: Response) => {
   try {
-    const parentId = parseInt(req.params.projectId, 10);
+    const parentId = parseInt(String(req.params.projectId), 10);
     if (Number.isNaN(parentId)) return res.status(400).json({ error: 'Invalid parent project ID' });
 
     const tenantContext = getTenantContext(req);
@@ -340,7 +340,7 @@ router.post('/:projectId/children', async (req: Request, res: Response) => {
 
 router.patch('/:projectId/move', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenantContext = getTenantContext(req);
@@ -476,7 +476,7 @@ router.patch('/:projectId/move', async (req: Request, res: Response) => {
 
 router.get('/:projectId/rollup', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenantContext = getTenantContext(req);

@@ -35,9 +35,9 @@ const router = Router();
 // Returns the full lineage graph for a document, workflow, or program.
 router.get('/:entityType/:entityId', async (req: Request, res: Response) => {
   try {
-    const { entityType, entityId } = req.params;
+    const entityType = String(req.params.entityType);
     const orgId = authedOrgId(req) ?? undefined;
-    const id = parseInt(entityId, 10);
+    const id = parseInt(String(req.params.entityId), 10);
 
     if (isNaN(id) || id <= 0) {
       return res.status(400).json({ error: 'Invalid entityId — must be a positive integer' });
@@ -55,10 +55,10 @@ router.get('/:entityType/:entityId', async (req: Request, res: Response) => {
 // Exports the lineage data in JSON, CSV, or eCTD-compatible XML.
 router.get('/:entityType/:entityId/export', async (req: Request, res: Response) => {
   try {
-    const { entityType, entityId } = req.params;
+    const entityType = String(req.params.entityType);
     const format = (req.query.format as ExportFormat) || 'json';
     const orgId = authedOrgId(req) ?? undefined;
-    const id = parseInt(entityId, 10);
+    const id = parseInt(String(req.params.entityId), 10);
 
     if (isNaN(id) || id <= 0) {
       return res.status(400).json({ error: 'Invalid entityId' });

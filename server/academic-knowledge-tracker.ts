@@ -4,41 +4,6 @@ import { pgTable, serial, varchar, text, timestamp, integer, json } from 'drizzl
 import { count, eq, like, and, desc, asc, or, inArray, sql } from 'drizzle-orm';
 import { db } from './db';
 
-// Temporary type definitions
-export type InsertAcademicResource = {
-  title: string;
-  authors?: string;
-  resourceType: string;
-  source?: string;
-  url?: string;
-  publishedDate?: Date;
-  category?: string;
-  summary?: string;
-  fullText?: string;
-  keyInsights?: string[];
-  tags?: string[];
-};
-
-export type InsertAcademicEmbedding = {
-  resourceId: number;
-  sectionType: string;
-  vector: number[];
-  textChunk?: string;
-};
-
-export type AcademicResource = InsertAcademicResource & {
-  id: number;
-  uploadDate: Date;
-  lastAccessed: Date;
-  accessCount: number;
-};
-
-export type AcademicEmbedding = InsertAcademicEmbedding & {
-  id: number;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
 // Temporary schema definitions
 export const academicResources = pgTable('academic_resources', {
   id: serial('id').primaryKey(),
@@ -71,6 +36,13 @@ export const academicEmbeddings = pgTable('academic_embeddings', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+// Types derived from the table definitions so they stay in sync with the
+// actual column nullability returned by the drizzle client.
+export type AcademicResource = typeof academicResources.$inferSelect;
+export type InsertAcademicResource = typeof academicResources.$inferInsert;
+export type AcademicEmbedding = typeof academicEmbeddings.$inferSelect;
+export type InsertAcademicEmbedding = typeof academicEmbeddings.$inferInsert;
 
 /**
  * Academic Knowledge Tracker Service
@@ -137,12 +109,11 @@ export class AcademicKnowledgeTracker {
    */
   async getResource(id: number): Promise<AcademicResource | undefined> {
     try {
-      const resource = await db.query.academicResources.findFirst({
-        where: eq(academicResources.id, id),
-        with: {
-          embeddings: true,
-        },
-      });
+      const [resource] = await db
+        .select()
+        .from(academicResources)
+        .where(eq(academicResources.id, id))
+        .limit(1);
 
       if (resource) {
         // Update access count and timestamp
@@ -207,12 +178,13 @@ export class AcademicKnowledgeTracker {
         .then(result => result[0]?.count || 0);
 
       // Get filtered resources
-      const resources = await db.query.academicResources.findMany({
-        where: conditions,
-        orderBy: desc(academicResources.uploadDate),
-        limit: filter?.limit || 100,
-        offset: filter?.offset || 0,
-      });
+      const resources = await db
+        .select()
+        .from(academicResources)
+        .where(conditions)
+        .orderBy(desc(academicResources.uploadDate))
+        .limit(filter?.limit || 100)
+        .offset(filter?.offset || 0);
 
       return {
         resources,
@@ -239,21 +211,23 @@ export class AcademicKnowledgeTracker {
     limit: number = 10
   ): Promise<Array<AcademicResource & { similarity: number }>> {
     try {
+      // pgvector expects the query vector as a bracketed literal, e.g. '[1,2,3]'.
+      const vectorLiteral = `[${embedVector.join(',')}]`;
+      const maxDistance = 1 - similarityThreshold;
+
       // Get embeddings with similarity scores above threshold
-      const results = await db.execute(
-        `SELECT e.*, r.*, 
-         (e.vector <=> $1) as similarity
+      const result = await db.execute(sql`
+        SELECT e.*, r.*,
+         (e.vector <=> ${vectorLiteral}::vector) as similarity
          FROM academic_embeddings e
          JOIN academic_resources r ON e.resource_id = r.id
-         WHERE (e.vector <=> $1) < $2
+         WHERE (e.vector <=> ${vectorLiteral}::vector) < ${maxDistance}
          ORDER BY similarity ASC
-         LIMIT $3`,
-        [embedVector, 1 - similarityThreshold, limit]
-      );
+         LIMIT ${limit}`);
 
       // Map results and update access counts for retrieved resources
       const resourceIds = new Set<number>();
-      const mappedResults = results.map((row: any) => {
+      const mappedResults = result.rows.map((row: any) => {
         resourceIds.add(row.resource_id);
         return {
           id: row.resource_id,

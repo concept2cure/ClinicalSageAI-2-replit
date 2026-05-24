@@ -18,13 +18,12 @@
 
 import type { Request, Response, Router } from 'express';
 
+import type { QueryResult, QueryResultRow } from 'pg';
+
 import { getPool } from '../../db.js';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
-import {
-  orchestrate,
-  type IntentLens,
-  type UserRole,
-} from '../../services/ana-ri/orchestrator.js';
+import { orchestrate } from '../../services/ana-ri/orchestrator.js';
+import type { IntentLens, UserRole } from '../../services/ana-ri/persona.js';
 import type { SubmissionType } from '../../services/ana-ri/deficiency-taxonomy.js';
 import { inferRole } from '../../services/ana-ri/role-adapter.js';
 import {
@@ -81,7 +80,10 @@ import {
 // Thin facade over getPool() so the extracted body keeps its `dbPool.query(...)`
 // shape without needing to touch the original handler.
 const dbPool = {
-  query: (...args: Parameters<ReturnType<typeof getPool>['query']>) => getPool().query(...args),
+  query: <R extends QueryResultRow = QueryResultRow>(
+    text: string,
+    values?: unknown[]
+  ): Promise<QueryResult<R>> => getPool().query<R>(text, values as unknown[]),
 };
 
 /** Register POST /stream on the given router. */
@@ -106,7 +108,7 @@ router.post('/stream', async (req: Request, res: Response) => {
     }
 
     const gw = ensureGateway();
-    const deterministicMode = gw?.isDeterministicMode?.() || false;
+    const deterministicMode = gw?.isDeterministic?.() || false;
     if (!gw || (!deterministicMode && gw.getEnabledProviders().length === 0)) {
       return sendError(res, 503, 'No AI providers available.', null, 'GATEWAY_UNAVAILABLE');
     }
