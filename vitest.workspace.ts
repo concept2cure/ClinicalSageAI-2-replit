@@ -1,13 +1,24 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineWorkspace } from 'vitest/config';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Alias targets MUST be absolute. A relative value like './client/src' is
+// re-resolved relative to the importing file, so `@/utils/authToken` from
+// client/src/concept2cure/.../useAnaChat.ts became
+// client/src/concept2cure/.../client/src/utils/authToken and failed to
+// resolve — breaking any test that transitively imports client code via `@`.
+const alias = {
+  '@': path.resolve(__dirname, 'client/src'),
+  '@shared': path.resolve(__dirname, 'shared'),
+};
 
 export default defineWorkspace([
   // Server + integration tests — need pg mock and setup
   {
     resolve: {
-      alias: {
-        '@': './client/src',
-        '@shared': './shared',
-      },
+      alias,
     },
     test: {
       name: 'server',
@@ -30,10 +41,7 @@ export default defineWorkspace([
   // Client unit tests — no server mocks, clean ESM
   {
     resolve: {
-      alias: {
-        '@': './client/src',
-        '@shared': './shared',
-      },
+      alias,
     },
     test: {
       name: 'client',
