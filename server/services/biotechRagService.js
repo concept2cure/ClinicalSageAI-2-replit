@@ -8,7 +8,7 @@ import { ragDocuments, ragChunks, ragQueries, ragKnowledgeGraph } from '@shared/
 import { eq, and, sql, desc, inArray, like, ilike, or } from 'drizzle-orm';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
-import pdfParse from 'pdf-parse';
+import pdfParse from '../utils/pdfParse';
 import mammoth from 'mammoth';
 import * as cheerio from 'cheerio';
 

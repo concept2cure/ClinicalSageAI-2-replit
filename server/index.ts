@@ -16,7 +16,13 @@
 // dotenv MUST load before any env var read. `override: false` so
 // shell-exported values still win over .env.
 import { config as dotenvConfig } from 'dotenv';
+import { createRequire } from 'module';
 dotenvConfig({ override: false, quiet: true });
+
+// This file is an ES module (top-level await below), so a bare require()
+// is ambiguous under Node ESM and aborts boot with ERR_AMBIGUOUS_MODULE_SYNTAX.
+// createRequire gives us a synchronous CJS loader for the few interop spots.
+const require = createRequire(import.meta.url);
 
 // Initialize OpenTelemetry + Sentry + IPv4 DNS ordering early, before
 // anything that opens a DB connection or HTTP client.
@@ -78,7 +84,6 @@ const debugLog = createDebugLogger(flags.debug);
 // async deps. We do this AFTER validateEnvironment so a missing-env
 // hard-exit message reaches stderr unbridged.
 {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { installConsoleBridge } = require('./utils/consoleBridge');
   installConsoleBridge();
 }

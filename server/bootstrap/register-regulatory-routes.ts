@@ -46,8 +46,16 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
         if (mountPath) {
           app.use(mountPath, authenticateToken, router);
         } else {
-          // No path: mount at app root with auth required.
-          app.use(authenticateToken, router);
+          // No path: these routers declare absolute /api/510k/... paths, so
+          // they must mount at app root for those paths to resolve. But a
+          // bare `app.use(authenticateToken, router)` runs authenticateToken
+          // on EVERY request — including the SPA shell and Vite dev assets —
+          // which 401s the entire frontend. Scope the gate to /api paths so
+          // non-API requests fall through to the frontend handler.
+          app.use((req, res, next) => {
+            if (!req.path.startsWith('/api')) return next();
+            return authenticateToken(req, res, next);
+          }, router);
         }
         console.log(`✅ ${label} routes mounted (auth-gated)`);
       } else {

@@ -11,7 +11,7 @@
  * recorded so the row's provenance row matches the LLM that produced it.
  */
 
-import pdfParse from 'pdf-parse';
+import pdfParse from '../../utils/pdfParse';
 import { ai } from '../../lib/unified-ai-client';
 import { createScopedLogger } from '../../utils/logger';
 import {

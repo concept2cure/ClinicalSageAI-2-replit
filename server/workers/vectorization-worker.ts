@@ -13,7 +13,7 @@
  */
 
 import { getOpenAIClient } from '../services/openai-client';
-import pdfParse from 'pdf-parse';
+import pdfParse from '../utils/pdfParse';
 import { pool } from '../db';
 import * as crypto from 'crypto';
 import { createScopedLogger } from '../utils/logger.js';

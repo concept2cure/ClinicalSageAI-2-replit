@@ -606,6 +606,31 @@
 .pdev-ana-suggestion:hover { background: var(--bg-050); }
 .pdev-ana-suggestion .ico { color: var(--accent-100); }
 .pdev-ana-spacer { flex: 1; }
+
+/* Inline transcript — provisional treatment pending a canonical viewport
+   in ui_kits/pdev. Reuses dock tokens; left-aligned plain rows (not
+   bubbles) to stay calm and consistent with the rest of the dock. */
+.pdev-ana-transcript {
+  flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+  padding: 8px 0; min-height: 0;
+}
+.pdev-ana-msg { display: flex; flex-direction: column; gap: 3px; }
+.pdev-ana-msg-who {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-400); font-weight: 600;
+}
+.pdev-ana-msg-body { font-size: 13px; line-height: 1.5; color: var(--text-100); white-space: pre-wrap; }
+.pdev-ana-msg.user .pdev-ana-msg-body { color: var(--text-200); }
+.pdev-ana-caret {
+  display: inline-block; width: 6px; height: 13px; margin-left: 2px;
+  vertical-align: text-bottom; background: var(--accent-100);
+  animation: pdev-ana-blink 1s steps(2, start) infinite;
+}
+@keyframes pdev-ana-blink { to { visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) {
+  .pdev-ana-caret { animation: none; }
+}
+
 .pdev-ana-foot {
   display: flex; flex-direction: column; gap: 4px;
   padding-top: 8px; border-top: 1px solid var(--border-100);

@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { PDFDocument } from 'pdf-lib';
-import pdfParse from 'pdf-parse';
+import pdfParse from './utils/pdfParse';
 
 // Local implementation to avoid circular dependency with openai-service
 async function extractTextFromPdf(pdfBuffer: Buffer): Promise<string> {

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import pdfParse from 'pdf-parse';
+import pdfParse from '../utils/pdfParse';
 import { ai } from '../lib/unified-ai-client';
 
 // Get the directory path for ES modules

@@ -15,6 +15,7 @@ import { useFetchJson } from '../../mdx/hooks/useFetchJson';
 import type { PdevActivityState, PdevWorkstream } from '../data/enums';
 import type {
   PdevAiDraftResult,
+  PdevContradiction,
   PdevContradictionsPayload,
   PdevEvidenceLinkType,
   PdevEvidencePayload,
@@ -406,13 +407,67 @@ export function usePdevFdaProposals(programId: string | null) {
   return { payload: data?.data ?? null, loading, error, refresh };
 }
 
+/** Server payload from /contradictions. The engine returns `findings`
+ *  with structured objectA/objectB sub-objects and a `contradictionType`
+ *  field; the kit surface expects `contradictions` with flat string
+ *  object labels and a `type`/`when`/`desc` shape. adaptContradictions()
+ *  bridges them — without it the surface reads `payload.contradictions[0]`
+ *  on an undefined array and crashes. */
+interface ServerContradictionFinding {
+  id: string;
+  title?: string;
+  description?: string;
+  contradictionType: string;
+  severity: PdevContradiction['severity'];
+  authorityState: PdevContradiction['authorityState'];
+  reviewState: PdevContradiction['reviewState'];
+  objectA?: { type?: string; id?: string; label?: string | null };
+  objectB?: { type?: string; id?: string; label?: string | null };
+  regulatorBody?: string | null;
+  createdAt?: string;
+}
+interface ServerContradictionsPayload {
+  programId: string;
+  findings: ServerContradictionFinding[];
+  counts?: Record<string, unknown>;
+}
+
+function objectLabel(o?: { id?: string; label?: string | null }): string {
+  return o?.label ?? o?.id ?? '';
+}
+
+function adaptContradictions(
+  server: ServerContradictionsPayload | null,
+): PdevContradictionsPayload | null {
+  if (!server) return null;
+  return {
+    contradictions: (server.findings ?? []).map((f) => ({
+      id: f.id,
+      severity: f.severity,
+      type: f.contradictionType,
+      objectA: objectLabel(f.objectA),
+      objectB: objectLabel(f.objectB),
+      authorityState: f.authorityState,
+      reviewState: f.reviewState,
+      when: f.createdAt ?? '',
+      desc: f.description ?? f.title ?? '',
+      regulatoryBody: f.regulatorBody ?? '',
+    })),
+  };
+}
+
 export function usePdevContradictions(programId: string | null) {
   const url = programId
     ? `/api/pdev/programs/${encodeURIComponent(programId)}/contradictions`
     : null;
   const { data, loading, error, refresh } =
-    useFetchJson<Envelope<PdevContradictionsPayload>>(url);
-  return { payload: data?.data ?? null, loading, error, refresh };
+    useFetchJson<Envelope<ServerContradictionsPayload>>(url);
+  return {
+    payload: adaptContradictions(data?.data ?? null),
+    loading,
+    error,
+    refresh,
+  };
 }
 
 // ─── Governed mutations ────────────────────────────────────────────────────

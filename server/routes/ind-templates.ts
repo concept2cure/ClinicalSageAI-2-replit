@@ -4,7 +4,7 @@ import path from 'path';
 import archiver from 'archiver';
 import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
-import pdfParse from 'pdf-parse';
+import pdfParse from '../utils/pdfParse';
 import { extractRawText } from 'mammoth';
 import ExcelJS from 'exceljs';
 import { Document, Packer, Paragraph, HeadingLevel, TextRun } from 'docx';
