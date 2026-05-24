@@ -946,12 +946,16 @@ router.get('/soc2/controls', (_req: Request, res: Response) => {
     },
   ];
 
+  const totalControls = controls.length;
+  const evidenceCollected = controls.filter(c => c.evidenceStatus === 'collected').length;
   const summary = {
-    totalControls: controls.length,
-    evidenceCollected: controls.filter(c => c.evidenceStatus === 'collected').length,
+    totalControls,
+    evidenceCollected,
     totalEvidence: controls.reduce((sum, c) => sum + c.evidenceCount, 0),
     part11MappedControls: controls.filter(c => (c as any).part11Mapping).length,
-    readinessScore: 0.92,
+    // Real readiness = fraction of controls with evidence collected.
+    // Previously hardcoded 0.92.
+    readinessScore: totalControls > 0 ? Number((evidenceCollected / totalControls).toFixed(4)) : 0,
     auditPeriod: { start: '2025-09-01', end: '2026-02-28' },
     certificationTarget: 'SOC 2 Type II',
   };

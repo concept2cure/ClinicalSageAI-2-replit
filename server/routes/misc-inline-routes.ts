@@ -105,7 +105,9 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
         totalDocuments: stats.total_documents || 0,
         totalSize: parseInt(stats.total_size) || 0,
         recentUploads: stats.recent_uploads || 0,
-        complianceScore: 95,
+        // Removed `complianceScore: 95` — a fabricated constant with no
+        // computation. Vault document counts do not yield a compliance
+        // score; a real one would come from the compliance subsystem.
         storageUsed: parseInt(stats.total_size) || 0,
         storageLimit: 1000000000,
       });
@@ -153,29 +155,29 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
     authMiddleware as any,
     async (req: Request, res: Response) => {
       try {
+        // No regulatory-intelligence data source is wired for this feed.
+        // The prior handler fabricated a complianceScore (95), a documents
+        // successRate (94), and a full per-agency "Compliant" matrix with
+        // invented scores (FDA 94, EMA 87, …) — none backed by any data.
+        // Emit honest nulls / empty rather than fake regulatory compliance
+        // statuses. Real values land when the source is connected.
         res.json({
           success: true,
           advisorySummary: {
             totalAdvisories: 0,
             criticalAlerts: 0,
             recentUpdates: 0,
-            complianceScore: 95,
+            complianceScore: null,
           },
           documents: {
             totalAnalyzed: 0,
-            successRate: 94,
-            averageProcessingTime: 2.3,
-            templatesAvailable: 13,
+            successRate: null,
+            averageProcessingTime: null,
+            templatesAvailable: null,
           },
           compliance: {
-            globalStatus: 'Compliant',
-            regions: [
-              { name: 'FDA', status: 'Compliant', score: 94 },
-              { name: 'EMA', status: 'Compliant', score: 87 },
-              { name: 'PMDA', status: 'Under Review', score: 92 },
-              { name: 'Health Canada', status: 'Compliant', score: 89 },
-              { name: 'TGA', status: 'Compliant', score: 91 },
-            ],
+            globalStatus: 'unknown',
+            regions: [],
           },
           updates: [],
         });
