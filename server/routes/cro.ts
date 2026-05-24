@@ -28,7 +28,7 @@
 import { Router, type Request, type Response } from 'express';
 import { eq, and } from 'drizzle-orm';
 
-import { db } from '../db';
+import { requestDb } from '../db/requestDb';
 import {
   croClients,
   croStudies,
@@ -125,16 +125,17 @@ function avg(values: number[]): number | null {
 router.get('/dashboard', async (req: Request, res: Response) => {
   const orgId = requireOrg(req, res);
   if (orgId == null) return;
+  const rdb = requestDb(req);
   try {
     const [clients, studies, submissions, milestones, assignments] = await Promise.all([
-      db.select().from(croClients).where(eq(croClients.organizationId, orgId)),
-      db.select().from(croStudies).where(eq(croStudies.organizationId, orgId)),
-      db
+      rdb.select().from(croClients).where(eq(croClients.organizationId, orgId)),
+      rdb.select().from(croStudies).where(eq(croStudies.organizationId, orgId)),
+      rdb
         .select()
         .from(croRegulatorySubmissions)
         .where(eq(croRegulatorySubmissions.organizationId, orgId)),
-      db.select().from(croMilestones).where(eq(croMilestones.organizationId, orgId)),
-      db.select().from(croTeamAssignments).where(eq(croTeamAssignments.organizationId, orgId)),
+      rdb.select().from(croMilestones).where(eq(croMilestones.organizationId, orgId)),
+      rdb.select().from(croTeamAssignments).where(eq(croTeamAssignments.organizationId, orgId)),
     ]);
 
     const activeStudyStatuses = new Set(['startup', 'recruiting', 'active']);
@@ -190,8 +191,9 @@ router.get('/dashboard', async (req: Request, res: Response) => {
 router.get('/clients', async (req: Request, res: Response) => {
   const orgId = requireOrg(req, res);
   if (orgId == null) return;
+  const rdb = requestDb(req);
   try {
-    const rows = await db
+    const rows = await rdb
       .select()
       .from(croClients)
       .where(eq(croClients.organizationId, orgId));
@@ -207,12 +209,13 @@ router.get('/clients', async (req: Request, res: Response) => {
 router.post('/clients', async (req: Request, res: Response) => {
   const orgId = requireOrg(req, res);
   if (orgId == null) return;
+  const rdb = requestDb(req);
   try {
     const payload = normalizeBody(req.body);
     if (!payload.name || !payload.companyType) {
       return res.status(400).json({ error: 'name and companyType are required' });
     }
-    const [row] = await db
+    const [row] = await rdb
       .insert(croClients)
       .values({ ...payload, organizationId: orgId } as any)
       .returning();
@@ -228,9 +231,10 @@ router.post('/clients', async (req: Request, res: Response) => {
 router.put('/clients/:id', async (req: Request, res: Response) => {
   const orgId = requireOrg(req, res);
   if (orgId == null) return;
+  const rdb = requestDb(req);
   try {
     const id = parseInt(req.params.id, 10);
-    const [row] = await db
+    const [row] = await rdb
       .update(croClients)
       .set({ ...normalizeBody(req.body), updatedAt: new Date() } as any)
       .where(and(eq(croClients.id, id), eq(croClients.organizationId, orgId)))
@@ -248,9 +252,10 @@ router.put('/clients/:id', async (req: Request, res: Response) => {
 router.delete('/clients/:id', async (req: Request, res: Response) => {
   const orgId = requireOrg(req, res);
   if (orgId == null) return;
+  const rdb = requestDb(req);
   try {
     const id = parseInt(req.params.id, 10);
-    const deleted = await db
+    const deleted = await rdb
       .delete(croClients)
       .where(and(eq(croClients.id, id), eq(croClients.organizationId, orgId)))
       .returning();
@@ -269,8 +274,9 @@ router.delete('/clients/:id', async (req: Request, res: Response) => {
 router.get('/studies', async (req: Request, res: Response) => {
   const orgId = requireOrg(req, res);
   if (orgId == null) return;
+  const rdb = requestDb(req);
   try {
-    const rows = await db
+    const rows = await rdb
       .select()
       .from(croStudies)
       .where(eq(croStudies.organizationId, orgId));
@@ -286,6 +292,7 @@ router.get('/studies', async (req: Request, res: Response) => {
 router.post('/studies', async (req: Request, res: Response) => {
   const orgId = requireOrg(req, res);
   if (orgId == null) return;
+  const rdb = requestDb(req);
   try {
     const payload = normalizeBody(req.body);
     if (!payload.clientId || !payload.studyNumber || !payload.studyTitle) {
@@ -293,7 +300,7 @@ router.post('/studies', async (req: Request, res: Response) => {
         .status(400)
         .json({ error: 'clientId, studyNumber and studyTitle are required' });
     }
-    const [row] = await db
+    const [row] = await rdb
       .insert(croStudies)
       .values({ ...payload, organizationId: orgId } as any)
       .returning();
@@ -309,9 +316,10 @@ router.post('/studies', async (req: Request, res: Response) => {
 router.put('/studies/:id', async (req: Request, res: Response) => {
   const orgId = requireOrg(req, res);
   if (orgId == null) return;
+  const rdb = requestDb(req);
   try {
     const id = parseInt(req.params.id, 10);
-    const [row] = await db
+    const [row] = await rdb
       .update(croStudies)
       .set({ ...normalizeBody(req.body), updatedAt: new Date() } as any)
       .where(and(eq(croStudies.id, id), eq(croStudies.organizationId, orgId)))
@@ -331,8 +339,9 @@ router.put('/studies/:id', async (req: Request, res: Response) => {
 router.get('/submissions', async (req: Request, res: Response) => {
   const orgId = requireOrg(req, res);
   if (orgId == null) return;
+  const rdb = requestDb(req);
   try {
-    const rows = await db
+    const rows = await rdb
       .select()
       .from(croRegulatorySubmissions)
       .where(eq(croRegulatorySubmissions.organizationId, orgId));
@@ -348,6 +357,7 @@ router.get('/submissions', async (req: Request, res: Response) => {
 router.post('/submissions', async (req: Request, res: Response) => {
   const orgId = requireOrg(req, res);
   if (orgId == null) return;
+  const rdb = requestDb(req);
   try {
     const payload = normalizeBody(req.body);
     if (!payload.clientId || !payload.submissionType || !payload.regulatoryRegion) {
@@ -355,7 +365,7 @@ router.post('/submissions', async (req: Request, res: Response) => {
         .status(400)
         .json({ error: 'clientId, submissionType and regulatoryRegion are required' });
     }
-    const [row] = await db
+    const [row] = await rdb
       .insert(croRegulatorySubmissions)
       .values({ ...payload, organizationId: orgId } as any)
       .returning();
@@ -371,9 +381,10 @@ router.post('/submissions', async (req: Request, res: Response) => {
 router.put('/submissions/:id', async (req: Request, res: Response) => {
   const orgId = requireOrg(req, res);
   if (orgId == null) return;
+  const rdb = requestDb(req);
   try {
     const id = parseInt(req.params.id, 10);
-    const [row] = await db
+    const [row] = await rdb
       .update(croRegulatorySubmissions)
       .set({ ...normalizeBody(req.body), updatedAt: new Date() } as any)
       .where(
@@ -398,8 +409,9 @@ router.put('/submissions/:id', async (req: Request, res: Response) => {
 router.get('/milestones', async (req: Request, res: Response) => {
   const orgId = requireOrg(req, res);
   if (orgId == null) return;
+  const rdb = requestDb(req);
   try {
-    const rows = await db
+    const rows = await rdb
       .select()
       .from(croMilestones)
       .where(eq(croMilestones.organizationId, orgId));
@@ -415,12 +427,13 @@ router.get('/milestones', async (req: Request, res: Response) => {
 router.post('/milestones', async (req: Request, res: Response) => {
   const orgId = requireOrg(req, res);
   if (orgId == null) return;
+  const rdb = requestDb(req);
   try {
     const payload = normalizeBody(req.body);
     if (!payload.clientId || !payload.title || !payload.category) {
       return res.status(400).json({ error: 'clientId, title and category are required' });
     }
-    const [row] = await db
+    const [row] = await rdb
       .insert(croMilestones)
       .values({ ...payload, organizationId: orgId } as any)
       .returning();
@@ -436,9 +449,10 @@ router.post('/milestones', async (req: Request, res: Response) => {
 router.put('/milestones/:id', async (req: Request, res: Response) => {
   const orgId = requireOrg(req, res);
   if (orgId == null) return;
+  const rdb = requestDb(req);
   try {
     const id = parseInt(req.params.id, 10);
-    const [row] = await db
+    const [row] = await rdb
       .update(croMilestones)
       .set({ ...normalizeBody(req.body), updatedAt: new Date() } as any)
       .where(and(eq(croMilestones.id, id), eq(croMilestones.organizationId, orgId)))
