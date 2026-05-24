@@ -68,9 +68,14 @@ CREATE TABLE IF NOT EXISTS regulatory_programs (
 
     created_by                TEXT,
     updated_by                TEXT,
+    deleted_at                TIMESTAMP,
     created_at                TIMESTAMP NOT NULL DEFAULT now(),
     updated_at                TIMESTAMP NOT NULL DEFAULT now()
 );
+
+-- Older databases created regulatory_programs before deleted_at existed
+-- (the column is assumed by mdx-search and other soft-delete filters).
+ALTER TABLE regulatory_programs ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;
 
 CREATE INDEX IF NOT EXISTS reg_programs_org_idx    ON regulatory_programs (organization_id);
 CREATE INDEX IF NOT EXISTS reg_programs_status_idx ON regulatory_programs (status);

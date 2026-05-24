@@ -1,11 +1,12 @@
 /**
  * Unit tests for the preclinical extractor.
  *
- * Mocks the pdf-parse wrapper (`server/utils/pdfParse` — the only
- * filesystem-touching dependency) and the unified AI client so the test runs
- * offline and is fully deterministic. The extractor imports the wrapper, not
- * `pdf-parse` directly (the wrapper loads pdf-parse via createRequire for ESM
- * interop), so the mock must target the wrapper module.
+ * Mocks the pdf-parse wrapper (the only filesystem-touching dependency) and
+ * the unified AI client so the test runs offline and is fully deterministic.
+ * The extractor imports the default export of ../../utils/pdfParse, which
+ * loads pdf-parse via createRequire; mock that wrapper directly so the mock
+ * actually reaches the consumer (mocking 'pdf-parse' does not, since the
+ * wrapper's require() returns the real CJS export shape).
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';

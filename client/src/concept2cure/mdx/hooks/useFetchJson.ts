@@ -24,7 +24,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { getAuthHeaders } from '../../../utils/authToken';
+import { getAuthHeaders } from '@/utils/authToken';
 
 export interface UseFetchJsonResult<T> {
   /** Resolved JSON payload, or null while loading / on error / when url is null. */
