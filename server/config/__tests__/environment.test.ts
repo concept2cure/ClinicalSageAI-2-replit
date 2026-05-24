@@ -84,3 +84,54 @@ describe('getJwtSecret', () => {
     }
   });
 });
+
+describe('getCurrentEnvironment', () => {
+  let originalEnv: NodeJS.ProcessEnv;
+
+  beforeEach(() => {
+    originalEnv = { ...process.env };
+    vi.resetModules();
+    process.env.JWT_SECRET = VALID_SECRET;
+    process.env.DATABASE_URL = 'postgres://test';
+    process.env.DATABASE_URL_DEV = 'postgres://test';
+    process.env.DATABASE_URL_PROD = 'postgres://test';
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+    vi.resetModules();
+  });
+
+  it('refuses to load on a set-but-unrecognized NODE_ENV', async () => {
+    // The dangerous silent path: "prod" is not "production", so the old code
+    // defaulted to development (DEV secrets, isDevelopment=true) in what the
+    // operator believed was production. It must fail loud instead.
+    process.env.NODE_ENV = 'prod';
+    await expect(import('../environment')).rejects.toThrow(/Unrecognized NODE_ENV/);
+  });
+
+  it('defaults to development when NODE_ENV is unset', async () => {
+    delete process.env.NODE_ENV;
+    const { config } = await import('../environment');
+    expect(config.env).toBe('development');
+    expect(config.isDevelopment).toBe(true);
+    expect(config.isProduction).toBe(false);
+  });
+
+  it('recognizes production', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.JWT_SECRET_PROD = VALID_SECRET;
+    const { config } = await import('../environment');
+    expect(config.env).toBe('production');
+    expect(config.isProduction).toBe(true);
+    expect(config.isDevelopment).toBe(false);
+  });
+
+  it('recognizes test', async () => {
+    process.env.NODE_ENV = 'test';
+    const { config } = await import('../environment');
+    expect(config.env).toBe('test');
+    expect(config.isTest).toBe(true);
+    expect(config.isProduction).toBe(false);
+  });
+});

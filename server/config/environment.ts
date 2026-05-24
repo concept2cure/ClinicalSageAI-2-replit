@@ -8,16 +8,32 @@
  */
 
 
-type Environment = 'development' | 'staging' | 'production';
+type Environment = 'development' | 'staging' | 'production' | 'test';
 
-// Determine current environment with fallback to development
+const RECOGNIZED_ENVIRONMENTS: readonly Environment[] = [
+  'development',
+  'staging',
+  'production',
+  'test',
+];
+
+// Determine current environment. An UNSET NODE_ENV defaults to development so
+// local dev (which rarely exports NODE_ENV) keeps working. But a SET-but-
+// unrecognized value (e.g. "prod", "Production-typo", "live") is a deployment
+// misconfiguration: silently treating it as development would select the DEV
+// secret suffix and flip isDevelopment on in what the operator believes is
+// production. Fail loud at config load instead of booting into a false dev mode.
 const getCurrentEnvironment = (): Environment => {
-  const env = process.env.NODE_ENV?.toLowerCase() || 'development';
-  if (['development', 'staging', 'production'].includes(env)) {
+  const raw = process.env.NODE_ENV?.trim();
+  if (!raw) return 'development';
+  const env = raw.toLowerCase();
+  if ((RECOGNIZED_ENVIRONMENTS as readonly string[]).includes(env)) {
     return env as Environment;
   }
-  console.warn(`Unknown environment "${env}", defaulting to "development"`);
-  return 'development';
+  throw new Error(
+    `[FATAL] Unrecognized NODE_ENV "${raw}". Must be one of: ` +
+      `${RECOGNIZED_ENVIRONMENTS.join(', ')} (or unset for local development).`,
+  );
 };
 
 const ENV: Environment = getCurrentEnvironment();
@@ -27,6 +43,7 @@ const ENV_MAP: Record<Environment, string> = {
   development: 'DEV',
   staging: 'STAGING',
   production: 'PROD',
+  test: 'DEV',
 };
 
 /**
@@ -157,6 +174,7 @@ export const config = {
   isProduction: ENV === 'production',
   isStaging: ENV === 'staging',
   isDevelopment: ENV === 'development',
+  isTest: ENV === 'test',
   database: {
     url: getDatabaseUrl(),
   },

@@ -51,6 +51,27 @@ export function validateEnvironment(): void {
     process.exit(1);
   }
 
+  // Production posture gate. The dev-only / mock / demo route families gate
+  // non-durable and fabricated handlers (e.g. the in-memory ana-features
+  // memory store and the static change-impact response). Their handlers also
+  // re-check NODE_ENV, but a flag flipped on in a production deploy is a
+  // misconfiguration we want to catch at boot — not silently tolerate. Refuse
+  // to start rather than serve a dev surface to paying customers.
+  if (isProduction) {
+    const PROD_FORBIDDEN_FLAGS = [
+      'ENABLE_ANA_FEATURES_MOCK_ROUTES',
+      'ENABLE_EXPERIMENTAL_ROUTES',
+      'ENABLE_DEMO_ROUTES',
+    ];
+    const enabled = PROD_FORBIDDEN_FLAGS.filter(k => process.env[k] === 'true');
+    if (enabled.length > 0) {
+      console.error(
+        `[FATAL] Dev/mock route flags must not be enabled in production: ${enabled.join(', ')}`,
+      );
+      process.exit(1);
+    }
+  }
+
   if (isProduction) {
     const recommended = ['SENTRY_DSN', 'REDIS_URL'];
     const missingRecommended = recommended.filter(k => !process.env[k]);
