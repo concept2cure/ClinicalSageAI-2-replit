@@ -56,6 +56,8 @@ import mdxSubmissionGatewayRoutes from '../routes/mdx-submission-gateway';
 import mdxNotificationsRoutes from '../routes/mdx-notifications';
 import mdxAuditRoutes from '../routes/mdx-audit';
 import mdxAdminRoutes from '../routes/mdx-admin';
+import mdxTemplatesRoutes from '../routes/mdx-templates';
+import mdxPostmarketRoutes from '../routes/mdx-postmarket';
 import mdxClinicalStudiesRoutes from '../routes/mdx-clinical-studies';
 import mdxAnaMemoryRoutes from '../routes/mdx-ana-memory';
 import mdxQmsRoutes from '../routes/mdx-qms';
@@ -371,6 +373,8 @@ export function registerInlineSubmissionWorkflowRoutes({
   app.use('/api/mdx', mdxNotificationsRoutes);
   app.use('/api/mdx', mdxAuditRoutes);
   app.use('/api/mdx', mdxAdminRoutes);
+  app.use('/api/mdx', mdxTemplatesRoutes);
+  app.use('/api/mdx', mdxPostmarketRoutes);
   app.use('/api/mdx', mdxClinicalStudiesRoutes);
   app.use('/api/mdx', mdxAnaMemoryRoutes);
   /* QMS + Labeling + Global search + Analytics (migration 20260511). */
