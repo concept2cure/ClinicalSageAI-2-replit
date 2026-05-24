@@ -134,7 +134,7 @@ router.use(auditMiddleware);
  * Get data residency configuration for a tenant
  */
 router.get('/data-residency/:tenantId', validateTenantId, asyncHandler(async (req: Request, res: Response) => {
-  const { tenantId } = req.params;
+  const tenantId = String(req.params.tenantId);
   
   const config = await grdheService.getDataResidencyConfig(tenantId);
   
@@ -251,7 +251,7 @@ router.get('/terminology/versions', asyncHandler(async (req: Request, res: Respo
  * Get a specific terminology version
  */
 router.get('/terminology/versions/:versionId', asyncHandler(async (req: Request, res: Response) => {
-  const { versionId } = req.params;
+  const versionId = String(req.params.versionId);
   
   const version = await grdheService.getTerminologyVersionById(versionId);
   
@@ -398,7 +398,7 @@ router.get('/rules', asyncHandler(async (req: Request, res: Response) => {
  * Get a specific mapping rule
  */
 router.get('/rules/:ruleId', asyncHandler(async (req: Request, res: Response) => {
-  const { ruleId } = req.params;
+  const ruleId = String(req.params.ruleId);
   
   const rule = await grdheService.getMappingRuleById(ruleId);
   
@@ -423,8 +423,9 @@ router.get('/rules/:ruleId', asyncHandler(async (req: Request, res: Response) =>
  * Get mapping rule for format and entity type
  */
 router.get('/rules/format/:targetFormat/:sourceEntityType', asyncHandler(async (req: Request, res: Response) => {
-  const { targetFormat, sourceEntityType } = req.params;
-  
+  const targetFormat = String(req.params.targetFormat);
+  const sourceEntityType = String(req.params.sourceEntityType);
+
   const rule = await grdheService.getMappingRule(
     targetFormat as RegulatoryFormat,
     sourceEntityType
@@ -516,7 +517,7 @@ router.post('/exports', asyncHandler(async (req: Request, res: Response) => {
  * Get export job status and details
  */
 router.get('/exports/:jobId', asyncHandler(async (req: Request, res: Response) => {
-  const { jobId } = req.params;
+  const jobId = String(req.params.jobId);
   
   try {
     const job = await grdheService.getExportJob(jobId);
@@ -541,7 +542,7 @@ router.get('/exports/:jobId', asyncHandler(async (req: Request, res: Response) =
  * List export jobs for a tenant
  */
 router.get('/exports/tenant/:tenantId', validateTenantId, asyncHandler(async (req: Request, res: Response) => {
-  const { tenantId } = req.params;
+  const tenantId = String(req.params.tenantId);
   const { status, targetFormat, limit, offset } = req.query;
   
   const jobs = await grdheService.listExportJobs(tenantId, {
@@ -563,7 +564,7 @@ router.get('/exports/tenant/:tenantId', validateTenantId, asyncHandler(async (re
  * Execute an export job (generate XML)
  */
 router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Response) => {
-  const { jobId } = req.params;
+  const jobId = String(req.params.jobId);
   
   try {
     // Get job details
@@ -610,10 +611,13 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
         // Get adverse event
         const event = await grdheService.getCanonicalAdverseEventById(entityId);
         
-        // Generate XML based on format
+        // Generate XML based on format. job.targetFormat is typed as the
+        // broad RegulatoryFormat union, but adverse-event export jobs store
+        // the narrower SupportedFormat keys (the generators are keyed by
+        // those), so compare against that vocabulary.
         let exportResult;
-        
-        switch (job.targetFormat) {
+
+        switch (job.targetFormat as SupportedFormat) {
           case 'FDA_AE_3500A':
             exportResult = generateFDA3500AXML(event, job, job.terminologyVersions);
             break;
@@ -700,7 +704,7 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
  * Cancel an export job
  */
 router.post('/exports/:jobId/cancel', asyncHandler(async (req: Request, res: Response) => {
-  const { jobId } = req.params;
+  const jobId = String(req.params.jobId);
   const { reason } = req.body;
   
   try {
@@ -773,7 +777,7 @@ router.post('/adverse-events', asyncHandler(async (req: Request, res: Response) 
  * Get adverse event by ID
  */
 router.get('/adverse-events/:eventId', asyncHandler(async (req: Request, res: Response) => {
-  const { eventId } = req.params;
+  const eventId = String(req.params.eventId);
   
   try {
     const event = await grdheService.getCanonicalAdverseEventById(eventId);
@@ -798,7 +802,8 @@ router.get('/adverse-events/:eventId', asyncHandler(async (req: Request, res: Re
  * Get adverse event by case number
  */
 router.get('/adverse-events/tenant/:tenantId/case/:caseNumber', validateTenantId, asyncHandler(async (req: Request, res: Response) => {
-  const { tenantId, caseNumber } = req.params;
+  const tenantId = String(req.params.tenantId);
+  const caseNumber = String(req.params.caseNumber);
   const { version } = req.query;
   
   try {
@@ -828,7 +833,7 @@ router.get('/adverse-events/tenant/:tenantId/case/:caseNumber', validateTenantId
  * List adverse events for a tenant
  */
 router.get('/adverse-events/tenant/:tenantId', validateTenantId, asyncHandler(async (req: Request, res: Response) => {
-  const { tenantId } = req.params;
+  const tenantId = String(req.params.tenantId);
   const { status, isSerious, limit, offset } = req.query;
   
   const events = await grdheService.listCanonicalAdverseEvents(tenantId, {
@@ -850,7 +855,7 @@ router.get('/adverse-events/tenant/:tenantId', validateTenantId, asyncHandler(as
  * Validate adverse event for a specific format
  */
 router.post('/adverse-events/:eventId/validate', asyncHandler(async (req: Request, res: Response) => {
-  const { eventId } = req.params;
+  const eventId = String(req.params.eventId);
   const { targetFormat } = req.body;
   
   if (!targetFormat) {
@@ -928,8 +933,18 @@ router.post('/signatures', asyncHandler(async (req: Request, res: Response) => {
     });
   }
   
-  // Validate meaning
-  const validMeanings: SignatureMeaning[] = ['authorship', 'approval', 'review', 'witness', 'verification', 'rejection', 'amendment'];
+  // Validate meaning against the canonical SignatureMeaning vocabulary.
+  const validMeanings: SignatureMeaning[] = [
+    'authored',
+    'reviewed',
+    'verified',
+    'approved',
+    'rejected',
+    'acknowledged',
+    'witnessed',
+    'responsible_for_content',
+    'legal_responsibility',
+  ];
   if (!validMeanings.includes(request.meaning)) {
     return res.status(400).json({
       success: false,
@@ -963,7 +978,7 @@ router.post('/signatures', asyncHandler(async (req: Request, res: Response) => {
  * Verify an electronic signature
  */
 router.get('/signatures/:signatureId/verify', asyncHandler(async (req: Request, res: Response) => {
-  const { signatureId } = req.params;
+  const signatureId = String(req.params.signatureId);
   
   const result = await grdheService.verifyElectronicSignature(signatureId);
   
@@ -982,7 +997,8 @@ router.get('/signatures/:signatureId/verify', asyncHandler(async (req: Request, 
  * Get audit trail for a specific record
  */
 router.get('/audit/:tableName/:recordId', asyncHandler(async (req: Request, res: Response) => {
-  const { tableName, recordId } = req.params;
+  const tableName = String(req.params.tableName);
+  const recordId = String(req.params.recordId);
   const { limit, offset } = req.query;
   
   // Validate table name (prevent SQL injection)

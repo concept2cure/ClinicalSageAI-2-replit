@@ -76,8 +76,9 @@ router.use((req: Request, res: Response, next) => {
  */
 router.get('/requirements/:projectId', async (req: Request, res: Response) => {
   try {
-    const { projectId } = req.params;
-    const organizationId = req.organizationId;
+    const projectId = String(req.params.projectId);
+    // Router-level middleware (above) guarantees req.organizationId is a valid number.
+    const organizationId = req.organizationId as number;
 
     // Get all files mapped to requirements
     const files = await db.execute(sql`
@@ -99,8 +100,8 @@ router.get('/requirements/:projectId', async (req: Request, res: Response) => {
     const totalRequired = 8; // Number of required FDA categories
     let completedCount = 0;
 
-    // Process files by requirement
-    for (const file of files) {
+    // Process files by requirement (raw SQL rows are untyped)
+    for (const file of files.rows as any[]) {
       if (!requirements[file.fda_requirement]) {
         requirements[file.fda_requirement] = {
           total: 0,
@@ -150,7 +151,8 @@ router.post('/upload', upload.array('files', 5), async (req: Request, res: Respo
   try {
     const files = req.files as Express.Multer.File[];
     const { fda_requirement, fda_section, workflow_stage, project_id } = req.body;
-    const organizationId = req.organizationId;
+    // Router-level middleware (above) guarantees req.organizationId is a valid number.
+    const organizationId = req.organizationId as number;
 
     if (!files || files.length === 0) {
       return res.status(400).json({ error: 'No files provided' });
@@ -280,8 +282,9 @@ router.post('/upload', upload.array('files', 5), async (req: Request, res: Respo
  */
 router.get('/gap-analysis/:projectId', async (req: Request, res: Response) => {
   try {
-    const { projectId } = req.params;
-    const organizationId = req.organizationId;
+    const projectId = String(req.params.projectId);
+    // Router-level middleware (above) guarantees req.organizationId is a valid number.
+    const organizationId = req.organizationId as number;
 
     const analysis = await evidenceService.performGapAnalysis(projectId, organizationId);
 
@@ -348,7 +351,8 @@ router.post('/link-workflow', async (req: Request, res: Response) => {
  */
 router.get('/stage-evidence/:projectId/:stage', async (req: Request, res: Response) => {
   try {
-    const { projectId, stage } = req.params;
+    const projectId = String(req.params.projectId);
+    const stage = String(req.params.stage);
 
     const evidence = await evidenceService.getStageEvidence(projectId, parseInt(stage));
 
@@ -357,7 +361,7 @@ router.get('/stage-evidence/:projectId/:stage', async (req: Request, res: Respon
       projectId,
       stage: parseInt(stage),
       evidence,
-      count: evidence.length,
+      count: evidence.rows.length,
     });
   } catch (error) {
     logger.error('Stage evidence error', { err: error instanceof Error ? error.message : String(error) });
@@ -371,7 +375,7 @@ router.get('/stage-evidence/:projectId/:stage', async (req: Request, res: Respon
  */
 router.post('/auto-populate/:formId', async (req: Request, res: Response) => {
   try {
-    const { formId } = req.params;
+    const formId = String(req.params.formId);
     const { projectId } = req.body;
 
     const formData = await evidenceService.autoPopulateForm(formId, projectId);
@@ -394,7 +398,7 @@ router.post('/auto-populate/:formId', async (req: Request, res: Response) => {
  */
 router.post('/review/submit/:fileId', async (req: Request, res: Response) => {
   try {
-    const { fileId } = req.params;
+    const fileId = String(req.params.fileId);
     const { reviewerId } = req.body;
 
     await evidenceService.submitForReview(fileId, reviewerId || 'system');
@@ -415,7 +419,7 @@ router.post('/review/submit/:fileId', async (req: Request, res: Response) => {
  */
 router.post('/review/approve/:fileId', async (req: Request, res: Response) => {
   try {
-    const { fileId } = req.params;
+    const fileId = String(req.params.fileId);
     const { reviewerId, comments } = req.body;
 
     await evidenceService.approveEvidence(fileId, reviewerId || 'system', comments);
@@ -436,7 +440,7 @@ router.post('/review/approve/:fileId', async (req: Request, res: Response) => {
  */
 router.post('/review/request-changes/:fileId', async (req: Request, res: Response) => {
   try {
-    const { fileId } = req.params;
+    const fileId = String(req.params.fileId);
     const { reviewerId, comments } = req.body;
 
     if (!comments) {
@@ -461,8 +465,9 @@ router.post('/review/request-changes/:fileId', async (req: Request, res: Respons
  */
 router.get('/export/:projectId', async (req: Request, res: Response) => {
   try {
-    const { projectId } = req.params;
-    const organizationId = req.organizationId;
+    const projectId = String(req.params.projectId);
+    // Router-level middleware (above) guarantees req.organizationId is a valid number.
+    const organizationId = req.organizationId as number;
 
     const evidencePackage = await evidenceService.exportEvidencePackage(projectId, organizationId);
 
@@ -482,8 +487,9 @@ router.get('/export/:projectId', async (req: Request, res: Response) => {
  */
 router.get('/analytics/:projectId', async (req: Request, res: Response) => {
   try {
-    const { projectId } = req.params;
-    const organizationId = req.organizationId;
+    const projectId = String(req.params.projectId);
+    // Router-level middleware (above) guarantees req.organizationId is a valid number.
+    const organizationId = req.organizationId as number;
 
     const analytics = await db.execute(sql`
       SELECT
@@ -502,15 +508,18 @@ router.get('/analytics/:projectId', async (req: Request, res: Response) => {
     // Get gap analysis
     const gapAnalysis = await evidenceService.performGapAnalysis(projectId, organizationId);
 
+    // Raw SQL aggregate row is untyped.
+    const analyticsRow = (analytics.rows[0] as any) || {};
+
     res.json({
       success: true,
       projectId,
-      totalFiles: parseInt(analytics[0]?.total_files || 0),
-      approvedFiles: parseInt(analytics[0]?.approved_files || 0),
-      underReview: parseInt(analytics[0]?.under_review || 0),
-      draftFiles: parseInt(analytics[0]?.draft_files || 0),
-      requirementsCovered: parseInt(analytics[0]?.requirements_covered || 0),
-      unmappedFiles: parseInt(analytics[0]?.unmapped_files || 0),
+      totalFiles: parseInt(analyticsRow.total_files || 0),
+      approvedFiles: parseInt(analyticsRow.approved_files || 0),
+      underReview: parseInt(analyticsRow.under_review || 0),
+      draftFiles: parseInt(analyticsRow.draft_files || 0),
+      requirementsCovered: parseInt(analyticsRow.requirements_covered || 0),
+      unmappedFiles: parseInt(analyticsRow.unmapped_files || 0),
       gaps: gapAnalysis.gaps.length,
       completeness: gapAnalysis.completeness,
     });

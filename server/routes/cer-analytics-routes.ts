@@ -72,7 +72,7 @@ async function executePythonScript(scriptName: string, args: string[] = []): Pro
  */
 router.get('/:ndc_code', async (req: Request, res: Response) => {
   try {
-    const { ndc_code } = req.params;
+    const ndc_code = String(req.params.ndc_code);
 
     // Validate NDC code format (basic check)
     if (!ndc_code || !/^[0-9a-zA-Z-]+$/.test(ndc_code)) {
@@ -106,7 +106,7 @@ router.get('/:ndc_code', async (req: Request, res: Response) => {
  */
 router.get('/normalize/:ndc_code', async (req: Request, res: Response) => {
   try {
-    const { ndc_code } = req.params;
+    const ndc_code = String(req.params.ndc_code);
 
     // Validate NDC code
     if (!ndc_code || !/^[0-9a-zA-Z-]+$/.test(ndc_code)) {
@@ -138,7 +138,8 @@ router.get('/normalize/:ndc_code', async (req: Request, res: Response) => {
  */
 router.get('/forecast/:ndc_code/:event', async (req: Request, res: Response) => {
   try {
-    const { ndc_code, event } = req.params;
+    const ndc_code = String(req.params.ndc_code);
+    const event = String(req.params.event);
 
     // Validate parameters
     if (!ndc_code || !event) {
@@ -171,7 +172,7 @@ router.get('/forecast/:ndc_code/:event', async (req: Request, res: Response) => 
  */
 router.get('/anomalies/:ndc_code', async (req: Request, res: Response) => {
   try {
-    const { ndc_code } = req.params;
+    const ndc_code = String(req.params.ndc_code);
 
     // Validate NDC code
     if (!ndc_code || !/^[0-9a-zA-Z-]+$/.test(ndc_code)) {
@@ -203,7 +204,7 @@ router.get('/anomalies/:ndc_code', async (req: Request, res: Response) => {
  */
 router.get('/alerts/:ndc_code', async (req: Request, res: Response) => {
   try {
-    const { ndc_code } = req.params;
+    const ndc_code = String(req.params.ndc_code);
 
     // Validate NDC code
     if (!ndc_code || !/^[0-9a-zA-Z-]+$/.test(ndc_code)) {
@@ -235,7 +236,7 @@ router.get('/alerts/:ndc_code', async (req: Request, res: Response) => {
  */
 router.get('/:ndc_code/enhanced-pdf', async (req: Request, res: Response) => {
   try {
-    const { ndc_code } = req.params;
+    const ndc_code = String(req.params.ndc_code);
 
     // Validate NDC code
     if (!ndc_code || !/^[0-9a-zA-Z-]+$/.test(ndc_code)) {
@@ -356,7 +357,7 @@ router.post('/nlp-query', requireOpenAIKey(), async (req: Request, res: Response
 
     const gateway = getGateway();
     const gatewayResponse = await gateway.route({
-      taskType: 'cer_nlp_query',
+      taskType: 'structured_output',
       messages: [
         {
           role: 'system',

@@ -46,7 +46,7 @@ router.get('/registry', async (req: Request, res: Response) => {
 
 // Get available FDA forms for a project
 router.get('/project/:projectId/forms', async (req: Request, res: Response) => {
-  const { projectId } = req.params;
+  const projectId = String(req.params.projectId);
   const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
   if (!organizationId) {
     return res.status(401).json({ error: 'Organization context required' });
@@ -104,7 +104,7 @@ router.get('/project/:projectId/forms', async (req: Request, res: Response) => {
         documentType: f.documentType,
         version: f.version,
         status: f.status,
-        completeness: f.completeness,
+        completeness: f.complianceScore,
         updatedAt: f.updatedAt
       }))
     });
@@ -116,7 +116,8 @@ router.get('/project/:projectId/forms', async (req: Request, res: Response) => {
 
 // Generate a specific FDA form
 router.post('/project/:projectId/generate/:formType', async (req: Request, res: Response) => {
-  const { projectId, formType } = req.params;
+  const projectId = String(req.params.projectId);
+  const formType = String(req.params.formType);
   const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
   const userId = req.headers['x-user-id'] as string;
 
@@ -158,7 +159,7 @@ router.post('/project/:projectId/generate/:formType', async (req: Request, res: 
       formData: generatedForm.formData,
       version: 1,
       status: 'draft',
-      completeness: generatedForm.completeness,
+      complianceScore: generatedForm.completeness,
       createdBy: parseInt(userId),
       updatedBy: parseInt(userId),
       organizationId,
@@ -185,14 +186,14 @@ router.post('/project/:projectId/generate/:formType', async (req: Request, res: 
         .set({
           content: documentRecord.content,
           formData: documentRecord.formData,
-          version: existingForm[0].version + 1,
-          completeness: documentRecord.completeness,
+          version: (existingForm[0].version ?? 1) + 1,
+          complianceScore: documentRecord.complianceScore,
           updatedBy: documentRecord.updatedBy,
           updatedAt: new Date()
         })
         .where(eq(fda510kDocuments.id, existingForm[0].id));
       
-      documentRecord.version = existingForm[0].version + 1;
+      documentRecord.version = (existingForm[0].version ?? 1) + 1;
     } else {
       // Insert new form
       await db.insert(fda510kDocuments).values(documentRecord);
@@ -219,7 +220,7 @@ router.post('/project/:projectId/generate/:formType', async (req: Request, res: 
 
 // Generate all FDA forms for a project
 router.post('/project/:projectId/generate-all', async (req: Request, res: Response) => {
-  const { projectId } = req.params;
+  const projectId = String(req.params.projectId);
   const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
   const userId = req.headers['x-user-id'] as string;
 
@@ -247,7 +248,8 @@ router.post('/project/:projectId/generate-all', async (req: Request, res: Respon
 });
 // Generate any SMART form from registry
 router.post('/project/:projectId/generate-smart/:formId', async (req: Request, res: Response) => {
-  const { projectId, formId } = req.params;
+  const projectId = String(req.params.projectId);
+  const formId = String(req.params.formId);
   const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
   const userId = req.headers['x-user-id'] as string;
 
@@ -274,7 +276,7 @@ router.post('/project/:projectId/generate-smart/:formId', async (req: Request, r
         formData: generatedForm.formData,
         version: 1,
         status: 'draft',
-        completeness: generatedForm.completeness,
+        complianceScore: generatedForm.completeness,
         createdBy: parseInt(userId),
         updatedBy: parseInt(userId),
         organizationId,
@@ -301,14 +303,14 @@ router.post('/project/:projectId/generate-smart/:formId', async (req: Request, r
           .set({
             content: documentRecord.content,
             formData: documentRecord.formData,
-            version: existingForm[0].version + 1,
-            completeness: documentRecord.completeness,
+            version: (existingForm[0].version ?? 1) + 1,
+            complianceScore: documentRecord.complianceScore,
             updatedBy: documentRecord.updatedBy,
             updatedAt: new Date()
           })
           .where(eq(fda510kDocuments.id, existingForm[0].id));
         
-        documentRecord.version = existingForm[0].version + 1;
+        documentRecord.version = (existingForm[0].version ?? 1) + 1;
       } else {
         // Insert new form
         await db.insert(fda510kDocuments).values(documentRecord);
@@ -331,7 +333,7 @@ router.post('/project/:projectId/generate-smart/:formId', async (req: Request, r
 
 // Auto-generate forms when workflow is updated
 router.post('/project/:projectId/auto-generate', async (req: Request, res: Response) => {
-  const { projectId } = req.params;
+  const projectId = String(req.params.projectId);
   const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
   const userId = req.headers['x-user-id'] as string;
 
@@ -347,8 +349,14 @@ router.post('/project/:projectId/auto-generate', async (req: Request, res: Respo
     // Import the registry to get all form IDs
     const { FDAFormsRegistry, getRequiredForms } = await import('../config/FDAFormsRegistry');
     
-    // Determine submission type from project data
-    const submissionType = projectData.fda510kProject?.submissionType || '510k';
+    // Determine submission type from project data. fda510kProjects has no
+    // dedicated submission-type column, so read it from the project's
+    // metadata json bag (narrow cast at the untyped-json boundary), and
+    // default to a 510(k) submission.
+    const projectMetadata = (projectData.fda510kProject?.metadata ?? {}) as {
+      submissionType?: string;
+    };
+    const submissionType = projectMetadata.submissionType || '510k';
     
     // Get all required forms for this submission type
     const formsToGenerate = getRequiredForms(submissionType as '510k' | 'PMA' | 'DeNovo');
@@ -370,7 +378,7 @@ router.post('/project/:projectId/auto-generate', async (req: Request, res: Respo
             formData: generatedForm.formData,
             version: 1,
             status: 'draft',
-            completeness: generatedForm.completeness,
+            complianceScore: generatedForm.completeness,
             createdBy: parseInt(userId),
             updatedBy: parseInt(userId),
             organizationId,
@@ -385,7 +393,7 @@ router.post('/project/:projectId/auto-generate', async (req: Request, res: Respo
             .where(
               and(
                 eq(fda510kDocuments.projectId, parseInt(projectId)),
-                eq(fda510kDocuments.documentType, formType)
+                eq(fda510kDocuments.documentType, formId)
               )
             )
             .limit(1);
@@ -397,14 +405,14 @@ router.post('/project/:projectId/auto-generate', async (req: Request, res: Respo
               .set({
                 content: documentRecord.content,
                 formData: documentRecord.formData,
-                version: existingForm[0].version + 1,
-                completeness: documentRecord.completeness,
+                version: (existingForm[0].version ?? 1) + 1,
+                complianceScore: documentRecord.complianceScore,
                 updatedBy: documentRecord.updatedBy,
                 updatedAt: new Date()
               })
               .where(eq(fda510kDocuments.id, existingForm[0].id));
             
-            documentRecord.version = existingForm[0].version + 1;
+            documentRecord.version = (existingForm[0].version ?? 1) + 1;
           } else {
             // Insert new form
             await db.insert(fda510kDocuments).values(documentRecord);
@@ -440,7 +448,8 @@ router.post('/project/:projectId/auto-generate', async (req: Request, res: Respo
 
 // Get a specific generated form
 router.get('/project/:projectId/form/:formType', async (req: Request, res: Response) => {
-  const { projectId, formType } = req.params;
+  const projectId = String(req.params.projectId);
+  const formType = String(req.params.formType);
   const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
 
   try {
@@ -471,7 +480,8 @@ router.get('/project/:projectId/form/:formType', async (req: Request, res: Respo
 });
 router.post('/project/:projectId/generate-stage/:stage', async (req: Request, res: Response) => {
   try {
-    const { projectId, stage } = req.params;
+    const projectId = String(req.params.projectId);
+    const stage = String(req.params.stage);
     const formGenerator = new FDAFormGenerator();
     
     // Map stages to relevant forms
@@ -497,7 +507,7 @@ router.post('/project/:projectId/generate-stage/:stage', async (req: Request, re
     // Generate each stage form
     for (const formId of formsToGenerate) {
       try {
-        const generatedForm = await formGenerator.generateUniversalSmartForm(formId, projectId);
+        const generatedForm = await formGenerator.generateSmartForm(formId, projectData);
         results.push({
           formId,
           status: 'success',

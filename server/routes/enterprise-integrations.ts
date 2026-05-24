@@ -634,7 +634,7 @@ router.get('/metrics/summary', async (req: Request, res: Response) => {
 router.get('/:integrationId', async (req: Request, res: Response) => {
   try {
     const tenantId = getTenantId(req);
-    const integration = await getIntegration(tenantId, req.params.integrationId);
+    const integration = await getIntegration(tenantId, String(req.params.integrationId));
 
     if (!integration) {
       return res.status(404).json({ success: false, error: 'Integration not found' });
@@ -658,7 +658,7 @@ router.get('/:integrationId', async (req: Request, res: Response) => {
 router.get('/:integrationId/health', async (req: Request, res: Response) => {
   try {
     const tenantId = getTenantId(req);
-    const { integrationId } = req.params;
+    const integrationId = String(req.params.integrationId);
     const integration = await getIntegration(tenantId, integrationId);
 
     if (!integration) {
@@ -693,11 +693,11 @@ router.post('/:integrationId/connect', async (req: Request, res: Response) => {
     if (idempotent) {
       return res.status(idempotent.status).json({
         ...idempotent.body,
-        receipt: buildExecutionReceipt('connect_integration', tenantId, req.params.integrationId, true),
+        receipt: buildExecutionReceipt('connect_integration', tenantId, String(req.params.integrationId), true),
       });
     }
 
-    const { integrationId } = req.params;
+    const integrationId = String(req.params.integrationId);
     const parsed = ConnectSchema.safeParse(req.body || {});
 
     if (!parsed.success) {
@@ -766,11 +766,11 @@ router.post('/:integrationId/disconnect', async (req: Request, res: Response) =>
     if (idempotent) {
       return res.status(idempotent.status).json({
         ...idempotent.body,
-        receipt: buildExecutionReceipt('disconnect_integration', tenantId, req.params.integrationId, true),
+        receipt: buildExecutionReceipt('disconnect_integration', tenantId, String(req.params.integrationId), true),
       });
     }
 
-    const { integrationId } = req.params;
+    const integrationId = String(req.params.integrationId);
 
     const integration = await getIntegration(tenantId, integrationId);
     if (!integration) {
@@ -806,7 +806,7 @@ router.post('/:integrationId/disconnect', async (req: Request, res: Response) =>
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.post('/:integrationId/test', async (req: Request, res: Response) => {
-  const { integrationId } = req.params;
+  const integrationId = String(req.params.integrationId);
   const parsed = ConnectSchema.safeParse(req.body || {});
 
   if (!parsed.success) {
@@ -867,11 +867,11 @@ router.post('/:integrationId/sync', async (req: Request, res: Response) => {
     if (idempotent) {
       return res.status(idempotent.status).json({
         ...idempotent.body,
-        receipt: buildExecutionReceipt('sync_integration', tenantId, req.params.integrationId, true),
+        receipt: buildExecutionReceipt('sync_integration', tenantId, String(req.params.integrationId), true),
       });
     }
 
-    const { integrationId } = req.params;
+    const integrationId = String(req.params.integrationId);
 
     const integration = await getIntegration(tenantId, integrationId);
     if (!integration) {
@@ -936,7 +936,7 @@ router.post('/:integrationId/sync', async (req: Request, res: Response) => {
 router.get('/:integrationId/sync/runs', async (req: Request, res: Response) => {
   try {
     const tenantId = getTenantId(req);
-    const { integrationId } = req.params;
+    const integrationId = String(req.params.integrationId);
     const parsed = SyncRunsQuerySchema.safeParse(req.query || {});
 
     if (!parsed.success) {

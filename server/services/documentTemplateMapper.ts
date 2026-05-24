@@ -200,8 +200,13 @@ export function mapWorkflowToTemplate(workflowData: any): any {
     sections: {}
   };
 
-  // Process each template section
-  for (const [sectionKey, sectionConfig] of Object.entries(ESTAR_TEMPLATE_MAPPING)) {
+  // Process each template section.
+  // ESTAR_TEMPLATE_MAPPING is a heterogeneous config literal (some entries have
+  // `fields`, some `subsections`, some `conditional`), so iterate as `any`.
+  for (const [sectionKey, sectionConfig] of Object.entries(ESTAR_TEMPLATE_MAPPING) as [
+    string,
+    any,
+  ][]) {
     // Check conditional sections
     if (sectionConfig.conditional) {
       const shouldInclude = evaluateCondition(workflowData, sectionConfig.conditional);
@@ -247,7 +252,7 @@ function mapFields(workflowData: any, fieldMapping: any): any {
 function mapSubsections(workflowData: any, subsections: any): any {
   const mapped: any = {};
   
-  for (const [key, config] of Object.entries(subsections as any)) {
+  for (const [key, config] of Object.entries(subsections as any) as [string, any][]) {
     // Check conditional subsections
     if (config.conditional) {
       const shouldInclude = evaluateCondition(workflowData, config.conditional);
@@ -373,9 +378,12 @@ export const TemplateMapper = {
   getTemplateSections: () => Object.keys(ESTAR_TEMPLATE_MAPPING),
   getRequiredFields: () => {
     const required: string[] = [];
-    for (const [section, config] of Object.entries(ESTAR_TEMPLATE_MAPPING)) {
+    for (const [section, config] of Object.entries(ESTAR_TEMPLATE_MAPPING) as [string, any][]) {
       if (config.subsections) {
-        for (const [key, subsection] of Object.entries(config.subsections as any)) {
+        for (const [key, subsection] of Object.entries(config.subsections as any) as [
+          string,
+          any,
+        ][]) {
           if (subsection.required) {
             required.push(`${section}.${key}`);
           }

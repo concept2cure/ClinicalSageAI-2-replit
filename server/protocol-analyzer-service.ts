@@ -283,17 +283,28 @@ export class ProtocolAnalyzerService {
         .where(eq(protocols.indication, protocolData.indication))
         .limit(limit);
 
-      return similar.map(protocol => ({
-        id: protocol.id,
-        title: protocol.title,
-        sponsor: protocol.sponsor || 'Lumen Biosciences', // Include sponsor in similar protocols
-        phase: protocol.phase,
-        indication: protocol.indication,
-        similarity: Math.floor(Math.random() * 40) + 60, // Random similarity score for demo
-        sampleSize: protocol.sample_size || 100,
-        duration: protocol.duration || 24,
-        outcome: Math.random() > 0.3 ? 'success' : 'failed', // Random outcome for demo
-      }));
+      return similar.map(protocol => {
+        // The protocols table stores sponsor / sample size / duration inside the
+        // JSON `metadata` column rather than as dedicated columns.
+        const meta = (protocol.metadata ?? {}) as {
+          sponsor?: string;
+          sampleSize?: number;
+          sample_size?: number;
+          durationWeeks?: number;
+          duration?: number;
+        };
+        return {
+          id: protocol.id,
+          title: protocol.title,
+          sponsor: meta.sponsor || 'Lumen Biosciences', // Include sponsor in similar protocols
+          phase: protocol.phase,
+          indication: protocol.indication,
+          similarity: Math.floor(Math.random() * 40) + 60, // Random similarity score for demo
+          sampleSize: meta.sampleSize ?? meta.sample_size ?? 100,
+          duration: meta.durationWeeks ?? meta.duration ?? 24,
+          outcome: Math.random() > 0.3 ? 'success' : 'failed', // Random outcome for demo
+        };
+      });
     } catch (error) {
       console.error('Error finding similar protocols:', error);
       return [];

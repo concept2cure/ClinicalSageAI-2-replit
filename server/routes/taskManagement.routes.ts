@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
-import { and, eq, or, desc, asc, inArray, gte, lte, like, sql } from 'drizzle-orm';
+import { and, eq, or, ne, lt, desc, asc, inArray, gte, lte, like, sql, count, avg } from 'drizzle-orm';
 import {
   unifiedTasks,
   taskTemplates,
@@ -10,6 +10,7 @@ import {
   taskDependencies,
   crossModuleTaskLinks,
   users,
+  organizationUsers,
   projects,
 } from '../../shared/schema';
 import { getSecureOrgId } from '../utils/tenantContext';
@@ -127,30 +128,27 @@ async function calculateCriticalPath(projectId: number, organizationId: number) 
   try {
     // Get all tasks and dependencies for the project
     const tasks = await storage.db
-      .selectFrom('unifiedTasks')
-      .selectAll()
-      .where('organizationId', '=', organizationId)
-      .where('projectId', '=', projectId)
-      .execute();
+      .select()
+      .from(unifiedTasks)
+      .where(
+        and(
+          eq(unifiedTasks.organizationId, organizationId),
+          eq(unifiedTasks.projectId, projectId)
+        )
+      );
 
-    const dependencies = await storage.db
-      .selectFrom('taskDependencies')
-      .selectAll()
-      .where((eb: any) =>
-        eb.or([
-          eb(
-            'predecessorTaskId',
-            'in',
-            tasks.map((t: any) => t.taskId)
-          ),
-          eb(
-            'successorTaskId',
-            'in',
-            tasks.map((t: any) => t.taskId)
-          ),
-        ])
-      )
-      .execute();
+    const taskIds = tasks.map((t) => t.taskId);
+    const dependencies = taskIds.length
+      ? await storage.db
+          .select()
+          .from(taskDependencies)
+          .where(
+            or(
+              inArray(taskDependencies.predecessorTaskId, taskIds),
+              inArray(taskDependencies.successorTaskId, taskIds)
+            )
+          )
+      : [];
 
     // Build adjacency list
     const graph: Record<string, { task: any; successors: string[]; duration: number }> = {};
@@ -221,29 +219,31 @@ async function calculateCriticalPath(projectId: number, organizationId: number) 
 // Helper function for workload balancing
 async function getOptimalAssignee(organizationId: number, taskData: any) {
   try {
-    // Get all users and their current workload
+    // Get all users in the organization and their current active workload.
+    // Users belong to an org via organizationUsers; the left join to
+    // unifiedTasks only counts active (pending/in-progress) assignments.
     const workloadQuery = await storage.db
-      .selectFrom('users')
-      .leftJoin('unifiedTasks', (join: any) =>
-        join
-          .onRef('users.id', '=', 'unifiedTasks.assigneeId')
-          .on('unifiedTasks.status', 'in', ['pending', 'in-progress'])
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        activeTaskCount: count(unifiedTasks.id),
+        totalHours: sql<number>`coalesce(sum(coalesce(${unifiedTasks.estimatedHours}, 8)), 0)`,
+      })
+      .from(users)
+      .innerJoin(organizationUsers, eq(organizationUsers.userId, users.id))
+      .leftJoin(
+        unifiedTasks,
+        and(
+          eq(unifiedTasks.assigneeId, users.id),
+          inArray(unifiedTasks.status, ['pending', 'in-progress'])
+        )
       )
-      .select([
-        'users.id',
-        'users.name',
-        'users.email',
-        storage.db.fn.count('unifiedTasks.id').as('activeTaskCount'),
-        storage.db.fn
-          .sum(storage.db.fn.coalesce('unifiedTasks.estimatedHours', 8))
-          .as('totalHours'),
-      ])
-      .where('users.organizationId', '=', organizationId)
-      .groupBy(['users.id', 'users.name', 'users.email'])
-      .execute();
+      .where(eq(organizationUsers.organizationId, organizationId))
+      .groupBy(users.id, users.name, users.email);
 
     // Sort by workload (ascending)
-    const sortedByWorkload = workloadQuery.sort((a: any, b: any) => {
+    const sortedByWorkload = workloadQuery.sort((a, b) => {
       const aHours = Number(a.totalHours || 0);
       const bHours = Number(b.totalHours || 0);
       return aHours - bHours;
@@ -281,23 +281,23 @@ router.post('/tasks', async (req: Request, res: Response) => {
       }
     }
 
-    const newTask = await storage.db
-      .insertInto('unifiedTasks')
+    const { startDate, dueDate, ...taskFields } = validatedData;
+    const [newTask] = await storage.db
+      .insert(unifiedTasks)
       .values({
         taskId,
         organizationId,
-        ...validatedData,
+        ...taskFields,
+        startDate: startDate ? new Date(startDate) : undefined,
+        dueDate: dueDate ? new Date(dueDate) : undefined,
         assigneeId,
         assigneeName,
         status: 'pending',
         progress: 0,
         completionPercentage: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        createdById: actorUserId,
+        createdById: actorUserId ?? undefined,
       })
-      .returningAll()
-      .executeTakeFirst();
+      .returning();
 
     res.json({
       success: true,
@@ -346,23 +346,23 @@ router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
         }
       }
 
-      const newTask = await storage.db
-        .insertInto('unifiedTasks')
+      const { startDate, dueDate, ...taskFields } = taskData;
+      const [newTask] = await storage.db
+        .insert(unifiedTasks)
         .values({
           taskId,
           organizationId,
-          ...taskData,
+          ...taskFields,
+          startDate: startDate ? new Date(startDate) : undefined,
+          dueDate: dueDate ? new Date(dueDate) : undefined,
           assigneeId,
           assigneeName,
           status: 'pending',
           progress: 0,
           completionPercentage: 0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          createdById: actorUserId,
+          createdById: actorUserId ?? undefined,
         })
-        .returningAll()
-        .executeTakeFirst();
+        .returning();
 
       if (newTask) {
         createdTasks.push(newTask);
@@ -376,18 +376,13 @@ router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
         if (task.dependencies && task.dependencies.length > 0) {
           for (const depTitle of task.dependencies) {
             if (taskIdMapping[depTitle] && taskIdMapping[task.title]) {
-              await storage.db
-                .insertInto('taskDependencies')
-                .values({
-                  dependencyId: `DEP-${Date.now()}-${uuidv4().substr(0, 8)}`,
-                  predecessorTaskId: taskIdMapping[depTitle],
-                  successorTaskId: taskIdMapping[task.title],
-                  dependencyType: 'finish-to-start',
-                  status: 'active',
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
-                })
-                .execute();
+              await storage.db.insert(taskDependencies).values({
+                dependencyId: `DEP-${Date.now()}-${uuidv4().substr(0, 8)}`,
+                predecessorTaskId: taskIdMapping[depTitle],
+                successorTaskId: taskIdMapping[task.title],
+                dependencyType: 'finish-to-start',
+                status: 'active',
+              });
             }
           }
         }
@@ -411,7 +406,7 @@ router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
 // Create tasks from template
 router.post('/tasks/from-template/:templateId', async (req: Request, res: Response) => {
   try {
-    const templateId = req.params.templateId;
+    const templateId = String(req.params.templateId);
     const { projectId, startDate, adjustDates } = req.body;
     const actorUserId = getActorUserId(req);
     const organizationIdRaw = getSecureOrgId(req);
@@ -421,12 +416,16 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
     }
 
     // Get template
-    const template = await storage.db
-      .selectFrom('taskTemplates')
-      .selectAll()
-      .where('templateId', '=', templateId)
-      .where('organizationId', '=', organizationId)
-      .executeTakeFirst();
+    const [template] = await storage.db
+      .select()
+      .from(taskTemplates)
+      .where(
+        and(
+          eq(taskTemplates.templateId, templateId),
+          eq(taskTemplates.organizationId, organizationId)
+        )
+      )
+      .limit(1);
 
     if (!template) {
       return res.status(404).json({
@@ -462,31 +461,31 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
         }
       }
 
-      const newTask = await storage.db
-        .insertInto('unifiedTasks')
+      const [newTask] = await storage.db
+        .insert(unifiedTasks)
         .values({
           taskId,
           organizationId,
-          projectId,
+          projectId: projectId != null ? Number(projectId) : undefined,
           title: taskDef.title,
           description: taskDef.description,
           moduleType: taskDef.moduleType || 'general',
           category: taskDef.category,
           taskType: taskDef.taskType,
           priority: taskDef.priority || 'medium',
-          startDate: taskStartDate,
-          dueDate: taskDueDate,
+          startDate: taskStartDate ? new Date(taskStartDate) : undefined,
+          dueDate: taskDueDate ? new Date(taskDueDate) : undefined,
           estimatedHours: taskDef.estimatedHours,
           status: 'pending',
           progress: 0,
           completionPercentage: 0,
-          templateId: template.id,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          createdById: actorUserId,
+          // unifiedTasks has no template foreign key; record the originating
+          // template via the generic source-entity fields instead.
+          sourceEntityType: 'taskTemplate',
+          sourceEntityId: template.templateId,
+          createdById: actorUserId ?? undefined,
         })
-        .returningAll()
-        .executeTakeFirst();
+        .returning();
 
       if (newTask) {
         createdTasks.push(newTask);
@@ -498,34 +497,32 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
       const dependencies = template.dependencies as any[];
       for (const dep of dependencies) {
         if (taskIdMapping[dep.predecessor] && taskIdMapping[dep.successor]) {
-          await storage.db
-            .insertInto('taskDependencies')
-            .values({
-              dependencyId: `DEP-${Date.now()}-${uuidv4().substr(0, 8)}`,
-              predecessorTaskId: taskIdMapping[dep.predecessor],
-              successorTaskId: taskIdMapping[dep.successor],
-              dependencyType: dep.type || 'finish-to-start',
-              lagTime: dep.lag || 0,
-              status: 'active',
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            })
-            .execute();
+          await storage.db.insert(taskDependencies).values({
+            dependencyId: `DEP-${Date.now()}-${uuidv4().substr(0, 8)}`,
+            predecessorTaskId: taskIdMapping[dep.predecessor],
+            successorTaskId: taskIdMapping[dep.successor],
+            dependencyType: dep.type || 'finish-to-start',
+            lagTime: dep.lag || 0,
+            status: 'active',
+          });
         }
       }
     }
 
     // Update template usage statistics
     await storage.db
-      .updateTable('taskTemplates')
+      .update(taskTemplates)
       .set({
-        usageCount: sql`usage_count + 1`,
+        usageCount: sql`${taskTemplates.usageCount} + 1`,
         lastUsedAt: new Date(),
         updatedAt: new Date(),
       })
-      .where('templateId', '=', templateId)
-      .where('organizationId', '=', organizationId)
-      .execute();
+      .where(
+        and(
+          eq(taskTemplates.templateId, templateId),
+          eq(taskTemplates.organizationId, organizationId)
+        )
+      );
 
     res.json({
       success: true,
@@ -545,7 +542,7 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
 // Get tasks by module
 router.get('/tasks/by-module/:moduleId', async (req: Request, res: Response) => {
   try {
-    const moduleId = req.params.moduleId;
+    const moduleId = String(req.params.moduleId);
     const organizationIdRaw = getSecureOrgId(req);
     const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
@@ -554,20 +551,22 @@ router.get('/tasks/by-module/:moduleId', async (req: Request, res: Response) => 
     const status = req.query.status as string;
     const priority = req.query.priority as string;
 
-    let query = storage.db
-      .selectFrom('unifiedTasks')
-      .selectAll()
-      .where('organizationId', '=', organizationId)
-      .where('moduleType', '=', moduleId);
-
+    const conditions = [
+      eq(unifiedTasks.organizationId, organizationId),
+      eq(unifiedTasks.moduleType, moduleId),
+    ];
     if (status) {
-      query = query.where('status', '=', status);
+      conditions.push(eq(unifiedTasks.status, status));
     }
     if (priority) {
-      query = query.where('priority', '=', priority);
+      conditions.push(eq(unifiedTasks.priority, priority));
     }
 
-    const tasks = await query.orderBy('dueDate', 'asc').orderBy('priority', 'desc').execute();
+    const tasks = await storage.db
+      .select()
+      .from(unifiedTasks)
+      .where(and(...conditions))
+      .orderBy(asc(unifiedTasks.dueDate), desc(unifiedTasks.priority));
 
     res.json({
       success: true,
@@ -593,20 +592,30 @@ router.post('/tasks/dependencies', async (req: Request, res: Response) => {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
 
-    const [predecessorTask, successorTask] = await Promise.all([
+    const [predecessorRows, successorRows] = await Promise.all([
       storage.db
-        .selectFrom('unifiedTasks')
-        .select(['taskId'])
-        .where('taskId', '=', validatedData.predecessorTaskId)
-        .where('organizationId', '=', organizationId)
-        .executeTakeFirst(),
+        .select({ taskId: unifiedTasks.taskId })
+        .from(unifiedTasks)
+        .where(
+          and(
+            eq(unifiedTasks.taskId, validatedData.predecessorTaskId),
+            eq(unifiedTasks.organizationId, organizationId)
+          )
+        )
+        .limit(1),
       storage.db
-        .selectFrom('unifiedTasks')
-        .select(['taskId'])
-        .where('taskId', '=', validatedData.successorTaskId)
-        .where('organizationId', '=', organizationId)
-        .executeTakeFirst(),
+        .select({ taskId: unifiedTasks.taskId })
+        .from(unifiedTasks)
+        .where(
+          and(
+            eq(unifiedTasks.taskId, validatedData.successorTaskId),
+            eq(unifiedTasks.organizationId, organizationId)
+          )
+        )
+        .limit(1),
     ]);
+    const predecessorTask = predecessorRows[0];
+    const successorTask = successorRows[0];
     if (!predecessorTask || !successorTask) {
       return res.status(404).json({
         success: false,
@@ -616,17 +625,14 @@ router.post('/tasks/dependencies', async (req: Request, res: Response) => {
 
     const dependencyId = `DEP-${Date.now()}-${uuidv4().substr(0, 8)}`;
 
-    const newDependency = await storage.db
-      .insertInto('taskDependencies')
+    const [newDependency] = await storage.db
+      .insert(taskDependencies)
       .values({
         dependencyId,
         ...validatedData,
         status: 'active',
-        createdAt: new Date(),
-        updatedAt: new Date(),
       })
-      .returningAll()
-      .executeTakeFirst();
+      .returning();
 
     res.json({
       success: true,
@@ -644,7 +650,7 @@ router.post('/tasks/dependencies', async (req: Request, res: Response) => {
 // Calculate critical path for project
 router.get('/tasks/critical-path/:projectId', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId);
+    const projectId = parseInt(String(req.params.projectId));
     const organizationIdRaw = getSecureOrgId(req);
     const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
@@ -680,12 +686,16 @@ router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
 
     for (const taskId of taskIds) {
       // Get task details
-      const task = await storage.db
-        .selectFrom('unifiedTasks')
-        .selectAll()
-        .where('taskId', '=', taskId)
-        .where('organizationId', '=', organizationId)
-        .executeTakeFirst();
+      const [task] = await storage.db
+        .select()
+        .from(unifiedTasks)
+        .where(
+          and(
+            eq(unifiedTasks.taskId, taskId),
+            eq(unifiedTasks.organizationId, organizationId)
+          )
+        )
+        .limit(1);
 
       if (!task) continue;
 
@@ -695,17 +705,20 @@ router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
       if (optimalAssignee) {
         // Update task assignment
         await storage.db
-          .updateTable('unifiedTasks')
+          .update(unifiedTasks)
           .set({
             assigneeId: optimalAssignee.id,
             assigneeName: optimalAssignee.name,
-            assignedBy: actorUserId,
+            assignedBy: actorUserId ?? undefined,
             assignedAt: new Date(),
             updatedAt: new Date(),
           })
-          .where('taskId', '=', taskId)
-          .where('organizationId', '=', organizationId)
-          .execute();
+          .where(
+            and(
+              eq(unifiedTasks.taskId, taskId),
+              eq(unifiedTasks.organizationId, organizationId)
+            )
+          );
 
         assignmentResults.push({
           taskId,
@@ -739,84 +752,67 @@ router.get('/tasks/analytics', async (req: Request, res: Response) => {
     }
     const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : null;
 
-    // Base query
-    let baseCondition = storage.db.eb('organizationId', '=', organizationId);
-    if (projectId) {
-      baseCondition = storage.db.eb.and([
-        baseCondition,
-        storage.db.eb('projectId', '=', projectId),
-      ]);
-    }
+    // Base condition: scope to org, and optionally to a project.
+    const baseCondition = projectId
+      ? and(
+          eq(unifiedTasks.organizationId, organizationId),
+          eq(unifiedTasks.projectId, projectId)
+        )
+      : eq(unifiedTasks.organizationId, organizationId);
 
     // Task statistics
-    const taskStats = await storage.db
-      .selectFrom('unifiedTasks')
-      .select([
-        storage.db.fn.count('id').as('totalTasks'),
-        storage.db.fn
-          .countAll()
-          .filter(storage.db.eb('status', '=', 'completed'))
-          .as('completedTasks'),
-        storage.db.fn
-          .countAll()
-          .filter(storage.db.eb('status', '=', 'in-progress'))
-          .as('inProgressTasks'),
-        storage.db.fn
-          .countAll()
-          .filter(storage.db.eb('status', '=', 'blocked'))
-          .as('blockedTasks'),
-        storage.db.fn
-          .countAll()
-          .filter(storage.db.eb('status', '=', 'pending'))
-          .as('pendingTasks'),
-        storage.db.fn.avg('completionPercentage').as('avgCompletion'),
-      ])
-      .where(baseCondition)
-      .executeTakeFirst();
+    const [taskStats] = await storage.db
+      .select({
+        totalTasks: count(unifiedTasks.id),
+        completedTasks: sql<number>`count(*) filter (where ${unifiedTasks.status} = 'completed')`,
+        inProgressTasks: sql<number>`count(*) filter (where ${unifiedTasks.status} = 'in-progress')`,
+        blockedTasks: sql<number>`count(*) filter (where ${unifiedTasks.status} = 'blocked')`,
+        pendingTasks: sql<number>`count(*) filter (where ${unifiedTasks.status} = 'pending')`,
+        avgCompletion: avg(unifiedTasks.completionPercentage),
+      })
+      .from(unifiedTasks)
+      .where(baseCondition);
 
     // Tasks by module
     const tasksByModule = await storage.db
-      .selectFrom('unifiedTasks')
-      .select(['moduleType', storage.db.fn.count('id').as('count')])
+      .select({ moduleType: unifiedTasks.moduleType, count: count(unifiedTasks.id) })
+      .from(unifiedTasks)
       .where(baseCondition)
-      .groupBy('moduleType')
-      .execute();
+      .groupBy(unifiedTasks.moduleType);
 
     // Tasks by priority
     const tasksByPriority = await storage.db
-      .selectFrom('unifiedTasks')
-      .select(['priority', storage.db.fn.count('id').as('count')])
+      .select({ priority: unifiedTasks.priority, count: count(unifiedTasks.id) })
+      .from(unifiedTasks)
       .where(baseCondition)
-      .groupBy('priority')
-      .execute();
+      .groupBy(unifiedTasks.priority);
 
     // Overdue tasks
-    const overdueTasks = await storage.db
-      .selectFrom('unifiedTasks')
-      .select([storage.db.fn.count('id').as('count')])
-      .where(baseCondition)
-      .where('dueDate', '<', new Date())
-      .where('status', '!=', 'completed')
-      .executeTakeFirst();
+    const [overdueTasks] = await storage.db
+      .select({ count: count(unifiedTasks.id) })
+      .from(unifiedTasks)
+      .where(
+        and(
+          baseCondition,
+          lt(unifiedTasks.dueDate, new Date()),
+          ne(unifiedTasks.status, 'completed')
+        )
+      );
 
     // Team productivity (top performers)
     const teamProductivity = await storage.db
-      .selectFrom('unifiedTasks')
-      .innerJoin('users', 'unifiedTasks.assigneeId', 'users.id')
-      .select([
-        'users.name',
-        storage.db.fn.count('unifiedTasks.id').as('totalTasks'),
-        storage.db.fn
-          .countAll()
-          .filter(storage.db.eb('unifiedTasks.status', '=', 'completed'))
-          .as('completedTasks'),
-        storage.db.fn.avg('unifiedTasks.completionPercentage').as('avgCompletion'),
-      ])
+      .select({
+        name: users.name,
+        totalTasks: count(unifiedTasks.id),
+        completedTasks: sql<number>`count(*) filter (where ${unifiedTasks.status} = 'completed')`,
+        avgCompletion: avg(unifiedTasks.completionPercentage),
+      })
+      .from(unifiedTasks)
+      .innerJoin(users, eq(unifiedTasks.assigneeId, users.id))
       .where(baseCondition)
-      .groupBy(['users.id', 'users.name'])
-      .orderBy('completedTasks', 'desc')
-      .limit(10)
-      .execute();
+      .groupBy(users.id, users.name)
+      .orderBy(sql`count(*) filter (where ${unifiedTasks.status} = 'completed') desc`)
+      .limit(10);
 
     res.json({
       success: true,
@@ -849,8 +845,8 @@ router.post('/templates', async (req: Request, res: Response) => {
     }
     const templateId = `TMPL-${Date.now()}-${uuidv4().substr(0, 8)}`;
 
-    const newTemplate = await storage.db
-      .insertInto('taskTemplates')
+    const [newTemplate] = await storage.db
+      .insert(taskTemplates)
       .values({
         templateId,
         organizationId,
@@ -858,12 +854,9 @@ router.post('/templates', async (req: Request, res: Response) => {
         isActive: true,
         version: 1,
         usageCount: 0,
-        createdById: actorUserId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdById: actorUserId ?? undefined,
       })
-      .returningAll()
-      .executeTakeFirst();
+      .returning();
 
     res.json({
       success: true,
@@ -890,8 +883,8 @@ router.post('/automation', async (req: Request, res: Response) => {
     }
     const automationId = `AUTO-${Date.now()}-${uuidv4().substr(0, 8)}`;
 
-    const newAutomation = await storage.db
-      .insertInto('taskAutomation')
+    const [newAutomation] = await storage.db
+      .insert(taskAutomation)
       .values({
         automationId,
         organizationId,
@@ -901,12 +894,9 @@ router.post('/automation', async (req: Request, res: Response) => {
         executionCount: 0,
         successCount: 0,
         failureCount: 0,
-        createdById: actorUserId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdById: actorUserId ?? undefined,
       })
-      .returningAll()
-      .executeTakeFirst();
+      .returning();
 
     res.json({
       success: true,

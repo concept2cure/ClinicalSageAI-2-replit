@@ -44,8 +44,9 @@ async function tableExists(req: any, tableName: string): Promise<boolean> {
  */
 router.get('/:qmpId', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
-    const { qmpId } = req.params;
-    const { organizationId } = req.tenantContext || {};
+    const qmpId = String(req.params.qmpId);
+    const organizationIdRaw = req.tenantContext?.organizationId;
+    const organizationId = organizationIdRaw != null ? Number(organizationIdRaw) : NaN;
 
     if (!organizationId) {
       return res.status(400).json({ error: 'Missing tenant context' });
@@ -169,8 +170,9 @@ router.get('/:qmpId', authMiddleware, requireOrganizationContext, async (req, re
  */
 router.post('/:qmpId', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
-    const { qmpId } = req.params;
-    const { organizationId } = req.tenantContext || {};
+    const qmpId = String(req.params.qmpId);
+    const organizationIdRaw = req.tenantContext?.organizationId;
+    const organizationId = organizationIdRaw != null ? Number(organizationIdRaw) : NaN;
 
     if (!organizationId) {
       return res.status(400).json({ error: 'Missing tenant context' });
@@ -287,8 +289,10 @@ router.post('/:qmpId', authMiddleware, requireOrganizationContext, async (req, r
  */
 router.get('/:qmpId/item/:itemId', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
-    const { qmpId, itemId } = req.params;
-    const { organizationId } = req.tenantContext || {};
+    const qmpId = String(req.params.qmpId);
+    const itemId = String(req.params.itemId);
+    const organizationIdRaw = req.tenantContext?.organizationId;
+    const organizationId = organizationIdRaw != null ? Number(organizationIdRaw) : NaN;
 
     if (!organizationId) {
       return res.status(400).json({ error: 'Missing tenant context' });
@@ -328,8 +332,9 @@ router.get('/:qmpId/item/:itemId', authMiddleware, requireOrganizationContext, a
       return res.status(404).json({ error: 'Traceability item not found' });
     }
 
-    // Get the CTQ factor if available
-    let item = items[0];
+    // Get the CTQ factor if available. The enriched response carries an
+    // extra ctqFactor field that is not part of the base row type.
+    let item: (typeof items)[number] & { ctqFactor?: unknown } = items[0];
 
     if (item.ctqFactorId) {
       const ctqFactorsExists = await tableExists(req, 'ctq_factors');
@@ -373,8 +378,10 @@ router.patch(
   requireOrganizationContext,
   async (req, res) => {
     try {
-      const { qmpId, itemId } = req.params;
-      const { organizationId } = req.tenantContext || {};
+      const qmpId = String(req.params.qmpId);
+      const itemId = String(req.params.itemId);
+      const organizationIdRaw = req.tenantContext?.organizationId;
+      const organizationId = organizationIdRaw != null ? Number(organizationIdRaw) : NaN;
 
       if (!organizationId) {
         return res.status(400).json({ error: 'Missing tenant context' });
@@ -465,19 +472,21 @@ router.patch(
         }
       }
 
-      // If updating verification status to 'verified', set verification timestamp
+      // Build the update payload from the validated body, plus the verified
+      // metadata when the status transitions to 'verified'.
+      const setValues: Partial<typeof qmpTraceabilityMatrix.$inferInsert> = {
+        ...updateData,
+        updatedAt: new Date(),
+      };
       if (updateData.verificationStatus === 'verified') {
-        updateData.verifiedAt = new Date();
-        updateData.verifiedById = req.userId;
+        setValues.verifiedAt = new Date();
+        setValues.verifiedById = req.userId != null ? Number(req.userId) : undefined;
       }
 
       // Update the traceability item
       const result = await getDb(req)
         .update(qmpTraceabilityMatrix)
-        .set({
-          ...updateData,
-          updatedAt: new Date(),
-        })
+        .set(setValues)
         .where(
           and(
             eq(qmpTraceabilityMatrix.organizationId, organizationId),
@@ -508,8 +517,10 @@ router.delete(
   requireOrganizationContext,
   async (req, res) => {
     try {
-      const { qmpId, itemId } = req.params;
-      const { organizationId } = req.tenantContext || {};
+      const qmpId = String(req.params.qmpId);
+      const itemId = String(req.params.itemId);
+      const organizationIdRaw = req.tenantContext?.organizationId;
+      const organizationId = organizationIdRaw != null ? Number(organizationIdRaw) : NaN;
 
       if (!organizationId) {
         return res.status(400).json({ error: 'Missing tenant context' });
@@ -580,8 +591,9 @@ router.delete(
  */
 router.get('/:qmpId/stats', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
-    const { qmpId } = req.params;
-    const { organizationId } = req.tenantContext || {};
+    const qmpId = String(req.params.qmpId);
+    const organizationIdRaw = req.tenantContext?.organizationId;
+    const organizationId = organizationIdRaw != null ? Number(organizationIdRaw) : NaN;
 
     if (!organizationId) {
       return res.status(400).json({ error: 'Missing tenant context' });
@@ -634,7 +646,7 @@ router.get('/:qmpId/stats', authMiddleware, requireOrganizationContext, async (r
       totalRequirements > 0 ? Math.round((verifiedRequirements / totalRequirements) * 100) : 0;
 
     // Calculate stats by requirement source
-    const bySource = {};
+    const bySource: Record<string, { total: number; verified: number }> = {};
     items.forEach((item: any) => {
       const source = item.requirementSource || 'Unknown';
       if (!bySource[source]) {
@@ -647,7 +659,7 @@ router.get('/:qmpId/stats', authMiddleware, requireOrganizationContext, async (r
     });
 
     // Calculate stats by verification method
-    const byMethod = {};
+    const byMethod: Record<string, { total: number; verified: number }> = {};
     items.forEach((item: any) => {
       const method = item.verificationMethod || 'Unknown';
       if (!byMethod[method]) {

@@ -197,9 +197,9 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
    * Get entities for a document atom
    */
   router.get('/graph/entities/:atomId', asyncHandler(async (req: Request, res: Response) => {
-    const { atomId } = req.params;
+    const atomId = String(req.params.atomId);
     validateUUID(atomId, 'atomId');
-    
+
     const entities = await graphService.getEntities(atomId);
     res.json({ 
       atomId, 
@@ -265,9 +265,9 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
    * Traverse graph from starting atom
    */
   router.get('/graph/traverse/:atomId', asyncHandler(async (req: Request, res: Response) => {
-    const { atomId } = req.params;
+    const atomId = String(req.params.atomId);
     validateUUID(atomId, 'atomId');
-    
+
     const { maxDepth, direction, types } = req.query;
     const parsedDepth = maxDepth ? Math.min(10, Math.max(1, parseInt(maxDepth as string))) : 3;
     const validDirections = ['OUTGOING', 'INCOMING', 'BOTH'];
@@ -325,7 +325,7 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
    * Find supporting evidence for a claim
    */
   router.get('/graph/evidence/:claimAtomId', asyncHandler(async (req: Request, res: Response) => {
-    const { claimAtomId } = req.params;
+    const claimAtomId = String(req.params.claimAtomId);
     validateUUID(claimAtomId, 'claimAtomId');
     
     const evidence = await graphService.findSupportingEvidence(claimAtomId);
@@ -342,7 +342,7 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
    * Find all documents derived from a source
    */
   router.get('/graph/derived/:sourceAtomId', asyncHandler(async (req: Request, res: Response) => {
-    const { sourceAtomId } = req.params;
+    const sourceAtomId = String(req.params.sourceAtomId);
     validateUUID(sourceAtomId, 'sourceAtomId');
     
     const derived = await graphService.findDerivedDocuments(sourceAtomId);
@@ -433,7 +433,7 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
    * Mark a traceability entry as verified
    */
   router.post('/traceability/:entryId/verify', asyncHandler(async (req: Request, res: Response) => {
-    const { entryId } = req.params;
+    const entryId = String(req.params.entryId);
     validateUUID(entryId, 'entryId');
     
     const { verifiedBy } = req.body;
@@ -460,9 +460,9 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
    * Extract entities from a document atom
    */
   router.post('/extract/:atomId', asyncHandler(async (req: Request, res: Response) => {
-    const { atomId } = req.params;
+    const atomId = String(req.params.atomId);
     validateUUID(atomId, 'atomId');
-    
+
     const { content } = req.body;
 
     if (!content || typeof content !== 'string') {
@@ -561,9 +561,9 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
       }
     }),
     asyncHandler(async (req: Request, res: Response) => {
-      const { sessionId } = req.params;
+      const sessionId = String(req.params.sessionId);
       validateUUID(sessionId, 'sessionId');
-      
+
       // Check if AI features are available
       if (!degradation.isFeatureAvailable('COUNCIL_DRAFTING')) {
         throw new FeatureUnavailableError('COUNCIL_DRAFTING', degradation.getLevel());
@@ -602,9 +602,9 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
    * Get council session status and results
    */
   router.get('/council/sessions/:sessionId', asyncHandler(async (req: Request, res: Response) => {
-    const { sessionId } = req.params;
+    const sessionId = String(req.params.sessionId);
     validateUUID(sessionId, 'sessionId');
-    
+
     const result = await pool.query(
       `SELECT * FROM lumen.v_council_session_progress WHERE session_id = $1`,
       [sessionId]
@@ -629,9 +629,9 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
    * Get verification results from Statistician agent
    */
   router.get('/council/sessions/:sessionId/verifications', asyncHandler(async (req: Request, res: Response) => {
-    const { sessionId } = req.params;
+    const sessionId = String(req.params.sessionId);
     validateUUID(sessionId, 'sessionId');
-    
+
     const result = await pool.query(
       `SELECT * FROM lumen.data_verifications WHERE session_id = $1 ORDER BY verified_at`,
       [sessionId]
