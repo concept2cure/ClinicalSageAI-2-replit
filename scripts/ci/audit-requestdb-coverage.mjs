@@ -61,6 +61,9 @@ const ALLOWLIST_FILES = new Set([
   'server/routes/auth.ts',
   'server/routes/authEnterprise.ts',
   'server/routes/admin.ts',
+  // First-run install setup: runs before any tenant/org exists, so it cannot
+  // use the tenant-scoped requestDb. Self-closing once a user exists.
+  'server/routes/setup.ts',
 ]);
 
 const ROUTES_DIR = path.join(repoRoot, 'server', 'routes');

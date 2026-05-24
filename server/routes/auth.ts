@@ -801,7 +801,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
 
     let stripeCustomerId: string | null = null;
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY;
-    if (stripeSecretKey) {
+    if (stripeSecretKey && !config.billing.stripeDisabled) {
       const Stripe = (await import('stripe')).default;
       const stripe = new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' });
       const customer = await stripe.customers.create({

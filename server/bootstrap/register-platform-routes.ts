@@ -141,6 +141,18 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
   app.post('/api/logout', (_req, res) => res.redirect(307, '/api/auth/logout'));
   app.post('/api/register', (_req, res) => res.redirect(307, '/api/auth/signup'));
 
+  // First-run setup for private / single-tenant installs (self-closing once a
+  // user exists — see routes/setup.ts). Open prefix added to the auth gate below.
+  try {
+    const setupModule = await import('../routes/setup');
+    const setupRouter = setupModule.default;
+    if (setupRouter && (typeof setupRouter === 'function' || (setupRouter as any).handle)) {
+      app.use('/api/setup', setupRouter);
+    }
+  } catch (error) {
+    console.error('❌ Failed to mount setup routes:', error);
+  }
+
   try {
     const authEnterpriseModule = await import('../routes/authEnterprise');
     const authEnterpriseRouter = authEnterpriseModule.default;
@@ -167,6 +179,8 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     const openPrefixes = [
       // Auth & session management
       '/api/auth', '/api/login', '/api/logout', '/api/register',
+      // First-run install setup — self-closing once any user exists.
+      '/api/setup',
       // Health & observability
       '/api/health', '/api/health/full', '/api/metrics',
       '/api/cortex/health', '/api/claude/health', '/api/ai-gateway/health',

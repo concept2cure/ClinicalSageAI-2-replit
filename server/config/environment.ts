@@ -201,6 +201,25 @@ export const config = {
     : {
         enabled: false,
       },
+  // Single-tenant / private install controls.
+  singleTenant: {
+    enabled: process.env.SINGLE_TENANT_MODE === 'true',
+    /**
+     * Tier assigned to orgs created on a private install. Defaults to
+     * 'enterprise' in single-tenant mode (all features on for the one tenant),
+     * otherwise empty (multi-tenant signup keeps its own default).
+     */
+    defaultOrgTier:
+      process.env.DEFAULT_ORG_TIER ||
+      (process.env.SINGLE_TENANT_MODE === 'true' ? 'enterprise' : ''),
+  },
+  // Billing / Stripe. Treated as disabled when explicitly turned off via
+  // STRIPE_DISABLED or when no Stripe key is configured at all.
+  billing: {
+    stripeDisabled:
+      process.env.STRIPE_DISABLED === 'true' ||
+      !(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY),
+  },
 };
 
 export default config;
