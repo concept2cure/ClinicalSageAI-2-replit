@@ -134,7 +134,7 @@ router.post('/letters/:id/questions/:qid/ai-draft', async (req: Request, res: Re
     if (!question)
       return res.status(404).json({ success: false, error: 'Question not found' });
 
-    const aiDraft = generateAIDraft(question);
+    const aiDraft = await generateAIDraft(question);
     const { id: _id, createdAt: _ca, updatedAt: _ua, ...data } = question;
     const updated = {
       ...data,
@@ -245,34 +245,78 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
   }
 });
 
-function generateAIDraft(question: any): {
+/**
+ * Draft a Health Authority Question response using the AI gateway.
+ *
+ * History: the prior implementation was a 3-entry static lookup table of
+ * canned regulatory paragraphs keyed by module, with a Math.random()
+ * "confidence" and a synthesized source citation — fabrication dressed as
+ * an AI draft. It now routes through the AI gateway with the real question
+ * context.
+ *
+ * Honesty constraints:
+ *   - No invented confidence score. The gateway returns no calibrated
+ *     confidence, so `confidence` is null (the caller persists it as-is).
+ *     A real confidence would require a scored retrieval pipeline.
+ *   - No synthesized source citations. Sources is empty until a real
+ *     knowledge-base retrieval is wired — fabricating `SRC-xxx` doc ids
+ *     was part of the original liability.
+ *   - The draft is explicitly a starting point for human review (HAQ
+ *     responses are always reviewed + approved before submission via the
+ *     /review and /approve handlers in this router).
+ */
+async function generateAIDraft(question: any): Promise<{
   response: string;
-  confidence: number;
+  confidence: number | null;
   sources: { docId: string; section: string; excerpt: string }[];
-} {
-  const moduleResponses: Record<string, string> = {
-    'Module 3 - Quality':
-      'The requested data has been generated and is provided herein. The supplementary study results demonstrate compliance with all established specifications and support the conclusions presented in the original submission. Detailed analytical results, including method validation summaries and trending analyses, are included as attachments to this response.',
-    'Module 2 - Summaries':
-      'The requested clarification is provided below. The mechanism of action, pharmacodynamic properties, and dose-response relationship have been further elaborated based on the totality of nonclinical evidence. The NOAEL-to-human equivalent dose calculation follows FDA Guidance for Industry "Estimating the Maximum Safe Starting Dose in Initial Clinical Trials for Therapeutics in Adult Healthy Volunteers" (July 2005), applying appropriate allometric scaling factors.',
-    'Module 1 - Administrative':
-      "The informed consent form has been revised to address the identified deficiency. The updated ICF now includes a comprehensive description of all nonclinical safety findings, including the specific adverse effects noted by the reviewer. The revised document is provided as an attachment.",
-  };
+}> {
+  const { getGateway } = await import('../services/ai-gateway');
+  const gateway = getGateway();
 
-  const response =
-    moduleResponses[question.module] ??
-    "A detailed response to the agency's inquiry is provided herein, addressing each aspect of the question with supporting data and cross-references to the relevant sections of the submission dossier.";
-
-  return {
-    response,
-    confidence: 0.78 + Math.random() * 0.17,
-    sources: [
+  const result = await gateway.route({
+    taskType: 'regulatory_review',
+    messages: [
       {
-        docId: `SRC-${(question.section || '').replace(/\./g, '')}`,
-        section: question.section || '',
-        excerpt: `Data supporting the response to Question ${question.questionNumber || '?'}`,
+        role: 'system',
+        content:
+          'You are a regulatory affairs writer drafting a response to a Health Authority ' +
+          'Question (FDA Information Request, EMA Day-120, PMDA query). Write a precise, ' +
+          'professional draft response grounded only in what the question states and ' +
+          'standard regulatory practice. Do NOT invent study results, numeric data, or ' +
+          'citations to specific documents — where supporting data is required, indicate ' +
+          'with a clear placeholder what the submitter must attach. The draft will be ' +
+          'reviewed and edited by a human before submission. Return plain prose only.',
+      },
+      {
+        role: 'user',
+        content: `Draft a response to the following Health Authority Question.
+
+Question metadata:
+${JSON.stringify(
+  {
+    module: question.module,
+    section: question.section,
+    questionNumber: question.questionNumber,
+    questionText: question.questionText ?? question.text ?? question.question,
+    agency: question.agency,
+  },
+  null,
+  2
+)}`,
       },
     ],
+    maxTokens: 1500,
+    temperature: 0.3,
+    strategy: 'quality_optimized',
+    callerModule: 'haq-manager/ai-draft',
+  });
+
+  return {
+    response:
+      result.content?.trim() ||
+      "A detailed response addressing the agency's inquiry should be drafted here.",
+    confidence: null,
+    sources: [],
   };
 }
 
