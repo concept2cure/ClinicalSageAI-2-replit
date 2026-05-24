@@ -411,7 +411,10 @@ async function findSimilarCsrs(indication: string, phase: string) {
       sample_size: 200, // Default value since property doesn't exist in schema
       primary_endpoint: 'Primary endpoint', // Would come from another table in a real implementation
       duration_weeks: 24, // Default value since property doesn't exist in schema
-      similarity: Math.random() * 0.3 + 0.7, // Simulated similarity score between 0.7 and 1.0
+      // No semantic-similarity engine is wired for this lookup (it's a
+      // LIKE match on indication), so we do not assert a similarity score.
+      // Previously `Math.random() * 0.3 + 0.7` — a fabricated rank.
+      similarity: null,
       success: true, // Assuming all CSRs in the database are from successful studies
     }));
   } catch (error) {
@@ -447,7 +450,7 @@ interface SimilarCSR {
   sample_size: number;
   primary_endpoint: string;
   duration_weeks: number;
-  similarity: number;
+  similarity: number | null;
   success: boolean;
   [key: string]: any; // Allow for additional properties
 }
@@ -588,7 +591,7 @@ function generateRecommendations(
       recommendations += `   - Phase: ${study.phase}\n`;
       recommendations += `   - Sample Size: ${study.sample_size}\n`;
       recommendations += `   - Duration: ${study.duration_weeks} weeks\n`;
-      recommendations += `   - Similarity Score: ${(study.similarity * 100).toFixed(1)}%\n\n`;
+      recommendations += `   - Similarity Score: ${study.similarity != null ? `${(study.similarity * 100).toFixed(1)}%` : 'n/a'}\n\n`;
     });
   }
 
@@ -847,7 +850,12 @@ For each recommendation, include specific citations to relevant regulatory guide
     // Create comprehensive IND assessment
     const indAnalysis = {
       title: 'IND Readiness Assessment',
-      score: Math.floor(Math.random() * 15) + 75, // 75-90 range
+      // No deterministic IND-readiness scorer is wired. The score was
+      // previously `Math.floor(Math.random()*15)+75` — a fabricated value.
+      // The qualitative strengths / improvement areas / citations below are
+      // static regulatory guidance and remain. Score is null until a real
+      // scorer is connected.
+      score: null as number | null,
       strengths: [
         'Well-defined primary and secondary endpoints',
         'Clear inclusion/exclusion criteria',
@@ -874,13 +882,15 @@ For each recommendation, include specific citations to relevant regulatory guide
       ],
     };
 
-    // Statistics-based dropout prediction with references
+    // Qualitative dropout-risk factors with references. There is no
+    // dropout-prediction model wired, so we do NOT emit a numeric
+    // predicted_rate / confidence_interval — those were previously
+    // fabricated with Math.random() yet dressed with academic citations,
+    // which is the dangerous case. The qualitative factors and mitigation
+    // strategies below are real guidance and remain.
     const dropoutPrediction = {
-      predicted_rate: (Math.random() * 0.1 + 0.1).toFixed(3), // 10-20%
-      confidence_interval: [
-        (Math.random() * 0.05 + 0.08).toFixed(3), // 8-13%
-        (Math.random() * 0.1 + 0.15).toFixed(3), // 15-25%
-      ],
+      predicted_rate: null as string | null,
+      confidence_interval: null as [string, string] | null,
       factors: [
         {
           name: 'Treatment duration',
@@ -1114,7 +1124,7 @@ router.get('/export', async (req, res) => {
     let reportData: any = {};
 
     if (type === 'summary') {
-      // Get summary analytics data
+      // Get summary analytics data — all aggregated from real csrReports rows.
       const cohortData = await db
         .select({
           count: count(),
@@ -1126,29 +1136,38 @@ router.get('/export', async (req, res) => {
 
       const totalReports = cohortData.reduce((sum, item) => sum + Number(item.count), 0);
 
+      // Real breakdowns from the grouped rows (previously hardcoded).
+      const reportsByIndication: Record<string, number> = {};
+      const reportsByPhase: Record<string, number> = {};
+      for (const row of cohortData) {
+        const ind = row.indication || 'Unspecified';
+        const ph = row.phase || 'Unspecified';
+        reportsByIndication[ind] = (reportsByIndication[ind] || 0) + Number(row.count);
+        reportsByPhase[ph] = (reportsByPhase[ph] || 0) + Number(row.count);
+      }
+
+      // Real success rate = approved reports / total (csrReports.status).
+      // Previously hardcoded 94.5.
+      const statusRows = await db
+        .select({ count: count(), status: csrReports.status })
+        .from(csrReports)
+        .groupBy(csrReports.status);
+      const approved = statusRows
+        .filter(r => r.status === 'approved')
+        .reduce((s, r) => s + Number(r.count), 0);
+      const successRate = totalReports > 0 ? Number(((approved / totalReports) * 100).toFixed(1)) : null;
+
       reportData = {
         totalReports,
-        averageEndpoints: 3.2,
-        successRate: 94.5,
-        reportsByIndication: {
-          Oncology: 225,
-          Cardiovascular: 143,
-          Neurology: 98,
-          'Infectious Disease': 87,
-        },
-        reportsByPhase: {
-          '1': 105,
-          '2': 287,
-          '3': 325,
-          '4': 62,
-        },
-        mostCommonEndpoints: [
-          'Overall Survival',
-          'Progression-Free Survival',
-          'Objective Response Rate',
-          'Disease-Free Survival',
-          'Change in HbA1c',
-        ],
+        // averageEndpoints + mostCommonEndpoints require per-report endpoint
+        // data that isn't modeled on csrReports; omitted rather than
+        // fabricated. They return when an endpoints table is wired.
+        successRate,
+        reportsByIndication,
+        reportsByPhase,
+        reportsByStatus: Object.fromEntries(
+          statusRows.map(r => [r.status || 'unknown', Number(r.count)])
+        ),
       };
     } else if (type === 'predictive') {
       // Generate predictive analysis data

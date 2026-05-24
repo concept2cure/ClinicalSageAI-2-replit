@@ -2,6 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { randomUUID } from 'crypto';
 import { protocolAnalyzerService } from '../protocol-analyzer-service';
 import { protocolOptimizerService } from '../protocol-optimizer-service';
 import { huggingFaceService } from '../huggingface-service';
@@ -638,12 +639,15 @@ async function generateAcademicReferences(indication: string, phase: string) {
 }
 
 /**
- * Calculates regulatory alignment score
+ * Regulatory alignment heuristic — deterministic function of the real
+ * supporting evidence retrieved (matched CSR precedents + academic
+ * references). Previously `Math.floor(70 + Math.random() * 25)`, a random
+ * value that ignored its inputs and varied per request. There is no
+ * trained regulatory-scoring model, so this is an explicit
+ * evidence-coverage heuristic, not a model prediction.
  */
-function calculateRegScore(indication: string, phase: string) {
-  // In a real implementation, this would use a more sophisticated algorithm
-  // For demo purposes, we're using a simple random score between 70-95
-  return Math.floor(70 + Math.random() * 25);
+function calculateRegScore(matchedCsrCount: number, academicCount: number) {
+  return Math.min(95, 65 + matchedCsrCount * 4 + academicCount * 2);
 }
 
 /**
@@ -667,14 +671,11 @@ function calculateAcademicScore(academicReferences: any[]) {
 }
 
 /**
- * Calculates overall quality score
+ * Overall quality score — deterministic mean of the three evidence-based
+ * alignment heuristics. Previously added `Math.random() * 10 - 5` jitter.
  */
-function calculateOverallScore(indication: string, phase: string, csrCount: number) {
-  // Base score influenced by CSR count and random variance
-  const baseScore = 70 + Math.min(15, csrCount * 3);
-
-  // Add some randomness for demo purposes
-  return Math.min(95, Math.max(65, baseScore + (Math.random() * 10 - 5)));
+function calculateOverallScore(regScore: number, csrScore: number, academicScore: number) {
+  return Math.round((regScore + csrScore + academicScore) / 3);
 }
 const upload = multer({
   dest: 'uploads/',
@@ -766,6 +767,17 @@ router.post('/parse-file', upload.single('file'), async (req, res) => {
         return res.status(422).json({
           success: false,
           message: 'Could not extract text from the PDF file',
+        });
+      }
+    } else if (fileExtension === '.docx' || fileExtension === '.doc') {
+      try {
+        const docBuffer = fs.readFileSync(filePath);
+        extractedText = await extractTextFromDocx(docBuffer);
+      } catch (docError) {
+        log.error('Document extraction error:', docError);
+        return res.status(422).json({
+          success: false,
+          message: `Could not extract text from the ${fileExtension} file`,
         });
       }
     } else {
@@ -933,10 +945,24 @@ router.post('/optimize', express.json(), async (req, res) => {
       suggestedArms: generateArmSuggestions(indication, phase, studyType),
       sectionAnalysis: generateSectionAnalysis(indication, phase, protocolSummary),
       academicReferences,
-      regulatoryAlignmentScore: calculateRegScore(indication, phase),
-      csrAlignmentScore: calculateCsrScore(enhancedCsrInsights),
-      academicAlignmentScore: calculateAcademicScore(academicReferences),
-      overallQualityScore: calculateOverallScore(indication, phase, enhancedCsrInsights.length),
+      ...(() => {
+        const regulatoryAlignmentScore = calculateRegScore(
+          enhancedCsrInsights.length,
+          academicReferences.length
+        );
+        const csrAlignmentScore = calculateCsrScore(enhancedCsrInsights);
+        const academicAlignmentScore = calculateAcademicScore(academicReferences);
+        return {
+          regulatoryAlignmentScore,
+          csrAlignmentScore,
+          academicAlignmentScore,
+          overallQualityScore: calculateOverallScore(
+            regulatoryAlignmentScore,
+            csrAlignmentScore,
+            academicAlignmentScore
+          ),
+        };
+      })(),
     });
   } catch (error: any) {
     log.error('Error optimizing protocol:', error);
@@ -976,11 +1002,8 @@ router.post('/upload-and-optimize', upload.single('file'), async (req, res) => {
       }
     } else if (fileExtension === '.docx' || fileExtension === '.doc') {
       try {
-        // Use appropriate document extraction
         const docBuffer = fs.readFileSync(filePath);
-        // For Word documents, we'll use the PDF extraction as fallback
-        // In a production environment, we would use specific DOCX/DOC libraries
-        text = await extractTextFromPdf(docBuffer);
+        text = await extractTextFromDocx(docBuffer);
       } catch (docError) {
         log.error('Document extraction error:', docError);
         return res.status(422).json({
@@ -1061,14 +1084,24 @@ router.post('/upload-and-optimize', upload.single('file'), async (req, res) => {
       ),
       sectionAnalysis: generateSectionAnalysis(protocolMeta.indication, protocolMeta.phase, text),
       academicReferences,
-      regulatoryAlignmentScore: calculateRegScore(protocolMeta.indication, protocolMeta.phase),
-      csrAlignmentScore: calculateCsrScore(enhancedCsrInsights),
-      academicAlignmentScore: calculateAcademicScore(academicReferences),
-      overallQualityScore: calculateOverallScore(
-        protocolMeta.indication,
-        protocolMeta.phase,
-        enhancedCsrInsights.length
-      ),
+      ...(() => {
+        const regulatoryAlignmentScore = calculateRegScore(
+          enhancedCsrInsights.length,
+          academicReferences.length
+        );
+        const csrAlignmentScore = calculateCsrScore(enhancedCsrInsights);
+        const academicAlignmentScore = calculateAcademicScore(academicReferences);
+        return {
+          regulatoryAlignmentScore,
+          csrAlignmentScore,
+          academicAlignmentScore,
+          overallQualityScore: calculateOverallScore(
+            regulatoryAlignmentScore,
+            csrAlignmentScore,
+            academicAlignmentScore
+          ),
+        };
+      })(),
     });
   } catch (error: any) {
     log.error('Error processing and optimizing protocol file:', error);
@@ -1145,308 +1178,117 @@ router.post('/optimize-deep', express.json(), async (req, res) => {
 });
 
 // Generate full protocol
-router.post('/generate', express.json(), async (req, res) => {
-  try {
-    const { indication, phase, primaryEndpoint, additionalContext, useCSRLibrary, optimalDesign } =
-      req.body;
-
-    if (!indication || !phase) {
-      return res.status(400).json({
-        success: false,
-        message: 'Indication and phase are required',
-      });
-    }
-
-    // Get similar protocols from the database based on indication and phase
-    // For now, we'll generate data similar to what the client expects
-
-    // Generate a base protocol structure
-    const baseProtocolData = await analyzeProtocolText(
-      `Protocol for ${indication} Phase ${phase} study ${primaryEndpoint ? `with primary endpoint ${primaryEndpoint}` : ''} ${additionalContext || ''}`
-    );
-
-    // Enhanced protocol with more realistic data
-    const enhancedProtocol = {
-      title: `Study of ${indication} Treatment in Phase ${phase} Clinical Trial`,
-      designElements: {
-        sampleSize: baseProtocolData.sample_size,
-        durationWeeks: baseProtocolData.duration_weeks,
-        studyDesign: 'Randomized, Double-blind, Placebo-controlled',
-        primaryEndpoint: primaryEndpoint || baseProtocolData.primary_endpoint,
-        populationCriteria: 'Adults 18-75 years with confirmed diagnosis',
-        randomizationRatio: '1:1',
-        blindingType: 'Double-blind',
-        controlType: 'Placebo-controlled',
-      },
-      validationSummary: {
-        criticalIssues: 0,
-        highIssues: 1,
-        mediumIssues: 2,
-        warningIssues: 4,
-        lowIssues: 3,
-      },
-      aiInsights: {
-        successProbability: 78,
-        strengths: [
-          {
-            insight:
-              'Well-defined inclusion/exclusion criteria aligned with regulatory expectations',
-            evidence: 'FDA guidance on protocol design for ' + indication + ' trials',
-          },
-          {
-            insight: 'Appropriate endpoints for the target indication based on precedent studies',
-            evidence: 'Similar endpoints used in 8 recently approved studies',
-          },
-          {
-            insight: 'Sufficient study duration to capture meaningful clinical outcomes',
-            evidence:
-              'Average duration of ' +
-              baseProtocolData.duration_weeks +
-              ' weeks aligns with similar successful trials',
-          },
-        ],
-        improvementAreas: [
-          {
-            insight: 'Sample size may be insufficient for statistical power',
-            evidence:
-              'Recent similar trials used ' +
-              Math.round(baseProtocolData.sample_size * 1.2) +
-              ' participants on average',
-            recommendation:
-              'Consider increasing sample size by 15-20% to improve statistical power',
-          },
-          {
-            insight: 'Dropout rate assumptions may be optimistic based on precedent',
-            evidence: 'Historical dropout rates for ' + indication + ' trials average 18-22%',
-            recommendation:
-              'Plan for higher dropout rate in statistical calculations and implement retention strategies',
-          },
-        ],
-        regulatoryAlignment: {
-          score: 87,
-          citations: [
-            'FDA Guidance for Industry: ' + indication + ' Drug Development (2022)',
-            'EMA Scientific Guidelines on Clinical Investigation (2021)',
-            'ICH E6(R2) Good Clinical Practice',
-          ],
-        },
-        competitiveAnalysis: {
-          recentApprovals: [
-            {
-              name: 'Drug-' + Math.floor(1000 + Math.random() * 9000),
-              approval: '2023',
-              phase3Result: 'Met primary endpoint with statistical significance (p<0.001)',
-            },
-            {
-              name: 'Drug-' + Math.floor(1000 + Math.random() * 9000),
-              approval: '2022',
-              phase3Result: 'Met primary and key secondary endpoints',
-            },
-          ],
-          marketDifferentiation:
-            'Protocol design includes novel biomarker assessment that may facilitate more precise patient stratification compared to competitor trials',
-        },
-      },
-      sections: [
-        {
-          sectionName: 'Study Synopsis',
-          content: `TITLE: Study of ${indication} Treatment in Phase ${phase} Clinical Trial\n\nINDICATION: ${indication}\n\nPHASE: ${phase}\n\nPRIMARY OBJECTIVE: To evaluate the efficacy and safety of the investigational product in patients with ${indication}.\n\nSTUDY DESIGN: This is a multicenter, randomized, double-blind, placebo-controlled clinical trial.\n\nSAMPLE SIZE: Approximately ${baseProtocolData.sample_size} subjects will be enrolled.\n\nSTUDY DURATION: The total duration of subject participation will be ${baseProtocolData.duration_weeks} weeks, including a screening period, treatment period, and follow-up period.`,
-          evidenceStrength: 90,
-          precedent: 'Based on 12 successful Phase ' + phase + ' trials for ' + indication,
-          regulatoryGuidance:
-            'Follows FDA and EMA guidance for ' + indication + ' clinical development programs',
-          citations: [
-            {
-              id: 'PMID-28976440',
-              title:
-                'Clinical Trial Design for ' +
-                indication +
-                ': Current Status and Future Perspectives',
-              relevance: 'High',
-            },
-            {
-              id: 'PMID-30122456',
-              title: 'Efficacy and Safety Assessment in ' + indication + ' Clinical Trials',
-              relevance: 'Medium',
-            },
-          ],
-        },
-        {
-          sectionName: 'Study Objectives',
-          content: `PRIMARY OBJECTIVE:\nTo evaluate the efficacy of the investigational product compared to placebo in subjects with ${indication} as measured by ${primaryEndpoint || baseProtocolData.primary_endpoint}.\n\nSECONDARY OBJECTIVES:\n1. To assess the safety and tolerability of the investigational product\n2. To evaluate the effect of treatment on key disease-specific metrics\n3. To determine the durability of treatment response\n4. To assess quality of life improvements`,
-          evidenceStrength: 85,
-          precedent: 'Standard objective structure used in successful Phase ' + phase + ' trials',
-          regulatoryGuidance:
-            'Objectives align with FDA expectations for pivotal ' + indication + ' studies',
-          citations: [
-            {
-              id: 'PMID-27654321',
-              title: 'Regulatory Perspectives on Clinical Trial Endpoints for ' + indication,
-              relevance: 'High',
-            },
-          ],
-        },
-        {
-          sectionName: 'Eligibility Criteria',
-          content: `INCLUSION CRITERIA:\n1. Males and females aged 18-75 years (inclusive)\n2. Confirmed diagnosis of ${indication} for at least 6 months\n3. Inadequate response to standard therapy\n4. ECOG performance status 0-1\n5. Ability to provide written informed consent\n\nEXCLUSION CRITERIA:\n1. Known hypersensitivity to the investigational product or any of its components\n2. Participation in another investigational drug trial within 30 days\n3. Pregnancy or breastfeeding\n4. Significant cardiovascular, hepatic, renal, or other major organ system disease\n5. Active or recent history of suicidal behavior or ideation`,
-          evidenceStrength: 88,
-          precedent: 'Criteria based on 9 successful Phase ' + phase + ' trials',
-          regulatoryGuidance: 'Criteria address FDA safety concerns for vulnerable populations',
-          citations: [
-            {
-              id: 'PMID-31245678',
-              title:
-                'Selection Criteria in Clinical Trials for ' +
-                indication +
-                ': Impact on Recruitment and Outcomes',
-              relevance: 'High',
-            },
-          ],
-        },
-        {
-          sectionName: 'Statistical Methodology',
-          content: `SAMPLE SIZE DETERMINATION:\nThe sample size of ${baseProtocolData.sample_size} subjects provides 90% power to detect a treatment difference of 30% in the primary endpoint, assuming a two-sided significance level of 0.05 and a dropout rate of ${(baseProtocolData.dropout_rate * 100).toFixed(0)}%.\n\nPRIMARY ENDPOINT ANALYSIS:\nThe primary efficacy analysis will be performed using an ANCOVA model with treatment as fixed effect and baseline values as covariates. Missing data will be handled using a multiple imputation approach.\n\nSECONDARY ENDPOINT ANALYSES:\nSecondary endpoints will be analyzed using appropriate statistical methods including MMRM for continuous longitudinal data and logistic regression for binary endpoints. A hierarchical testing procedure will be implemented to control the family-wise error rate.`,
-          evidenceStrength: 82,
-          precedent:
-            'Similar statistical approach used in recently approved ' + indication + ' treatments',
-          regulatoryGuidance:
-            'Statistical methods follow FDA guidance for handling missing data in clinical trials',
-          citations: [
-            {
-              id: 'PMID-29876543',
-              title: 'Statistical Considerations for ' + indication + ' Clinical Trials',
-              relevance: 'High',
-            },
-            {
-              id: 'PMID-30765432',
-              title: 'Methods for Handling Missing Data in Clinical Trials',
-              relevance: 'Medium',
-            },
-          ],
-        },
-      ],
-    };
-
-    return res.json(enhancedProtocol);
-  } catch (error: any) {
-    log.error('Error generating protocol:', error);
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Failed to generate protocol',
-    });
-  }
+router.post('/generate', express.json(), async (_req, res) => {
+  // DISABLED (501). This route fabricated an entire "generated protocol"
+  // analysis with no real data source: random competitor drug names
+  // (`Drug-${random}`) carrying invented "p<0.001" phase-3 results, a fixed
+  // regulatoryAlignment score (87), invented precedent counts ("12 successful
+  // Phase X trials"), and hardcoded evidence-strength numbers. None of it was
+  // backed by a real competitor/precedent database or model, and no client
+  // consumes this endpoint. Real CSR-backed protocol analysis is available at
+  // POST /api/protocol/optimize, which queries matched CSRs + academic
+  // references and routes through protocolOptimizerService.
+  return res.status(501).json({
+    success: false,
+    error: {
+      code: 'not_implemented',
+      message:
+        'Protocol generation is not available. The prior implementation returned ' +
+        'fabricated competitor, precedent, and alignment data. Use POST ' +
+        '/api/protocol/optimize for real CSR-backed protocol analysis.',
+    },
+  });
 });
 
 export { router as protocolRoutes };
 
 // Placeholder function - Generates a realistic protocol structure
+/**
+ * Extracts structured fields from raw protocol text via pattern matching.
+ *
+ * Honesty contract: every field is derived from the supplied text. Fields
+ * that are not present return null (scalars) or [] (lists) — we do NOT
+ * fabricate them. The prior implementation invented a random indication /
+ * phase / sample size / duration / endpoint when extraction failed, and
+ * returned hardcoded inclusion/exclusion criteria, arms, randomization,
+ * blinding, statistical methods, and a random dropout_rate as if they had
+ * been read from the protocol. None of that was real.
+ */
 async function analyzeProtocolText(text: string) {
-  // Generate a random protocol ID
-  const protocolId = `TS-${Math.floor(10000 + Math.random() * 90000)}`;
+  const protocolId = `TS-${randomUUID()}`;
 
-  // Extract indication-like patterns
   const indicationMatch = text.match(
     /(?:indication|disease|condition|disorder)s?:?\s*([A-Za-z\s\-]+)/i
   );
-  const indication = indicationMatch ? indicationMatch[1].trim() : getRandomIndication();
+  const indication = indicationMatch ? indicationMatch[1].trim() : null;
 
-  // Extract phase-like patterns
   const phaseMatch = text.match(/phase\s*([1-4]|I{1,3}V?)/i);
-  const phaseText = phaseMatch ? phaseMatch[1] : getRandomPhase();
-  const phase = phaseText.toString().replace(/I{1,3}V?/i, m => {
-    return { I: '1', II: '2', III: '3', IV: '4' }[m] || m;
-  });
+  const phase = phaseMatch
+    ? phaseMatch[1].toString().replace(/I{1,3}V?/i, m => {
+        return { I: '1', II: '2', III: '3', IV: '4' }[m] || m;
+      })
+    : null;
 
-  // Extract or generate sample size
   const sampleSizeMatch = text.match(
     /(?:sample size|n\s*=|subjects|patients)(?:\s*(?:of|=|:))?\s*(\d+)/i
   );
-  const sampleSize = sampleSizeMatch
-    ? parseInt(sampleSizeMatch[1])
-    : Math.floor(50 + Math.random() * 300);
+  const sampleSize = sampleSizeMatch ? parseInt(sampleSizeMatch[1]) : null;
 
-  // Extract or generate duration
   const durationMatch = text.match(
     /(?:duration|period|length|weeks)(?:\s*(?:of|=|:))?\s*(\d+)\s*(?:weeks|wks|w)/i
   );
-  const durationWeeks = durationMatch
-    ? parseInt(durationMatch[1])
-    : Math.floor(12 + Math.random() * 36);
+  const durationWeeks = durationMatch ? parseInt(durationMatch[1]) : null;
 
-  // Extract or generate primary endpoint
   const endpointMatch = text.match(
     /(?:primary\s*endpoint|primary\s*outcome)(?:\s*(?:is|=|:))?\s*([^.;]+)/i
   );
-  const primaryEndpoint = endpointMatch ? endpointMatch[1].trim() : getRandomEndpoint(indication);
+  const primaryEndpoint = endpointMatch ? endpointMatch[1].trim() : null;
+
+  const blindingMatch = text.match(/\b(double-blind|single-blind|open-label|unblinded)\b/i);
+  const randomizationMatch = text.match(/\b(\d\s*:\s*\d(?:\s*:\s*\d)?)\b\s*randomi[sz]ation/i);
 
   return {
     protocol_id: protocolId,
-    title: `Study of ${indication} Treatment in Phase ${phase} Clinical Trial`,
-    indication: indication,
-    phase: phase,
+    title: indication && phase ? `Study of ${indication} — Phase ${phase}` : null,
+    indication,
+    phase,
     sample_size: sampleSize,
     duration_weeks: durationWeeks,
-    primary_endpoint: primaryEndpoint, // Using the required field name
-    endpoint_primary: primaryEndpoint, // Keep for backward compatibility
-    secondary_endpoints: [
-      `Safety and tolerability of the treatment regimen`,
-      `Quality of life measures using standardized questionnaires`,
-    ],
-    inclusion_criteria: [
-      `Adult patients aged 18-75 years`,
-      `Confirmed diagnosis of ${indication}`,
-      `ECOG performance status 0-1`,
-    ],
-    exclusion_criteria: [
-      `History of hypersensitivity to study medication`,
-      `Participation in another clinical trial within 30 days`,
-      `Significant organ dysfunction or comorbidity`,
-    ],
-    arms: [
-      `Treatment arm: Standard therapy plus investigational product`,
-      `Control arm: Standard therapy plus placebo`,
-    ],
-    randomization: `1:1 randomization stratified by disease severity`,
-    blinding: `Double-blind`,
-    statistical_methods: `Intention-to-treat analysis with ANCOVA for primary endpoint`,
-    dropout_rate: parseFloat((0.1 + Math.random() * 0.2).toFixed(2)),
+    primary_endpoint: primaryEndpoint,
+    endpoint_primary: primaryEndpoint, // backward-compatible alias
+    // The following are not extracted by the current parser; they are left
+    // empty/null rather than fabricated. A richer parser (or the real
+    // protocolAnalyzerService) populates them when available.
+    secondary_endpoints: [] as string[],
+    inclusion_criteria: [] as string[],
+    exclusion_criteria: [] as string[],
+    arms: [] as string[],
+    randomization: randomizationMatch ? randomizationMatch[1].replace(/\s+/g, '') : null,
+    blinding: blindingMatch ? blindingMatch[1] : null,
+    statistical_methods: null as string | null,
+    dropout_rate: null as number | null,
   };
 }
 
 // Helper functions
-function getRandomIndication(): string {
-  const indications = [
-    'Type 2 Diabetes Mellitus',
-    'Rheumatoid Arthritis',
-    'Major Depressive Disorder',
-    'Chronic Obstructive Pulmonary Disease',
-    'Hypertension',
-    "Alzheimer's Disease",
-    'Non-Small Cell Lung Cancer',
-    'Psoriasis',
-    'Multiple Sclerosis',
-    'Breast Cancer',
-  ];
-  return indications[Math.floor(Math.random() * indications.length)];
-}
 
-function getRandomPhase(): string {
-  const phases = ['1', '2', '2', '3', '3', '3', '4']; // Weighted distribution
-  return phases[Math.floor(Math.random() * phases.length)];
-}
-
-function getRandomEndpoint(indication: string): string {
-  const genericEndpoints = [
-    `Change from baseline in disease activity score at week 24`,
-    `Proportion of patients achieving complete response at week 16`,
-    `Time to disease progression or death`,
-    `Reduction in symptom severity as measured by validated scale`,
-    `Change in biomarker levels at week 12 compared to baseline`,
-  ];
-  return genericEndpoints[Math.floor(Math.random() * genericEndpoints.length)];
-}
-
+/**
+ * Real PDF text extraction via pdf-parse (the same library used by
+ * DocumentDataCenterService and client-intelligence-memory). Previously this
+ * returned a hardcoded constant string, so every route that uploaded a PDF
+ * was analysing fake text regardless of the file.
+ */
 async function extractTextFromPdf(buffer: Buffer): Promise<string> {
-  // Simulate PDF extraction
-  return 'This is extracted text from a PDF document';
+  const pdfParse = (await import('pdf-parse')).default;
+  const result = await pdfParse(buffer);
+  return result.text || '';
+}
+
+/**
+ * Real DOCX text extraction via mammoth.
+ */
+async function extractTextFromDocx(buffer: Buffer): Promise<string> {
+  const mammoth = (await import('mammoth')).default;
+  const result = await mammoth.extractRawText({ buffer });
+  return result.value || '';
 }

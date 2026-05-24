@@ -4712,7 +4712,10 @@ Provide output as JSON with this structure:
     // 3. Calculate compliance scores
     const scores = {
       regulatory_score: Math.max(0, 100 - complianceIssues.length * 10),
-      technical_score: 85 + Math.random() * 15, // Simulated for demo
+      // Derived from technical-type findings, consistent with the other
+      // scores below. Previously: `85 + Math.random() * 15` — a fabricated
+      // value that varied per request with no relation to the document.
+      technical_score: Math.max(0, 100 - suggestions.filter(s => s.type === 'technical').length * 7),
       clarity_score: 90 - suggestions.filter(s => s.type === 'clarity').length * 5,
       consistency_score: 95 - suggestions.filter(s => s.type === 'consistency').length * 8,
       completeness_score: content.length > 500 ? 85 : 60,
@@ -4909,14 +4912,22 @@ router.post('/ai/validate-compliance', async (req: Request, res: Response) => {
       });
     }
 
-    // Check ICH guideline compliance
+    // ICH guideline applicability. There is no automated ICH-guideline
+    // conformance engine wired, so we do NOT assert a pass/fail verdict or a
+    // score — the prior implementation fabricated both with Math.random()
+    // (`compliant: Math.random() > 0.3`, `score: 75 + Math.random() * 25`),
+    // randomly claiming conformance to ICH Q1A/Q3A/Q6A/E6/M4. We surface the
+    // applicable guidelines for the section and flag them for manual review
+    // instead of inventing a verdict.
     const ichGuidelines = ['Q1A', 'Q3A', 'Q6A', 'E6', 'M4'];
     ichGuidelines.forEach(guideline => {
       validationResults.ich_compliance.push({
         guideline,
-        compliant: Math.random() > 0.3, // Simulated for demo
+        compliant: null,
+        assessment: 'not_assessed',
         issues: [],
-        score: 75 + Math.random() * 25,
+        score: null,
+        note: 'Automated ICH conformance assessment is not available — manual review required.',
       });
     });
 

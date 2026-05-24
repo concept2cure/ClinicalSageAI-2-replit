@@ -105,6 +105,7 @@ export async function registerAdvancedPlatformRoutes({
       { path: '/api/real-world-evidence', mod: '../routes/real-world-evidence', name: 'Real-World Evidence' },
       { path: '/api/regulatory-digital-twin', mod: '../routes/regulatory-digital-twin', name: 'Regulatory Digital Twin' },
       { path: '/api/submission-twin', mod: '../routes/submission-twin', name: 'Submission Twin' },
+      { path: '/api/cro', mod: '../routes/cro', name: 'CRO Management' },
     ] as const;
     const advancedResults = await Promise.allSettled(advancedConfig.map(c => import(c.mod)));
     advancedResults.forEach((r, i) => {

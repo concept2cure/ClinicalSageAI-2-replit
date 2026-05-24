@@ -24,6 +24,10 @@
 
 import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import type { TaskType as GatewayTaskType } from '../services/ai-gateway/types';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('agent-swarm');
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -584,59 +588,203 @@ class SwarmManager {
     swarm.state = 'executing';
     this.updateProgress(swarm);
 
-    // Simulate task completion for demo
-    this.simulateExecution(swarm);
+    // Execute the task graph for real via the AI gateway (runs in background).
+    void this.executeSwarm(swarm);
 
     return true;
   }
 
-  private async simulateExecution(swarm: SwarmExecution): Promise<void> {
-    // Guard against duplicate simulation timer chains
-    if ((swarm as any)._simulating) return;
-    (swarm as any)._simulating = true;
-
-    // In production, this runs actual LLM calls through each agent
-    // For now, simulate progress through the task graph
-    let delay = 0;
-    for (const task of swarm.tasks) {
-      delay += 2000; // 2s per task simulation
-      setTimeout(() => {
-        if (task.status === 'pending') {
-          // Check if dependencies are met
-          const depsCompleted = task.dependencies.every(depId => {
-            const dep = swarm.tasks.find(t => t.id === depId);
-            return dep?.status === 'completed';
-          });
-          if (depsCompleted) {
-            task.status = task.hitlRequired ? 'hitl_review' : 'in_progress';
-            task.startedAt = new Date();
-          }
-        }
-        if (task.status === 'in_progress') {
-          task.status = 'completed';
-          task.completedAt = new Date();
-          task.executionTimeMs = Date.now() - (task.startedAt?.getTime() || Date.now());
-          task.output = { summary: `${task.title} completed successfully` };
-          task.reasoning = [
-            `Analyzed input for ${task.taskType}`,
-            `Applied ${task.assignedAgentRole} expertise`,
-            `Generated output with high confidence`,
-          ];
-
-          const agent = swarm.agents.find(a => a.id === task.assignedAgentId);
-          if (agent) {
-            agent.status = 'idle';
-            agent.currentTask = undefined;
-            agent.executionCount++;
-          }
-        }
-        this.updateProgress(swarm);
-      }, delay);
+  /**
+   * Maps a swarm task type to an AI-gateway TaskType for routing.
+   */
+  private gatewayTaskType(taskType: SwarmTask['taskType']): GatewayTaskType {
+    switch (taskType) {
+      case 'draft_section':
+      case 'compile_ectd':
+        return 'document_drafting';
+      case 'gather_evidence':
+        return 'document_analysis';
+      case 'review_content':
+      case 'qc_check':
+      case 'compliance_check':
+      case 'validate':
+        return 'regulatory_review';
+      case 'translate':
+        return 'general';
+      default:
+        return 'general';
     }
-    // Clear simulation guard after all timers fire
-    setTimeout(() => {
-      (swarm as any)._simulating = false;
-    }, delay + 500);
+  }
+
+  /**
+   * Executes the swarm task graph for real: each ready task is run through
+   * the AI gateway using its agent's system prompt, capturing the real model
+   * output, token usage, and cost. HITL-required tasks pause for approval
+   * rather than auto-completing. Replaces the prior setTimeout-based mock that
+   * fabricated "completed successfully" outputs and canned reasoning.
+   *
+   * Runs in the background (not awaited by the request path); swarm state is
+   * polled via GET /swarms/:id.
+   */
+  private async executeSwarm(swarm: SwarmExecution): Promise<void> {
+    if ((swarm as any)._executing) return;
+    (swarm as any)._executing = true;
+
+    try {
+      const { getGateway } = await import('../services/ai-gateway');
+      const gateway = getGateway();
+
+      let madeProgress = true;
+      while (madeProgress) {
+        madeProgress = false;
+
+        for (const task of swarm.tasks) {
+          const isApprovedHitl = task.status === 'in_progress';
+          if (task.status !== 'pending' && !isApprovedHitl) continue;
+
+          const depStatuses = task.dependencies.map(
+            depId => swarm.tasks.find(t => t.id === depId)?.status
+          );
+          if (depStatuses.some(s => s === 'failed' || s === 'blocked')) {
+            if (task.status !== 'blocked') {
+              task.status = 'blocked';
+              madeProgress = true;
+            }
+            continue;
+          }
+          const depsCompleted = depStatuses.every(s => s === 'completed');
+          if (!depsCompleted && !isApprovedHitl) continue;
+
+          // Pause HITL-required tasks for human approval (resumed via
+          // approveHITL, which sets status to 'in_progress').
+          if (task.hitlRequired && !task.hitlApprovedBy && !isApprovedHitl) {
+            task.status = 'hitl_review';
+            madeProgress = true;
+            continue;
+          }
+
+          await this.runTask(swarm, gateway, task);
+          madeProgress = true;
+        }
+      }
+    } catch (err) {
+      log.error('Swarm execution failed', {
+        swarmId: swarm.id,
+        err: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      (swarm as any)._executing = false;
+      this.updateProgress(swarm);
+    }
+  }
+
+  /**
+   * Runs a single task through the AI gateway and records real results.
+   */
+  private async runTask(
+    swarm: SwarmExecution,
+    gateway: { route: (req: any) => Promise<any> },
+    task: SwarmTask
+  ): Promise<void> {
+    const agent =
+      swarm.agents.find(a => a.id === task.assignedAgentId) ||
+      swarm.agents.find(a => a.role === task.assignedAgentRole);
+
+    task.status = 'in_progress';
+    task.startedAt = task.startedAt || new Date();
+    if (agent) {
+      agent.status = 'working';
+      agent.currentTask = task.id;
+    }
+
+    const systemPrompt =
+      agent?.systemPrompt ||
+      `You are the ${task.assignedAgentRole} agent in a regulatory submission swarm.`;
+    const userContent =
+      `Task: ${task.title}\n\nDescription: ${task.description}\n\n` +
+      `Input:\n${JSON.stringify(task.input ?? {}, null, 2)}\n\n` +
+      `Produce the deliverable for this task. Be specific and state any assumptions.`;
+    const start = Date.now();
+
+    try {
+      const response = await gateway.route({
+        taskType: this.gatewayTaskType(task.taskType),
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userContent },
+        ],
+        maxTokens: agent?.maxTokens ?? 1500,
+        temperature: agent?.temperature ?? 0.3,
+        callerModule: 'agent-swarm',
+        projectId: swarm.projectId,
+      });
+
+      const tokens = response.usage?.totalTokens ?? 0;
+      task.output = {
+        content: response.content,
+        provider: response.provider,
+        model: response.model,
+      };
+      task.reasoning = [
+        `Executed by ${task.assignedAgentRole} via ${response.provider}/${response.model}`,
+        `Tokens used: ${tokens}`,
+      ];
+      const durationMs: number = response.latencyMs ?? Date.now() - start;
+      task.status = 'completed';
+      task.completedAt = new Date();
+      task.executionTimeMs = durationMs;
+
+      swarm.totalTokensUsed += tokens;
+      swarm.estimatedCostUsd += response.usage?.estimatedCostUsd ?? 0;
+
+      if (agent) {
+        agent.status = 'idle';
+        agent.currentTask = undefined;
+        agent.executionCount++;
+        agent.totalTokensUsed += tokens;
+      }
+
+      swarm.auditTrail.push({
+        id: uuidv4(),
+        timestamp: new Date(),
+        agentId: agent?.id || task.assignedAgentRole,
+        agentRole: task.assignedAgentRole,
+        action: `Completed: ${task.title}`,
+        input: userContent.slice(0, 500),
+        output: String(response.content).slice(0, 2000),
+        tokensUsed: tokens,
+        durationMs,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      task.retryCount = (task.retryCount || 0) + 1;
+
+      if (task.retryCount <= (task.maxRetries ?? 0)) {
+        // Re-queue for another attempt on the next pass.
+        task.status = 'pending';
+      } else {
+        task.status = 'failed';
+        task.completedAt = new Date();
+        task.output = { error: message };
+        swarm.auditTrail.push({
+          id: uuidv4(),
+          timestamp: new Date(),
+          agentId: agent?.id || task.assignedAgentRole,
+          agentRole: task.assignedAgentRole,
+          action: `Failed: ${task.title}`,
+          output: message,
+          tokensUsed: 0,
+          durationMs: Date.now() - start,
+        });
+      }
+
+      if (agent) {
+        agent.status = 'idle';
+        agent.currentTask = undefined;
+      }
+    }
+
+    this.updateProgress(swarm);
   }
 
   private updateProgress(swarm: SwarmExecution): void {
@@ -689,7 +837,7 @@ class SwarmManager {
 
     // Resume execution
     if (swarm.state === 'hitl_paused') swarm.state = 'executing';
-    this.simulateExecution(swarm);
+    void this.executeSwarm(swarm);
 
     return true;
   }
