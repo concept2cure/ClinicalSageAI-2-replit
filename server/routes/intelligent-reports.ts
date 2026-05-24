@@ -142,7 +142,7 @@ router.post('/generate', async (req: Request, res: Response) => {
  */
 router.get('/list/:organizationId', async (req: Request, res: Response) => {
   try {
-    const organizationId = parseInt(req.params.organizationId);
+    const organizationId = parseInt(String(req.params.organizationId));
     const { domain, sealStatus, targetRegulatory, projectId, limit, offset } = req.query;
 
     const reports = await intelligentReportEngine.listReports(organizationId, {
@@ -170,7 +170,7 @@ router.get('/list/:organizationId', async (req: Request, res: Response) => {
  */
 router.get('/:reportId', async (req: Request, res: Response) => {
   try {
-    const reportId = parseInt(req.params.reportId);
+    const reportId = parseInt(String(req.params.reportId));
     const report = await intelligentReportEngine.getReport(reportId);
 
     if (!report) {
@@ -189,7 +189,7 @@ router.get('/:reportId', async (req: Request, res: Response) => {
  */
 router.get('/:reportId/provenance', async (req: Request, res: Response) => {
   try {
-    const reportId = parseInt(req.params.reportId);
+    const reportId = parseInt(String(req.params.reportId));
     const provenance = await intelligentReportEngine.getReportProvenance(reportId);
     res.json({ success: true, data: provenance, count: provenance.length });
   } catch (error: any) {
@@ -203,7 +203,7 @@ router.get('/:reportId/provenance', async (req: Request, res: Response) => {
  */
 router.get('/:reportId/seal-events', async (req: Request, res: Response) => {
   try {
-    const reportId = parseInt(req.params.reportId);
+    const reportId = parseInt(String(req.params.reportId));
     const events = await intelligentReportEngine.getReportSealEvents(reportId);
     res.json({ success: true, data: events, count: events.length });
   } catch (error: any) {
@@ -217,7 +217,7 @@ router.get('/:reportId/seal-events', async (req: Request, res: Response) => {
  */
 router.get('/:reportId/attestations', async (req: Request, res: Response) => {
   try {
-    const reportId = parseInt(req.params.reportId);
+    const reportId = parseInt(String(req.params.reportId));
     const attestations = await intelligentReportEngine.getReportAttestations(reportId);
     res.json({ success: true, data: attestations, count: attestations.length });
   } catch (error: any) {
@@ -233,7 +233,7 @@ router.get('/:reportId/attestations', async (req: Request, res: Response) => {
  */
 router.post('/:reportId/seal', async (req: Request, res: Response) => {
   try {
-    const reportId = parseInt(req.params.reportId);
+    const reportId = parseInt(String(req.params.reportId));
     const { justification } = req.body;
 
     if (!justification) {
@@ -263,7 +263,7 @@ router.post('/:reportId/seal', async (req: Request, res: Response) => {
  */
 router.get('/:reportId/verify', async (req: Request, res: Response) => {
   try {
-    const reportId = parseInt(req.params.reportId);
+    const reportId = parseInt(String(req.params.reportId));
     const result = await intelligentReportEngine.verifyReportIntegrity(reportId);
     res.json({ success: true, data: result });
   } catch (error: any) {
@@ -279,7 +279,7 @@ router.get('/:reportId/verify', async (req: Request, res: Response) => {
  */
 router.post('/:reportId/supersede', async (req: Request, res: Response) => {
   try {
-    const originalReportId = parseInt(req.params.reportId);
+    const originalReportId = parseInt(String(req.params.reportId));
     const {
       organizationId, clientWorkspaceId, projectId,
       domain, subtype, title, targetRegulatory,
@@ -336,7 +336,7 @@ router.post('/:reportId/supersede', async (req: Request, res: Response) => {
  */
 router.post('/:reportId/revoke', async (req: Request, res: Response) => {
   try {
-    const reportId = parseInt(req.params.reportId);
+    const reportId = parseInt(String(req.params.reportId));
     const { justification } = req.body;
 
     if (!justification) {
@@ -368,7 +368,7 @@ router.post('/:reportId/revoke', async (req: Request, res: Response) => {
  */
 router.get('/:reportId/export/:format', async (req: Request, res: Response) => {
   try {
-    const reportId = parseInt(req.params.reportId);
+    const reportId = parseInt(String(req.params.reportId));
     const format = req.params.format as 'json' | 'csv' | 'manifest';
 
     if (!['json', 'csv', 'manifest'].includes(format)) {
@@ -400,7 +400,7 @@ router.get('/:reportId/export/:format', async (req: Request, res: Response) => {
  */
 router.get('/:reportId/drift-check', async (req: Request, res: Response) => {
   try {
-    const reportId = parseInt(req.params.reportId);
+    const reportId = parseInt(String(req.params.reportId));
     const result = await intelligentReportEngine.detectProvenanceDrift(reportId);
     res.json({
       success: true,
@@ -418,7 +418,7 @@ router.get('/:reportId/drift-check', async (req: Request, res: Response) => {
  */
 router.get('/:reportId/compliance-validation', async (req: Request, res: Response) => {
   try {
-    const reportId = parseInt(req.params.reportId);
+    const reportId = parseInt(String(req.params.reportId));
     const { body } = req.query;
 
     const result = await intelligentReportEngine.runComplianceValidation(

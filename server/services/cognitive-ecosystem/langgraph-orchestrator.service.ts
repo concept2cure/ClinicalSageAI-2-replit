@@ -19,13 +19,12 @@ import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import {
   AgentType,
-  ThreadStatus,
-  CheckpointStatus,
   BreakpointType,
-  BreakpointStatus,
+  AuditSeverity,
+  SemanticCategory,
+  ReasoningType,
   ServiceResult,
   AgentDefinition,
-  Thread,
   Checkpoint,
   HITLBreakpoint,
   ReasoningTrace
@@ -229,10 +228,10 @@ export class LangGraphOrchestrator {
     this.registerHandler('__governance_check__', async (state, context) => {
       if (context.agentId) {
         const result = await this.agentRuntime.validateGovernanceConstraints(
-          context.agentId,
-          state.data
+          context.threadId,
+          state.currentNodeId
         );
-        if (!result.success || !result.data?.passed) {
+        if (!result.success || !result.data?.allowed) {
           state.data._governanceViolation = result.data?.violations || ['Unknown violation'];
         }
       }
@@ -243,15 +242,23 @@ export class LangGraphOrchestrator {
     this.registerHandler('__audit_log__', async (state, context) => {
       await this.auditService.logEvent({
         tenantId: context.tenantId,
-        entityType: 'langgraph_execution',
-        entityId: context.threadId,
-        action: 'node_executed',
-        actorType: 'agent',
-        actorId: context.agentId || 'system',
-        details: {
+        agentId: context.agentId,
+        userId: context.userId,
+        severity: AuditSeverity.INFO,
+        semanticCategory: SemanticCategory.AGENT_DECISION,
+        eventType: 'node_executed',
+        eventSummary: `Node executed: ${state.currentNodeId}`,
+        eventDetails: {
           currentNode: state.currentNodeId,
           messageCount: state.messages.length
-        }
+        },
+        affectedEntities: [
+          {
+            entityType: 'langgraph_execution',
+            entityId: context.threadId,
+            changeType: 'updated'
+          }
+        ]
       });
       return state;
     });
@@ -282,13 +289,12 @@ export class LangGraphOrchestrator {
       }
 
       // Create thread
-      const threadResult = await this.agentRuntime.createThread({
-        tenantId: context.tenantId,
-        agentId: context.agentId,
-        userId: context.userId,
-        status: ThreadStatus.RUNNING,
-        metadata: { graphId, graphVersion: graph.version }
-      });
+      const threadResult = await this.agentRuntime.createThread(
+        context.agentId || '',
+        context.tenantId,
+        context.userId || 'system',
+        { contextData: { graphId, graphVersion: graph.version } }
+      );
 
       if (!threadResult.success) {
         return {
@@ -384,7 +390,7 @@ export class LangGraphOrchestrator {
       }
 
       // Restore state from checkpoint
-      const state = checkpoint.checkpoint.channel_values as GraphState;
+      const state = checkpoint.checkpoint.channel_values as unknown as GraphState;
       
       // Merge additional data
       if (additionalData) {
@@ -566,11 +572,13 @@ export class LangGraphOrchestrator {
       context.threadId,
       context.checkpointId || 'current',
       {
-        step: state.nodeHistory.length + 1,
-        nodeId: node.id,
-        nodeName: node.name,
-        inputData: { ...state.data },
-        startTime: new Date()
+        stepNumber: state.nodeHistory.length + 1,
+        reasoningType: ReasoningType.ANALYSIS,
+        inputSummary: `Node ${node.id} (${node.name})`,
+        thoughtProcess: `Executing handler for node "${node.name}" of type ${node.nodeType}`,
+        outputSummary: '',
+        confidenceScore: 1,
+        referencedSources: []
       }
     );
 
@@ -630,7 +638,7 @@ export class LangGraphOrchestrator {
   ): Promise<string> {
     // In production, this would call the actual LLM
     const lastMessage = state.messages[state.messages.length - 1];
-    return `[${agent.agentName}] Processed: ${lastMessage?.content || 'No input message'}`;
+    return `[${agent.displayName}] Processed: ${lastMessage?.content || 'No input message'}`;
   }
 
   /**
@@ -751,7 +759,8 @@ export class LangGraphOrchestrator {
         versions_seen: {},
         pending_sends: []
       },
-      { source: 'langgraph_orchestrator', step: state.nodeHistory.length, writes: null }
+      { source: 'langgraph_orchestrator', step: state.nodeHistory.length },
+      {}
     );
 
     // Update context with new checkpoint ID
@@ -766,15 +775,17 @@ export class LangGraphOrchestrator {
     state: GraphState,
     node: GraphNode
   ): Promise<void> {
-    await this.agentRuntime.createHITLBreakpoint({
-      threadId: context.threadId,
-      checkpointId: context.checkpointId || 'pending',
-      breakpointType: BreakpointType.APPROVAL,
-      status: BreakpointStatus.PENDING,
-      reason: node.config?.reason as string || `HITL required at node: ${node.name}`,
-      requiredApprovers: node.config?.approvers as string[] || [],
-      contextSnapshot: state.data
-    });
+    await this.agentRuntime.createHITLBreakpoint(
+      context.threadId,
+      context.checkpointId || 'pending',
+      {
+        breakpointType: BreakpointType.MANDATORY_REVIEW,
+        triggerCondition:
+          (node.config?.reason as string) || `HITL required at node: ${node.name}`,
+        requiredRole: (node.config?.requiredRole as string) || undefined,
+        contextSnapshot: state.data
+      }
+    );
   }
 
   // ===========================================================================

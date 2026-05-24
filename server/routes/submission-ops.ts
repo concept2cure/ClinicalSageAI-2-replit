@@ -194,7 +194,7 @@ router.get('/packages/:packageId', async (req: Request, res: Response) => {
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, req.params.packageId),
+          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -225,7 +225,7 @@ router.get('/packages/:packageId/sections', async (req: Request, res: Response) 
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, req.params.packageId),
+          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -273,7 +273,7 @@ router.post('/artifact-section-map', async (req: Request, res: Response) => {
         projectId: concept2cureArtifacts.projectId,
       })
       .from(concept2cureArtifacts)
-      .where(and(eq(concept2cureArtifacts.id, artifactId), eq(concept2cureArtifacts.orgId, orgId)));
+      .where(and(eq(concept2cureArtifacts.id, artifactId), eq(concept2cureArtifacts.organizationId, orgId)));
     if (!artifact) {
       return res.status(404).json({ error: 'Artifact not found for organization' });
     }
@@ -385,7 +385,7 @@ router.get('/packages/:packageId/milestones', async (req: Request, res: Response
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, req.params.packageId),
+          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -434,7 +434,7 @@ router.post('/packages/:packageId/milestones', async (req: Request, res: Respons
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, req.params.packageId),
+          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -593,7 +593,7 @@ router.put('/policies/:policyId', async (req: Request, res: Response) => {
       .set({ ...updates, updatedAt: new Date() })
       .where(
         and(
-          eq(c2cSubmissionPolicies.policyId, req.params.policyId),
+          eq(c2cSubmissionPolicies.policyId, String(req.params.policyId)),
           eq(c2cSubmissionPolicies.orgId, orgId)
         )
       )
@@ -613,7 +613,7 @@ router.delete('/policies/:policyId', async (req: Request, res: Response) => {
       .delete(c2cSubmissionPolicies)
       .where(
         and(
-          eq(c2cSubmissionPolicies.policyId, req.params.policyId),
+          eq(c2cSubmissionPolicies.policyId, String(req.params.policyId)),
           eq(c2cSubmissionPolicies.orgId, orgId)
         )
       )
@@ -650,7 +650,7 @@ router.get('/packages/:packageId/readiness', async (req: Request, res: Response)
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, req.params.packageId),
+          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -709,7 +709,7 @@ router.get('/packages/:packageId/readiness-history', async (req: Request, res: R
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, req.params.packageId),
+          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -798,7 +798,7 @@ router.patch('/blockers/:blockerId', async (req: Request, res: Response) => {
     const [updated] = await db
       .update(c2cBlockers)
       .set(updates)
-      .where(and(eq(c2cBlockers.blockerId, req.params.blockerId), eq(c2cBlockers.orgId, orgId)))
+      .where(and(eq(c2cBlockers.blockerId, String(req.params.blockerId)), eq(c2cBlockers.orgId, orgId)))
       .returning();
 
     if (!updated) return res.status(404).json({ error: 'Blocker not found' });
@@ -1003,7 +1003,7 @@ router.get('/automation/runs/:runId/actions', async (req: Request, res: Response
       .select()
       .from(c2cAutomationRuns)
       .where(
-        and(eq(c2cAutomationRuns.runId, req.params.runId), eq(c2cAutomationRuns.orgId, orgId))
+        and(eq(c2cAutomationRuns.runId, String(req.params.runId)), eq(c2cAutomationRuns.orgId, orgId))
       );
 
     if (!run) return res.status(404).json({ error: 'Run not found' });
@@ -1075,7 +1075,7 @@ router.post('/digests/:digestId/read', async (req: Request, res: Response) => {
     const [updated] = await db
       .update(c2cDigests)
       .set({ status: 'read', readAt: new Date() })
-      .where(and(eq(c2cDigests.digestId, req.params.digestId), eq(c2cDigests.orgId, orgId)))
+      .where(and(eq(c2cDigests.digestId, String(req.params.digestId)), eq(c2cDigests.orgId, orgId)))
       .returning();
 
     if (!updated) return res.status(404).json({ error: 'Digest not found' });
@@ -1191,7 +1191,7 @@ router.get('/command-center', async (req: Request, res: Response) => {
         )
       );
 
-    const [unresolvedCorrespondence] = await db.execute(sql`
+    const unresolvedCorrespondenceResult = await db.execute(sql`
       SELECT COUNT(*)::int AS count
       FROM c2c_correspondence_issues i
       JOIN c2c_correspondence c ON c.id = i.correspondence_id
@@ -1199,6 +1199,8 @@ router.get('/command-center', async (req: Request, res: Response) => {
         AND c.project_id = ${projectId}
         AND i.resolution_status IN ('open','in_progress')
     `);
+    const unresolvedCorrespondence =
+      (unresolvedCorrespondenceResult as any).rows?.[0] ?? (unresolvedCorrespondenceResult as any)?.[0];
 
     res.json({
       data: {
@@ -1249,7 +1251,7 @@ router.post('/packages/:packageId/publish', async (req: Request, res: Response) 
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, req.params.packageId),
+          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -1325,10 +1327,9 @@ router.post('/packages/:packageId/publish', async (req: Request, res: Response) 
       snapshotId: `snap_${randomUUID()}`,
       orgId,
       packageDbId: pkg.id,
-      overallScore: readiness.overallReadinessPercent,
-      sectionScores: readiness.sections || {},
+      readinessPercent: readiness.overallReadinessPercent,
+      overallState: readiness.overallState,
       computedAt: new Date(),
-      computedById: userId,
     });
 
     res.json({

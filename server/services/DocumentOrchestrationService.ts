@@ -89,7 +89,7 @@ class DocumentOrchestrationService {
       // 2a. Create intelligent cross-reference mapping
       const crossRefRules = await this.crossReferenceMapper.createMappingRules(
         projectIdNum,
-        project.templateId || 'default',
+        'default',
         orgIdNum
       );
       
@@ -552,11 +552,11 @@ class DocumentOrchestrationService {
       projectId: project.id,
       templateId: 2, // Reference to form-3601 template
       documentType: 'fda-form',
-      title: 'FDA Form 3601 - User Fee Cover Sheet',
+      documentName: 'FDA Form 3601 - User Fee Cover Sheet',
       content: JSON.stringify(formData),
       version: 1,
       status: 'draft',
-      metadata: {
+      formData: {
         formType: '3601',
         formVersion: '2024',
         generatedAt: new Date().toISOString()
@@ -608,11 +608,11 @@ class DocumentOrchestrationService {
       projectId: project.id,
       templateId: 3, // Reference to form-3514 template
       documentType: 'fda-form',
-      title: 'FDA Form 3514 - CDRH Premarket Review Submission Cover Sheet',
+      documentName: 'FDA Form 3514 - CDRH Premarket Review Submission Cover Sheet',
       content: JSON.stringify(formData),
       version: 1,
       status: 'draft',
-      metadata: {
+      formData: {
         formType: '3514',
         formVersion: '2024',
         generatedAt: new Date().toISOString()
@@ -652,11 +652,11 @@ class DocumentOrchestrationService {
       projectId: project.id,
       templateId: 4, // Reference to form-3881 template
       documentType: 'fda-form',
-      title: 'FDA Form 3881 - Indications for Use',
+      documentName: 'FDA Form 3881 - Indications for Use',
       content: JSON.stringify(formData),
       version: 1,
       status: 'draft',
-      metadata: {
+      formData: {
         formType: '3881',
         formVersion: '2024',
         generatedAt: new Date().toISOString()
@@ -704,11 +704,11 @@ class DocumentOrchestrationService {
       projectId: project.id,
       templateId: 5, // Reference to form-3654 template
       documentType: 'fda-form',
-      title: 'FDA Form 3654 - Certification',
+      documentName: 'FDA Form 3654 - Certification',
       content: JSON.stringify(formData),
       version: 1,
       status: 'draft',
-      metadata: {
+      formData: {
         formType: '3654',
         formVersion: '2024',
         generatedAt: new Date().toISOString()
@@ -766,7 +766,6 @@ class DocumentOrchestrationService {
         status: 'locked',
         lockedBy: userIdNum,
         lockedAt: new Date(),
-        finalHash: contentHash,
         updatedAt: new Date()
       })
       .where(eq(fda510kDocuments.documentId, documentId))
@@ -821,19 +820,19 @@ class DocumentOrchestrationService {
 
     // Create new version
     const newDocumentId = this.generateDocumentId();
-    const newVersion = currentDoc.version + 1;
+    const newVersion = (currentDoc.version ?? 1) + 1;
 
     const [newDoc] = await db!.insert(fda510kDocuments).values({
       documentId: newDocumentId,
       projectId: currentDoc.projectId,
       templateId: currentDoc.templateId,
       documentType: currentDoc.documentType,
-      title: currentDoc.title,
+      documentName: currentDoc.documentName,
       content: currentDoc.content,
       version: newVersion,
       status: 'draft',
       previousVersionId: currentDoc.id,
-      metadata: currentDoc.metadata,
+      formData: currentDoc.formData,
       createdBy: userIdNum,
       updatedBy: userIdNum,
       organizationId: currentDoc.organizationId,
