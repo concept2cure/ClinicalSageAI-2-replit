@@ -50,12 +50,11 @@ const createMockClaim = (overrides = {}) => ({
 });
 
 const createMockSourceSuggestion = (overrides = {}) => ({
-  sourceId: 'source-1',
-  sourceType: 'predicate',
-  sourceTitle: 'K123456 Predicate Device',
-  relevantExcerpt: 'The predicate device has similar safety characteristics...',
-  matchConfidence: 92,
-  matchReason: 'keyword_match',
+  id: 'source-1',
+  sourceType: 'predicate_device',
+  title: 'K123456 Predicate Device',
+  keyExcerpt: 'The predicate device has similar safety characteristics...',
+  relevanceScore: 92,
   ...overrides,
 });
 
@@ -250,9 +249,9 @@ describe('SourceSuggestionPanel', () => {
   test('displays source suggestions sorted by confidence', () => {
     const claim = createMockClaim();
     const suggestions = [
-      createMockSourceSuggestion({ sourceId: '1', sourceTitle: 'Low Match', matchConfidence: 60 }),
-      createMockSourceSuggestion({ sourceId: '2', sourceTitle: 'High Match', matchConfidence: 95 }),
-      createMockSourceSuggestion({ sourceId: '3', sourceTitle: 'Medium Match', matchConfidence: 80 }),
+      createMockSourceSuggestion({ id: '1', title: 'Low Match', relevanceScore: 60 }),
+      createMockSourceSuggestion({ id: '2', title: 'High Match', relevanceScore: 95 }),
+      createMockSourceSuggestion({ id: '3', title: 'Medium Match', relevanceScore: 80 }),
     ];
     
     render(<SourceSuggestionPanel {...defaultProps} claim={claim} suggestions={suggestions} />);
@@ -266,7 +265,7 @@ describe('SourceSuggestionPanel', () => {
   test('calls onLinkSource when linking', async () => {
     const onLinkSource = jest.fn();
     const claim = createMockClaim({ id: 'claim-123' });
-    const suggestions = [createMockSourceSuggestion({ sourceId: 'source-456' })];
+    const suggestions = [createMockSourceSuggestion({ id: 'source-456' })];
     
     render(
       <SourceSuggestionPanel 
@@ -335,13 +334,13 @@ describe('Integration: Intelligent Document System Logic', () => {
 
   test('source matching confidence thresholds are enforced', () => {
     const suggestions = [
-      createMockSourceSuggestion({ matchConfidence: 95 }),
-      createMockSourceSuggestion({ matchConfidence: 45 }),
-      createMockSourceSuggestion({ matchConfidence: 70 }),
+      createMockSourceSuggestion({ relevanceScore: 95 }),
+      createMockSourceSuggestion({ relevanceScore: 45 }),
+      createMockSourceSuggestion({ relevanceScore: 70 }),
     ];
-    
+
     const HIGH_CONFIDENCE_THRESHOLD = 70;
-    const highConfidence = suggestions.filter(s => s.matchConfidence >= HIGH_CONFIDENCE_THRESHOLD);
+    const highConfidence = suggestions.filter(s => s.relevanceScore >= HIGH_CONFIDENCE_THRESHOLD);
     
     expect(highConfidence.length).toBe(2);
   });
