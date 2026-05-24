@@ -24,6 +24,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { getAuthHeaders } from '@/utils/authToken';
 
 export interface UseFetchJsonResult<T> {
   /** Resolved JSON payload, or null while loading / on error / when url is null. */
@@ -78,9 +79,18 @@ export function useFetchJson<T>(
     let cancelled = false;
     setState((s) => ({ ...s, loading: true, error: null }));
 
+    // The PDEV/MDX API is Bearer-only (server reads Authorization, not a
+    // cookie). Inject the stored access token on every call so surfaces
+    // authenticate against the real API instead of 401-ing into empty/
+    // fixture state. credentials:'include' stays for any cookie-based flows.
     fetch(url, {
       ...DEFAULT_INIT,
       ...opts.init,
+      headers: {
+        ...getAuthHeaders(),
+        ...(DEFAULT_INIT.headers ?? {}),
+        ...(opts.init?.headers ?? {}),
+      },
       signal: controller.signal,
     })
       .then(async (res) => {

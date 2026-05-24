@@ -33,7 +33,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
 import crypto from 'crypto';
-import pdfParse from 'pdf-parse';
+import pdfParse from '../utils/pdfParse';
 import mammoth from 'mammoth';
 
 // AI-powered intelligent tagging available via unified client
