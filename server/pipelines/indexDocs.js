@@ -1,6 +1,6 @@
 import * as ds from '../services/docushare.js';
 import * as ss from '../services/semanticSearch.js';
-import pdf from 'pdf-parse';
+import pdf from '../utils/pdfParse';
 
 (async () => {
   const docs = await ds.list();

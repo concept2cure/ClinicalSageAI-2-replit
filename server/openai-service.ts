@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import pdfParse from 'pdf-parse';
+import pdfParse from './utils/pdfParse';
 import fs from 'fs';
 import { getGateway } from './services/ai-gateway/index.js';
 
