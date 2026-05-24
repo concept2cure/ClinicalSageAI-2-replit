@@ -44,7 +44,7 @@ jobs:
         run: npm run ci:tenant-isolation:no-regression
 
       - name: Guardrails — requestDb (RLS) adoption (no regressions)
-        run: npm run ci:requestdb-coverage:no-regression
+        run: node scripts/ci/audit-requestdb-coverage.mjs --strict-no-regression
 
       - name: Guardrails — no leaky dev-auth gates in prod paths
         run: npm run ci:no-dev-auth-in-prod
