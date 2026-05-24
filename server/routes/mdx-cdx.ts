@@ -285,4 +285,71 @@ router.patch('/cdx/concordance/:id', async (req: Request, res: Response) => {
   }
 });
 
+/* ── GET /api/mdx/cdx/:programId — kit-shaped aggregate ──────────────────────
+ * The Companion Diagnostic surface (client useCdx) consumes { timeline,
+ * concordance, xref, kpis } for the selected device program. Assembles from
+ * cdx_pairings + cdx_concordance_studies. Registered LAST so it does not
+ * shadow the literal /cdx/pairings · /cdx/concordance routes above. */
+router.get('/cdx/:programId', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const programId = String(req.params.programId);
+  try {
+    const pairs = await pool.query(
+      `SELECT id, drug_name, drug_innn, drug_sponsor, indication, biomarker,
+              approval_status, fda_approval_date, ema_approval_date
+         FROM cdx_pairings
+        WHERE organization_id = $1 AND device_program_id::text = $2 AND deleted_at IS NULL
+        ORDER BY created_at DESC LIMIT 200`,
+      [orgId, programId],
+    ).catch((e) => { if ((e as { code?: string }).code === '42P01') return { rows: [] }; throw e; });
+
+    const xref = pairs.rows.map((r: Record<string, unknown>) => ({
+      id: String(r.id),
+      drug: (r.drug_name as string) ?? '',
+      biomarker: (r.biomarker as string) ?? '',
+      indication: (r.indication as string) ?? '',
+      sponsor: (r.drug_sponsor as string) ?? '',
+      status: (r.approval_status as string) ?? 'planned',
+    }));
+    const timeline = pairs.rows
+      .filter((r: Record<string, unknown>) => r.fda_approval_date || r.ema_approval_date)
+      .map((r: Record<string, unknown>) => ({
+        id: String(r.id),
+        milestone: `${r.drug_name ?? ''} approval`,
+        fda: r.fda_approval_date ? new Date(r.fda_approval_date as string).toISOString() : '',
+        ema: r.ema_approval_date ? new Date(r.ema_approval_date as string).toISOString() : '',
+      }));
+
+    const conc = await pool.query(
+      `SELECT s.id, s.study_id, s.reference_assay, s.candidate_assay, s.n_samples,
+              s.ppa_pct, s.npa_pct, s.opa_pct
+         FROM cdx_concordance_studies s
+         JOIN cdx_pairings p ON p.id = s.cdx_pairing_id
+        WHERE s.organization_id = $1 AND p.device_program_id::text = $2
+        ORDER BY s.created_at DESC LIMIT 200`,
+      [orgId, programId],
+    ).catch((e) => { if ((e as { code?: string }).code === '42P01') return { rows: [] }; throw e; });
+
+    const concordance = conc.rows.map((r: Record<string, unknown>) => ({
+      id: (r.study_id as string) ?? String(r.id),
+      reference: (r.reference_assay as string) ?? '',
+      candidate: (r.candidate_assay as string) ?? '',
+      n: (r.n_samples as number) ?? 0,
+      ppa: r.ppa_pct != null ? `${r.ppa_pct}%` : '',
+      npa: r.npa_pct != null ? `${r.npa_pct}%` : '',
+      opa: r.opa_pct != null ? `${r.opa_pct}%` : '',
+    }));
+
+    const kpis = [
+      { label: 'CDx pairings', metric: String(xref.length), meta: `${xref.filter((x) => x.status === 'approved').length} approved` },
+      { label: 'Concordance studies', metric: String(concordance.length), meta: '' },
+    ];
+
+    return ok(res, { timeline, concordance, xref, kpis });
+  } catch (err) {
+    return serverError(res, log, 'cdx-aggregate', err);
+  }
+});
+
 export default router;
