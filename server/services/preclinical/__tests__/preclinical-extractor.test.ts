@@ -7,7 +7,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('pdf-parse', () => ({
+// The extractor imports pdf parsing through server/utils/pdfParse (an ESM
+// interop shim that createRequire()s pdf-parse). Mock that wrapper directly —
+// mocking 'pdf-parse' wouldn't intercept the shim's CommonJS require.
+vi.mock('../../../utils/pdfParse', () => ({
   default: vi.fn(async (_buf: Buffer) => ({
     text: 'GLP repeat-dose tox study, 13 weeks, rat, NOAEL 50 mg/kg/day.',
   })),
