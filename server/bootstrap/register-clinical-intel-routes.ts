@@ -119,6 +119,20 @@ export async function registerClinicalIntelRoutes({
     });
   }
 
+  // ── Citation Verification ──
+  //
+  // Real PubMed + CrossRef citation existence checks (replaces the prior
+  // client-side service that asserted existence with Math.random()).
+  // Auth-gated; the data is public bibliographic metadata but the surface
+  // is client-facing.
+  try {
+    const citationRoutes = await import('../routes/citations');
+    app.use('/api/citations', authenticateToken, citationRoutes.default);
+    console.log('✅ Citation Verification routes mounted at /api/citations (auth-gated)');
+  } catch (error) {
+    console.error('Failed to mount citation verification routes:', error);
+  }
+
   // ── CSR Builder (dual-mount for backward compat) ──
   try {
     const csrBuilderRoutes = await import('../routes/csr-builder-routes');
