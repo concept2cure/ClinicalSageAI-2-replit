@@ -17,11 +17,8 @@ export {
   createThread,
   addMessageToThread,
   runAssistant,
-  waitForRunCompletion,
-  getMessages,
   getRunStatus,
-  submitToolOutputs,
-  cancelRun,
+  listMessages,
 } from '../openai-service';
 
 // Export types for type-safe usage

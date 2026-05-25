@@ -4488,7 +4488,10 @@ export async function executeCommands(
   > = {
     create_project: createProject,
     list_projects: listProjects,
-    update_project: updateProject,
+    // updateProject's declared signature is (ctx, projectId, updates); dispatch
+    // calls every handler as (ctx, params). Cast through the map signature to
+    // preserve the existing dispatch behaviour without altering the call site.
+    update_project: updateProject as unknown as (ctx: CommandContext, params: any) => Promise<CommandResult>,
     create_artifact: createArtifact,
     update_artifact: updateArtifact,
     update_artifact_status: updateArtifactStatus,
@@ -4559,15 +4562,15 @@ export async function executeCommands(
     analyze_cms_strategy: analyzeCMSStrategy,
     assess_diagnostic_validation: assessDiagnosticsValidation,
     // Module 3 Workflow Convergence (Phase 7)
-    module3_build_all: module3BuildAll,
-    module3_build_section: module3BuildSection,
-    module3_missing_inputs: module3MissingInputs,
-    module3_stale_sections: module3StaleSections,
-    module3_refresh_stale: module3RefreshStale,
-    module3_readiness: module3Readiness,
-    module3_contradictions: module3Contradictions,
-    module3_lineage: module3Lineage,
-    module3_classify_source: module3ClassifySource,
+    module3_build_all: module3BuildAll as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+    module3_build_section: module3BuildSection as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+    module3_missing_inputs: module3MissingInputs as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+    module3_stale_sections: module3StaleSections as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+    module3_refresh_stale: module3RefreshStale as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+    module3_readiness: module3Readiness as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+    module3_contradictions: module3Contradictions as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+    module3_lineage: module3Lineage as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+    module3_classify_source: module3ClassifySource as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
     // Top-level CMC status — what `/cmc` dispatches with no args. The
     // underlying handler lives in module3-command-handlers, which defines
     // CommandContext / CommandResult locally; cast through to match the

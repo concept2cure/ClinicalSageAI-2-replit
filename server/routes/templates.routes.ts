@@ -298,7 +298,7 @@ router.post('/', async (req, res) => {
 
     const organizationId = requireOrganizationId(req, res);
     if (organizationId == null) return;
-    const userId = req.user?.id;
+    const userId = req.user?.id != null ? Number(req.user.id) : undefined;
     const { name, description, category, type, content, sections, metadata } = req.body;
     
     const templateId = generateTemplateId(category);
@@ -320,8 +320,6 @@ router.post('/', async (req, res) => {
           placeholders: sections || null, // Use placeholders not sections
           tags: null,
           isActive: true,
-          isLocked: false,
-          sourceSystem: 'api',
           version: '1.0',
           createdBy: userId
         })
@@ -482,7 +480,7 @@ router.post('/:templateId/use', async (req, res) => {
     }
 
     const { templateId } = req.params;
-    const userId = req.user?.id;
+    const userId = req.user?.id != null ? Number(req.user.id) : undefined;
     const organizationId = requireOrganizationId(req, res);
     if (organizationId == null) return;
     

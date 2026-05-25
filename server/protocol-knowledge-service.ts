@@ -1,9 +1,9 @@
-import { queryHuggingFace, generateEmbeddings, HFModel } from './huggingface-service';
+import { queryHuggingFace, HFModel } from './huggingface-service';
 import * as fs from 'fs';
 import * as path from 'path';
 import { db } from './db';
 import { csrReports, csrDetails } from '../shared/schema';
-import { sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 
 /**
  * Protocol Knowledge Service
@@ -77,24 +77,24 @@ export class ProtocolKnowledgeService {
     }
 
     try {
-      // Query database for evidence
-      let dbQuery = db
-        .select()
-        .from(csrReports)
-        .innerJoin(csrDetails, sql`${csrReports.id} = ${csrDetails.reportId}`)
-        .limit(15);
+      // Build filter conditions
+      const conditions = [];
 
-      // Add filters
       if (indication) {
-        dbQuery = dbQuery.where(sql`${csrReports.indication} = ${indication}`);
+        conditions.push(eq(csrReports.indication, indication));
       }
 
       if (phase) {
-        dbQuery = dbQuery.where(sql`${csrReports.phase} = ${phase}`);
+        conditions.push(eq(csrReports.phase, phase));
       }
 
-      // Execute query
-      const results = await dbQuery;
+      // Query database for evidence
+      const results = await db
+        .select()
+        .from(csrReports)
+        .innerJoin(csrDetails, sql`${csrReports.id} = ${csrDetails.reportId}`)
+        .where(conditions.length ? and(...conditions) : undefined)
+        .limit(15);
 
       // Process results into evidence items
       const evidence = results.map(result => {
@@ -105,12 +105,12 @@ export class ProtocolKnowledgeService {
           id: report.id,
           title: report.title,
           sponsor: report.sponsor,
-          date: report.date,
+          date: report.reportDate,
           indication: report.indication,
           phase: report.phase,
           endpoints: details.endpoints,
           studyDesign: details.studyDesign,
-          treatmentArms: details.treatmentArms,
+          treatmentArms: null,
           sampleSize: details.sampleSize,
           inclusionCriteria: details.inclusionCriteria,
           exclusionCriteria: details.exclusionCriteria,

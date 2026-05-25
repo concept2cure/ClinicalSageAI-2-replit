@@ -91,7 +91,7 @@ async function fetchRTMData(programId: number, organizationId: number) {
 router.get('/programs/:programId/rtm', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const programId = parseInt(req.params.programId, 10);
+    const programId = parseInt(String(req.params.programId), 10);
     if (isNaN(programId)) {
       return res.status(400).json({ error: 'Invalid program ID' });
     }
@@ -134,7 +134,7 @@ router.get('/programs/:programId/rtm', async (req: Request, res: Response) => {
 router.get('/programs/:programId/rtm/csv', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const programId = parseInt(req.params.programId, 10);
+    const programId = parseInt(String(req.params.programId), 10);
     if (isNaN(programId)) {
       return res.status(400).json({ error: 'Invalid program ID' });
     }
@@ -241,7 +241,7 @@ router.get('/programs/:programId/rtm/csv', async (req: Request, res: Response) =
 router.post('/programs/:programId/rtm/snapshot', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const programId = parseInt(req.params.programId, 10);
+    const programId = parseInt(String(req.params.programId), 10);
     if (isNaN(programId)) {
       return res.status(400).json({ error: 'Invalid program ID' });
     }
@@ -292,7 +292,7 @@ router.post('/programs/:programId/rtm/snapshot', async (req: Request, res: Respo
 router.get('/programs/:programId/rtm/snapshots', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const programId = parseInt(req.params.programId, 10);
+    const programId = parseInt(String(req.params.programId), 10);
     if (isNaN(programId)) {
       return res.status(400).json({ error: 'Invalid program ID' });
     }

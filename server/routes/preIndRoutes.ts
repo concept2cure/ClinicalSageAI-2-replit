@@ -32,6 +32,23 @@ const authMiddleware = (
 };
 
 // --- Database Interaction Logic ---
+
+// Shape of a row returned by the ind_pre_ind_data SELECT below. Declared here so
+// the raw-SQL result (untyped by drizzle's db.execute) carries its real columns.
+interface PreIndRecord {
+  id: string;
+  draft_id: string;
+  project_name: string | null;
+  therapeutic_area: string | null;
+  project_objective: string | null;
+  target_pre_ind_meeting_date: string | null;
+  pre_ind_meeting_objective: string | null;
+  pre_ind_agenda_topics: string[] | null;
+  pre_ind_attendees: string[] | null;
+  fda_interaction_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
 const dbOps = {
   // Function to get Pre-IND data and milestones for a draft
   getPreIndData: async (draftId: string, userId?: number) => {
@@ -53,7 +70,8 @@ const dbOps = {
         return null; // Not found
       }
 
-      const preIndRecord = preIndResult.rows[0];
+      // Raw SQL result rows are untyped by db.execute; assert the known columns.
+      const preIndRecord = preIndResult.rows[0] as unknown as PreIndRecord;
 
       // Fetch associated milestones
       const milestonesQuery = sql`

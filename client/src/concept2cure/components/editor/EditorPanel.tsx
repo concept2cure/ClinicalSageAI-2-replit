@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import UnifiedDocumentEditor from './UnifiedDocumentEditor';
+import UnifiedDocumentEditor, { type DocumentSource } from './UnifiedDocumentEditor';
 import { cn } from '@/lib/utils';
 import {
   FileText,
@@ -443,16 +443,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       createdBy: string;
     }>
   >([]);
-  const [traceabilitySources, setTraceabilitySources] = useState<
-    Array<{
-      id: string;
-      title: string;
-      type?: string;
-      version?: string;
-      hash?: string;
-      confidence?: number;
-    }>
-  >([]);
+  const [traceabilitySources, setTraceabilitySources] = useState<DocumentSource[]>([]);
 
   // Prevent stale traceability side-panel data when switching documents.
   useEffect(() => {
@@ -1874,10 +1865,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           const src = sourceByIdx.get(ref);
           if (!src) return;
           sentenceCounter += 1;
+          const srcId = src.id ?? src.sourceId ?? '';
           nextLinks.push({
             id: `trace-${Date.now()}-${sentenceCounter}`,
-            sourceId: src.id,
-            sourceHash: src.sourceHash || src.id,
+            sourceId: srcId,
+            sourceHash: src.hash ?? src.contentHash ?? srcId,
             targetRange: { from: 0, to: 0 },
             linkedText: cleanSentence,
             createdAt: new Date().toISOString(),
@@ -1887,14 +1879,17 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       }
       setTraceabilityLinks(nextLinks);
       setTraceabilitySources(
-        aiProvenance.sources.map(src => ({
-          id: src.id,
-          title: src.name || src.title || src.id,
-          type: src.type,
-          version: src.version,
-          hash: src.sourceHash || src.id,
-          confidence: src.confidence,
-        }))
+        aiProvenance.sources.map(src => {
+          const srcId = src.id ?? src.sourceId ?? '';
+          return {
+            id: srcId,
+            title: src.name || src.title || srcId,
+            hash: src.hash ?? src.contentHash ?? srcId,
+            version: '',
+            documentType: '',
+            excerpt: src.excerpt,
+          };
+        })
       );
       pushToast(
         `Applied ${srcCount} source traceability link${srcCount !== 1 ? 's' : ''}`,

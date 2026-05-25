@@ -520,7 +520,7 @@ async function enrichWithRecommendations(projectId: string | number, orgId?: num
       };
       const actionSet = await generateNextActions(ctx, 8);
       const actionLines = actionSet.actions.slice(0, 8).map((a, i) =>
-        `${i + 1}. **${a.title}** [${a.urgency}/${a.impact}] — ${a.description}${a.estimatedEffortHours ? ` (~${a.estimatedEffortHours}h)` : ''}`
+        `${i + 1}. **${a.title}** [${a.urgency}/${a.impactEstimate}] — ${a.description}${a.effortEstimate ? ` (${a.effortEstimate})` : ''}`
       ).join('\n');
 
       return `\n\n## Next Best Actions (Live)\n**${actionSet.actions.length} actions** prioritized by urgency and impact.\n\n${actionLines || 'No actions generated.'}${feedbackNote}\n\nPresent these as a prioritized to-do list. Be directive — tell the user what to do first and why.`;
@@ -561,7 +561,7 @@ async function enrichWithClaims(projectId: string | number): Promise<string> {
         extractedValue: r.content?.slice(0, 200),
       }));
 
-      const chain = buildEvidenceChain(sources);
+      const chain = buildEvidenceChain(sources, 'ai_inferred');
       const confidence = computeConfidence(sources);
       const factors = analyzeFactors(sources);
 

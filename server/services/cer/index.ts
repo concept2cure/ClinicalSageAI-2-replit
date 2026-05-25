@@ -11,11 +11,11 @@
  * @module server/services/cer/index
  */
 
-// Re-export from primary service
-export { CERGenerationService, generateCERReport } from '../cerGenerationService';
+// Re-export from primary service (default singleton instance)
+export { default as cerGenerationService } from '../cerGenerationService';
 
 // Re-export generator utilities
-export { CERGenerator } from '../cerGenerator';
+export { generateCerSections, assembleHtml, renderPdf, setupWorkers } from '../cerGenerator';
 
 // Unified interface for CER operations
 export interface CERServiceConfig {
@@ -48,10 +48,20 @@ export class UnifiedCERService {
   constructor(private config: CERServiceConfig) {}
 
   async generateReport(): Promise<CERGenerationResult> {
-    // Delegate to primary service
-    const { CERGenerationService } = await import('../cerGenerationService');
-    const service = new CERGenerationService();
-    return service.generate(this.config);
+    // The primary service (cerGenerationService.generateCER) requires a numeric
+    // deviceId, userId and regulatoryFramework which this facade config does not
+    // carry. Until the facade is wired to those inputs, surface a failed result
+    // rather than a partial/fabricated report.
+    return {
+      reportId: '',
+      status: 'failed',
+      sections: [],
+      generatedAt: new Date(),
+      warnings: [
+        'UnifiedCERService is not wired to the CER generation service; ' +
+          'deviceId, userId and regulatoryFramework are required.',
+      ],
+    };
   }
 
   async validateReport(reportId: string): Promise<{ valid: boolean; issues: string[] }> {

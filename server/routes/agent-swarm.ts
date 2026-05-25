@@ -737,9 +737,9 @@ router.post('/swarms', (req: Request, res: Response) => {
  * Start executing a swarm
  */
 router.post('/swarms/:swarmId/start', (req: Request, res: Response) => {
-  const started = swarmManager.startSwarm(req.params.swarmId);
+  const started = swarmManager.startSwarm(String(req.params.swarmId));
   if (!started) return res.status(404).json({ error: 'Swarm not found' });
-  const swarm = swarmManager.getSwarm(req.params.swarmId)!;
+  const swarm = swarmManager.getSwarm(String(req.params.swarmId))!;
   res.json({
     success: true,
     data: { swarmId: swarm.id, state: swarm.state, progress: swarm.progress },
@@ -751,7 +751,7 @@ router.post('/swarms/:swarmId/start', (req: Request, res: Response) => {
  * Get swarm execution status with full task graph
  */
 router.get('/swarms/:swarmId', (req: Request, res: Response) => {
-  const swarm = swarmManager.getSwarm(req.params.swarmId);
+  const swarm = swarmManager.getSwarm(String(req.params.swarmId));
   if (!swarm) return res.status(404).json({ error: 'Swarm not found' });
   res.json({ success: true, data: swarm });
 });
@@ -785,7 +785,7 @@ router.post('/swarms/:swarmId/hitl/:taskId/approve', (req: Request, res: Respons
   const { approvedBy, comments } = req.body;
   if (!approvedBy) return res.status(400).json({ error: 'approvedBy required' });
 
-  const approved = swarmManager.approveHITL(swarmId, taskId, approvedBy, comments);
+  const approved = swarmManager.approveHITL(String(swarmId), String(taskId), approvedBy, comments);
   if (!approved)
     return res.status(404).json({ error: 'Swarm/task not found or not in HITL state' });
 
@@ -797,7 +797,7 @@ router.post('/swarms/:swarmId/hitl/:taskId/approve', (req: Request, res: Respons
  * Get the reasoning audit trail for a swarm execution
  */
 router.get('/swarms/:swarmId/audit-trail', (req: Request, res: Response) => {
-  const swarm = swarmManager.getSwarm(req.params.swarmId);
+  const swarm = swarmManager.getSwarm(String(req.params.swarmId));
   if (!swarm) return res.status(404).json({ error: 'Swarm not found' });
 
   res.json({

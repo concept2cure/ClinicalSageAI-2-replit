@@ -336,7 +336,7 @@ function resolveApprovalPathType(
   documentClass: GovernedDocumentActionContract['documentClass'],
   readinessGate: GovernedDocumentActionContract['readinessGate'],
   personaOverlay: ReturnType<typeof resolveRulePack>['personaOverlay'],
-  semantics: ReturnType<typeof getDocumentClassSemantics>
+  semantics: NonNullable<ReturnType<typeof getDocumentClassSemantics>>
 ): GovernedDocumentActionContract['approvalPathType'] {
   if (context.approvalPathType) return context.approvalPathType;
   if (personaOverlay.approvalPathOverride) return personaOverlay.approvalPathOverride;
@@ -436,7 +436,7 @@ function evaluateExportGates(
 
 export function resolveGovernedContext(context: GovernedMutationContext): GovernedResolutionResult {
   const now = new Date().toISOString();
-  const actorId = context.req.userId || context.req.userEmail || 'unknown';
+  const actorId = String(context.req.userId || context.req.userEmail || 'unknown');
   const body = (context.req.body || {}) as Record<string, unknown>;
   const metadata = (body.metadata || {}) as Record<string, unknown>;
   const traceId =
@@ -453,6 +453,9 @@ export function resolveGovernedContext(context: GovernedMutationContext): Govern
   const workspaceTarget = resolveWorkspaceTarget(context, documentClass, readinessGate);
   const placement = resolvePlacementTarget(context, workspaceTarget);
   const semantics = getDocumentClassSemantics(documentClass);
+  if (!semantics) {
+    throw new Error(`No document-class semantics registered for documentClass "${documentClass}"`);
+  }
   const provisionalContract: GovernedDocumentActionContract = {
     projectId: context.projectId,
     artifactId: context.artifactId,

@@ -258,6 +258,12 @@ export interface UploadedDocument {
   embedding?: number[];
   /** Whether this document is active in the AI context window (default: true) */
   isActive?: boolean;
+  /** Processing lifecycle status */
+  status?: 'processing' | 'processed' | 'error';
+  /** Estimated page count for paginated documents (e.g. PDFs) */
+  pageCount?: number;
+  /** Estimated token count of the extracted text */
+  tokenCount?: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

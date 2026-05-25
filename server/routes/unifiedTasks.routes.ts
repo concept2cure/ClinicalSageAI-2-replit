@@ -137,7 +137,7 @@ router.get('/all', async (req: Request, res: Response) => {
  */
 router.get('/by-module/:module', async (req: Request, res: Response) => {
   try {
-    const { module } = req.params;
+    const module = String(req.params.module);
     const { organizationId, status, limit = '50' } = req.query;
 
     if (!['CMC', 'IND', 'MedicalDevice', 'eCTD', 'Vault', 'ProtocolDesign'].includes(module)) {
@@ -257,7 +257,7 @@ router.get('/dashboard/unified', async (req: Request, res: Response) => {
  */
 router.post('/sync/:module', async (req: Request, res: Response) => {
   try {
-    const { module } = req.params;
+    const module = String(req.params.module);
     const { organizationId } = req.body;
 
     if (!['CMC', 'IND', 'MedicalDevice', 'eCTD', 'Vault', 'ProtocolDesign'].includes(module)) {
@@ -300,7 +300,7 @@ router.post('/sync/:module', async (req: Request, res: Response) => {
  */
 router.patch('/:id/status', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const { status, userId } = req.body;
 
     if (!status) {
@@ -332,7 +332,7 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
  */
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
 
     const tasks = await unifiedTaskService.getAllUnifiedTasks({
       limit: 1,
