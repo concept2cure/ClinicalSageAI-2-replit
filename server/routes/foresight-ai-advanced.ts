@@ -225,7 +225,7 @@ const CrossSpeciesAnalysisSchema = z.object({
     halfLife: z.number(),
     clearance: z.number(),
     volume: z.number(),
-    bodyWeight: z.number().optional()
+    bodyWeight: z.number()
   }))
 });
 
