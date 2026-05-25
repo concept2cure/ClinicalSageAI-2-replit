@@ -79,6 +79,7 @@ import {
 } from '../../services/pdev/pdev-state-guard';
 import { pdevProvenanceTraceService } from '../../services/pdev/pdev-provenance-trace';
 import { pdevWorkflowBridge } from '../../services/pdev/pdev-workflow-bridge';
+import { applyIndClearanceIfTerminal } from '../../services/pdev/pdev-clearance';
 import {
   pdevFdaFeedbackRollupService,
 } from '../../services/pdev/pdev-fda-feedback-rollup';
@@ -468,7 +469,18 @@ router.post(
         },
       });
 
-      return ok(res, row);
+      // Terminal IND-clearance transition: if this is the clearance
+      // activity reaching a completed state, move the program to its
+      // cleared terminal state. No-op otherwise.
+      const clearance = await applyIndClearanceIfTerminal({
+        programId,
+        organizationId: orgId,
+        userId,
+        activityKey,
+        newState: parsed.data.state as (typeof PDEV_ACTIVITY_STATES)[number],
+      });
+
+      return ok(res, row, clearance.cleared ? { indCleared: true } : undefined);
     } catch (err) {
       return serverError(res, log, 'Failed to update activity state', err);
     }

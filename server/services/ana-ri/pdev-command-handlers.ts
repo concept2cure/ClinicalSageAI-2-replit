@@ -43,6 +43,7 @@ import { pdevFdaFeedbackRollupService } from '../pdev/pdev-fda-feedback-rollup';
 import { pdevEvidenceAttachService } from '../pdev/pdev-evidence-attach';
 import { pdevProvenanceTraceService } from '../pdev/pdev-provenance-trace';
 import { pdevWorkflowBridge } from '../pdev/pdev-workflow-bridge';
+import { applyIndClearanceIfTerminal } from '../pdev/pdev-clearance';
 import {
   PDEV_ACTIVITIES,
   PDEV_WORKSTREAMS,
@@ -522,11 +523,28 @@ export async function pdevActivitySetState(
       },
     });
 
+    // Terminal IND-clearance transition (no-op unless this is the
+    // clearance activity reaching a completed state).
+    const clearance = await applyIndClearanceIfTerminal({
+      programId: programIdOrErr,
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      activityKey: activityKeyOrErr,
+      newState: newState as PdevActivityState,
+    });
+
     return {
       success: true,
       action,
-      message: `Activity ${activityKeyOrErr} → ${newState} (was ${previousState}).`,
-      data: { activityStateId: stateRowId, previousState, newState },
+      message: clearance.cleared
+        ? `Activity ${activityKeyOrErr} → ${newState}. IND cleared — program moved to its terminal approved state.`
+        : `Activity ${activityKeyOrErr} → ${newState} (was ${previousState}).`,
+      data: {
+        activityStateId: stateRowId,
+        previousState,
+        newState,
+        indCleared: clearance.cleared,
+      },
     };
   } catch (err) {
     return mapServiceError(action, err);

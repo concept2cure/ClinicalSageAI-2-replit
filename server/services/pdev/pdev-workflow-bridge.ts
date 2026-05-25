@@ -39,6 +39,7 @@ import {
   getActivityByKey,
   type PdevActivityState,
 } from './pdev-activity-registry';
+import { applyIndClearanceIfTerminal } from './pdev-clearance';
 import auditService from '../auditService';
 
 const logger = createScopedLogger('pdev-workflow-bridge');
@@ -134,6 +135,45 @@ export interface PdevCheckpointDecisionInput {
   userRole?: string;
   decision: 'approve' | 'reject';
   reason: string;
+}
+
+/**
+ * Pure decision rule for one checkpoint decision. Captures every branch of
+ * the approval state machine without touching the database, so it can be
+ * tested exhaustively. `recordDecision` calls this to derive the status
+ * strings; the DB writes follow the plan.
+ */
+export interface CheckpointOutcomePlan {
+  checkpointStatus: 'approved' | 'awaiting_review' | 'failed';
+  workflowStatus: 'awaiting_approval' | 'completed' | 'failed';
+  outcome: 'rejected' | 'partial' | 'advanced' | 'completed';
+}
+
+export function decideCheckpointOutcome(args: {
+  decision: 'approve' | 'reject';
+  approvalsCountAfter: number;
+  requiredCount: number;
+  hasNextProposedCheckpoint: boolean;
+}): CheckpointOutcomePlan {
+  if (args.decision === 'reject') {
+    return { checkpointStatus: 'failed', workflowStatus: 'failed', outcome: 'rejected' };
+  }
+  const quorumMet = args.approvalsCountAfter >= Math.max(1, args.requiredCount);
+  if (!quorumMet) {
+    return {
+      checkpointStatus: 'awaiting_review',
+      workflowStatus: 'awaiting_approval',
+      outcome: 'partial',
+    };
+  }
+  if (args.hasNextProposedCheckpoint) {
+    return {
+      checkpointStatus: 'approved',
+      workflowStatus: 'awaiting_approval',
+      outcome: 'advanced',
+    };
+  }
+  return { checkpointStatus: 'approved', workflowStatus: 'completed', outcome: 'completed' };
 }
 
 export interface PdevCheckpointDecisionResult {
@@ -671,6 +711,18 @@ export class PdevWorkflowBridge {
         finalApproverReason: input.reason,
       },
     });
+
+    // Terminal IND-clearance transition: a completed approval chain on
+    // the clearance activity moves the program to its cleared state.
+    if (run.programId && activityKey) {
+      await applyIndClearanceIfTerminal({
+        programId: run.programId,
+        organizationId: input.organizationId,
+        userId: input.userId,
+        activityKey,
+        newState: targetState,
+      });
+    }
 
     return {
       checkpointStatus: 'approved',
