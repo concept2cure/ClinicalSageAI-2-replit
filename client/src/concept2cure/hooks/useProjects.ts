@@ -15,7 +15,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Project, Conversation, SubmissionType } from '../types';
+import { Project, Conversation, SubmissionType, ProjectOwnership } from '../types';
 import { queryKeys } from './queryKeys';
 import { apiRequest } from '@/lib/queryClient';
 
@@ -51,7 +51,7 @@ export interface ProjectTeamMember {
   role?: string | null;
 }
 
-function withRequiredOwnership(project: Project): Project {
+function withRequiredOwnership(project: Project): Project & { ownership: ProjectOwnership } {
   return {
     ...project,
     targetAgency: project.targetAgency ?? undefined,
@@ -137,7 +137,7 @@ function normalizeProjectResponse(project: Project): Project {
   return {
     ...project,
     pinned: project.pinned ?? false,
-    targetAgency: project.targetAgency ?? null,
+    targetAgency: project.targetAgency ?? undefined,
   };
 }
 
@@ -168,7 +168,7 @@ async function fetchProjectsFromAPI(): Promise<Project[]> {
  * @private
  */
 async function createProjectAPI(
-  project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>
+  project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'> & Record<string, unknown>
 ): Promise<Project> {
   const response = await apiRequest('POST', '/api/concept2cure/projects', project);
   const payload = await response.json().catch(() => ({}));
@@ -366,9 +366,17 @@ export function useProjects() {
       dossierStandard?: string;
       [key: string]: unknown;
     }) => {
+      const normalizedSubmissionType = String(data.submissionType).toUpperCase() as SubmissionType;
+
       if (USE_API) {
         try {
-          const result = await createProjectAPI(data);
+          // `data` carries a widened `submissionType` and extra agency-specific
+          // fields the server consumes; normalize the type and forward the rest.
+          const result = await createProjectAPI({
+            ...data,
+            submissionType: normalizedSubmissionType,
+            conversations: [],
+          });
           return result;
         } catch (e) {
           if (!ENABLE_LOCAL_PROJECT_FALLBACK) throw e;
@@ -377,7 +385,6 @@ export function useProjects() {
       }
 
       // Fallback to localStorage
-      const normalizedSubmissionType = String(data.submissionType).toUpperCase() as SubmissionType;
       const newProject: Project = withRequiredOwnership({
         id: `proj_${Date.now()}`,
         name: data.name,

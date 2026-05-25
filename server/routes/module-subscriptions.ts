@@ -161,7 +161,7 @@ router.put('/:moduleId/toggle', async (req: Request, res: Response) => {
   try {
     const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
     const userRole = (req as any).user?.role || (req as any).userRole;
-    const { moduleId } = req.params;
+    const moduleId = String(req.params.moduleId);
     const { enabled } = req.body;
 
     if (!orgId) {
@@ -214,7 +214,7 @@ router.get('/check/:moduleId', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Organization context required' });
     }
 
-    const result = await canAccessModule(Number(orgId), req.params.moduleId);
+    const result = await canAccessModule(Number(orgId), String(req.params.moduleId));
     return res.json(result);
   } catch (error) {
     logger.error('check error', { err: error instanceof Error ? error.message : String(error) });

@@ -179,7 +179,7 @@ router.get('/templates/:sectionCode', async (req, res) => {
       },
     };
 
-    const sectionTemplates = templates[sectionCode];
+    const sectionTemplates = templates[sectionCode as keyof typeof templates];
 
     if (!sectionTemplates) {
       return res.json({
@@ -261,8 +261,8 @@ router.get('/completion-status/:submissionType', async (req, res) => {
     const { submissionType } = req.params;
     const { existingSections = [] } = req.query;
 
-    const sectionsArray = Array.isArray(existingSections)
-      ? existingSections
+    const sectionsArray: string[] = Array.isArray(existingSections)
+      ? existingSections.map(s => String(s))
       : existingSections
           .toString()
           .split(',')

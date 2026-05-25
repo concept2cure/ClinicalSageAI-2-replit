@@ -11,8 +11,8 @@
 import crypto from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
-import { logger } from '../../../lib/logger';
-import { AuditLogger } from '../../audit/AuditLogger';
+import { logger } from '../../utils/logger';
+import { AuditLogger } from '../audit/auditLogger';
 
 export interface HashAlgorithm {
   name: 'SHA-256' | 'SHA-512' | 'MD5';

@@ -39,8 +39,9 @@ try {
 
 /** Extract auth context from request (populated by auth middleware). */
 function getAuthContext(req: Request) {
-  const authUser = (req as Record<string, unknown>).user as Record<string, unknown> | undefined;
-  const tenantCtx = (req as Record<string, unknown>).tenantContext as Record<string, unknown> | undefined;
+  const reqRecord = req as unknown as Record<string, unknown>;
+  const authUser = reqRecord.user as Record<string, unknown> | undefined;
+  const tenantCtx = reqRecord.tenantContext as Record<string, unknown> | undefined;
   const organizationId = Number(tenantCtx?.organizationId || authUser?.organizationId);
   if (!organizationId) {
     throw new Error('Organization context required');

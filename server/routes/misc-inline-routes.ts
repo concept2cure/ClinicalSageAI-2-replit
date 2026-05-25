@@ -428,7 +428,7 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
   // GET /api/v1/drafting/task_status/:task_id — DB-backed with in-memory fallback
   router.get('/v1/drafting/task_status/:task_id', async (req: Request, res: Response) => {
     try {
-      const { task_id } = req.params;
+      const task_id = String(req.params.task_id);
 
       try {
         const [task] = await db.select().from(draftingTasks).where(eq(draftingTasks.taskId, task_id));

@@ -19,7 +19,7 @@ import {
 import { stylePacks, StylePack } from './stylePacks/config';
 
 const MAX_CONTENT_CHARS = 500000;
-let clusterPromise: Promise<Cluster> | null = null;
+let clusterPromise: Promise<Cluster | null> | null = null;
 
 const escapeHtml = (value: string) =>
   value
@@ -192,7 +192,9 @@ export async function renderHtmlToPdfTracked(
 ): Promise<{ buffer: Buffer; usedFallback: boolean }> {
   const cluster = await getCluster();
   if (cluster) {
-    const buffer: Buffer = await cluster.execute(async ({ page }) => {
+    // puppeteer is an optional transitive dep of puppeteer-cluster and is not
+    // installed in this environment, so the Page type is unavailable here.
+    const buffer: Buffer = await cluster.execute(async ({ page }: { page: any }) => {
       await page.setContent(html, { waitUntil: 'networkidle0' });
       const pdf = await page.pdf({ format: 'A4', printBackground: true });
       return Buffer.from(pdf);
@@ -206,7 +208,10 @@ export async function renderHtmlToPdfTracked(
 
 function renderFallbackPdf(html: string): Promise<Buffer> {
   return new Promise(resolve => {
-    const doc = new PDFDocument({ margin: 72, size: 'A4' });
+    const doc = new PDFDocument({
+      margins: { top: 72, bottom: 72, left: 72, right: 72 },
+      size: 'A4',
+    });
     const chunks: Buffer[] = [];
 
     doc.on('data', chunk => chunks.push(chunk));

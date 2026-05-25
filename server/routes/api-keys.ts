@@ -205,7 +205,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Organization context required' });
     }
     const userId = Number(req.userId);
-    const keyId = parseInt(req.params.id, 10);
+    const keyId = parseInt(String(req.params.id), 10);
 
     if (isNaN(keyId)) {
       return res.status(400).json({ error: 'Invalid key ID' });
@@ -264,7 +264,7 @@ router.get('/:id/usage', async (req: Request, res: Response) => {
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    const keyId = parseInt(req.params.id, 10);
+    const keyId = parseInt(String(req.params.id), 10);
 
     if (isNaN(keyId)) {
       return res.status(400).json({ error: 'Invalid key ID' });

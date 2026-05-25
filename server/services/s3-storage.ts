@@ -355,7 +355,12 @@ class S3StorageService {
       Key: path,
     });
 
-    return getSignedUrl(this.client, command, { expiresIn });
+    // @aws-sdk/s3-request-presigner (3.1051) and @aws-sdk/client-s3 (3.1020)
+    // resolve different @smithy/types versions, so S3Client is not structurally
+    // identical to the presigner's expected Client type. The runtime contract is
+    // compatible; cast to the presigner's own first-parameter type at this
+    // SDK-version boundary.
+    return getSignedUrl(this.client as Parameters<typeof getSignedUrl>[0], command, { expiresIn });
   }
 
   /**
@@ -375,7 +380,8 @@ class S3StorageService {
       ServerSideEncryption: 'AES256',
     });
 
-    return getSignedUrl(this.client, command, { expiresIn });
+    // SDK-version boundary — see getPresignedDownloadUrl for rationale.
+    return getSignedUrl(this.client as Parameters<typeof getSignedUrl>[0], command, { expiresIn });
   }
 
   /**

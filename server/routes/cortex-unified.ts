@@ -44,6 +44,7 @@ import {
   renderSharedMemoryForPrompt,
 } from '../services/shared-memory-contract.js';
 import { executeGovernedAnaOperation } from '../services/governed-ana-execution.js';
+import { summarizeAndStoreWorkingMemoryForThread } from '../services/working-memory.js';
 
 const logger = createScopedLogger('cortex-unified');
 const router = Router();
@@ -832,13 +833,15 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       // ── AUTO-SUMMARIZE: Generate working memory summary after extended conversations ──
       // This runs async (fire-and-forget) to avoid blocking the response
       if (previousMessages.length >= 10 && !streamAborted) {
-        generateWorkingMemorySummary(
+        summarizeAndStoreWorkingMemoryForThread({
           threadId,
-          previousMessages,
-          message,
-          fullContent,
-          organizationId
-        ).catch((err: any) =>
+          organizationId,
+          messages: [
+            ...previousMessages.map((m: any) => ({ role: m.role, content: m.content })),
+            { role: 'user', content: message },
+            { role: 'assistant', content: fullContent },
+          ],
+        }).catch((err: any) =>
           logger.warn(`[WorkingMemory] Auto-summarization failed: ${err.message}`)
         );
       }
@@ -915,13 +918,15 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
 
     // Auto-summarize for long conversations (fire-and-forget)
     if (previousMessages.length >= 10) {
-      generateWorkingMemorySummary(
+      summarizeAndStoreWorkingMemoryForThread({
         threadId,
-        previousMessages,
-        message,
-        assistantMessage,
-        organizationId
-      ).catch((err: any) =>
+        organizationId,
+        messages: [
+          ...previousMessages.map((m: any) => ({ role: m.role, content: m.content })),
+          { role: 'user', content: message },
+          { role: 'assistant', content: assistantMessage },
+        ],
+      }).catch((err: any) =>
         logger.warn(`[WorkingMemory] Auto-summarization failed: ${err.message}`)
       );
     }

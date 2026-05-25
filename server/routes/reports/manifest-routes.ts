@@ -36,10 +36,8 @@ reportsManifestRoutes.get(['/personas', '/personas.json'], async (_req: Request,
  */
 reportsManifestRoutes.get('/persona/:personaId', async (req: Request, res: Response) => {
   try {
-    let { personaId } = req.params;
-
     // Remove the .json suffix if present
-    personaId = personaId.replace(/\.json$/, '');
+    const personaId = String(req.params.personaId).replace(/\.json$/, '');
 
     // Set response type to JSON explicitly
     res.setHeader('Content-Type', 'application/json');

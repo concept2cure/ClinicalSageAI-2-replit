@@ -15,9 +15,6 @@ export { ZenRouter } from './router';
 // Auth Components
 export { ZenLogin, ZenSignup, ZenAuthLayout } from './auth';
 
-// Layouts
-export * from './layouts';
-
 // Design System
 export * from './design';
 
@@ -34,4 +31,8 @@ export { ProjectProvider, useProject } from './context/ProjectContext';
 export * from './hooks';
 
 // Types
+// `./services` and `./types` both declare `Citation` and `SubmissionType`.
+// The richer domain definitions in `./types` are canonical (they back the
+// `Project` shape), so re-export them explicitly to resolve the ambiguity.
+export type { Citation, SubmissionType } from './types';
 export * from './types';

@@ -17,6 +17,7 @@ import type {
   AIActionExecutionContext,
   AIActionError,
   AIActionHandlerError,
+  AIActionType,
 } from '../../../../shared/types/ai-actions';
 import {
   runIntelligencePipeline,
@@ -202,14 +203,14 @@ export function createInlineAIHandler(actionType: InlineActionType): AIActionHan
 
       // Call AI gateway with constrained prompts
       try {
-        const { callAIGateway } = await import('../../ai-gateway/gateway.js');
+        const { getGateway } = await import('../../ai-gateway/gateway.js');
+        const gateway = getGateway();
 
-        const aiResult = await callAIGateway({
+        const aiResult = await gateway.route({
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt },
           ],
-          model: 'claude',
           maxTokens: actionType === 'summarize_selection' ? 1000 : 2000,
           temperature: actionType === 'rewrite_selection' ? 0.3 : 0.5,
           organizationId: ctx.user.organizationId,
@@ -217,7 +218,7 @@ export function createInlineAIHandler(actionType: InlineActionType): AIActionHan
           taskType: 'document_analysis',
         });
 
-        let resultContent = aiResult?.content || aiResult?.text || '';
+        let resultContent = aiResult?.content || '';
 
         // ─── Evaluation Gate: Check output quality before returning ─────
         if (intelligenceActions.includes(actionType) && resultContent.length > 0) {
@@ -226,19 +227,18 @@ export function createInlineAIHandler(actionType: InlineActionType): AIActionHan
             // REJECT and REGENERATE with tighter constraints
             try {
               const retryPrompt = `${systemPrompt}\n\nIMPORTANT: Your previous response was rejected for: ${evaluation.rejectionReasons.join('; ')}. You MUST include: a clear verdict/recommendation, prioritized findings, specific evidence references, and actionable guidance.`;
-              const retryResult = await callAIGateway({
+              const retryResult = await gateway.route({
                 messages: [
                   { role: 'system', content: retryPrompt },
                   { role: 'user', content: userPrompt },
                 ],
-                model: 'claude',
                 maxTokens: 2000,
                 temperature: 0.2,
                 organizationId: ctx.user.organizationId,
                 userId: ctx.user.userId,
                 taskType: 'document_analysis',
               });
-              resultContent = retryResult?.content || retryResult?.text || resultContent;
+              resultContent = retryResult?.content || resultContent;
             } catch {
               // Use original if retry fails
             }
@@ -328,7 +328,7 @@ export function createInlineAIHandler(actionType: InlineActionType): AIActionHan
 // Suggested follow-up actions per type
 // ---------------------------------------------------------------------------
 
-function getNextSuggestions(actionType: InlineActionType) {
+function getNextSuggestions(actionType: AIActionType) {
   switch (actionType) {
     case 'summarize_selection':
       return [
