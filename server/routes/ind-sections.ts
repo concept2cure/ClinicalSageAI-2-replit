@@ -16,6 +16,7 @@
 
 import { Router, Request, Response } from 'express';
 import { pool } from '../db.js';
+import { requireAuthedOrgId } from '../utils/authedOrgId.js';
 import {
   buildINDPackageDefinition,
   getAllINDSections,
@@ -120,16 +121,17 @@ function enrichSection(
 /**
  * GET /api/ind-sections
  * Returns the full IND package definition with live document status.
- * Query params: ?project_id=&organization_id=
+ * Query params: ?project_id= (organization scope comes from the authed JWT).
  */
 router.get('/', async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.query.project_id as string, 10) || 0;
-    const organizationId =
-      parseInt(req.query.organization_id as string, 10) ||
-      Number((req as any).user?.organizationId) ||
-      Number((req as any).tenantId) ||
-      0;
+    // Tenant scope from the authenticated JWT only. Sourcing it from
+    // req.query.organization_id (which previously took precedence) let an
+    // authed user read another org's IND section statuses via ?organization_id=.
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const organizationId = guard.orgId;
 
     const packageDef = buildINDPackageDefinition();
 
@@ -197,11 +199,12 @@ router.get('/required', (_req: Request, res: Response) => {
 router.get('/progress', async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.query.project_id as string, 10) || 0;
-    const organizationId =
-      parseInt(req.query.organization_id as string, 10) ||
-      Number((req as any).user?.organizationId) ||
-      Number((req as any).tenantId) ||
-      0;
+    // Tenant scope from the authenticated JWT only. Sourcing it from
+    // req.query.organization_id (which previously took precedence) let an
+    // authed user read another org's IND section statuses via ?organization_id=.
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const organizationId = guard.orgId;
 
     const statusMap = new Map<string, SectionStatus>();
 
