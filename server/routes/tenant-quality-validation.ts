@@ -14,6 +14,22 @@ import { getDb } from '../db/tenantDbHelper';
 import { createScopedLogger } from '../utils/logger';
 
 const logger = createScopedLogger('quality-validation-api');
+
+// requireOrganizationContext guarantees a numeric org id at runtime; assert
+// + coerce so handlers get a definite `number` (req.tenantContext is
+// `{...} | undefined` with `string | number | null` ids).
+function orgIdOf(req: Request): number {
+  const v = req.tenantContext?.organizationId;
+  if (v === undefined || v === null || v === '') {
+    throw new Error('organization context required');
+  }
+  return typeof v === 'string' ? parseInt(v, 10) : v;
+}
+function userIdOf(req: Request): number | undefined {
+  const v = req.tenantContext?.userId;
+  if (v === undefined || v === null || v === '') return undefined;
+  return typeof v === 'string' ? parseInt(v, 10) : v;
+}
 const router = Router();
 
 /**
@@ -21,7 +37,7 @@ const router = Router();
  */
 router.post('/validate-section', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
-    const { organizationId } = req.tenantContext;
+    const organizationId = orgIdOf(req);
 
     // Validate request payload
     const validationSchema = z.object({
@@ -224,7 +240,7 @@ router.post('/validate-section', authMiddleware, requireOrganizationContext, asy
  */
 router.post('/request-waiver', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
-    const { organizationId, userId } = req.tenantContext;
+    const organizationId = orgIdOf(req); const userId = userIdOf(req);
 
     // Validate request payload
     const waiverSchema = z.object({
@@ -318,7 +334,7 @@ router.post('/request-waiver', authMiddleware, requireOrganizationContext, async
 router.get('/stats/:qmpId', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
     const { qmpId } = req.params;
-    const { organizationId } = req.tenantContext;
+    const organizationId = orgIdOf(req);
 
     // Convert to number
     const qmpIdNumber = parseInt(qmpId, 10);

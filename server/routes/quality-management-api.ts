@@ -4,7 +4,7 @@
  * This module serves as a unified API layer for all quality management functionality,
  * integrating CTQ factors, section gating, and quality validation.
  */
-import { Router } from 'express';
+import { Router, type Request } from 'express';
 import { z } from 'zod';
 import { and, eq, SQL, sql } from 'drizzle-orm';
 import { qmpSectionGating, ctqFactors, qualityManagementPlans } from '../../shared/schema';
@@ -13,6 +13,23 @@ import { requireOrganizationContext } from '../middleware/tenantContext';
 import { getDb } from '../db/tenantDbHelper';
 import { createScopedLogger } from '../utils/logger';
 import { storeInCache, getFromCache, invalidateCache } from '../cache/tenantCache';
+
+// req.tenantContext is `{...} | undefined` and its ids are
+// `string | number | null`, but requireOrganizationContext (applied to every
+// route here) guarantees a numeric org id at runtime. These helpers assert
+// + coerce so handlers get a definite `number` without per-route guards.
+function orgIdOf(req: Request): number {
+  const v = req.tenantContext?.organizationId;
+  if (v === undefined || v === null || v === '') {
+    throw new Error('organization context required');
+  }
+  return typeof v === 'string' ? parseInt(v, 10) : v;
+}
+function userIdOf(req: Request): number | undefined {
+  const v = req.tenantContext?.userId;
+  if (v === undefined || v === null || v === '') return undefined;
+  return typeof v === 'string' ? parseInt(v, 10) : v;
+}
 
 // Import the specialized routes
 import ctqFactorsRouter from './tenant-ctq-factors';
@@ -34,7 +51,7 @@ router.use('/validation', qualityValidationRouter);
 router.get('/dashboard/:qmpId', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
     const { qmpId } = req.params;
-    const { organizationId } = req.tenantContext;
+    const organizationId = orgIdOf(req);
 
     // Convert to number
     const qmpIdNumber = parseInt(qmpId, 10);
@@ -161,7 +178,7 @@ router.get('/dashboard/:qmpId', authMiddleware, requireOrganizationContext, asyn
  */
 router.post('/batch-validate', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
-    const { organizationId } = req.tenantContext;
+    const organizationId = orgIdOf(req);
 
     // Validate request payload
     const batchValidationSchema = z.object({
@@ -412,7 +429,7 @@ router.get(
   async (req, res) => {
     try {
       const { cerProjectId } = req.params;
-      const { organizationId } = req.tenantContext;
+      const organizationId = orgIdOf(req);
 
       // Convert to number
       const cerProjectIdNumber = parseInt(cerProjectId, 10);
@@ -466,7 +483,7 @@ router.get(
  */
 router.get('/plans', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
-    const { organizationId } = req.tenantContext;
+    const organizationId = orgIdOf(req);
 
     // Get all QMPs for this organization
     const qmps = await getDb(req)
@@ -487,7 +504,7 @@ router.get('/plans', authMiddleware, requireOrganizationContext, async (req, res
 router.get('/plans/:id', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
     const { id } = req.params;
-    const { organizationId } = req.tenantContext;
+    const organizationId = orgIdOf(req);
 
     // Convert to number
     const qmpId = parseInt(id, 10);
@@ -575,7 +592,7 @@ router.get('/plans/:id', authMiddleware, requireOrganizationContext, async (req,
  */
 router.post('/plans', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
-    const { organizationId, userId } = req.tenantContext;
+    const organizationId = orgIdOf(req); const userId = userIdOf(req);
 
     // Validate request payload
     const qmpSchema = z.object({
@@ -625,7 +642,7 @@ router.post('/plans', authMiddleware, requireOrganizationContext, async (req, re
 router.patch('/plans/:id', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
     const { id } = req.params;
-    const { organizationId, userId } = req.tenantContext;
+    const organizationId = orgIdOf(req); const userId = userIdOf(req);
 
     // Convert to number
     const qmpId = parseInt(id, 10);
@@ -704,7 +721,7 @@ router.patch('/plans/:id', authMiddleware, requireOrganizationContext, async (re
 router.delete('/plans/:id', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
     const { id } = req.params;
-    const { organizationId } = req.tenantContext;
+    const organizationId = orgIdOf(req);
 
     // Convert to number
     const qmpId = parseInt(id, 10);
