@@ -1,4 +1,9 @@
-import { apiRequest, extractData } from './queryClient';
+import { apiRequest } from './queryClient';
+
+/** Parse the JSON body out of a fetch Response. */
+async function extractData<T = any>(response: Response): Promise<T> {
+  return (await response.json()) as T;
+}
 
 /**
  * Concept2Cure API Connector

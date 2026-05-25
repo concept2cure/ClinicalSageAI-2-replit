@@ -60,7 +60,7 @@ export function applyCompactStyling() {
   mainSections.forEach((section, index) => {
     if (!section.classList.contains('animate-fade-in')) {
       section.classList.add('animate-fade-in');
-      section.style.animationDelay = `${index * 100}ms`;
+      (section as HTMLElement).style.animationDelay = `${index * 100}ms`;
     }
   });
 
