@@ -75,11 +75,11 @@ const pool = new Proxy(
   {
     get(_target, prop) {
       const p = resolvePool();
-      const value = p[prop];
+      const value = Reflect.get(p, prop, p);
       return typeof value === 'function' ? value.bind(p) : value;
     },
     has(_target, prop) {
-      return prop in resolvePool();
+      return Reflect.has(resolvePool(), prop);
     },
   }
 );
