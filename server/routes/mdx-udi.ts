@@ -25,6 +25,7 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
+import auditService from '../services/auditService';
 
 const router = Router();
 const log = createScopedLogger('mdx-udi');
@@ -136,6 +137,11 @@ router.post('/udi', async (req: Request, res: Response) => {
         p.singleUse ?? false, p.rxOnly ?? true,
       ],
     );
+    void auditService.logAction({
+      tenantId: orgId, action: 'mdx.udi.issue',
+      resourceType: 'udi_record', resourceId: rows[0]?.id,
+      details: { udiDi: p.udiDi, deviceName: p.deviceName, issuingAgency: p.issuingAgency },
+    });
     return created(res, rows[0]);
   } catch (err: unknown) {
     const code = (err as { code?: string }).code;

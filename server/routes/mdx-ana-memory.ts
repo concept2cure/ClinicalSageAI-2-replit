@@ -25,6 +25,7 @@ import {
   ok, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
+import auditService from '../services/auditService';
 
 const router = Router();
 const log = createScopedLogger('mdx-ana-memory');
@@ -119,6 +120,11 @@ router.post('/ana/memory/:id/verify', async (req: Request, res: Response) => {
       [id, orgId, userId, bumpToHigh],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Memory atom');
+    void auditService.logAction({
+      tenantId: orgId, userId, action: 'mdx.memory.verify',
+      resourceType: 'memory_atom', resourceId: id,
+      details: { bumpImportance: bumpToHigh },
+    });
     return ok(res, rows[0]);
   } catch (err) {
     return serverError(res, log, 'verify-memory', err);
@@ -145,6 +151,11 @@ router.post('/ana/memory/:id/supersede', async (req: Request, res: Response) => 
       [id, orgId, supersededBy],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Memory atom (or not active)');
+    void auditService.logAction({
+      tenantId: orgId, userId: getUserId(req) ?? undefined, action: 'mdx.memory.supersede',
+      resourceType: 'memory_atom', resourceId: id,
+      details: { supersededById: supersededBy },
+    });
     return ok(res, rows[0]);
   } catch (err) {
     return serverError(res, log, 'supersede-memory', err);
@@ -235,6 +246,11 @@ router.post('/ana/threads/:threadId/pin', async (req: Request, res: Response) =>
       [threadId, orgId, pinned],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Thread');
+    void auditService.logAction({
+      tenantId: orgId, userId: getUserId(req) ?? undefined,
+      action: pinned ? 'mdx.conversation.pin' : 'mdx.conversation.unpin',
+      resourceType: 'chat_thread', resourceId: threadId,
+    });
     return ok(res, rows[0]);
   } catch (err) {
     return serverError(res, log, 'pin-thread', err);
