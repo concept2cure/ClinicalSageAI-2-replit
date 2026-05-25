@@ -53,14 +53,11 @@ export async function retrieveGuidance(
     const { embedding } = await embeddingService.embed(query);
     const vectorLiteral = `[${embedding.join(',')}]`;
 
-    const params: unknown[] = [vectorLiteral, threshold, entryTypes];
-    let orgClause = 'AND organization_id IS NULL';
-    if (typeof organizationId === 'number') {
-      params.push(organizationId);
-      orgClause = `AND (organization_id IS NULL OR organization_id = $${params.length})`;
-    }
-    params.push(limit);
-    const limitIndex = params.length;
+    // Tenant scoping: global (NULL-org) guidance is always visible; a tenant
+    // also sees its own. -1 sentinel matches no org, so an unset organizationId
+    // yields global-only. organization_id is referenced literally in the SQL.
+    const orgParam = typeof organizationId === 'number' ? organizationId : -1;
+    const params: unknown[] = [vectorLiteral, threshold, entryTypes, orgParam, limit];
 
     const { rows } = await pool.query(
       `
@@ -71,9 +68,9 @@ export async function retrieveGuidance(
       WHERE embedding IS NOT NULL
         AND entry_type = ANY($3)
         AND 1 - (embedding <=> $1::vector) > $2
-        ${orgClause}
+        AND (organization_id IS NULL OR organization_id = $4)
       ORDER BY embedding <=> $1::vector
-      LIMIT $${limitIndex}
+      LIMIT $5
       `,
       params
     );

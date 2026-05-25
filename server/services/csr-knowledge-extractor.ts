@@ -263,15 +263,18 @@ export class CSRKnowledgeExtractor {
       const correlations: BiomarkerCorrelation[] = [];
 
       // Prefer the study's result-bearing fields as the analysis corpus; only
-      // fall back to the whole record when those are empty. This keeps the
-      // correlation/p-value extraction anchored to the statistical narrative
-      // rather than to inclusion criteria or administrative text.
+      // fall back to the whole record when those are empty. The `results` JSON
+      // carries dedicated narrative fields (biomarkerResults / primaryResults /
+      // secondaryResults) — extract those as clean text so the correlation /
+      // p-value windows are anchored to the statistical narrative, with the
+      // biomarker-specific field first.
+      const resultsText = this.flattenResultsText(csr.results);
       const resultText = [
+        resultsText,
         csr.efficacyResults,
         csr.statisticalMethods,
         csr.safetyResults,
         csr.patientReportedOutcome,
-        csr.results ? JSON.stringify(csr.results) : null,
       ]
         .filter(Boolean)
         .join('\n');
@@ -613,6 +616,27 @@ export class CSRKnowledgeExtractor {
 
   private escapeRegex(value: string): string {
     return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  /**
+   * Extract clean narrative text from the CSR `results` JSON, putting the
+   * biomarker-specific field first so biomarker extraction anchors to it.
+   */
+  private flattenResultsText(results: unknown): string {
+    if (!results || typeof results !== 'object') {
+      return typeof results === 'string' ? results : '';
+    }
+    const obj = results as Record<string, unknown>;
+    const ordered = ['biomarkerResults', 'primaryResults', 'secondaryResults'];
+    const parts: string[] = [];
+    for (const key of ordered) {
+      if (typeof obj[key] === 'string') parts.push(obj[key] as string);
+    }
+    for (const [key, value] of Object.entries(obj)) {
+      if (ordered.includes(key)) continue;
+      if (typeof value === 'string') parts.push(value);
+    }
+    return parts.join('\n');
   }
 
   /** Infer a biomarker type from its name. */
