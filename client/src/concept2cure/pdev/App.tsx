@@ -26,7 +26,7 @@ import { useFetchJson } from '../mdx/hooks/useFetchJson';
 import { useAnaChat } from '../components/ana/useAnaChat';
 import { PdevRail } from './shell/Rail';
 import { PdevTopBar } from './shell/TopBar';
-import { PdevAnaDock } from './shell/AnaDock';
+import { PdevAnaDock, type PdevAnaDockMessage } from './shell/AnaDock';
 import { PdevOverview } from './surfaces/Overview';
 import { PdevWorkstreamSurface } from './surfaces/Workstream';
 import { PdevActivityDetail } from './surfaces/ActivityDetail';
@@ -198,6 +198,20 @@ export function PdevApp({
     },
     [onAskAna, anaChat, programCodeForAna, activityKeyForAna],
   );
+
+  // Adapt useAnaChat messages to the dock's transcript shape. Skipped when
+  // the host owns AnA (onAskAna present) — then the host renders history.
+  const dockMessages: PdevAnaDockMessage[] = React.useMemo(() => {
+    if (onAskAna) return [];
+    return anaChat.messages.map((m) => ({
+      role: m.role === 'assistant' ? ('ana' as const) : ('user' as const),
+      body: m.text || (m.streaming ? m.statusPhase || 'Routing…' : ''),
+      when: m.sentAt
+        ? new Date(m.sentAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+        : 'just now',
+      streaming: m.streaming,
+    }));
+  }, [onAskAna, anaChat.messages]);
 
   // Refresh data after a mutation completes (state change, evidence
   // attach/detach, workflow decisions, FDA rollups, compile, etc.).
@@ -410,6 +424,7 @@ export function PdevApp({
         activity={activeActivity}
         onSend={askAna}
         isStreaming={!onAskAna && anaChat.isStreaming}
+        messages={dockMessages}
       />
 
       {activeActivity && programId && (

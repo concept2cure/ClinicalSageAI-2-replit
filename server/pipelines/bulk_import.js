@@ -18,7 +18,7 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import pdf from 'pdf-parse';
+import pdf from '../utils/pdfParse';
 import * as ds from '../services/docushare.js';
 import * as ss from '../services/semanticSearch.js';
 import prisma from '../prisma/client.js';
