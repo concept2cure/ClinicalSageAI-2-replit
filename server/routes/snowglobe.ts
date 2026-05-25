@@ -441,6 +441,72 @@ async function executeRun(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// REGULATORY GUIDANCE CORPUS (unified view over a completed run)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Merge the per-dimension engine results of a completed run into a single
+ * "Regulatory Guidance Corpus" assessment: one overall posture, the dimensions
+ * that contributed to it, and all findings consolidated by severity. Returns
+ * null when the run has not completed. Stored records and IDs are untouched —
+ * this is a read-only consolidation surface.
+ */
+async function buildGuidanceCorpus(orgId: number, run: any): Promise<any | null> {
+  const runId = run.id;
+  const results = await store.query(orgId, 'result', (r: any) => r.runId === runId);
+  const result = results[0];
+  if (!result) return null;
+
+  const findings = await store.query(orgId, 'finding', (f: any) => f.runId === runId);
+  const scoreRecord = (await store.query(orgId, 'score', (s: any) => s.runId === runId))[0];
+  const remediation =
+    (await store.query(orgId, 'remediation_plan', (r: any) => r.runId === runId))[0] || null;
+
+  const engineResults: any[] = result.engineResults || [];
+  const numericScores = engineResults
+    .map(e => e.score)
+    .filter((s: any): s is number => typeof s === 'number');
+  const overall = numericScores.length
+    ? Math.round(numericScores.reduce((a, b) => a + b, 0) / numericScores.length)
+    : null;
+  const riskLevel =
+    overall === null ? 'insufficient_data' : overall >= 70 ? 'low' : overall >= 45 ? 'moderate' : 'high';
+
+  const dimensions = engineResults.map(e => ({
+    engine: e.engine,
+    dimension: ENGINE_LENS[e.engine as EngineId]?.label || e.engine,
+    score: e.score ?? null,
+    summary: e.summary,
+    findingCount: (e.findings || []).length,
+    insufficientData: e.metadata?.insufficientData === true,
+  }));
+
+  const bySeverity = {
+    critical: findings.filter((f: any) => f.severity === 'critical'),
+    high: findings.filter((f: any) => f.severity === 'high'),
+    medium: findings.filter((f: any) => f.severity === 'medium'),
+    low: findings.filter((f: any) => f.severity === 'low'),
+  };
+
+  const summary =
+    overall === null
+      ? 'Insufficient program content to assess regulatory readiness. Author program sections or upload documents to generate guidance.'
+      : `Assessed ${dimensions.length} regulatory dimensions: overall readiness ${overall}/100 (${riskLevel} risk). ${findings.length} findings (${bySeverity.critical.length} critical, ${bySeverity.high.length} high).`;
+
+  return {
+    runId,
+    programId: run.programId,
+    title: 'Regulatory Guidance Corpus',
+    status: run.status,
+    posture: { overall, riskLevel, dimensions, compositeScores: scoreRecord?.scores || {} },
+    summary,
+    findings: { total: findings.length, bySeverity, all: findings },
+    remediationPlan: remediation,
+    generatedAt: run.completedAt || result.createdAt || new Date().toISOString(),
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // SCENARIO MANAGEMENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -657,6 +723,49 @@ router.get('/runs/:runId/results', async (req: Request, res: Response) => {
         remediationPlan: remediations[0] || null,
       },
     });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Unified "Regulatory Guidance Corpus" view for a single run.
+router.get('/runs/:runId/guidance-corpus', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const runId = parseInt(String(req.params.runId));
+    const run = await store.getById(runId, orgId);
+    if (!run) return res.status(404).json({ error: 'Run not found' });
+
+    const corpus = await buildGuidanceCorpus(orgId, run);
+    if (!corpus) {
+      return res.json({ data: { run, status: 'pending', message: 'Run has not completed yet' } });
+    }
+    res.json({ data: corpus });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Unified "Regulatory Guidance Corpus" for a program's most recent completed run.
+router.get('/programs/:programId/guidance-corpus', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const programId = parseInt(String(req.params.programId));
+
+    const runs = await store.query(
+      orgId,
+      'run',
+      (r: any) => r.programId === programId && r.status === 'completed'
+    );
+    if (runs.length === 0) {
+      return res.json({ data: { programId, corpus: null, message: 'No completed runs for this program yet.' } });
+    }
+    runs.sort(
+      (a: any, b: any) => new Date(b.completedAt || 0).getTime() - new Date(a.completedAt || 0).getTime()
+    );
+
+    const corpus = await buildGuidanceCorpus(orgId, runs[0]);
+    res.json({ data: corpus });
   } catch (err: any) {
     res.status(500).json({ error: 'Internal server error' });
   }
