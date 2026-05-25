@@ -7,7 +7,7 @@ import {
   insertDocumentFolderSchema,
   documentVersions,
 } from '@shared/schema';
-import { getDb } from '../db/tenantDbHelper';
+import { requestDb } from '../db/requestDb';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -287,7 +287,7 @@ router.get('/:id/download', async (req, res) => {
     // document row. Load the current version to source filePath and content.
     const currentVersion = document.currentVersionId
       ? (
-          await getDb(req)
+          await requestDb(req)
             .select()
             .from(documentVersions)
             .where(eq(documentVersions.id, document.currentVersionId))
