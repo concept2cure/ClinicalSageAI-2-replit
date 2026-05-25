@@ -267,7 +267,7 @@ export class GovernanceBoundaryService {
           const contradictionCheck = await contradictionEngineService.checkPromotionBlocked(
             request.organizationId,
             request.projectId,
-            request.artifactId
+            request.artifactId ?? 0
           );
           if (contradictionCheck?.blocked) {
             const blockingCount = contradictionCheck.blockingFindings?.length ?? 0;

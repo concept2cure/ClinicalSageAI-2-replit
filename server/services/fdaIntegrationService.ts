@@ -486,7 +486,7 @@ class FDAIntegrationService {
         status: statusUpdate.status,
         lastUpdated: statusUpdate.timestamp,
         comments: statusUpdate.comments,
-        actions: statusUpdate.requiredActions || []
+        actions: (statusUpdate as any).requiredActions || []
       };
     } catch (error: any) {
       console.error('Error checking submission status:', error);
