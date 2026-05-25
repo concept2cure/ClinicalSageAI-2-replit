@@ -22,40 +22,67 @@ export const dbStatus = {
   events: new EventEmitter(),
 };
 
-// Use canonical pool
-const pool = getPool();
+// Lazy pool accessor. Importing this module must NOT eagerly call getPool() —
+// getPool() throws ("Database connection not available") before the pool is
+// initialized, which happens during test collection (modules load before the
+// test setup creates the pool). A bare `const pool = getPool()` at import time
+// therefore crashed the whole module for every importer. Instead, resolve the
+// real pool on first actual use and attach monitoring listeners exactly once.
+let _monitoringAttached = false;
+function attachPoolMonitoring(p) {
+  if (_monitoringAttached) return;
+  _monitoringAttached = true;
 
-// Add error handler for the pool
-pool.on('error', (err, client) => {
-  console.error('Unexpected error on idle client', err);
-
-  // Update status
-  dbStatus.lastError = err;
-  dbStatus.connected = false;
-  dbStatus.events.emit('error', err);
-
-  // Schedule a reconnection test
-  if (!dbStatus.reconnecting) {
-    scheduleReconnectionTest();
-  }
-});
-
-// Add connection monitoring
-pool.on('connect', client => {
-  dbStatus.poolSize++;
-  dbStatus.events.emit('connect', { poolSize: dbStatus.poolSize });
-
-  // Log connection stats periodically
-  console.log('[database] Database connection successful', {
-    timestamp: new Date().toISOString(),
-    poolSize: dbStatus.poolSize,
+  // Error handler for the pool
+  p.on('error', (err, _client) => {
+    console.error('Unexpected error on idle client', err);
+    dbStatus.lastError = err;
+    dbStatus.connected = false;
+    dbStatus.events.emit('error', err);
+    if (!dbStatus.reconnecting) {
+      scheduleReconnectionTest();
+    }
   });
-});
 
-pool.on('remove', client => {
-  dbStatus.poolSize = Math.max(0, dbStatus.poolSize - 1);
-  dbStatus.events.emit('remove', { poolSize: dbStatus.poolSize });
-});
+  // Connection monitoring
+  p.on('connect', _client => {
+    dbStatus.poolSize++;
+    dbStatus.events.emit('connect', { poolSize: dbStatus.poolSize });
+    console.log('[database] Database connection successful', {
+      timestamp: new Date().toISOString(),
+      poolSize: dbStatus.poolSize,
+    });
+  });
+
+  p.on('remove', _client => {
+    dbStatus.poolSize = Math.max(0, dbStatus.poolSize - 1);
+    dbStatus.events.emit('remove', { poolSize: dbStatus.poolSize });
+  });
+}
+
+function resolvePool() {
+  const p = getPool();
+  attachPoolMonitoring(p);
+  return p;
+}
+
+// Proxy that defers getPool() until a property is actually accessed, so
+// `import './db'` never opens a connection or throws at module load. Every real
+// usage (pool.query / pool.connect / pool.on) resolves the live pool at call
+// time, by which point the pool has been initialized.
+const pool = new Proxy(
+  {},
+  {
+    get(_target, prop) {
+      const p = resolvePool();
+      const value = p[prop];
+      return typeof value === 'function' ? value.bind(p) : value;
+    },
+    has(_target, prop) {
+      return prop in resolvePool();
+    },
+  }
+);
 
 // Function to set tenant context variables on the database session
 // Uses parameterized set_config() to prevent SQL injection
