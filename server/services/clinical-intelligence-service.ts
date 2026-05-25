@@ -3,7 +3,7 @@ import { db, query } from '../db';
 // cer_reports. Alias it here and map the old column names at the call sites
 // (cer_id → reportId, content_text → content, indication → clinicalBackground).
 import { cerReports as clinicalEvaluationReports } from '../../shared/schema';
-import { and, eq, isNull, like } from 'drizzle-orm';
+import { and, eq, isNull, like, sql } from 'drizzle-orm';
 import {
   generateEmbeddings,
   generateStructuredResponse,
@@ -670,7 +670,7 @@ class ClinicalIntelligenceService {
           return false;
         }
 
-        documentText = cer.content;
+        documentText = String(cer.content ?? '');
       } else {
         // Replace with CSR retrieval logic
         const csrResult = await query(
@@ -699,7 +699,11 @@ class ClinicalIntelligenceService {
       if (documentType === 'CER') {
         await db
           .update(clinicalEvaluationReports)
-          .set({ content_vector: JSON.stringify(embeddings) })
+          // cer_reports has no content_vector column; persist the embedding in
+          // metadata (merge, preserving existing keys).
+          .set({
+            metadata: sql`COALESCE(${clinicalEvaluationReports.metadata}, '{}'::jsonb) || jsonb_build_object('content_vector', ${JSON.stringify(embeddings)}::jsonb)`,
+          })
           .where(eq(clinicalEvaluationReports.reportId, documentId));
       } else {
         // Replace with CSR update logic
@@ -743,12 +747,12 @@ class ClinicalIntelligenceService {
           return [];
         }
 
-        documentText = cer.content_text;
+        documentText = String(cer.content ?? '');
         documentMeta = {
-          title: cer.title,
-          device_name: cer.device_name,
-          manufacturer: cer.manufacturer,
-          indication: cer.indication,
+          title: cer.deviceName,
+          device_name: cer.deviceName,
+          manufacturer: cer.deviceManufacturer,
+          indication: cer.clinicalBackground,
         };
       } else {
         // Replace with CSR retrieval logic
@@ -980,10 +984,9 @@ class ClinicalIntelligenceService {
       if (documentType === 'CER') {
         await db
           .update(clinicalEvaluationReports)
+          // processing-state flags have no cer_reports columns; record them in metadata.
           .set({
-            processed: true,
-            processed_at: new Date(),
-            semantic_processing_complete: true,
+            metadata: sql`COALESCE(${clinicalEvaluationReports.metadata}, '{}'::jsonb) || jsonb_build_object('processed', true, 'processed_at', now(), 'semantic_processing_complete', true)`,
           })
           .where(eq(clinicalEvaluationReports.reportId, documentId));
       } else {
