@@ -50,7 +50,7 @@ router.use('/validation', qualityValidationRouter);
  */
 router.get('/dashboard/:qmpId', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
-    const { qmpId } = req.params;
+    const qmpId = String(req.params.qmpId);
     const organizationId = orgIdOf(req);
 
     // Convert to number
@@ -113,31 +113,35 @@ router.get('/dashboard/:qmpId', authMiddleware, requireOrganizationContext, asyn
 
     const relatedFactors = allFactors.filter((factor: any) => factorIds.has(factor.id));
 
-    // Calculate statistics
+    // Calculate statistics. Gating level is derived from the mandatory
+    // completion threshold (the schema has no explicit level), and there is no
+    // inactive state on a gating rule, so all rules count as active.
     const sectionStats = {
       totalSections: gatingRules.length,
       sectionsByGateLevel: {
-        hard: gatingRules.filter((rule: any) => rule.minimumMandatoryCompletion === 100).length,
+        hard: gatingRules.filter(rule => (rule.minimumMandatoryCompletion ?? 0) === 100).length,
         soft: gatingRules.filter(
-          (rule: any) => rule.minimumMandatoryCompletion < 100 && rule.minimumMandatoryCompletion >= 80
+          rule =>
+            (rule.minimumMandatoryCompletion ?? 0) < 100 &&
+            (rule.minimumMandatoryCompletion ?? 0) >= 80
         ).length,
-        info: gatingRules.filter((rule: any) => rule.minimumMandatoryCompletion < 80).length,
+        info: gatingRules.filter(rule => (rule.minimumMandatoryCompletion ?? 0) < 80).length,
       },
-      activeSections: gatingRules.filter((rule: any) => rule.active === true).length,
-      inactiveSections: gatingRules.filter((rule: any) => rule.active === false).length,
-      sectionsAllowingOverride: gatingRules.filter((rule: any) => rule.allowOverride === true).length,
+      activeSections: gatingRules.length,
+      inactiveSections: 0,
+      sectionsAllowingOverride: gatingRules.filter(rule => rule.allowOverride === true).length,
     };
 
     const factorStats = {
       totalFactors: relatedFactors.length,
       factorsByRiskLevel: {
-        high: relatedFactors.filter((factor: any) => factor.riskLevel === 'high').length,
-        medium: relatedFactors.filter((factor: any) => factor.riskLevel === 'medium').length,
-        low: relatedFactors.filter((factor: any) => factor.riskLevel === 'low').length,
+        high: relatedFactors.filter(factor => factor.riskLevel === 'high').length,
+        medium: relatedFactors.filter(factor => factor.riskLevel === 'medium').length,
+        low: relatedFactors.filter(factor => factor.riskLevel === 'low').length,
       },
-      activeFactors: relatedFactors.filter((factor: any) => factor.active === true).length,
-      inactiveFactors: relatedFactors.filter((factor: any) => factor.active === false).length,
-      requiredFactors: relatedFactors.filter((factor: any) => factor.required === true).length,
+      activeFactors: relatedFactors.filter(factor => factor.status === 'active').length,
+      inactiveFactors: relatedFactors.filter(factor => factor.status !== 'active').length,
+      requiredFactors: relatedFactors.filter(factor => factor.requirementType === 'mandatory').length,
     };
 
     // Build dashboard data
@@ -228,7 +232,6 @@ router.post('/batch-validate', authMiddleware, requireOrganizationContext, async
         and(
           eq(qmpSectionGating.organizationId, organizationId),
           eq(qmpSectionGating.qmpId, qmpId),
-          eq(qmpSectionGating.active, true),
           sql`${qmpSectionGating.sectionKey} = ANY(${sectionCodes})`
         )
       );
@@ -249,11 +252,11 @@ router.post('/batch-validate', authMiddleware, requireOrganizationContext, async
 
     // Get all CTQ factors for these rules
     const ctqFactorIds = gatingRules
-      .map((rule: any) => rule.requiredCtqFactorIds || [])
+      .map(rule => (rule.requiredCtqFactorIds as number[] | null) || [])
       .flat()
-      .filter((v: any, i: any, a: any) => a.indexOf(v) === i); // Unique factor IDs
+      .filter((v, i, a) => a.indexOf(v) === i); // Unique factor IDs
 
-    let ctqFactorDetails = [];
+    let ctqFactorDetails: Array<typeof ctqFactors.$inferSelect> = [];
     if (ctqFactorIds.length > 0) {
       ctqFactorDetails = await getDb(req)
         .select()
@@ -272,7 +275,7 @@ router.post('/batch-validate', authMiddleware, requireOrganizationContext, async
         const { sectionCode, content } = section;
 
         // Find the rule for this section
-        const rule = gatingRules.find((r: any) => r.sectionKey === sectionCode);
+        const rule = gatingRules.find(r => r.sectionKey === sectionCode);
 
         // If no rule, section automatically passes
         if (!rule) {
@@ -280,32 +283,32 @@ router.post('/batch-validate', authMiddleware, requireOrganizationContext, async
             sectionCode,
             valid: true,
             message: 'No gating rules defined for this section',
-            validations: [],
+            validations: [] as Array<Record<string, unknown>>,
           };
         }
 
         // Get factors for this section
-        const requiredFactorIds = rule.requiredCtqFactorIds || [];
-        const factors = ctqFactorDetails.filter((f: any) => requiredFactorIds.includes(f.id));
+        const requiredFactorIds = (rule.requiredCtqFactorIds as number[] | null) || [];
+        const factors = ctqFactorDetails.filter(f => requiredFactorIds.includes(f.id));
 
         // Validate against each factor
-        const validationResults = [];
+        const validationResults: Array<Record<string, unknown>> = [];
         let hasHardFailures = false;
         let hasSoftFailures = false;
 
         for (const factor of factors) {
           // Skip inactive factors
-          if (factor.active === false) continue;
+          if (factor.status !== 'active') continue;
 
           let validationPassed = true;
           let validationMessage = '';
 
-          // Check content against factor rule
-          if (factor.validationRule) {
+          // Check content against factor rule (validationCriteria holds the rule text)
+          if (factor.validationCriteria) {
             try {
               // Simple keyword checking (in a real system, this would be more sophisticated)
               const contentLower = content.toLowerCase();
-              const requiredTerms = factor.validationRule
+              const requiredTerms = factor.validationCriteria
                 .toLowerCase()
                 .split(',')
                 .map((term: string) => term.trim());
@@ -329,7 +332,7 @@ router.post('/batch-validate', authMiddleware, requireOrganizationContext, async
             } catch (error) {
               logger.error('Error evaluating validation rule', {
                 error,
-                rule: factor.validationRule,
+                rule: factor.validationCriteria,
               });
               validationPassed = false;
               validationMessage = 'Error evaluating validation rule';
@@ -352,14 +355,15 @@ router.post('/batch-validate', authMiddleware, requireOrganizationContext, async
         let gatingStatusMessage = 'Section meets quality requirements';
         let gatingLevel = 'soft';
 
-        if (rule.minimumMandatoryCompletion === 100) {
+        const mandatoryCompletion = rule.minimumMandatoryCompletion ?? 0;
+        if (mandatoryCompletion === 100) {
           // Hard gate - any high risk failures block
           gatingLevel = 'hard';
           if (hasHardFailures) {
             valid = false;
             gatingStatusMessage = 'Section contains critical quality issues';
           }
-        } else if (rule.minimumMandatoryCompletion >= 80) {
+        } else if (mandatoryCompletion >= 80) {
           // Soft gate - high risk failures block, medium risk warn
           gatingLevel = 'soft';
           if (hasHardFailures) {
@@ -428,7 +432,7 @@ router.get(
   requireOrganizationContext,
   async (req, res) => {
     try {
-      const { cerProjectId } = req.params;
+      const cerProjectId = String(req.params.cerProjectId);
       const organizationId = orgIdOf(req);
 
       // Convert to number
@@ -503,7 +507,7 @@ router.get('/plans', authMiddleware, requireOrganizationContext, async (req, res
  */
 router.get('/plans/:id', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const organizationId = orgIdOf(req);
 
     // Convert to number
@@ -549,11 +553,11 @@ router.get('/plans/:id', authMiddleware, requireOrganizationContext, async (req,
 
     // Get all CTQ factors for this QMP
     const ctqFactorIds = gatingRules
-      .map((rule: any) => rule.requiredCtqFactorIds || [])
+      .map(rule => (rule.requiredCtqFactorIds as number[] | null) || [])
       .flat()
-      .filter((v: any, i: any, a: any) => a.indexOf(v) === i); // Unique factor IDs
+      .filter((v, i, a) => a.indexOf(v) === i); // Unique factor IDs
 
-    let ctqFactorDetails = [];
+    let ctqFactorDetails: Array<typeof ctqFactors.$inferSelect> = [];
     if (ctqFactorIds.length > 0) {
       ctqFactorDetails = await getDb(req)
         .select()
@@ -569,12 +573,13 @@ router.get('/plans/:id', authMiddleware, requireOrganizationContext, async (req,
     // Build the enriched QMP object
     const enrichedQmp = {
       ...qmp,
-      sections: gatingRules.map((rule: any) => ({
-        ...rule,
-        ctqFactors: rule.requiredCtqFactorIds
-          ? ctqFactorDetails.filter((f: any) => rule.requiredCtqFactorIds.includes(f.id))
-          : [],
-      })),
+      sections: gatingRules.map(rule => {
+        const ruleFactorIds = (rule.requiredCtqFactorIds as number[] | null) || [];
+        return {
+          ...rule,
+          ctqFactors: ctqFactorDetails.filter(f => ruleFactorIds.includes(f.id)),
+        };
+      }),
     };
 
     // Store in cache for future requests
@@ -613,7 +618,10 @@ router.post('/plans', authMiddleware, requireOrganizationContext, async (req, re
       });
     }
 
-    const qmpData = validationResult.data;
+    // Only persist columns that exist on the QMP table. `allowWaivers` and
+    // `cerTypeId` are accepted in the request for backward compatibility but
+    // the schema has no such columns, so they are folded into `metadata`.
+    const { allowWaivers, cerTypeId, metadata, ...qmpData } = validationResult.data;
 
     // Create the QMP
     const createdQmp = await getDb(req)
@@ -622,7 +630,7 @@ router.post('/plans', authMiddleware, requireOrganizationContext, async (req, re
         ...qmpData,
         organizationId,
         createdById: userId,
-        updatedById: userId,
+        metadata: { ...(metadata ?? {}), allowWaivers, cerTypeId },
       })
       .returning();
 
@@ -641,8 +649,8 @@ router.post('/plans', authMiddleware, requireOrganizationContext, async (req, re
  */
 router.patch('/plans/:id', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
-    const { id } = req.params;
-    const organizationId = orgIdOf(req); const userId = userIdOf(req);
+    const id = String(req.params.id);
+    const organizationId = orgIdOf(req);
 
     // Convert to number
     const qmpId = parseInt(id, 10);
@@ -669,7 +677,9 @@ router.patch('/plans/:id', authMiddleware, requireOrganizationContext, async (re
       });
     }
 
-    const qmpData = validationResult.data;
+    // `allowWaivers` and `cerTypeId` are not columns on the QMP table; fold any
+    // provided values into metadata and update only real columns.
+    const { allowWaivers, cerTypeId, metadata, ...qmpData } = validationResult.data;
 
     // Check if QMP exists
     const existingQmp = await getDb(req)
@@ -687,12 +697,23 @@ router.patch('/plans/:id', authMiddleware, requireOrganizationContext, async (re
       return res.status(404).json({ error: 'Quality Management Plan not found' });
     }
 
+    // Merge any backward-compat fields into the metadata column.
+    const mergedMetadata =
+      metadata !== undefined || allowWaivers !== undefined || cerTypeId !== undefined
+        ? {
+            ...((existingQmp[0].metadata as Record<string, unknown> | null) ?? {}),
+            ...(metadata ?? {}),
+            ...(allowWaivers !== undefined ? { allowWaivers } : {}),
+            ...(cerTypeId !== undefined ? { cerTypeId } : {}),
+          }
+        : undefined;
+
     // Update the QMP
     const updatedQmp = await getDb(req)
       .update(qualityManagementPlans)
       .set({
         ...qmpData,
-        updatedById: userId,
+        ...(mergedMetadata !== undefined ? { metadata: mergedMetadata } : {}),
         updatedAt: new Date(),
       })
       .where(
@@ -720,7 +741,7 @@ router.patch('/plans/:id', authMiddleware, requireOrganizationContext, async (re
  */
 router.delete('/plans/:id', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const organizationId = orgIdOf(req);
 
     // Convert to number

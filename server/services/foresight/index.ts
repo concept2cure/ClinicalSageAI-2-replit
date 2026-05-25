@@ -52,7 +52,23 @@ export class UnifiedForesightService {
   async predictTrialSuccess(protocolData: Record<string, unknown>): Promise<ForesightPrediction> {
     const { ForesightAIEngine } = await import('../foresight-ai-engine');
     const engine = new ForesightAIEngine();
-    return engine.predictSuccess(protocolData);
+    const result = await engine.calculatePredictiveSuccessScore({
+      organizationId: this.config.organizationId,
+      studyId: String(protocolData.studyId ?? `study-${Date.now()}`),
+      phase: String(protocolData.phase ?? 'II'),
+      indication: String(protocolData.indication ?? ''),
+      biomarkerData: protocolData.biomarkerData as any,
+      preclinicalData: protocolData.preclinicalData as any,
+      competitorData: protocolData.competitorData as any,
+    });
+    return {
+      id: result.predictionId,
+      type: 'success_rate',
+      confidence: result.successProbability,
+      value: result.successProbability,
+      rationale: result.goNoGoRecommendation,
+      supportingEvidence: (result.keyDrivers || []).map((d: any) => d.description),
+    };
   }
 
   async analyzeProtocol(protocolId: string): Promise<ForesightAnalysis> {

@@ -140,8 +140,9 @@ export class ForesightAIEngine {
     const prediction = JSON.parse(predictionResponse.choices[0].message.content || '{}');
 
     // Store prediction in database
-    const [savedPrediction] = await (db!.insert(foresightPredictions) as any).values({
-      organizationId,
+    const [savedPrediction] = await db!.insert(foresightPredictions).values({
+      studyId: `study-${organizationId}-${Date.now()}`,
+      organizationId: organizationId ? Number(organizationId) : undefined,
       predictionType: 'multi_modal_advanced',
       phase: studyPhase,
       successScore: prediction.confidence || 0,
@@ -232,17 +233,18 @@ export class ForesightAIEngine {
     // Update translational patterns based on learnings
     if (learnings.newPatterns) {
       for (const pattern of learnings.newPatterns) {
-        await (db!.insert(translationalPatterns) as any).values({
-          organizationId: feedback.organizationId,
-          sourcePhase: feedback.phase || 'unknown',
-          targetPhase: pattern.targetPhase,
-          patternType: pattern.type,
-          patternData: pattern.data,
-          confidenceScore: pattern.confidence,
-          evidenceCount: 1,
+        await db!.insert(translationalPatterns).values({
+          patternName: pattern.name || `Pattern ${pattern.type || 'learned'}`,
+          patternType: pattern.type || 'correlation',
+          phase: pattern.targetPhase || feedback.phase || 'unknown',
+          confidence: pattern.confidence ?? 0.5,
+          occurrenceCount: 1,
+          lastObserved: new Date(),
           metadata: {
             source: 'adaptive_learning',
             feedbackId: feedbackId,
+            patternData: pattern.data,
+            sourcePhase: feedback.phase || 'unknown',
             timestamp: new Date().toISOString()
           }
         });
@@ -757,35 +759,31 @@ export class ForesightAIEngine {
     
     // Store the narrative in database
     const [narrative] = await db!.insert(indNarratives).values({
-      studyId,
+      narrativeId: `IND-NARR-${Date.now()}`,
+      protocolNumber: `PROTO-${studyId}`,
+      title: `IND Narrative - ${drugName} - ${indication}`,
       drugName,
       indication,
+      phase: params.additionalContext?.phase || 'I',
       narrativeType,
-      regulatoryBody,
-      version: '1.0',
+      version: 1,
       status: 'draft',
-      content: narrativeContent,
-      wordCount: narrativeContent.split(/\s+/).length,
       complianceScore: await this.calculateComplianceScore(narrativeContent, regulatoryBody),
-      metadata: {
-        generatedAt: new Date().toISOString(),
-        model: AI_MODELS.NARRATIVE,
-        organizationId
-      },
-      organizationId,
+      sourceData: { studyId, regulatoryBody },
+      organizationId: organizationId ? Number(organizationId) : undefined,
       createdBy: 'ai_system'
     }).returning();
-    
+
     // Store individual sections
     for (const section of sections) {
       await db!.insert(indNarrativeSections).values({
         narrativeId: narrative.id,
-        sectionNumber: section.number,
-        title: section.title,
+        sectionNumber: String(section.number),
+        sectionTitle: section.title,
+        sectionType: 'clinical',
         content: section.content,
-        complianceChecks: section.complianceChecks,
+        complianceFlags: section.complianceChecks,
         wordCount: section.wordCount,
-        metadata: section.metadata
       });
     }
     
@@ -896,8 +894,8 @@ export class ForesightAIEngine {
     const patterns = await db!.select()
       .from(translationalPatterns)
       .where(and(
-        eq(translationalPatterns.organizationId, organizationId),
-        eq(translationalPatterns.targetPhase, phase)
+        eq(translationalPatterns.indication, indication),
+        eq(translationalPatterns.phase, phase)
       ));
 
     const protocolResponse = await openai.chat.completions.create({
@@ -940,12 +938,17 @@ export class ForesightAIEngine {
     
     // Create IND narrative
     const [narrative] = await db!.insert(indNarratives).values({
-      organizationId: organizationId,
-      narrativeType: 'clinical_protocol',
+      narrativeId: `IND-PROTO-${Date.now()}`,
+      protocolNumber: `PROTO-${Date.now()}`,
       title: `Clinical Protocol - ${indication} - Phase ${phase}`,
+      drugName: indication,
+      indication,
+      phase,
+      narrativeType: 'clinical_protocol',
       status: 'draft',
       complianceScore: 0,
-      metadata: {
+      organizationId: organizationId ? Number(organizationId) : undefined,
+      sourceData: {
         indication,
         phase,
         primaryEndpoint,
@@ -959,13 +962,13 @@ export class ForesightAIEngine {
     for (const section of sections) {
       await db!.insert(indNarrativeSections).values({
         narrativeId: narrative.id,
-        sectionNumber: section.number,
+        sectionNumber: String(section.number),
         sectionTitle: section.title,
+        sectionType: 'clinical',
         content: section.content,
-        complianceChecks: section.complianceChecks || {},
+        complianceFlags: section.complianceChecks || {},
         reviewStatus: 'pending',
         version: 1,
-        metadata: section.metadata || {}
       });
     }
 
@@ -1171,19 +1174,19 @@ export class ForesightAIEngine {
       allometricExponent: scalingResults.clearanceExponent,
       clearanceExponent: scalingResults.clearanceExponent,
       volumeExponent: scalingResults.volumeExponent,
-      humanEquivalentDose: hedResults.hed,
-      humanPredictedCmax: scalingResults.predictedHumanCmax,
-      humanPredictedAuc: scalingResults.predictedHumanAuc,
-      humanPredictedT12: scalingResults.predictedHumanT12,
+      humanEquivalentDose: String(hedResults.hed),
+      humanPredictedCmax: String(scalingResults.predictedHumanCmax),
+      humanPredictedAuc: String(scalingResults.predictedHumanAuc),
+      humanPredictedT12: String(scalingResults.predictedHumanT12),
       safetyMargin: regulatoryDoses.safetyFactor,
-      noaelDose: safetyMetrics.noael,
-      mabelDose: safetyMetrics.mabel,
-      padDose: safetyMetrics.pad,
-      recommendedStartingDose: regulatoryDoses.recommendedStartingDose,
+      noaelDose: String(safetyMetrics.noael),
+      mabelDose: String(safetyMetrics.mabel),
+      padDose: String(safetyMetrics.pad),
+      recommendedStartingDose: String(regulatoryDoses.recommendedStartingDose),
       confidenceInterval: scalingResults.confidenceInterval,
       validationMetrics: scalingResults.validationMetrics,
       regulatoryGuidelines: regulatoryDoses.guidelines,
-      organizationId,
+      organizationId: organizationId ? Number(organizationId) : undefined,
       createdBy: 'system'
     }).returning();
     
@@ -1193,11 +1196,11 @@ export class ForesightAIEngine {
         analysisId: analysis.id,
         species: species.species,
         bodyWeight: species.bodyWeight,
-        doseAdministered: species.dose,
+        doseAdministered: String(species.dose),
         doseUnit: species.doseUnit,
         route: 'po', // Default, should be provided
-        cmax: species.cmax,
-        auc0inf: species.auc,
+        cmaxValue: String(species.cmax),
+        auc0inf: String(species.auc),
         t12: species.halfLife,
         clearance: species.clearance,
         volumeDistribution: species.volume,
@@ -1578,30 +1581,33 @@ export class ForesightAIEngine {
     // Generate detailed risk factors
     const riskFactors = await this.identifyRiskFactors(params);
     
+    // Derive the predicted outcome payload (stored in failurePatterns metadata)
+    const goNoGo = adjustedScore > 0.6 ? 'proceed' : adjustedScore > 0.4 ? 'proceed_with_caution' : 'reconsider';
+    const keyDrivers = this.identifyKeyDrivers({
+      biomarkerScore,
+      preclinicalScore,
+      historicalScore,
+      competitiveScore,
+      targetValidationScore
+    });
+    const predictionConfidenceInterval = {
+      lower: Math.max(0, adjustedScore - 0.15),
+      upper: Math.min(1, adjustedScore + 0.15)
+    };
+
     // Store prediction in database
     const [prediction] = await db!.insert(foresightPredictions).values({
       studyId,
       phase,
       predictionType: 'success_probability',
-      confidence: adjustedScore,
-      predictedOutcome: {
-        probability: adjustedScore,
-        goNoGo: adjustedScore > 0.6 ? 'proceed' : adjustedScore > 0.4 ? 'proceed_with_caution' : 'reconsider',
-        keyDrivers: this.identifyKeyDrivers({
-          biomarkerScore,
-          preclinicalScore,
-          historicalScore,
-          competitiveScore,
-          targetValidationScore
-        })
-      },
-      biomarkers: biomarkerData || [],
+      successScore: adjustedScore,
       riskFactors,
-      confidenceInterval: {
-        lower: Math.max(0, adjustedScore - 0.15),
-        upper: Math.min(1, adjustedScore + 0.15)
-      },
-      metadata: {
+      confidenceInterval: predictionConfidenceInterval,
+      recommendations: {
+        probability: adjustedScore,
+        goNoGo,
+        keyDrivers,
+        biomarkers: biomarkerData || [],
         calculationMethod: 'multi_factorial_bayesian',
         weights,
         componentScores: {
@@ -1612,19 +1618,19 @@ export class ForesightAIEngine {
           targetValidation: targetValidationScore
         }
       },
-      organizationId,
-      createdBy: 'ai_system'
+      modelVersion: 'ai_system',
+      organizationId: organizationId ? Number(organizationId) : undefined,
     }).returning();
-    
+
     // Generate recommendations using AI
     const recommendations = await this.generateSuccessRecommendations(prediction, params);
-    
+
     return {
       predictionId: prediction.id,
       successProbability: adjustedScore,
-      confidenceInterval: prediction.confidenceInterval,
-      goNoGoRecommendation: prediction.predictedOutcome.goNoGo,
-      keyDrivers: prediction.predictedOutcome.keyDrivers,
+      confidenceInterval: predictionConfidenceInterval,
+      goNoGoRecommendation: goNoGo,
+      keyDrivers,
       riskFactors,
       recommendations,
       visualizationData: {
@@ -1841,7 +1847,7 @@ export class ForesightAIEngine {
    */
   private identifyKeyDrivers(scores: any) {
     const drivers = [];
-    const entries = Object.entries(scores);
+    const entries = Object.entries(scores) as Array<[string, number]>;
     
     // Sort by impact
     entries.sort((a: any, b: any) => b[1] - a[1]);

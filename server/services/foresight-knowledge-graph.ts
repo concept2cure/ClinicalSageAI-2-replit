@@ -111,7 +111,7 @@ export class ForesightKnowledgeGraph {
     const csr = await db
       .select()
       .from(csrReports)
-      .where(eq(csrReports.id, csrId))
+      .where(eq(csrReports.id, Number(csrId)))
       .limit(1);
     
     if (!csr.length) return;

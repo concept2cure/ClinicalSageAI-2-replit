@@ -40,16 +40,19 @@ export class LearningRepository {
   }
 
   async createLearningModule(data: InsertLearningModule) {
-    const [module] = await db.insert(learningModules).values(data).returning();
+    const [module] = (await db
+      .insert(learningModules)
+      .values(data)
+      .returning()) as (typeof learningModules.$inferSelect)[];
     return module;
   }
 
   async updateLearningModule(id: number, data: Partial<InsertLearningModule>) {
-    const [updatedModule] = await db
+    const [updatedModule] = (await db
       .update(learningModules)
       .set(data)
       .where(eq(learningModules.id, id))
-      .returning();
+      .returning()) as Record<string, unknown>[];
     return updatedModule;
   }
 
@@ -74,27 +77,30 @@ export class LearningRepository {
   }
 
   async createDocumentTemplate(data: InsertDocumentTemplate) {
-    const [template] = await db.insert(documentTemplates).values(data).returning();
+    const [template] = (await db
+      .insert(documentTemplates)
+      .values(data)
+      .returning()) as (typeof documentTemplates.$inferSelect)[];
     return template;
   }
 
   async updateDocumentTemplate(id: number, data: Partial<InsertDocumentTemplate>) {
-    const [updatedTemplate] = await db
+    const [updatedTemplate] = (await db
       .update(documentTemplates)
       .set(data)
       .where(eq(documentTemplates.id, id))
-      .returning();
+      .returning()) as Record<string, unknown>[];
     return updatedTemplate;
   }
 
   async incrementTemplateUseCount(id: number) {
-    const [updatedTemplate] = await db
+    const [updatedTemplate] = (await db
       .update(documentTemplates)
       .set({
         useCount: sql`${(documentTemplates as any).useCount} + 1`,
       } as any)
       .where(eq(documentTemplates.id, id))
-      .returning();
+      .returning()) as Record<string, unknown>[];
     return updatedTemplate;
   }
 
@@ -131,7 +137,7 @@ export class LearningRepository {
 
     if (existing) {
       // Update existing progress
-      const [updatedProgress] = await db
+      const [updatedProgress] = (await db
         .update(userProgress)
         .set({
           progress: data.progress,
@@ -140,11 +146,14 @@ export class LearningRepository {
           completedAt: data.completed ? new Date() : existing.completedAt,
         })
         .where(eq(userProgress.id, existing.id))
-        .returning();
+        .returning()) as Record<string, unknown>[];
       return updatedProgress;
     } else {
       // Create new progress entry
-      const [newProgress] = await db.insert(userProgress).values(data).returning();
+      const [newProgress] = (await db
+        .insert(userProgress)
+        .values(data)
+        .returning()) as (typeof userProgress.$inferSelect)[];
       return newProgress;
     }
   }
@@ -164,34 +173,37 @@ export class LearningRepository {
   }
 
   async createAiInsight(data: InsertAiInsight) {
-    const [insight] = await db.insert(aiInsights).values(data).returning();
+    const [insight] = (await db
+      .insert(aiInsights)
+      .values(data)
+      .returning()) as (typeof aiInsights.$inferSelect)[];
     return insight;
   }
 
   async updateAiInsight(id: number, data: Partial<InsertAiInsight>) {
-    const [updatedInsight] = await db
+    const [updatedInsight] = (await db
       .update(aiInsights)
       .set(data)
       .where(eq(aiInsights.id, id))
-      .returning();
+      .returning()) as Record<string, unknown>[];
     return updatedInsight;
   }
 
   async markInsightAsRead(id: number) {
-    const [updatedInsight] = await db
+    const [updatedInsight] = (await db
       .update(aiInsights)
       .set({ isRead: true })
       .where(eq(aiInsights.id, id))
-      .returning();
+      .returning()) as Record<string, unknown>[];
     return updatedInsight;
   }
 
   async saveOrUnsaveInsight(id: number, save: boolean) {
-    const [updatedInsight] = await db
+    const [updatedInsight] = (await db
       .update(aiInsights)
       .set({ isSaved: save })
       .where(eq(aiInsights.id, id))
-      .returning();
+      .returning()) as Record<string, unknown>[];
     return updatedInsight;
   }
 
@@ -206,7 +218,10 @@ export class LearningRepository {
   }
 
   async logUserActivity(data: InsertUserActivity) {
-    const [activity] = await db.insert(userActivity).values(data).returning();
+    const [activity] = (await db
+      .insert(userActivity)
+      .values(data)
+      .returning()) as (typeof userActivity.$inferSelect)[];
     return activity;
   }
 
@@ -220,24 +235,24 @@ export class LearningRepository {
     const existing = await this.getUserMetrics(userId);
 
     if (existing) {
-      const [updatedMetrics] = await db
+      const [updatedMetrics] = (await db
         .update(userMetrics)
         .set({
           ...data,
           lastUpdated: new Date(),
         })
         .where(eq(userMetrics.userId, userId))
-        .returning();
+        .returning()) as Record<string, unknown>[];
       return updatedMetrics;
     } else {
-      const [newMetrics] = await db
+      const [newMetrics] = (await db
         .insert(userMetrics)
         .values({
           userId,
           ...data,
           lastUpdated: new Date(),
         })
-        .returning();
+        .returning()) as Record<string, unknown>[];
       return newMetrics;
     }
   }

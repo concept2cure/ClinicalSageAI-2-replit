@@ -1,7 +1,13 @@
 import { Router, type Request } from 'express';
+import { eq } from 'drizzle-orm';
 import { storage } from '../storage';
 import { z } from 'zod';
-import { insertDocumentSchema, insertDocumentFolderSchema } from '@shared/schema';
+import {
+  insertDocumentSchema,
+  insertDocumentFolderSchema,
+  documentVersions,
+} from '@shared/schema';
+import { requestDb } from '../db/requestDb';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -277,20 +283,39 @@ router.get('/:id/download', async (req, res) => {
     // fails — the user requested it, that's the event.
     await auditDocumentAccess(req, guard.orgId, id, 'document_download');
 
-    // If the document has a filePath, send the file
-    if (document.filePath && fs.existsSync(document.filePath)) {
-      return res.download(document.filePath, document.fileName || `document-${id}.pdf`);
+    // File bytes / content live on the current document version, not on the
+    // document row. Load the current version to source filePath and content.
+    const currentVersion = document.currentVersionId
+      ? (
+          await requestDb(req)
+            .select()
+            .from(documentVersions)
+            .where(eq(documentVersions.id, document.currentVersionId))
+            .limit(1)
+        )[0]
+      : undefined;
+
+    // Derive a download filename from the document title and version mime type.
+    const extFromMime = currentVersion?.mimeType?.split('/')[1];
+    const fileName = `${document.title || `document-${id}`}${extFromMime ? `.${extFromMime}` : '.pdf'}`;
+
+    // If the current version has a filePath, send the file
+    if (currentVersion?.filePath && fs.existsSync(currentVersion.filePath)) {
+      return res.download(currentVersion.filePath, fileName);
     }
 
-    // For documents with content but no file, generate a PDF or HTML file
-    if (document.content) {
+    // For versions with content but no file, generate an HTML file
+    if (currentVersion?.content) {
       // This is a simplified example - in a real app, you'd use a PDF generation library
-      const htmlContent = generateHtmlFromDocument(document);
+      const htmlContent = generateHtmlFromDocument({
+        ...document,
+        content: currentVersion.content,
+      });
 
       res.setHeader('Content-Type', 'text/html');
       res.setHeader(
         'Content-Disposition',
-        `attachment; filename="${document.name || 'document'}.html"`
+        `attachment; filename="${document.title || 'document'}.html"`
       );
       return res.send(htmlContent);
     }
