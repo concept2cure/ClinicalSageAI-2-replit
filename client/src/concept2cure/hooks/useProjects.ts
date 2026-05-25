@@ -484,7 +484,7 @@ export function useProjects() {
         ...project,
         customInstructions: preferences.projectInstructions ?? project.customInstructions,
         ownership: {
-          ...project.ownership,
+          ...(project.ownership as ProjectOwnership),
           projectInstructions:
             preferences.projectInstructions ?? project.ownership?.projectInstructions ?? '',
           reusableSnippetsKnowledge:
