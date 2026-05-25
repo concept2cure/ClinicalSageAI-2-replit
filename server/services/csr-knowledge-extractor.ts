@@ -261,65 +261,80 @@ export class CSRKnowledgeExtractor {
       }
 
       const correlations: BiomarkerCorrelation[] = [];
-      
-      // Parse biomarker data from various sections
-      const fullText = JSON.stringify(csr).toLowerCase();
-      
-      // Common biomarkers to look for
-      const biomarkers = [
-        { name: 'PD-L1', type: 'protein' as const },
-        { name: 'EGFR', type: 'gene' as const },
-        { name: 'KRAS', type: 'gene' as const },
-        { name: 'CD4', type: 'cell' as const },
-        { name: 'CD8', type: 'cell' as const },
-        { name: 'IL-6', type: 'cytokine' as const },
-        { name: 'TNF-alpha', type: 'cytokine' as const },
-        { name: 'CRP', type: 'protein' as const },
-        { name: 'HbA1c', type: 'metabolite' as const },
-        { name: 'LDH', type: 'metabolite' as const }
+
+      // Prefer the study's result-bearing fields as the analysis corpus; only
+      // fall back to the whole record when those are empty. This keeps the
+      // correlation/p-value extraction anchored to the statistical narrative
+      // rather than to inclusion criteria or administrative text.
+      const resultText = [
+        csr.efficacyResults,
+        csr.statisticalMethods,
+        csr.safetyResults,
+        csr.patientReportedOutcome,
+        csr.results ? JSON.stringify(csr.results) : null,
+      ]
+        .filter(Boolean)
+        .join('\n');
+      const analysisText = (resultText || JSON.stringify(csr)).toLowerCase();
+
+      // Candidate biomarkers: the ones the study actually declares
+      // (csr.biomarkerUsed) merged with a set of common biomarkers.
+      const knownBiomarkers: { name: string; type: BiomarkerCorrelation['biomarkerType'] }[] = [
+        { name: 'PD-L1', type: 'protein' },
+        { name: 'EGFR', type: 'gene' },
+        { name: 'KRAS', type: 'gene' },
+        { name: 'CD4', type: 'cell' },
+        { name: 'CD8', type: 'cell' },
+        { name: 'IL-6', type: 'cytokine' },
+        { name: 'TNF-alpha', type: 'cytokine' },
+        { name: 'CRP', type: 'protein' },
+        { name: 'HbA1c', type: 'metabolite' },
+        { name: 'LDH', type: 'metabolite' },
       ];
+      const candidates = this.mergeBiomarkers(
+        knownBiomarkers,
+        this.parseStudyBiomarkers(csr.biomarkerUsed)
+      );
 
-      for (const biomarker of biomarkers) {
-        const pattern = new RegExp(`${biomarker.name.toLowerCase()}[^.]*?(\\d+\\.?\\d*)`, 'i');
-        const match = fullText.match(pattern);
-        
-        if (match) {
-          // Extract correlation data if biomarker is mentioned
-          const value = parseFloat(match[1]);
-          
-          // Determine response association based on context
-          const positiveTerms = ['response', 'benefit', 'improved', 'higher', 'increased'];
-          const negativeTerms = ['resistance', 'poor', 'lower', 'decreased', 'worse'];
-          
-          let association: 'positive' | 'negative' | 'neutral' = 'neutral';
-          const contextStart = Math.max(0, match.index! - 100);
-          const contextEnd = Math.min(fullText.length, match.index! + 100);
-          const context = fullText.substring(contextStart, contextEnd);
-          
-          if (positiveTerms.some(term => context.includes(term))) {
-            association = 'positive';
-          } else if (negativeTerms.some(term => context.includes(term))) {
-            association = 'negative';
-          }
+      for (const biomarker of candidates) {
+        const pattern = new RegExp(
+          `${this.escapeRegex(biomarker.name.toLowerCase())}[^.]*?(\\d+\\.?\\d*)`,
+          'i'
+        );
+        const match = analysisText.match(pattern);
+        if (!match) continue;
 
-          // Only emit a correlation when a real coefficient is present in the
-          // source text. Without it there is no quantitative basis, so the row
-          // is skipped rather than fabricated.
-          const correlationScore = this.extractCorrelationScore(context);
-          if (correlationScore === null) {
-            continue;
-          }
+        const value = parseFloat(match[1]);
 
-          correlations.push({
-            biomarkerName: biomarker.name,
-            biomarkerType: biomarker.type,
-            baselineLevel: value,
-            changeFromBaseline: this.extractChangeFromBaseline(context),
-            responseAssociation: association,
-            correlationScore,
-            pValue: this.extractPValue(context) ?? null,
-          });
+        const positiveTerms = ['response', 'benefit', 'improved', 'higher', 'increased'];
+        const negativeTerms = ['resistance', 'poor', 'lower', 'decreased', 'worse'];
+        let association: 'positive' | 'negative' | 'neutral' = 'neutral';
+        const contextStart = Math.max(0, match.index! - 120);
+        const contextEnd = Math.min(analysisText.length, match.index! + 120);
+        const context = analysisText.substring(contextStart, contextEnd);
+        if (positiveTerms.some(term => context.includes(term))) {
+          association = 'positive';
+        } else if (negativeTerms.some(term => context.includes(term))) {
+          association = 'negative';
         }
+
+        // Only emit a correlation when a real coefficient is present in the
+        // source text. Without it there is no quantitative basis, so the row
+        // is skipped rather than fabricated.
+        const correlationScore = this.extractCorrelationScore(context);
+        if (correlationScore === null) {
+          continue;
+        }
+
+        correlations.push({
+          biomarkerName: biomarker.name,
+          biomarkerType: biomarker.type,
+          baselineLevel: value,
+          changeFromBaseline: this.extractChangeFromBaseline(context),
+          responseAssociation: association,
+          correlationScore,
+          pValue: this.extractPValue(context) ?? null,
+        });
       }
 
       return correlations;
@@ -594,6 +609,47 @@ export class CSRKnowledgeExtractor {
       return parseFloat(pMatch[1]);
     }
     return undefined;
+  }
+
+  private escapeRegex(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  /** Infer a biomarker type from its name. */
+  private inferBiomarkerType(name: string): BiomarkerCorrelation['biomarkerType'] {
+    if (/\b(IL-?\d+|TNF|IFN|interferon|interleukin)\b/i.test(name)) return 'cytokine';
+    if (/\b(CD\d+|lymphocyte|neutrophil|cell)\b/i.test(name)) return 'cell';
+    if (/\b(EGFR|KRAS|BRAF|ALK|ROS1|HER2|gene|mutation)\b/i.test(name)) return 'gene';
+    if (/\b(HbA1c|glucose|LDH|creatinine|cholesterol|metabolite)\b/i.test(name)) return 'metabolite';
+    return 'protein';
+  }
+
+  /** Parse the study's declared biomarkers from the free-text biomarkerUsed field. */
+  private parseStudyBiomarkers(
+    biomarkerUsed: string | null | undefined
+  ): { name: string; type: BiomarkerCorrelation['biomarkerType'] }[] {
+    if (!biomarkerUsed) return [];
+    return biomarkerUsed
+      .split(/[,;/\n]|\band\b/i)
+      .map(token => token.replace(/\(.*?\)/g, '').trim())
+      .filter(name => name.length >= 2 && name.length <= 40)
+      .map(name => ({ name, type: this.inferBiomarkerType(name) }));
+  }
+
+  /** Merge biomarker lists, de-duplicating case-insensitively by name. */
+  private mergeBiomarkers(
+    a: { name: string; type: BiomarkerCorrelation['biomarkerType'] }[],
+    b: { name: string; type: BiomarkerCorrelation['biomarkerType'] }[]
+  ): { name: string; type: BiomarkerCorrelation['biomarkerType'] }[] {
+    const seen = new Set<string>();
+    const merged: { name: string; type: BiomarkerCorrelation['biomarkerType'] }[] = [];
+    for (const item of [...a, ...b]) {
+      const key = item.name.toUpperCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      merged.push(item);
+    }
+    return merged;
   }
 
   /**
