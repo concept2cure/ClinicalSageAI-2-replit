@@ -370,10 +370,8 @@ export default function createPharmacovigilanceRoutes(): Router {
         reportType: data.reportType as any,
         periodStart: new Date(data.periodStart),
         periodEnd: new Date(data.periodEnd),
-        status: 'draft',
         submittedTo: data.submittedTo,
         dueDate: new Date(data.dueDate),
-        submittedAt: null,
       });
 
       res.status(201).json({ success: true, data: report });
@@ -423,7 +421,6 @@ export default function createPharmacovigilanceRoutes(): Router {
         projectId: data.projectId,
         signalSource: data.signalSource as any,
         description: data.description,
-        detectedAt: new Date(),
         evaluationStatus: 'new',
         action: 'none',
         riskBenefitAssessment: data.riskBenefitAssessment,
@@ -451,7 +448,7 @@ export default function createPharmacovigilanceRoutes(): Router {
         return res.status(400).json({ success: false, error: 'projectId is required' });
       }
 
-      const plans = await getRMPsForProject(projectId);
+      const plans = await getRMPsForProject(String(projectId));
       return res.json({ success: true, data: plans, total: plans.length });
     } catch (error) {
       logger.error('get RMPs error', { err: error instanceof Error ? error.message : String(error) });

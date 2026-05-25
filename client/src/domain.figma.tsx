@@ -12,10 +12,6 @@
  * @see statesV2.tsx for async state wrappers
  */
 
-declare module '@figma/code-connect' {
-  const figma: { connect: (component: any, url: string, config: any) => void; enum: (name: string, map: any) => any; string: (name: string) => any; boolean: (name: string) => any; children: (name: string) => any; instance: (name: string) => any };
-  export default figma;
-}
 import figma from '@figma/code-connect';
 
 // ─── Workspace Layout ───────────────────────────────────────────────────────
@@ -162,7 +158,11 @@ figma.connect(WorkspaceCanvas, 'FIGMA_URL_PLACEHOLDER/Canvas', {
       Full: 'full',
     }),
   },
-  example: ({ maxWidth }: any) => <WorkspaceCanvas maxWidth={maxWidth}>{/* content */}</WorkspaceCanvas>,
+  example: ({ maxWidth }: any) => (
+    <WorkspaceCanvas maxWidth={maxWidth}>
+      <div>{/* content */}</div>
+    </WorkspaceCanvas>
+  ),
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -187,8 +187,9 @@ figma.connect(DataStateWrapper, 'FIGMA_URL_PLACEHOLDER/DataState', {
       loadingComponent={<SkeletonCard />}
       emptyTitle="No items yet"
       emptyDescription="Create your first item."
-      render={(data: any) => <div>{/* render data */}</div>}
-    />
+    >
+      {(data: any) => <div>{/* render data */}</div>}
+    </DataStateWrapper>
   ),
 });
 

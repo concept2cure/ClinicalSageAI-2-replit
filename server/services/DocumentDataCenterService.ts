@@ -27,7 +27,7 @@ import {
   deviceAuditTrail 
 } from '../../shared/schema.js';
 import { eq, and, or, inArray, like, sql, desc, asc, isNull } from 'drizzle-orm';
-import part11ComplianceService from './part11ComplianceService.js';
+import auditService from './auditService.js';
 import { ai } from '../lib/unified-ai-client';
 import multer from 'multer';
 import path from 'path';
@@ -464,7 +464,7 @@ class DocumentDataCenterService {
       }).returning();
 
       // Log audit trail for 21 CFR Part 11 compliance
-      await part11ComplianceService.logAction({
+      await auditService.logAction({
         organizationId,
         userId: metadata.userId,
         action: 'DOCUMENT_UPLOADED',
@@ -705,7 +705,9 @@ class DocumentDataCenterService {
           deviceComponents: updates.components || existing.deviceComponents,
           tags: updates.tags || existing.tags,
           metadata: {
-            ...existing.metadata,
+            // metadata is an untyped json column (typed `unknown` on select);
+            // coerce to an object at this JSON boundary before merging.
+            ...((existing.metadata as Record<string, unknown> | null) ?? {}),
             ...updates.metadata,
             lastUpdated: new Date().toISOString(),
             updatedBy: updates.userId,
@@ -721,7 +723,7 @@ class DocumentDataCenterService {
         .returning();
 
       // Log audit trail
-      await part11ComplianceService.logAction({
+      await auditService.logAction({
         organizationId,
         userId: updates.userId,
         action: 'DOCUMENT_TAGS_UPDATED',

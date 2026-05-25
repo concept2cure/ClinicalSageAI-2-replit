@@ -40,7 +40,7 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
     .select({ id: regulatoryPrograms.id })
     .from(regulatoryPrograms)
     .where(
-      and(eq(regulatoryPrograms.id, req.params.programId), eq(regulatoryPrograms.organizationId, orgId))
+      and(eq(regulatoryPrograms.id, String(req.params.programId)), eq(regulatoryPrograms.organizationId, orgId))
     )
     .limit(1);
   if (!row) {
@@ -70,7 +70,7 @@ router.post(
     try {
       const result = await assessSufficiency({
         organizationId: orgId,
-        programId: req.params.programId,
+        programId: String(req.params.programId),
         pathway: body.pathway,
         profile: body.profile,
         claimHealth: body.claimHealth,
@@ -115,7 +115,7 @@ router.get(
     const orgId = getOrgId(req)!;
     const limit = Math.min(parseInt(String(req.query.limit ?? '50'), 10) || 50, 200);
     try {
-      const rows = await listProgramAssessments(orgId, req.params.programId, limit);
+      const rows = await listProgramAssessments(orgId, String(req.params.programId), limit);
       res.json({ programId: req.params.programId, assessments: rows, count: rows.length });
     } catch (err: any) {
       res.status(500).json({ error: 'List failed', detail: err?.message });
@@ -127,7 +127,7 @@ router.get('/assessments/:id', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
   try {
-    const row = await getAssessment(orgId, req.params.id);
+    const row = await getAssessment(orgId, String(req.params.id));
     if (!row) return res.status(404).json({ error: 'Assessment not found' });
     res.json(row);
   } catch (err: any) {

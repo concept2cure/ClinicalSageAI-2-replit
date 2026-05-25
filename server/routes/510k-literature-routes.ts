@@ -274,7 +274,7 @@ router.get('/entry/:id', extractTenantContext, async (req: Request, res: Respons
     }
 
     const organizationId = (req as any).organizationId as string;
-    const entry = await literatureAggregator.getLiteratureById(req.params.id, organizationId);
+    const entry = await literatureAggregator.getLiteratureById(String(req.params.id), organizationId);
 
     if (!entry) {
       return res.status(404).json({ error: 'Literature entry not found' });
@@ -432,7 +432,7 @@ router.get('/citations/:documentId', extractTenantContext, async (req: Request, 
     const organizationId = (req as any).organizationId as string;
 
     const citations = await literatureAggregator.getCitations(
-      req.params.documentId,
+      String(req.params.documentId),
       documentType,
       organizationId
     );
@@ -472,7 +472,7 @@ router.delete(
 
       const organizationId = (req as any).organizationId as string;
 
-      await literatureAggregator.removeCitation(req.params.citationId, organizationId);
+      await literatureAggregator.removeCitation(String(req.params.citationId), organizationId);
 
       res.json({
         message: 'Citation removed successfully',
@@ -604,7 +604,7 @@ router.get('/summary/:id', extractTenantContext, async (req: Request, res: Respo
     }
 
     const organizationId = (req as any).organizationId as string;
-    const summary = await literatureSummarizer.getSummaryById(req.params.id, organizationId);
+    const summary = await literatureSummarizer.getSummaryById(String(req.params.id), organizationId);
 
     if (!summary) {
       return res.status(404).json({ error: 'Summary not found' });

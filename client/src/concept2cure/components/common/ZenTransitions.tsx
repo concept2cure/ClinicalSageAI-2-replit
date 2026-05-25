@@ -375,8 +375,6 @@ export const ZenPulse: React.FC<ZenPulseProps> = ({
   active = true,
   color = 'rgba(217, 119, 87, 0.4)',
   className = '',
-  color = 'rgba(37, 99, 235, 0.4)',
-  className,
 }) => (
   <div className={cn('relative', className)}>
     {children}

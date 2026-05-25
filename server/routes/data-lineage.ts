@@ -52,7 +52,7 @@ router.get('/trace/upstream/:objectType/:objectId', async (req: Request, res: Re
     const { objectType, objectId } = req.params;
     const maxDepth = Math.min(Number(req.query.maxDepth) || 5, 10);
 
-    const graph = await traceUpstream(orgId, objectType, objectId, maxDepth);
+    const graph = await traceUpstream(orgId, String(objectType), String(objectId), maxDepth);
     res.json({
       success: true,
       data: graph,
@@ -78,7 +78,7 @@ router.get('/trace/downstream/:objectType/:objectId', async (req: Request, res: 
     const { objectType, objectId } = req.params;
     const maxDepth = Math.min(Number(req.query.maxDepth) || 5, 10);
 
-    const graph = await traceDownstream(orgId, objectType, objectId, maxDepth);
+    const graph = await traceDownstream(orgId, String(objectType), String(objectId), maxDepth);
     res.json({
       success: true,
       data: graph,
@@ -106,7 +106,7 @@ router.get('/coverage/:objectType/:objectId', async (req: Request, res: Response
     if (!orgId) return res.status(401).json({ error: 'Organization context required' });
 
     const { objectType, objectId } = req.params;
-    const report = await getLineageCoverage(orgId, objectType, objectId);
+    const report = await getLineageCoverage(orgId, String(objectType), String(objectId));
     res.json({
       success: true,
       data: report,
@@ -162,7 +162,7 @@ router.get('/evidence/:objectType/:objectId', async (req: Request, res: Response
     if (!orgId) return res.status(401).json({ error: 'Organization context required' });
 
     const { objectType, objectId } = req.params;
-    const chains = await getEvidenceChainReport(orgId, objectType, objectId);
+    const chains = await getEvidenceChainReport(orgId, String(objectType), String(objectId));
     res.json({
       success: true,
       data: chains,

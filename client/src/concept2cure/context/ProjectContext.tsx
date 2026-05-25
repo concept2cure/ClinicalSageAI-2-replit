@@ -374,12 +374,18 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
     (projectId: string, knowledge: Partial<ProjectKnowledge>) => {
       const project = state.projects.find(p => p.id === projectId);
       if (project) {
+        const mergedKnowledge: ProjectKnowledge = {
+          documents: [],
+          context: '',
+          ...project.knowledge,
+          ...knowledge,
+        };
         dispatch({
           type: 'UPDATE_PROJECT',
           payload: {
             id: projectId,
             updates: {
-              knowledge: { ...project.knowledge, ...knowledge },
+              knowledge: mergedKnowledge,
               updatedAt: new Date(),
             },
           },
@@ -416,7 +422,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
           payload: {
             id: projectId,
             updates: {
-              conversationCount: project.conversationCount + 1,
+              conversationCount: (project.conversationCount ?? 0) + 1,
               lastActiveAt: now,
             },
           },
@@ -439,12 +445,14 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
         id: generateId(),
         name,
         type,
+        submissionType: type,
         description,
         createdAt: now,
         updatedAt: now,
         lastActiveAt: now,
         conversationCount: 0,
         artifactCount: 0,
+        conversations: [],
         knowledge: {
           documents: [],
           context: '',
@@ -571,7 +579,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
           type: 'UPDATE_PROJECT',
           payload: {
             id: artifactData.projectId,
-            updates: { artifactCount: project.artifactCount + 1 },
+            updates: { artifactCount: (project.artifactCount ?? 0) + 1 },
           },
         });
       }

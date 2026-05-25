@@ -89,7 +89,7 @@ router.get('/jobs', async (req: Request, res: Response) => {
  */
 router.get('/jobs/:id', async (req: Request, res: Response) => {
   try {
-    const job = await getJobStatus(parseInt(req.params.id, 10));
+    const job = await getJobStatus(parseInt(String(req.params.id), 10));
     res.json(job);
   } catch (err) {
     res.status(404).json({ error: String(err) });
@@ -101,7 +101,7 @@ router.get('/jobs/:id', async (req: Request, res: Response) => {
  */
 router.post('/jobs/:id/stop', async (req: Request, res: Response) => {
   try {
-    await cancelJob(parseInt(req.params.id, 10));
+    await cancelJob(parseInt(String(req.params.id), 10));
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: String(err) });
@@ -112,7 +112,7 @@ router.post('/jobs/:id/stop', async (req: Request, res: Response) => {
  * GET /api/deep-research/jobs/:id/stream — SSE stream for progress
  */
 router.get('/jobs/:id/stream', async (req: Request, res: Response) => {
-  const jobId = parseInt(req.params.id, 10);
+  const jobId = parseInt(String(req.params.id), 10);
 
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
