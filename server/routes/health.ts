@@ -151,7 +151,7 @@ router.get('/health/deep', async (req: Request, res: Response) => {
         databaseResult.latency = Date.now() - startDb;
       } catch (error) {
         // Keep existing status but note latency error
-        databaseResult.latencyError = error instanceof Error ? error.message : String(error);
+        (databaseResult as any).latencyError = error instanceof Error ? error.message : String(error);
       }
     }
 

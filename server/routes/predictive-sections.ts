@@ -271,7 +271,7 @@ router.get('/completion-status/:submissionType', async (req, res) => {
     const context = {
       documentType: 'Regulatory Submission',
       submissionType: submissionType as any,
-      existingSections: sectionsArray,
+      existingSections: sectionsArray.map(String),
       regulatoryRegion: 'FDA' as any,
     };
 
