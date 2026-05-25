@@ -70,7 +70,10 @@ field silently.
 ## Backend reference (already shipped, for wiring)
 
 - Protocol similarity/outcome: `server/protocol-analyzer-service.ts`
-  (`similarity` and `outcome` may be `null`).
+  (`similarity` and `outcome` may be `null`). Each similar-protocol result now
+  also carries `similarityMethod`: `"semantic"` (embedding-based) or
+  `"attribute"` (deterministic fallback when embeddings are unavailable) — both
+  are real measures; surface the method if showing the score's basis.
 - CSR biomarker correlations: `server/services/csr-knowledge-extractor.ts`
   (`changeFromBaseline`/`pValue` may be `null`; rows without a real correlation
   coefficient are omitted).

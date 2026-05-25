@@ -2,6 +2,8 @@ import { db } from './db';
 import { eq } from 'drizzle-orm';
 import { protocols } from '../shared/schema';
 import { classifyTherapeuticArea } from '../shared/utils/therapeutic-area-classifier';
+import { getPool } from './db/runtime';
+import { getEmbeddingService } from './services/enhancedEmbeddingService';
 
 export interface ProtocolData {
   phase: string;
@@ -300,8 +302,43 @@ export class ProtocolAnalyzerService {
     return null;
   }
 
+  /** Assemble a protocol's comparable text for semantic embedding. */
+  private buildProtocolText(p: {
+    title?: string | null;
+    indication?: string | null;
+    phase?: string | null;
+    summary?: string;
+    design?: string;
+    primary_endpoint?: string;
+  }): string {
+    return [p.title, p.indication, p.phase, p.summary, p.design, p.primary_endpoint]
+      .filter(Boolean)
+      .join('. ')
+      .trim();
+  }
+
+  /** Cosine similarity between two equal-length vectors (0 when undefined). */
+  private cosine(a: number[], b: number[]): number {
+    let dot = 0;
+    let normA = 0;
+    let normB = 0;
+    const len = Math.min(a.length, b.length);
+    for (let i = 0; i < len; i++) {
+      dot += a[i] * b[i];
+      normA += a[i] * a[i];
+      normB += b[i] * b[i];
+    }
+    if (normA === 0 || normB === 0) return 0;
+    return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+  }
+
   /**
-   * Find similar protocols to the given protocol data
+   * Find similar protocols to the given protocol data.
+   *
+   * Similarity is computed semantically via embeddings when the embedding
+   * service is available, and falls back to a deterministic attribute-based
+   * score otherwise. Both are real measures — neither is fabricated — and each
+   * result is tagged with the `similarityMethod` used.
    */
   async findSimilarProtocols(protocolData: ProtocolData, limit: number = 5): Promise<any[]> {
     try {
@@ -312,36 +349,78 @@ export class ProtocolAnalyzerService {
         .where(eq(protocols.indication, protocolData.indication))
         .limit(limit);
 
-      return similar.map(protocol => {
-        // The protocols table stores sponsor / sample size / duration inside the
-        // JSON `metadata` column rather than as dedicated columns.
-        const meta = (protocol.metadata ?? {}) as {
-          sponsor?: string;
-          sampleSize?: number;
-          sample_size?: number;
-          durationWeeks?: number;
-          duration?: number;
-          outcome?: string;
-        };
-        const sampleSize = meta.sampleSize ?? meta.sample_size;
-        const durationWeeks = meta.durationWeeks ?? meta.duration;
-        return {
-          id: protocol.id,
-          title: protocol.title,
-          sponsor: meta.sponsor ?? null,
-          phase: protocol.phase,
-          indication: protocol.indication,
-          similarity: this.computeSimilarity(protocolData, {
+      // Attempt semantic embeddings; degrade gracefully to attribute scoring.
+      let embeddingService: ReturnType<typeof getEmbeddingService> | null = null;
+      let inputVector: number[] | null = null;
+      try {
+        embeddingService = getEmbeddingService(getPool());
+        const inputText = this.buildProtocolText({
+          indication: protocolData.indication,
+          phase: protocolData.phase,
+          summary: protocolData.summary,
+          design: protocolData.design,
+          primary_endpoint: protocolData.primary_endpoint,
+        });
+        if (inputText) inputVector = (await embeddingService.embed(inputText)).embedding;
+      } catch {
+        embeddingService = null;
+        inputVector = null;
+      }
+
+      return await Promise.all(
+        similar.map(async protocol => {
+          // The protocols table stores sponsor / sample size / duration inside
+          // the JSON `metadata` column rather than as dedicated columns.
+          const meta = (protocol.metadata ?? {}) as {
+            sponsor?: string;
+            sampleSize?: number;
+            sample_size?: number;
+            durationWeeks?: number;
+            duration?: number;
+            outcome?: string;
+          };
+          const sampleSize = meta.sampleSize ?? meta.sample_size;
+          const durationWeeks = meta.durationWeeks ?? meta.duration;
+
+          let similarity: number | null = this.computeSimilarity(protocolData, {
             phase: protocol.phase,
             indication: protocol.indication,
             sampleSize,
             durationWeeks,
-          }),
-          sampleSize: sampleSize ?? null,
-          duration: durationWeeks ?? null,
-          outcome: this.deriveOutcome(protocol.status, meta.outcome),
-        };
-      });
+          });
+          let similarityMethod: 'semantic' | 'attribute' = 'attribute';
+
+          if (embeddingService && inputVector) {
+            try {
+              const candidateText = this.buildProtocolText({
+                title: protocol.title,
+                indication: protocol.indication,
+                phase: protocol.phase,
+              });
+              if (candidateText) {
+                const candidateVector = (await embeddingService.embed(candidateText)).embedding;
+                similarity = Math.round(this.cosine(inputVector, candidateVector) * 100);
+                similarityMethod = 'semantic';
+              }
+            } catch {
+              // keep the attribute-based score
+            }
+          }
+
+          return {
+            id: protocol.id,
+            title: protocol.title,
+            sponsor: meta.sponsor ?? null,
+            phase: protocol.phase,
+            indication: protocol.indication,
+            similarity,
+            similarityMethod,
+            sampleSize: sampleSize ?? null,
+            duration: durationWeeks ?? null,
+            outcome: this.deriveOutcome(protocol.status, meta.outcome),
+          };
+        })
+      );
     } catch (error) {
       console.error('Error finding similar protocols:', error);
       return [];
