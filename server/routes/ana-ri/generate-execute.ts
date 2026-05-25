@@ -14,6 +14,9 @@ import { sendSuccess, sendError, extractRequestContext } from './shared.js';
 
 import { createScopedLogger } from '../../utils/logger.js';
 
+import type { DocumentActionType } from '../../services/ana-ri/document-actions.js';
+import type { CommandName } from '../../services/ana-ri/command-executor.js';
+
 const logger = createScopedLogger('generate-execute');
 
 /** Register /generate and /execute endpoints on the given router. */
@@ -33,7 +36,7 @@ export function mountGenerateExecuteRoutes(router: Router): void {
         intent_lens,
       } = req.body;
 
-      const VALID_ACTIONS = [
+      const VALID_ACTIONS: DocumentActionType[] = [
         'risk_memo',
         'deficiency_preemption_memo',
         'evidence_memo',
@@ -43,7 +46,11 @@ export function mountGenerateExecuteRoutes(router: Router): void {
         'revised_artifact',
         'attach_to_dossier',
       ];
-      if (!action_type || typeof action_type !== 'string' || !VALID_ACTIONS.includes(action_type)) {
+      if (
+        !action_type ||
+        typeof action_type !== 'string' ||
+        !VALID_ACTIONS.includes(action_type as DocumentActionType)
+      ) {
         return sendError(
           res,
           400,
@@ -74,10 +81,12 @@ export function mountGenerateExecuteRoutes(router: Router): void {
       const { generateArtifact } = await import('../../services/ana-ri/artifact-generator.js');
 
       const result = await generateArtifact({
-        actionType: action_type,
+        // Validated above against VALID_ACTIONS, so this is a DocumentActionType.
+        actionType: action_type as DocumentActionType,
         conversationContext: conversation_context,
         projectId: Number(project_id),
-        organizationId: orgId ? Number(orgId) : undefined,
+        // orgId guaranteed truthy by the guard above.
+        organizationId: Number(orgId),
         userId: userId ? Number(userId) : undefined,
         userRole: user_role,
         intentLens: intent_lens,
@@ -153,7 +162,11 @@ export function mountGenerateExecuteRoutes(router: Router): void {
         );
       }
 
-      const [result] = await executor.executeCommands([{ command, params: params || {} }], ctx);
+      const [result] = await executor.executeCommands(
+        // Validated against COMMAND_REGISTRY above, so this is a CommandName.
+        [{ command: command as CommandName, params: params || {} }],
+        ctx
+      );
 
       return sendSuccess(
         res,

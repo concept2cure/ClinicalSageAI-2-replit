@@ -424,7 +424,7 @@ export async function createQSubmission(
   // Part 11 audit trail. Fire-and-forget; auditService never throws.
   void auditService.logAction({
     tenantId: organizationId,
-    userId: input.createdBy ?? null,
+    userId: input.createdBy ?? undefined,
     action: 'q_sub.create',
     resourceType: 'q_submission',
     resourceId: row.id,
@@ -486,7 +486,7 @@ export async function setCommitmentRolledIn(
 
   void auditService.logAction({
     tenantId: organizationId,
-    userId: input.rolledInBy ?? null,
+    userId: input.rolledInBy ?? undefined,
     action: input.rolledIn ? 'q_sub.commitment.rolled_in' : 'q_sub.commitment.rolled_out',
     resourceType: 'q_sub_commitment',
     resourceId: updated.id,

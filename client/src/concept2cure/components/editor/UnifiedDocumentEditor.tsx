@@ -44,6 +44,27 @@ import FontFamily from '@tiptap/extension-font-family';
 import { Node, mergeAttributes, Extension } from '@tiptap/core'; // eslint-disable-line no-duplicate-imports
 import { DOMParser as PMDOMParser } from '@tiptap/pm/model';
 
+// Register the custom commands added by the local Image/FontSize/LineHeight
+// extensions below so they're typed on `editor.commands` and `chain()`.
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    image: {
+      /** Insert an image node at the current selection. */
+      setImage: (options: { src: string; alt?: string; title?: string }) => ReturnType;
+    };
+    fontSize: {
+      /** Set the font size on the current text selection. */
+      setFontSize: (size: string) => ReturnType;
+      /** Remove the font size from the current text selection. */
+      unsetFontSize: () => ReturnType;
+    };
+    lineHeight: {
+      /** Set the line height on the current block selection. */
+      setLineHeight: (height: string) => ReturnType;
+    };
+  }
+}
+
 /**
  * Lightweight Image node compatible with @tiptap/core 3.7.x.
  * The official @tiptap/extension-image >=3.19 requires ResizableNodeView

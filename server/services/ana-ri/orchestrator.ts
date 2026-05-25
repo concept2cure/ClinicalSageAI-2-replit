@@ -207,8 +207,16 @@ export interface OrchestratorInput {
   userRole?: UserRole;
   /** Project context */
   projectContext?: AnaRIPromptOptions['projectContext'];
-  /** Document context */
-  documentContext?: AnaRIPromptOptions['documentContext'];
+  /**
+   * Document context. Extends the persona prompt's document context with the
+   * optional `title` and `status` fields the orchestrator reads when building
+   * grounding-context metadata (the system prompt itself only uses the base
+   * documentType/section/module fields).
+   */
+  documentContext?: AnaRIPromptOptions['documentContext'] & {
+    title?: string;
+    status?: string;
+  };
   /** Submission type override */
   submissionType?: SubmissionType;
   /** Conversation history for context */

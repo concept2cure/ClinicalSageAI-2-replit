@@ -44,7 +44,9 @@ describe('cortex threads runtime contract', () => {
   });
 
   it.skip('GET /threads/:threadId returns 403 when caller does not own thread', async () => {
-    const jwt = (await import('jsonwebtoken')).default as { verify: ReturnType<typeof vi.fn> };
+    // The module is mocked above, so the runtime default export is the mock
+    // shape `{ verify: Mock }`, which does not overlap with the real jwt typing.
+    const jwt = (await import('jsonwebtoken')).default as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 7 });
 
     queryMock.mockResolvedValueOnce({
@@ -73,7 +75,9 @@ describe('cortex threads runtime contract', () => {
   });
 
   it('GET /threads returns 500 fail-closed when storage throws', async () => {
-    const jwt = (await import('jsonwebtoken')).default as { verify: ReturnType<typeof vi.fn> };
+    // The module is mocked above, so the runtime default export is the mock
+    // shape `{ verify: Mock }`, which does not overlap with the real jwt typing.
+    const jwt = (await import('jsonwebtoken')).default as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 99 });
 
     queryMock.mockRejectedValueOnce(new Error('db unavailable'));
@@ -123,7 +127,9 @@ describe('cortex threads runtime contract', () => {
   });
 
   it.skip('PATCH /threads/:threadId returns 403 when user does not own thread', async () => {
-    const jwt = (await import('jsonwebtoken')).default as { verify: ReturnType<typeof vi.fn> };
+    // The module is mocked above, so the runtime default export is the mock
+    // shape `{ verify: Mock }`, which does not overlap with the real jwt typing.
+    const jwt = (await import('jsonwebtoken')).default as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 17 });
     queryMock.mockResolvedValueOnce({ rows: [] });
 
@@ -142,7 +148,9 @@ describe('cortex threads runtime contract', () => {
   });
 
   it.skip('DELETE /threads/:threadId returns 403 when user does not own thread', async () => {
-    const jwt = (await import('jsonwebtoken')).default as { verify: ReturnType<typeof vi.fn> };
+    // The module is mocked above, so the runtime default export is the mock
+    // shape `{ verify: Mock }`, which does not overlap with the real jwt typing.
+    const jwt = (await import('jsonwebtoken')).default as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 17 });
     queryMock.mockResolvedValueOnce({ rows: [] });
 

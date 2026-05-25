@@ -453,7 +453,9 @@ export async function computeSHA256(blob: Blob): Promise<string | null> {
   if (typeof crypto === 'undefined' || !crypto.subtle) {
     return null;
   }
-  const rawBuffer =
+  // `arrayBuffer()` resolves to an ArrayBuffer per spec, but stay defensive in
+  // case a polyfilled Blob hands back a typed-array view or some other value.
+  const rawBuffer: ArrayBuffer | ArrayBufferView | unknown =
     typeof blob.arrayBuffer === 'function'
       ? await blob.arrayBuffer()
       : await new Response(blob).arrayBuffer();

@@ -8,8 +8,8 @@
  * Integrates with: ComplianceRulesEngine, ECTDScaffoldingService
  */
 
-import { logger } from '../../lib/logger';
-import { AuditLogger } from '../audit/AuditLogger';
+import { logger } from '../../utils/logger';
+import { AuditLogger } from '../audit/auditLogger';
 
 export type SubmissionType = 
   | '510K' 

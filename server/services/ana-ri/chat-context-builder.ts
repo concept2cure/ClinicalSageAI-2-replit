@@ -25,6 +25,7 @@ import { inferRole } from './role-adapter.js';
 import { buildMemoryContextForChat } from '../memory-context-assembler.js';
 import { getIntelligencePrefix, buildSectionSpecificPrompt } from '../lumen-context-builder.js';
 import { enrichContextForChat } from './context-enrichment.js';
+import type { EnrichmentResult } from './context-enrichment.js';
 import { getThreadMessages } from '../chat-thread-helpers.js';
 import { getFeedbackSummary } from '../intelligence/learning-loop-service.js';
 import { decisionLifecycleService } from '../decision-lifecycle-service.js';
@@ -325,7 +326,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     buildMemoryContextForChat({
       threadId: thread_id || undefined,
       organizationId: numericOrgId ?? undefined,
-      projectId: projectId || undefined,
+      projectId: projectId != null ? Number(projectId) : undefined,
       query: message,
       limitPerLayer: 4,
       maxChars: 3500,
@@ -335,7 +336,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
       projectId,
       organizationId: numericOrgId ?? undefined,
       submissionType: orchestration.detectedSubmissionType || undefined,
-    }).catch(() => ({ block: '', sources: [] as string[] })),
+    }).catch((): EnrichmentResult => ({ block: '', sources: [] })),
   ]);
 
   const effectiveMessage = enrichment.rewrittenMessage || message;

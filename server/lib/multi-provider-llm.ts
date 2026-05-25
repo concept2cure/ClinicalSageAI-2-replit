@@ -147,7 +147,8 @@ export class MultiProviderLLMService {
   private circuitBreakers: Map<LLMProvider, CircuitBreaker> = new Map();
   private promptProtection = getPromptInjectionProtection();
   private pool: Pool;
-  private routingStats: RoutingStats = {
+  // Raw counters only; `fallbackRatePct` is derived on read in getRoutingStats().
+  private routingStats: Omit<RoutingStats, 'fallbackRatePct'> = {
     totalRequests: 0,
     totalFallbacks: 0,
     providerSuccesses: { OPENAI: 0, KIMI: 0 },

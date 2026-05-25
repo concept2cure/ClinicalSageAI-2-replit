@@ -95,7 +95,13 @@ let simulateDeficiency: ((snapshot: any, opts?: any) => Promise<any>) | null = n
 async function loadReviewer() {
   if (reviewManufacturing) return;
   try {
-    const mod = await import('../src/services/ai/manufacturingReviewer.js');
+    // manufacturingReviewer is an untyped .js module (allowJs is off, so it
+    // resolves to the ambient `*.js` wildcard that only exposes `default`).
+    // Cast to the known runtime export shape at this JS-module boundary.
+    const mod = (await import('../src/services/ai/manufacturingReviewer.js')) as unknown as {
+      reviewManufacturing: (snapshot: any, opts?: any) => Promise<any[]>;
+      simulateDeficiency: (snapshot: any, opts?: any) => Promise<any>;
+    };
     reviewManufacturing = mod.reviewManufacturing;
     simulateDeficiency = mod.simulateDeficiency;
   } catch (err) {

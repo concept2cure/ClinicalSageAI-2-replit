@@ -7,7 +7,7 @@
  */
 import { db } from '../db';
 import { featureToggles } from '../../shared/schema';
-import { eq, and, or, array, contains } from 'drizzle-orm';
+import { eq, and, or } from 'drizzle-orm';
 
 export class FeatureToggleService {
   /**
