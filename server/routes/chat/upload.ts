@@ -14,6 +14,8 @@
  */
 
 import type { Request, Response } from 'express';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 import { pool } from '../../db.js';
 import { resolveGovernedContext } from '../../services/concept2cure/governedDocumentContractService.js';
 import { sha256 } from './provenance.js';
@@ -97,6 +99,23 @@ export const uploadHandler = async (req: Request, res: Response) => {
     // those rows never collide with a real tenant's namespace.
     const orgSegment = orgId != null ? `org-${Number(orgId)}` : 'unscoped';
     const storagePath = `uploads/${orgSegment}/${fileId}`;
+
+    // Persist the bytes so downstream paths (e.g. ANA PDF intake via
+    // readLocalUploadBuffer) can re-read the file. Previously only metadata
+    // was stored, leaving storage_path dangling. Best-effort: a write
+    // failure must not fail the upload — the metadata row is still useful.
+    if (fileBuffer && fileBuffer.length > 0) {
+      try {
+        const resolved = path.resolve(process.cwd(), storagePath);
+        await fs.mkdir(path.dirname(resolved), { recursive: true });
+        await fs.writeFile(resolved, fileBuffer);
+      } catch (err) {
+        logger.warn('Upload byte persistence failed (non-fatal)', {
+          fileId,
+          reason: err instanceof Error ? err.message : 'unknown',
+        });
+      }
+    }
 
     // Save metadata to DB
     await pool.query(

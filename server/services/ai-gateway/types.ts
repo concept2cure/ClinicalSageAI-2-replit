@@ -54,8 +54,24 @@ export interface TextBlock {
   text: string;
 }
 
-/** Multi-modal content (text + images) */
-export type ContentBlock = TextBlock | ImageBlock;
+/**
+ * Document content block — lets the model read an attached PDF/text file.
+ * `base64` source is GA on current Claude models (no beta header). `file`
+ * source references Anthropic's Files API and additionally requires the
+ * files-api beta header (set by the provider when a file source is present).
+ */
+export interface DocumentBlock {
+  type: 'document';
+  source:
+    | { type: 'base64'; media_type: 'application/pdf' | 'text/plain'; data: string }
+    | { type: 'file'; file_id: string };
+  title?: string;
+  context?: string;
+  citations?: { enabled: boolean };
+}
+
+/** Multi-modal content (text + images + documents) */
+export type ContentBlock = TextBlock | ImageBlock | DocumentBlock;
 
 /** Claude tool definition for agentic workflows */
 export interface AnaTool {

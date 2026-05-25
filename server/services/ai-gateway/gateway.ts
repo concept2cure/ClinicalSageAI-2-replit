@@ -650,6 +650,15 @@ export class AIGateway {
           if (block.type === 'image') {
             return { type: 'image' as const, source: block.source } as any;
           }
+          if (block.type === 'document') {
+            return {
+              type: 'document' as const,
+              source: block.source,
+              ...(block.title ? { title: block.title } : {}),
+              ...(block.context ? { context: block.context } : {}),
+              ...(block.citations ? { citations: block.citations } : {}),
+            } as any;
+          }
           return { type: 'text' as const, text: block.text } as any;
         });
         if (shouldCache && blocks.length > 0) {
@@ -732,8 +741,15 @@ export class AIGateway {
       }
     }
 
+    const usesFilesApiDoc = (request.messages || []).some(m =>
+      m.contentBlocks?.some(b => b.type === 'document' && b.source.type === 'file')
+    );
+    const reqOptions = usesFilesApiDoc
+      ? { headers: { 'anthropic-beta': 'files-api-2025-04-14' } }
+      : undefined;
+
     const response = await Promise.race([
-      this.anthropicClient.messages.create(params),
+      this.anthropicClient.messages.create(params, reqOptions),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Anthropic API call timed out after 120s')), 120_000)
       ),
@@ -820,11 +836,21 @@ export class AIGateway {
     const messages = nonSystemMessages.map(m => {
       const shouldCache = streamCacheEnabled && m.cacheControl === true;
       if (m.contentBlocks && m.contentBlocks.length > 0) {
-        const blocks: any[] = m.contentBlocks.map(block =>
-          block.type === 'image'
-            ? { type: 'image' as const, source: block.source }
-            : { type: 'text' as const, text: block.text }
-        );
+        const blocks: any[] = m.contentBlocks.map(block => {
+          if (block.type === 'image') {
+            return { type: 'image' as const, source: block.source };
+          }
+          if (block.type === 'document') {
+            return {
+              type: 'document' as const,
+              source: block.source,
+              ...(block.title ? { title: block.title } : {}),
+              ...(block.context ? { context: block.context } : {}),
+              ...(block.citations ? { citations: block.citations } : {}),
+            };
+          }
+          return { type: 'text' as const, text: block.text };
+        });
         if (shouldCache && blocks.length > 0) {
           blocks[blocks.length - 1].cache_control = { type: streamCacheType };
         }
@@ -889,7 +915,13 @@ export class AIGateway {
     }
 
     // Use the Anthropic SDK streaming API
-    const stream = await this.anthropicClient.messages.create(params);
+    const streamUsesFilesApiDoc = (request.messages || []).some(m =>
+      m.contentBlocks?.some(b => b.type === 'document' && b.source.type === 'file')
+    );
+    const stream = await this.anthropicClient.messages.create(
+      params,
+      streamUsesFilesApiDoc ? { headers: { 'anthropic-beta': 'files-api-2025-04-14' } } : undefined
+    );
 
     let content = '';
     let thinking = '';

@@ -50,6 +50,7 @@ import {
 } from '../../services/ana/AnaToolDefinitions.js';
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
 import { loadAnaToolPolicy, filterToolsByPolicy } from '../../services/ana-ri/mdx-tool-policy.js';
+import { isPdfIntakeEnabled, readLocalUploadBuffer } from '../../services/anthropic-files.js';
 import { logToolRun } from '../../services/toolRegistry.js';
 import type { AnaGatewayResponse } from '../../services/ai-gateway/types.js';
 import {
@@ -361,7 +362,7 @@ router.post('/stream', async (req: Request, res: Response) => {
     if (streamFileIds && Array.isArray(streamFileIds) && streamFileIds.length > 0) {
       try {
         const fileResult = await dbPool.query(
-          `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1) AND organization_id = $2`,
+          `SELECT id, original_name, mime_type, storage_path FROM file_uploads WHERE id = ANY($1) AND organization_id = $2`,
           [streamFileIds, orgId ? Number(orgId) : 0]
         );
         if (fileResult.rows.length > 0) {
@@ -372,6 +373,43 @@ router.post('/stream', async (req: Request, res: Response) => {
             role: 'user' as const,
             content: `[The user has attached the following files:\n${fileContext}\nReference these files in your response when relevant.]`,
           });
+
+          // PDF intake: when enabled, send the actual bytes inline as base64
+          // document blocks so ANA can READ the file, not just see its name.
+          // GA path (no beta header). Capped per file to stay within the
+          // model's document limit; oversize/unreadable files degrade to the
+          // metadata-only mention above.
+          if (isPdfIntakeEnabled()) {
+            const MAX_DOC_BYTES = 30 * 1024 * 1024; // ~30MB raw, under Anthropic's limit
+            for (const f of fileResult.rows as Array<{
+              original_name: string;
+              mime_type: string;
+              storage_path: string | null;
+            }>) {
+              const mime = (f.mime_type || '').toLowerCase();
+              const docMime: 'application/pdf' | 'text/plain' | null =
+                mime === 'application/pdf'
+                  ? 'application/pdf'
+                  : mime === 'text/plain' || mime === 'text/markdown'
+                    ? 'text/plain'
+                    : null;
+              if (!docMime || !f.storage_path) continue;
+              const buf = await readLocalUploadBuffer(f.storage_path);
+              if (!buf || buf.length === 0 || buf.length > MAX_DOC_BYTES) continue;
+              messages.push({
+                role: 'user' as const,
+                content: `Read the attached document "${f.original_name}" and use it to answer.`,
+                contentBlocks: [
+                  {
+                    type: 'document',
+                    source: { type: 'base64', media_type: docMime, data: buf.toString('base64') },
+                    title: f.original_name,
+                  },
+                  { type: 'text', text: `Attached document: ${f.original_name}` },
+                ],
+              });
+            }
+          }
         }
       } catch {
         /* non-blocking */
