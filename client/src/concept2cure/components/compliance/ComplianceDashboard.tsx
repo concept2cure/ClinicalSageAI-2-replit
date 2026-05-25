@@ -53,7 +53,7 @@ type RuleCategory =
   | 'data_integrity'
   | 'signature';
 
-interface ComplianceViolation {
+export interface ComplianceViolation {
   ruleId: string;
   ruleName: string;
   severity: RuleSeverity;
@@ -68,7 +68,7 @@ interface ComplianceViolation {
   regulatoryReference?: string;
 }
 
-interface ComplianceScore {
+export interface ComplianceScore {
   overall: number;
   breakdown: {
     structure: number;
@@ -86,12 +86,12 @@ interface ComplianceScore {
   timestamp: string;
 }
 
-interface ComplianceHistory {
+export interface ComplianceHistory {
   timestamp: string;
   score: number;
 }
 
-interface ComplianceDashboardProps {
+export interface ComplianceDashboardProps {
   score: ComplianceScore;
   history?: ComplianceHistory[];
   documentTitle?: string;

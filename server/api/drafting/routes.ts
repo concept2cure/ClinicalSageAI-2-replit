@@ -133,12 +133,12 @@ RULES:
  * Generate embedding for query
  */
 async function generateQueryEmbedding(text: string): Promise<number[]> {
-  const response = await openai.embeddings.create({
+  const response = await ai.embeddings({
     model: CONFIG.embeddingModel,
     input: text.slice(0, 8000),
     dimensions: CONFIG.embeddingDimensions,
   });
-  return response.data[0].embedding;
+  return response.embedding;
 }
 
 /**
@@ -409,8 +409,8 @@ Generate a regulatory-grade response using the evidence above. Remember to outpu
       citations: enrichedCitations,
       metadata: {
         model: CONFIG.model,
-        promptTokens: completion.usage?.prompt_tokens || 0,
-        completionTokens: completion.usage?.completion_tokens || 0,
+        promptTokens: aiResult.usage?.inputTokens || 0,
+        completionTokens: aiResult.usage?.outputTokens || 0,
         generationTimeMs: Date.now() - startTime,
         chunksUsed: searchResults.length,
         tablesReferenced: tableCount,
@@ -528,7 +528,7 @@ Only extract entities you're confident about.`,
       max_tokens: 1000,
     });
 
-    const content = extraction.choices[0]?.message?.content || '[]';
+    const content = extraction.content || '[]';
     let entities = [];
 
     try {

@@ -290,12 +290,10 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                       {lastProject.name}
                     </h4>
                     <p className="text-sm text-stone-500 flex items-center gap-4">
-                      {lastProject.updatedAt && (
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5" />
-                          {getTimeAgo(typeof lastProject.updatedAt === 'string' ? lastProject.updatedAt : lastProject.updatedAt.toISOString())}
-                        </span>
-                      )}
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        Continue where you left off
+                      </span>
                     </p>
                   </div>
 

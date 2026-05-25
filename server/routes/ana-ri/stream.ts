@@ -56,7 +56,10 @@ import {
   buildSectionSpecificPrompt,
 } from '../../services/lumen-context-builder.js';
 import { interceptChatResponse } from '../../services/intelligence/rim-interceptors.js';
-import { enrichContextForChat } from '../../services/ana-ri/context-enrichment.js';
+import {
+  enrichContextForChat,
+  type EnrichmentResult,
+} from '../../services/ana-ri/context-enrichment.js';
 import { processResponseActions } from '../../services/ana-guidance-executor.js';
 import {
   processCommandsInResponse,
@@ -269,7 +272,7 @@ router.post('/stream', async (req: Request, res: Response) => {
         projectId: streamProjectId,
         organizationId: orgId ? Number(orgId) : undefined,
         submissionType: orchestration.detectedSubmissionType || undefined,
-      }).catch(err => {
+      }).catch((err): EnrichmentResult => {
         console.warn('[AnA RI] Context enrichment failed:', err?.message);
         return { block: '', sources: [] as string[] };
       }),
@@ -700,7 +703,7 @@ router.post('/stream', async (req: Request, res: Response) => {
             userRole: effectiveRole,
           };
           const { processCommandsInResponse } =
-            await import('../services/ana-ri/command-executor.js');
+            await import('../../services/ana-ri/command-executor.js');
           const cmdResult = await processCommandsInResponse(contentForCommandProcessing, cmdCtx);
           executedCommands = cmdResult.executedCommands;
           cleanedFullContent = cmdResult.cleanedText ? cmdResult.cleanedText : contentForCommandProcessing;

@@ -148,10 +148,8 @@ router.get('/pricing', async (req: Request, res: Response) => {
     const tiers = pricing.map(p => ({
       name: p.name,
       tier: p.tier,
-      baseMonthly: p.baseMonthly / 100,
-      perSeatMonthly: p.perSeatMonthly / 100,
+      perUserMonthly: p.perUserMonthly / 100,
       annualDiscountPct: p.annualDiscountPct,
-      maxUsers: p.maxUsers,
       maxProjects: p.maxProjects === -1 ? 'Unlimited' : p.maxProjects,
       maxStorageGB: p.maxStorageGB,
     }));

@@ -9,7 +9,7 @@
 import fs from 'fs';
 import path from 'path';
 import { db } from '../db';
-import { fda510kProjects, fda510kSections } from '../../shared/schema';
+import { fda510kProjects, fda510kDocuments } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
 
 export interface ValidationIssue {
@@ -43,10 +43,14 @@ export class eSTARValidator {
 
     const issues: ValidationIssue[] = [];
 
+    // Project and section IDs are numeric serial columns; callers pass the id
+    // as a string (e.g. from a route param), so coerce once here.
+    const numericProjectId = Number(projectId);
+
     try {
       // Fetch project data
       const project = await db.query.fda510kProjects.findFirst({
-        where: eq(fda510kProjects.id, projectId),
+        where: eq(fda510kProjects.id, numericProjectId),
       });
 
       if (!project) {
@@ -62,8 +66,8 @@ export class eSTARValidator {
       }
 
       // Fetch all sections for this project
-      const sections = await db.query.fda510kSections.findMany({
-        where: eq(fda510kSections.projectId, projectId),
+      const sections = await db.query.fda510kDocuments.findMany({
+        where: eq(fda510kDocuments.projectId, numericProjectId),
       });
 
       // Validate document structure

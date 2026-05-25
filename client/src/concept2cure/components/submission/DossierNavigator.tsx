@@ -57,6 +57,20 @@ import type {
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Flat section view that may accompany a dossier at runtime. SubmissionDossier
+// models the eCTD module tree; some callers also attach a flattened `sections`
+// array keyed by eCTD path. It is optional, so all reads guard against absence.
+interface DossierSectionView {
+  id?: string;
+  ectdPath?: string;
+  moduleId?: string;
+  status?: DocumentStatus['status'];
+}
+
+type DossierWithSections = SubmissionDossier & {
+  sections?: DossierSectionView[];
+};
+
 interface DossierNavigatorProps {
   dossier: SubmissionDossier;
   onDocumentSelect?: (sectionId: string, docId?: string) => void;
@@ -253,8 +267,8 @@ const getProgressForModule = (
   }
 
   // Calculate from actual dossier section statuses
-  const moduleSections = (dossier.sections || []).filter(
-    (s: any) => s.ectdPath?.startsWith(`${moduleId}.`) || s.moduleId === moduleId
+  const moduleSections = ((dossier as DossierWithSections).sections || []).filter(
+    (s) => s.ectdPath?.startsWith(`${moduleId}.`) || s.moduleId === moduleId
   );
   if (moduleSections.length === 0) {
     // Fall back to counting subsections in the static structure
@@ -263,7 +277,7 @@ const getProgressForModule = (
     return { complete: 0, total: Math.max(total, 1) };
   }
   const complete = moduleSections.filter(
-    (s: any) => s.status === 'final' || s.status === 'published' || s.status === 'qc'
+    (s) => s.status === 'final' || s.status === 'published' || s.status === 'qc'
   ).length;
   return { complete, total: moduleSections.length };
 };
@@ -517,7 +531,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
 
   // Calculate overall progress from actual dossier sections
   const overallProgress = useMemo(() => {
-    const sections = dossier.sections || [];
+    const sections = (dossier as DossierWithSections).sections || [];
     if (sections.length === 0) {
       // Sum subsections from static structure
       const total = Object.values(ECTD_STRUCTURE).reduce((sum, mod) => {
@@ -526,7 +540,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
       return { complete: 0, total, percent: 0 };
     }
     const complete = sections.filter(
-      (s: any) => s.status === 'final' || s.status === 'published' || s.status === 'qc'
+      (s) => s.status === 'final' || s.status === 'published' || s.status === 'qc'
     ).length;
     const total = sections.length;
     return { complete, total, percent: total > 0 ? Math.round((complete / total) * 100) : 0 };
@@ -649,7 +663,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                                 return 'drafting';
                               }
                               // Fallback to dossier sections
-                              return (dossier.sections || []).find((s: any) => s.ectdPath === sectionId || s.id === sectionId)?.status || 'not_started';
+                              return ((dossier as DossierWithSections).sections || []).find((s) => s.ectdPath === sectionId || s.id === sectionId)?.status || 'not_started';
                             })(),
                             children: hasSubsections ? [] : undefined,
                           }}
@@ -685,7 +699,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                                         return 'drafting';
                                       }
                                       // Fallback to dossier sections
-                                      return (dossier.sections || []).find((s: any) => s.ectdPath === subId || s.id === subId)?.status || 'not_started';
+                                      return ((dossier as DossierWithSections).sections || []).find((s) => s.ectdPath === subId || s.id === subId)?.status || 'not_started';
                                     })(),
                                   }}
                                   level={1}

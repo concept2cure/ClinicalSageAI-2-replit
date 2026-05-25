@@ -253,7 +253,7 @@ async function generateCERNarrative(faersData: any, productName?: string) {
     // Route through AI Gateway — centralised audit, policy & rate limiting
     const gateway = getGateway();
     const gatewayResponse = await gateway.route({
-      taskType: 'cer_narrative',
+      taskType: 'document_drafting',
       messages: [
         {
           role: 'system',
@@ -323,7 +323,11 @@ router.post('/faers/save-report', async (req, res) => {
 
     // In production, you would save this to your database
     // For now, we'll create a simplified in-memory storage solution
-    const report = {
+    const report: typeof reportData & {
+      id: string;
+      created_at: string;
+      db_id?: unknown;
+    } = {
       id: Date.now().toString(),
       ...reportData,
       created_at: new Date().toISOString(),
@@ -402,7 +406,7 @@ router.get('/reports', async (req, res) => {
           return null;
         }
       })
-      .filter(Boolean);
+      .filter((report): report is NonNullable<typeof report> => report !== null);
 
     // Sort by creation date, newest first
     reports.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());

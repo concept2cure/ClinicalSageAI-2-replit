@@ -7,9 +7,9 @@
  * Phase 6 Component - eCTD Co-Author + Document Drafting
  */
 
-import { logger } from '../../../lib/logger';
-import { AuditLogger } from '../../audit/AuditLogger';
-import { getPool } from '../../../db';
+import { logger } from '../../utils/logger';
+import { AuditLogger } from '../audit/AuditLogger';
+import { getPool } from '../../db';
 
 export type Agency = 'FDA' | 'EMA' | 'PMDA';
 

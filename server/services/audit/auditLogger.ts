@@ -261,6 +261,48 @@ export async function logSecurityEvent(
   });
 }
 
+/**
+ * Input accepted by {@link AuditLogger.log}. A flatter, service-friendly shape
+ * than {@link AuditEvent}: callers pass `details` (mapped to `metadata`) and an
+ * optional `timestamp` (the canonical event timestamp is assigned by
+ * {@link logAuditEvent}). Required category/severity/success are defaulted.
+ */
+export interface AuditLogInput {
+  action: string;
+  userId: string;
+  organizationId: string;
+  resourceType?: string;
+  resourceId?: string;
+  details?: Record<string, unknown>;
+  category?: AuditCategory;
+  severity?: AuditSeverity;
+  success?: boolean;
+  /** Accepted for call-site compatibility; the event timestamp is set by the audit pipeline. */
+  timestamp?: Date;
+}
+
+/**
+ * Instantiable audit-logging facade for service classes that prefer a
+ * `new AuditLogger().log({ ... })` call over the functional `logAuditEvent`
+ * API. Delegates to {@link logAuditEvent} so every record flows through the
+ * single signed, 21 CFR Part 11-compliant pipeline.
+ */
+export class AuditLogger {
+  async log(input: AuditLogInput): Promise<string> {
+    return logAuditEvent({
+      category: input.category ?? 'system',
+      severity: input.severity ?? 'info',
+      action: input.action,
+      userId: input.userId,
+      organizationId: input.organizationId,
+      resourceType: input.resourceType,
+      resourceId: input.resourceId,
+      metadata: input.details,
+      success: input.success ?? true,
+    });
+  }
+}
+
 export default {
   logAuditEvent,
   queryAuditEvents,

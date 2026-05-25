@@ -233,7 +233,7 @@ router.put('/clients/:id', async (req: Request, res: Response) => {
   if (orgId == null) return;
   const rdb = requestDb(req);
   try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(String(req.params.id), 10);
     const [row] = await rdb
       .update(croClients)
       .set({ ...normalizeBody(req.body), updatedAt: new Date() } as any)
@@ -254,7 +254,7 @@ router.delete('/clients/:id', async (req: Request, res: Response) => {
   if (orgId == null) return;
   const rdb = requestDb(req);
   try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(String(req.params.id), 10);
     const deleted = await rdb
       .delete(croClients)
       .where(and(eq(croClients.id, id), eq(croClients.organizationId, orgId)))
@@ -318,7 +318,7 @@ router.put('/studies/:id', async (req: Request, res: Response) => {
   if (orgId == null) return;
   const rdb = requestDb(req);
   try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(String(req.params.id), 10);
     const [row] = await rdb
       .update(croStudies)
       .set({ ...normalizeBody(req.body), updatedAt: new Date() } as any)
@@ -383,7 +383,7 @@ router.put('/submissions/:id', async (req: Request, res: Response) => {
   if (orgId == null) return;
   const rdb = requestDb(req);
   try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(String(req.params.id), 10);
     const [row] = await rdb
       .update(croRegulatorySubmissions)
       .set({ ...normalizeBody(req.body), updatedAt: new Date() } as any)
@@ -451,7 +451,7 @@ router.put('/milestones/:id', async (req: Request, res: Response) => {
   if (orgId == null) return;
   const rdb = requestDb(req);
   try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(String(req.params.id), 10);
     const [row] = await rdb
       .update(croMilestones)
       .set({ ...normalizeBody(req.body), updatedAt: new Date() } as any)

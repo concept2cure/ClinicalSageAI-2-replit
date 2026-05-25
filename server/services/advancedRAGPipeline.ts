@@ -23,10 +23,12 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import type OpenAI from 'openai';
 import pg from 'pg';
 import { randomUUID } from 'node:crypto';
 import { EnhancedEmbeddingService, getEmbeddingService } from './enhancedEmbeddingService.js';
 import { AIProviderRouter, getAIRouter } from './aiProviderRouter.js';
+import { getOpenAIClient } from './openai-client.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
@@ -171,7 +173,9 @@ export class AdvancedRAGPipeline {
     const artifactScope = options.artifactScope;
 
     let candidates: RetrievedDocument[];
-    let retrievalStrategy = options.strategy;
+    // Descriptive label for RAGContext.retrievalStrategy (free-form string);
+    // the 'advanced' strategy reports the composite 'hyde+multi_query'.
+    let retrievalStrategy: string = options.strategy;
     let tokensUsed = 0;
 
     // Step 1: Initial retrieval based on strategy

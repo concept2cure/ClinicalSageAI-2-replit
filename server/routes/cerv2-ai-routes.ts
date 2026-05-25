@@ -18,13 +18,7 @@ import { getGateway } from '../services/ai-gateway/gateway.js';
 import ragService from '../services/biotechRagService.js';
 import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
 
-// Initialize OpenAI for real AI generation
-let openai: OpenAI | null = null;
-try {
-
-} catch {
-  console.log('[CERV2 AI] OpenAI not available, using template fallback');
-}
+// AI generation is routed through the unified AI client (gateway-backed).
 import { ai } from '../lib/unified-ai-client';
 
 const router = Router();
@@ -549,7 +543,7 @@ router.get(
 
       return res.json({
         docType,
-        templates: sectionTemplates[docType] || {},
+        templates: sectionTemplates[String(docType)] || {},
         note: 'Template text — fill in device-specific details before use.',
       });
     } catch (err: any) {
@@ -747,11 +741,12 @@ router.post(
       }
 
       // Fallback: enhanced section content, then base templates
-      const enhancedFn = enhancedMockContent[docType]?.[sectionId];
+      const enhancedSection = enhancedMockContent[docType];
+      const hasEnhancedFn = !!(enhancedSection && enhancedSection[sectionId]);
       let suggestion: string;
 
-      if (enhancedFn) {
-        suggestion = enhancedFn(ctx);
+      if (hasEnhancedFn) {
+        suggestion = enhancedSection[sectionId](ctx);
       } else {
         const templates = sectionTemplates[docType] || {};
         suggestion =
@@ -774,7 +769,7 @@ router.post(
 
       return res.json({
         suggestion,
-        source: enhancedFn ? 'enhanced-template' : 'template',
+        source: hasEnhancedFn ? 'enhanced-template' : 'template',
         ragSources: [],
         sectionId,
         docType,

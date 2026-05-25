@@ -31,7 +31,7 @@ import type { CanonicalGovernedState } from '../../../shared/types/governed-docu
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-interface EnrichmentResult {
+export interface EnrichmentResult {
   block: string;
   sources: string[];
   /** Rewritten message if a slash command was detected (strips the command prefix) */
