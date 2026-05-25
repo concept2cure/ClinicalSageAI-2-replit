@@ -414,4 +414,71 @@ router.get('/ivd/performance-summary/:programId', async (req: Request, res: Resp
   }
 });
 
+/* ── GET /api/mdx/ivd/:programId — kit-shaped aggregate ──────────────────────
+ * The IVD Pathway surface (client useIvd) consumes a single payload
+ * { analytical, clinical, refmats, kpis } for the selected program. Assembles
+ * it from ivd_analytical_performance + ivd_clinical_performance. refmats has
+ * no backing table → empty. Registered LAST so it does not shadow the literal
+ * /ivd/analytical, /ivd/clinical, /ivd/performance-summary routes above. */
+router.get('/ivd/:programId', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const programId = String(req.params.programId);
+  try {
+    const anal = await pool.query(
+      `SELECT id, study_type, study_id, title, protocol_ref, acceptance_criterion,
+              result_summary, pass_fail, n_samples, completed_at
+         FROM ivd_analytical_performance
+        WHERE organization_id = $1 AND program_id::text = $2 AND deleted_at IS NULL
+        ORDER BY created_at DESC LIMIT 200`,
+      [orgId, programId],
+    ).catch((e) => { if ((e as { code?: string }).code === '42P01') return { rows: [] }; throw e; });
+
+    const analytical = anal.rows.map((r: Record<string, unknown>) => ({
+      id: (r.study_id as string) ?? `AP-${r.id}`,
+      study: (r.study_type as string) ?? (r.title as string) ?? '',
+      clsi: (r.protocol_ref as string) ?? '',
+      state: r.completed_at ? 'complete' : 'in-progress',
+      owner: '',
+      n: (r.n_samples as number) ?? 0,
+      target: (r.acceptance_criterion as string) ?? '',
+      result: (r.result_summary as string) ?? '',
+      pass: String(r.pass_fail ?? '').toLowerCase() === 'pass',
+    }));
+
+    const clin = await pool.query(
+      `SELECT id, study_id, title, intended_population, comparator, total_subjects,
+              sensitivity_pct, specificity_pct, pre_specified_endpoint_met
+         FROM ivd_clinical_performance
+        WHERE organization_id = $1 AND program_id::text = $2 AND deleted_at IS NULL
+        ORDER BY created_at DESC LIMIT 200`,
+      [orgId, programId],
+    ).catch((e) => { if ((e as { code?: string }).code === '42P01') return { rows: [] }; throw e; });
+
+    const clinical = clin.rows.map((r: Record<string, unknown>) => {
+      const sens = r.sensitivity_pct != null ? `${r.sensitivity_pct}%` : '';
+      const spec = r.specificity_pct != null ? `${r.specificity_pct}%` : '';
+      return {
+        id: (r.study_id as string) ?? `CP-${r.id}`,
+        study: (r.title as string) ?? '',
+        n: (r.total_subjects as number) ?? 0,
+        target: (r.comparator as string) ?? '',
+        result: [sens, spec].filter(Boolean).join(' / '),
+        state: r.pre_specified_endpoint_met != null ? 'complete' : 'in-progress',
+        pass: r.pre_specified_endpoint_met === true,
+        population: (r.intended_population as string) ?? '',
+      };
+    });
+
+    const kpis = [
+      { label: 'Analytical studies', metric: String(analytical.length), meta: `${analytical.filter((a) => a.pass).length} passing` },
+      { label: 'Clinical studies', metric: String(clinical.length), meta: `${clinical.filter((c) => c.pass).length} endpoint met` },
+    ];
+
+    return ok(res, { analytical, clinical, refmats: [], kpis });
+  } catch (err) {
+    return serverError(res, log, 'ivd-aggregate', err);
+  }
+});
+
 export default router;

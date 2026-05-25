@@ -896,12 +896,13 @@ router.get('/stats', async (req, res) => {
     );
 
     const stats = {
-      totalSubmissions: 842,
-      successRate: 98.4,
-      averagePreparationTime: 14.2,
-      avgCostSavings: 187500,
-      templatesDownloaded: 1247,
-      activeProjects: 156,
+      // Removed 6 fabricated vanity headline numbers (totalSubmissions: 842,
+      // successRate: 98.4, averagePreparationTime: 14.2, avgCostSavings:
+      // 187500, templatesDownloaded: 1247, activeProjects: 156) — none were
+      // backed by any query. The real, DB-backed KPI metrics are below in
+      // kpiEvents / kpiDerived / kpiTrends (acceptance ratio, draft→export
+      // conversion, windowed + lifetime counts). No client consumer read the
+      // removed fields.
       kpiEvents: {
         totalTracked: kpiEvents.length,
         uploadStarted: countEvents('upload_started'),

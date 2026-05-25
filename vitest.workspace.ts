@@ -2,16 +2,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineWorkspace } from 'vitest/config';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
-// Alias targets MUST be absolute. A relative value like './client/src' is
-// re-resolved relative to the importing file, so `@/utils/authToken` from
-// client/src/concept2cure/.../useAnaChat.ts became
-// client/src/concept2cure/.../client/src/utils/authToken and failed to
-// resolve — breaking any test that transitively imports client code via `@`.
+// Aliases MUST be absolute. Relative aliases ('./client/src') are not rewritten
+// when resolving imports from deeply-nested modules, so a client component
+// importing '@/utils/authToken' failed to resolve and broke the client smoke
+// tests. (vitest: "Use absolute paths instead.")
 const alias = {
-  '@': path.resolve(__dirname, 'client/src'),
-  '@shared': path.resolve(__dirname, 'shared'),
+  '@': path.resolve(rootDir, 'client/src'),
+  '@shared': path.resolve(rootDir, 'shared'),
 };
 
 export default defineWorkspace([

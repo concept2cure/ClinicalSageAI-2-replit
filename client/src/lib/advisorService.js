@@ -23,45 +23,30 @@ export async function getAdvisorReadiness(playbookType = 'Fast IND Playbook') {
     }
 
     console.error('Failed to load Advisor Readiness.');
-    // If API fails, use intelligent fallback data based on the playbook
-    return getPlaybookFallbackData(playbookType);
+    // API failure: return an honest "unavailable" state. We do NOT
+    // fabricate a readiness score / delay / submission date — the prior
+    // fallback invented per-playbook numbers (e.g. readinessScore 65,
+    // estimatedDelayDays 49, "August 15, 2025") that were presented as a
+    // real assessment. The playbook's required-section checklist is template
+    // reference data and is safe to surface.
+    return getPlaybookUnavailableState(playbookType);
   } catch (error) {
     console.error('Error fetching Advisor data:', error);
-    // If network error, use intelligent fallback data
-    return getPlaybookFallbackData(playbookType);
+    return getPlaybookUnavailableState(playbookType);
   }
 }
 
-// Get fallback data for a specific playbook (when API is unavailable)
-function getPlaybookFallbackData(playbookType) {
-  console.log('Using fallback data for demonstration');
-
-  // Default values for Fast IND Playbook
-  let readinessScore = 65;
-  let riskLevel = 'Medium';
-  let estimatedDelayDays = 49;
-  let estimatedSubmissionDate = 'August 15, 2025';
-
-  // Customize values based on playbook
-  if (playbookType === 'Full NDA Playbook') {
-    readinessScore = 35;
-    riskLevel = 'High';
-    estimatedDelayDays = 128;
-    estimatedSubmissionDate = 'October 27, 2025';
-  } else if (playbookType === 'EMA IMPD Playbook') {
-    readinessScore = 75;
-    riskLevel = 'Medium';
-    estimatedDelayDays = 28;
-    estimatedSubmissionDate = 'July 25, 2025';
-  }
-
+// Honest "readiness unavailable" state for when the API can't be reached.
+// No fabricated metrics — only the static playbook checklist + recommendations.
+function getPlaybookUnavailableState(playbookType) {
   return {
-    success: true,
-    readinessScore,
+    success: false,
+    readinessComputed: false,
+    readinessScore: null,
     missingSections: getMissingSectionsForPlaybook(playbookType),
-    riskLevel,
-    estimatedDelayDays,
-    estimatedSubmissionDate,
+    riskLevel: null,
+    estimatedDelayDays: null,
+    estimatedSubmissionDate: null,
     playbookUsed: playbookType,
     recommendations: getRecommendationsForPlaybook(playbookType),
   };

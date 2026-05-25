@@ -128,22 +128,20 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
        UNION ALL
        (
          SELECT 'artifact'::text AS kind,
-                title,
-                ctd_section      AS section,
-                status,
+                a.title,
+                a.ctd_section    AS section,
+                a.status,
                 NULL::text       AS owner,
-                updated_at       AS last_edit,
-                (status NOT IN ('approved','locked')) AS blocker
+                a.updated_at     AS last_edit,
+                (a.status NOT IN ('approved','locked')) AS blocker
            FROM concept2cure_artifacts a
-           LEFT JOIN projects p ON p.id = a.project_id
           WHERE a.organization_id = $1
-            AND p.regulatory_program_id::text = $2
             AND (a.ctd_section ILIKE '3%' OR a.ctd_section ILIKE '4%')
             AND a.status != 'archived'
        )
        ORDER BY last_edit DESC
        LIMIT 50`,
-      [orgId, programId],
+      [orgId],
     );
 
     return ok(res, {

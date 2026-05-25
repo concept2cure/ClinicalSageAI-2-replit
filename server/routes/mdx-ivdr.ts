@@ -322,4 +322,66 @@ router.patch('/ivdr/per/:id', async (req: Request, res: Response) => {
   }
 });
 
+/* ── GET /api/mdx/ivdr/:programId — kit-shaped aggregate ─────────────────────
+ * The EU IVDR surface (client useIvdr) consumes { rules, classes, nbTimeline,
+ * kpis } for the selected program. Assembles from ivdr_classifications +
+ * ivdr_per_documents. Registered LAST so it does not shadow the literal
+ * /ivdr/classifications · /ivdr/per routes above. */
+router.get('/ivdr/:programId', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const programId = String(req.params.programId);
+  try {
+    const cls = await pool.query(
+      `SELECT id, device_name, ivdr_class, classification_rule, rationale,
+              companion_diagnostic, notified_body_required, notified_body_name,
+              certificate_no, certificate_expiry
+         FROM ivdr_classifications
+        WHERE organization_id = $1 AND program_id::text = $2 AND deleted_at IS NULL
+        ORDER BY created_at DESC LIMIT 200`,
+      [orgId, programId],
+    ).catch((e) => { if ((e as { code?: string }).code === '42P01') return { rows: [] }; throw e; });
+
+    const classes = cls.rows.map((r: Record<string, unknown>) => ({
+      id: String(r.id),
+      device: (r.device_name as string) ?? '',
+      ivdrClass: (r.ivdr_class as string) ?? '',
+      rule: (r.classification_rule as string) ?? '',
+      rationale: (r.rationale as string) ?? '',
+      cdx: r.companion_diagnostic === true,
+      nbRequired: r.notified_body_required === true,
+      nb: (r.notified_body_name as string) ?? '',
+    }));
+    // Rules registry derived from the live classification rules present.
+    const ruleSet = new Map<string, number>();
+    for (const c of classes) if (c.rule) ruleSet.set(c.rule, (ruleSet.get(c.rule) ?? 0) + 1);
+    const rules = [...ruleSet.entries()].map(([id, count]) => ({ id, label: id, count }));
+
+    const per = await pool.query(
+      `SELECT id, device_name, per_version, per_status, per_date,
+              scientific_validity_done, analytical_performance_done, clinical_performance_done
+         FROM ivdr_per_documents
+        WHERE organization_id = $1 AND program_id::text = $2 AND deleted_at IS NULL
+        ORDER BY per_date DESC NULLS LAST LIMIT 200`,
+      [orgId, programId],
+    ).catch((e) => { if ((e as { code?: string }).code === '42P01') return { rows: [] }; throw e; });
+
+    const nbTimeline = per.rows.map((r: Record<string, unknown>) => ({
+      id: String(r.id),
+      milestone: `PER ${r.per_version ?? ''}`,
+      when: r.per_date ? new Date(r.per_date as string).toISOString() : '',
+      state: (r.per_status as string) ?? 'draft',
+    }));
+
+    const kpis = [
+      { label: 'Classifications', metric: String(classes.length), meta: `${classes.filter((c) => c.nbRequired).length} NB-required` },
+      { label: 'PER documents', metric: String(per.rows.length), meta: '' },
+    ];
+
+    return ok(res, { rules, classes, nbTimeline, kpis });
+  } catch (err) {
+    return serverError(res, log, 'ivdr-aggregate', err);
+  }
+});
+
 export default router;

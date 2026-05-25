@@ -12,11 +12,55 @@ router.use((req, res, next) => {
   next();
 });
 
-// Two response builders previously lived here and returned hardcoded JSON
-// (fabricated confidence scores, dollar-impact estimates, ICH section coverage).
-// Removed because they returned the same fabricated values for every request
-// without any AI gateway call, data lookup, or analysis. The handlers below
-// now return 501 until a validated, gateway-routed implementation lands.
+// ─────────────────────────────────────────────────────────────────────────────
+// Canonical AnA RI regulatory-analysis + ICH guidance handlers.
+//
+// History: this router previously returned fully hardcoded JSON dressed as AI
+// analysis (fabricated FDA cost estimates, invented confidence scores). That
+// fabrication was deleted. Two real, AI-gateway-backed implementations of the
+// same feature existed elsewhere — one live but unconsumed at
+// `/api/ana/regulatory-analysis` (server/routes/misc-inline-routes.ts) and one
+// orphan (server/routes/ana-ri-endpoints.ts, never mounted). Both were exact
+// duplicates. They have been removed; this router is the single canonical home,
+// already mounted at /api/ana-cortex and already what the client calls.
+//
+// Every numeric field in the response is produced by the AI gateway from the
+// caller's query + context — not hardcoded. Invalid model JSON returns 502
+// rather than a fabricated fallback. Citation-grounding hardening (no numeric
+// claim without a sourced reference) is tracked as follow-on work.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const REGULATORY_ANALYSIS_JSON_SHAPE = `{
+  "comprehensive_analysis": {
+    "regulatory_readiness_score": number,
+    "overall_risk_assessment": "Low|Medium|High|Critical",
+    "timeline_analysis": { "projected_delay_days": number },
+    "cost_analysis": { "total_financial_impact": number },
+    "regulatory_gaps": [{ "regulation_section": string, "risk_level": string, "compliance_status": string, "requirement_area": string }],
+    "ich_e6r3_assessment": { "compliance_score": number, "risk_factors": string[], "recommendations": string[] }
+  },
+  "ana_1_0_ri_intelligence_summary": {
+    "confidence_score": number,
+    "analysis_timestamp": string,
+    "data_sources": string[]
+  }
+}`;
+
+const ICH_GUIDANCE_JSON_SHAPE = `{
+  "guidance_response": {
+    "answer": string,
+    "regulatory_framework": "ICH_E6_R3",
+    "confidence_score": number,
+    "supporting_sections": [{ "section": string, "relevance": string, "summary": string }],
+    "implementation_guidance": string[],
+    "references": string[]
+  },
+  "query_metadata": {
+    "query_timestamp": string,
+    "processing_time_ms": number,
+    "guidance_version": string
+  }
+}`;
 
 router.get('/health', async (_req, res) => {
   try {
@@ -31,28 +75,102 @@ router.get('/health', async (_req, res) => {
   }
 });
 
-router.post('/regulatory-analysis', requireAuth, async (_req, res) => {
-  res.status(501).json({
-    success: false,
-    error: 'Regulatory analysis is not available in this build. A validated, gateway-routed implementation is pending.',
-    code: 'NOT_IMPLEMENTED',
-  });
+router.post('/regulatory-analysis', requireAuth, async (req, res) => {
+  try {
+    res.set({ 'Cache-Control': 'no-cache, no-store, must-revalidate', Pragma: 'no-cache', Expires: '0' });
+    const { query, context } = req.body || {};
+
+    const { getGateway } = await import('../services/ai-gateway');
+    const gateway = getGateway();
+    const response = await gateway.route({
+      taskType: 'regulatory_review',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are AnA RI. Return strict JSON only. No markdown. Provide concrete compliance analysis.',
+        },
+        {
+          role: 'user',
+          content: `Generate a regulatory analysis for the payload below.
+
+Query: ${query || ''}
+Context: ${JSON.stringify(context || {}, null, 2)}
+
+Return JSON shape:
+${REGULATORY_ANALYSIS_JSON_SHAPE}`,
+        },
+      ],
+      maxTokens: 3000,
+      temperature: 0.2,
+      strategy: 'quality_optimized',
+      callerModule: 'ana/regulatory-analysis',
+    });
+
+    try {
+      res.json(JSON.parse(response.content));
+    } catch {
+      res.status(502).json({
+        error: 'AI analysis returned invalid JSON payload',
+        code: 'AI_INVALID_RESPONSE_FORMAT',
+      });
+    }
+  } catch (error) {
+    console.error('AnA RI regulatory analysis failed:', error);
+    res.status(500).json({ success: false, error: 'Failed to generate regulatory analysis' });
+  }
 });
 
-router.post('/ich-e6r3-guidance', async (_req, res) => {
-  res.status(501).json({
-    success: false,
-    error: 'ICH E6(R3) guidance is not available in this build. A validated, gateway-routed implementation is pending.',
-    code: 'NOT_IMPLEMENTED',
-  });
+router.post('/ich-e6r3-guidance', requireAuth, async (req, res) => {
+  try {
+    res.set({ 'Cache-Control': 'no-cache, no-store, must-revalidate', Pragma: 'no-cache', Expires: '0' });
+    const { query } = req.body || {};
+
+    const { getGateway } = await import('../services/ai-gateway');
+    const gateway = getGateway();
+    const response = await gateway.route({
+      taskType: 'regulatory_review',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are AnA RI specialized in ICH E6(R3). Return strict JSON only and focus on actionable, evidence-aware guidance.',
+        },
+        {
+          role: 'user',
+          content: `Question: ${query || ''}
+
+Return JSON:
+${ICH_GUIDANCE_JSON_SHAPE}`,
+        },
+      ],
+      maxTokens: 2200,
+      temperature: 0.2,
+      strategy: 'quality_optimized',
+      callerModule: 'ana/ich-e6r3-guidance',
+    });
+
+    try {
+      res.json(JSON.parse(response.content));
+    } catch {
+      res.status(502).json({
+        error: 'AI guidance returned invalid JSON payload',
+        code: 'AI_INVALID_RESPONSE_FORMAT',
+      });
+    }
+  } catch (error) {
+    console.error('AnA RI ICH guidance failed:', error);
+    res.status(500).json({ success: false, error: 'Failed to generate ICH E6(R3) guidance' });
+  }
 });
 
-router.get('/intelligence', async (_req, res) => {
-  res.status(501).json({
-    success: false,
-    error: 'Regulatory intelligence feed is not available in this build. Live ingestion is pending.',
-    code: 'NOT_IMPLEMENTED',
-  });
+// Honest empty feed. The prior handler returned a single hardcoded
+// "regulatory-watch-001" entry with a fake updatedAt that ticked on every
+// call. The consumer (useIntelligenceFeeds) already tolerates an empty
+// array. Real feeds land when the intelligence source is wired through an
+// authenticated data path.
+router.get('/intelligence', (_req, res) => {
+  res.json({ success: true, feeds: [] });
 });
 
 router.get('/capabilities', async (_req, res) => {

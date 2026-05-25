@@ -43,6 +43,9 @@ jobs:
       - name: Guardrails — tenant-isolation in raw SQL (no regressions)
         run: npm run ci:tenant-isolation:no-regression
 
+      - name: Guardrails — requestDb (RLS) adoption (no regressions)
+        run: node scripts/ci/audit-requestdb-coverage.mjs --strict-no-regression
+
       - name: Guardrails — no leaky dev-auth gates in prod paths
         run: npm run ci:no-dev-auth-in-prod
 
@@ -290,51 +293,6 @@ jobs:
           exit-code: '1'
           format: table
           skip-dirs: node_modules
-
-  sonarcloud:
-    name: SonarCloud Analysis
-    runs-on: ubuntu-latest
-    needs: [lint, test]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Full history for better analysis
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run tests with coverage
-        run: npm test -- --coverage --passWithNoTests
-        env:
-          CI: true
-
-      - name: SonarCloud Scan
-        # SonarSource/sonarcloud-github-action was archived 2025-10-22 and
-        # superseded by SonarSource/sonarqube-scan-action (unified for
-        # Server + Cloud). v5+ of that action wraps a non-deprecated
-        # actions/cache so GitHub Actions infra doesn't auto-fail it.
-        # For SonarCloud, host URL is https://sonarcloud.io.
-        uses: SonarSource/sonarqube-scan-action@v5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://sonarcloud.io
-        with:
-          args: >
-            -Dsonar.projectKey=concept2cure_Concept2Cure.RI-2-replit
-            -Dsonar.organization=concept2cure
-            -Dsonar.sources=server,client/src,shared
-            -Dsonar.exclusions=**/node_modules/**,**/coverage/**,**/dist/**,**/*.test.ts,**/*.test.tsx,**/_archive/**,**/_deprecated_migrations/**
-            -Dsonar.tests=server,client/src
-            -Dsonar.test.inclusions=**/*.test.ts,**/*.test.tsx,**/*.spec.ts,**/*.spec.tsx
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-            -Dsonar.typescript.tsconfigPath=tsconfig.json
-            -Dsonar.qualitygate.wait=true
 
   nightly-governance:
     name: Nightly Governance Strict

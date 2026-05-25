@@ -28,7 +28,6 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -484,24 +483,6 @@ async function queryClinicalTrials(condition: string, intervention?: string): Pr
 }
 
 // ---------------------------------------------------------------------------
-// PROPENSITY SCORE ANALYSIS (simplified)
-// ---------------------------------------------------------------------------
-
-function computePropensityScoreAnalysis(
-  treatmentN: number,
-  controlN: number,
-  covariateCount: number
-): RWEResult['propensityScore'] {
-  // Simplified simulation — in production, uses R/Python statistical packages
-  return {
-    method: 'inverse_probability_weighting',
-    covariatesBalanced: covariateCount,
-    standardizedMeanDifference: 0.05 + Math.random() * 0.1, // Target < 0.1
-    cStatistic: 0.72 + Math.random() * 0.15, // 0.72-0.87
-  };
-}
-
-// ---------------------------------------------------------------------------
 // EXPRESS ROUTES
 // ---------------------------------------------------------------------------
 
@@ -533,83 +514,35 @@ router.get('/sources/:sourceId/status', (req: Request, res: Response) => {
 
 /**
  * POST /query
- * Execute a real-world evidence study query
+ * Execute a real-world evidence study query.
+ *
+ * DISABLED (501). The prior implementation fabricated the entire study
+ * result with Math.random(): hazard ratios, p-values (forced < 0.1),
+ * cohort sizes, demographics, and propensity-score c-statistics — then
+ * stamped it with HIPAA Safe-Harbor provenance and "applicable submission
+ * types: sNDA / BLA Supplement / Post-Market Commitment". Returning
+ * invented clinical efficacy statistics for regulatory submission is
+ * indefensible, and an LLM inventing them would be no better — these must
+ * come from a real analysis engine over a connected real-world data
+ * source (Aetion / Flatiron / claims warehouse), which is not wired.
+ *
+ * The real data-access endpoints in this router (/faers, /fhir/patients,
+ * /clinical-trials, /signal-detection) remain live — they proxy real
+ * external sources. Study *execution* (cohort construction + endpoint
+ * statistics) is what stays disabled until a real engine is connected.
  */
-router.post('/query', async (req: Request, res: Response) => {
-  const body: RWEQuery = req.body;
-  if (!body.drugOfInterest || !body.indication || !body.studyType) {
-    return res.status(400).json({ error: 'drugOfInterest, indication, and studyType required' });
-  }
-
-  try {
-    const queryId = uuidv4();
-
-    // Simulate cohort construction based on study type
-    const treatmentN = 500 + Math.floor(Math.random() * 2000);
-    const controlN = body.comparator ? 500 + Math.floor(Math.random() * 2000) : 0;
-
-    const endpoints: EndpointResult[] = body.outcomes.map(outcome => {
-      const hr = 0.5 + Math.random() * 0.8;
-      const pValue = Math.random() * 0.1;
-      return {
-        name: outcome,
-        type: 'efficacy' as const,
-        value: hr,
-        confidence_interval: [hr * 0.75, hr * 1.25] as [number, number],
-        p_value: pValue,
-        hazard_ratio: hr,
-        statistical_significance: pValue < 0.05,
-      };
-    });
-
-    const propensityScore =
-      body.analysisPlan?.propensityScoreMethod !== 'none'
-        ? computePropensityScoreAnalysis(
-            treatmentN,
-            controlN,
-            body.analysisPlan?.covariates?.length || 5
-          )
-        : undefined;
-
-    const result: RWEResult = {
-      id: uuidv4(),
-      queryId,
-      studyType: body.studyType,
-      cohort: {
-        totalPatients: treatmentN + controlN,
-        treatmentGroup: treatmentN,
-        controlGroup: controlN,
-        demographics: {
-          meanAge: 55 + Math.floor(Math.random() * 15),
-          genderDistribution: { male: 0.52, female: 0.48 },
-        },
-      },
-      endpoints,
-      safetySignals: [],
-      propensityScore,
-      provenance: {
-        dataSources: body.dataSources || [],
-        queryTimestamp: new Date(),
-        deidentificationMethod: 'Safe Harbor (HIPAA)',
-        dataLag: '3-6 months',
-      },
-      regulatoryRelevance: {
-        applicableSubmissionTypes: ['sNDA', 'BLA Supplement', 'Post-Market Commitment'],
-        levelOfEvidence: body.studyType === 'retrospective_cohort' ? 'Level III' : 'Level IV',
-        limitations: [
-          'Retrospective design — subject to selection bias',
-          'Claims data may not capture clinical nuance',
-          'Unmeasured confounders possible despite propensity score adjustment',
-        ],
-        fda_rwe_framework_alignment: true,
-      },
-    };
-
-    res.json({ success: true, data: result });
-  } catch (err) {
-    console.error('[RWE] Query failed:', err);
-    res.status(500).json({ success: false, error: String(err) });
-  }
+router.post('/query', (_req: Request, res: Response) => {
+  res.status(501).json({
+    success: false,
+    error: {
+      code: 'not_implemented',
+      message:
+        'RWE study execution is not available. Cohort construction and endpoint ' +
+        'statistics (hazard ratios, p-values, propensity scores) require a connected ' +
+        'real-world data source and validated analysis engine. Use /faers, ' +
+        '/fhir/patients, /clinical-trials, or /signal-detection for live source data.',
+    },
+  });
 });
 
 /**

@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-05-21T17:34:20.514Z",
+  "generatedAt": "2026-05-21T23:28:47.265Z",
   "git": {
-    "sha": "2c6d75bd682421284c28e3284b663f866b6917f6",
-    "branch": "claude/integrate-design-system-UBjRE-mdx-phase8"
+    "sha": "b90ce36f39d3344ea35e3b5f4ab9c136cb5ac08a",
+    "branch": "claude/beta-readiness-assessment-F37Iv"
   },
   "thresholds": {
     "maxBytes": 100000,
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 172,
+    "duplicateBasenames": 173,
     "largeFilesByBytes": 16,
     "largeFilesByLines": 48
   },
@@ -1248,6 +1248,14 @@
         ]
       },
       {
+        "basename": "org-lifecycle",
+        "count": 2,
+        "paths": [
+          "server/services/lifecycle/org-lifecycle.ts",
+          "shared/schema/org-lifecycle.ts"
+        ]
+      },
+      {
         "basename": "overview",
         "count": 2,
         "paths": [
@@ -1904,7 +1912,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 231,
+      "duplicateGroups": 232,
       "largeByBytes": 10,
       "largeByLines": 31
     },
@@ -1928,7 +1936,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 27,
+      "duplicateGroups": 28,
       "largeByBytes": 1,
       "largeByLines": 2
     },

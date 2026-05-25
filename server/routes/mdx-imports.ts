@@ -390,4 +390,66 @@ router.post('/imports/:id/findings/:findingId/resolve', async (req: Request, res
   } catch (err) { return serverError(res, log, 'resolve-finding', err); }
 });
 
+/* ── GET /api/mdx/onboarding/:tenantId — kit-shaped aggregate ────────────────
+ * The Onboarding (migration importer) surface (client useOnboarding) consumes
+ * { steps, artifacts, validations, kpis }. Tenant scope comes from the verified
+ * token (the :tenantId path param is informational). artifacts ← import_job_
+ * files, validations ← import_job_findings. steps is the onboarding workflow
+ * sequence, marked complete by evidence. Empty-safe. */
+router.get('/onboarding/:tenantId', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  try {
+    const files = await pool.query(
+      `SELECT id, file_name, mapped_ctd_section, mapped_artifact_kind, artifact_id,
+              mapping_confidence, status
+         FROM import_job_files WHERE organization_id = $1
+        ORDER BY created_at DESC LIMIT 500`,
+      [orgId],
+    ).catch((e) => { if ((e as { code?: string }).code === '42P01') return { rows: [] }; throw e; });
+
+    const artifacts = files.rows.map((r: Record<string, unknown>) => ({
+      id: `i-${r.id}`,
+      legacy: (r.file_name as string) ?? '',
+      mapped: (r.mapped_artifact_kind as string) ?? (r.artifact_id != null ? String(r.artifact_id) : ''),
+      section: (r.mapped_ctd_section as string) ?? '',
+      confidence: r.mapping_confidence != null ? Number(r.mapping_confidence) : 0,
+      state: (r.status as string) ?? 'pending',
+      issues: 0,
+    }));
+
+    const finds = await pool.query(
+      `SELECT id, file_path, code, severity, message, resolved
+         FROM import_job_findings WHERE organization_id = $1
+        ORDER BY created_at DESC LIMIT 500`,
+      [orgId],
+    ).catch((e) => { if ((e as { code?: string }).code === '42P01') return { rows: [] }; throw e; });
+
+    const validations = finds.rows.map((r: Record<string, unknown>) => ({
+      id: `v-${r.id}`,
+      artifact: (r.file_path as string) ?? '',
+      rule: (r.code as string) ?? '',
+      severity: (r.severity as string) ?? 'ok',
+      note: (r.message as string) ?? '',
+    }));
+
+    const mapped = artifacts.filter((a) => a.state === 'mapped' || a.mapped !== '').length;
+    const kpis = [
+      { label: 'Artifacts imported', metric: String(artifacts.length), meta: `${mapped} mapped`, tone: 'ok' },
+      { label: 'Open findings', metric: String(validations.filter((v) => v.severity !== 'ok').length), meta: '', tone: 'warn' },
+    ];
+
+    const steps = [
+      { id: 'connect', label: 'Connect', desc: 'Org account · SSO · admin', state: 'complete' },
+      { id: 'upload', label: 'Upload archive', desc: 'Legacy submission files', state: artifacts.length > 0 ? 'complete' : 'pending' },
+      { id: 'map', label: 'Section mapping', desc: 'AnA maps files → sections', state: mapped > 0 ? 'active' : 'pending' },
+      { id: 'validate', label: 'Validate', desc: 'Completeness + integrity checks', state: validations.length > 0 ? 'active' : 'pending' },
+    ];
+
+    return ok(res, { steps, artifacts, validations, kpis });
+  } catch (err) {
+    return serverError(res, log, 'onboarding-aggregate', err);
+  }
+});
+
 export default router;
