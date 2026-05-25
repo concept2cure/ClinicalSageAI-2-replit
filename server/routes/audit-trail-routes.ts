@@ -14,15 +14,24 @@ import { requireAuthedOrgId } from '../utils/authedOrgId';
 // ---------------------------------------------------------------------------
 // Helper: build WHERE clause + run query against audit_events
 // ---------------------------------------------------------------------------
-async function queryAuditEvents(pool: Pool, queryParams: any, limitVal = 10, offsetVal = 0) {
+async function queryAuditEvents(
+  pool: Pool,
+  orgId: number,
+  queryParams: any,
+  limitVal = 10,
+  offsetVal = 0
+) {
   const conditions: string[] = [];
   const params: any[] = [];
   let idx = 1;
 
-  if (queryParams.org_id || queryParams.tenantId) {
-    conditions.push(`organization_id = $${idx++}`);
-    params.push(parseInt(String(queryParams.org_id || queryParams.tenantId)));
-  }
+  // Tenant scope is mandatory and always sourced from the authenticated org,
+  // never from user-supplied query params. Sourcing it from req.query.org_id
+  // let any authenticated caller read another org's audit trail (or omit it
+  // and read every org's) — a cross-tenant IDOR on 21 CFR Part 11 data.
+  conditions.push(`organization_id = $${idx++}`);
+  params.push(orgId);
+
   if (queryParams.event_type) {
     conditions.push(`event_type = $${idx++}`);
     params.push(String(queryParams.event_type));
@@ -118,9 +127,11 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   // GET /api/audit/logs — paginated audit logs
   router.get('/audit/logs', async (req: Request, res: Response) => {
     try {
+      const guard = requireAuthedOrgId(req, res);
+      if (!guard.ok) return;
       const limit = Math.max(1, parseInt(String(req.query.limit || '10'), 10));
       const offset = Math.max(0, parseInt(String(req.query.offset || '0'), 10));
-      const { rows, total } = await queryAuditEvents(pool, req.query, limit, offset);
+      const { rows, total } = await queryAuditEvents(pool, guard.orgId, req.query, limit, offset);
 
       return res.json({
         logs: rows.map(formatAuditRow),
@@ -137,10 +148,12 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   // GET /api/audit-logs — legacy alias with page/pageSize
   router.get('/audit-logs', async (req: Request, res: Response) => {
     try {
+      const guard = requireAuthedOrgId(req, res);
+      if (!guard.ok) return;
       const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
       const pageSize = Math.max(1, parseInt(String(req.query.pageSize || '10'), 10));
       const offset = (page - 1) * pageSize;
-      const { rows, total } = await queryAuditEvents(pool, req.query, pageSize, offset);
+      const { rows, total } = await queryAuditEvents(pool, guard.orgId, req.query, pageSize, offset);
 
       return res.json({
         logs: rows.map(formatAuditRow),
@@ -158,7 +171,9 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   // GET /api/audit/events — event listing
   router.get('/audit/events', async (req: Request, res: Response) => {
     try {
-      const { rows, total } = await queryAuditEvents(pool, req.query, 50, 0);
+      const guard = requireAuthedOrgId(req, res);
+      if (!guard.ok) return;
+      const { rows, total } = await queryAuditEvents(pool, guard.orgId, req.query, 50, 0);
       return res.json({
         success: true,
         events: rows.map((row: any) => ({
@@ -187,15 +202,14 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   // POST /api/audit/events — create audit event
   router.post('/audit/events', async (req: Request, res: Response) => {
     try {
+      const guard = requireAuthedOrgId(req, res);
+      if (!guard.ok) return;
       const body = req.body || {};
-      if (!body.organizationId) {
-        return res.status(401).json({ error: 'Organization context required' });
-      }
       const result = await pool.query(
         `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, $11, $12, NOW()) RETURNING id`,
         [
-          body.organizationId,
+          guard.orgId,
           body.eventType || body.event_type || 'general',
           body.entityType || body.entity_type || 'system',
           body.entityId || body.entity_id || 0,
@@ -223,6 +237,8 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   // POST /api/audit/events/batch — batch create (up to 50)
   router.post('/audit/events/batch', async (req: Request, res: Response) => {
     try {
+      const guard = requireAuthedOrgId(req, res);
+      if (!guard.ok) return;
       const { events } = req.body || {};
       if (!Array.isArray(events) || events.length === 0) {
         return res.status(400).json({ error: 'events array is required and must not be empty' });
@@ -238,7 +254,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
             `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant, created_at)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, $11, $12, NOW()) RETURNING id`,
             [
-              evt.organizationId,
+              guard.orgId,
               evt.eventType || evt.action || 'general',
               evt.entityType || 'document',
               evt.entityId || 0,
@@ -274,6 +290,8 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   // POST /api/audit/signatures — create signature (21 CFR Part 11)
   router.post('/audit/signatures', async (req: Request, res: Response) => {
     try {
+      const guard = requireAuthedOrgId(req, res);
+      if (!guard.ok) return;
       const body = req.body || {};
       // Store signature as an audit event with signature metadata
       const result = await pool.query(
@@ -281,7 +299,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
          signature_status, signed_by, signed_date, signature_meaning, reason, metadata, regulatory_significant, gxp_relevant, created_at)
          VALUES ($1, 'signature.create', $2, $3, $4, $5, $6, NOW(), 'signed', $5, NOW(), $7, $8, $9, true, true, NOW()) RETURNING id`,
         [
-          body.organizationId,
+          guard.orgId,
           body.entityType || 'document',
           body.entityId || 0,
           body.userId || 0,
@@ -314,11 +332,13 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   // GET /api/audit/signatures/:signatureId/verify — verify signature
   router.get('/audit/signatures/:signatureId/verify', async (req: Request, res: Response) => {
     try {
+      const guard = requireAuthedOrgId(req, res);
+      if (!guard.ok) return;
       const sigId = String(req.params.signatureId).replace('SIG_', '');
       const result = await pool.query(
         `SELECT id, entity_type, entity_id, signed_by, signed_date, signature_meaning, reason, signature_status
-         FROM audit_events WHERE id = $1 AND event_type = 'signature.create'`,
-        [parseInt(sigId) || 0]
+         FROM audit_events WHERE id = $1 AND event_type = 'signature.create' AND organization_id = $2`,
+        [parseInt(sigId) || 0, guard.orgId]
       );
 
       if (result.rows.length === 0) {
@@ -351,10 +371,12 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   // GET /api/audit — paginated audit with pagination object
   router.get('/audit', async (req: Request, res: Response) => {
     try {
+      const guard = requireAuthedOrgId(req, res);
+      if (!guard.ok) return;
       const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
       const limit = Math.max(1, parseInt(String(req.query.limit || '10'), 10));
       const offset = (page - 1) * limit;
-      const { rows, total } = await queryAuditEvents(pool, req.query, limit, offset);
+      const { rows, total } = await queryAuditEvents(pool, guard.orgId, req.query, limit, offset);
 
       return res.json({
         logs: rows.map(formatAuditRow),
