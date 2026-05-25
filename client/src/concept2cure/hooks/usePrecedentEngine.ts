@@ -131,6 +131,7 @@ export interface StrategyParams {
 
 export interface StrategyResult {
   recommendedStrategy: string;
+  rationale?: string;
   confidence: number;
   supportingPrecedents: PrecedentRecord[];
   alternativeStrategies: Array<{

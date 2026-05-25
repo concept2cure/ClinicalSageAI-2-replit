@@ -936,8 +936,6 @@ class DocumentOrchestrationService {
       actionResult: 'success',
       newValue: metadata,
       timestamp: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date()
     });
     
     console.log(`Audit Trail: ${action} for project ${projectId} by user ${userId}`);
