@@ -328,6 +328,12 @@ router.post('/qms/suppliers', async (req: Request, res: Response) => {
         p.isoCertifications ?? null,
       ],
     );
+    void auditService.logAction({
+      tenantId: orgId, userId: getUserId(req) ?? undefined,
+      action: 'mdx.qms.supplier.qualify',
+      resourceType: 'qms_supplier', resourceId: rows[0]?.id,
+      details: { supplierName: p.supplierName, criticality: p.criticality },
+    });
     return created(res, rows[0]);
   } catch (err) { return serverError(res, log, 'supp-create', err); }
 });
@@ -501,6 +507,12 @@ router.post('/qms/management-reviews', async (req: Request, res: Response) => {
         p.minutesArtifactId ?? null,
       ],
     );
+    void auditService.logAction({
+      tenantId: orgId, userId: getUserId(req) ?? undefined,
+      action: 'mdx.qms.management_review.signoff',
+      resourceType: 'qms_management_review', resourceId: rows[0]?.id,
+      details: { period: p.period },
+    });
     return created(res, rows[0]);
   } catch (err) { return serverError(res, log, 'mr-create', err); }
 });
@@ -573,6 +585,12 @@ router.patch('/qms/nonconforming/:id/disposition', async (req: Request, res: Res
       [id, orgId, parsed.data.disposition, parsed.data.dispositionRationale ?? null],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'NC record');
+    void auditService.logAction({
+      tenantId: orgId, userId: getUserId(req) ?? undefined,
+      action: 'mdx.qms.nonconforming.disposition',
+      resourceType: 'qms_nonconforming_product', resourceId: id,
+      details: { disposition: parsed.data.disposition },
+    });
     return ok(res, rows[0]);
   } catch (err) { return serverError(res, log, 'nc-disposition', err); }
 });
