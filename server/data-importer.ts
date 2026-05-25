@@ -331,33 +331,37 @@ export async function importTrialsFromCsv(
                             ? row.exclusionCriteria || row.exclusion_criteria
                             : JSON.stringify(row.exclusionCriteria || row.exclusion_criteria)
                           : analysisResults.exclusionCriteria || null,
-                      treatmentArms:
-                        treatmentArms.length > 0
-                          ? treatmentArms
-                          : analysisResults.treatmentArms || [],
-                      studyDuration:
-                        row.studyDuration ||
-                        row.study_duration ||
-                        analysisResults.studyDuration ||
-                        null,
                       endpoints: endpoints.length > 0 ? endpoints : analysisResults.endpoints || [],
                       results: analysisResults.results || {},
-                      safety: analysisResults.safety || {},
-                      processed: true,
-                      processingStatus: 'completed',
                       sampleSize: row.sampleSize
                         ? parseInt(row.sampleSize)
                         : row.sample_size
                           ? parseInt(row.sample_size)
                           : analysisResults.sampleSize || null,
-                      ageRange: row.ageRange || row.age_range || analysisResults.ageRange || null,
-                      gender: analysisResults.gender || {},
-                      statisticalMethods: analysisResults.statisticalMethods || [],
-                      adverseEvents: analysisResults.adverseEvents || [],
-                      efficacyResults: analysisResults.efficacyResults || {},
-                      saeCount: analysisResults.saeCount || null,
-                      teaeCount: analysisResults.teaeCount || null,
-                      completionRate: analysisResults.completionRate || null,
+                      // text columns — leave null rather than objects/arrays
+                      statisticalMethods: null,
+                      adverseEvents: null,
+                      efficacyResults: null,
+                      // attributes without a first-class csr_details column → metadata
+                      metadata: {
+                        treatmentArms:
+                          treatmentArms.length > 0
+                            ? treatmentArms
+                            : analysisResults.treatmentArms || [],
+                        studyDuration:
+                          row.studyDuration ||
+                          row.study_duration ||
+                          analysisResults.studyDuration ||
+                          null,
+                        safety: analysisResults.safety || {},
+                        processed: true,
+                        processingStatus: 'completed',
+                        ageRange: row.ageRange || row.age_range || analysisResults.ageRange || null,
+                        gender: analysisResults.gender || {},
+                        saeCount: analysisResults.saeCount || null,
+                        teaeCount: analysisResults.teaeCount || null,
+                        completionRate: analysisResults.completionRate || null,
+                      },
                     };
 
                     // Insert the details
@@ -514,23 +518,27 @@ export async function importTrialsFromJson(
                       ? item.exclusionCriteria || item.exclusion_criteria
                       : JSON.stringify(item.exclusionCriteria || item.exclusion_criteria)
                     : null,
-                treatmentArms: item.treatmentArms || item.treatment_arms || [],
-                studyDuration: item.studyDuration || item.study_duration || null,
                 endpoints: item.endpoints || [],
                 results: {},
-                safety: {},
-                processed: false,
-                processingStatus: 'pending',
                 sampleSize: item.sampleSize
                   ? parseInt(item.sampleSize)
                   : item.sample_size
                     ? parseInt(item.sample_size)
                     : null,
-                ageRange: item.ageRange || item.age_range || null,
-                gender: {},
-                statisticalMethods: [],
-                adverseEvents: [],
-                efficacyResults: {},
+                // text columns — leave null rather than assigning objects/arrays
+                statisticalMethods: null,
+                adverseEvents: null,
+                efficacyResults: null,
+                // attributes without a first-class csr_details column live in metadata
+                metadata: {
+                  treatmentArms: item.treatmentArms || item.treatment_arms || [],
+                  studyDuration: item.studyDuration || item.study_duration || null,
+                  safety: {},
+                  processed: false,
+                  processingStatus: 'pending',
+                  ageRange: item.ageRange || item.age_range || null,
+                  gender: {},
+                },
               };
 
               // Insert the details
@@ -602,8 +610,12 @@ export async function importTrialsFromApiV2(
 
     let importCount = 0;
 
-    // Process each study
-    for (const { report, details } of studies) {
+    // Process each study. processApiV2Data returns loosely-typed items;
+    // annotate so report/details carry the insert shapes.
+    for (const { report, details } of studies as Array<{
+      report: Partial<InsertCsrReport>;
+      details: Partial<InsertCsrDetails>;
+    }>) {
       try {
         // Skip records that don't have basic required fields
         if (!report.title || !report.sponsor || !report.indication) {
