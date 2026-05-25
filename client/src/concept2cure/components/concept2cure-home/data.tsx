@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { isFeatureEnabled } from '@/flags/featureFlags';
 import styles from './styles.module.css';
 import type { IconName } from './icons';
 
@@ -15,6 +16,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { id: 'mdx',        label: 'Medical Device and Diagnostics', icon: 'stethoscope', group: 'domain',       href: null },
   { id: 'biopharma',  label: 'Biotech and Pharma',             icon: 'atom',        group: 'domain',       href: null },
+  { id: 'pdev',       label: 'Pharmaceutical Development',      icon: 'beaker',      group: 'domain',       href: null },
 
   { id: 'projects',   label: 'Projects',                       icon: 'folder',      group: 'work',         href: null },
   { id: 'vault',      label: 'Vault DMS',                      icon: 'vault',       group: 'work',         href: null },
@@ -93,6 +95,7 @@ export interface ModuleCard {
 export const MODULES: ModuleCard[] = [
   { navId: 'mdx',        icon: 'stethoscope', title: 'Medical Device and Diagnostics', desc: 'Class II/III device clearance, IVD submissions, predicate intelligence, UDI and post-market vigilance.',               foot: '6 active · 510(k), De Novo, PMA' },
   { navId: 'biopharma',  icon: 'atom',        title: 'Biotech and Pharma',             desc: 'Small molecule and biologic submissions. IND, NDA, BLA, MAA, pediatric plans.',                                            foot: '8 active · NDA, BLA, MAA' },
+  { navId: 'pdev',       icon: 'beaker',      title: 'Pharmaceutical Development',      desc: 'IND program development across CMC, nonclinical, clinical and regulatory. Assembly, FDA interactions and contradiction tracking.', foot: 'IND programs · CMC, nonclinical, clinical' },
   { navId: 'projects',   icon: 'folder',      title: 'Projects',                       desc: 'Persistent workspaces with shared context, chats, artifacts and files.',                                                   foot: '14 projects · 42 contributors' },
   { navId: 'vault',      icon: 'vault',       title: 'Vault DMS',                      desc: 'Controlled document management with 21 CFR Part 11 audit trail and e-signatures.',                                         foot: '12,480 docs · 99.8% valid' },
   { navId: 'tasking',    icon: 'checkCircle', title: 'Tasking and Collaboration',      desc: 'Review assignments, sign-offs and cross-team handoffs tied to artifacts.',                                                 foot: '7 open · 3 overdue' },
@@ -107,6 +110,19 @@ export const MODULES: ModuleCard[] = [
   { navId: 'audit',      icon: 'scroll',      title: 'Audit and Compliance',           desc: '21 CFR Part 11 audit trail, e-signatures, access logs and full change history.',                                          foot: 'Part 11 ready · 248k events' },
   { navId: 'admin',      icon: 'settings',    title: 'Admin Settings',                 desc: 'Users and roles, SSO, agency credentials, integrations and billing.',                                                    foot: 'Enterprise tier · SOC 2 Type II' },
 ];
+
+// PDEV (Phase 7) is a Domain rail item gated by ENABLE_PDEV_SURFACE. When the
+// flag is off the route falls through to projects, so the rail, launcher, and
+// command palette must hide the entry rather than offer a dead destination.
+export function visibleNavItems(): NavItem[] {
+  if (isFeatureEnabled('ENABLE_PDEV_SURFACE')) return NAV_ITEMS;
+  return NAV_ITEMS.filter(n => n.id !== 'pdev');
+}
+
+export function visibleModules(): ModuleCard[] {
+  if (isFeatureEnabled('ENABLE_PDEV_SURFACE')) return MODULES;
+  return MODULES.filter(m => m.navId !== 'pdev');
+}
 
 export interface RecentRow {
   icon: IconName;

@@ -17,7 +17,8 @@
 import { Fragment, useEffect, useState } from 'react';
 import { HomeIcon } from './icons';
 import {
-  NAV_ITEMS, NAV_SUB, DASH, MODULES, RECENTS, SUGGESTIONS, SCOPE_OPTIONS,
+  NAV_ITEMS, NAV_SUB, DASH, RECENTS, SUGGESTIONS, SCOPE_OPTIONS,
+  visibleNavItems, visibleModules,
   type Scope, type NavItem, type ModuleCard, type BriefingItem,
 } from './data';
 import { AnaCard } from './AnaCard';
@@ -159,7 +160,7 @@ function Rail({
 
       <div className={styles.railSection}>Modules</div>
       <div className={styles.railNav}>
-        {NAV_ITEMS.map((item: NavItem) => {
+        {visibleNavItems().map((item: NavItem) => {
           const isActive = activeNav === item.id;
           const isProjects = item.id === 'projects';
           const showLiveProjects = isProjects && projects.length > 0;
@@ -482,7 +483,7 @@ function Launcher({
         </button>
       </div>
       <div className={styles.modules}>
-        {MODULES.map((m: ModuleCard, i) => {
+        {visibleModules().map((m: ModuleCard, i) => {
           const nav = NAV_ITEMS.find(n => n.id === m.navId);
           const isPinned = nav?.group === 'domain';
           const isActive = activeNav === m.navId;
