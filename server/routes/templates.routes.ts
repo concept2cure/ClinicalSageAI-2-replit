@@ -310,7 +310,7 @@ router.post('/', async (req, res) => {
     
     if (category === 'ectd' || type === 'eCTD') {
       // Create eCTD template
-      const [template] = await db
+      const [template] = await (db as any)
         .insert(schema.ectdTemplates)
         .values({
           organizationId: organizationId,
