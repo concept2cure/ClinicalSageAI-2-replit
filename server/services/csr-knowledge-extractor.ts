@@ -377,6 +377,7 @@ export class CSRKnowledgeExtractor {
     biomarkerCorrelations: BiomarkerCorrelation[],
     doseRelationships: DoseExposureRelationship[]
   ) {
+    const orgId = Number(organizationId);
     try {
       // The `organization_id` columns are integers; coerce the string param.
       const orgIdNum = Number.isNaN(Number(organizationId)) ? null : Number(organizationId);
@@ -534,6 +535,9 @@ export class CSRKnowledgeExtractor {
             })
             .returning();
 
+          // The schema models cohorts per patient; CSR extraction only has
+          // aggregate figures, so we persist one representative row with the
+          // aggregate detail in metadata.
           await db!.insert(doseCohorts)
             .values({
               studyId: study.id,
