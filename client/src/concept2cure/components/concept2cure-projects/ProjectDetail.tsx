@@ -25,9 +25,18 @@ interface Props {
   /** Called when the project is archived or deleted so the host
    *  refetches the list and the user lands back on it. */
   onProjectMutated?: () => void;
+  /** Deep-link an IND program into a PDEV surface. Absent when the host
+   *  has no PDEV route mounted (e.g. ENABLE_PDEV_SURFACE off). */
+  onOpenPdev?: (programId: string, nav: string) => void;
 }
 
-export function ProjectDetail({ project, onBack, onProjectMutated }: Props) {
+const PDEV_TILES: Array<{ nav: string; icon: keyof typeof I; label: string }> = [
+  { nav: 'overview',         icon: 'barChart', label: 'Program overview' },
+  { nav: 'ind_assembly',     icon: 'fileText', label: 'IND assembly' },
+  { nav: 'fda_interactions', icon: 'chat',     label: 'FDA interactions' },
+];
+
+export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }: Props) {
   const [configOpen, setConfigOpen] = useState(false);
   const [archiveMode, setArchiveMode] = useState<ArchiveMode | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -143,6 +152,26 @@ export function ProjectDetail({ project, onBack, onProjectMutated }: Props) {
         </div>
       </header>
       <p className="prj-desc">{project.desc}</p>
+
+      {onOpenPdev && project.submissionType === 'IND' && (
+        <section className="prj-pdev" aria-label="Pharmaceutical development">
+          <span className="prj-pdev-label">Pharmaceutical development</span>
+          <div className="prj-pdev-tiles">
+            {PDEV_TILES.map(t => (
+              <button
+                type="button"
+                key={t.nav}
+                className="prj-pdev-tile"
+                onClick={() => onOpenPdev(project.id, t.nav)}
+              >
+                <span className="prj-pdev-tile-ico">{I[t.icon]}</span>
+                <span>{t.label}</span>
+                <span className="prj-pdev-tile-arrow">{I.arrowRight}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       <nav className="prj-tabs" role="tablist">
         {TABS.map(t => (

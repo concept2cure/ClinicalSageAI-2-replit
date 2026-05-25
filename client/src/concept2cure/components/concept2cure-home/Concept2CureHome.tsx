@@ -52,6 +52,8 @@ export interface Concept2CureHomeProps {
   onLaunchChat?: (draft: string) => void;
   /** Open a specific project's workspace from the rail subdrawer / Recents. */
   onSelectProject?: (projectId: string) => void;
+  /** Open a PDEV surface for an IND program — deep-link from the Projects detail. */
+  onOpenPdev?: (programId: string, nav: string) => void;
   /** Open the workspace switcher — pill in the top bar. */
   onWorkspaceSwitch?: () => void;
   /** Open notifications surface — bell icon in the top bar. */
@@ -658,6 +660,7 @@ export function Concept2CureHome({
   onNavigate,
   onLaunchChat,
   onSelectProject,
+  onOpenPdev,
   onWorkspaceSwitch,
   onOpenNotifications,
   onOpenHelp,
@@ -807,7 +810,7 @@ export function Concept2CureHome({
             // Lives at design-system/ui_kits/home/Projects.jsx +
             // ProjectsExtras.jsx; ported in
             // client/src/concept2cure/components/concept2cure-projects/.
-            <ProjectsScreen />
+            <ProjectsScreen onOpenPdev={onOpenPdev} />
           ) : (
             <div className={styles.pageInner}>
               <GreetAndCompose

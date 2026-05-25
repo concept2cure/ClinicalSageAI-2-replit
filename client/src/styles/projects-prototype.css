@@ -136,6 +136,46 @@
   text-wrap: pretty;
 }
 
+.prj-pdev {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 18px;
+}
+.prj-pdev-label {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-400);
+}
+.prj-pdev-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.prj-pdev-tile {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text-200);
+  background: var(--bg-000);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 200ms ease-out, color 200ms ease-out;
+}
+.prj-pdev-tile:hover {
+  color: var(--text-100);
+  border-color: var(--accent-100);
+}
+.prj-pdev-tile-ico,
+.prj-pdev-tile-arrow {
+  display: inline-flex;
+  color: var(--text-400);
+}
+
 /* Composer */
 .prj-composer {
   background: var(--bg-000);

@@ -472,6 +472,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // "Vault DMS" / "Tasking" / etc. from the home rail lands on the right
   // tab inside the React MDX shell. See hashToMdxNav() above.
   const [mdxDeepLink, setMdxDeepLink] = useState<string>('');
+  // PDEV deep-link target set when an IND project opens a PDEV surface
+  // (overview / ind_assembly / fda_interactions) for a specific program.
+  const [pdevDeepLink, setPdevDeepLink] = useState<{ programId: string; nav: string } | null>(null);
 
   // Active section code — tracks which dossier section is open in SectionWorkspace
   const [activeSectionCode, setActiveSectionCode] = useState<string | null>(null);
@@ -1851,7 +1854,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     !embeddedModule &&
     isFeatureEnabled('ENABLE_PDEV_SURFACE')
   ) {
-    return <PdevRoute />;
+    return (
+      <PdevRoute
+        initialNav={pdevDeepLink?.nav}
+        initialProgramId={pdevDeepLink?.programId ?? null}
+      />
+    );
   }
 
   // Project module deep-links route ONLY to bundle-designed surfaces.
@@ -1939,6 +1947,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           return true;
         }}
         onLaunchChat={seedChat}
+        onOpenPdev={(programId, nav) => {
+          setPdevDeepLink({ programId, nav });
+          setLayoutMode('pdev');
+        }}
         onSelectProject={projectId => openProjectWorkspace(projectId)}
         onWorkspaceSwitch={() => setSettingsOpen(true)}
         onOpenNotifications={() => {
