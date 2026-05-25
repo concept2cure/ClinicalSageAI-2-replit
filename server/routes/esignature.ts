@@ -257,7 +257,7 @@ router.post('/sign', async (req: Request, res: Response) => {
       action: 'esignature.sign',
       resourceType: 'electronic_signature',
       resourceId: String(result.rows[0].id),
-      ipAddress,
+      ipAddress: ipAddress ?? undefined,
       userAgent: req.headers['user-agent'] as string | undefined,
       details: {
         documentId: Number(documentId),

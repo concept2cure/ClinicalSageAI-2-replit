@@ -31,6 +31,12 @@ export const queryKeys = {
       ['concept2cure', 'projects', projectId, 'apps'] as const,
   },
 
+  // ── Module 3 (CMC) ─────────────────────────────────────────────────────────
+  module3: {
+    buildState: (projectId?: string | number, cmcProjectId?: string | number) =>
+      ['concept2cure', 'module3', 'build-state', projectId ?? '', cmcProjectId ?? ''] as const,
+  },
+
   // ── Governance ─────────────────────────────────────────────────────────────
   governance: {
     promotionBlockers: (projectId: number | string) =>
