@@ -153,7 +153,6 @@ export class MultiProviderLLMService {
     totalFallbacks: 0,
     providerSuccesses: { OPENAI: 0, KIMI: 0 },
     providerFailures: { OPENAI: 0, KIMI: 0 },
-    fallbackRatePct: 0,
   };
 
   // Provider priority order (first available is used)
@@ -584,7 +583,6 @@ export class MultiProviderLLMService {
       totalFallbacks: 0,
       providerSuccesses: { OPENAI: 0, KIMI: 0 },
       providerFailures: { OPENAI: 0, KIMI: 0 },
-      fallbackRatePct: 0,
     };
   }
 

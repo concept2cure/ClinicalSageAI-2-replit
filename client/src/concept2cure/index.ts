@@ -36,5 +36,3 @@ export * from './hooks';
 // `Project` shape), so re-export them explicitly to resolve the ambiguity.
 export type { Citation, SubmissionType } from './types';
 export * from './types';
-// Explicit re-export to resolve ambiguity with names also surfaced by ./services
-export type { Citation, SubmissionType } from './types';
