@@ -54,7 +54,7 @@ router.get('/dashboard/:qmpId', authMiddleware, requireOrganizationContext, asyn
     const organizationId = orgIdOf(req);
 
     // Convert to number
-    const qmpIdNumber = parseInt(qmpId, 10);
+    const qmpIdNumber = parseInt(String(qmpId), 10);
     if (isNaN(qmpIdNumber)) {
       return res.status(400).json({ error: 'Invalid QMP ID' });
     }
@@ -436,7 +436,7 @@ router.get(
       const organizationId = orgIdOf(req);
 
       // Convert to number
-      const cerProjectIdNumber = parseInt(cerProjectId, 10);
+      const cerProjectIdNumber = parseInt(String(cerProjectId), 10);
       if (isNaN(cerProjectIdNumber)) {
         return res.status(400).json({ error: 'Invalid CER Project ID' });
       }
@@ -511,7 +511,7 @@ router.get('/plans/:id', authMiddleware, requireOrganizationContext, async (req,
     const organizationId = orgIdOf(req);
 
     // Convert to number
-    const qmpId = parseInt(id, 10);
+    const qmpId = parseInt(String(id), 10);
     if (isNaN(qmpId)) {
       return res.status(400).json({ error: 'Invalid QMP ID' });
     }
@@ -623,7 +623,8 @@ router.post('/plans', authMiddleware, requireOrganizationContext, async (req, re
     // the schema has no such columns, so they are folded into `metadata`.
     const { allowWaivers, cerTypeId, metadata, ...qmpData } = validationResult.data;
 
-    // Create the QMP
+    // Create the QMP. allowWaivers/cerTypeId are not first-class columns; they
+    // live in the settings/metadata json blobs.
     const createdQmp = await getDb(req)
       .insert(qualityManagementPlans)
       .values({
@@ -653,7 +654,7 @@ router.patch('/plans/:id', authMiddleware, requireOrganizationContext, async (re
     const organizationId = orgIdOf(req);
 
     // Convert to number
-    const qmpId = parseInt(id, 10);
+    const qmpId = parseInt(String(id), 10);
     if (isNaN(qmpId)) {
       return res.status(400).json({ error: 'Invalid QMP ID' });
     }
@@ -745,7 +746,7 @@ router.delete('/plans/:id', authMiddleware, requireOrganizationContext, async (r
     const organizationId = orgIdOf(req);
 
     // Convert to number
-    const qmpId = parseInt(id, 10);
+    const qmpId = parseInt(String(id), 10);
     if (isNaN(qmpId)) {
       return res.status(400).json({ error: 'Invalid QMP ID' });
     }
