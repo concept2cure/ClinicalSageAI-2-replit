@@ -188,6 +188,24 @@ export const queryKeys = {
       ['concept2cure', 'ivdr', 'pack-readiness', projectId, packType] as const,
   },
 
+  // ── Governance (decision fabric + promotion gates) ────────────────────────
+  governance: {
+    fabricDecisions: (projectId?: number | string) =>
+      ['concept2cure', 'governance', 'fabric-decisions', projectId] as const,
+    fabricSummary: (projectId?: number | string) =>
+      ['concept2cure', 'governance', 'fabric-summary', projectId] as const,
+    promotionBlockers: (projectId?: number | string) =>
+      ['concept2cure', 'governance', 'promotion-blockers', projectId] as const,
+    decisions: (projectId?: number | string) =>
+      ['concept2cure', 'governance', 'decisions', projectId] as const,
+  },
+
+  // ── Module 3 (CMC quality) build state ────────────────────────────────────
+  module3: {
+    buildState: (projectId?: number | string, cmcProjectId?: number | string) =>
+      ['concept2cure', 'module3', 'build-state', projectId, cmcProjectId] as const,
+  },
+
   // ── Kernel Decision Records ───────────────────────────────────────────────
   kernelDecisions: {
     list: (projectId?: number | string) =>

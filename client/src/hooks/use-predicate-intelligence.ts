@@ -34,7 +34,7 @@ import type {
   PredicateToxicityProfile,
   SafetySignalIngestResult,
   LineageGraph,
-} from '../../shared/types/predicate-intelligence';
+} from '@shared/types/predicate-intelligence';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Config
@@ -399,7 +399,7 @@ import type {
   SubmissionGateResult,
   WaiveTaskRequest,
   WaiveTaskResponse,
-} from '../../shared/types/predicate-intelligence';
+} from '@shared/types/predicate-intelligence';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Phase 6.6.D1 — Defense Packet Builder Hooks (Evidence Ops)

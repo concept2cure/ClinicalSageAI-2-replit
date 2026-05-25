@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  chat: vi.fn(),
+  route: vi.fn(),
   executeGovernedAnaOperation: vi.fn(),
 }));
 
 vi.mock('../ai-gateway/index.js', () => ({
-  getGateway: () => ({ chat: mocks.chat }),
+  getGateway: () => ({ route: mocks.route }),
 }));
 
 vi.mock('../governed-ana-execution.js', () => ({
@@ -21,7 +21,7 @@ describe('artifact-generator governed execution', () => {
   });
 
   it('returns persistence failure when canonical wrapper rejects mutation', async () => {
-    mocks.chat.mockResolvedValue({
+    mocks.route.mockResolvedValue({
       content: `# Revised Artifact\n\n## Overview\n[KNOWN] This rewrite addresses reviewer concern with explicit evidence citations and structured rationale.\n\n## Updated Content\nThe section now includes endpoint justification, safety analysis, and statistical rationale with traceable references.\n\n## Change Rationale\n[INFERRED] The revised wording reduces ambiguity and aligns with likely reviewer expectations.\n\n## Evidence Labels\n[KNOWN] source dossier references are retained.\n`,
       provider: 'test',
       model: 'm',

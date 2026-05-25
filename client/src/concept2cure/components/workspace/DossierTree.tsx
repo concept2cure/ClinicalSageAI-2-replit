@@ -40,9 +40,15 @@ import {
   type DossierNode,
   type DossierNodeStatus,
 } from '../../models/ctdHierarchy';
-import type { TreeArtifact } from './ProjectFileTree';
-
 // ── Types ────────────────────────────────────────────────────────────────────
+
+/** Minimal artifact shape consumed by the dossier tree for section roll-ups. */
+export interface TreeArtifact {
+  id: string;
+  title: string;
+  ctdSection?: string | null;
+  status?: string | null;
+}
 
 interface DossierTreeProps {
   artifacts: TreeArtifact[];

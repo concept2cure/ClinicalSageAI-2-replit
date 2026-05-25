@@ -803,7 +803,9 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY;
     if (stripeSecretKey && !config.billing.stripeDisabled) {
       const Stripe = (await import('stripe')).default;
-      const stripe = new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' });
+      // Pin the runtime Stripe API version; the SDK's type only admits its
+      // newest literal, so cast as the rest of the billing code does.
+      const stripe = new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' as any });
       const customer = await stripe.customers.create({
         email,
         name: companyName,

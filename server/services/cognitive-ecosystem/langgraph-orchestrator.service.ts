@@ -754,7 +754,7 @@ export class LangGraphOrchestrator {
         v: 1,
         id: checkpointId,
         ts: new Date().toISOString(),
-        channel_values: state,
+        channel_values: state as unknown as Record<string, unknown>,
         channel_versions: {},
         versions_seen: {},
         pending_sends: []

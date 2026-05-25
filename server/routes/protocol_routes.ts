@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { randomUUID } from 'crypto';
-import { protocolAnalyzerService } from '../protocol-analyzer-service';
+import { protocolAnalyzerService, type ProtocolData } from '../protocol-analyzer-service';
 import { protocolOptimizerService } from '../protocol-optimizer-service';
 import { huggingFaceService } from '../huggingface-service';
 import { createScopedLogger } from '../utils/logger.js';
@@ -868,10 +868,12 @@ router.post('/deep-analyze', express.json(), async (req, res) => {
     }
 
     try {
-      // Use HuggingFace service to enhance analysis with AI
+      // analyzeProtocolText returns a best-effort regex extraction whose fields
+      // may be null where ProtocolData expects values; the enhancer treats it as
+      // a starting point, so bridge the loose extraction shape at this boundary.
       const enhancedAnalysis = await huggingFaceService.enhanceProtocolAnalysis(
         text,
-        basicAnalysis
+        basicAnalysis as unknown as ProtocolData
       );
       log.debug('Deep AI analysis completed successfully');
       res.json(enhancedAnalysis);

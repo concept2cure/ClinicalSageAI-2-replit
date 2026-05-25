@@ -83,6 +83,7 @@ import type {
   OverlayConsequence,
   ConsequencePath,
   ContradictionDecisionLink,
+  ConsequenceType,
 } from '../../../shared/types/contradiction-architecture.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -306,7 +307,7 @@ describe('Consequence Paths', () => {
   test('critical severity always offers correction draft path', () => {
     // Simulates getAvailableConsequencePaths for critical finding
     const severity = 'critical';
-    const consequenceType = 'assumption_supersession';
+    const consequenceType: ConsequenceType = 'assumption_supersession';
 
     const paths: string[] = [consequenceType];
     if (severity === 'critical' || severity === 'high') {

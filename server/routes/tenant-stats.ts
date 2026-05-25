@@ -29,7 +29,7 @@ router.use(authMiddleware);
  * Get usage statistics for a specific tenant
  */
 router.get('/:id', validateTenantAccessMiddleware, async (req, res) => {
-  const tenantId = parseInt(req.params.id);
+  const tenantId = parseInt(String(req.params.id));
 
   try {
     // Fetch tenant details to get plan limits

@@ -9,7 +9,12 @@
 export { DocumentWorkspace } from './DocumentWorkspace';
 
 // Smart components
-export { SmartClaimHighlighter } from './SmartClaimHighlighter';
+export {
+  ClaimHighlightMark,
+  ClaimIndicator,
+  ClaimSummaryStrip,
+  ClaimTooltip,
+} from './SmartClaimHighlighter';
 export { SourceSuggestionPanel } from './SourceSuggestionPanel';
 export { ComplianceGuardian } from './ComplianceGuardian';
 export { DocumentSherpa } from './DocumentSherpa';

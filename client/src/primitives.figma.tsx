@@ -11,10 +11,6 @@
  * @see figma.config.json for parser/import-path configuration
  */
 
-declare module '@figma/code-connect' {
-  const figma: { connect: (component: any, url: string, config: any) => void };
-  export default figma;
-}
 import figma from '@figma/code-connect';
 
 // ═══════════════════════════════════════════════════════════════════════════════

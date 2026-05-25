@@ -477,7 +477,7 @@ router.post(
 
     appendAuditEntry({
       entityType: 'signature',
-      entityId: signatureId,
+      entityId: String(signatureId),
       action: 'revoke_signature',
       userId: revokedBy,
       userName: revokedBy,

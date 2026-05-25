@@ -20,7 +20,7 @@ import { Request, Response, NextFunction } from 'express';
 import { createContextLogger } from '../utils/logger';
 import { config } from '../config/environment';
 
-const logger = createContextLogger({ module: 'error-handler' });
+const logger = createContextLogger('error-handler');
 
 const GENERIC_5XX_MESSAGE = 'Internal server error';
 

@@ -179,7 +179,9 @@ router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Resp
       search,
       sortBy,
       sortOrder,
-    } = req.query as z.infer<typeof queryParamsSchema>;
+      // validateQuery(queryParamsSchema) has already parsed/validated req.query
+      // against this schema; cast through unknown across the ParsedQs boundary.
+    } = req.query as unknown as z.infer<typeof queryParamsSchema>;
 
     const orgId = getSecureOrgId(req);
     if (!orgId) {

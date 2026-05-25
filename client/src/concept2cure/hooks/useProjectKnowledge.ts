@@ -305,7 +305,7 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
             name: file.name,
             type: getExtensionFromMime(file.type),
             size: file.size,
-            uploadedAt: new Date().toISOString(),
+            uploadedAt: new Date(),
             tokenCount,
             pageCount,
             status: 'processed',
@@ -473,7 +473,7 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
           name: title || 'Text content',
           type: 'txt',
           size: new Blob([content]).size,
-          uploadedAt: new Date().toISOString(),
+          uploadedAt: new Date(),
           tokenCount,
           status: 'processed',
         };

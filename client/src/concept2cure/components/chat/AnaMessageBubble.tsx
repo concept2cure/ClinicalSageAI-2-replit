@@ -536,7 +536,10 @@ export const AnaMessageBubble: React.FC<AnaMessageBubbleProps> = ({
           )}
           {/* AnA RI Document Action Row — shown on the last assistant message */}
           {!isUser &&
-            msg.id === messages.filter(m => m.role === 'assistant').at(-1)?.id &&
+            (() => {
+              const assistantMessages = messages.filter(m => m.role === 'assistant');
+              return msg.id === assistantMessages[assistantMessages.length - 1]?.id;
+            })() &&
             lastOrchestration && (
               <div className="mt-3 pt-3 border-t border-[#F5F4EF]">
                 <p className="text-[10px] font-medium text-[#B0AEA5] uppercase tracking-wide mb-2">

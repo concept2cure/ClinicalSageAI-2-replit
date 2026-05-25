@@ -413,7 +413,15 @@ export function useDocumentCompliance(documentId: string, submissionType?: strin
     if (submissionType) {
       await calculateMutation.mutateAsync({
         documentId,
-        submissionType: submissionType as ComplianceScore['submissionType'],
+        submissionType: submissionType as
+          | 'IND'
+          | '510K'
+          | 'NDA'
+          | 'BLA'
+          | 'PMA'
+          | 'MAA'
+          | 'DE_NOVO'
+          | 'EUA',
       });
     }
   };

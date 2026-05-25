@@ -1,4 +1,4 @@
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, type QueryFunction } from '@tanstack/react-query';
 import { getAuthToken, getOrgId } from '@/utils/authToken';
 
 export type ApiRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
@@ -63,9 +63,20 @@ export const apiRequest = async (
   return response;
 };
 
-export const getQueryFn = (options: GetQueryFnOptions = {}) => {
-  return async ({ queryKey }: { queryKey: string[] }) => {
-    const [url] = queryKey;
+/**
+ * Parse a fetch Response body as JSON. Returns null for empty/204 responses.
+ * Used by service-layer wrappers (api-connector) that work with raw Responses.
+ */
+export const extractData = async (response: Response): Promise<any> => {
+  if (response.status === 204 || response.headers.get('Content-Length') === '0') {
+    return null;
+  }
+  return await response.json();
+};
+
+export const getQueryFn = (options: GetQueryFnOptions = {}): QueryFunction => {
+  return async ({ queryKey }) => {
+    const url = String(queryKey[0]);
     const response = await apiRequest('GET', url, undefined, {
       'x-organization-id': getCachedOrgId(),
     });

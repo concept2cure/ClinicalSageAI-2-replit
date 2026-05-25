@@ -215,9 +215,25 @@ router.post('/', async (req, res) => {
       );
     }
 
-    // Use atomic project creation with quota enforcement
-    const { atomicCreateProject } = await import('../services/atomicQuotaService.js');
-    const result = await atomicCreateProject(organizationId, {
+    // Use atomic project creation with quota enforcement.
+    // atomicQuotaService is an untyped JS module; the global '*.js' shim only
+    // surfaces a default export, so read the named function off the namespace.
+    const atomicQuotaService = (await import(
+      '../services/atomicQuotaService.js'
+    )) as unknown as {
+      atomicCreateProject: (
+        organizationId: number,
+        projectData: Record<string, unknown>,
+      ) => Promise<{
+        success: boolean;
+        error?: string;
+        message?: string;
+        details?: unknown;
+        data?: any;
+        quotaInfo?: unknown;
+      }>;
+    };
+    const result = await atomicQuotaService.atomicCreateProject(organizationId, {
       name: validatedData.name,
       description: validatedData.description || null,
       type: validatedData.type,

@@ -59,7 +59,7 @@ router.get('/registry', async (req: Request, res: Response) => {
 router.get('/registry/:id', async (req: Request, res: Response) => {
   try {
     const { getApplicationType } = await getRegistry();
-    const entry = getApplicationType(req.params.id);
+    const entry = getApplicationType(String(req.params.id));
     if (!entry) return res.status(404).json({ success: false, error: 'Application type not found' });
     res.json({ success: true, data: entry });
   } catch (error: any) {

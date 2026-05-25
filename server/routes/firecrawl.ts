@@ -156,7 +156,13 @@ router.post('/scrape', async (req, res) => {
         title: normalized.title || normalized.url,
         source: 'firecrawl',
         provenance: normalized.canonicalUrl,
-        tags: normalized.regulatorySignals || [],
+        tags: [
+          ...(normalized.regulatorySignals?.nctIds || []),
+          ...(normalized.regulatorySignals?.dois || []),
+          ...(normalized.regulatorySignals?.hasSafetyLanguage ? ['safety'] : []),
+          ...(normalized.regulatorySignals?.hasEfficacyLanguage ? ['efficacy'] : []),
+          ...(normalized.regulatorySignals?.hasRegulatoryLanguage ? ['regulatory'] : []),
+        ],
         lifecycleState: 'ingested',
         content: (normalized.payload?.markdown || normalized.payload?.html || '').slice(0, 30000),
       }).catch(() => undefined);

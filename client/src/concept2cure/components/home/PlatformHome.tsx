@@ -308,7 +308,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
                   {activeProjects.map(project => (
                     <tr
                       key={project.id}
-                      onClick={() => onProjectClick(project.id)}
+                      onClick={() => onProjectClick(String(project.id))}
                       className="cursor-pointer hover:bg-stone-50 transition-colors"
                     >
                       <td className="px-4 py-2.5 whitespace-nowrap">
@@ -353,7 +353,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
             <EmptyState
               icon={<FolderOpen className="w-5 h-5 text-stone-400" />}
               title="No projects yet"
-              primaryAction={{ label: 'Create first project', onClick: onNewProject }}
+              action={{ label: 'Create first project', onClick: onNewProject }}
               testId="platform-home-empty-projects"
             />
           )}

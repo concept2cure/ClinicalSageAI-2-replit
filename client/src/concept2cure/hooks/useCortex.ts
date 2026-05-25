@@ -66,12 +66,17 @@ interface UseCortexChatOptions {
   onArtifact?: (artifact: CortexArtifact) => void;
 }
 
+/** Error optionally annotated with the message content that failed to send. */
+export interface CortexError extends Error {
+  failedMessage?: string;
+}
+
 interface UseCortexChatReturn {
   messages: CortexMessage[];
   threadId: string | null;
   isLoading: boolean;
   isStreaming: boolean;
-  error: Error | null;
+  error: CortexError | null;
   sendMessage: (content: string) => Promise<void>;
   streamMessage: (content: string) => void;
   cancelStream: () => void;
@@ -117,7 +122,7 @@ export function useCortexChat(options: UseCortexChatOptions = {}): UseCortexChat
   const [messages, setMessages] = useState<CortexMessage[]>([]);
   const [threadId, setThreadId] = useState<string | null>(options.threadId ?? null);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<CortexError | null>(null);
   const streamingMessageRef = useRef<string>('');
   const queryClient = useQueryClient();
   const projectContext = useProjectContext(options.projectId);
@@ -256,7 +261,10 @@ export function useCortexChat(options: UseCortexChatOptions = {}): UseCortexChat
         },
         onError: err => {
           setIsStreaming(false);
-          setError({ ...err, failedMessage: content });
+          const cortexErr: CortexError =
+            err instanceof Error ? err : new Error('Failed to stream message');
+          cortexErr.failedMessage = content;
+          setError(cortexErr);
           // Remove the empty assistant placeholder but keep the user message
           setMessages(prev => prev.slice(0, -1));
         },

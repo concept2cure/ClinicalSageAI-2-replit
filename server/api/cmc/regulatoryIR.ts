@@ -162,7 +162,7 @@ router.get('/questions/:qId/events', async (req: Request, res: Response) => {
 // Package all IR responses (.zip)
 router.post('/submissions/:id/questions/pack', async (req: Request, res: Response) => {
   try {
-    const outPath = await buildIRPackageZip(req.params.id);
+    const outPath = await buildIRPackageZip(String(req.params.id));
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${path.basename(outPath)}"`);
     fs.createReadStream(outPath).pipe(res);

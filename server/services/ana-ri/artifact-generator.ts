@@ -443,12 +443,12 @@ export async function generateArtifact(
     };
     const maxTokens = TOKEN_BUDGETS[actionType] || 8192;
 
-    response = await gateway.chat({
+    response = await gateway.route({
       taskType: 'document_drafting',
       messages,
       maxTokens,
       temperature: 0.2,
-      routingStrategy: 'quality_optimized',
+      strategy: 'quality_optimized',
     });
   } catch (err: any) {
     return {

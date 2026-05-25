@@ -518,7 +518,7 @@ router.get('/projects/:projectId/rim/section/:sectionCode', async (req: Request,
       return res.status(400).json({ error: 'Missing required parameters' });
     }
 
-    const enrichment = await enrichChangeImpact(organizationId, projectId, sectionCode);
+    const enrichment = await enrichChangeImpact(organizationId, projectId, String(sectionCode));
     return res.json(enrichment);
   } catch (error) {
     logger.error('Section enrichment failed', { err: error instanceof Error ? error.message : String(error) });

@@ -342,7 +342,19 @@ router.get('/estimand/regulatory-examples/:indication', authMiddleware, async (r
     const indication = String(req.params.indication);
     const { agency, phase } = req.query;
 
-    const strategy = req.query.strategy as string | undefined;
+    const VALID_STRATEGIES = [
+      'treatment_policy',
+      'hypothetical',
+      'composite',
+      'principal_stratum',
+      'while_on_treatment',
+    ] as const;
+    const rawStrategy = req.query.strategy;
+    const strategy =
+      typeof rawStrategy === 'string' &&
+      (VALID_STRATEGIES as readonly string[]).includes(rawStrategy)
+        ? (rawStrategy as (typeof VALID_STRATEGIES)[number])
+        : undefined;
     const result = await estimandEngineService.getRegulatoryExamples(indication, strategy, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {

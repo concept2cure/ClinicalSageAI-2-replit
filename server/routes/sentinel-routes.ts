@@ -113,7 +113,7 @@ router.patch('/findings/:findingId', async (req: Request, res: Response) => {
     const sentinel = scheduler.getSentinel();
 
     const updated = await sentinel.updateFindingStatus(
-      req.params.findingId,
+      String(req.params.findingId),
       organizationId,
       data.status,
       data.resolvedById

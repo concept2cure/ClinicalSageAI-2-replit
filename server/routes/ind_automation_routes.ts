@@ -178,7 +178,7 @@ router.post('/generate/module3', async (req, res) => {
     // is the loose body shape the service POSTs to the Python microservice).
     const documentBytes = await indAutomationService.generateModuleDocument(
       3,
-      data as ProjectMetadata
+      data as unknown as ProjectMetadata
     );
 
     // Set headers and send response

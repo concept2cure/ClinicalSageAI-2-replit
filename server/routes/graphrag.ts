@@ -770,7 +770,7 @@ router.get('/entities/:entityId/neighborhood', async (req: Request, res: Respons
     : undefined;
 
   try {
-    const result = await traverseGraph(pool, [entityId], maxHops, entityTypes);
+    const result = await traverseGraph(pool, [String(entityId)], maxHops, entityTypes);
     const communities = detectCommunities(result.entities, result.relationships);
 
     res.json({

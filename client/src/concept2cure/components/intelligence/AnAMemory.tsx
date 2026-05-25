@@ -573,7 +573,7 @@ export function AnAMemory({
  * Call this before sending an AI request to enrich with project memory.
  */
 export function getProjectMemoryContext(projectId: string, maxEntries = 10): string {
-  const entries = loadMemory(projectId);
+  const entries = loadMemoryFromLocalStorage(projectId);
   if (entries.length === 0) return '';
 
   const relevant = entries.slice(0, maxEntries);

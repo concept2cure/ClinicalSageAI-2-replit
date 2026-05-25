@@ -58,10 +58,9 @@ declare module '@tiptap/core' {
       /** Remove the font size from the current text selection. */
       unsetFontSize: () => ReturnType;
     };
-    lineHeight: {
-      /** Set the line height on the current block selection. */
-      setLineHeight: (height: string) => ReturnType;
-    };
+    // `lineHeight` commands are declared by @tiptap/extension-text-style; the
+    // local LineHeight extension below implements the same `setLineHeight`
+    // surface, so re-declaring it here would conflict with that augmentation.
   }
 }
 

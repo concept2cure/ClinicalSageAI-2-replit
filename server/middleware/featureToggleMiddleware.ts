@@ -26,10 +26,12 @@ export async function featureToggleMiddleware(
     const { organizationId, clientWorkspaceId } = req.tenantContext || {};
 
     // Check if the feature is enabled for this tenant
+    const orgId = organizationId != null ? Number(organizationId) : undefined;
+    const workspaceId = clientWorkspaceId != null ? Number(clientWorkspaceId) : undefined;
     const isEnabled = await FeatureToggleService.isFeatureEnabled(
       featureKey,
-      organizationId,
-      clientWorkspaceId
+      orgId,
+      workspaceId
     );
 
     if (!isEnabled) {

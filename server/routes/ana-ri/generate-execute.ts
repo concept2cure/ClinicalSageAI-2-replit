@@ -145,7 +145,7 @@ export function mountGenerateExecuteRoutes(router: Router): void {
 
       const ctx = {
         userId: Number(userId),
-        organizationId: orgId ? Number(orgId) : undefined,
+        organizationId: Number(orgId),
         activeProjectId: params?.projectId ? Number(params.projectId) : undefined,
         userName: (req as any).user?.name,
         userRole: (req as any).user?.role || (req as any).user?.title,

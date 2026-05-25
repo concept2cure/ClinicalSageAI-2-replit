@@ -197,7 +197,7 @@ class LiteratureSummarizerService {
     summaryType: string,
     focus?: string
   ): Promise<string> {
-    if (!openai) {
+    if (!process.env.ANTHROPIC_API_KEY && !process.env.OPENAI_API_KEY) {
       return 'AI-powered summaries are not available. Please configure the OpenAI API key.';
     }
 

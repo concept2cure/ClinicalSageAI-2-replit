@@ -23,7 +23,7 @@
 
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { Message, Artifact, SubmissionType } from '../types';
+import { Message, Artifact, ArtifactType, SubmissionType } from '../types';
 
 /**
  * Response structure from the AnA 1.0 RI API
@@ -98,6 +98,8 @@ function getSystemPrompt(submissionType: SubmissionType): string {
     'DE_NOVO': `\n\nYou're currently helping with a **De Novo classification request**. You know risk-based classification rationale, special controls development, performance testing for novel devices, and the strategic framework between De Novo vs. 510(k).`,
 
     'EUA': `\n\nYou're currently helping with an **EUA submission**. You know emergency use criteria, benefits/risks analysis, alternatives assessment, fact sheet requirements for HCPs and patients, and post-authorization commitments.`,
+
+    'IVDR': `\n\nYou're currently helping with an **EU IVDR submission**. You know IVDR (2017/746) classification rules, performance evaluation reports, scientific validity and analytical/clinical performance, the Common Specifications, technical documentation per Annexes II and III, and notified body conformity assessment.`,
   };
 
   return ANA_CORE + (contexts[submissionType] || contexts['510K']);
@@ -133,13 +135,13 @@ function parseArtifacts(response: string, projectId: string): Artifact[] {
     
     // Determine artifact type based on content
     let title = 'Generated Document';
-    let type: 'document' | 'interactive' = 'document';
-    
+    let type: ArtifactType = 'document';
+
     if (language === 'markdown' || language === 'md') {
       title = 'Regulatory Document Draft';
     } else if (language === 'json') {
       title = 'Structured Data';
-      type = 'interactive';
+      type = 'table';
     } else if (content.includes('## ') || content.includes('### ')) {
       title = 'Document Section';
     }

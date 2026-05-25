@@ -105,6 +105,8 @@ export interface CommandResult {
   data?: Record<string, unknown>;
   message: string;
   error?: string;
+  /** Optional UI hint: identifier of a modal/canvas the client may surface. */
+  openModal?: string;
 }
 
 async function persistGovernedCommandArtifact(

@@ -8,7 +8,7 @@
  */
 
 import { logger } from '../../utils/logger';
-import { AuditLogger } from '../audit/AuditLogger';
+import { AuditLogger } from '../audit/auditLogger';
 import { getPool } from '../../db';
 
 export type Agency = 'FDA' | 'EMA' | 'PMDA';

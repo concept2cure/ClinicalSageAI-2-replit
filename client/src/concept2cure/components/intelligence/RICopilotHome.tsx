@@ -523,13 +523,6 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                       onDraftFromPrecedent={onDraftFromPrecedent}
                     />
                   </div>
-                  {/* Why this recommendation */}
-                  {strategyData.rationale && (
-                    <div className="mt-1.5 pt-1.5 border-t border-blue-200/60">
-                      <span className="text-[11px] font-semibold text-stone-700">Why: </span>
-                      <span className="text-[11px] text-blue-600">{strategyData.rationale}</span>
-                    </div>
-                  )}
                   {strategyData.confidence != null && (
                     <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-blue-500 mt-1">
                       <span>{Math.round(strategyData.confidence * 100)}% confidence</span>

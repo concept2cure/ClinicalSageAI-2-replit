@@ -13068,7 +13068,7 @@ router.post('/projects/:projectId/tasks', async (req: Request, res: Response) =>
     const [project] = await db.select().from(projects).where(eq(projects.id, projectId));
     if (!project) return sendError(res, 404, 'Project not found');
 
-    const [task] = await db
+    const inserted = (await db
       .insert(projectTasks)
       .values({
         organizationId: project.organizationId,
@@ -13085,7 +13085,8 @@ router.post('/projects/:projectId/tasks', async (req: Request, res: Response) =>
         dependsOn: data.dependsOn || null,
         metadata: data.metadata || null,
       })
-      .returning();
+      .returning()) as any[];
+    const task = inserted[0];
 
     return sendSuccess(res, task);
   } catch (error: any) {

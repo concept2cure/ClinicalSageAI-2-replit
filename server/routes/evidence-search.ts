@@ -144,7 +144,7 @@ router.get('/search', async (req: Request, res: Response) => {
  */
 router.get('/gather/:productId', async (req: Request, res: Response) => {
   try {
-    const { productId } = req.params;
+    const productId = String(req.params.productId);
     const sectionCode = req.query.section as string | undefined;
 
     let evidence: any[] = [];
