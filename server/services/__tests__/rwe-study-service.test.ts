@@ -10,8 +10,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   comparativeStatistics,
+  logisticRegression,
+  propensityAdjustedEffect,
+  incidenceRateRatio,
   runRWEStudy,
   RWESourceNotConfiguredError,
+  type PatientRecord,
 } from '../rwe-study-service';
 
 function countResponse(total: number) {
@@ -44,6 +48,53 @@ describe('rwe-study-service', () => {
       expect(s.riskRatio).toBeNull();
       expect(s.riskDifference).toBeNull();
       expect(s.pValue).toBeNull();
+    });
+  });
+
+  describe('logisticRegression', () => {
+    it('recovers the sign of a separating covariate', () => {
+      // y increases with the covariate; X includes an intercept column.
+      const X = [
+        [1, -2], [1, -1.5], [1, -1], [1, -0.5],
+        [1, 0.5], [1, 1], [1, 1.5], [1, 2],
+      ];
+      const y = [0, 0, 0, 0, 1, 1, 1, 1];
+      const beta = logisticRegression(X, y);
+      expect(beta).not.toBeNull();
+      expect(beta![1]).toBeGreaterThan(0); // positive slope on the covariate
+    });
+  });
+
+  describe('incidenceRateRatio', () => {
+    it('computes IRR and CI from events and person-time', () => {
+      const t = incidenceRateRatio(20, 1000, 10, 1000);
+      expect(t.incidenceRateRatio).toBeCloseTo(2, 5);
+      expect(t.incidenceRateRatioCI).not.toBeNull();
+    });
+    it('returns null IRR when person-time is zero', () => {
+      const t = incidenceRateRatio(5, 0, 5, 100);
+      expect(t.incidenceRateRatio).toBeNull();
+      expect(t.incidenceRateRatioCI).toBeNull();
+    });
+  });
+
+  describe('propensityAdjustedEffect', () => {
+    it('returns an IPTW-adjusted effect with risks in [0,1]', () => {
+      const patients: PatientRecord[] = [];
+      // Exposure correlated with age; outcome present in some of each arm.
+      for (let i = 0; i < 40; i++) {
+        const age = 40 + (i % 40);
+        const exposed = age > 60;
+        patients.push({ exposed, outcome: i % 3 === 0, covariates: [age, i % 2] });
+      }
+      const eff = propensityAdjustedEffect(patients);
+      expect(eff).not.toBeNull();
+      expect(eff!.riskExposed).toBeGreaterThanOrEqual(0);
+      expect(eff!.riskExposed).toBeLessThanOrEqual(1);
+      expect(eff!.modeledPatients).toBe(40);
+    });
+    it('returns null with too few usable records', () => {
+      expect(propensityAdjustedEffect([{ exposed: true, outcome: false, covariates: [NaN, 1] }])).toBeNull();
     });
   });
 

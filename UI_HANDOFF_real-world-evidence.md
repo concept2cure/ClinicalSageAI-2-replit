@@ -24,7 +24,9 @@ Request body:
   "comparatorCode": "RxNorm-or-code",// optional — comparator cohort
   "outcomeCode": "ICD10/SNOMED",     // required — outcome event (condition)
   "demographics": { "gender": "female", "ageMin": 18, "ageMax": 75 },
-  "minCohortSize": 1
+  "minCohortSize": 1,
+  "observationDays": 365,        // optional — enables the incidence rate ratio
+  "adjustForCovariates": true    // optional — enables IPTW propensity adjustment
 }
 ```
 
@@ -46,11 +48,30 @@ Response (`200`):
       "riskDifference": 0.10,
       "pValue": 0.04
     },
+    "propensityAdjusted": {            // null unless adjustForCovariates + covariates available
+      "method": "IPTW (logistic propensity)",
+      "riskExposed": 0.18, "riskComparator": 0.11,
+      "riskRatio": 1.6, "riskDifference": 0.07, "modeledPatients": 320
+    },
+    "timeToEvent": {                   // null unless observationDays supplied
+      "method": "incidence rate ratio (constant-hazard approximation of hazard ratio)",
+      "incidenceRateRatio": 2.0, "incidenceRateRatioCI": [1.0, 4.0],
+      "personTimeExposedDays": 36500, "personTimeComparatorDays": 36500
+    },
     "notes": [],
     "provenance": { "source": "FHIR R4", "endpoint": "...", "query": { ... }, "executedAt": "..." }
   }
 }
 ```
+
+- **`propensityAdjusted`** — an IPTW propensity-adjusted effect (logistic model over
+  covariates). `null` when `adjustForCovariates` wasn't set or patient-level covariates
+  couldn't be assembled (see `notes`). Present it alongside the crude `statistics` so
+  reviewers can compare adjusted vs unadjusted.
+- **`timeToEvent`** — incidence rate ratio over a fixed follow-up window (a constant-hazard
+  approximation of the hazard ratio). `null` unless `observationDays` was supplied. `null`
+  IRR/CI inside it when events/person-time don't support it. Label it honestly as an
+  approximation, not a Cox hazard ratio.
 
 ### States to render honestly
 
