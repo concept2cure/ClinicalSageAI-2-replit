@@ -18,6 +18,10 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { createFeatureStore } from '../utils/feature-persistence';
+import { aiComplete } from '../lib/unified-ai-client';
+import { db } from '../db';
+import { sections, documents } from '../../shared/schema';
+import { eq, and } from 'drizzle-orm';
 
 const router = Router();
 router.use(requireAuth);
@@ -113,488 +117,201 @@ interface FindingCluster {
 
 interface EngineResult {
   engine: EngineId;
-  score: number;
+  score: number | null;
   summary: string;
   findings: FindingCluster[];
   metadata: Record<string, any>;
   completedAt: Date;
 }
 
-const DOSSIER_SECTIONS = [
-  'Module 1 — Administrative',
-  'Module 2.3 — Quality Overall Summary',
-  'Module 2.5 — Clinical Overview',
-  'Module 2.7 — Clinical Summary',
-  'Module 3.2.S — Drug Substance',
-  'Module 3.2.P — Drug Product',
-  'Module 4 — Nonclinical Study Reports',
-  'Module 5 — Clinical Study Reports',
-  "Investigator's Brochure",
-  'Clinical Protocol',
-  'Statistical Analysis Plan',
-  'Risk Management File',
-];
-
 let findingIdCounter = Date.now();
 function nextFindingId(): number {
   return findingIdCounter++;
 }
 
-function randomInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function pickRandom<T>(arr: T[], count: number): T[] {
-  const shuffled = [...arr].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, Math.min(count, arr.length));
-}
-
-function pickSeverity(): 'critical' | 'high' | 'medium' | 'low' {
-  const roll = Math.random();
-  if (roll < 0.1) return 'critical';
-  if (roll < 0.35) return 'high';
-  if (roll < 0.7) return 'medium';
-  return 'low';
-}
-
-function simulateAgencyScreen(runId: number): EngineResult {
-  const findingTemplates = [
-    {
-      title: 'Missing eCTD envelope metadata',
-      summary:
-        'The submission package lacks required eCTD v4.0 envelope attributes including application-type identifier and sequence-number linkage, which may trigger pre-technical rejection at the FDA gateway.',
-      basis: 'FDA eCTD Technical Conformance Guide v3.3',
-      remediation:
-        'Validate eCTD metadata against FDA gateway acceptance criteria and populate all mandatory envelope fields prior to submission.',
-    },
-    {
-      title: 'Inconsistent product naming across modules',
-      summary:
-        'Product name referenced as three distinct variants across Modules 1, 2, and 3. Agency technical screeners flag naming inconsistencies as a rejection-worthy deficiency.',
-      basis: 'ICH M4 Common Technical Document guidelines',
-      remediation:
-        'Conduct a cross-module naming harmonization pass and establish a controlled vocabulary for all product references.',
-    },
-    {
-      title: 'Cover letter omits required regulatory history',
-      summary:
-        'The Module 1.0 cover letter does not reference prior IND amendments or cross-reference existing applications as required by FDA Form 356h instructions.',
-      basis: 'FDA Form 356h Completion Requirements',
-      remediation:
-        'Update cover letter to include all prior submission references, IND amendment history, and cross-referenced application numbers.',
-    },
-    {
-      title: 'PDF bookmark structure non-compliant',
-      summary:
-        'Multiple Module 2 and Module 5 PDF documents lack hierarchical bookmarking required by FDA technical specifications, potentially triggering gateway reject.',
-      basis: 'FDA eCTD Specification v4.0 §3.2 PDF Requirements',
-      remediation:
-        'Rebuild PDF bookmark trees for all Module 2 and Module 5 documents using compliant publishing tools.',
-    },
-    {
-      title: 'Orphaned lifecycle reference detected',
-      summary:
-        'A Module 3 amendment references a superseded drug substance specification (version 2.1) that was replaced in sequence 0045, creating a lifecycle integrity gap.',
-      basis: 'ICH M4Q Quality Module Structure',
-      remediation:
-        'Update all cross-references to point to current active versions and remove orphaned lifecycle pointers.',
-    },
-  ];
-  const selected = pickRandom(findingTemplates, randomInt(2, 5));
-  const findings: FindingCluster[] = selected.map(tpl => ({
-    id: nextFindingId(),
-    runId,
-    engine: 'agency_screen' as EngineId,
-    severity: pickSeverity(),
-    title: tpl.title,
-    summary: tpl.summary,
-    regulatoryBasis: tpl.basis,
-    blastRadius: {
-      artifactsImpacted: randomInt(2, 12),
-      sectionsImpacted: pickRandom(DOSSIER_SECTIONS, randomInt(1, 4)),
-    },
-    suggestedRemediation: tpl.remediation,
-    confidence: randomInt(65, 95),
-    createdAt: new Date(),
-  }));
-  const score = randomInt(20, 95);
-  return {
-    engine: 'agency_screen',
-    score,
-    summary: `Pre-Technical Rejection Score: ${score}/100. Identified ${findings.length} metadata conflicts and package anomalies.`,
-    findings,
-    metadata: {
-      scoreType: 'preTechnicalRejection',
-      metadataConflicts: randomInt(1, 8),
-      packageAnomalies: randomInt(0, 5),
-      gatewayPassProbability: score > 70 ? 'high' : score > 45 ? 'moderate' : 'low',
-    },
-    completedAt: new Date(),
-  };
-}
-
-function simulateReviewerAttack(runId: number): EngineResult {
-  const findingTemplates = [
-    {
-      title: 'Efficacy claim exceeds pivotal trial evidence',
-      summary:
-        'Primary efficacy claim in Module 2.5 asserts superiority over standard of care, but pivotal trial (Study 301) only demonstrates non-inferiority.',
-      basis: 'FDA Guidance: Clinical Trial Endpoints for Approval',
-      remediation:
-        'Revise clinical overview to align claims precisely with statistical findings from pivotal trials.',
-    },
-    {
-      title: 'Safety signal underreporting in clinical summary',
-      summary:
-        'Module 2.7 clinical summary omits three Grade 3 adverse events reported in Study 201 Appendix Tables.',
-      basis: 'ICH E3 Structure and Content of Clinical Study Reports',
-      remediation: 'Reconcile Module 2.7 safety narrative with all individual CSR safety tables.',
-    },
-    {
-      title: 'Subgroup analysis inconsistency',
-      summary: 'Pre-specified subgroup analyses in the SAP differ from those reported in the CSR.',
-      basis: 'ICH E9 Statistical Principles for Clinical Trials',
-      remediation: 'Align reported subgroup analyses with SAP specifications.',
-    },
-    {
-      title: 'Missing exposure-response analysis',
-      summary:
-        'Clinical pharmacology section lacks an exposure-response analysis linking drug exposure to efficacy and safety outcomes.',
-      basis: 'FDA Guidance: Exposure-Response Relationships (2003)',
-      remediation: 'Commission exposure-response modeling and integrate results into Module 2.7.',
-    },
-    {
-      title: 'Label claim overreach in proposed labeling',
-      summary:
-        'Proposed product labeling includes an indication breadth that extends beyond the studied population.',
-      basis: 'FDA Labeling Guidance for Prescription Drugs',
-      remediation: 'Restrict indication statement to the enrolled population demographic.',
-    },
-  ];
-  const selected = pickRandom(findingTemplates, randomInt(2, 5));
-  const findings: FindingCluster[] = selected.map(tpl => ({
-    id: nextFindingId(),
-    runId,
-    engine: 'reviewer_attack' as EngineId,
-    severity: pickSeverity(),
-    title: tpl.title,
-    summary: tpl.summary,
-    regulatoryBasis: tpl.basis,
-    blastRadius: {
-      artifactsImpacted: randomInt(3, 15),
-      sectionsImpacted: pickRandom(DOSSIER_SECTIONS, randomInt(2, 5)),
-    },
-    suggestedRemediation: tpl.remediation,
-    confidence: randomInt(60, 92),
-    createdAt: new Date(),
-  }));
-  const score = randomInt(20, 95);
-  return {
-    engine: 'reviewer_attack',
-    score,
-    summary: `Reviewer Friction Score: ${score}/100. Identified ${findings.length} deficiency themes.`,
-    findings,
-    metadata: {
-      scoreType: 'reviewerFriction',
-      deficiencyThemes: findings.length,
-      claimOverreachWarnings: randomInt(0, 3),
-      projectedIRCount: randomInt(2, 12),
-      refuseToFileRisk: score < 40 ? 'high' : score < 65 ? 'moderate' : 'low',
-    },
-    completedAt: new Date(),
-  };
-}
-
-function simulateAuditInspection(runId: number): EngineResult {
-  const findingTemplates = [
-    {
-      title: 'Approval chain gap in CMC documentation',
-      summary:
-        'Module 3 drug substance specification shows version 3.2 was promoted from draft to approved without documented QA review step.',
-      basis: '21 CFR Part 211 — Current Good Manufacturing Practice',
-      remediation:
-        'Implement retrospective QA review and document the approval chain gap in a deviation report.',
-    },
-    {
-      title: 'Traceability break between protocol amendments and CSR',
-      summary:
-        'Protocol Amendment 4 (Study 301) modified the primary endpoint definition, but the CSR references the original endpoint.',
-      basis: 'ICH E6(R2) Good Clinical Practice §6.15',
-      remediation: 'Add protocol amendment traceability matrix to CSR.',
-    },
-    {
-      title: 'Incomplete audit trail for data transformations',
-      summary:
-        'SDTM-to-ADaM data transformation logic lacks version-controlled derivation documentation.',
-      basis: '21 CFR Part 11 — Electronic Records',
-      remediation:
-        'Document all data transformation derivations with version-controlled specifications.',
-    },
-    {
-      title: 'Site monitoring visit report gaps',
-      summary:
-        'Three clinical sites show gaps of 90+ days between monitoring visits during enrollment.',
-      basis: 'ICH E6(R2) Good Clinical Practice §5.18',
-      remediation: 'Generate retrospective monitoring rationale documents explaining visit gaps.',
-    },
-    {
-      title: 'Missing electronic signature justification',
-      summary:
-        'Fourteen Module 5 documents bear electronic signatures without the required Part 11 compliance statement.',
-      basis: '21 CFR Part 11.50 — Signature Manifestations',
-      remediation: 'Attach Part 11 compliance declarations to all electronically signed documents.',
-    },
-  ];
-  const selected = pickRandom(findingTemplates, randomInt(2, 5));
-  const findings: FindingCluster[] = selected.map(tpl => ({
-    id: nextFindingId(),
-    runId,
-    engine: 'audit_inspection' as EngineId,
-    severity: pickSeverity(),
-    title: tpl.title,
-    summary: tpl.summary,
-    regulatoryBasis: tpl.basis,
-    blastRadius: {
-      artifactsImpacted: randomInt(2, 10),
-      sectionsImpacted: pickRandom(DOSSIER_SECTIONS, randomInt(1, 4)),
-    },
-    suggestedRemediation: tpl.remediation,
-    confidence: randomInt(55, 90),
-    createdAt: new Date(),
-  }));
-  const score = randomInt(20, 95);
-  return {
-    engine: 'audit_inspection',
-    score,
-    summary: `Audit Exposure Score: ${score}/100. Detected ${findings.length} approval chain gaps and traceability weaknesses.`,
-    findings,
-    metadata: {
-      scoreType: 'auditExposure',
-      approvalChainGaps: randomInt(1, 6),
-      traceabilityWeaknesses: randomInt(0, 4),
-      inspectionReadiness: score > 70 ? 'ready' : score > 45 ? 'conditional' : 'not_ready',
-    },
-    completedAt: new Date(),
-  };
-}
-
-function simulateRouteTiming(runId: number): EngineResult {
-  const findingTemplates = [
-    {
-      title: 'Accelerated pathway eligibility uncertain',
-      summary:
-        'Current evidence package may not meet the threshold for Accelerated Approval under Subpart H.',
-      basis: 'FDA Accelerated Approval Program (21 CFR 314.510)',
-      remediation:
-        'Engage in a Pre-Submission meeting to discuss surrogate endpoint acceptability.',
-    },
-    {
-      title: 'Rolling submission timeline at risk',
-      summary: 'CMC module completion lags clinical modules by approximately 14 weeks.',
-      basis: 'FDA Manual of Policies and Procedures (MAPP) 6020.3',
-      remediation: 'Accelerate CMC module development and consider parallel workstreams.',
-    },
-    {
-      title: 'Advisory Committee meeting probability elevated',
-      summary:
-        'Novel mechanism of action creates >60% probability of an FDA Advisory Committee convening.',
-      basis: 'FDA Guidance on Advisory Committee Procedures',
-      remediation: 'Prepare Advisory Committee briefing materials in parallel with submission.',
-    },
-    {
-      title: 'Pediatric study plan deadline approaching',
-      summary:
-        'Initial Pediatric Study Plan (iPSP) must be submitted within 60 days of end-of-Phase-2 meeting.',
-      basis: 'Pediatric Research Equity Act (PREA)',
-      remediation: 'Begin iPSP development immediately with pediatric clinical pharmacology input.',
-    },
-  ];
-  const selected = pickRandom(findingTemplates, randomInt(2, 4));
-  const findings: FindingCluster[] = selected.map(tpl => ({
-    id: nextFindingId(),
-    runId,
-    engine: 'route_timing' as EngineId,
-    severity: pickSeverity(),
-    title: tpl.title,
-    summary: tpl.summary,
-    regulatoryBasis: tpl.basis,
-    blastRadius: {
-      artifactsImpacted: randomInt(4, 20),
-      sectionsImpacted: pickRandom(DOSSIER_SECTIONS, randomInt(2, 6)),
-    },
-    suggestedRemediation: tpl.remediation,
-    confidence: randomInt(50, 88),
-    createdAt: new Date(),
-  }));
-  const score = randomInt(20, 95);
-  return {
-    engine: 'route_timing',
-    score,
-    summary: `Route Viability Score: ${score}/100. Timeline analysis identified ${findings.length} delay risks.`,
-    findings,
-    metadata: {
-      scoreType: 'routeViability',
-      timelineConfidence: score > 70 ? 'high' : score > 45 ? 'moderate' : 'low',
-      delayProbability: Math.max(5, 100 - score) + '%',
-      estimatedDelayWeeks: randomInt(2, 18),
-      pathwayViability: score > 60 ? 'viable' : 'at_risk',
-    },
-    completedAt: new Date(),
-  };
-}
-
-function simulateEvidenceSufficiency(runId: number): EngineResult {
-  const findingTemplates = [
-    {
-      title: 'Primary endpoint evidence density below threshold',
-      summary:
-        'The pivotal trial primary endpoint is supported by a single adequate and well-controlled study.',
-      basis: 'FDA Guidance: Providing Clinical Evidence of Effectiveness',
-      remediation: 'Strengthen the single-study submission with robust sensitivity analyses.',
-    },
-    {
-      title: 'Long-term safety data gap',
-      summary:
-        'For a chronic-use indication, the safety database includes only 6-month exposure data for 85% of subjects.',
-      basis: 'ICH E1 Population Exposure Guideline',
-      remediation: 'Extend the open-label safety study to achieve ICH E1 exposure thresholds.',
-    },
-    {
-      title: 'Comparator arm evidence weakness',
-      summary:
-        'Active comparator used in Study 302 is not the current standard of care in the target market.',
-      basis: 'ICH E10 Choice of Control Group',
-      remediation: 'Provide indirect comparison analyses against the current standard of care.',
-    },
-    {
-      title: 'Missing patient-reported outcome validation',
-      summary:
-        'The key secondary endpoint uses a PRO instrument not formally validated in the target disease population.',
-      basis: 'FDA Guidance: Patient-Reported Outcome Measures (2009)',
-      remediation: 'Submit PRO instrument validation data as a standalone report in Module 5.',
-    },
-    {
-      title: 'Nonclinical-to-clinical translation gap',
-      summary:
-        'Nonclinical efficacy models show dose-dependent toxicity at exposures only 3x above the proposed clinical dose.',
-      basis: 'ICH M3(R2) Nonclinical Safety Studies',
-      remediation: 'Conduct additional PK/PD modeling to establish therapeutic margin confidence.',
-    },
-  ];
-  const selected = pickRandom(findingTemplates, randomInt(2, 5));
-  const findings: FindingCluster[] = selected.map(tpl => ({
-    id: nextFindingId(),
-    runId,
-    engine: 'evidence_sufficiency' as EngineId,
-    severity: pickSeverity(),
-    title: tpl.title,
-    summary: tpl.summary,
-    regulatoryBasis: tpl.basis,
-    blastRadius: {
-      artifactsImpacted: randomInt(3, 14),
-      sectionsImpacted: pickRandom(DOSSIER_SECTIONS, randomInt(2, 5)),
-    },
-    suggestedRemediation: tpl.remediation,
-    confidence: randomInt(58, 93),
-    createdAt: new Date(),
-  }));
-  const score = randomInt(20, 95);
-  return {
-    engine: 'evidence_sufficiency',
-    score,
-    summary: `Claim Defensibility Score: ${score}/100. Evidence gap analysis revealed ${findings.length} areas below regulatory expectations.`,
-    findings,
-    metadata: {
-      scoreType: 'claimDefensibility',
-      evidenceGaps: findings.length,
-      supportDensityWarnings: randomInt(1, 5),
-      overallEvidenceGrade: score > 75 ? 'strong' : score > 50 ? 'moderate' : 'weak',
-    },
-    completedAt: new Date(),
-  };
-}
-
-function simulateCollaborationFragility(runId: number): EngineResult {
-  const findingTemplates = [
-    {
-      title: 'Single-point-of-failure in CMC authoring',
-      summary:
-        'Module 3 content ownership is concentrated in a single subject matter expert with no documented backup.',
-      basis: 'ICH Q10 Pharmaceutical Quality System — Knowledge Management',
-      remediation:
-        'Cross-train a secondary CMC author and establish a knowledge transfer protocol.',
-    },
-    {
-      title: 'Approval chain bottleneck at medical review',
-      summary:
-        'The medical reviewer approval queue shows an average 21-day turnaround for Module 2 clinical documents.',
-      basis: 'Organizational SOP — Document Review and Approval',
-      remediation: 'Add a parallel medical reviewer to the approval chain.',
-    },
-    {
-      title: 'Cross-functional handoff fragility between biostatistics and clinical',
-      summary:
-        'Analysis dataset handoffs between biostatistics and clinical writing teams lack a structured data package specification.',
-      basis: 'ICH E9(R1) Estimands Framework — Implementation',
-      remediation: 'Define a standardized data handoff package template.',
-    },
-    {
-      title: 'Vendor dependency risk in regulatory publishing',
-      summary:
-        'Regulatory publishing is outsourced to a single CRO partner with a 45-day lead time for eCTD compilation.',
-      basis: 'ICH M8 eCTD Implementation Guide',
-      remediation: 'Establish a secondary publishing vendor relationship.',
-    },
-    {
-      title: 'Stakeholder alignment gap on benefit-risk narrative',
-      summary:
-        'Clinical, regulatory affairs, and commercial teams hold divergent views on the benefit-risk positioning.',
-      basis: 'ICH M4E(R2) — Common Technical Document for Efficacy',
-      remediation: 'Convene a cross-functional benefit-risk alignment workshop.',
-    },
-  ];
-  const selected = pickRandom(findingTemplates, randomInt(2, 5));
-  const findings: FindingCluster[] = selected.map(tpl => ({
-    id: nextFindingId(),
-    runId,
-    engine: 'collaboration_fragility' as EngineId,
-    severity: pickSeverity(),
-    title: tpl.title,
-    summary: tpl.summary,
-    regulatoryBasis: tpl.basis,
-    blastRadius: {
-      artifactsImpacted: randomInt(2, 12),
-      sectionsImpacted: pickRandom(DOSSIER_SECTIONS, randomInt(1, 4)),
-    },
-    suggestedRemediation: tpl.remediation,
-    confidence: randomInt(55, 88),
-    createdAt: new Date(),
-  }));
-  const score = randomInt(20, 95);
-  return {
-    engine: 'collaboration_fragility',
-    score,
-    summary: `Bottleneck Risk Score: ${score}/100. Collaboration analysis identified ${findings.length} fragility points.`,
-    findings,
-    metadata: {
-      scoreType: 'approvalChainFragility',
-      bottleneckRisk: score < 40 ? 'critical' : score < 65 ? 'elevated' : 'manageable',
-      approvalChainFragility: randomInt(1, 5),
-      handoffFragility: randomInt(1, 4),
-      singlePointsOfFailure: randomInt(0, 3),
-    },
-    completedAt: new Date(),
-  };
-}
-
-const ENGINE_SIMULATORS: Record<EngineId, (runId: number) => EngineResult> = {
-  agency_screen: simulateAgencyScreen,
-  reviewer_attack: simulateReviewerAttack,
-  audit_inspection: simulateAuditInspection,
-  route_timing: simulateRouteTiming,
-  evidence_sufficiency: simulateEvidenceSufficiency,
-  collaboration_fragility: simulateCollaborationFragility,
+// Each engine analyzes the program's real authored content through a specific
+// regulatory lens. No findings are fabricated: when content is absent the
+// engine fails loud with a null score and an empty findings set.
+const ENGINE_LENS: Record<EngineId, { scoreType: ScoreType; label: string; focus: string }> = {
+  agency_screen: {
+    scoreType: 'preTechnicalRejection',
+    label: 'Pre-Technical Rejection',
+    focus:
+      'eCTD/package conformance and technical-rejection risk: missing or inconsistent metadata, ' +
+      'cross-module naming inconsistencies, structural/bookmarking gaps, incomplete administrative content.',
+  },
+  reviewer_attack: {
+    scoreType: 'reviewerFriction',
+    label: 'Reviewer Friction',
+    focus:
+      'claims that exceed the supporting evidence, safety underreporting, statistical/SAP ' +
+      'inconsistencies, and labeling overreach that a regulatory reviewer would challenge.',
+  },
+  audit_inspection: {
+    scoreType: 'auditExposure',
+    label: 'Audit Exposure',
+    focus:
+      'GxP / 21 CFR Part 11 audit exposure: approval-chain gaps, traceability breaks between ' +
+      'protocol/SAP/CSR, incomplete audit trails, and electronic records/signature compliance gaps.',
+  },
+  route_timing: {
+    scoreType: 'routeViability',
+    label: 'Route Viability',
+    focus:
+      'regulatory route viability and timeline risk: pathway eligibility, module-readiness ' +
+      'imbalances, advisory-committee likelihood, and statutory deadlines.',
+  },
+  evidence_sufficiency: {
+    scoreType: 'claimDefensibility',
+    label: 'Claim Defensibility',
+    focus:
+      'sufficiency of evidence for the primary/secondary claims: endpoint evidence density, ' +
+      'long-term safety exposure, comparator choice, and nonclinical-to-clinical translation gaps.',
+  },
+  collaboration_fragility: {
+    scoreType: 'approvalChainFragility',
+    label: 'Bottleneck Risk',
+    focus:
+      'operational/collaboration fragility: single points of failure in authoring, approval-chain ' +
+      'bottlenecks, cross-functional handoff gaps, and vendor dependencies.',
+  },
 };
+
+interface ProgramContext {
+  hasContent: boolean;
+  sectionTitles: string[];
+  text: string;
+}
+
+// Assemble a program's real authored content. "Program" maps to a project, so
+// content is the project's active sections and documents.
+async function assembleProgramContext(programId: number): Promise<ProgramContext> {
+  const [sectionRows, documentRows] = await Promise.all([
+    db
+      .select({ title: sections.title, content: sections.content, status: sections.status })
+      .from(sections)
+      .where(and(eq(sections.projectId, programId), eq(sections.status, 'active')))
+      .limit(200),
+    db
+      .select({
+        title: documents.title,
+        documentType: documents.documentType,
+        status: documents.status,
+      })
+      .from(documents)
+      .where(eq(documents.projectId, programId))
+      .limit(200),
+  ]);
+
+  if (sectionRows.length === 0 && documentRows.length === 0) {
+    return { hasContent: false, sectionTitles: [], text: '' };
+  }
+
+  const sectionTitles = sectionRows
+    .map(s => s.title)
+    .filter((t): t is string => typeof t === 'string' && t.length > 0);
+
+  const docLines =
+    documentRows
+      .map(d => `- [${d.documentType ?? 'document'}] ${d.title} (${d.status ?? 'unknown'})`)
+      .join('\n') || '(none)';
+  const sectionLines =
+    sectionRows
+      .map(s => `### ${s.title ?? 'Untitled section'} (${s.status})\n${(s.content ?? '').slice(0, 1500)}`)
+      .join('\n\n') || '(none)';
+
+  const text = (
+    `DOCUMENTS (${documentRows.length}):\n${docLines}\n\n` +
+    `SECTIONS (${sectionRows.length}):\n${sectionLines}`
+  ).slice(0, 40000);
+
+  return { hasContent: true, sectionTitles, text };
+}
+
+// Run a single engine against the assembled real content using the AI client.
+async function runEngineAnalysis(
+  engineId: EngineId,
+  context: ProgramContext,
+  runId: number
+): Promise<EngineResult> {
+  const lens = ENGINE_LENS[engineId];
+
+  if (!context.hasContent) {
+    return {
+      engine: engineId,
+      score: null,
+      summary: `${lens.label}: insufficient program content to compute a prediction. Author program sections or upload documents before running this engine.`,
+      findings: [],
+      metadata: { scoreType: lens.scoreType, insufficientData: true },
+      completedAt: new Date(),
+    };
+  }
+
+  const systemPrompt =
+    `You are a regulatory submission risk analyst. Analyze the supplied program content through ` +
+    `the lens of "${lens.label}": ${lens.focus}\n` +
+    `Identify only risks that are supported by the provided content — do not invent deficiencies. ` +
+    `Cite a specific regulatory basis for each finding, and only reference section titles that appear ` +
+    `in the provided content. Respond with a single JSON object: { "score": number (0-100, higher = ` +
+    `lower risk), "summary": string, "findings": [ { "severity": "critical"|"high"|"medium"|"low", ` +
+    `"title": string, "summary": string, "regulatoryBasis": string, "suggestedRemediation": string, ` +
+    `"confidence": number (0-100), "sectionsImpacted": string[] } ] }. Return an empty findings array ` +
+    `if no risks are evident.`;
+
+  const raw = await aiComplete({
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: `Program content:\n${context.text}` },
+    ],
+    max_tokens: 2000,
+    temperature: 0,
+    response_format: { type: 'json_object' },
+  });
+
+  const parsed = JSON.parse(raw) as {
+    score?: number;
+    summary?: string;
+    findings?: Array<Record<string, any>>;
+  };
+
+  const validSeverities = ['critical', 'high', 'medium', 'low'];
+  const allowedSections = new Set(context.sectionTitles);
+  const findings: FindingCluster[] = (parsed.findings ?? [])
+    .filter(f => f.title && validSeverities.includes(String(f.severity)))
+    .map(f => {
+      const impacted = (Array.isArray(f.sectionsImpacted) ? f.sectionsImpacted : []).filter((s: string) =>
+        allowedSections.has(s)
+      );
+      return {
+        id: nextFindingId(),
+        runId,
+        engine: engineId,
+        severity: f.severity as FindingCluster['severity'],
+        title: String(f.title),
+        summary: String(f.summary ?? ''),
+        regulatoryBasis: String(f.regulatoryBasis ?? ''),
+        blastRadius: { artifactsImpacted: impacted.length, sectionsImpacted: impacted },
+        suggestedRemediation: String(f.suggestedRemediation ?? ''),
+        confidence:
+          typeof f.confidence === 'number'
+            ? Math.max(0, Math.min(100, Math.round(f.confidence)))
+            : 50,
+        createdAt: new Date(),
+      };
+    });
+
+  const score =
+    typeof parsed.score === 'number' ? Math.max(0, Math.min(100, Math.round(parsed.score))) : null;
+
+  return {
+    engine: engineId,
+    score,
+    summary: parsed.summary ? String(parsed.summary) : `${lens.label}: ${findings.length} findings.`,
+    findings,
+    metadata: { scoreType: lens.scoreType, findingCount: findings.length },
+    completedAt: new Date(),
+  };
+}
 
 async function executeRun(
   runId: number,
@@ -615,10 +332,11 @@ async function executeRun(
   const engineResults: EngineResult[] = [];
   const allFindings: FindingCluster[] = [];
 
+  const context = await assembleProgramContext(programId);
+
   for (const engineId of engines) {
-    const simulator = ENGINE_SIMULATORS[engineId];
-    if (!simulator) continue;
-    const result = simulator(runId);
+    if (!ENGINE_LENS[engineId]) continue;
+    const result = await runEngineAnalysis(engineId, context, runId);
     engineResults.push(result);
 
     for (const finding of result.findings) {
@@ -645,7 +363,7 @@ async function executeRun(
   const scoreMap: Record<string, number> = {};
   for (const er of engineResults) {
     const scoreType = er.metadata.scoreType as string;
-    if (scoreType) scoreMap[scoreType] = er.score;
+    if (scoreType && er.score !== null) scoreMap[scoreType] = er.score;
   }
   if (scoreMap.preTechnicalRejection !== undefined) {
     scoreMap.submissionSurvival = Math.min(
@@ -1106,17 +824,23 @@ router.get('/artifacts/:artifactId/scores', async (req: Request, res: Response) 
     }
     const normalizedScore = Math.min(100, Math.max(0, 100 - riskScore));
 
+    // Derive the per-engine breakdown from the real impacting findings rather
+    // than fabricating it: higher score = lower aggregated severity.
+    const engineBreakdown: Record<string, number> = {};
+    for (const eng of ['agency_screen', 'reviewer_attack', 'audit_inspection'] as const) {
+      const weight = impactingFindings
+        .filter((f: any) => f.engine === eng)
+        .reduce((sum: number, f: any) => sum + (severityWeights[f.severity] || 5), 0);
+      engineBreakdown[eng] = Math.min(100, Math.max(0, 100 - weight));
+    }
+
     res.json({
       data: {
         artifactId,
         overallScore: normalizedScore,
         findingsImpacting: findingCount,
         riskLevel: normalizedScore > 70 ? 'low' : normalizedScore > 40 ? 'medium' : 'high',
-        engineBreakdown: {
-          agency_screen: randomInt(30, 95),
-          reviewer_attack: randomInt(30, 95),
-          audit_inspection: randomInt(30, 95),
-        },
+        engineBreakdown,
       },
     });
   } catch (err: any) {
@@ -1124,26 +848,61 @@ router.get('/artifacts/:artifactId/scores', async (req: Request, res: Response) 
   }
 });
 
-router.get('/dossier-nodes/:nodeId/scores', (req: Request, res: Response) => {
-  const nodeId = parseInt(String(req.params.nodeId));
-  const sectionScore = 40 + ((nodeId * 17) % 55);
-  const completeness = 30 + ((nodeId * 23) % 65);
-  const consistency = 35 + ((nodeId * 31) % 60);
+router.get('/dossier-nodes/:nodeId/scores', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const nodeId = parseInt(String(req.params.nodeId));
 
-  res.json({
-    data: {
-      nodeId,
-      scores: {
-        overall: sectionScore,
-        completeness,
-        consistency,
-        evidenceDensity: 25 + ((nodeId * 13) % 70),
-        reviewerRisk: Math.max(5, 100 - sectionScore),
+    // Resolve the node to a real section, then score it from the real findings
+    // that impact it. Metrics that have no real basis are returned as null
+    // rather than fabricated from the node id.
+    const [section] = await db
+      .select({ title: sections.title })
+      .from(sections)
+      .where(eq(sections.id, nodeId))
+      .limit(1);
+
+    const sectionTitle = section?.title ?? null;
+    let overall: number | null = null;
+    let reviewerRisk: number | null = null;
+
+    if (sectionTitle) {
+      const severityWeights: Record<string, number> = {
+        critical: 25,
+        high: 15,
+        medium: 8,
+        low: 3,
+      };
+      const impacting = await store.query(
+        orgId,
+        'finding',
+        (f: any) => f.blastRadius?.sectionsImpacted?.includes(sectionTitle)
+      );
+      const weight = impacting.reduce(
+        (sum: number, f: any) => sum + (severityWeights[f.severity] || 5),
+        0
+      );
+      overall = Math.min(100, Math.max(0, 100 - weight));
+      reviewerRisk = Math.max(0, Math.min(100, weight));
+    }
+
+    res.json({
+      data: {
+        nodeId,
+        scores: {
+          overall,
+          completeness: null,
+          consistency: null,
+          evidenceDensity: null,
+          reviewerRisk,
+        },
+        lastAssessedAt: new Date(),
+        assessmentSource: sectionTitle ? 'snowglobe-findings' : 'no-data',
       },
-      lastAssessedAt: new Date(),
-      assessmentSource: 'snowglobe-prediction',
-    },
-  });
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
