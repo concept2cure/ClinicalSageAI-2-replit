@@ -22,6 +22,7 @@ import { aiComplete } from '../lib/unified-ai-client';
 import { requestDb, type RequestDb } from '../db/requestDb';
 import { sections, documents } from '../../shared/schema';
 import { eq, and } from 'drizzle-orm';
+import { retrieveGuidance, formatGuidanceForPrompt } from '../services/regulatory-guidance-retrieval';
 
 const router = Router();
 router.use(requireAuth);
@@ -236,7 +237,8 @@ async function assembleProgramContext(
 async function runEngineAnalysis(
   engineId: EngineId,
   context: ProgramContext,
-  runId: number
+  runId: number,
+  orgId?: number
 ): Promise<EngineResult> {
   const lens = ENGINE_LENS[engineId];
 
@@ -251,21 +253,34 @@ async function runEngineAnalysis(
     };
   }
 
+  // Ground the assessment in the regulatory guidance corpus (additive: an empty
+  // result just means the engine runs ungrounded — never fabricated).
+  const guidance = await retrieveGuidance(`${lens.label}. ${lens.focus}`, {
+    organizationId: orgId,
+    limit: 5,
+  });
+  const guidanceBlock = formatGuidanceForPrompt(guidance);
+
   const systemPrompt =
     `You are a regulatory submission risk analyst. Analyze the supplied program content through ` +
     `the lens of "${lens.label}": ${lens.focus}\n` +
     `Identify only risks that are supported by the provided content — do not invent deficiencies. ` +
-    `Cite a specific regulatory basis for each finding, and only reference section titles that appear ` +
-    `in the provided content. Respond with a single JSON object: { "score": number (0-100, higher = ` +
+    `Cite a specific regulatory basis for each finding; prefer citing the supplied guidance excerpts ` +
+    `as [G#] when relevant, and only reference section titles that appear in the provided content. ` +
+    `Respond with a single JSON object: { "score": number (0-100, higher = ` +
     `lower risk), "summary": string, "findings": [ { "severity": "critical"|"high"|"medium"|"low", ` +
     `"title": string, "summary": string, "regulatoryBasis": string, "suggestedRemediation": string, ` +
     `"confidence": number (0-100), "sectionsImpacted": string[] } ] }. Return an empty findings array ` +
     `if no risks are evident.`;
 
+  const userContent = guidanceBlock
+    ? `${guidanceBlock}\n\nProgram content:\n${context.text}`
+    : `Program content:\n${context.text}`;
+
   const raw = await aiComplete({
     messages: [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: `Program content:\n${context.text}` },
+      { role: 'user', content: userContent },
     ],
     max_tokens: 2000,
     temperature: 0,
@@ -341,7 +356,7 @@ async function executeRun(
 
   for (const engineId of engines) {
     if (!ENGINE_LENS[engineId]) continue;
-    const result = await runEngineAnalysis(engineId, context, runId);
+    const result = await runEngineAnalysis(engineId, context, runId, orgId);
     engineResults.push(result);
 
     for (const finding of result.findings) {
