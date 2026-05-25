@@ -7,6 +7,15 @@
 
 import { Node, mergeAttributes } from '@tiptap/core';
 
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    pageBreak: {
+      /** Insert an explicit page break at the current selection. */
+      setPageBreak: () => ReturnType;
+    };
+  }
+}
+
 export const PageBreak = Node.create({
   name: 'pageBreak',
   group: 'block',

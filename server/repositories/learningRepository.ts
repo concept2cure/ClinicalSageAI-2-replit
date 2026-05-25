@@ -370,7 +370,7 @@ export class LearningRepository {
           id: `${item.activityType}-${item.resourceId}`,
           type: item.activityType,
           resourceId: item.resourceId,
-          title: resourceData?.title || 'Unknown Resource',
+          title: resourceData?.name || 'Unknown Resource',
           timestamp: item.timestamp,
           progress: progress,
         };

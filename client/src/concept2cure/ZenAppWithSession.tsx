@@ -45,32 +45,28 @@ const useSessionCheck = (userId: string, organizationId: string) => {
   const [isNewSession, setIsNewSession] = useState(false);
   const [isSessionChecked, setIsSessionChecked] = useState(false);
   
-  const { restoreSession, getSessionHistory } = useSessionRestore(userId, organizationId);
-  
+  const { lastSession } = useSessionRestore(userId, organizationId);
+
   useEffect(() => {
     const checkSession = () => {
-      const currentSession = restoreSession();
-      const history = getSessionHistory();
-      
       // New session if:
       // 1. No previous session exists
       // 2. Last session was > 2 hours ago
-      // 3. User explicitly logged out last time
-      
-      if (!currentSession) {
+
+      if (!lastSession) {
         setIsNewSession(true);
       } else {
-        const lastActivity = new Date(currentSession.lastActivity);
+        const lastActivity = new Date(lastSession.savedAt);
         const hoursSinceLastActivity = (Date.now() - lastActivity.getTime()) / 3600000;
-        
+
         setIsNewSession(hoursSinceLastActivity > 2);
       }
-      
+
       setIsSessionChecked(true);
     };
-    
+
     checkSession();
-  }, [userId, organizationId, restoreSession, getSessionHistory]);
+  }, [userId, organizationId, lastSession]);
   
   return { isNewSession, isSessionChecked };
 };

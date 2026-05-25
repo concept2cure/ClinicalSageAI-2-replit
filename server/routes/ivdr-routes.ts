@@ -383,7 +383,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
         },
       };
       res.setHeader('Content-Type', 'application/json');
-      const safeId = id.replace(/[^a-zA-Z0-9\-_]/g, '');
+      const safeId = String(id).replace(/[^a-zA-Z0-9\-_]/g, '');
       res.setHeader('Content-Disposition', `attachment; filename="ivdr-classification-${safeId}.json"`);
 
       // Register governed export (fail-closed for governed flows)

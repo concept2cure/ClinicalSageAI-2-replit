@@ -1,7 +1,22 @@
 import { academicKnowledgeTracker } from './academic-knowledge-tracker';
-import { AcademicDocument } from 'shared/schema';
 import * as fs from 'fs';
 import * as path from 'path';
+
+/**
+ * Input shape for an academic document to be ingested. This is a service-layer
+ * DTO (not a database row) — it is normalised into an InsertAcademicResource
+ * by processAcademicDocument before persistence.
+ */
+export interface AcademicDocument {
+  title: string;
+  authors?: string | null;
+  resourceType: string;
+  source?: string | null;
+  url?: string | null;
+  category?: string | null;
+  summary?: string | null;
+  publishedDate?: string | Date | null;
+}
 
 /**
  * Academic Knowledge Service

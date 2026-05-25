@@ -335,23 +335,8 @@ describe.skip('Stage 4: Backend beta contract smoke net', () => {
     expect(indContent).toContain("router.get('/structure'");
   });
 
-  it('returns deterministic errors for lightweight eCTD and chat entry smoke paths', async () => {
-    const ectdModule = await import('../../routes/ectd-validate');
-    const ectdRouter = ectdModule.default;
-    const chatModule = await import('../../routes/chat');
-    const chatRouter = chatModule.default;
-
-    const app = express();
-    app.use(express.json());
-    app.use('/api/ectd-validate', ectdRouter);
-    app.use('/api/chat', chatRouter);
-
-    const ectdRes = await request(app).post('/api/ectd-validate/quick').send({});
-    expect(ectdRes.status).toBe(400);
-    expect(String(ectdRes.body?.error || '')).toContain('sectionCodes');
-
-    const chatRes = await request(app).post('/api/chat').send({});
-    expect(chatRes.status).toBe(400);
-    expect(chatRes.body?.code).toBe('INVALID_MESSAGE');
-  });
+  // NOTE: The deterministic eCTD/chat smoke path that exercised
+  // server/routes/ectd-validate.ts was removed — that route no longer exists
+  // (folded into the registerInlineRoutes path under a different name). This
+  // suite is skipped pending re-derivation against the current composition root.
 });

@@ -317,7 +317,7 @@ const COMMON_ENDPOINTS: Endpoint[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 const calculateSampleSize = (
-  measureType: 'continuous' | 'binary' | 'time_to_event',
+  measureType: 'continuous' | 'binary' | 'time_to_event' | 'count',
   power: number,
   alpha: number,
   effectSize: number,
@@ -340,8 +340,8 @@ const calculateSampleSize = (
     );
     assumptions.push(`Control rate: ${(p1 * 100).toFixed(0)}%`);
     assumptions.push(`Treatment rate: ${(p2 * 100).toFixed(0)}%`);
-  } else if (measureType === 'continuous') {
-    // Continuous endpoint
+  } else if (measureType === 'continuous' || measureType === 'count') {
+    // Continuous / count endpoint (normal approximation)
     const sd = 1; // Standardized
     perArm = Math.ceil(
       (2 * Math.pow(sd, 2) * Math.pow(zAlpha + zBeta, 2)) / Math.pow(effectSize, 2)

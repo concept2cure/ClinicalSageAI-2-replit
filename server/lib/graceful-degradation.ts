@@ -25,7 +25,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { CircuitBreaker, CircuitState } from './circuit-breaker';
+import { CircuitBreaker, CircuitState, CircuitBreakerMetrics } from './circuit-breaker';
 
 // =============================================================================
 // Types
@@ -55,7 +55,7 @@ export interface ServiceHealth {
   lastCheck: Date;
   latencyMs?: number;
   errorRate?: number;
-  details?: Record<string, unknown>;
+  details?: Record<string, unknown> | CircuitBreakerMetrics;
 }
 
 export interface DegradationState {

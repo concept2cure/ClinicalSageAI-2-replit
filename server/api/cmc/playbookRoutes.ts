@@ -130,7 +130,7 @@ router.post('/workflows/:id/start', async (req: Request, res: Response) => {
     ]);
 
     // Create initial tasks for the workflow
-    await createWorkflowTasks(workflowInstanceId, id);
+    await createWorkflowTasks(workflowInstanceId, String(id));
 
     res.json({
       success: true,

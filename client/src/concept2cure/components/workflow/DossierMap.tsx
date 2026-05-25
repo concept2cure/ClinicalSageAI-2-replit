@@ -49,7 +49,7 @@ interface ProjectSectionsResponse {
 function normalizeProjectSections(payload: ProjectSectionsResponse | Array<{ code: string; title: string; status: string }>) {
   const rawSections = Array.isArray(payload) ? payload : payload?.sections || [];
   return rawSections.map(sec => ({
-    code: sec.code || sec.section_code || '',
+    code: sec.code || ('section_code' in sec ? sec.section_code : undefined) || '',
     title: sec.title,
     status: sec.status,
   })).filter(sec => !!sec.code);

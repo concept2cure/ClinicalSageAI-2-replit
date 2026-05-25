@@ -5,7 +5,8 @@ import {
   fda510kDataMappings,
   fda510kTemplates,
   fda510kStageProgress,
-  documentAuditTrail
+  documentAuditTrail,
+  users
 } from '@shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import crypto from 'crypto';
@@ -915,15 +916,25 @@ class DocumentOrchestrationService {
     action: string,
     metadata: any
   ): Promise<void> {
-    // Use the new document_audit_trail table for 21 CFR Part 11 compliance
+    // Use the new document_audit_trail table for 21 CFR Part 11 compliance.
+    // userName/userEmail are denormalized on the audit row for compliance, so
+    // resolve them from the acting user record.
+    const [actingUser] = await db!
+      .select({ name: users.name, email: users.email })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
     await db!.insert(documentAuditTrail).values({
       organizationId,
-      projectId,
       userId,
-      action,
-      entityType: '510k-document',
-      entityId: String(projectId),
-      metadata,
+      userName: actingUser?.name ?? `user-${userId}`,
+      userEmail: actingUser?.email ?? '',
+      actionType: action,
+      actionCategory: 'document',
+      actionDescription: `${action} for project ${projectId}`,
+      actionResult: 'success',
+      newValue: metadata,
       timestamp: new Date(),
       createdAt: new Date(),
       updatedAt: new Date()

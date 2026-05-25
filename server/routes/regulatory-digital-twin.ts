@@ -1567,7 +1567,7 @@ router.post('/simulations', async (req: Request, res: Response) => {
  */
 router.get('/simulations/:id', async (req: Request, res: Response) => {
   try {
-    const sim = await dbGetSimulation(req.params.id);
+    const sim = await dbGetSimulation(String(req.params.id));
     if (!sim) {
       return res.status(404).json({ error: 'Simulation not found' });
     }

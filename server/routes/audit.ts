@@ -370,7 +370,7 @@ router.post('/signatures', async (req: Request, res: Response) => {
 
 router.get('/signatures/:signatureId/verify', async (req: Request, res: Response) => {
   try {
-    const sigId = req.params.signatureId.replace('SIG_', '');
+    const sigId = String(req.params.signatureId).replace('SIG_', '');
     // SECURITY: tenant-isolate the lookup. Without the org filter,
     // ANY authenticated user could verify (and thereby read details
     // of) another tenant's regulatory signatures by enumerating ids.

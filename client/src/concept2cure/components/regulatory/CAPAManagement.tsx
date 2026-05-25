@@ -1224,7 +1224,7 @@ export function CAPAManagement() {
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <InlineAIMenu
-                        content={`CAPA ${capa.id}: ${capa.title}\nDescription: ${capa.description}\nSource: ${capa.source}\nPriority: ${capa.priority}\nStatus: ${capa.status}\nOwner: ${capa.owner}\nRoot Cause: ${capa.rootCause || 'Not yet determined'}`}
+                        content={`CAPA ${capa.id}: ${capa.title}\nDescription: ${capa.description}\nSource: ${capa.source}\nPriority: ${capa.priority}\nStatus: ${capa.status}\nOwner: ${capa.owner}\nRoot Cause: ${capa.rootCauseAnalysis?.rootCause || 'Not yet determined'}`}
                         projectId={1}
                         variant="icon"
                         actions={['summarize_selection', 'explain_selection', 'create_followup_task']}

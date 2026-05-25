@@ -58,7 +58,7 @@ describe('AssemblyLine', () => {
     // Mock AI gateway for polish
     vi.mock('../../services/ai-gateway/index.js', () => ({
       getGateway: vi.fn().mockReturnValue({
-        chat: vi.fn().mockResolvedValue('AI-polished content'),
+        chat: vi.fn().mockResolvedValue({ content: 'AI-polished content' }),
       }),
     }));
 

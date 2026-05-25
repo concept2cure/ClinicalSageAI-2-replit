@@ -260,7 +260,7 @@ export class GovernanceBoundaryService {
     }
 
     // 3. Contradiction gate — block if unresolved blocking contradictions exist
-    if (request.projectId && request.toBoundary !== 'advisory') {
+    if (request.projectId && request.artifactId != null && request.toBoundary !== 'advisory') {
       try {
         const { contradictionEngineService } = await import('./contradiction-engine-service.js');
         if (contradictionEngineService?.checkPromotionBlocked) {

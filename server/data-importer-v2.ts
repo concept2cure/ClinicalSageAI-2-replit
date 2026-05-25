@@ -5,7 +5,15 @@
  * the ClinicalTrials.gov API v2 format to our system format
  */
 
-import { InsertCsrReport, InsertCsrDetails } from 'shared/schema';
+import { InsertCsrReport } from 'shared/schema';
+
+// shared/schema does not export a named insert type for csr_details. This v2
+// transformer emits a loosely-shaped, normalised CSR-details DTO (including a
+// few legacy/derived fields that are not columns on the current csr_details
+// table). Persistence — and the strict `typeof csrDetails.$inferInsert` typing
+// plus `as InsertCsrDetails` cast — happens downstream in data-importer.ts.
+// Here the intermediate transform shape is intentionally open.
+type InsertCsrDetails = Record<string, unknown>;
 
 /**
  * Convert a study from the ClinicalTrials.gov API v2 format to our CSR Report format

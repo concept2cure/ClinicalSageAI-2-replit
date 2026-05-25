@@ -229,7 +229,7 @@ router.get('/progress', async (req: Request, res: Response) => {
  * Returns a single section by its eCTD code (e.g., "m2.3.S.1").
  */
 router.get('/:code', (req: Request, res: Response) => {
-  const code = req.params.code;
+  const code = String(req.params.code);
   const section = getSectionByCode(code);
   if (!section) {
     return res.status(404).json({ error: `Section not found: ${code}` });

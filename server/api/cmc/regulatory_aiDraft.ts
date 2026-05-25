@@ -92,7 +92,7 @@ export async function aiDraftIR(subId: string, qrow: any) {
         },
       ],
     });
-    return out.choices[0]?.message?.content || '';
+    return out.content || '';
   } catch (error) {
     console.error('Error generating AI draft:', error);
     return `**Draft Response (AI Error)**

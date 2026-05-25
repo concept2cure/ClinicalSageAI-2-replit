@@ -210,11 +210,12 @@ export interface SherpaGuidance {
   rationale: string;
 }
 
-export type GuidanceActionType = 
+export type GuidanceActionType =
   | 'write-section'
   | 'review-claims'
   | 'add-sources'
   | 'update-from-module'      // Pull data from another module
+  | 'review'                  // Complete pending reviews assigned to the user
   | 'request-review'
   | 'submit-for-approval'
   | 'export-document';

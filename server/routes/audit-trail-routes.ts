@@ -314,7 +314,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   // GET /api/audit/signatures/:signatureId/verify — verify signature
   router.get('/audit/signatures/:signatureId/verify', async (req: Request, res: Response) => {
     try {
-      const sigId = req.params.signatureId.replace('SIG_', '');
+      const sigId = String(req.params.signatureId).replace('SIG_', '');
       const result = await pool.query(
         `SELECT id, entity_type, entity_id, signed_by, signed_date, signature_meaning, reason, signature_status
          FROM audit_events WHERE id = $1 AND event_type = 'signature.create'`,

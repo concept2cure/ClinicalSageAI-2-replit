@@ -740,7 +740,8 @@ class FDAIntegrationService {
       timestamp: new Date().toISOString(),
       comments: randomStatus === 'ACCEPTED'
         ? 'Submission accepted for review'
-        : 'Processing submission'
+        : 'Processing submission',
+      requiredActions: [] as string[]
     };
   }
 

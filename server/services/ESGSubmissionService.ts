@@ -3,7 +3,8 @@ import {
   fda510kSubmissionPackages,
   fda510kProjects,
   fda510kDocuments,
-  sharepoint_audit_log
+  sharepoint_audit_log,
+  users
 } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import crypto from 'crypto';
@@ -406,13 +407,23 @@ class ESGSubmissionService {
     action: string,
     metadata: any
   ): Promise<void> {
+    const [actingUser] = await db!
+      .select({ name: users.name })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
     await db!.insert(sharepoint_audit_log).values({
       action,
-      entityType: 'esg-submission',
-      entityId: String(projectId),
+      details: {
+        entityType: 'esg-submission',
+        entityId: String(projectId),
+        projectId,
+        metadata,
+      },
       userId: String(userId),
+      userName: actingUser?.name ?? `user-${userId}`,
       organizationId,
-      metadata: JSON.stringify(metadata),
       timestamp: new Date()
     });
   }

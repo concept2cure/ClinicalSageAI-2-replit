@@ -64,7 +64,7 @@ export interface DocumentWorkspaceProps {
   document?: IntelligentDocument | null;
   
   // Submission context - what workflow is this part of?
-  submissionType?: 'IND' | '510K' | 'NDA' | 'BLA' | 'PMA' | 'CER' | 'MAA';
+  submissionType?: 'IND' | '510K' | 'NDA' | 'BLA' | 'PMA' | 'CER' | 'MAA' | 'DE_NOVO';
   projectId?: string;
   
   // Pre-loaded data from other modules

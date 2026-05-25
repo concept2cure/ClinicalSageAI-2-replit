@@ -181,10 +181,15 @@ export class ManufacturingService {
       let fhirData: Record<string, unknown> = {};
 
       switch (rule.mappingType) {
-        case 'direct':
+        case 'direct': {
           // Direct mapping - copy value at path
-          fhirData = this.getNestedValue(isa95Data, mapping.isa95Path);
+          const directValue = this.getNestedValue(isa95Data, mapping.isa95Path);
+          fhirData =
+            directValue && typeof directValue === 'object'
+              ? (directValue as Record<string, unknown>)
+              : { [mapping.fhirPath]: directValue };
           break;
+        }
 
         case 'computed':
           // Apply expression (simplified - would use a proper expression evaluator)

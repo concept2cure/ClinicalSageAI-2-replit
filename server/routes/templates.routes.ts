@@ -299,8 +299,11 @@ router.post('/', async (req, res) => {
     const organizationId = requireOrganizationId(req, res);
     if (organizationId == null) return;
     const userId = req.user?.id != null ? Number(req.user.id) : undefined;
+    if (userId == null) {
+      return res.status(401).json({ error: 'Authenticated user required' });
+    }
     const { name, description, category, type, content, sections, metadata } = req.body;
-    
+
     const templateId = generateTemplateId(category);
     
     let createdTemplate: any;

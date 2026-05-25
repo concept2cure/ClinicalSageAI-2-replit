@@ -360,7 +360,11 @@ class S3StorageService {
     // identical to the presigner's expected Client type. The runtime contract is
     // compatible; cast to the presigner's own first-parameter type at this
     // SDK-version boundary.
-    return getSignedUrl(this.client as Parameters<typeof getSignedUrl>[0], command, { expiresIn });
+    return getSignedUrl(
+      this.client as unknown as Parameters<typeof getSignedUrl>[0],
+      command,
+      { expiresIn }
+    );
   }
 
   /**
@@ -381,7 +385,11 @@ class S3StorageService {
     });
 
     // SDK-version boundary — see getPresignedDownloadUrl for rationale.
-    return getSignedUrl(this.client as Parameters<typeof getSignedUrl>[0], command, { expiresIn });
+    return getSignedUrl(
+      this.client as unknown as Parameters<typeof getSignedUrl>[0],
+      command,
+      { expiresIn }
+    );
   }
 
   /**

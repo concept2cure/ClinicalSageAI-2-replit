@@ -12,7 +12,10 @@ import { eq, and } from 'drizzle-orm';
 import {
   unifiedDocuments,
   moduleDocuments,
+  moduleTypeEnum,
 } from '../../../../shared/schema/unified_workflow';
+
+type ModuleType = (typeof moduleTypeEnum.enumValues)[number];
 import { registerActionHandler } from '../action-registry';
 import { fetchDocument, isValidModuleType } from '../shared-utils';
 import type {
@@ -47,7 +50,8 @@ const handler: AIActionHandler = {
   ): Promise<AIActionResponse> {
     const db = ctx.db as any;
     const documentId = Number(request.targetId);
-    const moduleType = (request.module || request.payload?.module) as string;
+    // validate() has already confirmed this is one of the allowed module enum values.
+    const moduleType = (request.module || request.payload?.module) as ModuleType;
 
     // 1. Verify document exists and belongs to org
     const doc = await fetchDocument(db, documentId, ctx.user.organizationId);

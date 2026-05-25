@@ -63,7 +63,7 @@ export function useCommunicationCenterData(projectId?: string) {
           }
           const payload = await res.json().catch(() => ({}));
           const rows = Array.isArray(payload?.data) ? payload.data : [];
-          return { rows, error: null as const };
+          return { rows, error: null as string | null };
         } catch (error: any) {
           return { rows: [], error: error?.message || 'request_failed' };
         }

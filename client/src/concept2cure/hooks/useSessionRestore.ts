@@ -134,7 +134,7 @@ export function useSessionRestore(userId?: string, organizationId?: string): Ses
     
     try {
       // Merge with existing session
-      const existing = loadSession() || {};
+      const existing: Partial<SessionState> = loadSession() || {};
       
       const newSession: SessionState = {
         ...existing,

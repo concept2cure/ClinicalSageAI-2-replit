@@ -16,6 +16,25 @@
 import { Mark, mergeAttributes, Extension } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    trackChanges: {
+      /** Toggle whether direct edits are captured as tracked changes. */
+      toggleSuggestionMode: () => ReturnType;
+      /** Explicitly enable or disable suggestion mode. */
+      setSuggestionMode: (enabled: boolean) => ReturnType;
+      /** Accept a single tracked change by id. */
+      acceptChange: (changeId: string) => ReturnType;
+      /** Reject a single tracked change by id. */
+      rejectChange: (changeId: string) => ReturnType;
+      /** Accept every tracked change in the document. */
+      acceptAllChanges: () => ReturnType;
+      /** Reject every tracked change in the document. */
+      rejectAllChanges: () => ReturnType;
+    };
+  }
+}
+
 // ── Insertion Mark ──────────────────────────────────────────────────────────
 
 export const InsertionMark = Mark.create({

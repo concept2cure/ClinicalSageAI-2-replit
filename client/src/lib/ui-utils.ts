@@ -56,7 +56,7 @@ export function applyCompactStyling() {
   });
 
   // Add fade-in animations to major sections
-  const mainSections = document.querySelectorAll('main > div, main > section');
+  const mainSections = document.querySelectorAll<HTMLElement>('main > div, main > section');
   mainSections.forEach((section, index) => {
     if (!section.classList.contains('animate-fade-in')) {
       section.classList.add('animate-fade-in');

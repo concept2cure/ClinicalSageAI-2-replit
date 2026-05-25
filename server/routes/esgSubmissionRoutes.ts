@@ -55,7 +55,7 @@ router.post('/api/510k/:projectId/esg/submit', async (req, res) => {
     // a Part 11 event.
     void auditService.logAction({
       tenantId: Number((req as any).user?.organizationId || (req as any).tenantId) || 0,
-      userId: parseInt(req.headers['x-user-id'] as string || '') || null,
+      userId: parseInt(req.headers['x-user-id'] as string || '') || undefined,
       action: 'k510_workflow.transmit.failed',
       resourceType: 'fda_510k_submission_package',
       resourceId: req.params.projectId,
