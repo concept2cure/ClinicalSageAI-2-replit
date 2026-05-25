@@ -454,10 +454,24 @@ export async function processBatchForTraining(reportIds: number[]): Promise<any>
       const reportData = report[0];
       const detailsData = details[0];
 
-      // Check if the file exists
-      if (detailsData.filePath && fs.existsSync(detailsData.filePath)) {
-        const fileContent = fs.readFileSync(detailsData.filePath, 'utf8');
+      // CSR text is sourced from the report itself rather than a separate
+      // file: prefer an original path recorded in metadata, otherwise fall
+      // back to the serialized report content stored on the csr_reports row.
+      const reportMeta = (reportData.metadata as Record<string, unknown> | null) ?? {};
+      const metaFilePath =
+        typeof reportMeta.filePath === 'string' ? reportMeta.filePath : undefined;
 
+      let fileContent: string | undefined;
+      if (metaFilePath && fs.existsSync(metaFilePath)) {
+        fileContent = fs.readFileSync(metaFilePath, 'utf8');
+      } else if (reportData.content != null) {
+        fileContent =
+          typeof reportData.content === 'string'
+            ? reportData.content
+            : JSON.stringify(reportData.content);
+      }
+
+      if (fileContent) {
         // Create training examples
         createEndpointTrainingExample(fileContent, detailsData, datasetStream);
         createTreatmentArmsTrainingExample(fileContent, detailsData, datasetStream);
@@ -466,7 +480,7 @@ export async function processBatchForTraining(reportIds: number[]): Promise<any>
 
         results.processed++;
       } else {
-        console.warn(`File not found for report ID ${reportId}`);
+        console.warn(`No content available for report ID ${reportId}`);
         results.failed++;
       }
     } catch (error: any) {
@@ -766,8 +780,11 @@ export async function makePrediction(text: string, domain: string): Promise<any>
 
     // Use custom model or fall back to default model
     try {
-      const modelName = `trialsage-${domain}-extractor`;
-      const response = await queryHuggingFace(prompt, modelName);
+      // A per-domain custom model name (`trialsage-${domain}-extractor`) is
+      // not a member of the HFModel enum accepted by queryHuggingFace, so the
+      // call uses the service's default model. The catch block below already
+      // handles a default-model fallback path.
+      const response = await queryHuggingFace(prompt);
 
       // Try to parse the response as JSON
       try {

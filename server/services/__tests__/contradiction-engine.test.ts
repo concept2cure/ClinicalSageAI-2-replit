@@ -307,11 +307,17 @@ describe('Consequence Paths', () => {
   test('critical severity always offers correction draft path', () => {
     // Simulates getAvailableConsequencePaths for critical finding
     const severity = 'critical';
-    const consequenceType: ConsequenceType = 'assumption_supersession';
+    // Read through a typed object property (like production's
+    // finding.consequenceType) so the value keeps the full ConsequenceType
+    // union rather than narrowing to a single literal — otherwise the !==
+    // check below would be a no-overlap comparison.
+    const finding: { consequenceType: ConsequenceType } = {
+      consequenceType: 'assumption_supersession',
+    };
 
-    const paths: string[] = [consequenceType];
+    const paths: string[] = [finding.consequenceType];
     if (severity === 'critical' || severity === 'high') {
-      if (consequenceType !== 'harmonization_rewrite') {
+      if (finding.consequenceType !== 'harmonization_rewrite') {
         paths.push('prepare-correction-draft');
       }
     }

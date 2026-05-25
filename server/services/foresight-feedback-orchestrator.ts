@@ -243,7 +243,7 @@ export class ForesightFeedbackOrchestrator {
         4. Patient stratification strategies
       `;
 
-      const metaLearningResponse = await this.ai.chat({
+      const metaLearningResponse = await ai.chat({
         model: 'gpt-4-turbo-preview',
         messages: [
           {
@@ -259,7 +259,7 @@ export class ForesightFeedbackOrchestrator {
         response_format: { type: 'json_object' }
       });
 
-      const metaInsights = JSON.parse(metaLearningResponse.choices[0].message.content || '{}');
+      const metaInsights = JSON.parse(metaLearningResponse.content || '{}');
 
       // Store meta-learning patterns
       for (const pattern of metaInsights.patterns || []) {
@@ -323,7 +323,7 @@ export class ForesightFeedbackOrchestrator {
         - Required evidence
       `;
 
-      const response = await this.ai.chat({
+      const response = await ai.chat({
         model: 'gpt-4-turbo-preview',
         messages: [
           {
@@ -339,7 +339,7 @@ export class ForesightFeedbackOrchestrator {
         response_format: { type: 'json_object' }
       });
 
-      const hypothesisData = JSON.parse(aiResult.content || '{}');
+      const hypothesisData = JSON.parse(response.content || '{}');
 
       return {
         hypotheses: hypothesisData.hypotheses || [],

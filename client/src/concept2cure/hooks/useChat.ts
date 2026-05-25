@@ -23,7 +23,7 @@
 
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { Message, Artifact, ArtifactType, SubmissionType } from '../types';
+import { Message, Artifact, ArtifactType, ArtifactCategory, SubmissionType } from '../types';
 
 /**
  * Response structure from the AnA 1.0 RI API
@@ -146,13 +146,17 @@ function parseArtifacts(response: string, projectId: string): Artifact[] {
       title = 'Document Section';
     }
     
+    const category: ArtifactCategory = type === 'table' ? 'visualization' : 'document';
     artifacts.push({
       id: `artifact_${Date.now()}_${index}`,
       projectId,
+      conversationId: '',
       title,
       type,
+      category,
       content,
       version: 1,
+      versions: [],
       createdAt: new Date(),
       updatedAt: new Date(),
     });

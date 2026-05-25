@@ -296,73 +296,79 @@ router.post('/seed', async (req: Request, res: Response) => {
     ];
 
     for (const file of evidenceFiles) {
+      const deviceName =
+        file.project === project1[0].id
+          ? 'NeuroFlex TENS'
+          : file.project === project2[0].id
+            ? 'AeroSpire Spirometer'
+            : 'CardioGuardian ILR';
       await db.insert(sharepoint_files).values({
-        tenant_id: tenantId,
-        filename: file.filename,
-        category: file.category,
-        device_name: file.project === project1[0].id ? 'NeuroFlex TENS' : 
-                     file.project === project2[0].id ? 'AeroSpire Spirometer' : 
-                     'CardioGuardian ILR',
-        test_date: timestamp,
-        test_standard: file.category === 'test_report' ? 'ISO/IEC Standards' : null,
-        device_component: file.category,
-        uploaded_by: userId.toString(),
-        file_size: Math.floor(Math.random() * 5000000) + 500000,
-        content_type: file.filename.endsWith('.pdf') ? 'application/pdf' : 
-                      file.filename.endsWith('.xlsx') ? 'application/vnd.ms-excel' : 
-                      'application/zip',
-        version: 1,
-        is_current: true,
-        fda_requirement: mapToFDARequirement(file.category),
-        workflow_stage: file.stage,
-        project_id: file.project.toString(),
-        regulatory_status: file.status,
-        created_at: timestamp,
-        updated_at: timestamp
+        organizationId,
+        name: file.filename,
+        type: 'file',
+        path: `/${deviceName}/${file.category}/${file.filename}`,
+        mimeType: file.filename.endsWith('.pdf')
+          ? 'application/pdf'
+          : file.filename.endsWith('.xlsx')
+            ? 'application/vnd.ms-excel'
+            : 'application/zip',
+        size: Math.floor(Math.random() * 5000000) + 500000,
+        status: 'active',
+        createdBy: userId.toString(),
+        modifiedBy: userId.toString(),
+        // Domain fields without dedicated columns are preserved in metadata.
+        metadata: {
+          category: file.category,
+          deviceName,
+          testDate: timestamp,
+          testStandard: file.category === 'test_report' ? 'ISO/IEC Standards' : null,
+          deviceComponent: file.category,
+          version: 1,
+          isCurrent: true,
+          fdaRequirement: mapToFDARequirement(file.category),
+          workflowStage: file.stage,
+          projectId: file.project.toString(),
+          regulatoryStatus: file.status,
+        },
       });
     }
 
     // Add medical device records
+    // tenant_id/project_id have no real columns on medical_devices; dropped.
     await db.insert(medicalDevices).values([
       {
-        tenant_id: tenantId,
-        device_name: 'NeuroFlex TENS Patch',
-        device_type: 'Transcutaneous Electrical Nerve Stimulator',
-        device_class: 'II',
-        product_code: 'IPF',
-        regulation_number: '882.5890',
+        organizationId,
+        deviceName: 'NeuroFlex TENS Patch',
+        deviceType: 'Transcutaneous Electrical Nerve Stimulator',
+        deviceClass: 'II',
+        productCode: 'IPF',
+        regulationNumber: '882.5890',
         manufacturer: 'NeuroTech Medical Innovations Inc.',
-        intended_use: 'Temporary relief of pain',
-        project_id: project1[0].id.toString(),
-        created_at: timestamp,
-        updated_at: timestamp
+        intendedUse: 'Temporary relief of pain',
+        createdBy: userId,
       },
       {
-        tenant_id: tenantId,
-        device_name: 'AeroSpire Smart Spirometer',
-        device_type: 'Diagnostic Spirometer',
-        device_class: 'II',
-        product_code: 'BZG',
-        regulation_number: '868.1840',
+        organizationId,
+        deviceName: 'AeroSpire Smart Spirometer',
+        deviceType: 'Diagnostic Spirometer',
+        deviceClass: 'II',
+        productCode: 'BZG',
+        regulationNumber: '868.1840',
         manufacturer: 'Respiratory Innovations LLC',
-        intended_use: 'Lung function measurement',
-        project_id: project2[0].id.toString(),
-        created_at: timestamp,
-        updated_at: timestamp
+        intendedUse: 'Lung function measurement',
+        createdBy: userId,
       },
       {
-        tenant_id: tenantId,
-        device_name: 'CardioGuardian ILR',
-        device_type: 'Implantable Loop Recorder',
-        device_class: 'II',
-        product_code: 'DSI',
-        regulation_number: '870.2920',
+        organizationId,
+        deviceName: 'CardioGuardian ILR',
+        deviceType: 'Implantable Loop Recorder',
+        deviceClass: 'II',
+        productCode: 'DSI',
+        regulationNumber: '870.2920',
         manufacturer: 'Cardiac Monitoring Systems Inc.',
-        intended_use: 'Continuous cardiac monitoring',
-        project_id: project3[0].id.toString(),
-        created_at: timestamp,
-        updated_at: timestamp
-      }
+        intendedUse: 'Continuous cardiac monitoring',
+        createdBy: userId,
+      },
     ]);
 
     res.json({

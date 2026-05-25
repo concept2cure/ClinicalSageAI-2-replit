@@ -147,9 +147,14 @@ router.post('/', async (req, res) => {
     log.debug('Created user atomically:', result.data);
     log.debug('Quota info:', result.quotaInfo);
 
-    // Return the created user with quota info
+    // Return the created user with quota info. result.data is typed unknown by
+    // the dynamic-import shim, so narrow to an object before spreading.
+    const createdUser =
+      result.data && typeof result.data === 'object'
+        ? (result.data as Record<string, unknown>)
+        : {};
     res.status(201).json({
-      ...result.data,
+      ...createdUser,
       quotaInfo: result.quotaInfo,
     });
   } catch (error) {

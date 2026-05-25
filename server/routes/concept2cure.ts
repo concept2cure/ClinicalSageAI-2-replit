@@ -13126,7 +13126,13 @@ router.delete('/projects/:projectId/tasks/:taskId', async (req: Request, res: Re
     const taskId = parseInt(paramStr(req.params.taskId), 10);
     if (isNaN(taskId)) return sendError(res, 400, 'Invalid task ID');
 
-    const [deleted] = await db.delete(projectTasks).where(eq(projectTasks.id, taskId)).returning();
+    // db's union return type isn't iterable; cast at the boundary then index
+    // (matches the .returning() pattern used elsewhere in this file).
+    const deletedRows = (await db
+      .delete(projectTasks)
+      .where(eq(projectTasks.id, taskId))
+      .returning()) as any[];
+    const deleted = deletedRows[0];
     if (!deleted) return sendError(res, 404, 'Task not found');
     return sendSuccess(res, { deleted: true });
   } catch (error: any) {

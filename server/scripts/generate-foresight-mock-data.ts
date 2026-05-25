@@ -24,18 +24,22 @@ async function generateDoseEscalationData(organizationId: string) {
   console.log('📊 Generating dose escalation study data...');
   
   // Create a dose escalation study for an oncology drug
+  const mockStudyId = `STUDY-ONCO-${Date.now()}`;
   const [study] = await db!.insert(doseEscalationStudies).values({
-    organizationId,
-    studyName: 'ONCO-2025 Phase I Dose Escalation',
-    compoundName: 'ONX-4521',
+    organizationId: Number(organizationId),
+    studyId: mockStudyId,
+    protocolNumber: 'ONCO-2025-001',
+    title: 'ONCO-2025 Phase I Dose Escalation',
     indication: 'Advanced Solid Tumors',
+    phase: 'I',
     escalationMethod: '3_plus_3',
-    startingDose: 0.1,
-    maxDose: 10.0,
-    currentDoseLevel: 0.3,
+    startingDose: '0.1',
+    doseUnit: 'mg/kg',
+    maxDose: '10.0',
+    currentDoseLevel: 1,
     targetToxicityRate: 0.25,
-    status: 'enrolling',
-    metadata: {
+    status: 'active',
+    escalationParameters: {
       protocol: 'ONCO-2025-001',
       investigator: 'Dr. Sarah Johnson',
       site: 'Memorial Cancer Center'
@@ -86,15 +90,17 @@ async function generateDoseEscalationData(organizationId: string) {
   // Report a DLT event
   await db!.insert(dltEvents).values({
     studyId: study.id,
-    cohortId: cohort2[0].id,
-    patientIdentifier: 'PT-002-003',
-    dltType: 'Grade 3 Neutropenia',
-    grade: 3,
-    onsetDay: 14,
-    resolved: true,
+    cohortId: cohort2[0].id as string,
+    patientId: 'PT-002-003',
+    eventDate: new Date().toISOString().slice(0, 10),
+    ctcaeGrade: 3,
+    systemOrganClass: 'Blood and lymphatic system disorders',
+    preferredTerm: 'Neutropenia',
     description: 'Grade 3 neutropenia requiring G-CSF support',
-    attribution: 'probable',
-    reportedDate: new Date()
+    relatedness: 'probably',
+    seriousness: 'serious',
+    outcome: 'resolved',
+    metadata: { onsetDay: 14 }
   });
   
   console.log('✅ Created cohorts and DLT events');

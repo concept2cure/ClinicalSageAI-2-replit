@@ -378,6 +378,8 @@ export class CSRKnowledgeExtractor {
     doseRelationships: DoseExposureRelationship[]
   ) {
     try {
+      // The `organization_id` columns are integers; coerce the string param.
+      const orgIdNum = Number.isNaN(Number(organizationId)) ? null : Number(organizationId);
       // Store biomarker-endpoint relationships
       for (const biomarker of biomarkerCorrelations) {
         for (const outcome of efficacyOutcomes) {
@@ -400,7 +402,7 @@ export class CSRKnowledgeExtractor {
               pValue: biomarker.pValue,
               responseAssociation: biomarker.responseAssociation
             },
-            organizationId
+            organizationId: orgIdNum
           };
           
           await db!.insert(biomarkerEndpoints)
@@ -444,83 +446,91 @@ export class CSRKnowledgeExtractor {
             csrId,
             extractionDate: new Date().toISOString()
           },
-          organizationId
+          organizationId: orgIdNum
         };
-        
+
         await db!.insert(clinicalOutcomes).values(clinicalOutcomeData);
       }
 
       // Store translational patterns
       if (biomarkerCorrelations.length > 0 && efficacyOutcomes.length > 0) {
         const pattern: InsertTranslationalPattern = {
-          organizationId,
-          sourcePhase: 'preclinical',
-          targetPhase: 'clinical',
+          patternName: `biomarker_efficacy_${csrId}`,
           patternType: 'biomarker_efficacy',
-          patternData: {
-            biomarkers: biomarkerCorrelations.map(b => ({
-              name: b.biomarkerName,
-              correlation: b.correlationScore,
-              association: b.responseAssociation
-            })),
-            outcomes: efficacyOutcomes.map(o => ({
-              type: o.type,
-              value: o.value,
-              unit: o.unit
-            })),
+          preclinicalMarkers: biomarkerCorrelations.map(b => ({
+            name: b.biomarkerName,
+            correlation: b.correlationScore,
+            association: b.responseAssociation
+          })),
+          clinicalEndpoints: efficacyOutcomes.map(o => ({
+            type: o.type,
+            value: o.value,
+            unit: o.unit
+          })),
+          occurrenceCount: 1,
+          confidence: this.calculatePatternConfidence(biomarkerCorrelations, efficacyOutcomes),
+          lastObserved: new Date(),
+          metadata: {
+            csrId,
+            organizationId: orgIdNum,
+            extractionDate: new Date().toISOString(),
             safetyProfile: {
               aes: safetySignals.filter(s => s.type === 'AE').length,
               saes: safetySignals.filter(s => s.type === 'SAE').length,
               dlts: safetySignals.filter(s => s.type === 'DLT').length
             }
-          },
-          confidenceScore: this.calculatePatternConfidence(biomarkerCorrelations, efficacyOutcomes),
-          evidenceCount: 1,
-          metadata: {
-            csrId,
-            extractionDate: new Date().toISOString()
           }
         };
-        
+
         await db!.insert(translationalPatterns).values(pattern);
       }
 
       // Store dose escalation data if available
       if (doseRelationships.length > 0) {
-        const [report] = await db!.select()
-          .from(csrReports)
-          .where(eq(csrReports.id, csrId));
+        const csrIdNum = Number(csrId);
+        const [report] = Number.isNaN(csrIdNum)
+          ? [undefined]
+          : await db!.select().from(csrReports).where(eq(csrReports.id, csrIdNum));
 
+        const doseUnit = doseRelationships[0]?.doseUnit || 'mg';
+        // Decimal columns are typed as strings by the driver; stringify the
+        // computed dose figures. The escalation-study study id is a varchar,
+        // so it can carry the CSR-derived identifier directly.
         const studyData: InsertDoseEscalationStudy = {
-          organizationId,
-          studyName: report?.title || `CSR Study ${csrId}`,
-          compoundName: ((report?.metadata as any)?.drugName as string) || 'Unknown',
+          organizationId: orgIdNum,
+          studyId: `CSR_${csrId}`,
+          protocolNumber: report?.studyId || `CSR-${csrId}`,
+          title: report?.title || `CSR Study ${csrId}`,
           indication: report?.indication || 'Unknown',
-          escalationMethod: '3_plus_3',
-          startingDose: Math.min(...doseRelationships.map(d => d.doseLevel)),
-          maxDose: Math.max(...doseRelationships.map(d => d.doseLevel)),
+          phase: report?.phase || 'I',
+          escalationMethod: '3+3',
+          startingDose: String(Math.min(...doseRelationships.map(d => d.doseLevel))),
+          maxDose: String(Math.max(...doseRelationships.map(d => d.doseLevel))),
+          doseUnit,
           currentDoseLevel: doseRelationships[0]?.doseLevel || 0,
           status: 'completed',
-          metadata: {
+          escalationParameters: {
             csrId,
+            drugName: ((report?.metadata as Record<string, unknown> | null)?.drugName as string) || 'Unknown',
             doseRelationships,
             mtdEstimate: doseRelationships.find(d => d.mtdReached)?.doseLevel
           }
         };
-        
+
         const [study] = await db!.insert(doseEscalationStudies)
           .values(studyData)
           .returning();
 
-        // Store dose cohorts
+        // Store dose levels and a representative cohort for each.
         for (const doseRel of doseRelationships) {
           const [doseLevel] = await db!.insert(doseLevels)
             .values({
               studyId: study.id,
               levelNumber: doseRelationships.indexOf(doseRel) + 1,
-              doseAmount: doseRel.doseLevel,
+              doseAmount: String(doseRel.doseLevel),
               doseUnit: doseRel.doseUnit,
-              isDLT: doseRel.dltRate > 0.33
+              dltsInCohort: Math.round(doseRel.dltRate * 3),
+              status: 'completed'
             })
             .returning();
 
@@ -529,11 +539,10 @@ export class CSRKnowledgeExtractor {
               studyId: study.id,
               doseLevelId: doseLevel.id,
               cohortNumber: doseRelationships.indexOf(doseRel) + 1,
-              plannedPatients: 3,
-              enrolledPatients: 3,
-              evaluablePatients: 3,
-              dltsObserved: Math.round(doseRel.dltRate * 3),
-              status: 'completed'
+              patientId: `${study.id}_cohort_${doseRelationships.indexOf(doseRel) + 1}`,
+              enrollmentDate: new Date().toISOString().slice(0, 10),
+              dltOccurred: doseRel.dltRate > 0.33,
+              metadata: { dltsObserved: Math.round(doseRel.dltRate * 3) }
             });
         }
       }
