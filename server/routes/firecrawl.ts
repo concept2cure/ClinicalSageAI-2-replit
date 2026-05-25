@@ -5,7 +5,7 @@ import {
   recordSuccessfulFirecrawlScrape,
 } from '../integrations/firecrawl/usage';
 import { evaluateFirecrawlPolicy } from '../integrations/firecrawl/policy';
-import { getPool } from '../db.ts';
+import { getPool } from '../db';
 import { firecrawlError } from '../integrations/firecrawl/errors';
 import { authMiddleware } from '../auth';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
