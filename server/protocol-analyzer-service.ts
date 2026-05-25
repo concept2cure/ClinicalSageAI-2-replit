@@ -352,6 +352,7 @@ export class ProtocolAnalyzerService {
       // Attempt semantic embeddings; degrade gracefully to attribute scoring.
       let embeddingService: ReturnType<typeof getEmbeddingService> | null = null;
       let inputVector: number[] | null = null;
+      let inputModel = '';
       try {
         embeddingService = getEmbeddingService(getPool());
         const inputText = this.buildProtocolText({
@@ -361,7 +362,11 @@ export class ProtocolAnalyzerService {
           design: protocolData.design,
           primary_endpoint: protocolData.primary_endpoint,
         });
-        if (inputText) inputVector = (await embeddingService.embed(inputText)).embedding;
+        if (inputText) {
+          const result = await embeddingService.embed(inputText);
+          inputVector = result.embedding;
+          inputModel = result.model;
+        }
       } catch {
         embeddingService = null;
         inputVector = null;
@@ -378,6 +383,8 @@ export class ProtocolAnalyzerService {
             durationWeeks?: number;
             duration?: number;
             outcome?: string;
+            embedding?: number[];
+            embeddingModel?: string;
           };
           const sampleSize = meta.sampleSize ?? meta.sample_size;
           const durationWeeks = meta.durationWeeks ?? meta.duration;
@@ -392,13 +399,32 @@ export class ProtocolAnalyzerService {
 
           if (embeddingService && inputVector) {
             try {
-              const candidateText = this.buildProtocolText({
-                title: protocol.title,
-                indication: protocol.indication,
-                phase: protocol.phase,
-              });
-              if (candidateText) {
-                const candidateVector = (await embeddingService.embed(candidateText)).embedding;
+              // Reuse the protocol's persisted embedding when present (same
+              // model); otherwise embed once and persist it to avoid recomputing
+              // on every request.
+              let candidateVector: number[] | null = null;
+              if (
+                Array.isArray(meta.embedding) &&
+                meta.embedding.length === inputVector.length &&
+                meta.embeddingModel === inputModel
+              ) {
+                candidateVector = meta.embedding;
+              } else {
+                const candidateText = this.buildProtocolText({
+                  title: protocol.title,
+                  indication: protocol.indication,
+                  phase: protocol.phase,
+                });
+                if (candidateText) {
+                  const result = await embeddingService.embed(candidateText);
+                  candidateVector = result.embedding;
+                  await db
+                    .update(protocols)
+                    .set({ metadata: { ...meta, embedding: result.embedding, embeddingModel: result.model } })
+                    .where(eq(protocols.id, protocol.id));
+                }
+              }
+              if (candidateVector) {
                 similarity = Math.round(this.cosine(inputVector, candidateVector) * 100);
                 similarityMethod = 'semantic';
               }
