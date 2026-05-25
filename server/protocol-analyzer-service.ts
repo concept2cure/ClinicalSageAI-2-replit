@@ -248,6 +248,59 @@ export class ProtocolAnalyzerService {
   }
 
   /**
+   * Compute a deterministic similarity score (0-100) between the input protocol
+   * and a candidate, derived from real shared attributes. Returns null when no
+   * attribute can be compared, so callers never receive a fabricated score.
+   */
+  private computeSimilarity(
+    input: ProtocolData,
+    candidate: { phase?: string | null; indication?: string | null; sampleSize?: number; durationWeeks?: number }
+  ): number | null {
+    const components: { weight: number; score: number }[] = [];
+
+    if (input.phase && candidate.phase) {
+      const a = this.normalizePhase(input.phase);
+      const b = this.normalizePhase(candidate.phase);
+      components.push({ weight: 0.35, score: a === b ? 1 : 0 });
+    }
+
+    if (input.indication && candidate.indication) {
+      const a = classifyTherapeuticArea(input.indication);
+      const b = classifyTherapeuticArea(candidate.indication);
+      if (a && b) components.push({ weight: 0.2, score: a === b ? 1 : 0 });
+    }
+
+    const proximity = (a?: number, b?: number): number | null => {
+      if (typeof a !== 'number' || typeof b !== 'number' || a <= 0 || b <= 0) return null;
+      return 1 - Math.min(1, Math.abs(a - b) / Math.max(a, b));
+    };
+
+    const sizeScore = proximity(input.sample_size, candidate.sampleSize);
+    if (sizeScore !== null) components.push({ weight: 0.25, score: sizeScore });
+
+    const durationScore = proximity(input.duration_weeks, candidate.durationWeeks);
+    if (durationScore !== null) components.push({ weight: 0.2, score: durationScore });
+
+    if (components.length === 0) return null;
+
+    const totalWeight = components.reduce((sum, c) => sum + c.weight, 0);
+    const weighted = components.reduce((sum, c) => sum + c.weight * c.score, 0);
+    return Math.round((weighted / totalWeight) * 100);
+  }
+
+  /**
+   * Derive a trial outcome from real stored fields. Returns null when the data
+   * does not state an outcome — never a coined success/failed value.
+   */
+  private deriveOutcome(status?: string | null, outcome?: string | null): 'success' | 'failed' | null {
+    const value = (outcome ?? status ?? '').toString().toLowerCase();
+    if (!value) return null;
+    if (/\b(success|successful|approved|positive|met)\b/.test(value)) return 'success';
+    if (/\b(fail|failed|terminated|withdrawn|halted|negative|not met)\b/.test(value)) return 'failed';
+    return null;
+  }
+
+  /**
    * Find similar protocols to the given protocol data
    */
   async findSimilarProtocols(protocolData: ProtocolData, limit: number = 5): Promise<any[]> {
@@ -268,17 +321,25 @@ export class ProtocolAnalyzerService {
           sample_size?: number;
           durationWeeks?: number;
           duration?: number;
+          outcome?: string;
         };
+        const sampleSize = meta.sampleSize ?? meta.sample_size;
+        const durationWeeks = meta.durationWeeks ?? meta.duration;
         return {
           id: protocol.id,
           title: protocol.title,
-          sponsor: meta.sponsor || 'Lumen Biosciences', // Include sponsor in similar protocols
+          sponsor: meta.sponsor ?? null,
           phase: protocol.phase,
           indication: protocol.indication,
-          similarity: Math.floor(Math.random() * 40) + 60, // Random similarity score for demo
-          sampleSize: meta.sampleSize ?? meta.sample_size ?? 100,
-          duration: meta.durationWeeks ?? meta.duration ?? 24,
-          outcome: Math.random() > 0.3 ? 'success' : 'failed', // Random outcome for demo
+          similarity: this.computeSimilarity(protocolData, {
+            phase: protocol.phase,
+            indication: protocol.indication,
+            sampleSize,
+            durationWeeks,
+          }),
+          sampleSize: sampleSize ?? null,
+          duration: durationWeeks ?? null,
+          outcome: this.deriveOutcome(protocol.status, meta.outcome),
         };
       });
     } catch (error) {

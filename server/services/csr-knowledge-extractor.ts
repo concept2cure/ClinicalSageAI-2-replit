@@ -46,10 +46,10 @@ interface BiomarkerCorrelation {
   biomarkerName: string;
   biomarkerType: 'protein' | 'gene' | 'metabolite' | 'cell' | 'cytokine';
   baselineLevel: number;
-  changeFromBaseline: number;
+  changeFromBaseline: number | null;
   responseAssociation: 'positive' | 'negative' | 'neutral';
   correlationScore: number;
-  pValue: number;
+  pValue: number | null;
 }
 
 interface DoseExposureRelationship {
@@ -302,16 +302,22 @@ export class CSRKnowledgeExtractor {
             association = 'negative';
           }
 
+          // Only emit a correlation when a real coefficient is present in the
+          // source text. Without it there is no quantitative basis, so the row
+          // is skipped rather than fabricated.
+          const correlationScore = this.extractCorrelationScore(context);
+          if (correlationScore === null) {
+            continue;
+          }
+
           correlations.push({
             biomarkerName: biomarker.name,
             biomarkerType: biomarker.type,
             baselineLevel: value,
-            changeFromBaseline: Math.random() * 20 - 10, // Simulated for now
+            changeFromBaseline: this.extractChangeFromBaseline(context),
             responseAssociation: association,
-            correlationScore: association === 'positive' ? 0.7 + Math.random() * 0.3 : 
-                            association === 'negative' ? -0.7 - Math.random() * 0.3 : 
-                            Math.random() * 0.4 - 0.2,
-            pValue: Math.random() * 0.1
+            correlationScore,
+            pValue: this.extractPValue(context) ?? null,
           });
         }
       }
@@ -588,6 +594,39 @@ export class CSRKnowledgeExtractor {
       return parseFloat(pMatch[1]);
     }
     return undefined;
+  }
+
+  /**
+   * Extract a correlation coefficient stated in the text (e.g. "r = -0.62").
+   * Returns null when no value in the valid [-1, 1] range is present.
+   */
+  private extractCorrelationScore(text: string): number | null {
+    const match =
+      text.match(/r\s*=\s*(-?\d+\.?\d*)/i) ||
+      text.match(/correlation[^.\d-]*(-?\d+\.?\d*)/i);
+    if (!match) return null;
+    const value = parseFloat(match[1]);
+    if (Number.isNaN(value) || value < -1 || value > 1) return null;
+    return value;
+  }
+
+  /**
+   * Extract a stated change-from-baseline value (e.g. "decreased by 12.4").
+   * Returns null when not present; sign reflects increase/decrease wording.
+   */
+  private extractChangeFromBaseline(text: string): number | null {
+    const explicit = text.match(/change from baseline[^.\d-]*(-?\d+\.?\d*)/i);
+    if (explicit) {
+      const value = parseFloat(explicit[1]);
+      return Number.isNaN(value) ? null : value;
+    }
+    const directional = text.match(/(decreased|reduced|reduction|increased|increase)[^.\d]*(\d+\.?\d*)/i);
+    if (directional) {
+      const magnitude = parseFloat(directional[2]);
+      if (Number.isNaN(magnitude)) return null;
+      return /decreas|reduc/i.test(directional[1]) ? -magnitude : magnitude;
+    }
+    return null;
   }
 
   private extractDoseLevels(text: string): number[] {
