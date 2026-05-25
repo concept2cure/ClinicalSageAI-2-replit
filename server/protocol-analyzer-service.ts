@@ -1,10 +1,7 @@
 import { db } from './db';
 import { eq } from 'drizzle-orm';
 import { protocols } from '../shared/schema';
-import {
-  classifyTherapeuticArea,
-  getTherapeuticArea,
-} from '../shared/utils/therapeutic-area-classifier';
+import { classifyTherapeuticArea } from '../shared/utils/therapeutic-area-classifier';
 
 export interface ProtocolData {
   phase: string;
@@ -74,53 +71,32 @@ export class ProtocolAnalyzerService {
         normalizedText.match(/(?:indication|condition|disease):\s*([^\n\.]+)/i) ||
         normalizedText.match(/(?:investigating|studying|trial for|treatment of)\s+([^\n\.]+)/i);
 
+      // classifyTherapeuticArea returns the best-guess therapeutic-area name
+      // (string); the previous confidence/keyword-rich API no longer exists.
+      const UNKNOWN_AREA = 'Unknown';
       if (indicationMatch) {
-        // Extract the explicit statement and classify it
+        // Extract the explicit statement and classify it.
         const explicitIndication = indicationMatch[1].trim();
-        const classificationResult = classifyTherapeuticArea(explicitIndication, {
-          confidenceThreshold: 0.4,
-          enableLogging: true,
-        });
+        const explicitArea = classifyTherapeuticArea(explicitIndication);
 
-        // If we got a high-confidence match, use the therapeutic area name
-        if (classificationResult.confidence >= 0.7) {
-          indication = classificationResult.area;
+        if (explicitArea && explicitArea !== UNKNOWN_AREA) {
+          indication = explicitArea;
         } else {
-          // Otherwise use the explicit text but also run full-text classification
-          const fullTextResult = classifyTherapeuticArea(protocolText, {
-            confidenceThreshold: 0.3,
-            enableLogging: true,
-          });
-
-          // If full-text classification has higher confidence, use that
-          if (fullTextResult.confidence > classificationResult.confidence) {
-            indication = fullTextResult.area;
+          // Fall back to full-text classification, else the explicit text.
+          const fullTextArea = classifyTherapeuticArea(protocolText);
+          if (fullTextArea && fullTextArea !== UNKNOWN_AREA) {
+            indication = fullTextArea;
             console.log(
-              `Protocol analysis: Overriding explicit indication "${explicitIndication}" with higher confidence classification "${fullTextResult.area}" (${fullTextResult.confidence.toFixed(2)})`
+              `Protocol analysis: Overriding explicit indication "${explicitIndication}" with classification "${fullTextArea}"`
             );
           } else {
-            // Use the explicit text but clean it up
             indication = explicitIndication;
           }
         }
       } else {
-        // No explicit indication found, use full text classification
-        const classificationResult = classifyTherapeuticArea(protocolText, {
-          confidenceThreshold: 0.3,
-          enableLogging: true,
-        });
-
-        indication = classificationResult.area;
-
-        // Log classification details for audit purposes
-        console.log(
-          `Protocol analysis: Classified as "${indication}" with ${classificationResult.confidence.toFixed(2)} confidence`
-        );
-        if (classificationResult.matchedKeywords.length > 0) {
-          console.log(
-            `Protocol analysis: Matched keywords: ${classificationResult.matchedKeywords.join(', ')}`
-          );
-        }
+        // No explicit indication found, use full text classification.
+        indication = classifyTherapeuticArea(protocolText);
+        console.log(`Protocol analysis: Classified as "${indication}"`);
       }
 
       // Extract sample size
