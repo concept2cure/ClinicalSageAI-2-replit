@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-20T21:14:54.946Z",
+  "generatedAt": "2026-05-25T00:39:51.969Z",
   "fingerprints": [
     "server/api/vault/routes.ts#2ce45e947c41:document_chunks",
     "server/api/vault/routes.ts#37f70c50a823:document_chunks",
@@ -31,6 +31,7 @@
     "server/routes/mdx-ana-memory.ts#384273afbeb5:client_memory_entries",
     "server/routes/mdx-ana-memory.ts#4a5e5a454856:client_memory_entries",
     "server/routes/mdx-ana-memory.ts#56c5edff8921:client_memory_entries",
+    "server/routes/mdx-audit.ts#26683306ef50:audit_logs,users",
     "server/routes/mdx-vault.ts#99479ef22a20:projects",
     "server/routes/misc-inline-routes.ts#02b7c45c8611:documents",
     "server/routes/misc-inline-routes.ts#aa96af1bdd74:documents",
