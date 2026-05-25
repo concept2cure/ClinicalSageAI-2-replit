@@ -976,7 +976,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
     
     // Generate blockers based on missing dependencies
     const blockers: DocumentBlocker[] = [];
-    if ((submissionType === '510K' || submissionType === 'DE_NOVO') && predicateDevices.length === 0) {
+    if (((submissionType as string) === "510K" || (submissionType as string) === "DE_NOVO") && predicateDevices.length === 0) {
       blockers.push({
         id: 'blocker-predicate',
         title: 'Predicate device not connected',

@@ -59,7 +59,7 @@ const { TenantAccessError } = vi.hoisted(() => ({
 }));
 
 vi.mock('../../services/q-sub/q-sub.service', () => ({
-  createQSubmission: (...a: any[]) => svc.createQSubmission(...a),
+  createQSubmission: (...a: any[]) => (svc.createQSubmission as any)(...a),
   setCommitmentRolledIn: vi.fn(),
   TenantAccessError,
   Q_SUB_TYPES: ['presub', 'sir', 'srd', 'agree', 'info'],

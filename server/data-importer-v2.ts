@@ -150,25 +150,27 @@ export function convertV2StudyToCsrDetails(
     };
 
     // Prepare details data
-    const detailsData: Partial<InsertCsrDetails> = {
+    const detailsData: Record<string, any> = {
       reportId,
       studyDesign,
       primaryObjective,
-      studyDescription: description?.detailedDescription || null,
       inclusionCriteria,
       exclusionCriteria,
-      treatmentArms,
       studyDuration: design?.studyDesign || null,
       endpoints,
       results: {},
       safety: {},
-      processingStatus: 'imported_from_api_v2',
       sampleSize,
       ageRange,
       gender,
       statisticalMethods: null,
       adverseEvents: null,
       efficacyResults: null,
+      metadata: {
+        treatmentArms,
+        studyDescription: description?.detailedDescription || null,
+        processingStatus: 'imported_from_api_v2',
+      },
     };
 
     return detailsData;
@@ -176,7 +178,7 @@ export function convertV2StudyToCsrDetails(
     console.error('Error converting study to CSR details format:', error);
     return {
       reportId,
-      processingStatus: 'error_during_import',
+      metadata: { processingStatus: 'error_during_import' },
     };
   }
 }

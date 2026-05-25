@@ -458,7 +458,7 @@ export const DocumentSherpa: React.FC<DocumentSherpaProps> = ({
         title: `Complete ${pendingReviews} pending review${pendingReviews > 1 ? 's' : ''}`,
         description: 'Team members have requested your review on document sections.',
         expectedOutcome: 'Document progress continues',
-        actionType: 'review',
+        actionType: 'request-review',
         estimatedTime: `${pendingReviews * 5} min`,
         rationale: 'Timely reviews keep the submission on track.',
       });

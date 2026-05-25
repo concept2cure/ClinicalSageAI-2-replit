@@ -78,8 +78,8 @@ const traceUpstreamMock = vi.fn(async (..._args: unknown[]) => ({ nodes: [], edg
 
 vi.mock('../../data-lineage-service', () => ({
   recordLineageBatch: (e: unknown[]) => recordLineageBatchMock(e),
-  traceDownstream: (...args: unknown[]) => traceDownstreamMock(...args),
-  traceUpstream: (...args: unknown[]) => traceUpstreamMock(...args),
+  traceDownstream: (...args: unknown[]) => (traceDownstreamMock as any)(...args),
+  traceUpstream: (...args: unknown[]) => (traceUpstreamMock as any)(...args),
 }));
 
 vi.mock('../../audit/auditLogger', () => ({
