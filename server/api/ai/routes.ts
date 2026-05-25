@@ -472,7 +472,7 @@ router.get('/regulatory-guidance/:section', async (req: Request, res: Response) 
     const section = String(req.params.section);
     const organizationId = (req as any).user?.organizationId || (req as any).tenantId;
 
-    const guidance = regulatoryKnowledgeBase[section];
+    const guidance = regulatoryKnowledgeBase[String(section)];
 
     if (!guidance) {
       return res.status(404).json({
