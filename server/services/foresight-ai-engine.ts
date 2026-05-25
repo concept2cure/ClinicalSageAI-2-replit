@@ -757,7 +757,8 @@ export class ForesightAIEngine {
     // Parse the narrative into structured sections
     const sections = this.parseINDSections(narrativeContent);
     
-    // Store the narrative in database
+    // Store the narrative in database. The free-form narrative text and the
+    // regulatory body are not first-class columns; they live in sourceData.
     const [narrative] = await db!.insert(indNarratives).values({
       narrativeId: `IND-NARR-${Date.now()}`,
       protocolNumber: `PROTO-${studyId}`,
@@ -953,6 +954,7 @@ export class ForesightAIEngine {
         phase,
         primaryEndpoint,
         targetPopulation,
+        content: protocol,
         generatedBy: AI_MODELS.NARRATIVE,
         timestamp: new Date().toISOString()
       }
@@ -1189,7 +1191,7 @@ export class ForesightAIEngine {
       organizationId: organizationId ? Number(organizationId) : undefined,
       createdBy: 'system'
     }).returning();
-    
+
     // Store individual species comparisons
     for (const species of speciesData) {
       await db!.insert(speciesComparisons).values({
@@ -1850,7 +1852,7 @@ export class ForesightAIEngine {
     const entries = Object.entries(scores) as Array<[string, number]>;
     
     // Sort by impact
-    entries.sort((a: any, b: any) => b[1] - a[1]);
+    entries.sort((a, b) => b[1] - a[1]);
     
     // Top 3 positive drivers
     for (let i = 0; i < Math.min(3, entries.length); i++) {
