@@ -29,6 +29,7 @@ const listQuery = z.object({
   action:   z.string().max(60).optional(),
   resource: z.string().max(60).optional(),
   actor:    z.string().max(120).optional(),
+  program:  z.string().max(120).optional(),
   from:     z.string().optional(),
   to:       z.string().optional(),
   limit:    z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1).max(1000)).optional(),
@@ -50,13 +51,20 @@ router.get('/audit', async (req: Request, res: Response) => {
   if (orgId === null) return orgRequired(res);
   const parsed = listQuery.safeParse(req.query);
   if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
-  const { action, resource, actor, from, to, limit = 200 } = parsed.data;
+  const { action, resource, actor, program, from, to, limit = 200 } = parsed.data;
 
   const filters = ['al.tenant_id = $1'];
   const args: unknown[] = [orgId];
   if (action)   { args.push(action);   filters.push(`al.action = $${args.length}`); }
   if (resource) { args.push(resource); filters.push(`al.table_name = $${args.length}`); }
   if (actor)    { args.push(actor);    filters.push(`al.user_id::text = $${args.length}`); }
+  // Phase 9 connection-pass §3: cross-program surfaces accept an optional
+  // program filter. Audit events anchor to a program when the record id or
+  // the new_values payload references the program code.
+  if (program)  {
+    args.push(`%${program}%`);
+    filters.push(`(al.record_id ILIKE $${args.length} OR al.new_values::text ILIKE $${args.length})`);
+  }
   if (from)     { args.push(from);     filters.push(`al.created_at >= $${args.length}`); }
   if (to)       { args.push(to);       filters.push(`al.created_at <= $${args.length}`); }
   args.push(limit);
