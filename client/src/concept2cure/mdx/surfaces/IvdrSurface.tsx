@@ -20,6 +20,7 @@ import {
   IVDR_RULES,
 } from '../data/ivdr';
 import { useIvdr } from '../hooks/useIvdr';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 import type { Program } from '../data/programs';
 import type {
   KitDocFramework,
@@ -90,6 +91,8 @@ export function IvdrSurface({
           </button>
         </div>
       </div>
+
+      <SampleDataBanner show={live.rules === null} loading={live.loading} label="classification rules" />
 
       <div className="metrics-row metrics-compact">
         {kpis.map((k, i) => (

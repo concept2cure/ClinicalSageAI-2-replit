@@ -49,6 +49,7 @@ import {
   ALL_ANA_TOOLS,
 } from '../../services/ana/AnaToolDefinitions.js';
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
+import { loadAnaToolPolicy, filterToolsByPolicy } from '../../services/ana-ri/mdx-tool-policy.js';
 import { logToolRun } from '../../services/toolRegistry.js';
 import type { AnaGatewayResponse } from '../../services/ai-gateway/types.js';
 import {
@@ -441,7 +442,14 @@ router.post('/stream', async (req: Request, res: Response) => {
     // plus any env-enabled Anthropic server tools (web_search, web_fetch,
     // code_execution). Server tools resolve in Anthropic's infra; custom
     // tools dispatch locally via the single-round agentic block below.
-    const streamTools = getAllEnabledTools();
+    // Per-tenant tool governance: a tenant can disable individual tools
+    // (e.g. outbound FDA letters, adverse-event lookups) via
+    // organizations.settings.anaToolPolicy.deny. Honour the deny-list on
+    // the assembled toolset so disabled tools are never offered to the
+    // model. Loader is fail-open (default-allow) on any DB issue.
+    const allTools = getAllEnabledTools();
+    const toolPolicy = orgId ? await loadAnaToolPolicy(getPool(), Number(orgId)) : {};
+    const streamTools = filterToolsByPolicy(allTools, toolPolicy);
 
     const gwResponse = await gw.route({
       taskType: routingPlan.taskType,

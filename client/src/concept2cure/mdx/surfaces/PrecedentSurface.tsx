@@ -59,6 +59,15 @@ export function PrecedentSurface({ onAskAna }: PrecedentSurfaceProps) {
               </div>
             )}
 
+            {!saved.loading && saved.queries === null && (
+              <div className="estar-row" style={{ color: 'var(--text-300)' }}>
+                <div className="estar-num">--</div>
+                <div className="estar-label">
+                  Saved queries are unavailable right now. Retry shortly — your pinned searches are not lost.
+                </div>
+              </div>
+            )}
+
             {saved.queries?.length === 0 && (
               <div className="estar-row" style={{ color: 'var(--text-300)' }}>
                 <div className="estar-num">00</div>

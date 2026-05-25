@@ -22,6 +22,7 @@ import {
 } from '../data/udi';
 import { UDI_DOC_FRAMEWORKS, UDI_DOCUMENTS } from '../data/udi-docs';
 import { useUdi } from '../hooks/useUdi';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
 
 export interface UdiSurfaceProps {
@@ -125,6 +126,8 @@ export function UdiSurface({ onAskAna, onOpenEditor }: UdiSurfaceProps) {
           </button>
         </div>
       </div>
+
+      <SampleDataBanner show={live.devices === null} loading={live.loading} label="device identifiers" />
 
       <div className="metrics-row metrics-compact">
         <div className="metric-card">

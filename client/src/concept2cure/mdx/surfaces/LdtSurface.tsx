@@ -21,6 +21,7 @@ import {
   LDT_PHASES,
 } from '../data/ldt';
 import { useLdt } from '../hooks/useLdt';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 import type {
   KitDocFramework,
   KitDocument,
@@ -93,6 +94,8 @@ export function LdtSurface({ onAskAna, onOpenEditor }: LdtSurfaceProps) {
           </button>
         </div>
       </div>
+
+      <SampleDataBanner show={live.phases === null} loading={live.loading} label="compliance phases" />
 
       <div className="metrics-row metrics-compact">
         {kpis.map((k, i) => (

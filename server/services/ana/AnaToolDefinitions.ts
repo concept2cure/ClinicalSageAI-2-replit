@@ -70,6 +70,46 @@ export const SEARCH_LITERATURE: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// FDA Postmarket Surveillance Tools (live openFDA)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const SEARCH_DEVICE_ADVERSE_EVENTS: AnaTool = {
+  name: 'search_device_adverse_events',
+  description:
+    'Search the FDA MAUDE database (live openFDA) for medical-device adverse-event reports by product code, device name, or manufacturer. Returns a summary (total reports, serious events, top event types, date range) plus a capped sample of recent reports. Use for device postmarket surveillance and CER vigilance sections.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      product_code: { type: 'string', description: 'FDA product code (e.g. "MDS"), most precise filter' },
+      device_name: { type: 'string', description: 'Generic device name' },
+      manufacturer: { type: 'string', description: 'Manufacturer name' },
+      date_from: { type: 'string', description: 'Start date YYYY-MM-DD' },
+      date_to: { type: 'string', description: 'End date YYYY-MM-DD' },
+      max_results: { type: 'number', description: 'Maximum reports to summarize (default: 50)' },
+    },
+    required: [],
+  },
+};
+
+export const SEARCH_DRUG_ADVERSE_EVENTS: AnaTool = {
+  name: 'search_drug_adverse_events',
+  description:
+    'Search the FDA FAERS database (live openFDA) for drug adverse-event reports by product NDC, product name, or manufacturer. Returns a summary (total reports, serious events, top reactions, date range) plus a capped sample. Use for pharmacovigilance and safety-signal context.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      product_ndc: { type: 'string', description: 'Product NDC code, most precise filter' },
+      product_name: { type: 'string', description: 'Drug product or brand name' },
+      manufacturer: { type: 'string', description: 'Manufacturer name' },
+      date_from: { type: 'string', description: 'Start date YYYY-MM-DD' },
+      date_to: { type: 'string', description: 'End date YYYY-MM-DD' },
+      max_results: { type: 'number', description: 'Maximum reports to summarize (default: 50)' },
+    },
+    required: [],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Regulatory & Compliance Tools
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1912,6 +1952,8 @@ export const DRAFT_FDA_IR_RESPONSE: AnaTool = {
 export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
+  SEARCH_DEVICE_ADVERSE_EVENTS,
+  SEARCH_DRUG_ADVERSE_EVENTS,
   LOOKUP_FDA_GUIDANCE,
   LOOKUP_ICH_GUIDELINE,
   CHECK_REGULATORY_COMPLIANCE,

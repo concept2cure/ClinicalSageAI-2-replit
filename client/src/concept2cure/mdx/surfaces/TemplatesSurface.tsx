@@ -14,6 +14,7 @@ import { I } from '../icons';
 import { DocumentsPanel } from '../components/DocumentsPanel';
 import { TEMPLATES, TPL_FRAMEWORKS } from '../data/templates';
 import { useTemplates } from '../hooks/useTemplates';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 import type {
   KitDocFramework,
   KitDocument,
@@ -82,6 +83,8 @@ export function TemplatesSurface({
           </button>
         </div>
       </div>
+
+      <SampleDataBanner show={live.templates === null} loading={live.loading} label="templates" />
 
       <div className="metrics-row metrics-compact">
         <div className="metric-card">

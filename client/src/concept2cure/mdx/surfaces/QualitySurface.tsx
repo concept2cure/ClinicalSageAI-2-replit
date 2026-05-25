@@ -22,6 +22,7 @@ import {
   QMS_TRAINING,
 } from '../data/quality';
 import { useQuality } from '../hooks/useQuality';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 import type {
   KitDocFramework,
   KitDocument,
@@ -104,6 +105,8 @@ export function QualitySurface({
           </button>
         </div>
       </div>
+
+      <SampleDataBanner show={live.findings === null} loading={live.loading} label="quality findings" />
 
       <div className="metrics-row metrics-compact">
         {kpis.map((k, i) => (

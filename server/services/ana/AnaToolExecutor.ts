@@ -15,6 +15,8 @@
  */
 
 import { getGateway } from '../ai-gateway/gateway';
+import fdaMaudeClient from '../../fda_maude_client.js';
+import fdaFaersClient from '../../fda_faers_client.js';
 import type {
   GatewayRequest,
   GatewayMessage,
@@ -110,6 +112,62 @@ registerToolHandler('search_clinical_evidence', async (input) => {
     note: 'ClinicalTrials.gov API unavailable — returning guidance for manual search',
     suggestion: `Search ClinicalTrials.gov for: "${query}" filtered by ${evidenceType}`,
   });
+});
+
+// Search Device Adverse Events — live FDA MAUDE via openFDA passthrough.
+registerToolHandler('search_device_adverse_events', async (input) => {
+  const maxResults = Math.min((input.max_results as number) || 50, 100);
+  try {
+    const reports = await fdaMaudeClient.searchDeviceReports({
+      productCode: (input.product_code as string) || '',
+      deviceName: (input.device_name as string) || '',
+      manufacturer: (input.manufacturer as string) || '',
+      dateFrom: (input.date_from as string) || '',
+      dateTo: (input.date_to as string) || '',
+      limit: maxResults,
+    });
+    const analysis = fdaMaudeClient.analyzeMaudeData(reports);
+    return JSON.stringify({
+      source: 'FDA MAUDE (openFDA)',
+      summary: analysis,
+      sample: Array.isArray(reports) ? reports.slice(0, 15) : [],
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'FDA MAUDE (openFDA)',
+      error: e instanceof Error ? e.message : 'MAUDE search failed',
+      summary: { total_reports: 0 },
+      sample: [],
+    });
+  }
+});
+
+// Search Drug Adverse Events — live FDA FAERS via openFDA passthrough.
+registerToolHandler('search_drug_adverse_events', async (input) => {
+  const maxResults = Math.min((input.max_results as number) || 50, 100);
+  try {
+    const reports = await fdaFaersClient.searchAdverseEvents({
+      productNdc: (input.product_ndc as string) || '',
+      productName: (input.product_name as string) || '',
+      manufacturer: (input.manufacturer as string) || '',
+      dateFrom: (input.date_from as string) || '',
+      dateTo: (input.date_to as string) || '',
+      limit: maxResults,
+    });
+    const analysis = fdaFaersClient.analyzeFaersData(reports);
+    return JSON.stringify({
+      source: 'FDA FAERS (openFDA)',
+      summary: analysis,
+      sample: Array.isArray(reports) ? reports.slice(0, 15) : [],
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'FDA FAERS (openFDA)',
+      error: e instanceof Error ? e.message : 'FAERS search failed',
+      summary: { total_reports: 0 },
+      sample: [],
+    });
+  }
 });
 
 // Search Literature — queries PubMed via E-utilities

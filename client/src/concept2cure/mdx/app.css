@@ -1835,6 +1835,38 @@ svg { display: block; }
 }
 
 
+/* ───────────────────────────────────────────────────────────────────
+   Sample-data banner — standing marker shown when a surface or panel
+   is rendering canonical fixtures instead of the tenant's live data.
+   Neutral treatment (no accent orange): this is an honesty signal, not
+   a focal action. Left rule + muted icon read as "informational".
+   ─────────────────────────────────────────────────────────────────── */
+.sample-data-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 10px 14px;
+  background: var(--bg-050);
+  border: 1px solid var(--border-100);
+  border-left: 3px solid var(--text-400);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--text-200);
+  transition: background var(--dur) var(--ease);
+}
+.sample-data-icon { display: inline-flex; color: var(--text-400); flex-shrink: 0; }
+.sample-data-icon svg { width: 16px; height: 16px; }
+.sample-data-text { min-width: 0; }
+.sample-data-tag {
+  font-weight: 600;
+  color: var(--text-100);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sample-data-banner { transition: none; }
+}
+
+
 /* ═════════════════════════════════════════════════════════════════
    WORKBENCH — Tasks · Vault · Validation · Submissions · Templates
    Shared surface chrome (page header, metric row, ctable, section)

@@ -103,6 +103,28 @@ export async function loadAnaToolPolicy(
 }
 
 /**
+ * Filter an assembled toolset down to what the tenant permits, by tool
+ * name. Deny-list is honoured for ALL tools (read or mutation): a tenant
+ * that lists a tool under `deny` never sees it offered to the model. The
+ * allowlist is intentionally NOT applied here — `allow` is scoped to
+ * governed mutations (enforced at execution by requireGovernedToolGate),
+ * and applying it to the read toolset would strip every search/lookup
+ * tool the moment a tenant allowlisted a single mutation.
+ *
+ * Generic over the tool shape so it works for both custom AnA tools and
+ * Anthropic server tools — anything carrying a string `name`.
+ */
+export function filterToolsByPolicy<T extends { name: string }>(
+  tools: T[],
+  policy: AnaToolPolicy,
+): T[] {
+  const deny = policy.deny;
+  if (!Array.isArray(deny) || deny.length === 0) return tools;
+  const denied = new Set(deny);
+  return tools.filter((t) => !denied.has(t.name));
+}
+
+/**
  * Resolve policy from a CommandContext-level cache. The actual lookup
  * happens at chat-session start; this function reads the cached value
  * from `(ctx as any).anaToolPolicy`. If absent, the resolver returns

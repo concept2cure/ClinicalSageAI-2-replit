@@ -13,6 +13,7 @@ import * as React from 'react';
 import { I } from '../icons';
 import { NOTIFS, NOTIF_KINDS, NOTIF_KPIS } from '../data/notifications';
 import { useNotifications } from '../hooks/useNotifications';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 
 export interface NotificationsSurfaceProps {
   onAskAna: (text: string, opts?: { tool?: string }) => void;
@@ -75,6 +76,8 @@ export function NotificationsSurface({ onAskAna }: NotificationsSurfaceProps) {
           </button>
         </div>
       </div>
+
+      <SampleDataBanner show={live.notifications === null} loading={live.loading} label="notifications" />
 
       <div className="metrics-row metrics-compact">
         {kpis.map((k, i) => (

@@ -32,6 +32,7 @@ import {
 } from '../data/engineering';
 import { ENG_DOC_FRAMEWORKS, ENG_DOCUMENTS } from '../data/engineering-docs';
 import { useEngineering } from '../hooks/useEngineering';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 import type { Program } from '../data/programs';
 import type { KitDocument, KitDocFramework } from '../components/DocumentsPanel';
 
@@ -189,6 +190,8 @@ export function EngineeringSurface({
           </button>
         </div>
       </div>
+
+      <SampleDataBanner show={live.dhf === null} loading={live.loading} label="design history records" />
 
       <div className="metrics-row metrics-compact">
         <div className="metric-card">

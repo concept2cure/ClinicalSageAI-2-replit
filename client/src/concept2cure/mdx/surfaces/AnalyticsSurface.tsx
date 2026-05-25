@@ -23,6 +23,7 @@ import {
 } from '../data/analytics';
 import { ANL_DOC_FRAMEWORKS, ANL_DOCUMENTS } from '../data/analytics-docs';
 import { useAnalytics, type AnalyticsPathway } from '../hooks/useAnalytics';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
 
 export interface AnalyticsSurfaceProps {
@@ -92,6 +93,8 @@ export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
           </button>
         </div>
       </div>
+
+      <SampleDataBanner show={live.phases === null} loading={live.loading} label="cycle-time analytics" />
 
       <div className="metrics-row">
         {kpis.map((k, i) => (

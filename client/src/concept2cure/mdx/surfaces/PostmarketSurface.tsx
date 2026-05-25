@@ -25,6 +25,7 @@ import {
 } from '../data/postmarket';
 import { PV_DOC_FRAMEWORKS, PV_DOCUMENTS } from '../data/postmarket-docs';
 import { usePostmarket } from '../hooks/usePostmarket';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
 
 export interface PostmarketSurfaceProps {
@@ -131,6 +132,8 @@ export function PostmarketSurface({
           )}
         </div>
       </div>
+
+      <SampleDataBanner show={live.signals === null} loading={live.loading} label="safety signals" />
 
       <div className="metrics-row metrics-compact">
         <div className="metric-card" data-tone="err">

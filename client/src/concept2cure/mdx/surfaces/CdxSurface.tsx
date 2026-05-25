@@ -24,6 +24,7 @@ import {
   CDX_XREF,
 } from '../data/cdx';
 import { useCdx } from '../hooks/useCdx';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 import type { Program } from '../data/programs';
 import type {
   KitDocFramework,
@@ -100,6 +101,8 @@ export function CdxSurface({
           </button>
         </div>
       </div>
+
+      <SampleDataBanner show={live.timeline === null} loading={live.loading} label="co-development milestones" />
 
       <div className="metrics-row metrics-compact">
         {kpis.map((k, i) => (

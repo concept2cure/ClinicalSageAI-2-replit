@@ -20,6 +20,7 @@ import {
   MEM_INGEST,
 } from '../data/memory';
 import { useMemory } from '../hooks/useMemory';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 
 export interface MemorySurfaceProps {
   onAskAna: (text: string, opts?: { tool?: string }) => void;
@@ -86,6 +87,8 @@ export function MemorySurface({ onAskAna }: MemorySurfaceProps) {
           </button>
         </div>
       </div>
+
+      <SampleDataBanner show={live.atoms === null} loading={live.loading} label="memory atoms" />
 
       <div className="mem-headline">
         <div className="mem-headline-item">

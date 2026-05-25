@@ -16,6 +16,7 @@ import {
   ONB_VALIDATIONS,
 } from '../data/onboarding';
 import { useOnboarding } from '../hooks/useOnboarding';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 
 export interface OnboardingSurfaceProps {
   /** Tenant identifier for the live endpoint. Null while the host
@@ -84,6 +85,8 @@ export function OnboardingSurface({
           </button>
         </div>
       </div>
+
+      <SampleDataBanner show={live.steps === null} loading={live.loading} label="migration steps" />
 
       <div className="metrics-row metrics-compact">
         {kpis.map((k, i) => (

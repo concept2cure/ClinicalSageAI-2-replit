@@ -22,6 +22,7 @@ import {
 } from '../data/audit';
 import { ADM_DOC_FRAMEWORKS, ADM_DOCUMENTS } from '../data/admin-docs';
 import { useAudit } from '../hooks/useAudit';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 import type {
   KitDocFramework,
   KitDocument,
@@ -107,6 +108,8 @@ export function AuditSurface({ onAskAna, onOpenEditor }: AuditSurfaceProps) {
           </button>
         </div>
       </div>
+
+      <SampleDataBanner show={live.events === null} loading={live.loading} label="audit events" />
 
       <div className="metrics-row metrics-compact">
         {kpis.map((k, i) => (

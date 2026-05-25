@@ -25,6 +25,7 @@ import {
 } from '../data/admin';
 import { ADM_DOC_FRAMEWORKS, ADM_DOCUMENTS } from '../data/admin-docs';
 import { useAdmin } from '../hooks/useAdmin';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
 
 export interface AdminSurfaceProps {
@@ -113,6 +114,8 @@ export function AdminSurface({ onAskAna }: AdminSurfaceProps) {
           </button>
         </div>
       </div>
+
+      <SampleDataBanner show={live.members === null} loading={live.loading} label="workspace members" />
 
       <div className="metrics-row">
         {kpis.map((k, i) => (

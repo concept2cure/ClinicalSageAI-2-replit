@@ -19,6 +19,7 @@ import {
   SEARCH_SAVED,
 } from '../data/search';
 import { useSearch } from '../hooks/useSearch';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 import type { Program } from '../data/programs';
 
 export interface SearchSurfaceProps {
@@ -80,6 +81,8 @@ export function SearchSurface({ program, onAskAna }: SearchSurfaceProps) {
           </button>
         </div>
       </div>
+
+      <SampleDataBanner show={live.results === null} loading={live.loading} label="search results" />
 
       <div className="metrics-row metrics-compact">
         {kpis.map((k, i) => (

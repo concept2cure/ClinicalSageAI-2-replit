@@ -17,6 +17,7 @@ import {
   CONV_KPIS,
 } from '../data/conversations';
 import { useConversations } from '../hooks/useConversations';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 import type { Program } from '../data/programs';
 
 export interface ConversationsSurfaceProps {
@@ -91,6 +92,8 @@ export function ConversationsSurface({
           </button>
         </div>
       </div>
+
+      <SampleDataBanner show={live.conversations === null} loading={live.loading} label="conversations" />
 
       <div className="metrics-row metrics-compact">
         {kpis.map((k, i) => (

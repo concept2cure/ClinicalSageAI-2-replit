@@ -21,6 +21,7 @@ import {
   IVD_REFMATS,
 } from '../data/ivd';
 import { useIvd } from '../hooks/useIvd';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 import type { Program } from '../data/programs';
 import type {
   KitDocFramework,
@@ -84,6 +85,8 @@ export function IvdSurface({
           </button>
         </div>
       </div>
+
+      <SampleDataBanner show={live.analytical === null} loading={live.loading} label="analytical studies" />
 
       <div className="metrics-row metrics-compact">
         {kpis.map((k, i) => (

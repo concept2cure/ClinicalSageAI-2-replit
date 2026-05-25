@@ -21,6 +21,7 @@ import {
   VAULT_VERSIONS,
 } from '../data/vault';
 import { useVault } from '../hooks/useVault';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 import type {
   KitDocFramework,
   KitDocument,
@@ -130,6 +131,8 @@ export function VaultSurface({ onAskAna, onOpenEditor }: VaultSurfaceProps) {
           </button>
         </div>
       </div>
+
+      <SampleDataBanner show={live.files === null} loading={live.loading} label="documents" />
 
       <div className="metrics-row metrics-compact">
         {kpis.map((k, i) => (
