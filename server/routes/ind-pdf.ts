@@ -251,7 +251,7 @@ function buildINDHtml(opts: {
 async function renderWithPuppeteer(html: string): Promise<Buffer> {
   const cluster = await getCluster();
   if (cluster) {
-    return cluster.execute(async ({ page }) => {
+    return cluster.execute(async ({ page }: { page: any }) => {
       await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
       const pdf = await page.pdf({
         format: 'Letter',
@@ -274,7 +274,7 @@ async function renderWithPuppeteer(html: string): Promise<Buffer> {
 
 function renderFallbackPdf(html: string): Promise<Buffer> {
   return new Promise(resolve => {
-    const doc = new PDFDocument({ margin: 72, size: 'LETTER' });
+    const doc = new PDFDocument({ margins: { top: 72, bottom: 72, left: 72, right: 72 }, size: 'LETTER' });
     const chunks: Buffer[] = [];
     doc.on('data', (chunk: Buffer) => chunks.push(chunk));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
@@ -324,7 +324,7 @@ function renderFallbackPdf(html: string): Promise<Buffer> {
  * POST /:projectId/generate — Generate full IND PDF
  */
 router.post('/:projectId/generate', async (req: Request, res: Response) => {
-  const projectId = parseInt(req.params.projectId, 10);
+  const projectId = parseInt(String(req.params.projectId), 10);
   if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
 
   try {
@@ -496,7 +496,7 @@ router.post('/:projectId/generate', async (req: Request, res: Response) => {
  * POST /:projectId/section — Generate PDF for a single section
  */
 router.post('/:projectId/section', async (req: Request, res: Response) => {
-  const projectId = parseInt(req.params.projectId, 10);
+  const projectId = parseInt(String(req.params.projectId), 10);
   if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
 
   try {
@@ -588,7 +588,7 @@ router.get('/:projectId/download/:filename', async (req: Request, res: Response)
     const { filename } = req.params;
 
     // Sanitize filename to prevent path traversal
-    const safeName = path.basename(filename);
+    const safeName = path.basename(String(filename));
     const filepath = path.join(process.cwd(), 'exports', 'pdf', safeName);
 
     if (!fs.existsSync(filepath)) {

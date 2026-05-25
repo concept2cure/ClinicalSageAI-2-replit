@@ -83,7 +83,7 @@ const updateLinkSchema = z
  */
 router.get('/:projectId/modules', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenant = getTenantContext(req);
@@ -103,7 +103,7 @@ router.get('/:projectId/modules', async (req: Request, res: Response) => {
  */
 router.get('/:projectId/modules/summary', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenant = getTenantContext(req);
@@ -123,7 +123,7 @@ router.get('/:projectId/modules/summary', async (req: Request, res: Response) =>
  */
 router.post('/:projectId/modules', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenant = getTenantContext(req);
@@ -162,7 +162,7 @@ router.post('/:projectId/modules', async (req: Request, res: Response) => {
  */
 router.post('/:projectId/modules/bulk', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenant = getTenantContext(req);

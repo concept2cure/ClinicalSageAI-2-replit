@@ -94,7 +94,7 @@ router.post('/prepare', async (req: Request, res: Response) => {
 router.post('/:id/documents', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const submissionId = parseInt(req.params.id, 10);
+    const submissionId = parseInt(String(req.params.id), 10);
     if (isNaN(submissionId)) return res.status(400).json({ error: 'Valid submission ID required' });
 
     const parsed = addDocumentSchema.safeParse(req.body);
@@ -113,7 +113,7 @@ router.post('/:id/documents', async (req: Request, res: Response) => {
 router.post('/:id/validate', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const submissionId = parseInt(req.params.id, 10);
+    const submissionId = parseInt(String(req.params.id), 10);
     if (isNaN(submissionId)) return res.status(400).json({ error: 'Valid submission ID required' });
 
     const result = await ectdSubmissionAgent.validateSubmission(orgId, submissionId);
@@ -128,7 +128,7 @@ router.post('/:id/validate', async (req: Request, res: Response) => {
 router.post('/:id/submit', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const submissionId = parseInt(req.params.id, 10);
+    const submissionId = parseInt(String(req.params.id), 10);
     if (isNaN(submissionId)) return res.status(400).json({ error: 'Valid submission ID required' });
 
     const result = await ectdSubmissionAgent.submitToGateway(orgId, submissionId);
@@ -143,7 +143,7 @@ router.post('/:id/submit', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const submissionId = parseInt(req.params.id, 10);
+    const submissionId = parseInt(String(req.params.id), 10);
     if (isNaN(submissionId)) return res.status(400).json({ error: 'Valid submission ID required' });
 
     const submission = await ectdSubmissionAgent.getSubmission(orgId, submissionId);
@@ -178,7 +178,7 @@ router.get('/', async (req: Request, res: Response) => {
 router.get('/:id/status', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const submissionId = parseInt(req.params.id, 10);
+    const submissionId = parseInt(String(req.params.id), 10);
     if (isNaN(submissionId)) return res.status(400).json({ error: 'Valid submission ID required' });
 
     const statusInfo = await ectdSubmissionAgent.getSubmissionStatus(orgId, submissionId);
@@ -193,7 +193,7 @@ router.get('/:id/status', async (req: Request, res: Response) => {
 router.post('/:id/amend', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const parentId = parseInt(req.params.id, 10);
+    const parentId = parseInt(String(req.params.id), 10);
     if (isNaN(parentId)) return res.status(400).json({ error: 'Valid parent submission ID required' });
 
     const parsed = amendSchema.safeParse(req.body);

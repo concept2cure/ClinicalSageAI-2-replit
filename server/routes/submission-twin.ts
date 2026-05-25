@@ -39,9 +39,10 @@ class ValidationError extends Error {
   }
 }
 
-function parseIntParam(val: string, name: string): number {
-  const n = parseInt(val, 10);
-  if (isNaN(n) || n <= 0) throw new ValidationError(`Invalid ${name}: ${val}`);
+function parseIntParam(val: string | string[], name: string): number {
+  const str = Array.isArray(val) ? val[0] : val;
+  const n = parseInt(str, 10);
+  if (isNaN(n) || n <= 0) throw new ValidationError(`Invalid ${name}: ${str}`);
   return n;
 }
 

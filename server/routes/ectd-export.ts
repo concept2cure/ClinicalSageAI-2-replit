@@ -106,7 +106,7 @@ function validateExportGovernance(req: Request, res: Response) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 router.post('/:submissionId', async (req: Request, res: Response) => {
-  const submissionId = parseInt(req.params.submissionId, 10);
+  const submissionId = parseInt(String(req.params.submissionId), 10);
   if (!submissionId || isNaN(submissionId)) {
     return res.status(400).json({ error: 'Valid numeric submission ID required' });
   }
@@ -225,7 +225,7 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 router.post('/:submissionId/validate', async (req: Request, res: Response) => {
-  const submissionId = parseInt(req.params.submissionId, 10);
+  const submissionId = parseInt(String(req.params.submissionId), 10);
   if (!submissionId || isNaN(submissionId)) {
     return res.status(400).json({ error: 'Valid numeric submission ID required' });
   }
@@ -293,7 +293,7 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
       packageSize: zipBuffer.length,
     });
   } catch (error: any) {
-    logger.error('Failed', { err: error instanceof Error ? error.message : String(error) });
+    log.error('Failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({
       error: 'eCTD validation failed',
       message: error.message,
@@ -306,7 +306,7 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 router.get('/:submissionId/preview', async (req: Request, res: Response) => {
-  const submissionId = parseInt(req.params.submissionId, 10);
+  const submissionId = parseInt(String(req.params.submissionId), 10);
   if (!submissionId || isNaN(submissionId)) {
     return res.status(400).json({ error: 'Valid numeric submission ID required' });
   }
@@ -354,7 +354,7 @@ router.get('/:submissionId/preview', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    logger.error('Failed', { err: error instanceof Error ? error.message : String(error) });
+    log.error('Failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({
       error: 'eCTD preview failed',
       message: error.message,

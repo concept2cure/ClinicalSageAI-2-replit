@@ -100,14 +100,15 @@ router.get('/', async (req: Request, res: Response) => {
     }
 
     const userData = user[0];
+    const [firstName = '', ...lastNameParts] = (userData.name || '').split(' ');
+    const lastName = lastNameParts.join(' ');
     res.json({
       id: userData.id,
       username: userData.email?.split('@')[0] || 'user',
       email: userData.email,
-      firstName: userData.firstName || '',
-      lastName: userData.lastName || '',
-      displayName:
-        `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
+      firstName,
+      lastName,
+      displayName: `${firstName} ${lastName}`.trim() || userData.email,
       role: 'user',
       roles: ['user'],
       organizationId: '2',
@@ -151,6 +152,8 @@ router.get('/me', async (req: Request, res: Response) => {
     }
 
     const userData = user[0];
+    const [firstName = '', ...lastNameParts] = (userData.name || '').split(' ');
+    const lastName = lastNameParts.join(' ');
 
     // Get organization name
     let orgName = 'Concept2Cure Demo';
@@ -168,10 +171,9 @@ router.get('/me', async (req: Request, res: Response) => {
     res.json({
       id: userData.id.toString(),
       email: userData.email,
-      firstName: userData.firstName || '',
-      lastName: userData.lastName || '',
-      displayName:
-        `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
+      firstName,
+      lastName,
+      displayName: `${firstName} ${lastName}`.trim() || userData.email,
       title: userData.title || '',
       department: userData.department || '',
       bio: userData.bio || '',
@@ -405,7 +407,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     const user = await db
       .select()
       .from(users)
-      .where(eq(users.id, parseInt(id)))
+      .where(eq(users.id, parseInt(String(id))))
       .limit(1);
 
     if (!user.length) {
@@ -415,10 +417,12 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
 
     const userData = user[0];
+    const [firstName = '', ...lastNameParts] = (userData.name || '').split(' ');
+    const lastName = lastNameParts.join(' ');
 
     // Tenant isolation: only return user if they belong to the same org
     const requestorOrgId = decoded.organizationId;
-    const targetOrgId = userData.organizationId?.toString();
+    const targetOrgId = userData.defaultOrganizationId?.toString();
     if (requestorOrgId !== targetOrgId) {
       return res.status(404).json({
         error: { code: 'USER_NOT_FOUND', message: 'User not found' },
@@ -428,10 +432,9 @@ router.get('/:id', async (req: Request, res: Response) => {
     res.json({
       id: userData.id.toString(),
       email: userData.email,
-      firstName: userData.firstName || '',
-      lastName: userData.lastName || '',
-      displayName:
-        `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
+      firstName,
+      lastName,
+      displayName: `${firstName} ${lastName}`.trim() || userData.email,
       roles: ['user'],
       organizationId: targetOrgId,
     });
@@ -499,7 +502,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       {
         userId: String(userData.id),
         email: userData.email,
-        organizationId: userData.organizationId ? String(userData.organizationId) : '2',
+        organizationId: userData.defaultOrganizationId ? String(userData.defaultOrganizationId) : '2',
       },
       config.jwt.secret,
       { expiresIn: '24h' }

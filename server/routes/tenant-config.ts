@@ -103,7 +103,7 @@ const tenantSettingsSchema = z.object({
  */
 router.get('/:tenantId/settings', authMiddleware, requireOrganizationContext, async (req, res) => {
   try {
-    const tenantId = parseInt(req.params.tenantId);
+    const tenantId = parseInt(String(req.params.tenantId));
     if (isNaN(tenantId)) {
       return res.status(400).json({ error: 'Invalid tenant ID' });
     }
@@ -144,7 +144,7 @@ router.patch(
   requireOrganizationContext,
   async (req, res) => {
     try {
-      const tenantId = parseInt(req.params.tenantId);
+      const tenantId = parseInt(String(req.params.tenantId));
       if (isNaN(tenantId)) {
         return res.status(400).json({ error: 'Invalid tenant ID' });
       }
@@ -213,7 +213,7 @@ router.post(
   requireOrganizationContext,
   async (req, res) => {
     try {
-      const tenantId = parseInt(req.params.tenantId);
+      const tenantId = parseInt(String(req.params.tenantId));
       if (isNaN(tenantId)) {
         return res.status(400).json({ error: 'Invalid tenant ID' });
       }
@@ -313,12 +313,12 @@ router.patch(
   requireOrganizationContext,
   async (req, res) => {
     try {
-      const tenantId = parseInt(req.params.tenantId);
+      const tenantId = parseInt(String(req.params.tenantId));
       if (isNaN(tenantId)) {
         return res.status(400).json({ error: 'Invalid tenant ID' });
       }
 
-      const section = req.params.section;
+      const section = String(req.params.section);
       const validSections = [
         'branding',
         'security',
@@ -327,9 +327,9 @@ router.patch(
         'cer',
         'qmp',
         'integration',
-      ];
+      ] as const;
 
-      if (!validSections.includes(section)) {
+      if (!validSections.includes(section as (typeof validSections)[number])) {
         return res.status(400).json({
           error: 'Invalid section',
           validSections,
@@ -349,7 +349,8 @@ router.patch(
       }
 
       // Get schema for just this section
-      const sectionSchema = tenantSettingsSchema.shape[section];
+      const sectionKey = section as keyof typeof tenantSettingsSchema.shape;
+      const sectionSchema = tenantSettingsSchema.shape[sectionKey];
       if (!sectionSchema) {
         return res.status(400).json({ error: 'Invalid section schema' });
       }
@@ -377,11 +378,12 @@ router.patch(
       }
 
       // Merge current settings with new section settings
-      const currentSettings = tenant[0].settings || {};
+      // `settings` is an untyped JSON column; treat it as a keyed record here.
+      const currentSettings = (tenant[0].settings || {}) as Record<string, unknown>;
       const mergedSettings = {
         ...currentSettings,
         [section]: {
-          ...(currentSettings[section] || {}),
+          ...((currentSettings[section] as Record<string, unknown>) || {}),
           ...sectionData,
         },
       };
@@ -394,7 +396,8 @@ router.patch(
         .returning();
 
       // Return just the updated section
-      return res.json(updatedTenant[0].settings[section]);
+      const updatedSettings = (updatedTenant[0].settings || {}) as Record<string, unknown>;
+      return res.json(updatedSettings[section]);
     } catch (error) {
       logger.error(
         `Error updating ${req.params.section} settings for tenant ${req.params.tenantId}`,

@@ -20,14 +20,15 @@ const router = Router();
 router.use(authenticateToken);
 
 /** Extract organizationId from the authenticated user, return null if missing */
-function getOrgId(req: any): string | null {
+function getOrgId(req: any): number | null {
   const orgId = req.user?.organizationId;
   if (orgId == null) return null;
-  return String(orgId);
+  const numericOrgId = Number(orgId);
+  return Number.isFinite(numericOrgId) ? numericOrgId : null;
 }
 
 /** Verify a project belongs to the user's organization */
-async function verifyProjectOwnership(projectId: string, orgId: string) {
+async function verifyProjectOwnership(projectId: string, orgId: number) {
   if (!db) return null;
   const [project] = await db
     .select()
@@ -514,6 +515,13 @@ router.post('/projects/:projectId/documents', async (req, res) => {
       .insert(regulatoryDocuments)
       .values({
         ...validatedDocumentData,
+        // Re-assert NOT NULL columns the partial insert schema marks optional;
+        // these are always supplied above via .parse().
+        projectId,
+        organizationId,
+        documentType: validatedDocumentData.documentType,
+        title: validatedDocumentData.title,
+        status: validatedDocumentData.status ?? 'draft',
         createdAt: new Date(),
         updatedAt: new Date(),
       })

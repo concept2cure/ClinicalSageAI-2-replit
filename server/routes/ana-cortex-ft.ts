@@ -502,6 +502,11 @@ class ModelRegistry {
       throw new Error(`Invalid stage transition: ${previousStage} -> rollback`);
     }
     model.deploymentConfig = {
+      servingEndpoint: '/api/ana-cortex-ft/inference',
+      replicas: 2,
+      maxConcurrency: 50,
+      timeoutMs: 30000,
+      fallbackModel: 'claude-haiku-4',
       ...model.deploymentConfig,
       deploymentStage: 'rollback',
       routingWeight: 0,
@@ -552,6 +557,11 @@ class ModelRegistry {
         quantization,
       },
       deploymentConfig: {
+        servingEndpoint: '/api/ana-cortex-ft/inference',
+        replicas: 2,
+        maxConcurrency: 50,
+        timeoutMs: 30000,
+        fallbackModel: 'claude-haiku-4',
         ...source.deploymentConfig,
         deploymentStage: 'staged',
         routingWeight: 0,
@@ -1280,7 +1290,7 @@ router.get('/models', (_req: Request, res: Response) => {
  * Get detailed model information including training config and metrics
  */
 router.get('/models/:modelId', (req: Request, res: Response) => {
-  const model = registry.getModel(req.params.modelId);
+  const model = registry.getModel(String(req.params.modelId));
   if (!model) return res.status(404).json({ error: 'Model not found' });
   res.json({ success: true, data: model });
 });
@@ -1290,9 +1300,9 @@ router.get('/models/:modelId', (req: Request, res: Response) => {
  * Get deployment lifecycle events for a model
  */
 router.get('/models/:modelId/deployment-history', (req: Request, res: Response) => {
-  const model = registry.getModel(req.params.modelId);
+  const model = registry.getModel(String(req.params.modelId));
   if (!model) return res.status(404).json({ error: 'Model not found' });
-  const events = registry.getDeploymentHistory(req.params.modelId);
+  const events = registry.getDeploymentHistory(String(req.params.modelId));
   return res.json({
     success: true,
     data: {
@@ -1308,7 +1318,7 @@ router.get('/models/:modelId/deployment-history', (req: Request, res: Response) 
  * Set a model as the active inference model
  */
 router.post('/models/:modelId/activate', (req: Request, res: Response) => {
-  const success = registry.setActiveModel(req.params.modelId);
+  const success = registry.setActiveModel(String(req.params.modelId));
   if (!success) return res.status(404).json({ error: 'Model not found' });
   res.json({ success: true, message: `Model ${req.params.modelId} activated` });
 });
@@ -1334,7 +1344,7 @@ router.post('/models/:modelId/promote', (req: Request, res: Response) => {
   let updated: AnaCortexModel | null = null;
   try {
     updated = registry.promoteModel(
-      req.params.modelId,
+      String(req.params.modelId),
       stage as NonNullable<DeploymentConfig['deploymentStage']>,
       actor
     );
@@ -1364,7 +1374,7 @@ router.post('/models/:modelId/rollback', (req: Request, res: Response) => {
   const actor = String(req.body?.actor || 'system');
   let updated: AnaCortexModel | null = null;
   try {
-    updated = registry.rollbackModel(req.params.modelId, actor);
+    updated = registry.rollbackModel(String(req.params.modelId), actor);
   } catch (err) {
     return res.status(409).json({ error: String(err) });
   }
@@ -1397,7 +1407,7 @@ router.post('/models/:modelId/quantize', (req: Request, res: Response) => {
       .json({ error: "Invalid quantization. Expected '4bit' | '8bit' | 'none'" });
   }
 
-  const variant = registry.createQuantizedVariant(req.params.modelId, quantization, actor);
+  const variant = registry.createQuantizedVariant(String(req.params.modelId), quantization, actor);
   if (!variant) return res.status(404).json({ error: 'Model not found' });
   return res.json({
     success: true,
@@ -1416,9 +1426,9 @@ router.post('/models/:modelId/quantize', (req: Request, res: Response) => {
  * List model variants derived from a parent model
  */
 router.get('/models/:modelId/variants', (req: Request, res: Response) => {
-  const model = registry.getModel(req.params.modelId);
+  const model = registry.getModel(String(req.params.modelId));
   if (!model) return res.status(404).json({ error: 'Model not found' });
-  const variants = registry.getModelVariants(req.params.modelId);
+  const variants = registry.getModelVariants(String(req.params.modelId));
   return res.json({ success: true, data: { parentModelId: req.params.modelId, variants } });
 });
 
@@ -1427,9 +1437,9 @@ router.get('/models/:modelId/variants', (req: Request, res: Response) => {
  * Retrieve quantization benchmark snapshots for a model or variant
  */
 router.get('/models/:modelId/quantization-benchmarks', (req: Request, res: Response) => {
-  const model = registry.getModel(req.params.modelId);
+  const model = registry.getModel(String(req.params.modelId));
   if (!model) return res.status(404).json({ error: 'Model not found' });
-  const benchmarks = registry.getQuantizationBenchmarks(req.params.modelId);
+  const benchmarks = registry.getQuantizationBenchmarks(String(req.params.modelId));
   return res.json({ success: true, data: { modelId: req.params.modelId, benchmarks } });
 });
 
@@ -1640,7 +1650,7 @@ router.post('/roadmap/:itemId/status', (req: Request, res: Response) => {
       .status(400)
       .json({ error: 'Invalid status. Expected one of pending|in_progress|completed|blocked' });
   }
-  const item = registry.updateRemediationPlanStatus(req.params.itemId, status);
+  const item = registry.updateRemediationPlanStatus(String(req.params.itemId), status);
   if (!item) return res.status(404).json({ error: 'Roadmap item not found' });
   return res.json({ success: true, data: item });
 });

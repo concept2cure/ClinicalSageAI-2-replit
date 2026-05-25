@@ -160,7 +160,7 @@ router.get('/active', async (req: Request, res: Response) => {
  */
 router.get('/:submissionId', async (req: Request, res: Response) => {
   try {
-    const { submissionId } = req.params;
+    const submissionId = String(req.params.submissionId);
     const organizationId = getAuthedOrgId(req);
 
     const submission = await storage.getIndSubmission(submissionId);
@@ -262,7 +262,7 @@ router.post('/create', async (req: Request, res: Response) => {
  */
 router.put('/:submissionId', async (req: Request, res: Response) => {
   try {
-    const { submissionId } = req.params;
+    const submissionId = String(req.params.submissionId);
     const userId = getAuthedUserId(req);
     const organizationId = getAuthedOrgId(req);
     const updates = req.body;
@@ -316,7 +316,7 @@ router.put('/:submissionId', async (req: Request, res: Response) => {
  */
 router.post('/:submissionId/ind-step', async (req: Request, res: Response) => {
   try {
-    const { submissionId } = req.params;
+    const submissionId = String(req.params.submissionId);
     const { stepNumber, stepData, completed = false } = req.body;
     const userId = getAuthedUserId(req);
     const organizationId = getAuthedOrgId(req);
@@ -330,14 +330,15 @@ router.post('/:submissionId/ind-step', async (req: Request, res: Response) => {
       });
     }
     
-    // Update step data
-    const indStepData = submission.indStepData || {};
+    // Update step data. The JSON columns are untyped at the storage
+    // boundary, so narrow them to indexable records here.
+    const indStepData = (submission.indStepData || {}) as Record<string, any>;
     indStepData[`step${stepNumber}`] = stepData;
-    
+
     // Update completion status
-    const indStepsCompleted = submission.indStepsCompleted || {};
+    const indStepsCompleted = (submission.indStepsCompleted || {}) as Record<string, any>;
     indStepsCompleted[`step${stepNumber}`] = completed;
-    
+
     // Check if all steps are completed
     const allStepsCompleted = Object.keys(indStepsCompleted).every(
       key => key.startsWith('step') && indStepsCompleted[key]
@@ -368,8 +369,8 @@ router.post('/:submissionId/ind-step', async (req: Request, res: Response) => {
       
       // Update phase status
       updates.phases = {
-        ...submission.phases,
-        'ind-wizard': { 
+        ...(submission.phases as Record<string, any>),
+        'ind-wizard': {
           status: 'completed', 
           completedAt: new Date().toISOString()
         }
@@ -405,7 +406,7 @@ router.post('/:submissionId/ind-step', async (req: Request, res: Response) => {
  */
 router.post('/:submissionId/transition-to-ectd', async (req: Request, res: Response) => {
   try {
-    const { submissionId } = req.params;
+    const submissionId = String(req.params.submissionId);
     const userId = getAuthedUserId(req);
     const organizationId = getAuthedOrgId(req);
 
@@ -437,8 +438,8 @@ router.post('/:submissionId/transition-to-ectd', async (req: Request, res: Respo
       module3Data: extractModule3Data(indStepData),
       module5Data: extractModule5Data(indStepData),
       phases: {
-        ...submission.phases,
-        'ectd-coauthor': { 
+        ...(submission.phases as Record<string, any>),
+        'ectd-coauthor': {
           status: 'in-progress', 
           startedAt: new Date().toISOString()
         }

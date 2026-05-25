@@ -104,7 +104,7 @@ router.get('/programs', async (req: Request, res: Response) => {
 router.get('/programs/:id', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const program = await store.getById(parseInt(req.params.id), orgId);
+    const program = await store.getById(parseInt(String(req.params.id)), orgId);
     if (!program) return res.status(404).json({ error: 'Program not found' });
     res.json({ data: program });
   } catch (err: any) {
@@ -141,7 +141,7 @@ router.post('/programs', async (req: Request, res: Response) => {
 router.put('/programs/:id', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const existing = await store.getById(id, orgId);
     if (!existing) return res.status(404).json({ error: 'Program not found' });
 
@@ -162,7 +162,7 @@ router.put('/programs/:id', async (req: Request, res: Response) => {
 router.get('/programs/:programId/destinations', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
     const dests = await store.query(orgId, 'destination', (d: any) => d.programId === programId);
     res.json({ data: dests });
   } catch (err: any) {
@@ -173,7 +173,7 @@ router.get('/programs/:programId/destinations', async (req: Request, res: Respon
 router.post('/programs/:programId/destinations', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
     const data = {
       programId,
       organizationId: orgId,
@@ -205,7 +205,7 @@ router.post('/programs/:programId/destinations', async (req: Request, res: Respo
 router.get('/destinations/:destId/routes', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const destId = parseInt(req.params.destId);
+    const destId = parseInt(String(req.params.destId));
     const routes = await store.query(orgId, 'route_plan', (r: any) => r.destinationId === destId);
     res.json({ data: routes });
   } catch (err: any) {
@@ -216,7 +216,7 @@ router.get('/destinations/:destId/routes', async (req: Request, res: Response) =
 router.post('/destinations/:destId/routes', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const destId = parseInt(req.params.destId);
+    const destId = parseInt(String(req.params.destId));
     const dests = await store.query(orgId, 'destination', (d: any) => d.id === destId);
     const dest = dests[0];
 
@@ -243,7 +243,7 @@ router.post('/destinations/:destId/routes', async (req: Request, res: Response) 
 router.get('/programs/:programId/artifacts', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
     const { type, lifecycle, dossierModule } = req.query;
 
     let arts = await store.query(orgId, 'artifact', (a: any) => a.programId === programId);
@@ -259,7 +259,7 @@ router.get('/programs/:programId/artifacts', async (req: Request, res: Response)
 router.get('/artifacts/:id', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const art = await store.getById(id, orgId);
     if (!art) return res.status(404).json({ error: 'Artifact not found' });
 
@@ -287,7 +287,7 @@ router.get('/artifacts/:id', async (req: Request, res: Response) => {
 router.post('/programs/:programId/artifacts', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
     const data = {
       programId,
       organizationId: orgId,
@@ -313,7 +313,7 @@ router.post('/programs/:programId/artifacts', async (req: Request, res: Response
 router.put('/artifacts/:id', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const existing = await store.getById(id, orgId);
     if (!existing) return res.status(404).json({ error: 'Artifact not found' });
 
@@ -344,7 +344,7 @@ router.put('/artifacts/:id', async (req: Request, res: Response) => {
 router.post('/artifacts/:id/transition', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const art = await store.getById(id, orgId);
     if (!art) return res.status(404).json({ error: 'Artifact not found' });
 
@@ -402,7 +402,7 @@ router.post('/artifacts/:id/transition', async (req: Request, res: Response) => 
 router.get('/programs/:programId/evidence', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
     const evidence = await store.query(orgId, 'evidence', (e: any) => e.programId === programId);
     res.json({ data: evidence });
   } catch (err: any) {
@@ -413,7 +413,7 @@ router.get('/programs/:programId/evidence', async (req: Request, res: Response) 
 router.post('/programs/:programId/evidence', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
     const data = {
       programId,
       organizationId: orgId,
@@ -432,7 +432,7 @@ router.post('/programs/:programId/evidence', async (req: Request, res: Response)
 router.post('/artifacts/:artifactId/evidence', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const artifactId = parseInt(req.params.artifactId);
+    const artifactId = parseInt(String(req.params.artifactId));
     const data = {
       artifactId,
       evidenceNodeId: req.body.evidenceNodeId,
@@ -455,7 +455,7 @@ router.post('/artifacts/:artifactId/evidence', async (req: Request, res: Respons
 router.get('/programs/:programId/dependencies', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
     const deps = await store.query(orgId, 'dependency', (d: any) => d.programId === programId);
     res.json({ data: deps });
   } catch (err: any) {
@@ -466,7 +466,7 @@ router.get('/programs/:programId/dependencies', async (req: Request, res: Respon
 router.post('/programs/:programId/dependencies', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
     const data = {
       programId,
       organizationId: orgId,
@@ -484,7 +484,7 @@ router.post('/programs/:programId/dependencies', async (req: Request, res: Respo
 router.get('/programs/:programId/dependencies/stale', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
     const stale = await store.query(
       orgId,
       'dependency',
@@ -503,7 +503,7 @@ router.get('/programs/:programId/dependencies/stale', async (req: Request, res: 
 router.get('/programs/:programId/decisions', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
     const decisions = await store.query(orgId, 'decision', (d: any) => d.programId === programId);
     res.json({ data: decisions });
   } catch (err: any) {
@@ -514,7 +514,7 @@ router.get('/programs/:programId/decisions', async (req: Request, res: Response)
 router.post('/programs/:programId/decisions', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
     const userId = getUserId(req);
     const data = {
       programId,
@@ -539,7 +539,7 @@ router.post('/programs/:programId/decisions', async (req: Request, res: Response
 router.get('/artifacts/:artifactId/reviews', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const artifactId = parseInt(req.params.artifactId);
+    const artifactId = parseInt(String(req.params.artifactId));
     const reviews = await store.query(orgId, 'review', (r: any) => r.artifactId === artifactId);
     res.json({ data: reviews });
   } catch (err: any) {
@@ -550,7 +550,7 @@ router.get('/artifacts/:artifactId/reviews', async (req: Request, res: Response)
 router.post('/artifacts/:artifactId/reviews', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const artifactId = parseInt(req.params.artifactId);
+    const artifactId = parseInt(String(req.params.artifactId));
     const art = await store.getById(artifactId, orgId);
 
     const data = {
@@ -585,7 +585,7 @@ router.post('/artifacts/:artifactId/reviews', async (req: Request, res: Response
 router.put('/reviews/:id', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const review = await store.getById(id, orgId);
     if (!review) return res.status(404).json({ error: 'Review not found' });
 
@@ -626,7 +626,7 @@ router.put('/reviews/:id', async (req: Request, res: Response) => {
 router.get('/programs/:programId/risks', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
     const { status, severity } = req.query;
     let risks = await store.query(orgId, 'risk', (r: any) => r.programId === programId);
     if (status) risks = risks.filter((r: any) => r.status === status);
@@ -640,7 +640,7 @@ router.get('/programs/:programId/risks', async (req: Request, res: Response) => 
 router.post('/programs/:programId/risks', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
     const data = {
       programId,
       organizationId: orgId,
@@ -705,7 +705,7 @@ router.post('/collaboration', async (req: Request, res: Response) => {
 router.put('/collaboration/:id', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const existing = await store.getById(id, orgId);
     if (!existing) return res.status(404).json({ error: 'Item not found' });
 
@@ -771,7 +771,7 @@ router.post('/approval-requests', async (req: Request, res: Response) => {
 router.post('/approval-requests/:id/decide', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const item = await store.getById(id, orgId);
     if (!item) return res.status(404).json({ error: 'Approval request not found' });
     if (item.status !== 'pending') {
@@ -819,7 +819,7 @@ router.post('/approval-requests/:id/decide', async (req: Request, res: Response)
 router.post('/approval-requests/:id/delegate', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const item = await store.getById(id, orgId);
     if (!item) return res.status(404).json({ error: 'Approval request not found' });
     if (item.status !== 'pending') {
@@ -859,7 +859,7 @@ router.post('/approval-requests/:id/delegate', async (req: Request, res: Respons
 router.get('/programs/:programId/authority-interactions', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
     const interactions = await store.query(
       orgId,
       'authority_interaction',
@@ -874,7 +874,7 @@ router.get('/programs/:programId/authority-interactions', async (req: Request, r
 router.post('/programs/:programId/authority-interactions', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
     const data = {
       programId,
       organizationId: orgId,
@@ -902,7 +902,7 @@ router.post('/programs/:programId/authority-interactions', async (req: Request, 
 router.get('/programs/:programId/provenance', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
     const { entityType, entityId, limit } = req.query;
 
     let logs = await store.query(orgId, 'provenance', (p: any) => p.programId === programId);
@@ -923,7 +923,7 @@ router.get('/programs/:programId/provenance', async (req: Request, res: Response
 router.get('/programs/:programId/readiness', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
 
     const arts = await store.query(orgId, 'artifact', (a: any) => a.programId === programId);
     const evidence = await store.query(orgId, 'evidence', (e: any) => e.programId === programId);
@@ -1066,7 +1066,7 @@ router.get('/programs/:programId/readiness', async (req: Request, res: Response)
 router.post('/programs/:programId/scaffold', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const programId = parseInt(req.params.programId);
+    const programId = parseInt(String(req.params.programId));
     const program = await store.getById(programId, orgId);
     if (!program) return res.status(404).json({ error: 'Program not found' });
 

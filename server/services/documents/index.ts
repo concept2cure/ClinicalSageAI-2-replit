@@ -20,27 +20,27 @@
  */
 
 // Core document service
-export { default as documentService } from '../documentService';
+export { default as documentService } from '../documentService.js';
 
 // Document processing
-export { default as documentProcessor } from '../document-processor';
-export { default as academicDocumentProcessor } from '../academic-document-processor';
+export { default as documentProcessor } from '../document-processor.js';
+export { academicDocumentProcessor } from '../academic-document-processor';
 
 // Version control & locking
-export { default as documentReconstruction } from '../documentReconstruction';
-export { default as documentLocking } from '../documentLocking';
+export { default as documentReconstruction } from '../documentReconstruction.js';
+export { default as documentLocking } from '../documentLocking.js';
 
 // Ingestion workflows
-export { default as unifiedDocumentIngestion } from '../unifiedDocumentIngestion';
+export { default as unifiedDocumentIngestion } from '../unifiedDocumentIngestion.js';
 
 // Template & orchestration
 export { default as documentTemplateMapper } from '../documentTemplateMapper';
-export { DocumentOrchestrationService } from '../DocumentOrchestrationService';
-export { DocumentDataCenterService } from '../DocumentDataCenterService';
+export { default as DocumentOrchestrationService } from '../DocumentOrchestrationService';
+export { documentDataCenterService as DocumentDataCenterService } from '../DocumentDataCenterService';
 
 // Generator services (submission-specific)
-export { default as fda510kDocumentGenerator } from '../fda510kDocumentGenerator';
-export { default as pmaDocumentGenerator } from '../pmaDocumentGenerator';
+export { default as fda510kDocumentGenerator } from '../fda510kDocumentGenerator.js';
+export { default as pmaDocumentGenerator } from '../pmaDocumentGenerator.js';
 
 // Types
 export interface DocumentMetadata {

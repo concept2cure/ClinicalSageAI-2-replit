@@ -167,7 +167,7 @@ For best results, please use PDF format.`;
       });
     }
 
-    let analysisResult;
+    let analysisResult: ProtocolAnalysisResult;
     try {
       analysisResult = JSON.parse(analysisOutput);
 
@@ -327,7 +327,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
       log.error('Error cleaning up temp file:', e);
     }
 
-    let analysisResult;
+    let analysisResult: ProtocolAnalysisResult;
     try {
       analysisResult = JSON.parse(analysisOutput);
 
@@ -404,10 +404,10 @@ async function findSimilarCsrs(indication: string, phase: string) {
     // Format the results
     return reports.map(report => ({
       id: `CSR_${report.id}`,
-      title: report.title,
-      sponsor: report.sponsor,
-      indication: report.indication,
-      phase: report.phase,
+      title: report.title ?? '',
+      sponsor: report.sponsor ?? '',
+      indication: report.indication ?? '',
+      phase: report.phase ?? '',
       sample_size: 200, // Default value since property doesn't exist in schema
       primary_endpoint: 'Primary endpoint', // Would come from another table in a real implementation
       duration_weeks: 24, // Default value since property doesn't exist in schema

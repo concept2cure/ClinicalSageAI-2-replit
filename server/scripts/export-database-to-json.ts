@@ -13,7 +13,7 @@
 import path from 'path';
 import fs from 'fs/promises';
 import { db } from '../db';
-import { csrReports, csrDetails } from '../sage-plus-service';
+import { csrReports, csrDetails } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
 
 // File to store the last export statistics

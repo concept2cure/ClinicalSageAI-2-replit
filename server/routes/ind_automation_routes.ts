@@ -173,8 +173,13 @@ router.post('/generate/module3', async (req, res) => {
 
     logger.info(`Generating Module 3 document for drug ${data.drug_name}`);
 
-    // Generate the document through unified module rendering
-    const documentBytes = await indAutomationService.generateModuleDocument(3, data);
+    // Generate the document through unified module rendering.
+    // The validated Module 3 payload is forwarded as the request body (ProjectMetadata
+    // is the loose body shape the service POSTs to the Python microservice).
+    const documentBytes = await indAutomationService.generateModuleDocument(
+      3,
+      data as ProjectMetadata
+    );
 
     // Set headers and send response
     const filename = data.drug_name.replace(/\s+/g, '_');
@@ -503,7 +508,7 @@ router.post('/alert-preferences', (req, res) => {
     ensureDataDirectory();
 
     const { email, teams, warning_alerts, error_alerts } = req.body;
-    const userId = req.user?.id || 'default';
+    const userId = String(req.user?.id ?? 'default');
 
     // Validate input
     if (
@@ -519,11 +524,20 @@ router.post('/alert-preferences', (req, res) => {
     }
 
     // Create or update preferences
-    let preferences = { users: {} };
+    interface AlertPreferenceEntry {
+      email: boolean;
+      teams: boolean;
+      warning_alerts: boolean;
+      error_alerts: boolean;
+      userId: string;
+      lastUpdated: string;
+    }
+    let preferences: { users: Record<string, AlertPreferenceEntry> } = { users: {} };
 
     if (fs.existsSync(PREFERENCES_FILE)) {
       const fileContent = fs.readFileSync(PREFERENCES_FILE, 'utf8');
-      preferences = JSON.parse(fileContent);
+      // Untyped JSON boundary — file content matches the preferences shape.
+      preferences = JSON.parse(fileContent) as { users: Record<string, AlertPreferenceEntry> };
     }
 
     preferences.users[userId] = {

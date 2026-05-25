@@ -27,12 +27,45 @@ import {
   Hash,
 } from 'lucide-react';
 import { useSecurityContext } from './useSecurityContext';
-import type {
-  ElectronicSignature,
-  SignatureMeaning,
-  AuditLogEntry,
-} from './securityTypes';
 import type { SignatureRequiredAction } from './regulatoryCompliance';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SIGNATURE DOMAIN TYPES
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Signature meaning declarations per 21 CFR 11.50(b) */
+export type SignatureMeaning =
+  | 'authorship'
+  | 'review'
+  | 'approval'
+  | 'verification'
+  | 'amendment'
+  | 'release';
+
+/**
+ * Applied electronic signature record as constructed by this gate at signing
+ * time. This is the in-flight shape captured during the signature ceremony
+ * (distinct from the persisted audit-store record).
+ */
+export interface ElectronicSignature {
+  id: string;
+  userId: string;
+  recordId: string;
+  recordType: string;
+  meaning: SignatureMeaning;
+  reason?: string;
+  timestamp: string;
+  signatureHash: string;
+  hashAlgorithm: 'SHA-256' | 'SHA-384' | 'SHA-512';
+  ipAddress: string;
+  userAgent: string;
+  sessionId: string;
+  mfaMethod?: 'totp' | 'sms' | 'email' | 'hardware_key' | 'push';
+  biometricVerified?: boolean;
+  previousSignatureHash?: string;
+  linkedRecords: string[];
+  validUntil: string;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -440,7 +473,7 @@ export function ElectronicSignatureGate({
                   step={requireMFA ? 4 : 3}
                   label="Biometric"
                   active={status.step === 'biometric'}
-                  complete={status.step === 'complete'}
+                  complete={(['complete'] as SignatureStatus['step'][]).includes(status.step)}
                 />
               </>
             )}
@@ -471,7 +504,11 @@ export function ElectronicSignatureGate({
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="flex items-center gap-2 text-gray-600">
                     <User className="h-4 w-4" />
-                    <span>{user?.displayName || user?.email}</span>
+                    <span>
+                      {user
+                        ? `${user.firstName} ${user.lastName}`.trim() || user.email
+                        : ''}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 text-gray-600">
                     <Calendar className="h-4 w-4" />

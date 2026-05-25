@@ -45,7 +45,7 @@ router.get('/pathway', (req: Request, res: Response) => {
     return res.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Pathway error', { err: message instanceof Error ? message.message : String(message) });
+    logger.error('Pathway error', { err: message });
     return res.status(500).json({ error: 'Failed to get biologic pathway' });
   }
 });
@@ -71,7 +71,7 @@ router.get('/biosimilar-requirements', (req: Request, res: Response) => {
     return res.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Biosimilar requirements error', { err: message instanceof Error ? message.message : String(message) });
+    logger.error('Biosimilar requirements error', { err: message });
     return res.status(500).json({ error: 'Failed to get biosimilar requirements' });
   }
 });
@@ -98,7 +98,7 @@ router.get('/expedited-pathways', (req: Request, res: Response) => {
     return res.json({ pathways: result });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Expedited pathways error', { err: message instanceof Error ? message.message : String(message) });
+    logger.error('Expedited pathways error', { err: message });
     return res.status(500).json({ error: 'Failed to get expedited pathways' });
   }
 });
@@ -124,7 +124,7 @@ router.get('/comparability', (req: Request, res: Response) => {
     return res.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Comparability error', { err: message instanceof Error ? message.message : String(message) });
+    logger.error('Comparability error', { err: message });
     return res.status(500).json({ error: 'Failed to get comparability design' });
   }
 });
@@ -150,7 +150,7 @@ router.get('/combination-products/classify', (req: Request, res: Response) => {
     return res.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Classify error', { err: message instanceof Error ? message.message : String(message) });
+    logger.error('Classify error', { err: message });
     return res.status(500).json({ error: 'Failed to classify combination product' });
   }
 });
@@ -181,7 +181,7 @@ router.get('/combination-products/requirements', (req: Request, res: Response) =
     return res.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Requirements error', { err: message instanceof Error ? message.message : String(message) });
+    logger.error('Requirements error', { err: message });
     return res.status(500).json({ error: 'Failed to get combination requirements' });
   }
 });

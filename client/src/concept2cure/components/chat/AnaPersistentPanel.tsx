@@ -1981,7 +1981,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             const result = await onRequestPromotion(artifactId);
             const pendingNote = result.pendingApprovals?.length
               ? `\n\n**Pending approvals:** ${result.pendingApprovals
-                  .map((a: any) => `${a.requiredRole} (${a.reason})`)
+                  .map(a => `${a.requiredRole} (${a.reason})`)
                   .join(', ')}`
               : '';
             const decisionNote = result.decisionId
@@ -2847,7 +2847,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           if (data.status === 'data' || data.success) {
             const plan = data.data;
             const lines = [
-              `**Resolution Plan for "${finding.type || finding.contradictionType}"**`,
+              `**Resolution Plan for "${finding.type}"**`,
               '',
               `**Governed action:** ${plan?.governedAction || '—'}`,
               `**Authority level:** ${plan?.authorityLevel || '—'}`,

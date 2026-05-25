@@ -21,7 +21,7 @@ import { Pool } from 'pg';
 import RegulatoryDeltaRadarService from '../services/innovation/regulatory-delta-radar-service';
 import EvidenceConfidenceHeatmapService from '../services/innovation/evidence-confidence-heatmap-service';
 import SubmissionReadinessTwinService from '../services/innovation/submission-readiness-twin-service';
-import AutoTraceabilityService from '../services/innovation/auto-traceability-service';
+import AutoTraceabilityService, { type TraceLinkType } from '../services/innovation/auto-traceability-service';
 import AdaptiveReviewerWorkspaceService from '../services/innovation/adaptive-reviewer-workspace-service';
 import OutcomeBasedTemplateLearningService from '../services/innovation/outcome-based-template-learning-service';
 import RegulatoryNegotiationLogbookService from '../services/innovation/regulatory-negotiation-logbook-service';
@@ -82,11 +82,12 @@ router.post('/delta-radar/guidance', asyncHandler(async (req: Request, res: Resp
  * Get guidance documents
  */
 router.get('/delta-radar/guidance', asyncHandler(async (req: Request, res: Response) => {
-  const documents = await deltaRadarService.getGuidanceDocuments({
-    agency: req.query.agency as string,
-    documentType: req.query.documentType as string,
-    searchTerm: req.query.search as string
-  });
+  const orgGuard = requireAuthedOrgId(req, res);
+  if (!orgGuard.ok) return;
+  // getGuidanceDocuments scopes by organization id (filtering by agency/type/
+  // search is not supported by the service). Org comes from the authed context,
+  // never req.query (attacker-controlled).
+  const documents = await deltaRadarService.getGuidanceDocuments(String(orgGuard.orgId));
   res.json({ success: true, data: documents });
 }));
 
@@ -94,13 +95,11 @@ router.get('/delta-radar/guidance', asyncHandler(async (req: Request, res: Respo
  * Run delta scan
  */
 router.post('/delta-radar/scan', asyncHandler(async (req: Request, res: Response) => {
-  const { programId, submissionId, documentId, guidanceIds, scanType } = req.body;
+  const { programId, documentId, scanType } = req.body;
   const scan = await deltaRadarService.runDeltaScan({
     programId,
-    submissionId,
     documentId,
-    guidanceIds,
-    scanType: scanType || 'full'
+    scanScope: scanType || 'full'
   });
   res.status(201).json({ success: true, data: scan });
 }));
@@ -109,10 +108,7 @@ router.post('/delta-radar/scan', asyncHandler(async (req: Request, res: Response
  * Get scan findings
  */
 router.get('/delta-radar/scan/:scanId/findings', asyncHandler(async (req: Request, res: Response) => {
-  const findings = await deltaRadarService.getScanFindings(
-    req.params.scanId,
-    req.query.status as string
-  );
+  const findings = await deltaRadarService.getScanFindings(String(req.params.scanId));
   res.json({ success: true, data: findings });
 }));
 
@@ -122,7 +118,7 @@ router.get('/delta-radar/scan/:scanId/findings', asyncHandler(async (req: Reques
 router.patch('/delta-radar/findings/:findingId', asyncHandler(async (req: Request, res: Response) => {
   const { status, resolution } = req.body;
   const finding = await deltaRadarService.updateFindingStatus(
-    req.params.findingId,
+    String(req.params.findingId),
     status,
     resolution
   );
@@ -133,7 +129,7 @@ router.patch('/delta-radar/findings/:findingId', asyncHandler(async (req: Reques
  * Get delta statistics
  */
 router.get('/delta-radar/statistics/:programId', asyncHandler(async (req: Request, res: Response) => {
-  const stats = await deltaRadarService.getDeltaStatistics(req.params.programId);
+  const stats = await deltaRadarService.getDeltaStatistics(String(req.params.programId));
   res.json({ success: true, data: stats });
 }));
 
@@ -145,7 +141,7 @@ router.get('/delta-radar/statistics/:programId', asyncHandler(async (req: Reques
  * Configure scoring
  */
 router.post('/evidence-heatmap/config', asyncHandler(async (req: Request, res: Response) => {
-  const config = await heatmapService.createConfig(req.body);
+  const config = await heatmapService.createScoringConfig(req.body);
   res.status(201).json({ success: true, data: config });
 }));
 
@@ -155,10 +151,8 @@ router.post('/evidence-heatmap/config', asyncHandler(async (req: Request, res: R
 router.get('/evidence-heatmap/config', asyncHandler(async (req: Request, res: Response) => {
   const orgGuard = requireAuthedOrgId(req, res);
   if (!orgGuard.ok) return;
-  const configs = await heatmapService.getConfigs({
-    orgId: String(orgGuard.orgId),
-    submissionType: req.query.submissionType as string
-  });
+  // getScoringConfigs scopes by org id (submissionType filtering is not supported).
+  const configs = await heatmapService.getScoringConfigs(String(orgGuard.orgId));
   res.json({ success: true, data: configs });
 }));
 
@@ -167,12 +161,12 @@ router.get('/evidence-heatmap/config', asyncHandler(async (req: Request, res: Re
  */
 router.post('/evidence-heatmap/assess', asyncHandler(async (req: Request, res: Response) => {
   const { documentId, programId, content, configId } = req.body;
-  const assessment = await heatmapService.runAssessment({
-    documentId,
-    programId,
-    content,
-    configId
-  });
+  // runAssessment takes the program id plus a map of section content keyed by
+  // document/section id. Wrap the single document's content into that shape.
+  const documentContent = new Map<string, { title: string; content: string }>([
+    [String(documentId), { title: String(documentId), content: String(content ?? '') }],
+  ]);
+  const assessment = await heatmapService.runAssessment(programId, documentContent, configId);
   res.status(201).json({ success: true, data: assessment });
 }));
 
@@ -180,7 +174,7 @@ router.post('/evidence-heatmap/assess', asyncHandler(async (req: Request, res: R
  * Get assessment
  */
 router.get('/evidence-heatmap/assessment/:assessmentId', asyncHandler(async (req: Request, res: Response) => {
-  const assessment = await heatmapService.getAssessment(req.params.assessmentId);
+  const assessment = await heatmapService.getAssessmentWithGaps(String(req.params.assessmentId));
   if (!assessment) {
     return res.status(404).json({ success: false, error: 'Assessment not found' });
   }
@@ -191,7 +185,8 @@ router.get('/evidence-heatmap/assessment/:assessmentId', asyncHandler(async (req
  * Get evidence gaps
  */
 router.get('/evidence-heatmap/gaps/:assessmentId', asyncHandler(async (req: Request, res: Response) => {
-  const gaps = await heatmapService.getGaps(req.params.assessmentId);
+  // identifyGaps resolves the latest assessment for the given document/assessment id.
+  const gaps = await heatmapService.identifyGaps(String(req.params.assessmentId));
   res.json({ success: true, data: gaps });
 }));
 
@@ -199,7 +194,7 @@ router.get('/evidence-heatmap/gaps/:assessmentId', asyncHandler(async (req: Requ
  * Generate heatmap data
  */
 router.get('/evidence-heatmap/heatmap/:assessmentId', asyncHandler(async (req: Request, res: Response) => {
-  const heatmap = await heatmapService.generateHeatmapData(req.params.assessmentId);
+  const heatmap = await heatmapService.generateHeatmapData(String(req.params.assessmentId));
   res.json({ success: true, data: heatmap });
 }));
 
@@ -211,10 +206,10 @@ router.get('/evidence-heatmap/heatmap/:assessmentId', asyncHandler(async (req: R
  * Get readiness criteria
  */
 router.get('/readiness-twin/criteria', asyncHandler(async (req: Request, res: Response) => {
-  const criteria = await readinessTwinService.getCriteria({
-    submissionType: req.query.submissionType as string,
-    agency: req.query.agency as string
-  });
+  const criteria = await readinessTwinService.getCriteria(
+    req.query.submissionType as string,
+    req.query.agency as string | undefined
+  );
   res.json({ success: true, data: criteria });
 }));
 
@@ -222,13 +217,11 @@ router.get('/readiness-twin/criteria', asyncHandler(async (req: Request, res: Re
  * Run readiness assessment
  */
 router.post('/readiness-twin/assess', asyncHandler(async (req: Request, res: Response) => {
-  const { programId, submissionId, submissionType, agency, submissionData } = req.body;
+  const { programId, submissionType, agency } = req.body;
   const assessment = await readinessTwinService.runAssessment({
     programId,
-    submissionId,
     submissionType,
-    agency,
-    submissionData
+    targetAgency: agency
   });
   res.status(201).json({ success: true, data: assessment });
 }));
@@ -237,7 +230,15 @@ router.post('/readiness-twin/assess', asyncHandler(async (req: Request, res: Res
  * Get assessment
  */
 router.get('/readiness-twin/assessment/:assessmentId', asyncHandler(async (req: Request, res: Response) => {
-  const assessment = await readinessTwinService.getAssessment(req.params.assessmentId);
+  // NOTE: the service exposes no fetch-by-assessment-id method; the closest
+  // available accessor is getAssessmentHistory(programId). The route param is
+  // used as the program id to return the most recent assessment. This needs
+  // design confirmation (see batch report).
+  const history = await readinessTwinService.getAssessmentHistory(
+    String(req.params.assessmentId),
+    1
+  );
+  const assessment = history[0];
   if (!assessment) {
     return res.status(404).json({ success: false, error: 'Assessment not found' });
   }
@@ -248,7 +249,11 @@ router.get('/readiness-twin/assessment/:assessmentId', asyncHandler(async (req: 
  * Get readiness dashboard
  */
 router.get('/readiness-twin/dashboard/:programId', asyncHandler(async (req: Request, res: Response) => {
-  const dashboard = await readinessTwinService.getDashboard(req.params.programId);
+  const dashboard = await readinessTwinService.getDashboard(
+    String(req.params.programId),
+    req.query.submissionType as string,
+    req.query.agency as string
+  );
   res.json({ success: true, data: dashboard });
 }));
 
@@ -256,8 +261,8 @@ router.get('/readiness-twin/dashboard/:programId', asyncHandler(async (req: Requ
  * Get readiness trends
  */
 router.get('/readiness-twin/trends/:programId', asyncHandler(async (req: Request, res: Response) => {
-  const trends = await readinessTwinService.getTrends(
-    req.params.programId,
+  const trends = await readinessTwinService.getTrendData(
+    String(req.params.programId),
     parseInt(req.query.days as string) || 90
   );
   res.json({ success: true, data: trends });
@@ -271,12 +276,11 @@ router.get('/readiness-twin/trends/:programId', asyncHandler(async (req: Request
  * Detect trace links
  */
 router.post('/traceability/detect', asyncHandler(async (req: Request, res: Response) => {
-  const { programId, sourceDocumentId, sourceContent, targetDocuments } = req.body;
+  const { programId, sourceDocumentId, sourceContent } = req.body;
   const links = await traceabilityService.detectLinks({
     programId,
-    sourceDocumentId,
-    sourceContent,
-    targetDocuments
+    documentId: sourceDocumentId,
+    content: sourceContent
   });
   res.json({ success: true, data: links });
 }));
@@ -293,12 +297,11 @@ router.post('/traceability/links', asyncHandler(async (req: Request, res: Respon
  * Get trace links
  */
 router.get('/traceability/links', asyncHandler(async (req: Request, res: Response) => {
-  const links = await traceabilityService.getLinks({
-    programId: req.query.programId as string,
-    sourceDocumentId: req.query.sourceDocumentId as string,
-    targetDocumentId: req.query.targetDocumentId as string,
-    linkType: req.query.linkType as string,
-    status: req.query.status as string
+  // getLinks takes the program id positionally plus an options bag; only
+  // documentId and linkType are supported filters.
+  const links = await traceabilityService.getLinks(req.query.programId as string, {
+    documentId: req.query.sourceDocumentId as string | undefined,
+    linkType: req.query.linkType as TraceLinkType | undefined
   });
   res.json({ success: true, data: links });
 }));
@@ -308,7 +311,8 @@ router.get('/traceability/links', asyncHandler(async (req: Request, res: Respons
  */
 router.post('/traceability/links/:linkId/validate', asyncHandler(async (req: Request, res: Response) => {
   const link = await traceabilityService.validateLink(
-    req.params.linkId,
+    String(req.params.linkId),
+    'confirmed',
     req.body.validatedBy || 'system'
   );
   res.json({ success: true, data: link });
@@ -331,7 +335,7 @@ router.post('/traceability/matrix', asyncHandler(async (req: Request, res: Respo
  * Get traceability statistics
  */
 router.get('/traceability/statistics/:programId', asyncHandler(async (req: Request, res: Response) => {
-  const stats = await traceabilityService.getStatistics(req.params.programId);
+  const stats = await traceabilityService.getStatistics(String(req.params.programId));
   res.json({ success: true, data: stats });
 }));
 
@@ -353,9 +357,9 @@ router.get('/workspace/roles', asyncHandler(async (req: Request, res: Response) 
 router.get('/workspace/presets', asyncHandler(async (req: Request, res: Response) => {
   const orgGuard = requireAuthedOrgId(req, res);
   if (!orgGuard.ok) return;
+  // getPresets supports roleId and orgId filters (submissionType is not supported).
   const presets = await workspaceService.getPresets({
     roleId: req.query.roleId as string,
-    submissionType: req.query.submissionType as string,
     orgId: String(orgGuard.orgId)
   });
   res.json({ success: true, data: presets });
@@ -373,7 +377,7 @@ router.post('/workspace/presets', asyncHandler(async (req: Request, res: Respons
  * Get user preferences
  */
 router.get('/workspace/preferences/:userId', asyncHandler(async (req: Request, res: Response) => {
-  const prefs = await workspaceService.getUserPreferences(req.params.userId);
+  const prefs = await workspaceService.getUserPreferences(String(req.params.userId));
   res.json({ success: true, data: prefs });
 }));
 
@@ -381,7 +385,7 @@ router.get('/workspace/preferences/:userId', asyncHandler(async (req: Request, r
  * Save user preferences
  */
 router.put('/workspace/preferences/:userId', asyncHandler(async (req: Request, res: Response) => {
-  const prefs = await workspaceService.saveUserPreferences(req.params.userId, req.body);
+  const prefs = await workspaceService.updateUserPreferences(String(req.params.userId), req.body);
   res.json({ success: true, data: prefs });
 }));
 
@@ -389,10 +393,7 @@ router.put('/workspace/preferences/:userId', asyncHandler(async (req: Request, r
  * Get computed workspace
  */
 router.get('/workspace/computed/:userId', asyncHandler(async (req: Request, res: Response) => {
-  const workspace = await workspaceService.getComputedWorkspace(
-    req.params.userId,
-    req.query.presetId as string
-  );
+  const workspace = await workspaceService.getComputedWorkspace(String(req.params.userId));
   res.json({ success: true, data: workspace });
 }));
 
@@ -400,7 +401,10 @@ router.get('/workspace/computed/:userId', asyncHandler(async (req: Request, res:
  * Track workspace action
  */
 router.post('/workspace/analytics/action', asyncHandler(async (req: Request, res: Response) => {
-  await workspaceService.trackAction(req.body);
+  // The service records workspace activity via recordFeatureUsage; map the
+  // posted action body onto that signature.
+  const { sessionId, featureId, durationMs } = req.body || {};
+  await workspaceService.recordFeatureUsage(sessionId, featureId, durationMs);
   res.status(201).json({ success: true });
 }));
 
@@ -408,7 +412,7 @@ router.post('/workspace/analytics/action', asyncHandler(async (req: Request, res
  * Get workspace recommendations
  */
 router.get('/workspace/recommendations/:userId', asyncHandler(async (req: Request, res: Response) => {
-  const recommendations = await workspaceService.getRecommendations(req.params.userId);
+  const recommendations = await workspaceService.getRecommendations(String(req.params.userId));
   res.json({ success: true, data: recommendations });
 }));
 
@@ -444,7 +448,7 @@ router.get('/templates', asyncHandler(async (req: Request, res: Response) => {
  * Get template
  */
 router.get('/templates/:templateId', asyncHandler(async (req: Request, res: Response) => {
-  const template = await templateLearningService.getTemplate(req.params.templateId);
+  const template = await templateLearningService.getTemplate(String(req.params.templateId));
   if (!template) {
     return res.status(404).json({ success: false, error: 'Template not found' });
   }
@@ -502,7 +506,7 @@ router.get('/templates/recommendations', asyncHandler(async (req: Request, res: 
  * Get template effectiveness report
  */
 router.get('/templates/:templateId/effectiveness', asyncHandler(async (req: Request, res: Response) => {
-  const report = await templateLearningService.getEffectivenessReport(req.params.templateId);
+  const report = await templateLearningService.getEffectivenessReport(String(req.params.templateId));
   if (!report) {
     return res.status(404).json({ success: false, error: 'Template not found' });
   }
@@ -553,7 +557,7 @@ router.get('/negotiations/threads', asyncHandler(async (req: Request, res: Respo
  * Get thread
  */
 router.get('/negotiations/threads/:threadId', asyncHandler(async (req: Request, res: Response) => {
-  const thread = await negotiationService.getThread(req.params.threadId);
+  const thread = await negotiationService.getThread(String(req.params.threadId));
   if (!thread) {
     return res.status(404).json({ success: false, error: 'Thread not found' });
   }
@@ -564,7 +568,7 @@ router.get('/negotiations/threads/:threadId', asyncHandler(async (req: Request, 
  * Update thread
  */
 router.patch('/negotiations/threads/:threadId', asyncHandler(async (req: Request, res: Response) => {
-  const thread = await negotiationService.updateThread(req.params.threadId, req.body);
+  const thread = await negotiationService.updateThread(String(req.params.threadId), req.body);
   res.json({ success: true, data: thread });
 }));
 
@@ -583,7 +587,7 @@ router.post('/negotiations/threads/:threadId/entries', asyncHandler(async (req: 
  * Get thread entries
  */
 router.get('/negotiations/threads/:threadId/entries', asyncHandler(async (req: Request, res: Response) => {
-  const entries = await negotiationService.getEntries(req.params.threadId, {
+  const entries = await negotiationService.getEntries(String(req.params.threadId), {
     entryType: req.query.entryType as string,
     direction: req.query.direction as string,
     limit: parseInt(req.query.limit as string)
@@ -595,7 +599,7 @@ router.get('/negotiations/threads/:threadId/entries', asyncHandler(async (req: R
  * Update entry
  */
 router.patch('/negotiations/entries/:entryId', asyncHandler(async (req: Request, res: Response) => {
-  const entry = await negotiationService.updateEntry(req.params.entryId, req.body);
+  const entry = await negotiationService.updateEntry(String(req.params.entryId), req.body);
   res.json({ success: true, data: entry });
 }));
 
@@ -615,7 +619,7 @@ router.post('/negotiations/threads/:threadId/positions', asyncHandler(async (req
  */
 router.get('/negotiations/threads/:threadId/positions', asyncHandler(async (req: Request, res: Response) => {
   const positions = await negotiationService.getPositions(
-    req.params.threadId,
+    String(req.params.threadId),
     req.query.status as string
   );
   res.json({ success: true, data: positions });
@@ -625,7 +629,7 @@ router.get('/negotiations/threads/:threadId/positions', asyncHandler(async (req:
  * Get thread timeline
  */
 router.get('/negotiations/threads/:threadId/timeline', asyncHandler(async (req: Request, res: Response) => {
-  const timeline = await negotiationService.getTimeline(req.params.threadId);
+  const timeline = await negotiationService.getTimeline(String(req.params.threadId));
   res.json({ success: true, data: timeline });
 }));
 
@@ -646,7 +650,7 @@ router.get('/negotiations/search', asyncHandler(async (req: Request, res: Respon
  * Get negotiation statistics
  */
 router.get('/negotiations/statistics/:programId', asyncHandler(async (req: Request, res: Response) => {
-  const stats = await negotiationService.getStatistics(req.params.programId);
+  const stats = await negotiationService.getStatistics(String(req.params.programId));
   res.json({ success: true, data: stats });
 }));
 
@@ -683,7 +687,7 @@ router.get('/guardrails/rules', asyncHandler(async (req: Request, res: Response)
  * Get rule
  */
 router.get('/guardrails/rules/:ruleId', asyncHandler(async (req: Request, res: Response) => {
-  const rule = await guardrailsService.getRule(req.params.ruleId);
+  const rule = await guardrailsService.getRule(String(req.params.ruleId));
   if (!rule) {
     return res.status(404).json({ success: false, error: 'Rule not found' });
   }
@@ -766,7 +770,7 @@ router.post('/guardrails/validate', asyncHandler(async (req: Request, res: Respo
  * Get validation run findings
  */
 router.get('/guardrails/runs/:runId/findings', asyncHandler(async (req: Request, res: Response) => {
-  const findings = await guardrailsService.getRunFindings(req.params.runId);
+  const findings = await guardrailsService.getRunFindings(String(req.params.runId));
   res.json({ success: true, data: findings });
 }));
 
@@ -775,7 +779,7 @@ router.get('/guardrails/runs/:runId/findings', asyncHandler(async (req: Request,
  */
 router.post('/guardrails/findings/:findingId/acknowledge', asyncHandler(async (req: Request, res: Response) => {
   const finding = await guardrailsService.acknowledgeFinding(
-    req.params.findingId,
+    String(req.params.findingId),
     req.body.acknowledgedBy,
     req.body.reason
   );

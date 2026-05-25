@@ -2,6 +2,11 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import * as crypto from 'crypto';
 import { buildCanonicalGovernedState } from '../services/governed-ana-execution.js';
+import type { CanonicalGovernedState } from '../../shared/types/governed-document-fabric';
+
+type CanonicalGovernedStateResult =
+  | CanonicalGovernedState
+  | { error: string; degraded: boolean };
 import { db, pool } from '../db';
 import { concept2cureNotifications, projectTasks } from '../../shared/schema';
 import {
@@ -67,8 +72,11 @@ async function createCommunicationCenterTask(params: {
     dueDate: params.dueDate ? new Date(params.dueDate) : undefined,
     metadata: params.metadata || {},
   };
-  const [task] = await db.insert(projectTasks).values(values).returning();
-  return task;
+  // `projectTasks` is typed as `any` in the schema, so drizzle widens the
+  // returning() result to a union that includes a non-iterable QueryResult.
+  // The runtime value is always the inserted-rows array.
+  const inserted = (await db.insert(projectTasks).values(values).returning()) as any[];
+  return inserted[0];
 }
 
 async function createCommunicationCenterNotification(params: {
@@ -134,7 +142,7 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
     try {
       await ensureCommunicationCenterTables();
       const organizationId = getOrganizationId(req);
-      const projectId = parseProjectParam(req.params.projectId);
+      const projectId = parseProjectParam(String(req.params.projectId));
       const result = await pool.query(
         `SELECT profile_id, authority, center_or_division, channel_type, submission_transport,
                 accepted_formats, validation_requirements, package_constraints, acknowledgment_model,
@@ -179,7 +187,7 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
 
   router.get('/projects/:projectId/authority-profiles/templates', async (req: Request, res: Response) => {
     try {
-      const projectId = parseProjectParam(req.params.projectId);
+      const projectId = parseProjectParam(String(req.params.projectId));
       const organizationId = getOrganizationId(req);
       return sendSuccess(
         res,
@@ -217,7 +225,7 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
     try {
       await ensureCommunicationCenterTables();
       const organizationId = getOrganizationId(req);
-      const projectId = parseProjectParam(req.params.projectId);
+      const projectId = parseProjectParam(String(req.params.projectId));
       const input = schema.parse(req.body || {});
       validateAuthorityProfileInput(input);
       const now = new Date().toISOString();
@@ -274,7 +282,7 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
     try {
       await ensureCommunicationCenterTables();
       const organizationId = getOrganizationId(req);
-      const projectId = parseProjectParam(req.params.projectId);
+      const projectId = parseProjectParam(String(req.params.projectId));
       const result = await pool.query(
         `SELECT event_id, source_type, communication_type, source_channel, linked_submission_id,
                 linked_package_id, linked_section_codes, linked_artifact_ids, received_date, due_date,
@@ -352,7 +360,7 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
     try {
       await ensureCommunicationCenterTables();
       const organizationId = getOrganizationId(req);
-      const projectId = parseProjectParam(req.params.projectId);
+      const projectId = parseProjectParam(String(req.params.projectId));
       const input = schema.parse(req.body || {});
       if (!canViewVisibilityTier(input.visibilityTier, req.userRole)) {
         return sendError(res, 403, 'Visibility tier not permitted for current role');
@@ -445,8 +453,8 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
           await createCommunicationCenterNotification({
             organizationId,
             projectId,
-            recipientUserId: req.userId,
-            actorUserId: req.userId,
+            recipientUserId: getUserId(req),
+            actorUserId: getUserId(req),
             notificationType: event.responseRequired
               ? 'response_due_soon'
               : 'agency_communication_received',
@@ -481,7 +489,7 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
     try {
       await ensureCommunicationCenterTables();
       const organizationId = getOrganizationId(req);
-      const projectId = parseProjectParam(req.params.projectId);
+      const projectId = parseProjectParam(String(req.params.projectId));
       const result = await pool.query(
         `SELECT service_id, status, service_request_title, entitlement_level, requested_by_role, requested_by,
                 operator_assignee, blocked_reason, created_at, updated_at
@@ -540,7 +548,7 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
     try {
       await ensureCommunicationCenterTables();
       const organizationId = getOrganizationId(req);
-      const projectId = parseProjectParam(req.params.projectId);
+      const projectId = parseProjectParam(String(req.params.projectId));
       const input = schema.parse(req.body || {});
       const now = new Date().toISOString();
       const service: PublishOpsServiceRecord = {
@@ -593,8 +601,8 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
         await createCommunicationCenterNotification({
           organizationId,
           projectId,
-          recipientUserId: req.userId,
-          actorUserId: req.userId,
+          recipientUserId: getUserId(req),
+          actorUserId: getUserId(req),
           notificationType: 'assignment',
           title: 'PublishOps service request logged',
           body: `Task "${serviceTask?.name || 'PublishOps task'}" created for managed service request.`,
@@ -629,7 +637,7 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
       try {
         await ensureCommunicationCenterTables();
         const organizationId = getOrganizationId(req);
-        const projectId = parseProjectParam(req.params.projectId);
+        const projectId = parseProjectParam(String(req.params.projectId));
         const input = schema.parse(req.body || {});
         const priorRes = await pool.query(
           `SELECT service_id, status, service_request_title, entitlement_level, requested_by_role, requested_by,
@@ -691,8 +699,8 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
           await createCommunicationCenterNotification({
             organizationId,
             projectId,
-            recipientUserId: req.userId,
-            actorUserId: req.userId,
+            recipientUserId: getUserId(req),
+            actorUserId: getUserId(req),
             notificationType,
             title: `PublishOps status updated: ${updated.status}`,
             body: `Service request "${updated.serviceRequestTitle}" moved to ${updated.status}.`,
@@ -720,7 +728,7 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
     try {
       await ensureCommunicationCenterTables();
       const organizationId = getOrganizationId(req);
-      const projectId = parseProjectParam(req.params.projectId);
+      const projectId = parseProjectParam(String(req.params.projectId));
       const result = await pool.query(
         `SELECT item_id, title, authority, submission_type, sequence_number, gateway_profile,
                 status, ectd_path, dispatch_ready, metadata, created_by, created_at, updated_at
@@ -756,7 +764,7 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
     try {
       await ensureCommunicationCenterTables();
       const organizationId = getOrganizationId(req);
-      const projectId = parseProjectParam(req.params.projectId);
+      const projectId = parseProjectParam(String(req.params.projectId));
       const input = schema.parse(req.body || {});
       validateSubmissionCenterInput(input);
       const now = new Date().toISOString();
@@ -819,7 +827,7 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
       });
 
       // Governed Document Decision Fabric evaluation on creation — surface initial blockers/warnings
-      let canonicalGovernedState: Record<string, unknown> | undefined;
+      let canonicalGovernedState: CanonicalGovernedStateResult | undefined;
       try {
         canonicalGovernedState = await buildCanonicalGovernedState({
           context: {
@@ -869,7 +877,7 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
     try {
       await ensureCommunicationCenterTables();
       const organizationId = getOrganizationId(req);
-      const projectId = parseProjectParam(req.params.projectId);
+      const projectId = parseProjectParam(String(req.params.projectId));
       const input = schema.parse(req.body || {});
 
       const result = await pool.query(
@@ -915,8 +923,8 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
         await createCommunicationCenterNotification({
           organizationId,
           projectId,
-          recipientUserId: req.userId,
-          actorUserId: req.userId,
+          recipientUserId: getUserId(req),
+          actorUserId: getUserId(req),
           notificationType: 'submission_center_transition',
           title: `Submission item moved to ${updated.status}`,
           body: `${updated.title} (${updated.authority}) transitioned to ${updated.status}.`,
@@ -927,7 +935,7 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
       await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, previous, updated);
 
       // Governed Document Decision Fabric evaluation for dispatch readiness
-      let canonicalGovernedState: Record<string, unknown> | undefined;
+      let canonicalGovernedState: CanonicalGovernedStateResult | undefined;
       try {
         canonicalGovernedState = await buildCanonicalGovernedState({
           context: {

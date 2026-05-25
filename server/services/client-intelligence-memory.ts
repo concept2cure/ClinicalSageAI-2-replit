@@ -511,7 +511,7 @@ function extractMemoryEntriesFromText(
  * Ingest a document into client intelligence memory.
  */
 export async function ingestDocument(
-  profileId: number | null,
+  profileId: number,
   organizationId: number,
   file: { buffer: Buffer; originalname: string; mimetype: string; size: number },
   userId: number
@@ -633,7 +633,7 @@ export async function ingestDocument(
  * Get all memory entries for a client profile, optionally filtered by category.
  */
 export async function getMemoryEntries(
-  profileId?: number,
+  profileId: number,
   options?: { category?: string; limit?: number; offset?: number }
 ): Promise<MemorySearchResult> {
   const conditions = [
@@ -924,7 +924,7 @@ export async function getProjectIntelligence(
  * Ingest a document into project-level intelligence.
  */
 export async function ingestProjectDocument(
-  projectProfileId: number | null,
+  projectProfileId: number,
   projectId: number,
   organizationId: number,
   file: { buffer: Buffer; originalname: string; mimetype: string; size: number },
@@ -1161,7 +1161,7 @@ function extractProjectMemoryEntries(
  * Get project memory entries.
  */
 export async function getProjectMemoryEntries(
-  projectProfileId?: number,
+  projectProfileId: number,
   options?: { category?: string; limit?: number }
 ): Promise<{ entries: ProjectMemoryEntry[]; totalCount: number }> {
   const conditions = [

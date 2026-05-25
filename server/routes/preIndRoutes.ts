@@ -32,6 +32,23 @@ const authMiddleware = (
 };
 
 // --- Database Interaction Logic ---
+
+// Shape of a row returned by the ind_pre_ind_data SELECT below. Declared here so
+// the raw-SQL result (untyped by drizzle's db.execute) carries its real columns.
+interface PreIndRecord {
+  id: string;
+  draft_id: string;
+  project_name: string | null;
+  therapeutic_area: string | null;
+  project_objective: string | null;
+  target_pre_ind_meeting_date: string | null;
+  pre_ind_meeting_objective: string | null;
+  pre_ind_agenda_topics: string[] | null;
+  pre_ind_attendees: string[] | null;
+  fda_interaction_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
 const dbOps = {
   // Function to get Pre-IND data and milestones for a draft
   getPreIndData: async (draftId: string, userId?: number) => {
@@ -49,11 +66,12 @@ const dbOps = {
 
       const preIndResult = await db.execute(preIndDataQuery);
 
-      if (!preIndResult.length) {
+      if (!preIndResult.rows.length) {
         return null; // Not found
       }
 
-      const preIndRecord = preIndResult[0];
+      // Raw SQL result rows are untyped by db.execute; assert the known columns.
+      const preIndRecord = preIndResult.rows[0] as unknown as PreIndRecord;
 
       // Fetch associated milestones
       const milestonesQuery = sql`
@@ -66,7 +84,7 @@ const dbOps = {
       const milestones = await db.execute(milestonesQuery);
 
       // Format milestones for frontend
-      const formattedMilestones = milestones.map((ms: any) => ({
+      const formattedMilestones = milestones.rows.map((ms: any) => ({
         id: ms.id,
         title: ms.title,
         dueDate: ms.due_date,
@@ -255,7 +273,7 @@ const PreIndDataSchema = z.object({
  * Retrieves the Pre-IND data and associated milestones for a specific draft.
  */
 router.get('/', authMiddleware, async (req, res) => {
-  const { draftId } = req.params;
+  const draftId = String(req.params.draftId);
   const userId = (req as any).user?.id; // Type assertion for development - in production use proper typing
 
   try {
@@ -292,7 +310,7 @@ router.get('/', authMiddleware, async (req, res) => {
  * Creates or updates the Pre-IND data and milestones for a specific draft.
  */
 router.put('/', authMiddleware, async (req, res) => {
-  const { draftId } = req.params;
+  const draftId = String(req.params.draftId);
   const userId = (req as any).user?.id; // Type assertion for development
   const dataToSave = req.body;
 

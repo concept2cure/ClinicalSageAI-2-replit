@@ -52,7 +52,15 @@ export interface PricingTier {
 // No enterprise sales cycles. Sign up, pay, use.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export interface DTCPricingTier extends PricingTier {
+export interface DTCPricingTier {
+  name: string;
+  tier: string;
+  baseMonthly: number;          // cents — base subscription price
+  perSeatMonthly: number;       // cents — additional per-seat price
+  annualDiscountPct: number;
+  maxUsers: number;             // -1 = unlimited
+  maxProjects: number;          // -1 = unlimited
+  maxStorageGB: number;         // -1 = unlimited
   deepResearchCredits: number;  // per month (-1 = unlimited)
   builderCredits: number;       // per month (-1 = unlimited)
   trialDays: number;
@@ -678,6 +686,25 @@ export async function processWebhookEvent(event: Stripe.Event): Promise<void> {
 // WEBHOOK HANDLERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Stripe API v18 moved `current_period_end` from the Subscription object onto
+ * each SubscriptionItem. Read it from the first item, which all single-plan
+ * subscriptions in this app have.
+ */
+function getSubscriptionPeriodEnd(subscription: Stripe.Subscription): number {
+  return subscription.items.data[0].current_period_end;
+}
+
+/**
+ * Stripe API v18 removed the top-level `Invoice.subscription` field; the
+ * subscription reference now lives under `invoice.parent.subscription_details`.
+ */
+function getInvoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
+  const ref = invoice.parent?.subscription_details?.subscription;
+  if (!ref) return null;
+  return typeof ref === 'string' ? ref : ref.id;
+}
+
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promise<void> {
   const organizationId = session.metadata?.organizationId;
   const tier = session.metadata?.tier;
@@ -725,7 +752,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Pro
       seats,
       maxProjects > 0 ? maxProjects : 99999,
       maxStorageGB,
-      new Date(subscription.current_period_end * 1000),
+      new Date(getSubscriptionPeriodEnd(subscription) * 1000),
       parseInt(organizationId, 10),
     ]
   );
@@ -754,9 +781,10 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Pro
 }
 
 async function handlePaymentSucceeded(invoice: Stripe.Invoice): Promise<void> {
-  if (!invoice.subscription) return;
+  const subscriptionId = getInvoiceSubscriptionId(invoice);
+  if (!subscriptionId) return;
   const stripe = getStripe();
-  const sub = await stripe.subscriptions.retrieve(invoice.subscription as string);
+  const sub = await stripe.subscriptions.retrieve(subscriptionId);
   const organizationId = sub.metadata?.organizationId;
   if (!organizationId) return;
 
@@ -766,14 +794,15 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice): Promise<void> {
        next_billing_date = $1,
        updated_at = NOW()
      WHERE id = $2`,
-    [new Date(sub.current_period_end * 1000), parseInt(organizationId, 10)]
+    [new Date(getSubscriptionPeriodEnd(sub) * 1000), parseInt(organizationId, 10)]
   );
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
-  if (!invoice.subscription) return;
+  const subscriptionId = getInvoiceSubscriptionId(invoice);
+  if (!subscriptionId) return;
   const stripe = getStripe();
-  const sub = await stripe.subscriptions.retrieve(invoice.subscription as string);
+  const sub = await stripe.subscriptions.retrieve(subscriptionId);
   const organizationId = sub.metadata?.organizationId;
   if (!organizationId) return;
 

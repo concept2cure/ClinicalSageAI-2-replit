@@ -5,7 +5,7 @@ import React from 'react';
 import {
   Link as WouterLink,
   Route as WouterRoute,
-  Switch,
+  Switch as WouterSwitch,
   useLocation as wouterUseLocation,
   useRoute,
 } from 'wouter';
@@ -13,7 +13,7 @@ import {
 // Forward to wouter
 export const Link = WouterLink;
 export const Route = WouterRoute;
-export const Switch = Switch;
+export const Switch = WouterSwitch;
 export const useLocation = wouterUseLocation;
 
 // For compatibility with any code still using react-router-dom

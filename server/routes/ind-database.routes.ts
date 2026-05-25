@@ -24,7 +24,7 @@ const DEFAULT_ORG_ID = 1;
  */
 router.get('/project', async (req, res) => {
   try {
-    const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
+    const organizationId = Number(req.user?.organizationId ?? DEFAULT_ORG_ID);
     
     // Get the most recent active project for this organization
     const projects = await db
@@ -65,8 +65,8 @@ router.get('/project', async (req, res) => {
  */
 router.post('/project', async (req, res) => {
   try {
-    const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
-    const userId = req.user?.id;
+    const organizationId = Number(req.user?.organizationId ?? DEFAULT_ORG_ID);
+    const userId = req.user?.id != null ? Number(req.user.id) : undefined;
     const { projectData, stepData, currentStep, sections, cmcData, csrData } = req.body;
     
     // Calculate progress based on sections
@@ -162,7 +162,7 @@ router.post('/project', async (req, res) => {
  */
 router.get('/wizard/data', async (req, res) => {
   try {
-    const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
+    const organizationId = Number(req.user?.organizationId ?? DEFAULT_ORG_ID);
     
     // Get projects
     const projects = await db
@@ -230,7 +230,7 @@ router.post('/sections/:sectionId/generate', async (req, res) => {
   try {
     const { sectionId } = req.params;
     const { projectId, templateType = 'FDA', cmcData, csrData, indication, phase } = req.body;
-    const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
+    const organizationId = Number(req.user?.organizationId ?? DEFAULT_ORG_ID);
     
     // Get project if projectId provided
     let project = null;
@@ -268,7 +268,7 @@ router.post('/sections/:sectionId/generate', async (req, res) => {
  */
 router.get('/templates', async (req, res) => {
   try {
-    const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
+    const organizationId = Number(req.user?.organizationId ?? DEFAULT_ORG_ID);
     const { category, type, region } = req.query;
     
     const conditions = [
@@ -322,8 +322,8 @@ router.post('/templates/:templateId/use', async (req, res) => {
   try {
     const { templateId } = req.params;
     const { projectId } = req.body;
-    const userId = req.user?.id;
-    const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
+    const userId = req.user?.id != null ? Number(req.user.id) : undefined;
+    const organizationId = Number(req.user?.organizationId ?? DEFAULT_ORG_ID);
     
     // Get template
     const templates = await db
@@ -342,7 +342,7 @@ router.post('/templates/:templateId/use', async (req, res) => {
     await db
       .update(schema.indTemplates)
       .set({
-        usageCount: template.usageCount + 1,
+        usageCount: (template.usageCount ?? 0) + 1,
         lastUsedAt: new Date()
       })
       .where(eq(schema.indTemplates.templateId, templateId));
@@ -383,9 +383,12 @@ router.post('/templates/:templateId/use', async (req, res) => {
 router.post('/workflow/save', async (req, res) => {
   try {
     const { module, entityType, entityId, currentState, completedSteps, pendingSteps, progressPercentage } = req.body;
-    const userId = req.user?.id;
-    const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
-    const sessionId = req.sessionID || generateUUID();
+    const userId = req.user?.id != null ? Number(req.user.id) : undefined;
+    if (userId === undefined) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    const organizationId = Number(req.user?.organizationId ?? DEFAULT_ORG_ID);
+    const sessionId = req.sessionId || generateUUID();
     
     // Check if workflow exists
     const existing = await db
@@ -455,14 +458,17 @@ router.post('/workflow/save', async (req, res) => {
 router.get('/workflow/:entityId', async (req, res) => {
   try {
     const { entityId } = req.params;
-    const userId = req.user?.id;
-    
+    const userId = req.user?.id != null ? Number(req.user.id) : undefined;
+    if (userId === undefined) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
     const workflows = await db
       .select()
       .from(schema.workflowProgress)
       .where(
         and(
-          eq(schema.workflowProgress.entityId, entityId),
+          eq(schema.workflowProgress.entityId, String(entityId)),
           eq(schema.workflowProgress.userId, userId),
           eq(schema.workflowProgress.status, 'active')
         )

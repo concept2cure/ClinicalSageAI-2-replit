@@ -83,7 +83,7 @@ router.post('/source-objects/:projectId', async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ success: false, error: 'Invalid source object payload', details: error.errors });
     }
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to upsert source object' });
@@ -105,7 +105,7 @@ router.get('/sections/:projectId', async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to fetch section map' });
@@ -208,7 +208,7 @@ router.post('/compile/:projectId', async (req, res) => {
     res.json({ success: true, compiledCount: compiled.length, sections: compiled, bridgedArtifacts });
   } catch (error) {
     await client.query('ROLLBACK');
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Compilation failed' });
@@ -242,7 +242,7 @@ router.post('/source-changed/:projectId', async (req, res) => {
     }
     res.json({ success: true, staleSections: stale.filter((s) => s.stale).map((s) => s.sectionKey) });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Stale update failed' });
@@ -309,7 +309,7 @@ router.post('/contradictions/:projectId', async (req, res) => {
 
     res.json({ success: true, contradictions, impactTasks: deriveImpactTasks(contradictions) });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Contradiction detection failed' });
@@ -332,7 +332,7 @@ router.get('/contradictions/:projectId', async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to fetch contradictions' });
@@ -372,7 +372,7 @@ router.patch('/contradictions/:id/resolve', async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ success: false, error: 'Invalid resolution payload', details: error.errors });
     }
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to resolve contradiction' });
@@ -450,7 +450,7 @@ router.get('/readiness/:projectId', async (req, res) => {
       },
     });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to compute readiness' });
@@ -480,7 +480,7 @@ router.get('/provenance/:projectId/:sectionKey', async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to fetch provenance' });
@@ -589,7 +589,7 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
       canonicalGovernedState,
     });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Approval failed' });
@@ -630,7 +630,7 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
     );
     res.json({ success: true, sectionKey, state: 'draft', diffSummary });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Refresh failed' });
@@ -730,7 +730,7 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
 
     return res.json({ success: true, message: 'Final export gate passed', canonicalGovernedState });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed final export guard check' });

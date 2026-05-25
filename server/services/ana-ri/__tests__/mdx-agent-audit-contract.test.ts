@@ -31,24 +31,24 @@ vi.hoisted(() => {
 
 const { svc, audit } = vi.hoisted(() => ({
   svc: {
-    createQSubmission: vi.fn(async () => ({
+    createQSubmission: vi.fn(async (..._a: any[]) => ({
       id: 'q-1', programId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
       qSubType: 'presub', title: 'x', stage: 'plan',
     })),
-    setCommitmentRolledIn: vi.fn(async () => ({
+    setCommitmentRolledIn: vi.fn(async (..._a: any[]) => ({
       id: 'cccccccc-cccc-cccc-cccc-ccccccccccc1',
       displayCode: 'cm-1', dossierLinkSectionId: '6', rolledIn: true,
     })),
-    upsertMapping: vi.fn(async () => ({ id: 'm-1' })),
-    createDocument: vi.fn(async () => ({ id: 'd-1', code: 'PMCF-1' })),
-    updateDocument: vi.fn(async () => ({ id: 'd-1', updated: true })),
-    validateDocument: vi.fn(() => ({ valid: true, findings: [] })),
-    supersedeDocument: vi.fn(async () => ({ id: 'd-2' })),
-    getDocument: vi.fn(async () => ({ id: 'd-1' })),
-    approveDocument: vi.fn(async () => ({ ok: true })),
-    assessSufficiency: vi.fn(async () => ({ id: 'a-1', verdict: 'sufficient', overallScore: 90 })),
-    runReviewerSimulation: vi.fn(async () => ({ runId: 'rs-1' })),
-    submitToFDA: vi.fn(async () => ({ packageId: 'pkg-1', transactionId: 'tx-1' })),
+    upsertMapping: vi.fn(async (..._a: any[]) => ({ id: 'm-1' })),
+    createDocument: vi.fn(async (..._a: any[]) => ({ id: 'd-1', code: 'PMCF-1' })),
+    updateDocument: vi.fn(async (..._a: any[]) => ({ id: 'd-1', updated: true })),
+    validateDocument: vi.fn((..._a: any[]) => ({ valid: true, findings: [] })),
+    supersedeDocument: vi.fn(async (..._a: any[]) => ({ id: 'd-2' })),
+    getDocument: vi.fn(async (..._a: any[]) => ({ id: 'd-1' })),
+    approveDocument: vi.fn(async (..._a: any[]) => ({ ok: true })),
+    assessSufficiency: vi.fn(async (..._a: any[]) => ({ id: 'a-1', verdict: 'sufficient', overallScore: 90 })),
+    runReviewerSimulation: vi.fn(async (..._a: any[]) => ({ runId: 'rs-1' })),
+    submitToFDA: vi.fn(async (..._a: any[]) => ({ packageId: 'pkg-1', transactionId: 'tx-1' })),
   },
   audit: { logAction: vi.fn().mockResolvedValue(undefined) },
 }));

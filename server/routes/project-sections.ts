@@ -249,7 +249,7 @@ router.get('/', async (req: Request, res: Response) => {
 
 router.get('/:code', async (req: Request, res: Response) => {
   try {
-    const code = req.params.code;
+    const code = String(req.params.code);
     const projectId = parseInt(req.query.project_id as string, 10);
     const orgId = extractOrgId(req);
 
@@ -314,7 +314,7 @@ router.get('/:code', async (req: Request, res: Response) => {
 
 router.patch('/:code/status', async (req: Request, res: Response) => {
   try {
-    const code = req.params.code;
+    const code = String(req.params.code);
     const { project_id, new_status, reason } = req.body;
     const orgId = extractOrgId(req);
     const userId = extractUserId(req);
@@ -441,7 +441,7 @@ router.patch('/:code/status', async (req: Request, res: Response) => {
 
 router.patch('/:code/assign', async (req: Request, res: Response) => {
   try {
-    const code = req.params.code;
+    const code = String(req.params.code);
     const { project_id, assigned_to, reviewer_id } = req.body;
     const orgId = extractOrgId(req);
 
@@ -506,7 +506,7 @@ router.patch('/:code/assign', async (req: Request, res: Response) => {
 
 router.patch('/:code/deadline', async (req: Request, res: Response) => {
   try {
-    const code = req.params.code;
+    const code = String(req.params.code);
     const { project_id, deadline, priority } = req.body;
     const orgId = extractOrgId(req);
 
@@ -566,7 +566,7 @@ router.patch('/:code/deadline', async (req: Request, res: Response) => {
 
 router.patch('/:code', async (req: Request, res: Response) => {
   try {
-    const code = req.params.code;
+    const code = String(req.params.code);
     const { project_id, notes, actual_hours, estimated_hours, priority, metadata } = req.body;
     const orgId = extractOrgId(req);
 
@@ -734,7 +734,7 @@ router.get('/summary', async (req: Request, res: Response) => {
 
 router.post('/:code/comments', async (req: Request, res: Response) => {
   try {
-    const code = req.params.code;
+    const code = String(req.params.code);
     const { project_id, content, parent_id } = req.body;
     const orgId = extractOrgId(req);
     const userId = extractUserId(req);
@@ -782,7 +782,7 @@ router.post('/:code/comments', async (req: Request, res: Response) => {
 
 router.get('/:code/comments', async (req: Request, res: Response) => {
   try {
-    const code = req.params.code;
+    const code = String(req.params.code);
     const projectId = parseInt(req.query.project_id as string, 10);
     const orgId = extractOrgId(req);
 
@@ -812,7 +812,7 @@ router.get('/:code/comments', async (req: Request, res: Response) => {
 
 router.get('/:code/history', async (req: Request, res: Response) => {
   try {
-    const code = req.params.code;
+    const code = String(req.params.code);
     const projectId = parseInt(req.query.project_id as string, 10);
     const orgId = extractOrgId(req);
 
@@ -946,7 +946,7 @@ router.get('/notifications', async (req: Request, res: Response) => {
 
 router.patch('/notifications/:id/read', async (req: Request, res: Response) => {
   try {
-    const notifId = parseInt(req.params.id, 10);
+    const notifId = parseInt(String(req.params.id), 10);
     const userId = extractUserId(req);
 
     await pool.query(
@@ -1049,7 +1049,7 @@ router.get('/milestones', async (req: Request, res: Response) => {
 
 router.patch('/milestones/:id', async (req: Request, res: Response) => {
   try {
-    const milestoneId = parseInt(req.params.id, 10);
+    const milestoneId = parseInt(String(req.params.id), 10);
     const { name, description, target_date, status, linked_sections } = req.body;
     const orgId = extractOrgId(req);
 
@@ -1097,7 +1097,7 @@ router.patch('/milestones/:id', async (req: Request, res: Response) => {
 
 router.delete('/milestones/:id', async (req: Request, res: Response) => {
   try {
-    const milestoneId = parseInt(req.params.id, 10);
+    const milestoneId = parseInt(String(req.params.id), 10);
     const orgId = extractOrgId(req);
 
     await pool.query('DELETE FROM project_milestones WHERE id = $1 AND organization_id = $2', [

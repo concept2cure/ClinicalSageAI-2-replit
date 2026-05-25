@@ -1,6 +1,6 @@
 import { eq, and, sql, desc, like, or } from 'drizzle-orm';
 import { db } from '../db';
-import { csrReports, csrDetails } from '../sage-plus-service';
+import { csrReports, csrDetails } from '../../shared/schema';
 import { huggingFaceService } from '../huggingface-service';
 import { academicDocumentProcessor } from './academic-document-processor';
 import * as fs from 'fs';
@@ -37,6 +37,23 @@ export interface RegulatoryGuidance {
   url?: string;
 }
 
+/**
+ * Raw regulatory-guidance item as stored in the on-disk JSON files under
+ * regulatory_data/. These use a looser, source-specific shape that is then
+ * normalized into RegulatoryGuidance for output. Fields are optional because
+ * the JSON is authored externally and not all records populate every field.
+ */
+export interface RawRegulatoryGuidanceItem {
+  endpoint_text?: string;
+  phase?: string;
+  authority?: string;
+  document?: string;
+  text?: string;
+  description?: string;
+  date?: string;
+  url?: string;
+}
+
 export interface AcademicReference {
   title: string;
   authors: string[];
@@ -57,7 +74,7 @@ export interface AcademicReference {
 export class EndpointRecommenderService {
   private hfService: typeof huggingFaceService;
   private academicProcessor: typeof academicDocumentProcessor;
-  private regulatoryGuidanceCache: Map<string, RegulatoryGuidance[]> = new Map();
+  private regulatoryGuidanceCache: Map<string, RawRegulatoryGuidanceItem[]> = new Map();
 
   // Regulatory authorities and their typical guidelines
   private regulatoryAuthorities = [
@@ -636,8 +653,7 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
           title: csrReports.title,
           sponsor: csrReports.sponsor,
           phase: csrReports.phase,
-          date: csrReports.date,
-          outcome: csrReports.outcome,
+          date: csrReports.reportDate,
         })
         .from(csrReports)
         .where(whereCondition)
@@ -675,6 +691,9 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
             sponsor: string;
             phase: string;
             date: string;
+            // The current csr_reports schema has no trial-outcome column, so
+            // this is left blank until an outcome source is wired in. Success
+            // classification below therefore counts no trials as successful.
             outcome: string;
           }>;
         }
@@ -685,6 +704,10 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
         try {
           const report = matchingReports.find(r => r.id === detail.reportId);
           if (!report) continue;
+
+          // No trial-outcome column exists on csr_reports in the current schema.
+          const reportDateStr = report.date ?? '';
+          const reportOutcome = '';
 
           const endpoints = (detail.endpoints as any) || {};
           const primaryEndpoints = endpoints.primary || [];
@@ -713,7 +736,7 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
             // Check if trial was successful
             const successOutcomes = ['positive', 'success', 'met', 'achieved', 'favorable'];
             const isSuccessful = successOutcomes.some(term =>
-              report.outcome?.toLowerCase().includes(term)
+              reportOutcome.toLowerCase().includes(term)
             );
 
             if (isSuccessful) {
@@ -726,8 +749,8 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
               title: report.title || '',
               sponsor: report.sponsor || '',
               phase: report.phase || '',
-              date: report.date || '',
-              outcome: report.outcome || '',
+              date: reportDateStr,
+              outcome: reportOutcome,
             });
           }
 
@@ -757,7 +780,7 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
               // Check if trial was successful
               const successOutcomes = ['positive', 'success', 'met', 'achieved', 'favorable'];
               const isSuccessful = successOutcomes.some(term =>
-                report.outcome?.toLowerCase().includes(term)
+                reportOutcome.toLowerCase().includes(term)
               );
 
               if (isSuccessful) {
@@ -770,8 +793,8 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
                 title: report.title || '',
                 sponsor: report.sponsor || '',
                 phase: report.phase || '',
-                date: report.date || '',
-                outcome: report.outcome || '',
+                date: reportDateStr,
+                outcome: reportOutcome,
               });
             }
           }
@@ -793,17 +816,19 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
             endpoint: stat.endpoint,
             occurrence_count: stat.occurrences,
             success_rate: successRate,
-            evidence: stat.reports.slice(0, 3).map(report => ({
-              source_id: report.id.toString(),
-              source_type: 'csr',
-              title: report.title,
-              reference_text: `${report.sponsor} trial (${report.phase}): ${report.outcome || 'Completed'}`,
-              success_metric: report.outcome || undefined,
-              phase: report.phase,
-              confidence: 0.9,
-            })),
+            evidence: stat.reports.slice(0, 3).map(
+              (report): EndpointEvidence => ({
+                source_id: report.id.toString(),
+                source_type: 'csr',
+                title: report.title,
+                reference_text: `${report.sponsor} trial (${report.phase}): ${report.outcome || 'Completed'}`,
+                success_metric: report.outcome || undefined,
+                phase: report.phase,
+                confidence: 0.9,
+              })
+            ),
             is_primary: stat.isPrimary,
-            similar_endpoints: [],
+            similar_endpoints: [] as string[],
           };
         })
         .sort((a, b) => {

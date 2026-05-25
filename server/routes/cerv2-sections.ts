@@ -249,14 +249,14 @@ router.post('/', authMiddleware, async (req, res) => {
       newValues: { ...payload, field_data },
       changedBy: userId ?? undefined,
       changedByEmail: req.userEmail ?? null,
-      changedByName: req.user?.name ?? null,
+      changedByName: (req.user as { name?: string } | undefined)?.name ?? null,
       ipAddress: req.ip ?? null,
       userAgent: req.headers['user-agent'] ?? null,
     });
 
     void auditService.logAction({
       tenantId: organizationId,
-      userId: userId ?? null,
+      userId: userId ?? undefined,
       action: 'section.create',
       resourceType: 'cerv2_510k_section',
       resourceId: String(inserted.id),
@@ -379,7 +379,7 @@ router.patch('/:sectionId', authMiddleware, async (req, res) => {
       newValues: { ...parsed.data },
       changedBy: userId ?? undefined,
       changedByEmail: req.userEmail ?? null,
-      changedByName: req.user?.name ?? null,
+      changedByName: (req.user as { name?: string } | undefined)?.name ?? null,
       ipAddress: req.ip ?? null,
       userAgent: req.headers['user-agent'] ?? null,
     });
@@ -391,7 +391,7 @@ router.patch('/:sectionId', authMiddleware, async (req, res) => {
     // separately so reviewers can find sign-offs directly.
     void auditService.logAction({
       tenantId: organizationId,
-      userId: userId ?? null,
+      userId: userId ?? undefined,
       action: 'section.edit',
       resourceType: 'cerv2_510k_section',
       resourceId: String(sectionId),
@@ -407,7 +407,7 @@ router.patch('/:sectionId', authMiddleware, async (req, res) => {
     if (statusBecameApproved(existing.status, updated.status)) {
       void auditService.logAction({
         tenantId: organizationId,
-        userId: userId ?? null,
+        userId: userId ?? undefined,
         action: 'section.approve',
         resourceType: 'cerv2_510k_section',
         resourceId: String(sectionId),
@@ -457,7 +457,7 @@ router.delete('/:sectionId', authMiddleware, async (req, res) => {
 
     void auditService.logAction({
       tenantId: organizationId,
-      userId: resolveUserId(req) ?? null,
+      userId: resolveUserId(req) ?? undefined,
       action: 'section.delete',
       resourceType: 'cerv2_510k_section',
       resourceId: String(sectionId),

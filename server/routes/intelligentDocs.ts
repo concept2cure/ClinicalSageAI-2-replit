@@ -65,19 +65,24 @@ const CalculateComplianceSchema = z.object({
 // Middleware: Organization Context
 // ─────────────────────────────────────────────────────────────────────────────
 
-interface AuthenticatedRequest extends Request {
+// The global Express.Request augmentation types organizationId/userId as
+// number; this route works with the string org/user context returned by
+// getSecureOrgId. We read/write those values through this view of the request
+// (omitting the base members so the string types do not conflict).
+interface AuthenticatedRequest extends Omit<Request, 'organizationId' | 'userId'> {
   organizationId?: string;
   userId?: string;
   [key: string]: any;
 }
 
-const requireOrganization = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+const requireOrganization = (req: Request, res: Response, next: NextFunction) => {
+  const areq = req as AuthenticatedRequest;
   const orgId = getSecureOrgId(req);
   if (!orgId) {
     return res.status(401).json({ error: 'Organization context required' });
   }
-  req.organizationId = orgId;
-  req.userId = req.user?.id ? String(req.user.id) : req.userId || 'system';
+  areq.organizationId = orgId;
+  areq.userId = req.user?.id ? String(req.user.id) : areq.userId || 'system';
   next();
 };
 
@@ -101,7 +106,7 @@ function generateLinkHash(sourceHash: string, linkedText: string, timestamp: str
  * GET /api/intelligent-docs/sources
  * List source documents with search and filtering
  */
-router.get('/sources', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+router.get('/sources', requireOrganization, asyncHandler(async (req: Request, res: Response) => {
   const { search, type, limit = '50', offset = '0' } = req.query;
 
   let query = `
@@ -136,7 +141,7 @@ router.get('/sources', requireOrganization, asyncHandler(async (req: Authenticat
  * POST /api/intelligent-docs/sources
  * Create a new source document
  */
-router.post('/sources', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+router.post('/sources', requireOrganization, asyncHandler(async (req: Request, res: Response) => {
   try {
     const data = CreateSourceDocumentSchema.parse(req.body);
     const contentHash = generateHash(data.content || data.title);
@@ -167,8 +172,10 @@ router.post('/sources', requireOrganization, asyncHandler(async (req: Authentica
  * PUT /api/intelligent-docs/sources/:id
  * Update source document (creates new version)
  */
-router.put('/sources/:id', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
+router.put('/sources/:id', requireOrganization, asyncHandler(async (req: Request, res: Response) => {
+  // requireOrganization populates string org/user context on the request.
+  const areq = req as AuthenticatedRequest;
+  const id = String(req.params.id);
   const data = CreateSourceDocumentSchema.partial().parse(req.body);
 
   // Get current version
@@ -213,13 +220,13 @@ router.put('/sources/:id', requireOrganization, asyncHandler(async (req: Authent
   // Trigger change propagation if content changed
   if (newHash !== oldVersion.content_hash) {
     await triggerChangePropagation(
-      req.organizationId!,
+      areq.organizationId!,
       id,
       oldVersion.version,
       newVersion,
       oldVersion.content_hash,
       newHash,
-      req.userId!
+      areq.userId!
     );
   }
 
@@ -234,7 +241,7 @@ router.put('/sources/:id', requireOrganization, asyncHandler(async (req: Authent
  * GET /api/intelligent-docs/links
  * List traceability links for a document
  */
-router.get('/links', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+router.get('/links', requireOrganization, asyncHandler(async (req: Request, res: Response) => {
   const { documentId, sourceId, status } = req.query;
 
   let query = `
@@ -279,7 +286,7 @@ router.get('/links', requireOrganization, asyncHandler(async (req: Authenticated
  * POST /api/intelligent-docs/links
  * Create a new traceability link
  */
-router.post('/links', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+router.post('/links', requireOrganization, asyncHandler(async (req: Request, res: Response) => {
   try {
     const data = CreateTraceabilityLinkSchema.parse(req.body);
 
@@ -332,7 +339,7 @@ router.post('/links', requireOrganization, asyncHandler(async (req: Authenticate
  * POST /api/intelligent-docs/links/:id/verify
  * Verify a traceability link against current source
  */
-router.post('/links/:id/verify', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+router.post('/links/:id/verify', requireOrganization, asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
 
   // Get link and current source hash
@@ -381,7 +388,7 @@ router.post('/links/:id/verify', requireOrganization, asyncHandler(async (req: A
  * GET /api/intelligent-docs/propagation-events
  * List change propagation events
  */
-router.get('/propagation-events', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+router.get('/propagation-events', requireOrganization, asyncHandler(async (req: Request, res: Response) => {
   const { status, sourceId, limit = '50' } = req.query;
 
   let query = `
@@ -417,7 +424,7 @@ router.get('/propagation-events', requireOrganization, asyncHandler(async (req: 
  * GET /api/intelligent-docs/propagation-events/:id/impacted
  * Get impacted sections for a propagation event
  */
-router.get('/propagation-events/:id/impacted', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+router.get('/propagation-events/:id/impacted', requireOrganization, asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
 
   const result = await db.execute(sql`
@@ -442,7 +449,7 @@ router.get('/propagation-events/:id/impacted', requireOrganization, asyncHandler
  * PUT /api/intelligent-docs/propagation-events/:id/resolve
  * Resolve a propagation event
  */
-router.put('/propagation-events/:id/resolve', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+router.put('/propagation-events/:id/resolve', requireOrganization, asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
 
   await db.execute(sql`
@@ -462,7 +469,7 @@ router.put('/propagation-events/:id/resolve', requireOrganization, asyncHandler(
  * POST /api/intelligent-docs/compliance/calculate
  * Calculate compliance score for a document
  */
-router.post('/compliance/calculate', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+router.post('/compliance/calculate', requireOrganization, asyncHandler(async (req: Request, res: Response) => {
   try {
     const data = CalculateComplianceSchema.parse(req.body);
     return res.status(501).json({
@@ -484,7 +491,7 @@ router.post('/compliance/calculate', requireOrganization, asyncHandler(async (re
  * GET /api/intelligent-docs/compliance/history
  * Get compliance score history for a document
  */
-router.get('/compliance/history', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+router.get('/compliance/history', requireOrganization, asyncHandler(async (req: Request, res: Response) => {
   const { documentId, limit = '30' } = req.query;
 
   if (!documentId) {
@@ -510,7 +517,7 @@ router.get('/compliance/history', requireOrganization, asyncHandler(async (req: 
  * GET /api/intelligent-docs/compliance/rules
  * Get compliance rules
  */
-router.get('/compliance/rules', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+router.get('/compliance/rules', requireOrganization, asyncHandler(async (req: Request, res: Response) => {
   const { submissionType, category } = req.query;
 
   let query = `

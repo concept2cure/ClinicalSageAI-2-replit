@@ -49,13 +49,11 @@ router.get('/', async (req, res) => {
     }
     const { organizationId, clientWorkspaceId } = tenantContext;
 
-    log.debug(
-      '🔍 GET projects request - organizationId:',
+    log.debug('🔍 GET projects request', {
       organizationId,
-      'from:',
       // security-allow: source-telemetry
-      req.headers['x-organization-id'] ? 'header' : 'query'
-    );
+      from: req.headers['x-organization-id'] ? 'header' : 'query',
+    });
 
     const license = await getActiveLicenseForOrganization(organizationId);
     if (!license) {
@@ -79,7 +77,10 @@ router.get('/', async (req, res) => {
       ? orgProjects.filter(project => project.clientWorkspaceId === clientWorkspaceId)
       : orgProjects;
 
-    log.debug('🔍 Retrieved projects for org', organizationId, ':', orgProjects.length);
+    log.debug('🔍 Retrieved projects for org', {
+      organizationId,
+      count: orgProjects.length,
+    });
     log.debug('🔍 Projects data:', orgProjects);
     res.json(filteredProjects);
   } catch (error) {
@@ -198,8 +199,6 @@ router.post('/', async (req, res) => {
           description: 'Default client workspace created automatically for project management',
           status: 'active',
           industry: organization.industryMode || 'pharmaceutical',
-          tier: organization.tier || 'standard',
-          quotaUsers: organization.maxUsers || 5,
           quotaProjects: organization.maxProjects || 10,
           quotaStorage: organization.maxStorage || 5,
         })
@@ -217,8 +216,8 @@ router.post('/', async (req, res) => {
     }
 
     // Use atomic project creation with quota enforcement
-    const atomicQuotaService = await import('../services/atomicQuotaService.js');
-    const result = await atomicQuotaService.atomicCreateProject(organizationId, {
+    const { atomicCreateProject } = await import('../services/atomicQuotaService.js');
+    const result = await atomicCreateProject(organizationId, {
       name: validatedData.name,
       description: validatedData.description || null,
       type: validatedData.type,

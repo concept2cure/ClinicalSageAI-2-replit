@@ -1,6 +1,6 @@
-import { db } from '../db';
+import { db, query } from '../db';
 // import { clinicalEvaluationReports } from '../../shared/schema';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, like } from 'drizzle-orm';
 import {
   generateEmbeddings,
   generateStructuredResponse,
@@ -670,10 +670,11 @@ class ClinicalIntelligenceService {
         documentText = cer.content;
       } else {
         // Replace with CSR retrieval logic
-        const [csr] = await db.execute(
+        const csrResult = await query(
           'SELECT content_text FROM csr_reports WHERE report_id = $1',
           [documentId]
         );
+        const csr = csrResult.rows[0];
 
         if (!csr) {
           log.error(`CSR ${documentId} not found`);
@@ -699,7 +700,7 @@ class ClinicalIntelligenceService {
           .where(eq(clinicalEvaluationReports.cer_id, documentId));
       } else {
         // Replace with CSR update logic
-        await db.execute('UPDATE csr_reports SET content_vector = $1 WHERE report_id = $2', [
+        await query('UPDATE csr_reports SET content_vector = $1 WHERE report_id = $2', [
           JSON.stringify(embeddings),
           documentId,
         ]);
@@ -748,9 +749,10 @@ class ClinicalIntelligenceService {
         };
       } else {
         // Replace with CSR retrieval logic
-        const [csr] = await db.execute('SELECT * FROM csr_reports WHERE report_id = $1', [
+        const csrResult = await query('SELECT * FROM csr_reports WHERE report_id = $1', [
           documentId,
         ]);
+        const csr = csrResult.rows[0];
 
         if (!csr) {
           log.error(`CSR ${documentId} not found`);
@@ -838,8 +840,9 @@ class ClinicalIntelligenceService {
       }
 
       // Get cached connections if available
-      if (this.semanticConnectionCache.has(documentId)) {
-        return this.semanticConnectionCache.get(documentId);
+      const cachedConnections = this.semanticConnectionCache.get(documentId);
+      if (cachedConnections) {
+        return cachedConnections;
       }
 
       // Prepare variables for analysis
@@ -982,7 +985,7 @@ class ClinicalIntelligenceService {
           .where(eq(clinicalEvaluationReports.cer_id, documentId));
       } else {
         // CSR update
-        await db.execute(
+        await query(
           'UPDATE csr_reports SET processed = true, processed_at = NOW(), semantic_processing_complete = true WHERE report_id = $1',
           [documentId]
         );
@@ -1369,10 +1372,11 @@ class ClinicalIntelligenceService {
   }> {
     try {
       // Find relevant CSRs and CERs for this indication and phase
-      const relevantCSRs = await db.execute(
+      const relevantCSRsResult = await query(
         'SELECT report_id FROM csr_reports WHERE indication ILIKE $1 AND phase = $2 AND "deletedAt" IS NULL LIMIT 10',
         [`%${indication}%`, phase]
       );
+      const relevantCSRs = relevantCSRsResult.rows;
 
       const relevantCERs = await db
         .select({ cer_id: clinicalEvaluationReports.cer_id })

@@ -98,7 +98,7 @@ const formatRelativeTime = (date: Date): string => {
   return formatDateTime(date);
 };
 
-const getChangeIcon = (changeType: string) => {
+const getChangeIcon = (changeType: string | undefined) => {
   switch (changeType) {
     case 'ai':
       return Sparkles;
@@ -109,7 +109,7 @@ const getChangeIcon = (changeType: string) => {
   }
 };
 
-const getChangeLabel = (changeType: string): string => {
+const getChangeLabel = (changeType: string | undefined): string => {
   switch (changeType) {
     case 'ai':
       return 'RI';
@@ -440,29 +440,29 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
                     onSelect={() => {
                       if (compareMode) {
                         if (!selectedVersionId) {
-                          setSelectedVersionId(version.id);
+                          setSelectedVersionId(version.id ?? null);
                         } else if (!compareTargetId && version.id !== selectedVersionId) {
-                          setCompareTargetId(version.id);
+                          setCompareTargetId(version.id ?? null);
                         } else {
-                          setSelectedVersionId(version.id);
+                          setSelectedVersionId(version.id ?? null);
                           setCompareTargetId(null);
                         }
                       } else {
-                        setSelectedVersionId(selectedVersionId === version.id ? null : version.id);
+                        setSelectedVersionId(selectedVersionId === version.id ? null : version.id ?? null);
                       }
                     }}
                     onRestore={() => {
-                      setRestoreTargetId(version.id);
+                      setRestoreTargetId(version.id ?? null);
                       setShowRestoreDialog(true);
                     }}
                     onCompare={
                       onCompareVersions
                         ? () => {
                             if (selectedVersionId && selectedVersionId !== version.id) {
-                              setCompareTargetId(version.id);
+                              setCompareTargetId(version.id ?? null);
                               setShowDiffView(true);
                             } else {
-                              setSelectedVersionId(version.id);
+                              setSelectedVersionId(version.id ?? null);
                               setCompareMode(true);
                             }
                           }

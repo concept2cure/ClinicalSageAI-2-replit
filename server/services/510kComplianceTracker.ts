@@ -178,28 +178,36 @@ export class FDA510kComplianceTracker {
         .limit(1);
       
       const previousVersion = previousVersions[0];
-      const versionNumber = previousVersion ? (previousVersion.versionNumber || 1) + 1 : 1;
-      
-      // Create version entry in database
+      const previousVersionNumber = previousVersion
+        ? parseInt(previousVersion.versionNumber, 10) || 0
+        : 0;
+      const versionNumber = previousVersionNumber + 1;
+
+      const changes = previousVersion
+        ? JSON.stringify(
+            this.calculateChanges(JSON.parse(previousVersion.content || '{}'), content)
+          )
+        : '[]';
+
+      // Create version entry in database. `versionNumber` is stored as a string
+      // (varchar) in the schema; `changes` is persisted inside the metadata JSON
+      // since there is no dedicated column for it.
       const versionEntry = {
         documentId: parseInt(documentId) || 0,
-        versionNumber,
+        versionNumber: String(versionNumber),
         content: JSON.stringify(content),
-        changes: previousVersion ? 
-          JSON.stringify(this.calculateChanges(
-            JSON.parse(previousVersion.content || '{}'), 
-            content
-          )) : '[]',
-        createdBy: userId,
-        organizationId,
+        changeDescription,
+        createdById: userId,
         metadata: {
           projectId,
+          organizationId,
           changeDescription,
+          changes,
           hash: this.calculateContentHash(content),
           ...metadata
         }
       };
-      
+
       const [savedVersion] = await db.insert(schema.documentVersions)
         .values(versionEntry)
         .returning();
@@ -229,7 +237,7 @@ export class FDA510kComplianceTracker {
         versionNumber,
         versionId: savedVersion.id,
         hash: this.calculateContentHash(content),
-        changes: JSON.parse(versionEntry.changes)
+        changes: JSON.parse(changes)
       };
     } catch (error) {
       logger.error('Error creating document version', { err: error instanceof Error ? error.message : String(error) });
@@ -498,11 +506,23 @@ export class FDA510kComplianceTracker {
         currentVersion: versions.length,
         versions: versions.map(v => {
           const metadata = v.metadata as any || {};
+          // `changes` is persisted inside metadata as a JSON string.
+          let changes: unknown[] = [];
+          if (typeof metadata.changes === 'string') {
+            try {
+              const parsed = JSON.parse(metadata.changes);
+              if (Array.isArray(parsed)) changes = parsed;
+            } catch {
+              changes = [];
+            }
+          } else if (Array.isArray(metadata.changes)) {
+            changes = metadata.changes;
+          }
           return {
             versionNumber: v.versionNumber || 1,
-            changeDescription: metadata.changeDescription || 'Version update',
-            changesCount: Array.isArray(v.changes) ? v.changes.length : 0,
-            createdBy: v.createdBy,
+            changeDescription: v.changeDescription || metadata.changeDescription || 'Version update',
+            changesCount: changes.length,
+            createdBy: v.createdById,
             createdAt: v.createdAt,
             hash: metadata.hash || this.calculateContentHash(v.content || '')
           };

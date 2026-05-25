@@ -36,7 +36,7 @@ function getOrgId(req: Request): number {
 
 router.get('/:documentId', async (req: Request, res: Response) => {
   try {
-    const documentId = parseInt(req.params.documentId, 10);
+    const documentId = parseInt(String(req.params.documentId), 10);
     if (isNaN(documentId)) return res.status(400).json({ error: 'Invalid documentId' });
     const orgId = getOrgId(req);
 
@@ -58,7 +58,7 @@ router.get('/:documentId', async (req: Request, res: Response) => {
 
 router.post('/:documentId', async (req: Request, res: Response) => {
   try {
-    const documentId = parseInt(req.params.documentId, 10);
+    const documentId = parseInt(String(req.params.documentId), 10);
     if (isNaN(documentId)) return res.status(400).json({ error: 'Invalid documentId' });
     const orgId = getOrgId(req);
 
@@ -119,8 +119,8 @@ router.post('/:documentId', async (req: Request, res: Response) => {
 
 router.post('/:documentId/:id/reply', async (req: Request, res: Response) => {
   try {
-    const documentId = parseInt(req.params.documentId, 10);
-    const annotationId = parseInt(req.params.id, 10);
+    const documentId = parseInt(String(req.params.documentId), 10);
+    const annotationId = parseInt(String(req.params.id), 10);
     const { content } = req.body;
     const orgId = getOrgId(req);
 
@@ -156,8 +156,8 @@ router.post('/:documentId/:id/reply', async (req: Request, res: Response) => {
 
 router.post('/:documentId/:id/decide', async (req: Request, res: Response) => {
   try {
-    const documentId = parseInt(req.params.documentId, 10);
-    const annotationId = parseInt(req.params.id, 10);
+    const documentId = parseInt(String(req.params.documentId), 10);
+    const annotationId = parseInt(String(req.params.id), 10);
     const { decision, note } = req.body;
     const orgId = getOrgId(req);
 

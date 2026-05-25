@@ -66,9 +66,10 @@ function getOrgId(req: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-function parseIntParam(value: string | undefined): number | null {
+function parseIntParam(value: string | string[] | undefined): number | null {
   if (!value) return null;
-  const n = parseInt(value, 10);
+  const str = Array.isArray(value) ? value[0] : value;
+  const n = parseInt(str, 10);
   return Number.isFinite(n) ? n : null;
 }
 
@@ -211,7 +212,7 @@ async function requirePacketAccess(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const packetId = req.params.packetId;
+  const packetId = String(req.params.packetId ?? '');
   if (!packetId) {
     res.status(422).json({ error: 'packetId is required' });
     return;
@@ -257,7 +258,7 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user?.id;
-      const result = await registerPacketDependencies(req.params.packetId, {
+      const result = await registerPacketDependencies(String(req.params.packetId), {
         createdById: typeof userId === 'number' ? userId : undefined,
       });
       if (!result) return res.status(404).json({ error: 'Packet not found' });
@@ -274,8 +275,9 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const orgId = getOrgId(req)!;
-      const view = await getPacketDependencies(orgId, req.params.packetId);
-      res.json({ packetId: req.params.packetId, ...view });
+      const packetId = String(req.params.packetId);
+      const view = await getPacketDependencies(orgId, packetId);
+      res.json({ packetId, ...view });
     } catch (err: any) {
       res.status(500).json({ error: 'Dependency fetch failed', detail: err?.message });
     }
@@ -358,7 +360,7 @@ async function requireUuidProgramAccess(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const programId = req.params.programId;
+  const programId = String(req.params.programId ?? '');
   if (!programId) {
     res.status(422).json({ error: 'programId is required' });
     return;
@@ -394,7 +396,7 @@ router.post(
   requireUuidProgramAccess,
   async (req: Request, res: Response) => {
     const orgId = getOrgId(req)!;
-    const programId = req.params.programId;
+    const programId = String(req.params.programId);
     const userIdRaw = (req as any).user?.id;
     const triggeredBy =
       typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
@@ -457,9 +459,10 @@ router.get(
   async (req: Request, res: Response) => {
     const orgId = getOrgId(req)!;
     const limit = Math.min(parseInt(String(req.query.limit ?? '50'), 10) || 50, 200);
+    const programId = String(req.params.programId);
     try {
-      const rows = await listProgramSimulations(orgId, req.params.programId, limit);
-      res.json({ programId: req.params.programId, runs: rows, count: rows.length });
+      const rows = await listProgramSimulations(orgId, programId, limit);
+      res.json({ programId, runs: rows, count: rows.length });
     } catch (err: any) {
       res.status(500).json({ error: 'List failed', detail: err?.message });
     }
@@ -470,7 +473,7 @@ router.get('/reviewer-simulations/:runId', async (req: Request, res: Response) =
   const orgId = getOrgId(req);
   if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
   try {
-    const row = await getSimulationRun(orgId, req.params.runId);
+    const row = await getSimulationRun(orgId, String(req.params.runId));
     if (!row) return res.status(404).json({ error: 'Run not found' });
     res.json(row);
   } catch (err: any) {
@@ -518,7 +521,7 @@ router.post(
     try {
       const result = await propagateRegulatoryChange({
         organizationId: orgId,
-        programId: req.params.programId,
+        programId: String(req.params.programId),
         legacyProgramId:
           typeof body.legacyProgramId === 'number' ? body.legacyProgramId : undefined,
         event,
@@ -540,7 +543,7 @@ router.get(
   async (req: Request, res: Response) => {
     const orgId = getOrgId(req)!;
     try {
-      const report = await programFreshnessReport(orgId, req.params.programId);
+      const report = await programFreshnessReport(orgId, String(req.params.programId));
       res.json(report);
     } catch (err: any) {
       res.status(500).json({ error: 'Freshness report failed', detail: err?.message });

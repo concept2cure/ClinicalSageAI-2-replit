@@ -15,8 +15,6 @@ import {
   clinicalFeedback,
   translationalPatterns,
   csrReports,
-  type InsertForesightPrediction,
-  type InsertClinicalFeedback,
 } from '@shared/schema';
 import { knowledgeGraph } from '../services/foresight-knowledge-graph';
 import { z } from 'zod';
@@ -164,8 +162,10 @@ router.post('/score', async (req, res) => {
       .where(and(eq(csrReports.indication, data.indication), eq(csrReports.phase, data.phase)))
       .limit(5);
 
-    // Save prediction to database
-    const predictionData: InsertForesightPrediction = {
+    // Save prediction to database. Use drizzle's own insert type (the contract
+    // for .values()) rather than the zod-derived insert type, whose
+    // organizationId union (string | number) is wider than the integer column.
+    const predictionData: typeof foresightPredictions.$inferInsert = {
       studyId: data.studyId,
       phase: data.phase,
       predictionType: 'success_score',
@@ -177,7 +177,7 @@ router.post('/score', async (req, res) => {
       riskFactors,
       recommendations,
       similarTrials: similarTrials.map(t => ({
-        id: t.nctId || t.id,
+        id: t.studyId || t.id,
         title: t.title,
         similarity: 0.85, // Simplified - would use real similarity calculation
       })),
@@ -186,7 +186,8 @@ router.post('/score', async (req, res) => {
         probability: 1 - (p.successRate || 0),
       })),
       modelVersion: '1.0.0',
-      organizationId: data.organizationId,
+      organizationId:
+        data.organizationId == null ? null : Number(data.organizationId),
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
     };
 
@@ -296,7 +297,14 @@ router.get('/recommendations', async (req, res) => {
     );
 
     // Build recommendations
-    const recommendations = {
+    type Recommendation = { priority: string; action: string; rationale: string };
+    const recommendations: {
+      protocol: Recommendation[];
+      enrollment: Recommendation[];
+      endpoints: Recommendation[];
+      biomarkers: Recommendation[];
+      safety: Recommendation[];
+    } = {
       protocol: [],
       enrollment: [],
       endpoints: [],
@@ -500,8 +508,9 @@ router.post('/feedback', async (req, res) => {
   try {
     const data = FeedbackSchema.parse(req.body);
 
-    // Save feedback
-    const feedbackData: InsertClinicalFeedback = {
+    // Save feedback. Use drizzle's own insert type (see note above on
+    // organizationId).
+    const feedbackData: typeof clinicalFeedback.$inferInsert = {
       studyId: data.studyId,
       predictionId: data.predictionId,
       phase: data.phase,
@@ -511,7 +520,8 @@ router.post('/feedback', async (req, res) => {
       accuracyScore: data.actualOutcome === data.predictedOutcome ? 1.0 : 0.0,
       learningPoints: data.learningPoints,
       verified: false,
-      organizationId: data.organizationId,
+      organizationId:
+        data.organizationId == null ? null : Number(data.organizationId),
     };
 
     const [savedFeedback] = await db.insert(clinicalFeedback).values(feedbackData).returning();
@@ -565,7 +575,12 @@ router.get('/knowledge-graph', async (req, res) => {
 
     // Format for visualization
     const nodes = new Map();
-    const edges = [];
+    const edges: Array<{
+      source: string;
+      target: string;
+      weight: number;
+      evidence: number;
+    }> = [];
 
     relationships.forEach(rel => {
       // Add biomarker node

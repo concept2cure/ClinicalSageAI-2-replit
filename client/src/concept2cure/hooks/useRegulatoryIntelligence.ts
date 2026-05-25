@@ -28,11 +28,11 @@ import regulatoryIntelligenceService, {
 export const regulatoryQueryKeys = {
   all: ['regulatory-intelligence'] as const,
   briefing: (userId: string) => [...regulatoryQueryKeys.all, 'briefing', userId] as const,
-  maude: (params: Record<string, unknown>) => [...regulatoryQueryKeys.all, 'maude', params] as const,
-  recalls: (params: Record<string, unknown>) => [...regulatoryQueryKeys.all, 'recalls', params] as const,
-  guidances: (params: Record<string, unknown>) => [...regulatoryQueryKeys.all, 'guidances', params] as const,
-  competitors: (params: Record<string, unknown>) => [...regulatoryQueryKeys.all, 'competitors', params] as const,
-  pdufa: (params: Record<string, unknown>) => [...regulatoryQueryKeys.all, 'pdufa', params] as const,
+  maude: (params: MAUDESearchParams) => [...regulatoryQueryKeys.all, 'maude', params] as const,
+  recalls: (params: RecallsParams) => [...regulatoryQueryKeys.all, 'recalls', params] as const,
+  guidances: (params: GuidancesParams) => [...regulatoryQueryKeys.all, 'guidances', params] as const,
+  competitors: (params: CompetitorIntelParams) => [...regulatoryQueryKeys.all, 'competitors', params] as const,
+  pdufa: (params: PDUFAParams) => [...regulatoryQueryKeys.all, 'pdufa', params] as const,
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════

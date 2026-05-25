@@ -104,7 +104,7 @@ router.get('/letters/:id/questions', async (req: Request, res: Response) => {
 router.post('/letters/:id/questions/:qid/assign', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const questionDbId = parseInt(req.params.qid, 10);
+    const questionDbId = parseInt(String(req.params.qid), 10);
 
     const question = await store.getById(questionDbId, orgId);
     if (!question)
@@ -128,7 +128,7 @@ router.post('/letters/:id/questions/:qid/assign', async (req: Request, res: Resp
 router.post('/letters/:id/questions/:qid/ai-draft', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const questionDbId = parseInt(req.params.qid, 10);
+    const questionDbId = parseInt(String(req.params.qid), 10);
 
     const question = await store.getById(questionDbId, orgId);
     if (!question)
@@ -154,7 +154,7 @@ router.post('/letters/:id/questions/:qid/ai-draft', async (req: Request, res: Re
 router.post('/letters/:id/questions/:qid/review', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const questionDbId = parseInt(req.params.qid, 10);
+    const questionDbId = parseInt(String(req.params.qid), 10);
 
     const question = await store.getById(questionDbId, orgId);
     if (!question)
@@ -183,7 +183,7 @@ router.post('/letters/:id/questions/:qid/review', async (req: Request, res: Resp
 router.post('/letters/:id/questions/:qid/approve', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const questionDbId = parseInt(req.params.qid, 10);
+    const questionDbId = parseInt(String(req.params.qid), 10);
 
     const question = await store.getById(questionDbId, orgId);
     if (!question)

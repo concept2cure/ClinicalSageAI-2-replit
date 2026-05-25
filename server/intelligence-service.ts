@@ -1,7 +1,7 @@
 import { db } from './db';
-import { sql, eq, like, and } from 'drizzle-orm';
-import { reports, reportDetails } from 'shared/schema';
-import { CSRSearchEngine } from '../csr_search';
+import { like, and } from 'drizzle-orm';
+import { csrReports } from 'shared/schema';
+import { csrSearchService } from './services/csr-search-service';
 import fs from 'fs';
 import path from 'path';
 
@@ -30,11 +30,6 @@ export interface StrategicReport {
  * Service for generating Strategic Intelligence Reports
  */
 export class IntelligenceService {
-  private searchEngine: CSRSearchEngine;
-
-  constructor() {
-    this.searchEngine = new CSRSearchEngine();
-  }
 
   /**
    * Generate a strategic intelligence report for a given protocol
@@ -112,16 +107,14 @@ export class IntelligenceService {
   private async findSimilarTrials(summary: string, indication?: string, phase?: string) {
     try {
       // Get similar trials from CSR database
-      const searchResult = await this.searchEngine.combined_search(
-        summary,
+      const searchResult = await csrSearchService.searchCSRs({
+        query_text: summary,
         indication,
         phase,
-        null,
-        null,
-        15 // Increased limit to get better statistical data
-      );
+        limit: 15, // Increased limit to get better statistical data
+      });
 
-      return searchResult;
+      return searchResult.csrs;
     } catch (error) {
       console.error('Error finding similar trials:', error);
       return [];
@@ -134,18 +127,22 @@ export class IntelligenceService {
   private async findCompetitorTrials(indication?: string, phase?: string) {
     try {
       // Find trials in our database with matching indication/phase
-      let query = db.select().from(reports);
+      const conditions = [];
 
       if (indication) {
-        query = query.where(like(reports.indication, `%${indication}%`));
+        conditions.push(like(csrReports.indication, `%${indication}%`));
       }
 
       if (phase) {
-        query = query.where(like(reports.phase, `%${phase}%`));
+        conditions.push(like(csrReports.phase, `%${phase}%`));
       }
 
       // Limit to 15 results
-      const results = await query.limit(15);
+      const results = await db
+        .select()
+        .from(csrReports)
+        .where(conditions.length ? and(...conditions) : undefined)
+        .limit(15);
       return results;
     } catch (error) {
       console.error('Error finding competitor trials:', error);

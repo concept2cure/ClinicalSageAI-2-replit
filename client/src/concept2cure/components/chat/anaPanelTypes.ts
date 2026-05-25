@@ -225,6 +225,8 @@ export interface AnaPersistentPanelProps {
     label: string;
     status: 'running' | 'done' | 'failed';
     ts: number;
+    /** Failure detail, present when status is 'failed' */
+    error?: string;
   }) => void;
   /** Navigate to a layout mode or path */
   onNavigate?: (path: string) => void;
@@ -241,7 +243,16 @@ export interface AnaPersistentPanelProps {
   /** Open a specific artifact in the editor (P2) */
   onOpenArtifact?: (artifactId: string) => void;
   /** Request governed promotion of current artifact (P5) */
-  onRequestPromotion?: (artifactId: string) => Promise<{ promoted: boolean; message: string }>;
+  onRequestPromotion?: (artifactId: string) => Promise<{
+    promoted: boolean;
+    message: string;
+    /** Approvals still required before the promotion is fully governed */
+    pendingApprovals?: Array<{ requiredRole: string; reason: string }>;
+    /** Governance decision identifier, when the promotion was recorded */
+    decisionId?: string;
+    /** Authority context attached to the governance decision */
+    authority?: { level?: string };
+  }>;
   /** Open the version compare inspector panel (P4) */
   onOpenCompareInspector?: () => void;
   /** Refresh authoring intelligence (readiness/contradictions) after actions */

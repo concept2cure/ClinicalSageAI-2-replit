@@ -8,7 +8,7 @@
 import fs from 'fs';
 import path from 'path';
 import { db } from './db';
-import { csrReports, csrDetails } from './sage-plus-service';
+import { csrReports, csrDetails } from '../shared/schema';
 import { sql } from 'drizzle-orm';
 import { queryHuggingFace, trainCustomModel } from './huggingface-service';
 import { huggingFaceService } from './huggingface-service';
@@ -603,7 +603,8 @@ export async function trainModels(datasetPath: string): Promise<any> {
     }
 
     // Train models for each domain
-    const trainingResults = {};
+    const trainingResults: Record<string, { examples: number; modelName: string; status: any }> =
+      {};
 
     for (const domain of Object.keys(domainExamples)) {
       const examples = domainExamples[domain];

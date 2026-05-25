@@ -41,6 +41,9 @@ export function resolveRulePack(
     placementTarget: contract.placementTarget,
   });
   const documentSemantics = getDocumentClassSemantics(contract.documentClass);
+  if (!documentSemantics) {
+    throw new Error(`Unknown documentClass: ${contract.documentClass}`);
+  }
   const warnings: string[] = [...baseWarnings];
   const disallowedCombinations: string[] = [];
 

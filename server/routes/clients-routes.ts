@@ -106,7 +106,7 @@ async function getWorkspaceMetrics(workspaceId: number): Promise<{
     const [memberCount] = await db
       .select({ count: count() })
       .from(users)
-      .where(eq(users.organizationId, workspaceId));
+      .where(eq(users.defaultOrganizationId, workspaceId));
 
     return {
       activeProjects: projectCount?.count ?? 0,
@@ -541,8 +541,9 @@ router.patch('/:id', async (req, res) => {
 
       if (existingSettings) {
         // Update existing workspace settings general section
-        const currentGeneralSettings = existingSettings.generalSettings || {};
-        const updatedGeneralSettings = {
+        // generalSettings is an untyped JSON column; narrow to a record so we can merge.
+        const currentGeneralSettings = (existingSettings.generalSettings as Record<string, unknown>) || {};
+        const updatedGeneralSettings: Record<string, unknown> = {
           ...currentGeneralSettings,
         };
 
@@ -718,23 +719,27 @@ router.get('/:id/security-settings', async (req, res) => {
     // Merge saved settings with defaults
     let settings = defaultSettings;
     if (existingSettings) {
+      // The *Settings columns are untyped JSON; narrow to records before merging.
       settings = {
         passwordPolicy: {
           ...defaultSettings.passwordPolicy,
-          ...existingSettings.passwordPolicySettings,
+          ...(existingSettings.passwordPolicySettings as Record<string, unknown>),
         },
         sessionSettings: {
           ...defaultSettings.sessionSettings,
-          ...existingSettings.sessionSettings,
+          ...(existingSettings.sessionSettings as Record<string, unknown>),
         },
         dataProtection: {
           ...defaultSettings.dataProtection,
-          ...existingSettings.dataProtectionSettings,
+          ...(existingSettings.dataProtectionSettings as Record<string, unknown>),
         },
-        auditSettings: { ...defaultSettings.auditSettings, ...existingSettings.auditSettings },
+        auditSettings: {
+          ...defaultSettings.auditSettings,
+          ...(existingSettings.auditSettings as Record<string, unknown>),
+        },
         fdaCompliance: {
           ...defaultSettings.fdaCompliance,
-          ...existingSettings.fdaComplianceSettings,
+          ...(existingSettings.fdaComplianceSettings as Record<string, unknown>),
         },
       };
     }
@@ -761,7 +766,7 @@ router.patch('/:id/security-settings', async (req, res) => {
     const { id } = req.params;
     const settings = req.body;
 
-    log.debug('Updating security settings for client', id, ':', Object.keys(settings));
+    log.debug(`Updating security settings for client ${id}`, { keys: Object.keys(settings) });
 
     // Tenant guard — this is the MOST sensitive endpoint in the file.
     // Pre-fix it let any authenticated user weaken another tenant's
@@ -1014,15 +1019,16 @@ router.get('/:id/settings', async (req, res) => {
     // Merge saved settings with defaults
     let settings = defaultSettings;
     if (existingSettings) {
+      // The *Settings columns are untyped JSON; narrow to records before merging.
       settings = {
-        general: { ...defaultSettings.general, ...existingSettings.generalSettings },
-        quotas: { ...defaultSettings.quotas, ...existingSettings.quotaSettings },
-        modules: { ...defaultSettings.modules, ...existingSettings.moduleSettings },
-        integration: { ...defaultSettings.integration, ...existingSettings.integrationSettings },
-        appearance: { ...defaultSettings.appearance, ...existingSettings.appearanceSettings },
+        general: { ...defaultSettings.general, ...(existingSettings.generalSettings as Record<string, unknown>) },
+        quotas: { ...defaultSettings.quotas, ...(existingSettings.quotaSettings as Record<string, unknown>) },
+        modules: { ...defaultSettings.modules, ...(existingSettings.moduleSettings as Record<string, unknown>) },
+        integration: { ...defaultSettings.integration, ...(existingSettings.integrationSettings as Record<string, unknown>) },
+        appearance: { ...defaultSettings.appearance, ...(existingSettings.appearanceSettings as Record<string, unknown>) },
         notifications: {
           ...defaultSettings.notifications,
-          ...existingSettings.notificationSettings,
+          ...(existingSettings.notificationSettings as Record<string, unknown>),
         },
       };
     }

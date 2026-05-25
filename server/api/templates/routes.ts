@@ -6,7 +6,7 @@ import path from 'path';
 import crypto from 'node:crypto';
 import { db } from '../../db';
 import { ectdTemplates } from '../../../shared/schema';
-import { eq, and, or, like, sql } from 'drizzle-orm';
+import { eq, and, or, like, sql, type SQL } from 'drizzle-orm';
 
 const router = Router();
 
@@ -86,7 +86,7 @@ router.get('/catalog', async (req: Request, res: Response) => {
       organizationId = '6' 
     } = req.query;
     
-    let conditions = [
+    let conditions: (SQL<unknown> | undefined)[] = [
       eq(ectdTemplates.organizationId, parseInt(organizationId as string)),
       eq(ectdTemplates.isActive, true)
     ];
@@ -219,10 +219,10 @@ router.get('/:id', async (req: Request, res: Response) => {
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    const { id } = req.params;
-    
+    const id = String(req.params.id);
+
     let template = null;
-    
+
     // Try numeric ID first
     const numericId = parseInt(id);
     if (!isNaN(numericId)) {
@@ -265,25 +265,31 @@ router.get('/:id', async (req: Request, res: Response) => {
       });
     }
 
+    // `template` is a union of differently-shaped sources (raw DB row, the
+    // transformed getTemplateById result, and the in-memory catalog entry).
+    // Normalize to a permissive record so the response can pull optional
+    // fallback fields from any variant without losing runtime behavior.
+    const t = template as Record<string, any>;
+
     // Return template in expected format
     res.json({
       success: true,
       template: {
-        id: template.id || template.templateId,
-        templateName: template.templateName || template.name,
-        description: template.description || '',
-        content: template.content || template.structure || '',
-        sections: template.sections || [],
-        category: template.category || 'General',
-        tags: template.tags || [],
-        agency: template.agency || '',
-        format: template.format || 'html',
-        moduleNumber: template.moduleNumber,
-        version: template.version || '1.0.0',
+        id: t.id || t.templateId,
+        templateName: t.templateName || t.name,
+        description: t.description || '',
+        content: t.content || t.structure || '',
+        sections: t.sections || [],
+        category: t.category || 'General',
+        tags: t.tags || [],
+        agency: t.agency || '',
+        format: t.format || 'html',
+        moduleNumber: t.moduleNumber,
+        version: t.version || '1.0.0',
         metadata: {
-          createdAt: template.createdAt || template.created_at || new Date().toISOString(),
-          updatedAt: template.updatedAt || template.updated_at || new Date().toISOString(),
-          status: template.status || template.isActive ? 'active' : 'inactive'
+          createdAt: t.createdAt || t.created_at || new Date().toISOString(),
+          updatedAt: t.updatedAt || t.updated_at || new Date().toISOString(),
+          status: t.status || t.isActive ? 'active' : 'inactive'
         }
       },
     });
@@ -405,7 +411,7 @@ router.put('/:id', async (req: Request, res: Response) => {
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    const templateId = parseInt(req.params.id);
+    const templateId = parseInt(String(req.params.id));
 
     const updatedTemplate = await templateService.updateTemplate(
       templateId,
@@ -443,7 +449,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    const templateId = parseInt(req.params.id);
+    const templateId = parseInt(String(req.params.id));
 
     const deletedTemplate = await templateService.deleteTemplate(templateId, organizationId);
 
@@ -477,21 +483,15 @@ router.post('/:id/use', async (req: Request, res: Response) => {
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    const templateId = parseInt(req.params.id);
+    const templateId = parseInt(String(req.params.id));
     const userId = parseInt(req.headers['x-user-id'] as string);
     if (!userId) {
       return res.status(401).json({ error: 'User context required (x-user-id header)' });
     }
 
-    const usageData = {
-      organizationId,
-      templateId,
-      userId,
-      usageType: req.body.usageType || 'create_new',
-      documentTitle: req.body.documentTitle,
-    };
+    const usageType = req.body.usageType || 'create_new';
 
-    const usage = await templateService.trackTemplateUsage(usageData);
+    const usage = await templateService.trackTemplateUsage(templateId, usageType);
 
     res.json({
       success: true,
