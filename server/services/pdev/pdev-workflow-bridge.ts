@@ -39,6 +39,7 @@ import {
   getActivityByKey,
   type PdevActivityState,
 } from './pdev-activity-registry';
+import { applyIndClearanceIfTerminal } from './pdev-clearance';
 import auditService from '../auditService';
 
 const logger = createScopedLogger('pdev-workflow-bridge');
@@ -134,6 +135,45 @@ export interface PdevCheckpointDecisionInput {
   userRole?: string;
   decision: 'approve' | 'reject';
   reason: string;
+}
+
+/**
+ * Pure decision rule for one checkpoint decision. Captures every branch of
+ * the approval state machine without touching the database, so it can be
+ * tested exhaustively. `recordDecision` calls this to derive the status
+ * strings; the DB writes follow the plan.
+ */
+export interface CheckpointOutcomePlan {
+  checkpointStatus: 'approved' | 'awaiting_review' | 'failed';
+  workflowStatus: 'awaiting_approval' | 'completed' | 'failed';
+  outcome: 'rejected' | 'partial' | 'advanced' | 'completed';
+}
+
+export function decideCheckpointOutcome(args: {
+  decision: 'approve' | 'reject';
+  approvalsCountAfter: number;
+  requiredCount: number;
+  hasNextProposedCheckpoint: boolean;
+}): CheckpointOutcomePlan {
+  if (args.decision === 'reject') {
+    return { checkpointStatus: 'failed', workflowStatus: 'failed', outcome: 'rejected' };
+  }
+  const quorumMet = args.approvalsCountAfter >= Math.max(1, args.requiredCount);
+  if (!quorumMet) {
+    return {
+      checkpointStatus: 'awaiting_review',
+      workflowStatus: 'awaiting_approval',
+      outcome: 'partial',
+    };
+  }
+  if (args.hasNextProposedCheckpoint) {
+    return {
+      checkpointStatus: 'approved',
+      workflowStatus: 'awaiting_approval',
+      outcome: 'advanced',
+    };
+  }
+  return { checkpointStatus: 'approved', workflowStatus: 'completed', outcome: 'completed' };
 }
 
 export interface PdevCheckpointDecisionResult {
@@ -543,8 +583,17 @@ export class PdevWorkflowBridge {
       },
     ]);
     const required = checkpoint.requiredApproverCount ?? 1;
-    const checkpointMet = approvals.length >= required;
-    const newCheckpointStatus = checkpointMet ? 'approved' : 'awaiting_review';
+    const checkpointMet = approvals.length >= Math.max(1, required);
+    // Pure decision rule (tested exhaustively in pdev-workflow-bridge.test.ts).
+    // hasNextProposedCheckpoint is resolved after this update for the met
+    // case; for the partial case it is irrelevant.
+    const partialPlan = decideCheckpointOutcome({
+      decision: 'approve',
+      approvalsCountAfter: approvals.length,
+      requiredCount: required,
+      hasNextProposedCheckpoint: false,
+    });
+    const newCheckpointStatus = partialPlan.checkpointStatus;
 
     await db
       .update(approvalCheckpoints)
@@ -572,7 +621,7 @@ export class PdevWorkflowBridge {
         },
       });
       return {
-        checkpointStatus: newCheckpointStatus,
+        checkpointStatus: partialPlan.checkpointStatus,
         workflowStatus: run.status,
       };
     }
@@ -587,7 +636,15 @@ export class PdevWorkflowBridge {
       c => c.stepIndex > checkpoint.stepIndex && c.status === 'proposed'
     );
 
-    if (nextCheckpoint) {
+    // Re-evaluate the plan now that we know whether a next checkpoint exists.
+    const metPlan = decideCheckpointOutcome({
+      decision: 'approve',
+      approvalsCountAfter: approvals.length,
+      requiredCount: required,
+      hasNextProposedCheckpoint: Boolean(nextCheckpoint),
+    });
+
+    if (metPlan.outcome === 'advanced' && nextCheckpoint) {
       // Advance — activate the next checkpoint.
       await db
         .update(approvalCheckpoints)
@@ -623,8 +680,8 @@ export class PdevWorkflowBridge {
       });
 
       return {
-        checkpointStatus: 'approved',
-        workflowStatus: 'awaiting_approval',
+        checkpointStatus: metPlan.checkpointStatus,
+        workflowStatus: metPlan.workflowStatus,
         nextCheckpointId: nextCheckpoint.id,
       };
     }
@@ -672,9 +729,21 @@ export class PdevWorkflowBridge {
       },
     });
 
+    // Terminal IND-clearance transition: a completed approval chain on
+    // the clearance activity moves the program to its cleared state.
+    if (run.programId && activityKey) {
+      await applyIndClearanceIfTerminal({
+        programId: run.programId,
+        organizationId: input.organizationId,
+        userId: input.userId,
+        activityKey,
+        newState: targetState,
+      });
+    }
+
     return {
-      checkpointStatus: 'approved',
-      workflowStatus: 'completed',
+      checkpointStatus: metPlan.checkpointStatus,
+      workflowStatus: metPlan.workflowStatus,
       activityFinalState: targetState,
     };
   }
