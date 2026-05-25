@@ -153,16 +153,208 @@ export class AssumptionRegistryService {
     });
   }
 
-  async createContradictionLink(): Promise<void> {
-    // Compatibility shim for legacy integration paths.
+  async createContradictionLink(
+    organizationId?: number,
+    projectId?: number,
+    sourceType?: string,
+    sourceId?: string,
+    targetType?: string,
+    targetId?: string,
+    comparisonType?: string,
+    options: Record<string, unknown> = {}
+  ): Promise<Record<string, unknown> | null> {
+    // Legacy integration path calls this with no args — treat as a no-op.
+    if (!organizationId || !projectId || !sourceType || !sourceId || !targetType || !targetId) {
+      return null;
+    }
+    try {
+      const result = await pool!.query(
+        `
+        INSERT INTO contradiction_links (
+          organization_id, project_id, source_type, source_id,
+          target_type, target_id, comparison_type, status, created_by
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,'open',$8)
+        RETURNING *
+      `,
+        [
+          organizationId,
+          projectId,
+          sourceType,
+          sourceId,
+          targetType,
+          targetId,
+          comparisonType ?? 'value_mismatch',
+          String(options.createdById ?? 'system'),
+        ]
+      );
+      return result.rows[0] ?? null;
+    } catch (err) {
+      log.warn('Contradiction link table unavailable (non-blocking)', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return null;
+    }
   }
 
-  async linkToArtifact(): Promise<void> {
-    // Compatibility shim for legacy integration paths.
+  async getContradictionLinks(
+    projectId: number,
+    organizationId: number
+  ): Promise<Record<string, unknown>[]> {
+    try {
+      const result = await pool!.query(
+        'SELECT * FROM contradiction_links WHERE project_id = $1 AND organization_id = $2 ORDER BY created_at DESC',
+        [projectId, organizationId]
+      );
+      return result.rows;
+    } catch {
+      return [];
+    }
+  }
+
+  async linkToArtifact(
+    id?: string,
+    organizationId?: number,
+    artifactId?: number,
+    artifactVersion?: number
+  ): Promise<AssumptionRecord | null> {
+    // Legacy integration path calls this with no args — treat as a no-op.
+    if (!id || !organizationId || !artifactId) return null;
+    const result = await pool!.query(
+      `
+      UPDATE assumption_records
+      SET linked_artifact_id = $1, linked_artifact_version = $2, updated_at = NOW()
+      WHERE id = $3 AND organization_id = $4
+      RETURNING *
+    `,
+      [artifactId, artifactVersion ?? null, id, organizationId]
+    );
+    return result.rows.length ? this.map(result.rows[0]) : null;
   }
 
   async linkToDecision(): Promise<void> {
     // Compatibility shim for legacy integration paths.
+  }
+
+  async queryAssumptions(input: {
+    organizationId: number;
+    projectId?: number;
+    domainTrack?: DomainTrack;
+    category?: AssumptionCategory;
+    status?: AssumptionStatus;
+    confidence?: ConfidenceLevel;
+    regulatorBody?: string;
+    sourceArtifactId?: number;
+    includeSuperseded?: boolean;
+    limit?: number;
+  }): Promise<AssumptionRecord[]> {
+    const records = await this.search({
+      organizationId: input.organizationId,
+      projectId: input.projectId,
+      domainTrack: input.domainTrack,
+      category: input.category,
+      status: input.status,
+      linkedArtifactId: input.sourceArtifactId,
+      limit: input.limit,
+    });
+    return records.filter(r => {
+      if (!input.includeSuperseded && r.status === 'superseded') return false;
+      if (input.confidence && r.confidenceLevel !== input.confidence) return false;
+      if (input.regulatorBody && !r.applicableRegulators.includes(input.regulatorBody)) return false;
+      return true;
+    });
+  }
+
+  async getAssumption(id: string, organizationId: number): Promise<AssumptionRecord | null> {
+    return this.getById(id, organizationId);
+  }
+
+  async updateAssumption(
+    id: string,
+    organizationId: number,
+    input: Record<string, unknown>
+  ): Promise<AssumptionRecord | null> {
+    const editable: Record<string, string> = {
+      title: 'title',
+      rationale: 'rationale',
+      assumedValue: 'assumed_value',
+      unit: 'unit',
+      confidenceLevel: 'confidence_level',
+      sourceReference: 'source_reference',
+    };
+    const sets: string[] = [];
+    const params: (string | number | null)[] = [];
+    let idx = 1;
+    for (const [key, column] of Object.entries(editable)) {
+      if (input[key] !== undefined) {
+        sets.push(`${column} = $${idx++}`);
+        params.push(input[key] as string);
+      }
+    }
+    if (sets.length === 0) return this.getById(id, organizationId);
+    sets.push('updated_at = NOW()');
+    params.push(id, organizationId);
+    const result = await pool!.query(
+      `UPDATE assumption_records SET ${sets.join(', ')} WHERE id = $${idx++} AND organization_id = $${idx} RETURNING *`,
+      params
+    );
+    return result.rows.length ? this.map(result.rows[0]) : null;
+  }
+
+  async reviewAssumption(
+    id: string,
+    organizationId: number,
+    userId: number
+  ): Promise<AssumptionRecord | null> {
+    return this.updateStatus(id, organizationId, 'under_review', String(userId));
+  }
+
+  async approveAssumption(
+    id: string,
+    organizationId: number,
+    userId: number
+  ): Promise<AssumptionRecord | null> {
+    return this.updateStatus(id, organizationId, 'active', String(userId));
+  }
+
+  async rejectAssumption(
+    id: string,
+    organizationId: number,
+    userId: number,
+    _reason: string
+  ): Promise<AssumptionRecord | null> {
+    return this.updateStatus(id, organizationId, 'withdrawn', String(userId));
+  }
+
+  async supersedeAssumption(
+    id: string,
+    organizationId: number,
+    replacement: Record<string, unknown>,
+    reason: string
+  ): Promise<AssumptionRecord | null> {
+    const created = await this.createAssumption({ ...replacement, organizationId });
+    return this.supersede(id, {
+      organizationId,
+      replacementId: created.id,
+      reason,
+      performedBy: String(replacement.createdById ?? 'system'),
+    });
+  }
+
+  async getAssumptionHistory(
+    id: string,
+    organizationId: number
+  ): Promise<AssumptionRecord[]> {
+    const current = await this.getById(id, organizationId);
+    if (!current) return [];
+    const result = await pool!.query(
+      `
+      SELECT * FROM assumption_records
+      WHERE organization_id = $1 AND (id = $2 OR superseded_by = $2 OR assumption_code = $3)
+      ORDER BY created_at ASC
+    `,
+      [organizationId, id, current.assumptionCode]
+    );
+    return result.rows.map(this.map);
   }
 
   async create(input: CreateAssumptionInput): Promise<AssumptionRecord> {
