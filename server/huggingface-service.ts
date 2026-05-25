@@ -458,7 +458,7 @@ export class HuggingFaceService {
    */
   async queryHuggingFace(
     prompt: string,
-    model: HFModel = HFModel.STARLING,
+    model: HFModel | string = HFModel.STARLING,
     maxTokens: number = 512,
     temperature: number = 0.7,
     region?: RegulatoryRegion
@@ -940,7 +940,7 @@ export const huggingFaceService = new HuggingFaceService(process.env.HF_API_KEY 
 // Create a standalone function that uses the singleton service for convenience
 export function queryHuggingFace(
   prompt: string,
-  model: HFModel = HFModel.STARLING,
+  model: HFModel | string = HFModel.STARLING,
   maxTokens: number = 512,
   temperature: number = 0.7
 ): Promise<string> {
