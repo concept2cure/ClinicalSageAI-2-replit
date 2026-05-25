@@ -162,14 +162,13 @@ export function convertV2StudyToCsrDetails(
       endpoints,
       results: {},
       safety: {},
-      processed: true,
       processingStatus: 'imported_from_api_v2',
       sampleSize,
       ageRange,
       gender,
-      statisticalMethods: [],
-      adverseEvents: [],
-      efficacyResults: {},
+      statisticalMethods: null,
+      adverseEvents: null,
+      efficacyResults: null,
     };
 
     return detailsData;
@@ -177,7 +176,6 @@ export function convertV2StudyToCsrDetails(
     console.error('Error converting study to CSR details format:', error);
     return {
       reportId,
-      processed: false,
       processingStatus: 'error_during_import',
     };
   }
