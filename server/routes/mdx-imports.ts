@@ -21,6 +21,7 @@ import {
 } from '../lib/api-response';
 import { pool } from '../db';
 import { detectArchive } from '../services/legacy-importer/detector';
+import auditService from '../services/auditService';
 
 const router = Router();
 const log = createScopedLogger('mdx-imports');
@@ -334,6 +335,10 @@ router.post('/imports/:id/approve', async (req: Request, res: Response) => {
       [id, userId, created],
     );
     await client.query('COMMIT');
+    void auditService.logAction({
+      tenantId: orgId, userId: userId ?? undefined, action: 'mdx.onboarding.import.approve',
+      resourceType: 'import_job', resourceId: id, details: { artifactsCreated: created },
+    });
     const { rows } = await pool.query(
       `SELECT * FROM import_jobs WHERE id = $1`, [id],
     );
@@ -386,6 +391,10 @@ router.post('/imports/:id/findings/:findingId/resolve', async (req: Request, res
       [findingId, orgId, note],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Finding');
+    void auditService.logAction({
+      tenantId: orgId, userId: getUserId(req) ?? undefined, action: 'mdx.onboarding.finding.resolve',
+      resourceType: 'import_finding', resourceId: findingId,
+    });
     return ok(res, rows[0]);
   } catch (err) { return serverError(res, log, 'resolve-finding', err); }
 });

@@ -35,6 +35,7 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
+import auditService from '../services/auditService';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms');
@@ -199,6 +200,10 @@ router.post('/qms/documents/:id/approve', async (req: Request, res: Response) =>
       [id, orgId, userId, effectiveDate],
     );
     if (rows.length === 0) return clientError(res, 409, 'Document not found, or not in draft/in_review state');
+    void auditService.logAction({
+      tenantId: orgId, userId: userId ?? undefined, action: 'mdx.qms.document.approve',
+      resourceType: 'qms_document', resourceId: id,
+    });
     return ok(res, rows[0]);
   } catch (err) { return serverError(res, log, 'doc-approve', err); }
 });
@@ -227,6 +232,10 @@ router.post('/qms/documents/:id/training-ack', async (req: Request, res: Respons
        RETURNING *`,
       [orgId, userId, id, doc.rows[0].version, method, quizScore],
     );
+    void auditService.logAction({
+      tenantId: orgId, userId: userId ?? undefined, action: 'mdx.qms.training.acknowledge',
+      resourceType: 'qms_document', resourceId: id, details: { method, quizScore },
+    });
     return created(res, rows[0]);
   } catch (err) { return serverError(res, log, 'training-ack', err); }
 });
