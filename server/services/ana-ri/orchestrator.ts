@@ -535,12 +535,12 @@ Rules for proactive surfacing:
   // 12. Build grounding context metadata
   const groundingContext = {
     hasProjectContext: !!(input.projectContext?.productName || input.projectContext?.submissionType || input.authoringContext?.projectId),
-    hasArtifactContext: !!(input.documentContext?.documentType || input.documentContext?.title),
+    hasArtifactContext: !!(input.documentContext?.documentType || (input.documentContext as any)?.title),
     hasSectionContext: !!(input.documentContext?.section || input.authoringContext?.sectionCode),
     hasWorkflowContext: !!(activeWorkstream.stream !== 'general'),
     hasEvidenceContext: deficiencyContextInjected,
     hasMemoryContext: !!(input.conversationHistory && input.conversationHistory.length > 0),
-    documentStatus: input.documentContext?.status ?? null,
+    documentStatus: (input.documentContext as any)?.status ?? null,
     enrichmentSources: [] as string[], // populated by caller after enrichment
     enrichmentFailures: [] as string[], // populated by caller if enrichment fails
   };

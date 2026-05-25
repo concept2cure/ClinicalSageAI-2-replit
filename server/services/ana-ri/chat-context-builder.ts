@@ -339,7 +339,8 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     }).catch((): EnrichmentResult => ({ block: '', sources: [] })),
   ]);
 
-  const effectiveMessage = enrichment.rewrittenMessage || message;
+  const effectiveMessage =
+    ('rewrittenMessage' in enrichment && enrichment.rewrittenMessage) || message;
 
   // === Governed context enrichment (fabric state) ===
   let governedContextBlock = '';

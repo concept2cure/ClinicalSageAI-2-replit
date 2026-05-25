@@ -342,11 +342,11 @@ function getNextSuggestions(actionType: AIActionType) {
       ];
     case 'rewrite_selection':
       return [
-        { actionType: 'run_validation' as const, label: 'Validate', description: 'Run compliance validation' },
-      ];
-    case 'run_validation':
-      return [
-        { actionType: 'refine_with_validation_findings' as const, label: 'Refine', description: 'Fix validation issues' },
+        {
+          actionType: 'refine_with_validation_findings' as const,
+          label: 'Validate',
+          description: 'Run compliance validation',
+        },
       ];
     default:
       return [];
