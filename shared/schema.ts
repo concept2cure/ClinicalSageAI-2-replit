@@ -13741,17 +13741,19 @@ export type BiomarkerEndpoint = InferSelectModel<typeof biomarkerEndpoints>;
 // .values()/field access. $inferInsert yields the correct column shape.
 export type InsertBiomarkerEndpoint = typeof biomarkerEndpoints.$inferInsert;
 
+// $inferInsert (not the z.infer<createInsertSchemaOmit(...)> which resolves
+// to `{}` here) — yields the correct column shape for .values() calls.
 export type ClinicalOutcome = InferSelectModel<typeof clinicalOutcomes>;
-export type InsertClinicalOutcome = z.infer<typeof insertClinicalOutcomeSchema>;
+export type InsertClinicalOutcome = typeof clinicalOutcomes.$inferInsert;
 
 export type ForesightPrediction = InferSelectModel<typeof foresightPredictions>;
-export type InsertForesightPrediction = z.infer<typeof insertForesightPredictionSchema>;
+export type InsertForesightPrediction = typeof foresightPredictions.$inferInsert;
 
 export type ClinicalFeedback = InferSelectModel<typeof clinicalFeedback>;
-export type InsertClinicalFeedback = z.infer<typeof insertClinicalFeedbackSchema>;
+export type InsertClinicalFeedback = typeof clinicalFeedback.$inferInsert;
 
 export type TranslationalPattern = InferSelectModel<typeof translationalPatterns>;
-export type InsertTranslationalPattern = z.infer<typeof insertTranslationalPatternSchema>;
+export type InsertTranslationalPattern = typeof translationalPatterns.$inferInsert;
 
 // ============================================================================
 // PHASE 0/I PRODUCTION MODULES
@@ -14173,14 +14175,16 @@ export const insertPkpdCompartmentSchema = createInsertSchemaOmit(pkpdCompartmen
 });
 
 // Type definitions for new tables
+// $inferInsert — the z.infer<createInsertSchema*(...)> form resolves to `{}`
+// here, breaking .values() calls; native insert type yields correct columns.
 export type DoseEscalationStudy = InferSelectModel<typeof doseEscalationStudies>;
-export type InsertDoseEscalationStudy = z.infer<typeof insertDoseEscalationStudySchema>;
+export type InsertDoseEscalationStudy = typeof doseEscalationStudies.$inferInsert;
 
 export type DoseLevel = InferSelectModel<typeof doseLevels>;
-export type InsertDoseLevel = z.infer<typeof insertDoseLevelSchema>;
+export type InsertDoseLevel = typeof doseLevels.$inferInsert;
 
 export type DoseCohort = InferSelectModel<typeof doseCohorts>;
-export type InsertDoseCohort = z.infer<typeof insertDoseCohortSchema>;
+export type InsertDoseCohort = typeof doseCohorts.$inferInsert;
 
 export type DltEvent = InferSelectModel<typeof dltEvents>;
 export type InsertDltEvent = z.infer<typeof insertDltEventSchema>;

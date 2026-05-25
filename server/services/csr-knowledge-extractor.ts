@@ -494,7 +494,7 @@ export class CSRKnowledgeExtractor {
         const studyData: InsertDoseEscalationStudy = {
           organizationId,
           studyName: report?.title || `CSR Study ${csrId}`,
-          compoundName: report?.drugName || 'Unknown',
+          compoundName: ((report?.metadata as any)?.drugName as string) || 'Unknown',
           indication: report?.indication || 'Unknown',
           escalationMethod: '3_plus_3',
           startingDose: Math.min(...doseRelationships.map(d => d.doseLevel)),
