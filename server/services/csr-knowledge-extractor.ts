@@ -76,11 +76,11 @@ export class CSRKnowledgeExtractor {
         .from(csrDetails)
         .where(eq(csrDetails.reportId, parseInt(csrId)));
 
-      if (!csr || !csr.safety) {
+      // safety payload is stored under csr_details.metadata (no dedicated column).
+      const safetyData = (csr?.metadata as any)?.safety;
+      if (!csr || !safetyData) {
         return [];
       }
-
-      const safetyData = csr.safety as any;
       const signals: SafetySignal[] = [];
 
       // Extract adverse events

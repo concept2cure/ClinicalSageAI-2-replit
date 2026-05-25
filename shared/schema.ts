@@ -13736,7 +13736,10 @@ export const insertTranslationalPatternSchema = createInsertSchemaOmit(translati
 
 // Type definitions for ForesightAI tables
 export type BiomarkerEndpoint = InferSelectModel<typeof biomarkerEndpoints>;
-export type InsertBiomarkerEndpoint = z.infer<typeof insertBiomarkerEndpointSchema>;
+// Derive from the table's native insert type; the createInsertSchemaOmit
+// zod inference resolves to `{}` here, which broke every consumer's
+// .values()/field access. $inferInsert yields the correct column shape.
+export type InsertBiomarkerEndpoint = typeof biomarkerEndpoints.$inferInsert;
 
 export type ClinicalOutcome = InferSelectModel<typeof clinicalOutcomes>;
 export type InsertClinicalOutcome = z.infer<typeof insertClinicalOutcomeSchema>;
