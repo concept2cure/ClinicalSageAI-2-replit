@@ -298,7 +298,7 @@ router.get('/stats/:qmpId', authMiddleware, requireOrganizationContext, async (r
     const organizationId = orgIdOf(req);
 
     // Convert to number
-    const qmpIdNumber = parseInt(qmpId, 10);
+    const qmpIdNumber = parseInt(String(qmpId), 10);
     if (isNaN(qmpIdNumber)) {
       return res.status(400).json({ error: 'Invalid QMP ID' });
     }
