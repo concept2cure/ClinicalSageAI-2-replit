@@ -88,7 +88,7 @@ async function generateDoseEscalationData(organizationId: string) {
   const cohort2 = [cohort2Result.rows[0]];
   
   // Report a DLT event
-  await db!.insert(dltEvents).values({
+  await db!.insert(dltEvents as any).values({
     studyId: study.id,
     cohortId: cohort2[0].id as string,
     patientId: 'PT-002-003',
@@ -242,7 +242,8 @@ async function generatePredictiveSuccessScore(organizationId: string, studyId: s
   
   console.log('✅ Predictive success score calculated');
   console.log(`🎯 Success probability: ${(successScore.successProbability * 100).toFixed(1)}%`);
-  console.log(`📊 Confidence interval: ${(successScore.confidenceInterval.lower * 100).toFixed(1)}% - ${(successScore.confidenceInterval.upper * 100).toFixed(1)}%`);
+  const ci = successScore.confidenceInterval as { lower: number; upper: number };
+  console.log(`📊 Confidence interval: ${(ci.lower * 100).toFixed(1)}% - ${(ci.upper * 100).toFixed(1)}%`);
   console.log(`🚦 Go/No-Go recommendation: ${successScore.goNoGoRecommendation}`);
   console.log(`⚠️  Risk factors identified: ${successScore.riskFactors.length}`);
   

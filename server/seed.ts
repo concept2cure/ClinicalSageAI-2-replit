@@ -67,7 +67,7 @@ async function seed() {
   ];
 
   // Insert reports
-  const insertedReports = await db.insert(csrReports).values(reports).returning();
+  const insertedReports = await db.insert(csrReports).values(reports as any).returning();
 
   // Add sample CSR details for the first two reports
   const details = [
@@ -202,7 +202,7 @@ async function seed() {
   ];
 
   // Insert details
-  await db.insert(csrDetails).values(details);
+  await db.insert(csrDetails).values(details as any);
 
   console.log('Database successfully seeded with sample data');
 }
