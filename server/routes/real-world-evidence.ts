@@ -28,6 +28,8 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
+import { runRWEStudy, RWESourceNotConfiguredError } from '../services/rwe-study-service';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -516,33 +518,60 @@ router.get('/sources/:sourceId/status', (req: Request, res: Response) => {
  * POST /query
  * Execute a real-world evidence study query.
  *
- * DISABLED (501). The prior implementation fabricated the entire study
- * result with Math.random(): hazard ratios, p-values (forced < 0.1),
- * cohort sizes, demographics, and propensity-score c-statistics — then
- * stamped it with HIPAA Safe-Harbor provenance and "applicable submission
- * types: sNDA / BLA Supplement / Post-Market Commitment". Returning
- * invented clinical efficacy statistics for regulatory submission is
- * indefensible, and an LLM inventing them would be no better — these must
- * come from a real analysis engine over a connected real-world data
- * source (Aetion / Flatiron / claims warehouse), which is not wired.
+ * Builds real exposure/comparator cohorts and outcome counts from the connected
+ * FHIR data source and computes comparative statistics (risk ratio, risk
+ * difference, 95% CI, two-proportion z-test) analytically from the real counts.
+ * Nothing is fabricated: when no data source is connected it returns 501, and
+ * when cohorts are too small it returns status 'insufficient_data' with null
+ * statistics. Licensed vendor sources (aetion/flatiron/trinetx) are recognized
+ * but return 501 until credentials are wired.
  *
- * The real data-access endpoints in this router (/faers, /fhir/patients,
- * /clinical-trials, /signal-detection) remain live — they proxy real
- * external sources. Study *execution* (cohort construction + endpoint
- * statistics) is what stays disabled until a real engine is connected.
+ * The prior implementation fabricated the entire result with Math.random();
+ * this replaces it with a real analysis engine (see rwe-study-service).
  */
-router.post('/query', (_req: Request, res: Response) => {
-  res.status(501).json({
-    success: false,
-    error: {
-      code: 'not_implemented',
-      message:
-        'RWE study execution is not available. Cohort construction and endpoint ' +
-        'statistics (hazard ratios, p-values, propensity scores) require a connected ' +
-        'real-world data source and validated analysis engine. Use /faers, ' +
-        '/fhir/patients, /clinical-trials, or /signal-detection for live source data.',
-    },
-  });
+const rweStudySchema = z.object({
+  dataSource: z.enum(['fhir', 'aetion', 'flatiron', 'trinetx']).optional(),
+  exposureCode: z.string().min(1).max(200),
+  comparatorCode: z.string().min(1).max(200).optional(),
+  outcomeCode: z.string().min(1).max(200),
+  demographics: z
+    .object({
+      gender: z.string().max(20).optional(),
+      ageMin: z.number().int().min(0).max(120).optional(),
+      ageMax: z.number().int().min(0).max(120).optional(),
+    })
+    .optional(),
+  minCohortSize: z.number().int().min(1).max(100000).optional(),
+});
+
+router.post('/query', async (req: Request, res: Response) => {
+  const parsed = rweStudySchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({
+      success: false,
+      error: { code: 'invalid_request', message: 'Invalid study definition', details: parsed.error.flatten() },
+    });
+  }
+
+  try {
+    const result = await runRWEStudy(parsed.data);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    if (err instanceof RWESourceNotConfiguredError) {
+      return res.status(501).json({
+        success: false,
+        error: { code: 'source_not_configured', message: err.message, dataSource: err.dataSource },
+      });
+    }
+    console.error('[RWE] study execution failed:', err);
+    res.status(502).json({
+      success: false,
+      error: {
+        code: 'execution_failed',
+        message: `Study execution failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      },
+    });
+  }
 });
 
 /**
