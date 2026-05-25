@@ -251,6 +251,10 @@ router.post('/udi/:id/submit-gudid', async (req: Request, res: Response) => {
         'UDI record not found, already submitted, or not in draft/rejected state',
       );
     }
+    void auditService.logAction({
+      tenantId: orgId, action: 'mdx.udi.submit_gudid',
+      resourceType: 'udi_record', resourceId: id,
+    });
     return ok(res, rows[0]);
   } catch (err) {
     return serverError(res, log, 'submit-gudid', err);

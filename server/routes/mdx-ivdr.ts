@@ -25,6 +25,7 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
+import auditService from '../services/auditService';
 
 const router = Router();
 const log = createScopedLogger('mdx-ivdr');
@@ -114,6 +115,11 @@ router.post('/ivdr/classifications', async (req: Request, res: Response) => {
         p.certificateNo ?? null, p.certificateExpiry ?? null,
       ],
     );
+    void auditService.logAction({
+      tenantId: orgId, action: 'mdx.ivdr.classification.confirm',
+      resourceType: 'ivdr_classification', resourceId: rows[0]?.id,
+      details: { ivdrClass: p.ivdrClass, deviceName: p.deviceName },
+    });
     return created(res, rows[0]);
   } catch (err) {
     return serverError(res, log, 'class-create', err);

@@ -27,6 +27,7 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
+import auditService from '../services/auditService';
 
 const router = Router();
 const log = createScopedLogger('mdx-ivd-performance');
@@ -128,6 +129,11 @@ router.post('/ivd/analytical', async (req: Request, res: Response) => {
         p.reportArtifactId ?? null, p.startedAt ?? null, p.completedAt ?? null,
       ],
     );
+    void auditService.logAction({
+      tenantId: orgId, action: 'mdx.ivd.analytical.create',
+      resourceType: 'ivd_analytical_performance', resourceId: rows[0]?.id,
+      details: { studyType: p.studyType, title: p.title },
+    });
     return created(res, rows[0]);
   } catch (err) {
     return serverError(res, log, 'anal-create', err);

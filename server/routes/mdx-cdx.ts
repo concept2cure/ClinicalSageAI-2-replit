@@ -19,6 +19,7 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
+import auditService from '../services/auditService';
 
 const router = Router();
 const log = createScopedLogger('mdx-cdx');
@@ -105,6 +106,11 @@ router.post('/cdx/pairings', async (req: Request, res: Response) => {
         p.emaApprovalDate ?? null, p.cdxLabelText ?? null,
       ],
     );
+    void auditService.logAction({
+      tenantId: orgId, action: 'mdx.cdx.pairing.create',
+      resourceType: 'cdx_pairing', resourceId: rows[0]?.id,
+      details: { drugName: p.drugName, biomarker: p.biomarker },
+    });
     return created(res, rows[0]);
   } catch (err) {
     return serverError(res, log, 'pairing-create', err);
