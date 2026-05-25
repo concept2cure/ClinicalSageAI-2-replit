@@ -46,6 +46,10 @@ export interface CitationMatch {
   doi?: string;
   pmid?: string;
   url?: string;
+  /** Publication types from the source (e.g. PubMed pubtype). */
+  publicationTypes?: string[];
+  /** True when the source marks the work as retracted. undefined = unknown. */
+  retracted?: boolean;
 }
 
 export type CitationVerificationStatus = 'verified' | 'not_found' | 'unverifiable' | 'error';
@@ -59,6 +63,18 @@ export interface CitationVerificationResult {
   /** 0..1 match confidence when verified, else null. */
   confidence: number | null;
   match: CitationMatch | null;
+  /**
+   * True when the matched publication is marked as retracted (citing it is a
+   * scientific-integrity defect). undefined when existence wasn't verified or
+   * retraction status is unknown.
+   */
+  retracted?: boolean;
+  /**
+   * Field-level mismatches between the cited reference and the resolved record
+   * (e.g. wrong year, or a DOI that points to a different article than cited).
+   * Present only when a verified match has discrepancies.
+   */
+  discrepancies?: string[];
   detail: string;
   checkedAt: string;
 }
@@ -126,6 +142,12 @@ async function verifyByPmid(pmid: string): Promise<CitationMatch | null> {
   const data = await fetchJson(url);
   const record = data?.result?.[pmid];
   if (!record || record.error || !record.uid) return null;
+  return pubmedMatch(pmid, record);
+}
+
+/** Build a CitationMatch from a PubMed ESummary record, incl. retraction status. */
+function pubmedMatch(pmid: string, record: any): CitationMatch {
+  const publicationTypes: string[] = Array.isArray(record.pubtype) ? record.pubtype : [];
   return {
     source: 'pubmed',
     title: record.title,
@@ -135,6 +157,8 @@ async function verifyByPmid(pmid: string): Promise<CitationMatch | null> {
     doi: (record.elocationid || '').replace(/^doi:\s*/i, '') || undefined,
     pmid,
     url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
+    publicationTypes: publicationTypes.length ? publicationTypes : undefined,
+    retracted: publicationTypes.some(t => /retracted publication/i.test(t)),
   };
 }
 
@@ -170,19 +194,7 @@ async function searchPubMedByTitle(title: string): Promise<{ match: CitationMatc
     if (!record?.title) continue;
     const similarity = titleSimilarity(title, record.title);
     if (!best || similarity > best.similarity) {
-      best = {
-        similarity,
-        match: {
-          source: 'pubmed',
-          title: record.title,
-          authors: (record.authors || []).map((a: any) => a.name).join(', ') || undefined,
-          journal: record.fulljournalname || record.source,
-          year: record.pubdate ? parseInt(String(record.pubdate).slice(0, 4), 10) || undefined : undefined,
-          doi: (record.elocationid || '').replace(/^doi:\s*/i, '') || undefined,
-          pmid: id,
-          url: `https://pubmed.ncbi.nlm.nih.gov/${id}/`,
-        },
-      };
+      best = { similarity, match: pubmedMatch(id, record) };
     }
   }
   return best;
@@ -229,6 +241,51 @@ function result(
   return { id: input.id, input, status, exists, confidence, match, detail, checkedAt: new Date().toISOString() };
 }
 
+/** Compare the cited reference against the resolved record to surface inaccuracies. */
+function computeDiscrepancies(input: CitationInput, match: CitationMatch): string[] {
+  const discrepancies: string[] = [];
+  if (input.year && match.year && input.year !== match.year) {
+    discrepancies.push(`Cited year ${input.year} does not match the record's year ${match.year}.`);
+  }
+  // When the citation carried an explicit identifier but also a title, a low
+  // title similarity means the DOI/PMID resolves to a *different* article.
+  if (input.title && match.title && (input.doi || input.pmid)) {
+    const sim = titleSimilarity(input.title, match.title);
+    if (sim < 0.6) {
+      discrepancies.push(
+        `The supplied identifier resolves to a different article than the cited title (similarity ${sim.toFixed(2)}).`
+      );
+    }
+  }
+  return discrepancies;
+}
+
+/** Finalize a verified result: attach retraction status and field-level discrepancies. */
+function verifiedResult(
+  input: CitationInput,
+  match: CitationMatch,
+  confidence: number,
+  detail: string
+): CitationVerificationResult {
+  const discrepancies = computeDiscrepancies(input, match);
+  const retracted = match.retracted === true;
+  let finalDetail = detail;
+  if (retracted) finalDetail += ' WARNING: this publication is marked as RETRACTED.';
+  if (discrepancies.length) finalDetail += ` ${discrepancies.join(' ')}`;
+  return {
+    id: input.id,
+    input,
+    status: 'verified',
+    exists: true,
+    confidence,
+    match,
+    retracted,
+    discrepancies: discrepancies.length ? discrepancies : undefined,
+    detail: finalDetail,
+    checkedAt: new Date().toISOString(),
+  };
+}
+
 export async function verifyCitation(input: CitationInput): Promise<CitationVerificationResult> {
   const doi = extractDoi(input);
   const pmid = extractPmid(input);
@@ -238,13 +295,13 @@ export async function verifyCitation(input: CitationInput): Promise<CitationVeri
     // 1. Exact identifier: PMID
     if (pmid) {
       const match = await verifyByPmid(pmid);
-      if (match) return result(input, 'verified', true, 1, match, `Verified by PMID ${pmid} in PubMed.`);
+      if (match) return verifiedResult(input, match, 1, `Verified by PMID ${pmid} in PubMed.`);
     }
 
     // 2. Exact identifier: DOI
     if (doi) {
       const match = await verifyByDoi(doi);
-      if (match) return result(input, 'verified', true, 1, match, `Verified by DOI ${doi} in CrossRef.`);
+      if (match) return verifiedResult(input, match, 1, `Verified by DOI ${doi} in CrossRef.`);
     }
 
     // If an identifier was supplied but did not resolve, it is genuinely missing.
@@ -256,11 +313,11 @@ export async function verifyCitation(input: CitationInput): Promise<CitationVeri
     if (title && title.trim().length >= 8) {
       const pubmed = await searchPubMedByTitle(title);
       if (pubmed && pubmed.similarity >= TITLE_MATCH_THRESHOLD) {
-        return result(input, 'verified', true, pubmed.similarity, pubmed.match, `Matched a PubMed record by title (similarity ${pubmed.similarity.toFixed(2)}).`);
+        return verifiedResult(input, pubmed.match, pubmed.similarity, `Matched a PubMed record by title (similarity ${pubmed.similarity.toFixed(2)}).`);
       }
       const crossref = await searchCrossRefByTitle(input.raw || title, title);
       if (crossref && crossref.similarity >= TITLE_MATCH_THRESHOLD) {
-        return result(input, 'verified', true, crossref.similarity, crossref.match, `Matched a CrossRef record by title (similarity ${crossref.similarity.toFixed(2)}).`);
+        return verifiedResult(input, crossref.match, crossref.similarity, `Matched a CrossRef record by title (similarity ${crossref.similarity.toFixed(2)}).`);
       }
       const best = [pubmed, crossref].filter(Boolean).sort((a, b) => b!.similarity - a!.similarity)[0];
       return result(

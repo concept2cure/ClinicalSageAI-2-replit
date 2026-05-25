@@ -149,4 +149,50 @@ describe('citation-verification-service', () => {
     expect(results.map(r => r.id)).toEqual(['1', '2']);
     expect(results.every(r => r.status === 'verified')).toBe(true);
   });
+
+  it('flags a retracted publication while still confirming it exists', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) => {
+        if (String(url).includes('esummary.fcgi')) {
+          return Promise.resolve(
+            jsonResponse({
+              result: {
+                '99999999': {
+                  uid: '99999999',
+                  title: 'A study later retracted',
+                  fulljournalname: 'Journal of Retractions',
+                  pubdate: '2015',
+                  pubtype: ['Journal Article', 'Retracted Publication'],
+                },
+              },
+            })
+          );
+        }
+        return Promise.resolve(jsonResponse({}, 404));
+      })
+    );
+    const r = await verifyCitation({ id: 'retracted', pmid: '99999999' });
+    expect(r.status).toBe('verified');
+    expect(r.exists).toBe(true);
+    expect(r.retracted).toBe(true);
+    expect(r.detail).toMatch(/RETRACTED/);
+  });
+
+  it('flags a year discrepancy on an otherwise-verified citation', async () => {
+    const r = await verifyCitation({ id: 'yr', doi: '10.1038/171737a0', year: 1999 });
+    expect(r.status).toBe('verified');
+    expect(r.discrepancies?.length).toBeGreaterThanOrEqual(1);
+    expect(r.discrepancies?.join(' ')).toMatch(/1999/);
+  });
+
+  it('flags when an identifier resolves to a different article than the cited title', async () => {
+    const r = await verifyCitation({
+      id: 'mismatch',
+      pmid: '14907713',
+      title: 'An entirely unrelated paper about marine biology in the Pacific',
+    });
+    expect(r.status).toBe('verified');
+    expect(r.discrepancies?.join(' ')).toMatch(/different article/i);
+  });
 });

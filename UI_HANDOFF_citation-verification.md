@@ -44,13 +44,17 @@ Response (`200`):
         "status": "verified",
         "exists": true,
         "confidence": 1,
+        "retracted": false,
+        "discrepancies": ["Cited year 1999 does not match the record's year 1953."],
         "match": {
           "source": "crossref",
           "title": "...", "authors": "...", "journal": "Nature",
           "year": 1953, "doi": "10.1038/171737a0",
-          "url": "https://doi.org/10.1038/171737a0"
+          "url": "https://doi.org/10.1038/171737a0",
+          "publicationTypes": ["Journal Article"],
+          "retracted": false
         },
-        "detail": "Verified by DOI ... in CrossRef.",
+        "detail": "Verified by DOI ... in CrossRef. Cited year 1999 does not match the record's year 1953.",
         "checkedAt": "2026-05-25T..."
       }
     ],
@@ -69,6 +73,24 @@ Response (`200`):
 | `error` | `null` | Upstream API failed | Transient error state; offer retry; never show as verified or failed |
 
 `400` is returned for malformed bodies; `500` only on an unexpected server fault.
+
+### `retracted` and `discrepancies` — the high-value reviewer signals
+
+A reference can *exist* and still be a problem. Surface these even on `verified` results:
+
+- **`retracted: true`** — the matched publication is marked **RETRACTED** in PubMed.
+  Citing it is a scientific-integrity defect. Render as a **critical** state
+  ("Retracted — do not cite") regardless of `status`; this should be the most
+  prominent signal in the list and should feed any "blockers" count.
+- **`discrepancies: string[]`** — the reference exists but the *citation is
+  inaccurate*: e.g. a wrong year, or a DOI/PMID that resolves to a **different
+  article** than the cited title. Render as a **review/amber** state with the
+  discrepancy text shown inline so the writer can correct it. A verified citation
+  with discrepancies is not "all clear".
+- `match.publicationTypes` can be shown as metadata (e.g. "Review", "Clinical Trial").
+
+Recommended visual precedence per row: **retracted (critical) > not_found (warning) >
+discrepancies (review) > error (transient) > unverifiable (neutral) > clean verified (confirmed)**.
 
 ## What to build (UI)
 
