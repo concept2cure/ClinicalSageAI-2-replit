@@ -19,7 +19,7 @@ import { Router, Request, Response } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { createFeatureStore } from '../utils/feature-persistence';
 import { aiComplete } from '../lib/unified-ai-client';
-import { db } from '../db';
+import { requestDb, type RequestDb } from '../db/requestDb';
 import { sections, documents } from '../../shared/schema';
 import { eq, and } from 'drizzle-orm';
 
@@ -184,15 +184,19 @@ interface ProgramContext {
 }
 
 // Assemble a program's real authored content. "Program" maps to a project, so
-// content is the project's active sections and documents.
-async function assembleProgramContext(programId: number): Promise<ProgramContext> {
+// content is the project's active sections and documents. The request-scoped
+// (RLS) db enforces tenant isolation, so only the caller's org content loads.
+async function assembleProgramContext(
+  rdb: RequestDb,
+  programId: number
+): Promise<ProgramContext> {
   const [sectionRows, documentRows] = await Promise.all([
-    db
+    rdb
       .select({ title: sections.title, content: sections.content, status: sections.status })
       .from(sections)
       .where(and(eq(sections.projectId, programId), eq(sections.status, 'active')))
       .limit(200),
-    db
+    rdb
       .select({
         title: documents.title,
         documentType: documents.documentType,
@@ -314,6 +318,7 @@ async function runEngineAnalysis(
 }
 
 async function executeRun(
+  rdb: RequestDb,
   runId: number,
   programId: number,
   engines: EngineId[],
@@ -332,7 +337,7 @@ async function executeRun(
   const engineResults: EngineResult[] = [];
   const allFindings: FindingCluster[] = [];
 
-  const context = await assembleProgramContext(programId);
+  const context = await assembleProgramContext(rdb, programId);
 
   for (const engineId of engines) {
     if (!ENGINE_LENS[engineId]) continue;
@@ -586,7 +591,7 @@ async function createAndExecuteRun(
     await logProvenance(orgId, programId, 'prediction-run', run.id, 'created', userId, {
       description: `${runType} run initiated with engines: ${engines.join(', ')}`,
     });
-    await executeRun(run.id, programId, engines, orgId, userId, scenarioId);
+    await executeRun(requestDb(req), run.id, programId, engines, orgId, userId, scenarioId);
 
     const completed = await store.getById(run.id, orgId);
     res.status(201).json({ data: completed });
@@ -856,7 +861,7 @@ router.get('/dossier-nodes/:nodeId/scores', async (req: Request, res: Response) 
     // Resolve the node to a real section, then score it from the real findings
     // that impact it. Metrics that have no real basis are returned as null
     // rather than fabricated from the node id.
-    const [section] = await db
+    const [section] = await requestDb(req)
       .select({ title: sections.title })
       .from(sections)
       .where(eq(sections.id, nodeId))
