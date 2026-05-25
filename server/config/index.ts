@@ -14,6 +14,7 @@ export { config, default } from './environment';
 
 // Feature-specific configuration
 export { default as docushareConfig } from './docushareConfig';
+// @ts-ignore — plain JS config module without type declarations
 export { default as vectorDbConfig } from './vector_database_config';
 // regulatory_config.js exposes named exports only (no default); re-export the
 // module namespace so consumers get the full surface under one name.

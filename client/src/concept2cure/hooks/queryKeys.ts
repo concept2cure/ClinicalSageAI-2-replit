@@ -31,6 +31,18 @@ export const queryKeys = {
       ['concept2cure', 'projects', projectId, 'apps'] as const,
   },
 
+  // ── Governance ─────────────────────────────────────────────────────────────
+  governance: {
+    promotionBlockers: (projectId: number | string) =>
+      ['concept2cure', 'governance', projectId, 'promotion-blockers'] as const,
+    decisions: (projectId: number | string) =>
+      ['concept2cure', 'governance', projectId, 'decisions'] as const,
+    fabricDecisions: (projectId: number | string) =>
+      ['concept2cure', 'governance', projectId, 'fabric-decisions'] as const,
+    fabricSummary: (projectId: number | string) =>
+      ['concept2cure', 'governance', projectId, 'fabric-summary'] as const,
+  },
+
   // ── Artifacts ──────────────────────────────────────────────────────────────
   artifacts: {
     all: ['concept2cure', 'artifacts'] as const,
