@@ -29,6 +29,43 @@ const updateUserRoleSchema = z.object({
 });
 
 /**
+ * Authorize the caller against the *target* organization (the org named in the
+ * route/body), not just their own JWT org. Previously these handlers trusted
+ * organizationId from the request body/params, so any authenticated user could
+ * list, create, re-role, or remove users in any organization. A platform
+ * super_admin is allowed anywhere; otherwise the caller must belong to the
+ * target org (membership for reads, admin/owner for mutations).
+ */
+async function authorizeOrgAccess(
+  req: any,
+  res: any,
+  targetOrgId: number,
+  opts: { requireAdmin: boolean }
+): Promise<boolean> {
+  const callerId = Number(req.user?.id ?? req.userId);
+  const callerRole = req.userRole ?? req.user?.role;
+  if (!callerId || Number.isNaN(callerId)) {
+    res.status(401).json({ error: 'Authentication required' });
+    return false;
+  }
+  if (callerRole === 'super_admin') return true;
+  const membership = await pool.query(
+    'SELECT role FROM organization_users WHERE user_id = $1 AND organization_id = $2 LIMIT 1',
+    [callerId, targetOrgId]
+  );
+  const role = membership.rows[0]?.role;
+  if (!role) {
+    res.status(403).json({ error: 'You do not have access to this organization' });
+    return false;
+  }
+  if (opts.requireAdmin && role !== 'admin' && role !== 'owner') {
+    res.status(403).json({ error: 'Admin of the target organization required' });
+    return false;
+  }
+  return true;
+}
+
+/**
  * GET /api/tenant-users/:tenantId
  * Get users for a specific tenant
  */
@@ -43,6 +80,8 @@ router.get('/:tenantId', async (req, res) => {
     if (isNaN(tenantId)) {
       return res.status(400).json({ error: 'Invalid tenant ID' });
     }
+
+    if (!(await authorizeOrgAccess(req, res, tenantId, { requireAdmin: false }))) return;
 
     // Get users for this organization with their roles
     const query = `
@@ -94,6 +133,8 @@ router.post('/', async (req, res) => {
     if (!organizationId) {
       return res.status(400).json({ error: 'Organization ID is required' });
     }
+
+    if (!(await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }))) return;
 
     // Use atomic user creation with quota enforcement
     // atomicQuotaService is an untyped JS module; the global '*.js' shim only
@@ -184,6 +225,8 @@ router.post('/legacy', async (req, res) => {
     if (!organizationId) {
       return res.status(400).json({ error: 'Organization ID is required' });
     }
+
+    if (!(await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }))) return;
 
     // Check if user already exists
     const existingUserQuery = 'SELECT id FROM users WHERE email = $1';
@@ -305,6 +348,8 @@ router.patch('/:organizationId/:userId', async (req, res) => {
       return res.status(400).json({ error: 'Invalid organization ID or user ID' });
     }
 
+    if (!(await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }))) return;
+
     const validatedData = updateUserRoleSchema.parse(req.body);
 
     const updateQuery = `
@@ -348,6 +393,8 @@ router.delete('/:organizationId/:userId', async (req, res) => {
     if (isNaN(organizationId) || isNaN(userId)) {
       return res.status(400).json({ error: 'Invalid organization ID or user ID' });
     }
+
+    if (!(await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }))) return;
 
     const deleteQuery = `
       DELETE FROM organization_users
