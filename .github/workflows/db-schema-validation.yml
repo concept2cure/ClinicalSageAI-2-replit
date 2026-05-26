@@ -1,0 +1,92 @@
+name: DB Schema Validation
+
+# Proves the Drizzle schema (shared/schema.ts) applies cleanly to a fresh
+# PostgreSQL via `drizzle-kit push`. Nothing else in CI does this — the
+# neon-preview-db job applies the db/migrations/ SQL but never pushes the
+# drizzle schema, which is how an invalid single-column FK on the CDISC
+# reference tables (PR #595) reached the schema undetected and broke
+# `npm run db:push` for fresh checkouts / build agents.
+#
+# This gate fails the PR if the schema can't be created on an empty DB
+# (invalid FK targets, missing-extension types, ordering issues, etc.).
+
+on:
+  pull_request:
+    paths:
+      - 'shared/schema.ts'
+      - 'shared/schema/**'
+      - 'drizzle.config.*'
+      - '.github/workflows/db-schema-validation.yml'
+
+jobs:
+  schema-push:
+    name: Schema applies to fresh Postgres
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        # pgvector image: base Postgres 16 plus the `vector` extension the
+        # embeddings tables need. pgcrypto / uuid-ossp ship with Postgres.
+        #
+        # POSTGRES_HOST_AUTH_METHOD=trust: this is an ephemeral, localhost-only
+        # service container that lives for the duration of one CI job, so it
+        # uses trust auth rather than a password. That also means there's no
+        # credential literal in this file to leak (no real secret exists).
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: schema_check
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres@localhost:5432/schema_check
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install psql client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Prepare schemas + extensions
+        # The drizzle schema references named schemas (vault, precedent) and
+        # the vector / pgcrypto / uuid-ossp extensions. Create them first so
+        # `db:push` can lay the tables down.
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE SCHEMA IF NOT EXISTS vault;
+          CREATE SCHEMA IF NOT EXISTS precedent;
+          CREATE EXTENSION IF NOT EXISTS pgcrypto;
+          CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+          CREATE EXTENSION IF NOT EXISTS vector;
+          SQL
+
+      - name: drizzle-kit push (must apply cleanly)
+        # `echo ""` answers drizzle-kit's interactive prompt; on a fresh DB
+        # there are no destructive changes so it proceeds. A non-zero exit
+        # (e.g. "no unique constraint matching given keys") fails the gate.
+        run: echo "" | npx drizzle-kit push
+
+      - name: Confirm tables were created
+        run: |
+          COUNT=$(psql "$DATABASE_URL" -tAc \
+            "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';")
+          echo "Created $COUNT public base tables."
+          if [ "$COUNT" -lt 100 ]; then
+            echo "::error::Expected the full schema (hundreds of tables); only $COUNT created — push likely did not complete."
+            exit 1
+          fi
