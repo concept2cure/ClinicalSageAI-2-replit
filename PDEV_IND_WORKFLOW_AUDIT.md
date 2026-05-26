@@ -201,6 +201,40 @@ In dependency order, when the relevant design phase ships:
 - `server/routes/pdev/pdev-routes.ts` (edited — adds 7 routes for the new services).
 - `server/services/pdev/__tests__/{pdev-ai-drafting,pdev-fda-feedback-rollup}.test.ts` (new).
 
+**Pass 6 — finishers (terminal clearance + test coverage + walkthrough):**
+
+Closes the three residual gaps flagged after pass 5.
+
+1. **Terminal IND-clearance transition.** When `regulatory.ind_clearance`
+   reaches a completing state, the parent `regulatory_programs` row is
+   moved to its cleared terminal state (`status = 'approved'`,
+   `approvalDate`, `metadata.indClearedAt`), closing the CIRM slide's
+   "Singular Expected Outcome: IND Clearance". Idempotent; audit-logged
+   (`pdev_ind_cleared`). Wired into all three state-change surfaces:
+   the `/state` route, the `pdev.activity.set_state` AnA command, and
+   the workflow-bridge chain-completion path.
+   - `server/services/pdev/pdev-clearance.ts` (new).
+
+2. **Test coverage for the two previously-untested services.**
+   - `pdev-workflow-bridge.test.ts` — exhaustive `decideCheckpointOutcome`
+     pure state-machine tests + kickoff orchestration (stateful mock).
+   - `pdev-clearance.test.ts` — terminal transition, idempotency, metadata
+     preservation, tenant gate.
+   - `pdev-provenance-trace.test.ts` — full trace-tree assembly + no-state
+     and unknown-activity paths.
+   - The bridge's decision logic was extracted into the pure exported
+     `decideCheckpointOutcome` so it is testable without a database.
+
+3. **AnA conversation walkthrough.** `PDEV_IND_ANA_WALKTHROUGH.md` — a
+   13-turn transcript demonstrating natural-language → command → service
+   → result across the full lifecycle (situational awareness → AI draft
+   → evidence → dependency gate → approval chain → FDA feedback rollup →
+   provenance → eCTD compile → IND clearance), with a coverage map of all
+   20 PDEV commands.
+
+PDEV test total after pass 6: 73 in `server/services/pdev/__tests__/`
+plus 17 in the AnA command-handlers test.
+
 **Pass 5 — workflow / approval-chain bridge:**
 
 PDEV activity promotions now route through the existing `workflow_runs`
