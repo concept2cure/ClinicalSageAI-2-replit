@@ -24,6 +24,7 @@ import { Sidebar, type AnaView, type AccountInfo, type Recent } from './Sidebar'
 import { TopBar } from './TopBar';
 import { EmptyState, type EmptySuggestion } from './EmptyState';
 import { ChatView, type ChatMessageView } from './ChatView';
+import type { ExecutedActionChip } from './Message';
 import { ProjectsView, type AnaProject } from './ProjectsView';
 import { useAnaChat, type AnaChatMessage, type AnaChatAction } from './useAnaChat';
 import { useRecents } from './useRecents';
@@ -193,7 +194,7 @@ export function Ana({
   onThreadChange,
   onActionRun: _onActionRun,
   onNavigate,
-  onDraftInsert: _onDraftInsert,
+  onDraftInsert,
   onRequestPromotion: _onRequestPromotion,
   onOpenCompareInspector: _onOpenCompareInspector,
   onRefreshIntelligence,
@@ -403,9 +404,18 @@ export function Ana({
   const handleActionClick = useCallback(
     (
       _messageId: string,
-      action: { artifactId?: string; sectionCode?: string; path?: string },
+      action: {
+        actionType?: string;
+        artifactId?: string;
+        sectionCode?: string;
+        path?: string;
+        draftContent?: string;
+        draftTitle?: string;
+      },
     ) => {
-      if (action.artifactId && onOpenArtifact) {
+      if (action.actionType === 'open_in_editor' && action.draftContent && onDraftInsert) {
+        onDraftInsert(action.draftContent, action.draftTitle || 'Generated document');
+      } else if (action.artifactId && onOpenArtifact) {
         onOpenArtifact(action.artifactId);
       } else if (action.sectionCode && onNavigateToSection) {
         onNavigateToSection(action.sectionCode);
@@ -413,7 +423,7 @@ export function Ana({
         onNavigate(action.path);
       }
     },
-    [onOpenArtifact, onNavigateToSection, onNavigate]
+    [onOpenArtifact, onNavigateToSection, onNavigate, onDraftInsert]
   );
 
   // A tap on a suggested action pill sends a follow-up user message that
@@ -429,13 +439,27 @@ export function Ana({
 
   const messagesForView = useMemo<ChatMessageView[]>(
     () =>
-      chat.messages.map((m: AnaChatMessage) => ({
+      chat.messages.map((m: AnaChatMessage) => {
+        // Surface a tool-generated document as an "Open in editor" chip,
+        // alongside any server-side executed actions.
+        const baseActions = (m.executedActions as ExecutedActionChip[] | undefined) ?? [];
+        const draftAction: ExecutedActionChip[] = m.generatedDraft
+          ? [{
+              label: `Open "${m.generatedDraft.title}" in editor`,
+              actionType: 'open_in_editor',
+              draftContent: m.generatedDraft.content,
+              draftTitle: m.generatedDraft.title,
+              executed: true,
+            }]
+          : [];
+        const mergedActions = [...baseActions, ...draftAction];
+        return {
         id: m.id,
         role: m.role,
         text: m.text,
         streaming: m.streaming,
         statusPhase: m.statusPhase,
-        executedActions: m.executedActions as any,
+        executedActions: mergedActions.length > 0 ? mergedActions : undefined,
         latencyMs: m.latencyMs,
         fallback: m.fallback,
         stopped: m.stopped,
@@ -445,7 +469,8 @@ export function Ana({
         evidence: m.evidence,
         warnings: m.warnings,
         sentAt: m.sentAt,
-      })),
+        };
+      }),
     [chat.messages]
   );
 

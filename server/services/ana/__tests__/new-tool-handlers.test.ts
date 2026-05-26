@@ -336,3 +336,40 @@ describe('AnA biostatistics tools — registration + deterministic compute', () 
     expect(result.comparison).toBeDefined();
   });
 });
+
+// Every biostatistics document template generates engine-grounded content.
+describe('generate_statistical_document — full template coverage', () => {
+  const DOC_TYPES = [
+    'full_statistical_analysis_plan', 'sap_section_draft', 'sample_size_rationale',
+    'statistical_methods_section', 'interim_analysis_plan', 'dsmb_charter',
+    'tlf_shell_plan', 'randomization_plan', 'statistical_risk_memo',
+    'design_assumption_note', 'protocol_statistical_section', 'submission_statistical_note',
+    'statistical_reviewer_response', 'scenario_comparison_brief',
+  ] as const;
+
+  const design = {
+    clientTrack: 'biotech_pharma',
+    studyType: 'superiority',
+    objectiveType: 'efficacy',
+    endpointType: 'continuous',
+    effectSize: 0.4,
+    alpha: 0.05,
+    powerTarget: 0.9,
+    interimAnalyses: 2,
+    numberOfEndpoints: 2,
+    missingDataMethod: 'MMRM',
+    expectedMissingRate: 0.15,
+    regulatoryBody: 'FDA',
+  };
+
+  for (const documentType of DOC_TYPES) {
+    it(`generates ${documentType}`, async () => {
+      const handler = getToolHandler('generate_statistical_document')!;
+      const result = JSON.parse(await handler({ ...design, documentType }, {} as ToolContext));
+      expect(result.status).toBe('generated');
+      expect(result.documentType).toBe(documentType);
+      expect(typeof result.content).toBe('string');
+      expect(result.content.length).toBeGreaterThan(100);
+    });
+  }
+});

@@ -90,6 +90,16 @@ export interface AnaChatMessage {
   warnings?: string[];
   /** Timestamp (ms) when this turn was kicked off. Used for relative time chips. */
   sentAt?: number;
+  /**
+   * Editor-openable draft produced by a document-generating tool this turn
+   * (e.g. generate_statistical_document). The UI offers an "Open in editor"
+   * affordance that routes this content to the governed document editor.
+   */
+  generatedDraft?: {
+    title: string;
+    content: string;
+    documentType?: string;
+  };
 }
 
 export interface UseAnaChatOptions {
@@ -485,6 +495,20 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   prev.map(m =>
                     m.id === assistantId
                       ? { ...m, warnings: [...(m.warnings || []), msg] }
+                      : m
+                  )
+                );
+              }
+            } else if (event.type === 'artifact_draft') {
+              // A document-generating tool produced an editor-openable draft.
+              const title: string = event.title || 'Generated document';
+              const content: string = event.content || '';
+              const documentType: string | undefined = event.documentType;
+              if (content) {
+                setMessages(prev =>
+                  prev.map(m =>
+                    m.id === assistantId
+                      ? { ...m, generatedDraft: { title, content, documentType } }
                       : m
                   )
                 );

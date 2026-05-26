@@ -43,6 +43,9 @@ export interface ExecutedActionChip {
   sectionCode?: string;
   executed?: boolean;
   error?: string;
+  /** For an "open in editor" chip produced by a document-generating tool. */
+  draftContent?: string;
+  draftTitle?: string;
 }
 
 export interface MessageProps {

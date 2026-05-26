@@ -485,7 +485,7 @@ export const ANALYZE_MISSING_DATA_IMPACT: AnaTool = {
 export const GENERATE_STATISTICAL_DOCUMENT: AnaTool = {
   name: 'generate_statistical_document',
   description:
-    "Generate a submission-ready statistical document grounded in the DETERMINISTIC engine's computed numbers (every sample size / power figure in the output is engine-computed, not invented). Backs /sap and statistical-authoring requests. Takes the same design parameters as compute_sample_size plus a documentType. Returns the document title and full markdown content (a draft — the user promotes it through the governed authoring flow). documentType options: sample_size_rationale, sap_section_draft (Statistical Analysis Plan section), statistical_risk_memo, design_assumption_note, protocol_statistical_section, submission_statistical_note, statistical_reviewer_response, scenario_comparison_brief. Use sap_section_draft for SAP work and sample_size_rationale for the N justification.",
+    "Generate a submission-ready statistical document grounded in the DETERMINISTIC engine's computed numbers (every sample size / power figure in the output is engine-computed, not invented). Backs /sap and statistical-authoring requests, and the produced draft opens in AnA's document editor. Takes the same design parameters as compute_sample_size plus a documentType. Returns the document title and full markdown content (a draft — the user promotes it through the governed authoring flow). documentType options: full_statistical_analysis_plan (complete SAP), sap_section_draft (single SAP section), sample_size_rationale, statistical_methods_section (CSR §9.7), interim_analysis_plan, dsmb_charter, tlf_shell_plan (tables/listings/figures shells), randomization_plan, statistical_risk_memo, design_assumption_note, protocol_statistical_section, submission_statistical_note, statistical_reviewer_response, scenario_comparison_brief. Pick the documentType that matches the client's request (e.g. a full SAP → full_statistical_analysis_plan; a DSMB charter → dsmb_charter).",
   input_schema: {
     type: 'object',
     properties: {
@@ -493,7 +493,9 @@ export const GENERATE_STATISTICAL_DOCUMENT: AnaTool = {
       documentType: {
         type: 'string',
         enum: [
-          'sample_size_rationale', 'sap_section_draft', 'statistical_risk_memo',
+          'full_statistical_analysis_plan', 'sap_section_draft', 'sample_size_rationale',
+          'statistical_methods_section', 'interim_analysis_plan', 'dsmb_charter',
+          'tlf_shell_plan', 'randomization_plan', 'statistical_risk_memo',
           'design_assumption_note', 'protocol_statistical_section', 'submission_statistical_note',
           'statistical_reviewer_response', 'scenario_comparison_brief',
         ],
