@@ -14,12 +14,10 @@
  * @module server/services/cortex/index
  */
 
-// Re-export primary services. AuditEntry is exported by both
-// cortexComplianceService and anaCortexClient — re-export it once explicitly.
+// Re-export primary services
 export * from '../cortexPrimeService';
 export * from '../cortexComplianceService';
 export * from '../anaCortexClient';
-export type { AuditEntry } from '../cortexComplianceService';
 
 // `AuditEntry` is declared in both cortexComplianceService and anaCortexClient.
 // Explicitly re-export the compliance-service definition (the GxP audit-trail

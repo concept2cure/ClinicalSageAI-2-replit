@@ -64,10 +64,6 @@ export interface DTCPricingTier {
   deepResearchCredits: number;  // per month (-1 = unlimited)
   builderCredits: number;       // per month (-1 = unlimited)
   trialDays: number;
-  annualDiscountPct: number;
-  baseMonthly?: number;
-  perSeatMonthly?: number;
-  maxUsers?: number;
 }
 
 export const DTC_PRICING: DTCPricingTier[] = [
@@ -492,7 +488,7 @@ export async function createDTCCheckoutSession(params: DTCCheckoutParams): Promi
   }
 
   // Calculate price
-  let unitAmount = dtcTier.baseMonthly ?? 0;
+  let unitAmount = dtcTier.baseMonthly;
   if (billingCycle === 'annual') {
     unitAmount = Math.round(unitAmount * (1 - dtcTier.annualDiscountPct / 100));
   }

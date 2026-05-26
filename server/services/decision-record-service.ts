@@ -480,25 +480,6 @@ export class DecisionRecordService {
     });
   }
 
-  validateGovernanceBoundary(decision: DecisionRecord): {
-    decisionId: string;
-    actionState: ActionState;
-    requiresApproval: boolean;
-    withinBoundary: boolean;
-  } {
-    // A decision is within its governance boundary once it has reached a
-    // terminal approved/executed state; proposed/under-review decisions still
-    // require human approval before they may act.
-    const approvedStates: ActionState[] = ['approved', 'executed'];
-    const withinBoundary = approvedStates.includes(decision.actionState);
-    return {
-      decisionId: decision.id,
-      actionState: decision.actionState,
-      requiresApproval: !withinBoundary,
-      withinBoundary,
-    };
-  }
-
   private map(row: Record<string, unknown>): DecisionRecord {
     return {
       id: row.id as string,
