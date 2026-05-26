@@ -19,7 +19,13 @@ const createFolderBody = z.object({
 router.get(
   '/folders',
   asyncHandler(async (req, res) => {
-    const { tree, organizationId = 1 } = req.query;
+    const { tree } = req.query;
+    // Org from the JWT only — never from req.query (which also defaulted to
+    // org 1), which let a caller list any tenant's folder tree.
+    const organizationId = req.user?.organizationId ?? req.tenantContext?.organizationId;
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     const result = await pool.query(
       'SELECT id, name, parent_id, organization_id, created_at, updated_at FROM document_folders WHERE organization_id = $1 ORDER BY name',
@@ -87,9 +93,14 @@ router.patch(
       return res.status(400).json({ error: 'Name is required' });
     }
 
+    const organizationId = req.user?.organizationId ?? req.tenantContext?.organizationId;
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+
     const result = await pool.query(
-      'UPDATE document_folders SET name = $1, updated_at = NOW() WHERE id = $2 RETURNING id, name, parent_id, organization_id, created_at, updated_at',
-      [name, req.params.id]
+      'UPDATE document_folders SET name = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3 RETURNING id, name, parent_id, organization_id, created_at, updated_at',
+      [name, req.params.id, organizationId]
     );
 
     if (result.rows.length === 0) {
@@ -104,6 +115,21 @@ router.patch(
 router.delete(
   '/folders/:id',
   asyncHandler(async (req, res) => {
+    const organizationId = req.user?.organizationId ?? req.tenantContext?.organizationId;
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+
+    // Verify ownership first so a foreign folder 404s rather than leaking its
+    // existence (and document/subfolder counts) through the guards below.
+    const owned = await pool.query(
+      'SELECT id FROM document_folders WHERE id = $1 AND organization_id = $2',
+      [req.params.id, organizationId]
+    );
+    if (owned.rows.length === 0) {
+      return res.status(404).json({ error: 'Folder not found' });
+    }
+
     // Check if folder has documents
     const docCheck = await pool.query(
       'SELECT COUNT(*) as count FROM documents WHERE folder_id = $1',
@@ -124,9 +150,10 @@ router.delete(
       return res.status(400).json({ error: 'Cannot delete folder with subfolders' });
     }
 
-    const result = await pool.query('DELETE FROM document_folders WHERE id = $1 RETURNING id', [
-      req.params.id,
-    ]);
+    const result = await pool.query(
+      'DELETE FROM document_folders WHERE id = $1 AND organization_id = $2 RETURNING id',
+      [req.params.id, organizationId]
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Folder not found' });
