@@ -7,16 +7,20 @@
 
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 
-// Mock the database pool
-vi.mock('../../db/pool', () => ({
-  getPool: vi.fn(() => ({
-    connect: vi.fn(() => Promise.resolve({
-      query: vi.fn(),
-      release: vi.fn()
-    })),
-    query: vi.fn()
-  }))
-}));
+// Mock the database pool. CortexPrimeService imports `getPool` from
+// `../db` (server/db.ts), NOT `../db/pool` — the previous mock targeted
+// the wrong module, so the real getPool() ran in the no-DB test env and
+// threw "Database connection not available" at construction. Keep all
+// real `../db` exports and override only getPool with a fake pool.
+vi.mock('../../db', async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  const fakePool = {
+    connect: vi.fn(() => Promise.resolve({ query: vi.fn(() => Promise.resolve({ rows: [] })), release: vi.fn() })),
+    query: vi.fn(() => Promise.resolve({ rows: [] })),
+    end: vi.fn(() => Promise.resolve()),
+  };
+  return { ...actual, getPool: vi.fn(() => fakePool) };
+});
 
 describe('CortexPrimeService', () => {
   describe('Atom Operations', () => {

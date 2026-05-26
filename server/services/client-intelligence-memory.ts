@@ -25,7 +25,7 @@ import {
   type ProjectIntelligenceProfile,
   type ProjectMemoryEntry,
   type ProjectIngestedDocument,
-} from 'shared/schema';
+} from '../../shared/schema';
 import { eq, and, desc, sql, asc } from 'drizzle-orm';
 import { getEmbeddingService } from './enhancedEmbeddingService.js';
 
