@@ -56,9 +56,15 @@ vi.mock('../../../db', () => ({
   pool: sectionPool,
 }));
 
-const ESGSubmissionService = vi.fn(() => ({
-  submitToFDA: (...a: any[]) => esgSvc.submitToFDA(...a),
-}));
+// The handler does `new ESGSubmissionService()`, so the mocked default
+// must be a real constructor. A `vi.fn(() => ({...}))` with an arrow
+// implementation is NOT newable ("X is not a constructor") — use a class
+// whose method delegates to the hoisted spy.
+class ESGSubmissionService {
+  submitToFDA(...a: any[]) {
+    return esgSvc.submitToFDA(...a);
+  }
+}
 vi.mock('../../ESGSubmissionService', () => ({
   default: ESGSubmissionService,
 }));
@@ -71,6 +77,7 @@ import {
   esgTransmit,
   preflightModule,
 } from '../mdx-command-handlers';
+import { _resetMdxToolRateLimitersForTests } from '../mdx-tool-rate-limit';
 
 const CTX = {
   userId: 7,
@@ -84,6 +91,11 @@ const COMMITMENT_UUID = 'cccccccc-cccc-cccc-cccc-ccccccccccc1';
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // The AnA tool rate limiter is a module-level singleton; in single-fork
+  // vitest it persists across tests AND files. Multiple suites exercise
+  // k510_workflow.transmit (5/hour ceiling), so without a reset a later
+  // transmit test gets rate-limited and the gate returns success:false.
+  _resetMdxToolRateLimitersForTests();
 });
 
 // ─── Confirmation gate ──────────────────────────────────────────────────────

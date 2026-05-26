@@ -24,7 +24,13 @@ const { audit, dbState } = vi.hoisted(() => ({
 
 vi.mock('../../auditService', () => ({ default: audit }));
 
-vi.mock('../../db', () => ({
+// explainAuditRow does `await import('../../db')` from server/services/ana-ri,
+// which resolves to server/db. From this test (server/services/ana-ri/__tests__/)
+// the matching mock path is `../../../db` — one extra level to escape the
+// __tests__ folder. The previous `../../db` resolved to server/services/db,
+// so the mock missed and the real pool (null in the no-DB test env) made the
+// handler return EXECUTION_FAILED instead of the expected NOT_FOUND.
+vi.mock('../../../db', () => ({
   pool: {
     query: vi.fn(async () => ({ rows: dbState.rows })),
   },

@@ -15,6 +15,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { _resetMdxToolRateLimitersForTests } from '../mdx-tool-rate-limit';
 
 // vi.hoisted ensures env vars are set BEFORE any ESM imports (including
 // transitive ones) are evaluated. Loading the auth/db/config chain at
@@ -84,9 +85,13 @@ vi.mock('../../db', () => ({
     }),
   },
 }));
-const ESGSubmissionService = vi.fn(() => ({
-  submitToFDA: (...a: any[]) => svc.submitToFDA(...a),
-}));
+// Must be a real constructor: the handler does `new ESGSubmissionService()`.
+// An arrow-bodied vi.fn is not newable.
+class ESGSubmissionService {
+  submitToFDA(...a: any[]) {
+    return svc.submitToFDA(...a);
+  }
+}
 vi.mock('../../ESGSubmissionService', () => ({ default: ESGSubmissionService }));
 vi.mock('../../gspr-postmarket/gspr.service', () => ({
   upsertMapping: (...a: any[]) => svc.upsertMapping(...a),
@@ -349,6 +354,10 @@ const PROBES: Probe[] = [
 describe('AnA-MDX audit contract — every tool emits one agent.ana.* audit row', () => {
   beforeEach(() => {
     audit.logAction.mockClear();
+    // Reset the module-level AnA tool rate limiter so k510_workflow.transmit
+    // probes don't accumulate against the 5/hour ceiling across the
+    // single-fork run (this and mdx-command-handlers both transmit).
+    _resetMdxToolRateLimitersForTests();
   });
 
   // section.approve and audit.explain probes fail to emit their audit
