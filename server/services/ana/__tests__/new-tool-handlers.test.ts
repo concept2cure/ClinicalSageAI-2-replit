@@ -246,3 +246,93 @@ describe('AnA new tool handlers — tenant context enforcement', () => {
     }
   });
 });
+
+// ── Biostatistics tools (deterministic engine — no DB needed) ──────────────
+describe('AnA biostatistics tools — registration + deterministic compute', () => {
+  const BIOSTATS_TOOLS = [
+    'compute_sample_size',
+    'compare_statistical_scenarios',
+    'assess_statistical_defensibility',
+    'analyze_missing_data_impact',
+    'generate_statistical_document',
+  ] as const;
+
+  for (const name of BIOSTATS_TOOLS) {
+    it(`registers a handler for ${name}`, () => {
+      const handler = getToolHandler(name);
+      expect(handler).toBeDefined();
+      expect(typeof handler).toBe('function');
+    });
+  }
+
+  // A complete, valid binary-superiority design.
+  const validDesign = {
+    clientTrack: 'biotech_pharma',
+    studyType: 'superiority',
+    objectiveType: 'efficacy',
+    endpointType: 'binary',
+    controlRate: 0.3,
+    treatmentRate: 0.45,
+    alpha: 0.05,
+    powerTarget: 0.9,
+  };
+
+  it('compute_sample_size returns an engine-computed N and power', async () => {
+    const handler = getToolHandler('compute_sample_size')!;
+    const result = JSON.parse(await handler(validDesign, {} as ToolContext));
+    expect(result.status).toBe('computed');
+    expect(result.engine).toBe('deterministic');
+    expect(result.sampleSize.total).toBeGreaterThan(0);
+    expect(result.power).toBeGreaterThan(0);
+  });
+
+  it('compute_sample_size reports needs_parameters when design is missing', async () => {
+    const handler = getToolHandler('compute_sample_size')!;
+    const result = JSON.parse(await handler({ clientTrack: 'biotech_pharma' }, {} as ToolContext));
+    expect(result.status).toBe('needs_parameters');
+    expect(Array.isArray(result.errors)).toBe(true);
+  });
+
+  it('assess_statistical_defensibility returns a multi-dimension judgment', async () => {
+    const handler = getToolHandler('assess_statistical_defensibility')!;
+    const result = JSON.parse(await handler(validDesign, {} as ToolContext));
+    expect(result.status).toBe('assessed');
+    expect(result.judgment).toBeDefined();
+    expect(Array.isArray(result.judgment.dimensions)).toBe(true);
+  });
+
+  it('analyze_missing_data_impact returns adjusted power for a missing-data plan', async () => {
+    const handler = getToolHandler('analyze_missing_data_impact')!;
+    const result = JSON.parse(
+      await handler({ ...validDesign, missingDataMethod: 'MMRM', expectedMissingRate: 0.2 }, {} as ToolContext)
+    );
+    expect(result.status).toBe('computed');
+    expect(result.missingDataImpact).toBeDefined();
+    expect(typeof result.missingDataImpact.adjustedPower).toBe('number');
+  });
+
+  it('generate_statistical_document drafts a SAP section grounded in the engine', async () => {
+    const handler = getToolHandler('generate_statistical_document')!;
+    const result = JSON.parse(
+      await handler({ ...validDesign, documentType: 'sap_section_draft' }, {} as ToolContext)
+    );
+    expect(result.status).toBe('generated');
+    expect(result.documentType).toBe('sap_section_draft');
+    expect(typeof result.content).toBe('string');
+    expect(result.content.length).toBeGreaterThan(0);
+  });
+
+  it('compare_statistical_scenarios returns both scenarios and a recommendation', async () => {
+    const handler = getToolHandler('compare_statistical_scenarios')!;
+    const result = JSON.parse(
+      await handler(
+        { scenarioA: { ...validDesign, powerTarget: 0.8 }, scenarioB: { ...validDesign, powerTarget: 0.9 } },
+        {} as ToolContext
+      )
+    );
+    expect(result.status).toBe('computed');
+    expect(result.scenarioA.sampleSize).toBeGreaterThan(0);
+    expect(result.scenarioB.sampleSize).toBeGreaterThan(0);
+    expect(result.comparison).toBeDefined();
+  });
+});

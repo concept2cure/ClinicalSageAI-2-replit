@@ -588,47 +588,68 @@ registerToolHandler('check_numerical_integrity', async (input: Record<string, un
   }
 });
 
+// ── Biostatistics tools — backed by the deterministic engine ──────────────
+// Shared parser: map a raw tool-input record onto the engine's StatisticalInput
+// shape. Used by every biostats tool so they speak the same parameter language.
+function toBiostatsInput(input: Record<string, unknown>, ctx?: ToolContext): Record<string, unknown> {
+  const num = (v: unknown): number | undefined => {
+    if (v === undefined || v === null || v === '') return undefined;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : undefined;
+  };
+  const str = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.length > 0 ? v : undefined;
+
+  return {
+    clientTrack: str(input.clientTrack),
+    studyType: str(input.studyType),
+    objectiveType: str(input.objectiveType),
+    endpointType: str(input.endpointType),
+    effectSize: num(input.effectSize),
+    controlRate: num(input.controlRate),
+    treatmentRate: num(input.treatmentRate),
+    alpha: num(input.alpha),
+    powerTarget: num(input.powerTarget),
+    attritionRate: num(input.attritionRate),
+    allocationRatio: num(input.allocationRatio),
+    nonInferiorityMargin: num(input.nonInferiorityMargin),
+    equivalenceMargin: num(input.equivalenceMargin),
+    comparatorType: str(input.comparatorType),
+    numberOfGroups: num(input.numberOfGroups),
+    followUpDuration: num(input.followUpDuration),
+    interimAnalyses: num(input.interimAnalyses),
+    sensitivity: num(input.sensitivity),
+    specificity: num(input.specificity),
+    prevalence: num(input.prevalence),
+    aucTarget: num(input.aucTarget),
+    aucNull: num(input.aucNull),
+    agreementTarget: num(input.agreementTarget),
+    crossoverPeriods: num(input.crossoverPeriods),
+    withinSubjectCorrelation: num(input.withinSubjectCorrelation),
+    numberOfEndpoints: num(input.numberOfEndpoints),
+    multiplicityMethod: str(input.multiplicityMethod),
+    estimandStrategy: str(input.estimandStrategy),
+    missingDataMethod: str(input.missingDataMethod),
+    expectedMissingRate: num(input.expectedMissingRate),
+    regulatoryBody: str(input.regulatoryBody),
+    indication: str(input.indication),
+    phase: str(input.phase),
+    projectId: num(input.projectId) ?? (ctx?.projectId ?? undefined),
+  };
+}
+
+const NEEDS_PARAMS_MESSAGE =
+  'The biostatistics engine could not compute — required parameters are missing or invalid. Ask the user for exactly the fields listed in errors, then call the tool again.';
+
 // Compute Sample Size — deterministic biostatistics engine (validated formulas)
 registerToolHandler('compute_sample_size', async (input: Record<string, unknown>, ctx) => {
   try {
     const { anaBiostatsOrchestrator } = await import('../ana-biostats/index.js');
-
-    const num = (v: unknown): number | undefined => {
-      if (v === undefined || v === null || v === '') return undefined;
-      const n = Number(v);
-      return Number.isFinite(n) ? n : undefined;
-    };
-
-    const rawInput = {
-      clientTrack: input.clientTrack as string | undefined,
-      studyType: input.studyType as string | undefined,
-      objectiveType: input.objectiveType as string | undefined,
-      endpointType: input.endpointType as string | undefined,
-      effectSize: num(input.effectSize),
-      controlRate: num(input.controlRate),
-      treatmentRate: num(input.treatmentRate),
-      alpha: num(input.alpha),
-      powerTarget: num(input.powerTarget),
-      attritionRate: num(input.attritionRate),
-      allocationRatio: num(input.allocationRatio),
-      nonInferiorityMargin: num(input.nonInferiorityMargin),
-      equivalenceMargin: num(input.equivalenceMargin),
-      regulatoryBody: input.regulatoryBody as string | undefined,
-      indication: input.indication as string | undefined,
-      phase: input.phase as string | undefined,
-      projectId: num(input.projectId) ?? (ctx?.projectId ?? undefined),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any;
-
-    const result = anaBiostatsOrchestrator.quickCompute(rawInput);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = anaBiostatsOrchestrator.quickCompute(toBiostatsInput(input, ctx) as any);
 
     if (!result.validation.valid) {
-      return JSON.stringify({
-        status: 'needs_parameters',
-        errors: result.validation.errors,
-        message:
-          'The biostatistics engine could not compute — required parameters are missing or invalid. Ask the user for exactly the fields listed in errors, then call this tool again.',
-      });
+      return JSON.stringify({ status: 'needs_parameters', errors: result.validation.errors, message: NEEDS_PARAMS_MESSAGE });
     }
 
     const c = result.computation;
@@ -642,13 +663,21 @@ registerToolHandler('compute_sample_size', async (input: Record<string, unknown>
       },
       power: c?.power,
       method: c?.method,
+      // Enhanced computation surfaces — present only when the inputs trigger them.
+      multiplicity: c?.multiplicityResult,
+      crossover: c?.crossoverResult,
+      missingDataImpact: c?.missingDataImpact,
+      diagnosticMetrics: c?.diagnosticMetrics,
+      confidenceInterval: c?.confidenceInterval,
       assumptions: result.validation.normalizedInput,
       prefilledDefaults: result.validation.prefilled,
       warnings: result.validation.warnings,
       judgment: result.judgment
         ? {
             actionRecommendation: result.judgment.actionRecommendation,
-            dimensions: result.judgment.dimensions?.map(d => ({ name: d.name, verdict: d.verdict })),
+            overallVerdict: result.judgment.overallVerdict,
+            overallRisk: result.judgment.overallRisk,
+            dimensions: result.judgment.dimensions?.map(d => ({ name: d.name, verdict: d.verdict, score: d.score })),
             escalationReasons: result.judgment.escalationReasons,
           }
         : undefined,
@@ -658,9 +687,153 @@ registerToolHandler('compute_sample_size', async (input: Record<string, unknown>
         'Report these numbers verbatim. Do NOT recompute or round differently. State which assumptions were defaults (prefilledDefaults) so the user can override them.',
     });
   } catch (err: any) {
-    return JSON.stringify({
-      error: `Sample size computation failed: ${err?.message || 'unknown error'}`,
+    return JSON.stringify({ error: `Sample size computation failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// Compare Statistical Scenarios — side-by-side deterministic comparison
+registerToolHandler('compare_statistical_scenarios', async (input: Record<string, unknown>, ctx) => {
+  try {
+    const { anaBiostatsOrchestrator } = await import('../ana-biostats/index.js');
+    const a = input.scenarioA as Record<string, unknown> | undefined;
+    const b = input.scenarioB as Record<string, unknown> | undefined;
+    if (!a || !b) {
+      return JSON.stringify({ error: 'compare_statistical_scenarios requires scenarioA and scenarioB objects.' });
+    }
+    const meta = { userId: ctx?.userId ?? 0, organizationId: ctx?.organizationId ?? 0 };
+    const result = await anaBiostatsOrchestrator.compareScenarios(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      toBiostatsInput(a, ctx) as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      toBiostatsInput(b, ctx) as any,
+      meta,
+    );
+    const summarize = (r: typeof result.scenarioA) => ({
+      sampleSize: r.computation?.adjustedTotal ?? r.computation?.sampleSize.total,
+      power: r.computation?.power,
+      verdict: r.judgment?.overallVerdict,
+      actionRecommendation: r.judgment?.actionRecommendation,
     });
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      label: input.label,
+      scenarioA: summarize(result.scenarioA),
+      scenarioB: summarize(result.scenarioB),
+      comparison: result.comparison,
+      comparisonBrief: result.comparisonDocument
+        ? { title: result.comparisonDocument.title, content: result.comparisonDocument.content }
+        : undefined,
+      instruction: 'Report both scenarios\' engine-computed N and power and the recommendation verbatim.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Scenario comparison failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// Assess Statistical Defensibility — deterministic judgment engine (/defensibility)
+registerToolHandler('assess_statistical_defensibility', async (input: Record<string, unknown>, ctx) => {
+  try {
+    const { anaBiostatsOrchestrator } = await import('../ana-biostats/index.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = anaBiostatsOrchestrator.quickCompute(toBiostatsInput(input, ctx) as any);
+    if (!result.validation.valid) {
+      return JSON.stringify({ status: 'needs_parameters', errors: result.validation.errors, message: NEEDS_PARAMS_MESSAGE });
+    }
+    const j = result.judgment;
+    return JSON.stringify({
+      status: 'assessed',
+      engine: 'deterministic',
+      sampleSize: result.computation?.adjustedTotal ?? result.computation?.sampleSize.total,
+      power: result.computation?.power,
+      judgment: j
+        ? {
+            overallVerdict: j.overallVerdict,
+            overallRisk: j.overallRisk,
+            actionRecommendation: j.actionRecommendation,
+            confidence: j.confidence,
+            dimensions: j.dimensions?.map(d => ({ name: d.name, verdict: d.verdict, score: d.score, rationale: d.rationale, flags: d.flags })),
+            fragility: j.fragility,
+            endpointMethodFit: j.endpointMethodFit,
+            escalationReasons: j.escalationReasons,
+          }
+        : undefined,
+      interpretation: result.interpretation,
+      instruction: 'Report the verdict, per-dimension scores and escalation reasons verbatim. Do not soften or invent scores.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Defensibility assessment failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// Analyze Missing Data Impact — deterministic power-erosion analysis
+registerToolHandler('analyze_missing_data_impact', async (input: Record<string, unknown>, ctx) => {
+  try {
+    const { computationEngine, inputNormalizer } = await import('../ana-biostats/index.js');
+    const validation = inputNormalizer.normalize(toBiostatsInput(input, ctx));
+    if (!validation.valid) {
+      return JSON.stringify({ status: 'needs_parameters', errors: validation.errors, message: NEEDS_PARAMS_MESSAGE });
+    }
+    const normalized = validation.normalizedInput;
+    const base = computationEngine.computeEnhanced(normalized);
+    const impact = computationEngine.computeMissingDataImpact(normalized, base);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      baselineSampleSize: base.adjustedTotal ?? base.sampleSize.total,
+      baselinePower: base.power,
+      missingDataImpact: impact,
+      assumptions: { missingDataMethod: normalized.missingDataMethod, expectedMissingRate: normalized.expectedMissingRate },
+      instruction: 'Report the effective sample size, power reduction, adjusted power, bias risk and recommendation verbatim.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Missing-data impact analysis failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// Generate Statistical Document — deterministic-grounded SAP / rationale draft
+registerToolHandler('generate_statistical_document', async (input: Record<string, unknown>, ctx) => {
+  try {
+    const { anaBiostatsOrchestrator, documentGenerator } = await import('../ana-biostats/index.js');
+    const documentType = input.documentType as string | undefined;
+    if (!documentType) {
+      return JSON.stringify({ error: 'generate_statistical_document requires a documentType.' });
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = anaBiostatsOrchestrator.quickCompute(toBiostatsInput(input, ctx) as any);
+    if (!result.validation.valid) {
+      return JSON.stringify({ status: 'needs_parameters', errors: result.validation.errors, message: NEEDS_PARAMS_MESSAGE });
+    }
+    if (!result.computation || !result.judgment || !result.domain) {
+      return JSON.stringify({ error: 'Engine did not return a complete computation; cannot generate the document.' });
+    }
+    const doc = documentGenerator.generate(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      documentType as any,
+      result.validation.normalizedInput,
+      result.computation,
+      result.judgment,
+      result.domain,
+      result.regulatory,
+      {
+        projectId: result.validation.normalizedInput.projectId ?? (ctx?.projectId ?? 0),
+        organizationId: ctx?.organizationId ?? 0,
+        userId: ctx?.userId ?? 0,
+      },
+    );
+    return JSON.stringify({
+      status: 'generated',
+      engine: 'deterministic',
+      documentType: doc.type,
+      title: doc.title,
+      content: doc.content,
+      sampleSize: result.computation.adjustedTotal ?? result.computation.sampleSize.total,
+      power: result.computation.power,
+      instruction:
+        'Present this as a DRAFT grounded in the deterministic engine. The numbers in the content are engine-computed — do not alter them. The user promotes it through the governed authoring flow; do not claim it is filed or approved.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Statistical document generation failed: ${err?.message || 'unknown error'}` });
   }
 });
 

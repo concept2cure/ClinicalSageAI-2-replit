@@ -383,6 +383,42 @@ export const COMPUTE_SAMPLE_SIZE: AnaTool = {
         type: 'number',
         description: 'Equivalence margin (required for equivalence studies).',
       },
+      comparatorType: {
+        type: 'string',
+        enum: ['placebo', 'active', 'historical', 'performance_goal'],
+        description: 'Comparator type. Defaults to placebo.',
+      },
+      numberOfGroups: { type: 'number', description: 'Number of study arms/groups (defaults to 2).' },
+      followUpDuration: { type: 'number', description: 'Follow-up duration in the study time unit (for time-to-event designs).' },
+      interimAnalyses: { type: 'number', description: 'Number of planned interim analyses (group-sequential alpha spending).' },
+
+      sensitivity: { type: 'number', description: 'Target sensitivity, 0–1 (diagnostic-accuracy / sensitivity_specificity endpoints).' },
+      specificity: { type: 'number', description: 'Target specificity, 0–1 (diagnostic-accuracy endpoints).' },
+      prevalence: { type: 'number', description: 'Disease/condition prevalence in the intended-use population, 0–1 (diagnostic-accuracy endpoints).' },
+      aucTarget: { type: 'number', description: 'Target AUC for an ROC analysis, 0.5–1 (auc_roc endpoints).' },
+      aucNull: { type: 'number', description: 'Null-hypothesis AUC to test against, 0.5–1 (auc_roc endpoints).' },
+      agreementTarget: { type: 'number', description: "Target agreement/kappa for an agreement study (agreement endpoints)." },
+
+      crossoverPeriods: { type: 'number', description: 'Number of periods in a crossover design (enables crossover sample-size adjustment).' },
+      withinSubjectCorrelation: { type: 'number', description: 'Within-subject correlation for crossover designs, 0–1.' },
+
+      numberOfEndpoints: { type: 'number', description: 'Number of co-primary/multiple primary endpoints (triggers multiplicity adjustment).' },
+      multiplicityMethod: {
+        type: 'string',
+        enum: ['bonferroni', 'holm', 'hochberg', 'dunnett', 'none'],
+        description: 'Multiplicity adjustment method when there are multiple endpoints.',
+      },
+      estimandStrategy: {
+        type: 'string',
+        enum: ['treatment_policy', 'hypothetical', 'composite', 'principal_stratum', 'while_on_treatment'],
+        description: 'ICH E9(R1) estimand strategy for intercurrent events.',
+      },
+      missingDataMethod: {
+        type: 'string',
+        enum: ['complete_case', 'LOCF', 'MMRM', 'multiple_imputation', 'pattern_mixture'],
+        description: 'Planned handling of missing data (affects the power/sensitivity assessment).',
+      },
+      expectedMissingRate: { type: 'number', description: 'Expected proportion of missing primary-endpoint data, 0–1.' },
       regulatoryBody: {
         type: 'string',
         enum: ['FDA', 'EMA', 'MHRA', 'PMDA', 'NMPA', 'TGA', 'Health_Canada'],
@@ -393,6 +429,78 @@ export const COMPUTE_SAMPLE_SIZE: AnaTool = {
       projectId: { type: 'number', description: 'Project id for scoping/audit.' },
     },
     required: ['clientTrack', 'studyType', 'objectiveType', 'endpointType'],
+  },
+};
+
+// Shared biostatistics input schema — the full StatisticalInput surface the
+// deterministic engine accepts. Reused by the scenario / defensibility /
+// missing-data / document tools so they all speak the same parameter language.
+const BIOSTATS_INPUT_PROPERTIES = COMPUTE_SAMPLE_SIZE.input_schema.properties;
+
+export const COMPARE_STATISTICAL_SCENARIOS: AnaTool = {
+  name: 'compare_statistical_scenarios',
+  description:
+    "Compare two study-design scenarios side by side using the DETERMINISTIC biostatistics engine. Use this when the user weighs trade-offs — e.g. 80% vs 90% power, two effect-size assumptions, balanced vs 2:1 allocation, superiority vs non-inferiority. Each scenario takes the same parameter set as compute_sample_size. Returns each scenario's sample size and power, the deltas, which design is statistically stronger, a recommendation, and a scenario-comparison brief. NEVER estimate these trade-offs by hand.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      scenarioA: {
+        type: 'object',
+        description: 'First design scenario (same fields as compute_sample_size).',
+        properties: BIOSTATS_INPUT_PROPERTIES,
+      },
+      scenarioB: {
+        type: 'object',
+        description: 'Second design scenario (same fields as compute_sample_size).',
+        properties: BIOSTATS_INPUT_PROPERTIES,
+      },
+      label: { type: 'string', description: 'Optional short label for what is being compared (e.g. "80% vs 90% power").' },
+    },
+    required: ['scenarioA', 'scenarioB'],
+  },
+};
+
+export const ASSESS_STATISTICAL_DEFENSIBILITY: AnaTool = {
+  name: 'assess_statistical_defensibility',
+  description:
+    "Run the DETERMINISTIC engine's regulatory defensibility judgment on a study design. Backs /defensibility. Takes the same parameters as compute_sample_size and returns the multi-dimension judgment: overall verdict and risk level, per-dimension scores (evidence sufficiency, defensibility, reviewer sensitivity, claim risk, consistency, submission risk, endpoint-method fit), a fragility assessment, escalation reasons, and the confidence level. Use this when the user asks how defensible / reviewer-proof a design is, or before committing to a sample size. Report the engine's verdict and scores verbatim.",
+  input_schema: {
+    type: 'object',
+    properties: BIOSTATS_INPUT_PROPERTIES,
+    required: ['clientTrack', 'studyType', 'objectiveType', 'endpointType'],
+  },
+};
+
+export const ANALYZE_MISSING_DATA_IMPACT: AnaTool = {
+  name: 'analyze_missing_data_impact',
+  description:
+    "Quantify how missing primary-endpoint data erodes a study's power, using the DETERMINISTIC engine. Takes the same design parameters as compute_sample_size plus missingDataMethod and expectedMissingRate. Returns the effective sample size after attrition/missingness, the power reduction, the adjusted power, a bias-risk rating, and a handling recommendation (e.g. MMRM vs multiple imputation). Use this for missing-data strategy questions and ICH E9(R1) sensitivity discussions. Do not estimate the power loss by hand.",
+  input_schema: {
+    type: 'object',
+    properties: BIOSTATS_INPUT_PROPERTIES,
+    required: ['clientTrack', 'studyType', 'objectiveType', 'endpointType', 'missingDataMethod', 'expectedMissingRate'],
+  },
+};
+
+export const GENERATE_STATISTICAL_DOCUMENT: AnaTool = {
+  name: 'generate_statistical_document',
+  description:
+    "Generate a submission-ready statistical document grounded in the DETERMINISTIC engine's computed numbers (every sample size / power figure in the output is engine-computed, not invented). Backs /sap and statistical-authoring requests. Takes the same design parameters as compute_sample_size plus a documentType. Returns the document title and full markdown content (a draft — the user promotes it through the governed authoring flow). documentType options: sample_size_rationale, sap_section_draft (Statistical Analysis Plan section), statistical_risk_memo, design_assumption_note, protocol_statistical_section, submission_statistical_note, statistical_reviewer_response, scenario_comparison_brief. Use sap_section_draft for SAP work and sample_size_rationale for the N justification.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      ...BIOSTATS_INPUT_PROPERTIES,
+      documentType: {
+        type: 'string',
+        enum: [
+          'sample_size_rationale', 'sap_section_draft', 'statistical_risk_memo',
+          'design_assumption_note', 'protocol_statistical_section', 'submission_statistical_note',
+          'statistical_reviewer_response', 'scenario_comparison_brief',
+        ],
+        description: 'Which statistical document to generate.',
+      },
+    },
+    required: ['clientTrack', 'studyType', 'objectiveType', 'endpointType', 'documentType'],
   },
 };
 
@@ -2097,6 +2205,10 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CHECK_DOSSIER_CONSISTENCY,
   CHECK_NUMERICAL_INTEGRITY,
   COMPUTE_SAMPLE_SIZE,
+  COMPARE_STATISTICAL_SCENARIOS,
+  ASSESS_STATISTICAL_DEFENSIBILITY,
+  ANALYZE_MISSING_DATA_IMPACT,
+  GENERATE_STATISTICAL_DOCUMENT,
   MINE_PRECEDENTS,
   GENERATE_DOCUMENT,
   BUILD_FROM_TEMPLATE,
