@@ -41,9 +41,16 @@ const router = Router();
 // MIDDLEWARE HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function getOrgId(req: Request): number {
+function getOrgId(req: Request, res: Response): number | null {
   const user = (req as unknown as Record<string, Record<string, unknown>>).user;
-  return Number(user?.organizationId ?? user?.orgId ?? 0);
+  const orgId = Number(user?.organizationId ?? user?.orgId ?? 0);
+  // No fail-open to org 0: a request without authenticated org context is
+  // rejected rather than silently scoped to organization 0.
+  if (!Number.isFinite(orgId) || orgId <= 0) {
+    res.status(403).json({ error: 'Tenant context required' });
+    return null;
+  }
+  return orgId;
 }
 
 function getUserId(req: Request): number {
@@ -63,7 +70,8 @@ function getUserId(req: Request): number {
 router.get('/projects/:projectId/recommendations', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -96,7 +104,8 @@ router.get('/projects/:projectId/recommendations', async (req: Request, res: Res
 router.get('/projects/:projectId/readiness', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -129,7 +138,8 @@ router.get('/projects/:projectId/readiness', async (req: Request, res: Response)
 router.get('/projects/:projectId/profile', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -156,7 +166,8 @@ router.get('/projects/:projectId/profile', async (req: Request, res: Response) =
 router.post('/projects/:projectId/profile/enrich', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
     const userId = getUserId(req);
 
     if (!projectId || !organizationId) {
@@ -215,7 +226,8 @@ router.post('/projects/:projectId/profile/enrich', async (req: Request, res: Res
 router.get('/projects/:projectId/memory', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -245,7 +257,8 @@ router.get('/projects/:projectId/memory', async (req: Request, res: Response) =>
 router.get('/projects/:projectId/next-actions', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -281,7 +294,8 @@ router.get('/projects/:projectId/next-actions', async (req: Request, res: Respon
 router.post('/projects/:projectId/feedback', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
     const userId = getUserId(req);
 
     if (!projectId || !organizationId) {
@@ -324,7 +338,8 @@ router.post('/projects/:projectId/feedback', async (req: Request, res: Response)
 router.get('/projects/:projectId/feedback/summary', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -350,7 +365,8 @@ router.get('/projects/:projectId/feedback/summary', async (req: Request, res: Re
 router.get('/projects/:projectId/cross-module', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -381,7 +397,8 @@ router.get('/projects/:projectId/cross-module', async (req: Request, res: Respon
 router.get('/projects/:projectId/dashboard', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -432,7 +449,8 @@ router.get('/projects/:projectId/dashboard', async (req: Request, res: Response)
 router.post('/projects/:projectId/rim/assess', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -467,7 +485,8 @@ router.post('/projects/:projectId/rim/assess', async (req: Request, res: Respons
 router.get('/projects/:projectId/rim/signals', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -489,7 +508,8 @@ router.get('/projects/:projectId/rim/signals', async (req: Request, res: Respons
 router.get('/projects/:projectId/rim/cross-artifact', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -511,7 +531,8 @@ router.get('/projects/:projectId/rim/cross-artifact', async (req: Request, res: 
 router.get('/projects/:projectId/rim/section/:sectionCode', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
     const sectionCode = req.params.sectionCode;
 
     if (!projectId || !organizationId || !sectionCode) {

@@ -20,7 +20,7 @@ import { Router, Request, Response } from 'express';
 import { decisionLineageService, type ExportFormat } from '../services/workflow/DecisionLineageService';
 import auditService from '../services/auditService';
 import { createScopedLogger } from '../utils/logger';
-import { authedOrgId } from '../utils/authedOrgId';
+import { authedOrgId, requireAuthedOrgId } from '../utils/authedOrgId';
 
 // SECURITY: decision lineage exposes the regulatory decision graph
 // (who decided what, when, with what evidence). Pre-fix the
@@ -57,7 +57,11 @@ router.get('/:entityType/:entityId/export', async (req: Request, res: Response) 
   try {
     const entityType = String(req.params.entityType);
     const format = (req.query.format as ExportFormat) || 'json';
-    const orgId = authedOrgId(req) ?? undefined;
+    // Export must be tenant-scoped — never export lineage with an undefined
+    // org (which let exportLineage run unscoped across tenants).
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const orgId = guard.orgId;
     const id = parseInt(String(req.params.entityId), 10);
 
     if (isNaN(id) || id <= 0) {
@@ -72,7 +76,7 @@ router.get('/:entityType/:entityId/export', async (req: Request, res: Response) 
 
     // Log the export as an auditable action
     await auditService.logAction({
-      tenantId: orgId || 0,
+      tenantId: orgId,
       action: 'lineage_export',
       resourceType: entityType,
       resourceId: id,

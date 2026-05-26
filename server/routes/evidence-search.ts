@@ -5,6 +5,7 @@
  */
 import { Router, Request, Response } from 'express';
 import { searchGovernedDocuments } from '../services/search/opensearchClient';
+import { requireAuthedOrgId } from '../utils/authedOrgId';
 
 const router = Router();
 
@@ -38,7 +39,9 @@ router.get('/search', async (req: Request, res: Response) => {
     }> = [];
 
 
-    const orgId = Number((req as any).organizationId || (req as any).tenantId || 0);
+    const orgGuard = requireAuthedOrgId(req, res);
+    if (!orgGuard.ok) return;
+    const orgId = orgGuard.orgId;
 
     try {
       const osResp = await searchGovernedDocuments({

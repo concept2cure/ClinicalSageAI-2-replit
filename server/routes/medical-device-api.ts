@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { createScopedLogger } from '../utils/logger';
 import { authMiddleware } from '../auth';
 import { tenantContextMiddleware } from '../middleware/tenantContext';
+import { requireAuthedOrgId } from '../utils/authedOrgId';
 import medicalDeviceService from '../services/medicalDeviceService';
 import predicateFinderService from '../services/PredicateFinderService';
 import { eSTARValidator } from '../services/eSTARValidator';
@@ -683,7 +684,9 @@ router.get('/maude/hazard/:productCode', async (req: Request, res: Response) => 
 router.post('/cer/generate', async (req: Request, res: Response) => {
   try {
     const { deviceId, deviceName, manufacturer, templateVersion } = req.body;
-    const organizationId = Number((req as any).tenantContext?.organizationId || (req as any).organizationId || 0);
+    const orgGuard = requireAuthedOrgId(req, res);
+    if (!orgGuard.ok) return;
+    const organizationId = orgGuard.orgId;
 
     logger.info('Generating CER', { deviceId, deviceName, templateVersion });
 
@@ -713,7 +716,9 @@ router.post('/cer/generate', async (req: Request, res: Response) => {
 router.post('/cer', async (req: Request, res: Response) => {
   try {
     const { deviceId, deviceName, manufacturer, templateVersion } = req.body;
-    const organizationId = Number((req as any).tenantContext?.organizationId || (req as any).organizationId || 0);
+    const orgGuard = requireAuthedOrgId(req, res);
+    if (!orgGuard.ok) return;
+    const organizationId = orgGuard.orgId;
 
     const cerService = new UnifiedCERService({
       organizationId: String(organizationId),
