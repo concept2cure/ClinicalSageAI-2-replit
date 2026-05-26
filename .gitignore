@@ -6,6 +6,7 @@ dist/
 
 # Stray runtime artifacts (not part of source)
 tmp/
+uploads/
 logs/
 bun.lock
 __pycache__/
