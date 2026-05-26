@@ -40,6 +40,41 @@ export interface AnaChatAction {
   error?: string;
 }
 
+/** A tool invocation surfaced for transparency/auditability during a turn. */
+export interface AnaToolCall {
+  name: string;
+  label: string;
+  status: 'running' | 'success' | 'error';
+}
+
+/**
+ * Human-readable labels for AnA's tools, so the chat shows "Computing sample
+ * size (biostatistics engine)" instead of a raw tool name. Anything not listed
+ * falls back to a humanized form of the tool name.
+ */
+const TOOL_LABELS: Record<string, string> = {
+  compute_sample_size: 'Computing sample size — biostatistics engine',
+  compare_statistical_scenarios: 'Comparing study scenarios — biostatistics engine',
+  assess_statistical_defensibility: 'Assessing statistical defensibility',
+  analyze_missing_data_impact: 'Analyzing missing-data impact',
+  generate_statistical_document: 'Drafting statistical document',
+  search_clinical_evidence: 'Searching clinical evidence',
+  search_literature: 'Searching the literature',
+  lookup_fda_guidance: 'Looking up FDA guidance',
+  lookup_ich_guideline: 'Looking up ICH guidance',
+  check_regulatory_compliance: 'Checking regulatory compliance',
+  mine_precedents: 'Mining regulatory precedents',
+  lookup_regulatory_precedents: 'Looking up regulatory precedents',
+  check_numerical_integrity: 'Checking numerical integrity',
+  check_dossier_consistency: 'Checking dossier consistency',
+};
+
+function toolLabel(name: string): string {
+  if (TOOL_LABELS[name]) return TOOL_LABELS[name];
+  const spaced = name.replace(/_/g, ' ').trim();
+  return spaced ? spaced.charAt(0).toUpperCase() + spaced.slice(1) : 'Running a tool';
+}
+
 export interface AnaChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -100,6 +135,12 @@ export interface AnaChatMessage {
     content: string;
     documentType?: string;
   };
+  /**
+   * Tools AnA invoked this turn, shown as calm status rows for transparency
+   * and audit (e.g. "Computing sample size — biostatistics engine"). Lets the
+   * user see that a deterministic engine ran rather than a free-text guess.
+   */
+  toolCalls?: AnaToolCall[];
 }
 
 export interface UseAnaChatOptions {
@@ -499,6 +540,48 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   )
                 );
               }
+            } else if (event.type === 'tool_use') {
+              // AnA invoked a tool — show a calm "running" status row.
+              const name: string = event.name || '';
+              if (name) {
+                setMessages(prev =>
+                  prev.map(m =>
+                    m.id === assistantId
+                      ? {
+                          ...m,
+                          statusPhase: undefined,
+                          toolCalls: [
+                            ...(m.toolCalls || []),
+                            { name, label: toolLabel(name), status: 'running' as const },
+                          ],
+                        }
+                      : m
+                  )
+                );
+              }
+            } else if (event.type === 'tool_result') {
+              // Resolve the most recent running call for this tool name.
+              const name: string = event.name || '';
+              let failed = false;
+              if (typeof event.result === 'string') {
+                try {
+                  const parsed = JSON.parse(event.result);
+                  failed = Boolean(parsed?.error);
+                } catch {
+                  /* non-JSON result — treat as success */
+                }
+              }
+              setMessages(prev =>
+                prev.map(m => {
+                  if (m.id !== assistantId || !m.toolCalls) return m;
+                  const idx = [...m.toolCalls].reverse().findIndex(t => t.name === name && t.status === 'running');
+                  if (idx === -1) return m;
+                  const realIdx = m.toolCalls.length - 1 - idx;
+                  const next = m.toolCalls.slice();
+                  next[realIdx] = { ...next[realIdx], status: failed ? 'error' : 'success' };
+                  return { ...m, toolCalls: next };
+                })
+              );
             } else if (event.type === 'artifact_draft') {
               // A document-generating tool produced an editor-openable draft.
               const title: string = event.title || 'Generated document';

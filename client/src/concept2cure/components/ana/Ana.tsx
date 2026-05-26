@@ -468,6 +468,7 @@ export function Ana({
         thinking: m.thinking,
         evidence: m.evidence,
         warnings: m.warnings,
+        toolCalls: m.toolCalls,
         sentAt: m.sentAt,
         };
       }),

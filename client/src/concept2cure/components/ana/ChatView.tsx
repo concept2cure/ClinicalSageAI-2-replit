@@ -14,7 +14,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { I } from './icons';
 import { Composer } from './Composer';
-import { Message, type ExecutedActionChip } from './Message';
+import { Message, type ExecutedActionChip, type ToolCallView } from './Message';
 import styles from './styles.module.css';
 
 export interface ChatMessageView {
@@ -45,6 +45,8 @@ export interface ChatMessageView {
   };
   /** Degraded-mode warnings to surface as a chip. */
   warnings?: string[];
+  /** Tools AnA invoked this turn, shown as transparency/audit status rows. */
+  toolCalls?: ToolCallView[];
   /** When this turn was sent (ms epoch) — relative timestamp source. */
   sentAt?: number;
 }
@@ -142,6 +144,7 @@ export function ChatView({
               thinking={m.thinking}
               evidence={m.evidence}
               warnings={m.warnings}
+              toolCalls={m.toolCalls}
               sentAt={m.sentAt}
               onSuggestedAction={onSuggestedAction}
               onCopy={onCopy ? () => onCopy(m.id, m.text) : undefined}
