@@ -12259,9 +12259,12 @@ export const cdiscCdashFields = pgTable(
     tenantId: integer('tenant_id')
       .notNull()
       .references(() => organizations.id),
-    formId: varchar('form_id', { length: 100 })
-      .notNull()
-      .references(() => cdiscCdashForms.formId),
+    // Logical link to cdiscCdashForms.formId — NOT a DB-level FK.
+    // form_id is unique only per-tenant (cdash_tenant_form_idx composite
+    // on (tenant_id, form_id)), so Postgres rejects a single-column FK to
+    // it ("no unique constraint matching given keys") and that halted
+    // `drizzle-kit push`. Parent row is identified by (tenant_id, form_id).
+    formId: varchar('form_id', { length: 100 }).notNull(),
     fieldName: varchar('field_name', { length: 50 }).notNull(),
     cdashVariable: varchar('cdash_variable', { length: 40 }).notNull(),
     fieldLabel: text('field_label'),
@@ -13035,9 +13038,12 @@ export const cdiscDocsDefineArtifacts = pgTable(
     tenantId: integer('tenant_id')
       .notNull()
       .references(() => organizations.id),
-    defineId: varchar('define_id', { length: 100 })
-      .notNull()
-      .references(() => cdiscEctdDefineXml.defineId),
+    // Logical link to cdiscEctdDefineXml.defineId — NOT a DB-level FK.
+    // define_id is unique only per-study (ectd_study_define_idx composite
+    // on (study_id, define_id)), so a single-column FK to it is invalid
+    // and halted `drizzle-kit push`. Parent row is identified by
+    // (study_id, define_id).
+    defineId: varchar('define_id', { length: 100 }).notNull(),
     artifactType: varchar('artifact_type', { length: 50 }), // Stylesheet, PDF, Schema
     artifactName: text('artifact_name'),
     artifactPath: text('artifact_path'),
