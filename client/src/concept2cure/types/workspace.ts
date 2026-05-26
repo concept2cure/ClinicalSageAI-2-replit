@@ -336,16 +336,6 @@ export interface SubmissionDossier {
   // Submission tracking
   status: DossierStatus;
   timeline: SubmissionTimeline;
-
-  /** Flat list of sections surfaced by the dossier navigator UI. */
-  sections?: Array<{
-    id: string;
-    code?: string;
-    title: string;
-    status?: string;
-    moduleId?: string;
-    [key: string]: unknown;
-  }>;
 }
 
 export interface DossierStatus {
