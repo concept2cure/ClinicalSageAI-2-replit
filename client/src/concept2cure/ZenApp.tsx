@@ -1808,6 +1808,13 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     userIntelligence?.identity?.name ||
     'User';
   const userEmail = userIntelligence?.identity?.email ?? undefined;
+  const userInitials =
+    (userName || 'U')
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part[0]?.toUpperCase() ?? '')
+      .join('') || 'U';
 
   // Time-of-day greeting for the centered home (WO-8).
   // Computed once per mount; no re-render cost.
@@ -1914,13 +1921,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // ZenSidebar) when the user is on the home destination and not viewing an
   // embedded project module. Bundle source: design-system/ui_kits/home/.
   if (layoutMode === 'projects' && !embeddedModule) {
-    const initials =
-      (userName || 'U')
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map(part => part[0]?.toUpperCase() ?? '')
-        .join('') || 'U';
+    const initials = userInitials;
 
     // Route an arbitrary chat-seed string into the current AnA surface. Picks
     // regulatory-workspace when a project is active, deep-research otherwise.
@@ -2062,6 +2063,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       <Ana
         mode="full"
         defaultChatMode={layoutMode === 'deep-research' ? 'deep-research' : 'standard'}
+        user={{ name: userName, initials: userInitials, plan: userRole }}
         authoringContext={authoringContext}
         navContext={activeNavId}
         contextProfile={{

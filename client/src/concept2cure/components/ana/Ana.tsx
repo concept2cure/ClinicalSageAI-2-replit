@@ -24,17 +24,18 @@ import { Sidebar, type AnaView, type AccountInfo, type Recent } from './Sidebar'
 import { TopBar } from './TopBar';
 import { EmptyState, type EmptySuggestion } from './EmptyState';
 import { ChatView, type ChatMessageView } from './ChatView';
+import type { ExecutedActionChip } from './Message';
 import { ProjectsView, type AnaProject } from './ProjectsView';
 import { useAnaChat, type AnaChatMessage, type AnaChatAction } from './useAnaChat';
 import { useRecents } from './useRecents';
 import styles from './styles.module.css';
 
 export interface AnaProps {
-  /** Signed-in user (fallbacks match the bundle demo). */
+  /** Signed-in user. When absent, the account chip shows a neutral "You" — never a fabricated identity. */
   user?: Partial<AccountInfo>;
-  /** Real recents list from the thread DB. */
+  /** Real recents list from the thread DB. Empty when none exist. */
   recents?: Recent[];
-  /** Real projects from the project DB. */
+  /** Real projects from the project DB. Empty when none exist. */
   projects?: AnaProject[];
   /** Active project id so context is scoped for streaming. */
   activeProjectId?: string | null;
@@ -144,11 +145,14 @@ export interface AnaProps {
   navContext?: string;
 }
 
-const DEFAULT_ACCOUNT: AccountInfo = {
-  name: 'Jordan Chen',
-  initials: 'JC',
-  plan: 'Enterprise · Reg Affairs',
-};
+// Derive avatar initials from a display name. Used when the host does not
+// supply explicit initials. Never invents a name — falls back to a neutral
+// single glyph so the account chip stays truthful for a new/unknown user.
+function deriveInitials(name?: string | null): string {
+  const parts = (name || '').split(/\s+/).filter(Boolean).slice(0, 2);
+  const initials = parts.map(p => p[0]?.toUpperCase() ?? '').join('');
+  return initials || 'U';
+}
 
 // Client-side display labels for server DocumentActionType values.
 // Server emits the raw type in `orchestration.suggestedActions`; we render
@@ -163,54 +167,6 @@ const SUGGESTED_ACTION_LABELS: Record<string, string> = {
   revised_artifact: 'Revise the artifact',
   attach_to_dossier: 'Attach to the dossier',
 };
-
-const DEFAULT_RECENTS: Recent[] = [
-  { id: 'r1', label: 'NDA 212345 · Module 2.5 draft' },
-  { id: 'r2', label: '510(k) predicate search — Q1' },
-  { id: 'r3', label: 'EMA scientific advice prep' },
-  { id: 'r4', label: 'Biostat SAP review — BX-204' },
-  { id: 'r5', label: 'Pre-IND meeting package' },
-  { id: 'r6', label: 'PMDA consultation outline' },
-];
-
-const DEFAULT_PROJECTS: AnaProject[] = [
-  {
-    id: 'p1',
-    title: 'NDA 212345',
-    description: 'Full submission package for oncology biologic. 6 modules, 14 contributors.',
-    meta: '42 chats · updated 4h ago',
-  },
-  {
-    id: 'p2',
-    title: '510(k) — BX-204',
-    description: 'Class II device clearance. Predicate analysis + SE argument.',
-    meta: '18 chats · updated 2d ago',
-  },
-  {
-    id: 'p3',
-    title: 'EMA scientific advice',
-    description: 'Pre-submission advice request for MAA Q3 filing.',
-    meta: '7 chats · updated 1w ago',
-  },
-  {
-    id: 'p4',
-    title: 'Pediatric plan',
-    description: 'PIP + iPSP harmonization across FDA/EMA.',
-    meta: '3 chats · updated 2w ago',
-  },
-  {
-    id: 'p5',
-    title: 'Post-market safety',
-    description: 'PBRER / PSUR authoring for 3 approved products.',
-    meta: '21 chats · updated 3d ago',
-  },
-  {
-    id: 'p6',
-    title: 'CMC readiness',
-    description: 'Module 3 review, stability commitments, CBE-30 tracker.',
-    meta: '9 chats · updated 5d ago',
-  },
-];
 
 export function Ana({
   user,
@@ -238,7 +194,7 @@ export function Ana({
   onThreadChange,
   onActionRun: _onActionRun,
   onNavigate,
-  onDraftInsert: _onDraftInsert,
+  onDraftInsert,
   onRequestPromotion: _onRequestPromotion,
   onOpenCompareInspector: _onOpenCompareInspector,
   onRefreshIntelligence,
@@ -256,22 +212,18 @@ export function Ana({
   const resolvedThreadId = pinnedThreadId ?? contextProfile?.threadId ?? null;
 
   const account: AccountInfo = {
-    name: user?.name || DEFAULT_ACCOUNT.name,
-    initials: user?.initials || DEFAULT_ACCOUNT.initials,
-    plan: user?.plan || DEFAULT_ACCOUNT.plan,
+    name: user?.name || 'You',
+    initials: user?.initials || deriveInitials(user?.name),
+    plan: user?.plan || '',
   };
 
-  // Live recents from /api/chat/threads. Falls through to the bundle's demo
-  // list only when nothing has been fetched yet AND the caller did not pass
-  // an explicit `recents` prop.
+  // Live recents from /api/chat/threads. Empty until the thread DB returns
+  // rows — no demo fixtures (a new user sees an empty recents list, not
+  // fabricated threads).
   const { recents: liveRecents } = useRecents({ projectId: resolvedProjectId });
   const recentsList: Recent[] =
-    recents && recents.length > 0
-      ? recents
-      : liveRecents.length > 0
-        ? liveRecents
-        : DEFAULT_RECENTS;
-  const projectList = projects && projects.length > 0 ? projects : DEFAULT_PROJECTS;
+    recents && recents.length > 0 ? recents : liveRecents;
+  const projectList = projects ?? [];
 
   const [view, setView] = useState<AnaView>('home');
   const [collapsed, setCollapsed] = useState(false);
@@ -452,9 +404,18 @@ export function Ana({
   const handleActionClick = useCallback(
     (
       _messageId: string,
-      action: { artifactId?: string; sectionCode?: string; path?: string },
+      action: {
+        actionType?: string;
+        artifactId?: string;
+        sectionCode?: string;
+        path?: string;
+        draftContent?: string;
+        draftTitle?: string;
+      },
     ) => {
-      if (action.artifactId && onOpenArtifact) {
+      if (action.actionType === 'open_in_editor' && action.draftContent && onDraftInsert) {
+        onDraftInsert(action.draftContent, action.draftTitle || 'Generated document');
+      } else if (action.artifactId && onOpenArtifact) {
         onOpenArtifact(action.artifactId);
       } else if (action.sectionCode && onNavigateToSection) {
         onNavigateToSection(action.sectionCode);
@@ -462,7 +423,7 @@ export function Ana({
         onNavigate(action.path);
       }
     },
-    [onOpenArtifact, onNavigateToSection, onNavigate]
+    [onOpenArtifact, onNavigateToSection, onNavigate, onDraftInsert]
   );
 
   // A tap on a suggested action pill sends a follow-up user message that
@@ -478,13 +439,27 @@ export function Ana({
 
   const messagesForView = useMemo<ChatMessageView[]>(
     () =>
-      chat.messages.map((m: AnaChatMessage) => ({
+      chat.messages.map((m: AnaChatMessage) => {
+        // Surface a tool-generated document as an "Open in editor" chip,
+        // alongside any server-side executed actions.
+        const baseActions = (m.executedActions as ExecutedActionChip[] | undefined) ?? [];
+        const draftAction: ExecutedActionChip[] = m.generatedDraft
+          ? [{
+              label: `Open "${m.generatedDraft.title}" in editor`,
+              actionType: 'open_in_editor',
+              draftContent: m.generatedDraft.content,
+              draftTitle: m.generatedDraft.title,
+              executed: true,
+            }]
+          : [];
+        const mergedActions = [...baseActions, ...draftAction];
+        return {
         id: m.id,
         role: m.role,
         text: m.text,
         streaming: m.streaming,
         statusPhase: m.statusPhase,
-        executedActions: m.executedActions as any,
+        executedActions: mergedActions.length > 0 ? mergedActions : undefined,
         latencyMs: m.latencyMs,
         fallback: m.fallback,
         stopped: m.stopped,
@@ -493,8 +468,10 @@ export function Ana({
         thinking: m.thinking,
         evidence: m.evidence,
         warnings: m.warnings,
+        toolCalls: m.toolCalls,
         sentAt: m.sentAt,
-      })),
+        };
+      }),
     [chat.messages]
   );
 

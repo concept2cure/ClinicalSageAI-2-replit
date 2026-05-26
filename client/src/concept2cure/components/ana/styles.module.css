@@ -76,6 +76,24 @@
   font-size: 11px; color: var(--ink-subtle, var(--text-400));
   padding: 14px 10px 4px; font-weight: 500; letter-spacing: 0.02em;
 }
+.sbEmpty {
+  font-size: 12px; color: var(--ink-subtle, var(--text-400));
+  padding: 4px 10px 6px;
+}
+
+/* Tool-call transparency rows — calm, no motion beyond the shared typing dots. */
+.toolCalls {
+  display: flex; flex-direction: column; gap: 4px;
+  margin: 2px 0 10px;
+}
+.toolCall {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--ink-muted, var(--text-300));
+}
+.toolCall .ico { width: 14px; height: 14px; flex-shrink: 0; color: var(--ink-subtle, var(--text-400)); }
+.toolCall[data-status="success"] .ico:last-child { color: var(--accent-100, #d97757); }
+.toolCallLabel { min-width: 0; }
+.toolCallError { font-size: 11px; color: var(--ink-subtle, var(--text-400)); font-style: italic; }
 .sbSpacer { flex: 1; }
 .sbAccount {
   display: flex; align-items: center; gap: 10px;

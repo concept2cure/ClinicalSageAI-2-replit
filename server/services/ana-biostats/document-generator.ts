@@ -90,6 +90,18 @@ export class DocumentGenerator {
         return this.generateProtocolStatisticalSection(input, comp, judgment, domain, regulatory);
       case 'submission_statistical_note':
         return this.generateSubmissionStatisticalNote(input, comp, judgment, domain, regulatory);
+      case 'full_statistical_analysis_plan':
+        return this.generateFullStatisticalAnalysisPlan(input, comp, judgment, domain, regulatory);
+      case 'interim_analysis_plan':
+        return this.generateInterimAnalysisPlan(input, comp, judgment, domain, regulatory);
+      case 'dsmb_charter':
+        return this.generateDsmbCharter(input, comp, judgment, domain, regulatory);
+      case 'statistical_methods_section':
+        return this.generateStatisticalMethodsSection(input, comp, judgment, domain, regulatory);
+      case 'tlf_shell_plan':
+        return this.generateTlfShellPlan(input, comp, judgment, domain);
+      case 'randomization_plan':
+        return this.generateRandomizationPlan(input, comp, judgment, domain);
     }
   }
 
@@ -637,6 +649,205 @@ export class DocumentGenerator {
     };
   }
 
+  // ────────────────────────────────────────────────────────────────
+  // 9. Full Statistical Analysis Plan
+  // ────────────────────────────────────────────────────────────────
+
+  private generateFullStatisticalAnalysisPlan(
+    input: StatisticalInput,
+    comp: ComputationResult,
+    judgment: JudgmentResult,
+    domain: DomainAdaptation,
+    regulatory?: RegulatoryCustomization
+  ): string {
+    const n = comp.adjustedTotal ?? comp.sampleSize.total;
+    const body = regulatory?.body ?? input.regulatoryBody ?? 'FDA';
+    let c = `# Statistical Analysis Plan\n\n`;
+    c += `*${this.trackLabel(input.clientTrack)} · ${input.studyType} · ${input.objectiveType}*\n\n`;
+
+    c += `## 1. Introduction\n\nThis Statistical Analysis Plan (SAP) specifies the analyses for a ${input.studyType} study with a ${input.endpointType} primary endpoint. It is written to ${body} expectations and should be finalized and signed prior to database lock and unblinding.\n\n`;
+
+    c += `## 2. Study Objectives and Endpoints\n\n- **Primary objective**: ${input.objectiveType} evaluation via the ${input.endpointType} primary endpoint.\n- **Study type**: ${input.studyType}${input.nonInferiorityMargin ? ` (non-inferiority margin ${input.nonInferiorityMargin})` : ''}${input.equivalenceMargin ? ` (equivalence margin ${input.equivalenceMargin})` : ''}.\n\n`;
+
+    c += `## 3. Study Design\n\n- Design: ${input.studyType}\n- Number of groups: ${input.numberOfGroups ?? 2}\n- Allocation ratio: ${input.allocationRatio}:1\n- Comparator: ${input.comparatorType ?? 'placebo'}\n\n`;
+
+    c += `## 4. Analysis Populations\n\n- **Intention-to-treat (ITT)**: all randomized subjects, analyzed as randomized. Primary population for efficacy.\n- **Per-protocol (PP)**: subjects without major protocol deviations. Supportive${input.studyType === 'non_inferiority' || input.studyType === 'equivalence' ? ' — co-primary for non-inferiority/equivalence per ICH E9.' : '.'}\n- **Safety**: all subjects who received any study intervention, analyzed as treated.\n\n`;
+
+    c += `## 5. Sample Size Determination\n\nA total of **${n} subjects** (${comp.sampleSize.perGroup} per group) provides **${(comp.power * 100).toFixed(1)}% power** at a two-sided α = ${input.alpha} to detect the planned effect (${input.effectSize}).\n\n${comp.formula}\n\nAssumed attrition: ${(input.attritionRate * 100).toFixed(0)}%.\n\n`;
+
+    c += `## 6. Primary Analysis Method\n\n${comp.method}\n\n*Endpoint–method fit*: ${judgment.endpointMethodFit.rationale}\n\n`;
+
+    c += `## 7. Multiplicity\n\n`;
+    if (comp.multiplicityResult && comp.multiplicityResult.endpointCount > 1) {
+      c += `${comp.multiplicityResult.recommendation}\n\n| Endpoint | Adjusted α |\n|---|---|\n`;
+      comp.multiplicityResult.adjustedAlphas.forEach((a, i) => { c += `| Endpoint ${i + 1} | ${a.toFixed(4)} |\n`; });
+      c += `\nFamily-wise error rate controlled at α = ${input.alpha}.\n\n`;
+    } else {
+      c += `Single primary endpoint — no multiplicity adjustment required for the primary comparison. Pre-specify a testing hierarchy for any key secondary endpoints.\n\n`;
+    }
+
+    c += `## 8. Estimand (ICH E9(R1))\n\n${input.estimandStrategy ? `Strategy for intercurrent events: **${input.estimandStrategy}**. Define population, variable (${input.endpointType}), intercurrent-event handling, and population-level summary measure explicitly.` : 'Define the estimand (population, variable, intercurrent-event strategy, summary measure) before study conduct per ICH E9(R1).'}\n\n`;
+
+    c += `## 9. Missing Data\n\n`;
+    if (input.missingDataMethod && comp.missingDataImpact) {
+      c += `Primary approach: **${input.missingDataMethod}**. Expected missing rate ${(comp.missingDataImpact.expectedMissingRate * 100).toFixed(0)}%; effective N ${comp.missingDataImpact.effectiveSampleSize}; adjusted power ${(comp.missingDataImpact.adjustedPower * 100).toFixed(1)}%; bias risk ${comp.missingDataImpact.biasRisk}. ${comp.missingDataImpact.recommendation}\n\n`;
+    } else {
+      c += `Pre-specify the missing-data approach (e.g. MMRM for longitudinal endpoints, multiple imputation otherwise) and a tipping-point sensitivity analysis.\n\n`;
+    }
+
+    c += `## 10. Sensitivity Analyses\n\n- Tipping-point analysis for missing-data assumptions\n- ITT vs PP concordance\n`;
+    if (judgment.fragility.category !== 'robust') c += `- Effect-size sensitivity (fragility index ${judgment.fragility.fragilityIndex})\n`;
+    c += `\n`;
+
+    c += `## 11. Interim Analyses\n\n`;
+    if (input.interimAnalyses && input.interimAnalyses > 0) {
+      c += `${input.interimAnalyses} planned interim ${input.interimAnalyses === 1 ? 'analysis' : 'analyses'} governed by a pre-specified alpha-spending function (e.g. O'Brien–Fleming). See the Interim Analysis Plan and DSMB Charter.\n\n`;
+    } else {
+      c += `No interim efficacy analyses planned. Safety monitoring per the DSMB charter, if applicable.\n\n`;
+    }
+
+    c += `## 12. Planned Outputs\n\nTables, listings and figures are specified in the TLF Shell Plan. Disposition, demographics, primary/secondary efficacy, and safety summaries are mandatory.\n\n`;
+    c += this.provenanceFooter();
+    return c;
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 10. Interim Analysis Plan
+  // ────────────────────────────────────────────────────────────────
+
+  private generateInterimAnalysisPlan(
+    input: StatisticalInput,
+    comp: ComputationResult,
+    _judgment: JudgmentResult,
+    _domain: DomainAdaptation,
+    regulatory?: RegulatoryCustomization
+  ): string {
+    const k = input.interimAnalyses && input.interimAnalyses > 0 ? input.interimAnalyses : 1;
+    const n = comp.adjustedTotal ?? comp.sampleSize.total;
+    let c = `# Interim Analysis Plan\n\n`;
+    c += `## 1. Purpose\n\nThis plan governs ${k} planned interim ${k === 1 ? 'analysis' : 'analyses'} for a ${input.studyType} study (target N = ${n}, ${(comp.power * 100).toFixed(0)}% power at α = ${input.alpha}). It controls the overall Type I error and defines stopping rules.\n\n`;
+    c += `## 2. Timing\n\nInterim ${k === 1 ? 'analysis is' : 'analyses are'} planned at approximately ${Array.from({ length: k }, (_, i) => `${Math.round(((i + 1) / (k + 1)) * 100)}%`).join(', ')} of planned information (events/completers).\n\n`;
+    c += `## 3. Alpha Spending\n\nA group-sequential design with an O'Brien–Fleming-type alpha-spending function is recommended to preserve a conservative early boundary and a near-nominal final boundary. The cumulative spend at the final analysis equals the study-wide α = ${input.alpha}.\n\n| Look | Information fraction | Indicative two-sided boundary (Z) |\n|---|---|---|\n`;
+    for (let i = 1; i <= k; i++) {
+      const frac = (i / (k + 1));
+      const z = (2.96 - 0.6 * frac).toFixed(2); // indicative, conservative-early → near-final
+      c += `| ${i} | ${(frac * 100).toFixed(0)}% | ±${z} |\n`;
+    }
+    c += `| Final | 100% | ±${(1.97).toFixed(2)} |\n\n*Boundaries are indicative; compute exact boundaries with the chosen spending function (e.g. Lan–DeMets) at finalization.*\n\n`;
+    c += `## 4. Stopping Rules\n\n- **Efficacy**: cross the upper boundary at an interim look.\n- **Futility**: non-binding futility boundary (e.g. conditional power < 20%).\n- **Safety**: per DSMB charter, independent of efficacy boundaries.\n\n`;
+    c += `## 5. Governance\n\nInterim analyses are performed by an unblinded independent statistician and reviewed by the DSMB (see DSMB Charter). The sponsor remains blinded.${regulatory ? ` ${regulatory.body} expects pre-specification of all boundaries before the first look.` : ''}\n\n`;
+    c += this.provenanceFooter();
+    return c;
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 11. DSMB / DMC Charter
+  // ────────────────────────────────────────────────────────────────
+
+  private generateDsmbCharter(
+    input: StatisticalInput,
+    comp: ComputationResult,
+    _judgment: JudgmentResult,
+    _domain: DomainAdaptation,
+    regulatory?: RegulatoryCustomization
+  ): string {
+    let c = `# Data Safety Monitoring Board (DSMB) Charter\n\n`;
+    c += `## 1. Purpose and Scope\n\nThe DSMB (also DMC) safeguards the safety and interests of subjects in this ${input.studyType} study (target N = ${comp.adjustedTotal ?? comp.sampleSize.total}) and the integrity of the trial. It operates independently of the sponsor and investigators.\n\n`;
+    c += `## 2. Membership\n\n- Independent clinician(s) with relevant therapeutic expertise\n- Independent biostatistician\n- A chair with prior DSMB experience\n\nMembers have no competing financial or intellectual interests in the outcome.\n\n`;
+    c += `## 3. Responsibilities\n\n- Review accumulating safety data at pre-specified intervals\n- Review interim efficacy at planned looks (see Interim Analysis Plan)\n- Recommend continue / modify / pause / stop\n\n`;
+    c += `## 4. Meetings\n\n- **Organizational** (before first subject)\n- **Periodic safety reviews** (e.g. by enrollment/exposure milestones)\n- **Interim analyses**: ${input.interimAnalyses && input.interimAnalyses > 0 ? `${input.interimAnalyses} planned` : 'safety-only unless protocol specifies efficacy looks'}\n\n`;
+    c += `## 5. Open and Closed Sessions\n\nOpen sessions include the sponsor (blinded). Closed sessions are restricted to voting members and the independent unblinded statistician who presents by-arm data.\n\n`;
+    c += `## 6. Statistical Support and Stopping Guidance\n\nAn independent unblinded statistician prepares closed reports. Formal efficacy stopping follows the pre-specified group-sequential boundaries; safety stopping is at DSMB discretion.${regulatory ? ` Aligns with ${regulatory.body} expectations for independent data monitoring.` : ''}\n\n`;
+    c += `## 7. Confidentiality\n\nInterim by-arm results are confidential to the DSMB until the board recommends otherwise, to protect trial integrity and avoid operational bias.\n\n`;
+    c += this.provenanceFooter();
+    return c;
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 12. CSR Statistical Methods Section (ICH E3 §9.7)
+  // ────────────────────────────────────────────────────────────────
+
+  private generateStatisticalMethodsSection(
+    input: StatisticalInput,
+    comp: ComputationResult,
+    judgment: JudgmentResult,
+    _domain: DomainAdaptation,
+    _regulatory?: RegulatoryCustomization
+  ): string {
+    const n = comp.adjustedTotal ?? comp.sampleSize.total;
+    let c = `# Statistical Methods (CSR §9.7, ICH E3)\n\n`;
+    c += `## 9.7.1 Statistical and Analytical Plans\n\nThe study was a ${input.studyType} design with a ${input.endpointType} primary endpoint analyzed by ${comp.method}. Analyses followed the pre-specified SAP.\n\n`;
+    c += `## 9.7.1.1 Analysis Populations\n\nEfficacy was analyzed on the ITT population; the PP population was supportive. Safety was summarized on the as-treated population.\n\n`;
+    c += `## 9.7.1.2 Primary Endpoint Analysis\n\nThe primary endpoint was compared between arms using ${comp.method} at a two-sided α = ${input.alpha}. The point estimate is reported with its ${((1 - input.alpha) * 100).toFixed(0)}% confidence interval${comp.confidenceInterval ? ` (planned CI [${comp.confidenceInterval.lower}, ${comp.confidenceInterval.upper}])` : ''}.\n\n`;
+    c += `## 9.7.1.3 Sample Size\n\nThe planned sample size of ${n} (${comp.sampleSize.perGroup}/group) provided ${(comp.power * 100).toFixed(1)}% power. ${comp.formula}\n\n`;
+    c += `## 9.7.2 Multiplicity\n\n${comp.multiplicityResult && comp.multiplicityResult.endpointCount > 1 ? comp.multiplicityResult.recommendation : 'A single primary comparison was performed; secondary endpoints were tested within a pre-specified hierarchy.'}\n\n`;
+    c += `## 9.7.3 Handling of Missing Data\n\n${input.missingDataMethod ? `Missing data were handled by ${input.missingDataMethod}, with tipping-point sensitivity analyses.` : 'Missing data were handled per the pre-specified SAP approach with sensitivity analyses.'}\n\n`;
+    c += `## 9.7.4 Interim Analyses\n\n${input.interimAnalyses && input.interimAnalyses > 0 ? `${input.interimAnalyses} interim ${input.interimAnalyses === 1 ? 'analysis was' : 'analyses were'} conducted under a pre-specified alpha-spending function with DSMB oversight.` : 'No interim efficacy analyses were conducted.'}\n\n`;
+    if (judgment.fragility.category !== 'robust') {
+      c += `## 9.7.5 Robustness\n\nResult robustness was assessed (fragility index ${judgment.fragility.fragilityIndex}); conclusions were examined under alternative assumptions.\n\n`;
+    }
+    c += this.provenanceFooter();
+    return c;
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 13. Tables, Listings & Figures Shell Plan
+  // ────────────────────────────────────────────────────────────────
+
+  private generateTlfShellPlan(
+    input: StatisticalInput,
+    comp: ComputationResult,
+    _judgment: JudgmentResult,
+    _domain: DomainAdaptation
+  ): string {
+    let c = `# Tables, Listings & Figures (TLF) Shell Plan\n\n`;
+    c += `Planned outputs for a ${input.studyType} study (N = ${comp.adjustedTotal ?? comp.sampleSize.total}). Shells are organized by ICH E3 domain.\n\n`;
+    c += `## Tables\n\n| ID | Title | Population |\n|---|---|---|\n`;
+    c += `| 14.1.1 | Subject disposition | All randomized |\n`;
+    c += `| 14.1.2 | Protocol deviations | All randomized |\n`;
+    c += `| 14.1.3 | Demographics and baseline characteristics | ITT; Safety |\n`;
+    c += `| 14.2.1 | Primary endpoint (${input.endpointType}) analysis — ${comp.method} | ITT |\n`;
+    c += `| 14.2.2 | Primary endpoint — PP sensitivity | PP |\n`;
+    c += `| 14.2.3 | Secondary endpoints | ITT |\n`;
+    if (comp.multiplicityResult && comp.multiplicityResult.endpointCount > 1) c += `| 14.2.4 | Multiplicity-adjusted testing summary | ITT |\n`;
+    c += `| 14.3.1 | Exposure | Safety |\n`;
+    c += `| 14.3.2 | Adverse events overview | Safety |\n`;
+    c += `| 14.3.3 | AEs by SOC/PT | Safety |\n`;
+    c += `| 14.3.4 | Serious adverse events | Safety |\n`;
+    c += `| 14.3.5 | Laboratory shifts | Safety |\n\n`;
+    c += `## Figures\n\n| ID | Title |\n|---|---|\n`;
+    c += `| F-1 | Subject disposition (CONSORT) |\n`;
+    if (input.endpointType === 'time_to_event') c += `| F-2 | Kaplan–Meier curve, primary endpoint |\n`;
+    c += `| F-3 | Primary endpoint by visit / forest plot of subgroups |\n\n`;
+    c += `## Listings\n\n| ID | Title |\n|---|---|\n`;
+    c += `| 16.2.1 | Subject disposition |\n`;
+    c += `| 16.2.4 | Protocol deviations |\n`;
+    c += `| 16.2.7 | Adverse events |\n\n`;
+    c += this.provenanceFooter();
+    return c;
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 14. Randomization & Blinding Plan
+  // ────────────────────────────────────────────────────────────────
+
+  private generateRandomizationPlan(
+    input: StatisticalInput,
+    comp: ComputationResult,
+    _judgment: JudgmentResult,
+    _domain: DomainAdaptation
+  ): string {
+    const groups = input.numberOfGroups ?? 2;
+    let c = `# Randomization & Blinding Plan\n\n`;
+    c += `## 1. Allocation\n\nSubjects are randomized ${input.allocationRatio}:1 across ${groups} arm${groups === 1 ? '' : 's'} for this ${input.studyType} study (target N = ${comp.adjustedTotal ?? comp.sampleSize.total}).\n\n`;
+    c += `## 2. Method\n\nPermuted-block randomization with randomly varying block sizes is recommended to balance arms while protecting allocation concealment. ${input.studyType === 'single_arm' ? 'Single-arm study — randomization not applicable; document enrollment order instead.' : 'Stratify by key prognostic factors (e.g. site, baseline severity) to control confounding.'}\n\n`;
+    c += `## 3. Allocation Concealment\n\nThe randomization list is generated by an independent statistician and held in a secure IWRS/IRT. Sites obtain assignments at the point of randomization only.\n\n`;
+    c += `## 4. Blinding\n\n${input.comparatorType === 'placebo' ? 'Double-blind: subjects, investigators, and outcome assessors are masked using matching placebo.' : 'Specify the blinding level (open-label, single-, or double-blind). Where blinding is infeasible, use blinded independent endpoint adjudication.'}\n\n`;
+    c += `## 5. Unblinding\n\nEmergency unblinding is available via the IWRS for medical necessity and is logged. Planned unblinding occurs only after database lock, except for DSMB closed sessions (see DSMB Charter).\n\n`;
+    c += this.provenanceFooter();
+    return c;
+  }
+
   private generateTitle(type: StatisticalDocumentType, input: StatisticalInput): string {
     const trackLabel = this.trackLabel(input.clientTrack);
     const typeLabels: Record<StatisticalDocumentType, string> = {
@@ -648,6 +859,12 @@ export class DocumentGenerator {
       statistical_reviewer_response: 'Statistical Reviewer Response Support',
       protocol_statistical_section: 'Protocol Statistical Section',
       submission_statistical_note: 'Submission Statistical Note',
+      full_statistical_analysis_plan: 'Statistical Analysis Plan',
+      interim_analysis_plan: 'Interim Analysis Plan',
+      dsmb_charter: 'DSMB / DMC Charter',
+      statistical_methods_section: 'CSR Statistical Methods Section',
+      tlf_shell_plan: 'Tables, Listings & Figures Shell Plan',
+      randomization_plan: 'Randomization & Blinding Plan',
     };
     const suffix = input.indication ? ` — ${input.indication}` : '';
     return `${typeLabels[type]} (${trackLabel})${suffix}`;

@@ -2,21 +2,21 @@
  * Mirror of docs/design/concept2cure-design-system/project/ui_kits/home/Extras.jsx
  * (AnaCard section). "See all tasks" opens the command palette, matching bundle.
  *
- * Production wiring: when the host passes `items` (e.g. from useHomeBriefing
- * pulling real RIM next-actions), they replace the bundle fixture. The
- * `lastSyncLabel` prop swaps the static "3 minutes ago" with a live timestamp.
+ * Production wiring: the host passes `items` from useHomeBriefing (real RIM
+ * next-actions). When there are none, the card shows a truthful "all caught
+ * up" state — it never falls back to demo briefing rows. The `lastSyncLabel`
+ * prop swaps the static subtitle with a live timestamp.
  */
 import { useState } from 'react';
 import { HomeIcon } from './icons';
-import { BRIEFING_BY_SCOPE, type Scope, type BriefingItem } from './data';
+import { type BriefingItem } from './data';
 import styles from './styles.module.css';
 
 interface Props {
-  scope: Scope;
   onOpenPalette?: () => void;
-  /** Override the bundle's static briefing fixture with live items. */
+  /** Live briefing items from useHomeBriefing. Empty when nothing is pending. */
   items?: BriefingItem[];
-  /** Override the static "3 minutes ago" subtitle. */
+  /** Live "last synced" subtitle. */
   lastSyncLabel?: string;
   /** Click handler for an individual briefing row. */
   onItemClick?: (item: BriefingItem, index: number) => void;
@@ -25,7 +25,6 @@ interface Props {
 }
 
 export function AnaCard({
-  scope,
   onOpenPalette,
   items,
   lastSyncLabel,
@@ -35,16 +34,17 @@ export function AnaCard({
   const [dismissed, setDismissed] = useState(false);
   if (dismissed) return null;
 
-  const briefing = items && items.length > 0 ? items : BRIEFING_BY_SCOPE[scope] ?? [];
+  const briefing = items ?? [];
   const firstItem = briefing[0] ?? null;
+  const hasItems = briefing.length > 0;
 
   return (
     <div className={styles.anaCard} role="region" aria-label="AnA briefing">
       <div className={styles.anaHead}>
         <div className={styles.anaAvatar}>A</div>
         <div className={styles.anaTitle}>
-          AnA · morning briefing{' '}
-          <span className={styles.when}>· {lastSyncLabel || '3 minutes ago'}</span>
+          AnA · morning briefing
+          {lastSyncLabel && <span className={styles.when}> · {lastSyncLabel}</span>}
         </div>
         <button
           type="button"
@@ -56,31 +56,44 @@ export function AnaCard({
         </button>
       </div>
       <div className={styles.anaBody}>
-        <strong>{briefing.length} things need you today.</strong> I've scanned your projects, reviews and agency feeds — here's what's time-sensitive, ordered by impact.
+        {hasItems ? (
+          <>
+            <strong>
+              {briefing.length} {briefing.length === 1 ? 'thing needs' : 'things need'} you today.
+            </strong>{' '}
+            I've scanned your projects, reviews and agency feeds — here's what's time-sensitive, ordered by impact.
+          </>
+        ) : (
+          <>You're all caught up — nothing time-sensitive across your projects, reviews and agency feeds right now.</>
+        )}
       </div>
-      <div className={styles.anaItems}>
-        {briefing.map((it, i) => (
+      {hasItems && (
+        <div className={styles.anaItems}>
+          {briefing.map((it, i) => (
+            <button
+              type="button"
+              key={i}
+              className={styles.anaItem}
+              onClick={() => onItemClick?.(it, i)}
+            >
+              <span className={styles.anaNum}>{it.num}</span>
+              <span>{it.t}</span>
+              <span className={styles.anaMeta}>{it.meta}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      <div className={styles.anaActions}>
+        {hasItems && (
           <button
             type="button"
-            key={i}
-            className={styles.anaItem}
-            onClick={() => onItemClick?.(it, i)}
+            className={`${styles.anaBtn} ${styles.primary}`}
+            disabled={!firstItem}
+            onClick={() => onStartFirst?.(firstItem)}
           >
-            <span className={styles.anaNum}>{it.num}</span>
-            <span>{it.t}</span>
-            <span className={styles.anaMeta}>{it.meta}</span>
+            Start with #1 <HomeIcon name="arrowRight" size={14} />
           </button>
-        ))}
-      </div>
-      <div className={styles.anaActions}>
-        <button
-          type="button"
-          className={`${styles.anaBtn} ${styles.primary}`}
-          disabled={!firstItem}
-          onClick={() => onStartFirst?.(firstItem)}
-        >
-          Start with #1 <HomeIcon name="arrowRight" size={14} />
-        </button>
+        )}
         <button
           type="button"
           className={`${styles.anaBtn} ${styles.ghost}`}

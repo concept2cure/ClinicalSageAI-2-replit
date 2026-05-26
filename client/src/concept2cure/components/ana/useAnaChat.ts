@@ -23,6 +23,13 @@ import { useCallback, useRef, useState } from 'react';
 import { getAuthHeaders } from '../../../utils/authToken';
 import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
 
+/**
+ * Abort the stream if no bytes arrive for this long. Guards against a stalled
+ * gateway leaving the composer locked in a "Planning response…" state forever.
+ * The timer resets on every chunk, so a long but live generation is fine.
+ */
+const STREAM_IDLE_TIMEOUT_MS = 90_000;
+
 /** Shape of an action chip produced by the server's guidance/command executors. */
 export interface AnaChatAction {
   label: string;
@@ -31,6 +38,41 @@ export interface AnaChatAction {
   sectionCode?: string;
   executed?: boolean;
   error?: string;
+}
+
+/** A tool invocation surfaced for transparency/auditability during a turn. */
+export interface AnaToolCall {
+  name: string;
+  label: string;
+  status: 'running' | 'success' | 'error';
+}
+
+/**
+ * Human-readable labels for AnA's tools, so the chat shows "Computing sample
+ * size (biostatistics engine)" instead of a raw tool name. Anything not listed
+ * falls back to a humanized form of the tool name.
+ */
+const TOOL_LABELS: Record<string, string> = {
+  compute_sample_size: 'Computing sample size — biostatistics engine',
+  compare_statistical_scenarios: 'Comparing study scenarios — biostatistics engine',
+  assess_statistical_defensibility: 'Assessing statistical defensibility',
+  analyze_missing_data_impact: 'Analyzing missing-data impact',
+  generate_statistical_document: 'Drafting statistical document',
+  search_clinical_evidence: 'Searching clinical evidence',
+  search_literature: 'Searching the literature',
+  lookup_fda_guidance: 'Looking up FDA guidance',
+  lookup_ich_guideline: 'Looking up ICH guidance',
+  check_regulatory_compliance: 'Checking regulatory compliance',
+  mine_precedents: 'Mining regulatory precedents',
+  lookup_regulatory_precedents: 'Looking up regulatory precedents',
+  check_numerical_integrity: 'Checking numerical integrity',
+  check_dossier_consistency: 'Checking dossier consistency',
+};
+
+function toolLabel(name: string): string {
+  if (TOOL_LABELS[name]) return TOOL_LABELS[name];
+  const spaced = name.replace(/_/g, ' ').trim();
+  return spaced ? spaced.charAt(0).toUpperCase() + spaced.slice(1) : 'Running a tool';
 }
 
 export interface AnaChatMessage {
@@ -83,6 +125,22 @@ export interface AnaChatMessage {
   warnings?: string[];
   /** Timestamp (ms) when this turn was kicked off. Used for relative time chips. */
   sentAt?: number;
+  /**
+   * Editor-openable draft produced by a document-generating tool this turn
+   * (e.g. generate_statistical_document). The UI offers an "Open in editor"
+   * affordance that routes this content to the governed document editor.
+   */
+  generatedDraft?: {
+    title: string;
+    content: string;
+    documentType?: string;
+  };
+  /**
+   * Tools AnA invoked this turn, shown as calm status rows for transparency
+   * and audit (e.g. "Computing sample size — biostatistics engine"). Lets the
+   * user see that a deterministic engine ran rather than a free-text guess.
+   */
+  toolCalls?: AnaToolCall[];
 }
 
 export interface UseAnaChatOptions {
@@ -224,6 +282,25 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       const abortCtl = new AbortController();
       abortRef.current = abortCtl;
 
+      // Idle-timeout guard: abort if the stream goes silent for too long.
+      // `didTimeout` lets the AbortError handler distinguish a timeout from a
+      // user-initiated stop so the message reads correctly.
+      let idleTimer: ReturnType<typeof setTimeout> | null = null;
+      let didTimeout = false;
+      const clearIdleTimer = () => {
+        if (idleTimer) {
+          clearTimeout(idleTimer);
+          idleTimer = null;
+        }
+      };
+      const armIdleTimer = () => {
+        clearIdleTimer();
+        idleTimer = setTimeout(() => {
+          didTimeout = true;
+          abortCtl.abort();
+        }, STREAM_IDLE_TIMEOUT_MS);
+      };
+
       // Capture done-event fields before post_done arrives
       let capturedLatencyMs: number | undefined;
       let capturedProvider: string | undefined;
@@ -318,9 +395,12 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         const decoder = new TextDecoder();
         let buffer = '';
 
+        armIdleTimer();
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
+          // Live activity — reset the idle watchdog.
+          armIdleTimer();
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split('\n');
           buffer = lines.pop() || '';
@@ -460,13 +540,87 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   )
                 );
               }
+            } else if (event.type === 'tool_use') {
+              // AnA invoked a tool — show a calm "running" status row.
+              const name: string = event.name || '';
+              if (name) {
+                setMessages(prev =>
+                  prev.map(m =>
+                    m.id === assistantId
+                      ? {
+                          ...m,
+                          statusPhase: undefined,
+                          toolCalls: [
+                            ...(m.toolCalls || []),
+                            { name, label: toolLabel(name), status: 'running' as const },
+                          ],
+                        }
+                      : m
+                  )
+                );
+              }
+            } else if (event.type === 'tool_result') {
+              // Resolve the most recent running call for this tool name.
+              const name: string = event.name || '';
+              let failed = false;
+              if (typeof event.result === 'string') {
+                try {
+                  const parsed = JSON.parse(event.result);
+                  failed = Boolean(parsed?.error);
+                } catch {
+                  /* non-JSON result — treat as success */
+                }
+              }
+              setMessages(prev =>
+                prev.map(m => {
+                  if (m.id !== assistantId || !m.toolCalls) return m;
+                  const idx = [...m.toolCalls].reverse().findIndex(t => t.name === name && t.status === 'running');
+                  if (idx === -1) return m;
+                  const realIdx = m.toolCalls.length - 1 - idx;
+                  const next = m.toolCalls.slice();
+                  next[realIdx] = { ...next[realIdx], status: failed ? 'error' : 'success' };
+                  return { ...m, toolCalls: next };
+                })
+              );
+            } else if (event.type === 'artifact_draft') {
+              // A document-generating tool produced an editor-openable draft.
+              const title: string = event.title || 'Generated document';
+              const content: string = event.content || '';
+              const documentType: string | undefined = event.documentType;
+              if (content) {
+                setMessages(prev =>
+                  prev.map(m =>
+                    m.id === assistantId
+                      ? { ...m, generatedDraft: { title, content, documentType } }
+                      : m
+                  )
+                );
+              }
             } else if (event.type === 'error') {
               throw new Error(event.error || 'Stream error');
             }
           }
         }
       } catch (err: any) {
-        if (err?.name === 'AbortError') {
+        if (err?.name === 'AbortError' && didTimeout) {
+          // Idle timeout — the stream went silent. Seal any partial tokens and
+          // tell the user, rather than leaving a half-rendered reply.
+          setMessages(prev =>
+            prev.map(m => {
+              if (m.id !== assistantId) return m;
+              return {
+                ...m,
+                text:
+                  m.text.length > 0
+                    ? m.text
+                    : 'Sorry — AnA stopped responding. Please try again.',
+                streaming: false,
+                statusPhase: undefined,
+                warnings: [...(m.warnings || []), 'Response timed out'],
+              };
+            })
+          );
+        } else if (err?.name === 'AbortError') {
           // User stopped — mark stopped and seal whatever tokens rendered.
           setMessages(prev =>
             prev.map(m =>
@@ -493,6 +647,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           );
         }
       } finally {
+        clearIdleTimer();
         abortRef.current = null;
         setIsStreaming(false);
       }

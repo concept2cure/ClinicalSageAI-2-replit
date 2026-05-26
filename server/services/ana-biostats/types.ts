@@ -307,7 +307,13 @@ export type StatisticalDocumentType =
   | 'scenario_comparison_brief'
   | 'statistical_reviewer_response'
   | 'protocol_statistical_section'
-  | 'submission_statistical_note';
+  | 'submission_statistical_note'
+  | 'full_statistical_analysis_plan'
+  | 'interim_analysis_plan'
+  | 'dsmb_charter'
+  | 'statistical_methods_section'
+  | 'tlf_shell_plan'
+  | 'randomization_plan';
 
 export interface GovernedStatisticalDocument {
   id?: number;

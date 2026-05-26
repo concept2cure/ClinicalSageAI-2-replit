@@ -24,7 +24,7 @@ import styles from './styles.module.css';
 import {
   renderSafeMarkdown,
   sanitizeChatHtml,
-} from '../chat/renderSafeMarkdown';
+} from './renderSafeMarkdown';
 
 // Configure marked once: GitHub-flavoured markdown, no line-break collapsing.
 setOptions({ gfm: true, breaks: false });
@@ -43,6 +43,15 @@ export interface ExecutedActionChip {
   sectionCode?: string;
   executed?: boolean;
   error?: string;
+  /** For an "open in editor" chip produced by a document-generating tool. */
+  draftContent?: string;
+  draftTitle?: string;
+}
+
+export interface ToolCallView {
+  name: string;
+  label: string;
+  status: 'running' | 'success' | 'error';
 }
 
 export interface MessageProps {
@@ -77,6 +86,8 @@ export interface MessageProps {
   };
   /** Server-side degraded-mode warnings. */
   warnings?: string[];
+  /** Tools AnA invoked this turn — shown as transparency/audit status rows. */
+  toolCalls?: ToolCallView[];
   /** When this turn was sent (ms epoch) — for relative timestamp chip. */
   sentAt?: number;
 
@@ -123,6 +134,7 @@ export function Message({
   thinking,
   evidence,
   warnings,
+  toolCalls,
   sentAt,
   onCopy,
   onRetry,
@@ -337,6 +349,38 @@ export function Message({
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {toolCalls && toolCalls.length > 0 && (
+          <div className={styles.toolCalls} role="status" aria-label="Tools AnA used">
+            {toolCalls.map((tc, i) => (
+              <div
+                key={`${tc.name}-${i}`}
+                className={styles.toolCall}
+                data-status={tc.status}
+              >
+                <span className={styles.ico}>
+                  <I.flask size={12} />
+                </span>
+                <span className={styles.toolCallLabel}>{tc.label}</span>
+                {tc.status === 'running' && (
+                  <span className={styles.typing} aria-label="running">
+                    <span />
+                    <span />
+                    <span />
+                  </span>
+                )}
+                {tc.status === 'success' && (
+                  <span className={styles.ico} aria-label="done">
+                    <I.check size={12} />
+                  </span>
+                )}
+                {tc.status === 'error' && (
+                  <span className={styles.toolCallError}>failed</span>
+                )}
+              </div>
+            ))}
           </div>
         )}
 

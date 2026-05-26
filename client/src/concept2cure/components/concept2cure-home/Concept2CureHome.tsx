@@ -821,7 +821,6 @@ export function Concept2CureHome({
                 onModelPicker={onComposerModelPicker}
               />
               <AnaCard
-                scope={scope}
                 onOpenPalette={() => setPaletteOpen(true)}
                 items={briefingItems ?? undefined}
                 lastSyncLabel={briefingItems ? 'just now' : undefined}

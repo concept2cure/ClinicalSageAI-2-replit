@@ -605,6 +605,29 @@ router.post('/stream', async (req: Request, res: Response) => {
             result: resultStr,
           })}\n\n`
         );
+
+        // If the tool produced a document (e.g. generate_statistical_document),
+        // surface it as an editor-openable draft so AnA's document editor can
+        // display the work — not just the chat. The client renders an
+        // "Open in editor" affordance that routes the content to onDraftInsert.
+        if (toolStatus === 'success') {
+          try {
+            const parsed = JSON.parse(resultStr);
+            if (parsed && parsed.status === 'generated' && typeof parsed.content === 'string' && parsed.content.length > 0) {
+              res.write(
+                `data: ${JSON.stringify({
+                  type: 'artifact_draft',
+                  title: parsed.title || 'Generated document',
+                  content: parsed.content,
+                  documentType: parsed.documentType,
+                  source: toolUse.name,
+                })}\n\n`
+              );
+            }
+          } catch {
+            // Non-JSON tool result — nothing to surface as a draft.
+          }
+        }
       }
 
       // Compose the follow-up turn: prior messages + Claude's partial text

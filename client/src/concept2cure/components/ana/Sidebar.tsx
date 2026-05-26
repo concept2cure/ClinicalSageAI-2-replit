@@ -125,6 +125,9 @@ export function Sidebar({
       </button>
 
       <div className={styles.sbSection}>Recents</div>
+      {recents.length === 0 && (
+        <div className={styles.sbEmpty}>No recent chats yet</div>
+      )}
       {recents.map(r => (
         <button
           key={r.id}
