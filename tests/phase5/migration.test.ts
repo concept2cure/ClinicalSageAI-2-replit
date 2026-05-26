@@ -11,8 +11,8 @@
  * intelligent_docs schema. They are skipped in CI without proper DB setup.
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { Pool } from 'pg';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import type { Pool } from 'pg';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 
@@ -34,6 +34,10 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
       return;
     }
 
+    // This is a real integration test: it must connect to the live Postgres
+    // it was handed, not the unit-test pool mock registered globally in
+    // tests/setup.ts. Pull the real driver so `new Pool()` is a constructor.
+    const { Pool } = await vi.importActual<typeof import('pg')>('pg');
     pool = new Pool({ connectionString, connectionTimeoutMillis: 5000 });
     
     // Check if schema exists first
