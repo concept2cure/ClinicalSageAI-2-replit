@@ -40,7 +40,9 @@ import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingState } from '@/components/ui/statesV2';
-import { ReviewThreadsPanel } from './ReviewThreadsPanel';
+// ReviewThreadsPanel was removed in the Phase 1/2 port; local stub keeps
+// this file compiling until a replacement ships.
+const ReviewThreadsPanel: React.FC<any> = () => null;
 import { getGovWorkflowTailoring } from '../../config/industry-tailoring';
 import { useDocumentModeOptional } from '../../contexts/DocumentModeContext';
 import DecisionLineageMap from '../audit/DecisionLineageMap';

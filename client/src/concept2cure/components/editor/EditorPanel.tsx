@@ -3797,7 +3797,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             showCompliance={true}
             showTraceability={true}
             traceabilityLinks={traceabilityLinks}
-            sources={traceabilitySources}
+            sources={traceabilitySources as any}
             templateStructure={templateStructure}
             complianceIssues={complianceIssues as any}
             onComplianceIssuesFound={(issues: any[]) => {

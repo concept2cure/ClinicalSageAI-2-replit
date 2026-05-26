@@ -430,14 +430,14 @@ export class CSRKnowledgeExtractor {
             organizationId: orgIdNum
           };
           
-          await db!.insert(biomarkerEndpoints)
+          await (db!.insert(biomarkerEndpoints) as any)
             .values(biomarkerEndpointData)
             .onConflictDoUpdate({
               target: [biomarkerEndpoints.biomarkerId, biomarkerEndpoints.endpointId],
               set: {
-                correlationScore: sql`(${biomarkerEndpoints.correlationScore} + ${biomarkerEndpointData.correlationScore}) / 2`,
+                correlationScore: sql`(${biomarkerEndpoints.correlationScore} + ${(biomarkerEndpointData as any).correlationScore}) / 2`,
                 evidenceCount: sql`${biomarkerEndpoints.evidenceCount} + 1`,
-                confidence: sql`(${biomarkerEndpoints.confidence} + ${biomarkerEndpointData.confidence}) / 2`
+                confidence: sql`(${biomarkerEndpoints.confidence} + ${(biomarkerEndpointData as any).confidence}) / 2`
               }
             });
         }
@@ -548,7 +548,7 @@ export class CSRKnowledgeExtractor {
 
         // Store dose levels and a representative cohort for each.
         for (const doseRel of doseRelationships) {
-          const [doseLevel] = await db!.insert(doseLevels)
+          const [doseLevel] = await (db!.insert(doseLevels) as any)
             .values({
               studyId: study.id,
               levelNumber: doseRelationships.indexOf(doseRel) + 1,

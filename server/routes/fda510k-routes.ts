@@ -1449,7 +1449,7 @@ router.get('/pma/device/:pmaNumber', async (req: Request, res: Response, next: N
     const tenantContext = (req as any).tenantContext;
 
     // Validate PMA number format
-    if (!/^P\d{6}$/i.test(pmaNumber)) {
+    if (!/^P\d{6}$/i.test(String(pmaNumber))) {
       throw new APIError(
         400,
         ErrorCode.VALIDATION_ERROR,
@@ -1542,7 +1542,7 @@ router.post('/pma/compare', async (req: Request, res: Response, next: NextFuncti
 
     // Validate all PMA numbers
     for (const pmaNumber of pmaNumbers) {
-      if (!/^P\d{6}$/i.test(pmaNumber)) {
+      if (!/^P\d{6}$/i.test(String(pmaNumber))) {
         throw new APIError(
           400,
           ErrorCode.VALIDATION_ERROR,

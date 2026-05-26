@@ -301,7 +301,7 @@ router.delete('/api/tenant-ctq-factors/:id', async (req, res) => {
 
     const result = await pool.query(query);
 
-    if (result.rowCount === 0) {
+    if ((result.rowCount ?? 0) === 0) {
       return res.status(404).json({
         status: 'error',
         message: 'CTQ factor not found',

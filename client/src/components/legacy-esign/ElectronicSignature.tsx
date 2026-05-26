@@ -299,7 +299,7 @@ export function ElectronicSignatureGate({
 
   // Complete signature
   const completeSignature = useCallback(() => {
-    const signature: ElectronicSignature = {
+    const signature = {
       id: `sig_${Date.now()}`,
       userId: user?.id || '',
       recordId,
@@ -319,7 +319,7 @@ export function ElectronicSignatureGate({
       validUntil: new Date(
         Date.now() + (esigConfig?.signatureValidityHours || 24) * 60 * 60 * 1000
       ).toISOString(),
-    };
+    } as unknown as ElectronicSignature;
 
     setStatus({ step: 'complete', attempts: 0 });
 
@@ -728,7 +728,7 @@ export function SignatureDisplay({
         <span className="text-gray-600">Signed by</span>
         <span className="font-medium">{signature.userId}</span>
         <span className="text-gray-400">•</span>
-        <span className="text-gray-500">{new Date(signature.timestamp).toLocaleDateString()}</span>
+        <span className="text-gray-500">{new Date(signature.timestamp ?? Date.now()).toLocaleDateString()}</span>
       </div>
     );
   }
@@ -753,7 +753,7 @@ export function SignatureDisplay({
           </div>
           <div>
             <span className="text-gray-500">Date & Time:</span>
-            <p className="font-medium">{new Date(signature.timestamp).toLocaleString()}</p>
+            <p className="font-medium">{new Date(signature.timestamp ?? Date.now()).toLocaleString()}</p>
           </div>
           <div>
             <span className="text-gray-500">Meaning:</span>
@@ -761,7 +761,7 @@ export function SignatureDisplay({
           </div>
           <div>
             <span className="text-gray-500">Record:</span>
-            <p className="font-medium font-mono text-xs">{signature.recordId.slice(0, 16)}...</p>
+            <p className="font-medium font-mono text-xs">{(signature.recordId ?? '').slice(0, 16)}...</p>
           </div>
         </div>
 
@@ -776,13 +776,13 @@ export function SignatureDisplay({
           <div className="pt-3 border-t text-xs text-gray-500 space-y-1">
             <p>
               <span className="font-medium">Signature Hash:</span>{' '}
-              {signature.signatureHash.slice(0, 32)}...
+              {(signature.signatureHash ?? '').slice(0, 32)}...
             </p>
             <p>
               <span className="font-medium">Algorithm:</span> {signature.hashAlgorithm}
             </p>
             <p>
-              <span className="font-medium">Session:</span> {signature.sessionId.slice(0, 16)}...
+              <span className="font-medium">Session:</span> {(signature.sessionId ?? '').slice(0, 16)}...
             </p>
             {signature.mfaMethod && (
               <p>

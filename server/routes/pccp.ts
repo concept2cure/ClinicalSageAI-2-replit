@@ -108,7 +108,7 @@ router.post(
       const plan = await createPlan({
         ...body,
         organizationId: orgId,
-        programId: req.params.programId,
+        programId: String(req.params.programId ?? ""),
         createdBy,
         updatedBy: createdBy,
       });

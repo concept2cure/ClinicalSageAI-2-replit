@@ -132,6 +132,8 @@ const INTENT_PATTERNS: Record<IntentLens, RegExp[]> = {
  * Detect the user's intent from their message.
  * Returns the best-matching lens with confidence score.
  */
+export type { IntentLens, UserRole };
+
 export function detectIntent(message: string): DetectedIntent {
   const scores: Array<{ lens: IntentLens; score: number; signals: string[] }> = [];
 

@@ -17,6 +17,7 @@ import {
   type AuthorityProfileRecord,
   type PublishOpsServiceRecord,
   type SubmissionCenterItemRecord,
+  type SubmissionCenterItemState,
   SUBMISSION_CENTER_ITEM_STATES,
 } from '../../shared/types/communication-center';
 import {
@@ -829,7 +830,7 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
       // Governed Document Decision Fabric evaluation on creation — surface initial blockers/warnings
       let canonicalGovernedState: CanonicalGovernedStateResult | undefined;
       try {
-        canonicalGovernedState = await buildCanonicalGovernedState({
+        canonicalGovernedState = (await buildCanonicalGovernedState({
           context: {
             organizationId: String(organizationId),
             projectId: String(projectId),
@@ -851,7 +852,7 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
             unresolvedContradictionCount: 0,
             criticalContradictionCount: 0,
           },
-        });
+        })) as unknown as Record<string, unknown>;
       } catch (fabricError) {
         canonicalGovernedState = { error: 'Canonical governed-state evaluation unavailable', degraded: true };
       }
@@ -891,7 +892,10 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
       if (result.rows.length === 0) return sendError(res, 404, 'Submission center work item not found');
 
       const previous = mapSubmissionCenterItem(result.rows[0], organizationId, projectId);
-      validateSubmissionTransition(previous.status, input.status);
+      validateSubmissionTransition(
+        (previous.status ?? 'draft') as SubmissionCenterItemState,
+        input.status
+      );
 
       const updated: SubmissionCenterItemRecord = {
         ...previous,
@@ -901,7 +905,7 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
         sequenceNumber: input.sequenceNumber ?? previous.sequenceNumber,
         updatedAt: new Date().toISOString(),
       };
-      validateSubmissionCenterInput(updated);
+      validateSubmissionCenterInput(updated as any);
 
       await pool.query(
         `UPDATE concept2cure_submission_center_items
@@ -919,7 +923,7 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
         ]
       );
 
-      if (req.userId && ['ready_for_publish', 'published', 'submitted_to_gateway'].includes(updated.status)) {
+      if (req.userId && ['ready_for_publish', 'published', 'submitted_to_gateway'].includes(updated.status ?? '')) {
         await createCommunicationCenterNotification({
           organizationId,
           projectId,
@@ -937,7 +941,8 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
       // Governed Document Decision Fabric evaluation for dispatch readiness
       let canonicalGovernedState: CanonicalGovernedStateResult | undefined;
       try {
-        canonicalGovernedState = await buildCanonicalGovernedState({
+        const statusVal = updated.status ?? '';
+        canonicalGovernedState = (await buildCanonicalGovernedState({
           context: {
             organizationId: String(organizationId),
             projectId: String(projectId),
@@ -951,8 +956,8 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
           documentState: {
             hasContent: true,
             hasEvidence: !!updated.ectdPath,
-            hasBeenReviewed: ['ready_for_publish', 'published', 'submitted_to_gateway'].includes(updated.status),
-            hasApproval: ['ready_for_publish', 'published', 'submitted_to_gateway'].includes(updated.status),
+            hasBeenReviewed: ['ready_for_publish', 'published', 'submitted_to_gateway'].includes(statusVal),
+            hasApproval: ['ready_for_publish', 'published', 'submitted_to_gateway'].includes(statusVal),
             hasPlacement: !!updated.ectdPath,
             placementValid: !!updated.ectdPath,
             hasProvenance: true,
@@ -960,16 +965,16 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
             criticalContradictionCount: 0,
           },
           publishState: {
-            exportCompleted: ['ready_for_publish', 'published', 'submitted_to_gateway'].includes(updated.status),
+            exportCompleted: ['ready_for_publish', 'published', 'submitted_to_gateway'].includes(statusVal),
             hasGatewayProfile: !!updated.gatewayProfile,
             gatewayProfileValid: !!updated.gatewayProfile,
             hasSequenceNumber: !!updated.sequenceNumber,
             hasAuthorityProfile: !!updated.authority,
             authorityAcceptsFormat: true,
-            allSectionsApproved: ['ready_for_publish', 'published', 'submitted_to_gateway'].includes(updated.status),
+            allSectionsApproved: ['ready_for_publish', 'published', 'submitted_to_gateway'].includes(statusVal),
             staleSectionCount: 0,
           },
-        });
+        })) as unknown as Record<string, unknown>;
       } catch (fabricError) {
         canonicalGovernedState = { error: 'Canonical governed-state evaluation unavailable', degraded: true };
       }

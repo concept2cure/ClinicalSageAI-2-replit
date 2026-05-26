@@ -187,7 +187,7 @@ router.get('/by-module/:module', async (req: Request, res: Response) => {
  */
 router.post('/:id/link', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const linkData = linkTaskSchema.parse({
       ...req.body,
       sourceTaskId: id,

@@ -32,6 +32,8 @@ export interface ContradictionEntry {
   severity: BlockerSeverity;
   explanation: string;
   relatedObjectIds?: string[];
+  /** Legacy alias for `type`; kept for older callers. */
+  contradictionType?: string;
 }
 
 export interface AssumptionEntry {

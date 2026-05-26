@@ -44,7 +44,7 @@ async function generateDoseEscalationData(organizationId: string) {
       investigator: 'Dr. Sarah Johnson',
       site: 'Memorial Cancer Center'
     }
-  }).returning();
+  }).returning()) as any[];
   
   console.log(`✅ Created dose escalation study: ${study.id}`);
   

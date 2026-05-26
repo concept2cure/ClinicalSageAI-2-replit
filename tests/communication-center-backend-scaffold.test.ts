@@ -29,12 +29,30 @@ vi.mock('../server/db', () => ({
   getPool: () => ({ query: (...args: any[]) => mockQuery(...args) }),
   db: {
     insert: () => ({ values: (...args: any[]) => mockDbInsertValues(...args) }),
+    // Routes added since this test was written reach for db.select.from(...);
+    // a chainable stub keeps the heuristic-mode happy path reachable.
+    select: () => ({
+      from: () => ({
+        where: () => ({
+          limit: async () => [],
+          orderBy: () => ({ limit: async () => [] }),
+        }),
+      }),
+    }),
+    update: () => ({ set: () => ({ where: () => ({ returning: async () => [] }) }) }),
   },
 }));
 
-vi.mock('@shared/schema', () => ({
-  projectMemoryEntries: {},
-}));
+vi.mock('@shared/schema', async (importOriginal) => {
+  // The route reaches for several tables from @shared/schema. Spreading the
+  // real exports lets new ones land without a mock update; the explicit
+  // overrides keep test fixtures predictable.
+  const actual = await importOriginal<typeof import('@shared/schema')>();
+  return {
+    ...actual,
+    projectMemoryEntries: {},
+  };
+});
 
 import regulatoryCorrespondenceRoutes from '../server/routes/regulatory-correspondence';
 

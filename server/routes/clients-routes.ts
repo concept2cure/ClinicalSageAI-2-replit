@@ -376,7 +376,7 @@ router.post('/', async (req, res) => {
  */
 router.get('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
 
     log.debug(`Fetching client details for ID: ${id}`);
 
@@ -484,7 +484,7 @@ router.get('/:id', async (req, res) => {
  */
 router.patch('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
     const updates = req.body;
 
     log.debug(`Updating client workspace ${id} with data:`, updates);
@@ -649,7 +649,7 @@ router.patch('/:id', async (req, res) => {
  */
 router.get('/:id/security-settings', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
 
     log.debug(`Fetching security settings for client: ${id}`);
 
@@ -763,7 +763,7 @@ router.get('/:id/security-settings', async (req, res) => {
  */
 router.patch('/:id/security-settings', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
     const settings = req.body;
 
     log.debug(`Updating security settings for client ${id}`, { keys: Object.keys(settings) });
@@ -839,7 +839,7 @@ router.patch('/:id/security-settings', async (req, res) => {
  */
 router.delete('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
 
     log.debug(`Deleting client workspace ${id} with cascade deletion from database`);
 
@@ -938,7 +938,7 @@ router.delete('/:id', async (req, res) => {
  */
 router.get('/:id/settings', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
 
     log.debug(`Fetching workspace settings for client: ${id}`);
 
@@ -1052,7 +1052,7 @@ router.get('/:id/settings', async (req, res) => {
  */
 router.patch('/:id/settings', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
     const settings = req.body;
 
     log.debug('Updating workspace settings for client', id);

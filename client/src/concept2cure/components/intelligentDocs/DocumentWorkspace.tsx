@@ -615,7 +615,7 @@ const DataBridgeCard: React.FC<{
     missing: { icon: XCircle, color: 'text-stone-400', label: 'No Data' },
   };
   
-  const { icon: Icon, color, label } = statusConfig[bridge.status];
+  const { icon: Icon, color, label } = (statusConfig as Record<string, any>)[bridge.status] ?? statusConfig.missing;
   
   const moduleLabels: Record<DataModule, string> = {
     predicate_finder: 'Predicate Devices',

@@ -90,9 +90,9 @@ router.post(
           userId: triggeredBy,
           action: 'evidence_sufficiency.assess',
           resourceType: 'evidence_sufficiency_assessment',
-          resourceId: (result as any)?.id ?? req.params.programId,
+          resourceId: (result as any)?.id ?? String(req.params.programId),
           details: {
-            programId: req.params.programId,
+            programId: String(req.params.programId),
             pathway: body.pathway,
             verdict: (result as any)?.verdict ?? null,
             overallScore: (result as any)?.overallScore ?? null,

@@ -749,7 +749,7 @@ export class LangGraphOrchestrator {
     const checkpointId = uuidv4();
     
     await this.checkpointManager.put(
-      { configurable: { thread_id: context.threadId, checkpoint_id: checkpointId } },
+      { configurable: { thread_id: context.threadId, checkpoint_id: checkpointId } } as any,
       {
         v: 1,
         id: checkpointId,

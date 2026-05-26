@@ -949,7 +949,7 @@ Date: ${data.signature_date}
   private async persistSmartLinks(projectId: number, smartLinks: any): Promise<void> {
     try {
       // Store in fda510kDataMappings table
-      await db!.insert(fda510kDataMappings).values({
+      await (db!.insert(fda510kDataMappings) as any).values({
         organizationId: smartLinks.organizationId,
         mappingCode: `SMART_LINK_${projectId}_${Date.now()}`,
         mappingName: `Smart Links for Project ${projectId}`,

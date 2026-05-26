@@ -1192,6 +1192,14 @@
         ]
       },
       {
+        "basename": "jwtverify",
+        "count": 2,
+        "paths": [
+          "server/utils/jwtVerify.js",
+          "server/utils/jwtVerify.ts"
+        ]
+      },
+      {
         "basename": "kernel",
         "count": 2,
         "paths": [
@@ -1655,7 +1663,7 @@
       },
       {
         "file": "client/src/concept2cure/components/editor/EditorPanel.tsx",
-        "bytes": 190737
+        "bytes": 190774
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -1845,7 +1853,7 @@
       },
       {
         "file": "server/services/ana-ri/orchestrator.ts",
-        "lines": 1746
+        "lines": 1748
       },
       {
         "file": "client/src/services/DocumentIntelligenceService.js",
@@ -1853,7 +1861,7 @@
       },
       {
         "file": "server/routes/fda510k-routes.ts",
-        "lines": 1690
+        "lines": 1691
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
@@ -1885,7 +1893,7 @@
       },
       {
         "file": "server/services/client-intelligence-memory.ts",
-        "lines": 1574
+        "lines": 1578
       },
       {
         "file": ".claude/skills/gstack/test/skill-validation.test.ts",
@@ -1893,7 +1901,7 @@
       },
       {
         "file": "server/routes/cortex-unified.ts",
-        "lines": 1544
+        "lines": 1547
       },
       {
         "file": "server/services/submission-twin-service.ts",

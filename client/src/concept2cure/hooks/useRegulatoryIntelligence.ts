@@ -127,7 +127,7 @@ export interface MAUDESearchParams {
 
 export function useMAUDESearch(params: MAUDESearchParams, enabled = true) {
   return useQuery<MAUDEEvent[]>({
-    queryKey: regulatoryQueryKeys.maude(params),
+    queryKey: regulatoryQueryKeys.maude(params as Record<string, unknown>),
     queryFn: () => regulatoryIntelligenceService.searchMAUDE(params),
     enabled: enabled && Object.values(params).some(v => v !== undefined),
     staleTime: 10 * 60 * 1000, // 10 minutes
@@ -148,7 +148,7 @@ export interface RecallsParams {
 
 export function useRecalls(params: RecallsParams = {}) {
   return useQuery<FDARecall[]>({
-    queryKey: regulatoryQueryKeys.recalls(params),
+    queryKey: regulatoryQueryKeys.recalls(params as Record<string, unknown>),
     queryFn: () => regulatoryIntelligenceService.getRecalls(params),
     staleTime: 15 * 60 * 1000, // 15 minutes
   });
@@ -168,7 +168,7 @@ export interface GuidancesParams {
 
 export function useGuidances(params: GuidancesParams = {}) {
   return useQuery<FDAGuidance[]>({
-    queryKey: regulatoryQueryKeys.guidances(params),
+    queryKey: regulatoryQueryKeys.guidances(params as Record<string, unknown>),
     queryFn: () => regulatoryIntelligenceService.getGuidances(params),
     staleTime: 30 * 60 * 1000, // 30 minutes - guidances don't change often
   });
@@ -188,7 +188,7 @@ export interface CompetitorIntelParams {
 
 export function useCompetitorIntelligence(params: CompetitorIntelParams = {}) {
   return useQuery<CompetitorIntelligence[]>({
-    queryKey: regulatoryQueryKeys.competitors(params),
+    queryKey: regulatoryQueryKeys.competitors(params as Record<string, unknown>),
     queryFn: () => regulatoryIntelligenceService.getCompetitorIntelligence(params),
     staleTime: 15 * 60 * 1000, // 15 minutes
     enabled: (params.competitors?.length ?? 0) > 0 || (params.productCodes?.length ?? 0) > 0,
@@ -209,7 +209,7 @@ export interface PDUFAParams {
 
 export function usePDUFADates(params: PDUFAParams = {}) {
   return useQuery<PDUFADate[]>({
-    queryKey: regulatoryQueryKeys.pdufa(params),
+    queryKey: regulatoryQueryKeys.pdufa(params as Record<string, unknown>),
     queryFn: () => regulatoryIntelligenceService.getPDUFADates(params),
     staleTime: 60 * 60 * 1000, // 1 hour - PDUFA dates don't change often
   });

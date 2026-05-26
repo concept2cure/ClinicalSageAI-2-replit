@@ -32,6 +32,12 @@ export interface ProvenanceSource {
   excerpt?: string;
   /** Confidence score (0-1) */
   confidence?: number;
+  /** Legacy field used by the editor panel — alias for hash/contentHash. */
+  sourceHash?: string;
+  /** Free-form classification (e.g. "literature", "vault_doc") */
+  type?: string;
+  /** Optional version label surfaced in the trace UI */
+  version?: string;
 }
 
 export interface AIProvenance {

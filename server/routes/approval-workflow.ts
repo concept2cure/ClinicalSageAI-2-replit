@@ -48,7 +48,7 @@ function getUser(req: Request): { userId: string; organizationId: string } | nul
     if (decoded.organizationId === undefined) return null;
     return {
       userId: decoded.userId,
-      organizationId: decoded.organizationId,
+      organizationId: decoded.organizationId ?? '',
     };
   } catch {
     return null;
@@ -346,8 +346,7 @@ router.post('/templates', async (req: Request, res: Response) => {
     }
 
     // Create template
-    const [template] = await db
-      .insert(workflowTemplates)
+    const [template] = await (db.insert(workflowTemplates) as any)
       .values({
         name,
         description: description || '',

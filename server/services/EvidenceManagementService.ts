@@ -230,7 +230,7 @@ export class EvidenceManagementService {
    */
   async performGapAnalysis(projectId: string, organizationId: number) {
     // Get all files for the project
-    const files = await db.execute(sql`
+    const files = (await db.execute(sql`
       SELECT
         fda_requirement,
         fda_section,
@@ -241,7 +241,7 @@ export class EvidenceManagementService {
         project_id = ${projectId}
         AND organization_id = ${organizationId}
       GROUP BY fda_requirement, fda_section, regulatory_status
-    `);
+    `)).rows as any[];
 
     // Analyze gaps
     const gaps = [];
@@ -293,10 +293,10 @@ export class EvidenceManagementService {
    * Generate citations for document editor
    */
   async generateCitations(fileIds: string[], format: 'apa' | 'ieee' | 'custom' = 'custom') {
-    const files = await db.execute(sql`
+    const files = ((await db.execute(sql`
       SELECT * FROM device_data_center
       WHERE id = ANY(${fileIds})
-    `);
+    `)).rows as any[]);
 
     const citations = files.rows.map((file: any) => {
       const extracted = file.extracted_data || {};
@@ -371,7 +371,7 @@ export class EvidenceManagementService {
    */
   async autoPopulateForm(formId: string, projectId: string) {
     // Get relevant evidence files
-    const evidence = await db.execute(sql`
+    const evidence = ((await db.execute(sql`
       SELECT
         fda_requirement,
         fda_section,
@@ -383,7 +383,7 @@ export class EvidenceManagementService {
         project_id = ${projectId}
         AND regulatory_status = 'approved'
         AND extracted_data IS NOT NULL
-    `);
+    `)).rows as any[]);
 
     // Map evidence to form fields
     const formData: any = {};
@@ -477,7 +477,7 @@ export class EvidenceManagementService {
    * Export evidence package for submission
    */
   async exportEvidencePackage(projectId: string, organizationId: number) {
-    const evidence = await db.execute(sql`
+    const evidence = ((await db.execute(sql`
       SELECT
         fda_requirement,
         fda_section,
@@ -491,7 +491,7 @@ export class EvidenceManagementService {
         AND organization_id = ${organizationId}
         AND regulatory_status = 'approved'
       ORDER BY fda_requirement, fda_section
-    `);
+    `)).rows as any[]);
 
     // Organize by requirement
     const organized: any = {};

@@ -402,7 +402,8 @@ router.get('/:id', async (req: Request, res: Response) => {
       organizationId?: string;
     };
 
-    const { id } = req.params;
+    const idRaw = req.params.id;
+    const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? '');
 
     const user = await db
       .select()

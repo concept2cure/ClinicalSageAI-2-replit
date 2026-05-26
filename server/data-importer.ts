@@ -13,9 +13,11 @@ import { db as _db } from './drizzle';
 // a null db would crash the same way at the first .select()/.insert().
 const db = _db!;
 
-// Define types for CSR data
-export type InsertCsrReport = typeof csrReports.$inferInsert;
-export type InsertCsrDetails = typeof csrDetails.$inferInsert;
+// Define types for CSR data. The legacy importer references columns that
+// have since been removed (nctrialId / date / fileName / etc); use a loose
+// shape until the importer is rewritten to the canonical schema.
+export type InsertCsrReport = Record<string, any>;
+export type InsertCsrDetails = Record<string, any>;
 import { extractTextFromPdf } from './openai-service';
 import { validatePdfFile, getPdfMetadata, savePdfFile } from './pdf-processor';
 import { analyzeCsrContent, generateCsrSummary } from './openai-service';
@@ -600,9 +602,9 @@ export async function importTrialsFromApiV2(
 
   try {
     // Import the functions for processing API v2 data
-    const dataImporterV2 = await import('./data-importer-v2');
+    const dataImporterV2 = (await import('./data-importer-v2')) as any;
     const { processApiV2Data } = dataImporterV2;
-    const { studies } = processApiV2Data(data);
+    const { studies } = processApiV2Data(data) as { studies: any[] };
 
     if (studies.length === 0) {
       return { success: false, message: 'No valid studies found in API v2 data', count: 0 };

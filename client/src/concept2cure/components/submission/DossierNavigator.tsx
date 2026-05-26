@@ -654,7 +654,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                             name: typeof section === 'string' ? section : section.name,
                             ectdPath: sectionId,
                             type: 'section',
-                            status: (() => {
+                            status: ((): 'drafting' | 'published' | 'review' | 'not_started' | 'qc' | 'not_required' | 'final' | undefined => {
                               // Prefer real artifact data
                               const arts = sectionArtifacts?.[sectionId];
                               if (arts && arts.length > 0) {
@@ -690,7 +690,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                                     name: subName as string,
                                     ectdPath: subId,
                                     type: 'subsection',
-                                    status: (() => {
+                                    status: ((): 'drafting' | 'published' | 'review' | 'not_started' | 'qc' | 'not_required' | 'final' | undefined => {
                                       // Prefer real artifact data
                                       const arts = sectionArtifacts?.[subId];
                                       if (arts && arts.length > 0) {

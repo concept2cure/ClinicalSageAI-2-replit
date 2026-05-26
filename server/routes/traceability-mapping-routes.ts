@@ -53,7 +53,7 @@ router.get('/:qmpId', authMiddleware, requireOrganizationContext, async (req, re
     }
 
     // Convert to number
-    const qmpIdNumber = parseInt(qmpId, 10);
+    const qmpIdNumber = parseInt(String(qmpId), 10);
     if (isNaN(qmpIdNumber)) {
       return res.status(400).json({ error: 'Invalid QMP ID' });
     }
@@ -179,7 +179,7 @@ router.post('/:qmpId', authMiddleware, requireOrganizationContext, async (req, r
     }
 
     // Convert to number
-    const qmpIdNumber = parseInt(qmpId, 10);
+    const qmpIdNumber = parseInt(String(qmpId), 10);
     if (isNaN(qmpIdNumber)) {
       return res.status(400).json({ error: 'Invalid QMP ID' });
     }
@@ -299,8 +299,8 @@ router.get('/:qmpId/item/:itemId', authMiddleware, requireOrganizationContext, a
     }
 
     // Convert to numbers
-    const qmpIdNumber = parseInt(qmpId, 10);
-    const itemIdNumber = parseInt(itemId, 10);
+    const qmpIdNumber = parseInt(String(qmpId), 10);
+    const itemIdNumber = parseInt(String(itemId), 10);
     if (isNaN(qmpIdNumber) || isNaN(itemIdNumber)) {
       return res.status(400).json({ error: 'Invalid ID format' });
     }
@@ -352,7 +352,7 @@ router.get('/:qmpId/item/:itemId', authMiddleware, requireOrganizationContext, a
           item = {
             ...item,
             ctqFactor: factors[0],
-          };
+          } as any;
         }
       }
     }
@@ -388,8 +388,8 @@ router.patch(
       }
 
       // Convert to numbers
-      const qmpIdNumber = parseInt(qmpId, 10);
-      const itemIdNumber = parseInt(itemId, 10);
+      const qmpIdNumber = parseInt(String(qmpId), 10);
+      const itemIdNumber = parseInt(String(itemId), 10);
       if (isNaN(qmpIdNumber) || isNaN(itemIdNumber)) {
         return res.status(400).json({ error: 'Invalid ID format' });
       }
@@ -527,8 +527,8 @@ router.delete(
       }
 
       // Convert to numbers
-      const qmpIdNumber = parseInt(qmpId, 10);
-      const itemIdNumber = parseInt(itemId, 10);
+      const qmpIdNumber = parseInt(String(qmpId), 10);
+      const itemIdNumber = parseInt(String(itemId), 10);
       if (isNaN(qmpIdNumber) || isNaN(itemIdNumber)) {
         return res.status(400).json({ error: 'Invalid ID format' });
       }
@@ -600,7 +600,7 @@ router.get('/:qmpId/stats', authMiddleware, requireOrganizationContext, async (r
     }
 
     // Convert to number
-    const qmpIdNumber = parseInt(qmpId, 10);
+    const qmpIdNumber = parseInt(String(qmpId), 10);
     if (isNaN(qmpIdNumber)) {
       return res.status(400).json({ error: 'Invalid QMP ID' });
     }

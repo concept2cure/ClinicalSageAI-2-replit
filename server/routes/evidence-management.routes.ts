@@ -81,7 +81,7 @@ router.get('/requirements/:projectId', async (req: Request, res: Response) => {
     const organizationId = req.organizationId as number;
 
     // Get all files mapped to requirements
-    const files = await db.execute(sql`
+    const filesResult: any = await db.execute(sql`
       SELECT
         fda_requirement,
         fda_section,
@@ -236,7 +236,7 @@ router.post('/upload', upload.array('files', 5), async (req: Request, res: Respo
         // Index in OpenSearch for governed full-text search (non-blocking)
         indexGovernedDocument({
           id: fileId,
-          organizationId,
+          organizationId: organizationId!,
           projectId: project_id ? Number(project_id) : null,
           docType: 'evidence',
           section: fda_section || null,
@@ -286,7 +286,7 @@ router.get('/gap-analysis/:projectId', async (req: Request, res: Response) => {
     // Router-level middleware (above) guarantees req.organizationId is a valid number.
     const organizationId = req.organizationId as number;
 
-    const analysis = await evidenceService.performGapAnalysis(projectId, organizationId);
+    const analysis = await evidenceService.performGapAnalysis(projectId, organizationId!);
 
     res.json({
       success: true,
@@ -354,7 +354,10 @@ router.get('/stage-evidence/:projectId/:stage', async (req: Request, res: Respon
     const projectId = String(req.params.projectId);
     const stage = String(req.params.stage);
 
-    const evidence = await evidenceService.getStageEvidence(projectId, parseInt(stage));
+    const evidenceResult: any = await evidenceService.getStageEvidence(projectId, parseInt(stage));
+    const evidence: any[] = Array.isArray(evidenceResult)
+      ? evidenceResult
+      : (evidenceResult?.rows ?? []);
 
     res.json({
       success: true,
@@ -469,7 +472,7 @@ router.get('/export/:projectId', async (req: Request, res: Response) => {
     // Router-level middleware (above) guarantees req.organizationId is a valid number.
     const organizationId = req.organizationId as number;
 
-    const evidencePackage = await evidenceService.exportEvidencePackage(projectId, organizationId);
+    const evidencePackage = await evidenceService.exportEvidencePackage(projectId, organizationId!);
 
     res.json({
       success: true,
@@ -491,7 +494,7 @@ router.get('/analytics/:projectId', async (req: Request, res: Response) => {
     // Router-level middleware (above) guarantees req.organizationId is a valid number.
     const organizationId = req.organizationId as number;
 
-    const analytics = await db.execute(sql`
+    const analyticsResult: any = await db.execute(sql`
       SELECT
         COUNT(*) as total_files,
         COUNT(CASE WHEN regulatory_status = 'approved' THEN 1 END) as approved_files,
@@ -504,9 +507,12 @@ router.get('/analytics/:projectId', async (req: Request, res: Response) => {
         project_id = ${projectId}
         AND organization_id = ${organizationId}
     `);
+    const analytics: any[] = Array.isArray(analyticsResult)
+      ? analyticsResult
+      : (analyticsResult?.rows ?? []);
 
     // Get gap analysis
-    const gapAnalysis = await evidenceService.performGapAnalysis(projectId, organizationId);
+    const gapAnalysis = await evidenceService.performGapAnalysis(projectId, organizationId!);
 
     // Raw SQL aggregate row is untyped.
     const analyticsRow = (analytics.rows[0] as any) || {};

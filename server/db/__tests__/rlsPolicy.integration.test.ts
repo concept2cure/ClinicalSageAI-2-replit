@@ -44,7 +44,15 @@ vi.unmock('pg');
 import { Pool, type PoolClient } from 'pg';
 
 const databaseUrl = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
-const skip = !databaseUrl;
+// tests/setup.ts installs a sentinel test-fixture URL so the canonical
+// runtime doesn't refuse to boot in unit tests. That URL doesn't point at
+// a real Postgres — only the Integration Tests CI job stands up a real
+// pgvector container at this address. Detect the sentinel and skip the
+// integration suite when we're not in that job.
+const isSentinelTestUrl =
+  databaseUrl === 'postgresql://test:test@localhost:5432/test' &&
+  !process.env.RUN_INTEGRATION_TESTS;
+const skip = !databaseUrl || isSentinelTestUrl;
 const describeIfDb = skip ? describe.skip : describe;
 
 if (skip) {

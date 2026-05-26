@@ -417,7 +417,7 @@ router.post('/confidence/predictions', async (req: Request, res: Response) => {
 router.post('/confidence/predictions/:id/resolve', async (req: Request, res: Response) => {
   try {
     const entry = await confidenceCalibrationService.resolvePrediction({
-      id: req.params.id,
+      id: String(req.params.id),
       organizationId: getOrgId(req),
       ...req.body,
     });

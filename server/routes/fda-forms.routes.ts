@@ -156,7 +156,7 @@ router.post('/project/:projectId/generate/:formType', async (req: Request, res: 
       documentType: formType,
       documentName: generatedForm.name,
       content: generatedForm.htmlContent,
-      formData: generatedForm.formData,
+      formData: { ...(generatedForm.formData as any), completeness: generatedForm.completeness },
       version: 1,
       status: 'draft',
       complianceScore: generatedForm.completeness,
@@ -273,7 +273,7 @@ router.post('/project/:projectId/generate-smart/:formId', async (req: Request, r
         documentType: formId,
         documentName: generatedForm.name,
         content: generatedForm.htmlContent,
-        formData: generatedForm.formData,
+        formData: { ...(generatedForm.formData as any), completeness: generatedForm.completeness },
         version: 1,
         status: 'draft',
         complianceScore: generatedForm.completeness,
@@ -360,7 +360,7 @@ router.post('/project/:projectId/auto-generate', async (req: Request, res: Respo
     
     // Get all required forms for this submission type
     const formsToGenerate = getRequiredForms(submissionType as '510k' | 'PMA' | 'DeNovo');
-    const results = [];
+    const results: any[] = [];
 
     for (const formId of formsToGenerate) {
       try {
@@ -375,7 +375,7 @@ router.post('/project/:projectId/auto-generate', async (req: Request, res: Respo
             documentType: formId,
             documentName: generatedForm.name,
             content: generatedForm.htmlContent,
-            formData: generatedForm.formData,
+            formData: { ...(generatedForm.formData as any), completeness: generatedForm.completeness },
             version: 1,
             status: 'draft',
             complianceScore: generatedForm.completeness,

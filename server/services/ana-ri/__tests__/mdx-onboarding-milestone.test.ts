@@ -7,9 +7,13 @@ import { describe, it, expect, vi } from 'vitest';
 import { getMdxOnboardingMilestone } from '../mdx-onboarding-milestone';
 
 function clientWith(rowsByQuery: Map<string, any[]>) {
+  // Iterate in REVERSE insertion order so more-specific keys (added later,
+  // e.g. 'predicate_devices') win over the generic 'count(*) AS c FROM
+  // regulatory_programs' key that ALSO appears in the predicate-count query.
   return {
     query: vi.fn(async (sql: string) => {
-      for (const [key, rows] of rowsByQuery) {
+      const entries = Array.from(rowsByQuery.entries()).reverse();
+      for (const [key, rows] of entries) {
         if (sql.includes(key)) return { rows };
       }
       return { rows: [] };

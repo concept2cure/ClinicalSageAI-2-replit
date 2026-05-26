@@ -86,7 +86,7 @@ export class AcademicKnowledgeService {
             url: filePath,
             category: 'clinical_trials',
             summary: `Imported from ${fileName}`,
-            publishedDate: null, // Would be extracted in a full implementation
+            publishedDate: undefined,
           });
 
           result.processed++;
@@ -125,7 +125,7 @@ export class AcademicKnowledgeService {
         url: document.url || null,
         category: document.category,
         summary: document.summary || null,
-        publishedDate: document.publishedDate ? new Date(document.publishedDate) : null,
+        publishedDate: document.publishedDate ? new Date(document.publishedDate) : undefined,
       });
 
       // 2. In a full implementation, we would:

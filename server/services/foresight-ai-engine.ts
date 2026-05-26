@@ -777,7 +777,7 @@ export class ForesightAIEngine {
 
     // Store individual sections
     for (const section of sections) {
-      await db!.insert(indNarrativeSections).values({
+      await (db!.insert(indNarrativeSections) as any).values({
         narrativeId: narrative.id,
         sectionNumber: String(section.number),
         sectionTitle: section.title,
@@ -962,7 +962,7 @@ export class ForesightAIEngine {
 
     // Save sections
     for (const section of sections) {
-      await db!.insert(indNarrativeSections).values({
+      await (db!.insert(indNarrativeSections) as any).values({
         narrativeId: narrative.id,
         sectionNumber: String(section.number),
         sectionTitle: section.title,
@@ -1164,7 +1164,7 @@ export class ForesightAIEngine {
     const regulatoryDoses = this.applyPKPDRegulatoryFactors(safetyMetrics);
     
     // Store analysis in database
-    const [analysis] = await db!.insert(crossSpeciesPkpd).values({
+    const [analysis] = await (db!.insert(crossSpeciesPkpd) as any).values({
       analysisId: `PKPD-${Date.now()}`,
       studyId: compoundId,
       drugName: compoundName,
@@ -1194,7 +1194,7 @@ export class ForesightAIEngine {
 
     // Store individual species comparisons
     for (const species of speciesData) {
-      await db!.insert(speciesComparisons).values({
+      await (db!.insert(speciesComparisons) as any).values({
         analysisId: analysis.id,
         species: species.species,
         bodyWeight: species.bodyWeight,
@@ -1598,7 +1598,7 @@ export class ForesightAIEngine {
     };
 
     // Store prediction in database
-    const [prediction] = await db!.insert(foresightPredictions).values({
+    const [prediction] = await (db!.insert(foresightPredictions) as any).values({
       studyId,
       phase,
       predictionType: 'success_probability',
@@ -1856,11 +1856,11 @@ export class ForesightAIEngine {
     
     // Top 3 positive drivers
     for (let i = 0; i < Math.min(3, entries.length); i++) {
-      if (entries[i][1] > 0.6) {
+      if ((entries[i][1] as number) > 0.6) {
         drivers.push({
           factor: entries[i][0],
           impact: 'positive',
-          score: entries[i][1],
+          score: entries[i][1] as number,
           description: `Strong ${entries[i][0]} profile`
         });
       }
@@ -1869,7 +1869,7 @@ export class ForesightAIEngine {
     // Bottom 2 negative drivers
     const reversed = [...entries].reverse();
     for (let i = 0; i < Math.min(2, reversed.length); i++) {
-      if (reversed[i][1] < 0.4) {
+      if ((reversed[i][1] as number) < 0.4) {
         drivers.push({
           factor: reversed[i][0],
           impact: 'negative',

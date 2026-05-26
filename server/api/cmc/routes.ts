@@ -91,7 +91,7 @@ router.post('/analytical-methods', async (req, res) => {
 
 router.put('/analytical-methods/:id', async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = insertAnalyticalMethodSchema.partial().parse(req.body);
     // Strip organizationId so the tenant scope cannot be overridden by the request body.
@@ -100,7 +100,7 @@ router.put('/analytical-methods/:id', async (req, res) => {
       .update(analyticalMethods)
       .set({ ...safeData, updatedAt: new Date() })
       .where(and(eq(analyticalMethods.id, id), eq(analyticalMethods.organizationId, orgId)))
-      .returning();
+      .returning()) as any[];
     // Write-through: upsert canonical source object for Module 3
     const projectId = (req.body as { projectId?: string }).projectId;
     if (method && projectId) {

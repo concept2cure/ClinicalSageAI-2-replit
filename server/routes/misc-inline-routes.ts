@@ -464,7 +464,7 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
         // DB query failed — fall through to in-memory
       }
 
-      const memTask = (global as any).draftingTasks?.[task_id];
+      const memTask = (global as any).draftingTasks?.[task_id as any];
       if (!memTask) {
         return res.status(404).json({ error: 'Task not found' });
       }
