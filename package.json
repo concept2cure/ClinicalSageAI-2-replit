@@ -75,6 +75,8 @@
     "ci:route-ownership-matrix": "node scripts/ci/check-route-ownership-matrix.mjs",
     "ci:route-ownership-matrix:check": "node scripts/ci/check-route-ownership-matrix.mjs --check",
     "db:push": "drizzle-kit push",
+    "db:local": "bash scripts/setup-local-db.sh",
+    "db:local:status": "bash scripts/setup-local-db.sh --status",
     "db:seed": "node scripts/seed-ga-demo.mjs",
     "db:seed:admin": "node scripts/seed-admin.mjs",
     "db:seed:mdx-beta": "node scripts/seed-mdx-beta.mjs",
