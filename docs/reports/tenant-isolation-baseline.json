@@ -1,17 +1,6 @@
 {
-  "generatedAt": "2026-05-26T16:58:54.360Z",
+  "generatedAt": "2026-05-26T17:20:44.359Z",
   "fingerprints": [
-    "server/api/vault/routes.ts#2ce45e947c41:document_chunks",
-    "server/api/vault/routes.ts#37f70c50a823:document_chunks",
-    "server/api/vault/routes.ts#510b772ba514:documents",
-    "server/api/vault/routes.ts#671f6731e682:documents",
-    "server/api/vault/routes.ts#72366a5412e3:documents",
-    "server/api/vault/routes.ts#7da81f6131cf:documents",
-    "server/api/vault/routes.ts#9db3a3f40a15:document_chunks,documents",
-    "server/api/vault/routes.ts#af125c6772da:documents",
-    "server/api/vault/routes.ts#b1907c0702b0:documents",
-    "server/api/vault/routes.ts#b5045184f292:document_chunks",
-    "server/api/vault/routes.ts#d0d2d63a79e5:documents",
     "server/db/bootstrap/seed-default-org.ts#a183c3cd998e:users",
     "server/db/bootstrap/seed-default-org.ts#c7b7e41bb3f3:users",
     "server/models/ind_sequence.js#7fb39c315529:documents",
