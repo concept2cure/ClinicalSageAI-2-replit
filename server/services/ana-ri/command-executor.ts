@@ -18,7 +18,21 @@ import { getPool } from '../../db';
 import { logGeneration, validateArtifactQuality } from './enforcement.js';
 import { executeGovernedAnaOperation } from '../governed-ana-execution.js';
 
-const pool = getPool();
+// Lazy pool access. Acquiring the pool at module load (`getPool()` at
+// top level) throws "Database connection not available" when this module
+// is imported in a context without a DB — which breaks any test whose
+// import graph reaches command-executor (e.g. cortex-unified route smoke
+// tests) before a request is ever made. This proxy defers getPool() to
+// first property access, so import is side-effect-free and the pool is
+// resolved on first real use. Runtime behavior is identical (same pool
+// singleton); only the acquisition timing changes.
+const pool = new Proxy({} as ReturnType<typeof getPool>, {
+  get(_target, prop) {
+    const real = getPool() as unknown as Record<string | symbol, unknown>;
+    const value = real[prop];
+    return typeof value === 'function' ? (value as (...a: unknown[]) => unknown).bind(real) : value;
+  },
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Backend service imports — wiring AnA to the full platform
