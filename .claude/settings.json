@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/setup-local-db.sh >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ]
+  }
+}
