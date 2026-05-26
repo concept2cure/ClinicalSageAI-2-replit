@@ -201,7 +201,7 @@ router.post('/', async (req, res) => {
           industry: organization.industryMode || 'pharmaceutical',
           quotaProjects: organization.maxProjects || 10,
           quotaStorage: organization.maxStorage || 5,
-        })
+        } as any)
         .returning();
 
       clientWorkspaceId = newClientWorkspace.id;

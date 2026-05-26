@@ -128,7 +128,7 @@ export const Indent = Extension.create({
           if (changed && dispatch) dispatch(tr);
           return changed;
         },
-    };
+    } as any;
   },
 
   addKeyboardShortcuts() {

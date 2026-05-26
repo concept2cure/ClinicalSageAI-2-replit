@@ -270,7 +270,8 @@ describe('propagateRiskVocabChange', () => {
       { id: 'pkt-old', status: 'RENDERED', organizationId: ORG, hash: 'vocab-OLD' },
     ]);
     const result = await propagateRiskVocabChange(ORG, 'vocab-NEW');
-    expect(result.markedStaleCount).toBe(1);
     expect(result.affectedPacketIds).toEqual(['pkt-old']);
+    expect(result.markedStaleCount).toBe(1);
+    expect(result.reason).toBe('risk_vocab_updated');
   });
 });

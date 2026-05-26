@@ -475,7 +475,7 @@ class LiteratureAggregatorService {
         const authors = authorList.map((author: any) => `${author.name}`);
 
         // Parse publication date
-        let publicationDate = null;
+        let publicationDate: string | undefined = undefined;
         if (article.pubdate) {
           const dateComponents = article.pubdate.split(' ');
           if (dateComponents.length >= 2) {

@@ -193,7 +193,7 @@ router.post('/score', async (req, res) => {
 
     const [savedPrediction] = await db
       .insert(foresightPredictions)
-      .values(predictionData)
+      .values(predictionData as any)
       .returning();
 
     res.json({
@@ -524,7 +524,7 @@ router.post('/feedback', async (req, res) => {
         data.organizationId == null ? null : Number(data.organizationId),
     };
 
-    const [savedFeedback] = await db.insert(clinicalFeedback).values(feedbackData).returning();
+    const [savedFeedback] = await db.insert(clinicalFeedback).values(feedbackData as any).returning();
 
     // Update patterns based on feedback
     if (data.actualOutcome === 'success' || data.actualOutcome === 'failure') {
@@ -589,7 +589,7 @@ router.get('/knowledge-graph', async (req, res) => {
           id: `bio_${rel.biomarkerId}`,
           label: rel.biomarkerName,
           type: 'biomarker',
-          group: rel.biomarkerType,
+          group: rel.biomarkerType ?? 'unknown',
         });
       }
 
@@ -599,7 +599,7 @@ router.get('/knowledge-graph', async (req, res) => {
           id: `end_${rel.endpointId}`,
           label: rel.endpointName,
           type: 'endpoint',
-          group: rel.endpointType,
+          group: rel.endpointType ?? 'unknown',
         });
       }
 

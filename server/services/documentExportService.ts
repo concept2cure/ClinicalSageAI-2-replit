@@ -155,7 +155,7 @@ export async function generatePDF(options: PDFExportOptions): Promise<PDFExportR
     const margins = options.margins || { top: 72, right: 72, bottom: 72, left: 72 };
     const fontSize = options.fontSize || 11;
 
-    const doc = new PDFDocument({
+    const doc: any = new (PDFDocument as any)({
       size: pageSize,
       margins,
       bufferPages: true,
@@ -164,10 +164,8 @@ export async function generatePDF(options: PDFExportOptions): Promise<PDFExportR
         Author: 'Concept2Cure Platform',
         Subject: `${projectInfo?.submissionType || 'Regulatory'} Submission Document`,
         Keywords: 'regulatory, submission, eCTD, FDA',
-        Creator: 'Concept2Cure Document Export Service',
-        Producer: 'PDFKit + Concept2Cure v1.0',
         CreationDate: new Date(),
-      },
+      } as any,
     });
 
     // Collect PDF into buffer

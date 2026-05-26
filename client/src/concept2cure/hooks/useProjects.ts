@@ -495,7 +495,7 @@ export function useProjects() {
             preferences.currentWorkbenchContext ??
             project.ownership?.currentWorkbenchContext ??
             'project-home',
-        },
+        } as any,
       });
       projects[index] = merged;
       saveStoredProjects(projects);

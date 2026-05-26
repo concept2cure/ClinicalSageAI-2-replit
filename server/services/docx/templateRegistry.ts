@@ -26,7 +26,9 @@ export interface TemplateSectionBlueprint {
   /** CTD/regulatory section code */
   sectionCode: string;
   /** Instructional text shown to LLM — what to write here */
-  instruction: string;
+  instruction?: string;
+  /** Instructional text alias used by older blueprints */
+  instructionalText?: string;
   /** Whether this section is required */
   required: boolean;
   /** Default boilerplate if LLM provides nothing */
@@ -52,6 +54,8 @@ export interface DocumentTemplate {
   requiredMetadata: string[];
   /** Section blueprints */
   sections: TemplateSectionBlueprint[];
+  /** Template version */
+  version?: string;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

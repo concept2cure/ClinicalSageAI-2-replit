@@ -97,7 +97,7 @@ export class ProtocolKnowledgeService {
         .limit(15);
 
       // Process results into evidence items
-      const evidence = results.map(result => {
+      const evidence = results.map((result: any) => {
         const report = result.csr_reports;
         const details = result.csr_details;
 
@@ -122,7 +122,7 @@ export class ProtocolKnowledgeService {
       });
 
       // Sort by relevance
-      const sortedEvidence = evidence.sort((a, b) => b.relevanceScore - a.relevanceScore);
+      const sortedEvidence = evidence.sort((a: any, b: any) => b.relevanceScore - a.relevanceScore);
 
       // Cache the results
       this.evidenceCache.set(cacheKey, sortedEvidence);

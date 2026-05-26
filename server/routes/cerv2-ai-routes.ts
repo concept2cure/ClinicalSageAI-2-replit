@@ -534,7 +534,7 @@ router.get(
   requireEditorAccess,
   (req: Request, res: Response) => {
     try {
-      const docType = req.params.docType;
+      const docType = String(req.params.docType);
       if (!validDocTypes.includes(docType as any)) {
         return res.status(400).json({
           error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,

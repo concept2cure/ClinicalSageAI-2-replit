@@ -91,7 +91,7 @@ router.post('/analytical-methods', async (req, res) => {
 
 router.put('/analytical-methods/:id', async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = insertAnalyticalMethodSchema.partial().parse(req.body);
     // Strip organizationId so the tenant scope cannot be overridden by the request body.

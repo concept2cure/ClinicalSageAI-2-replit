@@ -31,11 +31,28 @@ export enum AgentStatus {
 
 export enum ThreadStatus {
   ACTIVE = 'active',
+  RUNNING = 'running',
   PAUSED = 'paused',
   COMPLETED = 'completed',
   FAILED = 'failed',
   AWAITING_HUMAN = 'awaiting_human'
 }
+
+export enum CheckpointStatus {
+  PENDING = 'pending',
+  COMMITTED = 'committed',
+  ROLLED_BACK = 'rolled_back',
+  ARCHIVED = 'archived'
+}
+
+export enum BreakpointStatus {
+  PENDING = 'pending',
+  TRIGGERED = 'triggered',
+  RESOLVED = 'resolved',
+  SKIPPED = 'skipped'
+}
+
+export type Thread = AgentThread;
 
 export enum BreakpointType {
   MANDATORY_REVIEW = 'mandatory_review',

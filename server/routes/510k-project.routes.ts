@@ -75,8 +75,8 @@ router.post('/create', asyncHandler(async (req: Request, res: Response) => {
   }
 
   // 1. First create the base project in projects table
-  const [baseProject] = await db
-      .insert(projects)
+  const [baseProject] = (await db
+      .insert(projects as any)
       .values({
         organizationId: organizationId,
         clientWorkspaceId: 1, // Default to first workspace
@@ -88,11 +88,11 @@ router.post('/create', asyncHandler(async (req: Request, res: Response) => {
         startDate: new Date(),
         targetEndDate: targetSubmissionDate ? new Date(targetSubmissionDate) : null,
       })
-      .returning();
+      .returning()) as any[];
 
     // 2. Create the FDA 510k specific project details
-    const [project] = await db
-      .insert(fda510kProjects)
+    const [project] = (await db
+      .insert(fda510kProjects as any)
       .values({
         organizationId: organizationId,
         projectId: baseProject.id,
@@ -130,7 +130,7 @@ router.post('/create', asyncHandler(async (req: Request, res: Response) => {
           createdViaWizard: true,
         },
       })
-      .returning();
+      .returning()) as any[];
 
     // 3. Create initial data forms using SQL
     await db.execute(sql`
@@ -213,7 +213,7 @@ router.post('/create', asyncHandler(async (req: Request, res: Response) => {
     }
 
     // 5. Create initial stage progress entry
-    await db.insert(fda510kStageProgress).values({
+    await (db.insert(fda510kStageProgress) as any).values({
       projectId: project.id,
       stageName: 'setup',
       sectionName: 'project_initialization',
@@ -244,7 +244,7 @@ router.post('/create', asyncHandler(async (req: Request, res: Response) => {
         const template = templateResult.rows[0] as any;
 
         // Apply template settings
-        await db.insert(fda510kStageProgress).values({
+        await (db.insert(fda510kStageProgress) as any).values({
           projectId: project.id,
           stageName: 'setup',
           sectionName: 'template_application',

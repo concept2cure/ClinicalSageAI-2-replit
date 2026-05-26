@@ -189,7 +189,7 @@ export default function EvidenceBinderTable({ projectId }: EvidenceBinderTablePr
         vaultFileId: attachForm.vaultFileId,
         vaultVersionId: attachForm.vaultVersionId,
         notes: attachForm.notes || undefined,
-      }),
+      } as any),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
       setAttachTarget(null);

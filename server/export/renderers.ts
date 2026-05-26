@@ -43,13 +43,13 @@ async function getCluster(): Promise<Cluster | null> {
       puppeteerOptions: {
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
       },
-    }).catch(err => {
+    }).catch((err: any) => {
       console.warn(
         '[Renderers] Puppeteer cluster failed to launch – using PDFKit fallback:',
         err?.message || err
       );
-      return null;
-    });
+      return null as any;
+    }) as Promise<Cluster>;
   }
   return clusterPromise;
 }

@@ -468,7 +468,7 @@ router.post(
     resourceType: 'electronic_signature',
   }),
   async (req: Request, res: Response) => {
-    const { signatureId } = req.params;
+    const { signatureId } = req.params as { signatureId: string };
     const { revokedBy, reason } = req.body;
 
     if (!revokedBy || !reason) {

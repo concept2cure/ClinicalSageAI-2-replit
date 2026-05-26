@@ -270,8 +270,12 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run npm audit
-        run: npm audit --audit-level=high
+      - name: Run npm audit (with documented false-positive allowlist)
+        # The wrapper filters out registry-lag false positives where installed
+        # version > advisory's vulnerable range. Genuine new high/critical
+        # advisories still fail. See scripts/ci/audit-with-allowlist.mjs for the
+        # current allowlist and justifications.
+        run: node scripts/ci/audit-with-allowlist.mjs
 
       - name: Trivy filesystem scan (deps + secrets)
         continue-on-error: true

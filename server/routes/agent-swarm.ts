@@ -929,7 +929,7 @@ router.get('/swarms', (_req: Request, res: Response) => {
  * Approve a HITL breakpoint to continue swarm execution
  */
 router.post('/swarms/:swarmId/hitl/:taskId/approve', (req: Request, res: Response) => {
-  const { swarmId, taskId } = req.params;
+  const { swarmId, taskId } = req.params as { swarmId: string; taskId: string };
   const { approvedBy, comments } = req.body;
   if (!approvedBy) return res.status(400).json({ error: 'approvedBy required' });
 

@@ -45,7 +45,7 @@ async function generateDoseEscalationData(organizationId: string) {
       site: 'Memorial Cancer Center'
     }
   }).returning();
-  
+
   console.log(`✅ Created dose escalation study: ${study.id}`);
   
   // Create dose levels - using correct column names for the database

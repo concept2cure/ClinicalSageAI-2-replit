@@ -253,7 +253,7 @@ export interface UploadedDocument {
   name: string;
   type: string;
   size: number;
-  uploadedAt: Date;
+  uploadedAt: Date | string;
   extractedText?: string;
   embedding?: number[];
   /** Whether this document is active in the AI context window (default: true) */

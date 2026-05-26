@@ -32,18 +32,34 @@ vi.mock('drizzle-orm', async (importOriginal) => {
 // Mock DB chain
 // ---------------------------------------------------------------------------
 
-const mockInsertValues = vi.fn().mockResolvedValue(undefined);
-const mockInsert = vi.fn(() => ({ values: mockInsertValues }));
-const mockLimit = vi.fn();
-const mockOrderBy = vi.fn(() => ({ limit: mockLimit }));
-const mockWhere = vi.fn(() => ({ orderBy: mockOrderBy }));
-const mockFrom = vi.fn(() => ({ where: mockWhere, orderBy: mockOrderBy }));
-const mockSelect = vi.fn(() => ({ from: mockFrom }));
-
-const mockDb = {
-  insert: mockInsert,
-  select: mockSelect,
-};
+const {
+  mockInsertValues,
+  mockInsert,
+  mockLimit,
+  mockOrderBy,
+  mockWhere,
+  mockFrom,
+  mockSelect,
+  mockDb,
+} = vi.hoisted(() => {
+  const mockInsertValues = vi.fn().mockResolvedValue(undefined);
+  const mockInsert = vi.fn(() => ({ values: mockInsertValues }));
+  const mockLimit = vi.fn();
+  const mockOrderBy = vi.fn(() => ({ limit: mockLimit }));
+  const mockWhere = vi.fn(() => ({ orderBy: mockOrderBy }));
+  const mockFrom = vi.fn(() => ({ where: mockWhere, orderBy: mockOrderBy }));
+  const mockSelect = vi.fn(() => ({ from: mockFrom }));
+  return {
+    mockInsertValues,
+    mockInsert,
+    mockLimit,
+    mockOrderBy,
+    mockWhere,
+    mockFrom,
+    mockSelect,
+    mockDb: { insert: mockInsert, select: mockSelect },
+  };
+});
 
 vi.mock('../../server/db', () => ({
   db: mockDb,

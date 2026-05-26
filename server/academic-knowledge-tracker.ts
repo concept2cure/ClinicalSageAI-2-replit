@@ -70,7 +70,7 @@ export class AcademicKnowledgeTracker {
         })
         .returning();
 
-      return newResource;
+      return newResource as unknown as AcademicResource;
     } catch (error) {
       console.error('Failed to add academic resource:', error);
       throw new Error('Failed to add academic resource to the knowledge base');
@@ -94,7 +94,7 @@ export class AcademicKnowledgeTracker {
         })
         .returning();
 
-      return newEmbedding;
+      return newEmbedding as unknown as AcademicEmbedding;
     } catch (error) {
       console.error('Failed to store embedding:', error);
       throw new Error('Failed to store academic resource embedding');
@@ -368,7 +368,9 @@ export class AcademicKnowledgeTracker {
         totalResources,
         resourcesByType,
         resourcesByCategory,
-        mostAccessedResources,
+        mostAccessedResources: mostAccessedResources as Array<
+          Pick<AcademicResource, 'id' | 'title' | 'accessCount'>
+        >,
         recentlyAddedResources,
       };
     } catch (error) {

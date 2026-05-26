@@ -22,6 +22,7 @@ import { registerExportGovernanceQuick } from '../services/compute/exportGoverna
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
+// @ts-ignore — JS module without bundled types
 import { extractPdfWithPython } from '../services/unifiedDocumentIngestion.js';
 
 const router = Router();
@@ -585,7 +586,7 @@ router.post('/:projectId/section', async (req: Request, res: Response) => {
  */
 router.get('/:projectId/download/:filename', async (req: Request, res: Response) => {
   try {
-    const { filename } = req.params;
+    const { filename } = req.params as { filename: string };
 
     // Sanitize filename to prevent path traversal
     const safeName = path.basename(String(filename));
@@ -721,7 +722,8 @@ router.post('/:projectId/import-content', upload.single('file'), async (req: Req
  */
 router.get('/conversion/health', async (_req: Request, res: Response) => {
   try {
-    const { isPdfConversionAvailable } = await import('../services/pdfConversionService.js');
+    const mod = (await import('../services/pdfConversionService.js' as any)) as any;
+    const isPdfConversionAvailable = mod.isPdfConversionAvailable;
     const available = await isPdfConversionAvailable();
     res.json({
       service: 'docx-to-pdf',
@@ -763,7 +765,8 @@ router.post('/convert/docx-to-pdf', docxUpload.single('file'), async (req: Reque
       return res.status(400).json({ error: 'No DOCX file provided. Use field name "file".' });
     }
 
-    const { convertDocxToPdf } = await import('../services/pdfConversionService.js');
+    const mod = (await import('../services/pdfConversionService.js' as any)) as any;
+    const convertDocxToPdf = mod.convertDocxToPdf;
     const pdfBuffer = await convertDocxToPdf(req.file.buffer);
 
     const baseName = path.basename(req.file.originalname, '.docx');

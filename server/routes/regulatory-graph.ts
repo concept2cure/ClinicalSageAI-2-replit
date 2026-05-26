@@ -519,6 +519,9 @@ router.post(
     const userId =
       typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : undefined;
     try {
+      const programIdStr = Array.isArray(req.params.programId)
+        ? req.params.programId[0]
+        : (req.params.programId ?? '');
       const result = await propagateRegulatoryChange({
         organizationId: orgId,
         programId: String(req.params.programId),

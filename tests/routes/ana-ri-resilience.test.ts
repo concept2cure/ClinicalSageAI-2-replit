@@ -62,6 +62,7 @@ vi.mock('../../server/services/ana-ri/deficiency-taxonomy.js', () => ({
 vi.mock('../../server/services/ana-ri/document-actions.js', () => ({
   getAllActions: () => [],
   getActionsForLens: () => [],
+  buildDocumentActionContext: () => '',
 }));
 
 vi.mock('../../server/services/ana-ri/evaluation.js', () => ({
@@ -71,6 +72,7 @@ vi.mock('../../server/services/ana-ri/evaluation.js', () => ({
 
 vi.mock('../../server/services/ana-ri/role-adapter.js', () => ({
   inferRole: () => 'ra_lead',
+  buildRoleAdaptiveContext: () => '',
 }));
 
 vi.mock('../../server/services/ana-ri/enforcement.js', () => ({
@@ -170,6 +172,7 @@ vi.mock('../../server/services/ana-guidance-executor.js', () => ({
 vi.mock('../../server/services/ana-ri/command-executor.js', () => ({
   COMMAND_REGISTRY: [],
   processCommandsInResponse: vi.fn(async () => ({ executedCommands: [] })),
+  buildCommandContextForPrompt: () => '',
 }));
 
 import router from '../../server/routes/ana-ri';

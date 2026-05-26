@@ -398,7 +398,7 @@ router.post('/workflow/save', async (req, res) => {
         and(
           eq(schema.workflowProgress.entityType, entityType),
           eq(schema.workflowProgress.entityId, entityId),
-          eq(schema.workflowProgress.userId, userId)
+          eq(schema.workflowProgress.userId, userId ?? 0)
         )
       )
       .limit(1);
@@ -440,7 +440,7 @@ router.post('/workflow/save', async (req, res) => {
           lastActivityAt: new Date(),
           resumeData: currentState,
           status: 'active',
-          userId
+          userId: userId ?? 0
         });
       
       res.json({ success: true, workflowId });

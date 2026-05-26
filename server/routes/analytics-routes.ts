@@ -443,10 +443,10 @@ interface ProtocolAnalysisResult {
 // Define type for similar CSR
 interface SimilarCSR {
   id: string;
-  title: string;
-  sponsor: string;
-  indication: string;
-  phase: string;
+  title: string | null;
+  sponsor: string | null;
+  indication: string | null;
+  phase: string | null;
   sample_size: number;
   primary_endpoint: string;
   duration_weeks: number;

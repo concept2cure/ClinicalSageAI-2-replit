@@ -288,7 +288,7 @@ router.post('/stream', async (req: Request, res: Response) => {
     }
 
     // Use rewritten message if slash command or @app mention was detected
-    const effectiveMessage = enrichment.rewrittenMessage || message;
+    const effectiveMessage = (enrichment as any).rewrittenMessage || message;
 
     // Split into stable prefix (cached) + volatile suffix (per-turn) — see /chat
     // handler for rationale. The Claude gateway marks the stable block with
@@ -879,7 +879,7 @@ router.post('/stream', async (req: Request, res: Response) => {
           executedActions: executedActions.length > 0 ? executedActions : undefined,
           executedCommands: executedCommands.length > 0 ? executedCommands : undefined,
           enrichmentSources: enrichment.sources.length > 0 ? enrichment.sources : undefined,
-          enrichmentMeta: enrichment.enrichmentMeta || undefined,
+          enrichmentMeta: (enrichment as any).enrichmentMeta || undefined,
           evidence: streamEvidenceVerdict || undefined,
           evidenceDiscipline: streamEvidenceCheck
             ? {

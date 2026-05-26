@@ -237,7 +237,7 @@ router.post('/chat', async (req: Request, res: Response) => {
               rawMarkdown: normalized.payload?.markdown,
               rawHtml: normalized.payload?.html,
               metadata: {
-                route: route.route,
+                route: route!.route,
                 source: 'ana-ri-chat',
                 taxonomy: 'external_evidence_mode',
                 domain: normalized.domain,
@@ -446,7 +446,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     }
 
     // Add current message (use rewritten version if slash command or @app mention detected)
-    const chatEffectiveMessage = chatEnrichment.rewrittenMessage || message;
+    const chatEffectiveMessage = (chatEnrichment as any).rewrittenMessage || message;
     messages.push({ role: 'user', content: chatEffectiveMessage });
 
     // Call AI Gateway
@@ -735,7 +735,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       reliability: chatReliability,
       queueMeta,
       enrichmentSources: chatEnrichment.sources?.length > 0 ? chatEnrichment.sources : undefined,
-      enrichmentMeta: chatEnrichment.enrichmentMeta || undefined,
+      enrichmentMeta: (chatEnrichment as any).enrichmentMeta || undefined,
       _meta: {
         ...(correlationId && { correlationId }),
         ...(source_surface ? { sourceSurface: source_surface } : {}),

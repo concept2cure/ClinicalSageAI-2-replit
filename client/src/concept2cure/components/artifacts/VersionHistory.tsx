@@ -438,6 +438,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
                       (version.id === selectedVersionId || version.id === compareTargetId)
                     }
                     onSelect={() => {
+                      const vid = version.id ?? null;
                       if (compareMode) {
                         if (!selectedVersionId) {
                           setSelectedVersionId(version.id ?? null);

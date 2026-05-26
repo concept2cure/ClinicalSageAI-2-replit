@@ -219,14 +219,14 @@ export async function upsertClientProfile(
     return updated;
   }
 
-  const [created] = await db
-    .insert(clientIntelligenceProfiles)
+  const [created] = (await db
+    .insert(clientIntelligenceProfiles as any)
     .values({
       ...profileData,
       createdBy: userId,
       profileStatus: 'active',
     })
-    .returning();
+    .returning()) as any[];
   return created;
 }
 
@@ -517,8 +517,8 @@ export async function ingestDocument(
   userId: number
 ): Promise<DocumentIngestionResult> {
   // 1. Create the ingested document record
-  const [docRecord] = await db
-    .insert(clientIngestedDocuments)
+  const [docRecord] = (await db
+    .insert(clientIngestedDocuments as any)
     .values({
       profileId,
       organizationId,
@@ -529,7 +529,7 @@ export async function ingestDocument(
       processingStatus: 'processing',
       uploadedBy: userId,
     })
-    .returning();
+    .returning()) as any[];
 
   try {
     // 2. Extract text
@@ -541,11 +541,13 @@ export async function ingestDocument(
     const tokenCount = estimateTokens(text);
 
     // 3. Get the profile for context
-    const profile = await db
-      .select()
-      .from(clientIntelligenceProfiles)
-      .where(eq(clientIntelligenceProfiles.id, profileId))
-      .limit(1);
+    const profile = profileId == null
+      ? []
+      : await db
+          .select()
+          .from(clientIntelligenceProfiles)
+          .where(eq(clientIntelligenceProfiles.id, profileId))
+          .limit(1);
 
     const profileName = profile[0]?.companyName || 'Unknown Client';
 
@@ -554,7 +556,7 @@ export async function ingestDocument(
 
     // 5. Persist memory entries
     if (extractedEntries.length > 0) {
-      await db.insert(clientMemoryEntries).values(
+      await db.insert(clientMemoryEntries as any).values(
         extractedEntries.map(entry => ({
           profileId,
           organizationId,
@@ -585,15 +587,17 @@ export async function ingestDocument(
       .where(eq(clientIngestedDocuments.id, docRecord.id));
 
     // 7. Update profile counters
-    await db
-      .update(clientIntelligenceProfiles)
-      .set({
-        totalDocumentsIngested: sql`${clientIntelligenceProfiles.totalDocumentsIngested} + 1`,
-        totalTokensProcessed: sql`${clientIntelligenceProfiles.totalTokensProcessed} + ${tokenCount}`,
-        lastDocumentIngestedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(clientIntelligenceProfiles.id, profileId));
+    if (profileId != null) {
+      await db
+        .update(clientIntelligenceProfiles)
+        .set({
+          totalDocumentsIngested: sql`${clientIntelligenceProfiles.totalDocumentsIngested} + 1`,
+          totalTokensProcessed: sql`${clientIntelligenceProfiles.totalTokensProcessed} + ${tokenCount}`,
+          lastDocumentIngestedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(clientIntelligenceProfiles.id, profileId));
+    }
 
     return {
       documentId: docRecord.id,
@@ -637,7 +641,7 @@ export async function getMemoryEntries(
   options?: { category?: string; limit?: number; offset?: number }
 ): Promise<MemorySearchResult> {
   const conditions = [
-    eq(clientMemoryEntries.profileId, profileId),
+    eq(clientMemoryEntries.profileId, profileId as number),
     eq(clientMemoryEntries.status, 'active'),
   ];
 
@@ -899,10 +903,10 @@ export async function upsertProjectIntelligence(
     return updated;
   }
 
-  const [created] = await db
-    .insert(projectIntelligenceProfiles)
+  const [created] = (await db
+    .insert(projectIntelligenceProfiles as any)
     .values({ ...profileData, createdBy: userId, profileStatus: 'active' })
-    .returning();
+    .returning()) as any[];
   return created;
 }
 
@@ -930,8 +934,8 @@ export async function ingestProjectDocument(
   file: { buffer: Buffer; originalname: string; mimetype: string; size: number },
   userId: number
 ): Promise<DocumentIngestionResult> {
-  const [docRecord] = await db
-    .insert(projectIngestedDocuments)
+  const [docRecord] = (await db
+    .insert(projectIngestedDocuments as any)
     .values({
       projectProfileId,
       projectId,
@@ -943,7 +947,7 @@ export async function ingestProjectDocument(
       processingStatus: 'processing',
       uploadedBy: userId,
     })
-    .returning();
+    .returning()) as any[];
 
   try {
     const { text, pageCount } = await extractTextFromFile(file.buffer, file.mimetype, file.originalname);
@@ -957,7 +961,7 @@ export async function ingestProjectDocument(
     const extractedEntries = extractProjectMemoryEntries(text, file.originalname, projectName);
 
     if (extractedEntries.length > 0) {
-      await db.insert(projectMemoryEntries).values(
+      await db.insert(projectMemoryEntries as any).values(
         extractedEntries.map(entry => ({
           projectProfileId,
           projectId,
@@ -995,7 +999,7 @@ export async function ingestProjectDocument(
         lastDocumentIngestedAt: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(projectIntelligenceProfiles.id, projectProfileId));
+      .where(eq(projectIntelligenceProfiles.id, projectProfileId as number));
 
     return {
       documentId: docRecord.id,
@@ -1165,7 +1169,7 @@ export async function getProjectMemoryEntries(
   options?: { category?: string; limit?: number }
 ): Promise<{ entries: ProjectMemoryEntry[]; totalCount: number }> {
   const conditions = [
-    eq(projectMemoryEntries.projectProfileId, projectProfileId),
+    eq(projectMemoryEntries.projectProfileId, projectProfileId as number),
     eq(projectMemoryEntries.status, 'active'),
   ];
   if (options?.category) {

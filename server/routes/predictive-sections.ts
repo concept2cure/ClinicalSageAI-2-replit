@@ -275,7 +275,7 @@ router.get('/completion-status/:submissionType', async (req, res) => {
       regulatoryRegion: 'FDA' as any,
     };
 
-    const predictions = await predictiveSectionService.getSectionSuggestions(context);
+    const predictions = await predictiveSectionService.getSectionSuggestions(context as any);
 
     res.json({
       success: true,

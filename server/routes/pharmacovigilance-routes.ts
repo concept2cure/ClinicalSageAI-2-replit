@@ -424,7 +424,7 @@ export default function createPharmacovigilanceRoutes(): Router {
         evaluationStatus: 'new',
         action: 'none',
         riskBenefitAssessment: data.riskBenefitAssessment,
-      });
+      } as any);
 
       res.status(201).json({ success: true, data: signal });
     } catch (error) {
@@ -443,7 +443,7 @@ export default function createPharmacovigilanceRoutes(): Router {
    */
   router.get('/rmp/:projectId', async (req: Request, res: Response) => {
     try {
-      const { projectId } = req.params;
+      const { projectId } = req.params as { projectId: string };
       if (!projectId) {
         return res.status(400).json({ success: false, error: 'projectId is required' });
       }

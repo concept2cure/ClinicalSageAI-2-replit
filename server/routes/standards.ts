@@ -162,7 +162,7 @@ router.get(
       if (!profile) return res.status(404).json({ error: 'Program not found' });
       const recs = await recommendApplicability(profile);
       res.json({
-        programId: req.params.programId,
+        programId: String(req.params.programId),
         profile,
         recommendations: recs,
         applicableCount: recs.filter(r => r.applicability === 'applies').length,
