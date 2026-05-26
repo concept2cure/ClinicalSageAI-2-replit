@@ -992,12 +992,12 @@ ${context}
     try {
       const totalResult = await db.execute<{ count: number }>(sql`
         SELECT COUNT(*) as count FROM csr_reports
-      `)).rows as Array<{ count: number }>;
+      `);
 
       const processedResult = await db.execute<{ count: number }>(sql`
         SELECT COUNT(*) as count FROM csr_details
         WHERE processed = true
-      `)).rows as Array<{ count: number }>;
+      `);
 
       const total = totalResult.rows[0]?.count || 0;
       const processed = processedResult.rows[0]?.count || 0;

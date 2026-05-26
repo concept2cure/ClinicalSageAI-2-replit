@@ -564,8 +564,8 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
                         ))}
                       </ul>
                     </div>
-                  );
-                })()
+                  )}
+                </div>
               ) : (
                 <p className="text-sm text-muted-foreground">Unable to check readiness</p>
               )}

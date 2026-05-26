@@ -100,7 +100,7 @@ router.put('/analytical-methods/:id', async (req, res) => {
       .update(analyticalMethods)
       .set({ ...safeData, updatedAt: new Date() })
       .where(and(eq(analyticalMethods.id, id), eq(analyticalMethods.organizationId, orgId)))
-      .returning()) as any[];
+      .returning();
     // Write-through: upsert canonical source object for Module 3
     const projectId = (req.body as { projectId?: string }).projectId;
     if (method && projectId) {
