@@ -94,9 +94,13 @@ const { dbMockFactory } = vi.hoisted(() => ({
 vi.mock('../../db', () => dbMockFactory());
 vi.mock('../../../db', () => dbMockFactory());
 const { ESGSubmissionService } = vi.hoisted(() => ({
-  ESGSubmissionService: vi.fn(() => ({
-    submitToFDA: vi.fn(async () => ({ packageId: 'pkg-1', transactionId: 'tx-1' })),
-  })),
+  // Regular function (not arrow) so `new ESGSubmissionService()` in the
+  // handler works — an arrow vi.fn throws "is not a constructor".
+  ESGSubmissionService: vi.fn(function () {
+    return {
+      submitToFDA: vi.fn(async () => ({ packageId: 'pkg-1', transactionId: 'tx-1' })),
+    };
+  }),
 }));
 vi.mock('../../ESGSubmissionService', () => ({ default: ESGSubmissionService }));
 vi.mock('../../gspr-postmarket/gspr.service', () => ({

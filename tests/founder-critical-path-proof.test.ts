@@ -6,9 +6,17 @@
  * running service-level functional tests. No running server or DB required.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
+
+// The token-revocation proof exercises the service's non-blocking degrade
+// path (memory tier). It reaches the DB pool via server/db.js → runtime,
+// where tests/setup.ts's global 'pg' mock installs a non-constructable
+// Pool — `new Pool()` then throws at init and the pool access surfaces an
+// uncaught error instead of degrading. Use the real pg driver so pool init
+// behaves normally (connects when DATABASE_URL is set, stays null otherwise).
+vi.unmock('pg');
 
 const ROOT = path.resolve(__dirname, '..');
 
