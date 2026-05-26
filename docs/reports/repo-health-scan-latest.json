@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-05-26T15:34:20.185Z",
+  "generatedAt": "2026-05-26T18:19:44.220Z",
   "git": {
-    "sha": "cd4d89cd5a40f92d178f696e954185366f0b855e",
-    "branch": "claude/merge-prs-concept2cure-v2-aZLtO"
+    "sha": "0737407b4fe184f76fa29641d9e539a69e19a459",
+    "branch": "concept2cure-v2"
   },
   "thresholds": {
     "maxBytes": 100000,
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 174,
+    "duplicateBasenames": 175,
     "largeFilesByBytes": 16,
     "largeFilesByLines": 46
   },
@@ -149,7 +149,7 @@
       },
       {
         "basename": "routes",
-        "count": 18,
+        "count": 17,
         "paths": [
           "server/api/ai/routes.ts",
           "server/api/cmc/routes.ts",
@@ -166,7 +166,6 @@
           "server/api/signing/routes.ts",
           "server/api/site-intel/routes.ts",
           "server/api/templates/routes.ts",
-          "server/api/vault/routes.ts",
           "server/routes.js",
           "server/startup/routes.ts"
         ]
@@ -1065,6 +1064,14 @@
         ]
       },
       {
+        "basename": "errorhandler",
+        "count": 2,
+        "paths": [
+          "server/middleware/errorHandler.js",
+          "server/middleware/errorHandler.ts"
+        ]
+      },
+      {
         "basename": "errorhandling",
         "count": 2,
         "paths": [
@@ -1652,7 +1659,7 @@
     "largeFilesByBytes": [
       {
         "file": "shared/schema.ts",
-        "bytes": 812934
+        "bytes": 813503
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -1672,7 +1679,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 173357
+        "bytes": 174190
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -1718,7 +1725,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19677
+        "lines": 19683
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -1737,12 +1744,12 @@
         "lines": 5278
       },
       {
-        "file": "client/src/concept2cure/components/editor/EditorPanel.tsx",
-        "lines": 4644
+        "file": "server/services/ana-ri/command-executor.ts",
+        "lines": 4653
       },
       {
-        "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 4639
+        "file": "client/src/concept2cure/components/editor/EditorPanel.tsx",
+        "lines": 4644
       },
       {
         "file": "server/storage.ts",
@@ -1913,7 +1920,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 237,
+      "duplicateGroups": 238,
       "largeByBytes": 10,
       "largeByLines": 31
     },
