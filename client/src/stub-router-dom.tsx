@@ -18,7 +18,7 @@ export const useLocation = wouterUseLocation;
 
 // For compatibility with any code still using react-router-dom
 export const BrowserRouter = ({ children }: { children: React.ReactNode }) => <>{children}</>;
-export const Routes = ({ children }: { children: React.ReactNode }) => <Switch>{children}</Switch>;
+export const Routes = ({ children }: { children: React.ReactNode }) => <WouterSwitch>{children}</WouterSwitch>;
 export const Outlet = () => <div>Please update to use wouter components</div>;
 export const Navigate = ({ to }: { to: string }) => {
   window.location.href = to;

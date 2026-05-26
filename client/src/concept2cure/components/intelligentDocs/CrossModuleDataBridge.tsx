@@ -193,7 +193,7 @@ const ConnectionStatusBadge: React.FC<{
     },
   };
 
-  const { icon: Icon, label, color } = config[status];
+  const { icon: Icon, label, color } = (config as Record<string, any>)[status] ?? config.missing;
 
   return (
     <span

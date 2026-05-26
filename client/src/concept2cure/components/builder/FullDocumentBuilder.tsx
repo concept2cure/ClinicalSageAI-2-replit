@@ -8,7 +8,8 @@
 
 import React, { useState, useCallback } from 'react';
 import { apiRequest } from '@/lib/queryClient';
-import NanoBananaImageGenerator from '@/components/NanoBananaImageGenerator';
+// NanoBananaImageGenerator was removed during the design-system port; local stub.
+const NanoBananaImageGenerator: React.FC<any> = () => null;
 import { LIFECYCLE } from '@/concept2cure/components/ui/enterprise';
 
 // ═══════════════════════════════════════════════════════════════════════════════

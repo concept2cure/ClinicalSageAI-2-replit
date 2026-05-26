@@ -416,7 +416,7 @@ router.post('/intuition/signals',
     }
     
     const signals = await cortex.extractRegulatorySignals(
-      orgId,
+      orgId!,
       documentId,
       documentContent,
       documentType
@@ -464,7 +464,7 @@ router.post('/intuition/match-patterns',
       return res.status(400).json({ error: 'submissionContent required' });
     }
     
-    const patterns = await cortex.matchRejectionPatterns(orgId, submissionContent);
+    const patterns = await cortex.matchRejectionPatterns(orgId!, submissionContent);
     res.json({ patterns, count: patterns.length });
   })
 );
@@ -512,7 +512,7 @@ router.post('/epistemic/gaps',
       return res.status(400).json({ error: 'domain required' });
     }
     
-    const gaps = await cortex.detectKnowledgeGaps(orgId, domain, queryEmbedding);
+    const gaps = await cortex.detectKnowledgeGaps(orgId!, domain, queryEmbedding);
     res.json({ gaps, count: gaps.length });
   })
 );

@@ -145,7 +145,7 @@ router.get('/assumptions/project/:projectId/summary', async (req: Request, res: 
   try {
     const summary = await assumptionRegistryService.getByProject(
       getOrgId(req),
-      Number(req.params.projectId)
+      Number(String(req.params.projectId ?? ""))
     );
     res.json(summary);
   } catch (error) {
@@ -236,7 +236,7 @@ router.post('/contradictions/scan/:projectId', async (req: Request, res: Respons
   try {
     const result = await contradictionEngineService.scanProject(
       getOrgId(req),
-      Number(req.params.projectId)
+      Number(String(req.params.projectId ?? ""))
     );
     res.json(result);
   } catch (error) {
@@ -322,7 +322,7 @@ router.get('/dependencies/stale/:projectId', async (req: Request, res: Response)
   try {
     const results = await reactiveDependencyService.getStale(
       getOrgId(req),
-      Number(req.params.projectId)
+      Number(String(req.params.projectId ?? ""))
     );
     res.json({ stale: results, count: results.length });
   } catch (error) {
@@ -348,7 +348,7 @@ router.get('/impact-summary/:projectId', async (req: Request, res: Response) => 
   try {
     const result = await reactiveDependencyService.getProjectImpactSummary(
       getOrgId(req),
-      Number(req.params.projectId)
+      Number(String(req.params.projectId ?? ""))
     );
     res.json(result);
   } catch (error) {

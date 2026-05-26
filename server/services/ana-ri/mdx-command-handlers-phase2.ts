@@ -204,7 +204,7 @@ export async function postMarketDocumentApprove(
         action,
         message: `Approve refused: ${code}.`,
         error: code === 'NOT_FOUND' ? 'NOT_FOUND' : 'GATE_BLOCKED',
-        data: result as Record<string, unknown>,
+        data: result as unknown as Record<string, unknown>,
       };
     }
 
@@ -223,7 +223,7 @@ export async function postMarketDocumentApprove(
     return {
       success: true,
       action,
-      data: result as Record<string, unknown>,
+      data: result as unknown as Record<string, unknown>,
       message: `Approved post-market document ${documentId}.`,
     };
   } catch (err) {

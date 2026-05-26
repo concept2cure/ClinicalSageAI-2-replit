@@ -163,7 +163,7 @@ export function mountPlanRoutes(router: Router): void {
     const { actorType, actorId, messageType, payload, metadata } = req.body || {};
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     const event = {
-      planRunId: req.params.planRunId,
+      planRunId: String(req.params.planRunId),
       organizationId: orgId ? Number(orgId) : null,
       actorType,
       actorId,

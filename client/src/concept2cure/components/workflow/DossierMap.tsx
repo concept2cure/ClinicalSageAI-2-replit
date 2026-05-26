@@ -52,7 +52,7 @@ function normalizeProjectSections(payload: ProjectSectionsResponse | Array<{ cod
     code: sec.code || ('section_code' in sec ? sec.section_code : undefined) || '',
     title: sec.title,
     status: sec.status,
-  })).filter(sec => !!sec.code);
+  })).filter((sec: { code: string }) => !!sec.code);
 }
 
 // Default CTD structure used as fallback when no sections are initialized

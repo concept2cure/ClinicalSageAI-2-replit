@@ -155,6 +155,12 @@ const ALLOWLIST_PATH_PREFIXES = [
   'server/db/_deprecated_migrations/',
   'server/__tests__/',
   'server/services/__tests__/',
+  // Background processors that operate on system-owned / queue data by id,
+  // after tenancy was resolved at enqueue time (ingestion + vectorization
+  // workers, retention/cron jobs). Matches the "system jobs / ingestion
+  // workers" allowlist intent above. Reviewed 2026-05-26.
+  'server/workers/',
+  'server/jobs/',
 ];
 
 function isAllowlistedFile(rel) {

@@ -716,7 +716,7 @@ router.patch('/plans/:id', authMiddleware, requireOrganizationContext, async (re
         ...qmpData,
         ...(mergedMetadata !== undefined ? { metadata: mergedMetadata } : {}),
         updatedAt: new Date(),
-      })
+      } as any)
       .where(
         and(
           eq(qualityManagementPlans.organizationId, organizationId),

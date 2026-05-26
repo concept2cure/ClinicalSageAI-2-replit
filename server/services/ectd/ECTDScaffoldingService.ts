@@ -61,7 +61,7 @@ export interface ScaffoldResult {
  * Manages eCTD module structure and project folder hierarchies
  */
 export class ECTDScaffoldingService {
-  private auditLogger: AuditLogger;
+  private auditLogger: any;
   private pool: any;
   private moduleCache: Map<string, ECTDModule[]>;
   private cacheExpiry: Map<string, number>;

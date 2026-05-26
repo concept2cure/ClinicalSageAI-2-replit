@@ -79,10 +79,12 @@ import {
 } from '../../services/pdev/pdev-state-guard';
 import { pdevProvenanceTraceService } from '../../services/pdev/pdev-provenance-trace';
 import { pdevWorkflowBridge } from '../../services/pdev/pdev-workflow-bridge';
+import { applyIndClearanceIfTerminal } from '../../services/pdev/pdev-clearance';
 import {
   pdevFdaFeedbackRollupService,
 } from '../../services/pdev/pdev-fda-feedback-rollup';
 import { pdevEvidenceAttachService } from '../../services/pdev/pdev-evidence-attach';
+import { pdevReadinessScheduler } from '../../services/pdev/pdev-readiness-scheduler';
 import {
   PDEV_ACTIVITIES,
   PDEV_WORKSTREAMS,
@@ -112,6 +114,16 @@ function getUserId(req: Request): number | null {
   const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
   return Number.isFinite(n) ? n : null;
 }
+
+function getUserRole(req: Request): string {
+  return String((req as any).user?.role ?? (req as any).userRole ?? '');
+}
+
+const READINESS_BATCH_ROLES = new Set([
+  'admin',
+  'superadmin',
+  'regulatory_lead',
+]);
 
 async function programBelongsToOrg(programId: string, organizationId: number): Promise<boolean> {
   const row = await db
@@ -468,7 +480,18 @@ router.post(
         },
       });
 
-      return ok(res, row);
+      // Terminal IND-clearance transition: if this is the clearance
+      // activity reaching a completed state, move the program to its
+      // cleared terminal state. No-op otherwise.
+      const clearance = await applyIndClearanceIfTerminal({
+        programId,
+        organizationId: orgId,
+        userId,
+        activityKey,
+        newState: parsed.data.state as (typeof PDEV_ACTIVITY_STATES)[number],
+      });
+
+      return ok(res, row, clearance.cleared ? { indCleared: true } : undefined);
     } catch (err) {
       return serverError(res, log, 'Failed to update activity state', err);
     }
@@ -963,5 +986,46 @@ router.post(
     }
   }
 );
+
+// ─── POST /api/pdev/admin/readiness/snapshot-all ───────────────────────────
+//
+// Batch-snapshot readiness for every active PDEV program in the caller's
+// organization. Role-gated (admin / superadmin / regulatory_lead) — this
+// writes one snapshot row per active program, so it must not be open to
+// every authenticated user. Scoped to the caller's org; never org-wide
+// from the HTTP surface (an org-wide sweep is the interval worker's job).
+
+router.post('/admin/readiness/snapshot-all', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const userId = getUserId(req);
+  const role = getUserRole(req);
+
+  if (!READINESS_BATCH_ROLES.has(role)) {
+    return clientError(
+      res,
+      403,
+      'Batch readiness snapshot requires an admin or regulatory-lead role.'
+    );
+  }
+
+  try {
+    const result = await pdevReadinessScheduler.snapshotActivePrograms(orgId, userId);
+    void auditService.logAction({
+      tenantId: orgId,
+      userId: userId ?? undefined,
+      action: 'pdev_readiness_snapshot_batch',
+      resourceType: 'organization',
+      resourceId: orgId,
+      details: {
+        programsConsidered: result.programsConsidered,
+        snapshotted: result.snapshotted,
+      },
+    });
+    return ok(res, result);
+  } catch (err) {
+    return serverError(res, log, 'Batch readiness snapshot', err);
+  }
+});
 
 export default router;

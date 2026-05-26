@@ -25,6 +25,7 @@ import {
 import { eq, and, desc } from 'drizzle-orm';
 import axios from 'axios';
 import crypto from 'crypto';
+// @ts-ignore — xml2js has no bundled types
 import xml2js from 'xml2js';
 
 class FDAIntegrationService {

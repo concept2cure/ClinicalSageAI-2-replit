@@ -763,7 +763,7 @@ router.post('/ingest', async (req: Request, res: Response) => {
  */
 router.get('/entities/:entityId/neighborhood', async (req: Request, res: Response) => {
   const pool: Pool = (req as any).pool || (req.app as any).pool;
-  const { entityId } = req.params;
+  const { entityId } = req.params as { entityId: string };
   const maxHops = parseInt(req.query.hops as string) || 1;
   const entityTypes = req.query.types
     ? ((req.query.types as string).split(',') as EntityType[])

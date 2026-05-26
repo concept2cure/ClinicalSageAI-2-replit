@@ -256,7 +256,7 @@ export const TrackChanges = Extension.create<TrackChangesOptions>({
           changeIds.forEach((id) => editor.commands.rejectChange(id));
           return true;
         },
-    };
+    } as any;
   },
 
   addProseMirrorPlugins() {

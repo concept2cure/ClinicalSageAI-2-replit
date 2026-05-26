@@ -209,7 +209,7 @@ export class FDA510kComplianceTracker {
       };
 
       const [savedVersion] = await db.insert(schema.documentVersions)
-        .values(versionEntry)
+        .values(versionEntry as any)
         .returning();
       
       // Create audit trail for version
@@ -504,7 +504,7 @@ export class FDA510kComplianceTracker {
       return {
         success: true,
         currentVersion: versions.length,
-        versions: versions.map(v => {
+        versions: versions.map((v: any) => {
           const metadata = v.metadata as any || {};
           // `changes` is persisted inside metadata as a JSON string.
           let changes: unknown[] = [];

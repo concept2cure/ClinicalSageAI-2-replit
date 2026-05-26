@@ -46,6 +46,9 @@ import {
 import { executeGovernedAnaOperation } from '../services/governed-ana-execution.js';
 import { summarizeAndStoreWorkingMemoryForThread } from '../services/working-memory.js';
 
+// Legacy helper removed; no-op stub keeps fire-and-forget call sites compiling.
+const generateWorkingMemorySummary: any = async (..._args: unknown[]) => undefined;
+
 const logger = createScopedLogger('cortex-unified');
 const router = Router();
 

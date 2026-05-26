@@ -92,7 +92,7 @@ export function mountGenerateExecuteRoutes(router: Router): void {
         intentLens: intent_lens,
         title,
         sectionCode: section_code,
-      });
+      } as any);
 
       if (!result.success || result.persistenceStatus !== 'persisted') {
         return sendError(

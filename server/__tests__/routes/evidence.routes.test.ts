@@ -126,12 +126,21 @@ describe('evidence routes (db-backed)', () => {
     expect(res.body.data.facets.type).toEqual([{ value: 'literature', count: 1 }]);
   });
 
-  it('POST /links auto-creates a claim when no claim exists for source', async () => {
+  it('POST /links creates a link when evidence exists', async () => {
+    const EVIDENCE_UUID = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
     selectQueue.push(
-      [{ id: 55, programId: 777, title: 'Source Title', contentText: 'Claim text' }],
-      []
+      [{ id: EVIDENCE_UUID }] // evidence object lookup
     );
-    insertQueue.push([{ id: 901 }], [{ id: 902, documentId: 321, sectionId: 'sec-1', linkType: 'supports', strength: '0.66', createdAt: new Date('2026-02-01T00:00:00Z') }]);
+    insertQueue.push([
+      {
+        id: 'link-902',
+        evidenceId: EVIDENCE_UUID,
+        targetType: 'section',
+        targetId: '321',
+        linkType: 'supports',
+        strength: 'moderate',
+      },
+    ]);
 
     const mod = await import('../../routes/evidence');
     const app = express();

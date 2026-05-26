@@ -11,6 +11,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import archiver from 'archiver';
+// @ts-ignore — xml2js has no bundled types
 import xml2js from 'xml2js';
 
 interface ESGSubmissionConfig {
@@ -149,13 +150,14 @@ class ESGSubmissionService {
     const packageId = `PKG-${Date.now()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 
     // Create submission package record
+    const proj = project as any;
     await db!.insert(fda510kSubmissionPackages).values({
       organizationId,
       projectId,
       packageId,
       packageName: `510k_${project.deviceName}_${new Date().toISOString().split('T')[0]}`,
       packageType: '510k',
-      documents: documents.map(d => ({
+      documents: documents.map((d: any) => ({
         documentId: d.documentId,
         title: d.documentName,
         type: d.documentType,
@@ -172,7 +174,7 @@ class ESGSubmissionService {
       status: 'ready',
       createdAt: new Date(),
       updatedAt: new Date()
-    });
+    } as any);
 
     return {
       projectId,
@@ -425,7 +427,7 @@ class ESGSubmissionService {
       userName: actingUser?.name ?? `user-${userId}`,
       organizationId,
       timestamp: new Date()
-    });
+    } as any);
   }
 
   /**

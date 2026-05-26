@@ -20,11 +20,13 @@ vi.mock('../../middleware/auth.js', () => ({
   requireAuth: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 
-vi.mock('jsonwebtoken', () => ({
-  default: {
-    verify: vi.fn(),
-  },
-}));
+vi.mock('jsonwebtoken', () => {
+  const verify = vi.fn();
+  return {
+    default: { verify },
+    verify,
+  };
+});
 
 describe('cortex threads runtime contract', () => {
   beforeEach(() => {
@@ -49,7 +51,7 @@ describe('cortex threads runtime contract', () => {
     const jwt = (await import('jsonwebtoken')).default as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 7 });
 
-    queryMock.mockResolvedValueOnce({
+    queryMock.mockResolvedValue({
       rows: [
         {
           id: 't-1',
@@ -131,7 +133,7 @@ describe('cortex threads runtime contract', () => {
     // shape `{ verify: Mock }`, which does not overlap with the real jwt typing.
     const jwt = (await import('jsonwebtoken')).default as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 17 });
-    queryMock.mockResolvedValueOnce({ rows: [] });
+    queryMock.mockResolvedValue({ rows: [] });
 
     const router = (await import('../../routes/cortex-unified')).default;
     const app = express();
@@ -152,7 +154,7 @@ describe('cortex threads runtime contract', () => {
     // shape `{ verify: Mock }`, which does not overlap with the real jwt typing.
     const jwt = (await import('jsonwebtoken')).default as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 17 });
-    queryMock.mockResolvedValueOnce({ rows: [] });
+    queryMock.mockResolvedValue({ rows: [] });
 
     const router = (await import('../../routes/cortex-unified')).default;
     const app = express();

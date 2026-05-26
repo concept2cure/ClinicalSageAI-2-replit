@@ -470,7 +470,7 @@ router.post('/packages/:packageId/milestones', async (req: Request, res: Respons
         if (!section) {
           return res
             .status(400)
-            .json({ error: `sectionId ${sId} does not belong to package ${req.params.packageId}` });
+            .json({ error: `sectionId ${sId} does not belong to package ${(String(req.params.packageId ?? ""))}` });
         }
         await db.insert(c2cMilestoneSections).values({
           milestoneDbId: milestone.id,
@@ -1323,7 +1323,7 @@ router.post('/packages/:packageId/publish', async (req: Request, res: Response) 
       .returning();
 
     // Create audit trail snapshot
-    await db.insert(c2cReadinessSnapshots).values({
+    await (db.insert(c2cReadinessSnapshots) as any).values({
       snapshotId: `snap_${randomUUID()}`,
       orgId,
       packageDbId: pkg.id,

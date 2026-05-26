@@ -15,16 +15,16 @@ python-docx>=0.8.11           # Read/write DOCX (extraction + generation)
 openpyxl>=3.1.0               # Read XLSX spreadsheets
 mammoth>=1.12.0                # DOCX plain-text extraction
 docx2txt>=0.9                 # DOCX fallback extractor
-tiktoken>=0.12.0               # Token counting for context window trimming
+tiktoken>=0.13.0               # Token counting for context window trimming
 
 # === Analytics Engine / API Bridge ===
 fastapi>=0.136.1              # HTTP API bridge for analytics engine
-uvicorn>=0.46.0               # ASGI server for FastAPI
+uvicorn>=0.47.0               # ASGI server for FastAPI
 httpx>=0.27.0                 # Async HTTP client
 pydantic>=2.13.4               # Data validation
-python-multipart>=0.0.27       # FastAPI multipart/form-data uploads
+python-multipart>=0.0.29       # FastAPI multipart/form-data uploads
 
 # === Data / AI ===
 openai>=2.37.0                 # LLM API client (section generation)
-numpy>=2.4.4                 # Numerical processing
+numpy>=2.4.6                 # Numerical processing
 pandas>=3.0.3                 # Data manipulation

@@ -97,7 +97,7 @@ router.get('/workflows', async (req: Request, res: Response) => {
 // Start a new workflow
 router.post('/workflows/:id/start', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const { organizationId, projectName, assignedTeam = [] } = req.body;
 
     if (!organizationId) {

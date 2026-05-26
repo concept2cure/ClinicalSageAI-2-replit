@@ -50,7 +50,7 @@ router.get('/catalog/regulatory-bodies', (_req: Request, res: Response) => {
  */
 router.get('/catalog/regulations/:domain', (req: Request, res: Response) => {
   try {
-    const { domain } = req.params;
+    const domainRaw = req.params.domain; const domain = Array.isArray(domainRaw) ? domainRaw[0] : (domainRaw ?? "");
     const { body } = req.query;
     const regulations = intelligentReportEngine.getApplicableRegulations(
       domain as any,

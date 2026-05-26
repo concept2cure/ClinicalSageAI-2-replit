@@ -89,7 +89,11 @@ describe.skip('eCTD export governance gate', () => {
       params: { submissionId: '123' },
       body: { region: 'FDA', submissionType: 'initial' },
     }) as any;
-    req.organizationId = 1;
+    // The route reads tenant + user from the JWT principal, not from
+    // req.organizationId. Set both so the governance writeback can attribute
+    // the export to a real user before res.send runs.
+    req.user = { id: 7, organizationId: 1, name: 'Test User' };
+    req.tenantContext = { organizationId: 1 };
     const res = createMockResponse();
 
     const handler = getHandler('/:submissionId');
@@ -116,7 +120,8 @@ describe.skip('eCTD export governance gate', () => {
         },
       },
     }) as any;
-    req.organizationId = 1;
+    req.user = { id: 7, organizationId: 1, name: 'Test User' };
+    req.tenantContext = { organizationId: 1 };
     const res = createMockResponse();
 
     const handler = getHandler('/:submissionId');

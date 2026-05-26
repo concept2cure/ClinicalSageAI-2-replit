@@ -92,7 +92,7 @@ const TiptapImage = Node.create({
       setImage: (options: { src: string; alt?: string; title?: string }) => ({ commands }: any) => {
         return commands.insertContent({ type: this.name, attrs: options });
       },
-    };
+    } as any;
   },
 });
 
@@ -871,7 +871,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             const reader = new FileReader();
             reader.onload = () => {
               const src = reader.result as string;
-              editor.chain().focus().setImage({ src, alt: file.name }).run();
+              (editor.chain().focus() as any).setImage({ src, alt: file.name }).run();
             };
             reader.readAsDataURL(file);
           };
@@ -2758,7 +2758,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                     if (!file) return;
                     const reader = new FileReader();
                     reader.onload = () => {
-                      editor.chain().focus().setImage({ src: reader.result as string, alt: file.name }).run();
+                      (editor.chain().focus() as any).setImage({ src: reader.result as string, alt: file.name }).run();
                     };
                     reader.readAsDataURL(file);
                   };

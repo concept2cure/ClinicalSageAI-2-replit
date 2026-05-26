@@ -15,7 +15,6 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { _resetMdxToolRateLimitersForTests } from '../mdx-tool-rate-limit';
 
 // vi.hoisted ensures env vars are set BEFORE any ESM imports (including
 // transitive ones) are evaluated. Loading the auth/db/config chain at
@@ -66,8 +65,8 @@ const { TenantAccessError } = vi.hoisted(() => ({
 }));
 
 vi.mock('../../q-sub/q-sub.service', () => ({
-  createQSubmission: (...a: any[]) => svc.createQSubmission(...a),
-  setCommitmentRolledIn: (...a: any[]) => svc.setCommitmentRolledIn(...a),
+  createQSubmission: (...a: any[]) => (svc.createQSubmission as any)(...a),
+  setCommitmentRolledIn: (...a: any[]) => (svc.setCommitmentRolledIn as any)(...a),
   TenantAccessError,
   Q_SUB_TYPES: ['presub', 'sir', 'srd', 'agree', 'info'],
 }));
@@ -75,40 +74,47 @@ vi.mock('../../../shared/schema/q-sub', () => ({
   Q_SUB_TYPES: ['presub', 'sir', 'srd', 'agree', 'info'],
 }));
 vi.mock('../../auditService', () => ({ default: audit }));
-vi.mock('../../db', () => ({
-  pool: {
-    query: vi.fn(async (sql: string) => {
-      if (sql.includes('SELECT id, section_number')) {
-        return { rows: [{ id: 1, section_number: '6.0', section_title: 'SE', status: 'todo' }] };
-      }
-      return { rows: [] };
-    }),
-  },
+const { dbMockFactory } = vi.hoisted(() => ({
+  dbMockFactory: () => ({
+    pool: {
+      query: vi.fn(async (sql: string) => {
+        if (sql.includes('SELECT id, section_number')) {
+          return { rows: [{ id: 1, section_number: '6.0', section_title: 'SE', status: 'todo' }] };
+        }
+        return { rows: [] };
+      }),
+    },
+  }),
 }));
-// Must be a real constructor: the handler does `new ESGSubmissionService()`.
-// An arrow-bodied vi.fn is not newable.
-class ESGSubmissionService {
-  submitToFDA(...a: any[]) {
-    return svc.submitToFDA(...a);
-  }
-}
+// The handler imports '../../db' from its own location
+// (server/services/ana-ri/mdx-command-handlers.ts), which resolves to
+// server/db. From this test file (server/services/ana-ri/__tests__/),
+// the equivalent specifier is '../../../db'. Mock both so the resolution
+// works no matter how vitest keys the cache.
+vi.mock('../../db', () => dbMockFactory());
+vi.mock('../../../db', () => dbMockFactory());
+const { ESGSubmissionService } = vi.hoisted(() => ({
+  ESGSubmissionService: vi.fn(() => ({
+    submitToFDA: vi.fn(async () => ({ packageId: 'pkg-1', transactionId: 'tx-1' })),
+  })),
+}));
 vi.mock('../../ESGSubmissionService', () => ({ default: ESGSubmissionService }));
 vi.mock('../../gspr-postmarket/gspr.service', () => ({
-  upsertMapping: (...a: any[]) => svc.upsertMapping(...a),
+  upsertMapping: (...a: any[]) => (svc.upsertMapping as any)(...a),
 }));
 vi.mock('../../gspr-postmarket/post-market.service', () => ({
-  approveDocument: (...a: any[]) => svc.approveDocument(...a),
-  createDocument: (...a: any[]) => svc.createDocument(...a),
-  supersedeDocument: (...a: any[]) => svc.supersedeDocument(...a),
-  updateDocument: (...a: any[]) => svc.updateDocument(...a),
-  validateDocument: (...a: any[]) => svc.validateDocument(...a),
-  getDocument: (...a: any[]) => svc.getDocument(...a),
+  approveDocument: (...a: any[]) => (svc.approveDocument as any)(...a),
+  createDocument: (...a: any[]) => (svc.createDocument as any)(...a),
+  supersedeDocument: (...a: any[]) => (svc.supersedeDocument as any)(...a),
+  updateDocument: (...a: any[]) => (svc.updateDocument as any)(...a),
+  validateDocument: (...a: any[]) => (svc.validateDocument as any)(...a),
+  getDocument: (...a: any[]) => (svc.getDocument as any)(...a),
 }));
 vi.mock('../../evidence-sufficiency/evidence-sufficiency.service', () => ({
-  assessSufficiency: (...a: any[]) => svc.assessSufficiency(...a),
+  assessSufficiency: (...a: any[]) => (svc.assessSufficiency as any)(...a),
 }));
 vi.mock('../../intelligence-engine/reviewer-simulator.service', () => ({
-  runReviewerSimulation: (...a: any[]) => svc.runReviewerSimulation(...a),
+  runReviewerSimulation: (...a: any[]) => (svc.runReviewerSimulation as any)(...a),
 }));
 
 import {
@@ -324,9 +330,11 @@ const PROBES: Probe[] = [
     tool: 'audit.explain',
     expectedAction: 'agent.ana.audit.explain',
     invoke: () => {
-      // The handler reads from `pool` lazily via dynamic import. Stub
-      // a minimal db module that returns one row.
-      vi.doMock('../../db', () => ({
+      // The handler reads from `pool` lazily via dynamic import. Stub a
+      // minimal db module that returns one row. explainAuditRow lives in
+      // server/services/ana-ri/, so its '../../db' is server/db; from this
+      // test file that's '../../../db'. doMock both keys.
+      const explainDbFactory = () => ({
         pool: {
           query: vi.fn(async () => ({
             rows: [
@@ -345,7 +353,9 @@ const PROBES: Probe[] = [
             ],
           })),
         },
-      }));
+      });
+      vi.doMock('../../db', explainDbFactory);
+      vi.doMock('../../../db', explainDbFactory);
       return explainAuditRow(CTX, { auditRowId: 1 });
     },
   },
@@ -354,10 +364,6 @@ const PROBES: Probe[] = [
 describe('AnA-MDX audit contract — every tool emits one agent.ana.* audit row', () => {
   beforeEach(() => {
     audit.logAction.mockClear();
-    // Reset the module-level AnA tool rate limiter so k510_workflow.transmit
-    // probes don't accumulate against the 5/hour ceiling across the
-    // single-fork run (this and mdx-command-handlers both transmit).
-    _resetMdxToolRateLimitersForTests();
   });
 
   // section.approve and audit.explain probes fail to emit their audit

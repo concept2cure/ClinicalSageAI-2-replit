@@ -3,8 +3,11 @@ import path from 'path';
 import { sql } from 'drizzle-orm';
 import { db } from '../db';
 import { huggingFaceService } from '../huggingface-service';
+import * as openaiServiceModule from './openai-service';
 import { eq } from 'drizzle-orm';
 import { getOpenAIClient } from './openai-client';
+
+const openaiService: any = openaiServiceModule;
 
 // Constants
 const PROCESSED_CSR_DIR = path.join(process.cwd(), 'data/processed_csrs');

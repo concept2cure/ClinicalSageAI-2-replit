@@ -73,7 +73,7 @@ interface AuthenticatedRequest extends Omit<Request, 'organizationId' | 'userId'
   organizationId?: string;
   userId?: string;
   [key: string]: any;
-}
+};
 
 const requireOrganization = (req: Request, res: Response, next: NextFunction) => {
   const areq = req as AuthenticatedRequest;

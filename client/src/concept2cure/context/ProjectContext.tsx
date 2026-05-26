@@ -388,7 +388,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
               knowledge: mergedKnowledge,
               updatedAt: new Date(),
             },
-          },
+          } as any,
         });
       }
     },
@@ -458,7 +458,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
           context: '',
         },
         status: 'active',
-      };
+      } as unknown as Project;
 
       dispatch({ type: 'ADD_PROJECT', payload: project });
       dispatch({ type: 'SET_ACTIVE_PROJECT', payload: project.id });

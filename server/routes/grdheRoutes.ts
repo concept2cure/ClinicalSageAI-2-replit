@@ -805,10 +805,10 @@ router.get('/adverse-events/tenant/:tenantId/case/:caseNumber', validateTenantId
   const tenantId = String(req.params.tenantId);
   const caseNumber = String(req.params.caseNumber);
   const { version } = req.query;
-  
+
   try {
     const event = await grdheService.getCanonicalAdverseEvent(
-      tenantId, 
+      tenantId,
       caseNumber,
       version ? parseInt(version as string) : undefined
     );

@@ -261,7 +261,7 @@ function mapSubsections(workflowData: any, subsections: any): any {
 
     // Get value from workflow data
     const value = getNestedValue(workflowData, config.workflowPath);
-    
+
     // Apply transformation if needed
     if (config.transform) {
       mapped[key] = applyTransformation(value, config.transform, workflowData);

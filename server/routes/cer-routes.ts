@@ -360,7 +360,7 @@ router.post('/faers/save-report', async (req, res) => {
         ]
       );
 
-      report.db_id = result.rows[0].id;
+      (report as any).db_id = result.rows[0].id;
     } catch (dbError) {
       console.error('Note: Database insert failed, but continuing with file storage:', dbError);
       // We'll still consider this a success since we saved to file
@@ -409,7 +409,7 @@ router.get('/reports', async (req, res) => {
       .filter((report): report is NonNullable<typeof report> => report !== null);
 
     // Sort by creation date, newest first
-    reports.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    reports.sort((a, b) => new Date((b as any)?.created_at ?? 0).getTime() - new Date((a as any)?.created_at ?? 0).getTime());
 
     res.json({ reports });
   } catch (error) {

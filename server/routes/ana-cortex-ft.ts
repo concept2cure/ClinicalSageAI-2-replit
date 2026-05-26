@@ -513,7 +513,7 @@ class ModelRegistry {
       canaryPercentage: 0,
       promotedAt: new Date(),
       promotedBy: actor,
-    };
+    } as any;
     model.status = 'deprecated';
     model.updatedAt = new Date();
     this.recordDeploymentEvent({
@@ -568,7 +568,7 @@ class ModelRegistry {
         canaryPercentage: 0,
         promotedAt: new Date(),
         promotedBy: actor,
-      },
+      } as any,
       createdAt: new Date(),
       updatedAt: new Date(),
       deployedAt: undefined,
@@ -1306,7 +1306,7 @@ router.get('/models/:modelId/deployment-history', (req: Request, res: Response) 
   return res.json({
     success: true,
     data: {
-      modelId: req.params.modelId,
+      modelId: (String(req.params.modelId ?? "")),
       count: events.length,
       events,
     },
@@ -1320,7 +1320,7 @@ router.get('/models/:modelId/deployment-history', (req: Request, res: Response) 
 router.post('/models/:modelId/activate', (req: Request, res: Response) => {
   const success = registry.setActiveModel(String(req.params.modelId));
   if (!success) return res.status(404).json({ error: 'Model not found' });
-  res.json({ success: true, message: `Model ${req.params.modelId} activated` });
+  res.json({ success: true, message: `Model ${(String(req.params.modelId ?? ""))} activated` });
 });
 
 /**

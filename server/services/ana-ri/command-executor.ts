@@ -4498,10 +4498,7 @@ export async function executeCommands(
     }
   }
 
-  const commandMap: Record<
-    string,
-    (ctx: CommandContext, params: any) => Promise<CommandResult>
-  > = {
+  const commandMap: Record<string, any> = {
     create_project: createProject,
     list_projects: listProjects,
     // updateProject's declared signature is (ctx, projectId, updates); dispatch
