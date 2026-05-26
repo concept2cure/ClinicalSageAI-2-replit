@@ -45,7 +45,12 @@ export const mockPool = {
 };
 
 vi.mock('pg', () => ({
-  Pool: vi.fn(() => mockPool),
+  // Regular function (not arrow) so `new Pool()` in db/runtime.ts works as a
+  // constructor. An arrow function throws "is not a constructor", leaving the
+  // pool null and polluting other tests in the shared singleFork process.
+  Pool: vi.fn(function () {
+    return mockPool;
+  }),
 }));
 
 // ═══════════════════════════════════════════════════════════════════════════════
