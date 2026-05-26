@@ -16,10 +16,7 @@ import {
 import { getSecureOrgId } from '../utils/tenantContext';
 
 const router = Router();
-// Legacy module uses the Kysely API (selectFrom/insertInto/updateTable/fn/eb)
-// against what is now a Drizzle handle. Cast to any so the existing
-// query bodies compile until they're ported. TODO: rewrite in Drizzle.
-const storage: { db: any } = { db: db as any };
+const storage = { db };
 
 function getActorUserId(req: Request): number | null {
   const raw = (req as any).userId ?? (req as any).user?.id;

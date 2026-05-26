@@ -2,8 +2,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import request from 'supertest';
 import express from 'express';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
-import type { Mock } from 'vitest';
 
 vi.mock('../../services/pdf-compression-service.js', () => ({
   COMPRESSION_PROFILES: [
@@ -109,7 +107,6 @@ describe('pdf-task-routes /compress', () => {
         { ok: true, inputPath: '/tmp/a.pdf', result: { outputPath: '/tmp/a.c.pdf' } },
         { ok: false, inputPath: '/tmp/b.pdf', error: 'failed' },
       ],
-      summary: { total: 2, success: 1, failed: 1 },
     });
 
     const res = await request(app).post('/api/pdf-tasks/compress/batch').send({

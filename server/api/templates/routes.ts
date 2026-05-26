@@ -103,13 +103,12 @@ router.get('/catalog', async (req: Request, res: Response) => {
     
     // Add search filter
     if (search) {
-      const searchClause = or(
-        like(ectdTemplates.templateName, `%${search}%`),
-        like(ectdTemplates.content, `%${search}%`)
+      conditions.push(
+        or(
+          like(ectdTemplates.templateName, `%${search}%`),
+          like(ectdTemplates.content, `%${search}%`)
+        )
       );
-      if (searchClause) {
-        conditions.push(searchClause);
-      }
     }
     
     // Get all templates matching base conditions
@@ -229,17 +228,16 @@ router.get('/:id', async (req: Request, res: Response) => {
     if (!isNaN(numericId)) {
       template = await templateService.getTemplateById(numericId, organizationId);
     }
-
+    
     // If not found with numeric ID or ID is not numeric, try string-based search
     if (!template) {
       // Try to get template by templateName or match string ID against id
-      const matchClause = or(
-        eq(ectdTemplates.templateName, id),
-        eq(sql`CAST(${ectdTemplates.id} AS TEXT)`, id)
-      );
       const templates = await db.select().from(ectdTemplates)
         .where(and(
-          matchClause as any,
+          or(
+            eq(ectdTemplates.templateName, id),
+            eq(sql`CAST(${ectdTemplates.id} AS TEXT)`, id)
+          ),
           eq(ectdTemplates.organizationId, organizationId)
         ));
       
@@ -274,7 +272,6 @@ router.get('/:id', async (req: Request, res: Response) => {
     const t = template as Record<string, any>;
 
     // Return template in expected format
-    const t = template as any;
     res.json({
       success: true,
       template: {

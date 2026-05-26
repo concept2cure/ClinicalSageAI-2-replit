@@ -57,13 +57,6 @@ const { svc, authState, PROGRAM_ORG_B, QSUB_ORG_B, COMMITMENT_ORG_B } = vi.hoist
       this.name = 'TenantAccessError';
     }
   }
-  // Inline duplicates of the module-level constants — vi.hoisted runs before
-  // any other top-level statements, so we cannot reference outer consts here.
-  const ORG_B_LOCAL = 22;
-  const PROGRAM_ORG_B_LOCAL = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
-  const QSUB_ORG_B_LOCAL = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
-  const COMMITMENT_ORG_B_LOCAL = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
-  const ORG_A_LOCAL = 11;
   return {
     PROGRAM_ORG_B,
     QSUB_ORG_B,

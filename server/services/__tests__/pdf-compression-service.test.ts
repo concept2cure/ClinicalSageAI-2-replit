@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { vi, describe, it, expect, beforeAll, afterAll } from 'vitest';
 
 vi.mock('child_process', () => ({
   execFile: vi.fn((cmd: string, args: string[], opts: any, cb: any) => {

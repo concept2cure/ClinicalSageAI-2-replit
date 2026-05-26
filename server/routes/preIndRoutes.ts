@@ -64,7 +64,7 @@ const dbOps = {
         WHERE draft_id = ${draftId}
       `;
 
-      const preIndResult = (await db.execute(preIndDataQuery)).rows as any[];
+      const preIndResult = await db.execute(preIndDataQuery);
 
       if (!preIndResult.rows.length) {
         return null; // Not found
@@ -81,7 +81,7 @@ const dbOps = {
         ORDER BY due_date ASC
       `;
 
-      const milestones = (await db.execute(milestonesQuery)).rows as any[];
+      const milestones = await db.execute(milestonesQuery);
 
       // Format milestones for frontend
       const formattedMilestones = milestones.rows.map((ms: any) => ({

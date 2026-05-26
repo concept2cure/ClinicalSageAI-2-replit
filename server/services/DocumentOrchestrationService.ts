@@ -416,7 +416,7 @@ class DocumentOrchestrationService {
     }
 
     // Save to database
-    const [document] = await (db!.insert(fda510kDocuments) as any).values({
+    const [document] = await db!.insert(fda510kDocuments).values({
       documentId: documentId,
       projectId: project.id,
       templateId: 1, // Reference to main-510k template
@@ -487,7 +487,7 @@ class DocumentOrchestrationService {
         };
 
         // Save to database
-        await (db!.insert(fda510kDocuments) as any).values({
+        await db!.insert(fda510kDocuments).values({
           ...formData,
           createdAt: new Date(),
           updatedAt: new Date()
@@ -548,7 +548,7 @@ class DocumentOrchestrationService {
 
     const documentId = this.generateDocumentId();
     
-    const [document] = await (db!.insert(fda510kDocuments) as any).values({
+    const [document] = await db!.insert(fda510kDocuments).values({
       documentId: documentId,
       projectId: project.id,
       templateId: 2, // Reference to form-3601 template
@@ -604,7 +604,7 @@ class DocumentOrchestrationService {
 
     const documentId = this.generateDocumentId();
     
-    const [document] = await (db!.insert(fda510kDocuments) as any).values({
+    const [document] = await db!.insert(fda510kDocuments).values({
       documentId: documentId,
       projectId: project.id,
       templateId: 3, // Reference to form-3514 template
@@ -648,7 +648,7 @@ class DocumentOrchestrationService {
 
     const documentId = this.generateDocumentId();
     
-    const [document] = await (db!.insert(fda510kDocuments) as any).values({
+    const [document] = await db!.insert(fda510kDocuments).values({
       documentId: documentId,
       projectId: project.id,
       templateId: 4, // Reference to form-3881 template
@@ -700,7 +700,7 @@ class DocumentOrchestrationService {
 
     const documentId = this.generateDocumentId();
     
-    const [document] = await (db!.insert(fda510kDocuments) as any).values({
+    const [document] = await db!.insert(fda510kDocuments).values({
       documentId: documentId,
       projectId: project.id,
       templateId: 5, // Reference to form-3654 template
@@ -768,7 +768,7 @@ class DocumentOrchestrationService {
         lockedBy: userIdNum,
         lockedAt: new Date(),
         updatedAt: new Date()
-      } as any)
+      })
       .where(eq(fda510kDocuments.documentId, documentId))
       .returning();
 
@@ -823,7 +823,7 @@ class DocumentOrchestrationService {
     const newDocumentId = this.generateDocumentId();
     const newVersion = (currentDoc.version ?? 1) + 1;
 
-    const [newDoc] = await (db!.insert(fda510kDocuments) as any).values({
+    const [newDoc] = await db!.insert(fda510kDocuments).values({
       documentId: newDocumentId,
       projectId: currentDoc.projectId,
       templateId: currentDoc.templateId,
@@ -836,7 +836,7 @@ class DocumentOrchestrationService {
       formData: currentDoc.formData,
       createdBy: userIdNum,
       updatedBy: userIdNum,
-      organizationId: currentDocAny.organizationId,
+      organizationId: currentDoc.organizationId,
       createdAt: new Date(),
       updatedAt: new Date()
     }).returning();
