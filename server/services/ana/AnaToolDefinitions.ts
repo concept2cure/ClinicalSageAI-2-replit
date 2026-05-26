@@ -317,6 +317,85 @@ export const CHECK_NUMERICAL_INTEGRITY: AnaTool = {
   },
 };
 
+export const COMPUTE_SAMPLE_SIZE: AnaTool = {
+  name: 'compute_sample_size',
+  description:
+    "Compute sample size, statistical power, and a regulatory defensibility judgment using the platform's DETERMINISTIC biostatistics engine (validated closed-form formulas — not an estimate). ALWAYS call this tool when the user asks for a sample-size, power, or study-design calculation (e.g. via /power, /sap, /dose, /design, /defensibility). NEVER hand-calculate or estimate these numbers yourself — a fabricated sample size in a regulatory submission is a critical defect. First gather the required parameters from the user in plain language, then call this tool with structured arguments; report the returned numbers verbatim. If the engine returns validation errors, relay exactly which parameters are missing and ask the user for them. Returns: required total/per-arm N, achieved power, the assumptions used (including any defaults the engine applied), a multi-dimension defensibility judgment, and suggested next steps.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      clientTrack: {
+        type: 'string',
+        enum: ['biotech_pharma', 'medical_device', 'diagnostics_ivd'],
+        description: 'Product track. Infer from the project context when possible.',
+      },
+      studyType: {
+        type: 'string',
+        enum: [
+          'superiority', 'non_inferiority', 'equivalence', 'single_arm', 'dose_response',
+          'adaptive', 'basket', 'platform', 'diagnostic_accuracy', 'agreement', 'usability', 'performance',
+        ],
+        description: 'Study design type.',
+      },
+      objectiveType: {
+        type: 'string',
+        enum: ['efficacy', 'safety', 'performance', 'diagnostic_accuracy', 'usability', 'bioequivalence', 'dose_finding'],
+        description: 'Primary objective of the study.',
+      },
+      endpointType: {
+        type: 'string',
+        enum: ['continuous', 'binary', 'time_to_event', 'ordinal', 'count', 'composite', 'sensitivity_specificity', 'agreement', 'auc_roc'],
+        description: 'Primary endpoint type. Drives which effect-size inputs are needed.',
+      },
+      effectSize: {
+        type: 'number',
+        description: "Standardized effect size (e.g. Cohen's d for continuous). For binary endpoints you may instead supply controlRate and treatmentRate and the engine derives the effect.",
+      },
+      controlRate: {
+        type: 'number',
+        description: 'Event/response rate in the control arm (binary endpoints), 0–1.',
+      },
+      treatmentRate: {
+        type: 'number',
+        description: 'Event/response rate in the treatment arm (binary endpoints), 0–1.',
+      },
+      alpha: {
+        type: 'number',
+        description: 'Type I error rate. Defaults to 0.05 if omitted.',
+      },
+      powerTarget: {
+        type: 'number',
+        description: 'Target power, 0–1. Defaults to 0.80 if omitted.',
+      },
+      attritionRate: {
+        type: 'number',
+        description: 'Expected dropout/attrition rate, 0–1. Defaults to 0.15 if omitted.',
+      },
+      allocationRatio: {
+        type: 'number',
+        description: 'Treatment:control allocation ratio. Defaults to 1 (balanced) if omitted.',
+      },
+      nonInferiorityMargin: {
+        type: 'number',
+        description: 'Non-inferiority margin (required for non_inferiority studies).',
+      },
+      equivalenceMargin: {
+        type: 'number',
+        description: 'Equivalence margin (required for equivalence studies).',
+      },
+      regulatoryBody: {
+        type: 'string',
+        enum: ['FDA', 'EMA', 'MHRA', 'PMDA', 'NMPA', 'TGA', 'Health_Canada'],
+        description: 'Target regulator, so the engine can add agency-specific customization.',
+      },
+      indication: { type: 'string', description: 'Therapeutic indication or intended use.' },
+      phase: { type: 'string', description: 'Trial phase (e.g. "Phase III"), if applicable.' },
+      projectId: { type: 'number', description: 'Project id for scoping/audit.' },
+    },
+    required: ['clientTrack', 'studyType', 'objectiveType', 'endpointType'],
+  },
+};
+
 export const CHECK_DOSSIER_CONSISTENCY: AnaTool = {
   name: 'check_dossier_consistency',
   description:
@@ -2017,6 +2096,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   EXTRACT_DOCUMENT_STRUCTURE,
   CHECK_DOSSIER_CONSISTENCY,
   CHECK_NUMERICAL_INTEGRITY,
+  COMPUTE_SAMPLE_SIZE,
   MINE_PRECEDENTS,
   GENERATE_DOCUMENT,
   BUILD_FROM_TEMPLATE,

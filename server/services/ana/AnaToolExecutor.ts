@@ -588,6 +588,82 @@ registerToolHandler('check_numerical_integrity', async (input: Record<string, un
   }
 });
 
+// Compute Sample Size — deterministic biostatistics engine (validated formulas)
+registerToolHandler('compute_sample_size', async (input: Record<string, unknown>, ctx) => {
+  try {
+    const { anaBiostatsOrchestrator } = await import('../ana-biostats/index.js');
+
+    const num = (v: unknown): number | undefined => {
+      if (v === undefined || v === null || v === '') return undefined;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : undefined;
+    };
+
+    const rawInput = {
+      clientTrack: input.clientTrack as string | undefined,
+      studyType: input.studyType as string | undefined,
+      objectiveType: input.objectiveType as string | undefined,
+      endpointType: input.endpointType as string | undefined,
+      effectSize: num(input.effectSize),
+      controlRate: num(input.controlRate),
+      treatmentRate: num(input.treatmentRate),
+      alpha: num(input.alpha),
+      powerTarget: num(input.powerTarget),
+      attritionRate: num(input.attritionRate),
+      allocationRatio: num(input.allocationRatio),
+      nonInferiorityMargin: num(input.nonInferiorityMargin),
+      equivalenceMargin: num(input.equivalenceMargin),
+      regulatoryBody: input.regulatoryBody as string | undefined,
+      indication: input.indication as string | undefined,
+      phase: input.phase as string | undefined,
+      projectId: num(input.projectId) ?? (ctx?.projectId ?? undefined),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any;
+
+    const result = anaBiostatsOrchestrator.quickCompute(rawInput);
+
+    if (!result.validation.valid) {
+      return JSON.stringify({
+        status: 'needs_parameters',
+        errors: result.validation.errors,
+        message:
+          'The biostatistics engine could not compute — required parameters are missing or invalid. Ask the user for exactly the fields listed in errors, then call this tool again.',
+      });
+    }
+
+    const c = result.computation;
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      sampleSize: {
+        total: c?.adjustedTotal ?? c?.sampleSize.total,
+        rawTotal: c?.sampleSize.total,
+        perGroup: c?.sampleSize.perGroup,
+      },
+      power: c?.power,
+      method: c?.method,
+      assumptions: result.validation.normalizedInput,
+      prefilledDefaults: result.validation.prefilled,
+      warnings: result.validation.warnings,
+      judgment: result.judgment
+        ? {
+            actionRecommendation: result.judgment.actionRecommendation,
+            dimensions: result.judgment.dimensions?.map(d => ({ name: d.name, verdict: d.verdict })),
+            escalationReasons: result.judgment.escalationReasons,
+          }
+        : undefined,
+      regulatory: result.regulatory ? { body: result.regulatory.body } : undefined,
+      interpretation: result.interpretation,
+      instruction:
+        'Report these numbers verbatim. Do NOT recompute or round differently. State which assumptions were defaults (prefilledDefaults) so the user can override them.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({
+      error: `Sample size computation failed: ${err?.message || 'unknown error'}`,
+    });
+  }
+});
+
 // Check Dossier Consistency — cross-artifact divergence detection
 registerToolHandler('check_dossier_consistency', async (input: Record<string, unknown>) => {
   const draftContent = input.draft_content as string;

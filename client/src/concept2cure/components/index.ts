@@ -25,9 +25,6 @@ export * from './templates';
 // Welcome & Onboarding (Claude.ai style)
 export { WelcomeBackScreen } from './common/WelcomeBackScreen';
 
-// Assistant Components
-export { LumenProjectAssistant } from './assistant/LumenProjectAssistant';
-
 // Artifact Viewer (Claude.ai style)
 export { ArtifactViewer } from './artifacts/ArtifactViewer';
 

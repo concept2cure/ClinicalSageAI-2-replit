@@ -23,6 +23,13 @@ import { useCallback, useRef, useState } from 'react';
 import { getAuthHeaders } from '../../../utils/authToken';
 import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
 
+/**
+ * Abort the stream if no bytes arrive for this long. Guards against a stalled
+ * gateway leaving the composer locked in a "Planning response…" state forever.
+ * The timer resets on every chunk, so a long but live generation is fine.
+ */
+const STREAM_IDLE_TIMEOUT_MS = 90_000;
+
 /** Shape of an action chip produced by the server's guidance/command executors. */
 export interface AnaChatAction {
   label: string;
@@ -224,6 +231,25 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       const abortCtl = new AbortController();
       abortRef.current = abortCtl;
 
+      // Idle-timeout guard: abort if the stream goes silent for too long.
+      // `didTimeout` lets the AbortError handler distinguish a timeout from a
+      // user-initiated stop so the message reads correctly.
+      let idleTimer: ReturnType<typeof setTimeout> | null = null;
+      let didTimeout = false;
+      const clearIdleTimer = () => {
+        if (idleTimer) {
+          clearTimeout(idleTimer);
+          idleTimer = null;
+        }
+      };
+      const armIdleTimer = () => {
+        clearIdleTimer();
+        idleTimer = setTimeout(() => {
+          didTimeout = true;
+          abortCtl.abort();
+        }, STREAM_IDLE_TIMEOUT_MS);
+      };
+
       // Capture done-event fields before post_done arrives
       let capturedLatencyMs: number | undefined;
       let capturedProvider: string | undefined;
@@ -318,9 +344,12 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         const decoder = new TextDecoder();
         let buffer = '';
 
+        armIdleTimer();
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
+          // Live activity — reset the idle watchdog.
+          armIdleTimer();
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split('\n');
           buffer = lines.pop() || '';
@@ -466,7 +495,25 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           }
         }
       } catch (err: any) {
-        if (err?.name === 'AbortError') {
+        if (err?.name === 'AbortError' && didTimeout) {
+          // Idle timeout — the stream went silent. Seal any partial tokens and
+          // tell the user, rather than leaving a half-rendered reply.
+          setMessages(prev =>
+            prev.map(m => {
+              if (m.id !== assistantId) return m;
+              return {
+                ...m,
+                text:
+                  m.text.length > 0
+                    ? m.text
+                    : 'Sorry — AnA stopped responding. Please try again.',
+                streaming: false,
+                statusPhase: undefined,
+                warnings: [...(m.warnings || []), 'Response timed out'],
+              };
+            })
+          );
+        } else if (err?.name === 'AbortError') {
           // User stopped — mark stopped and seal whatever tokens rendered.
           setMessages(prev =>
             prev.map(m =>
@@ -493,6 +540,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           );
         }
       } finally {
+        clearIdleTimer();
         abortRef.current = null;
         setIsStreaming(false);
       }

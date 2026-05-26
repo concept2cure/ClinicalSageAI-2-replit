@@ -24,7 +24,7 @@ import styles from './styles.module.css';
 import {
   renderSafeMarkdown,
   sanitizeChatHtml,
-} from '../chat/renderSafeMarkdown';
+} from './renderSafeMarkdown';
 
 // Configure marked once: GitHub-flavoured markdown, no line-break collapsing.
 setOptions({ gfm: true, breaks: false });

@@ -1,12 +1,11 @@
 /**
- * Shared markdown → safe HTML renderer for chat surfaces.
+ * Markdown → safe HTML renderer for the AnA chat surface.
  *
- * Why this lives in a shared module:
- *   AnaPersistentPanel and the ana/Message component both render
- *   assistant text as inline HTML via `dangerouslySetInnerHTML`. Both
- *   need the same sanitization story or one becomes an XSS sink.
- *   Extracted so the allowlist and the marked → DOMPurify chain stay
- *   in one place.
+ * Why this lives in a separate module:
+ *   The ana/Message component renders assistant text as inline HTML via
+ *   `dangerouslySetInnerHTML`, so it needs a single, audited sanitization
+ *   story or it becomes an XSS sink. The allowlist and the
+ *   marked → DOMPurify chain stay here, in one place.
  *
  * Sanitization model:
  *   1. `marked.parse(content)` converts user/assistant markdown to HTML.

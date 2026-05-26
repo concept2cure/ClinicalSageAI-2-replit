@@ -45,6 +45,11 @@ export function ProjectsView({ projects, onSelect, onNew }: ProjectsViewProps) {
           </button>
         )}
       </div>
+      {projects.length === 0 && (
+        <div className={styles.sbEmpty} style={{ padding: '8px 0' }}>
+          No projects yet. Create one to start a workspace.
+        </div>
+      )}
       <div className={styles.projectsGrid}>
         {projects.map(p => (
           <button
