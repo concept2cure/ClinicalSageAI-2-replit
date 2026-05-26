@@ -1220,10 +1220,10 @@ async function recalculateProjectProgress(projectId: number, orgId: number) {
     const completed = parseInt(stats.rows[0].completed, 10) || 0;
     const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-    await pool.query('UPDATE projects SET progress = $1, updated_at = NOW() WHERE id = $2', [
-      progress,
-      projectId,
-    ]);
+    await pool.query(
+      'UPDATE projects SET progress = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3',
+      [progress, projectId, orgId]
+    );
   } catch (err) {
     console.warn('[ProjectSections] Failed to recalculate progress:', err);
   }

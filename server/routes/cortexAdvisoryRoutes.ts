@@ -13,6 +13,7 @@
 import express from 'express';
 import { pool } from '../db';
 import { asyncHandler } from '../middleware/errorHandler';
+import { requireAuthedOrgId } from '../utils/authedOrgId';
 
 const router = express.Router();
 
@@ -261,14 +262,18 @@ const DEVICE_510K_SECTIONS = {
  */
 router.get('/advisory/:projectId', asyncHandler(async (req, res) => {
   const { projectId } = req.params;
+  // Tenant scope: only return advisory analysis for a project the caller's
+  // org owns. Previously this read any project by id (cross-tenant).
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
 
     // Get project context
     const projectResult = await pool.query(
       `
       SELECT id, name, submission_type, therapeutic_area, phase, current_stage, metadata
-      FROM projects WHERE id = $1
+      FROM projects WHERE id = $1 AND organization_id = $2
     `,
-      [projectId]
+      [projectId, guard.orgId]
     );
 
     if (projectResult.rows.length === 0) {
