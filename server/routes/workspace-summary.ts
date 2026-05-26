@@ -71,19 +71,29 @@ router.get('/workspace/summary', async (req: Request, res: Response) => {
     );
 
     // ── 3. Project counts (all project tables) ──────────────────────────────
+    // Every count is scoped to the caller's org — a workspace summary must
+    // reflect this tenant's data, not a global cross-tenant total.
     const [indCount, cerCount, fdaCount] = await Promise.all([
-      sq(`SELECT COUNT(*) AS n FROM ind_projects`).then(r => parseInt(r.rows[0]?.n || '0', 10)),
-      sq(`SELECT COUNT(*) AS n FROM cer_projects`).then(r => parseInt(r.rows[0]?.n || '0', 10)),
-      sq(`SELECT COUNT(*) AS n FROM fda_510k_projects`).then(r =>
+      sq(`SELECT COUNT(*) AS n FROM ind_projects WHERE organization_id = $1`, [orgId]).then(r =>
         parseInt(r.rows[0]?.n || '0', 10)
+      ),
+      sq(`SELECT COUNT(*) AS n FROM cer_projects WHERE organization_id = $1`, [orgId]).then(r =>
+        parseInt(r.rows[0]?.n || '0', 10)
+      ),
+      sq(`SELECT COUNT(*) AS n FROM fda_510k_projects WHERE organization_id = $1`, [orgId]).then(
+        r => parseInt(r.rows[0]?.n || '0', 10)
       ),
     ]);
     const totalProjects = indCount + cerCount + fdaCount;
 
     // ── 4. Document counts ──────────────────────────────────────────────────
     const [docsCount, uploadsCount] = await Promise.all([
-      sq(`SELECT COUNT(*) AS n FROM documents`).then(r => parseInt(r.rows[0]?.n || '0', 10)),
-      sq(`SELECT COUNT(*) AS n FROM file_uploads`).then(r => parseInt(r.rows[0]?.n || '0', 10)),
+      sq(`SELECT COUNT(*) AS n FROM documents WHERE organization_id = $1`, [orgId]).then(r =>
+        parseInt(r.rows[0]?.n || '0', 10)
+      ),
+      sq(`SELECT COUNT(*) AS n FROM file_uploads WHERE organization_id = $1`, [orgId]).then(r =>
+        parseInt(r.rows[0]?.n || '0', 10)
+      ),
     ]);
     const totalDocuments = Math.max(docsCount, uploadsCount);
 

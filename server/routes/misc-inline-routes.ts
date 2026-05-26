@@ -93,13 +93,21 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
   // GET /api/vault/statistics — real DB query on documents table
   router.get('/vault/statistics', async (req: Request, res: Response) => {
     try {
-      const statsResult = await pool.query(`
+      const organizationId = getSecureOrgId(req);
+      if (!organizationId) {
+        return res.status(401).json({ error: 'Organization context required' });
+      }
+      const statsResult = await pool.query(
+        `
         SELECT
           COUNT(*)::int AS total_documents,
           0::bigint AS total_size,
           COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '7 days')::int AS recent_uploads
         FROM documents
-      `);
+        WHERE organization_id = $1
+      `,
+        [organizationId]
+      );
       const stats = statsResult.rows[0] || {};
       res.json({
         totalDocuments: stats.total_documents || 0,
@@ -120,17 +128,24 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
   // GET /api/vault/list — paginated documents query
   router.get('/vault/list', async (req: Request, res: Response) => {
     try {
+      const organizationId = getSecureOrgId(req);
+      if (!organizationId) {
+        return res.status(401).json({ error: 'Organization context required' });
+      }
       const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
       const pageSize = Math.max(1, Math.min(100, parseInt(String(req.query.pageSize || '50'), 10)));
       const offset = (page - 1) * pageSize;
 
-      const countResult = await pool.query('SELECT COUNT(*)::int AS total FROM documents');
+      const countResult = await pool.query(
+        'SELECT COUNT(*)::int AS total FROM documents WHERE organization_id = $1',
+        [organizationId]
+      );
       const total = countResult.rows[0]?.total || 0;
 
       const docsResult = await pool.query(
         `SELECT id, title, document_type, category, status, document_code, description, created_at, updated_at
-         FROM documents ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
-        [pageSize, offset]
+         FROM documents WHERE organization_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+        [organizationId, pageSize, offset]
       );
 
       res.json({
