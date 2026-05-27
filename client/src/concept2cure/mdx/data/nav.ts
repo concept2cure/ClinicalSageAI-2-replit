@@ -41,6 +41,9 @@ export const MDX_NAV_V2: NavItem[] = [
   { id: 'udi',          label: 'UDI and Labeling',      icon: 'tag',          group: 'workstream' },
   { id: 'postmarket',   label: 'Post-market Vigilance', icon: 'alertCircle',  group: 'workstream' },
   { id: 'quality',      label: 'Quality System',        icon: 'shieldCheck',  group: 'workstream' },
+  // Phase 7 workstream surfaces.
+  { id: 'samd',         label: 'SaMD lifecycle',        icon: 'zap',          group: 'workstream' },
+  { id: 'clinical',     label: 'Clinical studies',      icon: 'users',        group: 'workstream' },
 
   // Workbench — cross-program work surfaces.
   { id: 'tasks',        label: 'Tasks and Reviews',     icon: 'clipboardList',group: 'workbench' },
@@ -48,6 +51,9 @@ export const MDX_NAV_V2: NavItem[] = [
   { id: 'validation',   label: 'Validation Center',     icon: 'shieldAlert',  group: 'workbench' },
   { id: 'submissions',  label: 'Submission Center',     icon: 'rocket',       group: 'workbench' },
   { id: 'templates',    label: 'Templates',             icon: 'template',     group: 'workbench' },
+  // Phase 7 workbench surfaces.
+  { id: 'ana-review',   label: 'AnA review queue',      icon: 'sparkles',     group: 'workbench' },
+  { id: 'qsub',         label: 'Q-Sub briefing',        icon: 'chat',         group: 'workbench' },
 
   // Diagnostics — Phase 6 paid-feature surfaces for IVD/CDx/LDT customers.
   { id: 'ivd',          label: 'IVD Pathway',           icon: 'flask',        group: 'diagnostics' },
@@ -139,6 +145,11 @@ export const MDX_SUGGESTIONS: Record<string, string[]> = {
   ivdr:         ['Walk me through Annex VIII classification', 'Find the PER gap vs Annex II/III', 'Schedule the next BSI milestone'],
   cdx:          ['Verify label alignment with KEYTRUDA-9', 'Recompute concordance with the latest cohort', 'Map every NDA section to its PMA equivalent'],
   ldt:          ['Run enforcement-discretion decision for every LDT', 'Show LDTs due for Phase 2 registration', 'Draft the CV-IH401 De Novo Pre-Sub response'],
+  // Phase 7 — AnA review queue, Q-Sub, SaMD, Clinical.
+  'ana-review': ['Accept the 3 high-priority drafts assigned to me', 'Show every draft waiting more than 24h', 'Refine draft d-4216 — MDR narrative root-cause needs clinical input'],
+  qsub:         ['Start a new pre-sub for BX-204 predicate concurrence', 'Show every Q-Sub that received FDA feedback in the last 90 days', 'Draft the specific questions section for Q26-0042'],
+  samd:         ['Re-run V&V coverage — surface every requirement still without a passing test', 'Triage the 4 must-fix anomalies by severity', 'Update SBOM and flag any new CVEs above CVSS 7'],
+  clinical:     ['Run BIMO inspection-readiness check', 'Show site-level enrollment trajectory for all 14 sites', 'Summarize the 2 open SAEs and their adjudication status'],
   // Phase 8 — cross-cutting surfaces.
   search:       ['Show every artifact signed by Jordan in Q2', 'Find every audit entry on CV-330 last 30 days', 'Surface MDR conversations across the portfolio'],
   onboarding:   ['Resume AnA section mapping', 'Surface every unmappable artifact for manual review', 'Seed memory from style guides + RTA letters'],

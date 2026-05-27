@@ -44,6 +44,11 @@ import { IvdSurface } from './surfaces/IvdSurface';
 import { IvdrSurface } from './surfaces/IvdrSurface';
 import { CdxSurface } from './surfaces/CdxSurface';
 import { LdtSurface } from './surfaces/LdtSurface';
+/* Phase 7 — AnA review queue, Q-Sub, SaMD, Clinical. */
+import { AnaReviewSurface } from './surfaces/AnaReviewSurface';
+import { QSubSurface } from './surfaces/QSubSurface';
+import { SamdSurface } from './surfaces/SamdSurface';
+import { ClinicalSurface } from './surfaces/ClinicalSurface';
 /* Phase 8 — cross-cutting. */
 import { SearchSurface } from './surfaces/SearchSurface';
 import { OnboardingSurface } from './surfaces/OnboardingSurface';
@@ -83,6 +88,10 @@ const HERE_LABEL: Record<string, string> = {
   'pre-sub':      'Pre-submission manager',
   'pma-editor':   'PMA module editor',
   'cer-editor':   'CER section editor',
+  'ana-review':   'AnA review queue',
+  qsub:           'Q-Sub briefing',
+  samd:           'SaMD lifecycle · IEC 62304',
+  clinical:       'Clinical study management',
 };
 
 function getStored<T>(key: string, fallback: T): T {
@@ -349,6 +358,40 @@ export function App({ initialNav, projectName }: AppProps = {}) {
       case 'ldt':
         /* Phase 6 — LDT compliance (FDA 2024 rule phase tracker). */
         surface = <LdtSurface onAskAna={askAna} onOpenEditor={openEditor} />;
+        break;
+      case 'ana-review':
+        /* Phase 7 — AnA-generated draft review queue. */
+        surface = <AnaReviewSurface program={programForContext} onAskAna={askAna} />;
+        break;
+      case 'qsub':
+        /* Phase 7 — Pre-Submission (Q-Sub) briefing-document workspace. */
+        surface = (
+          <QSubSurface
+            program={programForContext}
+            onAskAna={askAna}
+            onOpenEditor={openEditor}
+          />
+        );
+        break;
+      case 'samd':
+        /* Phase 7 — IEC 62304 SaMD software-lifecycle workspace. */
+        surface = (
+          <SamdSurface
+            program={programForContext}
+            onAskAna={askAna}
+            onOpenEditor={openEditor}
+          />
+        );
+        break;
+      case 'clinical':
+        /* Phase 7 — Clinical study management (sites, deviations, adjudication). */
+        surface = (
+          <ClinicalSurface
+            program={programForContext}
+            onAskAna={askAna}
+            onOpenEditor={openEditor}
+          />
+        );
         break;
       case 'search':
         /* Phase 8 — global cross-corpus search. */
