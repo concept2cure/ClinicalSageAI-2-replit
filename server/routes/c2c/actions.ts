@@ -23,7 +23,7 @@
  */
 
 import { Router, type Request, type Response } from 'express';
-import { createHash, randomUUID } from 'crypto';
+import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
 import { pool } from '../../db.js';
 import { computeAuditChain, hashPayload } from '../../services/audit/chain.js';
@@ -52,13 +52,11 @@ interface ActionResult {
   state:       string;
 }
 
-const COMMANDS = [
-  'claim', 'transition', 'resolve', 'sign',
-  'accept-ai-suggestion', 'lock',
-  'unclaim', 'transition-back', 'reopen',
-  'revoke-signature', 'reject-ai-suggestion', 'unlock',
-] as const;
-type Command = typeof COMMANDS[number];
+type Command =
+  | 'claim' | 'transition' | 'resolve' | 'sign'
+  | 'accept-ai-suggestion' | 'lock'
+  | 'unclaim' | 'transition-back' | 'reopen'
+  | 'revoke-signature' | 'reject-ai-suggestion' | 'unlock';
 
 const HIGH_RISK_COMMANDS: Set<Command> = new Set(['sign', 'lock', 'revoke-signature']);
 
