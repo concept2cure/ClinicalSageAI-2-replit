@@ -1,6 +1,4 @@
-import type { ReactNode } from 'react';
 import { isFeatureEnabled } from '@/flags/featureFlags';
-import styles from './styles.module.css';
 import type { IconName } from './icons';
 
 export type NavGroup = 'domain' | 'work' | 'intelligence' | 'system';
@@ -56,7 +54,10 @@ export interface DashMetric {
   metric: string;
   unit?: string;
   bar?: { pct: number; tone: 'ok' | 'warn' | 'err' };
-  meta: ReactNode;
+  /** Plain-text summary shown below the metric. The kit used JSX spans for
+   *  delta colouring; those are prototype artefacts — production renders
+   *  plain strings and applies colour via CSS classes on the card itself. */
+  meta: string;
 }
 
 export const DASH: DashMetric[] = [
@@ -75,12 +76,12 @@ export const DASH: DashMetric[] = [
   {
     label: 'Tasks due',
     metric: '7',
-    meta: <><span className={styles.deltaWarn}>3 overdue</span> · 4 due by Friday</>,
+    meta: '3 overdue · 4 due by Friday',
   },
   {
     label: 'Alerts',
     metric: '2',
-    meta: <>FDA guidance update · EMA precedent <span className={styles.deltaUp}>+1</span></>,
+    meta: 'FDA guidance update · EMA precedent +1',
   },
 ];
 
