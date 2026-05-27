@@ -229,6 +229,7 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
         onDelete={() => setArchiveMode('delete')}
         onTransfer={handleTransfer}
         onExportProject={handleExportProject}
+        onOpenInstructionsTab={() => { setConfigOpen(false); setTab('instructions'); }}
         onSave={async form => {
           // Persist to the backend; ignore failure silently — the host
           // can show a toast if it cares. The panel closes regardless

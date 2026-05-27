@@ -47,6 +47,9 @@ interface Props {
   onDelete?: () => void;
   onExportProject?: () => void;
   onAskAna?: (text: string) => void;
+  /** Per HANDOFF item 7: jump to the full Instructions tab when the
+   *  read-only instructions block is clicked in the config panel. */
+  onOpenInstructionsTab?: () => void;
 }
 
 export function ProjectConfigPanel({
@@ -59,6 +62,7 @@ export function ProjectConfigPanel({
   onDelete,
   onExportProject,
   onAskAna,
+  onOpenInstructionsTab,
 }: Props) {
   const [tab, setTab] = useState<ConfigPanelTab>('general');
   const [form, setForm] = useState<PcpForm | null>(null);
@@ -214,6 +218,9 @@ export function ProjectConfigPanel({
 
           {tab === 'instructions' && (
             <div className="pcp-tab-body">
+              {/* Per HANDOFF item 7: this tab is read-only. The single writer
+                  for instructions is the Instructions tab in the detail view.
+                  Clicking the preview opens the full editor. */}
               <div className="pcp-section-head">
                 <div>
                   <h3 className="pcp-h3">Custom instructions</h3>
@@ -221,31 +228,42 @@ export function ProjectConfigPanel({
                     Project-specific guidance injected into every Claude conversation.
                   </p>
                 </div>
-                <span className="pcp-badge" data-tone="ok">{instructions ? 'Active' : 'Inactive'}</span>
+                <span className="pcp-badge" data-tone={instructions ? 'ok' : undefined}>
+                  {instructions ? 'Active' : 'Inactive'}
+                </span>
               </div>
 
-              <textarea
-                className="pcp-textarea pcp-mono"
-                rows={10}
-                value={instructions}
-                onChange={e => e.target.value.length <= 5000 && setInstructions(e.target.value)}
-                placeholder="Add custom instructions for Claude in this project. For example: focus on FDA Class II device requirements. Always cite 21 CFR 820 when discussing QMS. Our predicate device is…"
-              />
+              <button
+                type="button"
+                className="pcp-instr-readonly"
+                onClick={() => { onClose(); onOpenInstructionsTab?.(); }}
+                title="Edit in the Instructions tab"
+                style={{
+                  display: 'block', width: '100%', textAlign: 'left',
+                  background: 'var(--bg-000)', border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-md)', padding: '10px 12px',
+                  fontFamily: 'var(--font-mono)', fontSize: '12px',
+                  color: instructions ? 'var(--text-200)' : 'var(--text-400)',
+                  lineHeight: '1.5', minHeight: '80px', cursor: 'pointer',
+                  whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                }}
+              >
+                {instructions || 'No instructions set. Click to add instructions in the Instructions tab.'}
+              </button>
 
-              <div className="pcp-instr-meta">
+              <div className="pcp-instr-meta" style={{ marginTop: '8px' }}>
                 <span>{instructions.length.toLocaleString()} / 5,000 characters</span>
                 <button
                   type="button"
                   className="pcp-link"
-                  onClick={() => setInstructions('')}
-                  disabled={!instructions}
+                  onClick={() => { onClose(); onOpenInstructionsTab?.(); }}
                 >
-                  Reset to default
+                  Edit in instructions tab
                 </button>
               </div>
 
               <p className="pcp-note">
-                These instructions are injected into every Claude conversation within this project. They help Claude understand your regulatory context, product specifics, and preferred output style.
+                Instructions are managed in the Instructions tab. Click the preview above to open the editor.
               </p>
             </div>
           )}

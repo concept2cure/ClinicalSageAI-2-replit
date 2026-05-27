@@ -53,16 +53,28 @@ export interface Project {
   chats: ProjectChat[];
   memory: ProjectMemory;
   instructions: string;
+  /** Per HANDOFF item 8: whether instructions are currently active. */
+  instructionsActive?: boolean;
   files: ProjectFile[];
-  capacityPct: number;
+  /** Per HANDOFF item 13: field is deprecated — keep optional for seed
+   *  data compatibility, do not reference in new UI code. */
+  capacityPct?: number;
+  /** Per HANDOFF item 12: denormalized counts (replaces full arrays in
+   *  the list-row when using real API data). */
+  chatCount?: number;
+  fileCount?: number;
   submissionType: SubmissionType;
   submissionTypeLabel: string;
   product: string;
   sponsor: string;
   targetAgency: Agency;
+  /** ISO 8601 YYYY-MM-DD. Per HANDOFF item 11. */
   targetDate: string;
   status: ProjectStatus;
   phases: ProjectPhase[];
+  /** Per HANDOFF item 6: derived at render — null when no targetDate.
+   *  Still present on seed rows for legacy compatibility; components
+   *  MUST recompute from targetDate at render, not trust this value. */
   daysToTarget: number | null;
 }
 
