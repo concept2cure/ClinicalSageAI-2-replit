@@ -25,7 +25,7 @@
 import { Router, type Request, type Response } from 'express';
 import { createHash, randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
-import { pool } from '../db.js';
+import { pool } from '../../db.js';
 import { computeAuditChain, hashPayload } from '../../services/audit/chain.js';
 import { verifyToken as verifyMfaToken } from '../../services/mfaService.js';
 
