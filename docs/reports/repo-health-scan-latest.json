@@ -1,23 +1,23 @@
 {
-  "generatedAt": "2026-05-26T18:19:44.220Z",
+  "generatedAt": "2026-05-27T03:59:21.645Z",
   "git": {
-    "sha": "0737407b4fe184f76fa29641d9e539a69e19a459",
-    "branch": "concept2cure-v2"
+    "sha": "253e7abce17c60549da48ae234eacc73c7052d13",
+    "branch": "claude/sharp-brahmagupta-SlRdx"
   },
   "thresholds": {
     "maxBytes": 100000,
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 175,
-    "largeFilesByBytes": 16,
-    "largeFilesByLines": 46
+    "duplicateBasenames": 180,
+    "largeFilesByBytes": 15,
+    "largeFilesByLines": 45
   },
   "findings": {
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 96,
+        "count": 97,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -26,6 +26,7 @@
           "client/src/components/ui/button/index.jsx",
           "client/src/components/ui/card/index.jsx",
           "client/src/components/ui/index.ts",
+          "client/src/concept2cure/_shared/hooks/index.ts",
           "client/src/concept2cure/auth/index.ts",
           "client/src/concept2cure/components/ana/index.ts",
           "client/src/concept2cure/components/artifacts/index.ts",
@@ -634,6 +635,15 @@
         ]
       },
       {
+        "basename": "schema",
+        "count": 3,
+        "paths": [
+          "server/regulatory-brain/schema.js",
+          "shared/schema.js",
+          "shared/schema.ts"
+        ]
+      },
+      {
         "basename": "setup",
         "count": 3,
         "paths": [
@@ -744,14 +754,6 @@
         ]
       },
       {
-        "basename": "anacortexclient",
-        "count": 2,
-        "paths": [
-          "client/src/concept2cure/components/chat/anaCortexClient.ts",
-          "server/services/anaCortexClient.ts"
-        ]
-      },
-      {
         "basename": "analytics-docs",
         "count": 2,
         "paths": [
@@ -808,11 +810,27 @@
         ]
       },
       {
+        "basename": "auditservice",
+        "count": 2,
+        "paths": [
+          "server/services/auditService.js",
+          "server/services/auditService.ts"
+        ]
+      },
+      {
         "basename": "authcontext",
         "count": 2,
         "paths": [
           "client/src/contexts/AuthContext.jsx",
           "client/src/contexts/AuthContext.tsx"
+        ]
+      },
+      {
+        "basename": "authedorgid",
+        "count": 2,
+        "paths": [
+          "server/utils/authedOrgId.js",
+          "server/utils/authedOrgId.ts"
         ]
       },
       {
@@ -925,6 +943,22 @@
         "paths": [
           "server/__tests__/services/cortexPrimeService.test.ts",
           "tests/services/cortexPrimeService.test.ts"
+        ]
+      },
+      {
+        "basename": "data-importer",
+        "count": 2,
+        "paths": [
+          "server/data-importer.js",
+          "server/data-importer.ts"
+        ]
+      },
+      {
+        "basename": "data-importer-v2",
+        "count": 2,
+        "paths": [
+          "server/data-importer-v2.js",
+          "server/data-importer-v2.ts"
         ]
       },
       {
@@ -1448,19 +1482,19 @@
         ]
       },
       {
+        "basename": "rolebasedaccess",
+        "count": 2,
+        "paths": [
+          "server/services/roleBasedAccess.js",
+          "server/services/roleBasedAccess.ts"
+        ]
+      },
+      {
         "basename": "samd",
         "count": 2,
         "paths": [
           "design-system/ui_kits/mdx/data/samd.js",
           "design-system/ui_kits/mdx/surfaces/Samd.jsx"
-        ]
-      },
-      {
-        "basename": "schema",
-        "count": 2,
-        "paths": [
-          "server/regulatory-brain/schema.js",
-          "shared/schema.ts"
         ]
       },
       {
@@ -1541,6 +1575,14 @@
         "paths": [
           "client/src/components/ui/textarea.jsx",
           "client/src/components/ui/textarea.tsx"
+        ]
+      },
+      {
+        "basename": "textprocessing",
+        "count": 2,
+        "paths": [
+          "server/utils/textProcessing.js",
+          "server/utils/textProcessing.ts"
         ]
       },
       {
@@ -1678,6 +1720,10 @@
         "bytes": 179953
       },
       {
+        "file": "server/services/ana/AnaToolExecutor.ts",
+        "bytes": 178879
+      },
+      {
         "file": "server/services/ana-ri/command-executor.ts",
         "bytes": 174190
       },
@@ -1686,20 +1732,16 @@
         "bytes": 170967
       },
       {
-        "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 166975
-      },
-      {
-        "file": "client/src/concept2cure/components/chat/AnaPersistentPanel.tsx",
-        "bytes": 151643
-      },
-      {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
         "bytes": 134822
       },
       {
         "file": "server/routes/authoring-actions.ts",
         "bytes": 134134
+      },
+      {
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "bytes": 121249
       },
       {
         "file": "server/storage.ts",
@@ -1712,10 +1754,6 @@
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "bytes": 114269
-      },
-      {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 109159
       },
       {
         "file": "client/src/concept2cure/components/editor/UnifiedDocumentEditor.tsx",
@@ -1752,16 +1790,12 @@
         "lines": 4644
       },
       {
+        "file": "server/services/ana/AnaToolExecutor.ts",
+        "lines": 4071
+      },
+      {
         "file": "server/storage.ts",
         "lines": 3954
-      },
-      {
-        "file": "client/src/concept2cure/components/chat/AnaPersistentPanel.tsx",
-        "lines": 3824
-      },
-      {
-        "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 3822
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -1792,6 +1826,10 @@
         "lines": 2379
       },
       {
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "lines": 2308
+      },
+      {
         "file": "client/src/concept2cure/models/ctdHierarchy.ts",
         "lines": 2299
       },
@@ -1801,11 +1839,7 @@
       },
       {
         "file": "client/src/concept2cure/ZenApp.tsx",
-        "lines": 2158
-      },
-      {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2114
+        "lines": 2160
       },
       {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",
@@ -1920,7 +1954,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 238,
+      "duplicateGroups": 249,
       "largeByBytes": 10,
       "largeByLines": 31
     },
@@ -1933,8 +1967,8 @@
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 105,
-      "largeByBytes": 3,
-      "largeByLines": 5
+      "largeByBytes": 2,
+      "largeByLines": 4
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",
@@ -1944,7 +1978,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 28,
+      "duplicateGroups": 29,
       "largeByBytes": 1,
       "largeByLines": 2
     },

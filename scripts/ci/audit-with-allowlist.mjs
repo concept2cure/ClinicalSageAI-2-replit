@@ -34,6 +34,13 @@ const ACCEPTED_GHSA_IDS = new Set([
   'GHSA-685m-2w69-288q', // unbounded protobuf recursion
   // @babel/plugin-transform-modules-systemjs — advisory range <=7.29.3, we ship 7.29.4
   'GHSA-fv7c-fp4j-7gwp', // arbitrary code generation
+  // tmp — advisory range <0.2.6; exceljs@4.4.0 (latest) declares `tmp: ^0.2.0`
+  // resolving to 0.2.5. No upgrade path exists: exceljs has no newer release that
+  // bumps tmp. The vulnerability requires attacker-controlled prefix/postfix options
+  // to tmp.tmpName(); exceljs passes fixed internal strings — not user input — so
+  // the path-traversal gadget is not reachable in our usage. Accepted until exceljs
+  // ships a release that depends on tmp >= 0.2.6.
+  'GHSA-ph9p-34f9-6g65', // tmp path traversal via unsanitized prefix/postfix
 ]);
 
 const proc = spawnSync('npm', ['audit', '--audit-level=high', '--json'], {
