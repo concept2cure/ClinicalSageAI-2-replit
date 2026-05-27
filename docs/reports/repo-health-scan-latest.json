@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-05-27T18:27:22.222Z",
+  "generatedAt": "2026-05-27T20:07:31.063Z",
   "git": {
-    "sha": "976d1ba48473ccdb6844fa08187fb66ec5575c97",
+    "sha": "27a44e338b428d5a7c6e2e58962287803c08b6cb",
     "branch": "claude/sharp-brahmagupta-SlRdx"
   },
   "thresholds": {
@@ -1716,7 +1716,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "bytes": 675674
+        "bytes": 680337
       },
       {
         "file": "server/statistics-service.ts",
@@ -1778,7 +1778,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "lines": 18178
+        "lines": 18310
       },
       {
         "file": "server/statistics-service.ts",
