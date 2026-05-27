@@ -54,7 +54,7 @@ interface Props {
   /** Per HANDOFF section 14: e-signature governed action (useSign). */
   onSign?: (reason: string) => Promise<void>;
   /** Per HANDOFF section 14: lock governed action (useLock). */
-  onLock?: () => Promise<void>;
+  onLock?: () => void;
 }
 
 export function ProjectConfigPanel({
@@ -642,9 +642,9 @@ export function ProjectConfigPanel({
                     <button
                       type="button"
                       className="pcp-btn"
-                      onClick={async () => {
+                      onClick={() => {
                         onClose();
-                        await onLock();
+                        onLock();
                       }}
                     >
                       Lock…

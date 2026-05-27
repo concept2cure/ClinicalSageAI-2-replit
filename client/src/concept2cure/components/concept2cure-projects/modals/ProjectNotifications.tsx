@@ -34,6 +34,7 @@ interface Props {
 export function ProjectNotifications({ open, onClose, projects, onOpenProject }: Props) {
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [readIds, setReadIds] = useState<Set<string>>(() => loadReadIds());
+  const [confirmingReset, setConfirmingReset] = useState(false);
 
   const notifications = useMemo(
     () => PNOT_NOTIFS.map(n => ({ ...n, unread: n.unread && !readIds.has(n.id) })),
@@ -137,19 +138,26 @@ export function ProjectNotifications({ open, onClose, projects, onOpenProject }:
             Mark all as read
           </button>
           <span className="pnot-foot-spacer" />
-          <button
-            type="button"
-            className="pnot-foot-btn"
-            onClick={() => {
-              if (window.confirm('Reset all notifications to unread?')) {
+          {confirmingReset ? (
+            <>
+              <span className="pnot-foot-confirm">Reset all to unread?</span>
+              <button type="button" className="pnot-foot-btn" onClick={() => setConfirmingReset(false)}>Cancel</button>
+              <button type="button" className="pnot-foot-btn" onClick={() => {
                 setReadIds(new Set());
                 persistReadIds(new Set());
-              }
-            }}
-            title="Reset read/unread state"
-          >
-            Notification settings
-          </button>
+                setConfirmingReset(false);
+              }}>Reset</button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="pnot-foot-btn"
+              onClick={() => setConfirmingReset(true)}
+              title="Reset read/unread state"
+            >
+              Notification settings
+            </button>
+          )}
         </footer>
       </div>
     </div>

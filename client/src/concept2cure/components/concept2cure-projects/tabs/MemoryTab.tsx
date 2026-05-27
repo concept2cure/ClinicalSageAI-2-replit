@@ -33,6 +33,7 @@ interface Props {
 export function MemoryTab({ project, onSwitchTab }: Props) {
   const [enabled, setEnabled] = useState(project.memory.enabled);
   const [forgotten, setForgotten] = useState<string[]>([]);
+  const [confirmingForgetAll, setConfirmingForgetAll] = useState(false);
 
   useEffect(() => {
     const map = loadForgotten();
@@ -51,9 +52,6 @@ export function MemoryTab({ project, onSwitchTab }: Props) {
   };
 
   const forgetAll = () => {
-    if (!window.confirm(
-      `Forget every learning in "${project.name}"? This is final — Claude will start fresh.`,
-    )) return;
     const next = allLearnings.map(l => `${l.when}|${l.kind}|${l.text}`);
     setForgotten(next);
     const map = loadForgotten();
@@ -195,14 +193,22 @@ export function MemoryTab({ project, onSwitchTab }: Props) {
               >
                 Audit trail
               </button>
-              <button
-                type="button"
-                className="pmem-danger"
-                onClick={forgetAll}
-                disabled={learnings.length === 0}
-              >
-                Forget everything in this project
-              </button>
+              {confirmingForgetAll ? (
+                <div className="pmem-confirm-row">
+                  <span className="pmem-confirm-lbl">Forget all {learnings.length} learnings? This is final.</span>
+                  <button type="button" className="prj-btn" onClick={() => setConfirmingForgetAll(false)}>Cancel</button>
+                  <button type="button" className="pmem-danger" onClick={() => { forgetAll(); setConfirmingForgetAll(false); }}>Forget everything</button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="pmem-danger"
+                  onClick={() => setConfirmingForgetAll(true)}
+                  disabled={learnings.length === 0}
+                >
+                  Forget everything in this project
+                </button>
+              )}
             </div>
             <p className="pmem-note">
               Forgetting is final — once cleared, Claude will start fresh in this project. Audit-trail entries (who turned memory on/off, what was forgotten and when) are retained per 21 CFR Part 11.
