@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-05-27T03:59:21.645Z",
+  "generatedAt": "2026-05-27T18:27:22.222Z",
   "git": {
-    "sha": "253e7abce17c60549da48ae234eacc73c7052d13",
+    "sha": "976d1ba48473ccdb6844fa08187fb66ec5575c97",
     "branch": "claude/sharp-brahmagupta-SlRdx"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 180,
+    "duplicateBasenames": 181,
     "largeFilesByBytes": 15,
     "largeFilesByLines": 45
   },
@@ -446,6 +446,15 @@
         ]
       },
       {
+        "basename": "clinical",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/mdx/data/clinical.ts",
+          "design-system/ui_kits/mdx/data/clinical.js",
+          "design-system/ui_kits/mdx/surfaces/Clinical.jsx"
+        ]
+      },
+      {
         "basename": "config",
         "count": 3,
         "paths": [
@@ -626,12 +635,30 @@
         ]
       },
       {
+        "basename": "qsub",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/mdx/data/qsub.ts",
+          "design-system/ui_kits/mdx/data/qsub.js",
+          "design-system/ui_kits/mdx/surfaces/QSub.jsx"
+        ]
+      },
+      {
         "basename": "resolution",
         "count": 3,
         "paths": [
           "server/routes/resolution.ts",
           "shared/schema/resolution.ts",
           "shared/types/resolution.ts"
+        ]
+      },
+      {
+        "basename": "samd",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/mdx/data/samd.ts",
+          "design-system/ui_kits/mdx/data/samd.js",
+          "design-system/ui_kits/mdx/surfaces/Samd.jsx"
         ]
       },
       {
@@ -751,6 +778,14 @@
         "paths": [
           "server/routes/ana-intelligence.ts",
           "shared/schema/ana-intelligence.ts"
+        ]
+      },
+      {
+        "basename": "ana-review",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/mdx/data/ana-review.ts",
+          "design-system/ui_kits/mdx/data/ana-review.js"
         ]
       },
       {
@@ -895,14 +930,6 @@
         "paths": [
           "server/routes/ana-ri/chat.ts",
           "server/routes/chat.ts"
-        ]
-      },
-      {
-        "basename": "clinical",
-        "count": 2,
-        "paths": [
-          "design-system/ui_kits/mdx/data/clinical.js",
-          "design-system/ui_kits/mdx/surfaces/Clinical.jsx"
         ]
       },
       {
@@ -1394,14 +1421,6 @@
         ]
       },
       {
-        "basename": "qsub",
-        "count": 2,
-        "paths": [
-          "design-system/ui_kits/mdx/data/qsub.js",
-          "design-system/ui_kits/mdx/surfaces/QSub.jsx"
-        ]
-      },
-      {
         "basename": "queryclient",
         "count": 2,
         "paths": [
@@ -1487,14 +1506,6 @@
         "paths": [
           "server/services/roleBasedAccess.js",
           "server/services/roleBasedAccess.ts"
-        ]
-      },
-      {
-        "basename": "samd",
-        "count": 2,
-        "paths": [
-          "design-system/ui_kits/mdx/data/samd.js",
-          "design-system/ui_kits/mdx/surfaces/Samd.jsx"
         ]
       },
       {
@@ -1757,7 +1768,7 @@
       },
       {
         "file": "client/src/concept2cure/components/editor/UnifiedDocumentEditor.tsx",
-        "bytes": 107745
+        "bytes": 108355
       }
     ],
     "largeFilesByLines": [
@@ -1811,7 +1822,7 @@
       },
       {
         "file": "client/src/concept2cure/components/editor/UnifiedDocumentEditor.tsx",
-        "lines": 2830
+        "lines": 2840
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -1960,13 +1971,13 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 134,
+      "duplicateGroups": 135,
       "largeByBytes": 2,
       "largeByLines": 7
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 105,
+      "duplicateGroups": 109,
       "largeByBytes": 2,
       "largeByLines": 4
     },
