@@ -10,6 +10,7 @@ import { authMiddleware } from '../auth';
 import { db } from '../db';
 import { createScopedLogger } from '../utils/logger';
 import auditService from '../services/auditService';
+import { writeMutation } from './c2c/actions.js';
 
 const SECTION_APPROVAL_STATES: ReadonlySet<string> = new Set(['validated', 'approved']);
 
@@ -628,6 +629,21 @@ router.post('/:sectionId/accept-ana-draft', authMiddleware, async (req, res) => 
         refined:       Boolean(parsed.data.refined_content),
         status:        updated.status,
       },
+    });
+
+    // Also write to the universal mutation ledger so the audit chain starts.
+    // Fire-and-forget: legacy path must not break if the new table is absent.
+    void writeMutation(
+      'accept-ai-suggestion',
+      {
+        target: `section:cerv2:${sectionId}`,
+        reason: `Accepted AnA draft for section ${sectionId}`,
+        payload: { status: nextStatus, refined: Boolean(parsed.data.refined_content) },
+      },
+      userId ?? 0,
+      organizationId,
+    ).catch((err: unknown) => {
+      logger.warn('c2c_ana_actions write failed (non-blocking)', { err });
     });
 
     return res.json({ section: serializeSection(updated) });

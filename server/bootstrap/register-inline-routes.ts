@@ -283,6 +283,16 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Authoring Actions routes:', error);
   }
 
+  // C2C universal mutation primitives (Mutation Primitives brief — Day 2).
+  // Mounts all six governed-action endpoints + six reverse counterparts.
+  try {
+    const c2cActionsModule = await import('../routes/c2c/actions');
+    app.use('/api/c2c/actions', authMiddleware, c2cActionsModule.default);
+    console.log('✅ C2C Actions routes mounted (/api/c2c/actions)');
+  } catch (error) {
+    console.error('❌ Failed to mount C2C Actions routes:', error);
+  }
+
   // Ana Platform Control (agentic settings, modules, onboarding).
   try {
     const anaPlatformModule = await import('../routes/ana-platform-control');

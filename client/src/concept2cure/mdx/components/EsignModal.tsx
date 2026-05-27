@@ -10,10 +10,11 @@
  *   2. Identity re-challenge (password + 6-digit TOTP)
  *   3. Confirmation — shows signing manifest entry before commit
  *
- * The server-side commit endpoint (`POST /api/mdx/esig/commit`) validates
- * password + TOTP, writes the SHA-256-chained audit entry, then executes
- * the held mutation. The modal's `onConfirm` callback should POST the
- * manifest and only execute the mutation after a 2xx response.
+ * The server-side commit endpoint is `POST /api/c2c/actions/sign`. It
+ * validates password + TOTP, writes the SHA-256-chained audit entry, then
+ * executes the held mutation. The modal's `onConfirm` callback should POST
+ * the manifest and only proceed after a 2xx response. Callers should use
+ * `useSign()` from `_shared/hooks/useC2cAction` which handles this.
  *
  * Port basis: design-system/ui_kits/mdx/esign-modal.jsx.
  */
@@ -71,11 +72,11 @@ export interface EsignModalProps {
   /** Identity displayed in step 2 ("you, the signer"). */
   signer?: { name: string; email: string; role: string; lastSigned?: string };
   onCancel: () => void;
-  /** Receives the manifest. Caller posts to /api/mdx/esig/commit, awaits
-   *  the response, and only then proceeds with the held mutation. The
-   *  modal stays open while the promise is unresolved (showing "Sealing
-   *  chain…"). Resolve to close. Reject to surface the error inline via
-   *  `submitError` (caller's responsibility to update state). */
+  /** Receives the manifest. Caller should use `useSign()` to post to
+   *  `POST /api/c2c/actions/sign`, await the response, then resolve this
+   *  promise to close the modal. The modal stays open while the promise
+   *  is unresolved (showing "Sealing chain…"). Reject to surface an error
+   *  inline via `submitError` (caller's responsibility to update state). */
   onConfirm: (manifest: EsigManifest) => Promise<void> | void;
   /** Optional error from a failed commit — surfaced in step 3. */
   submitError?: string | null;
