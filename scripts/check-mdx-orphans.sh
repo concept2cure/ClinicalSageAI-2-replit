@@ -90,8 +90,9 @@ while IFS= read -r f; do
   if [ ! -f "$REGISTRAR" ]; then
     continue
   fi
-  if ! grep -qE "from\s+['\"][^'\"]*${base_no_ext}['\"]" "$REGISTRAR" \
-       && ! grep -RIlE "from\s+['\"][^'\"]*${base_no_ext}['\"]" server/bootstrap server/index.ts server/app.ts server/server.ts 2>/dev/null | head -1 | grep -q .; then
+  # Match both static (from '...') and dynamic (import('...')) imports.
+  if ! grep -qE "(from|import)\s*\(?\s*['\"][^'\"]*${base_no_ext}['\"]" "$REGISTRAR" \
+       && ! grep -RIlE "(from|import)\s*\(?\s*['\"][^'\"]*${base_no_ext}['\"]" server/bootstrap server/index.ts server/app.ts server/server.ts 2>/dev/null | head -1 | grep -q .; then
     echo "UNMOUNTED ROUTE: $f exports a Router but no registrar imports it."
     violations=$((violations + 1))
   fi

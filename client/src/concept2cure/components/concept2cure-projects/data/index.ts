@@ -16,7 +16,6 @@ export {
 export type { PcpTab, PcpRole, PcpMember, PcpSsoGroup } from './config';
 
 export { PACT_EVENTS, PACT_KIND_LABEL } from './activity';
-export { PLNK_LINKS, PLNK_KIND_META } from './links';
 export {
   PLF_TYPES, PLF_STATUSES, PLF_AGENCIES, PLF_OWNERS, PLF_ACTIVITY,
   PLF_SAVED_VIEWS,

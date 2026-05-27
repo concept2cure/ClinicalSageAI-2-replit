@@ -5,7 +5,8 @@
  */
 import { useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
-import type { Project, ProjectFile } from '../types';
+import { useProjectFiles } from '../data/useProjectFiles';
+import type { Project } from '../types';
 
 interface Props {
   project: Project;
@@ -16,13 +17,15 @@ interface Props {
 type SortKey = 'recent' | 'name' | 'size' | 'kind';
 type GroupKey = 'kind' | 'none';
 
+import type { ProjectFile } from '../data/useProjectFiles';
+
 interface AugmentedFile extends ProjectFile {
   uploaded: string;
-  size: string;
-  author: string;
+  sizeLabel: string;
 }
 
 export function FilesTab({ project, onProjectMutated, onAskAna }: Props) {
+  const { files, loading: filesLoading, refetch: refetchFiles } = useProjectFiles(project.id);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortKey>('recent');
   const [groupBy, setGroupBy] = useState<GroupKey>('kind');
@@ -45,6 +48,7 @@ export function FilesTab({ project, onProjectMutated, onAskAna }: Props) {
         });
       }
       onProjectMutated?.();
+      refetchFiles();
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -53,13 +57,12 @@ export function FilesTab({ project, onProjectMutated, onAskAna }: Props) {
   };
 
   const augmented = useMemo<AugmentedFile[]>(() => {
-    return project.files.map((f, i) => ({
+    return files.map(f => ({
       ...f,
-      uploaded: ['12 hours ago', '1 day ago', '2 days ago', '4 days ago', '1 week ago'][i % 5],
-      size: f.lines ? `${(f.lines * 0.082).toFixed(1)} KB` : '—',
-      author: i % 2 ? 'JM Smith' : 'A Park',
+      uploaded: f.when,
+      sizeLabel: f.lines ? `${(f.lines * 0.082).toFixed(1)} KB` : '—',
     }));
-  }, [project.files]);
+  }, [files]);
 
   const filtered = augmented.filter(f =>
     f.name.toLowerCase().includes(query.toLowerCase()),
@@ -83,7 +86,7 @@ export function FilesTab({ project, onProjectMutated, onAskAna }: Props) {
       <header className="pfiles-head">
         <div>
           <div className="pfiles-eyebrow">Project files</div>
-          <h2 className="pfiles-title">{project.files.length} files in this project</h2>
+          <h2 className="pfiles-title">{files.length} files in this project</h2>
           <p className="pfiles-sub">
             Files added here are available to every chat. Claude can read, cite, and update them — and tracks which sections of which files informed each answer.
           </p>
@@ -130,7 +133,7 @@ export function FilesTab({ project, onProjectMutated, onAskAna }: Props) {
           <span className="pfiles-search-ico">{I.search}</span>
           <input
             className="pfiles-search-input"
-            placeholder={`Search ${project.files.length} files…`}
+            placeholder={`Search ${files.length} files…`}
             value={query}
             onChange={e => setQuery(e.target.value)}
           />
@@ -161,7 +164,7 @@ export function FilesTab({ project, onProjectMutated, onAskAna }: Props) {
         </div>
       </div>
 
-      {sorted.length === 0 && (
+      {!filesLoading && sorted.length === 0 && (
         <div className="pfiles-empty">
           <div className="pfiles-empty-ico">{I.file}</div>
           <div className="pfiles-empty-title">No files match "{query}"</div>
@@ -206,7 +209,7 @@ export function FilesTab({ project, onProjectMutated, onAskAna }: Props) {
                 </span>
                 <span className="pfiles-tr-author">{f.author}</span>
                 <span className="pfiles-tr-when">{f.uploaded}</span>
-                <span className="pfiles-tr-size">{f.size}</span>
+                <span className="pfiles-tr-size">{f.sizeLabel}</span>
                 <span className="pfiles-tr-lines">{f.lines || '—'}</span>
               </button>
             ))}

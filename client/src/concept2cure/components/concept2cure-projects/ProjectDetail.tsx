@@ -11,7 +11,7 @@
  */
 import { useEffect, useState } from 'react';
 import { I } from './icons';
-import { PACT_EVENTS, PLNK_LINKS, useProjectsMutations } from './data';
+import { useProjectsMutations } from './data';
 import { downloadJsonSnapshot } from './data/useProjectsMutations';
 import { useClaim, useTransition, useSign, useLock } from '../../_shared/hooks/useC2cAction';
 import { ProjectMoreMenu } from './ProjectMoreMenu';
@@ -134,9 +134,9 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
     { id: 'chats',        label: 'Chats',        count: project.chats.length },
     { id: 'memory',       label: 'Memory',       count: null },
     { id: 'instructions', label: 'Instructions', count: null },
-    { id: 'files',        label: 'Files',        count: project.files.length },
-    { id: 'linked',       label: 'Linked',       count: (PLNK_LINKS[project.id] || []).length || null },
-    { id: 'activity',     label: 'Activity',     count: (PACT_EVENTS[project.id] || []).length || null },
+    { id: 'files',        label: 'Files',        count: null },
+    { id: 'linked',       label: 'Linked',       count: null },
+    { id: 'activity',     label: 'Activity',     count: null },
   ];
 
   return (

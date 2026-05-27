@@ -12,6 +12,7 @@ import { I } from '../icons';
 import { ProjectTimeline } from '../ProjectTimeline';
 import { ReasonModal } from '../modals/ReasonModal';
 import { useResolve } from '../../../_shared/hooks/useC2cAction';
+import { useProjectFiles } from '../data/useProjectFiles';
 import type { DetailTab, Project } from '../types';
 
 interface Props {
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export function ChatsTab({ project, onSwitchTab, onProjectMutated }: Props) {
+  const { files } = useProjectFiles(project.id);
   const resolveAction = useResolve();
   const [resolvePhase, setResolvePhase] = useState<{ id: string; name: string } | null>(null);
 
@@ -182,7 +184,7 @@ export function ChatsTab({ project, onSwitchTab, onProjectMutated }: Props) {
           </header>
           {/* Per HANDOFF item 13: capacityPct dropped. Capacity bar removed. */}
           <div className="prj-files">
-            {project.files.map(f => (
+            {files.map(f => (
               <button
                 type="button"
                 key={f.name}
