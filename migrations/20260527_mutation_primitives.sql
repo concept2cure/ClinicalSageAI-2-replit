@@ -13,8 +13,10 @@ BEGIN;
 -- failed / reversed).
 --
 -- Type corrections applied vs original brief:
---   proposed_by / decided_by : integer (users.id is serial, not uuid)
---   audit_row_id             : uuid    (audit_logs.id is uuid)
+--   proposed_by / decided_by : integer (users.id is serial, not uuid); no FK — migration
+--                              must run on any schema state (Neon preview or bare CI DB)
+--   audit_row_id             : uuid (audit_logs.id is uuid); no FK — avoids circular ref
+--                              with audit_logs.ana_action_id and bare-schema failures
 --   org_id                   : integer (organizations use integer PKs)
 --   conversation_id          : text, no FK (@kit-registry-no-consumer-yet;
 --                              FK added in Phase 10.1 when c2c_ana_conversations ships)
@@ -32,12 +34,12 @@ CREATE TABLE IF NOT EXISTS c2c_ana_actions (
   agentic_mode    text        NOT NULL DEFAULT 'suggest',     -- 'suggest' | 'act_without_asking'
   state           text        NOT NULL DEFAULT 'proposed',    -- proposed | approved | modified | skipped | executed | failed | reversed
   proposed_at     timestamptz NOT NULL DEFAULT now(),
-  proposed_by     integer     NOT NULL REFERENCES users(id),
+  proposed_by     integer     NOT NULL,
   decided_at      timestamptz,
-  decided_by      integer     REFERENCES users(id),
+  decided_by      integer,
   decision_reason text,
   executed_at     timestamptz,
-  audit_row_id    uuid        REFERENCES audit_logs(id),      -- backlink once executed
+  audit_row_id    uuid,                                       -- backlink once executed; no FK (avoids circular ref with audit_logs)
   reverse_of      text        REFERENCES c2c_ana_actions(id),
   idempotency_key text        UNIQUE,
 
@@ -66,20 +68,30 @@ CREATE INDEX IF NOT EXISTS c2c_ana_actions_proposed_at ON c2c_ana_actions (propo
 -- of zero reads on the old columns (tracked via query logging).
 --
 -- Type correction: actor_id is integer (C-5 resolution) — users.id is serial.
--- No FK on actor_id: audit_logs is append-only history; users.id values in
--- legacy rows may have been deleted. Consistent with existing user_id column
--- which also carries no FK.
+-- No FK on actor_id or ana_action_id: audit_logs is append-only history; actor
+-- rows may be deleted, and ana_action_id would create a circular FK with
+-- c2c_ana_actions.audit_row_id. Both relationships enforced at application layer.
 
-ALTER TABLE audit_logs
-  ADD COLUMN IF NOT EXISTS actor_id      integer,
-  ADD COLUMN IF NOT EXISTS target        text,
-  ADD COLUMN IF NOT EXISTS target_type   text,
-  ADD COLUMN IF NOT EXISTS target_id     text,
-  ADD COLUMN IF NOT EXISTS reason        text,
-  ADD COLUMN IF NOT EXISTS payload_hash  text,
-  ADD COLUMN IF NOT EXISTS ana_action_id text        REFERENCES c2c_ana_actions(id),
-  ADD COLUMN IF NOT EXISTS sha256_chain  text,
-  ADD COLUMN IF NOT EXISTS occurred_at   timestamptz NOT NULL DEFAULT now();
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'audit_logs'
+  ) THEN
+    ALTER TABLE audit_logs
+      ADD COLUMN IF NOT EXISTS actor_id      integer,
+      ADD COLUMN IF NOT EXISTS target        text,
+      ADD COLUMN IF NOT EXISTS target_type   text,
+      ADD COLUMN IF NOT EXISTS target_id     text,
+      ADD COLUMN IF NOT EXISTS reason        text,
+      ADD COLUMN IF NOT EXISTS payload_hash  text,
+      ADD COLUMN IF NOT EXISTS ana_action_id text,
+      ADD COLUMN IF NOT EXISTS sha256_chain  text,
+      ADD COLUMN IF NOT EXISTS occurred_at   timestamptz NOT NULL DEFAULT now();
+  ELSE
+    RAISE NOTICE 'audit_logs not present in this schema; skipping chain field addition.';
+  END IF;
+END $$;
 
 -- ── 3. Historical backfill ────────────────────────────────────────────────
 --

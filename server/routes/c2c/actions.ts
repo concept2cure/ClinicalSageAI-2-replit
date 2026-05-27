@@ -233,8 +233,8 @@ export async function writeMutation(
       `INSERT INTO audit_logs
          (id, tenant_id, user_id, action, table_name, record_id,
           actor_id, target, target_type, target_id, reason, payload_hash,
-          ana_action_id, sha256_chain, occurred_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+          ana_action_id, sha256_chain, occurred_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
       [
         auditId,
         orgId,
@@ -250,7 +250,6 @@ export async function writeMutation(
         payloadHash,
         actionId,
         sha256Chain,
-        occurredAt,
         occurredAt,
       ],
     );
