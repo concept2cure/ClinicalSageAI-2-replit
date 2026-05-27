@@ -50,6 +50,10 @@ interface Props {
   /** Per HANDOFF item 7: jump to the full Instructions tab when the
    *  read-only instructions block is clicked in the config panel. */
   onOpenInstructionsTab?: () => void;
+  /** Per HANDOFF section 14: e-signature governed action (useSign). */
+  onSign?: (reason: string) => Promise<void>;
+  /** Per HANDOFF section 14: lock governed action (useLock). */
+  onLock?: () => Promise<void>;
 }
 
 export function ProjectConfigPanel({
@@ -63,6 +67,8 @@ export function ProjectConfigPanel({
   onExportProject,
   onAskAna,
   onOpenInstructionsTab,
+  onSign,
+  onLock,
 }: Props) {
   const [tab, setTab] = useState<ConfigPanelTab>('general');
   const [form, setForm] = useState<PcpForm | null>(null);
@@ -403,19 +409,36 @@ export function ProjectConfigPanel({
                 <p className="pcp-section-sub">
                   Assign a regulatory lead responsible for submission oversight, review approvals, and compliance sign-off.
                 </p>
-                <button
-                  type="button"
-                  className="pcp-btn"
-                  onClick={() =>
-                    onAskAna?.(
-                      `Assign a regulatory lead for project "${project.name}". List the active members ` +
-                        'who hold the Reviewer or Owner role, propose the strongest match for this submission type, ' +
-                        'and record the assignment with an e-sig.',
-                    )
-                  }
-                >
-                  Assign regulatory lead
-                </button>
+                <div className="pcp-btn-row" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="pcp-btn"
+                    onClick={() =>
+                      onAskAna?.(
+                        `Assign a regulatory lead for project "${project.name}". List the active members ` +
+                          'who hold the Reviewer or Owner role, propose the strongest match for this submission type, ' +
+                          'and record the assignment with an e-sig.',
+                      )
+                    }
+                  >
+                    Assign regulatory lead
+                  </button>
+                  {onSign && (
+                    <button
+                      type="button"
+                      className="pcp-btn primary"
+                      onClick={async () => {
+                        const reason = window.prompt(
+                          `E-signature for project "${project.name}".\n\nReason for signing (10+ characters):`,
+                        );
+                        if (!reason || reason.trim().length < 10) return;
+                        await onSign(reason.trim());
+                      }}
+                    >
+                      {I.shieldCheck} E-sign project
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -612,6 +635,26 @@ export function ProjectConfigPanel({
                     Transfer
                   </button>
                 </div>
+                {onLock && (
+                  <div className="pcp-danger-row">
+                    <div>
+                      <div className="pcp-danger-name">Lock project</div>
+                      <div className="pcp-danger-sub">
+                        Freeze all edits. Recorded in the audit trail with a governed action.
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="pcp-btn"
+                      onClick={async () => {
+                        onClose();
+                        await onLock();
+                      }}
+                    >
+                      Lock…
+                    </button>
+                  </div>
+                )}
                 <div className="pcp-danger-row">
                   <div>
                     <div className="pcp-danger-name is-danger">Delete project</div>

@@ -15,7 +15,7 @@ export type ProjectStatus =
 
 export type Agency = 'FDA' | 'EMA' | 'PMDA' | 'MHRA' | 'HC' | 'Health Canada' | 'Swissmedic' | string;
 
-export type PhaseStatus = 'completed' | 'current' | 'pending' | 'upcoming' | 'in_progress';
+export type PhaseStatus = 'completed' | 'current' | 'pending' | 'upcoming' | 'in_progress' | 'blocked';
 
 export interface ProjectChat {
   id: string;

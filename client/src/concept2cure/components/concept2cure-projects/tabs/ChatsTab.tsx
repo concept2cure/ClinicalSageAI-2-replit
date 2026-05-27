@@ -3,10 +3,14 @@
  * list (main column) with memory / instructions / files side cards.
  * Mirror of design-system/ui_kits/home/Projects.jsx (lines 330–431, the
  * `tab === 'chats'` branch of ProjectDetail).
+ *
+ * Per HANDOFF section 14: useResolve is wired here and forwarded to
+ * ProjectTimeline as onResolveBlocker for blocked phases.
  */
 import { useRef, useState } from 'react';
 import { I } from '../icons';
 import { ProjectTimeline } from '../ProjectTimeline';
+import { useResolve } from '../../../_shared/hooks/useC2cAction';
 import type { DetailTab, Project } from '../types';
 
 interface Props {
@@ -16,6 +20,21 @@ interface Props {
 }
 
 export function ChatsTab({ project, onSwitchTab, onProjectMutated }: Props) {
+  const resolveAction = useResolve();
+
+  const handleResolveBlocker = async (phaseId: string, phaseName: string) => {
+    const reason = window.prompt(
+      `Resolve blocker on phase "${phaseName}".\n\nDescribe what was resolved (10+ characters):`,
+    );
+    if (!reason || reason.trim().length < 10) return;
+    try {
+      await resolveAction.trigger({
+        target: `phase:${project.id}:${phaseId}`,
+        reason: reason.trim(),
+      });
+      onProjectMutated?.();
+    } catch { /* error surfaced via resolveAction.error */ }
+  };
   const [composer, setComposer] = useState('');
   const [uploading, setUploading] = useState(false);
   const attachRef = useRef<HTMLInputElement>(null);
@@ -44,7 +63,9 @@ export function ChatsTab({ project, onSwitchTab, onProjectMutated }: Props) {
   return (
     <div className="prj-grid">
       <section className="prj-main">
-        {project.phases && project.phases.length > 0 && <ProjectTimeline project={project} />}
+        {project.phases && project.phases.length > 0 && (
+          <ProjectTimeline project={project} onResolveBlocker={handleResolveBlocker} />
+        )}
 
         <div className="prj-composer">
           <textarea

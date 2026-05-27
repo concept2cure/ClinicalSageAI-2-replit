@@ -130,6 +130,21 @@
   line-height: 1.25; text-wrap: pretty;
 }
 .prj-head-r { display: flex; gap: 4px; flex-shrink: 0; }
+
+/* Status pill — HANDOFF section 14 (useTransition). */
+.prj-status-pill {
+  display: inline-flex; align-items: center;
+  padding: 2px 10px; border-radius: 99px;
+  font-size: 11px; font-weight: 500; letter-spacing: .02em; text-transform: capitalize;
+  border: 1px solid var(--border); background: var(--bg-100); color: var(--text-300);
+  cursor: pointer; transition: opacity 200ms ease-out; white-space: nowrap;
+}
+.prj-status-pill:disabled { opacity: .6; cursor: not-allowed; }
+.prj-status-pill[data-status="active"]     { background: var(--accent-100); color: #fff; border-color: transparent; }
+.prj-status-pill[data-status="in_review"]  { background: var(--bg-200); color: var(--text-200); }
+.prj-status-pill[data-status="submitted"]  { background: var(--bg-200); color: var(--text-200); }
+.prj-status-pill[data-status="archived"]   { background: var(--bg-100); color: var(--text-400); }
+
 .prj-desc {
   margin: 4px 0 18px;
   font-size: 13px; color: var(--text-300); line-height: 1.55;

@@ -6,12 +6,17 @@
  * Per HANDOFF item 6: daysToTarget is derived at render from
  * differenceInCalendarDays(targetDate, today). Negative = overdue,
  * rendered with --text-warn tone. null when no targetDate.
+ *
+ * Per HANDOFF section 14: onResolveBlocker fires useResolve for
+ * phases with status === 'blocked'.
  */
 import { I } from './icons';
 import type { Project } from './types';
 
 interface Props {
   project: Project;
+  /** Per HANDOFF section 14: fires useResolve for a blocked phase. */
+  onResolveBlocker?: (phaseId: string, phaseName: string) => void;
 }
 
 function deriveDaysToTarget(targetDate: string): number | null {
@@ -25,7 +30,7 @@ function deriveDaysToTarget(targetDate: string): number | null {
   return Math.round((target.getTime() - today.getTime()) / 86_400_000);
 }
 
-export function ProjectTimeline({ project }: Props) {
+export function ProjectTimeline({ project, onResolveBlocker }: Props) {
   const phases = project.phases || [];
   const completed = phases.filter(p => p.status === 'completed').length;
   const overall = phases.length === 0
@@ -82,11 +87,31 @@ export function ProjectTimeline({ project }: Props) {
                 <div className="ptl-row-name-row">
                   <span className="ptl-row-name">{p.name}</span>
                   {p.status === 'current' && <span className="ptl-pill">In progress</span>}
+                  {p.status === 'blocked' && (
+                    <span className="ptl-pill" data-tone="warn" style={{ color: 'var(--warning)' }}>
+                      Blocked
+                    </span>
+                  )}
                 </div>
                 {p.status === 'current' && p.progress > 0 && p.progress < 100 && (
                   <div className="ptl-row-bar">
                     <div className="ptl-row-bar-fill" style={{ width: `${p.progress}%` }} />
                   </div>
+                )}
+                {p.status === 'blocked' && onResolveBlocker && (
+                  <button
+                    type="button"
+                    className="ptl-resolve-btn"
+                    style={{
+                      marginTop: '4px', fontSize: '11px', padding: '2px 8px',
+                      background: 'transparent', border: '1px solid var(--border)',
+                      borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                      color: 'var(--text-300)',
+                    }}
+                    onClick={() => onResolveBlocker(p.id, p.name)}
+                  >
+                    Resolve blocker
+                  </button>
                 )}
               </div>
               <span className="ptl-row-pct" data-status={p.status}>

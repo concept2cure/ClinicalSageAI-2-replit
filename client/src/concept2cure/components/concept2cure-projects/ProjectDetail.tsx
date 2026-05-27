@@ -2,11 +2,18 @@
  * ProjectDetail — header + tabs + tab body for one project.
  * Mirror of design-system/ui_kits/home/Projects.jsx
  * (ProjectDetail, lines 273–449).
+ *
+ * Per HANDOFF section 14: governed-action hooks wired here:
+ *   - useClaim  → "Claim project" in ⋯ menu
+ *   - useTransition → status pill click in header
+ *   - useSign   → forwarded to ProjectConfigPanel compliance tab
+ *   - useLock   → forwarded to ProjectConfigPanel settings danger zone
  */
 import { useEffect, useState } from 'react';
 import { I } from './icons';
 import { PACT_EVENTS, PLNK_LINKS, useProjectsMutations } from './data';
 import { downloadJsonSnapshot } from './data/useProjectsMutations';
+import { useClaim, useTransition, useSign, useLock } from '../../_shared/hooks/useC2cAction';
 import { ProjectMoreMenu } from './ProjectMoreMenu';
 import { ChatsTab } from './tabs/ChatsTab';
 import { MemoryTab } from './tabs/MemoryTab';
@@ -43,6 +50,63 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
   const [tab, setTab] = useState<DetailTab>('chats');
   const { updateProject, archiveProject, deleteProject, exportProject, duplicateProject, transferProject } =
     useProjectsMutations({ onSuccess: onProjectMutated });
+
+  // ── Governed-action hooks (HANDOFF section 14) ────────────────────────────
+  const claimAction      = useClaim();
+  const transitionAction = useTransition();
+  const signAction       = useSign();
+  const lockAction       = useLock();
+
+  const handleClaim = async () => {
+    try {
+      await claimAction.trigger({
+        target: `program:${project.id}`,
+        reason: `Claiming project "${project.name}"`,
+      });
+      onProjectMutated?.();
+    } catch { /* error surfaced via claimAction.error */ }
+  };
+
+  const handleTransition = async (nextStatus: string) => {
+    try {
+      await transitionAction.trigger({
+        target: `program:${project.id}`,
+        reason: `Transitioning "${project.name}" to ${nextStatus}`,
+        payload: { status: nextStatus },
+      });
+      onProjectMutated?.();
+    } catch { /* error surfaced via transitionAction.error */ }
+  };
+
+  const handleSign = async (reason: string, reauth?: { password?: string; totp?: string }) => {
+    try {
+      await signAction.trigger({
+        target: `program:${project.id}`,
+        reason,
+        reauth,
+      });
+      onProjectMutated?.();
+    } catch { /* error surfaced via signAction.error */ }
+  };
+
+  const handleLock = async () => {
+    const reason = window.prompt(
+      `Lock project "${project.name}".\n\nReason (10+ characters, recorded in audit log):`,
+    );
+    if (!reason || reason.trim().length < 10) {
+      window.alert('Lock cancelled — reason must be at least 10 characters.');
+      return;
+    }
+    try {
+      await lockAction.trigger({
+        target: `program:${project.id}`,
+        reason: reason.trim(),
+      });
+      onProjectMutated?.();
+    } catch (err) {
+      window.alert(`Lock failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
 
   const handleExportProject = async () => {
     try {
@@ -107,6 +171,27 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
 
       <header className="prj-head">
         <h1 className="prj-title">{project.name}</h1>
+        {/* Status pill — click cycles to the next logical status (HANDOFF section 14 useTransition). */}
+        <button
+          type="button"
+          className="prj-status-pill"
+          data-status={project.status}
+          disabled={transitionAction.pending}
+          title="Click to advance status"
+          onClick={() => {
+            const next: Record<string, string> = {
+              draft: 'active',
+              active: 'in_review',
+              in_review: 'submitted',
+              submitted: 'active',
+              archived: 'active',
+            };
+            const nextStatus = next[project.status] ?? 'active';
+            handleTransition(nextStatus);
+          }}
+        >
+          {transitionAction.pending ? 'Updating…' : project.status.replace('_', ' ')}
+        </button>
         <div className="prj-head-r">
           <button
             type="button"
@@ -132,6 +217,7 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
               await duplicateProject(project.id);
             }}
             onExport={handleExportProject}
+            onClaim={handleClaim}
           />
           <button
             type="button"
@@ -230,6 +316,8 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
         onTransfer={handleTransfer}
         onExportProject={handleExportProject}
         onOpenInstructionsTab={() => { setConfigOpen(false); setTab('instructions'); }}
+        onSign={handleSign}
+        onLock={handleLock}
         onSave={async form => {
           // Persist to the backend; ignore failure silently — the host
           // can show a toast if it cares. The panel closes regardless
