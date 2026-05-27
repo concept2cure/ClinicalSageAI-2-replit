@@ -288,7 +288,7 @@ export async function registerInlineAiWorkflowRoutes({
   try {
     const c2cActionsModule = await import('../routes/c2c/actions');
     app.use('/api/c2c/actions', authMiddleware, c2cActionsModule.default);
-    console.log('✅ C2C Actions routes mounted (/api/c2c/actions)');
+    console.info('✅ C2C Actions routes mounted (/api/c2c/actions)');
   } catch (error) {
     console.error('❌ Failed to mount C2C Actions routes:', error);
   }

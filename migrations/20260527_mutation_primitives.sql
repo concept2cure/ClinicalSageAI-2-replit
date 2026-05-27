@@ -66,9 +66,12 @@ CREATE INDEX IF NOT EXISTS c2c_ana_actions_proposed_at ON c2c_ana_actions (propo
 -- of zero reads on the old columns (tracked via query logging).
 --
 -- Type correction: actor_id is integer (C-5 resolution) — users.id is serial.
+-- No FK on actor_id: audit_logs is append-only history; users.id values in
+-- legacy rows may have been deleted. Consistent with existing user_id column
+-- which also carries no FK.
 
 ALTER TABLE audit_logs
-  ADD COLUMN IF NOT EXISTS actor_id      integer     REFERENCES users(id),
+  ADD COLUMN IF NOT EXISTS actor_id      integer,
   ADD COLUMN IF NOT EXISTS target        text,
   ADD COLUMN IF NOT EXISTS target_type   text,
   ADD COLUMN IF NOT EXISTS target_id     text,
