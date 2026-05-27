@@ -231,12 +231,10 @@ export function SignatureWorkflow({
   onSignatureComplete,
   onClose,
 }: SignatureWorkflowProps) {
-  // When used in dialog mode (with `open` prop), respect it
-  if (open !== undefined && !open) return null;
   const currentUser = getCurrentUser();
 
   // ---------------------------------------------------------------------------
-  // State
+  // State — all hooks must be declared before any conditional return.
   // ---------------------------------------------------------------------------
   const [signatures, setSignatures] = useState<SignatureRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -822,8 +820,9 @@ export function SignatureWorkflow({
   }
 
   // ---------------------------------------------------------------------------
-  // Main render
+  // Main render — guard here, after all hooks.
   // ---------------------------------------------------------------------------
+  if (open !== undefined && !open) return null;
   return (
     <div className="flex flex-col h-full bg-white text-stone-900">
       {/* Header */}

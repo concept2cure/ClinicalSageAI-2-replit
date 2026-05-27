@@ -161,16 +161,14 @@ export function ProjectHome({
   onAskAna,
   onBackToOverview,
 }: ProjectHomeProps) {
-  if (!program) return null;
-  const ready = program.readiness ?? 0;
-
-  /* Live data:
-       - Program detail (lead name + team members) for the Governance panel
-       - Cross-program task list filtered to this program for "Your tasks"
-     Both fall back to the kit fixtures during load + on error. */
-  const detail = useProgramDetail(program.id);
+  // Hooks must be called unconditionally — guard renders null after all hooks.
+  const detail = useProgramDetail(program?.id ?? '');
   const allTasks = useWorkbenchTasks();
-  const extras = useProgramExtras(program.id);
+  const extras = useProgramExtras(program?.id ?? '');
+
+  if (!program) return null;
+
+  const ready = program.readiness ?? 0;
   const livePh = detail.detail
     ? deriveGovernance(detail.detail.leadUserName, detail.detail.teamMembers)
     : null;

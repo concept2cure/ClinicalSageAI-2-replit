@@ -1720,6 +1720,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   const [isPrintPreview, setIsPrintPreview] = useState(false);
 
   // Context menu state
+  const [contextLinkUrl, setContextLinkUrl] = useState('');
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
@@ -2664,18 +2665,27 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
               <div className="border-t border-stone-100 my-1" />
 
               {/* Link */}
-              <button
-                role="menuitem"
-                onClick={() => {
-                  const href = prompt('Enter URL:');
+              <form
+                className="px-3 py-1.5 flex items-center gap-1.5"
+                onSubmit={e => {
+                  e.preventDefault();
+                  const href = contextLinkUrl.trim();
                   if (href) editor.chain().focus().setLink({ href }).run();
+                  setContextLinkUrl('');
                   setContextMenu(null);
                 }}
-                className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[12px] text-stone-700 hover:bg-stone-50 transition-colors"
               >
-                <LinkIcon className="w-3.5 h-3.5 text-stone-400" />
-                Insert Link
-              </button>
+                <LinkIcon className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+                <input
+                  className="flex-1 min-w-0 text-[12px] border border-stone-200 rounded px-1.5 py-0.5 outline-none focus:border-stone-400"
+                  placeholder="Paste URL…"
+                  value={contextLinkUrl}
+                  onChange={e => setContextLinkUrl(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Escape') { setContextLinkUrl(''); setContextMenu(null); } }}
+                  autoFocus
+                />
+                <button type="submit" className="text-[11px] text-stone-500 hover:text-stone-800 shrink-0">Add</button>
+              </form>
 
               {/* Link to Source */}
               <button
