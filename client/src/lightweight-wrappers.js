@@ -4,12 +4,6 @@ import { useToast as useShadcnToast } from '@/hooks/use-toast';
 // Create a singleton toast object that can be imported without hooks
 let toastFn;
 
-// Initialize the toast function
-const initializeToast = () => {
-  const { toast: shadcnToast } = useShadcnToast();
-  toastFn = shadcnToast;
-};
-
 // Exposed toast API
 export const toast = {
   // Standard toast methods

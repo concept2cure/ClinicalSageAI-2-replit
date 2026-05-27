@@ -31,6 +31,7 @@ const EmbeddedCodingAgent = () => {
   const [extractingRelationships, setExtractingRelationships] = useState(false);
   const [knowledgeGraph, setKnowledgeGraph] = useState(null);
   const [extractedRelationships, setExtractedRelationships] = useState(null);
+  const [saveFilePaths, setSaveFilePaths] = useState({});
   const fileInputRef = useRef(null);
 
   const handleFileUpload = async event => {
@@ -861,20 +862,40 @@ const EmbeddedCodingAgent = () => {
                     >
                       📋 Copy Code
                     </button>
-                    <button
-                      className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
-                      onClick={() =>
-                        executeAction(
-                          { type: 'create_file' },
-                          {
-                            filePath: prompt('Enter file path:'),
-                            content: file.content,
-                          }
-                        )
-                      }
-                    >
-                      💾 Save as File
-                    </button>
+                    {saveFilePaths[fileIndex] !== undefined ? (
+                      <span className="flex gap-1 items-center">
+                        <input
+                          className="px-1 py-0.5 text-xs border border-blue-300 rounded"
+                          placeholder="file path…"
+                          value={saveFilePaths[fileIndex]}
+                          onChange={e => setSaveFilePaths(p => ({ ...p, [fileIndex]: e.target.value }))}
+                          autoFocus
+                          onKeyDown={e => {
+                            if (e.key === 'Escape') setSaveFilePaths(p => { const n = { ...p }; delete n[fileIndex]; return n; });
+                            if (e.key === 'Enter') {
+                              const fp = saveFilePaths[fileIndex].trim();
+                              if (fp) executeAction({ type: 'create_file' }, { filePath: fp, content: file.content });
+                              setSaveFilePaths(p => { const n = { ...p }; delete n[fileIndex]; return n; });
+                            }
+                          }}
+                        />
+                        <button
+                          className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                          onClick={() => {
+                            const fp = saveFilePaths[fileIndex].trim();
+                            if (fp) executeAction({ type: 'create_file' }, { filePath: fp, content: file.content });
+                            setSaveFilePaths(p => { const n = { ...p }; delete n[fileIndex]; return n; });
+                          }}
+                        >Save</button>
+                      </span>
+                    ) : (
+                      <button
+                        className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                        onClick={() => setSaveFilePaths(p => ({ ...p, [fileIndex]: '' }))}
+                      >
+                        💾 Save as File
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
