@@ -81,20 +81,13 @@ ALTER TABLE audit_logs
   ADD COLUMN IF NOT EXISTS sha256_chain  text,
   ADD COLUMN IF NOT EXISTS occurred_at   timestamptz NOT NULL DEFAULT now();
 
--- ── 3. Backfill — populate new columns from legacy columns ────────────────
+-- ── 3. Historical backfill ────────────────────────────────────────────────
 --
--- Runs only on rows that have legacy data but no actor_id yet.
--- sha256_chain intentionally left NULL on legacy rows — chain starts fresh
--- from the first new mutation. Integrity monitor will note the discontinuity.
-
-UPDATE audit_logs
-SET
-  actor_id    = user_id,
-  target      = COALESCE(table_name, '') || ':' || COALESCE(record_id, ''),
-  target_type = table_name,
-  target_id   = record_id,
-  occurred_at = COALESCE(created_at, now())
-WHERE actor_id IS NULL
-  AND (user_id IS NOT NULL OR table_name IS NOT NULL);
+-- Intentionally omitted: audit_logs is append-only and may carry
+-- immutability triggers in some deployment environments. Legacy rows carry
+-- NULL for the new columns; sha256_chain starts fresh from the first new
+-- mutation. actor_id / target / target_type / target_id on historical rows
+-- remain NULL — consistent with the existing user_id semantics on rows
+-- that predate the feature.
 
 COMMIT;
