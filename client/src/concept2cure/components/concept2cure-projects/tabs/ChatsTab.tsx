@@ -156,12 +156,7 @@ export function ChatsTab({ project, onSwitchTab, onProjectMutated }: Props) {
               {I.plus}
             </button>
           </header>
-          <div className="prj-cap">
-            <div className="prj-cap-track">
-              <div className="prj-cap-fill" style={{ width: `${project.capacityPct}%` }} />
-            </div>
-            <div className="prj-cap-lbl">{project.capacityPct}% of project capacity used</div>
-          </div>
+          {/* Per HANDOFF item 13: capacityPct dropped. Capacity bar removed. */}
           <div className="prj-files">
             {project.files.map(f => (
               <button

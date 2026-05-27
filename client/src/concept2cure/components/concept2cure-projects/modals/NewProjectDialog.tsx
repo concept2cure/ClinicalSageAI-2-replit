@@ -112,7 +112,6 @@ export function NewProjectDialog({ onClose, onCreated, onApiCreated }: Props) {
         memory: { enabled: false, summary: '', updated: '' },
         instructions: '',
         files: [],
-        capacityPct: 1,
         submissionType: type.applicationType.toUpperCase().replace(/[^A-Z0-9]/g, '') as Project['submissionType'],
         submissionTypeLabel: type.displayName,
         product: projProduct || '—',

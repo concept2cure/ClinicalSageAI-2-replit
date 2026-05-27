@@ -123,15 +123,7 @@ export function FilesTab({ project, onProjectMutated, onAskAna }: Props) {
         </div>
       </header>
 
-      <div className="pfiles-cap">
-        <div className="pfiles-cap-head">
-          <span>Project capacity</span>
-          <span className="pfiles-cap-pct">{project.capacityPct}% used</span>
-        </div>
-        <div className="prj-cap-track">
-          <div className="prj-cap-fill" style={{ width: `${project.capacityPct}%` }} />
-        </div>
-      </div>
+      {/* Per HANDOFF item 13: capacityPct dropped. Capacity bar removed. */}
 
       <div className="pfiles-tools">
         <div className="pfiles-search">

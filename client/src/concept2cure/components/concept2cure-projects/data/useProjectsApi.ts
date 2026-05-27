@@ -12,8 +12,9 @@
  *
  *   Prototype Project shape (data/projects.ts):
  *     { id, name, desc, starred, chats, memory, instructions, files,
- *       capacityPct, submissionType, submissionTypeLabel, product,
+ *       submissionType, submissionTypeLabel, product,
  *       sponsor, targetAgency, targetDate, status, phases, daysToTarget }
+ *     (capacityPct dropped per HANDOFF item 13)
  *
  * The adapter below maps API → Project, supplying empty arrays / null
  * defaults where the API has no equivalent. Per HANDOFF.md item 12,
@@ -112,7 +113,6 @@ function adaptApiProject(p: ApiProject): Project {
     memory: { enabled: false, summary: '', updated: '' },
     instructions: '',
     files: [],
-    capacityPct: 0,
     submissionType,
     submissionTypeLabel: label,
     product: p.product || '',
