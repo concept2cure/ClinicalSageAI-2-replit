@@ -24,6 +24,7 @@ import { ActivityTab } from './tabs/ActivityTab';
 import { ProjectConfigPanel } from './panels/ProjectConfigPanel';
 import { ProjectArchiveModal } from './modals/ProjectArchiveModal';
 import { ProjectInternalSearch } from './modals/ProjectInternalSearch';
+import { ReasonModal } from './modals/ReasonModal';
 import type { Project, DetailTab, ArchiveMode } from './types';
 
 interface Props {
@@ -48,6 +49,8 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
   const [archiveMode, setArchiveMode] = useState<ArchiveMode | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [tab, setTab] = useState<DetailTab>('chats');
+  const [lockModalOpen, setLockModalOpen] = useState(false);
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
   const { updateProject, archiveProject, deleteProject, exportProject, duplicateProject, transferProject } =
     useProjectsMutations({ onSuccess: onProjectMutated });
 
@@ -89,23 +92,12 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
     } catch { /* error surfaced via signAction.error */ }
   };
 
-  const handleLock = async () => {
-    const reason = window.prompt(
-      `Lock project "${project.name}".\n\nReason (10+ characters, recorded in audit log):`,
-    );
-    if (!reason || reason.trim().length < 10) {
-      window.alert('Lock cancelled — reason must be at least 10 characters.');
-      return;
-    }
+  const handleLockConfirm = async (reason: string) => {
     try {
-      await lockAction.trigger({
-        target: `program:${project.id}`,
-        reason: reason.trim(),
-      });
+      await lockAction.trigger({ target: `program:${project.id}`, reason });
       onProjectMutated?.();
-    } catch (err) {
-      window.alert(`Lock failed: ${err instanceof Error ? err.message : String(err)}`);
-    }
+    } catch { /* error surfaced via lockAction.error */ }
+    setLockModalOpen(false);
   };
 
   const handleExportProject = async () => {
@@ -118,27 +110,12 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
     } catch { /* host can retry */ }
   };
 
-  const handleTransfer = async () => {
-    const targetEmail = window.prompt(
-      `Transfer ownership of "${project.name}".\n\nEnter the email of the new owner:`,
-    );
+  const handleTransferConfirm = async (reason: string, targetEmail?: string) => {
     if (!targetEmail) return;
-    const reason = window.prompt(
-      'Reason for transfer (10+ characters, recorded in audit log):',
-    );
-    if (!reason || reason.trim().length < 10) {
-      window.alert('Transfer cancelled — reason must be at least 10 characters.');
-      return;
-    }
     try {
-      await transferProject({
-        id: project.id,
-        targetEmail: targetEmail.trim(),
-        reason: reason.trim(),
-      });
-    } catch (err) {
-      window.alert(`Transfer failed: ${err instanceof Error ? err.message : String(err)}`);
-    }
+      await transferProject({ id: project.id, targetEmail, reason });
+    } catch { /* error surfaced via transferProject */ }
+    setTransferModalOpen(false);
   };
 
   // ⌘F / Ctrl+F → project-internal search
@@ -313,11 +290,11 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
         onClose={() => setConfigOpen(false)}
         onArchive={() => setArchiveMode('archive')}
         onDelete={() => setArchiveMode('delete')}
-        onTransfer={handleTransfer}
+        onTransfer={() => setTransferModalOpen(true)}
         onExportProject={handleExportProject}
         onOpenInstructionsTab={() => { setConfigOpen(false); setTab('instructions'); }}
         onSign={handleSign}
-        onLock={handleLock}
+        onLock={() => setLockModalOpen(true)}
         onSave={async form => {
           // Persist to the backend; ignore failure silently — the host
           // can show a toast if it cares. The panel closes regardless
@@ -357,6 +334,25 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
           } catch { /* fall through — host refetch will pick up actual state */ }
           if (mode === 'archive' || mode === 'delete') onBack();
         }}
+      />
+
+      <ReasonModal
+        open={lockModalOpen}
+        title={`Lock project "${project.name}"`}
+        description="Locking prevents further changes. The action is recorded in the audit log."
+        cta="Lock project"
+        onClose={() => setLockModalOpen(false)}
+        onConfirm={handleLockConfirm}
+      />
+
+      <ReasonModal
+        open={transferModalOpen}
+        title={`Transfer ownership of "${project.name}"`}
+        description="Enter the new owner's email and a reason. Both are recorded in the audit log."
+        emailLabel="New owner email"
+        cta="Transfer"
+        onClose={() => setTransferModalOpen(false)}
+        onConfirm={handleTransferConfirm}
       />
     </div>
   );

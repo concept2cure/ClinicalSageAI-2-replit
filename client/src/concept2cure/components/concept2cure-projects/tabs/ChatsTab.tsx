@@ -10,6 +10,7 @@
 import { useRef, useState } from 'react';
 import { I } from '../icons';
 import { ProjectTimeline } from '../ProjectTimeline';
+import { ReasonModal } from '../modals/ReasonModal';
 import { useResolve } from '../../../_shared/hooks/useC2cAction';
 import type { DetailTab, Project } from '../types';
 
@@ -21,19 +22,18 @@ interface Props {
 
 export function ChatsTab({ project, onSwitchTab, onProjectMutated }: Props) {
   const resolveAction = useResolve();
+  const [resolvePhase, setResolvePhase] = useState<{ id: string; name: string } | null>(null);
 
-  const handleResolveBlocker = async (phaseId: string, phaseName: string) => {
-    const reason = window.prompt(
-      `Resolve blocker on phase "${phaseName}".\n\nDescribe what was resolved (10+ characters):`,
-    );
-    if (!reason || reason.trim().length < 10) return;
+  const handleResolveConfirm = async (reason: string) => {
+    if (!resolvePhase) return;
     try {
       await resolveAction.trigger({
-        target: `phase:${project.id}:${phaseId}`,
-        reason: reason.trim(),
+        target: `phase:${project.id}:${resolvePhase.id}`,
+        reason,
       });
       onProjectMutated?.();
     } catch { /* error surfaced via resolveAction.error */ }
+    setResolvePhase(null);
   };
   const [composer, setComposer] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -64,7 +64,10 @@ export function ChatsTab({ project, onSwitchTab, onProjectMutated }: Props) {
     <div className="prj-grid">
       <section className="prj-main">
         {project.phases && project.phases.length > 0 && (
-          <ProjectTimeline project={project} onResolveBlocker={handleResolveBlocker} />
+          <ProjectTimeline
+            project={project}
+            onResolveBlocker={(id, name) => setResolvePhase({ id, name })}
+          />
         )}
 
         <div className="prj-composer">
@@ -194,6 +197,15 @@ export function ChatsTab({ project, onSwitchTab, onProjectMutated }: Props) {
           </div>
         </section>
       </aside>
+
+      <ReasonModal
+        open={!!resolvePhase}
+        title={resolvePhase ? `Resolve blocker on "${resolvePhase.name}"` : ''}
+        description="Describe what was resolved. This is recorded in the audit log."
+        cta="Resolve"
+        onClose={() => setResolvePhase(null)}
+        onConfirm={handleResolveConfirm}
+      />
     </div>
   );
 }

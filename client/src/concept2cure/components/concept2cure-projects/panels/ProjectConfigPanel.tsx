@@ -23,6 +23,7 @@ import {
   PCP_SSO_GROUPS,
 } from '../data';
 import type { Project, ConfigPanelTab } from '../types';
+import { ReasonModal } from '../modals/ReasonModal';
 
 interface PcpForm {
   name: string;
@@ -72,6 +73,7 @@ export function ProjectConfigPanel({
 }: Props) {
   const [tab, setTab] = useState<ConfigPanelTab>('general');
   const [form, setForm] = useState<PcpForm | null>(null);
+  const [signModalOpen, setSignModalOpen] = useState(false);
   const [instructions, setInstructions] = useState('');
 
   useEffect(() => {
@@ -427,13 +429,7 @@ export function ProjectConfigPanel({
                     <button
                       type="button"
                       className="pcp-btn primary"
-                      onClick={async () => {
-                        const reason = window.prompt(
-                          `E-signature for project "${project.name}".\n\nReason for signing (10+ characters):`,
-                        );
-                        if (!reason || reason.trim().length < 10) return;
-                        await onSign(reason.trim());
-                      }}
+                      onClick={() => setSignModalOpen(true)}
                     >
                       {I.shieldCheck} E-sign project
                     </button>
@@ -678,6 +674,20 @@ export function ProjectConfigPanel({
           )}
         </div>
       </div>
+
+      {onSign && (
+        <ReasonModal
+          open={signModalOpen}
+          title={`E-sign project "${project.name}"`}
+          description="Your signature is recorded in the audit log against your account and this project."
+          cta="Sign"
+          onClose={() => setSignModalOpen(false)}
+          onConfirm={async reason => {
+            await onSign(reason);
+            setSignModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
