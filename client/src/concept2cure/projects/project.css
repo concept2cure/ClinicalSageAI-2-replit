@@ -2,8 +2,10 @@
    ─────────────────────────────────────────────────────────────
    One project. Header + workstream strip + chat thread + drafts + people + audit.
    Used by both biopharma and mdx when a user clicks into a specific program.
+
+   Canonical tokens come from design-system/colors_and_type.css, imported
+   once globally at client/src/index.css. Do not re-import here.
 */
-@import url('../../colors_and_type.css');
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; padding: 0; }
