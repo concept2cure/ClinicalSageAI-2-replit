@@ -1798,6 +1798,17 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     projectId: activeProjectId ?? null,
     enabled: layoutMode === 'ectd-coauthor',
   });
+
+  const handleEctdSubmitForReview = useCallback((ctx: { docId?: string; sectionPath: string }) => {
+    if (!ctx.docId) return;
+    apiRequest('PUT', `/api/ectd-documents/${ctx.docId}`, { status: 'in_review' }).catch(() => {});
+  }, []);
+
+  const handleEctdExport = useCallback((ctx: { docId?: string; sectionPath: string }) => {
+    if (!ctx.docId) return;
+    window.open(`/api/ectd-documents/${ctx.docId}`, '_blank', 'noopener,noreferrer');
+  }, []);
+
   const rawIndustry = userProfile?.preferences?.industryMode;
   const industryMode = normalizeIndustryMode(
     typeof rawIndustry === 'string' ? rawIndustry : orgIndustryMode
@@ -1898,6 +1909,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           readinessPct={ectdReadiness.readinessPct ?? undefined}
           blockingCount={ectdReadiness.blockingCount ?? undefined}
           lastRimSync={ectdReadiness.lastRimSync ?? undefined}
+          onSubmitForReview={handleEctdSubmitForReview}
+          onExport={handleEctdExport}
         />
       );
     }
@@ -2044,6 +2057,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         readinessPct={ectdReadiness.readinessPct ?? undefined}
         blockingCount={ectdReadiness.blockingCount ?? undefined}
         lastRimSync={ectdReadiness.lastRimSync ?? undefined}
+        onSubmitForReview={handleEctdSubmitForReview}
+        onExport={handleEctdExport}
       />
     );
   }
