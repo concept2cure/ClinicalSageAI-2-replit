@@ -16,9 +16,8 @@ import {
   SAMD_OTS,
   SAMD_ANOMALIES,
   SAMD_PCCP,
-  SAMD_DOCUMENTS,
-  SAMD_DOC_FRAMEWORKS,
 } from '../data/samd';
+import { useSamd } from '../hooks/useSamd';
 import type { Program } from '../data/programs';
 
 interface Props {
@@ -30,6 +29,7 @@ interface Props {
 export function SamdSurface({ program, onAskAna, onOpenEditor }: Props) {
   const [awarenessOpen, setAwarenessOpen] = React.useState(false);
   const programContext = program ? `${program.code} · ${program.title}` : 'BX-204 firmware 4.1';
+  const { documents: liveDocuments, docFrameworks } = useSamd(program?.id ?? null);
 
   return (
     <>
@@ -38,7 +38,7 @@ export function SamdSurface({ program, onAskAna, onOpenEditor }: Props) {
           <div className="page-eyebrow">Workstream · {programContext}</div>
           <h1 className="page-title">SaMD lifecycle · IEC 62304</h1>
           <div className="page-sub">
-            Class C software. {SAMD_DOCUMENTS.length} regulatory artifacts · {SAMD_REQS.length} requirements traced ·{' '}
+            Class C software. {liveDocuments.length} regulatory artifacts · {SAMD_REQS.length} requirements traced ·{' '}
             {SAMD_OTS.length} OTS/SOUP components · {SAMD_ANOMALIES.filter(a => a.kind === 'must-fix').length} must-fix anomalies open.
           </div>
         </div>
@@ -65,8 +65,8 @@ export function SamdSurface({ program, onAskAna, onOpenEditor }: Props) {
       <DocumentsPanel
         title="SaMD regulatory artifacts"
         subtitle="SRS · SDS · V&V · cybersecurity · PCCP — IEC 62304 Class C documentation depth"
-        docs={SAMD_DOCUMENTS}
-        frameworks={SAMD_DOC_FRAMEWORKS}
+        docs={liveDocuments}
+        frameworks={docFrameworks}
         onOpenEditor={onOpenEditor}
         onAskAna={onAskAna}
       />
