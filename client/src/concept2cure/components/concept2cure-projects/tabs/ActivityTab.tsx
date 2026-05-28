@@ -5,8 +5,19 @@
  */
 import { useMemo, useState } from 'react';
 import { I } from '../icons';
-import { PACT_EVENTS, PACT_KIND_LABEL } from '../data';
+import { useProjectActivity } from '../data/useProjectActivity';
 import type { Project } from '../types';
+
+const PACT_KIND_LABEL: Record<string, string> = {
+  export: 'Export',
+  file: 'File',
+  memory: 'Memory',
+  instr: 'Instructions',
+  esig: 'E-signature',
+  comment: 'Comment',
+  lifecycle: 'Lifecycle',
+  access: 'Access',
+};
 
 interface Props {
   project: Project;
@@ -27,7 +38,7 @@ const FILTERS = [
 type FilterId = typeof FILTERS[number]['id'];
 
 export function ActivityTab({ project }: Props) {
-  const events = PACT_EVENTS[project.id] || [];
+  const { events, loading } = useProjectActivity(project.id);
   const [filter, setFilter] = useState<FilterId>('all');
   const [query, setQuery] = useState('');
 
@@ -140,7 +151,12 @@ export function ActivityTab({ project }: Props) {
       </div>
 
       <div className="pact-list">
-        {byDay.length === 0 && (
+        {loading && (
+          <div className="pact-empty">
+            <div className="pact-empty-title">Loading…</div>
+          </div>
+        )}
+        {!loading && byDay.length === 0 && (
           <div className="pact-empty">
             <div className="pact-empty-title">No matching events</div>
             <div className="pact-empty-sub">Try a different filter or clear the search.</div>

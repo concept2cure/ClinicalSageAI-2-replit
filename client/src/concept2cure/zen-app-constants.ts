@@ -118,7 +118,10 @@ export type LayoutMode =
   | 'program-wizard'
   | 'task-board'
   | 'team-workspace'
-  | 'program-analytics';
+  | 'program-analytics'
+  // ── Phase 10 surfaces ──
+  | 'biopharma'
+  | 'project-detail';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // NAV MAPPINGS

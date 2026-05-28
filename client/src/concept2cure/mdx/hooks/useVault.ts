@@ -16,7 +16,7 @@ import {
 } from '../data/vault';
 
 type FolderRow = (typeof VAULT_FOLDERS)[number];
-type FileRow = (typeof VAULT_FILES)[number];
+type FileRow = (typeof VAULT_FILES)[number] & { blocker?: boolean };
 type VersionRow = (typeof VAULT_VERSIONS)[number];
 type KpiRow = (typeof VAULT_KPIS)[number];
 

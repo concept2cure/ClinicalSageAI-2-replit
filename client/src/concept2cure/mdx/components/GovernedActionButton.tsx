@@ -33,10 +33,8 @@
  */
 
 import * as React from 'react';
-import {
-  ElectronicSignatureGate,
-  type ElectronicSignature,
-} from '@/components/legacy-esign/ElectronicSignature';
+import { ElectronicSignatureGate } from '@/components/legacy-esign/ElectronicSignature';
+import type { ElectronicSignature } from '@/components/legacy-esign/ElectronicSignature';
 import type { SignatureRequiredAction } from '@/components/legacy-esign/regulatoryCompliance';
 
 /* SignatureMeaning is the 21 CFR Part 11 §11.50(b) meaning enum.
@@ -119,15 +117,17 @@ export function GovernedActionButton({
     onCancel?.();
   };
 
-  const handleSigned = async (signature: ElectronicSignature) => {
+  const handleSigned = (signature: ElectronicSignature): void => {
     setStep('busy');
-    try {
-      await onConfirm({ reason: reason.trim(), signature });
-      reset();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Action failed');
-      setStep('idle');
-    }
+    (async () => {
+      try {
+        await onConfirm({ reason: reason.trim(), signature });
+        reset();
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Action failed');
+        setStep('idle');
+      }
+    })();
   };
 
   const start = () => {

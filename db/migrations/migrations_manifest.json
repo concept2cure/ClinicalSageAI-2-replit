@@ -1,9 +1,9 @@
 {
   "$schema": "https://concept2cure-riai.com/schemas/migrations-manifest-v1.json",
   "version": "1.0.0",
-  "generatedAt": "2026-03-25T23:51:47.139Z",
+  "generatedAt": "2026-05-28T19:55:19.733Z",
   "description": "Migration manifest for Concept2Cure.RI database schema. Documents execution order, dependencies, and resolves numbering conflicts.",
-  "totalMigrations": 140,
+  "totalMigrations": 164,
   "conflicts": {
     "summary": "20+ migrations share the same prefix number. This manifest defines canonical execution order.",
     "conflictingPrefixes": [
@@ -476,7 +476,30 @@
     "20260325_ai_goal_plan_step_events.sql",
     "20260325_decision_receipts.sql",
     "emergency_security_migration.sql",
-    "20260401_project_sharing_visibility.sql"
+    "20260401_project_sharing_visibility.sql",
+    "20260325_ana_kernel_log_immutability_hashchain.sql",
+    "20260326_artifact_compute_plane.sql",
+    "20260326_conversation_os_durability.sql",
+    "20260326_conversation_os_durability_phase2.sql",
+    "20260331_communication_center_scaffold.sql",
+    "20260331_regulatory_correspondence_os.sql",
+    "20260401_cmc_convergence_os.sql",
+    "20260401_submission_center_items.sql",
+    "20260402_cmc_runtime_ddl_to_migration.sql",
+    "20260402_supply_chain_tables.sql",
+    "20260501_q_sub.sql",
+    "20260508_ana_submission_chat_proposals.sql",
+    "20260508_artifact_citations.sql",
+    "20260508_authoring_plans.sql",
+    "20260508_consistency_alerts.sql",
+    "20260508_guidance_alerts.sql",
+    "20260508_project_therapeutic_area.sql",
+    "20260520_ana_failure_learning.sql",
+    "20260520_document_templates.sql",
+    "20260520_growth_mindset_extensions.sql",
+    "20260520_regulatory_intelligence_layer.sql",
+    "20260526_drop_invalid_cdisc_fks.sql",
+    "20260526_updated_at_triggers.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"

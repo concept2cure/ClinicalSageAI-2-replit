@@ -8,7 +8,6 @@ import { I } from '../icons';
 import { PMA_MODULES, PMA_PHASES, PMA_TRIAL_METRICS, type PmaPhase } from '../data/pma';
 import type { Program } from '../data/programs';
 import { useProgramExtras } from '../hooks/useProgramExtras';
-import { SampleDataBanner } from '../components/SampleDataBanner';
 
 export interface PmaSurfaceProps {
   /** Active PMA program from App.tsx. When null, the surface renders the
@@ -107,12 +106,6 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
         ))}
       </div>
 
-      <SampleDataBanner
-        show={extras.pmaTrialMetrics === null}
-        loading={extras.loading}
-        label="trial metrics"
-      />
-
       <div className="health">
         {sourceTrialMetrics.map((d, i) => (
           <div key={i} className="health-card">
@@ -142,11 +135,6 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
           </div>
         </div>
       </div>
-      <SampleDataBanner
-        show={extras.pmaModules === null}
-        loading={extras.loading}
-        label="PMA modules"
-      />
       <div className="pma-modules">
         {sourceModules.map(m => (
           <button

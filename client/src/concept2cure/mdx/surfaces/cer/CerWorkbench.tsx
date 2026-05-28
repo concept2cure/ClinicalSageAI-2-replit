@@ -13,17 +13,16 @@ import { I } from '../../icons';
 import { CerSurface } from '../CerSurface';
 import { AskAnaChip } from '../AskAnaChip';
 import {
-  CER_GSPR,
   CER_EQUIV_DEVICES,
   CER_EQUIV_MATRIX,
-  CER_PMS_KPIS,
-  CER_PMS_COMPLAINTS,
   CER_PMCF_STUDIES,
   CER_PMS_TIMELINE,
   type GsprStatus,
   type GsprChapter,
   type EquivVerdict,
 } from '../../data/cer';
+import { useCerGspr } from '../../hooks/useCerGspr';
+import { useCerPms } from '../../hooks/useCerPms';
 
 type CerTabId = 'overview' | 'conformity' | 'equivalence' | 'pms';
 
@@ -65,18 +64,19 @@ interface CerConformityProps {
 }
 
 function CerConformity({ onAskAna }: CerConformityProps) {
+  const { gspr } = useCerGspr();
   const [filter, setFilter] = React.useState<GsprFilter>('all');
   const counts = React.useMemo(() => {
-    const c = { all: CER_GSPR.length, conform: 0, partial: 0, gap: 0, na: 0 };
-    CER_GSPR.forEach(r => { c[r.status] = (c[r.status] || 0) + 1; });
+    const c = { all: gspr.length, conform: 0, partial: 0, gap: 0, na: 0 };
+    gspr.forEach(r => { c[r.status] = (c[r.status] || 0) + 1; });
     return c;
-  }, []);
-  const rows = filter === 'all' ? CER_GSPR : CER_GSPR.filter(r => r.status === filter);
+  }, [gspr]);
+  const rows = filter === 'all' ? gspr : gspr.filter(r => r.status === filter);
 
-  const grouped = rows.reduce<Record<GsprChapter, typeof CER_GSPR>>((acc, r) => {
+  const grouped = rows.reduce<Record<GsprChapter, typeof gspr>>((acc, r) => {
     (acc[r.ch] = acc[r.ch] || []).push(r);
     return acc;
-  }, {} as Record<GsprChapter, typeof CER_GSPR>);
+  }, {} as Record<GsprChapter, typeof gspr>);
 
   const CHAPTERS: Record<GsprChapter, string> = {
     'I':   'Chapter I · General requirements',
@@ -106,8 +106,8 @@ function CerConformity({ onAskAna }: CerConformityProps) {
             className="section-more"
             onClick={() => {
               const headers = ['Section', 'Chapter', 'Requirement', 'Status', 'Evidence', 'Note'];
-              const rows = CER_GSPR.map(r => [r.id, r.ch, r.title, r.status, r.evidence, r.note || '']);
-              const csv = [headers, ...rows]
+              const exportRows = gspr.map(r => [r.id, r.ch, r.title, r.status, r.evidence, r.note || '']);
+              const csv = [headers, ...exportRows]
                 .map(line => line.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
                 .join('\r\n');
               const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
@@ -366,13 +366,14 @@ interface CerPmsPmcfProps {
 }
 
 function CerPmsPmcf({ onAskAna }: CerPmsPmcfProps) {
+  const { pmsKpis, complaints: liveComplaints } = useCerPms();
   const [openOnly, setOpenOnly] = React.useState(false);
   const totalEnrolled = CER_PMCF_STUDIES.reduce((s, x) => s + x.n, 0);
   const totalTarget   = CER_PMCF_STUDIES.reduce((s, x) => s + x.target, 0);
   const enrollPct     = Math.round((totalEnrolled / totalTarget) * 100);
   const complaints = openOnly
-    ? CER_PMS_COMPLAINTS.filter(c => c.status !== 'closed')
-    : CER_PMS_COMPLAINTS;
+    ? liveComplaints.filter(c => c.status !== 'closed')
+    : liveComplaints;
 
   return (
     <>
@@ -395,7 +396,7 @@ function CerPmsPmcf({ onAskAna }: CerPmsPmcfProps) {
       </div>
 
       <div className="cer-metrics">
-        {CER_PMS_KPIS.map((k, i) => (
+        {pmsKpis.map((k, i) => (
           <div
             key={i}
             className="metric-card"

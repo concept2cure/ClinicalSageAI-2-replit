@@ -101,6 +101,25 @@ const DEFAULTS: Tweaks = /*EDITMODE-BEGIN*/{
   userRole: 'Enterprise · Reg Affairs',
 }/*EDITMODE-END*/;
 
+// localStorage keys for persisted rail state.
+// The task spec calls for key `c2c.rail.collapsed`; activeNav uses the
+// same namespace so the two states travel together.
+const LS_COLLAPSED = 'c2c.rail.collapsed';
+const LS_ACTIVE_NAV = 'c2c.rail.activeNav';
+
+function readPersistedTweaks(): Pick<Tweaks, 'collapsed' | 'activeNav'> {
+  try {
+    const collapsed = window.localStorage.getItem(LS_COLLAPSED);
+    const activeNav = window.localStorage.getItem(LS_ACTIVE_NAV);
+    return {
+      collapsed: collapsed === 'true',
+      activeNav: activeNav ?? DEFAULTS.activeNav,
+    };
+  } catch {
+    return { collapsed: DEFAULTS.collapsed, activeNav: DEFAULTS.activeNav };
+  }
+}
+
 const DEFAULT_USER: User = {
   name: DEFAULTS.userName,
   initials: DEFAULTS.userInitials,
@@ -682,7 +701,12 @@ export function Concept2CureHome({
 
   // Bundle state — tweaks, tweaksOpen, editModeActive, scope, paletteOpen.
   // Logic below is ported verbatim from bundle App.jsx (the App function).
-  const [tweaks, setTweaks] = useState<Tweaks>(DEFAULTS);
+  // `collapsed` and `activeNav` are seeded from localStorage so the user's
+  // last-used rail state is restored on every visit.
+  const [tweaks, setTweaks] = useState<Tweaks>(() => ({
+    ...DEFAULTS,
+    ...readPersistedTweaks(),
+  }));
   const [tweaksOpen, setTweaksOpen] = useState(false);
   const [editModeActive, setEditModeActive] = useState(false);
   const [scope, setScope] = useState<Scope>('all');
@@ -692,7 +716,8 @@ export function Concept2CureHome({
   const { items: briefingItems } = useHomeBriefing();
 
   // Bundle App.jsx setTweak — mirrors the tweak into the parent canvas host
-  // so the designer surface stays in sync.
+  // so the designer surface stays in sync. Also persists `collapsed` and
+  // `activeNav` to localStorage so rail state survives page reloads.
   const setTweak = <K extends keyof Tweaks>(key: K, val: Tweaks[K]) => {
     setTweaks(t => {
       const next = { ...t, [key]: val };
@@ -703,6 +728,16 @@ export function Concept2CureHome({
         );
       } catch {
         /* no parent (standalone production tab) — ignore */
+      }
+      // Persist rail-specific keys to localStorage.
+      try {
+        if (key === 'collapsed') {
+          window.localStorage.setItem(LS_COLLAPSED, String(val));
+        } else if (key === 'activeNav') {
+          window.localStorage.setItem(LS_ACTIVE_NAV, String(val));
+        }
+      } catch {
+        /* storage unavailable — ignore */
       }
       return next;
     });

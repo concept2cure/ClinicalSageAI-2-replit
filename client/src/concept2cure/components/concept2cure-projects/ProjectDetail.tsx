@@ -2,11 +2,18 @@
  * ProjectDetail — header + tabs + tab body for one project.
  * Mirror of design-system/ui_kits/home/Projects.jsx
  * (ProjectDetail, lines 273–449).
+ *
+ * Per HANDOFF section 14: governed-action hooks wired here:
+ *   - useClaim  → "Claim project" in ⋯ menu
+ *   - useTransition → status pill click in header
+ *   - useSign   → forwarded to ProjectConfigPanel compliance tab
+ *   - useLock   → forwarded to ProjectConfigPanel settings danger zone
  */
 import { useEffect, useState } from 'react';
 import { I } from './icons';
-import { PACT_EVENTS, PLNK_LINKS, useProjectsMutations } from './data';
+import { useProjectsMutations } from './data';
 import { downloadJsonSnapshot } from './data/useProjectsMutations';
+import { useClaim, useTransition, useSign, useLock } from '../../_shared/hooks/useC2cAction';
 import { ProjectMoreMenu } from './ProjectMoreMenu';
 import { ChatsTab } from './tabs/ChatsTab';
 import { MemoryTab } from './tabs/MemoryTab';
@@ -17,6 +24,7 @@ import { ActivityTab } from './tabs/ActivityTab';
 import { ProjectConfigPanel } from './panels/ProjectConfigPanel';
 import { ProjectArchiveModal } from './modals/ProjectArchiveModal';
 import { ProjectInternalSearch } from './modals/ProjectInternalSearch';
+import { ReasonModal } from './modals/ReasonModal';
 import type { Project, DetailTab, ArchiveMode } from './types';
 
 interface Props {
@@ -41,8 +49,57 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
   const [archiveMode, setArchiveMode] = useState<ArchiveMode | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [tab, setTab] = useState<DetailTab>('chats');
+  const [chatPrefill, setChatPrefill] = useState<string | undefined>(undefined);
+  const [lockModalOpen, setLockModalOpen] = useState(false);
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
   const { updateProject, archiveProject, deleteProject, exportProject, duplicateProject, transferProject } =
     useProjectsMutations({ onSuccess: onProjectMutated });
+
+  // ── Governed-action hooks (HANDOFF section 14) ────────────────────────────
+  const claimAction      = useClaim();
+  const transitionAction = useTransition();
+  const signAction       = useSign();
+  const lockAction       = useLock();
+
+  const handleClaim = async () => {
+    try {
+      await claimAction.trigger({
+        target: `program:${project.id}`,
+        reason: `Claiming project "${project.name}"`,
+      });
+      onProjectMutated?.();
+    } catch { /* error surfaced via claimAction.error */ }
+  };
+
+  const handleTransition = async (nextStatus: string) => {
+    try {
+      await transitionAction.trigger({
+        target: `program:${project.id}`,
+        reason: `Transitioning "${project.name}" to ${nextStatus}`,
+        payload: { status: nextStatus },
+      });
+      onProjectMutated?.();
+    } catch { /* error surfaced via transitionAction.error */ }
+  };
+
+  const handleSign = async (reason: string, reauth?: { password?: string; totp?: string }) => {
+    try {
+      await signAction.trigger({
+        target: `program:${project.id}`,
+        reason,
+        reauth,
+      });
+      onProjectMutated?.();
+    } catch { /* error surfaced via signAction.error */ }
+  };
+
+  const handleLockConfirm = async (reason: string) => {
+    try {
+      await lockAction.trigger({ target: `program:${project.id}`, reason });
+      onProjectMutated?.();
+    } catch { /* error surfaced via lockAction.error */ }
+    setLockModalOpen(false);
+  };
 
   const handleExportProject = async () => {
     try {
@@ -54,27 +111,12 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
     } catch { /* host can retry */ }
   };
 
-  const handleTransfer = async () => {
-    const targetEmail = window.prompt(
-      `Transfer ownership of "${project.name}".\n\nEnter the email of the new owner:`,
-    );
+  const handleTransferConfirm = async (reason: string, targetEmail?: string) => {
     if (!targetEmail) return;
-    const reason = window.prompt(
-      'Reason for transfer (10+ characters, recorded in audit log):',
-    );
-    if (!reason || reason.trim().length < 10) {
-      window.alert('Transfer cancelled — reason must be at least 10 characters.');
-      return;
-    }
     try {
-      await transferProject({
-        id: project.id,
-        targetEmail: targetEmail.trim(),
-        reason: reason.trim(),
-      });
-    } catch (err) {
-      window.alert(`Transfer failed: ${err instanceof Error ? err.message : String(err)}`);
-    }
+      await transferProject({ id: project.id, targetEmail, reason });
+    } catch { /* error surfaced via transferProject */ }
+    setTransferModalOpen(false);
   };
 
   // ⌘F / Ctrl+F → project-internal search
@@ -93,9 +135,9 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
     { id: 'chats',        label: 'Chats',        count: project.chats.length },
     { id: 'memory',       label: 'Memory',       count: null },
     { id: 'instructions', label: 'Instructions', count: null },
-    { id: 'files',        label: 'Files',        count: project.files.length },
-    { id: 'linked',       label: 'Linked',       count: (PLNK_LINKS[project.id] || []).length || null },
-    { id: 'activity',     label: 'Activity',     count: (PACT_EVENTS[project.id] || []).length || null },
+    { id: 'files',        label: 'Files',        count: null },
+    { id: 'linked',       label: 'Linked',       count: null },
+    { id: 'activity',     label: 'Activity',     count: null },
   ];
 
   return (
@@ -107,6 +149,27 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
 
       <header className="prj-head">
         <h1 className="prj-title">{project.name}</h1>
+        {/* Status pill — click cycles to the next logical status (HANDOFF section 14 useTransition). */}
+        <button
+          type="button"
+          className="prj-status-pill"
+          data-status={project.status}
+          disabled={transitionAction.pending}
+          title="Click to advance status"
+          onClick={() => {
+            const next: Record<string, string> = {
+              draft: 'active',
+              active: 'in_review',
+              in_review: 'submitted',
+              submitted: 'active',
+              archived: 'active',
+            };
+            const nextStatus = next[project.status] ?? 'active';
+            handleTransition(nextStatus);
+          }}
+        >
+          {transitionAction.pending ? 'Updating…' : project.status.replace('_', ' ')}
+        </button>
         <div className="prj-head-r">
           <button
             type="button"
@@ -132,6 +195,7 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
               await duplicateProject(project.id);
             }}
             onExport={handleExportProject}
+            onClaim={handleClaim}
           />
           <button
             type="button"
@@ -191,7 +255,12 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
       </nav>
 
       {tab === 'chats' && (
-        <ChatsTab project={project} onSwitchTab={setTab} onProjectMutated={onProjectMutated} />
+        <ChatsTab
+          project={project}
+          onSwitchTab={setTab}
+          onProjectMutated={onProjectMutated}
+          prefillText={chatPrefill}
+        />
       )}
       {tab === 'memory' && <MemoryTab project={project} onSwitchTab={setTab} />}
       {tab === 'instructions' && (
@@ -210,7 +279,7 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
           }}
         />
       )}
-      {tab === 'files' && <FilesTab project={project} onProjectMutated={onProjectMutated} />}
+      {tab === 'files' && <FilesTab project={project} onProjectMutated={onProjectMutated} onAskAna={text => { setChatPrefill(text); setTab('chats'); }} />}
       {tab === 'linked' && <LinkedTab project={project} />}
       {tab === 'activity' && <ActivityTab project={project} />}
 
@@ -227,8 +296,12 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
         onClose={() => setConfigOpen(false)}
         onArchive={() => setArchiveMode('archive')}
         onDelete={() => setArchiveMode('delete')}
-        onTransfer={handleTransfer}
+        onTransfer={() => setTransferModalOpen(true)}
         onExportProject={handleExportProject}
+        onOpenInstructionsTab={() => { setConfigOpen(false); setTab('instructions'); }}
+        onAskAna={text => { setConfigOpen(false); setChatPrefill(text); setTab('chats'); }}
+        onSign={handleSign}
+        onLock={() => setLockModalOpen(true)}
         onSave={async form => {
           // Persist to the backend; ignore failure silently — the host
           // can show a toast if it cares. The panel closes regardless
@@ -268,6 +341,25 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
           } catch { /* fall through — host refetch will pick up actual state */ }
           if (mode === 'archive' || mode === 'delete') onBack();
         }}
+      />
+
+      <ReasonModal
+        open={lockModalOpen}
+        title={`Lock project "${project.name}"`}
+        description="Locking prevents further changes. The action is recorded in the audit log."
+        cta="Lock project"
+        onClose={() => setLockModalOpen(false)}
+        onConfirm={handleLockConfirm}
+      />
+
+      <ReasonModal
+        open={transferModalOpen}
+        title={`Transfer ownership of "${project.name}"`}
+        description="Enter the new owner's email and a reason. Both are recorded in the audit log."
+        emailLabel="New owner email"
+        cta="Transfer"
+        onClose={() => setTransferModalOpen(false)}
+        onConfirm={handleTransferConfirm}
       />
     </div>
   );

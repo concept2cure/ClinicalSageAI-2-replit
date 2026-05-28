@@ -9,6 +9,8 @@ import * as React from 'react';
 import { I } from '../icons';
 import { ANA_MODES, type AnaMode } from '../data/nav';
 import { useLiveSections } from '../hooks/useLiveSections';
+import { useDocumentComments } from '../hooks/useDocumentComments';
+import { useAnaChat } from '../../components/ana/useAnaChat';
 import { AnaDraftBanner } from '../components/AnaDraftBanner';
 import {
   EDITOR_COMMENTS,
@@ -708,10 +710,33 @@ export function EstarEditor({ initialMode = 'deep-research', programIdent }: Est
     if (isLive && firstLiveId !== undefined) setActiveId(firstLiveId);
   }, [isLive, firstLiveId]);
 
+  const chat = useAnaChat({ projectId: programIdent, screenName: 'mdx-510k-editor' });
+
   const [search, setSearch] = React.useState('');
   const [mode, setMode] = React.useState<AnaMode['id']>(initialMode);
-  const [messages, setMessages] = React.useState<EditorMessage[]>(EDITOR_SEED_MESSAGES);
+  const [messages, setMessages] = React.useState<EditorMessage[]>(
+    programIdent ? [] : EDITOR_SEED_MESSAGES,
+  );
+  const liveComments = useDocumentComments(programIdent);
   const [comments, setComments] = React.useState<EditorComment[]>(EDITOR_COMMENTS);
+  React.useEffect(() => {
+    if (liveComments.comments.length > 0) setComments(liveComments.comments);
+  }, [liveComments.comments]);
+
+  // Adapt AnaChatMessages → EditorMessages for live mode.
+  const modeRef = React.useRef(mode);
+  React.useEffect(() => { modeRef.current = mode; }, [mode]);
+  React.useEffect(() => {
+    if (!programIdent || chat.messages.length === 0) return;
+    setMessages(
+      chat.messages.map(m => ({
+        role: (m.role === 'assistant' ? 'ana' : 'user') as EditorMessage['role'],
+        body: m.text || (chat.isStreaming ? '…' : ''),
+        when: 'just now',
+        mode: modeRef.current,
+      })),
+    );
+  }, [programIdent, chat.messages, chat.isStreaming]);
   const [activePin, setActivePin] = React.useState<string | null>(null);
   const [pinnedComment, setPinnedComment] = React.useState<EditorComment | null>(null);
   const [valOpen, setValOpen] = React.useState(false);
@@ -745,21 +770,18 @@ export function EstarEditor({ initialMode = 'deep-research', programIdent }: Est
     live.refresh();
   }, [isLive, content?.id, live]);
 
-  const onAsk = (text: string, opts: { tool?: string } = {}) => {
+  const onAsk = (text: string, _opts: { tool?: string } = {}) => {
     if (!text) return;
-    const activeMode = ANA_MODES.find(m => m.id === mode)!;
-    setMessages(ms => [
-      ...ms,
-      { role: 'user', body: text, when: 'just now', mode },
-      {
-        role: 'ana',
-        body: opts.tool
-          ? `Running \`${opts.tool}\` on §${content.num.replace('§', '')} in ${activeMode.label} mode…`
-          : `Thinking in ${activeMode.label} mode. (UI stub — real response streams here via the gateway.)`,
-        when: 'just now',
-        mode,
-      },
-    ]);
+    if (programIdent) {
+      chat.send(text).catch(() => {});
+    } else {
+      const activeMode = ANA_MODES.find(m => m.id === mode)!;
+      setMessages(ms => [
+        ...ms,
+        { role: 'user', body: text, when: 'just now', mode },
+        { role: 'ana', body: `Thinking in ${activeMode.label} mode…`, when: 'just now', mode },
+      ]);
+    }
   };
 
   const onResolveComment = (id: string) => {

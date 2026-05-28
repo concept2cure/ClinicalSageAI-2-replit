@@ -20,34 +20,13 @@ import { PmaSurface } from './surfaces/PmaSurface';
 import { CerSurface } from './surfaces/CerSurface';
 import { PrecedentSurface } from './surfaces/PrecedentSurface';
 import { InDesignSurface } from './surfaces/InDesignSurface';
-import { EngineeringSurface } from './surfaces/EngineeringSurface';
-import { UdiSurface } from './surfaces/UdiSurface';
-import { PostmarketSurface } from './surfaces/PostmarketSurface';
-import { AnalyticsSurface } from './surfaces/AnalyticsSurface';
-import { MemorySurface } from './surfaces/MemorySurface';
-import { AdminSurface } from './surfaces/AdminSurface';
 import {
   TasksSurface,
+  VaultSurface,
   ValidationSurface,
   SubmissionsSurface,
+  TemplatesSurface,
 } from './workbench/Workbench';
-/* Phase 5: vault + templates routing leaves the Workbench placeholder
-   behind. The new full-feature VaultSurface lives at
-   surfaces/VaultSurface.tsx; TemplatesSurface ships in a follow-up PR. */
-import { VaultSurface } from './surfaces/VaultSurface';
-import { AuditSurface } from './surfaces/AuditSurface';
-import { NotificationsSurface } from './surfaces/NotificationsSurface';
-import { TemplatesSurface } from './surfaces/TemplatesSurface';
-import { QualitySurface } from './surfaces/QualitySurface';
-/* Phase 6 — diagnostic clients. */
-import { IvdSurface } from './surfaces/IvdSurface';
-import { IvdrSurface } from './surfaces/IvdrSurface';
-import { CdxSurface } from './surfaces/CdxSurface';
-import { LdtSurface } from './surfaces/LdtSurface';
-/* Phase 8 — cross-cutting. */
-import { SearchSurface } from './surfaces/SearchSurface';
-import { OnboardingSurface } from './surfaces/OnboardingSurface';
-import { ConversationsSurface } from './surfaces/ConversationsSurface';
 import { ProjectHome } from './projectHome/ProjectHome';
 import { EstarEditor } from './editors/EstarEditor';
 import { PmaEditor } from './editors/PmaEditor';
@@ -246,32 +225,6 @@ export function App({ initialNav, projectName }: AppProps = {}) {
     surface = <PmaEditor initialMode={anaMode} programIdent={programForContext?.code ?? programForContext?.id ?? null} />;
   } else if (editorRoute === 'cer') {
     surface = <CerEditor initialMode={anaMode} programIdent={programForContext?.code ?? programForContext?.id ?? null} />;
-  } else if (activeNav === 'engineering') {
-    /* Phase 4 — Device engineering surface (doc-first variant).
-       Lands ahead of the MDX_STUBS check so removing 'engineering' from
-       MDX_STUBS isn't required atomically. */
-    surface = (
-      <EngineeringSurface
-        program={programForContext}
-        onAskAna={askAna}
-        onOpenEditor={openEditor}
-      />
-    );
-  } else if (activeNav === 'udi') {
-    /* Phase 4 — UDI and labeling surface (doc-first, cross-program). */
-    surface = <UdiSurface onAskAna={askAna} onOpenEditor={openEditor} />;
-  } else if (activeNav === 'postmarket') {
-    /* Phase 4 — Post-market vigilance surface (doc-first, cross-program). */
-    surface = <PostmarketSurface onAskAna={askAna} onOpenEditor={openEditor} />;
-  } else if (activeNav === 'analytics') {
-    /* Phase 4 — Analytics surface (hybrid, cross-program). */
-    surface = <AnalyticsSurface onAskAna={askAna} />;
-  } else if (activeNav === 'memory') {
-    /* Phase 4 — AnA memory surface (no-docs variant, cross-program). */
-    surface = <MemorySurface onAskAna={askAna} />;
-  } else if (activeNav === 'admin') {
-    /* Phase 4 — Admin and access surface (hybrid, cross-program). */
-    surface = <AdminSurface onAskAna={askAna} />;
   } else if (MDX_STUBS[activeNav]) {
     surface = <InDesignSurface stub={MDX_STUBS[activeNav]} />;
   } else {
@@ -292,7 +245,7 @@ export function App({ initialNav, projectName }: AppProps = {}) {
         surface = <TasksSurface onAskAna={askAna} />;
         break;
       case 'vault':
-        surface = <VaultSurface onAskAna={askAna} onOpenEditor={openEditor} />;
+        surface = <VaultSurface onAskAna={askAna} />;
         break;
       case 'validation':
         surface = <ValidationSurface onAskAna={askAna} />;
@@ -301,68 +254,7 @@ export function App({ initialNav, projectName }: AppProps = {}) {
         surface = <SubmissionsSurface onAskAna={askAna} />;
         break;
       case 'templates':
-        surface = <TemplatesSurface onAskAna={askAna} onOpenEditor={openEditor} />;
-        break;
-      case 'audit':
-        /* Phase 5 — dedicated audit log viewer (separate from the
-           24-hour band on Admin). */
-        surface = <AuditSurface onAskAna={askAna} onOpenEditor={openEditor} />;
-        break;
-      case 'notifications':
-        /* Phase 5 — cross-surface signal inbox. */
-        surface = <NotificationsSurface onAskAna={askAna} />;
-        break;
-      case 'quality':
-        /* Phase 5 — Quality system (QSR/QMSR + ISO 13485). */
-        surface = <QualitySurface onAskAna={askAna} onOpenEditor={openEditor} />;
-        break;
-      case 'ivd':
-        /* Phase 6 — IVD pathway (analytical + clinical performance, CLIA, ISO 17511). */
-        surface = (
-          <IvdSurface
-            program={programForContext}
-            onAskAna={askAna}
-            onOpenEditor={openEditor}
-          />
-        );
-        break;
-      case 'ivdr':
-        /* Phase 6 — EU IVDR (PER, Annex VIII, notified body, EUDAMED IVD). */
-        surface = (
-          <IvdrSurface
-            program={programForContext}
-            onAskAna={askAna}
-            onOpenEditor={openEditor}
-          />
-        );
-        break;
-      case 'cdx':
-        /* Phase 6 — Companion diagnostic with paired drug-device timeline. */
-        surface = (
-          <CdxSurface
-            program={programForContext}
-            onAskAna={askAna}
-            onOpenEditor={openEditor}
-          />
-        );
-        break;
-      case 'ldt':
-        /* Phase 6 — LDT compliance (FDA 2024 rule phase tracker). */
-        surface = <LdtSurface onAskAna={askAna} onOpenEditor={openEditor} />;
-        break;
-      case 'search':
-        /* Phase 8 — global cross-corpus search. */
-        surface = <SearchSurface program={programForContext} onAskAna={askAna} />;
-        break;
-      case 'onboarding':
-        /* Phase 8 — migration importer wizard. */
-        surface = <OnboardingSurface onAskAna={askAna} />;
-        break;
-      case 'conversations':
-        /* Phase 8 — AnA conversation history. */
-        surface = (
-          <ConversationsSurface program={programForContext} onAskAna={askAna} />
-        );
+        surface = <TemplatesSurface onAskAna={askAna} />;
         break;
       case 'project-home':
         surface = (

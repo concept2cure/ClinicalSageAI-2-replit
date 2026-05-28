@@ -140,6 +140,8 @@ import { useAnaChat } from './components/ana/useAnaChat';
 import { Concept2CureHome } from './components/concept2cure-home';
 import MdxRoute from './mdx/MdxRoute';
 import PdevRoute from './pdev/PdevRoute';
+import BiopharmaRoute from './biopharma/BiopharmaRoute';
+import ProjectDetailRoute from './projects/ProjectDetailRoute';
 
 /** Map MDX deep-link hashes (#k510, #pma, #cer, #vault, #admin, …) to the
  *  React MDX App's activeNav identifiers. Returns undefined when no hash is
@@ -1798,6 +1800,17 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     projectId: activeProjectId ?? null,
     enabled: layoutMode === 'ectd-coauthor',
   });
+
+  const handleEctdSubmitForReview = useCallback((ctx: { docId?: string; sectionPath: string }) => {
+    if (!ctx.docId) return;
+    apiRequest('PUT', `/api/ectd-documents/${ctx.docId}`, { status: 'in_review' }).catch(() => {});
+  }, []);
+
+  const handleEctdExport = useCallback((ctx: { docId?: string; sectionPath: string }) => {
+    if (!ctx.docId) return;
+    window.open(`/api/ectd-documents/${ctx.docId}`, '_blank', 'noopener,noreferrer');
+  }, []);
+
   const rawIndustry = userProfile?.preferences?.industryMode;
   const industryMode = normalizeIndustryMode(
     typeof rawIndustry === 'string' ? rawIndustry : orgIndustryMode
@@ -1869,6 +1882,21 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     );
   }
 
+  // Phase 10 — Biopharma domain shell.
+  if (layoutMode === 'biopharma' && !embeddedModule) {
+    return <BiopharmaRoute />;
+  }
+
+  // Phase 10 — Project detail surface. Requires an active project.
+  if (layoutMode === 'project-detail' && !embeddedModule && activeProjectId) {
+    return (
+      <ProjectDetailRoute
+        projectId={activeProjectId}
+        onBack={() => setLayoutMode('projects')}
+      />
+    );
+  }
+
   // Project module deep-links route ONLY to bundle-designed surfaces.
   // Bundle coverage today (design-system/ui_kits/):
   //   - ectd → ClaudeEctdCoauthor (Phase 3 bundle)
@@ -1898,6 +1926,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           readinessPct={ectdReadiness.readinessPct ?? undefined}
           blockingCount={ectdReadiness.blockingCount ?? undefined}
           lastRimSync={ectdReadiness.lastRimSync ?? undefined}
+          onSubmitForReview={handleEctdSubmitForReview}
+          onExport={handleEctdExport}
         />
       );
     }
@@ -2044,6 +2074,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         readinessPct={ectdReadiness.readinessPct ?? undefined}
         blockingCount={ectdReadiness.blockingCount ?? undefined}
         lastRimSync={ectdReadiness.lastRimSync ?? undefined}
+        onSubmitForReview={handleEctdSubmitForReview}
+        onExport={handleEctdExport}
       />
     );
   }

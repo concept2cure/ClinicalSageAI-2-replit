@@ -169,6 +169,28 @@ router.get('/:sectionId', authMiddleware, async (req, res) => {
     return res.status(400).json({ error: 'Invalid section id' });
   }
 
+  // 301 redirect: if this section has been migrated to c2c_document_sections,
+  // point clients to the canonical new URL. Fall through if not yet migrated.
+  try {
+    const { rows } = await db.execute(sql`
+      SELECT
+        'doc_fda510k_' || fd.project_id::text AS document_id,
+        s.section_key
+      FROM cerv2_510k_sections s
+      JOIN fda_510k_documents fd ON fd.id = s.document_id
+      WHERE s.id = ${sectionId} AND s.document_id IS NOT NULL
+      LIMIT 1
+    `);
+    if (rows.length > 0) {
+      const { document_id, section_key } = rows[0] as any;
+      res.set('Deprecation', 'true');
+      res.set('Sunset', '2026-08-01');
+      return res.redirect(301, `/api/c2c/documents/${document_id}/sections/${section_key}`);
+    }
+  } catch {
+    // fda_510k_documents may not exist in this schema state — fall through.
+  }
+
   try {
     const [section] = await db
       .select()
@@ -523,6 +545,12 @@ const acceptAnaDraftSchema = z.object({
 });
 
 router.post('/:sectionId/accept-ana-draft', authMiddleware, async (req, res) => {
+  // Canonical endpoint is now POST /api/c2c/actions/accept-ai-suggestion.
+  // We keep this handler alive for one release cycle (Sunset: 2026-08-01).
+  res.set('Deprecation', 'true');
+  res.set('Sunset', '2026-08-01');
+  res.set('Link', '</api/c2c/actions/accept-ai-suggestion>; rel="canonical"');
+
   const organizationId = resolveOrganizationId(req);
   if (!organizationId) {
     return res.status(400).json({ error: 'Organization context required' });

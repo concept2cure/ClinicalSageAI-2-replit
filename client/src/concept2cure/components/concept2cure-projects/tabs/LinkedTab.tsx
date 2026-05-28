@@ -6,15 +6,26 @@
  */
 import { useMemo } from 'react';
 import { I } from '../icons';
-import { PLNK_LINKS, PLNK_KIND_META } from '../data';
+import { useProjectLinked } from '../data/useProjectLinked';
 import type { Project } from '../types';
+
+const PLNK_KIND_META: Record<string, { label: string; hint: string }> = {
+  predicate:   { label: 'Predicate device',     hint: 'Cleared device this submission claims substantial equivalence to' },
+  parent_ind:  { label: 'Parent IND',           hint: 'IND under which this NDA was developed' },
+  parent_510k: { label: 'Parent 510(k)',        hint: '510(k) cleared device this CER references' },
+  child_nda:   { label: 'Child NDA',            hint: 'NDA derived from this parent IND' },
+  cross_ref:   { label: 'Cross-reference',      hint: 'Related submission referenced for context' },
+  supplier:    { label: 'Supplier',             hint: 'Supplier or contract manufacturer relationship' },
+  sister:      { label: 'Sister submission',    hint: 'Related submission in the same family' },
+  reference:   { label: 'Referenced artifact',  hint: 'Document or study cited from this project' },
+};
 
 interface Props {
   project: Project;
 }
 
 export function LinkedTab({ project }: Props) {
-  const links = PLNK_LINKS[project.id] || [];
+  const { links } = useProjectLinked(project.id);
   const groups = useMemo(() => {
     const g: Record<string, typeof links> = {};
     for (const l of links) (g[l.kind] = g[l.kind] || []).push(l);
@@ -48,7 +59,7 @@ export function LinkedTab({ project }: Props) {
       )}
 
       {groups.map(([kind, items]) => {
-        const meta = PLNK_KIND_META[kind as keyof typeof PLNK_KIND_META] || { label: kind, hint: '' };
+        const meta = PLNK_KIND_META[kind] || { label: kind, hint: '' };
         return (
           <section key={kind} className="plnk-group">
             <header className="plnk-group-h">
@@ -66,13 +77,13 @@ export function LinkedTab({ project }: Props) {
                   </span>
                   <div className="plnk-body">
                     <div className="plnk-name-row">
-                      <span className="plnk-name">{l.otherName}</span>
-                      <span className="plnk-type-pill">{l.otherType}</span>
+                      <span className="plnk-name">{l.name}</span>
+                      <span className="plnk-type-pill">{l.type}</span>
                       <span className={`plnk-status-pill is-${l.status}`}>
                         {l.status.replace('_', ' ')}
                       </span>
                     </div>
-                    <div className="plnk-via">{l.via} · linked {l.date}</div>
+                    <div className="plnk-via">{l.via}</div>
                   </div>
                   <div className="plnk-row-actions">
                     <button type="button" className="prj-btn" title="Open linked project">Open</button>
@@ -126,7 +137,7 @@ export function LinkedTab({ project }: Props) {
                   />
                   <rect x={x} y={y} width={140} height={28} rx={5} fill="var(--bg-000)" stroke="var(--border)" />
                   <text x={x + 70} y={y + 18} textAnchor="middle" fontSize={10} fill="var(--text-200)">
-                    {l.otherName.length > 22 ? l.otherName.slice(0, 22) + '…' : l.otherName}
+                    {l.name.length > 22 ? l.name.slice(0, 22) + '…' : l.name}
                   </text>
                 </g>
               );

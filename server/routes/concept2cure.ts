@@ -622,11 +622,14 @@ function normalizeKnowledge(settings: Record<string, unknown>): ProjectKnowledge
       ? knowledge.customInstructions
       : '';
   const context = typeof knowledge.context === 'string' ? knowledge.context : '';
+  const memoryEnabled =
+    typeof knowledge.memoryEnabled === 'boolean' ? knowledge.memoryEnabled : false;
 
   return {
     documents,
     customInstructions,
     context,
+    memoryEnabled,
   };
 }
 
@@ -748,6 +751,7 @@ const updateKnowledgeSchema = z
   .object({
     customInstructions: z.string().max(5000).optional(),
     context: z.string().max(20000).optional(),
+    memoryEnabled: z.boolean().optional(),
   })
   .partial();
 
@@ -996,6 +1000,7 @@ interface ProjectKnowledge {
   documents: UploadedDocument[];
   customInstructions?: string;
   context?: string;
+  memoryEnabled?: boolean;
 }
 
 interface OwnershipReportRef {
@@ -3516,6 +3521,138 @@ router.get(
   }
 );
 
+// ─── Linked Projects Routes ─────────────────────────────────────────────────
+
+/**
+ * GET /api/concept2cure/projects/:projectId/linked
+ * Returns all typed link relationships for a project (both directions).
+ * Joins with concept2cure_projects for name/type/status of the other project.
+ * If the table doesn't exist yet (pre-migration deploy), returns [].
+ */
+router.get('/projects/:projectId/linked', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+
+    if (isNaN(numericProjectId)) {
+      return sendError(res, 400, 'Invalid project ID');
+    }
+
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    let rows: any[] = [];
+    try {
+      const result = await pool.query(
+        `SELECT
+           lnk.id,
+           lnk.kind,
+           lnk.direction AS dir,
+           lnk.created_at,
+           CASE
+             WHEN lnk.source_id = $1 THEN p.name
+             ELSE sp.name
+           END AS name,
+           CASE
+             WHEN lnk.source_id = $1 THEN p.metadata->>'submissionType'
+             ELSE sp.metadata->>'submissionType'
+           END AS type,
+           CASE
+             WHEN lnk.source_id = $1 THEN p.status
+             ELSE sp.status
+           END AS status
+         FROM concept2cure_project_links lnk
+         LEFT JOIN projects p  ON p.id  = lnk.target_id AND p.organization_id  = lnk.org_id
+         LEFT JOIN projects sp ON sp.id = lnk.source_id AND sp.organization_id = lnk.org_id
+         WHERE lnk.org_id = $2
+           AND (lnk.source_id = $1 OR lnk.target_id = $1)
+         ORDER BY lnk.created_at DESC`,
+        [numericProjectId, organizationId]
+      );
+      rows = result.rows;
+    } catch (tableErr: any) {
+      // Table doesn't exist yet (pre-migration deploy) — return empty list.
+      if (tableErr.code === '42P01') {
+        return sendSuccess(res, []);
+      }
+      throw tableErr;
+    }
+
+    const kindVia: Record<string, string> = {
+      predicate:  'Predicate device',
+      parent_ind: 'Parent IND',
+      child_nda:  'Child NDA',
+      cross_ref:  'Cross-reference',
+      supplier:   'Supplier',
+    };
+
+    const links = rows.map((r: any) => ({
+      id:     r.id,
+      kind:   r.kind,
+      dir:    r.dir as 'in' | 'out',
+      name:   r.name   || 'Unknown project',
+      type:   r.type   || '',
+      status: r.status || 'active',
+      via:    kindVia[r.kind] || r.kind,
+    }));
+
+    return sendSuccess(res, links);
+  } catch (error: any) {
+    logger.error('Failed to fetch linked projects', { error: error.message });
+    return sendError(res, 500, 'Failed to fetch linked projects');
+  }
+});
+
+/**
+ * POST /api/concept2cure/projects/:projectId/linked
+ * Creates a new typed link from this project to another.
+ * Body: { targetProjectId: string; kind: string; direction?: string }
+ */
+router.post('/projects/:projectId/linked', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+
+    if (isNaN(numericProjectId)) {
+      return sendError(res, 400, 'Invalid project ID');
+    }
+
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const { targetProjectId, kind, direction = 'out' } = req.body as {
+      targetProjectId: string;
+      kind: string;
+      direction?: string;
+    };
+
+    if (!targetProjectId || !kind) {
+      return sendError(res, 400, 'targetProjectId and kind are required');
+    }
+
+    const numericTargetId = parseInt(String(targetProjectId).replace('proj_', ''), 10);
+    if (isNaN(numericTargetId)) {
+      return sendError(res, 400, 'Invalid targetProjectId');
+    }
+
+    const result = await pool.query(
+      `INSERT INTO concept2cure_project_links (org_id, source_id, target_id, kind, direction)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, org_id, source_id, target_id, kind, direction, created_at`,
+      [organizationId, numericProjectId, numericTargetId, kind, direction]
+    );
+
+    return res.status(201).json({ success: true, data: result.rows[0] });
+  } catch (error: any) {
+    logger.error('Failed to create project link', { error: error.message });
+    return sendError(res, 500, 'Failed to create project link');
+  }
+});
+
 // ─── Client-Safe Governance Routes ──────────────────────────────────────────
 // These expose governed fabric decisions via project-scoped paths,
 // removing the dependency on admin-only /api/control-plane routes.
@@ -3787,6 +3924,8 @@ router.patch('/projects/:projectId/knowledge', async (req: Request, res: Respons
             ? sanitizeContent(data.context)
             : ''
           : knowledge.context,
+      memoryEnabled:
+        data.memoryEnabled !== undefined ? data.memoryEnabled : knowledge.memoryEnabled,
     };
 
     const updatedSettings = {

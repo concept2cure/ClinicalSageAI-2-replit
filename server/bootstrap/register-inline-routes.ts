@@ -293,6 +293,48 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount C2C Actions routes:', error);
   }
 
+  // C2C document family (Phase 9 Day 3 — document + section + evidence routes).
+  try {
+    const c2cDocsModule = await import('../routes/c2c/documents');
+    app.use('/api/c2c/documents', authMiddleware, c2cDocsModule.default);
+    console.info('✅ C2C Documents routes mounted (/api/c2c/documents)');
+  } catch (error) {
+    console.error('❌ Failed to mount C2C Documents routes:', error);
+  }
+
+  // C2C rule-packs (Phase 9 Day 3 — top-level /api/c2c/rule-packs endpoint).
+  // Thin inline handler; delegates to c2c_rule_packs table directly.
+  try {
+    const c2cDocsModule = await import('../routes/c2c/documents');
+    app.get('/api/c2c/rule-packs', authMiddleware, (req, res, next) => {
+      // Forward to the /rule-packs sub-route inside the documents router.
+      req.url = '/rule-packs';
+      c2cDocsModule.default(req, res, next);
+    });
+    console.info('✅ C2C Rule-packs route mounted (/api/c2c/rule-packs)');
+  } catch (error) {
+    console.error('❌ Failed to mount C2C Rule-packs route:', error);
+  }
+
+  // C2C Projects detail (Phase 10 — /api/c2c/projects/*).
+  try {
+    const c2cProjectsModule = await import('../routes/c2c/projects');
+    app.use('/api/c2c/projects', authMiddleware, c2cProjectsModule.default);
+    console.info('✅ C2C Projects routes mounted (/api/c2c/projects)');
+  } catch (error) {
+    console.error('❌ Failed to mount C2C Projects routes:', error);
+  }
+
+  // Biopharma domain programs + meetings (Phase 10 — /api/biopharma/*).
+  try {
+    const biopharmaModule = await import('../routes/biopharma/programs');
+    app.use('/api/biopharma', authMiddleware, biopharmaModule.default);
+    console.info('✅ Biopharma routes mounted (/api/biopharma)');
+  } catch (error) {
+    console.error('❌ Failed to mount Biopharma routes:', error);
+  }
+
+
   // Ana Platform Control (agentic settings, modules, onboarding).
   try {
     const anaPlatformModule = await import('../routes/ana-platform-control');

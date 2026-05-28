@@ -3,22 +3,49 @@
  * list (main column) with memory / instructions / files side cards.
  * Mirror of design-system/ui_kits/home/Projects.jsx (lines 330–431, the
  * `tab === 'chats'` branch of ProjectDetail).
+ *
+ * Per HANDOFF section 14: useResolve is wired here and forwarded to
+ * ProjectTimeline as onResolveBlocker for blocked phases.
  */
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { I } from '../icons';
 import { ProjectTimeline } from '../ProjectTimeline';
+import { ReasonModal } from '../modals/ReasonModal';
+import { useResolve } from '../../../_shared/hooks/useC2cAction';
+import { useProjectFiles } from '../data/useProjectFiles';
+import { getAuthHeaders } from '@/utils/authToken';
 import type { DetailTab, Project } from '../types';
 
 interface Props {
   project: Project;
   onSwitchTab?: (tab: DetailTab) => void;
   onProjectMutated?: () => void;
+  /** Pre-fills the chat composer — used by "Ask AnA…" buttons across the project surface. */
+  prefillText?: string;
 }
 
-export function ChatsTab({ project, onSwitchTab, onProjectMutated }: Props) {
-  const [composer, setComposer] = useState('');
+export function ChatsTab({ project, onSwitchTab, onProjectMutated, prefillText }: Props) {
+  const { files } = useProjectFiles(project.id);
+  const resolveAction = useResolve();
+  const [resolvePhase, setResolvePhase] = useState<{ id: string; name: string } | null>(null);
+
+  const handleResolveConfirm = async (reason: string) => {
+    if (!resolvePhase) return;
+    try {
+      await resolveAction.trigger({
+        target: `phase:${project.id}:${resolvePhase.id}`,
+        reason,
+      });
+      onProjectMutated?.();
+    } catch { /* error surfaced via resolveAction.error */ }
+    setResolvePhase(null);
+  };
+  const [composer, setComposer] = useState(prefillText ?? '');
+  useEffect(() => { if (prefillText) setComposer(prefillText); }, [prefillText]);
   const [uploading, setUploading] = useState(false);
   const attachRef = useRef<HTMLInputElement>(null);
+
+  const [sending, setSending] = useState(false);
 
   const uploadAttachments = async (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
@@ -41,10 +68,59 @@ export function ChatsTab({ project, onSwitchTab, onProjectMutated }: Props) {
     }
   };
 
+  const handleSend = async () => {
+    const text = composer.trim();
+    if (!text || sending) return;
+    const pid = project.id.startsWith('proj_') ? project.id.slice(5) : project.id;
+    if (!pid || isNaN(Number(pid))) return;
+    setSending(true);
+    setComposer('');
+    try {
+      const headers = { 'Content-Type': 'application/json', ...getAuthHeaders() };
+
+      // Pick the most recent conversation, or create one.
+      let convId: string | null = project.chats[0]?.id ?? null;
+      if (!convId) {
+        const createRes = await fetch(
+          `/api/concept2cure/projects/${encodeURIComponent(pid)}/conversations`,
+          {
+            method: 'POST',
+            credentials: 'include',
+            headers,
+            body: JSON.stringify({ title: text.slice(0, 80) }),
+          }
+        );
+        if (createRes.ok) {
+          const json = await createRes.json();
+          convId = (json?.data?.id ?? json?.id) as string | null;
+        }
+      }
+
+      if (convId) {
+        await fetch(
+          `/api/concept2cure/projects/${encodeURIComponent(pid)}/conversations/${encodeURIComponent(convId)}/messages`,
+          {
+            method: 'POST',
+            credentials: 'include',
+            headers,
+            body: JSON.stringify({ role: 'user', content: text }),
+          }
+        );
+      }
+      onProjectMutated?.();
+    } catch { /* network error — composer already cleared */ }
+    finally { setSending(false); }
+  };
+
   return (
     <div className="prj-grid">
       <section className="prj-main">
-        {project.phases && project.phases.length > 0 && <ProjectTimeline project={project} />}
+        {project.phases && project.phases.length > 0 && (
+          <ProjectTimeline
+            project={project}
+            onResolveBlocker={(id, name) => setResolvePhase({ id, name })}
+          />
+        )}
 
         <div className="prj-composer">
           <textarea
@@ -52,6 +128,13 @@ export function ChatsTab({ project, onSwitchTab, onProjectMutated }: Props) {
             value={composer}
             onChange={e => setComposer(e.target.value)}
             rows={1}
+            disabled={sending}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
           />
           <div className="prj-composer-foot">
             <input
@@ -78,6 +161,15 @@ export function ChatsTab({ project, onSwitchTab, onProjectMutated }: Props) {
             </button>
             <button type="button" className="prj-mic" title="Voice">
               {I.mic}
+            </button>
+            <button
+              type="button"
+              className="prj-send"
+              title={sending ? 'Sending…' : 'Send (Enter)'}
+              disabled={!composer.trim() || sending}
+              onClick={handleSend}
+            >
+              {I.arrowRight}
             </button>
           </div>
         </div>
@@ -156,14 +248,9 @@ export function ChatsTab({ project, onSwitchTab, onProjectMutated }: Props) {
               {I.plus}
             </button>
           </header>
-          <div className="prj-cap">
-            <div className="prj-cap-track">
-              <div className="prj-cap-fill" style={{ width: `${project.capacityPct}%` }} />
-            </div>
-            <div className="prj-cap-lbl">{project.capacityPct}% of project capacity used</div>
-          </div>
+          {/* Per HANDOFF item 13: capacityPct dropped. Capacity bar removed. */}
           <div className="prj-files">
-            {project.files.map(f => (
+            {files.map(f => (
               <button
                 type="button"
                 key={f.name}
@@ -178,6 +265,15 @@ export function ChatsTab({ project, onSwitchTab, onProjectMutated }: Props) {
           </div>
         </section>
       </aside>
+
+      <ReasonModal
+        open={!!resolvePhase}
+        title={resolvePhase ? `Resolve blocker on "${resolvePhase.name}"` : ''}
+        description="Describe what was resolved. This is recorded in the audit log."
+        cta="Resolve"
+        onClose={() => setResolvePhase(null)}
+        onConfirm={handleResolveConfirm}
+      />
     </div>
   );
 }

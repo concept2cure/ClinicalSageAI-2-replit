@@ -147,247 +147,219 @@ export const CollaborationProvider = ({ children, initialProjectId, initialModul
 
   // Send a message
   const sendMessage = async content => {
-    try {
-      const message = {
-        id: `msg-${Date.now()}`,
-        type: 'comment',
-        content,
-        timestamp: new Date().toISOString(),
-        sender: currentUser,
-      };
+    const message = {
+      id: `msg-${Date.now()}`,
+      type: 'comment',
+      content,
+      timestamp: new Date().toISOString(),
+      sender: currentUser,
+    };
 
-      // In a real implementation, this would call the API
-      // const response = await collaborationService.sendMessage(message);
+    // In a real implementation, this would call the API
+    // const response = await collaborationService.sendMessage(message);
 
-      // For now, just add it to the local state
-      setMessages(prev => [...prev, message]);
+    // For now, just add it to the local state
+    setMessages(prev => [...prev, message]);
 
-      // Generate an AI response after a delay
-      setTimeout(() => {
-        generateAiSuggestion();
-      }, 1500);
+    // Generate an AI response after a delay
+    setTimeout(() => {
+      generateAiSuggestion();
+    }, 1500);
 
-      return message;
-    } catch (err) {
-      throw err;
-    }
+    return message;
   };
 
   // Generate AI suggestion
   const generateAiSuggestion = async () => {
-    try {
-      // In a real implementation, this would call the AI API
-      // const suggestions = await collaborationService.getAiSuggestions(projectId, moduleType);
+    // In a real implementation, this would call the AI API
+    // const suggestions = await collaborationService.getAiSuggestions(projectId, moduleType);
 
-      // For demo purposes, generate a mock suggestion
-      const aiSuggestion = {
-        id: `suggestion-${Date.now()}`,
-        type: 'ai-suggestion',
-        content:
-          'I notice that for the current phase, you might need to verify the device classification according to FDA guidelines. Would you like me to provide more information on this?',
-        timestamp: new Date().toISOString(),
-        sender: { id: 'ai', name: 'AnA', avatar: '/ai-avatar.png' },
-        confidence: 0.91,
-        actions: [
-          { id: `action-${Date.now()}-1`, label: 'Get More Info', action: 'get-info' },
-          { id: `action-${Date.now()}-2`, label: 'Create Task', action: 'create-task' },
-          { id: `action-${Date.now()}-3`, label: 'Dismiss', action: 'dismiss' },
-        ],
-      };
+    // For demo purposes, generate a mock suggestion
+    const aiSuggestion = {
+      id: `suggestion-${Date.now()}`,
+      type: 'ai-suggestion',
+      content:
+        'I notice that for the current phase, you might need to verify the device classification according to FDA guidelines. Would you like me to provide more information on this?',
+      timestamp: new Date().toISOString(),
+      sender: { id: 'ai', name: 'AnA', avatar: '/ai-avatar.png' },
+      confidence: 0.91,
+      actions: [
+        { id: `action-${Date.now()}-1`, label: 'Get More Info', action: 'get-info' },
+        { id: `action-${Date.now()}-2`, label: 'Create Task', action: 'create-task' },
+        { id: `action-${Date.now()}-3`, label: 'Dismiss', action: 'dismiss' },
+      ],
+    };
 
-      setMessages(prev => [...prev, aiSuggestion]);
+    setMessages(prev => [...prev, aiSuggestion]);
 
-      return aiSuggestion;
-    } catch (err) {
-      throw err;
-    }
+    return aiSuggestion;
   };
 
   // Create a task
   const createTask = async taskData => {
-    try {
-      const task = {
-        id: `task-${Date.now()}`,
-        ...taskData,
-        createdAt: new Date().toISOString(),
-        createdBy: currentUser,
-      };
+    const task = {
+      id: `task-${Date.now()}`,
+      ...taskData,
+      createdAt: new Date().toISOString(),
+      createdBy: currentUser,
+    };
 
-      // In a real implementation, this would call the API
-      // const response = await collaborationService.createTask(task);
+    // In a real implementation, this would call the API
+    // const response = await collaborationService.createTask(task);
 
-      // For now, just add it to the local state
-      setTasks(prev => [...prev, task]);
+    // For now, just add it to the local state
+    setTasks(prev => [...prev, task]);
 
-      // Add a notification to messages
-      const notification = {
-        id: `task-create-${Date.now()}`,
-        type: 'task-update',
-        content: `${currentUser.name} created a new task: "${task.title}"`,
-        task,
-        timestamp: new Date().toISOString(),
-        sender: currentUser,
-      };
+    // Add a notification to messages
+    const notification = {
+      id: `task-create-${Date.now()}`,
+      type: 'task-update',
+      content: `${currentUser.name} created a new task: "${task.title}"`,
+      task,
+      timestamp: new Date().toISOString(),
+      sender: currentUser,
+    };
 
-      setMessages(prev => [...prev, notification]);
+    setMessages(prev => [...prev, notification]);
 
-      return task;
-    } catch (err) {
-      throw err;
-    }
+    return task;
   };
 
   // Update a task
   const updateTask = async (taskId, updates) => {
-    try {
-      // In a real implementation, this would call the API
-      // const response = await collaborationService.updateTask(taskId, updates);
+    // In a real implementation, this would call the API
+    // const response = await collaborationService.updateTask(taskId, updates);
 
-      // For now, just update the local state
-      setTasks(prev => prev.map(task => (task.id === taskId ? { ...task, ...updates } : task)));
+    // For now, just update the local state
+    setTasks(prev => prev.map(task => (task.id === taskId ? { ...task, ...updates } : task)));
 
-      // Add a notification to messages
-      const notification = {
-        id: `task-update-${Date.now()}`,
-        type: 'task-update',
-        content: `${currentUser.name} updated task: "${tasks.find(t => t.id === taskId)?.title}"`,
-        taskId,
-        updates,
-        timestamp: new Date().toISOString(),
-        sender: currentUser,
-      };
+    // Add a notification to messages
+    const notification = {
+      id: `task-update-${Date.now()}`,
+      type: 'task-update',
+      content: `${currentUser.name} updated task: "${tasks.find(t => t.id === taskId)?.title}"`,
+      taskId,
+      updates,
+      timestamp: new Date().toISOString(),
+      sender: currentUser,
+    };
 
-      setMessages(prev => [...prev, notification]);
+    setMessages(prev => [...prev, notification]);
 
-      // Find updated task
-      const updatedTask = tasks.find(t => t.id === taskId);
-      if (updatedTask) {
-        return { ...updatedTask, ...updates };
-      }
-      return null;
-    } catch (err) {
-      throw err;
+    // Find updated task
+    const updatedTask = tasks.find(t => t.id === taskId);
+    if (updatedTask) {
+      return { ...updatedTask, ...updates };
     }
+    return null;
   };
 
   // Complete a milestone
   const completeMilestone = async milestoneId => {
-    try {
-      // In a real implementation, this would call the API
-      // const response = await collaborationService.completeMilestone(milestoneId);
+    // In a real implementation, this would call the API
+    // const response = await collaborationService.completeMilestone(milestoneId);
 
-      // For now, just update the local state
-      setMilestones(prev =>
-        prev.map(milestone =>
-          milestone.id === milestoneId ? { ...milestone, status: 'completed' } : milestone
-        )
-      );
+    // For now, just update the local state
+    setMilestones(prev =>
+      prev.map(milestone =>
+        milestone.id === milestoneId ? { ...milestone, status: 'completed' } : milestone
+      )
+    );
 
-      // Find the milestone
-      const milestone = milestones.find(m => m.id === milestoneId);
+    // Find the milestone
+    const milestone = milestones.find(m => m.id === milestoneId);
 
-      // Add a notification to messages
-      const notification = {
-        id: `milestone-${Date.now()}`,
-        type: 'milestone',
-        content: `Milestone "${milestone?.title}" has been completed!`,
-        milestone: { ...milestone, status: 'completed' },
-        timestamp: new Date().toISOString(),
-        sender: currentUser,
-      };
+    // Add a notification to messages
+    const notification = {
+      id: `milestone-${Date.now()}`,
+      type: 'milestone',
+      content: `Milestone "${milestone?.title}" has been completed!`,
+      milestone: { ...milestone, status: 'completed' },
+      timestamp: new Date().toISOString(),
+      sender: currentUser,
+    };
 
-      setMessages(prev => [...prev, notification]);
+    setMessages(prev => [...prev, notification]);
 
-      return { ...milestone, status: 'completed' };
-    } catch (err) {
-      throw err;
-    }
+    return { ...milestone, status: 'completed' };
   };
 
   // Process an approval request
   const processApproval = async (approvalId, isApproved, note = '') => {
-    try {
-      // In a real implementation, this would call the API
-      // const response = await collaborationService.processApprovalRequest(approvalId, { isApproved, note });
+    // In a real implementation, this would call the API
+    // const response = await collaborationService.processApprovalRequest(approvalId, { isApproved, note });
 
-      // For now, just update the local state
-      setApprovals(prev =>
-        prev.map(approval =>
-          approval.id === approvalId
-            ? {
-                ...approval,
-                status: isApproved ? 'approved' : 'rejected',
-                processedAt: new Date().toISOString(),
-                note,
-              }
-            : approval
-        )
-      );
+    // For now, just update the local state
+    setApprovals(prev =>
+      prev.map(approval =>
+        approval.id === approvalId
+          ? {
+              ...approval,
+              status: isApproved ? 'approved' : 'rejected',
+              processedAt: new Date().toISOString(),
+              note,
+            }
+          : approval
+      )
+    );
 
-      // Find the approval
-      const approval = approvals.find(a => a.id === approvalId);
+    // Find the approval
+    const approval = approvals.find(a => a.id === approvalId);
 
-      // Add a notification to messages
-      const notification = {
-        id: `approval-${Date.now()}`,
-        type: isApproved ? 'approval-granted' : 'approval-denied',
-        content: `${currentUser.name} has ${isApproved ? 'approved' : 'rejected'} the request: "${approval?.title}"${note ? ` - Note: ${note}` : ''}`,
-        approval: {
-          ...approval,
-          status: isApproved ? 'approved' : 'rejected',
-          processedAt: new Date().toISOString(),
-          note,
-        },
-        timestamp: new Date().toISOString(),
-        sender: currentUser,
-      };
-
-      setMessages(prev => [...prev, notification]);
-
-      return {
+    // Add a notification to messages
+    const notification = {
+      id: `approval-${Date.now()}`,
+      type: isApproved ? 'approval-granted' : 'approval-denied',
+      content: `${currentUser.name} has ${isApproved ? 'approved' : 'rejected'} the request: "${approval?.title}"${note ? ` - Note: ${note}` : ''}`,
+      approval: {
         ...approval,
         status: isApproved ? 'approved' : 'rejected',
         processedAt: new Date().toISOString(),
         note,
-      };
-    } catch (err) {
-      throw err;
-    }
+      },
+      timestamp: new Date().toISOString(),
+      sender: currentUser,
+    };
+
+    setMessages(prev => [...prev, notification]);
+
+    return {
+      ...approval,
+      status: isApproved ? 'approved' : 'rejected',
+      processedAt: new Date().toISOString(),
+      note,
+    };
   };
 
   // Create an approval request
   const createApprovalRequest = async requestData => {
-    try {
-      const request = {
-        id: `approval-${Date.now()}`,
-        ...requestData,
-        status: 'pending',
-        requestedBy: currentUser,
-        requestedAt: new Date().toISOString(),
-      };
+    const request = {
+      id: `approval-${Date.now()}`,
+      ...requestData,
+      status: 'pending',
+      requestedBy: currentUser,
+      requestedAt: new Date().toISOString(),
+    };
 
-      // In a real implementation, this would call the API
-      // const response = await collaborationService.createApprovalRequest(request);
+    // In a real implementation, this would call the API
+    // const response = await collaborationService.createApprovalRequest(request);
 
-      // For now, just add it to the local state
-      setApprovals(prev => [...prev, request]);
+    // For now, just add it to the local state
+    setApprovals(prev => [...prev, request]);
 
-      // Add a notification to messages
-      const notification = {
-        id: `approval-request-${Date.now()}`,
-        type: 'approval-request',
-        content: `${currentUser.name} requested approval for "${request.title}"`,
-        item: request,
-        timestamp: new Date().toISOString(),
-        sender: currentUser,
-      };
+    // Add a notification to messages
+    const notification = {
+      id: `approval-request-${Date.now()}`,
+      type: 'approval-request',
+      content: `${currentUser.name} requested approval for "${request.title}"`,
+      item: request,
+      timestamp: new Date().toISOString(),
+      sender: currentUser,
+    };
 
-      setMessages(prev => [...prev, notification]);
+    setMessages(prev => [...prev, notification]);
 
-      return request;
-    } catch (err) {
-      throw err;
-    }
+    return request;
   };
 
   // Mock data generation for demo purposes
