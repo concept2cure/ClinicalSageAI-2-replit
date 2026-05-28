@@ -11,6 +11,7 @@ import { I } from '../icons';
 import { ANA_MODES, type AnaMode } from '../data/nav';
 import { useLiveSections } from '../hooks/useLiveSections';
 import { useDocumentComments } from '../hooks/useDocumentComments';
+import { useAnaChat } from '../../components/ana/useAnaChat';
 import { AnaDraftBanner } from '../components/AnaDraftBanner';
 import type {
   EditorBlock,
@@ -526,16 +527,34 @@ export function DocumentEditor(props: DocumentEditorProps) {
   const effectiveSections: EditorSectionVolume[] = isLive && live.sections ? live.sections : sections;
   const effectiveContentMap = isLive && live.contentMap ? live.contentMap : contentMap;
 
+  const chat = useAnaChat({ projectId: programIdent, screenName: screenLabel ?? 'mdx-editor' });
+
   const [sessionLocked, setSessionLocked] = React.useState<Set<number>>(new Set());
 
   const [search, setSearch] = React.useState('');
   const [mode, setMode] = React.useState<AnaMode['id']>(initialMode);
-  const [messages, setMessages] = React.useState<EditorMessage[]>(seedMessages);
+  const [messages, setMessages] = React.useState<EditorMessage[]>(
+    programIdent ? [] : seedMessages,
+  );
   const liveComments = useDocumentComments(programIdent);
   const [comments, setComments] = React.useState<EditorComment[]>(seedComments);
   React.useEffect(() => {
     if (liveComments.comments.length > 0) setComments(liveComments.comments);
   }, [liveComments.comments]);
+
+  const modeRef = React.useRef(mode);
+  React.useEffect(() => { modeRef.current = mode; }, [mode]);
+  React.useEffect(() => {
+    if (!programIdent || chat.messages.length === 0) return;
+    setMessages(
+      chat.messages.map(m => ({
+        role: (m.role === 'assistant' ? 'ana' : 'user') as EditorMessage['role'],
+        body: m.text || (chat.isStreaming ? '…' : ''),
+        when: 'just now',
+        mode: modeRef.current,
+      })),
+    );
+  }, [programIdent, chat.messages, chat.isStreaming]);
   const [activePin, setActivePin] = React.useState<string | null>(null);
   const [pinnedComment, setPinnedComment] = React.useState<EditorComment | null>(null);
   const [valOpen, setValOpen] = React.useState(false);
@@ -566,21 +585,18 @@ export function DocumentEditor(props: DocumentEditorProps) {
     live.refresh();
   }, [isLive, content?.id, live]);
 
-  const onAsk = (text: string, opts: { tool?: string } = {}) => {
+  const onAsk = (text: string, _opts: { tool?: string } = {}) => {
     if (!text) return;
-    const am = ANA_MODES.find(m => m.id === mode)!;
-    setMessages(ms => [
-      ...ms,
-      { role: 'user', body: text, when: 'just now', mode },
-      {
-        role: 'ana',
-        body: opts.tool
-          ? `Running \`${opts.tool}\` on ${content.num} in ${am.label} mode…`
-          : `Thinking in ${am.label} mode. (UI stub — real response streams here via the gateway.)`,
-        when: 'just now',
-        mode,
-      },
-    ]);
+    if (programIdent) {
+      chat.send(text).catch(() => {});
+    } else {
+      const am = ANA_MODES.find(m => m.id === mode)!;
+      setMessages(ms => [
+        ...ms,
+        { role: 'user', body: text, when: 'just now', mode },
+        { role: 'ana', body: `Thinking in ${am.label} mode…`, when: 'just now', mode },
+      ]);
+    }
   };
   const onResolveComment = (id: string) => {
     setComments(cs => cs.map(c => (c.id === id ? { ...c, resolved: true } : c)));
