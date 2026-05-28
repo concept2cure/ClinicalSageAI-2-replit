@@ -279,7 +279,7 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
           }}
         />
       )}
-      {tab === 'files' && <FilesTab project={project} onProjectMutated={onProjectMutated} />}
+      {tab === 'files' && <FilesTab project={project} onProjectMutated={onProjectMutated} onAskAna={text => { setChatPrefill(text); setTab('chats'); }} />}
       {tab === 'linked' && <LinkedTab project={project} />}
       {tab === 'activity' && <ActivityTab project={project} />}
 
