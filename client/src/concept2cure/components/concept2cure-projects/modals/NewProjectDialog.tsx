@@ -17,12 +17,9 @@ import { I } from '../icons';
 import {
   NPD_REGIONS, NPD_TYPES, NPD_FAMILY_LABELS,
   NPD_PREVIEWS, NPD_DEFAULT_PREVIEW,
-  buildPhases,
-  PR_PROJECTS,
   useProjectsMutations,
 } from '../data';
 import type { NpdRegion, NpdType } from '../data';
-import type { Project } from '../types';
 
 interface Props {
   onClose: () => void;
@@ -98,33 +95,7 @@ export function NewProjectDialog({ onClose, onCreated, onApiCreated }: Props) {
       });
       onCreated(result.id);
     } catch (err) {
-      // Real backend write failed (offline / not authed / new tenant
-      // without create permission). Per HANDOFF item 14 the prototype
-      // mutates the in-memory seed; we keep that as the demo fallback
-      // so the wizard's CTA always advances.
-      const fallbackId = `pr-${Date.now().toString(36)}`;
-      const next: Project = {
-        id: fallbackId,
-        name: projName,
-        desc: projDesc,
-        starred: false,
-        chats: [],
-        memory: { enabled: false, summary: '', updated: '' },
-        instructions: '',
-        files: [],
-        submissionType: type.applicationType.toUpperCase().replace(/[^A-Z0-9]/g, '') as Project['submissionType'],
-        submissionTypeLabel: type.displayName,
-        product: projProduct || '—',
-        sponsor: projSponsor,
-        targetAgency: regionMeta ? regionMeta.agency : '',
-        targetDate: '',
-        status: 'draft',
-        phases: buildPhases(type.preset, 0),
-        daysToTarget: null,
-      };
-      PR_PROJECTS.unshift(next);
-      setSubmitError(err instanceof Error ? err.message : 'Backend create failed; using demo seed.');
-      onCreated(fallbackId);
+      setSubmitError(err instanceof Error ? err.message : 'Failed to create project. Please try again.');
     } finally {
       setSubmitting(false);
     }

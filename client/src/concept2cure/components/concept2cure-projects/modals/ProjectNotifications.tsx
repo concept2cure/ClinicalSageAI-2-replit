@@ -1,28 +1,14 @@
 /**
  * ProjectNotifications — bell-icon right sheet, project-scoped feed.
  * Mirror of design-system/ui_kits/home/ProjectsExtras.jsx (lines 595–656).
+ *
+ * Data: useNotifications hook → GET /api/concept2cure/notifications/my
+ * Mark read: POST /api/concept2cure/notifications/mark-all-read
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { I } from '../icons';
-import { PNOT_NOTIFS } from '../data';
+import { useNotifications } from '../data/useNotifications';
 import type { Project } from '../types';
-
-const READ_IDS_KEY = 'concept2cure.notifications.readIds.v1';
-
-function loadReadIds(): Set<string> {
-  if (typeof localStorage === 'undefined') return new Set();
-  try {
-    const raw = localStorage.getItem(READ_IDS_KEY);
-    if (!raw) return new Set();
-    const parsed = JSON.parse(raw);
-    return new Set(Array.isArray(parsed) ? parsed : []);
-  } catch { return new Set(); }
-}
-
-function persistReadIds(ids: Set<string>) {
-  if (typeof localStorage === 'undefined') return;
-  try { localStorage.setItem(READ_IDS_KEY, JSON.stringify([...ids])); } catch { /* quota */ }
-}
 
 interface Props {
   open: boolean;
@@ -33,20 +19,7 @@ interface Props {
 
 export function ProjectNotifications({ open, onClose, projects, onOpenProject }: Props) {
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
-  const [readIds, setReadIds] = useState<Set<string>>(() => loadReadIds());
-  const [confirmingReset, setConfirmingReset] = useState(false);
-
-  const notifications = useMemo(
-    () => PNOT_NOTIFS.map(n => ({ ...n, unread: n.unread && !readIds.has(n.id) })),
-    [readIds],
-  );
-
-  const markAllRead = () => {
-    const next = new Set(readIds);
-    for (const n of PNOT_NOTIFS) next.add(n.id);
-    setReadIds(next);
-    persistReadIds(next);
-  };
+  const { notifications, loading, markAllRead } = useNotifications();
 
   useEffect(() => {
     if (!open) return;
@@ -59,7 +32,7 @@ export function ProjectNotifications({ open, onClose, projects, onOpenProject }:
 
   const visible = filter === 'unread' ? notifications.filter(n => n.unread) : notifications;
   const unreadN = notifications.filter(n => n.unread).length;
-  const projectCount = new Set(notifications.map(n => n.project)).size;
+  const projectCount = new Set(notifications.map(n => n.project).filter(Boolean)).size;
 
   return (
     <div className="pnot" role="dialog" aria-label="Notifications">
@@ -94,8 +67,9 @@ export function ProjectNotifications({ open, onClose, projects, onOpenProject }:
         </header>
 
         <ul className="pnot-list">
-          {visible.length === 0 && <li className="pnot-empty">You're all caught up.</li>}
-          {visible.map(n => {
+          {loading && <li className="pnot-empty">Loading…</li>}
+          {!loading && visible.length === 0 && <li className="pnot-empty">You're all caught up.</li>}
+          {!loading && visible.map(n => {
             const p = projects.find(x => x.id === n.project);
             return (
               <li key={n.id} className={`pnot-row ${n.unread ? 'is-unread' : ''}`}>
@@ -109,13 +83,7 @@ export function ProjectNotifications({ open, onClose, projects, onOpenProject }:
                       <button
                         type="button"
                         className="pnot-row-project"
-                        onClick={() => {
-                          const next = new Set(readIds);
-                          next.add(n.id);
-                          setReadIds(next);
-                          persistReadIds(next);
-                          onOpenProject(p.id);
-                        }}
+                        onClick={() => onOpenProject(p.id)}
                       >
                         {p.name}
                       </button>
@@ -137,27 +105,6 @@ export function ProjectNotifications({ open, onClose, projects, onOpenProject }:
           >
             Mark all as read
           </button>
-          <span className="pnot-foot-spacer" />
-          {confirmingReset ? (
-            <>
-              <span className="pnot-foot-confirm">Reset all to unread?</span>
-              <button type="button" className="pnot-foot-btn" onClick={() => setConfirmingReset(false)}>Cancel</button>
-              <button type="button" className="pnot-foot-btn" onClick={() => {
-                setReadIds(new Set());
-                persistReadIds(new Set());
-                setConfirmingReset(false);
-              }}>Reset</button>
-            </>
-          ) : (
-            <button
-              type="button"
-              className="pnot-foot-btn"
-              onClick={() => setConfirmingReset(true)}
-              title="Reset read/unread state"
-            >
-              Notification settings
-            </button>
-          )}
         </footer>
       </div>
     </div>

@@ -38,3 +38,4 @@ export type { UseProjectsMutations } from './useProjectsMutations';
 export { useProjectMemory } from './useProjectMemory';
 export { useProjectSharing } from './useProjectSharing';
 export type { ProjectMember, TeamUser } from './useProjectSharing';
+export { useNotifications } from './useNotifications';
