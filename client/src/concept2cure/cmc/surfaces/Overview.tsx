@@ -22,11 +22,10 @@ function KpiCard({ label, value, sub }: { label: string; value: string | number;
 interface OverviewProps {
   projectId: string | null;
   portfolioRows: CmcPortfolioRow[];
-  onSelectProject: (productId: string) => void;
   onAskAna: (text: string) => void;
 }
 
-export function CmcOverview({ projectId, portfolioRows, onSelectProject, onAskAna }: OverviewProps) {
+export function CmcOverview({ projectId, portfolioRows, onAskAna }: OverviewProps) {
   const portfolio = usePortfolioOverview();
   const readiness = useModule3Readiness(projectId);
 
@@ -103,10 +102,7 @@ export function CmcOverview({ projectId, portfolioRows, onSelectProject, onAskAn
             </thead>
             <tbody>
               {rows.map(row => (
-                <tr key={row.sub_id}
-                    aria-current={row.product_id === projectId || undefined}
-                    onClick={() => row.product_id && onSelectProject(row.product_id)}
-                    style={{ cursor: row.product_id ? 'pointer' : undefined }}>
+                <tr key={row.sub_id}>
                   <td style={{ fontWeight: 600 }}>{row.sub_id}</td>
                   <td>{row.product_id ?? '—'}</td>
                   <td>{row.region ?? '—'}</td>

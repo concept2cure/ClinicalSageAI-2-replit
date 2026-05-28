@@ -3,10 +3,14 @@
  *
  * Rail + TopBar + TabBar + surface router + AnA dock. Mirrors biopharma's
  * shell idioms. Every surface renders live data via useCMC hooks — no kit /
- * demo arrays are imported. The shell carries a selected project id (project
- * context) used by the project-scoped surfaces; selection defaults to the
- * activeProjectId prop, otherwise the first portfolio row, and persists in
- * localStorage 'cmc.projectId'.
+ * demo arrays are imported.
+ *
+ * The shell carries a selected project id (project context) used by the
+ * project-scoped surfaces. Selection comes from the canonical project id space
+ * (useProjects) — the same id the /api/cmc/*\/:projectId routes filter on —
+ * defaulting to the activeProjectId prop, then the first project, persisted in
+ * localStorage 'cmc.projectId'. The portfolio overview (product_id space) is a
+ * separate cross-submission view and never drives scoped surfaces.
  *
  * AnA: ⌘\ toggles the dock. When open the dock runs a real useAnaChat
  * round-trip against /api/ana-ri/stream with CMC module context; when closed
@@ -30,6 +34,7 @@ import { CmcCopilot } from './surfaces/Copilot';
 import { CmcIcon } from './icons';
 import { HERE_LABEL_CMC, CMC_SUGGESTIONS } from './data/nav';
 import { usePortfolioOverview } from '../hooks/useCMC';
+import { useProjects } from '../hooks/useProjects';
 import { useAnaChat } from '../components/ana/useAnaChat';
 
 const USER = { name: 'You', initials: 'JC', role: 'Enterprise · CMC' };
@@ -76,23 +81,22 @@ export function CmcApp({ activeProjectId, initialNav = 'overview' }: CmcAppProps
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // Portfolio drives the project selector when no project is pre-selected.
+  // Portfolio overview (cross-submission RPI) feeds the Overview surface only —
+  // it is keyed on product_id, a different id space, and never drives scoped
+  // surfaces.
   const portfolio = usePortfolioOverview();
   const portfolioRows = portfolio.data ?? [];
 
-  const projectOptions: CmcProjectOption[] = React.useMemo(() => {
-    const seen = new Set<string>();
-    const opts: CmcProjectOption[] = [];
-    for (const row of portfolioRows) {
-      if (row.product_id && !seen.has(row.product_id)) {
-        seen.add(row.product_id);
-        opts.push({ id: row.product_id, label: `${row.product_id} · ${row.sub_id}` });
-      }
-    }
-    return opts;
-  }, [portfolioRows]);
+  // The project selector and every project-scoped surface use the canonical
+  // project id space (useProjects) — the same id the /api/cmc/*\/:projectId
+  // routes filter on.
+  const { projects } = useProjects();
+  const projectOptions: CmcProjectOption[] = React.useMemo(
+    () => projects.map((p: { id: string; name: string }) => ({ id: p.id, label: p.name })),
+    [projects],
+  );
 
-  // Default the selection to the first portfolio product once it loads.
+  // Default the selection to the first project once the list loads.
   React.useEffect(() => {
     if (!projectId && projectOptions.length > 0) {
       setProjectId(projectOptions[0].id);
@@ -126,7 +130,6 @@ export function CmcApp({ activeProjectId, initialNav = 'overview' }: CmcAppProps
         <CmcOverview
           projectId={projectId}
           portfolioRows={portfolioRows}
-          onSelectProject={setProjectId}
           onAskAna={askAna}
         />
       );
@@ -143,7 +146,6 @@ export function CmcApp({ activeProjectId, initialNav = 'overview' }: CmcAppProps
         <CmcOverview
           projectId={projectId}
           portfolioRows={portfolioRows}
-          onSelectProject={setProjectId}
           onAskAna={askAna}
         />
       );

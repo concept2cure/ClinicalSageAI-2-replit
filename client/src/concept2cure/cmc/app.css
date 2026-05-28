@@ -14,17 +14,17 @@
 .cmc-sec-top { display: flex; align-items: center; gap: 8px; }
 .cmc-sec-key { font-family: var(--font-mono, monospace); font-size: 11px; font-weight: 600; color: var(--text-400); }
 .cmc-scope { margin-left: auto; font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 4px; letter-spacing: 0.04em; }
-.cmc-scope-ds { background: rgba(106, 155, 204, 0.16); color: #2f5a85; }
-.cmc-scope-dp { background: rgba(120, 140, 93, 0.16); color: #5a6e44; }
+.cmc-scope-ds { background: var(--bg-200); color: var(--text-300); }
+.cmc-scope-dp { background: var(--bg-200); color: var(--text-300); }
 .cmc-sec-label { font-size: 12.5px; font-weight: 500; color: var(--text-100); margin: 6px 0 8px; line-height: 1.35; }
 .cmc-sec-bar { height: 5px; border-radius: 3px; background: var(--bg-200); overflow: hidden; }
 .cmc-sec-fill { height: 100%; }
-.cmc-fill-review { background: #6a9bcc; }
+.cmc-fill-review { background: var(--text-400); }
 .cmc-fill-drafted { background: var(--accent-main-100); }
-.cmc-fill-todo { background: #d1cfc0; }
+.cmc-fill-todo { background: var(--border); }
 .cmc-sec-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 7px; }
 .cmc-sec-status { font-size: 10.5px; font-weight: 500; }
-.cmc-st-review { color: #2f5a85; }
+.cmc-st-review { color: var(--text-300); }
 .cmc-st-drafted { color: var(--text-300); }
 .cmc-st-todo { color: var(--text-400); }
 .cmc-sec-conv { font-size: 11px; font-weight: 600; color: var(--text-100); font-variant-numeric: tabular-nums; }
@@ -32,9 +32,9 @@
 /* ICH compliance chips */
 .cmc-ich { display: flex; flex-wrap: wrap; gap: 6px; }
 .cmc-ich-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; font-family: var(--font-mono, monospace); }
-.cmc-ich-ok { background: rgba(120, 140, 93, 0.14); color: #5a6e44; }
-.cmc-ich-warn { background: rgba(217, 119, 6, 0.16); color: #b06b14; }
-.cmc-ich-err { background: rgba(200, 74, 74, 0.16); color: #a04040; }
+.cmc-ich-ok { background: var(--success-muted); color: var(--success); }
+.cmc-ich-warn { background: var(--warning-muted); color: var(--warning); }
+.cmc-ich-err { background: var(--error-muted); color: var(--error); }
 .cmc-ich-muted { background: var(--bg-100); color: var(--text-400); }
 
 /* CQA / CPP / change tables */
@@ -47,29 +47,29 @@
 .cmc-cqa { font-weight: 500; color: var(--text-100); }
 .cmc-mut { color: var(--text-300); }
 .cmc-mono { font-family: var(--font-mono, monospace); font-size: 11px; color: var(--text-200); }
-.cmc-gap { color: #a04040; font-size: 11px; }
+.cmc-gap { color: var(--error); font-size: 11px; }
 .cmc-supac { font-size: 10.5px; font-weight: 600; padding: 1px 7px; border-radius: 4px; text-align: center; }
-.cmc-supac-med { background: rgba(217, 119, 6, 0.16); color: #b06b14; }
-.cmc-supac-high { background: rgba(200, 74, 74, 0.16); color: #a04040; }
+.cmc-supac-med { background: var(--warning-muted); color: var(--warning); }
+.cmc-supac-high { background: var(--error-muted); color: var(--error); }
 
 /* Shared status chip — text + icon, never color alone (WCAG 2.2 AA). */
 .cmc-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
 .cmc-chip svg { width: 12px; height: 12px; }
-.cmc-chip-ok { background: rgba(120, 140, 93, 0.14); color: #5a6e44; }
-.cmc-chip-warn { background: rgba(217, 119, 6, 0.16); color: #b06b14; }
-.cmc-chip-err { background: rgba(200, 74, 74, 0.16); color: #a04040; }
+.cmc-chip-ok { background: var(--success-muted); color: var(--success); }
+.cmc-chip-warn { background: var(--warning-muted); color: var(--warning); }
+.cmc-chip-err { background: var(--error-muted); color: var(--error); }
 .cmc-chip-dim { background: var(--bg-100); color: var(--text-400); }
 
 /* Loading / empty / error states */
 .cmc-state { padding: 28px 16px; text-align: center; color: var(--text-400); font-size: 13px; }
-.cmc-state-err { color: #a04040; }
+.cmc-state-err { color: var(--error); }
 
 /* Readiness bar (overview + sections) */
 .cmc-prog-bar { height: 6px; border-radius: 3px; background: var(--bg-200); overflow: hidden; }
 .cmc-prog-fill { height: 100%; transition: width 200ms ease-out; }
-.cmc-prog-fill[data-tone='ok'] { background: #6a8f5b; }
+.cmc-prog-fill[data-tone='ok'] { background: var(--success); }
 .cmc-prog-fill[data-tone='warn'] { background: var(--accent-main-100); }
-.cmc-prog-fill[data-tone='err'] { background: #c84a4a; }
+.cmc-prog-fill[data-tone='err'] { background: var(--error); }
 
 /* Simple form + chat surfaces */
 .cmc-form { display: flex; flex-direction: column; gap: 12px; max-width: 640px; }
@@ -86,6 +86,14 @@
 .cmc-chat-msg { font-size: 13px; line-height: 1.5; padding: 10px 12px; border-radius: 10px; max-width: 80%; }
 .cmc-chat-msg.you { align-self: flex-end; background: var(--bg-100); color: var(--text-100); }
 .cmc-chat-msg.ana { align-self: flex-start; background: var(--bg-000); border: 1px solid var(--border); color: var(--text-100); }
+
+/* Readable result rendering (AI / service responses) — prose + key/values */
+.cmc-prose { font-size: 13px; line-height: 1.6; color: var(--text-200); white-space: pre-wrap; word-break: break-word; max-width: 72ch; }
+.cmc-result-region { font-size: 12px; font-weight: 600; color: var(--text-300); margin: 0 0 6px; letter-spacing: 0.02em; }
+.cmc-kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 0; }
+.cmc-kv-row { display: contents; }
+.cmc-kv dt { font-size: 11px; font-weight: 600; color: var(--text-300); }
+.cmc-kv dd { font-size: 13px; color: var(--text-100); margin: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   .cmc-sec, .cmc-prog-fill { transition: none; }

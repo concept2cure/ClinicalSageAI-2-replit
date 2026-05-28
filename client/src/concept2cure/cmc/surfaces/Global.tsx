@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useGlobalCompliance } from '../../hooks/useCMC';
-import { ErrorState } from './state';
+import { ErrorState, ResultView } from './state';
 
 const TARGETS: Array<{ id: string; label: string }> = [
   { id: 'fda', label: 'FDA' },
@@ -36,6 +36,7 @@ export function CmcGlobal({ onAskAna }: { onAskAna: (t: string) => void }) {
   };
 
   const result = compliance.data as Record<string, unknown> | undefined;
+  const transformed = result?.transformedContent as Record<string, { content?: string; note?: string }> | undefined;
 
   return (
     <div className="bp-surface">
@@ -95,10 +96,20 @@ export function CmcGlobal({ onAskAna }: { onAskAna: (t: string) => void }) {
 
       {result && (
         <div className="bp-card" style={{ marginTop: 14 }}>
-          <div className="bp-card-head"><span>Per-market readiness</span></div>
-          <pre style={{ margin: 0, padding: 14, fontSize: 12, lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'var(--font-mono, monospace)', color: 'var(--text-200)' }}>
-            {JSON.stringify(result, null, 2)}
-          </pre>
+          <div className="bp-card-head"><span>Per-market transformation</span></div>
+          <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {transformed ? (
+              Object.entries(transformed).map(([region, val]) => (
+                <section key={region}>
+                  <h2 className="cmc-result-region">{region.toUpperCase()}</h2>
+                  <ResultView value={val?.content ?? val} />
+                  {val?.note && <div className="bp-meta" style={{ marginTop: 6 }}>{val.note}</div>}
+                </section>
+              ))
+            ) : (
+              <ResultView value={result} />
+            )}
+          </div>
         </div>
       )}
     </div>

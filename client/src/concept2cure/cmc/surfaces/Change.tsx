@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useChangeImpactSimulation } from '../../hooks/useCMC';
-import { ErrorState } from './state';
+import { ErrorState, ResultView } from './state';
 
 const CHANGE_TYPES: Array<{ id: string; label: string }> = [
   { id: 'api_supplier_change', label: 'API supplier change' },
@@ -111,10 +111,15 @@ export function CmcChange() {
 
       {result && (
         <div className="bp-card" style={{ marginTop: 14 }}>
-          <div className="bp-card-head"><span>Impact analysis</span></div>
-          <pre style={{ margin: 0, padding: 14, fontSize: 12, lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'var(--font-mono, monospace)', color: 'var(--text-200)' }}>
-            {JSON.stringify(result, null, 2)}
-          </pre>
+          <div className="bp-card-head">
+            <span>Impact analysis</span>
+            <span className="bp-meta">
+              {CHANGE_TYPES.find(c => c.id === changeType)?.label} · {markets.map(m => m.toUpperCase()).join(', ')}
+            </span>
+          </div>
+          <div style={{ padding: 14 }}>
+            <ResultView value={result.impactAnalysis ?? result} />
+          </div>
         </div>
       )}
     </div>

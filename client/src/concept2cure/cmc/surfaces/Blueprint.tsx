@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useQbdAnalysis, useGenerateBlueprint } from '../../hooks/useCMC';
-import { Loading, ErrorState, Empty, NoProject } from './state';
+import { Loading, ErrorState, Empty, NoProject, DataTable, ResultView } from './state';
 
 // §3.2 sections that the blueprint generator can compose.
 const SECTIONS: Array<{ key: string; label: string }> = [
@@ -64,9 +64,10 @@ export function CmcBlueprint({ projectId, onAskAna }: { projectId: string | null
           </div>
           {gen.isError && <ErrorState message={gen.error?.message ?? 'Blueprint generation failed.'} />}
           {gen.data != null && (
-            <pre style={{ margin: 0, padding: 12, fontSize: 12, lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: 'var(--bg-050)', borderRadius: 8, color: 'var(--text-200)' }}>
-              {JSON.stringify(gen.data, null, 2)}
-            </pre>
+            <div style={{ marginTop: 4 }}>
+              <div className="bp-meta" style={{ marginBottom: 8 }}>Blueprint generated.</div>
+              <ResultView value={gen.data} />
+            </div>
           )}
         </div>
       </div>
@@ -86,9 +87,20 @@ export function CmcBlueprint({ projectId, onAskAna }: { projectId: string | null
         ) : cqas.length === 0 && cpps.length === 0 ? (
           <Empty>No critical quality attributes or process parameters derived yet.</Empty>
         ) : (
-          <pre style={{ margin: 0, padding: 14, fontSize: 12, lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'var(--font-mono, monospace)', color: 'var(--text-200)' }}>
-            {JSON.stringify(qbd.data, null, 2)}
-          </pre>
+          <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {cqas.length > 0 && (
+              <div>
+                <div className="bp-meta" style={{ marginBottom: 6 }}>Critical quality attributes</div>
+                <DataTable rows={cqas} />
+              </div>
+            )}
+            {cpps.length > 0 && (
+              <div>
+                <div className="bp-meta" style={{ marginBottom: 6 }}>Critical process parameters</div>
+                <DataTable rows={cpps} />
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
