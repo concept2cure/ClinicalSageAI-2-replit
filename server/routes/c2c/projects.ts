@@ -194,9 +194,10 @@ router.get('/:id/team', async (req: Request, res: Response) => {
            u.name, u.email
          FROM project_members pm
          JOIN users u ON u.id = pm.user_id
+         JOIN regulatory_programs rp ON rp.id = pm.project_id AND rp.organization_id = $2
          WHERE pm.project_id = $1
          ORDER BY pm.added_at ASC`,
-        [req.params.id],
+        [req.params.id, orgId],
       );
       return res.json({ team: rows });
     } catch {
