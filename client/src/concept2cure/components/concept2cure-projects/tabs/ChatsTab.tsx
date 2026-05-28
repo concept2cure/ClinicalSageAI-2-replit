@@ -7,7 +7,7 @@
  * Per HANDOFF section 14: useResolve is wired here and forwarded to
  * ProjectTimeline as onResolveBlocker for blocked phases.
  */
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { I } from '../icons';
 import { ProjectTimeline } from '../ProjectTimeline';
 import { ReasonModal } from '../modals/ReasonModal';
@@ -20,9 +20,11 @@ interface Props {
   project: Project;
   onSwitchTab?: (tab: DetailTab) => void;
   onProjectMutated?: () => void;
+  /** Pre-fills the chat composer — used by "Ask AnA…" buttons across the project surface. */
+  prefillText?: string;
 }
 
-export function ChatsTab({ project, onSwitchTab, onProjectMutated }: Props) {
+export function ChatsTab({ project, onSwitchTab, onProjectMutated, prefillText }: Props) {
   const { files } = useProjectFiles(project.id);
   const resolveAction = useResolve();
   const [resolvePhase, setResolvePhase] = useState<{ id: string; name: string } | null>(null);
@@ -38,7 +40,8 @@ export function ChatsTab({ project, onSwitchTab, onProjectMutated }: Props) {
     } catch { /* error surfaced via resolveAction.error */ }
     setResolvePhase(null);
   };
-  const [composer, setComposer] = useState('');
+  const [composer, setComposer] = useState(prefillText ?? '');
+  useEffect(() => { if (prefillText) setComposer(prefillText); }, [prefillText]);
   const [uploading, setUploading] = useState(false);
   const attachRef = useRef<HTMLInputElement>(null);
 

@@ -49,6 +49,7 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
   const [archiveMode, setArchiveMode] = useState<ArchiveMode | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [tab, setTab] = useState<DetailTab>('chats');
+  const [chatPrefill, setChatPrefill] = useState<string | undefined>(undefined);
   const [lockModalOpen, setLockModalOpen] = useState(false);
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const { updateProject, archiveProject, deleteProject, exportProject, duplicateProject, transferProject } =
@@ -254,7 +255,12 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
       </nav>
 
       {tab === 'chats' && (
-        <ChatsTab project={project} onSwitchTab={setTab} onProjectMutated={onProjectMutated} />
+        <ChatsTab
+          project={project}
+          onSwitchTab={setTab}
+          onProjectMutated={onProjectMutated}
+          prefillText={chatPrefill}
+        />
       )}
       {tab === 'memory' && <MemoryTab project={project} onSwitchTab={setTab} />}
       {tab === 'instructions' && (
@@ -293,6 +299,7 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
         onTransfer={() => setTransferModalOpen(true)}
         onExportProject={handleExportProject}
         onOpenInstructionsTab={() => { setConfigOpen(false); setTab('instructions'); }}
+        onAskAna={text => { setConfigOpen(false); setChatPrefill(text); setTab('chats'); }}
         onSign={handleSign}
         onLock={() => setLockModalOpen(true)}
         onSave={async form => {
