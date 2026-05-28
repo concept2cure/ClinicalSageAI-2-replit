@@ -18,10 +18,10 @@ import {
   PCP_SUBMISSION_TYPES,
   PCP_AGENCIES,
   PCP_STATUSES,
-  PCP_ROLES,
   PCP_SSO_GROUPS,
 } from '../data';
 import { useProjectSharing } from '../data/useProjectSharing';
+import { useProjectActivity } from '../data/useProjectActivity';
 import type { Project, ConfigPanelTab } from '../types';
 import { ReasonModal } from '../modals/ReasonModal';
 
@@ -75,6 +75,7 @@ export function ProjectConfigPanel({
   const [form, setForm] = useState<PcpForm | null>(null);
   const [signModalOpen, setSignModalOpen] = useState(false);
   const [instructions, setInstructions] = useState('');
+  const { events: activityEvents } = useProjectActivity(project.id);
 
   useEffect(() => {
     if (open && project) {
@@ -299,11 +300,11 @@ export function ProjectConfigPanel({
                 <div className="pcp-stats">
                   <div className="pcp-stat">
                     <span className="pcp-stat-k">Audit trail</span>
-                    <span className="pcp-stat-v">12 entries</span>
+                    <span className="pcp-stat-v">{activityEvents.length} entries</span>
                   </div>
                   <div className="pcp-stat">
                     <span className="pcp-stat-k">E-signatures</span>
-                    <span className="pcp-stat-v">3 recorded</span>
+                    <span className="pcp-stat-v">{activityEvents.filter(ev => ev.e).length} recorded</span>
                   </div>
                 </div>
               </div>

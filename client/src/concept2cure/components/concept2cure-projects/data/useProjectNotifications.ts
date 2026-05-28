@@ -1,5 +1,5 @@
 /**
- * useNotifications — fetches and manages user notifications.
+ * useProjectNotifications — fetches and manages project-scoped user notifications.
  *
  * GET  /api/concept2cure/notifications/my
  * POST /api/concept2cure/notifications/:id/read
@@ -81,7 +81,7 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   return (await res.json()) as T;
 }
 
-interface UseNotificationsReturn {
+interface UseProjectNotificationsReturn {
   notifications: Notification[];
   unreadCount: number;
   loading: boolean;
@@ -89,7 +89,7 @@ interface UseNotificationsReturn {
   refetch: () => void;
 }
 
-export function useNotifications(): UseNotificationsReturn {
+export function useProjectNotifications(): UseProjectNotificationsReturn {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);

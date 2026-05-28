@@ -7,7 +7,7 @@
  */
 import { useEffect, useState } from 'react';
 import { I } from '../icons';
-import { useNotifications } from '../data/useNotifications';
+import { useProjectNotifications } from '../data/useProjectNotifications';
 import type { Project } from '../types';
 
 interface Props {
@@ -19,7 +19,7 @@ interface Props {
 
 export function ProjectNotifications({ open, onClose, projects, onOpenProject }: Props) {
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
-  const { notifications, loading, markAllRead } = useNotifications();
+  const { notifications, loading, markAllRead } = useProjectNotifications();
 
   useEffect(() => {
     if (!open) return;
