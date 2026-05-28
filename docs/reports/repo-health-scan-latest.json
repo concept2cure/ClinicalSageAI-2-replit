@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-05-28T18:03:13.993Z",
+  "generatedAt": "2026-05-28T19:17:00.623Z",
   "git": {
-    "sha": "7c6ca4006dbab34b51cdbbe7775dfe8915a6053c",
+    "sha": "f47d664dae6c4b3618d0db45ae5c463a23035e00",
     "branch": "claude/sharp-brahmagupta-SlRdx"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 189,
+    "duplicateBasenames": 190,
     "largeFilesByBytes": 15,
     "largeFilesByLines": 45
   },
@@ -1201,6 +1201,14 @@
         ]
       },
       {
+        "basename": "documents",
+        "count": 2,
+        "paths": [
+          "database/schema/documents.ts",
+          "server/routes/c2c/documents.ts"
+        ]
+      },
+      {
         "basename": "documents-panel",
         "count": 2,
         "paths": [
@@ -2113,13 +2121,13 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 249,
+      "duplicateGroups": 250,
       "largeByBytes": 10,
       "largeByLines": 31
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 233,
+      "duplicateGroups": 234,
       "largeByBytes": 2,
       "largeByLines": 7
     },

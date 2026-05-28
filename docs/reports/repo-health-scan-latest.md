@@ -1,12 +1,12 @@
 # Repo Health Scan
 
-Generated: 2026-05-28T18:03:13.993Z
+Generated: 2026-05-28T19:17:00.623Z
 Branch: claude/sharp-brahmagupta-SlRdx
-SHA: 7c6ca4006dbab34b51cdbbe7775dfe8915a6053c
+SHA: f47d664dae6c4b3618d0db45ae5c463a23035e00
 
 ## Summary
 
-- Duplicate basenames: 189
+- Duplicate basenames: 190
 - Files over byte threshold: 15
 - Files over line threshold: 45
 - Baseline: docs/reports/repo-health-scan-latest.json
@@ -16,8 +16,8 @@ SHA: 7c6ca4006dbab34b51cdbbe7775dfe8915a6053c
 
 ## Owner Summary
 
-- Backend Platform (server/routes + server/services owners): duplicateGroups=249, largeByBytes=10, largeByLines=31
-- Unassigned (TBD): duplicateGroups=233, largeByBytes=2, largeByLines=7
+- Backend Platform (server/routes + server/services owners): duplicateGroups=250, largeByBytes=10, largeByLines=31
+- Unassigned (TBD): duplicateGroups=234, largeByBytes=2, largeByLines=7
 - Concept2Cure Frontend (client/src/concept2cure maintainers): duplicateGroups=111, largeByBytes=2, largeByLines=4
 - Frontend Platform (client/src maintainers): duplicateGroups=82, largeByBytes=0, largeByLines=1
 - Shared Contracts (shared/schema + shared/types owners): duplicateGroups=29, largeByBytes=1, largeByLines=2
