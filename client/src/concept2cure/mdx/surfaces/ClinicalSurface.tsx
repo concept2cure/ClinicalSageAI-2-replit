@@ -12,14 +12,10 @@ import * as React from 'react';
 import { I } from '../icons';
 import { DocumentsPanel } from '../components/DocumentsPanel';
 import {
-  CLIN_KPIS,
-  CLIN_FUNNEL,
-  CLIN_SITES,
-  CLIN_DEVIATIONS,
-  CLIN_ADJUDICATION,
   CLIN_DOCUMENTS,
   CLIN_DOC_FRAMEWORKS,
 } from '../data/clinical';
+import { useClinicalStudy } from '../hooks/useClinicalStudy';
 import type { Program } from '../data/programs';
 
 interface Props {
@@ -31,6 +27,7 @@ interface Props {
 export function ClinicalSurface({ program, onAskAna, onOpenEditor }: Props) {
   const [awarenessOpen, setAwarenessOpen] = React.useState(false);
   const programContext = program ? `${program.code} pivotal trial · ${program.title}` : 'CV-330 pivotal trial';
+  const { kpis, funnel: CLIN_FUNNEL, sites: CLIN_SITES, deviations: CLIN_DEVIATIONS, adjudication: CLIN_ADJUDICATION } = useClinicalStudy();
 
   return (
     <>
@@ -54,7 +51,7 @@ export function ClinicalSurface({ program, onAskAna, onOpenEditor }: Props) {
       </div>
 
       <div className="metrics-row metrics-compact">
-        {CLIN_KPIS.map((k, i) => (
+        {kpis.map((k, i) => (
           <div key={i} className="metric-card" data-tone={k.tone ?? ''}>
             <div className="metric-label">{k.label}</div>
             <div className="metric-val">{k.metric}{k.unit && <span className="unit">{k.unit}</span>}</div>
