@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-05-28T19:17:00.623Z",
+  "generatedAt": "2026-05-28T20:14:10.683Z",
   "git": {
-    "sha": "f47d664dae6c4b3618d0db45ae5c463a23035e00",
+    "sha": "0ca9da06f32f8d3f4f489b6d0e07e6e114afd20c",
     "branch": "claude/sharp-brahmagupta-SlRdx"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 190,
+    "duplicateBasenames": 192,
     "largeFilesByBytes": 15,
     "largeFilesByLines": 45
   },
@@ -120,7 +120,7 @@
       },
       {
         "basename": "app",
-        "count": 24,
+        "count": 25,
         "paths": [
           "client/public/design-system/ui_kits/ana_ri/App.jsx",
           "client/public/design-system/ui_kits/ectd_coauthor/App.jsx",
@@ -128,6 +128,7 @@
           "client/public/design-system/ui_kits/mdx/App.jsx",
           "client/src/App.jsx",
           "client/src/concept2cure/App.tsx",
+          "client/src/concept2cure/biopharma/App.tsx",
           "client/src/concept2cure/mdx/App.tsx",
           "client/src/concept2cure/pdev/App.tsx",
           "design-system/ui_kits/ana_ri/App.jsx",
@@ -180,12 +181,13 @@
       },
       {
         "basename": "icons",
-        "count": 22,
+        "count": 23,
         "paths": [
           "client/public/design-system/ui_kits/ana_ri/Icons.jsx",
           "client/public/design-system/ui_kits/ectd_coauthor/Icons.jsx",
           "client/public/design-system/ui_kits/home/Icons.jsx",
           "client/public/design-system/ui_kits/mdx/Icons.jsx",
+          "client/src/concept2cure/biopharma/icons.tsx",
           "client/src/concept2cure/components/ana/icons.tsx",
           "client/src/concept2cure/components/claude-ectd-coauthor/icons.tsx",
           "client/src/concept2cure/components/concept2cure-home/icons.tsx",
@@ -292,6 +294,19 @@
           "server/services/ai-gateway/audit.ts",
           "ui_kits/mdx/data/audit.js",
           "ui_kits/mdx/surfaces/Audit.jsx"
+        ]
+      },
+      {
+        "basename": "programs",
+        "count": 7,
+        "paths": [
+          "client/src/concept2cure/biopharma/data/programs.ts",
+          "client/src/concept2cure/mdx/data/programs.ts",
+          "design-system/ui_kits/mdx/data/programs.js",
+          "server/routes/biopharma/programs.ts",
+          "server/routes/programs.ts",
+          "shared/schema/programs.ts",
+          "ui_kits/mdx/data/programs.js"
         ]
       },
       {
@@ -479,6 +494,17 @@
         ]
       },
       {
+        "basename": "nav",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/biopharma/data/nav.ts",
+          "client/src/concept2cure/mdx/data/nav.ts",
+          "client/src/concept2cure/pdev/data/nav.ts",
+          "design-system/ui_kits/mdx/data/nav.js",
+          "ui_kits/mdx/data/nav.js"
+        ]
+      },
+      {
         "basename": "onboarding",
         "count": 5,
         "paths": [
@@ -501,17 +527,6 @@
         ]
       },
       {
-        "basename": "programs",
-        "count": 5,
-        "paths": [
-          "client/src/concept2cure/mdx/data/programs.ts",
-          "design-system/ui_kits/mdx/data/programs.js",
-          "server/routes/programs.ts",
-          "shared/schema/programs.ts",
-          "ui_kits/mdx/data/programs.js"
-        ]
-      },
-      {
         "basename": "qsub",
         "count": 5,
         "paths": [
@@ -531,6 +546,17 @@
           "design-system/ui_kits/mdx/surfaces/Samd.jsx",
           "ui_kits/mdx/data/samd.js",
           "ui_kits/mdx/surfaces/Samd.jsx"
+        ]
+      },
+      {
+        "basename": "topbar",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/biopharma/shell/TopBar.tsx",
+          "client/src/concept2cure/components/ana/TopBar.tsx",
+          "client/src/concept2cure/components/claude-ectd-coauthor/TopBar.tsx",
+          "client/src/concept2cure/mdx/shell/TopBar.tsx",
+          "client/src/concept2cure/pdev/shell/TopBar.tsx"
         ]
       },
       {
@@ -596,16 +622,6 @@
         ]
       },
       {
-        "basename": "nav",
-        "count": 4,
-        "paths": [
-          "client/src/concept2cure/mdx/data/nav.ts",
-          "client/src/concept2cure/pdev/data/nav.ts",
-          "design-system/ui_kits/mdx/data/nav.js",
-          "ui_kits/mdx/data/nav.js"
-        ]
-      },
-      {
         "basename": "policy",
         "count": 4,
         "paths": [
@@ -616,13 +632,13 @@
         ]
       },
       {
-        "basename": "topbar",
+        "basename": "projects",
         "count": 4,
         "paths": [
-          "client/src/concept2cure/components/ana/TopBar.tsx",
-          "client/src/concept2cure/components/claude-ectd-coauthor/TopBar.tsx",
-          "client/src/concept2cure/mdx/shell/TopBar.tsx",
-          "client/src/concept2cure/pdev/shell/TopBar.tsx"
+          "client/src/concept2cure/components/concept2cure-projects/data/projects.ts",
+          "database/schema/projects.ts",
+          "design-system/ui_kits/home/Projects.jsx",
+          "server/routes/c2c/projects.ts"
         ]
       },
       {
@@ -809,6 +825,15 @@
         ]
       },
       {
+        "basename": "overview",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/biopharma/surfaces/Overview.tsx",
+          "client/src/concept2cure/mdx/surfaces/Overview.tsx",
+          "client/src/concept2cure/pdev/surfaces/Overview.tsx"
+        ]
+      },
+      {
         "basename": "postmarket-docs",
         "count": 3,
         "paths": [
@@ -818,12 +843,12 @@
         ]
       },
       {
-        "basename": "projects",
+        "basename": "rail",
         "count": 3,
         "paths": [
-          "client/src/concept2cure/components/concept2cure-projects/data/projects.ts",
-          "database/schema/projects.ts",
-          "design-system/ui_kits/home/Projects.jsx"
+          "client/src/concept2cure/biopharma/shell/Rail.tsx",
+          "client/src/concept2cure/mdx/shell/Rail.tsx",
+          "client/src/concept2cure/pdev/shell/Rail.tsx"
         ]
       },
       {
@@ -1513,14 +1538,6 @@
         ]
       },
       {
-        "basename": "overview",
-        "count": 2,
-        "paths": [
-          "client/src/concept2cure/mdx/surfaces/Overview.tsx",
-          "client/src/concept2cure/pdev/surfaces/Overview.tsx"
-        ]
-      },
-      {
         "basename": "precedent-engine",
         "count": 2,
         "paths": [
@@ -1569,6 +1586,14 @@
         ]
       },
       {
+        "basename": "projectdetail",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/components/concept2cure-projects/ProjectDetail.tsx",
+          "client/src/concept2cure/projects/ProjectDetail.tsx"
+        ]
+      },
+      {
         "basename": "projecthome",
         "count": 2,
         "paths": [
@@ -1598,14 +1623,6 @@
         "paths": [
           "client/src/components/ui/radio-group.jsx",
           "client/src/components/ui/radio-group.tsx"
-        ]
-      },
-      {
-        "basename": "rail",
-        "count": 2,
-        "paths": [
-          "client/src/concept2cure/mdx/shell/Rail.tsx",
-          "client/src/concept2cure/pdev/shell/Rail.tsx"
         ]
       },
       {
@@ -1710,6 +1727,14 @@
         "paths": [
           "server/routes/support-admin.ts",
           "shared/schema/support-admin.ts"
+        ]
+      },
+      {
+        "basename": "tabbar",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/biopharma/shell/TabBar.tsx",
+          "client/src/concept2cure/mdx/shell/TabBar.tsx"
         ]
       },
       {
@@ -2006,7 +2031,7 @@
       },
       {
         "file": "client/src/concept2cure/ZenApp.tsx",
-        "lines": 2175
+        "lines": 2192
       },
       {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",
@@ -2113,7 +2138,7 @@
   "comparison": {
     "baseline": "docs/reports/repo-health-scan-latest.json",
     "delta": {
-      "duplicateBasenames": 0,
+      "duplicateBasenames": 2,
       "largeFilesByBytes": 0,
       "largeFilesByLines": 0
     }
@@ -2121,7 +2146,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 250,
+      "duplicateGroups": 252,
       "largeByBytes": 10,
       "largeByLines": 31
     },
@@ -2133,7 +2158,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 111,
+      "duplicateGroups": 122,
       "largeByBytes": 2,
       "largeByLines": 4
     },
