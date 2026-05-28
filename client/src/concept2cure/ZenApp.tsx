@@ -141,6 +141,7 @@ import { Concept2CureHome } from './components/concept2cure-home';
 import MdxRoute from './mdx/MdxRoute';
 import PdevRoute from './pdev/PdevRoute';
 import BiopharmaRoute from './biopharma/BiopharmaRoute';
+import CmcRoute from './cmc/CmcRoute';
 import ProjectDetailRoute from './projects/ProjectDetailRoute';
 
 /** Map MDX deep-link hashes (#k510, #pma, #cer, #vault, #admin, …) to the
@@ -1167,7 +1168,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         tasking: '#tasks',
         submission: '#submissions',
         protocol: '#templates',
-        cmc: '#cer', // CER generator covers CMC docs in MDX
         biostat: '', // no MDX surface yet → fall through to Ana
         quality: '#validation',
         reporting: '#analytics',
@@ -1194,6 +1194,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
            return at line ~1820. When the flag is off, the destination
            falls through to the projects view. */
         setLayoutMode('pdev');
+        return;
+      }
+      if (normalizedPath === 'cmc') {
+        /* Phase 10 CMC (Module 3 — Chemistry, Manufacturing & Controls)
+           workstream. Live domain shell mirroring biopharma. */
+        setLayoutMode('cmc');
         return;
       }
       if (normalizedPath in BUNDLE_MDX_HASH) {
@@ -1885,6 +1891,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // Phase 10 — Biopharma domain shell.
   if (layoutMode === 'biopharma' && !embeddedModule) {
     return <BiopharmaRoute />;
+  }
+
+  // Phase 10 — CMC workstream shell.
+  if (layoutMode === 'cmc' && !embeddedModule) {
+    return <CmcRoute activeProjectId={activeProjectId} />;
   }
 
   // Phase 10 — Project detail surface. Requires an active project.

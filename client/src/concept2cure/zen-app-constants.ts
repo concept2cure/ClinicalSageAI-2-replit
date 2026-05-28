@@ -67,7 +67,6 @@ export type LayoutMode =
   | 'snowglobe-chambers'
   | 'rules'
   | 'ectd-coauthor'
-  | 'cmc'
   | 'document-vault'
   | 'clinical-trial'
   | 'templates'
@@ -121,6 +120,7 @@ export type LayoutMode =
   | 'program-analytics'
   // ── Phase 10 surfaces ──
   | 'biopharma'
+  | 'cmc'
   | 'project-detail';
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -22,6 +22,13 @@ import cmcService, {
   type BatchRecord,
   type ICHComplianceResult,
   type ICHGuideline,
+  type CmcPortfolioRow,
+  type CmcModule3Readiness,
+  type CmcSpecRow,
+  type CmcStabilityRow,
+  type CmcBatchRow,
+  type CmcIchCheckResult,
+  type CmcQbdResult,
 } from '../services/cmcService';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -43,7 +50,113 @@ export const cmcQueryKeys = {
   batchList: (params: Record<string, unknown>) => [...cmcQueryKeys.batches(), 'list', params] as const,
   batchDetail: (batchNumber: string) => [...cmcQueryKeys.batches(), batchNumber] as const,
   batchTrends: (params: Record<string, unknown>) => [...cmcQueryKeys.batches(), 'trends', params] as const,
+  // Workstream shell (Phase 10)
+  portfolioOverview: () => [...cmcQueryKeys.all, 'portfolio', 'overview'] as const,
+  module3Readiness: (projectId: string) => [...cmcQueryKeys.all, 'module3', 'readiness', projectId] as const,
+  projectSpecs: (projectId: string) => [...cmcQueryKeys.specifications(), 'project', projectId] as const,
+  projectStability: (projectId: string) => [...cmcQueryKeys.stability(), 'project', projectId] as const,
+  projectBatches: (projectId: string) => [...cmcQueryKeys.batches(), 'project', projectId] as const,
+  ichCheck: (projectId: string) => [...cmcQueryKeys.all, 'ich-check', projectId] as const,
+  qbd: (projectId: string) => [...cmcQueryKeys.all, 'qbd', projectId] as const,
 };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// WORKSTREAM SHELL HOOKS (Phase 10 CMC · Module 3) — live data only
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export function usePortfolioOverview() {
+  return useQuery<CmcPortfolioRow[]>({
+    queryKey: cmcQueryKeys.portfolioOverview(),
+    queryFn: () => cmcService.getPortfolioOverview(),
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export function useModule3Readiness(projectId: string | null) {
+  return useQuery<CmcModule3Readiness | null>({
+    queryKey: cmcQueryKeys.module3Readiness(projectId || ''),
+    queryFn: () => (projectId ? cmcService.getModule3Readiness(projectId) : null),
+    enabled: !!projectId,
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useProjectSpecifications(projectId: string | null) {
+  return useQuery<CmcSpecRow[]>({
+    queryKey: cmcQueryKeys.projectSpecs(projectId || ''),
+    queryFn: () => (projectId ? cmcService.getSpecificationsByProject(projectId) : []),
+    enabled: !!projectId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useProjectStability(projectId: string | null) {
+  return useQuery<CmcStabilityRow[]>({
+    queryKey: cmcQueryKeys.projectStability(projectId || ''),
+    queryFn: () => (projectId ? cmcService.getStabilityByProject(projectId) : []),
+    enabled: !!projectId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useProjectBatchRecords(projectId: string | null) {
+  return useQuery<CmcBatchRow[]>({
+    queryKey: cmcQueryKeys.projectBatches(projectId || ''),
+    queryFn: () => (projectId ? cmcService.getBatchRecordsByProject(projectId) : []),
+    enabled: !!projectId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useBatchRelease() {
+  const queryClient = useQueryClient();
+  return useMutation<unknown, Error, { id: string; releaseTesting: unknown; releasedBy: string }>({
+    mutationFn: ({ id, releaseTesting, releasedBy }) =>
+      cmcService.releaseBatch(id, { releaseTesting, releasedBy }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: cmcQueryKeys.batches() });
+    },
+  });
+}
+
+export function useICHComplianceCheck() {
+  return useMutation<CmcIchCheckResult | null, Error, string>({
+    mutationFn: (projectId) => cmcService.runICHComplianceCheck(projectId),
+  });
+}
+
+export function useChangeImpactSimulation() {
+  return useMutation<unknown, Error, Record<string, unknown>>({
+    mutationFn: (payload) => cmcService.simulateChangeImpact(payload),
+  });
+}
+
+export function useQbdAnalysis(projectId: string | null) {
+  return useQuery<CmcQbdResult | null>({
+    queryKey: cmcQueryKeys.qbd(projectId || ''),
+    queryFn: () => (projectId ? cmcService.analyzeQbd(projectId) : null),
+    enabled: !!projectId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useGenerateBlueprint() {
+  return useMutation<unknown, Error, Record<string, unknown>>({
+    mutationFn: (payload) => cmcService.generateBlueprint(payload),
+  });
+}
+
+export function useGlobalCompliance() {
+  return useMutation<unknown, Error, Record<string, unknown>>({
+    mutationFn: (payload) => cmcService.checkGlobalCompliance(payload),
+  });
+}
+
+export function useCmcCopilot() {
+  return useMutation<{ response?: string; [key: string]: unknown }, Error, { query: string; context?: Record<string, unknown> }>({
+    mutationFn: ({ query, context }) => cmcService.cmcCopilotChat(query, context),
+  });
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SPECIFICATION HOOKS

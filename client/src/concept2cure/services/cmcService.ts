@@ -339,6 +339,79 @@ export interface BatchRecord {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// TYPES - WORKSTREAM SHELL (Phase 10 CMC · Module 3)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** One row per submission from GET /api/cmc/blueprint/portfolio/overview. */
+export interface CmcPortfolioRow {
+  sub_id: string;
+  product_id: string;
+  region: string | null;
+  app_type: string | null;
+  rpi: number;
+  components: Record<string, unknown>;
+  ir_open: number;
+  ir_overdue: number;
+  obligations_open: number;
+  obligations_overdue: number;
+  stability_cov_m: number;
+  m3_missing: number;
+  preflight_critical: number;
+  qc_alerts: number;
+  playbook_open: number;
+}
+
+/** GET /api/cmc/module3-os/readiness/:projectId → data. */
+export interface CmcModule3Readiness {
+  totalSections: number;
+  approvedSections: number;
+  staleSections: number;
+  openCriticalContradictions: number;
+  exportReady: boolean;
+  canonicalGovernedState?: Record<string, unknown> | null;
+}
+
+/** Project-scoped specification row (quality_specifications table). */
+export interface CmcSpecRow {
+  id: string;
+  project_id: string | null;
+  [key: string]: unknown;
+}
+
+/** Project-scoped stability study row. */
+export interface CmcStabilityRow {
+  id: string;
+  project_id: string | null;
+  [key: string]: unknown;
+}
+
+/** Project-scoped batch record row. */
+export interface CmcBatchRow {
+  id: string;
+  project_id: string | null;
+  [key: string]: unknown;
+}
+
+/** POST /api/cmc/ich-compliance → data (deterministic Q-series rollup). */
+export interface CmcIchCheckResult {
+  overallStatus?: string;
+  score?: number;
+  guidelines?: Array<{
+    guideline: string;
+    status: string;
+    findings?: Array<{ description: string; reference?: string }>;
+  }>;
+  [key: string]: unknown;
+}
+
+/** GET /api/cmc/quality/qbd/:projectId → data. */
+export interface CmcQbdResult {
+  cqas?: Array<Record<string, unknown>>;
+  cpps?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // SERVICE CLASS
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -743,6 +816,119 @@ class CMCService {
       console.error('[CMC] Get batch trends failed:', error);
       return [];
     }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // WORKSTREAM SHELL (Phase 10 CMC · Module 3) — live, project-scoped reads
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /** Portfolio overview — one RPI row per submission. */
+  async getPortfolioOverview(): Promise<CmcPortfolioRow[]> {
+    const rows = await this.request<CmcPortfolioRow[] | { data?: CmcPortfolioRow[] }>(
+      'GET',
+      `${this.baseUrl}/blueprint/portfolio/overview`,
+    );
+    return Array.isArray(rows) ? rows : rows?.data ?? [];
+  }
+
+  /** Module 3 build-state readiness for a project. */
+  async getModule3Readiness(projectId: string): Promise<CmcModule3Readiness | null> {
+    const res = await this.request<{ data?: CmcModule3Readiness }>(
+      'GET',
+      `${this.baseUrl}/module3-os/readiness/${encodeURIComponent(projectId)}`,
+    );
+    return (res as any)?.data ?? (res as unknown as CmcModule3Readiness) ?? null;
+  }
+
+  /** Specifications for a project (quality_specifications). */
+  async getSpecificationsByProject(projectId: string): Promise<CmcSpecRow[]> {
+    const res = await this.request<{ data?: CmcSpecRow[] } | CmcSpecRow[]>(
+      'GET',
+      `${this.baseUrl}/specifications/${encodeURIComponent(projectId)}`,
+    );
+    return Array.isArray(res) ? res : res?.data ?? [];
+  }
+
+  /** Stability studies for a project. */
+  async getStabilityByProject(projectId: string): Promise<CmcStabilityRow[]> {
+    const res = await this.request<{ data?: CmcStabilityRow[] } | CmcStabilityRow[]>(
+      'GET',
+      `${this.baseUrl}/stability/${encodeURIComponent(projectId)}`,
+    );
+    return Array.isArray(res) ? res : res?.data ?? [];
+  }
+
+  /** Batch records for a project. */
+  async getBatchRecordsByProject(projectId: string): Promise<CmcBatchRow[]> {
+    const res = await this.request<{ data?: CmcBatchRow[] } | CmcBatchRow[]>(
+      'GET',
+      `${this.baseUrl}/batch-records/${encodeURIComponent(projectId)}`,
+    );
+    return Array.isArray(res) ? res : res?.data ?? [];
+  }
+
+  /** Release a batch record. */
+  async releaseBatch(id: string, payload: { releaseTesting: unknown; releasedBy: string }): Promise<unknown> {
+    return this.request('POST', `${this.baseUrl}/batch-records/${encodeURIComponent(id)}/release`, payload);
+  }
+
+  /** Deterministic ICH compliance check for a project. */
+  async runICHComplianceCheck(projectId: string): Promise<CmcIchCheckResult | null> {
+    const res = await this.request<{ data?: CmcIchCheckResult } | CmcIchCheckResult>(
+      'POST',
+      `${this.baseUrl}/ich-compliance`,
+      { projectId },
+    );
+    return (res as any)?.data ?? (res as CmcIchCheckResult) ?? null;
+  }
+
+  /** Change-impact simulation. Returns the filing path / impact analysis. */
+  async simulateChangeImpact(payload: Record<string, unknown>): Promise<unknown> {
+    const res = await this.request<{ data?: unknown }>(
+      'POST',
+      `${this.baseUrl}/change-impact-simulator/simulate`,
+      payload,
+    );
+    return (res as any)?.data ?? res;
+  }
+
+  /** QbD analysis (CQAs / CPPs) for a project. */
+  async analyzeQbd(projectId: string): Promise<CmcQbdResult | null> {
+    const res = await this.request<{ data?: CmcQbdResult } | CmcQbdResult>(
+      'GET',
+      `${this.baseUrl}/quality/qbd/${encodeURIComponent(projectId)}`,
+    );
+    return (res as any)?.data ?? (res as CmcQbdResult) ?? null;
+  }
+
+  /** Generate a §3.2 blueprint. */
+  async generateBlueprint(payload: Record<string, unknown>): Promise<unknown> {
+    const res = await this.request<{ data?: unknown }>(
+      'POST',
+      `${this.baseUrl}/blueprint/generate-blueprint`,
+      payload,
+    );
+    return (res as any)?.data ?? res;
+  }
+
+  /** Global (per-market) compliance transform. */
+  async checkGlobalCompliance(payload: Record<string, unknown>): Promise<unknown> {
+    const res = await this.request<{ data?: unknown }>(
+      'POST',
+      `${this.baseUrl}/global-compliance/transform`,
+      payload,
+    );
+    return (res as any)?.data ?? res;
+  }
+
+  /** CMC copilot chat turn. */
+  async cmcCopilotChat(query: string, context?: Record<string, unknown>): Promise<{ response?: string; [key: string]: unknown }> {
+    const res = await this.request<{ data?: any } | any>(
+      'POST',
+      `${this.baseUrl}/cmc-copilot/query`,
+      { query, context },
+    );
+    return (res as any)?.data ?? res ?? {};
   }
 }
 

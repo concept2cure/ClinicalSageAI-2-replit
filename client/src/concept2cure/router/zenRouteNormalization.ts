@@ -6,7 +6,6 @@ export const DEMOTED_LAYOUT_REDIRECTS: Partial<Record<LayoutMode, LayoutMode>> =
   'snowglobe-chambers': 'projects',
   rules: 'projects',
   'ectd-coauthor': 'documents',
-  cmc: 'documents',
   'document-vault': 'vault',
   'vault-workspace': 'vault',
   'review-readiness': 'review',
