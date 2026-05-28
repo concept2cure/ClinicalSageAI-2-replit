@@ -34,3 +34,7 @@ export type { UseProjectsApiOptions, UseProjectsApiReturn } from './useProjectsA
 
 export { useProjectsMutations } from './useProjectsMutations';
 export type { UseProjectsMutations } from './useProjectsMutations';
+
+export { useProjectMemory } from './useProjectMemory';
+export { useProjectSharing } from './useProjectSharing';
+export type { ProjectMember, TeamUser } from './useProjectSharing';

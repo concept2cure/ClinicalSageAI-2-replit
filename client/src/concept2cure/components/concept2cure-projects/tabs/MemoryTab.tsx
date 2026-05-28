@@ -5,7 +5,7 @@
  */
 import { useEffect, useState } from 'react';
 import { I } from '../icons';
-import { PMEM_LEARNINGS } from '../data';
+import { useProjectMemory } from '../data/useProjectMemory';
 import type { DetailTab, Project } from '../types';
 
 const FORGOTTEN_KEY = 'concept2cure.memory.forgotten.v1';
@@ -31,7 +31,7 @@ interface Props {
 }
 
 export function MemoryTab({ project, onSwitchTab }: Props) {
-  const [enabled, setEnabled] = useState(project.memory.enabled);
+  const { memoryEnabled: enabled, toggleMemory, toggling } = useProjectMemory(project.id);
   const [forgotten, setForgotten] = useState<string[]>([]);
   const [confirmingForgetAll, setConfirmingForgetAll] = useState(false);
 
@@ -40,7 +40,7 @@ export function MemoryTab({ project, onSwitchTab }: Props) {
     setForgotten(map[project.id] || []);
   }, [project.id]);
 
-  const allLearnings = PMEM_LEARNINGS[project.id] || [];
+  const allLearnings: import('../types').MemoryLearning[] = [];
   const learnings = allLearnings.filter(l => !forgotten.includes(`${l.when}|${l.kind}|${l.text}`));
 
   const forgetOne = (key: string) => {
@@ -92,7 +92,8 @@ export function MemoryTab({ project, onSwitchTab }: Props) {
           <button
             type="button"
             className={`pmem-toggle ${enabled ? 'is-on' : ''}`}
-            onClick={() => setEnabled(!enabled)}
+            onClick={toggleMemory}
+            disabled={toggling}
             aria-pressed={enabled}
           >
             <span className="pmem-toggle-knob" />
@@ -109,7 +110,7 @@ export function MemoryTab({ project, onSwitchTab }: Props) {
               Turn it on to let Claude carry context between chats. Off projects work like single conversations — nothing is remembered after a session ends.
             </div>
           </div>
-          <button type="button" className="prj-btn primary" onClick={() => setEnabled(true)}>
+          <button type="button" className="prj-btn primary" disabled={toggling} onClick={toggleMemory}>
             Turn on memory
           </button>
         </div>

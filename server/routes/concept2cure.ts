@@ -622,11 +622,14 @@ function normalizeKnowledge(settings: Record<string, unknown>): ProjectKnowledge
       ? knowledge.customInstructions
       : '';
   const context = typeof knowledge.context === 'string' ? knowledge.context : '';
+  const memoryEnabled =
+    typeof knowledge.memoryEnabled === 'boolean' ? knowledge.memoryEnabled : false;
 
   return {
     documents,
     customInstructions,
     context,
+    memoryEnabled,
   };
 }
 
@@ -748,6 +751,7 @@ const updateKnowledgeSchema = z
   .object({
     customInstructions: z.string().max(5000).optional(),
     context: z.string().max(20000).optional(),
+    memoryEnabled: z.boolean().optional(),
   })
   .partial();
 
@@ -996,6 +1000,7 @@ interface ProjectKnowledge {
   documents: UploadedDocument[];
   customInstructions?: string;
   context?: string;
+  memoryEnabled?: boolean;
 }
 
 interface OwnershipReportRef {
@@ -3919,6 +3924,8 @@ router.patch('/projects/:projectId/knowledge', async (req: Request, res: Respons
             ? sanitizeContent(data.context)
             : ''
           : knowledge.context,
+      memoryEnabled:
+        data.memoryEnabled !== undefined ? data.memoryEnabled : knowledge.memoryEnabled,
     };
 
     const updatedSettings = {

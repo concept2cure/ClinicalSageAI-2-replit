@@ -19,9 +19,9 @@ import {
   PCP_AGENCIES,
   PCP_STATUSES,
   PCP_ROLES,
-  PCP_MEMBERS,
   PCP_SSO_GROUPS,
 } from '../data';
+import { useProjectSharing } from '../data/useProjectSharing';
 import type { Project, ConfigPanelTab } from '../types';
 import { ReasonModal } from '../modals/ReasonModal';
 
@@ -277,95 +277,12 @@ export function ProjectConfigPanel({
           )}
 
           {tab === 'team' && (
-            <div className="pcp-tab-body">
-              <div className="pcp-card">
-                <div className="pcp-card-head">
-                  <h3 className="pcp-h3">Invite members</h3>
-                  <span className="pcp-badge" data-tone="ok">
-                    {(PCP_MEMBERS[project.id] || []).length} active
-                  </span>
-                </div>
-                <p className="pcp-section-sub">
-                  Add by email. New members receive an invitation with the role you specify.
-                </p>
-                <InviteRow
-                  onSend={(email, role) =>
-                    onAskAna?.(
-                      `Invite ${email} to project "${project.name}" as ${role}. ` +
-                        'Look them up in the org directory by email — if they aren\'t a member yet, ' +
-                        'send them an org invitation first, then add them as a project collaborator.',
-                    )
-                  }
-                />
-              </div>
-
-              <div className="pcp-card">
-                <h3 className="pcp-h3">Members</h3>
-                <ul className="pcp-mem-list">
-                  {(PCP_MEMBERS[project.id] || []).map(m => {
-                    const isOwner = m.role === 'Owner';
-                    return (
-                      <li key={m.id} className="pcp-mem-row">
-                        <span className="pcp-mem-avatar" aria-hidden="true">
-                          {m.name.split(' ').map(s => s[0]).join('').slice(0, 2)}
-                        </span>
-                        <div className="pcp-mem-body">
-                          <div className="pcp-mem-name">{m.name}</div>
-                          <div className="pcp-mem-email">{m.email} · active {m.last}</div>
-                        </div>
-                        <select className="pcp-select pcp-mem-role" defaultValue={m.role}>
-                          {PCP_ROLES.map(r => <option key={r.v} value={r.v}>{r.l}</option>)}
-                        </select>
-                        <button
-                          type="button"
-                          className="pcp-link is-danger"
-                          disabled={isOwner}
-                          onClick={() =>
-                            onAskAna?.(
-                              `Remove ${m.name} (${m.email}) from project "${project.name}". ` +
-                                'Confirm any in-flight reviews are reassigned, then revoke their project access.',
-                            )
-                          }
-                        >
-                          Remove
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <div className="pcp-roles-legend">
-                  {PCP_ROLES.map(r => (
-                    <div key={r.v} className="pcp-role-meta">
-                      <span className="pcp-role-name">{r.l}</span>
-                      <span className="pcp-role-hint">{r.hint}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pcp-card">
-                <div className="pcp-card-head">
-                  <h3 className="pcp-h3">SSO group bindings</h3>
-                  <span className="pcp-badge" data-tone="ok">SAML / OIDC</span>
-                </div>
-                <p className="pcp-section-sub">Map identity-provider groups to project roles.</p>
-                <ul className="pcp-sso-list">
-                  {PCP_SSO_GROUPS.map(g => (
-                    <li key={g.id} className="pcp-sso-row">
-                      <div className="pcp-sso-body">
-                        <div className="pcp-sso-name">{g.name}</div>
-                        <div className="pcp-sso-meta">{g.count} members</div>
-                      </div>
-                      <select className="pcp-select pcp-sso-role" defaultValue={g.mapped || ''}>
-                        <option value="">Not mapped</option>
-                        {PCP_ROLES.map(r => <option key={r.v} value={r.v}>{r.l}</option>)}
-                      </select>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+            <TeamTab
+              project={project}
+              onAskAna={onAskAna}
+            />
           )}
+
 
           {tab === 'compliance' && (
             <div className="pcp-tab-body">
@@ -692,13 +609,128 @@ export function ProjectConfigPanel({
   );
 }
 
-function InviteRow({ onSend }: { onSend: (email: string, role: string) => void }) {
+function TeamTab({
+  project,
+  onAskAna,
+}: {
+  project: Project;
+  onAskAna?: (text: string) => void;
+}) {
+  const { members, loading, invite, remove, changeRole } = useProjectSharing(project.id);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+
+  const handleInvite = async (email: string, role: 'use' | 'edit') => {
+    setInviteError(null);
+    try {
+      await invite(email, role);
+    } catch (e: unknown) {
+      setInviteError(e instanceof Error ? e.message : 'Invite failed');
+    }
+  };
+
+  return (
+    <div className="pcp-tab-body">
+      <div className="pcp-card">
+        <div className="pcp-card-head">
+          <h3 className="pcp-h3">Invite members</h3>
+          {!loading && (
+            <span className="pcp-badge" data-tone="ok">{members.length} active</span>
+          )}
+        </div>
+        <p className="pcp-section-sub">
+          Add by email. The user must already be a member of this organisation.
+        </p>
+        <InviteRow onSend={handleInvite} />
+        {inviteError && <p className="pcp-note" style={{ color: 'var(--red)' }}>{inviteError}</p>}
+      </div>
+
+      <div className="pcp-card">
+        <h3 className="pcp-h3">Members</h3>
+        {loading ? (
+          <p className="pcp-note">Loading…</p>
+        ) : members.length === 0 ? (
+          <p className="pcp-note">No members added yet.</p>
+        ) : (
+          <ul className="pcp-mem-list">
+            {members.map(m => (
+              <li key={m.userId} className="pcp-mem-row">
+                <span className="pcp-mem-avatar" aria-hidden="true">
+                  {m.name.split(' ').map(s => s[0]).join('').slice(0, 2).toUpperCase()}
+                </span>
+                <div className="pcp-mem-body">
+                  <div className="pcp-mem-name">{m.name}</div>
+                  <div className="pcp-mem-email">{m.email}</div>
+                </div>
+                <select
+                  className="pcp-select pcp-mem-role"
+                  value={m.role}
+                  onChange={e => changeRole(m.userId, e.target.value as 'use' | 'edit')}
+                >
+                  <option value="use">Viewer</option>
+                  <option value="edit">Editor</option>
+                </select>
+                <button
+                  type="button"
+                  className="pcp-link is-danger"
+                  onClick={() => remove(m.userId)}
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="pcp-roles-legend">
+          <div className="pcp-role-meta">
+            <span className="pcp-role-name">Viewer</span>
+            <span className="pcp-role-hint">Read only</span>
+          </div>
+          <div className="pcp-role-meta">
+            <span className="pcp-role-name">Editor</span>
+            <span className="pcp-role-hint">Edit content and settings</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="pcp-card">
+        <div className="pcp-card-head">
+          <h3 className="pcp-h3">SSO group bindings</h3>
+          <span className="pcp-badge" data-tone="ok">SAML / OIDC</span>
+        </div>
+        <p className="pcp-section-sub">Map identity-provider groups to project roles.</p>
+        <ul className="pcp-sso-list">
+          {PCP_SSO_GROUPS.map(g => (
+            <li key={g.id} className="pcp-sso-row">
+              <div className="pcp-sso-body">
+                <div className="pcp-sso-name">{g.name}</div>
+                <div className="pcp-sso-meta">{g.count} members</div>
+              </div>
+              <select className="pcp-select pcp-sso-role" defaultValue={g.mapped || ''}>
+                <option value="">Not mapped</option>
+                <option value="use">Viewer</option>
+                <option value="edit">Editor</option>
+              </select>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function InviteRow({ onSend }: { onSend: (email: string, role: 'use' | 'edit') => void }) {
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState('Editor');
-  const send = () => {
-    if (!email.trim()) return;
-    onSend(email.trim(), role);
-    setEmail('');
+  const [role, setRole] = useState<'use' | 'edit'>('use');
+  const [busy, setBusy] = useState(false);
+  const send = async () => {
+    if (!email.trim() || busy) return;
+    setBusy(true);
+    try {
+      await onSend(email.trim(), role);
+      setEmail('');
+    } finally {
+      setBusy(false);
+    }
   };
   return (
     <div className="pcp-invite-row">
@@ -708,16 +740,18 @@ function InviteRow({ onSend }: { onSend: (email: string, role: string) => void }
         type="email"
         value={email}
         onChange={e => setEmail(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') send(); }}
       />
       <select
         className="pcp-select pcp-invite-role"
         value={role}
-        onChange={e => setRole(e.target.value)}
+        onChange={e => setRole(e.target.value as 'use' | 'edit')}
       >
-        {PCP_ROLES.map(r => <option key={r.v} value={r.v}>{r.l}</option>)}
+        <option value="use">Viewer</option>
+        <option value="edit">Editor</option>
       </select>
-      <button type="button" className="pcp-btn primary" onClick={send} disabled={!email.trim()}>
-        Send invite
+      <button type="button" className="pcp-btn primary" onClick={send} disabled={!email.trim() || busy}>
+        {busy ? 'Adding…' : 'Add member'}
       </button>
     </div>
   );

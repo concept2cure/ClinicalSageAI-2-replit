@@ -6,7 +6,6 @@
  */
 import { useEffect, useState } from 'react';
 import { I } from '../icons';
-import { PMEM_LEARNINGS } from '../data';
 import type { Project, ArchiveMode } from '../types';
 
 interface Props {
@@ -44,7 +43,7 @@ export function ProjectArchiveModal({ open, project, mode, onClose, onConfirm }:
       : `Restore "${project.name}"?`;
   const cta = isDelete ? 'Delete project' : isArchive ? 'Archive project' : 'Restore project';
 
-  const learningsCount = (PMEM_LEARNINGS[project.id] || []).length;
+  const learningsCount = 0;
 
   return (
     <div className="parch" role="dialog" aria-label={title}>
