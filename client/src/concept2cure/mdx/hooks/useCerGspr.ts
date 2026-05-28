@@ -32,7 +32,7 @@ const CHAPTER_MAP: Record<string, GsprChapter> = { I: 'I', II: 'II', III: 'III' 
 function adaptRequirement(req: GsprCatalogRequirement): GsprRow {
   return {
     id: req.clause,
-    ch: (req.chapter && CHAPTER_MAP[req.chapter]) ?? 'I',
+    ch: (req.chapter ? CHAPTER_MAP[req.chapter] : undefined) ?? 'I',
     title: req.title,
     status: 'na',
     evidence: '—',
