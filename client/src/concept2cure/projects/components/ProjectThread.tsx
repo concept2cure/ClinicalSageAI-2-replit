@@ -21,8 +21,8 @@ function relTime(ms: number): string {
 function TurnChips({ message }: { message: AnaChatMessage }) {
   if (!message.toolCalls?.length && !message.executedActions?.length) return null;
   const chips = [
-    ...(message.toolCalls ?? []).map(t => ({ label: t.name ?? 'Tool' })),
-    ...(message.executedActions ?? []).map(a => ({ label: a.kind ?? 'Action' })),
+    ...(message.toolCalls ?? []).map(t => ({ label: t.label ?? t.name ?? 'Tool' })),
+    ...(message.executedActions ?? []).map(a => ({ label: a.label ?? a.actionType ?? 'Action' })),
   ];
   return (
     <div className="chips">
