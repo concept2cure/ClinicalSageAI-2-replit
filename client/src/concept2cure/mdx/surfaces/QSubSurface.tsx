@@ -19,7 +19,36 @@ import {
   QSUB_DOCUMENTS,
   QSUB_DOC_FRAMEWORKS,
 } from '../data/qsub';
+import { usePresubList } from '../hooks/usePresub';
+import type { PresubListRow } from '../data/presub';
+import type { QsubOpen } from '../data/qsub';
 import type { Program } from '../data/programs';
+
+function adaptToQsubOpen(r: PresubListRow): QsubOpen {
+  const typeMap: Record<string, QsubOpen['type']> = {
+    presub: 'pre-sub', sir: 'study-risk', srd: 'study-risk',
+    agree: 'pre-sub', info: 'pre-sub', pccp: 'pccp',
+  };
+  const stageMap: Record<string, QsubOpen['status']> = {
+    draft: 'drafting', await: 'awaiting-FDA',
+    feedback: 'feedback-received', closed: 'closed',
+  };
+  return {
+    id: r.id,
+    program: r.prog,
+    type: typeMap[r.type] ?? 'pre-sub',
+    title: r.title,
+    status: stageMap[r.stage] ?? 'drafting',
+    submittedAt: r.filed,
+    feedbackAt: null,
+    reviewer: r.fdaTeam,
+    cycleAge: `${r.daysIn}d in cycle`,
+    questionCount: r.questions,
+    accepted: r.answered,
+    modified: 0,
+    declined: 0,
+  };
+}
 
 interface Props {
   program: Program | null;
@@ -28,10 +57,14 @@ interface Props {
 }
 
 export function QSubSurface({ program, onAskAna, onOpenEditor }: Props) {
+  const live = usePresubList();
+  const qsubs = live.list ? live.list.map(adaptToQsubOpen) : QSUB_OPEN;
+  const kpis = live.kpis ?? QSUB_KPIS;
+
   const programFilter = program?.code?.split(' ')[0] ?? null;
-  const programQsubs = programFilter ? QSUB_OPEN.filter(q => q.program === programFilter) : QSUB_OPEN;
-  const [selected, setSelected] = React.useState<string>((programQsubs[0] ?? QSUB_OPEN[0]).id);
-  const sel = QSUB_OPEN.find(q => q.id === selected)!;
+  const programQsubs = programFilter ? qsubs.filter(q => q.program === programFilter) : qsubs;
+  const [selected, setSelected] = React.useState<string>('');
+  const sel = programQsubs.find(q => q.id === selected) ?? programQsubs[0] ?? QSUB_OPEN[0];
   const thread = QSUB_CORRESPONDENCE.filter(c => c.qsub === selected);
 
   return (
@@ -41,7 +74,7 @@ export function QSubSurface({ program, onAskAna, onOpenEditor }: Props) {
           <div className="page-eyebrow">Workbench · Pre-Submission</div>
           <h1 className="page-title">Q-Sub briefing</h1>
           <div className="page-sub">
-            Pre-Submission program. {QSUB_OPEN.length} open Q-Subs · {QSUB_DOCUMENTS.length} briefing documents.
+            Pre-Submission program. {qsubs.length} open Q-Subs · {QSUB_DOCUMENTS.length} briefing documents.
             Submit specific questions for FDA's view before committing to a full filing.
           </div>
         </div>
@@ -56,7 +89,7 @@ export function QSubSurface({ program, onAskAna, onOpenEditor }: Props) {
       </div>
 
       <div className="metrics-row metrics-compact">
-        {QSUB_KPIS.map((k, i) => (
+        {kpis.map((k, i) => (
           <div key={i} className="metric-card" data-tone={k.tone ?? ''}>
             <div className="metric-label">{k.label}</div>
             <div className="metric-val">{k.metric}{k.unit && <span className="unit">{k.unit}</span>}</div>
@@ -69,7 +102,7 @@ export function QSubSurface({ program, onAskAna, onOpenEditor }: Props) {
         {/* Q-Subs ledger */}
         <aside className="qsub-ledger">
           <div className="qsub-ledger-lbl">Open Q-Subs</div>
-          {QSUB_OPEN.map(q => {
+          {programQsubs.map(q => {
             const tdef = QSUB_TYPES.find(t => t.id === q.type);
             return (
               <button key={q.id} className="qsub-card" data-on={selected === q.id} onClick={() => setSelected(q.id)}>
