@@ -8,7 +8,13 @@
 
 **This project owns the Concept2Cure.RI UI.** Every Concept2Cure.RI surface — home, projects, artifacts, auth, editor, admin — is designed here first, shipped as a hi-fi prototype under `ui_kits/`, and then implemented in the `concept2cure-v2` codebase by Claude Code.
 
-The legacy UI that lives in the repo today (`client/src/concept2cure/ZenApp.tsx`, `IndustryAwareApp.tsx`, `AppsPage.tsx`, the industry-specific dashboards under `components/biologics|medtech|pharma|cro|biotech/`, etc.) is **in the process of being deleted**. Do not extend it, restyle it, or refactor it in place. Replace it surface-by-surface as this design system releases each phase.
+The legacy UI still live in the repo is **in the process of being deleted**. Do not extend it, restyle it, or refactor it in place. Replace it surface-by-surface as this design system releases each phase.
+
+**Legacy still live (per PR #601 audit, 2026-05-28):** `ZenApp.tsx` (2,174 lines — owns the `/` and `/concept2cure` catch-all), `ZenAppWithSession.tsx`, `components/editor/` (~19k), `components/regulatory/` (~10.9k), `components/intelligentDocs/` (~5.3k), `components/intelligence/` (~4.3k), `components/workspace/` (~3k), `auth/` (kept until Phase 5 ships). ~43k lines of editor/regulatory/workspace code is the bulk of the debt; it all hangs off ZenApp's `layoutMode` switch with no feature flags, so each piece is cuttable the moment its replacement kit is routed.
+
+**Already deleted (do NOT hunt for these):** `IndustryAwareApp.tsx`, `AppsPage.tsx`, and `components/biologics|medtech|pharma|cro|biotech/` no longer exist.
+
+**The single most important open decision:** the new MDX UI is fully built and wired but reachable only at `/concept2cure/mdx`. `/` and `/concept2cure` still resolve to legacy ZenApp. Flipping that catch-all to the new shell is gated on Phase 3 (Projects shell) shipping, since ZenApp currently owns project-level navigation the new shell doesn't yet replace.
 
 ## Claude Code's role
 
@@ -31,24 +37,22 @@ The legacy UI that lives in the repo today (`client/src/concept2cure/ZenApp.tsx`
 
 ## Phase status (summary — full list in HANDOFF.md)
 
-- **Phase 1 · Home screen** — READY FOR IMPLEMENTATION. Lives in `ui_kits/home/`.
-- **Phase 2 · MDX workstream** — READY FOR IMPLEMENTATION. Lives in `ui_kits/mdx/`. Includes the 510(k) module editor (3-pane Cursor-style workbench) reachable from the eSTAR checklist.
-- **Phase 3 · Projects detail** — In design (scaffolded in HANDOFF.md, pending RIM framing). Do not pre-build. Reference patterns: `ui_kits/ana_ri/` (chat-first shell) and `ui_kits/ectd_coauthor/` (3-pane artifact workbench).
-- **Phases 4–6 · Artifact workbench, Auth, Admin** — In design. Do not pre-build.
+- **Phase 1 · Home** — shipped (`components/concept2cure-home/`).
+- **Phase 2 · MDX workstream** — shipped (`client/src/concept2cure/mdx/`, all 28 nav items live). Reachable at `/concept2cure/mdx` only — not yet the default route.
+- **Phase 7 · PDEV** — shipped behind `ENABLE_PDEV_SURFACE` flag.
+- **Phases 9–11 (Authoring · Biopharma · Projects · Intelligence)** — kits shipped in `ui_kits/`; backend gated on two briefs (below).
+- **Phase 3–6 (Projects detail · Artifact workbench · Auth · Admin)** — in design / not pre-built.
 
-## Token import — read before writing one line of CSS
+## Backend briefs (read before implementing Phase 9+)
 
-`colors_and_type.css` is canonical, but **the `ui_kits/*` prototypes also re-declare a subset of the same tokens inline at `:root` in their own stylesheet** so they render standalone in this design tool. When you port a kit, those inline `:root` blocks are the *escape hatch* — not the contract.
+```
+MUTATION_PRIMITIVES_BRIEF.md        ← six governed-action endpoints + c2c_ana_actions ledger. SHIP FIRST.
+PHASE_9_SCHEMA_MIGRATION_BRIEF.md   ← c2c_documents family + rule packs + legacy 301 redirects. Ship second.
+PHASE_10_1_INSTALL.md               ← per-(domain,surface) AnA dock threading.
+PHASE_10_2_INSTALL.md               ← biopharma surface refresh (density, rail collapse, client-type IA, SurfaceComposer).
+```
 
-The contract is: **the global stylesheet of the React app must import `colors_and_type.css` once, at the root, before any component CSS.** Then drop the kit's inline `:root` token block during the port — the canonical file supplies every variable it referenced.
-
-If you skip the global import AND drop the inline tokens, every `var(--accent-100)`, `var(--bg-000)`, `var(--text-200)` resolves to undefined and the UI renders muted/grey. **This is the regression that broke the Phase 1 ship on 2026-04-26.** Do not repeat it.
-
-Verification step you must run before declaring a phase done:
-1. Open the live app in the browser. Inspect `:root` in DevTools.
-2. Confirm `--accent-100` resolves to `#d97757` (Claude orange) — not blank, not inherited.
-3. Confirm `--bg-000` resolves to `#faf9f5` (cream).
-4. If either is blank, the global import is missing. Fix it before continuing.
+All B/C-series status-check blockers are resolved inside the briefs (audit_logs column extensions, users.id integer FKs, c2c_blockers resolver, EsignModal promotion to /api/c2c/actions/sign).
 
 ## Non-negotiables (hard rules, no exceptions)
 
@@ -67,25 +71,11 @@ These come from `README.md`. Every PR that violates them is a bug.
 
 If an implementation decision requires trading off against what ships here — performance, framework constraints, a11y edge cases, anything — **raise it to the designer (this project) before coding around it**. Do not resolve UI trade-offs unilaterally. The designer will update `ui_kits/` and `HANDOFF.md` if the design needs to change.
 
-## Search-before-build (hard rule)
-
-Before adding **any** new server route, hook, data module, or component, you must search the codebase for an existing implementation that already covers the data domain. The platform already has substantial backend coverage (audit, approvals, correspondence, submissions, sections, programs, etc.); duplicating it leaves dead code paths and forks the canonical store of the same concept across multiple tables. Concrete checklist before writing a new file:
-
-1. `grep -rln '<thing>' server/routes server/services` — does an endpoint already exist?
-2. `grep -rln '<thing>' client/src/concept2cure` — does a hook / component already exist?
-3. `ls server/routes/ | grep -i '<topic>'` — sibling routes that hint at coverage?
-4. If an existing implementation is partial, **extend it** instead of creating a parallel one. New file is the last resort, never the default.
-
-If you do create a new file, it must have a real consumer in the same PR. The orphan-import check (`scripts/check-mdx-orphans.sh`) catches new client files with no importer and new server routes that no registrar mounts; it must pass before commit. Closed-enum registries waiting on a kit pane are exempt only when explicitly marked with `@kit-registry-no-consumer-yet` in the file header — and the marker comes off the day the consumer ships.
-
-Seed data fixtures (mock arrays of fake rows) must not land in v2. The kit's `data.jsx` files include both closed enums and demo rows; port the enums, leave the demo rows behind. Paying clients consume real data from the existing endpoints.
-
 ## What lives where
 
 | Location | What it owns |
 |---|---|
 | `CLAUDE.md` (this file)     | Pointer into the system. Read first. |
-| `CLAUDE_CODE_SETUP.md`      | One-time wiring instructions for the human operator — how to point Claude Code in `concept2cure-v2` at this project. |
 | `HANDOFF.md`                | Phase status + per-surface implementation contracts. |
 | `SKILL.md`                  | Skill framing — when and how to invoke this system. |
 | `README.md`                 | Voice, tone, visual foundations, content rules, iconography. |

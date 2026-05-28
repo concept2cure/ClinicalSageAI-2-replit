@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-05-28T05:33:56.877Z",
+  "generatedAt": "2026-05-28T18:03:13.993Z",
   "git": {
-    "sha": "7b6a507c85669769ecfae14a8d201e7a42cc7f13",
+    "sha": "7c6ca4006dbab34b51cdbbe7775dfe8915a6053c",
     "branch": "claude/sharp-brahmagupta-SlRdx"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 181,
+    "duplicateBasenames": 189,
     "largeFilesByBytes": 15,
     "largeFilesByLines": 45
   },
@@ -119,6 +119,36 @@
         ]
       },
       {
+        "basename": "app",
+        "count": 24,
+        "paths": [
+          "client/public/design-system/ui_kits/ana_ri/App.jsx",
+          "client/public/design-system/ui_kits/ectd_coauthor/App.jsx",
+          "client/public/design-system/ui_kits/home/App.jsx",
+          "client/public/design-system/ui_kits/mdx/App.jsx",
+          "client/src/App.jsx",
+          "client/src/concept2cure/App.tsx",
+          "client/src/concept2cure/mdx/App.tsx",
+          "client/src/concept2cure/pdev/App.tsx",
+          "design-system/ui_kits/ana_ri/App.jsx",
+          "design-system/ui_kits/ectd_coauthor/App.jsx",
+          "design-system/ui_kits/home/App.jsx",
+          "design-system/ui_kits/mdx/app.jsx",
+          "design-system/ui_kits/mdx_phase2/App.jsx",
+          "design-system/ui_kits/pdev/App.jsx",
+          "server/frontend/app.js",
+          "ui_kits/ana_ri/App.jsx",
+          "ui_kits/authoring/App.jsx",
+          "ui_kits/biopharma/app.jsx",
+          "ui_kits/ectd_coauthor/App.jsx",
+          "ui_kits/home/App.jsx",
+          "ui_kits/intelligence/App.jsx",
+          "ui_kits/mdx/app.jsx",
+          "ui_kits/pdev/App.jsx",
+          "ui_kits/projects/App.jsx"
+        ]
+      },
+      {
         "basename": "types",
         "count": 24,
         "paths": [
@@ -149,6 +179,34 @@
         ]
       },
       {
+        "basename": "icons",
+        "count": 22,
+        "paths": [
+          "client/public/design-system/ui_kits/ana_ri/Icons.jsx",
+          "client/public/design-system/ui_kits/ectd_coauthor/Icons.jsx",
+          "client/public/design-system/ui_kits/home/Icons.jsx",
+          "client/public/design-system/ui_kits/mdx/Icons.jsx",
+          "client/src/concept2cure/components/ana/icons.tsx",
+          "client/src/concept2cure/components/claude-ectd-coauthor/icons.tsx",
+          "client/src/concept2cure/components/concept2cure-home/icons.tsx",
+          "client/src/concept2cure/components/concept2cure-projects/icons.tsx",
+          "client/src/concept2cure/mdx/icons.tsx",
+          "client/src/concept2cure/pdev/icons.tsx",
+          "design-system/ui_kits/ana_ri/Icons.jsx",
+          "design-system/ui_kits/ectd_coauthor/Icons.jsx",
+          "design-system/ui_kits/home/Icons.jsx",
+          "design-system/ui_kits/mdx/icons.jsx",
+          "design-system/ui_kits/mdx_phase2/Icons.jsx",
+          "design-system/ui_kits/pdev/Icons.jsx",
+          "ui_kits/ana_ri/Icons.jsx",
+          "ui_kits/authoring/Icons.jsx",
+          "ui_kits/ectd_coauthor/Icons.jsx",
+          "ui_kits/home/Icons.jsx",
+          "ui_kits/mdx/icons.jsx",
+          "ui_kits/pdev/Icons.jsx"
+        ]
+      },
+      {
         "basename": "routes",
         "count": 17,
         "paths": [
@@ -169,49 +227,6 @@
           "server/api/templates/routes.ts",
           "server/routes.js",
           "server/startup/routes.ts"
-        ]
-      },
-      {
-        "basename": "icons",
-        "count": 16,
-        "paths": [
-          "client/public/design-system/ui_kits/ana_ri/Icons.jsx",
-          "client/public/design-system/ui_kits/ectd_coauthor/Icons.jsx",
-          "client/public/design-system/ui_kits/home/Icons.jsx",
-          "client/public/design-system/ui_kits/mdx/Icons.jsx",
-          "client/src/concept2cure/components/ana/icons.tsx",
-          "client/src/concept2cure/components/claude-ectd-coauthor/icons.tsx",
-          "client/src/concept2cure/components/concept2cure-home/icons.tsx",
-          "client/src/concept2cure/components/concept2cure-projects/icons.tsx",
-          "client/src/concept2cure/mdx/icons.tsx",
-          "client/src/concept2cure/pdev/icons.tsx",
-          "design-system/ui_kits/ana_ri/Icons.jsx",
-          "design-system/ui_kits/ectd_coauthor/Icons.jsx",
-          "design-system/ui_kits/home/Icons.jsx",
-          "design-system/ui_kits/mdx/icons.jsx",
-          "design-system/ui_kits/mdx_phase2/Icons.jsx",
-          "design-system/ui_kits/pdev/Icons.jsx"
-        ]
-      },
-      {
-        "basename": "app",
-        "count": 15,
-        "paths": [
-          "client/public/design-system/ui_kits/ana_ri/App.jsx",
-          "client/public/design-system/ui_kits/ectd_coauthor/App.jsx",
-          "client/public/design-system/ui_kits/home/App.jsx",
-          "client/public/design-system/ui_kits/mdx/App.jsx",
-          "client/src/App.jsx",
-          "client/src/concept2cure/App.tsx",
-          "client/src/concept2cure/mdx/App.tsx",
-          "client/src/concept2cure/pdev/App.tsx",
-          "design-system/ui_kits/ana_ri/App.jsx",
-          "design-system/ui_kits/ectd_coauthor/App.jsx",
-          "design-system/ui_kits/home/App.jsx",
-          "design-system/ui_kits/mdx/app.jsx",
-          "design-system/ui_kits/mdx_phase2/App.jsx",
-          "design-system/ui_kits/pdev/App.jsx",
-          "server/frontend/app.js"
         ]
       },
       {
@@ -236,7 +251,7 @@
       },
       {
         "basename": "data",
-        "count": 7,
+        "count": 12,
         "paths": [
           "client/public/design-system/ui_kits/home/data.jsx",
           "client/public/design-system/ui_kits/mdx/data.jsx",
@@ -244,39 +259,310 @@
           "client/src/concept2cure/components/concept2cure-home/data.tsx",
           "design-system/ui_kits/home/data.jsx",
           "design-system/ui_kits/mdx_phase2/data.jsx",
-          "design-system/ui_kits/pdev/data.jsx"
+          "design-system/ui_kits/pdev/data.jsx",
+          "ui_kits/authoring/data.jsx",
+          "ui_kits/biopharma/data.jsx",
+          "ui_kits/home/data.jsx",
+          "ui_kits/intelligence/data.jsx",
+          "ui_kits/pdev/data.jsx"
+        ]
+      },
+      {
+        "basename": "shell",
+        "count": 8,
+        "paths": [
+          "client/public/design-system/ui_kits/mdx/Shell.jsx",
+          "design-system/ui_kits/mdx/shell.jsx",
+          "design-system/ui_kits/mdx_phase2/Shell.jsx",
+          "design-system/ui_kits/pdev/Shell.jsx",
+          "ui_kits/authoring/Shell.jsx",
+          "ui_kits/biopharma/shell.jsx",
+          "ui_kits/mdx/shell.jsx",
+          "ui_kits/pdev/Shell.jsx"
         ]
       },
       {
         "basename": "audit",
-        "count": 5,
+        "count": 7,
         "paths": [
           "client/src/concept2cure/mdx/data/audit.ts",
           "design-system/ui_kits/mdx/data/audit.js",
           "design-system/ui_kits/mdx/surfaces/Audit.jsx",
           "server/routes/audit.ts",
-          "server/services/ai-gateway/audit.ts"
+          "server/services/ai-gateway/audit.ts",
+          "ui_kits/mdx/data/audit.js",
+          "ui_kits/mdx/surfaces/Audit.jsx"
         ]
       },
       {
         "basename": "templates",
-        "count": 5,
+        "count": 7,
         "paths": [
           "client/src/concept2cure/components/concept2cure-projects/data/templates.ts",
           "client/src/concept2cure/mdx/data/templates.ts",
           "design-system/ui_kits/mdx/data/templates.js",
           "design-system/ui_kits/mdx/surfaces/Templates.jsx",
-          "server/routes/templates.ts"
+          "server/routes/templates.ts",
+          "ui_kits/mdx/data/templates.js",
+          "ui_kits/mdx/surfaces/Templates.jsx"
         ]
       },
       {
         "basename": "analytics",
-        "count": 4,
+        "count": 6,
         "paths": [
           ".claude/skills/gstack/scripts/analytics.ts",
           "client/src/concept2cure/mdx/data/analytics.ts",
           "design-system/ui_kits/mdx/data/analytics.js",
-          "design-system/ui_kits/mdx/surfaces/Analytics.jsx"
+          "design-system/ui_kits/mdx/surfaces/Analytics.jsx",
+          "ui_kits/mdx/data/analytics.js",
+          "ui_kits/mdx/surfaces/Analytics.jsx"
+        ]
+      },
+      {
+        "basename": "notifications",
+        "count": 6,
+        "paths": [
+          "client/src/concept2cure/components/concept2cure-projects/data/notifications.ts",
+          "client/src/concept2cure/mdx/data/notifications.ts",
+          "design-system/ui_kits/mdx/data/notifications.js",
+          "design-system/ui_kits/mdx/surfaces/Notifications.jsx",
+          "ui_kits/mdx/data/notifications.js",
+          "ui_kits/mdx/surfaces/Notifications.jsx"
+        ]
+      },
+      {
+        "basename": "quality",
+        "count": 6,
+        "paths": [
+          "client/src/concept2cure/mdx/data/quality.ts",
+          "design-system/ui_kits/mdx/data/quality.js",
+          "design-system/ui_kits/mdx/surfaces/Quality.jsx",
+          "server/src/services/ai/quality.js",
+          "ui_kits/mdx/data/quality.js",
+          "ui_kits/mdx/surfaces/Quality.jsx"
+        ]
+      },
+      {
+        "basename": "search",
+        "count": 6,
+        "paths": [
+          "client/src/concept2cure/mdx/data/search.ts",
+          "design-system/ui_kits/mdx/data/search.js",
+          "design-system/ui_kits/mdx/surfaces/Search.jsx",
+          "server/integrations/firecrawl/search.ts",
+          "ui_kits/mdx/data/search.js",
+          "ui_kits/mdx/surfaces/Search.jsx"
+        ]
+      },
+      {
+        "basename": "surfaces",
+        "count": 6,
+        "paths": [
+          "client/public/design-system/ui_kits/mdx/Surfaces.jsx",
+          "design-system/ui_kits/mdx_phase2/Surfaces.jsx",
+          "design-system/ui_kits/pdev/Surfaces.jsx",
+          "ui_kits/biopharma/surfaces.jsx",
+          "ui_kits/intelligence/surfaces.jsx",
+          "ui_kits/pdev/Surfaces.jsx"
+        ]
+      },
+      {
+        "basename": "vault",
+        "count": 6,
+        "paths": [
+          "client/src/concept2cure/mdx/data/vault.ts",
+          "design-system/ui_kits/mdx/data/vault.js",
+          "design-system/ui_kits/mdx/surfaces/Vault.jsx",
+          "shared/schema/vault.ts",
+          "ui_kits/mdx/data/vault.js",
+          "ui_kits/mdx/surfaces/Vault.jsx"
+        ]
+      },
+      {
+        "basename": "admin",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/mdx/data/admin.ts",
+          "design-system/ui_kits/mdx/data/admin.js",
+          "design-system/ui_kits/mdx/surfaces/Admin.jsx",
+          "ui_kits/mdx/data/admin.js",
+          "ui_kits/mdx/surfaces/Admin.jsx"
+        ]
+      },
+      {
+        "basename": "cdx",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/mdx/data/cdx.ts",
+          "design-system/ui_kits/mdx/data/cdx.js",
+          "design-system/ui_kits/mdx/surfaces/Cdx.jsx",
+          "ui_kits/mdx/data/cdx.js",
+          "ui_kits/mdx/surfaces/Cdx.jsx"
+        ]
+      },
+      {
+        "basename": "clinical",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/mdx/data/clinical.ts",
+          "design-system/ui_kits/mdx/data/clinical.js",
+          "design-system/ui_kits/mdx/surfaces/Clinical.jsx",
+          "ui_kits/mdx/data/clinical.js",
+          "ui_kits/mdx/surfaces/Clinical.jsx"
+        ]
+      },
+      {
+        "basename": "conversations",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/mdx/data/conversations.ts",
+          "design-system/ui_kits/mdx/data/conversations.js",
+          "design-system/ui_kits/mdx/surfaces/Conversations.jsx",
+          "ui_kits/mdx/data/conversations.js",
+          "ui_kits/mdx/surfaces/Conversations.jsx"
+        ]
+      },
+      {
+        "basename": "engineering",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/mdx/data/engineering.ts",
+          "design-system/ui_kits/mdx/data/engineering.js",
+          "design-system/ui_kits/mdx/surfaces/Engineering.jsx",
+          "ui_kits/mdx/data/engineering.js",
+          "ui_kits/mdx/surfaces/Engineering.jsx"
+        ]
+      },
+      {
+        "basename": "ivd",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/mdx/data/ivd.ts",
+          "design-system/ui_kits/mdx/data/ivd.js",
+          "design-system/ui_kits/mdx/surfaces/Ivd.jsx",
+          "ui_kits/mdx/data/ivd.js",
+          "ui_kits/mdx/surfaces/Ivd.jsx"
+        ]
+      },
+      {
+        "basename": "ivdr",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/mdx/data/ivdr.ts",
+          "design-system/ui_kits/mdx/data/ivdr.js",
+          "design-system/ui_kits/mdx/surfaces/Ivdr.jsx",
+          "ui_kits/mdx/data/ivdr.js",
+          "ui_kits/mdx/surfaces/Ivdr.jsx"
+        ]
+      },
+      {
+        "basename": "ldt",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/mdx/data/ldt.ts",
+          "design-system/ui_kits/mdx/data/ldt.js",
+          "design-system/ui_kits/mdx/surfaces/Ldt.jsx",
+          "ui_kits/mdx/data/ldt.js",
+          "ui_kits/mdx/surfaces/Ldt.jsx"
+        ]
+      },
+      {
+        "basename": "memory",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/mdx/data/memory.ts",
+          "design-system/ui_kits/mdx/data/memory.js",
+          "design-system/ui_kits/mdx/surfaces/Memory.jsx",
+          "ui_kits/mdx/data/memory.js",
+          "ui_kits/mdx/surfaces/Memory.jsx"
+        ]
+      },
+      {
+        "basename": "onboarding",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/mdx/data/onboarding.ts",
+          "design-system/ui_kits/mdx/data/onboarding.js",
+          "design-system/ui_kits/mdx/surfaces/Onboarding.jsx",
+          "ui_kits/mdx/data/onboarding.js",
+          "ui_kits/mdx/surfaces/Onboarding.jsx"
+        ]
+      },
+      {
+        "basename": "postmarket",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/mdx/data/postmarket.ts",
+          "design-system/ui_kits/mdx/data/postmarket.js",
+          "design-system/ui_kits/mdx/surfaces/Postmarket.jsx",
+          "ui_kits/mdx/data/postmarket.js",
+          "ui_kits/mdx/surfaces/Postmarket.jsx"
+        ]
+      },
+      {
+        "basename": "programs",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/mdx/data/programs.ts",
+          "design-system/ui_kits/mdx/data/programs.js",
+          "server/routes/programs.ts",
+          "shared/schema/programs.ts",
+          "ui_kits/mdx/data/programs.js"
+        ]
+      },
+      {
+        "basename": "qsub",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/mdx/data/qsub.ts",
+          "design-system/ui_kits/mdx/data/qsub.js",
+          "design-system/ui_kits/mdx/surfaces/QSub.jsx",
+          "ui_kits/mdx/data/qsub.js",
+          "ui_kits/mdx/surfaces/QSub.jsx"
+        ]
+      },
+      {
+        "basename": "samd",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/mdx/data/samd.ts",
+          "design-system/ui_kits/mdx/data/samd.js",
+          "design-system/ui_kits/mdx/surfaces/Samd.jsx",
+          "ui_kits/mdx/data/samd.js",
+          "ui_kits/mdx/surfaces/Samd.jsx"
+        ]
+      },
+      {
+        "basename": "udi",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/mdx/data/udi.ts",
+          "design-system/ui_kits/mdx/data/udi.js",
+          "design-system/ui_kits/mdx/surfaces/Udi.jsx",
+          "ui_kits/mdx/data/udi.js",
+          "ui_kits/mdx/surfaces/Udi.jsx"
+        ]
+      },
+      {
+        "basename": "workbench",
+        "count": 5,
+        "paths": [
+          "client/public/design-system/ui_kits/mdx/Workbench.jsx",
+          "client/src/concept2cure/mdx/data/workbench.ts",
+          "client/src/concept2cure/mdx/workbench/Workbench.tsx",
+          "design-system/ui_kits/mdx_phase2/Workbench.jsx",
+          "ui_kits/authoring/Workbench.jsx"
+        ]
+      },
+      {
+        "basename": "artifactdoc",
+        "count": 4,
+        "paths": [
+          "client/public/design-system/ui_kits/ectd_coauthor/ArtifactDoc.jsx",
+          "client/src/concept2cure/components/claude-ectd-coauthor/ArtifactDoc.tsx",
+          "design-system/ui_kits/ectd_coauthor/ArtifactDoc.jsx",
+          "ui_kits/ectd_coauthor/ArtifactDoc.jsx"
         ]
       },
       {
@@ -300,13 +586,23 @@
         ]
       },
       {
-        "basename": "notifications",
+        "basename": "evidence",
         "count": 4,
         "paths": [
-          "client/src/concept2cure/components/concept2cure-projects/data/notifications.ts",
-          "client/src/concept2cure/mdx/data/notifications.ts",
-          "design-system/ui_kits/mdx/data/notifications.js",
-          "design-system/ui_kits/mdx/surfaces/Notifications.jsx"
+          "design-system/ui_kits/pdev/Evidence.jsx",
+          "server/routes/evidence.ts",
+          "server/src/services/reg/evidence.ts",
+          "ui_kits/pdev/Evidence.jsx"
+        ]
+      },
+      {
+        "basename": "nav",
+        "count": 4,
+        "paths": [
+          "client/src/concept2cure/mdx/data/nav.ts",
+          "client/src/concept2cure/pdev/data/nav.ts",
+          "design-system/ui_kits/mdx/data/nav.js",
+          "ui_kits/mdx/data/nav.js"
         ]
       },
       {
@@ -320,46 +616,6 @@
         ]
       },
       {
-        "basename": "programs",
-        "count": 4,
-        "paths": [
-          "client/src/concept2cure/mdx/data/programs.ts",
-          "design-system/ui_kits/mdx/data/programs.js",
-          "server/routes/programs.ts",
-          "shared/schema/programs.ts"
-        ]
-      },
-      {
-        "basename": "quality",
-        "count": 4,
-        "paths": [
-          "client/src/concept2cure/mdx/data/quality.ts",
-          "design-system/ui_kits/mdx/data/quality.js",
-          "design-system/ui_kits/mdx/surfaces/Quality.jsx",
-          "server/src/services/ai/quality.js"
-        ]
-      },
-      {
-        "basename": "search",
-        "count": 4,
-        "paths": [
-          "client/src/concept2cure/mdx/data/search.ts",
-          "design-system/ui_kits/mdx/data/search.js",
-          "design-system/ui_kits/mdx/surfaces/Search.jsx",
-          "server/integrations/firecrawl/search.ts"
-        ]
-      },
-      {
-        "basename": "shell",
-        "count": 4,
-        "paths": [
-          "client/public/design-system/ui_kits/mdx/Shell.jsx",
-          "design-system/ui_kits/mdx/shell.jsx",
-          "design-system/ui_kits/mdx_phase2/Shell.jsx",
-          "design-system/ui_kits/pdev/Shell.jsx"
-        ]
-      },
-      {
         "basename": "topbar",
         "count": 4,
         "paths": [
@@ -367,6 +623,16 @@
           "client/src/concept2cure/components/claude-ectd-coauthor/TopBar.tsx",
           "client/src/concept2cure/mdx/shell/TopBar.tsx",
           "client/src/concept2cure/pdev/shell/TopBar.tsx"
+        ]
+      },
+      {
+        "basename": "tree",
+        "count": 4,
+        "paths": [
+          "client/public/design-system/ui_kits/ectd_coauthor/Tree.jsx",
+          "client/src/concept2cure/components/claude-ectd-coauthor/Tree.tsx",
+          "design-system/ui_kits/ectd_coauthor/Tree.jsx",
+          "ui_kits/ectd_coauthor/Tree.jsx"
         ]
       },
       {
@@ -390,50 +656,48 @@
         ]
       },
       {
-        "basename": "vault",
-        "count": 4,
-        "paths": [
-          "client/src/concept2cure/mdx/data/vault.ts",
-          "design-system/ui_kits/mdx/data/vault.js",
-          "design-system/ui_kits/mdx/surfaces/Vault.jsx",
-          "shared/schema/vault.ts"
-        ]
-      },
-      {
-        "basename": "workbench",
-        "count": 4,
-        "paths": [
-          "client/public/design-system/ui_kits/mdx/Workbench.jsx",
-          "client/src/concept2cure/mdx/data/workbench.ts",
-          "client/src/concept2cure/mdx/workbench/Workbench.tsx",
-          "design-system/ui_kits/mdx_phase2/Workbench.jsx"
-        ]
-      },
-      {
-        "basename": "admin",
+        "basename": "activitydetail",
         "count": 3,
         "paths": [
-          "client/src/concept2cure/mdx/data/admin.ts",
-          "design-system/ui_kits/mdx/data/admin.js",
-          "design-system/ui_kits/mdx/surfaces/Admin.jsx"
+          "client/src/concept2cure/pdev/surfaces/ActivityDetail.tsx",
+          "design-system/ui_kits/pdev/ActivityDetail.jsx",
+          "ui_kits/pdev/ActivityDetail.jsx"
         ]
       },
       {
-        "basename": "artifactdoc",
+        "basename": "admin-docs",
         "count": 3,
         "paths": [
-          "client/public/design-system/ui_kits/ectd_coauthor/ArtifactDoc.jsx",
-          "client/src/concept2cure/components/claude-ectd-coauthor/ArtifactDoc.tsx",
-          "design-system/ui_kits/ectd_coauthor/ArtifactDoc.jsx"
+          "client/src/concept2cure/mdx/data/admin-docs.ts",
+          "design-system/ui_kits/mdx/data/admin-docs.js",
+          "ui_kits/mdx/data/admin-docs.js"
         ]
       },
       {
-        "basename": "cdx",
+        "basename": "ana-review",
         "count": 3,
         "paths": [
-          "client/src/concept2cure/mdx/data/cdx.ts",
-          "design-system/ui_kits/mdx/data/cdx.js",
-          "design-system/ui_kits/mdx/surfaces/Cdx.jsx"
+          "client/src/concept2cure/mdx/data/ana-review.ts",
+          "design-system/ui_kits/mdx/data/ana-review.js",
+          "ui_kits/mdx/data/ana-review.js"
+        ]
+      },
+      {
+        "basename": "analytics-docs",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/mdx/data/analytics-docs.ts",
+          "design-system/ui_kits/mdx/data/analytics-docs.js",
+          "ui_kits/mdx/data/analytics-docs.js"
+        ]
+      },
+      {
+        "basename": "artifacts",
+        "count": 3,
+        "paths": [
+          "client/public/design-system/ui_kits/ectd_coauthor/artifacts.js",
+          "design-system/ui_kits/ectd_coauthor/artifacts.js",
+          "ui_kits/ectd_coauthor/artifacts.js"
         ]
       },
       {
@@ -446,15 +710,6 @@
         ]
       },
       {
-        "basename": "clinical",
-        "count": 3,
-        "paths": [
-          "client/src/concept2cure/mdx/data/clinical.ts",
-          "design-system/ui_kits/mdx/data/clinical.js",
-          "design-system/ui_kits/mdx/surfaces/Clinical.jsx"
-        ]
-      },
-      {
         "basename": "config",
         "count": 3,
         "paths": [
@@ -464,21 +719,12 @@
         ]
       },
       {
-        "basename": "conversations",
+        "basename": "engineering-docs",
         "count": 3,
         "paths": [
-          "client/src/concept2cure/mdx/data/conversations.ts",
-          "design-system/ui_kits/mdx/data/conversations.js",
-          "design-system/ui_kits/mdx/surfaces/Conversations.jsx"
-        ]
-      },
-      {
-        "basename": "engineering",
-        "count": 3,
-        "paths": [
-          "client/src/concept2cure/mdx/data/engineering.ts",
-          "design-system/ui_kits/mdx/data/engineering.js",
-          "design-system/ui_kits/mdx/surfaces/Engineering.jsx"
+          "client/src/concept2cure/mdx/data/engineering-docs.ts",
+          "design-system/ui_kits/mdx/data/engineering-docs.js",
+          "ui_kits/mdx/data/engineering-docs.js"
         ]
       },
       {
@@ -500,12 +746,12 @@
         ]
       },
       {
-        "basename": "evidence",
+        "basename": "extras",
         "count": 3,
         "paths": [
-          "design-system/ui_kits/pdev/Evidence.jsx",
-          "server/routes/evidence.ts",
-          "server/src/services/reg/evidence.ts"
+          "client/public/design-system/ui_kits/home/Extras.jsx",
+          "design-system/ui_kits/home/Extras.jsx",
+          "ui_kits/home/Extras.jsx"
         ]
       },
       {
@@ -518,24 +764,6 @@
         ]
       },
       {
-        "basename": "ivd",
-        "count": 3,
-        "paths": [
-          "client/src/concept2cure/mdx/data/ivd.ts",
-          "design-system/ui_kits/mdx/data/ivd.js",
-          "design-system/ui_kits/mdx/surfaces/Ivd.jsx"
-        ]
-      },
-      {
-        "basename": "ivdr",
-        "count": 3,
-        "paths": [
-          "client/src/concept2cure/mdx/data/ivdr.ts",
-          "design-system/ui_kits/mdx/data/ivdr.js",
-          "design-system/ui_kits/mdx/surfaces/Ivdr.jsx"
-        ]
-      },
-      {
         "basename": "jest.config",
         "count": 3,
         "paths": [
@@ -545,48 +773,12 @@
         ]
       },
       {
-        "basename": "ldt",
-        "count": 3,
-        "paths": [
-          "client/src/concept2cure/mdx/data/ldt.ts",
-          "design-system/ui_kits/mdx/data/ldt.js",
-          "design-system/ui_kits/mdx/surfaces/Ldt.jsx"
-        ]
-      },
-      {
         "basename": "logger",
         "count": 3,
         "paths": [
           "client/src/services/portal/logger.ts",
           "server/utils/logger.js",
           "server/utils/logger.ts"
-        ]
-      },
-      {
-        "basename": "memory",
-        "count": 3,
-        "paths": [
-          "client/src/concept2cure/mdx/data/memory.ts",
-          "design-system/ui_kits/mdx/data/memory.js",
-          "design-system/ui_kits/mdx/surfaces/Memory.jsx"
-        ]
-      },
-      {
-        "basename": "nav",
-        "count": 3,
-        "paths": [
-          "client/src/concept2cure/mdx/data/nav.ts",
-          "client/src/concept2cure/pdev/data/nav.ts",
-          "design-system/ui_kits/mdx/data/nav.js"
-        ]
-      },
-      {
-        "basename": "onboarding",
-        "count": 3,
-        "paths": [
-          "client/src/concept2cure/mdx/data/onboarding.ts",
-          "design-system/ui_kits/mdx/data/onboarding.js",
-          "design-system/ui_kits/mdx/surfaces/Onboarding.jsx"
         ]
       },
       {
@@ -617,12 +809,12 @@
         ]
       },
       {
-        "basename": "postmarket",
+        "basename": "postmarket-docs",
         "count": 3,
         "paths": [
-          "client/src/concept2cure/mdx/data/postmarket.ts",
-          "design-system/ui_kits/mdx/data/postmarket.js",
-          "design-system/ui_kits/mdx/surfaces/Postmarket.jsx"
+          "client/src/concept2cure/mdx/data/postmarket-docs.ts",
+          "design-system/ui_kits/mdx/data/postmarket-docs.js",
+          "ui_kits/mdx/data/postmarket-docs.js"
         ]
       },
       {
@@ -635,30 +827,12 @@
         ]
       },
       {
-        "basename": "qsub",
-        "count": 3,
-        "paths": [
-          "client/src/concept2cure/mdx/data/qsub.ts",
-          "design-system/ui_kits/mdx/data/qsub.js",
-          "design-system/ui_kits/mdx/surfaces/QSub.jsx"
-        ]
-      },
-      {
         "basename": "resolution",
         "count": 3,
         "paths": [
           "server/routes/resolution.ts",
           "shared/schema/resolution.ts",
           "shared/types/resolution.ts"
-        ]
-      },
-      {
-        "basename": "samd",
-        "count": 3,
-        "paths": [
-          "client/src/concept2cure/mdx/data/samd.ts",
-          "design-system/ui_kits/mdx/data/samd.js",
-          "design-system/ui_kits/mdx/surfaces/Samd.jsx"
         ]
       },
       {
@@ -680,15 +854,6 @@
         ]
       },
       {
-        "basename": "surfaces",
-        "count": 3,
-        "paths": [
-          "client/public/design-system/ui_kits/mdx/Surfaces.jsx",
-          "design-system/ui_kits/mdx_phase2/Surfaces.jsx",
-          "design-system/ui_kits/pdev/Surfaces.jsx"
-        ]
-      },
-      {
         "basename": "tenantcontext",
         "count": 3,
         "paths": [
@@ -698,21 +863,12 @@
         ]
       },
       {
-        "basename": "tree",
+        "basename": "udi-docs",
         "count": 3,
         "paths": [
-          "client/public/design-system/ui_kits/ectd_coauthor/Tree.jsx",
-          "client/src/concept2cure/components/claude-ectd-coauthor/Tree.tsx",
-          "design-system/ui_kits/ectd_coauthor/Tree.jsx"
-        ]
-      },
-      {
-        "basename": "udi",
-        "count": 3,
-        "paths": [
-          "client/src/concept2cure/mdx/data/udi.ts",
-          "design-system/ui_kits/mdx/data/udi.js",
-          "design-system/ui_kits/mdx/surfaces/Udi.jsx"
+          "client/src/concept2cure/mdx/data/udi-docs.ts",
+          "design-system/ui_kits/mdx/data/udi-docs.js",
+          "ui_kits/mdx/data/udi-docs.js"
         ]
       },
       {
@@ -741,27 +897,19 @@
         ]
       },
       {
-        "basename": "activitydetail",
-        "count": 2,
-        "paths": [
-          "client/src/concept2cure/pdev/surfaces/ActivityDetail.tsx",
-          "design-system/ui_kits/pdev/ActivityDetail.jsx"
-        ]
-      },
-      {
-        "basename": "admin-docs",
-        "count": 2,
-        "paths": [
-          "client/src/concept2cure/mdx/data/admin-docs.ts",
-          "design-system/ui_kits/mdx/data/admin-docs.js"
-        ]
-      },
-      {
         "basename": "ai-actions",
         "count": 2,
         "paths": [
           "server/routes/ai-actions.ts",
           "shared/types/ai-actions.ts"
+        ]
+      },
+      {
+        "basename": "aidraft",
+        "count": 2,
+        "paths": [
+          "design-system/ui_kits/pdev/AiDraft.jsx",
+          "ui_kits/pdev/AiDraft.jsx"
         ]
       },
       {
@@ -781,19 +929,19 @@
         ]
       },
       {
-        "basename": "ana-review",
+        "basename": "anadock",
         "count": 2,
         "paths": [
-          "client/src/concept2cure/mdx/data/ana-review.ts",
-          "design-system/ui_kits/mdx/data/ana-review.js"
+          "client/src/concept2cure/pdev/shell/AnaDock.tsx",
+          "ui_kits/biopharma/AnaDock.jsx"
         ]
       },
       {
-        "basename": "analytics-docs",
+        "basename": "anareview",
         "count": 2,
         "paths": [
-          "client/src/concept2cure/mdx/data/analytics-docs.ts",
-          "design-system/ui_kits/mdx/data/analytics-docs.js"
+          "design-system/ui_kits/mdx/surfaces/AnaReview.jsx",
+          "ui_kits/mdx/surfaces/AnaReview.jsx"
         ]
       },
       {
@@ -821,11 +969,19 @@
         ]
       },
       {
-        "basename": "artifacts",
+        "basename": "artifact",
         "count": 2,
         "paths": [
-          "client/public/design-system/ui_kits/ectd_coauthor/artifacts.js",
-          "design-system/ui_kits/ectd_coauthor/artifacts.js"
+          "client/src/concept2cure/components/claude-ectd-coauthor/Artifact.tsx",
+          "ui_kits/authoring/Artifact.jsx"
+        ]
+      },
+      {
+        "basename": "ask-ana-chip",
+        "count": 2,
+        "paths": [
+          "design-system/ui_kits/mdx/ask-ana-chip.jsx",
+          "ui_kits/mdx/ask-ana-chip.jsx"
         ]
       },
       {
@@ -957,6 +1113,14 @@
         ]
       },
       {
+        "basename": "confirm",
+        "count": 2,
+        "paths": [
+          "design-system/ui_kits/pdev/Confirm.jsx",
+          "ui_kits/pdev/Confirm.jsx"
+        ]
+      },
+      {
         "basename": "conversation-health",
         "count": 2,
         "paths": [
@@ -1037,6 +1201,14 @@
         ]
       },
       {
+        "basename": "documents-panel",
+        "count": 2,
+        "paths": [
+          "design-system/ui_kits/mdx/documents-panel.jsx",
+          "ui_kits/mdx/documents-panel.jsx"
+        ]
+      },
+      {
         "basename": "documentservice",
         "count": 2,
         "paths": [
@@ -1109,14 +1281,6 @@
         ]
       },
       {
-        "basename": "engineering-docs",
-        "count": 2,
-        "paths": [
-          "client/src/concept2cure/mdx/data/engineering-docs.ts",
-          "design-system/ui_kits/mdx/data/engineering-docs.js"
-        ]
-      },
-      {
         "basename": "environment",
         "count": 2,
         "paths": [
@@ -1141,6 +1305,14 @@
         ]
       },
       {
+        "basename": "esign-modal",
+        "count": 2,
+        "paths": [
+          "design-system/ui_kits/mdx/esign-modal.jsx",
+          "ui_kits/mdx/esign-modal.jsx"
+        ]
+      },
+      {
         "basename": "eventbus",
         "count": 2,
         "paths": [
@@ -1154,14 +1326,6 @@
         "paths": [
           "server/routes/evidence-sufficiency.ts",
           "shared/schema/evidence-sufficiency.ts"
-        ]
-      },
-      {
-        "basename": "extras",
-        "count": 2,
-        "paths": [
-          "client/public/design-system/ui_kits/home/Extras.jsx",
-          "design-system/ui_kits/home/Extras.jsx"
         ]
       },
       {
@@ -1346,14 +1510,6 @@
         "paths": [
           "client/src/concept2cure/mdx/surfaces/Overview.tsx",
           "client/src/concept2cure/pdev/surfaces/Overview.tsx"
-        ]
-      },
-      {
-        "basename": "postmarket-docs",
-        "count": 2,
-        "paths": [
-          "client/src/concept2cure/mdx/data/postmarket-docs.ts",
-          "design-system/ui_kits/mdx/data/postmarket-docs.js"
         ]
       },
       {
@@ -1610,14 +1766,6 @@
         "paths": [
           "client/src/components/ui/toaster.jsx",
           "client/src/components/ui/toaster.tsx"
-        ]
-      },
-      {
-        "basename": "udi-docs",
-        "count": 2,
-        "paths": [
-          "client/src/concept2cure/mdx/data/udi-docs.ts",
-          "design-system/ui_kits/mdx/data/udi-docs.js"
         ]
       },
       {
@@ -1971,13 +2119,13 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 135,
+      "duplicateGroups": 233,
       "largeByBytes": 2,
       "largeByLines": 7
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 109,
+      "duplicateGroups": 111,
       "largeByBytes": 2,
       "largeByLines": 4
     },

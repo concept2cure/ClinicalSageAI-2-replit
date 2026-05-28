@@ -46,7 +46,6 @@ export function AnaRail({
   onShowHistory,
 }: AnaRailProps) {
   const [draft, setDraft] = React.useState('');
-  const [confirmingNewThread, setConfirmingNewThread] = React.useState(false);
   const suggestions = MDX_SUGGESTIONS[activeNav] || MDX_SUGGESTIONS.overview;
   const modelName = ANA_MODES.find(m => m.id === mode)?.model ?? '';
 
@@ -96,8 +95,9 @@ export function AnaRail({
             title="New thread"
             onClick={() => {
               if (!onNewThread) return;
-              if (messages.length === 0) { onNewThread(); return; }
-              setConfirmingNewThread(true);
+              if (messages.length === 0 || window.confirm('Start a fresh AnA thread? Current messages will be cleared.')) {
+                onNewThread();
+              }
             }}
             disabled={!onNewThread}
           >
@@ -169,13 +169,6 @@ export function AnaRail({
         ))}
       </div>
 
-      {confirmingNewThread && (
-        <div className="ana-new-thread-confirm">
-          <span className="ana-new-thread-msg">Clear current thread?</span>
-          <button className="tb-btn" onClick={() => setConfirmingNewThread(false)}>Cancel</button>
-          <button className="tb-btn" onClick={() => { onNewThread?.(); setConfirmingNewThread(false); }}>Clear</button>
-        </div>
-      )}
       <div className="ana-rail-foot">
         <div className="ana-composer">
           <textarea

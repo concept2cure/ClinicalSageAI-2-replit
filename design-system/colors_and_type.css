@@ -73,15 +73,6 @@
   --bg-500:                  #6b6963;
   --bg-inverse:              #262624;
 
-  /* PDEV / MDX kit aliases (promoted from per-kit tokens-shim.css per
-     PHASE_4_INSTALL.md §1.5). The kit JSX references these directly;
-     keeping them as canonical aliases lets every surface — PDEV shell,
-     MDX Phase 4 surfaces, future MDX phases — resolve from one place
-     instead of re-declaring per-shell. */
-  --border-100:              #e8e6dc;   /* default frame (= bg-200) */
-  --border-200:              #d1cfc0;   /* divider-strong (= bg-300) */
-  --error-text:              #8a2929;   /* deeper error for body copy on cream */
-
   --text-000:                #ffffff;
   --text-100:                #141413;   /* primary */
   --text-200:                #3d3d3a;

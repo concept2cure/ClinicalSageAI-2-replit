@@ -13,7 +13,6 @@ import { CER_EXPORT, CER_LITERATURE, CER_SIGNALS } from '../data/cer';
 import type { Program } from '../data/programs';
 import { useK510EstarSections } from '../hooks/useK510';
 import { useProgramExtras } from '../hooks/useProgramExtras';
-import { SampleDataBanner } from '../components/SampleDataBanner';
 
 export interface CerSurfaceProps {
   /** Active CER program from App.tsx. Sections and title come from here. */
@@ -110,11 +109,6 @@ export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
                 </button>
               </div>
             </div>
-            <SampleDataBanner
-              show={extras.safetySignals === null}
-              loading={extras.loading}
-              label="safety signals"
-            />
             {extras.safetySignals !== null && extras.safetySignals.length === 0 ? (
               <div
                 style={{
@@ -260,11 +254,6 @@ export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
                 </button>
               </div>
             </div>
-            <SampleDataBanner
-              show={sectionsState.rows === null}
-              loading={sectionsState.loading}
-              label="CER sections"
-            />
             <div className="estar">
               {sourceSections.map((s, i) => (
                 <div key={s.id} className="estar-row">

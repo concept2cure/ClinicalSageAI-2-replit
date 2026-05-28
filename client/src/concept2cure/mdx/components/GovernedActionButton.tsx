@@ -33,10 +33,8 @@
  */
 
 import * as React from 'react';
-import {
-  ElectronicSignatureGate,
-  type ElectronicSignature,
-} from '@/components/legacy-esign/ElectronicSignature';
+import { ElectronicSignatureGate } from '@/components/legacy-esign/ElectronicSignature';
+import type { ElectronicSignature } from '@/components/legacy-esign/securityTypes';
 import type { SignatureRequiredAction } from '@/components/legacy-esign/regulatoryCompliance';
 
 /* SignatureMeaning is the 21 CFR Part 11 §11.50(b) meaning enum.

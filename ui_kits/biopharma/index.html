@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=1440, initial-scale=1"/>
+  <title>Concept2Cure.RI · Biotech and Pharma (Phase 10)</title>
+  <link rel="icon" href="../../assets/concept2cure-icon.svg"/>
+
+  <!-- Shared chassis from MDX kit — same rail / topbar / tabbar CSS -->
+  <link rel="stylesheet" href="../../colors_and_type.css"/>
+  <link rel="stylesheet" href="../mdx/tokens-shim.css"/>
+  <link rel="stylesheet" href="../mdx/app.css"/>
+  <link rel="stylesheet" href="../mdx/surfaces.css"/>
+
+  <!-- Biopharma-specific deltas -->
+  <link rel="stylesheet" href="styles.css"/>
+
+  <style>
+    body { overflow: hidden; }
+    .kit-toast {
+      position: fixed; right: 56px; bottom: 18px; z-index: 1000;
+      max-width: 480px; display: flex; gap: 12px; align-items: flex-start;
+      padding: 12px 14px;
+      background: var(--bg-000); border: 1px solid var(--border);
+      border-left: 3px solid var(--accent-main-100);
+      border-radius: var(--radius-lg, 10px); box-shadow: var(--shadow-sm);
+      animation: kit-toast-in 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @keyframes kit-toast-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .kit-toast-mark { color: var(--accent-main-100); padding-top: 2px; }
+    .kit-toast-body { flex: 1; min-width: 0; }
+    .kit-toast-head {
+      display: flex; gap: 8px; align-items: center; margin-bottom: 4px;
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-400); font-weight: 600;
+    }
+    .kit-toast-lbl  { color: var(--accent-main-200); }
+    .kit-toast-when { font-family: var(--font-mono); color: var(--text-400); }
+    .kit-toast-text { font-size: 12px; color: var(--text-100); line-height: 1.4; }
+    .kit-toast-close { color: var(--text-400); padding: 2px; flex-shrink: 0; }
+    .kit-toast-close:hover { color: var(--text-200); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React + Babel (pinned) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <!-- React global for shared scripts -->
+  <script>window.React = React; window.ReactDOM = ReactDOM;</script>
+
+  <!-- MDX icons (lifted) — provides window.I -->
+  <script type="text/babel" src="../mdx/icons.jsx"></script>
+
+  <!-- Biopharma data + shell + surfaces + composer -->
+  <script type="text/babel" src="data.jsx"></script>
+  <script type="text/babel" src="shell.jsx"></script>
+  <script type="text/babel" src="surfaces.jsx"></script>
+  <script type="text/babel" src="AnaDock.jsx"></script>
+  <script type="text/babel" src="app.jsx"></script>
+</body>
+</html>

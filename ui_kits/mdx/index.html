@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=1440, initial-scale=1" />
+  <title>MDX kit · Phase 4 — engineering · UDI · vigilance · analytics · memory · admin</title>
+
+  <link rel="stylesheet" href="../../colors_and_type.css" />
+  <link rel="stylesheet" href="tokens-shim.css" />
+  <link rel="stylesheet" href="app.css" />
+  <link rel="stylesheet" href="surfaces.css" />
+
+  <style>
+    /* Harness chrome — toast for the askAna handoff (kit-only, not ported). */
+    .kit-toast {
+      position: fixed; right: 56px; bottom: 18px; z-index: 1000;
+      max-width: 480px;
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 12px 14px;
+      background: var(--canvas-elevated);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent-100);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      animation: kit-toast-in 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @keyframes kit-toast-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .kit-toast-mark { color: var(--accent-100); font-size: 18px; line-height: 1; padding-top: 2px; }
+    .kit-toast-body { flex: 1; min-width: 0; }
+    .kit-toast-head {
+      display: flex; gap: 8px; align-items: center; margin-bottom: 4px;
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-400); font-weight: 600;
+    }
+    .kit-toast-lbl  { color: var(--accent-200); }
+    .kit-toast-when { font-family: var(--font-mono); color: var(--text-400); }
+    .kit-toast-text { font-size: 12px; color: var(--text-100); line-height: 1.4; }
+    .kit-toast-close { color: var(--text-400); padding: 2px; flex-shrink: 0; }
+    .kit-toast-close:hover { color: var(--text-200); }
+    .kit-toast-close svg { width: 14px; height: 14px; }
+
+    /* Hide AnA seam from breaking the 1fr grid when --ana-seam is collapsed */
+    body { overflow: hidden; }
+
+    /* Variant toggle — only shown on engineering surface, kit-only chrome */
+    .kit-variant-toggle {
+      position: fixed; right: 56px; top: 70px; z-index: 900;
+      display: flex; flex-direction: column; gap: 4px;
+      padding: 12px;
+      background: var(--canvas-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      width: 220px;
+    }
+    .kit-variant-label {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-400); font-weight: 600; padding: 0 4px 4px;
+    }
+    .kit-variant-btn {
+      display: flex; flex-direction: column; gap: 2px;
+      padding: 8px 10px; text-align: left;
+      border-radius: var(--radius-md);
+      background: var(--bg-050);
+      border: 1px solid transparent;
+      transition: all 200ms cubic-bezier(0.4,0,0.2,1);
+    }
+    .kit-variant-btn:hover { background: var(--bg-100); }
+    .kit-variant-btn[data-on="true"] {
+      background: var(--accent-000);
+      border-color: var(--accent-100);
+    }
+    .kit-variant-name { font-size: 12px; font-weight: 600; color: var(--text-100); }
+    .kit-variant-desc { font-size: 11px; color: var(--text-400); }
+    .kit-variant-btn[data-on="true"] .kit-variant-name { color: var(--accent-200); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React + Babel pins (per project guidance) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js"
+    integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L"
+    crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"
+    integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm"
+    crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"
+    integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y"
+    crossorigin="anonymous"></script>
+
+  <!-- Data — load order matters (icons.jsx reads nothing; surfaces depend on data) -->
+  <script src="data/nav.js"></script>
+  <script src="data/programs.js"></script>
+  <script src="data/engineering.js"></script>
+  <script src="data/engineering-docs.js"></script>
+  <script src="data/udi.js"></script>
+  <script src="data/udi-docs.js"></script>
+  <script src="data/postmarket.js"></script>
+  <script src="data/postmarket-docs.js"></script>
+  <script src="data/analytics.js"></script>
+  <script src="data/analytics-docs.js"></script>
+  <script src="data/memory.js"></script>
+  <script src="data/admin.js"></script>
+  <script src="data/admin-docs.js"></script>
+  <!-- Phase 5 data -->
+  <script src="data/vault.js"></script>
+  <script src="data/audit.js"></script>
+  <script src="data/notifications.js"></script>
+  <script src="data/templates.js"></script>
+  <script src="data/quality.js"></script>
+  <!-- Phase 6 data (diagnostic clients) -->
+  <script src="data/ivd.js"></script>
+  <script src="data/ivdr.js"></script>
+  <script src="data/cdx.js"></script>
+  <script src="data/ldt.js"></script>
+  <!-- Phase 7 data (workspace deepening) -->
+  <script src="data/ana-review.js"></script>
+  <script src="data/qsub.js"></script>
+  <script src="data/samd.js"></script>
+  <script src="data/clinical.js"></script>
+  <!-- Phase 8 data (cross-cutting) -->
+  <script src="data/search.js"></script>
+  <script src="data/onboarding.js"></script>
+  <script src="data/conversations.js"></script>
+
+  <!-- Shared components -->
+  <script type="text/babel" src="icons.jsx"></script>
+  <script type="text/babel" src="ask-ana-chip.jsx"></script>
+  <script type="text/babel" src="documents-panel.jsx"></script>
+  <script type="text/babel" src="esign-modal.jsx"></script>
+  <script type="text/babel" src="shell.jsx"></script>
+
+  <!-- Surfaces -->
+  <script type="text/babel" src="surfaces/Engineering.jsx"></script>
+  <script type="text/babel" src="surfaces/Udi.jsx"></script>
+  <script type="text/babel" src="surfaces/Postmarket.jsx"></script>
+  <script type="text/babel" src="surfaces/Analytics.jsx"></script>
+  <script type="text/babel" src="surfaces/Memory.jsx"></script>
+  <script type="text/babel" src="surfaces/Admin.jsx"></script>
+  <!-- Phase 5 surfaces -->
+  <script type="text/babel" src="surfaces/Vault.jsx"></script>
+  <script type="text/babel" src="surfaces/Audit.jsx"></script>
+  <script type="text/babel" src="surfaces/Notifications.jsx"></script>
+  <script type="text/babel" src="surfaces/Templates.jsx"></script>
+  <script type="text/babel" src="surfaces/Quality.jsx"></script>
+  <!-- Phase 6 surfaces (diagnostic clients) -->
+  <script type="text/babel" src="surfaces/Ivd.jsx"></script>
+  <script type="text/babel" src="surfaces/Ivdr.jsx"></script>
+  <script type="text/babel" src="surfaces/Cdx.jsx"></script>
+  <script type="text/babel" src="surfaces/Ldt.jsx"></script>
+  <!-- Phase 7 surfaces (workspace deepening) -->
+  <script type="text/babel" src="surfaces/AnaReview.jsx"></script>
+  <script type="text/babel" src="surfaces/QSub.jsx"></script>
+  <script type="text/babel" src="surfaces/Samd.jsx"></script>
+  <script type="text/babel" src="surfaces/Clinical.jsx"></script>
+  <!-- Phase 8 surfaces (cross-cutting) -->
+  <script type="text/babel" src="surfaces/Search.jsx"></script>
+  <script type="text/babel" src="surfaces/Onboarding.jsx"></script>
+  <script type="text/babel" src="surfaces/Conversations.jsx"></script>
+
+  <!-- App -->
+  <script type="text/babel" src="app.jsx"></script>
+</body>
+</html>
