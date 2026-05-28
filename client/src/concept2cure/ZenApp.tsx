@@ -140,6 +140,8 @@ import { useAnaChat } from './components/ana/useAnaChat';
 import { Concept2CureHome } from './components/concept2cure-home';
 import MdxRoute from './mdx/MdxRoute';
 import PdevRoute from './pdev/PdevRoute';
+import BiopharmaRoute from './biopharma/BiopharmaRoute';
+import ProjectDetailRoute from './projects/ProjectDetailRoute';
 
 /** Map MDX deep-link hashes (#k510, #pma, #cer, #vault, #admin, …) to the
  *  React MDX App's activeNav identifiers. Returns undefined when no hash is
@@ -1876,6 +1878,21 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       <PdevRoute
         initialNav={pdevDeepLink?.nav}
         initialProgramId={pdevDeepLink?.programId ?? null}
+      />
+    );
+  }
+
+  // Phase 10 — Biopharma domain shell.
+  if (layoutMode === 'biopharma' && !embeddedModule) {
+    return <BiopharmaRoute />;
+  }
+
+  // Phase 10 — Project detail surface. Requires an active project.
+  if (layoutMode === 'project-detail' && !embeddedModule && activeProjectId) {
+    return (
+      <ProjectDetailRoute
+        projectId={activeProjectId}
+        onBack={() => setLayoutMode('projects')}
       />
     );
   }

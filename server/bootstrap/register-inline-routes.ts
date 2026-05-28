@@ -316,6 +316,24 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount C2C Rule-packs route:', error);
   }
 
+  // C2C Projects detail (Phase 10 — /api/c2c/projects/*).
+  try {
+    const c2cProjectsModule = await import('../routes/c2c/projects');
+    app.use('/api/c2c/projects', authMiddleware, c2cProjectsModule.default);
+    console.info('✅ C2C Projects routes mounted (/api/c2c/projects)');
+  } catch (error) {
+    console.error('❌ Failed to mount C2C Projects routes:', error);
+  }
+
+  // Biopharma domain programs + meetings (Phase 10 — /api/biopharma/*).
+  try {
+    const biopharmaModule = await import('../routes/biopharma/programs');
+    app.use('/api/biopharma', authMiddleware, biopharmaModule.default);
+    console.info('✅ Biopharma routes mounted (/api/biopharma)');
+  } catch (error) {
+    console.error('❌ Failed to mount Biopharma routes:', error);
+  }
+
   // Ana Platform Control (agentic settings, modules, onboarding).
   try {
     const anaPlatformModule = await import('../routes/ana-platform-control');
