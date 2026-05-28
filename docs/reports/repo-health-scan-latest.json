@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-05-28T05:18:00.645Z",
+  "generatedAt": "2026-05-28T05:33:56.877Z",
   "git": {
-    "sha": "26ebef17a91273a9dcbac6f3041ae50ee7472005",
+    "sha": "7b6a507c85669769ecfae14a8d201e7a42cc7f13",
     "branch": "claude/sharp-brahmagupta-SlRdx"
   },
   "thresholds": {
@@ -1850,7 +1850,7 @@
       },
       {
         "file": "client/src/concept2cure/ZenApp.tsx",
-        "lines": 2160
+        "lines": 2175
       },
       {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",

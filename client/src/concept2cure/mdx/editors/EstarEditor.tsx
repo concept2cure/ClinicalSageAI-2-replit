@@ -9,6 +9,7 @@ import * as React from 'react';
 import { I } from '../icons';
 import { ANA_MODES, type AnaMode } from '../data/nav';
 import { useLiveSections } from '../hooks/useLiveSections';
+import { useDocumentComments } from '../hooks/useDocumentComments';
 import { AnaDraftBanner } from '../components/AnaDraftBanner';
 import {
   EDITOR_COMMENTS,
@@ -711,7 +712,11 @@ export function EstarEditor({ initialMode = 'deep-research', programIdent }: Est
   const [search, setSearch] = React.useState('');
   const [mode, setMode] = React.useState<AnaMode['id']>(initialMode);
   const [messages, setMessages] = React.useState<EditorMessage[]>(EDITOR_SEED_MESSAGES);
+  const liveComments = useDocumentComments(programIdent);
   const [comments, setComments] = React.useState<EditorComment[]>(EDITOR_COMMENTS);
+  React.useEffect(() => {
+    if (liveComments.comments.length > 0) setComments(liveComments.comments);
+  }, [liveComments.comments]);
   const [activePin, setActivePin] = React.useState<string | null>(null);
   const [pinnedComment, setPinnedComment] = React.useState<EditorComment | null>(null);
   const [valOpen, setValOpen] = React.useState(false);
