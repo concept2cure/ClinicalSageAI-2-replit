@@ -29,6 +29,7 @@ import {
 import { useSubmissions, useSubmissionDetail } from '../hooks/useSubmissions';
 import { useWorkbenchTasks, useWorkbenchTemplates, useWorkbenchValidation } from '../hooks/useWorkbench';
 import { useMdxPrograms } from '../hooks/useMdxPrograms';
+import { useVault } from '../hooks/useVault';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tasks
@@ -207,16 +208,24 @@ export function VaultSurface({ onAskAna }: WorkbenchProps) {
   const [query, setQuery] = React.useState('');
   const [selected, setSelected] = React.useState('f1');
 
-  const files = VAULT_FILES.filter(
-    f =>
-      (folder === 'root' ||
-        folder === 'shared' ||
-        folder === 'corresp' ||
-        f.prog.toLowerCase().replace('-', '') === folder) &&
-      (filter === 'all' || f.kind === filter) &&
-      (!query || f.name.toLowerCase().includes(query.toLowerCase())),
-  );
-  const sel = VAULT_FILES.find(f => f.id === selected) || files[0];
+  /* Live data — server applies folder + filter; client applies query only.
+     Falls back to VAULT_FILES fixture while loading or on error. */
+  const vault = useVault(folder, filter === 'all' ? '' : filter);
+  const sourceFiles = vault.files ?? VAULT_FILES;
+  const sourceVersions = vault.versions ?? VAULT_VERSIONS;
+
+  const files = vault.files
+    ? sourceFiles.filter(f => !query || f.name.toLowerCase().includes(query.toLowerCase()))
+    : VAULT_FILES.filter(
+        f =>
+          (folder === 'root' ||
+            folder === 'shared' ||
+            folder === 'corresp' ||
+            f.prog.toLowerCase().replace('-', '') === folder) &&
+          (filter === 'all' || f.kind === filter) &&
+          (!query || f.name.toLowerCase().includes(query.toLowerCase())),
+      );
+  const sel = sourceFiles.find(f => f.id === selected) || files[0];
 
   return (
     <>
@@ -233,7 +242,7 @@ export function VaultSurface({ onAskAna }: WorkbenchProps) {
             className="btn ghost small"
             onClick={() => {
               const headers = ['Name', 'Type', 'Kind', 'Program', 'Size', 'Version', 'Status', 'Updated', 'Author', 'SHA-256'];
-              const rows = VAULT_FILES.map(f => [
+              const rows = sourceFiles.map(f => [
                 f.name, f.type, f.kind, f.prog, f.size, f.ver, f.status, f.updated, f.author, f.hash,
               ]);
               const csv = [headers, ...rows]
@@ -420,7 +429,7 @@ export function VaultSurface({ onAskAna }: WorkbenchProps) {
               </div>
 
               <div className="drawer-section-lbl">Version history</div>
-              {VAULT_VERSIONS.map((v, i) => (
+              {sourceVersions.map((v, i) => (
                 <div key={i} className="version-row" data-status={v.status}>
                   <span className="mono version-v">{v.v}</span>
                   <div className="version-body">
