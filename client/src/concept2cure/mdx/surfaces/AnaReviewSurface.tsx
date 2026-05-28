@@ -10,7 +10,8 @@
 
 import * as React from 'react';
 import { I } from '../icons';
-import { ARQ_KPIS, ARQ_FILTERS, ARQ_DRAFTS } from '../data/ana-review';
+import { ARQ_KPIS, ARQ_FILTERS } from '../data/ana-review';
+import { useAnaDrafts } from '../hooks/useAnaDrafts';
 import type { Program } from '../data/programs';
 
 interface Props {
@@ -22,8 +23,9 @@ export function AnaReviewSurface({ program, onAskAna }: Props) {
   const [filter, setFilter] = React.useState<'all' | 'mine' | 'unowned' | 'stale'>('all');
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
 
+  const { drafts } = useAnaDrafts();
   const programFilter = program?.code?.split(' ')[0] ?? null;
-  const visible = ARQ_DRAFTS.filter(d => {
+  const visible = drafts.filter(d => {
     if (programFilter && d.program !== programFilter) return false;
     if (filter === 'all') return true;
     if (filter === 'mine') return d.reviewer === 'JC';
@@ -85,7 +87,7 @@ export function AnaReviewSurface({ program, onAskAna }: Props) {
               <button key={f.id} className="seg-btn" data-on={filter === f.id} onClick={() => setFilter(f.id)}>{f.label}</button>
             ))}
           </div>
-          <span className="section-sub">{visible.length} of {ARQ_DRAFTS.length} shown</span>
+          <span className="section-sub">{visible.length} of {drafts.length} shown</span>
         </div>
         <div className="arq-list">
           {visible.map(d => (
