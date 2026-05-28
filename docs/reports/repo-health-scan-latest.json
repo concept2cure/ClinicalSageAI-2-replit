@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-05-28T20:14:10.683Z",
+  "generatedAt": "2026-05-28T20:15:51.074Z",
   "git": {
-    "sha": "0ca9da06f32f8d3f4f489b6d0e07e6e114afd20c",
+    "sha": "71aaba1d148059f0bd607742db1400e6fe634f9b",
     "branch": "claude/sharp-brahmagupta-SlRdx"
   },
   "thresholds": {
@@ -2138,7 +2138,7 @@
   "comparison": {
     "baseline": "docs/reports/repo-health-scan-latest.json",
     "delta": {
-      "duplicateBasenames": 2,
+      "duplicateBasenames": 0,
       "largeFilesByBytes": 0,
       "largeFilesByLines": 0
     }
