@@ -19,8 +19,9 @@ function SelectionToolbar({ selection, onAction }) {
       <button onClick={() => onAction('cite')}       title="Attach evidence">{I.cite} Cite</button>
       <button onClick={() => onAction('precedent')}  title="Find regulatory precedent">{I.book} Precedent</button>
       <div className="sep"/>
+      <button onClick={() => onAction('review')}     title="Send this section to a reviewer — creates a task and notifies them">{I.users || I.user} Send for review</button>
+      <button onClick={() => onAction('approve')}    title="Route for e-signature approval">{I.shieldOk || I.check} Request approval</button>
       <button onClick={() => onAction('comment')}    title="Comment · @-mention a reviewer">{I.chat || I.quote} Comment</button>
-      <button onClick={() => onAction('flag')}       title="Flag for reviewer attention">{I.warn} Flag</button>
     </div>
   );
 }
@@ -79,7 +80,7 @@ function Composer({ value, onChange, onSend, disabled }) {
           <button className="au-chip" title="Attach evidence">{I.attach}</button>
           <button className="au-chip" title="Skills"   >{I.tools} Skills</button>
           <button className="au-chip" title="Mentions" >{I.at}    Mention</button>
-          <button className="au-chip" title="Model">c2c-Opus 4.7 {I.chevronDn}</button>
+          <button className="au-chip" title="Model">AnA 1.0 {I.chevronDn}</button>
         </div>
         <div className="right">
           <button className="au-chip" title="Command palette (⌘K)">{I.command}</button>

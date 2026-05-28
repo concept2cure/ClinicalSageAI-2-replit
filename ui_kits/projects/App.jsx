@@ -194,7 +194,7 @@ function Thread() {
             <button title="Attach">{I.attach}</button>
             <button title="Slash commands">{I.command}</button>
             <button title="Pin">{I.pin}</button>
-            <button>c2c-Opus 4.7</button>
+            <button>AnA 1.0</button>
           </div>
           <button className="send" title="Send">{I.arrowUp}</button>
         </div>
