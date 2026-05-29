@@ -609,11 +609,17 @@ export class RegulatoryIntelligenceService {
       }
 
       // Generate the analysis text
-      let analysisText = `Regulatory Compliance Analysis for ${phase} Protocol`;
+      let analysisText = `Regulatory Requirement Screen for ${phase} Protocol`;
       if (indication) {
         analysisText += ` in ${indication}`;
       }
       analysisText += '\n\n';
+      analysisText +=
+        'METHOD: This is a heuristic keyword screen, not a validated compliance score. ' +
+        'It checks whether language associated with each regulatory requirement appears in ' +
+        'the protocol text. Absence of matching language does not confirm non-compliance, and ' +
+        'presence of matching language does not confirm a requirement is adequately addressed. ' +
+        'Treat the results below as a drafting aid for expert review, not as a compliance determination.\n\n';
 
       const mandatoryIssues = complianceResults
         .filter(r => !r.compliant && r.requirement.compliance_level === 'mandatory')
@@ -648,12 +654,20 @@ export class RegulatoryIntelligenceService {
         analysisText += '\n';
       }
 
-      // Add compliance summary
-      const compliantCount = complianceResults.filter(r => r.compliant).length;
+      // Add screen summary. We deliberately do NOT emit a "compliance percentage":
+      // a keyword-match ratio is not a validated compliance score and stating it as a
+      // percentage implies a precision this heuristic does not have.
+      // See FORENSIC_CODE_AUDIT_2026-05-29.md HI-3.
+      const matchedCount = complianceResults.filter(r => r.compliant).length;
       const totalCount = complianceResults.length;
-      const complianceRate = Math.round((compliantCount / totalCount) * 100);
+      const unmatchedCount = totalCount - matchedCount;
 
-      analysisText += `COMPLIANCE SUMMARY: ${complianceRate}% (${compliantCount}/${totalCount}) of regulatory requirements appear to be addressed.\n\n`;
+      analysisText += 'SCREEN SUMMARY:\n';
+      analysisText += `- Requirements checked: ${totalCount}\n`;
+      analysisText += `- Requirements with matching language detected: ${matchedCount}\n`;
+      analysisText += `- Requirements with no matching language (require manual review): ${unmatchedCount}\n`;
+      analysisText +=
+        'This summary reports text-match counts only and is not a compliance score.\n\n';
 
       // Add recommended guidance
       analysisText += 'RECOMMENDED GUIDANCE DOCUMENTS:\n\n';

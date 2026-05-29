@@ -682,37 +682,20 @@ export class PowerSampleSizeService {
    * @returns Distribution of effect sizes
    */
   async getHistoricalEffectSizes(indication: string, endpointType: string): Promise<any> {
-    // This would ideally be implemented with a database query
-    // For now returning mockup data
-    return (
-      {
-        continuous: {
-          mean: 0.5,
-          median: 0.45,
-          percentile25: 0.3,
-          percentile75: 0.7,
-          range: [0.2, 1.2],
-          description: "Standardized mean difference (Cohen's d)",
-        },
-        binary: {
-          meanOddsRatio: 1.8,
-          medianOddsRatio: 1.6,
-          rangeOddsRatio: [1.2, 3.5],
-          meanRiskRatio: 1.5,
-          medianRiskRatio: 1.4,
-          rangeRiskRatio: [1.1, 2.8],
-          description: 'Odds ratios and risk ratios from similar trials',
-        },
-        timeToEvent: {
-          meanHazardRatio: 0.75,
-          medianHazardRatio: 0.72,
-          rangeHazardRatio: [0.5, 0.95],
-          description: 'Hazard ratios from similar trials',
-        },
-      }[endpointType] || {
-        description: 'No historical data available for this endpoint type',
-      }
-    );
+    // Historical effect-size priors must be sourced from the CSR/trials database.
+    // No such query is wired yet, so this returns an explicit "unavailable" result
+    // rather than fabricated constants that would feed power calculations under the
+    // guise of "historical data from similar trials".
+    // See FORENSIC_CODE_AUDIT_2026-05-29.md HI-2.
+    return {
+      available: false,
+      source: 'none',
+      indication,
+      endpointType,
+      note:
+        'No historical effect-size data available. Supply an effect size from your own ' +
+        'prior evidence or a published source; this service does not substitute fabricated priors.',
+    };
   }
 
   /**
@@ -723,51 +706,19 @@ export class PowerSampleSizeService {
    * @returns Distribution of dropout rates
    */
   async getHistoricalDropoutRates(indication: string, phase: string): Promise<any> {
-    // This would ideally be implemented with a database query
-    // For now returning mockup data based on typical patterns
-    const baseRate = 0.15; // 15% base dropout rate
-
-    let multiplier = 1.0;
-
-    // Adjust by phase
-    if (phase.toLowerCase().includes('1')) {
-      multiplier *= 0.8; // Phase 1 often has lower dropout
-    } else if (phase.toLowerCase().includes('3')) {
-      multiplier *= 1.2; // Phase 3 often has higher dropout
-    }
-
-    // Some indications have higher dropout rates
-    if (
-      indication.toLowerCase().includes('oncology') ||
-      indication.toLowerCase().includes('cancer')
-    ) {
-      multiplier *= 1.3;
-    } else if (
-      indication.toLowerCase().includes('psych') ||
-      indication.toLowerCase().includes('mental')
-    ) {
-      multiplier *= 1.4;
-    } else if (indication.toLowerCase().includes('chronic')) {
-      multiplier *= 1.2;
-    }
-
-    const meanRate = baseRate * multiplier;
-
+    // Historical dropout rates must be sourced from the CSR/trials database.
+    // No such query is wired yet, so this returns an explicit "unavailable" result
+    // rather than a fabricated rate derived from a hardcoded 15% base and arbitrary
+    // multipliers presented as "typical patterns".
+    // See FORENSIC_CODE_AUDIT_2026-05-29.md HI-2.
     return {
-      mean: meanRate,
-      median: meanRate * 0.9, // Usually slightly lower than mean
-      range: [meanRate * 0.5, meanRate * 1.5],
-      byDuration: {
-        '3 months': meanRate * 0.7,
-        '6 months': meanRate,
-        '12 months': meanRate * 1.4,
-        '24 months': meanRate * 1.8,
-      },
-      recommendations: {
-        conservative: meanRate * 1.5,
-        typical: meanRate,
-        optimistic: meanRate * 0.7,
-      },
+      available: false,
+      source: 'none',
+      indication,
+      phase,
+      note:
+        'No historical dropout-rate data available. Supply an expected dropout rate from ' +
+        'your own prior evidence or a published source; this service does not substitute fabricated rates.',
     };
   }
 
