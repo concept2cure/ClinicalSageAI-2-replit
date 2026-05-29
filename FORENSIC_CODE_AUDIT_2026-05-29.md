@@ -158,7 +158,7 @@ What's genuinely encouraging, and worth stating plainly: the much-feared "is the
 
 ## LOW (representative)
 
-- Demo-mode LLM responses (`ai-gateway/gateway.ts:230-280,370-374`) are env-gated and **labeled "(Demo Mode)"** — honest, but a keyless prod deploy would silently serve demo regulatory text. Cure: hard-fail boot in prod when no provider key.
+- Demo-mode LLM responses (`ai-gateway/gateway.ts:230-280,370-374`) are env-gated and **labeled "(Demo Mode)"** — honest, but a keyless prod deploy would silently serve demo regulatory text. **FIXED (2026-05-29):** the no-provider branch now throws in `NODE_ENV==='production'` instead of falling back to the demo/deterministic response — fail-closed. Dev still falls back; the explicit `deterministicMode` opt-in is unchanged. Guard in `tests/audit-ai-gateway-keyless-prod.test.ts`.
 - Home module-tile footers (`concept2cure-home/data.tsx:63-113`) ship hardcoded "87% readiness," "12,480 docs," "248k events" as if live telemetry.
 - `server/faers-bridge.js` and `foresight-csr-integration.ts:26` (`http://localhost:8000`) are bridges to Python services that never start.
 - `aiProviderRouter.ts:403` — `Math.random()` tiebreak makes "cost-optimized routing" non-reproducible for audit.

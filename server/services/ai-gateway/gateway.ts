@@ -368,6 +368,17 @@ export class AIGateway {
     // Select model — fall back to deterministic if no providers available
     const selectedModel = this.selectModel(request, strategy);
     if (!selectedModel) {
+      // Fail closed in production: serving demo-mode ("[KNOWN]"/placeholder)
+      // regulatory text from a keyless prod deploy would silently present
+      // fabricated content as a real AI response. Demo fallback is for dev only;
+      // an explicit deterministicMode (handled above) remains a deliberate opt-in.
+      // See FORENSIC_CODE_AUDIT_2026-05-29.md (LOW: keyless-prod demo mode).
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(
+          '[AI Gateway] No AI provider is configured in production; refusing to serve demo-mode content. ' +
+            'Set ANTHROPIC_API_KEY / OPENAI_API_KEY, or enable deterministicMode explicitly.'
+        );
+      }
       log.warn(
         '[AI Gateway] No providers available — falling back to demo mode. Set ANTHROPIC_API_KEY in .env to enable live AI.'
       );
