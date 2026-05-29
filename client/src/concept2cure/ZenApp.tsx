@@ -142,6 +142,8 @@ import MdxRoute from './mdx/MdxRoute';
 import PdevRoute from './pdev/PdevRoute';
 import BiopharmaRoute from './biopharma/BiopharmaRoute';
 import CmcRoute from './cmc/CmcRoute';
+import IntelligenceRoute from './intelligence/IntelligenceRoute';
+import type { IntTab } from './intelligence/data';
 import LabelingRoute from './labeling/LabelingRoute';
 import RiskRoute from './risk/RiskRoute';
 import TaskingRoute from './tasking/TaskingRoute';
@@ -479,6 +481,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // "Vault DMS" / "Tasking" / etc. from the home rail lands on the right
   // tab inside the React MDX shell. See hashToMdxNav() above.
   const [mdxDeepLink, setMdxDeepLink] = useState<string>('');
+  // Phase 11 Intelligence cluster — which tab to open (protocol|cmc|biostat|reporting).
+  const [intelligenceTab, setIntelligenceTab] = useState<IntTab>('protocol');
   // PDEV deep-link target set when an IND project opens a PDEV surface
   // (overview / ind_assembly / fda_interactions) for a specific program.
   const [pdevDeepLink, setPdevDeepLink] = useState<{ programId: string; nav: string } | null>(null);
@@ -1242,6 +1246,22 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         setLayoutMode('submission-gateway');
         return;
       }
+      // Phase 11 Intelligence cluster — Protocol / Biostat / Reports resolve to
+      // the new read-only shell. Must precede the BUNDLE_MDX_HASH and
+      // BUNDLE_INTENTS checks below (which otherwise route 'protocol'/'reporting'
+      // to MDX tabs and 'biostat' to a deep-research intent). 'cmc' is handled
+      // earlier and still routes to the richer standalone CmcRoute pending a
+      // designer call on rail ownership.
+      const INTELLIGENCE_TABS: Record<string, IntTab> = {
+        protocol: 'protocol',
+        biostat: 'biostat',
+        reporting: 'reporting',
+      };
+      if (normalizedPath in INTELLIGENCE_TABS) {
+        setIntelligenceTab(INTELLIGENCE_TABS[normalizedPath]);
+        setLayoutMode('intelligence');
+        return;
+      }
       if (normalizedPath in BUNDLE_MDX_HASH) {
         // Persist the deep-link hash so the early return for 'mdx' can
         // pick it up and pass it to the iframe.
@@ -1952,6 +1972,22 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
   if (layoutMode === 'submission-gateway' && !embeddedModule) {
     return <SubmissionRoute activeProjectId={activeProjectId} />;
+  }
+
+  // Phase 11 — Intelligence cluster (Protocol / CMC / Biostat / Reports).
+  // Read-only surfaces; AnA prompts hand off to the conversation surface and
+  // rail cross-links route through the shared nav handler.
+  if (layoutMode === 'intelligence' && !embeddedModule) {
+    return (
+      <IntelligenceRoute
+        initialNav={intelligenceTab}
+        onNavigate={handleAnaPanelNavigate}
+        onAskAna={(text) => {
+          setExternalChatMessage({ text, ts: Date.now() });
+          setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'deep-research');
+        }}
+      />
+    );
   }
 
   // Phase 10 — Project detail surface. Requires an active project.
