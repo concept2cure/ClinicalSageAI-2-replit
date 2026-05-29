@@ -5,7 +5,7 @@
 
 import * as React from 'react';
 import { RiskIcon } from '../icons';
-import { type RiskBand, RISK_BAND_LABEL } from '../data/nav';
+import { type RiskBand, RISK_BAND_LABEL, riskBand } from '../data/nav';
 
 export function Loading({ label = 'Loading…' }: { label?: string }) {
   return <div className="risk-state" role="status">{label}</div>;
@@ -83,5 +83,23 @@ export function ScoreChip({ severity, probability, band }: { severity: number; p
       {severity}×{probability}
       <span className="risk-score-eq"> = {severity * probability}</span>
     </span>
+  );
+}
+
+/** Live score preview for an authoring form. Computes severity × probability
+ *  client-side (mirrors the server formula) so the user sees the score and band
+ *  before saving. Announced politely via aria-live; the numeric product and the
+ *  band word carry the meaning, never color alone. */
+export function ScorePreview({
+  label, severity, probability,
+}: { label: string; severity: number; probability: number }) {
+  const band = riskBand(severity, probability);
+  return (
+    <div className="risk-score-preview" role="status" aria-live="polite">
+      <span className="risk-score-preview-lbl">{label}</span>
+      <ScoreChip severity={severity} probability={probability} band={band} />
+      <span className="risk-score-preview-sep">·</span>
+      <BandPill band={band} />
+    </div>
   );
 }
