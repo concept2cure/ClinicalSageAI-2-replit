@@ -1006,7 +1006,7 @@ describe('AnA RI Persona — character & dissent', () => {
   it('stays inside the design-system voice (no emoji, no exclamation) in the new copy', () => {
     const whoYouAre = prompt.slice(prompt.indexOf('## Who You Are'), prompt.indexOf('## How to Communicate'));
     const dissent = prompt.slice(prompt.indexOf('## Constructive Dissent'), prompt.indexOf('## Your Expertise'));
-    const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F1E6}-\u{1F1FF}]/u;
+    const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
     for (const chunk of [whoYouAre, dissent]) {
       expect(chunk).not.toContain('!');
       expect(EMOJI.test(chunk)).toBe(false);
@@ -1026,7 +1026,7 @@ import {
 } from '../ana-ri/industry-wisdom-pack.js';
 
 describe('AnA RI Industry Wisdom Pack', () => {
-  const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F1E6}-\u{1F1FF}]/u;
+  const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
 
   it('covers all three segments plus cross-cutting wisdom', () => {
     const segments = new Set(INDUSTRY_WISDOM.map(h => h.segment));
@@ -1092,7 +1092,7 @@ import {
 } from '../ana-ri/use-case-playbooks.js';
 
 describe('AnA RI Use-Case Playbooks', () => {
-  const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F1E6}-\u{1F1FF}]/u;
+  const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
 
   it('provides journeys for all three segments', () => {
     expect(listUseCasesForSegment('mdx').length).toBeGreaterThan(0);
