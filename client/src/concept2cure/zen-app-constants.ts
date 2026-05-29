@@ -124,6 +124,7 @@ export type LayoutMode =
   | 'labeling'
   | 'risk'
   | 'tasking'
+  | 'submission-gateway'
   | 'project-detail';
 
 // ═══════════════════════════════════════════════════════════════════════════════

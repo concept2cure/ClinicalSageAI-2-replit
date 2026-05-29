@@ -1,0 +1,138 @@
+/* Submission gateway overlay. Shell chrome (.rail / .topbar / .tabbar /
+ * .ana-seam) comes from mdx/app.css; the bp-* surface primitives come from
+ * biopharma/app.css. This file ports only the submission-specific .sub-* rules
+ * adapted from the kit's sg-* primitives (ui_kits/submission/styles.css), plus
+ * shared status / empty helpers used by the submission surfaces. All values
+ * read from colors_and_type.css tokens — no raw hex; ACK / finding / status
+ * tones map to --success / --warning / --error / --info or neutral tokens.
+ *
+ * A11y (WCAG 2.2 AA): every transmittal status, ACK level, and finding severity
+ * pairs a tone with a text label (and an icon), so meaning never depends on
+ * color alone. Rows and controls are keyboard-operable with visible focus. */
+
+@import url('../biopharma/app.css');
+
+/* AnA composer + starters (shared across surfaces) */
+.sub-composer { display: flex; gap: 8px; align-items: center; margin: 4px 0 12px; }
+.sub-composer input { flex: 1; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-000); color: var(--text-100); }
+.sub-composer input:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: 1px; }
+.sub-starters { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.sub-starter { display: inline-flex; align-items: center; gap: 8px; text-align: left; font-size: 12px; color: var(--text-200); background: var(--bg-000); border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px; transition: border-color 200ms ease-out; }
+.sub-starter:hover { border-color: var(--accent-main-100); }
+.sub-starter:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: 1px; }
+.sub-starter-ico { display: inline-flex; color: var(--text-400); }
+.sub-starter-ico svg { width: 13px; height: 13px; }
+
+/* Summary tiles */
+.sub-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+@media (max-width: 1000px) { .sub-tiles { grid-template-columns: repeat(2, 1fr); } }
+.sub-tile { background: var(--bg-000); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.sub-tile-num { font-size: 24px; font-weight: 700; color: var(--text-100); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.sub-tile-lbl { font-size: 11px; color: var(--text-400); margin-top: 4px; }
+
+/* Transmittals table */
+.sub-mono { font-family: var(--font-mono); font-size: 11px; }
+.sub-table { display: flex; flex-direction: column; }
+.sub-tr { display: grid; grid-template-columns: 80px 80px 120px 160px 96px 150px 1fr; align-items: center; gap: 12px; padding: 11px 4px; font-size: 12.5px; border-top: 1px solid var(--border); width: 100%; text-align: left; background: transparent; transition: background 200ms ease-out; }
+.sub-tr:first-child { border-top: 0; }
+button.sub-tr { border: 0; border-top: 1px solid var(--border); cursor: pointer; }
+button.sub-tr:first-child { border-top: 0; }
+button.sub-tr:hover { background: var(--bg-050); }
+button.sub-tr:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: -2px; }
+.sub-tr-head { font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-400); font-weight: 600; }
+.sub-prog { font-weight: 600; color: var(--text-100); font-variant-numeric: tabular-nums; }
+.sub-type { color: var(--text-200); }
+.sub-gateway { color: var(--text-200); }
+.sub-core { color: var(--text-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sub-when { color: var(--text-400); font-size: 11px; }
+@media (max-width: 1100px) {
+  .sub-tr { grid-template-columns: 70px 70px 110px 96px 140px 1fr; }
+  .sub-core { display: none; }
+}
+
+/* ACK 1/2/3 chain — text label + glyph, never color alone */
+.sub-ackchain { display: inline-flex; gap: 3px; }
+.sub-ack { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; min-width: 20px; padding: 2px 0; border-radius: 4px; font-size: 9px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.sub-ack-glyph { font-size: 9px; }
+.sub-ack-received { background: var(--success-muted); color: var(--success); }
+.sub-ack-pending  { background: var(--bg-200); color: var(--text-400); }
+.sub-ack-failed   { background: var(--error-muted); color: var(--error); }
+.sub-ack-na       { background: transparent; color: var(--text-400); border: 1px dashed var(--border); }
+
+/* Status pill — tone + label + icon */
+.sub-pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 600; background: var(--bg-100); color: var(--text-300); white-space: nowrap; }
+.sub-pill svg { width: 12px; height: 12px; }
+.sub-pill-ok   { background: var(--success-muted); color: var(--success); }
+.sub-pill-warn { background: var(--warning-muted); color: var(--warning); }
+.sub-pill-err  { background: var(--error-muted); color: var(--error); }
+.sub-pill-info { background: var(--info-muted); color: var(--info); }
+.sub-pill-dim  { background: var(--bg-100); color: var(--text-400); }
+
+/* Collapsible section (gateway connections) */
+.sub-collapse { padding: 0; }
+.sub-collapse-head { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: transparent; border: 0; padding: 14px 16px; font-size: 13px; font-weight: 600; color: var(--text-100); transition: background 200ms ease-out; }
+.sub-collapse-head:hover { background: var(--bg-050); }
+.sub-collapse-head:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: -2px; }
+.sub-collapse-head .bp-meta { margin-left: auto; }
+.sub-chev { display: inline-flex; color: var(--text-400); transition: transform 200ms ease-out; }
+.sub-chev[data-open] { transform: rotate(90deg); }
+.sub-collapse-body { padding: 0 16px 14px; }
+
+/* Gateway connections list */
+.sub-conn-list { display: flex; flex-direction: column; }
+.sub-conn-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--border); }
+.sub-conn-row:first-child { border-top: 0; }
+.sub-conn { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.sub-conn-on  { background: var(--success); }
+.sub-conn-off { background: var(--warning); }
+.sub-conn-body { flex: 1; min-width: 0; }
+.sub-conn-title { font-size: 13px; font-weight: 600; color: var(--text-100); }
+.sub-conn-sub { font-size: 11px; color: var(--text-400); margin-top: 1px; text-transform: uppercase; letter-spacing: 0.03em; }
+
+/* Pre-flight surface — picker + findings detail */
+.sub-preflight { display: grid; grid-template-columns: 280px 1fr; gap: 12px; align-items: start; }
+@media (max-width: 1000px) { .sub-preflight { grid-template-columns: 1fr; } }
+.sub-pf-list { padding: 0; }
+.sub-pf-rows { display: flex; flex-direction: column; max-height: 480px; overflow-y: auto; }
+.sub-pf-row { display: block; width: 100%; text-align: left; background: transparent; border: 0; border-top: 1px solid var(--border); padding: 10px 16px; transition: background 200ms ease-out; }
+.sub-pf-row:first-child { border-top: 0; }
+.sub-pf-row:hover { background: var(--bg-050); }
+.sub-pf-row:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: -2px; }
+.sub-pf-row[data-active] { background: var(--bg-100); box-shadow: inset 2px 0 0 var(--accent-main-100); }
+.sub-pf-row-title { font-size: 12.5px; font-weight: 600; color: var(--text-100); }
+.sub-pf-row-sub { font-size: 11px; color: var(--text-400); margin-top: 1px; font-family: var(--font-mono); }
+.sub-pf-detail { padding: 0; }
+
+/* Findings list */
+.sub-find-list { display: flex; flex-direction: column; padding: 0 16px; }
+.sub-find-row { display: flex; align-items: flex-start; gap: 10px; padding: 12px 0; border-top: 1px solid var(--border); }
+.sub-find-row:first-child { border-top: 0; }
+.sub-find-resolved { opacity: 0.6; }
+.sub-find { display: inline-flex; flex-shrink: 0; margin-top: 1px; }
+.sub-find-ok   { color: var(--success); }
+.sub-find-warn { color: var(--warning); }
+.sub-find-err  { color: var(--error); }
+.sub-find-info { color: var(--info); }
+.sub-find-dim  { color: var(--text-400); }
+.sub-find-body { flex: 1; min-width: 0; }
+.sub-find-msg { font-size: 12.5px; color: var(--text-100); line-height: 1.4; }
+.sub-find-sev { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-400); margin-right: 6px; }
+.sub-find-ref { font-size: 11px; color: var(--text-400); margin-top: 2px; }
+
+/* Loading / empty / error states */
+.sub-state { padding: 28px 16px; text-align: center; color: var(--text-400); font-size: 13px; }
+.sub-state-err { color: var(--error); }
+
+/* Visually hidden label */
+.sub-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+/* AnA dock chat bubbles */
+.sub-chat-log { display: flex; flex-direction: column; gap: 10px; min-height: 120px; }
+.sub-chat-msg { font-size: 13px; line-height: 1.5; padding: 10px 12px; border-radius: 10px; max-width: 80%; }
+.sub-chat-msg.you { align-self: flex-end; background: var(--bg-100); color: var(--text-100); }
+.sub-chat-msg.ana { align-self: flex-start; background: var(--bg-000); border: 1px solid var(--border); color: var(--text-100); }
+
+@media (prefers-reduced-motion: reduce) {
+  .sub-starter, .sub-tr, button.sub-tr, .sub-collapse-head, .sub-chev,
+  .sub-pf-row, .sub-composer input { transition: none; }
+}

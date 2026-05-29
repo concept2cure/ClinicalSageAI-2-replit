@@ -145,6 +145,7 @@ import CmcRoute from './cmc/CmcRoute';
 import LabelingRoute from './labeling/LabelingRoute';
 import RiskRoute from './risk/RiskRoute';
 import TaskingRoute from './tasking/TaskingRoute';
+import SubmissionRoute from './submission/SubmissionRoute';
 import ProjectDetailRoute from './projects/ProjectDetailRoute';
 
 /** Map MDX deep-link hashes (#k510, #pma, #cer, #vault, #admin, …) to the
@@ -1228,6 +1229,19 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         setLayoutMode('tasking');
         return;
       }
+      if (normalizedPath === 'submission-gateway') {
+        /* Submission gateway workstream — the agency-transmission layer over
+           FDA ESG, EMA CESP, EUDAMED, and PMDA Gateway (transmittals, ACK
+           chains, pre-flight validation findings). Live domain shell mirroring
+           tasking. Org-scoped; backed by /api/mdx/gateways/*. Distinct from the
+           'submissions' layoutMode, which owns package/section/readiness
+           management via /api/submission-ops/*; this is the "press send to the
+           agency" step, not package authoring. Must precede the
+           BUNDLE_MDX_HASH check (the 'submission' alias there routes the legacy
+           MDX #submissions tab, a different surface). */
+        setLayoutMode('submission-gateway');
+        return;
+      }
       if (normalizedPath in BUNDLE_MDX_HASH) {
         // Persist the deep-link hash so the early return for 'mdx' can
         // pick it up and pass it to the iframe.
@@ -1934,6 +1948,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
   if (layoutMode === 'tasking' && !embeddedModule) {
     return <TaskingRoute activeProjectId={activeProjectId} />;
+  }
+
+  if (layoutMode === 'submission-gateway' && !embeddedModule) {
+    return <SubmissionRoute activeProjectId={activeProjectId} />;
   }
 
   // Phase 10 — Project detail surface. Requires an active project.
