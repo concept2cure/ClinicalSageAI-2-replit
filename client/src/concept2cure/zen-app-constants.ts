@@ -121,6 +121,7 @@ export type LayoutMode =
   // ── Phase 10 surfaces ──
   | 'biopharma'
   | 'cmc'
+  | 'labeling'
   | 'project-detail';
 
 // ═══════════════════════════════════════════════════════════════════════════════

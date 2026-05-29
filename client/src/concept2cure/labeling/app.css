@@ -1,0 +1,67 @@
+/* Labeling overlay. Shell chrome (.rail / .topbar / .tabbar / .ana-seam) comes
+ * from mdx/app.css; the bp-* surface primitives come from biopharma/app.css.
+ * This file ports only the labeling-specific .lb-* rules from
+ * ui_kits/labeling/styles.css, plus shared status/empty helpers used by the
+ * labeling surfaces. All values read from colors_and_type.css tokens — no raw
+ * hex; status tones map to --success / --warning / --error. */
+
+@import url('../biopharma/app.css');
+
+/* Document grid */
+.lb-docs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
+@media (max-width: 1000px) { .lb-docs { grid-template-columns: 1fr; } }
+.lb-doc { text-align: left; background: var(--bg-000); border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; transition: border-color 200ms ease-out; }
+.lb-doc:hover { border-color: var(--accent-main-100); }
+.lb-doc:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: 2px; }
+.lb-doc-top { display: flex; align-items: center; gap: 8px; }
+.lb-doc-kind { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-400); }
+.lb-doc-top .lb-chip { margin-left: auto; }
+.lb-doc-title { font-size: 13px; font-weight: 600; color: var(--text-100); margin: 6px 0 3px; }
+.lb-doc-meta { font-size: 11px; color: var(--text-400); }
+
+/* Mono + muted cell helpers */
+.lb-mono { font-family: var(--font-mono, monospace); font-size: 11px; color: var(--text-200); }
+.lb-mut { color: var(--text-300); text-transform: capitalize; font-size: 11px; }
+
+/* AnA composer + starters */
+.lb-composer { display: flex; gap: 8px; align-items: center; margin: 4px 0 12px; }
+.lb-composer input { flex: 1; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-000); color: var(--text-100); }
+.lb-composer input:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: 1px; }
+.lb-starters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.lb-starter { display: inline-flex; align-items: center; gap: 8px; text-align: left; font-size: 12px; color: var(--text-200); background: var(--bg-000); border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px; transition: border-color 200ms ease-out; }
+.lb-starter:hover { border-color: var(--accent-main-100); }
+.lb-starter:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: 1px; }
+.lb-starter-ico { display: inline-flex; color: var(--text-400); }
+.lb-starter-ico svg { width: 13px; height: 13px; }
+
+/* Document picker */
+.lb-docpicker { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.lb-docpicker label { font-size: 11px; font-weight: 600; color: var(--text-300); }
+.lb-docpicker select { font-size: 13px; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-000); color: var(--text-100); min-width: 280px; }
+.lb-docpicker select:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: 1px; }
+
+/* Shared status chip — text + icon, never color alone (WCAG 2.2 AA). */
+.lb-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+.lb-chip svg { width: 12px; height: 12px; }
+.lb-chip-ok { background: var(--success-muted); color: var(--success); }
+.lb-chip-warn { background: var(--warning-muted); color: var(--warning); }
+.lb-chip-err { background: var(--error-muted); color: var(--error); }
+.lb-chip-review { background: var(--bg-100); color: var(--text-300); }
+.lb-chip-dim { background: var(--bg-100); color: var(--text-400); }
+
+/* Loading / empty / error states */
+.lb-state { padding: 28px 16px; text-align: center; color: var(--text-400); font-size: 13px; }
+.lb-state-err { color: var(--error); }
+
+/* AnA dock chat bubbles */
+.lb-chat-log { display: flex; flex-direction: column; gap: 10px; min-height: 120px; }
+.lb-chat-msg { font-size: 13px; line-height: 1.5; padding: 10px 12px; border-radius: 10px; max-width: 80%; }
+.lb-chat-msg.you { align-self: flex-end; background: var(--bg-100); color: var(--text-100); }
+.lb-chat-msg.ana { align-self: flex-start; background: var(--bg-000); border: 1px solid var(--border); color: var(--text-100); }
+
+/* Visually hidden label */
+.lb-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lb-doc, .lb-starter { transition: none; }
+}

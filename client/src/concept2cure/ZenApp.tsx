@@ -142,6 +142,7 @@ import MdxRoute from './mdx/MdxRoute';
 import PdevRoute from './pdev/PdevRoute';
 import BiopharmaRoute from './biopharma/BiopharmaRoute';
 import CmcRoute from './cmc/CmcRoute';
+import LabelingRoute from './labeling/LabelingRoute';
 import ProjectDetailRoute from './projects/ProjectDetailRoute';
 
 /** Map MDX deep-link hashes (#k510, #pma, #cer, #vault, #admin, …) to the
@@ -1202,6 +1203,13 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         setLayoutMode('cmc');
         return;
       }
+      if (normalizedPath === 'labeling') {
+        /* Labeling workstream (IFU, package insert, translations, ISO 15223-1
+           symbols). Live domain shell mirroring CMC. Backed by
+           /api/mdx/labeling. */
+        setLayoutMode('labeling');
+        return;
+      }
       if (normalizedPath in BUNDLE_MDX_HASH) {
         // Persist the deep-link hash so the early return for 'mdx' can
         // pick it up and pass it to the iframe.
@@ -1896,6 +1904,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // Phase 10 — CMC workstream shell.
   if (layoutMode === 'cmc' && !embeddedModule) {
     return <CmcRoute activeProjectId={activeProjectId} />;
+  }
+
+  if (layoutMode === 'labeling' && !embeddedModule) {
+    return <LabelingRoute activeProjectId={activeProjectId} />;
   }
 
   // Phase 10 — Project detail surface. Requires an active project.
