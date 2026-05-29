@@ -26,6 +26,8 @@ import { CmcIcon } from '../../cmc/icons';
 import {
   useAuditTrail,
   useCorrespondence,
+  useCorrespondenceDetail,
+  useReviewIssue,
   useApprovalsPending,
   useApproveWorkflow,
   useRejectWorkflow,
@@ -33,6 +35,7 @@ import {
 import type {
   AuditEvent,
   CorrespondenceRow,
+  CorrespondenceIssue,
   PendingApproval,
 } from '../../services/programTabsService';
 import { EsignModal, type EsigSignedManifest } from '../components';
@@ -123,6 +126,128 @@ function Empty({ children }: { children: React.ReactNode }) {
   return <div className="ptab-state">{children}</div>;
 }
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Self-contained accessible modal shell. Mirrors the CmcDialog a11y contract —
+ * role=dialog aria-modal, focus trapped, Esc closes (unless busy), focus returns
+ * to the trigger on close — but carries its own ptab-* styling so _shared keeps
+ * no dependency on the cmc stylesheet.
+ */
+function PtabModal({
+  open,
+  title,
+  subtitle,
+  busy = false,
+  onClose,
+  children,
+  footer,
+}: {
+  open: boolean;
+  title: string;
+  subtitle?: string;
+  busy?: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+  footer: React.ReactNode;
+}) {
+  const dialogRef = React.useRef<HTMLDivElement>(null);
+  const titleId = React.useId();
+  const subId = React.useId();
+  const returnFocusRef = React.useRef<HTMLElement | null>(null);
+
+  React.useEffect(() => {
+    if (open) returnFocusRef.current = document.activeElement as HTMLElement | null;
+  }, [open]);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const first = dialogRef.current?.querySelector<HTMLElement>(FOCUSABLE);
+    first?.focus();
+  }, [open]);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !busy) {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const node = dialogRef.current;
+      if (!node) return;
+      const focusables = Array.from(node.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+        (el) => el.offsetParent !== null || el === document.activeElement,
+      );
+      if (focusables.length === 0) return;
+      const firstEl = focusables[0];
+      const lastEl = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === firstEl) {
+        e.preventDefault();
+        lastEl.focus();
+      } else if (!e.shiftKey && document.activeElement === lastEl) {
+        e.preventDefault();
+        firstEl.focus();
+      }
+    };
+    document.addEventListener('keydown', onKey, true);
+    return () => document.removeEventListener('keydown', onKey, true);
+  }, [open, busy, onClose]);
+
+  React.useEffect(() => {
+    if (open) return;
+    const target = returnFocusRef.current;
+    if (target && typeof target.focus === 'function') target.focus();
+  }, [open]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="ptab-modal-overlay"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget && !busy) onClose();
+      }}
+    >
+      <div
+        ref={dialogRef}
+        className="ptab-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={subtitle ? subId : undefined}
+      >
+        <div className="ptab-modal-head">
+          <div>
+            <h2 className="ptab-modal-title" id={titleId}>{title}</h2>
+            {subtitle && <p className="ptab-modal-sub" id={subId}>{subtitle}</p>}
+          </div>
+          <button
+            type="button"
+            className="ptab-modal-close"
+            onClick={onClose}
+            disabled={busy}
+            aria-label="Close dialog"
+          >
+            <CmcIcon name="x" size={16} />
+          </button>
+        </div>
+        <div className="ptab-modal-body">{children}</div>
+        <div className="ptab-modal-foot">{footer}</div>
+      </div>
+    </div>
+  );
+}
+
+function issueReviewTone(status: string): Tone {
+  const s = status.toLowerCase();
+  if (s === 'confirmed' || s === 'edited') return 'ok';
+  if (s === 'rejected') return 'err';
+  return 'dim';
+}
+
 function AuditPanel({ projectId }: { projectId: string | null }) {
   const audit = useAuditTrail({ program: projectId ?? undefined, filters: { limit: 100 } });
   const events: AuditEvent[] = audit.data?.events ?? [];
@@ -166,13 +291,146 @@ function AuditPanel({ projectId }: { projectId: string | null }) {
   );
 }
 
+/** A reviewable issue inside an expanded correspondence thread. */
+function IssueRow({
+  issue,
+  correspondenceId,
+  onReview,
+}: {
+  issue: CorrespondenceIssue;
+  correspondenceId: string;
+  onReview: (e: React.MouseEvent<HTMLButtonElement>, issue: CorrespondenceIssue) => void;
+}) {
+  const text = pick(issue, ['issue_text', 'summary', 'category']);
+  const reviewStatus = pick(issue, ['human_review_status']);
+  const resolution = pick(issue, ['resolution_status']).replace(/_/g, ' ');
+  const reviewed = reviewStatus !== '—' && reviewStatus.toLowerCase() !== 'pending';
+
+  return (
+    <div className="ptab-issue">
+      <div className="ptab-issue-body">
+        <div className="ptab-issue-text">{text}</div>
+        <div className="ptab-issue-meta">
+          {reviewStatus !== '—' && (
+            <StatusChip tone={issueReviewTone(reviewStatus)} label={`Review: ${reviewStatus}`} />
+          )}
+          {resolution !== '—' && (
+            <StatusChip tone="dim" label={resolution} />
+          )}
+        </div>
+      </div>
+      <div className="ptab-issue-actions">
+        {reviewed ? (
+          <span className="ptab-issue-state">
+            <CmcIcon name="checkCircle" size={14} />
+            Reviewed
+          </span>
+        ) : (
+          <button
+            type="button"
+            className="ptab-act"
+            aria-label={`Mark issue reviewed — ${text}`}
+            onClick={(e) => onReview(e, issue)}
+          >
+            <span className="ico"><CmcIcon name="checkCircle" size={14} /></span>
+            Mark reviewed
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Expanded issues panel for one correspondence thread. */
+function CorrespondenceIssues({
+  correspondenceId,
+  onReview,
+}: {
+  correspondenceId: string;
+  onReview: (e: React.MouseEvent<HTMLButtonElement>, issue: CorrespondenceIssue) => void;
+}) {
+  const detail = useCorrespondenceDetail(correspondenceId);
+  const issues = detail.data?.issues ?? [];
+
+  return (
+    <div className="ptab-issues">
+      <div className="ptab-issues-head">Parsed issues</div>
+      {detail.isLoading ? (
+        <div className="ptab-state" role="status">Loading issues…</div>
+      ) : detail.isError ? (
+        <div className="ptab-state ptab-state-err" role="alert">
+          Could not load the issues for this thread. Try again.
+        </div>
+      ) : issues.length === 0 ? (
+        <div className="ptab-state">No parsed issues for this correspondence.</div>
+      ) : (
+        issues.map((issue) => (
+          <IssueRow
+            key={issue.id}
+            issue={issue}
+            correspondenceId={correspondenceId}
+            onReview={onReview}
+          />
+        ))
+      )}
+    </div>
+  );
+}
+
+interface ReviewTarget {
+  issue: CorrespondenceIssue;
+  correspondenceId: string;
+  label: string;
+  trigger: HTMLButtonElement | null;
+}
+
 function CorrespondencePanel({ projectId }: { projectId: string | null }) {
   const corr = useCorrespondence(projectId);
+  const review = useReviewIssue();
   const rows: CorrespondenceRow[] = corr.data ?? [];
   const open = rows.filter((r) => {
     const s = String(r.status ?? '').toLowerCase();
     return s !== 'closed' && s !== 'responded' && s !== 'resolved';
   }).length;
+
+  const [expanded, setExpanded] = React.useState<string | null>(null);
+  const [target, setTarget] = React.useState<ReviewTarget | null>(null);
+  const [reason, setReason] = React.useState('');
+  const restoreFocusRef = React.useRef<HTMLElement | null>(null);
+  const errId = React.useId();
+
+  const onReview = (e: React.MouseEvent<HTMLButtonElement>, issue: CorrespondenceIssue, corrId: string) => {
+    const label = pick(issue, ['issue_text', 'summary', 'category']);
+    setReason('');
+    review.reset();
+    setTarget({ issue, correspondenceId: corrId, label, trigger: e.currentTarget });
+  };
+
+  const closeModal = () => {
+    const trigger = target?.trigger ?? null;
+    setTarget(null);
+    const restore = trigger && document.body.contains(trigger) ? trigger : restoreFocusRef.current;
+    restoreFocusRef.current = null;
+    window.setTimeout(() => restore?.focus?.(), 0);
+  };
+
+  const onConfirm = async () => {
+    if (!target || review.isPending) return;
+    // The reason is captured for operator intent; the review route stores only
+    // the status (no note column), so it is not persisted server-side.
+    await review.mutateAsync({
+      issueId: target.issue.id,
+      correspondenceId: target.correspondenceId,
+      reason: reason.trim() || undefined,
+    });
+    // The reviewed issue's "Mark reviewed" button disappears; return focus to
+    // the thread's expand toggle.
+    restoreFocusRef.current =
+      document.getElementById(`ptab-corr-toggle-${target.correspondenceId}`);
+    closeModal();
+  };
+
+  const mutationError = review.error as Error | null;
 
   return (
     <div className="ptab-pane">
@@ -202,19 +460,95 @@ function CorrespondencePanel({ projectId }: { projectId: string | null }) {
             const status = pick(c, ['status']);
             const urgency = pick(c, ['urgency']);
             const kind = pick(c, ['communication_type', 'direction']).replace(/_/g, ' ');
+            const corrId = String(c.id ?? '');
+            const isOpen = expanded === corrId && corrId !== '';
+            const subject = pick(c, ['subject']);
+            const issuesRegionId = corrId ? `ptab-corr-issues-${corrId}` : undefined;
             return (
-              <div key={(c.id as string) ?? i} className="ptab-tr" role="row">
-                <span role="cell"><span className="ptab-kind">{kind}</span></span>
-                <span role="cell" className="ptab-subj">{pick(c, ['subject'])}</span>
-                <span role="cell" className="ptab-mono">{formatWhen(pick(c, ['received_at', 'created_at']))}</span>
-                <span role="cell" className="ptab-mono">{c.due_date ? formatWhen(String(c.due_date)) : '—'}</span>
-                <span role="cell">{urgency === '—' ? '—' : <StatusChip tone={urgencyTone(urgency)} label={urgency} />}</span>
-                <span role="cell">{status === '—' ? '—' : <StatusChip tone={correspondenceTone(status)} label={status} />}</span>
-              </div>
+              <React.Fragment key={corrId || i}>
+                <div className="ptab-tr ptab-tr-btn" role="row" data-open={isOpen || undefined}>
+                  <span role="cell" className="ptab-kind-cell">
+                    <button
+                      type="button"
+                      id={corrId ? `ptab-corr-toggle-${corrId}` : undefined}
+                      className="ptab-tr-disclose"
+                      aria-expanded={isOpen}
+                      aria-controls={isOpen ? issuesRegionId : undefined}
+                      aria-label={`${isOpen ? 'Collapse' : 'Expand'} correspondence — ${subject}`}
+                      disabled={corrId === ''}
+                      onClick={() => setExpanded(isOpen ? null : corrId)}
+                    >
+                      <span className="ptab-tr-caret"><CmcIcon name="chevronRight" size={13} /></span>
+                      <span className="ptab-kind">{kind}</span>
+                    </button>
+                  </span>
+                  <span role="cell" className="ptab-subj">{subject}</span>
+                  <span role="cell" className="ptab-mono">{formatWhen(pick(c, ['received_at', 'created_at']))}</span>
+                  <span role="cell" className="ptab-mono">{c.due_date ? formatWhen(String(c.due_date)) : '—'}</span>
+                  <span role="cell">{urgency === '—' ? '—' : <StatusChip tone={urgencyTone(urgency)} label={urgency} />}</span>
+                  <span role="cell">{status === '—' ? '—' : <StatusChip tone={correspondenceTone(status)} label={status} />}</span>
+                </div>
+                {isOpen && (
+                  <div id={issuesRegionId}>
+                    <CorrespondenceIssues
+                      correspondenceId={corrId}
+                      onReview={(e, issue) => onReview(e, issue, corrId)}
+                    />
+                  </div>
+                )}
+              </React.Fragment>
             );
           })}
         </div>
       )}
+
+      <PtabModal
+        open={!!target}
+        busy={review.isPending}
+        title="Mark issue reviewed"
+        subtitle="Records a human review on this parsed issue. The review status is stored in the correspondence record."
+        onClose={closeModal}
+        footer={
+          <>
+            <button
+              type="button"
+              className="ptab-act"
+              onClick={closeModal}
+              disabled={review.isPending}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="ptab-act ptab-act-primary"
+              onClick={onConfirm}
+              disabled={review.isPending}
+              aria-describedby={mutationError ? errId : undefined}
+            >
+              {review.isPending ? 'Saving…' : 'Mark reviewed'}
+            </button>
+          </>
+        }
+      >
+        <div className="ptab-review-field">
+          <label htmlFor="ptab-review-reason">Reason for review (optional)</label>
+          <textarea
+            id="ptab-review-reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Why is this issue cleared, and any context for the audit trail"
+          />
+        </div>
+        <p className="ptab-review-note">
+          The reason is captured for your record. The review endpoint stores the review
+          status only, so the note is not persisted server-side.
+        </p>
+        {mutationError && (
+          <div id={errId} className="ptab-review-err" role="alert">
+            Could not mark the issue reviewed. {mutationError.message}
+          </div>
+        )}
+      </PtabModal>
     </div>
   );
 }

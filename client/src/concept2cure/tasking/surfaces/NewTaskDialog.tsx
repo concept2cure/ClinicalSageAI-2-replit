@@ -9,9 +9,11 @@
 //   status       — NOT accepted by the create schema; new tasks default to
 //                  "pending" server-side, so status is omitted here (see note).
 //   dueDate      string  optional (ISO date)
-//   assigneeName string  optional (the schema accepts a free-text assignee name;
-//                  assigneeId is a numeric users FK we cannot resolve from a
-//                  free-text field, so we send the name)
+//   assigneeId   number  optional (numeric users FK). Resolved from the team
+//                  roster picker (useTeamMembers → GET /api/collaboration/team).
+//   assigneeName string  optional (free-text assignee name). Sent alongside
+//                  assigneeId for display when a member is picked; sent alone as
+//                  a graceful fallback when the roster is empty.
 //   projectId    number  optional FK. The canonical concept2cure project id is a
 //                  non-numeric string that does NOT map to this numeric
 //                  projects.id FK, so it is exposed as an optional numeric
@@ -24,6 +26,7 @@
 
 import * as React from 'react';
 import { useCreateTask } from '../../hooks/useTasking';
+import { useTeamMembers } from '../../hooks/useTeam';
 import type {
   TaskCreate,
   TaskModuleType,
@@ -57,18 +60,25 @@ interface NewTaskState {
   description: string;
   priority: TaskPriority;
   dueDate: string;
+  /** Selected team member id as a string ('' = unassigned). */
+  assigneeId: string;
+  /** Free-text fallback when the team roster is empty. */
   assigneeName: string;
   programId: string;
 }
 
 export function NewTaskDialog({ defaultProgramId, onClose }: NewTaskDialogProps) {
   const create = useCreateTask();
+  const team = useTeamMembers();
+  const members = team.data ?? [];
+  const hasRoster = members.length > 0;
   const [form, setForm] = React.useState<NewTaskState>({
     moduleType: 'CMC',
     title: '',
     description: '',
     priority: 'medium',
     dueDate: '',
+    assigneeId: '',
     assigneeName: '',
     programId: defaultProgramId != null ? String(defaultProgramId) : '',
   });
@@ -88,13 +98,23 @@ export function NewTaskDialog({ defaultProgramId, onClose }: NewTaskDialogProps)
     e.preventDefault();
     if (!valid || pending) return;
     const programId = form.programId.trim();
+    // Resolve the picked member to a numeric assigneeId + display name. When the
+    // roster is empty we keep the free-text assigneeName fallback.
+    const picked = hasRoster
+      ? members.find((m) => String(m.id) === form.assigneeId)
+      : undefined;
+    const assignee = picked
+      ? { assigneeId: picked.id, assigneeName: picked.name || picked.email || `User ${picked.id}` }
+      : !hasRoster && form.assigneeName.trim()
+        ? { assigneeName: form.assigneeName.trim() }
+        : {};
     const body: TaskCreate = {
       moduleType: form.moduleType,
       title: form.title.trim(),
       priority: form.priority,
       ...(form.description.trim() ? { description: form.description.trim() } : {}),
       ...(form.dueDate ? { dueDate: form.dueDate } : {}),
-      ...(form.assigneeName.trim() ? { assigneeName: form.assigneeName.trim() } : {}),
+      ...assignee,
       ...(programId ? { projectId: Number(programId) } : {}),
     };
     await create.mutateAsync(body);
@@ -163,9 +183,29 @@ export function NewTaskDialog({ defaultProgramId, onClose }: NewTaskDialogProps)
           </div>
           <div className="task-field">
             <label htmlFor="task-new-assignee">Assignee</label>
-            <input id="task-new-assignee" value={form.assigneeName}
-                   onChange={(e) => set('assigneeName', e.target.value)}
-                   placeholder="Name of the owner" />
+            {hasRoster ? (
+              <select id="task-new-assignee" value={form.assigneeId}
+                      onChange={(e) => set('assigneeId', e.target.value)}>
+                <option value="">Unassigned</option>
+                {members.map((m) => (
+                  <option key={m.id} value={String(m.id)}>
+                    {m.name || m.email || `User ${m.id}`}
+                    {m.title ? ` — ${m.title}` : ''}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input id="task-new-assignee" value={form.assigneeName}
+                     onChange={(e) => set('assigneeName', e.target.value)}
+                     placeholder="Name of the owner" />
+            )}
+            <span className="task-field-hint">
+              {team.isLoading
+                ? 'Loading the team roster.'
+                : hasRoster
+                  ? `${members.length} team members. Pick one to assign.`
+                  : 'No team roster available. Enter an owner name.'}
+            </span>
           </div>
         </div>
 

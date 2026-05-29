@@ -100,6 +100,47 @@ export interface CorrespondenceRow {
   [key: string]: unknown;
 }
 
+/**
+ * One parsed issue inside a correspondence thread
+ * (GET /api/regulatory-correspondence/correspondence/:id → issues[]).
+ * Columns are heterogeneous; consumers pick defensively. The id, body text and
+ * the human review status are the load-bearing fields for the review action.
+ */
+export interface CorrespondenceIssue {
+  id: string;
+  correspondence_id?: string | null;
+  issue_text?: string | null;
+  summary?: string | null;
+  category?: string | null;
+  severity?: string | null;
+  human_review_status?: string | null;
+  resolution_status?: string | null;
+  mapped_ctd_sections?: unknown;
+  mapped_artifact_ids?: unknown;
+  created_at?: string | null;
+  updated_at?: string | null;
+  [key: string]: unknown;
+}
+
+/** Full correspondence detail (GET /correspondence/:id). */
+export interface CorrespondenceDetail {
+  data: CorrespondenceRow | null;
+  issues: CorrespondenceIssue[];
+  responsePackages: Array<Record<string, unknown>>;
+}
+
+/**
+ * The minimal review-issue payload accepted by
+ * PATCH /api/regulatory-correspondence/issues/:issueId/review (issueReviewSchema).
+ * humanReviewStatus is the only field this surface sets. The schema has no
+ * free-text reason/note column, so the captured reason is not persisted by the
+ * route — see ReviewIssueArgs in useProgramTabs for what is omitted and why.
+ */
+export interface ReviewIssuePayload {
+  humanReviewStatus?: 'pending' | 'confirmed' | 'edited' | 'rejected';
+  resolutionStatus?: 'open' | 'in_progress' | 'resolved' | 'waived';
+}
+
 /** A pending approval workflow instance (GET /api/approval-workflows/pending). */
 export interface PendingApproval {
   id: number | string;
@@ -164,6 +205,39 @@ class ProgramTabsService {
       `/api/regulatory-correspondence/correspondence?projectId=${encodeURIComponent(String(projectId))}`,
     );
     return Array.isArray(payload?.data) ? payload!.data! : [];
+  }
+
+  /**
+   * One correspondence thread with its parsed issues and response packages.
+   * Envelope is { data, issues, responsePackages }. GET /correspondence/:id.
+   */
+  async getCorrespondenceDetail(correspondenceId: string): Promise<CorrespondenceDetail> {
+    const payload = await this.request<{
+      data?: CorrespondenceRow;
+      issues?: CorrespondenceIssue[];
+      responsePackages?: Array<Record<string, unknown>>;
+    }>(
+      'GET',
+      `/api/regulatory-correspondence/correspondence/${encodeURIComponent(correspondenceId)}`,
+    );
+    return {
+      data: payload?.data ?? null,
+      issues: Array.isArray(payload?.issues) ? payload!.issues! : [],
+      responsePackages: Array.isArray(payload?.responsePackages) ? payload!.responsePackages! : [],
+    };
+  }
+
+  /**
+   * Record a human review decision on one parsed issue. Envelope is
+   * { data: CorrespondenceIssue }. PATCH /issues/:issueId/review.
+   */
+  async reviewIssue(issueId: string, payload: ReviewIssuePayload): Promise<CorrespondenceIssue> {
+    const result = await this.request<{ data?: CorrespondenceIssue }>(
+      'PATCH',
+      `/api/regulatory-correspondence/issues/${encodeURIComponent(issueId)}/review`,
+      payload,
+    );
+    return (result?.data ?? {}) as CorrespondenceIssue;
   }
 
   /** Pending approvals for the current user. Envelope is { approvals: [] }. */

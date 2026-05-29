@@ -21,6 +21,8 @@ import programTabsService, {
   type AuditTrail,
   type AuditFilters,
   type CorrespondenceRow,
+  type CorrespondenceDetail,
+  type CorrespondenceIssue,
   type PendingApproval,
   type WorkflowDecisionResult,
 } from '../services/programTabsService';
@@ -34,6 +36,8 @@ export const programTabsQueryKeys = {
   audit: (filters: AuditFilters) => [...programTabsQueryKeys.all, 'audit', filters] as const,
   correspondence: (projectId: string) =>
     [...programTabsQueryKeys.all, 'correspondence', projectId] as const,
+  correspondenceDetail: (correspondenceId: string) =>
+    [...programTabsQueryKeys.all, 'correspondence', 'detail', correspondenceId] as const,
   approvals: () => [...programTabsQueryKeys.all, 'approvals', 'pending'] as const,
 };
 
@@ -65,6 +69,22 @@ export function useCorrespondence(projectId: string | null) {
     queryFn: () => (projectId ? programTabsService.getCorrespondence(projectId) : []),
     enabled: projectId != null && projectId.length > 0,
     staleTime: 2 * 60 * 1000,
+  });
+}
+
+/**
+ * One correspondence thread with its parsed issues. Only loads when expanded
+ * (correspondenceId non-null), so the list view stays one round-trip.
+ */
+export function useCorrespondenceDetail(correspondenceId: string | null) {
+  return useQuery<CorrespondenceDetail>({
+    queryKey: programTabsQueryKeys.correspondenceDetail(correspondenceId ?? ''),
+    queryFn: () =>
+      correspondenceId
+        ? programTabsService.getCorrespondenceDetail(correspondenceId)
+        : { data: null, issues: [], responsePackages: [] },
+    enabled: correspondenceId != null && correspondenceId.length > 0,
+    staleTime: 60 * 1000,
   });
 }
 
@@ -117,6 +137,42 @@ export function useRejectWorkflow() {
       programTabsService.rejectWorkflow(approvalId, comment),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: programTabsQueryKeys.approvals() });
+    },
+  });
+}
+
+export interface ReviewIssueArgs {
+  /** The issue id from the correspondence detail (PATCH /issues/:issueId/review). */
+  issueId: string;
+  /** Parent correspondence id — invalidated on success so the detail refreshes. */
+  correspondenceId: string;
+  /**
+   * Reason-for-change captured in the confirm dialog. The review route's body
+   * (issueReviewSchema) has no free-text reason/note column, so this value is
+   * NOT sent to the server and therefore not persisted — it is captured for the
+   * operator's intent only. The route accepts no minimal field that would store
+   * it without fabricating a mapping (owner is a person name, not a reason).
+   */
+  reason?: string;
+}
+
+/**
+ * Mark one parsed correspondence issue reviewed. Sends the minimal valid body
+ * (humanReviewStatus='confirmed'); on success the parent correspondence detail
+ * and the project correspondence list are invalidated.
+ */
+export function useReviewIssue() {
+  const queryClient = useQueryClient();
+  return useMutation<CorrespondenceIssue, Error, ReviewIssueArgs>({
+    mutationFn: ({ issueId }) =>
+      programTabsService.reviewIssue(issueId, { humanReviewStatus: 'confirmed' }),
+    onSuccess: (_issue, { correspondenceId }) => {
+      void queryClient.invalidateQueries({
+        queryKey: programTabsQueryKeys.correspondenceDetail(correspondenceId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: [...programTabsQueryKeys.all, 'correspondence'],
+      });
     },
   });
 }

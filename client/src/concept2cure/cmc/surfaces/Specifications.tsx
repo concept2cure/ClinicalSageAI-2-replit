@@ -14,6 +14,7 @@ import {
 import type { CmcSpecRow, SpecificationInput, SpecificationPatch } from '../../services/cmcService';
 import { CmcIcon } from '../icons';
 import { CmcDialog } from './CmcDialog';
+import { EsignModal, type EsigSignedManifest } from '../../_shared/components';
 import { Loading, ErrorState, Empty, NoProject, StatusChip } from './state';
 
 function pick(row: CmcSpecRow, keys: string[]): string {
@@ -228,10 +229,46 @@ function SpecificationDialog({
   );
 }
 
+interface SpecSigningTarget {
+  id: string;
+  label: string;
+  trigger: HTMLButtonElement | null;
+}
+
 export function CmcSpecifications({ projectId, onAskAna }: { projectId: string | null; onAskAna: (t: string) => void }) {
   const specs = useProjectSpecifications(projectId);
+  const update = useUpdateSpecification();
   const rows = specs.data ?? [];
   const [dialog, setDialog] = React.useState<{ editing: CmcSpecRow | null } | null>(null);
+
+  // Governed approval — mirrors the proven Module 3 SectionApprovals e-sign flow.
+  const [signing, setSigning] = React.useState<SpecSigningTarget | null>(null);
+  const restoreFocusRef = React.useRef<HTMLElement | null>(null);
+
+  const onSign = React.useCallback(
+    async ({ reason, meaning }: { reason: string; meaning: EsigSignedManifest['meaning'] }): Promise<EsigSignedManifest> => {
+      if (!signing) throw new Error('No specification selected for approval.');
+      // The PUT /specifications/:id route sets approval_status; it has no
+      // free-text reason column, so the reason-for-change lives in the signed
+      // e-signature manifest below (the 21 CFR Part 11 record), not the spec row.
+      await update.mutateAsync({
+        id: signing.id,
+        data: { approvalStatus: 'approved' },
+        projectId: projectId ?? undefined,
+      });
+      restoreFocusRef.current = null;
+      return { meaning, reason, signedAt: new Date().toISOString() };
+    },
+    [signing, update, projectId],
+  );
+
+  const closeSigning = () => {
+    const trigger = signing?.trigger ?? null;
+    setSigning(null);
+    const target = trigger && document.body.contains(trigger) ? trigger : restoreFocusRef.current;
+    restoreFocusRef.current = null;
+    window.setTimeout(() => target?.focus?.(), 0);
+  };
 
   return (
     <div className="bp-surface">
@@ -287,9 +324,12 @@ export function CmcSpecifications({ projectId, onAskAna }: { projectId: string |
             <tbody>
               {rows.map((row, i) => {
                 const status = pick(row, ['approval_status', 'status', 'state']);
+                const approved = status.toLowerCase().includes('approv') || status.toLowerCase().includes('effective');
+                const name = pick(row, ['material_name', 'attribute', 'name', 'test_name', 'attribute_name']);
+                const specId = String(row.id ?? '');
                 return (
                   <tr key={(row.id as string) ?? i}>
-                    <td style={{ fontWeight: 600 }}>{pick(row, ['material_name', 'attribute', 'name', 'test_name', 'attribute_name'])}</td>
+                    <td style={{ fontWeight: 600 }}>{name}</td>
                     <td>{pick(row, ['material_type', 'material', 'spec_type', 'type'])}</td>
                     <td>{pick(row, ['test_methods', 'method', 'analytical_method', 'method_reference'])}</td>
                     <td>{pick(row, ['acceptance_criteria', 'release', 'release_limit', 'release_acceptance'])}</td>
@@ -297,13 +337,28 @@ export function CmcSpecifications({ projectId, onAskAna }: { projectId: string |
                     <td className="cmc-mono">{pick(row, ['regulatory_basis', 'ich', 'ich_reference'])}</td>
                     <td>{status === '—' ? '—' : <StatusChip tone={statusTone(status)} label={status} />}</td>
                     <td>
-                      <button
-                        className="bp-btn-tert"
-                        type="button"
-                        onClick={() => setDialog({ editing: row })}
-                      >
-                        <CmcIcon name="pen" size={14} /> Edit
-                      </button>
+                      <div style={{ display: 'inline-flex', gap: 8 }}>
+                        <button
+                          className="bp-btn-tert"
+                          type="button"
+                          aria-label={`Edit specification — ${name}`}
+                          onClick={() => setDialog({ editing: row })}
+                        >
+                          <CmcIcon name="pen" size={14} /> Edit
+                        </button>
+                        {!approved && specId !== '' && (
+                          <button
+                            className="bp-btn-tert"
+                            type="button"
+                            aria-label={`Approve specification — ${name}`}
+                            onClick={(e) =>
+                              setSigning({ id: specId, label: name === '—' ? `Specification ${specId}` : name, trigger: e.currentTarget })
+                            }
+                          >
+                            <CmcIcon name="shield" size={14} /> Approve specification
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -320,6 +375,16 @@ export function CmcSpecifications({ projectId, onAskAna }: { projectId: string |
           onClose={() => setDialog(null)}
         />
       )}
+
+      <EsignModal
+        open={!!signing}
+        action="Approve specification"
+        target={signing?.label ?? ''}
+        targetMeta="Signs the specification approval per 21 CFR Part 11 and sets its status to approved"
+        defaultMeaning="approval"
+        onClose={closeSigning}
+        onSign={onSign}
+      />
     </div>
   );
 }
