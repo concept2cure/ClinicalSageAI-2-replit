@@ -108,6 +108,7 @@ What's genuinely encouraging, and worth stating plainly: the much-feared "is the
 - `server/__tests__/security/audit-trail-contract.test.ts:213` and `ana-mdx-pen-scaffold.test.ts:278` — `expect(true).toBe(true)` in the *security* suite.
 - All three CI test steps use `--passWithNoTests` (green on zero tests).
 - **Cure:** Re-enable the cross-user 403 suite as a release blocker; replace no-op asserts; drop `--passWithNoTests`.
+- **Update (2026-05-29):** the three cross-user 403 tests in `cortex-threads.runtime.test.ts` are re-enabled on PR #621 (the route already enforced ownership; the skip rationale was stale). Verified meaningful via mutation testing — disabling the ownership check makes them fail. The remaining HI-7 items (the two `describe.skip` suites, the `expect(true)` security no-ops, and `--passWithNoTests`) are not yet addressed.
 
 ### HI-8 · The entire `services/` Python stack is dead; there is no real eCTD generation
 - `server/startup/services.ts:29-31` — `startPythonBackend()` is a hard stub (`return Promise.resolve(null)`, "Python backend is currently disabled"). The only live Node→Python bridge is the artifact-compute DOCX worker.
