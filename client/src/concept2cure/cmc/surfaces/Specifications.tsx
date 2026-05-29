@@ -1,10 +1,19 @@
-// Specifications — live rows from GET /api/cmc/specifications/:projectId.
-// The route returns raw quality_specifications rows; columns vary, so we
-// surface the recognised CMC columns and fall back gracefully.
+// Specifications — live rows from GET /api/cmc/specifications/:projectId, with
+// create and edit authoring. The route returns raw quality_specifications rows;
+// columns vary, so we surface the recognised CMC columns and fall back
+// gracefully. The form writes the exact columns the server reads
+// (material_type, material_name, test_parameters, acceptance_criteria,
+// test_methods, justification, regulatory_basis, approval_status).
 
 import * as React from 'react';
-import { useProjectSpecifications } from '../../hooks/useCMC';
-import type { CmcSpecRow } from '../../services/cmcService';
+import {
+  useProjectSpecifications,
+  useCreateSpecification,
+  useUpdateSpecification,
+} from '../../hooks/useCMC';
+import type { CmcSpecRow, SpecificationInput, SpecificationPatch } from '../../services/cmcService';
+import { CmcIcon } from '../icons';
+import { CmcDialog } from './CmcDialog';
 import { Loading, ErrorState, Empty, NoProject, StatusChip } from './state';
 
 function pick(row: CmcSpecRow, keys: string[]): string {
@@ -23,9 +32,206 @@ function statusTone(s: string): 'ok' | 'warn' | 'err' | 'dim' {
   return 'dim';
 }
 
+const APPROVAL_STATES = ['draft', 'review', 'approved', 'effective', 'superseded'] as const;
+
+interface SpecFormState {
+  materialName: string;
+  materialType: string;
+  testMethods: string;
+  acceptanceCriteria: string;
+  testParameters: string;
+  regulatoryBasis: string;
+  justification: string;
+  approvalStatus: string;
+}
+
+function rowToForm(row: CmcSpecRow | null): SpecFormState {
+  return {
+    materialName: row ? String(row.material_name ?? row.name ?? '') : '',
+    materialType: row ? String(row.material_type ?? '') : '',
+    testMethods: row ? String(row.test_methods ?? '') : '',
+    acceptanceCriteria: row ? String(row.acceptance_criteria ?? '') : '',
+    testParameters: row ? String(row.test_parameters ?? '') : '',
+    regulatoryBasis: row ? String(row.regulatory_basis ?? '') : '',
+    justification: row ? String(row.justification ?? '') : '',
+    approvalStatus: row ? String(row.approval_status ?? row.status ?? 'draft') : 'draft',
+  };
+}
+
+function SpecificationDialog({
+  projectId,
+  editing,
+  onClose,
+}: {
+  projectId: string;
+  editing: CmcSpecRow | null;
+  onClose: () => void;
+}) {
+  const create = useCreateSpecification();
+  const update = useUpdateSpecification();
+  const isEdit = !!editing;
+  const [form, setForm] = React.useState<SpecFormState>(() => rowToForm(editing));
+  const errId = React.useId();
+
+  const set = <K extends keyof SpecFormState>(k: K, v: SpecFormState[K]) =>
+    setForm((f) => ({ ...f, [k]: v }));
+
+  const valid = form.materialName.trim().length > 0 && form.materialType.trim().length > 0;
+  const pending = create.isPending || update.isPending;
+  const error = (create.error || update.error) as Error | null;
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!valid || pending) return;
+    if (isEdit && editing) {
+      const patch: SpecificationPatch = {
+        materialName: form.materialName.trim(),
+        materialType: form.materialType.trim(),
+        testMethods: form.testMethods.trim() || null,
+        acceptanceCriteria: form.acceptanceCriteria.trim() || null,
+        testParameters: form.testParameters.trim() || null,
+        regulatoryBasis: form.regulatoryBasis.trim() || null,
+        justification: form.justification.trim() || null,
+        approvalStatus: form.approvalStatus,
+      };
+      await update.mutateAsync({ id: String(editing.id), data: patch, projectId });
+    } else {
+      const body: SpecificationInput = {
+        projectId,
+        materialName: form.materialName.trim(),
+        materialType: form.materialType.trim(),
+        testMethods: form.testMethods.trim() || null,
+        acceptanceCriteria: form.acceptanceCriteria.trim() || null,
+        testParameters: form.testParameters.trim() || null,
+        regulatoryBasis: form.regulatoryBasis.trim() || null,
+        justification: form.justification.trim() || null,
+        approvalStatus: form.approvalStatus,
+      };
+      await create.mutateAsync(body);
+    }
+    onClose();
+  };
+
+  const formId = 'cmc-spec-form';
+
+  return (
+    <CmcDialog
+      open
+      busy={pending}
+      title={isEdit ? 'Edit specification' : 'New specification'}
+      subtitle="Release and shelf-life limits for a drug substance or drug product"
+      onClose={onClose}
+      footer={
+        <>
+          <button type="button" className="bp-btn-tert" onClick={onClose} disabled={pending}>
+            Cancel
+          </button>
+          <button type="submit" form={formId} className="bp-btn-primary" disabled={!valid || pending}>
+            {pending ? (isEdit ? 'Saving…' : 'Creating…') : isEdit ? 'Save changes' : 'Create specification'}
+          </button>
+        </>
+      }
+    >
+      <form id={formId} className="cmc-form" onSubmit={onSubmit} aria-describedby={error ? errId : undefined}>
+        <div className="cmc-field-row">
+          <div className="cmc-field">
+            <label htmlFor="spec-name">Material name<span className="cmc-req" aria-hidden="true">*</span></label>
+            <input
+              id="spec-name"
+              required
+              value={form.materialName}
+              onChange={(e) => set('materialName', e.target.value)}
+              placeholder="e.g. Drug substance API"
+            />
+          </div>
+          <div className="cmc-field">
+            <label htmlFor="spec-type">Material type<span className="cmc-req" aria-hidden="true">*</span></label>
+            <input
+              id="spec-type"
+              required
+              value={form.materialType}
+              onChange={(e) => set('materialType', e.target.value)}
+              placeholder="e.g. drug substance, drug product"
+            />
+          </div>
+        </div>
+
+        <div className="cmc-field">
+          <label htmlFor="spec-methods">Analytical method</label>
+          <input
+            id="spec-methods"
+            value={form.testMethods}
+            onChange={(e) => set('testMethods', e.target.value)}
+            placeholder="e.g. HPLC, USP 621"
+          />
+        </div>
+
+        <div className="cmc-field-row">
+          <div className="cmc-field">
+            <label htmlFor="spec-criteria">Acceptance criteria</label>
+            <input
+              id="spec-criteria"
+              value={form.acceptanceCriteria}
+              onChange={(e) => set('acceptanceCriteria', e.target.value)}
+              placeholder="e.g. 95.0 to 105.0 percent"
+            />
+          </div>
+          <div className="cmc-field">
+            <label htmlFor="spec-params">Test parameters</label>
+            <input
+              id="spec-params"
+              value={form.testParameters}
+              onChange={(e) => set('testParameters', e.target.value)}
+              placeholder="e.g. assay, related substances"
+            />
+          </div>
+        </div>
+
+        <div className="cmc-field-row">
+          <div className="cmc-field">
+            <label htmlFor="spec-ich">ICH reference</label>
+            <input
+              id="spec-ich"
+              value={form.regulatoryBasis}
+              onChange={(e) => set('regulatoryBasis', e.target.value)}
+              placeholder="e.g. ICH Q6A"
+            />
+          </div>
+          <div className="cmc-field">
+            <label htmlFor="spec-status">Status</label>
+            <select id="spec-status" value={form.approvalStatus} onChange={(e) => set('approvalStatus', e.target.value)}>
+              {APPROVAL_STATES.map((s) => (
+                <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="cmc-field">
+          <label htmlFor="spec-just">Justification</label>
+          <textarea
+            id="spec-just"
+            value={form.justification}
+            onChange={(e) => set('justification', e.target.value)}
+            placeholder="Rationale for the limits and method"
+          />
+        </div>
+
+        {error && (
+          <div id={errId} className="cmc-form-error" role="alert">
+            <CmcIcon name="alertCircle" size={14} />
+            Could not save the specification. {error.message}
+          </div>
+        )}
+      </form>
+    </CmcDialog>
+  );
+}
+
 export function CmcSpecifications({ projectId, onAskAna }: { projectId: string | null; onAskAna: (t: string) => void }) {
   const specs = useProjectSpecifications(projectId);
   const rows = specs.data ?? [];
+  const [dialog, setDialog] = React.useState<{ editing: CmcSpecRow | null } | null>(null);
 
   return (
     <div className="bp-surface">
@@ -36,6 +242,14 @@ export function CmcSpecifications({ projectId, onAskAna }: { projectId: string |
           <div className="bp-meta">Release and shelf-life limits · drug substance and drug product</div>
         </div>
         <div className="bp-page-actions">
+          <button
+            className="bp-btn-tert"
+            type="button"
+            disabled={!projectId}
+            onClick={() => setDialog({ editing: null })}
+          >
+            <CmcIcon name="plus" /> New specification
+          </button>
           <button className="bp-btn-primary" type="button"
                   onClick={() => onAskAna('Flag any specification without a validated method')}>
             Ask AnA
@@ -67,20 +281,30 @@ export function CmcSpecifications({ projectId, onAskAna }: { projectId: string |
                 <th>Shelf life</th>
                 <th>ICH</th>
                 <th>Status</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((row, i) => {
-                const status = pick(row, ['status', 'state']);
+                const status = pick(row, ['approval_status', 'status', 'state']);
                 return (
                   <tr key={(row.id as string) ?? i}>
-                    <td style={{ fontWeight: 600 }}>{pick(row, ['attribute', 'name', 'test_name', 'attribute_name'])}</td>
-                    <td>{pick(row, ['material', 'material_type', 'spec_type', 'type'])}</td>
-                    <td>{pick(row, ['method', 'analytical_method', 'method_reference'])}</td>
-                    <td>{pick(row, ['release', 'release_limit', 'release_acceptance'])}</td>
+                    <td style={{ fontWeight: 600 }}>{pick(row, ['material_name', 'attribute', 'name', 'test_name', 'attribute_name'])}</td>
+                    <td>{pick(row, ['material_type', 'material', 'spec_type', 'type'])}</td>
+                    <td>{pick(row, ['test_methods', 'method', 'analytical_method', 'method_reference'])}</td>
+                    <td>{pick(row, ['acceptance_criteria', 'release', 'release_limit', 'release_acceptance'])}</td>
                     <td>{pick(row, ['shelf', 'shelf_life', 'shelf_life_limit'])}</td>
-                    <td className="cmc-mono">{pick(row, ['ich', 'ich_reference', 'regulatory_basis'])}</td>
+                    <td className="cmc-mono">{pick(row, ['regulatory_basis', 'ich', 'ich_reference'])}</td>
                     <td>{status === '—' ? '—' : <StatusChip tone={statusTone(status)} label={status} />}</td>
+                    <td>
+                      <button
+                        className="bp-btn-tert"
+                        type="button"
+                        onClick={() => setDialog({ editing: row })}
+                      >
+                        <CmcIcon name="pen" size={14} /> Edit
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
@@ -88,6 +312,14 @@ export function CmcSpecifications({ projectId, onAskAna }: { projectId: string |
           </table>
         )}
       </div>
+
+      {dialog && projectId && (
+        <SpecificationDialog
+          projectId={projectId}
+          editing={dialog.editing}
+          onClose={() => setDialog(null)}
+        />
+      )}
     </div>
   );
 }

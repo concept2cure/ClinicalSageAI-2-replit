@@ -3,9 +3,17 @@
 // blocks with no endpoint are omitted rather than faked.
 
 import * as React from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { CmcIcon } from '../icons';
-import { usePortfolioOverview, useModule3Readiness } from '../../hooks/useCMC';
-import type { CmcPortfolioRow } from '../../services/cmcService';
+import {
+  usePortfolioOverview,
+  useModule3Readiness,
+  useModule3Sections,
+  useApproveModule3Section,
+  cmcQueryKeys,
+} from '../../hooks/useCMC';
+import type { CmcPortfolioRow, CmcModule3Section } from '../../services/cmcService';
+import { EsignModal, type EsigSignedManifest } from '../../_shared/components';
 import { CMC_SUGGESTIONS } from '../data/nav';
 import { Loading, ErrorState, Empty, NoProject, StatusChip } from './state';
 
@@ -15,6 +23,96 @@ function KpiCard({ label, value, sub }: { label: string; value: string | number;
       <div className="bp-kpi-lbl">{label}</div>
       <div className="bp-kpi-val">{value}</div>
       {sub && <div className="bp-kpi-sub">{sub}</div>}
+    </div>
+  );
+}
+
+function sectionTone(state: string): 'ok' | 'warn' | 'err' | 'dim' {
+  const v = state.toLowerCase();
+  if (v.includes('approv')) return 'ok';
+  if (v.includes('review')) return 'warn';
+  return 'dim';
+}
+
+/**
+ * Module 3 section approvals — a genuinely governed mutation. Each unapproved
+ * section can be approved through the shared 21 CFR Part 11 e-signature modal
+ * (meaning = approval, reason required, re-authentication). On a signed
+ * approval the section map and readiness re-fetch.
+ */
+function SectionApprovals({ projectId }: { projectId: string }) {
+  const sections = useModule3Sections(projectId);
+  const approve = useApproveModule3Section();
+  const queryClient = useQueryClient();
+  const rows = sections.data ?? [];
+
+  const [signing, setSigning] = React.useState<CmcModule3Section | null>(null);
+
+  const onSign = React.useCallback(
+    async ({ reason }: { reason: string }): Promise<EsigSignedManifest> => {
+      if (!signing) throw new Error('No section selected for approval.');
+      await approve.mutateAsync({ projectId, sectionKey: signing.sectionKey });
+      await queryClient.invalidateQueries({ queryKey: cmcQueryKeys.module3Readiness(projectId) });
+      return { meaning: 'approval', reason, signedAt: new Date().toISOString() };
+    },
+    [signing, approve, projectId, queryClient],
+  );
+
+  return (
+    <div className="bp-card" style={{ marginTop: 14 }}>
+      <div className="bp-card-head">
+        <span>Section approvals</span>
+        <span className="bp-meta">{rows.length} sections</span>
+      </div>
+      {sections.isLoading ? (
+        <Loading label="Loading sections…" />
+      ) : sections.isError ? (
+        <ErrorState message="Could not load Module 3 sections." />
+      ) : rows.length === 0 ? (
+        <Empty>No Module 3 sections built yet for this project.</Empty>
+      ) : (
+        <table className="bp-table">
+          <thead>
+            <tr>
+              <th>Section</th>
+              <th>Path</th>
+              <th>State</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((s) => {
+              const approved = s.approvalState.toLowerCase().includes('approv');
+              return (
+                <tr key={s.sectionKey}>
+                  <td className="cmc-mono" style={{ fontWeight: 600 }}>{s.sectionKey}</td>
+                  <td>{s.sectionPath ?? '—'}</td>
+                  <td><StatusChip tone={sectionTone(s.approvalState)} label={s.approvalState} /></td>
+                  <td>
+                    {approved ? (
+                      <span className="bp-meta">Approved</span>
+                    ) : (
+                      <button className="bp-btn-tert" type="button" onClick={() => setSigning(s)}>
+                        <CmcIcon name="shield" size={14} /> Approve section
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+
+      <EsignModal
+        open={!!signing}
+        action="Approve section"
+        target={signing ? `Section ${signing.sectionKey}` : ''}
+        targetMeta="Signs the section approval per 21 CFR Part 11 and locks the approved version"
+        defaultMeaning="approval"
+        onClose={() => setSigning(null)}
+        onSign={onSign}
+      />
     </div>
   );
 }
@@ -151,6 +249,9 @@ export function CmcOverview({ projectId, portfolioRows, onAskAna }: OverviewProp
           </div>
         )}
       </div>
+
+      {/* Governed section approvals for the selected project */}
+      {projectId && <SectionApprovals projectId={projectId} />}
     </div>
   );
 }
