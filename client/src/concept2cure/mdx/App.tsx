@@ -19,7 +19,12 @@ import { K510Surface } from './surfaces/K510Surface';
 import { PmaSurface } from './surfaces/PmaSurface';
 import { CerSurface } from './surfaces/CerSurface';
 import { PrecedentSurface } from './surfaces/PrecedentSurface';
-import { InDesignSurface } from './surfaces/InDesignSurface';
+import { EngineeringSurface } from './surfaces/EngineeringSurface';
+import { UdiSurface } from './surfaces/UdiSurface';
+import { PostmarketSurface } from './surfaces/PostmarketSurface';
+import { AnalyticsSurface } from './surfaces/AnalyticsSurface';
+import { MemorySurface } from './surfaces/MemorySurface';
+import { AdminSurface } from './surfaces/AdminSurface';
 import {
   TasksSurface,
   VaultSurface,
@@ -33,7 +38,7 @@ import { PmaEditor } from './editors/PmaEditor';
 import { CerEditor } from './editors/CerEditor';
 import { CerWorkbench } from './surfaces/cer/CerWorkbench';
 import { PreSubManager } from './presub/PreSubManager';
-import { MDX_STUBS, type AnaMode } from './data/nav';
+import { type AnaMode } from './data/nav';
 import { MDX_PROGRAMS, type Program } from './data/programs';
 import { EDITOR_PROGRAM } from './data/editor';
 import { useAnaChat } from '../components/ana/useAnaChat';
@@ -225,10 +230,26 @@ export function App({ initialNav, projectName }: AppProps = {}) {
     surface = <PmaEditor initialMode={anaMode} programIdent={programForContext?.code ?? programForContext?.id ?? null} />;
   } else if (editorRoute === 'cer') {
     surface = <CerEditor initialMode={anaMode} programIdent={programForContext?.code ?? programForContext?.id ?? null} />;
-  } else if (MDX_STUBS[activeNav]) {
-    surface = <InDesignSurface stub={MDX_STUBS[activeNav]} />;
   } else {
     switch (activeNav) {
+      case 'engineering':
+        surface = <EngineeringSurface program={programForContext} onAskAna={askAna} />;
+        break;
+      case 'udi':
+        surface = <UdiSurface onAskAna={askAna} />;
+        break;
+      case 'postmarket':
+        surface = <PostmarketSurface onAskAna={askAna} />;
+        break;
+      case 'analytics':
+        surface = <AnalyticsSurface onAskAna={askAna} />;
+        break;
+      case 'memory':
+        surface = <MemorySurface onAskAna={askAna} />;
+        break;
+      case 'admin':
+        surface = <AdminSurface onAskAna={askAna} />;
+        break;
       case 'k510':
         surface = <K510Surface program={programForContext} onAskAna={askAna} onOpenEditor={openEditor} />;
         break;
