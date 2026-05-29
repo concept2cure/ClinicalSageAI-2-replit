@@ -253,24 +253,20 @@ class EventBus extends EventEmitter {
    * Create submission container in eCTD Co-Author
    */
   async createSubmissionContainer(data) {
-    try {
-      // In a real implementation, this would call eCTD Co-Author APIs
-      console.log('[EventBus] Creating submission container:', {
-        packageId: data.packageId,
-        regions: data.regions,
-        submissionType: data.submissionType
-      });
-      
-      // Simulate API call
-      return {
-        success: true,
-        containerId: `ectd_${data.packageId}`,
-        createdAt: new Date().toISOString()
-      };
-    } catch (error) {
-      console.error('[EventBus] Error creating submission container:', error);
-      throw error;
-    }
+    // The eCTD Co-Author submission-container API is not wired. Report this
+    // honestly instead of returning success:true with a fabricated containerId,
+    // which claimed a container was created when nothing happened.
+    // See FORENSIC_CODE_AUDIT_2026-05-29.md HI-4.
+    console.warn('[EventBus] createSubmissionContainer not implemented; no container created:', {
+      packageId: data.packageId,
+      regions: data.regions,
+      submissionType: data.submissionType
+    });
+    return {
+      success: false,
+      implemented: false,
+      reason: 'eCTD Co-Author submission-container API is not wired',
+    };
   }
   
   /**
