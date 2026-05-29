@@ -147,8 +147,39 @@
   margin-bottom: 8px;
 }
 .ptab-appr-target { font-size: 13px; font-weight: 600; color: var(--text-100); }
-.ptab-appr-foot { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-300); }
+.ptab-appr-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-300);
+}
 .ptab-appr-foot b { color: var(--text-100); }
+.ptab-appr-meta { min-width: 0; }
+
+/* Approve / reject actions */
+.ptab-appr-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ptab-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 5px 11px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--bg-000, transparent);
+  color: var(--text-200);
+  cursor: pointer;
+  transition: background 200ms ease-out, color 200ms ease-out, border-color 200ms ease-out;
+}
+.ptab-act:hover { background: var(--bg-100); color: var(--text-100); }
+.ptab-act:focus-visible {
+  outline: 2px solid var(--accent-main-100);
+  outline-offset: 2px;
+}
+.ptab-act .ico { display: inline-flex; }
 
 /* Audit chain */
 .ptab-audit { position: relative; }
@@ -184,4 +215,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ptab-tab { transition: none; }
+  .ptab-act { transition: none; }
 }

@@ -106,13 +106,24 @@ export interface PendingApproval {
   [key: string]: unknown;
 }
 
+/** Result of an approve / reject decision (POST /api/approval-workflows/:id/{approve,reject}). */
+export interface WorkflowDecisionResult {
+  success: boolean;
+  status: string;
+  workflowAdvanced: boolean;
+  workflowCompleted: boolean;
+  workflowRejected: boolean;
+  nextStep?: number;
+  message?: string;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // SERVICE
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class ProgramTabsService {
-  private async request<T>(method: ApiRequestMethod, url: string): Promise<T> {
-    const response = await apiRequest(method, url);
+  private async request<T>(method: ApiRequestMethod, url: string, body?: unknown): Promise<T> {
+    const response = await apiRequest(method, url, body);
     if (response.status === 204) return undefined as T;
     const payload = await response.json().catch(() => ({}));
     if (payload?.error) {
@@ -162,6 +173,30 @@ class ProgramTabsService {
       '/api/approval-workflows/pending',
     );
     return Array.isArray(payload?.approvals) ? payload!.approvals! : [];
+  }
+
+  /**
+   * Approve a pending approval step. The reason captured at signing is stored
+   * verbatim as the approval comment. POST /api/approval-workflows/:id/approve.
+   */
+  async approveWorkflow(approvalId: number | string, comments: string): Promise<WorkflowDecisionResult> {
+    return this.request<WorkflowDecisionResult>(
+      'POST',
+      `/api/approval-workflows/${encodeURIComponent(String(approvalId))}/approve`,
+      { comments },
+    );
+  }
+
+  /**
+   * Reject a pending approval step. The server requires a non-empty comment as
+   * the rejection reason. POST /api/approval-workflows/:id/reject.
+   */
+  async rejectWorkflow(approvalId: number | string, comments: string): Promise<WorkflowDecisionResult> {
+    return this.request<WorkflowDecisionResult>(
+      'POST',
+      `/api/approval-workflows/${encodeURIComponent(String(approvalId))}/reject`,
+      { comments },
+    );
   }
 }
 

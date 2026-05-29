@@ -27,12 +27,16 @@ import {
   useAuditTrail,
   useCorrespondence,
   useApprovalsPending,
+  useApproveWorkflow,
+  useRejectWorkflow,
 } from '../../hooks/useProgramTabs';
 import type {
   AuditEvent,
   CorrespondenceRow,
   PendingApproval,
 } from '../../services/programTabsService';
+import { EsignModal, type EsigSignedManifest } from '../components';
+import type { EsigMeaning } from '../../hooks/useEsignature';
 import './ProgramSubTabs.css';
 
 export type ProgramTabId = 'audit' | 'correspondence' | 'approvals';
@@ -215,13 +219,68 @@ function CorrespondencePanel({ projectId }: { projectId: string | null }) {
   );
 }
 
+type ApprovalDecision = 'approve' | 'reject';
+
+interface SigningTarget {
+  /** The approvalId used at :id/approve|reject. */
+  approvalId: number | string;
+  /** Document/target title shown in the modal. */
+  label: string;
+  decision: ApprovalDecision;
+  /** The button to return focus to if the user cancels. */
+  trigger: HTMLButtonElement | null;
+}
+
 function ApprovalsPanel() {
   const appr = useApprovalsPending();
+  const approve = useApproveWorkflow();
+  const reject = useRejectWorkflow();
   const rows: PendingApproval[] = appr.data ?? [];
+
+  const [signing, setSigning] = React.useState<SigningTarget | null>(null);
+  // Where to return focus after a row resolves and leaves the list.
+  const restoreFocusRef = React.useRef<HTMLElement | null>(null);
+  const headRef = React.useRef<HTMLDivElement>(null);
+
+  const openDecision = (
+    e: React.MouseEvent<HTMLButtonElement>,
+    approvalId: number | string,
+    label: string,
+    decision: ApprovalDecision,
+  ) => {
+    setSigning({ approvalId, label, decision, trigger: e.currentTarget });
+  };
+
+  const onSign = React.useCallback(
+    async ({ reason, meaning }: { reason: string; meaning: EsigMeaning }): Promise<EsigSignedManifest> => {
+      if (!signing) throw new Error('No approval selected.');
+      // The signed reason is stored verbatim as the workflow comment. A mutation
+      // failure rejects here and the shared modal surfaces it inline (role=alert).
+      if (signing.decision === 'approve') {
+        await approve.mutateAsync({ approvalId: signing.approvalId, comment: reason });
+      } else {
+        await reject.mutateAsync({ approvalId: signing.approvalId, comment: reason });
+      }
+      // After commit the row leaves the pending list; send focus somewhere sensible.
+      restoreFocusRef.current = headRef.current;
+      return { meaning, reason, signedAt: new Date().toISOString() };
+    },
+    [signing, approve, reject],
+  );
+
+  const closeModal = () => {
+    const trigger = signing?.trigger ?? null;
+    setSigning(null);
+    // If the row still exists (cancelled), return focus to its button; if it
+    // resolved, the button is gone, so fall back to the panel heading.
+    const target = trigger && document.body.contains(trigger) ? trigger : restoreFocusRef.current;
+    restoreFocusRef.current = null;
+    window.setTimeout(() => target?.focus?.(), 0);
+  };
 
   return (
     <div className="ptab-pane">
-      <div className="ptab-pane-head">
+      <div className="ptab-pane-head" ref={headRef} tabIndex={-1}>
         <span>Pending approvals</span>
         <span className="ptab-muted">{rows.length} awaiting your sign-off</span>
       </div>
@@ -234,13 +293,15 @@ function ApprovalsPanel() {
       ) : (
         <div className="ptab-approvals">
           {rows.map((w, i) => {
+            const approvalId = (w.approvalId ?? w.id) as number | string | undefined;
             const target = pick(w, ['documentTitle', 'document_title', 'target']);
             const step = pick(w, ['stepName', 'step_name']);
             const requestedBy = pick(w, ['requestedByName', 'requested_by_name']);
             const dueRaw = w.dueDate ?? w.due_date;
             const due = dueRaw ? formatWhen(String(dueRaw)) : null;
+            const label = target !== '—' ? target : `Approval ${String(approvalId ?? i)}`;
             return (
-              <div key={(w.approvalId as string) ?? (w.id as string) ?? i} className="ptab-appr">
+              <div key={(approvalId as string) ?? i} className="ptab-appr">
                 <div className="ptab-appr-top">
                   <span className="ptab-appr-target">{target}</span>
                   {due
@@ -248,16 +309,52 @@ function ApprovalsPanel() {
                     : <StatusChip tone="dim" label="No due date" />}
                 </div>
                 <div className="ptab-appr-foot">
-                  <span className="ptab-muted">
+                  <span className="ptab-muted ptab-appr-meta">
                     {step !== '—' ? <>Step <b>{step}</b></> : 'Awaiting review'}
                     {requestedBy !== '—' ? ` · requested by ${requestedBy}` : ''}
                   </span>
+                  {approvalId != null && (
+                    <span className="ptab-appr-actions">
+                      <button
+                        type="button"
+                        className="ptab-act ptab-act-approve"
+                        aria-label={`Approve ${label}`}
+                        onClick={(e) => openDecision(e, approvalId, label, 'approve')}
+                      >
+                        <span className="ico"><CmcIcon name="checkCircle" size={14} /></span>
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        className="ptab-act ptab-act-reject"
+                        aria-label={`Reject ${label}`}
+                        onClick={(e) => openDecision(e, approvalId, label, 'reject')}
+                      >
+                        <span className="ico"><CmcIcon name="xCircle" size={14} /></span>
+                        Reject
+                      </button>
+                    </span>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
       )}
+
+      <EsignModal
+        open={!!signing}
+        action={signing?.decision === 'reject' ? 'Reject approval' : 'Approve step'}
+        target={signing?.label ?? ''}
+        targetMeta={
+          signing?.decision === 'reject'
+            ? 'Signs the rejection per 21 CFR Part 11. The reason is required and stored verbatim.'
+            : 'Signs the approval per 21 CFR Part 11. The reason is stored verbatim in the audit trail.'
+        }
+        defaultMeaning={signing?.decision === 'reject' ? 'review' : 'approval'}
+        onClose={closeModal}
+        onSign={onSign}
+      />
     </div>
   );
 }

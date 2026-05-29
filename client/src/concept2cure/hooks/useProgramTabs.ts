@@ -16,12 +16,13 @@
  *                                            (current user + org, no project id)
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import programTabsService, {
   type AuditTrail,
   type AuditFilters,
   type CorrespondenceRow,
   type PendingApproval,
+  type WorkflowDecisionResult,
 } from '../services/programTabsService';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -73,5 +74,49 @@ export function useApprovalsPending() {
     queryKey: programTabsQueryKeys.approvals(),
     queryFn: () => programTabsService.getPendingApprovals(),
     staleTime: 60 * 1000,
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MUTATIONS — governed approve / reject decisions
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface WorkflowDecisionArgs {
+  /** The approvalId from the pending row (numeric id at :id/approve|reject). */
+  approvalId: number | string;
+  /** Reason-for-change captured at signing, stored verbatim as the comment. */
+  comment: string;
+}
+
+/**
+ * Approve a pending step (POST /api/approval-workflows/:id/approve). On success
+ * the pending queue is invalidated so the resolved item leaves the list. Mirrors
+ * the read hooks' service idiom; the e-signature gate is applied by the caller
+ * through the shared EsignModal before this runs.
+ */
+export function useApproveWorkflow() {
+  const queryClient = useQueryClient();
+  return useMutation<WorkflowDecisionResult, Error, WorkflowDecisionArgs>({
+    mutationFn: ({ approvalId, comment }) =>
+      programTabsService.approveWorkflow(approvalId, comment),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: programTabsQueryKeys.approvals() });
+    },
+  });
+}
+
+/**
+ * Reject a pending step (POST /api/approval-workflows/:id/reject). The server
+ * requires a non-empty rejection reason; the signing reason supplies it. On
+ * success the pending queue is invalidated.
+ */
+export function useRejectWorkflow() {
+  const queryClient = useQueryClient();
+  return useMutation<WorkflowDecisionResult, Error, WorkflowDecisionArgs>({
+    mutationFn: ({ approvalId, comment }) =>
+      programTabsService.rejectWorkflow(approvalId, comment),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: programTabsQueryKeys.approvals() });
+    },
   });
 }
