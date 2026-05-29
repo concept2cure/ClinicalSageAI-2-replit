@@ -127,7 +127,9 @@ export type LayoutMode =
   | 'submission-gateway'
   | 'project-detail'
   // ── Phase 11 surface ──
-  | 'intelligence';
+  | 'intelligence'
+  // ── Phase 9 surface ──
+  | 'authoring';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // NAV MAPPINGS

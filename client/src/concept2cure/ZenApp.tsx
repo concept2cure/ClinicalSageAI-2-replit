@@ -143,6 +143,7 @@ import PdevRoute from './pdev/PdevRoute';
 import BiopharmaRoute from './biopharma/BiopharmaRoute';
 import CmcRoute from './cmc/CmcRoute';
 import IntelligenceRoute from './intelligence/IntelligenceRoute';
+import AuthoringRoute from './authoring/AuthoringRoute';
 import type { IntTab } from './intelligence/data';
 import LabelingRoute from './labeling/LabelingRoute';
 import RiskRoute from './risk/RiskRoute';
@@ -1262,6 +1263,14 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         setLayoutMode('intelligence');
         return;
       }
+      if (normalizedPath === 'artifacts') {
+        // Phase 9 — User Artifacts is the single entry point for Universal
+        // Authoring (supersedes the legacy ectd_coauthor + per-pathway
+        // editors). Must precede the BUNDLE_MDX_HASH check, which otherwise
+        // routes 'artifacts' to the MDX #vault tab.
+        setLayoutMode('authoring');
+        return;
+      }
       if (normalizedPath in BUNDLE_MDX_HASH) {
         // Persist the deep-link hash so the early return for 'mdx' can
         // pick it up and pass it to the iframe.
@@ -1988,6 +1997,13 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         }}
       />
     );
+  }
+
+  // Phase 9 — Universal Authoring (one editor over the c2c_documents model,
+  // driven by (doc_type × agency) rule packs). Supersedes the legacy
+  // ectd_coauthor + per-pathway editors. Reached via the 'artifacts' rail item.
+  if (layoutMode === 'authoring' && !embeddedModule) {
+    return <AuthoringRoute />;
   }
 
   // Phase 10 — Project detail surface. Requires an active project.
