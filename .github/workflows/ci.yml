@@ -104,7 +104,7 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npm test -- --passWithNoTests
+        run: npm test
         env:
           CI: true
 
@@ -203,7 +203,7 @@ jobs:
         # connect and ~100 server-side test files failed with
         # "Database connection not available." Mirror the value to
         # DATABASE_URL so the runtime actually sees it.
-        run: npm test -- --passWithNoTests
+        run: npm test
         env:
           CI: true
           RUN_INTEGRATION_TESTS: 'true'

@@ -206,11 +206,41 @@ describe('Audit-trail contract — every governed mutation logs one row', () => 
     expect(actionsFromAudit()).not.toContain('section.delete');
   });
 
-  it('esignature.sign on POST /api/esignature/sign (when schema present)', async () => {
-    // Heavy path; we assert at the level of the schema-missing branch which
-    // returns 503 before audit. The presence of the audit import + the
-    // route-level test in esignature.test.ts exercises the happy-path log.
-    expect(true).toBe(true);
+  it('POST /api/esignature/sign fails closed and logs no esignature.sign when the signature cannot be persisted', async () => {
+    // The happy-path audit row (esignature.sign) is asserted by
+    // esignature.test.ts, which has a working signature insert. Here the
+    // shared db mock exposes pool=null, so the electronic_signatures insert
+    // cannot succeed. The contract this asserts is the Part 11 integrity
+    // property the audit-coverage map depends on: a signing event that does
+    // NOT persist must NOT emit an esignature.sign audit row and must not
+    // report success. logAction fires only after the insert returns, so
+    // moving it earlier (logging a signature that never landed) breaks here.
+    // esignature routes resolve the signer from req.user (auth is applied
+    // globally in the real app, not inside the router), so inject the
+    // principal before mounting — otherwise the handler short-circuits at
+    // the 401 gate and never reaches the insert/audit ordering this asserts.
+    vi.resetModules();
+    const mod = await import('../../routes/esignature');
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+      (req as any).user = { id: USER_ID, organizationId: String(ORG), email: 'jm.smith@concept2cure.pro' };
+      next();
+    });
+    app.use('/api/esignature', mod.default);
+
+    const res = await request(app)
+      .post('/api/esignature/sign')
+      .send({
+        documentId: 1,
+        versionId: 1,
+        signaturePurpose: 'approval',
+        action: 'approve',
+      });
+
+    expect(res.status).toBeGreaterThanOrEqual(500);
+    expect(res.status).not.toBe(201);
+    expect(actionsFromAudit()).not.toContain('esignature.sign');
   });
 
   it('evidence_sufficiency.assess on POST /assess', async () => {
