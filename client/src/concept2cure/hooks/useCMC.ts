@@ -110,10 +110,21 @@ export function useProjectBatchRecords(projectId: string | null) {
 
 export function useBatchRelease() {
   const queryClient = useQueryClient();
-  return useMutation<unknown, Error, { id: string; releaseTesting: unknown; releasedBy: string }>({
-    mutationFn: ({ id, releaseTesting, releasedBy }) =>
-      cmcService.releaseBatch(id, { releaseTesting, releasedBy }),
+  return useMutation<
+    unknown,
+    Error,
+    {
+      id: string;
+      releaseTesting: unknown;
+      releasedBy: string;
+      decision: 'approved' | 'rejected' | 'conditional';
+      comments?: string;
+    }
+  >({
+    mutationFn: ({ id, releaseTesting, releasedBy, decision, comments }) =>
+      cmcService.releaseBatch(id, { releaseTesting, releasedBy, decision, comments }),
     onSuccess: () => {
+      // Reflect the new disposition: project batch list + any batch caches.
       queryClient.invalidateQueries({ queryKey: cmcQueryKeys.batches() });
     },
   });

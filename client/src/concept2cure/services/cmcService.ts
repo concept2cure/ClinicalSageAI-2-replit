@@ -867,8 +867,17 @@ class CMCService {
     return Array.isArray(res) ? res : res?.data ?? [];
   }
 
-  /** Release a batch record. */
-  async releaseBatch(id: string, payload: { releaseTesting: unknown; releasedBy: string }): Promise<unknown> {
+  /** Release a batch record. `decision` is required by the server schema;
+   *  `comments` carries the e-signature reason-for-change into the audit row. */
+  async releaseBatch(
+    id: string,
+    payload: {
+      releaseTesting: unknown;
+      releasedBy: string;
+      decision: 'approved' | 'rejected' | 'conditional';
+      comments?: string;
+    },
+  ): Promise<unknown> {
     return this.request('POST', `${this.baseUrl}/batch-records/${encodeURIComponent(id)}/release`, payload);
   }
 
