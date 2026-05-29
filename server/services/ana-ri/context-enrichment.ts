@@ -24,6 +24,8 @@ import { getProjectIntelligence } from '../intelligence/project-intelligence-ser
 import { analyzeCrossModuleRelationships } from '../intelligence/cross-module-intelligence.js';
 import { buildEvidenceChain, computeConfidence, analyzeFactors, type EvidenceSource } from '../intelligence/evidence-confidence-model.js';
 import { getDeficienciesBySubmissionType, getCriticalDeficiencies, type SubmissionType } from './deficiency-taxonomy.js';
+import { buildIndustryWisdomBlock } from './industry-wisdom-pack.js';
+import { buildTourGuideBlock } from './use-case-playbooks.js';
 import { buildWorkflowContext } from './workflow-orchestration.js';
 import { detectDocumentType, buildDocumentGenerationContext } from './document-routing.js';
 import { getFeedbackSummary } from '../intelligence/learning-loop-service.js';
@@ -144,6 +146,11 @@ export const SUPPORTED_SLASH_COMMANDS = [
   'uspi',
   'haq',
   'ask',
+  'wisdom',
+  'guide',
+  'playbook',
+  'orient',
+  'tour',
 ] as const;
 
 const SUPPORTED_SLASH_COMMAND_REGEX = new RegExp(
@@ -305,6 +312,19 @@ const DIAGNOSTICS_TRIGGERS = [
   /\b(?:diagnostic|companion diagnostic|cdx|in.?vitro diagnostic|ivd)\b/i,
   /\b(?:analytical validation|clinical validation|sensitivity|specificity|ppv|npv)\b/i,
   /\b(?:lodd?|linearity|precision|repeatability|reproducibility|method comparison)\b/i,
+];
+
+const WISDOM_TRIGGERS = [
+  /\b(?:common mistakes?|pitfalls?|rookie mistakes?|gotchas?|first.?time (?:sponsor|filer)s?)\b/i,
+  /\btrips? (?:up )?(?:people|teams|sponsors|first.?timers?)\b/i,
+  /\b(?:lessons? learned|hard.?won|war stor(?:y|ies)|best practices? for)\b/i,
+  /\b(?:what should i (?:watch out for|avoid|know about))\b/i,
+  /\b(?:what (?:do|would) (?:experienced|veteran|seasoned)\b)/i,
+];
+
+const WAYFINDING_TRIGGERS = [
+  /\b(?:where (?:do|should) i (?:start|begin)|how do i (?:get )?start|guide me|walk me through|orient me|i.?m new|new (?:here|to this)|where am i|what.?s the (?:process|journey|path))\b/i,
+  /\b(?:what are my options|which (?:pathway|route) (?:should|do)|help me get (?:oriented|started)|i.?m lost|give me (?:a|the) tour)\b/i,
 ];
 
 function matchesTriggers(message: string, triggers: RegExp[]): boolean {
@@ -914,17 +934,45 @@ export async function enrichContextForChat(params: {
   let detectedAppMentionId: string | undefined;
   let rewrittenMessage: string | undefined;
 
-  if (!projectId) return {
-    block: '',
-    sources: [],
-    enrichmentMeta: {
-      sourcesAttempted: 0,
-      sourcesSucceeded: [],
-      sourcesFailed: [],
-      triggerType: 'none',
-      hasProjectContext: false,
-    },
-  };
+  if (!projectId) {
+    // No project loaded yet — but industry wisdom and wayfinding need no project
+    // data, and a project-less chat is usually a new or exploring user: exactly
+    // who benefits most from orientation. Run a message-only pass for those.
+    const projectlessBlocks: string[] = [];
+    const projectlessSources: string[] = [];
+    const slashNoProj = detectSlashCommand(message);
+    const wisdomFamily = ['wisdom', 'guide', 'playbook', 'orient', 'tour'];
+
+    if (slashNoProj && wisdomFamily.includes(slashNoProj.command)) {
+      const block = slashNoProj.command === 'wisdom'
+        ? buildIndustryWisdomBlock({ submissionType, message })
+        : buildTourGuideBlock({ submissionType, message });
+      if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
+    } else if (!slashNoProj) {
+      if (matchesTriggers(message, WISDOM_TRIGGERS)) {
+        const block = buildIndustryWisdomBlock({ submissionType, message });
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('industry-wisdom'); }
+      }
+      const isGreetingNoProj = /^(hi|hello|hey|good\s*(morning|afternoon|evening)|help|where (?:do|should) i start|i.?m new|guide me)/i.test(message.trim());
+      if (matchesTriggers(message, WAYFINDING_TRIGGERS) || isGreetingNoProj) {
+        const block = buildTourGuideBlock({ submissionType, message });
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('tour-guide'); }
+      }
+    }
+
+    return {
+      block: projectlessBlocks.join('\n'),
+      sources: projectlessSources,
+      enrichmentMeta: {
+        sourcesAttempted: projectlessSources.length,
+        sourcesSucceeded: [...projectlessSources],
+        sourcesFailed: [],
+        triggerType: projectlessSources.length > 0 ? (slashNoProj ? 'slash_command' : 'natural_language') : 'none',
+        detectedCommand: slashNoProj && wisdomFamily.includes(slashNoProj.command) ? slashNoProj.command : undefined,
+        hasProjectContext: false,
+      },
+    };
+  }
 
   // ── Always inject project intelligence summary when available ──
   if (canonicalGovernedState) {
@@ -1025,6 +1073,11 @@ export async function enrichContextForChat(params: {
       uspi: () => enrichWithSafety(projectId),
       haq: () => Promise.all([enrichWithCRLRTF(projectId, organizationId), enrichWithPrecedents(projectId), enrichWithClaims(projectId)]).then(r => r.join('')),
       ask: () => enrichWithKnowledgeSearch(slash.args || message, projectId),
+      wisdom: () => Promise.resolve(buildIndustryWisdomBlock({ submissionType, message: slash.args || message })),
+      guide: () => Promise.resolve(buildTourGuideBlock({ submissionType, message: slash.args || message })),
+      playbook: () => Promise.resolve(buildTourGuideBlock({ submissionType, message: slash.args || message })),
+      orient: () => Promise.resolve(buildTourGuideBlock({ submissionType, message: slash.args || message })),
+      tour: () => Promise.resolve(buildTourGuideBlock({ submissionType, message: slash.args || message })),
       workflow: () => submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
       status: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
@@ -1116,6 +1169,17 @@ export async function enrichContextForChat(params: {
       ask: slash.args
         ? `Search the project data room and knowledge memory for: ${slash.args}. Return relevant findings with confidence and source category.`
         : 'Search the project data room and knowledge memory for the most relevant recent items. Summarize with confidence and source category.',
+      wisdom: slash.args
+        ? `Apply the experiential industry wisdom that bears on: ${slash.args}. For each relevant heuristic, connect the pattern to the user's situation, name the consequence before they hit it, and recommend the veteran move. Reason with the wisdom — do not just list it.`
+        : 'Surface the experiential industry wisdom that bears on the user\'s current segment and stage. Apply the relevant heuristics to their situation rather than reciting them.',
+      guide: slash.args
+        ? `Act as a tour guide for: ${slash.args}. Orient the user — where they are, what matters now, and the two or three moves people in their situation usually make next. Close with one concrete offer.`
+        : 'Act as a tour guide. Orient the user: where they are in their program, what matters most right now, and the few moves people in their situation usually make next. If the segment is unclear, ask one question to place them. Close with a single concrete offer.',
+      playbook: slash.args
+        ? `Walk the user through the relevant use-case playbook for: ${slash.args}. Name the first moves and the pitfall to watch.`
+        : 'Walk the user through the use-case playbook that fits their situation. Name the first moves and the pitfall to watch, then offer the first step.',
+      orient: 'Orient the user: name where they are, what matters now, and the common next moves for their segment and stage. Keep it short and specific.',
+      tour: 'Give the user a guided tour of what matters for their segment and stage — the canonical journeys, the first moves, and the pitfalls. Do not dump the whole map; lead with what bears on them now.',
       export: 'Export this conversation.',
     };
 
@@ -1194,6 +1258,8 @@ export async function enrichContextForChat(params: {
       { test: CMS_TRIGGERS, fn: () => enrichWithCMS(projectId), name: 'cms' },
       { test: ECTD_TRIGGERS, fn: () => enrichWithECTD(projectId), name: 'ectd' },
       { test: HAQ_TRIGGERS, fn: () => Promise.all([enrichWithCRLRTF(projectId, organizationId), enrichWithPrecedents(projectId)]).then(r => r.join('')), name: 'haq' },
+      { test: WISDOM_TRIGGERS, fn: () => Promise.resolve(buildIndustryWisdomBlock({ submissionType, message })), name: 'industry-wisdom' },
+      { test: WAYFINDING_TRIGGERS, fn: () => Promise.resolve(buildTourGuideBlock({ submissionType, message })), name: 'tour-guide' },
     ];
 
     const matchedFns = triggers.filter(t => matchesTriggers(message, t.test));
@@ -1239,6 +1305,15 @@ export async function enrichContextForChat(params: {
         sources.push('proactive-recommendations');
       } else {
         sourcesFailed.push('proactive-recommendations');
+      }
+
+      // On a greeting, also hand AnA a tour-guide orientation so she can lead
+      // with "where you are / what matters now / next moves" rather than a bare
+      // status dump. Pure builder — no DB dependency.
+      const tourBlock = buildTourGuideBlock({ submissionType, message });
+      if (tourBlock) {
+        blocks.push(tourBlock);
+        sources.push('proactive-tour-guide');
       }
     }
   }

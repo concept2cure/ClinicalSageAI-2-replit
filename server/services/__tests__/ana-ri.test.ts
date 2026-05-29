@@ -973,6 +973,210 @@ describe('AnA RI Context Enrichment', () => {
   });
 });
 
+// ── Persona: character & constructive dissent ────────────────────────────────
+
+import { getCorePrompt } from '../ana-ri/persona.js';
+
+describe('AnA RI Persona — character & dissent', () => {
+  const prompt = getCorePrompt();
+
+  it('gives AnA a distinct character (Who You Are)', () => {
+    expect(prompt).toContain('## Who You Are');
+    expect(prompt).toMatch(/Seasoned and unhurried/);
+    expect(prompt).toMatch(/Warm when it is earned/);
+    expect(prompt).toMatch(/Sharper when the stakes are real/);
+  });
+
+  it('licenses polite, grounded pushback (Constructive Dissent)', () => {
+    expect(prompt).toContain('## Constructive Dissent');
+    expect(prompt).toMatch(/not a yes-machine/i);
+    expect(prompt).toMatch(/Acknowledge what is right first/);
+    expect(prompt).toMatch(/Offer the better path/);
+    expect(prompt).toMatch(/yield gracefully/i);
+    // Guardrail against reflexive contrarianism must be present.
+    expect(prompt).toMatch(/Do not manufacture dissent/);
+  });
+
+  it('keeps the reconciled regulatory breadth index in the live prompt', () => {
+    expect(prompt).toMatch(/Tier 1/);
+    expect(prompt).toMatch(/ICH/);
+    expect(prompt).toMatch(/never fabricate/i);
+  });
+
+  it('stays inside the design-system voice (no emoji, no exclamation) in the new copy', () => {
+    const whoYouAre = prompt.slice(prompt.indexOf('## Who You Are'), prompt.indexOf('## How to Communicate'));
+    const dissent = prompt.slice(prompt.indexOf('## Constructive Dissent'), prompt.indexOf('## Your Expertise'));
+    const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F1E6}-\u{1F1FF}]/u;
+    for (const chunk of [whoYouAre, dissent]) {
+      expect(chunk).not.toContain('!');
+      expect(EMOJI.test(chunk)).toBe(false);
+    }
+  });
+});
+
+// ── Industry wisdom pack ─────────────────────────────────────────────────────
+
+import {
+  INDUSTRY_WISDOM,
+  buildIndustryWisdomBlock,
+  selectWisdom,
+  inferSegmentFromSubmissionType,
+  inferSegmentFromMessage,
+  inferStageFromMessage,
+} from '../ana-ri/industry-wisdom-pack.js';
+
+describe('AnA RI Industry Wisdom Pack', () => {
+  const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F1E6}-\u{1F1FF}]/u;
+
+  it('covers all three segments plus cross-cutting wisdom', () => {
+    const segments = new Set(INDUSTRY_WISDOM.map(h => h.segment));
+    expect(segments.has('mdx')).toBe(true);
+    expect(segments.has('biotech')).toBe(true);
+    expect(segments.has('pharma')).toBe(true);
+    expect(segments.has(null)).toBe(true); // cross-cutting
+  });
+
+  it('every heuristic is pattern -> consequence -> veteran move, with a basis', () => {
+    for (const h of INDUSTRY_WISDOM) {
+      expect(h.situation.length).toBeGreaterThan(10);
+      expect(h.consequence.length).toBeGreaterThan(10);
+      expect(h.veteranMove.length).toBeGreaterThan(10);
+      expect(h.basis.length).toBeGreaterThan(3);
+    }
+  });
+
+  it('infers segment from submission type', () => {
+    expect(inferSegmentFromSubmissionType('510(k)')).toBe('mdx');
+    expect(inferSegmentFromSubmissionType('BLA')).toBe('biotech');
+    expect(inferSegmentFromSubmissionType('NDA')).toBe('pharma');
+    expect(inferSegmentFromSubmissionType('IND')).toBeNull(); // ambiguous
+  });
+
+  it('infers segment and stage from free text', () => {
+    expect(inferSegmentFromMessage('we need to pick a predicate device')).toBe('mdx');
+    expect(inferSegmentFromMessage('our gene therapy potency assay')).toBe('biotech');
+    expect(inferStageFromMessage('what should we do before we file?')).toBe('pre_submission');
+    expect(inferStageFromMessage('our carcinogenicity study and module 3')).toBe('nonclinical_cmc');
+  });
+
+  it('selectWisdom always includes cross-cutting heuristics for a segment', () => {
+    const selected = selectWisdom({ segment: 'biotech' });
+    expect(selected.some(h => h.segment === null)).toBe(true);
+    expect(selected.some(h => h.segment === 'biotech')).toBe(true);
+    expect(selected.some(h => h.segment === 'mdx')).toBe(false);
+  });
+
+  it('builds a non-empty wisdom block for any segment', () => {
+    const block = buildIndustryWisdomBlock({ submissionType: 'BLA' });
+    expect(block).toContain('## Industry wisdom');
+    expect(block).toMatch(/Pattern:/);
+    expect(block).toMatch(/What veterans do:/);
+  });
+
+  it('keeps wisdom copy inside the design-system voice (no emoji, no exclamation)', () => {
+    for (const h of INDUSTRY_WISDOM) {
+      const text = [h.title, h.situation, h.consequence, h.veteranMove, h.basis].join(' ');
+      expect(text).not.toContain('!');
+      expect(EMOJI.test(text)).toBe(false);
+    }
+  });
+});
+
+// ── Use-case playbooks / tour guide ──────────────────────────────────────────
+
+import {
+  USE_CASES,
+  listUseCasesForSegment,
+  buildTourGuideBlock,
+  buildOrientation,
+} from '../ana-ri/use-case-playbooks.js';
+
+describe('AnA RI Use-Case Playbooks', () => {
+  const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F1E6}-\u{1F1FF}]/u;
+
+  it('provides journeys for all three segments', () => {
+    expect(listUseCasesForSegment('mdx').length).toBeGreaterThan(0);
+    expect(listUseCasesForSegment('biotech').length).toBeGreaterThan(0);
+    expect(listUseCasesForSegment('pharma').length).toBeGreaterThan(0);
+  });
+
+  it('every use case names first moves and a pitfall to watch', () => {
+    for (const u of USE_CASES) {
+      expect(u.firstMoves.length).toBeGreaterThan(0);
+      expect(u.watchOut.length).toBeGreaterThan(10);
+      expect(u.trigger.length).toBeGreaterThan(10);
+    }
+  });
+
+  it('builds an orientation that asks to place the user when segment is unknown', () => {
+    const block = buildOrientation({ segment: null, stage: null });
+    expect(block).toContain('## Orientation');
+    expect(block).toMatch(/Segment is not yet clear|ask one question/i);
+  });
+
+  it('builds a segment-specific tour-guide block', () => {
+    const block = buildTourGuideBlock({ submissionType: 'NDA' });
+    expect(block).toContain('## Orientation');
+    expect(block).toMatch(/Common journeys for/);
+  });
+
+  it('keeps playbook copy inside the design-system voice (no emoji, no exclamation)', () => {
+    for (const u of USE_CASES) {
+      const text = [u.name, u.trigger, u.watchOut, ...u.firstMoves].join(' ');
+      expect(text).not.toContain('!');
+      expect(EMOJI.test(text)).toBe(false);
+    }
+  });
+});
+
+// ── Enrichment wiring for wisdom + tour guide ────────────────────────────────
+
+describe('AnA RI Enrichment — wisdom & wayfinding', () => {
+  it('handles /wisdom as a first-class slash command', async () => {
+    const result = await enrichContextForChat({
+      message: '/wisdom',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'bla',
+    });
+    expect(result.enrichmentMeta?.detectedCommand).toBe('wisdom');
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('wisdom');
+    expect(result.block).toContain('Industry wisdom');
+  });
+
+  it('handles /guide as a first-class slash command', async () => {
+    const result = await enrichContextForChat({
+      message: '/guide',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: '510k',
+    });
+    expect(result.enrichmentMeta?.detectedCommand).toBe('guide');
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('guide');
+    expect(result.block).toContain('Orientation');
+  });
+
+  it('orients a project-less (new) user from a wayfinding question', async () => {
+    const result = await enrichContextForChat({
+      message: 'I am new here, where do I start?',
+    });
+    expect(result.enrichmentMeta?.hasProjectContext).toBe(false);
+    expect(result.block).toContain('Orientation');
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('tour-guide');
+  });
+
+  it('surfaces industry wisdom from a natural-language pitfall question', async () => {
+    const result = await enrichContextForChat({
+      message: 'what common mistakes trip up first-time IND sponsors on CMC?',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'ind',
+    });
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('industry-wisdom');
+    expect(result.block).toContain('Industry wisdom');
+  });
+});
+
 // ── Diff Service Integration Tests ───────────────────────────────────────────
 
 describe('AnA RI Diff Service Integration', () => {
