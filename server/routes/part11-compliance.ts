@@ -24,6 +24,7 @@ import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 import { createPolicyGuard } from '../services/policy/opaMiddleware';
+import rbacService from '../services/roleBasedAccess';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -759,19 +760,33 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
  * POST /authority-check
  * Verify a user's authority to perform an action
  */
-router.post('/authority-check', (req: Request, res: Response) => {
+router.post('/authority-check', async (req: Request, res: Response) => {
   const { userId, action, resource, resourceId } = req.body;
   if (!userId || !action || !resource) {
     return res.status(400).json({ error: 'userId, action, resource required' });
   }
 
-  // In production, this checks RBAC, delegation chains, and Part 11 authority matrix
+  // Real authority check: the DB-backed RBAC service (fail-closed — returns
+  // false on any error or unknown grant). Previously this endpoint returned
+  // authorized:true unconditionally, which made the §11.10(d) authority gate
+  // a rubber stamp. The org is taken from the authenticated request context.
+  const orgId =
+    (req as any).user?.organizationId ?? (req as any).tenantId ?? null;
+
+  let authorized = false;
+  try {
+    authorized = await rbacService.checkPermission(userId, resource, action, orgId);
+  } catch (err: any) {
+    console.error('[Part11] authority-check failed:', err?.message);
+    authorized = false; // fail closed
+  }
+
   const check: AuthorityCheck = {
     userId,
     action,
     resource,
     resourceId: resourceId || '',
-    authorized: true, // Default allow; production enforces RBAC
+    authorized,
     checkedAt: new Date(),
     authoritySource: 'RBAC',
     requiresMFA: ['sign', 'approve', 'delete', 'config_change'].includes(action),

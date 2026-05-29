@@ -16,6 +16,7 @@ import { users, organizations, notificationPreferences } from '../../shared/sche
 
 import { config } from '../config/environment';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { isDevAuthAllowed } from '../auth/dev-auth-policy.js';
 
 /** Login: 10 attempts per 15 minutes per IP */
 const loginLimiter = rateLimit({
@@ -48,9 +49,14 @@ const registerLimiter = rateLimit({
 
 const router = Router();
 
-// Dev mode requires explicit opt-in via NODE_ENV=development (not just "not production")
-// SECURITY: Dev user fallback is only active when NODE_ENV=development
-const isDev = process.env.NODE_ENV === 'development';
+// SECURITY: the dev-user fallback (synthetic user / faked mutation responses
+// below) is only active when the canonical dev-auth gate allows it — i.e.
+// BOTH NODE_ENV==='development' AND ALLOW_DEV_AUTH==='1'. Gating on NODE_ENV
+// alone was unsafe: any environment an operator accidentally flipped to
+// "development" (staging, beta, e2e) would have served the fallback. Routed
+// through isDevAuthAllowed() so this file is covered by the same policy and
+// CI guard (check-no-dev-auth-in-prod.mjs) as the rest of the auth surface.
+const isDev = isDevAuthAllowed();
 
 // Dev user response — uses 'user' role (not admin) to match least-privilege principle
 const devUserResponse = {
