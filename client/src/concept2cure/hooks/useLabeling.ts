@@ -151,7 +151,7 @@ export function useAddSymbol() {
   });
 }
 
-export function useDeleteSymbol() {
+export function useRemoveSymbol() {
   const queryClient = useQueryClient();
   return useMutation<void, Error, { symId: number; docId: number }>({
     mutationFn: ({ symId }) => labelingService.deleteSymbol(symId),

@@ -62,6 +62,70 @@
 /* Visually hidden label */
 .lb-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
+/* Authoring forms */
+.lb-form { display: flex; flex-direction: column; gap: 12px; max-width: 640px; }
+.lb-field { display: flex; flex-direction: column; gap: 4px; }
+.lb-field label { font-size: 11px; font-weight: 600; color: var(--text-300); }
+.lb-field input, .lb-field select, .lb-field textarea {
+  font-size: 13px; padding: 8px 10px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg-000); color: var(--text-100);
+}
+.lb-field input:focus-visible, .lb-field select:focus-visible, .lb-field textarea:focus-visible {
+  outline: 2px solid var(--accent-main-100); outline-offset: 1px;
+}
+.lb-field textarea { resize: vertical; min-height: 72px; }
+.lb-field .lb-req { color: var(--accent-main-100); margin-left: 2px; }
+.lb-field-row { display: flex; gap: 12px; }
+.lb-field-row > .lb-field { flex: 1; }
+.lb-field-check { flex-direction: row; align-items: center; gap: 8px; }
+.lb-field-check input { width: auto; }
+.lb-form-error {
+  font-size: 12px; color: var(--error); margin-top: 4px;
+  display: flex; align-items: center; gap: 6px;
+}
+.lb-form-note { font-size: 12px; color: var(--text-300); margin: 0 0 4px; }
+
+/* Authoring dialog — create / edit forms. Mirrors CmcDialog / EsignModal chrome and a11y. */
+.lb-dialog-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 64px 16px 16px;
+  background: color-mix(in srgb, var(--text-100) 32%, transparent);
+  overflow-y: auto;
+}
+.lb-dialog {
+  width: 100%; max-width: 560px;
+  background: var(--bg-000);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg, 0 12px 32px rgba(0,0,0,0.18));
+  display: flex; flex-direction: column;
+}
+.lb-dialog-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  padding: 16px 18px 12px; border-bottom: 1px solid var(--border);
+}
+.lb-dialog-title { font-size: 16px; font-weight: 600; color: var(--text-100); margin: 0; line-height: 1.3; }
+.lb-dialog-sub { font-size: 12px; color: var(--text-300); margin: 3px 0 0; }
+.lb-dialog-close {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+  border: 1px solid var(--border); background: var(--bg-000); color: var(--text-300);
+  cursor: pointer; transition: background 200ms ease-out, color 200ms ease-out;
+}
+.lb-dialog-close:hover { background: var(--bg-100); color: var(--text-100); }
+.lb-dialog-close:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: 1px; }
+.lb-dialog-body { padding: 16px 18px; }
+.lb-dialog-foot {
+  display: flex; align-items: center; justify-content: flex-end; gap: 8px;
+  padding: 12px 18px 16px; border-top: 1px solid var(--border);
+}
+
+/* Confirm prompt for destructive remove — text + icon, never color alone. */
+.lb-confirm { display: flex; align-items: center; gap: 8px; }
+.lb-confirm-text { font-size: 12px; color: var(--text-200); display: inline-flex; align-items: center; gap: 6px; }
+.lb-confirm-text svg { width: 13px; height: 13px; color: var(--warning); }
+
 @media (prefers-reduced-motion: reduce) {
-  .lb-doc, .lb-starter { transition: none; }
+  .lb-doc, .lb-starter, .lb-dialog-close { transition: none; }
 }
