@@ -224,12 +224,10 @@ export class SemanticSearchService {
         .sort((a, b) => b.score - a.score)
         .slice(0, limit);
 
-      return keywordResults.length > 0
-        ? keywordResults
-        : // If no keyword matches, return random documents
-          this.documents
-            .slice(0, Math.min(limit, this.documents.length))
-            .map(doc => ({ document: doc, score: 0.1 }));
+      // If no keyword matches, return no results rather than arbitrary documents
+      // dressed with a fabricated 0.1 relevance score.
+      // See FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: degraded-by-default search).
+      return keywordResults;
     }
   }
 
