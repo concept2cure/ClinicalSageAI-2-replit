@@ -77,13 +77,24 @@ A defensible GA bar for *generation* is **Phases A–C + E** (self-contained, si
 
 ---
 
-## 4. Open questions (need a decision before building)
+## 4. Resolved decisions (2026-05-29)
 
-1. **Canonical generator:** confirm `ectdExportService.ts` as the one, or is `regional-packager.ts` preferred for its cleaner per-region backbones?
-2. **eCTD version target:** the code mixes **v3.2.2** (the XML backbones) and **v4.0** (`ectd4-validator.ts` emits an M8 *JSON* backbone). Which is the GA target? They are different deliverables.
-3. **Regions in GA scope:** FDA only, or FDA + EMA + PMDA + Health Canada? This scales B/C/E effort.
-4. **DTD vendoring:** OK to commit agency DTD files into the repo (subject to redistribution terms), or must they be fetched at build time?
-5. **Transmission scope:** is "generate an externally-validated package, transmit manually" acceptable for GA, deferring real ESG (Phase F / CR-1)? Or is automated transmission a GA requirement?
+**Q2 — eCTD version: target v3.2.2. RESOLVED.** Investigation showed there was never a deliberate two-standard design:
+
+- **There is effectively one live generation standard already — v3.2.2 XML.** `ectdExportService.ts` + `submission-gateways/regional-packager.ts` produce 3.2.2 backbones (`<!DOCTYPE ... ich-ectd-3-2.dtd>`, `dtd-version="3.2"`).
+- **The "v4.0" is mostly a misnomer + dead code.** `server/services/ectd/ectd4-validator.ts` is named "ectd4" but its *validation* functions (`validatePackage`, `validateFilename`, `computeChecksum`) are reused generically as the structural validator — they're re-exported by `ectd-validator-hardening.ts` (`validatePackage as validateStructural`) and reach the submission orchestrator. Only its **v4.0-specific `generateBackbone` (JSON M8) is genuinely v4.0 — and it has zero callers anywhere** (grep: defined at `:347`, never invoked). The `dtd-version="4.0"` strings elsewhere are on the **STF** (submission-tracking file uses its own versioning) and in comments, not a v4.0 package generator.
+- **A fourth path, `server/src/services/reg/{indexXml,packager}.ts` + `src/services/ectd.ts`, appears orphaned** (no route wiring found).
+- **Why two seemed to exist:** every eCTD file landed in a single omnibus commit (`eb1751d`, 2026-05-25, message "Add real DB-backed adapter methods…" — which also dropped the ectd_coauthor UI kits and agent files). It bulk-authored overlapping implementations (two live 3.2.2 generators + a v4.0 validator/backbone + an orphaned reg path) without consolidating them. No one chose a dual standard; a batch drop left duplicates.
+- **Why v3.2.2 is correct for GA:** it is the standard FDA, EMA, PMDA, and Health Canada all accept today. eCTD v4.0 (HL7 RPS) is voluntary/limited (FDA accepts it optionally; EMA in transition; not mandated by PMDA/HC). v4.0 is a roadmap item, not a GA requirement.
+- **Action implied:** target v3.2.2 as the one; **delete the dead `generateBackbone` (v4.0 JSON)**; **rename `ectd4-validator.ts` → structural-validator** (or similar) to remove the misleading "4"; **delete or wire** the orphaned `src/services/ectd.ts` + `reg/` path; then consolidate the two live 3.2.2 generators (G2).
+
+**Q3 — Regions in GA scope: FDA + EMA + PMDA + Health Canada (all four). RESOLVED.** This scales B (four DTD sets to vendor), C (four regional backbones to keep correct), and E (four validators / regional rule sets). HC is currently the least-developed in code (rules referenced in `ectd-regional-rules.ts`, but no `ca-regional.xml` generator yet) — it needs a `buildHcBackbone` added to whichever generator becomes canonical.
+
+## 5. Still-open questions (need a decision before building)
+
+1. **Canonical generator:** confirm `ectdExportService.ts` as the one (recommended — highest fidelity, DB-backed, wired to the live route), or `regional-packager.ts` for its cleaner per-region backbones? (They must merge; pick the base.)
+2. **DTD vendoring:** OK to commit agency DTD files into the repo (subject to redistribution terms), or must they be fetched at build time?
+3. **Transmission scope:** is "generate an externally-validated package, transmit manually" acceptable for GA, deferring real ESG (Phase F / CR-1)? Or is automated transmission a GA requirement?
 
 ---
 
