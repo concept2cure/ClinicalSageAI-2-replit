@@ -148,6 +148,12 @@ const ALLOWLIST_FILES = new Set([
   'server/routes/admin.ts',
   'server/services/audit/audit-archive.service.ts',
   'server/services/audit/chainIntegrityMonitor.ts',
+  // The audit_logs SHA-256 hash chain is a single append-only chain ACROSS
+  // all tenants — each row links to the prior row regardless of org. Both
+  // the writer (computeAuditChain) and verifier (verifyAuditChain) must scan
+  // audit_logs unfiltered; a tenant predicate would fork/break the chain and
+  // make verification meaningless. Same rationale as chainIntegrityMonitor.
+  'server/services/audit/chain.ts',
   // Diagnostics / health.
   'server/diagnostics.js',
   'server/services/diagnostics.ts',
