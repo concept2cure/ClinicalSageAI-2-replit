@@ -11,6 +11,8 @@ import {
 } from '../data/nav';
 import { TaskingIcon } from '../icons';
 import { Loading, ErrorState, Empty, PriorityPill, dueInfo, initials } from './state';
+import { NewTaskDialog } from './NewTaskDialog';
+import { LinkTaskDialog } from './LinkTaskDialog';
 
 interface BoardProps {
   projectId: number | null;
@@ -32,6 +34,9 @@ export function TaskingBoard({ projectId, owner, currentUserId, onAskAna }: Boar
   const tasksQuery = useTasks(filter);
   const updateStatus = useUpdateTaskStatus();
   const tasks = tasksQuery.data ?? [];
+
+  const [creating, setCreating] = React.useState(false);
+  const [linkSource, setLinkSource] = React.useState<Task | null>(null);
 
   const taskKey = (t: Task) => t.taskId ?? String(t.id);
 
@@ -56,12 +61,23 @@ export function TaskingBoard({ projectId, owner, currentUserId, onAskAna }: Boar
           </div>
         </div>
         <div className="bp-page-actions">
+          <button className="bp-btn-tert" type="button" onClick={() => setCreating(true)}>
+            <TaskingIcon name="plus" size={14} />
+            New task
+          </button>
           <button className="bp-btn-primary" type="button"
                   onClick={() => onAskAna('Reassign the overdue tasks and notify the owners')}>
             Ask AnA
           </button>
         </div>
       </div>
+
+      {creating && (
+        <NewTaskDialog defaultProgramId={projectId} onClose={() => setCreating(false)} />
+      )}
+      {linkSource && (
+        <LinkTaskDialog source={linkSource} tasks={tasks} onClose={() => setLinkSource(null)} />
+      )}
 
       {tasksQuery.isLoading ? (
         <Loading label="Loading tasks…" />
@@ -107,7 +123,7 @@ export function TaskingBoard({ projectId, owner, currentUserId, onAskAna }: Boar
                             </span>
                           </div>
                         </button>
-                        <div className="task-card-move" role="group" aria-label="Move task">
+                        <div className="task-card-move" role="group" aria-label="Task actions">
                           <button type="button" className="task-move-btn"
                                   disabled={!canPrev || updateStatus.isPending}
                                   aria-label={`Move ${t.title} to previous column`}
@@ -121,6 +137,12 @@ export function TaskingBoard({ projectId, owner, currentUserId, onAskAna }: Boar
                                   title="Move forward"
                                   onClick={() => move(t, 1)}>
                             <TaskingIcon name="arrowRight" size={13} />
+                          </button>
+                          <button type="button" className="task-move-btn"
+                                  aria-label={`Link ${t.title} to another task`}
+                                  title="Link task"
+                                  onClick={() => setLinkSource(t)}>
+                            <TaskingIcon name="link" size={13} />
                           </button>
                         </div>
                       </div>

@@ -9,6 +9,7 @@ import type { Task } from '../../services/taskingService';
 import { TASKING_SUGGESTIONS, statusColumn } from '../data/nav';
 import { TaskingIcon } from '../icons';
 import { Loading, ErrorState, Empty, PriorityPill, dueInfo, initials } from './state';
+import { NewTaskDialog } from './NewTaskDialog';
 
 interface OverviewProps {
   projectId: number | null;
@@ -59,6 +60,8 @@ export function TaskingOverview({ projectId, owner, currentUserId, onAskAna }: O
     setComposer('');
   };
 
+  const [creating, setCreating] = React.useState(false);
+
   return (
     <div className="bp-surface">
       <div className="bp-page-head">
@@ -70,12 +73,23 @@ export function TaskingOverview({ projectId, owner, currentUserId, onAskAna }: O
           </div>
         </div>
         <div className="bp-page-actions">
+          <button className="bp-btn-tert" type="button" onClick={() => setCreating(true)}>
+            <TaskingIcon name="plus" size={14} />
+            New task
+          </button>
           <button className="bp-btn-primary" type="button"
                   onClick={() => onAskAna('Show everything assigned to me, sorted by urgency')}>
             Triage with AnA
           </button>
         </div>
       </div>
+
+      {creating && (
+        <NewTaskDialog
+          defaultProgramId={projectId}
+          onClose={() => setCreating(false)}
+        />
+      )}
 
       {/* AnA composer */}
       <form className="task-composer" onSubmit={e => { e.preventDefault(); send(composer); }}>
