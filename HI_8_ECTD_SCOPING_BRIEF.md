@@ -7,6 +7,19 @@
 
 ---
 
+## Progress (2026-05-29)
+
+Landed on `concept2cure-v2` (canonical generator `ectdExportService.ts`, the one wired to `POST /api/ectd/export`):
+- **Version consistency** — `index.xml` was internally mixed (3.2 DTD + `dtd-version="4.0"`, DOCTYPE missing the `util/dtd/` path). Now consistently **v3.2.2**.
+- **Region fail-closed** — non-FDA/EMA regions (incl. Health Canada) silently produced a **PMDA/`jp`** regional backbone. Regions now resolve from an explicit `ECTD_REGIONS` map and **throw** on unsupported regions instead of mislabeling a submission.
+- **G1 DTD self-containment** — added `bundleVendoredDtds()` (bundles `assets/ectd-dtd/*.dtd` → `util/dtd/` at export) + a documented drop-point (`assets/ectd-dtd/README.md`) + a `validateEctdPackage` warning when DTDs aren't bundled. DTDs are licensed and unreachable from CI (ich.org → 403), so the mechanism is built and **enforced**; the team drops in the licensed files to close G1 fully — no further code change.
+
+**Refined finding on Q1 (canonical generator):** direct reads show `ectdExportService.ts` (live route, DB-hydrated) is actually **lower-fidelity** than `submission-gateways/regional-packager.ts` (which has correct regional DTDs, hl7 namespaces, per-leaf MD5 index, all-region backbones). The right consolidation is to **adopt regional-packager's backbone fidelity inside the live ectdExportService flow**, not to pick one wholesale. Still a team workstream (needs full integration + eValidator).
+
+Still gated externally: real DTD files (procurement), an external eValidator dry-run (Phase E), and real PDF/A leaf rendering (G4). Health Canada generation (ca-regional) remains unbuilt — now fails closed rather than mislabeling.
+
+---
+
 ## 0. Headline — the audit's HI-8 finding was overstated
 
 FORENSIC_CODE_AUDIT_2026-05-29.md HI-8 states: *"No real eCTD anywhere — grep for `index.xml|md5|regional|dtd|backbone|leaf` across generators returns nothing."* **That is false for the TypeScript layer.** The audit's grep evidently covered only the Python `services/` stack. The repo contains **three** real, structured eCTD backbone generators in TypeScript:
