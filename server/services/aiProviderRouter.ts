@@ -270,6 +270,9 @@ export class AIProviderRouter {
   private pool: Pool;
   private providerHealth: Map<AIProvider, ProviderHealth> = new Map();
   private defaultStrategy: RoutingStrategy = 'task_based';
+  // Deterministic round-robin cursor — replaces a Math.random() pick so routing
+  // is reproducible and auditable. See FORENSIC_CODE_AUDIT_2026-05-29.md (LOW).
+  private roundRobinCursor = 0;
   private liteLLMAdapter: LiteLLMAdapter;
   private langfuse: LangfuseService;
 
@@ -399,8 +402,10 @@ export class AIProviderRouter {
         break;
 
       case 'round_robin':
-        // Simple round robin - in production would track state
-        selectedModel = candidates[Math.floor(Math.random() * candidates.length)];
+        // Deterministic round-robin via a persistent cursor (previously a random
+        // pick, which made provider selection non-reproducible in the audit trail).
+        selectedModel = candidates[this.roundRobinCursor % candidates.length];
+        this.roundRobinCursor = (this.roundRobinCursor + 1) % candidates.length;
         break;
 
       case 'task_based':
