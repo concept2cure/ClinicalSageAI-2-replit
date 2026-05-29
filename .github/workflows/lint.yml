@@ -1,0 +1,62 @@
+name: Lint
+on:
+  push:
+    branches: [main, concept2cure-v2]
+    paths:
+      - 'client/**'
+      - 'server/**'
+      - 'shared/**'
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '**/*.js'
+      - '**/*.jsx'
+      - 'package.json'
+      - 'eslint.config.js'
+      - 'tsconfig*.json'
+      - 'docs/reports/**'
+      - '.github/workflows/lint.yml'
+      - '.eslintrc*'
+  pull_request:
+    paths:
+      - 'client/**'
+      - 'server/**'
+      - 'shared/**'
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '**/*.js'
+      - '**/*.jsx'
+      - 'package.json'
+      - 'eslint.config.js'
+      - 'tsconfig*.json'
+      - 'docs/reports/**'
+      - '.github/workflows/lint.yml'
+      - '.eslintrc*'
+  workflow_dispatch: {}
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      # Canonical lint policy — same command as the ci.yml Lint job. The
+      # project deliberately scopes ESLint via the `lint` script (excludes
+      # client/src, scripts, tests; see package.json). A divergent raw
+      # `eslint . --max-warnings=0` linted intentionally-excluded files and
+      # contradicted the established policy.
+      - name: Run ESLint
+        run: npm run lint
+      # Baseline-aware typecheck (fails only on net-new errors vs the pinned
+      # baseline), matching ci.yml.
+      - name: TypeScript type check (no regression vs baseline)
+        run: npm run ci:typecheck:no-regression
+      # Beta slice uses its own tsconfig — the previous step pointed at the
+      # wrong project file.
+      - name: TypeScript type check (beta slice)
+        run: npm run beta:typecheck
