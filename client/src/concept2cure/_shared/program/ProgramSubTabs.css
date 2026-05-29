@@ -1,0 +1,187 @@
+/* ProgramSubTabs — Audit · Correspondence · Approvals strip.
+ * Ported from ui_kits/pathway-tabs/styles.css, renamed to .ptab-* so it never
+ * collides with the host shell's chrome. Every value reads from
+ * colors_and_type.css tokens — zero raw hex. Status tones use the canonical
+ * --success / --warning / --error families. Motion is 200ms ease-out and
+ * respects prefers-reduced-motion. */
+
+.ptab-wrap {
+  background: var(--bg-000);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Tabs */
+.ptab-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 6px 6px 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-050);
+}
+.ptab-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 13px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-300);
+  border-radius: 7px 7px 0 0;
+  margin-bottom: -1px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: background 200ms ease-out, color 200ms ease-out;
+}
+.ptab-tab .ico { display: inline-flex; color: var(--text-400); }
+.ptab-tab:hover { color: var(--text-100); }
+.ptab-tab[data-active="true"] {
+  background: var(--bg-000);
+  color: var(--text-100);
+  border-color: var(--border);
+  font-weight: 600;
+}
+.ptab-tab[data-active="true"] .ico { color: var(--accent-main-100); }
+.ptab-tab:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: -2px;
+}
+
+/* Panels */
+.ptab-pane { padding: 16px; }
+.ptab-pane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-100);
+}
+.ptab-muted { color: var(--text-400); font-weight: 400; font-size: 12px; }
+
+/* Loading / empty / error */
+.ptab-state {
+  padding: 28px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-400);
+  background: var(--bg-050);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+.ptab-state-err { color: var(--error); background: var(--error-muted); border-color: var(--error); }
+
+/* Status chip — text + icon, never color alone */
+.ptab-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--bg-100);
+  color: var(--text-200);
+}
+.ptab-chip svg { flex-shrink: 0; }
+.ptab-chip-ok   { background: var(--success-muted); color: var(--success); }
+.ptab-chip-warn { background: var(--warning-muted); color: var(--warning); }
+.ptab-chip-err  { background: var(--error-muted);   color: var(--error); }
+.ptab-chip-dim  { background: var(--bg-100);         color: var(--text-300); }
+
+/* Correspondence table */
+.ptab-table { border: 1px solid var(--border); border-radius: 9px; overflow: hidden; }
+.ptab-tr {
+  display: grid;
+  grid-template-columns: 120px 1fr 130px 130px 110px 130px;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  font-size: 13px;
+  border-top: 1px solid var(--border);
+  width: 100%;
+  text-align: left;
+}
+.ptab-tr:first-child { border-top: 0; }
+.ptab-tr-head {
+  background: var(--bg-050);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-400);
+  font-weight: 600;
+}
+.ptab-kind {
+  display: inline-flex;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: capitalize;
+  background: var(--bg-100);
+  color: var(--text-300);
+}
+.ptab-subj {
+  color: var(--text-100);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ptab-mono { font-family: var(--font-mono, monospace); font-size: 11px; color: var(--text-400); }
+
+/* Approvals */
+.ptab-approvals { display: flex; flex-direction: column; gap: 10px; }
+.ptab-appr { border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; }
+.ptab-appr-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.ptab-appr-target { font-size: 13px; font-weight: 600; color: var(--text-100); }
+.ptab-appr-foot { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-300); }
+.ptab-appr-foot b { color: var(--text-100); }
+
+/* Audit chain */
+.ptab-audit { position: relative; }
+.ptab-audit-row { display: flex; gap: 12px; }
+.ptab-audit-rail { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 12px; }
+.ptab-audit-node { width: 9px; height: 9px; border-radius: 50%; background: var(--accent-main-100); margin-top: 5px; }
+.ptab-audit-rail::after { content: ''; flex: 1; width: 2px; background: var(--border); margin: 3px 0; }
+.ptab-audit-row:last-child .ptab-audit-rail::after { display: none; }
+.ptab-audit-body { flex: 1; min-width: 0; padding-bottom: 16px; }
+.ptab-audit-line { display: flex; align-items: center; gap: 8px; }
+.ptab-audit-action { font-family: var(--font-mono, monospace); font-size: 11.5px; color: var(--text-200); font-weight: 600; }
+.ptab-audit-meaning {
+  padding: 1px 7px;
+  border-radius: 4px;
+  background: var(--bg-100);
+  color: var(--text-300);
+  font-size: 10px;
+  font-weight: 600;
+}
+.ptab-audit-when { margin-left: auto; font-size: 11px; color: var(--text-400); }
+.ptab-audit-target { font-size: 13px; font-weight: 600; color: var(--text-100); margin-top: 3px; }
+.ptab-audit-meta { font-size: 12px; color: var(--text-300); margin-top: 2px; }
+.ptab-audit-meta b { color: var(--text-100); }
+.ptab-audit-hash { font-family: var(--font-mono, monospace); font-size: 10.5px; color: var(--text-400); margin-top: 3px; }
+
+@media (max-width: 1000px) {
+  .ptab-tr { grid-template-columns: 90px 1fr 110px 110px; }
+  .ptab-tr > [role="cell"]:nth-child(5),
+  .ptab-tr > [role="cell"]:nth-child(6),
+  .ptab-tr > [role="columnheader"]:nth-child(5),
+  .ptab-tr > [role="columnheader"]:nth-child(6) { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ptab-tab { transition: none; }
+}

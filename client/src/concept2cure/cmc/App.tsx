@@ -31,6 +31,7 @@ import { CmcChange } from './surfaces/Change';
 import { CmcBlueprint } from './surfaces/Blueprint';
 import { CmcGlobal } from './surfaces/Global';
 import { CmcCopilot } from './surfaces/Copilot';
+import { ProgramSubTabs } from '../_shared/program/ProgramSubTabs';
 import { CmcIcon } from './icons';
 import { HERE_LABEL_CMC, CMC_SUGGESTIONS } from './data/nav';
 import { usePortfolioOverview } from '../hooks/useCMC';
@@ -140,6 +141,7 @@ export function CmcApp({ activeProjectId, initialNav = 'overview' }: CmcAppProps
     case 'change':    surface = <CmcChange />; break;
     case 'blueprint': surface = <CmcBlueprint projectId={projectId} onAskAna={askAna} />; break;
     case 'global':    surface = <CmcGlobal onAskAna={askAna} />; break;
+    case 'pathway':   surface = <ProgramSubTabs projectId={projectId} initialTab="audit" />; break;
     case 'copilot':   surface = <CmcCopilot projectId={projectId} />; break;
     default:
       surface = (

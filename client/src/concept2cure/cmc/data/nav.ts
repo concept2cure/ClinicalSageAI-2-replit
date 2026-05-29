@@ -15,6 +15,7 @@ export const CMC_NAV: CmcNavItem[] = [
   { id: 'change',    label: 'Change simulator',    icon: 'shuffle' },
   { id: 'blueprint', label: 'Blueprint generator', icon: 'layout' },
   { id: 'global',    label: 'Global compliance',   icon: 'globe' },
+  { id: 'pathway',   label: 'Program records',     icon: 'list' },
   { id: 'copilot',   label: 'CMC copilot',         icon: 'sparkles' },
 ];
 
@@ -26,6 +27,7 @@ export const HERE_LABEL_CMC: Record<string, string> = {
   change:    'Change simulator',
   blueprint: 'Blueprint generator',
   global:    'Global compliance',
+  pathway:   'Program records',
   copilot:   'CMC copilot',
 };
 
@@ -65,6 +67,11 @@ export const CMC_SUGGESTIONS: Record<string, string[]> = {
     'Compare FDA, EMA and PMDA readiness for this dossier',
     'Show the regional gaps blocking each market',
     'Transform the module 3 content for EMA submission',
+  ],
+  pathway: [
+    'Triage every open agency correspondence on this program by deadline',
+    'Summarize what changed on this program in the last 24 hours from the audit chain',
+    'What approvals are blocking the submission gate, and who do I need?',
   ],
   copilot: [
     'Explain the ICH Q6B expectations for charge-variant specifications',
