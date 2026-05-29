@@ -45,9 +45,10 @@ describe('cortex threads runtime contract', () => {
     expect(res.body?.code).toBe('CORTEX_THREADS_AUTH_REQUIRED');
   });
 
-  it.skip('GET /threads/:threadId returns 403 when caller does not own thread', async () => {
-    // The module is mocked above, so the runtime default export is the mock
-    // shape `{ verify: Mock }`, which does not overlap with the real jwt typing.
+  it('GET /threads/:threadId returns 403 when caller does not own thread', async () => {
+    // verifyJwtWithRotation() (used by the route) calls jsonwebtoken.verify
+    // internally, so mocking jwt.verify here drives the route's auth at runtime.
+    // The cast bridges the mock shape to the real jwt typing for TS.
     const jwt = (await import('jsonwebtoken')).default as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 7 });
 
@@ -77,8 +78,9 @@ describe('cortex threads runtime contract', () => {
   });
 
   it('GET /threads returns 500 fail-closed when storage throws', async () => {
-    // The module is mocked above, so the runtime default export is the mock
-    // shape `{ verify: Mock }`, which does not overlap with the real jwt typing.
+    // verifyJwtWithRotation() (used by the route) calls jsonwebtoken.verify
+    // internally, so mocking jwt.verify here drives the route's auth at runtime.
+    // The cast bridges the mock shape to the real jwt typing for TS.
     const jwt = (await import('jsonwebtoken')).default as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 99 });
 
@@ -128,9 +130,10 @@ describe('cortex threads runtime contract', () => {
     expect(res.body?.code).toBe('CORTEX_THREAD_DELETE_AUTH_REQUIRED');
   });
 
-  it.skip('PATCH /threads/:threadId returns 403 when user does not own thread', async () => {
-    // The module is mocked above, so the runtime default export is the mock
-    // shape `{ verify: Mock }`, which does not overlap with the real jwt typing.
+  it('PATCH /threads/:threadId returns 403 when user does not own thread', async () => {
+    // verifyJwtWithRotation() (used by the route) calls jsonwebtoken.verify
+    // internally, so mocking jwt.verify here drives the route's auth at runtime.
+    // The cast bridges the mock shape to the real jwt typing for TS.
     const jwt = (await import('jsonwebtoken')).default as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 17 });
     queryMock.mockResolvedValue({ rows: [] });
@@ -149,9 +152,10 @@ describe('cortex threads runtime contract', () => {
     expect(res.body?.error).toContain('access denied');
   });
 
-  it.skip('DELETE /threads/:threadId returns 403 when user does not own thread', async () => {
-    // The module is mocked above, so the runtime default export is the mock
-    // shape `{ verify: Mock }`, which does not overlap with the real jwt typing.
+  it('DELETE /threads/:threadId returns 403 when user does not own thread', async () => {
+    // verifyJwtWithRotation() (used by the route) calls jsonwebtoken.verify
+    // internally, so mocking jwt.verify here drives the route's auth at runtime.
+    // The cast bridges the mock shape to the real jwt typing for TS.
     const jwt = (await import('jsonwebtoken')).default as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 17 });
     queryMock.mockResolvedValue({ rows: [] });
