@@ -143,6 +143,7 @@ import PdevRoute from './pdev/PdevRoute';
 import BiopharmaRoute from './biopharma/BiopharmaRoute';
 import CmcRoute from './cmc/CmcRoute';
 import LabelingRoute from './labeling/LabelingRoute';
+import RiskRoute from './risk/RiskRoute';
 import ProjectDetailRoute from './projects/ProjectDetailRoute';
 
 /** Map MDX deep-link hashes (#k510, #pma, #cer, #vault, #admin, …) to the
@@ -1210,6 +1211,13 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         setLayoutMode('labeling');
         return;
       }
+      if (normalizedPath === 'risk') {
+        /* Risk-management workstream (ISO 14971 — hazard analysis, risk
+           register, severity × probability matrix, risk controls). Live domain
+           shell mirroring labeling. Backed by /api/mdx/risk-*. */
+        setLayoutMode('risk');
+        return;
+      }
       if (normalizedPath in BUNDLE_MDX_HASH) {
         // Persist the deep-link hash so the early return for 'mdx' can
         // pick it up and pass it to the iframe.
@@ -1908,6 +1916,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
   if (layoutMode === 'labeling' && !embeddedModule) {
     return <LabelingRoute activeProjectId={activeProjectId} />;
+  }
+
+  if (layoutMode === 'risk' && !embeddedModule) {
+    return <RiskRoute activeProjectId={activeProjectId} />;
   }
 
   // Phase 10 — Project detail surface. Requires an active project.

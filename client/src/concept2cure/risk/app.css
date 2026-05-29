@@ -1,0 +1,139 @@
+/* Risk overlay. Shell chrome (.rail / .topbar / .tabbar / .ana-seam) comes from
+ * mdx/app.css; the bp-* surface primitives come from biopharma/app.css. This
+ * file ports only the risk-specific .risk-* rules adapted from
+ * ui_kits/risk/styles.css, plus shared status / empty helpers used by the risk
+ * surfaces. All values read from colors_and_type.css tokens — no raw hex; band
+ * and status tones map green / amber / red to --success / --warning / --error.
+ *
+ * A11y (WCAG 2.2 AA): every cell, band, and score pairs color with a numeric
+ * score and/or text label, so meaning never depends on color alone. */
+
+@import url('../biopharma/app.css');
+
+/* AnA composer + starters (shared with the overview surface) */
+.risk-composer { display: flex; gap: 8px; align-items: center; margin: 4px 0 12px; }
+.risk-composer input { flex: 1; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-000); color: var(--text-100); }
+.risk-composer input:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: 1px; }
+.risk-starters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.risk-starter { display: inline-flex; align-items: center; gap: 8px; text-align: left; font-size: 12px; color: var(--text-200); background: var(--bg-000); border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px; transition: border-color 200ms ease-out; }
+.risk-starter:hover { border-color: var(--accent-main-100); }
+.risk-starter:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: 1px; }
+.risk-starter-ico { display: inline-flex; color: var(--text-400); }
+.risk-starter-ico svg { width: 13px; height: 13px; }
+
+/* Summary tiles */
+.risk-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+@media (max-width: 1000px) { .risk-tiles { grid-template-columns: repeat(2, 1fr); } }
+.risk-tile { background: var(--bg-000); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.risk-tile-num { font-size: 24px; font-weight: 700; color: var(--text-100); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.risk-tile-lbl { font-size: 11px; color: var(--text-400); margin-top: 4px; }
+
+/* Needs-attention queue */
+.risk-queue { display: flex; flex-direction: column; }
+.risk-q-item { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: transparent; border: 0; border-top: 1px solid var(--border); padding: 12px 4px; transition: background 200ms ease-out; }
+.risk-q-item:first-child { border-top: 0; }
+.risk-q-item:hover { background: var(--bg-050); }
+.risk-q-item:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: -2px; }
+.risk-q-ico { display: inline-flex; flex-shrink: 0; color: var(--text-400); }
+.risk-q-body { flex: 1; min-width: 0; }
+.risk-q-title { font-size: 13px; font-weight: 600; color: var(--text-100); }
+.risk-q-sub { font-size: 11px; color: var(--text-400); margin-top: 1px; }
+
+/* Mono + muted cell helpers */
+.risk-mono { font-family: var(--font-mono, monospace); font-size: 11px; color: var(--text-200); }
+.risk-mut { color: var(--text-400); font-size: 11px; }
+
+/* Hazard link cell in the register */
+.risk-haz-link { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; text-align: left; background: transparent; border: 0; padding: 0; transition: color 200ms ease-out; }
+.risk-haz-link:hover .risk-haz-t { color: var(--accent-main-100); }
+.risk-haz-link:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: 2px; border-radius: 4px; }
+.risk-haz-t { font-size: 13px; font-weight: 600; color: var(--text-100); }
+.risk-haz-s { font-size: 11px; color: var(--text-400); }
+
+/* Score chip — always shows severity × probability and the product, so the
+ * value is legible without color. Color is decorative only. */
+.risk-score { display: inline-flex; align-items: baseline; gap: 2px; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.risk-score-eq { font-weight: 500; opacity: 0.8; }
+.risk-score-acceptable   { background: var(--success-muted); color: var(--success); }
+.risk-score-alarp        { background: var(--warning-muted); color: var(--warning); }
+.risk-score-unacceptable { background: var(--error-muted);   color: var(--error); }
+
+/* Acceptability-band pill — the band word carries the meaning. */
+.risk-band { display: inline-flex; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.risk-band-acceptable   { background: var(--success-muted); color: var(--success); }
+.risk-band-alarp        { background: var(--warning-muted); color: var(--warning); }
+.risk-band-unacceptable { background: var(--error-muted);   color: var(--error); }
+
+/* Mode toggle (pre / post control) */
+.risk-toggle { display: inline-flex; padding: 2px; background: var(--bg-100); border-radius: 7px; border: 1px solid var(--border); }
+.risk-toggle button { padding: 4px 12px; border-radius: 5px; font-size: 12px; font-weight: 500; color: var(--text-400); background: transparent; border: 0; transition: background 200ms ease-out, color 200ms ease-out; }
+.risk-toggle button[data-active="true"] { background: var(--bg-000); color: var(--text-100); }
+.risk-toggle button:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: 1px; }
+
+/* Risk matrix */
+.risk-matrix-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 20px; align-items: start; }
+@media (max-width: 1000px) { .risk-matrix-wrap { grid-template-columns: 1fr; } }
+.risk-matrix { border-collapse: separate; border-spacing: 4px; width: 100%; }
+.risk-matrix-corner { width: 110px; }
+.risk-matrix-axis { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-400); text-align: center; line-height: 1.2; padding: 4px; }
+.risk-matrix-axis-row { text-align: right; width: 110px; }
+.risk-matrix-axis-num { display: inline-block; font-size: 12px; font-weight: 700; color: var(--text-200); margin-right: 4px; }
+.risk-matrix-axis-lbl { font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--text-400); }
+.risk-matrix-td { padding: 0; }
+.risk-cell { position: relative; width: 100%; aspect-ratio: 1 / 1; min-height: 56px; border-radius: 7px; border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; transition: transform 200ms ease-out, box-shadow 200ms ease-out; }
+.risk-cell:not(:disabled) { cursor: pointer; }
+.risk-cell:not(:disabled):hover { transform: scale(1.04); box-shadow: 0 2px 8px var(--shadow, rgba(0,0,0,0.12)); }
+.risk-cell:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: 2px; }
+.risk-cell-acceptable   { background: var(--success-muted); }
+.risk-cell-alarp        { background: var(--warning-muted); }
+.risk-cell-unacceptable { background: var(--error-muted); }
+.risk-cell-count { font-size: 16px; font-weight: 700; color: var(--text-100); font-variant-numeric: tabular-nums; line-height: 1; min-height: 16px; }
+.risk-cell-score { font-size: 10px; font-weight: 600; color: var(--text-400); font-variant-numeric: tabular-nums; }
+
+/* Matrix legend */
+.risk-legend { display: flex; flex-direction: column; gap: 10px; padding-top: 6px; }
+.risk-legend-head { font-size: 11px; font-weight: 600; color: var(--text-300); }
+.risk-legend-row { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--text-400); }
+.risk-legend-axes { font-size: 11px; color: var(--text-400); margin-top: 4px; }
+
+/* Item picker (controls surface) */
+.risk-itempicker { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.risk-itempicker label { font-size: 11px; font-weight: 600; color: var(--text-300); }
+.risk-itempicker select { font-size: 13px; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-000); color: var(--text-100); min-width: 280px; }
+.risk-itempicker select:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: 1px; }
+
+/* Selected-item risk context (controls surface) */
+.risk-context { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; padding: 10px 14px; background: var(--bg-000); border: 1px solid var(--border); border-radius: 10px; }
+.risk-context-lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-400); }
+.risk-context-sep { color: var(--text-400); }
+
+/* Control rows */
+.risk-ctrl-desc { font-size: 13px; font-weight: 500; color: var(--text-100); }
+.risk-ctrl-note { font-size: 11px; color: var(--warning); margin-top: 2px; }
+
+/* Shared status chip — text + icon, never color alone (WCAG 2.2 AA). */
+.risk-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+.risk-chip svg { width: 12px; height: 12px; }
+.risk-chip-ok { background: var(--success-muted); color: var(--success); }
+.risk-chip-warn { background: var(--warning-muted); color: var(--warning); }
+.risk-chip-err { background: var(--error-muted); color: var(--error); }
+.risk-chip-review { background: var(--bg-100); color: var(--text-300); }
+.risk-chip-dim { background: var(--bg-100); color: var(--text-400); }
+
+/* Loading / empty / error states */
+.risk-state { padding: 28px 16px; text-align: center; color: var(--text-400); font-size: 13px; }
+.risk-state-err { color: var(--error); }
+
+/* AnA dock chat bubbles */
+.risk-chat-log { display: flex; flex-direction: column; gap: 10px; min-height: 120px; }
+.risk-chat-msg { font-size: 13px; line-height: 1.5; padding: 10px 12px; border-radius: 10px; max-width: 80%; }
+.risk-chat-msg.you { align-self: flex-end; background: var(--bg-100); color: var(--text-100); }
+.risk-chat-msg.ana { align-self: flex-start; background: var(--bg-000); border: 1px solid var(--border); color: var(--text-100); }
+
+/* Visually hidden label */
+.risk-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .risk-starter, .risk-q-item, .risk-haz-link, .risk-toggle button, .risk-cell { transition: none; }
+  .risk-cell:not(:disabled):hover { transform: none; }
+}

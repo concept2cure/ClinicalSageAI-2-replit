@@ -122,6 +122,7 @@ export type LayoutMode =
   | 'biopharma'
   | 'cmc'
   | 'labeling'
+  | 'risk'
   | 'project-detail';
 
 // ═══════════════════════════════════════════════════════════════════════════════
