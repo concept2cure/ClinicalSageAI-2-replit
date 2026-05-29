@@ -28,6 +28,7 @@ import {
   CredentialError, GatewayError, TransportError, ValidationError,
   type Region, type GatewayName,
 } from '../services/submission-gateways';
+import { recordGovernedAction, verifyReauth } from './c2c/actions';
 
 const router = Router();
 const log = createScopedLogger('mdx-submission-gateway');
@@ -149,11 +150,19 @@ const transmitBody = z.object({
     displayName: z.string().optional(),
   }),
   metadata: z.record(z.unknown()).optional(),
+  reason: z.string().min(8, 'A reason of at least 8 characters is required.'),
+  reauth: z
+    .object({
+      password: z.string().optional(),
+      totp: z.string().optional(),
+    })
+    .optional(),
 });
 
 router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
+  const userId = getUserId(req);
   const region = req.params.region as Region;
   const gateway = req.params.gateway as GatewayName;
   if (!REGION_SET.includes(region as typeof REGION_SET[number])) {
@@ -167,11 +176,20 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
     return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   }
   const p = parsed.data;
+
+  // Re-auth gate FIRST (high-risk sign).
+  if (userId === null) return orgRequired(res);
+  const reauthResult = await verifyReauth(userId, p.reauth);
+  if (!reauthResult.ok) {
+    res.setHeader('WWW-Authenticate', 'ReAuth required');
+    return res.status(401).json({ error: reauthResult.error ?? 'REAUTH_REQUIRED' });
+  }
+
   try {
     const gw = getGateway(region, gateway);
     const result = await gw.transmit({
       organizationId: orgId,
-      userId:         getUserId(req),
+      userId,
       programId:      p.programId ?? null,
       packageId:      p.packageId ?? null,
       bundle: {
@@ -185,6 +203,47 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
       submissionType: p.submissionType,
       metadata:       { ...(p.metadata ?? {}), environment: p.environment },
     });
+
+    // Record the governed sign AFTER the external transmit succeeds. The
+    // external transmit is irreversible, so if the ledger write fails we log
+    // it and still return the transmit result (the gateway already accepted
+    // the package). The transmittal row written by gw.transmit() remains the
+    // authoritative external record in that edge case.
+    try {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await recordGovernedAction(client, {
+          orgId,
+          userId,
+          command: 'sign',
+          target: `submission:${p.packageId ?? p.programId ?? 'pkg'}`,
+          reason: p.reason,
+          payload: {
+            meaning: 'submission',
+            region,
+            gateway,
+            bundleSha256: p.bundle.sha256,
+            transactionId: (result as any)?.transactionId ?? null,
+          },
+          domain: 'mdx',
+          surface: 'submission-gateway',
+        });
+        await client.query('COMMIT');
+      } catch (ledgerErr) {
+        try { await client.query('ROLLBACK'); } catch { /* noop */ }
+        throw ledgerErr;
+      } finally {
+        client.release();
+      }
+    } catch (ledgerErr: any) {
+      log.error('transmit-ledger-write-failed-after-successful-transmit', {
+        message: ledgerErr?.message,
+        region,
+        gateway,
+      });
+    }
+
     return created(res, result);
   } catch (err: unknown) {
     if (err instanceof CredentialError) {

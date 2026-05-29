@@ -157,15 +157,22 @@ export function CmcBatch({ projectId, onAskAna }: { projectId: string | null; on
   const [newBatch, setNewBatch] = React.useState(false);
 
   const onSign = React.useCallback(
-    async ({ reason }: { reason: string }): Promise<EsigSignedManifest> => {
+    async ({ reason, password, totp }: {
+      reason: string;
+      password: string;
+      totp?: string;
+    }): Promise<EsigSignedManifest> => {
       if (!signing) throw new Error('No batch selected for release.');
-      // Re-auth has already passed in the modal. Run the real governed mutation.
+      // Re-auth credentials are forwarded so the server re-verifies the signer
+      // inside the same governed transaction (audit_logs + c2c_ana_actions).
       await release.mutateAsync({
         id: signing.id,
         decision: 'approved',
         releaseTesting: {},
         releasedBy: 'You',
         comments: reason,
+        reason,
+        reauth: { password, totp },
       });
       // Reflect the new disposition on this project's batch list.
       if (projectId) {
