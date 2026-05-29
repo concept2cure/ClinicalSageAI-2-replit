@@ -29,17 +29,23 @@ import {
   type ReportKpis, type ReportBar, type ForecastRow, type PrecedentModel,
 } from './data';
 
+/** Server responses use the canonical `{ data }` envelope (server/lib/api-response.ok).
+ *  The route omits any field it has no rows for, so the per-field `?? fixture`
+ *  fallback below keeps those sections populated until their backend lands. */
+type Envelope<T> = { data?: Partial<T> };
+
 export interface ProtocolData {
   protocols: Protocol[];
   endpoints: Endpoint[];
   amendments: Amendment[];
 }
 export function useProtocols(): ProtocolData {
-  const { data } = useFetchJson<Partial<ProtocolData>>('/api/intelligence/protocol');
+  const { data } = useFetchJson<Envelope<ProtocolData>>('/api/intelligence/protocol');
+  const d = data?.data;
   return {
-    protocols: data?.protocols ?? PROTOCOLS,
-    endpoints: data?.endpoints ?? ENDPOINTS,
-    amendments: data?.amendments ?? AMENDMENTS,
+    protocols: d?.protocols ?? PROTOCOLS,
+    endpoints: d?.endpoints ?? ENDPOINTS,
+    amendments: d?.amendments ?? AMENDMENTS,
   };
 }
 
@@ -48,10 +54,11 @@ export interface CmcData {
   stability: StabilityProgram[];
 }
 export function useCmc(): CmcData {
-  const { data } = useFetchJson<Partial<CmcData>>('/api/intelligence/cmc');
+  const { data } = useFetchJson<Envelope<CmcData>>('/api/intelligence/cmc');
+  const d = data?.data;
   return {
-    packages: data?.packages ?? CMC_PACKAGES,
-    stability: data?.stability ?? STABILITY,
+    packages: d?.packages ?? CMC_PACKAGES,
+    stability: d?.stability ?? STABILITY,
   };
 }
 
@@ -62,12 +69,13 @@ export interface BiostatData {
   interims: InterimAnalysis[];
 }
 export function useBiostat(): BiostatData {
-  const { data } = useFetchJson<Partial<BiostatData>>('/api/intelligence/biostat');
+  const { data } = useFetchJson<Envelope<BiostatData>>('/api/intelligence/biostat');
+  const d = data?.data;
   return {
-    saps: data?.saps ?? SAPS,
-    sampleSize: data?.sampleSize ?? SAMPLE_SIZE,
-    tlfQueue: data?.tlfQueue ?? TLF_QUEUE,
-    interims: data?.interims ?? INTERIMS,
+    saps: d?.saps ?? SAPS,
+    sampleSize: d?.sampleSize ?? SAMPLE_SIZE,
+    tlfQueue: d?.tlfQueue ?? TLF_QUEUE,
+    interims: d?.interims ?? INTERIMS,
   };
 }
 
@@ -78,11 +86,12 @@ export interface ReportsData {
   models: PrecedentModel[];
 }
 export function useReports(): ReportsData {
-  const { data } = useFetchJson<Partial<ReportsData>>('/api/intelligence/reports');
+  const { data } = useFetchJson<Envelope<ReportsData>>('/api/intelligence/reports');
+  const d = data?.data;
   return {
-    kpis: data?.kpis ?? REPORT_KPIS,
-    bars: data?.bars ?? REPORT_BARS,
-    forecast: data?.forecast ?? FORECAST,
-    models: data?.models ?? PRECEDENT_MODELS,
+    kpis: d?.kpis ?? REPORT_KPIS,
+    bars: d?.bars ?? REPORT_BARS,
+    forecast: d?.forecast ?? FORECAST,
+    models: d?.models ?? PRECEDENT_MODELS,
   };
 }
