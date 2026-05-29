@@ -23,6 +23,7 @@ import {
   deviceAuditTrail,
   fdaIntegrationLogs,
   cerProjects,
+  users,
 } from '../../shared/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import auditService from './auditService';
@@ -823,6 +824,22 @@ class MedicalDeviceService {
         ? Object.keys(safeNewValues).filter(key => previousValues[key] !== safeNewValues[key])
         : Object.keys(safeNewValues);
 
+      // Resolve the real username for Part 11 attribution rather than fabricating it.
+      // The users table has no role column, so userRole is left null (honest) instead
+      // of the previously hardcoded 'regulatory_specialist' applied to every actor.
+      // See FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: Part 11 attribution gaps).
+      let resolvedUserName = `User ${userId}`;
+      try {
+        const userRows = await dbInstance
+          .select({ name: users.name })
+          .from(users)
+          .where(eq(users.id, userId))
+          .limit(1);
+        if (userRows[0]?.name) resolvedUserName = userRows[0].name;
+      } catch {
+        // Fall back to the id-based label; audit logging must not break the operation.
+      }
+
       await dbInstance.insert(deviceAuditTrail).values({
         organizationId,
         entityType,
@@ -832,8 +849,8 @@ class MedicalDeviceService {
         newValues: safeNewValues,
         changedFields,
         userId,
-        userName: `User ${userId}`, // In production, fetch actual username
-        userRole: 'regulatory_specialist', // In production, fetch actual role
+        userName: resolvedUserName,
+        userRole: null,
         electronicSignature: this.generateSignatureHash({ entityType, entityId, action }, userId),
         signatureTimestamp: new Date(),
         signatureMeaning: action === 'approved' ? 'approval' : 'authorship',
