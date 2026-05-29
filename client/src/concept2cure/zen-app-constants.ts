@@ -123,6 +123,7 @@ export type LayoutMode =
   | 'cmc'
   | 'labeling'
   | 'risk'
+  | 'tasking'
   | 'project-detail';
 
 // ═══════════════════════════════════════════════════════════════════════════════

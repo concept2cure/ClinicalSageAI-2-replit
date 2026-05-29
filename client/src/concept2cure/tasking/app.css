@@ -1,0 +1,123 @@
+/* Tasking overlay. Shell chrome (.rail / .topbar / .tabbar / .ana-seam) comes
+ * from mdx/app.css; the bp-* surface primitives come from biopharma/app.css.
+ * This file ports only the tasking-specific .task-* rules adapted from
+ * ui_kits/tasking/styles.css, plus shared status / empty helpers used by the
+ * tasking surfaces. All values read from colors_and_type.css tokens — no raw
+ * hex; status, priority, and due-date tones map to --success / --warning /
+ * --error or neutral tokens.
+ *
+ * A11y (WCAG 2.2 AA): every status, priority, and due-date signal pairs a tone
+ * with a text label (and an icon for status / overdue), so meaning never
+ * depends on color alone. Cards and columns are keyboard-operable with visible
+ * focus. */
+
+@import url('../biopharma/app.css');
+
+/* AnA composer + starters (shared across surfaces) */
+.task-composer { display: flex; gap: 8px; align-items: center; margin: 4px 0 12px; }
+.task-composer input { flex: 1; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-000); color: var(--text-100); }
+.task-composer input:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: 1px; }
+.task-starters { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.task-starter { display: inline-flex; align-items: center; gap: 8px; text-align: left; font-size: 12px; color: var(--text-200); background: var(--bg-000); border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px; transition: border-color 200ms ease-out; }
+.task-starter:hover { border-color: var(--accent-main-100); }
+.task-starter:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: 1px; }
+.task-starter-ico { display: inline-flex; color: var(--text-400); }
+.task-starter-ico svg { width: 13px; height: 13px; }
+
+/* Summary tiles */
+.task-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+@media (max-width: 1000px) { .task-tiles { grid-template-columns: repeat(2, 1fr); } }
+.task-tile { background: var(--bg-000); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.task-tile-num { font-size: 24px; font-weight: 700; color: var(--text-100); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.task-tile-lbl { font-size: 11px; color: var(--text-400); margin-top: 4px; }
+
+/* Kanban board */
+.task-board { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 12px 0; }
+@media (max-width: 1100px) { .task-board { grid-template-columns: repeat(2, 1fr); } }
+.task-col { background: var(--bg-050); border: 1px solid var(--border); border-radius: 10px; padding: 8px; min-height: 120px; }
+.task-col-head { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-400); padding: 4px 6px 8px; display: flex; align-items: center; gap: 6px; }
+.task-col-count { margin-left: auto; padding: 0 6px; border-radius: 999px; background: var(--bg-200); color: var(--text-400); font-size: 10px; font-variant-numeric: tabular-nums; }
+.task-col-body { display: flex; flex-direction: column; gap: 6px; }
+.task-col-empty { font-size: 11px; color: var(--text-400); padding: 8px 6px; }
+
+/* Task card — a content button plus a move-control group */
+.task-card { background: var(--bg-000); border: 1px solid var(--border); border-radius: 8px; transition: border-color 200ms ease-out; }
+.task-card:hover { border-color: var(--accent-main-100); }
+.task-card:focus-within { border-color: var(--accent-main-100); }
+.task-card-main { display: block; width: 100%; text-align: left; background: transparent; border: 0; padding: 9px 10px 6px; border-radius: 8px 8px 0 0; }
+.task-card-main:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: -2px; }
+.task-card-top { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+.task-card-kind { font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-400); }
+.task-card-title { font-size: 12px; font-weight: 500; color: var(--text-100); line-height: 1.35; }
+.task-card-foot { display: flex; align-items: center; gap: 6px; margin-top: 7px; font-size: 10.5px; }
+.task-card-av { margin-left: auto; width: 20px; height: 20px; border-radius: 50%; background: var(--bg-200); color: var(--text-200); display: inline-flex; align-items: center; justify-content: center; font-size: 9.5px; font-weight: 600; flex-shrink: 0; }
+.task-card-move { display: flex; gap: 4px; justify-content: flex-end; padding: 4px 8px 6px; border-top: 1px solid var(--border); }
+.task-move-btn { width: 24px; height: 22px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-000); color: var(--text-300); display: inline-flex; align-items: center; justify-content: center; transition: border-color 200ms ease-out, color 200ms ease-out; }
+.task-move-btn:hover:not(:disabled) { border-color: var(--accent-main-100); color: var(--text-100); }
+.task-move-btn:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: 1px; }
+.task-move-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Due-date pill — the label ("Overdue", "Today", "3d") always carries the
+ * meaning; overdue also pairs a warning icon. Color is a secondary signal. */
+.task-due { display: inline-flex; align-items: center; gap: 3px; font-variant-numeric: tabular-nums; font-size: 10.5px; font-weight: 500; }
+.task-due svg { width: 12px; height: 12px; }
+.task-due-ok { color: var(--success); }
+.task-due-warn { color: var(--warning); }
+.task-due-err { color: var(--error); font-weight: 600; }
+.task-due-review { color: var(--text-300); }
+.task-due-dim { color: var(--text-400); }
+
+/* Priority pill — the priority word carries the meaning, not color alone. */
+.task-prio { margin-left: auto; display: inline-flex; padding: 1px 7px; border-radius: 999px; font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; }
+.task-prio-low { background: var(--bg-100); color: var(--text-400); }
+.task-prio-medium { background: var(--bg-100); color: var(--text-300); }
+.task-prio-high { background: var(--warning-muted); color: var(--warning); }
+.task-prio-critical { background: var(--error-muted); color: var(--error); }
+
+/* List surface helpers */
+.task-link { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; text-align: left; background: transparent; border: 0; padding: 0; transition: color 200ms ease-out; }
+.task-link:hover .task-link-t { color: var(--accent-main-100); }
+.task-link:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: 2px; border-radius: 4px; }
+.task-link-t { font-size: 13px; font-weight: 600; color: var(--text-100); }
+.task-link-s { font-size: 11px; color: var(--text-400); }
+.task-assignee { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-200); }
+.task-assignee .task-card-av { margin-left: 0; }
+.task-mut { color: var(--text-400); font-size: 12px; }
+
+/* Needs-attention queue (overview) */
+.task-queue { display: flex; flex-direction: column; }
+.task-q-item { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: transparent; border: 0; border-top: 1px solid var(--border); padding: 12px 4px; transition: background 200ms ease-out; }
+.task-q-item:first-child { border-top: 0; }
+.task-q-item:hover { background: var(--bg-050); }
+.task-q-item:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: -2px; }
+.task-q-ico { display: inline-flex; flex-shrink: 0; color: var(--text-400); }
+.task-q-body { flex: 1; min-width: 0; }
+.task-q-title { font-size: 13px; font-weight: 600; color: var(--text-100); }
+.task-q-sub { font-size: 11px; color: var(--text-400); margin-top: 1px; }
+.task-q-item .task-prio { margin-left: 0; }
+
+/* Shared status chip — text + icon, never color alone (WCAG 2.2 AA). */
+.task-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+.task-chip svg { width: 12px; height: 12px; }
+.task-chip-ok { background: var(--success-muted); color: var(--success); }
+.task-chip-warn { background: var(--warning-muted); color: var(--warning); }
+.task-chip-err { background: var(--error-muted); color: var(--error); }
+.task-chip-review { background: var(--bg-100); color: var(--text-300); }
+.task-chip-dim { background: var(--bg-100); color: var(--text-400); }
+
+/* Loading / empty / error states */
+.task-state { padding: 28px 16px; text-align: center; color: var(--text-400); font-size: 13px; }
+.task-state-err { color: var(--error); }
+
+/* AnA dock chat bubbles */
+.task-chat-log { display: flex; flex-direction: column; gap: 10px; min-height: 120px; }
+.task-chat-msg { font-size: 13px; line-height: 1.5; padding: 10px 12px; border-radius: 10px; max-width: 80%; }
+.task-chat-msg.you { align-self: flex-end; background: var(--bg-100); color: var(--text-100); }
+.task-chat-msg.ana { align-self: flex-start; background: var(--bg-000); border: 1px solid var(--border); color: var(--text-100); }
+
+/* Visually hidden label */
+.task-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .task-starter, .task-q-item, .task-link, .task-card, .task-move-btn { transition: none; }
+}

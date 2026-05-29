@@ -144,6 +144,7 @@ import BiopharmaRoute from './biopharma/BiopharmaRoute';
 import CmcRoute from './cmc/CmcRoute';
 import LabelingRoute from './labeling/LabelingRoute';
 import RiskRoute from './risk/RiskRoute';
+import TaskingRoute from './tasking/TaskingRoute';
 import ProjectDetailRoute from './projects/ProjectDetailRoute';
 
 /** Map MDX deep-link hashes (#k510, #pma, #cer, #vault, #admin, …) to the
@@ -1167,7 +1168,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         mdx: '', // bundle home — Overview tab
         biopharma: '', // routes through MDX shell scope tabs
         vault: '#vault',
-        tasking: '#tasks',
+        // 'tasking' now resolves to the live TaskingRoute above (handled before
+        // this map), so it is intentionally not a bundle deep-link key here.
         submission: '#submissions',
         protocol: '#templates',
         biostat: '', // no MDX surface yet → fall through to Ana
@@ -1216,6 +1218,14 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
            register, severity × probability matrix, risk controls). Live domain
            shell mirroring labeling. Backed by /api/mdx/risk-*. */
         setLayoutMode('risk');
+        return;
+      }
+      if (normalizedPath === 'tasking') {
+        /* Cross-program tasking workstream (global Kanban + list across every
+           module). Live domain shell mirroring risk. Org-scoped; backed by
+           /api/regulatory/tasks/*. Must precede the BUNDLE_MDX_HASH check so the
+           deep link resolves to the new shell rather than the MDX #tasks tab. */
+        setLayoutMode('tasking');
         return;
       }
       if (normalizedPath in BUNDLE_MDX_HASH) {
@@ -1920,6 +1930,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
   if (layoutMode === 'risk' && !embeddedModule) {
     return <RiskRoute activeProjectId={activeProjectId} />;
+  }
+
+  if (layoutMode === 'tasking' && !embeddedModule) {
+    return <TaskingRoute activeProjectId={activeProjectId} />;
   }
 
   // Phase 10 — Project detail surface. Requires an active project.
