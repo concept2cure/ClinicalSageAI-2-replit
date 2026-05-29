@@ -87,14 +87,14 @@ router.get('/cmc', async (_req: Request, res: Response) => {
 });
 
 /* ─── Biostat ──────────────────────────────────────────────────── */
-type TlfRow = {
+interface TlfRow {
   id: string;
   what: string;
   due_at: Date;
   pct_complete: number;
   status: string;
   program: string | null;
-};
+}
 router.get('/biostat', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   try {
@@ -131,13 +131,13 @@ router.get('/biostat', async (req: Request, res: Response) => {
 });
 
 /* ─── Reports ──────────────────────────────────────────────────── */
-type ForecastDbRow = {
+interface ForecastDbRow {
   milestone: string;
   target_date: Date;
   forecast_date: Date;
   confidence: string;
   program: string | null;
-};
+}
 router.get('/reports', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   try {
