@@ -10,7 +10,7 @@ import {
   buildProvenance,
   hashInputs,
   STATS_ENGINE_VERSION,
-} from '../../server/services/stats/provenance';
+} from '../../server/services/stats/computation-provenance';
 
 describe('Rng — determinism', () => {
   it('produces an identical sequence for the same seed', () => {

@@ -3,7 +3,7 @@ import { csrReports, csrDetails } from 'shared/schema';
 import { eq, sql, and, gte, lte, desc, count, avg, max, min } from 'drizzle-orm';
 import * as math from 'mathjs';
 import { Rng, createRng, seedFromObject } from './services/stats/rng';
-import { buildProvenance, type StatsProvenance } from './services/stats/provenance';
+import { buildProvenance, type StatsProvenance } from './services/stats/computation-provenance';
 
 /**
  * Enhanced Biostatistics Service for Concept2Cure
