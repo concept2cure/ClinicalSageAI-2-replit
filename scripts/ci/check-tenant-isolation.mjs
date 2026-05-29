@@ -136,10 +136,13 @@ const ALLOWLIST_FILES = new Set([
   'server/routes/authEnterprise.ts',
   'server/auth.ts',
   'server/middleware/auth.ts',
-  // Re-auth gate: queries users.password_hash by the authenticated user's
-  // own id to verify a re-challenge credential (same semantics as auth.ts).
-  // The user can only re-auth as themselves; the auth middleware already
-  // resolved and validated userId before this query runs.
+  // Re-auth gate ONLY: the single un-org-filtered query in this file is the
+  // users.password_hash self-lookup by the authenticated user's own id (same
+  // semantics as auth.ts — the user can only re-auth as themselves, and the
+  // auth middleware already resolved/validated userId). All governed-target
+  // lookups in resolveTarget() ARE org-scoped (organization_id / org_id), and
+  // the audit_logs insert carries tenant_id — so those pass the gate on their
+  // own merits, not via this allowlist.
   'server/routes/c2c/actions.ts',
   // System / admin tools that legitimately operate cross-tenant.
   'server/routes/admin.ts',
