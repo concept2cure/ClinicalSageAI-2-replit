@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS c2c_tlf_builds (
   due_at        timestamptz NOT NULL,
   pct_complete  integer NOT NULL DEFAULT 0,
   status        text NOT NULL DEFAULT 'queued',  -- queued | building | review | locked
-  owner_id      integer REFERENCES users(id),
+  owner_id      integer,  -- users.id (serial); no FK, matching mutation_primitives convention
   created_at    timestamptz NOT NULL DEFAULT now()
 );
 
