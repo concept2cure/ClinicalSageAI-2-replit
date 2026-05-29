@@ -116,15 +116,28 @@ export class TamperProofAuditLog {
   constructor(pool: Pool) {
     this.pool = pool;
 
-    // Get HMAC secret from environment or generate warning
-    this.hmacSecret = process.env.AUDIT_HMAC_SECRET || '';
-    if (!this.hmacSecret) {
+    // HMAC secret signs the tamper-evident hash chain. A predictable secret
+    // would let anyone with the source forge or recompute the chain, defeating
+    // the 21 CFR Part 11 integrity guarantee. Fail closed in production: a
+    // missing secret is a fatal misconfiguration, not a warning to ignore.
+    const secret = process.env.AUDIT_HMAC_SECRET || '';
+    if (!secret) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(
+          '[FATAL] AUDIT_HMAC_SECRET is required in production. ' +
+            'The tamper-proof audit chain cannot sign records without a ' +
+            'cryptographically random secret. Refusing to start.'
+        );
+      }
       console.warn(
-        '[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using fallback. ' +
-          'Set this in production for cryptographic integrity!'
+        '[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production ' +
+          'development fallback — audit-chain integrity is NOT guaranteed. ' +
+          'Set AUDIT_HMAC_SECRET before deploying.'
       );
-      // Use a deterministic fallback for development only
+      // Development-only fallback. Never reached in production (throws above).
       this.hmacSecret = 'INSECURE_DEV_SECRET_CHANGE_IN_PRODUCTION';
+    } else {
+      this.hmacSecret = secret;
     }
   }
 

@@ -712,36 +712,56 @@ class FDAIntegrationService {
   }
 
   /**
-   * Send to FDA ESG (mock for development)
+   * Send to FDA ESG.
+   *
+   * Real ESG transport (AS2 over HTTPS or the SFTP gateway) is not implemented
+   * in this service. Returning a synthetic "RECEIVED" receipt would tell a user
+   * their submission reached the FDA when nothing was transmitted — the most
+   * dangerous lie a regulatory platform can tell. Fail closed in production;
+   * only simulate in non-production, and mark the result as simulated so no
+   * caller can mistake it for a real acknowledgment.
    */
   async sendToESG(submissionPackage: any, trackingId: any) {
-    // In production, this would make actual API call to FDA ESG
-    // For now, simulate successful submission
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'FDA ESG transport is not configured. Submission was NOT transmitted. ' +
+          'Real AS2/SFTP gateway integration and FDA credentials are required ' +
+          'before submissions can be sent.'
+      );
+    }
+
+    // Non-production simulation only — explicitly flagged.
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     return {
       status: 'RECEIVED',
-      receiptNumber: `FDA-${Date.now()}-${trackingId.substring(0, 8)}`,
+      simulated: true,
+      receiptNumber: `SIMULATED-${Date.now()}-${trackingId.substring(0, 8)}`,
       timestamp: new Date().toISOString(),
-      message: 'Submission received by FDA Electronic Submission Gateway'
+      message: 'SIMULATED submission (non-production). Not transmitted to FDA ESG.'
     };
   }
 
   /**
-   * Query ESG status (mock for development)
+   * Query ESG status.
+   *
+   * No real ESG status endpoint is wired. Returning a random status (including
+   * "ACCEPTED") would fabricate the state of a regulatory submission. Fail
+   * closed in production; return an explicit simulated/UNKNOWN status otherwise.
    */
   async queryESGStatus(receiptNumber: any) {
-    // In production, this would query actual FDA ESG
-    // For now, simulate status progression
-    const statuses = ['RECEIVED', 'VALIDATING', 'UNDER_REVIEW', 'ACCEPTED'];
-    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'FDA ESG status query is not configured. Cannot determine real ' +
+          'submission status. Wire the ESG status endpoint before use.'
+      );
+    }
 
     return {
-      status: randomStatus,
+      status: 'UNKNOWN',
+      simulated: true,
       timestamp: new Date().toISOString(),
-      comments: randomStatus === 'ACCEPTED'
-        ? 'Submission accepted for review'
-        : 'Processing submission',
+      comments: 'SIMULATED status (non-production). No real ESG query performed.',
       requiredActions: [] as string[]
     };
   }
@@ -769,10 +789,18 @@ class FDAIntegrationService {
         return;
       }
 
-      const statusUpdate = await this.queryESGStatus(submission.esgReceiptNumber);
-      submission.status = statusUpdate.status;
-      submission.lastChecked = new Date();
-      this.submissionQueue.set(trackingId, submission);
+      try {
+        const statusUpdate = await this.queryESGStatus(submission.esgReceiptNumber);
+        submission.status = statusUpdate.status;
+        submission.lastChecked = new Date();
+        this.submissionQueue.set(trackingId, submission);
+      } catch (error) {
+        // queryESGStatus fails closed when ESG is not configured. Stop polling
+        // rather than spin forever or leak an unhandled rejection.
+        clearInterval(interval);
+        console.error(`[FDA ESG] Status polling stopped for ${trackingId}:`,
+          error instanceof Error ? error.message : String(error));
+      }
     }, this.statusPollingInterval);
   }
 
