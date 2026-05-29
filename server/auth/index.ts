@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Unified Authentication Module
  *
@@ -24,8 +23,13 @@
  * - All auth decisions audit-logged for 21 CFR Part 11
  */
 
-// Re-export from existing implementations during migration
-export { authenticateJWT, isPublicRoute, requireRole, hasPermission } from '../middleware/auth.js';
+// Re-export from existing implementations during migration.
+// NOTE: `isPublicRoute` and `hasPermission` are NOT exported by middleware/auth.ts
+// (this was a broken re-export masked by a prior `// @ts-nocheck`). `hasPermission`
+// actually lives in middleware/tenantIsolation.ts; `isPublicRoute` does not exist
+// anywhere in the codebase, so it is dropped rather than re-exported as undefined.
+export { authenticateJWT, requireRole } from '../middleware/auth.js';
+export { hasPermission } from '../middleware/tenantIsolation.js';
 export { authMiddleware } from '../auth';
 export { default as rbacService } from '../services/roleBasedAccess.js';
 
