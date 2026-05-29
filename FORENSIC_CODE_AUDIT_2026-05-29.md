@@ -100,6 +100,7 @@ What's genuinely encouraging, and worth stating plainly: the much-feared "is the
 - `server/routes/part11-compliance.ts:774` — authority-check endpoint returns `authorized:true` unconditionally ("production enforces RBAC" is a comment, not code).
 - `.github/workflows/ci.yml:281,291` — Trivy secret/dep scans are `continue-on-error:true` → cannot fail the build. `.claude/skills/gstack/test/skill-e2e-cso.test.ts:45` commits an `sk-`-format dummy key.
 - **Cure:** Route dev bypasses through `isDevAuthAllowed()` (explicit `ALLOW_DEV_AUTH=1` + non-prod) or delete; implement/501 the authority endpoint; remove `continue-on-error` from Trivy; sanitize the key.
+- **Update (2026-05-29):** dev-auth + authority parts fixed on PR #621. `users.ts` `isDev` now routes through `isDevAuthAllowed()` (requires `NODE_ENV==='development'` **and** `ALLOW_DEV_AUTH==='1'`), correcting all 6 call sites at once. `part11-compliance.ts` `/authority-check` now calls the real DB-backed `rbacService.checkPermission()` (fail-closed) instead of returning `authorized:true`. The Trivy `continue-on-error` + committed dummy key remain open (CI-policy changes, left for review).
 
 ### HI-7 · Tenant-isolation tests are skipped; security suites contain no-op assertions
 - `server/__tests__/routes/cortex-threads.runtime.test.ts:48,131,152` — 3× `it.skip` on the **cross-user 403 ownership** checks (the multi-tenant guarantee).
