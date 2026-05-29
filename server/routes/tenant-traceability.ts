@@ -1,4 +1,9 @@
-// @ts-nocheck
+// @ts-nocheck — TODO(audit HI/MEDIUM @ts-nocheck cleanup): removing this pragma
+// surfaces 17 real type errors (untyped req.body access → qmpId/ctqFactorId/
+// requirementId on {}, optional req.tenantContext.organizationId without a guard,
+// and one Drizzle insert overload mismatch). These are genuine, not a stale
+// declaration-merge conflict like the auth files — fixing them safely needs a
+// route integration test to confirm behavior is unchanged. Tracked, not masked.
 /**
  * QMP Traceability Matrix API Routes
  *
