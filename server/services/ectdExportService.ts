@@ -1,5 +1,5 @@
 /**
- * eCTD Export Service — ICH M8 v4.0 Submission Package Generator
+ * eCTD Export Service — ICH eCTD v3.2.2 Submission Package Generator
  *
  * Generates a structurally valid eCTD submission package as a ZIP archive
  * containing:
@@ -9,13 +9,16 @@
  *   - m3/ Module 3: Quality (CMC)
  *   - m4/ Module 4: Nonclinical Study Reports
  *   - m5/ Module 5: Clinical Study Reports
+ *   - util/dtd/ vendored ICH/regional DTDs (when present) for self-containment
  *
  * Uses database-backed eCTD modules/granules from the shared schema.
  *
  * @module server/services/ectdExportService
- * @compliance ICH M8 v4.0, ICH M4 CTD
+ * @compliance ICH eCTD v3.2.2, ICH M4 CTD
  */
 
+import fs from 'fs';
+import path from 'path';
 import JSZip from 'jszip';
 import { db, pool } from '../db';
 import {
@@ -260,6 +263,28 @@ function generateRegionalXml(region: string, applicationNumber: string): string 
     <submission-type>initial</submission-type>
   </admin>
 </${regionCode}-regional>`;
+}
+
+/**
+ * Bundle vendored eCTD DTD files (when present) into util/dtd/ so the package is
+ * self-contained and DTD-validatable. DTDs are licensed agency artifacts and are
+ * NOT committed to this repo — drop them into assets/ectd-dtd/ (or set
+ * ECTD_DTD_DIR) and they are bundled automatically; absence is surfaced as a
+ * "not submission-ready" warning by validateEctdPackage.
+ * See assets/ectd-dtd/README.md and HI_8_ECTD_SCOPING_BRIEF.md G1.
+ */
+function bundleVendoredDtds(zip: JSZip): number {
+  try {
+    const dir = process.env.ECTD_DTD_DIR || path.resolve(process.cwd(), 'assets/ectd-dtd');
+    if (!fs.existsSync(dir)) return 0;
+    const dtdFiles = fs.readdirSync(dir).filter(f => f.toLowerCase().endsWith('.dtd'));
+    for (const file of dtdFiles) {
+      zip.file(`util/dtd/${file}`, fs.readFileSync(path.join(dir, file)));
+    }
+    return dtdFiles.length;
+  } catch {
+    return 0; // non-fatal — absence is reported by validateEctdPackage
+  }
 }
 
 function generateModulePlaceholderXml(moduleNumber: string, moduleName: string, granules: GranuleRecord[]): string {
@@ -636,6 +661,11 @@ export async function generateEctdPackage(
   </submission>
 </submission-tracking>`;
   zip.file('util/stf.xml', stfXml);
+
+  // 7b. Bundle vendored ICH/regional DTDs into util/dtd/ when available, so the
+  // package is self-contained. No-op (with a validator warning) until the team
+  // vendors the licensed DTD files. See HI_8_ECTD_SCOPING_BRIEF.md G1.
+  bundleVendoredDtds(zip);
 
   // 8. Record the compilation in the database
   try {

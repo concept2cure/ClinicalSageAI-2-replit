@@ -43,3 +43,20 @@ describe('HI-8 · validator surfaces missing bundled DTDs', () => {
     expect(src).toContain("f.startsWith('util/dtd/')");
   });
 });
+
+describe('HI-8 · DTD bundling mechanism + documented drop-point', () => {
+  it('bundles vendored DTDs into util/dtd/ when present (no fabrication)', () => {
+    expect(src).toContain('function bundleVendoredDtds');
+    expect(src).toContain('ECTD_DTD_DIR');
+    expect(src).toContain('util/dtd/');
+  });
+
+  it('ships a documented DTD drop-point with required-file list', () => {
+    const readme = fs.readFileSync(
+      path.resolve(__dirname, '../assets/ectd-dtd/README.md'),
+      'utf8'
+    );
+    expect(readme).toContain('ich-ectd-3-2.dtd');
+    expect(readme).toContain('not committed');
+  });
+});
