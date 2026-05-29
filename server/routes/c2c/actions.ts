@@ -26,7 +26,7 @@ import { Router, type Request, type Response } from 'express';
 import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
 import { pool } from '../../db.js';
-import { computeAuditChain, hashPayload } from '../../services/audit/chain.js';
+import { computeAuditChain, hashPayload, verifyAuditChain } from '../../services/audit/chain.js';
 import { verifyToken as verifyMfaToken } from '../../services/mfaService.js';
 
 const router = Router();
@@ -78,11 +78,20 @@ function resolveOrgId(req: Request): number | null {
 
 // ── Typed-target resolver ─────────────────────────────────────────────────────
 //
-// Validates that the typed pointer references a real row. Returns the row or
-// null if not found. Gracefully handles tables that don't exist yet (Phase 9).
+// Validates that the typed pointer references a real row OWNED BY the caller's
+// org. Every lookup is scoped by organization id so a user in org A cannot
+// record a governed mutation against another tenant's object (cross-tenant
+// reference). Returns the row, or null if not found / not owned by the org.
+//
+// Distinguishes a missing table (Phase 9 not yet migrated — degrade to
+// unresolved-but-valid) from a real DB error (re-thrown, surfaced as 500).
+
+// Postgres SQLSTATE for "undefined_table".
+const PG_UNDEFINED_TABLE = '42P01';
 
 async function resolveTarget(
   target: string,
+  orgId: number,
 ): Promise<{ exists: boolean; table: string; id: string } | null> {
   const colonIdx = target.indexOf(':');
   if (colonIdx === -1) return null;
@@ -94,44 +103,54 @@ async function resolveTarget(
     switch (prefix) {
       case 'program': {
         const r = await pool.query(
-          `SELECT id FROM regulatory_programs WHERE id = $1 LIMIT 1`, [rest],
+          `SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+          [rest, orgId],
         );
         return r.rows.length > 0 ? { exists: true, table: 'regulatory_programs', id: rest } : null;
       }
       case 'document': {
         const r = await pool.query(
-          `SELECT id FROM c2c_documents WHERE id = $1 LIMIT 1`, [rest],
+          `SELECT id FROM c2c_documents WHERE id = $1 AND org_id = $2 LIMIT 1`,
+          [rest, orgId],
         );
         return r.rows.length > 0 ? { exists: true, table: 'c2c_documents', id: rest } : null;
       }
       case 'section': {
-        // format: section:<docId>:<sectionKey>
+        // format: section:<docId>:<sectionKey>. Sections have no org column of
+        // their own — scope via the owning document.
         const parts = rest.split(':');
         if (parts.length < 2) return null;
         const [docId, ...keyParts] = parts;
         const sectionKey = keyParts.join(':');
         const r = await pool.query(
-          `SELECT id FROM c2c_document_sections WHERE document_id = $1 AND section_key = $2 LIMIT 1`,
-          [docId, sectionKey],
+          `SELECT s.id
+             FROM c2c_document_sections s
+             JOIN c2c_documents d ON d.id = s.document_id
+            WHERE s.document_id = $1 AND s.section_key = $2 AND d.org_id = $3
+            LIMIT 1`,
+          [docId, sectionKey, orgId],
         );
         return r.rows.length > 0 ? { exists: true, table: 'c2c_document_sections', id: rest } : null;
       }
       case 'blocker': {
         // C-9: match on blocker_id (text business key), not serial PK
         const r = await pool.query(
-          `SELECT id FROM c2c_blockers WHERE blocker_id = $1 LIMIT 1`, [rest],
+          `SELECT id FROM c2c_blockers WHERE blocker_id = $1 AND organization_id = $2 LIMIT 1`,
+          [rest, orgId],
         );
         return r.rows.length > 0 ? { exists: true, table: 'c2c_blockers', id: rest } : null;
       }
       case 'task': {
         const r = await pool.query(
-          `SELECT id FROM c2c_project_work_items WHERE id = $1 LIMIT 1`, [rest],
+          `SELECT id FROM c2c_project_work_items WHERE id = $1 AND org_id = $2 LIMIT 1`,
+          [rest, orgId],
         );
         return r.rows.length > 0 ? { exists: true, table: 'c2c_project_work_items', id: rest } : null;
       }
       case 'submission': {
         const r = await pool.query(
-          `SELECT id FROM pma_submissions WHERE id = $1 LIMIT 1`, [rest],
+          `SELECT id FROM pma_submissions WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+          [rest, orgId],
         );
         return r.rows.length > 0 ? { exists: true, table: 'pma_submissions', id: rest } : null;
       }
@@ -146,10 +165,15 @@ async function resolveTarget(
       default:
         return null;
     }
-  } catch {
-    // Table may not exist yet (e.g. c2c_documents pre-Phase-9). Treat as
-    // unresolved but valid so the action can still be recorded.
-    return { exists: false, table: prefix, id: rest };
+  } catch (err: any) {
+    // A missing table (e.g. c2c_documents pre-Phase-9) is an expected,
+    // tolerable state: treat as unresolved-but-valid so the action records.
+    if (err?.code === PG_UNDEFINED_TABLE) {
+      return { exists: false, table: prefix, id: rest };
+    }
+    // Any other DB error is real — do not silently accept the target. Surface
+    // it so the handler returns 500 rather than recording an unverified target.
+    throw err;
   }
 }
 
@@ -325,13 +349,15 @@ function makeHandler(command: Command) {
       }
     }
 
-    // Resolve the typed target.
-    const resolved = await resolveTarget(body.target);
-    if (resolved === null) {
-      return res.status(400).json({ error: 'TARGET_INVALID', detail: 'Unknown target prefix.' });
-    }
-
+    // Resolve the typed target, scoped to the caller's org. A null result
+    // means unknown prefix, non-existent row, or a row owned by another org —
+    // all rejected. A thrown DB error is surfaced as 500 below.
     try {
+      const resolved = await resolveTarget(body.target, orgId);
+      if (resolved === null) {
+        return res.status(400).json({ error: 'TARGET_INVALID', detail: 'Unknown or inaccessible target.' });
+      }
+
       const result = await writeMutation(
         command,
         body,
@@ -347,6 +373,32 @@ function makeHandler(command: Command) {
     }
   };
 }
+
+// ── Audit-chain verification (read-only) ──────────────────────────────────────
+//
+// Re-derives the audit_logs sha256 chain and reports whether it is intact.
+// This is the verification counterpart to computeAuditChain — without it the
+// tamper-evident chain is written but never checked. Returns only a verdict +
+// the id/hashes of the first break (no audit record content is exposed).
+
+router.get('/verify-chain', async (req: Request, res: Response) => {
+  const userId = resolveUserId(req);
+  const orgId  = resolveOrgId(req);
+  if (!userId || !orgId) {
+    return res.status(401).json({ error: 'AUTH_REQUIRED' });
+  }
+
+  const client = await pool.connect();
+  try {
+    const result = await verifyAuditChain(client);
+    return res.status(result.ok ? 200 : 409).json(result);
+  } catch (err: any) {
+    console.error('[c2c/actions/verify-chain]', err?.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  } finally {
+    client.release();
+  }
+});
 
 // ── Six mutations ────────────────────────────────────────────────────────────
 
