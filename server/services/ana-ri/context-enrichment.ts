@@ -1501,8 +1501,20 @@ export async function enrichContextForChat(params: {
       }
     }
 
+    // ── Proactive stakeholder alignment — internal / partner tensions ──
+    if (detectRelevantAlignment(message, { segment: challengeSegment }).length > 0) {
+      sourcesAttempted++;
+      const alignBlock = buildAlignmentBlock({ message, segment: challengeSegment });
+      if (alignBlock) {
+        blocks.push(alignBlock);
+        sources.push('stakeholder-alignment');
+        if (triggerType === 'none') triggerType = 'natural_language';
+      }
+    }
+
     // ── Client attunement — read the human state and steady the delivery ──
-    if (detectClientState(message)) {      sourcesAttempted++;
+    if (detectClientState(message)) {
+      sourcesAttempted++;
       const attuneBlock = buildAttunementBlock(message);
       if (attuneBlock) {
         blocks.push(attuneBlock);
