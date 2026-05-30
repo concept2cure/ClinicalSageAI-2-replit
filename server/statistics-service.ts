@@ -4,6 +4,7 @@ import { eq, sql, and, gte, lte, desc, count, avg, max, min } from 'drizzle-orm'
 import * as math from 'mathjs';
 import { Rng, createRng, seedFromObject } from './services/stats/rng';
 import { buildProvenance, type StatsProvenance } from './services/stats/computation-provenance';
+import { ptrsService, type PtrsPrediction } from './services/ptrs';
 
 /**
  * Enhanced Biostatistics Service for Concept2Cure
@@ -1795,7 +1796,21 @@ export class StatisticsService {
   }
 
   /**
-   * Predict trial success probability
+   * Predict trial success probability.
+   *
+   * Delegates to the calibrated PTRS model (`server/services/ptrs`), which
+   * replaced the previous hand-tuned additive heuristic (a baseline rate nudged
+   * by magic constants) with a trained logistic model over the corpus plus an
+   * honest cold-start prior. The `registry_completion` target matches this
+   * method's historical "success" semantics — a trial that completes rather than
+   * terminates — so the contract is preserved while the number becomes honest.
+   *
+   * Returns the legacy shape (probability, confidence, contributingFactors)
+   * enriched with the fields the model carries: the estimate's source
+   * (trained/blended/prior/not-assessable), its evidence interval and N, the
+   * prior used, the label the probability refers to, and a provenance record.
+   * `probability` is `null` when the corpus cannot yet support an honest
+   * estimate, rather than a fabricated 0.5.
    */
   async predictTrialSuccess(params: {
     indication: string;
@@ -1804,215 +1819,63 @@ export class StatisticsService {
     duration: number;
     designFeatures: string[];
   }): Promise<{
-    probability: number;
+    probability: number | null;
     confidence: number;
     contributingFactors: Array<{
       factor: string;
       impact: number;
       direction: 'positive' | 'negative';
     }>;
+    source: PtrsPrediction['source'];
+    sampleSize: number;
+    interval: [number, number] | null;
+    priorProbability: number | null;
+    priorSource: string | null;
+    labelSemantics: string;
+    note: string;
+    provenance: StatsProvenance;
   }> {
-    try {
-      const { indication, phase, sampleSize, duration, designFeatures } = params;
+    const prediction = await ptrsService.predict('registry_completion', {
+      indication: params.indication,
+      phase: params.phase,
+      sampleSize: params.sampleSize ?? null,
+      durationWeeks: params.duration ?? null,
+      designFeatures: params.designFeatures ?? [],
+    });
 
-      const dbInstance = db;
-      if (!dbInstance) {
-        return {
-          probability: 0.5,
-          confidence: 0.1,
-          contributingFactors: [],
-          error: 'Database unavailable',
-        } as any;
-      }
-
-      // Get baseline success rate for the indication and phase
-      const reports = await dbInstance
-        .select({
-          id: csrReports.id,
-          status: csrReports.status,
-        })
-        .from(csrReports)
-        .where(and(eq(csrReports.indication, indication), eq(csrReports.phase, phase)));
-
-      if (reports.length === 0) {
-        return {
-          probability: 0.5, // Default without data
-          confidence: 0.1,
-          contributingFactors: [],
-        };
-      }
-
-      // Calculate baseline success rate
-      const successfulTrials = reports.filter(
-        r => r.status.toLowerCase() === 'completed' || r.status.toLowerCase() === 'successful'
-      ).length;
-
-      const baselineSuccessRate = reports.length > 0 ? successfulTrials / reports.length : 0.5;
-
-      // Get trial details
-      const reportIds = reports.map(r => r.id);
-      const details = await dbInstance
-        .select()
-        .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${reportIds.join(',')})`);
-
-      // Calculate adjustment factors based on the provided parameters
-      const factors: Array<{ factor: string; impact: number; direction: 'positive' | 'negative' }> =
-        [];
-      let adjustedProbability = baselineSuccessRate;
-
-      // 1. Sample size factor
-      const sampleSizes = details
-        .filter(
-          (d): d is typeof d & { sampleSize: number } => d.sampleSize !== null && d.sampleSize > 0
-        )
-        .map(d => d.sampleSize);
-
-      if (sampleSizes.length > 0) {
-        const avgSampleSize = Number(math.mean(sampleSizes));
-        const sizeRatio = sampleSize / avgSampleSize;
-
-        let sampleSizeImpact = 0;
-        let direction: 'positive' | 'negative' = 'positive';
-
-        if (sizeRatio > 1.5) {
-          // Larger sample size increases power
-          sampleSizeImpact = Math.min(0.15, (sizeRatio - 1) * 0.1);
-          direction = 'positive';
-          adjustedProbability += sampleSizeImpact;
-        } else if (sizeRatio < 0.7) {
-          // Smaller sample size decreases power
-          sampleSizeImpact = Math.min(0.15, (1 - sizeRatio) * 0.15);
-          direction = 'negative';
-          adjustedProbability -= sampleSizeImpact;
-        }
-
-        if (sampleSizeImpact > 0.01) {
-          factors.push({
-            factor: 'Sample Size',
-            impact: sampleSizeImpact,
-            direction,
-          });
-        }
-      }
-
-      // 2. Duration factor
-      const durations = details
-        .map(detail => this.extractStudyDurationWeeks(detail))
-        .filter((duration): duration is number => duration !== null);
-
-      if (durations.length > 0) {
-        const avgDuration = Number(math.mean(durations));
-        const durationRatio = duration / avgDuration;
-
-        let durationImpact = 0;
-        let direction: 'positive' | 'negative' = 'positive';
-
-        if (durationRatio < 0.7 && phase !== 'Phase 1') {
-          // Shorter duration might miss long-term effects in later phases
-          durationImpact = Math.min(0.12, (1 - durationRatio) * 0.15);
-          direction = 'negative';
-          adjustedProbability -= durationImpact;
-        } else if (durationRatio > 1.5) {
-          // Longer duration might increase dropout and complexity
-          durationImpact = Math.min(0.08, (durationRatio - 1) * 0.05);
-          direction = 'negative';
-          adjustedProbability -= durationImpact;
-        }
-
-        if (durationImpact > 0.01) {
-          factors.push({
-            factor: 'Study Duration',
-            impact: durationImpact,
-            direction,
-          });
-        }
-      }
-
-      // 3. Design features impact
-      if (designFeatures.length > 0) {
-        // Count frequency of each design feature in successful vs. failed trials
-        const designStats = new Map<string, { success: number; failure: number }>();
-
-        details.forEach(detail => {
-          if (!detail.studyDesign) return;
-
-          // Check if the report was successful
-          const report = reports.find(r => r.id === detail.reportId);
-          const isSuccess =
-            report &&
-            (report.status.toLowerCase() === 'completed' ||
-              report.status.toLowerCase() === 'successful');
-
-          // Look for design features in study design
-          designFeatures.forEach(feature => {
-            const studyDesign = detail.studyDesign ?? '';
-            if (studyDesign.toLowerCase().includes(feature.toLowerCase())) {
-              if (!designStats.has(feature)) {
-                designStats.set(feature, { success: 0, failure: 0 });
-              }
-
-              const stats = designStats.get(feature)!;
-              if (isSuccess) {
-                stats.success++;
-              } else {
-                stats.failure++;
-              }
-            }
-          });
-        });
-
-        // Calculate impact for each feature
-        designStats.forEach((stats, feature) => {
-          const total = stats.success + stats.failure;
-          if (total < 3) return; // Insufficient data
-
-          const featureSuccessRate = stats.success / total;
-          const impact = Math.abs(featureSuccessRate - baselineSuccessRate);
-
-          if (impact > 0.05) {
-            const direction: 'positive' | 'negative' =
-              featureSuccessRate > baselineSuccessRate ? 'positive' : 'negative';
-
-            factors.push({
-              factor: `Design: ${feature}`,
-              impact,
-              direction,
-            });
-
-            if (direction === 'positive') {
-              adjustedProbability += impact;
-            } else {
-              adjustedProbability -= impact;
-            }
-          }
-        });
-      }
-
-      // Ensure probability is between 0 and 1
-      adjustedProbability = Math.min(1, Math.max(0, adjustedProbability));
-
-      // Calculate confidence level based on available data
-      const confidenceLevel = Math.min(
-        0.9,
-        0.3 +
-          Math.min(0.3, (reports.length / 50) * 0.3) + // Data quantity factor
-          Math.min(0.3, (factors.length / 5) * 0.3) // Factor coverage
+    // Confidence is derived transparently from the evidence rather than
+    // hand-tuned: zero when the estimate is not assessable, otherwise a tighter
+    // interval and a higher trained-model weight both raise it.
+    let confidence = 0;
+    if (prediction.source !== 'not_assessable') {
+      const intervalTightness = prediction.interval
+        ? 1 - (prediction.interval[1] - prediction.interval[0])
+        : 0.1;
+      confidence = Math.max(
+        0,
+        Math.min(0.95, 0.5 * prediction.localWeight + 0.5 * intervalTightness),
       );
-
-      return {
-        probability: adjustedProbability,
-        confidence: confidenceLevel,
-        contributingFactors: factors.sort((a, b) => b.impact - a.impact),
-      };
-    } catch (error) {
-      console.error('Error predicting trial success:', error);
-      return {
-        probability: 0.5,
-        confidence: 0.1,
-        contributingFactors: [],
-      };
     }
+
+    const contributingFactors = prediction.contributingFactors.map(f => ({
+      factor: f.feature,
+      impact: Math.abs(f.contribution),
+      direction: f.direction,
+    }));
+
+    return {
+      probability: prediction.probability,
+      confidence,
+      contributingFactors,
+      source: prediction.source,
+      sampleSize: prediction.sampleSize,
+      interval: prediction.interval,
+      priorProbability: prediction.priorProbability,
+      priorSource: prediction.priorSource,
+      labelSemantics: prediction.labelSemantics,
+      note: prediction.note,
+      provenance: prediction.provenance,
+    };
   }
 
   /**
