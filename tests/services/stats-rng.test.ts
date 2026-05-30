@@ -46,6 +46,23 @@ describe('Rng — distribution sanity', () => {
     expect(Math.abs(sum / n - 0.5)).toBeLessThan(0.01);
   });
 
+  it('poisson is non-negative, deterministic by seed, and has mean ~lambda', () => {
+    expect(new Rng(7).poisson(4)).toEqual(new Rng(7).poisson(4));
+    expect(new Rng(7).poisson(0)).toEqual(0);
+    expect(new Rng(7).poisson(-1)).toEqual(0);
+    const r = new Rng(7);
+    const lambda = 4;
+    const reps = 50000;
+    let total = 0;
+    for (let i = 0; i < reps; i++) {
+      const k = r.poisson(lambda);
+      expect(k).toBeGreaterThanOrEqual(0);
+      expect(Number.isInteger(k)).toBe(true);
+      total += k;
+    }
+    expect(Math.abs(total / reps - lambda)).toBeLessThan(0.1);
+  });
+
   it('normal has mean ~mu and sd ~sigma', () => {
     const r = new Rng(3);
     const n = 200000;

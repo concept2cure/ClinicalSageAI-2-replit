@@ -99,6 +99,19 @@ export class Rng {
     }
     return successes;
   }
+
+  /** Poisson count with mean lambda (Knuth's algorithm; adequate for moderate lambda). */
+  poisson(lambda: number): number {
+    if (!(lambda > 0)) return 0;
+    const L = Math.exp(-lambda);
+    let k = 0;
+    let p = 1;
+    do {
+      k++;
+      p *= this.uniform();
+    } while (p > L);
+    return k - 1;
+  }
 }
 
 /** Hash an arbitrary string to a uint32 seed (FNV-1a). */
