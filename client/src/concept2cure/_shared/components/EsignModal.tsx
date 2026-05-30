@@ -125,8 +125,18 @@ export interface EsignModalProps {
    * Runs after re-authentication succeeds. Perform the real governed mutation
    * here (e.g. POST the batch release). Resolve with the committed manifest to
    * show the signed confirmation; reject to surface an inline error.
+   *
+   * `password` (and `totp` when MFA is required) are passed through so the
+   * caller can forward them as the `reauth` envelope to a server endpoint that
+   * re-verifies the signer inside the same governed transaction. They are held
+   * only for the duration of the call and never stored.
    */
-  onSign: (input: { meaning: EsigMeaning; reason: string }) => Promise<EsigSignedManifest>;
+  onSign: (input: {
+    meaning: EsigMeaning;
+    reason: string;
+    password: string;
+    totp?: string;
+  }) => Promise<EsigSignedManifest>;
 }
 
 // ── Focus trap helper ────────────────────────────────────────────────────────
@@ -260,8 +270,14 @@ export function EsignModal({
           return;
         }
       }
-      // Re-auth passed. Run the caller's governed mutation.
-      const signed = await onSign({ meaning, reason: reason.trim() });
+      // Re-auth passed. Run the caller's governed mutation, forwarding the
+      // credentials so the server can re-verify inside its own transaction.
+      const signed = await onSign({
+        meaning,
+        reason: reason.trim(),
+        password,
+        totp: requireMfa ? totp : undefined,
+      });
       setManifest(signed);
       setPhase('signed');
     } catch (err) {

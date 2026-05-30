@@ -1,8 +1,8 @@
 # Repo Health Scan
 
-Generated: 2026-05-30T16:30:06.025Z
-Branch: concept2cure-v2
-SHA: b4d3e60efe8bb9e0f9316049f5698946dfc63cff
+Generated: 2026-05-30T20:35:35.928Z
+Branch: claude/concept2cure-v2-audit-5zufv
+SHA: d52a3d7b168f2eec06049a3807b0f7ab9e1130d1
 
 ## Summary
 

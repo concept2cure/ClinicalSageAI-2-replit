@@ -154,6 +154,24 @@ async function resolveTarget(
         );
         return r.rows.length > 0 ? { exists: true, table: 'pma_submissions', id: rest } : null;
       }
+      case 'specification': {
+        const r = await pool.query(
+          `SELECT id FROM quality_specifications WHERE id = $1 LIMIT 1`, [rest],
+        );
+        return r.rows.length > 0 ? { exists: true, table: 'quality_specifications', id: rest } : null;
+      }
+      case 'batch': {
+        const r = await pool.query(
+          `SELECT id FROM cmc_batch_records WHERE id = $1 LIMIT 1`, [rest],
+        );
+        return r.rows.length > 0 ? { exists: true, table: 'cmc_batch_records', id: rest } : null;
+      }
+      case 'correspondence-issue': {
+        const r = await pool.query(
+          `SELECT id FROM c2c_correspondence_issues WHERE id = $1 LIMIT 1`, [rest],
+        );
+        return r.rows.length > 0 ? { exists: true, table: 'c2c_correspondence_issues', id: rest } : null;
+      }
       case 'gate':
       case 'haq':
       case 'signal':
@@ -179,7 +197,7 @@ async function resolveTarget(
 
 // ── Re-auth gate ──────────────────────────────────────────────────────────────
 
-async function verifyReauth(
+export async function verifyReauth(
   userId: number,
   reauth: ActionEnvelope['reauth'],
 ): Promise<{ ok: boolean; error?: string }> {
@@ -202,6 +220,128 @@ async function verifyReauth(
   }
 
   return { ok: true };
+}
+
+// ── Reusable governed-action writer ───────────────────────────────────────────
+//
+// Writes the audit_logs + c2c_ana_actions pair (with sha256 hash-chain) inside
+// a transaction the CALLER owns. It does NOT open/commit a transaction and does
+// NOT resolve the target — target resolution stays in the HTTP makeHandler path.
+//
+// This is the single ledger primitive shared by writeMutation() (the six
+// universal mutations) and the domain endpoints that govern their own writes
+// in place (spec approval, batch release, correspondence review, transmit).
+
+export interface RecordGovernedActionParams {
+  orgId:    number;
+  userId:   number;
+  command:  string;
+  target:   string;
+  reason:   string;
+  payload?: Record<string, unknown>;
+  domain?:  string;
+  surface?: string;
+  /** Optional idempotency key persisted on the c2c_ana_actions row. */
+  idempotencyKey?: string | null;
+}
+
+export interface RecordGovernedActionResult {
+  actionId:    string;
+  auditId:     string;
+  sha256Chain: string;
+}
+
+export async function recordGovernedAction(
+  client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> },
+  params: RecordGovernedActionParams,
+): Promise<RecordGovernedActionResult> {
+  const {
+    orgId,
+    userId,
+    command,
+    target,
+    reason,
+    payload = {},
+    domain = 'mdx',
+    surface = 'api',
+    idempotencyKey = null,
+  } = params;
+
+  const actionId     = `act_${randomUUID().replace(/-/g, '')}`;
+  const auditId      = randomUUID();
+  const occurredAt   = new Date().toISOString();
+  const payloadHash  = hashPayload(payload);
+  const targetType   = target.split(':')[0];
+  const targetId     = target.slice(targetType.length + 1);
+
+  const sha256Chain = await computeAuditChain(client as any, {
+    action:       `c2c.work.${command}`,
+    actor_id:     userId,
+    target,
+    payload_hash: payloadHash,
+    occurred_at:  occurredAt,
+  });
+
+  // Write audit_logs row inside the caller's transaction.
+  await client.query(
+    `INSERT INTO audit_logs
+       (id, tenant_id, user_id, action, table_name, record_id,
+        actor_id, target, target_type, target_id, reason, payload_hash,
+        ana_action_id, sha256_chain, occurred_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+    [
+      auditId,
+      orgId,
+      userId,
+      `c2c.work.${command}`,
+      targetType,
+      targetId,
+      userId,
+      target,
+      targetType,
+      targetId,
+      reason,
+      payloadHash,
+      actionId,
+      sha256Chain,
+      occurredAt,
+    ],
+  );
+
+  // Write c2c_ana_actions row.
+  await client.query(
+    `INSERT INTO c2c_ana_actions
+       (id, org_id, domain, surface, command, target, risk, payload,
+        agentic_mode, state, proposed_at, proposed_by,
+        decided_at, decided_by, decision_reason,
+        executed_at, audit_row_id, idempotency_key)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8,
+             $9, $10, $11, $12,
+             $13, $14, $15,
+             $16, $17, $18)`,
+    [
+      actionId,
+      orgId,
+      domain,
+      surface,
+      command,
+      target,
+      HIGH_RISK_COMMANDS.has(command as Command) ? 'high' : 'low',
+      JSON.stringify(payload),
+      'suggest',
+      'executed',
+      occurredAt,
+      userId,
+      occurredAt,
+      userId,
+      reason,
+      occurredAt,
+      auditId,
+      idempotencyKey ?? null,
+    ],
+  );
+
+  return { actionId, auditId, sha256Chain };
 }
 
 // ── Core mutation writer ──────────────────────────────────────────────────────
@@ -233,83 +373,21 @@ export async function writeMutation(
     }
   }
 
-  const actionId     = `act_${randomUUID().replace(/-/g, '')}`;
-  const auditId      = randomUUID();
-  const occurredAt   = new Date().toISOString();
-  const payloadHash  = hashPayload(payload);
-  const targetType   = target.split(':')[0];
-  const targetId     = target.slice(targetType.length + 1);
-
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
-    const sha256Chain = await computeAuditChain(client, {
-      action:       `c2c.work.${command}`,
-      actor_id:     userId,
+    const { actionId, auditId, sha256Chain } = await recordGovernedAction(client, {
+      orgId,
+      userId,
+      command,
       target,
-      payload_hash: payloadHash,
-      occurred_at:  occurredAt,
+      reason,
+      payload,
+      domain,
+      surface,
+      idempotencyKey: idempotencyKey ?? null,
     });
-
-    // Write audit_logs row inside the transaction.
-    await client.query(
-      `INSERT INTO audit_logs
-         (id, tenant_id, user_id, action, table_name, record_id,
-          actor_id, target, target_type, target_id, reason, payload_hash,
-          ana_action_id, sha256_chain, occurred_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
-      [
-        auditId,
-        orgId,
-        userId,
-        `c2c.work.${command}`,
-        targetType,
-        targetId,
-        userId,
-        target,
-        targetType,
-        targetId,
-        reason,
-        payloadHash,
-        actionId,
-        sha256Chain,
-        occurredAt,
-      ],
-    );
-
-    // Write c2c_ana_actions row.
-    await client.query(
-      `INSERT INTO c2c_ana_actions
-         (id, org_id, domain, surface, command, target, risk, payload,
-          agentic_mode, state, proposed_at, proposed_by,
-          decided_at, decided_by, decision_reason,
-          executed_at, audit_row_id, idempotency_key)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8,
-               $9, $10, $11, $12,
-               $13, $14, $15,
-               $16, $17, $18)`,
-      [
-        actionId,
-        orgId,
-        domain,
-        surface,
-        command,
-        target,
-        HIGH_RISK_COMMANDS.has(command) ? 'high' : 'low',
-        JSON.stringify(payload),
-        'suggest',
-        'executed',
-        occurredAt,
-        userId,
-        occurredAt,
-        userId,
-        reason,
-        occurredAt,
-        auditId,
-        idempotencyKey ?? null,
-      ],
-    );
 
     await client.query('COMMIT');
     return { actionId, auditId, sha256Chain, state: 'executed' };

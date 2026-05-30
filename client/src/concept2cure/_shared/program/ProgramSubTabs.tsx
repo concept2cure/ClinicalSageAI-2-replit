@@ -414,14 +414,16 @@ function CorrespondencePanel({ projectId }: { projectId: string | null }) {
     window.setTimeout(() => restore?.focus?.(), 0);
   };
 
+  const reasonValid = reason.trim().length >= 8;
+
   const onConfirm = async () => {
-    if (!target || review.isPending) return;
-    // The reason is captured for operator intent; the review route stores only
-    // the status (no note column), so it is not persisted server-side.
+    if (!target || review.isPending || !reasonValid) return;
+    // Governed resolve: the reason is required and is written verbatim into the
+    // audit_logs + c2c_ana_actions ledger by the server.
     await review.mutateAsync({
       issueId: target.issue.id,
       correspondenceId: target.correspondenceId,
-      reason: reason.trim() || undefined,
+      reason: reason.trim(),
     });
     // The reviewed issue's "Mark reviewed" button disappears; return focus to
     // the thread's expand toggle.
@@ -506,7 +508,7 @@ function CorrespondencePanel({ projectId }: { projectId: string | null }) {
         open={!!target}
         busy={review.isPending}
         title="Mark issue reviewed"
-        subtitle="Records a human review on this parsed issue. The review status is stored in the correspondence record."
+        subtitle="Records a governed human review on this parsed issue. The reason is written to the 21 CFR Part 11 audit trail."
         onClose={closeModal}
         footer={
           <>
@@ -522,7 +524,7 @@ function CorrespondencePanel({ projectId }: { projectId: string | null }) {
               type="button"
               className="ptab-act ptab-act-primary"
               onClick={onConfirm}
-              disabled={review.isPending}
+              disabled={review.isPending || !reasonValid}
               aria-describedby={mutationError ? errId : undefined}
             >
               {review.isPending ? 'Saving…' : 'Mark reviewed'}
@@ -531,17 +533,20 @@ function CorrespondencePanel({ projectId }: { projectId: string | null }) {
         }
       >
         <div className="ptab-review-field">
-          <label htmlFor="ptab-review-reason">Reason for review (optional)</label>
+          <label htmlFor="ptab-review-reason">Reason for review (required)</label>
           <textarea
             id="ptab-review-reason"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
+            required
+            aria-required="true"
+            aria-describedby="ptab-review-reason-hint"
             placeholder="Why is this issue cleared, and any context for the audit trail"
           />
         </div>
-        <p className="ptab-review-note">
-          The reason is captured for your record. The review endpoint stores the review
-          status only, so the note is not persisted server-side.
+        <p className="ptab-review-note" id="ptab-review-reason-hint">
+          Minimum 8 characters. The reason is written verbatim to the 21 CFR Part 11
+          audit trail.
         </p>
         {mutationError && (
           <div id={errId} className="ptab-review-err" role="alert">

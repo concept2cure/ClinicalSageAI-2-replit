@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-05-30T16:30:06.025Z",
+  "generatedAt": "2026-05-30T20:35:35.928Z",
   "git": {
-    "sha": "b4d3e60efe8bb9e0f9316049f5698946dfc63cff",
-    "branch": "concept2cure-v2"
+    "sha": "d52a3d7b168f2eec06049a3807b0f7ab9e1130d1",
+    "branch": "claude/concept2cure-v2-audit-5zufv"
   },
   "thresholds": {
     "maxBytes": 100000,
