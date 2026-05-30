@@ -125,7 +125,11 @@ export type LayoutMode =
   | 'risk'
   | 'tasking'
   | 'submission-gateway'
-  | 'project-detail';
+  | 'project-detail'
+  // ── Phase 11 surface ──
+  | 'intelligence'
+  // ── Phase 9 surface ──
+  | 'authoring';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // NAV MAPPINGS
