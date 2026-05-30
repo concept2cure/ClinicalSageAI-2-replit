@@ -146,6 +146,45 @@ const CROSS_CUTTING: WisdomHeuristic[] = [
       'Use the designation for what it gives you — rolling review, more frequent FDA contact, senior reviewer attention — and build the evidence as if the designation were not there.',
     basis: 'FDA expedited programs guidance (2014); EMA PRIME; PMDA SAKIGAKE.',
   },
+  {
+    id: 'x-minutes-are-the-record',
+    segment: null,
+    stage: 'agency_interaction',
+    title: 'The official minutes are the record, not what you remember hearing',
+    situation:
+      'A team leaves a meeting confident the agency agreed to something, but the agreement never makes it into the official minutes, or the team accepts the agency minutes without correcting an error.',
+    consequence:
+      'A verbal understanding that is not in the minutes does not bind the agency. Months later the reviewer holds you to what the minutes say, not what you recall.',
+    veteranMove:
+      'Submit your own minutes or formally request corrections within the comment window. Treat anything material that is not in the written record as not agreed.',
+    basis: 'FDA formal meeting procedures (PDUFA); EMA scientific advice letters as the binding record.',
+  },
+  {
+    id: 'x-answer-the-question-asked',
+    segment: null,
+    stage: 'agency_interaction',
+    title: 'Answer the question the agency asked, not the one you wish they had',
+    situation:
+      'Facing a deficiency or information request, a team responds with the argument it prefers rather than the specific evidence the reviewer asked for.',
+    consequence:
+      'A non-responsive answer reads as evasive, extends the review cycle, and often draws a sharper repeat of the same question.',
+    veteranMove:
+      'Restate the question, answer it directly with the evidence requested, and only then add context. If you cannot meet the request, say so plainly and propose what you can provide.',
+    basis: 'Recurring pattern in FDA information-request and EMA major-objection cycles.',
+  },
+  {
+    id: 'x-confirmatory-evidence-before-you-need-it',
+    segment: null,
+    stage: 'clinical',
+    title: 'Decide what would change your mind before the data arrive',
+    situation:
+      'A team designs a pivotal without pre-specifying how it will read a borderline or mixed result, then argues the interpretation after unblinding.',
+    consequence:
+      'Post-hoc interpretation of a borderline result is the weakest position in front of a reviewer, and a poorly pre-specified secondary analysis cannot rescue a missed primary.',
+    veteranMove:
+      'Pre-specify the estimand, the success criterion, and the multiplicity strategy. Decide before unblinding what result would and would not support the claim.',
+    basis: 'ICH E9(R1) estimand framework; pre-specification expectations at FDA and EMA.',
+  },
 ];
 
 // ─── Medical device / IVD wisdom ─────────────────────────────────────────────
@@ -228,6 +267,32 @@ const MDX_WISDOM: WisdomHeuristic[] = [
     veteranMove:
       'Track every commitment to either rolled-in or explicitly deferred-with-justification, and confirm none is open within two weeks of transmit.',
     basis: 'Q-Submission feedback practice; recurring AI-letter pattern.',
+  },
+  {
+    id: 'mdx-pms-is-not-paperwork',
+    segment: 'mdx',
+    stage: 'lifecycle',
+    title: 'Under MDR, post-market surveillance feeds the clinical evidence — it is not filing-and-forgetting',
+    situation:
+      'After CE marking, a team treats the PMS plan, PMCF, and PSUR as a compliance archive rather than a live input to the clinical evaluation.',
+    consequence:
+      'Notified Body surveillance audits check that PMS and PMCF actually update the CER and risk file. A dormant PMS system is a common finding that can suspend the certificate.',
+    veteranMove:
+      'Wire PMS and PMCF outputs back into the CER and risk management file on the planned cadence, and keep the PSUR current for Class IIa and above.',
+    basis: 'EU MDR 2017/745 Articles 83-86, Annex XIV Part B; MDCG PMS guidance.',
+  },
+  {
+    id: 'mdx-ivdr-transition-underestimated',
+    segment: 'mdx',
+    stage: 'strategy',
+    title: 'IVDR reclassified most assays into Notified-Body territory',
+    situation:
+      'An IVD team assumes the legacy IVDD self-certification path still applies, or underestimates how many products IVDR pushes into Class B/C/D requiring a Notified Body.',
+    consequence:
+      'Under IVDR the large majority of assays now need Notified Body involvement and performance evidence the IVDD never required; capacity constraints make this a multi-year timeline, not a paperwork update.',
+    veteranMove:
+      'Classify each assay under the IVDR rules early, secure Notified Body capacity, and budget the performance-evaluation evidence the new class demands.',
+    basis: 'EU IVDR 2017/746 classification rules (Annex VIII); staggered transition timelines.',
   },
 ];
 
@@ -312,6 +377,32 @@ const BIOTECH_WISDOM: WisdomHeuristic[] = [
       'Map orphan designation, the iPSP/PIP timeline, and the adult filing as one sequence. File pediatric plans at end of Phase 2, not at submission.',
     basis: 'FDA PREA / iPSP timing; EU Paediatric Regulation; orphan exemptions and their limits.',
   },
+  {
+    id: 'bio-crl-is-a-roadmap',
+    segment: 'biotech',
+    stage: 'agency_interaction',
+    title: 'A complete response letter is a roadmap, not a verdict',
+    situation:
+      'A team reacts to a CRL by resubmitting piecemeal fixes to the deficiencies it finds easiest, or by relitigating the agency\'s judgment.',
+    consequence:
+      'A response that leaves any cited deficiency unaddressed restarts the review clock without resolving the file, and arguing the science the agency already weighed rarely lands.',
+    veteranMove:
+      'Request a Type A meeting to confirm the path, address every deficiency in the letter, and align the resubmission class with the work actually required rather than the timeline you wish for.',
+    basis: '21 CFR 314.110 / 601.3; FDA Type A post-action meeting practice.',
+  },
+  {
+    id: 'bio-cgt-manufacturing-is-the-product',
+    segment: 'biotech',
+    stage: 'lifecycle',
+    title: 'For an advanced therapy, the manufacturing process effectively is the product',
+    situation:
+      'A cell or gene therapy team plans a post-approval process change, site transfer, or scale-up as if it were a conventional CMC variation.',
+    consequence:
+      'Because the process defines the product, even a modest change can require comparability that approaches a new characterization package, and an unplanned change can put supply or the license at risk.',
+    veteranMove:
+      'Treat any process change as a comparability exercise scoped to the modality, plan changes against the approved control strategy, and use the established-conditions framework to bound what is reportable.',
+    basis: 'ICH Q5E; FDA CGT CMC expectations; ICH Q12 established conditions.',
+  },
 ];
 
 // ─── Pharma wisdom (small molecule, lifecycle) ───────────────────────────────
@@ -394,6 +485,32 @@ const PHARMA_WISDOM: WisdomHeuristic[] = [
     veteranMove:
       'File the iPSP and agree the PIP on the regulator timeline — typically end of Phase 2 — so pediatric obligations do not stall the adult submission.',
     basis: 'FDA PREA; EU Paediatric Regulation (PIP required for MAA validation).',
+  },
+  {
+    id: 'pharma-label-is-decided-late-cycle',
+    segment: 'pharma',
+    stage: 'agency_interaction',
+    title: 'The label is negotiated in the late-cycle review, not after approval',
+    situation:
+      'A team goes quiet during the review and treats labeling as a post-approval formality, deferring to whatever the agency drafts.',
+    consequence:
+      'The indication wording, contraindications, and boxed-warning decisions are largely settled in the late-cycle meeting and labeling negotiations. A passive sponsor inherits a narrower or more cautious label than the data support.',
+    veteranMove:
+      'Prepare the labeling argument with the same rigor as the efficacy case, engage actively in mid- and late-cycle communications, and bring the evidence for each contested label element.',
+    basis: 'FDA review program (Program for Enhanced Review Transparency); late-cycle meeting practice.',
+  },
+  {
+    id: 'pharma-pre-nda-meeting-sets-the-filing',
+    segment: 'pharma',
+    stage: 'pre_submission',
+    title: 'The pre-NDA meeting is where you confirm the filing will be accepted, not just reviewed',
+    situation:
+      'A team uses the pre-NDA meeting to discuss strategy in the abstract rather than to confirm the dataset, analyses, and format the agency expects to see.',
+    consequence:
+      'A filing that surprises the reviewer on content or structure risks a refuse-to-file or an early information request, costing the very time the meeting was meant to protect.',
+    veteranMove:
+      'Use the pre-NDA meeting to lock the contents of the application, the primary analyses, the integrated summaries scope, and any waivers — so the filing holds no surprises.',
+    basis: 'FDA pre-NDA/pre-BLA meeting guidance; refuse-to-file criteria (21 CFR 314.101).',
   },
 ];
 

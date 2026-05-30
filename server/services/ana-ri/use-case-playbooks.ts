@@ -155,6 +155,22 @@ const MDX_USE_CASES: UseCase[] = [
     watchOut: 'Responding out of sequence or orphaning the response from the original letter in the audit trail.',
     commands: ['haq', 'review', 'preflight'],
   },
+  {
+    id: 'mdx-pms',
+    segment: 'mdx',
+    name: 'Run post-market surveillance for a CE-marked device',
+    forRoles: ['ra_lead', 'clinical_lead'],
+    stage: 'lifecycle',
+    trigger: 'Your device is on the EU market and you owe PMS, PMCF, and PSUR obligations under MDR.',
+    surfaces: ['cer'],
+    firstMoves: [
+      'Stand up the PMS plan with defined data sources, analysis, and trend reporting.',
+      'Run the PMCF activities and feed the results back into the CER and risk file.',
+      'Keep the PSUR current for Class IIa and above.',
+    ],
+    watchOut: 'Treating PMS as an archive; Notified Body audits check that it actually updates the clinical evaluation.',
+    commands: ['safety', 'signals', 'device'],
+  },
 ];
 
 // ─── Biotech journeys ────────────────────────────────────────────────────────
@@ -255,6 +271,38 @@ const BIOTECH_USE_CASES: UseCase[] = [
     ],
     watchOut: 'Treating the designation as a discount on the evidence bar; it speeds interaction, not the standard.',
     commands: ['strategy', 'precedent', 'risk'],
+  },
+  {
+    id: 'bio-pre-bla-meeting',
+    segment: 'biotech',
+    name: 'Prepare a pre-BLA meeting',
+    forRoles: ['ra_lead', 'medical_writer'],
+    stage: 'pre_submission',
+    trigger: 'Your pivotal is reading out and you want to confirm the BLA will be accepted as planned.',
+    surfaces: [],
+    firstMoves: [
+      'Frame the meeting to lock the application contents, primary analyses, and integrated-summary scope.',
+      'Surface any waivers, comparability bridges, or format questions before they become filing surprises.',
+      'Bring your own draft minutes and confirm agreements in writing afterward.',
+    ],
+    watchOut: 'Using the meeting for abstract strategy instead of confirming exactly what the reviewer expects to see.',
+    commands: ['readiness', 'strategy', 'brief'],
+  },
+  {
+    id: 'bio-crl-response',
+    segment: 'biotech',
+    name: 'Respond to a complete response letter',
+    forRoles: ['ra_lead', 'ceo'],
+    stage: 'agency_interaction',
+    trigger: 'FDA issued a CRL on your BLA and you need a path back to approval.',
+    surfaces: [],
+    firstMoves: [
+      'Request a Type A meeting to confirm the path before committing to a resubmission scope.',
+      'Address every cited deficiency, not just the easy ones.',
+      'Match the resubmission class to the work actually required.',
+    ],
+    watchOut: 'Relitigating the agency\'s judgment or resubmitting piecemeal, which restarts the clock without resolving the file.',
+    commands: ['haq', 'risk', 'strategy'],
   },
 ];
 
@@ -372,6 +420,38 @@ const PHARMA_USE_CASES: UseCase[] = [
     ],
     watchOut: 'Assuming global data transfers automatically; both agencies expect adequate local or bridging data.',
     commands: ['strategy', 'precedent'],
+  },
+  {
+    id: 'pharma-pre-nda-meeting',
+    segment: 'pharma',
+    name: 'Prepare a pre-NDA meeting',
+    forRoles: ['ra_lead', 'medical_writer'],
+    stage: 'pre_submission',
+    trigger: 'Your pivotal program is reading out and you want to confirm the NDA will be accepted as planned.',
+    surfaces: [],
+    firstMoves: [
+      'Lock the application contents, the primary analyses, and the integrated-summary scope.',
+      'Confirm any waivers and the acceptability of the nonclinical and CMC packages.',
+      'Capture agreements in writing and reconcile the agency minutes.',
+    ],
+    watchOut: 'Discussing strategy in the abstract instead of confirming exactly what the reviewer expects, risking a refuse-to-file.',
+    commands: ['readiness', 'strategy', 'brief'],
+  },
+  {
+    id: 'pharma-crl-response',
+    segment: 'pharma',
+    name: 'Respond to a complete response letter',
+    forRoles: ['ra_lead', 'ceo'],
+    stage: 'agency_interaction',
+    trigger: 'FDA issued a CRL on your NDA and you need a path back to approval.',
+    surfaces: [],
+    firstMoves: [
+      'Request a Type A meeting to confirm the resubmission path.',
+      'Address every deficiency in the letter and align the resubmission class to the work required.',
+      'Where the deficiency is about labeling, prepare the labeling argument with full evidence.',
+    ],
+    watchOut: 'Going quiet or relitigating the science the agency already weighed, instead of resolving each cited deficiency.',
+    commands: ['haq', 'risk', 'strategy'],
   },
 ];
 
