@@ -24,8 +24,9 @@ import { getProjectIntelligence } from '../intelligence/project-intelligence-ser
 import { analyzeCrossModuleRelationships } from '../intelligence/cross-module-intelligence.js';
 import { buildEvidenceChain, computeConfidence, analyzeFactors, type EvidenceSource } from '../intelligence/evidence-confidence-model.js';
 import { getDeficienciesBySubmissionType, getCriticalDeficiencies, type SubmissionType } from './deficiency-taxonomy.js';
-import { buildIndustryWisdomBlock } from './industry-wisdom-pack.js';
+import { buildIndustryWisdomBlock, inferSegmentFromSubmissionType, inferSegmentFromMessage } from './industry-wisdom-pack.js';
 import { buildTourGuideBlock } from './use-case-playbooks.js';
+import { buildChallengeBlock, detectChallengeableClaims } from './challenge-library.js';
 import { buildWorkflowContext } from './workflow-orchestration.js';
 import { detectDocumentType, buildDocumentGenerationContext } from './document-routing.js';
 import { getFeedbackSummary } from '../intelligence/learning-loop-service.js';
@@ -151,6 +152,9 @@ export const SUPPORTED_SLASH_COMMANDS = [
   'playbook',
   'orient',
   'tour',
+  'challenge',
+  'redteam',
+  'devil',
 ] as const;
 
 const SUPPORTED_SLASH_COMMAND_REGEX = new RegExp(
@@ -329,6 +333,25 @@ const WAYFINDING_TRIGGERS = [
 
 function matchesTriggers(message: string, triggers: RegExp[]): boolean {
   return triggers.some(t => t.test(message));
+}
+
+/**
+ * Build a constructive-challenge block. If the message contains a recognized
+ * challengeable assertion, prime AnA to push back on it specifically; if the
+ * user explicitly asked to be challenged but no specific claim is detected,
+ * fall back to a general red-team instruction so /challenge always does work.
+ */
+function buildChallengeOrRedteam(message: string, submissionType?: string): string {
+  const segment = inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(message);
+  const block = buildChallengeBlock({ message, segment });
+  if (block) return block;
+  return (
+    '\n\n## Constructive challenge — red-team the plan\n' +
+    'The user explicitly asked you to challenge their thinking. Apply your Constructive Dissent doctrine as a red-team: ' +
+    'find the load-bearing assumption in their current plan, name the single biggest risk it carries, ground the objection in ' +
+    'precedent or guidance, and offer the stronger alternative. Acknowledge what is right first, state the disagreement once, ' +
+    'and end with a concrete better path. If the plan is genuinely sound, say so and name the one thing you would still watch.'
+  );
 }
 
 // ─── Enrichment functions ────────────────────────────────────────────────────
@@ -942,11 +965,15 @@ export async function enrichContextForChat(params: {
     const projectlessSources: string[] = [];
     const slashNoProj = detectSlashCommand(message);
     const wisdomFamily = ['wisdom', 'guide', 'playbook', 'orient', 'tour'];
+    const challengeFamily = ['challenge', 'redteam', 'devil'];
 
     if (slashNoProj && wisdomFamily.includes(slashNoProj.command)) {
       const block = slashNoProj.command === 'wisdom'
         ? buildIndustryWisdomBlock({ submissionType, message })
         : buildTourGuideBlock({ submissionType, message });
+      if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
+    } else if (slashNoProj && challengeFamily.includes(slashNoProj.command)) {
+      const block = buildChallengeOrRedteam(slashNoProj.args || message, submissionType);
       if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
     } else if (!slashNoProj) {
       if (matchesTriggers(message, WISDOM_TRIGGERS)) {
@@ -957,6 +984,12 @@ export async function enrichContextForChat(params: {
       if (matchesTriggers(message, WAYFINDING_TRIGGERS) || isGreetingNoProj) {
         const block = buildTourGuideBlock({ submissionType, message });
         if (block) { projectlessBlocks.push(block); projectlessSources.push('tour-guide'); }
+      }
+      const challengeSegmentNoProj =
+        inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(message);
+      if (detectChallengeableClaims(message, challengeSegmentNoProj).length > 0) {
+        const block = buildChallengeBlock({ message, segment: challengeSegmentNoProj });
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('constructive-challenge'); }
       }
     }
 
@@ -1078,6 +1111,9 @@ export async function enrichContextForChat(params: {
       playbook: () => Promise.resolve(buildTourGuideBlock({ submissionType, message: slash.args || message })),
       orient: () => Promise.resolve(buildTourGuideBlock({ submissionType, message: slash.args || message })),
       tour: () => Promise.resolve(buildTourGuideBlock({ submissionType, message: slash.args || message })),
+      challenge: () => Promise.resolve(buildChallengeOrRedteam(slash.args || message, submissionType)),
+      redteam: () => Promise.resolve(buildChallengeOrRedteam(slash.args || message, submissionType)),
+      devil: () => Promise.resolve(buildChallengeOrRedteam(slash.args || message, submissionType)),
       workflow: () => submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
       status: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
@@ -1180,6 +1216,11 @@ export async function enrichContextForChat(params: {
         : 'Walk the user through the use-case playbook that fits their situation. Name the first moves and the pitfall to watch, then offer the first step.',
       orient: 'Orient the user: name where they are, what matters now, and the common next moves for their segment and stage. Keep it short and specific.',
       tour: 'Give the user a guided tour of what matters for their segment and stage — the canonical journeys, the first moves, and the pitfalls. Do not dump the whole map; lead with what bears on them now.',
+      challenge: slash.args
+        ? `Red-team this plan: ${slash.args}. Find the load-bearing assumption, name the biggest risk it carries, ground the objection, and offer the stronger path. Acknowledge what is right first; state the disagreement once.`
+        : 'Red-team the user\'s current plan. Find the load-bearing assumption, name the single biggest risk, ground it in precedent or guidance, and offer the stronger alternative. Acknowledge what is right first, push back once, and end with a concrete better path.',
+      redteam: 'Red-team the user\'s current plan. Find the load-bearing assumption, name the single biggest risk, ground it, and offer the stronger alternative — acknowledging what is right first.',
+      devil: 'Play devil\'s advocate on the user\'s current plan. Surface the strongest objection a skeptical reviewer would raise, ground it, and offer the better path.',
       export: 'Export this conversation.',
     };
 
@@ -1282,6 +1323,22 @@ export async function enrichContextForChat(params: {
           }
         })
       );
+    }
+
+    // ── Proactive constructive challenge — runs independent of other triggers ──
+    // If the user asserts a plan experience says is risky, prime AnA to push
+    // back politely rather than affirming it. This is the operational arm of
+    // the persona's Constructive Dissent doctrine.
+    const challengeSegment =
+      inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(message);
+    if (detectChallengeableClaims(message, challengeSegment).length > 0) {
+      sourcesAttempted++;
+      const challengeBlock = buildChallengeBlock({ message, segment: challengeSegment });
+      if (challengeBlock) {
+        blocks.push(challengeBlock);
+        sources.push('constructive-challenge');
+        if (triggerType === 'none') triggerType = 'natural_language';
+      }
     }
 
     // ── Proactive enrichment for greetings/help — inject status so AnA can lead ──

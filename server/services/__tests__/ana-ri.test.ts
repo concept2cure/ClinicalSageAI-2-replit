@@ -1129,6 +1129,77 @@ describe('AnA RI Use-Case Playbooks', () => {
   });
 });
 
+// ── Constructive-challenge library ───────────────────────────────────────────
+
+import {
+  CHALLENGE_PATTERNS,
+  detectChallengeableClaims,
+  buildChallengeBlock,
+  listChallengesForSegment,
+} from '../ana-ri/challenge-library.js';
+
+describe('AnA RI Constructive-Challenge Library', () => {
+  const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
+
+  it('covers all three segments plus cross-cutting challenges', () => {
+    expect(listChallengesForSegment('mdx').some(p => p.segment === 'mdx')).toBe(true);
+    expect(listChallengesForSegment('biotech').some(p => p.segment === 'biotech')).toBe(true);
+    expect(listChallengesForSegment('pharma').some(p => p.segment === 'pharma')).toBe(true);
+    expect(CHALLENGE_PATTERNS.some(p => p.segment === null)).toBe(true);
+  });
+
+  it('every pattern has a claim, triggers, risk, challenge, reframe, and basis', () => {
+    for (const p of CHALLENGE_PATTERNS) {
+      expect(p.claim.length).toBeGreaterThan(10);
+      expect(p.triggers.length).toBeGreaterThan(0);
+      expect(p.risk.length).toBeGreaterThan(10);
+      expect(p.challenge.length).toBeGreaterThan(10);
+      expect(p.reframe.length).toBeGreaterThan(10);
+      expect(p.basis.length).toBeGreaterThan(3);
+    }
+  });
+
+  it('linked heuristics resolve to real wisdom entries', () => {
+    const ids = new Set(INDUSTRY_WISDOM.map(h => h.id));
+    for (const p of CHALLENGE_PATTERNS) {
+      if (p.relatedHeuristic) expect(ids.has(p.relatedHeuristic)).toBe(true);
+    }
+  });
+
+  it('fires on representative risky assertions', () => {
+    expect(detectChallengeableClaims("We're going to skip the pre-sub to save time").length).toBeGreaterThan(0);
+    expect(detectChallengeableClaims('Our predicate is the closest match so it is the best').length).toBeGreaterThan(0);
+    expect(detectChallengeableClaims('Our global dataset will be enough for Japan').length).toBeGreaterThan(0);
+    expect(detectChallengeableClaims('Breakthrough designation means we need less data').length).toBeGreaterThan(0);
+    expect(detectChallengeableClaims("We'll mature the potency assay later").length).toBeGreaterThan(0);
+  });
+
+  it('does not fire on neutral questions', () => {
+    expect(detectChallengeableClaims('What is the readiness of my IND?')).toHaveLength(0);
+    expect(detectChallengeableClaims('Draft the clinical overview for me')).toHaveLength(0);
+  });
+
+  it('builds a polite-challenge block that invokes the dissent doctrine', () => {
+    const block = buildChallengeBlock({ message: "We're going to skip the pre-sub to save time" });
+    expect(block).toContain('Constructive challenge');
+    expect(block).toMatch(/acknowledge what is right/i);
+    expect(block).toMatch(/The better path to offer/);
+    expect(block).toMatch(/Why it is risky/);
+  });
+
+  it('returns empty when nothing is challengeable', () => {
+    expect(buildChallengeBlock({ message: 'What is ICH E6?' })).toBe('');
+  });
+
+  it('keeps challenge copy inside the design-system voice (no emoji, no exclamation)', () => {
+    for (const p of CHALLENGE_PATTERNS) {
+      const text = [p.claim, p.risk, p.challenge, p.reframe, p.basis].join(' ');
+      expect(text).not.toContain('!');
+      expect(EMOJI.test(text)).toBe(false);
+    }
+  });
+});
+
 // ── Enrichment wiring for wisdom + tour guide ────────────────────────────────
 
 describe('AnA RI Enrichment — wisdom & wayfinding', () => {
@@ -1174,6 +1245,37 @@ describe('AnA RI Enrichment — wisdom & wayfinding', () => {
     });
     expect(result.enrichmentMeta?.sourcesSucceeded).toContain('industry-wisdom');
     expect(result.block).toContain('Industry wisdom');
+  });
+
+  it('handles /challenge as a first-class slash command', async () => {
+    const result = await enrichContextForChat({
+      message: '/challenge',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'nda',
+    });
+    expect(result.enrichmentMeta?.detectedCommand).toBe('challenge');
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('challenge');
+    expect(result.block).toContain('Constructive challenge');
+  });
+
+  it('proactively challenges a risky assertion mid-conversation', async () => {
+    const result = await enrichContextForChat({
+      message: 'We are going to skip the pre-sub to save time and just file.',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'ind',
+    });
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('constructive-challenge');
+    expect(result.block).toContain('push back, politely');
+  });
+
+  it('challenges a risky assertion from a project-less user', async () => {
+    const result = await enrichContextForChat({
+      message: 'We will just mature the potency assay later, a placeholder is fine.',
+    });
+    expect(result.enrichmentMeta?.hasProjectContext).toBe(false);
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('constructive-challenge');
   });
 });
 
