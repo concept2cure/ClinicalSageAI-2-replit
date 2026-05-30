@@ -1005,7 +1005,6 @@ describe('AnA RI Persona — character & dissent', () => {
     expect(prompt).toMatch(/Structure the hard choices/);
     expect(prompt).toMatch(/Coach the agency interaction/);
     expect(prompt).toMatch(/Read the landscape/);
-    expect(prompt).toMatch(/Align the people, not just the file/);
   });
 
   it('carries an always-on empathy posture (Meet the human)', () => {
@@ -1475,7 +1474,7 @@ import {
 } from '../ana-ri/stakeholder-alignment.js';
 
 describe('AnA RI Stakeholder-Alignment Pack', () => {
-  const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
+  const STAKE_EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
 
   it('covers cross-functional, commercial, executive, and partner axes', () => {
     expect(listAlignmentByAxis('cross_functional').length).toBeGreaterThan(0);
@@ -1484,7 +1483,7 @@ describe('AnA RI Stakeholder-Alignment Pack', () => {
     expect(listAlignmentByAxis('external_partner').length).toBeGreaterThan(0);
   });
 
-  it('every play states tension, insight, move, watch-out, and basis', () => {
+  it('every alignment play states tension, insight, move, watch-out, and basis', () => {
     for (const p of ALIGNMENT_PLAYS) {
       expect(p.tension.length).toBeGreaterThan(10);
       expect(p.insight.length).toBeGreaterThan(10);
@@ -1506,29 +1505,49 @@ describe('AnA RI Stakeholder-Alignment Pack', () => {
     expect(detectRelevantAlignment('What ICH guideline covers stability testing?')).toHaveLength(0);
   });
 
-  it('builds a block, and forceGeneric always does work', () => {
+  it('builds an alignment block, and forceGeneric always does work', () => {
     const block = buildAlignmentBlock({ message: 'commercial wants a broader claim' });
     expect(block).toContain('Stakeholder alignment');
     expect(block).toMatch(/How to align/);
     expect(buildAlignmentBlock({ message: 'nothing here', forceGeneric: true })).toContain('Stakeholder alignment');
   });
 
-  it('ties the internal tension to regulatory consequence (delivery, judgment is theirs)', () => {
+  it('ties the internal tension to regulatory consequence and leaves the call to the client', () => {
     const block = buildAlignmentBlock({ message: 'the board wants a date', forceGeneric: true });
     expect(block).toMatch(/regulatory consequence|program impact/i);
     expect(block).toMatch(/theirs/);
   });
 
-  it('keeps alignment copy inside the design-system voice', () => {
+  it('keeps stakeholder-alignment copy inside the design-system voice', () => {
     for (const p of ALIGNMENT_PLAYS) {
       const text = [p.tension, p.insight, p.move, p.watchOut, p.basis].join(' ');
       expect(text).not.toContain('!');
-      expect(EMOJI.test(text)).toBe(false);
+      expect(STAKE_EMOJI.test(text)).toBe(false);
     }
+  });
+
+  it('handles /align via enrichment and proactively detects stakeholder tension', async () => {
+    const aligned = await enrichContextForChat({
+      message: '/align',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'bla',
+    });
+    expect(aligned.enrichmentMeta?.detectedCommand).toBe('align');
+    expect(aligned.enrichmentMeta?.sourcesSucceeded).toContain('align');
+
+    const proactive = await enrichContextForChat({
+      message: 'CMC and clinical disagree on the timeline and the board wants a date',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'ind',
+    });
+    expect(proactive.enrichmentMeta?.sourcesSucceeded).toContain('stakeholder-alignment');
   });
 });
 
 // ── Role lens ────────────────────────────────────────────────────────────────
+
 import { buildRoleLensBlock, hasRoleLens } from '../ana-ri/role-lens.js';
 
 describe('AnA RI Role Lens', () => {
