@@ -1,4 +1,3 @@
-// @ts-nocheck - Uses optional puppeteer-cluster and bull; OpenAI SDK v4
 // server/services/cerGenerator.ts
 
 import { Cluster } from 'puppeteer-cluster';
@@ -93,13 +92,16 @@ export function setupWorkers(pool: Pool, redisOpts: { host: string; port: number
     let html = '';
     for (let i = 0; i < sections.length; i++) {
       const sec = sections[i];
-      job.progress(((i + 1) / sections.length) * 80, sec.name);
-      io.to(job.id).emit('progress', { progress: job._progress, step: sec.name });
+      // Bull's Job.progress(p) takes a single argument — the section name was
+      // silently ignored; it is conveyed below as `step`. Read current progress
+      // via the public job.progress() getter rather than the internal _progress.
+      job.progress(((i + 1) / sections.length) * 80);
+      io.to(String(job.id)).emit('progress', { progress: job.progress(), step: sec.name });
       html += await sec.render();
     }
 
     html = assembleHtml(html);
-    const pdfPath = await renderPdf(html, job.id);
+    const pdfPath = await renderPdf(html, String(job.id));
 
     // Save job record in Postgres
     await pool.query(`UPDATE cer_jobs SET status='completed', progress=100 WHERE job_id=$1`, [

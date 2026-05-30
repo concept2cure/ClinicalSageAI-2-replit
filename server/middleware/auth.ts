@@ -1,4 +1,3 @@
-// @ts-nocheck - Express.Request.user type conflicts with tenantContext.ts
 /**
  * Authentication Middleware
  *

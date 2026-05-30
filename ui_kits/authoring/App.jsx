@@ -3,7 +3,7 @@
     AUTH_PROGRAMS, AUTH_SECTION_BODY, AUTH_SEED_THREAD, AUTH_REWRITES, AUTH_DEFAULT,
     AUTH_SKILLS,
     OutlineTree, Artifact, Workbench, Conversation, AuthShell, outlineHelpers */
-const { useState, useEffect, useMemo, useCallback, useRef } = React;
+var { useState, useEffect, useMemo, useCallback, useRef } = React;
 
 /* ───────── Resolve the outline for (docType × agency) with fallback. */
 function resolveOutline(docType, agency) {

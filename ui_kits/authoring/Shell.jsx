@@ -1,5 +1,5 @@
 /* global React, I, AUTH_AGENCIES, AUTH_DOC_TYPES */
-const { useState, useRef, useEffect } = React;
+var { useState, useRef, useEffect } = React;
 
 /* Click-outside helper */
 function useClickOutside(open, onClose) {

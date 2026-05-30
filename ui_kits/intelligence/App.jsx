@@ -1,5 +1,5 @@
 (() => {
-const { useState } = React;
+var { useState } = React;
 const { Rail, TopBar, ProtocolSurface, CmcSurface, BiostatSurface, ReportsSurface } = window.IntSurfaces;
 
 function App() {
