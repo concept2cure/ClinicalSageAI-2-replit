@@ -1003,6 +1003,7 @@ describe('AnA RI Persona — character & dissent', () => {
     expect(prompt).toMatch(/Bring experience, not just rules/);
     expect(prompt).toMatch(/Push back when it is warranted/);
     expect(prompt).toMatch(/Structure the hard choices/);
+    expect(prompt).toMatch(/Coach the agency interaction/);
   });
 
   it('keeps the reconciled regulatory breadth index in the live prompt', () => {
@@ -1274,6 +1275,100 @@ describe('AnA RI Decision-Frameworks Pack', () => {
   });
 });
 
+// ── Agency-interaction tactics pack ──────────────────────────────────────────
+
+import {
+  AGENCY_TACTICS,
+  detectRelevantTactics,
+  buildAgencyTacticsBlock,
+  listTacticsByKind,
+} from '../ana-ri/agency-tactics.js';
+
+describe('AnA RI Agency-Tactics Pack', () => {
+  const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
+
+  it('covers meeting prep, response strategy, and posture', () => {
+    expect(listTacticsByKind('meeting_prep').length).toBeGreaterThan(0);
+    expect(listTacticsByKind('response_strategy').length).toBeGreaterThan(0);
+    expect(listTacticsByKind('posture').length).toBeGreaterThan(0);
+  });
+
+  it('every tactic states the move, why, watch-out, and basis', () => {
+    for (const t of AGENCY_TACTICS) {
+      expect(t.tactic.length).toBeGreaterThan(10);
+      expect(t.why.length).toBeGreaterThan(10);
+      expect(t.watchOut.length).toBeGreaterThan(10);
+      expect(t.basis.length).toBeGreaterThan(3);
+      expect(t.triggers.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('fires on meeting-prep and response-letter situations', () => {
+    expect(detectRelevantTactics('We are preparing questions for our pre-IND meeting').length).toBeGreaterThan(0);
+    expect(detectRelevantTactics('How should we respond to the FDA deficiency letter?').length).toBeGreaterThan(0);
+    expect(detectRelevantTactics('We just received a complete response letter').length).toBeGreaterThan(0);
+    expect(detectRelevantTactics('Should we appeal or escalate our disagreement with the division?').length).toBeGreaterThan(0);
+  });
+
+  it('can narrow by kind', () => {
+    const prep = detectRelevantTactics('preparing our briefing book for the meeting', { kind: 'meeting_prep' });
+    expect(prep.every(t => t.kind === 'meeting_prep')).toBe(true);
+  });
+
+  it('does not fire on an unrelated drafting request', () => {
+    expect(detectRelevantTactics('Draft Module 3.2.P.5 for me')).toHaveLength(0);
+  });
+
+  it('builds a tactics block, and forceGeneric always does work', () => {
+    const block = buildAgencyTacticsBlock({ message: 'responding to a CRL' });
+    expect(block).toContain('Agency-interaction tactics');
+    expect(block).toMatch(/Why it works/);
+    expect(buildAgencyTacticsBlock({ message: 'nothing relevant here', forceGeneric: true })).toContain('Agency interaction');
+  });
+
+  it('keeps tactics copy inside the design-system voice', () => {
+    for (const t of AGENCY_TACTICS) {
+      const text = [t.situation, t.tactic, t.why, t.watchOut, t.basis].join(' ');
+      expect(text).not.toContain('!');
+      expect(EMOJI.test(text)).toBe(false);
+    }
+  });
+});
+
+// ── Role lens ────────────────────────────────────────────────────────────────
+
+import { buildRoleLensBlock, hasRoleLens } from '../ana-ri/role-lens.js';
+
+describe('AnA RI Role Lens', () => {
+  const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
+  const ROLES = ['ceo', 'ra_lead', 'medical_writer', 'clinical_lead', 'cmc_lead', 'investor'] as const;
+
+  it('produces a distinct audience lens for each non-general role', () => {
+    const blocks = ROLES.map(r => buildRoleLensBlock(r));
+    for (const b of blocks) {
+      expect(b).toContain('Audience lens');
+      expect(b).toMatch(/emphasize/i);
+    }
+    // Lenses are distinct (CEO is not the same as RA lead).
+    expect(buildRoleLensBlock('ceo')).not.toBe(buildRoleLensBlock('ra_lead'));
+  });
+
+  it('returns empty for the general role and reports lens availability', () => {
+    expect(buildRoleLensBlock('general')).toBe('');
+    expect(hasRoleLens('ceo')).toBe(true);
+    expect(hasRoleLens('general')).toBe(false);
+    expect(hasRoleLens(undefined)).toBe(false);
+  });
+
+  it('keeps lens copy inside the design-system voice', () => {
+    for (const r of ROLES) {
+      const b = buildRoleLensBlock(r);
+      expect(b).not.toContain('!');
+      expect(EMOJI.test(b)).toBe(false);
+    }
+  });
+});
+
 // ── First-session onboarding tour + pack integrity ──────────────────────────
 
 import { listSurfaceKeys } from '../ana-ri/mdx-knowledge-pack.js';
@@ -1440,6 +1535,53 @@ describe('AnA RI Enrichment — wisdom & wayfinding', () => {
     });
     expect(result.enrichmentMeta?.hasProjectContext).toBe(false);
     expect(result.enrichmentMeta?.sourcesSucceeded).toContain('decision-framework');
+  });
+
+  it('handles /meeting as a first-class slash command', async () => {
+    const result = await enrichContextForChat({
+      message: '/meeting',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'ind',
+    });
+    expect(result.enrichmentMeta?.detectedCommand).toBe('meeting');
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('meeting');
+    expect(result.block).toContain('Agency interaction');
+  });
+
+  it('proactively coaches an agency-interaction situation', async () => {
+    const result = await enrichContextForChat({
+      message: 'How should we respond to the FDA deficiency letter we just received?',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'nda',
+    });
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('agency-tactics');
+    expect(result.block).toContain('Agency-interaction tactics');
+  });
+
+  it('applies a role lens when a role is supplied and a pack fired', async () => {
+    const result = await enrichContextForChat({
+      message: 'what common mistakes trip up first-time sponsors?',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'ind',
+      userRole: 'investor',
+    });
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('industry-wisdom');
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('role-lens');
+    expect(result.block).toContain('Audience lens');
+  });
+
+  it('does not apply a role lens for the general role', async () => {
+    const result = await enrichContextForChat({
+      message: 'what common mistakes trip up first-time sponsors?',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'ind',
+      userRole: 'general',
+    });
+    expect(result.enrichmentMeta?.sourcesSucceeded).not.toContain('role-lens');
   });
 });
 

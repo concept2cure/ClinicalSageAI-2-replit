@@ -29,6 +29,9 @@ import { buildTourGuideBlock } from './use-case-playbooks.js';
 import { buildChallengeBlock, detectChallengeableClaims } from './challenge-library.js';
 import { buildFirstSessionTour } from './onboarding-tour.js';
 import { buildDecisionFrameworkBlock, detectRelevantFrameworks } from './decision-frameworks.js';
+import { buildAgencyTacticsBlock, detectRelevantTactics } from './agency-tactics.js';
+import { buildRoleLensBlock, hasRoleLens } from './role-lens.js';
+import type { UserRole } from './persona.js';
 import { buildWorkflowContext } from './workflow-orchestration.js';
 import { detectDocumentType, buildDocumentGenerationContext } from './document-routing.js';
 import { getFeedbackSummary } from '../intelligence/learning-loop-service.js';
@@ -160,7 +163,17 @@ export const SUPPORTED_SLASH_COMMANDS = [
   'decide',
   'tradeoff',
   'framework',
+  'meeting',
+  'agency',
+  'tactics',
 ] as const;
+
+/** Enrichment sources that emit guidance the role lens can frame for an audience. */
+const ROLE_FRAMEABLE_SOURCES = new Set<string>([
+  'industry-wisdom', 'tour-guide', 'first-session-tour', 'constructive-challenge', 'decision-framework',
+  'agency-tactics', 'wisdom', 'guide', 'playbook', 'orient', 'tour', 'challenge', 'redteam', 'devil',
+  'decide', 'tradeoff', 'framework', 'meeting', 'agency', 'tactics', 'proactive-tour-guide',
+]);
 
 const SUPPORTED_SLASH_COMMAND_REGEX = new RegExp(
   `^\\/(${SUPPORTED_SLASH_COMMANDS.join('|')})\\b\\s*(.*)`,
@@ -951,8 +964,10 @@ export async function enrichContextForChat(params: {
   organizationId?: number;
   submissionType?: string;
   canonicalGovernedState?: CanonicalGovernedState;
+  /** Optional user role; when present, a role lens frames the pack guidance. */
+  userRole?: UserRole;
 }): Promise<EnrichmentResult> {
-  const { message, projectId, organizationId, submissionType, canonicalGovernedState } = params;
+  const { message, projectId, organizationId, submissionType, canonicalGovernedState, userRole } = params;
   const blocks: string[] = [];
   const sources: string[] = [];
   const sourcesFailed: string[] = [];
@@ -1004,6 +1019,10 @@ export async function enrichContextForChat(params: {
         const block = buildDecisionFrameworkBlock({ message, segment: challengeSegmentNoProj });
         if (block) { projectlessBlocks.push(block); projectlessSources.push('decision-framework'); }
       }
+      if (detectRelevantTactics(message, { segment: challengeSegmentNoProj }).length > 0) {
+        const block = buildAgencyTacticsBlock({ message, segment: challengeSegmentNoProj });
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('agency-tactics'); }
+      }
     } else if (slashNoProj && ['decide', 'tradeoff', 'framework'].includes(slashNoProj.command)) {
       const block = buildDecisionFrameworkBlock({
         message: slashNoProj.args || message,
@@ -1011,8 +1030,22 @@ export async function enrichContextForChat(params: {
         forceGeneric: true,
       });
       if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
+    } else if (slashNoProj && ['meeting', 'agency', 'tactics'].includes(slashNoProj.command)) {
+      const block = buildAgencyTacticsBlock({
+        message: slashNoProj.args || message,
+        segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slashNoProj.args || message),
+        kind: slashNoProj.command === 'meeting' ? 'meeting_prep' : undefined,
+        forceGeneric: true,
+      });
+      if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
     }
 
+    if (hasRoleLens(userRole) && projectlessSources.some(s => ROLE_FRAMEABLE_SOURCES.has(s))) {
+      const lensBlock = buildRoleLensBlock(userRole as UserRole);
+      if (lensBlock) { projectlessBlocks.push(lensBlock); projectlessSources.push('role-lens'); }
+    }
+
+    const wisdomOrChallengeFamily = [...wisdomFamily, ...challengeFamily, 'decide', 'tradeoff', 'framework', 'meeting', 'agency', 'tactics'];
     return {
       block: projectlessBlocks.join('\n'),
       sources: projectlessSources,
@@ -1021,7 +1054,7 @@ export async function enrichContextForChat(params: {
         sourcesSucceeded: [...projectlessSources],
         sourcesFailed: [],
         triggerType: projectlessSources.length > 0 ? (slashNoProj ? 'slash_command' : 'natural_language') : 'none',
-        detectedCommand: slashNoProj && wisdomFamily.includes(slashNoProj.command) ? slashNoProj.command : undefined,
+        detectedCommand: slashNoProj && wisdomOrChallengeFamily.includes(slashNoProj.command) ? slashNoProj.command : undefined,
         hasProjectContext: false,
       },
     };
@@ -1137,6 +1170,9 @@ export async function enrichContextForChat(params: {
       decide: () => Promise.resolve(buildDecisionFrameworkBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), forceGeneric: true })),
       tradeoff: () => Promise.resolve(buildDecisionFrameworkBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), forceGeneric: true })),
       framework: () => Promise.resolve(buildDecisionFrameworkBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), forceGeneric: true })),
+      meeting: () => Promise.resolve(buildAgencyTacticsBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), kind: 'meeting_prep', forceGeneric: true })),
+      agency: () => Promise.resolve(buildAgencyTacticsBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), forceGeneric: true })),
+      tactics: () => Promise.resolve(buildAgencyTacticsBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), forceGeneric: true })),
       workflow: () => submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
       status: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
@@ -1249,6 +1285,11 @@ export async function enrichContextForChat(params: {
         : 'Help the user reason through the strategic trade-off they are weighing. Name the real tension, lay out the factors that tilt it each way, and give the single question that resolves it. The call is theirs — surface the trade-off honestly rather than forcing one answer.',
       tradeoff: 'Frame the trade-off the user is weighing: the real tension, what tilts it each way for their program, and the deciding question. Do not pretend a hard trade-off has one obvious answer.',
       framework: 'Apply the relevant decision framework to the user\'s choice: name the trade-off, the tilt factors, and the deciding question. Recommend where you have a basis; leave the judgment call to them.',
+      meeting: slash.args
+        ? `Help the user prepare the agency meeting: ${slash.args}. Bring proposals and ask for agreement, rank the load-bearing questions, and treat the briefing package as the meeting.`
+        : 'Help the user prepare an agency meeting. Frame questions as proposals seeking agreement, rank the three to five that matter, choose the right meeting type, and treat the briefing package as where the review team forms its view.',
+      agency: 'Help the user run their agency interaction well — meeting preparation or response strategy. Apply the concrete tactics: proposals over open questions, answer exactly what is asked in the agency order, concede what cannot be defended, and anchor everything to the official minutes or letter.',
+      tactics: 'Give the user the agency-interaction tactics that bear on their situation — the move, why it works, and the failure mode it avoids.',
       export: 'Export this conversation.',
     };
 
@@ -1380,6 +1421,16 @@ export async function enrichContextForChat(params: {
       }
     }
 
+    if (detectRelevantTactics(message, { segment: challengeSegment }).length > 0) {
+      sourcesAttempted++;
+      const tacticsBlock = buildAgencyTacticsBlock({ message, segment: challengeSegment });
+      if (tacticsBlock) {
+        blocks.push(tacticsBlock);
+        sources.push('agency-tactics');
+        if (triggerType === 'none') triggerType = 'natural_language';
+      }
+    }
+
     // ── Proactive enrichment for greetings/help — inject status so AnA can lead ──
     const isGreeting = /^(hi|hello|hey|good\s*(morning|afternoon|evening)|what.?s up|how are you|help|what can you do)/i.test(message.trim());
     if (isGreeting && sources.length === 0) {
@@ -1423,6 +1474,12 @@ export async function enrichContextForChat(params: {
       blocks.push(buildDocumentGenerationContext(detectedDoc));
       sources.push(`doc-${detectedDoc.type}`);
     }
+  }
+
+  // ── Role lens — frame the pack guidance for the audience, once, at the end ──
+  if (hasRoleLens(userRole) && sources.some(s => ROLE_FRAMEABLE_SOURCES.has(s))) {
+    const lensBlock = buildRoleLensBlock(userRole as UserRole);
+    if (lensBlock) { blocks.push(lensBlock); sources.push('role-lens'); }
   }
 
   return {
