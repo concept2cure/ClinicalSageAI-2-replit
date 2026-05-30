@@ -144,7 +144,7 @@ const EXECUTIVE: AlignmentPlay[] = [
     axis: 'executive',
     tension: 'The board or CEO wants a firm date and a confident story.',
     triggers: [
-      /\b(?:board|ceo|leadership|exec(?:utive)?s?|investors?)\b[^.?!]{0,30}\b(?:wants?|asking for|expects?|needs?)\b[^.?!]{0,25}\b(?:a (?:date|timeline)|certainty|confidence|guarantee|commitment)/i,
+      /\b(?:board|ceo|leadership|exec(?:utive)?s?|investors?)\b[^.?!]{0,30}\b(?:wants?|asking for|expects?|needs?)\b[^.?!]{0,25}\b(?:date|timeline|deadline|certainty|confidence|guarantee|commitment)\b/i,
       /\b(?:board (?:meeting|update|deck)|investor (?:update|deck))\b/i,
     ],
     insight:
