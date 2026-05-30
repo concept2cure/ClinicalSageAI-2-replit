@@ -5,7 +5,6 @@
  *
  * Consolidated from:
  * - document-routes.ts (core document operations)
- * - documentAuthoring.routes.ts (document authoring)
  * - documentOrchestrationRoutes.ts (document orchestration)
  * - document_qc_routes.ts (document QC)
  * - document-data-center.ts (document data center)
@@ -111,11 +110,6 @@ router.get('/docs', (_req: Request, res: Response) => {
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
         legacyPath: '/api/documents/*',
       },
-      '/authoring': {
-        description: 'Document authoring and editing',
-        methods: ['GET', 'POST', 'PUT'],
-        legacyPath: '/api/document-authoring/*',
-      },
       '/orchestration': {
         description: 'Document workflow orchestration',
         methods: ['GET', 'POST'],
@@ -157,15 +151,6 @@ async function mountSubRouters() {
     logger.info('Mounted: /core (document CRUD)');
   } catch (error) {
     logger.error('Failed to mount core document routes:', error);
-  }
-
-  // Document authoring
-  try {
-    const authoringModule = await import('./documentAuthoring.routes');
-    router.use('/authoring', authoringModule.default);
-    logger.info('Mounted: /authoring (document authoring)');
-  } catch (error) {
-    logger.error('Failed to mount authoring routes:', error);
   }
 
   // Document orchestration
