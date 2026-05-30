@@ -24,10 +24,11 @@
  */
 
 // Re-export from existing implementations during migration.
-// NOTE: `isPublicRoute` and `hasPermission` are NOT exported by middleware/auth.ts
-// (this was a broken re-export masked by a prior `// @ts-nocheck`). `hasPermission`
-// actually lives in middleware/tenantIsolation.ts; `isPublicRoute` does not exist
-// anywhere in the codebase, so it is dropped rather than re-exported as undefined.
+// NOTE: isPublicRoute and hasPermission are NOT exported by middleware/auth.ts
+// (this was a broken re-export, previously hidden because the file skipped type
+// checking). hasPermission actually lives in middleware/tenantIsolation.ts;
+// isPublicRoute does not exist anywhere in the codebase, so it is dropped rather
+// than re-exported as undefined.
 export { authenticateJWT, requireRole } from '../middleware/auth.js';
 export { hasPermission } from '../middleware/tenantIsolation.js';
 export { authMiddleware } from '../auth';
