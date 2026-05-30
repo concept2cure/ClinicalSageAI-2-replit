@@ -14,8 +14,15 @@
 export * from './ctgov-types';
 export * from './ctgov-normalizer';
 export * from './ingest-ctgov';
+export * from './precedent-benchmark';
 export { LiveCtgovFetcher } from './live-ctgov-fetcher';
 export { DrizzleCorpusWriter } from './drizzle-corpus-writer';
+export {
+  PrecedentBenchmarkReader,
+  precedentBenchmarkReader,
+  statusToOutcome,
+  endpointsFromDetail,
+} from './precedent-benchmark-reader';
 
 import { ingestCtgov, type CtgovIngestQuery, type IngestSummary } from './ingest-ctgov';
 import { LiveCtgovFetcher } from './live-ctgov-fetcher';
