@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-05-30T11:03:55.239Z",
+  "generatedAt": "2026-05-30T13:45:58.240Z",
   "git": {
-    "sha": "d8df9d8ece4fd1ce70f4dc62ae10e77b2d211211",
+    "sha": "643caadaaddb9ae69f9bf76e8c8f0e2de2090606",
     "branch": "claude/ana-industry-wisdom-8UJhc"
   },
   "thresholds": {
@@ -11,7 +11,7 @@
   "summary": {
     "duplicateBasenames": 196,
     "largeFilesByBytes": 15,
-    "largeFilesByLines": 46
+    "largeFilesByLines": 47
   },
   "findings": {
     "duplicateBasenames": [
@@ -2207,6 +2207,10 @@
         "lines": 1534
       },
       {
+        "file": "server/services/__tests__/ana-ri.test.ts",
+        "lines": 1524
+      },
+      {
         "file": "server/services/ai-gateway/gateway.ts",
         "lines": 1505
       }
@@ -2225,7 +2229,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 253,
       "largeByBytes": 10,
-      "largeByLines": 32
+      "largeByLines": 33
     },
     {
       "owner": "Unassigned (TBD)",

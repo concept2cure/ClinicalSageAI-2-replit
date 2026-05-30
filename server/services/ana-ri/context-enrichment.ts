@@ -28,6 +28,7 @@ import { buildIndustryWisdomBlock, inferSegmentFromSubmissionType, inferSegmentF
 import { buildTourGuideBlock } from './use-case-playbooks.js';
 import { buildChallengeBlock, detectChallengeableClaims } from './challenge-library.js';
 import { buildFirstSessionTour } from './onboarding-tour.js';
+import { buildDecisionFrameworkBlock, detectRelevantFrameworks } from './decision-frameworks.js';
 import { buildWorkflowContext } from './workflow-orchestration.js';
 import { detectDocumentType, buildDocumentGenerationContext } from './document-routing.js';
 import { getFeedbackSummary } from '../intelligence/learning-loop-service.js';
@@ -156,6 +157,9 @@ export const SUPPORTED_SLASH_COMMANDS = [
   'challenge',
   'redteam',
   'devil',
+  'decide',
+  'tradeoff',
+  'framework',
 ] as const;
 
 const SUPPORTED_SLASH_COMMAND_REGEX = new RegExp(
@@ -996,6 +1000,17 @@ export async function enrichContextForChat(params: {
         const block = buildChallengeBlock({ message, segment: challengeSegmentNoProj });
         if (block) { projectlessBlocks.push(block); projectlessSources.push('constructive-challenge'); }
       }
+      if (detectRelevantFrameworks(message, challengeSegmentNoProj).length > 0) {
+        const block = buildDecisionFrameworkBlock({ message, segment: challengeSegmentNoProj });
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('decision-framework'); }
+      }
+    } else if (slashNoProj && ['decide', 'tradeoff', 'framework'].includes(slashNoProj.command)) {
+      const block = buildDecisionFrameworkBlock({
+        message: slashNoProj.args || message,
+        segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slashNoProj.args || message),
+        forceGeneric: true,
+      });
+      if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
     }
 
     return {
@@ -1119,6 +1134,9 @@ export async function enrichContextForChat(params: {
       challenge: () => Promise.resolve(buildChallengeOrRedteam(slash.args || message, submissionType)),
       redteam: () => Promise.resolve(buildChallengeOrRedteam(slash.args || message, submissionType)),
       devil: () => Promise.resolve(buildChallengeOrRedteam(slash.args || message, submissionType)),
+      decide: () => Promise.resolve(buildDecisionFrameworkBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), forceGeneric: true })),
+      tradeoff: () => Promise.resolve(buildDecisionFrameworkBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), forceGeneric: true })),
+      framework: () => Promise.resolve(buildDecisionFrameworkBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), forceGeneric: true })),
       workflow: () => submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
       status: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
@@ -1226,6 +1244,11 @@ export async function enrichContextForChat(params: {
         : 'Red-team the user\'s current plan. Find the load-bearing assumption, name the single biggest risk, ground it in precedent or guidance, and offer the stronger alternative. Acknowledge what is right first, push back once, and end with a concrete better path.',
       redteam: 'Red-team the user\'s current plan. Find the load-bearing assumption, name the single biggest risk, ground it, and offer the stronger alternative — acknowledging what is right first.',
       devil: 'Play devil\'s advocate on the user\'s current plan. Surface the strongest objection a skeptical reviewer would raise, ground it, and offer the better path.',
+      decide: slash.args
+        ? `Help the user decide: ${slash.args}. Name the real trade-off, lay out what tilts it each way for their program, and give the deciding question. Recommend where you have a basis, but leave the call to them.`
+        : 'Help the user reason through the strategic trade-off they are weighing. Name the real tension, lay out the factors that tilt it each way, and give the single question that resolves it. The call is theirs — surface the trade-off honestly rather than forcing one answer.',
+      tradeoff: 'Frame the trade-off the user is weighing: the real tension, what tilts it each way for their program, and the deciding question. Do not pretend a hard trade-off has one obvious answer.',
+      framework: 'Apply the relevant decision framework to the user\'s choice: name the trade-off, the tilt factors, and the deciding question. Recommend where you have a basis; leave the judgment call to them.',
       export: 'Export this conversation.',
     };
 
@@ -1342,6 +1365,17 @@ export async function enrichContextForChat(params: {
       if (challengeBlock) {
         blocks.push(challengeBlock);
         sources.push('constructive-challenge');
+        if (triggerType === 'none') triggerType = 'natural_language';
+      }
+    }
+
+    // ── Proactive decision framework — when the user is weighing a real choice ──
+    if (detectRelevantFrameworks(message, challengeSegment).length > 0) {
+      sourcesAttempted++;
+      const frameworkBlock = buildDecisionFrameworkBlock({ message, segment: challengeSegment });
+      if (frameworkBlock) {
+        blocks.push(frameworkBlock);
+        sources.push('decision-framework');
         if (triggerType === 'none') triggerType = 'natural_language';
       }
     }

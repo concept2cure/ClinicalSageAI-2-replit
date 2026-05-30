@@ -1002,6 +1002,7 @@ describe('AnA RI Persona — character & dissent', () => {
     expect(prompt).toMatch(/Orient the lost/);
     expect(prompt).toMatch(/Bring experience, not just rules/);
     expect(prompt).toMatch(/Push back when it is warranted/);
+    expect(prompt).toMatch(/Structure the hard choices/);
   });
 
   it('keeps the reconciled regulatory breadth index in the live prompt', () => {
@@ -1207,6 +1208,72 @@ describe('AnA RI Constructive-Challenge Library', () => {
   });
 });
 
+// ── Decision-frameworks pack ─────────────────────────────────────────────────
+
+import {
+  DECISION_FRAMEWORKS,
+  detectRelevantFrameworks,
+  buildDecisionFrameworkBlock,
+  listFrameworksForSegment,
+} from '../ana-ri/decision-frameworks.js';
+
+describe('AnA RI Decision-Frameworks Pack', () => {
+  const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
+
+  it('covers all three segments plus cross-cutting frameworks', () => {
+    expect(listFrameworksForSegment('mdx').some(f => f.segment === 'mdx')).toBe(true);
+    expect(listFrameworksForSegment('biotech').some(f => f.segment === 'biotech')).toBe(true);
+    expect(listFrameworksForSegment('pharma').some(f => f.segment === 'pharma')).toBe(true);
+    expect(DECISION_FRAMEWORKS.some(f => f.segment === null)).toBe(true);
+  });
+
+  it('every framework states the trade-off, both tilt sets, and how to decide', () => {
+    for (const f of DECISION_FRAMEWORKS) {
+      expect(f.theTradeoff.length).toBeGreaterThan(10);
+      expect(f.tiltsTowardA.length).toBeGreaterThan(0);
+      expect(f.tiltsTowardB.length).toBeGreaterThan(0);
+      expect(f.howToDecide.length).toBeGreaterThan(10);
+      expect(f.basis.length).toBeGreaterThan(3);
+    }
+  });
+
+  it('fires on representative trade-off questions', () => {
+    expect(detectRelevantFrameworks('Should we go for accelerated approval or wait for the full package?').length).toBeGreaterThan(0);
+    expect(detectRelevantFrameworks('Which pathway should we use — 510(k) or De Novo?').length).toBeGreaterThan(0);
+    expect(detectRelevantFrameworks('Do we power on a surrogate or a clinical outcome?').length).toBeGreaterThan(0);
+    expect(detectRelevantFrameworks('Should we file FDA first or file in parallel with EMA?').length).toBeGreaterThan(0);
+  });
+
+  it('does not fire on a plain factual question', () => {
+    expect(detectRelevantFrameworks('What is the page limit for Module 2.5?')).toHaveLength(0);
+  });
+
+  it('builds a framework block that refuses to decide for the user', () => {
+    const block = buildDecisionFrameworkBlock({ message: 'Should we go for breakthrough or build the full package?' });
+    expect(block).toContain('Decision framework');
+    expect(block).toMatch(/The real trade-off/);
+    expect(block).toMatch(/How to decide/);
+    expect(block).toMatch(/do not decide for them|call .* is theirs/i);
+  });
+
+  it('forceGeneric makes an explicit /decide always do work', () => {
+    const block = buildDecisionFrameworkBlock({ message: 'help me choose something', forceGeneric: true });
+    expect(block).toContain('Decision framework');
+  });
+
+  it('returns empty for a non-trade-off message without forceGeneric', () => {
+    expect(buildDecisionFrameworkBlock({ message: 'Draft my clinical overview' })).toBe('');
+  });
+
+  it('keeps framework copy inside the design-system voice', () => {
+    for (const f of DECISION_FRAMEWORKS) {
+      const text = [f.choice, f.theTradeoff, f.howToDecide, f.basis, ...f.tiltsTowardA, ...f.tiltsTowardB].join(' ');
+      expect(text).not.toContain('!');
+      expect(EMOJI.test(text)).toBe(false);
+    }
+  });
+});
+
 // ── First-session onboarding tour + pack integrity ──────────────────────────
 
 import { listSurfaceKeys } from '../ana-ri/mdx-knowledge-pack.js';
@@ -1342,6 +1409,37 @@ describe('AnA RI Enrichment — wisdom & wayfinding', () => {
     expect(result.enrichmentMeta?.hasProjectContext).toBe(false);
     expect(result.enrichmentMeta?.sourcesSucceeded).toContain('first-session-tour');
     expect(result.block).toContain('First-session welcome');
+  });
+
+  it('handles /decide as a first-class slash command', async () => {
+    const result = await enrichContextForChat({
+      message: '/decide',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'nda',
+    });
+    expect(result.enrichmentMeta?.detectedCommand).toBe('decide');
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('decide');
+    expect(result.block).toContain('Decision framework');
+  });
+
+  it('proactively frames a trade-off the user is weighing', async () => {
+    const result = await enrichContextForChat({
+      message: 'Should we go for accelerated approval or wait for the full package?',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'bla',
+    });
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('decision-framework');
+    expect(result.block).toContain('Decision framework');
+  });
+
+  it('frames a trade-off for a project-less user', async () => {
+    const result = await enrichContextForChat({
+      message: 'For our device, should we use 510(k) or De Novo?',
+    });
+    expect(result.enrichmentMeta?.hasProjectContext).toBe(false);
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('decision-framework');
   });
 });
 
