@@ -1,14 +1,14 @@
 # Repo Health Scan
 
-Generated: 2026-05-30T13:45:58.240Z
+Generated: 2026-05-30T15:38:30.091Z
 Branch: claude/ana-industry-wisdom-8UJhc
-SHA: 643caadaaddb9ae69f9bf76e8c8f0e2de2090606
+SHA: d30268f28c98249b8bf25554f61a5876003f0ccc
 
 ## Summary
 
 - Duplicate basenames: 196
 - Files over byte threshold: 15
-- Files over line threshold: 47
+- Files over line threshold: 48
 - Baseline: docs/reports/repo-health-scan-latest.json
 - Delta duplicate basenames: 0
 - Delta files over byte threshold: 0
@@ -16,7 +16,7 @@ SHA: 643caadaaddb9ae69f9bf76e8c8f0e2de2090606
 
 ## Owner Summary
 
-- Backend Platform (server/routes + server/services owners): duplicateGroups=253, largeByBytes=10, largeByLines=33
+- Backend Platform (server/routes + server/services owners): duplicateGroups=253, largeByBytes=10, largeByLines=34
 - Unassigned (TBD): duplicateGroups=234, largeByBytes=2, largeByLines=7
 - Concept2Cure Frontend (client/src/concept2cure maintainers): duplicateGroups=169, largeByBytes=2, largeByLines=4
 - Frontend Platform (client/src maintainers): duplicateGroups=83, largeByBytes=0, largeByLines=1

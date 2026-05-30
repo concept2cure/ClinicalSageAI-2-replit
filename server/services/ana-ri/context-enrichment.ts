@@ -30,6 +30,7 @@ import { buildChallengeBlock, detectChallengeableClaims } from './challenge-libr
 import { buildFirstSessionTour } from './onboarding-tour.js';
 import { buildDecisionFrameworkBlock, detectRelevantFrameworks } from './decision-frameworks.js';
 import { buildAgencyTacticsBlock, detectRelevantTactics } from './agency-tactics.js';
+import { buildCompetitiveBlock, detectRelevantPlays } from './competitive-strategy.js';
 import { buildRoleLensBlock, hasRoleLens } from './role-lens.js';
 import type { UserRole } from './persona.js';
 import { buildWorkflowContext } from './workflow-orchestration.js';
@@ -166,6 +167,9 @@ export const SUPPORTED_SLASH_COMMANDS = [
   'meeting',
   'agency',
   'tactics',
+  'position',
+  'landscape',
+  'compete',
 ] as const;
 
 /** Enrichment sources that emit guidance the role lens can frame for an audience. */
@@ -173,6 +177,7 @@ const ROLE_FRAMEABLE_SOURCES = new Set<string>([
   'industry-wisdom', 'tour-guide', 'first-session-tour', 'constructive-challenge', 'decision-framework',
   'agency-tactics', 'wisdom', 'guide', 'playbook', 'orient', 'tour', 'challenge', 'redteam', 'devil',
   'decide', 'tradeoff', 'framework', 'meeting', 'agency', 'tactics', 'proactive-tour-guide',
+  'competitive-strategy', 'position', 'landscape', 'compete',
 ]);
 
 const SUPPORTED_SLASH_COMMAND_REGEX = new RegExp(
@@ -359,6 +364,12 @@ function matchesTriggers(message: string, triggers: RegExp[]): boolean {
  * user explicitly asked to be challenged but no specific claim is detected,
  * fall back to a general red-team instruction so /challenge always does work.
  */
+/** Build a competitive-strategy block, inferring the segment from type or message. */
+function buildCompetitiveForMessage(message: string, submissionType?: string, forceGeneric = false): string {
+  const segment = inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(message);
+  return buildCompetitiveBlock({ message, segment, forceGeneric });
+}
+
 function buildChallengeOrRedteam(message: string, submissionType?: string): string {
   const segment = inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(message);
   const block = buildChallengeBlock({ message, segment });
@@ -1023,6 +1034,10 @@ export async function enrichContextForChat(params: {
         const block = buildAgencyTacticsBlock({ message, segment: challengeSegmentNoProj });
         if (block) { projectlessBlocks.push(block); projectlessSources.push('agency-tactics'); }
       }
+      if (detectRelevantPlays(message, { segment: challengeSegmentNoProj }).length > 0) {
+        const block = buildCompetitiveBlock({ message, segment: challengeSegmentNoProj });
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('competitive-strategy'); }
+      }
     } else if (slashNoProj && ['decide', 'tradeoff', 'framework'].includes(slashNoProj.command)) {
       const block = buildDecisionFrameworkBlock({
         message: slashNoProj.args || message,
@@ -1038,6 +1053,9 @@ export async function enrichContextForChat(params: {
         forceGeneric: true,
       });
       if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
+    } else if (slashNoProj && ['position', 'landscape', 'compete'].includes(slashNoProj.command)) {
+      const block = buildCompetitiveForMessage(slashNoProj.args || message, submissionType, true);
+      if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
     }
 
     if (hasRoleLens(userRole) && projectlessSources.some(s => ROLE_FRAMEABLE_SOURCES.has(s))) {
@@ -1045,7 +1063,7 @@ export async function enrichContextForChat(params: {
       if (lensBlock) { projectlessBlocks.push(lensBlock); projectlessSources.push('role-lens'); }
     }
 
-    const wisdomOrChallengeFamily = [...wisdomFamily, ...challengeFamily, 'decide', 'tradeoff', 'framework', 'meeting', 'agency', 'tactics'];
+    const wisdomOrChallengeFamily = [...wisdomFamily, ...challengeFamily, 'decide', 'tradeoff', 'framework', 'meeting', 'agency', 'tactics', 'position', 'landscape', 'compete'];
     return {
       block: projectlessBlocks.join('\n'),
       sources: projectlessSources,
@@ -1173,6 +1191,9 @@ export async function enrichContextForChat(params: {
       meeting: () => Promise.resolve(buildAgencyTacticsBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), kind: 'meeting_prep', forceGeneric: true })),
       agency: () => Promise.resolve(buildAgencyTacticsBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), forceGeneric: true })),
       tactics: () => Promise.resolve(buildAgencyTacticsBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), forceGeneric: true })),
+      position: () => Promise.resolve(buildCompetitiveForMessage(slash.args || message, submissionType, true)),
+      landscape: () => Promise.resolve(buildCompetitiveForMessage(slash.args || message, submissionType, true)),
+      compete: () => Promise.resolve(buildCompetitiveForMessage(slash.args || message, submissionType, true)),
       workflow: () => submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
       status: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
@@ -1290,6 +1311,11 @@ export async function enrichContextForChat(params: {
         : 'Help the user prepare an agency meeting. Frame questions as proposals seeking agreement, rank the three to five that matter, choose the right meeting type, and treat the briefing package as where the review team forms its view.',
       agency: 'Help the user run their agency interaction well — meeting preparation or response strategy. Apply the concrete tactics: proposals over open questions, answer exactly what is asked in the agency order, concede what cannot be defended, and anchor everything to the official minutes or letter.',
       tactics: 'Give the user the agency-interaction tactics that bear on their situation — the move, why it works, and the failure mode it avoids.',
+      position: slash.args
+        ? `Help the user position against the field: ${slash.args}. Read the relevant precedent and competitor labels, then position on the axis the agency rewards.`
+        : 'Help the user position against the competitive landscape. Read precedent for where it actually transfers, position against the approved label rather than marketing, and differentiate on the axis the agency rewards.',
+      landscape: 'Read the competitive and precedent landscape for the user: which approvals transfer, what the labels actually claim, and where the failures mark the bar.',
+      compete: 'Help the user compete: position against the competitor\'s approved label, differentiate on the axis the agency rewards, and treat a path that unwound for a rival as a raised bar, not an opening.',
       export: 'Export this conversation.',
     };
 
@@ -1427,6 +1453,17 @@ export async function enrichContextForChat(params: {
       if (tacticsBlock) {
         blocks.push(tacticsBlock);
         sources.push('agency-tactics');
+        if (triggerType === 'none') triggerType = 'natural_language';
+      }
+    }
+
+    // ── Proactive competitive strategy — reading precedent or positioning ──
+    if (detectRelevantPlays(message, { segment: challengeSegment }).length > 0) {
+      sourcesAttempted++;
+      const compBlock = buildCompetitiveBlock({ message, segment: challengeSegment });
+      if (compBlock) {
+        blocks.push(compBlock);
+        sources.push('competitive-strategy');
         if (triggerType === 'none') triggerType = 'natural_language';
       }
     }

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-05-30T13:45:58.240Z",
+  "generatedAt": "2026-05-30T15:38:30.091Z",
   "git": {
-    "sha": "643caadaaddb9ae69f9bf76e8c8f0e2de2090606",
+    "sha": "d30268f28c98249b8bf25554f61a5876003f0ccc",
     "branch": "claude/ana-industry-wisdom-8UJhc"
   },
   "thresholds": {
@@ -11,7 +11,7 @@
   "summary": {
     "duplicateBasenames": 196,
     "largeFilesByBytes": 15,
-    "largeFilesByLines": 47
+    "largeFilesByLines": 48
   },
   "findings": {
     "duplicateBasenames": [
@@ -2163,6 +2163,10 @@
         "lines": 1749
       },
       {
+        "file": "server/services/__tests__/ana-ri.test.ts",
+        "lines": 1745
+      },
+      {
         "file": "server/routes/fda510k-routes.ts",
         "lines": 1691
       },
@@ -2203,12 +2207,12 @@
         "lines": 1550
       },
       {
-        "file": "server/services/submission-twin-service.ts",
-        "lines": 1534
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "lines": 1537
       },
       {
-        "file": "server/services/__tests__/ana-ri.test.ts",
-        "lines": 1524
+        "file": "server/services/submission-twin-service.ts",
+        "lines": 1534
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2229,7 +2233,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 253,
       "largeByBytes": 10,
-      "largeByLines": 33
+      "largeByLines": 34
     },
     {
       "owner": "Unassigned (TBD)",

@@ -1004,6 +1004,7 @@ describe('AnA RI Persona — character & dissent', () => {
     expect(prompt).toMatch(/Push back when it is warranted/);
     expect(prompt).toMatch(/Structure the hard choices/);
     expect(prompt).toMatch(/Coach the agency interaction/);
+    expect(prompt).toMatch(/Read the landscape/);
   });
 
   it('keeps the reconciled regulatory breadth index in the live prompt', () => {
@@ -1335,6 +1336,61 @@ describe('AnA RI Agency-Tactics Pack', () => {
   });
 });
 
+// ── Competitive-strategy pack ────────────────────────────────────────────────
+
+import {
+  COMPETITIVE_PLAYS,
+  detectRelevantPlays,
+  buildCompetitiveBlock,
+  listPlaysByFocus,
+} from '../ana-ri/competitive-strategy.js';
+
+describe('AnA RI Competitive-Strategy Pack', () => {
+  const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
+
+  it('covers reading precedent, positioning, and differentiation', () => {
+    expect(listPlaysByFocus('precedent_reading').length).toBeGreaterThan(0);
+    expect(listPlaysByFocus('positioning').length).toBeGreaterThan(0);
+    expect(listPlaysByFocus('differentiation').length).toBeGreaterThan(0);
+  });
+
+  it('every play states the insight, move, watch-out, and basis', () => {
+    for (const p of COMPETITIVE_PLAYS) {
+      expect(p.insight.length).toBeGreaterThan(10);
+      expect(p.move.length).toBeGreaterThan(10);
+      expect(p.watchOut.length).toBeGreaterThan(10);
+      expect(p.basis.length).toBeGreaterThan(3);
+      expect(p.triggers.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('fires on precedent and positioning situations', () => {
+    expect(detectRelevantPlays('Can we cite that prior approval as precedent?').length).toBeGreaterThan(0);
+    expect(detectRelevantPlays('How do we position against the approved competitor?').length).toBeGreaterThan(0);
+    expect(detectRelevantPlays('We are first-in-class with no precedent').length).toBeGreaterThan(0);
+    expect(detectRelevantPlays('How should we differentiate from the incumbent?').length).toBeGreaterThan(0);
+  });
+
+  it('does not fire on an unrelated drafting request', () => {
+    expect(detectRelevantPlays('Draft the safety narrative for study 301')).toHaveLength(0);
+  });
+
+  it('builds a block, and forceGeneric always does work', () => {
+    const block = buildCompetitiveBlock({ message: 'how do we position against the competitive landscape?' });
+    expect(block).toContain('Competitive strategy');
+    expect(block).toMatch(/The move/);
+    expect(buildCompetitiveBlock({ message: 'nothing here', forceGeneric: true })).toContain('Competitive strategy');
+  });
+
+  it('keeps competitive copy inside the design-system voice', () => {
+    for (const p of COMPETITIVE_PLAYS) {
+      const text = [p.situation, p.insight, p.move, p.watchOut, p.basis].join(' ');
+      expect(text).not.toContain('!');
+      expect(EMOJI.test(text)).toBe(false);
+    }
+  });
+});
+
 // ── Role lens ────────────────────────────────────────────────────────────────
 
 import { buildRoleLensBlock, hasRoleLens } from '../ana-ri/role-lens.js';
@@ -1571,6 +1627,29 @@ describe('AnA RI Enrichment — wisdom & wayfinding', () => {
     expect(result.enrichmentMeta?.sourcesSucceeded).toContain('industry-wisdom');
     expect(result.enrichmentMeta?.sourcesSucceeded).toContain('role-lens');
     expect(result.block).toContain('Audience lens');
+  });
+
+  it('handles /position as a first-class slash command', async () => {
+    const result = await enrichContextForChat({
+      message: '/position',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'bla',
+    });
+    expect(result.enrichmentMeta?.detectedCommand).toBe('position');
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('position');
+    expect(result.block).toContain('Competitive strategy');
+  });
+
+  it('proactively reads the landscape on a positioning question', async () => {
+    const result = await enrichContextForChat({
+      message: 'How do we position against the approved competitor in this space?',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'nda',
+    });
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('competitive-strategy');
+    expect(result.block).toContain('Competitive strategy');
   });
 
   it('does not apply a role lens for the general role', async () => {
