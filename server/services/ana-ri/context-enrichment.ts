@@ -27,6 +27,7 @@ import { getDeficienciesBySubmissionType, getCriticalDeficiencies, type Submissi
 import { buildIndustryWisdomBlock, inferSegmentFromSubmissionType, inferSegmentFromMessage } from './industry-wisdom-pack.js';
 import { buildTourGuideBlock } from './use-case-playbooks.js';
 import { buildChallengeBlock, detectChallengeableClaims } from './challenge-library.js';
+import { buildFirstSessionTour } from './onboarding-tour.js';
 import { buildWorkflowContext } from './workflow-orchestration.js';
 import { detectDocumentType, buildDocumentGenerationContext } from './document-routing.js';
 import { getFeedbackSummary } from '../intelligence/learning-loop-service.js';
@@ -981,7 +982,11 @@ export async function enrichContextForChat(params: {
         if (block) { projectlessBlocks.push(block); projectlessSources.push('industry-wisdom'); }
       }
       const isGreetingNoProj = /^(hi|hello|hey|good\s*(morning|afternoon|evening)|help|where (?:do|should) i start|i.?m new|guide me)/i.test(message.trim());
-      if (matchesTriggers(message, WAYFINDING_TRIGGERS) || isGreetingNoProj) {
+      if (isGreetingNoProj) {
+        // True first contact: lead with a tailored welcome, not a feature list.
+        const block = buildFirstSessionTour({ submissionType, message });
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('first-session-tour'); }
+      } else if (matchesTriggers(message, WAYFINDING_TRIGGERS)) {
         const block = buildTourGuideBlock({ submissionType, message });
         if (block) { projectlessBlocks.push(block); projectlessSources.push('tour-guide'); }
       }

@@ -997,6 +997,13 @@ describe('AnA RI Persona — character & dissent', () => {
     expect(prompt).toMatch(/Do not manufacture dissent/);
   });
 
+  it('makes AnA aware of her wayfinding, wisdom, and challenge reflexes', () => {
+    expect(prompt).toContain('## Wayfinding, Wisdom, and Challenge');
+    expect(prompt).toMatch(/Orient the lost/);
+    expect(prompt).toMatch(/Bring experience, not just rules/);
+    expect(prompt).toMatch(/Push back when it is warranted/);
+  });
+
   it('keeps the reconciled regulatory breadth index in the live prompt', () => {
     expect(prompt).toMatch(/Tier 1/);
     expect(prompt).toMatch(/ICH/);
@@ -1200,6 +1207,58 @@ describe('AnA RI Constructive-Challenge Library', () => {
   });
 });
 
+// ── First-session onboarding tour + pack integrity ──────────────────────────
+
+import { listSurfaceKeys } from '../ana-ri/mdx-knowledge-pack.js';
+import { getFirstSessionTour, buildFirstSessionTour } from '../ana-ri/onboarding-tour.js';
+
+describe('AnA RI Onboarding Tour & Pack Integrity', () => {
+  const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
+
+  it('provides a first-session tour for every segment plus a generic fallback', () => {
+    for (const seg of ['mdx', 'biotech', 'pharma'] as const) {
+      const t = getFirstSessionTour(seg);
+      expect(t.segment).toBe(seg);
+      expect(t.steps.length).toBeGreaterThan(2);
+      expect(t.firstOffer.length).toBeGreaterThan(10);
+    }
+    expect(getFirstSessionTour(null).segment).toBeNull();
+  });
+
+  it('builds a segment-specific welcome from the message', () => {
+    const block = buildFirstSessionTour({ message: 'I am building a 510(k) device' });
+    expect(block).toContain('First-session welcome');
+    expect(block).toContain('Medical device');
+  });
+
+  it('keeps onboarding copy inside the design-system voice', () => {
+    for (const seg of ['mdx', 'biotech', 'pharma', null] as const) {
+      const t = getFirstSessionTour(seg);
+      const text = [t.opening, t.firstOffer, ...t.steps.map(s => s.whatAnaDoes)].join(' ');
+      expect(text).not.toContain('!');
+      expect(EMOJI.test(text)).toBe(false);
+    }
+  });
+
+  it('every use-case command resolves to a registered slash command (no drift)', () => {
+    const valid = new Set(SUPPORTED_SLASH_COMMANDS);
+    for (const u of USE_CASES) {
+      for (const c of u.commands) {
+        expect(valid.has(c as typeof SUPPORTED_SLASH_COMMANDS[number])).toBe(true);
+      }
+    }
+  });
+
+  it('every mdx use-case surface resolves to a known MDX surface key (no drift)', () => {
+    const keys = new Set(listSurfaceKeys());
+    for (const u of USE_CASES.filter(u => u.segment === 'mdx')) {
+      for (const s of u.surfaces) {
+        expect(keys.has(s)).toBe(true);
+      }
+    }
+  });
+});
+
 // ── Enrichment wiring for wisdom + tour guide ────────────────────────────────
 
 describe('AnA RI Enrichment — wisdom & wayfinding', () => {
@@ -1276,6 +1335,13 @@ describe('AnA RI Enrichment — wisdom & wayfinding', () => {
     });
     expect(result.enrichmentMeta?.hasProjectContext).toBe(false);
     expect(result.enrichmentMeta?.sourcesSucceeded).toContain('constructive-challenge');
+  });
+
+  it('welcomes a project-less new user with a first-session tour', async () => {
+    const result = await enrichContextForChat({ message: 'hi' });
+    expect(result.enrichmentMeta?.hasProjectContext).toBe(false);
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('first-session-tour');
+    expect(result.block).toContain('First-session welcome');
   });
 });
 
