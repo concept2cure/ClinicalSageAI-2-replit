@@ -31,6 +31,7 @@ import { buildFirstSessionTour } from './onboarding-tour.js';
 import { buildDecisionFrameworkBlock, detectRelevantFrameworks } from './decision-frameworks.js';
 import { buildAgencyTacticsBlock, detectRelevantTactics } from './agency-tactics.js';
 import { buildCompetitiveBlock, detectRelevantPlays } from './competitive-strategy.js';
+import { buildAttunementBlock, detectClientState } from './client-attunement.js';
 import { buildRoleLensBlock, hasRoleLens } from './role-lens.js';
 import type { UserRole } from './persona.js';
 import { buildWorkflowContext } from './workflow-orchestration.js';
@@ -1038,6 +1039,10 @@ export async function enrichContextForChat(params: {
         const block = buildCompetitiveBlock({ message, segment: challengeSegmentNoProj });
         if (block) { projectlessBlocks.push(block); projectlessSources.push('competitive-strategy'); }
       }
+      if (detectClientState(message)) {
+        const block = buildAttunementBlock(message);
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('client-attunement'); }
+      }
     } else if (slashNoProj && ['decide', 'tradeoff', 'framework'].includes(slashNoProj.command)) {
       const block = buildDecisionFrameworkBlock({
         message: slashNoProj.args || message,
@@ -1464,6 +1469,17 @@ export async function enrichContextForChat(params: {
       if (compBlock) {
         blocks.push(compBlock);
         sources.push('competitive-strategy');
+        if (triggerType === 'none') triggerType = 'natural_language';
+      }
+    }
+
+    // ── Client attunement — read the human state and steady the delivery ──
+    if (detectClientState(message)) {
+      sourcesAttempted++;
+      const attuneBlock = buildAttunementBlock(message);
+      if (attuneBlock) {
+        blocks.push(attuneBlock);
+        sources.push('client-attunement');
         if (triggerType === 'none') triggerType = 'natural_language';
       }
     }

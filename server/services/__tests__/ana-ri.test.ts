@@ -1007,6 +1007,15 @@ describe('AnA RI Persona — character & dissent', () => {
     expect(prompt).toMatch(/Read the landscape/);
   });
 
+  it('carries an always-on empathy posture (Meet the human)', () => {
+    expect(prompt).toContain('## Meet the human, not just the question');
+    expect(prompt).toMatch(/When bad news has just landed/);
+    expect(prompt).toMatch(/Empathy here is not warmth for its own sake/);
+    // Empathy must not breach the voice floor.
+    const section = prompt.slice(prompt.indexOf('## Meet the human'), prompt.indexOf('## How to Communicate'));
+    expect(section).not.toContain('!');
+  });
+
   it('keeps the reconciled regulatory breadth index in the live prompt', () => {
     expect(prompt).toMatch(/Tier 1/);
     expect(prompt).toMatch(/ICH/);
@@ -1391,6 +1400,70 @@ describe('AnA RI Competitive-Strategy Pack', () => {
   });
 });
 
+// ── Client attunement (empathy layer) ────────────────────────────────────────
+
+import {
+  ATTUNEMENT_PATTERNS,
+  detectClientState,
+  buildAttunementBlock,
+  getAttunement,
+} from '../ana-ri/client-attunement.js';
+
+describe('AnA RI Client Attunement', () => {
+  const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
+
+  it('every state has a reading, attune, leadWith, and avoid', () => {
+    for (const p of ATTUNEMENT_PATTERNS) {
+      expect(p.triggers.length).toBeGreaterThan(0);
+      expect(p.reading.length).toBeGreaterThan(10);
+      expect(p.attune.length).toBeGreaterThan(10);
+      expect(p.leadWith.length).toBeGreaterThan(10);
+      expect(p.avoid.length).toBeGreaterThan(10);
+    }
+  });
+
+  it('reads the salient state from a message', () => {
+    expect(detectClientState('We just got a CRL from the FDA')?.state).toBe('crisis');
+    expect(detectClientState('I am completely overwhelmed and do not know where to start')?.state).toBe('overwhelm');
+    expect(detectClientState('We file in 3 days and are running out of time')?.state).toBe('time_pressure');
+    expect(detectClientState('FDA keeps moving the goalposts, this is impossible')?.state).toBe('frustration');
+    expect(detectClientState('I am worried we are missing something')?.state).toBe('anxiety');
+    expect(detectClientState('the team is completely burned out')?.state).toBe('fatigue');
+    expect(detectClientState('this is a slam dunk, no way they reject it')?.state).toBe('overconfidence');
+  });
+
+  it('crisis outranks a co-occurring softer state', () => {
+    // Contains both a crisis signal and a frustration signal; crisis wins.
+    expect(detectClientState('We just got a clinical hold and honestly this is impossible')?.state).toBe('crisis');
+  });
+
+  it('returns null on a neutral, unemotional message', () => {
+    expect(detectClientState('What is the page limit for Module 2.5?')).toBeNull();
+    expect(buildAttunementBlock('Draft section 3.2.P.5')).toBe('');
+  });
+
+  it('builds an attunement directive scoped to delivery, not truth', () => {
+    const block = buildAttunementBlock('we just received a complete response letter');
+    expect(block).toContain('Read on the user');
+    expect(block).toMatch(/how you show up, not what is true/i);
+    expect(block).toMatch(/How to show up/);
+    expect(block).toMatch(/Avoid/);
+  });
+
+  it('exposes a lookup by state', () => {
+    expect(getAttunement('crisis')?.label).toMatch(/bad news/i);
+    expect(getAttunement('fatigue')?.state).toBe('fatigue');
+  });
+
+  it('keeps attunement copy inside the design-system voice (no emoji, no exclamation)', () => {
+    for (const p of ATTUNEMENT_PATTERNS) {
+      const text = [p.label, p.reading, p.attune, p.leadWith, p.avoid].join(' ');
+      expect(text).not.toContain('!');
+      expect(EMOJI.test(text)).toBe(false);
+    }
+  });
+});
+
 // ── Role lens ────────────────────────────────────────────────────────────────
 
 import { buildRoleLensBlock, hasRoleLens } from '../ana-ri/role-lens.js';
@@ -1650,6 +1723,25 @@ describe('AnA RI Enrichment — wisdom & wayfinding', () => {
     });
     expect(result.enrichmentMeta?.sourcesSucceeded).toContain('competitive-strategy');
     expect(result.block).toContain('Competitive strategy');
+  });
+
+  it('reads a client in crisis and steadies the delivery', async () => {
+    const result = await enrichContextForChat({
+      message: 'We just got a complete response letter from the FDA, what do we do?',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'nda',
+    });
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('client-attunement');
+    expect(result.block).toContain('Read on the user');
+  });
+
+  it('attunes to an overwhelmed project-less newcomer', async () => {
+    const result = await enrichContextForChat({
+      message: 'I am completely overwhelmed and have no idea where to start',
+    });
+    expect(result.enrichmentMeta?.hasProjectContext).toBe(false);
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('client-attunement');
   });
 
   it('does not apply a role lens for the general role', async () => {
