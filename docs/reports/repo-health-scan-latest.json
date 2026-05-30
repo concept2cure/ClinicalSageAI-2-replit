@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-05-30T20:35:35.928Z",
+  "generatedAt": "2026-05-30T20:38:54.288Z",
   "git": {
-    "sha": "d52a3d7b168f2eec06049a3807b0f7ab9e1130d1",
+    "sha": "278c4d59d35fe881b1491cdf8fa4138a8931a10c",
     "branch": "claude/concept2cure-v2-audit-5zufv"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 196,
+    "duplicateBasenames": 197,
     "largeFilesByBytes": 15,
     "largeFilesByLines": 47
   },
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 98,
+        "count": 100,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -83,6 +83,7 @@
           "server/services/biostats-signal-engine/index.ts",
           "server/services/cer/index.ts",
           "server/services/cognitive-ecosystem/index.ts",
+          "server/services/corpus/index.ts",
           "server/services/cortex/index.ts",
           "server/services/csr/index.ts",
           "server/services/documents/index.ts",
@@ -96,6 +97,7 @@
           "server/services/intelligence/index.ts",
           "server/services/literature/index.ts",
           "server/services/orchestration/index.ts",
+          "server/services/ptrs/index.ts",
           "server/services/regulatory-precedent-intelligence/index.ts",
           "server/services/regulatory/registry/index.ts",
           "server/services/research-intelligence/index.ts",
@@ -833,6 +835,15 @@
           "client/src/ErrorBoundary.jsx",
           "client/src/concept2cure/components/ErrorBoundary.tsx",
           "client/src/utils/errorBoundary.jsx"
+        ]
+      },
+      {
+        "basename": "eslint.config",
+        "count": 3,
+        "paths": [
+          "eslint.config.js",
+          "eslint.config.js",
+          "eslint.config.js"
         ]
       },
       {
@@ -1966,7 +1977,7 @@
     "largeFilesByBytes": [
       {
         "file": "shared/schema.ts",
-        "bytes": 813503
+        "bytes": 813599
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -1974,7 +1985,7 @@
       },
       {
         "file": "server/statistics-service.ts",
-        "bytes": 218562
+        "bytes": 219669
       },
       {
         "file": "client/src/concept2cure/components/editor/EditorPanel.tsx",
@@ -2028,7 +2039,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19683
+        "lines": 19684
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2036,7 +2047,7 @@
       },
       {
         "file": "server/statistics-service.ts",
-        "lines": 6914
+        "lines": 6883
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2227,13 +2238,13 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 253,
+      "duplicateGroups": 255,
       "largeByBytes": 10,
       "largeByLines": 33
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 234,
+      "duplicateGroups": 237,
       "largeByBytes": 2,
       "largeByLines": 7
     },
