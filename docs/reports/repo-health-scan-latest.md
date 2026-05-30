@@ -1,8 +1,8 @@
 # Repo Health Scan
 
-Generated: 2026-05-29T17:59:02.868Z
+Generated: 2026-05-30T11:44:20.758Z
 Branch: claude/study-protocol-design-assessment-m6ltz
-SHA: 241ed930807b902d51dfe6c9fd594cad1a74dd48
+SHA: ee7642ff5c6e3edbade0de1e4b39ca791280e00b
 
 ## Summary
 
@@ -10,9 +10,9 @@ SHA: 241ed930807b902d51dfe6c9fd594cad1a74dd48
 - Files over byte threshold: 15
 - Files over line threshold: 46
 - Baseline: docs/reports/repo-health-scan-latest.json
-- Delta duplicate basenames: 4
+- Delta duplicate basenames: 0
 - Delta files over byte threshold: 0
-- Delta files over line threshold: 1
+- Delta files over line threshold: 0
 
 ## Owner Summary
 

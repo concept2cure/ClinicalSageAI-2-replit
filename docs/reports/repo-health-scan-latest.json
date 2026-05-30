@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-05-29T17:59:02.868Z",
+  "generatedAt": "2026-05-30T11:44:20.758Z",
   "git": {
-    "sha": "241ed930807b902d51dfe6c9fd594cad1a74dd48",
+    "sha": "ee7642ff5c6e3edbade0de1e4b39ca791280e00b",
     "branch": "claude/study-protocol-design-assessment-m6ltz"
   },
   "thresholds": {
@@ -1974,7 +1974,7 @@
       },
       {
         "file": "server/statistics-service.ts",
-        "bytes": 223732
+        "bytes": 223744
       },
       {
         "file": "client/src/concept2cure/components/editor/EditorPanel.tsx",
@@ -2215,9 +2215,9 @@
   "comparison": {
     "baseline": "docs/reports/repo-health-scan-latest.json",
     "delta": {
-      "duplicateBasenames": 4,
+      "duplicateBasenames": 0,
       "largeFilesByBytes": 0,
-      "largeFilesByLines": 1
+      "largeFilesByLines": 0
     }
   },
   "ownerSummary": [
