@@ -484,6 +484,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   const [mdxDeepLink, setMdxDeepLink] = useState<string>('');
   // Phase 11 Intelligence cluster — which tab to open (protocol|cmc|biostat|reporting).
   const [intelligenceTab, setIntelligenceTab] = useState<IntTab>('protocol');
+  // Phase 9 Universal Authoring — which doc type to open the authoring shell on.
+  const [authoringDocType, setAuthoringDocType] = useState<string | undefined>(undefined);
+  const openAuthoring = React.useCallback((docType?: string) => {
+    setAuthoringDocType(docType);
+    setLayoutMode('authoring');
+  }, []);
   // PDEV deep-link target set when an IND project opens a PDEV surface
   // (overview / ind_assembly / fda_interactions) for a specific program.
   const [pdevDeepLink, setPdevDeepLink] = useState<{ programId: string; nav: string } | null>(null);
@@ -1936,7 +1942,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // sourced from design-system/ui_kits/mdx/. The prior iframe wrapper was
   // retired in Phase 2 (commit 4e5f63d4).
   if (layoutMode === 'mdx' && !embeddedModule) {
-    return <MdxRoute initialNav={hashToMdxNav(mdxDeepLink)} />;
+    return <MdxRoute initialNav={hashToMdxNav(mdxDeepLink)} onOpenAuthoring={openAuthoring} />;
   }
 
   // Phase 7 — PDEV (Pharmaceutical Development) workstream for IND programs.
@@ -2003,7 +2009,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // driven by (doc_type × agency) rule packs). Supersedes the legacy
   // ectd_coauthor + per-pathway editors. Reached via the 'artifacts' rail item.
   if (layoutMode === 'authoring' && !embeddedModule) {
-    return <AuthoringRoute />;
+    return <AuthoringRoute initialDocType={authoringDocType} />;
   }
 
   // Phase 10 — Project detail surface. Requires an active project.
@@ -2057,7 +2063,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     };
     const hash = moduleHash[embeddedModule];
     if (hash !== undefined) {
-      return <MdxRoute initialNav={hashToMdxNav(hash)} projectName={activeProject?.name} />;
+      return <MdxRoute initialNav={hashToMdxNav(hash)} projectName={activeProject?.name} onOpenAuthoring={openAuthoring} />;
     }
     // ind / cmc: bundle has not designed these surfaces. Redirect to the
     // project's chat-first shell so the user never lands on invented UI.
