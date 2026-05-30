@@ -100,7 +100,7 @@ function extractSampleSize(text: string): { value: number; evidence: string } | 
 }
 
 function extractPhase(text: string): { value: string; evidence: string } | null {
-  const m = firstMatch(text, /phase\s+(?:I{1,3}V?|[1-4])(?:\s*[\/-]\s*(?:I{1,3}V?|[1-4]))?/i);
+  const m = firstMatch(text, /phase\s+(?:I{1,3}V?|[1-4])(?:\s*[/-]\s*(?:I{1,3}V?|[1-4]))?/i);
   if (!m) return null;
   const roman: Record<string, string> = { I: '1', II: '2', III: '3', IV: '4' };
   const normalized = m[0]
