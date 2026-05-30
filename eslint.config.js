@@ -180,4 +180,14 @@ export default [
       }],
     },
   },
+  {
+    // ui_kits/ holds hi-fi design prototypes whose scripts load as sibling
+    // <script> tags sharing one global lexical scope. Those kits intentionally
+    // use `var { ... } = React` destructures because const/let would throw
+    // "Identifier has already been declared" across scripts and render nothing
+    // (see concept2cure-v2 commit b4d3e60). Allow var for these prototype
+    // files only; all other rules still apply.
+    files: ['ui_kits/**/*.{js,jsx}'],
+    rules: { 'no-var': 'off' },
+  },
 ];

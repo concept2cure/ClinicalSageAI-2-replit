@@ -336,6 +336,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
       projectId,
       organizationId: numericOrgId ?? undefined,
       submissionType: orchestration.detectedSubmissionType || undefined,
+      userRole: effectiveRole,
     }).catch((): EnrichmentResult => ({ block: '', sources: [] })),
   ]);
 

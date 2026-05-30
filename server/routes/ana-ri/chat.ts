@@ -361,6 +361,7 @@ router.post('/chat', async (req: Request, res: Response) => {
         projectId: chatProjectId,
         organizationId: orgId ? Number(orgId) : undefined,
         submissionType: orchestration.detectedSubmissionType || undefined,
+        userRole: effectiveRole,
       }).catch(err => {
         console.warn('[AnA RI] Context enrichment failed:', err?.message);
         return {
