@@ -12444,6 +12444,7 @@ export const csrReports = pgTable(
     metadata: json('metadata'),
     complianceStatus: text('compliance_status'),
     regulatoryAgency: text('regulatory_agency'), // FDA, EMA, PMDA, etc.
+    nctId: text('nct_id'), // ClinicalTrials.gov id; corpus dedupe key (see migration 20260530)
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },

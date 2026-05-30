@@ -4,7 +4,11 @@
  * Persists a normalized CT.gov study into csr_reports + csr_details, keyed on
  * nct_id for idempotency. If a report with the same NCT id exists it is updated
  * in place (and its details refreshed); otherwise a new report+details pair is
- * created. Mirrors the insert shapes used by server/data-importer.ts.
+ * created. Maps strictly to columns that exist in shared/schema.ts — fields the
+ * registry provides that have no dedicated column (brief summary, treatment
+ * arms, study duration, registry success hint) are preserved in the `metadata`
+ * JSON so nothing is silently dropped and nothing is written to a non-existent
+ * column.
  *
  * This is the production wiring for the CorpusWriter interface; the ingestion
  * orchestrator (ingest-ctgov.ts) stays IO-free and testable by depending on the
@@ -22,35 +26,59 @@ const DEFAULT_ORG_ID = 1;
 type CsrReportInsert = typeof csrReports.$inferInsert;
 type CsrDetailsInsert = typeof csrDetails.$inferInsert;
 
+/** Parse a "<n> weeks" duration string back to an integer count, or null. */
+function durationToWeeks(duration: string | null): number | null {
+  if (!duration) return null;
+  const m = duration.match(/(\d+)\s*weeks?/i);
+  return m ? Number(m[1]) : null;
+}
+
 export class DrizzleCorpusWriter implements CorpusWriter {
   constructor(private readonly organizationId: number = DEFAULT_ORG_ID) {}
 
   async upsert(study: NormalizedStudy): Promise<NormalizedStudyWriteResult> {
+    // csr_reports.report_id is NOT NULL + UNIQUE; use the NCT id when present,
+    // otherwise a deterministic title-derived key, so the row is well-formed and
+    // re-ingestion stays idempotent.
+    const reportKey = study.nctId ?? `ctgov:${study.report.title}`;
+
     const reportValues: CsrReportInsert = {
+      organizationId: this.organizationId,
+      reportId: reportKey,
+      reportTitle: study.report.title,
       title: study.report.title,
       sponsor: study.report.sponsor,
       indication: study.report.indication,
       phase: study.report.phase,
       status: study.report.status,
-      date: study.report.date ?? undefined,
-      summary: study.report.summary ?? undefined,
+      reportDate: study.report.date ?? undefined,
+      durationWeeks: durationToWeeks(study.details.studyDuration) ?? undefined,
+      studyDesign: study.details.studyDesign ?? undefined,
+      sampleSize: study.details.sampleSize ?? undefined,
       nctId: study.nctId ?? undefined,
-      organizationId: this.organizationId,
+      // Fields without a dedicated column are kept in metadata, not dropped.
+      metadata: {
+        source: 'clinicaltrials.gov',
+        summary: study.report.summary,
+        successHint: study.successHint,
+        treatmentArms: study.details.treatmentArms,
+        studyDuration: study.details.studyDuration,
+      },
     };
 
     const detailValues: Omit<CsrDetailsInsert, 'reportId'> = {
       studyDesign: study.details.studyDesign ?? undefined,
       primaryObjective: study.details.primaryObjective ?? undefined,
       endpoints: study.details.endpoints ?? undefined,
-      treatmentArms: study.details.treatmentArms ?? undefined,
       inclusionCriteria: study.details.inclusionCriteria ?? undefined,
       exclusionCriteria: study.details.exclusionCriteria ?? undefined,
       sampleSize: study.details.sampleSize ?? undefined,
       statisticalMethods: study.details.statisticalMethods ?? undefined,
-      studyDuration: study.details.studyDuration ?? undefined,
       results: study.details.results ?? undefined,
-      processed: true,
-      organizationId: this.organizationId,
+      metadata: {
+        treatmentArms: study.details.treatmentArms,
+        studyDuration: study.details.studyDuration,
+      },
     };
 
     // Look up an existing report by NCT id (when present) for idempotency.

@@ -1,8 +1,8 @@
 # Repo Health Scan
 
-Generated: 2026-05-30T11:44:20.758Z
+Generated: 2026-05-30T11:58:38.106Z
 Branch: claude/study-protocol-design-assessment-m6ltz
-SHA: ee7642ff5c6e3edbade0de1e4b39ca791280e00b
+SHA: 65aff0c3eed6e9bae631471abd9ece9c8e8103ca
 
 ## Summary
 
@@ -16,7 +16,7 @@ SHA: ee7642ff5c6e3edbade0de1e4b39ca791280e00b
 
 ## Owner Summary
 
-- Backend Platform (server/routes + server/services owners): duplicateGroups=253, largeByBytes=10, largeByLines=32
+- Backend Platform (server/routes + server/services owners): duplicateGroups=254, largeByBytes=10, largeByLines=32
 - Unassigned (TBD): duplicateGroups=234, largeByBytes=2, largeByLines=7
 - Concept2Cure Frontend (client/src/concept2cure maintainers): duplicateGroups=169, largeByBytes=2, largeByLines=4
 - Frontend Platform (client/src maintainers): duplicateGroups=83, largeByBytes=0, largeByLines=1
