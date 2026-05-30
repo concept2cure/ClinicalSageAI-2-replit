@@ -10,6 +10,13 @@
  *   1. index.html exists for every kit
  *   2. every local file referenced by index.html (scripts, styles, icons) exists
  *   3. every JSX/JS script parses (via esbuild, which the kits' Babel also accepts)
+ *   4. no shared-scope collisions — the kits' sibling <script> tags share one
+ *      global scope, so the same `const {..} = React` in two scripts throws at
+ *      runtime and the kit renders nothing (catch it statically; fix with `var`).
+ *
+ * Full offline browser rendering (vendoring React from node_modules and driving
+ * headless chromium over CDP) confirmed all 9 kits render after these fixes; that
+ * harness needs a chromium binary so it is not part of this CI-friendly check.
  *
  * Usage: node scripts/validate-ui-kits.mjs [--strict]
  *   --strict exits non-zero on any issue (for CI).
@@ -72,6 +79,33 @@ for (const kit of kits) {
       const msg = (e.stderr?.toString() || e.message).split('\n').find((l) => l.includes('ERROR')) || 'parse error';
       issues.push(`parse error in ${path.relative(dir, f)}: ${msg.trim()}`);
     }
+  }
+
+  // 3. shared-scope collision check. The kits load their scripts as sibling
+  //    <script> tags, which share ONE global lexical scope — so the same
+  //    `const { ...hooks } = React;` declared at top level in two scripts throws
+  //    "Identifier 'X' has already been declared" and the kit renders nothing.
+  //    (Found in the authoring + intelligence kits; fixed by using `var`.) Use
+  //    `var` for top-level React-hook destructures shared across a kit's scripts.
+  const hookCounts = new Map();
+  for (const f of scripts) {
+    const src = fs.readFileSync(f, 'utf8');
+    for (const line of src.split('\n')) {
+      const cm = line.match(/^\s*const\s*\{([^}]*)\}\s*=\s*React\s*;?\s*$/);
+      if (!cm) continue;
+      for (let part of cm[1].split(',')) {
+        // The collision is on the BOUND name: for `useState: useStateExt` the
+        // binding is `useStateExt`, so aliasing avoids the clash (as home does).
+        const bound = (part.includes(':') ? part.split(':')[1] : part).trim();
+        if (bound) hookCounts.set(bound, (hookCounts.get(bound) || 0) + 1);
+      }
+    }
+  }
+  const collisions = [...hookCounts.entries()].filter(([, n]) => n > 1).map(([k]) => k);
+  if (collisions.length > 0) {
+    issues.push(
+      `shared-scope collision: ${collisions.join(', ')} declared via \`const {..} = React\` in multiple scripts (use \`var\`)`
+    );
   }
 
   if (issues.length === 0) {

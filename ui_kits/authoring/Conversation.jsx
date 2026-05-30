@@ -1,5 +1,5 @@
 /* global React, I, AUTH_SLASH_COMMANDS, AUTH_SKILLS */
-const { useState, useRef, useEffect } = React;
+var { useState, useRef, useEffect } = React;
 
 /* ───────── Selection toolbar — fixed-positioned popover above the user's range.
    Phase 10.3 — extended with Comment and Regenerate alongside the existing

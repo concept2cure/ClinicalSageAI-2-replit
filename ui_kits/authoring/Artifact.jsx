@@ -1,5 +1,5 @@
 /* global React, I, AUTH_SECTION_BODY, AUTH_EVIDENCE, AUTH_GATES, AUTH_GATE_CATEGORIES */
-const { useState, useRef, useEffect, useMemo } = React;
+var { useState, useRef, useEffect, useMemo } = React;
 
 const evMap = () => Object.fromEntries(AUTH_EVIDENCE.map(e => [e.id, e]));
 
