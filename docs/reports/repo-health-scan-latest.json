@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-05-30T20:42:46.362Z",
+  "generatedAt": "2026-05-30T20:53:39.513Z",
   "git": {
-    "sha": "b0cbe1a83a6e1f95320941d3c2698df68fe35a1b",
+    "sha": "c160c3b519655b20bcecc4d6edff1df0e06b5c75",
     "branch": "claude/concept2cure-v2-audit-5zufv"
   },
   "thresholds": {
@@ -123,7 +123,7 @@
       },
       {
         "basename": "app",
-        "count": 32,
+        "count": 40,
         "paths": [
           "client/public/design-system/ui_kits/ana_ri/App.jsx",
           "client/public/design-system/ui_kits/ectd_coauthor/App.jsx",
@@ -151,12 +151,20 @@
           "ui_kits/ana_ri/App.jsx",
           "ui_kits/authoring/App.jsx",
           "ui_kits/biopharma/app.jsx",
+          "ui_kits/cmc/app.jsx",
           "ui_kits/ectd_coauthor/App.jsx",
+          "ui_kits/esign/app.jsx",
           "ui_kits/home/App.jsx",
           "ui_kits/intelligence/App.jsx",
+          "ui_kits/labeling/app.jsx",
           "ui_kits/mdx/app.jsx",
+          "ui_kits/pathway-tabs/app.jsx",
           "ui_kits/pdev/App.jsx",
-          "ui_kits/projects/App.jsx"
+          "ui_kits/projects/App.jsx",
+          "ui_kits/risk/app.jsx",
+          "ui_kits/submission/app.jsx",
+          "ui_kits/task-tray/app.jsx",
+          "ui_kits/tasking/app.jsx"
         ]
       },
       {
@@ -226,6 +234,32 @@
         ]
       },
       {
+        "basename": "data",
+        "count": 20,
+        "paths": [
+          "client/public/design-system/ui_kits/home/data.jsx",
+          "client/public/design-system/ui_kits/mdx/data.jsx",
+          "client/src/concept2cure/authoring/data.ts",
+          "client/src/concept2cure/components/claude-ectd-coauthor/data.ts",
+          "client/src/concept2cure/components/concept2cure-home/data.tsx",
+          "client/src/concept2cure/intelligence/data.ts",
+          "design-system/ui_kits/home/data.jsx",
+          "design-system/ui_kits/mdx_phase2/data.jsx",
+          "design-system/ui_kits/pdev/data.jsx",
+          "ui_kits/authoring/data.jsx",
+          "ui_kits/biopharma/data.jsx",
+          "ui_kits/cmc/data.jsx",
+          "ui_kits/home/data.jsx",
+          "ui_kits/intelligence/data.jsx",
+          "ui_kits/labeling/data.jsx",
+          "ui_kits/pathway-tabs/data.jsx",
+          "ui_kits/pdev/data.jsx",
+          "ui_kits/risk/data.jsx",
+          "ui_kits/submission/data.jsx",
+          "ui_kits/tasking/data.jsx"
+        ]
+      },
+      {
         "basename": "routes",
         "count": 17,
         "paths": [
@@ -269,26 +303,6 @@
         ]
       },
       {
-        "basename": "data",
-        "count": 14,
-        "paths": [
-          "client/public/design-system/ui_kits/home/data.jsx",
-          "client/public/design-system/ui_kits/mdx/data.jsx",
-          "client/src/concept2cure/authoring/data.ts",
-          "client/src/concept2cure/components/claude-ectd-coauthor/data.ts",
-          "client/src/concept2cure/components/concept2cure-home/data.tsx",
-          "client/src/concept2cure/intelligence/data.ts",
-          "design-system/ui_kits/home/data.jsx",
-          "design-system/ui_kits/mdx_phase2/data.jsx",
-          "design-system/ui_kits/pdev/data.jsx",
-          "ui_kits/authoring/data.jsx",
-          "ui_kits/biopharma/data.jsx",
-          "ui_kits/home/data.jsx",
-          "ui_kits/intelligence/data.jsx",
-          "ui_kits/pdev/data.jsx"
-        ]
-      },
-      {
         "basename": "topbar",
         "count": 12,
         "paths": [
@@ -324,7 +338,7 @@
       },
       {
         "basename": "rail",
-        "count": 9,
+        "count": 10,
         "paths": [
           "client/src/concept2cure/biopharma/shell/Rail.tsx",
           "client/src/concept2cure/cmc/shell/Rail.tsx",
@@ -334,7 +348,8 @@
           "client/src/concept2cure/pdev/shell/Rail.tsx",
           "client/src/concept2cure/risk/shell/Rail.tsx",
           "client/src/concept2cure/submission/shell/Rail.tsx",
-          "client/src/concept2cure/tasking/shell/Rail.tsx"
+          "client/src/concept2cure/tasking/shell/Rail.tsx",
+          "ui_kits/_shared/rail.jsx"
         ]
       },
       {
@@ -363,6 +378,20 @@
           "ui_kits/biopharma/shell.jsx",
           "ui_kits/mdx/shell.jsx",
           "ui_kits/pdev/Shell.jsx"
+        ]
+      },
+      {
+        "basename": "surfaces",
+        "count": 8,
+        "paths": [
+          "client/public/design-system/ui_kits/mdx/Surfaces.jsx",
+          "design-system/ui_kits/mdx_phase2/Surfaces.jsx",
+          "design-system/ui_kits/pdev/Surfaces.jsx",
+          "ui_kits/biopharma/surfaces.jsx",
+          "ui_kits/intelligence/surfaces.jsx",
+          "ui_kits/pdev/Surfaces.jsx",
+          "ui_kits/risk/surfaces.jsx",
+          "ui_kits/submission/surfaces.jsx"
         ]
       },
       {
@@ -463,18 +492,6 @@
           "server/integrations/firecrawl/search.ts",
           "ui_kits/mdx/data/search.js",
           "ui_kits/mdx/surfaces/Search.jsx"
-        ]
-      },
-      {
-        "basename": "surfaces",
-        "count": 6,
-        "paths": [
-          "client/public/design-system/ui_kits/mdx/Surfaces.jsx",
-          "design-system/ui_kits/mdx_phase2/Surfaces.jsx",
-          "design-system/ui_kits/pdev/Surfaces.jsx",
-          "ui_kits/biopharma/surfaces.jsx",
-          "ui_kits/intelligence/surfaces.jsx",
-          "ui_kits/pdev/Surfaces.jsx"
         ]
       },
       {
@@ -2253,7 +2270,7 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 234,
+      "duplicateGroups": 251,
       "largeByBytes": 2,
       "largeByLines": 7
     },

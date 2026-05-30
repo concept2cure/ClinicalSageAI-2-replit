@@ -96,8 +96,9 @@ function Message({ m }) {
 }
 
 /* ───── Composer with slash menu + suggestion chips ───── */
-function Composer({ value, onChange, onSend, scope, agentic, onAgenticToggle, model, onModelChange }) {
+function Composer({ value, onChange, onSend, onUpload, scope, projectName, agentic, onAgenticToggle, model, onModelChange }) {
   const ref = React.useRef(null);
+  const fileRef = React.useRef(null);
   const [modelOpen, setModelOpen] = React.useState(false);
 
   const isSlash = value.startsWith('/');
@@ -155,7 +156,12 @@ function Composer({ value, onChange, onSend, scope, agentic, onAgenticToggle, mo
 
         <div className="ad-composer-row">
           <div className="ad-composer-left">
-            <button className="ad-chip" title="Attach evidence">{I.attach}</button>
+            <input ref={fileRef} type="file" hidden multiple onChange={(e) => {
+              const files = e.target.files; if (!files || !files.length) return;
+              onUpload(Array.from(files).map(f => f.name));
+              e.target.value = '';
+            }}/>
+            <button className="ad-chip" title={`Attach a file — saved to ${projectName || 'this project'} and added to project memory`} onClick={() => fileRef.current && fileRef.current.click()}>{I.attach}</button>
             <button className="ad-chip" title="Mention reviewer">{I.users || I.user}</button>
             <button className="ad-chip" onClick={onAgenticToggle} title={agentic ? 'Switch to Suggest only' : 'Switch to Act without asking'}>
               {agentic ? (
@@ -284,7 +290,21 @@ function AnaDock({ activeNav, open, onClose }) {
 
       <Composer
         value={draft} onChange={setDraft} onSend={send}
+        onUpload={(names) => {
+          const list = names.join(', ');
+          setMessages(m => [...m, { role: 'user', text: `Uploaded: ${list}` }]);
+          setPending(true);
+          setTimeout(() => {
+            setPending(false);
+            setMessages(m => [...m, { role: 'ana', blocks: [
+              { kind: 'tool', label: 'Saved',  value: `${list} → ${label} · stored in project vault` },
+              { kind: 'tool', label: 'Memory', value: `Project memory updated · AnA can now ground on these` },
+              { kind: 'p',    text: `Filed ${names.length} file${names.length>1?'s':''} to ${label}. I classified ${names.length>1?'them':'it'} and linked to the most relevant section — say the word and I'll draft from ${names.length>1?'them':'it'}.` },
+            ]}]);
+          }, 900);
+        }}
         scope={scope}
+        projectName={label}
         agentic={agentic} onAgenticToggle={() => setAgentic(a => !a)}
         model={model} onModelChange={setModel}
       />

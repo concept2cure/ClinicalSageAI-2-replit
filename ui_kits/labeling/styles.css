@@ -1,0 +1,37 @@
+@import url('../../colors_and_type.css');
+@import url('../biopharma/styles.css');
+@import url('../submission/styles.css');
+
+.lb-docs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
+@media (max-width: 1000px){ .lb-docs { grid-template-columns: 1fr; } }
+.lb-doc { text-align: left; background: var(--bg-000); border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; transition: border-color 200ms; }
+.lb-doc:hover { border-color: var(--accent-main-100); }
+.lb-doc-top { display: flex; align-items: center; gap: 8px; }
+.lb-doc-kind { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-400); }
+.lb-doc-st { margin-left: auto; font-size: 10px; font-weight: 600; padding: 1px 8px; border-radius: 999px; }
+.lb-doc-st-draft { background: var(--bg-100); color: var(--text-400); }
+.lb-doc-st-review { background: rgba(106,155,204,0.14); color: #2f5a85; }
+.lb-doc-st-approved { background: rgba(120,140,93,0.14); color: #5a6e44; }
+.lb-doc-st-effective { background: rgba(108,93,172,0.12); color: #5d4f8a; }
+.lb-doc-title { font-size: 13px; font-weight: 600; color: var(--text-100); margin: 6px 0 3px; }
+.lb-doc-meta { font-size: 11px; color: var(--text-400); }
+.lb-doc-cov { display: flex; align-items: center; gap: 9px; margin-top: 8px; font-size: 11px; color: var(--text-300); font-variant-numeric: tabular-nums; }
+.lb-doc-bar { flex: 1; height: 5px; border-radius: 3px; background: var(--bg-200); overflow: hidden; }
+.lb-doc-fill { height: 100%; background: var(--accent-main-100); }
+
+.lb-table { display: flex; flex-direction: column; }
+.lb-tr { display: grid; grid-template-columns: 1.3fr 1fr 1fr 90px; gap: 10px; align-items: center; padding: 8px 12px; font-size: 12px; border-top: 1px solid #f2f0e8; }
+.lb-tr-sym { grid-template-columns: 70px 1fr 110px; }
+.lb-tr:first-child { border-top: 0; }
+.lb-lang { font-weight: 500; color: var(--text-100); }
+.lb-method { color: var(--text-300); text-transform: capitalize; font-size: 11px; }
+.lb-btv { font-size: 11px; color: var(--text-400); }
+.lb-btv.ok { color: #5a6e44; }
+.lb-st { font-size: 10.5px; font-weight: 600; padding: 1px 8px; border-radius: 999px; text-transform: capitalize; }
+.lb-st-ok { background: rgba(120,140,93,0.14); color: #5a6e44; }
+.lb-st-review { background: rgba(106,155,204,0.14); color: #2f5a85; }
+.lb-st-warn { background: rgba(217,119,6,0.14); color: #b06b14; }
+.lb-st-draft { background: var(--bg-100); color: var(--text-400); }
+.lb-sym-code { font-family: var(--font-mono, monospace); font-size: 11px; color: var(--text-400); font-weight: 600; }
+.lb-sym-name { color: var(--text-100); font-weight: 500; }
+.lb-sym-req { font-size: 10.5px; color: var(--text-400); }
