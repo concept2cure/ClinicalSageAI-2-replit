@@ -166,11 +166,13 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(opts.region).toBe('FDA');
     expect(opts.leafs).toHaveLength(2);
 
-    // Both leafs are real PDFs placed at ICH module paths (*.pdf).
+    // Both leafs are real PDFs placed at the correct ICH module path. The
+    // semantic sectionKeys route by module: `module1_admin` -> m1 (nested under
+    // the region code), `module3_cmc` -> m3.
     expect(opts.leafs[0].mediaType).toBe('application/pdf');
-    expect(opts.leafs[0].path.endsWith('.pdf')).toBe(true);
+    expect(opts.leafs[0].path).toBe('m1/us/module1-admin.pdf');
     expect(opts.leafs[1].mediaType).toBe('application/pdf');
-    expect(opts.leafs[1].path.endsWith('.pdf')).toBe(true);
+    expect(opts.leafs[1].path).toBe('m3/module3-cmc.pdf');
     // The PDF magic bytes confirm a valid pdfkit render (not a text leaf).
     expect(opts.leafs[1].content.subarray(0, 5).toString('utf8')).toBe('%PDF-');
 

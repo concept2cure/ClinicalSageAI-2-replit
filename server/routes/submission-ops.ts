@@ -1402,6 +1402,43 @@ function leafSlug(value: string): string {
 }
 
 /**
+ * Best-effort ICH module (1–5) for a c2c_package_sections sectionKey. These
+ * keys are semantic (e.g. `module3_cmc`, `labeling`, `cer`), not ICH-numeric,
+ * so we derive the module from, in order: an explicit module-N prefix, an
+ * ICH-numeric leading digit, or well-known content keywords. Returns null when
+ * nothing matches (caller defaults to module 1 / regional).
+ */
+function moduleForSectionKey(sectionKey: string): 1 | 2 | 3 | 4 | 5 | null {
+  const k = (sectionKey || '').toLowerCase();
+  const prefix = k.match(/(?:^|[^a-z0-9])(?:module|mod|m)[\s_-]?([1-5])(?:[^0-9]|$)/);
+  if (prefix) return Number(prefix[1]) as 1 | 2 | 3 | 4 | 5;
+  const numeric = k.match(/^\s*([1-5])\./);
+  if (numeric) return Number(numeric[1]) as 1 | 2 | 3 | 4 | 5;
+  // Order matters: module-2 "overview/summary" before the broad clinical
+  // keywords; "nonclinical" (m4) is matched before "clinical" (m5).
+  if (/(cover|admin|labeling|label|user-?fee|1571|1572|3674|\bform\b|regional)/.test(k)) return 1;
+  if (/(qos|quality-overall|overall-summary|overview|\bsummary\b)/.test(k)) return 2;
+  if (/(cmc|quality|drug-substance|drug-product|stability|specification|manufactur)/.test(k)) return 3;
+  if (/(nonclinical|pharmacolog|toxicolog|pharmacokinetic|\bpk\b|\badme\b)/.test(k)) return 4;
+  if (/(clinical|efficacy|safety|\bcsr\b|\bcer\b|study-report)/.test(k)) return 5;
+  return null;
+}
+
+/**
+ * Map a sectionKey to an eCTD leaf path. ICH-numeric keys keep the canonical
+ * documentExportService mapping; semantic keys are routed by module via
+ * moduleForSectionKey. Module 1 (regional) is nested under the region code.
+ */
+function sectionKeyToEctdPath(sectionKey: string, regionCode: string): string {
+  if (/^\s*[1-5](\.|\s*$)/.test(sectionKey || '')) {
+    return mapSectionToECTDPath(sectionKey, regionCode);
+  }
+  const mod = moduleForSectionKey(sectionKey) ?? 1;
+  const slug = leafSlug(sectionKey);
+  return mod === 1 ? `m1/${regionCode}/${slug}.pdf` : `m${mod}/${slug}.pdf`;
+}
+
+/**
  * Renders a single eCTD leaf as a real PDF: a bold title line followed by the
  * section markdown rendered via the canonical pdfkit markdown renderer. Resolves
  * a `%PDF`-prefixed Buffer. Mirrors the buffer pattern in documentExportService.
@@ -1537,7 +1574,7 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
 
       // Deterministic leaf path at an ICH module path; de-dupe collisions by
       // inserting the section db id BEFORE the .pdf extension.
-      let leafPath = mapSectionToECTDPath(section.sectionKey, regionCode);
+      let leafPath = sectionKeyToEctdPath(section.sectionKey, regionCode);
       if (seenPaths.has(leafPath)) {
         leafPath = leafPath.replace(/\.pdf$/, `-${section.id}.pdf`);
       }
