@@ -53,6 +53,12 @@ import {
   type CovariateInput,
 } from '../services/stats/external-control';
 import {
+  evaluateRegionRules,
+  listRegionRules,
+  type Agency,
+  type RegionDesignInput,
+} from '../services/region-design-rules';
+import {
   runJudgmentPipeline,
   runPipelineAndGenerateArtifact,
   runPipelineForRole,
@@ -1179,6 +1185,56 @@ router.post('/external-control/sensitivity', authMiddleware, async (req: Request
     });
 
     res.json({ success: true, data: { control, effect, tipping, balance, memo } });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/biostat/region-rules/evaluate
+ * Evaluate a study design against region-specific design rules for the targeted
+ * agencies (PMDA / MHRA / NMPA / Swissmedic / ANVISA / FDA / EMA): bridging and
+ * ethnic sensitivity (ICH E5), MRCT consistency (ICH E17), local-subject data,
+ * QT in the regional population, post-Brexit UK separation, Project Orbis
+ * eligibility, FDA diversity plan. Returns structured findings + recommendations.
+ *
+ * Body: a RegionDesignInput (targetAgencies required).
+ */
+router.post('/region-rules/evaluate', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    resolveOrganizationId(req);
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: error.message });
+  }
+  try {
+    const b = req.body ?? {};
+    if (!Array.isArray(b.targetAgencies) || b.targetAgencies.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'targetAgencies (non-empty array) is required.',
+      });
+    }
+    const result = evaluateRegionRules(b as RegionDesignInput);
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/biostat/region-rules/catalog?agency=PMDA
+ * Retrieve the region design-rule catalog with guidance citations, optionally
+ * filtered to one agency.
+ */
+router.get('/region-rules/catalog', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    resolveOrganizationId(req);
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: error.message });
+  }
+  try {
+    const agency = req.query.agency as Agency | undefined;
+    res.json({ success: true, data: listRegionRules(agency) });
   } catch (error: any) {
     return res.status(400).json({ success: false, error: error.message });
   }
