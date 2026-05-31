@@ -31,8 +31,10 @@ import { buildFirstSessionTour } from './onboarding-tour.js';
 import { buildDecisionFrameworkBlock, detectRelevantFrameworks } from './decision-frameworks.js';
 import { buildAgencyTacticsBlock, detectRelevantTactics } from './agency-tactics.js';
 import { buildCompetitiveBlock, detectRelevantPlays } from './competitive-strategy.js';
+import { buildAlignmentBlock, detectRelevantAlignment } from './stakeholder-alignment.js';
 import { buildAttunementBlock, detectClientState } from './client-attunement.js';
 import { buildRoleLensBlock, hasRoleLens } from './role-lens.js';
+import { composeContext, priorityForSource, type CandidateBlock, type ComposeTraceEntry } from './context-composer.js';
 import type { UserRole } from './persona.js';
 import { buildWorkflowContext } from './workflow-orchestration.js';
 import { detectDocumentType, buildDocumentGenerationContext } from './document-routing.js';
@@ -62,6 +64,10 @@ export interface EnrichmentResult {
     detectedAppMention?: string;
     /** Whether project context was available */
     hasProjectContext: boolean;
+    /** Composer decision trace when relevance-ranking was applied (opt-in). */
+    composeTrace?: ComposeTraceEntry[];
+    /** Approximate tokens used by the composed enrichment, when composed. */
+    composeTokensUsed?: number;
   };
 }
 
@@ -171,6 +177,7 @@ export const SUPPORTED_SLASH_COMMANDS = [
   'position',
   'landscape',
   'compete',
+  'align',
 ] as const;
 
 /** Enrichment sources that emit guidance the role lens can frame for an audience. */
@@ -978,8 +985,19 @@ export async function enrichContextForChat(params: {
   canonicalGovernedState?: CanonicalGovernedState;
   /** Optional user role; when present, a role lens frames the pack guidance. */
   userRole?: UserRole;
+  /**
+   * Optional token budget. When set, the composer relevance-ranks and
+   * de-duplicates the enrichment blocks under this budget instead of plain
+   * concatenation. Omit (or 0) to preserve the legacy join-all behavior.
+   */
+  composeTokenBudget?: number;
+  /**
+   * Optional learned per-source priority multipliers (from adaptive-priority).
+   * Only consulted when composeTokenBudget engages the composer.
+   */
+  priorityMultipliers?: Record<string, number>;
 }): Promise<EnrichmentResult> {
-  const { message, projectId, organizationId, submissionType, canonicalGovernedState, userRole } = params;
+  const { message, projectId, organizationId, submissionType, canonicalGovernedState, userRole, composeTokenBudget, priorityMultipliers } = params;
   const blocks: string[] = [];
   const sources: string[] = [];
   const sourcesFailed: string[] = [];
@@ -1043,6 +1061,10 @@ export async function enrichContextForChat(params: {
         const block = buildAttunementBlock(message);
         if (block) { projectlessBlocks.push(block); projectlessSources.push('client-attunement'); }
       }
+      if (detectRelevantAlignment(message, { segment: challengeSegmentNoProj }).length > 0) {
+        const block = buildAlignmentBlock({ message, segment: challengeSegmentNoProj });
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('stakeholder-alignment'); }
+      }
     } else if (slashNoProj && ['decide', 'tradeoff', 'framework'].includes(slashNoProj.command)) {
       const block = buildDecisionFrameworkBlock({
         message: slashNoProj.args || message,
@@ -1061,6 +1083,13 @@ export async function enrichContextForChat(params: {
     } else if (slashNoProj && ['position', 'landscape', 'compete'].includes(slashNoProj.command)) {
       const block = buildCompetitiveForMessage(slashNoProj.args || message, submissionType, true);
       if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
+    } else if (slashNoProj && slashNoProj.command === 'align') {
+      const block = buildAlignmentBlock({
+        message: slashNoProj.args || message,
+        segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slashNoProj.args || message),
+        forceGeneric: true,
+      });
+      if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
     }
 
     if (hasRoleLens(userRole) && projectlessSources.some(s => ROLE_FRAMEABLE_SOURCES.has(s))) {
@@ -1068,7 +1097,7 @@ export async function enrichContextForChat(params: {
       if (lensBlock) { projectlessBlocks.push(lensBlock); projectlessSources.push('role-lens'); }
     }
 
-    const wisdomOrChallengeFamily = [...wisdomFamily, ...challengeFamily, 'decide', 'tradeoff', 'framework', 'meeting', 'agency', 'tactics', 'position', 'landscape', 'compete'];
+    const wisdomOrChallengeFamily = [...wisdomFamily, ...challengeFamily, 'decide', 'tradeoff', 'framework', 'meeting', 'agency', 'tactics', 'position', 'landscape', 'compete', 'align'];
     return {
       block: projectlessBlocks.join('\n'),
       sources: projectlessSources,
@@ -1199,6 +1228,7 @@ export async function enrichContextForChat(params: {
       position: () => Promise.resolve(buildCompetitiveForMessage(slash.args || message, submissionType, true)),
       landscape: () => Promise.resolve(buildCompetitiveForMessage(slash.args || message, submissionType, true)),
       compete: () => Promise.resolve(buildCompetitiveForMessage(slash.args || message, submissionType, true)),
+      align: () => Promise.resolve(buildAlignmentBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), forceGeneric: true })),
       workflow: () => submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
       status: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
@@ -1321,6 +1351,9 @@ export async function enrichContextForChat(params: {
         : 'Help the user position against the competitive landscape. Read precedent for where it actually transfers, position against the approved label rather than marketing, and differentiate on the axis the agency rewards.',
       landscape: 'Read the competitive and precedent landscape for the user: which approvals transfer, what the labels actually claim, and where the failures mark the bar.',
       compete: 'Help the user compete: position against the competitor\'s approved label, differentiate on the axis the agency rewards, and treat a path that unwound for a rival as a raised bar, not an opening.',
+      align: slash.args
+        ? `Help the user align stakeholders on: ${slash.args}. Name the tension, tie it to the regulatory consequence that makes it matter, and give a concrete way to align the parties. The internal call is theirs.`
+        : 'Help the user navigate an internal or partner tension. Name the friction, tie it to the regulatory consequence that makes it matter, and give a concrete way to align the parties around what moves the program. Make the trade-off visible; the internal decision is theirs.',
       export: 'Export this conversation.',
     };
 
@@ -1473,6 +1506,28 @@ export async function enrichContextForChat(params: {
       }
     }
 
+    // ── Proactive stakeholder alignment — internal / partner tensions ──
+    if (detectRelevantAlignment(message, { segment: challengeSegment }).length > 0) {
+      sourcesAttempted++;
+      const alignBlock = buildAlignmentBlock({ message, segment: challengeSegment });
+      if (alignBlock) {
+        blocks.push(alignBlock);
+        sources.push('stakeholder-alignment');
+        if (triggerType === 'none') triggerType = 'natural_language';
+      }
+    }
+
+    // ── Proactive stakeholder alignment — internal / partner tensions ──
+    if (detectRelevantAlignment(message, { segment: challengeSegment }).length > 0) {
+      sourcesAttempted++;
+      const alignBlock = buildAlignmentBlock({ message, segment: challengeSegment });
+      if (alignBlock) {
+        blocks.push(alignBlock);
+        sources.push('stakeholder-alignment');
+        if (triggerType === 'none') triggerType = 'natural_language';
+      }
+    }
+
     // ── Client attunement — read the human state and steady the delivery ──
     if (detectClientState(message)) {
       sourcesAttempted++;
@@ -1535,8 +1590,30 @@ export async function enrichContextForChat(params: {
     if (lensBlock) { blocks.push(lensBlock); sources.push('role-lens'); }
   }
 
+  // ── Optional composer pass — relevance-rank + de-dup under a token budget ──
+  // Engaged only when a budget is requested AND blocks/sources are 1:1 aligned
+  // (some sources push metadata without a block; in that case we cannot safely
+  // map blocks to priorities, so we fall back to the legacy join). Pure
+  // re-ordering and budgeting — never changes truth.
+  let composedBlock = blocks.join('\n');
+  let composeTrace: ComposeTraceEntry[] | undefined;
+  let composeTokensUsed: number | undefined;
+  if (composeTokenBudget && composeTokenBudget > 0 && blocks.length === sources.length && blocks.length > 1) {
+    const candidates: CandidateBlock[] = blocks.map((text, i) => ({
+      source: sources[i],
+      text,
+      priority: priorityForSource(sources[i]),
+      // Governed envelope and a crisis read must never be dropped.
+      pinned: sources[i] === 'governed-envelope' || sources[i] === 'client-attunement',
+    }));
+    const composed = composeContext(message, candidates, { tokenBudget: composeTokenBudget, priorityMultipliers });
+    composedBlock = composed.text;
+    composeTrace = composed.trace;
+    composeTokensUsed = composed.tokensUsed;
+  }
+
   return {
-    block: blocks.join('\n'),
+    block: composedBlock,
     sources,
     rewrittenMessage,
     enrichmentMeta: {
@@ -1547,6 +1624,8 @@ export async function enrichContextForChat(params: {
       detectedCommand,
       detectedAppMention: detectedAppMentionId,
       hasProjectContext: true,
+      composeTrace,
+      composeTokensUsed,
     },
   };
 }

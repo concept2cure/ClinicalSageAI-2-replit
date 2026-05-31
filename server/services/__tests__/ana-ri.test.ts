@@ -1464,6 +1464,345 @@ describe('AnA RI Client Attunement', () => {
   });
 });
 
+// ── Stakeholder-alignment pack ───────────────────────────────────────────────
+
+import {
+  ALIGNMENT_PLAYS,
+  detectRelevantAlignment,
+  buildAlignmentBlock,
+  listAlignmentByAxis,
+} from '../ana-ri/stakeholder-alignment.js';
+
+describe('AnA RI Stakeholder-Alignment Pack', () => {
+  const STAKE_EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
+
+  it('covers cross-functional, commercial, executive, and partner axes', () => {
+    expect(listAlignmentByAxis('cross_functional').length).toBeGreaterThan(0);
+    expect(listAlignmentByAxis('commercial').length).toBeGreaterThan(0);
+    expect(listAlignmentByAxis('executive').length).toBeGreaterThan(0);
+    expect(listAlignmentByAxis('external_partner').length).toBeGreaterThan(0);
+  });
+
+  it('every alignment play states tension, insight, move, watch-out, and basis', () => {
+    for (const p of ALIGNMENT_PLAYS) {
+      expect(p.tension.length).toBeGreaterThan(10);
+      expect(p.insight.length).toBeGreaterThan(10);
+      expect(p.move.length).toBeGreaterThan(10);
+      expect(p.watchOut.length).toBeGreaterThan(10);
+      expect(p.basis.length).toBeGreaterThan(3);
+      expect(p.triggers.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('fires on representative internal-tension situations', () => {
+    expect(detectRelevantAlignment('CMC and clinical disagree on the timeline').length).toBeGreaterThan(0);
+    expect(detectRelevantAlignment('commercial wants a broader label than the data supports').length).toBeGreaterThan(0);
+    expect(detectRelevantAlignment('the board wants a firm date for the filing').length).toBeGreaterThan(0);
+    expect(detectRelevantAlignment('our CRO holds the data we depend on').length).toBeGreaterThan(0);
+  });
+
+  it('does not fire on a plain regulatory question', () => {
+    expect(detectRelevantAlignment('What ICH guideline covers stability testing?')).toHaveLength(0);
+  });
+
+  it('builds an alignment block, and forceGeneric always does work', () => {
+    const block = buildAlignmentBlock({ message: 'commercial wants a broader claim' });
+    expect(block).toContain('Stakeholder alignment');
+    expect(block).toMatch(/How to align/);
+    expect(buildAlignmentBlock({ message: 'nothing here', forceGeneric: true })).toContain('Stakeholder alignment');
+  });
+
+  it('ties the internal tension to regulatory consequence and leaves the call to the client', () => {
+    const block = buildAlignmentBlock({ message: 'the board wants a date', forceGeneric: true });
+    expect(block).toMatch(/regulatory consequence|program impact/i);
+    expect(block).toMatch(/theirs/);
+  });
+
+  it('keeps stakeholder-alignment copy inside the design-system voice', () => {
+    for (const p of ALIGNMENT_PLAYS) {
+      const text = [p.tension, p.insight, p.move, p.watchOut, p.basis].join(' ');
+      expect(text).not.toContain('!');
+      expect(STAKE_EMOJI.test(text)).toBe(false);
+    }
+  });
+
+  it('handles /align via enrichment and proactively detects stakeholder tension', async () => {
+    const aligned = await enrichContextForChat({
+      message: '/align',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'bla',
+    });
+    expect(aligned.enrichmentMeta?.detectedCommand).toBe('align');
+    expect(aligned.enrichmentMeta?.sourcesSucceeded).toContain('align');
+
+    const proactive = await enrichContextForChat({
+      message: 'CMC and clinical disagree on the timeline and the board wants a date',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'ind',
+    });
+    expect(proactive.enrichmentMeta?.sourcesSucceeded).toContain('stakeholder-alignment');
+  });
+});
+
+// ── Context composer (relevance-ranking kernel) ──────────────────────────────
+
+import {
+  tokenize,
+  approxTokens,
+  scoreRelevanceBM25,
+  lexicalSimilarity,
+  composeContext,
+  priorityForSource,
+  SOURCE_PRIORITY,
+  type CandidateBlock,
+} from '../ana-ri/context-composer.js';
+
+describe('AnA RI Context Composer', () => {
+  it('tokenizes, drops stopwords, and keeps regulatory tokens like 510(k)', () => {
+    const toks = tokenize('We need a 510(k) predicate for the device');
+    expect(toks).toContain('510(k)');
+    expect(toks).toContain('predicate');
+    expect(toks).toContain('device');
+    expect(toks).not.toContain('the');
+    expect(toks).not.toContain('a');
+  });
+
+  it('approxTokens scales with length and is always positive', () => {
+    expect(approxTokens('')).toBeGreaterThan(0);
+    expect(approxTokens('a'.repeat(400))).toBe(100);
+  });
+
+  it('BM25 ranks the block that shares query terms highest', () => {
+    const blocks: CandidateBlock[] = [
+      { source: 'a', text: 'Pediatric investigation plan and iPSP timing for the adult filing.' },
+      { source: 'b', text: 'Predicate device toxicity and substantial equivalence matrix.' },
+      { source: 'c', text: 'Stability testing and comparability for the drug substance.' },
+    ];
+    const scores = scoreRelevanceBM25('how do i handle the pediatric plan', blocks);
+    expect(scores[0]).toBeGreaterThan(scores[1]);
+    expect(scores[0]).toBeGreaterThan(scores[2]);
+    expect(Math.max(...scores)).toBeLessThanOrEqual(1);
+  });
+
+  it('returns all-zero relevance for an empty or stopword-only query', () => {
+    const blocks: CandidateBlock[] = [{ source: 'a', text: 'pediatric plan' }];
+    expect(scoreRelevanceBM25('', blocks)).toEqual([0]);
+    expect(scoreRelevanceBM25('the a of', blocks)).toEqual([0]);
+  });
+
+  it('lexical similarity is high for near-duplicates, low for unrelated text', () => {
+    const dup = lexicalSimilarity('pediatric plan timing filing', 'pediatric plan timing for filing');
+    const diff = lexicalSimilarity('pediatric plan timing', 'predicate device toxicity matrix');
+    expect(dup).toBeGreaterThan(diff);
+    expect(diff).toBeLessThan(0.2);
+  });
+
+  it('composes within budget, dropping the lowest-value block when it cannot fit', () => {
+    const big = 'word '.repeat(400); // ~500 tokens each
+    const candidates: CandidateBlock[] = [
+      { source: 'agency-tactics', text: 'pediatric plan ' + big, priority: 0.75 },
+      { source: 'industry-wisdom', text: 'unrelated filler ' + big, priority: 0.55 },
+      { source: 'tour-guide', text: 'orientation filler ' + big, priority: 0.5 },
+    ];
+    const result = composeContext('pediatric plan', candidates, { tokenBudget: 600 });
+    // Budget ~600 tokens fits only one ~500-token block.
+    expect(result.selected.length).toBe(1);
+    expect(result.selected[0].source).toBe('agency-tactics');
+    expect(result.tokensUsed).toBeLessThanOrEqual(600);
+    expect(result.trace.some((t) => t.reason === 'over-budget')).toBe(true);
+  });
+
+  it('always keeps pinned blocks regardless of relevance', () => {
+    const candidates: CandidateBlock[] = [
+      { source: 'client-attunement', text: 'steady the user in crisis', priority: 0.95, pinned: true },
+      { source: 'industry-wisdom', text: 'pediatric plan timing details', priority: 0.55 },
+    ];
+    const result = composeContext('something totally unrelated to either', candidates, { tokenBudget: 5000 });
+    expect(result.selected.map((s) => s.source)).toContain('client-attunement');
+    // Pinned block leads the order.
+    expect(result.selected[0].source).toBe('client-attunement');
+  });
+
+  it('de-duplicates near-identical blocks via MMR under tight budget', () => {
+    const body = 'reconcile the load bearing numbers across protocol sap csr and summary before filing';
+    const candidates: CandidateBlock[] = [
+      { source: 'industry-wisdom', text: body, priority: 0.55 },
+      { source: 'decision-framework', text: body + ' identical twin', priority: 0.55 },
+      { source: 'agency-tactics', text: 'answer the question the reviewer asked in their own order', priority: 0.75 },
+    ];
+    // Budget (~50 tok) fits two of three ~small blocks. With a diversity-leaning
+    // lambda, MMR should prefer the distinct agency-tactics block over the
+    // redundant near-duplicate of the first selection.
+    const result = composeContext('reconcile numbers before filing', candidates, { tokenBudget: 50, lambda: 0.4 });
+    const sources = result.selected.map((s) => s.source);
+    expect(sources).toContain('agency-tactics');
+    expect(result.trace.some((t) => t.reason === 'over-budget')).toBe(true);
+  });
+
+  it('is a no-op (keeps everything) when budget is generous', () => {
+    const candidates: CandidateBlock[] = [
+      { source: 'a', text: 'pediatric plan' },
+      { source: 'b', text: 'predicate device' },
+      { source: 'c', text: 'stability testing' },
+    ];
+    const result = composeContext('pediatric predicate stability', candidates, { tokenBudget: 100000 });
+    expect(result.selected.length).toBe(3);
+  });
+
+  it('handles the empty candidate set', () => {
+    const result = composeContext('anything', [], { tokenBudget: 1000 });
+    expect(result.selected).toHaveLength(0);
+    expect(result.text).toBe('');
+    expect(result.tokensUsed).toBe(0);
+  });
+
+  it('emits an explainable trace for every candidate', () => {
+    const candidates: CandidateBlock[] = [
+      { source: 'a', text: 'pediatric plan timing' },
+      { source: 'b', text: 'predicate device toxicity' },
+    ];
+    const result = composeContext('pediatric plan', candidates, { tokenBudget: 5000 });
+    expect(result.trace).toHaveLength(2);
+    for (const t of result.trace) {
+      expect(t).toHaveProperty('source');
+      expect(t).toHaveProperty('relevance');
+      expect(t).toHaveProperty('kept');
+      expect(t).toHaveProperty('reason');
+    }
+  });
+
+  it('maps source priorities and slash-command aliases to pack weights', () => {
+    expect(priorityForSource('governed-envelope')).toBe(SOURCE_PRIORITY['governed-envelope']);
+    expect(priorityForSource('client-attunement')).toBeGreaterThan(priorityForSource('tour-guide'));
+    // Slash aliases resolve to their pack weight.
+    expect(priorityForSource('wisdom')).toBe(SOURCE_PRIORITY['industry-wisdom']);
+    expect(priorityForSource('align')).toBe(SOURCE_PRIORITY['stakeholder-alignment']);
+    expect(priorityForSource('totally-unknown-source')).toBe(0.5);
+  });
+});
+
+describe('AnA RI Enrichment — composer integration', () => {
+  it('preserves legacy join when no budget is requested', async () => {
+    const result = await enrichContextForChat({
+      message: 'We just got a CRL and the board wants a date',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'nda',
+    });
+    expect(result.enrichmentMeta?.composeTrace).toBeUndefined();
+    expect(typeof result.block).toBe('string');
+  });
+
+  it('engages the composer and emits a trace when a budget is set', async () => {
+    const result = await enrichContextForChat({
+      message: 'We just received a complete response letter and the board wants a firm date for the resubmission',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'nda',
+      composeTokenBudget: 4000,
+    });
+    // Multiple packs fire on this message; when composed, a trace is present
+    // and the crisis read is pinned/kept.
+    if (result.enrichmentMeta?.composeTrace) {
+      expect(result.enrichmentMeta.composeTokensUsed).toBeGreaterThan(0);
+      const attune = result.enrichmentMeta.composeTrace.find((t) => t.source === 'client-attunement');
+      if (attune) expect(attune.kept).toBe(true);
+    }
+    expect(typeof result.block).toBe('string');
+  });
+});
+
+// ── Adaptive priority (learned re-weighting) ─────────────────────────────────
+
+import {
+  smoothedReward,
+  rewardToMultiplier,
+  buildAdaptiveMultipliers,
+  applyAdaptivePriority,
+  type SourceOutcomeStats,
+} from '../ana-ri/adaptive-priority.js';
+
+describe('AnA RI Adaptive Priority', () => {
+  it('returns the prior exactly when there are no samples', () => {
+    const r = smoothedReward({ source: 'x', accepted: 0, edited: 0, rejected: 0, regenerated: 0 });
+    expect(r).toBeCloseTo(0.5, 6);
+  });
+
+  it('rewards an all-accepted source above an all-rejected one', () => {
+    const good = smoothedReward({ source: 'g', accepted: 200, edited: 0, rejected: 0, regenerated: 0 });
+    const bad = smoothedReward({ source: 'b', accepted: 0, edited: 0, rejected: 200, regenerated: 0 });
+    expect(good).toBeGreaterThan(0.9);
+    expect(bad).toBeLessThan(0.1);
+  });
+
+  it('treats edited as partial credit (between accepted and rejected)', () => {
+    const edited = smoothedReward({ source: 'e', accepted: 0, edited: 200, rejected: 0, regenerated: 0 });
+    expect(edited).toBeGreaterThan(0.4);
+    expect(edited).toBeLessThan(0.6);
+  });
+
+  it('shrinks low-sample sources toward the prior (small-sample safety)', () => {
+    const lowN = smoothedReward({ source: 'l', accepted: 2, edited: 0, rejected: 0, regenerated: 0 });
+    const highN = smoothedReward({ source: 'h', accepted: 200, edited: 0, rejected: 0, regenerated: 0 });
+    // 2 accepts barely moves off 0.5; 200 accepts moves nearly to 1.
+    expect(lowN).toBeLessThan(0.65);
+    expect(highN).toBeGreaterThan(0.9);
+  });
+
+  it('maps rewards to bounded multipliers centered on 1.0', () => {
+    expect(rewardToMultiplier(0.5)).toBeCloseTo(1.0, 6);
+    expect(rewardToMultiplier(1)).toBeCloseTo(1.25, 6);
+    expect(rewardToMultiplier(0)).toBeCloseTo(0.75, 6);
+    // Always within bounds.
+    for (const r of [0, 0.25, 0.5, 0.75, 1]) {
+      const m = rewardToMultiplier(r);
+      expect(m).toBeGreaterThanOrEqual(0.75);
+      expect(m).toBeLessThanOrEqual(1.25);
+    }
+  });
+
+  it('builds a multiplier map only for sources with stats', () => {
+    const stats: SourceOutcomeStats[] = [
+      { source: 'agency-tactics', accepted: 100, edited: 0, rejected: 0, regenerated: 0 },
+      { source: 'tour-guide', accepted: 0, edited: 0, rejected: 100, regenerated: 0 },
+    ];
+    const m = buildAdaptiveMultipliers(stats);
+    expect(m['agency-tactics']).toBeGreaterThan(1);
+    expect(m['tour-guide']).toBeLessThan(1);
+    expect(m['never-seen']).toBeUndefined();
+  });
+
+  it('applyAdaptivePriority scales and clamps, and is a no-op for unknown sources', () => {
+    const m = { 'agency-tactics': 1.25, 'tour-guide': 0.75 };
+    expect(applyAdaptivePriority(0.6, 'agency-tactics', m)).toBeCloseTo(0.75, 6);
+    expect(applyAdaptivePriority(0.6, 'tour-guide', m)).toBeCloseTo(0.45, 6);
+    expect(applyAdaptivePriority(0.6, 'unknown', m)).toBe(0.6);
+    expect(applyAdaptivePriority(0.6, 'agency-tactics', undefined)).toBe(0.6);
+    // Clamp: a high base times a >1 multiplier never exceeds 1.
+    expect(applyAdaptivePriority(0.95, 'agency-tactics', m)).toBeLessThanOrEqual(1);
+  });
+
+  it('learned multipliers can reorder composer selection under tight budget', () => {
+    const big = 'word '.repeat(400); // ~500 tokens each
+    const candidates: CandidateBlock[] = [
+      { source: 'tour-guide', text: 'shared topic alpha ' + big, priority: 0.6 },
+      { source: 'agency-tactics', text: 'shared topic alpha ' + big, priority: 0.6 },
+    ];
+    // Equal base priority and identical relevance: tie. A learned multiplier
+    // favoring agency-tactics should make it win the single budget slot.
+    const result = composeContext('shared topic alpha', candidates, {
+      tokenBudget: 600,
+      priorityMultipliers: { 'agency-tactics': 1.25, 'tour-guide': 0.75 },
+    });
+    expect(result.selected.length).toBe(1);
+    expect(result.selected[0].source).toBe('agency-tactics');
+  });
+});
+
+// ── Role lens ────────────────────────────────────────────────────────────────
+// ── Role lens ────────────────────────────────────────────────────────────────
 // ── Role lens ────────────────────────────────────────────────────────────────
 
 import { buildRoleLensBlock, hasRoleLens } from '../ana-ri/role-lens.js';
