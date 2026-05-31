@@ -21,9 +21,28 @@ import {
   AUTH_AGENCIES, AUTH_DOC_TYPES, AUTH_EVIDENCE, AUTH_REVIEWERS, AUTH_PROGRAMS,
   AUTH_SECTION_BODY, AUTH_SEED_THREAD, AUTH_REWRITES, AUTH_DEFAULT,
   resolveOutline, findNode, firstLeaf, timeNow,
-  type AuthMessage, type SectionBody, type Skill,
+  type AuthMessage, type SectionBody, type Skill, type AuthSection,
 } from './data';
-import { useC2cDocuments, type C2cDocumentSummary } from './hooks';
+import { useC2cDocuments, useC2cDocumentOutline, type C2cDocumentSummary, type C2cOutlineNode } from './hooks';
+
+/** Transform the flat c2c outline (key + parent_key) into the nested
+ *  AuthSection tree the OutlineTree renders. Preserves rule-pack order. */
+function c2cOutlineToTree(nodes: C2cOutlineNode[]): AuthSection[] {
+  const byKey = new Map<string, AuthSection>();
+  const roots: AuthSection[] = [];
+  for (const n of nodes) {
+    byKey.set(n.key, { id: n.key, path: n.key, label: n.label, mandatory: n.mandatory, status: n.status });
+  }
+  for (const n of nodes) {
+    const node = byKey.get(n.key)!;
+    if (n.parent_key && byKey.has(n.parent_key)) {
+      (byKey.get(n.parent_key)!.children ||= []).push(node);
+    } else {
+      roots.push(node);
+    }
+  }
+  return roots;
+}
 
 const STATUS_TEXT: Record<string, string> = { approved: 'Approved', review: 'In review', drafted: 'Drafted', locked: 'Locked', todo: 'Not started' };
 
