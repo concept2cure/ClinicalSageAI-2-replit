@@ -16,6 +16,7 @@ import type { GatewayName, Region, SubmissionGateway } from './types';
 export * from './types';
 export { packageEctdSubmission } from './regional-packager';
 export type { EctdLeaf, PackagerInput } from './regional-packager';
+export { readVerifiedBundle } from './bundle-integrity';
 
 const REGISTRY: Record<string, SubmissionGateway> = {
   'fda:esg':           new FdaEsgGateway(),
