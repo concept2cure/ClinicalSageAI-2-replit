@@ -9,14 +9,17 @@
  * in the AnA conversation history (Phase 8); this dock just collects
  * the prompt with PDEV context attached.
  *
+ * File upload: the paperclip uploads to /api/chat/upload, which OCRs the
+ * document and writes its text to project memory so AnA can retrieve it.
+ *
  * Port of design-system/ui_kits/pdev/Shell.jsx > PdevAnaDock.
  */
 
 import * as React from 'react';
 import { PdevIcon } from '../icons';
 import { PDEV_SUGGESTIONS } from '../data/enums';
-import type { PdevProgramView, PdevActivityView } from '../data/types';
 import { useChatUpload, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
+import type { PdevProgramView, PdevActivityView } from '../data/types';
 
 /** Minimal transcript message for the dock. Mapped from useAnaChat in
  *  PdevApp; mirrors the MDX AnaRail `ana-msg` shape. */
@@ -31,11 +34,9 @@ export interface PdevAnaDockMessage {
 
 interface AnaDockProps {
   open: boolean;
-  setOpen: (next: boolean) => void;
-  program: PdevProgramView['program'] | null;
-  /** Effective readiness for the program (latest snapshot overall). */
-  readinessScore: number | null;
-  /** Top blocker derived from the program view; null when none. */
+  setOpen: (v: boolean) => void;
+  program: PdevProgramView | null;
+  readinessScore: number;
   topBlocker: string | null;
   activeNav: string;
   /** When a single activity is selected in a workstream / detail view,
@@ -52,6 +53,10 @@ interface AnaDockProps {
    *  suggestion chips show instead. Provisional inline treatment pending
    *  a canonical viewport design in ui_kits/pdev. */
   messages?: PdevAnaDockMessage[];
+  /** Numeric project id for scoping uploads into project memory. The PDEV
+   *  program id is not a project id; without this the file still uploads,
+   *  just unscoped to a project. */
+  projectId?: string;
 }
 
 export function PdevAnaDock({
@@ -65,17 +70,36 @@ export function PdevAnaDock({
   onSend,
   isStreaming = false,
   messages = [],
+  projectId,
 }: AnaDockProps) {
   const [draft, setDraft] = React.useState('');
   const suggestions = PDEV_SUGGESTIONS[activeNav] ?? PDEV_SUGGESTIONS.overview;
   const hasTranscript = messages.length > 0;
   const transcriptRef = React.useRef<HTMLDivElement>(null);
+  const fileRef = React.useRef<HTMLInputElement>(null);
+  const upload = useChatUpload({ projectId });
 
   // Keep the transcript pinned to the latest message as tokens stream in.
   React.useEffect(() => {
     const el = transcriptRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
+
+  const readyCount = upload.attachments.filter((a) => a.status === 'ready').length;
+
+  const handleSend = () => {
+    const trimmed = draft.trim();
+    const ready = upload.attachments.filter((a) => a.status === 'ready');
+    if (!trimmed && ready.length === 0) return;
+    // Uploaded docs are OCR'd into project memory server-side; reference them
+    // inline when the message is otherwise bare so AnA has a prompt to act on.
+    const names = ready.map((a) => a.name).join(', ');
+    const text = trimmed || (names ? `Review the attached: ${names}` : '');
+    if (!text) return;
+    onSend(text);
+    setDraft('');
+    upload.clear();
+  };
 
   if (!open) {
     return (
@@ -92,20 +116,6 @@ export function PdevAnaDock({
       </aside>
     );
   }
-
-  const handleSend = () => {
-    const trimmed = draft.trim();
-    const ready = upload.attachments.filter(a => a.status === 'ready');
-    if (!trimmed && ready.length === 0) return;
-    // Uploaded docs are OCR'd into project memory server-side; reference them
-    // inline when the message is otherwise bare so AnA has a prompt to act on.
-    const names = ready.map(a => a.name).join(', ');
-    const text = trimmed || (names ? `Review the attached: ${names}` : '');
-    if (!text) return;
-    onSend(text);
-    setDraft('');
-    upload.clear();
-  };
 
   return (
     <aside className="pdev-ana">
@@ -128,59 +138,53 @@ export function PdevAnaDock({
         </button>
       </div>
 
-      {program && (
-        <div className="pdev-ana-context">
-          <div className="lbl">Context</div>
-          <div className="val">
-            {program.code} · {program.productName.split(' · ')[0]}
-          </div>
-          <div className="sub">
-            {readinessScore !== null && (
-              <>Readiness {Math.round(readinessScore)}%</>
+      {/* Context block */}
+      <div className="pdev-ana-ctx">
+        {program ? (
+          <>
+            <div className="pdev-ana-ctx-line">
+              <span className="pdev-ana-ctx-label">Program</span>
+              <span className="pdev-ana-ctx-value">{program.title}</span>
+            </div>
+            <div className="pdev-ana-ctx-line">
+              <span className="pdev-ana-ctx-label">Readiness</span>
+              <span className="pdev-ana-ctx-value">{readinessScore}%</span>
+            </div>
+            {activity && (
+              <div className="pdev-ana-ctx-line">
+                <span className="pdev-ana-ctx-label">Activity</span>
+                <span className="pdev-ana-ctx-value">{activity.title}</span>
+              </div>
             )}
-            {readinessScore !== null && program.targetSubmissionDate && ' · '}
-            {program.targetSubmissionDate &&
-              `target IND ${program.targetSubmissionDate.slice(0, 10)}`}
-          </div>
-          {activity && (
-            <div className="pdev-ana-context-activity">
-              <span className="ico">
-                <PdevIcon name="zap" />
-              </span>
-              <span>{activity.registry.title}</span>
-            </div>
-          )}
-          {topBlocker && (
-            <div className="pdev-ana-context-blocker">
-              <span className="ico">
-                <PdevIcon name="alertCircle" />
-              </span>
-              <span>{topBlocker}</span>
-            </div>
-          )}
-        </div>
-      )}
+            {topBlocker && (
+              <div className="pdev-ana-ctx-line">
+                <span className="pdev-ana-ctx-label">Top blocker</span>
+                <span className="pdev-ana-ctx-value">{topBlocker}</span>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="pdev-ana-ctx-empty">Select a program for context.</div>
+        )}
+      </div>
 
-      {!hasTranscript && (
-        <>
-          <div className="pdev-ana-section-label">Suggested for this surface</div>
-          {suggestions.slice(0, 3).map((s, i) => (
+      {/* Suggestions OR transcript */}
+      {!hasTranscript ? (
+        <div className="pdev-ana-suggestions">
+          <div className="pdev-ana-suggestions-label">Suggested for this surface</div>
+          {suggestions.map((s, i) => (
             <button
               key={i}
               className="pdev-ana-suggestion"
               onClick={() => setDraft(s)}
               type="button"
             >
-              <span className="ico">
-                <PdevIcon name="sparkles" />
-              </span>
+              <PdevIcon name="sparkles" />
               <span>{s}</span>
             </button>
           ))}
-        </>
-      )}
-
-      {hasTranscript ? (
+        </div>
+      ) : (
         <div className="pdev-ana-transcript" ref={transcriptRef}>
           {messages.map((m, i) => (
             <div key={i} className={`pdev-ana-msg ${m.role}`}>
@@ -192,12 +196,76 @@ export function PdevAnaDock({
             </div>
           ))}
         </div>
-      ) : (
-        <div className="pdev-ana-spacer" />
       )}
 
       <div className="pdev-ana-foot">
+        {upload.attachments.length > 0 && (
+          <div
+            className="pdev-ana-attachments"
+            style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}
+          >
+            {upload.attachments.map((a) => (
+              <span
+                key={a.id}
+                title={a.error || a.name}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  maxWidth: 200,
+                  padding: '4px 8px',
+                  fontSize: 12,
+                  lineHeight: 1.2,
+                  borderRadius: 6,
+                  border: '1px solid var(--c2c-border, rgba(0,0,0,0.12))',
+                  color: a.status === 'error' ? 'var(--c2c-danger, #b3261e)' : 'inherit',
+                }}
+              >
+                <span
+                  style={{
+                    opacity: a.status === 'uploading' ? 0.6 : 1,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
+                </span>
+                <button
+                  type="button"
+                  className="pdev-ana-attachment-remove"
+                  aria-label={`Remove ${a.name}`}
+                  onClick={() => upload.removeAttachment(a.id)}
+                  style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 0, color: 'inherit', opacity: 0.6 }}
+                >
+                  <PdevIcon name="close" />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
         <div className="pdev-ana-composer">
+          <input
+            ref={fileRef}
+            type="file"
+            multiple
+            accept={CHAT_UPLOAD_ACCEPT}
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              upload.addFiles(e.target.files);
+              e.target.value = '';
+            }}
+          />
+          <button
+            className="pdev-ana-attach"
+            onClick={() => fileRef.current?.click()}
+            title="Attach files"
+            type="button"
+            aria-label="Attach files"
+            disabled={isStreaming}
+          >
+            <PdevIcon name="paperclip" />
+          </button>
           <textarea
             rows={2}
             placeholder={isStreaming ? 'AnA is thinking…' : 'Ask AnA about this program…'}
@@ -214,7 +282,7 @@ export function PdevAnaDock({
           />
           <button
             className="pdev-ana-send"
-            disabled={!draft.trim() || isStreaming}
+            disabled={(!draft.trim() && readyCount === 0) || isStreaming || upload.uploading}
             onClick={handleSend}
             type="button"
             aria-label="Send"
