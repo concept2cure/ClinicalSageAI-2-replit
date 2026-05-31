@@ -261,6 +261,40 @@ describe('POST /api/mdx/gateways/:region/:gateway/transmit', () => {
     expect(arg.bundle.sizeBytes).toBe(STORED.sizeBytes);
   });
 
+  it('hard-blocks transmit (422) when the stored bundle has validation errors', async () => {
+    const STORED = {
+      path: '/tmp/submission-bundles/pkg-err-0123456789abcdef.zip',
+      sha256: 'c'.repeat(64),
+      sizeBytes: 42,
+      format: 'ectd',
+      validation: {
+        errorCount: 1,
+        warningCount: 0,
+        infoCount: 1,
+        findings: [
+          { severity: 'error', ruleId: 'LEAF-CORRUPT', message: 'bad pdf', filePath: 'm3/cmc.pdf' },
+        ],
+      },
+    };
+    queryFn.mockImplementation((sql: string) => {
+      if (typeof sql === 'string' && sql.includes('password_hash')) {
+        return Promise.resolve({ rows: [{ password_hash: 'hashed' }], rowCount: 1 });
+      }
+      if (typeof sql === 'string' && sql.includes('FROM c2c_submission_packages')) {
+        return Promise.resolve({ rows: [{ metadata: { bundle: STORED } }], rowCount: 1 });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(422);
+    expect(res.body.error).toMatch(/structural validation/i);
+    expect(res.body.details.findings).toHaveLength(1);
+    // The gateway transmit must NOT have been called.
+    expect(transmitFn).not.toHaveBeenCalled();
+  });
+
   it('returns 422 when neither an explicit bundle nor a stored bundle exists', async () => {
     // Default queryFn impl returns no rows for the package metadata lookup.
     const res = await request(makeApp())

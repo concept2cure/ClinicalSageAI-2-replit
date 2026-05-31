@@ -160,6 +160,11 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(res.body.data.bundle.format).toBe('ectd');
     expect(res.body.data.bundle.leafCount).toBe(2);
 
+    // Internal eCTD structural validation ran: no errors, and the empty
+    // `module3_cmc` section (no mapped artifacts) yields at least one warning.
+    expect(res.body.data.bundle.validation.errorCount).toBe(0);
+    expect(res.body.data.bundle.validation.warningCount).toBeGreaterThanOrEqual(1);
+
     // The builder received two leafs (one per section), region FDA derived from 'ind'.
     expect(buildECTDZipFn).toHaveBeenCalledTimes(1);
     const opts = buildECTDZipFn.mock.calls[0][0];
@@ -184,5 +189,10 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(dbState.updateSet.metadata.foo).toBe('bar');
     expect(dbState.updateSet.metadata.bundle.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(dbState.updateSet.metadata.bundle.leafCount).toBe(2);
+    // The validation result (with findings) is persisted on the descriptor.
+    expect(dbState.updateSet.metadata.bundle.validation.errorCount).toBe(0);
+    expect(Array.isArray(dbState.updateSet.metadata.bundle.validation.findings)).toBe(true);
+    // The descriptor records local-only storage (no SUBMISSION_BUNDLE_S3_BUCKET in tests).
+    expect(dbState.updateSet.metadata.bundle.storage.provider).toBe('local');
   });
 });
