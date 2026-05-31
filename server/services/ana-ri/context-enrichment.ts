@@ -34,6 +34,7 @@ import { buildCompetitiveBlock, detectRelevantPlays } from './competitive-strate
 import { buildAlignmentBlock, detectRelevantAlignment } from './stakeholder-alignment.js';
 import { buildAttunementBlock, detectClientState } from './client-attunement.js';
 import { buildRoleLensBlock, hasRoleLens } from './role-lens.js';
+import { composeContext, priorityForSource, type CandidateBlock, type ComposeTraceEntry } from './context-composer.js';
 import type { UserRole } from './persona.js';
 import { buildWorkflowContext } from './workflow-orchestration.js';
 import { detectDocumentType, buildDocumentGenerationContext } from './document-routing.js';
@@ -63,6 +64,10 @@ export interface EnrichmentResult {
     detectedAppMention?: string;
     /** Whether project context was available */
     hasProjectContext: boolean;
+    /** Composer decision trace when relevance-ranking was applied (opt-in). */
+    composeTrace?: ComposeTraceEntry[];
+    /** Approximate tokens used by the composed enrichment, when composed. */
+    composeTokensUsed?: number;
   };
 }
 
@@ -980,8 +985,14 @@ export async function enrichContextForChat(params: {
   canonicalGovernedState?: CanonicalGovernedState;
   /** Optional user role; when present, a role lens frames the pack guidance. */
   userRole?: UserRole;
+  /**
+   * Optional token budget. When set, the composer relevance-ranks and
+   * de-duplicates the enrichment blocks under this budget instead of plain
+   * concatenation. Omit (or 0) to preserve the legacy join-all behavior.
+   */
+  composeTokenBudget?: number;
 }): Promise<EnrichmentResult> {
-  const { message, projectId, organizationId, submissionType, canonicalGovernedState, userRole } = params;
+  const { message, projectId, organizationId, submissionType, canonicalGovernedState, userRole, composeTokenBudget } = params;
   const blocks: string[] = [];
   const sources: string[] = [];
   const sourcesFailed: string[] = [];
@@ -1574,8 +1585,30 @@ export async function enrichContextForChat(params: {
     if (lensBlock) { blocks.push(lensBlock); sources.push('role-lens'); }
   }
 
+  // ── Optional composer pass — relevance-rank + de-dup under a token budget ──
+  // Engaged only when a budget is requested AND blocks/sources are 1:1 aligned
+  // (some sources push metadata without a block; in that case we cannot safely
+  // map blocks to priorities, so we fall back to the legacy join). Pure
+  // re-ordering and budgeting — never changes truth.
+  let composedBlock = blocks.join('\n');
+  let composeTrace: ComposeTraceEntry[] | undefined;
+  let composeTokensUsed: number | undefined;
+  if (composeTokenBudget && composeTokenBudget > 0 && blocks.length === sources.length && blocks.length > 1) {
+    const candidates: CandidateBlock[] = blocks.map((text, i) => ({
+      source: sources[i],
+      text,
+      priority: priorityForSource(sources[i]),
+      // Governed envelope and a crisis read must never be dropped.
+      pinned: sources[i] === 'governed-envelope' || sources[i] === 'client-attunement',
+    }));
+    const composed = composeContext(message, candidates, { tokenBudget: composeTokenBudget });
+    composedBlock = composed.text;
+    composeTrace = composed.trace;
+    composeTokensUsed = composed.tokensUsed;
+  }
+
   return {
-    block: blocks.join('\n'),
+    block: composedBlock,
     sources,
     rewrittenMessage,
     enrichmentMeta: {
@@ -1586,6 +1619,8 @@ export async function enrichContextForChat(params: {
       detectedCommand,
       detectedAppMention: detectedAppMentionId,
       hasProjectContext: true,
+      composeTrace,
+      composeTokensUsed,
     },
   };
 }

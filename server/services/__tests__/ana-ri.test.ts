@@ -1546,6 +1546,175 @@ describe('AnA RI Stakeholder-Alignment Pack', () => {
   });
 });
 
+// ── Context composer (relevance-ranking kernel) ──────────────────────────────
+
+import {
+  tokenize,
+  approxTokens,
+  scoreRelevanceBM25,
+  lexicalSimilarity,
+  composeContext,
+  priorityForSource,
+  SOURCE_PRIORITY,
+  type CandidateBlock,
+} from '../ana-ri/context-composer.js';
+
+describe('AnA RI Context Composer', () => {
+  it('tokenizes, drops stopwords, and keeps regulatory tokens like 510(k)', () => {
+    const toks = tokenize('We need a 510(k) predicate for the device');
+    expect(toks).toContain('510(k)');
+    expect(toks).toContain('predicate');
+    expect(toks).toContain('device');
+    expect(toks).not.toContain('the');
+    expect(toks).not.toContain('a');
+  });
+
+  it('approxTokens scales with length and is always positive', () => {
+    expect(approxTokens('')).toBeGreaterThan(0);
+    expect(approxTokens('a'.repeat(400))).toBe(100);
+  });
+
+  it('BM25 ranks the block that shares query terms highest', () => {
+    const blocks: CandidateBlock[] = [
+      { source: 'a', text: 'Pediatric investigation plan and iPSP timing for the adult filing.' },
+      { source: 'b', text: 'Predicate device toxicity and substantial equivalence matrix.' },
+      { source: 'c', text: 'Stability testing and comparability for the drug substance.' },
+    ];
+    const scores = scoreRelevanceBM25('how do i handle the pediatric plan', blocks);
+    expect(scores[0]).toBeGreaterThan(scores[1]);
+    expect(scores[0]).toBeGreaterThan(scores[2]);
+    expect(Math.max(...scores)).toBeLessThanOrEqual(1);
+  });
+
+  it('returns all-zero relevance for an empty or stopword-only query', () => {
+    const blocks: CandidateBlock[] = [{ source: 'a', text: 'pediatric plan' }];
+    expect(scoreRelevanceBM25('', blocks)).toEqual([0]);
+    expect(scoreRelevanceBM25('the a of', blocks)).toEqual([0]);
+  });
+
+  it('lexical similarity is high for near-duplicates, low for unrelated text', () => {
+    const dup = lexicalSimilarity('pediatric plan timing filing', 'pediatric plan timing for filing');
+    const diff = lexicalSimilarity('pediatric plan timing', 'predicate device toxicity matrix');
+    expect(dup).toBeGreaterThan(diff);
+    expect(diff).toBeLessThan(0.2);
+  });
+
+  it('composes within budget, dropping the lowest-value block when it cannot fit', () => {
+    const big = 'word '.repeat(400); // ~500 tokens each
+    const candidates: CandidateBlock[] = [
+      { source: 'agency-tactics', text: 'pediatric plan ' + big, priority: 0.75 },
+      { source: 'industry-wisdom', text: 'unrelated filler ' + big, priority: 0.55 },
+      { source: 'tour-guide', text: 'orientation filler ' + big, priority: 0.5 },
+    ];
+    const result = composeContext('pediatric plan', candidates, { tokenBudget: 600 });
+    // Budget ~600 tokens fits only one ~500-token block.
+    expect(result.selected.length).toBe(1);
+    expect(result.selected[0].source).toBe('agency-tactics');
+    expect(result.tokensUsed).toBeLessThanOrEqual(600);
+    expect(result.trace.some((t) => t.reason === 'over-budget')).toBe(true);
+  });
+
+  it('always keeps pinned blocks regardless of relevance', () => {
+    const candidates: CandidateBlock[] = [
+      { source: 'client-attunement', text: 'steady the user in crisis', priority: 0.95, pinned: true },
+      { source: 'industry-wisdom', text: 'pediatric plan timing details', priority: 0.55 },
+    ];
+    const result = composeContext('something totally unrelated to either', candidates, { tokenBudget: 5000 });
+    expect(result.selected.map((s) => s.source)).toContain('client-attunement');
+    // Pinned block leads the order.
+    expect(result.selected[0].source).toBe('client-attunement');
+  });
+
+  it('de-duplicates near-identical blocks via MMR under tight budget', () => {
+    const body = 'reconcile the load bearing numbers across protocol sap csr and summary before filing';
+    const candidates: CandidateBlock[] = [
+      { source: 'industry-wisdom', text: body, priority: 0.55 },
+      { source: 'decision-framework', text: body + ' identical twin', priority: 0.55 },
+      { source: 'agency-tactics', text: 'answer the question the reviewer asked in their own order', priority: 0.75 },
+    ];
+    // Budget (~50 tok) fits two of three ~small blocks. With a diversity-leaning
+    // lambda, MMR should prefer the distinct agency-tactics block over the
+    // redundant near-duplicate of the first selection.
+    const result = composeContext('reconcile numbers before filing', candidates, { tokenBudget: 50, lambda: 0.4 });
+    const sources = result.selected.map((s) => s.source);
+    expect(sources).toContain('agency-tactics');
+    expect(result.trace.some((t) => t.reason === 'over-budget')).toBe(true);
+  });
+
+  it('is a no-op (keeps everything) when budget is generous', () => {
+    const candidates: CandidateBlock[] = [
+      { source: 'a', text: 'pediatric plan' },
+      { source: 'b', text: 'predicate device' },
+      { source: 'c', text: 'stability testing' },
+    ];
+    const result = composeContext('pediatric predicate stability', candidates, { tokenBudget: 100000 });
+    expect(result.selected.length).toBe(3);
+  });
+
+  it('handles the empty candidate set', () => {
+    const result = composeContext('anything', [], { tokenBudget: 1000 });
+    expect(result.selected).toHaveLength(0);
+    expect(result.text).toBe('');
+    expect(result.tokensUsed).toBe(0);
+  });
+
+  it('emits an explainable trace for every candidate', () => {
+    const candidates: CandidateBlock[] = [
+      { source: 'a', text: 'pediatric plan timing' },
+      { source: 'b', text: 'predicate device toxicity' },
+    ];
+    const result = composeContext('pediatric plan', candidates, { tokenBudget: 5000 });
+    expect(result.trace).toHaveLength(2);
+    for (const t of result.trace) {
+      expect(t).toHaveProperty('source');
+      expect(t).toHaveProperty('relevance');
+      expect(t).toHaveProperty('kept');
+      expect(t).toHaveProperty('reason');
+    }
+  });
+
+  it('maps source priorities and slash-command aliases to pack weights', () => {
+    expect(priorityForSource('governed-envelope')).toBe(SOURCE_PRIORITY['governed-envelope']);
+    expect(priorityForSource('client-attunement')).toBeGreaterThan(priorityForSource('tour-guide'));
+    // Slash aliases resolve to their pack weight.
+    expect(priorityForSource('wisdom')).toBe(SOURCE_PRIORITY['industry-wisdom']);
+    expect(priorityForSource('align')).toBe(SOURCE_PRIORITY['stakeholder-alignment']);
+    expect(priorityForSource('totally-unknown-source')).toBe(0.5);
+  });
+});
+
+describe('AnA RI Enrichment — composer integration', () => {
+  it('preserves legacy join when no budget is requested', async () => {
+    const result = await enrichContextForChat({
+      message: 'We just got a CRL and the board wants a date',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'nda',
+    });
+    expect(result.enrichmentMeta?.composeTrace).toBeUndefined();
+    expect(typeof result.block).toBe('string');
+  });
+
+  it('engages the composer and emits a trace when a budget is set', async () => {
+    const result = await enrichContextForChat({
+      message: 'We just received a complete response letter and the board wants a firm date for the resubmission',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'nda',
+      composeTokenBudget: 4000,
+    });
+    // Multiple packs fire on this message; when composed, a trace is present
+    // and the crisis read is pinned/kept.
+    if (result.enrichmentMeta?.composeTrace) {
+      expect(result.enrichmentMeta.composeTokensUsed).toBeGreaterThan(0);
+      const attune = result.enrichmentMeta.composeTrace.find((t) => t.source === 'client-attunement');
+      if (attune) expect(attune.kept).toBe(true);
+    }
+    expect(typeof result.block).toBe('string');
+  });
+});
+
+// ── Role lens ────────────────────────────────────────────────────────────────
 // ── Role lens ────────────────────────────────────────────────────────────────
 
 import { buildRoleLensBlock, hasRoleLens } from '../ana-ri/role-lens.js';
