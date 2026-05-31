@@ -35,6 +35,7 @@ import { buildAlignmentBlock, detectRelevantAlignment } from './stakeholder-alig
 import { buildAttunementBlock, detectClientState } from './client-attunement.js';
 import { buildClaimGroundingBlock, detectClaimCategories } from './claim-grounding.js';
 import { buildCapabilityCatalogue } from './capability-registry.js';
+import { buildScopeGuardBlock, detectScopeCategories } from './scope-guard.js';
 import { buildRoleLensBlock, hasRoleLens } from './role-lens.js';
 import { composeContext, priorityForSource, type CandidateBlock, type ComposeTraceEntry } from './context-composer.js';
 import type { UserRole } from './persona.js';
@@ -1073,6 +1074,10 @@ export async function enrichContextForChat(params: {
         const block = buildClaimGroundingBlock(message);
         if (block) { projectlessBlocks.push(block); projectlessSources.push('claim-grounding'); }
       }
+      if (detectScopeCategories(message).length > 0) {
+        const block = buildScopeGuardBlock(message);
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('scope-guard'); }
+      }
     } else if (slashNoProj && ['decide', 'tradeoff', 'framework'].includes(slashNoProj.command)) {
       const block = buildDecisionFrameworkBlock({
         message: slashNoProj.args || message,
@@ -1561,6 +1566,17 @@ export async function enrichContextForChat(params: {
       if (groundingBlock) {
         blocks.push(groundingBlock);
         sources.push('claim-grounding');
+        if (triggerType === 'none') triggerType = 'natural_language';
+      }
+    }
+
+    // ── Scope-and-escalation guard — know the limits, hand off the rest ──
+    if (detectScopeCategories(message).length > 0) {
+      sourcesAttempted++;
+      const scopeBlock = buildScopeGuardBlock(message);
+      if (scopeBlock) {
+        blocks.push(scopeBlock);
+        sources.push('scope-guard');
         if (triggerType === 'none') triggerType = 'natural_language';
       }
     }
