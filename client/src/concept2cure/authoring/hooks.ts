@@ -16,7 +16,9 @@
  * @module client/src/concept2cure/authoring/hooks
  */
 
+import * as React from 'react';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
+import { getAuthToken, getOrgId } from '@/utils/authToken';
 
 export interface C2cDocumentSummary {
   id: string;
@@ -145,4 +147,64 @@ export function useC2cDocumentSection(documentId: string | null, sectionKey: str
       : null;
   const { data, loading } = useFetchJson<C2cSectionRow>(url);
   return { section: data ?? null, loading };
+}
+
+export interface SaveSectionInput {
+  documentId: string;
+  sectionKey: string;
+  /** New content jsonb (`{ paragraphs: [...] }`). Omit to change status only. */
+  content?: { paragraphs: C2cContentParagraph[] };
+  /** New lifecycle status. Omit to change content only. */
+  status?: string;
+  /** Required Part-11 reason-for-change. Server rejects empty. */
+  reason: string;
+}
+
+/**
+ * Save a section via the audited `PATCH /api/c2c/documents/:id/sections/:key`.
+ * The route writes the Part-11 version snapshot + c2c_ana_actions ledger from
+ * the reason; this just forwards the governed mutation with bearer + org
+ * headers (the global /api gate is Bearer-only). Returns the updated row.
+ */
+export function useSaveC2cSection(): {
+  save: (input: SaveSectionInput) => Promise<C2cSectionRow>;
+  saving: boolean;
+  error: string | null;
+} {
+  const [saving, setSaving] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const save = React.useCallback(async (input: SaveSectionInput): Promise<C2cSectionRow> => {
+    setSaving(true);
+    setError(null);
+    try {
+      const token = getAuthToken();
+      const orgId = getOrgId();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      if (orgId) headers['x-organization-id'] = orgId;
+
+      const body: Record<string, unknown> = { reason: input.reason };
+      if (input.content !== undefined) body.content = input.content;
+      if (input.status !== undefined) body.status = input.status;
+
+      const res = await fetch(
+        `/api/c2c/documents/${encodeURIComponent(input.documentId)}/sections/${encodeURIComponent(input.sectionKey)}`,
+        { method: 'PATCH', credentials: 'include', headers, body: JSON.stringify(body) },
+      );
+      if (!res.ok) {
+        const detail = await res.text().catch(() => '');
+        throw new Error(`HTTP ${res.status}${detail ? `: ${detail.slice(0, 200)}` : ''}`);
+      }
+      return (await res.json()) as C2cSectionRow;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Save failed';
+      setError(msg);
+      throw err;
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
+  return { save, saving, error };
 }

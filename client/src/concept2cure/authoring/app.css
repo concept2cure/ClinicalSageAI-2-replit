@@ -778,6 +778,33 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
+   REASON-FOR-CHANGE dialog (governed "send for review")
+   ─────────────────────────────────────────────────────────── */
+.au-reason-scrim {
+  position: fixed; inset: 0; z-index: 90;
+  background: rgba(20,20,19,0.32);
+  display: flex; align-items: center; justify-content: center;
+}
+.au-reason {
+  width: 440px; max-width: calc(100vw - 32px);
+  background: #fff; border: 1px solid #e8e6dc; border-radius: 12px;
+  box-shadow: 0 24px 60px -16px rgba(20,20,19,0.30);
+  padding: 18px 20px;
+}
+.au-reason h6 { margin: 0 0 6px; font-family: var(--font-serif); font-size: 15px; font-weight: 600; color: var(--text-100); }
+.au-reason p { margin: 0 0 12px; font-size: 12px; color: var(--text-400); line-height: 1.5; }
+.au-reason textarea {
+  width: 100%; min-height: 72px; resize: vertical;
+  border: 1px solid #e8e6dc; border-radius: 8px; padding: 9px 11px;
+  font-family: inherit; font-size: 13px; color: var(--text-100);
+  transition: border-color 200ms, box-shadow 200ms;
+}
+.au-reason textarea:focus { border-color: var(--accent-main-100); box-shadow: 0 0 0 3px var(--accent-main-000); }
+.au-reason textarea::placeholder { color: var(--text-400); }
+.au-reason-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.au-reason-btns .au-tb-btn.primary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ═══════════════════════════════════════════════════════════
    TWEAKS PANEL
    ─────────────────────────────────────────────────────────── */
 .au-tweaks {

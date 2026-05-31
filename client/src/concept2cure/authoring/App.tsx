@@ -23,7 +23,7 @@ import {
   resolveOutline, findNode, firstLeaf, timeNow,
   type AuthMessage, type SectionBody, type Skill, type AuthSection,
 } from './data';
-import { useC2cDocuments, useC2cDocumentOutline, useC2cDocumentSection, type C2cDocumentSummary, type C2cOutlineNode, type C2cSectionRow } from './hooks';
+import { useC2cDocuments, useC2cDocumentOutline, useC2cDocumentSection, useSaveC2cSection, type C2cDocumentSummary, type C2cOutlineNode, type C2cSectionRow } from './hooks';
 
 /** Transform the flat c2c outline (key + parent_key) into the nested
  *  AuthSection tree the OutlineTree renders. Preserves rule-pack order. */
@@ -195,6 +195,30 @@ export function AuthoringApp({ initialDocType }: AuthoringAppProps = {}) {
   // Manual rule-pack changes drop back to the fixture outline for that pack.
   const onDocTypeChange = React.useCallback((id: string) => { setLiveDocId(null); setDocType(id); }, []);
   const onAgencyChange = React.useCallback((id: string) => { setLiveDocId(null); setAgency(id); }, []);
+
+  // Governed "send for review" — only on a loaded live document. Captures a
+  // Part-11 reason-for-change, then PATCHes status='review' via the audited
+  // route (server writes the version snapshot + c2c_ana_actions ledger).
+  const { save: saveSection, saving } = useSaveC2cSection();
+  const [reasonOpen, setReasonOpen] = React.useState(false);
+  const [reasonText, setReasonText] = React.useState('');
+  const submitForReview = React.useCallback(async (reason: string) => {
+    if (!liveDocId) return;
+    try {
+      await saveSection({ documentId: liveDocId, sectionKey: activeId, status: 'review', reason });
+      setMessages((m) => [...m, { role: 'ai', blocks: [
+        { kind: 'tool', label: 'Sent for review', value: `§${sectionMeta.path} · ${sectionMeta.label}` },
+        { kind: 'tool', label: 'Audit', value: 'Part-11 version snapshot + ledger entry written' },
+      ] }]);
+    } catch {
+      setMessages((m) => [...m, { role: 'ai', blocks: [
+        { kind: 'p', text: 'Could not send for review — the section was not changed. Check your access and try again.' },
+      ] }]);
+    } finally {
+      setReasonOpen(false);
+      setReasonText('');
+    }
+  }, [liveDocId, activeId, saveSection, sectionMeta.path, sectionMeta.label]);
 
   /* ───── Streaming rewrite engine ───── */
   React.useEffect(() => {
@@ -507,7 +531,12 @@ export function AuthoringApp({ initialDocType }: AuthoringAppProps = {}) {
                     <button className="au-tb-btn" title="Open in conversation" onClick={() => setView('conversation')}>
                       {I.conversation} Draft with AnA
                     </button>
-                    <button className="au-tb-btn primary">{I.send} Send for review</button>
+                    <button className="au-tb-btn primary"
+                            disabled={!liveDocId || saving}
+                            title={liveDocId ? 'Send this section for review (records a reason)' : 'Load a live document to send for review'}
+                            onClick={() => setReasonOpen(true)}>
+                      {I.send} {saving ? 'Sending…' : 'Send for review'}
+                    </button>
                   </div>
                   <div className="au-wb-meta-strip">
                     <div className="col"><div className="lbl">Status</div><div className="val">{STATUS_TEXT[sectionMeta.status || 'todo']}</div></div>
@@ -563,6 +592,32 @@ export function AuthoringApp({ initialDocType }: AuthoringAppProps = {}) {
         evidenceMode={evidenceMode} setEvidenceMode={setEvidenceMode}
         focus={focus} setFocus={setFocus}
       />
+
+      {reasonOpen && (
+        <div className="au-reason-scrim" role="dialog" aria-modal="true" aria-label="Reason for change"
+             onMouseDown={() => { if (!saving) { setReasonOpen(false); setReasonText(''); } }}>
+          <div className="au-reason" onMouseDown={(e) => e.stopPropagation()}>
+            <h6>Send §{sectionMeta.path} for review</h6>
+            <p>Records a 21 CFR Part 11 reason for change against this section. The system writes a version snapshot and an audit-ledger entry.</p>
+            <textarea
+              autoFocus
+              placeholder="Reason for change (10+ characters)"
+              value={reasonText}
+              onChange={(e) => setReasonText(e.target.value)}
+              disabled={saving}
+            />
+            <div className="au-reason-btns">
+              <button className="au-tb-btn" type="button" disabled={saving}
+                      onClick={() => { setReasonOpen(false); setReasonText(''); }}>Cancel</button>
+              <button className="au-tb-btn primary" type="button"
+                      disabled={saving || reasonText.trim().length < 10}
+                      onClick={() => submitForReview(reasonText.trim())}>
+                {saving ? 'Sending…' : 'Send for review'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
