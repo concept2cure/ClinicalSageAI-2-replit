@@ -107,7 +107,16 @@ export function AuthoringApp({ initialDocType }: AuthoringAppProps = {}) {
   const [streamTarget, setStreamTarget] = React.useState<{ id: string; fullText: string; onDone?: () => void } | null>(null);
   const bodyCache = React.useRef<Record<string, SectionBody>>({ ...AUTH_SECTION_BODY });
 
-  const outline = React.useMemo(() => resolveOutline(docType, agency), [docType, agency]);
+  const fixtureOutline = React.useMemo(() => resolveOutline(docType, agency), [docType, agency]);
+  // When a live c2c document is loaded, its real section tree (with live
+  // statuses) replaces the rule-pack fixture outline; otherwise the kit
+  // fixture renders. The house live ?? fixture pattern.
+  const [liveDocId, setLiveDocId] = React.useState<string | null>(null);
+  const { outline: liveOutlineNodes } = useC2cDocumentOutline(liveDocId);
+  const outline = React.useMemo(
+    () => (liveOutlineNodes && liveOutlineNodes.length > 0 ? c2cOutlineToTree(liveOutlineNodes) : fixtureOutline),
+    [liveOutlineNodes, fixtureOutline],
+  );
 
   React.useEffect(() => {
     if (!findNode(outline, activeId)) {
@@ -129,6 +138,7 @@ export function AuthoringApp({ initialDocType }: AuthoringAppProps = {}) {
   // content renders — the house `live ?? fixture` pattern.
   const { documents: liveDocuments } = useC2cDocuments();
   const loadLiveDocument = React.useCallback((doc: C2cDocumentSummary) => {
+    setLiveDocId(doc.id);
     setDocType(doc.doc_type);
     setAgency(doc.agency);
     setMessages((m) => [...m, { role: 'ai', blocks: [
@@ -136,6 +146,9 @@ export function AuthoringApp({ initialDocType }: AuthoringAppProps = {}) {
       { kind: 'tool', label: 'Readiness', value: `${doc.readiness}% · ${doc.status}` },
     ] }]);
   }, []);
+  // Manual rule-pack changes drop back to the fixture outline for that pack.
+  const onDocTypeChange = React.useCallback((id: string) => { setLiveDocId(null); setDocType(id); }, []);
+  const onAgencyChange = React.useCallback((id: string) => { setLiveDocId(null); setAgency(id); }, []);
 
   /* ───── Streaming rewrite engine ───── */
   React.useEffect(() => {
@@ -378,8 +391,8 @@ export function AuthoringApp({ initialDocType }: AuthoringAppProps = {}) {
         streaming={!!streamingId}
         evidenceMode={evidenceMode}
         onEvidenceMode={setEvidenceMode}
-        onDocType={setDocType}
-        onAgency={setAgency}
+        onDocType={onDocTypeChange}
+        onAgency={onAgencyChange}
         onView={setView}
         onToggleTree={() => setTreeCollapsed((c) => !c)}
         onToggleFocus={() => setFocus((f) => !f)}
