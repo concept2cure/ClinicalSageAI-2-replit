@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-05-30T21:05:49.534Z",
+  "generatedAt": "2026-05-31T14:44:25.865Z",
   "git": {
-    "sha": "ffe8d442a17f2b7d36437935910fc19e8080d46c",
-    "branch": "claude/concept2cure-v2-audit-5zufv"
+    "sha": "dcb04d90562f1cc7cd2705fefb599faef5bbd0de",
+    "branch": "claude/ana-integrate-all"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -10,7 +10,7 @@
   },
   "summary": {
     "duplicateBasenames": 197,
-    "largeFilesByBytes": 15,
+    "largeFilesByBytes": 16,
     "largeFilesByLines": 47
   },
   "findings": {
@@ -2060,6 +2060,10 @@
       {
         "file": "client/src/concept2cure/components/editor/UnifiedDocumentEditor.tsx",
         "bytes": 108355
+      },
+      {
+        "file": "server/services/__tests__/ana-ri.test.ts",
+        "bytes": 106200
       }
     ],
     "largeFilesByLines": [
@@ -2124,6 +2128,10 @@
         "lines": 2501
       },
       {
+        "file": "server/services/__tests__/ana-ri.test.ts",
+        "lines": 2490
+      },
+      {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "lines": 2379
       },
@@ -2158,10 +2166,6 @@
       {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
         "lines": 1849
-      },
-      {
-        "file": "server/services/__tests__/ana-ri.test.ts",
-        "lines": 1837
       },
       {
         "file": "server/services/dataHarvester.js",
@@ -2208,6 +2212,10 @@
         "lines": 1676
       },
       {
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "lines": 1674
+      },
+      {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1658
       },
@@ -2230,10 +2238,6 @@
       {
         "file": "server/services/client-intelligence-memory.ts",
         "lines": 1578
-      },
-      {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 1553
       },
       {
         "file": "server/routes/cortex-unified.ts",
@@ -2265,7 +2269,7 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 255,
-      "largeByBytes": 10,
+      "largeByBytes": 11,
       "largeByLines": 33
     },
     {
