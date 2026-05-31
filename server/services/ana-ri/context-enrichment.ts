@@ -33,6 +33,7 @@ import { buildAgencyTacticsBlock, detectRelevantTactics } from './agency-tactics
 import { buildCompetitiveBlock, detectRelevantPlays } from './competitive-strategy.js';
 import { buildAlignmentBlock, detectRelevantAlignment } from './stakeholder-alignment.js';
 import { buildAttunementBlock, detectClientState } from './client-attunement.js';
+import { buildClaimGroundingBlock, detectClaimCategories } from './claim-grounding.js';
 import { buildRoleLensBlock, hasRoleLens } from './role-lens.js';
 import { composeContext, priorityForSource, type CandidateBlock, type ComposeTraceEntry } from './context-composer.js';
 import type { UserRole } from './persona.js';
@@ -1065,6 +1066,10 @@ export async function enrichContextForChat(params: {
         const block = buildAlignmentBlock({ message, segment: challengeSegmentNoProj });
         if (block) { projectlessBlocks.push(block); projectlessSources.push('stakeholder-alignment'); }
       }
+      if (detectClaimCategories(message).length > 0) {
+        const block = buildClaimGroundingBlock(message);
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('claim-grounding'); }
+      }
     } else if (slashNoProj && ['decide', 'tradeoff', 'framework'].includes(slashNoProj.command)) {
       const block = buildDecisionFrameworkBlock({
         message: slashNoProj.args || message,
@@ -1535,6 +1540,17 @@ export async function enrichContextForChat(params: {
       if (attuneBlock) {
         blocks.push(attuneBlock);
         sources.push('client-attunement');
+        if (triggerType === 'none') triggerType = 'natural_language';
+      }
+    }
+
+    // ── Claim-grounding guard — verify high-stakes factual claims before they ship ──
+    if (detectClaimCategories(message).length > 0) {
+      sourcesAttempted++;
+      const groundingBlock = buildClaimGroundingBlock(message);
+      if (groundingBlock) {
+        blocks.push(groundingBlock);
+        sources.push('claim-grounding');
         if (triggerType === 'none') triggerType = 'natural_language';
       }
     }
