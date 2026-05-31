@@ -40,6 +40,10 @@ import {
   type MultiplicityProcedure,
 } from '../services/stats/multiplicity';
 import {
+  sizeSingleProportion,
+  sizeCoPrimarySensSpec,
+} from '../services/stats/diagnostic-design';
+import {
   runJudgmentPipeline,
   runPipelineAndGenerateArtifact,
   runPipelineForRole,
@@ -1043,6 +1047,68 @@ router.post('/multiplicity/test', authMiddleware, async (req: Request, res: Resp
       ids: Array.isArray(b.ids) ? b.ids : undefined,
       weights: Array.isArray(b.weights) ? b.weights : undefined,
       transitionMatrix: Array.isArray(b.transitionMatrix) ? b.transitionMatrix : undefined,
+    });
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/biostat/diagnostic/sizing
+ * Sample-size for a diagnostic / IVD performance study. Either a single
+ * performance goal (sensitivity OR specificity vs a goal), or co-primary
+ * sensitivity AND specificity translated through prevalence into total
+ * enrollment. Returns both the normal-approximation and exact binomial sizes.
+ *
+ * Body (single):    { mode: 'single', goal, expected, alpha?, power? }
+ * Body (co-primary):{ mode: 'co-primary', sensitivityGoal, sensitivityExpected,
+ *                     specificityGoal, specificityExpected, prevalence,
+ *                     alpha?, power?, jointPowerTarget? }
+ */
+router.post('/diagnostic/sizing', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    resolveOrganizationId(req);
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: error.message });
+  }
+  try {
+    const b = req.body ?? {};
+    if (b.mode === 'co-primary') {
+      const required = [
+        'sensitivityGoal', 'sensitivityExpected',
+        'specificityGoal', 'specificityExpected', 'prevalence',
+      ];
+      if (required.some(k => typeof b[k] !== 'number')) {
+        return res.status(400).json({
+          success: false,
+          error: `co-primary mode requires numbers: ${required.join(', ')}.`,
+        });
+      }
+      const result = sizeCoPrimarySensSpec({
+        sensitivityGoal: b.sensitivityGoal,
+        sensitivityExpected: b.sensitivityExpected,
+        specificityGoal: b.specificityGoal,
+        specificityExpected: b.specificityExpected,
+        prevalence: b.prevalence,
+        alpha: typeof b.alpha === 'number' ? b.alpha : undefined,
+        power: typeof b.power === 'number' ? b.power : undefined,
+        jointPowerTarget: typeof b.jointPowerTarget === 'number' ? b.jointPowerTarget : undefined,
+      });
+      return res.json({ success: true, data: result });
+    }
+
+    if (typeof b.goal !== 'number' || typeof b.expected !== 'number') {
+      return res.status(400).json({
+        success: false,
+        error: "single mode requires numeric 'goal' and 'expected'.",
+      });
+    }
+    const result = sizeSingleProportion({
+      goal: b.goal,
+      expected: b.expected,
+      alpha: typeof b.alpha === 'number' ? b.alpha : undefined,
+      power: typeof b.power === 'number' ? b.power : undefined,
     });
     res.json({ success: true, data: result });
   } catch (error: any) {
