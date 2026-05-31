@@ -137,9 +137,22 @@ export const uploadHandler = async (req: Request, res: Response) => {
       }
 
       const artId = `artifact_chat_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-      const extractedText = fileBuffer && mimeType.startsWith('text/')
-        ? fileBuffer.toString('utf8')
-        : `[Uploaded via chat: ${fileName}] (${mimeType}, ${fileSize} bytes)`;
+      // Extract real text so the artifact + embedded atom carry usable content for
+      // AnA's project memory: text/* directly, images via OCR, PDFs via text layer
+      // or OCR fallback, .docx via mammoth. Falls back to a placeholder on failure.
+      let extractedText = `[Uploaded via chat: ${fileName}] (${mimeType}, ${fileSize} bytes)`;
+      if (fileBuffer && fileBuffer.length > 0) {
+        try {
+          const { extractDocumentText } = await import('../../services/ocr/index.js');
+          const extracted = await extractDocumentText(fileBuffer, mimeType, fileName);
+          if (extracted.text && extracted.text.trim().length > 0) {
+            extractedText = extracted.text;
+            logger.info('Upload text extracted', { fileId, method: extracted.method, chars: extracted.text.length });
+          }
+        } catch (extractErr: any) {
+          logger.warn('Upload text extraction failed (non-fatal)', { err: extractErr?.message, fileId });
+        }
+      }
       const boundedContent = extractedText.substring(0, 100000);
 
       const governedResolution = resolveGovernedContext({

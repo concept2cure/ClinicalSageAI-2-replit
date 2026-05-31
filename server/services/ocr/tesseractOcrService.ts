@@ -46,9 +46,15 @@ function defaultLanguages(): string[] {
 function resolveLangPath(): string | undefined {
   const fromEnv = (process.env.TESSERACT_LANG_PATH || '').trim();
   if (fromEnv) return fromEnv;
-  // Vendored under the repo: server/assets/tessdata
-  const vendored = path.resolve(__dirname, '../../assets/tessdata');
-  return existsSync(vendored) ? vendored : undefined;
+  // Locate the vendored server/assets/tessdata relative to the working directory.
+  // Avoids __dirname / import.meta so it resolves under both CJS and ESM builds
+  // (prod runs from /app with the `server` tree copied in; tests run from repo root).
+  const candidates = [
+    path.resolve(process.cwd(), 'server/assets/tessdata'),
+    path.resolve(process.cwd(), 'dist/server/assets/tessdata'),
+    path.resolve(process.cwd(), 'assets/tessdata'),
+  ];
+  return candidates.find((dir) => existsSync(dir));
 }
 
 function langDataPresent(langPath: string | undefined, langs: string[]): boolean {
