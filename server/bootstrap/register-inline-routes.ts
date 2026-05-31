@@ -326,6 +326,17 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount C2C Projects routes:', error);
   }
 
+  // C2C client formatting templates — AnA document-formatting engine.
+  // Extract a TemplateSpec from an upload, build/edit client templates, and
+  // render documents as .docx / .pdf with the client's fonts, margins, logo.
+  try {
+    const c2cTemplatesModule = await import('../routes/c2c/templates');
+    app.use('/api/c2c/templates', authMiddleware, c2cTemplatesModule.default);
+    console.info('✅ C2C Templates routes mounted (/api/c2c/templates)');
+  } catch (error) {
+    console.error('❌ Failed to mount C2C Templates routes:', error);
+  }
+
   // Biopharma domain programs + meetings (Phase 10 — /api/biopharma/*).
   try {
     const biopharmaModule = await import('../routes/biopharma/programs');

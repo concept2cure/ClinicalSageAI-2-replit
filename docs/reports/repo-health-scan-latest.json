@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-05-31T19:14:20.253Z",
+  "generatedAt": "2026-05-31T19:21:01.619Z",
   "git": {
-    "sha": "30136b1bba6a111ba694fc04060bc846fb0ae9f6",
+    "sha": "a231a3eca0356bc924e1c415bb0e32e17bc438fc",
     "branch": "claude/design-kit-integration-audit-5yeba"
   },
   "thresholds": {
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 100,
+        "count": 101,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -106,6 +106,7 @@
           "server/services/rules-engine/index.ts",
           "server/services/storage/index.ts",
           "server/services/submission-gateways/index.ts",
+          "server/services/templates/index.ts",
           "server/services/tools/index.ts",
           "server/src/db/index.ts",
           "server/types/index.ts",
@@ -395,6 +396,20 @@
         ]
       },
       {
+        "basename": "templates",
+        "count": 8,
+        "paths": [
+          "client/src/concept2cure/components/concept2cure-projects/data/templates.ts",
+          "client/src/concept2cure/mdx/data/templates.ts",
+          "design-system/ui_kits/mdx/data/templates.js",
+          "design-system/ui_kits/mdx/surfaces/Templates.jsx",
+          "server/routes/c2c/templates.ts",
+          "server/routes/templates.ts",
+          "ui_kits/mdx/data/templates.js",
+          "ui_kits/mdx/surfaces/Templates.jsx"
+        ]
+      },
+      {
         "basename": "audit",
         "count": 7,
         "paths": [
@@ -431,19 +446,6 @@
           "client/src/concept2cure/risk/shell/TabBar.tsx",
           "client/src/concept2cure/submission/shell/TabBar.tsx",
           "client/src/concept2cure/tasking/shell/TabBar.tsx"
-        ]
-      },
-      {
-        "basename": "templates",
-        "count": 7,
-        "paths": [
-          "client/src/concept2cure/components/concept2cure-projects/data/templates.ts",
-          "client/src/concept2cure/mdx/data/templates.ts",
-          "design-system/ui_kits/mdx/data/templates.js",
-          "design-system/ui_kits/mdx/surfaces/Templates.jsx",
-          "server/routes/templates.ts",
-          "ui_kits/mdx/data/templates.js",
-          "ui_kits/mdx/surfaces/Templates.jsx"
         ]
       },
       {
@@ -2265,18 +2267,11 @@
       }
     ]
   },
-  "comparison": {
-    "baseline": "docs/reports/repo-health-scan-latest.json",
-    "delta": {
-      "duplicateBasenames": 0,
-      "largeFilesByBytes": 0,
-      "largeFilesByLines": 0
-    }
-  },
+  "comparison": null,
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 255,
+      "duplicateGroups": 257,
       "largeByBytes": 11,
       "largeByLines": 33
     },

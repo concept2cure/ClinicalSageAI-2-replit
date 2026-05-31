@@ -4,6 +4,11 @@ import { eq, and, like, desc } from 'drizzle-orm';
 import path from 'path';
 import fs from 'fs';
 import { OperatingSystemIntegration } from './operating-system-integration';
+import {
+  renderEstimandSection,
+  type EstimandInput,
+  type RenderedEstimandSection,
+} from './estimand-sap-section';
 
 // Define the file paths
 const SAP_DIR = path.join(process.cwd(), 'data/sap');
@@ -30,6 +35,11 @@ export interface SapRequestData {
   // study statistician — this service does not fabricate them when absent.
   target_power?: number; // e.g. 0.8 for 80% power
   minimum_detectable_effect?: number; // standardized effect size
+  // ICH E9(R1) estimands for the primary / key secondary objectives. When
+  // supplied, the SAP renders them as a first-class estimand framework section;
+  // when absent, that section renders an explicit deferral rather than
+  // fabricating an estimand. See server/services/estimand-sap-section.ts.
+  estimands?: EstimandInput[];
   // Operating system context (optional — for assumption capture)
   organizationId?: number;
   projectId?: number;
@@ -45,6 +55,9 @@ export interface GeneratedSapData {
   sapPath?: string;
   assumptions?: unknown[];
   decision?: unknown;
+  // Structured metadata for the rendered estimand framework section: how many
+  // estimands were rendered and their per-estimand ICH E9(R1) completeness.
+  estimandSection?: RenderedEstimandSection;
 }
 
 export class SapGeneratorService {
@@ -85,7 +98,13 @@ export class SapGeneratorService {
         dropout_rate = 0.15,
         target_power,
         minimum_detectable_effect,
+        estimands,
       } = protocolData;
+
+      // Render the ICH E9(R1) estimand framework deterministically. When no
+      // estimand is supplied this renders an explicit deferral, not a fabricated
+      // estimand — consistent with the sample-size honesty stance below.
+      const estimandSection = renderEstimandSection(estimands);
 
       // Calculate effective sample size accounting for dropouts
       const effectiveSampleSize = Math.round(sample_size * (1 - dropout_rate));
@@ -116,6 +135,11 @@ export class SapGeneratorService {
           ? `a sample size of ${sample_size} will provide ${(powerForPrimary * 100).toFixed(0)}% power to detect a difference of ${requiredEffectSize.toFixed(2)} at a two-sided significance level of 0.05, assuming a dropout rate of ${(dropout_rate * 100).toFixed(0)}%`
           : `the target power and minimum detectable effect must be specified and computed by the study statistician. Sample size of ${sample_size} is recorded as provided; this draft does not assert a power figure that has not been calculated. Dropout rate assumed at ${(dropout_rate * 100).toFixed(0)}%`;
 
+      // The renderer's text begins with its own "ESTIMAND FRAMEWORK (ICH E9(R1))"
+      // title line; the numbered SAP header below prefixes the section number to
+      // it, so it reads "2. ESTIMAND FRAMEWORK (ICH E9(R1))" in the plan.
+      const estimandSapBody = estimandSection.text;
+
       // Get relevant similar trials from the database
       const similarTrials = await this.findSimilarProtocols(indication, phase);
 
@@ -139,65 +163,69 @@ Study Information:
    1.2 Secondary Objectives
        ${secondary_endpoints.map((endpoint, i) => `${i + 1}. To assess ${endpoint}`).join('\n       ')}
 
-2. STUDY DESIGN
+2. ${estimandSapBody}
+
+3. STUDY DESIGN
    - ${numArms}-arm, ${randomization || 'randomized'}, ${blinding || 'blinded'} study
    - Allocation ratio: ${numArms > 1 ? `1:${numArms > 2 ? numArms - 1 : 1}` : 'N/A'}
    - Stratification factors: Disease severity, age group, previous treatment
 
-3. SAMPLE SIZE JUSTIFICATION
+4. SAMPLE SIZE JUSTIFICATION
    Based on the primary endpoint (${primary_endpoint}), ${sampleSizeJustification}.
 
    Per-arm sample size: ${perArmSampleSize}
 
-4. STATISTICAL METHODS
-   4.1 Primary Analysis
+5. STATISTICAL METHODS
+   5.1 Primary Analysis
        The primary endpoint will be analyzed using ${statisticalMethods.primaryMethod}.
        Missing data will be handled using ${statisticalMethods.missingDataMethod}.
+       The analysis method is aligned with the estimand defined in Section 2.
 
-   4.2 Secondary Analyses
+   5.2 Secondary Analyses
        Secondary endpoints will be analyzed using appropriate statistical methods based on the data type:
        - Continuous outcomes: ${statisticalMethods.continuousMethod}
        - Binary outcomes: ${statisticalMethods.binaryMethod}
        - Time-to-event outcomes: ${statisticalMethods.timeToEventMethod}
 
-   4.3 Multiplicity Adjustment
+   5.3 Multiplicity Adjustment
        ${statisticalMethods.multiplicityMethod}
 
-5. INTERIM ANALYSES
+6. INTERIM ANALYSES
    ${statisticalMethods.interimAnalysisText}
 
-6. ANALYSIS SETS
+7. ANALYSIS SETS
    - Intent-to-Treat (ITT): All randomized participants
    - Per-Protocol (PP): All randomized participants without major protocol deviations
    - Safety: All participants who received at least one dose of study drug
 
-7. HANDLING OF MISSING DATA
+8. HANDLING OF MISSING DATA
    Primary approach: ${statisticalMethods.primaryMissingDataApproach}
    Sensitivity analyses: ${statisticalMethods.sensitivityAnalyses}
+   Missing-data handling supports the intercurrent-event strategies in the Section 2 estimands.
 
-8. SAFETY ANALYSES
+9. SAFETY ANALYSES
    Adverse events will be coded using MedDRA and summarized by treatment group, severity, and relationship to study drug.
 
    Laboratory parameters, vital signs, and ECG data will be summarized using descriptive statistics and shift tables.
 
-9. EXPLORATORY ANALYSES
-   Subgroup analyses will be performed for:
-   - Age groups (<65, ≥65 years)
-   - Sex
-   - Disease severity
-   - Prior treatment history
+10. EXPLORATORY ANALYSES
+    Subgroup analyses will be performed for:
+    - Age groups (<65, ≥65 years)
+    - Sex
+    - Disease severity
+    - Prior treatment history
 
-10. DATA HANDLING CONVENTIONS
+11. DATA HANDLING CONVENTIONS
     - Continuous variables: mean, SD, median, min, max
     - Categorical variables: counts and percentages
     - Missing data codes: explicitly defined for database
 
-11. REPORTING CONVENTIONS
+12. REPORTING CONVENTIONS
     - P-values will be reported to 3 decimal places
     - Percentages will be reported to 1 decimal place
     - All confidence intervals will be reported at 95% level
 
-12. AMENDMENTS TO THE SAP
+13. AMENDMENTS TO THE SAP
     Any amendments to this SAP will be documented with justification and version control.
 `;
 
@@ -243,6 +271,7 @@ Study Information:
         sapPath,
         assumptions: assumptionCapture?.assumptions,
         decision: assumptionCapture?.decision,
+        estimandSection,
       };
     } catch (error) {
       console.error('Error in SAP generator service:', error);

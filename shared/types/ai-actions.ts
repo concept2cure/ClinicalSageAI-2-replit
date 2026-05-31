@@ -29,7 +29,10 @@ export type AIActionType =
   | 'compare_selection'
   | 'refine_with_validation_findings'
   | 'create_followup_task'
-  | 'attach_selection_as_source';
+  | 'attach_selection_as_source'
+  // Document formatting — AnA template engine
+  | 'extract_template_from_upload'
+  | 'render_document_with_template';
 
 /** Target entity types that actions can operate on. */
 export type AIActionTargetType =
@@ -37,7 +40,8 @@ export type AIActionTargetType =
   | 'document'
   | 'project'
   | 'section'
-  | 'task'; // Phase 2: add 'dossier', 'submission', etc.
+  | 'task'
+  | 'template'; // Phase 2: add 'dossier', 'submission', etc.
 
 /** Where the action was invoked from — for analytics and context routing. */
 export type AIActionSourceSurface =

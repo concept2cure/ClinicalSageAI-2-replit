@@ -42,6 +42,8 @@ import './handlers/route-document';
 import './handlers/export-document';
 import './handlers/attach-sources';
 import './handlers/register-inline-ai'; // Phase 2: inline AI actions
+import './handlers/extract-template-from-upload'; // AnA document-formatting engine
+import './handlers/render-document-with-template';
 
 // Re-export shared types for convenience
 export type {
