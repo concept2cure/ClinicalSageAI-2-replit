@@ -16,6 +16,7 @@ import * as React from 'react';
 import { PdevIcon } from '../icons';
 import { PDEV_SUGGESTIONS } from '../data/enums';
 import type { PdevProgramView, PdevActivityView } from '../data/types';
+import { useChatUpload, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 
 /** Minimal transcript message for the dock. Mapped from useAnaChat in
  *  PdevApp; mirrors the MDX AnaRail `ana-msg` shape. */
@@ -94,9 +95,16 @@ export function PdevAnaDock({
 
   const handleSend = () => {
     const trimmed = draft.trim();
-    if (!trimmed) return;
-    onSend(trimmed);
+    const ready = upload.attachments.filter(a => a.status === 'ready');
+    if (!trimmed && ready.length === 0) return;
+    // Uploaded docs are OCR'd into project memory server-side; reference them
+    // inline when the message is otherwise bare so AnA has a prompt to act on.
+    const names = ready.map(a => a.name).join(', ');
+    const text = trimmed || (names ? `Review the attached: ${names}` : '');
+    if (!text) return;
+    onSend(text);
     setDraft('');
+    upload.clear();
   };
 
   return (
