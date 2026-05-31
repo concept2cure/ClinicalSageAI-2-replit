@@ -19,6 +19,7 @@
  */
 import { createHash } from 'crypto';
 import { Readable } from 'stream';
+import { promises as fsp } from 'fs';
 
 /**
  * The dedicated bucket env. When unset, all durable-storage operations are
@@ -117,4 +118,28 @@ export async function getBundle(key: string): Promise<Buffer> {
     chunks.push(chunk as Buffer);
   }
   return Buffer.concat(chunks);
+}
+
+/**
+ * Read the raw bytes of an assembled bundle from its descriptor. Reads the local
+ * file at `descriptor.path` first (the local copy is always written at assemble).
+ * If the local file is missing AND the descriptor records a durable S3 copy
+ * (`storage.provider === 's3'` with a `storage.key`), rematerialize it from S3.
+ * Throws when neither source is available.
+ */
+export async function readBundleBytes(descriptor: {
+  path: string;
+  storage?: { provider?: string; key?: string };
+}): Promise<Buffer> {
+  try {
+    return await fsp.readFile(descriptor.path);
+  } catch (localErr) {
+    if (descriptor.storage?.provider === 's3' && descriptor.storage.key) {
+      return getBundle(descriptor.storage.key);
+    }
+    throw new Error(
+      `Bundle bytes are unavailable: local file missing at ${descriptor.path} and no durable S3 copy is recorded` +
+        (localErr instanceof Error ? ` (${localErr.message})` : ''),
+    );
+  }
 }
