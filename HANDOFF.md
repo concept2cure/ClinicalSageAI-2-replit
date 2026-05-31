@@ -245,7 +245,44 @@ When PR #550 merges, Phase 7 is the next phase to ship — slotted between the i
 
 ---
 
+## Backend re-land — Phase 11 (validated, ready to ship)
+
+> Root-caused 2026-05-30 on a real local Postgres 16. **The reverted Phase 11
+> migration + routes are sound; the original `preview_db_test` failures were
+> preview-DB provisioning flakiness, not the SQL.** Re-land directly.
+
+Evidence:
+- The migration (`c2c_tlf_builds` + `c2c_forecast_snapshots`, recoverable from
+  commit `91d10ff`) applies cleanly with `psql -v ON_ERROR_STOP=1` on a parent
+  carrying `regulatory_programs` (uuid id) + `users` (serial id) — exit 0, both
+  tables + all four indexes created.
+- The exact org-scoped join queries in `server/routes/intelligence-cluster.ts`
+  (recoverable from `91d10ff`) return correct rows end-to-end:
+  TLF queue → `TLF-1 | building | BX204`; forecast → `PDUFA goal | 0.78 | BX204`.
+- `scripts/check_no_destructive_migrations.sh` only scans `db/migrations/`, so a
+  file in `migrations/` is not gated by it. `preview_db_test` went green on the
+  next push (`4f7cc25`, no migration) — confirming the gate is flaky/env, not SQL.
+
+Re-land recipe (one commit, then watch `preview_db_test`; re-push if it flakes):
+1. `git show 91d10ff:migrations/20260529_phase11_intelligence.sql` → restore.
+2. `git show 91d10ff:server/routes/intelligence-cluster.ts` → restore (already
+   uses `safeRows` 42P01/42703 degrade + the `{ data }` envelope, omit-empty).
+3. Re-add the mount in `server/bootstrap/register-inline-routes.ts`
+   (`app.use('/api/intelligence', intelligenceClusterRoutes)`).
+4. Re-apply the hooks-unwrap in `client/.../intelligence/hooks.ts` (envelope
+   `{ data }` form, from `91d10ff`/`cf6f994`).
+Keep the `users` FK dropped (per mutation_primitives convention) and row types
+as `type` aliases (satisfy `safeRows<T extends Record<string, unknown>>`).
+
+Still genuinely missing schema (real data-modeling, not a port):
+`c2c_endpoint_library`, `c2c_manufacturing_sites`, `c2c_stability_studies` —
+Protocol/CMC sections stay on fixtures until these are designed.
+
+---
+
 ## Changelog
+
+- **2026-05-30** — **PR #624 merged.** Phase 4 surface wiring + Phase 11 Intelligence cluster (frontend) + Phase 9 Universal Authoring (frontend) + legacy MDX editor removal landed on `concept2cure-v2`. Phase 11 backend root-caused as ship-ready (see "Backend re-land" above).
 
 - **2026-05-29** — **Legacy MDX editors deleted; routed to Phase 9 authoring.** Per PHASE_9_INSTALL.md §7: removed `mdx/editors/{EstarEditor,PmaEditor,CerEditor,DocumentEditor}.tsx` and `mdx/surfaces/cer/CerWorkbench.tsx`. The 510(k) / PMA "open editor" affordances now call up to the host via a new `onOpenAuthoring(docType)` callback (`ZenApp` → `MdxRoute` → `mdx/App`), which switches to the `authoring` layout with the doc type pre-set — no nested shells. Stripped the per-pathway editor chrome from `mdx/App.tsx` (the `editorRoute`/`inEditor` branch, the `editor`/`pma-editor`/`cer-editor`/`cer-workbench` nav ids + labels, and the now-unused `I`/`EDITOR_PROGRAM` imports). The CER workbench tab and the three editor sub-routes were already mutually orphaned (reachable only from each other), so removal is behaviour-preserving. typecheck clean. `ui_kits/ectd_coauthor/` stays as design reference for one release cycle. Remaining Phase 9 backend work (repoint authoring mutation routes off `concept2cure_artifacts` onto the seeded `c2c_documents` model) is deferred to the preview-DB-capable backend pass.
 - **2026-05-29** — **Phase 9 Universal Authoring installed (frontend).** Ported `ui_kits/authoring/` into `client/src/concept2cure/authoring/` — the single authoring spine (one surface, two modes: Conversation default · Workbench) over the `(doc_type × agency)` rule-pack model. Modules: `data.ts` (typed fixtures + 13 outline rule packs + gates + helpers), `icons.tsx`, `app.css` (ported from the kit `styles.css`, scoped to `.au-shell`), `shell/{TopBar,OutlineTree}`, `conversation/Conversation` (Chat + Composer + slash menu + SelectionToolbar), `artifact/Artifact` (document renderer + provenance popovers + inline compliance gates + GatePopover), `workbench/Workbench` (section table + Evidence/Reviewers/AnA inspector), `App.tsx`, `AuthoringRoute.tsx`. Wired into ZenApp: new `'authoring'` `LayoutMode`, render branch, and a nav interception so the home-rail **User Artifacts** item resolves to authoring (was the MDX `#vault` deep-link; PHASE_9_INSTALL.md §8 repoint). The kit's prototype behaviour (local streaming rewrite engine, demo AnA turns, selection→strengthen/tighten/regenerate/cite/precedent/comment/flag) is preserved 1:1; AnA chat layers onto `/api/ana-ri/stream` and audited section mutations onto `/api/c2c/documents/*` (schema already seeded; routes still serve the legacy artifact model) in the backend follow-up. typecheck clean. **Still to do (legacy removal — the user's explicit goal):** delete `mdx/editors/{EstarEditor,PmaEditor,CerEditor,DocumentEditor}` + `mdx/surfaces/cer/CerWorkbench` and forward the `mdx/App.tsx` `estar`/`pma`/`cer` editor routes to authoring with the doc type pre-set (PHASE_9_INSTALL.md §7); and repoint the authoring mutation routes off `concept2cure_artifacts` onto the seeded `c2c_documents` model. Both are the next commit.
