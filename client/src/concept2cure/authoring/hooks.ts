@@ -109,3 +109,40 @@ export function useC2cDocumentOutline(documentId: string | null): {
     loading,
   };
 }
+
+/** A paragraph inside a c2c section's `content` jsonb. Shapes vary (legacy
+ *  backfill stores `prov: 'legacy'` as a string), so all fields are loose. */
+export interface C2cContentParagraph {
+  id?: string | number;
+  text?: string;
+  tag?: string;
+  prov?: unknown;
+  citations?: unknown;
+}
+
+/** Raw c2c_document_sections row (GET /:id/sections/:key returns it directly). */
+export interface C2cSectionRow {
+  id: number;
+  document_id: string;
+  section_key: string;
+  label: string;
+  status: string;
+  content: { paragraphs?: C2cContentParagraph[] } | null;
+  version: number;
+}
+
+/**
+ * Live content for one section of a document. Returns `null` (→ fixture body)
+ * while loading, on error/404, or when either id is missing.
+ */
+export function useC2cDocumentSection(documentId: string | null, sectionKey: string | null): {
+  section: C2cSectionRow | null;
+  loading: boolean;
+} {
+  const url =
+    documentId && sectionKey
+      ? `/api/c2c/documents/${encodeURIComponent(documentId)}/sections/${encodeURIComponent(sectionKey)}`
+      : null;
+  const { data, loading } = useFetchJson<C2cSectionRow>(url);
+  return { section: data ?? null, loading };
+}

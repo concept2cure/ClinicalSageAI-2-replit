@@ -23,7 +23,7 @@ import {
   resolveOutline, findNode, firstLeaf, timeNow,
   type AuthMessage, type SectionBody, type Skill, type AuthSection,
 } from './data';
-import { useC2cDocuments, useC2cDocumentOutline, type C2cDocumentSummary, type C2cOutlineNode } from './hooks';
+import { useC2cDocuments, useC2cDocumentOutline, useC2cDocumentSection, type C2cDocumentSummary, type C2cOutlineNode, type C2cSectionRow } from './hooks';
 
 /** Transform the flat c2c outline (key + parent_key) into the nested
  *  AuthSection tree the OutlineTree renders. Preserves rule-pack order. */
@@ -42,6 +42,25 @@ function c2cOutlineToTree(nodes: C2cOutlineNode[]): AuthSection[] {
     }
   }
   return roots;
+}
+
+/** Map a live c2c section row's content jsonb into the kit's SectionBody.
+ *  Defensive: c2c paragraph shapes vary (legacy backfill stores prov as the
+ *  string 'legacy'), so prov is kept only when it's an object and every field
+ *  has a fallback. Returns null when there are no paragraphs → fixture body. */
+function c2cSectionToBody(row: C2cSectionRow | null, label: string): SectionBody | null {
+  const paras = row?.content?.paragraphs;
+  if (!Array.isArray(paras) || paras.length === 0) return null;
+  return {
+    heading: row?.label || label,
+    paragraphs: paras.map((p, i) => ({
+      id: String(p?.id ?? `p${i + 1}`),
+      text: String(p?.text ?? ''),
+      tag: typeof p?.tag === 'string' ? p.tag : undefined,
+      prov: p?.prov && typeof p.prov === 'object' ? (p.prov as SectionBody['paragraphs'][number]['prov']) : undefined,
+      citations: Array.isArray(p?.citations) ? (p.citations as SectionBody['paragraphs'][number]['citations']) : undefined,
+    })),
+  };
 }
 
 const STATUS_TEXT: Record<string, string> = { approved: 'Approved', review: 'In review', drafted: 'Drafted', locked: 'Locked', todo: 'Not started' };
@@ -146,7 +165,15 @@ export function AuthoringApp({ initialDocType }: AuthoringAppProps = {}) {
 
   const program = AUTH_PROGRAMS[programIdx];
   const sectionMeta = findNode(outline, activeId) || firstLeaf(outline) || { id: '—', label: '—', path: '—' };
-  const section = bodyCache.current[activeId] || null;
+  // Live section content for the active section of a loaded c2c document;
+  // falls back to the fixture body (bodyCache) when absent. Read path complete:
+  // live outline (above) + live content (here), both live ?? fixture.
+  const { section: liveSectionRow } = useC2cDocumentSection(liveDocId, liveDocId ? activeId : null);
+  const liveSectionBody = React.useMemo(
+    () => c2cSectionToBody(liveSectionRow, sectionMeta.label),
+    [liveSectionRow, sectionMeta.label],
+  );
+  const section = liveSectionBody ?? bodyCache.current[activeId] ?? null;
   const agencyObj = AUTH_AGENCIES.find((a) => a.id === agency)!;
   const docTypeObj = AUTH_DOC_TYPES.find((d) => d.id === docType)!;
   const ownerName = sectionMeta.owner ? (AUTH_REVIEWERS.find((r) => r.id === sectionMeta.owner) || { name: undefined }).name : null;
