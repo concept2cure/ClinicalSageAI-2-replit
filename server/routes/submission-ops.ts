@@ -61,8 +61,14 @@ import {
   bundleStorageBucket,
   bundleStorageKey,
   putBundle,
+  readBundleBytes,
 } from '../services/submission-bundle-storage';
 import { validateEctdLeafs } from '../services/submission-gateways/ectd-structural-validator';
+import type { EctdFinding } from '../services/submission-gateways/ectd-structural-validator';
+import {
+  VALIDATOR_REGISTRY,
+  runHttpValidator,
+} from '../services/submission-gateways/validator-registry';
 
 const router = Router();
 
@@ -1737,6 +1743,213 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           },
           assembledAt: descriptor.assembledAt,
         },
+      },
+    });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+  }
+});
+
+// ============================================================
+// PRE-FLIGHT VALIDATION
+// ============================================================
+
+/**
+ * POST /api/submission-ops/packages/:packageId/preflight
+ *
+ * Runs the validator layer over a package's assembled bundle and returns the
+ * combined findings, a per-validator configuration/run status, and a `blocking`
+ * flag (true iff any error-severity finding exists). The UI calls this before
+ * showing the e-sign / transmit affordance.
+ *
+ * Findings come from:
+ *  - `internal` — the eCTD structural validator, already computed at assemble.
+ *    We reuse the stored `metadata.bundle.validation` (do NOT recompute).
+ *  - external agency validators (`fda_evalidator`, `ema_validator`,
+ *    `pmda_precheck`) — only when CONFIGURED (their `*_VALIDATOR_URL` env is set).
+ *    When unconfigured (the default) they contribute nothing and report
+ *    `ran:false`. A configured validator that fails to run is recorded
+ *    `ran:true` with an `error` AND adds an error-severity finding, so a failed
+ *    validator never looks like a pass.
+ *
+ * This endpoint is read-only relative to the package: it runs/aggregates
+ * validation and writes nothing (no governed action needed). Tenant-scoped.
+ */
+router.post('/packages/:packageId/preflight', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+
+    // Resolve package (tenant-scoped).
+    const [pkg] = await db
+      .select()
+      .from(c2cSubmissionPackages)
+      .where(
+        and(
+          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          eq(c2cSubmissionPackages.orgId, orgId),
+        ),
+      );
+
+    if (!pkg) return res.status(404).json({ error: 'Package not found' });
+
+    const metadata =
+      pkg.metadata && typeof pkg.metadata === 'object'
+        ? (pkg.metadata as Record<string, any>)
+        : {};
+    const bundle = metadata.bundle as
+      | {
+          sha256?: string;
+          sizeBytes?: number;
+          format?: string;
+          path?: string;
+          storage?: { provider?: string; key?: string };
+          validation?: {
+            errorCount?: number;
+            warningCount?: number;
+            infoCount?: number;
+            findings?: EctdFinding[];
+          };
+        }
+      | undefined;
+
+    if (!bundle) {
+      return res.status(409).json({
+        gate: 'not_assembled',
+        error: 'No assembled bundle; call assemble first.',
+      });
+    }
+
+    const validators: {
+      id: string;
+      label: string;
+      configured: boolean;
+      ran: boolean;
+      errorCount: number;
+      warningCount: number;
+      error?: string;
+    }[] = [];
+    const findings: EctdFinding[] = [];
+
+    // INTERNAL: reuse the structural findings computed at assemble.
+    const internalFindings = Array.isArray(bundle.validation?.findings)
+      ? bundle.validation!.findings!
+      : [];
+    findings.push(...internalFindings);
+    const internalProvider = VALIDATOR_REGISTRY.find((v) => v.id === 'internal');
+    validators.push({
+      id: 'internal',
+      label: internalProvider?.label ?? 'Internal structural',
+      configured: true,
+      ran: true,
+      errorCount: bundle.validation?.errorCount ?? 0,
+      warningCount: bundle.validation?.warningCount ?? 0,
+    });
+
+    // EXTERNAL: run each configured agency validator over the bundle bytes.
+    const externalProviders = VALIDATOR_REGISTRY.filter((v) => v.id !== 'internal');
+    const anyExternalConfigured = externalProviders.some((v) => v.configured());
+
+    // Read the bundle bytes once, lazily, only if at least one external runs.
+    let zipBytes: Buffer | null = null;
+    let zipError: string | null = null;
+    if (anyExternalConfigured) {
+      try {
+        zipBytes = await readBundleBytes({
+          path: String(bundle.path ?? ''),
+          storage: bundle.storage,
+        });
+      } catch (e) {
+        zipError = e instanceof Error ? e.message : 'Failed to read bundle bytes';
+      }
+    }
+
+    for (const provider of externalProviders) {
+      if (!provider.configured()) {
+        validators.push({
+          id: provider.id,
+          label: provider.label,
+          configured: false,
+          ran: false,
+          errorCount: 0,
+          warningCount: 0,
+        });
+        continue;
+      }
+
+      // Configured but could not read the bundle bytes — record as errored.
+      if (!zipBytes) {
+        const message = `Validator '${provider.id}' could not read the bundle: ${zipError ?? 'bundle bytes unavailable'}`;
+        findings.push({ severity: 'error', ruleId: 'VALIDATOR-ERROR', message });
+        validators.push({
+          id: provider.id,
+          label: provider.label,
+          configured: true,
+          ran: true,
+          errorCount: 1,
+          warningCount: 0,
+          error: message,
+        });
+        continue;
+      }
+
+      try {
+        const result = await runHttpValidator(provider.id, zipBytes, {
+          sha256: String(bundle.sha256 ?? ''),
+          format: String(bundle.format ?? ''),
+        });
+        findings.push(...result);
+        let errs = 0;
+        let warns = 0;
+        for (const f of result) {
+          if (f.severity === 'error') errs += 1;
+          else if (f.severity === 'warning') warns += 1;
+        }
+        validators.push({
+          id: provider.id,
+          label: provider.label,
+          configured: true,
+          ran: true,
+          errorCount: errs,
+          warningCount: warns,
+        });
+      } catch (e) {
+        const message = e instanceof Error ? e.message : 'Validator failed';
+        // A validator that fails to run must NOT look like a pass.
+        findings.push({ severity: 'error', ruleId: 'VALIDATOR-ERROR', message });
+        validators.push({
+          id: provider.id,
+          label: provider.label,
+          configured: true,
+          ran: true,
+          errorCount: 1,
+          warningCount: 0,
+          error: message,
+        });
+      }
+    }
+
+    // Combined counts across all findings.
+    let errorCount = 0;
+    let warningCount = 0;
+    for (const f of findings) {
+      if (f.severity === 'error') errorCount += 1;
+      else if (f.severity === 'warning') warningCount += 1;
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        packageId: pkg.packageId,
+        bundle: {
+          sha256: bundle.sha256 ?? null,
+          sizeBytes: bundle.sizeBytes ?? null,
+          format: bundle.format ?? null,
+        },
+        validators,
+        findings,
+        blocking: errorCount > 0,
+        errorCount,
+        warningCount,
       },
     });
   } catch (e) {
