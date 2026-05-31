@@ -30,11 +30,10 @@ The agency-transmission layer is fully wired on the server. The **only** missing
 
 The pipeline is real but **not yet production-grade eCTD packaging**. This changes what the UI may safely allow:
 
-- **Leaves are text, not PDF.** Each section becomes a `.txt` leaf of its markdown content; empty sections become explicit `[EMPTY SECTION]` placeholders. Real agencies (FDA ESG etc.) expect PDFs and a true ICH module structure. **A production transmit of the current bundle would be rejected by the agency.** PDF rendering + real module mapping is further backend work, not done here.
-- **Leaf paths are slug-based** (`m1/<sectionKey-slug>.txt`), not validated ICH module placement.
-- **Storage is local disk** (`SUBMISSION_BUNDLE_DIR` or `uploads/submission-bundles`) — not durable across multi-node/serverless deploys.
+- **Leaves are now real PDFs at ICH module paths.** Each section is rendered to a PDF via pdfkit and placed at an ICH module path via `mapSectionToECTDPath` (e.g. `m2/2-3.pdf`, `m1/<region>/..`); empty sections become PDFs whose body is an explicit `[EMPTY SECTION]` marker (no fabricated content). Remaining caveats keep this short of agency-grade: **(a)** the section→module mapping is heuristic — only ICH-numeric `sectionKey`s (e.g. `2.3`) route to the correct module; anything non-numeric falls back to `m2`; **(b)** the PDFs are basic pdfkit renders with no eCTD technical-conformance validation, hyperlinks, or bookmarks. **A production transmit would still likely be rejected on technical validation.**
+- **Storage is still local disk** (`SUBMISSION_BUNDLE_DIR` or `uploads/submission-bundles`) — not durable across multi-node/serverless deploys.
 
-**Design implication:** treat **staging** as the only honest destination today. Production transmit should be visibly gated/disabled until the backend ships real PDF packaging — the surface can present production as "not yet available" rather than a live, dangerous button.
+**Design implication:** treat **staging** as the only honest destination today. Even with real PDFs at ICH module paths, the bundle still lacks eCTD technical-conformance validation and durable storage, so production transmit should remain visibly gated/disabled — the surface can present production as "not yet available" rather than a live, dangerous button.
 
 ## 3 · The flow to design
 
