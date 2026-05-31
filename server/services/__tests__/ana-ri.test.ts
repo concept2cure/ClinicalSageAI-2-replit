@@ -1464,6 +1464,659 @@ describe('AnA RI Client Attunement', () => {
   });
 });
 
+// ── Stakeholder-alignment pack ───────────────────────────────────────────────
+
+import {
+  ALIGNMENT_PLAYS,
+  detectRelevantAlignment,
+  buildAlignmentBlock,
+  listAlignmentByAxis,
+} from '../ana-ri/stakeholder-alignment.js';
+
+describe('AnA RI Stakeholder-Alignment Pack', () => {
+  const STAKE_EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
+
+  it('covers cross-functional, commercial, executive, and partner axes', () => {
+    expect(listAlignmentByAxis('cross_functional').length).toBeGreaterThan(0);
+    expect(listAlignmentByAxis('commercial').length).toBeGreaterThan(0);
+    expect(listAlignmentByAxis('executive').length).toBeGreaterThan(0);
+    expect(listAlignmentByAxis('external_partner').length).toBeGreaterThan(0);
+  });
+
+  it('every alignment play states tension, insight, move, watch-out, and basis', () => {
+    for (const p of ALIGNMENT_PLAYS) {
+      expect(p.tension.length).toBeGreaterThan(10);
+      expect(p.insight.length).toBeGreaterThan(10);
+      expect(p.move.length).toBeGreaterThan(10);
+      expect(p.watchOut.length).toBeGreaterThan(10);
+      expect(p.basis.length).toBeGreaterThan(3);
+      expect(p.triggers.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('fires on representative internal-tension situations', () => {
+    expect(detectRelevantAlignment('CMC and clinical disagree on the timeline').length).toBeGreaterThan(0);
+    expect(detectRelevantAlignment('commercial wants a broader label than the data supports').length).toBeGreaterThan(0);
+    expect(detectRelevantAlignment('the board wants a firm date for the filing').length).toBeGreaterThan(0);
+    expect(detectRelevantAlignment('our CRO holds the data we depend on').length).toBeGreaterThan(0);
+  });
+
+  it('does not fire on a plain regulatory question', () => {
+    expect(detectRelevantAlignment('What ICH guideline covers stability testing?')).toHaveLength(0);
+  });
+
+  it('builds an alignment block, and forceGeneric always does work', () => {
+    const block = buildAlignmentBlock({ message: 'commercial wants a broader claim' });
+    expect(block).toContain('Stakeholder alignment');
+    expect(block).toMatch(/How to align/);
+    expect(buildAlignmentBlock({ message: 'nothing here', forceGeneric: true })).toContain('Stakeholder alignment');
+  });
+
+  it('ties the internal tension to regulatory consequence and leaves the call to the client', () => {
+    const block = buildAlignmentBlock({ message: 'the board wants a date', forceGeneric: true });
+    expect(block).toMatch(/regulatory consequence|program impact/i);
+    expect(block).toMatch(/theirs/);
+  });
+
+  it('keeps stakeholder-alignment copy inside the design-system voice', () => {
+    for (const p of ALIGNMENT_PLAYS) {
+      const text = [p.tension, p.insight, p.move, p.watchOut, p.basis].join(' ');
+      expect(text).not.toContain('!');
+      expect(STAKE_EMOJI.test(text)).toBe(false);
+    }
+  });
+
+  it('handles /align via enrichment and proactively detects stakeholder tension', async () => {
+    const aligned = await enrichContextForChat({
+      message: '/align',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'bla',
+    });
+    expect(aligned.enrichmentMeta?.detectedCommand).toBe('align');
+    expect(aligned.enrichmentMeta?.sourcesSucceeded).toContain('align');
+
+    const proactive = await enrichContextForChat({
+      message: 'CMC and clinical disagree on the timeline and the board wants a date',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'ind',
+    });
+    expect(proactive.enrichmentMeta?.sourcesSucceeded).toContain('stakeholder-alignment');
+  });
+});
+
+// ── Claim-grounding guard ────────────────────────────────────────────────────
+
+import {
+  CLAIM_CHECKS,
+  detectClaimCategories,
+  buildClaimGroundingBlock,
+  getClaimCheck,
+} from '../ana-ri/claim-grounding.js';
+
+describe('AnA RI Claim-Grounding Guard', () => {
+  const GROUND_EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
+
+  it('every claim check has a label, directive, and triggers', () => {
+    for (const c of CLAIM_CHECKS) {
+      expect(c.label.length).toBeGreaterThan(3);
+      expect(c.directive.length).toBeGreaterThan(20);
+      expect(c.triggers.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('detects each high-stakes claim category', () => {
+    expect(detectClaimCategories('this is per 21 CFR 314.50').some((c) => c.category === 'citation')).toBe(true);
+    expect(detectClaimCategories('cite ICH E6 for GCP').some((c) => c.category === 'citation')).toBe(true);
+    expect(detectClaimCategories('the probability of approval is high').some((c) => c.category === 'probability')).toBe(true);
+    expect(detectClaimCategories('this is a slam dunk, guaranteed approval').some((c) => c.category === 'guarantee')).toBe(true);
+    expect(detectClaimCategories('a similar product was approved last year').some((c) => c.category === 'precedent')).toBe(true);
+    expect(detectClaimCategories('you need at least 1500 patients').some((c) => c.category === 'numeric')).toBe(true);
+    expect(detectClaimCategories('the 75-day Pre-Sub clock starts then').some((c) => c.category === 'deadline')).toBe(true);
+  });
+
+  it('does not fire on a plain conversational message', () => {
+    expect(detectClaimCategories('hi, can you help me get oriented?')).toHaveLength(0);
+    expect(detectClaimCategories('what should I work on next?')).toHaveLength(0);
+  });
+
+  it('builds a non-negotiable grounding directive scoped to the claims present', () => {
+    const block = buildClaimGroundingBlock('we are guaranteed approval per 21 CFR 314 with 90% probability');
+    expect(block).toContain('Claim-grounding check');
+    expect(block).toMatch(/KNOWN|INFERRED|MISSING/);
+    expect(block).toMatch(/Absolute assurance/);
+    expect(block).toMatch(/Regulatory citation/);
+  });
+
+  it('returns empty when there is nothing groundable', () => {
+    expect(buildClaimGroundingBlock('thanks, that helps')).toBe('');
+  });
+
+  it('can scan AnA\'s drafted answer as a self-check, not only the user message', () => {
+    const block = buildClaimGroundingBlock('tell me about the program', 'It will definitely be approved.');
+    expect(block).toContain('Claim-grounding check');
+    expect(block).toMatch(/Absolute assurance/);
+  });
+
+  it('exposes a lookup by category', () => {
+    expect(getClaimCheck('guarantee')?.label).toMatch(/assurance/i);
+    expect(getClaimCheck('citation')?.category).toBe('citation');
+  });
+
+  it('keeps claim-grounding copy inside the design-system voice', () => {
+    for (const c of CLAIM_CHECKS) {
+      const text = [c.label, c.directive].join(' ');
+      expect(text).not.toContain('!');
+      expect(GROUND_EMOJI.test(text)).toBe(false);
+    }
+  });
+
+  it('persona declares the claim-grounding discipline', () => {
+    expect(getCorePrompt()).toMatch(/Ground your high-stakes claims/);
+  });
+});
+
+describe('AnA RI Enrichment — claim-grounding integration', () => {
+  it('proactively injects the grounding guard on a high-stakes claim', async () => {
+    const result = await enrichContextForChat({
+      message: 'Can you confirm we are guaranteed approval under 21 CFR 314 with a 90% probability?',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'nda',
+    });
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('claim-grounding');
+    expect(result.block).toContain('Claim-grounding check');
+  });
+
+  it('grounds a high-stakes claim for a project-less user', async () => {
+    const result = await enrichContextForChat({
+      message: 'Is it true a similar device was cleared under ICH E6 with only 50 patients?',
+    });
+    expect(result.enrichmentMeta?.hasProjectContext).toBe(false);
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('claim-grounding');
+  });
+
+  it('does not inject the guard on a plain orientation request', async () => {
+    const result = await enrichContextForChat({
+      message: 'where do I start?',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'ind',
+    });
+    expect(result.enrichmentMeta?.sourcesSucceeded).not.toContain('claim-grounding');
+  });
+});
+
+// ── Capability registry (anti-drift inventory) ───────────────────────────────
+
+import {
+  CAPABILITIES,
+  CAPABILITY_COMMANDS,
+  getCapability,
+  getCapabilityForCommand,
+  listCapabilitiesByCategory,
+  buildCapabilityCatalogue,
+} from '../ana-ri/capability-registry.js';
+
+describe('AnA RI Capability Registry', () => {
+  const CAP_EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
+
+  it('every capability has commands, a description, and a category', () => {
+    for (const c of CAPABILITIES) {
+      expect(c.commands.length).toBeGreaterThan(0);
+      expect(c.description.length).toBeGreaterThan(20);
+      expect(c.label.length).toBeGreaterThan(3);
+      expect(typeof c.proactive).toBe('boolean');
+    }
+  });
+
+  it('command lookups resolve in both directions', () => {
+    expect(getCapability('challenge')?.label).toMatch(/challenge/i);
+    expect(getCapabilityForCommand('redteam')?.id).toBe('challenge');
+    expect(getCapabilityForCommand('landscape')?.id).toBe('position');
+    expect(getCapabilityForCommand('align')?.id).toBe('align');
+    expect(getCapabilityForCommand('not-a-command')).toBeNull();
+  });
+
+  it('lists capabilities by category', () => {
+    expect(listCapabilitiesByCategory('judgment').length).toBeGreaterThan(0);
+    expect(listCapabilitiesByCategory('agency').length).toBeGreaterThan(0);
+  });
+
+  it('has no duplicate command across capabilities', () => {
+    const all = CAPABILITIES.flatMap((c) => c.commands);
+    expect(new Set(all).size).toBe(all.length);
+  });
+
+  it('ANTI-DRIFT: every registered capability command is a wired slash command', () => {
+    const wired = new Set<string>(SUPPORTED_SLASH_COMMANDS);
+    for (const cmd of CAPABILITY_COMMANDS) {
+      expect(wired.has(cmd as typeof SUPPORTED_SLASH_COMMANDS[number])).toBe(true);
+    }
+  });
+
+  it('ANTI-DRIFT: every judgment-pack slash command is catalogued here', () => {
+    // The judgment/guidance commands wired in context-enrichment that must be
+    // documented in the registry so AnA never has an undocumented capability.
+    const judgmentCommands = [
+      'wisdom', 'guide', 'orient', 'tour', 'playbook',
+      'challenge', 'redteam', 'devil',
+      'decide', 'tradeoff', 'framework',
+      'meeting', 'agency', 'tactics',
+      'position', 'landscape', 'compete',
+      'align',
+    ];
+    for (const cmd of judgmentCommands) {
+      expect(CAPABILITY_COMMANDS.has(cmd)).toBe(true);
+    }
+  });
+
+  it('builds a grounded catalogue that is not a recite-this menu', () => {
+    const cat = buildCapabilityCatalogue();
+    expect(cat).toContain('enrichment capabilities');
+    expect(cat).toMatch(/Do not recite this as a menu/);
+    // Every capability surfaces with at least one slash command.
+    for (const c of CAPABILITIES) {
+      expect(cat).toContain('/' + c.commands[0]);
+    }
+  });
+
+  it('keeps capability copy inside the design-system voice', () => {
+    for (const c of CAPABILITIES) {
+      const text = [c.label, c.description].join(' ');
+      expect(text).not.toContain('!');
+      expect(CAP_EMOJI.test(text)).toBe(false);
+    }
+  });
+});
+
+describe('AnA RI Enrichment — capabilities command', () => {
+  it('grounds a "what can you do" request in the capability catalogue', async () => {
+    const result = await enrichContextForChat({
+      message: '/capabilities',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'nda',
+    });
+    expect(result.enrichmentMeta?.detectedCommand).toBe('capabilities');
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('capabilities');
+    expect(result.block).toContain('enrichment capabilities');
+  });
+
+  it('grounds capabilities for a project-less user', async () => {
+    const result = await enrichContextForChat({ message: '/capabilities' });
+    expect(result.enrichmentMeta?.hasProjectContext).toBe(false);
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('capabilities');
+  });
+});
+
+// ── Context composer (relevance-ranking kernel) ──────────────────────────────
+
+import {
+  tokenize,
+  approxTokens,
+  scoreRelevanceBM25,
+  lexicalSimilarity,
+  composeContext,
+  priorityForSource,
+  SOURCE_PRIORITY,
+  type CandidateBlock,
+} from '../ana-ri/context-composer.js';
+
+describe('AnA RI Context Composer', () => {
+  it('tokenizes, drops stopwords, and keeps regulatory tokens like 510(k)', () => {
+    const toks = tokenize('We need a 510(k) predicate for the device');
+    expect(toks).toContain('510(k)');
+    expect(toks).toContain('predicate');
+    expect(toks).toContain('device');
+    expect(toks).not.toContain('the');
+    expect(toks).not.toContain('a');
+  });
+
+  it('approxTokens scales with length and is always positive', () => {
+    expect(approxTokens('')).toBeGreaterThan(0);
+    expect(approxTokens('a'.repeat(400))).toBe(100);
+  });
+
+  it('BM25 ranks the block that shares query terms highest', () => {
+    const blocks: CandidateBlock[] = [
+      { source: 'a', text: 'Pediatric investigation plan and iPSP timing for the adult filing.' },
+      { source: 'b', text: 'Predicate device toxicity and substantial equivalence matrix.' },
+      { source: 'c', text: 'Stability testing and comparability for the drug substance.' },
+    ];
+    const scores = scoreRelevanceBM25('how do i handle the pediatric plan', blocks);
+    expect(scores[0]).toBeGreaterThan(scores[1]);
+    expect(scores[0]).toBeGreaterThan(scores[2]);
+    expect(Math.max(...scores)).toBeLessThanOrEqual(1);
+  });
+
+  it('returns all-zero relevance for an empty or stopword-only query', () => {
+    const blocks: CandidateBlock[] = [{ source: 'a', text: 'pediatric plan' }];
+    expect(scoreRelevanceBM25('', blocks)).toEqual([0]);
+    expect(scoreRelevanceBM25('the a of', blocks)).toEqual([0]);
+  });
+
+  it('lexical similarity is high for near-duplicates, low for unrelated text', () => {
+    const dup = lexicalSimilarity('pediatric plan timing filing', 'pediatric plan timing for filing');
+    const diff = lexicalSimilarity('pediatric plan timing', 'predicate device toxicity matrix');
+    expect(dup).toBeGreaterThan(diff);
+    expect(diff).toBeLessThan(0.2);
+  });
+
+  it('composes within budget, dropping the lowest-value block when it cannot fit', () => {
+    const big = 'word '.repeat(400); // ~500 tokens each
+    const candidates: CandidateBlock[] = [
+      { source: 'agency-tactics', text: 'pediatric plan ' + big, priority: 0.75 },
+      { source: 'industry-wisdom', text: 'unrelated filler ' + big, priority: 0.55 },
+      { source: 'tour-guide', text: 'orientation filler ' + big, priority: 0.5 },
+    ];
+    const result = composeContext('pediatric plan', candidates, { tokenBudget: 600 });
+    // Budget ~600 tokens fits only one ~500-token block.
+    expect(result.selected.length).toBe(1);
+    expect(result.selected[0].source).toBe('agency-tactics');
+    expect(result.tokensUsed).toBeLessThanOrEqual(600);
+    expect(result.trace.some((t) => t.reason === 'over-budget')).toBe(true);
+  });
+
+  it('always keeps pinned blocks regardless of relevance', () => {
+    const candidates: CandidateBlock[] = [
+      { source: 'client-attunement', text: 'steady the user in crisis', priority: 0.95, pinned: true },
+      { source: 'industry-wisdom', text: 'pediatric plan timing details', priority: 0.55 },
+    ];
+    const result = composeContext('something totally unrelated to either', candidates, { tokenBudget: 5000 });
+    expect(result.selected.map((s) => s.source)).toContain('client-attunement');
+    // Pinned block leads the order.
+    expect(result.selected[0].source).toBe('client-attunement');
+  });
+
+  it('de-duplicates near-identical blocks via MMR under tight budget', () => {
+    const body = 'reconcile the load bearing numbers across protocol sap csr and summary before filing';
+    const candidates: CandidateBlock[] = [
+      { source: 'industry-wisdom', text: body, priority: 0.55 },
+      { source: 'decision-framework', text: body + ' identical twin', priority: 0.55 },
+      { source: 'agency-tactics', text: 'answer the question the reviewer asked in their own order', priority: 0.75 },
+    ];
+    // Budget (~50 tok) fits two of three ~small blocks. With a diversity-leaning
+    // lambda, MMR should prefer the distinct agency-tactics block over the
+    // redundant near-duplicate of the first selection.
+    const result = composeContext('reconcile numbers before filing', candidates, { tokenBudget: 50, lambda: 0.4 });
+    const sources = result.selected.map((s) => s.source);
+    expect(sources).toContain('agency-tactics');
+    expect(result.trace.some((t) => t.reason === 'over-budget')).toBe(true);
+  });
+
+  it('is a no-op (keeps everything) when budget is generous', () => {
+    const candidates: CandidateBlock[] = [
+      { source: 'a', text: 'pediatric plan' },
+      { source: 'b', text: 'predicate device' },
+      { source: 'c', text: 'stability testing' },
+    ];
+    const result = composeContext('pediatric predicate stability', candidates, { tokenBudget: 100000 });
+    expect(result.selected.length).toBe(3);
+  });
+
+  it('handles the empty candidate set', () => {
+    const result = composeContext('anything', [], { tokenBudget: 1000 });
+    expect(result.selected).toHaveLength(0);
+    expect(result.text).toBe('');
+    expect(result.tokensUsed).toBe(0);
+  });
+
+  it('emits an explainable trace for every candidate', () => {
+    const candidates: CandidateBlock[] = [
+      { source: 'a', text: 'pediatric plan timing' },
+      { source: 'b', text: 'predicate device toxicity' },
+    ];
+    const result = composeContext('pediatric plan', candidates, { tokenBudget: 5000 });
+    expect(result.trace).toHaveLength(2);
+    for (const t of result.trace) {
+      expect(t).toHaveProperty('source');
+      expect(t).toHaveProperty('relevance');
+      expect(t).toHaveProperty('kept');
+      expect(t).toHaveProperty('reason');
+    }
+  });
+
+  it('maps source priorities and slash-command aliases to pack weights', () => {
+    expect(priorityForSource('governed-envelope')).toBe(SOURCE_PRIORITY['governed-envelope']);
+    expect(priorityForSource('client-attunement')).toBeGreaterThan(priorityForSource('tour-guide'));
+    // Slash aliases resolve to their pack weight.
+    expect(priorityForSource('wisdom')).toBe(SOURCE_PRIORITY['industry-wisdom']);
+    expect(priorityForSource('align')).toBe(SOURCE_PRIORITY['stakeholder-alignment']);
+    expect(priorityForSource('totally-unknown-source')).toBe(0.5);
+  });
+});
+
+describe('AnA RI Enrichment — composer integration', () => {
+  it('preserves legacy join when no budget is requested', async () => {
+    const result = await enrichContextForChat({
+      message: 'We just got a CRL and the board wants a date',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'nda',
+    });
+    expect(result.enrichmentMeta?.composeTrace).toBeUndefined();
+    expect(typeof result.block).toBe('string');
+  });
+
+  it('engages the composer and emits a trace when a budget is set', async () => {
+    const result = await enrichContextForChat({
+      message: 'We just received a complete response letter and the board wants a firm date for the resubmission',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'nda',
+      composeTokenBudget: 4000,
+    });
+    // Multiple packs fire on this message; when composed, a trace is present
+    // and the crisis read is pinned/kept.
+    if (result.enrichmentMeta?.composeTrace) {
+      expect(result.enrichmentMeta.composeTokensUsed).toBeGreaterThan(0);
+      const attune = result.enrichmentMeta.composeTrace.find((t) => t.source === 'client-attunement');
+      if (attune) expect(attune.kept).toBe(true);
+    }
+    expect(typeof result.block).toBe('string');
+  });
+});
+
+// ── Adaptive priority (learned re-weighting) ─────────────────────────────────
+
+import {
+  smoothedReward,
+  rewardToMultiplier,
+  buildAdaptiveMultipliers,
+  applyAdaptivePriority,
+  type SourceOutcomeStats,
+} from '../ana-ri/adaptive-priority.js';
+
+describe('AnA RI Adaptive Priority', () => {
+  it('returns the prior exactly when there are no samples', () => {
+    const r = smoothedReward({ source: 'x', accepted: 0, edited: 0, rejected: 0, regenerated: 0 });
+    expect(r).toBeCloseTo(0.5, 6);
+  });
+
+  it('rewards an all-accepted source above an all-rejected one', () => {
+    const good = smoothedReward({ source: 'g', accepted: 200, edited: 0, rejected: 0, regenerated: 0 });
+    const bad = smoothedReward({ source: 'b', accepted: 0, edited: 0, rejected: 200, regenerated: 0 });
+    expect(good).toBeGreaterThan(0.9);
+    expect(bad).toBeLessThan(0.1);
+  });
+
+  it('treats edited as partial credit (between accepted and rejected)', () => {
+    const edited = smoothedReward({ source: 'e', accepted: 0, edited: 200, rejected: 0, regenerated: 0 });
+    expect(edited).toBeGreaterThan(0.4);
+    expect(edited).toBeLessThan(0.6);
+  });
+
+  it('shrinks low-sample sources toward the prior (small-sample safety)', () => {
+    const lowN = smoothedReward({ source: 'l', accepted: 2, edited: 0, rejected: 0, regenerated: 0 });
+    const highN = smoothedReward({ source: 'h', accepted: 200, edited: 0, rejected: 0, regenerated: 0 });
+    // 2 accepts barely moves off 0.5; 200 accepts moves nearly to 1.
+    expect(lowN).toBeLessThan(0.65);
+    expect(highN).toBeGreaterThan(0.9);
+  });
+
+  it('maps rewards to bounded multipliers centered on 1.0', () => {
+    expect(rewardToMultiplier(0.5)).toBeCloseTo(1.0, 6);
+    expect(rewardToMultiplier(1)).toBeCloseTo(1.25, 6);
+    expect(rewardToMultiplier(0)).toBeCloseTo(0.75, 6);
+    // Always within bounds.
+    for (const r of [0, 0.25, 0.5, 0.75, 1]) {
+      const m = rewardToMultiplier(r);
+      expect(m).toBeGreaterThanOrEqual(0.75);
+      expect(m).toBeLessThanOrEqual(1.25);
+    }
+  });
+
+  it('builds a multiplier map only for sources with stats', () => {
+    const stats: SourceOutcomeStats[] = [
+      { source: 'agency-tactics', accepted: 100, edited: 0, rejected: 0, regenerated: 0 },
+      { source: 'tour-guide', accepted: 0, edited: 0, rejected: 100, regenerated: 0 },
+    ];
+    const m = buildAdaptiveMultipliers(stats);
+    expect(m['agency-tactics']).toBeGreaterThan(1);
+    expect(m['tour-guide']).toBeLessThan(1);
+    expect(m['never-seen']).toBeUndefined();
+  });
+
+  it('applyAdaptivePriority scales and clamps, and is a no-op for unknown sources', () => {
+    const m = { 'agency-tactics': 1.25, 'tour-guide': 0.75 };
+    expect(applyAdaptivePriority(0.6, 'agency-tactics', m)).toBeCloseTo(0.75, 6);
+    expect(applyAdaptivePriority(0.6, 'tour-guide', m)).toBeCloseTo(0.45, 6);
+    expect(applyAdaptivePriority(0.6, 'unknown', m)).toBe(0.6);
+    expect(applyAdaptivePriority(0.6, 'agency-tactics', undefined)).toBe(0.6);
+    // Clamp: a high base times a >1 multiplier never exceeds 1.
+    expect(applyAdaptivePriority(0.95, 'agency-tactics', m)).toBeLessThanOrEqual(1);
+  });
+
+  it('learned multipliers can reorder composer selection under tight budget', () => {
+    const big = 'word '.repeat(400); // ~500 tokens each
+    const candidates: CandidateBlock[] = [
+      { source: 'tour-guide', text: 'shared topic alpha ' + big, priority: 0.6 },
+      { source: 'agency-tactics', text: 'shared topic alpha ' + big, priority: 0.6 },
+    ];
+    // Equal base priority and identical relevance: tie. A learned multiplier
+    // favoring agency-tactics should make it win the single budget slot.
+    const result = composeContext('shared topic alpha', candidates, {
+      tokenBudget: 600,
+      priorityMultipliers: { 'agency-tactics': 1.25, 'tour-guide': 0.75 },
+    });
+    expect(result.selected.length).toBe(1);
+    expect(result.selected[0].source).toBe('agency-tactics');
+  });
+});
+
+// ── Scope-and-escalation guard ───────────────────────────────────────────────
+
+import {
+  SCOPE_CHECKS,
+  detectScopeCategories,
+  requiresRefusal,
+  buildScopeGuardBlock,
+  getScopeCheck,
+} from '../ana-ri/scope-guard.js';
+
+describe('AnA RI Scope Guard', () => {
+  const SCOPE_EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
+
+  it('every scope check has a label, mode, directive, and triggers', () => {
+    for (const c of SCOPE_CHECKS) {
+      expect(c.label.length).toBeGreaterThan(3);
+      expect(['handoff', 'refuse']).toContain(c.mode);
+      expect(c.directive.length).toBeGreaterThan(20);
+      expect(c.triggers.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('detects each scope-sensitive category', () => {
+    expect(detectScopeCategories('can you confirm we are compliant and ready to file?').some((c) => c.category === 'regulatory_determination')).toBe(true);
+    expect(detectScopeCategories('is this legally binding and are we liable?').some((c) => c.category === 'legal_advice')).toBe(true);
+    expect(detectScopeCategories('how should I dose my patient on this drug?').some((c) => c.category === 'medical_advice')).toBe(true);
+    expect(detectScopeCategories('should we fund the next phase or kill the program?').some((c) => c.category === 'business_decision')).toBe(true);
+    expect(detectScopeCategories('can the IRB waive informed consent here?').some((c) => c.category === 'human_subjects')).toBe(true);
+    expect(detectScopeCategories('can you back-date the signed record?').some((c) => c.category === 'data_integrity')).toBe(true);
+  });
+
+  it('flags data-integrity requests as requiring refusal, not just handoff', () => {
+    expect(requiresRefusal('please back-date the audit trail entry')).toBe(true);
+    expect(requiresRefusal('hide the failing result from the submission')).toBe(true);
+    // A normal in-scope analysis request does not require refusal.
+    expect(requiresRefusal('help me strengthen the Module 2.5 argument')).toBe(false);
+  });
+
+  it('does not fire on a normal in-scope request', () => {
+    expect(detectScopeCategories('draft the clinical overview for me')).toHaveLength(0);
+    expect(detectScopeCategories('what does ICH E6 require for monitoring?')).toHaveLength(0);
+  });
+
+  it('builds a hand-off directive that keeps AnA useful, not stonewalling', () => {
+    const block = buildScopeGuardBlock('are we ready to file? confirm we are compliant');
+    expect(block).toContain('Scope and escalation boundary');
+    expect(block).toMatch(/\[HAND OFF\]/);
+    expect(block).toMatch(/trusted advisor/);
+  });
+
+  it('builds an integrity-boundary directive on a data-integrity ask', () => {
+    const block = buildScopeGuardBlock('can you back-date the signed record to last month?');
+    expect(block).toContain('Scope and integrity boundary');
+    expect(block).toMatch(/\[DECLINE\]/);
+    expect(block).toMatch(/legitimate path/);
+  });
+
+  it('returns empty when the request is fully in scope', () => {
+    expect(buildScopeGuardBlock('summarize the deficiency taxonomy for an IND')).toBe('');
+  });
+
+  it('exposes a lookup by category', () => {
+    expect(getScopeCheck('data_integrity')?.mode).toBe('refuse');
+    expect(getScopeCheck('regulatory_determination')?.mode).toBe('handoff');
+  });
+
+  it('keeps scope-guard copy inside the design-system voice', () => {
+    for (const c of SCOPE_CHECKS) {
+      const text = [c.label, c.directive].join(' ');
+      expect(text).not.toContain('!');
+      expect(SCOPE_EMOJI.test(text)).toBe(false);
+    }
+  });
+
+  it('persona declares the know-your-limits discipline', () => {
+    expect(getCorePrompt()).toMatch(/Know your limits and hand off/);
+  });
+});
+
+describe('AnA RI Enrichment — scope-guard integration', () => {
+  it('proactively injects the scope guard on a determination request', async () => {
+    const result = await enrichContextForChat({
+      message: 'Can you confirm we are compliant and acceptable to the FDA?',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'nda',
+    });
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('scope-guard');
+    expect(result.block).toContain('boundary');
+  });
+
+  it('injects the integrity boundary for a project-less data-integrity ask', async () => {
+    const result = await enrichContextForChat({
+      message: 'Just alter the data so the result looks like it passed.',
+    });
+    expect(result.enrichmentMeta?.hasProjectContext).toBe(false);
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('scope-guard');
+  });
+
+  it('does not inject the guard on a normal drafting request', async () => {
+    const result = await enrichContextForChat({
+      message: 'draft my safety narrative',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'ind',
+    });
+    expect(result.enrichmentMeta?.sourcesSucceeded).not.toContain('scope-guard');
+  });
+});
+
+// ── Role lens ────────────────────────────────────────────────────────────────
 // ── Role lens ────────────────────────────────────────────────────────────────
 
 import { buildRoleLensBlock, hasRoleLens } from '../ana-ri/role-lens.js';

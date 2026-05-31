@@ -380,6 +380,40 @@ const SEED_CAPABILITIES: SeedCapability[] = [
     projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
     documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
   },
+  // ── Document formatting (3) ───────────────────────────────
+  {
+    capabilityKey: 'extract-template',
+    category: 'formatting',
+    name: 'Recreate a Template from an Upload',
+    description:
+      'Read an uploaded Word or PDF document and recreate its formatting as a reusable client template — page size, margins, fonts, brand colours, logo, and running header/footer. Reports an extraction confidence and asks you to confirm before saving.',
+    slashCommand: '/extract-template',
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
+    capabilityKey: 'build-template',
+    category: 'formatting',
+    name: 'Build or Adjust a Client Template',
+    description:
+      'Create or edit a client formatting template conversationally — set margins, fonts, sizes, colours, header and footer text, and the logo — without touching a settings panel.',
+    slashCommand: '/template',
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
+    capabilityKey: 'render-with-template',
+    category: 'formatting',
+    name: 'Produce Word and PDF in the Client Template',
+    description:
+      'Render a document as a Microsoft Word (.docx) file and a PDF that match a saved client template exactly — same fonts, margins, logo, header and footer.',
+    slashCommand: '/produce',
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
 ];
 
 // ============================================================
