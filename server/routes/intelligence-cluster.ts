@@ -28,6 +28,7 @@ import { Router, Request, Response } from 'express';
 import { createScopedLogger } from '../utils/logger';
 import { ok, serverError } from '../lib/api-response';
 import { pool } from '../db';
+import { formatDueIn, formatDelta, isoDate } from './intelligence-cluster.format';
 
 const router = Router();
 const log = createScopedLogger('intelligence-cluster');
@@ -51,15 +52,6 @@ async function safeRows<T extends Record<string, unknown>>(sql: string, args: un
     if (code === '42P01' || code === '42703') return [];
     throw err;
   }
-}
-
-/** Days from now until `d`, rounded up. */
-function daysUntil(d: Date): number {
-  return Math.ceil((d.getTime() - Date.now()) / 86_400_000);
-}
-/** Whole-day delta between two dates (b - a). */
-function dayDelta(a: Date, b: Date): number {
-  return Math.round((b.getTime() - a.getTime()) / 86_400_000);
 }
 
 /* ─── Protocol ─────────────────────────────────────────────────── */
@@ -110,12 +102,11 @@ router.get('/biostat', async (req: Request, res: Response) => {
       );
       if (tlf.length > 0) {
         out.tlfQueue = tlf.map((r) => {
-          const d = daysUntil(new Date(r.due_at));
           return {
             id: r.id,
             program: r.program ?? '—',
             what: r.what,
-            dueIn: d < 0 ? 'overdue' : `${d} days`,
+            dueIn: formatDueIn(new Date(r.due_at)),
             pct: r.pct_complete,
             status: r.status,
           };
@@ -157,13 +148,12 @@ router.get('/reports', async (req: Request, res: Response) => {
         out.forecast = fc.map((r) => {
           const target = new Date(r.target_date);
           const forecast = new Date(r.forecast_date);
-          const delta = dayDelta(target, forecast);
           return {
             program: r.program ?? '—',
             milestone: r.milestone,
-            target: target.toISOString().slice(0, 10),
-            forecast: forecast.toISOString().slice(0, 10),
-            delta: delta < 0 ? `−${Math.abs(delta)}d` : `+${delta}d`,
+            target: isoDate(target),
+            forecast: isoDate(forecast),
+            delta: formatDelta(target, forecast),
             conf: Number(r.confidence),
           };
         });
