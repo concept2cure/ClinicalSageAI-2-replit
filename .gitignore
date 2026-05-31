@@ -64,3 +64,7 @@ test-artifacts/
 generated_documents/
 .claude/worktrees/
 .gstack/
+
+# Tesseract decompressed-data cache (the vendored *.traineddata.gz is tracked)
+/*.traineddata
+tesseract-cache/

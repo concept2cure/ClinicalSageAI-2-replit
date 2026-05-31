@@ -6,7 +6,8 @@
  */
 
 export { ocrService } from './ocrService';
-export type { OcrCapabilities, OcrPdfResult } from './ocrService';
+export type { OcrCapabilities, OcrPdfResult, OcrPdfTextResult } from './ocrService';
+export { rasterizePdf, type RasterizeOptions } from './pdfRasterizer';
 export {
   tesseractOcrService,
   type OcrImageOptions,

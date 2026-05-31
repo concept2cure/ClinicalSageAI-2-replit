@@ -4,6 +4,7 @@
     pkgs.python3
     pkgs.zip
     pkgs.tesseract
+    pkgs.ocrmypdf
     pkgs.pinentry-all
     pkgs.gnupg
     pkgs.openssh

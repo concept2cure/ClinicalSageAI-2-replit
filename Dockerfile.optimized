@@ -21,13 +21,16 @@ FROM node:20-slim AS production
 
 WORKDIR /app
 
-# Install LibreOffice headless for DOCX-to-PDF conversion
+# Install LibreOffice headless for DOCX-to-PDF conversion, and ocrmypdf for
+# scanned-PDF OCR (pulls in tesseract-ocr, qpdf, unpaper as dependencies).
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       libreoffice-common \
       libreoffice-writer \
       fonts-liberation \
       ghostscript \
+      ocrmypdf \
+      tesseract-ocr \
       curl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 

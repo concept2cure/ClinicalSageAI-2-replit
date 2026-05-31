@@ -17,6 +17,7 @@
  */
 
 import { existsSync } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { createWorker, type Worker } from 'tesseract.js';
 import { createScopedLogger } from '../../utils/logger';
@@ -162,6 +163,9 @@ class TesseractOcrService {
 
     const options: Record<string, unknown> = {
       logger: () => {}, // suppress tesseract.js progress noise; we log outcomes ourselves
+      // tesseract.js decompresses traineddata to a cache dir; default is cwd, which
+      // would litter the working directory — keep it in a temp dir instead.
+      cachePath: process.env.TESSERACT_CACHE_PATH || path.join(os.tmpdir(), 'tesseract-cache'),
     };
     if (langPath) options.langPath = langPath;
 

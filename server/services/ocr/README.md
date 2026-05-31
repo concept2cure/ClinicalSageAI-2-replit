@@ -4,15 +4,16 @@ Optical character recognition for AnA's document stack, behind one capability-aw
 
 ## Engines
 
-| Input | Engine | System dependency |
-|---|---|---|
-| Images (png, jpeg, tiff, bmp, webp) | `tesseract.js` (WASM) | **none** — the WASM core ships in `node_modules` |
-| PDFs | `ocrmypdf` via the existing `OcrMyPdfClient` | `ocrmypdf` binary (wraps Tesseract) |
+| Input | Method | Engine | System dependency |
+|---|---|---|---|
+| Images (png, jpeg, tiff, bmp, webp) | `recognizeImage` | `tesseract.js` (WASM) | **none** — WASM core ships in `node_modules` |
+| PDF → text | `ocrPdfToText` | pdfjs rasterise + `tesseract.js` | **none** — `@napi-rs/canvas` + pdfjs |
+| PDF → searchable PDF | `ocrPdf` | `ocrmypdf` via `OcrMyPdfClient` | `ocrmypdf` binary (wraps Tesseract) |
 
-The WASM image path works in every runtime — including the managed/ephemeral
-container where no system `tesseract`/`ocrmypdf` is installed. PDF OCR still needs
-the `ocrmypdf` binary; we don't add a native page rasteriser, so where it's absent
-`ocrPdf` degrades gracefully (`applied: false`) instead of throwing.
+Both the image path and `ocrPdfToText` work in **every** runtime — including the
+managed/ephemeral container where no system `tesseract`/`ocrmypdf` is installed.
+`ocrPdf` (which produces a *searchable PDF* rather than text) needs the `ocrmypdf`
+binary and degrades gracefully (`applied: false`) instead of throwing when it's absent.
 
 Always check `ocrService.getCapabilities()` before relying on an engine.
 
@@ -21,8 +22,13 @@ Always check `ocrService.getCapabilities()` before relying on an engine.
 ```ts
 import { ocrService } from '../ocr';
 
+// Image OCR (works everywhere)
 const { text, confidence } = await ocrService.recognizeImage(imageBuffer);
 
+// Scanned-PDF → text (works everywhere; no system binary)
+const pdf = await ocrService.ocrPdfToText(pdfBuffer, { dpi: 200, maxPages: 50 });
+
+// Scanned-PDF → searchable PDF (needs ocrmypdf)
 const caps = ocrService.getCapabilities();
 if (caps.pdf.available) {
   await ocrService.ocrPdf('/in.pdf', '/out.pdf');
@@ -47,5 +53,11 @@ This writes `server/assets/tessdata/<lang>.traineddata.gz`, which
 `TESSERACT_LANG_PATH` to a directory you manage. `getCapabilities().image.langDataLocal`
 reports whether the default languages are available on disk.
 
+`eng` data is committed to the repo (`server/assets/tessdata/eng.traineddata.gz`),
+so image and PDF OCR work out of the box. The vendoring script pulls from the **npm
+registry** (`@tesseract.js-data/<lang>`), which is reachable where the jsDelivr CDN
+is blocked.
+
 Env knobs: `TESSERACT_LANG` (default `eng`; `+`/comma-separated for multiple),
-`TESSERACT_LANG_PATH`, `OCRMYPDF_COMMAND`.
+`TESSERACT_LANG_PATH`, `TESSERACT_CACHE_PATH` (decompressed-data cache; defaults to
+a temp dir), `OCRMYPDF_COMMAND`.

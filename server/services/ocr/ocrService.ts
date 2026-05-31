@@ -15,6 +15,7 @@
 import { spawnSync } from 'node:child_process';
 import { OcrMyPdfClient } from '../../integrations/ocrmypdf/client';
 import { createScopedLogger } from '../../utils/logger';
+import { rasterizePdf, type RasterizeOptions } from './pdfRasterizer';
 import {
   tesseractOcrService,
   type OcrImageOptions,
@@ -43,6 +44,11 @@ export interface OcrCapabilities {
     available: boolean;
     command: string;
   };
+  /** Scanned-PDF → text with no system binary (pdfjs rasterise + WASM Tesseract). */
+  pdfToText: {
+    engine: 'pdfjs+tesseract.js';
+    available: true;
+  };
   /** Legacy direct `tesseract` CLI, probed for completeness. */
   systemTesseract: boolean;
 }
@@ -52,6 +58,16 @@ export interface OcrPdfResult {
   engine: 'ocrmypdf';
   outputPath?: string;
   reason?: string;
+}
+
+export interface OcrPdfTextResult {
+  text: string;
+  /** Per-page recognised text, in order. */
+  pages: string[];
+  /** Mean confidence across pages, 0–100. */
+  confidence: number;
+  engine: 'pdfjs+tesseract.js';
+  durationMs: number;
 }
 
 class OcrService {
@@ -67,6 +83,7 @@ class OcrService {
         available: binaryAvailable(this.ocrMyPdfCommand),
         command: this.ocrMyPdfCommand,
       },
+      pdfToText: { engine: 'pdfjs+tesseract.js', available: true },
       systemTesseract: binaryAvailable('tesseract'),
     };
   }
@@ -91,6 +108,46 @@ class OcrService {
       applied: false,
       engine: 'ocrmypdf',
       reason: result.stderr || 'ocrmypdf_unavailable',
+    };
+  }
+
+  /**
+   * Extract text from a (possibly scanned) PDF with no system binary: rasterise
+   * each page with pdfjs and OCR it with the WASM engine. Works in every runtime.
+   */
+  async ocrPdfToText(
+    data: Buffer | Uint8Array,
+    options: (OcrImageOptions & RasterizeOptions) | undefined = undefined,
+  ): Promise<OcrPdfTextResult> {
+    const startedAt = Date.now();
+    const images = await rasterizePdf(data, {
+      dpi: options?.dpi,
+      maxPages: options?.maxPages,
+    });
+
+    const pages: string[] = [];
+    const confidences: number[] = [];
+    for (const png of images) {
+      const result = await tesseractOcrService.recognizeImage(
+        png,
+        options?.languages ? { languages: options.languages } : undefined,
+      );
+      pages.push(result.text);
+      confidences.push(result.confidence);
+    }
+
+    const confidence = confidences.length
+      ? confidences.reduce((a, b) => a + b, 0) / confidences.length
+      : 0;
+    const durationMs = Date.now() - startedAt;
+    logger.info('PDF text OCR completed', { pages: pages.length, confidence: Math.round(confidence), durationMs });
+
+    return {
+      text: pages.join('\n\n').trim(),
+      pages,
+      confidence,
+      engine: 'pdfjs+tesseract.js',
+      durationMs,
     };
   }
 

@@ -79,44 +79,57 @@ const handler: AIActionHandler = {
     }
 
     const fileName = file.filename || 'upload';
+    const isPdf = file.mime === 'application/pdf' || /\.pdf$/i.test(fileName);
 
-    if (!isImageMime(file.mime, fileName)) {
-      // Non-image (e.g. a scanned PDF). PDF OCR needs the ocrmypdf binary, which
-      // we don't rasterise around — surface capability rather than guessing.
-      const caps = ocrService.getCapabilities();
+    if (!isImageMime(file.mime, fileName) && !isPdf) {
       return {
         ...base,
         success: false,
         status: 'failed',
-        result: { capabilities: caps },
-        warnings: [
-          caps.pdf.available
-            ? 'PDF OCR is available but this handler only runs image OCR inline; route PDFs through the document intake pipeline.'
-            : 'PDF OCR requires the ocrmypdf binary, which is not installed in this runtime.',
-        ],
+        result: null,
+        warnings: [],
         errors: [
           {
-            code: 'UNSUPPORTED_FOR_INLINE_OCR',
-            message: `Inline OCR handles images; ${fileName} (${file.mime}) is not an image.`,
+            code: 'UNSUPPORTED_FOR_OCR',
+            message: `OCR handles images and PDFs; ${fileName} (${file.mime}) is neither.`,
           },
         ],
       };
     }
 
-    const ocr = await ocrService.recognizeImage(file.bytes, languages ? { languages } : undefined);
+    let text: string;
+    let confidence: number;
+    let durationMs: number;
+    let langs: string[];
+
+    if (isPdf) {
+      // Scanned/image-only PDF — rasterise + WASM OCR (no system binary needed).
+      const ocr = await ocrService.ocrPdfToText(file.bytes, languages ? { languages } : undefined);
+      text = ocr.text;
+      confidence = ocr.confidence;
+      durationMs = ocr.durationMs;
+      langs = languages ?? ['eng'];
+    } else {
+      const ocr = await ocrService.recognizeImage(file.bytes, languages ? { languages } : undefined);
+      text = ocr.text;
+      confidence = ocr.confidence;
+      durationMs = ocr.durationMs;
+      langs = ocr.languages;
+    }
 
     return {
       ...base,
       success: true,
       status: 'completed',
       result: {
-        text: ocr.text,
-        confidence: ocr.confidence,
-        languages: ocr.languages,
-        chars: ocr.text.length,
-        durationMs: ocr.durationMs,
+        text,
+        confidence,
+        languages: langs,
+        chars: text.length,
+        durationMs,
+        kind: isPdf ? 'pdf' : 'image',
       },
-      warnings: ocr.text.length === 0 ? ['OCR produced no text — the image may be blank or unreadable.'] : [],
+      warnings: text.length === 0 ? ['OCR produced no text — the document may be blank or unreadable.'] : [],
       errors: [],
     };
   },

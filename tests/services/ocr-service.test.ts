@@ -48,8 +48,8 @@ describe('tesseractOcrService', () => {
     expect(caps.available).toBe(true);
     expect(caps.defaultLanguages).toEqual(['eng']);
     expect(caps.supportedLanguages).toContain('eng');
-    // No vendored traineddata in the test env.
-    expect(caps.langDataLocal).toBe(false);
+    // eng.traineddata.gz is vendored in the repo, so it's available offline.
+    expect(caps.langDataLocal).toBe(true);
   });
 
   it('honours TESSERACT_LANG for default languages', () => {
