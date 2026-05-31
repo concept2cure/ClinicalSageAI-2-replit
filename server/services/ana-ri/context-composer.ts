@@ -95,6 +95,13 @@ export interface ComposeOptions {
   lambda?: number;
   /** Default base priority for blocks that do not set one. Default 0.5. */
   defaultPriority?: number;
+  /**
+   * Optional learned per-source priority multipliers (from adaptive-priority).
+   * When present, a source's base priority is scaled by its multiplier and
+   * re-clamped to [0, 1]. Bounded by construction, so it nudges ranking from
+   * evidence without inverting the deliberate static weights.
+   */
+  priorityMultipliers?: Record<string, number>;
 }
 
 // ─── Tokenization & text stats ───────────────────────────────────────────────
@@ -203,9 +210,12 @@ export function composeContext(
 
   const relevance = scoreRelevanceBM25(query, candidates);
   const tokens = candidates.map((c) => approxTokens(c.text));
-  const priority = candidates.map((c) =>
-    typeof c.priority === 'number' ? Math.max(0, Math.min(1, c.priority)) : defaultPriority,
-  );
+  const mult = options.priorityMultipliers;
+  const priority = candidates.map((c) => {
+    const base = typeof c.priority === 'number' ? c.priority : defaultPriority;
+    const scaled = mult && c.source in mult ? base * mult[c.source] : base;
+    return Math.max(0, Math.min(1, scaled));
+  });
 
   // Base score blends relevance and priority. Priority dominates ties so a
   // safety-critical block beats an equally-relevant nice-to-have.

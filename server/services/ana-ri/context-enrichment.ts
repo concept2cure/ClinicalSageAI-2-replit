@@ -991,8 +991,13 @@ export async function enrichContextForChat(params: {
    * concatenation. Omit (or 0) to preserve the legacy join-all behavior.
    */
   composeTokenBudget?: number;
+  /**
+   * Optional learned per-source priority multipliers (from adaptive-priority).
+   * Only consulted when composeTokenBudget engages the composer.
+   */
+  priorityMultipliers?: Record<string, number>;
 }): Promise<EnrichmentResult> {
-  const { message, projectId, organizationId, submissionType, canonicalGovernedState, userRole, composeTokenBudget } = params;
+  const { message, projectId, organizationId, submissionType, canonicalGovernedState, userRole, composeTokenBudget, priorityMultipliers } = params;
   const blocks: string[] = [];
   const sources: string[] = [];
   const sourcesFailed: string[] = [];
@@ -1601,7 +1606,7 @@ export async function enrichContextForChat(params: {
       // Governed envelope and a crisis read must never be dropped.
       pinned: sources[i] === 'governed-envelope' || sources[i] === 'client-attunement',
     }));
-    const composed = composeContext(message, candidates, { tokenBudget: composeTokenBudget });
+    const composed = composeContext(message, candidates, { tokenBudget: composeTokenBudget, priorityMultipliers });
     composedBlock = composed.text;
     composeTrace = composed.trace;
     composeTokensUsed = composed.tokensUsed;

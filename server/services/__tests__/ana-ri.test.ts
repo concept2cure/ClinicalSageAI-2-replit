@@ -1714,6 +1714,94 @@ describe('AnA RI Enrichment — composer integration', () => {
   });
 });
 
+// ── Adaptive priority (learned re-weighting) ─────────────────────────────────
+
+import {
+  smoothedReward,
+  rewardToMultiplier,
+  buildAdaptiveMultipliers,
+  applyAdaptivePriority,
+  type SourceOutcomeStats,
+} from '../ana-ri/adaptive-priority.js';
+
+describe('AnA RI Adaptive Priority', () => {
+  it('returns the prior exactly when there are no samples', () => {
+    const r = smoothedReward({ source: 'x', accepted: 0, edited: 0, rejected: 0, regenerated: 0 });
+    expect(r).toBeCloseTo(0.5, 6);
+  });
+
+  it('rewards an all-accepted source above an all-rejected one', () => {
+    const good = smoothedReward({ source: 'g', accepted: 200, edited: 0, rejected: 0, regenerated: 0 });
+    const bad = smoothedReward({ source: 'b', accepted: 0, edited: 0, rejected: 200, regenerated: 0 });
+    expect(good).toBeGreaterThan(0.9);
+    expect(bad).toBeLessThan(0.1);
+  });
+
+  it('treats edited as partial credit (between accepted and rejected)', () => {
+    const edited = smoothedReward({ source: 'e', accepted: 0, edited: 200, rejected: 0, regenerated: 0 });
+    expect(edited).toBeGreaterThan(0.4);
+    expect(edited).toBeLessThan(0.6);
+  });
+
+  it('shrinks low-sample sources toward the prior (small-sample safety)', () => {
+    const lowN = smoothedReward({ source: 'l', accepted: 2, edited: 0, rejected: 0, regenerated: 0 });
+    const highN = smoothedReward({ source: 'h', accepted: 200, edited: 0, rejected: 0, regenerated: 0 });
+    // 2 accepts barely moves off 0.5; 200 accepts moves nearly to 1.
+    expect(lowN).toBeLessThan(0.65);
+    expect(highN).toBeGreaterThan(0.9);
+  });
+
+  it('maps rewards to bounded multipliers centered on 1.0', () => {
+    expect(rewardToMultiplier(0.5)).toBeCloseTo(1.0, 6);
+    expect(rewardToMultiplier(1)).toBeCloseTo(1.25, 6);
+    expect(rewardToMultiplier(0)).toBeCloseTo(0.75, 6);
+    // Always within bounds.
+    for (const r of [0, 0.25, 0.5, 0.75, 1]) {
+      const m = rewardToMultiplier(r);
+      expect(m).toBeGreaterThanOrEqual(0.75);
+      expect(m).toBeLessThanOrEqual(1.25);
+    }
+  });
+
+  it('builds a multiplier map only for sources with stats', () => {
+    const stats: SourceOutcomeStats[] = [
+      { source: 'agency-tactics', accepted: 100, edited: 0, rejected: 0, regenerated: 0 },
+      { source: 'tour-guide', accepted: 0, edited: 0, rejected: 100, regenerated: 0 },
+    ];
+    const m = buildAdaptiveMultipliers(stats);
+    expect(m['agency-tactics']).toBeGreaterThan(1);
+    expect(m['tour-guide']).toBeLessThan(1);
+    expect(m['never-seen']).toBeUndefined();
+  });
+
+  it('applyAdaptivePriority scales and clamps, and is a no-op for unknown sources', () => {
+    const m = { 'agency-tactics': 1.25, 'tour-guide': 0.75 };
+    expect(applyAdaptivePriority(0.6, 'agency-tactics', m)).toBeCloseTo(0.75, 6);
+    expect(applyAdaptivePriority(0.6, 'tour-guide', m)).toBeCloseTo(0.45, 6);
+    expect(applyAdaptivePriority(0.6, 'unknown', m)).toBe(0.6);
+    expect(applyAdaptivePriority(0.6, 'agency-tactics', undefined)).toBe(0.6);
+    // Clamp: a high base times a >1 multiplier never exceeds 1.
+    expect(applyAdaptivePriority(0.95, 'agency-tactics', m)).toBeLessThanOrEqual(1);
+  });
+
+  it('learned multipliers can reorder composer selection under tight budget', () => {
+    const big = 'word '.repeat(400); // ~500 tokens each
+    const candidates: CandidateBlock[] = [
+      { source: 'tour-guide', text: 'shared topic alpha ' + big, priority: 0.6 },
+      { source: 'agency-tactics', text: 'shared topic alpha ' + big, priority: 0.6 },
+    ];
+    // Equal base priority and identical relevance: tie. A learned multiplier
+    // favoring agency-tactics should make it win the single budget slot.
+    const result = composeContext('shared topic alpha', candidates, {
+      tokenBudget: 600,
+      priorityMultipliers: { 'agency-tactics': 1.25, 'tour-guide': 0.75 },
+    });
+    expect(result.selected.length).toBe(1);
+    expect(result.selected[0].source).toBe('agency-tactics');
+  });
+});
+
+// ── Role lens ────────────────────────────────────────────────────────────────
 // ── Role lens ────────────────────────────────────────────────────────────────
 // ── Role lens ────────────────────────────────────────────────────────────────
 
