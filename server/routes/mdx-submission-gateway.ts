@@ -270,6 +270,23 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
     );
   }
 
+  // Internal eCTD structural-validation hard-gate. If the stored descriptor
+  // recorded error-severity findings at assemble-time, refuse the transmit and
+  // return the findings so the caller can re-assemble after fixing. Warnings do
+  // NOT block. A missing `validation` field is treated as zero errors
+  // (back-compat: explicit-bundle callers and pre-existing descriptors). This
+  // runs AFTER the re-auth gate — governance order is unchanged. Note: this is
+  // INTERNAL structural validation only, not an agency validator.
+  const errorCount = bundle.validation?.errorCount ?? 0;
+  if (errorCount > 0) {
+    return clientError(
+      res,
+      422,
+      `Bundle failed eCTD structural validation (${errorCount} error${errorCount === 1 ? '' : 's'}); re-assemble after fixing.`,
+      { findings: bundle.validation?.findings ?? [] },
+    );
+  }
+
   // Rematerialize the local bundle file from durable storage if a container
   // recycle lost it since assembly. No-op for local-only descriptors.
   try {

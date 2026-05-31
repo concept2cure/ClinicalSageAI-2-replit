@@ -62,6 +62,7 @@ import {
   bundleStorageKey,
   putBundle,
 } from '../services/submission-bundle-storage';
+import { validateEctdLeafs } from '../services/submission-gateways/ectd-structural-validator';
 
 const router = Router();
 
@@ -1554,6 +1555,7 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     // An empty section produces an explicitly-empty PDF leaf.
     const seenPaths = new Set<string>();
     const leafs: { path: string; mediaType: string; content: Buffer }[] = [];
+    const emptyLeafPaths: string[] = [];
     let emptyLeafCount = 0;
 
     for (const section of sections) {
@@ -1591,6 +1593,7 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         // No artifact content mapped — emit an explicitly empty placeholder leaf.
         markdown = `[EMPTY SECTION] ${section.sectionLabel} (${section.sectionKey})\n`;
         emptyLeafCount += 1;
+        emptyLeafPaths.push(leafPath);
       } else {
         // Serialize mapped artifact content deterministically. Real content only —
         // no fabrication.
@@ -1609,6 +1612,11 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         content: await buildLeafPdf(leafTitle, markdown),
       });
     }
+
+    // Internal eCTD structural validation (pre-flight). Findings are stored on
+    // the descriptor and surfaced to the UI; transmit hard-blocks on errors.
+    // This is INTERNAL structural validation only — NOT an agency validator.
+    const validation = validateEctdLeafs(leafs, { region, emptyLeafPaths });
 
     // Assemble the real zip buffer.
     const zipBuffer = await buildECTDZip({
@@ -1658,6 +1666,12 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       leafCount: leafs.length,
       emptyLeafCount,
       storage,
+      validation: {
+        errorCount: validation.errorCount,
+        warningCount: validation.warningCount,
+        infoCount: validation.infoCount,
+        findings: validation.findings,
+      },
       assembledAt,
       assembledBy: userId,
     };
@@ -1716,6 +1730,11 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           format: descriptor.format,
           leafCount: descriptor.leafCount,
           storage: { provider: descriptor.storage.provider },
+          validation: {
+            errorCount: descriptor.validation.errorCount,
+            warningCount: descriptor.validation.warningCount,
+            infoCount: descriptor.validation.infoCount,
+          },
           assembledAt: descriptor.assembledAt,
         },
       },
