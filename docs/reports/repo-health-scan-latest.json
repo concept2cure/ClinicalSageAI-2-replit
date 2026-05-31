@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-05-30T21:05:49.534Z",
+  "generatedAt": "2026-05-31T06:42:48.435Z",
   "git": {
-    "sha": "ffe8d442a17f2b7d36437935910fc19e8080d46c",
-    "branch": "claude/concept2cure-v2-audit-5zufv"
+    "sha": "cc950fb6eb4f6e17c9abc16b443adba937116581",
+    "branch": "claude/transmit-pipeline"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -11,7 +11,7 @@
   "summary": {
     "duplicateBasenames": 197,
     "largeFilesByBytes": 15,
-    "largeFilesByLines": 47
+    "largeFilesByLines": 48
   },
   "findings": {
     "duplicateBasenames": [
@@ -2216,6 +2216,10 @@
         "lines": 1626
       },
       {
+        "file": "server/routes/submission-ops.ts",
+        "lines": 1619
+      },
+      {
         "file": "server/routes/report-os.ts",
         "lines": 1613
       },
@@ -2266,7 +2270,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 255,
       "largeByBytes": 10,
-      "largeByLines": 33
+      "largeByLines": 34
     },
     {
       "owner": "Unassigned (TBD)",

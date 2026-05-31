@@ -19,7 +19,10 @@
  */
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { db } from '../db';
+import * as fs from 'fs';
+import * as path from 'path';
+import { createHash } from 'crypto';
+import { db, pool } from '../db';
 import {
   c2cSubmissionPackages,
   c2cPackageSections,
@@ -45,6 +48,8 @@ import { computePackageReadiness } from '../submission-ops/readiness-engine';
 import { runAutomationSweep } from '../submission-ops/automation-runner';
 import { getProjectSignals, analyzeCrossArtifactIntelligence } from '../services/intelligence/index.js';
 import { readCanonicalDueSoonAndWorkload } from '../services/regulatory-correspondence/operating-layer';
+import { buildECTDZip } from '../src/services/ectd';
+import { recordGovernedAction } from './c2c/actions';
 
 const router = Router();
 
@@ -1337,6 +1342,273 @@ router.post('/packages/:packageId/publish', async (req: Request, res: Response) 
       message: 'Package locked for submission',
       data: updated,
       readiness,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+  }
+});
+
+// ============================================================
+// BUNDLE ASSEMBLY
+// ============================================================
+
+/**
+ * Root directory under which assembled submission bundles are persisted.
+ * Configurable via SUBMISSION_BUNDLE_DIR. Defaults to a repo-/cwd-local
+ * `uploads/submission-bundles` directory, matching the repo's existing
+ * `uploads/` file convention (see server/pdf-processor.ts, data-importer.ts).
+ */
+const BUNDLE_DIR = process.env.SUBMISSION_BUNDLE_DIR
+  ? path.resolve(process.env.SUBMISSION_BUNDLE_DIR)
+  : path.resolve(process.cwd(), 'uploads', 'submission-bundles');
+
+const SUBMISSION_FORMATS = ['ectd', 'estar', 'eudamed_register', 'pmda_ectd'] as const;
+type SubmissionFormatTag = typeof SUBMISSION_FORMATS[number];
+
+/**
+ * Derive an eCTD region (for the backbone) and a transmit `format` tag from the
+ * package family. Conservative defaults: FDA / 'ectd'. Medtech families map to
+ * eSTAR / EUDAMED register; PMDA families map to pmda_ectd.
+ */
+function deriveRegionAndFormat(
+  packageFamily: string,
+): { region: 'FDA' | 'EMA' | 'PMDA'; format: SubmissionFormatTag } {
+  const fam = (packageFamily || '').toLowerCase();
+  if (fam.includes('estar') || fam === '510k' || fam.includes('510')) {
+    return { region: 'FDA', format: 'estar' };
+  }
+  if (fam.includes('eudamed') || fam.includes('ivdr') || fam.includes('mdr') || fam.includes('cer')) {
+    return { region: 'EMA', format: 'eudamed_register' };
+  }
+  if (fam.includes('pmda') || fam.includes('jnda')) {
+    return { region: 'PMDA', format: 'pmda_ectd' };
+  }
+  return { region: 'FDA', format: 'ectd' };
+}
+
+/** Deterministic, filesystem-safe slug for a section's leaf path. */
+function leafSlug(value: string): string {
+  return (value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80) || 'section';
+}
+
+const assembleBody = z.object({
+  // Optional explicit overrides; otherwise derived from packageFamily.
+  region: z.enum(['FDA', 'EMA', 'PMDA']).optional(),
+  format: z.enum(SUBMISSION_FORMATS).optional(),
+  sequence: z.string().max(20).optional(),
+  reason: z.string().min(8).optional(),
+});
+
+/**
+ * POST /api/submission-ops/packages/:packageId/assemble
+ *
+ * Assembles a real eCTD zip bundle from the package's sections + their mapped
+ * artifact content, persists it to disk, computes a bundle-level SHA-256, and
+ * records a `bundle` descriptor on the package's metadata JSONB. The transmit
+ * endpoint (mdx-submission-gateway) consumes this descriptor.
+ *
+ * Gating: the package MUST be `locked` (published) before assembly. This keeps
+ * the bundle hash bound to a frozen package. Re-assembling overwrites (idempotent
+ * per content); no confirmation header is required.
+ */
+router.post('/packages/:packageId/assemble', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+
+    const parsed = assembleBody.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res
+        .status(400)
+        .json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
+    }
+
+    // Resolve package (tenant-scoped).
+    const [pkg] = await db
+      .select()
+      .from(c2cSubmissionPackages)
+      .where(
+        and(
+          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          eq(c2cSubmissionPackages.orgId, orgId),
+        ),
+      );
+
+    if (!pkg) return res.status(404).json({ error: 'Package not found' });
+
+    // Gate: only locked (published) packages may be assembled for transmit.
+    if (pkg.status !== 'locked') {
+      return res.status(409).json({
+        error: `Package must be locked (published) before assembly; current status: ${pkg.status}`,
+        gate: 'not_locked',
+        status: pkg.status,
+      });
+    }
+
+    // Load sections (same query as the sections route).
+    const sections = await db
+      .select()
+      .from(c2cPackageSections)
+      .where(eq(c2cPackageSections.packageDbId, pkg.id))
+      .orderBy(asc(c2cPackageSections.sortOrder));
+
+    // Build eCTD leafs from section content. Section content is sourced from the
+    // artifacts mapped to each section (c2c_artifact_section_map -> concept2cure
+    // artifacts.content). An empty section produces an explicitly-empty leaf.
+    const seenPaths = new Set<string>();
+    const leafs: { path: string; mediaType: string; content: Buffer }[] = [];
+    let emptyLeafCount = 0;
+
+    for (const section of sections) {
+      const mapped = await db
+        .select({
+          artifactDbId: concept2cureArtifacts.id,
+          artifactId: concept2cureArtifacts.artifactId,
+          title: concept2cureArtifacts.title,
+          content: concept2cureArtifacts.content,
+          version: concept2cureArtifacts.version,
+        })
+        .from(c2cArtifactSectionMap)
+        .innerJoin(
+          concept2cureArtifacts,
+          eq(concept2cureArtifacts.id, c2cArtifactSectionMap.artifactId),
+        )
+        .where(
+          and(
+            eq(c2cArtifactSectionMap.sectionDbId, section.id),
+            eq(c2cArtifactSectionMap.orgId, orgId),
+          ),
+        )
+        .orderBy(asc(concept2cureArtifacts.id));
+
+      // Deterministic leaf path; de-dupe collisions with the section db id.
+      let leafPath = `m1/${leafSlug(section.sectionKey)}.txt`;
+      if (seenPaths.has(leafPath)) leafPath = `m1/${leafSlug(section.sectionKey)}-${section.id}.txt`;
+      seenPaths.add(leafPath);
+
+      let content: string;
+      if (mapped.length === 0) {
+        // No artifact content mapped — emit an explicitly empty placeholder leaf.
+        content = `[EMPTY SECTION] ${section.sectionLabel} (${section.sectionKey})\n`;
+        emptyLeafCount += 1;
+      } else {
+        // Serialize mapped artifact content deterministically. Real content only —
+        // no fabrication.
+        content = mapped
+          .map(
+            (a) =>
+              `### ${a.title} (${a.artifactId} v${a.version})\n\n${a.content ?? ''}\n`,
+          )
+          .join('\n');
+      }
+
+      leafs.push({
+        path: leafPath,
+        mediaType: 'text/plain',
+        content: Buffer.from(content, 'utf8'),
+      });
+    }
+
+    const { region, format } = (() => {
+      const derived = deriveRegionAndFormat(pkg.packageFamily);
+      return {
+        region: parsed.data.region ?? derived.region,
+        format: parsed.data.format ?? derived.format,
+      };
+    })();
+    const sequence = parsed.data.sequence ?? '0000';
+
+    // Assemble the real zip buffer.
+    const zipBuffer = await buildECTDZip({
+      region,
+      sequence,
+      operation: 'new',
+      leafs,
+    });
+    const zip: Buffer = Buffer.isBuffer(zipBuffer) ? zipBuffer : Buffer.from(zipBuffer as Uint8Array);
+
+    // Bundle-level SHA-256 over the full zip + size.
+    const sha256 = createHash('sha256').update(zip).digest('hex');
+    const sizeBytes = zip.length;
+
+    // Persist to disk at a deterministic path keyed by packageId + content hash.
+    await fs.promises.mkdir(BUNDLE_DIR, { recursive: true });
+    const fileName = `${leafSlug(pkg.packageId)}-${sha256.slice(0, 16)}.zip`;
+    const bundlePath = path.join(BUNDLE_DIR, fileName);
+    await fs.promises.writeFile(bundlePath, zip);
+
+    const assembledAt = new Date().toISOString();
+    const descriptor = {
+      path: bundlePath,
+      sha256,
+      sizeBytes,
+      format,
+      leafCount: leafs.length,
+      emptyLeafCount,
+      assembledAt,
+      assembledBy: userId,
+    };
+
+    // Store the descriptor under metadata.bundle (JSONB) and bump updated_at.
+    const existingMetadata =
+      pkg.metadata && typeof pkg.metadata === 'object' ? (pkg.metadata as Record<string, unknown>) : {};
+    await db
+      .update(c2cSubmissionPackages)
+      .set({
+        metadata: { ...existingMetadata, bundle: descriptor },
+        updatedAt: new Date(),
+      })
+      .where(eq(c2cSubmissionPackages.id, pkg.id));
+
+    // Audit: medium-risk governed transition (no reauth). Written in its own
+    // transaction via the shared ledger primitive.
+    try {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await recordGovernedAction(client as any, {
+          orgId,
+          userId,
+          command: 'transition',
+          target: `submission:${pkg.id}`,
+          reason: parsed.data.reason ?? 'eCTD bundle assembled',
+          payload: { sha256, sizeBytes, format, leafCount: leafs.length },
+          domain: 'mdx',
+          surface: 'submission-gateway',
+        });
+        await client.query('COMMIT');
+      } catch (ledgerErr) {
+        try { await client.query('ROLLBACK'); } catch { /* noop */ }
+        throw ledgerErr;
+      } finally {
+        client.release();
+      }
+    } catch (ledgerErr) {
+      // The bundle is persisted; an audit-write failure must not lose the
+      // descriptor. Log and continue (mirrors the transmit route's fallback).
+      console.error(
+        '[submission-ops] assemble-ledger-write-failed',
+        ledgerErr instanceof Error ? ledgerErr.message : ledgerErr,
+      );
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        packageId: pkg.packageId,
+        bundle: {
+          path: descriptor.path,
+          sha256: descriptor.sha256,
+          sizeBytes: descriptor.sizeBytes,
+          format: descriptor.format,
+          leafCount: descriptor.leafCount,
+          assembledAt: descriptor.assembledAt,
+        },
+      },
     });
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });

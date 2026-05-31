@@ -148,7 +148,7 @@ const transmitBody = z.object({
     sizeBytes:   z.number().int().nonnegative(),
     format:      z.enum(['ectd', 'estar', 'eudamed_register', 'pmda_ectd']),
     displayName: z.string().optional(),
-  }),
+  }).optional(),
   metadata: z.record(z.unknown()).optional(),
   reason: z.string().min(8, 'A reason of at least 8 characters is required.'),
   reauth: z
@@ -185,6 +185,53 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
     return res.status(401).json({ error: reauthResult.error ?? 'REAUTH_REQUIRED' });
   }
 
+  // Resolve the bundle. An explicit `bundle` in the body always wins (back-compat).
+  // Otherwise, if a `packageId` is provided, load the stored bundle descriptor that
+  // the assemble endpoint persisted on c2c_submission_packages.metadata.bundle.
+  let bundle: {
+    path: string;
+    sha256: string;
+    sizeBytes: number;
+    format: 'ectd' | 'estar' | 'eudamed_register' | 'pmda_ectd';
+    displayName?: string;
+  } | null = p.bundle ?? null;
+
+  if (!bundle && p.packageId != null) {
+    try {
+      const { rows } = await pool.query<{ metadata: any }>(
+        `SELECT metadata FROM c2c_submission_packages
+          WHERE id = $1 AND org_id = $2`,
+        [p.packageId, orgId],
+      );
+      const stored = rows[0]?.metadata?.bundle;
+      if (
+        stored &&
+        typeof stored.path === 'string' &&
+        typeof stored.sha256 === 'string' &&
+        typeof stored.sizeBytes === 'number' &&
+        typeof stored.format === 'string'
+      ) {
+        bundle = {
+          path:        stored.path,
+          sha256:      stored.sha256,
+          sizeBytes:   stored.sizeBytes,
+          format:      stored.format,
+          displayName: typeof stored.displayName === 'string' ? stored.displayName : undefined,
+        };
+      }
+    } catch (err) {
+      return serverError(res, log, 'transmit-load-bundle', err);
+    }
+  }
+
+  if (!bundle) {
+    return clientError(
+      res,
+      422,
+      'No assembled bundle; call POST /api/submission-ops/packages/:packageId/assemble first.',
+    );
+  }
+
   try {
     const gw = getGateway(region, gateway);
     const result = await gw.transmit({
@@ -193,11 +240,11 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
       programId:      p.programId ?? null,
       packageId:      p.packageId ?? null,
       bundle: {
-        path:        p.bundle.path,
-        sha256:      p.bundle.sha256,
-        sizeBytes:   p.bundle.sizeBytes,
-        format:      p.bundle.format,
-        displayName: p.bundle.displayName,
+        path:        bundle.path,
+        sha256:      bundle.sha256,
+        sizeBytes:   bundle.sizeBytes,
+        format:      bundle.format,
+        displayName: bundle.displayName,
       },
       environment:    p.environment,
       submissionType: p.submissionType,
@@ -223,7 +270,7 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
             meaning: 'submission',
             region,
             gateway,
-            bundleSha256: p.bundle.sha256,
+            bundleSha256: bundle.sha256,
             transactionId: (result as any)?.transactionId ?? null,
           },
           domain: 'mdx',

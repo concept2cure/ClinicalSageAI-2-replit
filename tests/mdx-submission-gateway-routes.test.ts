@@ -223,6 +223,62 @@ describe('POST /api/mdx/gateways/:region/:gateway/transmit', () => {
     expect(res.body.data.transmissionId).toBe('mdn-12345');
   });
 
+  it('loads the stored bundle when only packageId is supplied (no explicit bundle)', async () => {
+    const STORED = {
+      path: '/tmp/submission-bundles/pkg-abc-0123456789abcdef.zip',
+      sha256: 'b'.repeat(64),
+      sizeBytes: 654321,
+      format: 'ectd',
+    };
+    // The transmit route runs the re-auth password lookup (default impl) and
+    // then a SELECT metadata FROM c2c_submission_packages for the stored bundle.
+    queryFn.mockImplementation((sql: string) => {
+      if (typeof sql === 'string' && sql.includes('password_hash')) {
+        return Promise.resolve({ rows: [{ password_hash: 'hashed' }], rowCount: 1 });
+      }
+      if (typeof sql === 'string' && sql.includes('FROM c2c_submission_packages')) {
+        return Promise.resolve({ rows: [{ metadata: { bundle: STORED } }], rowCount: 1 });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+    transmitFn.mockResolvedValueOnce({
+      transmittalId: 77,
+      transmissionId: 'mdn-stored',
+      status: 'received',
+      transport: 'as2',
+      httpStatus: 200,
+    });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(res.body.data.transmittalId).toBe(77);
+    // The gateway must have received the stored bundle's path + hash.
+    expect(transmitFn).toHaveBeenCalledTimes(1);
+    const arg = transmitFn.mock.calls[0][0];
+    expect(arg.bundle.path).toBe(STORED.path);
+    expect(arg.bundle.sha256).toBe(STORED.sha256);
+    expect(arg.bundle.sizeBytes).toBe(STORED.sizeBytes);
+  });
+
+  it('returns 422 when neither an explicit bundle nor a stored bundle exists', async () => {
+    // Default queryFn impl returns no rows for the package metadata lookup.
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 9999, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(422);
+    expect(transmitFn).not.toHaveBeenCalled();
+    expect(res.body.error).toMatch(/assemble/i);
+  });
+
+  it('returns 422 when neither bundle nor packageId is supplied', async () => {
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ ...REAUTH });
+    expect(res.status).toBe(422);
+    expect(transmitFn).not.toHaveBeenCalled();
+  });
+
   it('maps CredentialError to 412', async () => {
     const { CredentialError } = await import('../server/services/submission-gateways');
     transmitFn.mockRejectedValueOnce(new (CredentialError as any)('missing FDA_ESG_URL'));
