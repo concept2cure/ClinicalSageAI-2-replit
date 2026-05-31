@@ -21,8 +21,47 @@ import {
   AUTH_AGENCIES, AUTH_DOC_TYPES, AUTH_EVIDENCE, AUTH_REVIEWERS, AUTH_PROGRAMS,
   AUTH_SECTION_BODY, AUTH_SEED_THREAD, AUTH_REWRITES, AUTH_DEFAULT,
   resolveOutline, findNode, firstLeaf, timeNow,
-  type AuthMessage, type SectionBody, type Skill,
+  type AuthMessage, type SectionBody, type Skill, type AuthSection,
 } from './data';
+import { useC2cDocuments, useC2cDocumentOutline, useC2cDocumentSection, useSaveC2cSection, type C2cDocumentSummary, type C2cOutlineNode, type C2cSectionRow } from './hooks';
+
+/** Transform the flat c2c outline (key + parent_key) into the nested
+ *  AuthSection tree the OutlineTree renders. Preserves rule-pack order. */
+function c2cOutlineToTree(nodes: C2cOutlineNode[]): AuthSection[] {
+  const byKey = new Map<string, AuthSection>();
+  const roots: AuthSection[] = [];
+  for (const n of nodes) {
+    byKey.set(n.key, { id: n.key, path: n.key, label: n.label, mandatory: n.mandatory, status: n.status });
+  }
+  for (const n of nodes) {
+    const node = byKey.get(n.key)!;
+    if (n.parent_key && byKey.has(n.parent_key)) {
+      (byKey.get(n.parent_key)!.children ||= []).push(node);
+    } else {
+      roots.push(node);
+    }
+  }
+  return roots;
+}
+
+/** Map a live c2c section row's content jsonb into the kit's SectionBody.
+ *  Defensive: c2c paragraph shapes vary (legacy backfill stores prov as the
+ *  string 'legacy'), so prov is kept only when it's an object and every field
+ *  has a fallback. Returns null when there are no paragraphs → fixture body. */
+function c2cSectionToBody(row: C2cSectionRow | null, label: string): SectionBody | null {
+  const paras = row?.content?.paragraphs;
+  if (!Array.isArray(paras) || paras.length === 0) return null;
+  return {
+    heading: row?.label || label,
+    paragraphs: paras.map((p, i) => ({
+      id: String(p?.id ?? `p${i + 1}`),
+      text: String(p?.text ?? ''),
+      tag: typeof p?.tag === 'string' ? p.tag : undefined,
+      prov: p?.prov && typeof p.prov === 'object' ? (p.prov as SectionBody['paragraphs'][number]['prov']) : undefined,
+      citations: Array.isArray(p?.citations) ? (p.citations as SectionBody['paragraphs'][number]['citations']) : undefined,
+    })),
+  };
+}
 
 const STATUS_TEXT: Record<string, string> = { approved: 'Approved', review: 'In review', drafted: 'Drafted', locked: 'Locked', todo: 'Not started' };
 
@@ -106,7 +145,16 @@ export function AuthoringApp({ initialDocType }: AuthoringAppProps = {}) {
   const [streamTarget, setStreamTarget] = React.useState<{ id: string; fullText: string; onDone?: () => void } | null>(null);
   const bodyCache = React.useRef<Record<string, SectionBody>>({ ...AUTH_SECTION_BODY });
 
-  const outline = React.useMemo(() => resolveOutline(docType, agency), [docType, agency]);
+  const fixtureOutline = React.useMemo(() => resolveOutline(docType, agency), [docType, agency]);
+  // When a live c2c document is loaded, its real section tree (with live
+  // statuses) replaces the rule-pack fixture outline; otherwise the kit
+  // fixture renders. The house live ?? fixture pattern.
+  const [liveDocId, setLiveDocId] = React.useState<string | null>(null);
+  const { outline: liveOutlineNodes } = useC2cDocumentOutline(liveDocId);
+  const outline = React.useMemo(
+    () => (liveOutlineNodes && liveOutlineNodes.length > 0 ? c2cOutlineToTree(liveOutlineNodes) : fixtureOutline),
+    [liveOutlineNodes, fixtureOutline],
+  );
 
   React.useEffect(() => {
     if (!findNode(outline, activeId)) {
@@ -117,10 +165,60 @@ export function AuthoringApp({ initialDocType }: AuthoringAppProps = {}) {
 
   const program = AUTH_PROGRAMS[programIdx];
   const sectionMeta = findNode(outline, activeId) || firstLeaf(outline) || { id: '—', label: '—', path: '—' };
-  const section = bodyCache.current[activeId] || null;
+  // Live section content for the active section of a loaded c2c document;
+  // falls back to the fixture body (bodyCache) when absent. Read path complete:
+  // live outline (above) + live content (here), both live ?? fixture.
+  const { section: liveSectionRow } = useC2cDocumentSection(liveDocId, liveDocId ? activeId : null);
+  const liveSectionBody = React.useMemo(
+    () => c2cSectionToBody(liveSectionRow, sectionMeta.label),
+    [liveSectionRow, sectionMeta.label],
+  );
+  const section = liveSectionBody ?? bodyCache.current[activeId] ?? null;
   const agencyObj = AUTH_AGENCIES.find((a) => a.id === agency)!;
   const docTypeObj = AUTH_DOC_TYPES.find((d) => d.id === docType)!;
   const ownerName = sectionMeta.owner ? (AUTH_REVIEWERS.find((r) => r.id === sectionMeta.owner) || { name: undefined }).name : null;
+
+  // Live documents for this org from the c2c_documents API. When present, the
+  // banner lets the user load a real document (its doc_type × agency drives the
+  // shell's rule pack); when none exist, the strip is hidden and the kit demo
+  // content renders — the house `live ?? fixture` pattern.
+  const { documents: liveDocuments } = useC2cDocuments();
+  const loadLiveDocument = React.useCallback((doc: C2cDocumentSummary) => {
+    setLiveDocId(doc.id);
+    setDocType(doc.doc_type);
+    setAgency(doc.agency);
+    setMessages((m) => [...m, { role: 'ai', blocks: [
+      { kind: 'tool', label: 'Loaded', value: `${doc.title} · ${doc.doc_type.toUpperCase()} × ${doc.agency.toUpperCase()}` },
+      { kind: 'tool', label: 'Readiness', value: `${doc.readiness}% · ${doc.status}` },
+    ] }]);
+  }, []);
+  // Manual rule-pack changes drop back to the fixture outline for that pack.
+  const onDocTypeChange = React.useCallback((id: string) => { setLiveDocId(null); setDocType(id); }, []);
+  const onAgencyChange = React.useCallback((id: string) => { setLiveDocId(null); setAgency(id); }, []);
+
+  // Governed "send for review" — only on a loaded live document. Captures a
+  // Part-11 reason-for-change, then PATCHes status='review' via the audited
+  // route (server writes the version snapshot + c2c_ana_actions ledger).
+  const { save: saveSection, saving } = useSaveC2cSection();
+  const [reasonOpen, setReasonOpen] = React.useState(false);
+  const [reasonText, setReasonText] = React.useState('');
+  const submitForReview = React.useCallback(async (reason: string) => {
+    if (!liveDocId) return;
+    try {
+      await saveSection({ documentId: liveDocId, sectionKey: activeId, status: 'review', reason });
+      setMessages((m) => [...m, { role: 'ai', blocks: [
+        { kind: 'tool', label: 'Sent for review', value: `§${sectionMeta.path} · ${sectionMeta.label}` },
+        { kind: 'tool', label: 'Audit', value: 'Part-11 version snapshot + ledger entry written' },
+      ] }]);
+    } catch {
+      setMessages((m) => [...m, { role: 'ai', blocks: [
+        { kind: 'p', text: 'Could not send for review — the section was not changed. Check your access and try again.' },
+      ] }]);
+    } finally {
+      setReasonOpen(false);
+      setReasonText('');
+    }
+  }, [liveDocId, activeId, saveSection, sectionMeta.path, sectionMeta.label]);
 
   /* ───── Streaming rewrite engine ───── */
   React.useEffect(() => {
@@ -363,8 +461,8 @@ export function AuthoringApp({ initialDocType }: AuthoringAppProps = {}) {
         streaming={!!streamingId}
         evidenceMode={evidenceMode}
         onEvidenceMode={setEvidenceMode}
-        onDocType={setDocType}
-        onAgency={setAgency}
+        onDocType={onDocTypeChange}
+        onAgency={onAgencyChange}
         onView={setView}
         onToggleTree={() => setTreeCollapsed((c) => !c)}
         onToggleFocus={() => setFocus((f) => !f)}
@@ -377,6 +475,21 @@ export function AuthoringApp({ initialDocType }: AuthoringAppProps = {}) {
         version={AUTH_DEFAULT.version}
         state={AUTH_DEFAULT.state}
       />
+
+      {liveDocuments && liveDocuments.length > 0 && (
+        <div className="au-live-docs" role="region" aria-label="Live documents">
+          <span className="au-live-docs-label">Your documents</span>
+          {liveDocuments.slice(0, 8).map((doc) => (
+            <button key={doc.id} className="au-live-doc" type="button"
+                    onClick={() => loadLiveDocument(doc)}
+                    title={`${doc.title} · ${doc.readiness}% · ${doc.status}`}>
+              {I.fileText}
+              <span className="au-live-doc-title">{doc.title}</span>
+              <span className="au-live-doc-meta">{doc.doc_type.toUpperCase()} · {doc.readiness}%</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="au-primary">
         {view === 'conversation' ? (
@@ -418,7 +531,12 @@ export function AuthoringApp({ initialDocType }: AuthoringAppProps = {}) {
                     <button className="au-tb-btn" title="Open in conversation" onClick={() => setView('conversation')}>
                       {I.conversation} Draft with AnA
                     </button>
-                    <button className="au-tb-btn primary">{I.send} Send for review</button>
+                    <button className="au-tb-btn primary"
+                            disabled={!liveDocId || saving}
+                            title={liveDocId ? 'Send this section for review (records a reason)' : 'Load a live document to send for review'}
+                            onClick={() => setReasonOpen(true)}>
+                      {I.send} {saving ? 'Sending…' : 'Send for review'}
+                    </button>
                   </div>
                   <div className="au-wb-meta-strip">
                     <div className="col"><div className="lbl">Status</div><div className="val">{STATUS_TEXT[sectionMeta.status || 'todo']}</div></div>
@@ -474,6 +592,32 @@ export function AuthoringApp({ initialDocType }: AuthoringAppProps = {}) {
         evidenceMode={evidenceMode} setEvidenceMode={setEvidenceMode}
         focus={focus} setFocus={setFocus}
       />
+
+      {reasonOpen && (
+        <div className="au-reason-scrim" role="dialog" aria-modal="true" aria-label="Reason for change"
+             onMouseDown={() => { if (!saving) { setReasonOpen(false); setReasonText(''); } }}>
+          <div className="au-reason" onMouseDown={(e) => e.stopPropagation()}>
+            <h6>Send §{sectionMeta.path} for review</h6>
+            <p>Records a 21 CFR Part 11 reason for change against this section. The system writes a version snapshot and an audit-ledger entry.</p>
+            <textarea
+              autoFocus
+              placeholder="Reason for change (10+ characters)"
+              value={reasonText}
+              onChange={(e) => setReasonText(e.target.value)}
+              disabled={saving}
+            />
+            <div className="au-reason-btns">
+              <button className="au-tb-btn" type="button" disabled={saving}
+                      onClick={() => { setReasonOpen(false); setReasonText(''); }}>Cancel</button>
+              <button className="au-tb-btn primary" type="button"
+                      disabled={saving || reasonText.trim().length < 10}
+                      onClick={() => submitForReview(reasonText.trim())}>
+                {saving ? 'Sending…' : 'Send for review'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

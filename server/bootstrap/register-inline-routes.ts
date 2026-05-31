@@ -64,6 +64,7 @@ import mdxQmsRoutes from '../routes/mdx-qms';
 import mdxLabelingRoutes from '../routes/mdx-labeling';
 import mdxSearchRoutes from '../routes/mdx-search';
 import mdxAnalyticsRoutes from '../routes/mdx-analytics';
+import intelligenceClusterRoutes from '../routes/intelligence-cluster';
 import mdxImportsRoutes from '../routes/mdx-imports';
 import regulatoryCorrespondenceRoutes from '../routes/regulatory-correspondence';
 import { create510kWorkflowRoutes } from '../routes/510k-workflow-routes';
@@ -445,6 +446,11 @@ export function registerInlineSubmissionWorkflowRoutes({
   app.use('/api/mdx', mdxLabelingRoutes);
   app.use('/api/mdx', mdxSearchRoutes);
   app.use('/api/mdx', mdxAnalyticsRoutes);
+  /* Phase 11 Intelligence cluster (Protocol / CMC / Biostat / Reports) —
+     flat paths under /api/intelligence; does not collide with the RIM
+     router's /projects/:projectId/* paths. Migration + queries validated on
+     a real Postgres 16 (see HANDOFF "Backend re-land — Phase 11"). */
+  app.use('/api/intelligence', intelligenceClusterRoutes);
   /* Legacy archive importer (migration 20260512). */
   app.use('/api/mdx', mdxImportsRoutes);
   app.use('/api/regulatory-correspondence', regulatoryCorrespondenceRoutes);
