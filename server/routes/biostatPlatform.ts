@@ -24,6 +24,14 @@ import { estimandEngineService } from '../services/estimand-engine-service';
 import { CollaborativeSapService } from '../services/collaborative-sap-service';
 import { ExternalControlArmService } from '../services/external-control-arm-service';
 import {
+  solveSpendingBoundaries,
+  operatingCharacteristics,
+  assurance as computeAssurance,
+  discretizeNormalPrior,
+  type GroupSequentialBoundaries,
+  type SpendingFunction,
+} from '../services/stats/group-sequential-oc';
+import {
   runJudgmentPipeline,
   runPipelineAndGenerateArtifact,
   runPipelineForRole,
@@ -836,6 +844,112 @@ router.get('/adaptive/:planId/operating-characteristics', authMiddleware, async 
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/biostat/adaptive/oc-exact
+ * Compute exact group-sequential operating characteristics by recursive
+ * numerical integration (deterministic; no Monte Carlo). Either supply explicit
+ * z-scale boundaries, or supply { alpha, spendingFunction } and the efficacy
+ * boundaries are solved exactly from the alpha-spending function. Returns the OC
+ * table over the requested drift grid, the type I error, optional assurance over
+ * a normal prior on the drift, and a provenance record.
+ *
+ * Body: {
+ *   informationFractions: number[],          // strictly increasing, last = 1
+ *   efficacyBoundaries?: number[],            // optional explicit z-boundaries
+ *   futilityBoundaries?: (number|null)[],     // optional, binding
+ *   alpha?: number,                           // one-sided, default 0.025
+ *   spendingFunction?: 'obrien-fleming'|'pocock'|'linear',
+ *   driftGrid?: number[],                     // default [0,1,2,3,4]
+ *   prior?: { mean: number, sd: number, nNodes?: number },
+ *   grid?: { step?: number, halfWidth?: number }
+ * }
+ */
+router.post('/adaptive/oc-exact', authMiddleware, async (req: Request, res: Response) => {
+  // Authenticated + tenant-scoped like its siblings, though the computation is
+  // pure math and does not read tenant data.
+  try {
+    resolveOrganizationId(req);
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: error.message });
+  }
+
+  try {
+    const body = req.body ?? {};
+    const informationFractions = body.informationFractions;
+    if (!Array.isArray(informationFractions) || informationFractions.length === 0 ||
+        !informationFractions.every((x: unknown) => typeof x === 'number' && Number.isFinite(x))) {
+      return res.status(400).json({
+        success: false,
+        error: 'informationFractions must be a non-empty array of numbers (strictly increasing, last = 1).',
+      });
+    }
+
+    const spendingFunction: SpendingFunction = ['obrien-fleming', 'pocock', 'linear'].includes(body.spendingFunction)
+      ? body.spendingFunction
+      : 'obrien-fleming';
+    const alpha = typeof body.alpha === 'number' ? body.alpha : 0.025;
+
+    const grid =
+      body.grid && typeof body.grid === 'object'
+        ? { step: body.grid.step, halfWidth: body.grid.halfWidth }
+        : {};
+
+    // Boundaries: explicit if supplied, otherwise solved from the spending function.
+    let boundaries: GroupSequentialBoundaries;
+    let solved: ReturnType<typeof solveSpendingBoundaries> | null = null;
+    if (Array.isArray(body.efficacyBoundaries)) {
+      boundaries = {
+        informationFractions,
+        efficacyBoundaries: body.efficacyBoundaries,
+        futilityBoundaries: body.futilityBoundaries,
+      };
+    } else {
+      solved = solveSpendingBoundaries(informationFractions, alpha, spendingFunction, grid);
+      boundaries = {
+        informationFractions,
+        efficacyBoundaries: solved.efficacyBoundaries,
+        futilityBoundaries: body.futilityBoundaries,
+      };
+    }
+
+    const driftGrid: number[] =
+      Array.isArray(body.driftGrid) && body.driftGrid.length > 0 &&
+      body.driftGrid.every((x: unknown) => typeof x === 'number' && Number.isFinite(x))
+        ? body.driftGrid
+        : [0, 1, 2, 3, 4];
+
+    const table = operatingCharacteristics(boundaries, driftGrid, grid);
+
+    let assuranceResult = null;
+    if (body.prior && typeof body.prior === 'object' &&
+        typeof body.prior.mean === 'number' && typeof body.prior.sd === 'number') {
+      const priorNodes = discretizeNormalPrior(
+        body.prior.mean,
+        body.prior.sd,
+        typeof body.prior.nNodes === 'number' ? body.prior.nNodes : 25,
+      );
+      assuranceResult = computeAssurance(boundaries, priorNodes, grid);
+    }
+
+    res.json({
+      success: true,
+      data: {
+        boundaries,
+        spending: solved
+          ? { spendingFunction, alpha, cumulativeAlpha: solved.cumulativeAlpha, incrementalAlpha: solved.incrementalAlpha }
+          : null,
+        characteristics: table.characteristics,
+        typeIError: table.typeIError,
+        assurance: assuranceResult,
+        provenance: table.provenance,
+      },
+    });
+  } catch (error: any) {
+    // Engine validation errors (bad information fractions, etc.) are client errors.
+    return res.status(400).json({ success: false, error: error.message });
   }
 });
 
