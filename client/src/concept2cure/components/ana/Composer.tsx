@@ -59,6 +59,7 @@ export function Composer({
   const DownIco = I.down;
   const ArrowUpIco = I.arrowUp;
   const StopIco = I.stop;
+  const CloseIco = I.close;
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
@@ -135,38 +136,30 @@ export function Composer({
         setDragging(false);
         handleFiles(e.dataTransfer.files);
       }}
-      style={dragging ? { outline: '1.5px dashed var(--c2c-accent, #d97757)', outlineOffset: '2px' } : undefined}
+      data-dragging={dragging || undefined}
     >
       {attachments.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', padding: '0 4px 8px' }}>
+        <div className={styles.composerAttachments}>
           {attachments.map((a) => (
             <span
               key={a.id}
               title={a.error || a.name}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                maxWidth: '220px',
-                padding: '4px 8px',
-                fontSize: '12px',
-                lineHeight: 1.2,
-                borderRadius: '6px',
-                border: '1px solid var(--c2c-border, rgba(0,0,0,0.12))',
-                background: 'var(--c2c-surface-2, rgba(0,0,0,0.03))',
-                color: a.status === 'error' ? 'var(--c2c-danger, #b3261e)' : 'inherit',
-              }}
+              className={[
+                styles.composerAttachment,
+                a.status === 'uploading' ? styles.composerAttachmentUploading : '',
+                a.status === 'error' ? styles.composerAttachmentError : '',
+              ].filter(Boolean).join(' ')}
             >
-              <span style={{ opacity: a.status === 'uploading' ? 0.6 : 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span className={styles.label}>
                 {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
               </span>
               <button
                 type="button"
+                className={styles.composerAttachmentRemove}
                 onClick={() => removeAttachment(a.id)}
                 aria-label={`Remove ${a.name}`}
-                style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 0, color: 'inherit', opacity: 0.6, fontSize: '14px', lineHeight: 1 }}
               >
-                ×
+                <CloseIco size={12} />
               </button>
             </span>
           ))}

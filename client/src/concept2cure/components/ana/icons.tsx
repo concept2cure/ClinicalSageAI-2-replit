@@ -30,6 +30,7 @@ import {
   Check,
   ArrowUpRight,
   Square,
+  X,
 } from 'lucide-react';
 
 export const I = {
@@ -58,6 +59,7 @@ export const I = {
   check: Check,
   upgrade: ArrowUpRight,
   stop: Square,
+  close: X,
 } as const;
 
 export type IconKey = keyof typeof I;

@@ -191,6 +191,10 @@
   border-color: var(--border-strong);
   box-shadow: 0 0 0 3px var(--accent-subtle);
 }
+.composer[data-dragging] {
+  border-color: var(--accent-main-100);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
 .composer textarea {
   width: 100%; border: 0; outline: none; resize: none;
   font-family: var(--font-sans); font-size: 15px; line-height: 1.5;
@@ -228,6 +232,36 @@
 }
 .composerSend:hover { background: var(--accent-main-200); }
 .composerSend:disabled { background: var(--bg-300); cursor: default; }
+
+/* ───────── Attachment chips (above the textarea) ───────── */
+.composerAttachments {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 0 0 8px;
+}
+.composerAttachment {
+  display: inline-flex; align-items: center; gap: 6px;
+  max-width: 220px;
+  padding: 4px 8px; border-radius: 8px;
+  font-size: 12px; line-height: 1.2;
+  color: var(--ink-body, var(--text-200));
+  background: var(--bg-200);
+  border: 1px solid var(--border);
+}
+.composerAttachment .label {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.composerAttachmentUploading .label { opacity: 0.6; }
+.composerAttachmentError {
+  color: var(--accent-main-200);
+  border-color: var(--accent-main-200);
+}
+.composerAttachmentRemove {
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 0; background: transparent; cursor: pointer;
+  padding: 0; color: inherit; opacity: 0.6;
+  transition: opacity 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+}
+.composerAttachmentRemove:hover { opacity: 1; }
 
 /* ───────── Suggestion pill row ───────── */
 .suggest {

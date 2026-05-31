@@ -1,5 +1,5 @@
 /* global React, I */
-const { useState } = React;
+const { useState, useRef } = React;
 
 /* ───────── Sidebar ───────── */
 function Sidebar({ view, setView, collapsed, setCollapsed }) {
@@ -67,10 +67,55 @@ function TopBar({ view }) {
   );
 }
 
-/* ───────── Composer ───────── */
+/* ───────── Composer ─────────
+ * Attach (paperclip) opens a file picker and accepts drag-and-drop. Each file
+ * shows as a chip with uploading / ready / error state and a remove control.
+ * In production the chip lifecycle is driven by POST /api/chat/upload (which
+ * OCRs the document into project memory); here it's mocked for the prototype.
+ */
 function Composer({ value, onChange, onSend, placeholder = "How can AnA help you today?" }) {
+  const [attachments, setAttachments] = useState([]);
+  const [dragging, setDragging] = useState(false);
+  const fileRef = useRef(null);
+  const ACCEPT = ".pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.docx,.doc";
+
+  const addFiles = (files) => {
+    if (!files) return;
+    Array.from(files).forEach((file) => {
+      const id = `att_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      setAttachments((prev) => [...prev, { id, name: file.name, status: 'uploading' }]);
+      // Prototype: resolve to "ready" after a beat (production awaits the upload).
+      setTimeout(() => {
+        setAttachments((prev) => prev.map((a) => a.id === id ? { ...a, status: 'ready' } : a));
+      }, 700);
+    });
+  };
+  const removeAttachment = (id) => setAttachments((prev) => prev.filter((a) => a.id !== id));
+  const readyCount = attachments.filter((a) => a.status === 'ready').length;
+  const sendDisabled = !value.trim() && readyCount === 0;
+
   return (
-    <div className="composer">
+    <div
+      className="composer"
+      data-dragging={dragging || undefined}
+      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+      onDragLeave={(e) => { e.preventDefault(); setDragging(false); }}
+      onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
+    >
+      {attachments.length > 0 && (
+        <div className="composer-attachments">
+          {attachments.map((a) => (
+            <span
+              key={a.id}
+              className={`composer-attachment${a.status === 'uploading' ? ' is-uploading' : ''}${a.status === 'error' ? ' is-error' : ''}`}
+              title={a.name}
+            >
+              <span className="label">{a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}</span>
+              <button className="composer-attachment-remove" onClick={() => removeAttachment(a.id)} aria-label={`Remove ${a.name}`}>{I.close}</button>
+            </span>
+          ))}
+        </div>
+      )}
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -80,11 +125,13 @@ function Composer({ value, onChange, onSend, placeholder = "How can AnA help you
       />
       <div className="composer-actions">
         <div className="left">
-          <button className="composer-icon" title="Attach">{I.attach}</button>
+          <input ref={fileRef} type="file" multiple accept={ACCEPT} style={{ display: 'none' }}
+            onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }} />
+          <button className="composer-icon" title="Attach files" onClick={() => fileRef.current?.click()}>{I.attach}</button>
           <button className="composer-icon" title="Tools">{I.tools}</button>
           <button className="composer-chip">AnA 1.0 RI {I.down}</button>
         </div>
-        <button className="composer-send" onClick={onSend} disabled={!value.trim()}>{I.arrowUp}</button>
+        <button className="composer-send" onClick={onSend} disabled={sendDisabled}>{I.arrowUp}</button>
       </div>
     </div>
   );

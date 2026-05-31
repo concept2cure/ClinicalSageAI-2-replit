@@ -114,6 +114,7 @@ input, textarea { font-family: inherit; }
   transition: box-shadow 200ms var(--ease), border-color 200ms var(--ease);
 }
 .composer:focus-within { border-color: var(--border-strong); box-shadow: 0 0 0 3px var(--accent-subtle); }
+.composer[data-dragging] { border-color: var(--accent-main-100); box-shadow: 0 0 0 3px var(--accent-subtle); }
 .composer textarea {
   width: 100%; border: 0; outline: none; resize: none;
   font-family: var(--font-sans); font-size: 15px; line-height: 1.5;
@@ -141,6 +142,24 @@ input, textarea { font-family: inherit; }
 }
 .composer-send:hover { background: var(--accent-main-200); }
 .composer-send:disabled { background: var(--bg-300); cursor: default; }
+
+/* Attachment chips — render above the textarea once files are attached. */
+.composer-attachments { display:flex; flex-wrap:wrap; gap: 6px; padding: 0 0 8px; }
+.composer-attachment {
+  display:inline-flex; align-items:center; gap: 6px;
+  max-width: 220px; padding: 4px 8px; border-radius: 8px;
+  font-size: 12px; line-height: 1.2; color: var(--ink-body);
+  background: var(--bg-200); border: 1px solid var(--border);
+}
+.composer-attachment .label { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.composer-attachment.is-uploading .label { opacity: 0.6; }
+.composer-attachment.is-error { color: var(--accent-main-200); border-color: var(--accent-main-200); }
+.composer-attachment-remove {
+  display:inline-flex; align-items:center; justify-content:center;
+  border: 0; background: transparent; cursor: pointer; padding: 0;
+  color: inherit; opacity: 0.6; transition: opacity 200ms var(--ease);
+}
+.composer-attachment-remove:hover { opacity: 1; }
 
 /* ───────── Suggestion pill row ───────── */
 .suggest { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; max-width: 720px; }
