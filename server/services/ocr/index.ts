@@ -9,6 +9,11 @@ export { ocrService } from './ocrService';
 export type { OcrCapabilities, OcrPdfResult, OcrPdfTextResult } from './ocrService';
 export { rasterizePdf, type RasterizeOptions } from './pdfRasterizer';
 export {
+  extractDocumentText,
+  type ExtractedDocumentText,
+  type ExtractionMethod,
+} from './extractDocumentText';
+export {
   tesseractOcrService,
   type OcrImageOptions,
   type OcrImageResult,

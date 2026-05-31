@@ -14,6 +14,7 @@ import { createCanvas } from '@napi-rs/canvas';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { ocrService } from '../../server/services/ocr';
 import { tesseractOcrService } from '../../server/services/ocr/tesseractOcrService';
+import { extractDocumentText } from '../../server/services/ocr/extractDocumentText';
 
 const HAS_LANG_DATA = existsSync(
   path.resolve(__dirname, '../../server/assets/tessdata/eng.traineddata.gz'),
@@ -60,5 +61,28 @@ describeLive('OCR (live)', () => {
     expect(result.pages).toHaveLength(1);
     expect(result.text.toLowerCase()).toContain('scanned pdf ocr path');
     expect(result.engine).toBe('pdfjs+tesseract.js');
+  }, 60000);
+});
+
+describe('extractDocumentText (live)', () => {
+  it('reads text/* directly', async () => {
+    const out = await extractDocumentText(Buffer.from('plain memory text'), 'text/plain', 'a.txt');
+    expect(out.method).toBe('utf8');
+    expect(out.text).toBe('plain memory text');
+  });
+
+  (HAS_LANG_DATA ? it : it.skip)('OCRs an uploaded image', async () => {
+    const out = await extractDocumentText(textImagePng('Memory from an image'), 'image/png', 'a.png');
+    expect(out.method).toBe('image-ocr');
+    expect(out.text.toLowerCase()).toContain('memory from an image');
+  }, 60000);
+
+  it('reads a born-digital PDF text layer (no OCR needed)', async () => {
+    const pdf = await onePagePdf(
+      'Born digital body text long enough to skip OCR '.repeat(6),
+    );
+    const out = await extractDocumentText(pdf, 'application/pdf', 'b.pdf');
+    expect(out.method).toBe('pdf-text');
+    expect(out.text.toLowerCase()).toContain('born digital body text');
   }, 60000);
 });
