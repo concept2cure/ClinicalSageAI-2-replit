@@ -59,6 +59,12 @@ import {
   type RegionDesignInput,
 } from '../services/region-design-rules';
 import {
+  forecastCompletion,
+  forecastEnrollmentByTime,
+  forecastRetention,
+  type SiteConfig,
+} from '../services/stats/enrollment-forecast';
+import {
   runJudgmentPipeline,
   runPipelineAndGenerateArtifact,
   runPipelineForRole,
@@ -1235,6 +1241,58 @@ router.get('/region-rules/catalog', authMiddleware, async (req: Request, res: Re
   try {
     const agency = req.query.agency as Agency | undefined;
     res.json({ success: true, data: listRegionRules(agency) });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/biostat/enrollment/forecast
+ * Poisson–Gamma (Anisimov) enrollment forecast. Either time-to-target
+ * (`targetN`) or enrollment-by-time (`time`), each with an 80% prediction
+ * interval; optionally a retention forecast under exponential dropout.
+ *
+ * Body: { sites: SiteConfig[], targetN?, time?, seed?, nSim?,
+ *         retention?: { dropoutRatePerUnit, atTime, conf? } }
+ */
+router.post('/enrollment/forecast', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    resolveOrganizationId(req);
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: error.message });
+  }
+  try {
+    const b = req.body ?? {};
+    if (!Array.isArray(b.sites) || b.sites.length === 0) {
+      return res.status(400).json({ success: false, error: 'sites (non-empty array) is required.' });
+    }
+    const sites = b.sites as SiteConfig[];
+    const seed = typeof b.seed === 'number' ? b.seed : undefined;
+    const nSim = typeof b.nSim === 'number' ? b.nSim : undefined;
+
+    const data: Record<string, unknown> = {};
+    if (typeof b.targetN === 'number') {
+      data.completion = forecastCompletion({ sites, targetN: b.targetN, nSim, seed });
+    }
+    if (typeof b.time === 'number') {
+      data.byTime = forecastEnrollmentByTime({ sites, time: b.time, nSim, seed });
+    }
+    if (b.retention && typeof b.retention.dropoutRatePerUnit === 'number'
+        && typeof b.retention.atTime === 'number') {
+      const enrolled = typeof b.targetN === 'number'
+        ? b.targetN
+        : (data.byTime as { expected: number } | undefined)?.expected ?? 0;
+      data.retention = forecastRetention({
+        nEnrolled: Math.round(enrolled),
+        dropoutRatePerUnit: b.retention.dropoutRatePerUnit,
+        atTime: b.retention.atTime,
+        conf: typeof b.retention.conf === 'number' ? b.retention.conf : undefined,
+      });
+    }
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ success: false, error: "provide 'targetN' and/or 'time'." });
+    }
+    res.json({ success: true, data });
   } catch (error: any) {
     return res.status(400).json({ success: false, error: error.message });
   }
