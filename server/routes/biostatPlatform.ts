@@ -32,6 +32,14 @@ import {
   type SpendingFunction,
 } from '../services/stats/group-sequential-oc';
 import {
+  assuranceTwoSampleMeans,
+  assuranceMonteCarloTwoSampleMeans,
+} from '../services/stats/assurance';
+import {
+  testMultiplicity,
+  type MultiplicityProcedure,
+} from '../services/stats/multiplicity';
+import {
   runJudgmentPipeline,
   runPipelineAndGenerateArtifact,
   runPipelineForRole,
@@ -949,6 +957,95 @@ router.post('/adaptive/oc-exact', authMiddleware, async (req: Request, res: Resp
     });
   } catch (error: any) {
     // Engine validation errors (bad information fractions, etc.) are client errors.
+    return res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/biostat/assurance
+ * Bayesian assurance (probability of success) for a two-sample means design:
+ * the power averaged over a normal prior on the standardized effect. Optionally
+ * cross-checks the deterministic quadrature against a seeded Monte Carlo run.
+ *
+ * Body: { priorMean, priorSd, nPerArm, alpha?, oneSided?, nNodes?,
+ *         monteCarlo?: { nSim?, seed? } }
+ */
+router.post('/assurance', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    resolveOrganizationId(req);
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: error.message });
+  }
+  try {
+    const b = req.body ?? {};
+    if (typeof b.priorMean !== 'number' || typeof b.priorSd !== 'number' || typeof b.nPerArm !== 'number') {
+      return res.status(400).json({
+        success: false,
+        error: 'priorMean, priorSd and nPerArm are required numbers.',
+      });
+    }
+    const args = {
+      priorMean: b.priorMean,
+      priorSd: b.priorSd,
+      nPerArm: b.nPerArm,
+      alpha: typeof b.alpha === 'number' ? b.alpha : undefined,
+      oneSided: typeof b.oneSided === 'boolean' ? b.oneSided : undefined,
+      nNodes: typeof b.nNodes === 'number' ? b.nNodes : undefined,
+    };
+    const result = assuranceTwoSampleMeans(args);
+
+    let monteCarlo = null;
+    if (b.monteCarlo) {
+      monteCarlo = assuranceMonteCarloTwoSampleMeans({
+        ...args,
+        nSim: typeof b.monteCarlo.nSim === 'number' ? b.monteCarlo.nSim : undefined,
+        seed: typeof b.monteCarlo.seed === 'number' ? b.monteCarlo.seed : undefined,
+      });
+    }
+
+    res.json({ success: true, data: { ...result, monteCarlo } });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/biostat/multiplicity/test
+ * Apply a multiple-testing procedure to observed p-values and return which
+ * hypotheses are rejected while controlling the family-wise error rate. This is
+ * the decision layer complementing /multiplicity/design (which allocates alpha).
+ *
+ * Body: { pValues: number[], alpha: number, procedure, ids?, weights?,
+ *         transitionMatrix? }
+ */
+router.post('/multiplicity/test', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    resolveOrganizationId(req);
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: error.message });
+  }
+  try {
+    const b = req.body ?? {};
+    const validProcedures: MultiplicityProcedure[] = [
+      'bonferroni', 'weighted-bonferroni', 'holm', 'hochberg', 'fixed-sequence', 'graphical',
+    ];
+    if (!Array.isArray(b.pValues) || typeof b.alpha !== 'number' ||
+        !validProcedures.includes(b.procedure)) {
+      return res.status(400).json({
+        success: false,
+        error: `pValues (array), alpha (number) and procedure (one of ${validProcedures.join(', ')}) are required.`,
+      });
+    }
+    const result = testMultiplicity({
+      pValues: b.pValues,
+      alpha: b.alpha,
+      procedure: b.procedure,
+      ids: Array.isArray(b.ids) ? b.ids : undefined,
+      weights: Array.isArray(b.weights) ? b.weights : undefined,
+      transitionMatrix: Array.isArray(b.transitionMatrix) ? b.transitionMatrix : undefined,
+    });
+    res.json({ success: true, data: result });
+  } catch (error: any) {
     return res.status(400).json({ success: false, error: error.message });
   }
 });
