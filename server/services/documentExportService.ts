@@ -747,7 +747,7 @@ async function getProjectInfo(
   }
 }
 
-function mapSectionToECTDPath(sectionCode: string, region: string): string {
+export function mapSectionToECTDPath(sectionCode: string, region: string): string {
   const code = sectionCode.toLowerCase().replace(/\s+/g, '');
 
   // Module mapping per ICH M4
@@ -781,7 +781,7 @@ function escapeXml(str: string): string {
     .replace(/'/g, '&apos;');
 }
 
-function renderMarkdownToPDF(doc: any, content: string, baseFontSize: number): void {
+export function renderMarkdownToPDF(doc: any, content: string, baseFontSize: number): void {
   const lines = content.split('\n');
 
   for (const line of lines) {

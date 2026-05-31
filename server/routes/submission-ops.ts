@@ -50,6 +50,12 @@ import { getProjectSignals, analyzeCrossArtifactIntelligence } from '../services
 import { readCanonicalDueSoonAndWorkload } from '../services/regulatory-correspondence/operating-layer';
 import { buildECTDZip } from '../src/services/ectd';
 import { recordGovernedAction } from './c2c/actions';
+import PDFDocument from 'pdfkit';
+import { PassThrough } from 'stream';
+import {
+  renderMarkdownToPDF,
+  mapSectionToECTDPath,
+} from '../services/documentExportService';
 
 const router = Router();
 
@@ -1395,6 +1401,35 @@ function leafSlug(value: string): string {
     .slice(0, 80) || 'section';
 }
 
+/**
+ * Renders a single eCTD leaf as a real PDF: a bold title line followed by the
+ * section markdown rendered via the canonical pdfkit markdown renderer. Resolves
+ * a `%PDF`-prefixed Buffer. Mirrors the buffer pattern in documentExportService.
+ */
+async function buildLeafPdf(title: string, markdown: string): Promise<Buffer> {
+  const doc: any = new (PDFDocument as any)({
+    size: 'A4',
+    margins: { top: 72, right: 72, bottom: 72, left: 72 },
+    bufferPages: true,
+  });
+
+  const chunks: Buffer[] = [];
+  const bufferStream = new PassThrough();
+  bufferStream.on('data', (chunk: Buffer) => chunks.push(chunk));
+  doc.pipe(bufferStream);
+
+  doc.fontSize(14).font('Helvetica-Bold').text(title);
+  doc.moveDown();
+  doc.fontSize(11).font('Helvetica');
+  renderMarkdownToPDF(doc, markdown, 11);
+
+  doc.end();
+
+  return new Promise<Buffer>((resolve) => {
+    bufferStream.on('end', () => resolve(Buffer.concat(chunks)));
+  });
+}
+
 const assembleBody = z.object({
   // Optional explicit overrides; otherwise derived from packageFamily.
   region: z.enum(['FDA', 'EMA', 'PMDA']).optional(),
@@ -1456,9 +1491,24 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       .where(eq(c2cPackageSections.packageDbId, pkg.id))
       .orderBy(asc(c2cPackageSections.sortOrder));
 
+    // Resolve region/format up front so leaf paths can be routed to the correct
+    // ICH module region directory.
+    const { region, format } = (() => {
+      const derived = deriveRegionAndFormat(pkg.packageFamily);
+      return {
+        region: parsed.data.region ?? derived.region,
+        format: parsed.data.format ?? derived.format,
+      };
+    })();
+    const sequence = parsed.data.sequence ?? '0000';
+
+    // Region code used in m1/<region>/.. leaf paths (per ICH M4 / regional M1).
+    const regionCode = region === 'EMA' ? 'eu' : region === 'PMDA' ? 'jp' : 'us';
+
     // Build eCTD leafs from section content. Section content is sourced from the
     // artifacts mapped to each section (c2c_artifact_section_map -> concept2cure
-    // artifacts.content). An empty section produces an explicitly-empty leaf.
+    // artifacts.content). Each leaf is a real PDF placed at an ICH module path.
+    // An empty section produces an explicitly-empty PDF leaf.
     const seenPaths = new Set<string>();
     const leafs: { path: string; mediaType: string; content: Buffer }[] = [];
     let emptyLeafCount = 0;
@@ -1485,20 +1535,23 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         )
         .orderBy(asc(concept2cureArtifacts.id));
 
-      // Deterministic leaf path; de-dupe collisions with the section db id.
-      let leafPath = `m1/${leafSlug(section.sectionKey)}.txt`;
-      if (seenPaths.has(leafPath)) leafPath = `m1/${leafSlug(section.sectionKey)}-${section.id}.txt`;
+      // Deterministic leaf path at an ICH module path; de-dupe collisions by
+      // inserting the section db id BEFORE the .pdf extension.
+      let leafPath = mapSectionToECTDPath(section.sectionKey, regionCode);
+      if (seenPaths.has(leafPath)) {
+        leafPath = leafPath.replace(/\.pdf$/, `-${section.id}.pdf`);
+      }
       seenPaths.add(leafPath);
 
-      let content: string;
+      let markdown: string;
       if (mapped.length === 0) {
         // No artifact content mapped — emit an explicitly empty placeholder leaf.
-        content = `[EMPTY SECTION] ${section.sectionLabel} (${section.sectionKey})\n`;
+        markdown = `[EMPTY SECTION] ${section.sectionLabel} (${section.sectionKey})\n`;
         emptyLeafCount += 1;
       } else {
         // Serialize mapped artifact content deterministically. Real content only —
         // no fabrication.
-        content = mapped
+        markdown = mapped
           .map(
             (a) =>
               `### ${a.title} (${a.artifactId} v${a.version})\n\n${a.content ?? ''}\n`,
@@ -1506,21 +1559,13 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           .join('\n');
       }
 
+      const leafTitle = `${section.sectionLabel} (${section.sectionKey})`;
       leafs.push({
         path: leafPath,
-        mediaType: 'text/plain',
-        content: Buffer.from(content, 'utf8'),
+        mediaType: 'application/pdf',
+        content: await buildLeafPdf(leafTitle, markdown),
       });
     }
-
-    const { region, format } = (() => {
-      const derived = deriveRegionAndFormat(pkg.packageFamily);
-      return {
-        region: parsed.data.region ?? derived.region,
-        format: parsed.data.format ?? derived.format,
-      };
-    })();
-    const sequence = parsed.data.sequence ?? '0000';
 
     // Assemble the real zip buffer.
     const zipBuffer = await buildECTDZip({

@@ -165,9 +165,14 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     const opts = buildECTDZipFn.mock.calls[0][0];
     expect(opts.region).toBe('FDA');
     expect(opts.leafs).toHaveLength(2);
-    // Empty section produced an explicitly-marked empty leaf.
-    const emptyLeaf = opts.leafs[1].content.toString('utf8');
-    expect(emptyLeaf).toMatch(/\[EMPTY SECTION\]/);
+
+    // Both leafs are real PDFs placed at ICH module paths (*.pdf).
+    expect(opts.leafs[0].mediaType).toBe('application/pdf');
+    expect(opts.leafs[0].path.endsWith('.pdf')).toBe(true);
+    expect(opts.leafs[1].mediaType).toBe('application/pdf');
+    expect(opts.leafs[1].path.endsWith('.pdf')).toBe(true);
+    // The PDF magic bytes confirm a valid pdfkit render (not a text leaf).
+    expect(opts.leafs[1].content.subarray(0, 5).toString('utf8')).toBe('%PDF-');
 
     // The zip was persisted to disk.
     expect(mkdirFn).toHaveBeenCalledTimes(1);
