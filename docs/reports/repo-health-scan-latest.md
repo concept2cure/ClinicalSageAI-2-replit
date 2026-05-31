@@ -1,12 +1,12 @@
 # Repo Health Scan
 
-Generated: 2026-05-30T11:13:13.179Z
+Generated: 2026-05-31T06:51:07.478Z
 Branch: claude/design-kit-integration-audit-5yeba
-SHA: c00edce8befb238ffcb1d26369dd723f8deddb11
+SHA: a7b58e7db163cd64a3400efa113a42f4403493e7
 
 ## Summary
 
-- Duplicate basenames: 197
+- Duplicate basenames: 198
 - Files over byte threshold: 15
 - Files over line threshold: 45
 - Baseline: docs/reports/repo-health-scan-latest.json
@@ -18,7 +18,7 @@ SHA: c00edce8befb238ffcb1d26369dd723f8deddb11
 
 - Backend Platform (server/routes + server/services owners): duplicateGroups=253, largeByBytes=10, largeByLines=31
 - Unassigned (TBD): duplicateGroups=234, largeByBytes=2, largeByLines=7
-- Concept2Cure Frontend (client/src/concept2cure maintainers): duplicateGroups=180, largeByBytes=2, largeByLines=4
+- Concept2Cure Frontend (client/src/concept2cure maintainers): duplicateGroups=182, largeByBytes=2, largeByLines=4
 - Frontend Platform (client/src maintainers): duplicateGroups=84, largeByBytes=0, largeByLines=1
 - Shared Contracts (shared/schema + shared/types owners): duplicateGroups=29, largeByBytes=1, largeByLines=2
 - Developer Experience (scripts maintainers): duplicateGroups=3, largeByBytes=0, largeByLines=0

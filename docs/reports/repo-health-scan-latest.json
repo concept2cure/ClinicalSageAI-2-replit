@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-05-30T11:13:13.179Z",
+  "generatedAt": "2026-05-31T06:51:07.478Z",
   "git": {
-    "sha": "c00edce8befb238ffcb1d26369dd723f8deddb11",
+    "sha": "a7b58e7db163cd64a3400efa113a42f4403493e7",
     "branch": "claude/design-kit-integration-audit-5yeba"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 197,
+    "duplicateBasenames": 198,
     "largeFilesByBytes": 15,
     "largeFilesByLines": 45
   },
@@ -1517,6 +1517,14 @@
         ]
       },
       {
+        "basename": "hooks",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/authoring/hooks.ts",
+          "client/src/concept2cure/intelligence/hooks.ts"
+        ]
+      },
+      {
         "basename": "huggingface-service",
         "count": 2,
         "paths": [
@@ -2249,7 +2257,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 180,
+      "duplicateGroups": 182,
       "largeByBytes": 2,
       "largeByLines": 4
     },
