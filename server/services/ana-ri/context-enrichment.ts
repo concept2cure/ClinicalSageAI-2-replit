@@ -34,6 +34,7 @@ import { buildCompetitiveBlock, detectRelevantPlays } from './competitive-strate
 import { buildAlignmentBlock, detectRelevantAlignment } from './stakeholder-alignment.js';
 import { buildAttunementBlock, detectClientState } from './client-attunement.js';
 import { buildClaimGroundingBlock, detectClaimCategories } from './claim-grounding.js';
+import { buildCapabilityCatalogue } from './capability-registry.js';
 import { buildRoleLensBlock, hasRoleLens } from './role-lens.js';
 import { composeContext, priorityForSource, type CandidateBlock, type ComposeTraceEntry } from './context-composer.js';
 import type { UserRole } from './persona.js';
@@ -179,6 +180,8 @@ export const SUPPORTED_SLASH_COMMANDS = [
   'landscape',
   'compete',
   'align',
+  'capabilities',
+  'whatcanyoudo',
 ] as const;
 
 /** Enrichment sources that emit guidance the role lens can frame for an audience. */
@@ -1095,6 +1098,9 @@ export async function enrichContextForChat(params: {
         forceGeneric: true,
       });
       if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
+    } else if (slashNoProj && ['capabilities', 'whatcanyoudo'].includes(slashNoProj.command)) {
+      const block = buildCapabilityCatalogue();
+      if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
     }
 
     if (hasRoleLens(userRole) && projectlessSources.some(s => ROLE_FRAMEABLE_SOURCES.has(s))) {
@@ -1102,7 +1108,7 @@ export async function enrichContextForChat(params: {
       if (lensBlock) { projectlessBlocks.push(lensBlock); projectlessSources.push('role-lens'); }
     }
 
-    const wisdomOrChallengeFamily = [...wisdomFamily, ...challengeFamily, 'decide', 'tradeoff', 'framework', 'meeting', 'agency', 'tactics', 'position', 'landscape', 'compete', 'align'];
+    const wisdomOrChallengeFamily = [...wisdomFamily, ...challengeFamily, 'decide', 'tradeoff', 'framework', 'meeting', 'agency', 'tactics', 'position', 'landscape', 'compete', 'align', 'capabilities', 'whatcanyoudo'];
     return {
       block: projectlessBlocks.join('\n'),
       sources: projectlessSources,
@@ -1234,6 +1240,8 @@ export async function enrichContextForChat(params: {
       landscape: () => Promise.resolve(buildCompetitiveForMessage(slash.args || message, submissionType, true)),
       compete: () => Promise.resolve(buildCompetitiveForMessage(slash.args || message, submissionType, true)),
       align: () => Promise.resolve(buildAlignmentBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), forceGeneric: true })),
+      capabilities: () => Promise.resolve(buildCapabilityCatalogue()),
+      whatcanyoudo: () => Promise.resolve(buildCapabilityCatalogue()),
       workflow: () => submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
       status: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
@@ -1359,6 +1367,8 @@ export async function enrichContextForChat(params: {
       align: slash.args
         ? `Help the user align stakeholders on: ${slash.args}. Name the tension, tie it to the regulatory consequence that makes it matter, and give a concrete way to align the parties. The internal call is theirs.`
         : 'Help the user navigate an internal or partner tension. Name the friction, tie it to the regulatory consequence that makes it matter, and give a concrete way to align the parties around what moves the program. Make the trade-off visible; the internal decision is theirs.',
+      capabilities: 'The user is asking what you can do. Use the grounded capability inventory in context. Do not recite it as a menu — name the two or three capabilities that fit their actual situation and offer to apply one now.',
+      whatcanyoudo: 'The user is asking what you can do. Use the grounded capability inventory in context. Do not recite it as a menu — name the two or three capabilities that fit their actual situation and offer to apply one now.',
       export: 'Export this conversation.',
     };
 
