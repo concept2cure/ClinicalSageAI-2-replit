@@ -108,6 +108,15 @@ export const CAPABILITIES: Capability[] = [
     category: 'strategy',
     proactive: true,
   },
+  {
+    id: 'align',
+    label: 'Stakeholder alignment',
+    commands: ['align'],
+    description:
+      'Navigates the internal side — CMC versus clinical, a commercial label ambition, a board that wants a date, a CRO that holds the data — tied to regulatory consequence.',
+    category: 'people',
+    proactive: true,
+  },
 ];
 
 // ─── Lookups ─────────────────────────────────────────────────────────────────

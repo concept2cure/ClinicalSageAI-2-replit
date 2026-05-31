@@ -1675,6 +1675,7 @@ describe('AnA RI Capability Registry', () => {
     expect(getCapability('challenge')?.label).toMatch(/challenge/i);
     expect(getCapabilityForCommand('redteam')?.id).toBe('challenge');
     expect(getCapabilityForCommand('landscape')?.id).toBe('position');
+    expect(getCapabilityForCommand('align')?.id).toBe('align');
     expect(getCapabilityForCommand('not-a-command')).toBeNull();
   });
 
@@ -1704,6 +1705,7 @@ describe('AnA RI Capability Registry', () => {
       'decide', 'tradeoff', 'framework',
       'meeting', 'agency', 'tactics',
       'position', 'landscape', 'compete',
+      'align',
     ];
     for (const cmd of judgmentCommands) {
       expect(CAPABILITY_COMMANDS.has(cmd)).toBe(true);
