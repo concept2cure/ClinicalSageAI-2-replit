@@ -64,8 +64,13 @@ export async function extractDocumentText(
   if (isPdf) {
     let text = '';
     try {
-      const { PDFParse } = await import('pdf-parse');
-      const parser = new PDFParse({ data: buffer });
+      // pdf-parse v2 exports a `PDFParse` class at runtime, but the resolved
+      // .d.cts types still describe the v1 default-function API, so the named
+      // import trips tsc. Narrow the shape we actually use (behavior unchanged).
+      interface PdfParseInstance { getText(): Promise<{ text?: string }>; }
+      interface PdfParseCtor { new (opts: { data: Buffer }): PdfParseInstance; }
+      const mod = (await import('pdf-parse')) as unknown as { PDFParse: PdfParseCtor };
+      const parser = new mod.PDFParse({ data: buffer });
       const parsed = await parser.getText();
       text = (parsed.text || '').trim();
     } catch (error) {
