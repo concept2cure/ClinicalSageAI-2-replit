@@ -44,6 +44,15 @@ import {
   sizeCoPrimarySensSpec,
 } from '../services/stats/diagnostic-design';
 import {
+  covariateBalance,
+  powerPriorBorrow,
+  commensurateBorrow,
+  treatmentEffect,
+  tippingPointBias,
+  renderExternalControlMemo,
+  type CovariateInput,
+} from '../services/stats/external-control';
+import {
   runJudgmentPipeline,
   runPipelineAndGenerateArtifact,
   runPipelineForRole,
@@ -1111,6 +1120,65 @@ router.post('/diagnostic/sizing', authMiddleware, async (req: Request, res: Resp
       power: typeof b.power === 'number' ? b.power : undefined,
     });
     res.json({ success: true, data: result });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/biostat/external-control/sensitivity
+ * External-control rigor: borrow a historical control (power prior or
+ * commensurate prior), estimate the treatment effect, run a bias tipping-point
+ * sensitivity, optionally assess covariate balance, and render a regulatory
+ * memo. Deterministic and reproducible.
+ *
+ * Body: { endpoint, meanT, seT, meanC, seC, nC, meanH, seH, nH,
+ *         method: 'power-prior' | 'commensurate', a0?, tau2?, alpha?,
+ *         covariates?: CovariateInput[] }
+ */
+router.post('/external-control/sensitivity', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    resolveOrganizationId(req);
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: error.message });
+  }
+  try {
+    const b = req.body ?? {};
+    const numeric = ['meanT', 'seT', 'meanC', 'seC', 'nC', 'meanH', 'seH', 'nH'];
+    if (numeric.some(k => typeof b[k] !== 'number') || typeof b.endpoint !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: `endpoint (string) and numbers ${numeric.join(', ')} are required.`,
+      });
+    }
+    const method = b.method === 'commensurate' ? 'commensurate' : 'power-prior';
+    const alpha = typeof b.alpha === 'number' ? b.alpha : 0.05;
+    const summary = { meanC: b.meanC, seC: b.seC, nC: b.nC, meanH: b.meanH, seH: b.seH, nH: b.nH };
+
+    const a0 = typeof b.a0 === 'number' ? b.a0 : 1;
+    const tau2 = typeof b.tau2 === 'number' ? b.tau2 : 0;
+    const control = method === 'commensurate'
+      ? commensurateBorrow({ ...summary, tau2 })
+      : powerPriorBorrow({ ...summary, a0 });
+
+    const effect = treatmentEffect(b.meanT, b.seT, control, alpha);
+    // The bias tipping-point uses the power-prior path with the active a0.
+    const tipping = tippingPointBias({ ...summary, meanT: b.meanT, seT: b.seT, a0, alpha });
+    const balance = Array.isArray(b.covariates) && b.covariates.length > 0
+      ? covariateBalance(b.covariates as CovariateInput[])
+      : undefined;
+
+    const memo = renderExternalControlMemo({
+      endpoint: b.endpoint,
+      borrowingMethod: method,
+      borrowingParam: method === 'commensurate' ? tau2 : a0,
+      control,
+      effect,
+      balance,
+      tipping,
+    });
+
+    res.json({ success: true, data: { control, effect, tipping, balance, memo } });
   } catch (error: any) {
     return res.status(400).json({ success: false, error: error.message });
   }
