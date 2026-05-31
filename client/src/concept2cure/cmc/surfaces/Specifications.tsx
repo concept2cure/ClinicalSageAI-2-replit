@@ -10,6 +10,7 @@ import {
   useProjectSpecifications,
   useCreateSpecification,
   useUpdateSpecification,
+  useApproveSpecification,
 } from '../../hooks/useCMC';
 import type { CmcSpecRow, SpecificationInput, SpecificationPatch } from '../../services/cmcService';
 import { CmcIcon } from '../icons';
@@ -33,7 +34,10 @@ function statusTone(s: string): 'ok' | 'warn' | 'err' | 'dim' {
   return 'dim';
 }
 
-const APPROVAL_STATES = ['draft', 'review', 'approved', 'effective', 'superseded'] as const;
+// Editable statuses exclude 'approved'/'effective': approval is a governed
+// e-signature action reached only via "Approve specification" (POST
+// /specifications/:id/approve), never through this edit form.
+const APPROVAL_STATES = ['draft', 'review', 'superseded'] as const;
 
 interface SpecFormState {
   materialName: string;
@@ -237,29 +241,34 @@ interface SpecSigningTarget {
 
 export function CmcSpecifications({ projectId, onAskAna }: { projectId: string | null; onAskAna: (t: string) => void }) {
   const specs = useProjectSpecifications(projectId);
-  const update = useUpdateSpecification();
+  const approve = useApproveSpecification();
   const rows = specs.data ?? [];
   const [dialog, setDialog] = React.useState<{ editing: CmcSpecRow | null } | null>(null);
 
-  // Governed approval — mirrors the proven Module 3 SectionApprovals e-sign flow.
+  // Governed approval — routes through the mutation-primitives ledger via
+  // POST /api/cmc/specifications/:id/approve (high-risk sign). The server
+  // re-verifies the signer and writes audit_logs + c2c_ana_actions.
   const [signing, setSigning] = React.useState<SpecSigningTarget | null>(null);
   const restoreFocusRef = React.useRef<HTMLElement | null>(null);
 
   const onSign = React.useCallback(
-    async ({ reason, meaning }: { reason: string; meaning: EsigSignedManifest['meaning'] }): Promise<EsigSignedManifest> => {
+    async ({ reason, meaning, password, totp }: {
+      reason: string;
+      meaning: EsigSignedManifest['meaning'];
+      password: string;
+      totp?: string;
+    }): Promise<EsigSignedManifest> => {
       if (!signing) throw new Error('No specification selected for approval.');
-      // The PUT /specifications/:id route sets approval_status; it has no
-      // free-text reason column, so the reason-for-change lives in the signed
-      // e-signature manifest below (the 21 CFR Part 11 record), not the spec row.
-      await update.mutateAsync({
+      await approve.mutateAsync({
         id: signing.id,
-        data: { approvalStatus: 'approved' },
+        reason,
+        reauth: { password, totp },
         projectId: projectId ?? undefined,
       });
       restoreFocusRef.current = null;
       return { meaning, reason, signedAt: new Date().toISOString() };
     },
-    [signing, update, projectId],
+    [signing, approve, projectId],
   );
 
   const closeSigning = () => {

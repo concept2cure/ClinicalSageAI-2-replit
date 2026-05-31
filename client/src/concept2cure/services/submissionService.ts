@@ -154,6 +154,10 @@ export interface TransmitInput {
     displayName?: string;
   };
   metadata?: Record<string, unknown>;
+  /** Reason-for-change, required by the governed transmit route (min 8 chars). */
+  reason: string;
+  /** Re-auth credentials; the server re-verifies the signer (high-risk sign). */
+  reauth: { password: string; totp?: string };
 }
 
 // The DB returns snake_case columns; normalise to the camelCase shapes above so
@@ -315,6 +319,8 @@ class SubmissionService {
         submissionType: body.submissionType,
         bundle: body.bundle,
         metadata: body.metadata,
+        reason: body.reason,
+        reauth: body.reauth,
       },
     );
     return adaptTransmittal(payload.data);

@@ -181,13 +181,19 @@ export default [
     },
   },
   {
-    // ui_kits/ holds hi-fi design prototypes whose scripts load as sibling
-    // <script> tags sharing one global lexical scope. Those kits intentionally
-    // use `var { ... } = React` destructures because const/let would throw
-    // "Identifier has already been declared" across scripts and render nothing
-    // (see concept2cure-v2 commit b4d3e60). Allow var for these prototype
-    // files only; all other rules still apply.
+    // ui_kits/** are standalone hi-fi design-system prototypes loaded as plain
+    // browser <script> tags that share one global scope — not ES modules. They
+    // intentionally use `var { ... } = React` (and bare globals declared via
+    // /* global ... */ headers) because `const` would throw "Identifier already
+    // declared" when several kit files load into the same page. Lint them
+    // accordingly so these reference prototypes don't fail the app lint gate.
     files: ['ui_kits/**/*.{js,jsx}'],
-    rules: { 'no-var': 'off' },
+    languageOptions: {
+      sourceType: 'script',
+    },
+    rules: {
+      'no-var': 'off',
+      'no-undef': 'off',
+    },
   },
 ];

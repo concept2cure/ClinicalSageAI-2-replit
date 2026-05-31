@@ -56,6 +56,8 @@ export const correspondenceIntakeGovernanceSchema = correspondenceIntakeSchema.s
 });
 
 export const issueReviewSchema = z.object({
+  // Governed resolve: a reason-for-change is required for the ledger.
+  reason: z.string().min(8, 'A reason of at least 8 characters is required.'),
   humanReviewStatus: z.enum(['pending', 'confirmed', 'edited', 'rejected']).optional(),
   mappedCtdSections: z.array(z.string().max(24)).optional(),
   mappedArtifactIds: z.array(z.string().max(64)).optional(),

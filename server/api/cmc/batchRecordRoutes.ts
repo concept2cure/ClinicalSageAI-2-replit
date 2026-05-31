@@ -2,8 +2,16 @@ import express from 'express';
 import { getPool } from '../../db';
 import { z } from 'zod';
 import { writeThroughBatchRecord } from '../../services/cmc-write-through';
+import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
 
 const router = express.Router();
+
+function resolveActorUserId(req: express.Request): number {
+  const r = req as any;
+  const raw = r.userId ?? r.user?.id ?? 0;
+  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
 
 // Validation schemas
 const createBatchSchema = z.object({
@@ -41,6 +49,14 @@ const releaseSchema = z.object({
   releasedBy: z.string().min(1, 'Released by is required'),
   decision: z.enum(['approved', 'rejected', 'conditional']),
   comments: z.string().optional(),
+  reason: z.string().min(8, 'A reason of at least 8 characters is required.'),
+  reauth: z
+    .object({
+      password: z.string().optional(),
+      totp: z.string().optional(),
+    })
+    .optional(),
+  idempotencyKey: z.string().optional(),
 });
 
 // GET /api/cmc/batch-records/:projectId - List batch records
@@ -245,32 +261,51 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// POST /api/cmc/batch-records/:id/release - Release testing and batch disposition
+// POST /api/cmc/batch-records/:id/release - Release testing and batch disposition.
+// High-risk governed sign: re-auth gate, then UPDATE + ledger write in one
+// transaction (audit_logs + c2c_ana_actions). The governed ledger is the
+// signature of record for batch release (no document-scoped electronic_signatures).
 router.post('/:id/release', async (req, res) => {
+  const { id } = req.params;
+  const validationResult = releaseSchema.safeParse(req.body);
+
+  if (!validationResult.success) {
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid input data',
+      details: validationResult.error.errors,
+    });
+  }
+
+  const data = validationResult.data;
+  const pool = getPool();
+  const tenantRaw = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+  const orgId = typeof tenantRaw === 'string' ? parseInt(tenantRaw, 10) : Number(tenantRaw);
+  if (!Number.isFinite(orgId) || orgId <= 0) {
+    return res.status(401).json({ success: false, error: 'Tenant context required' });
+  }
+  const userId = resolveActorUserId(req);
+  if (!userId) {
+    return res.status(401).json({ error: 'AUTH_REQUIRED' });
+  }
+
+  // Re-auth gate FIRST (high-risk).
+  const reauthResult = await verifyReauth(userId, data.reauth);
+  if (!reauthResult.ok) {
+    res.setHeader('WWW-Authenticate', 'ReAuth required');
+    return res.status(401).json({ error: reauthResult.error ?? 'REAUTH_REQUIRED' });
+  }
+
+  const client = await pool.connect();
   try {
-    const { id } = req.params;
-    const validationResult = releaseSchema.safeParse(req.body);
-
-    if (!validationResult.success) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid input data',
-        details: validationResult.error.errors,
-      });
-    }
-
-    const data = validationResult.data;
-    const pool = getPool();
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-    if (!tenantId) {
-      return res.status(401).json({ success: false, error: 'Tenant context required' });
-    }
+    await client.query('BEGIN');
 
     // Verify record exists and belongs to tenant
-    const existing = await pool.query(
-      `SELECT * FROM cmc_batch_records WHERE id = $1 AND (tenant_id = $2 OR tenant_id IS NULL)`, [id, tenantId]
+    const existing = await client.query(
+      `SELECT * FROM cmc_batch_records WHERE id = $1 AND (tenant_id = $2 OR tenant_id IS NULL)`, [id, orgId]
     );
     if (existing.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ success: false, error: 'Batch record not found' });
     }
 
@@ -318,7 +353,7 @@ router.post('/:id/release', async (req, res) => {
     };
 
     // Update batch record with release data
-    const updateResult = await pool.query(
+    const updateResult = await client.query(
       `UPDATE cmc_batch_records
        SET release_testing = $1,
            release_status = $2,
@@ -337,29 +372,47 @@ router.post('/:id/release', async (req, res) => {
       ]
     );
 
+    const governance = await recordGovernedAction(client, {
+      orgId,
+      userId,
+      command: 'sign',
+      target: `batch:${id}`,
+      reason: data.reason,
+      payload: { meaning: 'release', decision: data.decision, releaseStatus },
+      domain: 'biopharma',
+      surface: 'cmc-batch',
+      idempotencyKey: data.idempotencyKey ?? null,
+    });
+
+    await client.query('COMMIT');
+
     console.log(`[CMC Batch] Release testing for batch ${id}: ${releaseStatus}`);
     // Write-through: upsert canonical source object for Module 3
     const releasedBatch = updateResult.rows[0];
     if (releasedBatch?.project_id) {
-      writeThroughBatchRecord(Number(tenantId), releasedBatch.project_id, String(id), releasedBatch).catch(() => {});
+      writeThroughBatchRecord(orgId, releasedBatch.project_id, String(id), releasedBatch).catch(() => {});
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         batchRecord: releasedBatch,
         releaseEvaluation: releaseRecord,
       },
+      governance: { actionId: governance.actionId, sha256Chain: governance.sha256Chain },
       message: `Batch ${releaseStatus === 'released' ? 'released' : 'release decision recorded'} successfully`,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
+    try { await client.query('ROLLBACK'); } catch { /* noop */ }
     console.error('[CMC Batch] Error processing release:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to process batch release',
       message: 'Operation failed',
     });
+  } finally {
+    client.release();
   }
 });
 

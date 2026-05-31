@@ -137,6 +137,8 @@ export interface CorrespondenceDetail {
  * route — see ReviewIssueArgs in useProgramTabs for what is omitted and why.
  */
 export interface ReviewIssuePayload {
+  /** Reason-for-change, required by the governed review route (min 8 chars). */
+  reason: string;
   humanReviewStatus?: 'pending' | 'confirmed' | 'edited' | 'rejected';
   resolutionStatus?: 'open' | 'in_progress' | 'resolved' | 'waived';
 }

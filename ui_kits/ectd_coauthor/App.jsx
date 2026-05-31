@@ -55,7 +55,7 @@ function Intelligence({ messages, onSend, pending }) {
     <section className="intel">
       <div className="intel-head">
         <b>Intelligence</b>
-        <span className="hint">AnA 1.0 RI · c2c-Opus 4.7</span>
+        <span className="hint">AnA 1.0 RI</span>
       </div>
       <div className="intel-scroll" ref={scrollRef}>
         <div className="intel-thread">
@@ -112,7 +112,7 @@ function Intelligence({ messages, onSend, pending }) {
             <div style={{display:'flex', gap:4}}>
               <button className="chip" title="Attach">{I.attach}</button>
               <button className="chip" title="Tools">{I.tools} Tools</button>
-              <button className="chip">c2c-Opus 4.7 {I.down}</button>
+              <button className="chip">AnA 1.0 {I.down}</button>
             </div>
             <button className="composer-send" disabled={!draft.trim()} onClick={send}>
               {I.arrowUp}

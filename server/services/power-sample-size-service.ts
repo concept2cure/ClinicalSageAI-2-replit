@@ -1,4 +1,6 @@
 import * as math from 'mathjs';
+import { Rng, createRng, seedFromObject } from './stats/rng';
+import { buildProvenance } from './stats/computation-provenance';
 
 /**
  * Power & Sample Size Calculator Service
@@ -12,6 +14,23 @@ import * as math from 'mathjs';
  * - Group sequential and adaptive design simulations
  */
 export class PowerSampleSizeService {
+  /** Seeded generator for the group-sequential / adaptive simulations. */
+  private rng: Rng = createRng();
+
+  /**
+   * Reseed the engine for a simulation run. An explicit finite seed is used
+   * verbatim; otherwise a seed is derived deterministically from the inputs so
+   * identical requests reproduce identical simulated power. Returns the seed.
+   */
+  private seedRun(inputs: unknown, explicitSeed?: number): number {
+    const seed =
+      explicitSeed !== undefined && Number.isFinite(explicitSeed)
+        ? Math.trunc(explicitSeed)
+        : seedFromObject(inputs);
+    this.rng = createRng(seed);
+    return seed;
+  }
+
   /**
    * Calculate sample size for a two-sample t-test
    *
@@ -350,8 +369,14 @@ export class PowerSampleSizeService {
     interimLooks: number,
     alpha: number = 0.05,
     power: number = 0.8,
-    spendingFunction: 'obrien-fleming' | 'pocock' = 'obrien-fleming'
+    spendingFunction: 'obrien-fleming' | 'pocock' = 'obrien-fleming',
+    seed?: number
   ): any {
+    const usedSeed = this.seedRun(
+      { expectedEffect, sigma, interimLooks, alpha, power, spendingFunction },
+      seed
+    );
+
     // First, calculate fixed sample size
     const fixedN = this.calculateTTestSampleSize(expectedEffect, sigma, alpha, power).total;
 
@@ -406,6 +431,13 @@ export class PowerSampleSizeService {
       boundaries,
       alphaSpent,
       simulatedPower,
+      seed: usedSeed,
+      provenance: buildProvenance({
+        method: 'power-sample-size:simulateGroupSequentialTrial',
+        seed: usedSeed,
+        inputs: { expectedEffect, sigma, interimLooks, alpha, power, spendingFunction },
+        note: 'Simulated power is reproducible given this seed and these inputs.',
+      }),
     };
   }
 
@@ -471,8 +503,14 @@ export class PowerSampleSizeService {
     sigma: number,
     adaptiveRule: 'promising zone' | 'conditional power' = 'conditional power',
     alpha: number = 0.05,
-    power: number = 0.8
+    power: number = 0.8,
+    seed?: number
   ): any {
+    const usedSeed = this.seedRun(
+      { initialEffect, sigma, adaptiveRule, alpha, power },
+      seed
+    );
+
     // Calculate initial sample size
     const initialN = this.calculateTTestSampleSize(initialEffect, sigma, alpha, power).total;
 
@@ -565,6 +603,13 @@ export class PowerSampleSizeService {
       interimAnalysisAt: interimN,
       adaptiveRule,
       expectedResults: results,
+      seed: usedSeed,
+      provenance: buildProvenance({
+        method: 'power-sample-size:calculateAdaptiveSampleSize',
+        seed: usedSeed,
+        inputs: { initialEffect, sigma, adaptiveRule, alpha, power },
+        note: 'Expected sample size and power per scenario reproduce given this seed and these inputs.',
+      }),
     };
   }
 
@@ -610,11 +655,7 @@ export class PowerSampleSizeService {
    * Generate a standard normal random variate
    */
   private generateStandardNormal(): number {
-    let u = 0,
-      v = 0;
-    while (u === 0) u = Math.random();
-    while (v === 0) v = Math.random();
-    return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+    return this.rng.normal();
   }
 
   /**

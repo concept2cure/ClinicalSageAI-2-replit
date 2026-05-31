@@ -56,44 +56,11 @@ export interface StubInfo {
   phase: string;
 }
 
-export const MDX_STUBS: Record<string, StubInfo> = {
-  engineering: {
-    title: 'Device engineering',
-    icon: 'wrench',
-    desc: 'Risk management (ISO 14971), biocompatibility, cybersecurity premarket submissions, and design controls traceability.',
-    phase: 'Phase 4',
-  },
-  udi: {
-    title: 'UDI and labeling',
-    icon: 'tag',
-    desc: 'UDI issuance, GUDID submission, labeling harmonization across regions, MRI-conditional statements.',
-    phase: 'Phase 4',
-  },
-  postmarket: {
-    title: 'Post-market vigilance',
-    icon: 'alertCircle',
-    desc: 'MDR tracking, trending adverse events, PMS plan execution, and notified-body reporting.',
-    phase: 'Phase 4',
-  },
-  analytics: {
-    title: 'Analytics',
-    icon: 'barChart3',
-    desc: 'Portfolio-wide metrics — cycle times, readiness trends, reviewer velocity, blocker root causes. Read-only.',
-    phase: 'Phase 4',
-  },
-  memory: {
-    title: 'Claude memory',
-    icon: 'database',
-    desc: "Your organization's shared Claude context — style guides, approved language, past review learnings. Pinned to every conversation.",
-    phase: 'Phase 4',
-  },
-  admin: {
-    title: 'Admin and access',
-    icon: 'userCheck',
-    desc: 'Org members, roles, program-level access grants, SSO, audit log. Required for any production rollout.',
-    phase: 'Phase 4',
-  },
-};
+// Phase 4 shipped: engineering, udi, postmarket, analytics, memory, and admin
+// now route to their real surfaces in App.tsx. No MDX nav id falls through to
+// the "in design" placeholder. Kept as an empty map so future pre-design
+// surfaces can register a stub here without reintroducing the import.
+export const MDX_STUBS: Record<string, StubInfo> = {};
 
 export interface AnaMode {
   id: 'standard' | 'deep-research' | 'nano-banana';

@@ -125,10 +125,12 @@ export function useBatchRelease() {
       releasedBy: string;
       decision: 'approved' | 'rejected' | 'conditional';
       comments?: string;
+      reason: string;
+      reauth: { password: string; totp?: string };
     }
   >({
-    mutationFn: ({ id, releaseTesting, releasedBy, decision, comments }) =>
-      cmcService.releaseBatch(id, { releaseTesting, releasedBy, decision, comments }),
+    mutationFn: ({ id, releaseTesting, releasedBy, decision, comments, reason, reauth }) =>
+      cmcService.releaseBatch(id, { releaseTesting, releasedBy, decision, comments, reason, reauth }),
     onSuccess: () => {
       // Reflect the new disposition: project batch list + any batch caches.
       queryClient.invalidateQueries({ queryKey: cmcQueryKeys.batches() });
@@ -266,6 +268,29 @@ export function useUpdateSpecification() {
     { id: string; data: SpecificationPatch; projectId?: string }
   >({
     mutationFn: ({ id, data }) => cmcService.updateSpecification(id, data),
+    onSuccess: (updated, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: cmcQueryKeys.specificationDetail(variables.id),
+      });
+      queryClient.invalidateQueries({ queryKey: cmcQueryKeys.specifications() });
+      const projectId = variables.projectId ?? updated?.project_id ?? undefined;
+      if (projectId) {
+        queryClient.invalidateQueries({ queryKey: cmcQueryKeys.projectSpecs(projectId) });
+      }
+    },
+  });
+}
+
+export function useApproveSpecification() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    CmcSpecRow,
+    Error,
+    { id: string; reason: string; reauth: { password: string; totp?: string }; projectId?: string }
+  >({
+    mutationFn: ({ id, reason, reauth }) =>
+      cmcService.approveSpecification(id, { reason, reauth }),
     onSuccess: (updated, variables) => {
       queryClient.invalidateQueries({
         queryKey: cmcQueryKeys.specificationDetail(variables.id),

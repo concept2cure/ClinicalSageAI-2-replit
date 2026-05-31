@@ -533,13 +533,36 @@ class CMCService {
 
   /**
    * Update specification — PUT /api/cmc/specifications/:id (server uses PUT,
-   * not PATCH). Returns the updated row.
+   * not PATCH). Returns the updated row. Approval cannot happen here; use
+   * approveSpecification, which routes through the governed ledger.
    */
   async updateSpecification(id: string, data: SpecificationPatch): Promise<CmcSpecRow> {
     try {
       return await this.request<CmcSpecRow>('PUT', `${this.baseUrl}/specifications/${id}`, data);
     } catch (error) {
       console.error('[CMC] Update specification failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Approve a specification — POST /api/cmc/specifications/:id/approve.
+   * High-risk governed sign: the server re-verifies the signer (`reauth`) and
+   * writes the audit_logs + c2c_ana_actions ledger pair in one transaction.
+   * The only path to approval; the ungoverned PUT no longer accepts it.
+   */
+  async approveSpecification(
+    id: string,
+    payload: { reason: string; reauth: { password: string; totp?: string } },
+  ): Promise<CmcSpecRow> {
+    try {
+      return await this.request<CmcSpecRow>(
+        'POST',
+        `${this.baseUrl}/specifications/${id}/approve`,
+        payload,
+      );
+    } catch (error) {
+      console.error('[CMC] Approve specification failed:', error);
       throw error;
     }
   }
@@ -955,8 +978,11 @@ class CMCService {
     );
   }
 
-  /** Release a batch record. `decision` is required by the server schema;
-   *  `comments` carries the e-signature reason-for-change into the audit row. */
+  /** Release a batch record — POST /api/cmc/batch-records/:id/release.
+   *  High-risk governed sign: the server re-verifies the signer (`reauth`) and
+   *  writes the audit_logs + c2c_ana_actions ledger pair in one transaction.
+   *  `decision` is required by the server schema; `reason` is the
+   *  reason-for-change recorded verbatim in the ledger. */
   async releaseBatch(
     id: string,
     payload: {
@@ -964,6 +990,8 @@ class CMCService {
       releasedBy: string;
       decision: 'approved' | 'rejected' | 'conditional';
       comments?: string;
+      reason: string;
+      reauth: { password: string; totp?: string };
     },
   ): Promise<unknown> {
     return this.request('POST', `${this.baseUrl}/batch-records/${encodeURIComponent(id)}/release`, payload);

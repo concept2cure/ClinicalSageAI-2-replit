@@ -328,6 +328,15 @@ export async function registerDocumentRoutes({
     console.error('❌ Failed to mount AnA Biostats routes:', error);
   }
 
+  // ── Trial Corpus (ingest → extract → benchmark) ──
+  try {
+    const corpusModule = await import('../routes/corpus-routes');
+    app.use('/api/corpus', corpusModule.default);
+    console.log('✅ Trial Corpus routes mounted (benchmark, extract, ingest)');
+  } catch (error) {
+    console.error('❌ Failed to mount Trial Corpus routes:', error);
+  }
+
   // ── Content Atoms ──
   try {
     const atomsModule = await import('../routes/atoms.js');

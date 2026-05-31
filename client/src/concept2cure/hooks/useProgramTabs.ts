@@ -147,25 +147,24 @@ export interface ReviewIssueArgs {
   /** Parent correspondence id — invalidated on success so the detail refreshes. */
   correspondenceId: string;
   /**
-   * Reason-for-change captured in the confirm dialog. The review route's body
-   * (issueReviewSchema) has no free-text reason/note column, so this value is
-   * NOT sent to the server and therefore not persisted — it is captured for the
-   * operator's intent only. The route accepts no minimal field that would store
-   * it without fabricating a mapping (owner is a person name, not a reason).
+   * Reason-for-change captured in the confirm dialog. The review is a governed
+   * `resolve` action, so the reason is REQUIRED (min 8 chars) and is written
+   * verbatim into the audit_logs + c2c_ana_actions ledger by the server.
    */
-  reason?: string;
+  reason: string;
 }
 
 /**
- * Mark one parsed correspondence issue reviewed. Sends the minimal valid body
- * (humanReviewStatus='confirmed'); on success the parent correspondence detail
- * and the project correspondence list are invalidated.
+ * Mark one parsed correspondence issue reviewed. The review route is a governed
+ * `resolve` action: it requires a reason and writes the mutation-primitives
+ * ledger. On success the parent correspondence detail and the project
+ * correspondence list are invalidated.
  */
 export function useReviewIssue() {
   const queryClient = useQueryClient();
   return useMutation<CorrespondenceIssue, Error, ReviewIssueArgs>({
-    mutationFn: ({ issueId }) =>
-      programTabsService.reviewIssue(issueId, { humanReviewStatus: 'confirmed' }),
+    mutationFn: ({ issueId, reason }) =>
+      programTabsService.reviewIssue(issueId, { humanReviewStatus: 'confirmed', reason }),
     onSuccess: (_issue, { correspondenceId }) => {
       void queryClient.invalidateQueries({
         queryKey: programTabsQueryKeys.correspondenceDetail(correspondenceId),
