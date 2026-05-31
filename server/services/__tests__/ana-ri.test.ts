@@ -1464,6 +1464,108 @@ describe('AnA RI Client Attunement', () => {
   });
 });
 
+// ── Capability registry (anti-drift inventory) ───────────────────────────────
+
+import {
+  CAPABILITIES,
+  CAPABILITY_COMMANDS,
+  getCapability,
+  getCapabilityForCommand,
+  listCapabilitiesByCategory,
+  buildCapabilityCatalogue,
+} from '../ana-ri/capability-registry.js';
+
+describe('AnA RI Capability Registry', () => {
+  const CAP_EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
+
+  it('every capability has commands, a description, and a category', () => {
+    for (const c of CAPABILITIES) {
+      expect(c.commands.length).toBeGreaterThan(0);
+      expect(c.description.length).toBeGreaterThan(20);
+      expect(c.label.length).toBeGreaterThan(3);
+      expect(typeof c.proactive).toBe('boolean');
+    }
+  });
+
+  it('command lookups resolve in both directions', () => {
+    expect(getCapability('challenge')?.label).toMatch(/challenge/i);
+    expect(getCapabilityForCommand('redteam')?.id).toBe('challenge');
+    expect(getCapabilityForCommand('landscape')?.id).toBe('position');
+    expect(getCapabilityForCommand('not-a-command')).toBeNull();
+  });
+
+  it('lists capabilities by category', () => {
+    expect(listCapabilitiesByCategory('judgment').length).toBeGreaterThan(0);
+    expect(listCapabilitiesByCategory('agency').length).toBeGreaterThan(0);
+  });
+
+  it('has no duplicate command across capabilities', () => {
+    const all = CAPABILITIES.flatMap((c) => c.commands);
+    expect(new Set(all).size).toBe(all.length);
+  });
+
+  it('ANTI-DRIFT: every registered capability command is a wired slash command', () => {
+    const wired = new Set<string>(SUPPORTED_SLASH_COMMANDS);
+    for (const cmd of CAPABILITY_COMMANDS) {
+      expect(wired.has(cmd as typeof SUPPORTED_SLASH_COMMANDS[number])).toBe(true);
+    }
+  });
+
+  it('ANTI-DRIFT: every judgment-pack slash command is catalogued here', () => {
+    // The judgment/guidance commands wired in context-enrichment that must be
+    // documented in the registry so AnA never has an undocumented capability.
+    const judgmentCommands = [
+      'wisdom', 'guide', 'orient', 'tour', 'playbook',
+      'challenge', 'redteam', 'devil',
+      'decide', 'tradeoff', 'framework',
+      'meeting', 'agency', 'tactics',
+      'position', 'landscape', 'compete',
+    ];
+    for (const cmd of judgmentCommands) {
+      expect(CAPABILITY_COMMANDS.has(cmd)).toBe(true);
+    }
+  });
+
+  it('builds a grounded catalogue that is not a recite-this menu', () => {
+    const cat = buildCapabilityCatalogue();
+    expect(cat).toContain('enrichment capabilities');
+    expect(cat).toMatch(/Do not recite this as a menu/);
+    // Every capability surfaces with at least one slash command.
+    for (const c of CAPABILITIES) {
+      expect(cat).toContain('/' + c.commands[0]);
+    }
+  });
+
+  it('keeps capability copy inside the design-system voice', () => {
+    for (const c of CAPABILITIES) {
+      const text = [c.label, c.description].join(' ');
+      expect(text).not.toContain('!');
+      expect(CAP_EMOJI.test(text)).toBe(false);
+    }
+  });
+});
+
+describe('AnA RI Enrichment — capabilities command', () => {
+  it('grounds a "what can you do" request in the capability catalogue', async () => {
+    const result = await enrichContextForChat({
+      message: '/capabilities',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'nda',
+    });
+    expect(result.enrichmentMeta?.detectedCommand).toBe('capabilities');
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('capabilities');
+    expect(result.block).toContain('enrichment capabilities');
+  });
+
+  it('grounds capabilities for a project-less user', async () => {
+    const result = await enrichContextForChat({ message: '/capabilities' });
+    expect(result.enrichmentMeta?.hasProjectContext).toBe(false);
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('capabilities');
+  });
+});
+
+// ── Role lens ────────────────────────────────────────────────────────────────
 // ── Role lens ────────────────────────────────────────────────────────────────
 
 import { buildRoleLensBlock, hasRoleLens } from '../ana-ri/role-lens.js';

@@ -32,6 +32,7 @@ import { buildDecisionFrameworkBlock, detectRelevantFrameworks } from './decisio
 import { buildAgencyTacticsBlock, detectRelevantTactics } from './agency-tactics.js';
 import { buildCompetitiveBlock, detectRelevantPlays } from './competitive-strategy.js';
 import { buildAttunementBlock, detectClientState } from './client-attunement.js';
+import { buildCapabilityCatalogue } from './capability-registry.js';
 import { buildRoleLensBlock, hasRoleLens } from './role-lens.js';
 import type { UserRole } from './persona.js';
 import { buildWorkflowContext } from './workflow-orchestration.js';
@@ -171,6 +172,8 @@ export const SUPPORTED_SLASH_COMMANDS = [
   'position',
   'landscape',
   'compete',
+  'capabilities',
+  'whatcanyoudo',
 ] as const;
 
 /** Enrichment sources that emit guidance the role lens can frame for an audience. */
@@ -1061,6 +1064,9 @@ export async function enrichContextForChat(params: {
     } else if (slashNoProj && ['position', 'landscape', 'compete'].includes(slashNoProj.command)) {
       const block = buildCompetitiveForMessage(slashNoProj.args || message, submissionType, true);
       if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
+    } else if (slashNoProj && ['capabilities', 'whatcanyoudo'].includes(slashNoProj.command)) {
+      const block = buildCapabilityCatalogue();
+      if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
     }
 
     if (hasRoleLens(userRole) && projectlessSources.some(s => ROLE_FRAMEABLE_SOURCES.has(s))) {
@@ -1068,7 +1074,7 @@ export async function enrichContextForChat(params: {
       if (lensBlock) { projectlessBlocks.push(lensBlock); projectlessSources.push('role-lens'); }
     }
 
-    const wisdomOrChallengeFamily = [...wisdomFamily, ...challengeFamily, 'decide', 'tradeoff', 'framework', 'meeting', 'agency', 'tactics', 'position', 'landscape', 'compete'];
+    const wisdomOrChallengeFamily = [...wisdomFamily, ...challengeFamily, 'decide', 'tradeoff', 'framework', 'meeting', 'agency', 'tactics', 'position', 'landscape', 'compete', 'capabilities', 'whatcanyoudo'];
     return {
       block: projectlessBlocks.join('\n'),
       sources: projectlessSources,
@@ -1199,6 +1205,8 @@ export async function enrichContextForChat(params: {
       position: () => Promise.resolve(buildCompetitiveForMessage(slash.args || message, submissionType, true)),
       landscape: () => Promise.resolve(buildCompetitiveForMessage(slash.args || message, submissionType, true)),
       compete: () => Promise.resolve(buildCompetitiveForMessage(slash.args || message, submissionType, true)),
+      capabilities: () => Promise.resolve(buildCapabilityCatalogue()),
+      whatcanyoudo: () => Promise.resolve(buildCapabilityCatalogue()),
       workflow: () => submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
       status: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
@@ -1321,6 +1329,8 @@ export async function enrichContextForChat(params: {
         : 'Help the user position against the competitive landscape. Read precedent for where it actually transfers, position against the approved label rather than marketing, and differentiate on the axis the agency rewards.',
       landscape: 'Read the competitive and precedent landscape for the user: which approvals transfer, what the labels actually claim, and where the failures mark the bar.',
       compete: 'Help the user compete: position against the competitor\'s approved label, differentiate on the axis the agency rewards, and treat a path that unwound for a rival as a raised bar, not an opening.',
+      capabilities: 'The user is asking what you can do. Use the grounded capability inventory in context. Do not recite it as a menu — name the two or three capabilities that fit their actual situation and offer to apply one now.',
+      whatcanyoudo: 'The user is asking what you can do. Use the grounded capability inventory in context. Do not recite it as a menu — name the two or three capabilities that fit their actual situation and offer to apply one now.',
       export: 'Export this conversation.',
     };
 
