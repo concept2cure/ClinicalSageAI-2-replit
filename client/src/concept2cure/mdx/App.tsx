@@ -306,6 +306,9 @@ export function App({ initialNav, projectName, onOpenAuthoring }: AppProps = {})
         </div>
       </main>
       {true && (
+        // No projectId passed to AnaRail: the MDX context id is a device/program
+        // id, not a numeric project id, and /api/chat/upload 400s on a non-numeric
+        // projectId. Uploads here stay org-scoped until MDX exposes a real project id.
         <AnaRail
           open={anaOpen}
           setOpen={setAnaOpen}

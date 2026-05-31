@@ -425,6 +425,7 @@ export function PdevApp({
         onSend={askAna}
         isStreaming={!onAskAna && anaChat.isStreaming}
         messages={dockMessages}
+        projectId={projectIdForProgram != null ? String(projectIdForProgram) : undefined}
       />
 
       {activeActivity && programId && (

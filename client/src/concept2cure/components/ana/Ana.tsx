@@ -519,6 +519,7 @@ export function Ana({
             onEditRegenerate={handleEditRegenerate}
             onSuggestedAction={handleSuggestedAction}
             suggestedActionLabels={SUGGESTED_ACTION_LABELS}
+            projectId={resolvedProjectId ?? undefined}
           />
         )}
         {view === 'projects' && (

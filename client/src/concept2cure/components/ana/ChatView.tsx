@@ -65,6 +65,8 @@ export interface ChatViewProps {
   onSuggestedAction?: (actionType: string) => void;
   /** Client-side label map for DocumentActionType strings. */
   suggestedActionLabels?: Record<string, string>;
+  /** Scopes composer uploads to a project so extracted text lands in its memory. */
+  projectId?: string;
 }
 
 export function ChatView({
@@ -79,6 +81,7 @@ export function ChatView({
   onEditRegenerate,
   onSuggestedAction,
   suggestedActionLabels,
+  projectId,
 }: ChatViewProps) {
   const [draft, setDraft] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
@@ -183,6 +186,7 @@ export function ChatView({
           onStop={onStop}
           isStreaming={isStreaming}
           placeholder="Reply to AnA…"
+          projectId={projectId}
         />
       </div>
     </div>
