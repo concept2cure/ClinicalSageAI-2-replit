@@ -26,6 +26,10 @@ export interface SapRequestData {
   duration_weeks?: number;
   statistical_methods?: string;
   dropout_rate?: number;
+  // Statistical assumptions for the sample-size justification. Supplied by the
+  // study statistician — this service does not fabricate them when absent.
+  target_power?: number; // e.g. 0.8 for 80% power
+  minimum_detectable_effect?: number; // standardized effect size
   // Operating system context (optional — for assumption capture)
   organizationId?: number;
   projectId?: number;
@@ -79,6 +83,8 @@ export class SapGeneratorService {
         blinding,
         duration_weeks = 24,
         dropout_rate = 0.15,
+        target_power,
+        minimum_detectable_effect,
       } = protocolData;
 
       // Calculate effective sample size accounting for dropouts
@@ -95,9 +101,20 @@ export class SapGeneratorService {
       // Calculate per-arm sample size
       const perArmSampleSize = Math.floor(sample_size / numArms);
 
-      // Generate placeholders for power calculations
-      const powerForPrimary = 0.8 + Math.random() * 0.1; // 80-90% power
-      const requiredEffectSize = 0.3 + Math.random() * 0.2; // 0.3-0.5 effect size
+      // Statistical assumptions come from the caller (the study statistician),
+      // not from fabricated random values. When absent, the SAP narrative defers
+      // to the statistician rather than asserting a power figure that was never
+      // computed. See FORENSIC_CODE_AUDIT_2026-05-29.md HI-2.
+      const powerForPrimary =
+        typeof target_power === 'number' ? target_power : null;
+      const requiredEffectSize =
+        typeof minimum_detectable_effect === 'number'
+          ? minimum_detectable_effect
+          : null;
+      const sampleSizeJustification =
+        powerForPrimary !== null && requiredEffectSize !== null
+          ? `a sample size of ${sample_size} will provide ${(powerForPrimary * 100).toFixed(0)}% power to detect a difference of ${requiredEffectSize.toFixed(2)} at a two-sided significance level of 0.05, assuming a dropout rate of ${(dropout_rate * 100).toFixed(0)}%`
+          : `the target power and minimum detectable effect must be specified and computed by the study statistician. Sample size of ${sample_size} is recorded as provided; this draft does not assert a power figure that has not been calculated. Dropout rate assumed at ${(dropout_rate * 100).toFixed(0)}%`;
 
       // Get relevant similar trials from the database
       const similarTrials = await this.findSimilarProtocols(indication, phase);
@@ -128,7 +145,7 @@ Study Information:
    - Stratification factors: Disease severity, age group, previous treatment
 
 3. SAMPLE SIZE JUSTIFICATION
-   Based on the primary endpoint (${primary_endpoint}), a sample size of ${sample_size} will provide ${(powerForPrimary * 100).toFixed(0)}% power to detect a difference of ${requiredEffectSize.toFixed(2)} at a two-sided significance level of 0.05, assuming a dropout rate of ${(dropout_rate * 100).toFixed(0)}%.
+   Based on the primary endpoint (${primary_endpoint}), ${sampleSizeJustification}.
 
    Per-arm sample size: ${perArmSampleSize}
 
@@ -207,9 +224,9 @@ Study Information:
             sampleSize: sample_size,
             dropoutRate: dropout_rate,
             primaryEndpoint: primary_endpoint,
-            effectSize: requiredEffectSize,
+            effectSize: requiredEffectSize ?? undefined,
             alpha: 0.05,
-            power: powerForPrimary,
+            power: powerForPrimary ?? undefined,
             regulatorBody: protocolData.regulatorBody,
             jurisdiction: protocolData.jurisdiction,
             sourceArtifactId: protocolData.sourceArtifactId,

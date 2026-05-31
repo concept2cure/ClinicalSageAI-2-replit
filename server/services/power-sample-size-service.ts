@@ -1,4 +1,6 @@
 import * as math from 'mathjs';
+import { Rng, createRng, seedFromObject } from './stats/rng';
+import { buildProvenance } from './stats/computation-provenance';
 
 /**
  * Power & Sample Size Calculator Service
@@ -12,6 +14,23 @@ import * as math from 'mathjs';
  * - Group sequential and adaptive design simulations
  */
 export class PowerSampleSizeService {
+  /** Seeded generator for the group-sequential / adaptive simulations. */
+  private rng: Rng = createRng();
+
+  /**
+   * Reseed the engine for a simulation run. An explicit finite seed is used
+   * verbatim; otherwise a seed is derived deterministically from the inputs so
+   * identical requests reproduce identical simulated power. Returns the seed.
+   */
+  private seedRun(inputs: unknown, explicitSeed?: number): number {
+    const seed =
+      explicitSeed !== undefined && Number.isFinite(explicitSeed)
+        ? Math.trunc(explicitSeed)
+        : seedFromObject(inputs);
+    this.rng = createRng(seed);
+    return seed;
+  }
+
   /**
    * Calculate sample size for a two-sample t-test
    *
@@ -350,8 +369,14 @@ export class PowerSampleSizeService {
     interimLooks: number,
     alpha: number = 0.05,
     power: number = 0.8,
-    spendingFunction: 'obrien-fleming' | 'pocock' = 'obrien-fleming'
+    spendingFunction: 'obrien-fleming' | 'pocock' = 'obrien-fleming',
+    seed?: number
   ): any {
+    const usedSeed = this.seedRun(
+      { expectedEffect, sigma, interimLooks, alpha, power, spendingFunction },
+      seed
+    );
+
     // First, calculate fixed sample size
     const fixedN = this.calculateTTestSampleSize(expectedEffect, sigma, alpha, power).total;
 
@@ -406,6 +431,13 @@ export class PowerSampleSizeService {
       boundaries,
       alphaSpent,
       simulatedPower,
+      seed: usedSeed,
+      provenance: buildProvenance({
+        method: 'power-sample-size:simulateGroupSequentialTrial',
+        seed: usedSeed,
+        inputs: { expectedEffect, sigma, interimLooks, alpha, power, spendingFunction },
+        note: 'Simulated power is reproducible given this seed and these inputs.',
+      }),
     };
   }
 
@@ -471,8 +503,14 @@ export class PowerSampleSizeService {
     sigma: number,
     adaptiveRule: 'promising zone' | 'conditional power' = 'conditional power',
     alpha: number = 0.05,
-    power: number = 0.8
+    power: number = 0.8,
+    seed?: number
   ): any {
+    const usedSeed = this.seedRun(
+      { initialEffect, sigma, adaptiveRule, alpha, power },
+      seed
+    );
+
     // Calculate initial sample size
     const initialN = this.calculateTTestSampleSize(initialEffect, sigma, alpha, power).total;
 
@@ -565,6 +603,13 @@ export class PowerSampleSizeService {
       interimAnalysisAt: interimN,
       adaptiveRule,
       expectedResults: results,
+      seed: usedSeed,
+      provenance: buildProvenance({
+        method: 'power-sample-size:calculateAdaptiveSampleSize',
+        seed: usedSeed,
+        inputs: { initialEffect, sigma, adaptiveRule, alpha, power },
+        note: 'Expected sample size and power per scenario reproduce given this seed and these inputs.',
+      }),
     };
   }
 
@@ -610,11 +655,7 @@ export class PowerSampleSizeService {
    * Generate a standard normal random variate
    */
   private generateStandardNormal(): number {
-    let u = 0,
-      v = 0;
-    while (u === 0) u = Math.random();
-    while (v === 0) v = Math.random();
-    return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+    return this.rng.normal();
   }
 
   /**
@@ -682,37 +723,20 @@ export class PowerSampleSizeService {
    * @returns Distribution of effect sizes
    */
   async getHistoricalEffectSizes(indication: string, endpointType: string): Promise<any> {
-    // This would ideally be implemented with a database query
-    // For now returning mockup data
-    return (
-      {
-        continuous: {
-          mean: 0.5,
-          median: 0.45,
-          percentile25: 0.3,
-          percentile75: 0.7,
-          range: [0.2, 1.2],
-          description: "Standardized mean difference (Cohen's d)",
-        },
-        binary: {
-          meanOddsRatio: 1.8,
-          medianOddsRatio: 1.6,
-          rangeOddsRatio: [1.2, 3.5],
-          meanRiskRatio: 1.5,
-          medianRiskRatio: 1.4,
-          rangeRiskRatio: [1.1, 2.8],
-          description: 'Odds ratios and risk ratios from similar trials',
-        },
-        timeToEvent: {
-          meanHazardRatio: 0.75,
-          medianHazardRatio: 0.72,
-          rangeHazardRatio: [0.5, 0.95],
-          description: 'Hazard ratios from similar trials',
-        },
-      }[endpointType] || {
-        description: 'No historical data available for this endpoint type',
-      }
-    );
+    // Historical effect-size priors must be sourced from the CSR/trials database.
+    // No such query is wired yet, so this returns an explicit "unavailable" result
+    // rather than fabricated constants that would feed power calculations under the
+    // guise of "historical data from similar trials".
+    // See FORENSIC_CODE_AUDIT_2026-05-29.md HI-2.
+    return {
+      available: false,
+      source: 'none',
+      indication,
+      endpointType,
+      note:
+        'No historical effect-size data available. Supply an effect size from your own ' +
+        'prior evidence or a published source; this service does not substitute fabricated priors.',
+    };
   }
 
   /**
@@ -723,51 +747,19 @@ export class PowerSampleSizeService {
    * @returns Distribution of dropout rates
    */
   async getHistoricalDropoutRates(indication: string, phase: string): Promise<any> {
-    // This would ideally be implemented with a database query
-    // For now returning mockup data based on typical patterns
-    const baseRate = 0.15; // 15% base dropout rate
-
-    let multiplier = 1.0;
-
-    // Adjust by phase
-    if (phase.toLowerCase().includes('1')) {
-      multiplier *= 0.8; // Phase 1 often has lower dropout
-    } else if (phase.toLowerCase().includes('3')) {
-      multiplier *= 1.2; // Phase 3 often has higher dropout
-    }
-
-    // Some indications have higher dropout rates
-    if (
-      indication.toLowerCase().includes('oncology') ||
-      indication.toLowerCase().includes('cancer')
-    ) {
-      multiplier *= 1.3;
-    } else if (
-      indication.toLowerCase().includes('psych') ||
-      indication.toLowerCase().includes('mental')
-    ) {
-      multiplier *= 1.4;
-    } else if (indication.toLowerCase().includes('chronic')) {
-      multiplier *= 1.2;
-    }
-
-    const meanRate = baseRate * multiplier;
-
+    // Historical dropout rates must be sourced from the CSR/trials database.
+    // No such query is wired yet, so this returns an explicit "unavailable" result
+    // rather than a fabricated rate derived from a hardcoded 15% base and arbitrary
+    // multipliers presented as "typical patterns".
+    // See FORENSIC_CODE_AUDIT_2026-05-29.md HI-2.
     return {
-      mean: meanRate,
-      median: meanRate * 0.9, // Usually slightly lower than mean
-      range: [meanRate * 0.5, meanRate * 1.5],
-      byDuration: {
-        '3 months': meanRate * 0.7,
-        '6 months': meanRate,
-        '12 months': meanRate * 1.4,
-        '24 months': meanRate * 1.8,
-      },
-      recommendations: {
-        conservative: meanRate * 1.5,
-        typical: meanRate,
-        optimistic: meanRate * 0.7,
-      },
+      available: false,
+      source: 'none',
+      indication,
+      phase,
+      note:
+        'No historical dropout-rate data available. Supply an expected dropout rate from ' +
+        'your own prior evidence or a published source; this service does not substitute fabricated rates.',
     };
   }
 

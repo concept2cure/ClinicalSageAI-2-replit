@@ -6,6 +6,8 @@ import {
 } from 'shared/schema';
 import { eq, and, inArray, sql } from 'drizzle-orm';
 import * as math from 'mathjs';
+import { createRng, seedFromObject } from './stats/rng';
+import { buildProvenance } from './stats/computation-provenance';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -967,11 +969,26 @@ export class ExternalControlArmService {
       syntheticControlId: number;
       covariates: string[];
       modelType?: string;
+      seed?: number;
     },
     organizationId: number
   ) {
     const database = this.getDb();
     const modelType = params.modelType ?? 'logistic';
+
+    // Reseed deterministically so the within-arm jitter used to build the
+    // pseudo-individual-level data is reproducible — the fitted propensity model,
+    // c-statistic, and balance metrics regenerate from the same seed and inputs.
+    const usedSeed =
+      params.seed !== undefined && Number.isFinite(params.seed)
+        ? Math.trunc(params.seed)
+        : seedFromObject({
+            syntheticControlId: params.syntheticControlId,
+            covariates: params.covariates,
+            modelType,
+            organizationId,
+          });
+    const rng = createRng(usedSeed);
 
     // Fetch the synthetic control
     const [control] = await database
@@ -1024,7 +1041,7 @@ export class ExternalControlArmService {
             ? (demographics[cov] as number)
             : 0;
           // Add small jitter to create within-arm variation
-          const jitter = (Math.random() - 0.5) * 0.1 * Math.abs(baseValue || 1);
+          const jitter = (rng.uniform() - 0.5) * 0.1 * Math.abs(baseValue || 1);
           row.push(baseValue + jitter);
         }
         X.push(row);
@@ -1107,6 +1124,18 @@ export class ExternalControlArmService {
       cStatistic: Math.round(cStatistic * 1000) / 1000,
       balanceMetrics,
       trimmingBounds,
+      seed: usedSeed,
+      provenance: buildProvenance({
+        method: 'external-control-arm:fitPropensityModel',
+        seed: usedSeed,
+        inputs: {
+          syntheticControlId: params.syntheticControlId,
+          covariates: params.covariates,
+          modelType,
+          organizationId,
+        },
+        note: 'Propensity model, c-statistic, and balance metrics reproduce given this seed and these inputs.',
+      }),
     };
   }
 

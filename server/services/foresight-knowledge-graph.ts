@@ -344,58 +344,25 @@ export class ForesightKnowledgeGraph {
   }
   
   private async extractBiomarkers(csrData: any): Promise<Array<{ id: string; name: string; type: string }>> {
-    // Extract biomarkers from CSR data
-    // This would parse the CSR content for biomarker mentions
-    const biomarkers: Array<{ id: string; name: string; type: string }> = [];
-    
-    // Simplified extraction - in production this would use NLP
+    // Return biomarkers only when they are actually present in the CSR metadata.
+    // No NLP extraction is wired, so we do NOT fabricate indication-based defaults
+    // (e.g. HbA1c for diabetes, PD-L1 for oncology) and present them as "extracted
+    // from CSR data". See FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: heuristic dressed as NLP).
     if (csrData.metadata?.biomarkers) {
       return csrData.metadata.biomarkers;
     }
-    
-    // Default biomarkers based on indication
-    if (csrData.indication?.toLowerCase().includes('diabetes')) {
-      biomarkers.push(
-        { id: 'hba1c', name: 'HbA1c', type: 'metabolite' },
-        { id: 'glucose', name: 'Blood Glucose', type: 'metabolite' }
-      );
-    }
-    
-    if (csrData.indication?.toLowerCase().includes('oncology')) {
-      biomarkers.push(
-        { id: 'pd-l1', name: 'PD-L1', type: 'protein' },
-        { id: 'ctdna', name: 'Circulating Tumor DNA', type: 'gene' }
-      );
-    }
-    
-    return biomarkers;
+    return [];
   }
   
   private async extractEndpoints(csrData: any): Promise<Array<{ id: string; name: string; type: string }>> {
-    // Extract endpoints from CSR data
-    const endpoints: Array<{ id: string; name: string; type: string }> = [];
-    
-    // Simplified extraction - in production this would use NLP
+    // Return endpoints only when they are actually present in the CSR metadata.
+    // No NLP extraction is wired, so we do NOT fabricate phase-based defaults
+    // (e.g. "Primary Efficacy" / "Quality of Life") and present them as extracted.
+    // See FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: heuristic dressed as NLP).
     if (csrData.metadata?.endpoints) {
       return csrData.metadata.endpoints;
     }
-    
-    // Default endpoints based on phase
-    if (csrData.phase === 'Phase I') {
-      endpoints.push(
-        { id: 'safety', name: 'Safety and Tolerability', type: 'safety' },
-        { id: 'pk', name: 'Pharmacokinetics', type: 'exploratory' }
-      );
-    }
-    
-    if (csrData.phase === 'Phase II' || csrData.phase === 'Phase III') {
-      endpoints.push(
-        { id: 'efficacy', name: 'Primary Efficacy', type: 'primary' },
-        { id: 'qol', name: 'Quality of Life', type: 'secondary' }
-      );
-    }
-    
-    return endpoints;
+    return [];
   }
 }
 

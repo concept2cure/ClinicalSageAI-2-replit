@@ -590,7 +590,11 @@ class Part11ComplianceService {
   /**
    * Generate cryptographic signature
    */
-  generateCryptographicSignature(data: Record<string, any>, userId: number) {
+  generateCryptographicSignature(
+    data: Record<string, any>,
+    userId: number,
+    ipAddress?: string | null
+  ) {
     const dataString = JSON.stringify(data);
     const hash = crypto.createHash(this.hashAlgorithm).update(dataString).digest('hex');
 
@@ -605,7 +609,10 @@ class Part11ComplianceService {
       hash,
       data: dataString,
       verificationCode,
-      ipAddress: '127.0.0.1', // In production, get actual IP
+      // Honest attribution: record the real client IP when the caller threads it
+      // (route handlers have req.ip), or null when unknown — never a fabricated
+      // 127.0.0.1. See FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: Part 11 attribution).
+      ipAddress: ipAddress ?? null,
     };
   }
 

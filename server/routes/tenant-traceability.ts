@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * QMP Traceability Matrix API Routes
  *
@@ -56,6 +55,20 @@ declare global {
 const router = Router();
 const logger = createScopedLogger('traceability-routes');
 
+// `requireOrganizationContext` (mounted below) guarantees req.tenantContext and a
+// non-null organizationId before any handler runs. These helpers narrow the
+// optional/nullable tenant-context types to the concrete numeric ids the queries
+// use. organizationId is a string at runtime but is compared against integer
+// columns; node-postgres serialises number and string params identically, so
+// coercing to number is behaviour-preserving (only the TS type changes).
+function tenantOrgId(req: Request): number {
+  return Number(req.tenantContext?.organizationId);
+}
+function tenantUserId(req: Request): number | null {
+  const v = req.tenantContext?.userId;
+  return v == null ? null : Number(v);
+}
+
 // Import the getDb helper from the tenantDbHelper
 import { getDb } from '../db/tenantDbHelper';
 
@@ -69,7 +82,7 @@ router.use(requireOrganizationContext);
 router.get('/:qmpId', async (req, res) => {
   try {
     const { qmpId } = req.params;
-    const { organizationId } = req.tenantContext;
+    const organizationId = tenantOrgId(req);
 
     // Convert qmpId to number
     const qmpIdNumber = parseInt(qmpId, 10);
@@ -103,7 +116,7 @@ router.get('/:qmpId', async (req, res) => {
 router.get('/item/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { organizationId } = req.tenantContext;
+    const organizationId = tenantOrgId(req);
 
     // Convert id to number
     const itemId = parseInt(id, 10);
@@ -141,7 +154,7 @@ router.get('/item/:id', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   try {
-    const { organizationId } = req.tenantContext;
+    const organizationId = tenantOrgId(req);
 
     // Validate input
     const itemSchema = insertQmpTraceabilityMatrixSchema.extend({
@@ -156,7 +169,10 @@ router.post('/', async (req, res) => {
       });
     }
 
-    const itemData = validationResult.data;
+    // Note: the zod-derived InsertQmpTraceabilityMatrix infers as {} (a known
+    // drizzle-zod quirk for createInsertSchemaOmit), so we type itemData by the
+    // table's own insert type, which resolves to the real columns.
+    const itemData = validationResult.data as typeof qmpTraceabilityMatrix.$inferInsert;
 
     // Verify the QMP belongs to the tenant
     const qmpResults = await getDb(req)
@@ -202,7 +218,10 @@ router.post('/', async (req, res) => {
     };
 
     // Create traceability item
-    const result = await getDb(req).insert(qmpTraceabilityMatrix).values(newItem).returning();
+    const result = await getDb(req)
+      .insert(qmpTraceabilityMatrix)
+      .values(newItem as typeof qmpTraceabilityMatrix.$inferInsert)
+      .returning();
 
     // Get the newly created item or use the returned item
     const createdItem =
@@ -233,7 +252,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { organizationId } = req.tenantContext;
+    const organizationId = tenantOrgId(req);
 
     // Convert id to number
     const itemId = parseInt(id, 10);
@@ -254,7 +273,7 @@ router.put('/:id', async (req, res) => {
       });
     }
 
-    const updateData = validationResult.data;
+    const updateData = validationResult.data as Partial<typeof qmpTraceabilityMatrix.$inferInsert>;
 
     // Check if item exists and belongs to tenant
     const existingItemResults = await getDb(req)
@@ -335,7 +354,7 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { organizationId } = req.tenantContext;
+    const organizationId = tenantOrgId(req);
 
     // Convert id to number
     const itemId = parseInt(id, 10);
@@ -383,8 +402,13 @@ router.delete('/:id', async (req, res) => {
 router.put('/verify-batch/:qmpId', async (req, res) => {
   try {
     const { qmpId } = req.params;
-    const { organizationId, userId } = req.tenantContext;
-    const { itemIds, verificationStatus, notes } = req.body;
+    const organizationId = tenantOrgId(req);
+    const userId = tenantUserId(req);
+    const { itemIds, verificationStatus, notes } = req.body as {
+      itemIds?: number[];
+      verificationStatus?: string;
+      notes?: string;
+    };
 
     // Convert qmpId to number
     const qmpIdNumber = parseInt(qmpId, 10);
@@ -462,7 +486,7 @@ router.put('/verify-batch/:qmpId', async (req, res) => {
 router.get('/stats/:qmpId', async (req, res) => {
   try {
     const { qmpId } = req.params;
-    const { organizationId } = req.tenantContext;
+    const organizationId = tenantOrgId(req);
 
     // Convert qmpId to number
     const qmpIdNumber = parseInt(qmpId, 10);

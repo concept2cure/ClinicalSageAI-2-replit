@@ -1,5 +1,5 @@
 /* global React, I */
-const { useState, useMemo } = React;
+var { useState, useMemo } = React;
 
 /* Walk the recursive outline → flat array of {id, depth, ...} for filtering */
 function flatten(nodes, depth = 0, out = []) {

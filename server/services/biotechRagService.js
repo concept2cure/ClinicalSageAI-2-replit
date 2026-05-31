@@ -11,12 +11,22 @@ import { v4 as uuidv4 } from 'uuid';
 import pdfParse from '../utils/pdfParse';
 import mammoth from 'mammoth';
 import * as cheerio from 'cheerio';
+import OpenAI from 'openai';
 
-// Initialize OpenAI if API key is available
+// Initialize OpenAI if an API key is available. Previously this try block was
+// empty, so `openai` was always null and the service silently used crude TF-IDF
+// fallback embeddings even when a real key was configured.
+// See FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: degraded-by-default RAG).
 let openai = null;
 try {
+  if (process.env.OPENAI_API_KEY) {
+    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  } else {
+    console.warn('biotechRagService: OPENAI_API_KEY not set — using fallback TF-IDF embeddings');
+  }
 } catch (error) {
-  console.log('OpenAI initialization failed, using fallback embeddings');
+  console.warn('biotechRagService: OpenAI initialization failed, using fallback embeddings:', error?.message);
+  openai = null;
 }
 
 // Fallback embedding generator (simple TF-IDF based)

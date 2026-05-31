@@ -24,6 +24,26 @@ import { sql } from 'drizzle-orm';
 
 const router = Router();
 
+/**
+ * Honesty disclosure attached to every prediction-bearing response from this router.
+ * These simulations are stochastic illustrations driven by fixed assumptions and
+ * randomized panelist/timing draws — they are NOT trained on, or validated against,
+ * historical regulatory decisions. Presenting them without this disclosure would
+ * misrepresent RNG output as predictive analysis.
+ * See FORENSIC_CODE_AUDIT_2026-05-29.md HI-1.
+ */
+const SIMULATION_DISCLOSURE = {
+  predictive: false,
+  methodology: 'monte-carlo-illustration',
+  validatedAgainstHistoricalDecisions: false,
+  note:
+    'Illustrative simulation, not a validated prediction of any regulatory outcome. ' +
+    'Panelist votes, review timing, RTF/deficiency likelihoods, and advisory-committee ' +
+    'sentiment are produced by a stochastic model using fixed assumptions — not by a model ' +
+    'trained on historical FDA/EMA/PMDA decisions. Do not rely on these figures for ' +
+    'regulatory decision-making.',
+} as const;
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // DB Table Initialization
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1555,6 +1575,7 @@ router.post('/simulations', async (req: Request, res: Response) => {
       therapeuticArea: submission.therapeuticArea,
       summary,
       results,
+      _disclosure: SIMULATION_DISCLOSURE,
     });
   } catch (error: any) {
     console.error('[regulatory-digital-twin] Simulation error:', error);
@@ -1576,6 +1597,7 @@ router.get('/simulations/:id', async (req: Request, res: Response) => {
       createdAt: sim.createdAt,
       submission: sim.submissionProfile,
       results: sim.results,
+      _disclosure: SIMULATION_DISCLOSURE,
     });
   } catch (error: any) {
     console.error('[DigitalTwin] Failed to retrieve simulation:', error);
@@ -1589,7 +1611,7 @@ router.get('/simulations/:id', async (req: Request, res: Response) => {
 router.get('/simulations', async (_req: Request, res: Response) => {
   try {
     const simulations = await dbListSimulations();
-    res.json({ simulations, total: simulations.length });
+    res.json({ simulations, total: simulations.length, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
     console.error('[DigitalTwin] Failed to list simulations:', error);
     res.status(500).json({ error: 'Failed to list simulations', details: error.message });
@@ -1614,6 +1636,7 @@ router.post('/predict-questions', async (req: Request, res: Response) => {
       },
       byCategory: groupBy(questions, 'category'),
       questions,
+      _disclosure: SIMULATION_DISCLOSURE,
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -1628,7 +1651,7 @@ router.post('/rtf-assessment', (req: Request, res: Response) => {
     const { submission } = req.body;
     const twin = new RegulatoryDigitalTwin();
     const assessment = twin.assessRTFRisk(submission);
-    res.json(assessment);
+    res.json({ ...assessment, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -1643,7 +1666,7 @@ router.post('/deficiency-prediction', (req: Request, res: Response) => {
     const twin = new RegulatoryDigitalTwin();
     const rtfRisk = twin.assessRTFRisk(submission);
     const prediction = twin.predictDeficiencyLetter(submission, rtfRisk);
-    res.json(prediction);
+    res.json({ ...prediction, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -1657,7 +1680,7 @@ router.post('/advisory-committee', (req: Request, res: Response) => {
     const { submission, committeeType } = req.body;
     const twin = new RegulatoryDigitalTwin();
     const simulation = twin.simulateAdvisoryCommittee(submission, committeeType);
-    res.json(simulation);
+    res.json({ ...simulation, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -1675,7 +1698,7 @@ router.post('/monte-carlo-timing', (req: Request, res: Response) => {
       targetDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
       iterations || 10000
     );
-    res.json(result);
+    res.json({ ...result, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -1694,6 +1717,7 @@ router.post('/cross-agency', async (req: Request, res: Response) => {
       agencies: Object.keys(comparison),
       comparison,
       harmonizationOpportunities: identifyHarmonizationOpportunities(comparison),
+      _disclosure: SIMULATION_DISCLOSURE,
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

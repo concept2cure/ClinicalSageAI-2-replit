@@ -5,7 +5,7 @@
  *
  * Consolidated from:
  * - document-routes.ts (core document operations)
- * - documentAuthoring.routes.ts (document authoring)
+ * - documentAuthoring.routes.ts (document authoring: create + fetch)
  * - documentOrchestrationRoutes.ts (document orchestration)
  * - document_qc_routes.ts (document QC)
  * - document-data-center.ts (document data center)
@@ -112,8 +112,8 @@ router.get('/docs', (_req: Request, res: Response) => {
         legacyPath: '/api/documents/*',
       },
       '/authoring': {
-        description: 'Document authoring and editing',
-        methods: ['GET', 'POST', 'PUT'],
+        description: 'Document authoring (create, fetch) — 21 CFR Part 11',
+        methods: ['GET', 'POST'],
         legacyPath: '/api/document-authoring/*',
       },
       '/orchestration': {
@@ -159,7 +159,7 @@ async function mountSubRouters() {
     logger.error('Failed to mount core document routes:', error);
   }
 
-  // Document authoring
+  // Document authoring (create + fetch; 21 CFR Part 11 path)
   try {
     const authoringModule = await import('./documentAuthoring.routes');
     router.use('/authoring', authoringModule.default);

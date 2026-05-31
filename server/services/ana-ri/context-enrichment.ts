@@ -24,6 +24,21 @@ import { getProjectIntelligence } from '../intelligence/project-intelligence-ser
 import { analyzeCrossModuleRelationships } from '../intelligence/cross-module-intelligence.js';
 import { buildEvidenceChain, computeConfidence, analyzeFactors, type EvidenceSource } from '../intelligence/evidence-confidence-model.js';
 import { getDeficienciesBySubmissionType, getCriticalDeficiencies, type SubmissionType } from './deficiency-taxonomy.js';
+import { buildIndustryWisdomBlock, inferSegmentFromSubmissionType, inferSegmentFromMessage } from './industry-wisdom-pack.js';
+import { buildTourGuideBlock } from './use-case-playbooks.js';
+import { buildChallengeBlock, detectChallengeableClaims } from './challenge-library.js';
+import { buildFirstSessionTour } from './onboarding-tour.js';
+import { buildDecisionFrameworkBlock, detectRelevantFrameworks } from './decision-frameworks.js';
+import { buildAgencyTacticsBlock, detectRelevantTactics } from './agency-tactics.js';
+import { buildCompetitiveBlock, detectRelevantPlays } from './competitive-strategy.js';
+import { buildAlignmentBlock, detectRelevantAlignment } from './stakeholder-alignment.js';
+import { buildAttunementBlock, detectClientState } from './client-attunement.js';
+import { buildClaimGroundingBlock, detectClaimCategories } from './claim-grounding.js';
+import { buildCapabilityCatalogue } from './capability-registry.js';
+import { buildScopeGuardBlock, detectScopeCategories } from './scope-guard.js';
+import { buildRoleLensBlock, hasRoleLens } from './role-lens.js';
+import { composeContext, priorityForSource, type CandidateBlock, type ComposeTraceEntry } from './context-composer.js';
+import type { UserRole } from './persona.js';
 import { buildWorkflowContext } from './workflow-orchestration.js';
 import { detectDocumentType, buildDocumentGenerationContext } from './document-routing.js';
 import { getFeedbackSummary } from '../intelligence/learning-loop-service.js';
@@ -52,6 +67,10 @@ export interface EnrichmentResult {
     detectedAppMention?: string;
     /** Whether project context was available */
     hasProjectContext: boolean;
+    /** Composer decision trace when relevance-ranking was applied (opt-in). */
+    composeTrace?: ComposeTraceEntry[];
+    /** Approximate tokens used by the composed enrichment, when composed. */
+    composeTokensUsed?: number;
   };
 }
 
@@ -144,7 +163,35 @@ export const SUPPORTED_SLASH_COMMANDS = [
   'uspi',
   'haq',
   'ask',
+  'wisdom',
+  'guide',
+  'playbook',
+  'orient',
+  'tour',
+  'challenge',
+  'redteam',
+  'devil',
+  'decide',
+  'tradeoff',
+  'framework',
+  'meeting',
+  'agency',
+  'tactics',
+  'position',
+  'landscape',
+  'compete',
+  'align',
+  'capabilities',
+  'whatcanyoudo',
 ] as const;
+
+/** Enrichment sources that emit guidance the role lens can frame for an audience. */
+const ROLE_FRAMEABLE_SOURCES = new Set<string>([
+  'industry-wisdom', 'tour-guide', 'first-session-tour', 'constructive-challenge', 'decision-framework',
+  'agency-tactics', 'wisdom', 'guide', 'playbook', 'orient', 'tour', 'challenge', 'redteam', 'devil',
+  'decide', 'tradeoff', 'framework', 'meeting', 'agency', 'tactics', 'proactive-tour-guide',
+  'competitive-strategy', 'position', 'landscape', 'compete',
+]);
 
 const SUPPORTED_SLASH_COMMAND_REGEX = new RegExp(
   `^\\/(${SUPPORTED_SLASH_COMMANDS.join('|')})\\b\\s*(.*)`,
@@ -307,8 +354,46 @@ const DIAGNOSTICS_TRIGGERS = [
   /\b(?:lodd?|linearity|precision|repeatability|reproducibility|method comparison)\b/i,
 ];
 
+const WISDOM_TRIGGERS = [
+  /\b(?:common mistakes?|pitfalls?|rookie mistakes?|gotchas?|first.?time (?:sponsor|filer)s?)\b/i,
+  /\btrips? (?:up )?(?:people|teams|sponsors|first.?timers?)\b/i,
+  /\b(?:lessons? learned|hard.?won|war stor(?:y|ies)|best practices? for)\b/i,
+  /\b(?:what should i (?:watch out for|avoid|know about))\b/i,
+  /\b(?:what (?:do|would) (?:experienced|veteran|seasoned)\b)/i,
+];
+
+const WAYFINDING_TRIGGERS = [
+  /\b(?:where (?:do|should) i (?:start|begin)|how do i (?:get )?start|guide me|walk me through|orient me|i.?m new|new (?:here|to this)|where am i|what.?s the (?:process|journey|path))\b/i,
+  /\b(?:what are my options|which (?:pathway|route) (?:should|do)|help me get (?:oriented|started)|i.?m lost|give me (?:a|the) tour)\b/i,
+];
+
 function matchesTriggers(message: string, triggers: RegExp[]): boolean {
   return triggers.some(t => t.test(message));
+}
+
+/**
+ * Build a constructive-challenge block. If the message contains a recognized
+ * challengeable assertion, prime AnA to push back on it specifically; if the
+ * user explicitly asked to be challenged but no specific claim is detected,
+ * fall back to a general red-team instruction so /challenge always does work.
+ */
+/** Build a competitive-strategy block, inferring the segment from type or message. */
+function buildCompetitiveForMessage(message: string, submissionType?: string, forceGeneric = false): string {
+  const segment = inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(message);
+  return buildCompetitiveBlock({ message, segment, forceGeneric });
+}
+
+function buildChallengeOrRedteam(message: string, submissionType?: string): string {
+  const segment = inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(message);
+  const block = buildChallengeBlock({ message, segment });
+  if (block) return block;
+  return (
+    '\n\n## Constructive challenge — red-team the plan\n' +
+    'The user explicitly asked you to challenge their thinking. Apply your Constructive Dissent doctrine as a red-team: ' +
+    'find the load-bearing assumption in their current plan, name the single biggest risk it carries, ground the objection in ' +
+    'precedent or guidance, and offer the stronger alternative. Acknowledge what is right first, state the disagreement once, ' +
+    'and end with a concrete better path. If the plan is genuinely sound, say so and name the one thing you would still watch.'
+  );
 }
 
 // ─── Enrichment functions ────────────────────────────────────────────────────
@@ -903,8 +988,21 @@ export async function enrichContextForChat(params: {
   organizationId?: number;
   submissionType?: string;
   canonicalGovernedState?: CanonicalGovernedState;
+  /** Optional user role; when present, a role lens frames the pack guidance. */
+  userRole?: UserRole;
+  /**
+   * Optional token budget. When set, the composer relevance-ranks and
+   * de-duplicates the enrichment blocks under this budget instead of plain
+   * concatenation. Omit (or 0) to preserve the legacy join-all behavior.
+   */
+  composeTokenBudget?: number;
+  /**
+   * Optional learned per-source priority multipliers (from adaptive-priority).
+   * Only consulted when composeTokenBudget engages the composer.
+   */
+  priorityMultipliers?: Record<string, number>;
 }): Promise<EnrichmentResult> {
-  const { message, projectId, organizationId, submissionType, canonicalGovernedState } = params;
+  const { message, projectId, organizationId, submissionType, canonicalGovernedState, userRole, composeTokenBudget, priorityMultipliers } = params;
   const blocks: string[] = [];
   const sources: string[] = [];
   const sourcesFailed: string[] = [];
@@ -914,17 +1012,121 @@ export async function enrichContextForChat(params: {
   let detectedAppMentionId: string | undefined;
   let rewrittenMessage: string | undefined;
 
-  if (!projectId) return {
-    block: '',
-    sources: [],
-    enrichmentMeta: {
-      sourcesAttempted: 0,
-      sourcesSucceeded: [],
-      sourcesFailed: [],
-      triggerType: 'none',
-      hasProjectContext: false,
-    },
-  };
+  if (!projectId) {
+    // No project loaded yet — but industry wisdom and wayfinding need no project
+    // data, and a project-less chat is usually a new or exploring user: exactly
+    // who benefits most from orientation. Run a message-only pass for those.
+    const projectlessBlocks: string[] = [];
+    const projectlessSources: string[] = [];
+    const slashNoProj = detectSlashCommand(message);
+    const wisdomFamily = ['wisdom', 'guide', 'playbook', 'orient', 'tour'];
+    const challengeFamily = ['challenge', 'redteam', 'devil'];
+
+    if (slashNoProj && wisdomFamily.includes(slashNoProj.command)) {
+      const block = slashNoProj.command === 'wisdom'
+        ? buildIndustryWisdomBlock({ submissionType, message })
+        : buildTourGuideBlock({ submissionType, message });
+      if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
+    } else if (slashNoProj && challengeFamily.includes(slashNoProj.command)) {
+      const block = buildChallengeOrRedteam(slashNoProj.args || message, submissionType);
+      if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
+    } else if (!slashNoProj) {
+      if (matchesTriggers(message, WISDOM_TRIGGERS)) {
+        const block = buildIndustryWisdomBlock({ submissionType, message });
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('industry-wisdom'); }
+      }
+      const isGreetingNoProj = /^(hi|hello|hey|good\s*(morning|afternoon|evening)|help|where (?:do|should) i start|i.?m new|guide me)/i.test(message.trim());
+      if (isGreetingNoProj) {
+        // True first contact: lead with a tailored welcome, not a feature list.
+        const block = buildFirstSessionTour({ submissionType, message });
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('first-session-tour'); }
+      } else if (matchesTriggers(message, WAYFINDING_TRIGGERS)) {
+        const block = buildTourGuideBlock({ submissionType, message });
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('tour-guide'); }
+      }
+      const challengeSegmentNoProj =
+        inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(message);
+      if (detectChallengeableClaims(message, challengeSegmentNoProj).length > 0) {
+        const block = buildChallengeBlock({ message, segment: challengeSegmentNoProj });
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('constructive-challenge'); }
+      }
+      if (detectRelevantFrameworks(message, challengeSegmentNoProj).length > 0) {
+        const block = buildDecisionFrameworkBlock({ message, segment: challengeSegmentNoProj });
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('decision-framework'); }
+      }
+      if (detectRelevantTactics(message, { segment: challengeSegmentNoProj }).length > 0) {
+        const block = buildAgencyTacticsBlock({ message, segment: challengeSegmentNoProj });
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('agency-tactics'); }
+      }
+      if (detectRelevantPlays(message, { segment: challengeSegmentNoProj }).length > 0) {
+        const block = buildCompetitiveBlock({ message, segment: challengeSegmentNoProj });
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('competitive-strategy'); }
+      }
+      if (detectClientState(message)) {
+        const block = buildAttunementBlock(message);
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('client-attunement'); }
+      }
+      if (detectRelevantAlignment(message, { segment: challengeSegmentNoProj }).length > 0) {
+        const block = buildAlignmentBlock({ message, segment: challengeSegmentNoProj });
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('stakeholder-alignment'); }
+      }
+      if (detectClaimCategories(message).length > 0) {
+        const block = buildClaimGroundingBlock(message);
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('claim-grounding'); }
+      }
+      if (detectScopeCategories(message).length > 0) {
+        const block = buildScopeGuardBlock(message);
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('scope-guard'); }
+      }
+    } else if (slashNoProj && ['decide', 'tradeoff', 'framework'].includes(slashNoProj.command)) {
+      const block = buildDecisionFrameworkBlock({
+        message: slashNoProj.args || message,
+        segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slashNoProj.args || message),
+        forceGeneric: true,
+      });
+      if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
+    } else if (slashNoProj && ['meeting', 'agency', 'tactics'].includes(slashNoProj.command)) {
+      const block = buildAgencyTacticsBlock({
+        message: slashNoProj.args || message,
+        segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slashNoProj.args || message),
+        kind: slashNoProj.command === 'meeting' ? 'meeting_prep' : undefined,
+        forceGeneric: true,
+      });
+      if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
+    } else if (slashNoProj && ['position', 'landscape', 'compete'].includes(slashNoProj.command)) {
+      const block = buildCompetitiveForMessage(slashNoProj.args || message, submissionType, true);
+      if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
+    } else if (slashNoProj && slashNoProj.command === 'align') {
+      const block = buildAlignmentBlock({
+        message: slashNoProj.args || message,
+        segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slashNoProj.args || message),
+        forceGeneric: true,
+      });
+      if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
+    } else if (slashNoProj && ['capabilities', 'whatcanyoudo'].includes(slashNoProj.command)) {
+      const block = buildCapabilityCatalogue();
+      if (block) { projectlessBlocks.push(block); projectlessSources.push(slashNoProj.command); }
+    }
+
+    if (hasRoleLens(userRole) && projectlessSources.some(s => ROLE_FRAMEABLE_SOURCES.has(s))) {
+      const lensBlock = buildRoleLensBlock(userRole as UserRole);
+      if (lensBlock) { projectlessBlocks.push(lensBlock); projectlessSources.push('role-lens'); }
+    }
+
+    const wisdomOrChallengeFamily = [...wisdomFamily, ...challengeFamily, 'decide', 'tradeoff', 'framework', 'meeting', 'agency', 'tactics', 'position', 'landscape', 'compete', 'align', 'capabilities', 'whatcanyoudo'];
+    return {
+      block: projectlessBlocks.join('\n'),
+      sources: projectlessSources,
+      enrichmentMeta: {
+        sourcesAttempted: projectlessSources.length,
+        sourcesSucceeded: [...projectlessSources],
+        sourcesFailed: [],
+        triggerType: projectlessSources.length > 0 ? (slashNoProj ? 'slash_command' : 'natural_language') : 'none',
+        detectedCommand: slashNoProj && wisdomOrChallengeFamily.includes(slashNoProj.command) ? slashNoProj.command : undefined,
+        hasProjectContext: false,
+      },
+    };
+  }
 
   // ── Always inject project intelligence summary when available ──
   if (canonicalGovernedState) {
@@ -1025,6 +1227,26 @@ export async function enrichContextForChat(params: {
       uspi: () => enrichWithSafety(projectId),
       haq: () => Promise.all([enrichWithCRLRTF(projectId, organizationId), enrichWithPrecedents(projectId), enrichWithClaims(projectId)]).then(r => r.join('')),
       ask: () => enrichWithKnowledgeSearch(slash.args || message, projectId),
+      wisdom: () => Promise.resolve(buildIndustryWisdomBlock({ submissionType, message: slash.args || message })),
+      guide: () => Promise.resolve(buildTourGuideBlock({ submissionType, message: slash.args || message })),
+      playbook: () => Promise.resolve(buildTourGuideBlock({ submissionType, message: slash.args || message })),
+      orient: () => Promise.resolve(buildTourGuideBlock({ submissionType, message: slash.args || message })),
+      tour: () => Promise.resolve(buildTourGuideBlock({ submissionType, message: slash.args || message })),
+      challenge: () => Promise.resolve(buildChallengeOrRedteam(slash.args || message, submissionType)),
+      redteam: () => Promise.resolve(buildChallengeOrRedteam(slash.args || message, submissionType)),
+      devil: () => Promise.resolve(buildChallengeOrRedteam(slash.args || message, submissionType)),
+      decide: () => Promise.resolve(buildDecisionFrameworkBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), forceGeneric: true })),
+      tradeoff: () => Promise.resolve(buildDecisionFrameworkBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), forceGeneric: true })),
+      framework: () => Promise.resolve(buildDecisionFrameworkBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), forceGeneric: true })),
+      meeting: () => Promise.resolve(buildAgencyTacticsBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), kind: 'meeting_prep', forceGeneric: true })),
+      agency: () => Promise.resolve(buildAgencyTacticsBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), forceGeneric: true })),
+      tactics: () => Promise.resolve(buildAgencyTacticsBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), forceGeneric: true })),
+      position: () => Promise.resolve(buildCompetitiveForMessage(slash.args || message, submissionType, true)),
+      landscape: () => Promise.resolve(buildCompetitiveForMessage(slash.args || message, submissionType, true)),
+      compete: () => Promise.resolve(buildCompetitiveForMessage(slash.args || message, submissionType, true)),
+      align: () => Promise.resolve(buildAlignmentBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), forceGeneric: true })),
+      capabilities: () => Promise.resolve(buildCapabilityCatalogue()),
+      whatcanyoudo: () => Promise.resolve(buildCapabilityCatalogue()),
       workflow: () => submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
       status: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
@@ -1116,6 +1338,42 @@ export async function enrichContextForChat(params: {
       ask: slash.args
         ? `Search the project data room and knowledge memory for: ${slash.args}. Return relevant findings with confidence and source category.`
         : 'Search the project data room and knowledge memory for the most relevant recent items. Summarize with confidence and source category.',
+      wisdom: slash.args
+        ? `Apply the experiential industry wisdom that bears on: ${slash.args}. For each relevant heuristic, connect the pattern to the user's situation, name the consequence before they hit it, and recommend the veteran move. Reason with the wisdom — do not just list it.`
+        : 'Surface the experiential industry wisdom that bears on the user\'s current segment and stage. Apply the relevant heuristics to their situation rather than reciting them.',
+      guide: slash.args
+        ? `Act as a tour guide for: ${slash.args}. Orient the user — where they are, what matters now, and the two or three moves people in their situation usually make next. Close with one concrete offer.`
+        : 'Act as a tour guide. Orient the user: where they are in their program, what matters most right now, and the few moves people in their situation usually make next. If the segment is unclear, ask one question to place them. Close with a single concrete offer.',
+      playbook: slash.args
+        ? `Walk the user through the relevant use-case playbook for: ${slash.args}. Name the first moves and the pitfall to watch.`
+        : 'Walk the user through the use-case playbook that fits their situation. Name the first moves and the pitfall to watch, then offer the first step.',
+      orient: 'Orient the user: name where they are, what matters now, and the common next moves for their segment and stage. Keep it short and specific.',
+      tour: 'Give the user a guided tour of what matters for their segment and stage — the canonical journeys, the first moves, and the pitfalls. Do not dump the whole map; lead with what bears on them now.',
+      challenge: slash.args
+        ? `Red-team this plan: ${slash.args}. Find the load-bearing assumption, name the biggest risk it carries, ground the objection, and offer the stronger path. Acknowledge what is right first; state the disagreement once.`
+        : 'Red-team the user\'s current plan. Find the load-bearing assumption, name the single biggest risk, ground it in precedent or guidance, and offer the stronger alternative. Acknowledge what is right first, push back once, and end with a concrete better path.',
+      redteam: 'Red-team the user\'s current plan. Find the load-bearing assumption, name the single biggest risk, ground it, and offer the stronger alternative — acknowledging what is right first.',
+      devil: 'Play devil\'s advocate on the user\'s current plan. Surface the strongest objection a skeptical reviewer would raise, ground it, and offer the better path.',
+      decide: slash.args
+        ? `Help the user decide: ${slash.args}. Name the real trade-off, lay out what tilts it each way for their program, and give the deciding question. Recommend where you have a basis, but leave the call to them.`
+        : 'Help the user reason through the strategic trade-off they are weighing. Name the real tension, lay out the factors that tilt it each way, and give the single question that resolves it. The call is theirs — surface the trade-off honestly rather than forcing one answer.',
+      tradeoff: 'Frame the trade-off the user is weighing: the real tension, what tilts it each way for their program, and the deciding question. Do not pretend a hard trade-off has one obvious answer.',
+      framework: 'Apply the relevant decision framework to the user\'s choice: name the trade-off, the tilt factors, and the deciding question. Recommend where you have a basis; leave the judgment call to them.',
+      meeting: slash.args
+        ? `Help the user prepare the agency meeting: ${slash.args}. Bring proposals and ask for agreement, rank the load-bearing questions, and treat the briefing package as the meeting.`
+        : 'Help the user prepare an agency meeting. Frame questions as proposals seeking agreement, rank the three to five that matter, choose the right meeting type, and treat the briefing package as where the review team forms its view.',
+      agency: 'Help the user run their agency interaction well — meeting preparation or response strategy. Apply the concrete tactics: proposals over open questions, answer exactly what is asked in the agency order, concede what cannot be defended, and anchor everything to the official minutes or letter.',
+      tactics: 'Give the user the agency-interaction tactics that bear on their situation — the move, why it works, and the failure mode it avoids.',
+      position: slash.args
+        ? `Help the user position against the field: ${slash.args}. Read the relevant precedent and competitor labels, then position on the axis the agency rewards.`
+        : 'Help the user position against the competitive landscape. Read precedent for where it actually transfers, position against the approved label rather than marketing, and differentiate on the axis the agency rewards.',
+      landscape: 'Read the competitive and precedent landscape for the user: which approvals transfer, what the labels actually claim, and where the failures mark the bar.',
+      compete: 'Help the user compete: position against the competitor\'s approved label, differentiate on the axis the agency rewards, and treat a path that unwound for a rival as a raised bar, not an opening.',
+      align: slash.args
+        ? `Help the user align stakeholders on: ${slash.args}. Name the tension, tie it to the regulatory consequence that makes it matter, and give a concrete way to align the parties. The internal call is theirs.`
+        : 'Help the user navigate an internal or partner tension. Name the friction, tie it to the regulatory consequence that makes it matter, and give a concrete way to align the parties around what moves the program. Make the trade-off visible; the internal decision is theirs.',
+      capabilities: 'The user is asking what you can do. Use the grounded capability inventory in context. Do not recite it as a menu — name the two or three capabilities that fit their actual situation and offer to apply one now.',
+      whatcanyoudo: 'The user is asking what you can do. Use the grounded capability inventory in context. Do not recite it as a menu — name the two or three capabilities that fit their actual situation and offer to apply one now.',
       export: 'Export this conversation.',
     };
 
@@ -1194,6 +1452,8 @@ export async function enrichContextForChat(params: {
       { test: CMS_TRIGGERS, fn: () => enrichWithCMS(projectId), name: 'cms' },
       { test: ECTD_TRIGGERS, fn: () => enrichWithECTD(projectId), name: 'ectd' },
       { test: HAQ_TRIGGERS, fn: () => Promise.all([enrichWithCRLRTF(projectId, organizationId), enrichWithPrecedents(projectId)]).then(r => r.join('')), name: 'haq' },
+      { test: WISDOM_TRIGGERS, fn: () => Promise.resolve(buildIndustryWisdomBlock({ submissionType, message })), name: 'industry-wisdom' },
+      { test: WAYFINDING_TRIGGERS, fn: () => Promise.resolve(buildTourGuideBlock({ submissionType, message })), name: 'tour-guide' },
     ];
 
     const matchedFns = triggers.filter(t => matchesTriggers(message, t.test));
@@ -1218,6 +1478,109 @@ export async function enrichContextForChat(params: {
       );
     }
 
+    // ── Proactive constructive challenge — runs independent of other triggers ──
+    // If the user asserts a plan experience says is risky, prime AnA to push
+    // back politely rather than affirming it. This is the operational arm of
+    // the persona's Constructive Dissent doctrine.
+    const challengeSegment =
+      inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(message);
+    if (detectChallengeableClaims(message, challengeSegment).length > 0) {
+      sourcesAttempted++;
+      const challengeBlock = buildChallengeBlock({ message, segment: challengeSegment });
+      if (challengeBlock) {
+        blocks.push(challengeBlock);
+        sources.push('constructive-challenge');
+        if (triggerType === 'none') triggerType = 'natural_language';
+      }
+    }
+
+    // ── Proactive decision framework — when the user is weighing a real choice ──
+    if (detectRelevantFrameworks(message, challengeSegment).length > 0) {
+      sourcesAttempted++;
+      const frameworkBlock = buildDecisionFrameworkBlock({ message, segment: challengeSegment });
+      if (frameworkBlock) {
+        blocks.push(frameworkBlock);
+        sources.push('decision-framework');
+        if (triggerType === 'none') triggerType = 'natural_language';
+      }
+    }
+
+    if (detectRelevantTactics(message, { segment: challengeSegment }).length > 0) {
+      sourcesAttempted++;
+      const tacticsBlock = buildAgencyTacticsBlock({ message, segment: challengeSegment });
+      if (tacticsBlock) {
+        blocks.push(tacticsBlock);
+        sources.push('agency-tactics');
+        if (triggerType === 'none') triggerType = 'natural_language';
+      }
+    }
+
+    // ── Proactive competitive strategy — reading precedent or positioning ──
+    if (detectRelevantPlays(message, { segment: challengeSegment }).length > 0) {
+      sourcesAttempted++;
+      const compBlock = buildCompetitiveBlock({ message, segment: challengeSegment });
+      if (compBlock) {
+        blocks.push(compBlock);
+        sources.push('competitive-strategy');
+        if (triggerType === 'none') triggerType = 'natural_language';
+      }
+    }
+
+    // ── Proactive stakeholder alignment — internal / partner tensions ──
+    if (detectRelevantAlignment(message, { segment: challengeSegment }).length > 0) {
+      sourcesAttempted++;
+      const alignBlock = buildAlignmentBlock({ message, segment: challengeSegment });
+      if (alignBlock) {
+        blocks.push(alignBlock);
+        sources.push('stakeholder-alignment');
+        if (triggerType === 'none') triggerType = 'natural_language';
+      }
+    }
+
+    // ── Proactive stakeholder alignment — internal / partner tensions ──
+    if (detectRelevantAlignment(message, { segment: challengeSegment }).length > 0) {
+      sourcesAttempted++;
+      const alignBlock = buildAlignmentBlock({ message, segment: challengeSegment });
+      if (alignBlock) {
+        blocks.push(alignBlock);
+        sources.push('stakeholder-alignment');
+        if (triggerType === 'none') triggerType = 'natural_language';
+      }
+    }
+
+    // ── Client attunement — read the human state and steady the delivery ──
+    if (detectClientState(message)) {
+      sourcesAttempted++;
+      const attuneBlock = buildAttunementBlock(message);
+      if (attuneBlock) {
+        blocks.push(attuneBlock);
+        sources.push('client-attunement');
+        if (triggerType === 'none') triggerType = 'natural_language';
+      }
+    }
+
+    // ── Claim-grounding guard — verify high-stakes factual claims before they ship ──
+    if (detectClaimCategories(message).length > 0) {
+      sourcesAttempted++;
+      const groundingBlock = buildClaimGroundingBlock(message);
+      if (groundingBlock) {
+        blocks.push(groundingBlock);
+        sources.push('claim-grounding');
+        if (triggerType === 'none') triggerType = 'natural_language';
+      }
+    }
+
+    // ── Scope-and-escalation guard — know the limits, hand off the rest ──
+    if (detectScopeCategories(message).length > 0) {
+      sourcesAttempted++;
+      const scopeBlock = buildScopeGuardBlock(message);
+      if (scopeBlock) {
+        blocks.push(scopeBlock);
+        sources.push('scope-guard');
+        if (triggerType === 'none') triggerType = 'natural_language';
+      }
+    }
+
     // ── Proactive enrichment for greetings/help — inject status so AnA can lead ──
     const isGreeting = /^(hi|hello|hey|good\s*(morning|afternoon|evening)|what.?s up|how are you|help|what can you do)/i.test(message.trim());
     if (isGreeting && sources.length === 0) {
@@ -1240,6 +1603,15 @@ export async function enrichContextForChat(params: {
       } else {
         sourcesFailed.push('proactive-recommendations');
       }
+
+      // On a greeting, also hand AnA a tour-guide orientation so she can lead
+      // with "where you are / what matters now / next moves" rather than a bare
+      // status dump. Pure builder — no DB dependency.
+      const tourBlock = buildTourGuideBlock({ submissionType, message });
+      if (tourBlock) {
+        blocks.push(tourBlock);
+        sources.push('proactive-tour-guide');
+      }
     }
   }
 
@@ -1254,8 +1626,36 @@ export async function enrichContextForChat(params: {
     }
   }
 
+  // ── Role lens — frame the pack guidance for the audience, once, at the end ──
+  if (hasRoleLens(userRole) && sources.some(s => ROLE_FRAMEABLE_SOURCES.has(s))) {
+    const lensBlock = buildRoleLensBlock(userRole as UserRole);
+    if (lensBlock) { blocks.push(lensBlock); sources.push('role-lens'); }
+  }
+
+  // ── Optional composer pass — relevance-rank + de-dup under a token budget ──
+  // Engaged only when a budget is requested AND blocks/sources are 1:1 aligned
+  // (some sources push metadata without a block; in that case we cannot safely
+  // map blocks to priorities, so we fall back to the legacy join). Pure
+  // re-ordering and budgeting — never changes truth.
+  let composedBlock = blocks.join('\n');
+  let composeTrace: ComposeTraceEntry[] | undefined;
+  let composeTokensUsed: number | undefined;
+  if (composeTokenBudget && composeTokenBudget > 0 && blocks.length === sources.length && blocks.length > 1) {
+    const candidates: CandidateBlock[] = blocks.map((text, i) => ({
+      source: sources[i],
+      text,
+      priority: priorityForSource(sources[i]),
+      // Governed envelope and a crisis read must never be dropped.
+      pinned: sources[i] === 'governed-envelope' || sources[i] === 'client-attunement',
+    }));
+    const composed = composeContext(message, candidates, { tokenBudget: composeTokenBudget, priorityMultipliers });
+    composedBlock = composed.text;
+    composeTrace = composed.trace;
+    composeTokensUsed = composed.tokensUsed;
+  }
+
   return {
-    block: blocks.join('\n'),
+    block: composedBlock,
     sources,
     rewrittenMessage,
     enrichmentMeta: {
@@ -1266,6 +1666,8 @@ export async function enrichContextForChat(params: {
       detectedCommand,
       detectedAppMention: detectedAppMentionId,
       hasProjectContext: true,
+      composeTrace,
+      composeTokensUsed,
     },
   };
 }

@@ -10,6 +10,9 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, 'client/src'),
       '@shared': path.resolve(__dirname, 'shared'),
+      // Bare `shared/...` imports (used by 14+ server modules) resolve via
+      // tsconfig `baseUrl` for tsc; mirror that here so vitest can import them.
+      shared: path.resolve(__dirname, 'shared'),
     },
   },
   test: {

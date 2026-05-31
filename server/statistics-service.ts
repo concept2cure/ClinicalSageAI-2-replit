@@ -2,6 +2,9 @@ import { db } from './db';
 import { csrReports, csrDetails } from 'shared/schema';
 import { eq, sql, and, gte, lte, desc, count, avg, max, min } from 'drizzle-orm';
 import * as math from 'mathjs';
+import { Rng, createRng, seedFromObject } from './services/stats/rng';
+import { buildProvenance, type StatsProvenance } from './services/stats/computation-provenance';
+import { ptrsService, type PtrsPrediction } from './services/ptrs';
 
 /**
  * Enhanced Biostatistics Service for Concept2Cure
@@ -16,6 +19,30 @@ import * as math from 'mathjs';
  * - Adaptive trial design optimization
  */
 export class StatisticsService {
+  /**
+   * Seedable generator for all Monte Carlo / bootstrap work. Reseeded
+   * deterministically at the entry of each stochastic method (see `seedRun`)
+   * so results are reproducible: same inputs (or same explicit seed) reproduce
+   * the same numbers. The draw loops are synchronous, so a single shared
+   * instance is safe under Node's single-threaded execution.
+   */
+  private rng: Rng = createRng();
+
+  /**
+   * Reseed the engine for a run. If the caller passes an explicit finite seed
+   * it is used verbatim; otherwise a seed is derived deterministically from the
+   * inputs so identical requests reproduce identical results. Returns the seed
+   * actually used so it can be recorded in the result's provenance.
+   */
+  private seedRun(inputs: unknown, explicitSeed?: number): number {
+    const seed =
+      explicitSeed !== undefined && Number.isFinite(explicitSeed)
+        ? Math.trunc(explicitSeed)
+        : seedFromObject(inputs);
+    this.rng = createRng(seed);
+    return seed;
+  }
+
   /**
    * Get statistics for a specific indication
    */
@@ -1769,7 +1796,21 @@ export class StatisticsService {
   }
 
   /**
-   * Predict trial success probability
+   * Predict trial success probability.
+   *
+   * Delegates to the calibrated PTRS model (`server/services/ptrs`), which
+   * replaced the previous hand-tuned additive heuristic (a baseline rate nudged
+   * by magic constants) with a trained logistic model over the corpus plus an
+   * honest cold-start prior. The `registry_completion` target matches this
+   * method's historical "success" semantics — a trial that completes rather than
+   * terminates — so the contract is preserved while the number becomes honest.
+   *
+   * Returns the legacy shape (probability, confidence, contributingFactors)
+   * enriched with the fields the model carries: the estimate's source
+   * (trained/blended/prior/not-assessable), its evidence interval and N, the
+   * prior used, the label the probability refers to, and a provenance record.
+   * `probability` is `null` when the corpus cannot yet support an honest
+   * estimate, rather than a fabricated 0.5.
    */
   async predictTrialSuccess(params: {
     indication: string;
@@ -1778,215 +1819,63 @@ export class StatisticsService {
     duration: number;
     designFeatures: string[];
   }): Promise<{
-    probability: number;
+    probability: number | null;
     confidence: number;
     contributingFactors: Array<{
       factor: string;
       impact: number;
       direction: 'positive' | 'negative';
     }>;
+    source: PtrsPrediction['source'];
+    sampleSize: number;
+    interval: [number, number] | null;
+    priorProbability: number | null;
+    priorSource: string | null;
+    labelSemantics: string;
+    note: string;
+    provenance: StatsProvenance;
   }> {
-    try {
-      const { indication, phase, sampleSize, duration, designFeatures } = params;
+    const prediction = await ptrsService.predict('registry_completion', {
+      indication: params.indication,
+      phase: params.phase,
+      sampleSize: params.sampleSize ?? null,
+      durationWeeks: params.duration ?? null,
+      designFeatures: params.designFeatures ?? [],
+    });
 
-      const dbInstance = db;
-      if (!dbInstance) {
-        return {
-          probability: 0.5,
-          confidence: 0.1,
-          contributingFactors: [],
-          error: 'Database unavailable',
-        } as any;
-      }
-
-      // Get baseline success rate for the indication and phase
-      const reports = await dbInstance
-        .select({
-          id: csrReports.id,
-          status: csrReports.status,
-        })
-        .from(csrReports)
-        .where(and(eq(csrReports.indication, indication), eq(csrReports.phase, phase)));
-
-      if (reports.length === 0) {
-        return {
-          probability: 0.5, // Default without data
-          confidence: 0.1,
-          contributingFactors: [],
-        };
-      }
-
-      // Calculate baseline success rate
-      const successfulTrials = reports.filter(
-        r => r.status.toLowerCase() === 'completed' || r.status.toLowerCase() === 'successful'
-      ).length;
-
-      const baselineSuccessRate = reports.length > 0 ? successfulTrials / reports.length : 0.5;
-
-      // Get trial details
-      const reportIds = reports.map(r => r.id);
-      const details = await dbInstance
-        .select()
-        .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${reportIds.join(',')})`);
-
-      // Calculate adjustment factors based on the provided parameters
-      const factors: Array<{ factor: string; impact: number; direction: 'positive' | 'negative' }> =
-        [];
-      let adjustedProbability = baselineSuccessRate;
-
-      // 1. Sample size factor
-      const sampleSizes = details
-        .filter(
-          (d): d is typeof d & { sampleSize: number } => d.sampleSize !== null && d.sampleSize > 0
-        )
-        .map(d => d.sampleSize);
-
-      if (sampleSizes.length > 0) {
-        const avgSampleSize = Number(math.mean(sampleSizes));
-        const sizeRatio = sampleSize / avgSampleSize;
-
-        let sampleSizeImpact = 0;
-        let direction: 'positive' | 'negative' = 'positive';
-
-        if (sizeRatio > 1.5) {
-          // Larger sample size increases power
-          sampleSizeImpact = Math.min(0.15, (sizeRatio - 1) * 0.1);
-          direction = 'positive';
-          adjustedProbability += sampleSizeImpact;
-        } else if (sizeRatio < 0.7) {
-          // Smaller sample size decreases power
-          sampleSizeImpact = Math.min(0.15, (1 - sizeRatio) * 0.15);
-          direction = 'negative';
-          adjustedProbability -= sampleSizeImpact;
-        }
-
-        if (sampleSizeImpact > 0.01) {
-          factors.push({
-            factor: 'Sample Size',
-            impact: sampleSizeImpact,
-            direction,
-          });
-        }
-      }
-
-      // 2. Duration factor
-      const durations = details
-        .map(detail => this.extractStudyDurationWeeks(detail))
-        .filter((duration): duration is number => duration !== null);
-
-      if (durations.length > 0) {
-        const avgDuration = Number(math.mean(durations));
-        const durationRatio = duration / avgDuration;
-
-        let durationImpact = 0;
-        let direction: 'positive' | 'negative' = 'positive';
-
-        if (durationRatio < 0.7 && phase !== 'Phase 1') {
-          // Shorter duration might miss long-term effects in later phases
-          durationImpact = Math.min(0.12, (1 - durationRatio) * 0.15);
-          direction = 'negative';
-          adjustedProbability -= durationImpact;
-        } else if (durationRatio > 1.5) {
-          // Longer duration might increase dropout and complexity
-          durationImpact = Math.min(0.08, (durationRatio - 1) * 0.05);
-          direction = 'negative';
-          adjustedProbability -= durationImpact;
-        }
-
-        if (durationImpact > 0.01) {
-          factors.push({
-            factor: 'Study Duration',
-            impact: durationImpact,
-            direction,
-          });
-        }
-      }
-
-      // 3. Design features impact
-      if (designFeatures.length > 0) {
-        // Count frequency of each design feature in successful vs. failed trials
-        const designStats = new Map<string, { success: number; failure: number }>();
-
-        details.forEach(detail => {
-          if (!detail.studyDesign) return;
-
-          // Check if the report was successful
-          const report = reports.find(r => r.id === detail.reportId);
-          const isSuccess =
-            report &&
-            (report.status.toLowerCase() === 'completed' ||
-              report.status.toLowerCase() === 'successful');
-
-          // Look for design features in study design
-          designFeatures.forEach(feature => {
-            const studyDesign = detail.studyDesign ?? '';
-            if (studyDesign.toLowerCase().includes(feature.toLowerCase())) {
-              if (!designStats.has(feature)) {
-                designStats.set(feature, { success: 0, failure: 0 });
-              }
-
-              const stats = designStats.get(feature)!;
-              if (isSuccess) {
-                stats.success++;
-              } else {
-                stats.failure++;
-              }
-            }
-          });
-        });
-
-        // Calculate impact for each feature
-        designStats.forEach((stats, feature) => {
-          const total = stats.success + stats.failure;
-          if (total < 3) return; // Insufficient data
-
-          const featureSuccessRate = stats.success / total;
-          const impact = Math.abs(featureSuccessRate - baselineSuccessRate);
-
-          if (impact > 0.05) {
-            const direction: 'positive' | 'negative' =
-              featureSuccessRate > baselineSuccessRate ? 'positive' : 'negative';
-
-            factors.push({
-              factor: `Design: ${feature}`,
-              impact,
-              direction,
-            });
-
-            if (direction === 'positive') {
-              adjustedProbability += impact;
-            } else {
-              adjustedProbability -= impact;
-            }
-          }
-        });
-      }
-
-      // Ensure probability is between 0 and 1
-      adjustedProbability = Math.min(1, Math.max(0, adjustedProbability));
-
-      // Calculate confidence level based on available data
-      const confidenceLevel = Math.min(
-        0.9,
-        0.3 +
-          Math.min(0.3, (reports.length / 50) * 0.3) + // Data quantity factor
-          Math.min(0.3, (factors.length / 5) * 0.3) // Factor coverage
+    // Confidence is derived transparently from the evidence rather than
+    // hand-tuned: zero when the estimate is not assessable, otherwise a tighter
+    // interval and a higher trained-model weight both raise it.
+    let confidence = 0;
+    if (prediction.source !== 'not_assessable') {
+      const intervalTightness = prediction.interval
+        ? 1 - (prediction.interval[1] - prediction.interval[0])
+        : 0.1;
+      confidence = Math.max(
+        0,
+        Math.min(0.95, 0.5 * prediction.localWeight + 0.5 * intervalTightness),
       );
-
-      return {
-        probability: adjustedProbability,
-        confidence: confidenceLevel,
-        contributingFactors: factors.sort((a, b) => b.impact - a.impact),
-      };
-    } catch (error) {
-      console.error('Error predicting trial success:', error);
-      return {
-        probability: 0.5,
-        confidence: 0.1,
-        contributingFactors: [],
-      };
     }
+
+    const contributingFactors = prediction.contributingFactors.map(f => ({
+      factor: f.feature,
+      impact: Math.abs(f.contribution),
+      direction: f.direction,
+    }));
+
+    return {
+      probability: prediction.probability,
+      confidence,
+      contributingFactors,
+      source: prediction.source,
+      sampleSize: prediction.sampleSize,
+      interval: prediction.interval,
+      priorProbability: prediction.priorProbability,
+      priorSource: prediction.priorSource,
+      labelSemantics: prediction.labelSemantics,
+      note: prediction.note,
+      provenance: prediction.provenance,
+    };
   }
 
   /**
@@ -2407,6 +2296,12 @@ export class StatisticsService {
       minAllocation: number;
     };
     interimLooks: number[];
+    /** Significance level used for the Monte Carlo operating characteristics. */
+    alpha?: number;
+    /** Number of replications for the operating-characteristics estimate. */
+    operatingCharNSim?: number;
+    /** Explicit seed for reproducibility; derived from inputs when omitted. */
+    seed?: number;
   }): Promise<{
     stageResults: Array<{
       stage: number;
@@ -2432,6 +2327,8 @@ export class StatisticsService {
       expectedSampleSize: number;
       adaptiveEfficiency: number;
     };
+    seed: number;
+    provenance: StatsProvenance;
   }> {
     try {
       const {
@@ -2442,6 +2339,10 @@ export class StatisticsService {
         adaptationRules,
         interimLooks,
       } = params;
+
+      // Seed the engine so the simulation and its operating characteristics are
+      // reproducible for a given run.
+      const usedSeed = this.seedRun(params, params.seed);
 
       // Validate inputs
       if (initialAllocation.length !== responseRates.length) {
@@ -2591,6 +2492,12 @@ export class StatisticsService {
           adaptiveAdvantage,
         },
         simulationMetrics,
+        seed: usedSeed,
+        provenance: buildProvenance({
+          method: 'simulateAdaptiveTrial',
+          seed: usedSeed,
+          inputs: params,
+        }),
       };
     } catch (error) {
       console.error('Error simulating adaptive trial:', error);
@@ -2942,6 +2849,8 @@ export class StatisticsService {
       requiredSampleSizeForPower80: number;
       requiredSampleSizeForPower90: number;
     };
+    seed: number;
+    provenance: StatsProvenance;
   }> {
     try {
       const {
@@ -2951,8 +2860,10 @@ export class StatisticsService {
         accrualTime = 0,
         survivalModel = 'exponential',
         weibullShape = 1,
-        seed = 12345,
       } = params;
+
+      // Seed the engine so this simulation is reproducible.
+      const usedSeed = this.seedRun(params, params.seed);
 
       // Validate inputs
       if (sampleSize <= 0) {
@@ -2964,12 +2875,7 @@ export class StatisticsService {
         throw new Error('Group proportions must sum to 1');
       }
 
-      // Set random seed for reproducibility
-      // This is simplified - in a real implementation would need a seedable RNG
-      const seedrandom = (Math as { seedrandom?: (value: string) => void }).seedrandom;
-      if (typeof seedrandom === 'function') {
-        seedrandom(seed.toString());
-      }
+      // Reproducibility is handled by the seeded engine (this.seedRun above).
 
       // Generate simulated survival data
       const simulatedData: Array<{
@@ -2994,7 +2900,7 @@ export class StatisticsService {
           accrualTime > 0
             ? Array(n)
                 .fill(0)
-                .map(() => Math.random() * accrualTime)
+                .map(() => this.rng.uniform() * accrualTime)
             : Array(n).fill(0);
 
         for (let j = 0; j < n; j++) {
@@ -3005,13 +2911,13 @@ export class StatisticsService {
             case 'exponential':
               // Exponential model with rate parameter based on median survival
               const rate = Math.log(2) / group.medianSurvival;
-              survTime = -Math.log(Math.random()) / rate;
+              survTime = -Math.log(this.rng.uniform()) / rate;
               break;
 
             case 'weibull':
               // Weibull model with shape parameter and scale based on median
               const scale = group.medianSurvival / Math.pow(Math.log(2), 1 / weibullShape);
-              survTime = scale * Math.pow(-Math.log(Math.random()), 1 / weibullShape);
+              survTime = scale * Math.pow(-Math.log(this.rng.uniform()), 1 / weibullShape);
               break;
 
             case 'gompertz':
@@ -3019,7 +2925,7 @@ export class StatisticsService {
               const a = 0.1; // Shape parameter
               const b =
                 -Math.log(0.5) / (group.medianSurvival * Math.exp(a * group.medianSurvival));
-              survTime = -Math.log(1 + (a * Math.log(Math.random())) / b) / a;
+              survTime = -Math.log(1 + (a * Math.log(this.rng.uniform())) / b) / a;
               break;
 
             default:
@@ -3029,7 +2935,7 @@ export class StatisticsService {
           // Handle censoring due to dropout
           const dropoutTime =
             group.dropoutRate && group.dropoutRate > 0
-              ? (-Math.log(Math.random()) / (Math.log(2) / (group.medianSurvival * 2))) *
+              ? (-Math.log(this.rng.uniform()) / (Math.log(2) / (group.medianSurvival * 2))) *
                 group.dropoutRate
               : Infinity;
 
@@ -3139,6 +3045,12 @@ export class StatisticsService {
           requiredSampleSizeForPower80: requiredN80,
           requiredSampleSizeForPower90: requiredN90,
         },
+        seed: usedSeed,
+        provenance: buildProvenance({
+          method: 'simulateSurvivalData',
+          seed: usedSeed,
+          inputs: params,
+        }),
       };
     } catch (error) {
       console.error('Error simulating survival data:', error);
@@ -3702,41 +3614,75 @@ export class StatisticsService {
    * Simulate binomial trials
    */
   private simulateBinomialTrials(n: number, p: number): number {
-    let successes = 0;
+    return this.rng.binomial(n, p);
+  }
 
-    for (let i = 0; i < n; i++) {
-      if (Math.random() < p) {
-        successes++;
+  /**
+   * Monte Carlo operating characteristics for a multi-arm design: simulate
+   * `nSim` trials, each drawing per-arm responses, then declare "success" if the
+   * best treatment arm beats control on a two-proportion z-test at level alpha.
+   * Under the null (all arms = control rate) this is the type I error; under the
+   * supplied rates it is the power. Replaces the previous hardcoded placeholders.
+   *
+   * Uses the seeded engine RNG, so the estimate is reproducible for a given run.
+   */
+  private monteCarloOperatingCharacteristics(
+    responseRates: number[],
+    perArmN: number,
+    alpha: number,
+    nSim: number
+  ): number {
+    if (perArmN <= 0 || responseRates.length < 2) return 0;
+    const zCrit = this.getNormalQuantile(1 - alpha / 2);
+    let declared = 0;
+
+    for (let s = 0; s < nSim; s++) {
+      const controlResp = this.rng.binomial(perArmN, responseRates[0]);
+      const pControl = controlResp / perArmN;
+      let anyArmWins = false;
+
+      for (let arm = 1; arm < responseRates.length; arm++) {
+        const treatResp = this.rng.binomial(perArmN, responseRates[arm]);
+        const pTreat = treatResp / perArmN;
+        const pPool = (controlResp + treatResp) / (2 * perArmN);
+        const se = Math.sqrt(pPool * (1 - pPool) * (2 / perArmN));
+        if (se <= 0) continue;
+        const z = (pTreat - pControl) / se;
+        if (z > zCrit) {
+          anyArmWins = true;
+          break;
+        }
       }
+
+      if (anyArmWins) declared++;
     }
 
-    return successes;
+    return declared / nSim;
   }
 
   /**
-   * Estimate type I error for adaptive design
+   * Type I error for the adaptive design, estimated by Monte Carlo under the
+   * null (every arm shares the control response rate).
    */
   private estimateTypeIError(responseRates: number[], params: any): number {
-    // Simplified calculation - in reality would use simulations
-    return 0.05; // Assume controlled at nominal level
+    const alpha = Number(params?.alpha ?? 0.05);
+    const numArms = responseRates.length;
+    const perArmN = Math.max(1, Math.floor(Number(params?.sampleSize ?? 0) / numArms));
+    const nSim = Math.max(500, Math.floor(Number(params?.operatingCharNSim ?? 2000)));
+    const nullRates = responseRates.map(() => responseRates[0]);
+    return this.monteCarloOperatingCharacteristics(nullRates, perArmN, alpha, nSim);
   }
 
   /**
-   * Estimate power for adaptive design
+   * Power for the adaptive design, estimated by Monte Carlo under the supplied
+   * response rates.
    */
   private estimateAdaptivePower(responseRates: number[], params: any): number {
-    // Simplified calculation - in reality would use simulations
-    const controlRate = responseRates[0];
-    const maxTreatmentRate = Math.max(...responseRates.slice(1));
-    const delta = maxTreatmentRate - controlRate;
-
-    // Rough approximation
-    if (delta <= 0) return 0.05;
-
-    // Adjust for adaptive design which typically has higher power
-    const adaptivePowerBoost = 1.1; // 10% power boost compared to fixed design
-
-    return Math.min(0.99, 0.5 + delta * 2 * adaptivePowerBoost);
+    const alpha = Number(params?.alpha ?? 0.05);
+    const numArms = responseRates.length;
+    const perArmN = Math.max(1, Math.floor(Number(params?.sampleSize ?? 0) / numArms));
+    const nSim = Math.max(500, Math.floor(Number(params?.operatingCharNSim ?? 2000)));
+    return this.monteCarloOperatingCharacteristics(responseRates, perArmN, alpha, nSim);
   }
 
   /**
@@ -3870,8 +3816,8 @@ export class StatisticsService {
     const max = this.betaPdf((alpha - 1) / (alpha + beta - 2), alpha, beta);
 
     while (true) {
-      const x = Math.random();
-      const y = Math.random() * max;
+      const x = this.rng.uniform();
+      const y = this.rng.uniform() * max;
 
       if (y <= this.betaPdf(x, alpha, beta)) {
         return x;
@@ -4738,6 +4684,9 @@ export class StatisticsService {
     calibrationSlope: { mean: number; sd: number; ci95: [number, number] };
     brier: { mean: number; sd: number; ci95: [number, number] };
   } {
+    // Seed the engine from the data so the bootstrap resampling is reproducible.
+    this.seedRun({ modelType, outcomes, predictions, iterations });
+
     // Initialize arrays to store bootstrap results
     const aucValues: number[] = [];
     const cIndexValues: number[] = [];
@@ -4833,8 +4782,7 @@ export class StatisticsService {
     const indices: number[] = [];
 
     for (let i = 0; i < size; i++) {
-      const randomIndex = Math.floor(Math.random() * size);
-      indices.push(randomIndex);
+      indices.push(this.rng.int(size));
     }
 
     return indices;
@@ -5047,6 +4995,9 @@ export class StatisticsService {
   } {
     // This is a simplified implementation of network meta-analysis
     // A real implementation would use a proper statistical package
+
+    // Seed the engine so the SUCRA / rank-probability simulation is reproducible.
+    this.seedRun({ treatments, referenceGroup, outcomeType, fixedEffect });
 
     // Calculate pairwise comparisons for all treatment pairs
     const pairwiseResults: Map<
@@ -5510,10 +5461,7 @@ export class StatisticsService {
    * Generate random normal variate (Box-Muller transform)
    */
   private rnorm(): number {
-    const u1 = Math.random();
-    const u2 = Math.random();
-
-    return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+    return this.rng.normal();
   }
 
   async performMetaAnalysis(params: {
@@ -6748,8 +6696,9 @@ export function compareTrials(
   trial1Value: number;
   trial2Value: number;
   difference: number;
-  pValue: number;
-  significance: string;
+  pValue: number | null;
+  significance: 'not-assessable';
+  note: string;
 } {
   const extractValue = (trial: any): number => {
     if (!trial) return 0;
@@ -6767,16 +6716,19 @@ export function compareTrials(
   const trial1Value = extractValue(trial1);
   const trial2Value = extractValue(trial2);
   const difference = trial2Value - trial1Value;
-  const pValue = Math.min(0.5, Math.random() * 0.1 + 0.01);
-  const significance = pValue < 0.05 ? 'Significant' : 'Not Significant';
 
+  // A point-estimate difference between two reported values cannot yield a valid
+  // p-value: a real test needs per-arm sample sizes and variances (or raw data),
+  // which are not available here. We report the observed difference and refuse to
+  // fabricate significance. (Previously this returned a random p-value.)
   return {
     endpointName,
     trial1Value,
     trial2Value,
     difference,
-    pValue,
-    significance,
+    pValue: null,
+    significance: 'not-assessable',
+    note: 'Significance not assessable from reported point estimates alone; per-arm n and variance (or raw data) are required for a valid test.',
   };
 }
 
@@ -6835,7 +6787,10 @@ export function generatePredictiveModel(
   const meanEffect = effects.length ? (math.mean(effects) as number) : 0.35;
   const stdDev = effects.length > 1 ? Number(math.std(effects)) : 0.1;
 
-  const predictedEffectSize = meanEffect + (Math.random() - 0.5) * stdDev;
+  // The predicted effect is the historical mean (a deterministic point estimate).
+  // Previously this added random jitter, which made the prediction non-reproducible
+  // and is not a meaningful statistical operation. Uncertainty is expressed by the CI.
+  const predictedEffectSize = meanEffect;
   const confidenceInterval: [number, number] = [
     predictedEffectSize - 1.96 * stdDev,
     predictedEffectSize + 1.96 * stdDev,
@@ -6862,6 +6817,7 @@ export function simulateVirtualTrial(
   expectedEffectSize: number;
   dropoutRate: number;
   simulatedOutcome: number;
+  seed: number;
   assumptions: Record<string, any>;
 } {
   const predictiveModel = generatePredictiveModel(historicalDetails, endpoint);
@@ -6869,8 +6825,19 @@ export function simulateVirtualTrial(
   const dropoutRate = Number(customParams.dropoutRate ?? 0.12);
 
   const expectedEffectSize = predictiveModel.predictedEffectSize;
-  const noise = (Math.random() - 0.5) * 0.1;
-  const simulatedOutcome = expectedEffectSize + noise;
+
+  // Single simulated outcome drawn from the predicted distribution. The noise
+  // scale is the model's own standard deviation (derived from its CI), not an
+  // arbitrary constant, and it is drawn from a seeded generator so the result is
+  // reproducible. Previously this used an unseeded constant-magnitude jitter.
+  const [ciLow, ciHigh] = predictiveModel.confidenceInterval;
+  const modelSd = Math.max(0, (ciHigh - ciLow) / (2 * 1.96));
+  const seed =
+    Number.isFinite(customParams.seed) && customParams.seed !== undefined
+      ? Math.trunc(customParams.seed)
+      : seedFromObject({ historicalDetails, endpoint, customParams });
+  const rng = createRng(seed);
+  const simulatedOutcome = expectedEffectSize + rng.normal(0, modelSd);
 
   return {
     endpoint,
@@ -6878,9 +6845,11 @@ export function simulateVirtualTrial(
     expectedEffectSize,
     dropoutRate,
     simulatedOutcome,
+    seed,
     assumptions: {
       modelReliability: predictiveModel.reliability,
       confidenceInterval: predictiveModel.confidenceInterval,
+      modelSd,
       ...customParams,
     },
   };

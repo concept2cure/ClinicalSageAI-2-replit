@@ -1,5 +1,5 @@
 /**
- * eCTD Export Service — ICH M8 v4.0 Submission Package Generator
+ * eCTD Export Service — ICH eCTD v3.2.2 Submission Package Generator
  *
  * Generates a structurally valid eCTD submission package as a ZIP archive
  * containing:
@@ -9,13 +9,16 @@
  *   - m3/ Module 3: Quality (CMC)
  *   - m4/ Module 4: Nonclinical Study Reports
  *   - m5/ Module 5: Clinical Study Reports
+ *   - util/dtd/ vendored ICH/regional DTDs (when present) for self-containment
  *
  * Uses database-backed eCTD modules/granules from the shared schema.
  *
  * @module server/services/ectdExportService
- * @compliance ICH M8 v4.0, ICH M4 CTD
+ * @compliance ICH eCTD v3.2.2, ICH M4 CTD
  */
 
+import fs from 'fs';
+import path from 'path';
 import JSZip from 'jszip';
 import { db, pool } from '../db';
 import {
@@ -198,18 +201,17 @@ function generateIndexXml(opts: {
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE ectd:ectd SYSTEM "ich-ectd-3-2.dtd">
+<!DOCTYPE ectd:ectd SYSTEM "util/dtd/ich-ectd-3-2.dtd">
 <!--
-  eCTD Submission Backbone (ICH M8 v4.0)
+  eCTD Submission Backbone (ICH eCTD v3.2.2)
   Application: ${escapeXml(opts.applicationNumber)}
   Sequence: ${opts.sequenceNumber}
   Generated: ${opts.generatedAt}
   Generator: Concept2Cure.RI eCTD Export Service
-  Generator: Concept2Cure eCTD Export Service
 -->
 <ectd:ectd xmlns:ectd="http://www.ich.org/ectd"
            xmlns:xlink="http://www.w3.org/1999/xlink"
-           dtd-version="4.0"
+           dtd-version="3.2"
            xml:lang="en">
   <ectd:submission>
     <ectd:application-number>${escapeXml(opts.applicationNumber)}</ectd:application-number>
@@ -224,13 +226,31 @@ ${moduleElements}
 </ectd:ectd>`;
 }
 
+// Regions this generator can produce a correct regional backbone for.
+// Adding a region requires a verified regional XML structure + DTD — do NOT
+// silently fall back to another region's backbone (that previously shipped a
+// PMDA/jp file for Health Canada and any other non-FDA/EMA input).
+// See HI_8_ECTD_SCOPING_BRIEF.md (regions in scope: FDA, EMA, PMDA, HC).
+const ECTD_REGIONS: Record<string, { code: string; agency: string }> = {
+  FDA: { code: 'us', agency: 'U.S. Food and Drug Administration' },
+  EMA: { code: 'eu', agency: 'European Medicines Agency' },
+  PMDA: { code: 'jp', agency: 'Pharmaceuticals and Medical Devices Agency' },
+};
+
+function resolveEctdRegion(region: string): { code: string; agency: string } {
+  const resolved = ECTD_REGIONS[region];
+  if (!resolved) {
+    // Fail closed rather than mislabel a regulatory submission. Health Canada
+    // (ca-regional) is a documented pending region — see the scoping brief.
+    throw new Error(
+      `eCTD export does not support region "${region}" yet. Supported: ${Object.keys(ECTD_REGIONS).join(', ')}.`
+    );
+  }
+  return resolved;
+}
+
 function generateRegionalXml(region: string, applicationNumber: string): string {
-  const regionCode = region === 'FDA' ? 'us' : region === 'EMA' ? 'eu' : 'jp';
-  const agencyName = region === 'FDA'
-    ? 'U.S. Food and Drug Administration'
-    : region === 'EMA'
-      ? 'European Medicines Agency'
-      : 'Pharmaceuticals and Medical Devices Agency';
+  const { code: regionCode, agency: agencyName } = resolveEctdRegion(region);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <${regionCode}-regional xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -243,6 +263,28 @@ function generateRegionalXml(region: string, applicationNumber: string): string 
     <submission-type>initial</submission-type>
   </admin>
 </${regionCode}-regional>`;
+}
+
+/**
+ * Bundle vendored eCTD DTD files (when present) into util/dtd/ so the package is
+ * self-contained and DTD-validatable. DTDs are licensed agency artifacts and are
+ * NOT committed to this repo — drop them into assets/ectd-dtd/ (or set
+ * ECTD_DTD_DIR) and they are bundled automatically; absence is surfaced as a
+ * "not submission-ready" warning by validateEctdPackage.
+ * See assets/ectd-dtd/README.md and HI_8_ECTD_SCOPING_BRIEF.md G1.
+ */
+function bundleVendoredDtds(zip: JSZip): number {
+  try {
+    const dir = process.env.ECTD_DTD_DIR || path.resolve(process.cwd(), 'assets/ectd-dtd');
+    if (!fs.existsSync(dir)) return 0;
+    const dtdFiles = fs.readdirSync(dir).filter(f => f.toLowerCase().endsWith('.dtd'));
+    for (const file of dtdFiles) {
+      zip.file(`util/dtd/${file}`, fs.readFileSync(path.join(dir, file)));
+    }
+    return dtdFiles.length;
+  } catch {
+    return 0; // non-fatal — absence is reported by validateEctdPackage
+  }
 }
 
 function generateModulePlaceholderXml(moduleNumber: string, moduleName: string, granules: GranuleRecord[]): string {
@@ -586,7 +628,7 @@ export async function generateEctdPackage(
 
   // 5. Generate regional XML (Module 1 regional info)
   const regionalXml = generateRegionalXml(region, applicationNumber);
-  const regionCode = region === 'FDA' ? 'us' : region === 'EMA' ? 'eu' : 'jp';
+  const regionCode = resolveEctdRegion(region).code;
   zip.file(`m1/${regionCode}-regional.xml`, regionalXml);
 
   // 6. Generate per-module manifest XMLs
@@ -619,6 +661,11 @@ export async function generateEctdPackage(
   </submission>
 </submission-tracking>`;
   zip.file('util/stf.xml', stfXml);
+
+  // 7b. Bundle vendored ICH/regional DTDs into util/dtd/ when available, so the
+  // package is self-contained. No-op (with a validator warning) until the team
+  // vendors the licensed DTD files. See HI_8_ECTD_SCOPING_BRIEF.md G1.
+  bundleVendoredDtds(zip);
 
   // 8. Record the compilation in the database
   try {
@@ -747,6 +794,28 @@ export async function validateEctdPackage(
   // 7. Check STF (Submission Tracking File)
   if (!fileNames.includes('util/stf.xml')) {
     warnings.push('Missing util/stf.xml (Submission Tracking File)');
+  }
+
+  // 8. DTD self-containment: index.xml declares a DTD via DOCTYPE, but a
+  // submission-ready package must bundle that DTD under util/dtd/. Surface this
+  // explicitly instead of silently shipping a backbone with a dangling DTD
+  // reference. See HI_8_ECTD_SCOPING_BRIEF.md G1.
+  try {
+    const idxFile = zip.file('index.xml');
+    const idxContent = idxFile ? await idxFile.async('string') : '';
+    const referencesDtd = /<!DOCTYPE[^>]*\.dtd"/i.test(idxContent);
+    const hasBundledDtd = fileNames.some(
+      f => f.startsWith('util/dtd/') && f.endsWith('.dtd')
+    );
+    if (referencesDtd && !hasBundledDtd) {
+      warnings.push(
+        'index.xml references a DTD via DOCTYPE but no DTD is bundled under util/dtd/ — ' +
+          'the package is not self-contained and is not submission-ready until the ICH/regional ' +
+          'DTDs are vendored into util/dtd/.'
+      );
+    }
+  } catch {
+    /* non-fatal — DTD bundling check is advisory */
   }
 
   return {

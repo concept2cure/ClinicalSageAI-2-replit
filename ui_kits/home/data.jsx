@@ -5,16 +5,16 @@
    Tiered: domain (2) · work (4) · intelligence (5) · system (4) = 15 items.
    Precedent Intelligence lives inside the MDX workstream, not here. */
 window.NAV_ITEMS = [
-  { id: 'mdx',        label: 'Medical Device and Diagnostics',        icon: 'stethoscope', group: 'domain',       href: null },
+  { id: 'mdx',        label: 'Medical Device and Diagnostics',        icon: 'stethoscope', group: 'domain',       href: '../mdx/index.html' },
   { id: 'biopharma',  label: 'Biotech and Pharma',                    icon: 'atom',         group: 'domain',       href: '../biopharma/index.html' },
 
   { id: 'projects',   label: 'Projects',                              icon: 'folder',       group: 'work',         href: '../projects/index.html' },
   { id: 'vault',      label: 'Vault DMS',                             icon: 'vault',        group: 'work',         href: null },
-  { id: 'tasking',    label: 'Tasking and Collaboration',             icon: 'checkCircle',  group: 'work',         href: null },
-  { id: 'submission', label: 'Submission Center',                     icon: 'send',         group: 'work',         href: null },
+  { id: 'tasking',    label: 'Tasking and Collaboration',             icon: 'checkCircle',  group: 'work',         href: '../tasking/index.html' },
+  { id: 'submission', label: 'Submission Center',                     icon: 'send',         group: 'work',         href: '../submission/index.html' },
 
   { id: 'protocol',   label: 'Protocol and Study Design',             icon: 'microscope',   group: 'intelligence', href: '../intelligence/index.html?tab=protocol' },
-  { id: 'cmc',        label: 'CMC Module',                            icon: 'beaker',       group: 'intelligence', href: '../intelligence/index.html?tab=cmc' },
+  { id: 'cmc',        label: 'CMC Module',                            icon: 'beaker',       group: 'intelligence', href: '../cmc/index.html' },
   { id: 'biostat',    label: 'Biostatistics',                         icon: 'sigma',        group: 'intelligence', href: '../intelligence/index.html?tab=biostat' },
   { id: 'quality',    label: 'Quality and Lifecycle',                 icon: 'shieldCheck',  group: 'intelligence', href: null },
   { id: 'reporting',  label: 'Reports',                               icon: 'barChart',     group: 'intelligence', href: '../intelligence/index.html?tab=reporting' },

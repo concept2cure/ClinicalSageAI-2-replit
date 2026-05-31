@@ -1,6 +1,6 @@
 (() => {
 /* Intelligence — Icons + 4 surfaces + Shell helpers. */
-const { useState } = React;
+var { useState } = React;
 
 const Icon = ({ d, size = 14 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"

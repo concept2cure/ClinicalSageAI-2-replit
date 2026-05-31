@@ -274,6 +274,7 @@ router.post('/stream', async (req: Request, res: Response) => {
         projectId: streamProjectId,
         organizationId: orgId ? Number(orgId) : undefined,
         submissionType: orchestration.detectedSubmissionType || undefined,
+        userRole: effectiveRole,
       }).catch((err): EnrichmentResult => {
         console.warn('[AnA RI] Context enrichment failed:', err?.message);
         return { block: '', sources: [] as string[] };

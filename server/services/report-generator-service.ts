@@ -194,43 +194,49 @@ class InvestorReportGenerator extends BaseReportGenerator {
    * Generate success probability analysis
    */
   private async generateSuccessProbability(indication?: string): Promise<any> {
-    // In a real implementation, this would use ML models to predict success
-    // For demonstration, we're providing simulated data
-
-    let phaseTransitionProbabilities = {
-      phase1to2: 0.78,
-      phase2to3: 0.42,
-      phase3toApproval: 0.64,
-      overallSuccess: 0.21,
-    };
+    // Phase-transition / success probabilities must be sourced from historical data,
+    // not canned industry constants. We only return a figure when the statistics
+    // service provides a real success rate for the indication; otherwise we return an
+    // explicit "unavailable" result rather than fabricated numbers presented as a
+    // prediction. See FORENSIC_CODE_AUDIT_2026-05-29.md HI-2.
+    let indicationSuccessRate: number | null = null;
 
     if (indication) {
-      // If we have indication, we would customize the probabilities based on
-      // historical data for this specific indication
       try {
         const indicationStats = await statisticsService.getIndication(indication);
-        if (indicationStats?.success_rate !== null && indicationStats?.success_rate !== undefined) {
-          phaseTransitionProbabilities = {
-            ...phaseTransitionProbabilities,
-            overallSuccess: indicationStats.success_rate,
-          };
+        if (
+          indicationStats?.success_rate !== null &&
+          indicationStats?.success_rate !== undefined
+        ) {
+          indicationSuccessRate = indicationStats.success_rate;
         }
       } catch (error) {
         console.error(`Error getting statistics for ${indication}:`, error);
       }
     }
 
+    if (indicationSuccessRate === null) {
+      return {
+        available: false,
+        source: 'none',
+        indication: indication ?? null,
+        note:
+          'No historical phase-transition data available for this indication. Success ' +
+          'probability is reported as unavailable rather than from fabricated industry constants.',
+      };
+    }
+
     return {
-      phaseTransitionProbabilities,
-      confidenceInterval: {
-        lower: Math.max(0, phaseTransitionProbabilities.overallSuccess - 0.07),
-        upper: Math.min(1, phaseTransitionProbabilities.overallSuccess + 0.07),
+      available: true,
+      source: 'indication_statistics',
+      indication,
+      phaseTransitionProbabilities: {
+        overallSuccess: indicationSuccessRate,
       },
-      benchmarks: {
-        industryAverage: 0.14,
-        topQuartile: 0.28,
-        bottomQuartile: 0.08,
-      },
+      note:
+        'Overall success probability is sourced from indication statistics. Phase-by-phase ' +
+        'transition probabilities, confidence intervals, and industry benchmarks are not ' +
+        'estimated by this service.',
     };
   }
 

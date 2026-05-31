@@ -180,4 +180,20 @@ export default [
       }],
     },
   },
+  {
+    // ui_kits/** are standalone hi-fi design-system prototypes loaded as plain
+    // browser <script> tags that share one global scope — not ES modules. They
+    // intentionally use `var { ... } = React` (and bare globals declared via
+    // /* global ... */ headers) because `const` would throw "Identifier already
+    // declared" when several kit files load into the same page. Lint them
+    // accordingly so these reference prototypes don't fail the app lint gate.
+    files: ['ui_kits/**/*.{js,jsx}'],
+    languageOptions: {
+      sourceType: 'script',
+    },
+    rules: {
+      'no-var': 'off',
+      'no-undef': 'off',
+    },
+  },
 ];

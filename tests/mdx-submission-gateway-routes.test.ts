@@ -26,6 +26,20 @@ vi.mock('../server/db', () => ({
   db: {},
 }));
 
+// Make the high-risk re-auth gate pass deterministically: a valid password and
+// (when present) TOTP. The governed-action ledger write needs a transaction
+// client; connectFn returns one whose query resolves and whose release is a noop.
+vi.mock('bcryptjs', () => ({
+  default: { compare: vi.fn().mockResolvedValue(true) },
+  compare: vi.fn().mockResolvedValue(true),
+}));
+vi.mock('../server/services/mfaService', () => ({
+  verifyToken: vi.fn().mockResolvedValue(true),
+}));
+
+/** Re-auth body that satisfies verifyReauth in these tests. */
+const REAUTH = { reason: 'governed transmit reason', reauth: { password: 'pw-123456' } };
+
 /* Stub the submission-gateway service so the route tests don't run the
    real transport code. vi.mock is hoisted, so the mocks reference vars
    via vi.hoisted to survive the hoist. */
@@ -102,12 +116,27 @@ function makeApp(opts: { withAuth?: boolean } = { withAuth: true }) {
 
 beforeEach(() => {
   queryFn.mockReset();
+  connectFn.mockReset();
   transmitFn.mockReset();
   statusFn.mockReset();
   ackFn.mockReset();
   isConfigFn.mockReset();
   configStatusFn.mockReset();
-  queryFn.mockResolvedValue({ rows: [], rowCount: 0 });
+  // Default: empty result, except the re-auth password lookup which must find a
+  // user with a password_hash so verifyReauth can run bcrypt.compare (mocked true).
+  queryFn.mockImplementation((sql: string) => {
+    if (typeof sql === 'string' && sql.includes('password_hash')) {
+      return Promise.resolve({ rows: [{ password_hash: 'hashed' }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+  // A transaction client for the governed-action ledger write (BEGIN/INSERT/COMMIT).
+  connectFn.mockImplementation(() =>
+    Promise.resolve({
+      query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+      release: vi.fn(),
+    }),
+  );
 });
 
 /* ─── Auth gate ──────────────────────────────────────────────────── */
@@ -187,6 +216,7 @@ describe('POST /api/mdx/gateways/:region/:gateway/transmit', () => {
         },
         application_id: 'IND-12345',
         sequence: '0001',
+        ...REAUTH,
       });
     expect(res.status).toBe(201);
     expect(res.body.data.transmittalId).toBe(42);
@@ -200,6 +230,7 @@ describe('POST /api/mdx/gateways/:region/:gateway/transmit', () => {
       .post('/api/mdx/gateways/fda/esg/transmit')
       .send({
         bundle: { path: '/tmp/a.zip', sha256: 'a'.repeat(64), sizeBytes: 1, format: 'ectd' },
+        ...REAUTH,
       });
     expect(res.status).toBe(412);
   });
@@ -211,6 +242,7 @@ describe('POST /api/mdx/gateways/:region/:gateway/transmit', () => {
       .post('/api/mdx/gateways/fda/esg/transmit')
       .send({
         bundle: { path: '/tmp/a.zip', sha256: 'a'.repeat(64), sizeBytes: 1, format: 'ectd' },
+        ...REAUTH,
       });
     expect(res.status).toBe(502);
   });

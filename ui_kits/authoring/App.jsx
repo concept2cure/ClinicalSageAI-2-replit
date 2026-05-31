@@ -3,7 +3,7 @@
     AUTH_PROGRAMS, AUTH_SECTION_BODY, AUTH_SEED_THREAD, AUTH_REWRITES, AUTH_DEFAULT,
     AUTH_SKILLS,
     OutlineTree, Artifact, Workbench, Conversation, AuthShell, outlineHelpers */
-const { useState, useEffect, useMemo, useCallback, useRef } = React;
+var { useState, useEffect, useMemo, useCallback, useRef } = React;
 
 /* ───────── Resolve the outline for (docType × agency) with fallback. */
 function resolveOutline(docType, agency) {
@@ -331,6 +331,24 @@ function App() {
       return;
     }
 
+    if (action === 'review') {
+      setMessages(m => [...m, { role: 'user', pre: preLabel, text: 'Send this section to a reviewer.' }]);
+      setMessages(m => [...m, { role: 'ai', blocks: [
+        { kind: 'tool', label: 'Task created', value: `Review §${sectionMeta.path} · assigned · notified` },
+        { kind: 'p',    text: 'Who should review? @-mention them in the composer, or I\u2019ll route to the section owner. A review task is now on their board with this selection attached.' },
+      ]}]);
+      return;
+    }
+
+    if (action === 'approve') {
+      setMessages(m => [...m, { role: 'user', pre: preLabel, text: 'Route this section for approval.' }]);
+      setMessages(m => [...m, { role: 'ai', blocks: [
+        { kind: 'tool', label: 'Approval chain', value: `§${sectionMeta.path} → Reg lead → QA · e-signature required` },
+        { kind: 'p',    text: 'Routed for e-signature approval. The approver signs through the 21 CFR Part 11 gate; the audit chain records the meaning and reason.' },
+      ]}]);
+      return;
+    }
+
     if (action === 'flag') {
       setMessages(m => [...m, { role: 'user', pre: preLabel, text: 'Flag for reviewer attention.' }]);
       setMessages(m => [...m, { role: 'ai', blocks: [
@@ -342,7 +360,7 @@ function App() {
   /* ───── Chat props (shared between modes) ───── */
   const chatProps = {
     title: view === 'workbench' ? 'Ask AnA' : 'Intelligence',
-    hint:  view === 'workbench' ? `§${sectionMeta.path}` : `AnA 1.0 RI · c2c-Opus 4.7`,
+    hint:  view === 'workbench' ? `§${sectionMeta.path}` : `AnA 1.0 RI`,
     messages, pending,
     value: composer, onChange: setComposer, onSend,
     showSkills: messages.length <= AUTH_SEED_THREAD.length + 2,

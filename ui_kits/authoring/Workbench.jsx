@@ -1,5 +1,5 @@
 /* global React, I, AUTH_EVIDENCE, AUTH_REVIEWERS */
-const { useMemo } = React;
+var { useMemo } = React;
 
 /* Helper: walk the outline tree → flat array of leaf sections only. */
 function flattenLeaves(nodes, parent = null, out = []) {

@@ -87,7 +87,7 @@ function SurfaceComposer({ scope, kicker, title, stateLine, starters, queue, pri
           <button className="bp-od-chip" onClick={() => fileRef.current && fileRef.current.click()}>{I.attach} Drop files</button>
           <button className="bp-od-chip">{I.users || I.user} Mention</button>
           <button className="bp-od-chip">{I.sparkles} Skills</button>
-          <button className="bp-od-chip" style={{ marginLeft:'auto' }}>c2c-Opus 4.7 {I.down}</button>
+          <button className="bp-od-chip" style={{ marginLeft:'auto' }}>AnA 1.0 {I.down}</button>
           <button className="bp-od-send" disabled={!composerValue.trim()} onClick={() => send(composerValue)}>{I.arrowRight}</button>
         </div>
         {dragOver && <div className="bp-od-drop-hint">Drop to file with AnA — she'll classify and anchor it to {scope}.</div>}
@@ -298,7 +298,7 @@ function Overview({ programs, onAskAna }) {
           <button className="bp-od-chip" onClick={() => fileRef.current && fileRef.current.click()}>{I.attach} Drop files</button>
           <button className="bp-od-chip">{I.users || I.user} Mention</button>
           <button className="bp-od-chip">{I.sparkles} Skills</button>
-          <button className="bp-od-chip" style={{ marginLeft:'auto' }}>c2c-Opus 4.7 {I.down}</button>
+          <button className="bp-od-chip" style={{ marginLeft:'auto' }}>AnA 1.0 {I.down}</button>
           <button className="bp-od-send" disabled={!composerValue.trim()} onClick={() => send(composerValue)}>{I.arrowRight}</button>
         </div>
         {dragOver && (
