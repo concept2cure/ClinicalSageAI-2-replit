@@ -26,6 +26,7 @@ import { createHash } from 'crypto';
 import * as https from 'https';
 import { URL } from 'url';
 import { pool } from '../../db';
+import { readVerifiedBundle } from './bundle-integrity';
 import {
   CredentialError, GatewayError, TransportError,
   type GatewayAcknowledgment, type GatewayStatusResult, type GatewayTransmitRequest,
@@ -263,7 +264,7 @@ export class EmaCespGateway implements SubmissionGateway {
       const token = await fetchCespToken(creds);
       await updateTransmittal(transmittalId, { status: 'in_transit' });
 
-      const zipBuf = await fs.readFile(req.bundle.path);
+      const zipBuf = await readVerifiedBundle(req.bundle);
       const metadata = {
         organisationId:    creds.organisationId,
         productName:       req.metadata?.productName ?? null,
@@ -426,7 +427,7 @@ export class EudamedGateway implements SubmissionGateway {
          vigilance / capa registrations. The kit's metadata.eudamedPath
          picks the endpoint, with /devices as the default. */
       const endpointPath = (req.metadata?.eudamedPath as string | undefined) ?? '/devices';
-      const payload = await fs.readFile(req.bundle.path);
+      const payload = await readVerifiedBundle(req.bundle);
       const cert = creds.certPath ? await fs.readFile(creds.certPath, 'utf8') : undefined;
       const key  = creds.keyPath  ? await fs.readFile(creds.keyPath, 'utf8')  : undefined;
 
