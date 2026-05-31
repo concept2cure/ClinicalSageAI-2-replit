@@ -3,6 +3,7 @@ import { TikaClient } from '../../integrations/tika/client';
 import { OcrMyPdfClient } from '../../integrations/ocrmypdf/client';
 import { DoclingClient } from '../../integrations/docling/client';
 import { UnstructuredClient } from '../../integrations/unstructured/client';
+import { ocrService } from '../ocr';
 import type { IntakeFileDescriptor, IntakePipelineReport } from './contracts';
 
 export interface IntakePipelineDependencies {
@@ -85,6 +86,47 @@ export class DocumentIntakePipeline {
 
       if (fallbackParse.text.length > primaryParse.text.length) {
         selectedProvider = fallbackParse.provider;
+      }
+    }
+
+    // Last-resort OCR: if the best extracted text is still thin and this is a
+    // scanned/image PDF that ocrmypdf could not handle (binary absent), recover
+    // the text with the portable WASM engine — no system dependency required.
+    const bestSoFar =
+      fallbackParse && fallbackParse.text.length > primaryParse.text.length ? fallbackParse : primaryParse;
+    const looksLikePdf = params.inputBuffer.subarray(0, 5).toString('latin1') === '%PDF-';
+    if (!ocrApplied && looksLikePdf && bestSoFar.text.trim().length < 200) {
+      const wasmStart = new Date();
+      try {
+        const wasm = await ocrService.ocrPdfToText(params.inputBuffer);
+        provenance.push({
+          step: 'tesseract_wasm_ocr',
+          provider: 'tesseract.js',
+          startedAt: wasmStart.toISOString(),
+          completedAt: new Date().toISOString(),
+          success: wasm.text.length > 0,
+          details: `pages=${wasm.pages.length} confidence=${Math.round(wasm.confidence)}`,
+        });
+        if (wasm.text.length > bestSoFar.text.length) {
+          fallbackParse = {
+            provider: 'tesseract.js',
+            text: wasm.text,
+            sections: [],
+            confidence: Math.max(0, Math.min(1, wasm.confidence / 100)),
+            warnings: [],
+          };
+          selectedProvider = 'tesseract.js';
+          ocrApplied = true;
+        }
+      } catch (error) {
+        provenance.push({
+          step: 'tesseract_wasm_ocr',
+          provider: 'tesseract.js',
+          startedAt: wasmStart.toISOString(),
+          completedAt: new Date().toISOString(),
+          success: false,
+          details: error instanceof Error ? error.message : String(error),
+        });
       }
     }
 
