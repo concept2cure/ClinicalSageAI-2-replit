@@ -44,6 +44,7 @@ import './handlers/attach-sources';
 import './handlers/register-inline-ai'; // Phase 2: inline AI actions
 import './handlers/extract-template-from-upload'; // AnA document-formatting engine
 import './handlers/render-document-with-template';
+import './handlers/ocr-extract-text'; // AnA OCR — read text off scanned uploads
 
 // Re-export shared types for convenience
 export type {

@@ -32,7 +32,9 @@ export type AIActionType =
   | 'attach_selection_as_source'
   // Document formatting — AnA template engine
   | 'extract_template_from_upload'
-  | 'render_document_with_template';
+  | 'render_document_with_template'
+  // OCR — extract text from scanned uploads
+  | 'ocr_extract_text';
 
 /** Target entity types that actions can operate on. */
 export type AIActionTargetType =
