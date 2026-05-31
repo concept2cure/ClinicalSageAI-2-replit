@@ -29,6 +29,9 @@ import {
   type Region, type GatewayName,
 } from '../services/submission-gateways';
 import { recordGovernedAction, verifyReauth } from './c2c/actions';
+import { getBundle } from '../services/submission-bundle-storage';
+import { promises as fsp } from 'fs';
+import { dirname } from 'path';
 
 const router = Router();
 const log = createScopedLogger('mdx-submission-gateway');
@@ -44,6 +47,32 @@ function getUserId(req: Request): number | null {
   if (raw === undefined || raw === null) return null;
   const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
   return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Rematerialize a bundle's local file from durable storage if it is missing.
+ *
+ * Bundles are local-first, but ephemeral containers can recycle between assemble
+ * and transmit. If the local file at bundle.path is gone AND the descriptor
+ * records a durable S3 copy, download it back to bundle.path before the gateway
+ * reads it. No-op when the local file is present, when there is no storage
+ * descriptor, or when provider is 'local'. A genuinely-missing local file with
+ * no durable copy is left for the gateway's integrity gate to refuse (422).
+ */
+async function ensureBundleLocal(bundle: {
+  path: string;
+  storage?: { provider: 'local' } | { provider: 's3'; bucket: string; key: string };
+}): Promise<void> {
+  try {
+    await fsp.access(bundle.path);
+    return; // local file present — nothing to do
+  } catch {
+    // local file missing — fall through to durable rematerialization
+  }
+  if (bundle.storage?.provider !== 's3') return; // no durable copy to restore
+  const buf = await getBundle(bundle.storage.key);
+  await fsp.mkdir(dirname(bundle.path), { recursive: true });
+  await fsp.writeFile(bundle.path, buf);
 }
 
 const REGION_SET   = ['fda', 'ema', 'pmda'] as const;
@@ -194,6 +223,8 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
     sizeBytes: number;
     format: 'ectd' | 'estar' | 'eudamed_register' | 'pmda_ectd';
     displayName?: string;
+    storage?: { provider: 'local' } | { provider: 's3'; bucket: string; key: string };
+    validation?: { errorCount: number; warningCount?: number; infoCount?: number; findings?: unknown[] };
   } | null = p.bundle ?? null;
 
   if (!bundle && p.packageId != null) {
@@ -217,6 +248,13 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
           sizeBytes:   stored.sizeBytes,
           format:      stored.format,
           displayName: typeof stored.displayName === 'string' ? stored.displayName : undefined,
+          // Carry the durable-storage descriptor (if any) so ensureBundleLocal can
+          // rematerialize the local file after a container recycle. Not passed to
+          // the gateway — the gateway contract stays path/sha256/sizeBytes/format.
+          storage:     stored.storage && typeof stored.storage === 'object' ? stored.storage : undefined,
+          // Carry internal eCTD structural validation findings (if any) so the
+          // transmit hard-gate can block on error-severity findings.
+          validation:  stored.validation && typeof stored.validation === 'object' ? stored.validation : undefined,
         };
       }
     } catch (err) {
@@ -230,6 +268,14 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
       422,
       'No assembled bundle; call POST /api/submission-ops/packages/:packageId/assemble first.',
     );
+  }
+
+  // Rematerialize the local bundle file from durable storage if a container
+  // recycle lost it since assembly. No-op for local-only descriptors.
+  try {
+    await ensureBundleLocal(bundle);
+  } catch (err) {
+    return serverError(res, log, 'transmit-rematerialize-bundle', err);
   }
 
   try {

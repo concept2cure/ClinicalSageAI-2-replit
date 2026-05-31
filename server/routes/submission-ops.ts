@@ -56,6 +56,12 @@ import {
   renderMarkdownToPDF,
   mapSectionToECTDPath,
 } from '../services/documentExportService';
+import {
+  isBundleStorageEnabled,
+  bundleStorageBucket,
+  bundleStorageKey,
+  putBundle,
+} from '../services/submission-bundle-storage';
 
 const router = Router();
 
@@ -1623,6 +1629,26 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     const bundlePath = path.join(BUNDLE_DIR, fileName);
     await fs.promises.writeFile(bundlePath, zip);
 
+    // Optionally persist a durable copy to S3 (env-gated). The local file is the
+    // primary and is already written above; a durable-archive failure must NOT
+    // fail assembly, so we fall back to provider:'local' on any error.
+    let storage: { provider: 'local' } | { provider: 's3'; bucket: string; key: string } = {
+      provider: 'local',
+    };
+    if (isBundleStorageEnabled()) {
+      const key = bundleStorageKey(pkg.packageId, sha256);
+      try {
+        await putBundle(key, zip);
+        storage = { provider: 's3', bucket: bundleStorageBucket(), key };
+      } catch (storageErr) {
+        console.error(
+          '[submission-ops] assemble-durable-storage-failed (falling back to local)',
+          storageErr instanceof Error ? storageErr.message : storageErr,
+        );
+        storage = { provider: 'local' };
+      }
+    }
+
     const assembledAt = new Date().toISOString();
     const descriptor = {
       path: bundlePath,
@@ -1631,6 +1657,7 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       format,
       leafCount: leafs.length,
       emptyLeafCount,
+      storage,
       assembledAt,
       assembledBy: userId,
     };
@@ -1688,6 +1715,7 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           sizeBytes: descriptor.sizeBytes,
           format: descriptor.format,
           leafCount: descriptor.leafCount,
+          storage: { provider: descriptor.storage.provider },
           assembledAt: descriptor.assembledAt,
         },
       },
