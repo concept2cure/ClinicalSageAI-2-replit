@@ -245,11 +245,11 @@ When PR #550 merges, Phase 7 is the next phase to ship — slotted between the i
 
 ---
 
-## Backend re-land — Phase 11 (validated, ready to ship)
+## Backend re-land — Phase 11 (SHIPPED 2026-05-30)
 
-> Root-caused 2026-05-30 on a real local Postgres 16. **The reverted Phase 11
-> migration + routes are sound; the original `preview_db_test` failures were
-> preview-DB provisioning flakiness, not the SQL.** Re-land directly.
+> Re-landed the validated Phase 11 backend. Migration applies on real
+> Postgres 16; routes + mount compile in both client and server bundles;
+> all CI gates green locally.
 
 Evidence:
 - The migration (`c2c_tlf_builds` + `c2c_forecast_snapshots`, recoverable from
@@ -282,6 +282,7 @@ Protocol/CMC sections stay on fixtures until these are designed.
 
 ## Changelog
 
+- **2026-05-30** — **Phase 11 backend re-landed.** Restored the validated migration (`migrations/20260529_phase11_intelligence.sql` — `c2c_tlf_builds` + `c2c_forecast_snapshots`, no `users` FK) + `server/routes/intelligence-cluster.ts` (`/api/intelligence/{protocol,cmc,biostat,reports}`, `{ data }` envelope, `safeRows` 42P01/42703 degrade, omit-empty) + mount in `register-inline-routes.ts` + the envelope-unwrapping `intelligence/hooks.ts`. Validated before push this time: migration applies on real Postgres 16 (exit 0, 2 tables + 4 indexes); `ci:typecheck:no-regression` 0 errors; repo-health delta 0/0/0; `vite build` + `build-server.mjs` both green. The Biostat TLF queue + Reports forecast now serve live data (org-scoped join to `regulatory_programs`); all other Intelligence sections keep their fixtures until their source tables are designed.
 - **2026-05-30** — **PR #624 merged.** Phase 4 surface wiring + Phase 11 Intelligence cluster (frontend) + Phase 9 Universal Authoring (frontend) + legacy MDX editor removal landed on `concept2cure-v2`. Phase 11 backend root-caused as ship-ready (see "Backend re-land" above).
 
 - **2026-05-29** — **Legacy MDX editors deleted; routed to Phase 9 authoring.** Per PHASE_9_INSTALL.md §7: removed `mdx/editors/{EstarEditor,PmaEditor,CerEditor,DocumentEditor}.tsx` and `mdx/surfaces/cer/CerWorkbench.tsx`. The 510(k) / PMA "open editor" affordances now call up to the host via a new `onOpenAuthoring(docType)` callback (`ZenApp` → `MdxRoute` → `mdx/App`), which switches to the `authoring` layout with the doc type pre-set — no nested shells. Stripped the per-pathway editor chrome from `mdx/App.tsx` (the `editorRoute`/`inEditor` branch, the `editor`/`pma-editor`/`cer-editor`/`cer-workbench` nav ids + labels, and the now-unused `I`/`EDITOR_PROGRAM` imports). The CER workbench tab and the three editor sub-routes were already mutually orphaned (reachable only from each other), so removal is behaviour-preserving. typecheck clean. `ui_kits/ectd_coauthor/` stays as design reference for one release cycle. Remaining Phase 9 backend work (repoint authoring mutation routes off `concept2cure_artifacts` onto the seeded `c2c_documents` model) is deferred to the preview-DB-capable backend pass.
