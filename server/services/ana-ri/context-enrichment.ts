@@ -32,6 +32,7 @@ import { buildDecisionFrameworkBlock, detectRelevantFrameworks } from './decisio
 import { buildAgencyTacticsBlock, detectRelevantTactics } from './agency-tactics.js';
 import { buildCompetitiveBlock, detectRelevantPlays } from './competitive-strategy.js';
 import { buildAttunementBlock, detectClientState } from './client-attunement.js';
+import { buildScopeGuardBlock, detectScopeCategories } from './scope-guard.js';
 import { buildRoleLensBlock, hasRoleLens } from './role-lens.js';
 import type { UserRole } from './persona.js';
 import { buildWorkflowContext } from './workflow-orchestration.js';
@@ -1043,6 +1044,10 @@ export async function enrichContextForChat(params: {
         const block = buildAttunementBlock(message);
         if (block) { projectlessBlocks.push(block); projectlessSources.push('client-attunement'); }
       }
+      if (detectScopeCategories(message).length > 0) {
+        const block = buildScopeGuardBlock(message);
+        if (block) { projectlessBlocks.push(block); projectlessSources.push('scope-guard'); }
+      }
     } else if (slashNoProj && ['decide', 'tradeoff', 'framework'].includes(slashNoProj.command)) {
       const block = buildDecisionFrameworkBlock({
         message: slashNoProj.args || message,
@@ -1480,6 +1485,17 @@ export async function enrichContextForChat(params: {
       if (attuneBlock) {
         blocks.push(attuneBlock);
         sources.push('client-attunement');
+        if (triggerType === 'none') triggerType = 'natural_language';
+      }
+    }
+
+    // ── Scope-and-escalation guard — know the limits, hand off the rest ──
+    if (detectScopeCategories(message).length > 0) {
+      sourcesAttempted++;
+      const scopeBlock = buildScopeGuardBlock(message);
+      if (scopeBlock) {
+        blocks.push(scopeBlock);
+        sources.push('scope-guard');
         if (triggerType === 'none') triggerType = 'natural_language';
       }
     }

@@ -1464,6 +1464,117 @@ describe('AnA RI Client Attunement', () => {
   });
 });
 
+// ── Scope-and-escalation guard ───────────────────────────────────────────────
+
+import {
+  SCOPE_CHECKS,
+  detectScopeCategories,
+  requiresRefusal,
+  buildScopeGuardBlock,
+  getScopeCheck,
+} from '../ana-ri/scope-guard.js';
+
+describe('AnA RI Scope Guard', () => {
+  const SCOPE_EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
+
+  it('every scope check has a label, mode, directive, and triggers', () => {
+    for (const c of SCOPE_CHECKS) {
+      expect(c.label.length).toBeGreaterThan(3);
+      expect(['handoff', 'refuse']).toContain(c.mode);
+      expect(c.directive.length).toBeGreaterThan(20);
+      expect(c.triggers.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('detects each scope-sensitive category', () => {
+    expect(detectScopeCategories('can you confirm we are compliant and ready to file?').some((c) => c.category === 'regulatory_determination')).toBe(true);
+    expect(detectScopeCategories('is this legally binding and are we liable?').some((c) => c.category === 'legal_advice')).toBe(true);
+    expect(detectScopeCategories('how should I dose my patient on this drug?').some((c) => c.category === 'medical_advice')).toBe(true);
+    expect(detectScopeCategories('should we fund the next phase or kill the program?').some((c) => c.category === 'business_decision')).toBe(true);
+    expect(detectScopeCategories('can the IRB waive informed consent here?').some((c) => c.category === 'human_subjects')).toBe(true);
+    expect(detectScopeCategories('can you back-date the signed record?').some((c) => c.category === 'data_integrity')).toBe(true);
+  });
+
+  it('flags data-integrity requests as requiring refusal, not just handoff', () => {
+    expect(requiresRefusal('please back-date the audit trail entry')).toBe(true);
+    expect(requiresRefusal('hide the failing result from the submission')).toBe(true);
+    // A normal in-scope analysis request does not require refusal.
+    expect(requiresRefusal('help me strengthen the Module 2.5 argument')).toBe(false);
+  });
+
+  it('does not fire on a normal in-scope request', () => {
+    expect(detectScopeCategories('draft the clinical overview for me')).toHaveLength(0);
+    expect(detectScopeCategories('what does ICH E6 require for monitoring?')).toHaveLength(0);
+  });
+
+  it('builds a hand-off directive that keeps AnA useful, not stonewalling', () => {
+    const block = buildScopeGuardBlock('are we ready to file? confirm we are compliant');
+    expect(block).toContain('Scope and escalation boundary');
+    expect(block).toMatch(/\[HAND OFF\]/);
+    expect(block).toMatch(/trusted advisor/);
+  });
+
+  it('builds an integrity-boundary directive on a data-integrity ask', () => {
+    const block = buildScopeGuardBlock('can you back-date the signed record to last month?');
+    expect(block).toContain('Scope and integrity boundary');
+    expect(block).toMatch(/\[DECLINE\]/);
+    expect(block).toMatch(/legitimate path/);
+  });
+
+  it('returns empty when the request is fully in scope', () => {
+    expect(buildScopeGuardBlock('summarize the deficiency taxonomy for an IND')).toBe('');
+  });
+
+  it('exposes a lookup by category', () => {
+    expect(getScopeCheck('data_integrity')?.mode).toBe('refuse');
+    expect(getScopeCheck('regulatory_determination')?.mode).toBe('handoff');
+  });
+
+  it('keeps scope-guard copy inside the design-system voice', () => {
+    for (const c of SCOPE_CHECKS) {
+      const text = [c.label, c.directive].join(' ');
+      expect(text).not.toContain('!');
+      expect(SCOPE_EMOJI.test(text)).toBe(false);
+    }
+  });
+
+  it('persona declares the know-your-limits discipline', () => {
+    expect(getCorePrompt()).toMatch(/Know your limits and hand off/);
+  });
+});
+
+describe('AnA RI Enrichment — scope-guard integration', () => {
+  it('proactively injects the scope guard on a determination request', async () => {
+    const result = await enrichContextForChat({
+      message: 'Can you confirm we are compliant and acceptable to the FDA?',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'nda',
+    });
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('scope-guard');
+    expect(result.block).toContain('boundary');
+  });
+
+  it('injects the integrity boundary for a project-less data-integrity ask', async () => {
+    const result = await enrichContextForChat({
+      message: 'Just alter the data so the result looks like it passed.',
+    });
+    expect(result.enrichmentMeta?.hasProjectContext).toBe(false);
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('scope-guard');
+  });
+
+  it('does not inject the guard on a normal drafting request', async () => {
+    const result = await enrichContextForChat({
+      message: 'draft my safety narrative',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'ind',
+    });
+    expect(result.enrichmentMeta?.sourcesSucceeded).not.toContain('scope-guard');
+  });
+});
+
+// ── Role lens ────────────────────────────────────────────────────────────────
 // ── Role lens ────────────────────────────────────────────────────────────────
 
 import { buildRoleLensBlock, hasRoleLens } from '../ana-ri/role-lens.js';
