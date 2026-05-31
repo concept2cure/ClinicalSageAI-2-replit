@@ -1464,6 +1464,109 @@ describe('AnA RI Client Attunement', () => {
   });
 });
 
+// ── Claim-grounding guard ────────────────────────────────────────────────────
+
+import {
+  CLAIM_CHECKS,
+  detectClaimCategories,
+  buildClaimGroundingBlock,
+  getClaimCheck,
+} from '../ana-ri/claim-grounding.js';
+
+describe('AnA RI Claim-Grounding Guard', () => {
+  const GROUND_EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
+
+  it('every claim check has a label, directive, and triggers', () => {
+    for (const c of CLAIM_CHECKS) {
+      expect(c.label.length).toBeGreaterThan(3);
+      expect(c.directive.length).toBeGreaterThan(20);
+      expect(c.triggers.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('detects each high-stakes claim category', () => {
+    expect(detectClaimCategories('this is per 21 CFR 314.50').some((c) => c.category === 'citation')).toBe(true);
+    expect(detectClaimCategories('cite ICH E6 for GCP').some((c) => c.category === 'citation')).toBe(true);
+    expect(detectClaimCategories('the probability of approval is high').some((c) => c.category === 'probability')).toBe(true);
+    expect(detectClaimCategories('this is a slam dunk, guaranteed approval').some((c) => c.category === 'guarantee')).toBe(true);
+    expect(detectClaimCategories('a similar product was approved last year').some((c) => c.category === 'precedent')).toBe(true);
+    expect(detectClaimCategories('you need at least 1500 patients').some((c) => c.category === 'numeric')).toBe(true);
+    expect(detectClaimCategories('the 75-day Pre-Sub clock starts then').some((c) => c.category === 'deadline')).toBe(true);
+  });
+
+  it('does not fire on a plain conversational message', () => {
+    expect(detectClaimCategories('hi, can you help me get oriented?')).toHaveLength(0);
+    expect(detectClaimCategories('what should I work on next?')).toHaveLength(0);
+  });
+
+  it('builds a non-negotiable grounding directive scoped to the claims present', () => {
+    const block = buildClaimGroundingBlock('we are guaranteed approval per 21 CFR 314 with 90% probability');
+    expect(block).toContain('Claim-grounding check');
+    expect(block).toMatch(/KNOWN|INFERRED|MISSING/);
+    expect(block).toMatch(/Absolute assurance/);
+    expect(block).toMatch(/Regulatory citation/);
+  });
+
+  it('returns empty when there is nothing groundable', () => {
+    expect(buildClaimGroundingBlock('thanks, that helps')).toBe('');
+  });
+
+  it('can scan AnA\'s drafted answer as a self-check, not only the user message', () => {
+    const block = buildClaimGroundingBlock('tell me about the program', 'It will definitely be approved.');
+    expect(block).toContain('Claim-grounding check');
+    expect(block).toMatch(/Absolute assurance/);
+  });
+
+  it('exposes a lookup by category', () => {
+    expect(getClaimCheck('guarantee')?.label).toMatch(/assurance/i);
+    expect(getClaimCheck('citation')?.category).toBe('citation');
+  });
+
+  it('keeps claim-grounding copy inside the design-system voice', () => {
+    for (const c of CLAIM_CHECKS) {
+      const text = [c.label, c.directive].join(' ');
+      expect(text).not.toContain('!');
+      expect(GROUND_EMOJI.test(text)).toBe(false);
+    }
+  });
+
+  it('persona declares the claim-grounding discipline', () => {
+    expect(getCorePrompt()).toMatch(/Ground your high-stakes claims/);
+  });
+});
+
+describe('AnA RI Enrichment — claim-grounding integration', () => {
+  it('proactively injects the grounding guard on a high-stakes claim', async () => {
+    const result = await enrichContextForChat({
+      message: 'Can you confirm we are guaranteed approval under 21 CFR 314 with a 90% probability?',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'nda',
+    });
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('claim-grounding');
+    expect(result.block).toContain('Claim-grounding check');
+  });
+
+  it('grounds a high-stakes claim for a project-less user', async () => {
+    const result = await enrichContextForChat({
+      message: 'Is it true a similar device was cleared under ICH E6 with only 50 patients?',
+    });
+    expect(result.enrichmentMeta?.hasProjectContext).toBe(false);
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('claim-grounding');
+  });
+
+  it('does not inject the guard on a plain orientation request', async () => {
+    const result = await enrichContextForChat({
+      message: 'where do I start?',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'ind',
+    });
+    expect(result.enrichmentMeta?.sourcesSucceeded).not.toContain('claim-grounding');
+  });
+});
+
+// ── Role lens ────────────────────────────────────────────────────────────────
 // ── Role lens ────────────────────────────────────────────────────────────────
 
 import { buildRoleLensBlock, hasRoleLens } from '../ana-ri/role-lens.js';
