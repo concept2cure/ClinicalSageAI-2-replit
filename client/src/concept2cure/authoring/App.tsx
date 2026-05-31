@@ -23,6 +23,7 @@ import {
   resolveOutline, findNode, firstLeaf, timeNow,
   type AuthMessage, type SectionBody, type Skill,
 } from './data';
+import { useC2cDocuments, type C2cDocumentSummary } from './hooks';
 
 const STATUS_TEXT: Record<string, string> = { approved: 'Approved', review: 'In review', drafted: 'Drafted', locked: 'Locked', todo: 'Not started' };
 
@@ -121,6 +122,20 @@ export function AuthoringApp({ initialDocType }: AuthoringAppProps = {}) {
   const agencyObj = AUTH_AGENCIES.find((a) => a.id === agency)!;
   const docTypeObj = AUTH_DOC_TYPES.find((d) => d.id === docType)!;
   const ownerName = sectionMeta.owner ? (AUTH_REVIEWERS.find((r) => r.id === sectionMeta.owner) || { name: undefined }).name : null;
+
+  // Live documents for this org from the c2c_documents API. When present, the
+  // banner lets the user load a real document (its doc_type × agency drives the
+  // shell's rule pack); when none exist, the strip is hidden and the kit demo
+  // content renders — the house `live ?? fixture` pattern.
+  const { documents: liveDocuments } = useC2cDocuments();
+  const loadLiveDocument = React.useCallback((doc: C2cDocumentSummary) => {
+    setDocType(doc.doc_type);
+    setAgency(doc.agency);
+    setMessages((m) => [...m, { role: 'ai', blocks: [
+      { kind: 'tool', label: 'Loaded', value: `${doc.title} · ${doc.doc_type.toUpperCase()} × ${doc.agency.toUpperCase()}` },
+      { kind: 'tool', label: 'Readiness', value: `${doc.readiness}% · ${doc.status}` },
+    ] }]);
+  }, []);
 
   /* ───── Streaming rewrite engine ───── */
   React.useEffect(() => {
@@ -377,6 +392,21 @@ export function AuthoringApp({ initialDocType }: AuthoringAppProps = {}) {
         version={AUTH_DEFAULT.version}
         state={AUTH_DEFAULT.state}
       />
+
+      {liveDocuments && liveDocuments.length > 0 && (
+        <div className="au-live-docs" role="region" aria-label="Live documents">
+          <span className="au-live-docs-label">Your documents</span>
+          {liveDocuments.slice(0, 8).map((doc) => (
+            <button key={doc.id} className="au-live-doc" type="button"
+                    onClick={() => loadLiveDocument(doc)}
+                    title={`${doc.title} · ${doc.readiness}% · ${doc.status}`}>
+              {I.fileText}
+              <span className="au-live-doc-title">{doc.title}</span>
+              <span className="au-live-doc-meta">{doc.doc_type.toUpperCase()} · {doc.readiness}%</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="au-primary">
         {view === 'conversation' ? (

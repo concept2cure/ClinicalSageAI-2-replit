@@ -232,6 +232,31 @@
 .au-tree-foot .bar .fill { height: 100%; background: var(--accent-main-100); transition: width 220ms; }
 
 /* ═══════════════════════════════════════════════════════════
+   LIVE DOCUMENTS strip — appears (spanning the work area) only when the
+   org has real c2c_documents; hidden otherwise so the kit demo renders.
+   ─────────────────────────────────────────────────────────── */
+.au-live-docs {
+  grid-column: 2;
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 16px; overflow-x: auto;
+  background: var(--bg-050); border-bottom: 1px solid #f2f0e8;
+}
+.au-live-docs-label {
+  font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--text-400); font-weight: 600; white-space: nowrap; flex: 0 0 auto;
+}
+.au-live-doc {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 999px;
+  background: var(--background); border: 1px solid #e8e6dc;
+  font-size: 11.5px; color: var(--text-200); white-space: nowrap;
+  transition: background 200ms, border-color 200ms;
+}
+.au-live-doc:hover { background: var(--bg-100); border-color: #d1cfc0; color: var(--text-100); }
+.au-live-doc .au-live-doc-title { font-weight: 500; color: var(--text-100); }
+.au-live-doc .au-live-doc-meta { color: var(--text-400); font-variant-numeric: tabular-nums; }
+
+/* ═══════════════════════════════════════════════════════════
    PRIMARY — mode-switching pane
    ─────────────────────────────────────────────────────────── */
 .au-primary {
