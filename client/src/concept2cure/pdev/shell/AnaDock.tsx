@@ -34,9 +34,11 @@ export interface PdevAnaDockMessage {
 
 interface AnaDockProps {
   open: boolean;
-  setOpen: (v: boolean) => void;
-  program: PdevProgramView | null;
-  readinessScore: number;
+  setOpen: (next: boolean) => void;
+  program: PdevProgramView['program'] | null;
+  /** Effective readiness for the program (latest snapshot overall). */
+  readinessScore: number | null;
+  /** Top blocker derived from the program view; null when none. */
   topBlocker: string | null;
   activeNav: string;
   /** When a single activity is selected in a workstream / detail view,
@@ -78,28 +80,13 @@ export function PdevAnaDock({
   const transcriptRef = React.useRef<HTMLDivElement>(null);
   const fileRef = React.useRef<HTMLInputElement>(null);
   const upload = useChatUpload({ projectId });
+  const readyCount = upload.attachments.filter((a) => a.status === 'ready').length;
 
   // Keep the transcript pinned to the latest message as tokens stream in.
   React.useEffect(() => {
     const el = transcriptRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
-
-  const readyCount = upload.attachments.filter((a) => a.status === 'ready').length;
-
-  const handleSend = () => {
-    const trimmed = draft.trim();
-    const ready = upload.attachments.filter((a) => a.status === 'ready');
-    if (!trimmed && ready.length === 0) return;
-    // Uploaded docs are OCR'd into project memory server-side; reference them
-    // inline when the message is otherwise bare so AnA has a prompt to act on.
-    const names = ready.map((a) => a.name).join(', ');
-    const text = trimmed || (names ? `Review the attached: ${names}` : '');
-    if (!text) return;
-    onSend(text);
-    setDraft('');
-    upload.clear();
-  };
 
   if (!open) {
     return (
@@ -116,6 +103,20 @@ export function PdevAnaDock({
       </aside>
     );
   }
+
+  const handleSend = () => {
+    const trimmed = draft.trim();
+    const ready = upload.attachments.filter((a) => a.status === 'ready');
+    if (!trimmed && ready.length === 0) return;
+    // Uploaded docs are OCR'd into project memory server-side; reference them
+    // inline when the message is otherwise bare so AnA has a prompt to act on.
+    const names = ready.map((a) => a.name).join(', ');
+    const text = trimmed || (names ? `Review the attached: ${names}` : '');
+    if (!text) return;
+    onSend(text);
+    setDraft('');
+    upload.clear();
+  };
 
   return (
     <aside className="pdev-ana">
@@ -138,53 +139,59 @@ export function PdevAnaDock({
         </button>
       </div>
 
-      {/* Context block */}
-      <div className="pdev-ana-ctx">
-        {program ? (
-          <>
-            <div className="pdev-ana-ctx-line">
-              <span className="pdev-ana-ctx-label">Program</span>
-              <span className="pdev-ana-ctx-value">{program.title}</span>
-            </div>
-            <div className="pdev-ana-ctx-line">
-              <span className="pdev-ana-ctx-label">Readiness</span>
-              <span className="pdev-ana-ctx-value">{readinessScore}%</span>
-            </div>
-            {activity && (
-              <div className="pdev-ana-ctx-line">
-                <span className="pdev-ana-ctx-label">Activity</span>
-                <span className="pdev-ana-ctx-value">{activity.title}</span>
-              </div>
+      {program && (
+        <div className="pdev-ana-context">
+          <div className="lbl">Context</div>
+          <div className="val">
+            {program.code} · {program.productName.split(' · ')[0]}
+          </div>
+          <div className="sub">
+            {readinessScore !== null && (
+              <>Readiness {Math.round(readinessScore)}%</>
             )}
-            {topBlocker && (
-              <div className="pdev-ana-ctx-line">
-                <span className="pdev-ana-ctx-label">Top blocker</span>
-                <span className="pdev-ana-ctx-value">{topBlocker}</span>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="pdev-ana-ctx-empty">Select a program for context.</div>
-        )}
-      </div>
+            {readinessScore !== null && program.targetSubmissionDate && ' · '}
+            {program.targetSubmissionDate &&
+              `target IND ${program.targetSubmissionDate.slice(0, 10)}`}
+          </div>
+          {activity && (
+            <div className="pdev-ana-context-activity">
+              <span className="ico">
+                <PdevIcon name="zap" />
+              </span>
+              <span>{activity.registry.title}</span>
+            </div>
+          )}
+          {topBlocker && (
+            <div className="pdev-ana-context-blocker">
+              <span className="ico">
+                <PdevIcon name="alertCircle" />
+              </span>
+              <span>{topBlocker}</span>
+            </div>
+          )}
+        </div>
+      )}
 
-      {/* Suggestions OR transcript */}
-      {!hasTranscript ? (
-        <div className="pdev-ana-suggestions">
-          <div className="pdev-ana-suggestions-label">Suggested for this surface</div>
-          {suggestions.map((s, i) => (
+      {!hasTranscript && (
+        <>
+          <div className="pdev-ana-section-label">Suggested for this surface</div>
+          {suggestions.slice(0, 3).map((s, i) => (
             <button
               key={i}
               className="pdev-ana-suggestion"
               onClick={() => setDraft(s)}
               type="button"
             >
-              <PdevIcon name="sparkles" />
+              <span className="ico">
+                <PdevIcon name="sparkles" />
+              </span>
               <span>{s}</span>
             </button>
           ))}
-        </div>
-      ) : (
+        </>
+      )}
+
+      {hasTranscript ? (
         <div className="pdev-ana-transcript" ref={transcriptRef}>
           {messages.map((m, i) => (
             <div key={i} className={`pdev-ana-msg ${m.role}`}>
@@ -196,6 +203,8 @@ export function PdevAnaDock({
             </div>
           ))}
         </div>
+      ) : (
+        <div className="pdev-ana-spacer" />
       )}
 
       <div className="pdev-ana-foot">
