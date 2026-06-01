@@ -69,6 +69,14 @@ const TOOL_LABELS: Record<string, string> = {
   check_dossier_consistency: 'Checking dossier consistency',
 };
 
+/** A file attached to a sent message — the minimal shape the thread renders. */
+export interface MessageAttachment {
+  id: string;
+  name: string;
+  /** Server file id once uploaded (present for ready attachments). */
+  fileId?: string;
+}
+
 function toolLabel(name: string): string {
   if (TOOL_LABELS[name]) return TOOL_LABELS[name];
   const spaced = name.replace(/_/g, ' ').trim();
@@ -79,6 +87,8 @@ export interface AnaChatMessage {
   id: string;
   role: 'user' | 'assistant';
   text: string;
+  /** Files attached to this (user) turn, shown as chips above the bubble. */
+  attachments?: MessageAttachment[];
   /** True while tokens are still arriving for this message. */
   streaming?: boolean;
   /**
@@ -174,8 +184,8 @@ export interface UseAnaChatOptions {
 export interface UseAnaChatReturn {
   messages: AnaChatMessage[];
   isStreaming: boolean;
-  /** Send a user message and stream the assistant reply. */
-  send: (text: string) => Promise<void>;
+  /** Send a user message (with optional attachments) and stream the reply. */
+  send: (text: string, attachments?: MessageAttachment[]) => Promise<void>;
   /** Abort the current stream. */
   stop: () => void;
   /** Reset the conversation (new thread). */
@@ -250,7 +260,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   }, []);
 
   const send = useCallback(
-    async (rawText: string) => {
+    async (rawText: string, attachments?: MessageAttachment[]) => {
       const text = rawText.trim();
       if (!text || isStreaming) return;
 
@@ -260,6 +270,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         role: 'user',
         text,
         sentAt,
+        attachments: attachments && attachments.length > 0 ? attachments : undefined,
       };
       const assistantId = `a-${sentAt}`;
 

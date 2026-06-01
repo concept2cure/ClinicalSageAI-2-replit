@@ -26,7 +26,7 @@ import { EmptyState, type EmptySuggestion } from './EmptyState';
 import { ChatView, type ChatMessageView } from './ChatView';
 import type { ExecutedActionChip } from './Message';
 import { ProjectsView, type AnaProject } from './ProjectsView';
-import { useAnaChat, type AnaChatMessage, type AnaChatAction } from './useAnaChat';
+import { useAnaChat, type AnaChatMessage, type AnaChatAction, type MessageAttachment } from './useAnaChat';
 import { useRecents } from './useRecents';
 import styles from './styles.module.css';
 
@@ -278,9 +278,9 @@ export function Ana({
   }, [suggestedActions]);
 
   const handleSend = useCallback(
-    (text: string) => {
+    (text: string, attachments?: MessageAttachment[]) => {
       setView('chat');
-      void chat.send(text);
+      void chat.send(text, attachments);
     },
     [chat]
   );
@@ -457,6 +457,7 @@ export function Ana({
         id: m.id,
         role: m.role,
         text: m.text,
+        attachments: m.attachments,
         streaming: m.streaming,
         statusPhase: m.statusPhase,
         executedActions: mergedActions.length > 0 ? mergedActions : undefined,

@@ -20,6 +20,7 @@ import { setOptions } from 'marked';
 
 import { I } from './icons';
 import { Composer } from './Composer';
+import type { MessageAttachment } from './useAnaChat';
 import styles from './styles.module.css';
 import {
   renderSafeMarkdown,
@@ -57,6 +58,8 @@ export interface ToolCallView {
 export interface MessageProps {
   role: 'user' | 'assistant';
   text: string;
+  /** Files attached to this (user) turn — rendered as chips above the bubble. */
+  attachments?: MessageAttachment[];
   /** Markdown-rendered HTML. If unset, `text` renders as plain paragraph. */
   html?: string;
   streaming?: boolean;
@@ -121,6 +124,7 @@ function formatLatency(ms: number): string {
 export function Message({
   role,
   text,
+  attachments,
   html,
   streaming,
   statusPhase,
@@ -247,7 +251,19 @@ export function Message({
     }
     return (
       <div className={`${styles.msg} ${styles.msgUser}`}>
-        <div className={styles.bubble}>{text}</div>
+        <div className={styles.msgUserStack}>
+          {attachments && attachments.length > 0 && (
+            <div className={styles.msgAttachments}>
+              {attachments.map(a => (
+                <span key={a.id} className={styles.msgAttachment} title={a.name}>
+                  <I.attach size={12} />
+                  <span className={styles.label}>{a.name}</span>
+                </span>
+              ))}
+            </div>
+          )}
+          <div className={styles.bubble}>{text}</div>
+        </div>
         {onEditRegenerate && (
           <button
             className={styles.userEditBtn}

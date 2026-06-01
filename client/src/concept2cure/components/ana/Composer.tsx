@@ -32,6 +32,19 @@ export interface ComposerProps {
   placeholder?: string;
   /** Scopes uploads to a project so extracted text lands in that project's memory. */
   projectId?: string;
+  /**
+   * Called with the ready attachments at the moment of send, just before
+   * `onSend`. Lets the host attach them to the outgoing message so the thread
+   * can render them. The composer clears its attachment chips afterwards.
+   */
+  onAttachmentsSend?: (attachments: ComposerReadyAttachment[]) => void;
+}
+
+/** A successfully-uploaded attachment, handed to the host on send. */
+export interface ComposerReadyAttachment {
+  id: string;
+  name: string;
+  fileId?: string;
 }
 
 /** A file attached in the composer, tracked through its upload lifecycle. */
@@ -53,6 +66,7 @@ export function Composer({
   isStreaming = false,
   placeholder = 'How can AnA help you today?',
   projectId,
+  onAttachmentsSend,
 }: ComposerProps) {
   const AttachIco = I.attach;
   const ToolsIco = I.tools;
@@ -118,6 +132,17 @@ export function Composer({
 
   const removeAttachment = (id: string) => setAttachments((prev) => prev.filter((a) => a.id !== id));
 
+  // Surface ready attachments to the host (so the sent message can render them),
+  // clear the composer's chips, then fire the parent's send.
+  const handleSend = useCallback(() => {
+    const ready = attachments.filter((a) => a.status === 'ready');
+    if (ready.length > 0) {
+      onAttachmentsSend?.(ready.map((a) => ({ id: a.id, name: a.name, fileId: a.fileId })));
+      setAttachments([]);
+    }
+    onSend();
+  }, [attachments, onAttachmentsSend, onSend]);
+
   const sendDisabled = !value.trim() && !isStreaming;
 
   return (
@@ -173,7 +198,7 @@ export function Composer({
         onKeyDown={e => {
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            if (!isStreaming) onSend();
+            if (!isStreaming) handleSend();
           } else if (e.key === 'Escape' && isStreaming && onStop) {
             // Escape during streaming = stop generation (Anthropic shortcut)
             e.preventDefault();
@@ -217,7 +242,7 @@ export function Composer({
             if (isStreaming) {
               onStop?.();
             } else {
-              onSend();
+              handleSend();
             }
           }}
           disabled={sendDisabled}

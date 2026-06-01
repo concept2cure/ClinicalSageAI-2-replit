@@ -317,6 +317,20 @@
   padding: 12px 16px; border-radius: 18px;
   font-size: 15px; line-height: 1.5; max-width: 85%;
 }
+/* Column wrapper so attachment chips stack above the bubble, both right-aligned. */
+.msgUserStack {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+  max-width: 85%;
+}
+.msgUserStack .bubble { max-width: 100%; }
+.msgAttachments { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.msgAttachment {
+  display: inline-flex; align-items: center; gap: 6px;
+  max-width: 240px; padding: 4px 8px; border-radius: 8px;
+  font-size: 12px; line-height: 1.2; color: var(--ink-body, var(--text-200));
+  background: var(--bg-200); border: 1px solid var(--border);
+}
+.msgAttachment .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* User-message edit affordance — visible on row hover only, uses the same
    subtle icon-button pattern as the assistant ai-actions row. */

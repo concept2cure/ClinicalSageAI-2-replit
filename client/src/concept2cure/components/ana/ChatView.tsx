@@ -13,14 +13,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { I } from './icons';
-import { Composer } from './Composer';
+import { Composer, type ComposerReadyAttachment } from './Composer';
 import { Message, type ExecutedActionChip, type ToolCallView } from './Message';
+import type { MessageAttachment } from './useAnaChat';
 import styles from './styles.module.css';
 
 export interface ChatMessageView {
   id: string;
   role: 'user' | 'assistant';
   text: string;
+  /** Files attached to this (user) turn — rendered as chips above the bubble. */
+  attachments?: MessageAttachment[];
   html?: string;
   streaming?: boolean;
   /** Progress label shown before the first token arrives. */
@@ -53,7 +56,7 @@ export interface ChatMessageView {
 
 export interface ChatViewProps {
   messages: ChatMessageView[];
-  onSend: (text: string) => void;
+  onSend: (text: string, attachments?: MessageAttachment[]) => void;
   onStop?: () => void;
   isStreaming?: boolean;
   onCopy?: (messageId: string, text: string) => void;
@@ -84,6 +87,8 @@ export function ChatView({
   projectId,
 }: ChatViewProps) {
   const [draft, setDraft] = useState('');
+  // Attachments the composer hands up at send time, consumed by `send`.
+  const pendingAttachmentsRef = useRef<MessageAttachment[]>([]);
   const endRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [stickToBottom, setStickToBottom] = useState(true);
@@ -118,7 +123,9 @@ export function ChatView({
   const send = () => {
     const out = draft.trim();
     if (!out) return;
-    onSend(out);
+    const attachments = pendingAttachmentsRef.current;
+    pendingAttachmentsRef.current = [];
+    onSend(out, attachments.length > 0 ? attachments : undefined);
     setDraft('');
     // Sending a new message implies user wants to follow it.
     setStickToBottom(true);
@@ -134,6 +141,7 @@ export function ChatView({
               key={m.id}
               role={m.role}
               text={m.text}
+              attachments={m.attachments}
               html={m.html}
               streaming={m.streaming}
               statusPhase={m.statusPhase}
@@ -183,6 +191,9 @@ export function ChatView({
           value={draft}
           onChange={setDraft}
           onSend={send}
+          onAttachmentsSend={(atts: ComposerReadyAttachment[]) => {
+            pendingAttachmentsRef.current = atts;
+          }}
           onStop={onStop}
           isStreaming={isStreaming}
           placeholder="Reply to AnA…"
