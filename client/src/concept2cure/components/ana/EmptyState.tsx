@@ -9,10 +9,11 @@
  * the default greeting line and the default pill list (the bundle hardcodes
  * both; production passes context-specific text from ZenApp).
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { I } from './icons';
-import { Composer } from './Composer';
+import { Composer, type ComposerReadyAttachment } from './Composer';
+import type { MessageAttachment } from './useAnaChat';
 import styles from './styles.module.css';
 
 const AGENCIES = ['FDA', 'EMA', 'PMDA', 'Health Canada', 'MHRA', 'ICH'] as const;
@@ -33,13 +34,15 @@ export interface EmptySuggestion {
 
 export interface EmptyStateProps {
   greetingName: string;
-  onSend: (text: string) => void;
+  onSend: (text: string, attachments?: MessageAttachment[]) => void;
   isStreaming?: boolean;
   onStop?: () => void;
   /** Override the default "Good morning, {name}" line. Bundle shows the default. */
   greeting?: string;
   /** Override the default suggestion pill list. */
   suggestions?: ReadonlyArray<EmptySuggestion>;
+  /** Scopes composer uploads to a project so extracted text lands in its memory. */
+  projectId?: string;
 }
 
 function resolveIcon(key?: EmptySuggestion['iconKey']): typeof I.file {
@@ -64,13 +67,23 @@ export function EmptyState({
   onStop,
   greeting,
   suggestions,
+  projectId,
 }: EmptyStateProps) {
   const [draft, setDraft] = useState('');
+  // Attachments the composer hands up at send time, consumed by `send`.
+  const pendingAttachmentsRef = useRef<MessageAttachment[]>([]);
 
   const send = (text?: string) => {
     const out = text || draft;
-    if (!out.trim()) return;
-    onSend(out);
+    if (!out.trim()) {
+      pendingAttachmentsRef.current = [];
+      return;
+    }
+    // A suggestion-pill click (text passed) carries no attachments; a composer
+    // send consumes whatever the composer handed up.
+    const attachments = text ? [] : pendingAttachmentsRef.current;
+    pendingAttachmentsRef.current = [];
+    onSend(out, attachments.length > 0 ? attachments : undefined);
     if (!text) setDraft('');
   };
 
@@ -92,8 +105,12 @@ export function EmptyState({
           value={draft}
           onChange={setDraft}
           onSend={() => send()}
+          onAttachmentsSend={(atts: ComposerReadyAttachment[]) => {
+            pendingAttachmentsRef.current = atts;
+          }}
           onStop={onStop}
           isStreaming={isStreaming}
+          projectId={projectId}
         />
         <div className={styles.suggest}>
           {pills.map(({ Ico, label }) => (

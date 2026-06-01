@@ -505,6 +505,7 @@ export function Ana({
             isStreaming={chat.isStreaming}
             greeting={greeting}
             suggestions={emptySuggestions}
+            projectId={resolvedProjectId ?? undefined}
           />
         )}
         {view === 'chat' && (
