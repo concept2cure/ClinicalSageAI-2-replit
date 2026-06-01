@@ -65,6 +65,11 @@ import {
   type SiteConfig,
 } from '../services/stats/enrollment-forecast';
 import {
+  mrmcPower,
+  mrmcReadersForPower,
+  type MrmcInput,
+} from '../services/stats/mrmc';
+import {
   runJudgmentPipeline,
   runPipelineAndGenerateArtifact,
   runPipelineForRole,
@@ -1293,6 +1298,58 @@ router.post('/enrollment/forecast', authMiddleware, async (req: Request, res: Re
       return res.status(400).json({ success: false, error: "provide 'targetN' and/or 'time'." });
     }
     res.json({ success: true, data });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/biostat/diagnostic/mrmc
+ * Multireader-multicase (Obuchowski–Rockette) reader-study sizing for a
+ * two-modality figure-of-merit (e.g. AUC) comparison. Either the power at a
+ * given number of readers, or the smallest reader count for a target power.
+ *
+ * Body: { aucDifference, varTR, varError, cov1, cov2, cov3, alpha?, ddf?,
+ *         nReaders? , targetPower?, maxReaders? }
+ */
+router.post('/diagnostic/mrmc', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    resolveOrganizationId(req);
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: error.message });
+  }
+  try {
+    const b = req.body ?? {};
+    const required = ['aucDifference', 'varTR', 'varError', 'cov1', 'cov2', 'cov3'];
+    if (required.some(k => typeof b[k] !== 'number')) {
+      return res.status(400).json({
+        success: false,
+        error: `numbers required: ${required.join(', ')}.`,
+      });
+    }
+    const common = {
+      aucDifference: b.aucDifference,
+      varTR: b.varTR,
+      varError: b.varError,
+      cov1: b.cov1,
+      cov2: b.cov2,
+      cov3: b.cov3,
+      alpha: typeof b.alpha === 'number' ? b.alpha : undefined,
+      ddf: typeof b.ddf === 'number' ? b.ddf : undefined,
+    };
+    if (typeof b.targetPower === 'number') {
+      const data = mrmcReadersForPower({
+        ...common,
+        targetPower: b.targetPower,
+        maxReaders: typeof b.maxReaders === 'number' ? b.maxReaders : undefined,
+      });
+      return res.json({ success: true, data });
+    }
+    if (typeof b.nReaders === 'number') {
+      const data = mrmcPower({ ...common, nReaders: b.nReaders } as MrmcInput);
+      return res.json({ success: true, data });
+    }
+    return res.status(400).json({ success: false, error: "provide 'nReaders' or 'targetPower'." });
   } catch (error: any) {
     return res.status(400).json({ success: false, error: error.message });
   }
