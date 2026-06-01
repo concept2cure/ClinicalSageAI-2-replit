@@ -83,9 +83,9 @@ function estimateTokens(text: string): number {
  */
 export async function getThreadMessages(
   threadId: string
-): Promise<Array<{ role: string; content: string }>> {
+): Promise<Array<{ role: string; content: string; metadata?: unknown }>> {
   const result = await pool.query(
-    'SELECT role, content FROM chat_messages WHERE thread_id = $1 ORDER BY created_at ASC',
+    'SELECT role, content, metadata FROM chat_messages WHERE thread_id = $1 ORDER BY created_at ASC',
     [threadId]
   );
   return result.rows;
@@ -156,11 +156,12 @@ export async function saveChatMessage(
   role: string,
   content: string,
   model?: string,
-  tokens?: number
+  tokens?: number,
+  metadata?: Record<string, unknown> | null
 ): Promise<void> {
   await pool.query(
-    'INSERT INTO chat_messages (thread_id, role, content, model, tokens_used, created_at) VALUES ($1, $2, $3, $4, $5, NOW())',
-    [threadId, role, content, model || null, tokens || 0]
+    'INSERT INTO chat_messages (thread_id, role, content, model, tokens_used, metadata, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW())',
+    [threadId, role, content, model || null, tokens || 0, metadata ? JSON.stringify(metadata) : null]
   );
   await pool.query('UPDATE chat_threads SET updated_at = NOW() WHERE id = $1', [threadId]);
 }
