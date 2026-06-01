@@ -44,6 +44,7 @@
  *   GET  /api/ana-ri/observability/log → ./ana-ri/utility.ts
  *   GET  /api/ana-ri/commands          → ./ana-ri/utility.ts
  *   GET  /api/ana-ri/decisions         → ./ana-ri/utility.ts
+ *   GET  /api/ana-ri/threads/:id/timeline → ./ana-ri/threads.ts
  *
  * @module server/routes/ana-ri
  */
@@ -57,6 +58,7 @@ import { mountKernelRoutes } from './ana-ri/kernel.js';
 import { mountGenerateExecuteRoutes } from './ana-ri/generate-execute.js';
 import { mountLookupRoutes } from './ana-ri/lookups.js';
 import { mountUtilityRoutes } from './ana-ri/utility.js';
+import { mountThreadRoutes } from './ana-ri/threads.js';
 
 const router = Router();
 
@@ -70,5 +72,6 @@ mountKernelRoutes(router);
 mountGenerateExecuteRoutes(router);
 mountLookupRoutes(router);
 mountUtilityRoutes(router);
+mountThreadRoutes(router);
 
 export default router;
