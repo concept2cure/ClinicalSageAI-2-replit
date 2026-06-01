@@ -307,12 +307,13 @@ async function processDocument(job: ProcessingJob): Promise<void> {
       job.document_id,
     ]);
 
-    // Insert new chunks
+    // Insert new chunks. Column is chunk_text (the canonical vault schema and
+    // the column the read path in advancedRAGPipeline selects) — not "content".
     for (const chunk of chunks) {
       await client.query(
         `
         INSERT INTO vault.document_chunks (
-          document_id, chunk_index, content, embedding, token_count
+          document_id, chunk_index, chunk_text, embedding, token_count
         ) VALUES ($1, $2, $3, $4::vector(1536), $5)
       `,
         [
