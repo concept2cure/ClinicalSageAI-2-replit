@@ -51,6 +51,15 @@ export interface RagRetrievalParams {
   organizationUuid?: string;
   /** Project scope — routes retrieval through project-scoped atoms. */
   artifactScope?: { projectId: number | string; organizationUuid: string };
+  /**
+   * Corpus to read from. Defaults to the vault. Set 'rag_chunks' to target the
+   * rag_chunks corpus (scoped by the integer `organizationId`), which is how
+   * callers reach that store through the single router instead of a separate
+   * retrieval engine.
+   */
+  corpus?: 'vault' | 'rag_chunks';
+  /** Integer org id for `corpus: 'rag_chunks'` tenant scoping. */
+  organizationId?: number;
   /** Result count (default 5). */
   limit?: number;
   /** Similarity floor; when omitted the pipeline default applies. */
@@ -107,6 +116,8 @@ export function optionsForIntent(params: RagRetrievalParams): RetrievalOptions {
     useCompression: params.useCompression,
     organizationUuid: params.organizationUuid,
     artifactScope: params.artifactScope,
+    corpus: params.corpus,
+    organizationId: params.organizationId,
     persistCitations: params.persistCitations,
     filters: params.filters,
   };

@@ -15,7 +15,7 @@ import rateLimit from 'express-rate-limit';
 import { authMiddleware } from '../auth';
 import { getIntelligencePrefix } from '../services/lumen-context-builder.js';
 import { getGateway } from '../services/ai-gateway/gateway.js';
-import ragService from '../services/biotechRagService.js';
+import { ragRouter } from '../services/ragRouter.js';
 import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
 
 // AI generation is routed through the unified AI client (gateway-backed).
@@ -201,21 +201,26 @@ async function generateWithRAG(
   let ragContext = '';
   let ragSources: any[] = [];
   try {
-    const searchResults = await ragService.search({
+    // Retrieve through the single router against the rag_chunks corpus, scoped
+    // to this organization. Passing organizationId closes the previous
+    // cross-tenant gap (the old ragService.search call was unscoped).
+    const ctx = await ragRouter.retrieve({
       query: ragQuery,
-      topK: 5,
-      minScore: 0.5,
-      searchMode: 'hybrid',
+      corpus: 'rag_chunks',
+      organizationId,
+      strategy: 'basic',
+      limit: 5,
+      threshold: 0.5,
+      useReranking: true,
+      useMmr: false,
     });
-    if (searchResults?.results?.length > 0) {
-      ragSources = searchResults.results.map((r: any) => ({
-        title: r.documentTitle || r.sectionTitle || 'Document',
-        score: r.score,
-        snippet: (r.content || '').substring(0, 200),
+    if (ctx.documents.length > 0) {
+      ragSources = ctx.documents.map(d => ({
+        title: d.title || 'Document',
+        score: d.finalScore,
+        snippet: (d.content || '').substring(0, 200),
       }));
-      ragContext = searchResults.results
-        .map((r: any) => r.content)
-        .join('\n\n---\n\n');
+      ragContext = ctx.documents.map(d => d.content).join('\n\n---\n\n');
     }
   } catch (ragErr) {
     console.warn('[CERV2 AI] RAG retrieval failed, continuing without context:', ragErr);

@@ -71,4 +71,22 @@ describe('ragRouter optionsForIntent', () => {
       expect(optionsForIntent({ query: 'q' }).threshold).toBeUndefined();
     });
   });
+
+  describe('corpus selection', () => {
+    it('defaults corpus to undefined (pipeline reads the vault)', () => {
+      const o = optionsForIntent({ query: 'q' });
+      expect(o.corpus).toBeUndefined();
+      expect(o.organizationId).toBeUndefined();
+    });
+
+    it('passes through corpus rag_chunks + integer organizationId', () => {
+      const o = optionsForIntent({
+        query: 'q',
+        corpus: 'rag_chunks',
+        organizationId: 7,
+      });
+      expect(o.corpus).toBe('rag_chunks');
+      expect(o.organizationId).toBe(7);
+    });
+  });
 });
