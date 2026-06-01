@@ -11,6 +11,7 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   runAgenticToolLoop,
   capToolResultForModel,
+  mapWithConcurrency,
   type ModelTurn,
   type ToolCall,
   type ToolResultEntry,
@@ -145,5 +146,40 @@ describe('capToolResultForModel', () => {
     const capped = capToolResultForModel('x'.repeat(1000), 10);
     expect(capped).toMatch(/truncated/);
     expect(capped.length).toBeGreaterThan(0);
+  });
+});
+
+describe('mapWithConcurrency', () => {
+  it('preserves input order even when workers resolve out of order', async () => {
+    const delays = [30, 5, 20, 1];
+    const out = await mapWithConcurrency(delays, async (d, i) => {
+      await new Promise(r => setTimeout(r, d));
+      return `${i}:${d}`;
+    }, 4);
+    expect(out).toEqual(['0:30', '1:5', '2:20', '3:1']);
+  });
+
+  it('never exceeds the concurrency limit', async () => {
+    let active = 0;
+    let peak = 0;
+    await mapWithConcurrency(Array.from({ length: 10 }, (_, i) => i), async () => {
+      active++;
+      peak = Math.max(peak, active);
+      await new Promise(r => setTimeout(r, 5));
+      active--;
+      return null;
+    }, 3);
+    expect(peak).toBeLessThanOrEqual(3);
+    expect(peak).toBeGreaterThan(1); // actually ran in parallel
+  });
+
+  it('processes every item and handles the empty case', async () => {
+    const out = await mapWithConcurrency([1, 2, 3, 4, 5], async n => n * 2, 2);
+    expect(out).toEqual([2, 4, 6, 8, 10]);
+    expect(await mapWithConcurrency([], async (n: number) => n, 4)).toEqual([]);
+  });
+
+  it('rejects a concurrency below 1', async () => {
+    await expect(mapWithConcurrency([1], async n => n, 0)).rejects.toThrow(/at least 1/);
   });
 });

@@ -49,7 +49,7 @@ import {
   ALL_ANA_TOOLS,
 } from '../../services/ana/AnaToolDefinitions.js';
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
-import { runAgenticToolLoop, capToolResultForModel, type ToolCall, type ToolResultEntry, type ModelTurn } from '../../services/ana/agentic-loop.js';
+import { runAgenticToolLoop, capToolResultForModel, mapWithConcurrency, type ToolCall, type ToolResultEntry, type ModelTurn } from '../../services/ana/agentic-loop.js';
 import { loadAnaToolPolicy, filterToolsByPolicy } from '../../services/ana-ri/mdx-tool-policy.js';
 import { isPdfIntakeEnabled, readLocalUploadBuffer } from '../../services/anthropic-files.js';
 import { logToolRun } from '../../services/toolRegistry.js';
@@ -544,11 +544,16 @@ router.post('/stream', async (req: Request, res: Response) => {
         res.write(
           `data: ${JSON.stringify({ type: 'step', round, tools: calls.map(c => c.name) })}\n\n`
         );
-        const entries: ToolResultEntry[] = [];
+        // Announce all tool invocations in order, then run their handlers with
+        // bounded concurrency (network-bound tools like PubMed/ClinicalTrials
+        // run in parallel), and finally emit results in the original order so
+        // the client UI stays deterministic.
         for (const toolUse of calls) {
           res.write(
             `data: ${JSON.stringify({ type: 'tool_use', name: toolUse.name, input: toolUse.input })}\n\n`
           );
+        }
+        const ran = await mapWithConcurrency(calls, async (toolUse) => {
           const handler = getToolHandler(toolUse.name);
           const toolStart = Date.now();
           let resultStr: string;
@@ -587,6 +592,11 @@ router.post('/stream', async (req: Request, res: Response) => {
             errorMessage: toolErrorMessage,
             latencyMs: Date.now() - toolStart,
           });
+          return { toolUse, resultStr, toolStatus };
+        }, 4);
+
+        const entries: ToolResultEntry[] = [];
+        for (const { toolUse, resultStr, toolStatus } of ran) {
           entries.push({ tool_use_id: toolUse.id, content: resultStr, name: toolUse.name });
           res.write(
             `data: ${JSON.stringify({ type: 'tool_result', name: toolUse.name, result: resultStr })}\n\n`

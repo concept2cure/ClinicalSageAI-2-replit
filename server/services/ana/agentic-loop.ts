@@ -159,3 +159,29 @@ export function capToolResultForModel(content: string, maxChars = 8000): string 
     content.slice(content.length - tail)
   );
 }
+
+/**
+ * Map a worker over items with bounded concurrency, preserving input order in
+ * the results. Used to run a round's independent tool calls in parallel (e.g.
+ * search PubMed and ClinicalTrials at once) instead of serially, while the
+ * caller still streams results in a deterministic order.
+ */
+export async function mapWithConcurrency<T, R>(
+  items: T[],
+  worker: (item: T, index: number) => Promise<R>,
+  concurrency = 4,
+): Promise<R[]> {
+  if (concurrency < 1) throw new Error('concurrency must be at least 1');
+  const results = new Array<R>(items.length);
+  let next = 0;
+  const run = async (): Promise<void> => {
+    for (;;) {
+      const i = next++;
+      if (i >= items.length) return;
+      results[i] = await worker(items[i], i);
+    }
+  };
+  const lanes = Array.from({ length: Math.min(concurrency, items.length) }, run);
+  await Promise.all(lanes);
+  return results;
+}
