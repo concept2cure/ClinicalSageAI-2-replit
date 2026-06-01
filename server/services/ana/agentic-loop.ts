@@ -185,3 +185,55 @@ export async function mapWithConcurrency<T, R>(
   await Promise.all(lanes);
   return results;
 }
+
+export interface PlanStep {
+  tool: string;
+  /** Human-readable description of what this step does, for the UI. */
+  label: string;
+}
+
+function quoteArg(value: unknown, max = 60): string {
+  if (value === undefined || value === null || value === '') return 'it';
+  const s = String(value);
+  return `"${s.length > max ? s.slice(0, max) + '…' : s}"`;
+}
+
+function humanizeToolName(name: string): string {
+  const words = name.replace(/_/g, ' ').trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/** Friendly per-tool step labels for surfacing the investigation plan. */
+const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = {
+  extract_document_structure: () => 'Analyzing the document structure',
+  search_document: i => `Searching the document for ${quoteArg(i.query)}`,
+  compare_document_versions: () => 'Comparing the two document versions',
+  search_clinical_evidence: i => `Searching clinical trials for ${quoteArg(i.query)}`,
+  search_literature: i => `Searching the literature for ${quoteArg(i.query)}`,
+  search_device_adverse_events: i => `Checking device adverse events for ${quoteArg(i.device ?? i.query)}`,
+  search_drug_adverse_events: i => `Checking drug adverse events for ${quoteArg(i.drug ?? i.query)}`,
+  lookup_fda_guidance: i => `Looking up FDA guidance${i.topic ? ` on ${quoteArg(i.topic)}` : ''}`,
+  lookup_ich_guideline: i => `Looking up the ICH guideline${i.guideline ? ` ${quoteArg(i.guideline)}` : ''}`,
+  check_regulatory_compliance: () => 'Checking regulatory compliance',
+  mine_precedents: i => `Mining precedents${i.document_type ? ` for ${humanizeToolName(String(i.document_type))}` : ''}`,
+  analyze_predicate_device: i => `Analyzing predicate device${i.predicate_510k_number ? ` ${quoteArg(i.predicate_510k_number)}` : ''}`,
+  generate_document: () => 'Drafting the document',
+  generate_statistical_document: () => 'Drafting the statistical document',
+  compute_sample_size: () => 'Computing the sample size',
+  check_numerical_integrity: () => 'Checking numerical integrity',
+  check_dossier_consistency: () => 'Checking consistency across the dossier',
+};
+
+/**
+ * Turn a round's tool calls into a human-readable plan for the UI to surface
+ * (e.g. "Analyzing the document structure", "Searching the document for
+ * \"indemnification\""). Deterministic; unknown tools fall back to a humanized
+ * name so every step gets a sensible label.
+ */
+export function describeToolPlan(calls: ToolCall[]): PlanStep[] {
+  return calls.map(c => {
+    const labeler = TOOL_LABELS[c.name];
+    const label = labeler ? labeler(c.input ?? {}) : humanizeToolName(c.name);
+    return { tool: c.name, label };
+  });
+}
