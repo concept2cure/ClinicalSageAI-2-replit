@@ -51,6 +51,7 @@ import {
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
 import { runAgenticToolLoop, capToolResultForModel, mapWithConcurrency, describeToolPlan, type ToolCall, type ToolResultEntry, type ModelTurn } from '../../services/ana/agentic-loop.js';
 import { buildTraceEntry, collectTracesFromHistory, formatTraceForContext, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
+import { verifyAnswerGrounding } from '../../services/ana/answer-grounding.js';
 import { loadAnaToolPolicy, filterToolsByPolicy } from '../../services/ana-ri/mdx-tool-policy.js';
 import { isPdfIntakeEnabled, readLocalUploadBuffer } from '../../services/anthropic-files.js';
 import { logToolRun } from '../../services/toolRegistry.js';
@@ -476,6 +477,9 @@ router.post('/stream', async (req: Request, res: Response) => {
     // Structured record of the tools run this turn (persisted on the assistant
     // message's metadata for cross-turn memory; see tool-trace.ts).
     const toolTrace: ToolTraceEntry[] = [];
+    // Raw tool output this turn — the evidence corpus the final answer is
+    // verified against in the self-verification round (see answer-grounding.ts).
+    const toolEvidenceCorpus: string[] = [];
     let cleanedFullContent = '';
 
     // Stream via gateway
@@ -609,10 +613,11 @@ router.post('/stream', async (req: Request, res: Response) => {
         const entries: ToolResultEntry[] = [];
         for (const { toolUse, resultStr, toolStatus } of ran) {
           entries.push({ tool_use_id: toolUse.id, content: resultStr, name: toolUse.name });
-          // Record this call in the turn's tool-trace memory.
+          // Record this call in the turn's tool-trace memory + evidence corpus.
           toolTrace.push(
             buildTraceEntry(toolUse.name, describeToolPlan([toolUse])[0].label, toolStatus, resultStr),
           );
+          toolEvidenceCorpus.push(resultStr);
           res.write(
             `data: ${JSON.stringify({ type: 'tool_result', name: toolUse.name, result: resultStr })}\n\n`
           );
@@ -844,6 +849,13 @@ router.post('/stream', async (req: Request, res: Response) => {
       const streamEvidenceVerdict = finalAssistantContent
         ? validateEvidence(finalAssistantContent, 'ana-ri')
         : null;
+      // Self-verification round: check the answer's specific claims (trial ids,
+      // quoted source text) against the tool evidence actually gathered. No-op
+      // when no tools ran.
+      const streamGrounding =
+        finalAssistantContent && toolEvidenceCorpus.length > 0
+          ? verifyAnswerGrounding(finalAssistantContent, toolEvidenceCorpus.join('\n'))
+          : null;
 
       // RIM interception — fire sync, non-blocking, on the cleaned content.
       // Claim metrics are grounded in the structure + evidence checks above so
@@ -947,6 +959,14 @@ router.post('/stream', async (req: Request, res: Response) => {
                 maxScore: streamStructureCheck.maxScore,
               }
             : undefined,
+          grounding:
+            streamGrounding && streamGrounding.checked > 0
+              ? {
+                  checked: streamGrounding.checked,
+                  grounded: streamGrounding.grounded,
+                  unsupported: streamGrounding.unsupported,
+                }
+              : undefined,
           reliability: streamReliability || undefined,
           queueMeta: streamQueueMeta,
         })}\n\n`
