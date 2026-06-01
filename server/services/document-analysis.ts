@@ -160,7 +160,9 @@ export function searchDocument(
   try {
     re = new RegExp(pattern, flags);
   } catch (e: any) {
-    throw new Error(`invalid regex: ${e.message}`, { cause: e });
+    const err = new Error(`invalid regex: ${e.message}`);
+    (err as { cause?: unknown }).cause = e;
+    throw err;
   }
 
   const lines = text.split('\n');

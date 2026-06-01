@@ -49,6 +49,7 @@ import {
   ALL_ANA_TOOLS,
 } from '../../services/ana/AnaToolDefinitions.js';
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
+import { runAgenticToolLoop, type ToolCall, type ToolResultEntry, type ModelTurn } from '../../services/ana/agentic-loop.js';
 import { loadAnaToolPolicy, filterToolsByPolicy } from '../../services/ana-ri/mdx-tool-policy.js';
 import { isPdfIntakeEnabled, readLocalUploadBuffer } from '../../services/anthropic-files.js';
 import { logToolRun } from '../../services/toolRegistry.js';
@@ -526,147 +527,146 @@ router.post('/stream', async (req: Request, res: Response) => {
     });
     streamGatewayMs = Date.now() - streamGatewayStart;
 
-    // Single-round agentic tool execution. If Claude called custom tools,
-    // dispatch them locally, stream transparency events to the client, then
-    // make one non-streaming follow-up call with the tool results so Claude
-    // can deliver the final grounded answer. Multi-round is out of scope
-    // here — for regulatory lookups one round covers the common case, and
-    // the non-streaming send-message.ts path still handles multi-round.
+    // Multi-round agentic tool execution via the orchestrator
+    // (server/services/ana/agentic-loop.ts): the model proposes tool calls, we
+    // execute them and stream transparency, then feed the results back so it can
+    // chain another step (extract structure → search → compare versions) or
+    // produce a grounded answer. Bounded + thrash-resistant; the loop core is
+    // unit-tested independently of the gateway and this SSE transport.
     const streamToolUses = (gwResponse as AnaGatewayResponse).toolUses;
     if (streamToolUses && streamToolUses.length > 0) {
-      const toolResultEntries: Array<{ tool_use_id: string; content: string; name: string }> = [];
-      for (const toolUse of streamToolUses) {
-        // Announce the tool invocation to the client so the UI can show
-        // "Checking FDA guidance…" affordances instead of an opaque pause.
+      const toToolCall = (c: { id: string; name: string; input?: Record<string, unknown> }): ToolCall =>
+        ({ id: c.id, name: c.name, input: (c.input ?? {}) as Record<string, unknown> });
+
+      // Execute one round: announce the step, stream tool_use/result events, run
+      // the handler, log telemetry, and surface any generated document draft.
+      const executeTools = async (calls: ToolCall[], round: number): Promise<ToolResultEntry[]> => {
         res.write(
-          `data: ${JSON.stringify({
-            type: 'tool_use',
-            name: toolUse.name,
-            input: toolUse.input,
-          })}\n\n`
+          `data: ${JSON.stringify({ type: 'step', round, tools: calls.map(c => c.name) })}\n\n`
         );
-
-        const handler = getToolHandler(toolUse.name);
-        const toolStart = Date.now();
-        let resultStr: string;
-        let toolStatus: 'success' | 'error' | 'not_found' = 'success';
-        let toolErrorMessage: string | undefined;
-        if (handler) {
-          try {
-            resultStr = await handler(toolUse.input, {
-              organizationId: orgId,
-              userId: userId || null,
-              projectId: streamProjectId ? Number(streamProjectId) || null : null,
-            });
-          } catch (toolErr: any) {
-            resultStr = JSON.stringify({
-              error: `Tool execution failed: ${toolErr?.message || 'unknown error'}`,
-              tool: toolUse.name,
-            });
-            toolStatus = 'error';
-            toolErrorMessage = toolErr?.message || 'unknown error';
-          }
-        } else {
-          // Unknown tool name — could be an Anthropic server tool that
-          // Anthropic resolved server-side (in which case the result is
-          // already in the content stream, nothing to do) or a schema drift.
-          // Either way we don't want to block the conversation.
-          resultStr = JSON.stringify({
-            note: `No local handler for ${toolUse.name}; may be a server-resolved tool.`,
-          });
-          toolStatus = 'not_found';
-        }
-        // Telemetry: persist the tool invocation so we can measure how
-        // often each tool fires and decide whether eager schema loading
-        // (all 18 tool schemas on every turn) is worth keeping vs
-        // moving to a deferred / tool-search pattern. Fire-and-forget;
-        // logToolRun swallows its own errors.
-        void logToolRun({
-          threadId: thread_id,
-          projectId: streamProjectId ? Number(streamProjectId) || null : null,
-          userId: userId || null,
-          organizationId: orgId,
-          toolName: toolUse.name,
-          arguments: (toolUse.input ?? {}) as Record<string, unknown>,
-          result: { resultBytes: resultStr.length },
-          status: toolStatus,
-          errorMessage: toolErrorMessage,
-          latencyMs: Date.now() - toolStart,
-        });
-        toolResultEntries.push({
-          tool_use_id: toolUse.id,
-          content: resultStr,
-          name: toolUse.name,
-        });
-
-        res.write(
-          `data: ${JSON.stringify({
-            type: 'tool_result',
-            name: toolUse.name,
-            result: resultStr,
-          })}\n\n`
-        );
-
-        // If the tool produced a document (e.g. generate_statistical_document),
-        // surface it as an editor-openable draft so AnA's document editor can
-        // display the work — not just the chat. The client renders an
-        // "Open in editor" affordance that routes the content to onDraftInsert.
-        if (toolStatus === 'success') {
-          try {
-            const parsed = JSON.parse(resultStr);
-            if (parsed && parsed.status === 'generated' && typeof parsed.content === 'string' && parsed.content.length > 0) {
-              res.write(
-                `data: ${JSON.stringify({
-                  type: 'artifact_draft',
-                  title: parsed.title || 'Generated document',
-                  content: parsed.content,
-                  documentType: parsed.documentType,
-                  source: toolUse.name,
-                })}\n\n`
-              );
+        const entries: ToolResultEntry[] = [];
+        for (const toolUse of calls) {
+          res.write(
+            `data: ${JSON.stringify({ type: 'tool_use', name: toolUse.name, input: toolUse.input })}\n\n`
+          );
+          const handler = getToolHandler(toolUse.name);
+          const toolStart = Date.now();
+          let resultStr: string;
+          let toolStatus: 'success' | 'error' | 'not_found' = 'success';
+          let toolErrorMessage: string | undefined;
+          if (handler) {
+            try {
+              resultStr = await handler(toolUse.input, {
+                organizationId: orgId,
+                userId: userId || null,
+                projectId: streamProjectId ? Number(streamProjectId) || null : null,
+              });
+            } catch (toolErr: any) {
+              resultStr = JSON.stringify({
+                error: `Tool execution failed: ${toolErr?.message || 'unknown error'}`,
+                tool: toolUse.name,
+              });
+              toolStatus = 'error';
+              toolErrorMessage = toolErr?.message || 'unknown error';
             }
-          } catch {
-            // Non-JSON tool result — nothing to surface as a draft.
+          } else {
+            resultStr = JSON.stringify({
+              note: `No local handler for ${toolUse.name}; may be a server-resolved tool.`,
+            });
+            toolStatus = 'not_found';
+          }
+          void logToolRun({
+            threadId: thread_id,
+            projectId: streamProjectId ? Number(streamProjectId) || null : null,
+            userId: userId || null,
+            organizationId: orgId,
+            toolName: toolUse.name,
+            arguments: (toolUse.input ?? {}) as Record<string, unknown>,
+            result: { resultBytes: resultStr.length },
+            status: toolStatus,
+            errorMessage: toolErrorMessage,
+            latencyMs: Date.now() - toolStart,
+          });
+          entries.push({ tool_use_id: toolUse.id, content: resultStr, name: toolUse.name });
+          res.write(
+            `data: ${JSON.stringify({ type: 'tool_result', name: toolUse.name, result: resultStr })}\n\n`
+          );
+          if (toolStatus === 'success') {
+            try {
+              const parsed = JSON.parse(resultStr);
+              if (parsed && parsed.status === 'generated' && typeof parsed.content === 'string' && parsed.content.length > 0) {
+                res.write(
+                  `data: ${JSON.stringify({
+                    type: 'artifact_draft',
+                    title: parsed.title || 'Generated document',
+                    content: parsed.content,
+                    documentType: parsed.documentType,
+                    source: toolUse.name,
+                  })}\n\n`
+                );
+              }
+            } catch {
+              // Non-JSON tool result — nothing to surface as a draft.
+            }
           }
         }
-      }
+        return entries;
+      };
 
-      // Compose the follow-up turn: prior messages + Claude's partial text
-      // (which often narrates "let me check…") + a user message bundling
-      // the tool results. Force a text response by dropping tools on the
-      // follow-up call — we only want one round here.
-      const followupMessages: GatewayMessage[] = [
-        ...messages,
-        { role: 'assistant', content: fullContent || '' },
-        {
+      // Call the model with the latest tool results, streaming its narration. On
+      // the terminal round includeTools is false to force a grounded answer.
+      const loopMessages: GatewayMessage[] = [...messages];
+      const callModel = async (
+        results: ToolResultEntry[],
+        priorText: string,
+        _round: number,
+        includeTools: boolean,
+      ): Promise<ModelTurn> => {
+        loopMessages.push({ role: 'assistant', content: priorText || '' });
+        loopMessages.push({
           role: 'user',
-          content: toolResultEntries
+          content: results
             .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${tr.content}`)
             .join('\n\n'),
-        },
-      ];
+        });
+        let roundText = '';
+        const roundResponse = await gw.route({
+          taskType: routingPlan.taskType,
+          messages: loopMessages,
+          maxTokens: routingPlan.maxTokens,
+          temperature: routingPlan.temperature,
+          strategy: selectedStrategy,
+          promptCache: { enabled: true, type: 'ephemeral' },
+          ...(includeTools && streamTools.length > 0 ? { tools: streamTools } : {}),
+          stream: true,
+          onStream: (chunk: string, metadata?: any) => {
+            if (metadata?.type === 'thinking') {
+              const thinkingChunk: string = metadata?.thinkingContent || '';
+              if (thinkingChunk) {
+                res.write(`data: ${JSON.stringify({ type: 'thinking', content: thinkingChunk })}\n\n`);
+              }
+              return;
+            }
+            roundText += chunk;
+            fullContent += chunk;
+            res.write(`data: ${JSON.stringify({ type: 'text', content: chunk })}\n\n`);
+          },
+          callerModule: 'ana-ri-stream-followup',
+        });
+        if (!roundText && roundResponse.content) {
+          roundText = roundResponse.content;
+          fullContent += (fullContent ? '\n\n' : '') + roundText;
+          res.write(`data: ${JSON.stringify({ type: 'text', content: roundText })}\n\n`);
+        }
+        const nextUses = (roundResponse as AnaGatewayResponse).toolUses;
+        return { text: roundText, toolCalls: (nextUses ?? []).map(toToolCall) };
+      };
 
-      const followupResponse = await gw.route({
-        taskType: routingPlan.taskType,
-        messages: followupMessages,
-        maxTokens: routingPlan.maxTokens,
-        temperature: routingPlan.temperature,
-        strategy: selectedStrategy,
-        promptCache: { enabled: true, type: 'ephemeral' },
-        callerModule: 'ana-ri-stream-followup',
-      });
-
-      const followupText = followupResponse.content || '';
-      if (followupText) {
-        // Emit the follow-up answer. Not true token-by-token streaming —
-        // the follow-up call was non-streaming — but the client receives
-        // it as a standard text chunk so the UI renders it the same way
-        // as normal streamed content.
-        fullContent += (fullContent ? '\n\n' : '') + followupText;
-        res.write(
-          `data: ${JSON.stringify({ type: 'text', content: followupText })}\n\n`
-        );
-      }
+      await runAgenticToolLoop(
+        { text: fullContent, toolCalls: streamToolUses.map(toToolCall) },
+        { executeTools, callModel },
+        { maxRounds: 5 },
+      );
     }
 
     // RIM interception moved to the background post-processing block below,
