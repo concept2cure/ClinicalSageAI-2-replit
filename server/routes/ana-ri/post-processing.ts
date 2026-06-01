@@ -24,6 +24,7 @@ import { saveChatMessage as saveMessage } from '../../services/chat-thread-helpe
 import { summarizeAndStoreWorkingMemoryForThread } from '../../services/working-memory.js';
 import { getCachedSignalReliability } from '../../services/intelligence/learning-loop-service.js';
 import { verifyAnswerGrounding } from '../../services/ana/answer-grounding.js';
+import { computeRimClaimMetrics } from '../../services/ana/rim-claim-metrics.js';
 import { interceptChatResponse } from '../../services/intelligence/rim-interceptors.js';
 import { processResponseActions } from '../../services/ana-guidance-executor.js';
 import type { CommandContext } from '../../services/ana-ri/command-executor.js';
@@ -174,25 +175,23 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
         : null;
 
     // RIM interception — fire sync, non-blocking, on the cleaned content.
-    // Claim metrics are grounded in the structure + evidence checks above so
-    // RIM receives an actual turn-quality signal instead of a flat 0.5.
+    // Claim metrics blend the structure + evidence checks with the direct
+    // grounding measurement (when claims were checkable) so RIM receives an
+    // actual turn-quality signal instead of a flat 0.5.
     if (finalAssistantContent && streamProjectId && orgId) {
-      const ratedClaimCount = Math.max(
-        streamEvidenceCheck?.totalLabels || 0,
-        streamStructureCheck && streamStructureCheck.score > 0 ? 1 : 0,
-      );
-      const qualityRate =
-        streamStructureCheck && streamStructureCheck.maxScore > 0
-          ? streamStructureCheck.score / streamStructureCheck.maxScore
-          : 0.5;
+      const { claimCount, supportedClaimRate } = computeRimClaimMetrics({
+        structure: streamStructureCheck,
+        evidence: streamEvidenceCheck,
+        grounding: streamGrounding,
+      });
       interceptChatResponse({
         organizationId: Number(orgId),
         projectId: Number(streamProjectId),
         userId: typeof userId === 'number' ? userId : undefined,
         sectionCode,
         assistantMessage: finalAssistantContent,
-        claimCount: ratedClaimCount,
-        supportedClaimRate: qualityRate,
+        claimCount,
+        supportedClaimRate,
         model: model || 'unknown',
         provider: provider || 'unknown',
       });
