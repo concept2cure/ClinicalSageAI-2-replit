@@ -18,7 +18,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { getPool } from '../../db';
-import { getRAGPipeline } from '../../services/advancedRAGPipeline.js';
+import { ragRouter } from '../../services/ragRouter.js';
 import { getAIRouter } from '../../services/aiProviderRouter.js';
 import {
   type GoldItem,
@@ -59,7 +59,6 @@ async function main() {
   const opts = parseArgs(process.argv.slice(2));
   const items = loadGoldItems();
   const pool = getPool();
-  const pipeline = getRAGPipeline(pool);
   const aiRouter = getAIRouter(pool);
 
   const judge = async (prompt: string): Promise<string> => {
@@ -81,8 +80,9 @@ async function main() {
   console.info(`\nRAG eval — ${items.length} gold items, k=${opts.k}\n${'─'.repeat(72)}`);
 
   for (const item of items) {
-    const result = await pipeline.queryWithGeneration(item.question, {
-      strategy: 'advanced',
+    const result = await ragRouter.query({
+      query: item.question,
+      intent: 'regulatory_qa',
       limit: opts.k,
       useReranking: true,
       useMmr: true,

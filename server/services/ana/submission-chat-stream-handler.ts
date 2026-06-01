@@ -19,7 +19,7 @@
  */
 import { getPool } from '../../db/runtime.js';
 import { ensureGateway } from '../../routes/chat/shared.js';
-import { getRAGPipeline } from '../advancedRAGPipeline.js';
+import { ragRouter } from '../ragRouter.js';
 import { buildMemoryContextForChat } from '../memory-context-assembler.js';
 import { saveChatMessage } from '../chat-thread-helpers.js';
 import {
@@ -289,14 +289,14 @@ export async function handleSubmissionChatStream(
 
   let rawHits: Array<{ id: string; title: string; content: string; score: number }> = [];
   if (validOrgUuid) {
-    const ragPipeline = getRAGPipeline(getPool());
     const artifactScope = {
       projectId: artifact.project_id,
       organizationUuid: validOrgUuid,
     };
-    const primary = ragPipeline
-      .retrieve(retrievalQuery, {
-        strategy: 'advanced',
+    const primary = ragRouter
+      .retrieve({
+        query: retrievalQuery,
+        intent: 'project_scoped',
         limit: RETRIEVAL_TOP_K,
         threshold: RETRIEVAL_THRESHOLD,
         useReranking: true,
@@ -318,8 +318,10 @@ export async function handleSubmissionChatStream(
       typeof artifact.content === 'string' &&
       artifact.content.trim().length > 0;
     const artifactScan = useArtifactScan
-      ? ragPipeline
-          .retrieve((artifact.content as string).slice(0, 2000), {
+      ? ragRouter
+          .retrieve({
+            query: (artifact.content as string).slice(0, 2000),
+            intent: 'project_scoped',
             strategy: 'basic',
             limit: Math.max(4, Math.floor(RETRIEVAL_TOP_K / 2)),
             threshold: RETRIEVAL_THRESHOLD,

@@ -24,7 +24,7 @@ import pg from 'pg';
 import { getGateway } from '../services/ai-gateway/index.js';
 import type { GatewayRequest, RoutingStrategy } from '../services/ai-gateway/types.js';
 import { getEmbeddingService } from '../services/enhancedEmbeddingService.js';
-import { getRAGPipeline, RetrievalOptions } from '../services/advancedRAGPipeline.js';
+import { ragRouter } from '../services/ragRouter.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
@@ -231,11 +231,10 @@ async function handleGenerateMode(
   organizationUuid?: string,
   persistCitations?: boolean
 ): Promise<CortexQueryResponse> {
-  const ragPipeline = getRAGPipeline(pool!);
-  const gateway = getGateway();
-
-  // Configure retrieval options
-  const retrievalOptions: RetrievalOptions = {
+  // Execute RAG query with generation through the single router.
+  const result = await ragRouter.query({
+    query,
+    intent: 'regulatory_qa',
     strategy: options?.retrievalStrategy || 'advanced',
     limit: options?.limit || 8,
     threshold: options?.threshold || 0.5,
@@ -245,15 +244,8 @@ async function handleGenerateMode(
     useCompression: true,
     organizationUuid,
     persistCitations: !!persistCitations,
-    filters: options?.filters
-      ? {
-          atomType: options.filters.atomType,
-        }
-      : undefined,
-  };
-
-  // Execute RAG query with generation
-  const result = await ragPipeline.queryWithGeneration(query, retrievalOptions);
+    filters: options?.filters ? { atomType: options.filters.atomType } : undefined,
+  });
 
   return {
     success: true,
@@ -375,13 +367,15 @@ async function handleAdvisoryMode(
   organizationUuid?: string
 ): Promise<CortexQueryResponse> {
   const gateway = getGateway();
-  const ragPipeline = getRAGPipeline(pool!);
 
-  // Get relevant context
-  const ragContext = await ragPipeline.retrieve(query, {
-    strategy: 'advanced',
+  // Get relevant context (retrieve only; this mode does its own generation).
+  // useMmr:false preserves the prior behaviour (MMR was not enabled here).
+  const ragContext = await ragRouter.retrieve({
+    query,
+    intent: 'regulatory_qa',
     limit: 5,
     useReranking: true,
+    useMmr: false,
     organizationUuid,
   });
 
