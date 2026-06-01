@@ -89,6 +89,13 @@ import {
   type LevelSpec as WinRatioLevelSpec,
 } from '../services/stats/win-ratio';
 import {
+  boinBoundaries,
+  boinDecision,
+  boinDecisionTable,
+  selectMtd,
+  type DoseLevelData,
+} from '../services/stats/dose-finding-boin';
+import {
   runJudgmentPipeline,
   runPipelineAndGenerateArtifact,
   runPipelineForRole,
@@ -1518,6 +1525,52 @@ router.post('/win-ratio', authMiddleware, async (req: Request, res: Response) =>
       typeof b.confLevel === 'number' ? b.confLevel : undefined,
     );
     res.json({ success: true, data: result });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/biostat/dose-finding/boin
+ * BOIN (Bayesian Optimal Interval) phase 1 dose finding. Modes:
+ *  - 'boundaries' — λ_e/λ_d for a target (+ optional decision table over cohort sizes),
+ *  - 'decision'   — next action at the current dose given n / DLTs,
+ *  - 'select-mtd' — MTD via isotonic regression over the dose levels.
+ *
+ * Body: { mode, target, phi1?, phi2?, ... mode-specific fields }
+ */
+router.post('/dose-finding/boin', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    resolveOrganizationId(req);
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: error.message });
+  }
+  try {
+    const b = req.body ?? {};
+    if (typeof b.target !== 'number') {
+      return res.status(400).json({ success: false, error: 'numeric target is required.' });
+    }
+    if (b.mode === 'decision') {
+      if (typeof b.nPatients !== 'number' || typeof b.nDlt !== 'number') {
+        return res.status(400).json({ success: false, error: "decision mode requires 'nPatients' and 'nDlt'." });
+      }
+      return res.json({ success: true, data: boinDecision({
+        nPatients: b.nPatients, nDlt: b.nDlt, target: b.target, phi1: b.phi1, phi2: b.phi2,
+        eliminationThreshold: b.eliminationThreshold, minEliminationN: b.minEliminationN,
+      }) });
+    }
+    if (b.mode === 'select-mtd') {
+      if (!Array.isArray(b.doses)) {
+        return res.status(400).json({ success: false, error: "select-mtd mode requires a 'doses' array." });
+      }
+      return res.json({ success: true, data: selectMtd(b.doses as DoseLevelData[], b.target) });
+    }
+    // Default: boundaries (+ optional decision table).
+    const data: Record<string, unknown> = { boundaries: boinBoundaries(b.target, b.phi1, b.phi2) };
+    if (Array.isArray(b.cohortSizes)) {
+      data.decisionTable = boinDecisionTable(b.target, b.cohortSizes, b.phi1, b.phi2);
+    }
+    res.json({ success: true, data });
   } catch (error: any) {
     return res.status(400).json({ success: false, error: error.message });
   }
