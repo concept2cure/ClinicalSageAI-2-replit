@@ -101,7 +101,7 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
 
       // RAG retrieval metrics — recorded at the ragRouter chokepoint.
       try {
-        const { renderRagMetrics } = await import('../services/rag-metrics.js');
+        const { renderRagMetrics } = await import('../services/rag-runtime-metrics.js');
         lines.push(...renderRagMetrics());
       } catch {
         /* metrics module not loaded yet — skip */

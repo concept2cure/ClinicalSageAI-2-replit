@@ -4,7 +4,7 @@ import {
   renderRagMetrics,
   snapshotRagMetrics,
   resetRagMetrics,
-} from '../rag-metrics.js';
+} from '../rag-runtime-metrics.js';
 
 describe('rag-metrics', () => {
   beforeEach(() => resetRagMetrics());

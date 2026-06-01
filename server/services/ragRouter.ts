@@ -37,7 +37,7 @@ import {
   recordRagRetrieval,
   type RagCorpusLabel,
   type RagOutcome,
-} from './rag-metrics.js';
+} from './rag-runtime-metrics.js';
 
 /**
  * Caller intent. Each maps to a vetted default retrieval configuration so

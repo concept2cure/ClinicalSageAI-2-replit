@@ -14,7 +14,11 @@
  * (rag_retrievals_total{outcome="empty"} / total) and the top-score
  * distribution (rag_retrieval_top_score) — both fall out of the records below.
  *
- * @module server/services/rag-metrics
+ * Named "runtime" to distinguish it from server/eval/rag/rag-metrics.ts, which
+ * computes offline retrieval-quality metrics (hit@k, recall, MRR, faithfulness)
+ * over a gold set. This module is the live operational counterpart.
+ *
+ * @module server/services/rag-runtime-metrics
  */
 
 /** Which corpus the retrieval actually read from (derived in the router). */
