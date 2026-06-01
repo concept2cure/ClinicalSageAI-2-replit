@@ -37,7 +37,7 @@
  * @module server/services/ana/authoring-plan-generator
  */
 import { getPool } from '../../db/runtime.js';
-import { getRAGPipeline } from '../advancedRAGPipeline.js';
+import { ragRouter } from '../ragRouter.js';
 import { IND_SECTIONS, type INDSection } from '../ind/ind-section-registry.js';
 import { getProjectTherapeuticContext } from './therapeutic-area-context.js';
 import { getProjectReadinessAggregate } from './project-readiness-aggregator.js';
@@ -698,12 +698,13 @@ export async function generateAuthoringPlan(
   }> = [];
   if (organizationUuid) {
     try {
-      const pipeline = getRAGPipeline(getPool());
-      const ctx = await pipeline.retrieve(query, {
-        strategy: 'advanced',
+      const ctx = await ragRouter.retrieve({
+        query,
+        intent: 'project_scoped',
         limit: RETRIEVAL_LIMIT,
         useReranking: true,
         useMmr: true,
+        mmrLambda: 0.7, // preserve prior behaviour (pipeline default was 0.7)
         organizationUuid,
         artifactScope: { projectId, organizationUuid },
       });

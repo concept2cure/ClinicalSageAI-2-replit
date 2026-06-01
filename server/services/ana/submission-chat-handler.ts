@@ -19,7 +19,7 @@
  */
 import { getPool } from '../../db/runtime.js';
 import { ensureGateway } from '../../routes/chat/shared.js';
-import { getRAGPipeline } from '../advancedRAGPipeline.js';
+import { ragRouter } from '../ragRouter.js';
 import { buildMemoryContextForChat } from '../memory-context-assembler.js';
 import {
   getThreadMessages,
@@ -1262,7 +1262,6 @@ export async function handleSubmissionChat(
 
   let rawHits: Array<{ id: string; title: string; content: string; score: number }> = [];
   if (validOrgUuid) {
-    const ragPipeline = getRAGPipeline(getPool());
     const artifactScope = {
       projectId: artifact.project_id,
       organizationUuid: validOrgUuid,
@@ -1270,9 +1269,10 @@ export async function handleSubmissionChat(
 
     // The "advanced" strategy combines HyDE + multi-query, then rerank + MMR
     // run on top. This is the canonical cross-module retrieval path.
-    const primary = ragPipeline
-      .retrieve(retrievalQuery, {
-        strategy: 'advanced',
+    const primary = ragRouter
+      .retrieve({
+        query: retrievalQuery,
+        intent: 'project_scoped',
         limit: RETRIEVAL_TOP_K,
         threshold: RETRIEVAL_THRESHOLD,
         useReranking: true,
@@ -1308,8 +1308,10 @@ export async function handleSubmissionChat(
       typeof artifact.content === 'string' &&
       artifact.content.trim().length > 0;
     const artifactScan = useArtifactScan
-      ? ragPipeline
-          .retrieve((artifact.content as string).slice(0, 2000), {
+      ? ragRouter
+          .retrieve({
+            query: (artifact.content as string).slice(0, 2000),
+            intent: 'project_scoped',
             // Cheaper basic strategy with rerank for the contradiction sweep —
             // we don't need HyDE/multi-query expansion of the artifact text.
             strategy: 'basic',

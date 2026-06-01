@@ -49,7 +49,16 @@ export interface SearchResult {
 }
 
 /**
- * Service for semantic search using text embeddings
+ * Service for semantic search using text embeddings.
+ *
+ * @deprecated Legacy RAG path. Retrieval is converging on `ragRouter`
+ * (server/services/ragRouter.ts), which delegates to the AdvancedRAGPipeline
+ * over pgvector-backed corpora. This service keeps its own in-memory index with
+ * local hash-based 384-dim embeddings (not comparable to the canonical
+ * text-embedding-3-small space), so it cannot simply be repointed — retiring it
+ * requires migrating its callers' corpus (academic-knowledge-service,
+ * study-design-agent-service, the /api/evidence-search route) into the vault.
+ * Do not add new callers; route new retrieval through `ragRouter` instead.
  */
 export class SemanticSearchService {
   private documents: EmbeddedDocument[] = [];

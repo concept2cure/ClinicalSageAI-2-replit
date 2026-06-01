@@ -1,6 +1,15 @@
 /**
  * Biotech AI Intelligence RAG Service
  * Production-ready service for biotech document processing, embeddings, and retrieval
+ *
+ * @deprecated Legacy RAG path. Retrieval is converging on `ragRouter`
+ * (server/services/ragRouter.ts), which delegates to the AdvancedRAGPipeline
+ * over the vault / lumen_data_atoms corpora. This service maintains its own
+ * separate corpus (ragDocuments / ragChunks / ragKnowledgeGraph) and powers the
+ * live /api/biotech-rag endpoints, so it cannot be repointed by a code swap —
+ * fully retiring it requires migrating that corpus into the vault and porting
+ * the /api/biotech-rag routes. Do not add new callers; new retrieval should go
+ * through `ragRouter`.
  */
 
 import { db } from '../db';
