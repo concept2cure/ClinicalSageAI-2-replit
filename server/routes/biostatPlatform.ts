@@ -70,6 +70,14 @@ import {
   type MrmcInput,
 } from '../services/stats/mrmc';
 import {
+  deviceSampleSize,
+  deviceOperatingCharacteristic,
+  predictiveProbabilityOfSuccess,
+  powerPriorFromHistory,
+  UNIFORM_PRIOR,
+  type BetaPrior,
+} from '../services/stats/bayesian-device';
+import {
   runJudgmentPipeline,
   runPipelineAndGenerateArtifact,
   runPipelineForRole,
@@ -1350,6 +1358,68 @@ router.post('/diagnostic/mrmc', authMiddleware, async (req: Request, res: Respon
       return res.json({ success: true, data });
     }
     return res.status(400).json({ success: false, error: "provide 'nReaders' or 'targetPower'." });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/biostat/diagnostic/bayesian-device
+ * Bayesian device-pivotal (binary endpoint) templates: P(θ>goal|data) ≥
+ * threshold success rule with a Beta prior (optionally informative via a power
+ * prior on historical successes/failures). Modes: 'sample-size', 'oc',
+ * 'predictive'. Exact (Beta–Binomial).
+ *
+ * Body: { mode, goal, successThreshold, prior? | history?{successes,failures,a0},
+ *         ... mode-specific fields }
+ */
+router.post('/diagnostic/bayesian-device', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    resolveOrganizationId(req);
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: error.message });
+  }
+  try {
+    const b = req.body ?? {};
+    if (typeof b.goal !== 'number' || typeof b.successThreshold !== 'number') {
+      return res.status(400).json({
+        success: false,
+        error: 'numeric goal and successThreshold are required.',
+      });
+    }
+    let prior: BetaPrior = UNIFORM_PRIOR;
+    if (b.history && typeof b.history.successes === 'number' && typeof b.history.failures === 'number') {
+      prior = powerPriorFromHistory(b.history.successes, b.history.failures,
+        typeof b.history.a0 === 'number' ? b.history.a0 : 1);
+    } else if (b.prior && typeof b.prior.alpha === 'number' && typeof b.prior.beta === 'number') {
+      prior = { alpha: b.prior.alpha, beta: b.prior.beta };
+    }
+
+    if (b.mode === 'oc') {
+      if (typeof b.n !== 'number' || typeof b.trueRate !== 'number') {
+        return res.status(400).json({ success: false, error: "oc mode requires 'n' and 'trueRate'." });
+      }
+      return res.json({ success: true, data: deviceOperatingCharacteristic({
+        n: b.n, goal: b.goal, prior, successThreshold: b.successThreshold, trueRate: b.trueRate,
+      }) });
+    }
+    if (b.mode === 'predictive') {
+      if (['xInterim', 'nInterim', 'nFinal'].some(k => typeof b[k] !== 'number')) {
+        return res.status(400).json({ success: false, error: "predictive mode requires xInterim, nInterim, nFinal." });
+      }
+      return res.json({ success: true, data: predictiveProbabilityOfSuccess({
+        xInterim: b.xInterim, nInterim: b.nInterim, nFinal: b.nFinal,
+        goal: b.goal, prior, successThreshold: b.successThreshold,
+      }) });
+    }
+    // Default: sample-size.
+    if (typeof b.expected !== 'number' || typeof b.targetPower !== 'number') {
+      return res.status(400).json({ success: false, error: "sample-size mode requires 'expected' and 'targetPower'." });
+    }
+    return res.json({ success: true, data: deviceSampleSize({
+      goal: b.goal, expected: b.expected, prior, successThreshold: b.successThreshold,
+      targetPower: b.targetPower, maxTypeI: typeof b.maxTypeI === 'number' ? b.maxTypeI : undefined,
+    }) });
   } catch (error: any) {
     return res.status(400).json({ success: false, error: error.message });
   }
