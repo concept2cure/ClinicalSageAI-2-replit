@@ -49,7 +49,7 @@ import {
   ALL_ANA_TOOLS,
 } from '../../services/ana/AnaToolDefinitions.js';
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
-import { runAgenticToolLoop, capToolResultForModel, mapWithConcurrency, type ToolCall, type ToolResultEntry, type ModelTurn } from '../../services/ana/agentic-loop.js';
+import { runAgenticToolLoop, capToolResultForModel, mapWithConcurrency, describeToolPlan, type ToolCall, type ToolResultEntry, type ModelTurn } from '../../services/ana/agentic-loop.js';
 import { loadAnaToolPolicy, filterToolsByPolicy } from '../../services/ana-ri/mdx-tool-policy.js';
 import { isPdfIntakeEnabled, readLocalUploadBuffer } from '../../services/anthropic-files.js';
 import { logToolRun } from '../../services/toolRegistry.js';
@@ -542,7 +542,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       // the handler, log telemetry, and surface any generated document draft.
       const executeTools = async (calls: ToolCall[], round: number): Promise<ToolResultEntry[]> => {
         res.write(
-          `data: ${JSON.stringify({ type: 'step', round, tools: calls.map(c => c.name) })}\n\n`
+          `data: ${JSON.stringify({ type: 'step', round, tools: calls.map(c => c.name), plan: describeToolPlan(calls) })}\n\n`
         );
         // Announce all tool invocations in order, then run their handlers with
         // bounded concurrency (network-bound tools like PubMed/ClinicalTrials

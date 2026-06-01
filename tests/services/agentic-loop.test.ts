@@ -12,6 +12,7 @@ import {
   runAgenticToolLoop,
   capToolResultForModel,
   mapWithConcurrency,
+  describeToolPlan,
   type ModelTurn,
   type ToolCall,
   type ToolResultEntry,
@@ -181,5 +182,38 @@ describe('mapWithConcurrency', () => {
 
   it('rejects a concurrency below 1', async () => {
     await expect(mapWithConcurrency([1], async n => n, 0)).rejects.toThrow(/at least 1/);
+  });
+});
+
+describe('describeToolPlan', () => {
+  it('produces friendly labels for known tools, incorporating key args', () => {
+    const steps = describeToolPlan([
+      call('extract_document_structure', { text: '...' }),
+      call('search_document', { query: 'indemnification' }),
+      call('compare_document_versions', { old_text: 'a', new_text: 'b' }),
+    ]);
+    expect(steps.map(s => s.label)).toEqual([
+      'Analyzing the document structure',
+      'Searching the document for "indemnification"',
+      'Comparing the two document versions',
+    ]);
+    expect(steps[0].tool).toBe('extract_document_structure');
+  });
+
+  it('truncates long argument values in the label', () => {
+    const long = 'x'.repeat(200);
+    const [step] = describeToolPlan([call('search_document', { query: long })]);
+    expect(step.label.length).toBeLessThan(120);
+    expect(step.label).toContain('…');
+  });
+
+  it('falls back to a humanized name for unknown tools', () => {
+    const [step] = describeToolPlan([call('some_new_tool', {})]);
+    expect(step.label).toBe('Some new tool');
+  });
+
+  it('handles a missing query gracefully', () => {
+    const [step] = describeToolPlan([call('search_literature', {})]);
+    expect(step.label).toBe('Searching the literature for it');
   });
 });
