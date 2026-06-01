@@ -4,7 +4,6 @@ import { huggingFaceService, HFModel } from '../huggingface-service';
 import { memoryService, type ChatMessage } from './memory-service';
 import { clinicalIntelligenceService } from './clinical-intelligence-service';
 import { academicKnowledgeService } from './academic-knowledge-service';
-import { semanticSearchService } from './semantic-search-service';
 import { RegulatoryIntelligenceService } from './regulatory-intelligence-service';
 import { academicDocumentProcessor } from './academic-document-processor';
 import { getIntelligencePrefix } from './lumen-context-builder.js';

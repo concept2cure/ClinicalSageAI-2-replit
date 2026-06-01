@@ -7,10 +7,11 @@
  *
  * WHY THIS EXISTS
  * The codebase grew several parallel RAG implementations (advancedRAGPipeline,
- * biotechRagService, semantic-search-service, regulatory-guidance-retrieval, a
- * separate Python ICH ingest) with no shared router, so corpus selection,
- * retrieval strategy, and tenant scoping were duplicated and drifted apart.
- * See DATA_KNOWLEDGE_MEMORY_LAYER_AUDIT.md.
+ * biotechRagService, regulatory-guidance-retrieval, a separate Python ICH
+ * ingest) with no shared router, so corpus selection, retrieval strategy, and
+ * tenant scoping were duplicated and drifted apart. The in-memory
+ * semantic-search-service (local hash embeddings) has since been removed in
+ * favour of this path. See DATA_KNOWLEDGE_MEMORY_LAYER_AUDIT.md.
  *
  * This module is the convergence point. It owns pool acquisition and maps a
  * caller "intent" to a reviewed default retrieval policy, then delegates to
