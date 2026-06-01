@@ -87,8 +87,11 @@ function intentDefaults(intent: RagIntent | undefined): Partial<RetrievalOptions
   }
 }
 
-/** Build pipeline options from intent defaults, with explicit params taking precedence. */
-function optionsForIntent(params: RagRetrievalParams): RetrievalOptions {
+/**
+ * Build pipeline options from intent defaults, with explicit params taking
+ * precedence. Exported for unit testing the policy/override merge.
+ */
+export function optionsForIntent(params: RagRetrievalParams): RetrievalOptions {
   const defaults = intentDefaults(params.intent);
   const pick = <T>(override: T | undefined, fallback: T | undefined): T | undefined =>
     override !== undefined ? override : fallback;
