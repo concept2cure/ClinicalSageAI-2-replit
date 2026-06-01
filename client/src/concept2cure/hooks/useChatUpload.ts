@@ -15,6 +15,20 @@ export interface ChatAttachment {
   status: 'uploading' | 'ready' | 'error';
   fileId?: string;
   error?: string;
+  /** How the server read the file (utf8 / pdf-text / pdf-ocr / image-ocr / docx). */
+  extractionMethod?: string | null;
+  /** Word count extracted into project memory. */
+  extractionWords?: number;
+}
+
+/** "read · N words" sub-label for a ready attachment, or null when not read. */
+export function attachmentReadLabel(
+  method: string | null | undefined,
+  words: number | undefined,
+): string | null {
+  if (!words || words <= 0) return null;
+  const w = `${words.toLocaleString()} ${words === 1 ? 'word' : 'words'}`;
+  return method === 'image-ocr' || method === 'pdf-ocr' ? `read via OCR · ${w}` : `read · ${w}`;
 }
 
 export interface UseChatUploadOptions {
@@ -53,7 +67,17 @@ export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload
         }
         const data = await res.json();
         setAttachments((prev) =>
-          prev.map((a) => (a.id === localId ? { ...a, status: 'ready', fileId: data.fileId } : a)),
+          prev.map((a) =>
+            a.id === localId
+              ? {
+                  ...a,
+                  status: 'ready',
+                  fileId: data.fileId,
+                  extractionMethod: data.extractionMethod ?? null,
+                  extractionWords: typeof data.extractionWords === 'number' ? data.extractionWords : 0,
+                }
+              : a,
+          ),
         );
       } catch (err) {
         setAttachments((prev) =>

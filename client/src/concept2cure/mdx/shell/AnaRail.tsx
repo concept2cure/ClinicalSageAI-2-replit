@@ -10,7 +10,7 @@ import * as React from 'react';
 import { I } from '../icons';
 import { ANA_MODES, MDX_SUGGESTIONS, type AnaMode } from '../data/nav';
 import type { Program } from '../data/programs';
-import { useChatUpload, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
+import { useChatUpload, CHAT_UPLOAD_ACCEPT, attachmentReadLabel } from '../../hooks/useChatUpload';
 
 export interface AnaMessage {
   role: 'ana' | 'user';
@@ -202,8 +202,15 @@ export function AnaRail({
                   color: a.status === 'error' ? 'var(--c2c-danger, #b3261e)' : 'inherit',
                 }}
               >
-                <span style={{ opacity: a.status === 'uploading' ? 0.6 : 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
+                <span style={{ display: 'inline-flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
+                  <span style={{ opacity: a.status === 'uploading' ? 0.6 : 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
+                  </span>
+                  {a.status === 'ready' && attachmentReadLabel(a.extractionMethod, a.extractionWords) && (
+                    <span style={{ fontSize: 10, lineHeight: 1.2, color: 'var(--c2c-ink-subtle, #888)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {attachmentReadLabel(a.extractionMethod, a.extractionWords)}
+                    </span>
+                  )}
                 </span>
                 <button
                   type="button"

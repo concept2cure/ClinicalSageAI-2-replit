@@ -22,6 +22,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 
 import { I } from './icons';
 import styles from './styles.module.css';
+import { attachmentReadLabel as readLabel } from '../../hooks/useChatUpload';
 
 export interface ComposerProps {
   value: string;
@@ -62,13 +63,6 @@ interface ComposerAttachment {
   extractionWords?: number;
 }
 
-/** Human label for an extraction method, shown on the chip once read. */
-function readLabel(method: string | null | undefined, words: number | undefined): string | null {
-  if (!words || words <= 0) return null;
-  const w = `${words.toLocaleString()} ${words === 1 ? 'word' : 'words'}`;
-  const ocr = method === 'image-ocr' || method === 'pdf-ocr';
-  return ocr ? `read via OCR · ${w}` : `read · ${w}`;
-}
 
 const ACCEPT = '.pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.docx,.doc';
 

@@ -21,6 +21,7 @@ import { setOptions } from 'marked';
 import { I } from './icons';
 import { Composer } from './Composer';
 import type { MessageAttachment } from './useAnaChat';
+import { attachmentReadLabel } from '../../hooks/useChatUpload';
 import styles from './styles.module.css';
 import {
   renderSafeMarkdown,
@@ -29,13 +30,6 @@ import {
 
 // Configure marked once: GitHub-flavoured markdown, no line-break collapsing.
 setOptions({ gfm: true, breaks: false });
-
-/** "read · N words" sub-label for an attachment chip, or null when not read. */
-function attachmentReadLabel(method: string | null | undefined, words: number | undefined): string | null {
-  if (!words || words <= 0) return null;
-  const w = `${words.toLocaleString()} ${words === 1 ? 'word' : 'words'}`;
-  return method === 'image-ocr' || method === 'pdf-ocr' ? `read via OCR · ${w}` : `read · ${w}`;
-}
 
 /** Decode HTML entities in a string (used for the code-block copy payload). */
 function decodeHtmlEntities(s: string): string {

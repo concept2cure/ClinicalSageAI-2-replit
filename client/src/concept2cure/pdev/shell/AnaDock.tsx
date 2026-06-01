@@ -18,7 +18,7 @@
 import * as React from 'react';
 import { PdevIcon } from '../icons';
 import { PDEV_SUGGESTIONS } from '../data/enums';
-import { useChatUpload, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
+import { useChatUpload, CHAT_UPLOAD_ACCEPT, attachmentReadLabel } from '../../hooks/useChatUpload';
 import type { PdevProgramView, PdevActivityView } from '../data/types';
 
 /** Minimal transcript message for the dock. Mapped from useAnaChat in
@@ -230,15 +230,22 @@ export function PdevAnaDock({
                   color: a.status === 'error' ? 'var(--c2c-danger, #b3261e)' : 'inherit',
                 }}
               >
-                <span
-                  style={{
-                    opacity: a.status === 'uploading' ? 0.6 : 1,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
+                <span style={{ display: 'inline-flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
+                  <span
+                    style={{
+                      opacity: a.status === 'uploading' ? 0.6 : 1,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
+                  </span>
+                  {a.status === 'ready' && attachmentReadLabel(a.extractionMethod, a.extractionWords) && (
+                    <span style={{ fontSize: 10, lineHeight: 1.2, color: 'var(--c2c-ink-subtle, #888)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {attachmentReadLabel(a.extractionMethod, a.extractionWords)}
+                    </span>
+                  )}
                 </span>
                 <button
                   type="button"
