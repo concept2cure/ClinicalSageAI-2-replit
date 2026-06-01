@@ -95,6 +95,7 @@ import {
   selectMtd,
   type DoseLevelData,
 } from '../services/stats/dose-finding-boin';
+import { rmstDifference, restrictedMeanSurvival } from '../services/stats/rmst';
 import {
   runJudgmentPipeline,
   runPipelineAndGenerateArtifact,
@@ -1571,6 +1572,44 @@ router.post('/dose-finding/boin', authMiddleware, async (req: Request, res: Resp
       data.decisionTable = boinDecisionTable(b.target, b.cohortSizes, b.phi1, b.phi2);
     }
     res.json({ success: true, data });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/biostat/survival/rmst
+ * Restricted mean survival time (RMST) at horizon τ — a model-free treatment
+ * effect that stays interpretable when proportional hazards fails. With both
+ * arms returns the RMST difference + z test + CI; with one arm returns the
+ * single-arm RMST and variance.
+ *
+ * Body: { tau, confLevel?, treatment:{times[],events[]}, control?:{times[],events[]} }
+ */
+router.post('/survival/rmst', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    resolveOrganizationId(req);
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: error.message });
+  }
+  try {
+    const b = req.body ?? {};
+    const okArm = (a: any) => a && Array.isArray(a.times) && Array.isArray(a.events);
+    if (typeof b.tau !== 'number' || !okArm(b.treatment)) {
+      return res.status(400).json({
+        success: false,
+        error: 'numeric tau and treatment {times[], events[]} are required.',
+      });
+    }
+    if (okArm(b.control)) {
+      return res.json({ success: true, data: rmstDifference(
+        b.treatment, b.control, b.tau,
+        typeof b.confLevel === 'number' ? b.confLevel : undefined,
+      ) });
+    }
+    return res.json({ success: true, data: restrictedMeanSurvival(
+      b.treatment.times, b.treatment.events, b.tau,
+    ) });
   } catch (error: any) {
     return res.status(400).json({ success: false, error: error.message });
   }
