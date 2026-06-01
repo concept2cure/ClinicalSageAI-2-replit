@@ -18,7 +18,7 @@
 import * as React from 'react';
 import { PdevIcon } from '../icons';
 import { PDEV_SUGGESTIONS } from '../data/enums';
-import { useChatUpload, CHAT_UPLOAD_ACCEPT, attachmentReadLabel } from '../../hooks/useChatUpload';
+import { useChatUpload, CHAT_UPLOAD_ACCEPT, attachmentReadLabel, SR_ONLY_STYLE } from '../../hooks/useChatUpload';
 import type { PdevProgramView, PdevActivityView } from '../data/types';
 
 /** Minimal transcript message for the dock. Mapped from useAnaChat in
@@ -208,6 +208,9 @@ export function PdevAnaDock({
       )}
 
       <div className="pdev-ana-foot">
+        <div style={SR_ONLY_STYLE} aria-live="polite" role="status">
+          {upload.statusMessage}
+        </div>
         {upload.attachments.length > 0 && (
           <div
             className="pdev-ana-attachments"

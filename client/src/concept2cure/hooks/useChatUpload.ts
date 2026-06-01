@@ -7,6 +7,7 @@
  * (artifact + embedded atom) so AnA can retrieve the content.
  */
 
+import type { CSSProperties } from 'react';
 import { useCallback, useState } from 'react';
 
 export interface ChatAttachment {
@@ -39,6 +40,12 @@ export interface UseChatUploadOptions {
 export interface UseChatUpload {
   attachments: ChatAttachment[];
   uploading: boolean;
+  /**
+   * Latest upload-lifecycle message for an aria-live region (screen readers):
+   * "Uploading X…", "X read, N words", "X failed to upload". Empty when idle.
+   * Render it in a visually-hidden aria-live="polite" node next to the composer.
+   */
+  statusMessage: string;
   /** Upload one or many files (from an <input> or a drop). */
   addFiles: (files: FileList | File[] | null) => void;
   removeAttachment: (id: string) => void;
@@ -48,14 +55,30 @@ export interface UseChatUpload {
 /** File types the chat upload accepts (matches server-side extraction support). */
 export const CHAT_UPLOAD_ACCEPT = '.pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.docx,.doc';
 
+/** Inline visually-hidden style for an aria-live status node (surfaces without a
+ *  CSS module / sr-only utility, e.g. the MDX and PDEV rails). */
+export const SR_ONLY_STYLE: CSSProperties = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0, 0, 0, 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+};
+
 export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload {
   const { projectId } = options;
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
+  const [statusMessage, setStatusMessage] = useState('');
 
   const uploadOne = useCallback(
     async (file: File) => {
       const localId = `att_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
       setAttachments((prev) => [...prev, { id: localId, name: file.name, status: 'uploading' }]);
+      setStatusMessage(`Uploading ${file.name}…`);
       try {
         const form = new FormData();
         form.append('file', file);
@@ -66,19 +89,17 @@ export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload
           throw new Error(body?.error || `Upload failed (${res.status})`);
         }
         const data = await res.json();
+        const method: string | null = data.extractionMethod ?? null;
+        const words: number = typeof data.extractionWords === 'number' ? data.extractionWords : 0;
         setAttachments((prev) =>
           prev.map((a) =>
             a.id === localId
-              ? {
-                  ...a,
-                  status: 'ready',
-                  fileId: data.fileId,
-                  extractionMethod: data.extractionMethod ?? null,
-                  extractionWords: typeof data.extractionWords === 'number' ? data.extractionWords : 0,
-                }
+              ? { ...a, status: 'ready', fileId: data.fileId, extractionMethod: method, extractionWords: words }
               : a,
           ),
         );
+        const read = attachmentReadLabel(method, words);
+        setStatusMessage(read ? `${file.name} ${read}` : `${file.name} uploaded`);
       } catch (err) {
         setAttachments((prev) =>
           prev.map((a) =>
@@ -87,6 +108,7 @@ export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload
               : a,
           ),
         );
+        setStatusMessage(`${file.name} failed to upload`);
       }
     },
     [projectId],
@@ -105,11 +127,15 @@ export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload
     [],
   );
 
-  const clear = useCallback(() => setAttachments([]), []);
+  const clear = useCallback(() => {
+    setAttachments([]);
+    setStatusMessage('');
+  }, []);
 
   return {
     attachments,
     uploading: attachments.some((a) => a.status === 'uploading'),
+    statusMessage,
     addFiles,
     removeAttachment,
     clear,

@@ -22,7 +22,11 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 
 import { I } from './icons';
 import styles from './styles.module.css';
-import { attachmentReadLabel as readLabel } from '../../hooks/useChatUpload';
+import {
+  useChatUpload,
+  attachmentReadLabel as readLabel,
+  CHAT_UPLOAD_ACCEPT,
+} from '../../hooks/useChatUpload';
 
 export interface ComposerProps {
   value: string;
@@ -50,22 +54,6 @@ export interface ComposerReadyAttachment {
   extractionWords?: number;
 }
 
-/** A file attached in the composer, tracked through its upload lifecycle. */
-interface ComposerAttachment {
-  id: string;
-  name: string;
-  status: 'uploading' | 'ready' | 'error';
-  fileId?: string;
-  error?: string;
-  /** How the server read the file (utf8 / pdf-text / pdf-ocr / image-ocr / docx). */
-  extractionMethod?: string | null;
-  /** Word count extracted into project memory. */
-  extractionWords?: number;
-}
-
-
-const ACCEPT = '.pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.docx,.doc';
-
 export function Composer({
   value,
   onChange,
@@ -84,7 +72,7 @@ export function Composer({
   const CloseIco = I.close;
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
+  const { attachments, addFiles, removeAttachment, clear, statusMessage } = useChatUpload({ projectId });
   const [dragging, setDragging] = useState(false);
 
   // Auto-grow: reset to single-line height, then expand to scrollHeight,
@@ -100,56 +88,6 @@ export function Composer({
     ta.style.overflowY = ta.scrollHeight > max ? 'auto' : 'hidden';
   }, [value]);
 
-  const uploadFile = useCallback(
-    async (file: File) => {
-      const localId = `att_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-      setAttachments((prev) => [...prev, { id: localId, name: file.name, status: 'uploading' }]);
-      try {
-        const form = new FormData();
-        form.append('file', file);
-        if (projectId) form.append('projectId', projectId);
-        const res = await fetch('/api/chat/upload', { method: 'POST', body: form, credentials: 'include' });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body?.error || `Upload failed (${res.status})`);
-        }
-        const data = await res.json();
-        setAttachments((prev) =>
-          prev.map((a) =>
-            a.id === localId
-              ? {
-                  ...a,
-                  status: 'ready',
-                  fileId: data.fileId,
-                  extractionMethod: data.extractionMethod ?? null,
-                  extractionWords: typeof data.extractionWords === 'number' ? data.extractionWords : 0,
-                }
-              : a,
-          ),
-        );
-      } catch (err) {
-        setAttachments((prev) =>
-          prev.map((a) =>
-            a.id === localId
-              ? { ...a, status: 'error', error: err instanceof Error ? err.message : 'Upload failed' }
-              : a,
-          ),
-        );
-      }
-    },
-    [projectId],
-  );
-
-  const handleFiles = useCallback(
-    (files: FileList | null) => {
-      if (!files) return;
-      Array.from(files).forEach((file) => void uploadFile(file));
-    },
-    [uploadFile],
-  );
-
-  const removeAttachment = (id: string) => setAttachments((prev) => prev.filter((a) => a.id !== id));
-
   // Surface ready attachments to the host (so the sent message can render them),
   // clear the composer's chips, then fire the parent's send.
   const handleSend = useCallback(() => {
@@ -164,10 +102,10 @@ export function Composer({
           extractionWords: a.extractionWords,
         })),
       );
-      setAttachments([]);
+      clear();
     }
     onSend();
-  }, [attachments, onAttachmentsSend, onSend]);
+  }, [attachments, onAttachmentsSend, onSend, clear]);
 
   const sendDisabled = !value.trim() && !isStreaming;
 
@@ -185,10 +123,13 @@ export function Composer({
       onDrop={(e) => {
         e.preventDefault();
         setDragging(false);
-        handleFiles(e.dataTransfer.files);
+        addFiles(e.dataTransfer.files);
       }}
       data-dragging={dragging || undefined}
     >
+      <div className={styles.srOnly} aria-live="polite" role="status">
+        {statusMessage}
+      </div>
       {attachments.length > 0 && (
         <div className={styles.composerAttachments}>
           {attachments.map((a) => (
@@ -246,10 +187,10 @@ export function Composer({
             ref={fileRef}
             type="file"
             multiple
-            accept={ACCEPT}
+            accept={CHAT_UPLOAD_ACCEPT}
             style={{ display: 'none' }}
             onChange={e => {
-              handleFiles(e.target.files);
+              addFiles(e.target.files);
               e.target.value = '';
             }}
           />

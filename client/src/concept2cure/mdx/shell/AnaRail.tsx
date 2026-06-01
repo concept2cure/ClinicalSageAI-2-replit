@@ -10,7 +10,7 @@ import * as React from 'react';
 import { I } from '../icons';
 import { ANA_MODES, MDX_SUGGESTIONS, type AnaMode } from '../data/nav';
 import type { Program } from '../data/programs';
-import { useChatUpload, CHAT_UPLOAD_ACCEPT, attachmentReadLabel } from '../../hooks/useChatUpload';
+import { useChatUpload, CHAT_UPLOAD_ACCEPT, attachmentReadLabel, SR_ONLY_STYLE } from '../../hooks/useChatUpload';
 
 export interface AnaMessage {
   role: 'ana' | 'user';
@@ -183,6 +183,9 @@ export function AnaRail({
       </div>
 
       <div className="ana-rail-foot">
+        <div style={SR_ONLY_STYLE} aria-live="polite" role="status">
+          {upload.statusMessage}
+        </div>
         {upload.attachments.length > 0 && (
           <div className="ana-attachments" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
             {upload.attachments.map(a => (
