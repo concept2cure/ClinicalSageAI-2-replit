@@ -49,7 +49,7 @@ import {
   ALL_ANA_TOOLS,
 } from '../../services/ana/AnaToolDefinitions.js';
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
-import { runAgenticToolLoop, type ToolCall, type ToolResultEntry, type ModelTurn } from '../../services/ana/agentic-loop.js';
+import { runAgenticToolLoop, capToolResultForModel, type ToolCall, type ToolResultEntry, type ModelTurn } from '../../services/ana/agentic-loop.js';
 import { loadAnaToolPolicy, filterToolsByPolicy } from '../../services/ana-ri/mdx-tool-policy.js';
 import { isPdfIntakeEnabled, readLocalUploadBuffer } from '../../services/anthropic-files.js';
 import { logToolRun } from '../../services/toolRegistry.js';
@@ -626,7 +626,7 @@ router.post('/stream', async (req: Request, res: Response) => {
         loopMessages.push({
           role: 'user',
           content: results
-            .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${tr.content}`)
+            .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${capToolResultForModel(tr.content)}`)
             .join('\n\n'),
         });
         let roundText = '';
