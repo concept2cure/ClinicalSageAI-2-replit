@@ -78,6 +78,12 @@ import {
   type BetaPrior,
 } from '../services/stats/bayesian-device';
 import {
+  projectEventTime,
+  expectedEventsByTime,
+  expectedTimeToEvents,
+  type EventProjectionInput,
+} from '../services/stats/event-projection';
+import {
   runJudgmentPipeline,
   runPipelineAndGenerateArtifact,
   runPipelineForRole,
@@ -1420,6 +1426,55 @@ router.post('/diagnostic/bayesian-device', authMiddleware, async (req: Request, 
       goal: b.goal, expected: b.expected, prior, successThreshold: b.successThreshold,
       targetPower: b.targetPower, maxTypeI: typeof b.maxTypeI === 'number' ? b.maxTypeI : undefined,
     }) });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/biostat/adaptive/event-projection
+ * Forecast the calendar time at which an event-driven (time-to-event) trial
+ * reaches a target number of events — the timing that schedules interim/DMC and
+ * final analyses. Uniform accrual + exponential event/dropout; exact expected
+ * curve plus a seeded Monte Carlo 80% prediction interval.
+ *
+ * Body: { accrualRate, accrualPeriod, medianControl, hazardRatio, targetEvents,
+ *         allocationRatio?, dropoutHazard?, atTime?, seed?, nSim? }
+ */
+router.post('/adaptive/event-projection', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    resolveOrganizationId(req);
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: error.message });
+  }
+  try {
+    const b = req.body ?? {};
+    const required = ['accrualRate', 'accrualPeriod', 'medianControl', 'hazardRatio', 'targetEvents'];
+    if (required.some(k => typeof b[k] !== 'number')) {
+      return res.status(400).json({ success: false, error: `numbers required: ${required.join(', ')}.` });
+    }
+    const input: EventProjectionInput = {
+      accrualRate: b.accrualRate,
+      accrualPeriod: b.accrualPeriod,
+      medianControl: b.medianControl,
+      hazardRatio: b.hazardRatio,
+      targetEvents: b.targetEvents,
+      allocationRatio: typeof b.allocationRatio === 'number' ? b.allocationRatio : undefined,
+      dropoutHazard: typeof b.dropoutHazard === 'number' ? b.dropoutHazard : undefined,
+    };
+    const forecast = projectEventTime({
+      ...input,
+      nSim: typeof b.nSim === 'number' ? b.nSim : undefined,
+      seed: typeof b.seed === 'number' ? b.seed : undefined,
+    });
+    const data: Record<string, unknown> = {
+      forecast,
+      expectedTimeToTarget: expectedTimeToEvents(input),
+    };
+    if (typeof b.atTime === 'number') {
+      data.expectedEventsAtTime = expectedEventsByTime(input, b.atTime);
+    }
+    res.json({ success: true, data });
   } catch (error: any) {
     return res.status(400).json({ success: false, error: error.message });
   }
