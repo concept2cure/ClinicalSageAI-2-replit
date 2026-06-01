@@ -33,6 +33,11 @@ import {
   type RAGContext,
   type RetrievedDocument,
 } from './advancedRAGPipeline.js';
+import {
+  recordRagRetrieval,
+  type RagCorpusLabel,
+  type RagOutcome,
+} from './rag-metrics.js';
 
 /**
  * Caller intent. Each maps to a vetted default retrieval configuration so
@@ -127,9 +132,62 @@ export function optionsForIntent(params: RagRetrievalParams): RetrievalOptions {
  * Retrieve relevant context only (no generation). Returns the full RAGContext
  * so callers can run their own generation/streaming over the documents.
  */
+/** The corpus a retrieval actually read from, for the observability label. */
+function corpusLabel(params: RagRetrievalParams): RagCorpusLabel {
+  if (params.artifactScope) return 'project_atoms';
+  return params.corpus === 'rag_chunks' ? 'rag_chunks' : 'vault';
+}
+
+/**
+ * Record one retrieval against the in-memory metrics surfaced on /api/metrics.
+ * On success, latency is the pipeline's own retrieval time (comparable across
+ * retrieve/query); on error it's measured wall clock. Best-effort — a metrics
+ * failure must never break a retrieval.
+ */
+function recordRetrieval(
+  params: RagRetrievalParams,
+  options: RetrievalOptions,
+  wallStart: number,
+  ctx: RAGContext | undefined
+): void {
+  try {
+    const corpus = corpusLabel(params);
+    const intent = params.intent ?? 'regulatory_qa';
+    const strategy = options.strategy ?? 'advanced';
+    if (!ctx) {
+      recordRagRetrieval({ corpus, intent, strategy, outcome: 'error', latencyMs: Date.now() - wallStart });
+      return;
+    }
+    const returned = ctx.documents.length;
+    const outcome: RagOutcome = returned > 0 ? 'ok' : 'empty';
+    recordRagRetrieval({
+      corpus,
+      intent,
+      strategy,
+      outcome,
+      latencyMs: ctx.processingTimeMs,
+      candidates: ctx.totalCandidates,
+      returned,
+      topScore: returned > 0 ? ctx.documents[0].finalScore : undefined,
+      tokensUsed: ctx.tokensUsed,
+    });
+  } catch {
+    /* metrics are best-effort; never surface a recording failure to the caller */
+  }
+}
+
 export async function ragRetrieve(params: RagRetrievalParams): Promise<RAGContext> {
   const pipeline = getRAGPipeline(getPool());
-  return pipeline.retrieve(params.query, optionsForIntent(params));
+  const options = optionsForIntent(params);
+  const wallStart = Date.now();
+  try {
+    const ctx = await pipeline.retrieve(params.query, options);
+    recordRetrieval(params, options, wallStart, ctx);
+    return ctx;
+  } catch (err) {
+    recordRetrieval(params, options, wallStart, undefined);
+    throw err;
+  }
 }
 
 /**
@@ -137,12 +195,20 @@ export async function ragRetrieve(params: RagRetrievalParams): Promise<RAGContex
  */
 export async function ragQuery(params: RagRetrievalParams): Promise<RagRouterResult> {
   const pipeline = getRAGPipeline(getPool());
-  const result = await pipeline.queryWithGeneration(params.query, optionsForIntent(params));
-  return {
-    answer: result.answer,
-    sources: result.sources,
-    context: result.context,
-  };
+  const options = optionsForIntent(params);
+  const wallStart = Date.now();
+  try {
+    const result = await pipeline.queryWithGeneration(params.query, options);
+    recordRetrieval(params, options, wallStart, result.context);
+    return {
+      answer: result.answer,
+      sources: result.sources,
+      context: result.context,
+    };
+  } catch (err) {
+    recordRetrieval(params, options, wallStart, undefined);
+    throw err;
+  }
 }
 
 export const ragRouter = { query: ragQuery, retrieve: ragRetrieve };
