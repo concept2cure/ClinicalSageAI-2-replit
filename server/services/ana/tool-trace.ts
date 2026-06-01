@@ -125,3 +125,38 @@ export function formatTraceForContext(entries: ToolTraceEntry[]): string {
     lines.join('\n')
   );
 }
+
+/** Grounding verdict as persisted on the assistant message metadata. */
+export interface GroundingSummary {
+  checked: number;
+  grounded: number;
+  unsupported: Array<{ kind: string; text: string }>;
+}
+
+/** Hidden metadata stored on an assistant message: durable turn-quality record. */
+export interface AssistantMessageMetadata {
+  toolTrace?: ToolTraceEntry[];
+  grounding?: GroundingSummary;
+}
+
+/**
+ * Build the assistant message's hidden metadata from the turn's tool-trace and
+ * grounding verdict. Returns undefined when there is nothing worth storing, so
+ * callers persist `null` rather than an empty object. The grounding verdict is
+ * only stored when claims were actually checked (`checked > 0`).
+ */
+export function buildAssistantMetadata(
+  toolTrace: ToolTraceEntry[],
+  grounding: GroundingSummary | null,
+): AssistantMessageMetadata | undefined {
+  const meta: AssistantMessageMetadata = {};
+  if (toolTrace.length > 0) meta.toolTrace = toolTrace;
+  if (grounding && grounding.checked > 0) {
+    meta.grounding = {
+      checked: grounding.checked,
+      grounded: grounding.grounded,
+      unsupported: grounding.unsupported,
+    };
+  }
+  return Object.keys(meta).length > 0 ? meta : undefined;
+}

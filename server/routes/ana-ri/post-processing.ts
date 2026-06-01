@@ -13,7 +13,7 @@
 import type { Response } from 'express';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import type { UserRole } from '../../services/ana-ri/persona.js';
-import type { ToolTraceEntry } from '../../services/ana/tool-trace.js';
+import { buildAssistantMetadata, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
 import {
   checkEvidenceDiscipline,
   validateResponseStructure,
@@ -139,15 +139,27 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
           ? 'Action executed successfully.'
           : contentForCommandProcessing || fullContent;
 
+    // Self-verification round (computed before persistence so its verdict can
+    // be stored on the assistant message): check the answer's specific claims
+    // (trial ids, quoted source text) against the tool evidence actually
+    // gathered. No-op when no tools ran. It is a fast CPU pass, so running it
+    // ahead of the DB roundtrip does not move the latency tail.
+    const streamGrounding =
+      finalAssistantContent && toolEvidenceCorpus.length > 0
+        ? verifyAnswerGrounding(finalAssistantContent, toolEvidenceCorpus.join('\n'))
+        : null;
+
     // Run persistence concurrent with the synchronous evidence / structure
     // checks. saveMessage is a DB roundtrip (tens to hundreds of ms); the
     // checks are CPU-only and finish instantly. Awaiting them together
-    // collapses the tail to max(db, cpu) instead of db + cpu.
+    // collapses the tail to max(db, cpu) instead of db + cpu. The assistant
+    // message carries a hidden metadata record (tool-trace + grounding verdict)
+    // so the turn's investigation and self-check survive across turns.
     const persistPromise: Promise<void> =
       orgId && threadId && fullContent
         ? saveMessage(
             threadId, 'assistant', finalAssistantContent, undefined, undefined,
-            toolTrace.length > 0 ? { toolTrace } : undefined,
+            buildAssistantMetadata(toolTrace, streamGrounding) as Record<string, unknown> | undefined,
           )
             .then(() => undefined)
             .catch((e: any) => {
@@ -166,13 +178,6 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     const streamEvidenceVerdict = finalAssistantContent
       ? validateEvidence(finalAssistantContent, 'ana-ri')
       : null;
-    // Self-verification round: check the answer's specific claims (trial ids,
-    // quoted source text) against the tool evidence actually gathered. No-op
-    // when no tools ran.
-    const streamGrounding =
-      finalAssistantContent && toolEvidenceCorpus.length > 0
-        ? verifyAnswerGrounding(finalAssistantContent, toolEvidenceCorpus.join('\n'))
-        : null;
 
     // RIM interception — fire sync, non-blocking, on the cleaned content.
     // Claim metrics blend the structure + evidence checks with the direct

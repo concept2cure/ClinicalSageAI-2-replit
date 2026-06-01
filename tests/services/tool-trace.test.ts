@@ -8,6 +8,7 @@ import {
   buildTraceEntry,
   collectTracesFromHistory,
   formatTraceForContext,
+  buildAssistantMetadata,
   type ToolTraceEntry,
 } from '../../server/services/ana/tool-trace';
 
@@ -87,5 +88,32 @@ describe('formatTraceForContext', () => {
 
   it('returns an empty string when there is nothing to carry forward', () => {
     expect(formatTraceForContext([])).toBe('');
+  });
+});
+
+describe('buildAssistantMetadata', () => {
+  const trace: ToolTraceEntry[] = [
+    { tool: 'search_document', label: 'Searching', status: 'success', resultSummary: '1 match' },
+  ];
+
+  it('returns undefined when there is nothing worth storing', () => {
+    expect(buildAssistantMetadata([], null)).toBeUndefined();
+    expect(buildAssistantMetadata([], { checked: 0, grounded: 0, unsupported: [] })).toBeUndefined();
+  });
+
+  it('stores the tool trace alone when no claims were checked', () => {
+    expect(buildAssistantMetadata(trace, null)).toEqual({ toolTrace: trace });
+    expect(buildAssistantMetadata(trace, { checked: 0, grounded: 0, unsupported: [] }))
+      .toEqual({ toolTrace: trace });
+  });
+
+  it('stores the grounding verdict alongside the trace when claims were checked', () => {
+    const grounding = { checked: 2, grounded: 1, unsupported: [{ kind: 'nct', text: 'NCT09999999' }] };
+    expect(buildAssistantMetadata(trace, grounding)).toEqual({ toolTrace: trace, grounding });
+  });
+
+  it('stores grounding even when the trace is empty', () => {
+    const grounding = { checked: 1, grounded: 1, unsupported: [] };
+    expect(buildAssistantMetadata([], grounding)).toEqual({ grounding });
   });
 });
