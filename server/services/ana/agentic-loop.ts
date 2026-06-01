@@ -1,0 +1,138 @@
+/**
+ * AnA agentic tool loop — the orchestration core behind AnA's chat.
+ *
+ * Drives a bounded multi-round "reason → call tools → observe → continue" loop:
+ * the model proposes tool calls, they are executed, the results are fed back,
+ * and the model either chains another step (e.g. extract a document's structure,
+ * then search it, then compare two versions) or produces a final grounded
+ * answer. This is what lets AnA actually investigate a client document rather
+ * than answer in a single shot.
+ *
+ * The loop is dependency-injected (the model call and tool execution are passed
+ * in) so it is pure orchestration logic and fully unit-testable, independent of
+ * the gateway, SSE transport, or the live tool registry.
+ *
+ * Safety properties (the moat is reliability):
+ *   - bounded: never exceeds `maxRounds`; the final permitted round drops tools
+ *     to force a text answer;
+ *   - thrash-resistant: if the model repeats the same tool call (name + input)
+ *     beyond `duplicateLimit`, tools are withdrawn to break the loop;
+ *   - fault-tolerant: a failing tool returns an error result and the loop
+ *     continues (the executor is expected to encode failures as results, not
+ *     throw), so one bad tool never aborts the conversation.
+ */
+
+export interface ToolCall {
+  id: string;
+  name: string;
+  input: Record<string, unknown>;
+}
+
+export interface ToolResultEntry {
+  tool_use_id: string;
+  name: string;
+  content: string;
+}
+
+export interface ModelTurn {
+  /** The assistant's narration for this turn (may be empty). */
+  text: string;
+  /** Tool calls the model wants executed; empty ⇒ the turn is a final answer. */
+  toolCalls: ToolCall[];
+}
+
+export interface AgenticLoopDeps {
+  /**
+   * Execute a batch of tool calls for a round and return their results. The
+   * route implementation streams transparency events as a side effect. Should
+   * not throw for individual tool failures — encode them as result content.
+   */
+  executeTools: (calls: ToolCall[], round: number) => Promise<ToolResultEntry[]>;
+  /**
+   * Call the model with the latest tool results and the prior assistant text.
+   * `includeTools` is false on the terminal round to force a text answer.
+   * Returns the next model turn (its narration + any further tool calls).
+   */
+  callModel: (
+    results: ToolResultEntry[],
+    priorText: string,
+    round: number,
+    includeTools: boolean,
+  ) => Promise<ModelTurn>;
+}
+
+export interface AgenticLoopOptions {
+  /** Maximum tool rounds (default 5). */
+  maxRounds?: number;
+  /** Withdraw tools once the same (name+input) call recurs beyond this (default 2). */
+  duplicateLimit?: number;
+}
+
+export type StoppedReason = 'no_more_tools' | 'max_rounds' | 'duplicate_thrash';
+
+export interface AgenticLoopResult {
+  /** Number of tool rounds executed. */
+  rounds: number;
+  /** Total tool calls executed across all rounds. */
+  toolCallCount: number;
+  stoppedReason: StoppedReason;
+}
+
+/** Stable key for a tool call so reordered input keys still compare equal. */
+function callKey(call: ToolCall): string {
+  const input = call.input ?? {};
+  const keys = Object.keys(input).sort();
+  const norm: Record<string, unknown> = {};
+  for (const k of keys) norm[k] = (input as Record<string, unknown>)[k];
+  return `${call.name}|${JSON.stringify(norm)}`;
+}
+
+/**
+ * Run the bounded multi-round tool loop starting from the model's first turn.
+ * Returns once the model produces an answer with no tool calls, the round cap is
+ * hit, or the model is thrashing — always after a final answer has been
+ * produced by `callModel`.
+ */
+export async function runAgenticToolLoop(
+  initial: ModelTurn,
+  deps: AgenticLoopDeps,
+  options: AgenticLoopOptions = {},
+): Promise<AgenticLoopResult> {
+  const maxRounds = options.maxRounds ?? 5;
+  const duplicateLimit = options.duplicateLimit ?? 2;
+  if (maxRounds < 1) throw new Error('maxRounds must be at least 1');
+
+  const seen = new Map<string, number>();
+  let turn = initial;
+  let round = 0;
+  let toolCallCount = 0;
+
+  while (turn.toolCalls.length > 0) {
+    round++;
+
+    // Thrash detection: count how often each exact call has been requested.
+    let thrashing = false;
+    for (const call of turn.toolCalls) {
+      const key = callKey(call);
+      const n = (seen.get(key) ?? 0) + 1;
+      seen.set(key, n);
+      if (n > duplicateLimit) thrashing = true;
+    }
+
+    const results = await deps.executeTools(turn.toolCalls, round);
+    toolCallCount += turn.toolCalls.length;
+
+    const finalRound = round >= maxRounds;
+    const includeTools = !finalRound && !thrashing;
+
+    turn = await deps.callModel(results, turn.text, round, includeTools);
+
+    if (!includeTools) {
+      // Tools were withdrawn → this turn is the forced final answer; stop here
+      // even if the model attempted (ignored) further tool calls.
+      return { rounds: round, toolCallCount, stoppedReason: thrashing ? 'duplicate_thrash' : 'max_rounds' };
+    }
+  }
+
+  return { rounds: round, toolCallCount, stoppedReason: 'no_more_tools' };
+}
