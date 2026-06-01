@@ -136,3 +136,26 @@ export async function runAgenticToolLoop(
 
   return { rounds: round, toolCallCount, stoppedReason: 'no_more_tools' };
 }
+
+/**
+ * Cap an oversized tool result before it is fed back to the model.
+ *
+ * Tools over real client documents can return very large payloads (a full
+ * structure outline, hundreds of search hits). Sending them back verbatim each
+ * round bloats the context window and cost and can derail the loop. This keeps
+ * the head and tail with an explicit truncation marker, so the model still sees
+ * the shape and the ends of the result while staying within budget. The full
+ * result is unaffected for the UI — only what is sent to the model is capped.
+ */
+export function capToolResultForModel(content: string, maxChars = 8000): string {
+  const limit = Math.max(maxChars, 200);
+  if (content.length <= limit) return content;
+  const head = Math.floor(limit * 0.7);
+  const tail = Math.max(limit - head - 60, 0);
+  const omitted = content.length - head - tail;
+  return (
+    content.slice(0, head) +
+    `\n… [${omitted} characters truncated to fit the model context] …\n` +
+    content.slice(content.length - tail)
+  );
+}

@@ -10,6 +10,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
   runAgenticToolLoop,
+  capToolResultForModel,
   type ModelTurn,
   type ToolCall,
   type ToolResultEntry,
@@ -120,5 +121,29 @@ describe('runAgenticToolLoop', () => {
     await expect(
       runAgenticToolLoop({ text: '', toolCalls: [call('x')] }, deps, { maxRounds: 0 }),
     ).rejects.toThrow(/at least 1/);
+  });
+});
+
+describe('capToolResultForModel', () => {
+  it('returns short content unchanged', () => {
+    const s = 'a small tool result';
+    expect(capToolResultForModel(s, 8000)).toBe(s);
+  });
+
+  it('truncates oversized content but keeps the head, tail, and a marker', () => {
+    const big = 'H'.repeat(5000) + 'MIDDLE' + 'T'.repeat(5000);
+    const capped = capToolResultForModel(big, 2000);
+    expect(capped.length).toBeLessThan(big.length);
+    expect(capped.length).toBeLessThan(2200); // ~limit + marker
+    expect(capped.startsWith('H')).toBe(true);
+    expect(capped.endsWith('T')).toBe(true);
+    expect(capped).toMatch(/characters truncated/);
+    expect(capped).not.toContain('MIDDLE'); // the omitted middle is dropped
+  });
+
+  it('clamps an unreasonably small limit so it never produces a negative tail', () => {
+    const capped = capToolResultForModel('x'.repeat(1000), 10);
+    expect(capped).toMatch(/truncated/);
+    expect(capped.length).toBeGreaterThan(0);
   });
 });
