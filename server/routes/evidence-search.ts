@@ -64,27 +64,7 @@ router.get('/search', async (req: Request, res: Response) => {
       // OpenSearch unavailable, continue to current paths.
     }
 
-    if (results.length === 0) {
-      try {
-        // Use the semantic search service if available
-        const { semanticSearchService } = await import('../services/semantic-search-service');
-        if (semanticSearchService) {
-          const searchResults = await semanticSearchService.search(query, limit);
-          results = (searchResults || []).map((r: any) => ({
-            id: r.document?.id || r.id,
-            title: r.document?.title || r.title || 'Untitled',
-            type: r.document?.type || type || 'document',
-            source: 'semantic_search',
-            content: r.document?.content?.substring(0, 200) || '',
-            relevanceScore: r.score || 0,
-          }));
-        }
-      } catch {
-        // Semantic search unavailable, will fall back to basic search
-      }
-    }
-
-    // If semantic search returned nothing, try basic text search on vault documents
+    // If OpenSearch returned nothing, fall back to basic text search on vault documents
     if (results.length === 0) {
       try {
         const { db } = await import('../db');

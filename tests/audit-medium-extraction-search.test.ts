@@ -5,8 +5,9 @@
  *  - foresight-knowledge-graph: extractBiomarkers/extractEndpoints no longer
  *    fabricate indication/phase-based defaults (HbA1c, PD-L1, "Primary Efficacy")
  *    and present them as "extracted from CSR data"; they return [] without metadata.
- *  - semantic-search-service: no longer returns arbitrary documents at a fabricated
- *    score: 0.1 when there are no keyword matches; it returns no results.
+ *
+ * (The companion semantic-search-service fabrication guard was retired alongside
+ * that service, which has been removed in favour of the canonical RAG router.)
  *
  * Source-integrity guards.
  */
@@ -28,14 +29,5 @@ describe('MEDIUM · foresight-knowledge-graph does not fabricate extractions', (
   it('extractEndpoints no longer pushes hardcoded phase defaults', () => {
     expect(src).not.toContain("name: 'Primary Efficacy'");
     expect(src).not.toContain("name: 'Quality of Life'");
-  });
-});
-
-describe('MEDIUM · semantic-search-service returns no fabricated fallback results', () => {
-  const src = read('services/semantic-search-service.ts');
-
-  it('no longer returns arbitrary documents at a hardcoded score: 0.1', () => {
-    expect(src).not.toContain('score: 0.1');
-    expect(src).not.toContain('return random documents');
   });
 });

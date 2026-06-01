@@ -1,5 +1,4 @@
 import { huggingFaceService, HFModel } from '../huggingface-service';
-import { semanticSearchService } from './semantic-search-service';
 import fs from 'fs';
 import path from 'path';
 import { createScopedLogger } from '../utils/logger.js';
@@ -77,9 +76,6 @@ export class AcademicKnowledgeService {
       // Load resources from the academic_resources directory
       await this.loadResourcesFromDisk();
 
-      // Index the resources for semantic search
-      await this.indexResourcesForSearch();
-
       this.resourcesIndexed = true;
       log.debug(`Academic knowledge service initialized with ${this.resources.length} resources`);
     } catch (error) {
@@ -138,45 +134,6 @@ export class AcademicKnowledgeService {
   }
 
   /**
-   * Index academic resources for semantic search
-   */
-  private async indexResourcesForSearch(): Promise<void> {
-    try {
-      log.debug('Indexing academic resources for semantic search...');
-
-      // Clear any existing index
-      semanticSearchService.clearIndex();
-
-      // Index each resource
-      for (const resource of this.resources) {
-        try {
-          // Create a document text combining the important fields
-          let documentText = `Title: ${resource.title}\n`;
-          documentText += `Type: ${resource.type}\n`;
-          documentText += `Source: ${resource.source}\n`;
-          documentText += `Year: ${resource.year}\n\n`;
-          documentText += resource.content;
-
-          // Add to semantic search index
-          await semanticSearchService.addDocument(parseInt(resource.id), documentText, {
-            id: resource.id,
-            title: resource.title,
-            type: resource.type,
-            year: resource.year,
-          });
-        } catch (indexError) {
-          log.error(`Error indexing academic resource ${resource.id}:`, indexError);
-        }
-      }
-
-      log.debug('Finished indexing academic resources');
-    } catch (error) {
-      log.error('Error indexing academic resources for search:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Add a new academic resource
    */
   async addResource(resource: AcademicResource): Promise<string> {
@@ -192,22 +149,6 @@ export class AcademicKnowledgeService {
       // Save to disk
       const filePath = path.join(this.academicDocsDir, `${resource.id}.json`);
       fs.writeFileSync(filePath, JSON.stringify(resource, null, 2));
-
-      // Index for search
-      if (this.resourcesIndexed) {
-        let documentText = `Title: ${resource.title}\n`;
-        documentText += `Type: ${resource.type}\n`;
-        documentText += `Source: ${resource.source}\n`;
-        documentText += `Year: ${resource.year}\n\n`;
-        documentText += resource.content;
-
-        await semanticSearchService.addDocument(parseInt(resource.id), documentText, {
-          id: resource.id,
-          title: resource.title,
-          type: resource.type,
-          year: resource.year,
-        });
-      }
 
       return resource.id;
     } catch (error) {
@@ -226,20 +167,33 @@ export class AcademicKnowledgeService {
         await this.initialize();
       }
 
-      // Use semantic search to find relevant resources
-      const searchResults = await semanticSearchService.search(query.text, query.limit || 10);
+      // Rank resources by keyword overlap with the query. This is a small,
+      // curated corpus loaded from disk, so a local term-overlap score is
+      // sufficient — no separate vector index is needed.
+      const terms = query.text
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(w => w.length > 2);
+
+      const ranked = this.resources
+        .map(resource => {
+          const haystack = `${resource.title} ${resource.content}`.toLowerCase();
+          let matches = 0;
+          for (const term of terms) {
+            if (haystack.includes(term)) matches += 1;
+          }
+          const relevance = terms.length > 0 ? matches / terms.length : 0;
+          return { resource, relevance };
+        })
+        .filter(r => r.relevance > 0)
+        .sort((a, b) => b.relevance - a.relevance)
+        .slice(0, query.limit || 10);
 
       // Process and filter results
       const results: SearchResult[] = [];
 
-      for (const result of searchResults) {
-        const resourceId = result.document.metadata?.id;
-
-        // Find the full resource
-        const resource = this.resources.find(r => r.id === resourceId);
-        if (!resource) {
-          continue;
-        }
+      for (const result of ranked) {
+        const resource = result.resource;
 
         // Apply filters
         if (query.filters) {
@@ -277,7 +231,7 @@ export class AcademicKnowledgeService {
         // Add to results
         results.push({
           resource,
-          relevance: result.score,
+          relevance: result.relevance,
           snippets,
         });
       }
