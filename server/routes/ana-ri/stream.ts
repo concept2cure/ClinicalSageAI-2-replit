@@ -50,6 +50,7 @@ import {
 } from '../../services/ana/AnaToolDefinitions.js';
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
 import { runAgenticToolLoop, capToolResultForModel, mapWithConcurrency, describeToolPlan, type ToolCall, type ToolResultEntry, type ModelTurn } from '../../services/ana/agentic-loop.js';
+import { buildTraceEntry, collectTracesFromHistory, formatTraceForContext, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
 import { loadAnaToolPolicy, filterToolsByPolicy } from '../../services/ana-ri/mdx-tool-policy.js';
 import { isPdfIntakeEnabled, readLocalUploadBuffer } from '../../services/anthropic-files.js';
 import { logToolRun } from '../../services/toolRegistry.js';
@@ -335,6 +336,13 @@ router.post('/stream', async (req: Request, res: Response) => {
             messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
           }
           streamHistoryLoaded = true;
+          // Tool-trace memory: carry forward a compact summary of the tools AnA
+          // already ran in earlier turns (stored on each assistant message's
+          // metadata) so she reuses prior findings instead of re-running them.
+          const traceNote = formatTraceForContext(collectTracesFromHistory(previousMsgs));
+          if (traceNote) {
+            messages.push({ role: 'system', content: traceNote });
+          }
         }
       } catch {
         /* fall through to client history */
@@ -465,6 +473,9 @@ router.post('/stream', async (req: Request, res: Response) => {
     const selectedStrategy = policyHint?.preferredStrategy || routingPlan.strategy;
 
     let fullContent = '';
+    // Structured record of the tools run this turn (persisted on the assistant
+    // message's metadata for cross-turn memory; see tool-trace.ts).
+    const toolTrace: ToolTraceEntry[] = [];
     let cleanedFullContent = '';
 
     // Stream via gateway
@@ -598,6 +609,10 @@ router.post('/stream', async (req: Request, res: Response) => {
         const entries: ToolResultEntry[] = [];
         for (const { toolUse, resultStr, toolStatus } of ran) {
           entries.push({ tool_use_id: toolUse.id, content: resultStr, name: toolUse.name });
+          // Record this call in the turn's tool-trace memory.
+          toolTrace.push(
+            buildTraceEntry(toolUse.name, describeToolPlan([toolUse])[0].label, toolStatus, resultStr),
+          );
           res.write(
             `data: ${JSON.stringify({ type: 'tool_result', name: toolUse.name, result: resultStr })}\n\n`
           );
@@ -808,7 +823,10 @@ router.post('/stream', async (req: Request, res: Response) => {
       // collapses the tail to max(db, cpu) instead of db + cpu.
       const persistPromise: Promise<void> =
         orgId && threadId && fullContent
-          ? saveMessage(threadId, 'assistant', finalAssistantContent)
+          ? saveMessage(
+              threadId, 'assistant', finalAssistantContent, undefined, undefined,
+              toolTrace.length > 0 ? { toolTrace } : undefined,
+            )
               .then(() => undefined)
               .catch((e: any) => {
                 console.error('[AnA RI Stream] Assistant persist failed:', e?.message);
