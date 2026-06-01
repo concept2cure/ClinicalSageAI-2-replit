@@ -14,7 +14,7 @@ while generation still hallucinates, and vice versa.
 
 ## Files
 
-- `metrics.ts` — pure metric functions (unit-tested in `__tests__/metrics.test.ts`).
+- `rag-metrics.ts` — pure metric functions (unit-tested in `__tests__/rag-metrics.test.ts`).
 - `gold-dataset.json` — the evaluation set. **Currently a 12-item seed.**
 - `run-eval.ts` — loads the gold set, runs each question through the RAG router, prints metrics.
 
@@ -23,14 +23,14 @@ while generation still hallucinates, and vice versa.
 Unit tests for the metrics (no DB or network needed):
 
 ```
-npx vitest run server/eval/rag/__tests__/metrics.test.ts
+npx vitest run server/eval/rag/__tests__/rag-metrics.test.ts
 ```
 
 Full evaluation against a populated corpus + configured LLM provider:
 
 ```
-npm run eval:rag                                   # report only
-npm run eval:rag -- --min-hit-rate 0.6 --min-faithfulness 0.7   # gate CI
+tsx server/eval/rag/run-eval.ts                                        # report only
+tsx server/eval/rag/run-eval.ts --min-hit-rate 0.6 --min-faithfulness 0.7   # gate CI
 ```
 
 Exit code is non-zero when a threshold is missed. With no corpus / no provider it

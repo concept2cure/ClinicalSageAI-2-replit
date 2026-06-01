@@ -29,7 +29,7 @@ import {
   answerContainsScore,
   isGroundedRefusal,
   judgeFaithfulness,
-} from './metrics.js';
+} from './rag-metrics.js';
 
 interface CliOptions {
   minHitRate: number | null;

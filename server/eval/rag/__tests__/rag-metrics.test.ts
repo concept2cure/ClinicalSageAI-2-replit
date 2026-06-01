@@ -8,7 +8,7 @@ import {
   answerContainsScore,
   isGroundedRefusal,
   judgeFaithfulness,
-} from '../metrics';
+} from '../rag-metrics';
 
 describe('rag eval metrics', () => {
   describe('mean', () => {
