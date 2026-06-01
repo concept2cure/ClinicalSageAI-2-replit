@@ -72,6 +72,20 @@ export interface RetrievalOptions {
     projectId: number | string;
     organizationUuid: string;
   };
+  /**
+   * Which corpus to retrieve from. Defaults to the vault. Set 'rag_chunks' to
+   * target the rag_chunks corpus (the registered hot-path chunk store also used
+   * by the biotech surface), scoped by the integer `organizationId` below. This
+   * is the single-router path that lets callers reach rag_chunks without a
+   * separate retrieval engine. `artifactScope` takes precedence when set.
+   */
+  corpus?: 'vault' | 'rag_chunks';
+  /**
+   * Integer organization id for `corpus: 'rag_chunks'` tenant scoping
+   * (rag_documents.organization_id). rag_chunks is not RLS-scoped, so this is
+   * applied as an explicit WHERE filter — omitting it returns cross-tenant rows.
+   */
+  organizationId?: number;
 }
 
 export interface RetrievedDocument {
@@ -108,6 +122,9 @@ type VaultChunkRow = {
   section_title: string | null;
   similarity: number;
 };
+
+/** Corpus selection threaded through the strategy methods to searchInitial. */
+type CorpusScope = { corpus?: 'vault' | 'rag_chunks'; organizationId?: number };
 
 function buildLocator(row: VaultChunkRow): string | undefined {
   if (row.section_title && row.section_title.trim()) {
@@ -187,6 +204,10 @@ export class AdvancedRAGPipeline {
     const limit = options.limit || 10;
     const threshold = options.threshold || 0.5;
     const artifactScope = options.artifactScope;
+    const scope: CorpusScope = {
+      corpus: options.corpus,
+      organizationId: options.organizationId,
+    };
 
     let candidates: RetrievedDocument[];
     // Descriptive label for RAGContext.retrievalStrategy (free-form string);
@@ -203,7 +224,8 @@ export class AdvancedRAGPipeline {
           threshold,
           options.filters,
           options.organizationUuid,
-          artifactScope
+          artifactScope,
+          scope
         );
         candidates = hydeResult.documents;
         tokensUsed += hydeResult.tokensUsed;
@@ -216,7 +238,8 @@ export class AdvancedRAGPipeline {
           threshold,
           options.filters,
           options.organizationUuid,
-          artifactScope
+          artifactScope,
+          scope
         );
         candidates = multiResult.documents;
         tokensUsed += multiResult.tokensUsed;
@@ -231,7 +254,8 @@ export class AdvancedRAGPipeline {
             threshold,
             options.filters,
             options.organizationUuid,
-            artifactScope
+            artifactScope,
+            scope
           ),
           this.multiQueryRetrieval(
             query,
@@ -239,7 +263,8 @@ export class AdvancedRAGPipeline {
             threshold,
             options.filters,
             options.organizationUuid,
-            artifactScope
+            artifactScope,
+            scope
           ),
         ]);
 
@@ -260,7 +285,8 @@ export class AdvancedRAGPipeline {
           threshold,
           options.filters,
           options.organizationUuid,
-          artifactScope
+          artifactScope,
+          scope
         );
         break;
     }
@@ -310,10 +336,14 @@ export class AdvancedRAGPipeline {
     limit: number,
     threshold: number,
     organizationUuid?: string,
-    artifactScope?: RetrievalOptions['artifactScope']
+    artifactScope?: RetrievalOptions['artifactScope'],
+    scope?: CorpusScope
   ): Promise<RetrievedDocument[]> {
     if (artifactScope) {
       return this.searchProjectAtoms(query, limit, threshold, artifactScope);
+    }
+    if (scope?.corpus === 'rag_chunks') {
+      return this.searchRagChunksSimilar(query, limit, threshold, scope.organizationId);
     }
     return this.searchVaultSimilar(query, limit, threshold, organizationUuid);
   }
@@ -360,9 +390,10 @@ export class AdvancedRAGPipeline {
     threshold: number,
     _filters?: RetrievalOptions['filters'],
     organizationUuid?: string,
-    artifactScope?: RetrievalOptions['artifactScope']
+    artifactScope?: RetrievalOptions['artifactScope'],
+    scope?: CorpusScope
   ): Promise<RetrievedDocument[]> {
-    return this.searchInitial(query, limit, threshold, organizationUuid, artifactScope);
+    return this.searchInitial(query, limit, threshold, organizationUuid, artifactScope, scope);
   }
 
   /**
@@ -375,7 +406,8 @@ export class AdvancedRAGPipeline {
     threshold: number,
     _filters?: RetrievalOptions['filters'],
     organizationUuid?: string,
-    artifactScope?: RetrievalOptions['artifactScope']
+    artifactScope?: RetrievalOptions['artifactScope'],
+    scope?: CorpusScope
   ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }> {
     // Generate hypothetical answer using Claude for better reasoning
     const hydeResponse = await this.routeCached({
@@ -402,7 +434,8 @@ export class AdvancedRAGPipeline {
       limit,
       threshold,
       organizationUuid,
-      artifactScope
+      artifactScope,
+      scope
     );
 
     return {
@@ -420,7 +453,8 @@ export class AdvancedRAGPipeline {
     threshold: number,
     _filters?: RetrievalOptions['filters'],
     organizationUuid?: string,
-    artifactScope?: RetrievalOptions['artifactScope']
+    artifactScope?: RetrievalOptions['artifactScope'],
+    scope?: CorpusScope
   ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }> {
     // Generate alternative queries
     const queryExpansionResponse = await this.routeCached({
@@ -458,7 +492,8 @@ export class AdvancedRAGPipeline {
         Math.ceil(limit / allQueries.length),
         threshold,
         organizationUuid,
-        artifactScope
+        artifactScope,
+        scope
       )
     );
 
@@ -705,6 +740,69 @@ Example: {"1": 95, "2": 72, "3": 45}`,
         locator: buildLocator(row),
       }));
     });
+  }
+
+  /**
+   * Initial retrieval against the rag_chunks corpus (the registered hot-path
+   * chunk store, also used by the biotech surface). Mirrors searchVaultSimilar
+   * but reads rag_chunks / rag_documents and scopes by the integer
+   * organization_id. rag_chunks is not RLS-scoped, so the org filter is applied
+   * explicitly — when organizationId is omitted, all tenants' chunks are
+   * eligible, so callers serving a single tenant must pass it.
+   *
+   * Same embedding space as the vault path (text-embedding-3-small, 1536d) per
+   * embedding-corpus-policy, so query embedding and similarity are identical.
+   */
+  private async searchRagChunksSimilar(
+    query: string,
+    limit: number,
+    threshold: number,
+    organizationId?: number
+  ): Promise<RetrievedDocument[]> {
+    const queryResult = await this.embeddingService.embed(query, 'text-embedding-3-small');
+    const vector = `[${queryResult.embedding.join(',')}]`;
+
+    const params: Array<string | number> = [vector, threshold, limit];
+    let orgFilter = '';
+    if (organizationId !== undefined && organizationId !== null) {
+      params.push(organizationId);
+      orgFilter = `AND d.organization_id = $${params.length}`;
+    }
+
+    const { rows } = await this.pool.query<VaultChunkRow>(
+      `
+        SELECT
+          c.id AS chunk_id,
+          c.document_id AS document_id,
+          COALESCE(d.title, '') AS title,
+          c.content AS content,
+          c.page_number AS page_number,
+          c.section_title AS section_title,
+          1 - (c.embedding <=> $1::vector) AS similarity
+        FROM rag_chunks c
+        JOIN rag_documents d ON d.id = c.document_id
+        WHERE c.embedding IS NOT NULL
+          ${orgFilter}
+          AND 1 - (c.embedding <=> $1::vector) > $2
+        ORDER BY c.embedding <=> $1::vector
+        LIMIT $3
+      `,
+      params
+    );
+
+    return rows.map(row => ({
+      id: row.chunk_id,
+      chunkId: row.chunk_id,
+      documentId: row.document_id,
+      content: row.content || '',
+      title: row.title || 'Untitled',
+      atomType: 'rag_chunk',
+      initialScore: Number(row.similarity),
+      finalScore: Number(row.similarity),
+      pageNumber: row.page_number ?? undefined,
+      sectionTitle: row.section_title,
+      locator: buildLocator(row),
+    }));
   }
 
   private async persistEvidenceCitations(

@@ -102,13 +102,12 @@ export const CORPUS_POLICY: readonly CorpusPolicy[] = [
     corpus: 'vaultDocumentChunks',
     table: 'vault.document_chunks',
     dimensions: 1536,
-    // ada-002 is registered here because that's what the historical vault
-    // index was built with (column default + writer + retriever agree).
-    // Migrating this corpus to text-embedding-3-small requires
-    // re-vectorizing every existing row; mixing models on the same column
-    // produces silent retrieval misses, not loud errors. Tracked as a
-    // separate migration in DATA_KNOWLEDGE_MEMORY_LAYER_AUDIT.md.
-    model: 'text-embedding-ada-002',
+    // The active writer (layout-aware-ingestion.ts, CONFIG.embeddingModel) and
+    // the reader (advancedRAGPipeline.searchVaultSimilar) both use
+    // text-embedding-3-small; only the column DEFAULT is the legacy ada-002,
+    // which the writer overrides. Registered as 3-small to match what the index
+    // is actually built and queried with — both are 1536d, so no re-vectorize.
+    model: 'text-embedding-3-small',
     purpose: 'Vault document chunks — semantic similarity search over indexed vault PDFs/DOCX',
   },
 ] as const;
