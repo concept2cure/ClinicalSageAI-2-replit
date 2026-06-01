@@ -494,17 +494,64 @@ registerToolHandler('analyze_predicate_device', async (input) => {
   });
 });
 
-// Extract Document Structure
+// Extract Document Structure — real heading/section/clause outline from text.
 registerToolHandler('extract_document_structure', async (input) => {
-  const documentId = input.document_id as string;
-  const elements = input.extract_elements as string[] || ['headings', 'tables', 'figures'];
-
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) {
+    return JSON.stringify({
+      error: 'No document text provided. Pass the extracted document text in `text` (e.g. from the OCR/extraction step).',
+    });
+  }
+  const { parseDocumentStructure } = await import('../document-analysis');
+  const s = parseDocumentStructure(text);
   return JSON.stringify({
-    documentId,
-    requestedElements: elements,
-    note: 'Document structure extraction requires document store access. This tool will be fully operational once connected to the document management system.',
-    recommendation: 'Upload the document to the platform for automated structure analysis.',
+    documentId: input.document_id ?? null,
+    counts: s.counts,
+    toc: s.toc,
+    sections: s.sections.map(sec => ({
+      number: sec.number, title: sec.title, level: sec.level,
+      startLine: sec.startLine, endLine: sec.endLine,
+    })),
   });
+});
+
+// Compare Document Versions — section/clause-level + line-level diff of two texts.
+registerToolHandler('compare_document_versions', async (input) => {
+  const oldText = typeof input.old_text === 'string' ? input.old_text : '';
+  const newText = typeof input.new_text === 'string' ? input.new_text : '';
+  if (!oldText || !newText) {
+    return JSON.stringify({ error: 'compare_document_versions requires both `old_text` and `new_text`.' });
+  }
+  const { diffDocumentStructure } = await import('../document-analysis');
+  const d = diffDocumentStructure(oldText, newText);
+  return JSON.stringify({
+    summary: d.summary,
+    lineLevel: { additions: d.flat.additions, deletions: d.flat.deletions },
+    // The changed sections first, so AnA leads with what actually moved.
+    sections: d.sections
+      .filter(s => s.status !== 'unchanged')
+      .concat(d.sections.filter(s => s.status === 'unchanged')),
+  });
+});
+
+// Search Document — "grep" within a document's text, attributed by section.
+registerToolHandler('search_document', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  const query = typeof input.query === 'string' ? input.query : '';
+  if (!text || !query) {
+    return JSON.stringify({ error: 'search_document requires `text` and `query`.' });
+  }
+  try {
+    const { searchDocument } = await import('../document-analysis');
+    const r = searchDocument(text, query, {
+      regex: input.regex === true,
+      caseSensitive: input.case_sensitive === true,
+      maxResults: typeof input.max_results === 'number' ? input.max_results : undefined,
+    });
+    return JSON.stringify(r);
+  } catch (e: any) {
+    return JSON.stringify({ error: e.message });
+  }
 });
 
 // Mine Precedents — structured precedent-search plan for a document type

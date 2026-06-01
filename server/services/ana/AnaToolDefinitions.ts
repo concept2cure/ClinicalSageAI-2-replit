@@ -263,21 +263,51 @@ export const ANALYZE_PREDICATE_DEVICE: AnaTool = {
 export const EXTRACT_DOCUMENT_STRUCTURE: AnaTool = {
   name: 'extract_document_structure',
   description:
-    'Extract and analyze the structure of an uploaded document — headings, sections, tables, figures, references. Useful for gap analysis and template matching.',
+    'Parse the structure of a document from its extracted text — the heading/section/clause outline, a table of contents, and counts of tables and figures. Headings are detected from markdown, decimal numbering (e.g. "2.3 Scope"), Article/Section/Clause prefixes, or ALL-CAPS lines. Pass the document text in `text`. Use this to understand a client document before reviewing or comparing it.',
   input_schema: {
     type: 'object',
     properties: {
+      text: {
+        type: 'string',
+        description: 'The extracted plain text of the document to analyze.',
+      },
       document_id: {
         type: 'string',
-        description: 'Internal document ID to analyze',
-      },
-      extract_elements: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'Elements to extract (e.g., ["headings", "tables", "figures", "references", "acronyms"])',
+        description: 'Optional internal document ID (informational; the analysis runs on `text`).',
       },
     },
-    required: ['document_id'],
+    required: ['text'],
+  },
+};
+
+export const COMPARE_DOCUMENT_VERSIONS: AnaTool = {
+  name: 'compare_document_versions',
+  description:
+    'Compare two versions of a document and report what changed — at the section/clause level (which sections were added, removed, or modified) and as a line-level diff. Pass the two texts as `old_text` and `new_text`. Use this for redline-style version review of client documents (e.g. a brief, protocol, or contract).',
+  input_schema: {
+    type: 'object',
+    properties: {
+      old_text: { type: 'string', description: 'Text of the earlier version.' },
+      new_text: { type: 'string', description: 'Text of the later version.' },
+    },
+    required: ['old_text', 'new_text'],
+  },
+};
+
+export const SEARCH_DOCUMENT: AnaTool = {
+  name: 'search_document',
+  description:
+    'Search within a document\'s text for a term or pattern ("grep" the document) and return each hit with its line number and the section it falls under. Set `regex` to true to treat `query` as a regular expression. Use this to locate clauses, defined terms, obligations, or specific values inside a client document.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: { type: 'string', description: 'The extracted plain text of the document to search.' },
+      query: { type: 'string', description: 'The term or pattern to find.' },
+      regex: { type: 'boolean', description: 'Treat `query` as a regular expression (default false).' },
+      case_sensitive: { type: 'boolean', description: 'Case-sensitive match (default false).' },
+      max_results: { type: 'number', description: 'Maximum matches to return (default 200).' },
+    },
+    required: ['text', 'query'],
   },
 };
 
@@ -567,6 +597,13 @@ export const GAP_ANALYSIS_TOOLS: AnaTool[] = [
   LOOKUP_FDA_GUIDANCE,
   LOOKUP_ICH_GUIDELINE,
   VALIDATE_CROSS_REFERENCES,
+];
+
+/** Tools for reviewing and comparing client documents */
+export const DOCUMENT_REVIEW_TOOLS: AnaTool[] = [
+  EXTRACT_DOCUMENT_STRUCTURE,
+  COMPARE_DOCUMENT_VERSIONS,
+  SEARCH_DOCUMENT,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2204,6 +2241,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   DRAFT_FDA_IR_RESPONSE,
   ANALYZE_PREDICATE_DEVICE,
   EXTRACT_DOCUMENT_STRUCTURE,
+  COMPARE_DOCUMENT_VERSIONS,
+  SEARCH_DOCUMENT,
   CHECK_DOSSIER_CONSISTENCY,
   CHECK_NUMERICAL_INTEGRITY,
   COMPUTE_SAMPLE_SIZE,
