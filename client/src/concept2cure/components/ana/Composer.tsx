@@ -151,6 +151,9 @@ export function Composer({
                     {readLabel(a.extractionMethod, a.extractionWords)}
                   </span>
                 )}
+                {a.status === 'error' && a.error && (
+                  <span className={styles.attachmentMeta}>{a.error}</span>
+                )}
               </span>
               <button
                 type="button"

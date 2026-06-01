@@ -55,6 +55,37 @@ export interface UseChatUpload {
 /** File types the chat upload accepts (matches server-side extraction support). */
 export const CHAT_UPLOAD_ACCEPT = '.pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.docx,.doc';
 
+/** Max upload size (bytes). Comfortable for documents and multi-page scans. */
+export const CHAT_UPLOAD_MAX_BYTES = 25 * 1024 * 1024;
+
+/** Accepted extensions, derived from CHAT_UPLOAD_ACCEPT (the single source). */
+const ACCEPTED_EXTENSIONS = CHAT_UPLOAD_ACCEPT.split(',').map((e) => e.trim().toLowerCase());
+
+function humanSize(bytes: number): string {
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(0)} MB`;
+  if (bytes >= 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${bytes} B`;
+}
+
+/**
+ * Validate a file before upload. Returns an error string to show inline, or null
+ * when the file is acceptable — so bad files never hit the network.
+ */
+export function validateUploadFile(file: File): string | null {
+  const dot = file.name.lastIndexOf('.');
+  const ext = dot >= 0 ? file.name.slice(dot).toLowerCase() : '';
+  if (!ext || !ACCEPTED_EXTENSIONS.includes(ext)) {
+    return `Unsupported file type (${ext || 'no extension'})`;
+  }
+  if (file.size > CHAT_UPLOAD_MAX_BYTES) {
+    return `File too large (${humanSize(file.size)} · max ${humanSize(CHAT_UPLOAD_MAX_BYTES)})`;
+  }
+  if (file.size === 0) {
+    return 'File is empty';
+  }
+  return null;
+}
+
 /** Inline visually-hidden style for an aria-live status node (surfaces without a
  *  CSS module / sr-only utility, e.g. the MDX and PDEV rails). */
 export const SR_ONLY_STYLE: CSSProperties = {
@@ -77,6 +108,19 @@ export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload
   const uploadOne = useCallback(
     async (file: File) => {
       const localId = `att_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+      // Client-side gate: reject oversized / unsupported / empty files before the
+      // network round-trip, surfaced as an error chip with a clear reason.
+      const validationError = validateUploadFile(file);
+      if (validationError) {
+        setAttachments((prev) => [
+          ...prev,
+          { id: localId, name: file.name, status: 'error', error: validationError },
+        ]);
+        setStatusMessage(`${file.name} rejected: ${validationError}`);
+        return;
+      }
+
       setAttachments((prev) => [...prev, { id: localId, name: file.name, status: 'uploading' }]);
       setStatusMessage(`Uploading ${file.name}…`);
       try {

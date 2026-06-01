@@ -214,6 +214,11 @@ export function AnaRail({
                       {attachmentReadLabel(a.extractionMethod, a.extractionWords)}
                     </span>
                   )}
+                  {a.status === 'error' && a.error && (
+                    <span style={{ fontSize: 10, lineHeight: 1.2, color: 'var(--c2c-danger, #b3261e)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {a.error}
+                    </span>
+                  )}
                 </span>
                 <button
                   type="button"

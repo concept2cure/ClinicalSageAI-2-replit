@@ -13,7 +13,16 @@ import { renderHook, act, waitFor, cleanup } from '@testing-library/react';
 import {
   useChatUpload,
   attachmentReadLabel,
+  validateUploadFile,
+  CHAT_UPLOAD_MAX_BYTES,
 } from '../../client/src/concept2cure/hooks/useChatUpload';
+
+/** Build a File of a given size without allocating real bytes. */
+function sizedFile(name: string, type: string, size: number): File {
+  const f = new File(['x'], name, { type });
+  Object.defineProperty(f, 'size', { value: size });
+  return f;
+}
 
 function mockFetchOnce(body: unknown, ok = true, status = 200) {
   (globalThis.fetch as any) = vi.fn().mockResolvedValue({
@@ -38,6 +47,23 @@ describe('attachmentReadLabel', () => {
   it('returns null when nothing was read', () => {
     expect(attachmentReadLabel('utf8', 0)).toBeNull();
     expect(attachmentReadLabel(null, undefined)).toBeNull();
+  });
+});
+
+describe('validateUploadFile', () => {
+  it('accepts a supported, reasonably-sized file', () => {
+    expect(validateUploadFile(sizedFile('a.pdf', 'application/pdf', 1024))).toBeNull();
+  });
+  it('rejects an unsupported extension', () => {
+    expect(validateUploadFile(sizedFile('a.exe', 'application/octet-stream', 1024)))
+      .toMatch(/unsupported file type/i);
+  });
+  it('rejects an oversized file', () => {
+    expect(validateUploadFile(sizedFile('big.pdf', 'application/pdf', CHAT_UPLOAD_MAX_BYTES + 1)))
+      .toMatch(/too large/i);
+  });
+  it('rejects an empty file', () => {
+    expect(validateUploadFile(sizedFile('empty.txt', 'text/plain', 0))).toMatch(/empty/i);
   });
 });
 
@@ -76,6 +102,19 @@ describe('useChatUpload', () => {
     await waitFor(() => expect(result.current.uploading).toBe(false));
     expect(result.current.attachments[0].status).toBe('error');
     expect(result.current.statusMessage).toBe('bad.png failed to upload');
+  });
+
+  it('rejects an invalid file as an error chip without calling the network', async () => {
+    mockFetchOnce({ fileId: 'should_not_happen' });
+    const { result } = renderHook(() => useChatUpload());
+
+    act(() => result.current.addFiles([sizedFile('virus.exe', 'application/octet-stream', 10)]));
+
+    // Synchronously an error chip, no fetch.
+    expect(result.current.attachments[0].status).toBe('error');
+    expect(result.current.attachments[0].error).toMatch(/unsupported file type/i);
+    expect(result.current.statusMessage).toMatch(/rejected/i);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
   it('clear() empties attachments and the status message', async () => {
