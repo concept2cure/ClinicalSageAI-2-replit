@@ -3,8 +3,8 @@
  *                    ADVANCED RAG PIPELINE SERVICE
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * Enterprise-grade Retrieval-Augmented Generation pipeline with:
- * - Cross-encoder reranking for improved relevance
+ * Retrieval-Augmented Generation pipeline with:
+ * - LLM-based reranking for improved relevance
  * - HyDE (Hypothetical Document Embeddings) for query expansion
  * - Multi-query retrieval for better coverage
  * - Maximal Marginal Relevance (MMR) for diversity
@@ -13,9 +13,14 @@
  * TECHNIQUES IMPLEMENTED:
  * 1. HyDE - Generate hypothetical answer, embed that
  * 2. Multi-Query - Expand query into multiple perspectives
- * 3. Cross-Encoder Reranking - Score relevance with cross-attention
- * 4. MMR - Balance relevance with diversity
+ * 3. LLM reranking - An LLM scores each candidate's relevance (LLM-as-judge).
+ *    Note: this is NOT a cross-encoder model; it is a prompted relevance score.
+ * 4. MMR - Balance relevance with diversity, measured in embedding space
  * 5. Contextual Compression - Extract only relevant passages
+ *
+ * The auxiliary reasoning steps (HyDE, query expansion, reranking, compression)
+ * are cached in-memory per identical request to cut redundant LLM round-trips;
+ * the final grounded answer is never cached.
  *
  * @author Concept2Cure AI Team
  * @version 2.0.0
@@ -25,9 +30,9 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
 import pg from 'pg';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { EnhancedEmbeddingService, getEmbeddingService } from './enhancedEmbeddingService.js';
-import { AIProviderRouter, getAIRouter } from './aiProviderRouter.js';
+import { AIProviderRouter, getAIRouter, type AIRequest, type AIResponse } from './aiProviderRouter.js';
 import { getOpenAIClient } from './openai-client.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -78,7 +83,7 @@ export interface RetrievedDocument {
   atomType: string;
   source?: string;
   initialScore: number; // From embedding similarity
-  rerankScore?: number; // From cross-encoder
+  rerankScore?: number; // From the LLM relevance judge (LLM-as-judge, not a cross-encoder)
   finalScore: number; // Combined score
   compressedContent?: string; // Extracted relevant passage
   pageNumber?: number;
@@ -149,6 +154,14 @@ export class AdvancedRAGPipeline {
   private aiRouter: AIProviderRouter;
   private pool: pg.Pool;
   private openai: any;
+
+  // In-memory TTL cache for the auxiliary reasoning calls (HyDE, query
+  // expansion, reranking, compression). These repeat verbatim across similar
+  // queries, so caching them cuts the 4+N per-query LLM round-trips. The final
+  // grounded answer is deliberately never cached.
+  private llmCallCache = new Map<string, { value: AIResponse; expiresAt: number }>();
+  private readonly llmCacheTtlMs = 60 * 60 * 1000; // 1 hour
+  private readonly llmCacheMaxEntries = 500;
 
   constructor(pool: pg.Pool) {
     this.pool = pool;
@@ -254,9 +267,9 @@ export class AdvancedRAGPipeline {
 
     const totalCandidates = candidates.length;
 
-    // Step 2: Cross-encoder reranking
+    // Step 2: LLM-based reranking (LLM-as-judge, not a cross-encoder)
     if (options.useReranking && candidates.length > 0) {
-      const rerankResult = await this.crossEncoderRerank(query, candidates);
+      const rerankResult = await this.llmRerank(query, candidates);
       candidates = rerankResult.documents;
       tokensUsed += rerankResult.tokensUsed;
     }
@@ -365,7 +378,7 @@ export class AdvancedRAGPipeline {
     artifactScope?: RetrievalOptions['artifactScope']
   ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }> {
     // Generate hypothetical answer using Claude for better reasoning
-    const hydeResponse = await this.aiRouter.route({
+    const hydeResponse = await this.routeCached({
       taskType: 'reasoning',
       messages: [
         {
@@ -410,7 +423,7 @@ export class AdvancedRAGPipeline {
     artifactScope?: RetrievalOptions['artifactScope']
   ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }> {
     // Generate alternative queries
-    const queryExpansionResponse = await this.aiRouter.route({
+    const queryExpansionResponse = await this.routeCached({
       taskType: 'structured_output',
       messages: [
         {
@@ -461,9 +474,14 @@ export class AdvancedRAGPipeline {
   }
 
   /**
-   * Cross-encoder reranking using LLM
+   * LLM-based reranking (LLM-as-judge).
+   *
+   * An LLM scores each candidate's relevance to the query. This is NOT a
+   * cross-encoder model and performs no cross-attention; it is a prompted
+   * relevance score combined with the embedding score. Cheap to run, but
+   * non-deterministic at temperature > 0 (we use 0 here for stability).
    */
-  private async crossEncoderRerank(
+  private async llmRerank(
     query: string,
     documents: RetrievedDocument[]
   ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }> {
@@ -479,7 +497,7 @@ export class AdvancedRAGPipeline {
       )
       .join('\n\n');
 
-    const rerankResponse = await this.aiRouter.route({
+    const rerankResponse = await this.routeCached({
       taskType: 'structured_output',
       messages: [
         {
@@ -526,7 +544,12 @@ Example: {"1": 95, "2": 72, "3": 45}`,
   }
 
   /**
-   * Maximal Marginal Relevance for diversity
+   * Maximal Marginal Relevance for diversity.
+   *
+   * Diversity is measured as cosine similarity in embedding space (the same
+   * space retrieval ranks in), not word overlap. Candidate contents are
+   * embedded once via the cached embedding service; if that fails we fall
+   * back to lexical Jaccard similarity so MMR still degrades gracefully.
    */
   private async applyMmr(
     documents: RetrievedDocument[],
@@ -535,43 +558,55 @@ Example: {"1": 95, "2": 72, "3": 45}`,
   ): Promise<RetrievedDocument[]> {
     if (documents.length <= limit) return documents;
 
-    const selected: RetrievedDocument[] = [];
-    const remaining = [...documents];
+    // Embed all candidate contents once (cached) for cosine-based diversity.
+    let vectors: Array<number[] | null>;
+    try {
+      const embedded = await this.embeddingService.embedBatch(
+        documents.map(d => d.content || ''),
+        'text-embedding-3-small'
+      );
+      vectors = embedded.map(e => e.embedding);
+    } catch (error) {
+      console.warn('[RAG] MMR embedding failed, using lexical similarity fallback:', error);
+      vectors = documents.map(() => null);
+    }
 
-    while (selected.length < limit && remaining.length > 0) {
-      let bestIdx = 0;
+    const similarity = (i: number, j: number): number => {
+      if (vectors[i] && vectors[j]) {
+        return this.cosineSimilarity(vectors[i] as number[], vectors[j] as number[]);
+      }
+      return this.calculateTextSimilarity(documents[i].content, documents[j].content);
+    };
+
+    const selectedIdx: number[] = [];
+    const remainingIdx = documents.map((_, i) => i);
+
+    while (selectedIdx.length < limit && remainingIdx.length > 0) {
+      let bestPos = 0;
       let bestScore = -Infinity;
 
-      for (let i = 0; i < remaining.length; i++) {
-        const doc = remaining[i];
+      for (let pos = 0; pos < remainingIdx.length; pos++) {
+        const i = remainingIdx[pos];
+        const relevance = documents[i].finalScore;
 
-        // Calculate relevance component
-        const relevance = doc.finalScore;
-
-        // Calculate diversity component (max similarity to already selected)
+        // Diversity component: max similarity to anything already selected.
         let maxSimilarity = 0;
-        if (selected.length > 0) {
-          // Simple text-based similarity for efficiency
-          for (const selDoc of selected) {
-            const sim = this.calculateTextSimilarity(doc.content, selDoc.content);
-            maxSimilarity = Math.max(maxSimilarity, sim);
-          }
+        for (const j of selectedIdx) {
+          maxSimilarity = Math.max(maxSimilarity, similarity(i, j));
         }
 
-        // MMR score
         const mmrScore = lambda * relevance - (1 - lambda) * maxSimilarity;
-
         if (mmrScore > bestScore) {
           bestScore = mmrScore;
-          bestIdx = i;
+          bestPos = pos;
         }
       }
 
-      selected.push(remaining[bestIdx]);
-      remaining.splice(bestIdx, 1);
+      selectedIdx.push(remainingIdx[bestPos]);
+      remainingIdx.splice(bestPos, 1);
     }
 
-    return selected;
+    return selectedIdx.map(i => documents[i]);
   }
 
   /**
@@ -590,7 +625,7 @@ Example: {"1": 95, "2": 72, "3": 45}`,
           return { ...doc, compressedContent: doc.content };
         }
 
-        const compressResponse = await this.aiRouter.route({
+        const compressResponse = await this.routeCached({
           taskType: 'document_analysis',
           messages: [
             {
@@ -750,7 +785,8 @@ Example: {"1": 95, "2": 72, "3": 45}`,
   }
 
   /**
-   * Simple text similarity (Jaccard on words)
+   * Lexical fallback similarity (Jaccard on words). Only used when embedding
+   * the candidates for MMR fails; the primary path is cosine in embedding space.
    */
   private calculateTextSimilarity(text1: string, text2: string): number {
     const words1 = new Set(text1.toLowerCase().split(/\s+/));
@@ -759,7 +795,61 @@ Example: {"1": 95, "2": 72, "3": 45}`,
     const intersection = new Set([...words1].filter(x => words2.has(x)));
     const union = new Set([...words1, ...words2]);
 
-    return intersection.size / union.size;
+    return union.size === 0 ? 0 : intersection.size / union.size;
+  }
+
+  /**
+   * Cosine similarity between two embedding vectors.
+   */
+  private cosineSimilarity(a: number[], b: number[]): number {
+    let dot = 0;
+    let normA = 0;
+    let normB = 0;
+    const len = Math.min(a.length, b.length);
+    for (let i = 0; i < len; i++) {
+      dot += a[i] * b[i];
+      normA += a[i] * a[i];
+      normB += b[i] * b[i];
+    }
+    if (normA === 0 || normB === 0) return 0;
+    return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+  }
+
+  /**
+   * Route an auxiliary LLM call through an in-memory TTL cache keyed by the
+   * request shape. Identical HyDE / expansion / rerank / compression calls
+   * within the TTL reuse the prior result instead of paying for another
+   * round-trip. The final answer generation does NOT use this.
+   */
+  private async routeCached(request: AIRequest): Promise<AIResponse> {
+    const key = createHash('sha256')
+      .update(
+        JSON.stringify({
+          taskType: request.taskType,
+          messages: request.messages,
+          maxTokens: request.maxTokens,
+          temperature: request.temperature,
+          jsonMode: request.jsonMode,
+        })
+      )
+      .digest('hex');
+
+    const now = Date.now();
+    const hit = this.llmCallCache.get(key);
+    if (hit && hit.expiresAt > now) {
+      return { ...hit.value, cached: true };
+    }
+
+    const value = await this.aiRouter.route(request);
+    this.llmCallCache.set(key, { value, expiresAt: now + this.llmCacheTtlMs });
+
+    // Bound the cache: drop the oldest entry once over capacity.
+    if (this.llmCallCache.size > this.llmCacheMaxEntries) {
+      const oldest = this.llmCallCache.keys().next().value as string | undefined;
+      if (oldest) this.llmCallCache.delete(oldest);
+    }
+
+    return value;
   }
 
   /**

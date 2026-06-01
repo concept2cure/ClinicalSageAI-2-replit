@@ -1,5 +1,4 @@
-import { getPool } from '../db';
-import { getRAGPipeline } from './advancedRAGPipeline.js';
+import { ragRouter } from './ragRouter.js';
 
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -35,15 +34,9 @@ export class ForesightRAGService {
     const { query, context = '', maxTokens = 1000, temperature = 0.3 } = params;
 
     try {
-      const pool = getPool();
-      const ragPipeline = getRAGPipeline(pool);
-
-      const result = await ragPipeline.queryWithGeneration(query, {
-        strategy: 'advanced',
-        limit: 5,
-        useReranking: true,
-        useMmr: true,
-      });
+      // Route through the single RAG router rather than configuring the
+      // pipeline inline, so strategy/reranking/MMR policy stays centralised.
+      const result = await ragRouter.query({ query, intent: 'foresight', limit: 5 });
 
       const sources = result.sources.map(source => ({
         docId: source.documentId || source.id,

@@ -1,0 +1,90 @@
+{
+  "$comment": "SEED gold dataset for RAG evaluation. Expand to 30-50 items before treating the numbers as a quality bar. Populate expectedSourceIds with real chunk/atom ids from your corpus (run scripts/verify-rag-corpus.mjs to find them) so the retrieval metrics become meaningful. expectedAnswerContains and referenceAnswer work without corpus ids.",
+  "version": "0.1.0-seed",
+  "items": [
+    {
+      "id": "ich-q1a-stability",
+      "question": "What long-term stability testing storage conditions does ICH Q1A(R2) recommend for a drug substance intended for storage at room temperature?",
+      "expectedSourceIds": [],
+      "expectedAnswerContains": ["25", "60%", "long-term"],
+      "tags": ["ICH", "stability", "Q1A"]
+    },
+    {
+      "id": "ich-e6-gcp-essential-docs",
+      "question": "Under ICH E6(R2) good clinical practice, who is responsible for maintaining the trial master file?",
+      "expectedSourceIds": [],
+      "expectedAnswerContains": ["sponsor", "investigator"],
+      "tags": ["ICH", "GCP", "E6"]
+    },
+    {
+      "id": "fda-ind-content",
+      "question": "What are the required contents of an FDA Investigational New Drug (IND) application under 21 CFR 312.23?",
+      "expectedSourceIds": [],
+      "expectedAnswerContains": ["investigator brochure", "protocol", "chemistry"],
+      "tags": ["FDA", "IND", "21CFR312"]
+    },
+    {
+      "id": "ich-m4-ctd-modules",
+      "question": "How many modules make up the Common Technical Document (CTD) and what does Module 1 contain?",
+      "expectedSourceIds": [],
+      "expectedAnswerContains": ["five", "regional", "administrative"],
+      "tags": ["ICH", "CTD", "M4"]
+    },
+    {
+      "id": "ich-q3a-impurity-thresholds",
+      "question": "What reporting and identification thresholds for impurities does ICH Q3A(R2) define for a new drug substance?",
+      "expectedSourceIds": [],
+      "expectedAnswerContains": ["reporting threshold", "identification threshold", "qualification"],
+      "tags": ["ICH", "impurities", "Q3A"]
+    },
+    {
+      "id": "ema-paediatric-investigation-plan",
+      "question": "When must a Paediatric Investigation Plan (PIP) be submitted to the EMA relative to adult clinical development?",
+      "expectedSourceIds": [],
+      "expectedAnswerContains": ["paediatric", "before"],
+      "tags": ["EMA", "PIP"]
+    },
+    {
+      "id": "stats-primary-endpoint-multiplicity",
+      "question": "How should multiplicity be controlled when a confirmatory trial has more than one primary endpoint?",
+      "expectedSourceIds": [],
+      "expectedAnswerContains": ["family-wise error", "multiplicity"],
+      "tags": ["statistics", "endpoints", "ICH E9"]
+    },
+    {
+      "id": "ich-e9-estimands",
+      "question": "What are the five attributes of an estimand as defined in ICH E9(R1)?",
+      "expectedSourceIds": [],
+      "expectedAnswerContains": ["population", "treatment", "endpoint", "intercurrent", "summary"],
+      "tags": ["ICH", "statistics", "E9R1", "estimand"]
+    },
+    {
+      "id": "fda-bla-vs-nda",
+      "question": "What is the difference between a Biologics License Application (BLA) and a New Drug Application (NDA)?",
+      "expectedSourceIds": [],
+      "expectedAnswerContains": ["biologic", "351", "505"],
+      "tags": ["FDA", "BLA", "NDA"]
+    },
+    {
+      "id": "ich-q7-gmp-api",
+      "question": "What does ICH Q7 cover and to which stage of manufacturing do its GMP requirements begin to apply?",
+      "expectedSourceIds": [],
+      "expectedAnswerContains": ["active pharmaceutical ingredient", "starting material"],
+      "tags": ["ICH", "GMP", "Q7"]
+    },
+    {
+      "id": "negative-control-out-of-scope",
+      "question": "What is the airspeed velocity of an unladen swallow?",
+      "expectedSourceIds": [],
+      "expectedAnswerContains": ["could not find"],
+      "tags": ["negative-control", "out-of-scope"]
+    },
+    {
+      "id": "negative-control-no-corpus-fact",
+      "question": "What were the exact enrollment numbers for the sponsor's 2027 phase 3 oncology trial?",
+      "expectedSourceIds": [],
+      "expectedAnswerContains": ["could not find"],
+      "tags": ["negative-control", "ungrounded"]
+    }
+  ]
+}

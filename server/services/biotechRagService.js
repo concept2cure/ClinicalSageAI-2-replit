@@ -17,15 +17,24 @@ import OpenAI from 'openai';
 // empty, so `openai` was always null and the service silently used crude TF-IDF
 // fallback embeddings even when a real key was configured.
 // See FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: degraded-by-default RAG).
+//
+// The TF-IDF fallback produces 384-dim, statefully-built vectors that are not
+// comparable to OpenAI's 1536-dim embeddings (or to each other across queries),
+// so silently using it degrades retrieval to near-noise. We therefore hard-fail
+// by default when real embeddings are unavailable. Set ALLOW_FALLBACK_EMBEDDINGS=true
+// to explicitly opt into the lexical fallback (local dev / offline only).
+const allowFallbackEmbeddings = process.env.ALLOW_FALLBACK_EMBEDDINGS === 'true';
 let openai = null;
 try {
   if (process.env.OPENAI_API_KEY) {
     openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  } else if (allowFallbackEmbeddings) {
+    console.warn('biotechRagService: OPENAI_API_KEY not set — using opt-in fallback TF-IDF embeddings');
   } else {
-    console.warn('biotechRagService: OPENAI_API_KEY not set — using fallback TF-IDF embeddings');
+    console.error('biotechRagService: OPENAI_API_KEY not set — embeddings will hard-fail. Set ALLOW_FALLBACK_EMBEDDINGS=true to permit the degraded lexical fallback.');
   }
 } catch (error) {
-  console.warn('biotechRagService: OpenAI initialization failed, using fallback embeddings:', error?.message);
+  console.error('biotechRagService: OpenAI initialization failed:', error?.message);
   openai = null;
 }
 
@@ -127,12 +136,25 @@ class BiotechRagService {
         embedding = response.data[0].embedding;
       } catch (error) {
         console.error('OpenAI embedding error:', error);
-        // Fall back to local embeddings
+        // Only degrade to the lexical fallback when explicitly permitted;
+        // otherwise surface the failure rather than poison the index with
+        // dimension-mismatched, non-comparable vectors.
+        if (!allowFallbackEmbeddings) {
+          throw new Error(
+            `biotechRagService: embedding generation failed and fallback is disabled (${error?.message}). ` +
+              'Set ALLOW_FALLBACK_EMBEDDINGS=true to permit the degraded lexical fallback.'
+          );
+        }
         embedding = await fallbackEmbeddings.generateEmbedding(text);
       }
-    } else {
-      // Use fallback embeddings
+    } else if (allowFallbackEmbeddings) {
+      // Explicitly opted-in lexical fallback (local dev / offline only).
       embedding = await fallbackEmbeddings.generateEmbedding(text);
+    } else {
+      throw new Error(
+        'biotechRagService: no embedding provider configured (OPENAI_API_KEY missing) and fallback is disabled. ' +
+          'Set OPENAI_API_KEY, or ALLOW_FALLBACK_EMBEDDINGS=true to permit the degraded lexical fallback.'
+      );
     }
 
     // Cache the embedding

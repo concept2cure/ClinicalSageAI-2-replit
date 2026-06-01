@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-05-31T19:21:01.619Z",
+  "generatedAt": "2026-06-01T03:15:24.220Z",
   "git": {
-    "sha": "a231a3eca0356bc924e1c415bb0e32e17bc438fc",
-    "branch": "claude/design-kit-integration-audit-5yeba"
+    "sha": "20faf6e71f905ac02d76bd0ff2a6cab28e98a9a0",
+    "branch": "claude/rag-sophistication-review-X3y9Y"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -11,13 +11,13 @@
   "summary": {
     "duplicateBasenames": 198,
     "largeFilesByBytes": 16,
-    "largeFilesByLines": 47
+    "largeFilesByLines": 48
   },
   "findings": {
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 101,
+        "count": 102,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -96,6 +96,7 @@
           "server/services/intelligence-engine/index.ts",
           "server/services/intelligence/index.ts",
           "server/services/literature/index.ts",
+          "server/services/ocr/index.ts",
           "server/services/orchestration/index.ts",
           "server/services/ptrs/index.ts",
           "server/services/regulatory-precedent-intelligence/index.ts",
@@ -2258,6 +2259,10 @@
         "lines": 1550
       },
       {
+        "file": "server/routes/biostatPlatform.ts",
+        "lines": 1541
+      },
+      {
         "file": "server/services/submission-twin-service.ts",
         "lines": 1534
       },
@@ -2267,13 +2272,20 @@
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": 0
+    }
+  },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 257,
+      "duplicateGroups": 258,
       "largeByBytes": 11,
-      "largeByLines": 33
+      "largeByLines": 34
     },
     {
       "owner": "Unassigned (TBD)",
