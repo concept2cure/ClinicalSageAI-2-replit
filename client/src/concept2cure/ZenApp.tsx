@@ -1942,7 +1942,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // sourced from design-system/ui_kits/mdx/. The prior iframe wrapper was
   // retired in Phase 2 (commit 4e5f63d4).
   if (layoutMode === 'mdx' && !embeddedModule) {
-    return <MdxRoute initialNav={hashToMdxNav(mdxDeepLink)} onOpenAuthoring={openAuthoring} />;
+    return <MdxRoute initialNav={hashToMdxNav(mdxDeepLink)} onOpenAuthoring={openAuthoring} projectId={activeProjectId} />;
   }
 
   // Phase 7 — PDEV (Pharmaceutical Development) workstream for IND programs.

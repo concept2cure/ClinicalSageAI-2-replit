@@ -21,8 +21,18 @@ export interface MdxRouteProps {
    *  The host (ZenApp) switches to the authoring layout — the MDX shell no
    *  longer owns per-pathway editors (Phase 9 consolidation). */
   onOpenAuthoring?: (docType?: string) => void;
+  /** Active project id from the host, forwarded so AnA chat uploads scope into
+   *  that project's memory. */
+  projectId?: string;
 }
 
-export default function MdxRoute({ initialNav, projectName, onOpenAuthoring }: MdxRouteProps = {}) {
-  return <App initialNav={initialNav} projectName={projectName} onOpenAuthoring={onOpenAuthoring} />;
+export default function MdxRoute({ initialNav, projectName, onOpenAuthoring, projectId }: MdxRouteProps = {}) {
+  return (
+    <App
+      initialNav={initialNav}
+      projectName={projectName}
+      onOpenAuthoring={onOpenAuthoring}
+      projectId={projectId}
+    />
+  );
 }

@@ -92,9 +92,14 @@ export interface AppProps {
   /** Open the Phase 9 Universal Authoring shell on a doc type. The host swaps
    *  to the authoring layout — MDX no longer owns per-pathway editors. */
   onOpenAuthoring?: (docType?: string) => void;
+  /** Numeric project id (as a string) for the project MDX is embedded under.
+   *  Scopes AnA chat uploads into that project's memory. MDX's own program
+   *  fixtures carry only device/program ids (not project ids), so this must be
+   *  supplied by the host; when absent, uploads stay org-scoped. */
+  projectId?: string;
 }
 
-export function App({ initialNav, projectName, onOpenAuthoring }: AppProps = {}) {
+export function App({ initialNav, projectName, onOpenAuthoring, projectId }: AppProps = {}) {
   const [activeNav,    setActiveNav]    = React.useState<string>(() =>
     initialNav ?? getStored('mdx.activeNav', 'overview'),
   );
@@ -306,9 +311,10 @@ export function App({ initialNav, projectName, onOpenAuthoring }: AppProps = {})
         </div>
       </main>
       {true && (
-        // No projectId passed to AnaRail: the MDX context id is a device/program
-        // id, not a numeric project id, and /api/chat/upload 400s on a non-numeric
-        // projectId. Uploads here stay org-scoped until MDX exposes a real project id.
+        // projectId is the host-supplied numeric project id (string), not MDX's
+        // own device/program id — /api/chat/upload 400s on a non-numeric id, so
+        // we forward only the real one. When the host omits it, uploads stay
+        // org-scoped (AnaRail leaves projectId undefined).
         <AnaRail
           open={anaOpen}
           setOpen={setAnaOpen}
@@ -319,6 +325,7 @@ export function App({ initialNav, projectName, onOpenAuthoring }: AppProps = {})
           messages={messages}
           onSend={askAna}
           onNewThread={() => anaChat.reset()}
+          projectId={projectId}
         />
       )}
 
