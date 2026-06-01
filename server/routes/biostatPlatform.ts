@@ -84,6 +84,11 @@ import {
   type EventProjectionInput,
 } from '../services/stats/event-projection';
 import {
+  winRatioAnalysis,
+  type Subject as WinRatioSubject,
+  type LevelSpec as WinRatioLevelSpec,
+} from '../services/stats/win-ratio';
+import {
   runJudgmentPipeline,
   runPipelineAndGenerateArtifact,
   runPipelineForRole,
@@ -1475,6 +1480,44 @@ router.post('/adaptive/event-projection', authMiddleware, async (req: Request, r
       data.expectedEventsAtTime = expectedEventsByTime(input, b.atTime);
     }
     res.json({ success: true, data });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/biostat/win-ratio
+ * Win ratio + Finkelstein–Schoenfeld analysis of a hierarchical composite
+ * endpoint. Each treatment subject is compared with each control subject down a
+ * prioritized hierarchy (e.g. time to death, then HF hospitalization, then a
+ * biomarker). Returns wins/losses/ties, win ratio + CI, win odds, net benefit,
+ * and the FS test.
+ *
+ * Body: { treatment: Subject[], control: Subject[], hierarchy: LevelSpec[], confLevel? }
+ *   Subject = { levels: { value, event? }[] }
+ *   LevelSpec = { type: 'continuous'|'tte', direction: 'higher-better'|'lower-better' }
+ */
+router.post('/win-ratio', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    resolveOrganizationId(req);
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: error.message });
+  }
+  try {
+    const b = req.body ?? {};
+    if (!Array.isArray(b.treatment) || !Array.isArray(b.control) || !Array.isArray(b.hierarchy)) {
+      return res.status(400).json({
+        success: false,
+        error: 'treatment, control (Subject arrays) and hierarchy (LevelSpec array) are required.',
+      });
+    }
+    const result = winRatioAnalysis(
+      b.treatment as WinRatioSubject[],
+      b.control as WinRatioSubject[],
+      b.hierarchy as WinRatioLevelSpec[],
+      typeof b.confLevel === 'number' ? b.confLevel : undefined,
+    );
+    res.json({ success: true, data: result });
   } catch (error: any) {
     return res.status(400).json({ success: false, error: error.message });
   }
