@@ -117,10 +117,15 @@ function textImagePng(text: string): Buffer {
   return canvas.toBuffer('image/png');
 }
 
-async function runUpload(file: { originalname: string; mimetype: string; buffer: Buffer }) {
-  const req = createMockRequest({ body: { projectId: 'proj_12' } }) as any;
+async function runUpload(
+  file: { originalname: string; mimetype: string; buffer: Buffer },
+  opts: { projectId?: string | null; tenantId?: number | null } = {},
+) {
+  const { projectId = 'proj_12', tenantId = 5 } = opts;
+  const body = projectId ? { projectId } : {};
+  const req = createMockRequest({ body }) as any;
   req.user = { id: 9 };
-  req.tenantId = 5;
+  if (tenantId != null) req.tenantId = tenantId;
   req.file = { ...file, size: file.buffer.length };
   const res = createMockResponse();
   await getPostHandler('/upload')(req, res);
@@ -204,6 +209,28 @@ describe('chat upload → extraction → project memory (e2e)', () => {
     expect(res.status).not.toHaveBeenCalledWith(400);
     const atomInsert = findAtomInsert();
     expect(atomInsert![1][3]).not.toContain('[Uploaded via chat:');
+  });
+
+  it('reports extraction status for an org-scoped upload (no project, no artifact)', async () => {
+    const body = 'Org scoped note with several words here.';
+    const res = await runUpload(
+      { originalname: 'org.txt', mimetype: 'text/plain', buffer: Buffer.from(body, 'utf8') },
+      { projectId: null },
+    );
+
+    // Success, and the response still reports the file was read.
+    expect(res.status).not.toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'ready',
+        extractionMethod: 'utf8',
+        extractionWords: body.trim().split(/\s+/).length,
+        artifactId: null,
+      }),
+    );
+    // No project → no artifact / memory atom insert.
+    expect(findArtifactInsert()).toBeUndefined();
+    expect(findAtomInsert()).toBeUndefined();
   });
 
   (HAS_LANG_DATA ? it : it.skip)(

@@ -124,12 +124,31 @@ export const uploadHandler = async (req: Request, res: Response) => {
       [fileId, userId, fileName, mimeType, fileSize, storagePath]
     );
 
-    // ── Data Room convergence: create artifact + embed for retrieval ──
-    let artifactId: string | null = null;
-    // Extraction metadata surfaced in the response so the chat UI can show that
-    // the document was read (method + word count), independent of project scope.
+    // ── Text extraction (runs for every upload with a buffer) ──
+    // Extract real text once so: (a) the response can report it was read
+    // (method + word count) regardless of project scope, and (b) the
+    // project-scoped block below reuses it for the artifact + memory atom.
+    // Falls back to a filename placeholder on failure.
     let extractionMethod: string | null = null;
     let extractionWords = 0;
+    let extractedText = `[Uploaded via chat: ${fileName}] (${mimeType}, ${fileSize} bytes)`;
+    if (fileBuffer && fileBuffer.length > 0) {
+      try {
+        const { extractDocumentText } = await import('../../services/ocr/index.js');
+        const extracted = await extractDocumentText(fileBuffer, mimeType, fileName);
+        if (extracted.text && extracted.text.trim().length > 0) {
+          extractedText = extracted.text;
+          extractionMethod = extracted.method;
+          extractionWords = extracted.text.trim().split(/\s+/).length;
+          logger.info('Upload text extracted', { fileId, method: extracted.method, chars: extracted.text.length });
+        }
+      } catch (extractErr: any) {
+        logger.warn('Upload text extraction failed (non-fatal)', { err: extractErr?.message, fileId });
+      }
+    }
+
+    // ── Data Room convergence: create artifact + embed for retrieval ──
+    let artifactId: string | null = null;
     if (projectId && orgId) {
       const numericProjectId = parseInt(String(projectId).replace('proj_', ''), 10);
       const numericOrgId = parseInt(String(orgId), 10);
@@ -141,24 +160,6 @@ export const uploadHandler = async (req: Request, res: Response) => {
       }
 
       const artId = `artifact_chat_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-      // Extract real text so the artifact + embedded atom carry usable content for
-      // AnA's project memory: text/* directly, images via OCR, PDFs via text layer
-      // or OCR fallback, .docx via mammoth. Falls back to a placeholder on failure.
-      let extractedText = `[Uploaded via chat: ${fileName}] (${mimeType}, ${fileSize} bytes)`;
-      if (fileBuffer && fileBuffer.length > 0) {
-        try {
-          const { extractDocumentText } = await import('../../services/ocr/index.js');
-          const extracted = await extractDocumentText(fileBuffer, mimeType, fileName);
-          if (extracted.text && extracted.text.trim().length > 0) {
-            extractedText = extracted.text;
-            extractionMethod = extracted.method;
-            extractionWords = extracted.text.trim().split(/\s+/).length;
-            logger.info('Upload text extracted', { fileId, method: extracted.method, chars: extracted.text.length });
-          }
-        } catch (extractErr: any) {
-          logger.warn('Upload text extraction failed (non-fatal)', { err: extractErr?.message, fileId });
-        }
-      }
       const boundedContent = extractedText.substring(0, 100000);
 
       const governedResolution = resolveGovernedContext({
