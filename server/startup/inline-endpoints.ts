@@ -99,6 +99,14 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // RAG retrieval metrics — recorded at the ragRouter chokepoint.
+      try {
+        const { renderRagMetrics } = await import('../services/rag-runtime-metrics.js');
+        lines.push(...renderRagMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // Security health gauges. Sourced from the periodic scheduler's
       // cached result so /api/metrics scrapes don't trigger a full
       // panel run (which would do an EICAR scan, chain verify, etc.).
