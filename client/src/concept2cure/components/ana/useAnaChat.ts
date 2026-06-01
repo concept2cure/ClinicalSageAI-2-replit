@@ -75,6 +75,10 @@ export interface MessageAttachment {
   name: string;
   /** Server file id once uploaded (present for ready attachments). */
   fileId?: string;
+  /** How the server read the file (utf8 / pdf-text / pdf-ocr / image-ocr / docx). */
+  extractionMethod?: string | null;
+  /** Word count extracted into project memory. */
+  extractionWords?: number;
 }
 
 function toolLabel(name: string): string {

@@ -126,6 +126,10 @@ export const uploadHandler = async (req: Request, res: Response) => {
 
     // ── Data Room convergence: create artifact + embed for retrieval ──
     let artifactId: string | null = null;
+    // Extraction metadata surfaced in the response so the chat UI can show that
+    // the document was read (method + word count), independent of project scope.
+    let extractionMethod: string | null = null;
+    let extractionWords = 0;
     if (projectId && orgId) {
       const numericProjectId = parseInt(String(projectId).replace('proj_', ''), 10);
       const numericOrgId = parseInt(String(orgId), 10);
@@ -147,6 +151,8 @@ export const uploadHandler = async (req: Request, res: Response) => {
           const extracted = await extractDocumentText(fileBuffer, mimeType, fileName);
           if (extracted.text && extracted.text.trim().length > 0) {
             extractedText = extracted.text;
+            extractionMethod = extracted.method;
+            extractionWords = extracted.text.trim().split(/\s+/).length;
             logger.info('Upload text extracted', { fileId, method: extracted.method, chars: extracted.text.length });
           }
         } catch (extractErr: any) {
@@ -277,6 +283,10 @@ export const uploadHandler = async (req: Request, res: Response) => {
       status: 'ready',
       fileName,
       artifactId,
+      // Extraction summary for the chat UI: which method read the file and how
+      // many words landed in memory (null/0 when unscoped or extraction failed).
+      extractionMethod,
+      extractionWords,
     });
   } catch (error: any) {
     logger.error('Upload error', { err: error?.message });

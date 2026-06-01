@@ -240,14 +240,24 @@
 }
 .composerAttachment {
   display: inline-flex; align-items: center; gap: 6px;
-  max-width: 220px;
+  max-width: 260px;
   padding: 4px 8px; border-radius: 8px;
   font-size: 12px; line-height: 1.2;
   color: var(--ink-body, var(--text-200));
   background: var(--bg-200);
   border: 1px solid var(--border);
 }
+/* Name + "read · N words" stacked; the column owns the ellipsis budget. */
+.attachmentText {
+  display: inline-flex; flex-direction: column; gap: 1px;
+  min-width: 0;
+}
 .composerAttachment .label {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.attachmentMeta {
+  font-size: 10px; line-height: 1.2;
+  color: var(--ink-subtle, var(--text-400));
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .composerAttachmentUploading .label { opacity: 0.6; }

@@ -32,6 +32,21 @@ describe('Message attachment chips', () => {
     expect(screen.getByText('scan.png')).toBeDefined();
   });
 
+  it('shows a "read · N words" sub-label, and notes OCR when used', () => {
+    render(
+      <Message
+        role="user"
+        text="see attached"
+        attachments={[
+          { id: 'a1', name: 'memo.txt', extractionMethod: 'utf8', extractionWords: 1240 },
+          { id: 'a2', name: 'scan.png', extractionMethod: 'image-ocr', extractionWords: 87 },
+        ]}
+      />,
+    );
+    expect(screen.getByText('read · 1,240 words')).toBeDefined();
+    expect(screen.getByText('read via OCR · 87 words')).toBeDefined();
+  });
+
   it('renders no attachment chips when none are attached', () => {
     const { container } = render(<Message role="user" text="Just a question" />);
     expect(screen.getByText('Just a question')).toBeDefined();

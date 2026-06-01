@@ -170,7 +170,13 @@ describe('chat upload → extraction → project memory (e2e)', () => {
 
     // Success response
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 'ready', fileName: 'enrollment.txt' }),
+      expect.objectContaining({
+        status: 'ready',
+        fileName: 'enrollment.txt',
+        // Extraction summary surfaced for the chat UI's "read · N words" chip.
+        extractionMethod: 'utf8',
+        extractionWords: body.trim().split(/\s+/).length,
+      }),
     );
 
     // Artifact carries the extracted text (not a filename placeholder).

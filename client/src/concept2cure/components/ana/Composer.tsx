@@ -45,6 +45,8 @@ export interface ComposerReadyAttachment {
   id: string;
   name: string;
   fileId?: string;
+  extractionMethod?: string | null;
+  extractionWords?: number;
 }
 
 /** A file attached in the composer, tracked through its upload lifecycle. */
@@ -54,6 +56,18 @@ interface ComposerAttachment {
   status: 'uploading' | 'ready' | 'error';
   fileId?: string;
   error?: string;
+  /** How the server read the file (utf8 / pdf-text / pdf-ocr / image-ocr / docx). */
+  extractionMethod?: string | null;
+  /** Word count extracted into project memory. */
+  extractionWords?: number;
+}
+
+/** Human label for an extraction method, shown on the chip once read. */
+function readLabel(method: string | null | undefined, words: number | undefined): string | null {
+  if (!words || words <= 0) return null;
+  const w = `${words.toLocaleString()} ${words === 1 ? 'word' : 'words'}`;
+  const ocr = method === 'image-ocr' || method === 'pdf-ocr';
+  return ocr ? `read via OCR · ${w}` : `read · ${w}`;
 }
 
 const ACCEPT = '.pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.docx,.doc';
@@ -107,7 +121,17 @@ export function Composer({
         }
         const data = await res.json();
         setAttachments((prev) =>
-          prev.map((a) => (a.id === localId ? { ...a, status: 'ready', fileId: data.fileId } : a)),
+          prev.map((a) =>
+            a.id === localId
+              ? {
+                  ...a,
+                  status: 'ready',
+                  fileId: data.fileId,
+                  extractionMethod: data.extractionMethod ?? null,
+                  extractionWords: typeof data.extractionWords === 'number' ? data.extractionWords : 0,
+                }
+              : a,
+          ),
         );
       } catch (err) {
         setAttachments((prev) =>
@@ -137,7 +161,15 @@ export function Composer({
   const handleSend = useCallback(() => {
     const ready = attachments.filter((a) => a.status === 'ready');
     if (ready.length > 0) {
-      onAttachmentsSend?.(ready.map((a) => ({ id: a.id, name: a.name, fileId: a.fileId })));
+      onAttachmentsSend?.(
+        ready.map((a) => ({
+          id: a.id,
+          name: a.name,
+          fileId: a.fileId,
+          extractionMethod: a.extractionMethod,
+          extractionWords: a.extractionWords,
+        })),
+      );
       setAttachments([]);
     }
     onSend();
@@ -175,8 +207,15 @@ export function Composer({
                 a.status === 'error' ? styles.composerAttachmentError : '',
               ].filter(Boolean).join(' ')}
             >
-              <span className={styles.label}>
-                {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
+              <span className={styles.attachmentText}>
+                <span className={styles.label}>
+                  {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
+                </span>
+                {a.status === 'ready' && readLabel(a.extractionMethod, a.extractionWords) && (
+                  <span className={styles.attachmentMeta}>
+                    {readLabel(a.extractionMethod, a.extractionWords)}
+                  </span>
+                )}
               </span>
               <button
                 type="button"

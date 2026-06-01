@@ -30,6 +30,13 @@ import {
 // Configure marked once: GitHub-flavoured markdown, no line-break collapsing.
 setOptions({ gfm: true, breaks: false });
 
+/** "read · N words" sub-label for an attachment chip, or null when not read. */
+function attachmentReadLabel(method: string | null | undefined, words: number | undefined): string | null {
+  if (!words || words <= 0) return null;
+  const w = `${words.toLocaleString()} ${words === 1 ? 'word' : 'words'}`;
+  return method === 'image-ocr' || method === 'pdf-ocr' ? `read via OCR · ${w}` : `read · ${w}`;
+}
+
 /** Decode HTML entities in a string (used for the code-block copy payload). */
 function decodeHtmlEntities(s: string): string {
   const ta = document.createElement('textarea');
@@ -254,12 +261,18 @@ export function Message({
         <div className={styles.msgUserStack}>
           {attachments && attachments.length > 0 && (
             <div className={styles.msgAttachments}>
-              {attachments.map(a => (
-                <span key={a.id} className={styles.msgAttachment} title={a.name}>
-                  <I.attach size={12} />
-                  <span className={styles.label}>{a.name}</span>
-                </span>
-              ))}
+              {attachments.map(a => {
+                const meta = attachmentReadLabel(a.extractionMethod, a.extractionWords);
+                return (
+                  <span key={a.id} className={styles.msgAttachment} title={meta ? `${a.name} — ${meta}` : a.name}>
+                    <I.attach size={12} />
+                    <span className={styles.attachmentText}>
+                      <span className={styles.label}>{a.name}</span>
+                      {meta && <span className={styles.attachmentMeta}>{meta}</span>}
+                    </span>
+                  </span>
+                );
+              })}
             </div>
           )}
           <div className={styles.bubble}>{text}</div>
