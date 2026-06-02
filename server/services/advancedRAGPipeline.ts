@@ -248,10 +248,11 @@ export class AdvancedRAGPipeline {
   private pool: pg.Pool;
   private openai: any;
 
-  // In-memory TTL cache for the auxiliary reasoning calls (HyDE, query
+  // In-memory TTL + LRU cache for the auxiliary reasoning calls (HyDE, query
   // expansion, reranking, compression). These repeat verbatim across similar
-  // queries, so caching them cuts the 4+N per-query LLM round-trips. The final
-  // grounded answer is deliberately never cached.
+  // queries, so caching them cuts the 4+N per-query LLM round-trips. Eviction is
+  // least-recently-used (a live hit is re-inserted to refresh recency). The
+  // final grounded answer is deliberately never cached.
   private llmCallCache = new Map<string, { value: AIResponse; expiresAt: number }>();
   private readonly llmCacheTtlMs = 60 * 60 * 1000; // 1 hour
   private readonly llmCacheMaxEntries = 500;
@@ -582,6 +583,20 @@ export class AdvancedRAGPipeline {
     // Add original query
     const allQueries = [query, ...alternativeQueries.slice(0, 4)];
 
+    // Collapse the per-sub-query embedding round-trips into a single batch call.
+    // searchInitial embeds each query internally; pre-warming the embedding
+    // service's text->vector cache here turns those into cache hits, so the N
+    // sub-queries cost one embeddings request instead of N. Queries are short
+    // (no truncation), so the batch cache keys match the per-query embed keys.
+    // Best-effort: on failure we fall back to per-query embedding inside the
+    // searches, and corpora that embed elsewhere (project atoms via
+    // searchHybrid) are simply unaffected.
+    try {
+      await this.embeddingService.embedBatch(allQueries, 'text-embedding-3-small');
+    } catch (error) {
+      console.warn('[RAG] multi-query batch embed failed, falling back to per-query embed:', error);
+    }
+
     // Search with all queries in parallel
     const searchPromises = allQueries.map(q =>
       this.searchInitial(
@@ -844,7 +859,10 @@ Example: {"1": 95, "2": 72, "3": 45}`,
         FROM vault.document_chunks c
         JOIN vault.documents d ON d.id = c.document_id
         WHERE c.embedding IS NOT NULL
-          AND 1 - (c.embedding <=> $1::vector) > $2
+          -- (1 - sim) filter as a distance bound: 1 - dist > t  <=>  dist < 1 - t.
+          -- Uses the same bare <=> operator as ORDER BY so the planner reuses
+          -- the distance and the predicate matches the indexed cosine operator.
+          AND (c.embedding <=> $1::vector) < 1 - $2
         ORDER BY c.embedding <=> $1::vector
         LIMIT $3
       `,
@@ -914,7 +932,10 @@ Example: {"1": 95, "2": 72, "3": 45}`,
         JOIN rag_documents d ON d.id = c.document_id
         WHERE c.embedding IS NOT NULL
           ${orgFilter}
-          AND 1 - (c.embedding <=> $1::vector) > $2
+          -- (1 - sim) filter as a distance bound: 1 - dist > t  <=>  dist < 1 - t.
+          -- Uses the same bare <=> operator as ORDER BY so the planner reuses
+          -- the distance and the predicate matches the indexed cosine operator.
+          AND (c.embedding <=> $1::vector) < 1 - $2
         ORDER BY c.embedding <=> $1::vector
         LIMIT $3
       `,
@@ -1204,17 +1225,26 @@ Example: {"1": 95, "2": 72, "3": 45}`,
 
     const now = Date.now();
     const hit = this.llmCallCache.get(key);
-    if (hit && hit.expiresAt > now) {
-      return { ...hit.value, cached: true };
+    if (hit) {
+      if (hit.expiresAt > now) {
+        // Live hit: re-insert so it becomes the most-recently-used entry. A
+        // Map preserves insertion order, so this makes eviction true LRU (the
+        // key returned by keys().next() is the least-recently-used).
+        this.llmCallCache.delete(key);
+        this.llmCallCache.set(key, hit);
+        return { ...hit.value, cached: true };
+      }
+      // Expired: drop it so it doesn't linger as a stale eviction candidate.
+      this.llmCallCache.delete(key);
     }
 
     const value = await this.aiRouter.route(request);
     this.llmCallCache.set(key, { value, expiresAt: now + this.llmCacheTtlMs });
 
-    // Bound the cache: drop the oldest entry once over capacity.
+    // Bound the cache: drop the least-recently-used entry once over capacity.
     if (this.llmCallCache.size > this.llmCacheMaxEntries) {
-      const oldest = this.llmCallCache.keys().next().value as string | undefined;
-      if (oldest) this.llmCallCache.delete(oldest);
+      const lru = this.llmCallCache.keys().next().value as string | undefined;
+      if (lru) this.llmCallCache.delete(lru);
     }
 
     return value;
