@@ -16,7 +16,7 @@
  */
 
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
-import { render, cleanup, fireEvent } from '@testing-library/react';
+import { render, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import * as React from 'react';
 
 import { PathwayPanes } from '../../client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes';
@@ -194,5 +194,57 @@ describe('dossierStore round-trip', () => {
     const entries = DossierStore.listDir(root);
     expect(entries.length).toBeGreaterThan(0);
     expect(entries.every((e) => e.path.startsWith(root))).toBe(true);
+  });
+});
+
+// Operational flows a human user actually performs (interaction, not just render).
+describe('pathway panes — operational flows', () => {
+  it('Approvals: a pending e-sign can be completed (Part 11 flow)', () => {
+    const { getAllByRole, container } = render(
+      <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
+    );
+    fireEvent.click(getAllByRole('tab')[3]); // Approvals
+    const esign = container.querySelector('.ap-sign-btn') as HTMLElement | null;
+    expect(esign).toBeTruthy(); // the "signer = You" pending card
+    fireEvent.click(esign!);
+    const inputs = container.querySelectorAll('.ap-sign-input');
+    expect(inputs.length).toBeGreaterThanOrEqual(2); // meaning + password
+    fireEvent.change(inputs[1], { target: { value: 'pw-123456' } }); // password ≥ 6
+    const confirm = container.querySelector('.ap-sign-confirm') as HTMLButtonElement | null;
+    expect(confirm).toBeTruthy();
+    expect(confirm!.disabled).toBe(false);
+    fireEvent.click(confirm!);
+    expect(container.querySelector('.ap-card.signed')).toBeTruthy(); // signed state rendered
+    assertNoReactErrors();
+  });
+
+  it('DossierDrawer opens from the audit pane and switches its three tabs', () => {
+    const { getAllByRole, container } = render(
+      <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
+    );
+    fireEvent.click(getAllByRole('tab')[1]); // Audit
+    const open = container.querySelector('.audit-act.primary') as HTMLElement | null;
+    expect(open).toBeTruthy();
+    fireEvent.click(open!);
+    expect(container.querySelector('.dd-drawer')).toBeTruthy();
+    const ddTabs = container.querySelectorAll('.dd-tab');
+    expect(ddTabs.length).toBe(3); // Document · Attachments · Activity
+    fireEvent.click(ddTabs[1] as HTMLElement);
+    fireEvent.click(ddTabs[2] as HTMLElement);
+    fireEvent.click(ddTabs[0] as HTMLElement);
+    assertNoReactErrors();
+  });
+
+  it('AnaDrafter generates a structured draft from an unstarted item', async () => {
+    const corr = PATHWAY_TABS_DATA.k510.correspondence.find((c) => c.id === 'rta-2')!;
+    const { container } = render(
+      <AnaDrafter correspondence={corr} pathway="k510" onClose={onClose} onOpenSection={onOpenSection} />,
+    );
+    expect(container.querySelector('.drafter-unstarted')).toBeTruthy();
+    const cta = container.querySelector('.du-cta') as HTMLElement | null;
+    expect(cta).toBeTruthy();
+    fireEvent.click(cta!); // "Generate draft"
+    await waitFor(() => expect(container.querySelector('.dr-body')).toBeTruthy(), { timeout: 2000 });
+    assertNoReactErrors();
   });
 });
