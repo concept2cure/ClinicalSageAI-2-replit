@@ -14,6 +14,7 @@ import { I } from '../../icons';
 import { AUDIT_KIND_META, PATHWAY_TABS_DATA } from '../../data/pathwayTabs';
 import { DossierStore, useSection } from '../../store/dossierStore';
 import { FilesTreePane } from './FilesTreePane';
+import { AnaDrafter } from '../../components/AnaDrafter';
 import type {
   Approval,
   AuditEvent,
@@ -802,14 +803,12 @@ export interface PathwayPanesProps {
   workspace: React.ReactNode;
   onAskAna: (text: string) => void;
   onOpenEditor?: OpenEditor;
-  /** Opt-in full-page drafter (Phase: AnaDrafter). When absent, "Draft response
-   *  with AnA" falls back to opening AnA chat. */
-  onDraftResponse?: (c: Correspondence) => void;
 }
 
-export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, onDraftResponse }: PathwayPanesProps) {
+export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor }: PathwayPanesProps) {
   const [tab, setTab] = React.useState<PaneTab>('workspace');
   const [drawerTarget, setDrawerTarget] = React.useState<SectionTarget | null>(null);
+  const [drafterCorr, setDrafterCorr] = React.useState<Correspondence | null>(null);
   const data = PATHWAY_TABS_DATA[pathway];
 
   const counts: PaneCounts = {
@@ -822,6 +821,18 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, onDra
 
   const openSection: OpenSection = (t) => setDrawerTarget(t);
 
+  /* The drafter takes over the surface area while active. */
+  if (drafterCorr) {
+    return (
+      <AnaDrafter
+        correspondence={drafterCorr}
+        pathway={pathway}
+        onClose={() => setDrafterCorr(null)}
+        onOpenSection={(t) => { setDrafterCorr(null); setDrawerTarget(t); }}
+      />
+    );
+  }
+
   return (
     <>
       <PathwayTabBar tab={tab} setTab={setTab} pathway={pathway} counts={counts} />
@@ -829,7 +840,7 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, onDra
         {tab === 'workspace' && workspace}
         {tab === 'audit' && <AuditTrailPane pathway={pathway} events={data.audit} onOpenSection={openSection} />}
         {tab === 'correspondence' && (
-          <CorrespondencePane pathway={pathway} items={data.correspondence} onOpenSection={openSection} onAskAna={onAskAna} onDraftResponse={onDraftResponse} />
+          <CorrespondencePane pathway={pathway} items={data.correspondence} onOpenSection={openSection} onAskAna={onAskAna} onDraftResponse={(c) => setDrafterCorr(c)} />
         )}
         {tab === 'approvals' && <ApprovalsPane approvals={data.approvals} onOpenSection={openSection} />}
         {tab === 'files' && <FilesTreePane pathway={pathway} onOpenSection={openSection} />}

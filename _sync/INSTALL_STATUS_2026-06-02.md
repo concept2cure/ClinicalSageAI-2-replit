@@ -93,17 +93,16 @@ the Step 1 package. No content is lost: the 7 files are in the bundle and in can
   paperclip, image, code, edit, bookOpen, left).
 - `types.ts` — added the AuditEvent / Correspondence / Approval / dossier-node contracts.
 - **Wired:** `PathwayPanes` mounted inside `K510Surface`, `PmaSurface`, `CerSurface`
-  (existing surface content is now the Workspace tab). The previously-**orphan**
-  `AuditSurface.tsx` (unrouted, live-API divergence) is superseded by the kit's
-  AuditTrailPane and is flagged for removal in the legacy-cleanup pass (left in place this
-  PR only because deleting it also orphans `data/audit.ts` + `hooks/useAudit.ts`, which
-  belongs in the same cleanup commit).
+  (existing surface content is now the Workspace tab). The standalone
+  `AuditSurface.tsx` (unrouted, live-API divergence) has been **deleted** —
+  superseded by the kit's AuditTrailPane Audit tab. (`data/audit.ts` +
+  `hooks/useAudit.ts` are retained; they're still used by
+  `_shared/program/ProgramSubTabs` outside MDX.)
 
-**Deferred to the immediate next increment (one component):** the full-page
-`AnaDrafter` + its `data-correspondence-detail` data module. It is the largest, most
-self-contained kit file; held back so the verified core is not gated on its size. Its entry
-point ("Draft response with AnA" in the Correspondence pane) works today via AnA chat —
-no regression — and `PathwayPanes` already accepts an `onDraftResponse` hook to slot it in.
+**Update (reconciliation packet, 2026-06-02):** `AnaDrafter` + `data/correspondenceDetail.ts`
+have now **landed** — the drafter takes over the surface from the Correspondence pane's
+"Draft response with AnA". See `RECONCILIATION_REPLY_2026-06-02.md` for the full packet
+reply. The only remaining bundle file is `data-submissions.jsx` (Submission-Center scope).
 
 ---
 
