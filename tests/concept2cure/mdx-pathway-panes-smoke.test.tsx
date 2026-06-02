@@ -288,3 +288,47 @@ describe('live backend wiring', () => {
     expect((await findAllByText('LIVE-APPROVAL-ROW')).length).toBeGreaterThan(0);
   });
 });
+
+// Dossier (Files tree + drawer) async-seeded from the c2c/documents backend.
+// NOTE: DossierStore.hydratePathway mutates the module-singleton store, so this
+// runs LAST — after the fixture-dependent tree/drawer tests above.
+describe('live dossier wiring', () => {
+  it('async-seeds the Files tree + drawer from the c2c/documents backend', async () => {
+    const ok = (body: unknown) =>
+      Promise.resolve({ ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body) } as Response);
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const u = String(input);
+      if (u.includes('/api/c2c/documents/doc-1/sections/')) {
+        return ok({ id: 'x', document_id: 'doc-1', section_key: 's-clin', label: 'LIVE DOSSIER SECTION',
+          content: { paragraphs: [{ text: 'LIVE BODY CONTENT from the backend.' }] }, owner_id: 'Jordan Chen', version: 3 });
+      }
+      if (u.includes('/api/c2c/documents/doc-1/outline')) {
+        return ok({ document: { id: 'doc-1', title: '510(k)' }, outline: [
+          { key: 's-clin', parent_key: null, label: 'LIVE DOSSIER SECTION', path_order: 1, status: 'review', version: 3, owner_id: 'Jordan Chen', accepted_at: '2026-05-01T10:00:00Z', has_content: true },
+        ] });
+      }
+      if (u.includes('/api/c2c/documents')) {
+        return ok({ documents: [{ id: 'doc-1', project_id: 'proj-1', doc_type: '510k', agency: 'FDA', title: '510(k)' }] });
+      }
+      return Promise.resolve({ ok: false, status: 404, json: async () => ({}), text: async () => 'Not Found' } as Response);
+    }) as unknown as typeof fetch;
+
+    const { getAllByRole, findByText, container } = renderWithClient(
+      <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} programId="proj-1" />,
+    );
+    fireEvent.click(getAllByRole('tab')[4]); // Files
+    // Tree shows the backend section (not a BX-204 fixture section).
+    const folderName = await findByText(/LIVE DOSSIER SECTION/);
+    fireEvent.click(folderName.closest('button')!); // expand the section folder
+    // Select body.md from the TREE aside (body.md also appears in the dir preview).
+    const treeBody = await waitFor(() => {
+      const el = Array.from(container.querySelectorAll('.ftp-tree .ftp-row-file'))
+        .find((n) => n.textContent?.includes('body.md'));
+      if (!el) throw new Error('tree body.md not yet present');
+      return el as HTMLElement;
+    });
+    fireEvent.click(treeBody);
+    // PreviewBody renders the backend section content.
+    expect(await findByText(/LIVE BODY CONTENT from the backend/)).toBeTruthy();
+  });
+});
