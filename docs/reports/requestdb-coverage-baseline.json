@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-24T20:04:20.238Z",
+  "generatedAt": "2026-06-02T00:18:29.566Z",
   "onSharedPool": [
     "server/routes/510k-project.routes.ts",
     "server/routes/admin-security.ts",
@@ -9,6 +9,7 @@
     "server/routes/ana-ri/kernel.ts",
     "server/routes/ana-ri/shared.ts",
     "server/routes/ana-ri/stream.ts",
+    "server/routes/ana-ri/threads.ts",
     "server/routes/analytics-routes.ts",
     "server/routes/approval-workflow.ts",
     "server/routes/audit.ts",

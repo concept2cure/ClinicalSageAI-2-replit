@@ -4,6 +4,7 @@ import {
   searchProjectMemoryEntriesSemantic,
   type SemanticMemoryHit,
 } from './client-intelligence-memory.js';
+import { orchestrateAtoms } from './memory-orchestrator.js';
 import type { ClientMemoryEntry, ProjectMemoryEntry } from 'shared/schema';
 
 /**
@@ -180,55 +181,6 @@ function mapProjectEntryToAtom(entry: SemanticMemoryHit<ProjectMemoryEntry>): Re
   };
 }
 
-function isFreshOrImportant(atom: RetrievedMemoryAtom, maxAgeDays: number): boolean {
-  if (atom.layer === 'working_memory') return true;
-
-  const createdAt = atom.metadata?.createdAt;
-  if (!createdAt) return true;
-
-  const ageMs = Date.now() - new Date(createdAt).getTime();
-  if (Number.isNaN(ageMs)) return true;
-  const ageDays = ageMs / (1000 * 60 * 60 * 24);
-
-  const importance = (atom.metadata?.importance || '').toLowerCase();
-  const isCritical = importance === 'critical' || importance === 'high';
-  const isVerified = Boolean(atom.metadata?.isVerified);
-
-  // Structured forgetting policy:
-  // - Keep recent entries.
-  // - Keep older entries if verified/high-importance.
-  return ageDays <= maxAgeDays || isCritical || isVerified;
-}
-
-function atomSortScore(atom: RetrievedMemoryAtom): number {
-  if (atom.layer === 'working_memory') return 2;
-
-  const similarity = atom.similarity ?? 0;
-  const confidence = atom.metadata?.confidence ?? 0;
-  const verifiedBoost = atom.metadata?.isVerified ? 0.05 : 0;
-  return similarity * 0.75 + confidence * 0.2 + verifiedBoost;
-}
-
-function dedupeAtoms(atoms: RetrievedMemoryAtom[]): {
-  deduped: RetrievedMemoryAtom[];
-  dropped: number;
-} {
-  const deduped = new Map<string, RetrievedMemoryAtom>();
-
-  for (const atom of atoms) {
-    const key = `${atom.layer}:${atom.title.trim().toLowerCase()}:${atom.content
-      .slice(0, 120)
-      .trim()
-      .toLowerCase()}`;
-    const existing = deduped.get(key);
-    if (!existing || atomSortScore(atom) > atomSortScore(existing)) {
-      deduped.set(key, atom);
-    }
-  }
-
-  const dedupedList = Array.from(deduped.values());
-  return { deduped: dedupedList, dropped: Math.max(0, atoms.length - dedupedList.length) };
-}
 
 export async function buildMemoryContextForChat(
   input: MemoryContextAssemblerInput
@@ -327,12 +279,14 @@ export async function buildMemoryContextForChat(
     semanticSearchMs = Date.now() - semanticStart;
   }
 
-  const rememberedAtoms = atoms.filter(atom => isFreshOrImportant(atom, maxAgeDays));
-  const droppedByForgetting = atoms.length - rememberedAtoms.length;
-
-  const { deduped, dropped: droppedByDeduplication } = dedupeAtoms(rememberedAtoms);
-
-  const sorted = deduped.sort((a, b) => atomSortScore(b) - atomSortScore(a));
+  // Forget stale atoms, collapse duplicates, and rank across layers under the
+  // single reviewed policy (memory-orchestrator). This module only assembles
+  // and formats; the coordination policy lives there.
+  const {
+    ranked: sorted,
+    droppedByForgetting,
+    droppedByDeduplication,
+  } = orchestrateAtoms(atoms, maxAgeDays);
 
   const sections: string[] = [];
 
