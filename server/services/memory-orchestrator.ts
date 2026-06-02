@@ -11,35 +11,54 @@
  * ragRouter made for retrieval — means the cross-layer ranking is reviewed in
  * one place instead of living as magic constants inside the assembler.
  *
- * It is also the single seam a future semantic-memory-retrieval step plugs
- * into. Working memory is currently recency-only (no embedding), so it is
- * pinned above the semantic layers with a fixed score. When working memory
- * gains an embedding and a per-turn similarity, only
- * DEFAULT_MEMORY_POLICY.ranking.workingMemoryPinScore changes to a
- * similarity-weighted score — the assembler does not change.
+ * Every layer is scored through one formula (priorityBoost + similarity·w +
+ * confidence·w + verifiedBoost) with per-layer weights — there is no
+ * special-cased layer. Working memory is currently recency-only (no embedding),
+ * so its weights carry a large priorityBoost and a zero similarityWeight, which
+ * keeps it above the semantic layers. This is also the single seam a future
+ * semantic-memory-retrieval step plugs into: when working memory gains an
+ * embedding and a per-turn similarity, only its entry in
+ * DEFAULT_MEMORY_POLICY.ranking.byLayer.working_memory changes (raise
+ * similarityWeight, lower priorityBoost) — the assembler does not change.
  *
  * Pure and dependency-free so it unit-tests without a DB or network.
  *
  * @module server/services/memory-orchestrator
  */
 
-import type { RetrievedMemoryAtom } from './memory-context-assembler.js';
+import type { MemoryLayer, RetrievedMemoryAtom } from './memory-context-assembler.js';
 
-export interface MemoryRankingPolicy {
+/**
+ * Ranking weights for a single memory layer. Every layer is scored through the
+ * same formula in {@link scoreAtom}, so a layer's behaviour is fully described
+ * by its four weights — there is no special-cased branch per layer.
+ */
+export interface LayerRankingWeights {
   /**
-   * Fixed score for working-memory atoms. Working memory is the thread's
-   * current state and has no embedding, so it is pinned above the semantic
-   * layers rather than ranked by query similarity. The semantic layers score
-   * in [0, ~1], so a value > 1 keeps working memory on top. This is the one
-   * field a future semantic-working-memory step replaces with a weighted score.
+   * Layer-level additive priority, applied regardless of query relevance. This
+   * is how a layer earns structural primacy: working memory is the thread's live
+   * state, so it outranks the semantic layers even at zero similarity. It is a
+   * tunable weight, not a hard pin — a future semantic-working-memory step lowers
+   * this and raises {@link similarityWeight} so working memory competes on
+   * relevance instead.
    */
-  workingMemoryPinScore: number;
-  /** Weight on vector similarity for client/project atoms. */
+  priorityBoost: number;
+  /** Weight on vector similarity (0..~1). Zero for a layer with no embedding. */
   similarityWeight: number;
   /** Weight on the extractor confidence score (0..1). */
   confidenceWeight: number;
   /** Additive boost for user-verified atoms. */
   verifiedBoost: number;
+}
+
+/**
+ * Cross-layer ranking policy: one weight set per layer, all run through the same
+ * {@link scoreAtom} formula. Working memory's primacy is expressed as a large
+ * priorityBoost with its similarityWeight at zero (it has no embedding yet); the
+ * semantic layers rank by query relevance.
+ */
+export interface MemoryRankingPolicy {
+  byLayer: Record<MemoryLayer, LayerRankingWeights>;
 }
 
 export interface MemoryForgettingPolicy {
@@ -62,16 +81,38 @@ export interface MemoryPolicy {
 }
 
 /**
- * The reviewed default policy. These values reproduce the behaviour that was
+ * Shared weights for the embedding-backed semantic layers (client + project).
+ * Also the defensive fallback in {@link scoreAtom} for an unrecognised layer, so
+ * an unexpected atom ranks by relevance rather than silently scoring zero.
+ */
+const SEMANTIC_LAYER_WEIGHTS: LayerRankingWeights = {
+  priorityBoost: 0,
+  similarityWeight: 0.75,
+  confidenceWeight: 0.2,
+  verifiedBoost: 0.05,
+};
+
+/**
+ * The reviewed default policy. These weights reproduce the behaviour that was
  * previously inlined in memory-context-assembler.ts, so swapping the assembler
- * onto the orchestrator is behaviour-preserving.
+ * onto the orchestrator is behaviour-preserving: working memory still scores a
+ * flat 2 (priorityBoost 2, zero similarity/confidence weight), and the semantic
+ * layers still combine similarity·0.75 + confidence·0.2 + verified·0.05.
  */
 export const DEFAULT_MEMORY_POLICY: MemoryPolicy = {
   ranking: {
-    workingMemoryPinScore: 2,
-    similarityWeight: 0.75,
-    confidenceWeight: 0.2,
-    verifiedBoost: 0.05,
+    byLayer: {
+      // No embedding yet, so it cannot rank by similarity; a priorityBoost above
+      // the semantic layers' max score (0.75 + 0.2 + 0.05 = 1.0) keeps it on top.
+      working_memory: {
+        priorityBoost: 2,
+        similarityWeight: 0,
+        confidenceWeight: 0,
+        verifiedBoost: 0,
+      },
+      client_memory: SEMANTIC_LAYER_WEIGHTS,
+      project_memory: SEMANTIC_LAYER_WEIGHTS,
+    },
   },
   forgetting: {
     retainImportanceLevels: ['critical', 'high'],
@@ -80,21 +121,23 @@ export const DEFAULT_MEMORY_POLICY: MemoryPolicy = {
 };
 
 /**
- * Cross-layer relevance score. Working memory is pinned; client/project atoms
- * combine vector similarity, extractor confidence, and a verified boost.
+ * Cross-layer relevance score: priorityBoost + similarity·w + confidence·w +
+ * verifiedBoost, with the weights drawn from the atom's layer. One formula for
+ * every layer — a layer's primacy is encoded in its weights, not a branch.
  */
 export function scoreAtom(
   atom: RetrievedMemoryAtom,
   policy: MemoryPolicy = DEFAULT_MEMORY_POLICY
 ): number {
-  if (atom.layer === 'working_memory') return policy.ranking.workingMemoryPinScore;
+  const weights = policy.ranking.byLayer[atom.layer] ?? SEMANTIC_LAYER_WEIGHTS;
 
   const similarity = atom.similarity ?? 0;
   const confidence = atom.metadata?.confidence ?? 0;
-  const verifiedBoost = atom.metadata?.isVerified ? policy.ranking.verifiedBoost : 0;
+  const verifiedBoost = atom.metadata?.isVerified ? weights.verifiedBoost : 0;
   return (
-    similarity * policy.ranking.similarityWeight +
-    confidence * policy.ranking.confidenceWeight +
+    weights.priorityBoost +
+    similarity * weights.similarityWeight +
+    confidence * weights.confidenceWeight +
     verifiedBoost
   );
 }
