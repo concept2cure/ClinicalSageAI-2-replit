@@ -2,12 +2,10 @@
  * Pathway sub-tab closed enums.
  * Ported from `design-system/ui_kits/mdx/data-pathway-tabs.jsx`.
  *
- * @kit-registry-no-consumer-yet
- * Remove the marker above when the kit's pathway sub-tab pane lands and
- * imports AUDIT_KIND_META. Until then this file is exempt from the
- * orphan-import check (scripts/check-mdx-orphans.sh) on the grounds that
- * the closed-enum registry is real Part 11 audit-kind taxonomy, not dead
- * seed data.
+ * The orphan-check marker is gone: a pathway sub-tab pane has landed.
+ * APPROVAL_STAGE_META is consumed by surfaces/pathway/ApprovalsPane;
+ * AUDIT_KIND_META is consumed by the audit pane as it ships. Both are
+ * closed Part 11 taxonomies (kind + stage labels), not seed data.
  *
  * The kit's data fixture also includes hand-crafted demo rows
  * (K510_AUDIT, PMA_AUDIT, CER_AUDIT, K510_CORRESP, …, K510_APPROVALS,
@@ -24,7 +22,7 @@
  * filter dropdowns) regardless of data source.
  */
 
-import type { AuditKind, AuditKindMeta } from '../types';
+import type { AuditKind, AuditKindMeta, AuditTone, ApprovalStage } from '../types';
 
 export const AUDIT_KIND_META: Record<AuditKind, AuditKindMeta> = {
   'section.edit':    { label: 'Edit',     tone: 'neutral' },
@@ -37,4 +35,13 @@ export const AUDIT_KIND_META: Record<AuditKind, AuditKindMeta> = {
   attach:            { label: 'Attach',   tone: 'neutral' },
   export:            { label: 'Export',   tone: 'neutral' },
   access:            { label: 'Access',   tone: 'neutral' },
+};
+
+/** Closed enum: approval stage → pill label + tone. Regulatory is the one
+ *  accent (focal) stage; the rest are neutral. */
+export const APPROVAL_STAGE_META: Record<ApprovalStage, { label: string; tone: AuditTone }> = {
+  review:     { label: 'Review',      tone: 'neutral' },
+  qa:         { label: 'QA',          tone: 'neutral' },
+  medical:    { label: 'Med affairs', tone: 'neutral' },
+  regulatory: { label: 'Regulatory',  tone: 'accent' },
 };

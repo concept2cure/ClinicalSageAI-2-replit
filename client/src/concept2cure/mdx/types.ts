@@ -142,3 +142,34 @@ export interface AuditKindMeta {
   label: string;
   tone: AuditTone;
 }
+
+/* ─── Approval — consumed by surfaces/pathway/ApprovalsPane ──────────────── */
+
+/** Closed list of approval workflow stages. */
+export type ApprovalStage = 'review' | 'qa' | 'medical' | 'regulatory';
+
+/**
+ * One approval row rendered by ApprovalsPane. Adapted from the server's
+ * PendingApproval (GET /api/approval-workflows/pending) by useApprovals.
+ *
+ * The /pending endpoint is already scoped to the current user server-side,
+ * so every returned row is the signer's own — `signer` is always 'You'.
+ * It also returns only `status: 'pending'`; there is no completed-approvals
+ * source yet, so ApprovalsPane's Signed history renders honest-empty until
+ * one exists (a read gap, distinct from the Part 11 write gap on /approve).
+ */
+export interface Approval {
+  id: string;
+  stage: ApprovalStage;
+  target: string;
+  target_id?: number | string;
+  target_kind: 'Section' | 'Submission';
+  requested: string; // ISO
+  requested_by: string;
+  signer: string; // 'You' routes the row into "pending your signature"
+  role: string;
+  due?: string; // ISO
+  status: 'pending' | 'signed';
+  signed_at?: string; // ISO, signed rows only
+  meaning?: string; // default attestation text
+}

@@ -10,6 +10,7 @@ import type { Program } from '../data/programs';
 import { useK510EstarSections, useK510Predicates, useK510SeMatrix } from '../hooks/useK510';
 import { AskAnaChip } from './AskAnaChip';
 import { AnaDraftBanner } from '../components/AnaDraftBanner';
+import { PathwayPanes } from './pathway/PathwayPanes';
 
 export interface K510SurfaceProps {
   program: Program | null;
@@ -65,7 +66,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
   const multi = selectedList.length > 1;
   const subjectName = program ? program.title : 'BX-204 CGM';
 
-  return (
+  const workspace = (
     <>
       <div className="section-hdr">
         <div>
@@ -401,5 +402,13 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
         </div>
       </div>
     </>
+  );
+
+  return (
+    <PathwayPanes
+      pathway="k510"
+      workspace={workspace}
+      onOpenSection={(t) => onOpenEditor?.(typeof t.id === 'number' ? t.id : 11)}
+    />
   );
 }
