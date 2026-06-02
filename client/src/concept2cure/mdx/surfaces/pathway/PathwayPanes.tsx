@@ -4,16 +4,16 @@
  * pane switch). In the kit, Audit / Correspondence / Approvals / Files are
  * tabs here rather than standalone rail destinations.
  *
- * This is slice 1 of that port: the bar plus a live Approvals tab. The
- * existing surface content is passed in as the Workspace tab (default), so
- * mounting PathwayPanes does not disturb the current layout. Audit,
- * Correspondence, and Files render an honest placeholder until their panes
- * land in following slices (AuditTrailPane / CorrespondencePane / FilesTreePane).
+ * Slices shipped so far: Approvals tab (live) and Files tab (kit's
+ * FilesTreePane, Dossier branch backed by /document-preview, siblings as
+ * placeholder folders). Audit and Correspondence remain placeholders until
+ * their dedicated panes ship.
  */
 
 import * as React from 'react';
 import { useApprovals } from '../../hooks/useApprovals';
 import { ApprovalsPane, type ApprovalTarget } from './ApprovalsPane';
+import { FilesTreePane } from './FilesTreePane';
 
 export type PathwayKind = 'k510' | 'pma' | 'cer';
 
@@ -71,11 +71,19 @@ export interface PathwayPanesProps {
   pathway: PathwayKind;
   /** Existing surface content, rendered as the Workspace tab. */
   workspace: React.ReactNode;
-  /** Open a dossier section from an approval row. */
+  /** Active program identifier (numeric id, UUID, or code). Required for the
+   *  Files tab to source the Dossier branch from /document-preview. */
+  programIdent?: string | null;
+  /** Open a dossier section from an approval row or files-tree body.md. */
   onOpenSection?: (target: ApprovalTarget) => void;
 }
 
-export function PathwayPanes({ pathway, workspace, onOpenSection }: PathwayPanesProps) {
+export function PathwayPanes({
+  pathway,
+  workspace,
+  programIdent = null,
+  onOpenSection,
+}: PathwayPanesProps) {
   const [tab, setTab] = React.useState<TabId>('workspace');
   const { approvals, loading, error, refresh } = useApprovals();
 
@@ -105,7 +113,15 @@ export function PathwayPanes({ pathway, workspace, onOpenSection }: PathwayPanes
         />
       )}
 
-      {(tab === 'audit' || tab === 'correspondence' || tab === 'files') && (
+      {tab === 'files' && (
+        <FilesTreePane
+          pathway={pathway}
+          programIdent={programIdent}
+          onOpenSection={onOpenSection}
+        />
+      )}
+
+      {(tab === 'audit' || tab === 'correspondence') && (
         <div className="audit-empty">
           This tab ships in a following pathway-tabs slice.
         </div>

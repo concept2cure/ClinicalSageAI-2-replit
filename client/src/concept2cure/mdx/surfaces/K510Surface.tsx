@@ -408,6 +408,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
     <PathwayPanes
       pathway="k510"
       workspace={workspace}
+      programIdent={programId}
       onOpenSection={(t) => onOpenEditor?.(typeof t.id === 'number' ? t.id : 11)}
     />
   );

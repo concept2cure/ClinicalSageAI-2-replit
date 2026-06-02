@@ -12,6 +12,7 @@ import { App } from './App';
 
 import './app.css';
 import './pathway-tabs.css';
+import './files-tree.css';
 
 export interface MdxRouteProps {
   /** Initial workstream tab — k510 / pma / cer / project-home / overview / etc. */
