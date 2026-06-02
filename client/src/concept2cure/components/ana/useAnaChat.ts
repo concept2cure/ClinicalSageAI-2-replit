@@ -11,8 +11,10 @@
  *   text         — token chunk appended to the streaming message
  *   done         — captures latencyMs + provider (fallback detection)
  *   post_done    — cleaned response + executedActions chips
- *   warning      — degraded-mode signal (noop for now)
- *   grounding_strip — evidence verdict (noop for now)
+ *   warning      — degraded-mode signal appended to the message's warnings
+ *   grounding_strip — evidence verdict stored for the grounding chip on the reply
+ *   tool_use / tool_result — tool-call transparency rows
+ *   artifact_draft — an editor-openable draft produced by a generating tool
  *   error        — surface via console + last-message flag
  *
  * @module client/src/concept2cure/components/ana/useAnaChat
@@ -126,7 +128,8 @@ export interface AnaChatMessage {
   thinking?: string;
   /**
    * Evidence grounding summary from the server's validateEvidence pipeline.
-   * Surfaced as a small chip (e.g. "✓ 8 sources · 12 grounded claims").
+   * Surfaced as a small chip on the reply: a shield-check icon + "N sources"
+   * when grounded, or an alert icon + "N weak" when claims are unsupported.
    */
   evidence?: {
     validated: boolean;

@@ -315,21 +315,25 @@ export function Message({
               Stopped
             </span>
           )}
-          {evidence && (evidence.sourceCount > 0 || evidence.groundedClaims > 0 || evidence.weakClaims > 0) && (
-            <span
-              className={styles.cite}
-              style={{ marginLeft: 8 }}
-              title={
-                evidence.weakClaims > 0 || evidence.missingSupport > 0
-                  ? `${evidence.weakClaims} weak / ${evidence.missingSupport} unsupported claim(s)`
-                  : `${evidence.sourceCount} source${evidence.sourceCount !== 1 ? 's' : ''} · ${evidence.groundedClaims} grounded claim${evidence.groundedClaims !== 1 ? 's' : ''}`
-              }
-            >
-              {evidence.weakClaims > 0 || evidence.missingSupport > 0
-                ? `⚠ ${evidence.weakClaims + evidence.missingSupport} weak`
-                : `✓ ${evidence.sourceCount} source${evidence.sourceCount !== 1 ? 's' : ''}`}
-            </span>
-          )}
+          {evidence && (evidence.sourceCount > 0 || evidence.groundedClaims > 0 || evidence.weakClaims > 0) && (() => {
+            const weak = evidence.weakClaims > 0 || evidence.missingSupport > 0;
+            return (
+              <span
+                className={styles.cite}
+                style={{ marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                title={
+                  weak
+                    ? `${evidence.weakClaims} weak / ${evidence.missingSupport} unsupported claim(s)`
+                    : `${evidence.sourceCount} source${evidence.sourceCount !== 1 ? 's' : ''} · ${evidence.groundedClaims} grounded claim${evidence.groundedClaims !== 1 ? 's' : ''}`
+                }
+              >
+                {weak ? <I.alert size={11} /> : <I.shieldCheck size={11} />}
+                {weak
+                  ? `${evidence.weakClaims + evidence.missingSupport} weak`
+                  : `${evidence.sourceCount} source${evidence.sourceCount !== 1 ? 's' : ''}`}
+              </span>
+            );
+          })()}
           {typeof latencyMs === 'number' && latencyMs > 0 && (
             <span className={styles.cite} style={{ marginLeft: 8 }} title={`${latencyMs} ms`}>
               {formatLatency(latencyMs)}

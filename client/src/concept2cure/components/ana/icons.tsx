@@ -31,6 +31,8 @@ import {
   ArrowUpRight,
   Square,
   X,
+  ShieldCheck,
+  TriangleAlert,
 } from 'lucide-react';
 
 export const I = {
@@ -60,6 +62,8 @@ export const I = {
   upgrade: ArrowUpRight,
   stop: Square,
   close: X,
+  shieldCheck: ShieldCheck,
+  alert: TriangleAlert,
 } as const;
 
 export type IconKey = keyof typeof I;
