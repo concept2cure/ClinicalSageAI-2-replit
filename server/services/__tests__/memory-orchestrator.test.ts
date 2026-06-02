@@ -5,8 +5,9 @@ import {
   dedupeAtoms,
   orchestrateAtoms,
   DEFAULT_MEMORY_POLICY,
+  type MemoryPolicy,
 } from '../memory-orchestrator.js';
-import type { RetrievedMemoryAtom } from '../memory-context-assembler.js';
+import type { MemoryLayer, RetrievedMemoryAtom } from '../memory-context-assembler.js';
 
 function atom(partial: Partial<RetrievedMemoryAtom>): RetrievedMemoryAtom {
   return {
@@ -50,6 +51,58 @@ describe('memory-orchestrator', () => {
 
     it('treats missing similarity/confidence as zero', () => {
       expect(scoreAtom(atom({ layer: 'project_memory' }))).toBe(0);
+    });
+  });
+
+  describe('per-layer ranking weights (unified formula)', () => {
+    it('ignores similarity/confidence for working memory under the default weights', () => {
+      // working_memory weights are priorityBoost 2 with zero similarity/confidence
+      // weight, so a "rich" working-memory atom still scores exactly the flat 2.
+      const rich = atom({
+        layer: 'working_memory',
+        similarity: 0.95,
+        metadata: { confidence: 1, isVerified: true },
+      });
+      expect(scoreAtom(rich)).toBe(2);
+    });
+
+    it('falls back to semantic weights for an unrecognised layer', () => {
+      const weird = atom({
+        layer: 'mystery' as MemoryLayer,
+        similarity: 0.8,
+        metadata: { confidence: 0.5, isVerified: true },
+      });
+      // 0 + 0.8*0.75 + 0.5*0.2 + 0.05 = 0.75
+      expect(scoreAtom(weird)).toBeCloseTo(0.75, 10);
+    });
+
+    it('lets a custom policy unpin working memory so it ranks by similarity', () => {
+      // The shape a future semantic-working-memory step takes: working memory
+      // gains a similarity weight and sheds most of its priorityBoost.
+      const semanticWorkingMemory: MemoryPolicy = {
+        ...DEFAULT_MEMORY_POLICY,
+        ranking: {
+          byLayer: {
+            ...DEFAULT_MEMORY_POLICY.ranking.byLayer,
+            working_memory: {
+              priorityBoost: 0.2,
+              similarityWeight: 0.75,
+              confidenceWeight: 0.2,
+              verifiedBoost: 0.05,
+            },
+          },
+        },
+      };
+      const wmWeak = atom({ layer: 'working_memory', similarity: 0.1 });
+      const projStrong = atom({ layer: 'project_memory', similarity: 0.95 });
+
+      // Default policy: working memory is pinned on top regardless of similarity.
+      expect(scoreAtom(wmWeak)).toBeGreaterThan(scoreAtom(projStrong));
+      // Custom policy: a strongly-matching project atom now outranks a weak
+      // working-memory atom — proving primacy lives in the weights, not a branch.
+      expect(scoreAtom(projStrong, semanticWorkingMemory)).toBeGreaterThan(
+        scoreAtom(wmWeak, semanticWorkingMemory)
+      );
     });
   });
 
@@ -130,12 +183,22 @@ describe('memory-orchestrator', () => {
   });
 
   it('exposes the reviewed default constants that preserve prior behaviour', () => {
-    expect(DEFAULT_MEMORY_POLICY.ranking).toEqual({
-      workingMemoryPinScore: 2,
+    // Working memory: flat pin of 2 (priorityBoost 2, no similarity/confidence).
+    expect(DEFAULT_MEMORY_POLICY.ranking.byLayer.working_memory).toEqual({
+      priorityBoost: 2,
+      similarityWeight: 0,
+      confidenceWeight: 0,
+      verifiedBoost: 0,
+    });
+    // Semantic layers: similarity·0.75 + confidence·0.2 + verified·0.05.
+    const semantic = {
+      priorityBoost: 0,
       similarityWeight: 0.75,
       confidenceWeight: 0.2,
       verifiedBoost: 0.05,
-    });
+    };
+    expect(DEFAULT_MEMORY_POLICY.ranking.byLayer.client_memory).toEqual(semantic);
+    expect(DEFAULT_MEMORY_POLICY.ranking.byLayer.project_memory).toEqual(semantic);
     expect(DEFAULT_MEMORY_POLICY.forgetting.retainImportanceLevels).toEqual(['critical', 'high']);
     expect(DEFAULT_MEMORY_POLICY.dedupeContentKeyLength).toBe(120);
   });
