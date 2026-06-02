@@ -162,6 +162,7 @@ interface ApprovalCardProps {
 function ApprovalCard({ a, mine, onOpenSection, onSigned }: ApprovalCardProps) {
   const [signingOpen, setSigningOpen] = React.useState(false);
   const [pwd, setPwd] = React.useState('');
+  const [mfa, setMfa] = React.useState('');
   const [meaning, setMeaning] = React.useState(a.meaning || '');
   const [done, setDone] = React.useState(false);
 
@@ -173,8 +174,19 @@ function ApprovalCard({ a, mine, onOpenSection, onSigned }: ApprovalCardProps) {
   const days = daysUntil(a.due);
   const overdue = days !== null && days < 0;
 
+  const canApply =
+    pwd.length >= 6 &&
+    /^\d{6}$/.test(mfa) &&
+    meaning.trim().length > 0 &&
+    !signing;
+
   const apply = async () => {
-    await sign({ approvalId: a.id, meaning: meaning.trim(), password: pwd });
+    await sign({
+      approvalId: a.id,
+      meaning: meaning.trim(),
+      password: pwd,
+      mfaToken: mfa,
+    });
   };
 
   if (done) {
@@ -253,27 +265,39 @@ function ApprovalCard({ a, mine, onOpenSection, onSigned }: ApprovalCardProps) {
               className="ap-sign-input"
               type="password"
               placeholder="Re-enter password"
+              autoComplete="current-password"
               value={pwd}
               onChange={(e) => setPwd(e.target.value)}
             />
+            <input
+              className="ap-sign-input"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              placeholder="6-digit auth code"
+              value={mfa}
+              onChange={(e) => setMfa(e.target.value.replace(/\D/g, ''))}
+            />
             <button
               className="ap-sign-confirm"
-              disabled={pwd.length < 6 || meaning.trim().length === 0 || signing}
+              disabled={!canApply}
               onClick={apply}
             >
               {I.lock} {signing ? 'Signing…' : 'Apply signature'}
             </button>
             <button
               className="ap-sign-cancel"
-              onClick={() => { setSigningOpen(false); setPwd(''); }}
+              onClick={() => { setSigningOpen(false); setPwd(''); setMfa(''); }}
             >
               Cancel
             </button>
           </div>
           {error && <div className="ap-sign-error">{error}</div>}
           <div className="ap-sign-foot">
-            21 CFR §11.100(b) · By signing you certify the listed meaning. Time, IP, and a SHA-256
-            of this record will be appended to the audit trail.
+            21 CFR §11.100(b) · By signing with your password and authentication code, you certify
+            the listed meaning. Time, IP, and a SHA-256 of this record will be appended to the
+            audit trail.
           </div>
         </div>
       )}

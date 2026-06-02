@@ -2,12 +2,10 @@
  * useSignApproval — commits an approval e-signature.
  *
  * Single POST to /api/approval-workflows/:id/approve carries the Part 11
- * attestation (meaning + password). The server verifies the password, writes
- * the electronic_signatures row, and advances the workflow step in one call.
- * Authentication mode is password-only (authentication_method='password'),
- * permitted under 21 CFR §11.200(a)(1) for systems with controlled access;
- * /api/esignature/sign keeps its password+totp ceremony for document-centric
- * signatures.
+ * attestation (meaning + password + TOTP). The server verifies BOTH factors
+ * inline (no pre-call to /verify-mfa), writes the electronic_signatures row
+ * with authentication_method='password+totp', and advances the workflow
+ * step in one call — matching the strength of /api/esignature/sign.
  *
  * Response: { success, signatureId, signaturePending, ...workflowResult }.
  * `signaturePending: true` means the step advanced but the Part 11 row write
@@ -20,8 +18,10 @@ export interface SignApprovalInput {
   approvalId: string;
   /** Meaning-of-signature attestation (21 CFR §11.50). */
   meaning: string;
-  /** Re-entered credential (21 CFR §11.200(a)). */
+  /** Re-entered credential (21 CFR §11.200(a)(1)). */
   password: string;
+  /** Current 6-digit TOTP code (21 CFR §11.200(a)(1)(ii) — second factor). */
+  mfaToken: string;
 }
 
 export interface UseSignApprovalResult {
@@ -48,6 +48,7 @@ export function useSignApproval(onSigned?: () => void): UseSignApprovalResult {
             body: JSON.stringify({
               meaning: input.meaning,
               signaturePassword: input.password,
+              mfaToken: input.mfaToken,
             }),
           },
         );
@@ -55,6 +56,12 @@ export function useSignApproval(onSigned?: () => void): UseSignApprovalResult {
           const body = (await res.json().catch(() => ({}))) as { error?: string };
           if (res.status === 401 && body?.error === 'SIGNATURE_INVALID') {
             throw new Error('Password did not match — signature not recorded.');
+          }
+          if (res.status === 401 && body?.error === 'MFA_INVALID') {
+            throw new Error('Authentication code did not match — signature not recorded.');
+          }
+          if (res.status === 400 && body?.error === 'MFA_TOKEN_REQUIRED') {
+            throw new Error('Enter your 6-digit authentication code.');
           }
           throw new Error(body?.error || `Signature failed (HTTP ${res.status})`);
         }

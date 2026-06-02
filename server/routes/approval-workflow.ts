@@ -29,9 +29,11 @@ import {
   workflowApprovals,
   documentWorkflows,
   unifiedDocuments,
+  workflowDocumentVersions,
 } from '../../shared/schema/unified_workflow';
 import { users } from '../../shared/schema';
 import auditService from '../services/auditService';
+import { verifyToken as verifyMfaToken } from '../services/mfaService';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
@@ -120,21 +122,20 @@ router.post('/start', async (req: Request, res: Response) => {
 //
 // Two modes:
 //   1. Comments-only (legacy)   — body: { comments } → advances the step.
-//   2. 21 CFR Part 11 e-sign    — body: { meaning, signaturePassword, ... } →
-//      verifies the caller's password server-side, advances the step, then
-//      writes an electronic_signatures row + audit event atomically (from the
-//      client's perspective). The pane (ApprovalsPane) submits both `comments`
-//      and the Part 11 fields together so the action is a single POST.
+//   2. 21 CFR Part 11 e-sign    — body: { meaning, signaturePassword,
+//      mfaToken } → verifies BOTH factors server-side, advances the step,
+//      then writes an electronic_signatures row + audit event. Single POST
+//      to keep the kit's "Apply signature" action atomic from the user's
+//      perspective.
 //
-// Auth strength: password-only (authentication_method='password'). Permitted
-// under 21 CFR §11.200(a)(1) for systems with controlled access. /sign keeps
-// its password+totp ceremony for document-centric signatures; approval-
-// workflow signatures use this softer mode by design (decided 2026-06-02).
+// Auth strength: password + TOTP (authentication_method='password+totp'),
+// matching /api/esignature/sign's ceremony. /verify-mfa is NOT called as a
+// separate step — the TOTP is sent in the same request and verified inline,
+// which eliminates the trust-the-client gap of a pre-verified flag.
 //
-// version_id semantics: pulled from unified_documents.latestVersion at the
-// moment of signing. Falls back to 1 when the document row is missing. The
-// signature_manifest JSON carries the full approval context (approvalId,
-// workflowId, stepName, stepOrder) so an auditor can correlate.
+// version_id semantics: resolves the workflow_document_versions row for
+// (documentId, latestVersion). Auto-creates one if missing so every
+// signature has a stable FK anchor.
 // ============================================================================
 
 router.post('/:id/approve', async (req: Request, res: Response) => {
@@ -147,28 +148,36 @@ router.post('/:id/approve', async (req: Request, res: Response) => {
       comments,
       meaning,
       signaturePassword,
+      mfaToken,
     } = req.body ?? {};
 
     const isPartEleven =
       typeof meaning === 'string' && meaning.trim().length > 0 &&
       typeof signaturePassword === 'string' && signaturePassword.length > 0;
 
-    // 1 — verify password BEFORE any state change.
-    //     A signature whose credential failed must not advance the workflow.
+    // 1 — verify BOTH factors BEFORE any state change.
+    //     A signature whose credentials failed must not advance the workflow.
     const numericUserId = Number(user.userId);
     if (isPartEleven) {
       if (!Number.isFinite(numericUserId)) {
         return res.status(401).json({ error: 'AUTH_REQUIRED' });
       }
+      if (typeof mfaToken !== 'string' || !/^\d{6}$/.test(mfaToken)) {
+        return res.status(400).json({ error: 'MFA_TOKEN_REQUIRED' });
+      }
       const hash = await loadPasswordHash(numericUserId);
       if (!hash) {
         return res.status(401).json({ error: 'SIGNATURE_INVALID' });
       }
-      const ok = await bcrypt
+      const pwdOk = await bcrypt
         .compare(signaturePassword, hash)
         .catch(() => false);
-      if (!ok) {
+      if (!pwdOk) {
         return res.status(401).json({ error: 'SIGNATURE_INVALID' });
+      }
+      const mfaOk = await verifyMfaToken(numericUserId, mfaToken).catch(() => false);
+      if (!mfaOk) {
+        return res.status(401).json({ error: 'MFA_INVALID' });
       }
     }
 
@@ -206,7 +215,7 @@ router.post('/:id/approve', async (req: Request, res: Response) => {
       success: true,
       ...result,
       ...(isPartEleven
-        ? { signatureId, signaturePending, authenticationMethod: 'password' }
+        ? { signatureId, signaturePending, authenticationMethod: 'password+totp' }
         : {}),
       message: result.workflowCompleted
         ? 'Workflow completed — all steps approved'
@@ -279,11 +288,41 @@ async function recordApprovalSignature(
     .from(workflowSteps)
     .where(eq(workflowSteps.id, approval.stepId));
 
+  // Resolve workflow_document_versions.id for (documentId, latestVersion).
+  // Auto-create the row if missing so every signature has a stable FK anchor;
+  // the document's latestVersion number is preserved in the manifest.
   const [doc] = await db
     .select({ latestVersion: unifiedDocuments.latestVersion })
     .from(unifiedDocuments)
     .where(eq(unifiedDocuments.id, workflow.documentId));
-  const versionAnchor = doc?.latestVersion ?? 1;
+  const latestVersionNumber = doc?.latestVersion ?? 1;
+
+  const [existingVersion] = await db
+    .select({ id: workflowDocumentVersions.id })
+    .from(workflowDocumentVersions)
+    .where(
+      and(
+        eq(workflowDocumentVersions.documentId, workflow.documentId),
+        eq(workflowDocumentVersions.version, latestVersionNumber),
+      ),
+    )
+    .limit(1);
+
+  let versionRowId: number;
+  if (existingVersion) {
+    versionRowId = existingVersion.id;
+  } else {
+    const [created] = await db
+      .insert(workflowDocumentVersions)
+      .values({
+        documentId: workflow.documentId,
+        version: latestVersionNumber,
+        createdBy: String(userId),
+        comments: 'auto-created by approval e-signature',
+      })
+      .returning({ id: workflowDocumentVersions.id });
+    versionRowId = created.id;
+  }
 
   // Signer identity — denormalised onto the row for offline audit.
   const sessionUser = (req as any).user ?? {};
@@ -315,14 +354,15 @@ async function recordApprovalSignature(
     null;
 
   // Deterministic content hash — the bytes a regulator would re-derive.
-  // Does NOT include the password.
+  // Does NOT include the password or MFA token.
   const signatureHash = createHash('sha256')
     .update(
       JSON.stringify({
         approvalId,
         workflowId: workflow.id,
         documentId: workflow.documentId,
-        versionId: versionAnchor,
+        versionId: versionRowId,
+        documentVersionNumber: latestVersionNumber,
         stepOrder: approval.stepOrder,
         meaning,
         action: 'approve',
@@ -339,6 +379,7 @@ async function recordApprovalSignature(
     stepId: approval.stepId,
     stepName: step?.name ?? `Step ${approval.stepOrder}`,
     stepOrder: approval.stepOrder,
+    documentVersionNumber: latestVersionNumber,
     action: 'approve',
   };
 
@@ -353,14 +394,14 @@ async function recordApprovalSignature(
      ) VALUES (
        $1, $2, 'approval', 'approval',
        $3, $4, NULL, $5,
-       'password', $6, false,
+       'password+totp', $6, true,
        $7, $8, $9,
        true, NULL, NULL,
        $10, NULL, $6
      ) RETURNING id`,
     [
       workflow.documentId,
-      versionAnchor,
+      versionRowId,
       userId,
       signerName,
       signerEmail,
@@ -388,8 +429,10 @@ async function recordApprovalSignature(
       approvalId,
       workflowId: workflow.id,
       documentId: workflow.documentId,
-      versionId: versionAnchor,
-      authenticationMethod: 'password',
+      versionId: versionRowId,
+      documentVersionNumber: latestVersionNumber,
+      authenticationMethod: 'password+totp',
+      secondFactorVerified: true,
       signatureHash,
       meaning,
     },
