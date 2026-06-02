@@ -17,6 +17,7 @@ import {
   type ToolCall,
   type ToolResultEntry,
 } from '../../server/services/ana/agentic-loop';
+import { verifyAnswerGrounding } from '../../server/services/ana/answer-grounding';
 
 const call = (name: string, input: Record<string, unknown> = {}, id = `${name}-${Math.random()}`): ToolCall => ({ id, name, input });
 
@@ -147,6 +148,32 @@ describe('capToolResultForModel', () => {
     const capped = capToolResultForModel('x'.repeat(1000), 10);
     expect(capped).toMatch(/truncated/);
     expect(capped.length).toBeGreaterThan(0);
+  });
+
+  // Regression guard for the stream loop's grounding corpus. The model only ever
+  // sees the capped tool result, so the self-verification grounding round must
+  // verify against the same capped view — never the full, uncapped result. A
+  // claim that survives only in the truncated-away middle must NOT count as
+  // grounded, otherwise a fabrication the model could not have read slips
+  // through as "supported". (server/routes/ana-ri/stream.ts pushes
+  // capToolResultForModel(resultStr) into toolEvidenceCorpus for this reason.)
+  it('grounds an answer against the capped view, not the omitted middle', () => {
+    const buried = 'NCT12345678'; // a trial id present only in the truncated middle
+    const full =
+      'Top hits:\n' + 'H'.repeat(6000) + `\nBuried record: ${buried} (overall survival)\n` + 'T'.repeat(6000);
+    const capped = capToolResultForModel(full, 8000);
+
+    // Sanity: the cap really did drop the buried id from the model's view.
+    expect(capped).not.toContain(buried);
+
+    const answer = `The pivotal study was ${buried}.`;
+
+    // Against the full result the check is fooled into calling it grounded …
+    expect(verifyAnswerGrounding(answer, full).grounded).toBe(1);
+    // … but against the capped view (what the model actually saw) it is flagged.
+    const verdict = verifyAnswerGrounding(answer, capped);
+    expect(verdict.grounded).toBe(0);
+    expect(verdict.unsupported).toEqual([{ kind: 'nct', text: buried }]);
   });
 });
 

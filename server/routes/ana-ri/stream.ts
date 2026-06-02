@@ -602,7 +602,15 @@ router.post('/stream', async (req: Request, res: Response) => {
           toolTrace.push(
             buildTraceEntry(toolUse.name, describeToolPlan([toolUse])[0].label, toolStatus, resultStr),
           );
-          toolEvidenceCorpus.push(resultStr);
+          // Ground against what the MODEL saw, not the raw result. Oversized tool
+          // output is capped (head+tail) before it reaches the model (line below,
+          // callModel → capToolResultForModel). If the grounding round verified
+          // the answer against the full, uncapped result, a claim sitting in the
+          // truncated-away middle would be marked "grounded" though the model
+          // never read it — a false pass in the one direction that lets a
+          // fabrication through. Cap the corpus identically so the self-check
+          // sees exactly the evidence the model had.
+          toolEvidenceCorpus.push(capToolResultForModel(resultStr));
           res.write(
             `data: ${JSON.stringify({ type: 'tool_result', name: toolUse.name, result: resultStr })}\n\n`
           );
