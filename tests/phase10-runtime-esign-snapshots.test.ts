@@ -24,10 +24,10 @@ import path from 'path';
 const ROOT = path.resolve(__dirname, '..');
 const SCHEMA = path.join(ROOT, 'shared/schema.ts');
 const BACKEND = path.join(ROOT, 'server/routes/concept2cure.ts');
-const GOVERNED_PANEL = path.join(
-  ROOT,
-  'client/src/concept2cure/components/workspace/GovernedDocumentPanel.tsx'
-);
+// GovernedDocumentPanel.tsx was removed with the disconnected legacy island in
+// the design-system port (CLAUDE.md). The frontend snapshot/attestation
+// describes below (10H–10K) are skipped until the Phase 3 workbench reintroduces
+// the panel; the backend governance wiring (10A–10G) stays fully covered.
 
 function readSrc(filePath: string): string {
   return fs.readFileSync(filePath, 'utf-8');
@@ -230,8 +230,8 @@ describe('10G — Backend: signature role check', () => {
 
 // ── 10H: Frontend — SnapshotsTab + SnapshotEntry ────────────────────────────
 
-describe('10H — Frontend: SnapshotsTab component', () => {
-  const src = readSrc(GOVERNED_PANEL);
+describe.skip('10H — Frontend: SnapshotsTab component', () => {
+  const src = ''; // GovernedDocumentPanel removed in design-system port (CLAUDE.md)
 
   it('defines SnapshotEntry interface', () => {
     expect(src).toContain('interface SnapshotEntry');
@@ -272,8 +272,8 @@ describe('10H — Frontend: SnapshotsTab component', () => {
 
 // ── 10I: Frontend — attestation modal ────────────────────────────────────────
 
-describe('10I — Frontend: attestation modal', () => {
-  const src = readSrc(GOVERNED_PANEL);
+describe.skip('10I — Frontend: attestation modal', () => {
+  const src = ''; // GovernedDocumentPanel removed in design-system port (CLAUDE.md)
 
   it('defines attestation state variables', () => {
     expect(src).toContain('attestationTarget');
@@ -317,8 +317,8 @@ describe('10I — Frontend: attestation modal', () => {
 
 // ── 10J: Frontend — AuditTab attestation rendering ──────────────────────────
 
-describe('10J — Frontend: AuditTab attestation rendering', () => {
-  const src = readSrc(GOVERNED_PANEL);
+describe.skip('10J — Frontend: AuditTab attestation rendering', () => {
+  const src = ''; // GovernedDocumentPanel removed in design-system port (CLAUDE.md)
 
   it('renders attestation detail in audit events', () => {
     expect(src).toMatch(/details\?\.attestation/);
@@ -339,8 +339,8 @@ describe('10J — Frontend: AuditTab attestation rendering', () => {
 
 // ── 10K: Frontend — fetchData includes snapshots ────────────────────────────
 
-describe('10K — Frontend: fetchData includes snapshots', () => {
-  const src = readSrc(GOVERNED_PANEL);
+describe.skip('10K — Frontend: fetchData includes snapshots', () => {
+  const src = ''; // GovernedDocumentPanel removed in design-system port (CLAUDE.md)
 
   it('fetches snapshots endpoint', () => {
     expect(src).toContain('/snapshots');
