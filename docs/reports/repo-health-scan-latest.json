@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-06-01T03:15:24.220Z",
+  "generatedAt": "2026-06-02T00:14:18.199Z",
   "git": {
-    "sha": "20faf6e71f905ac02d76bd0ff2a6cab28e98a9a0",
-    "branch": "claude/rag-sophistication-review-X3y9Y"
+    "sha": "7104f40a907dd9acddd37e1cbdd14144503e0134",
+    "branch": "claude/memory-orchestrator"
   },
   "thresholds": {
     "maxBytes": 100000,
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 198,
+    "duplicateBasenames": 199,
     "largeFilesByBytes": 16,
-    "largeFilesByLines": 48
+    "largeFilesByLines": 47
   },
   "findings": {
     "duplicateBasenames": [
@@ -1907,6 +1907,14 @@
         ]
       },
       {
+        "basename": "threads",
+        "count": 2,
+        "paths": [
+          "server/routes/ana-ri/threads.ts",
+          "server/routes/chat/threads.ts"
+        ]
+      },
+      {
         "basename": "toast",
         "count": 2,
         "paths": [
@@ -2029,12 +2037,12 @@
         "bytes": 190789
       },
       {
-        "file": "server/routes/ana-features.ts",
-        "bytes": 179953
+        "file": "server/services/ana/AnaToolExecutor.ts",
+        "bytes": 180817
       },
       {
-        "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 178879
+        "file": "server/routes/ana-features.ts",
+        "bytes": 179953
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2054,7 +2062,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 121249
+        "bytes": 123359
       },
       {
         "file": "server/storage.ts",
@@ -2108,7 +2116,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 4071
+        "lines": 4118
       },
       {
         "file": "server/storage.ts",
@@ -2147,12 +2155,12 @@
         "lines": 2379
       },
       {
-        "file": "client/src/concept2cure/ZenApp.tsx",
-        "lines": 2317
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "lines": 2347
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2308
+        "file": "client/src/concept2cure/ZenApp.tsx",
+        "lines": 2317
       },
       {
         "file": "client/src/concept2cure/models/ctdHierarchy.ts",
@@ -2220,7 +2228,7 @@
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
-        "lines": 1676
+        "lines": 1678
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
@@ -2259,10 +2267,6 @@
         "lines": 1550
       },
       {
-        "file": "server/routes/biostatPlatform.ts",
-        "lines": 1541
-      },
-      {
         "file": "server/services/submission-twin-service.ts",
         "lines": 1534
       },
@@ -2283,9 +2287,9 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 258,
+      "duplicateGroups": 260,
       "largeByBytes": 11,
-      "largeByLines": 34
+      "largeByLines": 33
     },
     {
       "owner": "Unassigned (TBD)",
