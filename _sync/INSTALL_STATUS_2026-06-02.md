@@ -15,8 +15,12 @@ no "sample data" hedges), and superseded non-kit surfaces are flagged for remova
 ## The 5 reply items
 
 ### 1. Step 1 rescue package — DELIVERED
-Packaged the single-copy work to `_sync/rescue-2026-06-02/` (committed, so no longer
-single-copy) + a zip handed to the operator:
+Delivered as a zip to the operator + a sha256 record at
+`_sync/rescue-2026-06-02.manifest.txt`. The bytes are **not single-copy** — they already
+live at their `design-system/` originals in this repo, so the package is a convenience
+copy, not the only copy. (The earlier committed unzipped tree was removed: it duplicated
+~48 basenames already present under `design-system/`, which tripped the repo-health
+no-regression gate for no benefit.) Contents:
 - `ui_kits/mdx_phase2/` (21 files) · `ui_kits/pdev/` (14 files)
 - `MDX_DESIGN_BACKLOG.md` (design-system-only — true single copy)
 - `PDEV_IND_DESIGN_BRIEF.md` · `READ_ME_FIRST.md` (design-system variant; differs from repo root)
@@ -68,7 +72,12 @@ the acceptance checklist below is then run against the live URL.
 
 ## What was installed (Step 3)
 
-**3a · mirror refresh** — the 7 kit files dropped into `design-system/ui_kits/mdx/`.
+**3a · mirror refresh** — deferred to the `sync-design-system` workflow. Step 2 / the
+runbook "Do NOT" list say the mirror is read-only ("do NOT hand-edit anything under
+`design-system/`"); hand-copying the 7 files both violates that and duplicated
+`mdx_phase2` basenames (repo-health regression). The mirror gets these files when the
+operator next runs the sync from canonical — which is also when canonical has absorbed
+the Step 1 package. No content is lost: the 7 files are in the bundle and in canonical.
 
 **3b · ported into the implementation** (`client/src/concept2cure/mdx/`):
 - `store/dossierStore.ts` — kit IIFE converted to a real ES module; exports
