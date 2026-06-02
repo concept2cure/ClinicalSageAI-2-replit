@@ -15,6 +15,7 @@ import { AUDIT_KIND_META, PATHWAY_TABS_DATA } from '../../data/pathwayTabs';
 import { DossierStore, useSection } from '../../store/dossierStore';
 import { FilesTreePane } from './FilesTreePane';
 import { AnaDrafter } from '../../components/AnaDrafter';
+import { usePathwayTabsData } from '../../hooks/usePathwayTabsData';
 import type {
   Approval,
   AuditEvent,
@@ -803,13 +804,17 @@ export interface PathwayPanesProps {
   workspace: React.ReactNode;
   onAskAna: (text: string) => void;
   onOpenEditor?: OpenEditor;
+  /** Canonical project id — anchors live audit + scopes correspondence. When
+   *  absent, the panes fall back to the kit fixtures. */
+  programId?: string | null;
 }
 
-export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor }: PathwayPanesProps) {
+export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, programId }: PathwayPanesProps) {
   const [tab, setTab] = React.useState<PaneTab>('workspace');
   const [drawerTarget, setDrawerTarget] = React.useState<SectionTarget | null>(null);
   const [drafterCorr, setDrafterCorr] = React.useState<Correspondence | null>(null);
-  const data = PATHWAY_TABS_DATA[pathway];
+  // Live backend data (audit / correspondence / approvals) with kit-fixture fallback.
+  const data = usePathwayTabsData(pathway, programId);
 
   const counts: PaneCounts = {
     audit: data.audit.length,

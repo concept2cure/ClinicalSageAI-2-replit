@@ -16,7 +16,8 @@
  */
 
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
-import { render, cleanup, fireEvent } from '@testing-library/react';
+import { render, cleanup, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as React from 'react';
 
 import { PathwayPanes } from '../../client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes';
@@ -35,6 +36,13 @@ const mkProgram = (pathway: Program['pathway']): Program => ({
   lead: 'Jordan Chen', owners: ['JC'], nextBlocker: null,
   dueLabel: 'Filing · Q3 2026', dueTone: 'ok', lastActivity: '3h ago', meta: 'test',
 });
+
+// PathwayPanes now uses react-query (live audit/correspondence/approvals); renders
+// must run under a QueryClient. retry:false so a mocked 404 falls back immediately.
+function renderWithClient(ui: React.ReactElement) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0, staleTime: 0 } } });
+  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+}
 
 const askAna = vi.fn();
 const openEditor = vi.fn();
@@ -87,7 +95,7 @@ function assertNoReactErrors() {
 describe('MDX pathway panes smoke', () => {
   (['k510', 'pma', 'cer'] as PathwayKey[]).forEach((pathway) => {
     it(`PathwayPanes(${pathway}) mounts every tab without errors`, () => {
-      const { getAllByRole } = render(
+      const { getAllByRole } = renderWithClient(
         <PathwayPanes
           pathway={pathway}
           workspace={<div>workspace content</div>}
@@ -105,7 +113,7 @@ describe('MDX pathway panes smoke', () => {
   });
 
   it('opens the DossierDrawer from the audit pane', () => {
-    const { getAllByRole, container } = render(
+    const { getAllByRole, container } = renderWithClient(
       <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
     );
     fireEvent.click(getAllByRole('tab')[1]); // Audit
@@ -118,7 +126,7 @@ describe('MDX pathway panes smoke', () => {
   });
 
   it('FilesTreePane preview opens a body section in the drawer', () => {
-    const { getAllByRole, container } = render(
+    const { getAllByRole, container } = renderWithClient(
       <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
     );
     fireEvent.click(getAllByRole('tab')[4]); // Files
@@ -128,7 +136,7 @@ describe('MDX pathway panes smoke', () => {
 
   it('AnaDrafter renders a drafted response (rta-3)', () => {
     const corr = PATHWAY_TABS_DATA.k510.correspondence.find((c) => c.id === 'rta-3')!;
-    const { container } = render(
+    const { container } = renderWithClient(
       <AnaDrafter correspondence={corr} pathway="k510" onClose={onClose} onOpenSection={onOpenSection} />,
     );
     expect(container.querySelector('.ana-drafter')).toBeTruthy();
@@ -137,7 +145,7 @@ describe('MDX pathway panes smoke', () => {
 
   it('AnaDrafter renders an unstarted response (rta-2)', () => {
     const corr = PATHWAY_TABS_DATA.k510.correspondence.find((c) => c.id === 'rta-2')!;
-    const { container } = render(
+    const { container } = renderWithClient(
       <AnaDrafter correspondence={corr} pathway="k510" onClose={onClose} onOpenSection={onOpenSection} />,
     );
     expect(container.querySelector('.drafter-unstarted')).toBeTruthy();
@@ -146,7 +154,7 @@ describe('MDX pathway panes smoke', () => {
 
   // The pathway surfaces wrap their existing content as the Workspace tab.
   it('K510Surface mounts the pathway tab bar', () => {
-    const { container } = render(
+    const { container } = renderWithClient(
       <K510Surface program={mkProgram('k510')} onAskAna={askAna} onOpenEditor={openEditor} />,
     );
     expect(container.querySelector('.pwt-bar')).toBeTruthy();
@@ -154,7 +162,7 @@ describe('MDX pathway panes smoke', () => {
   });
 
   it('PmaSurface mounts the pathway tab bar', () => {
-    const { container } = render(
+    const { container } = renderWithClient(
       <PmaSurface program={mkProgram('pma')} onAskAna={askAna} onOpenEditor={openEditor} />,
     );
     expect(container.querySelector('.pwt-bar')).toBeTruthy();
@@ -162,7 +170,7 @@ describe('MDX pathway panes smoke', () => {
   });
 
   it('CerSurface mounts the pathway tab bar', () => {
-    const { container } = render(
+    const { container } = renderWithClient(
       <CerSurface program={mkProgram('cer')} onAskAna={askAna} />,
     );
     expect(container.querySelector('.pwt-bar')).toBeTruthy();
@@ -194,5 +202,89 @@ describe('dossierStore round-trip', () => {
     const entries = DossierStore.listDir(root);
     expect(entries.length).toBeGreaterThan(0);
     expect(entries.every((e) => e.path.startsWith(root))).toBe(true);
+  });
+});
+
+// Operational flows a human user actually performs (interaction, not just render).
+describe('pathway panes — operational flows', () => {
+  it('Approvals: a pending e-sign can be completed (Part 11 flow)', () => {
+    const { getAllByRole, container } = renderWithClient(
+      <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
+    );
+    fireEvent.click(getAllByRole('tab')[3]); // Approvals
+    const esign = container.querySelector('.ap-sign-btn') as HTMLElement | null;
+    expect(esign).toBeTruthy(); // the "signer = You" pending card
+    fireEvent.click(esign!);
+    const inputs = container.querySelectorAll('.ap-sign-input');
+    expect(inputs.length).toBeGreaterThanOrEqual(2); // meaning + password
+    fireEvent.change(inputs[1], { target: { value: 'pw-123456' } }); // password ≥ 6
+    const confirm = container.querySelector('.ap-sign-confirm') as HTMLButtonElement | null;
+    expect(confirm).toBeTruthy();
+    expect(confirm!.disabled).toBe(false);
+    fireEvent.click(confirm!);
+    expect(container.querySelector('.ap-card.signed')).toBeTruthy(); // signed state rendered
+    assertNoReactErrors();
+  });
+
+  it('DossierDrawer opens from the audit pane and switches its three tabs', () => {
+    const { getAllByRole, container } = renderWithClient(
+      <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
+    );
+    fireEvent.click(getAllByRole('tab')[1]); // Audit
+    const open = container.querySelector('.audit-act.primary') as HTMLElement | null;
+    expect(open).toBeTruthy();
+    fireEvent.click(open!);
+    expect(container.querySelector('.dd-drawer')).toBeTruthy();
+    const ddTabs = container.querySelectorAll('.dd-tab');
+    expect(ddTabs.length).toBe(3); // Document · Attachments · Activity
+    fireEvent.click(ddTabs[1] as HTMLElement);
+    fireEvent.click(ddTabs[2] as HTMLElement);
+    fireEvent.click(ddTabs[0] as HTMLElement);
+    assertNoReactErrors();
+  });
+
+  it('AnaDrafter generates a structured draft from an unstarted item', async () => {
+    const corr = PATHWAY_TABS_DATA.k510.correspondence.find((c) => c.id === 'rta-2')!;
+    const { container } = renderWithClient(
+      <AnaDrafter correspondence={corr} pathway="k510" onClose={onClose} onOpenSection={onOpenSection} />,
+    );
+    expect(container.querySelector('.drafter-unstarted')).toBeTruthy();
+    const cta = container.querySelector('.du-cta') as HTMLElement | null;
+    expect(cta).toBeTruthy();
+    fireEvent.click(cta!); // "Generate draft"
+    await waitFor(() => expect(container.querySelector('.dr-body')).toBeTruthy(), { timeout: 2000 });
+    assertNoReactErrors();
+  });
+});
+
+// The operator decision: kit UI, real backend data. Prove the live path renders
+// backend rows (the 15 tests above already prove fixture fallback under fetch→404).
+describe('live backend wiring', () => {
+  it('renders live audit / correspondence / approvals from the backend', async () => {
+    const ok = (body: unknown) =>
+      Promise.resolve({ ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body) } as Response);
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const u = String(input);
+      if (u.includes('/api/mdx/audit')) {
+        return ok({ data: { events: [{ id: 'live-a1', when: '2026-05-02T10:00:00Z', actor: 'u1', actorName: 'Live Reviewer', role: 'QA', action: 'sign', resource: 'Section', target: 'LIVE-AUDIT-ROW', resourceId: '11', reason: '', sha: 'deadbeef', prev: 'cafef00d', chain: 'ok' }], actions: [], resources: [], kpis: [] } });
+      }
+      if (u.includes('/api/regulatory-correspondence/correspondence')) {
+        return ok({ data: [{ id: 'live-c1', subject: 'LIVE-LETTER-ROW', sender: 'CDRH', source_channel: 'eSTAR', communication_type: 'AI-Hold', received_at: '2026-05-02T09:00:00Z', status: 'open' }] });
+      }
+      if (u.includes('/api/approval-workflows/pending')) {
+        return ok({ approvals: [{ id: 42, target: 'LIVE-APPROVAL-ROW', signer: 'You', stage: 'regulatory', requested_by: 'u2', requested_at: '2026-05-02T08:00:00Z' }] });
+      }
+      return Promise.resolve({ ok: false, status: 404, json: async () => ({}), text: async () => 'Not Found' } as Response);
+    }) as unknown as typeof fetch;
+
+    const { getAllByRole, findAllByText } = renderWithClient(
+      <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} programId="proj-1" />,
+    );
+    fireEvent.click(getAllByRole('tab')[1]); // Audit
+    expect((await findAllByText('LIVE-AUDIT-ROW')).length).toBeGreaterThan(0); // list + detail
+    fireEvent.click(getAllByRole('tab')[2]); // Correspondence
+    expect((await findAllByText('LIVE-LETTER-ROW')).length).toBeGreaterThan(0);
+    fireEvent.click(getAllByRole('tab')[3]); // Approvals
+    expect((await findAllByText('LIVE-APPROVAL-ROW')).length).toBeGreaterThan(0);
   });
 });

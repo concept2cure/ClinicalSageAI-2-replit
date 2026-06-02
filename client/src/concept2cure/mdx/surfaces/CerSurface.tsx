@@ -349,6 +349,7 @@ export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
       pathway="cer"
       workspace={workspace}
       onAskAna={onAskAna}
+      programId={program?.id ?? null}
     />
   );
 }
