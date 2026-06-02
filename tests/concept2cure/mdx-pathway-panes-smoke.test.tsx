@@ -22,6 +22,7 @@ import * as React from 'react';
 import { PathwayPanes } from '../../client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes';
 import { AnaDrafter } from '../../client/src/concept2cure/mdx/components/AnaDrafter';
 import { PATHWAY_TABS_DATA } from '../../client/src/concept2cure/mdx/data/pathwayTabs';
+import { DossierStore } from '../../client/src/concept2cure/mdx/store/dossierStore';
 import type { PathwayKey } from '../../client/src/concept2cure/mdx/types';
 import { K510Surface } from '../../client/src/concept2cure/mdx/surfaces/K510Surface';
 import { PmaSurface } from '../../client/src/concept2cure/mdx/surfaces/PmaSurface';
@@ -166,5 +167,32 @@ describe('MDX pathway panes smoke', () => {
     );
     expect(container.querySelector('.pwt-bar')).toBeTruthy();
     assertNoReactErrors();
+  });
+});
+
+// Acceptance #4: edits round-trip through the in-memory store into the audit trail.
+describe('dossierStore round-trip', () => {
+  it('seeds section bodies and pushes an edit onto the section activity trail', () => {
+    const label = 'Substantial Equivalence Discussion'; // K510_ESTAR id 11
+    const seeded = DossierStore.readSectionBody('k510', 11, label);
+    expect(seeded.length).toBeGreaterThan(0);
+
+    const before = DossierStore.activityForSection('k510', 11).length;
+    const marker = `EDIT-${Date.now()}`;
+    DossierStore.writeSectionBody('k510', 11, label, `${seeded}\n\n${marker}`, { who: 'Tester', role: 'Reg Lead' });
+
+    // The edit persists…
+    expect(DossierStore.readSectionBody('k510', 11, label)).toContain(marker);
+    // …and a live section.edit event is appended (Activity tab reads this).
+    const after = DossierStore.activityForSection('k510', 11);
+    expect(after.length).toBeGreaterThanOrEqual(before + 1);
+    expect(after.some((e) => e.kind === 'section.edit' && e.live === true)).toBe(true);
+  });
+
+  it('lists the dossier tree under the program root', () => {
+    const root = DossierStore.rootFor('k510');
+    const entries = DossierStore.listDir(root);
+    expect(entries.length).toBeGreaterThan(0);
+    expect(entries.every((e) => e.path.startsWith(root))).toBe(true);
   });
 });
