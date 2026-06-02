@@ -76,21 +76,10 @@ export interface AnaDrafterProps {
 
 export function AnaDrafter({ correspondence, onClose, onOpenSection }: AnaDrafterProps) {
   const detail = CORRESP_DETAIL[correspondence.id];
-  if (!detail) {
-    return (
-      <div className="drafter-empty">
-        <div className="drafter-empty-icon">{I.fileText}</div>
-        <div className="drafter-empty-title">No structured letter on file for this item.</div>
-        <div className="drafter-empty-sub">Open the original document to begin drafting manually, or contact the lead reviewer to request a structured copy.</div>
-        <button className="drafter-empty-act" onClick={onClose}>Back to correspondence</button>
-      </div>
-    );
-  }
+  const deficiencies: Deficiency[] = detail?.deficiencies ?? [];
 
-  const { letter, deficiencies } = detail;
-  const initialDraft: ResponseDraft = detail.draft || { status: 'unstarted' };
-
-  const [draft, setDraft] = React.useState<ResponseDraft>(initialDraft);
+  // Hooks must run unconditionally (Rules of Hooks) — guard the body, not the hooks.
+  const [draft, setDraft] = React.useState<ResponseDraft>(detail?.draft ?? { status: 'unstarted' });
   const [activeDefId, setActiveDefId] = React.useState<string | undefined>(deficiencies[0]?.id);
   const [generating, setGenerating] = React.useState(false);
   const [showCitations, setShowCitations] = React.useState(true);
@@ -103,10 +92,24 @@ export function AnaDrafter({ correspondence, onClose, onOpenSection }: AnaDrafte
   React.useEffect(() => {
     if (!activeDefId || !responseScrollRef.current) return;
     const el = responseScrollRef.current.querySelector(`[data-def="${activeDefId}"]`);
-    if (el && 'scrollIntoView' in el) {
+    // Guard scrollIntoView — present in browsers, absent in jsdom (tests).
+    if (el && typeof el.scrollIntoView === 'function') {
       el.scrollIntoView({ block: 'start', behavior: 'smooth' });
     }
   }, [activeDefId]);
+
+  if (!detail) {
+    return (
+      <div className="drafter-empty">
+        <div className="drafter-empty-icon">{I.fileText}</div>
+        <div className="drafter-empty-title">No structured letter on file for this item.</div>
+        <div className="drafter-empty-sub">Open the original document to begin drafting manually, or contact the lead reviewer to request a structured copy.</div>
+        <button className="drafter-empty-act" onClick={onClose}>Back to correspondence</button>
+      </div>
+    );
+  }
+
+  const { letter } = detail;
 
   const generate = () => {
     setGenerating(true);
