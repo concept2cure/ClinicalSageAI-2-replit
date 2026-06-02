@@ -1,18 +1,17 @@
 /**
  * useSignApproval — commits an approval e-signature.
  *
- * Per the runbook decision ("Extend /approve server-side"), the single
- * "Apply signature" action POSTs to /api/approval-workflows/:id/approve.
- * Keying off the approval id (not a document/version id) means this works
- * for every pending row regardless of whether it backs a section or a
- * package — the case the two-call /esignature/sign path could not cover.
+ * Single POST to /api/approval-workflows/:id/approve carries the Part 11
+ * attestation (meaning + password). The server verifies the password, writes
+ * the electronic_signatures row, and advances the workflow step in one call.
+ * Authentication mode is password-only (authentication_method='password'),
+ * permitted under 21 CFR §11.200(a)(1) for systems with controlled access;
+ * /api/esignature/sign keeps its password+totp ceremony for document-centric
+ * signatures.
  *
- * BACKEND GAP (logged): /approve currently persists only `comments`. The
- * `meaning` + `credential` sent below are the Part 11 attestation; they are
- * written so the electronic_signatures row is recorded atomically the moment
- * the endpoint is extended server-side to capture them. Until then the action
- * advances the workflow step without writing the Part 11 row. This is the
- * same "log the gap, don't block the slice" treatment as the audit manifest.
+ * Response: { success, signatureId, signaturePending, ...workflowResult }.
+ * `signaturePending: true` means the step advanced but the Part 11 row write
+ * failed and needs reconciliation — surface this to the user if it ever fires.
  */
 
 import { useCallback, useState } from 'react';
@@ -47,17 +46,16 @@ export function useSignApproval(onSigned?: () => void): UseSignApprovalResult {
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              // Read today by the endpoint:
-              comments: input.meaning,
-              // Part 11 attestation — captured once /approve is extended:
               meaning: input.meaning,
-              signatureMeaning: input.meaning,
               signaturePassword: input.password,
             }),
           },
         );
         if (!res.ok) {
           const body = (await res.json().catch(() => ({}))) as { error?: string };
+          if (res.status === 401 && body?.error === 'SIGNATURE_INVALID') {
+            throw new Error('Password did not match — signature not recorded.');
+          }
           throw new Error(body?.error || `Signature failed (HTTP ${res.status})`);
         }
         onSigned?.();

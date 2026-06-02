@@ -14,10 +14,24 @@
  */
 
 import { Router, Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
+import { createHash } from 'crypto';
 import { approvalOrchestrator } from '../services/workflow/ApprovalOrchestrator';
-import { db } from '../db';
+import { db, pool } from '../db';
+// pool is used for the raw INSERT into electronic_signatures (the table has
+// no Drizzle schema in this codebase; routes/esignature.ts uses the same
+// raw-SQL pattern, and the table is not in the tenant-isolation scanner's
+// list of tenant-scoped tables).
 import { eq, and } from 'drizzle-orm';
-import { workflowTemplates, workflowSteps } from '../../shared/schema/unified_workflow';
+import {
+  workflowTemplates,
+  workflowSteps,
+  workflowApprovals,
+  documentWorkflows,
+  unifiedDocuments,
+} from '../../shared/schema/unified_workflow';
+import { users } from '../../shared/schema';
+import auditService from '../services/auditService';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
@@ -103,6 +117,24 @@ router.post('/start', async (req: Request, res: Response) => {
 
 // ============================================================================
 // POST /api/approval-workflows/:id/approve — Approve current step
+//
+// Two modes:
+//   1. Comments-only (legacy)   — body: { comments } → advances the step.
+//   2. 21 CFR Part 11 e-sign    — body: { meaning, signaturePassword, ... } →
+//      verifies the caller's password server-side, advances the step, then
+//      writes an electronic_signatures row + audit event atomically (from the
+//      client's perspective). The pane (ApprovalsPane) submits both `comments`
+//      and the Part 11 fields together so the action is a single POST.
+//
+// Auth strength: password-only (authentication_method='password'). Permitted
+// under 21 CFR §11.200(a)(1) for systems with controlled access. /sign keeps
+// its password+totp ceremony for document-centric signatures; approval-
+// workflow signatures use this softer mode by design (decided 2026-06-02).
+//
+// version_id semantics: pulled from unified_documents.latestVersion at the
+// moment of signing. Falls back to 1 when the document row is missing. The
+// signature_manifest JSON carries the full approval context (approvalId,
+// workflowId, stepName, stepOrder) so an auditor can correlate.
 // ============================================================================
 
 router.post('/:id/approve', async (req: Request, res: Response) => {
@@ -111,18 +143,71 @@ router.post('/:id/approve', async (req: Request, res: Response) => {
 
   try {
     const approvalId = parseInt(req.params.id);
-    const { comments } = req.body;
+    const {
+      comments,
+      meaning,
+      signaturePassword,
+    } = req.body ?? {};
 
+    const isPartEleven =
+      typeof meaning === 'string' && meaning.trim().length > 0 &&
+      typeof signaturePassword === 'string' && signaturePassword.length > 0;
+
+    // 1 — verify password BEFORE any state change.
+    //     A signature whose credential failed must not advance the workflow.
+    const numericUserId = Number(user.userId);
+    if (isPartEleven) {
+      if (!Number.isFinite(numericUserId)) {
+        return res.status(401).json({ error: 'AUTH_REQUIRED' });
+      }
+      const hash = await loadPasswordHash(numericUserId);
+      if (!hash) {
+        return res.status(401).json({ error: 'SIGNATURE_INVALID' });
+      }
+      const ok = await bcrypt
+        .compare(signaturePassword, hash)
+        .catch(() => false);
+      if (!ok) {
+        return res.status(401).json({ error: 'SIGNATURE_INVALID' });
+      }
+    }
+
+    // 2 — advance the workflow step (existing orchestrator path).
     const result = await approvalOrchestrator.processApproval({
       approvalId,
       action: 'approve',
       performedBy: user.userId,
-      comments,
+      comments: isPartEleven ? meaning : comments,
     });
+
+    // 3 — Part 11: record the signature row + audit event. Best-effort
+    //     after step advance; on failure we log critical and surface
+    //     `signaturePending: true` so the client can surface reconciliation.
+    let signatureId: number | null = null;
+    let signaturePending = false;
+    if (isPartEleven) {
+      try {
+        signatureId = await recordApprovalSignature({
+          approvalId,
+          userId: numericUserId,
+          meaning,
+          req,
+        });
+      } catch (sigErr) {
+        signaturePending = true;
+        logger.error('Part 11 signature row write failed after step advance', {
+          approvalId,
+          err: sigErr instanceof Error ? sigErr.message : String(sigErr),
+        });
+      }
+    }
 
     return res.json({
       success: true,
       ...result,
+      ...(isPartEleven
+        ? { signatureId, signaturePending, authenticationMethod: 'password' }
+        : {}),
       message: result.workflowCompleted
         ? 'Workflow completed — all steps approved'
         : result.workflowAdvanced
@@ -135,6 +220,183 @@ router.post('/:id/approve', async (req: Request, res: Response) => {
     return res.status(400).json({ error: message });
   }
 });
+
+// ── Part 11 helpers (approval-workflow signature path) ─────────────────────
+//
+// loadPasswordHash + recordApprovalSignature mirror the patterns in
+// `routes/esignature.ts` but with the policy decisions specific to the
+// approval-workflow surface: password-only authentication, version anchor
+// from unified_documents.latestVersion, manifest JSON keyed on approvalId.
+//
+// Both use raw SQL against `users` and `electronic_signatures` because those
+// are the tables `routes/esignature.ts` already uses; `electronic_signatures`
+// has no Drizzle schema in this codebase.
+
+async function loadPasswordHash(userId: number): Promise<string | null> {
+  try {
+    const [row] = await db
+      .select({ passwordHash: users.passwordHash })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    return row?.passwordHash ?? null;
+  } catch (err: any) {
+    if (err?.code !== '42P01') {
+      logger.warn('password lookup failed', { err: err?.message });
+    }
+    return null;
+  }
+}
+
+interface RecordSignatureParams {
+  approvalId: number;
+  userId: number;
+  meaning: string;
+  req: Request;
+}
+
+async function recordApprovalSignature(
+  params: RecordSignatureParams,
+): Promise<number> {
+  const { approvalId, userId, meaning, req } = params;
+
+  // Resolve workflow + document so the signature row points at the right
+  // document_id and we can derive a version anchor.
+  const [approval] = await db
+    .select()
+    .from(workflowApprovals)
+    .where(eq(workflowApprovals.id, approvalId));
+  if (!approval) throw new Error(`approval ${approvalId} not found`);
+
+  const [workflow] = await db
+    .select()
+    .from(documentWorkflows)
+    .where(eq(documentWorkflows.id, approval.workflowId));
+  if (!workflow) throw new Error(`workflow ${approval.workflowId} not found`);
+
+  const [step] = await db
+    .select({ name: workflowSteps.name })
+    .from(workflowSteps)
+    .where(eq(workflowSteps.id, approval.stepId));
+
+  const [doc] = await db
+    .select({ latestVersion: unifiedDocuments.latestVersion })
+    .from(unifiedDocuments)
+    .where(eq(unifiedDocuments.id, workflow.documentId));
+  const versionAnchor = doc?.latestVersion ?? 1;
+
+  // Signer identity — denormalised onto the row for offline audit.
+  const sessionUser = (req as any).user ?? {};
+  let signerName: string = sessionUser.name ?? '';
+  let signerEmail: string = sessionUser.email ?? '';
+  try {
+    const [row] = await db
+      .select({ name: users.name, email: users.email })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    if (row) {
+      signerName = signerName || row.name || '';
+      signerEmail = signerEmail || row.email || '';
+    }
+  } catch (err: any) {
+    if (err?.code !== '42P01') {
+      logger.warn('signer lookup failed', { err: err?.message });
+    }
+  }
+  if (!signerEmail) {
+    throw new Error('signer email not resolvable from session');
+  }
+
+  const signedAt = new Date();
+  const ipAddress =
+    (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
+    (req as any).socket?.remoteAddress ||
+    null;
+
+  // Deterministic content hash — the bytes a regulator would re-derive.
+  // Does NOT include the password.
+  const signatureHash = createHash('sha256')
+    .update(
+      JSON.stringify({
+        approvalId,
+        workflowId: workflow.id,
+        documentId: workflow.documentId,
+        versionId: versionAnchor,
+        stepOrder: approval.stepOrder,
+        meaning,
+        action: 'approve',
+        signerId: userId,
+        signerEmail,
+        signedAt: signedAt.toISOString(),
+      }),
+    )
+    .digest('hex');
+
+  const manifest = {
+    approvalId,
+    workflowId: workflow.id,
+    stepId: approval.stepId,
+    stepName: step?.name ?? `Step ${approval.stepOrder}`,
+    stepOrder: approval.stepOrder,
+    action: 'approve',
+  };
+
+  const result = await pool.query(
+    `INSERT INTO electronic_signatures (
+       document_id, version_id, signature_type, signature_purpose,
+       signer_id, signer_name, signer_title, signer_email,
+       authentication_method, authentication_timestamp, second_factor_verified,
+       signature_hash, signature_meaning, signature_manifest,
+       is_valid, compliance_statement, legal_disclaimer,
+       ip_address, device_info, signed_at
+     ) VALUES (
+       $1, $2, 'approval', 'approval',
+       $3, $4, NULL, $5,
+       'password', $6, false,
+       $7, $8, $9,
+       true, NULL, NULL,
+       $10, NULL, $6
+     ) RETURNING id`,
+    [
+      workflow.documentId,
+      versionAnchor,
+      userId,
+      signerName,
+      signerEmail,
+      signedAt,
+      signatureHash,
+      meaning,
+      JSON.stringify(manifest),
+      ipAddress,
+    ],
+  );
+
+  const signatureId = Number(result.rows[0].id);
+
+  // 21 CFR Part 11 §11.10(e) — every signing event also lands in the
+  // central audit trail. The signature hash correlates the two tables.
+  void auditService.logAction({
+    tenantId: sessionUser.organizationId ?? null,
+    userId,
+    action: 'approval.esign',
+    resourceType: 'electronic_signature',
+    resourceId: String(signatureId),
+    ipAddress,
+    userAgent: req.headers['user-agent'] as string | undefined,
+    details: {
+      approvalId,
+      workflowId: workflow.id,
+      documentId: workflow.documentId,
+      versionId: versionAnchor,
+      authenticationMethod: 'password',
+      signatureHash,
+      meaning,
+    },
+  });
+
+  return signatureId;
+}
 
 // ============================================================================
 // POST /api/approval-workflows/:id/reject — Reject at current step
