@@ -88,5 +88,49 @@ describe('ragRouter optionsForIntent', () => {
       expect(o.corpus).toBe('rag_chunks');
       expect(o.organizationId).toBe(7);
     });
+
+    it('passes through the client_memory corpus + memoryScope', () => {
+      const o = optionsForIntent({
+        query: 'q',
+        corpus: 'client_memory',
+        organizationId: 3,
+        memoryScope: { profileId: 11, category: 'regulatory' },
+      });
+      expect(o.corpus).toBe('client_memory');
+      expect(o.organizationId).toBe(3);
+      expect(o.memoryScope).toEqual({ profileId: 11, category: 'regulatory' });
+    });
+
+    it('passes through the project_memory corpus + project scope', () => {
+      const o = optionsForIntent({
+        query: 'q',
+        corpus: 'project_memory',
+        organizationId: 3,
+        memoryScope: { projectId: 99, projectProfileId: 5 },
+      });
+      expect(o.corpus).toBe('project_memory');
+      expect(o.memoryScope).toEqual({ projectId: 99, projectProfileId: 5 });
+    });
+
+    it('the memory shims invoke a pure-similarity policy (basic, rerank/mmr/compression off)', () => {
+      // This is the exact option shape the memory shims pass so the document
+      // reranker never runs on memory atoms — ranking stays similarity-pure.
+      const o = optionsForIntent({
+        query: 'q',
+        corpus: 'client_memory',
+        organizationId: 3,
+        threshold: 0.65,
+        strategy: 'basic',
+        useReranking: false,
+        useMmr: false,
+        useCompression: false,
+        memoryScope: { profileId: null },
+      });
+      expect(o.strategy).toBe('basic');
+      expect(o.useReranking).toBe(false);
+      expect(o.useMmr).toBe(false);
+      expect(o.useCompression).toBe(false);
+      expect(o.threshold).toBe(0.65);
+    });
   });
 });

@@ -32,6 +32,7 @@ import {
   type RetrievalOptions,
   type RAGContext,
   type RetrievedDocument,
+  type MemoryScope,
 } from './advancedRAGPipeline.js';
 import {
   recordRagRetrieval,
@@ -62,9 +63,15 @@ export interface RagRetrievalParams {
    * callers reach that store through the single router instead of a separate
    * retrieval engine.
    */
-  corpus?: 'vault' | 'rag_chunks';
-  /** Integer org id for `corpus: 'rag_chunks'` tenant scoping. */
+  corpus?: 'vault' | 'rag_chunks' | 'client_memory' | 'project_memory';
+  /** Integer org id for `corpus: 'rag_chunks'` and the memory corpora tenant scoping. */
   organizationId?: number;
+  /**
+   * Scope for `corpus: 'client_memory' | 'project_memory'`. Invoke memory
+   * corpora with `strategy: 'basic'` and reranking/MMR/compression off so they
+   * stay pure-similarity (the document reranker is meaningless for memory atoms).
+   */
+  memoryScope?: MemoryScope;
   /** Result count (default 5). */
   limit?: number;
   /** Similarity floor; when omitted the pipeline default applies. */
@@ -123,6 +130,7 @@ export function optionsForIntent(params: RagRetrievalParams): RetrievalOptions {
     artifactScope: params.artifactScope,
     corpus: params.corpus,
     organizationId: params.organizationId,
+    memoryScope: params.memoryScope,
     persistCitations: params.persistCitations,
     filters: params.filters,
   };
@@ -135,7 +143,16 @@ export function optionsForIntent(params: RagRetrievalParams): RetrievalOptions {
 /** The corpus a retrieval actually read from, for the observability label. */
 function corpusLabel(params: RagRetrievalParams): RagCorpusLabel {
   if (params.artifactScope) return 'project_atoms';
-  return params.corpus === 'rag_chunks' ? 'rag_chunks' : 'vault';
+  switch (params.corpus) {
+    case 'rag_chunks':
+      return 'rag_chunks';
+    case 'client_memory':
+      return 'client_memory';
+    case 'project_memory':
+      return 'project_memory';
+    default:
+      return 'vault';
+  }
 }
 
 /**

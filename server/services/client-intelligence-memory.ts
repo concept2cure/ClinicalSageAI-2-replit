@@ -28,6 +28,7 @@ import {
 } from '../../shared/schema';
 import { eq, and, desc, sql, asc } from 'drizzle-orm';
 import { getEmbeddingService } from './enhancedEmbeddingService.js';
+import { ragRetrieve } from './ragRouter.js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -1481,27 +1482,85 @@ export async function getSharedMemoryPool(
 }
 
 /**
+ * Whether memory semantic search routes through the single ragRouter (default)
+ * or the legacy direct pgvector query. The router path is behaviour-identical —
+ * it runs the same SQL via advancedRAGPipeline with strategy 'basic' and
+ * reranking/MMR/compression off. The kill-switch `MEMORY_RAG_ROUTER=legacy`
+ * reverts instantly if the converged path misbehaves in production, since the
+ * live pgvector path cannot be exercised in CI.
+ */
+function memoryViaRagRouter(): boolean {
+  return process.env.MEMORY_RAG_ROUTER !== 'legacy';
+}
+
+/**
  * Semantic search over client memory entries using pgvector similarity.
+ *
+ * Routes through the single ragRouter (corpus 'client_memory') so memory shares
+ * one retrieval path with the rest of RAG. The rich entry rows are rebuilt from
+ * the router's `sourceRow` passthrough, so callers see the same shape as before
+ * (including the per-atom confidence/importance/verification columns the memory
+ * context assembler ranks on). Legacy direct query kept behind the kill-switch.
  */
 export async function searchMemoryEntriesSemantic(
   profileId: number | null,
   organizationId: number,
   query: string,
   options?: { limit?: number; category?: string; minSimilarity?: number }
- ): Promise<SemanticMemorySearchResult<ClientMemoryEntry>> {
+): Promise<SemanticMemorySearchResult<ClientMemoryEntry>> {
   const limit = Math.max(1, Math.min(options?.limit || 10, 50));
   const minSimilarity = options?.minSimilarity ?? 0.65;
 
+  if (!memoryViaRagRouter()) {
+    return searchMemoryEntriesSemanticDirect(
+      profileId,
+      organizationId,
+      query,
+      limit,
+      minSimilarity,
+      options?.category
+    );
+  }
+
+  const ctx = await ragRetrieve({
+    query,
+    corpus: 'client_memory',
+    organizationId,
+    limit,
+    threshold: minSimilarity,
+    strategy: 'basic',
+    useReranking: false,
+    useMmr: false,
+    useCompression: false,
+    memoryScope: { profileId, category: options?.category },
+  });
+
+  const entries = ctx.documents.map(
+    doc =>
+      ({ ...(doc.sourceRow as object), similarity: doc.finalScore }) as SemanticMemoryHit<ClientMemoryEntry>
+  );
+  return { entries, totalCount: entries.length, query };
+}
+
+/** Legacy direct pgvector query for client memory (kill-switch fallback). */
+async function searchMemoryEntriesSemanticDirect(
+  profileId: number | null,
+  organizationId: number,
+  query: string,
+  limit: number,
+  minSimilarity: number,
+  category?: string
+): Promise<SemanticMemorySearchResult<ClientMemoryEntry>> {
   const embeddingService = getEmbeddingService(pool);
   const embedded = await embeddingService.embed(query, 'text-embedding-3-small');
   const vectorLiteral = `[${embedded.embedding.join(',')}]`;
 
   const profileClause = profileId ? 'AND profile_id = $3' : '';
-  const categoryClause = options?.category ? `AND category = $${profileId ? 5 : 4}` : '';
+  const categoryClause = category ? `AND category = $${profileId ? 5 : 4}` : '';
   const params: any[] = profileId
     ? [vectorLiteral, organizationId, profileId, minSimilarity]
     : [vectorLiteral, organizationId, minSimilarity];
-  if (options?.category) params.push(options.category);
+  if (category) params.push(category);
   params.push(limit);
 
   const rows = await pool.query(
@@ -1529,6 +1588,7 @@ export async function searchMemoryEntriesSemantic(
 
 /**
  * Semantic search over project memory entries using pgvector similarity.
+ * Router shim (corpus 'project_memory'); see searchMemoryEntriesSemantic.
  */
 export async function searchProjectMemoryEntriesSemantic(
   projectProfileId: number | null,
@@ -1540,16 +1600,58 @@ export async function searchProjectMemoryEntriesSemantic(
   const limit = Math.max(1, Math.min(options?.limit || 10, 50));
   const minSimilarity = options?.minSimilarity ?? 0.65;
 
+  if (!memoryViaRagRouter()) {
+    return searchProjectMemoryEntriesSemanticDirect(
+      projectProfileId,
+      projectId,
+      organizationId,
+      query,
+      limit,
+      minSimilarity,
+      options?.category
+    );
+  }
+
+  const ctx = await ragRetrieve({
+    query,
+    corpus: 'project_memory',
+    organizationId,
+    limit,
+    threshold: minSimilarity,
+    strategy: 'basic',
+    useReranking: false,
+    useMmr: false,
+    useCompression: false,
+    memoryScope: { projectId, projectProfileId, category: options?.category },
+  });
+
+  const entries = ctx.documents.map(
+    doc =>
+      ({ ...(doc.sourceRow as object), similarity: doc.finalScore }) as SemanticMemoryHit<ProjectMemoryEntry>
+  );
+  return { entries, totalCount: entries.length, query };
+}
+
+/** Legacy direct pgvector query for project memory (kill-switch fallback). */
+async function searchProjectMemoryEntriesSemanticDirect(
+  projectProfileId: number | null,
+  projectId: number,
+  organizationId: number,
+  query: string,
+  limit: number,
+  minSimilarity: number,
+  category?: string
+): Promise<SemanticMemorySearchResult<ProjectMemoryEntry>> {
   const embeddingService = getEmbeddingService(pool);
   const embedded = await embeddingService.embed(query, 'text-embedding-3-small');
   const vectorLiteral = `[${embedded.embedding.join(',')}]`;
 
   const profileClause = projectProfileId ? 'AND project_profile_id = $4' : '';
-  const categoryClause = options?.category ? `AND category = $${projectProfileId ? 6 : 5}` : '';
+  const categoryClause = category ? `AND category = $${projectProfileId ? 6 : 5}` : '';
   const params: any[] = projectProfileId
     ? [vectorLiteral, organizationId, projectId, projectProfileId, minSimilarity]
     : [vectorLiteral, organizationId, projectId, minSimilarity];
-  if (options?.category) params.push(options.category);
+  if (category) params.push(category);
   params.push(limit);
 
   const rows = await pool.query(
