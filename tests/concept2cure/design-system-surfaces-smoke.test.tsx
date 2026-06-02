@@ -1,11 +1,17 @@
 /**
  * @vitest-environment jsdom
  *
- * Runtime smoke tests for every new Concept2Cure design-system surface
- * ported in this session. Verifies each surface:
+ * Runtime smoke tests for the live Concept2Cure MDX design-system surfaces.
+ * Verifies each surface:
  *   1. Mounts without throwing
  *   2. Renders its page-title h1
  *   3. Doesn't log any unexpected errors to the console
+ *
+ * Scope note: this suite covers the surfaces still wired into the live MDX
+ * shell (`mdx/App.tsx`) — DocumentsPanel plus the Phase 4 lifecycle/system
+ * surfaces. The older `mdx/surfaces/*` prototypes (Vault/Audit/Ivd/Cdx/etc.)
+ * were superseded by the workbench architecture and removed as dead code, so
+ * their smoke cases were dropped with them.
  *
  * These are NOT exhaustive — they're a smoke test that catches:
  *   - import path errors that escaped tsc
@@ -26,26 +32,14 @@ import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { render, cleanup } from '@testing-library/react';
 import * as React from 'react';
 
-// ─── Component imports (all new surfaces + shared components from this session) ─
+// ─── Component imports (live MDX surfaces wired into mdx/App.tsx) ─
 import { DocumentsPanel } from '../../client/src/concept2cure/mdx/components/DocumentsPanel';
-import { EsignModal } from '../../client/src/concept2cure/mdx/components/EsignModal';
 import { EngineeringSurface } from '../../client/src/concept2cure/mdx/surfaces/EngineeringSurface';
 import { UdiSurface } from '../../client/src/concept2cure/mdx/surfaces/UdiSurface';
 import { PostmarketSurface } from '../../client/src/concept2cure/mdx/surfaces/PostmarketSurface';
 import { AnalyticsSurface } from '../../client/src/concept2cure/mdx/surfaces/AnalyticsSurface';
 import { MemorySurface } from '../../client/src/concept2cure/mdx/surfaces/MemorySurface';
 import { AdminSurface } from '../../client/src/concept2cure/mdx/surfaces/AdminSurface';
-import { VaultSurface } from '../../client/src/concept2cure/mdx/surfaces/VaultSurface';
-import { NotificationsSurface } from '../../client/src/concept2cure/mdx/surfaces/NotificationsSurface';
-import { TemplatesSurface } from '../../client/src/concept2cure/mdx/surfaces/TemplatesSurface';
-import { QualitySurface } from '../../client/src/concept2cure/mdx/surfaces/QualitySurface';
-import { IvdSurface } from '../../client/src/concept2cure/mdx/surfaces/IvdSurface';
-import { IvdrSurface } from '../../client/src/concept2cure/mdx/surfaces/IvdrSurface';
-import { CdxSurface } from '../../client/src/concept2cure/mdx/surfaces/CdxSurface';
-import { LdtSurface } from '../../client/src/concept2cure/mdx/surfaces/LdtSurface';
-import { SearchSurface } from '../../client/src/concept2cure/mdx/surfaces/SearchSurface';
-import { OnboardingSurface } from '../../client/src/concept2cure/mdx/surfaces/OnboardingSurface';
-import { ConversationsSurface } from '../../client/src/concept2cure/mdx/surfaces/ConversationsSurface';
 
 import type { Program } from '../../client/src/concept2cure/mdx/data/programs';
 
@@ -138,33 +132,6 @@ describe('design-system surface smoke tests', () => {
     assertNoReactErrors();
   });
 
-  it('EsignModal renders open state without throwing', () => {
-    render(
-      <EsignModal
-        open={true}
-        action="Approve CAPA-0042"
-        target="capa-0042"
-        onCancel={() => {}}
-        onConfirm={() => Promise.resolve()}
-      />,
-    );
-    assertNoReactErrors();
-  });
-
-  it('EsignModal renders nothing when closed', () => {
-    const { container } = render(
-      <EsignModal
-        open={false}
-        action="—"
-        target="—"
-        onCancel={() => {}}
-        onConfirm={() => Promise.resolve()}
-      />,
-    );
-    expect(container.querySelector('.esig-backdrop')).toBeNull();
-    assertNoReactErrors();
-  });
-
   // ─── Phase 4 ─────────────────────────────────────────────────────────
   it('EngineeringSurface renders with program context', () => {
     const { getByText } = render(
@@ -214,96 +181,6 @@ describe('design-system surface smoke tests', () => {
   it('AdminSurface renders members tab by default', () => {
     const { getByText } = render(<AdminSurface onAskAna={askAna} />);
     expect(getByText('Admin and access')).toBeTruthy();
-    assertNoReactErrors();
-  });
-
-  // ─── Phase 5 ─────────────────────────────────────────────────────────
-  it('VaultSurface renders', () => {
-    const { getByText } = render(
-      <VaultSurface onAskAna={askAna} onOpenEditor={openEditor} />,
-    );
-    expect(getByText('Document vault')).toBeTruthy();
-    assertNoReactErrors();
-  });
-
-  it('NotificationsSurface renders', () => {
-    const { getByText } = render(<NotificationsSurface onAskAna={askAna} />);
-    expect(getByText('Notifications')).toBeTruthy();
-    assertNoReactErrors();
-  });
-
-  it('TemplatesSurface renders', () => {
-    const { container } = render(
-      <TemplatesSurface onAskAna={askAna} onOpenEditor={openEditor} />,
-    );
-    /* "Templates" appears in the h1 + section header; assert the page
-       title h1 specifically. */
-    const h1 = container.querySelector('h1.page-title');
-    expect(h1?.textContent).toBe('Templates');
-    assertNoReactErrors();
-  });
-
-  it('QualitySurface renders', () => {
-    const { getByText } = render(
-      <QualitySurface onAskAna={askAna} onOpenEditor={openEditor} />,
-    );
-    expect(getByText('Quality system')).toBeTruthy();
-    assertNoReactErrors();
-  });
-
-  // ─── Phase 6 ─────────────────────────────────────────────────────────
-  it('IvdSurface renders', () => {
-    const { getByText } = render(
-      <IvdSurface program={MOCK_PROGRAM} onAskAna={askAna} onOpenEditor={openEditor} />,
-    );
-    expect(getByText('IVD pathway')).toBeTruthy();
-    assertNoReactErrors();
-  });
-
-  it('IvdrSurface renders', () => {
-    const { getByText } = render(
-      <IvdrSurface program={MOCK_PROGRAM} onAskAna={askAna} onOpenEditor={openEditor} />,
-    );
-    expect(getByText('EU IVDR')).toBeTruthy();
-    assertNoReactErrors();
-  });
-
-  it('CdxSurface renders', () => {
-    const { getByText } = render(
-      <CdxSurface program={MOCK_PROGRAM} onAskAna={askAna} onOpenEditor={openEditor} />,
-    );
-    expect(getByText('Companion diagnostic co-development')).toBeTruthy();
-    assertNoReactErrors();
-  });
-
-  it('LdtSurface renders', () => {
-    const { getByText } = render(
-      <LdtSurface onAskAna={askAna} onOpenEditor={openEditor} />,
-    );
-    expect(getByText('LDT compliance — FDA 2024 rule')).toBeTruthy();
-    assertNoReactErrors();
-  });
-
-  // ─── Phase 8 ─────────────────────────────────────────────────────────
-  it('SearchSurface renders', () => {
-    const { getByText } = render(
-      <SearchSurface program={MOCK_PROGRAM} onAskAna={askAna} />,
-    );
-    expect(getByText('Global search')).toBeTruthy();
-    assertNoReactErrors();
-  });
-
-  it('OnboardingSurface renders', () => {
-    const { getByText } = render(<OnboardingSurface onAskAna={askAna} />);
-    expect(getByText('Migration importer')).toBeTruthy();
-    assertNoReactErrors();
-  });
-
-  it('ConversationsSurface renders', () => {
-    const { getByText } = render(
-      <ConversationsSurface program={MOCK_PROGRAM} onAskAna={askAna} />,
-    );
-    expect(getByText('AnA conversation history')).toBeTruthy();
     assertNoReactErrors();
   });
 });

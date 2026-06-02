@@ -47,8 +47,6 @@ while IFS= read -r f; do
     client/src/concept2cure/mdx/**/*.ts|client/src/concept2cure/mdx/**/*.tsx) ;;
     *) continue ;;
   esac
-  # Skip the type barrel (it's a contract surface; importers live in data files).
-  [ "$f" = "client/src/concept2cure/mdx/types.ts" ] && continue
   # Files with `@kit-registry-no-consumer-yet` in the first 30 lines are
   # explicitly exempt: closed-enum registries / type registries waiting on
   # a kit pane. The marker MUST be removed when the consumer ships.

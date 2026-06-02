@@ -420,11 +420,12 @@ describe.skip('UI consequence loop — export artifacts visible in project conte
   });
 });
 
-describe('useDeliverable — governed export consequence loop', () => {
-  const src = fs.readFileSync(
-    path.join(ROOT, 'client/src/concept2cure/hooks/useDeliverable.ts'),
-    'utf-8'
-  );
+// useDeliverable.ts was removed with the disconnected legacy island in the
+// design-system port (CLAUDE.md) — it was unreachable from ZenApp. The
+// client-side governed-export consequence loop moves to the Phase 3 workbench
+// when it ships. Server-side governed wiring stays covered above.
+describe.skip('useDeliverable — governed export consequence loop', () => {
+  const src = '';
 
   it('reads X-Concept2Cure-Artifact-Id from response headers', () => {
     expect(src).toContain("response.headers.get('X-Concept2Cure-Artifact-Id')");
