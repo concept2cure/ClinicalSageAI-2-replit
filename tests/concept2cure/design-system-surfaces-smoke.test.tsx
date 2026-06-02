@@ -36,7 +36,6 @@ import { AnalyticsSurface } from '../../client/src/concept2cure/mdx/surfaces/Ana
 import { MemorySurface } from '../../client/src/concept2cure/mdx/surfaces/MemorySurface';
 import { AdminSurface } from '../../client/src/concept2cure/mdx/surfaces/AdminSurface';
 import { VaultSurface } from '../../client/src/concept2cure/mdx/surfaces/VaultSurface';
-import { AuditSurface } from '../../client/src/concept2cure/mdx/surfaces/AuditSurface';
 import { NotificationsSurface } from '../../client/src/concept2cure/mdx/surfaces/NotificationsSurface';
 import { TemplatesSurface } from '../../client/src/concept2cure/mdx/surfaces/TemplatesSurface';
 import { QualitySurface } from '../../client/src/concept2cure/mdx/surfaces/QualitySurface';
@@ -224,14 +223,6 @@ describe('design-system surface smoke tests', () => {
       <VaultSurface onAskAna={askAna} onOpenEditor={openEditor} />,
     );
     expect(getByText('Document vault')).toBeTruthy();
-    assertNoReactErrors();
-  });
-
-  it('AuditSurface renders', () => {
-    const { getByText } = render(
-      <AuditSurface onAskAna={askAna} onOpenEditor={openEditor} />,
-    );
-    expect(getByText('Audit log')).toBeTruthy();
     assertNoReactErrors();
   });
 

@@ -8,6 +8,7 @@ import { I } from '../icons';
 import { PMA_MODULES, PMA_PHASES, PMA_TRIAL_METRICS, type PmaPhase } from '../data/pma';
 import type { Program } from '../data/programs';
 import { useProgramExtras } from '../hooks/useProgramExtras';
+import { PathwayPanes } from './pathway/PathwayPanes';
 
 export interface PmaSurfaceProps {
   /** Active PMA program from App.tsx. When null, the surface renders the
@@ -69,7 +70,7 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
     : PMA_TRIAL_METRICS;
   const totalDocs = sourceModules.reduce((s, m) => s + m.docs, 0);
 
-  return (
+  const workspace = (
     <>
       <div className="section-hdr">
         <div>
@@ -161,5 +162,14 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
         ))}
       </div>
     </>
+  );
+
+  return (
+    <PathwayPanes
+      pathway="pma"
+      workspace={workspace}
+      onAskAna={onAskAna}
+      onOpenEditor={onOpenEditor}
+    />
   );
 }
