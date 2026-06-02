@@ -22,7 +22,12 @@
  */
 
 /** Which corpus the retrieval actually read from (derived in the router). */
-export type RagCorpusLabel = 'vault' | 'rag_chunks' | 'project_atoms';
+export type RagCorpusLabel =
+  | 'vault'
+  | 'rag_chunks'
+  | 'project_atoms'
+  | 'client_memory'
+  | 'project_memory';
 /** ok = documents returned; empty = ran but zero docs; error = threw. */
 export type RagOutcome = 'ok' | 'empty' | 'error';
 

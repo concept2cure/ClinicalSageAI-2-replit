@@ -79,13 +79,34 @@ export interface RetrievalOptions {
    * is the single-router path that lets callers reach rag_chunks without a
    * separate retrieval engine. `artifactScope` takes precedence when set.
    */
-  corpus?: 'vault' | 'rag_chunks';
+  corpus?: 'vault' | 'rag_chunks' | 'client_memory' | 'project_memory';
   /**
    * Integer organization id for `corpus: 'rag_chunks'` tenant scoping
    * (rag_documents.organization_id). rag_chunks is not RLS-scoped, so this is
    * applied as an explicit WHERE filter — omitting it returns cross-tenant rows.
+   * Also the tenant scope for the memory corpora (client/project_memory).
    */
   organizationId?: number;
+  /**
+   * Scoping for the memory corpora (`corpus: 'client_memory' | 'project_memory'`).
+   * These run a pure pgvector similarity search over the memory tables, so they
+   * should be invoked with `strategy: 'basic'` and reranking/MMR/compression off
+   * to stay similarity-pure (the document reranker is not meaningful for memory
+   * atoms).
+   */
+  memoryScope?: MemoryScope;
+}
+
+/** Filters for the memory corpora, mirroring the searchMemoryEntriesSemantic query. */
+export interface MemoryScope {
+  /** client_memory: optional profile filter. */
+  profileId?: number | null;
+  /** project_memory: required project filter. */
+  projectId?: number;
+  /** project_memory: optional project-profile filter. */
+  projectProfileId?: number | null;
+  /** Optional category filter (both memory corpora). */
+  category?: string;
 }
 
 export interface RetrievedDocument {
@@ -103,6 +124,15 @@ export interface RetrievedDocument {
   pageNumber?: number;
   sectionTitle?: string | null;
   locator?: string;
+  /**
+   * Opaque passthrough of the originating row, set by corpora whose callers
+   * need the full record back (the memory corpora carry every column here so
+   * the memory shims can reconstruct their rich entry type — confidence,
+   * importance, verification, timestamps — that the document fields above drop).
+   * Reranking/MMR only reorder documents and compression is disabled for these
+   * corpora, so this survives the pipeline untouched.
+   */
+  sourceRow?: Record<string, unknown>;
 }
 
 export interface RAGContext {
@@ -124,7 +154,11 @@ type VaultChunkRow = {
 };
 
 /** Corpus selection threaded through the strategy methods to searchInitial. */
-type CorpusScope = { corpus?: 'vault' | 'rag_chunks'; organizationId?: number };
+type CorpusScope = {
+  corpus?: 'vault' | 'rag_chunks' | 'client_memory' | 'project_memory';
+  organizationId?: number;
+  memory?: MemoryScope;
+};
 
 function buildLocator(row: VaultChunkRow): string | undefined {
   if (row.section_title && row.section_title.trim()) {
@@ -207,6 +241,7 @@ export class AdvancedRAGPipeline {
     const scope: CorpusScope = {
       corpus: options.corpus,
       organizationId: options.organizationId,
+      memory: options.memoryScope,
     };
 
     let candidates: RetrievedDocument[];
@@ -344,6 +379,12 @@ export class AdvancedRAGPipeline {
     }
     if (scope?.corpus === 'rag_chunks') {
       return this.searchRagChunksSimilar(query, limit, threshold, scope.organizationId);
+    }
+    if (scope?.corpus === 'client_memory') {
+      return this.searchClientMemorySimilar(query, limit, threshold, scope);
+    }
+    if (scope?.corpus === 'project_memory') {
+      return this.searchProjectMemorySimilar(query, limit, threshold, scope);
     }
     return this.searchVaultSimilar(query, limit, threshold, organizationUuid);
   }
@@ -803,6 +844,130 @@ Example: {"1": 95, "2": 72, "3": 45}`,
       sectionTitle: row.section_title,
       locator: buildLocator(row),
     }));
+  }
+
+  /**
+   * Wrap a memory row (SELECT *, similarity) as a RetrievedDocument, carrying the
+   * full row in sourceRow so the memory shims reconstruct their rich entry type.
+   */
+  private memoryRowToDocument(
+    row: Record<string, any>,
+    atomType: 'client_memory' | 'project_memory'
+  ): RetrievedDocument {
+    const similarity = Number(row.similarity);
+    return {
+      id: String(row.id),
+      documentId: String(row.id),
+      content: typeof row.content === 'string' ? row.content : String(row.content ?? ''),
+      title: typeof row.title === 'string' ? row.title : String(row.title ?? ''),
+      atomType,
+      initialScore: similarity,
+      finalScore: similarity,
+      sourceRow: row,
+    };
+  }
+
+  /**
+   * Initial retrieval against the client_memory_entries corpus. Byte-for-byte the
+   * same query (and param order) as the legacy searchMemoryEntriesSemantic, now
+   * reached through the single router. Invoke with strategy 'basic' and
+   * reranking/MMR/compression off so ranking stays pure similarity.
+   */
+  private async searchClientMemorySimilar(
+    query: string,
+    limit: number,
+    threshold: number,
+    scope: CorpusScope
+  ): Promise<RetrievedDocument[]> {
+    const organizationId = scope.organizationId;
+    if (organizationId === undefined || organizationId === null) return [];
+    const profileId = scope.memory?.profileId ?? null;
+    const category = scope.memory?.category;
+
+    const queryResult = await this.embeddingService.embed(query, 'text-embedding-3-small');
+    const vector = `[${queryResult.embedding.join(',')}]`;
+
+    const params: Array<string | number> = profileId
+      ? [vector, organizationId, profileId, threshold]
+      : [vector, organizationId, threshold];
+    const profileClause = profileId ? 'AND profile_id = $3' : '';
+    const thresholdIdx = profileId ? 4 : 3;
+    let categoryClause = '';
+    if (category) {
+      params.push(category);
+      categoryClause = `AND category = $${params.length}`;
+    }
+    params.push(limit);
+
+    const { rows } = await this.pool.query(
+      `SELECT
+         *,
+         1 - (embedding <=> $1::vector) AS similarity
+       FROM client_memory_entries
+       WHERE organization_id = $2
+         ${profileClause}
+         AND status = 'active'
+         AND embedding IS NOT NULL
+         AND 1 - (embedding <=> $1::vector) >= $${thresholdIdx}
+         ${categoryClause}
+       ORDER BY embedding <=> $1::vector
+       LIMIT $${params.length}`,
+      params
+    );
+
+    return rows.map(row => this.memoryRowToDocument(row, 'client_memory'));
+  }
+
+  /**
+   * Initial retrieval against the project_memory_entries corpus. Mirror of the
+   * legacy searchProjectMemoryEntriesSemantic query and param order.
+   */
+  private async searchProjectMemorySimilar(
+    query: string,
+    limit: number,
+    threshold: number,
+    scope: CorpusScope
+  ): Promise<RetrievedDocument[]> {
+    const organizationId = scope.organizationId;
+    const projectId = scope.memory?.projectId;
+    if (organizationId === undefined || organizationId === null) return [];
+    if (projectId === undefined || projectId === null) return [];
+    const projectProfileId = scope.memory?.projectProfileId ?? null;
+    const category = scope.memory?.category;
+
+    const queryResult = await this.embeddingService.embed(query, 'text-embedding-3-small');
+    const vector = `[${queryResult.embedding.join(',')}]`;
+
+    const params: Array<string | number> = projectProfileId
+      ? [vector, organizationId, projectId, projectProfileId, threshold]
+      : [vector, organizationId, projectId, threshold];
+    const profileClause = projectProfileId ? 'AND project_profile_id = $4' : '';
+    const thresholdIdx = projectProfileId ? 5 : 4;
+    let categoryClause = '';
+    if (category) {
+      params.push(category);
+      categoryClause = `AND category = $${params.length}`;
+    }
+    params.push(limit);
+
+    const { rows } = await this.pool.query(
+      `SELECT
+         *,
+         1 - (embedding <=> $1::vector) AS similarity
+       FROM project_memory_entries
+       WHERE organization_id = $2
+         AND project_id = $3
+         ${profileClause}
+         AND status = 'active'
+         AND embedding IS NOT NULL
+         AND 1 - (embedding <=> $1::vector) >= $${thresholdIdx}
+         ${categoryClause}
+       ORDER BY embedding <=> $1::vector
+       LIMIT $${params.length}`,
+      params
+    );
+
+    return rows.map(row => this.memoryRowToDocument(row, 'project_memory'));
   }
 
   private async persistEvidenceCitations(
