@@ -5549,6 +5549,11 @@ export const conversationWorkingMemory = pgTable(
       exclusions: string[];
     }>(), // Machine-parseable structured memory
     messageCountAtGeneration: integer('message_count_at_generation').notNull(),
+    // Vector embedding of `summary` for semantic recall, mirroring
+    // client_memory_entries / project_memory_entries. Nullable and additive:
+    // populated only when ENABLE_SEMANTIC_WORKING_MEMORY is on, ignored by the
+    // recency-only read path, and skipped by similarity search when null.
+    embedding: vector('embedding', { dimensions: 1536 }),
     generatedAt: timestamp('generated_at').defaultNow().notNull(),
   },
   table => ({
