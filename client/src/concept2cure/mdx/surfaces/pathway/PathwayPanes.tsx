@@ -16,6 +16,7 @@ import { DossierStore, useSection } from '../../store/dossierStore';
 import { FilesTreePane } from './FilesTreePane';
 import { AnaDrafter } from '../../components/AnaDrafter';
 import { usePathwayTabsData } from '../../hooks/usePathwayTabsData';
+import { useDossierHydration } from '../../hooks/useDossier';
 import type {
   Approval,
   AuditEvent,
@@ -815,6 +816,8 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
   const [drafterCorr, setDrafterCorr] = React.useState<Correspondence | null>(null);
   // Live backend data (audit / correspondence / approvals) with kit-fixture fallback.
   const data = usePathwayTabsData(pathway, programId);
+  // Async-seed the dossier store (Files tree + drawer) from the real backend.
+  const dossier = useDossierHydration(pathway, programId);
 
   const counts: PaneCounts = {
     audit: data.audit.length,
@@ -848,7 +851,13 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
           <CorrespondencePane pathway={pathway} items={data.correspondence} onOpenSection={openSection} onAskAna={onAskAna} onDraftResponse={(c) => setDrafterCorr(c)} />
         )}
         {tab === 'approvals' && <ApprovalsPane approvals={data.approvals} onOpenSection={openSection} />}
-        {tab === 'files' && <FilesTreePane pathway={pathway} onOpenSection={openSection} />}
+        {tab === 'files' && (
+          <FilesTreePane
+            key={`ftp-${pathway}-${dossier.version}`}
+            pathway={pathway}
+            onOpenSection={openSection}
+          />
+        )}
       </div>
       <DossierDrawer
         open={!!drawerTarget}

@@ -416,6 +416,60 @@ function listDir(prefix: string): DossierDirEntry[] {
   return entries.sort((a, b) => (Number(b.isDir) - Number(a.isDir)) || a.name.localeCompare(b.name));
 }
 
+/* ─────────────── Backend hydration ─────────────── */
+/* Async-seed path: replace a pathway's fixture dossier with the program's real
+   c2c_documents sections. Only invoked when the backend returns sections (see
+   useDossierHydration); otherwise the fixture seed stands. Writes through the
+   same sectionFolder() path scheme the tree + drawer read, so both follow with
+   no component change. */
+
+const backendDocId = new Map<PathwayId, string>();
+
+export interface HydrateSection {
+  key: string | number;
+  label: string;
+  status?: string;
+  version?: number;
+  owner?: string;
+  when?: string;
+  body?: string;
+  attachments?: DossierAttachment[];
+}
+
+function clearPathway(pathway: PathwayId): void {
+  const prefix = rootFor(pathway) + '/';
+  Array.from(fs.keys()).forEach((k) => { if (k.startsWith(prefix)) fs.delete(k); });
+}
+
+function hydratePathway(pathway: PathwayId, docId: string | null, sections: HydrateSection[]): void {
+  if (!sections.length) return; // nothing from the backend → keep the fixtures
+  clearPathway(pathway);
+  if (docId) backendDocId.set(pathway, docId); else backendDocId.delete(pathway);
+  const touched: string[] = [];
+  sections.forEach((s) => {
+    const folder = sectionFolder(pathway, s.key, s.label);
+    const body = s.body ?? '';
+    const bodyPath = `${folder}/body.md`;
+    const metaPath = `${folder}/meta.json`;
+    const attPath = `${folder}/attachments`;
+    fs.set(bodyPath, { kind: 'file', body, size: body.length, when: s.when, who: s.owner });
+    fs.set(metaPath, { kind: 'file', meta: {
+      sectionId: s.key, label: s.label, status: s.status || 'draft',
+      version: s.version || 1, lastEdited: s.when, lastEditor: s.owner || '—',
+      signers: [], blocker: null,
+    } });
+    fs.set(attPath, { kind: 'dir', files: s.attachments || [] });
+    touched.push(bodyPath, metaPath, attPath);
+  });
+  // notify() hits both the path subscribers (an open drawer's useSection) and the
+  // global subscribers; the tree itself remounts via a version key in PathwayPanes.
+  touched.forEach((p) => notify(p));
+}
+
+function getBackendDocId(pathway: PathwayId): string | undefined {
+  return backendDocId.get(pathway);
+}
+
 /* ─────────────── Seed ─────────────── */
 
 function seed(): void {
@@ -499,6 +553,9 @@ export const DossierStore = {
   guessKind,
   fs,
   listDir,
+  clearPathway,
+  hydratePathway,
+  getBackendDocId,
 };
 
 /** Subscribe a component to a single node path; re-renders on write. */
