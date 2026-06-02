@@ -410,6 +410,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
       workspace={workspace}
       onAskAna={onAskAna}
       onOpenEditor={onOpenEditor}
+      programId={program?.id ?? null}
     />
   );
 }

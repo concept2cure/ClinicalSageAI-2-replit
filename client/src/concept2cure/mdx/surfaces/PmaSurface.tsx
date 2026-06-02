@@ -170,6 +170,7 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
       workspace={workspace}
       onAskAna={onAskAna}
       onOpenEditor={onOpenEditor}
+      programId={program?.id ?? null}
     />
   );
 }
