@@ -119,11 +119,11 @@ describe('verifyAnswerGrounding', () => {
     expect(r.grounded).toBe(1);
   });
 
-  it('flags a fabricated PMID and reports the bare number', () => {
+  it('flags a fabricated PMID, reporting the labeled form but matching by number', () => {
     const r = verifyAnswerGrounding('See PMID: 99999999 for the meta-analysis.', 'unrelated evidence');
     expect(r.checked).toBe(1);
     expect(r.grounded).toBe(0);
-    expect(r.unsupported).toEqual([{ kind: 'pmid', text: '99999999' }]);
+    expect(r.unsupported).toEqual([{ kind: 'pmid', text: 'PMID: 99999999' }]);
   });
 
   it('grounds a DOI present in the evidence, trimming trailing punctuation', () => {
@@ -165,5 +165,31 @@ describe('verifyAnswerGrounding', () => {
     const r = verifyAnswerGrounding('Both NCT01234567 and ISRCTN87654321 are relevant.', evidence);
     expect(r.checked).toBe(2); // exactly two ids, no spurious K/P/DEN matches
     expect(r.grounded).toBe(2);
+  });
+
+  // FDA drug submission numbers (biopharma analogues of 510(k)) — a fabricated
+  // reference-product NDA/BLA is the biopharma equivalent of an invented predicate.
+  it('grounds an NDA number present in the evidence, regardless of spacing', () => {
+    const evidence = 'Drugs@FDA returned application NDA021436 for the reference product.';
+    const r = verifyAnswerGrounding('The reference product is NDA 021436.', evidence);
+    expect(r.checked).toBe(1);
+    expect(r.grounded).toBe(1); // "021436" matches despite the space difference
+  });
+
+  it('flags fabricated NDA, BLA and ANDA numbers and reports the labeled form', () => {
+    const r = verifyAnswerGrounding(
+      'Cite NDA 099999, BLA 125999, and ANDA 091999 as references.',
+      'no matching application numbers here',
+    );
+    expect(r.checked).toBe(3);
+    expect(r.grounded).toBe(0);
+    expect(r.unsupported.map(u => u.kind).sort()).toEqual(['fda_anda', 'fda_bla', 'fda_nda']);
+    expect(r.unsupported.find(u => u.kind === 'fda_bla')?.text).toBe('BLA 125999');
+  });
+
+  it('does not let an ANDA citation double-count as an NDA', () => {
+    const r = verifyAnswerGrounding('The generic references ANDA 091999.', 'no application here');
+    expect(r.checked).toBe(1); // ANDA must not also trip the NDA pattern
+    expect(r.unsupported[0].kind).toBe('fda_anda');
   });
 });
