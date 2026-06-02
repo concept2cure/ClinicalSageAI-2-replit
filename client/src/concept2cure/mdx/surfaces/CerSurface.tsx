@@ -13,6 +13,7 @@ import { CER_EXPORT, CER_LITERATURE, CER_SIGNALS } from '../data/cer';
 import type { Program } from '../data/programs';
 import { useK510EstarSections } from '../hooks/useK510';
 import { useProgramExtras } from '../hooks/useProgramExtras';
+import { PathwayPanes } from './pathway/PathwayPanes';
 
 export interface CerSurfaceProps {
   /** Active CER program from App.tsx. Sections and title come from here. */
@@ -50,7 +51,7 @@ export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
   const literatureTotal = extras.literatureTotal > 0
     ? extras.literatureTotal
     : sourceLiterature.reduce((s, l) => s + l.hits, 0);
-  return (
+  const workspace = (
     <>
       <div className="section-hdr">
         <div>
@@ -341,5 +342,13 @@ export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
         </div>
       </div>
     </>
+  );
+
+  return (
+    <PathwayPanes
+      pathway="cer"
+      workspace={workspace}
+      onAskAna={onAskAna}
+    />
   );
 }
