@@ -2,6 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../server/services/working-memory.js', () => ({
   getLatestWorkingMemoryByThread: vi.fn(),
+  // Semantic working-memory recall defaults off, so these tests exercise the
+  // unchanged recency path (getLatestWorkingMemoryByThread).
+  isSemanticWorkingMemoryEnabled: vi.fn(() => false),
+  searchWorkingMemorySemantic: vi.fn(async () => []),
 }));
 
 vi.mock('../../server/services/client-intelligence-memory.js', () => ({
