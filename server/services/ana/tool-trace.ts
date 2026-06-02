@@ -112,18 +112,38 @@ export function collectTracesFromHistory(history: HistoryMessage[], maxEntries =
 /**
  * Format collected traces into a compact continuity note injected into AnA's
  * context next turn. Returns '' when there is nothing to carry forward.
+ *
+ * Successful and unsuccessful attempts are reported separately and given
+ * different guidance: reuse the findings of tools that succeeded (do not repeat
+ * them), but treat a failed or empty attempt as unfinished — do not loop on the
+ * same call, yet do not assume it covered the ground either. Lumping the two
+ * together let a failed search read as "already done", leaving a real evidence
+ * gap silently unfilled.
  */
 export function formatTraceForContext(entries: ToolTraceEntry[]): string {
   if (entries.length === 0) return '';
-  const lines = entries.map(e => {
-    const mark = e.status === 'success' ? '' : ` [${e.status}]`;
-    return `- ${e.label}${mark}: ${e.resultSummary}`;
-  });
-  return (
-    'Tools you have already run earlier in this conversation (reuse these ' +
-    'findings; do not repeat them needlessly):\n' +
-    lines.join('\n')
-  );
+  const succeeded = entries.filter(e => e.status === 'success');
+  const failed = entries.filter(e => e.status !== 'success');
+  const sections: string[] = [];
+
+  if (succeeded.length > 0) {
+    sections.push(
+      'Tools you have already run earlier in this conversation (reuse these ' +
+        'findings; do not repeat them needlessly):\n' +
+        succeeded.map(e => `- ${e.label}: ${e.resultSummary}`).join('\n')
+    );
+  }
+
+  if (failed.length > 0) {
+    sections.push(
+      'Tool attempts that did not return a usable result (do not loop on the ' +
+        'same call; retry only with a changed approach, or proceed and state ' +
+        'plainly what could not be retrieved — do not treat these as covered):\n' +
+        failed.map(e => `- ${e.label} [${e.status}]: ${e.resultSummary}`).join('\n')
+    );
+  }
+
+  return sections.join('\n\n');
 }
 
 /** Grounding verdict as persisted on the assistant message metadata. */
