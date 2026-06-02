@@ -133,6 +133,15 @@ export interface RetrievedDocument {
    * corpora, so this survives the pipeline untouched.
    */
   sourceRow?: Record<string, unknown>;
+  /**
+   * The index-time embedding for this candidate, carried straight out of the
+   * vector store (the `embedding` column we already rank on) so MMR can measure
+   * diversity without re-embedding the content via a separate OpenAI round-trip.
+   * Only populated when MMR is requested (`needEmbeddings`); corpora that don't
+   * expose a stored vector (e.g. project atoms via searchHybrid) leave it unset,
+   * and MMR embeds just those stragglers.
+   */
+  embedding?: number[];
 }
 
 export interface RAGContext {
@@ -151,6 +160,8 @@ type VaultChunkRow = {
   page_number: number | null;
   section_title: string | null;
   similarity: number;
+  /** Stored index vector in pgvector text form ('[a,b,...]'); only selected when needEmbeddings. */
+  embedding?: string | null;
 };
 
 /** Corpus selection threaded through the strategy methods to searchInitial. */
@@ -158,7 +169,38 @@ type CorpusScope = {
   corpus?: 'vault' | 'rag_chunks' | 'client_memory' | 'project_memory';
   organizationId?: number;
   memory?: MemoryScope;
+  /**
+   * Pull each candidate's stored embedding out of the vector search so MMR can
+   * reuse it instead of re-embedding. Set only when the caller requested MMR,
+   * so non-MMR queries don't pay to ship vector text they won't use.
+   */
+  needEmbeddings?: boolean;
 };
+
+/**
+ * Parse a pgvector value into a number[]. Without a registered pg type parser
+ * the column arrives as the text form '[a,b,...]'; tolerate an already-parsed
+ * numeric array too. Returns undefined on anything malformed so callers fall
+ * back to embedding/lexical paths rather than ranking on a partial vector.
+ */
+export function parsePgVector(value: unknown): number[] | undefined {
+  if (Array.isArray(value)) {
+    return value.every(n => typeof n === 'number' && Number.isFinite(n))
+      ? (value as number[])
+      : undefined;
+  }
+  if (typeof value !== 'string' || value.length < 2) return undefined;
+  const inner = value.charCodeAt(0) === 0x5b /* [ */ ? value.slice(1, -1) : value;
+  if (!inner) return undefined;
+  const parts = inner.split(',');
+  const out = new Array<number>(parts.length);
+  for (let i = 0; i < parts.length; i++) {
+    const n = Number(parts[i]);
+    if (!Number.isFinite(n)) return undefined;
+    out[i] = n;
+  }
+  return out;
+}
 
 function buildLocator(row: VaultChunkRow): string | undefined {
   if (row.section_title && row.section_title.trim()) {
@@ -242,6 +284,8 @@ export class AdvancedRAGPipeline {
       corpus: options.corpus,
       organizationId: options.organizationId,
       memory: options.memoryScope,
+      // Only carry stored vectors out of the search when MMR will consume them.
+      needEmbeddings: !!options.useMmr,
     };
 
     let candidates: RetrievedDocument[];
@@ -378,7 +422,13 @@ export class AdvancedRAGPipeline {
       return this.searchProjectAtoms(query, limit, threshold, artifactScope);
     }
     if (scope?.corpus === 'rag_chunks') {
-      return this.searchRagChunksSimilar(query, limit, threshold, scope.organizationId);
+      return this.searchRagChunksSimilar(
+        query,
+        limit,
+        threshold,
+        scope.organizationId,
+        scope.needEmbeddings
+      );
     }
     if (scope?.corpus === 'client_memory') {
       return this.searchClientMemorySimilar(query, limit, threshold, scope);
@@ -386,7 +436,13 @@ export class AdvancedRAGPipeline {
     if (scope?.corpus === 'project_memory') {
       return this.searchProjectMemorySimilar(query, limit, threshold, scope);
     }
-    return this.searchVaultSimilar(query, limit, threshold, organizationUuid);
+    return this.searchVaultSimilar(
+      query,
+      limit,
+      threshold,
+      organizationUuid,
+      scope?.needEmbeddings
+    );
   }
 
   /**
@@ -623,9 +679,11 @@ Example: {"1": 95, "2": 72, "3": 45}`,
    * Maximal Marginal Relevance for diversity.
    *
    * Diversity is measured as cosine similarity in embedding space (the same
-   * space retrieval ranks in), not word overlap. Candidate contents are
-   * embedded once via the cached embedding service; if that fails we fall
-   * back to lexical Jaccard similarity so MMR still degrades gracefully.
+   * space retrieval ranks in), not word overlap. Vectors are reused from the
+   * vector store where the candidates were just retrieved (carried on
+   * `RetrievedDocument.embedding`); only candidates that arrived without one are
+   * embedded via the embedding service. If that embedding fails we fall back to
+   * lexical Jaccard similarity so MMR still degrades gracefully.
    */
   private async applyMmr(
     documents: RetrievedDocument[],
@@ -634,22 +692,42 @@ Example: {"1": 95, "2": 72, "3": 45}`,
   ): Promise<RetrievedDocument[]> {
     if (documents.length <= limit) return documents;
 
-    // Embed all candidate contents once (cached) for cosine-based diversity.
-    let vectors: Array<number[] | null>;
-    try {
-      const embedded = await this.embeddingService.embedBatch(
-        documents.map(d => d.content || ''),
-        'text-embedding-3-small'
-      );
-      vectors = embedded.map(e => e.embedding);
-    } catch (error) {
-      console.warn('[RAG] MMR embedding failed, using lexical similarity fallback:', error);
-      vectors = documents.map(() => null);
+    // Reuse the index-time vectors carried out of the vector store; only embed
+    // the stragglers (e.g. project atoms via searchHybrid) that didn't carry
+    // one. This avoids re-embedding the whole candidate set — those contents are
+    // never query cache hits, so the old path paid a full OpenAI batch call on
+    // every MMR query.
+    const vectors: Array<number[] | null> = documents.map(d => d.embedding ?? null);
+    const missing: number[] = [];
+    for (let i = 0; i < vectors.length; i++) {
+      if (!vectors[i]) missing.push(i);
+    }
+    if (missing.length > 0) {
+      try {
+        const embedded = await this.embeddingService.embedBatch(
+          missing.map(i => documents[i].content || ''),
+          'text-embedding-3-small'
+        );
+        missing.forEach((docIdx, k) => {
+          vectors[docIdx] = embedded[k]?.embedding ?? null;
+        });
+      } catch (error) {
+        console.warn(
+          '[RAG] MMR embedding failed for uncarried candidates, using lexical fallback:',
+          error
+        );
+      }
     }
 
+    // Normalize once so each pairwise diversity check is a single dot product
+    // rather than recomputing both vector norms on every comparison.
+    const unit: Array<number[] | null> = vectors.map(v => (v ? this.normalize(v) : null));
+
     const similarity = (i: number, j: number): number => {
-      if (vectors[i] && vectors[j]) {
-        return this.cosineSimilarity(vectors[i] as number[], vectors[j] as number[]);
+      const a = unit[i];
+      const b = unit[j];
+      if (a && b) {
+        return this.dotProduct(a, b);
       }
       return this.calculateTextSimilarity(documents[i].content, documents[j].content);
     };
@@ -741,10 +819,15 @@ Example: {"1": 95, "2": 72, "3": 45}`,
     query: string,
     limit: number,
     threshold: number,
-    organizationUuid?: string
+    organizationUuid?: string,
+    needEmbeddings?: boolean
   ): Promise<RetrievedDocument[]> {
     const queryResult = await this.embeddingService.embed(query, 'text-embedding-3-small');
     const vector = `[${queryResult.embedding.join(',')}]`;
+
+    // Ship the stored vector (as text) only when MMR will reuse it. SELECT-list
+    // columns take no params, so this doesn't shift the $1..$3 placeholders.
+    const embeddingCol = needEmbeddings ? 'c.embedding::text AS embedding,' : '';
 
     return withTenantContext(this.pool, organizationUuid, async client => {
       const { rows } = await client.query<VaultChunkRow>(
@@ -756,6 +839,7 @@ Example: {"1": 95, "2": 72, "3": 45}`,
           c.chunk_text AS content,
           c.page_number AS page_number,
           c.section_title AS section_title,
+          ${embeddingCol}
           1 - (c.embedding <=> $1::vector) AS similarity
         FROM vault.document_chunks c
         JOIN vault.documents d ON d.id = c.document_id
@@ -779,6 +863,7 @@ Example: {"1": 95, "2": 72, "3": 45}`,
         pageNumber: row.page_number ?? undefined,
         sectionTitle: row.section_title,
         locator: buildLocator(row),
+        embedding: needEmbeddings ? parsePgVector(row.embedding) : undefined,
       }));
     });
   }
@@ -798,7 +883,8 @@ Example: {"1": 95, "2": 72, "3": 45}`,
     query: string,
     limit: number,
     threshold: number,
-    organizationId?: number
+    organizationId?: number,
+    needEmbeddings?: boolean
   ): Promise<RetrievedDocument[]> {
     const queryResult = await this.embeddingService.embed(query, 'text-embedding-3-small');
     const vector = `[${queryResult.embedding.join(',')}]`;
@@ -810,6 +896,9 @@ Example: {"1": 95, "2": 72, "3": 45}`,
       orgFilter = `AND d.organization_id = $${params.length}`;
     }
 
+    // Ship the stored vector (as text) only when MMR will reuse it.
+    const embeddingCol = needEmbeddings ? 'c.embedding::text AS embedding,' : '';
+
     const { rows } = await this.pool.query<VaultChunkRow>(
       `
         SELECT
@@ -819,6 +908,7 @@ Example: {"1": 95, "2": 72, "3": 45}`,
           c.content AS content,
           c.page_number AS page_number,
           c.section_title AS section_title,
+          ${embeddingCol}
           1 - (c.embedding <=> $1::vector) AS similarity
         FROM rag_chunks c
         JOIN rag_documents d ON d.id = c.document_id
@@ -843,6 +933,7 @@ Example: {"1": 95, "2": 72, "3": 45}`,
       pageNumber: row.page_number ?? undefined,
       sectionTitle: row.section_title,
       locator: buildLocator(row),
+      embedding: needEmbeddings ? parsePgVector(row.embedding) : undefined,
     }));
   }
 
@@ -852,7 +943,8 @@ Example: {"1": 95, "2": 72, "3": 45}`,
    */
   private memoryRowToDocument(
     row: Record<string, any>,
-    atomType: 'client_memory' | 'project_memory'
+    atomType: 'client_memory' | 'project_memory',
+    needEmbeddings?: boolean
   ): RetrievedDocument {
     const similarity = Number(row.similarity);
     return {
@@ -864,6 +956,9 @@ Example: {"1": 95, "2": 72, "3": 45}`,
       initialScore: similarity,
       finalScore: similarity,
       sourceRow: row,
+      // `SELECT *` already returns the vector; only spend the parse when MMR
+      // will use it (memory corpora normally run MMR-off, so this stays unset).
+      embedding: needEmbeddings ? parsePgVector(row.embedding) : undefined,
     };
   }
 
@@ -915,7 +1010,7 @@ Example: {"1": 95, "2": 72, "3": 45}`,
       params
     );
 
-    return rows.map(row => this.memoryRowToDocument(row, 'client_memory'));
+    return rows.map(row => this.memoryRowToDocument(row, 'client_memory', scope.needEmbeddings));
   }
 
   /**
@@ -967,7 +1062,7 @@ Example: {"1": 95, "2": 72, "3": 45}`,
       params
     );
 
-    return rows.map(row => this.memoryRowToDocument(row, 'project_memory'));
+    return rows.map(row => this.memoryRowToDocument(row, 'project_memory', scope.needEmbeddings));
   }
 
   private async persistEvidenceCitations(
@@ -1062,20 +1157,30 @@ Example: {"1": 95, "2": 72, "3": 45}`,
   }
 
   /**
-   * Cosine similarity between two embedding vectors.
+   * Scale a vector to unit length once, up front. Cosine similarity between two
+   * unit vectors is then just their dot product, so MMR's inner loop avoids
+   * recomputing norms on every pairwise comparison. A zero vector maps to zero
+   * (yields 0 similarity), matching the old guard.
    */
-  private cosineSimilarity(a: number[], b: number[]): number {
-    let dot = 0;
-    let normA = 0;
-    let normB = 0;
+  private normalize(v: number[]): number[] {
+    let norm = 0;
+    for (let i = 0; i < v.length; i++) norm += v[i] * v[i];
+    norm = Math.sqrt(norm);
+    if (norm === 0) return new Array<number>(v.length).fill(0);
+    const out = new Array<number>(v.length);
+    for (let i = 0; i < v.length; i++) out[i] = v[i] / norm;
+    return out;
+  }
+
+  /**
+   * Dot product of two vectors. On unit-normalized inputs this equals cosine
+   * similarity; on zero vectors it returns 0.
+   */
+  private dotProduct(a: number[], b: number[]): number {
     const len = Math.min(a.length, b.length);
-    for (let i = 0; i < len; i++) {
-      dot += a[i] * b[i];
-      normA += a[i] * a[i];
-      normB += b[i] * b[i];
-    }
-    if (normA === 0 || normB === 0) return 0;
-    return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+    let dot = 0;
+    for (let i = 0; i < len; i++) dot += a[i] * b[i];
+    return dot;
   }
 
   /**
