@@ -70,4 +70,43 @@ describe('verifyAnswerGrounding', () => {
     expect(r.unsupported[0].text.length).toBeLessThanOrEqual(80);
     expect(r.unsupported[0].text.endsWith('…')).toBe(true);
   });
+
+  // Trial-registry coverage beyond US NCT ids — EU and UK/international trials
+  // are just as fabricatable and must equally come from the tool evidence.
+  it('grounds an ISRCTN id present in the evidence', () => {
+    const evidence = 'The UK registry lists ISRCTN12345678 for this indication.';
+    const r = verifyAnswerGrounding('See ISRCTN12345678 for the UK arm.', evidence);
+    expect(r.checked).toBe(1);
+    expect(r.grounded).toBe(1);
+  });
+
+  it('flags a fabricated ISRCTN id not in the evidence', () => {
+    const r = verifyAnswerGrounding('The UK study was ISRCTN87654321.', 'unrelated evidence');
+    expect(r.checked).toBe(1);
+    expect(r.grounded).toBe(0);
+    expect(r.unsupported).toEqual([{ kind: 'isrctn', text: 'ISRCTN87654321' }]);
+  });
+
+  it('grounds a EudraCT number present in the evidence', () => {
+    const evidence = 'EU CTR record: 2019-001234-12 enrolled across five member states.';
+    const r = verifyAnswerGrounding('The EU trial is EudraCT 2019-001234-12.', evidence);
+    expect(r.checked).toBe(1);
+    expect(r.grounded).toBe(1);
+  });
+
+  it('flags a fabricated EudraCT number not in the evidence', () => {
+    const r = verifyAnswerGrounding('Registered as 2020-009999-88 in the EU.', 'no EU trial here');
+    expect(r.checked).toBe(1);
+    expect(r.grounded).toBe(0);
+    expect(r.unsupported).toEqual([{ kind: 'eudract', text: '2020-009999-88' }]);
+  });
+
+  it('counts NCT, ISRCTN and EudraCT ids together across registries', () => {
+    const evidence = 'Evidence mentions NCT01234567 only.';
+    const answer = 'See NCT01234567, ISRCTN87654321, and EudraCT 2020-009999-88.';
+    const r = verifyAnswerGrounding(answer, evidence);
+    expect(r.checked).toBe(3);
+    expect(r.grounded).toBe(1); // only the NCT is in evidence
+    expect(r.unsupported.map(u => u.kind).sort()).toEqual(['eudract', 'isrctn']);
+  });
 });
