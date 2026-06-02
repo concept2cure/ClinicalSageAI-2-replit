@@ -86,6 +86,33 @@ describe('formatTraceForContext', () => {
     expect(note).toContain('- Searching the document for "x" [error]: error: bad regex');
   });
 
+  it('separates successful tools from failed attempts with distinct guidance', () => {
+    const note = formatTraceForContext([
+      { tool: 'a', label: 'Analyzing the document structure', status: 'success', resultSummary: '8 sections' },
+      { tool: 'b', label: 'Searching ClinicalTrials', status: 'error', resultSummary: 'error: upstream timeout' },
+      { tool: 'c', label: 'Looking up the predicate', status: 'not_found', resultSummary: 'no match' },
+    ]);
+    // Succeeded tools live under the reuse guidance; failures do not.
+    const reuseIdx = note.indexOf('reuse these');
+    const failIdx = note.indexOf('did not return a usable result');
+    expect(reuseIdx).toBeGreaterThanOrEqual(0);
+    expect(failIdx).toBeGreaterThan(reuseIdx);
+    // The failure guidance explicitly tells AnA not to treat these as covered.
+    expect(note).toContain('do not treat these as covered');
+    expect(note).toContain('- Searching ClinicalTrials [error]: error: upstream timeout');
+    expect(note).toContain('- Looking up the predicate [not_found]: no match');
+    // The successful tool is not pulled into the failure section.
+    expect(note.slice(failIdx)).not.toContain('Analyzing the document structure');
+  });
+
+  it('omits the reuse section entirely when every attempt failed', () => {
+    const note = formatTraceForContext([
+      { tool: 'b', label: 'Searching ClinicalTrials', status: 'error', resultSummary: 'error: upstream timeout' },
+    ]);
+    expect(note).not.toContain('reuse these');
+    expect(note).toContain('did not return a usable result');
+  });
+
   it('returns an empty string when there is nothing to carry forward', () => {
     expect(formatTraceForContext([])).toBe('');
   });
