@@ -5,6 +5,7 @@ import {
   dedupeAtoms,
   orchestrateAtoms,
   DEFAULT_MEMORY_POLICY,
+  SEMANTIC_WORKING_MEMORY_POLICY,
   type MemoryPolicy,
 } from '../memory-orchestrator.js';
 import type { MemoryLayer, RetrievedMemoryAtom } from '../memory-context-assembler.js';
@@ -179,6 +180,47 @@ describe('memory-orchestrator', () => {
       // working memory first (pinned), then strong (0.9) then weak (0.3)
       expect(ranked.map(a => a.id)).toEqual([1, 10, 11]);
       expect(ranked[0].layer).toBe('working_memory');
+    });
+  });
+
+  describe('SEMANTIC_WORKING_MEMORY_POLICY', () => {
+    it('changes only the working_memory weights (semantic layers untouched)', () => {
+      expect(SEMANTIC_WORKING_MEMORY_POLICY.ranking.byLayer.client_memory).toEqual(
+        DEFAULT_MEMORY_POLICY.ranking.byLayer.client_memory
+      );
+      expect(SEMANTIC_WORKING_MEMORY_POLICY.ranking.byLayer.project_memory).toEqual(
+        DEFAULT_MEMORY_POLICY.ranking.byLayer.project_memory
+      );
+      expect(SEMANTIC_WORKING_MEMORY_POLICY.forgetting).toEqual(DEFAULT_MEMORY_POLICY.forgetting);
+      expect(SEMANTIC_WORKING_MEMORY_POLICY.ranking.byLayer.working_memory).not.toEqual(
+        DEFAULT_MEMORY_POLICY.ranking.byLayer.working_memory
+      );
+    });
+
+    it('ranks working memory by similarity instead of a flat pin', () => {
+      // A highly-relevant working-memory summary outranks a weak project atom...
+      const wmStrong = atom({ layer: 'working_memory', similarity: 0.9 });
+      const projWeak = atom({ layer: 'project_memory', similarity: 0.2 });
+      expect(scoreAtom(wmStrong, SEMANTIC_WORKING_MEMORY_POLICY)).toBeGreaterThan(
+        scoreAtom(projWeak, SEMANTIC_WORKING_MEMORY_POLICY)
+      );
+
+      // ...but a barely-relevant working-memory summary is now beaten by a
+      // strongly-matching project atom — the whole point of unpinning it.
+      const wmWeak = atom({ layer: 'working_memory', similarity: 0.1 });
+      const projStrong = atom({ layer: 'project_memory', similarity: 0.95 });
+      expect(scoreAtom(projStrong, SEMANTIC_WORKING_MEMORY_POLICY)).toBeGreaterThan(
+        scoreAtom(wmWeak, SEMANTIC_WORKING_MEMORY_POLICY)
+      );
+    });
+
+    it('keeps a small structural edge: ties favour working memory', () => {
+      // Equal similarity → working memory wins by its priorityBoost.
+      const wm = atom({ layer: 'working_memory', similarity: 0.7 });
+      const proj = atom({ layer: 'project_memory', similarity: 0.7 });
+      expect(scoreAtom(wm, SEMANTIC_WORKING_MEMORY_POLICY)).toBeGreaterThan(
+        scoreAtom(proj, SEMANTIC_WORKING_MEMORY_POLICY)
+      );
     });
   });
 

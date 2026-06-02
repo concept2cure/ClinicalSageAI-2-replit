@@ -1,10 +1,18 @@
-import { getLatestWorkingMemoryByThread } from './working-memory.js';
+import {
+  getLatestWorkingMemoryByThread,
+  isSemanticWorkingMemoryEnabled,
+  searchWorkingMemorySemantic,
+} from './working-memory.js';
 import {
   searchMemoryEntriesSemantic,
   searchProjectMemoryEntriesSemantic,
   type SemanticMemoryHit,
 } from './client-intelligence-memory.js';
-import { orchestrateAtoms } from './memory-orchestrator.js';
+import {
+  orchestrateAtoms,
+  DEFAULT_MEMORY_POLICY,
+  SEMANTIC_WORKING_MEMORY_POLICY,
+} from './memory-orchestrator.js';
 import type { ClientMemoryEntry, ProjectMemoryEntry } from 'shared/schema';
 
 /**
@@ -201,20 +209,57 @@ export async function buildMemoryContextForChat(
     projectMemory: 'skipped',
   };
 
-  const workingSummary = await getLatestWorkingMemoryByThread(input.threadId).catch(() => null);
-  if (workingSummary) {
-    atoms.push({
-      id: 0,
-      layer: 'working_memory',
-      title: 'Latest Working Memory Summary',
-      content: workingSummary,
-      metadata: {
-        extractedBy: 'system',
-      },
-    });
-    layerOutcomes.workingMemory = 'ok';
-  } else {
-    layerOutcomes.workingMemory = 'empty';
+  // Working memory: when semantic recall is enabled and we have a query, recall
+  // the summary most relevant to it (with similarity, ranked by the semantic
+  // policy). Otherwise — and whenever semantic recall clears nothing — fall back
+  // to the recency-only latest summary under the default policy, exactly as
+  // before. The flag defaults off, so the recency path is the unchanged default.
+  let useSemanticWorkingMemory = false;
+
+  if (isSemanticWorkingMemoryEnabled() && input.organizationId && input.query?.trim()) {
+    const hits = await withTimeout(
+      searchWorkingMemorySemantic(input.threadId, input.organizationId, input.query, {
+        limit: 1,
+        minSimilarity,
+      }).catch(() => [] as Awaited<ReturnType<typeof searchWorkingMemorySemantic>>),
+      MEMORY_LAYER_TIMEOUT_MS,
+      [] as Awaited<ReturnType<typeof searchWorkingMemorySemantic>>
+    );
+    if (hits.length > 0) {
+      for (const hit of hits) {
+        atoms.push({
+          id: hit.id,
+          layer: 'working_memory',
+          title: 'Working memory summary',
+          content: hit.summary,
+          similarity: hit.similarity,
+          metadata: {
+            extractedBy: 'system',
+            createdAt: toIso(hit.generatedAt),
+          },
+        });
+      }
+      layerOutcomes.workingMemory = 'ok';
+      useSemanticWorkingMemory = true;
+    }
+  }
+
+  if (!useSemanticWorkingMemory) {
+    const workingSummary = await getLatestWorkingMemoryByThread(input.threadId).catch(() => null);
+    if (workingSummary) {
+      atoms.push({
+        id: 0,
+        layer: 'working_memory',
+        title: 'Latest Working Memory Summary',
+        content: workingSummary,
+        metadata: {
+          extractedBy: 'system',
+        },
+      });
+      layerOutcomes.workingMemory = 'ok';
+    } else {
+      layerOutcomes.workingMemory = 'empty';
+    }
   }
 
   // Client + project semantic searches run in parallel — no reason to serialize
@@ -282,11 +327,14 @@ export async function buildMemoryContextForChat(
   // Forget stale atoms, collapse duplicates, and rank across layers under the
   // single reviewed policy (memory-orchestrator). This module only assembles
   // and formats; the coordination policy lives there.
+  const memoryPolicy = useSemanticWorkingMemory
+    ? SEMANTIC_WORKING_MEMORY_POLICY
+    : DEFAULT_MEMORY_POLICY;
   const {
     ranked: sorted,
     droppedByForgetting,
     droppedByDeduplication,
-  } = orchestrateAtoms(atoms, maxAgeDays);
+  } = orchestrateAtoms(atoms, maxAgeDays, memoryPolicy);
 
   const sections: string[] = [];
 

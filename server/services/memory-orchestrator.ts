@@ -121,6 +121,33 @@ export const DEFAULT_MEMORY_POLICY: MemoryPolicy = {
 };
 
 /**
+ * Policy variant for when semantic working-memory recall is enabled
+ * (ENABLE_SEMANTIC_WORKING_MEMORY). Working memory now carries a per-turn
+ * similarity, so it ranks by query relevance like the semantic layers instead of
+ * sitting on a flat pin. It keeps a small priorityBoost so an equally-relevant
+ * working-memory atom still edges out a client/project one — it is the thread's
+ * live state — but a far more relevant semantic atom can now outrank a
+ * barely-relevant working-memory summary.
+ *
+ * This is the single edit the step-2 ranking design was built to enable: only
+ * byLayer.working_memory changes; scoreAtom and the assembler are untouched.
+ */
+export const SEMANTIC_WORKING_MEMORY_POLICY: MemoryPolicy = {
+  ...DEFAULT_MEMORY_POLICY,
+  ranking: {
+    byLayer: {
+      ...DEFAULT_MEMORY_POLICY.ranking.byLayer,
+      working_memory: {
+        priorityBoost: 0.15,
+        similarityWeight: 0.75,
+        confidenceWeight: 0.2,
+        verifiedBoost: 0.05,
+      },
+    },
+  },
+};
+
+/**
  * Cross-layer relevance score: priorityBoost + similarity·w + confidence·w +
  * verifiedBoost, with the weights drawn from the atom's layer. One formula for
  * every layer — a layer's primacy is encoded in its weights, not a branch.
