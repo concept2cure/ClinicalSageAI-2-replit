@@ -142,6 +142,37 @@ describe('verifyAnswerGrounding', () => {
     expect(r.unsupported[0].text).toBe('10.9999/fake.doi.2024.0001');
   });
 
+  // Precision: an FDA single-letter submission number must not be re-extracted
+  // from inside a DOI suffix or a dotted path — '/' and '.' are word boundaries,
+  // so "10.1016/P123456" must count as one DOI, not also a bogus PMA number.
+  it('does not extract an FDA submission number from inside a grounded DOI suffix', () => {
+    const evidence = 'Reference: 10.1016/P123456 reported the outcome.';
+    const r = verifyAnswerGrounding('The paper is 10.1016/P123456.', evidence);
+    expect(r.checked).toBe(1);
+    expect(r.grounded).toBe(1);
+    expect(r.unsupported).toHaveLength(0);
+  });
+
+  it('does not misclassify a fabricated DOI suffix as an FDA number', () => {
+    const r = verifyAnswerGrounding('Per 10.9999/K999999 the claim holds.', 'no such reference');
+    expect(r.checked).toBe(1);
+    expect(r.unsupported).toHaveLength(1);
+    expect(r.unsupported[0].kind).toBe('doi');
+  });
+
+  it('does not extract a EudraCT-shaped number from inside a DOI suffix', () => {
+    const r = verifyAnswerGrounding('Per 10.1234/2019-001234-12 the claim holds.', 'no such reference');
+    expect(r.checked).toBe(1); // one DOI, not also a spurious EudraCT id
+    expect(r.unsupported[0].kind).toBe('doi');
+  });
+
+  it('still grounds a standalone EudraCT number after the precision guard', () => {
+    const evidence = 'EU CTR record: 2019-001234-12 enrolled across member states.';
+    const r = verifyAnswerGrounding('The EU trial is EudraCT 2019-001234-12.', evidence);
+    expect(r.checked).toBe(1);
+    expect(r.grounded).toBe(1);
+  });
+
   // FDA submission numbers — an invented predicate 510(k) or PMA is the classic
   // medtech fabrication.
   it('grounds a 510(k) predicate number present in the evidence', () => {
