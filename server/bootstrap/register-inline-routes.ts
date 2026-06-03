@@ -294,6 +294,16 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount C2C Actions routes:', error);
   }
 
+  // C2C governance projections — the permission-atom engine surfaced as
+  // who-can / can reads ("permission is the source of truth, derived").
+  try {
+    const c2cGovernanceModule = await import('../routes/c2c/governance');
+    app.use('/api/c2c/governance', authMiddleware, c2cGovernanceModule.default);
+    console.info('✅ C2C Governance routes mounted (/api/c2c/governance)');
+  } catch (error) {
+    console.error('❌ Failed to mount C2C Governance routes:', error);
+  }
+
   // C2C document family (Phase 9 Day 3 — document + section + evidence routes).
   try {
     const c2cDocsModule = await import('../routes/c2c/documents');
