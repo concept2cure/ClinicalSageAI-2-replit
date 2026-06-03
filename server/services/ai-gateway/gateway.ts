@@ -11,7 +11,7 @@
  * - Deterministic mode for testing
  */
 
-import { randomUUID } from 'crypto';
+import { randomUUID, createHash } from 'crypto';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import type {
@@ -400,7 +400,7 @@ export class AIGateway {
         () => this.executeProvider(selectedModel, request, requestId, startTime), 1, 1000
       );
       this.recordSuccess(selectedModel.provider, response.latencyMs);
-      await this.logAudit(request, response, strategy, true);
+      await this.logAudit(request, response, strategy, true, undefined, triedModels);
       return response;
     } catch (error: any) {
       lastError = error;
@@ -424,7 +424,7 @@ export class AIGateway {
           () => this.executeProvider(fallback, request, requestId, startTime), 1, 1000
         );
         this.recordSuccess(fallback.provider, response.latencyMs);
-        await this.logAudit(request, response, strategy, true);
+        await this.logAudit(request, response, strategy, true, undefined, triedModels);
         return response;
       } catch (error: any) {
         lastError = error;
@@ -448,7 +448,7 @@ export class AIGateway {
       deterministic: false,
       finishReason: 'error',
     };
-    await this.logAudit(request, errorResponse, strategy, false, lastError?.message);
+    await this.logAudit(request, errorResponse, strategy, false, lastError?.message, triedModels);
 
     throw new GatewayAllProvidersFailedError(
       `All models failed. Tried: ${triedModels.join(', ')}. Last error: ${lastError?.message}`
@@ -578,6 +578,11 @@ export class AIGateway {
       max_tokens: request.maxTokens || 2000,
       temperature: request.temperature ?? 0.7,
     };
+
+    // Pass the sampling seed through for reproducible output where supported.
+    if (request.seed !== undefined) {
+      params.seed = request.seed;
+    }
 
     if (request.jsonMode) {
       if (request.jsonSchema) {
@@ -1063,6 +1068,11 @@ export class AIGateway {
       temperature: request.temperature ?? 0.7,
     };
 
+    // Pass the sampling seed through for reproducible output where supported.
+    if (request.seed !== undefined) {
+      params.seed = request.seed;
+    }
+
     if (request.jsonMode) {
       params.response_format = { type: 'json_object' };
     }
@@ -1323,11 +1333,18 @@ export class AIGateway {
     response: GatewayResponse,
     strategy: RoutingStrategy,
     success: boolean,
-    error?: string
+    error?: string,
+    triedModels?: string[]
   ): Promise<void> {
     if (!this.config.auditEnabled) return;
 
     try {
+      const promptVersion =
+        request.promptVersion ??
+        (typeof request.metadata?.promptVersion === 'string'
+          ? (request.metadata.promptVersion as string)
+          : undefined);
+
       await this.auditLogger.log({
         requestId: response.requestId,
         timestamp: new Date(),
@@ -1348,11 +1365,23 @@ export class AIGateway {
         error,
         cached: response.cached,
         deterministic: response.deterministic,
+        // Reproducibility: which params + prompt produced this output.
+        temperature: request.temperature ?? 0.7,
+        seed: request.seed,
+        promptHash: this.hashPrompt(request.messages),
+        promptVersion,
+        triedModels: triedModels && triedModels.length > 0 ? triedModels : undefined,
         metadata: request.metadata,
       });
     } catch (auditError: any) {
       log.error(`[AI Gateway] Audit log failed: ${auditError.message}`);
     }
+  }
+
+  /** SHA-256 of the canonicalized prompt messages, for reproducibility audit. */
+  private hashPrompt(messages: GatewayMessage[]): string {
+    const canonical = messages.map(m => `${m.role}:${m.content}`).join('\n');
+    return createHash('sha256').update(canonical, 'utf8').digest('hex');
   }
 
   // ─────────────────────────────────────────────────────────────────────────

@@ -28,6 +28,7 @@ import bcrypt from 'bcryptjs';
 import { pool } from '../../db.js';
 import { computeAuditChain, hashPayload, verifyAuditChain } from '../../services/audit/chain.js';
 import { verifyToken as verifyMfaToken } from '../../services/mfaService.js';
+import { evaluateAcceptGate } from '../../services/ai-governance/review-policy.js';
 
 const router = Router();
 
@@ -410,7 +411,7 @@ function makeHandler(command: Command) {
       return res.status(401).json({ error: 'AUTH_REQUIRED' });
     }
 
-    const body = req.body as ActionEnvelope;
+    let body = req.body as ActionEnvelope;
     if (!body?.target || typeof body.target !== 'string') {
       return res.status(400).json({ error: 'TARGET_REQUIRED' });
     }
@@ -425,6 +426,28 @@ function makeHandler(command: Command) {
         res.setHeader('WWW-Authenticate', 'ReAuth required');
         return res.status(401).json({ error: reauth.error ?? 'REAUTH_REQUIRED' });
       }
+    }
+
+    // Groundedness → human-review gate. AI-generated content whose groundedness
+    // score is below the capability's threshold cannot be approved without an
+    // explicit human review acknowledgement. Non-breaking: only blocks when a
+    // score is supplied; the governance verdict + score are persisted into the
+    // action payload either way (so the immutable ledger records why the AI
+    // content was allowed to land). See server/services/ai-governance/.
+    if (command === 'accept-ai-suggestion') {
+      const gate = evaluateAcceptGate(body.payload);
+      if (gate.blocked) {
+        return res.status(422).json({
+          error: 'GROUNDEDNESS_REVIEW_REQUIRED',
+          gate: gate.gate,
+          riskTier: gate.riskTier,
+          groundednessThreshold: gate.groundednessThreshold,
+          groundednessScore: gate.groundednessScore,
+          intendedUse: gate.intendedUse,
+          detail: gate.reason,
+        });
+      }
+      body = { ...body, payload: gate.enrichedPayload };
     }
 
     // Resolve the typed target, scoped to the caller's org. A null result

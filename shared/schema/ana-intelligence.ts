@@ -67,6 +67,14 @@ export const anaCapabilityRegistry = pgTable(
     projectTypesApplicable: jsonb('project_types_applicable').$type<string[]>().default([]), // ['IND','NDA','BLA','510k',...]
     documentTypesApplicable: jsonb('document_types_applicable').$type<string[]>().default([]), // ['csr','protocol','ib',...]
 
+    // ── Governance contract (FDA 2025 AI-credibility framing) ───
+    // Source of truth: server/services/ai-governance/ (governanceFor).
+    intendedUse: text('intended_use'), // per-feature intended-use statement
+    riskTier: text('risk_tier'), // 'minimal' | 'low' | 'moderate' | 'high'
+    humanOversight: text('human_oversight'), // 'none' | 'suggest_only' | 'requires_review' | 'requires_approval'
+    groundednessThreshold: real('groundedness_threshold'), // 0..1; below → human review
+    gxpApplicable: boolean('gxp_applicable').default(false), // part of a Part-11 regulated record
+
     // ── Effectiveness tracking (aggregated from outcome log) ────
     successCount: integer('success_count').default(0).notNull(),
     failureCount: integer('failure_count').default(0).notNull(),
@@ -83,6 +91,7 @@ export const anaCapabilityRegistry = pgTable(
   table => ({
     categoryIdx: index('ana_cap_registry_category_idx').on(table.category),
     activeIdx: index('ana_cap_registry_active_idx').on(table.isActive),
+    riskTierIdx: index('ana_cap_registry_risk_tier_idx').on(table.riskTier),
   })
 );
 

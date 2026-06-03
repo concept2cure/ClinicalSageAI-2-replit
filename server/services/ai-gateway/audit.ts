@@ -122,8 +122,9 @@ export class GatewayAuditLogger {
           request_id, timestamp, provider, model, task_type, strategy,
           organization_id, user_id, project_id, caller_module,
           input_tokens, output_tokens, total_tokens, estimated_cost_usd,
-          latency_ms, success, error, cached, deterministic, metadata
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
+          latency_ms, success, error, cached, deterministic, metadata,
+          temperature, seed, prompt_hash, prompt_version, tried_models
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)`,
         [
           entry.requestId,
           entry.timestamp,
@@ -145,6 +146,11 @@ export class GatewayAuditLogger {
           entry.cached,
           entry.deterministic,
           entry.metadata ? JSON.stringify(entry.metadata) : null,
+          entry.temperature ?? null,
+          entry.seed ?? null,
+          entry.promptHash || null,
+          entry.promptVersion || null,
+          entry.triedModels ? JSON.stringify(entry.triedModels) : null,
         ],
       );
     } catch (error: any) {
@@ -181,8 +187,23 @@ export class GatewayAuditLogger {
           error TEXT,
           cached BOOLEAN DEFAULT false,
           deterministic BOOLEAN DEFAULT false,
-          metadata JSONB
+          metadata JSONB,
+          temperature NUMERIC(4,2),
+          seed BIGINT,
+          prompt_hash VARCHAR(64),
+          prompt_version VARCHAR(64),
+          tried_models JSONB
         )
+      `);
+
+      // Upgrade already-created tables with the reproducibility columns.
+      await this.pool.query(`
+        ALTER TABLE ai.gateway_audit_log
+          ADD COLUMN IF NOT EXISTS temperature NUMERIC(4,2),
+          ADD COLUMN IF NOT EXISTS seed BIGINT,
+          ADD COLUMN IF NOT EXISTS prompt_hash VARCHAR(64),
+          ADD COLUMN IF NOT EXISTS prompt_version VARCHAR(64),
+          ADD COLUMN IF NOT EXISTS tried_models JSONB
       `);
 
       // Create indexes for common queries
@@ -191,6 +212,7 @@ export class GatewayAuditLogger {
         CREATE INDEX IF NOT EXISTS idx_gateway_audit_timestamp ON ai.gateway_audit_log(timestamp);
         CREATE INDEX IF NOT EXISTS idx_gateway_audit_provider ON ai.gateway_audit_log(provider);
         CREATE INDEX IF NOT EXISTS idx_gateway_audit_request ON ai.gateway_audit_log(request_id);
+        CREATE INDEX IF NOT EXISTS idx_gateway_audit_prompt_hash ON ai.gateway_audit_log(prompt_hash);
       `);
 
       console.log('[AI Gateway Audit] Database table ai.gateway_audit_log ready');

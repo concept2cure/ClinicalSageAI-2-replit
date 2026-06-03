@@ -16,6 +16,7 @@ import { anaCapabilityRegistry, anaOutcomeLog, anaProjectCapabilities } from 'sh
 import { eq, and, desc, sql, or, inArray } from 'drizzle-orm';
 
 import { createScopedLogger } from '../utils/logger.js';
+import { governanceFor } from './ai-governance/risk-tiers';
 
 const logger = createScopedLogger('ana-capability-registry');
 
@@ -429,6 +430,10 @@ export async function seedCapabilityRegistry(): Promise<{ seeded: number; total:
   let seeded = 0;
 
   for (const cap of SEED_CAPABILITIES) {
+    const gov = governanceFor(cap.capabilityKey, cap.category, {
+      name: cap.name,
+      description: cap.description,
+    });
     const result = await db
       .insert(anaCapabilityRegistry)
       .values({
@@ -440,6 +445,11 @@ export async function seedCapabilityRegistry(): Promise<{ seeded: number; total:
         regulatoryBodiesApplicable: cap.regulatoryBodiesApplicable,
         projectTypesApplicable: cap.projectTypesApplicable,
         documentTypesApplicable: cap.documentTypesApplicable,
+        intendedUse: gov.intendedUse,
+        riskTier: gov.riskTier,
+        humanOversight: gov.humanOversight,
+        groundednessThreshold: gov.groundednessThreshold,
+        gxpApplicable: gov.gxpApplicable,
       })
       .onConflictDoNothing({ target: anaCapabilityRegistry.capabilityKey })
       .returning({ id: anaCapabilityRegistry.id });
@@ -449,11 +459,57 @@ export async function seedCapabilityRegistry(): Promise<{ seeded: number; total:
     }
   }
 
+  // Existing rows are skipped by onConflictDoNothing above, so refresh their
+  // governance contract from the code source of truth (governanceFor) too.
+  const { updated } = await backfillCapabilityGovernance();
+  if (updated > 0) {
+    logger.info(`Refreshed AI governance contract on ${updated} capabilities`);
+  }
+
   const [countResult] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(anaCapabilityRegistry);
 
   return { seeded, total: countResult?.count ?? 0 };
+}
+
+/**
+ * Refresh the per-capability governance contract (intended use, risk tier,
+ * human oversight, groundedness threshold, GxP applicability) on every row of
+ * the registry from the single code source of truth (`governanceFor`). Safe to
+ * run repeatedly; brings existing installs up to date when the policy changes.
+ */
+export async function backfillCapabilityGovernance(): Promise<{ updated: number }> {
+  const rows = await db
+    .select({
+      id: anaCapabilityRegistry.id,
+      capabilityKey: anaCapabilityRegistry.capabilityKey,
+      category: anaCapabilityRegistry.category,
+      name: anaCapabilityRegistry.name,
+      description: anaCapabilityRegistry.description,
+    })
+    .from(anaCapabilityRegistry);
+
+  let updated = 0;
+  for (const row of rows) {
+    const gov = governanceFor(row.capabilityKey, row.category, {
+      name: row.name,
+      description: row.description,
+    });
+    await db
+      .update(anaCapabilityRegistry)
+      .set({
+        intendedUse: gov.intendedUse,
+        riskTier: gov.riskTier,
+        humanOversight: gov.humanOversight,
+        groundednessThreshold: gov.groundednessThreshold,
+        gxpApplicable: gov.gxpApplicable,
+        updatedAt: new Date(),
+      })
+      .where(eq(anaCapabilityRegistry.id, row.id));
+    updated++;
+  }
+  return { updated };
 }
 
 /**

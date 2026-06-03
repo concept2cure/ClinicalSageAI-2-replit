@@ -184,6 +184,19 @@ export interface GatewayRequest {
   /** Temperature (0-2). Lower = more deterministic */
   temperature?: number;
 
+  /**
+   * Sampling seed for reproducible output. Passed through to providers that
+   * support it (OpenAI/Moonshot) and recorded in the audit trail regardless,
+   * so a generation can be tied to its sampling parameters.
+   */
+  seed?: number;
+
+  /**
+   * Version/identifier of the prompt template used (e.g. a git tag or content
+   * hash of the system prompt). Recorded in the audit trail for reproducibility.
+   */
+  promptVersion?: string;
+
   /** Request JSON-mode output */
   jsonMode?: boolean;
 
@@ -386,5 +399,16 @@ export interface AuditLogEntry {
   error?: string;
   cached: boolean;
   deterministic: boolean;
+  // ── Reproducibility (which params + prompt produced this output) ──────────
+  /** Sampling temperature used for the request. */
+  temperature?: number;
+  /** Sampling seed, when supplied. */
+  seed?: number;
+  /** SHA-256 of the canonicalized prompt messages (role:content joined). */
+  promptHash?: string;
+  /** Caller-supplied prompt template version/identifier. */
+  promptVersion?: string;
+  /** Model ids attempted before the one that served this response (fallback chain). */
+  triedModels?: string[];
   metadata?: Record<string, unknown>;
 }
