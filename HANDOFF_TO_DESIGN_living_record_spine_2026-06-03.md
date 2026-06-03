@@ -89,10 +89,11 @@ tracked value," which is honest.
 
 **Backend contract:** `fact_drift` rows, read per program. Proposed route:
 
-- `GET /api/regulatory-graph/programs/:programId/drift` **proposed (backend
-  follow-up)** — returns `programFactDriftReport(programId)`:
+- `GET /api/regulatory-graph/programs/:programId/drift` **shipped** — returns
+  `programFactDriftReport(programId)`:
   `{ openDriftCount, bySeverity, drift: [{ id, factId, bindingId, expectedValue,
-  observedValue, driftType, severity, detectedAt, target }], hasOpenDrift }`.
+  observedValue, driftType, severity, detectedAt }], hasOpenDrift }`. To show
+  the location, join `bindingId → fact_bindings.target` via the bindings route.
 
 **Needed surface:** a per-program queue, sibling to the existing freshness view
 (`GET /api/regulatory-graph/programs/:programId/freshness`). Each row: the target
@@ -140,11 +141,11 @@ the record.
 **Backend contract:** `canonical_facts`, one active row per
 `(program, entity, field)`. Proposed routes:
 
-- `GET /api/regulatory-graph/programs/:programId/facts` **proposed (backend
-  follow-up)** — list: `{ id, entity, field, value (num or text), unit,
-  comparator, valueType, status, confidence, establishedByClaimId, version }`.
-- `GET /api/regulatory-graph/facts/:factId/bindings` **proposed (backend
-  follow-up)** — the bindings and drift for a fact.
+- `GET /api/regulatory-graph/programs/:programId/facts` **shipped** — list:
+  `{ id, entity, field, valueNum / valueText, unit, comparator, valueType,
+  status, confidence, establishedByClaimId, version }`.
+- `GET /api/regulatory-graph/facts/:factId/bindings` **shipped** — `{ fact,
+  bindings, openDrift, bindingCount }` for a fact.
 
 **Needed surface:** a browsable, filterable table — the program's "facts of
 record." Columns: entity.field, the value, status (`active` | `disputed` |
@@ -249,13 +250,13 @@ the user already works.
 | # | Surface | Binds to | Read route | Status |
 |---|---|---|---|---|
 | 1 | Inline value verification chip | `evidence_claims.verification`, `fact_bindings` | served with section content | needs design |
-| 2 | Drift inbox | `fact_drift` | `…/programs/:id/drift` (proposed) | needs design + route |
+| 2 | Drift inbox | `fact_drift` | `…/programs/:id/drift` (shipped) | needs design |
 | 3 | Dispute resolution | disputed `canonical_facts` + competing claims | `…/claims/:id/evidence` (exists) | needs design |
-| 4 | Canonical fact registry | `canonical_facts`, `fact_bindings` | `…/programs/:id/facts` (proposed) | needs design + route |
+| 4 | Canonical fact registry | `canonical_facts`, `fact_bindings` | `…/programs/:id/facts`, `…/facts/:id/bindings` (shipped) | needs design |
 | 5 | Value lineage drawer | `spine_nodes`/`edges`, claim, source | `…/claims/:id/evidence` (exists) | needs design |
 | 6 | Bind / override (editor) | `fact_bindings` | write via `/api/c2c/actions/*` (exists) | needs design |
-| 7 | Sequence in dossier nav | `regulatory_sequences` | `…/programs/:id/sequences` (proposed) | needs design + route |
-| 8 | Health readout + AnA dock | drift report, audit actions | exists / proposed | needs design |
+| 7 | Sequence in dossier nav | `regulatory_sequences` | `…/programs/:id/sequences` (shipped) | needs design |
+| 8 | Health readout + AnA dock | freshness (now incl. `canonical_fact`) + `…/drift` | shipped | needs design |
 
 ---
 
@@ -273,17 +274,27 @@ the user already works.
    follow-up builds exactly what the surfaces consume. The write side
    (`/api/c2c/actions/*`) is already there.
 
-## Backend follow-ups this handoff assumes (not design's to build)
+## Backend follow-ups — status
 
-These are tracked on the backend side so design can bind against them:
+Shipped on `concept2cure-v2` (commit "Wire Living Record Spine: read routes,
+reconcile path, drift sentinel, freshness"):
 
 - Read routes for facts, bindings, drift, and sequences under
-  `/api/regulatory-graph/*` (shapes given above).
-- Wire `reconcileClaim` into the claim write path so values reconcile on entry,
-  and schedule `runDriftSentinel` per program so drift is detected continuously.
-- Fold the fact-drift bucket into `programFreshnessReport` so Surface 8 reads one
-  health model, not two.
+  `/api/regulatory-graph/*` (shapes above) — shipped.
+- Reconcile path — `POST …/programs/:id/reconcile` (body `legacyProgramId`)
+  reconciles every current valued claim in a program; `POST
+  …/programs/:id/claims/:claimId/reconcile` reconciles one. Both run from the
+  uuid-program context the UI already holds.
+- Drift detection — `POST …/programs/:id/drift/scan` runs the Sentinel on demand;
+  `server/jobs/driftSentinelSweep.ts` adds an env-gated periodic sweep
+  (`ENABLE_DRIFT_SENTINEL`) that does not change default boot.
+- Fold-in — `programFreshnessReport` now includes a `canonical_fact` bucket from
+  open drift, so Surface 8 reads one health model.
 
-Until those land, Surfaces 1, 4, 7, and 8 will have data only for programs whose
-claims have been reconciled. Design to the populated state, but include the
-honest empty state for the not-yet-reconciled case.
+Still open (not blocking design): hooking `reconcileClaim` into the exact
+claim-insert call site is deferred, because claims are created without a
+uuid-program in scope (the platform uses a dual-id contract). Until then, call
+the per-claim reconcile route right after a claim is written, or run the
+program-level reconcile. So Surfaces 1, 4, 7, and 8 show data for programs that
+have been reconciled at least once — design the populated state and the honest
+not-yet-reconciled empty state.
