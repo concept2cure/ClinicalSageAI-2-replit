@@ -1,11 +1,12 @@
 {
-  "$comment": "SEED per-document-type extraction/generation eval tasks. Expand to a real bank (10+ per docType) and populate `input` with source documents, then run live via run-eval.ts. The `candidateContent`/`candidateExtraction` fields let you score a captured model output offline (no DB/LLM needed) so the harness is runnable today. Generation pass = section coverage >= min AND zero forbidden hits; extraction pass = field F1 >= min.",
-  "version": "0.1.0-seed",
+  "$comment": "Per-document-type extraction/generation eval tasks. `candidateContent`/`candidateExtraction` let the runner score a captured output offline (no DB/LLM); `input` lets --live draft generation tasks through the AI gateway and score the result. Generation pass = section coverage >= min AND zero forbidden hits; extraction pass = field F1 >= min. Expand to 10+ tasks per docType with real source documents before treating the numbers as a quality bar.",
+  "version": "0.2.0-seed",
   "tasks": [
     {
       "id": "510k-se-summary-generate",
       "docType": "510k",
       "taskType": "generation",
+      "input": "Subject device: Acme Analyzer 2000, a benchtop in vitro diagnostic for quantitation of analyte X in serum. Predicate: K123456 (same intended use, same measurand, comparable technology). Bench studies completed: precision (CLSI EP05), linearity (EP06), method comparison (EP09) vs predicate. Labeling includes intended use, warnings, and instructions for use.",
       "requiredSections": [
         "device description",
         "intended use",
@@ -39,6 +40,7 @@
       "id": "cer-clinical-eval-generate",
       "docType": "cer",
       "taskType": "generation",
+      "input": "Device: implantable widget for condition Y. Clinical background and current standard of care described in literature. Evidence: a literature review and post-market clinical follow-up (PMCF) dataset appraised for relevance and methodological quality. Benefit-risk concluded acceptable for the intended population per MEDDEV 2.7/1 rev 4.",
       "requiredSections": [
         "clinical background",
         "state of the art",
@@ -51,9 +53,28 @@
       "tags": ["eu-mdr", "cer"]
     },
     {
+      "id": "cer-device-extract",
+      "docType": "cer",
+      "taskType": "extraction",
+      "expectedFields": {
+        "device_name": "CardioWidget",
+        "classification": "Class IIb",
+        "intended_purpose": "condition Y",
+        "standard_reference": "MEDDEV 2.7/1"
+      },
+      "candidateExtraction": {
+        "device_name": "CardioWidget implant",
+        "classification": "Class IIb",
+        "intended_purpose": "treatment of condition Y",
+        "standard_reference": "MEDDEV 2.7/1 rev 4"
+      },
+      "tags": ["eu-mdr", "cer", "metadata"]
+    },
+    {
       "id": "ind-m2-summary-generate",
       "docType": "ind",
       "taskType": "generation",
+      "input": "Program: first-in-human Phase 1 for indication Z. Nonclinical pharmacology and toxicology completed (rodent and non-rodent GLP studies). Clinical overview: single ascending dose design with safety run-in. Benefit-risk assessment for healthy volunteers documented.",
       "requiredSections": [
         "introduction",
         "nonclinical overview",
@@ -61,8 +82,24 @@
         "benefit-risk assessment"
       ],
       "forbiddenPatterns": ["proven safe", "guaranteed", "no side effects"],
-      "candidateContent": "Introduction: this is a Phase 1 program for indication Z. Nonclinical overview: pharmacology and toxicology summarized. Clinical overview: first-in-human design rationale provided.",
+      "candidateContent": "Introduction: this is a Phase 1 program for indication Z. Nonclinical overview: pharmacology and toxicology summarized. Clinical overview: first-in-human design rationale provided. Benefit-risk assessment: the profile supports first-in-human dosing in healthy volunteers.",
       "tags": ["fda", "ind", "module-2"]
+    },
+    {
+      "id": "nonclinical-tox-summary-generate",
+      "docType": "ind",
+      "taskType": "generation",
+      "input": "GLP toxicology package: repeat-dose toxicity in rat and dog, genotoxicity battery (Ames, micronucleus), safety pharmacology core battery (CNS, CV, respiratory). NOAEL established; safety margins calculated against the proposed clinical starting dose.",
+      "requiredSections": [
+        "study designs",
+        "repeat-dose toxicity",
+        "genotoxicity",
+        "safety pharmacology",
+        "noael and safety margins"
+      ],
+      "forbiddenPatterns": ["proven safe", "no toxicity", "guaranteed"],
+      "candidateContent": "Study designs: GLP studies are described. Repeat-dose toxicity: rat and dog studies were conducted. Genotoxicity: Ames and micronucleus assays were negative. Safety pharmacology: CNS, CV, and respiratory endpoints were assessed. NOAEL and safety margins: the NOAEL supports the proposed clinical starting dose.",
+      "tags": ["fda", "ind", "nonclinical", "module-2.6"]
     }
   ]
 }

@@ -11,6 +11,7 @@
  */
 
 import { governanceFor, type CapabilityGovernance } from './risk-tiers';
+import { resolveGroundedness, type GroundednessSource } from './groundedness';
 
 export type ReviewGate =
   | 'auto_approvable' // no review required
@@ -108,21 +109,21 @@ export function evaluateAcceptGate(payload: Record<string, unknown> | undefined)
   const p = payload ?? {};
   const capabilityKey = typeof p.capabilityKey === 'string' ? p.capabilityKey : undefined;
   const category = typeof p.category === 'string' ? p.category : undefined;
-  const rawScore =
-    p.groundednessScore ?? p.groundedness ?? p.confidence ?? p.confidenceScore ?? null;
   const reviewAck = p.groundednessReviewAck === true || p.humanReviewed === true;
 
   const governance = governanceFor(capabilityKey, category, {
     intendedUse: typeof p.intendedUse === 'string' ? p.intendedUse : undefined,
   });
-  const evaln = evaluateReviewRequirement({
-    governance,
-    groundednessScore: rawScore as number | null,
-  });
 
-  // Non-breaking enforcement: block only when groundedness was assessed and
-  // falls below threshold without an explicit human-review acknowledgement.
+  // Resolve a groundedness score: an explicit score (from the richer
+  // confidenceScoringEngine) wins and is always enforced; otherwise the
+  // accept-time citation-coverage proxy is computed from the content and
+  // recorded (enforced only when the caller opts in). See ./groundedness.
+  const resolved = resolveGroundedness(p);
+  const evaln = evaluateReviewRequirement({ governance, groundednessScore: resolved.score });
+
   const blocked =
+    resolved.enforce &&
     evaln.groundednessAssessed &&
     evaln.groundednessScore !== null &&
     evaln.groundednessScore < governance.groundednessThreshold &&
@@ -138,6 +139,9 @@ export function evaluateAcceptGate(payload: Record<string, unknown> | undefined)
       groundednessThreshold: governance.groundednessThreshold,
       groundednessScore: evaln.groundednessScore,
       groundednessAssessed: evaln.groundednessAssessed,
+      groundednessSource: resolved.source as GroundednessSource,
+      groundednessEnforced: resolved.enforce,
+      citationCoverage: resolved.detail ?? undefined,
       gate: evaln.gate,
       requiresHumanReview: evaln.requiresHumanReview,
       reviewAcknowledged: reviewAck,
