@@ -36,6 +36,7 @@ import { EnhancedEmbeddingService, getEmbeddingService } from './enhancedEmbeddi
 import { AIProviderRouter, getAIRouter, type AIRequest, type AIResponse } from './aiProviderRouter.js';
 import { getOpenAIClient } from './openai-client.js';
 import { getReranker, type Reranker } from './rag-reranker.js';
+import { reciprocalRankFusion, normalizeToUnit } from './rag-fusion.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
@@ -48,6 +49,15 @@ export interface RetrievalOptions {
   useReranking?: boolean;
   useMmr?: boolean;
   mmrLambda?: number; // 0 = max diversity, 1 = max relevance
+  /**
+   * Fuse dense (vector) retrieval with a sparse (Postgres full-text) retrieval
+   * via Reciprocal Rank Fusion on the vault / rag_chunks corpora. Recovers
+   * keyword/exact-term matches that pure embeddings miss (codes, acronyms, rare
+   * tokens) without sacrificing semantic recall. Ignored by the project-atom and
+   * memory paths (project atoms already run their own hybrid; memory stays
+   * similarity-pure). Off unless set — the router enables it per intent.
+   */
+  useHybrid?: boolean;
   useCompression?: boolean;
   organizationUuid?: string;
   persistCitations?: boolean;
@@ -171,6 +181,11 @@ type CorpusScope = {
   corpus?: 'vault' | 'rag_chunks' | 'client_memory' | 'project_memory';
   organizationId?: number;
   memory?: MemoryScope;
+  /**
+   * Fuse dense retrieval with a sparse full-text retrieval via RRF. Honoured
+   * only by the vault and rag_chunks paths; the memory paths ignore it.
+   */
+  hybrid?: boolean;
   /**
    * Pull each candidate's stored embedding out of the vector search so MMR can
    * reuse it instead of re-embedding. Set only when the caller requested MMR,
@@ -297,6 +312,7 @@ export class AdvancedRAGPipeline {
       memory: options.memoryScope,
       // Only carry stored vectors out of the search when MMR will consume them.
       needEmbeddings: !!options.useMmr,
+      hybrid: !!options.useHybrid,
     };
 
     let candidates: RetrievedDocument[];
@@ -439,7 +455,8 @@ export class AdvancedRAGPipeline {
         limit,
         threshold,
         scope.organizationId,
-        scope.needEmbeddings
+        scope.needEmbeddings,
+        scope.hybrid
       );
     }
     if (scope?.corpus === 'client_memory') {
@@ -453,7 +470,8 @@ export class AdvancedRAGPipeline {
       limit,
       threshold,
       organizationUuid,
-      scope?.needEmbeddings
+      scope?.needEmbeddings,
+      scope?.hybrid
     );
   }
 
@@ -829,7 +847,8 @@ export class AdvancedRAGPipeline {
     limit: number,
     threshold: number,
     organizationUuid?: string,
-    needEmbeddings?: boolean
+    needEmbeddings?: boolean,
+    hybrid?: boolean
   ): Promise<RetrievedDocument[]> {
     const queryResult = await this.embeddingService.embed(query, 'text-embedding-3-small');
     const vector = `[${queryResult.embedding.join(',')}]`;
@@ -838,8 +857,23 @@ export class AdvancedRAGPipeline {
     // columns take no params, so this doesn't shift the $1..$3 placeholders.
     const embeddingCol = needEmbeddings ? 'c.embedding::text AS embedding,' : '';
 
+    const toDoc = (row: VaultChunkRow): RetrievedDocument => ({
+      id: row.chunk_id,
+      chunkId: row.chunk_id,
+      documentId: row.document_id,
+      content: row.content || '',
+      title: row.title || 'Untitled',
+      atomType: 'vault_chunk',
+      initialScore: Number(row.similarity),
+      finalScore: Number(row.similarity),
+      pageNumber: row.page_number ?? undefined,
+      sectionTitle: row.section_title,
+      locator: buildLocator(row),
+      embedding: needEmbeddings ? parsePgVector(row.embedding) : undefined,
+    });
+
     return withTenantContext(this.pool, organizationUuid, async client => {
-      const { rows } = await client.query<VaultChunkRow>(
+      const { rows: denseRows } = await client.query<VaultChunkRow>(
         `
         SELECT
           c.id AS chunk_id,
@@ -862,21 +896,43 @@ export class AdvancedRAGPipeline {
       `,
         [vector, threshold, limit]
       );
+      const dense = denseRows.map(toDoc);
+      if (!hybrid) return dense;
 
-      return rows.map(row => ({
-        id: row.chunk_id,
-        chunkId: row.chunk_id,
-        documentId: row.document_id,
-        content: row.content || '',
-        title: row.title || 'Untitled',
-        atomType: 'vault_chunk',
-        initialScore: Number(row.similarity),
-        finalScore: Number(row.similarity),
-        pageNumber: row.page_number ?? undefined,
-        sectionTitle: row.section_title,
-        locator: buildLocator(row),
-        embedding: needEmbeddings ? parsePgVector(row.embedding) : undefined,
-      }));
+      // Sparse arm: Postgres full-text ranked by ts_rank_cd. websearch_to_tsquery
+      // tolerates arbitrary user text (no tsquery syntax errors), and the
+      // to_tsvector('english', chunk_text) expression matches the GIN index in
+      // performance_indexes.sql so this stays index-backed. A lexical failure
+      // must not break retrieval — fall back to the dense arm alone.
+      let lexical: RetrievedDocument[];
+      try {
+        const { rows: lexRows } = await client.query<VaultChunkRow>(
+          `
+          SELECT
+            c.id AS chunk_id,
+            c.document_id AS document_id,
+            COALESCE(d.document_title, d.file_name, '') AS title,
+            c.chunk_text AS content,
+            c.page_number AS page_number,
+            c.section_title AS section_title,
+            ${embeddingCol}
+            0::float8 AS similarity
+          FROM vault.document_chunks c
+          JOIN vault.documents d ON d.id = c.document_id
+          WHERE c.embedding IS NOT NULL
+            AND to_tsvector('english', c.chunk_text) @@ websearch_to_tsquery('english', $1)
+          ORDER BY ts_rank_cd(to_tsvector('english', c.chunk_text), websearch_to_tsquery('english', $1)) DESC
+          LIMIT $2
+        `,
+          [query, limit]
+        );
+        lexical = lexRows.map(toDoc);
+      } catch (error) {
+        console.warn('[RAG] vault lexical arm failed; using dense-only retrieval:', error);
+        return dense;
+      }
+
+      return this.fuseHybrid(dense, lexical, limit);
     });
   }
 
@@ -896,7 +952,8 @@ export class AdvancedRAGPipeline {
     limit: number,
     threshold: number,
     organizationId?: number,
-    needEmbeddings?: boolean
+    needEmbeddings?: boolean,
+    hybrid?: boolean
   ): Promise<RetrievedDocument[]> {
     const queryResult = await this.embeddingService.embed(query, 'text-embedding-3-small');
     const vector = `[${queryResult.embedding.join(',')}]`;
@@ -911,7 +968,22 @@ export class AdvancedRAGPipeline {
     // Ship the stored vector (as text) only when MMR will reuse it.
     const embeddingCol = needEmbeddings ? 'c.embedding::text AS embedding,' : '';
 
-    const { rows } = await this.pool.query<VaultChunkRow>(
+    const toDoc = (row: VaultChunkRow): RetrievedDocument => ({
+      id: row.chunk_id,
+      chunkId: row.chunk_id,
+      documentId: row.document_id,
+      content: row.content || '',
+      title: row.title || 'Untitled',
+      atomType: 'rag_chunk',
+      initialScore: Number(row.similarity),
+      finalScore: Number(row.similarity),
+      pageNumber: row.page_number ?? undefined,
+      sectionTitle: row.section_title,
+      locator: buildLocator(row),
+      embedding: needEmbeddings ? parsePgVector(row.embedding) : undefined,
+    });
+
+    const { rows: denseRows } = await this.pool.query<VaultChunkRow>(
       `
         SELECT
           c.id AS chunk_id,
@@ -935,21 +1007,76 @@ export class AdvancedRAGPipeline {
       `,
       params
     );
+    const dense = denseRows.map(toDoc);
+    if (!hybrid) return dense;
 
-    return rows.map(row => ({
-      id: row.chunk_id,
-      chunkId: row.chunk_id,
-      documentId: row.document_id,
-      content: row.content || '',
-      title: row.title || 'Untitled',
-      atomType: 'rag_chunk',
-      initialScore: Number(row.similarity),
-      finalScore: Number(row.similarity),
-      pageNumber: row.page_number ?? undefined,
-      sectionTitle: row.section_title,
-      locator: buildLocator(row),
-      embedding: needEmbeddings ? parsePgVector(row.embedding) : undefined,
-    }));
+    // Sparse arm: same RRF hybrid as the vault path. The org filter reuses the
+    // $N placeholder already bound above; the lexical query takes the raw query
+    // text as $1 and limit as $2, so its own org placeholder (if any) is $3.
+    const lexParams: Array<string | number> = [query, limit];
+    let lexOrgFilter = '';
+    if (organizationId !== undefined && organizationId !== null) {
+      lexParams.push(organizationId);
+      lexOrgFilter = `AND d.organization_id = $${lexParams.length}`;
+    }
+    let lexical: RetrievedDocument[];
+    try {
+      const { rows: lexRows } = await this.pool.query<VaultChunkRow>(
+        `
+        SELECT
+          c.id AS chunk_id,
+          c.document_id AS document_id,
+          COALESCE(d.title, '') AS title,
+          c.content AS content,
+          c.page_number AS page_number,
+          c.section_title AS section_title,
+          ${embeddingCol}
+          0::float8 AS similarity
+        FROM rag_chunks c
+        JOIN rag_documents d ON d.id = c.document_id
+        WHERE c.embedding IS NOT NULL
+          ${lexOrgFilter}
+          AND to_tsvector('english', c.content) @@ websearch_to_tsquery('english', $1)
+        ORDER BY ts_rank_cd(to_tsvector('english', c.content), websearch_to_tsquery('english', $1)) DESC
+        LIMIT $2
+      `,
+        lexParams
+      );
+      lexical = lexRows.map(toDoc);
+    } catch (error) {
+      console.warn('[RAG] rag_chunks lexical arm failed; using dense-only retrieval:', error);
+      return dense;
+    }
+
+    return this.fuseHybrid(dense, lexical, limit);
+  }
+
+  /**
+   * Reciprocal Rank Fusion of a dense and a sparse candidate list. Fuses on
+   * rank (cosine similarity and ts_rank_cd aren't comparable magnitudes), then
+   * min-max normalizes the fused score into [0,1] and writes it onto
+   * initialScore/finalScore so the downstream rerank blend stays meaningful.
+   * Dense payloads win on documents that appear in both lists (added first).
+   */
+  private fuseHybrid(
+    dense: RetrievedDocument[],
+    sparse: RetrievedDocument[],
+    limit: number
+  ): RetrievedDocument[] {
+    const rrf = reciprocalRankFusion([dense.map(d => d.id), sparse.map(d => d.id)]);
+    const normalized = normalizeToUnit(rrf);
+
+    const byId = new Map<string, RetrievedDocument>();
+    for (const doc of [...dense, ...sparse]) {
+      if (!byId.has(doc.id)) byId.set(doc.id, doc);
+    }
+
+    const fused = [...byId.values()].map(doc => {
+      const score = normalized.get(doc.id) ?? 0;
+      return { ...doc, initialScore: score, finalScore: score };
+    });
+    fused.sort((a, b) => b.finalScore - a.finalScore);
+    return fused.slice(0, limit);
   }
 
   /**

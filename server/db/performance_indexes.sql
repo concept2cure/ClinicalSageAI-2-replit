@@ -84,5 +84,17 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_workflow_steps_tenant_status
 ON workflow_steps(tenant_id, status, updated_at DESC);
 
 -- Document versioning performance
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_document_versions_tenant_latest 
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_document_versions_tenant_latest
 ON document_versions(tenant_id, document_id, version DESC);
+
+-- ── Hybrid RAG: sparse (full-text) arms of the dense+sparse RRF retrieval ──
+-- The to_tsvector(...) expressions MUST match the lexical queries in
+-- advancedRAGPipeline.ts (searchVaultSimilar / searchRagChunksSimilar) exactly,
+-- or the planner falls back to a seq scan that recomputes the tsvector per row.
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_vault_document_chunks_fts
+ON vault.document_chunks USING gin (to_tsvector('english', chunk_text))
+WHERE embedding IS NOT NULL;
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_rag_chunks_fts
+ON rag_chunks USING gin (to_tsvector('english', content))
+WHERE embedding IS NOT NULL;

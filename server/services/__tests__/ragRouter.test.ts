@@ -28,12 +28,23 @@ describe('ragRouter optionsForIntent', () => {
     it('foresight favours diversity (lambda 0.6)', () => {
       expect(optionsForIntent({ query: 'q', intent: 'foresight' }).mmrLambda).toBe(0.6);
     });
+
+    it('enables dense+full-text hybrid (RRF) by default on every intent', () => {
+      expect(optionsForIntent({ query: 'q', intent: 'regulatory_qa' }).useHybrid).toBe(true);
+      expect(optionsForIntent({ query: 'q', intent: 'foresight' }).useHybrid).toBe(true);
+      expect(optionsForIntent({ query: 'q', intent: 'project_scoped' }).useHybrid).toBe(true);
+    });
   });
 
   describe('explicit overrides', () => {
     it('an explicit false overrides a default true (not truthiness-based)', () => {
       const o = optionsForIntent({ query: 'q', intent: 'regulatory_qa', useMmr: false });
       expect(o.useMmr).toBe(false);
+    });
+
+    it('an explicit useHybrid:false overrides the intent default', () => {
+      const o = optionsForIntent({ query: 'q', intent: 'regulatory_qa', useHybrid: false });
+      expect(o.useHybrid).toBe(false);
     });
 
     it('overrides strategy, mmrLambda, and limit', () => {
