@@ -29,6 +29,10 @@ import { pool } from '../../db.js';
 import { computeAuditChain, hashPayload, verifyAuditChain } from '../../services/audit/chain.js';
 import { verifyToken as verifyMfaToken } from '../../services/mfaService.js';
 import { evaluateAcceptGate, GroundednessReviewError } from '../../services/ai-governance/review-policy.js';
+import {
+  assertSignerIsNotAuthor,
+  SeparationOfDutiesError,
+} from '../../services/governance/separation-of-duties.js';
 
 const router = Router();
 
@@ -452,6 +456,13 @@ function makeHandler(command: Command) {
         return res.status(400).json({ error: 'TARGET_INVALID', detail: 'Unknown or inaccessible target.' });
       }
 
+      // Separation of duties (un-disableable): the signer/approver must not be
+      // the author/owner of the target. Admin may only tighten (four-eyes),
+      // never loosen — so this is a hard code path, not a permission row.
+      if (command === 'sign' || command === 'lock') {
+        await assertSignerIsNotAuthor(body.target, orgId, userId);
+      }
+
       const result = await writeMutation(
         command,
         body,
@@ -473,6 +484,9 @@ function makeHandler(command: Command) {
           intendedUse: g.intendedUse,
           detail: g.reason,
         });
+      }
+      if (err instanceof SeparationOfDutiesError) {
+        return res.status(403).json({ error: err.code, detail: err.message });
       }
       console.error(`[c2c/actions/${command}]`, err?.message);
       return res.status(500).json({ error: 'INTERNAL_ERROR' });
