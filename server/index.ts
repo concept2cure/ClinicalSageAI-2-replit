@@ -28,6 +28,7 @@ await initializeOpenTelemetry();
 
 import express from 'express';
 import { createServer, type Server as HttpServer } from 'http';
+import { startDriftSentinelSchedule } from './jobs/driftSentinelSweep';
 import { errorHandler } from './src/mw/observability.js';
 
 // Audit + RBAC side-effect imports (initialize tables + cache on require).
@@ -181,6 +182,9 @@ async function startServer() {
     console.log(`🚀 Server running on http://0.0.0.0:${flags.port}`);
     console.log(`📊 Health check: http://localhost:${flags.port}/api/health`);
     console.log(`🔐 Login: http://localhost:${flags.port}/auth`);
+    // Living Record Spine: start the Drift Sentinel periodic sweep. Self-guards
+    // to a no-op unless ENABLE_DRIFT_SENTINEL=true, so default boot is unchanged.
+    startDriftSentinelSchedule();
   });
 }
 
