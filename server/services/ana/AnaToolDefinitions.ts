@@ -69,6 +69,26 @@ export const SEARCH_LITERATURE: AnaTool = {
   },
 };
 
+export const PROJECT_KNOWLEDGE_SEARCH: AnaTool = {
+  name: 'project_knowledge_search',
+  description:
+    "Search the ACTIVE project's own knowledge corpus — the documents and governed artifacts uploaded to this project — for passages relevant to a question. Use this when the user asks about content that lives in this project's files rather than general regulatory knowledge. Returns the most relevant passages with their source document titles and relevance scores; cite the document titles in your answer. The project and tenant come from the active context — you only supply the query.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      query: {
+        type: 'string',
+        description: 'What to look for in the project knowledge (a question or topic).',
+      },
+      max_results: {
+        type: 'number',
+        description: 'Maximum passages to return (default: 6).',
+      },
+    },
+    required: ['query'],
+  },
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // FDA Postmarket Surveillance Tools (live openFDA)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2178,6 +2198,7 @@ export const DRAFT_FDA_IR_RESPONSE: AnaTool = {
 export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
+  PROJECT_KNOWLEDGE_SEARCH,
   SEARCH_DEVICE_ADVERSE_EVENTS,
   SEARCH_DRUG_ADVERSE_EVENTS,
   LOOKUP_FDA_GUIDANCE,

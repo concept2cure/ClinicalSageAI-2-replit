@@ -25,6 +25,7 @@ import type {
   AnaTool,
   StreamCallback,
 } from '../ai-gateway/types';
+import { ragRouter } from '../ragRouter';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool Handler Registry
@@ -40,6 +41,8 @@ export interface ToolContext {
   organizationId?: number | null;
   userId?: number | null;
   projectId?: number | null;
+  /** Tenant UUID — required to scope project_knowledge_search retrieval. */
+  organizationUuid?: string | null;
 }
 
 type ToolHandler = (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>;
@@ -59,6 +62,49 @@ export function getToolHandler(name: string): ToolHandler | undefined {
 // ─────────────────────────────────────────────────────────────────────────────
 // Built-in Tool Handlers
 // ─────────────────────────────────────────────────────────────────────────────
+
+// Project Knowledge Search — exposes the project-scoped hybrid retrieval
+// (ragRouter intent 'project_scoped') as a model-callable tool. The project and
+// tenant come from the active ToolContext, never from model input, so the model
+// cannot read another project's corpus. Graceful: returns a plain message when
+// there is no active project or the retrieval fails.
+registerToolHandler('project_knowledge_search', async (input, ctx) => {
+  const query = typeof input.query === 'string' ? input.query.trim() : '';
+  if (!query) return 'No query provided for project_knowledge_search.';
+  const projectId = ctx?.projectId;
+  const organizationUuid = ctx?.organizationUuid;
+  if (!projectId || !organizationUuid) {
+    return 'No active project is in context, so project knowledge cannot be searched. Ask the user to open a project first.';
+  }
+  const maxResults =
+    typeof input.max_results === 'number' && input.max_results > 0
+      ? Math.min(Math.floor(input.max_results), 20)
+      : 6;
+  try {
+    const result = await ragRouter.retrieve({
+      query,
+      intent: 'project_scoped',
+      organizationUuid,
+      artifactScope: { projectId, organizationUuid },
+      useReranking: true,
+      limit: maxResults,
+    });
+    const docs = (result?.documents ?? []).slice(0, maxResults);
+    if (docs.length === 0) {
+      return `No matching passages were found in this project's knowledge for "${query}".`;
+    }
+    const formatted = docs
+      .map((d, i) => {
+        const passage = (d.compressedContent || d.content || '').slice(0, 800);
+        const score = typeof d.finalScore === 'number' ? d.finalScore.toFixed(3) : 'n/a';
+        return `[${i + 1}] ${d.title || 'Untitled'} (relevance ${score})\n${passage}`;
+      })
+      .join('\n\n');
+    return `Project knowledge results for "${query}":\n\n${formatted}`;
+  } catch (err: any) {
+    return `Project knowledge search failed: ${err?.message ?? 'unknown error'}.`;
+  }
+});
 
 // Search Clinical Evidence — queries internal DB and ClinicalTrials.gov
 registerToolHandler('search_clinical_evidence', async (input) => {

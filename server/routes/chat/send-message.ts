@@ -666,6 +666,8 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           userId: numericUserId || null,
           projectId:
             typeof project_id === 'string' ? parseInt(project_id, 10) || null : project_id || null,
+          // Tenant UUID so the project_knowledge_search tool can scope retrieval.
+          organizationUuid: orgUuid ?? null,
         },
         onToolExecution: (toolName, input, result) => {
           // Persist the invocation for usage analytics. Latency is 0 here
