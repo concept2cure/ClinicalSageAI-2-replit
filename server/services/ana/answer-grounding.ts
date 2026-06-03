@@ -65,14 +65,19 @@ type IdKind = Exclude<UnsupportedClaim['kind'], 'quote'>;
 //   - literature: DOI
 //   - FDA submissions: 510(k) K######, PMA P######, De Novo DEN######
 //     (an invented predicate-device number is the classic medtech fabrication)
+//
+// The FDA single-/three-letter tokens carry a `(?<![./])` guard so they are not
+// re-extracted from inside a DOI suffix or a dotted path (e.g. "10.1016/P123456"
+// must count as one DOI, not also a bogus PMA number) — `/` and `.` are word
+// boundaries, so `\b` alone would let those embedded matches through.
 const TOKEN_ID_PATTERNS: ReadonlyArray<{ kind: IdKind; re: RegExp }> = [
   { kind: 'nct', re: /NCT\d{8}/gi },
   { kind: 'isrctn', re: /ISRCTN\d{8}/gi },
-  { kind: 'eudract', re: /\b\d{4}-\d{6}-\d{2}\b/g },
+  { kind: 'eudract', re: /(?<![./])\b\d{4}-\d{6}-\d{2}\b/g },
   { kind: 'doi', re: /\b10\.\d{4,9}\/[^\s"”'<>)\]]+/gi },
-  { kind: 'fda_510k', re: /\bK\d{6}\b/g },
-  { kind: 'fda_pma', re: /\bP\d{6}\b/g },
-  { kind: 'fda_denovo', re: /\bDEN\d{6}\b/gi },
+  { kind: 'fda_510k', re: /(?<![./])\bK\d{6}\b/g },
+  { kind: 'fda_pma', re: /(?<![./])\bP\d{6}\b/g },
+  { kind: 'fda_denovo', re: /(?<![./])\bDEN\d{6}\b/gi },
 ];
 
 // Labeled-number identifiers. The bare number is not distinctive on its own, so
