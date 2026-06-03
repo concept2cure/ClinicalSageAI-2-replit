@@ -28,6 +28,11 @@ is canonical.**
   verified JWT (`getSecureOrgId`) and ignores client input; by-id paths verify the
   task belongs to the caller's org. **Regression test** (`8c0a1b2`, 5 cases) proves
   it. Behaviour is unchanged for legitimate same-org use.
+- **Immutable data lineage added** (`065b5e3`). Task create / status-transition /
+  link now write the SHA-256 hash-chained `audit_logs` + `c2c_ana_actions` ledger
+  (the same Projects governed-action primitive) — authenticated actor, task target,
+  before/after payload, optional reason-for-change. Best-effort + graceful; 4 unit
+  tests + route assertions. See `tasking-module-assurance-2026-06-03.md`.
 
 ---
 
@@ -63,7 +68,7 @@ a true unification layer) — and it gates a coherent UI.
 | Primary table `unified_tasks` | ✅ real | org FK, numeric `project_id` FK, dependency arrays, working unblock-cascade |
 | Tenant isolation | ✅ now fixed | `getSecureOrgId` on every handler (was IDOR) |
 | Two parallel APIs | ⚠️ | `/api/regulatory/tasks` (UI binds here) + `/api/tasks` (safe, but **orphaned** — no client). Both double-mounted again under `/api/unified-tasks` and `/api/task-management` |
-| Audit / e-signature on task mutations | ❌ **missing** | create/status/link are plain writes; `approvalRequired/Status/History` columns exist but are never written; the `c2c_ana_actions` ledger is not used. Part 11 gap |
+| Audit / data lineage on task mutations | ◐ now partial | create/status/link now write the SHA-256-chained `audit_logs` + `c2c_ana_actions` ledger (shipped `065b5e3`); **e-signature** on sign-off + writing `approvalHistory` still missing |
 | Soft-delete | ❌ missing on **all** task tables | hard deletes only |
 | Status workflow | ⚠️ | free-text status; **no transition state machine** (any string accepted); only the unblock cascade is automatic |
 | Task links / dependencies | ✅ real | `cross_module_task_links` + `task_dependencies` (4 dependency types, critical-path DFS), but the two link tables aren't unified and have no org column |
@@ -113,9 +118,11 @@ Gaps (what's designed-but-unbuilt or missing):
 1. **P0 (decision) — declare the canonical task store** and reconcile/retire the
    others, or build a true unification layer. The UI cannot be coherent until the
    tasking board, the MDX workbench, and AnA write/read the same store.
-2. **P0 — task audit + e-signature.** Route task create/status/sign-off through the
-   governed `c2c_ana_actions` + `audit_logs` SHA-256 chain (the Projects pattern at
-   `/api/c2c/actions/*`). Write `approvalHistory` on sign-off.
+2. **P1 — e-signature on task sign-off** (the audit/data-lineage half is **done** —
+   task create/status/link write the `audit_logs` + `c2c_ana_actions` SHA-256 chain,
+   `065b5e3`). Still missing: the §11.50/§11.100 e-signature + reason-for-change UI
+   on regulated task completion, writing `approvalHistory`, and routing the other
+   writers (orphaned `/api/tasks`, AnA `project_tasks`) through the same ledger.
 3. **P1 — point AnA at the canonical store** (the `ana-ri` task tools write
    `project_tasks`; add task tools to the main `ana/` agent too).
 4. **P1 — consolidate the two task APIs**; remove the duplicate route mounts.
