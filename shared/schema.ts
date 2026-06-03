@@ -5088,6 +5088,11 @@ export const projects = pgTable(
     moduleReferences: json('module_references'), // References to specific module instances
     settings: json('settings'),
     metadata: json('metadata'),
+    // ── Projects spec A2: two-mode capacity model ────────────────────────────
+    // 'in_context' | 'retrieval', null until first computed. The estimated
+    // token size of the project knowledge corpus drives the selection.
+    retrievalMode: text('retrieval_mode'),
+    knowledgeTokenEstimate: integer('knowledge_token_estimate').default(0).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },

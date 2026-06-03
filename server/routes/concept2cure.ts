@@ -74,6 +74,10 @@ import * as crypto from 'crypto';
 import { guardEmptyContent, guardDemoContent } from '../middleware/documentLoopGuards';
 import { computeConversationHealth } from '../services/conversation-health.js';
 import {
+  getProjectRetrievalMode,
+  refreshProjectRetrievalMode,
+} from '../services/projects/retrieval-mode.js';
+import {
   interceptComplianceScan,
   interceptArtifactChange,
   interceptFeedback,
@@ -3427,7 +3431,14 @@ router.get('/projects/:projectId/knowledge', async (req: Request, res: Response)
 
     const settings = normalizeProjectSettings(project.settings);
     const knowledge = normalizeKnowledge(settings);
-    return sendSuccess(res, knowledge);
+    // A2: surface the retrieval mode (read-through compute when not yet set) so
+    // the UI can show the in-context vs retrieval indicator.
+    const modeState = await getProjectRetrievalMode(scope.numericId, organizationId);
+    return sendSuccess(res, {
+      ...knowledge,
+      retrievalMode: modeState.mode,
+      knowledgeTokenEstimate: modeState.tokenEstimate,
+    });
   } catch (error: any) {
     logger.error('Failed to fetch project knowledge', { error: error.message });
     return sendError(res, 500, 'Failed to fetch project knowledge');
@@ -4517,6 +4528,10 @@ router.post(
         .returning();
 
       await logAuditEntry(req, 'UPDATE', 'project', projectIdRaw, project, updated);
+
+      // A2: the corpus grew with this upload — recompute the retrieval mode
+      // (fire-and-forget; never blocks the upload response).
+      void refreshProjectRetrievalMode(numericId, organizationId);
 
       res.status(201);
       return sendSuccess(res, {
