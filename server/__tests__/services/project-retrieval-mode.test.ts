@@ -8,6 +8,7 @@ import {
   estimateProjectKnowledgeTokens,
   refreshProjectRetrievalMode,
   getProjectRetrievalMode,
+  assembleProjectKnowledgeCorpus,
   RETRIEVAL_MODE_THRESHOLD_TOKENS,
 } from '../../services/projects/retrieval-mode';
 
@@ -77,5 +78,46 @@ describe('getProjectRetrievalMode', () => {
     const state = await getProjectRetrievalMode(42, 7);
     expect(state).toEqual({ mode: 'in_context', tokenEstimate: 0 });
     expect(queryMock).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('assembleProjectKnowledgeCorpus', () => {
+  it('returns empty for invalid ids without querying', async () => {
+    expect(await assembleProjectKnowledgeCorpus(0, 7)).toBe('');
+    expect(await assembleProjectKnowledgeCorpus(42, 0)).toBe('');
+    expect(queryMock).not.toHaveBeenCalled();
+  });
+  it('returns empty when the project has no atoms', async () => {
+    queryMock.mockResolvedValueOnce({ rows: [] });
+    expect(await assembleProjectKnowledgeCorpus(42, 7)).toBe('');
+  });
+  it('assembles a corpus block from atom title + content', async () => {
+    queryMock.mockResolvedValueOnce({
+      rows: [
+        { title: 'Device Description', content: 'The device is a monitor.' },
+        { title: 'Indications', content: 'For adult use.' },
+      ],
+    });
+    const block = await assembleProjectKnowledgeCorpus(42, 7);
+    expect(block).toContain('PROJECT KNOWLEDGE (full corpus');
+    expect(block).toContain('Device Description');
+    expect(block).toContain('The device is a monitor.');
+    expect(block).toContain('Indications');
+  });
+  it('respects the character budget and truncates', async () => {
+    const big = 'x'.repeat(1000);
+    queryMock.mockResolvedValueOnce({
+      rows: [
+        { title: 'A', content: big },
+        { title: 'B', content: big },
+      ],
+    });
+    const block = await assembleProjectKnowledgeCorpus(42, 7, 500);
+    expect(block).toContain('…[truncated]');
+    expect(block.length).toBeLessThan(1200);
+  });
+  it('returns empty on a DB error', async () => {
+    queryMock.mockRejectedValueOnce(new Error('boom'));
+    expect(await assembleProjectKnowledgeCorpus(42, 7)).toBe('');
   });
 });

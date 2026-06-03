@@ -34,6 +34,10 @@ import type { AnaGatewayResponse } from '../../services/ai-gateway/types.js';
 import { buildMemoryContextForChat, type MemoryAssemblyDiagnostics } from '../../services/memory-context-assembler.js';
 import { summarizeAndStoreWorkingMemoryForThread } from '../../services/working-memory.js';
 import { getProjectInstructionsBlock } from '../../services/projects/project-instructions.js';
+import {
+  getProjectRetrievalMode,
+  assembleProjectKnowledgeCorpus,
+} from '../../services/projects/retrieval-mode.js';
 import { getCachedSignalReliability } from '../../services/intelligence/learning-loop-service.js';
 import type { SignalReliability } from '../../services/intelligence/learning-loop-service.js';
 import { orchestrate, type OrchestratorOutput } from '../../services/ana-ri/orchestrator.js';
@@ -49,6 +53,13 @@ import { verifyClaim, type VerifierFlag } from './verifier.js';
 const RETRIEVAL_TOP_K = parseInt(process.env.ANA_RETRIEVAL_TOP_K ?? '5', 10);
 const RETRIEVAL_THRESHOLD = parseFloat(process.env.ANA_RETRIEVAL_THRESHOLD ?? '0.7');
 const GENERATION_MAX_TOKENS = parseInt(process.env.ANA_GENERATION_MAX_TOKENS ?? '4096', 10);
+// Projects spec A2: dark-launch flag for in-context full-corpus injection. Off
+// by default — the retrieval mode is still computed and surfaced via the
+// knowledge endpoint; this flag only controls whether the chat path injects the
+// full project corpus into the prompt (pending cost/cache validation in a live
+// environment). When off, this path does zero extra work.
+const INCONTEXT_INJECTION_ENABLED =
+  process.env.PROJECT_INCONTEXT_INJECTION_ENABLED === 'true';
 
 /**
  * POST /api/chat/send-message  (and POST /api/chat via root alias)
@@ -530,6 +541,31 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         numericOrgId
       );
 
+      // A2 in-context mode (dark-launched behind INCONTEXT_INJECTION_ENABLED):
+      // when the project runs in_context, inject the full project knowledge
+      // corpus. Off by default → zero extra work and no behaviour change. The
+      // mode itself is surfaced separately by GET /projects/:id/knowledge.
+      let projectKnowledgeCorpusBlock = '';
+      if (INCONTEXT_INJECTION_ENABLED && project_id && numericOrgId) {
+        const pidNum =
+          typeof project_id === 'string'
+            ? parseInt(project_id.replace(/^proj_/, ''), 10)
+            : project_id;
+        if (Number.isFinite(pidNum) && pidNum > 0) {
+          try {
+            const modeState = await getProjectRetrievalMode(pidNum, numericOrgId);
+            if (modeState.mode === 'in_context') {
+              projectKnowledgeCorpusBlock = await assembleProjectKnowledgeCorpus(
+                pidNum,
+                numericOrgId
+              );
+            }
+          } catch {
+            /* non-fatal — fall back to retrieval-only */
+          }
+        }
+      }
+
       // AnA fix F2: always prepend a CONTEXT SNAPSHOT block so AnA can see
       // exactly what context is loaded right now — including explicit
       // "NOT LOADED" / "NONE" markers when something is missing. The Context
@@ -564,6 +600,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         basePrompt +
         indContextBlock +
         deviceContextBlock +
+        projectKnowledgeCorpusBlock +
         memoryBlock +
         evidenceBlock;
 
@@ -615,6 +652,10 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         tools: getAllEnabledTools(),
         toolChoice: 'auto' as const,
         ...(validatedChatProvider ? { provider: validatedChatProvider } : {}),
+        // A2: cache the (large, stable) in-context corpus prefix when injected.
+        ...(projectKnowledgeCorpusBlock
+          ? { promptCache: { enabled: true, type: 'ephemeral' as const } }
+          : {}),
       };
 
       // Use agentic loop for multi-turn tool execution (max 5 rounds)

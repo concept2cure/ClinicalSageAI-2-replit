@@ -136,3 +136,62 @@ export async function getProjectRetrievalMode(
   }
   return refreshProjectRetrievalMode(projectId, organizationId);
 }
+
+/**
+ * Assemble the full project knowledge corpus as a single system-prompt block,
+ * for 'in_context' mode. Atoms are concatenated most-recent first up to a
+ * character budget (a deliberate hard cap so the block can never overflow the
+ * context window, independent of the token estimate). Returns '' when the
+ * project has no corpus or on error. Tenant-scoped.
+ *
+ * The default budget (~160k chars ≈ 40k tokens) is conservative; the caller
+ * may pass a larger budget once prompt caching for the block is validated.
+ */
+export async function assembleProjectKnowledgeCorpus(
+  projectId: number,
+  organizationId: number,
+  budgetChars = 160_000
+): Promise<string> {
+  if (!Number.isFinite(projectId) || projectId <= 0) return '';
+  if (!Number.isFinite(organizationId) || organizationId <= 0) return '';
+  try {
+    const { rows } = await pool.query(
+      `SELECT a.title, a.content
+         FROM lumen_data_atoms a
+        WHERE a.organization_id = $1
+          AND a.source_type IN ('artifact', 'data_room_upload')
+          AND a.source_id IN (
+            SELECT artifact_id FROM concept2cure_artifacts WHERE project_id = $2
+          )
+        ORDER BY a.updated_at DESC`,
+      [organizationId, projectId]
+    );
+    if (!rows?.length) return '';
+    const parts: string[] = [];
+    let used = 0;
+    for (const r of rows) {
+      const title = typeof r.title === 'string' && r.title ? r.title : 'Untitled';
+      const content = typeof r.content === 'string' ? r.content : '';
+      const entry = `### ${title}\n${content}\n`;
+      if (used + entry.length > budgetChars) {
+        const remaining = budgetChars - used;
+        if (remaining > 200) {
+          parts.push(`${entry.slice(0, remaining)}\n…[truncated]\n`);
+        }
+        break;
+      }
+      parts.push(entry);
+      used += entry.length;
+    }
+    if (parts.length === 0) return '';
+    return (
+      '\n\n## PROJECT KNOWLEDGE (full corpus — in-context mode)\n' +
+      'The complete project knowledge is provided below. Ground your answer in it ' +
+      'and cite document titles where relevant.\n\n' +
+      parts.join('\n')
+    );
+  } catch (err: any) {
+    console.warn('[projects] corpus assembly failed (continuing without):', err?.message);
+    return '';
+  }
+}
