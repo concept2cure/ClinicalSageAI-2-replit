@@ -28,7 +28,7 @@ import bcrypt from 'bcryptjs';
 import { pool } from '../../db.js';
 import { computeAuditChain, hashPayload, verifyAuditChain } from '../../services/audit/chain.js';
 import { verifyToken as verifyMfaToken } from '../../services/mfaService.js';
-import { evaluateAcceptGate } from '../../services/ai-governance/review-policy.js';
+import { evaluateAcceptGate, GroundednessReviewError } from '../../services/ai-governance/review-policy.js';
 
 const router = Router();
 
@@ -357,6 +357,19 @@ export async function writeMutation(
 ): Promise<ActionResult> {
   const { target, reason, payload = {}, idempotencyKey } = envelope;
 
+  // Groundedness → human-review gate (single chokepoint for the HTTP route and
+  // the legacy accept path). AI content scored below its capability threshold
+  // is blocked unless a human-review acknowledgement is supplied; the
+  // governance verdict + score are persisted into the ledger payload either way.
+  let effectivePayload: Record<string, unknown> = payload;
+  if (command === 'accept-ai-suggestion') {
+    const gate = evaluateAcceptGate(payload);
+    if (gate.blocked) {
+      throw new GroundednessReviewError(gate);
+    }
+    effectivePayload = gate.enrichedPayload;
+  }
+
   // Idempotency: if a row already exists for this key, return it.
   if (idempotencyKey) {
     const existing = await pool.query(
@@ -384,7 +397,7 @@ export async function writeMutation(
       command,
       target,
       reason,
-      payload,
+      payload: effectivePayload,
       domain,
       surface,
       idempotencyKey: idempotencyKey ?? null,
@@ -411,7 +424,7 @@ function makeHandler(command: Command) {
       return res.status(401).json({ error: 'AUTH_REQUIRED' });
     }
 
-    let body = req.body as ActionEnvelope;
+    const body = req.body as ActionEnvelope;
     if (!body?.target || typeof body.target !== 'string') {
       return res.status(400).json({ error: 'TARGET_REQUIRED' });
     }
@@ -428,31 +441,11 @@ function makeHandler(command: Command) {
       }
     }
 
-    // Groundedness → human-review gate. AI-generated content whose groundedness
-    // score is below the capability's threshold cannot be approved without an
-    // explicit human review acknowledgement. Non-breaking: only blocks when a
-    // score is supplied; the governance verdict + score are persisted into the
-    // action payload either way (so the immutable ledger records why the AI
-    // content was allowed to land). See server/services/ai-governance/.
-    if (command === 'accept-ai-suggestion') {
-      const gate = evaluateAcceptGate(body.payload);
-      if (gate.blocked) {
-        return res.status(422).json({
-          error: 'GROUNDEDNESS_REVIEW_REQUIRED',
-          gate: gate.gate,
-          riskTier: gate.riskTier,
-          groundednessThreshold: gate.groundednessThreshold,
-          groundednessScore: gate.groundednessScore,
-          intendedUse: gate.intendedUse,
-          detail: gate.reason,
-        });
-      }
-      body = { ...body, payload: gate.enrichedPayload };
-    }
-
     // Resolve the typed target, scoped to the caller's org. A null result
     // means unknown prefix, non-existent row, or a row owned by another org —
-    // all rejected. A thrown DB error is surfaced as 500 below.
+    // all rejected. A thrown DB error is surfaced as 500 below. The
+    // groundedness → human-review gate runs inside writeMutation (single
+    // chokepoint shared with the legacy accept path) and surfaces as 422 here.
     try {
       const resolved = await resolveTarget(body.target, orgId);
       if (resolved === null) {
@@ -469,6 +462,18 @@ function makeHandler(command: Command) {
       );
       return res.json(result);
     } catch (err: any) {
+      if (err instanceof GroundednessReviewError) {
+        const g = err.gateResult;
+        return res.status(422).json({
+          error: 'GROUNDEDNESS_REVIEW_REQUIRED',
+          gate: g.gate,
+          riskTier: g.riskTier,
+          groundednessThreshold: g.groundednessThreshold,
+          groundednessScore: g.groundednessScore,
+          intendedUse: g.intendedUse,
+          detail: g.reason,
+        });
+      }
       console.error(`[c2c/actions/${command}]`, err?.message);
       return res.status(500).json({ error: 'INTERNAL_ERROR' });
     }
@@ -545,13 +550,24 @@ export async function legacyAcceptAnaDraftHandler(
     return;
   }
 
-  const { refinedContent, status = 'ready_for_review' } = req.body ?? {};
+  const {
+    refinedContent,
+    status = 'ready_for_review',
+    groundednessScore,
+    confidence,
+    groundednessReviewAck,
+  } = req.body ?? {};
 
   // Build a synthetic accept-ai-suggestion envelope pointing at the section
-  // using the legacy integer section id as a cerv2 target pointer.
+  // using the legacy integer section id as a cerv2 target pointer. Attach
+  // governance metadata so the acceptance is recorded against the capability
+  // contract and the groundedness gate can engage on this path too.
   const target = `section:cerv2:${sectionId}`;
-  const payload: Record<string, unknown> = { status };
+  const payload: Record<string, unknown> = { status, capabilityKey: 'authoring-review' };
   if (refinedContent !== undefined) payload.refinedContent = refinedContent;
+  if (groundednessScore !== undefined) payload.groundednessScore = groundednessScore;
+  if (confidence !== undefined) payload.confidence = confidence;
+  if (groundednessReviewAck !== undefined) payload.groundednessReviewAck = groundednessReviewAck;
 
   // If refinedContent present, patch the section first (existing behavior).
   if (refinedContent !== undefined) {
@@ -593,6 +609,17 @@ export async function legacyAcceptAnaDraftHandler(
     );
     res.json({ success: true, ...result });
   } catch (err: any) {
+    if (err instanceof GroundednessReviewError) {
+      const g = err.gateResult;
+      res.status(422).json({
+        error: 'GROUNDEDNESS_REVIEW_REQUIRED',
+        gate: g.gate,
+        groundednessThreshold: g.groundednessThreshold,
+        groundednessScore: g.groundednessScore,
+        detail: g.reason,
+      });
+      return;
+    }
     console.error('[c2c/legacyAcceptAnaDraft]', err?.message);
     res.status(500).json({ error: 'INTERNAL_ERROR' });
   }

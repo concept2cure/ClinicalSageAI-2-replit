@@ -157,3 +157,18 @@ export function evaluateAcceptGate(payload: Record<string, unknown> | undefined)
     enrichedPayload,
   };
 }
+
+/**
+ * Thrown when AI content cannot be accepted because its groundedness is below
+ * the capability threshold and no human-review acknowledgement was supplied.
+ * The governed-action routes map this to HTTP 422.
+ */
+export class GroundednessReviewError extends Error {
+  readonly gateResult: AcceptGateResult;
+  constructor(gateResult: AcceptGateResult) {
+    super(gateResult.reason);
+    this.name = 'GroundednessReviewError';
+    this.gateResult = gateResult;
+  }
+}
+

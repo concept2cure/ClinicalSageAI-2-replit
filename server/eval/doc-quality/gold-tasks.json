@@ -1,0 +1,68 @@
+{
+  "$comment": "SEED per-document-type extraction/generation eval tasks. Expand to a real bank (10+ per docType) and populate `input` with source documents, then run live via run-eval.ts. The `candidateContent`/`candidateExtraction` fields let you score a captured model output offline (no DB/LLM needed) so the harness is runnable today. Generation pass = section coverage >= min AND zero forbidden hits; extraction pass = field F1 >= min.",
+  "version": "0.1.0-seed",
+  "tasks": [
+    {
+      "id": "510k-se-summary-generate",
+      "docType": "510k",
+      "taskType": "generation",
+      "requiredSections": [
+        "device description",
+        "intended use",
+        "substantial equivalence",
+        "performance testing",
+        "labeling"
+      ],
+      "forbiddenPatterns": ["proven safe", "no risk", "guaranteed", "100% effective"],
+      "candidateContent": "Device description: the subject device is a benchtop analyzer. Intended use: in vitro quantitation of analyte X. Substantial equivalence: the subject device has the same intended use and technological characteristics as the predicate (K123456). Performance testing: precision, linearity, and method comparison studies were conducted. Labeling: instructions for use and warnings are provided.",
+      "tags": ["fda", "510k", "substantial-equivalence"]
+    },
+    {
+      "id": "510k-header-extract",
+      "docType": "510k",
+      "taskType": "extraction",
+      "expectedFields": {
+        "device_name": "Acme Analyzer",
+        "predicate_k_number": "K123456",
+        "product_code": "JJX",
+        "regulation_number": "862.1345"
+      },
+      "candidateExtraction": {
+        "device_name": "Acme Analyzer 2000",
+        "predicate_k_number": "K123456",
+        "product_code": "JJX",
+        "regulation_number": "21 CFR 862.1345"
+      },
+      "tags": ["fda", "510k", "metadata"]
+    },
+    {
+      "id": "cer-clinical-eval-generate",
+      "docType": "cer",
+      "taskType": "generation",
+      "requiredSections": [
+        "clinical background",
+        "state of the art",
+        "clinical data appraisal",
+        "benefit-risk",
+        "conclusions"
+      ],
+      "forbiddenPatterns": ["proven safe", "no adverse events", "guaranteed"],
+      "candidateContent": "Clinical background: the device treats condition Y. State of the art: current standard of care is described. Clinical data appraisal: literature and PMCF data were appraised for relevance and quality. Benefit-risk: the benefit-risk profile is acceptable for the intended population. Conclusions: the clinical evidence supports conformity.",
+      "tags": ["eu-mdr", "cer"]
+    },
+    {
+      "id": "ind-m2-summary-generate",
+      "docType": "ind",
+      "taskType": "generation",
+      "requiredSections": [
+        "introduction",
+        "nonclinical overview",
+        "clinical overview",
+        "benefit-risk assessment"
+      ],
+      "forbiddenPatterns": ["proven safe", "guaranteed", "no side effects"],
+      "candidateContent": "Introduction: this is a Phase 1 program for indication Z. Nonclinical overview: pharmacology and toxicology summarized. Clinical overview: first-in-human design rationale provided.",
+      "tags": ["fda", "ind", "module-2"]
+    }
+  ]
+}
