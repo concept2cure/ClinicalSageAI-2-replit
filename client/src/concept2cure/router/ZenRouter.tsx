@@ -24,6 +24,7 @@ import { ZenSignup, ZenAuthLayout } from '../auth';
 import { Concept2CureLogin } from '../components/concept2cure-auth';
 import { ZenApp } from '../ZenApp';
 import MdxRoute from '../mdx/MdxRoute';
+import WorkspaceRoute from '../workspace/WorkspaceRoute';
 import { ProjectProvider } from '../context/ProjectContext';
 import {
   AuthProvider as PortalAuthProvider,
@@ -194,6 +195,20 @@ export const ZenRouter: React.FC = () => {
               <ProtectedRoute>
                 <PageTransition>
                   <MdxRoute />
+                </PageTransition>
+              </ProtectedRoute>
+            )}
+          </Route>
+
+          {/* Workspace shell — AnA-conversation-first three-zone shell from
+              the design-system workspace kit. Additive in this commit:
+              reachable at its own route so the deployed shell can be
+              verified before any cutover from /concept2cure/mdx. */}
+          <Route path="/concept2cure/workspace">
+            {() => (
+              <ProtectedRoute>
+                <PageTransition>
+                  <WorkspaceRoute />
                 </PageTransition>
               </ProtectedRoute>
             )}
