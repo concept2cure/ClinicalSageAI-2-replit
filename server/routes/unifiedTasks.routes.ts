@@ -10,6 +10,7 @@ import unifiedTaskService, { MODULE_CONFIG } from '../services/unifiedTaskServic
 import { storage } from '../storage';
 import { z } from 'zod';
 import { getSecureOrgId } from '../utils/tenantContext';
+import { auditTaskAction } from '../services/tasking/task-audit';
 
 const router = Router();
 
@@ -89,6 +90,20 @@ router.post('/unified', async (req: Request, res: Response) => {
     };
     
     const task = await unifiedTaskService.createUnifiedTask(taskData);
+
+    await auditTaskAction({
+      orgId: org,
+      userId: (req as any).user?.id,
+      command: 'task.create',
+      taskId: task?.taskId ?? String(task?.id ?? ''),
+      payload: {
+        moduleType: validatedData.moduleType,
+        title: validatedData.title,
+        priority: validatedData.priority ?? 'medium',
+        status: 'pending',
+      },
+      reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
+    });
     
     res.status(201).json({
       success: true,
@@ -243,6 +258,14 @@ router.post('/:id/link', async (req: Request, res: Response) => {
 
     const link = await unifiedTaskService.linkTasks(linkData);
 
+    await auditTaskAction({
+      orgId: org,
+      userId: (req as any).user?.id,
+      command: 'task.link',
+      taskId: linkData.sourceTaskId,
+      payload: { targetTaskId: linkData.targetTaskId, linkType: linkData.linkType },
+    });
+
     res.json({
       success: true,
       link,
@@ -356,6 +379,15 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
     }
 
     const updatedTask = await unifiedTaskService.updateTaskStatus(id, status, userId);
+
+    await auditTaskAction({
+      orgId: org,
+      userId: (req as any).user?.id,
+      command: 'task.transition',
+      taskId: id,
+      payload: { from: (existing as any).status, to: status },
+      reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
+    });
 
     res.json({
       success: true,

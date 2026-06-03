@@ -14,6 +14,7 @@ const m = vi.hoisted(() => ({
   linkTasks: vi.fn(),
   getUnifiedDashboardMetrics: vi.fn(),
   syncTasksFromModule: vi.fn(),
+  auditTaskAction: vi.fn(),
 }));
 
 vi.mock('../../services/unifiedTaskService', () => ({
@@ -21,6 +22,8 @@ vi.mock('../../services/unifiedTaskService', () => ({
   MODULE_CONFIG: {},
 }));
 vi.mock('../../storage', () => ({ storage: { db: {} } }));
+// Isolate the route from the real audit ledger (db/chain/bcrypt); assert it is invoked.
+vi.mock('../../services/tasking/task-audit', () => ({ auditTaskAction: m.auditTaskAction }));
 
 import unifiedTaskRoutes from '../unifiedTasks.routes';
 
@@ -74,6 +77,10 @@ describe('unifiedTasks routes — tenant isolation', () => {
       .send({ status: 'completed' });
     expect(res.status).toBe(200);
     expect(m.updateTaskStatus).toHaveBeenCalledWith('TASK-A', 'completed', undefined);
+    // The mutation writes a transparent lineage record.
+    expect(m.auditTaskAction).toHaveBeenCalledWith(
+      expect.objectContaining({ command: 'task.transition', taskId: 'TASK-A', orgId: 2 }),
+    );
   });
 
   it('POST /unified forces the JWT org onto the created task', async () => {
