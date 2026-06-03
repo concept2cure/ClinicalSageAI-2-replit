@@ -13,8 +13,9 @@
  * TECHNIQUES IMPLEMENTED:
  * 1. HyDE - Generate hypothetical answer, embed that
  * 2. Multi-Query - Expand query into multiple perspectives
- * 3. LLM reranking - An LLM scores each candidate's relevance (LLM-as-judge).
- *    Note: this is NOT a cross-encoder model; it is a prompted relevance score.
+ * 3. Reranking - pluggable via rag-reranker.ts. Defaults to an LLM-as-judge
+ *    (a prompted relevance score, NOT a cross-encoder); swaps to a true
+ *    cross-encoder reranker when RAG_RERANKER_* env is configured.
  * 4. MMR - Balance relevance with diversity, measured in embedding space
  * 5. Contextual Compression - Extract only relevant passages
  *
@@ -34,6 +35,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { EnhancedEmbeddingService, getEmbeddingService } from './enhancedEmbeddingService.js';
 import { AIProviderRouter, getAIRouter, type AIRequest, type AIResponse } from './aiProviderRouter.js';
 import { getOpenAIClient } from './openai-client.js';
+import { getReranker, type Reranker } from './rag-reranker.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
@@ -247,6 +249,9 @@ export class AdvancedRAGPipeline {
   private aiRouter: AIProviderRouter;
   private pool: pg.Pool;
   private openai: any;
+  // Reranking strategy. Defaults to the LLM-as-judge provider (prior behavior);
+  // swaps to a cross-encoder when RAG_RERANKER_* is configured. See rag-reranker.ts.
+  private reranker: Reranker;
 
   // In-memory TTL + LRU cache for the auxiliary reasoning calls (HyDE, query
   // expansion, reranking, compression). These repeat verbatim across similar
@@ -266,6 +271,11 @@ export class AdvancedRAGPipeline {
     // aiRouter for completions. Keep the field as an any-shaped stub so
     // legacy references still compile.
     this.openai = null;
+
+    // LLM-judge reranks route through the cached AI router so identical rerank
+    // calls reuse the prior result; a cross-encoder provider (if configured)
+    // ignores the route fn and calls its own HTTP endpoint.
+    this.reranker = getReranker(req => this.routeCached(req));
 
     console.log('✅ Advanced RAG Pipeline initialized');
   }
@@ -373,9 +383,10 @@ export class AdvancedRAGPipeline {
 
     const totalCandidates = candidates.length;
 
-    // Step 2: LLM-based reranking (LLM-as-judge, not a cross-encoder)
+    // Step 2: reranking via the configured provider (LLM-judge by default,
+    // cross-encoder when RAG_RERANKER_* is set).
     if (options.useReranking && candidates.length > 0) {
-      const rerankResult = await this.llmRerank(query, candidates);
+      const rerankResult = await this.applyReranker(query, candidates);
       candidates = rerankResult.documents;
       tokensUsed += rerankResult.tokensUsed;
     }
@@ -628,7 +639,7 @@ export class AdvancedRAGPipeline {
    * relevance score combined with the embedding score. Cheap to run, but
    * non-deterministic at temperature > 0 (we use 0 here for stability).
    */
-  private async llmRerank(
+  private async applyReranker(
     query: string,
     documents: RetrievedDocument[]
   ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }> {
@@ -636,58 +647,41 @@ export class AdvancedRAGPipeline {
       return { documents: [], tokensUsed: 0 };
     }
 
-    // Build reranking prompt
-    const docList = documents
-      .map(
-        (doc, idx) =>
-          `[${idx + 1}] ${doc.title}\n${doc.content.slice(0, 500)}${doc.content.length > 500 ? '...' : ''}`
-      )
-      .join('\n\n');
-
-    const rerankResponse = await this.routeCached({
-      taskType: 'structured_output',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a relevance judge. Score each document's relevance to the query on a scale of 0-100.
-Return ONLY a JSON object with document indices as keys and scores as values.
-Example: {"1": 95, "2": 72, "3": 45}`,
-        },
-        {
-          role: 'user',
-          content: `Query: "${query}"\n\nDocuments:\n${docList}\n\nScore each document's relevance (0-100):`,
-        },
-      ],
-      maxTokens: 200,
-      temperature: 0,
-      jsonMode: true,
-    });
-
-    let scores: Record<string, number> = {};
+    let result;
     try {
-      scores = JSON.parse(rerankResponse.content);
-    } catch {
-      // If parsing fails, keep original order
-      return { documents, tokensUsed: rerankResponse.usage.totalTokens };
+      result = await this.reranker.score(
+        query,
+        documents.map(d => ({ title: d.title, content: d.content }))
+      );
+    } catch (error) {
+      // A reranker failure must never break retrieval — keep the embedding order.
+      console.warn(`[RAG] reranker "${this.reranker.name}" failed; keeping embedding order:`, error);
+      return { documents, tokensUsed: 0 };
     }
 
-    // Apply rerank scores
-    const rerankedDocs = documents.map((doc, idx) => {
-      const rerankScore = (scores[String(idx + 1)] || 50) / 100;
+    // Defensive: a provider that returns the wrong count can't be trusted to
+    // align with documents, so fall back rather than mis-rank.
+    if (result.scores.length !== documents.length) {
+      console.warn(
+        `[RAG] reranker "${this.reranker.name}" returned ${result.scores.length} scores for ${documents.length} docs; keeping embedding order`
+      );
+      return { documents, tokensUsed: result.tokensUsed };
+    }
+
+    // Combine the rerank score with the embedding score (same blend as before),
+    // preserving every other field on the document (embedding, sourceRow, …).
+    const reranked = documents.map((doc, idx) => {
+      const rerankScore = result.scores[idx];
       return {
         ...doc,
         rerankScore,
-        finalScore: (doc.initialScore + rerankScore) / 2, // Combined score
+        finalScore: (doc.initialScore + rerankScore) / 2,
       };
     });
 
-    // Sort by final score
-    rerankedDocs.sort((a, b) => b.finalScore - a.finalScore);
+    reranked.sort((a, b) => b.finalScore - a.finalScore);
 
-    return {
-      documents: rerankedDocs,
-      tokensUsed: rerankResponse.usage.totalTokens,
-    };
+    return { documents: reranked, tokensUsed: result.tokensUsed };
   }
 
   /**
