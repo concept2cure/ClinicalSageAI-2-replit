@@ -78,6 +78,7 @@ import {
   refreshProjectRetrievalMode,
 } from '../services/projects/retrieval-mode.js';
 import { extractUploadedText } from '../services/projects/extract-text.js';
+import { ingestContextualChunks } from '../services/projects/contextual-ingest.js';
 import {
   interceptComplianceScan,
   interceptArtifactChange,
@@ -4465,6 +4466,26 @@ router.post(
         }
       } catch (embedErr: any) {
         logger.warn('Auto-embedding failed (non-fatal)', { error: embedErr.message });
+      }
+
+      // ── A3 contextual-retrieval ingest (dark-launched) ──
+      // When enabled, also store contextualized chunk atoms (chunk + a per-chunk
+      // situating context generated via the gateway) for finer-grained
+      // retrieval. Off by default — the per-chunk gateway calls cost tokens, so
+      // validate cost/quality before enabling. Fire-and-forget so it never
+      // blocks the upload response; additive to the whole-document atom above.
+      if (
+        process.env.PROJECT_CONTEXTUAL_INGEST_ENABLED === 'true' &&
+        extractedText &&
+        extractedText.length > 200
+      ) {
+        void ingestContextualChunks({
+          artifactId,
+          organizationId,
+          title: safeOriginalName,
+          text: extractedText,
+          ctdSection: dossierClassification.ctdSection,
+        });
       }
 
       // ── Record dossier classification provenance ──
