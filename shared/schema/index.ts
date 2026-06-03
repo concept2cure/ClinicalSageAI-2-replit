@@ -394,3 +394,9 @@ export type {
   ActionType,
   VigilanceEventKind,
 } from './capa-mdr';
+
+// Living Record Spine — the canonical fact store, derived-value bindings, drift
+// sentinel output, the eCTD sequence node, and the graph overlay. The value
+// layer underneath the existing living-file cascade.
+// See docs/architecture/LIVING_RECORD_SPINE.md.
+export * from './living-record-spine';

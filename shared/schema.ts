@@ -17893,6 +17893,19 @@ export const evidenceClaims = pgTable(
     sourcePath: text('source_path'),
     tags: jsonb('tags').default([]),
     metadata: jsonb('metadata').default({}),
+    // Living Record Spine — value + verification axis (migration 20260603).
+    // The value columns let a claim assert a structured quantity, which is the
+    // join key (program_id, entity, field) into canonical_facts.
+    entity: text('entity'),
+    field: text('field'),
+    valueNum: numeric('value_num'),
+    valueText: text('value_text'),
+    unit: varchar('unit', { length: 40 }),
+    comparator: varchar('comparator', { length: 8 }).default('='),
+    valueType: varchar('value_type', { length: 20 }), // count | measure | date | categorical | boolean | text
+    verification: varchar('verification', { length: 16 }).notNull().default('unverified'),
+    // unverified | verified | drifted | disputed
+    canonicalFactId: uuid('canonical_fact_id'),
     extractedBy: integer('extracted_by'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
