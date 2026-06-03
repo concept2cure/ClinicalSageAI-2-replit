@@ -39,7 +39,7 @@ const log = createScopedLogger('ai-gateway');
 // Default Model Registry
 // ─────────────────────────────────────────────────────────────────────────────
 
-const DEFAULT_MODELS: ModelConfig[] = [
+export const DEFAULT_MODELS: ModelConfig[] = [
   {
     id: 'gpt-4o',
     provider: 'openai',
