@@ -317,3 +317,11 @@ export function reconcileClaimValue(params: {
     factStatusAfter: 'disputed',
   };
 }
+
+/**
+ * Map a drift severity to the freshness read-model state, so the canonical-fact
+ * drift folds into programFreshnessReport with one shared rule. Pure.
+ */
+export function driftSeverityToFreshness(severity: string): 'stale' | 'needs_evidence' {
+  return severity === 'high' || severity === 'critical' ? 'stale' : 'needs_evidence';
+}

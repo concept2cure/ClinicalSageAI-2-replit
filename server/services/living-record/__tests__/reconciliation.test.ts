@@ -13,6 +13,7 @@ import {
   parseLeadingNumber,
   applyTransform,
   numToCanonical,
+  driftSeverityToFreshness,
   type FactValueView,
 } from '../value-reconciliation';
 import {
@@ -202,5 +203,14 @@ describe('object model — the explicit spine', () => {
     expect(numToCanonical(186)).toBe('186');
     expect(numToCanonical(18.5)).toBe('18.5');
     expect(numToCanonical(3.0)).toBe('3');
+  });
+});
+
+describe('drift → freshness mapping', () => {
+  it('maps high/critical drift to stale and low/medium to needs_evidence', () => {
+    expect(driftSeverityToFreshness('critical')).toBe('stale');
+    expect(driftSeverityToFreshness('high')).toBe('stale');
+    expect(driftSeverityToFreshness('medium')).toBe('needs_evidence');
+    expect(driftSeverityToFreshness('low')).toBe('needs_evidence');
   });
 });

@@ -15,11 +15,14 @@ export * from './object-model';
 export * from './claim-lifecycle';
 export * from './value-reconciliation';
 export * from './canonical-fact-store';
+export * from './sequence-store';
 export {
   reconcileClaim,
+  reconcileProgramClaims,
   runDriftSentinel,
   type ReconcileClaimParams,
   type ReconcileClaimOutcome,
+  type ReconcileProgramResult,
   type DriftSentinelReport,
   type DriftSentinelResultItem,
 } from './reconciliation-engine';

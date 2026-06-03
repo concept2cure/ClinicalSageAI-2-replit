@@ -294,3 +294,38 @@ export async function programFactDriftReport(programId: string) {
     hasOpenDrift: open.length > 0,
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Read queries (the surfaces in HANDOFF_TO_DESIGN_living_record_spine bind here)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function getFact(factId: string): Promise<CanonicalFact | null> {
+  const rows = await db.select().from(canonicalFacts).where(eq(canonicalFacts.id, factId)).limit(1);
+  return rows[0] ?? null;
+}
+
+/** Active facts for a program (the program's facts of record), ordered by key. */
+export async function listProgramFacts(
+  programId: string,
+  opts: { includeNonActive?: boolean } = {}
+): Promise<CanonicalFact[]> {
+  const where = opts.includeNonActive
+    ? eq(canonicalFacts.programId, programId)
+    : and(eq(canonicalFacts.programId, programId), eq(canonicalFacts.status, 'active'));
+  return db
+    .select()
+    .from(canonicalFacts)
+    .where(where)
+    .orderBy(canonicalFacts.entity, canonicalFacts.field);
+}
+
+export async function listBindingsForFact(factId: string): Promise<FactBinding[]> {
+  return db.select().from(factBindings).where(eq(factBindings.factId, factId));
+}
+
+export async function listOpenDriftForFact(factId: string) {
+  return db
+    .select()
+    .from(factDrift)
+    .where(and(eq(factDrift.factId, factId), eq(factDrift.status, 'open')));
+}

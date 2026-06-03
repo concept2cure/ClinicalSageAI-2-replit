@@ -30,6 +30,8 @@ import {
 import { aiMlPccpPlans } from '../../../shared/schema/ai-ml-pccp';
 import { evidenceSufficiencyAssessments } from '../../../shared/schema/evidence-sufficiency';
 import { reviewerSimulationRuns } from '../../../shared/schema/reviewer-simulation';
+import { factDrift } from '../../../shared/schema/living-record-spine';
+import { driftSeverityToFreshness } from '../living-record/value-reconciliation';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -45,7 +47,8 @@ export interface ArtifactFreshness {
     | 'post_market_document'
     | 'ai_ml_pccp_plan'
     | 'reviewer_simulation_run'
-    | 'evidence_sufficiency_assessment';
+    | 'evidence_sufficiency_assessment'
+    | 'canonical_fact';
   artifactId: string;
   state: FreshnessState;
   reason?: string;
@@ -312,6 +315,40 @@ async function sufficiencyFreshness(
   ];
 }
 
+async function canonicalFactDriftFreshness(
+  organizationId: number,
+  programId: string
+): Promise<ArtifactFreshness[]> {
+  // Open drift = a bound value no longer agrees with its canonical fact. This
+  // folds the Living Record Spine drift into the one freshness read model so the
+  // health readout (design Surface 8) reads a single source. The drift inbox
+  // (Surface 2) shows full detail; here it is one freshness row per open drift.
+  const rows = await db
+    .select({
+      id: factDrift.id,
+      severity: factDrift.severity,
+      driftType: factDrift.driftType,
+      expectedValue: factDrift.expectedValue,
+      observedValue: factDrift.observedValue,
+      detectedAt: factDrift.detectedAt,
+    })
+    .from(factDrift)
+    .where(
+      and(
+        eq(factDrift.organizationId, organizationId),
+        eq(factDrift.programId, programId),
+        eq(factDrift.status, 'open')
+      )
+    );
+  return rows.map(r => ({
+    artifact: 'canonical_fact' as const,
+    artifactId: r.id,
+    state: driftSeverityToFreshness(r.severity),
+    reason: `${r.driftType}: expected ${r.expectedValue ?? '—'}, observed ${r.observedValue ?? '—'}`,
+    updatedAt: r.detectedAt,
+  }));
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Public entry
 // ─────────────────────────────────────────────────────────────────────────────
@@ -328,6 +365,7 @@ export async function programFreshnessReport(
     pccpPlanFreshness(organizationId, programId),
     reviewerSimFreshness(organizationId, programId),
     sufficiencyFreshness(organizationId, programId),
+    canonicalFactDriftFreshness(organizationId, programId),
   ]);
   const artifacts = buckets.flat();
 

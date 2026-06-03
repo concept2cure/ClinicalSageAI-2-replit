@@ -310,5 +310,69 @@ export async function runDriftSentinel(
   return { programId, scanned: candidates.length, driftDetected, healed, items };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Program-level reconcile (the claim write path, dual-id contract)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ReconcileProgramResult {
+  programId: string;
+  reconciled: number;
+  established: number;
+  agreed: number;
+  disputed: number;
+  skipped: number;
+  outcomes: ReconcileClaimOutcome[];
+}
+
+/**
+ * Reconcile every current claim in a program against the canonical fact store.
+ *
+ * Claims are scoped by the legacy integer program id (evidence_claims), while
+ * facts are scoped by the uuid regulatory_programs id — the platform's
+ * established dual-id contract (the change-router takes both the same way). The
+ * caller supplies both; there is no DB-level bridge between the two namespaces.
+ */
+export async function reconcileProgramClaims(params: {
+  /** UUID of the regulatory_programs row (scopes the canonical facts). */
+  programId: string;
+  /** Integer evidence_claims.program_id (locates the program's claims). */
+  legacyProgramId: number;
+  organizationId: number;
+  tolerance?: number;
+  actor?: number | null;
+}): Promise<ReconcileProgramResult> {
+  const claims = await db
+    .select({ id: evidenceClaims.id })
+    .from(evidenceClaims)
+    .where(
+      and(
+        eq(evidenceClaims.programId, params.legacyProgramId),
+        eq(evidenceClaims.organizationId, params.organizationId),
+        eq(evidenceClaims.isCurrent, true)
+      )
+    );
+
+  const outcomes: ReconcileClaimOutcome[] = [];
+  const tally = { established: 0, agreed: 0, disputed: 0, skipped: 0 };
+  for (const c of claims) {
+    const outcome = await reconcileClaim({
+      claimId: c.id,
+      programId: params.programId,
+      organizationId: params.organizationId,
+      tolerance: params.tolerance,
+      actor: params.actor,
+    });
+    outcomes.push(outcome);
+    tally[outcome.verdict] += 1;
+  }
+
+  return {
+    programId: params.programId,
+    reconciled: outcomes.length,
+    ...tally,
+    outcomes,
+  };
+}
+
 // Re-export the read model for ergonomic imports.
 export { programFactDriftReport } from './canonical-fact-store';
