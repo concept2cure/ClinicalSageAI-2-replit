@@ -318,8 +318,11 @@ The quality bars are no longer aspirations because each now names a mechanism.
 2. Drizzle module `shared/schema/living-record-spine.ts` (types) — exported via
    `shared/schema/index.ts`.
 3. Engine `server/services/living-record/*` + tests.
-4. Wire `reconcileClaim` into the claim write path and schedule `runDriftSentinel`
-   per program (follow-up PR; engine is callable today).
+4. Reconcile-on-write and the sweep are wired: `reconcileClaimById(claimId)`
+   resolves the uuid program via the program-id bridge
+   (`living_record_program_links`) and reconciles; `startDriftSentinelSchedule()`
+   runs the periodic sweep on boot behind `ENABLE_DRIFT_SENTINEL`. Routes live
+   under `/api/regulatory-graph/*`.
 
 ---
 
@@ -339,3 +342,8 @@ See `migrations/20260603_living_record_spine.sql` for authoritative DDL and
   entity pointer; typed, versioned, confidence-scored edges).
 - `evidence_claims` += `entity`, `field`, `value_num`, `value_text`, `unit`,
   `comparator`, `value_type`, `verification`, `canonical_fact_id`.
+- `living_record_program_links` — bridges the integer claim program
+  (`evidence_claims.program_id`) to the uuid fact program
+  (`regulatory_programs.id`) so a claim reconciles from its id alone. There is no
+  native FK; the link is explicit and operator/UI-populated, and reconcile
+  no-ops when it is absent rather than guessing a mapping.

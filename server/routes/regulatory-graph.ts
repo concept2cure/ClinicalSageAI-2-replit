@@ -59,8 +59,10 @@ import {
   programFactDriftReport,
 } from '../services/living-record/canonical-fact-store';
 import { listProgramSequences } from '../services/living-record/sequence-store';
+import { linkLegacyProgram } from '../services/living-record/program-link';
 import {
   reconcileClaim,
+  reconcileClaimById,
   reconcileProgramClaims,
   runDriftSentinel,
 } from '../services/living-record/reconciliation-engine';
@@ -725,6 +727,44 @@ router.post(
     }
   }
 );
+
+// Bridge a legacy integer claim program to this uuid program, so claims can be
+// reconciled from their id alone (POST /claims/:claimId/reconcile).
+router.post(
+  '/programs/:programId/link',
+  requireUuidProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const legacyProgramId =
+      typeof req.body?.legacyProgramId === 'number' ? req.body.legacyProgramId : null;
+    if (legacyProgramId === null) {
+      return res.status(422).json({ error: 'legacyProgramId (integer) is required' });
+    }
+    try {
+      await linkLegacyProgram({
+        organizationId: orgId,
+        legacyProgramId,
+        programId: String(req.params.programId),
+        createdBy: actorId(req),
+      });
+      res.json({ linked: true, programId: String(req.params.programId), legacyProgramId });
+    } catch (err: any) {
+      res.status(500).json({ error: 'Link failed', detail: err?.message });
+    }
+  }
+);
+
+// Reconcile-on-write: reconcile a claim from its id alone (resolves the uuid
+// program via the bridge). No-ops with verdict 'skipped' if no link exists.
+router.post('/claims/:claimId/reconcile', requireClaimAccess, async (req: Request, res: Response) => {
+  const claimId = parseIntParam(req.params.claimId)!;
+  try {
+    const result = await reconcileClaimById(claimId, { actor: actorId(req) });
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Reconcile failed', detail: err?.message });
+  }
+});
 
 router.post('/propagate/risk-vocab', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);

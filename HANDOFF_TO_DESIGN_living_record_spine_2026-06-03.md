@@ -291,10 +291,11 @@ reconcile path, drift sentinel, freshness"):
 - Fold-in — `programFreshnessReport` now includes a `canonical_fact` bucket from
   open drift, so Surface 8 reads one health model.
 
-Still open (not blocking design): hooking `reconcileClaim` into the exact
-claim-insert call site is deferred, because claims are created without a
-uuid-program in scope (the platform uses a dual-id contract). Until then, call
-the per-claim reconcile route right after a claim is written, or run the
-program-level reconcile. So Surfaces 1, 4, 7, and 8 show data for programs that
-have been reconciled at least once — design the populated state and the honest
-not-yet-reconciled empty state.
+Resolved: the integer-claim-program to uuid-fact-program duality now has an
+explicit bridge (`living_record_program_links`). `POST …/programs/:id/link`
+records it (and the program-level reconcile records it automatically), after
+which `POST …/claims/:claimId/reconcile` reconciles a claim from its id alone —
+the reconcile-on-write hook. The periodic Drift Sentinel sweep runs on boot
+behind `ENABLE_DRIFT_SENTINEL`. So Surfaces 1, 4, 7, and 8 show data for programs
+that have been reconciled at least once — design the populated state and the
+honest not-yet-reconciled empty state.

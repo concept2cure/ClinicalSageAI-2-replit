@@ -329,6 +329,37 @@ export const spineEdges = pgTable(
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// living_record_program_links — bridge integer claim program ↔ uuid program
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const livingRecordProgramLinks = pgTable(
+  'living_record_program_links',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: integer('organization_id').notNull(),
+    legacyProgramId: integer('legacy_program_id').notNull(),
+    programId: uuid('program_id')
+      .notNull()
+      .references(() => regulatoryPrograms.id, { onDelete: 'cascade' }),
+    createdBy: integer('created_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  table => ({
+    orgLegacyIdx: uniqueIndex('living_record_program_links_org_legacy_idx').on(
+      table.organizationId,
+      table.legacyProgramId
+    ),
+    programIdx: index('living_record_program_links_program_idx').on(table.programId),
+  })
+);
+
+export const insertLivingRecordProgramLinkSchema = createInsertSchema(
+  livingRecordProgramLinks
+).omit({ id: true, createdAt: true });
+export type LivingRecordProgramLink = InferSelectModel<typeof livingRecordProgramLinks>;
+export type InsertLivingRecordProgramLink = z.infer<typeof insertLivingRecordProgramLinkSchema>;
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Relations
 // ═══════════════════════════════════════════════════════════════════════════════
 

@@ -27,6 +27,7 @@ import {
   type ClaimVerification,
 } from './claim-lifecycle';
 import { claimIdFromTarget, claimTarget } from './object-model';
+import { linkLegacyProgram, resolveUuidProgram } from './program-link';
 import {
   bindToFact,
   factValueView,
@@ -341,6 +342,16 @@ export async function reconcileProgramClaims(params: {
   tolerance?: number;
   actor?: number | null;
 }): Promise<ReconcileProgramResult> {
+  // Pairing the two ids here is an explicit operator association, so record the
+  // bridge. Subsequent reconcileClaimById calls can then resolve the uuid
+  // program from the claim id alone — the reconcile-on-write hook.
+  await linkLegacyProgram({
+    organizationId: params.organizationId,
+    legacyProgramId: params.legacyProgramId,
+    programId: params.programId,
+    createdBy: params.actor ?? null,
+  });
+
   const claims = await db
     .select({ id: evidenceClaims.id })
     .from(evidenceClaims)
@@ -372,6 +383,70 @@ export async function reconcileProgramClaims(params: {
     ...tally,
     outcomes,
   };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Reconcile-on-write hook (resolve the uuid program from the claim id alone)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ReconcileClaimByIdOutcome extends ReconcileClaimOutcome {
+  resolvedProgramId: string | null;
+}
+
+/**
+ * Reconcile a claim given only its id. Resolves the claim's org + legacy program,
+ * looks up the uuid program via the program-id bridge, then reconciles. This is
+ * the hook to call right after a claim is created or its value changes. If no
+ * program link exists, it no-ops (verdict 'skipped') rather than guessing a
+ * mapping.
+ */
+export async function reconcileClaimById(
+  claimId: number,
+  opts: { tolerance?: number; actor?: number | null } = {}
+): Promise<ReconcileClaimByIdOutcome> {
+  const [claim] = await db
+    .select({
+      id: evidenceClaims.id,
+      programId: evidenceClaims.programId,
+      organizationId: evidenceClaims.organizationId,
+    })
+    .from(evidenceClaims)
+    .where(eq(evidenceClaims.id, claimId))
+    .limit(1);
+
+  if (!claim) {
+    return {
+      verdict: 'skipped',
+      reason: 'claim not found',
+      claimVerification: 'unverified',
+      factStatusAfter: null,
+      claimId,
+      factId: null,
+      resolvedProgramId: null,
+    };
+  }
+
+  const programId = await resolveUuidProgram(claim.programId, claim.organizationId);
+  if (!programId) {
+    return {
+      verdict: 'skipped',
+      reason: 'no program link for the legacy program; record one via POST /programs/:programId/link',
+      claimVerification: 'unverified',
+      factStatusAfter: null,
+      claimId,
+      factId: null,
+      resolvedProgramId: null,
+    };
+  }
+
+  const outcome = await reconcileClaim({
+    claimId,
+    programId,
+    organizationId: claim.organizationId,
+    tolerance: opts.tolerance,
+    actor: opts.actor,
+  });
+  return { ...outcome, resolvedProgramId: programId };
 }
 
 // Re-export the read model for ergonomic imports.
