@@ -4,6 +4,31 @@
 
 ---
 
+## Execution model — one branch, ship on concept2cure-v2 (read first)
+
+This section governs *where* and *how* work ships. It overrides any older guidance that implies work can park on a feature branch, an open PR, or the `design-system/` mirror.
+
+**`concept2cure-v2` is the one and only branch.** The repo's `.husky/pre-push` hook refuses any push to another ref by design, to stop the divergence that strands work. Do not create `claude/*`, `chore/*`, or feature branches expecting to push them — commit straight to `concept2cure-v2`.
+
+**Definition of done.** A change is done only when it is (1) committed and pushed to `concept2cure-v2`, (2) deployed, and (3) verified on the live URL. Until all three are true it is in progress — say so, do not call it shipped. A local branch is not done. A green local build is not done. A mirror-only edit is not done.
+
+**Commit policy.**
+- Commit straight to `concept2cure-v2` in small, surface-scoped commits. Keep each commit focused, and delete the legacy route, page, or flag it replaces in the same commit — no parallel UI paths.
+- Push only to `concept2cure-v2`. If the pre-push hook blocks you, you are on the wrong branch — switch to `concept2cure-v2`, do not bypass with `ALLOW_NON_CANONICAL_PUSH` unless the operator told you to.
+- Never gate a ship on work that flows `concept2cure-v2 → canonical` (for example absorbing `pdev` or `mdx_phase2` back into the design system). That is the operator's separate track and does not block a ship.
+
+**CI policy — only failures your change introduced block the ship.**
+- Triage every red check and record `signal · verdict · action` in the commit message or your status reply.
+- Pre-existing failures on `concept2cure-v2` (tenant-isolation lint drift above an already-stale baseline, `npm audit` transitive-dep vulnerabilities with no `package.json` change in your commit) and infra flakes (Docker-pull timeouts, runner deprecations) are not yours — log them and proceed.
+- A check blocks only if your change introduced it. If you cannot re-run a job (no `actions:write`), name the run id and ask the operator rather than blocking the ship.
+
+**Check the live branch before porting (stale-mirror escape hatch).**
+- The `design-system/` folder in this repo is an operator-synced *mirror* and is frequently stale. Before porting any surface, read the live implementation under `client/src/concept2cure/` first.
+- Never report a surface "missing" or "not ported" off the mirror alone, and never port a kit `.jsx` over a `.tsx` that is already fuller — that strips live wiring and is a regression. When the live file already has the behaviour, the action is verify-and-deploy, not port.
+- When a port is genuinely needed, port from the latest `_sync/<date>/files/` packet — the freshest design reference — not from the rest of the stale mirror.
+
+---
+
 ## Authority
 
 **This project owns the Concept2Cure.RI UI.** Every Concept2Cure.RI surface — home, projects, artifacts, auth, editor, admin — is designed here first, shipped as a hi-fi prototype under `ui_kits/`, and then implemented in the `concept2cure-v2` codebase by Claude Code.
