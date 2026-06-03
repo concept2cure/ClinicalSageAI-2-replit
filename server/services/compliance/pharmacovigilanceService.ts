@@ -24,8 +24,10 @@
  */
 
 import { pool } from '../../db';
+import { randomUUID } from 'crypto';
 
 import { createScopedLogger } from '../../utils/logger.js';
+import { computeAuditChain, hashPayload } from '../audit/chain.js';
 
 const logger = createScopedLogger('pharmacovigilanceService');
 
@@ -1016,4 +1018,209 @@ function mapRowToRMP(row: any): RiskManagementPlan {
     status: row.status,
     region: row.region,
   };
+}
+
+// ---------------------------------------------------------------------------
+// 7. Reporting clock (expedited 15-day window)
+// ---------------------------------------------------------------------------
+
+export interface ReportingClock {
+  deadline: string | null;
+  daysRemaining: number | null;
+  /** True when the expedited window is in its urgent tail (e.g. day 6+ of 15) and not yet breached. */
+  day6Flag: boolean;
+  breached: boolean;
+  status: 'none' | 'on_track' | 'due_soon' | 'day6' | 'breached';
+}
+
+/**
+ * Compute the expedited-reporting clock for a case from its deadline. Pure (no
+ * DB) so it is unit-testable and reusable by the case line-listing + overview.
+ * "Day 6 of 15" = the urgent tail of the window: <= (windowDays - 6) days left.
+ */
+export function computeReportingClock(
+  deadline: Date | string | null | undefined,
+  now: Date = new Date(),
+  windowDays = 15,
+): ReportingClock {
+  if (!deadline) {
+    return { deadline: null, daysRemaining: null, day6Flag: false, breached: false, status: 'none' };
+  }
+  const due = deadline instanceof Date ? deadline : new Date(deadline);
+  if (Number.isNaN(due.getTime())) {
+    return { deadline: null, daysRemaining: null, day6Flag: false, breached: false, status: 'none' };
+  }
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const daysRemaining = Math.ceil((due.getTime() - now.getTime()) / msPerDay);
+  const breached = daysRemaining < 0;
+  const day6Flag = !breached && daysRemaining <= windowDays - 6;
+  let status: ReportingClock['status'];
+  if (breached) status = 'breached';
+  else if (day6Flag) status = 'day6';
+  else if (daysRemaining <= windowDays - 3) status = 'due_soon';
+  else status = 'on_track';
+  return { deadline: due.toISOString(), daysRemaining, day6Flag, breached, status };
+}
+
+// ---------------------------------------------------------------------------
+// 8. MedDRA term lookup (drives the PT picker)
+// ---------------------------------------------------------------------------
+
+export interface MeddraTerm {
+  ptCode: string;
+  ptName: string;
+  socCode: string | null;
+  socName: string | null;
+  lltCode: string | null;
+  lltName: string | null;
+}
+
+/**
+ * Search the MedDRA dictionary (meddra_term_reference) for the case-intake PT
+ * picker. Org-scoped (the dictionary is loaded per org). Returns [] when the
+ * dictionary table/column is absent or no data is loaded — the licensed MedDRA
+ * dictionary must be ingested per org before this returns terms.
+ */
+export async function searchMeddraTerms(
+  organizationId: string,
+  query: string,
+  limit = 20,
+): Promise<MeddraTerm[]> {
+  const orgId = Number(organizationId);
+  if (!pool || !query || query.trim().length < 2 || !Number.isFinite(orgId)) return [];
+  try {
+    const result = await pool.query(
+      `SELECT pt_code, pt_name, soc_code, soc_name, llt_code, llt_name
+         FROM meddra_term_reference
+        WHERE organization_id = $1
+          AND (pt_name ILIKE $2 OR llt_name ILIKE $2 OR pt_code = $3)
+        ORDER BY pt_name ASC
+        LIMIT $4`,
+      [orgId, `%${query.trim()}%`, query.trim(), Math.min(limit, 100)],
+    );
+    return result.rows.map((r: any) => ({
+      ptCode: r.pt_code,
+      ptName: r.pt_name,
+      socCode: r.soc_code ?? null,
+      socName: r.soc_name ?? null,
+      lltCode: r.llt_code ?? null,
+      lltName: r.llt_name ?? null,
+    }));
+  } catch (error: any) {
+    if (error?.code === '42P01' || error?.code === '42703') return [];
+    throw error;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 9. Submit case to triage (assigns clock + writes a 21 CFR Part 11 audit)
+// ---------------------------------------------------------------------------
+
+export interface CaseTriageResult {
+  id: string;
+  caseStatus: string;
+  submittedAt: string;
+  reportingClock: ReportingClock;
+  auditWritten: boolean;
+}
+
+/**
+ * Transition a drafted case to triage: set status, stamp submitter/time, and
+ * write a Part 11 audit entry (best-effort, hash-chained). The reporting clock
+ * was assigned at case creation (regulatory_reporting_deadline); this returns
+ * it for the UI. Throws CASE_NOT_FOUND if no matching case for the org.
+ */
+export async function submitCaseToTriage(
+  organizationId: string,
+  userId: string,
+  caseId: string,
+  reason: string,
+): Promise<CaseTriageResult> {
+  if (!pool) throw new Error('PV_DB_UNAVAILABLE');
+  const submittedAt = new Date();
+  let updated: any;
+  try {
+    const res = await pool.query(
+      `UPDATE adverse_events
+          SET case_status = 'submitted_to_triage', submitted_by = $1, submitted_at = $2
+        WHERE id = $3 AND organization_id = $4
+        RETURNING id, case_status, submitted_at, regulatory_reporting_deadline`,
+      [userId, submittedAt, caseId, organizationId],
+    );
+    if (res.rows.length === 0) throw new Error('CASE_NOT_FOUND');
+    updated = res.rows[0];
+  } catch (error: any) {
+    if (error?.code === '42P01') throw new Error('PV_TABLE_MISSING');
+    throw error;
+  }
+
+  const auditWritten = await writePvAudit({
+    organizationId,
+    userId,
+    action: 'pv.case.submit_to_triage',
+    recordId: caseId,
+    reason,
+    payload: { caseId, caseStatus: 'submitted_to_triage', submittedAt: submittedAt.toISOString() },
+  }).catch(() => false);
+
+  return {
+    id: updated.id,
+    caseStatus: updated.case_status,
+    submittedAt: new Date(updated.submitted_at).toISOString(),
+    reportingClock: computeReportingClock(updated.regulatory_reporting_deadline),
+    auditWritten,
+  };
+}
+
+/**
+ * Best-effort 21 CFR Part 11 audit write into the hash-chained audit_logs
+ * ledger. Never throws (returns false on any failure) so it cannot break the
+ * operational action. For strict atomic Part 11 capture, route through
+ * /api/c2c/actions (recordGovernedAction); this is the PV-service path.
+ */
+async function writePvAudit(entry: {
+  organizationId: string;
+  userId: string;
+  action: string;
+  recordId: string;
+  reason: string;
+  payload: Record<string, unknown>;
+}): Promise<boolean> {
+  if (!pool) return false;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const occurredAt = new Date().toISOString();
+    const payloadHash = hashPayload(entry.payload);
+    const actorId = Number.isFinite(Number(entry.userId)) ? Number(entry.userId) : null;
+    const tenantId = Number.isFinite(Number(entry.organizationId)) ? Number(entry.organizationId) : null;
+    const target = `case:${entry.recordId}`;
+    const sha256Chain = await computeAuditChain(client as any, {
+      action: entry.action,
+      actor_id: actorId,
+      target,
+      payload_hash: payloadHash,
+      occurred_at: occurredAt,
+    });
+    await client.query(
+      `INSERT INTO audit_logs
+         (id, tenant_id, user_id, action, table_name, record_id,
+          actor_id, target, target_type, target_id, reason, payload_hash,
+          ana_action_id, sha256_chain, occurred_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+      [
+        randomUUID(), tenantId, actorId, entry.action, 'adverse_events', entry.recordId,
+        actorId, target, 'case', entry.recordId, entry.reason, payloadHash,
+        null, sha256Chain, occurredAt,
+      ],
+    );
+    await client.query('COMMIT');
+    return true;
+  } catch (error: any) {
+    try { await client.query('ROLLBACK'); } catch { /* ignore */ }
+    logger.warn(`PV audit write failed (best-effort): ${error?.message}`);
+    return false;
+  } finally {
+    client.release();
+  }
 }
