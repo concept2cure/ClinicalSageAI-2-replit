@@ -1,10 +1,11 @@
 /**
  * Study Design module — the design-as-data spine (USDM / ICH M11-aligned).
  *
- * Public surface for the structured study-design object and its deterministic gates.
- * Persistence, sample-size wiring, SoA, SAP/protocol projection and governance are
- * added in subsequent slices; this barrel exposes the object model plus the §2/§3/§4/
- * §6/§10/§17 validation that everything else builds on.
+ * Public surface for the structured study-design object, its deterministic gates, and
+ * the seeded synthetic-twin outcome simulator. Persistence, SoA, SAP/protocol projection
+ * and governance are added in subsequent slices; this barrel exposes the object model,
+ * the §2/§3/§4/§6/§10/§17 validation, and the evidence-grounded trial simulator that
+ * everything else builds on.
  *
  * @module server/services/study-design
  */
@@ -25,3 +26,21 @@ export {
   type DesignValidationReport,
   validateDesign,
 } from './design-validation';
+export {
+  type EvidenceObservation,
+  type EffectPrior,
+  type PriorBasis,
+  type BuildEffectPriorOptions,
+  buildEffectPrior,
+} from './evidence-prior';
+export {
+  type SimulationAssumptions,
+  type TrialSimulationReport,
+  type SyntheticTwinSummary,
+  type EstimateDistribution,
+  type SensitivityPoint,
+  type AssumptionsLedger,
+  type DefensibilitySnapshot,
+  simulateTrial,
+  normalApproxPower,
+} from './trial-simulator';
