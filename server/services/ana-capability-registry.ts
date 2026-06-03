@@ -24,7 +24,7 @@ const logger = createScopedLogger('ana-capability-registry');
 // SEED DATA — 33 Core Capabilities
 // ============================================================
 
-interface SeedCapability {
+export interface SeedCapability {
   capabilityKey: string;
   category: string;
   name: string;
@@ -35,7 +35,7 @@ interface SeedCapability {
   documentTypesApplicable: string[];
 }
 
-const SEED_CAPABILITIES: SeedCapability[] = [
+export const SEED_CAPABILITIES: SeedCapability[] = [
   // ── Drafting (8) ──────────────────────────────────────────
   {
     capabilityKey: 'draft-csr',

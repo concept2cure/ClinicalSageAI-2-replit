@@ -29,6 +29,7 @@ await initializeOpenTelemetry();
 import express from 'express';
 import { createServer, type Server as HttpServer } from 'http';
 import { startDriftSentinelSchedule } from './jobs/driftSentinelSweep';
+import { startAuditChainIntegritySchedule } from './jobs/auditChainIntegritySweep';
 import { errorHandler } from './src/mw/observability.js';
 
 // Audit + RBAC side-effect imports (initialize tables + cache on require).
@@ -185,6 +186,9 @@ async function startServer() {
     // Living Record Spine: start the Drift Sentinel periodic sweep. Self-guards
     // to a no-op unless ENABLE_DRIFT_SENTINEL=true, so default boot is unchanged.
     startDriftSentinelSchedule();
+    // 21 CFR Part 11 / ISO 14971: daily audit-chain tamper-evidence sweep.
+    // Self-guards to a no-op unless ENABLE_AUDIT_CHAIN_CHECK=true.
+    startAuditChainIntegritySchedule();
   });
 }
 

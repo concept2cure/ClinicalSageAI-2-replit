@@ -42,6 +42,7 @@
     "ci:ban-new-pool": "bash scripts/ci/ban-new-pool.sh",
     "ci:gateway-bypass": "node scripts/ci/check-gateway-bypass.mjs",
     "ai:model-cards": "tsx scripts/ai-governance/generate-model-cards.ts",
+    "ai:evidence-pack": "tsx scripts/ai-governance/generate-evidence-pack.ts",
     "ai:eval-doc-quality": "tsx server/eval/doc-quality/run-eval.ts",
     "ci:migration-prefix-collisions": "node scripts/ci/check-migration-prefix-collisions.mjs",
     "ci:migration-prefix-collisions:strict": "node scripts/ci/check-migration-prefix-collisions.mjs --strict",

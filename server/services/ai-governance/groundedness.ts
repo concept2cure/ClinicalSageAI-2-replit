@@ -72,6 +72,33 @@ export function citationCoverage(content: string): CitationCoverage {
   return { coverage: cited / claims.length, claims: claims.length, cited };
 }
 
+/**
+ * Whether computed groundedness scores should be enforced (block on low) by
+ * default, org-wide. Off by default so existing accept flows are unchanged;
+ * set AI_GROUNDEDNESS_ENFORCE=1 in the environment to turn the gate on for
+ * every accept once the org is ready. Read at call time so it is configurable
+ * per deployment without a rebuild.
+ */
+export function groundednessEnforcedByDefault(): boolean {
+  const v = process.env.AI_GROUNDEDNESS_ENFORCE;
+  return v === '1' || v === 'true';
+}
+
+/**
+ * Generation-time groundedness scoring helper. Generation services should call
+ * this on freshly drafted content and persist the score alongside the artifact,
+ * so the accept-time gate has an authoritative score (passed as
+ * `groundednessScore`) rather than recomputing. The richer, evidence-based path
+ * is server/services/confidenceScoringEngine.ts (computeEvidenceConfidence).
+ */
+export function scoreGeneratedGroundedness(content: string): {
+  score: number | null;
+  coverage: CitationCoverage;
+} {
+  const coverage = citationCoverage(content);
+  return { score: coverage.coverage, coverage };
+}
+
 export type GroundednessSource = 'explicit' | 'computed' | 'none';
 
 export interface ResolvedGroundedness {
@@ -120,7 +147,7 @@ export function resolveGroundedness(payload: Record<string, unknown> | undefined
     return {
       score: detail.coverage,
       source: detail.coverage === null ? 'none' : 'computed',
-      enforce: p.enforceGroundedness === true,
+      enforce: p.enforceGroundedness === true || groundednessEnforcedByDefault(),
       detail,
     };
   }
