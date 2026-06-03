@@ -77,6 +77,7 @@ import {
   getProjectRetrievalMode,
   refreshProjectRetrievalMode,
 } from '../services/projects/retrieval-mode.js';
+import { extractUploadedText } from '../services/projects/extract-text.js';
 import {
   interceptComplianceScan,
   interceptArtifactChange,
@@ -4310,9 +4311,14 @@ router.post(
         sourceProcessingMode: req.body.sourceProcessingMode || 'artifact_only', // artifact_only | artifact_plus_source_object
       };
 
-      const extractedText = file.mimetype.startsWith('text/')
-        ? file.buffer.toString('utf8')
-        : `[${file.mimetype} document ${safeOriginalName}]`;
+      // Extract real text from PDF/DOCX (and pass through plain text) so binary
+      // uploads are searchable in retrieval and the in-context corpus; fall back
+      // to a placeholder when extraction yields nothing.
+      const extracted = await extractUploadedText(file.buffer, file.mimetype, safeOriginalName);
+      const extractedText =
+        extracted && extracted.length > 0
+          ? extracted
+          : `[${file.mimetype} document ${safeOriginalName}]`;
 
       const document: UploadedDocument = {
         id: documentId,
