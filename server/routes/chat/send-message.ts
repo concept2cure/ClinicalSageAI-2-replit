@@ -33,6 +33,7 @@ import { logToolRun } from '../../services/toolRegistry.js';
 import type { AnaGatewayResponse } from '../../services/ai-gateway/types.js';
 import { buildMemoryContextForChat, type MemoryAssemblyDiagnostics } from '../../services/memory-context-assembler.js';
 import { summarizeAndStoreWorkingMemoryForThread } from '../../services/working-memory.js';
+import { getProjectInstructionsBlock } from '../../services/projects/project-instructions.js';
 import { getCachedSignalReliability } from '../../services/intelligence/learning-loop-service.js';
 import type { SignalReliability } from '../../services/intelligence/learning-loop-service.js';
 import { orchestrate, type OrchestratorOutput } from '../../services/ana-ri/orchestrator.js';
@@ -520,57 +521,14 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         }
       }
 
-      // ── Project Instructions Injection ──────────────────────────────────────────
-      // A project's authored instructions + knowledge context (persisted to
-      // projects.settings.knowledge by the Projects module's
-      // PATCH /api/concept2cure/projects/:id/knowledge) must steer every chat in
-      // the project. Previously this blob was stored but never reached the model.
-      // Read it tenant-scoped and prepend to the system context. Empty/missing
-      // instructions yield no block; a non-matching project id (different id
-      // space or org) simply returns no rows. Non-fatal on error.
-      let projectInstructionsBlock = '';
-      if (project_id) {
-        try {
-          const pid =
-            typeof project_id === 'string'
-              ? parseInt(project_id.replace(/^proj_/, ''), 10)
-              : project_id;
-          if (Number.isFinite(pid) && pid > 0) {
-            const projRes = await pool.query(
-              numericOrgId
-                ? 'SELECT settings FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1'
-                : 'SELECT settings FROM projects WHERE id = $1 LIMIT 1',
-              numericOrgId ? [pid, numericOrgId] : [pid]
-            );
-            const settings = (projRes.rows?.[0]?.settings ?? {}) as Record<string, any>;
-            const knowledge =
-              settings.knowledge && typeof settings.knowledge === 'object'
-                ? (settings.knowledge as Record<string, any>)
-                : {};
-            const projInstr = (
-              typeof settings.customInstructions === 'string' && settings.customInstructions.trim()
-                ? settings.customInstructions
-                : typeof knowledge.customInstructions === 'string'
-                ? knowledge.customInstructions
-                : ''
-            ).trim();
-            const projContext = (
-              typeof knowledge.context === 'string' ? knowledge.context : ''
-            ).trim();
-            if (projInstr || projContext) {
-              projectInstructionsBlock =
-                '\n\n## PROJECT INSTRUCTIONS (authored for this project — follow precisely)\n' +
-                (projInstr ? `${projInstr}\n` : '') +
-                (projContext ? `\n### Project knowledge context\n${projContext}\n` : '');
-            }
-          }
-        } catch (instrErr: any) {
-          console.warn(
-            '[AnA] project instructions load failed (continuing without):',
-            instrErr?.message
-          );
-        }
-      }
+      // Project instructions injection (spec A1.1) — read the project's
+      // authored instructions + knowledge context and prepend to the system
+      // context. Shared helper so this and submission-chat cannot drift; it is
+      // tenant-scoped and graceful (empty string when absent or on error).
+      const projectInstructionsBlock = await getProjectInstructionsBlock(
+        project_id,
+        numericOrgId
+      );
 
       // AnA fix F2: always prepend a CONTEXT SNAPSHOT block so AnA can see
       // exactly what context is loaded right now — including explicit

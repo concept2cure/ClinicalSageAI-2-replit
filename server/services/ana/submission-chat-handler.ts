@@ -21,6 +21,7 @@ import { getPool } from '../../db/runtime.js';
 import { ensureGateway } from '../../routes/chat/shared.js';
 import { ragRouter } from '../ragRouter.js';
 import { buildMemoryContextForChat } from '../memory-context-assembler.js';
+import { getProjectInstructionsBlock } from '../projects/project-instructions.js';
 import {
   getThreadMessages,
   saveChatMessage,
@@ -1376,6 +1377,12 @@ export async function handleSubmissionChat(
     throw err;
   }
 
+  // Project instructions injection (spec A1.1) — same helper as the main chat
+  // path so the two cannot drift. Tenant-scoped, graceful when absent.
+  const projectInstructionsBlock = await getProjectInstructionsBlock(
+    artifact.project_id,
+    artifact.organization_id
+  );
   const systemPrompt =
     buildSystemPrompt(artifact, projectArtifacts, chunks, {
       intent,
@@ -1383,7 +1390,9 @@ export async function handleSubmissionChat(
       sectionReference,
       history,
       priorCitations,
-    }) + (memoryResult.memoryBlock ? `\n${memoryResult.memoryBlock}` : '');
+    }) +
+    projectInstructionsBlock +
+    (memoryResult.memoryBlock ? `\n${memoryResult.memoryBlock}` : '');
 
   // Pass the conversation as message turns too (in addition to the transcript
   // baked into the system prompt) so the model sees the actual structure of
