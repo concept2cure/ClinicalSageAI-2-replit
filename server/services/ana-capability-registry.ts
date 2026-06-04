@@ -415,6 +415,30 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
     projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
     documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
   },
+
+  // ── Commitments (2) ───────────────────────────────────────
+  {
+    capabilityKey: 'extract-commitments',
+    category: 'commitments',
+    name: 'Extract Regulatory Commitments',
+    description:
+      'Find every binding commitment in a document — inbound (PMR, PMC, REMS, EU Annex II / specific obligations / PASS / PAES, PMA conditions, 522 studies) and outbound (the applicant’s own promises) — source-anchored to the exact span, with direction, type, owner, and deadline.',
+    slashCommand: '/extract-commitments',
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['approval-letter', 'meeting-minutes', 'correspondence', 'submission'],
+  },
+  {
+    capabilityKey: 'track-commitments',
+    category: 'commitments',
+    name: 'Track Regulatory Commitments',
+    description:
+      'Track inbound and outbound commitments to closure across the post-approval lifecycle: deadlines, owners, status, and evidence, with governed status changes and an audit trail.',
+    slashCommand: '/commitments',
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['approval-letter', 'submission'],
+  },
 ];
 
 // ============================================================

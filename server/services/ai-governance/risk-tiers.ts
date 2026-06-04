@@ -48,6 +48,9 @@ type CategoryPolicy = Omit<CapabilityGovernance, 'capabilityKey' | 'category' | 
 const CATEGORY_POLICY: Record<string, CategoryPolicy> = {
   drafting: { riskTier: 'high', humanOversight: 'requires_review', groundednessThreshold: 0.8, gxpApplicable: true },
   compliance: { riskTier: 'high', humanOversight: 'requires_review', groundednessThreshold: 0.85, gxpApplicable: true },
+  // A missed/wrong regulatory commitment is pure liability (misbranding, accelerated-
+  // approval withdrawal), so extracted commitments are high-risk and always reviewed.
+  commitments: { riskTier: 'high', humanOversight: 'requires_review', groundednessThreshold: 0.85, gxpApplicable: true },
   submission: { riskTier: 'high', humanOversight: 'requires_approval', groundednessThreshold: 0.85, gxpApplicable: true },
   analysis: { riskTier: 'moderate', humanOversight: 'requires_review', groundednessThreshold: 0.75, gxpApplicable: true },
   intelligence: { riskTier: 'moderate', humanOversight: 'suggest_only', groundednessThreshold: 0.7, gxpApplicable: true },

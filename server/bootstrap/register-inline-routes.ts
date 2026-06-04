@@ -304,6 +304,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount C2C Governance routes:', error);
   }
 
+  // C2C regulatory commitments (source-anchored inbound + outbound obligations).
+  try {
+    const c2cCommitmentsModule = await import('../routes/c2c/commitments');
+    app.use('/api/c2c/commitments', authMiddleware, c2cCommitmentsModule.default);
+    console.info('✅ C2C Commitments routes mounted (/api/c2c/commitments)');
+  } catch (error) {
+    console.error('❌ Failed to mount C2C Commitments routes:', error);
+  }
+
   // C2C document family (Phase 9 Day 3 — document + section + evidence routes).
   try {
     const c2cDocsModule = await import('../routes/c2c/documents');
