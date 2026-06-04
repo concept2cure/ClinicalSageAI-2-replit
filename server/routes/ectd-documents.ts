@@ -6,14 +6,25 @@
  */
 import { Router, Request, Response } from 'express';
 import { eq, desc, and, like, sql } from 'drizzle-orm';
+import { z } from 'zod';
 import { db } from '../db';
 import { coauthorDocuments } from '../../shared/schema';
+import { requireRole } from '../middleware/auth';
+import { createRateLimiter } from '../middleware/rateLimiter';
+import {
+  classifyDocument,
+  extractStructure,
+  IngestionError,
+} from '../services/ingestion/ingestion-service';
 
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('ectd-documents');
 
 const router = Router();
+
+// Rate limiter for the AI-backed ingestion endpoints.
+const ingestionRateLimiter = createRateLimiter();
 
 /**
  * Resolve organization from headers or query params.
@@ -336,5 +347,130 @@ router.get('/meta/structure', (_req: Request, res: Response) => {
     ],
   });
 });
+
+// ── Ingestion: classify + extract (Phase 1, WO-1.4) ──────────────────────────
+//
+// RECONCILE (RECONCILE.md §3): the work order specced these under
+// /api/documents/:id/* but there is no /api/documents router. coauthor_documents
+// — the canonical eCTD document table — is served by THIS router, mounted at
+// /api/ectd-documents, so the endpoints live here:
+//   POST /api/ectd-documents/:id/classify
+//   POST /api/ectd-documents/:id/extract
+// Both require the regulatory-author role, are rate-limited and Zod-validated,
+// and resolve organizationId from the authenticated session only.
+
+const classifyBodySchema = z.object({
+  // Optional target sequence — when supplied (and owned), a draft leaf is placed.
+  sequenceId: z.coerce.number().int().positive().optional(),
+});
+
+const extractBodySchema = z.object({
+  sectionCode: z.string().min(1).max(64),
+  // Provenance links require a submission context.
+  submissionId: z.coerce.number().int().positive(),
+});
+
+interface UserContext {
+  userId: number;
+  organizationId: number;
+}
+
+/** Resolve user + org strictly from the authenticated session (never body/params). */
+function resolveUserContext(req: Request): UserContext | null {
+  const user = (req as any).user;
+  const userId = Number(user?.id);
+  const organizationId = Number(user?.organizationId);
+  if (!Number.isFinite(userId) || !Number.isFinite(organizationId)) return null;
+  return { userId, organizationId };
+}
+
+const INGESTION_ERROR_STATUS: Record<IngestionError['code'], number> = {
+  NOT_FOUND: 404,
+  FORBIDDEN: 403,
+  INVALID_AI_RESPONSE: 502,
+  RATE_LIMITED: 429,
+  PROVIDER_UNAVAILABLE: 503,
+  TOKEN_LIMIT_EXCEEDED: 413,
+};
+
+function sendIngestionError(res: Response, err: unknown): void {
+  if (err instanceof IngestionError) {
+    res
+      .status(INGESTION_ERROR_STATUS[err.code] ?? 500)
+      .json({ error: { code: err.code, message: err.message } });
+    return;
+  }
+  logger.error('Ingestion failure', {
+    err: err instanceof Error ? err.message : String(err),
+  });
+  res.status(500).json({ error: { code: 'INTERNAL', message: 'Ingestion request failed.' } });
+}
+
+router.post(
+  '/:id/classify',
+  requireRole('regulatory-author'),
+  ingestionRateLimiter,
+  async (req: Request, res: Response) => {
+    const documentId = Number(req.params.id);
+    if (!Number.isFinite(documentId)) {
+      return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid document id.' } });
+    }
+    const ctx = resolveUserContext(req);
+    if (!ctx) {
+      return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+    }
+    const parsed = classifyBodySchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res
+        .status(400)
+        .json({ error: { code: 'VALIDATION', message: 'Invalid request body.', details: parsed.error.flatten() } });
+    }
+    try {
+      const result = await classifyDocument({
+        documentId,
+        userId: ctx.userId,
+        organizationId: ctx.organizationId,
+        sequenceId: parsed.data.sequenceId,
+      });
+      res.json(result);
+    } catch (err) {
+      sendIngestionError(res, err);
+    }
+  }
+);
+
+router.post(
+  '/:id/extract',
+  requireRole('regulatory-author'),
+  ingestionRateLimiter,
+  async (req: Request, res: Response) => {
+    const documentId = Number(req.params.id);
+    if (!Number.isFinite(documentId)) {
+      return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid document id.' } });
+    }
+    const ctx = resolveUserContext(req);
+    if (!ctx) {
+      return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+    }
+    const parsed = extractBodySchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res
+        .status(400)
+        .json({ error: { code: 'VALIDATION', message: 'Invalid request body.', details: parsed.error.flatten() } });
+    }
+    try {
+      const result = await extractStructure({
+        documentId,
+        sectionCode: parsed.data.sectionCode,
+        submissionId: parsed.data.submissionId,
+        userId: ctx.userId,
+        organizationId: ctx.organizationId,
+      });
+      res.json(result);
+    } catch (err) {
+      sendIngestionError(res, err);
+    }
+  }
+);
 
 export default router;
