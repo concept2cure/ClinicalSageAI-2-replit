@@ -111,6 +111,26 @@ export interface AdverseEvent {
   reportedToAuthorities: boolean;
   /** Whether the event meets criteria for expedited (clock-start) reporting */
   expeditedReportRequired: boolean;
+  // ── E2B(R3) intake detail (optional) ──────────────────────────────────────
+  /** MedDRA reaction Preferred Term + code (and System Organ Class). */
+  reactionPt?: string | null;
+  reactionPtCode?: string | null;
+  reactionSoc?: string | null;
+  reactionSocCode?: string | null;
+  /** Suspect product details. */
+  suspectProduct?: string | null;
+  suspectProductStrength?: string | null;
+  suspectProductRoute?: string | null;
+  suspectProductDose?: string | null;
+  /** Expectedness vs the Reference Safety Information. */
+  expectedness?: string | null;
+  rsiReference?: string | null;
+  /** Reporter / source. */
+  reporterName?: string | null;
+  reporterContact?: string | null;
+  reporterOrganization?: string | null;
+  /** Free-text case narrative. */
+  narrative?: string | null;
   createdAt: Date;
 }
 
@@ -379,8 +399,12 @@ export async function reportAdverseEvent(
         event_description, onset_date, report_date, seriousness_criteria,
         causality, outcome, reporter_type, country_of_occurrence,
         regulatory_reporting_deadline, reported_to_authorities,
-        expedited_report_required, created_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
+        expedited_report_required, created_at,
+        reaction_pt, reaction_pt_code, reaction_soc, reaction_soc_code,
+        suspect_product, suspect_product_strength, suspect_product_route, suspect_product_dose,
+        expectedness, rsi_reference, reporter_name, reporter_contact, reporter_organization, narrative
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,
+                $18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31)`,
       [
         adverseEvent.id,
         adverseEvent.organizationId,
@@ -399,6 +423,20 @@ export async function reportAdverseEvent(
         adverseEvent.reportedToAuthorities,
         adverseEvent.expeditedReportRequired,
         adverseEvent.createdAt,
+        adverseEvent.reactionPt ?? null,
+        adverseEvent.reactionPtCode ?? null,
+        adverseEvent.reactionSoc ?? null,
+        adverseEvent.reactionSocCode ?? null,
+        adverseEvent.suspectProduct ?? null,
+        adverseEvent.suspectProductStrength ?? null,
+        adverseEvent.suspectProductRoute ?? null,
+        adverseEvent.suspectProductDose ?? null,
+        adverseEvent.expectedness ?? null,
+        adverseEvent.rsiReference ?? null,
+        adverseEvent.reporterName ?? null,
+        adverseEvent.reporterContact ?? null,
+        adverseEvent.reporterOrganization ?? null,
+        adverseEvent.narrative ?? null,
       ],
     );
 
@@ -957,6 +995,20 @@ function mapRowToAdverseEvent(row: any): AdverseEvent {
     regulatoryReportingDeadline: new Date(row.regulatory_reporting_deadline),
     reportedToAuthorities: row.reported_to_authorities,
     expeditedReportRequired: row.expedited_report_required,
+    reactionPt: row.reaction_pt ?? null,
+    reactionPtCode: row.reaction_pt_code ?? null,
+    reactionSoc: row.reaction_soc ?? null,
+    reactionSocCode: row.reaction_soc_code ?? null,
+    suspectProduct: row.suspect_product ?? null,
+    suspectProductStrength: row.suspect_product_strength ?? null,
+    suspectProductRoute: row.suspect_product_route ?? null,
+    suspectProductDose: row.suspect_product_dose ?? null,
+    expectedness: row.expectedness ?? null,
+    rsiReference: row.rsi_reference ?? null,
+    reporterName: row.reporter_name ?? null,
+    reporterContact: row.reporter_contact ?? null,
+    reporterOrganization: row.reporter_organization ?? null,
+    narrative: row.narrative ?? null,
     createdAt: new Date(row.created_at),
   };
 }

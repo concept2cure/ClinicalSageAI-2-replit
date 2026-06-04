@@ -70,6 +70,21 @@ const adverseEventSchema = z.object({
   reporterType: z.enum(['investigator', 'sponsor', 'patient', 'healthcare_provider']),
   countryOfOccurrence: z.string().length(2),
   reportedToAuthorities: z.boolean().default(false),
+  // ── E2B(R3) intake detail (optional) ──────────────────────────────────────
+  reactionPt: z.string().optional(),
+  reactionPtCode: z.string().optional(),
+  reactionSoc: z.string().optional(),
+  reactionSocCode: z.string().optional(),
+  suspectProduct: z.string().optional(),
+  suspectProductStrength: z.string().optional(),
+  suspectProductRoute: z.string().optional(),
+  suspectProductDose: z.string().optional(),
+  expectedness: z.enum(['expected', 'unexpected', 'unknown']).optional(),
+  rsiReference: z.string().optional(),
+  reporterName: z.string().optional(),
+  reporterContact: z.string().optional(),
+  reporterOrganization: z.string().optional(),
+  narrative: z.string().max(50000).optional(),
 });
 
 const periodicReportSchema = z.object({
@@ -278,6 +293,20 @@ export default function createPharmacovigilanceRoutes(): Router {
         reporterType: data.reporterType as ReporterType,
         countryOfOccurrence: data.countryOfOccurrence,
         reportedToAuthorities: data.reportedToAuthorities,
+        reactionPt: data.reactionPt ?? null,
+        reactionPtCode: data.reactionPtCode ?? null,
+        reactionSoc: data.reactionSoc ?? null,
+        reactionSocCode: data.reactionSocCode ?? null,
+        suspectProduct: data.suspectProduct ?? null,
+        suspectProductStrength: data.suspectProductStrength ?? null,
+        suspectProductRoute: data.suspectProductRoute ?? null,
+        suspectProductDose: data.suspectProductDose ?? null,
+        expectedness: data.expectedness ?? null,
+        rsiReference: data.rsiReference ?? null,
+        reporterName: data.reporterName ?? null,
+        reporterContact: data.reporterContact ?? null,
+        reporterOrganization: data.reporterOrganization ?? null,
+        narrative: data.narrative ?? null,
       });
 
       return res.status(201).json({ success: true, data: event });
