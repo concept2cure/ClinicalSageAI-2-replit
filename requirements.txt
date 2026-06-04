@@ -22,7 +22,7 @@ fastapi>=0.136.1              # HTTP API bridge for analytics engine
 uvicorn>=0.47.0               # ASGI server for FastAPI
 httpx>=0.27.0                 # Async HTTP client
 pydantic>=2.13.4               # Data validation
-python-multipart>=0.0.29       # FastAPI multipart/form-data uploads
+python-multipart>=0.0.31       # FastAPI multipart/form-data uploads
 
 # === Data / AI ===
 openai>=2.37.0                 # LLM API client (section generation)
