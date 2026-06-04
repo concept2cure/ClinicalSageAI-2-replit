@@ -12,7 +12,7 @@
 
 import { useMemo } from 'react';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
-import type { QmsDoc, DocType, DocStatus, SopTemplate, ReviewDueRow } from './data';
+import type { QmsDoc, DocType, DocStatus, SopTemplate, ReviewDueRow, TrainingRow } from './data';
 
 /** Unwrap the API envelope — `ok(res, rows, meta)` returns `{ data, ... }`,
  *  but tolerate a bare array or a `{ rows }` shape too. */
@@ -90,6 +90,32 @@ export function useReviewDue(within = 120) {
       nextReviewDate: r.next_review_date,
       overdue: !!r.overdue,
       status: r.status as DocStatus,
+    }));
+  }, [data]);
+  return { rows, loading, error };
+}
+
+interface ServerTraining {
+  id: number;
+  doc_number: string;
+  title: string;
+  current: number;
+  of: number;
+  last_cycle: string | null;
+}
+
+/** Read-and-understood compliance per controlled procedure —
+ *  GET /api/mdx/qms/training/compliance. Numerator is distinct current
+ *  acknowledgments; denominator is the org roster. */
+export function useTrainingCompliance() {
+  const { data, loading, error } = useFetchJson<unknown>('/api/mdx/qms/training/compliance');
+  const rows = useMemo<TrainingRow[] | null>(() => {
+    if (!data) return null;
+    return listOf<ServerTraining>(data).map((r) => ({
+      doc: `${r.doc_number} ${r.title}`,
+      current: r.current ?? 0,
+      of: r.of ?? 0,
+      lastCycle: r.last_cycle ? String(r.last_cycle).slice(0, 10) : '—',
     }));
   }, [data]);
   return { rows, loading, error };

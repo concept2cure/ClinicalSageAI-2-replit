@@ -418,6 +418,42 @@ router.get('/qms/training/expiring', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'training-expiring', err); }
 });
 
+/* Read-and-understood compliance per controlled procedure. The denominator is
+   the org roster (organization_users); the numerator is the distinct users with
+   a current (non-expired) acknowledgment. Only effective, trainable doc types
+   are counted — forms and specifications don't carry read-and-understood. */
+router.get('/qms/training/compliance', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  try {
+    const { rows } = await pool.query(
+      `WITH roster AS (
+         SELECT COUNT(*)::int AS n FROM organization_users WHERE organization_id = $1
+       ),
+       acks AS (
+         SELECT document_id,
+                COUNT(DISTINCT user_id) FILTER (WHERE expires_at IS NULL OR expires_at > NOW())::int AS current,
+                MAX(acknowledged_at) AS last_cycle
+           FROM qms_training_records
+          WHERE organization_id = $1
+          GROUP BY document_id
+       )
+       SELECT d.id, d.doc_number, d.title,
+              COALESCE(a.current, 0)::int AS current,
+              (SELECT n FROM roster)      AS of,
+              a.last_cycle
+         FROM qms_documents d
+         LEFT JOIN acks a ON a.document_id = d.id
+        WHERE d.organization_id = $1 AND d.deleted_at IS NULL
+          AND d.status = 'effective'
+          AND d.doc_type IN ('sop','wi','manual','policy','protocol','curriculum')
+        ORDER BY d.doc_number LIMIT 200`,
+      [orgId],
+    );
+    return ok(res, rows, { count: rows.length });
+  } catch (err) { return serverError(res, log, 'training-compliance', err); }
+});
+
 /* ─── Suppliers ─────────────────────────────────────────────── */
 
 const supplierCreate = z.object({

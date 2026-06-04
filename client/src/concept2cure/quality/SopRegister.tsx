@@ -29,7 +29,7 @@ import {
   formatDate,
   isReviewOverdue,
 } from './data';
-import { useSopRegister, useSopTemplates, useReviewDue } from './hooks';
+import { useSopRegister, useSopTemplates, useReviewDue, useTrainingCompliance } from './hooks';
 
 export interface SopRegisterProps {
   /** Forward a prompt to the host's AnA conversation surface. */
@@ -80,10 +80,10 @@ export function SopRegister({ onAsk }: SopRegisterProps) {
   const docs = reg.docs ?? FIXTURE_DOCS;
   const templates = tpl.templates ?? SOP_TEMPLATES;
   const reviewDue = rev.rows ?? deriveReviewDue(docs);
-  /* Per-procedure denominators (current / of) need a roster join the ack list
-     doesn't carry, so the compliance bars render the fixture for now. The
-     register, templates and review-due panels are fully live. */
-  const training = FIXTURE_TRAINING;
+  /* Live read-and-understood compliance (numerator = distinct current
+     acknowledgments, denominator = org roster); fixture fallback on load. */
+  const trainComp = useTrainingCompliance();
+  const training = trainComp.rows ?? FIXTURE_TRAINING;
 
   const [filter, setFilter] = React.useState<StatusFilter>('all');
 
@@ -91,8 +91,9 @@ export function SopRegister({ onAsk }: SopRegisterProps) {
   const underReviewCount = docs.filter((d) => d.status === 'in_review').length;
   const draftCount = docs.filter((d) => d.status === 'draft').length;
   const overdueCount = reviewDue.filter((r) => r.overdue).length;
-  const trainingPct = training.length
-    ? Math.round((training.reduce((s, t) => s + t.current / t.of, 0) / training.length) * 100)
+  const trainedRows = training.filter((t) => t.of > 0);
+  const trainingPct = trainedRows.length
+    ? Math.round((trainedRows.reduce((s, t) => s + t.current / t.of, 0) / trainedRows.length) * 100)
     : 0;
 
   const visible = docs.filter((d) => filter === 'all' || d.status === filter);
@@ -378,8 +379,11 @@ export function SopRegister({ onAsk }: SopRegisterProps) {
             </button>
           </div>
           <div className="qms-train">
+            {training.length === 0 && (
+              <div className="qms-empty">No training-controlled documents yet.</div>
+            )}
             {training.map((t) => {
-              const pct = Math.round((t.current / t.of) * 100);
+              const pct = t.of > 0 ? Math.round((t.current / t.of) * 100) : 0;
               const tone = pct < 80 ? 'err' : pct < 95 ? 'warn' : 'ok';
               return (
                 <div key={t.doc} className="qms-train-row">
