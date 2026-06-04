@@ -33,6 +33,7 @@ import {
   assertSignerIsNotAuthor,
   SeparationOfDutiesError,
 } from '../../services/governance/separation-of-duties.js';
+import { can } from '../../services/governance/permissions.js';
 
 const router = Router();
 
@@ -461,6 +462,25 @@ function makeHandler(command: Command) {
       // never loosen — so this is a hard code path, not a permission row.
       if (command === 'sign' || command === 'lock') {
         await assertSignerIsNotAuthor(body.target, orgId, userId);
+      }
+
+      // RBAC authority gate (dark-launched behind GOVERNANCE_RBAC_ENFORCE).
+      // The actor's role must hold the permission for the action x target type,
+      // evaluated against the permission-atom engine (defaults + per-org grants).
+      // Off by default so it is validated against real role data before it gates
+      // live signing; enforcement is the projection of permission, not the task.
+      if (
+        process.env.GOVERNANCE_RBAC_ENFORCE === 'true' &&
+        (command === 'sign' || command === 'lock')
+      ) {
+        const actorRole = String((req as any).userRole ?? (req as any).user?.role ?? '');
+        const resourceType = body.target.split(':')[0];
+        if (!(await can(orgId, actorRole, { action: command, resourceType }))) {
+          return res.status(403).json({
+            error: 'NOT_AUTHORIZED',
+            detail: `Your role does not hold ${command} permission for ${resourceType}.`,
+          });
+        }
       }
 
       const result = await writeMutation(
