@@ -817,6 +817,12 @@ export function initializeSocketServer(server: Server) {
     });
   });
 
+  // Attach ANA's real-time duplex chat namespace (/ana). Lazy import keeps the
+  // heavy agentic-loop graph off the socket-server load path; non-blocking.
+  void import('./services/ana/ana-realtime.js')
+    .then(m => m.registerAnaRealtime(ioInstance))
+    .catch(err => log.warn(`[ana-realtime] namespace registration failed (non-blocking): ${err?.message}`));
+
   log.debug('✅ Socket.io server initialized with collaboration features');
   return io;
 }

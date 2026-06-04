@@ -4714,6 +4714,8 @@ export interface AgenticOptions {
   onToolExecution?: (toolName: string, input: Record<string, unknown>, result: string) => void;
   /** Tenant + thread context forwarded to each tool handler */
   toolContext?: ToolContext;
+  /** Abort signal — when aborted, the loop stops before the next round (barge-in). */
+  signal?: AbortSignal;
 }
 
 /**
@@ -4733,6 +4735,8 @@ export async function executeAgenticLoop(
   let finalResponse: AnaGatewayResponse | null = null;
 
   for (let round = 0; round < maxRounds; round++) {
+    // Barge-in: stop before issuing the next generation/tool round when cancelled.
+    if (options?.signal?.aborted) break;
     const response = (await gateway.route(currentRequest)) as AnaGatewayResponse;
 
     // If no tool uses, we're done
