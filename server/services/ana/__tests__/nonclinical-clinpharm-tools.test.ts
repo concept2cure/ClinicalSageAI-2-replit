@@ -18,6 +18,7 @@ const NEW_TOOLS = [
   'classify_tox_findings',
   'select_exposure_response_dose',
   'load_nonclinical_program',
+  'get_nonclinical_template',
   'draft_nonclinical_overview_m2_4',
   'draft_nonclinical_summaries_m2_6',
   'assess_nonclinical_program',
@@ -128,6 +129,22 @@ describe('draft_nonclinical_overview_m2_4 handler', () => {
     expect(out.content).toMatch(/NONCLINICAL OVERVIEW/);
     expect(out.gaps).toContain('primary pharmacology studies');
     expect(out.toxProfile.adaptive).toContain('hepatocellular hypertrophy');
+  });
+});
+
+describe('get_nonclinical_template handler', () => {
+  it('lists templates when no key is given', async () => {
+    const handler = getToolHandler('get_nonclinical_template')!;
+    const out = JSON.parse(await handler({}));
+    expect(out.status).toBe('list');
+    expect(out.templates.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it('returns a specific template by section code', async () => {
+    const handler = getToolHandler('get_nonclinical_template')!;
+    const out = JSON.parse(await handler({ template: '4.2.3' }));
+    expect(out.status).toBe('template');
+    expect(out.content).toContain('[NOAEL]');
   });
 });
 

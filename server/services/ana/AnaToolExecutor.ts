@@ -969,6 +969,31 @@ registerToolHandler('draft_nonclinical_overview_m2_4', async (input: Record<stri
   }
 });
 
+// Fetch a blank nonclinical/clin-pharm document template (form)
+registerToolHandler('get_nonclinical_template', async (input: Record<string, unknown>) => {
+  try {
+    const { getNonclinicalTemplate, listNonclinicalTemplates } = await import('../templates/nonclinical-templates.js');
+    const key = typeof input.template === 'string' ? input.template.trim() : '';
+    if (!key) {
+      return JSON.stringify({ status: 'list', templates: listNonclinicalTemplates() });
+    }
+    const tmpl = getNonclinicalTemplate(key);
+    if (!tmpl) {
+      return JSON.stringify({ status: 'not_found', message: `No nonclinical template for "${key}".`, available: listNonclinicalTemplates() });
+    }
+    return JSON.stringify({
+      status: 'template',
+      granule_id: tmpl.granule_id,
+      sectionCode: tmpl.sectionCode,
+      title: tmpl.title,
+      content: tmpl.content,
+      instruction: 'Fill the [PLACEHOLDER] tokens. If the program has ingested studies, prefer the draft_* composer tools, which fill content from data.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Fetching nonclinical template failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Load a program's ingested nonclinical studies (feature-gated DB read)
 registerToolHandler('load_nonclinical_program', async (input: Record<string, unknown>) => {
   try {

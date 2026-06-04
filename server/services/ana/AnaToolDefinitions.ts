@@ -2759,6 +2759,19 @@ export const LOAD_NONCLINICAL_PROGRAM: AnaTool = {
   },
 };
 
+export const GET_NONCLINICAL_TEMPLATE: AnaTool = {
+  name: 'get_nonclinical_template',
+  description:
+    "Fetch a blank structured template (form) for a Module 4 study report (4.2.1 pharmacology, 4.2.2 PK, 4.2.3 toxicology), the Module 2.6 nonclinical summaries, or a first-in-human dose-justification memo. Pass a template key (a granule id like 'm4-2-3-toxicology' or a section code like '4.2.3'); omit it to list the available templates. Use this when starting a nonclinical document from scratch (no ingested data yet) — the scaffold's [PLACEHOLDER] tokens guide what to fill. When the program already has ingested studies, prefer the draft_* composer tools, which fill the content from data.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      template: { type: 'string', description: "Template key — granule id (e.g. 'm2-6-nonclinical-summaries') or CTD section code (e.g. '4.2.3'). Omit to list templates." },
+    },
+    required: [],
+  },
+};
+
 export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
@@ -2840,6 +2853,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CLASSIFY_TOX_FINDINGS,
   SELECT_EXPOSURE_RESPONSE_DOSE,
   LOAD_NONCLINICAL_PROGRAM,
+  GET_NONCLINICAL_TEMPLATE,
   DRAFT_NONCLINICAL_OVERVIEW_M2_4,
   DRAFT_NONCLINICAL_SUMMARIES_M2_6,
   ASSESS_NONCLINICAL_PROGRAM,
