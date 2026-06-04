@@ -33,6 +33,27 @@ gate on labeling for Org A" is *derived* as the set of users holding
    submission-publish are Highest risk → forced four-eyes.
 5. **Server-side enforcement; client role is distrusted.** (Already real — keep.)
 
+## 1.5. Build status — shipped this session (on `concept2cure-v2`)
+
+The foundational governance core is now built, tested, and pushed:
+- **SoD author≠signer is enforced (un-disableable)** on `/api/c2c/actions/sign` +
+  `/lock` (`a5f0fc3`) — self-sign now 403s, resolved from the real owner column
+  per target type. 8 unit tests.
+- **The permission-atom engine** (`f358707`) — server-side `(role × action ×
+  resourceType × ctdModule × classification)`, deny-by-default, explicit-deny-wins;
+  code defaults ∪ Admin-curated `c2c_governance_grants` (idempotent migration).
+  This is the "derived, not connected" core. 8 unit tests.
+- **The eligibility projection** (`cffda64`) — `GET /api/c2c/governance/eligible`
+  + `/can` derive who-can-act from RBAC server-side (not stored on the task).
+- **RBAC authority gate on sign/lock** (`4212919`) — dark-launched behind
+  `GOVERNANCE_RBAC_ENFORCE`; flip on after validating role data in preview.
+
+These move several §2 rows from BUILD/PARTIAL toward REAL. The remainder
+(four-eyes, classification model, substrate consolidation + signature-as-state-
+transition + change_control wiring, the universal state machine, the
+non-skippable legacy review quorum) is the live-infra / substrate-decision tier
+in §6–§7 — it needs the real preview DB and the canonical-substrate call.
+
 ## 2. Reality — real / connect / build (the binding truth)
 
 Legend: **REAL** (built, keep) · **CONNECT** (foundation exists, wire it) ·
