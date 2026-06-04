@@ -3543,6 +3543,30 @@ registerToolHandler('extract_submission_document', async (input, ctx) => {
   }
 });
 
+registerToolHandler('validate_ectd_package', async (input) => {
+  try {
+    const { validatePackage } = await import('../ectd/ectd4-validator.js');
+    const submissionType = typeof input.submission_type === 'string' ? input.submission_type : 'IND';
+    const leaves = (Array.isArray(input.leaves) ? input.leaves : []).map((l: any) => ({
+      sectionCode: l.section_code,
+      title: l.title,
+      checksum: l.checksum,
+      checksumType: 'md5' as const,
+      operation: l.operation,
+      lifecycleOperator: l.lifecycle_operator,
+      filePath: l.file_path,
+      mimeType: l.mime_type ?? 'application/pdf',
+      fileSize: typeof l.file_size === 'number' ? l.file_size : 0,
+    }));
+    const result = validatePackage(leaves, submissionType);
+    return JSON.stringify({ ok: true, ...result });
+  } catch (err) {
+    return JSON.stringify({
+      error: `validate_ectd_package failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Notifications + clinical-study + memory handlers (migration 20260510).
 // ─────────────────────────────────────────────────────────────────────────────

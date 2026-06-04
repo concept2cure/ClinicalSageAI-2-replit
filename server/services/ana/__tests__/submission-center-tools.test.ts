@@ -20,6 +20,7 @@ const SUBMISSION_TOOLS = [
   'check_ectd_cross_references',
   'classify_submission_document',
   'extract_submission_document',
+  'validate_ectd_package',
 ];
 
 describe('submission-center AnA tools — registration', () => {
@@ -98,6 +99,24 @@ describe('check_ectd_cross_references (pure)', () => {
     expect(out.resolved).toHaveLength(1);
     expect(out.broken).toHaveLength(1);
     expect(out.ok).toBe(false);
+  });
+});
+
+describe('validate_ectd_package (pure)', () => {
+  it('returns a verdict, score, and findings for a leaf set', async () => {
+    const handler = getToolHandler('validate_ectd_package')!;
+    const out = JSON.parse(
+      await handler({
+        submission_type: 'IND',
+        leaves: [
+          { section_code: 'm1.1', title: 'Cover', checksum: 'd41d8cd98f00b204e9800998ecf8427e', operation: 'new', file_path: 'm1/us/cover.pdf' },
+        ],
+      })
+    );
+    expect(out.ok).toBe(true);
+    expect(typeof out.score).toBe('number');
+    expect(Array.isArray(out.findings)).toBe(true);
+    expect(typeof out.valid).toBe('boolean');
   });
 });
 

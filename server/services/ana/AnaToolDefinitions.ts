@@ -1794,6 +1794,37 @@ export const EXTRACT_SUBMISSION_DOCUMENT: AnaTool = {
   },
 };
 
+export const VALIDATE_ECTD_PACKAGE: AnaTool = {
+  name: 'validate_ectd_package',
+  description:
+    'Run the deterministic eCTD 4.0 validator over a set of leaves and return a pass/fail verdict, a 0-100 score, and severity-scored findings (required-section coverage, filename rules, MD5 format, lifecycle operations, ICH M8). Pure computation — read only, no transmission. Use it before packaging or transmitting so the user sees and fixes errors first.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      submission_type: { type: 'string', description: "Submission type for required-section rules (default 'IND')." },
+      leaves: {
+        type: 'array',
+        description: 'Leaves to validate.',
+        items: {
+          type: 'object',
+          properties: {
+            section_code: { type: 'string', description: 'eCTD section code, e.g. "m3.2.S.1".' },
+            title: { type: 'string', description: 'Document title.' },
+            checksum: { type: 'string', description: 'MD5 checksum.' },
+            operation: { type: 'string', enum: ['new', 'append', 'replace', 'delete'], description: 'Lifecycle operation.' },
+            file_path: { type: 'string', description: 'Relative file path within the package.' },
+            mime_type: { type: 'string', description: "Defaults to 'application/pdf'." },
+            file_size: { type: 'number', description: 'File size in bytes.' },
+            lifecycle_operator: { type: 'string', description: 'Optional lifecycle operator id.' },
+          },
+          required: ['section_code', 'title', 'checksum', 'operation', 'file_path'],
+        },
+      },
+    },
+    required: ['leaves'],
+  },
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Notifications + clinical-study + memory tools (migration 20260510).
 // AnA fires notifications when she identifies actionable state, logs
@@ -3239,6 +3270,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CHECK_ECTD_CROSS_REFERENCES,
   CLASSIFY_SUBMISSION_DOCUMENT,
   EXTRACT_SUBMISSION_DOCUMENT,
+  VALIDATE_ECTD_PACKAGE,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,
   LOG_STUDY_DEVIATION,

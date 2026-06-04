@@ -110,4 +110,25 @@ A real-vs-demo audit of the existing eCTD/submission backend found the publishin
 - `ectd/cross-reference-resolver.ts` — `resolveCrossReferences(leaves, refs)` validates intra-package hyperlinks (resolved / `TARGET_NOT_FOUND` / `TARGET_DELETED`). 8 tests.
 Both reuse the existing `EctdLeaf` type and feed the existing packager/validator pipeline. `tsc --noEmit` clean; 17/17 tests pass.
 
-**Remaining pure gaps (buildable next, no DB/UI):** STF (Study Tagging File) tree generator (extend `ectdExportService.ts:649`), PDF/A *detection* check, and exporting `regional-packager.ts`'s `buildIndexXml`/`buildMd5Index` for reuse. **Not pure-buildable here:** live transmission already exists (credential-gated), PDF/A *normalization* needs an external binary, and Shadow Review / authoring AI tasks need their own designed work orders. The genuine open architectural decision is **unifying the two submission backbones** — the Phase-1 Drizzle `submissions/ectd_sequences/submission_leaves` core vs. the pre-existing raw-SQL `reg_*` model that the packager runs on — which belongs to the designer/operator.
+**Also shipped (pure, tested):**
+- `ectd/stf-generator.ts` — `generateStfFiles(leaves, studyMeta)` emits a real per-study FDA STF (v2.6.1) `stf.xml` grouped by file-tag, replacing the `util/stf.xml` stub. 7 tests.
+- `ectd/pdfa-detect.ts` — `classifyPdfA(bytes)` deterministic PDF/A detection (version, declared part/conformance from XMP, encryption) for the FDA-ESG-006 rule + the stubbed `pdf_a_compliant` flag. Detection-only by design. 7 tests.
+
+**Not pure-buildable here:** live transmission already exists (credential-gated), PDF/A *normalization* needs an external binary, and Shadow Review / authoring AI tasks need their own designed work orders. The genuine open architectural decision is **unifying the two submission backbones** — the Phase-1 Drizzle `submissions/ectd_sequences/submission_leaves` core vs. the pre-existing raw-SQL `reg_*` model that the packager runs on — which belongs to the designer/operator.
+
+---
+
+## 7. AnA control over the submission center (governed tool layer)
+
+AnA already had submission/eCTD tools (`package_ectd_for_region`, `transmit_submission`, `check_submission_status`, `record_validation_finding`, `gateway_configuration_status`, `create_q_sub`, …). Six tools were added so AnA can also drive the Phase-1 ingestion path and the new deterministic primitives — declared in `AnaToolDefinitions.ts`, dispatched in `AnaToolExecutor.ts`, 11 tests in `ana/__tests__/submission-center-tools.test.ts`:
+
+| Tool | Wraps | Tenant gate | Audited |
+|---|---|---|---|
+| `compute_lifecycle_operations` | `ectd/lifecycle-operator` | — (pure) | — |
+| `generate_stf` | `ectd/stf-generator` | — (pure) | — |
+| `check_ectd_cross_references` | `ectd/cross-reference-resolver` | — (pure) | — |
+| `validate_ectd_package` | `ectd/ectd4-validator` | — (pure) | — |
+| `classify_submission_document` | ingestion `classifyDocument` | org + user from `ToolContext` | yes (AI_GENERATE, in service) |
+| `extract_submission_document` | ingestion `extractStructure` | org + user from `ToolContext` | yes (AI_GENERATE, in service) |
+
+**Governance rail (deliberate):** tenant/user come from the request-scoped `ToolContext`, never model args; the two ingestion tools refuse without org+user. The **irreversible/outward** actions — sequence freeze and **transmit to FDA/EMA/PMDA** — were *not* added to this group; they stay behind the existing governed `transmit_submission` tool and the Part 11 e-signature gate. AnA orchestrates everything up to the regulatory wire; the human sign-off the law requires is preserved. Removing that rail is a designer/operator decision, not an implementation default.
