@@ -95,3 +95,11 @@ export {
   projectRegistration,
   projectAllRegistrations,
 } from './registration-projection';
+export {
+  type CrfShell,
+  type CrfForm,
+  type CrfItem,
+  type CrfFormOrigin,
+  type CrfItemType,
+  projectCrfShell,
+} from './crf-shell';

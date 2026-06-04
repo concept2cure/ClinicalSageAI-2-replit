@@ -31,6 +31,7 @@ import {
   projectScheduleOfActivities,
   projectRegistration,
   projectAllRegistrations,
+  projectCrfShell,
   buildEffectPrior,
   gatherCsrEffectEvidence,
   persistStudyDesignTx,
@@ -303,6 +304,21 @@ router.post('/registration', (req: Request, res: Response) => {
   }
 });
 
+// ─── POST /crf-shell (project the design as a blank CRF set) ───────────────────
+
+router.post('/crf-shell', (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
+  const design = parseDesign(req, res);
+  if (!design) return;
+  try {
+    return res.json({ crfShell: projectCrfShell(design) });
+  } catch (err: any) {
+    console.error('[study-design/crf-shell]', err?.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
 // ─── POST /persist (governed mutation) ────────────────────────────────────────
 
 router.post('/persist', async (req: Request, res: Response) => {
@@ -406,6 +422,22 @@ router.get('/:studyId/registration', async (req: Request, res: Response) => {
     return res.json({ ...registrationResponse(loaded.design, req.query.registry), validation: loaded.validation });
   } catch (err: any) {
     console.error('[study-design/registration-load]', err?.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─── GET /:studyId/crf-shell (load + project) ─────────────────────────────────
+
+router.get('/:studyId/crf-shell', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
+  const studyId = String(req.params.studyId);
+  try {
+    const loaded = await loadStudyDesign(studyId, orgId);
+    if (!loaded) return res.status(404).json({ error: 'NOT_FOUND' });
+    return res.json({ crfShell: projectCrfShell(loaded.design), validation: loaded.validation });
+  } catch (err: any) {
+    console.error('[study-design/crf-shell-load]', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });

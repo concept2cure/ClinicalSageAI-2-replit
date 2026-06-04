@@ -192,3 +192,18 @@ describe('POST /api/study-design/registration', () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe('POST /api/study-design/crf-shell', () => {
+  it('projects a blank CRF set from the design', async () => {
+    const res = await request(authedApp()).post('/api/study-design/crf-shell').send({ design: design() });
+    expect(res.status).toBe(200);
+    expect(res.body.crfShell.standard).toBe('CDISC CDASH');
+    expect(Array.isArray(res.body.crfShell.forms)).toBe(true);
+    expect(res.body.crfShell.forms.length).toBeGreaterThan(0);
+  });
+
+  it('rejects without an authenticated tenant', async () => {
+    const res = await request(anonApp()).post('/api/study-design/crf-shell').send({ design: design() });
+    expect(res.status).toBe(401);
+  });
+});
