@@ -69,3 +69,9 @@ export {
   sampleSizeForPower,
   sampleSizeForAssurance,
 } from './sample-size';
+export {
+  type ProtocolDocument,
+  type ProtocolSection,
+  type SectionStatus,
+  projectProtocol,
+} from './protocol-projection';

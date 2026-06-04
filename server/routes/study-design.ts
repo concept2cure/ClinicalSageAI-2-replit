@@ -27,6 +27,7 @@ import {
   validateDesign,
   simulateTrial,
   solveSampleSize,
+  projectProtocol,
   buildEffectPrior,
   gatherCsrEffectEvidence,
   persistStudyDesignTx,
@@ -246,6 +247,21 @@ router.post('/sample-size', async (req: Request, res: Response) => {
   }
 });
 
+// ─── POST /protocol (project the design as an ICH M11 protocol) ───────────────
+
+router.post('/protocol', (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
+  const design = parseDesign(req, res);
+  if (!design) return;
+  try {
+    return res.json({ protocol: projectProtocol(design) });
+  } catch (err: any) {
+    console.error('[study-design/protocol]', err?.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
 // ─── POST /persist (governed mutation) ────────────────────────────────────────
 
 router.post('/persist', async (req: Request, res: Response) => {
@@ -298,6 +314,22 @@ router.get('/', async (req: Request, res: Response) => {
     return res.json({ designs: await listStudyDesigns(orgId, { limit, offset }) });
   } catch (err: any) {
     console.error('[study-design/list]', err?.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─── GET /:studyId/protocol (load + project) ──────────────────────────────────
+
+router.get('/:studyId/protocol', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
+  const studyId = String(req.params.studyId);
+  try {
+    const loaded = await loadStudyDesign(studyId, orgId);
+    if (!loaded) return res.status(404).json({ error: 'NOT_FOUND' });
+    return res.json({ protocol: projectProtocol(loaded.design), validation: loaded.validation });
+  } catch (err: any) {
+    console.error('[study-design/protocol-load]', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });

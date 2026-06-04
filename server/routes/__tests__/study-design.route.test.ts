@@ -130,3 +130,19 @@ describe('POST /api/study-design/sample-size', () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe('POST /api/study-design/protocol', () => {
+  it('projects the design as an ICH M11 protocol', async () => {
+    const res = await request(authedApp()).post('/api/study-design/protocol').send({ design: design() });
+    expect(res.status).toBe(200);
+    expect(res.body.protocol.standard).toBe('ICH M11');
+    expect(Array.isArray(res.body.protocol.sections)).toBe(true);
+    expect(res.body.protocol.sections.length).toBeGreaterThan(0);
+    expect(typeof res.body.protocol.synopsis).toBe('string');
+  });
+
+  it('rejects without an authenticated tenant', async () => {
+    const res = await request(anonApp()).post('/api/study-design/protocol').send({ design: design() });
+    expect(res.status).toBe(401);
+  });
+});
