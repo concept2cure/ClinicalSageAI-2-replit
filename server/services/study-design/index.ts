@@ -86,3 +86,12 @@ export {
   type SectionStatus,
   projectProtocol,
 } from './protocol-projection';
+export {
+  type RegistrationRegistry,
+  type RegistrationFieldStatus,
+  type RegistrationField,
+  type RegistrationModule,
+  type RegistrationRecord,
+  projectRegistration,
+  projectAllRegistrations,
+} from './registration-projection';

@@ -29,6 +29,8 @@ import {
   solveSampleSize,
   projectProtocol,
   projectScheduleOfActivities,
+  projectRegistration,
+  projectAllRegistrations,
   buildEffectPrior,
   gatherCsrEffectEvidence,
   persistStudyDesignTx,
@@ -278,6 +280,29 @@ router.post('/schedule-of-activities', (req: Request, res: Response) => {
   }
 });
 
+// ─── POST /registration (project the design as a registry record) ────────────
+
+/** Resolve the requested registry and project the matching record(s). */
+function registrationResponse(design: StudyDesign, registry: unknown): Record<string, unknown> {
+  const which = String(registry ?? 'both').toLowerCase();
+  if (which === 'ctgov') return { registration: projectRegistration(design, 'ctgov') };
+  if (which === 'ctis') return { registration: projectRegistration(design, 'ctis') };
+  return { registrations: projectAllRegistrations(design) };
+}
+
+router.post('/registration', (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
+  const design = parseDesign(req, res);
+  if (!design) return;
+  try {
+    return res.json(registrationResponse(design, req.body?.registry ?? req.query.registry));
+  } catch (err: any) {
+    console.error('[study-design/registration]', err?.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
 // ─── POST /persist (governed mutation) ────────────────────────────────────────
 
 router.post('/persist', async (req: Request, res: Response) => {
@@ -365,6 +390,22 @@ router.get('/:studyId/schedule-of-activities', async (req: Request, res: Respons
     });
   } catch (err: any) {
     console.error('[study-design/soa-load]', err?.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─── GET /:studyId/registration (load + project) ──────────────────────────────
+
+router.get('/:studyId/registration', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
+  const studyId = String(req.params.studyId);
+  try {
+    const loaded = await loadStudyDesign(studyId, orgId);
+    if (!loaded) return res.status(404).json({ error: 'NOT_FOUND' });
+    return res.json({ ...registrationResponse(loaded.design, req.query.registry), validation: loaded.validation });
+  } catch (err: any) {
+    console.error('[study-design/registration-load]', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });

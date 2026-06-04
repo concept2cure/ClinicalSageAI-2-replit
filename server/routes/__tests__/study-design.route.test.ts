@@ -168,3 +168,27 @@ describe('POST /api/study-design/schedule-of-activities', () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe('POST /api/study-design/registration', () => {
+  it('projects both registry records by default', async () => {
+    const res = await request(authedApp()).post('/api/study-design/registration').send({ design: design() });
+    expect(res.status).toBe(200);
+    expect(res.body.registrations.ctgov.registry).toBe('ClinicalTrials.gov');
+    expect(res.body.registrations.ctis.registry).toBe('EU CTIS');
+  });
+
+  it('projects a single registry when asked', async () => {
+    const res = await request(authedApp())
+      .post('/api/study-design/registration')
+      .send({ design: design(), registry: 'ctgov' });
+    expect(res.status).toBe(200);
+    expect(res.body.registration.registry).toBe('ClinicalTrials.gov');
+    expect(typeof res.body.registration.registrable).toBe('boolean');
+    expect(res.body.registration.standard).toMatch(/ClinicalTrials\.gov/);
+  });
+
+  it('rejects without an authenticated tenant', async () => {
+    const res = await request(anonApp()).post('/api/study-design/registration').send({ design: design() });
+    expect(res.status).toBe(401);
+  });
+});
