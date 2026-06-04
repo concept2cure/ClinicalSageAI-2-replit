@@ -2530,6 +2530,104 @@ export const DRAFT_NONCLINICAL_OVERVIEW_M2_4: AnaTool = {
   },
 };
 
+export const ASSESS_CONCENTRATION_QTC: AnaTool = {
+  name: 'assess_concentration_qtc',
+  description:
+    "Assess whether a thorough-QT (TQT) study can be waived using the platform's deterministic concentration-QTc engine (ICH E14 Q&A R3). From the fitted C-QTc slope and its SE, the intercept, and the high clinical exposure, it computes the predicted ΔΔQTc and the upper bound of the two-sided 90% CI, and reports whether the 10 ms threshold is excluded — guarding against inadequate supratherapeutic coverage or an uninformatively wide CI. ALWAYS call this for TQT-waiver / concentration-QT / QT-risk questions. NEVER eyeball the QT decision — report the returned bound and verdict verbatim.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      slope: { type: 'number', description: 'C-QTc slope (ms per concentration unit).' },
+      slopeSE: { type: 'number', description: 'Standard error of the slope.' },
+      intercept: { type: 'number', description: 'Model intercept (ms at zero concentration). Default 0.' },
+      interceptSE: { type: 'number', description: 'SE of the intercept (optional, propagated into the prediction SE).' },
+      slopeInterceptCov: { type: 'number', description: 'Covariance of slope and intercept (optional).' },
+      targetConcentration: { type: 'number', description: 'High clinical exposure to evaluate (geometric-mean Cmax).' },
+      therapeuticCmax: { type: 'number', description: 'Therapeutic Cmax, to check supratherapeutic coverage.' },
+      requiredCoverageMultiple: { type: 'number', description: 'Required multiple of therapeutic Cmax (default 2).' },
+      thresholdMs: { type: 'number', description: 'ΔΔQTc threshold of concern (default 10 ms).' },
+      ciZ: { type: 'number', description: 'z for the two-sided 90% CI upper bound (default 1.645).' },
+    },
+    required: ['slope', 'slopeSE', 'targetConcentration'],
+  },
+};
+
+export const ASSESS_DDI_RISK: AnaTool = {
+  name: 'assess_ddi_risk',
+  description:
+    "Decide whether a drug needs a clinical DDI study as a CYP/transporter perpetrator, using the FDA in-vitro DDI basic/static models (R1 reversible inhibition ≥1.02, R1,gut ≥11, R2 time-dependent inhibition ≥1.25, R3 induction ≤0.8, transporter Igut/IC50 ≥10 or Iu/IC50 ≥0.1). Each mechanism is evaluated only when its inputs are supplied; any flag triggers a clinical-study recommendation. Concentrations and constants for a mechanism must share units (the engine does not convert). ALWAYS call this for DDI / perpetrator-risk questions. Report the computed R-values and the recommendation verbatim.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      imaxUnbound: { type: 'number', description: 'Unbound maximum plasma concentration (Imax,u).' },
+      ki: { type: 'number', description: 'Reversible inhibition constant Ki (systemic).' },
+      doseMol: { type: 'number', description: 'Molar dose, for Igut = dose / 0.25 L.' },
+      igut: { type: 'number', description: 'Explicit gut concentration Igut (overrides doseMol).' },
+      kiGut: { type: 'number', description: 'Ki for gut CYP3A (defaults to ki).' },
+      kinact: { type: 'number', description: 'TDI maximal inactivation rate kinact.' },
+      kI: { type: 'number', description: 'TDI concentration for half-maximal inactivation KI.' },
+      kdeg: { type: 'number', description: 'Enzyme degradation rate constant kdeg.' },
+      emax: { type: 'number', description: 'Induction maximal effect Emax (fold).' },
+      ec50: { type: 'number', description: 'Induction EC50.' },
+      inductionD: { type: 'number', description: 'Induction calibration factor d (default 1).' },
+      transporters: {
+        type: 'array',
+        description: 'Transporter inhibition inputs.',
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            ic50: { type: 'number' },
+            gut: { type: 'boolean', description: 'Gut transporter (P-gp/BCRP): compares Igut/IC50 ≥ 10.' },
+            igut: { type: 'number' },
+            unboundConcentration: { type: 'number', description: 'Unbound systemic/inlet concentration for hepatic/renal transporters.' },
+          },
+          required: ['name', 'ic50'],
+        },
+      },
+    },
+    required: [],
+  },
+};
+
+export const DRAFT_CLINICAL_SUMMARY_M2_7: AnaTool = {
+  name: 'draft_clinical_summary_m2_7',
+  description:
+    "Draft the Module 2.7 Clinical Summary (ICH M4E) from the program's clinical study reports using the platform's deterministic composer — the integrated summary of biopharmaceutics (2.7.1), clinical pharmacology (2.7.2), efficacy (2.7.3), and safety (2.7.4). Returns a draft (a starting point the author promotes through the governed authoring flow), with gap-flagging. Use this for Module 2.7 / clinical-summary authoring requests. Report the safety counts and gaps honestly; do not invent studies or events that were not supplied.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      csrs: {
+        type: 'array',
+        description: 'Clinical study reports feeding the summary (one per study).',
+        items: {
+          type: 'object',
+          properties: {
+            studyId: { type: 'string' },
+            protocolNumber: { type: 'string' },
+            phase: { type: 'string', description: 'e.g. "1", "2", "3".' },
+            studyDesign: { type: 'string' },
+            primaryEndpoint: { type: 'string' },
+            primaryResult: { type: 'string' },
+            sampleSize: { type: 'number' },
+            ittPopulation: { type: 'number' },
+            saeCount: { type: 'number' },
+            deathCount: { type: 'number' },
+            topAEs: {
+              type: 'array',
+              items: { type: 'object', properties: { pt: { type: 'string' }, rate: { type: 'string' }, severity: { type: 'string' } }, required: ['pt', 'rate'] },
+            },
+          },
+          required: ['studyId', 'phase', 'primaryEndpoint', 'primaryResult', 'sampleSize'],
+        },
+      },
+      indication: { type: 'string' },
+      investigationalProduct: { type: 'string' },
+    },
+    required: ['csrs', 'indication', 'investigationalProduct'],
+  },
+};
+
 export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
@@ -2611,6 +2709,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CLASSIFY_TOX_FINDINGS,
   SELECT_EXPOSURE_RESPONSE_DOSE,
   DRAFT_NONCLINICAL_OVERVIEW_M2_4,
+  ASSESS_CONCENTRATION_QTC,
+  ASSESS_DDI_RISK,
+  DRAFT_CLINICAL_SUMMARY_M2_7,
   ASSESS_ANALYTICAL_SIMILARITY,
   ASSESS_COMPARABILITY,
   ASSESS_IMMUNOGENICITY,

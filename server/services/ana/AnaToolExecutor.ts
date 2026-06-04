@@ -969,6 +969,74 @@ registerToolHandler('draft_nonclinical_overview_m2_4', async (input: Record<stri
   }
 });
 
+// Concentration-QTc / thorough-QT waiver — deterministic
+registerToolHandler('assess_concentration_qtc', async (input: Record<string, unknown>) => {
+  try {
+    const { assessConcentrationQtc } = await import('../clinical-pharmacology/concentration-qtc.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = assessConcentrationQtc(input as any);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      ...result,
+      instruction: 'Report the upper 90% bound and the TQT verdict verbatim. State the confidence flag.',
+    });
+  } catch (err: any) {
+    const message = err?.message || 'unknown error';
+    if (/must be|required/.test(message)) {
+      return JSON.stringify({ status: 'needs_parameters', message });
+    }
+    return JSON.stringify({ error: `Concentration-QTc assessment failed: ${message}` });
+  }
+});
+
+// DDI static-model risk — deterministic
+registerToolHandler('assess_ddi_risk', async (input: Record<string, unknown>) => {
+  try {
+    const { assessDdiRisk } = await import('../clinical-pharmacology/ddi-static-model.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = assessDdiRisk(input as any);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      ...result,
+      instruction: 'Report the computed R-values, thresholds, and the clinical-study recommendation verbatim.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `DDI risk assessment failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// Draft M2.7 Clinical Summary — deterministic composer
+registerToolHandler('draft_clinical_summary_m2_7', async (input: Record<string, unknown>) => {
+  try {
+    const csrs = input.csrs;
+    if (!Array.isArray(csrs) || csrs.length === 0) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'csrs[] is required to draft the M2.7 summary.' });
+    }
+    const { buildM27ClinicalSummary } = await import('../m2-summary-builders.js');
+    const summary = buildM27ClinicalSummary({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      csrs: csrs as any,
+      indication: (input.indication as string) ?? '',
+      investigationalProduct: (input.investigationalProduct as string) ?? '',
+    });
+    return JSON.stringify({
+      status: 'drafted',
+      engine: 'deterministic',
+      sectionKey: summary.sectionKey,
+      title: summary.title,
+      content: summary.narrative,
+      completeness: summary.completeness,
+      gaps: summary.gaps,
+      instruction:
+        'This is a draft the author promotes through the governed authoring flow. State the completeness and gaps honestly; do not invent studies or events.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `M2.7 summary drafting failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Compare Statistical Scenarios — side-by-side deterministic comparison
 registerToolHandler('compare_statistical_scenarios', async (input: Record<string, unknown>, ctx) => {
   try {

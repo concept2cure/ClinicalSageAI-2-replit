@@ -18,6 +18,9 @@ const NEW_TOOLS = [
   'classify_tox_findings',
   'select_exposure_response_dose',
   'draft_nonclinical_overview_m2_4',
+  'assess_concentration_qtc',
+  'assess_ddi_risk',
+  'draft_clinical_summary_m2_7',
 ] as const;
 
 describe('nonclinical & clin-pharm tools — registration + exposure', () => {
@@ -121,5 +124,47 @@ describe('draft_nonclinical_overview_m2_4 handler', () => {
     expect(out.content).toMatch(/NONCLINICAL OVERVIEW/);
     expect(out.gaps).toContain('primary pharmacology studies');
     expect(out.toxProfile.adaptive).toContain('hepatocellular hypertrophy');
+  });
+});
+
+describe('assess_concentration_qtc handler', () => {
+  it('returns a negative C-QTc verdict', async () => {
+    const handler = getToolHandler('assess_concentration_qtc')!;
+    const out = JSON.parse(
+      await handler({ slope: 0.02, slopeSE: 0.005, intercept: 0.5, targetConcentration: 300, therapeuticCmax: 150 }),
+    );
+    expect(out.status).toBe('computed');
+    expect(out.tqtWarranted).toBe(false);
+    expect(out.upperBound90).toBeLessThan(10);
+  });
+});
+
+describe('assess_ddi_risk handler', () => {
+  it('flags a reversible CYP inhibitor and recommends a study', async () => {
+    const handler = getToolHandler('assess_ddi_risk')!;
+    const out = JSON.parse(await handler({ imaxUnbound: 0.5, ki: 10 }));
+    expect(out.status).toBe('computed');
+    expect(out.clinicalStudyRecommended).toBe(true);
+  });
+});
+
+describe('draft_clinical_summary_m2_7 handler', () => {
+  it('returns needs_parameters without CSRs', async () => {
+    const handler = getToolHandler('draft_clinical_summary_m2_7')!;
+    const out = JSON.parse(await handler({ csrs: [], indication: 'x', investigationalProduct: 'y' }));
+    expect(out.status).toBe('needs_parameters');
+  });
+
+  it('drafts the M2.7 summary from a CSR', async () => {
+    const handler = getToolHandler('draft_clinical_summary_m2_7')!;
+    const out = JSON.parse(
+      await handler({
+        csrs: [{ studyId: 'S1', phase: '1', primaryEndpoint: 'safety', primaryResult: 'well tolerated', sampleSize: 48, saeCount: 0 }],
+        indication: 'oncology',
+        investigationalProduct: 'BX-115',
+      }),
+    );
+    expect(out.status).toBe('drafted');
+    expect(out.sectionKey).toBe('2.7');
   });
 });

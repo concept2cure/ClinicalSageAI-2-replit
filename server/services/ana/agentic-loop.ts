@@ -224,6 +224,9 @@ const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = 
   classify_tox_findings: () => 'Classifying the toxicology findings',
   select_exposure_response_dose: () => 'Selecting the dose from exposure-response',
   draft_nonclinical_overview_m2_4: () => 'Drafting the Module 2.4 nonclinical overview',
+  assess_concentration_qtc: () => 'Assessing the concentration-QTc relationship',
+  assess_ddi_risk: () => 'Assessing drug-interaction risk',
+  draft_clinical_summary_m2_7: () => 'Drafting the Module 2.7 clinical summary',
   check_numerical_integrity: () => 'Checking numerical integrity',
   check_dossier_consistency: () => 'Checking consistency across the dossier',
 };
