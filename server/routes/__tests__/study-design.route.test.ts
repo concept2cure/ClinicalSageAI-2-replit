@@ -109,3 +109,24 @@ describe('auth gate', () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe('POST /api/study-design/sample-size', () => {
+  it('returns power-based and assurance-based sizes', async () => {
+    const res = await request(authedApp())
+      .post('/api/study-design/sample-size')
+      .send({ design: design(), plannedEffect: 0.4, assumptionSd: 0.18, targetPower: 0.8, targetAssurance: 0.8 });
+    expect(res.status).toBe(200);
+    const ss = res.body.sampleSize;
+    expect(typeof ss.nPerArmForPower).toBe('number');
+    // Same target ⇒ assurance needs more subjects than power.
+    expect(ss.nPerArmForAssurance).toBeGreaterThan(ss.nPerArmForPower);
+    expect(typeof ss.assuranceCeiling).toBe('number');
+  });
+
+  it('rejects sizing without an authenticated tenant', async () => {
+    const res = await request(anonApp())
+      .post('/api/study-design/sample-size')
+      .send({ design: design(), plannedEffect: 0.4 });
+    expect(res.status).toBe(401);
+  });
+});

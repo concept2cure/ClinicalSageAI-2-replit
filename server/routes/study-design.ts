@@ -26,6 +26,7 @@ import { recordGovernedAction } from './c2c/actions';
 import {
   validateDesign,
   simulateTrial,
+  solveSampleSize,
   buildEffectPrior,
   gatherCsrEffectEvidence,
   persistStudyDesignTx,
@@ -34,6 +35,7 @@ import {
   listStudyDesigns,
   primaryEndpoints,
   type StudyDesign,
+  type EffectPrior,
   type EvidenceObservation,
 } from '../services/study-design';
 
@@ -114,6 +116,48 @@ const simulateSchema = z.object({
   eventProbability: z.number().min(0).max(1).optional(),
 });
 
+interface PriorInputs {
+  plannedEffect?: number;
+  assumptionSd?: number;
+  // Loosely typed: the request schema validates the shape; we coerce to EvidenceObservation here.
+  observations?: unknown[];
+  useCsrEvidence?: boolean;
+}
+
+interface ResolvedPrior {
+  prior: EffectPrior;
+  csrNote?: string;
+  csrScanned?: number;
+  observationsUsed: number;
+}
+
+/**
+ * Build the effect prior a simulation or sizing call needs, optionally grounding it in
+ * this tenant's prior CSRs. Throws (via buildEffectPrior) when no prior can be formed.
+ */
+async function resolvePrior(orgId: number, design: StudyDesign, p: PriorInputs): Promise<ResolvedPrior> {
+  const direction = primaryEndpoints(design)[0]?.direction;
+  const observations: EvidenceObservation[] = [...((p.observations as EvidenceObservation[] | undefined) ?? [])];
+  let csrNote: string | undefined;
+  let csrScanned: number | undefined;
+
+  if (p.useCsrEvidence) {
+    const csr = await gatherCsrEffectEvidence({
+      tenantId: orgId,
+      indication: design.indication,
+      phase: design.phase,
+      direction,
+    });
+    observations.push(...csr.observations);
+    csrNote = csr.note;
+    csrScanned = csr.scanned;
+  }
+
+  const plannedEffect = p.plannedEffect ?? design.statisticalPlan?.powerAssumptions?.effectSize;
+  const prior = buildEffectPrior(observations, { plannedEffect, assumptionSd: p.assumptionSd });
+  return { prior, csrNote, csrScanned, observationsUsed: observations.length };
+}
+
 router.post('/simulate', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
@@ -126,48 +170,79 @@ router.post('/simulate', async (req: Request, res: Response) => {
   }
   const p = params.data;
 
+  let resolved: ResolvedPrior;
   try {
-    const direction = primaryEndpoints(design)[0]?.direction;
-    const observations: EvidenceObservation[] = [...((p.observations as EvidenceObservation[]) ?? [])];
-    let csrNote: string | undefined;
-    let csrScanned: number | undefined;
+    resolved = await resolvePrior(orgId, design, p);
+  } catch {
+    return res.status(400).json({
+      error: 'NO_PRIOR',
+      detail: 'Supply plannedEffect, observations, or enable CSR evidence so a prior can be formed.',
+    });
+  }
 
-    if (p.useCsrEvidence) {
-      const csr = await gatherCsrEffectEvidence({
-        tenantId: orgId,
-        indication: design.indication,
-        phase: design.phase,
-        direction,
-      });
-      observations.push(...csr.observations);
-      csrNote = csr.note;
-      csrScanned = csr.scanned;
-    }
-
-    const plannedEffect = p.plannedEffect ?? design.statisticalPlan?.powerAssumptions?.effectSize;
-    let prior;
-    try {
-      prior = buildEffectPrior(observations, { plannedEffect, assumptionSd: p.assumptionSd });
-    } catch (e: any) {
-      return res.status(400).json({
-        error: 'NO_PRIOR',
-        detail: 'Supply plannedEffect, observations, or enable CSR evidence so a prior can be formed.',
-      });
-    }
-
+  try {
     const report = simulateTrial(design, {
-      effectPrior: prior,
+      effectPrior: resolved.prior,
       nRuns: p.nRuns,
       seed: p.seed,
       nPerArm: p.nPerArm,
       controlEventRate: p.controlEventRate,
       eventProbability: p.eventProbability,
     });
-
-    return res.json({ ...report, evidence: { csrNote, csrScanned, observationsUsed: observations.length } });
+    return res.json({
+      ...report,
+      evidence: { csrNote: resolved.csrNote, csrScanned: resolved.csrScanned, observationsUsed: resolved.observationsUsed },
+    });
   } catch (err: any) {
     // simulateTrial throws for designs it will not fake (single-arm, no sample size, …).
     return res.status(422).json({ error: 'CANNOT_SIMULATE', detail: err?.message ?? 'Simulation failed.' });
+  }
+});
+
+// ─── POST /sample-size ────────────────────────────────────────────────────────
+
+const sampleSizeSchema = z.object({
+  plannedEffect: z.number().optional(),
+  assumptionSd: z.number().positive().optional(),
+  observations: z.array(observationSchema).optional(),
+  useCsrEvidence: z.boolean().optional(),
+  targetPower: z.number().min(0.5).max(0.999).optional(),
+  targetAssurance: z.number().min(0.05).max(0.999).optional(),
+});
+
+router.post('/sample-size', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
+
+  const design = parseDesign(req, res);
+  if (!design) return;
+  const params = sampleSizeSchema.safeParse(req.body ?? {});
+  if (!params.success) {
+    return res.status(400).json({ error: 'INVALID_PARAMS', details: params.error.issues });
+  }
+  const p = params.data;
+
+  let resolved: ResolvedPrior;
+  try {
+    resolved = await resolvePrior(orgId, design, p);
+  } catch {
+    return res.status(400).json({
+      error: 'NO_PRIOR',
+      detail: 'Supply plannedEffect, observations, or enable CSR evidence so a prior can be formed.',
+    });
+  }
+
+  try {
+    const report = solveSampleSize(design, resolved.prior, {
+      targetPower: p.targetPower,
+      targetAssurance: p.targetAssurance,
+    });
+    return res.json({
+      sampleSize: report,
+      evidence: { csrNote: resolved.csrNote, csrScanned: resolved.csrScanned, observationsUsed: resolved.observationsUsed },
+    });
+  } catch (err: any) {
+    return res.status(422).json({ error: 'CANNOT_SIZE', detail: err?.message ?? 'Sample-size calculation failed.' });
   }
 });
 

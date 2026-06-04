@@ -62,3 +62,10 @@ export {
   extractEffectObservation,
   gatherCsrEffectEvidence,
 } from './csr-evidence-source';
+export {
+  type SolveSampleSizeOptions,
+  type SampleSizeReport,
+  solveSampleSize,
+  sampleSizeForPower,
+  sampleSizeForAssurance,
+} from './sample-size';
