@@ -2483,6 +2483,53 @@ export const SELECT_EXPOSURE_RESPONSE_DOSE: AnaTool = {
   },
 };
 
+export const DRAFT_NONCLINICAL_OVERVIEW_M2_4: AnaTool = {
+  name: 'draft_nonclinical_overview_m2_4',
+  description:
+    "Draft the Module 2.4 Nonclinical Overview (ICH M4S) from the program's nonclinical study set using the platform's deterministic composer. Maps ingest-shaped studies (single/repeat-dose tox, genotox, DART, carcinogenicity, safety pharm, PK/ADME) into the ICH M4S structure, flags the gaps against ICH M3(R2)/S2(R1)/S7A, and — when target-organ findings are supplied — appends the adversity profile (adverse vs adaptive vs monitor) from the toxicologic-pathology classifier. Returns a draft M2.4 (a starting point the author promotes through the governed authoring flow), its completeness score, and the gap list. Use this for Module 2.4 / nonclinical-overview authoring requests. Report the gaps and completeness honestly; do not assert a study exists that was not supplied.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      studies: {
+        type: 'array',
+        description: 'Nonclinical studies feeding the overview.',
+        items: {
+          type: 'object',
+          properties: {
+            studyType: { type: 'string', description: 'Study type (ingest enum e.g. repeat_dose_tox, genotox, dart, safety_pharm, pk — or a builder category).' },
+            studyTitle: { type: 'string' },
+            species: { type: 'string' },
+            durationWeeks: { type: 'number' },
+            glpCompliant: { type: 'boolean' },
+            noael: { type: 'string', description: 'NOAEL (e.g. "50 mg/kg/day").' },
+            keyFindings: { type: 'string', description: 'Primary finding / summary.' },
+            doseLevels: { type: 'array', items: { type: 'string' } },
+            reportSection: { type: 'string', description: 'Module 4 section (e.g. "4.2.3.2").' },
+          },
+          required: ['studyType'],
+        },
+      },
+      findings: {
+        type: 'array',
+        description: 'Target-organ findings to classify for the overview (optional).',
+        items: {
+          type: 'object',
+          properties: {
+            organ: { type: 'string' },
+            finding: { type: 'string' },
+            severity: { type: 'string' },
+            correlates: { type: 'array', items: { type: 'string' } },
+          },
+          required: ['organ', 'finding'],
+        },
+      },
+      drugSubstanceName: { type: 'string' },
+      indication: { type: 'string' },
+    },
+    required: ['studies'],
+  },
+};
+
 export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
@@ -2563,6 +2610,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   COMPUTE_FIH_DOSE,
   CLASSIFY_TOX_FINDINGS,
   SELECT_EXPOSURE_RESPONSE_DOSE,
+  DRAFT_NONCLINICAL_OVERVIEW_M2_4,
   ASSESS_ANALYTICAL_SIMILARITY,
   ASSESS_COMPARABILITY,
   ASSESS_IMMUNOGENICITY,

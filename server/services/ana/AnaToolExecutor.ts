@@ -929,6 +929,46 @@ registerToolHandler('select_exposure_response_dose', async (input: Record<string
   }
 });
 
+// Draft M2.4 Nonclinical Overview — deterministic composer + adversity profile
+registerToolHandler('draft_nonclinical_overview_m2_4', async (input: Record<string, unknown>) => {
+  try {
+    const studies = input.studies;
+    if (!Array.isArray(studies) || studies.length === 0) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'studies[] is required to draft the M2.4 overview.' });
+    }
+    const { buildEnrichedM24 } = await import('../preclinical/nonclinical-m24-adapter.js');
+    const { summary, toxProfile } = buildEnrichedM24({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      studies: studies as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      findings: input.findings as any,
+      drugSubstanceName: input.drugSubstanceName as string | undefined,
+      indication: input.indication as string | undefined,
+    });
+    return JSON.stringify({
+      status: 'drafted',
+      engine: 'deterministic',
+      sectionKey: summary.sectionKey,
+      title: summary.title,
+      content: summary.narrative,
+      completeness: summary.completeness,
+      gaps: summary.gaps,
+      toxProfile: toxProfile
+        ? {
+            adverse: toxProfile.adverseFindings.map(f => f.finding),
+            adaptive: toxProfile.adaptiveFindings.map(f => f.finding),
+            monitor: toxProfile.monitorFindings.map(f => f.finding),
+            overviewParagraph: toxProfile.overviewParagraph,
+          }
+        : null,
+      instruction:
+        'This is a draft the author promotes through the governed authoring flow. State the completeness score and gaps honestly; do not assert a study that was not supplied.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `M2.4 overview drafting failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Compare Statistical Scenarios — side-by-side deterministic comparison
 registerToolHandler('compare_statistical_scenarios', async (input: Record<string, unknown>, ctx) => {
   try {

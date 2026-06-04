@@ -13,7 +13,12 @@ import { describe, it, expect } from 'vitest';
 import { getToolHandler } from '../AnaToolExecutor.js';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
 
-const NEW_TOOLS = ['compute_fih_dose', 'classify_tox_findings', 'select_exposure_response_dose'] as const;
+const NEW_TOOLS = [
+  'compute_fih_dose',
+  'classify_tox_findings',
+  'select_exposure_response_dose',
+  'draft_nonclinical_overview_m2_4',
+] as const;
 
 describe('nonclinical & clin-pharm tools — registration + exposure', () => {
   for (const name of NEW_TOOLS) {
@@ -89,5 +94,32 @@ describe('select_exposure_response_dose handler', () => {
     );
     expect(out.status).toBe('computed');
     expect(out.predictions.find((p: { doseMg: number }) => p.doseMg === 200)?.exposure).toBe(400);
+  });
+});
+
+describe('draft_nonclinical_overview_m2_4 handler', () => {
+  it('returns needs_parameters without studies', async () => {
+    const handler = getToolHandler('draft_nonclinical_overview_m2_4')!;
+    const out = JSON.parse(await handler({ studies: [] }));
+    expect(out.status).toBe('needs_parameters');
+  });
+
+  it('drafts the M2.4 overview with gaps and an adversity profile', async () => {
+    const handler = getToolHandler('draft_nonclinical_overview_m2_4')!;
+    const out = JSON.parse(
+      await handler({
+        studies: [
+          { studyType: 'repeat_dose_tox', species: 'rat', durationWeeks: 13, glpCompliant: true, noael: '50 mg/kg/day' },
+          { studyType: 'genotox', studyTitle: 'Ames', keyFindings: 'Negative' },
+        ],
+        findings: [{ organ: 'liver', finding: 'hepatocellular hypertrophy' }],
+        drugSubstanceName: 'BX-115',
+      }),
+    );
+    expect(out.status).toBe('drafted');
+    expect(out.sectionKey).toBe('2.4');
+    expect(out.content).toMatch(/NONCLINICAL OVERVIEW/);
+    expect(out.gaps).toContain('primary pharmacology studies');
+    expect(out.toxProfile.adaptive).toContain('hepatocellular hypertrophy');
   });
 });

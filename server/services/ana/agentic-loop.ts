@@ -223,6 +223,7 @@ const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = 
   compute_fih_dose: () => 'Computing the first-in-human dose',
   classify_tox_findings: () => 'Classifying the toxicology findings',
   select_exposure_response_dose: () => 'Selecting the dose from exposure-response',
+  draft_nonclinical_overview_m2_4: () => 'Drafting the Module 2.4 nonclinical overview',
   check_numerical_integrity: () => 'Checking numerical integrity',
   check_dossier_consistency: () => 'Checking consistency across the dossier',
 };
