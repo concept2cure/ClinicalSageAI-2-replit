@@ -228,6 +228,8 @@ const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = 
   draft_nonclinical_overview_m2_4: () => 'Drafting the Module 2.4 nonclinical overview',
   draft_nonclinical_summaries_m2_6: () => 'Drafting the Module 2.6 nonclinical summaries',
   draft_quality_overall_summary_m2_3: () => 'Drafting the Module 2.3 Quality Overall Summary',
+  list_platform_commands: () => 'Listing the platform command surface',
+  execute_platform_command: (i: Record<string, unknown>) => `Executing platform command: ${typeof i?.command === 'string' ? i.command : '…'}`,
   assess_nonclinical_program: () => 'Assessing the nonclinical study program',
   assess_nonclinical_safety: () => 'Assembling the integrated nonclinical safety assessment',
   assess_concentration_qtc: () => 'Assessing the concentration-QTc relationship',

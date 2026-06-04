@@ -1031,6 +1031,69 @@ registerToolHandler('load_nonclinical_program', async (input: Record<string, unk
 });
 
 // Draft M2.6 Nonclinical Written & Tabulated Summaries — deterministic composer
+// ── Platform command bridge — ANA's full operational control surface ─────────
+// Bridges the agentic tool loop into the governed ana-ri command executor so the
+// conversational ANA can discover and invoke every platform command (project /
+// artifact / task / dossier / Module 3 / CMC / MDX / PDEV / …). Reads are open;
+// governed mutations still require confirm + reason and are audit-logged. Tenant
+// and user come from the session context, never from model input.
+
+registerToolHandler('list_platform_commands', async (input: Record<string, unknown>) => {
+  try {
+    const { COMMAND_REGISTRY } = await import('../ana-ri/command-executor.js');
+    const q = typeof input.query === 'string' ? input.query.toLowerCase().trim() : '';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let list = COMMAND_REGISTRY as Array<any>;
+    if (q) list = list.filter(c => `${c.name} ${c.description ?? ''}`.toLowerCase().includes(q));
+    return JSON.stringify({
+      status: 'ok',
+      count: list.length,
+      commands: list.map(c => ({ command: c.name, description: c.description, parameters: c.parameters })),
+      instruction:
+        "Invoke any of these with execute_platform_command { command, params }. This is ANA's full platform command surface beyond the typed tools; governed mutations need params.confirm=true and params.reason.",
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Listing platform commands failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+registerToolHandler('execute_platform_command', async (input: Record<string, unknown>, ctx) => {
+  try {
+    const command = typeof input.command === 'string' ? input.command.trim() : '';
+    if (!command) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'command is required — call list_platform_commands to discover the catalog.' });
+    }
+    const organizationId = ctx?.organizationId;
+    const userId = ctx?.userId;
+    if (!organizationId || !userId) {
+      return JSON.stringify({ status: 'needs_context', message: 'execute_platform_command requires an active organization and user context.' });
+    }
+    const params = input.params && typeof input.params === 'object' ? (input.params as Record<string, unknown>) : {};
+    const { executeCommands, COMMAND_REGISTRY } = await import('../ana-ri/command-executor.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!(COMMAND_REGISTRY as Array<any>).some(c => c.name === command)) {
+      return JSON.stringify({ status: 'unknown_command', message: `Unknown command "${command}". Call list_platform_commands to see the catalog.` });
+    }
+    const cmdCtx = {
+      userId: Number(userId),
+      organizationId: Number(organizationId),
+      activeProjectId: ctx?.projectId != null ? Number(ctx.projectId) : undefined,
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const results = await executeCommands([{ command, params } as any], cmdCtx as any);
+    const result = results[0];
+    return JSON.stringify({
+      status: result?.success ? 'executed' : 'failed',
+      command,
+      result,
+      instruction:
+        'Governed mutations require confirm + reason in params. If the result indicates confirmation is required, re-issue with params.confirm=true and params.reason set. Report the result message verbatim.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Platform command failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Draft M2.3 Quality Overall Summary — composes Module 3 then builds the QOS
 registerToolHandler('draft_quality_overall_summary_m2_3', async (input: Record<string, unknown>) => {
   try {

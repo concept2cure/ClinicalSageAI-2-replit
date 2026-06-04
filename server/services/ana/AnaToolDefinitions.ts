@@ -2997,7 +2997,36 @@ export const DRAFT_QUALITY_OVERALL_SUMMARY_M2_3: AnaTool = {
   },
 };
 
+export const LIST_PLATFORM_COMMANDS: AnaTool = {
+  name: 'list_platform_commands',
+  description:
+    "List the full catalog of governed platform commands ANA can run via execute_platform_command — the operational surface beyond the typed tools: project / document / artifact / task / milestone / version lifecycle, dossier packaging, Module 3 / CMC composition, biostatistics & trial design, compliance scans, freeze / sign / export, personal-data operations, MDX governed mutations, and the PDEV→IND workflow. Optionally filter with `query`. Call this to discover everything ANA can command across the whole platform, then act with execute_platform_command.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      query: { type: 'string', description: 'Optional substring filter over command name / description.' },
+    },
+    required: [],
+  },
+};
+
+export const EXECUTE_PLATFORM_COMMAND: AnaTool = {
+  name: 'execute_platform_command',
+  description:
+    "Execute any governed platform command — ANA's full operational control beyond the typed tools (see list_platform_commands for the catalog). Pass `command` (a command name) and `params`. Runs through the platform's governed command executor: reads are open; governed mutations require params.confirm = true and a params.reason string, and are written to the audit trail. The organization, user, and active project are taken from the session context, never from params, and per-tenant tool policy is enforced. If a result asks for confirmation, re-issue with params.confirm = true and params.reason set. Report the result message verbatim.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      command: { type: 'string', description: 'Command name from list_platform_commands (e.g. create_artifact, module3_build_all, sign_document).' },
+      params: { type: 'object', description: 'Command parameters. For governed mutations include confirm: true and reason: "…".' },
+    },
+    required: ['command'],
+  },
+};
+
 export const ALL_ANA_TOOLS: AnaTool[] = [
+  LIST_PLATFORM_COMMANDS,
+  EXECUTE_PLATFORM_COMMAND,
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
   PROJECT_KNOWLEDGE_SEARCH,
