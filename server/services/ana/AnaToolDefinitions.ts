@@ -2661,6 +2661,44 @@ export const ASSESS_NONCLINICAL_PROGRAM: AnaTool = {
   },
 };
 
+export const CHARACTERIZE_PK: AnaTool = {
+  name: 'characterize_pk',
+  description:
+    "Characterize PK with the platform's deterministic engine: dose proportionality by the power model (judges whether the 90% CI of the ln-ln slope falls in the [1+ln0.8/lnr, 1+ln1.25/lnr] acceptance region — slope ≈ 1 is dose-proportional), and/or accumulation (Rac = 1/(1−e^−ke·τ)) with time to steady state from the half-life and dosing interval. Supply doseProportionality and/or accumulation. ALWAYS call this for dose-proportionality / accumulation / steady-state questions; report the slope, CI, verdict, and Rac verbatim.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      doseProportionality: {
+        type: 'object',
+        description: 'Power-model dose-proportionality assessment.',
+        properties: {
+          dataPoints: {
+            type: 'array',
+            items: { type: 'object', properties: { dose: { type: 'number' }, exposure: { type: 'number' } }, required: ['dose', 'exposure'] },
+            description: 'Dose vs exposure (AUC or Cmax) pairs across ≥2 dose levels.',
+          },
+          theta: {
+            type: 'object',
+            properties: { low: { type: 'number' }, high: { type: 'number' } },
+            description: 'Acceptance bounds for the critical region (default 0.8, 1.25).',
+          },
+        },
+        required: ['dataPoints'],
+      },
+      accumulation: {
+        type: 'object',
+        description: 'Accumulation and time-to-steady-state from half-life and interval.',
+        properties: {
+          halfLifeHours: { type: 'number' },
+          dosingIntervalHours: { type: 'number' },
+        },
+        required: ['halfLifeHours', 'dosingIntervalHours'],
+      },
+    },
+    required: [],
+  },
+};
+
 export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
@@ -2745,6 +2783,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ASSESS_NONCLINICAL_PROGRAM,
   ASSESS_CONCENTRATION_QTC,
   ASSESS_DDI_RISK,
+  CHARACTERIZE_PK,
   DRAFT_CLINICAL_SUMMARY_M2_7,
   ASSESS_ANALYTICAL_SIMILARITY,
   ASSESS_COMPARABILITY,

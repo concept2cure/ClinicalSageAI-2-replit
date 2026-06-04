@@ -227,6 +227,7 @@ const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = 
   assess_nonclinical_program: () => 'Assessing the nonclinical study program',
   assess_concentration_qtc: () => 'Assessing the concentration-QTc relationship',
   assess_ddi_risk: () => 'Assessing drug-interaction risk',
+  characterize_pk: () => 'Characterizing the pharmacokinetics',
   draft_clinical_summary_m2_7: () => 'Drafting the Module 2.7 clinical summary',
   check_numerical_integrity: () => 'Checking numerical integrity',
   check_dossier_consistency: () => 'Checking consistency across the dossier',

@@ -21,6 +21,7 @@ const NEW_TOOLS = [
   'assess_nonclinical_program',
   'assess_concentration_qtc',
   'assess_ddi_risk',
+  'characterize_pk',
   'draft_clinical_summary_m2_7',
 ] as const;
 
@@ -174,6 +175,33 @@ describe('assess_ddi_risk handler', () => {
     const out = JSON.parse(await handler({ imaxUnbound: 0.5, ki: 10 }));
     expect(out.status).toBe('computed');
     expect(out.clinicalStudyRecommended).toBe(true);
+  });
+});
+
+describe('characterize_pk handler', () => {
+  it('returns needs_parameters when nothing is supplied', async () => {
+    const handler = getToolHandler('characterize_pk')!;
+    const out = JSON.parse(await handler({}));
+    expect(out.status).toBe('needs_parameters');
+  });
+
+  it('characterizes dose proportionality and accumulation', async () => {
+    const handler = getToolHandler('characterize_pk')!;
+    const out = JSON.parse(
+      await handler({
+        doseProportionality: {
+          dataPoints: [
+            { dose: 50, exposure: 100 },
+            { dose: 100, exposure: 200 },
+            { dose: 200, exposure: 400 },
+          ],
+        },
+        accumulation: { halfLifeHours: 18, dosingIntervalHours: 24 },
+      }),
+    );
+    expect(out.status).toBe('computed');
+    expect(out.doseProportionality.verdict).toBe('proportional');
+    expect(out.accumulation.accumulationRatio).toBeCloseTo(1.66, 1);
   });
 });
 

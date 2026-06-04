@@ -1018,6 +1018,34 @@ registerToolHandler('assess_concentration_qtc', async (input: Record<string, unk
   }
 });
 
+// PK characterization — deterministic dose proportionality + accumulation
+registerToolHandler('characterize_pk', async (input: Record<string, unknown>) => {
+  try {
+    const dp = input.doseProportionality as Record<string, unknown> | undefined;
+    const acc = input.accumulation as Record<string, unknown> | undefined;
+    if (!dp && !acc) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'Supply doseProportionality and/or accumulation.' });
+    }
+    const mod = await import('../clinical-pharmacology/pk-characterization.js');
+    const result: Record<string, unknown> = { status: 'computed', engine: 'deterministic' };
+    if (dp) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      result.doseProportionality = mod.assessDoseProportionality(dp as any);
+    }
+    if (acc) {
+      result.accumulation = mod.accumulation(Number(acc.halfLifeHours), Number(acc.dosingIntervalHours));
+    }
+    result.instruction = 'Report the slope, 90% CI, proportionality verdict, and accumulation ratio verbatim.';
+    return JSON.stringify(result);
+  } catch (err: any) {
+    const message = err?.message || 'unknown error';
+    if (/required|must be/.test(message)) {
+      return JSON.stringify({ status: 'needs_parameters', message });
+    }
+    return JSON.stringify({ error: `PK characterization failed: ${message}` });
+  }
+});
+
 // DDI static-model risk — deterministic
 registerToolHandler('assess_ddi_risk', async (input: Record<string, unknown>) => {
   try {
