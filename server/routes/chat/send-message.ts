@@ -28,6 +28,7 @@ import {
 } from '../../services/kernel-adaptive-policy.js';
 import { interceptChatResponse } from '../../services/intelligence/rim-interceptors.js';
 import { getAllEnabledTools } from '../../services/ana/AnaToolDefinitions.js';
+import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
 import { executeAgenticLoop } from '../../services/ana/AnaToolExecutor.js';
 import { logToolRun } from '../../services/toolRegistry.js';
 import type { AnaGatewayResponse } from '../../services/ai-gateway/types.js';
@@ -68,7 +69,7 @@ const INCONTEXT_INJECTION_ENABLED =
 export const sendMessageHandler = async (req: Request, res: Response) => {
   normalizeBody(req);
   try {
-    const { message, thread_id, file_id, system_prompt, project_id, preferred_provider } = req.body;
+    const { message, thread_id, file_id, system_prompt, project_id, preferred_provider, selected_tools, tool_context } = req.body;
 
     if (!message || typeof message !== 'string') {
       return res.status(400).json({
@@ -649,7 +650,13 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         organizationId: numericOrgId ?? undefined,
         userId: numericUserId,
         strategy: selectedStrategy,
-        tools: getAllEnabledTools(),
+        // Offer the tools relevant to this turn's intent + context (the platform
+        // command bridge is always included, so nothing is ever truly out of
+        // reach), honouring any tools the user pinned in the tool picker.
+        tools: selectToolsForTurn(getAllEnabledTools(), typeof message === 'string' ? message : '', {
+          pinned: Array.isArray(selected_tools) ? selected_tools.filter((t: unknown): t is string => typeof t === 'string') : undefined,
+          context: tool_context && typeof tool_context === 'object' ? tool_context : undefined,
+        }),
         toolChoice: 'auto' as const,
         ...(validatedChatProvider ? { provider: validatedChatProvider } : {}),
         // A2: cache the (large, stable) in-context corpus prefix when injected.

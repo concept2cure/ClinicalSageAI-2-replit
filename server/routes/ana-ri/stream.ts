@@ -45,6 +45,7 @@ import { runAgenticToolLoop, capToolResultForModel, mapWithConcurrency, describe
 import { buildTraceEntry, collectTracesFromHistory, formatTraceForContext, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
 import { runStreamPostProcessing } from './post-processing.js';
 import { loadAnaToolPolicy, filterToolsByPolicy } from '../../services/ana-ri/mdx-tool-policy.js';
+import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
 import { isPdfIntakeEnabled, readLocalUploadBuffer } from '../../services/anthropic-files.js';
 import { logToolRun } from '../../services/toolRegistry.js';
 import type { AnaGatewayResponse } from '../../services/ai-gateway/types.js';
@@ -95,6 +96,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       conversation_history,
       authoring_context,
       project_id,
+      selected_tools,
     } = req.body;
 
     if (!message || typeof message !== 'string') {
@@ -489,7 +491,19 @@ router.post('/stream', async (req: Request, res: Response) => {
     // model. Loader is fail-open (default-allow) on any DB issue.
     const allTools = getAllEnabledTools();
     const toolPolicy = orgId ? await loadAnaToolPolicy(getPool(), Number(orgId)) : {};
-    const streamTools = filterToolsByPolicy(allTools, toolPolicy);
+    // Governance first (tenant deny-list), then offer the subset relevant to this
+    // turn's intent + context. The platform command bridge is always retained, so
+    // intent selection never removes a capability — anything dropped stays
+    // reachable through execute_platform_command. User-pinned tools are honoured.
+    const asStr = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+    const streamTools = selectToolsForTurn(filterToolsByPolicy(allTools, toolPolicy), typeof message === 'string' ? message : '', {
+      pinned: Array.isArray(selected_tools) ? selected_tools.filter((t: unknown): t is string => typeof t === 'string') : undefined,
+      context: {
+        projectType: asStr(submission_type),
+        documentType: asStr(document_context),
+        surface: asStr(intent_lens) ?? asStr(authoring_context),
+      },
+    });
 
     const gwResponse = await gw.route({
       taskType: routingPlan.taskType,
