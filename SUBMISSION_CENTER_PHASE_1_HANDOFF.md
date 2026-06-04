@@ -83,3 +83,31 @@ The data model and ingestion path now exist; Phase 2 is the **assembly tree** (s
 **Design-system non-negotiables to honor (CLAUDE.md / README):** sentence case, no emoji/exclamations, body 13px, Claude orange `#d97757` as the only strong color (one focal point), 200ms ease-out motion, Lucide icons, second person. Loading/empty/error states mandatory. Streaming surfaces (none in Phase 2) render progressively.
 
 **Do NOT build in Phase 2 (still out of scope):** eCTD backbone/checksum/STF, validation rule packs, section authoring, `consistency_findings`, Shadow Review, region adapters beyond stored `region`/`pathway` values.
+
+---
+
+## 6. eCTD publishing engine — audit + deterministic primitives (post-Phase-1 addendum)
+
+A real-vs-demo audit of the existing eCTD/submission backend found the publishing engine is **~80% already built** (so "build everything" mostly means *reconcile/complete*, not greenfield):
+
+| §5 capability | Status | Owner |
+|---|---|---|
+| Backbone / index.xml | **REAL** (4 generators; pure canonical = `submission-gateways/regional-packager.ts`) | — |
+| MD5 + `util/index-md5.txt` | **REAL** | `regional-packager.ts:buildMd5Index` |
+| Validation rule packs (FDA/EU/JP/CA + ICH M8 + DTD) | **REAL** (3-layer stack) | `ectd/ectd-regional-rules.ts`, `ectd/ectd4-validator.ts`, `ectd/ectd-validator-hardening.ts` |
+| Sequence tracker | **REAL** | `ectd/ectd-validator-hardening.ts`, `ectd-submission-agent.ts` |
+| Transmission (ESG AS2/SFTP, CESP OAuth2, EUDAMED, PMDA HMAC) | **REAL**, credential-gated, fail-closed | `submission-gateways/{fda-esg,ema-cesp,pmda-gateway}.ts` |
+| eCTD full package (ICH 3.2.2) | **REAL** | `ectdExportService.ts` |
+| STF generator | **STUB** (only minimal `util/stf.xml`) | `ectdExportService.ts:649` |
+| PDF/A normalizer | **STUB** (needs external binary) | flagged in rules only |
+| **Lifecycle-operator diff (new/replace/append/delete)** | **WAS ABSENT → SHIPPED** | `ectd/lifecycle-operator.ts` |
+| **Cross-reference / hyperlink resolver** | **WAS ABSENT → SHIPPED** | `ectd/cross-reference-resolver.ts` |
+
+**Duplication watch (do not add a 5th):** 4 competing index.xml generators + 4 MD5 copies already exist; the legacy `ESGSubmissionService.ts` is a MOCK superseded by `submission-gateways/fda-esg.ts`; the demo `server/src/services/ectd.ts` path emits hardcoded data. New work must extend `regional-packager.ts` (the pure `EctdLeaf` + `buildIndexXml`/`buildMd5Index`) and plug rules into the `ectd-validator-hardening.ts` layer.
+
+**Shipped here (pure, deterministic, unit-tested, no DB/UI/network):**
+- `ectd/lifecycle-operator.ts` — `computeLifecycleOperations(prior, desired)` derives each leaf's operation by diffing against the prior sequence. 9 tests.
+- `ectd/cross-reference-resolver.ts` — `resolveCrossReferences(leaves, refs)` validates intra-package hyperlinks (resolved / `TARGET_NOT_FOUND` / `TARGET_DELETED`). 8 tests.
+Both reuse the existing `EctdLeaf` type and feed the existing packager/validator pipeline. `tsc --noEmit` clean; 17/17 tests pass.
+
+**Remaining pure gaps (buildable next, no DB/UI):** STF (Study Tagging File) tree generator (extend `ectdExportService.ts:649`), PDF/A *detection* check, and exporting `regional-packager.ts`'s `buildIndexXml`/`buildMd5Index` for reuse. **Not pure-buildable here:** live transmission already exists (credential-gated), PDF/A *normalization* needs an external binary, and Shadow Review / authoring AI tasks need their own designed work orders. The genuine open architectural decision is **unifying the two submission backbones** — the Phase-1 Drizzle `submissions/ectd_sequences/submission_leaves` core vs. the pre-existing raw-SQL `reg_*` model that the packager runs on — which belongs to the designer/operator.
