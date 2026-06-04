@@ -1031,6 +1031,39 @@ registerToolHandler('load_nonclinical_program', async (input: Record<string, unk
 });
 
 // Draft M2.6 Nonclinical Written & Tabulated Summaries — deterministic composer
+// Draft M2.3 Quality Overall Summary — composes Module 3 then builds the QOS
+registerToolHandler('draft_quality_overall_summary_m2_3', async (input: Record<string, unknown>) => {
+  try {
+    const cmcSources = input.cmcSources;
+    if (!Array.isArray(cmcSources) || cmcSources.length === 0) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'cmcSources[] is required to compose the QOS.' });
+    }
+    const { composeModule3FromCanonicalSources } = await import('../module3Composer.js');
+    const { buildM23QualityOverallSummary } = await import('../m2-summary-builders.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const module3Sections = composeModule3FromCanonicalSources(cmcSources as any);
+    const summary = buildM23QualityOverallSummary({
+      module3Sections,
+      drugSubstanceName: typeof input.drugSubstanceName === 'string' ? input.drugSubstanceName : undefined,
+      drugProductName: typeof input.drugProductName === 'string' ? input.drugProductName : undefined,
+    });
+    return JSON.stringify({
+      status: 'drafted',
+      engine: 'deterministic',
+      sectionKey: summary.sectionKey,
+      title: summary.title,
+      content: summary.narrative,
+      tables: summary.tables,
+      completeness: summary.completeness,
+      gaps: summary.gaps,
+      instruction:
+        'This is a draft the author promotes through the governed authoring flow. State the completeness and the missing Module 3 sections (gaps) honestly.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `M2.3 QOS composition failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 registerToolHandler('draft_nonclinical_summaries_m2_6', async (input: Record<string, unknown>) => {
   try {
     const studies = input.studies;

@@ -21,6 +21,7 @@ const NEW_TOOLS = [
   'get_nonclinical_template',
   'draft_nonclinical_overview_m2_4',
   'draft_nonclinical_summaries_m2_6',
+  'draft_quality_overall_summary_m2_3',
   'assess_nonclinical_program',
   'assess_nonclinical_safety',
   'assess_concentration_qtc',
@@ -168,6 +169,29 @@ describe('load_nonclinical_program handler', () => {
     const handler = getToolHandler('load_nonclinical_program')!;
     const out = JSON.parse(await handler({ ctdProgramId: 123 }, ctx));
     expect(out.status).toBe('unavailable');
+  });
+});
+
+describe('draft_quality_overall_summary_m2_3 handler', () => {
+  it('composes the QOS from CMC sources via the Module 3 convergence engine', async () => {
+    const handler = getToolHandler('draft_quality_overall_summary_m2_3')!;
+    const out = JSON.parse(
+      await handler({
+        cmcSources: [
+          { id: 'ds1', sourceType: 'drug_substance', sourcePayload: { name: 'BX-115', manufacturer: 'Acme' } },
+          { id: 'dp1', sourceType: 'drug_product', sourcePayload: { dosageFormDescription: 'tablet', composition: 'x', strength: '50 mg' } },
+        ],
+        drugSubstanceName: 'BX-115',
+      }),
+    );
+    expect(out.status).toBe('drafted');
+    expect(out.sectionKey).toBe('2.3');
+    expect(Array.isArray(out.tables)).toBe(true);
+  });
+  it('returns needs_parameters without cmcSources', async () => {
+    const handler = getToolHandler('draft_quality_overall_summary_m2_3')!;
+    const out = JSON.parse(await handler({ cmcSources: [] }));
+    expect(out.status).toBe('needs_parameters');
   });
 });
 

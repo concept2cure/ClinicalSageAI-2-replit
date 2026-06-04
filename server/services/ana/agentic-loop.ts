@@ -227,6 +227,7 @@ const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = 
   get_nonclinical_template: () => 'Fetching the nonclinical document template',
   draft_nonclinical_overview_m2_4: () => 'Drafting the Module 2.4 nonclinical overview',
   draft_nonclinical_summaries_m2_6: () => 'Drafting the Module 2.6 nonclinical summaries',
+  draft_quality_overall_summary_m2_3: () => 'Drafting the Module 2.3 Quality Overall Summary',
   assess_nonclinical_program: () => 'Assessing the nonclinical study program',
   assess_nonclinical_safety: () => 'Assembling the integrated nonclinical safety assessment',
   assess_concentration_qtc: () => 'Assessing the concentration-QTc relationship',

@@ -6,7 +6,8 @@
 
 import { describe, it, expect } from 'vitest';
 
-import { buildM25ClinicalOverview, type CSRSummaryInput } from '../m2-summary-builders';
+import { buildM25ClinicalOverview, buildM23QualityOverallSummary, type CSRSummaryInput } from '../m2-summary-builders';
+import { composeModule3FromCanonicalSources } from '../module3Composer';
 
 const pivotal: CSRSummaryInput = {
   studyId: 'S3',
@@ -29,6 +30,26 @@ const phase1: CSRSummaryInput = {
   primaryResult: 'well tolerated; dose-proportional PK',
   sampleSize: 40,
 };
+
+describe('buildM23QualityOverallSummary (QOS via Module 3 composition)', () => {
+  it('composes the 2.3.S / 2.3.P QOS from CMC source objects', () => {
+    const sections = composeModule3FromCanonicalSources([
+      { id: 'ds1', sourceType: 'drug_substance', sourcePayload: { name: 'BX-115', manufacturer: 'Acme' } },
+      { id: 'dp1', sourceType: 'drug_product', sourcePayload: { dosageFormDescription: 'tablet', composition: 'API + excipients', strength: '50 mg' } },
+    ] as any);
+    const qos = buildM23QualityOverallSummary({
+      module3Sections: sections,
+      drugSubstanceName: 'BX-115',
+      drugProductName: 'BX-115 tablets',
+    });
+    expect(qos.sectionKey).toBe('2.3');
+    expect(qos.title).toBe('Quality Overall Summary');
+    expect(qos.narrative).toMatch(/2\.3\.S DRUG SUBSTANCE/);
+    expect(qos.narrative).toMatch(/2\.3\.P DRUG PRODUCT/);
+    expect(qos.completeness).toBeGreaterThanOrEqual(0);
+    expect(qos.completeness).toBeLessThanOrEqual(100);
+  });
+});
 
 describe('buildM25ClinicalOverview', () => {
   it('composes the 2.5.1–2.5.6 critical assessment with a favorable benefit-risk', () => {
