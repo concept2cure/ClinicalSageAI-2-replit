@@ -4,9 +4,10 @@ import { buildNdaPyramid } from './pyramids/nda-pyramid';
 import { buildBlaPyramid } from './pyramids/bla-pyramid';
 import { buildPmaPyramid } from './pyramids/pma-pyramid';
 import { buildMaaPyramid } from './pyramids/maa-pyramid';
+import { buildJndaPyramid } from './pyramids/jnda-pyramid';
 import { buildDeNovoPyramid } from './pyramids/de-novo-pyramid';
 
-export type SubmissionType = '510K' | 'IND' | 'NDA' | 'BLA' | 'PMA' | 'MAA' | 'DE_NOVO';
+export type SubmissionType = '510K' | 'IND' | 'NDA' | 'BLA' | 'PMA' | 'MAA' | 'JNDA' | 'DE_NOVO';
 export type TaskStatus = 'todo' | 'in-progress' | 'review' | 'done' | 'blocked';
 
 export type PyramidTask = {
@@ -59,6 +60,8 @@ export function getPyramidForProject(type: SubmissionType): SubmissionPyramid {
       return buildPmaPyramid();
     case 'MAA':
       return buildMaaPyramid();
+    case 'JNDA':
+      return buildJndaPyramid();
     case 'DE_NOVO':
       return buildDeNovoPyramid();
     default:

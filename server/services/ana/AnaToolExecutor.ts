@@ -999,6 +999,60 @@ registerToolHandler('generate_statistical_document', async (input: Record<string
   }
 });
 
+// Assess Analytical Similarity — deterministic FDA Tier 1/2/3 engine (BLA)
+registerToolHandler('assess_analytical_similarity', async (input: Record<string, unknown>) => {
+  try {
+    const { assessAnalyticalSimilarity } = await import('../biologics/analytical-similarity.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = assessAnalyticalSimilarity(input as any);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      ...result,
+      instruction:
+        'Report the per-attribute verdicts, the overall conclusion, and the statistics verbatim. Do not recompute. Tier 1 uses EAC = ±1.5·σ_R with a 90% CI; Tier 2 a mean_R ± k·σ_R quality range.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Analytical similarity assessment failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// Assess Comparability — deterministic ICH Q5E engine (BLA)
+registerToolHandler('assess_comparability', async (input: Record<string, unknown>) => {
+  try {
+    const { assessComparability } = await import('../biologics/comparability.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = assessComparability(input as any);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      ...result,
+      instruction:
+        'Report the per-attribute verdicts, the overall ICH Q5E conclusion, and the bridging recommendation (analytical-sufficient vs non-clinical/clinical) verbatim. Do not recompute.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Comparability assessment failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// Assess Immunogenicity — deterministic ADA/NAb + risk engine (BLA)
+registerToolHandler('assess_immunogenicity', async (input: Record<string, unknown>) => {
+  try {
+    const { assessImmunogenicity } = await import('../biologics/immunogenicity.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = assessImmunogenicity(input as any);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      ...result,
+      instruction:
+        'Report each arm’s ADA/NAb incidence with its 95% CI, the comparative difference, and the overall risk tier with its rationale verbatim. Do not recompute.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Immunogenicity assessment failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Check Dossier Consistency — cross-artifact divergence detection
 registerToolHandler('check_dossier_consistency', async (input: Record<string, unknown>) => {
   const draftContent = input.draft_content as string;

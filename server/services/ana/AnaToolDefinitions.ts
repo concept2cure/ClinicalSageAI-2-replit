@@ -2238,6 +2238,131 @@ export const DRAFT_FDA_IR_RESPONSE: AnaTool = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// BLA 351(a) biologics tools — deterministic engines (analytical similarity,
+// comparability, immunogenicity). These compute on measured lot/subject data;
+// report their numbers and verdicts verbatim, never estimate by hand.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const ASSESS_ANALYTICAL_SIMILARITY: AnaTool = {
+  name: 'assess_analytical_similarity',
+  description:
+    "Run the DETERMINISTIC analytical-similarity engine for a BLA 351(a)/biosimilar 351(k) program. Compares a proposed biologic to a reference product across critical quality attributes using the FDA tiered framework: Tier 1 equivalence test (EAC = ±1.5·σ_R, 90% CI), Tier 2 quality range (mean_R ± k·σ_R, % of test lots within), Tier 3 min–max. Use when the user asks to run a Tier 1 similarity check, compare to a reference product, or assess analytical similarity. Returns per-attribute verdicts with the underlying statistics and an overall conclusion. Report the verdicts and numbers verbatim.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      referenceProduct: { type: 'string', description: 'Reference product name (e.g. the originator/RP).' },
+      modality: { type: 'string', description: 'Product modality, e.g. monoclonal_antibody, fusion_protein, adc.' },
+      targetAgency: { type: 'string', description: 'Target agency (FDA, EMA, PMDA).' },
+      programId: { type: 'string', description: 'Optional regulatory_programs UUID to persist the assessment against.' },
+      attributes: {
+        type: 'array',
+        description: 'Critical quality attributes with reference and test lot measurements.',
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'CQA name, e.g. "Potency (relative %)".' },
+            tier: { type: 'number', enum: [1, 2, 3], description: '1=most critical/MoA-related, 2=moderate, 3=least critical.' },
+            criticality: { type: 'string', description: 'Free-text criticality note.' },
+            unit: { type: 'string' },
+            reference: { type: 'array', items: { type: 'number' }, description: 'Reference-product lot measurements.' },
+            test: { type: 'array', items: { type: 'number' }, description: 'Proposed/test-product lot measurements.' },
+            eacSigmaMultiplier: { type: 'number', description: 'Tier 1 σ_R multiplier for the EAC (default 1.5).' },
+            qualityRangeK: { type: 'number', description: 'Tier 2 SD multiplier (default 3).' },
+            withinThreshold: { type: 'number', description: 'Tier 2/3 fraction of test lots required within range (default 0.9).' },
+            mechanismRelated: { type: 'boolean' },
+          },
+          required: ['name', 'tier', 'reference', 'test'],
+        },
+      },
+    },
+    required: ['attributes'],
+  },
+};
+
+export const ASSESS_COMPARABILITY: AnaTool = {
+  name: 'assess_comparability',
+  description:
+    "Run the DETERMINISTIC ICH Q5E comparability engine: assess whether a biologic produced after a manufacturing change (process/site/scale/formulation) is comparable to the pre-change material. Per attribute it tests post-change lots against the pre-change quality range, the standardized mean shift, and (for high-criticality attributes) equivalence; then derives the overall conclusion and whether analytical data alone is sufficient or non-clinical/clinical bridging is indicated. Use for manufacturing change comparability questions. Report the verdicts, the bridging recommendation, and numbers verbatim.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      changeDescription: { type: 'string', description: 'What changed (e.g. "new DS manufacturing site").' },
+      changeType: { type: 'string', description: 'process | site | scale | formulation | cell_bank.' },
+      modality: { type: 'string' },
+      targetAgency: { type: 'string' },
+      programId: { type: 'string', description: 'Optional regulatory_programs UUID to persist against.' },
+      attributes: {
+        type: 'array',
+        description: 'Quality attributes with pre- and post-change lot measurements.',
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            criticality: { type: 'string', enum: ['high', 'moderate', 'low'] },
+            unit: { type: 'string' },
+            preChange: { type: 'array', items: { type: 'number' } },
+            postChange: { type: 'array', items: { type: 'number' } },
+            qualityRangeK: { type: 'number', description: 'SD multiplier (default 3).' },
+            withinThreshold: { type: 'number', description: 'Fraction of post-change lots required within range (default 0.9).' },
+            eacSigmaMultiplier: { type: 'number', description: 'σ_pre multiplier for high-criticality equivalence (default 1.5).' },
+          },
+          required: ['name', 'criticality', 'preChange', 'postChange'],
+        },
+      },
+    },
+    required: ['attributes'],
+  },
+};
+
+export const ASSESS_IMMUNOGENICITY: AnaTool = {
+  name: 'assess_immunogenicity',
+  description:
+    "Run the DETERMINISTIC immunogenicity engine: compute ADA and neutralizing-antibody (NAb) incidence with 95% Wilson CIs per arm, the comparative between-arm difference (Newcombe), and an overall immunogenicity risk classification (low/moderate/high) using the FDA risk-based framework (likelihood × clinical consequence). Use for immunogenicity incidence, comparative immunogenicity, and risk-assessment questions. Report the incidences, comparison, and risk tier verbatim.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      productType: { type: 'string', enum: ['biologic', 'biosimilar'] },
+      modality: { type: 'string' },
+      targetAgency: { type: 'string' },
+      programId: { type: 'string', description: 'Optional regulatory_programs UUID to persist against.' },
+      riskFactors: {
+        type: 'object',
+        description: 'Product/patient factors that modulate immunogenicity risk.',
+        properties: {
+          chronicDosing: { type: 'boolean' },
+          immunomodulator: { type: 'boolean' },
+          foreignSequence: { type: 'boolean' },
+          aggregationProne: { type: 'boolean' },
+          neutralizesEndogenous: { type: 'boolean', description: 'Product neutralizes a non-redundant endogenous protein (severe consequence).' },
+        },
+      },
+      arms: {
+        type: 'array',
+        description: 'Study arms with tiered-assay subject counts.',
+        items: {
+          type: 'object',
+          properties: {
+            label: { type: 'string' },
+            role: { type: 'string', enum: ['test', 'reference', 'comparator'] },
+            nSubjects: { type: 'number', description: 'Evaluable subjects.' },
+            adaPositive: { type: 'number', description: 'Confirmed ADA-positive subjects.' },
+            treatmentEmergentAda: { type: 'number', description: 'Treatment-emergent (induced + boosted) ADA+ — preferred numerator.' },
+            nabPositive: { type: 'number', description: 'Neutralizing-antibody-positive subjects.' },
+            persistentAda: { type: 'number' },
+            titers: { type: 'array', items: { type: 'number' }, description: 'ADA reciprocal titers among positives.' },
+            impactedPk: { type: 'number', description: 'ADA+ subjects with a relevant PK impact.' },
+            impactedEfficacy: { type: 'number', description: 'ADA+ subjects with loss of efficacy.' },
+            hypersensitivity: { type: 'number', description: 'Serious hypersensitivity/anaphylaxis events associated with ADA.' },
+          },
+          required: ['label', 'nSubjects'],
+        },
+      },
+    },
+    required: ['arms'],
+  },
+};
+
 /** Custom JSON-schema tools dispatched by our local AnaToolExecutor. */
 export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
@@ -2316,6 +2441,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ASSESS_STATISTICAL_DEFENSIBILITY,
   ANALYZE_MISSING_DATA_IMPACT,
   GENERATE_STATISTICAL_DOCUMENT,
+  ASSESS_ANALYTICAL_SIMILARITY,
+  ASSESS_COMPARABILITY,
+  ASSESS_IMMUNOGENICITY,
   MINE_PRECEDENTS,
   GENERATE_DOCUMENT,
   BUILD_FROM_TEMPLATE,

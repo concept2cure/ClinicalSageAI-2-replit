@@ -374,6 +374,17 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount C2C Templates routes:', error);
   }
 
+  // BLA 351(a) biologics workbench — analytical similarity, comparability,
+  // immunogenicity engines (/api/biopharma/bla/*). Mounted before the programs
+  // router so its multi-segment paths resolve ahead of programs' GET /:id.
+  try {
+    const blaWorkbenchModule = await import('../routes/biopharma/bla-workbench');
+    app.use('/api/biopharma/bla', authMiddleware, blaWorkbenchModule.default);
+    console.info('✅ BLA workbench routes mounted (/api/biopharma/bla)');
+  } catch (error) {
+    console.error('❌ Failed to mount BLA workbench routes:', error);
+  }
+
   // Biopharma domain programs + meetings (Phase 10 — /api/biopharma/*).
   try {
     const biopharmaModule = await import('../routes/biopharma/programs');

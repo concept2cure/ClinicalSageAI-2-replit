@@ -8,7 +8,7 @@ import {
 } from '../../../services/regulatory/SubmissionPyramidEngine';
 
 describe('SubmissionPyramidEngine', () => {
-  const types = ['510K', 'IND', 'NDA', 'BLA', 'PMA', 'MAA', 'DE_NOVO'] as const;
+  const types = ['510K', 'IND', 'NDA', 'BLA', 'PMA', 'MAA', 'JNDA', 'DE_NOVO'] as const;
 
   it('builds pyramids for all supported submission types', () => {
     for (const type of types) {
