@@ -3401,6 +3401,149 @@ registerToolHandler('gateway_configuration_status', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Submission-center handlers. The three compute tools are pure (no tenant data
+// touched, so no org gate); the two ingestion tools persist and are tenant +
+// user scoped via the active ToolContext and audited inside the ingestion
+// service (AI_GENERATE). None of these transmit or freeze — those stay in the
+// existing governed tools.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('compute_lifecycle_operations', async (input) => {
+  try {
+    const { computeLifecycleOperations } = await import('../ectd/lifecycle-operator.js');
+    const prior = (Array.isArray(input.prior_leaves) ? input.prior_leaves : []).map((p: any) => ({
+      leafKey: p.leaf_key,
+      ctdSection: p.ctd_section,
+      fileName: p.file_name,
+      md5: p.md5,
+      title: p.title,
+      sourcePath: p.source_path,
+    }));
+    const desired = (Array.isArray(input.desired_leaves) ? input.desired_leaves : []).map((d: any) => ({
+      leafKey: d.leaf_key,
+      ctdSection: d.ctd_section,
+      fileName: d.file_name,
+      md5: d.md5,
+      title: d.title ?? d.file_name,
+      sourcePath: d.source_path ?? '',
+      appendOnChange: d.append_on_change === true,
+    }));
+    const result = computeLifecycleOperations(prior, desired);
+    return JSON.stringify({ ok: true, ...result });
+  } catch (err) {
+    return JSON.stringify({
+      error: `compute_lifecycle_operations failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('generate_stf', async (input) => {
+  try {
+    const { generateStfFiles } = await import('../ectd/stf-generator.js');
+    const leaves = (Array.isArray(input.leaves) ? input.leaves : []).map((l: any) => ({
+      studyId: l.study_id,
+      fileTag: l.file_tag,
+      ctdSection: l.ctd_section,
+      href: l.href,
+      title: l.title,
+      operation: l.operation,
+    }));
+    const studyMeta = (Array.isArray(input.study_meta) ? input.study_meta : []).map((m: any) => ({
+      studyId: m.study_id,
+      studyTitle: m.study_title,
+      studyCategory: m.study_category,
+    }));
+    const result = generateStfFiles(leaves, studyMeta);
+    return JSON.stringify({ ok: true, ...result });
+  } catch (err) {
+    return JSON.stringify({
+      error: `generate_stf failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('check_ectd_cross_references', async (input) => {
+  try {
+    const { resolveCrossReferences } = await import('../ectd/cross-reference-resolver.js');
+    const leaves = (Array.isArray(input.leaves) ? input.leaves : []).map((l: any) => ({
+      leafKey: l.leaf_key,
+      ctdSection: l.ctd_section,
+      fileName: l.file_name,
+      title: l.title ?? l.file_name,
+      operation: l.operation ?? 'new',
+      sourcePath: l.source_path ?? '',
+      md5: l.md5,
+    }));
+    const references = (Array.isArray(input.references) ? input.references : []).map((r: any) => ({
+      id: r.id,
+      source: r.source,
+      target: r.target,
+      label: r.label,
+    }));
+    const result = resolveCrossReferences(leaves, references);
+    return JSON.stringify(result);
+  } catch (err) {
+    return JSON.stringify({
+      error: `check_ectd_cross_references failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('classify_submission_document', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) {
+    return JSON.stringify({ error: 'classify_submission_document requires tenant context (organizationId and userId).' });
+  }
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isFinite(documentId)) {
+    return JSON.stringify({ error: 'document_id (number) is required.' });
+  }
+  const sequenceId = typeof input.sequence_id === 'number' ? input.sequence_id : undefined;
+  try {
+    const { classifyDocument } = await import('../ingestion/ingestion-service.js');
+    const result = await classifyDocument({
+      documentId,
+      userId: ctx.userId,
+      organizationId: ctx.organizationId,
+      sequenceId,
+    });
+    return JSON.stringify({ ok: true, ...result });
+  } catch (err) {
+    return JSON.stringify({
+      error: `classify_submission_document failed: ${err instanceof Error ? err.message : String(err)}`,
+      code: (err as any)?.code,
+    });
+  }
+});
+
+registerToolHandler('extract_submission_document', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) {
+    return JSON.stringify({ error: 'extract_submission_document requires tenant context (organizationId and userId).' });
+  }
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const sectionCode = typeof input.section_code === 'string' ? input.section_code : '';
+  const submissionId = typeof input.submission_id === 'number' ? input.submission_id : NaN;
+  if (!Number.isFinite(documentId)) return JSON.stringify({ error: 'document_id (number) is required.' });
+  if (!sectionCode) return JSON.stringify({ error: 'section_code is required.' });
+  if (!Number.isFinite(submissionId)) return JSON.stringify({ error: 'submission_id (number) is required.' });
+  try {
+    const { extractStructure } = await import('../ingestion/ingestion-service.js');
+    const result = await extractStructure({
+      documentId,
+      sectionCode,
+      submissionId,
+      userId: ctx.userId,
+      organizationId: ctx.organizationId,
+    });
+    return JSON.stringify({ ok: true, ...result });
+  } catch (err) {
+    return JSON.stringify({
+      error: `extract_submission_document failed: ${err instanceof Error ? err.message : String(err)}`,
+      code: (err as any)?.code,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Notifications + clinical-study + memory handlers (migration 20260510).
 // ─────────────────────────────────────────────────────────────────────────────
 

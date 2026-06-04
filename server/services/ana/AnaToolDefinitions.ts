@@ -1631,6 +1631,170 @@ export const GATEWAY_CONFIGURATION_STATUS: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Submission-center tools — give AnA reach over the canonical core + ingestion
+// + deterministic eCTD primitives. The three compute tools are pure (no tenant
+// data touched); the two ingestion tools persist and are tenant-scoped via the
+// active context. Irreversible/outward actions (freeze, transmit) stay in the
+// existing governed tools — these do not bypass that.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const COMPUTE_LIFECYCLE_OPERATIONS: AnaTool = {
+  name: 'compute_lifecycle_operations',
+  description:
+    'Compute the eCTD lifecycle operator (new, replace, append, or delete) for each leaf of a new sequence by diffing it against the prior sequence. You pass the prior leaves and the desired leaves, each with its md5 checksum; you get every leaf with its computed operation plus a summary count (new, replace, append, delete, unchanged). This is pure computation — nothing is written. Use it when planning a sequence so the user sees exactly which leaves change.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      prior_leaves: {
+        type: 'array',
+        description: 'Leaves published in the prior sequence.',
+        items: {
+          type: 'object',
+          properties: {
+            leaf_key: { type: 'string', description: 'Stable leaf identity (eCTD leaf GUID); defaults to ctd_section/file_name.' },
+            ctd_section: { type: 'string', description: 'CTD section code, e.g. "2.5".' },
+            file_name: { type: 'string', description: 'Leaf file name.' },
+            md5: { type: 'string', description: 'Published content checksum.' },
+            title: { type: 'string', description: 'Leaf title.' },
+            source_path: { type: 'string', description: 'Path of the prior file (used for delete leaves).' },
+          },
+          required: ['ctd_section', 'file_name', 'md5'],
+        },
+      },
+      desired_leaves: {
+        type: 'array',
+        description: 'Leaves the new sequence intends to contain.',
+        items: {
+          type: 'object',
+          properties: {
+            leaf_key: { type: 'string', description: 'Stable leaf identity; defaults to ctd_section/file_name.' },
+            ctd_section: { type: 'string', description: 'CTD section code.' },
+            file_name: { type: 'string', description: 'Leaf file name.' },
+            md5: { type: 'string', description: 'Content checksum of the desired file.' },
+            title: { type: 'string', description: 'Leaf title.' },
+            source_path: { type: 'string', description: 'Path of the desired file.' },
+            append_on_change: { type: 'boolean', description: 'When content changed, emit append instead of replace.' },
+          },
+          required: ['ctd_section', 'file_name', 'md5'],
+        },
+      },
+    },
+    required: ['desired_leaves'],
+  },
+};
+
+export const GENERATE_STF: AnaTool = {
+  name: 'generate_stf',
+  description:
+    'Generate FDA Study Tagging File (stf.xml) content for each study from its tagged study-report leaves. You pass the leaves with their study id, file tag, CTD section, href, title, and operation; you get one stf.xml per study, grouped by file tag, plus a summary. Pure computation — nothing is written to the package. Use it when assembling Module 4 or 5 so each study folder carries a correct STF.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      leaves: {
+        type: 'array',
+        description: 'Study-report leaves to tag.',
+        items: {
+          type: 'object',
+          properties: {
+            study_id: { type: 'string', description: 'Controlling study identifier.' },
+            file_tag: { type: 'string', description: "STF file-tag, e.g. 'study-report-body', 'protocol-or-amendment'." },
+            ctd_section: { type: 'string', description: 'CTD section, e.g. "5.3.5.1".' },
+            href: { type: 'string', description: 'Relative href of the leaf in the package.' },
+            title: { type: 'string', description: 'Leaf title.' },
+            operation: { type: 'string', enum: ['new', 'append', 'replace', 'delete'], description: 'Lifecycle operation.' },
+          },
+          required: ['study_id', 'file_tag', 'ctd_section', 'href', 'title', 'operation'],
+        },
+      },
+      study_meta: {
+        type: 'array',
+        description: 'Optional per-study title and category.',
+        items: {
+          type: 'object',
+          properties: {
+            study_id: { type: 'string' },
+            study_title: { type: 'string' },
+            study_category: { type: 'string' },
+          },
+          required: ['study_id'],
+        },
+      },
+    },
+    required: ['leaves'],
+  },
+};
+
+export const CHECK_ECTD_CROSS_REFERENCES: AnaTool = {
+  name: 'check_ectd_cross_references',
+  description:
+    'Check that every intra-package cross-reference in an eCTD submission resolves to a leaf that is present and not deleted. You pass the package leaves and the references between them; you get the resolved references and any broken ones with the reason (target not found, or target deleted). Pure computation — read only. Use it before validation to catch dangling hyperlinks.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      leaves: {
+        type: 'array',
+        description: 'All leaves in the package.',
+        items: {
+          type: 'object',
+          properties: {
+            leaf_key: { type: 'string' },
+            ctd_section: { type: 'string' },
+            file_name: { type: 'string' },
+            title: { type: 'string' },
+            operation: { type: 'string', enum: ['new', 'append', 'replace', 'delete'] },
+          },
+          required: ['ctd_section', 'file_name'],
+        },
+      },
+      references: {
+        type: 'array',
+        description: 'Cross-references to validate.',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', description: 'Optional reference id.' },
+            source: { type: 'string', description: 'The leaf making the reference (section code, leaf key, or file name).' },
+            target: { type: 'string', description: 'The referenced leaf (section code, leaf key, file name, or href).' },
+            label: { type: 'string', description: 'Optional display label.' },
+          },
+          required: ['source', 'target'],
+        },
+      },
+    },
+    required: ['leaves', 'references'],
+  },
+};
+
+export const CLASSIFY_SUBMISSION_DOCUMENT: AnaTool = {
+  name: 'classify_submission_document',
+  description:
+    'Classify a submission document to its CTD section through the ingestion pipeline, and optionally draft a leaf placement in a target sequence. The document, tenant, and acting user come from the active context — you pass only the document id and an optional sequence id. The proposal is persisted onto the document and the AI call is audited. Use this when a user uploads a document and asks where it belongs.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_id: { type: 'number', description: 'Id of the coauthor document to classify.' },
+      sequence_id: { type: 'number', description: 'Optional target sequence; when set and owned, a draft leaf is placed.' },
+    },
+    required: ['document_id'],
+  },
+};
+
+export const EXTRACT_SUBMISSION_DOCUMENT: AnaTool = {
+  name: 'extract_submission_document',
+  description:
+    "Extract a submission document's structure, claims, and referenced sources through the ingestion pipeline, and record a provenance link from the target section to the document. You pass the document id, the CTD section it maps to, and the submission id; tenant and acting user come from the active context. The result is persisted and audited. Use this after classification to capture what a document supports.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_id: { type: 'number', description: 'Id of the coauthor document to extract.' },
+      section_code: { type: 'string', description: 'CTD section the document maps to, e.g. "2.7.3".' },
+      submission_id: { type: 'number', description: 'Submission the provenance link belongs to.' },
+    },
+    required: ['document_id', 'section_code', 'submission_id'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Notifications + clinical-study + memory tools (migration 20260510).
 // AnA fires notifications when she identifies actionable state, logs
 // clinical study events as she ingests them, and curates her own memory.
@@ -3070,6 +3234,11 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   RECORD_VALIDATION_FINDING,
   RESOLVE_VALIDATION_FINDING,
   GATEWAY_CONFIGURATION_STATUS,
+  COMPUTE_LIFECYCLE_OPERATIONS,
+  GENERATE_STF,
+  CHECK_ECTD_CROSS_REFERENCES,
+  CLASSIFY_SUBMISSION_DOCUMENT,
+  EXTRACT_SUBMISSION_DOCUMENT,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,
   LOG_STUDY_DEVIATION,
