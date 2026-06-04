@@ -146,3 +146,25 @@ describe('POST /api/study-design/protocol', () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe('POST /api/study-design/schedule-of-activities', () => {
+  it('projects the SoA grid from the design', async () => {
+    const d: any = design();
+    d.scheduleOfActivities = {
+      epochs: [{ id: 'e1', name: 'Treatment', kind: 'treatment', order: 0 }],
+      visits: [{ id: 'V1', name: 'Baseline', epochId: 'e1', isBaseline: true, order: 0 }],
+      activities: [{ id: 'a1', name: 'Primary assessment', category: 'efficacy', endpointNames: ['Primary'], order: 0 }],
+      cells: [{ activityId: 'a1', visitId: 'V1', state: 'performed' }],
+    };
+    const res = await request(authedApp()).post('/api/study-design/schedule-of-activities').send({ design: d });
+    expect(res.status).toBe(200);
+    expect(res.body.scheduleOfActivities.present).toBe(true);
+    expect(res.body.scheduleOfActivities.standard).toBe('ICH M11 §7');
+    expect(res.body.scheduleOfActivities.counts.visits).toBe(1);
+  });
+
+  it('rejects without an authenticated tenant', async () => {
+    const res = await request(anonApp()).post('/api/study-design/schedule-of-activities').send({ design: design() });
+    expect(res.status).toBe(401);
+  });
+});

@@ -290,6 +290,96 @@ export interface SafetyDesign {
   };
 }
 
+// ─── Schedule of Activities (ICH M11 §7 / USDM ScheduleOfActivities / CDISC) ───
+
+/** Trial epoch a visit belongs to (ICH M11 / CDISC SDTM epoch). */
+export type SoaEpochKind = 'screening' | 'run_in' | 'treatment' | 'follow_up' | 'unscheduled';
+
+/** Cell state at an (activity × visit) intersection. */
+export type SoaCellState = 'performed' | 'conditional' | 'optional';
+
+/** Activity grouping; drives row ordering and the §7 category roll-up. */
+export type SoaActivityCategory =
+  | 'administrative'
+  | 'eligibility'
+  | 'drug_administration'
+  | 'efficacy'
+  | 'safety'
+  | 'pk'
+  | 'pd'
+  | 'biomarker'
+  | 'patient_reported';
+
+/** A study epoch (screening, treatment, follow-up). Visits group under epochs. */
+export interface SoaEpoch {
+  id: string;
+  name: string;
+  kind: SoaEpochKind;
+  /** Column-group order, left to right. */
+  order: number;
+}
+
+/** A scheduled visit — one column of the time-and-events grid. */
+export interface SoaVisit {
+  id: string;
+  name: string;
+  /** Epoch this visit belongs to (by epoch id). */
+  epochId: string;
+  /** Planned study day relative to first dose (day 1). Screening days are negative. */
+  studyDay?: number;
+  /** Visit window in days; e.g. 3 means ±3 days. */
+  windowDays?: number;
+  /** The baseline / randomization / first-dose anchor visit. */
+  isBaseline?: boolean;
+  /** Unscheduled / as-needed visit (e.g. early termination). */
+  unscheduled?: boolean;
+  /** Column order within the grid. */
+  order: number;
+}
+
+/** A procedure or assessment — one row of the grid. */
+export interface SoaActivity {
+  id: string;
+  name: string;
+  category: SoaActivityCategory;
+  /** Endpoint(s) whose measurement this activity collects (by endpoint name). */
+  endpointNames?: string[];
+  /** Footnotes attached to the whole activity row. */
+  footnoteIds?: string[];
+  /** Row order within the grid. */
+  order: number;
+}
+
+/** One filled intersection of the (activity × visit) grid. The grid is sparse. */
+export interface SoaCell {
+  activityId: string;
+  visitId: string;
+  state: SoaCellState;
+  footnoteIds?: string[];
+}
+
+/** A footnote referenced by cells or activity rows. */
+export interface SoaFootnote {
+  id: string;
+  text: string;
+}
+
+/**
+ * The Schedule of Activities — the time-and-events grid. Visits are columns
+ * (grouped by epoch), activities are rows (grouped by category), and the grid is
+ * sparse: only the performed/conditional/optional intersections are listed as cells.
+ * This is a design node in its own right; it round-trips on the design object.
+ */
+export interface ScheduleOfActivities {
+  id?: string;
+  epochs: SoaEpoch[];
+  visits: SoaVisit[];
+  activities: SoaActivity[];
+  /** Sparse: only the cells that are performed/conditional/optional are present. */
+  cells: SoaCell[];
+  footnotes?: SoaFootnote[];
+}
+
 // ─── The root object ─────────────────────────────────────────────────────────
 
 /**
@@ -320,6 +410,8 @@ export interface StudyDesign {
   randomization?: Randomization;
   /** Schedule of Activities is modeled in a dedicated slice; referenced here by id. */
   scheduleOfActivitiesId?: string;
+  /** The inline Schedule of Activities, when carried on the object. Round-trips via persistence. */
+  scheduleOfActivities?: ScheduleOfActivities;
   statisticalPlan: StatisticalPlan;
   safety?: SafetyDesign;
 

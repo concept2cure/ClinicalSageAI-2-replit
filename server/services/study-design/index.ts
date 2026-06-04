@@ -2,10 +2,10 @@
  * Study Design module — the design-as-data spine (USDM / ICH M11-aligned).
  *
  * Public surface for the structured study-design object, its deterministic gates, and
- * the seeded synthetic-twin outcome simulator. Persistence, SoA, SAP/protocol projection
- * and governance are added in subsequent slices; this barrel exposes the object model,
- * the §2/§3/§4/§6/§10/§17 validation, and the evidence-grounded trial simulator that
- * everything else builds on.
+ * the seeded synthetic-twin outcome simulator. Persistence, the Schedule of Activities and
+ * the protocol projection have shipped; SAP projection and governance follow in subsequent
+ * slices. This barrel exposes the object model, the §2/§3/§4/§6/§7/§10/§17 validation, the
+ * SoA and protocol projections, and the evidence-grounded trial simulator everything builds on.
  *
  * @module server/services/study-design
  */
@@ -19,8 +19,19 @@ export {
   frameworkRules,
   multiplicityGate,
   powerRedFlags,
+  scheduleOfActivitiesGate,
   runAllGates,
 } from './design-gates';
+export {
+  type SoaProjection,
+  type SoaGridCell,
+  type SoaGridRow,
+  type SoaEpochSpan,
+  type SoaIssue,
+  projectScheduleOfActivities,
+  analyzeScheduleOfActivities,
+  summarizeSoaForProtocol,
+} from './schedule-of-activities';
 export {
   type DesignRiskLevel,
   type DesignValidationReport,

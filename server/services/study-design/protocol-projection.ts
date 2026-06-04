@@ -17,6 +17,7 @@
 
 import type { Arm, Endpoint, StudyDesign } from './study-design-types';
 import { renderEstimandSection } from '../estimand-sap-section';
+import { summarizeSoaForProtocol } from './schedule-of-activities';
 
 export type SectionStatus = 'rendered' | 'partial' | 'missing';
 
@@ -178,7 +179,11 @@ function assessments(design: StudyDesign): Omit<ProtocolSection, 'number' | 'tit
   const endpoints = design.endpoints ?? [];
   if (endpoints.length === 0) return { content: NOT_SPECIFIED, status: 'missing', gaps: ['No endpoints are defined.'] };
   const lines = endpoints.map(describeEndpoint);
-  if (!design.scheduleOfActivitiesId) gaps.push('No Schedule of Activities is linked (modeled in a later slice).');
+  // The Schedule of Activities is its own design node; the protocol projects a compact
+  // summary of it here (and inherits its gaps) so §7 and the SoA grid cannot drift.
+  const soa = summarizeSoaForProtocol(design);
+  if (soa.content) lines.push('', soa.content);
+  gaps.push(...soa.gaps);
   return { content: lines.join('\n'), status: statusFrom(true, gaps), gaps };
 }
 

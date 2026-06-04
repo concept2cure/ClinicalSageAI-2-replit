@@ -1,7 +1,7 @@
 /**
  * Study-design gates — the deterministic checks a design must pass before it can
  * advance (module spec §2 estimands, §3 endpoint architecture, §4 design framework,
- * §6 sample size / power red-flags).
+ * §6 sample size / power red-flags, §7 schedule of activities).
  *
  * Each gate is a pure function over the {@link StudyDesign} object that returns
  * {@link DesignFinding}s. Nothing here calls a DB, a clock, an RNG or an LLM, so the
@@ -20,6 +20,7 @@
  */
 
 import { assessEstimandCompleteness } from '../estimand-sap-section';
+import { analyzeScheduleOfActivities } from './schedule-of-activities';
 import {
   type StudyDesign,
   type Endpoint,
@@ -466,6 +467,28 @@ export function multiplicityGate(design: StudyDesign): DesignFinding[] {
   return [];
 }
 
+// ─── §7 · Schedule of Activities ─────────────────────────────────────────────
+
+/**
+ * Structural integrity and endpoint coverage of the Schedule of Activities. The
+ * substantive check is whether the schedule actually collects every confirmatory
+ * endpoint; the rest guard the grid's referential integrity and its baseline anchor.
+ * The detail logic lives in `schedule-of-activities.ts` (one source of truth the SoA
+ * projection shares); this gate adapts its issues to the finding shape.
+ */
+export function scheduleOfActivitiesGate(design: StudyDesign): DesignFinding[] {
+  return analyzeScheduleOfActivities(design).map(issue => ({
+    code: issue.code,
+    section: '§7 Schedule of Activities',
+    severity: issue.severity,
+    standard: 'ICH M11',
+    title: issue.title,
+    detail: issue.detail,
+    suggestedFix: issue.suggestedFix,
+    endpointName: issue.endpointName,
+  }));
+}
+
 // ─── Aggregate ───────────────────────────────────────────────────────────────
 
 /** Run every gate over a design and return the combined findings. */
@@ -476,6 +499,7 @@ export function runAllGates(design: StudyDesign): DesignFinding[] {
     ...frameworkRules(design),
     ...multiplicityGate(design),
     ...powerRedFlags(design),
+    ...scheduleOfActivitiesGate(design),
   ];
 }
 

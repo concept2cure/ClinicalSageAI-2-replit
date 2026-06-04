@@ -28,6 +28,7 @@ import {
   simulateTrial,
   solveSampleSize,
   projectProtocol,
+  projectScheduleOfActivities,
   buildEffectPrior,
   gatherCsrEffectEvidence,
   persistStudyDesignTx,
@@ -262,6 +263,21 @@ router.post('/protocol', (req: Request, res: Response) => {
   }
 });
 
+// ─── POST /schedule-of-activities (project the design's SoA grid) ─────────────
+
+router.post('/schedule-of-activities', (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
+  const design = parseDesign(req, res);
+  if (!design) return;
+  try {
+    return res.json({ scheduleOfActivities: projectScheduleOfActivities(design) });
+  } catch (err: any) {
+    console.error('[study-design/soa]', err?.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
 // ─── POST /persist (governed mutation) ────────────────────────────────────────
 
 router.post('/persist', async (req: Request, res: Response) => {
@@ -330,6 +346,25 @@ router.get('/:studyId/protocol', async (req: Request, res: Response) => {
     return res.json({ protocol: projectProtocol(loaded.design), validation: loaded.validation });
   } catch (err: any) {
     console.error('[study-design/protocol-load]', err?.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─── GET /:studyId/schedule-of-activities (load + project) ────────────────────
+
+router.get('/:studyId/schedule-of-activities', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
+  const studyId = String(req.params.studyId);
+  try {
+    const loaded = await loadStudyDesign(studyId, orgId);
+    if (!loaded) return res.status(404).json({ error: 'NOT_FOUND' });
+    return res.json({
+      scheduleOfActivities: projectScheduleOfActivities(loaded.design),
+      validation: loaded.validation,
+    });
+  } catch (err: any) {
+    console.error('[study-design/soa-load]', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });
