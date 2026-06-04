@@ -1,0 +1,404 @@
+/**
+ * SopRegister — the controlled-document register and SOP library surface.
+ *
+ * Document control over the live QMS backend (/api/mdx/qms/*): the register
+ * catalog, the controlled lifecycle (draft → under review → effective →
+ * superseded → retired), periodic-review tracking with overdue flags,
+ * read-and-understood training, change control (revise / retire), and the
+ * Quality system template gallery.
+ *
+ * AnA-first: every action is a conversational prompt handed to the host's AnA
+ * surface via `onAsk` — the same pattern as the MDX Quality kit and the
+ * Intelligence cluster. No mutation is performed directly here; AnA runs the
+ * governed action (and captures the reason-for-change / e-signature) so the
+ * 21 CFR Part 11 audit trail stays the single path.
+ *
+ * @module client/src/concept2cure/quality/SopRegister
+ */
+
+import * as React from 'react';
+import { I } from './icons';
+import {
+  SOP_TEMPLATES,
+  FIXTURE_DOCS,
+  FIXTURE_TRAINING,
+  deriveReviewDue,
+  DOC_TYPE_LABEL,
+  STATUS_LABEL,
+  STATUS_TONE,
+  formatDate,
+  isReviewOverdue,
+} from './data';
+import { useSopRegister, useSopTemplates, useReviewDue } from './hooks';
+
+export interface SopRegisterProps {
+  /** Forward a prompt to the host's AnA conversation surface. */
+  onAsk: (q: string) => void;
+}
+
+type StatusFilter = 'all' | 'effective' | 'in_review' | 'draft';
+
+const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'effective', label: 'Effective' },
+  { id: 'in_review', label: 'Under review' },
+  { id: 'draft', label: 'Draft' },
+];
+
+const GRID = '110px minmax(0, 1fr) 130px 64px 108px 100px 116px 150px';
+
+function Kpi({
+  label,
+  val,
+  unit,
+  sub,
+  tone,
+}: {
+  label: string;
+  val: string;
+  unit?: string;
+  sub: string;
+  tone?: 'ok' | 'warn' | 'err';
+}) {
+  return (
+    <div className="qms-kpi" data-tone={tone === 'ok' ? '' : tone || ''}>
+      <div className="lbl">{label}</div>
+      <div className="val">
+        {val}
+        {unit && <span className="unit">{unit}</span>}
+      </div>
+      <div className="sub">{sub}</div>
+    </div>
+  );
+}
+
+export function SopRegister({ onAsk }: SopRegisterProps) {
+  const reg = useSopRegister();
+  const tpl = useSopTemplates();
+  const rev = useReviewDue();
+
+  const docs = reg.docs ?? FIXTURE_DOCS;
+  const templates = tpl.templates ?? SOP_TEMPLATES;
+  const reviewDue = rev.rows ?? deriveReviewDue(docs);
+  /* Per-procedure denominators (current / of) need a roster join the ack list
+     doesn't carry, so the compliance bars render the fixture for now. The
+     register, templates and review-due panels are fully live. */
+  const training = FIXTURE_TRAINING;
+
+  const [filter, setFilter] = React.useState<StatusFilter>('all');
+
+  const effectiveCount = docs.filter((d) => d.status === 'effective').length;
+  const underReviewCount = docs.filter((d) => d.status === 'in_review').length;
+  const draftCount = docs.filter((d) => d.status === 'draft').length;
+  const overdueCount = reviewDue.filter((r) => r.overdue).length;
+  const trainingPct = training.length
+    ? Math.round((training.reduce((s, t) => s + t.current / t.of, 0) / training.length) * 100)
+    : 0;
+
+  const visible = docs.filter((d) => filter === 'all' || d.status === filter);
+
+  return (
+    <>
+      <div className="qms-head">
+        <div>
+          <div className="qms-eyebrow">Workstream</div>
+          <h1 className="qms-h1">Quality system</h1>
+          <div className="qms-sub">
+            Your controlled-document register and SOP library. Build SOPs, work instructions, policies,
+            forms, validation protocols and training curricula — then track each through draft, review,
+            effective and retirement, with periodic review and read-and-understood training.
+          </div>
+        </div>
+        <div className="qms-actions">
+          <button
+            className="qms-btn ghost"
+            onClick={() =>
+              onAsk(
+                'Run a QMS pre-inspection check — surface every controlled document overdue for periodic ' +
+                  'review, every training gap, and anything not yet effective, ranked by inspection risk.',
+              )
+            }
+          >
+            {I.shieldCheck} Pre-inspection check
+          </button>
+          <button
+            className="qms-btn primary"
+            onClick={() =>
+              onAsk(
+                'Help me create a new controlled document. Ask me which type from the Quality system library ' +
+                  '(quality manual, policy, SOP, work instruction, form, validation protocol, training curriculum), ' +
+                  'assign the next document number, then open it with the standard Purpose to Approval section structure.',
+              )
+            }
+          >
+            {I.plus} New controlled document
+          </button>
+        </div>
+      </div>
+
+      <div className="qms-kpis">
+        <Kpi label="Effective documents" val={String(effectiveCount)} sub={`${docs.length} in register`} />
+        <Kpi
+          label="Under review"
+          val={String(underReviewCount)}
+          sub={underReviewCount ? 'Awaiting approval' : 'None in review'}
+          tone={underReviewCount ? 'warn' : 'ok'}
+        />
+        <Kpi
+          label="Review overdue"
+          val={String(overdueCount)}
+          sub={overdueCount ? 'Past next-review date' : 'All current'}
+          tone={overdueCount ? 'err' : 'ok'}
+        />
+        <Kpi
+          label="Training compliance"
+          val={String(trainingPct)}
+          unit="%"
+          sub="Read-and-understood, current cycle"
+          tone={trainingPct >= 95 ? 'ok' : trainingPct >= 80 ? 'warn' : 'err'}
+        />
+      </div>
+
+      {/* ── Template gallery ── */}
+      <section className="qms-sec">
+        <div className="qms-sec-head">
+          <h2>Build from the Quality system library</h2>
+          <span className="meta">{templates.length} document types · standard Purpose to Approval structure</span>
+        </div>
+        <div className="qms-tpl-grid">
+          {templates.map((t) => (
+            <button
+              key={t.key}
+              className="qms-tpl-card"
+              onClick={() =>
+                onAsk(
+                  `Create a new ${t.label} from the Quality system library. Assign the next ${t.numberPrefix} number, ` +
+                    `then open it with the standard sections: ${t.sections.map((s) => s.label).join(', ')}.`,
+                )
+              }
+            >
+              <div className="qms-tpl-top">
+                <span className="qms-tpl-ico">{I.template}</span>
+                <span className="qms-tpl-prefix mono">{t.numberPrefix}</span>
+              </div>
+              <div className="qms-tpl-label">{t.label}</div>
+              <div className="qms-tpl-desc">{t.description}</div>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Register ── */}
+      <section className="qms-sec">
+        <div className="qms-sec-head">
+          <h2>Controlled-document register</h2>
+          <span className="meta">
+            {effectiveCount} effective · {underReviewCount} under review · {draftCount} draft
+          </span>
+          <span className="spacer" />
+          <div className="qms-seg" role="tablist">
+            {STATUS_FILTERS.map((f) => (
+              <button
+                key={f.id}
+                className="qms-chip"
+                data-on={filter === f.id}
+                aria-pressed={filter === f.id}
+                style={filter === f.id ? { borderColor: 'var(--text-300)', color: 'var(--text-100)' } : undefined}
+                onClick={() => setFilter(f.id)}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="qms-table">
+          <div className="qms-thead" style={{ gridTemplateColumns: GRID }}>
+            <div>Number</div>
+            <div>Title</div>
+            <div>Type</div>
+            <div>Version</div>
+            <div>Status</div>
+            <div>Effective</div>
+            <div>Next review</div>
+            <div />
+          </div>
+          {visible.map((d) => {
+            const overdue = isReviewOverdue(d.nextReviewDate);
+            return (
+              <div key={d.id} className="qms-row" style={{ gridTemplateColumns: GRID }} data-status={d.status}>
+                <button
+                  className="qms-cell qms-num mono"
+                  onClick={() =>
+                    onAsk(
+                      `Open ${d.docNumber} ${d.title} (v${d.version}, ${STATUS_LABEL[d.status]}). Walk me through its ` +
+                        'sections, current status, training status and review history.',
+                    )
+                  }
+                >
+                  {d.docNumber}
+                </button>
+                <div className="qms-cell qms-title" title={d.title}>
+                  {d.title}
+                </div>
+                <div className="qms-cell">
+                  <span className="qms-tag">{DOC_TYPE_LABEL[d.docType] ?? d.docType}</span>
+                </div>
+                <div className="qms-cell mono">{d.version}</div>
+                <div className="qms-cell">
+                  <span className="qms-pill" data-tone={STATUS_TONE[d.status]}>
+                    {STATUS_LABEL[d.status]}
+                  </span>
+                </div>
+                <div className="qms-cell">{formatDate(d.effectiveDate)}</div>
+                <div className="qms-cell">
+                  {d.nextReviewDate ? (
+                    <span className={overdue ? 'qms-overdue' : undefined}>
+                      {formatDate(d.nextReviewDate)}
+                      {overdue && <> {I.flag}</>}
+                    </span>
+                  ) : (
+                    '—'
+                  )}
+                </div>
+                <div className="qms-cell qms-rowacts">
+                  {(d.status === 'draft' || d.status === 'in_review') && (
+                    <button
+                      className="qms-chip"
+                      title="Approve and make effective"
+                      onClick={() =>
+                        onAsk(
+                          `Approve ${d.docNumber} ${d.title} (v${d.version}) and make it effective — confirm the reviewer ` +
+                            '(must differ from the author), capture the e-signature, set the effective date and the next ' +
+                            'periodic-review date, then write the Part 11 audit entry.',
+                        )
+                      }
+                    >
+                      {I.check} Approve
+                    </button>
+                  )}
+                  {d.status === 'effective' && (
+                    <>
+                      <button
+                        className="qms-chip"
+                        title="Open a controlled revision"
+                        onClick={() =>
+                          onAsk(
+                            `Open a controlled revision of ${d.docNumber} ${d.title} (currently v${d.version}). Ask me for ` +
+                              'the reason for change, bump to the next version, return it to draft, and route it for review.',
+                          )
+                        }
+                      >
+                        {I.history} Revise
+                      </button>
+                      <button
+                        className="qms-chip"
+                        title="Retire"
+                        onClick={() =>
+                          onAsk(
+                            `Retire ${d.docNumber} ${d.title}. Ask me for the reason, confirm there is no active dependency, ` +
+                              'then move it to retired and write the audit entry.',
+                          )
+                        }
+                      >
+                        {I.archive} Retire
+                      </button>
+                    </>
+                  )}
+                  <button
+                    className="qms-chip ghost"
+                    title="Ask AnA about this document"
+                    onClick={() => onAsk(`Summarize ${d.docNumber} ${d.title} and tell me what it needs next.`)}
+                  >
+                    {I.sparkle}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ── Periodic review + training ── */}
+      <div className="qms-grid2">
+        <section className="qms-sec">
+          <div className="qms-sec-head">
+            <h2>Periodic review</h2>
+            <span className="meta">
+              {overdueCount} overdue · {reviewDue.length} within 120 days
+            </span>
+          </div>
+          <div className="qms-review">
+            {reviewDue.length === 0 && <div className="qms-empty">No documents due for review.</div>}
+            {reviewDue.map((r) => (
+              <button
+                key={r.id}
+                className="qms-review-row"
+                data-overdue={r.overdue || undefined}
+                onClick={() =>
+                  onAsk(
+                    `Schedule the periodic review of ${r.docNumber} ${r.title} (next review ${formatDate(r.nextReviewDate)}` +
+                      `${r.overdue ? ', overdue' : ''}). Confirm the reviewer and due date, open a revision if changes are ` +
+                      'needed, and log it.',
+                  )
+                }
+              >
+                <span className="qms-review-num mono">{r.docNumber}</span>
+                <span className="qms-review-title" title={r.title}>
+                  {r.title}
+                </span>
+                <span className="qms-review-when">
+                  {r.overdue ? (
+                    <span className="qms-flag-txt">{I.flag} Overdue</span>
+                  ) : (
+                    formatDate(r.nextReviewDate)
+                  )}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="qms-sec">
+          <div className="qms-sec-head">
+            <h2>Read-and-understood training</h2>
+            <span className="meta">Per controlled procedure</span>
+            <span className="spacer" />
+            <button
+              className="qms-link"
+              onClick={() =>
+                onAsk(
+                  'Record read-and-understood training. Ask me which controlled document and which team members, ' +
+                    'capture the acknowledgment method (e-signature, attestation, or trainer-verified), then set the ' +
+                    'next refresh date.',
+                )
+              }
+            >
+              {I.bookOpen} Record training
+            </button>
+          </div>
+          <div className="qms-train">
+            {training.map((t) => {
+              const pct = Math.round((t.current / t.of) * 100);
+              const tone = pct < 80 ? 'err' : pct < 95 ? 'warn' : 'ok';
+              return (
+                <div key={t.doc} className="qms-train-row">
+                  <span className="qms-train-doc" title={t.doc}>
+                    {t.doc}
+                  </span>
+                  <span className="qms-train-bar">
+                    <span className="qms-train-fill" data-tone={tone} style={{ width: `${pct}%` }} />
+                  </span>
+                  <span className="qms-train-pct mono">
+                    {t.current}/{t.of}
+                  </span>
+                  <span className="qms-train-when">{t.lastCycle}</span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      </div>
+    </>
+  );
+}
