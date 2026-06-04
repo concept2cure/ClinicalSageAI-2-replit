@@ -20,6 +20,14 @@ import crypto from 'crypto';
 
 const { Pool } = pg;
 
+// ── Safety + modes ──────────────────────────────────────────────────
+// Refuse to mutate a production database; support a non-mutating verify pass.
+const VERIFY_ONLY = process.argv.includes('--verify');
+if (process.env.NODE_ENV === 'production') {
+  console.error('Refusing to run seed-ga-demo in production (NODE_ENV=production).');
+  process.exit(1);
+}
+
 // ── Database Connection ─────────────────────────────────────────────
 function getDbUrl() {
   const raw = process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL;
@@ -383,6 +391,117 @@ async function seed() {
       console.log('   ⚠ auth_audit_log table not found — skipping');
     }
 
+    // ════════════════════════════════════════════════════════════════
+    // 7. SUBMISSION CORE + EVIDENCE GRAPH (Phase 1)
+    // ════════════════════════════════════════════════════════════════
+    // RECONCILE: the work order referenced 3 demo orgs (PharmaCorp/Biotech/CRO)
+    // and a `documents` table; this script seeds a single org (Concept2Cure) and
+    // the canonical eCTD doc table is `coauthor_documents`. We seed submission
+    // core + evidence demo data against THIS org and table. Idempotent via
+    // existence checks (these tables have no natural unique key for ON CONFLICT).
+    console.log('[7/7] Creating submission core + evidence demo data...');
+
+    const subCoreExists = await client.query(`
+      SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'submissions')
+        AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'coauthor_documents') AS ok
+    `);
+
+    if (subCoreExists.rows[0].ok) {
+      // Insert-if-absent helper keyed on a stable selector; returns the row id.
+      const ensureRow = async (selectSql, selectParams, insertSql, insertParams) => {
+        const found = await client.query(selectSql, selectParams);
+        if (found.rows[0]) return found.rows[0].id;
+        const ins = await client.query(insertSql, insertParams);
+        return ins.rows[0].id;
+      };
+
+      // ── Canonical documents (coauthor_documents) ──
+      const ensureDoc = (title, moduleNumber) =>
+        ensureRow(
+          `SELECT id FROM coauthor_documents WHERE organization_id = $1 AND title = $2 LIMIT 1`,
+          [org.id, title],
+          `INSERT INTO coauthor_documents (organization_id, title, content, status, created_by, module_number)
+             VALUES ($1, $2, $3, 'draft', $4, $5) RETURNING id`,
+          [org.id, title, `<p>${title}</p>`, String(admin.id), moduleNumber]
+        );
+
+      const docOverview = await ensureDoc('C2C-001 Clinical Overview (source)', '2.5');
+      const docSummary = await ensureDoc('C2C-001 Clinical Summary (source)', '2.7');
+      const docQuality = await ensureDoc('C2C-001 Quality Overall Summary (source)', '2.3');
+
+      // ── Submissions ──
+      const ensureSubmission = (title, applicationType, clientType, primaryRegion, lifecycleStage) =>
+        ensureRow(
+          `SELECT id FROM submissions WHERE organization_id = $1 AND title = $2 AND deleted_at IS NULL LIMIT 1`,
+          [org.id, title],
+          `INSERT INTO submissions (title, product_name, application_type, client_type, primary_region,
+              status, lifecycle_stage, organization_id, created_by)
+             VALUES ($1, $2, $3, $4, $5, 'active', $6, $7, $8) RETURNING id`,
+          [title, 'C2C-001', applicationType, clientType, primaryRegion, lifecycleStage, org.id, admin.id]
+        );
+
+      const sub1 = await ensureSubmission('C2C-001 IND (FDA)', 'ind', 'biotech', 'fda', 'original');
+      const sub2 = await ensureSubmission('MDX-100 510(k) (FDA)', '510k', 'mdx', 'fda', 'planning');
+
+      // ── Submission regions ──
+      const ensureRegion = (submissionId, region, pathway) =>
+        ensureRow(
+          `SELECT id FROM submission_regions WHERE submission_id = $1 AND region = $2 LIMIT 1`,
+          [submissionId, region],
+          `INSERT INTO submission_regions (submission_id, region, pathway, organization_id, created_by)
+             VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+          [submissionId, region, pathway, org.id, admin.id]
+        );
+      await ensureRegion(sub1, 'fda', 'ectd_v322');
+      await ensureRegion(sub2, 'fda', 'estar');
+
+      // ── eCTD sequences (original 0000 each) ──
+      const ensureSequence = (submissionId, region) =>
+        ensureRow(
+          `SELECT id FROM ectd_sequences WHERE submission_id = $1 AND region = $2 AND sequence_number = '0000' LIMIT 1`,
+          [submissionId, region],
+          `INSERT INTO ectd_sequences (submission_id, region, sequence_number, type, status, organization_id, created_by)
+             VALUES ($1, $2, '0000', 'original', 'draft', $3, $4) RETURNING id`,
+          [submissionId, region, org.id, admin.id]
+        );
+      const seq1 = await ensureSequence(sub1, 'fda');
+      const seq2 = await ensureSequence(sub2, 'fda');
+
+      // ── Submission leaves (doc -> CTD leaf, polymorphic ref to coauthor_documents) ──
+      const ensureLeaf = (sequenceId, sectionCode, title, documentId) =>
+        ensureRow(
+          `SELECT id FROM submission_leaves WHERE sequence_id = $1 AND section_code = $2 AND deleted_at IS NULL LIMIT 1`,
+          [sequenceId, sectionCode],
+          `INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op,
+              document_table, document_id, organization_id, created_by)
+             VALUES ($1, $2, $3, 'new', 'coauthor_documents', $4, $5, $6) RETURNING id`,
+          [sequenceId, sectionCode, title, documentId, org.id, admin.id]
+        );
+      await ensureLeaf(seq1, '2.3', 'Quality Overall Summary', docQuality);
+      await ensureLeaf(seq1, '2.5', 'Clinical Overview', docOverview);
+      await ensureLeaf(seq1, '2.7', 'Clinical Summary', docSummary);
+      await ensureLeaf(seq2, 'm1.us.cover', 'eSTAR Cover', null);
+
+      // ── Evidence links (provenance: section derives_from source doc) ──
+      const ensureLink = (submissionId, sectionCode, documentId, confidence) =>
+        ensureRow(
+          `SELECT id FROM submission_evidence_links WHERE submission_id = $1 AND target_section_code = $2
+             AND source_document_id = $3 AND deleted_at IS NULL LIMIT 1`,
+          [submissionId, sectionCode, documentId],
+          `INSERT INTO submission_evidence_links (submission_id, target_section_code, source_document_table,
+              source_document_id, source_locator, direction, confidence, organization_id, created_by)
+             VALUES ($1, $2, 'coauthor_documents', $3, $4, 'derives_from', $5, $6, $7) RETURNING id`,
+          [submissionId, sectionCode, documentId, 'seeded provenance', confidence, org.id, admin.id]
+        );
+      await ensureLink(sub1, '2.5', docOverview, 0.9);
+      await ensureLink(sub1, '2.7', docSummary, 0.85);
+      await ensureLink(sub1, '2.3', docQuality, 0.8);
+
+      console.log('   ✓ Submission core + evidence graph seeded');
+    } else {
+      console.log('   ⚠ submissions/coauthor_documents not found — run drizzle-kit push first, skipping');
+    }
+
     await client.query('COMMIT');
 
     // ── Summary ───────────────────────────────────────────────────
@@ -420,4 +539,47 @@ async function seed() {
   }
 }
 
-seed().catch(() => process.exit(1));
+// ── Verify (non-mutating) ───────────────────────────────────────────
+// Asserts the Phase-1 submission core + evidence demo data is present for the
+// seeded org. Exits non-zero if any threshold is unmet.
+async function verify() {
+  console.log('Verifying submission core + evidence demo data...');
+  const client = await pool.connect();
+  try {
+    const orgRes = await client.query(`SELECT id FROM organizations WHERE slug = 'concept2cure' LIMIT 1`);
+    const orgId = orgRes.rows[0]?.id;
+    if (!orgId) {
+      console.error('✗ Org "concept2cure" not found — run the seed first.');
+      process.exit(1);
+    }
+    const counts = {};
+    for (const table of ['submissions', 'ectd_sequences', 'submission_leaves', 'submission_evidence_links']) {
+      const r = await client.query(
+        `SELECT COUNT(*)::int AS n FROM ${table} WHERE organization_id = $1`,
+        [orgId]
+      );
+      counts[table] = r.rows[0].n;
+    }
+    const thresholds = { submissions: 2, ectd_sequences: 2, submission_leaves: 3, evidence_links: 3 };
+    let ok = true;
+    for (const [table, min] of Object.entries(thresholds)) {
+      const pass = counts[table] >= min;
+      ok = ok && pass;
+      console.log(`   ${pass ? '✓' : '✗'} ${table}: ${counts[table]} (need >= ${min})`);
+    }
+    if (!ok) {
+      console.error('✗ Verification failed.');
+      process.exit(1);
+    }
+    console.log('✓ Verification passed.');
+  } finally {
+    client.release();
+    await pool.end();
+  }
+}
+
+if (VERIFY_ONLY) {
+  verify().catch(() => process.exit(1));
+} else {
+  seed().catch(() => process.exit(1));
+}
