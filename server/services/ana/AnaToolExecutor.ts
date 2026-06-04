@@ -4455,6 +4455,34 @@ registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
     });
   }
 
+  // Data-driven mode: when clinical studies are supplied, compose the Clinical
+  // Overview through the same deterministic engine the submission package uses.
+  if (Array.isArray(input.csrs) && input.csrs.length > 0) {
+    try {
+      const { buildM25ClinicalOverview } = await import('../m2-summary-builders.js');
+      const summary = buildM25ClinicalOverview({
+        csrs: input.csrs as any,
+        indication,
+        investigationalProduct: productName,
+        developmentRationale: typeof input.development_rationale === 'string' ? input.development_rationale : undefined,
+      });
+      return JSON.stringify({
+        status: 'drafted',
+        engine: 'deterministic',
+        sectionKey: summary.sectionKey,
+        title: summary.title,
+        content: summary.narrative,
+        tables: summary.tables,
+        completeness: summary.completeness,
+        gaps: summary.gaps,
+        instruction:
+          'This is a draft the author promotes through the governed authoring flow. State the completeness and gaps honestly; 2.5.6 is the benefit-risk conclusion.',
+      });
+    } catch (err: any) {
+      return JSON.stringify({ error: `M2.5 Clinical Overview composition failed: ${err?.message || 'unknown error'}` });
+    }
+  }
+
   // Best-effort: pull project artifacts to suggest citations. Skip silently if
   // tenant context is missing or DB is unavailable — the structure response
   // is still useful without it.

@@ -489,11 +489,12 @@ describe('submission-package-orchestrator', () => {
     const { run, outputs } = await runOrchestrator(baseInputs);
     expect(run.runId).toBeDefined();
     expect(run.status).toMatch(/complete|partial/);
-    expect(run.steps.length).toBe(10);
+    expect(run.steps.length).toBe(11);
     expect(outputs.module3Sections.length).toBeGreaterThan(0);
     expect(outputs.csrTables.length).toBe(1);
     expect(outputs.m23).toBeDefined();
     expect(outputs.m24).toBeDefined();
+    expect(outputs.m25).toBeDefined();
     expect(outputs.m27).toBeDefined();
   });
 
