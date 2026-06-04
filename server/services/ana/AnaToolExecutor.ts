@@ -853,6 +853,382 @@ registerToolHandler('compute_sample_size', async (input: Record<string, unknown>
   }
 });
 
+// First-in-human dose — deterministic NOAEL→HED→MRSD vs MABEL
+registerToolHandler('compute_fih_dose', async (input: Record<string, unknown>) => {
+  try {
+    const { computeFirstInHumanDose } = await import('../preclinical/fih-dose-engine.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = computeFirstInHumanDose(input as any);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      ...result,
+      instruction:
+        'Report these numbers verbatim. Do NOT recompute or round differently. State which derivation is limiting (limitedBy) and surface any warnings.',
+    });
+  } catch (err: any) {
+    const message = err?.message || 'unknown error';
+    if (/required|at least one|usable HED|must be/.test(message)) {
+      return JSON.stringify({ status: 'needs_parameters', message });
+    }
+    return JSON.stringify({ error: `FIH dose computation failed: ${message}` });
+  }
+});
+
+// Toxicologic-pathology adversity classification — deterministic
+registerToolHandler('classify_tox_findings', async (input: Record<string, unknown>) => {
+  try {
+    const findings = input.findings;
+    if (!Array.isArray(findings) || findings.length === 0) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'findings[] (organ + finding) is required.' });
+    }
+    const { classifyToxFindings } = await import('../preclinical/tox-findings-classifier.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const summary = classifyToxFindings(findings as any);
+    return JSON.stringify({
+      status: 'classified',
+      engine: 'deterministic',
+      ...summary,
+      instruction:
+        'Use these classifications and the overviewParagraph for the M2.4 target-organ profile. A pathologist adjudicates the final adversity call; surface any escalated or indeterminate findings.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Tox-finding classification failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// Exposure-response dose selection — deterministic Project Optimus engine
+registerToolHandler('select_exposure_response_dose', async (input: Record<string, unknown>) => {
+  try {
+    // Normalize an array-form exposuresByDose into the engine's Record shape.
+    const normalized: Record<string, unknown> = { ...input };
+    const raw = input.exposuresByDose;
+    if (Array.isArray(raw)) {
+      const map: Record<number, number> = {};
+      for (const e of raw as Array<{ doseMg: number; exposure: number }>) {
+        if (e && Number.isFinite(Number(e.doseMg))) map[Number(e.doseMg)] = Number(e.exposure);
+      }
+      normalized.exposuresByDose = map;
+    }
+    const { selectExposureResponseDose } = await import('../clinical-pharmacology/exposure-response-engine.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = selectExposureResponseDose(normalized as any);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      ...result,
+      instruction:
+        'Report the optimized dose, MTD, and per-dose predictions verbatim. When belowMtd is true, frame the selection as Project Optimus dose optimization rather than dosing to the MTD.',
+    });
+  } catch (err: any) {
+    const message = err?.message || 'unknown error';
+    if (/required|supply/.test(message)) {
+      return JSON.stringify({ status: 'needs_parameters', message });
+    }
+    return JSON.stringify({ error: `Exposure-response dose selection failed: ${message}` });
+  }
+});
+
+// Draft M2.4 Nonclinical Overview — deterministic composer + adversity profile
+registerToolHandler('draft_nonclinical_overview_m2_4', async (input: Record<string, unknown>) => {
+  try {
+    const studies = input.studies;
+    if (!Array.isArray(studies) || studies.length === 0) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'studies[] is required to draft the M2.4 overview.' });
+    }
+    const { buildEnrichedM24 } = await import('../preclinical/nonclinical-m24-adapter.js');
+    const { summary, toxProfile } = buildEnrichedM24({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      studies: studies as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      findings: input.findings as any,
+      drugSubstanceName: input.drugSubstanceName as string | undefined,
+      indication: input.indication as string | undefined,
+    });
+    return JSON.stringify({
+      status: 'drafted',
+      engine: 'deterministic',
+      sectionKey: summary.sectionKey,
+      title: summary.title,
+      content: summary.narrative,
+      completeness: summary.completeness,
+      gaps: summary.gaps,
+      toxProfile: toxProfile
+        ? {
+            adverse: toxProfile.adverseFindings.map(f => f.finding),
+            adaptive: toxProfile.adaptiveFindings.map(f => f.finding),
+            monitor: toxProfile.monitorFindings.map(f => f.finding),
+            overviewParagraph: toxProfile.overviewParagraph,
+          }
+        : null,
+      instruction:
+        'This is a draft the author promotes through the governed authoring flow. State the completeness score and gaps honestly; do not assert a study that was not supplied.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `M2.4 overview drafting failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// Fetch a blank nonclinical/clin-pharm document template (form)
+registerToolHandler('get_nonclinical_template', async (input: Record<string, unknown>) => {
+  try {
+    const { getNonclinicalTemplate, listNonclinicalTemplates } = await import('../templates/nonclinical-templates.js');
+    const key = typeof input.template === 'string' ? input.template.trim() : '';
+    if (!key) {
+      return JSON.stringify({ status: 'list', templates: listNonclinicalTemplates() });
+    }
+    const tmpl = getNonclinicalTemplate(key);
+    if (!tmpl) {
+      return JSON.stringify({ status: 'not_found', message: `No nonclinical template for "${key}".`, available: listNonclinicalTemplates() });
+    }
+    return JSON.stringify({
+      status: 'template',
+      granule_id: tmpl.granule_id,
+      sectionCode: tmpl.sectionCode,
+      title: tmpl.title,
+      content: tmpl.content,
+      instruction: 'Fill the [PLACEHOLDER] tokens. If the program has ingested studies, prefer the draft_* composer tools, which fill content from data.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Fetching nonclinical template failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// Load a program's ingested nonclinical studies (feature-gated DB read)
+registerToolHandler('load_nonclinical_program', async (input: Record<string, unknown>, ctx) => {
+  try {
+    const organizationId = ctx?.organizationId;
+    if (!organizationId) {
+      return JSON.stringify({
+        status: 'needs_context',
+        message: 'Loading program data requires an active organization context. Ask the user to open a project first.',
+      });
+    }
+    const ctdProgramId = Number(input.ctdProgramId);
+    if (!Number.isInteger(ctdProgramId) || ctdProgramId <= 0) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'A positive integer ctdProgramId is required.' });
+    }
+    const { loadNonclinicalProgram } = await import('../preclinical/nonclinical-program-loader.js');
+    const loaded = await loadNonclinicalProgram(ctdProgramId, organizationId);
+    if (!loaded) {
+      return JSON.stringify({
+        status: 'unavailable',
+        message: 'The preclinical data layer is not enabled in this environment (PRECLINICAL_REVIEWER_ENABLED unset) or the program id is invalid.',
+      });
+    }
+    return JSON.stringify({
+      status: 'loaded',
+      rowCount: loaded.rowCount,
+      studies: loaded.studies,
+      presentStudies: loaded.presentStudies,
+      speciesNoaels: loaded.speciesNoaels,
+      instruction:
+        'Pass studies into draft_nonclinical_overview_m2_4 / draft_nonclinical_summaries_m2_6, presentStudies into assess_nonclinical_program, and speciesNoaels into compute_fih_dose. If rowCount is 0, tell the user no nonclinical studies are ingested for this program.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Loading nonclinical program failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// Draft M2.6 Nonclinical Written & Tabulated Summaries — deterministic composer
+registerToolHandler('draft_nonclinical_summaries_m2_6', async (input: Record<string, unknown>) => {
+  try {
+    const studies = input.studies;
+    if (!Array.isArray(studies) || studies.length === 0) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'studies[] is required to draft the M2.6 summaries.' });
+    }
+    const { buildM26NonclinicalSummaries } = await import('../preclinical/m26-nonclinical-summaries.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const r = buildM26NonclinicalSummaries(input as any);
+    return JSON.stringify({
+      status: 'drafted',
+      engine: 'deterministic',
+      sectionKey: r.sectionKey,
+      title: r.title,
+      content: r.narrative,
+      tables: r.tables,
+      completeness: r.completeness,
+      gaps: r.gaps,
+      instruction:
+        'This is a draft the author promotes through the governed authoring flow. State the completeness and gaps honestly.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `M2.6 summaries drafting failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// IND filing readiness across all five modules — deterministic, eCTD-map based
+registerToolHandler('assess_ind_filing_readiness', async (input: Record<string, unknown>) => {
+  try {
+    const { assessIndFilingReadiness } = await import('../regulatory/ind-filing-readiness.js');
+    const sectionStatus = (input.sectionStatus && typeof input.sectionStatus === 'object'
+      ? input.sectionStatus
+      : {}) as Record<string, never>;
+    const r = assessIndFilingReadiness(sectionStatus);
+    return JSON.stringify({
+      status: 'assessed',
+      engine: 'deterministic',
+      overallReadiness: r.overallReadiness,
+      percentage: r.percentage,
+      readyCount: r.readyCount,
+      requiredCount: r.requiredCount,
+      modules: r.modules.map(m => ({ module: m.module, percentage: m.percentage, readyCount: m.readyCount, requiredCount: m.requiredCount, missing: m.missing })),
+      blockers: r.blockers,
+      instruction: 'Report the overall verdict, per-module percentages, and blockers verbatim. A blocker is a required section not yet started, not a quality judgment of drafted content.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `IND filing-readiness assessment failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// Integrated nonclinical safety assessment — composes the engines
+registerToolHandler('assess_nonclinical_safety', async (input: Record<string, unknown>) => {
+  try {
+    const { assessNonclinicalSafety } = await import('../preclinical/nonclinical-safety-assessment.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const a = assessNonclinicalSafety(input as any);
+    return JSON.stringify({
+      status: 'assessed',
+      engine: 'deterministic',
+      readiness: a.readiness,
+      recommendedStartingDoseMg: a.fihDose?.recommendedStartingDoseMg ?? null,
+      limitedBy: a.fihDose?.limitedBy ?? null,
+      adverseFindings: a.toxProfile?.adverseFindings.map(f => `${f.finding} (${f.organ})`) ?? [],
+      programGaps: a.programGaps?.gaps ?? [],
+      blockers: a.blockers,
+      overviewCompleteness: a.overview?.completeness ?? null,
+      summary: a.summary,
+      instruction: 'Report the readiness verdict, FIH dose, adverse findings, and blockers verbatim. A blocker means a study is missing for the target phase, not that the molecule is unsafe.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Nonclinical safety assessment failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// Nonclinical study-program requirements & gaps — deterministic ICH M3(R2)
+registerToolHandler('assess_nonclinical_program', async (input: Record<string, unknown>) => {
+  try {
+    if (input.maxClinicalDurationWeeks == null) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'maxClinicalDurationWeeks is required.' });
+    }
+    const { assessNonclinicalProgram } = await import('../preclinical/nonclinical-program-requirements.js');
+    const present = Array.isArray(input.present) ? input.present : [];
+    const result = assessNonclinicalProgram(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      input as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      present as any,
+    );
+    return JSON.stringify({
+      status: 'assessed',
+      engine: 'deterministic',
+      adequate: result.adequate,
+      required: result.required,
+      gaps: result.gaps,
+      instruction:
+        'Report the required battery and the gaps verbatim. Only studies due at or before the target phase are gated; note the timing of later-due studies.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Nonclinical program assessment failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// Concentration-QTc / thorough-QT waiver — deterministic
+registerToolHandler('assess_concentration_qtc', async (input: Record<string, unknown>) => {
+  try {
+    const { assessConcentrationQtc } = await import('../clinical-pharmacology/concentration-qtc.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = assessConcentrationQtc(input as any);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      ...result,
+      instruction: 'Report the upper 90% bound and the TQT verdict verbatim. State the confidence flag.',
+    });
+  } catch (err: any) {
+    const message = err?.message || 'unknown error';
+    if (/must be|required/.test(message)) {
+      return JSON.stringify({ status: 'needs_parameters', message });
+    }
+    return JSON.stringify({ error: `Concentration-QTc assessment failed: ${message}` });
+  }
+});
+
+// PK characterization — deterministic dose proportionality + accumulation
+registerToolHandler('characterize_pk', async (input: Record<string, unknown>) => {
+  try {
+    const dp = input.doseProportionality as Record<string, unknown> | undefined;
+    const acc = input.accumulation as Record<string, unknown> | undefined;
+    if (!dp && !acc) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'Supply doseProportionality and/or accumulation.' });
+    }
+    const mod = await import('../clinical-pharmacology/pk-characterization.js');
+    const result: Record<string, unknown> = { status: 'computed', engine: 'deterministic' };
+    if (dp) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      result.doseProportionality = mod.assessDoseProportionality(dp as any);
+    }
+    if (acc) {
+      result.accumulation = mod.accumulation(Number(acc.halfLifeHours), Number(acc.dosingIntervalHours));
+    }
+    result.instruction = 'Report the slope, 90% CI, proportionality verdict, and accumulation ratio verbatim.';
+    return JSON.stringify(result);
+  } catch (err: any) {
+    const message = err?.message || 'unknown error';
+    if (/required|must be/.test(message)) {
+      return JSON.stringify({ status: 'needs_parameters', message });
+    }
+    return JSON.stringify({ error: `PK characterization failed: ${message}` });
+  }
+});
+
+// DDI static-model risk — deterministic
+registerToolHandler('assess_ddi_risk', async (input: Record<string, unknown>) => {
+  try {
+    const { assessDdiRisk } = await import('../clinical-pharmacology/ddi-static-model.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = assessDdiRisk(input as any);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      ...result,
+      instruction: 'Report the computed R-values, thresholds, and the clinical-study recommendation verbatim.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `DDI risk assessment failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// Draft M2.7 Clinical Summary — deterministic composer
+registerToolHandler('draft_clinical_summary_m2_7', async (input: Record<string, unknown>) => {
+  try {
+    const csrs = input.csrs;
+    if (!Array.isArray(csrs) || csrs.length === 0) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'csrs[] is required to draft the M2.7 summary.' });
+    }
+    const { buildM27ClinicalSummary } = await import('../m2-summary-builders.js');
+    const summary = buildM27ClinicalSummary({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      csrs: csrs as any,
+      indication: (input.indication as string) ?? '',
+      investigationalProduct: (input.investigationalProduct as string) ?? '',
+    });
+    return JSON.stringify({
+      status: 'drafted',
+      engine: 'deterministic',
+      sectionKey: summary.sectionKey,
+      title: summary.title,
+      content: summary.narrative,
+      completeness: summary.completeness,
+      gaps: summary.gaps,
+      instruction:
+        'This is a draft the author promotes through the governed authoring flow. State the completeness and gaps honestly; do not invent studies or events.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `M2.7 summary drafting failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Compare Statistical Scenarios — side-by-side deterministic comparison
 registerToolHandler('compare_statistical_scenarios', async (input: Record<string, unknown>, ctx) => {
   try {
