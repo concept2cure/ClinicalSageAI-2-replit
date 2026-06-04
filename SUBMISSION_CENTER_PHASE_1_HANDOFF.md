@@ -132,3 +132,18 @@ AnA already had submission/eCTD tools (`package_ectd_for_region`, `transmit_subm
 | `extract_submission_document` | ingestion `extractStructure` | org + user from `ToolContext` | yes (AI_GENERATE, in service) |
 
 **Governance rail (deliberate):** tenant/user come from the request-scoped `ToolContext`, never model args; the two ingestion tools refuse without org+user. The **irreversible/outward** actions — sequence freeze and **transmit to FDA/EMA/PMDA** — were *not* added to this group; they stay behind the existing governed `transmit_submission` tool and the Part 11 e-signature gate. AnA orchestrates everything up to the regulatory wire; the human sign-off the law requires is preserved. Removing that rail is a designer/operator decision, not an implementation default.
+
+---
+
+## 8. Backbone unification (in progress)
+
+Two parallel submission backbones existed: the canonical Drizzle core (`submissions`/`ectd_sequences`/`submission_leaves`) and an older raw-SQL `reg_*` model. Audit findings: the new core's `submission_leaves` was **written by ingestion but never read**; the live publisher `packageEctdSubmission` was fed leaves **by hand**; and the `reg_*` *packager* path (`server/src/services/reg/{indexXml,packager}.ts`) was **orphaned** (zero importers, no migrations for `reg_sequences`/`reg_sequence_files`, drifted `up_*` columns).
+
+**Done:**
+1. **Keystone bridge** — `ectd/core-to-packager.ts` (pure, 8 tests) + `ectd/package-from-core.ts` (tenant-scoped orchestrator). The canonical core now drives the real `packageEctdSubmission`; `submission_leaves` is no longer a dead-end. Region maps `fda|eu|jp → fda|ema|pmda`. Document→file resolution is injected (storage-specific).
+2. **Retired the orphaned reg packager** — deleted `server/src/services/reg/indexXml.ts` + `packager.ts` (the dead competing publisher). `ectdMap.ts` and the live reg readiness/portfolio services were kept (separate, still used).
+
+**Still open (needs a DB + operator):**
+- A real `resolveFile` for `package-from-core` (materialize `coauthor_documents` content / resolve `vault.documents` to disk).
+- Wire `packageSequenceFromCore` to a route + an AnA tool (`package_submission_from_core`).
+- Repoint the remaining live `reg_*` *readiness/portfolio* consumers (portfolio.ts, regulatory_aiDraft.ts, rpi/impact/digest/gatekeeper/preflight/playbook) onto the canonical core, then retire `reg_submissions`/`reg_m3_*` — a data-migration (UUID→serial id translation map) the operator must run. Fix the drifted `reg_m3_sections.up_proc/up_quality/up_stability` columns (read but never created) as part of that.
