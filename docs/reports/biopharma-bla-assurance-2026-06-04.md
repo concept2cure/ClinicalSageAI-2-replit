@@ -71,10 +71,16 @@ The biotech crown jewel is now real computation, not strings.
 - **`immunogenicity.ts`** — tiered ADA/NAb incidence with Wilson CIs, comparative
   between-arm difference (Newcombe), and an FDA risk-based tier
   (likelihood × consequence) with rationale.
+- **`regulatory-risk.ts`** — biologics-specific BLA filing-risk engine. Maps
+  CMC/clinical readiness signals plus the conclusions of the three engines above
+  onto RTF/CRL failure modes (21 CFR 601.2; ICH Q5A/Q5E/Q6B/Q1A; FDA
+  immunogenicity & process-validation guidance), with cited per-finding triggers,
+  mitigations, and RTF/CRL risk bands. This is the layer that stops BLA from
+  reusing the small-molecule NDA risk model wholesale.
 
 ### Persistence + API (`server/routes/biopharma/bla-workbench.ts`, `/api/biopharma/bla/*`)
-- `POST /analytical-similarity`, `POST /comparability`, `POST /immunogenicity`
-  (compute, optionally persist when a `programId` is supplied).
+- `POST /analytical-similarity`, `POST /comparability`, `POST /immunogenicity`,
+  `POST /filing-risk` (compute, optionally persist when a `programId` is supplied).
 - `GET /assessments`, `GET /assessments/:id`.
 - `POST /assessments/:id/sign` — governed 21 CFR Part 11 sign-off writing the
   SHA-256-chained `audit_logs` + `c2c_ana_actions` ledger via the shared
@@ -84,9 +90,10 @@ The biotech crown jewel is now real computation, not strings.
   idempotent). Mounted in `register-inline-routes.ts`.
 
 ### AnA wiring (so the BLA suggestion pills actually run)
-- Three model tools added to `ALL_ANA_TOOLS`: `assess_analytical_similarity`,
-  `assess_comparability`, `assess_immunogenicity`, with executor handlers in
-  `AnaToolExecutor.ts` that call the engines and report numbers verbatim.
+- Four model tools added to `ALL_ANA_TOOLS`: `assess_analytical_similarity`,
+  `assess_comparability`, `assess_immunogenicity`, `assess_bla_filing_risk`, with
+  executor handlers in `AnaToolExecutor.ts` that call the engines and report
+  numbers/verdicts verbatim.
 
 ### JNDA orphan closed
 - `services/regulatory/pyramids/jnda-pyramid.ts` — PMDA Shōnin, biologic-aware
@@ -112,9 +119,11 @@ conclusion, recommendations), so the design can render them without reshaping.
 
 ## 4. Remaining roadmap (sequenced)
 
-1. **BLA-specific regulatory intelligence** — biologics CRL/RTF triggers
-   (analytical-similarity gaps, immunogenicity signal, potency/viral safety) and
-   a biosimilar completeness flag, so BLA stops reusing the NDA model wholesale.
+1. **BLA-specific regulatory intelligence** — delivered as the `regulatory-risk.ts`
+   filing-risk engine (biologics RTF/CRL triggers feeding off the three science
+   engines + readiness signals). Remaining: auto-populate its readiness/admin
+   signals from live program data, and feed its output into the general
+   precedent/risk model so BLA stops reusing the NDA model wholesale.
 2. **JNDA templates + rule-pack outlines** — marketing-approval templates and
    `nda:pmda` / `bla:pmda` authoring outlines (today only CTN templates exist).
 3. **MAA depth** — RMP gap rules and Type IA/IB/II variation classification.

@@ -25,10 +25,11 @@ import { recordGovernedAction } from '../c2c/actions.js';
 import { assessAnalyticalSimilarity, type SimilarityAssessmentInput } from '../../services/biologics/analytical-similarity.js';
 import { assessComparability, type ComparabilityInput } from '../../services/biologics/comparability.js';
 import { assessImmunogenicity, type ImmunogenicityInput } from '../../services/biologics/immunogenicity.js';
+import { assessBlaFilingRisk, type BlaFilingRiskInput } from '../../services/biologics/regulatory-risk.js';
 
 const router = Router();
 
-type Kind = 'analytical_similarity' | 'comparability' | 'immunogenicity';
+type Kind = 'analytical_similarity' | 'comparability' | 'immunogenicity' | 'filing_risk';
 
 function resolveOrgId(req: Request): number | null {
   const r = req as any;
@@ -53,6 +54,7 @@ function send(res: Response, code: number, body: unknown) {
 // Top-level verdict denormalized onto the row for fast listing.
 function verdictFor(kind: Kind, result: any): string | null {
   if (kind === 'immunogenicity') return result?.risk?.tier ?? null;
+  if (kind === 'filing_risk') return result?.crlRisk ?? null;
   return result?.conclusion ?? null;
 }
 
@@ -177,6 +179,34 @@ router.post('/immunogenicity', async (req: Request, res: Response) => {
     return send(res, 200, { result, assessment });
   } catch (err) {
     console.error('[bla/immunogenicity]', err);
+    return send(res, 500, { error: 'INTERNAL_ERROR' });
+  }
+});
+
+// ── POST /filing-risk ─────────────────────────────────────────────────────────
+//
+// Biologics-specific RTF/CRL filing-risk profile. Consumes the conclusions of
+// the three science engines plus CMC/clinical readiness signals.
+
+router.post('/filing-risk', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return send(res, 403, { error: 'FORBIDDEN' });
+
+  const body = (req.body ?? {}) as BlaFilingRiskInput;
+
+  try {
+    const result = assessBlaFilingRisk(body);
+    const assessment = await maybePersist(
+      req,
+      orgId,
+      'filing_risk',
+      { modality: body.modality, referenceProduct: null, targetAgency: null },
+      body,
+      result,
+    );
+    return send(res, 200, { result, assessment });
+  } catch (err) {
+    console.error('[bla/filing-risk]', err);
     return send(res, 500, { error: 'INTERNAL_ERROR' });
   }
 });

@@ -1053,6 +1053,24 @@ registerToolHandler('assess_immunogenicity', async (input: Record<string, unknow
   }
 });
 
+// Assess BLA Filing Risk — deterministic biologics RTF/CRL engine
+registerToolHandler('assess_bla_filing_risk', async (input: Record<string, unknown>) => {
+  try {
+    const { assessBlaFilingRisk } = await import('../biologics/regulatory-risk.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = assessBlaFilingRisk(input as any);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      ...result,
+      instruction:
+        'Report the RTF and CRL risk bands, the triggered findings with their citations and mitigations, and the filing blockers verbatim. Do not invent triggers beyond those returned.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `BLA filing-risk assessment failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Check Dossier Consistency — cross-artifact divergence detection
 registerToolHandler('check_dossier_consistency', async (input: Record<string, unknown>) => {
   const draftContent = input.draft_content as string;

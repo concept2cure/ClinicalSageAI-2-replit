@@ -2363,6 +2363,64 @@ export const ASSESS_IMMUNOGENICITY: AnaTool = {
   },
 };
 
+export const ASSESS_BLA_FILING_RISK: AnaTool = {
+  name: 'assess_bla_filing_risk',
+  description:
+    "Run the DETERMINISTIC BLA 351(a) filing-risk engine. Maps a biologics program's CMC/clinical readiness signals — and the conclusions of the analytical-similarity, comparability, and immunogenicity engines — onto Refuse-to-File (RTF) and Complete Response Letter (CRL) failure modes (21 CFR 601.2; ICH Q5A/Q5E/Q6B/Q1A; FDA immunogenicity & process-validation guidance). Use when the user asks about BLA filing readiness, RTF/CRL risk, or what would block a biologics filing. Returns cited per-finding triggers with mitigations and overall RTF/CRL risk bands. Report the triggers and bands verbatim.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      productType: { type: 'string', enum: ['biologic', 'biosimilar'] },
+      modality: { type: 'string' },
+      programId: { type: 'string', description: 'Optional regulatory_programs UUID to persist against.' },
+      manufacturingChange: { type: 'boolean', description: 'True if a manufacturing change requiring comparability is in scope.' },
+      analyticalSimilarity: {
+        type: 'string',
+        enum: ['similar', 'similar_with_residual_uncertainty', 'not_demonstrated', 'insufficient_data'],
+        description: 'Conclusion from assess_analytical_similarity, if run.',
+      },
+      comparability: {
+        type: 'string',
+        enum: ['comparable', 'comparable_with_additional_data', 'not_comparable', 'insufficient_data'],
+        description: 'Conclusion from assess_comparability, if run.',
+      },
+      immunogenicityRisk: {
+        type: 'string',
+        enum: ['low', 'moderate', 'high'],
+        description: 'Risk tier from assess_immunogenicity, if run.',
+      },
+      readiness: {
+        type: 'object',
+        description: 'CMC/clinical/quality readiness signals (true=met, false=known missing, omit=unknown).',
+        properties: {
+          potencyAssayValidated: { type: 'boolean' },
+          viralClearanceValidated: { type: 'boolean' },
+          adventitiousAgentTesting: { type: 'boolean' },
+          cellBankCharacterized: { type: 'boolean' },
+          stabilityMonths: { type: 'number' },
+          requiredShelfLifeMonths: { type: 'number' },
+          processValidationComplete: { type: 'boolean' },
+          containerClosureQualified: { type: 'boolean' },
+          inspectionReady: { type: 'boolean' },
+        },
+      },
+      administrative: {
+        type: 'object',
+        description: 'BLA completeness signals for RTF assessment (21 CFR 601.2).',
+        properties: {
+          form356h: { type: 'boolean' },
+          coverLetter: { type: 'boolean' },
+          module3CmcComplete: { type: 'boolean' },
+          clinicalSummaries: { type: 'boolean' },
+          immunogenicityData: { type: 'boolean' },
+          cdiscDatasets: { type: 'boolean' },
+        },
+      },
+    },
+    required: [],
+  },
+};
+
 /** Custom JSON-schema tools dispatched by our local AnaToolExecutor. */
 export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
@@ -2444,6 +2502,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ASSESS_ANALYTICAL_SIMILARITY,
   ASSESS_COMPARABILITY,
   ASSESS_IMMUNOGENICITY,
+  ASSESS_BLA_FILING_RISK,
   MINE_PRECEDENTS,
   GENERATE_DOCUMENT,
   BUILD_FROM_TEMPLATE,
