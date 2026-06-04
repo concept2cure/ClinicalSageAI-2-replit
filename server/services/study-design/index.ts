@@ -44,3 +44,21 @@ export {
   simulateTrial,
   normalApproxPower,
 } from './trial-simulator';
+export {
+  type PersistContext,
+  type StudyDesignRows,
+  type StudyDesignSummary,
+  STUDY_DESIGN_META_KIND,
+  studyDesignToRows,
+  rowsToStudyDesign,
+  persistStudyDesignTx,
+  deleteStudyDesignTx,
+  loadStudyDesign,
+  listStudyDesigns,
+} from './study-design-repository';
+export {
+  type ExtractOptions,
+  type CsrEvidenceResult,
+  extractEffectObservation,
+  gatherCsrEffectEvidence,
+} from './csr-evidence-source';

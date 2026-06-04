@@ -313,6 +313,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount C2C Commitments routes:', error);
   }
 
+  // Study-design spine (validate / simulate / persist onto the CDISC PRM tables).
+  try {
+    const studyDesignModule = await import('../routes/study-design');
+    app.use('/api/study-design', authMiddleware, studyDesignModule.default);
+    console.info('✅ Study Design routes mounted (/api/study-design)');
+  } catch (error) {
+    console.error('❌ Failed to mount Study Design routes:', error);
+  }
+
   // C2C document family (Phase 9 Day 3 — document + section + evidence routes).
   try {
     const c2cDocsModule = await import('../routes/c2c/documents');
