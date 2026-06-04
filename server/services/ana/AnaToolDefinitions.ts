@@ -2816,6 +2816,23 @@ export const ASSESS_NONCLINICAL_SAFETY: AnaTool = {
   },
 };
 
+export const ASSESS_IND_FILING_READINESS: AnaTool = {
+  name: 'assess_ind_filing_readiness',
+  description:
+    "Assess whether an IND is ready to file across all five CTD modules, using the canonical eCTD section map. Given a per-section authoring-status map (eCTD code → not_started/drafting/.../approved/signed/locked), it reports, for every section required for initial filing, whether it is ready (approved/signed/locked), in progress, or a hard blocker (not started) — aggregated per module (M1–M5) and overall. Use this for 'are we ready to file the IND? / what's left across the modules?' questions. Report the overall verdict, per-module percentages, and the blocker list verbatim; nonclinical depth comes from assess_nonclinical_safety.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      sectionStatus: {
+        type: 'object',
+        description: 'Map of eCTD section code (e.g. "m4.2.3", "m2.4") to authoring status: not_started | data_gathering | drafting | internal_review | revision | qa_review | approved | signed | locked. Missing codes default to not_started.',
+        additionalProperties: { type: 'string' },
+      },
+    },
+    required: [],
+  },
+};
+
 export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
@@ -2902,6 +2919,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   DRAFT_NONCLINICAL_SUMMARIES_M2_6,
   ASSESS_NONCLINICAL_PROGRAM,
   ASSESS_NONCLINICAL_SAFETY,
+  ASSESS_IND_FILING_READINESS,
   ASSESS_CONCENTRATION_QTC,
   ASSESS_DDI_RISK,
   CHARACTERIZE_PK,
