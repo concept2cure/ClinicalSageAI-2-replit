@@ -36,6 +36,7 @@ import {
 } from '../lib/api-response';
 import { pool } from '../db';
 import auditService from '../services/auditService';
+import { SOP_TEMPLATES, getSopTemplate, type SopSection } from '../services/qms/sopTemplates';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms');
@@ -53,7 +54,7 @@ function getUserId(req: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-const DOC_TYPE = ['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol'] as const;
+const DOC_TYPE = ['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol', 'curriculum'] as const;
 const DOC_STATUS = ['draft', 'in_review', 'effective', 'superseded', 'retired'] as const;
 const CRITICALITY = ['critical', 'major', 'minor'] as const;
 const SUPPLIER_STATUS = ['pending', 'approved', 'conditional', 'revoked'] as const;
@@ -67,6 +68,12 @@ const docListQuery = z.object({
   status:   z.enum(DOC_STATUS).optional(),
   category: z.string().max(60).optional(),
 });
+const sopSectionSchema = z.object({
+  key:   z.string().min(1).max(80),
+  label: z.string().min(1).max(200),
+  order: z.number().int().nonnegative().optional(),
+  hint:  z.string().max(500).optional(),
+});
 const docCreate = z.object({
   docNumber:        z.string().min(1).max(60),
   title:            z.string().min(1).max(300),
@@ -77,8 +84,36 @@ const docCreate = z.object({
   effectiveDate:    z.string().date().optional().nullable(),
   nextReviewDate:   z.string().date().optional().nullable(),
   artifactId:       z.number().int().positive().optional().nullable(),
+  templateKey:      z.string().max(80).optional().nullable(),
+  sections:         z.array(sopSectionSchema).optional().nullable(),
+  metadata:         z.record(z.unknown()).optional().nullable(),
 });
 const docPatch = docCreate.partial();
+
+/** Bump to the next major version (e.g. '3.1' → '4.0'); defaults to '2.0'. */
+function nextMajorVersion(v: string | null | undefined): string {
+  const m = /^(\d+)/.exec(String(v ?? '').trim());
+  const major = m ? parseInt(m[1], 10) : 1;
+  return `${major + 1}.0`;
+}
+
+/** Build create-time metadata — seeds the section skeleton from a templateKey
+ *  when the caller did not pass an explicit sections array. Returns null when
+ *  there is nothing to store (so the column keeps its '{}' default). */
+function buildCreateMetadata(p: z.infer<typeof docCreate>): Record<string, unknown> | null {
+  const meta: Record<string, unknown> = { ...(p.metadata ?? {}) };
+  if (p.templateKey) {
+    meta.templateKey = p.templateKey;
+    const tpl = getSopTemplate(p.templateKey);
+    const sections: SopSection[] | undefined =
+      (p.sections as SopSection[] | undefined) ?? tpl?.sections;
+    if (sections) meta.sections = sections;
+    if (tpl) meta.family = tpl.family;
+  } else if (p.sections) {
+    meta.sections = p.sections;
+  }
+  return Object.keys(meta).length > 0 ? meta : null;
+}
 
 router.get('/qms/documents', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
@@ -111,13 +146,14 @@ router.post('/qms/documents', async (req: Request, res: Response) => {
     const { rows } = await pool.query(
       `INSERT INTO qms_documents (
          organization_id, doc_number, title, doc_type, category, version, status,
-         effective_date, next_review_date, author_id, artifact_id
-       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,'1.0'),COALESCE($7,'draft'),$8,$9,$10,$11)
+         effective_date, next_review_date, author_id, artifact_id, metadata
+       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,'1.0'),COALESCE($7,'draft'),$8,$9,$10,$11,COALESCE($12::jsonb,'{}'::jsonb))
        RETURNING *`,
       [
         orgId, p.docNumber, p.title, p.docType, p.category ?? null,
         p.version ?? null, p.status ?? null,
         p.effectiveDate ?? null, p.nextReviewDate ?? null, getUserId(req), p.artifactId ?? null,
+        (() => { const m = buildCreateMetadata(p); return m ? JSON.stringify(m) : null; })(),
       ],
     );
     return created(res, rows[0]);
@@ -126,6 +162,38 @@ router.post('/qms/documents', async (req: Request, res: Response) => {
     if (code === '23505') return clientError(res, 409, 'A document with that number already exists in this org');
     return serverError(res, log, 'doc-create', err);
   }
+});
+
+/* Quality-system template family — the controlled-document types a client
+   builds their internal quality system from (Quality manual · Policy · SOP ·
+   Work instruction · Form · Validation protocol · Training curriculum), each
+   carrying the standard Purpose → Approval section skeleton. Server-curated. */
+router.get('/qms/templates', (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  return ok(res, SOP_TEMPLATES, { count: SOP_TEMPLATES.length });
+});
+
+/* Periodic-review tracking — controlled docs whose next_review_date is overdue
+   (flagged) or falls within `within` days. Must precede /documents/:id so the
+   literal path is not captured as an id. */
+router.get('/qms/documents/review-due', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const withinDays = Math.max(1, Math.min(365, Number(req.query.within) || 30));
+  try {
+    const { rows } = await pool.query(
+      `SELECT *, (next_review_date < CURRENT_DATE) AS overdue
+         FROM qms_documents
+        WHERE organization_id = $1 AND deleted_at IS NULL
+          AND status IN ('effective','in_review')
+          AND next_review_date IS NOT NULL
+          AND next_review_date < CURRENT_DATE + ($2 || ' days')::interval
+        ORDER BY next_review_date ASC LIMIT 500`,
+      [orgId, withinDays],
+    );
+    return ok(res, rows, { count: rows.length, withinDays });
+  } catch (err) { return serverError(res, log, 'doc-review-due', err); }
 });
 
 router.get('/qms/documents/:id', async (req: Request, res: Response) => {
@@ -206,6 +274,84 @@ router.post('/qms/documents/:id/approve', async (req: Request, res: Response) =>
     });
     return ok(res, rows[0]);
   } catch (err) { return serverError(res, log, 'doc-approve', err); }
+});
+
+/* Change control — open a controlled revision. Bumps to the next major
+   version, returns the document to draft, and clears the prior approval so it
+   must be re-reviewed and re-approved. A reason for change is required and is
+   captured in metadata + the audit trail (21 CFR Part 11). */
+router.post('/qms/documents/:id/revise', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  const userId = getUserId(req);
+  if (orgId === null) return orgRequired(res);
+  if (userId === null) return clientError(res, 401, 'User context required');
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
+  if (!reason) return clientError(res, 422, 'A reason for change is required to open a revision');
+  const explicitVersion = typeof req.body?.version === 'string' ? req.body.version.trim() : null;
+  try {
+    const cur = await pool.query<{ version: string }>(
+      `SELECT version FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [id, orgId],
+    );
+    if (cur.rows.length === 0) return notFoundInTenant(res, 'Document');
+    const fromVersion = cur.rows[0].version;
+    const newVersion = explicitVersion || nextMajorVersion(fromVersion);
+    const { rows } = await pool.query(
+      `UPDATE qms_documents
+          SET status = 'draft',
+              version = $3,
+              approver_id = NULL,
+              approved_at = NULL,
+              metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
+                'lastRevision',
+                jsonb_build_object('reason', $4::text, 'from', $5::text, 'at', NOW(), 'by', $6::int)
+              ),
+              updated_at = NOW()
+        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
+          AND status IN ('effective','superseded','retired','in_review')
+        RETURNING *`,
+      [id, orgId, newVersion, reason, fromVersion, userId],
+    );
+    if (rows.length === 0) return clientError(res, 409, 'Document cannot be revised from its current state');
+    void auditService.logAction({
+      tenantId: orgId, userId: userId ?? undefined, action: 'mdx.qms.document.revise',
+      resourceType: 'qms_document', resourceId: id,
+      details: { reason, from: fromVersion, to: newVersion },
+    });
+    return ok(res, rows[0]);
+  } catch (err) { return serverError(res, log, 'doc-revise', err); }
+});
+
+/* Retire a controlled document — terminal lifecycle state. Captures an
+   optional reason in metadata + the audit trail. */
+router.post('/qms/documents/:id/retire', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  const userId = getUserId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : null;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE qms_documents
+          SET status = 'retired',
+              metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
+                'retired', jsonb_build_object('reason', $3::text, 'at', NOW(), 'by', $4::int)
+              ),
+              updated_at = NOW()
+        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND status <> 'retired'
+        RETURNING *`,
+      [id, orgId, reason, userId],
+    );
+    if (rows.length === 0) return clientError(res, 409, 'Document not found, or already retired');
+    void auditService.logAction({
+      tenantId: orgId, userId: userId ?? undefined, action: 'mdx.qms.document.retire',
+      resourceType: 'qms_document', resourceId: id, details: { reason },
+    });
+    return ok(res, rows[0]);
+  } catch (err) { return serverError(res, log, 'doc-retire', err); }
 });
 
 router.post('/qms/documents/:id/training-ack', async (req: Request, res: Response) => {
