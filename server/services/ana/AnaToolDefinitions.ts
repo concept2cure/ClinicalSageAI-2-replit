@@ -2746,6 +2746,19 @@ export const DRAFT_NONCLINICAL_SUMMARIES_M2_6: AnaTool = {
   },
 };
 
+export const LOAD_NONCLINICAL_PROGRAM: AnaTool = {
+  name: 'load_nonclinical_program',
+  description:
+    "Load a program's ingested nonclinical studies (from ctd_nonclinical_studies) and return them in the shapes the other tools consume: study inputs for draft_nonclinical_overview_m2_4 / draft_nonclinical_summaries_m2_6, present-studies for assess_nonclinical_program, and species-NOAELs for compute_fih_dose. Call this FIRST when the user references a program/IND by id and wants the overview drafted, the gap analysis run, or the FIH dose computed from the program's real data — then pass the returned arrays into the relevant tool. Feature-gated: returns status 'unavailable' when the preclinical data layer is not enabled in this environment.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      ctdProgramId: { type: 'number', description: 'The ctd_programs id whose nonclinical studies to load.' },
+    },
+    required: ['ctdProgramId'],
+  },
+};
+
 export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
@@ -2826,6 +2839,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   COMPUTE_FIH_DOSE,
   CLASSIFY_TOX_FINDINGS,
   SELECT_EXPOSURE_RESPONSE_DOSE,
+  LOAD_NONCLINICAL_PROGRAM,
   DRAFT_NONCLINICAL_OVERVIEW_M2_4,
   DRAFT_NONCLINICAL_SUMMARIES_M2_6,
   ASSESS_NONCLINICAL_PROGRAM,

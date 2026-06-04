@@ -17,6 +17,7 @@ const NEW_TOOLS = [
   'compute_fih_dose',
   'classify_tox_findings',
   'select_exposure_response_dose',
+  'load_nonclinical_program',
   'draft_nonclinical_overview_m2_4',
   'draft_nonclinical_summaries_m2_6',
   'assess_nonclinical_program',
@@ -127,6 +128,20 @@ describe('draft_nonclinical_overview_m2_4 handler', () => {
     expect(out.content).toMatch(/NONCLINICAL OVERVIEW/);
     expect(out.gaps).toContain('primary pharmacology studies');
     expect(out.toxProfile.adaptive).toContain('hepatocellular hypertrophy');
+  });
+});
+
+describe('load_nonclinical_program handler', () => {
+  it('returns needs_parameters without a valid program id', async () => {
+    const handler = getToolHandler('load_nonclinical_program')!;
+    const out = JSON.parse(await handler({ ctdProgramId: 0 }));
+    expect(out.status).toBe('needs_parameters');
+  });
+
+  it('reports unavailable when the preclinical data layer is disabled', async () => {
+    const handler = getToolHandler('load_nonclinical_program')!;
+    const out = JSON.parse(await handler({ ctdProgramId: 123 }));
+    expect(out.status).toBe('unavailable');
   });
 });
 

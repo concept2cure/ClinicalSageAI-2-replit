@@ -969,6 +969,35 @@ registerToolHandler('draft_nonclinical_overview_m2_4', async (input: Record<stri
   }
 });
 
+// Load a program's ingested nonclinical studies (feature-gated DB read)
+registerToolHandler('load_nonclinical_program', async (input: Record<string, unknown>) => {
+  try {
+    const ctdProgramId = Number(input.ctdProgramId);
+    if (!Number.isInteger(ctdProgramId) || ctdProgramId <= 0) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'A positive integer ctdProgramId is required.' });
+    }
+    const { loadNonclinicalProgram } = await import('../preclinical/nonclinical-program-loader.js');
+    const loaded = await loadNonclinicalProgram(ctdProgramId);
+    if (!loaded) {
+      return JSON.stringify({
+        status: 'unavailable',
+        message: 'The preclinical data layer is not enabled in this environment (PRECLINICAL_REVIEWER_ENABLED unset) or the program id is invalid.',
+      });
+    }
+    return JSON.stringify({
+      status: 'loaded',
+      rowCount: loaded.rowCount,
+      studies: loaded.studies,
+      presentStudies: loaded.presentStudies,
+      speciesNoaels: loaded.speciesNoaels,
+      instruction:
+        'Pass studies into draft_nonclinical_overview_m2_4 / draft_nonclinical_summaries_m2_6, presentStudies into assess_nonclinical_program, and speciesNoaels into compute_fih_dose. If rowCount is 0, tell the user no nonclinical studies are ingested for this program.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Loading nonclinical program failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Draft M2.6 Nonclinical Written & Tabulated Summaries — deterministic composer
 registerToolHandler('draft_nonclinical_summaries_m2_6', async (input: Record<string, unknown>) => {
   try {
