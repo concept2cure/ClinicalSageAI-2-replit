@@ -108,6 +108,37 @@ The biotech crown jewel is now real computation, not strings.
 
 ---
 
+## 2b. Multi-region build+submit and the SOP generator
+
+**Multi-region (FDA/EMA/PMDA) submit + build was already real** — confirmed by a
+full sweep. `server/services/submission-gateways/regional-packager.ts` builds the
+region-correct Module 1 backbone for each of the US/EU/JP; `ectd-regional-rules.ts`
+carries the per-gateway validation profiles; `fda-esg.ts` / `ema-cesp.ts` /
+`pmda-gateway.ts` transmit (AS2/SFTP + ACK 1/2/3; OAuth2 + EUDAMED; mTLS + HMAC),
+and `shared/regulatory/global-document-registry.ts` maps 70+ filing types × 12
+regions. The gap was a single resolver tying it together. Added:
+
+- **`server/services/regulatory/submission-resolver.ts`** — given a filing
+  (IND/NDA/BLA/MAA/JNDA) and product class, resolves the regional equivalent per
+  region (a biologic marketing application → US BLA, EU MAA, JP JNDA), each with
+  dossier standard, Module 1 path, validation profile, blueprints, and gateway;
+  plus `submissionCoverageMatrix()` that asserts every core (filing × region)
+  combination supports region-correct build and gateway submission.
+- **`GET /api/biopharma/submissions/plan` and `/coverage`** + AnA tool
+  `resolve_submission_plan` so AnA answers "can we build+submit this in the US,
+  EU and Japan, and how."
+
+**Client-side SOP generator inside AnA** — `server/services/sop-generator.ts`
+produces a GxP-structured, region-aware (FDA/EMA/PMDA) Standard Operating
+Procedure (Purpose, Scope, Responsibilities, Definitions, Procedure, Records,
+References, Revision history, Approval) with real starter procedures for common
+regulated processes (change control, CAPA, deviation, document control, eCTD
+publishing, regulatory submission, pharmacovigilance, training, supplier
+qualification, internal audit) and region-appropriate references. Exposed as the
+AnA tool `generate_sop`.
+
+---
+
 ## 3. Design alignment
 
 UI is untouched per the design contract — these are the backend services and

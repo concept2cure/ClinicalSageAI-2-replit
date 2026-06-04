@@ -1071,6 +1071,48 @@ registerToolHandler('assess_bla_filing_risk', async (input: Record<string, unkno
   }
 });
 
+// Generate SOP — deterministic GxP SOP generator (region-aware)
+registerToolHandler('generate_sop', async (input: Record<string, unknown>) => {
+  try {
+    const { generateSop } = await import('../sop-generator.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = generateSop(input as any);
+    return JSON.stringify({
+      status: 'generated',
+      documentId: result.documentId,
+      title: result.title,
+      regions: result.regions,
+      processType: result.processType,
+      content: result.markdown,
+      sections: result.sections,
+      references: result.references,
+      instruction:
+        'Present the SOP markdown for review. It is a draft for the client to tailor and approve; the procedure steps and references are a region-appropriate starting point, not final.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `SOP generation failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// Resolve Submission Plan — multi-region build+submit resolver (FDA/EMA/PMDA)
+registerToolHandler('resolve_submission_plan', async (input: Record<string, unknown>) => {
+  try {
+    const { resolveSubmissionPlan, submissionCoverageMatrix } = await import('../regulatory/submission-resolver.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const plan = resolveSubmissionPlan(input as any);
+    const coverage = submissionCoverageMatrix();
+    return JSON.stringify({
+      status: 'resolved',
+      plan,
+      coverageSummary: coverage.summary,
+      instruction:
+        'Report the per-region filing, dossier standard, Module 1 path, validation profile, and gateway, plus the coverage/gaps verbatim. The build and submit stacks for FDA/EMA/PMDA already exist; this is the routing plan over them.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Submission plan resolution failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Check Dossier Consistency — cross-artifact divergence detection
 registerToolHandler('check_dossier_consistency', async (input: Record<string, unknown>) => {
   const draftContent = input.draft_content as string;

@@ -385,6 +385,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount BLA workbench routes:', error);
   }
 
+  // Multi-region submission planning (build+submit resolver, FDA/EMA/PMDA).
+  try {
+    const submissionsModule = await import('../routes/biopharma/submissions');
+    app.use('/api/biopharma/submissions', authMiddleware, submissionsModule.default);
+    console.info('✅ Biopharma submissions routes mounted (/api/biopharma/submissions)');
+  } catch (error) {
+    console.error('❌ Failed to mount Biopharma submissions routes:', error);
+  }
+
   // Biopharma domain programs + meetings (Phase 10 — /api/biopharma/*).
   try {
     const biopharmaModule = await import('../routes/biopharma/programs');

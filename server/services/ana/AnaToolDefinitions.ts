@@ -2421,6 +2421,67 @@ export const ASSESS_BLA_FILING_RISK: AnaTool = {
   },
 };
 
+export const GENERATE_SOP: AnaTool = {
+  name: 'generate_sop',
+  description:
+    "Generate a GxP-structured client Standard Operating Procedure (SOP), region-aware across FDA (US), EMA (EU), and PMDA (Japan). Use when the user asks AnA to write/draft an SOP for a process (e.g. change control, CAPA, deviation, document control, eCTD publishing, regulatory submission, pharmacovigilance case processing, training, supplier qualification, internal audit). Returns the SOP as structured sections plus rendered markdown, with the canonical SOP skeleton (Purpose, Scope, Responsibilities, Definitions, Procedure, Records, References, Revision history, Approval) and region-appropriate regulatory references. The draft opens in AnA's editor; the client tailors and approves it.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      title: { type: 'string', description: 'SOP title, e.g. "Change Control for Manufacturing Processes".' },
+      processType: {
+        type: 'string',
+        enum: [
+          'change_control', 'document_control', 'capa', 'deviation_management',
+          'ectd_publishing', 'regulatory_submission', 'pharmacovigilance_case',
+          'training', 'supplier_qualification', 'internal_audit', 'generic',
+        ],
+        description: 'Known regulated process (drives the starter procedure). Use generic for an unlisted topic.',
+      },
+      regions: {
+        type: 'array',
+        items: { type: 'string', enum: ['FDA', 'EMA', 'PMDA'] },
+        description: 'Regions the SOP must satisfy (default FDA).',
+      },
+      filingType: { type: 'string', description: 'Optional filing context (NDA/BLA/MAA/JNDA/IND).' },
+      organization: { type: 'string' },
+      documentId: { type: 'string', description: 'SOP identifier, e.g. SOP-QA-CC-001 (generated if omitted).' },
+      effectiveDate: { type: 'string', description: 'ISO date; defaults to today.' },
+      ownerRole: { type: 'string', description: 'Role accountable for the SOP (e.g. "Head of Quality").' },
+      scopeNote: { type: 'string', description: 'Extra scope sentence from the client.' },
+    },
+    required: ['title'],
+  },
+};
+
+export const RESOLVE_SUBMISSION_PLAN: AnaTool = {
+  name: 'resolve_submission_plan',
+  description:
+    "Resolve the multi-region BUILD + SUBMIT plan for a filing across FDA (US), EMA (EU), and PMDA (Japan). Given a filing type (IND/NDA/BLA/MAA/JNDA/…) and/or product class, returns the regional equivalent application per region (e.g. a biologic marketing application → US BLA, EU MAA, JP JNDA), each with its dossier standard, region Module 1 path, validation profile, blueprints, and submission gateway, plus whether region-correct build and gateway submission are supported. Also returns an overall coverage summary asserting which (filing × region) combinations are fully supported. Use when the user asks whether/how a product can be filed in the US, EU, and Japan, or which gateway/structure applies.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      filingType: { type: 'string', description: 'Filing string or registry id (IND, NDA, BLA, MAA, JNDA, …).' },
+      applicationFamily: {
+        type: 'string',
+        enum: ['clinical_trial', 'marketing_authorization', 'variation', 'renewal', 'supplement', 'pediatric', 'orphan'],
+        description: 'Used when no filingType is given.',
+      },
+      productClass: {
+        type: 'string',
+        enum: ['small_molecule', 'biologic', 'biosimilar', 'vaccine', 'atmp', 'generic', 'any'],
+        description: 'Drives the regional equivalent (biologic → BLA in the US).',
+      },
+      regions: {
+        type: 'array',
+        items: { type: 'string', enum: ['US', 'EU', 'JP', 'UK', 'CA', 'CN', 'AU', 'CH'] },
+        description: 'Target regions (default US, EU, JP).',
+      },
+    },
+    required: [],
+  },
+};
+
 /** Custom JSON-schema tools dispatched by our local AnaToolExecutor. */
 export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
@@ -2503,6 +2564,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ASSESS_COMPARABILITY,
   ASSESS_IMMUNOGENICITY,
   ASSESS_BLA_FILING_RISK,
+  GENERATE_SOP,
+  RESOLVE_SUBMISSION_PLAN,
   MINE_PRECEDENTS,
   GENERATE_DOCUMENT,
   BUILD_FROM_TEMPLATE,
