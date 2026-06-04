@@ -87,7 +87,7 @@ describe('runReviewerSimulation — preclinical wiring', () => {
     });
 
     expect(loadPreclinicalIntelMock).toHaveBeenCalledTimes(1);
-    expect(loadPreclinicalIntelMock).toHaveBeenCalledWith(42, expect.any(Object));
+    expect(loadPreclinicalIntelMock).toHaveBeenCalledWith(42, ORG, expect.any(Object));
     // GLP rule should fire because pivotal study has glpCompliant=false
     const glpHit = result.questions.find(r => r.trigger === 'NC_GLP_PIVOTAL_MISSING');
     expect(glpHit?.severity).toBe('critical');

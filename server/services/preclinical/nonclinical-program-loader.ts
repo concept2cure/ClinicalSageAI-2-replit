@@ -110,29 +110,26 @@ export interface LoadedNonclinicalProgram {
   rowCount: number;
 }
 
+/** Full ctd_nonclinical_studies row — the single source for the row shape. */
+export type NonclinicalStudyRow = typeof ctdNonclinicalStudies.$inferSelect;
+
 /**
- * Load a program's nonclinical studies and return them in every shape the
- * engines consume. Returns undefined when PRECLINICAL_REVIEWER_ENABLED is unset
- * or either id is invalid. The query is constrained to the caller's
- * organization, so an empty result also covers "program not in this org".
- *
- * @param organizationId the active tenant — required; the program is loaded
- *   only when it belongs to this organization, independent of whether Postgres
- *   RLS enforcement is active in the environment.
+ * The single tenant-scoped reader of ctd_nonclinical_studies. Both the
+ * M2.4/M2.6 composers (via loadNonclinicalProgram) and the reviewer-simulator
+ * intel loader (loadPreclinicalIntel) read through this, so the query and its
+ * tenant constraint live in exactly one place. ctd_nonclinical_studies has no
+ * org column of its own, so ownership is enforced through its parent program —
+ * independent of whether Postgres RLS enforcement is active. Returns undefined
+ * when the flag is unset or either id is invalid.
  */
-export async function loadNonclinicalProgram(
+export async function fetchNonclinicalRows(
   ctdProgramId: number,
   organizationId: number,
-): Promise<LoadedNonclinicalProgram | undefined> {
+): Promise<NonclinicalStudyRow[] | undefined> {
   if (!PRECLINICAL_REVIEWER_ENABLED) return undefined;
   if (!Number.isInteger(ctdProgramId) || ctdProgramId <= 0) return undefined;
   if (!Number.isInteger(organizationId) || organizationId <= 0) return undefined;
-
-  // Tenant isolation: join to ctd_programs and constrain by organizationId.
-  // ctd_nonclinical_studies has no org column of its own, so ownership is
-  // enforced through its parent program rather than trusting the model-supplied
-  // program id.
-  const rows = (await db
+  return (await db
     .select(getTableColumns(ctdNonclinicalStudies))
     .from(ctdNonclinicalStudies)
     .innerJoin(ctdPrograms, eq(ctdNonclinicalStudies.programId, ctdPrograms.id))
@@ -141,8 +138,20 @@ export async function loadNonclinicalProgram(
         eq(ctdNonclinicalStudies.programId, ctdProgramId),
         eq(ctdPrograms.organizationId, organizationId),
       ),
-    )) as unknown as NonclinicalRow[];
+    )) as unknown as NonclinicalStudyRow[];
+}
 
+/**
+ * Load a program's nonclinical studies in every shape the composers and engines
+ * consume. Tenant-scoped via {@link fetchNonclinicalRows}; an empty result also
+ * covers "program not in this organization".
+ */
+export async function loadNonclinicalProgram(
+  ctdProgramId: number,
+  organizationId: number,
+): Promise<LoadedNonclinicalProgram | undefined> {
+  const rows = await fetchNonclinicalRows(ctdProgramId, organizationId);
+  if (!rows) return undefined;
   return {
     studies: rows.map(mapRowToStudyInput),
     presentStudies: rows.map(mapRowToPresentStudy),
