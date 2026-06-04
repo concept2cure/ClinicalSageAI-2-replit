@@ -7,6 +7,7 @@ import crypto from 'node:crypto';
 import { db } from '../../db';
 import { ectdTemplates } from '../../../shared/schema';
 import { eq, and, or, like, sql, type SQL } from 'drizzle-orm';
+import { SOP_TEMPLATES } from '../../services/qms/sopTemplates';
 
 const router = Router();
 
@@ -58,9 +59,29 @@ router.get('/', async (req: Request, res: Response) => {
 
     const result = await templateService.getAllTemplates(organizationId, filters);
 
+    // Fold in the server-curated Quality system family (SOPs, work
+    // instructions, policies, forms, validation protocols, training
+    // curricula) so the cross-program Templates library lists them alongside
+    // the regulatory templates. Static catalog — see services/qms/sopTemplates.
+    const qmsCards = SOP_TEMPLATES.map((t) => ({
+      id: `qms-${t.key}`,
+      name: t.label,
+      title: t.label,
+      description: t.description,
+      category: 'Quality system',
+      type: t.docType,
+      source: 'qms',
+      tags: ['quality', 'sop', t.docType],
+      usageCount: 0,
+      downloadCount: 0,
+      updatedAt: new Date().toISOString(),
+      status: 'active',
+    }));
+
     res.json({
       success: true,
       ...result,
+      templates: [...result.templates, ...qmsCards],
     });
   } catch (error) {
     console.error('Error fetching templates:', error);
