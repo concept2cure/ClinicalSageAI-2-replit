@@ -1113,6 +1113,24 @@ registerToolHandler('resolve_submission_plan', async (input: Record<string, unkn
   }
 });
 
+// Get CTD Module 1 / Module 2 home — region-aware section structure
+registerToolHandler('get_ctd_module_home', async (input: Record<string, unknown>) => {
+  try {
+    const mod = await import('../regulatory/ctd-module-structure.js');
+    const region = mod.normalizeRegion(input.region as string | undefined);
+    const which = input.module as string | undefined;
+    if (which === '1') {
+      return JSON.stringify({ status: 'ok', region, module: 1, sections: mod.getModule1Structure(region) });
+    }
+    if (which === '2') {
+      return JSON.stringify({ status: 'ok', region, module: 2, sections: mod.getModule2Structure() });
+    }
+    return JSON.stringify({ status: 'ok', ...mod.getCtdModuleHome(region) });
+  } catch (err: any) {
+    return JSON.stringify({ error: `CTD module home lookup failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Check Dossier Consistency — cross-artifact divergence detection
 registerToolHandler('check_dossier_consistency', async (input: Record<string, unknown>) => {
   const draftContent = input.draft_content as string;

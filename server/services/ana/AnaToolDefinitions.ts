@@ -2482,6 +2482,20 @@ export const RESOLVE_SUBMISSION_PLAN: AnaTool = {
   },
 };
 
+export const GET_CTD_MODULE_HOME: AnaTool = {
+  name: 'get_ctd_module_home',
+  description:
+    "Return the CTD Module 1 (regional administrative) and Module 2 (CTD summaries) section structure for a region (FDA / EMA / PMDA). Module 1 is region-specific (FDA forms 356h/1571 + labeling; EU application form + SmPC/PL + RMP; JP 様式 + 添付文書 + J-RMP); Module 2 is the ICH-common summary set 2.1–2.7 where each summary declares its source module (2.3 ← M3, 2.4/2.6 ← M4, 2.5/2.7 ← M5). Use when the user asks what goes in Module 1 or Module 2, how the CTD summaries map to the source modules, or to scaffold a dedicated M1/M2 authoring view. Per-program build-state (which sections are drafted/approved) is available from GET /api/biopharma/ctd/build-state.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      region: { type: 'string', enum: ['FDA', 'EMA', 'PMDA', 'US', 'EU', 'JP'], description: 'Region (default FDA).' },
+      module: { type: 'string', enum: ['1', '2'], description: 'Restrict to a single module; omit for both.' },
+    },
+    required: [],
+  },
+};
+
 /** Custom JSON-schema tools dispatched by our local AnaToolExecutor. */
 export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
@@ -2566,6 +2580,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ASSESS_BLA_FILING_RISK,
   GENERATE_SOP,
   RESOLVE_SUBMISSION_PLAN,
+  GET_CTD_MODULE_HOME,
   MINE_PRECEDENTS,
   GENERATE_DOCUMENT,
   BUILD_FROM_TEMPLATE,

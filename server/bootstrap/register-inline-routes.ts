@@ -394,6 +394,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Biopharma submissions routes:', error);
   }
 
+  // CTD Module 1 (regional administrative) + Module 2 (CTD summaries) home.
+  try {
+    const ctdModule = await import('../routes/biopharma/ctd');
+    app.use('/api/biopharma/ctd', authMiddleware, ctdModule.default);
+    console.info('✅ Biopharma CTD M1/M2 routes mounted (/api/biopharma/ctd)');
+  } catch (error) {
+    console.error('❌ Failed to mount Biopharma CTD routes:', error);
+  }
+
   // Biopharma domain programs + meetings (Phase 10 — /api/biopharma/*).
   try {
     const biopharmaModule = await import('../routes/biopharma/programs');

@@ -5,7 +5,7 @@ import { ALL_ANA_TOOLS } from '../../../server/services/ana/AnaToolDefinitions';
 // biologics tools are registered in the model's master tool list with the
 // required input-schema fields, so AnA can call them in a BLA context.
 describe('biologics AnA tool definitions', () => {
-  const names = ['assess_analytical_similarity', 'assess_comparability', 'assess_immunogenicity', 'assess_bla_filing_risk', 'generate_sop'];
+  const names = ['assess_analytical_similarity', 'assess_comparability', 'assess_immunogenicity', 'assess_bla_filing_risk', 'generate_sop', 'resolve_submission_plan', 'get_ctd_module_home'];
 
   it('are present in ALL_ANA_TOOLS', () => {
     const toolNames = ALL_ANA_TOOLS.map((t) => t.name);

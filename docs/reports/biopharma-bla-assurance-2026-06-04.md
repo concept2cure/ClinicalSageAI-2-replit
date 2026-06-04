@@ -139,6 +139,35 @@ AnA tool `generate_sop`.
 
 ---
 
+## 2c. CTD Module 1 + Module 2 home (completes M1–M5)
+
+Design is building dedicated UI surfaces for Module 1 (regional administrative)
+and Module 2 (CTD summaries) — the two modules that were authored piecemeal with
+no home, whereas M3 (CMC OS), M4, and M5 are homed. This adds the backend they
+bind to, mirroring the M3 build-state shape and reusing the existing section
+store (no new tables):
+
+- **`server/services/regulatory/ctd-module-structure.ts`** — the canonical,
+  region-aware definition. Module 1 differs by region (FDA 356h/1571 + labeling;
+  EU application form + SmPC/PL + RMP; JP 様式 + 添付文書 + GPSP/J-RMP); Module 2
+  is the ICH set 2.1–2.7 where each summary declares its source module
+  (2.3 ← M3, 2.4/2.6 ← M4, 2.5/2.7 ← M5). Plus a pure `annotateModuleBuildState`
+  that derives per-section status + a readiness summary, and — for M2 — the
+  upstream readiness of the source module.
+- **Build-state from the existing store** — `GET /api/biopharma/ctd/build-state/:projectId`
+  reads `c2c_document_sections` (the same store the biopharma surface already
+  counts) and annotates the M1/M2 trees; it degrades to an all-not-started
+  structure when a program has no authored sections yet.
+- **`GET /api/biopharma/ctd/structure`** + AnA tool `get_ctd_module_home` so the
+  surfaces and AnA share one definition of what belongs in M1 and M2.
+
+M2 generation itself is not rebuilt — the existing `m2-summary-builders.ts`
+(QOS / nonclinical overview / clinical summary) and the `submission-orchestrator`
+`/m2/*` routes remain the compose path; this layer adds the structure,
+dependency awareness, and build-state home over them.
+
+---
+
 ## 3. Design alignment
 
 UI is untouched per the design contract — these are the backend services and
