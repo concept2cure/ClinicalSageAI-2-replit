@@ -828,6 +828,104 @@ export interface CsrKnowledgeEdge {
 }
 
 // ============================================================================
+// Submission Core + Evidence Graph (Phase 1) — see shared/schema/submissions.ts,
+// shared/schema/evidence.ts. Canonical select shapes are inferred there via
+// $inferSelect/$inferInsert; these hand-authored mirrors match the SQL columns.
+// ============================================================================
+
+export interface Submission {
+  id: number;
+  title: string;
+  productName?: string | null;
+  applicationType: string; // ind|nda|bla|anda|maa|510k|de_novo|pma|cta
+  clientType: string; // pharma|biotech|mdx|ivd
+  primaryRegion: string; // fda|eu|jp
+  status: string; // planning|active|submitted|archived
+  lifecycleStage: string; // planning|original|amendment|response|variation|annual|withdrawal
+  organizationId: number;
+  createdBy: number;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+  deletedAt?: Date | null;
+}
+export type NewSubmission = Omit<Submission, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>;
+
+export interface SubmissionRegion {
+  id: number;
+  submissionId: number;
+  region: string; // fda|eu|jp
+  pathway: string; // ectd_v322|ectd_v40|estar|mdr|ivdr|ctis
+  moduleProfileVersion?: string | null;
+  validationProfileVersion?: string | null;
+  organizationId: number;
+  createdBy: number;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+  deletedAt?: Date | null;
+}
+export type NewSubmissionRegion = Omit<SubmissionRegion, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>;
+
+export interface EctdSequence {
+  id: number;
+  submissionId: number;
+  region: string;
+  sequenceNumber: string; // '0000', '0001', ...
+  type: string; // original|amendment|response|variation|annual|withdrawal
+  status: string; // draft|assembling|validated|frozen|dispatched
+  validationStatus?: string | null;
+  dispatchStatus?: string | null;
+  frozenAt?: Date | null;
+  organizationId: number;
+  createdBy: number;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+  deletedAt?: Date | null;
+}
+export type NewEctdSequence = Omit<EctdSequence, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>;
+
+export interface SubmissionLeaf {
+  id: number;
+  sequenceId: number;
+  sectionCode: string; // "2.5", "3.2.S.4.2", "m1.us.cover"
+  title: string;
+  granularity?: string | null;
+  lifecycleOp: string; // new|replace|append|delete
+  documentTable?: string | null; // polymorphic — coauthor_documents|ctd_onboarding_documents|unified_documents|vault_documents
+  documentId?: number | null; // polymorphic id within documentTable
+  leafGuid?: string | null;
+  parentLeafId?: number | null;
+  checksum?: string | null;
+  organizationId: number;
+  createdBy: number;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+  deletedAt?: Date | null;
+}
+export type NewSubmissionLeaf = Omit<SubmissionLeaf, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>;
+
+// Named SubmissionEvidenceLink (not EvidenceLink) — `evidence_links` already
+// exists in shared/schema/programs.ts. See RECONCILE.md §2.
+export interface SubmissionEvidenceLink {
+  id: number;
+  submissionId: number;
+  targetSectionCode: string; // "2.7.3"
+  sourceDocumentTable: string; // polymorphic
+  sourceDocumentId: number; // polymorphic id within sourceDocumentTable
+  sourceLocator?: string | null;
+  direction: string; // derives_from|cited_by|supports|contradicts
+  confidence?: number | null; // 0..1
+  organizationId: number;
+  createdBy: number;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+  deletedAt?: Date | null;
+}
+export type NewSubmissionEvidenceLink = Omit<
+  SubmissionEvidenceLink,
+  'id' | 'createdAt' | 'updatedAt' | 'deletedAt'
+>;
+
+// ============================================================================
 // Global exports
 // ============================================================================
 

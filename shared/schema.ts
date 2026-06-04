@@ -38,6 +38,8 @@ import { z } from 'zod';
 import { sql } from 'drizzle-orm';
 export * from './schema/vault';
 export * from './schema/csr-knowledge-db';
+export * from './schema/submissions';
+export * from './schema/evidence';
 
 // ============================================================
 // SHARED ENUMS
@@ -10915,6 +10917,10 @@ export const coauthorDocuments = pgTable(
     ectdModuleId: integer('ectd_module_id').references(() => ectdModules.id),
     moduleNumber: text('module_number'), // e.g., "3.2.S.4.1" for quick lookups
     moduleName: text('module_name'), // Cached module name for display
+
+    // pgvector embedding for RAG grounding (Phase 1, WO-1.2). Canonical eCTD
+    // document table — see RECONCILE.md §2 and the companion migration.
+    embedding: vector('embedding', { dimensions: 1536 }),
 
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
