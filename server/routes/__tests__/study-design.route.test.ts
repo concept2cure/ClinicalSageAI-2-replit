@@ -207,3 +207,17 @@ describe('POST /api/study-design/crf-shell', () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe('POST /api/study-design/sap', () => {
+  it('projects the design as a SAP skeleton', async () => {
+    const res = await request(authedApp()).post('/api/study-design/sap').send({ design: design() });
+    expect(res.status).toBe(200);
+    expect(res.body.sap.standard).toBe('ICH E9 / E9(R1)');
+    expect(res.body.sap.sections.length).toBe(12);
+  });
+
+  it('rejects without an authenticated tenant', async () => {
+    const res = await request(anonApp()).post('/api/study-design/sap').send({ design: design() });
+    expect(res.status).toBe(401);
+  });
+});

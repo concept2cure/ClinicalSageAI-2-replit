@@ -103,3 +103,8 @@ export {
   type CrfItemType,
   projectCrfShell,
 } from './crf-shell';
+export {
+  type SapDocument,
+  type SapSection,
+  projectSap,
+} from './sap-projection';

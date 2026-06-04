@@ -32,6 +32,7 @@ import {
   projectRegistration,
   projectAllRegistrations,
   projectCrfShell,
+  projectSap,
   buildEffectPrior,
   gatherCsrEffectEvidence,
   persistStudyDesignTx,
@@ -266,6 +267,21 @@ router.post('/protocol', (req: Request, res: Response) => {
   }
 });
 
+// ─── POST /sap (project the design as a SAP skeleton) ─────────────────────────
+
+router.post('/sap', (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
+  const design = parseDesign(req, res);
+  if (!design) return;
+  try {
+    return res.json({ sap: projectSap(design) });
+  } catch (err: any) {
+    console.error('[study-design/sap]', err?.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
 // ─── POST /schedule-of-activities (project the design's SoA grid) ─────────────
 
 router.post('/schedule-of-activities', (req: Request, res: Response) => {
@@ -387,6 +403,22 @@ router.get('/:studyId/protocol', async (req: Request, res: Response) => {
     return res.json({ protocol: projectProtocol(loaded.design), validation: loaded.validation });
   } catch (err: any) {
     console.error('[study-design/protocol-load]', err?.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─── GET /:studyId/sap (load + project) ───────────────────────────────────────
+
+router.get('/:studyId/sap', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
+  const studyId = String(req.params.studyId);
+  try {
+    const loaded = await loadStudyDesign(studyId, orgId);
+    if (!loaded) return res.status(404).json({ error: 'NOT_FOUND' });
+    return res.json({ sap: projectSap(loaded.design), validation: loaded.validation });
+  } catch (err: any) {
+    console.error('[study-design/sap-load]', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });
