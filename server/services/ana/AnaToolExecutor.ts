@@ -1050,6 +1050,30 @@ registerToolHandler('draft_nonclinical_summaries_m2_6', async (input: Record<str
   }
 });
 
+// Integrated nonclinical safety assessment — composes the engines
+registerToolHandler('assess_nonclinical_safety', async (input: Record<string, unknown>) => {
+  try {
+    const { assessNonclinicalSafety } = await import('../preclinical/nonclinical-safety-assessment.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const a = assessNonclinicalSafety(input as any);
+    return JSON.stringify({
+      status: 'assessed',
+      engine: 'deterministic',
+      readiness: a.readiness,
+      recommendedStartingDoseMg: a.fihDose?.recommendedStartingDoseMg ?? null,
+      limitedBy: a.fihDose?.limitedBy ?? null,
+      adverseFindings: a.toxProfile?.adverseFindings.map(f => `${f.finding} (${f.organ})`) ?? [],
+      programGaps: a.programGaps?.gaps ?? [],
+      blockers: a.blockers,
+      overviewCompleteness: a.overview?.completeness ?? null,
+      summary: a.summary,
+      instruction: 'Report the readiness verdict, FIH dose, adverse findings, and blockers verbatim. A blocker means a study is missing for the target phase, not that the molecule is unsafe.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Nonclinical safety assessment failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Nonclinical study-program requirements & gaps — deterministic ICH M3(R2)
 registerToolHandler('assess_nonclinical_program', async (input: Record<string, unknown>) => {
   try {

@@ -22,6 +22,7 @@ const NEW_TOOLS = [
   'draft_nonclinical_overview_m2_4',
   'draft_nonclinical_summaries_m2_6',
   'assess_nonclinical_program',
+  'assess_nonclinical_safety',
   'assess_concentration_qtc',
   'assess_ddi_risk',
   'characterize_pk',
@@ -204,6 +205,23 @@ describe('assess_nonclinical_program handler', () => {
     expect(out.status).toBe('assessed');
     // in-vivo genotox is due before Phase 2 and absent.
     expect(out.gaps.some((g: { key: string }) => g.key === 'genotox_in_vivo')).toBe(true);
+  });
+});
+
+describe('assess_nonclinical_safety handler', () => {
+  it('rolls up the integrated assessment with a readiness verdict', async () => {
+    const handler = getToolHandler('assess_nonclinical_safety')!;
+    const out = JSON.parse(
+      await handler({
+        fih: { speciesNoaels: [{ species: 'dog', noaelMgPerKg: 30 }], mabel: { minAnticipatedEffectiveExposure: 10, exposurePerMgDose: 1 } },
+        program: { maxClinicalDurationWeeks: 4, targetPhase: 2 },
+        presentStudies: [{ studyType: 'repeat_dose_tox', species: 'rat', durationWeeks: 4 }],
+      }),
+    );
+    expect(out.status).toBe('assessed');
+    expect(out.readiness).toBe('gaps_block_fih');
+    expect(out.recommendedStartingDoseMg).toBe(10);
+    expect(out.blockers.length).toBeGreaterThan(0);
   });
 });
 

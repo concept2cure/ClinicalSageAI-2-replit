@@ -2772,6 +2772,50 @@ export const GET_NONCLINICAL_TEMPLATE: AnaTool = {
   },
 };
 
+export const ASSESS_NONCLINICAL_SAFETY: AnaTool = {
+  name: 'assess_nonclinical_safety',
+  description:
+    "Produce the integrated nonclinical safety assessment for an IND in one call — the roll-up a toxicology lead writes. Composes the first-in-human starting dose (NOAEL→HED→MRSD vs MABEL), the target-organ adversity profile, the ICH M3(R2)/S-series program gaps, and the M2.4 overview into a single readiness verdict (ready_for_fih / gaps_block_fih / insufficient_input) with the blocker list. Each input block is optional; supply what the program has. Prefer this for 'what is the nonclinical safety story / are we ready for first-in-human?' questions; report the verdict, dose, adverse findings, and blockers verbatim.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      drugSubstanceName: { type: 'string' },
+      indication: { type: 'string' },
+      fih: {
+        type: 'object',
+        description: 'First-in-human dose inputs (same shape as compute_fih_dose).',
+        properties: {
+          speciesNoaels: {
+            type: 'array',
+            items: { type: 'object', properties: { species: { type: 'string' }, noaelMgPerKg: { type: 'number' }, studyRef: { type: 'string' }, km: { type: 'number' } }, required: ['species', 'noaelMgPerKg'] },
+          },
+          safetyFactor: { type: 'number' },
+          mabel: { type: 'object', properties: { minAnticipatedEffectiveExposure: { type: 'number' }, exposurePerMgDose: { type: 'number' }, mabelSafetyFactor: { type: 'number' }, basis: { type: 'string' } }, required: ['minAnticipatedEffectiveExposure', 'exposurePerMgDose'] },
+        },
+        required: ['speciesNoaels'],
+      },
+      findings: {
+        type: 'array',
+        items: { type: 'object', properties: { organ: { type: 'string' }, finding: { type: 'string' }, severity: { type: 'string' }, correlates: { type: 'array', items: { type: 'string' } } }, required: ['organ', 'finding'] },
+      },
+      program: {
+        type: 'object',
+        properties: { maxClinicalDurationWeeks: { type: 'number' }, targetPhase: { type: 'number' }, route: { type: 'string' }, includesWocbp: { type: 'boolean' }, chronicUse: { type: 'boolean' }, oncology: { type: 'boolean' }, marketingApplication: { type: 'boolean' } },
+        required: ['maxClinicalDurationWeeks'],
+      },
+      presentStudies: {
+        type: 'array',
+        items: { type: 'object', properties: { studyType: { type: 'string' }, species: { type: 'string' }, durationWeeks: { type: 'number' }, genotoxComponent: { type: 'string' } }, required: ['studyType'] },
+      },
+      studies: {
+        type: 'array',
+        items: { type: 'object', properties: { studyType: { type: 'string' }, species: { type: 'string' }, durationWeeks: { type: 'number' }, glpCompliant: { type: 'boolean' }, noael: { type: 'string' }, keyFindings: { type: 'string' } }, required: ['studyType'] },
+      },
+    },
+    required: [],
+  },
+};
+
 export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
@@ -2857,6 +2901,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   DRAFT_NONCLINICAL_OVERVIEW_M2_4,
   DRAFT_NONCLINICAL_SUMMARIES_M2_6,
   ASSESS_NONCLINICAL_PROGRAM,
+  ASSESS_NONCLINICAL_SAFETY,
   ASSESS_CONCENTRATION_QTC,
   ASSESS_DDI_RISK,
   CHARACTERIZE_PK,
