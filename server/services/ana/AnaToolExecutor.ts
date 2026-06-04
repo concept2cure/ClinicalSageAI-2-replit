@@ -1057,30 +1057,6 @@ registerToolHandler('draft_nonclinical_summaries_m2_6', async (input: Record<str
   }
 });
 
-// IND filing readiness across all five modules — deterministic, eCTD-map based
-registerToolHandler('assess_ind_filing_readiness', async (input: Record<string, unknown>) => {
-  try {
-    const { assessIndFilingReadiness } = await import('../regulatory/ind-filing-readiness.js');
-    const sectionStatus = (input.sectionStatus && typeof input.sectionStatus === 'object'
-      ? input.sectionStatus
-      : {}) as Record<string, never>;
-    const r = assessIndFilingReadiness(sectionStatus);
-    return JSON.stringify({
-      status: 'assessed',
-      engine: 'deterministic',
-      overallReadiness: r.overallReadiness,
-      percentage: r.percentage,
-      readyCount: r.readyCount,
-      requiredCount: r.requiredCount,
-      modules: r.modules.map(m => ({ module: m.module, percentage: m.percentage, readyCount: m.readyCount, requiredCount: m.requiredCount, missing: m.missing })),
-      blockers: r.blockers,
-      instruction: 'Report the overall verdict, per-module percentages, and blockers verbatim. A blocker is a required section not yet started, not a quality judgment of drafted content.',
-    });
-  } catch (err: any) {
-    return JSON.stringify({ error: `IND filing-readiness assessment failed: ${err?.message || 'unknown error'}` });
-  }
-});
-
 // Integrated nonclinical safety assessment — composes the engines
 registerToolHandler('assess_nonclinical_safety', async (input: Record<string, unknown>) => {
   try {

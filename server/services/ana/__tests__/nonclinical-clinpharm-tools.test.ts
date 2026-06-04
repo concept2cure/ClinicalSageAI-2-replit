@@ -23,7 +23,6 @@ const NEW_TOOLS = [
   'draft_nonclinical_summaries_m2_6',
   'assess_nonclinical_program',
   'assess_nonclinical_safety',
-  'assess_ind_filing_readiness',
   'assess_concentration_qtc',
   'assess_ddi_risk',
   'characterize_pk',
@@ -214,17 +213,6 @@ describe('assess_nonclinical_program handler', () => {
     expect(out.status).toBe('assessed');
     // in-vivo genotox is due before Phase 2 and absent.
     expect(out.gaps.some((g: { key: string }) => g.key === 'genotox_in_vivo')).toBe(true);
-  });
-});
-
-describe('assess_ind_filing_readiness handler', () => {
-  it('reports gaps and per-module rollup for an empty status map', async () => {
-    const handler = getToolHandler('assess_ind_filing_readiness')!;
-    const out = JSON.parse(await handler({}));
-    expect(out.status).toBe('assessed');
-    expect(out.overallReadiness).toBe('gaps');
-    expect(out.modules.map((m: { module: string }) => m.module)).toEqual(['M1', 'M2', 'M3', 'M4', 'M5']);
-    expect(out.blockers.length).toBe(out.requiredCount);
   });
 });
 
