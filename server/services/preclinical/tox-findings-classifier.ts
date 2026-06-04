@@ -174,8 +174,14 @@ function normalizeSeverity(s: string | null | undefined): string {
 export function classifyToxFinding(input: ToxFindingInput): ClassifiedFinding {
   const haystack = `${input.organ} ${input.finding}`.toLowerCase();
   const correlatesText = (input.correlates ?? []).join(' ');
+  // Escalate on an adverse term anywhere in the explicit correlates OR in the
+  // finding/organ text itself — e.g. "hepatocellular hypertrophy with necrosis"
+  // matches the adaptive hypertrophy entry first, but the in-finding "necrosis"
+  // must still escalate it to adverse. (None of the escalable KB patterns
+  // contain an adverse-correlate term, so testing the full text cannot
+  // spuriously escalate a plain adaptive finding.)
   const hasAdverseCorrelate =
-    ADVERSE_CORRELATES.test(correlatesText) || ADVERSE_CORRELATES.test(haystack.replace(input.finding.toLowerCase(), ''));
+    ADVERSE_CORRELATES.test(correlatesText) || ADVERSE_CORRELATES.test(haystack);
   const isSevere = SEVERE_GRADE.test(normalizeSeverity(input.severity));
 
   const entry = KB.find(k => k.pattern.test(haystack));

@@ -41,6 +41,15 @@ describe('classifyToxFinding', () => {
     expect(r.escalated).toBe(true);
   });
 
+  it('escalates when an adverse term appears within the finding text itself', () => {
+    // The adaptive hypertrophy entry matches first and KB.find short-circuits;
+    // the in-finding "necrosis" must still escalate to adverse rather than being
+    // stripped before the correlate check.
+    const r = classifyToxFinding({ organ: 'liver', finding: 'hepatocellular hypertrophy with single-cell necrosis' });
+    expect(r.adversity).toBe('adverse');
+    expect(r.escalated).toBe(true);
+  });
+
   it('frames phospholipidosis as a finding to monitor', () => {
     const r = classifyToxFinding({ organ: 'lung', finding: 'phospholipidosis (foamy macrophages)' });
     expect(r.adversity).toBe('monitor');

@@ -78,4 +78,13 @@ describe('assessConcentrationQtc', () => {
   it('rejects a negative slope SE', () => {
     expect(() => assessConcentrationQtc({ slope: 0.02, slopeSE: -1, targetConcentration: 300 })).toThrow();
   });
+
+  it('does not assert supratherapeutic coverage when no therapeutic Cmax is supplied', () => {
+    // Sub-threshold result, but therapeuticCmax omitted → coverage unverified.
+    const r = assessConcentrationQtc({ slope: 0.001, slopeSE: 0.001, targetConcentration: 100 });
+    expect(r.tqtWarranted).toBe(false);
+    expect(r.exposureCoverageAdequate).toBeNull();
+    expect(r.rationale).not.toMatch(/≥\d+× therapeutic exposure/);
+    expect(r.rationale).toMatch(/coverage not verified/i);
+  });
 });

@@ -99,7 +99,6 @@ export function requiredRepeatDoseToxDuration(maxClinicalWeeks: number): { roden
 
 /** Build the required nonclinical battery for the given program context. */
 export function requiredNonclinicalBattery(ctx: ProgramContext): RequiredStudy[] {
-  const phase = ctx.targetPhase ?? 1;
   const dur = requiredRepeatDoseToxDuration(ctx.maxClinicalDurationWeeks);
   const studies: RequiredStudy[] = [];
 

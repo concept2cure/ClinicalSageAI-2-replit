@@ -111,9 +111,15 @@ export function assessConcentrationQtc(input: ConcentrationQtcInput): Concentrat
 
   let rationale: string;
   if (!tqtWarranted && confidence === 'adequate') {
+    // Only claim supratherapeutic coverage when a therapeutic Cmax was supplied
+    // and the check actually passed; otherwise state that coverage is unverified.
+    const coverageClause =
+      exposureCoverageAdequate === true
+        ? ` (≥${requiredMultiple}× therapeutic exposure)`
+        : ' (supratherapeutic coverage not verified — no therapeutic Cmax supplied)';
     rationale =
       `Negative C-QTc: the upper 90% CI bound of ΔΔQTc (${round(upperBound90, 1)} ms) is below the ` +
-      `${thresholdMs} ms threshold at ${round(c, 1)} (≥${requiredMultiple}× therapeutic exposure). A dedicated ` +
+      `${thresholdMs} ms threshold at ${round(c, 1)}${coverageClause}. A dedicated ` +
       `thorough-QT study is not warranted per ICH E14 Q&A (R3); the C-QTc analysis substitutes.`;
   } else if (tqtWarranted) {
     rationale =

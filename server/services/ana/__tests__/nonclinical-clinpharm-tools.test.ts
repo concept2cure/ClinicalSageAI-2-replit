@@ -151,15 +151,23 @@ describe('get_nonclinical_template handler', () => {
 });
 
 describe('load_nonclinical_program handler', () => {
+  const ctx = { organizationId: 1 };
+
+  it('refuses without an active organization context (tenant isolation)', async () => {
+    const handler = getToolHandler('load_nonclinical_program')!;
+    const out = JSON.parse(await handler({ ctdProgramId: 123 }));
+    expect(out.status).toBe('needs_context');
+  });
+
   it('returns needs_parameters without a valid program id', async () => {
     const handler = getToolHandler('load_nonclinical_program')!;
-    const out = JSON.parse(await handler({ ctdProgramId: 0 }));
+    const out = JSON.parse(await handler({ ctdProgramId: 0 }, ctx));
     expect(out.status).toBe('needs_parameters');
   });
 
   it('reports unavailable when the preclinical data layer is disabled', async () => {
     const handler = getToolHandler('load_nonclinical_program')!;
-    const out = JSON.parse(await handler({ ctdProgramId: 123 }));
+    const out = JSON.parse(await handler({ ctdProgramId: 123 }, ctx));
     expect(out.status).toBe('unavailable');
   });
 });

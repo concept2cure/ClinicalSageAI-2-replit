@@ -15,10 +15,10 @@
  * callers degrade cleanly in environments that have not opted in.
  */
 
-import { eq } from 'drizzle-orm';
+import { and, eq, getTableColumns } from 'drizzle-orm';
 
 import { db } from '../../db';
-import { ctdNonclinicalStudies } from '../../../shared/schema/csr-knowledge-db';
+import { ctdNonclinicalStudies, ctdPrograms } from '../../../shared/schema/csr-knowledge-db';
 import { PRECLINICAL_REVIEWER_ENABLED } from './feature-flags';
 import { parseDoseMgPerKg, type SpeciesNoael } from './fih-dose-engine';
 import type { NonclinicalStudyInput } from './nonclinical-m24-adapter';
@@ -88,8 +88,16 @@ export function mapRowToPresentStudy(row: NonclinicalRow): PresentStudy {
   };
 }
 
+/**
+ * Study types whose NOAEL is appropriate to anchor a first-in-human dose.
+ * FIH scaling derives from the pivotal general-toxicity studies; a mg/kg NOAEL
+ * reported on a pharmacology or PK row should not feed the dose calculation.
+ */
+const FIH_NOAEL_STUDY_TYPES = new Set(['single_dose_tox', 'repeat_dose_tox']);
+
 /** Map a tox row with a parseable mg/kg NOAEL to a FIH species-NOAEL input. */
 export function mapRowToSpeciesNoael(row: NonclinicalRow): SpeciesNoael | null {
+  if (!FIH_NOAEL_STUDY_TYPES.has(row.studyType)) return null;
   const noaelMgPerKg = parseDoseMgPerKg(row.noael);
   if (noaelMgPerKg == null || !row.species) return null;
   return { species: row.species, noaelMgPerKg, studyRef: row.studyTitle ?? undefined };
@@ -105,18 +113,35 @@ export interface LoadedNonclinicalProgram {
 /**
  * Load a program's nonclinical studies and return them in every shape the
  * engines consume. Returns undefined when PRECLINICAL_REVIEWER_ENABLED is unset
- * or the program id is invalid.
+ * or either id is invalid. The query is constrained to the caller's
+ * organization, so an empty result also covers "program not in this org".
+ *
+ * @param organizationId the active tenant — required; the program is loaded
+ *   only when it belongs to this organization, independent of whether Postgres
+ *   RLS enforcement is active in the environment.
  */
 export async function loadNonclinicalProgram(
   ctdProgramId: number,
+  organizationId: number,
 ): Promise<LoadedNonclinicalProgram | undefined> {
   if (!PRECLINICAL_REVIEWER_ENABLED) return undefined;
   if (!Number.isInteger(ctdProgramId) || ctdProgramId <= 0) return undefined;
+  if (!Number.isInteger(organizationId) || organizationId <= 0) return undefined;
 
+  // Tenant isolation: join to ctd_programs and constrain by organizationId.
+  // ctd_nonclinical_studies has no org column of its own, so ownership is
+  // enforced through its parent program rather than trusting the model-supplied
+  // program id.
   const rows = (await db
-    .select()
+    .select(getTableColumns(ctdNonclinicalStudies))
     .from(ctdNonclinicalStudies)
-    .where(eq(ctdNonclinicalStudies.programId, ctdProgramId))) as unknown as NonclinicalRow[];
+    .innerJoin(ctdPrograms, eq(ctdNonclinicalStudies.programId, ctdPrograms.id))
+    .where(
+      and(
+        eq(ctdNonclinicalStudies.programId, ctdProgramId),
+        eq(ctdPrograms.organizationId, organizationId),
+      ),
+    )) as unknown as NonclinicalRow[];
 
   return {
     studies: rows.map(mapRowToStudyInput),

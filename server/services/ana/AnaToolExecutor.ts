@@ -995,14 +995,21 @@ registerToolHandler('get_nonclinical_template', async (input: Record<string, unk
 });
 
 // Load a program's ingested nonclinical studies (feature-gated DB read)
-registerToolHandler('load_nonclinical_program', async (input: Record<string, unknown>) => {
+registerToolHandler('load_nonclinical_program', async (input: Record<string, unknown>, ctx) => {
   try {
+    const organizationId = ctx?.organizationId;
+    if (!organizationId) {
+      return JSON.stringify({
+        status: 'needs_context',
+        message: 'Loading program data requires an active organization context. Ask the user to open a project first.',
+      });
+    }
     const ctdProgramId = Number(input.ctdProgramId);
     if (!Number.isInteger(ctdProgramId) || ctdProgramId <= 0) {
       return JSON.stringify({ status: 'needs_parameters', message: 'A positive integer ctdProgramId is required.' });
     }
     const { loadNonclinicalProgram } = await import('../preclinical/nonclinical-program-loader.js');
-    const loaded = await loadNonclinicalProgram(ctdProgramId);
+    const loaded = await loadNonclinicalProgram(ctdProgramId, organizationId);
     if (!loaded) {
       return JSON.stringify({
         status: 'unavailable',

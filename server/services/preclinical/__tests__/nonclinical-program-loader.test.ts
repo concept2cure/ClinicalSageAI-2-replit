@@ -63,10 +63,20 @@ describe('mapRowToSpeciesNoael', () => {
     expect(mapRowToSpeciesNoael({ studyType: 'repeat_dose_tox', species: 'rat', noael: 'not reported' })).toBeNull();
     expect(mapRowToSpeciesNoael({ studyType: 'repeat_dose_tox', noael: '50 mg/kg/day' })).toBeNull();
   });
+  it('does not anchor FIH dosing on a non-tox study NOAEL', () => {
+    // A pharmacology/PK row may carry a mg/kg NOAEL, but FIH scaling derives
+    // from the pivotal general-toxicity studies only.
+    expect(mapRowToSpeciesNoael({ studyType: 'pharmacology', species: 'rat', noael: '5 mg/kg' })).toBeNull();
+    expect(mapRowToSpeciesNoael({ studyType: 'pk', species: 'dog', noael: '10 mg/kg' })).toBeNull();
+    expect(mapRowToSpeciesNoael({ studyType: 'single_dose_tox', species: 'rat', noael: '100 mg/kg' })).not.toBeNull();
+  });
 });
 
 describe('loadNonclinicalProgram (flag-off path)', () => {
   it('returns undefined when PRECLINICAL_REVIEWER_ENABLED is unset', async () => {
-    expect(await loadNonclinicalProgram(123)).toBeUndefined();
+    expect(await loadNonclinicalProgram(123, 1)).toBeUndefined();
+  });
+  it('returns undefined for an invalid organization id', async () => {
+    expect(await loadNonclinicalProgram(123, 0)).toBeUndefined();
   });
 });
