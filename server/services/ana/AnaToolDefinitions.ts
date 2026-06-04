@@ -2699,6 +2699,53 @@ export const CHARACTERIZE_PK: AnaTool = {
   },
 };
 
+export const DRAFT_NONCLINICAL_SUMMARIES_M2_6: AnaTool = {
+  name: 'draft_nonclinical_summaries_m2_6',
+  description:
+    "Draft the Module 2.6 Nonclinical Written and Tabulated Summaries (ICH M4S) from the program's nonclinical study set using the platform's deterministic composer — the 2.6.1 introduction, 2.6.2/2.6.4/2.6.6 written summaries (pharmacology, PK, toxicology) and the 2.6.3/2.6.5/2.6.7 tabulated summaries — weaving in the target-organ adversity profile when findings are supplied. Returns a draft, per-discipline tables, the gap list, and a completeness score. Use this for Module 2.6 authoring; report gaps and completeness honestly.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      studies: {
+        type: 'array',
+        description: 'Nonclinical studies feeding the summaries.',
+        items: {
+          type: 'object',
+          properties: {
+            studyType: { type: 'string', description: 'Study type (ingest enum or builder category).' },
+            studyId: { type: 'string' },
+            studyTitle: { type: 'string' },
+            species: { type: 'string' },
+            durationWeeks: { type: 'number' },
+            glpCompliant: { type: 'boolean' },
+            noael: { type: 'string' },
+            keyFindings: { type: 'string' },
+            reportSection: { type: 'string' },
+          },
+          required: ['studyType'],
+        },
+      },
+      findings: {
+        type: 'array',
+        description: 'Target-organ findings for the 2.6.6 adversity profile (optional).',
+        items: {
+          type: 'object',
+          properties: {
+            organ: { type: 'string' },
+            finding: { type: 'string' },
+            severity: { type: 'string' },
+            correlates: { type: 'array', items: { type: 'string' } },
+          },
+          required: ['organ', 'finding'],
+        },
+      },
+      drugSubstanceName: { type: 'string' },
+      indication: { type: 'string' },
+    },
+    required: ['studies'],
+  },
+};
+
 export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
@@ -2780,6 +2827,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CLASSIFY_TOX_FINDINGS,
   SELECT_EXPOSURE_RESPONSE_DOSE,
   DRAFT_NONCLINICAL_OVERVIEW_M2_4,
+  DRAFT_NONCLINICAL_SUMMARIES_M2_6,
   ASSESS_NONCLINICAL_PROGRAM,
   ASSESS_CONCENTRATION_QTC,
   ASSESS_DDI_RISK,

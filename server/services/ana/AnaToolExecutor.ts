@@ -969,6 +969,33 @@ registerToolHandler('draft_nonclinical_overview_m2_4', async (input: Record<stri
   }
 });
 
+// Draft M2.6 Nonclinical Written & Tabulated Summaries — deterministic composer
+registerToolHandler('draft_nonclinical_summaries_m2_6', async (input: Record<string, unknown>) => {
+  try {
+    const studies = input.studies;
+    if (!Array.isArray(studies) || studies.length === 0) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'studies[] is required to draft the M2.6 summaries.' });
+    }
+    const { buildM26NonclinicalSummaries } = await import('../preclinical/m26-nonclinical-summaries.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const r = buildM26NonclinicalSummaries(input as any);
+    return JSON.stringify({
+      status: 'drafted',
+      engine: 'deterministic',
+      sectionKey: r.sectionKey,
+      title: r.title,
+      content: r.narrative,
+      tables: r.tables,
+      completeness: r.completeness,
+      gaps: r.gaps,
+      instruction:
+        'This is a draft the author promotes through the governed authoring flow. State the completeness and gaps honestly.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `M2.6 summaries drafting failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Nonclinical study-program requirements & gaps — deterministic ICH M3(R2)
 registerToolHandler('assess_nonclinical_program', async (input: Record<string, unknown>) => {
   try {

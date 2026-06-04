@@ -18,6 +18,7 @@ const NEW_TOOLS = [
   'classify_tox_findings',
   'select_exposure_response_dose',
   'draft_nonclinical_overview_m2_4',
+  'draft_nonclinical_summaries_m2_6',
   'assess_nonclinical_program',
   'assess_concentration_qtc',
   'assess_ddi_risk',
@@ -126,6 +127,23 @@ describe('draft_nonclinical_overview_m2_4 handler', () => {
     expect(out.content).toMatch(/NONCLINICAL OVERVIEW/);
     expect(out.gaps).toContain('primary pharmacology studies');
     expect(out.toxProfile.adaptive).toContain('hepatocellular hypertrophy');
+  });
+});
+
+describe('draft_nonclinical_summaries_m2_6 handler', () => {
+  it('drafts the M2.6 summaries with tables', async () => {
+    const handler = getToolHandler('draft_nonclinical_summaries_m2_6')!;
+    const out = JSON.parse(
+      await handler({
+        studies: [
+          { studyType: 'pharmacology', studyId: 'PD-1', species: 'rat', keyFindings: 'engaged' },
+          { studyType: 'repeat_dose_tox', studyId: 'TX-1', species: 'rat', durationWeeks: 13, noael: '50 mg/kg/day' },
+        ],
+      }),
+    );
+    expect(out.status).toBe('drafted');
+    expect(out.sectionKey).toBe('2.6');
+    expect(Array.isArray(out.tables)).toBe(true);
   });
 });
 
