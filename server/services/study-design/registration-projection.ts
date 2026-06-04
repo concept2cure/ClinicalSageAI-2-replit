@@ -23,6 +23,7 @@ import type {
   StudyDesign,
   StudyPhase,
 } from './study-design-types';
+import { endpointTimeFrameFromSoa } from './schedule-of-activities';
 
 export type RegistrationRegistry = 'ClinicalTrials.gov' | 'EU CTIS';
 export type RegistrationFieldStatus = 'rendered' | 'partial' | 'missing';
@@ -167,7 +168,9 @@ function outcomeMeasures(design: StudyDesign, roles: Endpoint['role'][]): {
   const missingTimeFrame: string[] = [];
   const parts = eps.map(e => {
     const def = present(e.definition) ? e.definition : e.name;
-    if (present(e.timepoint)) return `${e.name}: ${def} (time frame: ${e.timepoint})`;
+    // The endpoint's own timepoint wins; otherwise derive it from the schedule it is collected at.
+    const timeFrame = present(e.timepoint) ? e.timepoint : endpointTimeFrameFromSoa(design, e.name);
+    if (timeFrame) return `${e.name}: ${def} (time frame: ${timeFrame})`;
     missingTimeFrame.push(e.name);
     return `${e.name}: ${def}`;
   });

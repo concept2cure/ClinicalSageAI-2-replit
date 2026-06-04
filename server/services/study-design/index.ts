@@ -31,6 +31,7 @@ export {
   projectScheduleOfActivities,
   analyzeScheduleOfActivities,
   summarizeSoaForProtocol,
+  endpointTimeFrameFromSoa,
 } from './schedule-of-activities';
 export {
   type DesignRiskLevel,

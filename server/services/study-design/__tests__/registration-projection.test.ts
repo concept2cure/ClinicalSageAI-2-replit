@@ -160,6 +160,35 @@ describe('projectRegistration — EU CTIS', () => {
   });
 });
 
+describe('SoA-derived outcome timing', () => {
+  it('reads the outcome time frame from the schedule when the endpoint has no timepoint', () => {
+    const d = clone(regDesign());
+    delete d.endpoints[0].timepoint; // no free-text timepoint on the primary
+    d.scheduleOfActivities = {
+      epochs: [{ id: 'e_trt', name: 'Treatment', kind: 'treatment', order: 0 }],
+      visits: [
+        { id: 'V2', name: 'Baseline', epochId: 'e_trt', studyDay: 1, isBaseline: true, order: 0 },
+        { id: 'V4', name: 'Week 24', epochId: 'e_trt', studyDay: 168, order: 1 },
+      ],
+      activities: [{ id: 'a_hba1c', name: 'HbA1c', category: 'efficacy', endpointNames: ['HbA1c change'], order: 0 }],
+      cells: [
+        { activityId: 'a_hba1c', visitId: 'V2', state: 'performed' },
+        { activityId: 'a_hba1c', visitId: 'V4', state: 'performed' },
+      ],
+    };
+    const primary = fieldOf(projectRegistration(d, 'ctgov'), 'Primary outcome measure')!;
+    expect(primary.status).toBe('rendered'); // no longer partial — the schedule supplies the time frame
+    expect(primary.value).toMatch(/Week 24 \(day 168\)/);
+  });
+
+  it('still reports a partial outcome when neither a timepoint nor a schedule supplies the time frame', () => {
+    const d = clone(regDesign());
+    delete d.endpoints[0].timepoint; // and no SoA on regDesign
+    const primary = fieldOf(projectRegistration(d, 'ctgov'), 'Primary outcome measure')!;
+    expect(primary.status).toBe('partial');
+  });
+});
+
 describe('projectAllRegistrations', () => {
   it('projects both registries from one design', () => {
     const both = projectAllRegistrations(regDesign());
