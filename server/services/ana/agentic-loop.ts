@@ -220,6 +220,9 @@ const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = 
   generate_document: () => 'Drafting the document',
   generate_statistical_document: () => 'Drafting the statistical document',
   compute_sample_size: () => 'Computing the sample size',
+  compute_fih_dose: () => 'Computing the first-in-human dose',
+  classify_tox_findings: () => 'Classifying the toxicology findings',
+  select_exposure_response_dose: () => 'Selecting the dose from exposure-response',
   check_numerical_integrity: () => 'Checking numerical integrity',
   check_dossier_consistency: () => 'Checking consistency across the dossier',
 };

@@ -2364,6 +2364,125 @@ export const ASSESS_IMMUNOGENICITY: AnaTool = {
 };
 
 /** Custom JSON-schema tools dispatched by our local AnaToolExecutor. */
+// ─────────────────────────────────────────────────────────────────────────────
+// Nonclinical & Clinical Pharmacology Engines (deterministic)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const COMPUTE_FIH_DOSE: AnaTool = {
+  name: 'compute_fih_dose',
+  description:
+    "Compute a defensible first-in-human (FIH) starting dose using the platform's DETERMINISTIC dose engine. Shows BOTH standard derivations: (1) NOAEL → HED (FDA 2005 body-surface Km scaling) → safety factor → MRSD from the most sensitive species, and (2) MABEL from the minimum anticipated effective exposure (EMA FIH guidance), then selects the more conservative and flags which is limiting. ALWAYS call this tool for FIH/MRSD/MABEL/starting-dose questions (e.g. /fih, /dose, Module 2.4 dose-justification). NEVER hand-calculate an HED, MRSD, or MABEL — a fabricated starting dose is a critical safety defect. Gather the per-species NOAELs (mg/kg/day) and, for high-risk molecules, the MABEL inputs, then report the returned numbers verbatim.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      speciesNoaels: {
+        type: 'array',
+        description: 'One NOAEL per relevant species. At least one is required.',
+        items: {
+          type: 'object',
+          properties: {
+            species: { type: 'string', description: 'Species name (e.g. "rat", "cynomolgus monkey").' },
+            noaelMgPerKg: { type: 'number', description: 'NOAEL in mg/kg/day.' },
+            studyRef: { type: 'string', description: 'Optional study reference for provenance.' },
+            km: { type: 'number', description: 'Optional explicit Km factor override.' },
+          },
+          required: ['species', 'noaelMgPerKg'],
+        },
+      },
+      safetyFactor: { type: 'number', description: 'Safety factor applied to the selected HED (default 10 per FDA 2005).' },
+      safetyFactorRationale: { type: 'string', description: 'Justification for any deviation from the default safety factor.' },
+      mostAppropriateSpecies: { type: 'string', description: 'Force a species to carry the MRSD (default: most sensitive).' },
+      humanReferenceWeightKg: { type: 'number', description: 'Human reference body weight in kg (default 60).' },
+      mabel: {
+        type: 'object',
+        description: 'Optional MABEL derivation; when supplied it competes with the MRSD.',
+        properties: {
+          minAnticipatedEffectiveExposure: { type: 'number', description: 'Minimum anticipated effective exposure to target at the starting dose.' },
+          exposurePerMgDose: { type: 'number', description: 'Exposure produced per 1 mg of total dose (linear factor).' },
+          mabelSafetyFactor: { type: 'number', description: 'Additional MABEL safety factor (default 1).' },
+          basis: { type: 'string', description: 'Free-text basis for audit (e.g. "10% receptor occupancy from in vitro Kd + human popPK").' },
+        },
+        required: ['minAnticipatedEffectiveExposure', 'exposurePerMgDose'],
+      },
+    },
+    required: ['speciesNoaels'],
+  },
+};
+
+export const CLASSIFY_TOX_FINDINGS: AnaTool = {
+  name: 'classify_tox_findings',
+  description:
+    "Classify nonclinical target-organ findings as adverse / adaptive-non-adverse / monitor / indeterminate using the platform's DETERMINISTIC toxicologic-pathology classifier (STP adversity framework, INHAND nomenclature). Returns a reversibility and human-relevance call and an overview-ready framing sentence per finding, plus the assembled M2.4 target-organ paragraph. Use this when framing tox findings for a Module 2.4 Nonclinical Overview or deciding which findings define the NOAEL. The classifier conservatively escalates normally-adaptive findings (e.g. hepatocellular hypertrophy) to adverse when adverse correlates or moderate+ severity are present, and never assumes an unrecognised finding is benign. Report the classifications and rationale; a pathologist adjudicates the final adversity call.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      findings: {
+        type: 'array',
+        description: 'Target-organ findings to classify.',
+        items: {
+          type: 'object',
+          properties: {
+            organ: { type: 'string', description: 'Target organ (e.g. "liver").' },
+            finding: { type: 'string', description: 'Finding text (e.g. "hepatocellular hypertrophy").' },
+            severity: { type: 'string', description: 'Severity grade if reported (minimal/mild/moderate/marked/severe).' },
+            doseLevel: { type: 'string', description: 'Dose level at which the finding occurred.' },
+            reversible: { type: 'boolean', description: 'Reversibility from a recovery cohort, when known.' },
+            correlates: { type: 'array', items: { type: 'string' }, description: 'Concurrent correlates that can escalate adversity (e.g. "increased ALT").' },
+          },
+          required: ['organ', 'finding'],
+        },
+      },
+    },
+    required: ['findings'],
+  },
+};
+
+export const SELECT_EXPOSURE_RESPONSE_DOSE: AnaTool = {
+  name: 'select_exposure_response_dose',
+  description:
+    "Select a dose from the exposure-response (E-R) relationship rather than the MTD, using the platform's DETERMINISTIC E-R engine (FDA Project Optimus / ICH E4). For each candidate dose it predicts efficacy (Emax/Hill on exposure) and safety (logistic P(AE) or an exposure threshold), then recommends the lowest dose that reaches the efficacy plateau within the acceptable safety bound and contrasts it with the MTD. ALWAYS call this tool for dose-optimization / dose-selection / Project Optimus / exposure-response questions (e.g. /dose-optimization, Module 2.7 dose-selection rationale). NEVER estimate the optimized dose by hand. Report the returned dose, MTD, and per-dose predictions verbatim.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      dosesMg: { type: 'array', items: { type: 'number' }, description: 'Candidate doses in mg.' },
+      exposurePerMgDose: { type: 'number', description: 'Exposure produced per 1 mg of dose (linear). Supply this OR exposuresByDose.' },
+      exposuresByDose: {
+        type: 'array',
+        description: 'Explicit exposure per dose (for non-linear PK). Overrides the linear factor.',
+        items: {
+          type: 'object',
+          properties: {
+            doseMg: { type: 'number' },
+            exposure: { type: 'number' },
+          },
+          required: ['doseMg', 'exposure'],
+        },
+      },
+      efficacy: {
+        type: 'object',
+        description: 'Emax efficacy model on exposure.',
+        properties: {
+          ec50: { type: 'number', description: 'Concentration giving half-maximal effect, in exposure units.' },
+          hill: { type: 'number', description: 'Hill coefficient (default 1).' },
+        },
+        required: ['ec50'],
+      },
+      safety: {
+        type: 'object',
+        description: 'Logistic safety model {intercept, slope, acceptableAeProbability} OR exposure-threshold model {thresholdExposure}.',
+        properties: {
+          intercept: { type: 'number' },
+          slope: { type: 'number' },
+          acceptableAeProbability: { type: 'number' },
+          thresholdExposure: { type: 'number' },
+        },
+      },
+      targetEfficacyFraction: { type: 'number', description: 'Fraction of Emax that counts as the efficacy plateau (default 0.9).' },
+    },
+    required: ['dosesMg', 'efficacy', 'safety'],
+  },
+};
+
 export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
@@ -2441,6 +2560,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ASSESS_STATISTICAL_DEFENSIBILITY,
   ANALYZE_MISSING_DATA_IMPACT,
   GENERATE_STATISTICAL_DOCUMENT,
+  COMPUTE_FIH_DOSE,
+  CLASSIFY_TOX_FINDINGS,
+  SELECT_EXPOSURE_RESPONSE_DOSE,
   ASSESS_ANALYTICAL_SIMILARITY,
   ASSESS_COMPARABILITY,
   ASSESS_IMMUNOGENICITY,

@@ -853,6 +853,82 @@ registerToolHandler('compute_sample_size', async (input: Record<string, unknown>
   }
 });
 
+// First-in-human dose — deterministic NOAEL→HED→MRSD vs MABEL
+registerToolHandler('compute_fih_dose', async (input: Record<string, unknown>) => {
+  try {
+    const { computeFirstInHumanDose } = await import('../preclinical/fih-dose-engine.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = computeFirstInHumanDose(input as any);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      ...result,
+      instruction:
+        'Report these numbers verbatim. Do NOT recompute or round differently. State which derivation is limiting (limitedBy) and surface any warnings.',
+    });
+  } catch (err: any) {
+    const message = err?.message || 'unknown error';
+    if (/required|at least one|usable HED|must be/.test(message)) {
+      return JSON.stringify({ status: 'needs_parameters', message });
+    }
+    return JSON.stringify({ error: `FIH dose computation failed: ${message}` });
+  }
+});
+
+// Toxicologic-pathology adversity classification — deterministic
+registerToolHandler('classify_tox_findings', async (input: Record<string, unknown>) => {
+  try {
+    const findings = input.findings;
+    if (!Array.isArray(findings) || findings.length === 0) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'findings[] (organ + finding) is required.' });
+    }
+    const { classifyToxFindings } = await import('../preclinical/tox-findings-classifier.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const summary = classifyToxFindings(findings as any);
+    return JSON.stringify({
+      status: 'classified',
+      engine: 'deterministic',
+      ...summary,
+      instruction:
+        'Use these classifications and the overviewParagraph for the M2.4 target-organ profile. A pathologist adjudicates the final adversity call; surface any escalated or indeterminate findings.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Tox-finding classification failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// Exposure-response dose selection — deterministic Project Optimus engine
+registerToolHandler('select_exposure_response_dose', async (input: Record<string, unknown>) => {
+  try {
+    // Normalize an array-form exposuresByDose into the engine's Record shape.
+    const normalized: Record<string, unknown> = { ...input };
+    const raw = input.exposuresByDose;
+    if (Array.isArray(raw)) {
+      const map: Record<number, number> = {};
+      for (const e of raw as Array<{ doseMg: number; exposure: number }>) {
+        if (e && Number.isFinite(Number(e.doseMg))) map[Number(e.doseMg)] = Number(e.exposure);
+      }
+      normalized.exposuresByDose = map;
+    }
+    const { selectExposureResponseDose } = await import('../clinical-pharmacology/exposure-response-engine.js');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = selectExposureResponseDose(normalized as any);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      ...result,
+      instruction:
+        'Report the optimized dose, MTD, and per-dose predictions verbatim. When belowMtd is true, frame the selection as Project Optimus dose optimization rather than dosing to the MTD.',
+    });
+  } catch (err: any) {
+    const message = err?.message || 'unknown error';
+    if (/required|supply/.test(message)) {
+      return JSON.stringify({ status: 'needs_parameters', message });
+    }
+    return JSON.stringify({ error: `Exposure-response dose selection failed: ${message}` });
+  }
+});
+
 // Compare Statistical Scenarios — side-by-side deterministic comparison
 registerToolHandler('compare_statistical_scenarios', async (input: Record<string, unknown>, ctx) => {
   try {
