@@ -18,6 +18,10 @@ import {
   createCommitment,
   listCommitments,
   updateCommitmentStatus,
+  getCommitmentById,
+  linkCommitmentTask,
+  buildTaskFromCommitment,
+  checkOutboundContradictions,
   type CommitmentDirection,
   type CommitmentStatus,
 } from '../../services/commitments/commitments-service.js';
@@ -159,6 +163,53 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
   } catch (err: any) {
     if (err?.message === 'COMMITMENTS_TABLE_MISSING') return res.status(503).json({ error: 'COMMITMENTS_TABLE_MISSING' });
     console.error('[c2c/commitments/status]', err?.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+/**
+ * POST /api/c2c/commitments/contradictions — check OUTBOUND commitments for
+ * internal contradictions (the company contradicting its own promises). Body:
+ * { projectId? }. AI-derived findings — advisory, require human review.
+ */
+router.post('/contradictions', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
+  try {
+    const rows = await listCommitments(orgId, {
+      projectId: req.body?.projectId ? Number(req.body.projectId) : undefined,
+      direction: 'outbound',
+    });
+    const findings = await checkOutboundContradictions(
+      rows.map((r) => ({ id: r.id, title: r.title, description: r.description, sourceQuote: r.sourceQuote })),
+    );
+    return res.json({ success: true, data: { findings, checked: rows.length } });
+  } catch (err: any) {
+    console.error('[c2c/commitments/contradictions]', err?.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+/**
+ * POST /api/c2c/commitments/:id/promote-to-task — build an owned, dated task
+ * spec from a commitment. The tasking module creates the task row from the spec;
+ * pass { taskId } back to link it. Returns { taskSpec, linkedTaskId }.
+ */
+router.post('/:id/promote-to-task', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
+  try {
+    const c = await getCommitmentById(orgId, String(req.params.id));
+    if (!c) return res.status(404).json({ error: 'COMMITMENT_NOT_FOUND' });
+    const taskSpec = buildTaskFromCommitment(c);
+    let linkedTaskId = c.linkedTaskId;
+    if (typeof req.body?.taskId === 'string' && req.body.taskId) {
+      const ok = await linkCommitmentTask(orgId, c.id, req.body.taskId);
+      if (ok) linkedTaskId = req.body.taskId;
+    }
+    return res.json({ success: true, data: { taskSpec, linkedTaskId } });
+  } catch (err: any) {
+    console.error('[c2c/commitments/promote-to-task]', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });

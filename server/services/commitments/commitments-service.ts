@@ -302,3 +302,152 @@ function mapRow(row: any): CommitmentRow {
     clock: commitmentClock(row.due_date),
   };
 }
+
+export async function getCommitmentById(organizationId: number, id: string): Promise<CommitmentRow | null> {
+  if (!pool) return null;
+  try {
+    const res = await pool.query(
+      `SELECT * FROM c2c_commitments WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+      [id, organizationId],
+    );
+    return res.rows.length ? mapRow(res.rows[0]) : null;
+  } catch (error: any) {
+    if (error?.code === '42P01') return null;
+    throw error;
+  }
+}
+
+export async function linkCommitmentTask(organizationId: number, id: string, taskId: string): Promise<boolean> {
+  if (!pool) return false;
+  try {
+    const res = await pool.query(
+      `UPDATE c2c_commitments SET linked_task_id = $1, updated_at = now() WHERE id = $2 AND organization_id = $3`,
+      [taskId, id, organizationId],
+    );
+    return (res.rowCount ?? 0) > 0;
+  } catch (error: any) {
+    if (error?.code === '42P01') return false;
+    throw error;
+  }
+}
+
+// ── Task spec (promote a commitment to an owned, dated task) ──────────────────
+
+export interface CommitmentTaskSpec {
+  sourceCommitmentId: string;
+  title: string;
+  description: string;
+  owner: string | null;
+  dueDate: string | null;
+  priority: 'high' | 'medium' | 'low';
+  sourceQuote: string | null;
+}
+
+/**
+ * Build a normalized task spec from a commitment ("submit confirmatory data by
+ * Q4" → an owned, dated task). Pure. The tasking module creates the task row
+ * from this spec; the commitment's linked_task_id is then set via linkCommitmentTask.
+ */
+export function buildTaskFromCommitment(c: {
+  id: string;
+  title: string;
+  description?: string | null;
+  owner?: string | null;
+  dueDateText?: string | null;
+  sourceQuote?: string | null;
+  clock?: CommitmentClock;
+}): CommitmentTaskSpec {
+  const overdueOrSoon = c.clock && (c.clock.overdue || c.clock.dueSoon);
+  return {
+    sourceCommitmentId: c.id,
+    title: `Commitment: ${c.title}`,
+    description: [c.description, c.dueDateText ? `Deadline: ${c.dueDateText}` : null]
+      .filter(Boolean)
+      .join('\n') || c.title,
+    owner: c.owner ?? null,
+    dueDate: c.clock?.dueDate ?? null,
+    priority: overdueOrSoon ? 'high' : 'medium',
+    sourceQuote: c.sourceQuote ?? null,
+  };
+}
+
+// ── Outbound contradiction detection ──────────────────────────────────────────
+
+export interface ContradictionFinding {
+  commitmentIds: string[];
+  kind: 'conflicting_deadline' | 'duplicate_divergent' | 'unfulfilled_vs_stated' | 'inconsistent_scope' | 'other';
+  explanation: string;
+  severity: 'high' | 'medium' | 'low';
+}
+
+const VALID_KINDS = new Set<ContradictionFinding['kind']>([
+  'conflicting_deadline', 'duplicate_divergent', 'unfulfilled_vs_stated', 'inconsistent_scope', 'other',
+]);
+
+/** Parse the model's contradiction findings. Never throws. */
+export function parseContradictionsJson(raw: string, validIds?: Set<string>): ContradictionFinding[] {
+  if (!raw) return [];
+  let text = raw.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+  const start = text.indexOf('[');
+  const end = text.lastIndexOf(']');
+  if (start >= 0 && end > start) text = text.slice(start, end + 1);
+  let arr: unknown;
+  try { arr = JSON.parse(text); } catch { return []; }
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .filter((r): r is Record<string, unknown> => !!r && typeof r === 'object')
+    .map((r) => {
+      const ids = Array.isArray(r.commitmentIds) ? r.commitmentIds.map((x) => String(x)) : [];
+      const kind = String(r.kind ?? 'other') as ContradictionFinding['kind'];
+      const severity = ['high', 'medium', 'low'].includes(String(r.severity)) ? (String(r.severity) as ContradictionFinding['severity']) : 'medium';
+      return {
+        commitmentIds: validIds ? ids.filter((id) => validIds.has(id)) : ids,
+        kind: VALID_KINDS.has(kind) ? kind : 'other',
+        explanation: String(r.explanation ?? '').trim(),
+        severity,
+      };
+    })
+    // A finding must reference >= 2 real commitments and explain itself — no hallucinated conflicts.
+    .filter((f) => f.commitmentIds.length >= 2 && f.explanation.length > 0);
+}
+
+const CONTRADICTION_SYSTEM = `You are a regulatory reviewer checking a company's OWN outbound commitments for internal contradictions.
+A contradiction is when the company promised the same/related obligation in conflicting ways across its documents — e.g. two different deadlines for the same study, a commitment in meeting minutes that a later submission narrowed or dropped, or inconsistent scope for the same obligation.
+Given the list of commitments (each with id, title, description, sourceQuote), find genuine contradictions ONLY.
+Return ONLY a JSON array; each item: { commitmentIds: [ids of the >=2 conflicting commitments], kind ("conflicting_deadline"|"duplicate_divergent"|"unfulfilled_vs_stated"|"inconsistent_scope"|"other"), explanation (cite the conflict concretely), severity ("high"|"medium"|"low") }.
+Do not invent conflicts. If there are none, return [].`;
+
+/**
+ * Detect contradictions among a set of (outbound) commitments via the governed
+ * gateway. The non-obvious, high-value check: catch "the minutes committed to X
+ * but the submission did Y" before the agency does. Degrades to [] if the
+ * gateway is unavailable. AI output — findings are advisory and require review.
+ */
+export async function checkOutboundContradictions(
+  commitments: Array<{ id: string; title: string; description?: string | null; sourceQuote?: string | null }>,
+): Promise<ContradictionFinding[]> {
+  if (commitments.length < 2) return [];
+  const validIds = new Set(commitments.map((c) => c.id));
+  const payload = commitments.map((c) => ({
+    id: c.id, title: c.title, description: c.description ?? '', sourceQuote: c.sourceQuote ?? '',
+  }));
+  try {
+    const gateway = getGateway();
+    const response = await gateway.route({
+      taskType: 'regulatory_review',
+      messages: [
+        { role: 'system', content: CONTRADICTION_SYSTEM },
+        { role: 'user', content: `Commitments:\n${JSON.stringify(payload, null, 2)}` },
+      ],
+      jsonMode: true,
+      temperature: 0,
+      maxTokens: 2000,
+      callerModule: 'commitments-contradictions',
+      metadata: { promptVersion: 'commitments-contradictions-v1' },
+    });
+    return parseContradictionsJson(response.content, validIds);
+  } catch (error: any) {
+    logger.warn(`Contradiction check unavailable: ${error?.message}`);
+    return [];
+  }
+}

@@ -88,6 +88,28 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
     documentTypesApplicable: ['nda-section', 'ctd-module'],
   },
   {
+    capabilityKey: 'draft-jnda-section',
+    category: 'drafting',
+    name: 'Draft JNDA Section',
+    description:
+      'Generate J-NDA (PMDA) submission sections with the Japanese eCTD Module 1 structure, similar-drug selection rationale, and J-RMP, in line with PMDA expectations.',
+    slashCommand: '/draft-jnda-section',
+    regulatoryBodiesApplicable: ['PMDA'],
+    projectTypesApplicable: ['JNDA', 'IND'],
+    documentTypesApplicable: ['jnda-section', 'ctd-module'],
+  },
+  {
+    capabilityKey: 'draft-bridging-strategy',
+    category: 'drafting',
+    name: 'Draft Bridging / Ethnic-Sensitivity Strategy',
+    description:
+      'Draft a Japan bridging-study strategy and ethnic-sensitivity assessment (ICH E5) to justify the extrapolation of foreign clinical data for a JNDA, including SAKIGAKE eligibility where applicable.',
+    slashCommand: '/draft-bridging-strategy',
+    regulatoryBodiesApplicable: ['PMDA'],
+    projectTypesApplicable: ['JNDA', 'IND'],
+    documentTypesApplicable: ['jnda-section', 'ctd-module'],
+  },
+  {
     capabilityKey: 'draft-510k',
     category: 'drafting',
     name: 'Draft 510(k) Submission',
@@ -146,7 +168,7 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
     description: 'Scan document against PMDA-specific requirements, J-NDA formatting, and Japanese regulatory expectations.',
     slashCommand: '/compliance-scan',
     regulatoryBodiesApplicable: ['PMDA'],
-    projectTypesApplicable: ['J-NDA', 'IND'],
+    projectTypesApplicable: ['JNDA', 'IND'],
     documentTypesApplicable: ['csr', 'protocol', 'ib', 'ctd-module'],
   },
   {

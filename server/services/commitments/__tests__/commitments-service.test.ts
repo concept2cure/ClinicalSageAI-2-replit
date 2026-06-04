@@ -5,6 +5,8 @@ import {
   commitmentGroundedness,
   normalizeType,
   normalizeDirection,
+  parseContradictionsJson,
+  buildTaskFromCommitment,
 } from '../commitments-service';
 
 describe('normalizeDirection / normalizeType', () => {
@@ -79,5 +81,52 @@ describe('commitmentClock', () => {
     const overdue = commitmentClock('2026-06-01T00:00:00Z', now);
     expect(overdue.overdue).toBe(true);
     expect(overdue.status).toBe('overdue');
+  });
+});
+
+describe('parseContradictionsJson', () => {
+  const ids = new Set(['cmt_a', 'cmt_b', 'cmt_c']);
+  it('keeps findings that reference >=2 real commitments with an explanation', () => {
+    const raw = JSON.stringify([
+      { commitmentIds: ['cmt_a', 'cmt_b'], kind: 'conflicting_deadline', explanation: 'Q4 2027 vs Q2 2027 for the same study.', severity: 'high' },
+    ]);
+    const out = parseContradictionsJson(raw, ids);
+    expect(out).toHaveLength(1);
+    expect(out[0].kind).toBe('conflicting_deadline');
+    expect(out[0].severity).toBe('high');
+  });
+  it('drops single-id, unexplained, or hallucinated-id findings', () => {
+    const raw = JSON.stringify([
+      { commitmentIds: ['cmt_a'], explanation: 'only one', severity: 'low' },
+      { commitmentIds: ['cmt_a', 'cmt_b'], explanation: '', severity: 'low' },
+      { commitmentIds: ['cmt_a', 'cmt_zzz'], explanation: 'one id is fake', severity: 'low' },
+    ]);
+    expect(parseContradictionsJson(raw, ids)).toEqual([]);
+  });
+  it('coerces unknown kind/severity and returns [] on non-JSON', () => {
+    const raw = JSON.stringify([{ commitmentIds: ['cmt_a', 'cmt_b'], kind: 'weird', explanation: 'x', severity: 'huge' }]);
+    const out = parseContradictionsJson(raw, ids);
+    expect(out[0].kind).toBe('other');
+    expect(out[0].severity).toBe('medium');
+    expect(parseContradictionsJson('nope', ids)).toEqual([]);
+  });
+});
+
+describe('buildTaskFromCommitment', () => {
+  it('builds an owned, dated task spec and escalates priority when overdue/soon', () => {
+    const spec = buildTaskFromCommitment({
+      id: 'cmt_a', title: 'Submit confirmatory data', description: 'Phase 4 trial',
+      owner: 'RA Lead', dueDateText: 'Q4 2027', sourceQuote: 'The applicant commits to…',
+      clock: { dueDate: '2027-12-31T00:00:00Z', daysRemaining: 500, overdue: false, dueSoon: false, status: 'on_track' },
+    });
+    expect(spec.sourceCommitmentId).toBe('cmt_a');
+    expect(spec.title).toContain('Submit confirmatory data');
+    expect(spec.priority).toBe('medium');
+    expect(spec.description).toContain('Q4 2027');
+
+    const urgent = buildTaskFromCommitment({
+      id: 'cmt_b', title: 'File DSUR', clock: { dueDate: '2026-06-15T00:00:00Z', daysRemaining: 5, overdue: false, dueSoon: true, status: 'due_soon' },
+    });
+    expect(urgent.priority).toBe('high');
   });
 });
