@@ -322,6 +322,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Study Design routes:', error);
   }
 
+  // C2C study digital twins + simulation (study/protocol design module).
+  try {
+    const c2cStudyTwinModule = await import('../routes/c2c/study-twin');
+    app.use('/api/c2c/study-twin', authMiddleware, c2cStudyTwinModule.default);
+    console.info('✅ C2C Study Twin routes mounted (/api/c2c/study-twin)');
+  } catch (error) {
+    console.error('❌ Failed to mount C2C Study Twin routes:', error);
+  }
+
   // C2C document family (Phase 9 Day 3 — document + section + evidence routes).
   try {
     const c2cDocsModule = await import('../routes/c2c/documents');

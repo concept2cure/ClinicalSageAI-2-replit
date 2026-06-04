@@ -89,6 +89,50 @@ export const PROJECT_KNOWLEDGE_SEARCH: AnaTool = {
   },
 };
 
+export const SIMULATE_STUDY_DESIGN: AnaTool = {
+  name: 'simulate_study_design',
+  description:
+    "Simulate a clinical study design as a DIGITAL TWIN and predict its likely outcomes — approximate probability of success on the primary endpoint, expected effect vs. the powered assumption, enrolment/dropout feasibility, and the design risks most likely to sink the readout. Works for ANY therapeutic area and ANY phase (first-in-human through phase 4). Grounds the prediction in the client's uploaded history (prior CSRs / study records) when available. The result ALWAYS carries a predictive disclaimer — you MUST include that disclaimer verbatim in your answer — and when the client has uploaded no history, it carries a request to upload prior CSRs so AnA can learn; surface that request to the user. The organization and project come from the active context.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      phase: { type: 'string', description: 'Development phase: FIH, 1, 1b, 2, 2b, 3, 3b, or 4.' },
+      indication: { type: 'string', description: 'Disease / indication (any therapeutic area).' },
+      product_type: {
+        type: 'string',
+        enum: ['drug', 'biologic', 'device', 'ivd', 'combination'],
+        description: 'Product type.',
+      },
+      structural_design: {
+        type: 'string',
+        description: 'e.g. parallel_group, crossover, single_arm, adaptive, platform, basket.',
+      },
+      control_type: { type: 'string', description: 'e.g. placebo, active, historical, external, none.' },
+      inferential_frame: {
+        type: 'string',
+        enum: ['superiority', 'non_inferiority', 'equivalence'],
+        description: 'Inferential frame.',
+      },
+      primary_endpoint: {
+        type: 'string',
+        description: 'Primary endpoint definition, e.g. "change from baseline in HbA1c at week 24".',
+      },
+      primary_endpoint_type: {
+        type: 'string',
+        enum: ['continuous', 'binary', 'time_to_event', 'ordinal', 'count', 'composite', 'patient_reported'],
+        description: 'Primary endpoint measurement family.',
+      },
+      planned_sample_size: { type: 'number', description: 'Planned total N.' },
+      power: { type: 'number', description: 'Target power (0-1).' },
+      alpha: { type: 'number', description: 'Type I error (e.g. 0.05).' },
+      dropout_rate: { type: 'number', description: 'Assumed dropout rate (0-1).' },
+      effect_size: { type: 'number', description: 'Assumed effect size used to power the study.' },
+      question: { type: 'string', description: 'Optional focus for the simulation.' },
+    },
+    required: ['phase', 'indication'],
+  },
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // FDA Postmarket Surveillance Tools (live openFDA)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2199,6 +2243,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
   PROJECT_KNOWLEDGE_SEARCH,
+  SIMULATE_STUDY_DESIGN,
   SEARCH_DEVICE_ADVERSE_EVENTS,
   SEARCH_DRUG_ADVERSE_EVENTS,
   LOOKUP_FDA_GUIDANCE,

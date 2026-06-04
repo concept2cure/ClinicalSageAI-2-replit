@@ -63,6 +63,75 @@ export function getToolHandler(name: string): ToolHandler | undefined {
 // Built-in Tool Handlers
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Study digital twin simulation. Builds a StudyDesign from the model's sketch and
+// predicts outcomes across any therapeutic area / phase, grounded on the org's
+// uploaded history when available. The disclaimer + (when no history) the upload
+// request are enforced by the service and returned in the result string, so AnA
+// always surfaces them. Org/project come from the active ToolContext.
+registerToolHandler('simulate_study_design', async (input, ctx) => {
+  const orgId = ctx?.organizationId;
+  if (!orgId) return 'Simulation requires an active organization context.';
+  const phase = typeof input.phase === 'string' ? input.phase.trim() : '';
+  const indication = typeof input.indication === 'string' ? input.indication.trim() : '';
+  if (!phase || !indication) {
+    return 'Provide at least the study phase and the indication to simulate a study design.';
+  }
+  const toNum = (v: unknown): number | undefined => {
+    const n = typeof v === 'string' ? parseFloat(v) : typeof v === 'number' ? v : NaN;
+    return Number.isFinite(n) ? n : undefined;
+  };
+  const { simulateStudyTwin } = await import('../study-design/study-twin-service.js');
+  const design: any = {
+    title: `Twin: ${indication} (phase ${phase})`,
+    phase,
+    indication,
+    productType: input.product_type,
+    objectives: [],
+    estimands: [],
+    endpoints: input.primary_endpoint
+      ? [
+          {
+            name: String(input.primary_endpoint).slice(0, 160),
+            role: 'primary',
+            type: input.primary_endpoint_type ?? 'continuous',
+            definition: String(input.primary_endpoint),
+          },
+        ]
+      : [],
+    framework: {
+      inferentialFrame: input.inferential_frame ?? 'superiority',
+      structuralDesign: input.structural_design ?? 'parallel_group',
+      controlType: input.control_type ?? 'placebo',
+    },
+    population: { targetDescription: indication, analysisPopulations: [], eligibility: [] },
+    statisticalPlan: {
+      alpha: toNum(input.alpha),
+      power: toNum(input.power),
+      plannedSampleSize: toNum(input.planned_sample_size),
+      dropoutRate: toNum(input.dropout_rate),
+      plannedAnalyses: [],
+      powerAssumptions: { effectSize: toNum(input.effect_size) },
+    },
+  };
+  const result = await simulateStudyTwin({
+    design,
+    organizationId: orgId,
+    projectId: ctx?.projectId ?? null,
+    question: typeof input.question === 'string' ? input.question : undefined,
+  });
+  const parts = [
+    `Study digital twin simulation — ${indication}, phase ${phase}:`,
+    '',
+    result.prediction,
+    '',
+    result.disclaimer,
+  ];
+  if (result.needsHistoryUpload && result.historyRequest) {
+    parts.push('', result.historyRequest);
+  }
+  return parts.join('\n');
+});
+
 // Project Knowledge Search — exposes the project-scoped hybrid retrieval
 // (ragRouter intent 'project_scoped') as a model-callable tool. The project and
 // tenant come from the active ToolContext, never from model input, so the model
