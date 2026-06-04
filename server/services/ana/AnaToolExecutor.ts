@@ -969,6 +969,34 @@ registerToolHandler('draft_nonclinical_overview_m2_4', async (input: Record<stri
   }
 });
 
+// Nonclinical study-program requirements & gaps — deterministic ICH M3(R2)
+registerToolHandler('assess_nonclinical_program', async (input: Record<string, unknown>) => {
+  try {
+    if (input.maxClinicalDurationWeeks == null) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'maxClinicalDurationWeeks is required.' });
+    }
+    const { assessNonclinicalProgram } = await import('../preclinical/nonclinical-program-requirements.js');
+    const present = Array.isArray(input.present) ? input.present : [];
+    const result = assessNonclinicalProgram(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      input as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      present as any,
+    );
+    return JSON.stringify({
+      status: 'assessed',
+      engine: 'deterministic',
+      adequate: result.adequate,
+      required: result.required,
+      gaps: result.gaps,
+      instruction:
+        'Report the required battery and the gaps verbatim. Only studies due at or before the target phase are gated; note the timing of later-due studies.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Nonclinical program assessment failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Concentration-QTc / thorough-QT waiver — deterministic
 registerToolHandler('assess_concentration_qtc', async (input: Record<string, unknown>) => {
   try {

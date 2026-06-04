@@ -18,6 +18,7 @@ const NEW_TOOLS = [
   'classify_tox_findings',
   'select_exposure_response_dose',
   'draft_nonclinical_overview_m2_4',
+  'assess_nonclinical_program',
   'assess_concentration_qtc',
   'assess_ddi_risk',
   'draft_clinical_summary_m2_7',
@@ -124,6 +125,34 @@ describe('draft_nonclinical_overview_m2_4 handler', () => {
     expect(out.content).toMatch(/NONCLINICAL OVERVIEW/);
     expect(out.gaps).toContain('primary pharmacology studies');
     expect(out.toxProfile.adaptive).toContain('hepatocellular hypertrophy');
+  });
+});
+
+describe('assess_nonclinical_program handler', () => {
+  it('returns needs_parameters without the clinical duration', async () => {
+    const handler = getToolHandler('assess_nonclinical_program')!;
+    const out = JSON.parse(await handler({ present: [] }));
+    expect(out.status).toBe('needs_parameters');
+  });
+
+  it('flags gaps for a Phase 2 program', async () => {
+    const handler = getToolHandler('assess_nonclinical_program')!;
+    const out = JSON.parse(
+      await handler({
+        maxClinicalDurationWeeks: 4,
+        targetPhase: 2,
+        present: [
+          { studyType: 'repeat_dose_tox', species: 'rat', durationWeeks: 4 },
+          { studyType: 'repeat_dose_tox', species: 'dog', durationWeeks: 4 },
+          { studyType: 'safety_pharm' },
+          { studyType: 'genotox', genotoxComponent: 'ames' },
+          { studyType: 'genotox', genotoxComponent: 'in_vitro_mammalian' },
+        ],
+      }),
+    );
+    expect(out.status).toBe('assessed');
+    // in-vivo genotox is due before Phase 2 and absent.
+    expect(out.gaps.some((g: { key: string }) => g.key === 'genotox_in_vivo')).toBe(true);
   });
 });
 

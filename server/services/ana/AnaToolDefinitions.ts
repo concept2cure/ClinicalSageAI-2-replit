@@ -2628,6 +2628,39 @@ export const DRAFT_CLINICAL_SUMMARY_M2_7: AnaTool = {
   },
 };
 
+export const ASSESS_NONCLINICAL_PROGRAM: AnaTool = {
+  name: 'assess_nonclinical_program',
+  description:
+    "Determine which nonclinical studies are required to support a clinical trial of a given duration and phase, and which are missing, using the platform's deterministic ICH M3(R2)/S-series staging engine. Encodes the repeat-dose tox duration vs clinical duration table (two species), the genotox battery timing (S2(R1)), safety pharmacology before FIH (S7A), reproductive tox staging (S5(R3)), carcinogenicity at marketing for chronic use (S1), and the ICH S9 oncology relaxations. ALWAYS call this for 'what nonclinical studies do I need for Phase X' / nonclinical gap-analysis / study-program planning. Report the required battery and the gaps verbatim; only studies due at or before the target phase are gated.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      maxClinicalDurationWeeks: { type: 'number', description: 'Maximum clinical dosing duration to support, in weeks.' },
+      targetPhase: { type: 'number', description: 'Clinical phase being enabled (1, 2, or 3).' },
+      route: { type: 'string', description: 'Route of administration (non-oral routes add local tolerance).' },
+      includesWocbp: { type: 'boolean', description: 'Trial enrols women of childbearing potential.' },
+      chronicUse: { type: 'boolean', description: 'Intended chronic therapy (≥6 months).' },
+      oncology: { type: 'boolean', description: 'Advanced-cancer program (ICH S9 relaxations).' },
+      marketingApplication: { type: 'boolean', description: 'This is a marketing application (carcinogenicity becomes due).' },
+      present: {
+        type: 'array',
+        description: 'Studies the program already holds.',
+        items: {
+          type: 'object',
+          properties: {
+            studyType: { type: 'string', description: 'Study type (ingest enum or builder category).' },
+            species: { type: 'string' },
+            durationWeeks: { type: 'number' },
+            genotoxComponent: { type: 'string', description: 'For genotox: ames | in_vitro_mammalian | in_vivo.' },
+          },
+          required: ['studyType'],
+        },
+      },
+    },
+    required: ['maxClinicalDurationWeeks'],
+  },
+};
+
 export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
@@ -2709,6 +2742,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CLASSIFY_TOX_FINDINGS,
   SELECT_EXPOSURE_RESPONSE_DOSE,
   DRAFT_NONCLINICAL_OVERVIEW_M2_4,
+  ASSESS_NONCLINICAL_PROGRAM,
   ASSESS_CONCENTRATION_QTC,
   ASSESS_DDI_RISK,
   DRAFT_CLINICAL_SUMMARY_M2_7,
