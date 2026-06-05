@@ -3589,6 +3589,95 @@ registerToolHandler('run_shadow_review', async (input, ctx) => {
   }
 });
 
+// ── Submission AI tasks (gateway-backed, audited; tenant from ToolContext) ────
+
+registerToolHandler('plan_submission', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) {
+    return JSON.stringify({ error: 'plan_submission requires tenant context (organizationId and userId).' });
+  }
+  const applicationType = typeof input.application_type === 'string' ? input.application_type : '';
+  const clientType = typeof input.client_type === 'string' ? input.client_type : '';
+  const regions = Array.isArray(input.regions) ? (input.regions as string[]) : [];
+  if (!applicationType) return JSON.stringify({ error: 'application_type is required.' });
+  if (!clientType) return JSON.stringify({ error: 'client_type is required.' });
+  if (regions.length === 0) return JSON.stringify({ error: 'regions (non-empty array) is required.' });
+  try {
+    const { generateSubmissionPlan } = await import('../submission-ai/submission-ai-service.js');
+    const result = await generateSubmissionPlan(
+      { applicationType, clientType, regions, productProfile: typeof input.product_profile === 'string' ? input.product_profile : undefined },
+      { organizationId: ctx.organizationId, userId: ctx.userId, submissionId: typeof input.submission_id === 'number' ? input.submission_id : undefined }
+    );
+    return JSON.stringify({ ok: true, plan: result });
+  } catch (err) {
+    return JSON.stringify({ error: `plan_submission failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });
+  }
+});
+
+registerToolHandler('explain_validation_findings', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) {
+    return JSON.stringify({ error: 'explain_validation_findings requires tenant context (organizationId and userId).' });
+  }
+  const region = typeof input.region === 'string' ? input.region : '';
+  const findings = Array.isArray(input.findings) ? (input.findings as any[]) : [];
+  if (!region) return JSON.stringify({ error: 'region is required.' });
+  if (findings.length === 0) return JSON.stringify({ error: 'findings (non-empty array) is required.' });
+  try {
+    const { explainValidation } = await import('../submission-ai/submission-ai-service.js');
+    const result = await explainValidation(
+      { region, findings },
+      { organizationId: ctx.organizationId, userId: ctx.userId, submissionId: typeof input.submission_id === 'number' ? input.submission_id : undefined }
+    );
+    return JSON.stringify({ ok: true, ...((result as object) ?? {}) });
+  } catch (err) {
+    return JSON.stringify({ error: `explain_validation_findings failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });
+  }
+});
+
+registerToolHandler('cross_region_gap_analysis', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) {
+    return JSON.stringify({ error: 'cross_region_gap_analysis requires tenant context (organizationId and userId).' });
+  }
+  const sourceRegion = typeof input.source_region === 'string' ? input.source_region : '';
+  const targetRegions = Array.isArray(input.target_regions) ? (input.target_regions as string[]) : [];
+  const applicationType = typeof input.application_type === 'string' ? input.application_type : '';
+  if (!sourceRegion) return JSON.stringify({ error: 'source_region is required.' });
+  if (targetRegions.length === 0) return JSON.stringify({ error: 'target_regions (non-empty array) is required.' });
+  if (!applicationType) return JSON.stringify({ error: 'application_type is required.' });
+  try {
+    const { computeCrossRegionGap } = await import('../submission-ai/submission-ai-service.js');
+    const result = await computeCrossRegionGap(
+      { sourceRegion, targetRegions, applicationType, sectionsPresent: Array.isArray(input.sections_present) ? (input.sections_present as string[]) : undefined },
+      { organizationId: ctx.organizationId, userId: ctx.userId, submissionId: typeof input.submission_id === 'number' ? input.submission_id : undefined }
+    );
+    return JSON.stringify({ ok: true, ...((result as object) ?? {}) });
+  } catch (err) {
+    return JSON.stringify({ error: `cross_region_gap_analysis failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });
+  }
+});
+
+registerToolHandler('dispatch_qc_check', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) {
+    return JSON.stringify({ error: 'dispatch_qc_check requires tenant context (organizationId and userId).' });
+  }
+  const region = typeof input.region === 'string' ? input.region : '';
+  const validationErrors = typeof input.validation_errors === 'number' ? input.validation_errors : NaN;
+  const unresolvedShadowCriticals = typeof input.unresolved_shadow_criticals === 'number' ? input.unresolved_shadow_criticals : NaN;
+  const leaves = Array.isArray(input.leaves) ? (input.leaves as any[]) : [];
+  if (!region) return JSON.stringify({ error: 'region is required.' });
+  if (!Number.isFinite(validationErrors)) return JSON.stringify({ error: 'validation_errors (number) is required.' });
+  if (!Number.isFinite(unresolvedShadowCriticals)) return JSON.stringify({ error: 'unresolved_shadow_criticals (number) is required.' });
+  try {
+    const { runDispatchQc } = await import('../submission-ai/submission-ai-service.js');
+    const result = await runDispatchQc(
+      { region, validationErrors, unresolvedShadowCriticals, leaves: leaves.map((l) => ({ sectionCode: l.section_code, operation: l.operation })) },
+      { organizationId: ctx.organizationId, userId: ctx.userId, submissionId: typeof input.submission_id === 'number' ? input.submission_id : undefined }
+    );
+    return JSON.stringify({ ok: true, ...((result as object) ?? {}) });
+  } catch (err) {
+    return JSON.stringify({ error: `dispatch_qc_check failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Notifications + clinical-study + memory handlers (migration 20260510).
 // ─────────────────────────────────────────────────────────────────────────────

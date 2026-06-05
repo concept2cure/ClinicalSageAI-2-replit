@@ -1843,6 +1843,90 @@ export const VALIDATE_ECTD_PACKAGE: AnaTool = {
   },
 };
 
+// ── Submission AI tasks (gateway-backed, audited) ────────────────────────────
+
+export const PLAN_SUBMISSION: AnaTool = {
+  name: 'plan_submission',
+  description:
+    'Generate a submission plan for a target product: the required module/section map, regional forms, a timeline keyed to health-authority clocks, a dependency graph, and an initial gap list. Tenant and acting user come from the active context. Grounds against ICH and region guidance and is audited. Use it when a user starts a new submission and asks what is required.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      application_type: { type: 'string', description: 'e.g. ind, nda, bla, maa, 510k, de_novo, pma, cta.' },
+      client_type: { type: 'string', enum: ['pharma', 'biotech', 'mdx', 'ivd'], description: 'Client type.' },
+      regions: { type: 'array', items: { type: 'string', enum: ['fda', 'eu', 'jp'] }, description: 'Target regions.' },
+      product_profile: { type: 'string', description: 'Optional product and indication description.' },
+      submission_id: { type: 'number', description: 'Optional submission this plan is for (recorded on the audit entry).' },
+    },
+    required: ['application_type', 'client_type', 'regions'],
+  },
+};
+
+export const EXPLAIN_VALIDATION_FINDINGS: AnaTool = {
+  name: 'explain_validation_findings',
+  description:
+    'Translate deterministic eCTD/region validator findings into plain-language causes and concrete fixes, without changing any verdict. Tenant comes from the active context; the call is audited. Use it after validate_ectd_package so the user understands and can fix each finding.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      region: { type: 'string', enum: ['fda', 'eu', 'jp'] },
+      findings: {
+        type: 'array',
+        description: 'Deterministic validator findings to explain.',
+        items: {
+          type: 'object',
+          properties: {
+            rule_id: { type: 'string' },
+            severity: { type: 'string', enum: ['error', 'warning', 'info'] },
+            message: { type: 'string' },
+            leaf: { type: 'string' },
+          },
+          required: ['severity', 'message'],
+        },
+      },
+      submission_id: { type: 'number', description: 'Optional submission id for the audit entry.' },
+    },
+    required: ['region', 'findings'],
+  },
+};
+
+export const CROSS_REGION_GAP_ANALYSIS: AnaTool = {
+  name: 'cross_region_gap_analysis',
+  description:
+    'Given a submission prepared for a source region, compute what is additionally needed to file the same product in target regions: Module 1 deltas, bridging-study needs (ICH E5), translation scope, and format conversion. Tenant comes from the active context; the call is audited.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      source_region: { type: 'string', enum: ['fda', 'eu', 'jp'] },
+      target_regions: { type: 'array', items: { type: 'string', enum: ['fda', 'eu', 'jp'] } },
+      application_type: { type: 'string', description: 'e.g. nda, maa, jnda.' },
+      sections_present: { type: 'array', items: { type: 'string' }, description: 'Optional CTD section codes already prepared.' },
+      submission_id: { type: 'number', description: 'Optional submission id for the audit entry.' },
+    },
+    required: ['source_region', 'target_regions', 'application_type'],
+  },
+};
+
+export const DISPATCH_QC_CHECK: AnaTool = {
+  name: 'dispatch_qc_check',
+  description:
+    'Run a final adversarial pre-transmit QC pass and decide whether dispatch may proceed. Hard rule: never cleared when there are open error-severity validation findings or unacknowledged Shadow Review criticals. This does NOT transmit — it gates. Tenant comes from the active context; the call is audited.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      region: { type: 'string', enum: ['fda', 'eu', 'jp'] },
+      validation_errors: { type: 'number', description: 'Count of open error-severity validation findings.' },
+      unresolved_shadow_criticals: { type: 'number', description: 'Count of unacknowledged Shadow Review criticals.' },
+      leaves: {
+        type: 'array',
+        items: { type: 'object', properties: { section_code: { type: 'string' }, operation: { type: 'string' } }, required: ['section_code', 'operation'] },
+      },
+      submission_id: { type: 'number', description: 'Optional submission id for the audit entry.' },
+    },
+    required: ['region', 'validation_errors', 'unresolved_shadow_criticals', 'leaves'],
+  },
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Notifications + clinical-study + memory tools (migration 20260510).
 // AnA fires notifications when she identifies actionable state, logs
@@ -3290,6 +3374,10 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   EXTRACT_SUBMISSION_DOCUMENT,
   RUN_SHADOW_REVIEW,
   VALIDATE_ECTD_PACKAGE,
+  PLAN_SUBMISSION,
+  EXPLAIN_VALIDATION_FINDINGS,
+  CROSS_REGION_GAP_ANALYSIS,
+  DISPATCH_QC_CHECK,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,
   LOG_STUDY_DEVIATION,

@@ -22,6 +22,10 @@ const SUBMISSION_TOOLS = [
   'extract_submission_document',
   'validate_ectd_package',
   'run_shadow_review',
+  'plan_submission',
+  'explain_validation_findings',
+  'cross_region_gap_analysis',
+  'dispatch_qc_check',
 ];
 
 describe('submission-center AnA tools — registration', () => {
@@ -118,6 +122,34 @@ describe('validate_ectd_package (pure)', () => {
     expect(typeof out.score).toBe('number');
     expect(Array.isArray(out.findings)).toBe(true);
     expect(typeof out.valid).toBe('boolean');
+  });
+});
+
+describe('submission AI tasks — tenant + input guards', () => {
+  it('plan_submission refuses without org/user context', async () => {
+    const handler = getToolHandler('plan_submission')!;
+    const out = JSON.parse(await handler({ application_type: 'ind', client_type: 'biotech', regions: ['fda'] }, {} as ToolContext));
+    expect(out.error).toMatch(/tenant context/);
+  });
+  it('plan_submission validates required inputs', async () => {
+    const handler = getToolHandler('plan_submission')!;
+    const out = JSON.parse(await handler({ client_type: 'biotech', regions: ['fda'] }, { organizationId: 1, userId: 2 } as ToolContext));
+    expect(out.error).toMatch(/application_type/);
+  });
+  it('explain_validation_findings refuses without org/user context', async () => {
+    const handler = getToolHandler('explain_validation_findings')!;
+    const out = JSON.parse(await handler({ region: 'fda', findings: [{ severity: 'error', message: 'x' }] }, {} as ToolContext));
+    expect(out.error).toMatch(/tenant context/);
+  });
+  it('cross_region_gap_analysis validates required inputs', async () => {
+    const handler = getToolHandler('cross_region_gap_analysis')!;
+    const out = JSON.parse(await handler({ source_region: 'fda' }, { organizationId: 1, userId: 2 } as ToolContext));
+    expect(out.error).toMatch(/target_regions|application_type/);
+  });
+  it('dispatch_qc_check refuses without org/user context', async () => {
+    const handler = getToolHandler('dispatch_qc_check')!;
+    const out = JSON.parse(await handler({ region: 'fda', validation_errors: 0, unresolved_shadow_criticals: 0, leaves: [] }, {} as ToolContext));
+    expect(out.error).toMatch(/tenant context/);
   });
 });
 
