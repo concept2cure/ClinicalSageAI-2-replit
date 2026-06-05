@@ -61,3 +61,19 @@ Dominated by **CDISC** (37, schema.ts:12154–13370), **CSR knowledge DB** (26, 
 5. **Type drift**: replace `database.d.ts` mirrors with `$inferSelect` re-exports.
 
 Say the word and I'll execute Tier 1 + Tier 2 first (safest, ~highest yield), build-verify, and push — then proceed tier by tier with your go at each.
+
+---
+
+## Execution status (2026-06-05)
+
+**Done — all `vite build` + `tsc` verified, 7 commits, ~211 files / ~55.6k lines removed:**
+- **Tier 2:** 16 dead router files + 2 orphan tests removed. **Correction:** `beta-telemetry.routes.ts` was a swarm **false positive** — it IS live (mounted via `betaRouteManifest.ts` → `register-inline-routes`) and was restored. (Lesson: the agent's scan checked `register-*.ts` bootstrap files but not sibling mount helpers; `tsc` caught it.)
+- **Tier 1A:** dead server services (`ana-continuous-eval`, `documentPreviewService`, `docusign.js`, `deviceProfileService`+test) + 4 dead shared modules.
+- **Tier 1B:** dead client islands (figma/registry, `stub-router-dom`, `role/`, `store/manufacturing.store`, worker+spawner, the dead `client/src/design-system/` island).
+- **Tier 3:** the legacy CERV2/510k/eCTD **client layer** — dead dirs (`api/`, `templates/`, `data/`, `i18n/`), superseded `.jsx/.js` duplicate variants, and **126 zero-reference files** across `services/`/`utils/`/`lib/`/`contexts/`/`hooks/` (+ cascade). Live files (`services/portal`, `lib/queryClient.ts`, `utils/authToken.ts`, the ~45 in-use hooks, the 3 live contexts) preserved.
+
+**Remaining — these are REFACTORS/MIGRATIONS, not pure deletes; recommend dedicated reviewed passes (higher risk near go-live):**
+- **server/services duplicate consolidation:** migrate the 6+2 callers off `audit/auditLogger.ts` + `auditLoggerV2.ts` onto canonical `auditService.ts`, then remove; consolidate `FDA510kService` vs `PredicateFinderService`. (Changes live audit/route behavior — review required.)
+- **Tier 4 schema collisions:** fold `shared/cmc-schema.ts`'s 6 duplicate-SQL-name tables into `schema.ts` and repoint `server/api/cmc/*` + `routes/knowledge-base.ts`. (Migration + insert-path review.)
+- **Tier 5:** prune ~157 fully-dead tables (CDISC/CSR/QC/…) — a controlled schema-cleanup migration.
+- **Type drift:** replace `shared/types/database.d.ts` hand-mirrors with `typeof table.$inferSelect` re-exports.
