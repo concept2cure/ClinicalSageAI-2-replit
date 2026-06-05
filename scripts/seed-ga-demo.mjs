@@ -498,6 +498,51 @@ async function seed() {
       await ensureLink(sub1, '2.3', docQuality, 0.8);
 
       console.log('   ✓ Submission core + evidence graph seeded');
+
+      // ── Shadow Review demo (the moat) ──
+      const shadowExists = await client.query(
+        `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'shadow_review_runs') AS ok`
+      );
+      if (shadowExists.rows[0].ok) {
+        const runId = await ensureRow(
+          `SELECT id FROM shadow_review_runs WHERE sequence_id = $1 AND lens = 'fda_filing' AND deleted_at IS NULL LIMIT 1`,
+          [seq1],
+          `INSERT INTO shadow_review_runs (sequence_id, region, lens, model, prompt_version, status,
+              rtf_risk_score, crl_risk_score, summary, organization_id, created_by)
+             VALUES ($1, 'fda', 'fda_filing', 'claude', 'shadow-review@v1.0', 'complete', $2, $3, $4, $5, $6) RETURNING id`,
+          [seq1, 0.18, 0.31, 'Two filing-readiness gaps and one benefit-risk weakness to resolve before submission.', org.id, admin.id]
+        );
+        const ensureFinding = (dimension, severity, title, basis, recommendation, leafRef) =>
+          ensureRow(
+            `SELECT id FROM shadow_review_findings WHERE run_id = $1 AND title = $2 AND deleted_at IS NULL LIMIT 1`,
+            [runId, title],
+            `INSERT INTO shadow_review_findings (run_id, dimension, severity, title, detail, basis, recommendation, leaf_ref, status, organization_id, created_by)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10) RETURNING id`,
+            [runId, dimension, severity, title, title, basis, recommendation, leafRef, org.id, admin.id]
+          );
+        await ensureFinding('rtf', 'major', 'Form 1571 is not signed', '21 CFR 312.23(a)(1)', 'Attach the signed Form 1571 under Module 1 (US).', 'm1.us');
+        await ensureFinding('crl', 'major', 'Benefit-risk integration is thin in 2.5', 'ICH M4E(R2)', 'Strengthen the integrated benefit-risk in the Clinical Overview.', '2.5');
+        await ensureFinding('format', 'minor', 'One leaf is missing an MD5 checksum', 'eCTD validation criteria', 'Recompute the MD5 for the affected leaf before packaging.', '3.2.S');
+        console.log('   ✓ Shadow review demo seeded');
+      }
+
+      // ── Consistency findings demo (Truth Engine) ──
+      const consExists = await client.query(
+        `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'consistency_findings') AS ok`
+      );
+      if (consExists.rows[0].ok) {
+        const ensureCons = (dimension, leftRef, rightRef, status, detail) =>
+          ensureRow(
+            `SELECT id FROM consistency_findings WHERE submission_id = $1 AND dimension = $2 AND left_ref = $3 AND right_ref = $4 AND deleted_at IS NULL LIMIT 1`,
+            [sub1, dimension, leftRef, rightRef],
+            `INSERT INTO consistency_findings (submission_id, dimension, left_ref, right_ref, status, detail, organization_id, created_by)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+            [sub1, dimension, leftRef, rightRef, status, detail, org.id, admin.id]
+          );
+        await ensureCons('subject-counts', '2.7.3', '5.3.5.1', 'match', null);
+        await ensureCons('spec-vs-qos', '2.3', '3.2.S.4.1', 'conflict', 'Assay limit in the 2.3 QOS (98.0%) does not match the Module 3 specification (98.5%).');
+        console.log('   ✓ Consistency findings demo seeded');
+      }
     } else {
       console.log('   ⚠ submissions/coauthor_documents not found — run drizzle-kit push first, skipping');
     }

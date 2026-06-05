@@ -1,0 +1,1322 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Concept2Cure Submission Center API",
+    "version": "1.0.0",
+    "description": "Endpoints for the Submission Center (spec §4 workspaces). All require an authenticated cookie session; organization/user are resolved server-side and never accepted in the body. TypeScript shapes: shared/types/submission-api.ts. Human map: SUBMISSION_CENTER_API.md."
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "security": [
+    {
+      "cookieSession": []
+    }
+  ],
+  "paths": {
+    "/api/submissions": {
+      "get": {
+        "tags": [
+          "Submissions"
+        ],
+        "summary": "Portfolio list",
+        "responses": {
+          "200": {
+            "description": "Submissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Submission"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Submissions"
+        ],
+        "summary": "Create submission",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/CreateSubmission"
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Submission"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/submissions/capabilities": {
+      "get": {
+        "tags": [
+          "Submissions"
+        ],
+        "summary": "Feature gating",
+        "parameters": [
+          {
+            "name": "environment",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "staging",
+                "production"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Capabilities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/submissions/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/Id"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Submissions"
+        ],
+        "summary": "Submission hub",
+        "responses": {
+          "200": {
+            "description": "Submission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Submission"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/submissions/{id}/sequences": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/Id"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Sequences"
+        ],
+        "summary": "List sequences",
+        "responses": {
+          "200": {
+            "description": "Sequences",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EctdSequence"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Sequences"
+        ],
+        "summary": "Create sequence",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "region",
+                  "sequenceNumber"
+                ],
+                "properties": {
+                  "region": {
+                    "type": "string",
+                    "enum": [
+                      "fda",
+                      "eu",
+                      "jp"
+                    ]
+                  },
+                  "sequenceNumber": {
+                    "type": "string",
+                    "pattern": "^\\d{4}$"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "original",
+                      "amendment",
+                      "response",
+                      "variation",
+                      "annual",
+                      "withdrawal"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EctdSequence"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/submissions/sequences/{seqId}/transition": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/SeqId"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Sequences"
+        ],
+        "summary": "Transition sequence status",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "draft",
+                      "assembling",
+                      "validated",
+                      "frozen",
+                      "dispatched"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EctdSequence"
+                }
+              }
+            }
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/submissions/sequences/{seqId}/leaves": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/SeqId"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Builder"
+        ],
+        "summary": "List leaves",
+        "responses": {
+          "200": {
+            "description": "Leaves",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SubmissionLeaf"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Builder"
+        ],
+        "summary": "Create or update a leaf",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "sectionCode",
+                  "title"
+                ],
+                "properties": {
+                  "leafId": {
+                    "type": "integer"
+                  },
+                  "sectionCode": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "granularity": {
+                    "type": "string"
+                  },
+                  "lifecycleOp": {
+                    "type": "string",
+                    "enum": [
+                      "new",
+                      "replace",
+                      "append",
+                      "delete"
+                    ]
+                  },
+                  "documentTable": {
+                    "type": "string"
+                  },
+                  "documentId": {
+                    "type": "integer"
+                  },
+                  "parentLeafId": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Leaf",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionLeaf"
+                }
+              }
+            }
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/submissions/{id}/plan": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/Id"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Planner"
+        ],
+        "summary": "Generate submission plan (AI)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "applicationType",
+                  "clientType",
+                  "regions"
+                ],
+                "properties": {
+                  "applicationType": {
+                    "type": "string"
+                  },
+                  "clientType": {
+                    "type": "string",
+                    "enum": [
+                      "pharma",
+                      "biotech",
+                      "mdx",
+                      "ivd"
+                    ]
+                  },
+                  "regions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "fda",
+                        "eu",
+                        "jp"
+                      ]
+                    }
+                  },
+                  "productProfile": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Plan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/submissions/{id}/validation/explain": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/Id"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Validation"
+        ],
+        "summary": "Explain validator findings (AI)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "region",
+                  "findings"
+                ],
+                "properties": {
+                  "region": {
+                    "type": "string",
+                    "enum": [
+                      "fda",
+                      "eu",
+                      "jp"
+                    ]
+                  },
+                  "findings": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Explanations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/submissions/{id}/cross-region": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/Id"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Cross-Region"
+        ],
+        "summary": "Cross-region gap analysis (AI)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "sourceRegion",
+                  "targetRegions",
+                  "applicationType"
+                ],
+                "properties": {
+                  "sourceRegion": {
+                    "type": "string",
+                    "enum": [
+                      "fda",
+                      "eu",
+                      "jp"
+                    ]
+                  },
+                  "targetRegions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "fda",
+                        "eu",
+                        "jp"
+                      ]
+                    }
+                  },
+                  "applicationType": {
+                    "type": "string"
+                  },
+                  "sectionsPresent": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Per-region deltas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/submissions/{id}/dispatch-qc": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/Id"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Dispatch"
+        ],
+        "summary": "Pre-transmit QC gate (does not transmit)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "region",
+                  "validationErrors",
+                  "unresolvedShadowCriticals",
+                  "leaves"
+                ],
+                "properties": {
+                  "region": {
+                    "type": "string",
+                    "enum": [
+                      "fda",
+                      "eu",
+                      "jp"
+                    ]
+                  },
+                  "validationErrors": {
+                    "type": "integer"
+                  },
+                  "unresolvedShadowCriticals": {
+                    "type": "integer"
+                  },
+                  "leaves": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Gate verdict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/submissions/{id}/provenance": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/Id"
+        },
+        {
+          "name": "section",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "Truth Engine"
+        ],
+        "summary": "Provenance graph for a section",
+        "responses": {
+          "200": {
+            "description": "Provenance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/submissions/{id}/consistency": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/Id"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Truth Engine"
+        ],
+        "summary": "List consistency findings",
+        "responses": {
+          "200": {
+            "description": "Findings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Truth Engine"
+        ],
+        "summary": "Run consistency check (AI; persisted)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "dimension",
+                  "left",
+                  "right"
+                ],
+                "properties": {
+                  "dimension": {
+                    "type": "string"
+                  },
+                  "left": {
+                    "type": "object"
+                  },
+                  "right": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Findings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/submissions/sequences/{seqId}/shadow-review": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/SeqId"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Shadow Review"
+        ],
+        "summary": "Run history",
+        "responses": {
+          "200": {
+            "description": "Runs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Shadow Review"
+        ],
+        "summary": "Run a reviewer-lens pass (AI)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "lens": {
+                    "type": "string",
+                    "enum": [
+                      "fda_filing",
+                      "ema_d120",
+                      "pmda",
+                      "nb_mdr",
+                      "nb_ivdr"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Run result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/submissions/shadow-review/{runId}/findings": {
+      "parameters": [
+        {
+          "name": "runId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "Shadow Review"
+        ],
+        "summary": "Findings of a run",
+        "responses": {
+          "200": {
+            "description": "Findings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/submissions/{id}/sections/generate": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/Id"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Authoring"
+        ],
+        "summary": "Stream a section draft (SSE)",
+        "description": "text/event-stream: repeated event:chunk then event:done (GenerateSectionResult) or event:error.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "sectionCode",
+                  "evidence"
+                ],
+                "properties": {
+                  "sectionCode": {
+                    "type": "string"
+                  },
+                  "evidence": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "productContext": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SSE stream",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ectd-documents/{id}/classify": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/Id"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Ingestion"
+        ],
+        "summary": "Classify a document to a CTD leaf (AI)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sequenceId": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Classification",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ectd-documents/{id}/extract": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/Id"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Ingestion"
+        ],
+        "summary": "Extract structure + provenance (AI)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "sectionCode",
+                  "submissionId"
+                ],
+                "properties": {
+                  "sectionCode": {
+                    "type": "string"
+                  },
+                  "submissionId": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Extraction",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/region-profiles": {
+      "get": {
+        "tags": [
+          "Region Profiles"
+        ],
+        "summary": "All region profiles",
+        "responses": {
+          "200": {
+            "description": "Profiles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/region-profiles/{region}": {
+      "parameters": [
+        {
+          "name": "region",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "fda",
+              "eu",
+              "jp"
+            ]
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "Region Profiles"
+        ],
+        "summary": "One region profile",
+        "responses": {
+          "200": {
+            "description": "Profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "cookieSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "session"
+      }
+    },
+    "parameters": {
+      "Id": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "SeqId": {
+        "name": "seqId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer"
+        }
+      }
+    },
+    "requestBodies": {
+      "CreateSubmission": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "title",
+                "applicationType",
+                "clientType",
+                "primaryRegion"
+              ],
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "productName": {
+                  "type": "string"
+                },
+                "applicationType": {
+                  "type": "string"
+                },
+                "clientType": {
+                  "type": "string",
+                  "enum": [
+                    "pharma",
+                    "biotech",
+                    "mdx",
+                    "ivd"
+                  ]
+                },
+                "primaryRegion": {
+                  "type": "string",
+                  "enum": [
+                    "fda",
+                    "eu",
+                    "jp"
+                  ]
+                },
+                "lifecycleStage": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Region": {
+        "type": "string",
+        "enum": [
+          "fda",
+          "eu",
+          "jp"
+        ]
+      },
+      "ClientType": {
+        "type": "string",
+        "enum": [
+          "pharma",
+          "biotech",
+          "mdx",
+          "ivd"
+        ]
+      },
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": [
+              "code"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {}
+            }
+          }
+        }
+      },
+      "Submission": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "applicationType",
+          "clientType",
+          "primaryRegion",
+          "status",
+          "lifecycleStage",
+          "organizationId",
+          "createdBy"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "productName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "clientType": {
+            "type": "string"
+          },
+          "primaryRegion": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "lifecycleStage": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "integer"
+          },
+          "createdBy": {
+            "type": "integer"
+          }
+        }
+      },
+      "EctdSequence": {
+        "type": "object",
+        "required": [
+          "id",
+          "submissionId",
+          "region",
+          "sequenceNumber",
+          "type",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "submissionId": {
+            "type": "integer"
+          },
+          "region": {
+            "type": "string"
+          },
+          "sequenceNumber": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "validationStatus": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dispatchStatus": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "frozenAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "organizationId": {
+            "type": "integer"
+          },
+          "createdBy": {
+            "type": "integer"
+          }
+        }
+      },
+      "SubmissionLeaf": {
+        "type": "object",
+        "required": [
+          "id",
+          "sequenceId",
+          "sectionCode",
+          "title",
+          "lifecycleOp",
+          "organizationId",
+          "createdBy"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "sequenceId": {
+            "type": "integer"
+          },
+          "sectionCode": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "granularity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lifecycleOp": {
+            "type": "string"
+          },
+          "documentTable": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "documentId": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "leafGuid": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parentLeafId": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "checksum": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "organizationId": {
+            "type": "integer"
+          },
+          "createdBy": {
+            "type": "integer"
+          }
+        }
+      }
+    }
+  }
+}
