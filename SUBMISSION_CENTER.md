@@ -5,7 +5,7 @@ phase handoff. Parent spec: `AnA_Submission_Center_Architecture_and_Build_Spec.m
 Audit record: `RECONCILE.md`.
 
 **Branch:** `concept2cure-v2` (only). **Verification state:** `tsc --noEmit` = 0
-errors; 59 unit tests green. DB-runtime (`drizzle-kit push`, live endpoints) and
+errors; 62 unit tests green (8 suites). DB-runtime (`drizzle-kit push`, live endpoints) and
 all UI are **not** verified here — no database/browser in the build container.
 
 ---
