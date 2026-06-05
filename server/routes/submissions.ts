@@ -24,6 +24,22 @@ import {
   upsertLeaf,
   SubmissionError,
 } from '../services/submission-service/submission-service';
+import {
+  generateSubmissionPlan,
+  explainValidation,
+  computeCrossRegionGap,
+  runDispatchQc,
+} from '../services/submission-ai/submission-ai-service';
+import {
+  traceProvenance,
+  runConsistencyCheck,
+  listConsistencyFindings,
+} from '../services/truth-engine/truth-engine-service';
+import {
+  runShadowReview,
+  listShadowReviewRuns,
+  getShadowReviewFindings,
+} from '../services/shadow-review/shadow-review-service';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('submissions-routes');
@@ -42,10 +58,20 @@ function ctxOf(req: Request): Ctx | null {
   return { userId, organizationId };
 }
 
+const CODE_STATUS: Record<string, number> = {
+  NOT_FOUND: 404,
+  INVALID_STATE: 409,
+  VALIDATION: 400,
+  RATE_LIMITED: 429,
+  INVALID_AI_RESPONSE: 502,
+  PROVIDER_UNAVAILABLE: 503,
+};
+
 function fail(res: Response, err: unknown): void {
-  if (err instanceof SubmissionError) {
-    const status = err.code === 'NOT_FOUND' ? 404 : err.code === 'INVALID_STATE' ? 409 : 400;
-    res.status(status).json({ error: { code: err.code, message: err.message } });
+  // Any service error that carries a known `code` maps to a stable HTTP status.
+  const code = (err as { code?: string } | null)?.code;
+  if (code && CODE_STATUS[code]) {
+    res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } });
     return;
   }
   logger.error('submissions route error', { err: err instanceof Error ? err.message : String(err) });
@@ -186,6 +212,179 @@ router.put('/sequences/:seqId/leaves', limiter, requireRole(AUTHOR), async (req,
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
     res.json(await upsertLeaf({ sequenceId: seqId, ...parsed.data }, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Planner (AI) ────────────────────────────────────────────────────────────
+const planSchema = z.object({
+  applicationType: z.string().min(1).max(64),
+  clientType: z.enum(['pharma', 'biotech', 'mdx', 'ivd']),
+  regions: z.array(z.enum(['fda', 'eu', 'jp'])).min(1),
+  productProfile: z.string().max(4000).optional(),
+});
+router.post('/:id/plan', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = idParam(req.params.id);
+  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
+  const parsed = planSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    await getSubmission(id, ctx); // tenant ownership
+    res.json(await generateSubmissionPlan(parsed.data, { ...ctx, submissionId: id }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Validation co-pilot (AI explain) ─────────────────────────────────────────
+const explainSchema = z.object({
+  region: z.enum(['fda', 'eu', 'jp']),
+  findings: z
+    .array(z.object({ ruleId: z.string().optional(), severity: z.enum(['error', 'warning', 'info']), message: z.string(), leaf: z.string().optional() }))
+    .min(1),
+});
+router.post('/:id/validation/explain', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = idParam(req.params.id);
+  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
+  const parsed = explainSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    await getSubmission(id, ctx);
+    res.json(await explainValidation(parsed.data, { ...ctx, submissionId: id }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Cross-region gap (AI) ────────────────────────────────────────────────────
+const crossRegionSchema = z.object({
+  sourceRegion: z.enum(['fda', 'eu', 'jp']),
+  targetRegions: z.array(z.enum(['fda', 'eu', 'jp'])).min(1),
+  applicationType: z.string().min(1).max(64),
+  sectionsPresent: z.array(z.string()).optional(),
+});
+router.post('/:id/cross-region', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = idParam(req.params.id);
+  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
+  const parsed = crossRegionSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    await getSubmission(id, ctx);
+    res.json(await computeCrossRegionGap(parsed.data, { ...ctx, submissionId: id }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Dispatch QC gate (AI; does NOT transmit) ─────────────────────────────────
+const dispatchQcSchema = z.object({
+  region: z.enum(['fda', 'eu', 'jp']),
+  validationErrors: z.number().int().min(0),
+  unresolvedShadowCriticals: z.number().int().min(0),
+  leaves: z.array(z.object({ sectionCode: z.string(), operation: z.string() })),
+});
+router.post('/:id/dispatch-qc', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = idParam(req.params.id);
+  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
+  const parsed = dispatchQcSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    await getSubmission(id, ctx);
+    res.json(await runDispatchQc(parsed.data, { ...ctx, submissionId: id }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Truth Engine: provenance + consistency ───────────────────────────────────
+router.get('/:id/provenance', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = idParam(req.params.id);
+  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
+  const section = Array.isArray(req.query.section) ? String(req.query.section[0]) : typeof req.query.section === 'string' ? req.query.section : '';
+  if (!section) return res.status(400).json({ error: { code: 'VALIDATION', message: 'query param "section" is required.' } });
+  try {
+    res.json(await traceProvenance({ submissionId: id, targetSectionCode: section }, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+const consistencySchema = z.object({
+  dimension: z.string().min(1).max(64),
+  left: z.object({ ref: z.string(), text: z.string() }),
+  right: z.array(z.object({ ref: z.string(), text: z.string() })).min(1),
+});
+router.post('/:id/consistency', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = idParam(req.params.id);
+  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
+  const parsed = consistencySchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    res.json(await runConsistencyCheck({ submissionId: id, ...parsed.data }, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+router.get('/:id/consistency', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = idParam(req.params.id);
+  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
+  try {
+    res.json(await listConsistencyFindings(id, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Shadow Review (the moat) ────────────────────────────────────────────────
+const shadowSchema = z.object({
+  lens: z.enum(['fda_filing', 'ema_d120', 'pmda', 'nb_mdr', 'nb_ivdr']).optional(),
+});
+router.post('/sequences/:seqId/shadow-review', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = shadowSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    res.json(await runShadowReview({ sequenceId: seqId, lens: parsed.data.lens, organizationId: ctx.organizationId, userId: ctx.userId }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+router.get('/sequences/:seqId/shadow-review', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  try {
+    res.json(await listShadowReviewRuns(seqId, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+router.get('/shadow-review/:runId/findings', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const runId = idParam(req.params.runId);
+  if (runId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid run id.' } });
+  try {
+    res.json(await getShadowReviewFindings(runId, ctx));
   } catch (err) {
     fail(res, err);
   }

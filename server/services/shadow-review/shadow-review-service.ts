@@ -11,7 +11,7 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, and, isNull, desc } from 'drizzle-orm';
 import { db } from '../../db';
 import { ectdSequences, submissionLeaves, shadowReviewRuns, shadowReviewFindings } from '../../../shared/schema';
 import { getGateway } from '../ai-gateway';
@@ -198,3 +198,35 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
 }
 
 export default { runShadowReview, aggregateRisk, ShadowReviewError };
+
+// ── Reads (tenant-scoped) ─────────────────────────────────────────────────
+
+/** List shadow-review runs for a sequence (newest first). */
+export async function listShadowReviewRuns(sequenceId: number, ctx: { organizationId: number }) {
+  return db
+    .select()
+    .from(shadowReviewRuns)
+    .where(
+      and(
+        eq(shadowReviewRuns.sequenceId, sequenceId),
+        eq(shadowReviewRuns.organizationId, ctx.organizationId),
+        isNull(shadowReviewRuns.deletedAt)
+      )
+    )
+    .orderBy(desc(shadowReviewRuns.createdAt));
+}
+
+/** Get the findings of a shadow-review run (tenant-scoped). */
+export async function getShadowReviewFindings(runId: number, ctx: { organizationId: number }) {
+  return db
+    .select()
+    .from(shadowReviewFindings)
+    .where(
+      and(
+        eq(shadowReviewFindings.runId, runId),
+        eq(shadowReviewFindings.organizationId, ctx.organizationId),
+        isNull(shadowReviewFindings.deletedAt)
+      )
+    )
+    .orderBy(shadowReviewFindings.severity);
+}
