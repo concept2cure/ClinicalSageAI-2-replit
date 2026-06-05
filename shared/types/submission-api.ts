@@ -218,3 +218,21 @@ export interface RegionProfileResponse {
   specificRequirements: string[];
   validationRuleCount: number;
 }
+
+// ── Capabilities (GET /api/submissions/capabilities) ─────────────────────────
+export interface CapabilitiesResponse {
+  environment: 'staging' | 'production';
+  gateways: Array<{ configured: boolean; [k: string]: unknown }>;
+  gatewaysConfigured: number;
+  workspaces: {
+    portfolio: boolean;
+    planner: boolean;
+    builder: boolean;
+    sequences: boolean;
+    validation: boolean;
+    shadowReview: boolean;
+    crossRegion: boolean;
+    dispatchQc: boolean;
+    publishTransmit: boolean;
+  };
+}

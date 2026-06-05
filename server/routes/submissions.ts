@@ -138,6 +138,43 @@ router.post('/', limiter, requireRole(AUTHOR), async (req, res) => {
   }
 });
 
+// ── Capabilities (feature-gating for the UI) ─────────────────────────────────
+// Registered before '/:id' so it is not shadowed by the id param route.
+router.get('/capabilities', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const environment = req.query.environment === 'staging' ? 'staging' : 'production';
+  try {
+    const { gatewayConfigurationStatus } = await import('../services/submission-gateways/index.js');
+    let gateways: Array<{ configured: boolean }> = [];
+    try {
+      gateways = (await gatewayConfigurationStatus(ctx.organizationId, environment)) as Array<{ configured: boolean }>;
+    } catch {
+      gateways = [];
+    }
+    res.json({
+      environment,
+      gateways,
+      gatewaysConfigured: gateways.filter((g) => g.configured).length,
+      // Which workspaces are server-ready today. Dispatch transmit + Publish
+      // bytes are pending the storage resolver (see SUBMISSION_CENTER_API.md).
+      workspaces: {
+        portfolio: true,
+        planner: true,
+        builder: true,
+        sequences: true,
+        validation: true,
+        shadowReview: true,
+        crossRegion: true,
+        dispatchQc: true,
+        publishTransmit: false,
+      },
+    });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 router.get('/:id', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });

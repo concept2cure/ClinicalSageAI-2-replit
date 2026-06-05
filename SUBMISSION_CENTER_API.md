@@ -88,3 +88,9 @@ lifecycle ops, severities, finding status, shadow lenses, evidence directions,
 consistency status, lifecycle stages) with sentence-case labels + a neutral
 `tone` hint (UI maps tone→palette; no hex here) and `SEQUENCE_TRANSITIONS`
 mirroring the server's lifecycle rules. Render dropdowns/badges/pills from these.
+
+## Capabilities (feature-gating)
+| GET | `/api/submissions/capabilities?environment=` | → `CapabilitiesResponse` | which gateways are configured + which workspaces are server-ready; UI disables/empties screens accordingly. `publishTransmit: false` until the storage resolver lands. |
+
+Workspace map + error catalog for nav/error handling: `shared/types/submission-ui.ts`
+(`SUBMISSION_WORKSPACES`, `SUBMISSION_ERROR_CODES`, `submissionErrorMessage()`).
