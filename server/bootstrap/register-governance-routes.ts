@@ -8,6 +8,7 @@ import escalateRoutes from '../routes/escalate';
 import validateCompletenessRoutes from '../routes/validate-completeness';
 import submissionCenterRoutes from '../routes/submissionCenter.routes';
 import submissionCoreRoutes from '../routes/submissions';
+import regionProfileRoutes from '../routes/region-profiles';
 import regulatoryPrecedentIntelligenceRoutes from '../routes/regulatory-precedent-intelligence';
 import { authenticateToken } from '../middleware/auth.js';
 
@@ -48,6 +49,7 @@ export async function registerGovernanceRoutes(app: Express) {
   app.use('/api/validate-completeness', authenticateToken, validateCompletenessRoutes);
   app.use('/api/submission-center', authenticateToken, submissionCenterRoutes);
   app.use('/api/submissions', authenticateToken, submissionCoreRoutes);
+  app.use('/api/region-profiles', authenticateToken, regionProfileRoutes);
   app.use(
     '/api/regulatory-precedent-intelligence',
     authenticateToken,

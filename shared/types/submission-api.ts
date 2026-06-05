@@ -198,3 +198,23 @@ export interface GenerateSectionResult {
   citations: Array<{ claim: string; evidenceId: string }>;
   ungrounded: string[];
 }
+
+// ── Region profiles (GET /api/region-profiles[/:region]) ─────────────────────
+export interface RegionProfileResponse {
+  region: 'fda' | 'eu' | 'jp';
+  agency: string; // FDA | EMA | PMDA
+  language: string;
+  currency: string;
+  pathways: string[];
+  module1Sections: Array<{
+    number: string;
+    title: string;
+    titleLocal?: string;
+    required: boolean;
+    description: string;
+    childSections?: RegionProfileResponse['module1Sections'];
+  }>;
+  forms: Array<{ name: string; formId?: string; required: boolean; description: string; url?: string }>;
+  specificRequirements: string[];
+  validationRuleCount: number;
+}

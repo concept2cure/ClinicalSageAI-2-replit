@@ -76,3 +76,15 @@ AnA can drive all of the above through her governed tools (tenant from
 Sentence case; no emoji/exclamations; body 13px; Claude orange `#d97757` as the
 only strong color (one focal point/screen); 200ms ease-out motion; Lucide icons;
 second person; numbers over adjectives. Loading/empty/error states mandatory.
+
+## Region profiles (static metadata — Planner / Builder / Validation / Cross-Region)
+| GET | `/api/region-profiles` | → `RegionProfileResponse[]` | all regions: Module 1 structure, forms, pathways, rule-pack size |
+| GET | `/api/region-profiles/:region` | → `RegionProfileResponse` | one region (fda \| eu \| jp); 404 on unknown |
+
+## Shared UI constants
+`shared/types/submission-constants.ts` — canonical `Choice[]` arrays for every
+enum (regions, client/application types, pathways, sequence type/status,
+lifecycle ops, severities, finding status, shadow lenses, evidence directions,
+consistency status, lifecycle stages) with sentence-case labels + a neutral
+`tone` hint (UI maps tone→palette; no hex here) and `SEQUENCE_TRANSITIONS`
+mirroring the server's lifecycle rules. Render dropdowns/badges/pills from these.
