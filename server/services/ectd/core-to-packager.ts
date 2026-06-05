@@ -7,7 +7,7 @@
  *
  * WHY THIS EXISTS (audit finding): there were two submission backbones — the new
  * Drizzle core and an older raw-SQL `reg_*` model whose packager
- * (`server/src/services/reg/{indexXml,packager}.ts`) is orphaned (no HTTP caller,
+ * (the former `reg/{indexXml,packager}.ts`, since deleted) was orphaned (no HTTP caller,
  * no migrations for `reg_sequences`/`reg_sequence_files`). Meanwhile the new core's
  * `submission_leaves` was written by ingestion but never READ, and the live
  * packager was fed leaves by hand. This adapter makes the canonical core the

@@ -615,10 +615,6 @@ export const CHECK_DOSSIER_CONSISTENCY: AnaTool = {
         type: 'number',
         description: 'The project the draft belongs to. Required so the check is scoped to the correct dossier.',
       },
-      organization_id: {
-        type: 'number',
-        description: 'The organization that owns the project (for tenant scoping).',
-      },
       ctd_section: {
         type: 'string',
         description: 'Optional CTD section code for this draft (e.g. "2.5", "3.2.P.8.1"). Used to skip self-reference cross-checks.',
@@ -628,7 +624,7 @@ export const CHECK_DOSSIER_CONSISTENCY: AnaTool = {
         description: 'Optional numeric artifact id to exclude from comparison — used when re-checking a revision of an existing artifact so it does not compare against its prior version.',
       },
     },
-    required: ['draft_content', 'project_id', 'organization_id'],
+    required: ['draft_content', 'project_id'],
   },
 };
 

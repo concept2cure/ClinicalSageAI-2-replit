@@ -1580,18 +1580,21 @@ registerToolHandler('get_ctd_module_home', async (input: Record<string, unknown>
 });
 
 // Check Dossier Consistency — cross-artifact divergence detection
-registerToolHandler('check_dossier_consistency', async (input: Record<string, unknown>) => {
+registerToolHandler('check_dossier_consistency', async (input: Record<string, unknown>, ctx?: ToolContext) => {
   const draftContent = input.draft_content as string;
   const projectId = Number(input.project_id);
-  const organizationId = Number(input.organization_id);
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'check_dossier_consistency requires tenant context (organizationId).' });
+  }
+  const organizationId = ctx.organizationId;
   const ctdSection = input.ctd_section as string | undefined;
   const excludeArtifactId = input.exclude_artifact_id
     ? Number(input.exclude_artifact_id)
     : undefined;
 
-  if (!draftContent || !Number.isFinite(projectId) || !Number.isFinite(organizationId)) {
+  if (!draftContent || !Number.isFinite(projectId)) {
     return JSON.stringify({
-      error: 'check_dossier_consistency requires draft_content, project_id, and organization_id',
+      error: 'check_dossier_consistency requires draft_content and project_id',
     });
   }
 

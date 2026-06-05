@@ -11,7 +11,7 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { eq, and, isNull, desc } from 'drizzle-orm';
+import { eq, and, isNull, desc, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { ectdSequences, submissionLeaves, shadowReviewRuns, shadowReviewFindings } from '../../../shared/schema';
 import { getGateway } from '../ai-gateway';
@@ -228,5 +228,9 @@ export async function getShadowReviewFindings(runId: number, ctx: { organization
         isNull(shadowReviewFindings.deletedAt)
       )
     )
-    .orderBy(shadowReviewFindings.severity);
+    // Severity is text; order by explicit rank so critical → major → minor → info
+    // (not alphabetical, which would surface "info" above "major").
+    .orderBy(
+      sql`CASE ${shadowReviewFindings.severity} WHEN 'critical' THEN 0 WHEN 'major' THEN 1 WHEN 'minor' THEN 2 ELSE 3 END`
+    );
 }

@@ -2,14 +2,16 @@
  * Submission Center API client (typed)
  *
  * One typed wrapper over every Submission Center endpoint, returning the shared
- * contract shapes from @shared/types/submission-api. Auth is the platform's
- * cookie session (`credentials: 'include'`) — no tokens in JS. Errors are
- * normalized to `SubmissionApiError { code, message }`.
+ * contract shapes from @shared/types/submission-api. Auth is the platform bearer
+ * token (`getAuthHeaders()` → `Authorization: Bearer …`, what every other client
+ * sends), with `credentials: 'include'` kept for cookie-bearing deployments.
+ * Errors are normalized to `SubmissionApiError { code, message }`.
  *
  * A dropped-in UI kit imports these (directly or via the hooks in ./hooks) and
  * never hand-rolls a fetch. See _install/README.md.
  */
 
+import { getAuthHeaders } from '@/utils/authToken';
 import type {
   CreateSubmissionRequest,
   SubmissionResponse,
@@ -51,10 +53,12 @@ export class SubmissionApiError extends Error {
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   let res: Response;
   try {
+    const headers: Record<string, string> = { ...getAuthHeaders() };
+    if (body !== undefined) headers['Content-Type'] = 'application/json';
     res = await fetch(path, {
       method,
       credentials: 'include',
-      headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+      headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch (e) {
@@ -142,7 +146,7 @@ export async function generateSectionStream(
   const res = await fetch(`/api/submissions/${submissionId}/sections/generate`, {
     method: 'POST',
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json', Accept: 'text/event-stream' },
     body: JSON.stringify(body),
     signal,
   });
@@ -161,7 +165,9 @@ export async function generateSectionStream(
     const dataLines: string[] = [];
     for (const line of frame.split('\n')) {
       if (line.startsWith('event:')) event = line.slice(6).trim();
-      else if (line.startsWith('data:')) dataLines.push(line.slice(5).trim());
+      // Per the SSE spec, strip only a single leading space from a data line —
+      // do not trim, which would corrupt JSON values with significant whitespace.
+      else if (line.startsWith('data:')) dataLines.push(line.slice(5).replace(/^ /, ''));
     }
     if (dataLines.length === 0) return;
     const data = safeJson(dataLines.join('\n'));

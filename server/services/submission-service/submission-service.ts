@@ -19,6 +19,7 @@ import {
   submissions,
   ectdSequences,
   submissionLeaves,
+  coauthorDocuments,
 } from '../../../shared/schema';
 import type {
   Submission,
@@ -32,7 +33,14 @@ const logger = createScopedLogger('submission-service');
 
 // ── Standardized errors ───────────────────────────────────────────────────────
 
-export type SubmissionErrorCode = 'NOT_FOUND' | 'INVALID_STATE' | 'VALIDATION';
+export type SubmissionErrorCode = 'NOT_FOUND' | 'INVALID_STATE' | 'VALIDATION' | 'GOVERNED_REQUIRED' | 'FORBIDDEN';
+
+/**
+ * Transitions that are irreversible / outward-facing and must go through the
+ * governed e-signature flow (POST /api/c2c/actions sign) — they are NOT allowed
+ * via the generic transition endpoint (Part 11, spec §10).
+ */
+const GOVERNED_TRANSITIONS = new Set(['frozen', 'dispatched']);
 
 export class SubmissionError extends Error {
   constructor(public code: SubmissionErrorCode, message: string) {
@@ -202,6 +210,12 @@ export async function transitionSequence(
   ctx: { organizationId: number; userId: number }
 ): Promise<EctdSequence> {
   const seq = await getSequence(id, ctx);
+  if (GOVERNED_TRANSITIONS.has(toStatus)) {
+    throw new SubmissionError(
+      'GOVERNED_REQUIRED',
+      `Transition to ${toStatus} is irreversible and must go through the governed e-signature flow (POST /api/c2c/actions sign), not this endpoint.`
+    );
+  }
   if (!canTransitionSequence(seq.status, toStatus)) {
     throw new SubmissionError('INVALID_STATE', `Cannot transition sequence from ${seq.status} to ${toStatus}.`);
   }
@@ -263,6 +277,19 @@ export async function upsertLeaf(
   const seq = await getSequence(input.sequenceId, ctx);
   if (isSequenceLocked(seq.status)) {
     throw new SubmissionError('INVALID_STATE', `Sequence is ${seq.status}; its leaves are immutable.`);
+  }
+
+  // When a leaf points at the canonical document table, the target must belong
+  // to the caller's org — no dangling cross-tenant document pointers.
+  if (input.documentTable === 'coauthor_documents' && input.documentId) {
+    const [doc] = await db
+      .select({ id: coauthorDocuments.id })
+      .from(coauthorDocuments)
+      .where(and(eq(coauthorDocuments.id, input.documentId), eq(coauthorDocuments.organizationId, ctx.organizationId)))
+      .limit(1);
+    if (!doc) {
+      throw new SubmissionError('FORBIDDEN', 'Referenced document not found for this organization.');
+    }
   }
 
   if (input.leafId) {

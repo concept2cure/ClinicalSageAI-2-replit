@@ -21,6 +21,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { getGateway } from '../ai-gateway';
+import { classifyGatewayError } from '../ai-gateway/gateway-error-map';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 
@@ -28,9 +29,28 @@ const logger = createScopedLogger('submission-ai-service');
 const PROMPTS_DIR = path.join(__dirname, '..', 'ai-gateway', 'prompts');
 
 export class SubmissionAiError extends Error {
-  constructor(public code: 'INVALID_AI_RESPONSE' | 'PROVIDER_UNAVAILABLE', message: string) {
+  constructor(
+    public code: 'INVALID_AI_RESPONSE' | 'PROVIDER_UNAVAILABLE' | 'RATE_LIMITED' | 'TOKEN_LIMIT_EXCEEDED',
+    message: string
+  ) {
     super(message);
     this.name = 'SubmissionAiError';
+  }
+}
+
+/** Audit an AI invocation outcome (best-effort; never masks the real error). */
+async function auditAiOutcome(task: string, ctx: AiTaskCtx, outcome: 'success' | 'failed', extra?: Record<string, unknown>) {
+  try {
+    await auditService.logAction({
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      action: 'AI_GENERATE',
+      resourceType: 'submission',
+      resourceId: ctx.submissionId,
+      details: { task, promptVersion: `${task}@v1.0`, outcome, ...extra },
+    });
+  } catch {
+    /* audit must never block the response */
   }
 }
 
@@ -70,9 +90,8 @@ async function runJsonTask<T>(
   maxTokens: number
 ): Promise<T> {
   const systemPrompt = await loadPrompt(task);
-  let response;
   try {
-    response = await getGateway().route({
+    const response = await getGateway().route({
       taskType,
       messages: [
         { role: 'system', content: systemPrompt },
@@ -87,20 +106,20 @@ async function runJsonTask<T>(
       callerModule: 'submission-ai-service',
       metadata: { task, submissionId: ctx.submissionId },
     });
+    const result = parseJson<T>(response.content);
+    await auditAiOutcome(task, ctx, 'success');
+    logger.info('Ran submission AI task', { task, organizationId: ctx.organizationId, submissionId: ctx.submissionId });
+    return result;
   } catch (err) {
-    throw new SubmissionAiError('PROVIDER_UNAVAILABLE', `The AI request could not be completed: ${err instanceof Error ? err.message : String(err)}`);
+    // Always audit the failed attempt with its true code, then rethrow mapped.
+    if (err instanceof SubmissionAiError) {
+      await auditAiOutcome(task, ctx, 'failed', { code: err.code });
+      throw err;
+    }
+    const { code, message } = classifyGatewayError(err);
+    await auditAiOutcome(task, ctx, 'failed', { code });
+    throw new SubmissionAiError(code, message);
   }
-  const result = parseJson<T>(response.content);
-  await auditService.logAction({
-    organizationId: ctx.organizationId,
-    userId: ctx.userId,
-    action: 'AI_GENERATE',
-    resourceType: 'submission',
-    resourceId: ctx.submissionId,
-    details: { task, promptVersion: `${task}@v1.0` },
-  });
-  logger.info('Ran submission AI task', { task, organizationId: ctx.organizationId, submissionId: ctx.submissionId });
-  return result;
 }
 
 // ── Public task functions ─────────────────────────────────────────────────

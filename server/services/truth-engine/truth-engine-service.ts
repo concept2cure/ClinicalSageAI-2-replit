@@ -22,6 +22,7 @@ import { submissions } from '../../../shared/schema';
 import { submissionEvidenceLinks, consistencyFindings } from '../../../shared/schema/evidence';
 import type { SubmissionEvidenceLink, ConsistencyFinding } from '../../../shared/types/database';
 import { getGateway } from '../ai-gateway';
+import { classifyGatewayError } from '../ai-gateway/gateway-error-map';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 
@@ -29,7 +30,10 @@ const logger = createScopedLogger('truth-engine-service');
 const PROMPTS_DIR = path.join(__dirname, '..', 'ai-gateway', 'prompts');
 
 export class TruthEngineError extends Error {
-  constructor(public code: 'NOT_FOUND' | 'INVALID_AI_RESPONSE' | 'PROVIDER_UNAVAILABLE', message: string) {
+  constructor(
+    public code: 'NOT_FOUND' | 'INVALID_AI_RESPONSE' | 'PROVIDER_UNAVAILABLE' | 'RATE_LIMITED' | 'TOKEN_LIMIT_EXCEEDED',
+    message: string
+  ) {
     super(message);
     this.name = 'TruthEngineError';
   }
@@ -126,8 +130,21 @@ export async function runConsistencyCheck(
     const cleaned = response.content.trim().replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
     result = JSON.parse(cleaned) as ConsistencyAiResult;
   } catch (err) {
-    if (err instanceof SyntaxError) throw new TruthEngineError('INVALID_AI_RESPONSE', 'The AI response was not valid JSON.');
-    throw new TruthEngineError('PROVIDER_UNAVAILABLE', `The AI request could not be completed: ${err instanceof Error ? err.message : String(err)}`);
+    const { code, message } = classifyGatewayError(err);
+    // Audit the failed AI attempt (best-effort) before surfacing the error.
+    try {
+      await auditService.logAction({
+        organizationId: ctx.organizationId,
+        userId: ctx.userId,
+        action: 'AI_GENERATE',
+        resourceType: 'submission',
+        resourceId: params.submissionId,
+        details: { task: 'consistency-check', promptVersion: 'consistency-check@v1.0', outcome: 'failed', code },
+      });
+    } catch {
+      /* never block on audit */
+    }
+    throw new TruthEngineError(code, message);
   }
 
   const findings = Array.isArray(result.findings) ? result.findings : [];

@@ -52,18 +52,27 @@ interface Ctx {
   organizationId: number;
 }
 function ctxOf(req: Request): Ctx | null {
-  const user = (req as any).user;
-  const userId = Number(user?.id);
-  const organizationId = Number(user?.organizationId);
-  if (!Number.isFinite(userId) || !Number.isFinite(organizationId)) return null;
+  const r = req as any;
+  const userId = Number(r.user?.id);
+  // Resolve the org the same way the rest of the platform does: tenant context
+  // first, then the user claim. The org id is an integer FK; a non-numeric claim
+  // (e.g. a UUID) is treated as unauthenticated rather than silently mis-scoped.
+  const orgRaw = r.tenantContext?.organizationId ?? r.tenantId ?? r.user?.organizationId;
+  const organizationId = Number(orgRaw);
+  if (!Number.isInteger(userId) || userId <= 0 || !Number.isInteger(organizationId) || organizationId <= 0) {
+    return null;
+  }
   return { userId, organizationId };
 }
 
 const CODE_STATUS: Record<string, number> = {
   NOT_FOUND: 404,
   INVALID_STATE: 409,
+  GOVERNED_REQUIRED: 403,
+  FORBIDDEN: 403,
   VALIDATION: 400,
   RATE_LIMITED: 429,
+  TOKEN_LIMIT_EXCEEDED: 413,
   INVALID_AI_RESPONSE: 502,
   PROVIDER_UNAVAILABLE: 503,
 };
@@ -82,7 +91,7 @@ function fail(res: Response, err: unknown): void {
 const idParam = (v: string | string[] | undefined) => {
   const raw = Array.isArray(v) ? v[0] : v;
   const n = Number(raw);
-  return Number.isFinite(n) ? n : null;
+  return Number.isInteger(n) && n > 0 ? n : null;
 };
 
 // ── Schemas ───────────────────────────────────────────────────────────────
@@ -447,7 +456,15 @@ router.post('/:id/sections/generate', limiter, requireRole(AUTHOR), async (req, 
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   (res as unknown as { flushHeaders?: () => void }).flushHeaders?.();
-  const send = (event: string, data: unknown) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  // Stop writing once the client disconnects (avoids EPIPE / write-after-end).
+  let closed = false;
+  req.on('close', () => {
+    closed = true;
+  });
+  const send = (event: string, data: unknown) => {
+    if (closed) return;
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  };
   try {
     const result = await generateSection({ submissionId: id, ...parsed.data }, ctx, (text) => send('chunk', { text }));
     send('done', result);
