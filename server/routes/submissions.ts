@@ -40,6 +40,7 @@ import {
   listShadowReviewRuns,
   getShadowReviewFindings,
 } from '../services/shadow-review/shadow-review-service';
+import { generateSection } from '../services/authoring/section-generation-service';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('submissions-routes');
@@ -387,6 +388,38 @@ router.get('/shadow-review/:runId/findings', limiter, requireRole(AUTHOR), async
     res.json(await getShadowReviewFindings(runId, ctx));
   } catch (err) {
     fail(res, err);
+  }
+});
+
+// ── Authoring (section-generation, streamed via SSE) ─────────────────────────
+const generateSectionSchema = z.object({
+  sectionCode: z.string().min(1).max(64),
+  evidence: z.array(z.object({ id: z.string(), source: z.string(), text: z.string() })).default([]),
+  productContext: z.string().max(8000).optional(),
+});
+router.post('/:id/sections/generate', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = idParam(req.params.id);
+  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
+  const parsed = generateSectionSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+
+  // Server-Sent Events: stream tokens as `chunk`, then a final `done` (or `error`).
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  (res as unknown as { flushHeaders?: () => void }).flushHeaders?.();
+  const send = (event: string, data: unknown) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  try {
+    const result = await generateSection({ submissionId: id, ...parsed.data }, ctx, (text) => send('chunk', { text }));
+    send('done', result);
+  } catch (err) {
+    const code = (err as { code?: string } | null)?.code ?? 'INTERNAL';
+    logger.error('section generation failed', { err: err instanceof Error ? err.message : String(err) });
+    send('error', { code, message: err instanceof Error ? err.message : 'Generation failed.' });
+  } finally {
+    res.end();
   }
 });
 

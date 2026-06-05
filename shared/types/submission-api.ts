@@ -175,3 +175,26 @@ export interface ShadowFindingResponse {
   leafRef: string | null;
   status: 'open' | 'accepted' | 'fixed' | 'waived';
 }
+
+// ── Authoring (section-generation, SSE) ──────────────────────────────────────
+export interface GenerateSectionRequest {
+  sectionCode: string;
+  evidence: Array<{ id: string; source: string; text: string }>;
+  productContext?: string;
+}
+/**
+ * SSE stream from POST /api/submissions/:id/sections/generate:
+ *   event: chunk  data: { text }            // repeated, as tokens arrive
+ *   event: done   data: GenerateSectionResult
+ *   event: error  data: { code, message }
+ */
+export interface GenerateSectionChunk {
+  text: string;
+}
+export interface GenerateSectionResult {
+  documentId: number; // the persisted governed draft (coauthor_documents)
+  sectionCode: string;
+  body: string;
+  citations: Array<{ claim: string; evidenceId: string }>;
+  ungrounded: string[];
+}

@@ -39,6 +39,9 @@ come from it. Do not send tenant ids in the body.
 | GET | `/api/submissions/sequences/:seqId/shadow-review` | → `ShadowReviewRunResponse[]`-like rows | run history (for the RTF gauge) |
 | GET | `/api/submissions/shadow-review/:runId/findings` | → `ShadowFindingResponse[]` | severity-scored findings + fixes |
 
+## Authoring (section-generation, SSE) — surfaced in Builder / an editor
+| POST | `/api/submissions/:id/sections/generate` | `GenerateSectionRequest` → **SSE** | streams `event: chunk {text}` … then `event: done` = `GenerateSectionResult` (persisted governed draft id + citations), or `event: error {code,message}`. RAG-grounded; ungrounded points surfaced, never invented. |
+
 ## 6. Cross-Region (`/submissions/:id/cross-region`)
 | POST | `/api/submissions/:id/cross-region` | `CrossRegionRequest` → `CrossRegionResponse` | Module 1 deltas, bridging (ICH E5), translation, format conversion |
 
@@ -66,8 +69,6 @@ AnA can drive all of the above through her governed tools (tenant from
 - **Dispatch transmit + Publish**: `packageSequenceFromCore` (core→publisher
   bridge) needs a storage `resolveFile` and a route; transmit stays behind the
   e-sign gate.
-- **Authoring (section-generation)**: prompt template pinned; SSE streaming route
-  + governed-artifact persistence not yet wired.
 - **DB-runtime**: nothing here is runtime-verified — needs `drizzle-kit push` +
   the new `20260605_consistency_findings.sql` migration applied, then live calls.
 
