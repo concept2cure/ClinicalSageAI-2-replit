@@ -1794,6 +1794,24 @@ export const EXTRACT_SUBMISSION_DOCUMENT: AnaTool = {
   },
 };
 
+export const RUN_SHADOW_REVIEW: AnaTool = {
+  name: 'run_shadow_review',
+  description:
+    'Run a shadow review on an assembled sequence — a simulated reviewer pass that returns severity-scored Refuse-to-File and Complete-Response-risk findings, each with a regulatory basis and a fix, plus rtf/crl risk scores. You pass the sequence id and an optional reviewer lens; tenant and acting user come from the active context. The run and its findings are persisted and the AI call is audited. Use this before dispatch to surface what a reviewer would reject.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      sequence_id: { type: 'number', description: 'Id of the assembled eCTD sequence to review.' },
+      lens: {
+        type: 'string',
+        enum: ['fda_filing', 'ema_d120', 'pmda', 'nb_mdr', 'nb_ivdr'],
+        description: "Reviewer lens; defaults to 'fda_filing'.",
+      },
+    },
+    required: ['sequence_id'],
+  },
+};
+
 export const VALIDATE_ECTD_PACKAGE: AnaTool = {
   name: 'validate_ectd_package',
   description:
@@ -3270,6 +3288,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CHECK_ECTD_CROSS_REFERENCES,
   CLASSIFY_SUBMISSION_DOCUMENT,
   EXTRACT_SUBMISSION_DOCUMENT,
+  RUN_SHADOW_REVIEW,
   VALIDATE_ECTD_PACKAGE,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,

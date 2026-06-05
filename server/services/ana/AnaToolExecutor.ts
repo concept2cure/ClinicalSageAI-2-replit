@@ -3567,6 +3567,28 @@ registerToolHandler('validate_ectd_package', async (input) => {
   }
 });
 
+registerToolHandler('run_shadow_review', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) {
+    return JSON.stringify({ error: 'run_shadow_review requires tenant context (organizationId and userId).' });
+  }
+  const sequenceId = typeof input.sequence_id === 'number' ? input.sequence_id : NaN;
+  if (!Number.isFinite(sequenceId)) {
+    return JSON.stringify({ error: 'sequence_id (number) is required.' });
+  }
+  const allowedLens = ['fda_filing', 'ema_d120', 'pmda', 'nb_mdr', 'nb_ivdr'];
+  const lens = typeof input.lens === 'string' && allowedLens.includes(input.lens) ? (input.lens as any) : undefined;
+  try {
+    const { runShadowReview } = await import('../shadow-review/shadow-review-service.js');
+    const result = await runShadowReview({ sequenceId, lens, organizationId: ctx.organizationId, userId: ctx.userId });
+    return JSON.stringify({ ok: true, ...result });
+  } catch (err) {
+    return JSON.stringify({
+      error: `run_shadow_review failed: ${err instanceof Error ? err.message : String(err)}`,
+      code: (err as any)?.code,
+    });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Notifications + clinical-study + memory handlers (migration 20260510).
 // ─────────────────────────────────────────────────────────────────────────────

@@ -40,6 +40,7 @@ export * from './schema/vault';
 export * from './schema/csr-knowledge-db';
 export * from './schema/submissions';
 export * from './schema/evidence';
+export * from './schema/shadow-review';
 
 // ============================================================
 // SHARED ENUMS

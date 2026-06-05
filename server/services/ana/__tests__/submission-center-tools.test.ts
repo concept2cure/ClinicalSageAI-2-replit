@@ -21,6 +21,7 @@ const SUBMISSION_TOOLS = [
   'classify_submission_document',
   'extract_submission_document',
   'validate_ectd_package',
+  'run_shadow_review',
 ];
 
 describe('submission-center AnA tools — registration', () => {

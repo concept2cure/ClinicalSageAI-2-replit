@@ -52,8 +52,9 @@ function fail(res: Response, err: unknown): void {
   res.status(500).json({ error: { code: 'INTERNAL', message: 'Request failed.' } });
 }
 
-const idParam = (v: string) => {
-  const n = Number(v);
+const idParam = (v: string | string[] | undefined) => {
+  const raw = Array.isArray(v) ? v[0] : v;
+  const n = Number(raw);
   return Number.isFinite(n) ? n : null;
 };
 
