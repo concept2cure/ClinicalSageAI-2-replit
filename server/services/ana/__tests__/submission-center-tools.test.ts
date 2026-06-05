@@ -26,6 +26,8 @@ const SUBMISSION_TOOLS = [
   'explain_validation_findings',
   'cross_region_gap_analysis',
   'dispatch_qc_check',
+  'trace_provenance',
+  'check_consistency',
 ];
 
 describe('submission-center AnA tools — registration', () => {
@@ -150,6 +152,16 @@ describe('submission AI tasks — tenant + input guards', () => {
     const handler = getToolHandler('dispatch_qc_check')!;
     const out = JSON.parse(await handler({ region: 'fda', validation_errors: 0, unresolved_shadow_criticals: 0, leaves: [] }, {} as ToolContext));
     expect(out.error).toMatch(/tenant context/);
+  });
+  it('trace_provenance refuses without org/user context', async () => {
+    const handler = getToolHandler('trace_provenance')!;
+    const out = JSON.parse(await handler({ submission_id: 1, target_section_code: '2.7' }, {} as ToolContext));
+    expect(out.error).toMatch(/tenant context/);
+  });
+  it('check_consistency validates required inputs', async () => {
+    const handler = getToolHandler('check_consistency')!;
+    const out = JSON.parse(await handler({ submission_id: 1 }, { organizationId: 1, userId: 2 } as ToolContext));
+    expect(out.error).toMatch(/dimension|left|right/);
   });
 });
 

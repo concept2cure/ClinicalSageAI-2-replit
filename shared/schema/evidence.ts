@@ -75,3 +75,41 @@ export const submissionEvidenceLinks = pgTable(
 
 export type SubmissionEvidenceLink = typeof submissionEvidenceLinks.$inferSelect;
 export type NewSubmissionEvidenceLink = typeof submissionEvidenceLinks.$inferInsert;
+
+// ============================================================================
+// CONSISTENCY FINDINGS — Truth Engine cross-document verdicts (spec §6.4)
+// ============================================================================
+// A finding records whether leftRef agrees with rightRef along a named
+// dimension. Deferred from Phase 1; persisted by the consistency-check task.
+
+export const consistencyFindings = pgTable(
+  'consistency_findings',
+  {
+    id: serial('id').primaryKey(),
+    submissionId: integer('submission_id')
+      .notNull()
+      .references(() => submissions.id),
+    dimension: text('dimension').notNull(), // subject-counts | spec-vs-qos | label-vs-safety
+    leftRef: text('left_ref').notNull(), // claim/section under review
+    rightRef: text('right_ref').notNull(), // reference checked against
+    status: text('status').notNull(), // match | conflict
+    detail: text('detail'), // one-line discrepancy for conflicts
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    createdBy: integer('created_by')
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  },
+  (table) => ({
+    submissionIdx: index('idx_consistency_submission_id').on(table.submissionId),
+    orgIdx: index('idx_consistency_organization_id').on(table.organizationId),
+    statusIdx: index('idx_consistency_status').on(table.status),
+  })
+);
+
+export type ConsistencyFinding = typeof consistencyFindings.$inferSelect;
+export type NewConsistencyFinding = typeof consistencyFindings.$inferInsert;

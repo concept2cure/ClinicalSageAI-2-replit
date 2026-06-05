@@ -1927,6 +1927,47 @@ export const DISPATCH_QC_CHECK: AnaTool = {
   },
 };
 
+// ── Truth Engine (provenance + consistency) ──────────────────────────────────
+
+export const TRACE_PROVENANCE: AnaTool = {
+  name: 'trace_provenance',
+  description:
+    'Trace where a submission section derives from: returns the provenance links (source document, direction, confidence) recorded for that section, ordered by confidence. Deterministic read of the evidence graph — never invents sources. Tenant comes from the active context. Use it to answer "what does 2.7 draw on?".',
+  input_schema: {
+    type: 'object',
+    properties: {
+      submission_id: { type: 'number', description: 'The submission.' },
+      target_section_code: { type: 'string', description: 'The section to trace, e.g. "2.7.3".' },
+    },
+    required: ['submission_id', 'target_section_code'],
+  },
+};
+
+export const CHECK_CONSISTENCY: AnaTool = {
+  name: 'check_consistency',
+  description:
+    'Cross-check a claim against other parts of the dossier for consistency along a named dimension (e.g. subject-counts, spec-vs-qos, label-vs-safety), and record each verdict (match or conflict) as a consistency finding. Tenant comes from the active context; the call is audited. Use it to catch contradictions before review.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      submission_id: { type: 'number', description: 'The submission.' },
+      dimension: { type: 'string', description: 'What is being checked, e.g. "subject-counts".' },
+      left: {
+        type: 'object',
+        description: 'The claim under review.',
+        properties: { ref: { type: 'string' }, text: { type: 'string' } },
+        required: ['ref', 'text'],
+      },
+      right: {
+        type: 'array',
+        description: 'The sources to check against.',
+        items: { type: 'object', properties: { ref: { type: 'string' }, text: { type: 'string' } }, required: ['ref', 'text'] },
+      },
+    },
+    required: ['submission_id', 'dimension', 'left', 'right'],
+  },
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Notifications + clinical-study + memory tools (migration 20260510).
 // AnA fires notifications when she identifies actionable state, logs
@@ -3378,6 +3419,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   EXPLAIN_VALIDATION_FINDINGS,
   CROSS_REGION_GAP_ANALYSIS,
   DISPATCH_QC_CHECK,
+  TRACE_PROVENANCE,
+  CHECK_CONSISTENCY,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,
   LOG_STUDY_DEVIATION,

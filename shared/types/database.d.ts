@@ -925,6 +925,22 @@ export type NewSubmissionEvidenceLink = Omit<
   'id' | 'createdAt' | 'updatedAt' | 'deletedAt'
 >;
 
+export interface ConsistencyFinding {
+  id: number;
+  submissionId: number;
+  dimension: string; // subject-counts | spec-vs-qos | label-vs-safety
+  leftRef: string;
+  rightRef: string;
+  status: string; // match | conflict
+  detail?: string | null;
+  organizationId: number;
+  createdBy: number;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+  deletedAt?: Date | null;
+}
+export type NewConsistencyFinding = Omit<ConsistencyFinding, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>;
+
 // ============================================================================
 // Global exports
 // ============================================================================

@@ -3678,6 +3678,47 @@ registerToolHandler('dispatch_qc_check', async (input, ctx) => {
   }
 });
 
+registerToolHandler('trace_provenance', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) {
+    return JSON.stringify({ error: 'trace_provenance requires tenant context (organizationId and userId).' });
+  }
+  const submissionId = typeof input.submission_id === 'number' ? input.submission_id : NaN;
+  const targetSectionCode = typeof input.target_section_code === 'string' ? input.target_section_code : '';
+  if (!Number.isFinite(submissionId)) return JSON.stringify({ error: 'submission_id (number) is required.' });
+  if (!targetSectionCode) return JSON.stringify({ error: 'target_section_code is required.' });
+  try {
+    const { traceProvenance } = await import('../truth-engine/truth-engine-service.js');
+    const result = await traceProvenance({ submissionId, targetSectionCode }, { organizationId: ctx.organizationId, userId: ctx.userId });
+    return JSON.stringify({ ok: true, ...result });
+  } catch (err) {
+    return JSON.stringify({ error: `trace_provenance failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });
+  }
+});
+
+registerToolHandler('check_consistency', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) {
+    return JSON.stringify({ error: 'check_consistency requires tenant context (organizationId and userId).' });
+  }
+  const submissionId = typeof input.submission_id === 'number' ? input.submission_id : NaN;
+  const dimension = typeof input.dimension === 'string' ? input.dimension : '';
+  const left = input.left as { ref?: string; text?: string } | undefined;
+  const right = Array.isArray(input.right) ? (input.right as Array<{ ref: string; text: string }>) : [];
+  if (!Number.isFinite(submissionId)) return JSON.stringify({ error: 'submission_id (number) is required.' });
+  if (!dimension) return JSON.stringify({ error: 'dimension is required.' });
+  if (!left || !left.ref || !left.text) return JSON.stringify({ error: 'left { ref, text } is required.' });
+  if (right.length === 0) return JSON.stringify({ error: 'right (non-empty array) is required.' });
+  try {
+    const { runConsistencyCheck } = await import('../truth-engine/truth-engine-service.js');
+    const findings = await runConsistencyCheck(
+      { submissionId, dimension, left: { ref: left.ref, text: left.text }, right },
+      { organizationId: ctx.organizationId, userId: ctx.userId }
+    );
+    return JSON.stringify({ ok: true, findings, conflicts: findings.filter((f) => f.status === 'conflict').length });
+  } catch (err) {
+    return JSON.stringify({ error: `check_consistency failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Notifications + clinical-study + memory handlers (migration 20260510).
 // ─────────────────────────────────────────────────────────────────────────────
