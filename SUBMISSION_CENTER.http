@@ -1,0 +1,126 @@
+### Submission Center — request collection (VS Code REST Client / IntelliJ HTTP)
+# Set @base and log in first; the session cookie is reused. Replace :id / :seqId.
+
+@base = http://localhost:5000
+@submissionId = 1
+@sequenceId = 1
+@documentId = 1
+@runId = 1
+
+### Login (captures session cookie)
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{ "email": "jm.smith@concept2cure.pro", "password": "pass-word" }
+
+### Region profiles (all)
+GET {{base}}/api/region-profiles
+
+### Region profile (one)
+GET {{base}}/api/region-profiles/fda
+
+### Capabilities (feature-gating)
+GET {{base}}/api/submissions/capabilities?environment=production
+
+### Portfolio
+GET {{base}}/api/submissions
+
+### Create submission
+POST {{base}}/api/submissions
+Content-Type: application/json
+
+{ "title": "C2C-001 IND (FDA)", "productName": "C2C-001", "applicationType": "ind", "clientType": "biotech", "primaryRegion": "fda" }
+
+### Submission hub
+GET {{base}}/api/submissions/{{submissionId}}
+
+### Planner (AI)
+POST {{base}}/api/submissions/{{submissionId}}/plan
+Content-Type: application/json
+
+{ "applicationType": "ind", "clientType": "biotech", "regions": ["fda"], "productProfile": "First-in-human small molecule for type 2 diabetes." }
+
+### Sequences — list
+GET {{base}}/api/submissions/{{submissionId}}/sequences
+
+### Sequences — create (0000)
+POST {{base}}/api/submissions/{{submissionId}}/sequences
+Content-Type: application/json
+
+{ "region": "fda", "sequenceNumber": "0000", "type": "original" }
+
+### Sequence — transition (draft → assembling)
+POST {{base}}/api/submissions/sequences/{{sequenceId}}/transition
+Content-Type: application/json
+
+{ "status": "assembling" }
+
+### Builder — list leaves
+GET {{base}}/api/submissions/sequences/{{sequenceId}}/leaves
+
+### Builder — upsert leaf
+PUT {{base}}/api/submissions/sequences/{{sequenceId}}/leaves
+Content-Type: application/json
+
+{ "sectionCode": "2.5", "title": "Clinical Overview", "lifecycleOp": "new" }
+
+### Ingestion — classify a document
+POST {{base}}/api/ectd-documents/{{documentId}}/classify
+Content-Type: application/json
+
+{ "sequenceId": {{sequenceId}} }
+
+### Ingestion — extract structure + provenance
+POST {{base}}/api/ectd-documents/{{documentId}}/extract
+Content-Type: application/json
+
+{ "sectionCode": "2.7.3", "submissionId": {{submissionId}} }
+
+### Validation co-pilot — explain findings
+POST {{base}}/api/submissions/{{submissionId}}/validation/explain
+Content-Type: application/json
+
+{ "region": "fda", "findings": [ { "ruleId": "FDA-ESG-006", "severity": "error", "message": "PDF is not PDF/A.", "leaf": "2.5" } ] }
+
+### Shadow Review — run (the moat)
+POST {{base}}/api/submissions/sequences/{{sequenceId}}/shadow-review
+Content-Type: application/json
+
+{ "lens": "fda_filing" }
+
+### Shadow Review — run history
+GET {{base}}/api/submissions/sequences/{{sequenceId}}/shadow-review
+
+### Shadow Review — findings of a run
+GET {{base}}/api/submissions/shadow-review/{{runId}}/findings
+
+### Cross-region gap
+POST {{base}}/api/submissions/{{submissionId}}/cross-region
+Content-Type: application/json
+
+{ "sourceRegion": "fda", "targetRegions": ["eu", "jp"], "applicationType": "nda" }
+
+### Dispatch QC gate (does NOT transmit)
+POST {{base}}/api/submissions/{{submissionId}}/dispatch-qc
+Content-Type: application/json
+
+{ "region": "fda", "validationErrors": 0, "unresolvedShadowCriticals": 0, "leaves": [ { "sectionCode": "2.5", "operation": "new" } ] }
+
+### Truth Engine — provenance for a section
+GET {{base}}/api/submissions/{{submissionId}}/provenance?section=2.7.3
+
+### Truth Engine — run consistency check
+POST {{base}}/api/submissions/{{submissionId}}/consistency
+Content-Type: application/json
+
+{ "dimension": "subject-counts", "left": { "ref": "2.7.3", "text": "N=240 randomized." }, "right": [ { "ref": "5.3.5.1", "text": "240 subjects were randomized." } ] }
+
+### Truth Engine — list stored findings
+GET {{base}}/api/submissions/{{submissionId}}/consistency
+
+### Authoring — stream a section draft (SSE)
+POST {{base}}/api/submissions/{{submissionId}}/sections/generate
+Content-Type: application/json
+Accept: text/event-stream
+
+{ "sectionCode": "2.5", "evidence": [ { "id": "e1", "source": "CSR-001", "text": "Primary endpoint met (p<0.001)." } ], "productContext": "C2C-001, type 2 diabetes." }
