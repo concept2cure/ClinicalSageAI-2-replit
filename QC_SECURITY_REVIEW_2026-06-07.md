@@ -149,14 +149,28 @@ broken-access-control findings surfaced and were fixed:
 previously-cleared `decision-lineage`, `audit-trail-routes`, `tenant-users`,
 `tenant-config`, `tenant-ctq-factors`, `grdhe`, `ind-sections`.
 
+## Prompt-injection hardening (done)
+
+The gateway's content filter had two regex patterns applied to **every** message
+(including the trusted system prompt) — shallow, and a false-positive risk for a
+regulated-document app. Replaced with `ai-gateway/promptInjection.ts`: a
+high-precision detector covering instruction-override, system-prompt
+exfiltration, jailbreak-persona and guardrail-bypass families, each requiring
+**both** an override/exfil verb **and** a meta-reference to the model's
+instructions/persona (so "ignore the previous draft" / "summarize the previous
+instructions section" are not blocked). Scoped to untrusted **user** messages
+only. 20 unit tests (`__tests__/promptInjection.test.ts`) cover detections and —
+importantly — regulated-domain false-positive guards. Bounded quantifiers, no
+ReDoS.
+
 ## Still open
 
 1. **Run the new tests against a database** in CI as part of the broader suite,
    and add equivalent DB-backed integration coverage — including the
    membership-scoped `tenants-simple` reads (verified here only by tsc + the
    mocked-SQL contract test).
-2. **Deepen prompt-injection detection** in `ai-gateway/policy.ts` (the regex
-   heuristics are shallow); consider a guardrail model.
+2. **Model-based guardrail** for prompt injection remains a future option beyond
+   the heuristic layer above — an infrastructure decision, not a code tweak.
 
 ## Systemic recommendations
 
