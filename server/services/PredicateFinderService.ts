@@ -41,21 +41,27 @@ class PredicateFinderService {
       // Build FDA API query
       let query = [];
 
+      // SECURITY/correctness: percent-encode the user-supplied VALUES only,
+      // leaving the openFDA query operators (field:"", +AND+, (), +) intact.
+      // Unencoded device names with spaces or quotes previously broke the
+      // query string; encoding a value that is already URL-safe is a no-op.
       if (params.deviceName) {
-        query.push(`device_name:"${params.deviceName}"`);
+        query.push(`device_name:"${encodeURIComponent(params.deviceName)}"`);
       }
 
       if (params.manufacturer) {
-        query.push(`applicant:"${params.manufacturer}"`);
+        query.push(`applicant:"${encodeURIComponent(params.manufacturer)}"`);
       }
 
       if (params.productCode) {
-        query.push(`product_code:"${params.productCode}"`);
+        query.push(`product_code:"${encodeURIComponent(params.productCode)}"`);
       }
 
       // Add keywords to the search if provided
       if (params.keywords && params.keywords.length > 0) {
-        const keywordQuery = params.keywords.map(keyword => `"${keyword}"`).join('+');
+        const keywordQuery = params.keywords
+          .map(keyword => `"${encodeURIComponent(keyword)}"`)
+          .join('+');
         query.push(`(${keywordQuery})`);
       }
 

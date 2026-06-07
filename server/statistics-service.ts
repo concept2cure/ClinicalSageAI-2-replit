@@ -1,6 +1,6 @@
 import { db } from './db';
 import { csrReports, csrDetails } from 'shared/schema';
-import { eq, sql, and, gte, lte, desc, count, avg, max, min } from 'drizzle-orm';
+import { eq, sql, and, gte, lte, desc, count, avg, max, min, inArray } from 'drizzle-orm';
 import * as math from 'mathjs';
 import { Rng, createRng, seedFromObject } from './services/stats/rng';
 import { buildProvenance, type StatsProvenance } from './services/stats/computation-provenance';
@@ -84,7 +84,7 @@ export class StatisticsService {
       const details = (await dbInstance
         .select()
         .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${reportIds.join(',')})`)) as any[];
+        .where(inArray(csrDetails.reportId, reportIds))) as any[];
 
       // Count studies by phase
       const phaseCount: Record<string, number> = {};
@@ -173,7 +173,7 @@ export class StatisticsService {
       const details = (await dbInstance
         .select()
         .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${reportIds.join(',')})`)) as any[];
+        .where(inArray(csrDetails.reportId, reportIds))) as any[];
 
       // Count studies by indication
       const indicationCount: Record<string, number> = {};
@@ -294,7 +294,7 @@ export class StatisticsService {
       const details = await dbInstance
         .select()
         .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${reportIds.join(',')})`);
+        .where(inArray(csrDetails.reportId, reportIds));
 
       // Calculate success rate
       const successfulTrials = reports.filter(
@@ -448,7 +448,7 @@ export class StatisticsService {
       const details = await dbInstance
         .select()
         .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${reportIds.join(',')})`);
+        .where(inArray(csrDetails.reportId, reportIds));
 
       // Extract endpoints from details
       const endpointMap = new Map<
@@ -780,7 +780,7 @@ export class StatisticsService {
       const details = await dbInstance
         .select()
         .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${allReportIds.join(',')})`);
+        .where(inArray(csrDetails.reportId, allReportIds));
 
       // Find trending endpoints
       const trendingEndpoints = this.findTrendingEndpoints(details, indicationReports);
@@ -1466,8 +1466,8 @@ export class StatisticsService {
         .from(csrReports)
         .where(
           and(
-            sql`${csrReports.indication} IN (${indications.join(',')})`,
-            sql`${csrReports.phase} IN (${phases.join(',')})`
+            inArray(csrReports.indication, indications),
+            inArray(csrReports.phase, phases)
           )
         );
 
@@ -1486,7 +1486,7 @@ export class StatisticsService {
       const details = await dbInstance
         .select()
         .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${reportIds.join(',')})`);
+        .where(inArray(csrDetails.reportId, reportIds));
 
       // Group data by indication and phase
       const groupedData = new Map<
@@ -1947,7 +1947,7 @@ export class StatisticsService {
       const details = await dbInstance
         .select()
         .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${reportIds.join(',')})`);
+        .where(inArray(csrDetails.reportId, reportIds));
 
       // Extract valuable patterns from successful trials
       const successfulTrials = reports.filter(
@@ -5477,11 +5477,11 @@ export class StatisticsService {
       const conditions: any[] = [];
 
       if (params.indications && params.indications.length > 0) {
-        conditions.push(sql`${csrReports.indication} IN (${params.indications.join(',')})`);
+        conditions.push(inArray(csrReports.indication, params.indications));
       }
 
       if (params.phases && params.phases.length > 0) {
-        conditions.push(sql`${csrReports.phase} IN (${params.phases.join(',')})`);
+        conditions.push(inArray(csrReports.phase, params.phases));
       }
 
       if (params.startDate) {
@@ -5527,7 +5527,7 @@ export class StatisticsService {
       const details = await dbInstance
         .select()
         .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${reportIds.join(',')})`);
+        .where(inArray(csrDetails.reportId, reportIds));
 
       // Meta-analysis results depend on analysis type
       switch (params.analysisType) {
@@ -6132,7 +6132,7 @@ export class StatisticsService {
       const conditions = [eq(csrReports.indication, indication), eq(csrReports.phase, phase)];
 
       if (sponsorFilter && sponsorFilter.length > 0) {
-        conditions.push(sql`${csrReports.sponsor} IN (${sponsorFilter.join(',')})`);
+        conditions.push(inArray(csrReports.sponsor, sponsorFilter));
       }
 
       // Get all relevant reports
@@ -6163,7 +6163,7 @@ export class StatisticsService {
       const details = await dbInstance
         .select()
         .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${reportIds.join(',')})`);
+        .where(inArray(csrDetails.reportId, reportIds));
 
       // Group reports by sponsor
       const sponsorGroups = new Map<
