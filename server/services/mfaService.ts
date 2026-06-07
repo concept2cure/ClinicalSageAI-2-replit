@@ -103,22 +103,78 @@ function base32Decode(encoded: string): Buffer {
 // Encryption Helpers (AES-256-GCM)
 // ---------------------------------------------------------------------------
 
+/** Derive a 32-byte AES key from a secret string. */
+function deriveKey(secret: string): Buffer {
+  return crypto.createHash('sha256').update(secret).digest();
+}
+
+/**
+ * The key used to ENCRYPT new MFA secrets.
+ *
+ * SECURITY: a dedicated MFA_ENCRYPTION_KEY must back MFA-secret confidentiality
+ * so it does not depend on JWT_SECRET — reusing JWT_SECRET means a JWT_SECRET
+ * disclosure would also decrypt every stored MFA secret (key reuse across
+ * trust domains). Development falls back to a JWT-derived key for convenience.
+ * Production allows the fallback (with a CRITICAL log) only until the operator
+ * sets MFA_REQUIRE_DEDICATED_KEY=true — done after provisioning the key and
+ * re-encrypting existing secrets — at which point encryption fails closed.
+ */
 function getEncryptionKey(): Buffer {
   const envKey = process.env.MFA_ENCRYPTION_KEY;
   if (envKey && envKey.length >= 32) {
-    // Use raw key or hash it to exactly 32 bytes
-    return crypto.createHash('sha256').update(envKey).digest();
+    return deriveKey(envKey);
   }
-  // Fallback: derive from JWT secret (not ideal, but functional)
   if (process.env.NODE_ENV === 'production') {
-    console.error('[mfa] CRITICAL: MFA_ENCRYPTION_KEY not set in production. MFA secrets may be at risk.');
+    if (process.env.MFA_REQUIRE_DEDICATED_KEY === 'true') {
+      throw new Error(
+        'MFA_ENCRYPTION_KEY (>=32 chars) is required in production when MFA_REQUIRE_DEDICATED_KEY=true'
+      );
+    }
+    console.error(
+      '[mfa] CRITICAL: MFA_ENCRYPTION_KEY not set in production — falling back to a JWT_SECRET-derived key. ' +
+        'Provision MFA_ENCRYPTION_KEY, re-encrypt secrets, then set MFA_REQUIRE_DEDICATED_KEY=true.'
+    );
   }
   const jwtSecret = process.env.JWT_SECRET;
   if (!jwtSecret) {
     throw new Error('MFA_ENCRYPTION_KEY or JWT_SECRET must be set for MFA functionality');
   }
-  console.warn('[mfa] MFA_ENCRYPTION_KEY not set — deriving from JWT_SECRET. Set MFA_ENCRYPTION_KEY for production.');
-  return crypto.createHash('sha256').update(jwtSecret).digest();
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn('[mfa] MFA_ENCRYPTION_KEY not set — deriving from JWT_SECRET (development only).');
+  }
+  return deriveKey(jwtSecret);
+}
+
+/**
+ * Candidate keys to TRY when DECRYPTING, primary first. Includes the legacy
+ * JWT_SECRET-derived key so secrets written before MFA_ENCRYPTION_KEY was
+ * provisioned still decrypt — no user lockout during the key migration.
+ * AES-GCM's auth tag makes trying candidates safe: a wrong key throws.
+ */
+function getDecryptionKeys(): Buffer[] {
+  const keys: Buffer[] = [];
+  const seen = new Set<string>();
+  const add = (k: Buffer | null) => {
+    if (!k) return;
+    const h = k.toString('hex');
+    if (!seen.has(h)) {
+      seen.add(h);
+      keys.push(k);
+    }
+  };
+  try {
+    add(getEncryptionKey());
+  } catch {
+    /* primary unavailable (enforcement on, no key) — fall through to legacy */
+  }
+  const envKey = process.env.MFA_ENCRYPTION_KEY;
+  if (envKey && envKey.length >= 32) add(deriveKey(envKey));
+  const jwtSecret = process.env.JWT_SECRET;
+  if (jwtSecret) add(deriveKey(jwtSecret));
+  if (keys.length === 0) {
+    throw new Error('No MFA decryption key available (set MFA_ENCRYPTION_KEY or JWT_SECRET)');
+  }
+  return keys;
 }
 
 function requireJwtSecret(): string {
@@ -147,18 +203,25 @@ function decrypt(encryptedStr: string): string {
     throw new Error('Invalid encrypted format');
   }
 
-  const key = getEncryptionKey();
   const iv = Buffer.from(parts[0], 'hex');
   const authTag = Buffer.from(parts[1], 'hex');
   const encrypted = parts[2];
 
-  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
-  decipher.setAuthTag(authTag);
-
-  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
-
-  return decrypted;
+  // Try each candidate key (primary, then legacy JWT-derived). A wrong key
+  // fails the GCM auth tag on final(), so this never decrypts with the wrong key.
+  let lastErr: unknown;
+  for (const key of getDecryptionKeys()) {
+    try {
+      const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+      decipher.setAuthTag(authTag);
+      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      return decrypted;
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error('MFA secret decryption failed');
 }
 
 // ---------------------------------------------------------------------------
