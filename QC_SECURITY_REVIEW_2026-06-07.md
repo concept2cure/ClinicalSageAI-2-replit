@@ -66,9 +66,9 @@ JWT, letting any *valid* tenant act on another tenant's data.
 | 4 | HIGH | Auth / Part 11 | `hocuspocus-server.ts:52` — collab WebSocket auth base64-decoded the JWT **without verifying the signature**, trusting forged identity. Attribution-integrity break. | ✅ fixed |
 | 5 | MEDIUM | SSRF | `webhook-notifications.ts:205` — `fetch(channel.url)` with no destination validation (cloud-metadata / internal SSRF if a channel URL is attacker-influenced). | ✅ fixed |
 | 6 | MEDIUM | Tenancy | `client-branding.ts` — `/upload-logo`, `/upload-letterhead` (body org) and `/logo/:orgId` (path org) bypassed the JWT-org guard the rest of the file uses. | ✅ fixed |
-| 7 | MEDIUM | Crypto hygiene | `mfaService.ts:106` — in production with `MFA_ENCRYPTION_KEY` unset, the MFA-secret encryption key is derived from `JWT_SECRET` (key reuse across trust domains); only logs, does not fail closed. | ⏭ documented — needs key migration (below) |
-| 8 | LOW | Correctness | `statistics-service.ts` (~11 sites) — `sql\`… IN (${arr.join(',')})\``. **Not SQL injection** (Drizzle binds it as one parameter); a correctness bug — the `IN` matches a single comma-joined string, not the list. | ⏭ documented |
-| 9 | LOW | Hardening | CORS allowlist hard-codes prod origins (`enterprise-security.ts:38`); `PredicateFinderService.ts:39` builds an openFDA query URL without `encodeURIComponent`; prompt-injection regex in `ai-gateway/policy.ts` is shallow. | ⏭ documented |
+| 7 | MEDIUM | Crypto hygiene | `mfaService.ts:106` — in production with `MFA_ENCRYPTION_KEY` unset, the MFA-secret encryption key is derived from `JWT_SECRET` (key reuse across trust domains); only logs, does not fail closed. | ✅ fixed (rotation-safe + opt-in enforcement) |
+| 8 | LOW | Correctness | `statistics-service.ts` (14 sites) — `sql\`… IN (${arr.join(',')})\``. **Not SQL injection** (Drizzle binds it as one parameter); a correctness bug — the `IN` matched a single comma-joined string, not the list. | ✅ fixed (`inArray`) |
+| 9 | LOW | Hardening | CORS allowlist + `PredicateFinderService` openFDA query encoding + shallow prompt-injection regex in `ai-gateway/policy.ts`. | ◑ CORS + openFDA fixed; prompt-injection still open |
 
 ### Discarded false positives (QC integrity)
 
@@ -93,6 +93,10 @@ JWT, letting any *valid* tenant act on another tenant's data.
 | `fix(security): verify JWT signature for collab WebSocket auth` | #4 |
 | `fix(security): block SSRF in webhook delivery` | #5 |
 | `fix(security): enforce org scope on all global-compliance routes` | #1 |
+| `test(security): tenant-isolation regression guards for the four IDOR fixes` | #1–3, #6 (23 tests) |
+| `fix(security): rotation-safe MFA key with opt-in dedicated-key enforcement` | #7 |
+| `fix(correctness): parameterize IN-lists and encode openFDA query values` | #8, #9 |
+| `harden(security): validate and de-duplicate CORS allowlist` | #9 |
 
 Fix pattern, applied uniformly: org id comes from the verified JWT
 (`authedOrgId` / `requireAuthedOrgId` / the file-local `enforceOrgScope` /
@@ -105,27 +109,32 @@ All commits: `tsc --noEmit` = 0 errors; `check-security-patterns` = 0 violations
 
 ---
 
-## Open follow-ups
+## Follow-ups — done in this pass
 
-1. **Live tenant-isolation tests (highest priority).** No DB in this env.
-   Add per-route tests that authenticate as org A and assert 404/403 reading or
-   writing org B's reports, compliance records, foresight studies and branding —
-   template: `test/routes/*.tenant-isolation.test.ts`. Run them against a DB.
-2. **MFA key (#7).** Do **not** just flip to fail-closed: secrets already
-   enrolled were encrypted with the JWT-derived key, so changing derivation
-   without a decrypt-old / re-encrypt-new migration would lock out every MFA
-   user. Sequence: provision `MFA_ENCRYPTION_KEY`, migrate existing ciphertext,
-   *then* make production refuse the JWT fallback.
-3. **Finish the IDOR audit.** ~65 `req.(params|query|body).(org…|tenant…)` sites
+- **Live tenant-isolation tests.** Added four runnable contract suites (vitest +
+  supertest, mocked data layer — no DB needed), 23 tests, all passing:
+  `server/__tests__/security/tenant-isolation-{global-compliance,intelligent-reports,client-branding,foresight}.contract.test.ts`.
+  Each asserts foreign-org read/write → 403/404, same-org → allowed, no auth →
+  401/403. global-compliance exercises the real signed-JWT auth path.
+- **MFA key (#7).** Shipped rotation-safe decryption (legacy JWT-derived key is
+  still a decrypt candidate → no lockout) + new `MFA_REQUIRE_DEDICATED_KEY` flag.
+  Operator cutover: set `MFA_ENCRYPTION_KEY` → re-encrypt → set
+  `MFA_REQUIRE_DEDICATED_KEY=true` to fail closed. Safe to deploy as-is.
+- **Correctness (#8).** All 14 `IN (${arr.join(',')})` sites → `inArray`.
+- **Hardening (#9).** CORS allowlist trims/validates/de-dupes origins; openFDA
+  query values are `encodeURIComponent`-ed.
+
+## Still open
+
+1. **Run the new tests against a database** in CI as part of the broader suite,
+   and add equivalent DB-backed integration coverage.
+2. **Finish the IDOR audit.** ~65 `req.(params|query|body).(org…|tenant…)` sites
    exist. The confirmed-vulnerable clusters (#1, #2, #3, #6) are fixed; the
    confirmed-safe set (`decision-lineage`, `audit-trail-routes`, `tenant-users`,
    `tenant-config`, `tenant-ctq-factors`, `grdhe`) uses JWT-org guards. The
    remaining sites should each be classified read/write × safe/vulnerable.
-4. **Correctness (#8).** Replace `IN (${arr.join(',')})` with Drizzle
-   `inArray(col, arr)` or `sql.join(arr, sql\`, \`)` in `statistics-service.ts`.
-   Behavior-changing on real data — fix with a DB to verify.
-5. **Hardening (#9).** Move CORS prod origins to env; `encodeURIComponent` the
-   openFDA query; deepen prompt-injection detection.
+3. **Deepen prompt-injection detection** in `ai-gateway/policy.ts` (the regex
+   heuristics are shallow); consider a guardrail model.
 
 ## Systemic recommendations
 
