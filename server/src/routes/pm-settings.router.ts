@@ -15,6 +15,7 @@ import { z } from 'zod';
 import { db } from '../../db';
 import { pmSettings, auditLogs, organizations } from '../../../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
+import { authedOrgId } from '../../utils/authedOrgId';
 
 const router = Router();
 
@@ -124,6 +125,12 @@ async function validateOrganization(organizationId: number): Promise<boolean> {
 router.get('/:organizationId', async (req, res) => {
   try {
     const organizationId = parseInt(req.params.organizationId, 10);
+    // SECURITY: PM settings are per-tenant. The :organizationId path segment
+    // must match the caller's JWT-bound org — without this, any authenticated
+    // user could read or overwrite another tenant's settings (cross-tenant IDOR).
+    if (!Number.isInteger(organizationId) || authedOrgId(req) !== organizationId) {
+      return res.status(403).json({ error: 'Tenant context mismatch' });
+    }
     
     if (isNaN(organizationId)) {
       return res.status(400).json({ error: 'Invalid organization ID' });
@@ -179,6 +186,12 @@ router.get('/:organizationId', async (req, res) => {
 router.put('/:organizationId', async (req, res) => {
   try {
     const organizationId = parseInt(req.params.organizationId, 10);
+    // SECURITY: PM settings are per-tenant. The :organizationId path segment
+    // must match the caller's JWT-bound org — without this, any authenticated
+    // user could read or overwrite another tenant's settings (cross-tenant IDOR).
+    if (!Number.isInteger(organizationId) || authedOrgId(req) !== organizationId) {
+      return res.status(403).json({ error: 'Tenant context mismatch' });
+    }
     
     if (isNaN(organizationId)) {
       return res.status(400).json({ error: 'Invalid organization ID' });
@@ -273,6 +286,12 @@ router.put('/:organizationId', async (req, res) => {
 router.post('/:organizationId/reset', async (req, res) => {
   try {
     const organizationId = parseInt(req.params.organizationId, 10);
+    // SECURITY: PM settings are per-tenant. The :organizationId path segment
+    // must match the caller's JWT-bound org — without this, any authenticated
+    // user could read or overwrite another tenant's settings (cross-tenant IDOR).
+    if (!Number.isInteger(organizationId) || authedOrgId(req) !== organizationId) {
+      return res.status(403).json({ error: 'Tenant context mismatch' });
+    }
     
     if (isNaN(organizationId)) {
       return res.status(400).json({ error: 'Invalid organization ID' });
@@ -336,6 +355,12 @@ router.post('/:organizationId/reset', async (req, res) => {
 router.get('/:organizationId/history', async (req, res) => {
   try {
     const organizationId = parseInt(req.params.organizationId, 10);
+    // SECURITY: PM settings are per-tenant. The :organizationId path segment
+    // must match the caller's JWT-bound org — without this, any authenticated
+    // user could read or overwrite another tenant's settings (cross-tenant IDOR).
+    if (!Number.isInteger(organizationId) || authedOrgId(req) !== organizationId) {
+      return res.status(403).json({ error: 'Tenant context mismatch' });
+    }
     
     if (isNaN(organizationId)) {
       return res.status(400).json({ error: 'Invalid organization ID' });
