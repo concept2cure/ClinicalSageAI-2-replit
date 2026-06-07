@@ -6,6 +6,7 @@
  */
 
 import type { GatewayRequest, PolicyConfig } from './types';
+import { detectPromptInjection } from './promptInjection';
 
 export interface PolicyResult {
   allowed: boolean;
@@ -102,18 +103,19 @@ export class GatewayPolicyEngine {
   }
 
   private checkBlockedPatterns(request: GatewayRequest): PolicyResult {
-    // Prompt injection detection (before blocked patterns)
+    // Prompt-injection detection (before blocked patterns). Scoped to USER
+    // messages — the untrusted input. The system prompt is app-controlled and
+    // trusted; scanning it only risks false positives on legitimate directives.
     if (this.config.contentFilters) {
-      const injectionPatterns = [
-        /ignore\s+(all\s+)?(previous|prior|above)\s+(instructions|prompts|rules)/i,
-        /system\s*:\s*(override|bypass|ignore)/i,
-      ];
-      for (const pattern of injectionPatterns) {
-        for (const msg of request.messages) {
-          const content = typeof msg.content === 'string' ? msg.content : '';
-          if (pattern.test(content)) {
-            return { allowed: false, reason: 'Content filter: potential prompt injection detected' };
-          }
+      for (const msg of request.messages) {
+        if (msg.role !== 'user') continue;
+        const content = typeof msg.content === 'string' ? msg.content : '';
+        const hit = detectPromptInjection(content);
+        if (hit.detected) {
+          return {
+            allowed: false,
+            reason: `Content filter: potential prompt injection detected (${hit.category})`,
+          };
         }
       }
     }
