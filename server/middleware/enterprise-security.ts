@@ -34,30 +34,45 @@ const config = {
   isProduction: process.env.NODE_ENV === 'production',
   isDevelopment: process.env.NODE_ENV === 'development',
 
-  // CORS — production origins always included; localhost only in dev
-  allowedOrigins: (process.env.ALLOWED_ORIGINS || '')
-    .split(',')
-    .filter(Boolean)
-    .concat([
-      'https://trialsage.com',
-      'https://www.trialsage.com',
-      'https://app.trialsage.com',
-      'https://concept2cure-ri.ai',
-      'https://app.concept2cure-ri.ai',
-      'https://clinicalsage.ai',
-      'https://app.clinicalsage.ai',
-    ])
-    .concat(
-      process.env.NODE_ENV !== 'production'
-        ? ['http://localhost:5000', 'http://localhost:3000']
-        : []
+  // CORS — production origins always included; localhost only in dev.
+  // Env-supplied origins are trimmed and validated (malformed entries dropped),
+  // and the final list is de-duplicated so an operator typo cannot widen or
+  // corrupt the allowlist.
+  allowedOrigins: Array.from(
+    new Set(
+      (process.env.ALLOWED_ORIGINS || '')
+        .split(',')
+        .map(o => o.trim())
+        .filter(Boolean)
+        .concat([
+          'https://trialsage.com',
+          'https://www.trialsage.com',
+          'https://app.trialsage.com',
+          'https://concept2cure-ri.ai',
+          'https://app.concept2cure-ri.ai',
+          'https://clinicalsage.ai',
+          'https://app.clinicalsage.ai',
+        ])
+        .concat(
+          process.env.NODE_ENV !== 'production'
+            ? ['http://localhost:5000', 'http://localhost:3000']
+            : []
+        )
+        .concat(
+          // Allow GitHub Codespaces forwarded origins
+          process.env.CODESPACES === 'true' || process.env.CODESPACE_NAME
+            ? [`https://${process.env.CODESPACE_NAME}-5000.app.github.dev`]
+            : []
+        )
     )
-    .concat(
-      // Allow GitHub Codespaces forwarded origins
-      process.env.CODESPACES === 'true' || process.env.CODESPACE_NAME
-        ? [`https://${process.env.CODESPACE_NAME}-5000.app.github.dev`]
-        : []
-    ),
+  ).filter(origin => {
+    try {
+      const u = new URL(origin);
+      return u.protocol === 'https:' || u.protocol === 'http:';
+    } catch {
+      return false;
+    }
+  }),
 
   // Rate Limits — environment-aware (single canonical definition)
   rateLimits: (() => {
