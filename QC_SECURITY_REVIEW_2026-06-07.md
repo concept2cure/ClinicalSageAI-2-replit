@@ -124,16 +124,38 @@ All commits: `tsc --noEmit` = 0 errors; `check-security-patterns` = 0 violations
 - **Hardening (#9).** CORS allowlist trims/validates/de-dupes origins; openFDA
   query values are `encodeURIComponent`-ed.
 
+## IDOR audit — second pass (complete)
+
+Classified all ~65 `req.(params|query|body).(org…|tenant…)` sites. Two more
+broken-access-control findings surfaced and were fixed:
+
+- **CRITICAL — `pm-settings.router.ts`** (`/api/pm-settings/:organizationId`).
+  GET/PUT/POST-reset/GET-history validated only that the org *existed*, not that
+  the caller owned it — cross-tenant read/write of PM settings. Fixed: path org
+  must equal the JWT org on all four handlers.
+- **CRITICAL — `tenants-simple.ts`** (`/api/tenants`). Authenticated but **not
+  authorized** — any user could list every organization, read any tenant's user
+  directory, and create/delete tenants or rotate API keys (the beta route fence
+  that would have blocked `/tenants` is off unless `ENABLE_BETA_ROUTE_FENCE=true`).
+  Fixed: mutations gated to `super_admin`/`platform_admin`; `GET /` is now
+  membership-scoped (admins see all, members see only their orgs via
+  `organization_users`); `GET /:tenantId/users` requires the caller's own tenant
+  or admin. Contract test: `tenant-isolation-tenants-simple.contract.test.ts`
+  (8 tests).
+
+**Confirmed safe** (verified, no change): `client-intelligence`
+(org from JWT; query `clientWorkspaceId` is a within-org sub-filter),
+`regulatorySubmissions` (org from JWT; workspace is a sub-scope), plus the
+previously-cleared `decision-lineage`, `audit-trail-routes`, `tenant-users`,
+`tenant-config`, `tenant-ctq-factors`, `grdhe`, `ind-sections`.
+
 ## Still open
 
 1. **Run the new tests against a database** in CI as part of the broader suite,
-   and add equivalent DB-backed integration coverage.
-2. **Finish the IDOR audit.** ~65 `req.(params|query|body).(org…|tenant…)` sites
-   exist. The confirmed-vulnerable clusters (#1, #2, #3, #6) are fixed; the
-   confirmed-safe set (`decision-lineage`, `audit-trail-routes`, `tenant-users`,
-   `tenant-config`, `tenant-ctq-factors`, `grdhe`) uses JWT-org guards. The
-   remaining sites should each be classified read/write × safe/vulnerable.
-3. **Deepen prompt-injection detection** in `ai-gateway/policy.ts` (the regex
+   and add equivalent DB-backed integration coverage — including the
+   membership-scoped `tenants-simple` reads (verified here only by tsc + the
+   mocked-SQL contract test).
+2. **Deepen prompt-injection detection** in `ai-gateway/policy.ts` (the regex
    heuristics are shallow); consider a guardrail model.
 
 ## Systemic recommendations
