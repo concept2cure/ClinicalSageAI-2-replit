@@ -117,6 +117,16 @@ export async function registerAdvancedPlatformRoutes({
         mod: '../routes/udi-ivdr.ts',
         name: 'UDI/GUDID + EU IVDR Performance Evaluation',
       },
+      {
+        path: '/api/market-access',
+        mod: '../routes/market-access.ts',
+        name: 'Market Access (CPT/HCPCS coding + coverage dossier)',
+      },
+      {
+        path: '/api/companion-diagnostics',
+        mod: '../routes/companion-diagnostics.ts',
+        name: 'Companion Diagnostics (drug↔Dx co-development)',
+      },
     ] as const;
     const auditIntegResults = await Promise.allSettled(auditIntegConfig.map(c => import(c.mod)));
     auditIntegResults.forEach((r, i) => {

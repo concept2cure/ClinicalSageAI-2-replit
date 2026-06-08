@@ -121,6 +121,13 @@ non-overlapping value:
   `server/services/regulatory/ivdr-performance-evaluation.ts` — PER completeness
   across the Annex XIII pillars (scientific validity, analytical performance,
   clinical performance). `/api/udi-ivdr`.
+- **Market access / reimbursement (gap #11)**: `server/services/regulatory/market-access.ts`
+  — CPT (I/II/III)/PLA/HCPCS-II procedure-code classification + validation, and
+  coverage-evidence dossier completeness. `/api/market-access`.
+- **Companion diagnostics (the drug↔Dx differentiator)**:
+  `server/services/regulatory/companion-diagnostics.ts` — CDx co-development
+  readiness + drug↔Dx linkage validation (therapeutic + device + biomarker +
+  intended-use alignment). `/api/companion-diagnostics`.
 - **eCTD leaf PDF rendering**: `server/services/ectd/leaf-pdf-renderer.ts` (pdf-lib,
   deterministic); `generateEctdPackage` renders both leaf sites to real PDF bytes
   and checksums them. Residual: true PDF/A-1b conformance is a documented OQ enhancement.
