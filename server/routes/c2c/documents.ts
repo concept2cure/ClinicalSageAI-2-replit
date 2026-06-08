@@ -25,7 +25,7 @@
 
 import { Router, type Request, type Response } from 'express';
 import { pool } from '../../db.js';
-import { writeMutation } from './actions.js';
+import { writeMutation, recordGovernedAction } from './actions.js';
 
 const router = Router();
 
@@ -446,17 +446,22 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
         row = upd.rows[0];
       }
 
-      await client.query('COMMIT');
-
-      // Write audit ledger entry (outside the section transaction — non-fatal).
-      writeMutation(
-        'transition',
-        { target: `section:${id}:${key}`, reason: reason.trim(), payload: { status } },
-        userId,
+      // 21 CFR Part 11 §11.10(e): record the audit IN the same transaction as
+      // the section change, so they commit or roll back together. Previously
+      // the audit ran fire-and-forget AFTER COMMIT with a swallowed error, so a
+      // crash (or an audit failure) left a section transition unaudited.
+      await recordGovernedAction(client, {
         orgId,
-        'api',
-        'documents',
-      ).catch(err => console.error('[c2c/documents] writeMutation transition error:', err));
+        userId,
+        command: 'transition',
+        target: `section:${id}:${key}`,
+        reason: reason.trim(),
+        payload: { status },
+        domain: 'documents',
+        surface: 'api',
+      });
+
+      await client.query('COMMIT');
 
       return res.json(row);
     } catch (err) {

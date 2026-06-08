@@ -68,13 +68,20 @@ change in compliance-critical code, so not done unilaterally without a DB):**
    no soft-delete (violates §11.10(e)). *This is the known-deferred QA_REPORT
    item #14.* Fix: add `deleted_at` to `coauthor_documents` (migration), switch
    to soft-delete, audit before the write, filter reads on `deleted_at IS NULL`.
-2. ✅ **Fixed — audit after a raw DELETE, `routes/c2c/documents.ts:560`:** the
-   evidence-unlink DELETEd first, then fired a non-awaited `writeMutation` with a
-   swallowed error. Now audits first via `writeMutation` and **awaits** it
-   (fail-closed — an audit failure blocks the delete; a crash can't leave an
-   unaudited deletion). Contract test
-   `c2c-documents-delete-audit-order.contract.test.ts` locks the order, the
-   fail-closed behaviour, and the 404 path (3 tests, no DB).
+2. ✅ **Fixed — fire-and-forget audit on `routes/c2c/documents.ts` mutations:**
+   both the evidence **delete** (`:560`) and the section **transition** (`:452`)
+   recorded the audit *after* the mutation, non-awaited, with a swallowed error
+   — a crash or audit failure left the mutation unaudited.
+   - *Delete:* now audits first via `writeMutation` and **awaits** it
+     (fail-closed — an audit failure blocks the delete).
+   - *Transition:* the audit now runs via `recordGovernedAction` **inside the
+     same DB transaction** as the section change, before COMMIT — so they
+     commit or roll back together (atomic, fail-closed).
+   Contract tests (`c2c-documents-{delete,transition}-audit-order.contract.test.ts`,
+   5 tests, no DB) lock the audit→mutation order, the fail-closed/rollback
+   behaviour, and the 404 path. The evidence **link** (`:521`) still audits
+   after the insert (a create is correctly audited only on success — moving it
+   in-transaction is the remaining follow-up).
 3. **HIGH — immutability middleware is narrow (`startup/middleware.ts:113`):**
    `IMMUTABLE_ROUTE_PATTERNS` only guards `/api/audit/*`. Regulated-data DELETEs
    elsewhere are not policy-blocked. Fix is a policy decision (expand patterns
