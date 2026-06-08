@@ -183,6 +183,12 @@ async function main() {
       const dr = await c.req('GET', `/api/submissions/sequences/${seqId}/dispatch-readiness`);
       ok('dispatch-readiness computes the gate server-side', dr.status === 200 && typeof dr.json?.gate?.cleared === 'boolean' && typeof dr.json?.validationErrors === 'number', `status ${dr.status}`);
 
+      // Universal pathway manifest (assembled ToC across pathways) — deterministic.
+      const pm = await c.req('GET', `/api/submissions/sequences/${seqId}/pathway-manifest?pathway=estar_510k`);
+      ok('pathway-manifest returns an ordered ToC with entries', pm.status === 200 && Array.isArray(pm.json?.entries) && pm.json.entries.length > 0 && /^01-/.test(pm.json.entries[0]?.path || ''), `status ${pm.status}`);
+      const pmCtis = await c.req('GET', `/api/submissions/sequences/${seqId}/pathway-manifest?pathway=ctis&memberStates=DE,FR`);
+      ok('pathway-manifest flattens CTIS Part I + per-state Part II', pmCtis.status === 200 && Array.isArray(pmCtis.json?.entries) && pmCtis.json.entries.some((e) => e.group === 'Part II — DE'), `status ${pmCtis.status}`);
+
       // Device technical-file manifest (MDR/IVDR assemble structure) — deterministic.
       const tf = await c.req('GET', `/api/submissions/sequences/${seqId}/technical-file?regulation=mdr`);
       ok('technical-file returns the MDR Annex II/III ToC', tf.status === 200 && Array.isArray(tf.json?.entries) && tf.json.entries.length > 0 && typeof tf.json?.totals?.sections === 'number', `status ${tf.status}`);

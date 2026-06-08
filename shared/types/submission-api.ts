@@ -256,6 +256,27 @@ export interface PathwayReadinessResponse {
   detail: unknown;
 }
 
+// ── Universal pathway manifest (GET /sequences/:seqId/pathway-manifest?pathway=&memberStates=) ─
+// Assembled table-of-contents for ANY non-eCTD pathway (eSTAR / CTIS / MDR / IVDR
+// / PMDA). Deterministic; maps + reports gaps across a uniform entry shape.
+export interface PathwayManifestEntry {
+  path: string;
+  id: string;
+  label: string;
+  group: string; // annex / "eSTAR" / "Part I" / "Part II — DE" / "STED"
+  required: boolean;
+  status: 'present' | 'missing' | 'optional-absent';
+  sources: string[];
+}
+export interface PathwayManifestResponse {
+  pathway: Pathway;
+  framework: string;
+  generatedFrom: 'canonical-core';
+  ready: boolean;
+  totals: { sections: number; requiredPresent: number; requiredMissing: number };
+  entries: PathwayManifestEntry[];
+}
+
 // ── Device technical file (GET /sequences/:seqId/technical-file?regulation=mdr|ivdr) ─
 // The assembled EU MDR/IVDR technical-documentation table-of-contents (device
 // equivalent of the eCTD index). Deterministic; maps + reports gaps.

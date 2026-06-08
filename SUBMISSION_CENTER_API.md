@@ -97,6 +97,7 @@ Workspace map + error catalog for nav/error handling: `shared/types/submission-u
 
 ## Pathway readiness (non-eCTD projections — Cross-Region / Dispatch)
 | GET | `/api/submissions/sequences/:seqId/pathway-readiness?pathway=&memberStates=` | → `PathwayReadinessResponse` | projects the sequence's canonical leaves onto CTIS \| MDR \| IVDR \| eSTAR (510k/de_novo) and returns a required-slot gap/readiness report. Deterministic, map+gap only — never submits. `memberStates` (comma list) applies to CTIS Part II. |
+| GET | `/api/submissions/sequences/:seqId/pathway-manifest?pathway=&memberStates=` | → `PathwayManifestResponse` | Universal assembled table-of-contents for ANY non-eCTD pathway (eSTAR 510k/de_novo \| CTIS \| MDR \| IVDR \| PMDA Shōnin): uniform ordered entries with group label (annex / eSTAR / CTIS part+state / STED), deterministic paths, present/missing status, and source leaves. Maps + reports gaps, never invents. |
 | GET | `/api/submissions/sequences/:seqId/technical-file?regulation=mdr\|ivdr` | → `TechnicalFileResponse` | The device assemble structure (mdx/ivd): the assembled EU MDR/IVDR Annex II/III technical-file table-of-contents — ordered sections with deterministic paths, annex refs, present/missing status, and source leaves. The device equivalent of the eCTD index. Maps + reports gaps, never invents. |
 
 ## Assemble (Publish step — Dispatch workspace)

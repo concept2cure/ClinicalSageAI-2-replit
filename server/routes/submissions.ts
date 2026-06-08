@@ -524,6 +524,35 @@ router.get('/sequences/:seqId/pathway-readiness', limiter, requireRole(AUTHOR), 
   }
 });
 
+// ── Universal pathway manifest (assembled ToC for ANY non-eCTD pathway) ───────
+// One uniform table-of-contents across eSTAR / CTIS / MDR / IVDR / PMDA: runs the
+// pathway engine, then projects its result into ordered entries (group + path +
+// present/missing + sources). Deterministic, read-only — maps + reports gaps.
+router.get('/sequences/:seqId/pathway-manifest', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const pathway = String(Array.isArray(req.query.pathway) ? req.query.pathway[0] : req.query.pathway ?? '');
+  if (!(PATHWAYS as string[]).includes(pathway)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: `pathway must be one of: ${PATHWAYS.join(', ')}.` } });
+  }
+  const msRaw = Array.isArray(req.query.memberStates) ? req.query.memberStates[0] : req.query.memberStates;
+  const memberStates = typeof msRaw === 'string' && msRaw ? msRaw.split(',').map((s) => s.trim()).filter(Boolean) : [];
+  try {
+    const leaves = await listLeaves(seqId, ctx); // tenant-scoped
+    const { buildPathwayManifest } = await import('../services/pathway-engines/pathway-manifest');
+    const result = assessPathwayReadiness({
+      pathway: pathway as Pathway,
+      leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, documentType: l.documentType ?? undefined })),
+      memberStates,
+    });
+    res.json(buildPathwayManifest(pathway as Pathway, result.detail));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 // ── Device technical-file manifest (EU MDR/IVDR assemble structure) ───────────
 // The device equivalent of the eCTD index: projects the sequence's canonical
 // leaves onto the MDR/IVDR Annex II/III structure and returns the assembled
