@@ -87,7 +87,12 @@ class OpenAICompatibleEmbeddingProvider implements EmbeddingProvider {
   }
 
   async embed(req: EmbeddingRequest): Promise<EmbeddingProviderResult> {
-    const model = req.model || this.defaultModel;
+    // For a self-hosted endpoint the caller's model id (an OpenAI model name,
+    // chosen per corpus) is meaningless — the local server serves its own
+    // configured model. Use the configured local model and honor only the
+    // requested dimension (the operator must deploy a model whose dimension
+    // matches the target corpus). Frontier/OpenAI keeps the caller's model.
+    const model = this.selfHosted ? this.defaultModel : (req.model || this.defaultModel);
     const params: any = { model, input: req.input };
     // `dimensions` is supported by OpenAI's v3 models and many local servers;
     // omit it when not requested so servers that reject the field still work.
