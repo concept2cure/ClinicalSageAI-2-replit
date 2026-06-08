@@ -2,7 +2,6 @@
   "description": "Files allowed to instantiate an LLM client directly outside the governed AI gateway. This is the gateway-bypass burndown list. Do NOT add to it — route new AI calls through server/services/ai-gateway (getGateway) or the shared client. Removing entries (by routing them through the gateway) is encouraged. Enforced by scripts/ci/check-gateway-bypass.mjs.",
   "allowed": [
     "server/lib/multi-provider-llm.ts",
-    "server/lib/unified-ai-client.ts",
     "server/services/aiProviderRouter.ts",
     "server/services/anthropic-client.ts",
     "server/services/kimiAIService.js",
