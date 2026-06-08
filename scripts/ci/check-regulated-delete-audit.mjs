@@ -35,6 +35,7 @@ const REGULATED = [
   ['c2cDocumentSections', 'c2c_document_sections'],
   ['c2cDocumentSectionEvidence', 'c2c_document_section_evidence'],
   ['authoringDocuments', 'authoring_documents'],
+  ['indApplications', 'ind_applications'], // IND = regulated FDA submission record
 ];
 
 const AUDIT_RE =
@@ -49,6 +50,8 @@ const ALLOWLIST = {
     'coauthor_documents hard-delete; soft-delete migration + audit pending (Part 11 #1)',
   'server/routes/authoring.router.ts':
     'authoring_documents UAT-cleanup hard-delete; audit pending (Part 11 #5)',
+  'server/routes/ind.ts':
+    'ind_applications hard-delete (regulated FDA submission) with no audit; audit pending (Part 11 #1 scope)',
 };
 
 const WINDOW = 25; // lines around a delete to search for an audit call

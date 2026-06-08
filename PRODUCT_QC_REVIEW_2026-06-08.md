@@ -104,11 +104,14 @@ change in compliance-critical code, so not done unilaterally without a DB):**
 **Durable guard — added (static, no DB needed):**
 `scripts/ci/check-regulated-delete-audit.mjs` (wired into CI Lint) fails if a
 DELETE on a regulated table (`coauthor_documents`, `c2c_document_*`,
-`authoring_documents`) has no audit call nearby. The three currently-unaudited
-deletes are allow-listed as operator-tracked, so the gate blocks the gap from
-**widening** while the soft-delete migration is scheduled. A fourth site —
-`coauthor.ts:237` (`coauthorDocuments`), which the swarm missed — was found by
-this gate's scan and added to the allow-list / Part 11 #1 scope.
+`authoring_documents`, `ind_applications`) has no audit call nearby. The
+currently-unaudited deletes are allow-listed as operator-tracked, so the gate
+blocks the gap from **widening** while the soft-delete migration is scheduled.
+Two sites the swarm missed were found by this gate's scan and added to the
+allow-list / Part 11 #1 scope: `coauthor.ts:237` (`coauthor_documents`) and —
+notably — **`ind.ts:266` (`ind_applications`)**, a hard-delete of a regulated
+**IND/FDA submission record** with no audit at all (a §11.10(e) gap on one of
+the most regulation-significant records in the product).
 A DB-backed integration test (delete ⇒ matching `audit_logs` row) remains the
 complementary runtime check.
 
