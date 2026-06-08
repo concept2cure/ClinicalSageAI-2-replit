@@ -243,7 +243,7 @@ export interface CapabilitiesResponse {
 }
 
 // ── Pathway readiness (GET /api/submissions/sequences/:seqId/pathway-readiness) ─
-export type Pathway = 'ctis' | 'mdr' | 'ivdr' | 'estar_510k' | 'estar_de_novo';
+export type Pathway = 'ctis' | 'mdr' | 'ivdr' | 'estar_510k' | 'estar_de_novo' | 'pmda_shonin';
 export interface PathwayReadinessResponse {
   pathway: Pathway;
   ready: boolean;
