@@ -104,6 +104,16 @@ non-overlapping value:
   (SE / NSE / INSUFFICIENT_DATA with the decision path + rationale), plus
   attribute-by-attribute technological-characteristics comparison. This turns the
   prior "data shape" into an actual SE decision. Exposed at `/api/substantial-equivalence`.
+- **Premarket cybersecurity §524B (gap #3)**: `server/services/regulatory/cybersecurity-524b.ts`
+  — SBOM completeness against the NTIA minimum elements (per-component gaps,
+  known-vulnerability tally) and §524B artifact readiness scoring. `/api/cybersecurity-524b`.
+- **Human factors IEC 62366-1 (gap #4)**: `server/services/regulatory/human-factors.ts`
+  — HFE/UE file completeness and use-related risk analysis (critical-task
+  identification, unmitigated-risk flagging, residual-risk acceptability). `/api/human-factors`.
+- **Post-market surveillance (gap #6)**: `server/services/postmarket/openfda-surveillance.ts`
+  — openFDA MAUDE adverse-event and recall ingestion (behind a mockable fetch
+  seam) with signal aggregation (event-type counts, top problems, spike detection)
+  and recall summaries by classification. `/api/postmarket-surveillance`.
 - **eCTD leaf PDF rendering**: `server/services/ectd/leaf-pdf-renderer.ts` (pdf-lib,
   deterministic); `generateEctdPackage` renders both leaf sites to real PDF bytes
   and checksums them. Residual: true PDF/A-1b conformance is a documented OQ enhancement.

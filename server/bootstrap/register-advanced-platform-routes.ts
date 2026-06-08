@@ -97,6 +97,21 @@ export async function registerAdvancedPlatformRoutes({
         mod: '../routes/substantial-equivalence.ts',
         name: 'Substantial Equivalence (FDA 510(k) SE flowchart)',
       },
+      {
+        path: '/api/cybersecurity-524b',
+        mod: '../routes/cybersecurity-524b.ts',
+        name: 'Premarket Cybersecurity (FDA §524B SBOM + readiness)',
+      },
+      {
+        path: '/api/human-factors',
+        mod: '../routes/human-factors.ts',
+        name: 'Human Factors (IEC 62366-1)',
+      },
+      {
+        path: '/api/postmarket-surveillance',
+        mod: '../routes/postmarket-surveillance.ts',
+        name: 'Post-market Surveillance (openFDA MAUDE + recalls)',
+      },
     ] as const;
     const auditIntegResults = await Promise.allSettled(auditIntegConfig.map(c => import(c.mod)));
     auditIntegResults.forEach((r, i) => {
