@@ -534,7 +534,7 @@ router.get('/Groups', scimAuth, async (req: Request, res: Response) => {
 router.get('/Groups/:id', scimAuth, async (req: Request, res: Response) => {
   try {
     const orgId = orgOf(req);
-    const role = req.params.id.toLowerCase();
+    const role = String(req.params.id).toLowerCase();
     if (!isValidRole(role)) return scimError(res, 404, 'Group not found.');
     res.json(toScimGroup(req, role, await membersOfRole(orgId, role)));
   } catch (err) {
@@ -546,7 +546,7 @@ router.get('/Groups/:id', scimAuth, async (req: Request, res: Response) => {
 router.patch('/Groups/:id', scimAuth, async (req: Request, res: Response) => {
   try {
     const orgId = orgOf(req);
-    const role = req.params.id.toLowerCase();
+    const role = String(req.params.id).toLowerCase();
     if (!isValidRole(role)) return scimError(res, 404, 'Group not found.');
 
     const ops = ((req.body?.Operations ?? []) as PatchOp[]) || [];
