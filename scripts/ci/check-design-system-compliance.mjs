@@ -2,7 +2,7 @@
 /**
  * Design-system compliance CI gate.
  *
- * Enforces a subset of the CLAUDE.md non-negotiables on the LIVE Concept2Cure
+ * Enforces a subset of the Concept2Cure design-system non-negotiables on the
  * design-system surfaces under client/src/concept2cure/ — the rules that are
  * unambiguous and currently at zero violations, so this gate purely prevents
  * regression (no baseline needed):
@@ -17,9 +17,7 @@
  *     values and need per-occurrence design judgement);
  *   - emoji / exclamation / Title-Case copy review.
  *
- * EXCLUDED: client/src/concept2cure/auth/** — legacy per CLAUDE.md ("kept until
- * Phase 5 ships"; do not refactor in place). It contains a known spring
- * transition that is being replaced, not fixed.
+ * Scope: all of client/src/concept2cure/ (no legacy carve-out).
  *
  * Exit codes: 0 = clean, 1 = violations found.
  * Usage:
@@ -39,8 +37,8 @@ const SURFACE = path.join(ROOT, 'client', 'src', 'concept2cure');
 const args = process.argv.slice(2);
 const jsonOut = args.includes('--json');
 
-// Legacy / out-of-scope subpaths (relative to SURFACE).
-const EXCLUDED_PREFIXES = ['auth'];
+// Out-of-scope subpaths (relative to SURFACE). None — the whole surface is enforced.
+const EXCLUDED_PREFIXES = [];
 
 const RULES = [
   {
@@ -102,7 +100,7 @@ if (jsonOut) {
     console.error(`  ${v.file}:${v.line}  [${v.rule}] ${v.description}`);
     console.error(`    ${v.excerpt}`);
   }
-  console.error('\nCLAUDE.md non-negotiables: Lucide icons only; 200ms ease-out motion (no spring/bounce).');
+  console.error('\nDesign-system non-negotiables: Lucide icons only; 200ms ease-out motion (no spring/bounce).');
 }
 
 process.exit(violations.length === 0 ? 0 : 1);

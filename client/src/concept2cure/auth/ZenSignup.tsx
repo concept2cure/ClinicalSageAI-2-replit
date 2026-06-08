@@ -914,7 +914,7 @@ export const ZenSignup: React.FC = () => {
       <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
-        transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
         className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100"
       >
         <motion.div

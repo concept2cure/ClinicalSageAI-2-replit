@@ -98,9 +98,14 @@ command palette, scope switcher.
 - ✅ **Fixed — icon-button a11y:** home TopBar search/notifications/help icon
   buttons had `title` but no `aria-label` (not exposed to SR/mobile — WCAG 2.2
   AA). Added `aria-label` to each.
+- ✅ **Fixed — motion (spring):** `auth/ZenSignup.tsx` used a Framer-Motion
+  `spring` (overshoot) for the success-checkmark scale-in → replaced with a
+  200ms ease-out tween. (Owner directed treating `auth/` as in-scope, not
+  legacy.)
 - ✅ **New gate — `scripts/ci/check-design-system-compliance.mjs`** (wired into
   CI Lint): hard-fails on non-Lucide icon imports and Framer-Motion spring/bounce
-  on live `concept2cure/` surfaces (both at zero today → pure regression guard).
+  across the **whole** `concept2cure/` surface (both at zero now → pure
+  regression guard).
 - ⏭ **Deferred to designer — hardcoded hex:** ~500 hex literals across the
   surface CSS mix legitimate token *definitions* with inline *values* that should
   be tokens (e.g. PDEV status pills `#f6e9cf` next to `var(--warning)`). Proper
@@ -110,8 +115,7 @@ command palette, scope switcher.
   wired into CI** — recommend fixing the 12 and adding it as a guardrail.
 - ⏭ **Deferred to designer — motion:** `concept2cure-home` readiness *fill*
   animates `width` at 600ms (vs the 200ms rule). Arguably a deliberate progress
-  animation; a designer call, not an obvious bug. The legacy `auth/ZenSignup.tsx`
-  spring is intentionally **out of scope** (legacy, replaced in Phase 5).
+  animation; a designer call, not an obvious bug.
 
 ---
 
