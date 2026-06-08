@@ -24,12 +24,9 @@ export * as literature from './literature';
 // ═══════════════════════════════════════════════════════════════════════════════
 // AI SERVICES
 // openai-service exports OpenAI Assistants API functions (threads, runs, etc.)
-// kimiAIService.js has export default
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export * as openaiService from './openai-service';
-// @ts-expect-error — kimiAIService is a plain .js file without type declarations
-export { default as kimiAIService } from './kimiAIService';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CORTEX PRIME SERVICES
@@ -138,7 +135,6 @@ export const SERVICE_REGISTRY = {
   'ai.completion': 'ai/openai-orchestrator',
   'ai.assistant': 'openai-service',
   // 'ai.regulatory': removed — was a stub
-  'ai.kimi': 'kimiAIService',
 
   // Documents
   'documents.crud': 'documentService',

@@ -170,11 +170,6 @@ declare module '*/fdaService.js' {
   export function analyzeFaersDataForCER(data: any): any;
 }
 
-declare module '*/kimiAIService.js' {
-  const kimiAIService: Record<string, (...args: any[]) => any>;
-  export default kimiAIService;
-}
-
 declare module '*/pdfGenerator.js' {
   const pdfGenerator: Record<string, (...args: any[]) => any>;
   export default pdfGenerator;
