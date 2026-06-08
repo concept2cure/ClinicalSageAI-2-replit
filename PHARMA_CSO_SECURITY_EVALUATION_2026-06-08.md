@@ -114,7 +114,7 @@ Ratings are A (client-CSO-ready) → C (questionnaire risk). "Enforced" means a 
 | 10 | **XSS** | A | DOMPurify (client + isomorphic) on all rendered markdown/HTML, CSP nonce, no unsanitized `dangerouslySetInnerHTML`. |
 | 11 | **File upload** | A− | Magic-byte validation, size caps, tenant-scoped storage, ClamAV (note: fails *open* if scanner unreachable — monitor). |
 | 12 | **DevSecOps / CI gates** | A− | Exceptional breadth of enforced gates; GitGuardian secret scanning + CycloneDX SBOM artifact; only Trivy fs/config remain advisory (§3.4). |
-| 13 | **Logging / error handling** | A− | Prod 5xx generic (no stack/PII leak), redaction service for keys/tokens, request-id hardening. Add a Sentry `beforeSend` PII scrubber. |
+| 13 | **Logging / error handling** | A | Prod 5xx generic (no stack/PII leak), request-id hardening, and a **fail-closed Sentry `beforeSend` scrubber** (strips auth headers/cookies/user PII + backstops secret/email/SSN across the event) — landed in this PR. |
 | 14 | **Org attestations (SOC2/ISO/pen-test)** | C | Not evidenced in repo (§3.2) — the main *non-code* blocker. |
 
 ---
@@ -158,7 +158,7 @@ Ratings are A (client-CSO-ready) → C (questionnaire risk). "Enforced" means a 
 | ~~P1~~ ◑ | §3.4: **SBOM landed** (CycloneDX artifact); secret scanning already present (GitGuardian) and the HIGH `tmp` advisory already justified-allowlisted — both corrected. **Remaining:** make Trivy gating once a clean baseline is confirmed | DevSecOps | partial | SBOM artifact ✅ |
 | **P1** | Add SCIM provisioning; org-default enforce-MFA | Eng | ~1 wk | — |
 | **P2** | Confirm classifier gates AI placement; finish gateway-bypass burn-down → `--strict` | Eng (AI) | ~1 wk | `check-gateway-bypass --strict` |
-| **P2** | RLS enforce-on by default + boot assertion; KMS signer wiring; Sentry `beforeSend` PII scrub; retention/DR SOP | Eng/Compliance | ~1–2 wk | — |
+| **P2** | RLS enforce-on by default + boot assertion; KMS signer wiring; ~~Sentry `beforeSend` PII scrub~~ ✅ **landed**; retention/DR SOP | Eng/Compliance | partial | — |
 | **P3** | Fine-grained (resource-level) RBAC; column-level encryption for PII; mTLS between services | Eng | Roadmap | — |
 
 ---
