@@ -97,3 +97,6 @@ Workspace map + error catalog for nav/error handling: `shared/types/submission-u
 
 ## Pathway readiness (non-eCTD projections — Cross-Region / Dispatch)
 | GET | `/api/submissions/sequences/:seqId/pathway-readiness?pathway=&memberStates=` | → `PathwayReadinessResponse` | projects the sequence's canonical leaves onto CTIS \| MDR \| IVDR \| eSTAR (510k/de_novo) and returns a required-slot gap/readiness report. Deterministic, map+gap only — never submits. `memberStates` (comma list) applies to CTIS Part II. |
+
+## Assemble (Publish step — Dispatch workspace)
+| POST | `/api/submissions/sequences/:seqId/assemble` | `AssembleRequest` → `AssembleResponse` | Drives the real eCTD publisher off the sequence's canonical leaves (backbone + MD5 + regional m1 + md5.txt). Returns a sanitized package descriptor (sha256/format/size). **Does NOT transmit** — submit/transmit stays behind the governed `transmit_submission` tool + Part 11 e-sign. Content is materialized as-is; PDF/A normalization is a separate gap. |

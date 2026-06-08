@@ -511,4 +511,44 @@ router.get('/sequences/:seqId/pathway-readiness', limiter, requireRole(AUTHOR), 
   }
 });
 
+// ── Assemble (assemble step of assemble→submit→transmit) ──────────────────────
+// Drives the real eCTD publisher off the sequence's canonical leaves. Returns a
+// sanitized package descriptor (no server paths). Does NOT transmit — submit/
+// transmit stays behind the governed transmit_submission tool + Part 11 e-sign.
+const assembleSchema = z.object({
+  applicationId: z.string().min(1).max(128).optional(),
+  sponsorId: z.string().min(1).max(128).optional(),
+  sponsorName: z.string().min(1).max(256).optional(),
+});
+router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = assembleSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { assembleSequence } = await import('../services/ectd/assemble-from-core');
+    const result = await assembleSequence({
+      sequenceId: seqId,
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      applicationId: parsed.data.applicationId ?? `SEQ-${seqId}`,
+      sponsorId: parsed.data.sponsorId ?? `ORG-${ctx.organizationId}`,
+      sponsorName: parsed.data.sponsorName ?? `Organization ${ctx.organizationId}`,
+    });
+    // Sanitized — never expose the server temp path.
+    res.json({
+      ok: true,
+      sha256: result.bundle.sha256,
+      format: result.bundle.format,
+      sizeBytes: result.bundle.sizeBytes,
+      materialized: result.materialized,
+      skipped: result.skipped,
+    });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 export default router;

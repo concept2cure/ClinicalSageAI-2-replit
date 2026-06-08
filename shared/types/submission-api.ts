@@ -252,3 +252,20 @@ export interface PathwayReadinessResponse {
   /** Full engine result (section/slot breakdown) — shape varies by pathway. */
   detail: unknown;
 }
+
+// ── Assemble (POST /api/submissions/sequences/:seqId/assemble) ────────────────
+export interface AssembleRequest {
+  applicationId?: string;
+  sponsorId?: string;
+  sponsorName?: string;
+}
+export interface AssembleResponse {
+  ok: true;
+  sha256: string;
+  format: string;
+  sizeBytes: number;
+  /** Number of canonical leaves materialized into the package. */
+  materialized: number;
+  /** Leaves with no resolvable source file, excluded from the package. */
+  skipped: Array<{ sectionCode: string; reason: string }>;
+}
