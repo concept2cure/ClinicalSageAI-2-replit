@@ -350,6 +350,8 @@ export interface MethodComparisonResult {
   sdBias: number;
   /** Predicted bias (regression estimate − level) at the decision level, if given. */
   biasAtDecisionLevel: number | null;
+  /** Bland–Altman 95% limits of agreement: meanBias ± 1.96·sdBias. */
+  limitsOfAgreement: { lower: number; upper: number };
   n: number;
   provenance: StatsProvenance;
 }
@@ -383,12 +385,149 @@ export function compareMethods(args: MethodComparisonArgs): MethodComparisonResu
     meanBias,
     sdBias,
     biasAtDecisionLevel,
+    limitsOfAgreement: { lower: meanBias - 1.96 * sdBias, upper: meanBias + 1.96 * sdBias },
     n,
     provenance: buildProvenance({
       method: 'CLSI EP09 method comparison',
       seed: 0,
       inputs: args,
-      note: 'OLS regression of test on reference; systematic bias estimates.',
+      note: 'OLS regression of test on reference; systematic bias + Bland–Altman LoA.',
+    }),
+  };
+}
+
+// ── EP07 · Interference ──────────────────────────────────────────────────────
+
+export interface InterferenceArgs {
+  /** Replicates of the sample WITHOUT the interferent (control), at a fixed analyte level. */
+  baseline: number[];
+  /** Replicates of the same sample WITH the interferent added. */
+  withInterferent: number[];
+  /** Maximum allowable bias (%) before the substance is flagged as interfering. */
+  allowableBiasPct?: number;
+}
+
+export interface InterferenceResult {
+  baselineMean: number;
+  interferentMean: number;
+  /** Percent bias attributable to the interferent: (test − control)/control × 100. */
+  percentBias: number;
+  /** Absolute bias in measurement units. */
+  absoluteBias: number;
+  /** True when |percentBias| exceeds allowableBiasPct (only when that is supplied). */
+  interferes: boolean | null;
+  provenance: StatsProvenance;
+}
+
+/**
+ * CLSI EP07 interference: percent bias introduced by an interferent at a fixed
+ * analyte level, from paired baseline / with-interferent replicate sets.
+ */
+export function assessInterference(args: InterferenceArgs): InterferenceResult {
+  const { baseline, withInterferent } = args;
+  if (baseline.length < 1 || withInterferent.length < 1) {
+    throw new Error('EP07 interference requires baseline and with-interferent measurements.');
+  }
+  const baselineMean = baseline.reduce((s, x) => s + x, 0) / baseline.length;
+  const interferentMean = withInterferent.reduce((s, x) => s + x, 0) / withInterferent.length;
+  if (baselineMean === 0) throw new Error('Baseline mean is zero; percent bias is undefined.');
+  const absoluteBias = interferentMean - baselineMean;
+  const percentBias = (absoluteBias / baselineMean) * 100;
+  const interferes =
+    args.allowableBiasPct !== undefined
+      ? Math.abs(percentBias) > args.allowableBiasPct
+      : null;
+
+  return {
+    baselineMean,
+    interferentMean,
+    percentBias,
+    absoluteBias,
+    interferes,
+    provenance: buildProvenance({
+      method: 'CLSI EP07 interference',
+      seed: 0,
+      inputs: args,
+      note: 'Percent bias = (with-interferent − baseline)/baseline × 100.',
+    }),
+  };
+}
+
+// ── EP28 · Reference intervals ───────────────────────────────────────────────
+
+export interface ReferenceIntervalArgs {
+  /** Reference-population measurements. */
+  values: number[];
+  /** Lower tail probability for the interval. Default 0.025. */
+  lowerQuantile?: number;
+  /** Upper tail probability for the interval. Default 0.975. */
+  upperQuantile?: number;
+}
+
+export interface ReferenceIntervalResult {
+  lowerLimit: number;
+  upperLimit: number;
+  /** 90% confidence intervals on each reference limit (normal-approx rank method). */
+  lowerLimitCi: { lower: number; upper: number };
+  upperLimitCi: { lower: number; upper: number };
+  n: number;
+  method: 'nonparametric-percentile';
+  provenance: StatsProvenance;
+}
+
+/** Type-7 (linear-interpolation) quantile of a sorted ascending array. */
+function quantileSorted(sorted: number[], q: number): number {
+  const n = sorted.length;
+  if (n === 1) return sorted[0];
+  const idx = q * (n - 1);
+  const lo = Math.floor(idx);
+  const hi = Math.ceil(idx);
+  if (lo === hi) return sorted[lo];
+  return sorted[lo] + (idx - lo) * (sorted[hi] - sorted[lo]);
+}
+
+/**
+ * CLSI EP28 nonparametric reference interval. Returns the lower/upper reference
+ * limits (percentiles) and a 90% CI on each limit via the normal approximation
+ * to the binomial rank distribution. (EP28-A3c recommends n ≥ 120 for the
+ * nonparametric method; the computation is exposed for any n.)
+ */
+export function estimateReferenceInterval(args: ReferenceIntervalArgs): ReferenceIntervalResult {
+  const values = [...args.values].sort((a, b) => a - b);
+  const n = values.length;
+  if (n < 3) throw new Error('EP28 reference interval requires at least 3 values.');
+  const ql = args.lowerQuantile ?? 0.025;
+  const qu = args.upperQuantile ?? 0.975;
+  if (!(ql > 0 && qu < 1 && ql < qu)) {
+    throw new Error('Require 0 < lowerQuantile < upperQuantile < 1.');
+  }
+
+  const lowerLimit = quantileSorted(values, ql);
+  const upperLimit = quantileSorted(values, qu);
+
+  // 90% CI on a quantile limit via the rank normal approximation:
+  // rank ≈ q·n ± z·sqrt(n·q·(1−q)), z = 1.645 for a 90% two-sided interval.
+  const z = 1.645;
+  const ciForQuantile = (q: number) => {
+    const mean = q * n;
+    const sd = Math.sqrt(n * q * (1 - q));
+    const loRank = Math.max(0, Math.floor(mean - z * sd) - 1);
+    const hiRank = Math.min(n - 1, Math.ceil(mean + z * sd) - 1);
+    return { lower: values[loRank], upper: values[hiRank] };
+  };
+
+  return {
+    lowerLimit,
+    upperLimit,
+    lowerLimitCi: ciForQuantile(ql),
+    upperLimitCi: ciForQuantile(qu),
+    n,
+    method: 'nonparametric-percentile',
+    provenance: buildProvenance({
+      method: 'CLSI EP28 nonparametric reference interval',
+      seed: 0,
+      inputs: args,
+      note: 'Type-7 percentile limits with normal-approx rank CIs.',
     }),
   };
 }

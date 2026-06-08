@@ -136,3 +136,111 @@ export function computeDiagnosticAccuracy(
     }),
   };
 }
+
+// ── ROC / AUC (continuous-score diagnostics) ─────────────────────────────────
+
+export interface ScoredObservation {
+  /** Continuous test score (higher = more positive). */
+  score: number;
+  /** True disease/condition status. */
+  positive: boolean;
+}
+
+export interface RocPoint {
+  threshold: number;
+  /** True-positive rate (sensitivity) at this threshold. */
+  tpr: number;
+  /** False-positive rate (1 − specificity) at this threshold. */
+  fpr: number;
+}
+
+export interface RocResult {
+  /** Area under the ROC curve (Mann–Whitney rank estimate; ties handled). */
+  auc: number;
+  curve: RocPoint[];
+  /** Threshold maximising Youden's J (tpr − fpr) and its operating point. */
+  optimalThreshold: number;
+  optimalTpr: number;
+  optimalFpr: number;
+  positives: number;
+  negatives: number;
+  provenance: StatsProvenance;
+}
+
+/** Average-rank assignment (1-based) handling ties, for the Mann–Whitney AUC. */
+function averageRanks(values: number[]): number[] {
+  const order = values.map((v, i) => ({ v, i })).sort((a, b) => a.v - b.v);
+  const ranks = new Array(values.length).fill(0);
+  let i = 0;
+  while (i < order.length) {
+    let j = i;
+    while (j + 1 < order.length && order[j + 1].v === order[i].v) j++;
+    const avg = (i + j + 2) / 2; // average of 1-based ranks (i+1 .. j+1)
+    for (let k = i; k <= j; k++) ranks[order[k].i] = avg;
+    i = j + 1;
+  }
+  return ranks;
+}
+
+/**
+ * ROC analysis for a continuous-score diagnostic: AUC (rank-based, tie-safe),
+ * the ROC curve, and the Youden-optimal threshold.
+ */
+export function computeRoc(observations: ScoredObservation[]): RocResult {
+  const positives = observations.filter(o => o.positive).length;
+  const negatives = observations.length - positives;
+  if (positives === 0 || negatives === 0) {
+    throw new Error('ROC requires at least one positive and one negative observation.');
+  }
+
+  // AUC via Mann–Whitney U on average ranks.
+  const ranks = averageRanks(observations.map(o => o.score));
+  let sumRankPos = 0;
+  for (let i = 0; i < observations.length; i++) {
+    if (observations[i].positive) sumRankPos += ranks[i];
+  }
+  const auc = (sumRankPos - (positives * (positives + 1)) / 2) / (positives * negatives);
+
+  // ROC curve by sweeping unique score thresholds (predict positive if score ≥ t).
+  const thresholds = Array.from(new Set(observations.map(o => o.score))).sort((a, b) => b - a);
+  const curve: RocPoint[] = [];
+  let optimalThreshold = thresholds[0];
+  let optimalTpr = 0;
+  let optimalFpr = 0;
+  let bestJ = -Infinity;
+  for (const t of thresholds) {
+    let tp = 0;
+    let fp = 0;
+    for (const o of observations) {
+      if (o.score >= t) {
+        if (o.positive) tp++;
+        else fp++;
+      }
+    }
+    const tpr = tp / positives;
+    const fpr = fp / negatives;
+    curve.push({ threshold: t, tpr, fpr });
+    if (tpr - fpr > bestJ) {
+      bestJ = tpr - fpr;
+      optimalThreshold = t;
+      optimalTpr = tpr;
+      optimalFpr = fpr;
+    }
+  }
+
+  return {
+    auc,
+    curve,
+    optimalThreshold,
+    optimalTpr,
+    optimalFpr,
+    positives,
+    negatives,
+    provenance: buildProvenance({
+      method: 'ROC / AUC (Mann–Whitney)',
+      seed: 0,
+      inputs: observations,
+      note: 'Rank-based AUC (tie-safe) + threshold-sweep ROC curve + Youden optimum.',
+    }),
+  };
+}

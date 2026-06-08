@@ -11,6 +11,8 @@ import {
   polynomialFit,
   assessLinearity,
   compareMethods,
+  assessInterference,
+  estimateReferenceInterval,
 } from '../analytical-performance';
 
 describe('EP05 imprecision (one-way ANOVA)', () => {
@@ -159,5 +161,72 @@ describe('EP09 method comparison', () => {
   it('null decision-level bias when not requested; rejects unpaired input', () => {
     expect(compareMethods({ reference: [1, 2], test: [1, 2] }).biasAtDecisionLevel).toBeNull();
     expect(() => compareMethods({ reference: [1, 2, 3], test: [1, 2] })).toThrow();
+  });
+
+  it('Bland–Altman limits of agreement = meanBias ± 1.96·sdBias', () => {
+    // diffs = [1,2,3,4] → meanBias 2.5, sdBias = sqrt(5/3).
+    const r = compareMethods({ reference: [1, 2, 3, 4], test: [2, 4, 6, 8] });
+    const sd = Math.sqrt(5 / 3);
+    expect(r.limitsOfAgreement.lower).toBeCloseTo(2.5 - 1.96 * sd, 8);
+    expect(r.limitsOfAgreement.upper).toBeCloseTo(2.5 + 1.96 * sd, 8);
+  });
+});
+
+describe('EP07 interference', () => {
+  it('computes percent bias from baseline vs with-interferent', () => {
+    // baseline mean 100, interferent mean 110 → +10% bias.
+    const r = assessInterference({ baseline: [98, 102], withInterferent: [108, 112] });
+    expect(r.baselineMean).toBeCloseTo(100, 10);
+    expect(r.interferentMean).toBeCloseTo(110, 10);
+    expect(r.percentBias).toBeCloseTo(10, 10);
+    expect(r.absoluteBias).toBeCloseTo(10, 10);
+    expect(r.interferes).toBeNull();
+  });
+
+  it('flags interference when bias exceeds the allowable limit', () => {
+    const r = assessInterference({
+      baseline: [100],
+      withInterferent: [110],
+      allowableBiasPct: 5,
+    });
+    expect(r.interferes).toBe(true);
+    const ok = assessInterference({
+      baseline: [100],
+      withInterferent: [103],
+      allowableBiasPct: 5,
+    });
+    expect(ok.interferes).toBe(false);
+  });
+
+  it('rejects empty input or zero baseline', () => {
+    expect(() => assessInterference({ baseline: [], withInterferent: [1] })).toThrow();
+    expect(() => assessInterference({ baseline: [0, 0], withInterferent: [1] })).toThrow();
+  });
+});
+
+describe('EP28 reference interval', () => {
+  it('type-7 percentile limits on 1..100', () => {
+    const values = Array.from({ length: 100 }, (_, i) => i + 1);
+    const r = estimateReferenceInterval({ values });
+    // idx = q·(n−1): 0.025·99 = 2.475 → 1 + 2.475 = 3.475; 0.975·99 = 96.525 → 97.525.
+    expect(r.lowerLimit).toBeCloseTo(3.475, 6);
+    expect(r.upperLimit).toBeCloseTo(97.525, 6);
+    expect(r.n).toBe(100);
+  });
+
+  it('limits are ordered and CIs bracket them', () => {
+    const values = Array.from({ length: 200 }, (_, i) => i + 1);
+    const r = estimateReferenceInterval({ values });
+    expect(r.lowerLimit).toBeLessThan(r.upperLimit);
+    expect(r.lowerLimitCi.lower).toBeLessThanOrEqual(r.lowerLimit);
+    expect(r.lowerLimitCi.upper).toBeGreaterThanOrEqual(r.lowerLimit);
+    expect(r.upperLimitCi.lower).toBeLessThanOrEqual(r.upperLimit);
+  });
+
+  it('rejects <3 values or bad quantiles', () => {
+    expect(() => estimateReferenceInterval({ values: [1, 2] })).toThrow();
+    expect(() =>
+      estimateReferenceInterval({ values: [1, 2, 3], lowerQuantile: 0.9, upperQuantile: 0.1 })
+    ).toThrow();
   });
 });

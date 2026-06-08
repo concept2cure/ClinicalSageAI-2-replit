@@ -85,10 +85,12 @@ non-overlapping value:
 
 - **IVD analytical performance (the real diagnostic gap)**:
   `server/services/stats/analytical-performance.ts` — CLSI **EP05** imprecision,
-  **EP17** LoB/LoD, **EP06** linearity, **EP09** method comparison. Pure/deterministic.
+  **EP06** linearity, **EP07** interference, **EP09** method comparison (+ Bland–Altman
+  limits of agreement), **EP17** LoB/LoD, **EP28** reference intervals. Pure/deterministic.
 - **Clinical diagnostic performance**: `server/services/stats/clinical-performance.ts`
   — 2×2 sensitivity/specificity (Clopper–Pearson CIs), PPA/NPA, prevalence-adjusted
-  PPV/NPV, likelihood ratios, Youden's J, Cohen's κ.
+  PPV/NPV, likelihood ratios, Youden's J, Cohen's κ, and **ROC/AUC** (rank-based,
+  tie-safe) with the Youden-optimal threshold.
 - **Diagnostics performance API**: `server/routes/diagnostics-performance.ts`
   (role-gated, Zod-validated) mounted at `/api/diagnostics-performance`.
 - **eCTD leaf PDF rendering**: `server/services/ectd/leaf-pdf-renderer.ts` (pdf-lib,

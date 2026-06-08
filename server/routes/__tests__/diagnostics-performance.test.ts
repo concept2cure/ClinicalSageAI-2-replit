@@ -56,6 +56,23 @@ describe('analytical endpoints', () => {
     const res = await post('/analytical/imprecision', { runs: [[1, 2], [3]] });
     expect(res.status).toBe(400);
   });
+
+  it('interference returns percent bias', async () => {
+    const res = await post('/analytical/interference', {
+      baseline: [98, 102],
+      withInterferent: [108, 112],
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.result.percentBias).toBeCloseTo(10, 6);
+  });
+
+  it('reference-interval returns ordered limits', async () => {
+    const res = await post('/analytical/reference-interval', {
+      values: Array.from({ length: 100 }, (_, i) => i + 1),
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.result.lowerLimit).toBeLessThan(res.body.result.upperLimit);
+  });
 });
 
 describe('clinical endpoint', () => {
@@ -80,6 +97,29 @@ describe('clinical endpoint', () => {
 
   it('rejects invalid body with 400', async () => {
     const res = await post('/clinical/accuracy', { tp: -1, fp: 0, fn: 0, tn: 0 });
+    expect(res.status).toBe(400);
+  });
+
+  it('roc returns AUC and an optimal threshold', async () => {
+    const res = await post('/clinical/roc', {
+      observations: [
+        { score: 0.9, positive: true },
+        { score: 0.8, positive: true },
+        { score: 0.3, positive: false },
+        { score: 0.1, positive: false },
+      ],
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.result.auc).toBeCloseTo(1, 8);
+  });
+
+  it('rejects an ROC request with only one class (400)', async () => {
+    const res = await post('/clinical/roc', {
+      observations: [
+        { score: 1, positive: true },
+        { score: 2, positive: true },
+      ],
+    });
     expect(res.status).toBe(400);
   });
 });

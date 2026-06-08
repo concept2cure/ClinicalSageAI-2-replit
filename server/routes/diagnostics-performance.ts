@@ -1,8 +1,8 @@
 /**
- * Diagnostics performance API — analytical (CLSI EP05/EP06/EP09/EP17) and
- * clinical (2×2 accuracy) performance computations for IVD / diagnostic
- * submissions. Pure, deterministic math (no tenant data persisted); every
- * endpoint is role-gated and Zod-validated.
+ * Diagnostics performance API — analytical (CLSI EP05/EP06/EP07/EP09/EP17/EP28)
+ * and clinical (2×2 accuracy, ROC/AUC) performance computations for IVD /
+ * diagnostic submissions. Pure, deterministic math (no tenant data persisted);
+ * every endpoint is role-gated and Zod-validated.
  */
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
@@ -13,8 +13,10 @@ import {
   estimateDetectionCapability,
   assessLinearity,
   compareMethods,
+  assessInterference,
+  estimateReferenceInterval,
 } from '../services/stats/analytical-performance';
-import { computeDiagnosticAccuracy } from '../services/stats/clinical-performance';
+import { computeDiagnosticAccuracy, computeRoc } from '../services/stats/clinical-performance';
 
 const logger = createScopedLogger('diagnostics-performance');
 const router = Router();
@@ -89,6 +91,32 @@ router.post(
   )
 );
 
+router.post(
+  '/analytical/interference',
+  author,
+  handle(
+    z.object({
+      baseline: numArray,
+      withInterferent: numArray,
+      allowableBiasPct: num.optional(),
+    }),
+    input => assessInterference(input)
+  )
+);
+
+router.post(
+  '/analytical/reference-interval',
+  author,
+  handle(
+    z.object({
+      values: z.array(num).min(3),
+      lowerQuantile: num.gt(0).lt(1).optional(),
+      upperQuantile: num.gt(0).lt(1).optional(),
+    }),
+    input => estimateReferenceInterval(input)
+  )
+);
+
 // ── Clinical performance ─────────────────────────────────────────────────────
 
 router.post(
@@ -105,6 +133,19 @@ router.post(
     }),
     ({ tp, fp, fn, tn, prevalence, conf }) =>
       computeDiagnosticAccuracy({ tp, fp, fn, tn }, { prevalence, conf })
+  )
+);
+
+router.post(
+  '/clinical/roc',
+  author,
+  handle(
+    z.object({
+      observations: z
+        .array(z.object({ score: num, positive: z.boolean() }))
+        .min(2),
+    }),
+    input => computeRoc(input.observations)
   )
 );
 

@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { computeDiagnosticAccuracy } from '../clinical-performance';
+import { computeDiagnosticAccuracy, computeRoc } from '../clinical-performance';
 
 describe('computeDiagnosticAccuracy', () => {
   // tp=90, fn=10, tn=80, fp=20 → 100 positives, 100 negatives, N=200.
@@ -63,5 +63,45 @@ describe('computeDiagnosticAccuracy', () => {
     expect(() => computeDiagnosticAccuracy({ tp: 0, fp: 0, fn: 0, tn: 10 })).toThrow();
     expect(() => computeDiagnosticAccuracy({ tp: 1.5, fp: 0, fn: 1, tn: 1 })).toThrow();
     expect(() => computeDiagnosticAccuracy({ tp: 5, fp: 5, fn: 5, tn: 5 }, { prevalence: 2 })).toThrow();
+  });
+});
+
+describe('computeRoc', () => {
+  it('AUC = 1 for perfectly separable scores', () => {
+    const r = computeRoc([
+      { score: 0.9, positive: true },
+      { score: 0.8, positive: true },
+      { score: 0.3, positive: false },
+      { score: 0.1, positive: false },
+    ]);
+    expect(r.auc).toBeCloseTo(1, 10);
+    expect(r.optimalTpr).toBeCloseTo(1, 10);
+    expect(r.optimalFpr).toBeCloseTo(0, 10);
+  });
+
+  it('AUC matches the Mann–Whitney hand calculation (0.75)', () => {
+    // pos=[0.6,0.4], neg=[0.5,0.2]; ranks 0.2,0.4,0.5,0.6 → sumRankPos=6 → (6−3)/4=0.75.
+    const r = computeRoc([
+      { score: 0.6, positive: true },
+      { score: 0.4, positive: true },
+      { score: 0.5, positive: false },
+      { score: 0.2, positive: false },
+    ]);
+    expect(r.auc).toBeCloseTo(0.75, 10);
+    expect(r.positives).toBe(2);
+    expect(r.negatives).toBe(2);
+    expect(r.curve.length).toBeGreaterThan(0);
+  });
+
+  it('handles ties with average ranks (AUC = 0.5 for identical scores)', () => {
+    const r = computeRoc([
+      { score: 1, positive: true },
+      { score: 1, positive: false },
+    ]);
+    expect(r.auc).toBeCloseTo(0.5, 10);
+  });
+
+  it('requires both classes present', () => {
+    expect(() => computeRoc([{ score: 1, positive: true }, { score: 2, positive: true }])).toThrow();
   });
 });
