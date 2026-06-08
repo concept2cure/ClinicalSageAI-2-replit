@@ -1468,24 +1468,32 @@ export class MemStorage {
     return release;
   }
 
-  async reviewBatchRecord(id: number, review: any): Promise<any> {
-    return review;
+  async reviewBatchRecord(_id: number, _review: any): Promise<any> {
+    // Not implemented — must not fabricate that a GMP batch-record review was
+    // recorded (the prior stub echoed the request back). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: reviewBatchRecord');
   }
 
-  async generateCertificateOfAnalysis(id: number): Promise<any> {
-    return {};
+  async generateCertificateOfAnalysis(_id: number): Promise<any> {
+    // Not implemented — a Certificate of Analysis is a released GMP quality
+    // document and must never be fabricated (the prior stub returned {}).
+    throw new Error('NOT_IMPLEMENTED: generateCertificateOfAnalysis');
   }
 
   async getBatchGenealogy(id: number, _organizationId: number | string): Promise<any> {
     return {};
   }
 
-  async validateReleaseCriteria(id: number): Promise<any> {
-    return { valid: true };
+  async validateReleaseCriteria(_id: number): Promise<any> {
+    // Not implemented — must not return { valid: true } and falsely certify a
+    // batch meets release criteria (21 CFR Part 211 integrity). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: validateReleaseCriteria');
   }
 
-  async releaseBatch(id: number, params: any): Promise<any> {
-    return { released: true };
+  async releaseBatch(_id: number, _params: any): Promise<any> {
+    // Not implemented — must not report a GMP batch as released without a real
+    // disposition action (the prior stub returned { released: true }).
+    throw new Error('NOT_IMPLEMENTED: releaseBatch');
   }
 
   // QC Deviation methods
@@ -3628,24 +3636,32 @@ export class DatabaseStorage {
     return release;
   }
 
-  async reviewBatchRecord(id: number, review: any): Promise<any> {
-    return review;
+  async reviewBatchRecord(_id: number, _review: any): Promise<any> {
+    // Not implemented — must not fabricate that a GMP batch-record review was
+    // recorded (the prior stub echoed the request back). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: reviewBatchRecord');
   }
 
-  async generateCertificateOfAnalysis(id: number): Promise<any> {
-    return {};
+  async generateCertificateOfAnalysis(_id: number): Promise<any> {
+    // Not implemented — a Certificate of Analysis is a released GMP quality
+    // document and must never be fabricated (the prior stub returned {}).
+    throw new Error('NOT_IMPLEMENTED: generateCertificateOfAnalysis');
   }
 
   async getBatchGenealogy(id: number, _organizationId: number | string): Promise<any> {
     return {};
   }
 
-  async validateReleaseCriteria(id: number): Promise<any> {
-    return { valid: true };
+  async validateReleaseCriteria(_id: number): Promise<any> {
+    // Not implemented — must not return { valid: true } and falsely certify a
+    // batch meets release criteria (21 CFR Part 211 integrity). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: validateReleaseCriteria');
   }
 
-  async releaseBatch(id: number, params: any): Promise<any> {
-    return { released: true };
+  async releaseBatch(_id: number, _params: any): Promise<any> {
+    // Not implemented — must not report a GMP batch as released without a real
+    // disposition action (the prior stub returned { released: true }).
+    throw new Error('NOT_IMPLEMENTED: releaseBatch');
   }
 
   // QC Deviation methods

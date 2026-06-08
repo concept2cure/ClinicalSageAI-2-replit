@@ -279,30 +279,26 @@ router.put('/batch-releases/:id', async (req: Request, res: Response) => {
 });
 
 // Review batch record
-router.post('/batch-releases/:id/review', async (req: Request, res: Response) => {
-  try {
-    const { reviewer, comments, checklist, status } = req.body;
-    const release = await storage.reviewBatchRecord(Number(req.params.id), {
-      reviewer,
-      comments,
-      checklist,
-      status,
-    });
-    res.json(release);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to review batch record' });
-  }
+// Not implemented. The prior stub echoed the request body back, falsely
+// signalling that a GMP batch-record review had been recorded. Fail closed.
+router.post('/batch-releases/:id/review', async (_req: Request, res: Response) => {
+  res.status(501).json({
+    error: 'Batch-record review is not implemented',
+    notImplemented: true,
+    message: 'No batch-record review was recorded. This endpoint performs no action.',
+  });
 });
 
 // Generate Certificate of Analysis
-router.post('/batch-releases/:id/coa', async (req: Request, res: Response) => {
-  try {
-    const { testResults, conclusion, approvedBy } = req.body;
-    const coa = await storage.generateCertificateOfAnalysis(Number(req.params.id));
-    res.json(coa);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to generate COA' });
-  }
+// Not implemented. The prior stub returned an empty object as if a CoA had been
+// generated. A Certificate of Analysis is a GMP-released quality document; an
+// empty/fabricated one must never be presented as real. Fail closed.
+router.post('/batch-releases/:id/coa', async (_req: Request, res: Response) => {
+  res.status(501).json({
+    error: 'Certificate of Analysis generation is not implemented',
+    notImplemented: true,
+    message: 'No Certificate of Analysis was generated.',
+  });
 });
 
 // Get batch genealogy
@@ -317,30 +313,29 @@ router.get('/batch-releases/:id/genealogy', async (req: Request, res: Response) 
 });
 
 // Validate release criteria
-router.post('/batch-releases/:id/validate-criteria', async (req: Request, res: Response) => {
-  try {
-    const { criteria } = req.body;
-    const validation = await storage.validateReleaseCriteria(Number(req.params.id));
-    res.json(validation);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to validate release criteria' });
-  }
+// Not implemented. The prior stub returned { valid: true } unconditionally —
+// certifying that a batch met ALL release criteria without performing any
+// check. That is a 21 CFR Part 211 data-integrity false positive (it could
+// drive a batch disposition decision). Fail closed.
+router.post('/batch-releases/:id/validate-criteria', async (_req: Request, res: Response) => {
+  res.status(501).json({
+    error: 'Release-criteria validation is not implemented',
+    notImplemented: true,
+    message:
+      'The batch was NOT evaluated against release criteria. No validation was performed; do not treat this as a passing result.',
+  });
 });
 
 // Release batch
-router.post('/batch-releases/:id/release', async (req: Request, res: Response) => {
-  try {
-    const { releasedBy, decision, conditions, restrictions } = req.body;
-    const release = await storage.releaseBatch(Number(req.params.id), {
-      releasedBy,
-      decision,
-      conditions,
-      restrictions,
-    });
-    res.json(release);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to release batch' });
-  }
+// Not implemented. The prior stub returned { released: true } unconditionally,
+// falsely signalling that a GMP batch had been released/dispositioned. Fail
+// closed — a batch must never be reported as released without a real action.
+router.post('/batch-releases/:id/release', async (_req: Request, res: Response) => {
+  res.status(501).json({
+    error: 'Batch release is not implemented',
+    notImplemented: true,
+    message: 'The batch was NOT released. No disposition action was taken.',
+  });
 });
 
 // ============================================================================
