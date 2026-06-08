@@ -38,12 +38,28 @@ export function redactSecretsAndPiiText(input: string): string {
 }
 
 /**
- * Redact secrets + PII across an arbitrary serializable object by scrubbing its
- * JSON form. Replacement tokens are JSON-safe, so the round-trip preserves
- * structure. Used as the backstop scrubber for outbound telemetry events.
+ * Redact secrets + PII across an arbitrary object by recursively walking it and
+ * scrubbing only string VALUES — structure (keys, nesting, arrays) is preserved,
+ * and non-plain objects (Date, Buffer, etc.) are left intact. Used as the
+ * backstop scrubber for outbound telemetry events.
  */
 export function redactSecretsAndPiiObject<T>(payload: T): T {
-  const serialized = JSON.stringify(payload);
-  if (!serialized) return payload;
-  return JSON.parse(redactSecretsAndPiiText(serialized)) as T;
+  return deepRedact(payload) as T;
+}
+
+function deepRedact(value: unknown): unknown {
+  if (typeof value === 'string') return redactSecretsAndPiiText(value);
+  if (Array.isArray(value)) return value.map(deepRedact);
+  if (value !== null && typeof value === 'object') {
+    // Only descend into plain objects; preserve Dates/Buffers/class instances.
+    const proto = Object.getPrototypeOf(value);
+    if (proto === Object.prototype || proto === null) {
+      const out: Record<string, unknown> = {};
+      for (const [key, v] of Object.entries(value as Record<string, unknown>)) {
+        out[key] = deepRedact(v);
+      }
+      return out;
+    }
+  }
+  return value;
 }
