@@ -106,6 +106,7 @@ export async function assessSequenceDispatchReadiness(
       requiredSections: requiredModule1Codes(sequence.region),
       // An original is type 'original' or sequence number '0000'.
       isOriginalSequence: sequence.type === 'original' || sequence.sequenceNumber === '0000',
+      sequenceNumber: sequence.sequenceNumber,
     }
   );
 

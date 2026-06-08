@@ -55,6 +55,8 @@ export interface ComputeReadinessOptions {
    * only `new` is valid.
    */
   isOriginalSequence?: boolean;
+  /** The sequence number — eCTD requires exactly four digits (e.g. "0000"). */
+  sequenceNumber?: string;
 }
 
 const VALID_OPS = new Set(['new', 'replace', 'append', 'delete']);
@@ -84,6 +86,16 @@ export function computeDispatchReadiness(
       code: 'EMPTY_SEQUENCE',
       sectionCode: null,
       message: 'Sequence has no dispatchable leaves (every leaf is a delete or none exist).',
+    });
+  }
+
+  // ERROR: eCTD sequence numbers are exactly four digits (0000, 0001, …).
+  if (opts.sequenceNumber !== undefined && !/^\d{4}$/.test(opts.sequenceNumber)) {
+    findings.push({
+      severity: 'error',
+      code: 'SEQUENCE_NUMBER_FORMAT',
+      sectionCode: null,
+      message: `Sequence number "${opts.sequenceNumber}" is not a valid eCTD 4-digit sequence (expected e.g. "0000").`,
     });
   }
 

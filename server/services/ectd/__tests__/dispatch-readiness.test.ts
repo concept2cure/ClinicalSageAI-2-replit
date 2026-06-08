@@ -113,4 +113,19 @@ describe('computeDispatchReadiness', () => {
     expect(r.findings.some(f => f.code === 'LIFECYCLE_OP_IN_ORIGINAL')).toBe(false);
     expect(r.errors).toBe(0);
   });
+
+  it('accepts a valid 4-digit sequence number', () => {
+    for (const n of ['0000', '0001', '0042', '9999']) {
+      const r = computeDispatchReadiness([goodLeaf()], { sequenceNumber: n });
+      expect(r.findings.some(f => f.code === 'SEQUENCE_NUMBER_FORMAT')).toBe(false);
+    }
+  });
+
+  it('flags a malformed sequence number as an error', () => {
+    for (const n of ['0', '00', '12345', 'abcd', '00a0', '']) {
+      const r = computeDispatchReadiness([goodLeaf()], { sequenceNumber: n });
+      expect(r.findings.some(f => f.code === 'SEQUENCE_NUMBER_FORMAT')).toBe(true);
+      expect(r.errors).toBeGreaterThanOrEqual(1);
+    }
+  });
 });
