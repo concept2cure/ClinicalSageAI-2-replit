@@ -80,6 +80,7 @@
     "ci:password-hygiene": "node scripts/ci/check-password-hygiene.mjs",
     "ci:password-hygiene:strict": "node scripts/ci/check-password-hygiene.mjs --strict",
     "ci:design-system": "node scripts/ci/check-design-system-compliance.mjs",
+    "ci:regulated-delete-audit": "node scripts/ci/check-regulated-delete-audit.mjs",
     "db:seed:founder": "node scripts/seed-founder.mjs",
     "ci:token-cascade": "node scripts/ci/check-token-cascade.mjs",
     "ci:route-ownership-matrix": "node scripts/ci/check-route-ownership-matrix.mjs",

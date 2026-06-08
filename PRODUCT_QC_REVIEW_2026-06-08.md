@@ -77,10 +77,16 @@ change in compliance-critical code, so not done unilaterally without a DB):**
    elsewhere are not policy-blocked. Fix is a policy decision (expand patterns
    vs enforce soft-delete everywhere) — operator call.
 
-**Recommended durable guard (needs DB, so flagged not built):** an integration
-test asserting that for every DELETE/UPDATE on a regulated table there is a
-matching `audit_logs` row — extend to `coauthor_documents`, `c2c_document_*`,
-submission tables.
+**Durable guard — added (static, no DB needed):**
+`scripts/ci/check-regulated-delete-audit.mjs` (wired into CI Lint) fails if a
+DELETE on a regulated table (`coauthor_documents`, `c2c_document_*`,
+`authoring_documents`) has no audit call nearby. The three currently-unaudited
+deletes are allow-listed as operator-tracked, so the gate blocks the gap from
+**widening** while the soft-delete migration is scheduled. A fourth site —
+`coauthor.ts:237` (`coauthorDocuments`), which the swarm missed — was found by
+this gate's scan and added to the allow-list / Part 11 #1 scope.
+A DB-backed integration test (delete ⇒ matching `audit_logs` row) remains the
+complementary runtime check.
 
 ---
 
@@ -124,6 +130,7 @@ command palette, scope switcher.
 | Gate | Status |
 |---|---|
 | `check-design-system-compliance.mjs` (Lucide-only, no spring/bounce) | ✅ added + wired to CI |
+| `check-regulated-delete-audit.mjs` (Part 11: regulated delete ⇒ audit) | ✅ added + wired to CI |
 | `check-token-cascade.mjs` (var() resolves to tokens) | exists; **recommend** fixing its 12 findings and wiring to CI |
 | Regulated-table mutation→audit coverage test | recommended (needs DB) |
 | `@typescript-eslint/no-floating-promises` (baseline-gated) | recommended — real gap in this async-heavy server; surfaces a large baseline, so introduce baselined, not big-bang |

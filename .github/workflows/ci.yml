@@ -55,6 +55,9 @@ jobs:
       - name: Guardrails — design-system non-negotiables (Lucide-only, no spring)
         run: npm run ci:design-system
 
+      - name: Guardrails — regulated-data delete audit coverage (Part 11)
+        run: npm run ci:regulated-delete-audit
+
       - name: Guardrails — route mount authority audit (no regressions)
         run: npm run ci:audit-route-mounts:no-regression
 
