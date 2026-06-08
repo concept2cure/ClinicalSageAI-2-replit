@@ -82,6 +82,11 @@ export async function registerAdvancedPlatformRoutes({
         mod: '../routes/connector-library.ts',
         name: 'Connector Library (catalog, toggle, guides)',
       },
+      {
+        path: '/api/diagnostics-performance',
+        mod: '../routes/diagnostics-performance.ts',
+        name: 'Diagnostics Performance (CLSI analytical + clinical)',
+      },
     ] as const;
     const auditIntegResults = await Promise.allSettled(auditIntegConfig.map(c => import(c.mod)));
     auditIntegResults.forEach((r, i) => {
