@@ -596,11 +596,10 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
         maskedEmail,
       });
     }
-    const refreshToken = jwt.sign(
-      { userId: userData.id.toString(), email: userData.email, type: 'refresh' },
-      getRefreshTokenSecret(),
-      { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
-    );
+    // NOTE: login always issues an MFA challenge above and returns — there is no
+    // direct session/refresh-token mint here. The refresh token is created on
+    // /mfa/verify once the challenge is satisfied. (Removed unreachable
+    // refresh-token mint that pre-dated mandatory MFA.)
   } catch (error: any) {
     logger.error('Login error', { err: error?.message ?? String(error) });
     res.status(500).json({
