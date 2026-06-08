@@ -6,7 +6,6 @@
     "server/openai-service.ts",
     "server/services/aiProviderRouter.ts",
     "server/services/anthropic-client.ts",
-    "server/services/biotechRagService.js",
     "server/services/kimiAIService.js",
     "server/services/openai-client.ts",
     "server/services/openai-service.ts"
