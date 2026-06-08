@@ -1140,18 +1140,19 @@ class RegulatoryDigitalTwin {
 
     approvalSentiment = Math.max(0.1, Math.min(0.95, approvalSentiment));
 
-    // Simulate each panelist vote (slightly randomized)
-    for (let i = 0; i < totalPanelists; i++) {
-      const personalBias = (Math.random() - 0.5) * 0.2;
-      if (approvalSentiment + personalBias > 0.5) {
-        yesVotes++;
-      } else {
-        noVotes++;
-      }
-    }
-
-    const abstain = Math.random() > 0.85 ? 1 : 0;
-    if (abstain && yesVotes > 0) yesVotes--;
+    // Deterministic expected vote split from the sentiment derived above.
+    // Previously each panelist vote was drawn with a Math.random() "personal
+    // bias" plus a random abstention, so the predicted tally was noise that
+    // changed on every call. Report the expected split implied by the disclosed
+    // sentiment factors instead — reproducible, and honest that it is an
+    // estimate from those factors rather than a stochastic forecast. (The
+    // Monte Carlo timing simulation below legitimately samples randomness, but
+    // it aggregates over thousands of iterations; a single advisory-committee
+    // draw does not.) Abstentions are not derivable from the available data and
+    // are reported as 0 rather than invented.
+    yesVotes = Math.round(totalPanelists * approvalSentiment);
+    noVotes = totalPanelists - yesVotes;
+    const abstain = 0;
 
     const overallSentiment =
       yesVotes > totalPanelists * 0.65
