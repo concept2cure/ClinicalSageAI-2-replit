@@ -305,6 +305,18 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Generate SBOM (CycloneDX)
+        # Software Bill of Materials for vendor security questionnaires /
+        # supply-chain transparency. Published as a build artifact.
+        run: npm run sbom > sbom.cyclonedx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx
+          path: sbom.cyclonedx.json
+          retention-days: 90
+
       - name: Run npm audit (with documented false-positive allowlist)
         # The wrapper filters out registry-lag false positives where installed
         # version > advisory's vulnerable range. Genuine new high/critical

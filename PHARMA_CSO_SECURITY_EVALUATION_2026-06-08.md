@@ -84,9 +84,15 @@ Regulated tables previously permitted unaudited hard-deletes: `coauthor_document
 
 **Follow-up (not blocking):** `deleted_at` *soft-delete* with read-path filtering (`deleted_at IS NULL`) across the ~30 read sites mapped for these tables is the stronger product ideal, but it requires the DB-backed integration test lane to verify no read path leaks/hides rows — deferred rather than done blind.
 
-### 3.4 🟠 HIGH — Supply-chain / IaC scans are advisory, not gating
+### 3.4 🟡 MEDIUM — Supply-chain hardening (partially remediated)
 
-Trivy filesystem + config scans run but carry `continue-on-error: true` (`.github/workflows/ci.yml` ~lines 313, 323), so CRITICAL/HIGH findings do not block merge. There is **no gitleaks / GitHub native secret scanning** gate, and **no SBOM** (CycloneDX/SPDX) is produced — pharma vendor questionnaires increasingly ask for one. A current `npm audit` shows a **HIGH** `tmp` path-traversal (GHSA-ph9p-34f9-6g65) and the `@anthropic-ai/sdk` advisory range, neither blocking. *Action: make Trivy CRITICAL/HIGH gating, add gitleaks, emit an SBOM artifact per build, clear the HIGH advisories.*
+**Corrections to the initial automated read (verified against source):**
+- **Secret scanning is present** — **GitGuardian** runs on every PR (`GitGuardian Security Checks`, observed green), so the "no secret scanning" finding was overstated; a `gitleaks` gate would be redundant.
+- **The HIGH `tmp` advisory (GHSA-ph9p-34f9-6g65) is already handled** — not an open gap. `scripts/ci/audit-with-allowlist.mjs:37-43` documents it with a sound justification: `exceljs` calls `tmp` with fixed internal strings (not user-controlled prefix/postfix), so the path-traversal vector is unreachable; the entry self-expires when `exceljs` ships a release depending on `tmp >= 0.2.6`. `npm audit` is gated through this wrapper, and genuine new HIGH/CRITICAL advisories still fail it.
+
+**✅ REMEDIATED IN THIS PR:** a **CycloneDX SBOM** is now generated on every CI run (`npm run sbom` → `npm sbom --sbom-format cyclonedx`) and published as a 90-day build artifact (`sbom-cyclonedx`) from the Security Scan job — the concrete artifact pharma vendor questionnaires increasingly request.
+
+**Still open (deliberately not flipped blindly):** Trivy fs/config scans remain advisory (`continue-on-error: true`). Making them merge-blocking is the right end-state, but flipping it without a confirmed-clean baseline would turn the whole repo's CI red on every PR (the `.trivyignore` documents pre-existing IaC findings). *Action: run a full Trivy pass in the team's CI env, drive CRITICAL/HIGH to zero (or `.trivyignore` with justification), then remove `continue-on-error`.*
 
 ---
 
@@ -107,7 +113,7 @@ Ratings are A (client-CSO-ready) → C (questionnaire risk). "Enforced" means a 
 | 9 | **Injection / input validation** | A | Drizzle parameterized throughout, Zod at boundaries, `ban-new-pool` enforced, file magic-byte checks, SSRF in webhooks closed. |
 | 10 | **XSS** | A | DOMPurify (client + isomorphic) on all rendered markdown/HTML, CSP nonce, no unsanitized `dangerouslySetInnerHTML`. |
 | 11 | **File upload** | A− | Magic-byte validation, size caps, tenant-scoped storage, ClamAV (note: fails *open* if scanner unreachable — monitor). |
-| 12 | **DevSecOps / CI gates** | B+ | Exceptional breadth of enforced gates; **but** Trivy/secret/SBOM are advisory (§3.4). |
+| 12 | **DevSecOps / CI gates** | A− | Exceptional breadth of enforced gates; GitGuardian secret scanning + CycloneDX SBOM artifact; only Trivy fs/config remain advisory (§3.4). |
 | 13 | **Logging / error handling** | A− | Prod 5xx generic (no stack/PII leak), redaction service for keys/tokens, request-id hardening. Add a Sentry `beforeSend` PII scrubber. |
 | 14 | **Org attestations (SOC2/ISO/pen-test)** | C | Not evidenced in repo (§3.2) — the main *non-code* blocker. |
 
@@ -149,7 +155,7 @@ Ratings are A (client-CSO-ready) → C (questionnaire risk). "Enforced" means a 
 | ~~P0~~ ✅ | SAML fail-closed + vetted-library rewrite + fail-closed tests + CI gate (§3.1) — **landed in this PR**; live-IdP interop + SCIM are follow-ups | Eng (Security) | done | `ci:saml-fail-closed` ✅ |
 | **P0** | Confirm/publish SOC 2 Type II (or Type I + bridge) + pen-test summary (§3.2) | Compliance | Calendar | trust center |
 | ~~P1~~ ✅ | Audit-before-delete (fail-closed, pre-image snapshot) for `ind_applications`/`coauthor_documents`/`authoring_documents` (§3.3) — **landed in this PR**; soft-delete read-filtering is the deferred follow-up | Eng | done | `check-regulated-delete-audit` allowlist = 0 ✅ |
-| **P1** | Make Trivy CRITICAL/HIGH gating; add gitleaks; emit SBOM; clear HIGH npm advisories (§3.4) | DevSecOps | ~2–3 d | CI hard-fail |
+| ~~P1~~ ◑ | §3.4: **SBOM landed** (CycloneDX artifact); secret scanning already present (GitGuardian) and the HIGH `tmp` advisory already justified-allowlisted — both corrected. **Remaining:** make Trivy gating once a clean baseline is confirmed | DevSecOps | partial | SBOM artifact ✅ |
 | **P1** | Add SCIM provisioning; org-default enforce-MFA | Eng | ~1 wk | — |
 | **P2** | Confirm classifier gates AI placement; finish gateway-bypass burn-down → `--strict` | Eng (AI) | ~1 wk | `check-gateway-bypass --strict` |
 | **P2** | RLS enforce-on by default + boot assertion; KMS signer wiring; Sentry `beforeSend` PII scrub; retention/DR SOP | Eng/Compliance | ~1–2 wk | — |
