@@ -552,6 +552,51 @@ router.get('/sequences/:seqId/technical-file', limiter, requireRole(AUTHOR), asy
   }
 });
 
+// ── Device technical-file ASSEMBLE (materialize the MDR/IVDR ZIP) ─────────────
+// Device counterpart of POST /assemble: materializes the sequence's leaves into a
+// real technical-file ZIP (Annex II/III tree + manifest.json + checksums) with
+// valid PDF leaves. Returns a sanitized descriptor (no server paths). Does NOT
+// transmit — submit/transmit stays behind the governed transmit path + e-sign.
+const techFileAssembleSchema = z.object({
+  regulation: z.enum(['mdr', 'ivdr']),
+  applicationId: z.string().min(1).max(128).optional(),
+  productName: z.string().min(1).max(256).optional(),
+  manufacturer: z.string().min(1).max(256).optional(),
+});
+router.post('/sequences/:seqId/technical-file/assemble', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = techFileAssembleSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { assembleTechnicalFileFromCore } = await import('../services/pathway-engines/mdr-ivdr/assemble-technical-file-from-core');
+    const result = await assembleTechnicalFileFromCore({
+      sequenceId: seqId,
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      regulation: parsed.data.regulation,
+      applicationId: parsed.data.applicationId ?? `SEQ-${seqId}`,
+      productName: parsed.data.productName,
+      manufacturer: parsed.data.manufacturer,
+    });
+    // Sanitized — never expose the server temp path.
+    res.json({
+      ok: true,
+      regulation: parsed.data.regulation,
+      ready: result.ready,
+      sha256: result.bundle.sha256,
+      sizeBytes: result.bundle.sizeBytes,
+      fileCount: result.bundle.fileCount,
+      materialized: result.materialized,
+      skipped: result.skipped,
+    });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 // ── Assemble (assemble step of assemble→submit→transmit) ──────────────────────
 // Drives the real eCTD publisher off the sequence's canonical leaves. Returns a
 // sanitized package descriptor (no server paths). Does NOT transmit — submit/

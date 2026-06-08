@@ -279,6 +279,26 @@ export interface TechnicalFileResponse {
   entries: TechnicalFileEntry[];
 }
 
+// ── Device technical-file ASSEMBLE (POST .../technical-file/assemble) ─────────
+// Materializes the MDR/IVDR technical-file ZIP from the canonical core. Sanitized
+// descriptor — no server paths. Does NOT transmit.
+export interface TechnicalFileAssembleRequest {
+  regulation: 'mdr' | 'ivdr';
+  applicationId?: string;
+  productName?: string;
+  manufacturer?: string;
+}
+export interface TechnicalFileAssembleResponse {
+  ok: true;
+  regulation: 'mdr' | 'ivdr';
+  ready: boolean;
+  sha256: string;
+  sizeBytes: number;
+  fileCount: number;
+  materialized: number;
+  skipped: Array<{ sectionId: string; source: string; reason: string }>;
+}
+
 // ── Dispatch readiness (GET /api/submissions/sequences/:seqId/dispatch-readiness) ─
 // Deterministic, SERVER-COMPUTED gate inputs — the tamper-proof counterpart to
 // the AI dispatch-qc advisory.
