@@ -230,7 +230,7 @@ export function PdevAnaDock({
                   lineHeight: 1.2,
                   borderRadius: 6,
                   border: '1px solid var(--c2c-border, rgba(0,0,0,0.12))',
-                  color: a.status === 'error' ? 'var(--c2c-danger, #b3261e)' : 'inherit',
+                  color: a.status === 'error' ? 'var(--error)' : 'inherit',
                 }}
               >
                 <span style={{ display: 'inline-flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
@@ -250,7 +250,7 @@ export function PdevAnaDock({
                     </span>
                   )}
                   {a.status === 'error' && a.error && (
-                    <span style={{ fontSize: 10, lineHeight: 1.2, color: 'var(--c2c-danger, #b3261e)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: 10, lineHeight: 1.2, color: 'var(--error)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {a.error}
                     </span>
                   )}

@@ -10,6 +10,9 @@
 
 import { createHash, randomBytes } from 'crypto';
 import { pool } from '../db.js';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('api-key-service');
 
 // ============================================================================
 // TYPES
@@ -205,8 +208,14 @@ export async function validateApiKey(rawKey: string): Promise<ApiKeyValidationRe
      SET request_count = request_count + 1, last_used_at = NOW()
      WHERE id = $1`,
     [key.id]
-  ).catch(() => {
-    // Swallow errors from usage tracking — validation should still succeed
+  ).catch((err) => {
+    // Usage tracking is non-blocking — validation still succeeds — but the
+    // failure must not be silent: a corrupted request_count / last_used_at
+    // masks suspicious activity and skews billing. Log it.
+    log.warn('API key usage tracking failed (non-blocking)', {
+      keyId: key.id,
+      error: err instanceof Error ? err.message : String(err),
+    });
   });
 
   const scopes = typeof key.scopes === 'string' ? JSON.parse(key.scopes) : key.scopes;

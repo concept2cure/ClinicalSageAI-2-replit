@@ -305,13 +305,14 @@ function TopBar({
       </button>
       <div className={styles.tbDivider} />
       <div className={styles.tbActions}>
-        <button type="button" className={styles.tbBtn} title="Search (⌘K)" onClick={onOpenPalette}>
+        <button type="button" className={styles.tbBtn} title="Search (⌘K)" aria-label="Search" onClick={onOpenPalette}>
           <HomeIcon name="search" size={16} />
         </button>
         <button
           type="button"
           className={styles.tbBtn}
           title="Notifications"
+          aria-label="Notifications"
           onClick={onOpenNotifications}
         >
           <HomeIcon name="bell" size={16} />
@@ -321,6 +322,7 @@ function TopBar({
           type="button"
           className={styles.tbBtn}
           title="Help"
+          aria-label="Help"
           onClick={onOpenHelp}
         >
           <HomeIcon name="help" size={16} />
