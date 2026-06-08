@@ -7,8 +7,17 @@ import { getGateway } from '../services/ai-gateway';
 import auditService from '../services/auditService';
 import { createScopedLogger } from '../utils/logger.js';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
+import { UnifiedCERService } from '../services/cer';
 
 const cerLog = createScopedLogger('cer-routes');
+
+// Schema for structured EU MDR/IVDR CER generation from a device profile.
+const mdrCerGenerateSchema = z.object({
+  deviceId: z.number().int().positive(),
+  regulatoryFramework: z.enum(['MDR_2017_745', 'IVDR_2017_746', 'UK_MDR_2002', 'Swiss_MedDO']),
+  templateId: z.string().max(128).optional(),
+  notifiedBodyId: z.string().max(128).optional(),
+});
 
 /**
  * Strictly validate a CER report id used to build a filesystem path.
@@ -504,6 +513,49 @@ router.get('/reports/:id', async (req, res) => {
       err: error instanceof Error ? error.message : String(error),
     });
     res.status(500).json({ error: 'Failed to fetch CER report' });
+  }
+});
+
+// Generate a structured EU MDR/IVDR Clinical Evaluation Report from a device
+// profile using the deterministic template engine (DB-backed, audit-logged).
+// Tenant org id comes from the verified JWT; the authenticated user is recorded
+// as the author. Fails closed (422 with reason) rather than returning a
+// fabricated or empty report when generation cannot complete.
+router.post('/mdr/generate', async (req, res) => {
+  try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
+    const user = (req as any).user;
+    const userId = Number(user?.id ?? user?.userId);
+    if (!Number.isFinite(userId)) {
+      return res.status(401).json({ error: 'Authenticated user context required' });
+    }
+
+    const body = mdrCerGenerateSchema.parse(req.body);
+
+    const service = new UnifiedCERService({
+      organizationId: guard.orgId,
+      deviceId: body.deviceId,
+      userId,
+      regulatoryFramework: body.regulatoryFramework,
+      templateId: body.templateId,
+      notifiedBodyId: body.notifiedBodyId,
+    });
+
+    const result = await service.generateReport();
+    if (result.status === 'failed') {
+      return res.status(422).json({ error: 'CER generation failed', warnings: result.warnings });
+    }
+    return res.status(201).json(result);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid data', details: error.errors });
+    }
+    cerLog.error('MDR CER generation error', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({ error: 'Failed to generate CER' });
   }
 });
 
