@@ -7,12 +7,15 @@
  * leaf's content to a temp file, then drives `packageSequenceFromCore` (which
  * runs the real `packageEctdSubmission` — backbone, MD5, regional m1, md5.txt).
  *
- * IMPORTANT (honest scope): content is materialized AS-IS (HTML/text written to
- * disk). It is NOT yet eCTD-PDF-spec normalized — PDF/A rendering needs an
- * external binary (flagged elsewhere). This produces a structurally-correct,
- * dev/preview-grade package; it is the assemble wiring, not the final
- * bytes-on-disk publisher. SUBMIT/TRANSMIT remains behind the existing governed
- * `transmit_submission` tool + Part 11 e-signature — this never transmits.
+ * Each coauthor leaf is rendered to a genuine, valid PDF via `renderLeafPdf`
+ * (pure pdf-lib, deterministic → byte-identical output → stable md5, the eCTD
+ * checksum contract). That is a faithful TEXT rendering, not high-fidelity
+ * PDF/A: styled-HTML/DOCX fidelity and PDF/A-1b conformance are the
+ * LibreOffice/Chromium path (`pdf-converter.ts`), out of scope here. So this
+ * produces a structurally-correct package with valid PDF leaves a validator
+ * will load — the assemble wiring, not the final archival publisher.
+ * SUBMIT/TRANSMIT remains behind the existing governed `transmit_submission`
+ * tool + Part 11 e-signature — this never transmits.
  *
  * Tenant-scoped + audited. Running it needs a database + filesystem.
  *
@@ -27,16 +30,12 @@ import { eq, and, isNull } from 'drizzle-orm';
 import { db } from '../../db';
 import { submissionLeaves, coauthorDocuments } from '../../../shared/schema';
 import { packageSequenceFromCore, type PackageFromCoreResult } from './package-from-core';
+import { renderLeafPdf } from './leaf-pdf-renderer';
 import type { LeafFileResolver, ResolvedFile } from './core-to-packager';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 
 const logger = createScopedLogger('assemble-from-core');
-
-function stripHtml(input: string | null | undefined): string {
-  if (!input) return '';
-  return input.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-}
 
 function safeName(s: string): string {
   return (s || 'leaf').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'leaf';
@@ -91,12 +90,16 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
       .where(and(eq(coauthorDocuments.id, docId), eq(coauthorDocuments.organizationId, organizationId)))
       .limit(1);
     if (!doc) continue; // cross-tenant / missing → skipped (the packager reports the gap)
-    const body = stripHtml(doc.content) || doc.title || '';
-    // Materialized as-is — NOT PDF/A normalized (see module header).
-    const fileName = `${safeName(doc.moduleNumber || doc.title)}-${docId}.txt`;
+    // Render a genuine, valid PDF leaf (deterministic → stable md5). Faithful
+    // text rendering, not PDF/A — see module header.
+    const pdfBytes = await renderLeafPdf(doc.content ?? doc.title ?? '', {
+      title: doc.title ?? undefined,
+      sectionCode: doc.moduleNumber ?? undefined,
+    });
+    const fileName = `${safeName(doc.moduleNumber || doc.title)}-${docId}.pdf`;
     const sourcePath = path.join(stageDir, fileName);
-    await fs.writeFile(sourcePath, body, 'utf8');
-    const md5 = createHash('md5').update(body).digest('hex');
+    await fs.writeFile(sourcePath, pdfBytes);
+    const md5 = createHash('md5').update(pdfBytes).digest('hex');
     byDocId.set(docId, { fileName, sourcePath, md5 });
     materialized++;
   }
