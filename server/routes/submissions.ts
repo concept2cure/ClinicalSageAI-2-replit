@@ -551,4 +551,23 @@ router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (r
   }
 });
 
+// ── Dispatch readiness (deterministic, server-computed gate inputs) ───────────
+// The tamper-proof counterpart to dispatch-qc: it computes validationErrors (from
+// the canonical leaves) and unacknowledgedShadowCriticals (from shadow_findings)
+// SERVER-SIDE and runs the hard gate, so the verdict can't be talked out of a
+// blocker by a client-supplied number. Read-only; does NOT transmit.
+router.get('/sequences/:seqId/dispatch-readiness', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  try {
+    const { assessSequenceDispatchReadiness } = await import('../services/ectd/assess-dispatch-readiness');
+    const assessment = await assessSequenceDispatchReadiness({ sequenceId: seqId, organizationId: ctx.organizationId });
+    res.json(assessment);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 export default router;

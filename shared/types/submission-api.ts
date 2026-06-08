@@ -253,6 +253,34 @@ export interface PathwayReadinessResponse {
   detail: unknown;
 }
 
+// ── Dispatch readiness (GET /api/submissions/sequences/:seqId/dispatch-readiness) ─
+// Deterministic, SERVER-COMPUTED gate inputs — the tamper-proof counterpart to
+// the AI dispatch-qc advisory.
+export interface DispatchReadinessFinding {
+  severity: 'error' | 'warning' | 'info';
+  code: string;
+  sectionCode: string | null;
+  message: string;
+}
+export interface DispatchReadinessResponse {
+  sequenceId: number;
+  region: 'fda' | 'eu' | 'jp';
+  sequenceStatus: string;
+  /** Authoritative error count computed from the canonical leaves. */
+  validationErrors: number;
+  /** Open critical Shadow Review findings counted from the database. */
+  unacknowledgedShadowCriticals: number;
+  /** Hard gate verdict over the server-computed inputs. */
+  gate: { cleared: boolean; blockers: string[] };
+  readiness: {
+    errors: number;
+    warnings: number;
+    infos: number;
+    findings: DispatchReadinessFinding[];
+  };
+  leafCount: number;
+}
+
 // ── Assemble (POST /api/submissions/sequences/:seqId/assemble) ────────────────
 export interface AssembleRequest {
   applicationId?: string;

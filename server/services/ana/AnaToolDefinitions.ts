@@ -1987,6 +1987,19 @@ export const ASSESS_PATHWAY_READINESS: AnaTool = {
   },
 };
 
+export const ASSESS_DISPATCH_READINESS: AnaTool = {
+  name: 'assess_dispatch_readiness',
+  description:
+    "Determine whether an eCTD sequence is clear to dispatch, with every input computed SERVER-SIDE from the canonical core — never a client-supplied number. Returns the authoritative validationErrors (structural defects in the sequence's leaves), the count of open critical Shadow Review findings, and the hard dispatch-gate verdict (cleared + blockers). Deterministic, read-only — it proves readiness, it never transmits. Prefer this over dispatch_qc_check when you need the tamper-proof verdict rather than the AI advisory.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      sequence_id: { type: 'number', description: 'The sequence to assess for dispatch readiness.' },
+    },
+    required: ['sequence_id'],
+  },
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Notifications + clinical-study + memory tools (migration 20260510).
 // AnA fires notifications when she identifies actionable state, logs
@@ -3441,6 +3454,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   TRACE_PROVENANCE,
   CHECK_CONSISTENCY,
   ASSESS_PATHWAY_READINESS,
+  ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,
   LOG_STUDY_DEVIATION,
