@@ -185,6 +185,17 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     console.warn('⚠️ SCIM routes not mounted - continuing without SCIM provisioning');
   }
 
+  // RFC 9116 vulnerability disclosure — /.well-known/security.txt (public).
+  try {
+    const wellKnownModule = await import('../routes/well-known');
+    const wellKnownRouter = wellKnownModule.default;
+    if (wellKnownRouter && (typeof wellKnownRouter === 'function' || (wellKnownRouter as any).handle)) {
+      app.use('/.well-known', wellKnownRouter);
+    }
+  } catch {
+    console.warn('⚠️ .well-known routes not mounted');
+  }
+
   // Global /api auth gate — routes not in the allowlist require session auth.
   // Routes that use their own auth (API keys, webhook signatures, etc.) MUST be listed here.
   app.use('/api', (req: Request, res: Response, next: NextFunction) => {
