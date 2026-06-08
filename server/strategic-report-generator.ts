@@ -267,6 +267,8 @@ export class StrategicReportGenerator {
       return {
         successProbability: result.probability,
         confidence: result.confidence,
+        assessable: true,
+        source: 'model',
         keyFactors: [
           { name: 'Sample Size', impact: result.feature_importance.sample_size || 0 },
           { name: 'Duration', impact: result.feature_importance.duration_weeks || 0 },
@@ -323,29 +325,32 @@ export class StrategicReportGenerator {
         probability -= 0.02;
       }
 
+      // Anchored on the real historical success rate for comparable trials,
+      // with transparent fixed adjustments above. This is a heuristic, not a
+      // trained model — labelled as such so it is not read as a prediction.
+      // Per-factor importances are only emitted by the model path
+      // (predictSuccessProbability); fabricating them here is omitted.
       return {
         successProbability: Math.max(0.1, Math.min(0.9, probability)),
-        confidence: 0.7,
-        keyFactors: [
-          { name: 'Sample Size', impact: 0.15 },
-          { name: 'Duration', impact: 0.12 },
-          { name: 'Dropout Rate', impact: 0.13 },
-          { name: 'Phase', impact: 0.18 },
-          { name: 'Blinding', impact: 0.11 },
-        ],
+        confidence: 0.5,
+        assessable: true,
+        source: 'historical_base_rate_heuristic',
+        note: 'Heuristic anchored on the historical success rate for comparable trials with fixed adjustments for sample size, duration, and blinding. Not a trained predictive model.',
+        keyFactors: [],
       };
     } catch (error) {
       console.error('Error in statistical success prediction:', error);
+      // No comparable-trial statistics were available. This previously returned
+      // a fabricated 0.5 success probability with 0.5 confidence and invented
+      // factor impacts — a coin-flip presented as a prediction. Return an
+      // explicit not-assessable result instead of inventing a number.
       return {
-        successProbability: 0.5,
-        confidence: 0.5,
-        keyFactors: [
-          { name: 'Sample Size', impact: 0.15 },
-          { name: 'Duration', impact: 0.12 },
-          { name: 'Dropout Rate', impact: 0.13 },
-          { name: 'Phase', impact: 0.18 },
-          { name: 'Blinding', impact: 0.11 },
-        ],
+        successProbability: null,
+        confidence: 0,
+        assessable: false,
+        source: 'insufficient_data',
+        note: 'No comparable-trial statistics were available to assess success probability.',
+        keyFactors: [],
       };
     }
   }
@@ -672,8 +677,14 @@ export class StrategicReportGenerator {
       }
     }
 
-    // If high failure risk, add specific mitigation recommendation
-    if (params.successPrediction.successProbability < 0.4) {
+    // If high failure risk, add specific mitigation recommendation. Guard the
+    // not-assessable case: when success probability could not be assessed it is
+    // null, and `null < 0.4` would otherwise fire this as a false positive.
+    if (
+      params.successPrediction.assessable !== false &&
+      typeof params.successPrediction.successProbability === 'number' &&
+      params.successPrediction.successProbability < 0.4
+    ) {
       recommendations.push(
         'Given the predicted low success probability, consider an adaptive design with interim analyses to enable early stopping for futility or sample size re-estimation'
       );

@@ -22,6 +22,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { getGateway } from '../ai-gateway';
 import { classifyGatewayError } from '../ai-gateway/gateway-error-map';
+import { evaluateDispatchGate } from '../ectd/dispatch-gate';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 
@@ -158,8 +159,26 @@ export interface DispatchQcInput {
   unresolvedShadowCriticals: number;
   leaves: Array<{ sectionCode: string; operation: string }>;
 }
-export function runDispatchQc<T = unknown>(input: DispatchQcInput, ctx: AiTaskCtx): Promise<T> {
-  return runJsonTask<T>('dispatch-qc', 'regulatory_review', input, ctx, 4000);
+/**
+ * Run the adversarial pre-dispatch QC task, then clamp the verdict with the
+ * deterministic dispatch gate (spec §7: prove, don't generate, the hard rule).
+ * The AI advises and predicts; `evaluateDispatchGate` ENFORCES — when an open
+ * error-severity validation finding or unacknowledged Shadow critical exists,
+ * `clearedToDispatch` is forced false and the proven blockers are prepended,
+ * regardless of what the model returned. Both the route and ANA call this, so
+ * the floor is universal.
+ */
+export async function runDispatchQc<T = unknown>(input: DispatchQcInput, ctx: AiTaskCtx): Promise<T> {
+  const ai = await runJsonTask<Record<string, unknown>>('dispatch-qc', 'regulatory_review', input, ctx, 4000);
+  const gate = evaluateDispatchGate({
+    validationErrors: input.validationErrors,
+    unacknowledgedShadowCriticals: input.unresolvedShadowCriticals,
+  });
+  const aiBlockers = Array.isArray(ai?.blockers) ? (ai.blockers as unknown[]).map(String) : [];
+  // Deterministic floor: the gate can only ever make the verdict stricter.
+  const clearedToDispatch = gate.cleared && ai?.clearedToDispatch === true;
+  const blockers = [...gate.blockers, ...aiBlockers.filter((b) => !gate.blockers.includes(b))];
+  return { ...(ai ?? {}), clearedToDispatch, blockers } as T;
 }
 
 export default { generateSubmissionPlan, explainValidation, computeCrossRegionGap, runDispatchQc };

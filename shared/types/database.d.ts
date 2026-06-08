@@ -892,6 +892,7 @@ export interface SubmissionLeaf {
   lifecycleOp: string; // new|replace|append|delete
   documentTable?: string | null; // polymorphic — coauthor_documents|ctd_onboarding_documents|unified_documents|vault_documents
   documentId?: number | null; // polymorphic id within documentTable
+  documentType?: string | null; // classifier hint for pathway leaf→slot matching
   leafGuid?: string | null;
   parentLeafId?: number | null;
   checksum?: string | null;

@@ -7,10 +7,9 @@
 import { Router, Request, Response } from 'express';
 import { eq, desc, and, like, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { db, getPool } from '../db';
+import { db, transaction } from '../db';
 import { coauthorDocuments } from '../../shared/schema';
 import { requireRole } from '../middleware/auth';
-import { logRegulatedDeletion } from '../services/audit/regulatedDeletion';
 import { createRateLimiter } from '../middleware/rateLimiter';
 import {
   classifyDocument,
@@ -319,59 +318,53 @@ router.delete('/:id', requireRole('regulatory-author'), async (req: Request, res
     const organizationId = resolveOrganizationId(req);
     if (organizationId === null) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
 
-    // 21 CFR Part 11 §11.10(e): coauthor_documents are regulated (eCTD) records.
-    // Audit the deletion (with a full pre-image) BEFORE removing the row, in the
-    // SAME transaction, so an audit failure rolls back the delete (fail-closed).
-    const actorId = Number((req as any).user?.id);
-    const reason = ((req.body as any)?.reason as string) || 'eCTD document deleted';
-    const client = await getPool().connect();
-    try {
-      await client.query('BEGIN');
+    const u = (req as any).user || {};
+    const auditUserId = Number(u.id ?? u.userId) || null;
 
-      const selParams: unknown[] = [docId];
-      let selSql = 'SELECT * FROM coauthor_documents WHERE id = $1';
-      if (organizationId) {
-        selParams.push(organizationId);
-        selSql += ` AND organization_id = $${selParams.length}`;
-      }
-      selSql += ' FOR UPDATE';
-
-      const pre = await client.query(selSql, selParams);
-      if (!pre.rows.length) {
-        await client.query('ROLLBACK');
-        return res.status(404).json({ error: 'eCTD document not found' });
-      }
-
-      await logRegulatedDeletion(client, {
-        table: 'coauthor_documents',
-        recordId: docId,
-        tenantId: Number(pre.rows[0].organization_id),
-        actorId: Number.isFinite(actorId) ? actorId : null,
-        reason,
-        snapshot: pre.rows[0],
-      });
-
+    // 21 CFR Part 11 §11.10(e): delete the regulated eCTD document and record
+    // the deletion in the hash-chained, append-only audit_events table IN THE
+    // SAME TRANSACTION — atomic and fail-closed (an audit failure rolls the
+    // delete back, so a regulated document is never removed unaudited).
+    const deletedRow = await transaction(async (client: any) => {
       const delParams: unknown[] = [docId];
       let delSql = 'DELETE FROM coauthor_documents WHERE id = $1';
       if (organizationId) {
         delParams.push(organizationId);
         delSql += ` AND organization_id = $${delParams.length}`;
       }
-      delSql += ' RETURNING id';
+      delSql += ' RETURNING id, organization_id';
 
       const del = await client.query(delSql, delParams);
-      await client.query('COMMIT');
-      res.json({ success: true, deletedId: del.rows[0].id });
-    } catch (txErr) {
-      try {
-        await client.query('ROLLBACK');
-      } catch {
-        /* connection already broken */
-      }
-      throw txErr;
-    } finally {
-      client.release();
+      if (!del.rows.length) return null;
+      const row = del.rows[0];
+
+      await client.query(
+        `INSERT INTO audit_events
+           (organization_id, event_type, entity_type, entity_id, user_id, user_name,
+            user_role, ip_address, timestamp, reason, metadata,
+            regulatory_significant, gxp_relevant, created_at)
+         VALUES ($1, 'coauthor_document.deleted', 'coauthor_document', $2, $3, $4, $5, $6,
+                 NOW(), $7, $8, true, true, NOW())`,
+        [
+          row.organization_id,
+          row.id,
+          auditUserId,
+          u.name ?? u.email ?? 'System',
+          u.role ?? 'user',
+          req.ip ?? '',
+          'eCTD coauthor document deleted',
+          JSON.stringify({}),
+        ],
+      );
+
+      return row;
+    });
+
+    if (!deletedRow) {
+      return res.status(404).json({ error: 'eCTD document not found' });
     }
+
+    res.json({ success: true, deletedId: deletedRow.id });
   } catch (error: any) {
     logger.error('Delete error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to delete eCTD document', code: 'INTERNAL' });

@@ -54,6 +54,7 @@ export interface UpsertLeafRequest {
   lifecycleOp?: 'new' | 'replace' | 'append' | 'delete';
   documentTable?: string;
   documentId?: number;
+  documentType?: string;
   parentLeafId?: number;
 }
 export type LeafResponse = SubmissionLeaf;
@@ -224,15 +225,47 @@ export interface CapabilitiesResponse {
   environment: 'staging' | 'production';
   gateways: Array<{ configured: boolean; [k: string]: unknown }>;
   gatewaysConfigured: number;
+  // Keyed by the canonical workspace ids in submission-ui.ts (SUBMISSION_WORKSPACES).
   workspaces: {
     portfolio: boolean;
     planner: boolean;
     builder: boolean;
     sequences: boolean;
     validation: boolean;
-    shadowReview: boolean;
-    crossRegion: boolean;
-    dispatchQc: boolean;
+    'shadow-review': boolean;
+    'cross-region': boolean;
+    dispatch: boolean;
+  };
+  // Capability flags that are not workspaces.
+  features: {
     publishTransmit: boolean;
   };
+}
+
+// ── Pathway readiness (GET /api/submissions/sequences/:seqId/pathway-readiness) ─
+export type Pathway = 'ctis' | 'mdr' | 'ivdr' | 'estar_510k' | 'estar_de_novo' | 'pmda_shonin';
+export interface PathwayReadinessResponse {
+  pathway: Pathway;
+  ready: boolean;
+  /** Missing required slot ids (CTIS uses 'I:<id>' / 'II:<state>:<id>' prefixes). */
+  missingRequired: string[];
+  /** Full engine result (section/slot breakdown) — shape varies by pathway. */
+  detail: unknown;
+}
+
+// ── Assemble (POST /api/submissions/sequences/:seqId/assemble) ────────────────
+export interface AssembleRequest {
+  applicationId?: string;
+  sponsorId?: string;
+  sponsorName?: string;
+}
+export interface AssembleResponse {
+  ok: true;
+  sha256: string;
+  format: string;
+  sizeBytes: number;
+  /** Number of canonical leaves materialized into the package. */
+  materialized: number;
+  /** Leaves with no resolvable source file, excluded from the package. */
+  skipped: Array<{ sectionCode: string; reason: string }>;
 }

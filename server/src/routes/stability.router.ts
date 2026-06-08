@@ -813,55 +813,15 @@ router.post(
       // });
       // const records = parseResult.data;
 
-      // For now, return a simple message about CSV import being temporarily unavailable
+      // CSV import is disabled until a CSV parser (papaparse) is wired in.
+      // The parse + per-row upsert into stab_results lived here; it was removed
+      // as dead code once the early return above made it unreachable. Restore it
+      // alongside the parser when the feature is re-enabled.
       return res.status(200).json({
         message: 'CSV import feature temporarily unavailable',
         imported: 0,
         errors: ['CSV parsing library not available'],
       });
-
-      // Get lookup data
-      const conditionsResult = await client.query(
-        'SELECT * FROM stab_conditions WHERE study_id = $1',
-        [id]
-      );
-      const conditions = new Map(conditionsResult.rows.map(c => [c.kind, c]));
-
-      const timepointsResult = await client.query(
-        'SELECT * FROM stab_timepoints WHERE study_id = $1',
-        [id]
-      );
-      const timepoints = new Map(
-        timepointsResult.rows.map(tp => [`${tp.cond_id}-${tp.label}`, tp])
-      );
-
-      const testsResult = await client.query('SELECT * FROM stab_tests WHERE study_id = $1', [id]);
-      const tests = new Map(testsResult.rows.map(t => [t.name, t]));
-
-      let imported = 0;
-      // CSV import functionality temporarily disabled
-      // const records = parseResult.data;
-
-      // for (const record of records) {
-      //   const row = record as any;
-      //   const condition = conditions.get(row.condition);
-      //   const timepoint = timepoints.get(`${condition?.cond_id}-${row.timepoint}`);
-      //   const test = tests.get(row.test);
-      //
-      //   if (condition && timepoint && test) {
-      //     await client.query(`
-      //       INSERT INTO stab_results (study_id, cond_id, tp_id, test_id, value, unit, pass, remarks)
-      //       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      //       ON CONFLICT (cond_id, tp_id, test_id) DO UPDATE SET
-      //         value = $5, unit = $6, pass = $7, remarks = $8
-      //     `, [id, condition.cond_id, timepoint.tp_id, test.test_id, row.value, row.unit, row.pass === 'true', row.remarks]);
-      //     imported++;
-      //   }
-      // }
-
-      await client.query('COMMIT');
-
-      res.json({ imported, total: 0 });
     } catch (error) {
       await client.query('ROLLBACK');
       console.error('Error importing results:', error);

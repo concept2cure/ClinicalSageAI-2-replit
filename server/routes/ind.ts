@@ -13,7 +13,6 @@
 import { Router, Request, Response } from 'express';
 import { query, transaction } from '../db';
 import { createScopedLogger } from '../utils/logger';
-import { logRegulatedDeletion } from '../services/audit/regulatedDeletion';
 import indCopilot from '../services/indCopilot.js';
 
 const router = Router();
@@ -238,64 +237,75 @@ router.put('/applications/:id', async (req: Request, res: Response) => {
 // ── DELETE /applications/:id ──────────────────────────────────────────────────
 
 router.delete('/applications/:id', async (req: Request, res: Response) => {
-  // 21 CFR Part 11 §11.10(e): an IND application is a regulated FDA submission
-  // record. Audit the deletion (with a full pre-image) BEFORE removing the row,
-  // in the SAME transaction, so an audit failure rolls back the delete.
   try {
     const { organizationId } = tenantHeaders(req);
     const { id } = req.params;
-    const actorId = (req as any).user?.id ?? null;
-    const reason = (req.body?.reason as string) || 'IND application deleted';
 
-    const outcome = await transaction(async (client) => {
-      // Lock + load the full pre-image (org-scoped, SAFETY: draft only).
-      const checkParams: unknown[] = [id];
-      let checkSql = 'SELECT * FROM ind_applications WHERE id = $1';
-      if (organizationId) {
-        checkParams.push(organizationId);
-        checkSql += ` AND organization_id = $${checkParams.length}`;
-      }
-      checkSql += ' FOR UPDATE';
+    // SAFETY: Only allow deletion of draft applications
+    const checkParams: unknown[] = [id];
+    let checkSql = 'SELECT id, status, organization_id FROM ind_applications WHERE id = $1';
+    if (organizationId) {
+      checkParams.push(organizationId);
+      checkSql += ` AND organization_id = $${checkParams.length}`;
+    }
 
-      const existing = await client.query(checkSql, checkParams);
-      if (!existing.rows.length) return { kind: 'notfound' as const };
-
-      const app = existing.rows[0];
-      if (app.status && app.status !== 'draft') {
-        return { kind: 'conflict' as const, status: app.status as string };
-      }
-
-      await logRegulatedDeletion(client, {
-        table: 'ind_applications',
-        recordId: app.id,
-        tenantId: Number(app.organization_id),
-        actorId,
-        reason,
-        snapshot: app,
-      });
-
-      const params: unknown[] = [id];
-      let sql = 'DELETE FROM ind_applications WHERE id = $1';
-      if (organizationId) {
-        params.push(organizationId);
-        sql += ` AND organization_id = $${params.length}`;
-      }
-      sql += ' RETURNING id';
-
-      const result = await client.query(sql, params);
-      return { kind: 'deleted' as const, id: result.rows[0].id };
-    });
-
-    if (outcome.kind === 'notfound') {
+    const existing = await query(checkSql, checkParams);
+    if (!existing.rows.length) {
       return res.status(404).json({ success: false, error: 'IND application not found' });
     }
-    if (outcome.kind === 'conflict') {
+
+    const app = existing.rows[0];
+    if (app.status && app.status !== 'draft') {
       return res.status(409).json({
         success: false,
-        error: `Cannot delete application in "${outcome.status}" status. Only draft applications can be deleted.`,
+        error: `Cannot delete application in "${app.status}" status. Only draft applications can be deleted.`,
       });
     }
-    res.json({ success: true, deleted: outcome.id });
+
+    const u = (req as any).user || {};
+    const auditUserId = Number(u.id ?? u.userId) || null;
+
+    // 21 CFR Part 11 §11.10(e): delete the regulated IND/FDA submission record
+    // and record the deletion in the hash-chained, append-only audit_events
+    // table IN THE SAME TRANSACTION — atomic and fail-closed (an audit failure
+    // rolls the delete back, so a regulated record is never removed unaudited).
+    const deletedId = await transaction(async (client: any) => {
+      const delParams: unknown[] = [id];
+      let delSql = 'DELETE FROM ind_applications WHERE id = $1';
+      if (organizationId) {
+        delParams.push(organizationId);
+        delSql += ` AND organization_id = $${delParams.length}`;
+      }
+      delSql += ' RETURNING id';
+
+      const del = await client.query(delSql, delParams);
+      if (!del.rows.length) {
+        throw new Error('IND application not found');
+      }
+
+      await client.query(
+        `INSERT INTO audit_events
+           (organization_id, event_type, entity_type, entity_id, user_id, user_name,
+            user_role, ip_address, timestamp, reason, metadata,
+            regulatory_significant, gxp_relevant, created_at)
+         VALUES ($1, 'ind_application.deleted', 'ind_application', $2, $3, $4, $5, $6,
+                 NOW(), $7, $8, true, true, NOW())`,
+        [
+          app.organization_id,
+          Number(id),
+          auditUserId,
+          u.name ?? u.email ?? 'System',
+          u.role ?? 'user',
+          req.ip ?? '',
+          'IND application deleted',
+          JSON.stringify({ previousStatus: app.status ?? null }),
+        ],
+      );
+
+      return del.rows[0].id;
+    });
+
+    res.json({ success: true, deleted: deletedId });
   } catch (err: any) {
     sendError(res, 500, 'Failed to delete IND application', err);
   }

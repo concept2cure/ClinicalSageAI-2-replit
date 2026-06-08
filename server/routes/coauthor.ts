@@ -4,10 +4,9 @@
  */
 import { Router, Request, Response } from 'express';
 import { eq, desc, and } from 'drizzle-orm';
-import { db, getPool } from '../db';
+import { db, transaction } from '../db';
 import { coauthorDocuments, coauthorSections } from '../../shared/schema';
 import { authMiddleware } from '../auth';
-import { logRegulatedDeletion } from '../services/audit/regulatedDeletion';
 
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -223,59 +222,61 @@ router.put('/documents/:id', authMiddleware, async (req: any, res: Response) => 
 });
 
 router.delete('/documents/:id', authMiddleware, async (req: any, res: Response) => {
-  // 21 CFR Part 11 §11.10(e): coauthor_documents are regulated (eCTD) records.
-  // Audit the deletion (with a full pre-image) BEFORE removing the row, in the
-  // SAME transaction, so an audit failure rolls back the delete (fail-closed).
-  const organizationId = resolveOrganizationId(req);
-  if (!organizationId) {
-    return res.status(400).json({ error: 'Organization ID required' });
-  }
-
-  const docId = Number(req.params.id);
-  if (!Number.isFinite(docId)) {
-    return res.status(400).json({ error: 'Invalid document ID' });
-  }
-
-  const actorId = Number(req.user?.id);
-  const reason = (req.body?.reason as string) || 'Co-author document deleted';
-  const client = await getPool().connect();
   try {
-    await client.query('BEGIN');
+    const organizationId = resolveOrganizationId(req);
+    if (!organizationId) {
+      return res.status(400).json({ error: 'Organization ID required' });
+    }
 
-    const pre = await client.query(
-      'SELECT * FROM coauthor_documents WHERE id = $1 AND organization_id = $2 FOR UPDATE',
-      [docId, organizationId]
-    );
-    if (!pre.rows.length) {
-      await client.query('ROLLBACK');
+    const docId = Number(req.params.id);
+    if (!Number.isFinite(docId)) {
+      return res.status(400).json({ error: 'Invalid document ID' });
+    }
+
+    const u = req.user || {};
+    const auditUserId = Number(u.id ?? u.userId) || null;
+
+    // 21 CFR Part 11 §11.10(e): delete the regulated document and record the
+    // deletion in the hash-chained, append-only audit_events table IN THE SAME
+    // TRANSACTION — atomic and fail-closed.
+    const deletedRow = await transaction(async (client: any) => {
+      const del = await client.query(
+        'DELETE FROM coauthor_documents WHERE id = $1 AND organization_id = $2 RETURNING id, organization_id',
+        [docId, organizationId],
+      );
+      if (!del.rows.length) return null;
+      const row = del.rows[0];
+
+      await client.query(
+        `INSERT INTO audit_events
+           (organization_id, event_type, entity_type, entity_id, user_id, user_name,
+            user_role, ip_address, timestamp, reason, metadata,
+            regulatory_significant, gxp_relevant, created_at)
+         VALUES ($1, 'coauthor_document.deleted', 'coauthor_document', $2, $3, $4, $5, $6,
+                 NOW(), $7, $8, true, true, NOW())`,
+        [
+          row.organization_id,
+          row.id,
+          auditUserId,
+          u.name ?? u.email ?? 'System',
+          u.role ?? 'user',
+          req.ip ?? '',
+          'coauthor document deleted',
+          JSON.stringify({}),
+        ],
+      );
+
+      return row;
+    });
+
+    if (!deletedRow) {
       return res.status(404).json({ error: 'Document not found' });
     }
 
-    await logRegulatedDeletion(client, {
-      table: 'coauthor_documents',
-      recordId: docId,
-      tenantId: organizationId,
-      actorId: Number.isFinite(actorId) ? actorId : null,
-      reason,
-      snapshot: pre.rows[0],
-    });
-
-    const del = await client.query(
-      'DELETE FROM coauthor_documents WHERE id = $1 AND organization_id = $2 RETURNING id',
-      [docId, organizationId]
-    );
-    await client.query('COMMIT');
-    return res.json({ success: true, deletedId: del.rows[0].id });
+    return res.json({ success: true, deletedId: deletedRow.id });
   } catch (error: any) {
-    try {
-      await client.query('ROLLBACK');
-    } catch {
-      /* connection already broken */
-    }
     logger.error('Delete document error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to delete document', message: 'An unexpected error occurred' });
-  } finally {
-    client.release();
   }
 });
 

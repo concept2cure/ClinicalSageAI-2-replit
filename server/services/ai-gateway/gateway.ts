@@ -706,6 +706,51 @@ export class AIGateway {
     };
   }
 
+  /**
+   * Opus 4.7 and later removed the sampling parameters (temperature/top_p/top_k)
+   * and the manual extended-thinking shape (thinking.type "enabled" with
+   * budget_tokens) — sending any of them now returns a 400. Matches
+   * claude-opus-4-7 / claude-opus-4-8 and provider-prefixed variants
+   * (anthropic.claude-opus-4-7), but NOT the dated 4.0 snapshot
+   * claude-opus-4-20250514, which still accepts the legacy surface.
+   */
+  private isReasoningOnlyModel(model: string): boolean {
+    const m = /claude-opus-4-(\d{1,2})(?!\d)/.exec(model);
+    return m ? Number(m[1]) >= 7 : false;
+  }
+
+  /**
+   * Apply Anthropic sampling + thinking params in a model-aware way.
+   *
+   * Reasoning-only models (Opus 4.7/4.8 family) reject sampling params and
+   * manual thinking — they use adaptive thinking with no sampling controls.
+   * Summarized display keeps reasoning visible for the streaming path. Older
+   * Claude models (Sonnet 4.6, Haiku 4.5, the dated 4.0 snapshots) keep the
+   * legacy temperature + budget_tokens surface.
+   */
+  private applyAnthropicSamplingParams(
+    params: any,
+    modelConfig: ModelConfig,
+    request: GatewayRequest
+  ): void {
+    if (this.isReasoningOnlyModel(modelConfig.model)) {
+      if (request.thinking?.enabled) {
+        params.thinking = { type: 'adaptive', display: 'summarized' };
+      }
+      return;
+    }
+    if (request.thinking?.enabled) {
+      // Manual extended thinking requires temperature=1 and no top_p/top_k.
+      params.thinking = {
+        type: 'enabled',
+        budget_tokens: request.thinking.budgetTokens || 10000,
+      };
+      params.temperature = 1;
+    } else {
+      params.temperature = request.temperature ?? 0.7;
+    }
+  }
+
   private async executeAnthropic(
     modelConfig: ModelConfig,
     request: GatewayRequest,
@@ -810,17 +855,9 @@ export class AIGateway {
       }
     }
 
-    // Extended thinking — requires temperature unset or 1
-    if (request.thinking?.enabled) {
-      params.thinking = {
-        type: 'enabled',
-        budget_tokens: request.thinking.budgetTokens || 10000,
-      };
-      // Extended thinking requires temperature=1 and no top_p/top_k
-      params.temperature = 1;
-    } else {
-      params.temperature = request.temperature ?? 0.7;
-    }
+    // Sampling + extended thinking (model-aware: Opus 4.7+ rejects temperature
+    // and manual budget_tokens thinking; older models keep the legacy surface).
+    this.applyAnthropicSamplingParams(params, modelConfig, request);
 
     // Tool use
     if (request.tools && request.tools.length > 0) {
@@ -989,15 +1026,9 @@ export class AIGateway {
       }
     }
 
-    if (request.thinking?.enabled) {
-      params.thinking = {
-        type: 'enabled',
-        budget_tokens: request.thinking.budgetTokens || 10000,
-      };
-      params.temperature = 1;
-    } else {
-      params.temperature = request.temperature ?? 0.7;
-    }
+    // Sampling + extended thinking (model-aware: Opus 4.7+ rejects temperature
+    // and manual budget_tokens thinking; older models keep the legacy surface).
+    this.applyAnthropicSamplingParams(params, modelConfig, request);
 
     if (request.tools && request.tools.length > 0) {
       params.tools = request.tools;

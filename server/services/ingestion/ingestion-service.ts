@@ -241,6 +241,7 @@ export async function classifyDocument(params: {
         lifecycleOp: 'new',
         documentTable: CANONICAL_DOCUMENT_TABLE,
         documentId,
+        documentType: result.documentType ?? null,
         organizationId,
         createdBy: userId,
       });

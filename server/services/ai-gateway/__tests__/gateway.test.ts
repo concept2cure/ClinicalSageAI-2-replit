@@ -206,6 +206,67 @@ describe('AIGateway', () => {
     });
   });
 
+  // ─── Anthropic param construction (model-aware) ──────────────────────────
+  //
+  // Opus 4.7+ removed the sampling parameters (temperature/top_p/top_k) and the
+  // manual `thinking: {type:"enabled", budget_tokens}` shape — sending either
+  // now returns a 400. These tests guard that the gateway does NOT emit those
+  // for the Opus 4.7/4.8 family while preserving the legacy surface elsewhere.
+
+  describe('anthropic sampling params', () => {
+    const reasoningOnly = (model: string): boolean =>
+      (gateway as any).isReasoningOnlyModel(model);
+
+    const buildParams = (model: string, request: Partial<GatewayRequest>): any => {
+      const params: any = {};
+      (gateway as any).applyAnthropicSamplingParams(
+        params,
+        { model, provider: 'anthropic' },
+        buildTestRequest(request)
+      );
+      return params;
+    };
+
+    it('classifies Opus 4.7/4.8 (incl. provider-prefixed) as reasoning-only', () => {
+      expect(reasoningOnly('claude-opus-4-7')).toBe(true);
+      expect(reasoningOnly('claude-opus-4-8')).toBe(true);
+      expect(reasoningOnly('anthropic.claude-opus-4-7')).toBe(true);
+    });
+
+    it('does not classify Sonnet 4.6, Haiku 4.5, or the dated 4.0 snapshot', () => {
+      expect(reasoningOnly('claude-sonnet-4-6')).toBe(false);
+      expect(reasoningOnly('claude-haiku-4-5-20251001')).toBe(false);
+      expect(reasoningOnly('claude-opus-4-20250514')).toBe(false);
+    });
+
+    it('omits temperature for Opus 4.7 (would 400)', () => {
+      const params = buildParams('claude-opus-4-7', { temperature: 0.5 });
+      expect(params.temperature).toBeUndefined();
+      expect(params.top_p).toBeUndefined();
+      expect(params.top_k).toBeUndefined();
+      expect(params.thinking).toBeUndefined();
+    });
+
+    it('uses adaptive thinking (no budget_tokens) for Opus 4.7', () => {
+      const params = buildParams('claude-opus-4-7', {
+        thinking: { enabled: true, budgetTokens: 8000 },
+      });
+      expect(params.thinking).toEqual({ type: 'adaptive', display: 'summarized' });
+      expect(params.temperature).toBeUndefined();
+    });
+
+    it('keeps the legacy temperature + budget_tokens surface for Sonnet 4.6', () => {
+      const plain = buildParams('claude-sonnet-4-6', { temperature: 0.3 });
+      expect(plain.temperature).toBe(0.3);
+
+      const thinking = buildParams('claude-sonnet-4-6', {
+        thinking: { enabled: true, budgetTokens: 12000 },
+      });
+      expect(thinking.thinking).toEqual({ type: 'enabled', budget_tokens: 12000 });
+      expect(thinking.temperature).toBe(1);
+    });
+  });
+
   // ─── Provider Health ────────────────────────────────────────────────────
 
   describe('provider health', () => {
