@@ -1,0 +1,163 @@
+# Pharma / Biotech / MedTech CSO Security Evaluation — Licensing Readiness
+
+**Platform:** Concept2Cure RIAI / ClinicalSageAI (enterprise regulatory-intelligence platform for life sciences)
+**Evaluation date:** 2026-06-08
+**Author:** Office of the CSO (codebase-grounded review)
+**Lens:** How a Chief Security Officer at a pharma, biotech, or medical-device (MDx) client will evaluate this product before authorizing their company to become a licensed user.
+**Method:** Evidence-based review of the live `claude/pharma-cso-security-eval-hLEiD` working tree — four parallel read-only domain sweeps (identity/tenancy, AI data governance, 21 CFR Part 11 / cryptography, AppSec / DevSecOps), each finding re-verified against source, plus direct inspection of the SSO/SAML path. File:line references are provided so any client auditor can reproduce.
+
+> This document deliberately supersedes the security-relevant rows of `C2C_PRODUCT_AUDIT_QUESTIONNAIRE_RESPONSES.md` (Feb 2026), which materially overstated SSO maturity. See §7 (Questionnaire reconciliation).
+
+---
+
+## 1. Executive verdict
+
+**Overall posture: STRONG architecture, ONE live critical, and a short list of licensing blockers.**
+
+This platform is **substantially more hardened than the typical Series-A/B life-sciences SaaS** a client CSO will have seen. The controls that vendors usually fake — tenant isolation, an audited single seam for all AI egress, data residency/zero-retention as *hard* constraints, 21 CFR Part 11 hash-chained audit with e-signatures, and an unusually deep suite of CI security gates — are genuinely implemented and, in most cases, regression-tested and enforced on every PR.
+
+That makes the **one critical finding all the more important to fix before any security questionnaire goes out**: the enterprise **SAML SSO path fails open** (authenticates forged/unsigned assertions). A client's pen-test vendor will find it on day one, and because the existing client questionnaire already answers "SSO ✅ supported," it becomes both a security issue *and* a trust/credibility issue.
+
+| Decision | Status |
+|---|---|
+| Proceed to licensing **as-is** | ❌ No |
+| Proceed **with conditions** (fix the blockers in §3, then ship) | ✅ **Recommended** |
+| Delay / major rework | ❌ Not warranted — the core is sound |
+
+**Time-to-licensable (engineering):** the §3 blockers are days–weeks of focused work, not a re-architecture. The longer pole is **organizational evidence** (SOC 2 Type II report, pen-test attestation, sub-processor list, DPA/BAA) — those are procurement gating items independent of code.
+
+---
+
+## 2. How a life-sciences client CSO actually evaluates us
+
+A pharma/biotech/MDx CSO does not read source. They run our answers through a battery of frameworks and a third-party questionnaire, then commission a pen test. We are graded against:
+
+| Category | What they send us / check | Our readiness |
+|---|---|---|
+| **Vendor security questionnaire** | SIG / SIG-Lite, CAIQ (CSA STAR), HECVAT, or a bespoke pharma IT-security questionnaire | Mostly answerable; SSO answer must be corrected (§7) |
+| **SOC 2 Type II** | Independent auditor report, ≥6-month observation window | ⚠️ Targeted Q1 2026; **no report evidenced in repo as of this review** |
+| **ISO 27001 / 27701** | Certificate + SoA | ❌ Not evidenced |
+| **HIPAA / HITECH** (US PHI) | BAA, Security Rule safeguards, encryption | Technically capable; BAA + ZDR contracts required |
+| **GDPR / EU** (EU personal data) | DPA, sub-processors, residency, DSR/erasure | EU residency supported (Vertex/Azure); DPA + retention SOP needed |
+| **21 CFR Part 11 / EU Annex 11 / GAMP 5 / CSA** | Audit trail, e-signature, validation, immutability | ✅ Strong core; 3 tracked gaps (§5.4) |
+| **NIST CSF 2.0 / ISO 42001 / NIST AI RMF / EU AI Act** | AI governance, model cards, data-flow control | ✅ Unusually strong for the segment |
+| **OWASP ASVS / Top 10, pen test** | Hands-on test of auth, IDOR, injection, SSRF | ✅ Mostly — **except the SAML critical (§3.1)** |
+
+The takeaway for sales/security engineering: **we win on architecture and AI governance; we lose deals on (a) the SAML bug, (b) missing third-party attestations, and (c) the questionnaire/reality gap.** Fixing (a) and (c) is on us this sprint; (b) is a compliance-calendar item.
+
+---
+
+## 3. Licensing blockers — must fix before a questionnaire/pen-test
+
+### 3.1 🔴 CRITICAL — SAML SSO authenticates forged assertions (auth bypass, cross-tenant impersonation)
+
+**The single most important finding in this review.**
+
+- **Fail-open on signature failure.** `server/routes/sso.ts:190-198`: the ACS callback calls `verifySignature()`, and when it returns `false` it merely logs `"SAML Response signature verification failed — proceeding with caution"` and **continues to parse and trust the assertion**. There is no rejection. An attacker can POST a self-authored, unsigned SAML Response to the public callback and be issued a session as **any email in any tenant**.
+- **Regex-based XML assertion parsing.** `server/services/saml-provider.ts` extracts `NameID`, `Issuer`, attributes, etc. with regular expressions (`extractElementContent` returns the *first* match). This is the textbook setup for **XML Signature Wrapping (XSW)**: an attacker wraps a forged assertion next to a legitimately signed blob; the regex reads the forged one while any signature check passes over the other.
+- **Non-canonical signature check.** `verifySignature()` (`saml-provider.ts:341-381`) verifies over raw `SignedInfo` text and self-documents the gap: *"Full XML canonicalization (c14n) is complex; this validates the digest over the raw signed content."* It does not perform C14N, does not validate the `Reference`/digest binds the consumed assertion, and does not pin the IdP cert to a trust anchor beyond config.
+- **Exposure.** The router is mounted at `/api/auth/sso` (`server/bootstrap/register-platform-routes.ts:170`) and `/api/auth` is on the unauthenticated `openPrefixes` allowlist (`register-platform-routes.ts:181`), so the callback is reachable pre-auth. It is inert only until a customer configures `SAML_IDP_*` env vars — i.e., it activates exactly for the enterprise customers who demand SSO.
+
+**Severity rationale:** complete authentication bypass + multi-tenant impersonation on a regulated-data platform. This is *worse* than having no SSO, because it advertises a security feature that is exploitable.
+
+**Required remediation (do not ship a partial fix as "done"):**
+1. **Immediate, low-risk mitigation:** fail **closed** — reject (HTTP 401/403) on missing/invalid signature; gate behind a `SAML_STRICT=true` default. This removes the trivial unsigned-forgery path but **does not** close XSW.
+2. **Real fix (required to honestly answer "we support SSO"):** replace the hand-rolled SP with a vetted, maintained library — `@node-saml/node-saml` (with `xml-crypto` / proper C14N) or an OIDC-first path via `openid-client`. Enforce signed assertions, audience/recipient/InResponseTo, replay protection, and IdP-cert trust pinning. Add SSW/replay regression tests and a CI gate analogous to the existing `check-jwt-verify-pinned`.
+3. Add **SCIM** provisioning/deprovisioning alongside — enterprise IdP teams expect it and it is the usual follow-on questionnaire line.
+
+### 3.2 🟠 HIGH — Third-party security attestations not evidenced
+
+SOC 2 Type II was targeted for Q1 2026; as of this review (2026-06-08) **no SOC 2 report, ISO 27001 certificate, or independent pen-test attestation is present in the repository or referenced as available.** Most enterprise pharma procurement will not sign without at least a SOC 2 Type II report (or a Type I + bridge letter) and a recent pen-test summary. *Action: confirm current audit status with Compliance; if achieved, publish to the trust center; if not, set a credible date and offer the bridge artifacts (security whitepaper, this evaluation, the CI-gate evidence).* 
+
+### 3.3 🟠 HIGH — Hard-delete of regulated records (Part 11 §11.10(e))
+
+Regulated tables still permit unaudited hard-deletes: `coauthor_documents` (`server/routes/ectd-documents.ts`, `coauthor.ts:237`), `authoring_documents` (`authoring.router.ts`), and **`ind_applications`** (`server/routes/ind.ts:266`) — actual IND submission records. These are operator-allow-listed in the `check-regulated-delete-audit` CI gate so they cannot *regress*, but they remain open. *Action: `deleted_at` soft-delete + in-transaction audit-before-mutate (the pattern already shipped for `c2c_document_section_evidence`), then read-filter `deleted_at IS NULL`.*
+
+### 3.4 🟠 HIGH — Supply-chain / IaC scans are advisory, not gating
+
+Trivy filesystem + config scans run but carry `continue-on-error: true` (`.github/workflows/ci.yml` ~lines 313, 323), so CRITICAL/HIGH findings do not block merge. There is **no gitleaks / GitHub native secret scanning** gate, and **no SBOM** (CycloneDX/SPDX) is produced — pharma vendor questionnaires increasingly ask for one. A current `npm audit` shows a **HIGH** `tmp` path-traversal (GHSA-ph9p-34f9-6g65) and the `@anthropic-ai/sdk` advisory range, neither blocking. *Action: make Trivy CRITICAL/HIGH gating, add gitleaks, emit an SBOM artifact per build, clear the HIGH advisories.*
+
+---
+
+## 4. Domain scorecard
+
+Ratings are A (client-CSO-ready) → C (questionnaire risk). "Enforced" means a CI gate blocks regression on every PR.
+
+| # | Domain | Rating | One-line basis |
+|---|---|:---:|---|
+| 1 | **Authentication & session** | A− | JWT HS256 *pinned* + CI gate, bcrypt-12, NIST password policy, lockout, zero-downtime secret rotation. (SSO is the exception — §3.1.) |
+| 2 | **MFA** | A− | TOTP (speakeasy) + email-OTP; AES-256-GCM secret storage; dev-skip double-gated and CI-enforced. Make org-level enforce-MFA the default. |
+| 3 | **Authorization / RBAC** | B | Global `/api` auth gate (~99% coverage, regression-tested); role + membership model. No fine-grained (resource/project-level) permissions yet. |
+| 4 | **Multi-tenant isolation** | A− | Primary boundary = JWT-derived org scoping (`authedOrgId`) + `check-tenant-isolation` CI gate + 22 contract suites/133 tests; Postgres RLS as defense-in-depth. IDOR sweep closed 8 findings (QC 2026-06-07). |
+| 5 | **AI data governance** | A | Single audited gateway seam; residency + ZDR are *hard* constraints; air-gappable local inference; bypass CI ratchet burning down legacy callers. Best-in-segment. |
+| 6 | **21 CFR Part 11 / GxP** | A− | SHA-256 hash-chained + HMAC tamper-proof audit, DB-trigger immutability, mandatory reason-for-change, e-signature manifests. 3 tracked gaps (§3.3, §5.4). |
+| 7 | **Cryptography / secrets** | B+ | Fail-closed required secrets at boot, no hardcoded secrets, KMS/HSM signer mode designed. Field encryption is dev-grade in places; KMS signer not yet wired (DEV mode). |
+| 8 | **HTTP hardening** | A | Helmet + per-request CSP nonce + `strict-dynamic`, HSTS preload, locked CORS allowlist, multi-tier Redis rate limits. |
+| 9 | **Injection / input validation** | A | Drizzle parameterized throughout, Zod at boundaries, `ban-new-pool` enforced, file magic-byte checks, SSRF in webhooks closed. |
+| 10 | **XSS** | A | DOMPurify (client + isomorphic) on all rendered markdown/HTML, CSP nonce, no unsanitized `dangerouslySetInnerHTML`. |
+| 11 | **File upload** | A− | Magic-byte validation, size caps, tenant-scoped storage, ClamAV (note: fails *open* if scanner unreachable — monitor). |
+| 12 | **DevSecOps / CI gates** | B+ | Exceptional breadth of enforced gates; **but** Trivy/secret/SBOM are advisory (§3.4). |
+| 13 | **Logging / error handling** | A− | Prod 5xx generic (no stack/PII leak), redaction service for keys/tokens, request-id hardening. Add a Sentry `beforeSend` PII scrubber. |
+| 14 | **Org attestations (SOC2/ISO/pen-test)** | C | Not evidenced in repo (§3.2) — the main *non-code* blocker. |
+
+---
+
+## 5. Selected evidence (for the client auditor)
+
+### 5.1 Tenant isolation — the boundary CSOs probe hardest
+- Global gate: `server/bootstrap/register-platform-routes.ts:178` routes all non-allowlisted `/api/*` through `authMiddleware`; regression test `server/bootstrap/__tests__/api-auth-gate.test.ts`.
+- Org id is sourced **only** from the verified JWT (`server/utils/authedOrgId.ts`), never from `req.params/query/body`; cross-tenant ids return **404** to avoid existence disclosure.
+- QC sweep 2026-06-07 (`QC_SECURITY_REVIEW_2026-06-07.md`) found and **fixed 8 IDOR/auth issues** (global-compliance, intelligent-reports, foresight, branding, pm-settings, tenants-simple) and a forged-JWT collab-WebSocket bug; added 133 security tests now gating CI via a `security-tests` job that runs **independent of lint** so a regression always reports.
+- Defense-in-depth: Postgres RLS (`server/db/tenantRls.ts`) with `check-rls-allowlist-sync` + `check-tenant-isolation` CI gates. **Recommendation:** move RLS to enforce-on by default and add a boot assertion, so RLS backstops the app-layer scoping rather than depending on an env var.
+
+### 5.2 AI data governance — our differentiator with a regulated buyer
+- **One seam:** `server/services/ai-gateway/gateway.ts:376` `route()` — "the ONLY method external code should call"; every call persisted to `ai.gateway_audit_log` (`ai-gateway/audit.ts`) with substrate/region/retention/prompt-hash (content **not** stored in plaintext).
+- **Residency/ZDR as hard constraints:** `ai-gateway/providers/placement.ts` per-provider region+ZDR; per-org DB policy (`aiPlacementPolicies`); `gateway.ts` `meetsPlacementRequirements()` will *never* relax residency or ZDR to satisfy a model fallback. Bedrock/Vertex/Azure default ZDR-on; shared frontier APIs default ZDR-off until a signed agreement is set.
+- **Air-gappable:** `AI_LOCAL_ENABLED` + local embeddings — fully on-prem inference, the gold standard for top-20 pharma. 
+- **Bypass control (correcting an over-statement from an automated sub-sweep):** a CI gate **does** exist — `scripts/ci/check-gateway-bypass.mjs` with a ratchet baseline (`gateway-bypass-baseline.json`); recent commits (#695/#696) are actively migrating legacy direct-client callers onto the seam. *Open item:* finish burning down the baseline and flip to `--strict`.
+- **Content classification exists** — `server/services/ai-governance/classification/index.ts` (`AI_CLASSIFIER_MODE=heuristic|slm`). *Open item:* confirm the classifier output **gates placement** (forces PHI/regulatory content to ZDR-only/local), not just labels it.
+- **Prompt-injection:** high-precision detector (`ai-gateway/promptInjection.ts`, 20 tests) scoped to untrusted user messages, designed to avoid false positives on regulatory phrasing ("disregard prior adverse events" is allowed). *Open item:* no output-side validation / tool-schema gating yet.
+
+### 5.3 21 CFR Part 11 / e-signatures
+- Hash chain: `server/services/audit/chain.ts` (`sha256(content+prev)`, `SELECT … FOR UPDATE`), background integrity monitor (`chainIntegrityMonitor.ts`), tamper-proof log with DB trigger blocking UPDATE/DELETE and HMAC over the chain (`server/lib/tamper-proof-audit.ts`); `AUDIT_HMAC_SECRET` required in prod.
+- E-signature: password + TOTP re-auth, deterministic signature hash + manifest, written to `electronic_signatures` and the central audit in one path (`server/routes/esignature.ts`). Signed, verifiable audit exports (`server/services/audit/signedAuditExport.ts`).
+- Reason-for-change: mandatory (≥8 chars) on governed mutations, captured via PG session GUCs into version history (`server/routes/c2c/documents.ts`, `c2c/actions.ts`).
+
+### 5.4 Part 11 open items (tracked, gated against regression)
+1. Hard-delete of regulated records → soft-delete + audit (§3.3) — **highest priority**.
+2. In-memory `auditLogger` at ~28 non-c2c call sites (se-matrix, defense-packet) → migrate to persistent hash-chained/HMAC store.
+3. Immutability HTTP middleware only guards `/api/audit/*` → decide policy reach for other regulated tables.
+4. Wire KMS/HSM signer (`CONCEPT2CURE_SIGNER_MODE=hsm_kms|hsm_vault`); DEV password+TOTP is acceptable only for early/pre-submission use.
+
+---
+
+## 6. Prioritized remediation roadmap
+
+| Priority | Item | Owner | Effort | Gate when done |
+|---|---|---|---|---|
+| **P0** | SAML fail-closed + vetted library/OIDC rewrite + SSW/replay tests (§3.1) | Eng (Security) | 1–2 wk | new `check-saml-*` CI gate |
+| **P0** | Confirm/publish SOC 2 Type II (or Type I + bridge) + pen-test summary (§3.2) | Compliance | Calendar | trust center |
+| **P1** | Soft-delete + audit for `ind_applications`/`coauthor_documents`/`authoring_documents` (§3.3) | Eng | ~2–3 d | `check-regulated-delete-audit` allowlist → 0 |
+| **P1** | Make Trivy CRITICAL/HIGH gating; add gitleaks; emit SBOM; clear HIGH npm advisories (§3.4) | DevSecOps | ~2–3 d | CI hard-fail |
+| **P1** | Add SCIM provisioning; org-default enforce-MFA | Eng | ~1 wk | — |
+| **P2** | Confirm classifier gates AI placement; finish gateway-bypass burn-down → `--strict` | Eng (AI) | ~1 wk | `check-gateway-bypass --strict` |
+| **P2** | RLS enforce-on by default + boot assertion; KMS signer wiring; Sentry `beforeSend` PII scrub; retention/DR SOP | Eng/Compliance | ~1–2 wk | — |
+| **P3** | Fine-grained (resource-level) RBAC; column-level encryption for PII; mTLS between services | Eng | Roadmap | — |
+
+---
+
+## 7. Questionnaire reconciliation (trust risk)
+
+`C2C_PRODUCT_AUDIT_QUESTIONNAIRE_RESPONSES.md` (Feb 2026) answers **16.4 "Is SSO supported? ✅ Yes"** citing `server/routes/sso.ts`. This review finds SSO is *present but exploitable* (§3.1). Shipping that answer to a client whose pen-test then breaks the SSO flow is a credibility loss that can sink the whole evaluation. **Do not send any security questionnaire until §3.1 is fixed**, then answer SSO as "SAML 2.0 + OIDC via `<vendored library>`, signed assertions enforced, SCIM available," with the new CI gate as evidence. Similarly, soften "zero data retention" claims to "ZDR enforced per provider where a signed ZDR/BAA is in force; air-gapped/local inference available" — which is what the code actually guarantees.
+
+---
+
+## 8. What to lead with in front of a client CSO
+
+Genuine strengths, all code-backed, that most competitors cannot show:
+1. **AI data governance that a regulated buyer can verify** — one audited egress seam, residency + zero-retention as hard constraints, and a fully air-gappable on-prem inference option.
+2. **21 CFR Part 11 that is real, not a checkbox** — tamper-evident hash-chained + HMAC audit with DB-enforced immutability, e-signatures, mandatory reason-for-change.
+3. **Security enforced in CI, not just in policy** — tenant-isolation, JWT-pinning, no-dev-auth-in-prod, password-hygiene, regulated-delete-audit, gateway-bypass ratchet: regressions are blocked on every PR, and the security test job runs even when lint is red.
+4. **A demonstrated, honest security process** — the QC sweep that found and fixed 8 IDOR issues and recorded its own false positives is exactly the maturity signal a CSO wants to see.
+
+**Bottom line:** close the four blockers in §3 — above all the SAML auth bypass — and this platform presents as a credibly secure, GxP-aware, AI-governed system that a pharma/biotech/MDx CSO can defensibly approve for licensing.
