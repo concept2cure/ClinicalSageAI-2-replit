@@ -43,12 +43,15 @@ export async function getProjectInstructions(
       : projectId;
   if (!Number.isFinite(pid) || (pid as number) <= 0) return empty;
 
+  // Tenant isolation: never read a project without an org filter. Production
+  // callers always pass the authenticated org; absent one we fail closed
+  // (return empty) rather than fall back to an unscoped, cross-tenant read.
+  if (!organizationId) return empty;
+
   try {
     const res = await pool.query(
-      organizationId
-        ? 'SELECT settings FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1'
-        : 'SELECT settings FROM projects WHERE id = $1 LIMIT 1',
-      organizationId ? [pid, organizationId] : [pid]
+      'SELECT settings FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1',
+      [pid, organizationId]
     );
     const settings = (res.rows?.[0]?.settings ?? {}) as Record<string, any>;
     const knowledge =

@@ -76,12 +76,18 @@ describe('getProjectInstructions', () => {
     expect((await getProjectInstructions(42, 7)).customInstructions).toBe('TOP');
   });
 
-  it('strips a proj_ prefix and omits the org filter when org is null', async () => {
+  it('fails closed (no query, empty result) when org is missing', async () => {
+    const res = await getProjectInstructions('proj_99', null);
+    expect(res).toEqual({ customInstructions: '', context: '' });
+    expect(queryMock).not.toHaveBeenCalled();
+  });
+
+  it('always scopes the query by organization_id when org is present', async () => {
     queryMock.mockResolvedValueOnce({ rows: [{ settings: {} }] });
-    await getProjectInstructions('proj_99', null);
+    await getProjectInstructions('proj_99', 7);
     const [sql, params] = queryMock.mock.calls[0] as [string, unknown[]];
-    expect(sql).not.toContain('organization_id');
-    expect(params).toEqual([99]);
+    expect(sql).toContain('organization_id');
+    expect(params).toEqual([99, 7]);
   });
 
   it('returns empty when there are no rows', async () => {

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-26T17:20:44.359Z",
+  "generatedAt": "2026-06-08T00:31:11.317Z",
   "fingerprints": [
     "server/db/bootstrap/seed-default-org.ts#a183c3cd998e:users",
     "server/db/bootstrap/seed-default-org.ts#c7b7e41bb3f3:users",
@@ -7,7 +7,6 @@
     "server/routes/510k-project.routes.ts#347c8fc38df0:projects",
     "server/routes/audit-trail-routes.ts#2667f1a65bb9:audit_events",
     "server/routes/audit-trail-routes.ts#5b0a612295a0:audit_events",
-    "server/routes/audit.ts#2667f1a65bb9:audit_events",
     "server/routes/billing-dashboard.ts#207a97ebd894:stripe_events",
     "server/routes/esignature.ts#1e604c94ef8c:users",
     "server/routes/esignature.ts#bdd651a1d4c8:users",
@@ -24,7 +23,6 @@
     "server/routes/project-hierarchy.ts#265313896667:projects",
     "server/routes/project-hierarchy.ts#c7d47693bfd9:projects",
     "server/routes/project-sections.ts#8e115457ce66:projects",
-    "server/routes/support-admin.ts#9016d62a534d:users",
     "server/routes/tenant-users.ts#315beeb434dd:users",
     "server/routes/tenant-users.ts#845353960b91:users",
     "server/routes/tenant-users.ts#be62a80adb5d:users",
@@ -49,9 +47,6 @@
     "server/services/ana/org-readiness-overview.ts#458ae9722f23:projects",
     "server/services/atomicQuotaService.js#845353960b91:users",
     "server/services/atomicQuotaService.js#ee1737b4931d:users",
-    "server/services/audit/auditLoggerV2.ts#16f5096bfb1e:audit_events",
-    "server/services/audit/auditLoggerV2.ts#387c565c293b:audit_events",
-    "server/services/audit/auditLoggerV2.ts#c6b89851d8f7:audit_events",
     "server/services/billing.ts#d154d148af68:stripe_events",
     "server/services/billing.ts#f45ebb17e8ac:stripe_events",
     "server/services/billing.ts#fbf8b3f2cb11:stripe_events",

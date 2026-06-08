@@ -168,8 +168,18 @@ ReDoS.
 The tenant-isolation + prompt-injection contract tests now gate every PR via a
 dedicated, DB-free `security-tests` job (`.github/workflows/ci.yml`) running
 `npm run test:security` — the whole `server/__tests__/security` directory (22
-files, 133 tests) plus the prompt-injection suite. Fast and independent of the
-heavier DB-backed `npm test`.
+files, 133 tests) plus the prompt-injection suite. The job is intentionally
+**independent of `lint`** (the other test jobs `needs: lint` and were being
+skipped while the lint job was red), so a security regression always reports.
+
+Inspecting the live run also surfaced a pre-existing **lint blocker** unrelated
+to this work: `server/services/projects/project-instructions.ts` had an
+unscoped `SELECT settings FROM projects WHERE id = $1` fallback (a latent
+cross-tenant read of project instructions when no org was passed). Fixed to fail
+closed — it now requires the org and only ever runs the org-scoped query.
+Production callers already pass the org, so no behaviour change. This cleared
+the `Test`/`Build` jobs that `needs: lint`, and the stale tenant-isolation
+baseline was ratcheted down 74 → 69 to lock in the resolved findings.
 
 ## Still open
 
