@@ -1964,6 +1964,29 @@ export const CHECK_CONSISTENCY: AnaTool = {
   },
 };
 
+export const ASSESS_PATHWAY_READINESS: AnaTool = {
+  name: 'assess_pathway_readiness',
+  description:
+    "Assess whether a submission sequence is ready for a non-eCTD regulatory pathway (EU CTIS clinical trials, EU MDR/IVDR device tech doc, FDA eSTAR 510(k)/De Novo, or Japan PMDA Shōnin). Reads the sequence's leaves from the active tenant context and returns a required-slot gap report (ready + missingRequired). Deterministic, read-only — it maps and gap-checks, it never submits.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      sequence_id: { type: 'number', description: 'The sequence whose leaves are assessed.' },
+      pathway: {
+        type: 'string',
+        enum: ['ctis', 'mdr', 'ivdr', 'estar_510k', 'estar_de_novo', 'pmda_shonin'],
+        description: 'The target pathway.',
+      },
+      member_states: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'CTIS only — concerned EU member-state codes (e.g. ["DE","FR"]).',
+      },
+    },
+    required: ['sequence_id', 'pathway'],
+  },
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Notifications + clinical-study + memory tools (migration 20260510).
 // AnA fires notifications when she identifies actionable state, logs
@@ -3417,6 +3440,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   DISPATCH_QC_CHECK,
   TRACE_PROVENANCE,
   CHECK_CONSISTENCY,
+  ASSESS_PATHWAY_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,
   LOG_STUDY_DEVIATION,

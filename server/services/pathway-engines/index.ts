@@ -13,14 +13,16 @@
 import { mapToCtis, type CtisInputLeaf } from './ctis/ctis-mapper';
 import { assembleTechDoc, type TechDocInputLeaf } from './mdr-ivdr/tech-doc-assembler';
 import { mapToEstar, type EstarInputLeaf } from './estar/estar-mapper';
+import { assessPmdaShonin, type PmdaInputLeaf } from './pmda/pmda-shonin';
 
 export * from './ctis/ctis-mapper';
 export * from './mdr-ivdr/tech-doc-assembler';
 export * from './estar/estar-mapper';
+export * from './pmda/pmda-shonin';
 
-export type Pathway = 'ctis' | 'mdr' | 'ivdr' | 'estar_510k' | 'estar_de_novo';
+export type Pathway = 'ctis' | 'mdr' | 'ivdr' | 'estar_510k' | 'estar_de_novo' | 'pmda_shonin';
 
-export const PATHWAYS: Pathway[] = ['ctis', 'mdr', 'ivdr', 'estar_510k', 'estar_de_novo'];
+export const PATHWAYS: Pathway[] = ['ctis', 'mdr', 'ivdr', 'estar_510k', 'estar_de_novo', 'pmda_shonin'];
 
 /** A canonical leaf accepted by any pathway engine. */
 export interface PathwayLeaf {
@@ -66,6 +68,10 @@ export function assessPathwayReadiness(input: AssessPathwayInput): PathwayReadin
     case 'estar_de_novo': {
       const r = mapToEstar({ leaves: leaves as EstarInputLeaf[], type: input.pathway === 'estar_de_novo' ? 'de_novo' : '510k' });
       return { pathway: input.pathway, ready: r.summary.ready, missingRequired: r.summary.missingRequired, detail: r };
+    }
+    case 'pmda_shonin': {
+      const r = assessPmdaShonin({ leaves: leaves as PmdaInputLeaf[] });
+      return { pathway: 'pmda_shonin', ready: r.summary.ready, missingRequired: r.summary.missingRequired, detail: r };
     }
     default: {
       const _exhaustive: never = input.pathway;

@@ -41,6 +41,6 @@ describe('assessPathwayReadiness — dispatcher', () => {
   });
 
   it('exposes the full set of pathways', () => {
-    expect(PATHWAYS).toEqual(['ctis', 'mdr', 'ivdr', 'estar_510k', 'estar_de_novo']);
+    expect(PATHWAYS).toEqual(['ctis', 'mdr', 'ivdr', 'estar_510k', 'estar_de_novo', 'pmda_shonin']);
   });
 });
