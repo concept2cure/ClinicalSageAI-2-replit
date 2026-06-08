@@ -52,6 +52,9 @@ jobs:
       - name: Guardrails — password hygiene
         run: npm run ci:password-hygiene
 
+      - name: Guardrails — design-system non-negotiables (Lucide-only, no spring)
+        run: npm run ci:design-system
+
       - name: Guardrails — route mount authority audit (no regressions)
         run: npm run ci:audit-route-mounts:no-regression
 
