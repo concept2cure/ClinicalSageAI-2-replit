@@ -16,6 +16,7 @@
 
 import { getGateway } from '../ai-gateway/gateway';
 import fdaMaudeClient from '../../fda_maude_client.js';
+import { searchTrials } from '../integrations/clinicaltrials-client.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 import type {
   GatewayRequest,
@@ -177,56 +178,41 @@ registerToolHandler('project_knowledge_search', async (input, ctx) => {
 
 // Search Clinical Evidence — queries internal DB and ClinicalTrials.gov
 registerToolHandler('search_clinical_evidence', async (input) => {
-  const query = input.query as string;
-  const evidenceType = input.evidence_type as string || 'any';
-  const maxResults = (input.max_results as number) || 5;
+  const query = typeof input.query === 'string' ? input.query : '';
+  const maxResults = Math.min((input.max_results as number) || 5, 20);
+  const asStr = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v.trim() : undefined;
 
   try {
-    // Try ClinicalTrials.gov API via fetch
-    const searchParams = new URLSearchParams({
-      'query.term': query,
-      pageSize: String(Math.min(maxResults, 10)),
-      format: 'json',
+    // Live ClinicalTrials.gov v2 via the governed client (structured filters
+    // when supplied, free-text otherwise). Returns citeable trials + total count.
+    const result = await searchTrials({
+      query: query || undefined,
+      condition: asStr(input.condition),
+      intervention: asStr(input.intervention),
+      sponsor: asStr(input.sponsor),
+      status: asStr(input.status),
+      phase: asStr(input.phase),
+      pageSize: maxResults,
     });
-    const ctResponse = await fetch(
-      `https://clinicaltrials.gov/api/v2/studies?${searchParams.toString()}`,
-      { signal: AbortSignal.timeout(10000) }
-    );
 
-    if (ctResponse.ok) {
-      const data = await ctResponse.json();
-      const studies = (data.studies || []).slice(0, maxResults);
-      const results = studies.map((s: any) => {
-        const proto = s.protocolSection || {};
-        const id = proto.identificationModule || {};
-        const status = proto.statusModule || {};
-        const design = proto.designModule || {};
-        return {
-          nctId: id.nctId,
-          title: id.briefTitle || id.officialTitle,
-          status: status.overallStatus,
-          phase: (design.phases || []).join(', '),
-          enrollment: status.enrollmentInfo?.count,
-          studyType: design.studyType,
-        };
-      });
-      return JSON.stringify({
-        source: 'ClinicalTrials.gov',
-        query,
-        resultCount: results.length,
-        studies: results,
-      });
-    }
-  } catch (e) {
-    // Fall through to fallback
+    return JSON.stringify({
+      source: result.source,
+      query: query || undefined,
+      totalCount: result.totalCount,
+      resultCount: result.trials.length,
+      studies: result.trials,
+      citation_hint: 'Cite each trial by its NCT ID and link to the provided url.',
+    });
+  } catch {
+    // Never regress below the prior behavior: degrade to manual-search guidance.
+    return JSON.stringify({
+      source: 'search',
+      query,
+      note: 'ClinicalTrials.gov API unavailable — returning guidance for manual search',
+      suggestion: `Search ClinicalTrials.gov for: "${query || [asStr(input.condition), asStr(input.intervention)].filter(Boolean).join(' ')}"`,
+    });
   }
-
-  return JSON.stringify({
-    source: 'search',
-    query,
-    note: 'ClinicalTrials.gov API unavailable — returning guidance for manual search',
-    suggestion: `Search ClinicalTrials.gov for: "${query}" filtered by ${evidenceType}`,
-  });
 });
 
 // Search Device Adverse Events — live FDA MAUDE via openFDA passthrough.

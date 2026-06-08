@@ -18,13 +18,37 @@ import type { AnaTool, AnthropicServerTool, AnyAnaTool } from '../ai-gateway/typ
 export const SEARCH_CLINICAL_EVIDENCE: AnaTool = {
   name: 'search_clinical_evidence',
   description:
-    'Search for clinical evidence by condition, intervention, or outcome. Returns relevant clinical trial data, study results, and evidence summaries from ClinicalTrials.gov and internal databases.',
+    'Search live ClinicalTrials.gov for clinical evidence and competitive/precedent intelligence. ' +
+    'Use structured filters (condition, intervention, sponsor, status, phase) for precision, or a ' +
+    'free-text query. Returns trials with NCT IDs and canonical URLs for citation, plus the total ' +
+    'match count. Cite results by NCT ID and link to the provided url.',
   input_schema: {
     type: 'object',
     properties: {
       query: {
         type: 'string',
-        description: 'Search query for clinical evidence (condition, drug, device, etc.)',
+        description: 'Free-text query for clinical evidence (condition, drug, device, etc.)',
+      },
+      condition: {
+        type: 'string',
+        description: 'Disease / condition filter, e.g. "non-small cell lung cancer"',
+      },
+      intervention: {
+        type: 'string',
+        description: 'Intervention / drug / device name filter',
+      },
+      sponsor: {
+        type: 'string',
+        description: 'Lead sponsor or collaborator (company/institution) filter',
+      },
+      status: {
+        type: 'string',
+        description:
+          'Overall status filter, e.g. RECRUITING, COMPLETED, ACTIVE_NOT_RECRUITING, TERMINATED',
+      },
+      phase: {
+        type: 'string',
+        description: 'Trial phase filter, e.g. PHASE3 or 3',
       },
       evidence_type: {
         type: 'string',
@@ -33,7 +57,7 @@ export const SEARCH_CLINICAL_EVIDENCE: AnaTool = {
       },
       max_results: {
         type: 'number',
-        description: 'Maximum number of results to return (default: 5)',
+        description: 'Maximum number of results to return (default: 5, max: 20)',
       },
     },
     required: ['query'],
