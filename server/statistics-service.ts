@@ -1902,8 +1902,12 @@ export class StatisticsService {
     originalDesign: any;
     optimizedDesign: any;
     improvements: Array<{ factor: string; change: string; impact: number }>;
-    expectedSuccessProbability: number;
+    // null when the probability could not be assessed (no data / DB
+    // unavailable / error) — never a fabricated placeholder.
+    expectedSuccessProbability: number | null;
     confidence: number;
+    assessable?: boolean;
+    note?: string;
   }> {
     try {
       const { indication, phase, currentDesign, optimizationGoal, constraints } = params;
@@ -1914,9 +1918,10 @@ export class StatisticsService {
           originalDesign: { ...currentDesign },
           optimizedDesign: { ...currentDesign },
           improvements: [],
-          expectedSuccessProbability: 0.5,
-          confidence: 0.1,
-          error: 'Database unavailable',
+          expectedSuccessProbability: null,
+          confidence: 0,
+          assessable: false,
+          note: 'Database unavailable; expected success probability could not be assessed.',
         } as any;
       }
 
@@ -1938,8 +1943,10 @@ export class StatisticsService {
           originalDesign,
           optimizedDesign,
           improvements: [],
-          expectedSuccessProbability: 0.5,
-          confidence: 0.1,
+          expectedSuccessProbability: null,
+          confidence: 0,
+          assessable: false,
+          note: 'No comparable trials found for this indication/phase; expected success probability could not be assessed.',
         };
       }
 
@@ -2263,6 +2270,7 @@ export class StatisticsService {
         improvements,
         expectedSuccessProbability: adjustedProbability,
         confidence,
+        assessable: true,
       };
     } catch (error) {
       console.error('Error optimizing trial design:', error);
@@ -2270,8 +2278,10 @@ export class StatisticsService {
         originalDesign: params.currentDesign,
         optimizedDesign: params.currentDesign,
         improvements: [],
-        expectedSuccessProbability: 0.5,
-        confidence: 0.1,
+        expectedSuccessProbability: null,
+        confidence: 0,
+        assessable: false,
+        note: 'Trial design optimization failed; expected success probability could not be assessed.',
       };
     }
   }
