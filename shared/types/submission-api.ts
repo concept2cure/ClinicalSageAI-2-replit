@@ -241,6 +241,14 @@ export interface CapabilitiesResponse {
   };
   // Capability flags that are not workspaces.
   features: {
+    /** eCTD package bytes assemble from the canonical core (storage resolver landed). */
+    assemble: boolean;
+    /** EU MDR/IVDR technical-file ZIP materializes from the canonical core. */
+    deviceTechnicalFile: boolean;
+    /** Universal assembled table-of-contents across every non-eCTD pathway. */
+    pathwayManifest: boolean;
+    /** Wire transmit to the agency — stays false; gated behind the governed
+     *  transmit path + Part 11 e-signature regardless of assemble readiness. */
     publishTransmit: boolean;
   };
 }

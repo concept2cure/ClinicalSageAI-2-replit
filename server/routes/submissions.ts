@@ -180,9 +180,14 @@ router.get('/capabilities', limiter, requireRole(AUTHOR), async (req, res) => {
         'cross-region': true,
         dispatch: true,
       },
-      // Capability flags (not workspaces). Dispatch transmit + Publish bytes are
-      // pending the storage resolver (see SUBMISSION_CENTER_API.md).
+      // Capability flags (not workspaces). The assemble/publish BYTES are now
+      // server-ready (eCTD packager + device technical-file ZIP both materialize
+      // from the canonical core via the storage resolver). The wire TRANSMIT to the
+      // agency stays gated behind the governed transmit path + Part 11 e-signature.
       features: {
+        assemble: true,
+        deviceTechnicalFile: true,
+        pathwayManifest: true,
         publishTransmit: false,
       },
     });

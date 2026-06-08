@@ -132,6 +132,7 @@ async function main() {
   // Capabilities.
   const cap = await c.req('GET', '/api/submissions/capabilities');
   ok('GET /api/submissions/capabilities returns workspaces', cap.status === 200 && !!cap.json);
+  ok('capabilities advertise assemble bytes server-ready', cap.json?.features?.assemble === true && cap.json?.features?.deviceTechnicalFile === true && cap.json?.features?.pathwayManifest === true && cap.json?.features?.publishTransmit === false, `features ${JSON.stringify(cap.json?.features)}`);
 
   // Portfolio + create (throwaway).
   const list0 = await c.req('GET', '/api/submissions');

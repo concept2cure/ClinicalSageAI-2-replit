@@ -66,9 +66,12 @@ AnA can drive all of the above through her governed tools (tenant from
 (`{ submissionId, sectionCode, region }`); the tools supply nothing tenant-related.
 
 ## Still server-side TODO before some screens are fully live
-- **Dispatch transmit + Publish**: `packageSequenceFromCore` (core→publisher
-  bridge) needs a storage `resolveFile` and a route; transmit stays behind the
-  e-sign gate.
+- **Publish/assemble bytes**: DONE. `assembleSequence` (eCTD) and
+  `assembleTechnicalFileFromCore` (device MDR/IVDR ZIP) both supply the storage
+  `resolveFile` and have routes (`POST .../assemble`, `POST .../technical-file/assemble`).
+  `capabilities.features.{assemble,deviceTechnicalFile,pathwayManifest}` are now `true`.
+- **Wire transmit**: stays behind the governed transmit path + Part 11 e-signature
+  (`publishTransmit:false` by design — it is a signature gate, not a missing feature).
 - **DB-runtime**: nothing here is runtime-verified — needs `drizzle-kit push` +
   the new `20260605_consistency_findings.sql` migration applied, then live calls.
 
@@ -90,7 +93,7 @@ consistency status, lifecycle stages) with sentence-case labels + a neutral
 mirroring the server's lifecycle rules. Render dropdowns/badges/pills from these.
 
 ## Capabilities (feature-gating)
-| GET | `/api/submissions/capabilities?environment=` | → `CapabilitiesResponse` | which gateways are configured + which workspaces are server-ready; UI disables/empties screens accordingly. `publishTransmit: false` until the storage resolver lands. |
+| GET | `/api/submissions/capabilities?environment=` | → `CapabilitiesResponse` | which gateways are configured + which workspaces are server-ready; UI disables/empties screens accordingly. `features.{assemble,deviceTechnicalFile,pathwayManifest}` are `true` (assemble bytes landed); `publishTransmit:false` by design (wire transmit is an e-signature gate, not a missing feature). |
 
 Workspace map + error catalog for nav/error handling: `shared/types/submission-ui.ts`
 (`SUBMISSION_WORKSPACES`, `SUBMISSION_ERROR_CODES`, `submissionErrorMessage()`).
