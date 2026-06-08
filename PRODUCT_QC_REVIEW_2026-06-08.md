@@ -77,11 +77,14 @@ change in compliance-critical code, so not done unilaterally without a DB):**
    - *Transition:* the audit now runs via `recordGovernedAction` **inside the
      same DB transaction** as the section change, before COMMIT — so they
      commit or roll back together (atomic, fail-closed).
-   Contract tests (`c2c-documents-{delete,transition}-audit-order.contract.test.ts`,
-   5 tests, no DB) lock the audit→mutation order, the fail-closed/rollback
-   behaviour, and the 404 path. The evidence **link** (`:521`) still audits
-   after the insert (a create is correctly audited only on success — moving it
-   in-transaction is the remaining follow-up).
+   - *Link:* the insert and its audit (`recordGovernedAction`) now run in one
+     transaction, committing or rolling back together.
+   All three fire-and-forget audits in `c2c/documents` are closed (the two
+   remaining `writeMutation` calls at `:600`/`:653` were already awaited).
+   Contract tests
+   (`c2c-documents-{delete,transition,evidence-link}-audit-order.contract.test.ts`,
+   7 tests, no DB) lock the audit↔mutation order, the fail-closed/rollback
+   behaviour, and the 404 path.
 3. **HIGH — immutability middleware is narrow (`startup/middleware.ts:113`):**
    `IMMUTABLE_ROUTE_PATTERNS` only guards `/api/audit/*`. Regulated-data DELETEs
    elsewhere are not policy-blocked. Fix is a policy decision (expand patterns

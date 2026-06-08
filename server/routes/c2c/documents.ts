@@ -515,24 +515,38 @@ router.post('/:id/sections/:key/evidence', async (req: Request, res: Response) =
     if (secRes.rows.length === 0) return send404(res);
     const sectionId = (secRes.rows[0] as any).section_id as number;
 
-    const { rows } = await pool.query(
-      `INSERT INTO c2c_document_section_evidence
-         (section_id, evidence_kind, evidence_ref, paragraph_id, confidence, linked_by)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-      [sectionId, evidenceKind, evidenceRef, paragraphId ?? null, confidence ?? null, userId],
-    );
-
-    writeMutation(
-      'resolve',
-      { target: `section:${id}:${key}`, reason: reason ?? 'evidence linked', payload: { evidenceRef } },
-      userId,
-      orgId,
-      'api',
-      'documents',
-    ).catch(err => console.error('[c2c/documents] writeMutation resolve error:', err));
-
-    return res.status(201).json(rows[0]);
+    // 21 CFR Part 11 §11.10(e): create the evidence link and its audit in one
+    // transaction, so they commit or roll back together. Previously the insert
+    // ran on its own and the audit fired fire-and-forget afterwards with a
+    // swallowed error, so a crash or audit failure left the create unaudited.
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const { rows } = await client.query(
+        `INSERT INTO c2c_document_section_evidence
+           (section_id, evidence_kind, evidence_ref, paragraph_id, confidence, linked_by)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [sectionId, evidenceKind, evidenceRef, paragraphId ?? null, confidence ?? null, userId],
+      );
+      await recordGovernedAction(client, {
+        orgId,
+        userId,
+        command: 'resolve',
+        target: `section:${id}:${key}`,
+        reason: reason ?? 'evidence linked',
+        payload: { evidenceRef },
+        domain: 'documents',
+        surface: 'api',
+      });
+      await client.query('COMMIT');
+      return res.status(201).json(rows[0]);
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   } catch (err: unknown) {
     console.error('[c2c/documents] POST /:id/sections/:key/evidence', err);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
