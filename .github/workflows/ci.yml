@@ -108,6 +108,29 @@ jobs:
         env:
           CI: true
 
+  security-tests:
+    name: Security Contract Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Tenant-isolation + prompt-injection contract tests. These mock the data
+      # layer (no DB), so they run fast and gate every PR independently of the
+      # heavier DB-backed suite.
+      - name: Run security contract tests
+        run: npm run test:security
+        env:
+          CI: true
+
   ana-readiness-tests:
     name: AnA Readiness Tests
     runs-on: ubuntu-latest

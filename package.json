@@ -41,6 +41,7 @@
     "lint:fix": "eslint . --fix --ignore-pattern dist --ignore-pattern scripts --ignore-pattern client/src --ignore-pattern tests/integration/api/vault.test.js --ignore-pattern server/events/eventBus.js --ignore-pattern server/routes/fda510k-routes.ts --ignore-pattern server/services/pdfGenerator.js",
     "test": "jest --config scripts/jest.config.js && NODE_OPTIONS=\"--max-old-space-size=4096\" vitest run --config vitest.config.ts",
     "test:submission": "vitest run --config vitest.config.ts server/services/ectd server/services/submission-service server/services/region-profiles server/services/ana/__tests__/submission-center-tools.test.ts",
+    "test:security": "vitest run --config vitest.config.ts server/__tests__/security server/services/ai-gateway/__tests__/promptInjection.test.ts",
     "verify:submission": "node scripts/verify-submission-center.mjs",
     "ci:ban-new-pool": "bash scripts/ci/ban-new-pool.sh",
     "ci:gateway-bypass": "node scripts/ci/check-gateway-bypass.mjs",

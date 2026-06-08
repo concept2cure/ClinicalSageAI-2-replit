@@ -163,12 +163,20 @@ only. 20 unit tests (`__tests__/promptInjection.test.ts`) cover detections and �
 importantly — regulated-domain false-positive guards. Bounded quantifiers, no
 ReDoS.
 
+## CI gate (done)
+
+The tenant-isolation + prompt-injection contract tests now gate every PR via a
+dedicated, DB-free `security-tests` job (`.github/workflows/ci.yml`) running
+`npm run test:security` — the whole `server/__tests__/security` directory (22
+files, 133 tests) plus the prompt-injection suite. Fast and independent of the
+heavier DB-backed `npm test`.
+
 ## Still open
 
-1. **Run the new tests against a database** in CI as part of the broader suite,
-   and add equivalent DB-backed integration coverage — including the
-   membership-scoped `tenants-simple` reads (verified here only by tsc + the
-   mocked-SQL contract test).
+1. **DB-backed integration coverage.** The contract tests mock the data layer
+   (and so gate CI without a database). Equivalent integration tests against a
+   real Postgres — especially the membership-scoped `tenants-simple` reads —
+   remain a follow-up for the DB-backed CI lane.
 2. **Model-based guardrail** for prompt injection remains a future option beyond
    the heuristic layer above — an infrastructure decision, not a code tweak.
 
