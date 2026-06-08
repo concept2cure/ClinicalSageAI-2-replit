@@ -129,6 +129,9 @@ export interface CrossRegionResponse {
 // ── Dispatch QC gate (AI; does NOT transmit) ─────────────────────────────────
 export interface DispatchQcRequest {
   region: 'fda' | 'eu' | 'jp';
+  /** When set, the gate inputs below are recomputed SERVER-SIDE from this
+   *  sequence's canonical core and the client-supplied numbers are ignored. */
+  sequenceId?: number;
   validationErrors: number;
   unresolvedShadowCriticals: number;
   leaves: Array<{ sectionCode: string; operation: string }>;

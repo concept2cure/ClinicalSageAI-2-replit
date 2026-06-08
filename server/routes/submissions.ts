@@ -338,8 +338,13 @@ router.post('/:id/cross-region', limiter, requireRole(AUTHOR), async (req, res) 
 });
 
 // ── Dispatch QC gate (AI; does NOT transmit) ─────────────────────────────────
+// When `sequenceId` is supplied the gate inputs are computed SERVER-SIDE from the
+// canonical core (never the client numbers) — the AI advisory then floors on real
+// values. Without a sequenceId it falls back to the supplied numbers (advisory
+// only); prefer GET /sequences/:seqId/dispatch-readiness for the tamper-proof gate.
 const dispatchQcSchema = z.object({
   region: z.enum(['fda', 'eu', 'jp']),
+  sequenceId: z.number().int().positive().optional(),
   validationErrors: z.number().int().min(0),
   unresolvedShadowCriticals: z.number().int().min(0),
   leaves: z.array(z.object({ sectionCode: z.string(), operation: z.string() })),
@@ -353,7 +358,14 @@ router.post('/:id/dispatch-qc', limiter, requireRole(AUTHOR), async (req, res) =
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
     await getSubmission(id, ctx);
-    res.json(await runDispatchQc(parsed.data, { ...ctx, submissionId: id }));
+    let input = parsed.data;
+    if (parsed.data.sequenceId) {
+      // Authoritative, tamper-proof gate inputs from server state.
+      const { assessSequenceDispatchReadiness } = await import('../services/ectd/assess-dispatch-readiness');
+      const a = await assessSequenceDispatchReadiness({ sequenceId: parsed.data.sequenceId, organizationId: ctx.organizationId });
+      input = { ...parsed.data, validationErrors: a.validationErrors, unresolvedShadowCriticals: a.unacknowledgedShadowCriticals };
+    }
+    res.json(await runDispatchQc(input, { ...ctx, submissionId: id }));
   } catch (err) {
     fail(res, err);
   }
