@@ -20,10 +20,9 @@ import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import request from 'supertest';
 
-const { order, clientQuery, releaseMock, logDeletionMock, state } = vi.hoisted(() => ({
+const { order, clientQuery, logDeletionMock, state } = vi.hoisted(() => ({
   order: [] as string[],
   clientQuery: vi.fn(),
-  releaseMock: vi.fn(),
   logDeletionMock: vi.fn(),
   state: {
     auditShouldThrow: false,
@@ -31,10 +30,19 @@ const { order, clientQuery, releaseMock, logDeletionMock, state } = vi.hoisted((
   },
 }));
 
-const mockClient = { query: clientQuery, release: releaseMock };
+const mockClient = { query: clientQuery };
 
 vi.mock('../../db', () => ({
-  getPool: () => ({ connect: async () => mockClient }),
+  // Mirror the real transaction() wrapper: run the callback with a client,
+  // record ROLLBACK on throw so the fail-closed path is observable.
+  transaction: async (cb: (client: unknown) => Promise<unknown>) => {
+    try {
+      return await cb(mockClient);
+    } catch (e) {
+      order.push('rollback');
+      throw e;
+    }
+  },
   query: vi.fn(),
 }));
 vi.mock('../../services/audit/regulatedDeletion', () => ({
@@ -51,15 +59,6 @@ beforeEach(async () => {
   state.row = { id: 1, status: 'draft', organization_id: 7 };
 
   clientQuery.mockImplementation(async (sql: string) => {
-    if (/^\s*BEGIN/i.test(sql)) return { rows: [] };
-    if (/^\s*COMMIT/i.test(sql)) {
-      order.push('commit');
-      return { rows: [] };
-    }
-    if (/^\s*ROLLBACK/i.test(sql)) {
-      order.push('rollback');
-      return { rows: [] };
-    }
     if (/SELECT\s+\*\s+FROM\s+ind_applications/i.test(sql)) {
       return { rows: state.row ? [state.row] : [] };
     }
@@ -89,13 +88,11 @@ beforeEach(async () => {
 const del = () => request(app).delete('/api/ind/applications/1');
 
 describe('Part 11 — IND application delete audit ordering', () => {
-  it('audits BEFORE deleting the regulated IND record (atomic, committed)', async () => {
+  it('audits BEFORE deleting the regulated IND record', async () => {
     const res = await del();
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ success: true, deleted: 1 });
-    expect(order.indexOf('audit')).toBeGreaterThanOrEqual(0);
-    expect(order.indexOf('audit')).toBeLessThan(order.indexOf('delete'));
-    expect(order[order.length - 1]).toBe('commit');
+    expect(order).toEqual(['audit', 'delete']);
   });
 
   it('fails closed — an audit-write failure rolls back and blocks the delete', async () => {
@@ -104,7 +101,6 @@ describe('Part 11 — IND application delete audit ordering', () => {
     expect(res.status).toBe(500);
     expect(order).toContain('audit');
     expect(order).not.toContain('delete');
-    expect(order).not.toContain('commit');
     expect(order).toContain('rollback');
   });
 
@@ -114,7 +110,6 @@ describe('Part 11 — IND application delete audit ordering', () => {
     expect(res.status).toBe(404);
     expect(order).not.toContain('audit');
     expect(order).not.toContain('delete');
-    expect(order).toContain('rollback');
   });
 
   it('409 on a non-draft record performs neither audit nor delete', async () => {
@@ -123,6 +118,5 @@ describe('Part 11 — IND application delete audit ordering', () => {
     expect(res.status).toBe(409);
     expect(order).not.toContain('audit');
     expect(order).not.toContain('delete');
-    expect(order).toContain('rollback');
   });
 });
