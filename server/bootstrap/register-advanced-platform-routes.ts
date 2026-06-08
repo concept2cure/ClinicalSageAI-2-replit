@@ -87,6 +87,11 @@ export async function registerAdvancedPlatformRoutes({
         mod: '../routes/diagnostics-performance.ts',
         name: 'Diagnostics Performance (CLSI analytical + clinical)',
       },
+      {
+        path: '/api/device-classification',
+        mod: '../routes/device-classification.ts',
+        name: 'Device Classification (IMDRF SaMD + IEC 62304)',
+      },
     ] as const;
     const auditIntegResults = await Promise.allSettled(auditIntegConfig.map(c => import(c.mod)));
     auditIntegResults.forEach((r, i) => {

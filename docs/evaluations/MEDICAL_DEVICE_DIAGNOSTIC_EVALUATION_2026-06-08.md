@@ -95,6 +95,10 @@ non-overlapping value:
   and **ROC/AUC** (rank-based, tie-safe) with **DeLong CI** and the Youden-optimal threshold.
 - **Diagnostics performance API**: `server/routes/diagnostics-performance.ts`
   (role-gated, Zod-validated) mounted at `/api/diagnostics-performance`.
+- **SaMD / software classification (gap #2)**: `server/services/regulatory/samd-classification.ts`
+  — IMDRF SaMD N12 risk categorization (the 4×3 matrix → category I–IV) and
+  IEC 62304 software safety classification (A/B/C); exposed at
+  `/api/device-classification`.
 - **eCTD leaf PDF rendering**: `server/services/ectd/leaf-pdf-renderer.ts` (pdf-lib,
   deterministic); `generateEctdPackage` renders both leaf sites to real PDF bytes
   and checksums them. Residual: true PDF/A-1b conformance is a documented OQ enhancement.
