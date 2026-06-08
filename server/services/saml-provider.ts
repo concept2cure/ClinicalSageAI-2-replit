@@ -1,24 +1,37 @@
 /**
- * SAML 2.0 Service Provider Implementation
+ * SAML 2.0 Service Provider — vetted-library implementation.
  *
- * Implements SP-Initiated SSO flow with:
- * - AuthnRequest generation (HTTP-Redirect binding with deflate + base64)
- * - SAML Response parsing (base64 decode + XML extraction)
- * - Assertion validation (timestamps, audience, InResponseTo)
+ * Thin, fail-closed wrapper around `@node-saml/node-saml`, which performs real
+ * XML-DSig verification (canonicalization / C14N, Reference digest binding,
+ * signed-assertion enforcement) via `xml-crypto`. This replaces the previous
+ * hand-rolled implementation, which parsed assertions with regular expressions
+ * and trusted them even when signature verification failed — an authentication
+ * bypass (forged/unsigned assertions ⇒ cross-tenant impersonation) and an XML
+ * Signature Wrapping (XSW) surface.
  *
- * Uses only Node.js built-in modules (crypto, zlib) — no external SAML dependencies.
+ * Security invariants enforced here (do not relax without security review):
+ *   - `wantAssertionsSigned: true`  — an unsigned/invalid assertion is REJECTED.
+ *   - `audience` pinned to our SP entityId — AudienceRestriction must match us.
+ *   - `validateInResponseTo` — replay/solicitation binding for SP-initiated SSO.
+ *   - The IdP signing certificate is the trust anchor; only assertions signed by
+ *     it validate, so org selection from untrusted RelayState cannot forge login.
  *
- * @version 1.0.0
+ * @version 2.0.0
  */
 
 import * as crypto from 'crypto';
-import * as zlib from 'zlib';
+import {
+  SAML,
+  ValidateInResponseTo,
+  type SamlConfig as NodeSamlConfig,
+  type Profile,
+} from '@node-saml/node-saml';
 import { createScopedLogger } from '../utils/logger';
 
 const logger = createScopedLogger('saml-provider');
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TYPES
+// TYPES (stable public surface — consumed by server/routes/sso.ts)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface SAMLConfig {
@@ -43,35 +56,23 @@ export interface SAMLUser {
   sessionIndex?: string;
 }
 
-export interface SAMLAssertion {
-  issuer: string;
-  nameId: string;
-  nameIdFormat: string;
-  sessionIndex?: string;
-  notBefore?: string;
-  notOnOrAfter?: string;
-  audience?: string;
-  inResponseTo?: string;
-  attributes: Record<string, string>;
-}
-
-interface AuthnRequestResult {
-  requestId: string;
-  redirectUrl: string;
+export class SAMLValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'SAMLValidationError';
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const SAML_PROTOCOL_NS = 'urn:oasis:names:tc:SAML:2.0:protocol';
-const SAML_ASSERTION_NS = 'urn:oasis:names:tc:SAML:2.0:assertion';
 const DEFAULT_NAME_ID_FORMAT = 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress';
 
-/** Maximum clock skew tolerance in seconds (5 minutes) */
-const CLOCK_SKEW_TOLERANCE_SECONDS = 300;
+/** Maximum clock skew tolerance (5 minutes). */
+const CLOCK_SKEW_TOLERANCE_MS = 300_000;
 
-// Common SAML attribute URIs mapped to friendly names
+// Common SAML attribute URIs mapped to friendly names.
 const ATTRIBUTE_MAP: Record<string, string> = {
   'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress': 'email',
   'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname': 'firstName',
@@ -84,145 +85,155 @@ const ATTRIBUTE_MAP: Record<string, string> = {
   'urn:oid:1.3.6.1.4.1.5923.1.5.1.1': 'groups',
 };
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// SP-INITIATED FLOW: BUILD AUTHN REQUEST
-// ═══════════════════════════════════════════════════════════════════════════════
-
 /**
- * Generates a SAML AuthnRequest and returns a redirect URL to the IdP.
- * Uses HTTP-Redirect binding (deflate + base64 + URL encode).
+ * InResponseTo / replay validation mode. Default `ifPresent`: validate the
+ * solicitation binding for SP-initiated flows (which always carry InResponseTo),
+ * while still accepting IdP-initiated SSO. Override with
+ * SAML_VALIDATE_INRESPONSETO=never|ifPresent|always.
+ *
+ * NOTE: node-saml's default in-memory request cache is per-process. For
+ * multi-instance / HA deployments, a shared cache (e.g. Redis) should back the
+ * InResponseTo store; until then run SSO on a single instance or sticky routing.
  */
-export function buildAuthnRequest(samlConfig: SAMLConfig): AuthnRequestResult {
-  const requestId = `_${crypto.randomUUID()}`;
-  const issueInstant = new Date().toISOString();
-  const nameIdFormat = samlConfig.nameIdFormat || DEFAULT_NAME_ID_FORMAT;
-
-  const authnRequestXml = [
-    `<samlp:AuthnRequest`,
-    `  xmlns:samlp="${SAML_PROTOCOL_NS}"`,
-    `  xmlns:saml="${SAML_ASSERTION_NS}"`,
-    `  ID="${requestId}"`,
-    `  Version="2.0"`,
-    `  IssueInstant="${issueInstant}"`,
-    `  Destination="${samlConfig.idpSsoUrl}"`,
-    `  AssertionConsumerServiceURL="${samlConfig.assertionConsumerServiceUrl}"`,
-    `  ProtocolBinding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"`,
-    `  >`,
-    `  <saml:Issuer>${samlConfig.entityId}</saml:Issuer>`,
-    `  <samlp:NameIDPolicy`,
-    `    Format="${nameIdFormat}"`,
-    `    AllowCreate="true"`,
-    `  />`,
-    `</samlp:AuthnRequest>`,
-  ].join('\n');
-
-  // Deflate (raw, no header) then base64 encode per SAML HTTP-Redirect binding spec
-  const deflated = zlib.deflateRawSync(Buffer.from(authnRequestXml, 'utf-8'));
-  const encoded = deflated.toString('base64');
-
-  // Build redirect URL
-  const redirectUrl = new URL(samlConfig.idpSsoUrl);
-  redirectUrl.searchParams.set('SAMLRequest', encoded);
-
-  // If signing is enabled and we have a private key, add signature
-  if (samlConfig.signRequests && samlConfig.spPrivateKey) {
-    const sigAlg = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256';
-    redirectUrl.searchParams.set('SigAlg', sigAlg);
-
-    // For redirect binding, signature is over the query string (SAMLRequest + SigAlg)
-    const signablePayload = `SAMLRequest=${encodeURIComponent(encoded)}&SigAlg=${encodeURIComponent(sigAlg)}`;
-    const signer = crypto.createSign('RSA-SHA256');
-    signer.update(signablePayload);
-    const signature = signer.sign(samlConfig.spPrivateKey, 'base64');
-    redirectUrl.searchParams.set('Signature', signature);
+function inResponseToMode(): ValidateInResponseTo {
+  switch ((process.env.SAML_VALIDATE_INRESPONSETO || '').toLowerCase()) {
+    case 'never':
+      return ValidateInResponseTo.never;
+    case 'always':
+      return ValidateInResponseTo.always;
+    default:
+      return ValidateInResponseTo.ifPresent;
   }
-
-  logger.info(`Built AuthnRequest ID=${requestId} for IdP=${samlConfig.idpSsoUrl}`);
-
-  return { requestId, redirectUrl: redirectUrl.toString() };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// RESPONSE PARSING
+// CONFIG MAPPING (fail-closed defaults)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/**
- * Decodes a base64-encoded SAML Response, parses XML, and extracts assertion data.
- * Uses regex-based XML extraction (no external XML parser dependency).
- */
-export function parseAssertion(samlResponseB64: string, samlConfig: SAMLConfig): SAMLAssertion {
-  // Decode base64 SAML Response
-  const responseXml = Buffer.from(samlResponseB64, 'base64').toString('utf-8');
+function toNodeSamlConfig(c: SAMLConfig): NodeSamlConfig {
+  // Some IdPs sign only the assertion (not the whole Response). Requiring a
+  // signed assertion is the security floor; requiring a signed Response too is
+  // stricter and opt-in via SAML_WANT_AUTHN_RESPONSE_SIGNED=true.
+  const wantAuthnResponseSigned = process.env.SAML_WANT_AUTHN_RESPONSE_SIGNED === 'true';
 
-  logger.debug('Parsing SAML Response XML');
-
-  // Extract InResponseTo from top-level Response element
-  const inResponseTo = extractAttribute(responseXml, 'Response', 'InResponseTo');
-
-  // Extract Issuer
-  const issuer = extractElementContent(responseXml, 'Issuer') || '';
-
-  // Extract NameID
-  const nameId = extractElementContent(responseXml, 'NameID') || '';
-  const nameIdFormat = extractAttribute(responseXml, 'NameID', 'Format') || DEFAULT_NAME_ID_FORMAT;
-
-  // Extract SessionIndex from AuthnStatement
-  const sessionIndex = extractAttribute(responseXml, 'AuthnStatement', 'SessionIndex') || undefined;
-
-  // Extract Conditions
-  const conditionsMatch = responseXml.match(/<(?:saml:)?Conditions([^>]*)>/);
-  let notBefore: string | undefined;
-  let notOnOrAfter: string | undefined;
-  if (conditionsMatch) {
-    const condAttrs = conditionsMatch[1];
-    notBefore = extractAttrFromString(condAttrs, 'NotBefore') || undefined;
-    notOnOrAfter = extractAttrFromString(condAttrs, 'NotOnOrAfter') || undefined;
-  }
-
-  // Extract AudienceRestriction
-  const audience = extractElementContent(responseXml, 'Audience') || undefined;
-
-  // Extract Attributes from AttributeStatement
-  const attributes = extractSamlAttributes(responseXml);
-
-  const assertion: SAMLAssertion = {
-    issuer,
-    nameId,
-    nameIdFormat,
-    sessionIndex,
-    notBefore,
-    notOnOrAfter,
-    audience,
-    inResponseTo: inResponseTo || undefined,
-    attributes,
+  const base: NodeSamlConfig = {
+    // Trust anchor: assertions must be signed by this certificate.
+    idpCert: normalizeCertificate(c.idpCertificate),
+    issuer: c.entityId,
+    callbackUrl: c.assertionConsumerServiceUrl,
+    entryPoint: c.idpSsoUrl,
+    idpIssuer: c.idpEntityId,
+    // Enforce AudienceRestriction == our SP entityId.
+    audience: c.entityId,
+    identifierFormat: c.nameIdFormat || DEFAULT_NAME_ID_FORMAT,
+    // ── Security invariants ──────────────────────────────────────────────
+    wantAssertionsSigned: true,
+    wantAuthnResponseSigned,
+    acceptedClockSkewMs: CLOCK_SKEW_TOLERANCE_MS,
+    validateInResponseTo: inResponseToMode(),
+    signatureAlgorithm: 'sha256',
+    digestAlgorithm: 'sha256',
   };
 
-  logger.info(`Parsed SAML assertion: nameId=${nameId}, issuer=${issuer}, attributeCount=${Object.keys(attributes).length}`);
+  // Optionally sign our outbound AuthnRequest.
+  if (c.signRequests && c.spPrivateKey) {
+    base.privateKey = c.spPrivateKey;
+  }
 
-  return assertion;
+  return base;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROVIDER WRAPPER + PER-ORG INSTANCE CACHE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface CachedProvider {
+  saml: SAML;
+  configHash: string;
 }
 
 /**
- * Converts a parsed SAML Assertion into a SAMLUser by mapping well-known attributes.
+ * Cache SAML instances per org so the (process-local) InResponseTo request cache
+ * persists across initiate → callback. Re-created if the org's config changes.
  */
-export function assertionToUser(assertion: SAMLAssertion): SAMLUser {
-  const attrs = assertion.attributes;
+const providerCache = new Map<string, CachedProvider>();
 
-  // Find email: from NameID (if email format) or from known attribute URIs
-  let email = '';
-  if (assertion.nameId && assertion.nameId.includes('@')) {
-    email = assertion.nameId;
+function configHash(c: SAMLConfig): string {
+  return crypto.createHash('sha256').update(JSON.stringify(c)).digest('hex');
+}
+
+export class SamlProvider {
+  constructor(
+    private readonly saml: SAML,
+    private readonly config: SAMLConfig
+  ) {}
+
+  /** Build the IdP redirect URL for SP-initiated SSO. */
+  async getAuthorizeUrl(relayState: string): Promise<string> {
+    return this.saml.getAuthorizeUrlAsync(relayState ?? '', undefined, {});
   }
+
+  /**
+   * Validate a SAML Response POSTed to the ACS. Throws {@link SAMLValidationError}
+   * on ANY failure (missing/invalid signature, expired/forged assertion, audience
+   * mismatch, InResponseTo mismatch). Never returns a user for an unverified
+   * assertion — this is the fail-closed guarantee that fixes the prior bypass.
+   */
+  async validateResponse(container: Record<string, string>): Promise<SAMLUser> {
+    let profile: Profile | null;
+    try {
+      const result = await this.saml.validatePostResponseAsync(container);
+      profile = result?.profile ?? null;
+    } catch (err) {
+      throw new SAMLValidationError(
+        `SAML response validation failed: ${(err as Error)?.message ?? 'unknown error'}`
+      );
+    }
+    if (!profile) {
+      throw new SAMLValidationError('SAML response did not yield a validated assertion');
+    }
+    return profileToUser(profile);
+  }
+
+  /** SP metadata XML for IdP federation setup. */
+  metadata(): string {
+    return this.saml.generateServiceProviderMetadata(null, this.config.spCertificate ?? null);
+  }
+}
+
+export function getSamlProvider(orgSlug: string, config: SAMLConfig): SamlProvider {
+  const hash = configHash(config);
+  const cached = providerCache.get(orgSlug);
+  if (cached && cached.configHash === hash) {
+    return new SamlProvider(cached.saml, config);
+  }
+  const saml = new SAML(toNodeSamlConfig(config));
+  providerCache.set(orgSlug, { saml, configHash: hash });
+  logger.info(`Initialized SAML provider for org="${orgSlug}"`);
+  return new SamlProvider(saml, config);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROFILE → USER MAPPING
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function profileToUser(profile: Profile): SAMLUser {
+  const attrs = collectAttributes(profile);
+
+  let email = '';
+  if (typeof profile.nameID === 'string' && profile.nameID.includes('@')) {
+    email = profile.nameID;
+  }
+  if (!email && typeof profile.email === 'string') email = profile.email;
+  if (!email && typeof profile.mail === 'string') email = profile.mail;
 
   let firstName: string | undefined;
   let lastName: string | undefined;
   const groups: string[] = [];
 
-  // Map attributes using both URI keys and friendly names
   for (const [key, value] of Object.entries(attrs)) {
-    const friendlyName = ATTRIBUTE_MAP[key] || key.toLowerCase();
-
-    switch (friendlyName) {
+    const friendly = ATTRIBUTE_MAP[key] || key.toLowerCase();
+    switch (friendly) {
       case 'email':
         if (!email) email = value;
         break;
@@ -235,276 +246,62 @@ export function assertionToUser(assertion: SAMLAssertion): SAMLUser {
         lastName = value;
         break;
       case 'groups':
-        groups.push(...value.split(',').map((g) => g.trim()));
+        groups.push(...value.split(',').map((g) => g.trim()).filter(Boolean));
         break;
     }
   }
 
-  // Fallback: if still no email, use NameID directly
-  if (!email) {
-    email = assertion.nameId;
-  }
+  if (!email) email = typeof profile.nameID === 'string' ? profile.nameID : '';
 
   return {
-    nameId: assertion.nameId,
+    nameId: typeof profile.nameID === 'string' ? profile.nameID : '',
     email,
     firstName,
     lastName,
     groups: groups.length > 0 ? groups : undefined,
     attributes: attrs,
-    sessionIndex: assertion.sessionIndex,
+    sessionIndex: profile.sessionIndex,
   };
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ASSERTION VALIDATION
-// ═══════════════════════════════════════════════════════════════════════════════
+/** Flatten node-saml attributes (under `attributes` and/or spread on the profile). */
+function collectAttributes(profile: Profile): Record<string, string> {
+  const out: Record<string, string> = {};
 
-/**
- * Validates a parsed SAML Assertion:
- * - NotBefore / NotOnOrAfter timestamps (with clock skew tolerance)
- * - Audience restriction matches our SP entity ID
- * - InResponseTo matches original request ID (if provided)
- * - Issuer matches expected IdP entity ID
- *
- * Throws on validation failure.
- */
-export function validateAssertion(
-  assertion: SAMLAssertion,
-  samlConfig: SAMLConfig,
-  expectedRequestId?: string
-): void {
-  const now = Date.now();
-  const toleranceMs = CLOCK_SKEW_TOLERANCE_SECONDS * 1000;
-
-  // Validate issuer matches IdP
-  if (assertion.issuer && assertion.issuer !== samlConfig.idpEntityId) {
-    throw new SAMLValidationError(
-      `Issuer mismatch: expected "${samlConfig.idpEntityId}", got "${assertion.issuer}"`
-    );
-  }
-
-  // Validate NotBefore (assertion not yet valid)
-  if (assertion.notBefore) {
-    const notBeforeMs = new Date(assertion.notBefore).getTime();
-    if (isNaN(notBeforeMs)) {
-      throw new SAMLValidationError(`Invalid NotBefore timestamp: "${assertion.notBefore}"`);
-    }
-    if (now < notBeforeMs - toleranceMs) {
-      throw new SAMLValidationError(
-        `Assertion not yet valid: NotBefore=${assertion.notBefore}, now=${new Date(now).toISOString()}`
-      );
+  const rawAttrs = (profile as Record<string, unknown>).attributes;
+  if (rawAttrs && typeof rawAttrs === 'object') {
+    for (const [k, v] of Object.entries(rawAttrs as Record<string, unknown>)) {
+      out[k] = stringifyAttr(v);
     }
   }
 
-  // Validate NotOnOrAfter (assertion expired)
-  if (assertion.notOnOrAfter) {
-    const notOnOrAfterMs = new Date(assertion.notOnOrAfter).getTime();
-    if (isNaN(notOnOrAfterMs)) {
-      throw new SAMLValidationError(`Invalid NotOnOrAfter timestamp: "${assertion.notOnOrAfter}"`);
-    }
-    if (now >= notOnOrAfterMs + toleranceMs) {
-      throw new SAMLValidationError(
-        `Assertion expired: NotOnOrAfter=${assertion.notOnOrAfter}, now=${new Date(now).toISOString()}`
-      );
-    }
+  // node-saml also spreads well-known claim URIs directly onto the profile.
+  for (const uri of Object.keys(ATTRIBUTE_MAP)) {
+    const v = (profile as Record<string, unknown>)[uri];
+    if (v != null && out[uri] == null) out[uri] = stringifyAttr(v);
   }
 
-  // Validate Audience restriction
-  if (assertion.audience) {
-    if (assertion.audience !== samlConfig.entityId) {
-      throw new SAMLValidationError(
-        `Audience mismatch: expected "${samlConfig.entityId}", got "${assertion.audience}"`
-      );
-    }
-  }
-
-  // Validate InResponseTo
-  if (expectedRequestId && assertion.inResponseTo) {
-    if (assertion.inResponseTo !== expectedRequestId) {
-      throw new SAMLValidationError(
-        `InResponseTo mismatch: expected "${expectedRequestId}", got "${assertion.inResponseTo}"`
-      );
-    }
-  }
-
-  logger.info('SAML assertion validation passed');
+  return out;
 }
 
-/**
- * Verifies the XML signature on the SAML Response using the IdP's public certificate.
- * Returns true if signature is valid, false otherwise.
- *
- * Note: This performs a basic signature check on the response. Full XML canonicalization
- * (c14n) is complex; this validates the digest over the raw signed content.
- */
-export function verifySignature(samlResponseB64: string, samlConfig: SAMLConfig): boolean {
-  try {
-    const responseXml = Buffer.from(samlResponseB64, 'base64').toString('utf-8');
-
-    // Extract SignatureValue
-    const signatureValue = extractElementContent(responseXml, 'SignatureValue');
-    if (!signatureValue) {
-      logger.warn('No SignatureValue found in SAML Response');
-      return false;
-    }
-
-    // Extract SignedInfo block for verification
-    const signedInfoMatch = responseXml.match(/<(?:ds:)?SignedInfo[^>]*>([\s\S]*?)<\/(?:ds:)?SignedInfo>/);
-    if (!signedInfoMatch) {
-      logger.warn('No SignedInfo block found in SAML Response');
-      return false;
-    }
-
-    // Reconstruct the SignedInfo element for verification
-    const signedInfoXml = signedInfoMatch[0];
-
-    // Normalize the certificate (strip PEM headers, whitespace)
-    const certPem = normalizeCertificate(samlConfig.idpCertificate);
-
-    const verifier = crypto.createVerify('RSA-SHA256');
-    verifier.update(signedInfoXml);
-
-    const isValid = verifier.verify(certPem, signatureValue.replace(/\s/g, ''), 'base64');
-
-    if (!isValid) {
-      logger.warn('SAML Response signature verification failed');
-    } else {
-      logger.info('SAML Response signature verification passed');
-    }
-
-    return isValid;
-  } catch (err) {
-    logger.error('Signature verification error', err as Record<string, unknown>);
-    return false;
-  }
-}
-
-/**
- * Generates SP metadata XML for sharing with IdPs during federation setup.
- */
-export function generateSpMetadata(samlConfig: SAMLConfig): string {
-  const nameIdFormat = samlConfig.nameIdFormat || DEFAULT_NAME_ID_FORMAT;
-
-  let keyDescriptor = '';
-  if (samlConfig.spCertificate) {
-    const certBody = samlConfig.spCertificate
-      .replace(/-----BEGIN CERTIFICATE-----/g, '')
-      .replace(/-----END CERTIFICATE-----/g, '')
-      .replace(/\s/g, '');
-    keyDescriptor = `
-    <md:KeyDescriptor use="signing">
-      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
-        <ds:X509Data>
-          <ds:X509Certificate>${certBody}</ds:X509Certificate>
-        </ds:X509Data>
-      </ds:KeyInfo>
-    </md:KeyDescriptor>`;
-  }
-
-  return [
-    `<?xml version="1.0" encoding="UTF-8"?>`,
-    `<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="${samlConfig.entityId}">`,
-    `  <md:SPSSODescriptor AuthnRequestsSigned="${samlConfig.signRequests}" protocolSupportEnumeration="${SAML_PROTOCOL_NS}">`,
-    keyDescriptor,
-    `    <md:NameIDFormat>${nameIdFormat}</md:NameIDFormat>`,
-    `    <md:AssertionConsumerService`,
-    `      Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"`,
-    `      Location="${samlConfig.assertionConsumerServiceUrl}"`,
-    `      index="0"`,
-    `      isDefault="true"`,
-    `    />`,
-    `  </md:SPSSODescriptor>`,
-    `</md:EntityDescriptor>`,
-  ].join('\n');
+function stringifyAttr(v: unknown): string {
+  if (Array.isArray(v)) return v.map((x) => String(x)).join(',');
+  if (v == null) return '';
+  return String(v);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// XML HELPERS (regex-based, no external deps)
+// CERT NORMALIZATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/**
- * Extracts text content of the first occurrence of an XML element.
- * Handles both namespaced (saml:Issuer) and non-namespaced (Issuer) forms.
- */
-function extractElementContent(xml: string, elementName: string): string | null {
-  // Match with optional namespace prefix: <ns:Element>content</ns:Element>
-  const regex = new RegExp(`<(?:[\\w-]+:)?${elementName}[^>]*>([^<]*)<\\/(?:[\\w-]+:)?${elementName}>`, 's');
-  const match = xml.match(regex);
-  return match ? match[1].trim() : null;
-}
-
-/**
- * Extracts an XML attribute value from the first occurrence of an element.
- */
-function extractAttribute(xml: string, elementName: string, attrName: string): string | null {
-  const elementRegex = new RegExp(`<(?:[\\w-]+:)?${elementName}\\s([^>]*)>`, 's');
-  const elementMatch = xml.match(elementRegex);
-  if (!elementMatch) return null;
-  return extractAttrFromString(elementMatch[1], attrName);
-}
-
-/**
- * Extracts an attribute value from an attribute string.
- */
-function extractAttrFromString(attrString: string, attrName: string): string | null {
-  const attrRegex = new RegExp(`${attrName}="([^"]*)"`, 's');
-  const match = attrString.match(attrRegex);
-  return match ? match[1] : null;
-}
-
-/**
- * Extracts all SAML Attributes from an AttributeStatement.
- * Handles both <saml:Attribute Name="..."> and <Attribute Name="..."> forms.
- */
-function extractSamlAttributes(xml: string): Record<string, string> {
-  const attributes: Record<string, string> = {};
-
-  // Match each Attribute element with its Name and nested AttributeValue
-  const attrRegex = /<(?:[\w-]+:)?Attribute\s+[^>]*Name="([^"]*)"[^>]*>([\s\S]*?)<\/(?:[\w-]+:)?Attribute>/g;
-  let attrMatch: RegExpExecArray | null;
-
-  while ((attrMatch = attrRegex.exec(xml)) !== null) {
-    const name = attrMatch[1];
-    const innerXml = attrMatch[2];
-
-    // Extract the first AttributeValue content
-    const valueMatch = innerXml.match(/<(?:[\w-]+:)?AttributeValue[^>]*>([^<]*)<\/(?:[\w-]+:)?AttributeValue>/);
-    if (valueMatch) {
-      attributes[name] = valueMatch[1].trim();
-    }
-  }
-
-  return attributes;
-}
-
-/**
- * Normalizes a PEM certificate to standard format for crypto operations.
- */
+/** Wrap a bare base64 certificate body in PEM headers if needed. */
 function normalizeCertificate(cert: string): string {
-  // If it already has PEM headers, return as-is
-  if (cert.includes('-----BEGIN CERTIFICATE-----')) {
-    return cert;
-  }
-
-  // Strip whitespace and wrap in PEM headers
+  if (cert.includes('-----BEGIN CERTIFICATE-----')) return cert;
   const cleaned = cert.replace(/\s/g, '');
-  const lines: string[] = [];
-  lines.push('-----BEGIN CERTIFICATE-----');
+  const lines: string[] = ['-----BEGIN CERTIFICATE-----'];
   for (let i = 0; i < cleaned.length; i += 64) {
     lines.push(cleaned.substring(i, i + 64));
   }
   lines.push('-----END CERTIFICATE-----');
   return lines.join('\n');
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// ERROR CLASS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-export class SAMLValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'SAMLValidationError';
-  }
 }

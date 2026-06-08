@@ -16,7 +16,7 @@
 
 This platform is **substantially more hardened than the typical Series-A/B life-sciences SaaS** a client CSO will have seen. The controls that vendors usually fake — tenant isolation, an audited single seam for all AI egress, data residency/zero-retention as *hard* constraints, 21 CFR Part 11 hash-chained audit with e-signatures, and an unusually deep suite of CI security gates — are genuinely implemented and, in most cases, regression-tested and enforced on every PR.
 
-That makes the **one critical finding all the more important to fix before any security questionnaire goes out**: the enterprise **SAML SSO path fails open** (authenticates forged/unsigned assertions). A client's pen-test vendor will find it on day one, and because the existing client questionnaire already answers "SSO ✅ supported," it becomes both a security issue *and* a trust/credibility issue.
+The review found **one critical**: the enterprise **SAML SSO path failed open** (authenticated forged/unsigned assertions) — a client's pen-test vendor would have found it on day one, and because the existing client questionnaire already answers "SSO ✅ supported," it was both a security issue *and* a trust/credibility issue. **This PR remediates it** with a fail-closed, vetted-library (`@node-saml/node-saml`) rewrite, regression tests, and a new CI guardrail (see §3.1); live-IdP interop validation and SCIM remain as follow-ups.
 
 | Decision | Status |
 |---|---|
@@ -60,10 +60,17 @@ The takeaway for sales/security engineering: **we win on architecture and AI gov
 
 **Severity rationale:** complete authentication bypass + multi-tenant impersonation on a regulated-data platform. This is *worse* than having no SSO, because it advertises a security feature that is exploitable.
 
-**Required remediation (do not ship a partial fix as "done"):**
-1. **Immediate, low-risk mitigation:** fail **closed** — reject (HTTP 401/403) on missing/invalid signature; gate behind a `SAML_STRICT=true` default. This removes the trivial unsigned-forgery path but **does not** close XSW.
-2. **Real fix (required to honestly answer "we support SSO"):** replace the hand-rolled SP with a vetted, maintained library — `@node-saml/node-saml` (with `xml-crypto` / proper C14N) or an OIDC-first path via `openid-client`. Enforce signed assertions, audience/recipient/InResponseTo, replay protection, and IdP-cert trust pinning. Add SSW/replay regression tests and a CI gate analogous to the existing `check-jwt-verify-pinned`.
-3. Add **SCIM** provisioning/deprovisioning alongside — enterprise IdP teams expect it and it is the usual follow-on questionnaire line.
+**✅ REMEDIATED IN THIS PR (vetted-library rewrite):**
+- `server/services/saml-provider.ts` rewritten as a thin, **fail-closed** wrapper around **`@node-saml/node-saml` v5.1.0** (real XML-DSig via `xml-crypto`: canonicalization/C14N, Reference-digest binding). All regex XML parsing removed.
+- Security invariants enforced: `wantAssertionsSigned: true` (unsigned/invalid assertions are **rejected**), `audience` pinned to the SP entityId, `validateInResponseTo` for replay/solicitation binding, IdP certificate as the trust anchor.
+- `server/routes/sso.ts` ACS now validates via `provider.validateResponse()`, which **throws on any signature/assertion failure** — the `"proceeding with caution"` fail-open path is gone. The org is selected from (untrusted) RelayState, which only chooses *which* IdP cert validates, so it cannot forge a login. The previous `new URL(relayState)` **open-redirect / token-exfil** path was replaced with a same-origin-only return path (validated at both initiate and callback).
+- Regression suite `server/services/__tests__/saml-provider.test.ts` proves forged/unsigned assertions are rejected and no user is ever returned for an unverified assertion (wired into `npm run test:security`).
+- New CI guardrail `scripts/ci/check-saml-fail-closed.mjs` (`npm run ci:saml-fail-closed`, added to the Lint job) blocks reintroduction of the fail-open/regex-parsing pattern.
+
+**Still open (follow-up):**
+- **Live-IdP interop validation** against Okta / Entra ID / Ping (the unit tests prove fail-closed but do not exercise a real signed assertion end-to-end). Recommend a staging IdP integration test before GA.
+- **SCIM** provisioning/deprovisioning — enterprise IdP teams expect it; usual follow-on questionnaire line.
+- **Shared InResponseTo cache (Redis)** for multi-instance HA (node-saml's default request cache is per-process; single-instance/sticky routing is fine until then).
 
 ### 3.2 🟠 HIGH — Third-party security attestations not evidenced
 
@@ -135,7 +142,7 @@ Ratings are A (client-CSO-ready) → C (questionnaire risk). "Enforced" means a 
 
 | Priority | Item | Owner | Effort | Gate when done |
 |---|---|---|---|---|
-| **P0** | SAML fail-closed + vetted library/OIDC rewrite + SSW/replay tests (§3.1) | Eng (Security) | 1–2 wk | new `check-saml-*` CI gate |
+| ~~P0~~ ✅ | SAML fail-closed + vetted-library rewrite + fail-closed tests + CI gate (§3.1) — **landed in this PR**; live-IdP interop + SCIM are follow-ups | Eng (Security) | done | `ci:saml-fail-closed` ✅ |
 | **P0** | Confirm/publish SOC 2 Type II (or Type I + bridge) + pen-test summary (§3.2) | Compliance | Calendar | trust center |
 | **P1** | Soft-delete + audit for `ind_applications`/`coauthor_documents`/`authoring_documents` (§3.3) | Eng | ~2–3 d | `check-regulated-delete-audit` allowlist → 0 |
 | **P1** | Make Trivy CRITICAL/HIGH gating; add gitleaks; emit SBOM; clear HIGH npm advisories (§3.4) | DevSecOps | ~2–3 d | CI hard-fail |

@@ -52,6 +52,9 @@ jobs:
       - name: Guardrails — password hygiene
         run: npm run ci:password-hygiene
 
+      - name: Guardrails — SAML SSO fail-closed (no auth bypass)
+        run: npm run ci:saml-fail-closed
+
       - name: Guardrails — design-system non-negotiables (Lucide-only, no spring)
         run: npm run ci:design-system
 
