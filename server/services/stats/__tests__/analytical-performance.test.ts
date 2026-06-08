@@ -13,6 +13,9 @@ import {
   compareMethods,
   assessInterference,
   estimateReferenceInterval,
+  studentTQuantile,
+  estimateShelfLife,
+  fitQualitativeDoseResponse,
 } from '../analytical-performance';
 
 describe('EP05 imprecision (one-way ANOVA)', () => {
@@ -227,6 +230,76 @@ describe('EP28 reference interval', () => {
     expect(() => estimateReferenceInterval({ values: [1, 2] })).toThrow();
     expect(() =>
       estimateReferenceInterval({ values: [1, 2, 3], lowerQuantile: 0.9, upperQuantile: 0.1 })
+    ).toThrow();
+  });
+});
+
+describe('studentTQuantile', () => {
+  it('matches standard t-table values', () => {
+    expect(studentTQuantile(0.975, 10)).toBeCloseTo(2.228, 2);
+    expect(studentTQuantile(0.975, 1)).toBeCloseTo(12.706, 2);
+    expect(studentTQuantile(0.975, 1000)).toBeCloseTo(1.962, 2);
+  });
+  it('is symmetric about zero', () => {
+    expect(studentTQuantile(0.025, 10)).toBeCloseTo(-studentTQuantile(0.975, 10), 8);
+    expect(studentTQuantile(0.5, 5)).toBe(0);
+  });
+});
+
+describe('EP25 stability / shelf-life', () => {
+  it('on a noise-free degrading line, shelf-life equals the nominal crossing', () => {
+    // value = 100 − 2·t; spec 85 → line meets spec at t = 7.5. residualSd = 0.
+    const points = [0, 1, 2, 3, 4, 5].map(t => ({ time: t, value: 100 - 2 * t }));
+    const r = estimateShelfLife({ points, specLimit: 85, direction: 'lower' });
+    expect(r.slope).toBeCloseTo(-2, 8);
+    expect(r.nominalCrossing).toBeCloseTo(7.5, 6);
+    expect(r.shelfLife).toBeCloseTo(7.5, 1);
+  });
+
+  it('with scatter the confidence bound shortens shelf-life below the nominal crossing', () => {
+    const points = [
+      { time: 0, value: 100 },
+      { time: 1, value: 97 },
+      { time: 2, value: 99 },
+      { time: 3, value: 94 },
+      { time: 4, value: 93 },
+      { time: 5, value: 90 },
+    ];
+    const r = estimateShelfLife({ points, specLimit: 85, direction: 'lower' });
+    expect(r.shelfLife).not.toBeNull();
+    expect(r.nominalCrossing).not.toBeNull();
+    expect(r.shelfLife!).toBeLessThan(r.nominalCrossing!);
+    expect(r.shelfLife!).toBeGreaterThan(0);
+  });
+});
+
+describe('EP12 qualitative dose-response (C5–C95)', () => {
+  it('recovers a known logistic and the C5/C50/C95 interval', () => {
+    // proportions 0.25/0.5/0.75 at concentrations logit(0.25)/0/logit(0.75)
+    // → perfect fit a=0, b=1.
+    const L = Math.log(0.25 / 0.75); // -1.0986
+    const r = fitQualitativeDoseResponse([
+      { concentration: L, n: 4, positives: 1 },
+      { concentration: 0, n: 4, positives: 2 },
+      { concentration: -L, n: 4, positives: 3 },
+    ]);
+    expect(r.converged).toBe(true);
+    expect(r.intercept).toBeCloseTo(0, 4);
+    expect(r.slope).toBeCloseTo(1, 4);
+    expect(r.c50).toBeCloseTo(0, 4);
+    expect(r.c5).toBeCloseTo(Math.log(0.05 / 0.95), 3); // ≈ -2.944
+    expect(r.c95).toBeCloseTo(Math.log(0.95 / 0.05), 3); // ≈ +2.944
+    expect(r.c5).toBeLessThan(r.c50);
+    expect(r.c50).toBeLessThan(r.c95);
+  });
+
+  it('rejects too few levels or invalid counts', () => {
+    expect(() => fitQualitativeDoseResponse([{ concentration: 1, n: 4, positives: 1 }])).toThrow();
+    expect(() =>
+      fitQualitativeDoseResponse([
+        { concentration: 1, n: 4, positives: 5 },
+        { concentration: 2, n: 4, positives: 1 },
+      ])
     ).toThrow();
   });
 });

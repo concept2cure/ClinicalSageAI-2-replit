@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { computeDiagnosticAccuracy, computeRoc } from '../clinical-performance';
+import { computeDiagnosticAccuracy, computeRoc, computeWeightedKappa } from '../clinical-performance';
 
 describe('computeDiagnosticAccuracy', () => {
   // tp=90, fn=10, tn=80, fp=20 → 100 positives, 100 negatives, N=200.
@@ -103,5 +103,51 @@ describe('computeRoc', () => {
 
   it('requires both classes present', () => {
     expect(() => computeRoc([{ score: 1, positive: true }, { score: 2, positive: true }])).toThrow();
+  });
+
+  it('DeLong SE is zero for perfect separation and positive with overlap', () => {
+    const perfect = computeRoc([
+      { score: 0.9, positive: true },
+      { score: 0.8, positive: true },
+      { score: 0.3, positive: false },
+      { score: 0.1, positive: false },
+    ]);
+    expect(perfect.aucSe).toBeCloseTo(0, 10);
+    expect(perfect.aucCi).toMatchObject({ lower: 1, upper: 1 });
+
+    // The 0.75 example: V10=[1,0.5], V01=[0.5,1] → var=0.125/2+0.125/2=0.125.
+    const overlap = computeRoc([
+      { score: 0.6, positive: true },
+      { score: 0.4, positive: true },
+      { score: 0.5, positive: false },
+      { score: 0.2, positive: false },
+    ]);
+    expect(overlap.aucSe).toBeCloseTo(Math.sqrt(0.125), 8);
+    expect(overlap.aucCi.lower).toBeLessThan(0.75);
+    expect(overlap.aucCi.upper).toBeLessThanOrEqual(1);
+  });
+});
+
+describe('computeWeightedKappa', () => {
+  it('perfect agreement → κ = 1', () => {
+    const r = computeWeightedKappa([[5, 0, 0], [0, 5, 0], [0, 0, 5]], 'quadratic');
+    expect(r.kappa).toBeCloseTo(1, 10);
+  });
+
+  it('2×2 linear-weighted κ equals unweighted Cohen κ (0.7)', () => {
+    // Same table as the 2×2 accuracy test (κ = 0.7).
+    const r = computeWeightedKappa([[90, 20], [10, 80]], 'linear');
+    expect(r.kappa).toBeCloseTo(0.7, 10);
+  });
+
+  it('quadratic-weighted κ matches a hand calculation (0.6667)', () => {
+    // obs Σw·O = 5, exp Σw·E = 15 → κ = 1 − 5/15 = 2/3.
+    const r = computeWeightedKappa([[10, 5, 0], [5, 10, 5], [0, 5, 10]], 'quadratic');
+    expect(r.kappa).toBeCloseTo(2 / 3, 8);
+  });
+
+  it('rejects non-square or empty matrices', () => {
+    expect(() => computeWeightedKappa([[1, 2, 3], [4, 5, 6]])).toThrow();
+    expect(() => computeWeightedKappa([[0, 0], [0, 0]])).toThrow();
   });
 });

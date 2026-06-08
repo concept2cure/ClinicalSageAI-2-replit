@@ -24,7 +24,22 @@
  */
 
 import { normalQuantile } from './normal';
+import { betaQuantile } from './special';
 import { buildProvenance, type StatsProvenance } from './computation-provenance';
+
+/**
+ * Student's t quantile, derived from the inverse regularized incomplete beta:
+ * for X ~ Beta(ν/2, 1/2), t = sign·sqrt(ν(1−x)/x). Used for regression
+ * confidence bounds (EP25). Matches standard tables (t₀.₉₇₅,₁₀ ≈ 2.228).
+ */
+export function studentTQuantile(p: number, nu: number): number {
+  if (p === 0.5) return 0;
+  const upper = p > 0.5;
+  const pp = upper ? p : 1 - p;
+  const x = betaQuantile(2 * (1 - pp), nu / 2, 0.5);
+  const t = Math.sqrt((nu * (1 - x)) / x);
+  return upper ? t : -t;
+}
 
 // ── EP05 · Imprecision (one-way random-effects ANOVA) ────────────────────────
 
@@ -606,6 +621,190 @@ export function assessLinearity(levels: LinearityLevel[]): LinearityResult {
       seed: 0,
       inputs: levels,
       note: 'Linear vs best nonlinear polynomial fit; deviation-from-linearity per level.',
+    }),
+  };
+}
+
+// ── EP25 · Stability / shelf-life (ICH Q1E regression) ───────────────────────
+
+export interface StabilityArgs {
+  /** Stability time points (e.g. months) and the measured attribute value. */
+  points: { time: number; value: number }[];
+  /** Acceptance limit the attribute must not cross. */
+  specLimit: number;
+  /** Which side of the limit matters: 'lower' (degradation) or 'upper'. */
+  direction: 'lower' | 'upper';
+  /** One-sided confidence for the regression bound. Default 0.95. */
+  confidence?: number;
+}
+
+export interface StabilityResult {
+  slope: number;
+  intercept: number;
+  /** Time where the fitted line itself meets the spec (null if it never does). */
+  nominalCrossing: number | null;
+  /** Shelf-life: time where the one-sided confidence bound meets the spec. */
+  shelfLife: number | null;
+  n: number;
+  provenance: StatsProvenance;
+}
+
+/**
+ * CLSI/ICH Q1E shelf-life: regress value on time and find where the one-sided
+ * confidence bound on the mean response crosses the acceptance limit. The bound
+ * is ŷ(t) ∓ t₍conf,n−2₎·s·√(1/n + (t−t̄)²/Sxx); shelf-life is the largest t for
+ * which the attribute is still within spec.
+ */
+export function estimateShelfLife(args: StabilityArgs): StabilityResult {
+  const pts = args.points;
+  const n = pts.length;
+  if (n < 3) throw new Error('EP25 stability requires at least 3 time points.');
+  const conf = args.confidence ?? 0.95;
+  const t = pts.map(p => p.time);
+  const y = pts.map(p => p.value);
+  const fit = linearRegression(t, y);
+  const meanT = t.reduce((s, v) => s + v, 0) / n;
+  const sxx = t.reduce((s, v) => s + (v - meanT) ** 2, 0);
+  const tCrit = studentTQuantile(conf, n - 2);
+
+  // Nominal crossing: where intercept + slope·t = specLimit.
+  const nominalCrossing =
+    fit.slope !== 0 ? (args.specLimit - fit.intercept) / fit.slope : null;
+
+  // One-sided bound that approaches the spec from the in-spec side.
+  const bound = (tt: number): number => {
+    const se = fit.residualSd * Math.sqrt(1 / n + (tt - meanT) ** 2 / sxx);
+    const pred = fit.intercept + fit.slope * tt;
+    return args.direction === 'lower' ? pred - tCrit * se : pred + tCrit * se;
+  };
+  const inSpec = (tt: number) =>
+    args.direction === 'lower' ? bound(tt) >= args.specLimit : bound(tt) <= args.specLimit;
+
+  // Scan forward from t=0 to find where the bound first leaves spec.
+  let shelfLife: number | null = null;
+  if (inSpec(0)) {
+    const horizon = nominalCrossing && nominalCrossing > 0 ? nominalCrossing * 1.5 : Math.max(...t) * 3 || 1;
+    const step = horizon / 10000;
+    let prev = 0;
+    for (let tt = step; tt <= horizon; tt += step) {
+      if (!inSpec(tt)) {
+        shelfLife = prev;
+        break;
+      }
+      prev = tt;
+    }
+    if (shelfLife === null) shelfLife = horizon; // still in spec across the horizon
+  } else {
+    shelfLife = 0;
+  }
+
+  return {
+    slope: fit.slope,
+    intercept: fit.intercept,
+    nominalCrossing,
+    shelfLife,
+    n,
+    provenance: buildProvenance({
+      method: 'ICH Q1E / CLSI EP25 shelf-life',
+      seed: 0,
+      inputs: args,
+      note: 'Regression with one-sided confidence-bound crossing of the spec limit.',
+    }),
+  };
+}
+
+// ── EP12 · Qualitative dose-response (C5–C95 interval) ────────────────────────
+
+export interface QualitativeLevel {
+  concentration: number;
+  /** Number of replicates tested at this concentration. */
+  n: number;
+  /** Number that tested positive. */
+  positives: number;
+}
+
+export interface QualitativeDoseResponseResult {
+  /** Logistic fit logit(p) = a + b·concentration. */
+  intercept: number;
+  slope: number;
+  /** Concentrations at 5%, 50%, 95% positivity. */
+  c5: number;
+  c50: number;
+  c95: number;
+  iterations: number;
+  converged: boolean;
+  provenance: StatsProvenance;
+}
+
+/**
+ * CLSI EP12 qualitative dose-response. Fits a logistic curve to grouped
+ * positive/negative data by IRLS (Newton–Raphson) and reports the C5–C95
+ * interval — the analyte range over which the assay transitions from negative
+ * to positive.
+ */
+export function fitQualitativeDoseResponse(
+  levels: QualitativeLevel[]
+): QualitativeDoseResponseResult {
+  if (levels.length < 2) throw new Error('EP12 requires at least 2 concentration levels.');
+  for (const l of levels) {
+    if (l.n <= 0 || l.positives < 0 || l.positives > l.n) {
+      throw new Error('Each level needs 0 ≤ positives ≤ n and n > 0.');
+    }
+  }
+
+  // IRLS for grouped logistic regression of positivity on concentration.
+  let a = 0;
+  let b = 0;
+  let iterations = 0;
+  let converged = false;
+  for (let iter = 0; iter < 100; iter++) {
+    iterations = iter + 1;
+    // Build the 2×2 Fisher information and the score vector.
+    let g0 = 0;
+    let g1 = 0;
+    let h00 = 0;
+    let h01 = 0;
+    let h11 = 0;
+    for (const l of levels) {
+      const eta = a + b * l.concentration;
+      const p = 1 / (1 + Math.exp(-eta));
+      const w = l.n * p * (1 - p);
+      const resid = l.positives - l.n * p;
+      g0 += resid;
+      g1 += resid * l.concentration;
+      h00 += w;
+      h01 += w * l.concentration;
+      h11 += w * l.concentration * l.concentration;
+    }
+    const det = h00 * h11 - h01 * h01;
+    if (Math.abs(det) < 1e-12) break;
+    const da = (h11 * g0 - h01 * g1) / det;
+    const db = (-h01 * g0 + h00 * g1) / det;
+    a += da;
+    b += db;
+    if (Math.abs(da) < 1e-10 && Math.abs(db) < 1e-10) {
+      converged = true;
+      break;
+    }
+  }
+  if (b === 0) throw new Error('Degenerate fit (zero slope); cannot resolve C5–C95.');
+
+  const logit = (q: number) => Math.log(q / (1 - q));
+  const concAt = (q: number) => (logit(q) - a) / b;
+
+  return {
+    intercept: a,
+    slope: b,
+    c5: concAt(0.05),
+    c50: concAt(0.5),
+    c95: concAt(0.95),
+    iterations,
+    converged,
+    provenance: buildProvenance({
+      method: 'CLSI EP12 qualitative dose-response',
+      seed: 0,
+      inputs: levels,
+      note: 'IRLS logistic fit; C5/C50/C95 by inverting logit(p)=a+b·conc.',
     }),
   };
 }

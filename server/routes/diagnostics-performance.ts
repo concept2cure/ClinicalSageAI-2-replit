@@ -1,8 +1,8 @@
 /**
- * Diagnostics performance API — analytical (CLSI EP05/EP06/EP07/EP09/EP17/EP28)
- * and clinical (2×2 accuracy, ROC/AUC) performance computations for IVD /
- * diagnostic submissions. Pure, deterministic math (no tenant data persisted);
- * every endpoint is role-gated and Zod-validated.
+ * Diagnostics performance API — analytical (CLSI EP05/EP06/EP07/EP09/EP12/EP17/
+ * EP25/EP28) and clinical (2×2 accuracy, ROC/AUC + DeLong CI, weighted κ)
+ * performance computations for IVD / diagnostic submissions. Pure, deterministic
+ * math (no tenant data persisted); every endpoint is role-gated and Zod-validated.
  */
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
@@ -15,8 +15,14 @@ import {
   compareMethods,
   assessInterference,
   estimateReferenceInterval,
+  estimateShelfLife,
+  fitQualitativeDoseResponse,
 } from '../services/stats/analytical-performance';
-import { computeDiagnosticAccuracy, computeRoc } from '../services/stats/clinical-performance';
+import {
+  computeDiagnosticAccuracy,
+  computeRoc,
+  computeWeightedKappa,
+} from '../services/stats/clinical-performance';
 
 const logger = createScopedLogger('diagnostics-performance');
 const router = Router();
@@ -117,6 +123,39 @@ router.post(
   )
 );
 
+router.post(
+  '/analytical/stability',
+  author,
+  handle(
+    z.object({
+      points: z.array(z.object({ time: num, value: num })).min(3),
+      specLimit: num,
+      direction: z.enum(['lower', 'upper']),
+      confidence: num.gt(0).lt(1).optional(),
+    }),
+    input => estimateShelfLife(input)
+  )
+);
+
+router.post(
+  '/analytical/qualitative-dose-response',
+  author,
+  handle(
+    z.object({
+      levels: z
+        .array(
+          z.object({
+            concentration: num,
+            n: z.number().int().positive(),
+            positives: z.number().int().nonnegative(),
+          })
+        )
+        .min(2),
+    }),
+    input => fitQualitativeDoseResponse(input.levels)
+  )
+);
+
 // ── Clinical performance ─────────────────────────────────────────────────────
 
 router.post(
@@ -146,6 +185,18 @@ router.post(
         .min(2),
     }),
     input => computeRoc(input.observations)
+  )
+);
+
+router.post(
+  '/clinical/weighted-kappa',
+  author,
+  handle(
+    z.object({
+      matrix: z.array(z.array(num).min(2)).min(2),
+      weights: z.enum(['linear', 'quadratic']).optional(),
+    }),
+    input => computeWeightedKappa(input.matrix, input.weights ?? 'quadratic')
   )
 );
 

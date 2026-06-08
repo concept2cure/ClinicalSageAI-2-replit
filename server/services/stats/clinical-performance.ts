@@ -10,6 +10,7 @@
  */
 
 import { clopperPearsonInterval } from './special';
+import { normalQuantile } from './normal';
 import { buildProvenance, type StatsProvenance } from './computation-provenance';
 
 export interface ConfusionMatrix {
@@ -157,6 +158,10 @@ export interface RocPoint {
 export interface RocResult {
   /** Area under the ROC curve (Mann–Whitney rank estimate; ties handled). */
   auc: number;
+  /** Standard error of the AUC (DeLong). */
+  aucSe: number;
+  /** Two-sided 95% CI on the AUC (DeLong, clamped to [0,1]). */
+  aucCi: { lower: number; upper: number };
   curve: RocPoint[];
   /** Threshold maximising Youden's J (tpr − fpr) and its operating point. */
   optimalThreshold: number;
@@ -201,6 +206,22 @@ export function computeRoc(observations: ScoredObservation[]): RocResult {
   }
   const auc = (sumRankPos - (positives * (positives + 1)) / 2) / (positives * negatives);
 
+  // DeLong variance via placement values (structural components).
+  const posScores = observations.filter(o => o.positive).map(o => o.score);
+  const negScores = observations.filter(o => !o.positive).map(o => o.score);
+  const psi = (a: number, b: number) => (a > b ? 1 : a === b ? 0.5 : 0);
+  const v10 = posScores.map(x => negScores.reduce((s, y) => s + psi(x, y), 0) / negScores.length);
+  const v01 = negScores.map(y => posScores.reduce((s, x) => s + psi(x, y), 0) / posScores.length);
+  const sampVar = (arr: number[]) =>
+    arr.length > 1 ? arr.reduce((s, v) => s + (v - auc) ** 2, 0) / (arr.length - 1) : 0;
+  const aucVar = sampVar(v10) / positives + sampVar(v01) / negatives;
+  const aucSe = Math.sqrt(aucVar);
+  const z = normalQuantile(0.975);
+  const aucCi = {
+    lower: Math.max(0, auc - z * aucSe),
+    upper: Math.min(1, auc + z * aucSe),
+  };
+
   // ROC curve by sweeping unique score thresholds (predict positive if score ≥ t).
   const thresholds = Array.from(new Set(observations.map(o => o.score))).sort((a, b) => b - a);
   const curve: RocPoint[] = [];
@@ -230,6 +251,8 @@ export function computeRoc(observations: ScoredObservation[]): RocResult {
 
   return {
     auc,
+    aucSe,
+    aucCi,
     curve,
     optimalThreshold,
     optimalTpr,
@@ -237,10 +260,76 @@ export function computeRoc(observations: ScoredObservation[]): RocResult {
     positives,
     negatives,
     provenance: buildProvenance({
-      method: 'ROC / AUC (Mann–Whitney)',
+      method: 'ROC / AUC (Mann–Whitney + DeLong CI)',
       seed: 0,
       inputs: observations,
-      note: 'Rank-based AUC (tie-safe) + threshold-sweep ROC curve + Youden optimum.',
+      note: 'Rank-based AUC (tie-safe), DeLong SE/CI, threshold-sweep ROC, Youden optimum.',
+    }),
+  };
+}
+
+// ── Weighted Cohen's κ (ordinal agreement) ───────────────────────────────────
+
+export interface WeightedKappaResult {
+  /** Weighted agreement coefficient. */
+  kappa: number;
+  weights: 'linear' | 'quadratic';
+  categories: number;
+  provenance: StatsProvenance;
+}
+
+/**
+ * Weighted Cohen's κ for an ordinal k×k agreement matrix (rows = rater A,
+ * columns = rater B). Disagreement weights are linear |i−j|/(k−1) or quadratic
+ * ((i−j)/(k−1))². For k = 2 (or all-diagonal) this reduces to unweighted κ.
+ */
+export function computeWeightedKappa(
+  matrix: number[][],
+  weights: 'linear' | 'quadratic' = 'quadratic'
+): WeightedKappaResult {
+  const k = matrix.length;
+  if (k < 2 || matrix.some(row => row.length !== k)) {
+    throw new Error('Weighted κ requires a square k×k matrix with k ≥ 2.');
+  }
+  let n = 0;
+  const rowSum = new Array(k).fill(0);
+  const colSum = new Array(k).fill(0);
+  for (let i = 0; i < k; i++) {
+    for (let j = 0; j < k; j++) {
+      const c = matrix[i][j];
+      if (!Number.isFinite(c) || c < 0) throw new Error('Matrix cells must be non-negative.');
+      n += c;
+      rowSum[i] += c;
+      colSum[j] += c;
+    }
+  }
+  if (n === 0) throw new Error('Agreement matrix is empty.');
+
+  const w = (i: number, j: number) =>
+    weights === 'linear'
+      ? Math.abs(i - j) / (k - 1)
+      : ((i - j) / (k - 1)) ** 2;
+
+  let obs = 0;
+  let exp = 0;
+  for (let i = 0; i < k; i++) {
+    for (let j = 0; j < k; j++) {
+      const e = (rowSum[i] * colSum[j]) / n;
+      obs += w(i, j) * matrix[i][j];
+      exp += w(i, j) * e;
+    }
+  }
+  const kappa = exp === 0 ? 1 : 1 - obs / exp;
+
+  return {
+    kappa,
+    weights,
+    categories: k,
+    provenance: buildProvenance({
+      method: "Weighted Cohen's κ",
+      seed: 0,
+      inputs: { matrix, weights },
+      note: 'κ_w = 1 − Σw·O / Σw·E with linear/quadratic disagreement weights.',
     }),
   };
 }

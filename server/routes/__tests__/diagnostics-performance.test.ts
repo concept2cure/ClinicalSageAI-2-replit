@@ -73,6 +73,31 @@ describe('analytical endpoints', () => {
     expect(res.status).toBe(200);
     expect(res.body.result.lowerLimit).toBeLessThan(res.body.result.upperLimit);
   });
+
+  it('stability returns slope, nominal crossing, and shelf-life', async () => {
+    const res = await post('/analytical/stability', {
+      points: [0, 1, 2, 3, 4, 5].map(t => ({ time: t, value: 100 - 2 * t })),
+      specLimit: 85,
+      direction: 'lower',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.result.slope).toBeCloseTo(-2, 6);
+    expect(res.body.result.nominalCrossing).toBeCloseTo(7.5, 4);
+  });
+
+  it('qualitative-dose-response returns the C5–C95 interval', async () => {
+    const L = Math.log(0.25 / 0.75);
+    const res = await post('/analytical/qualitative-dose-response', {
+      levels: [
+        { concentration: L, n: 4, positives: 1 },
+        { concentration: 0, n: 4, positives: 2 },
+        { concentration: -L, n: 4, positives: 3 },
+      ],
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.result.c5).toBeLessThan(res.body.result.c95);
+    expect(res.body.result.c50).toBeCloseTo(0, 3);
+  });
 });
 
 describe('clinical endpoint', () => {
@@ -119,6 +144,22 @@ describe('clinical endpoint', () => {
         { score: 1, positive: true },
         { score: 2, positive: true },
       ],
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('weighted-kappa returns the agreement coefficient', async () => {
+    const res = await post('/clinical/weighted-kappa', {
+      matrix: [[90, 20], [10, 80]],
+      weights: 'linear',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.result.kappa).toBeCloseTo(0.7, 8);
+  });
+
+  it('rejects a non-square weighted-kappa matrix (400)', async () => {
+    const res = await post('/clinical/weighted-kappa', {
+      matrix: [[1, 2, 3], [4, 5, 6]],
     });
     expect(res.status).toBe(400);
   });
