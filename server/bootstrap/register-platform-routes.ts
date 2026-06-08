@@ -173,6 +173,18 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     console.warn('⚠️ SSO helper routes not mounted - continuing without SSO helpers');
   }
 
+  // SCIM 2.0 provisioning — mounted OUTSIDE /api (it uses its own bearer-token
+  // auth, not session auth). Inert until SCIM_BEARER_TOKEN/SCIM_ORG_ID are set.
+  try {
+    const scimModule = await import('../routes/scim');
+    const scimRouter = scimModule.default;
+    if (scimRouter && (typeof scimRouter === 'function' || (scimRouter as any).handle)) {
+      app.use('/scim/v2', scimRouter);
+    }
+  } catch {
+    console.warn('⚠️ SCIM routes not mounted - continuing without SCIM provisioning');
+  }
+
   // Global /api auth gate — routes not in the allowlist require session auth.
   // Routes that use their own auth (API keys, webhook signatures, etc.) MUST be listed here.
   app.use('/api', (req: Request, res: Response, next: NextFunction) => {

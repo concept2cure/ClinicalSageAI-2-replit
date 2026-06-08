@@ -134,6 +134,10 @@ const ALLOWLIST_FILES = new Set([
   // tenant key, so it can't be filtered by org before login.
   'server/routes/auth.ts',
   'server/routes/authEnterprise.ts',
+  // SCIM 2.0 provisioning — bearer-token auth into a fixed deployment org
+  // (SCIM_ORG_ID); user-by-email lookup is inherent to provisioning/dedupe,
+  // and all membership/list/get queries ARE org-scoped (organization_id).
+  'server/routes/scim.ts',
   'server/auth.ts',
   'server/middleware/auth.ts',
   // Re-auth gate ONLY: the single un-org-filtered query in this file is the

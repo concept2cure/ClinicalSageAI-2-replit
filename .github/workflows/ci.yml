@@ -52,6 +52,9 @@ jobs:
       - name: Guardrails — password hygiene
         run: npm run ci:password-hygiene
 
+      - name: Guardrails — SAML SSO fail-closed (no auth bypass)
+        run: npm run ci:saml-fail-closed
+
       - name: Guardrails — design-system non-negotiables (Lucide-only, no spring)
         run: npm run ci:design-system
 
@@ -301,6 +304,21 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
+      - name: Generate SBOM (CycloneDX)
+        # Software Bill of Materials (production tree) for vendor security
+        # questionnaires / supply-chain transparency. Published as a build
+        # artifact. Value-add only — never block the security scan on it.
+        continue-on-error: true
+        run: npm run sbom > sbom.cyclonedx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx
+          path: sbom.cyclonedx.json
+          retention-days: 90
+          if-no-files-found: ignore
 
       - name: Run npm audit (with documented false-positive allowlist)
         # The wrapper filters out registry-lag false positives where installed

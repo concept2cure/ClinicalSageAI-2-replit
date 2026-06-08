@@ -8,12 +8,7 @@ import { eq } from 'drizzle-orm';
 import { users, organizationUsers } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger';
 import {
-  buildAuthnRequest,
-  parseAssertion,
-  validateAssertion,
-  assertionToUser,
-  verifySignature,
-  generateSpMetadata,
+  getSamlProvider,
   SAMLValidationError,
   type SAMLConfig,
 } from '../services/saml-provider';
@@ -34,24 +29,26 @@ const isDev = process.env.NODE_ENV === 'development';
 const samlConfigs: Map<string, SAMLConfig> = new Map();
 
 /**
- * Pending AuthnRequest IDs for InResponseTo validation.
- * Maps requestId -> { createdAt, organizationSlug }.
- * Entries expire after 10 minutes.
+ * RelayState carries the org slug (and optional same-origin return path) through
+ * the IdP round-trip. It is UNTRUSTED on return — it only selects which org's IdP
+ * certificate validates the response. A forged response cannot validate against
+ * any org's trust anchor, so RelayState cannot be used to forge a login.
+ * InResponseTo/replay validation is handled inside node-saml (see saml-provider).
  */
-const pendingRequests: Map<string, { createdAt: number; organizationSlug: string }> = new Map();
-const PENDING_REQUEST_TTL_MS = 10 * 60 * 1000;
+function encodeRelayState(state: { org: string; returnTo?: string }): string {
+  return Buffer.from(JSON.stringify(state), 'utf-8').toString('base64url');
+}
 
-/** Clean up expired pending requests periodically */
-function cleanupPendingRequests(): void {
-  const now = Date.now();
-  const keysToDelete: string[] = [];
-  pendingRequests.forEach((entry, id) => {
-    if (now - entry.createdAt > PENDING_REQUEST_TTL_MS) {
-      keysToDelete.push(id);
-    }
-  });
-  for (const key of keysToDelete) {
-    pendingRequests.delete(key);
+function decodeRelayState(relayState: unknown): { org: string; returnTo?: string } {
+  if (typeof relayState !== 'string' || relayState.length === 0) return { org: 'default' };
+  try {
+    const parsed = JSON.parse(Buffer.from(relayState, 'base64url').toString('utf-8'));
+    return {
+      org: typeof parsed?.org === 'string' ? parsed.org : 'default',
+      returnTo: typeof parsed?.returnTo === 'string' ? parsed.returnTo : undefined,
+    };
+  } catch {
+    return { org: 'default' };
   }
 }
 
@@ -100,7 +97,7 @@ function getSamlConfig(orgSlug: string): SAMLConfig | null {
  * Query params:
  *   - org: organization slug (required in multi-tenant mode)
  */
-router.get('/saml/initiate', (req: Request, res: Response) => {
+router.get('/saml/initiate', async (req: Request, res: Response) => {
   try {
     const orgSlug = (req.query.org as string) || 'default';
     const samlConfig = getSamlConfig(orgSlug);
@@ -114,13 +111,14 @@ router.get('/saml/initiate', (req: Request, res: Response) => {
       });
     }
 
-    const { requestId, redirectUrl } = buildAuthnRequest(samlConfig);
+    // Only honor a same-origin return path (prevents open-redirect / token leak).
+    const returnTo = sanitizeReturnTo(req.query.returnTo);
+    const relayState = encodeRelayState({ org: orgSlug, returnTo });
 
-    // Store the request ID for InResponseTo validation
-    pendingRequests.set(requestId, { createdAt: Date.now(), organizationSlug: orgSlug });
-    cleanupPendingRequests();
+    const provider = getSamlProvider(orgSlug, samlConfig);
+    const redirectUrl = await provider.getAuthorizeUrl(relayState);
 
-    logger.info(`SAML SSO initiated for org="${orgSlug}", requestId=${requestId}`);
+    logger.info(`SAML SSO initiated for org="${orgSlug}"`);
 
     return res.redirect(302, redirectUrl);
   } catch (err) {
@@ -132,6 +130,14 @@ router.get('/saml/initiate', (req: Request, res: Response) => {
     });
   }
 });
+
+/** Accept only a relative, same-origin path as a post-login return target. */
+function sanitizeReturnTo(value: unknown): string | undefined {
+  if (typeof value !== 'string' || value.length === 0) return undefined;
+  // Must be a root-relative path with no scheme/host and no protocol-relative form.
+  if (value.startsWith('/') && !value.startsWith('//')) return value;
+  return undefined;
+}
 
 /**
  * POST /api/auth/sso/saml/callback
@@ -157,24 +163,10 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
       });
     }
 
-    // Parse the assertion to determine which org this is for
-    // We need a config to validate, so we try to determine org from the assertion issuer
-    // or from a pending request
-    let orgSlug = 'default';
-    let expectedRequestId: string | undefined;
-
-    // Try to find org from pending requests by checking InResponseTo
-    const responseXml = Buffer.from(samlResponseB64, 'base64').toString('utf-8');
-    const inResponseToMatch = responseXml.match(/InResponseTo="([^"]*)"/);
-    if (inResponseToMatch) {
-      const inResponseTo = inResponseToMatch[1];
-      const pending = pendingRequests.get(inResponseTo);
-      if (pending) {
-        orgSlug = pending.organizationSlug;
-        expectedRequestId = inResponseTo;
-        pendingRequests.delete(inResponseTo);
-      }
-    }
+    // The org is selected from (untrusted) RelayState. This only picks which
+    // org's IdP certificate validates the response; a forged response cannot
+    // validate against any org's trust anchor, so this cannot forge a login.
+    const { org: orgSlug, returnTo } = decodeRelayState(relayState);
 
     const samlConfig = getSamlConfig(orgSlug);
     if (!samlConfig) {
@@ -186,22 +178,15 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
       });
     }
 
-    // Verify signature if IdP certificate is available
-    const signatureValid = verifySignature(samlResponseB64, samlConfig);
-    if (!signatureValid) {
-      logger.warn('SAML Response signature verification failed — proceeding with caution');
-      // Note: In strict production mode, you may want to reject unsigned/invalid responses.
-      // For now we log the warning but continue, as some IdPs sign only the assertion, not the response.
-    }
-
-    // Parse the SAML assertion
-    const assertion = parseAssertion(samlResponseB64, samlConfig);
-
-    // Validate the assertion (timestamps, audience, InResponseTo)
-    validateAssertion(assertion, samlConfig, expectedRequestId);
-
-    // Convert assertion to user profile
-    const samlUser = assertionToUser(assertion);
+    // FAIL CLOSED: real XML-DSig verification (signed assertion required),
+    // audience + InResponseTo enforced. Throws SAMLValidationError on any
+    // missing/invalid signature or forged/expired assertion — there is no
+    // "proceed with caution" path.
+    const provider = getSamlProvider(orgSlug, samlConfig);
+    const samlUser = await provider.validateResponse({
+      SAMLResponse: samlResponseB64,
+      ...(typeof relayState === 'string' ? { RelayState: relayState } : {}),
+    });
 
     if (!samlUser.email) {
       logger.error('SAML assertion did not contain an email address');
@@ -233,11 +218,15 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
 
     logger.info(`SAML SSO login successful for user=${dbUser.email}, org=${organizationId}`);
 
-    // If RelayState is provided, redirect with token in query param
-    if (relayState) {
-      const redirectUrl = new URL(relayState);
-      redirectUrl.searchParams.set('token', token);
-      return res.redirect(302, redirectUrl.toString());
+    // Redirect to a SAME-ORIGIN return path with the token, when one was
+    // requested. RelayState round-trips through the IdP unauthenticated, so the
+    // return path is re-validated here as same-origin; an attacker-supplied
+    // absolute URL is rejected (would otherwise leak the token cross-origin).
+    const safeReturnTo = sanitizeReturnTo(returnTo);
+    if (safeReturnTo) {
+      const params = new URLSearchParams({ token });
+      const sep = safeReturnTo.includes('?') ? '&' : '?';
+      return res.redirect(302, `${safeReturnTo}${sep}${params.toString()}`);
     }
 
     // Otherwise return JSON response
@@ -292,7 +281,7 @@ router.get('/saml/metadata', (req: Request, res: Response) => {
       });
     }
 
-    const metadata = generateSpMetadata(samlConfig);
+    const metadata = getSamlProvider(orgSlug, samlConfig).metadata();
     res.set('Content-Type', 'application/xml');
     return res.send(metadata);
   } catch (err) {

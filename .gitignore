@@ -68,3 +68,6 @@ generated_documents/
 # Tesseract decompressed-data cache (the vendored *.traineddata.gz is tracked)
 /*.traineddata
 tesseract-cache/
+
+# Generated SBOM (produced in CI, published as an artifact)
+sbom.cyclonedx.json

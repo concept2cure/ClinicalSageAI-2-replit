@@ -1,6 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { EventEmitter } from 'events';
-import { installRlsEnforcement, readEnforcementMode } from '../rlsEnforcement';
+import {
+  installRlsEnforcement,
+  readEnforcementMode,
+  assertRlsEnforcementForProduction,
+} from '../rlsEnforcement';
 
 class FakePool extends EventEmitter {
   query = vi.fn(() => Promise.resolve({ rows: [], rowCount: 0 }));
@@ -28,6 +32,41 @@ describe('readEnforcementMode', () => {
 
   it('treats unknown values as off', () => {
     expect(readEnforcementMode({ RLS_ENFORCE: 'maybe' })).toBe('off');
+  });
+});
+
+describe('assertRlsEnforcementForProduction', () => {
+  it('is a no-op (returns mode) outside production', () => {
+    expect(assertRlsEnforcementForProduction({ NODE_ENV: 'development' })).toBe('off');
+    expect(assertRlsEnforcementForProduction({ NODE_ENV: 'test', RLS_ENFORCE: 'shadow' })).toBe(
+      'shadow'
+    );
+  });
+
+  it('returns "on" without warning when enforced in production', () => {
+    expect(assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_ENFORCE: 'on' })).toBe(
+      'on'
+    );
+  });
+
+  it('warns but does not throw when RLS is off in production (default)', () => {
+    expect(() =>
+      assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_ENFORCE: 'off' })
+    ).not.toThrow();
+  });
+
+  it('hard-fails in production when RLS_REQUIRE_ENFORCE=true and RLS is off', () => {
+    expect(() =>
+      assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_REQUIRE_ENFORCE: 'true' })
+    ).toThrow(/FAIL-CLOSED/);
+    // shadow is still "not on" → also blocked under the opt-in flag.
+    expect(() =>
+      assertRlsEnforcementForProduction({
+        NODE_ENV: 'production',
+        RLS_ENFORCE: 'shadow',
+        RLS_REQUIRE_ENFORCE: 'true',
+      })
+    ).toThrow(/FAIL-CLOSED/);
   });
 });
 
