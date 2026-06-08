@@ -69,7 +69,7 @@ The takeaway for sales/security engineering: **we win on architecture and AI gov
 
 **Still open (follow-up):**
 - **Live-IdP interop validation** against Okta / Entra ID / Ping (the unit tests prove fail-closed but do not exercise a real signed assertion end-to-end). Recommend a staging IdP integration test before GA.
-- **SCIM** provisioning/deprovisioning — enterprise IdP teams expect it; usual follow-on questionnaire line.
+- **SCIM** provisioning/deprovisioning — ✅ **core landed in this PR** (`server/routes/scim.ts`, mounted at `/scim/v2`): bearer-token auth, Users list/create/get/replace/patch, and the **deprovision/offboarding path** (PATCH `active:false` / DELETE → deactivate), tenant-scoped to a configured `SCIM_ORG_ID`. Groups + multi-org SCIM tokens are the follow-on.
 - **Shared InResponseTo cache (Redis)** for multi-instance HA (node-saml's default request cache is per-process; single-instance/sticky routing is fine until then).
 
 ### 3.2 🟠 HIGH — Third-party security attestations not evidenced
@@ -156,7 +156,7 @@ Ratings are A (client-CSO-ready) → C (questionnaire risk). "Enforced" means a 
 | **P0** | Confirm/publish SOC 2 Type II (or Type I + bridge) + pen-test summary (§3.2) | Compliance | Calendar | trust center |
 | ~~P1~~ ✅ | Audit-before-delete (fail-closed, pre-image snapshot) for `ind_applications`/`coauthor_documents`/`authoring_documents` (§3.3) — **landed in this PR**; soft-delete read-filtering is the deferred follow-up | Eng | done | `check-regulated-delete-audit` allowlist = 0 ✅ |
 | ~~P1~~ ◑ | §3.4: **SBOM landed** (CycloneDX artifact); secret scanning already present (GitGuardian) and the HIGH `tmp` advisory already justified-allowlisted — both corrected. **Remaining:** make Trivy gating once a clean baseline is confirmed | DevSecOps | partial | SBOM artifact ✅ |
-| **P1** | Add SCIM provisioning; org-default enforce-MFA | Eng | ~1 wk | — |
+| ~~P1~~ ◑ | SCIM provisioning/deprovisioning ✅ **core landed** (`/scim/v2` Users + deactivate); org-default enforce-MFA still open | Eng | partial | contract test ✅ |
 | **P2** | Confirm classifier gates AI placement; finish gateway-bypass burn-down → `--strict` | Eng (AI) | ~1 wk | `check-gateway-bypass --strict` |
 | **P2** | ~~RLS boot assertion~~ ✅ **landed** (loud prod warning if `RLS_ENFORCE`≠on; opt-in hard-fail via `RLS_REQUIRE_ENFORCE`); ~~Sentry `beforeSend` PII scrub~~ ✅ **landed**; remaining: flip RLS default to on (needs verified rollout), KMS signer wiring, retention/DR SOP | Eng/Compliance | partial | — |
 | **P3** | Fine-grained (resource-level) RBAC; column-level encryption for PII; mTLS between services | Eng | Roadmap | — |
