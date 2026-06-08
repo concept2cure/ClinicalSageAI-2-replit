@@ -33,7 +33,6 @@ router.use(express.json({ type: ['application/json', 'application/scim+json'], l
 const USER_SCHEMA = 'urn:ietf:params:scim:schemas:core:2.0:User';
 const LIST_SCHEMA = 'urn:ietf:params:scim:api:messages:2.0:ListResponse';
 const ERROR_SCHEMA = 'urn:ietf:params:scim:api:messages:2.0:Error';
-const PATCH_SCHEMA = 'urn:ietf:params:scim:api:messages:2.0:PatchOp';
 
 interface ScimConfig {
   token: string;
