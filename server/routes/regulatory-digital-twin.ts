@@ -603,7 +603,7 @@ const DEFICIENCY_PATTERNS: Record<string, DeficiencyItem[]> = {
 // Core Simulation Engine
 // ═══════════════════════════════════════════════════════════════════════════════
 
-class RegulatoryDigitalTwin {
+export class RegulatoryDigitalTwin {
   private simulationId: string;
   private createdAt: string;
 
