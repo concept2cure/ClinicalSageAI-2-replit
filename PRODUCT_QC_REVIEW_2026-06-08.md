@@ -94,17 +94,25 @@ change in compliance-critical code, so not done unilaterally without a DB):**
    `IMMUTABLE_ROUTE_PATTERNS` only guards `/api/audit/*`. Regulated-data DELETEs
    elsewhere are not policy-blocked. Fix is a policy decision (expand patterns
    vs enforce soft-delete everywhere) — operator call.
-4. **HIGH — a second, non-persistent audit logger
-   (`services/audit/auditLogger.ts`):** `logAuditEvent` (and `logDataChange` /
-   `logSecurityEvent` / `logExport`) push to an **in-memory array**
-   (`auditStore`, "replace with database in production"), not a table — ~28 call
-   sites (incl. routes `se-matrix`, `defense-packet`) record audit events that
-   are lost on restart and are neither queryable nor tamper-evident. The c2c
-   governed flow (`writeMutation`) and `regulatoryAuditLogs`/tamper-proof-log are
-   the persistent mechanisms; these surfaces must be migrated onto one of them.
-   This also blocks a clean fix of #1/#2 — there is no safe *generic* persistent
-   logger to drop into the delete handlers; `writeMutation` is coupled to the
-   c2c typed-target resolver.
+4. ~~**HIGH — a second, non-persistent audit logger
+   (`services/audit/auditLogger.ts`):**~~ ✅ **FIXED.** `logAuditEvent` (and
+   `logDataChange` / `logSecurityEvent` / `logExport` / the `AuditLogger` class)
+   pushed only to an **in-memory array** (`auditStore`, "replace with database in
+   production"), so ~28 call sites (incl. routes `se-matrix`, `defense-packet`)
+   recorded audit events that were lost on restart and were neither queryable nor
+   tamper-evident — while the class docstring falsely claimed a "single signed,
+   21 CFR Part 11-compliant pipeline." **`logAuditEvent` now forwards every event
+   through the canonical `auditService`** (`audit_logs` Drizzle table +
+   tamper-proof hash-chain log); the array is retained only as a bounded in-memory
+   **query cache**, no longer the system of record. The forward is best-effort
+   (wrapped in try/catch — an audit-store outage logs but never breaks the user
+   action it records) and the misleading docstring was corrected. Contract test
+   `auditlogger-persistence.contract.test.ts` (5 tests, no DB) locks the
+   forwarding, the field mapping (category-prefixed action, resourceType→category
+   fallback, previous/new-value carry), the class delegate, and the
+   never-breaks-the-caller guarantee. This is the **first concrete step of the
+   audit-store consolidation** recommendation — one more fragmented store now
+   drains into a persistent canonical one.
 
 **Durable guard — added (static, no DB needed):**
 `scripts/ci/check-regulated-delete-audit.mjs` (wired into CI Lint) fails if a

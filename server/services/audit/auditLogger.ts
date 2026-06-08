@@ -9,6 +9,7 @@
  */
 
 import { createScopedLogger } from '../../utils/logger';
+import auditService from '../auditService';
 
 const logger = createScopedLogger('audit');
 
@@ -46,7 +47,11 @@ export interface AuditEvent {
   errorMessage?: string;
 }
 
-// In-memory audit store (replace with database in production)
+// In-memory query cache (fast reads for queryAuditEvents/getResourceAuditTrail).
+// Durability does NOT depend on this array: every event is also forwarded to the
+// persistent auditService (audit_logs Drizzle table + tamper-proof hash-chain
+// log). The array is bounded and is lost on restart — it is a cache, not the
+// system of record.
 const auditStore: AuditEvent[] = [];
 
 /**
@@ -66,7 +71,7 @@ export async function logAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>)
     timestamp: new Date(),
   };
 
-  // Store event
+  // Cache in memory for fast queries
   auditStore.push(auditEvent);
 
   // Log to console for debugging
@@ -77,9 +82,39 @@ export async function logAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>)
     success: event.success,
   });
 
-  // Trim store if too large (keep last 10000 events in memory)
+  // Trim cache if too large (keep last 10000 events in memory)
   if (auditStore.length > 10000) {
     auditStore.splice(0, auditStore.length - 10000);
+  }
+
+  // Persist through the canonical store so the event survives a restart and is
+  // queryable + tamper-evident (21 CFR Part 11 §11.10(e)). auditService.logAction
+  // writes audit_logs + the tamper-proof hash-chain log. The forward is
+  // best-effort — a persistence failure is logged but never propagated to the
+  // caller (an audit-trail outage must not break the user action it records).
+  // resourceType is required there; fall back to the event category when a
+  // resource is not named.
+  try {
+    await auditService.logAction({
+      action: `${event.category}.${event.action}`,
+      resourceType: event.resourceType ?? event.category,
+      resourceId: event.resourceId,
+      organizationId: event.organizationId,
+      userId: event.userId,
+      ipAddress: event.ipAddress,
+      userAgent: event.userAgent,
+      details: {
+        ...(event.metadata ?? {}),
+        category: event.category,
+        severity: event.severity,
+        success: event.success,
+        ...(event.previousValue !== undefined ? { previousValue: event.previousValue } : {}),
+        ...(event.newValue !== undefined ? { newValue: event.newValue } : {}),
+        ...(event.errorMessage ? { errorMessage: event.errorMessage } : {}),
+      },
+    });
+  } catch (err) {
+    logger.error('Failed to persist audit event to canonical store', err);
   }
 
   return auditEvent.id;
@@ -284,8 +319,9 @@ export interface AuditLogInput {
 /**
  * Instantiable audit-logging facade for service classes that prefer a
  * `new AuditLogger().log({ ... })` call over the functional `logAuditEvent`
- * API. Delegates to {@link logAuditEvent} so every record flows through the
- * single signed, 21 CFR Part 11-compliant pipeline.
+ * API. Delegates to {@link logAuditEvent}, which both caches the event in memory
+ * and persists it through the canonical auditService (audit_logs + tamper-proof
+ * hash-chain log) for 21 CFR Part 11 durability.
  */
 export class AuditLogger {
   async log(input: AuditLogInput): Promise<string> {
