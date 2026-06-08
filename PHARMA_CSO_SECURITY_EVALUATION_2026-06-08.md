@@ -158,7 +158,7 @@ Ratings are A (client-CSO-ready) → C (questionnaire risk). "Enforced" means a 
 | ~~P1~~ ◑ | §3.4: **SBOM landed** (CycloneDX artifact); secret scanning already present (GitGuardian) and the HIGH `tmp` advisory already justified-allowlisted — both corrected. **Remaining:** make Trivy gating once a clean baseline is confirmed | DevSecOps | partial | SBOM artifact ✅ |
 | **P1** | Add SCIM provisioning; org-default enforce-MFA | Eng | ~1 wk | — |
 | **P2** | Confirm classifier gates AI placement; finish gateway-bypass burn-down → `--strict` | Eng (AI) | ~1 wk | `check-gateway-bypass --strict` |
-| **P2** | RLS enforce-on by default + boot assertion; KMS signer wiring; ~~Sentry `beforeSend` PII scrub~~ ✅ **landed**; retention/DR SOP | Eng/Compliance | partial | — |
+| **P2** | ~~RLS boot assertion~~ ✅ **landed** (loud prod warning if `RLS_ENFORCE`≠on; opt-in hard-fail via `RLS_REQUIRE_ENFORCE`); ~~Sentry `beforeSend` PII scrub~~ ✅ **landed**; remaining: flip RLS default to on (needs verified rollout), KMS signer wiring, retention/DR SOP | Eng/Compliance | partial | — |
 | **P3** | Fine-grained (resource-level) RBAC; column-level encryption for PII; mTLS between services | Eng | Roadmap | — |
 
 ---
