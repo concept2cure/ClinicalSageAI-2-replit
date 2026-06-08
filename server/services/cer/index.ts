@@ -64,9 +64,20 @@ export class UnifiedCERService {
     };
   }
 
-  async validateReport(reportId: string): Promise<{ valid: boolean; issues: string[] }> {
-    // Validation logic
-    return { valid: true, issues: [] };
+  async validateReport(_reportId: string): Promise<{ valid: boolean; issues: string[] }> {
+    // No real CER validation (MEDDEV 2.7/1 rev 4, Annex I GSPR, Annex XIV
+    // conformity) is implemented, and this facade is not wired to a validation
+    // engine. Returning { valid: true } would falsely certify an unvalidated
+    // regulated report as conformant — a dangerous false positive. Fail closed:
+    // report invalid with an explicit reason until real validation exists.
+    return {
+      valid: false,
+      issues: [
+        'CER validation is not implemented. UnifiedCERService is not wired to a ' +
+          'validation engine (MEDDEV 2.7/1 rev 4 / Annex I GSPR / Annex XIV), so ' +
+          'this report cannot be certified valid.',
+      ],
+    };
   }
 }
 
