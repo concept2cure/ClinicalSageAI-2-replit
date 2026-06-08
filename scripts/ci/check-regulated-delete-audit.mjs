@@ -9,10 +9,11 @@
  * land. It does not assert ordering/transactionality (a separate concern); it
  * asserts an audit call exists.
  *
- * The currently-unaudited deletes are allow-listed below with a justification
- * (they are operator-tracked: a soft-delete migration + audit is pending — see
- * PRODUCT_QC_REVIEW Part 11 #1/#5). This gate stops the gap from widening while
- * that work is scheduled.
+ * The allow-list below is now empty: every regulated-table delete is positively
+ * audited, so this is a pure positive-coverage guard — any new unaudited
+ * regulated delete is a hard CI failure. New allow-list entries should be added
+ * only with a justification (see PRODUCT_QC_REVIEW Part 11); the goal is to keep
+ * it empty.
  *
  * Exit codes: 0 = clean, 1 = a new unaudited regulated delete was found.
  * Usage: node scripts/ci/check-regulated-delete-audit.mjs [--json]
@@ -38,19 +39,15 @@ const REGULATED = [
   ['indApplications', 'ind_applications'], // IND = regulated FDA submission record
 ];
 
+// Require an actual call/statement, not a bare word in a comment, so a comment
+// mentioning "auditService" near an unaudited delete cannot mask the gap.
 const AUDIT_RE =
-  /\b(writeMutation|logAuditEntry|recordGovernedAction|logAuditEvent|recordGovernedDecision|auditService|logRegulatedDeletion)\b|INSERT\s+INTO\s+audit_events\b/i;
+  /\b(writeMutation|logAuditEntry|recordGovernedAction|logAuditEvent|recordGovernedDecision|logRegulatedDeletion)\s*\(|\bauditService\.|INSERT\s+INTO\s+audit_events\b/i;
 
-// Known-unaudited regulated deletes, operator-tracked (PRODUCT_QC_REVIEW Part 11).
-// Keyed by route file (each holds a single regulated-delete handler).
-const ALLOWLIST = {
-  'server/routes/ectd-documents.ts':
-    'coauthor_documents hard-delete; soft-delete migration + audit pending (Part 11 #1)',
-  'server/routes/coauthor.ts':
-    'coauthor_documents hard-delete; soft-delete migration + audit pending (Part 11 #1)',
-  'server/routes/authoring.router.ts':
-    'authoring_documents UAT-cleanup hard-delete; audit pending (Part 11 #5)',
-};
+// Operator-tracked unaudited regulated deletes (PRODUCT_QC_REVIEW Part 11).
+// Empty — every regulated-table delete is now positively audited. New entries
+// should be added only with a justification; the goal is to keep this empty.
+const ALLOWLIST = {};
 
 const WINDOW = 25; // lines around a delete to search for an audit call
 

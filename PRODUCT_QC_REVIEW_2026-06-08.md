@@ -63,11 +63,16 @@ Environment caveat: no Neon DB and no deploy here, so fixes are verified by
 
 **Real gaps — documented for the operator (each needs a migration / transaction
 change in compliance-critical code, so not done unilaterally without a DB):**
-1. **CRITICAL — hard-delete without audit, `routes/ectd-documents.ts:~327`:**
-   `DELETE` on `coauthor_documents` (regulated eCTD docs) with no audit row and
-   no soft-delete (violates §11.10(e)). *This is the known-deferred QA_REPORT
-   item #14.* Fix: add `deleted_at` to `coauthor_documents` (migration), switch
-   to soft-delete, audit before the write, filter reads on `deleted_at IS NULL`.
+1. ◑ **Audit gap closed (soft-delete still pending) — `coauthor_documents`:**
+   both routes that hard-delete regulated eCTD documents — `ectd-documents.ts`
+   and `coauthor.ts` — previously deleted with **no audit** (§11.10(e),
+   QA_REPORT #14). ✅ Both now delete and write an `audit_events` row **in the
+   same transaction** (atomic, fail-closed), via the proven `transaction()` +
+   `audit_events` pattern; removed from the gate allow-list (positively
+   enforced). Contract test `coauthor-document-delete-audit.contract.test.ts`
+   (6 tests, no DB). ⏭ The remaining enhancement is **soft-delete** (add
+   `deleted_at`, retain the row, filter reads) — a schema migration, still
+   operator-track; the audit gap itself is now closed.
 2. ✅ **Fixed — fire-and-forget audit on `routes/c2c/documents.ts` mutations:**
    both the evidence **delete** (`:560`) and the section **transition** (`:452`)
    recorded the audit *after* the mutation, non-awaited, with a swallowed error
@@ -89,30 +94,43 @@ change in compliance-critical code, so not done unilaterally without a DB):**
    `IMMUTABLE_ROUTE_PATTERNS` only guards `/api/audit/*`. Regulated-data DELETEs
    elsewhere are not policy-blocked. Fix is a policy decision (expand patterns
    vs enforce soft-delete everywhere) — operator call.
-4. **HIGH — a second, non-persistent audit logger
-   (`services/audit/auditLogger.ts`):** `logAuditEvent` (and `logDataChange` /
-   `logSecurityEvent` / `logExport`) push to an **in-memory array**
-   (`auditStore`, "replace with database in production"), not a table — ~28 call
-   sites (incl. routes `se-matrix`, `defense-packet`) record audit events that
-   are lost on restart and are neither queryable nor tamper-evident. The c2c
-   governed flow (`writeMutation`) and `regulatoryAuditLogs`/tamper-proof-log are
-   the persistent mechanisms; these surfaces must be migrated onto one of them.
-   This also blocks a clean fix of #1/#2 — there is no safe *generic* persistent
-   logger to drop into the delete handlers; `writeMutation` is coupled to the
-   c2c typed-target resolver.
+4. ~~**HIGH — a second, non-persistent audit logger
+   (`services/audit/auditLogger.ts`):**~~ ✅ **FIXED.** `logAuditEvent` (and
+   `logDataChange` / `logSecurityEvent` / `logExport` / the `AuditLogger` class)
+   pushed only to an **in-memory array** (`auditStore`, "replace with database in
+   production"), so ~28 call sites (incl. routes `se-matrix`, `defense-packet`)
+   recorded audit events that were lost on restart and were neither queryable nor
+   tamper-evident — while the class docstring falsely claimed a "single signed,
+   21 CFR Part 11-compliant pipeline." **`logAuditEvent` now forwards every event
+   through the canonical `auditService`** (`audit_logs` Drizzle table +
+   tamper-proof hash-chain log); the array is retained only as a bounded in-memory
+   **query cache**, no longer the system of record. The forward is best-effort
+   (wrapped in try/catch — an audit-store outage logs but never breaks the user
+   action it records) and the misleading docstring was corrected. Contract test
+   `auditlogger-persistence.contract.test.ts` (5 tests, no DB) locks the
+   forwarding, the field mapping (category-prefixed action, resourceType→category
+   fallback, previous/new-value carry), the class delegate, and the
+   never-breaks-the-caller guarantee. This is the **first concrete step of the
+   audit-store consolidation** recommendation — one more fragmented store now
+   drains into a persistent canonical one.
 
 **Durable guard — added (static, no DB needed):**
 `scripts/ci/check-regulated-delete-audit.mjs` (wired into CI Lint) fails if a
 DELETE on a regulated table (`coauthor_documents`, `c2c_document_*`,
-`authoring_documents`, `ind_applications`) has no audit call nearby. The
-currently-unaudited deletes are allow-listed as operator-tracked, so the gate
-blocks the gap from **widening** while the soft-delete migration is scheduled.
-Two sites the swarm missed were found by this gate's scan: `coauthor.ts:237`
-(`coauthor_documents`, allow-listed) and — notably — `ind.ts:266`
-(`ind_applications`), a hard-delete of a regulated **IND/FDA submission record**
-with no audit at all. ✅ **`ind.ts` is now fixed** (below) and recognised by the
-gate as positively audited (no allow-list); the gate's audit-signal set was
-extended to count a raw `INSERT INTO audit_events`.
+`authoring_documents`, `ind_applications`) has no audit call nearby. Two sites
+the swarm missed were found by this gate's scan: `coauthor.ts:237`
+(`coauthor_documents`) and — notably — `ind.ts:266` (`ind_applications`), a
+hard-delete of a regulated **IND/FDA submission record** with no audit at all.
+
+✅ **100% regulated-delete audit coverage reached — the allow-list is now empty.**
+Every regulated-table delete the gate scans (`ind_applications`,
+`coauthor_documents` ×2 routers, the `c2c_documents` family, `authoring_documents`)
+is positively audited, not merely allow-listed. The gate is therefore a pure
+positive-coverage guard: any new unaudited regulated delete is a hard CI failure.
+The gate's audit-signal regex was also **hardened** to require an actual call
+(`fn(` / `auditService.` method dot / `INSERT INTO audit_events`) rather than a
+bare word — verified by a negative test: commenting-out or renaming the real
+audit call now flags the delete (previously a comment mention could mask the gap).
 
 ### ✅ Fixed — IND application delete now audited (architecture call made)
 
@@ -122,6 +140,22 @@ table **in the same transaction** (atomic, fail-closed — an audit failure roll
 the delete back). Contract test
 `ind-application-delete-audit.contract.test.ts` (3 tests, no DB) locks the
 order, the rollback-on-audit-failure, and the non-draft guard.
+
+**Same pattern applied across every regulated-delete handler.** Following the
+IND fix, the audit-in-transaction pattern was carried to the remaining regulated
+deletes: `coauthor_documents` (both `ectd-documents.ts` and `coauthor.ts` — raw
+`DELETE … RETURNING` + `INSERT INTO audit_events` in one `transaction()`,
+fail-closed), the `c2c_documents` family (delete / transition / evidence-link via
+`writeMutation` / `recordGovernedAction` inside the existing transaction), and
+finally `authoring_documents` (the admin UAT-cleanup delete in
+`authoring.router.ts` — `auditService.logAction('authoring_document.deleted')`
+before the delete; `auditService` persists to `audit_logs` + the tamper-proof
+hash-chain log and is best-effort by design). Each non-trivial handler is locked
+by a no-DB contract test (`*-audit-order` / `*-delete-audit` in
+`server/__tests__/security/`). The `authoring` UAT path is gate-enforced only:
+it is an admin-token-gated, `UAT-`scoped cleanup route (not a tenant-facing
+mutation), so a dedicated test against the 900-line multer/jose/pdf-lib router
+was not worth its cost — the static gate guarantees the audit call stays present.
 
 **Audit-store choice (the green-lit architecture call):** I used `audit_events`
 (public, trigger-computed hash chain + immutability migration) — the most robust
@@ -191,8 +225,17 @@ command palette, scope switcher.
 | `@typescript-eslint/no-floating-promises` (baseline-gated) | recommended — real gap in this async-heavy server; surfaces a large baseline, so introduce baselined, not big-bang |
 
 ## Open items for the owner (prioritized)
-1. Part 11 #1 — `coauthor_documents` soft-delete + audit (migration). *Highest.*
-2. Part 11 #2 — audit-in-transaction for `c2c/documents` evidence delete.
+1. Part 11 — **audit-store consolidation** (the architecture recommendation):
+   collapse the ≥5 fragmented stores onto one canonical chained, queryable trail
+   and migrate the in-memory `auditLogger` stub (#4) off its lossy array. *Highest
+   — needs DB/schema + a migration plan.*
+2. Part 11 — `coauthor_documents` **soft-delete** migration. Deletes are now
+   audited (✅ done), but a soft-delete (tombstone) would preserve the record
+   itself, not just the audit row — the stronger Part 11 posture.
 3. Part 11 #3 — immutability-policy scope decision.
 4. Design — tokenize the hardcoded-hex surface; fix + wire the token-cascade gate.
 5. Correctness — project-settings atomic update; statistics error-shape.
+
+*(Resolved since first draft: every regulated-delete handler is now positively
+audited — IND, `coauthor_documents` ×2, the `c2c_documents` family, and
+`authoring_documents` — and the gate allow-list is empty.)*
