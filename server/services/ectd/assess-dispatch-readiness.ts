@@ -36,6 +36,10 @@ export interface DispatchReadinessAssessment {
   /** Authoritative, server-computed gate inputs. */
   validationErrors: number;
   unacknowledgedShadowCriticals: number;
+  /** Completed Shadow Review runs for this sequence. */
+  shadowReviewRunCount: number;
+  /** Gate clear but no Shadow Review has run — dispatch allowed, never reviewed. */
+  shadowReviewMissing: boolean;
   /** Hard gate verdict over the server-computed inputs. */
   gate: DispatchGateResult;
   /** Full structural breakdown (errors + non-blocking warnings/infos). */
@@ -123,6 +127,22 @@ export async function assessSequenceDispatchReadiness(
 
   const unacknowledgedShadowCriticals = criticalCount ?? 0;
 
+  // 4b. Has this sequence ever been Shadow-Reviewed? Zero open criticals means
+  //     nothing different whether the dossier is clean OR was never reviewed —
+  //     surface that blind spot so a never-reviewed dossier isn't dispatched blind.
+  const [{ value: shadowRunCount }] = await db
+    .select({ value: sql<number>`count(*)::int` })
+    .from(shadowReviewRuns)
+    .where(
+      and(
+        eq(shadowReviewRuns.sequenceId, sequenceId),
+        eq(shadowReviewRuns.organizationId, organizationId),
+        eq(shadowReviewRuns.status, 'complete'),
+        isNull(shadowReviewRuns.deletedAt)
+      )
+    );
+  const shadowReviewRunCount = shadowRunCount ?? 0;
+
   // 5. Hard gate over the server-computed inputs.
   const gate = evaluateDispatchGate({
     validationErrors: readiness.errors,
@@ -135,6 +155,10 @@ export async function assessSequenceDispatchReadiness(
     sequenceStatus: sequence.status,
     validationErrors: readiness.errors,
     unacknowledgedShadowCriticals,
+    shadowReviewRunCount,
+    /** True when the gate is clear but no Shadow Review has run — dispatch is
+     *  permitted, but the dossier was never adversarially reviewed. */
+    shadowReviewMissing: gate.cleared && shadowReviewRunCount === 0,
     gate,
     readiness,
     leafCount: leaves.length,

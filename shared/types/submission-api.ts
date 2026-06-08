@@ -270,6 +270,10 @@ export interface DispatchReadinessResponse {
   validationErrors: number;
   /** Open critical Shadow Review findings counted from the database. */
   unacknowledgedShadowCriticals: number;
+  /** Completed Shadow Review runs for this sequence. */
+  shadowReviewRunCount: number;
+  /** Gate clear but no Shadow Review has run — dispatch allowed, never reviewed. */
+  shadowReviewMissing: boolean;
   /** Hard gate verdict over the server-computed inputs. */
   gate: { cleared: boolean; blockers: string[] };
   readiness: {
