@@ -1,0 +1,39 @@
+{
+  "$comment": "Training config scaffold for the owned regulatory embedder/reranker. Consumed by the out-of-band training harness (not CI). See scripts/ml/README.md.",
+  "model": {
+    "name": "c2c-regulatory-embedder",
+    "base": "BAAI/bge-large-en-v1.5",
+    "dimensions": 1024,
+    "note": "Pick a base whose output dimension matches the target corpus in server/services/embedding-corpus-policy.ts, or project to it. 1536d corpora → use a 1536d base or add a projection head; 3072d corpora → text-embedding-3-large-class base."
+  },
+  "data": {
+    "sources": [
+      "csrs/",
+      "regulatory_data/",
+      "knowledge_entries (rejection patterns + guidance)"
+    ],
+    "format": "triples: {query, positive_passage, hard_negatives[]}",
+    "deidentify": true
+  },
+  "training": {
+    "objective": "info_nce_contrastive",
+    "batch_size": 64,
+    "epochs": 3,
+    "learning_rate": 2e-5,
+    "hard_negative_mining": "bm25_top_k_then_dense"
+  },
+  "reranker": {
+    "enabled": true,
+    "type": "cross_encoder",
+    "base": "BAAI/bge-reranker-large"
+  },
+  "eval": {
+    "harness": "server/eval/rag/",
+    "acceptance": "must beat OpenAI text-embedding-3-small/large baseline on retrieval hit-rate and faithfulness before promotion"
+  },
+  "serve": {
+    "runtime": "text-embeddings-inference | vllm",
+    "api": "openai_compatible /v1/embeddings",
+    "wire_via": "EMBEDDING_PROVIDER=local + EMBEDDING_LOCAL_BASE_URL + EMBEDDING_LOCAL_MODEL"
+  }
+}

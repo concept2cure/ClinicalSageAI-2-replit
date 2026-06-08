@@ -129,6 +129,56 @@ export const APPROVED_MODELS: ApprovedModel[] = [
     evalReference: 'Gateway fallback law.',
     lastReviewed: '2026-06-03',
   },
+  // ── Private-cloud + self-hosted substrates ─────────────────────────────────
+  // Same Claude/GPT models as the shared-frontier entries, deployed in a
+  // tenant's own cloud account (BAA / zero-retention / regional residency) or
+  // self-hosted (air-gapped). Pinned here so a substrate-specific model id
+  // cannot be swapped without governance review.
+  {
+    id: 'claude-opus-4-bedrock',
+    pinnedVersion: 'anthropic.claude-opus-4-7',
+    provider: 'bedrock',
+    role: 'primary',
+    rationale: 'Flagship Claude in the tenant AWS account — primary high-risk authoring/review path for BAA + zero-retention customers.',
+    evalReference: 'Same model weights as claude-opus-4 (first-party); server/eval/rag/. Region/ZDR governed by providers/placement.ts.',
+    lastReviewed: '2026-06-08',
+  },
+  {
+    id: 'claude-sonnet-4-bedrock',
+    pinnedVersion: 'anthropic.claude-sonnet-4-6',
+    provider: 'bedrock',
+    role: 'fallback',
+    rationale: 'Lower-cost private-cloud Claude fallback below Opus for BAA/ZDR customers.',
+    evalReference: 'Same weights as claude-sonnet-4; gateway fallback law.',
+    lastReviewed: '2026-06-08',
+  },
+  {
+    id: 'claude-opus-4-vertex',
+    pinnedVersion: 'claude-opus-4-7',
+    provider: 'vertex',
+    role: 'fallback',
+    rationale: 'Flagship Claude in the tenant GCP project — regional data-residency path (EU/APAC) for customers on Google Cloud.',
+    evalReference: 'Same weights as claude-opus-4; residency governed by providers/placement.ts.',
+    lastReviewed: '2026-06-08',
+  },
+  {
+    id: 'gpt-4o-azure',
+    pinnedVersion: 'gpt-4o',
+    provider: 'azure',
+    role: 'fallback',
+    rationale: 'GPT-4o in the tenant Azure estate — private-cloud path for Microsoft-shop / enterprise customers.',
+    evalReference: 'Same model as gpt-4o (first-party); abuse-monitoring opt-out is an Azure-side control.',
+    lastReviewed: '2026-06-08',
+  },
+  {
+    id: 'local-default',
+    pinnedVersion: 'local-default',
+    provider: 'local',
+    role: 'fallback',
+    rationale: 'Self-hosted open-weight model (vLLM/LiteLLM) — the only air-gappable substrate, for tenants who cannot send data to any third party. Lower quality; intended for non-high-risk tasks and offline deployments. The concrete weights are resolved by the self-hosted server / LiteLLM model map.',
+    evalReference: 'Pending per-deployment eval; not approved for high-risk regulatory drafting until evaluated against server/eval/rag/.',
+    lastReviewed: '2026-06-08',
+  },
 ];
 
 /** Minimal fact about a model as it exists in the live gateway registry. */

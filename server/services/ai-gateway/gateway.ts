@@ -32,6 +32,17 @@ import type {
 } from './types';
 import { GatewayAuditLogger } from './audit';
 import { GatewayPolicyEngine } from './policy';
+import { CLOUD_MODELS } from './providers/cloud-models';
+import {
+  createBedrockClient,
+  createVertexClient,
+  createAzureClient,
+  createLocalClient,
+} from './providers/clients';
+import {
+  resolvePlacement,
+  isPlacementCompliant,
+} from './providers/placement';
 import { createScopedLogger } from '../../utils/logger.js';
 const log = createScopedLogger('ai-gateway');
 
@@ -207,6 +218,10 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     capabilities: ['chat', 'general'],
     enabled: true,
   },
+  // Private-cloud (Bedrock/Vertex/Azure) + self-hosted (local) substrates.
+  // Always present in the static registry so the approved-models drift gate can
+  // pin them; enabled at runtime only when their provider env is configured.
+  ...CLOUD_MODELS,
 ];
 
 // Task → preferred provider order
@@ -294,6 +309,11 @@ export class AIGateway {
   private openaiClient: any = null;
   private anthropicClient: any = null;
   private moonshotClient: any = null;
+  // Private-cloud + self-hosted substrate clients.
+  private bedrockClient: any = null;
+  private vertexClient: any = null;
+  private azureClient: any = null;
+  private localClient: any = null;
 
   private roundRobinIndex = 0;
 
@@ -413,7 +433,7 @@ export class AIGateway {
 
     // Try fallback models — same provider first (quality-desc), then cross-provider.
     const fallbacks = this.getFallbackModels(
-      request.taskType,
+      request,
       triedModels,
       selectedModel.provider,
     );
@@ -552,13 +572,49 @@ export class AIGateway {
   ): Promise<GatewayResponse> {
     switch (modelConfig.provider) {
       case 'openai':
+      case 'azure':
+      case 'local':
+        // OpenAI-compatible substrates share one execution path; the client is
+        // resolved per provider inside executeOpenAI.
         return this.executeOpenAI(modelConfig, request, requestId, startTime);
       case 'anthropic':
+      case 'bedrock':
+      case 'vertex':
+        // Anthropic-family substrates (first-party + Bedrock + Vertex) share the
+        // proven Claude path; the client is resolved per provider.
         return this.executeAnthropic(modelConfig, request, requestId, startTime);
       case 'moonshot':
         return this.executeMoonshot(modelConfig, request, requestId, startTime);
       default:
         throw new Error(`Unknown provider: ${modelConfig.provider}`);
+    }
+  }
+
+  /**
+   * Resolve the Anthropic-family SDK client for a provider. First-party,
+   * Bedrock, and Vertex all expose the same messages.create() surface, so the
+   * gateway can run them through the single executeAnthropic path.
+   */
+  private anthropicFamilyClient(provider: ProviderName): any {
+    switch (provider) {
+      case 'bedrock':
+        return this.bedrockClient;
+      case 'vertex':
+        return this.vertexClient;
+      default:
+        return this.anthropicClient;
+    }
+  }
+
+  /** Resolve the OpenAI-compatible SDK client for a provider. */
+  private openaiFamilyClient(provider: ProviderName): any {
+    switch (provider) {
+      case 'azure':
+        return this.azureClient;
+      case 'local':
+        return this.localClient;
+      default:
+        return this.openaiClient;
     }
   }
 
@@ -568,8 +624,12 @@ export class AIGateway {
     requestId: string,
     startTime: number
   ): Promise<GatewayResponse> {
-    if (!this.openaiClient) {
-      throw new Error('OpenAI client not initialized (missing OPENAI_API_KEY)');
+    // Resolve the OpenAI-compatible client for this provider (openai / azure / local).
+    const client = this.openaiFamilyClient(modelConfig.provider);
+    if (!client) {
+      throw new Error(
+        `${modelConfig.provider} client not initialized (missing credentials/endpoint for ${modelConfig.provider})`
+      );
     }
 
     const params: any = {
@@ -585,7 +645,10 @@ export class AIGateway {
     }
 
     if (request.jsonMode) {
-      if (request.jsonSchema) {
+      // Strict json_schema is a frontier/Azure feature; self-hosted
+      // OpenAI-compatible servers generally support only json_object.
+      const supportsStrictSchema = modelConfig.provider !== 'local';
+      if (request.jsonSchema && supportsStrictSchema) {
         params.response_format = {
           type: 'json_schema',
           json_schema: {
@@ -600,13 +663,13 @@ export class AIGateway {
     }
 
     const completion = await Promise.race([
-      this.openaiClient.chat.completions.create(params),
+      client.chat.completions.create(params),
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('OpenAI API call timed out after 120s')), 120_000)
+        setTimeout(() => reject(new Error(`${modelConfig.provider} API call timed out after 120s`)), 120_000)
       ),
     ]).catch((error: Error) => {
       if (error.message.includes('timed out')) {
-        this.recordFailure('openai', error);
+        this.recordFailure(modelConfig.provider, error);
       }
       throw error;
     });
@@ -614,7 +677,7 @@ export class AIGateway {
 
     return {
       content: choice?.message?.content || '',
-      provider: 'openai',
+      provider: modelConfig.provider,
       model: modelConfig.model,
       usage: {
         inputTokens: completion.usage?.prompt_tokens || 0,
@@ -640,8 +703,12 @@ export class AIGateway {
     requestId: string,
     startTime: number
   ): Promise<AnaGatewayResponse> {
-    if (!this.anthropicClient) {
-      throw new Error('Anthropic client not initialized (missing ANTHROPIC_API_KEY)');
+    // Resolve the Anthropic-family client (first-party / Bedrock / Vertex).
+    const client = this.anthropicFamilyClient(modelConfig.provider);
+    if (!client) {
+      throw new Error(
+        `${modelConfig.provider} client not initialized (missing credentials for ${modelConfig.provider})`
+      );
     }
 
     // If streaming requested, delegate to streaming method
@@ -765,13 +832,13 @@ export class AIGateway {
       : undefined;
 
     const response = await Promise.race([
-      this.anthropicClient.messages.create(params, reqOptions),
+      client.messages.create(params, reqOptions),
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Anthropic API call timed out after 120s')), 120_000)
+        setTimeout(() => reject(new Error(`${modelConfig.provider} API call timed out after 120s`)), 120_000)
       ),
     ]).catch((error: Error) => {
       if (error.message.includes('timed out')) {
-        this.recordFailure('anthropic', error);
+        this.recordFailure(modelConfig.provider, error);
       }
       throw error;
     });
@@ -811,7 +878,7 @@ export class AIGateway {
       content,
       thinking: thinking || undefined,
       toolUses: toolUses.length > 0 ? toolUses : undefined,
-      provider: 'anthropic',
+      provider: modelConfig.provider,
       model: modelConfig.model,
       usage: {
         inputTokens,
@@ -838,8 +905,11 @@ export class AIGateway {
     requestId: string,
     startTime: number
   ): Promise<AnaGatewayResponse> {
-    if (!this.anthropicClient) {
-      throw new Error('Anthropic client not initialized (missing ANTHROPIC_API_KEY)');
+    const client = this.anthropicFamilyClient(modelConfig.provider);
+    if (!client) {
+      throw new Error(
+        `${modelConfig.provider} client not initialized (missing credentials for ${modelConfig.provider})`
+      );
     }
 
     const onStream = request.onStream!;
@@ -934,7 +1004,7 @@ export class AIGateway {
     const streamUsesFilesApiDoc = (request.messages || []).some(m =>
       m.contentBlocks?.some(b => b.type === 'document' && b.source.type === 'file')
     );
-    const stream = await this.anthropicClient.messages.create(
+    const stream = await client.messages.create(
       params,
       streamUsesFilesApiDoc ? { headers: { 'anthropic-beta': 'files-api-2025-04-14' } } : undefined
     );
@@ -1033,7 +1103,7 @@ export class AIGateway {
       content,
       thinking: thinking || undefined,
       toolUses: toolUses.length > 0 ? toolUses : undefined,
-      provider: 'anthropic',
+      provider: modelConfig.provider,
       model: modelConfig.model,
       usage: {
         inputTokens,
@@ -1123,7 +1193,8 @@ export class AIGateway {
         m =>
           m.enabled &&
           (!request.provider || m.provider === request.provider) &&
-          (!request.model || m.model === request.model || m.id === request.model)
+          (!request.model || m.model === request.model || m.id === request.model) &&
+          this.meetsPlacementRequirements(m.provider, request)
       );
       if (explicit && this.isProviderHealthy(explicit.provider)) return explicit;
       // Even if unhealthy, honor explicit if it's the only option
@@ -1132,13 +1203,20 @@ export class AIGateway {
 
     const eligible = this.models.filter(
       m =>
-        m.enabled && m.capabilities.includes(request.taskType) && this.isProviderHealthy(m.provider)
+        m.enabled &&
+        m.capabilities.includes(request.taskType) &&
+        this.meetsPlacementRequirements(m.provider, request) &&
+        this.isProviderHealthy(m.provider)
     );
 
     if (eligible.length === 0) {
-      // Relax health check
+      // Relax health check (but never relax placement: residency/ZDR are hard
+      // compliance constraints, not preferences).
       const relaxed = this.models.filter(
-        m => m.enabled && m.capabilities.includes(request.taskType)
+        m =>
+          m.enabled &&
+          m.capabilities.includes(request.taskType) &&
+          this.meetsPlacementRequirements(m.provider, request)
       );
       return relaxed[0] || null;
     }
@@ -1198,12 +1276,17 @@ export class AIGateway {
    * prompt-cache hits, tool-schema consistency, and telemetry continuity.
    */
   private getFallbackModels(
-    taskType: TaskType,
+    request: GatewayRequest,
     triedModels: string[],
     primaryProvider: ProviderName,
   ): ModelConfig[] {
     const eligible = this.models.filter(
-      m => m.enabled && m.capabilities.includes(taskType) && !triedModels.includes(m.id),
+      m =>
+        m.enabled &&
+        m.capabilities.includes(request.taskType) &&
+        !triedModels.includes(m.id) &&
+        // Residency / ZDR are hard constraints — never fall back across them.
+        this.meetsPlacementRequirements(m.provider, request),
     );
     const samePriority = eligible.filter(m => m.provider === primaryProvider);
     const otherProviders = eligible.filter(m => m.provider !== primaryProvider);
@@ -1211,6 +1294,27 @@ export class AIGateway {
     const sortByQuality = (list: ModelConfig[]) =>
       [...list].sort((a, b) => b.qualityScore - a.qualityScore);
     return [...sortByQuality(samePriority), ...sortByQuality(otherProviders)];
+  }
+
+  /**
+   * True when a provider's placement satisfies the request's residency / ZDR
+   * requirements. Returns true when the request declares no constraints, so
+   * existing callers are unaffected.
+   */
+  private meetsPlacementRequirements(
+    provider: ProviderName,
+    request: GatewayRequest,
+  ): boolean {
+    const needsZdr = request.zeroDataRetention === true;
+    const residency =
+      request.dataResidency && request.dataResidency !== 'any'
+        ? request.dataResidency
+        : null;
+    if (!needsZdr && !residency) return true;
+    return isPlacementCompliant(resolvePlacement(provider), {
+      zeroDataRetention: needsZdr,
+      residency,
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1345,6 +1449,11 @@ export class AIGateway {
           ? (request.metadata.promptVersion as string)
           : undefined);
 
+      // Resolve the substrate/region/retention the serving provider ran under,
+      // so the audit ledger records *where* regulated data was processed — the
+      // evidence a residency- or BAA-constrained tenant asks for.
+      const placement = resolvePlacement(response.provider);
+
       await this.auditLogger.log({
         requestId: response.requestId,
         timestamp: new Date(),
@@ -1371,6 +1480,13 @@ export class AIGateway {
         promptHash: this.hashPrompt(request.messages),
         promptVersion,
         triedModels: triedModels && triedModels.length > 0 ? triedModels : undefined,
+        // Placement / residency evidence.
+        substrate: placement.substrate,
+        region:
+          request.dataResidency && request.dataResidency !== 'any'
+            ? request.dataResidency
+            : placement.regions[0],
+        retentionPolicy: placement.zeroDataRetention ? 'zero_retention' : 'standard',
         metadata: request.metadata,
       });
     } catch (auditError: any) {
@@ -1392,6 +1508,16 @@ export class AIGateway {
     const openaiKey = process.env.OPENAI_API_KEY;
     const anthropicKey = process.env.ANTHROPIC_API_KEY;
     const moonshotKey = process.env.KIMI_API_KEY || process.env.MOONSHOT_API_KEY;
+
+    // Private-cloud + self-hosted substrates. Each is opt-in: a deployment only
+    // turns one on when it has the credentials/infra and a tenant that needs it.
+    const bedrockEnabled = process.env.AI_BEDROCK_ENABLED === 'true';
+    const vertexEnabled = process.env.AI_VERTEX_ENABLED === 'true';
+    const azureEnabled = !!(
+      process.env.AZURE_OPENAI_API_KEY && process.env.AZURE_OPENAI_ENDPOINT
+    );
+    const localBaseUrl = process.env.LOCAL_AI_BASE_URL || process.env.LITELLM_BASE_URL;
+    const localEnabled = process.env.AI_LOCAL_ENABLED === 'true' && !!localBaseUrl;
 
     return {
       deterministicMode:
@@ -1420,6 +1546,33 @@ export class AIGateway {
           apiKey: moonshotKey,
           baseUrl: 'https://api.moonshot.ai/v1',
           defaultModel: 'kimi-k2-0711-preview',
+          models: [],
+        },
+        {
+          name: 'bedrock',
+          enabled: bedrockEnabled,
+          defaultModel: 'anthropic.claude-opus-4-7',
+          models: [],
+        },
+        {
+          name: 'vertex',
+          enabled: vertexEnabled,
+          defaultModel: 'claude-opus-4-7',
+          models: [],
+        },
+        {
+          name: 'azure',
+          enabled: azureEnabled,
+          apiKey: process.env.AZURE_OPENAI_API_KEY,
+          baseUrl: process.env.AZURE_OPENAI_ENDPOINT,
+          defaultModel: 'gpt-4o',
+          models: [],
+        },
+        {
+          name: 'local',
+          enabled: localEnabled,
+          baseUrl: localBaseUrl,
+          defaultModel: 'local-default',
           models: [],
         },
       ],
@@ -1480,6 +1633,31 @@ export class AIGateway {
       } catch (e: any) {
         log.warn(`  ⚠️ Moonshot provider init failed: ${e.message}`);
       }
+    }
+
+    // ── Private-cloud + self-hosted substrates ───────────────────────────────
+    // Each factory returns null (with a logged hint) when its optional SDK or
+    // credentials are absent, so an enabled-but-unconfigured provider degrades
+    // to "unhealthy" rather than crashing the gateway.
+
+    if (this.config.providers.find(p => p.name === 'bedrock')?.enabled) {
+      this.bedrockClient = createBedrockClient();
+      if (this.bedrockClient) log.debug('  ✅ Bedrock (Claude, private-cloud) provider ready');
+    }
+
+    if (this.config.providers.find(p => p.name === 'vertex')?.enabled) {
+      this.vertexClient = createVertexClient();
+      if (this.vertexClient) log.debug('  ✅ Vertex (Claude, private-cloud) provider ready');
+    }
+
+    if (this.config.providers.find(p => p.name === 'azure')?.enabled) {
+      this.azureClient = createAzureClient();
+      if (this.azureClient) log.debug('  ✅ Azure OpenAI (private-cloud) provider ready');
+    }
+
+    if (this.config.providers.find(p => p.name === 'local')?.enabled) {
+      this.localClient = createLocalClient();
+      if (this.localClient) log.debug('  ✅ Local / self-hosted provider ready');
     }
   }
 }

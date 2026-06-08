@@ -123,8 +123,9 @@ export class GatewayAuditLogger {
           organization_id, user_id, project_id, caller_module,
           input_tokens, output_tokens, total_tokens, estimated_cost_usd,
           latency_ms, success, error, cached, deterministic, metadata,
-          temperature, seed, prompt_hash, prompt_version, tried_models
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)`,
+          temperature, seed, prompt_hash, prompt_version, tried_models,
+          substrate, region, retention_policy
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)`,
         [
           entry.requestId,
           entry.timestamp,
@@ -151,6 +152,9 @@ export class GatewayAuditLogger {
           entry.promptHash || null,
           entry.promptVersion || null,
           entry.triedModels ? JSON.stringify(entry.triedModels) : null,
+          entry.substrate || null,
+          entry.region || null,
+          entry.retentionPolicy || null,
         ],
       );
     } catch (error: any) {
@@ -192,18 +196,24 @@ export class GatewayAuditLogger {
           seed BIGINT,
           prompt_hash VARCHAR(64),
           prompt_version VARCHAR(64),
-          tried_models JSONB
+          tried_models JSONB,
+          substrate VARCHAR(20),
+          region VARCHAR(16),
+          retention_policy VARCHAR(20)
         )
       `);
 
-      // Upgrade already-created tables with the reproducibility columns.
+      // Upgrade already-created tables with the reproducibility + placement columns.
       await this.pool.query(`
         ALTER TABLE ai.gateway_audit_log
           ADD COLUMN IF NOT EXISTS temperature NUMERIC(4,2),
           ADD COLUMN IF NOT EXISTS seed BIGINT,
           ADD COLUMN IF NOT EXISTS prompt_hash VARCHAR(64),
           ADD COLUMN IF NOT EXISTS prompt_version VARCHAR(64),
-          ADD COLUMN IF NOT EXISTS tried_models JSONB
+          ADD COLUMN IF NOT EXISTS tried_models JSONB,
+          ADD COLUMN IF NOT EXISTS substrate VARCHAR(20),
+          ADD COLUMN IF NOT EXISTS region VARCHAR(16),
+          ADD COLUMN IF NOT EXISTS retention_policy VARCHAR(20)
       `);
 
       // Create indexes for common queries
