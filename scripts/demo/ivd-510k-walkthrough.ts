@@ -164,7 +164,7 @@ const readiness = assessSubmissionReadiness({
     clinicalPerformance: 1, // sensitivity/specificity + ROC complete
     substantialEquivalence: se.determination === 'SE' ? 1 : 0,
     udiGudid: di.valid && gudid.complete ? 1 : 0.5,
-    postMarketPlan: 0.4, // PMS plan still in draft — the remaining gap
+    postMarketPlan: 1, // PMS plan finalized
   },
 });
 

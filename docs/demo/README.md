@@ -2,15 +2,19 @@
 
 Four runnable, end-to-end demos — one per regulatory pathway — that exercise the
 real, deterministic regulatory services (no DB, no network) and end in the
-submission-readiness capstone verdict. Together they span the full verdict range,
-so you can pick the scenario that fits the room.
+submission-readiness capstone verdict. Each scenario is a fully-prepared
+submission, so all four return **READY (100%)**.
 
-| Demo | Scenario | Run | Verdict shown |
+| Demo | Scenario | Run | Verdict |
 |---|---|---|---|
-| IVD 510(k) | Cardiac-troponin immunoassay | `npx tsx scripts/demo/ivd-510k-walkthrough.ts` | **NEARLY-READY** (88%) — post-market gap |
+| IVD 510(k) | Cardiac-troponin immunoassay | `npx tsx scripts/demo/ivd-510k-walkthrough.ts` | **READY** (100%) |
 | CDx | PD-L1 companion Dx + checkpoint inhibitor | `npx tsx scripts/demo/cdx-walkthrough.ts` | **READY** (100%) |
-| PMA | Implantable CGM + connected app (Class III) | `npx tsx scripts/demo/pma-walkthrough.ts` | **NOT-READY** (75%) — cyber/HFE/labeling gaps |
-| EU IVDR | IVD CE marking (2017/746) | `npx tsx scripts/demo/eu-ivdr-walkthrough.ts` | **NEARLY-READY** (98%) — clinical-evidence gap |
+| PMA | Implantable CGM + connected app (Class III) | `npx tsx scripts/demo/pma-walkthrough.ts` | **READY** (100%) |
+| EU IVDR | IVD CE marking (2017/746) | `npx tsx scripts/demo/eu-ivdr-walkthrough.ts` | **READY** (100%) |
+
+> To demonstrate the capstone's gap-surfacing live, lower any domain input in a
+> `scripts/demo/*.ts` file (e.g. set a domain score to 0.4) and re-run — the
+> verdict drops to NEARLY-READY / NOT-READY with a prioritized gap list.
 
 Detailed talking points and the verified IVD 510(k) output are in
 [`IVD_510K_WALKTHROUGH.md`](./IVD_510K_WALKTHROUGH.md).

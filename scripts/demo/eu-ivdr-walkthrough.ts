@@ -4,8 +4,8 @@
  *   npx tsx scripts/demo/eu-ivdr-walkthrough.ts
  *
  * Scenario: an in-vitro diagnostic seeking CE marking under EU IVDR 2017/746,
- * built on the Annex XIII performance-evaluation pillars. Shows a "nearly-ready"
- * verdict with a single prioritized gap.
+ * built on the Annex XIII performance-evaluation pillars — a fully-prepared
+ * submission across all pillars.
  */
 
 import {
@@ -34,7 +34,7 @@ const per = assessPerformanceEvaluationReport({
   measuringRange: true,
   diagnosticSensitivity: true,
   diagnosticSpecificity: true,
-  // missing: clinicalEvidence
+  clinicalEvidence: true,
 });
 console.log(`PER completeness: ${(per.completenessScore * 100).toFixed(0)}%`);
 per.pillars.forEach(p => console.log(`  ${p.complete ? '✓' : '○'} ${p.pillar}${p.gaps.length ? ' — gaps: ' + p.gaps.join(', ') : ''}`));

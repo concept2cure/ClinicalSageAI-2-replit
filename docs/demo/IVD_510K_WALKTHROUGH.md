@@ -43,15 +43,13 @@ HFE (IEC 62366-1): 100% complete
 UDI DI 00012345678905: valid; GUDID 100% complete
 
 === Submission-readiness capstone — pathway: ivd-510k ===
-Overall readiness: 88%  →  VERDICT: NEARLY-READY
+Overall readiness: 100%  →  VERDICT: READY
 Per-domain:
   ✓ analyticalPerformance: 100%
   ✓ clinicalPerformance: 100%
   ✓ substantialEquivalence: 100%
   ✓ udiGudid: 100%
-  ○ postMarketPlan: 40%
-Prioritized gaps:
-  1. postMarketPlan (40%)
+  ✓ postMarketPlan: 100%
 ```
 
 ## Talking points (per section)
@@ -70,11 +68,13 @@ Prioritized gaps:
 
 ## The narrative
 
-The headline is the capstone: analytical, clinical, substantial-equivalence, and
-UDI work are **complete**; the single remaining gap the platform surfaces and
-prioritizes is the **post-market surveillance plan** (40%) — so the program is
-**NEARLY-READY** at 88%. That is the product thesis in one screen: a dozen
-standards-grounded checks reduced to one defensible answer and a clear next step.
+The headline is the capstone: every required domain — analytical, clinical,
+substantial-equivalence, UDI, and the post-market plan — is **complete**, so the
+program is **READY** at 100%. That is the product thesis in one screen: a dozen
+standards-grounded checks reduced to one defensible answer. (To show the
+gap-surfacing case live, lower any domain input in the script — e.g. set
+`postMarketPlan` to 0.4 — and the verdict drops to NEARLY-READY with that item at
+the top of a prioritized gap list.)
 
 ## Defensibility
 

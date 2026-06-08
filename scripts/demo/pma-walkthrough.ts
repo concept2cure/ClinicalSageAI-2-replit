@@ -4,9 +4,8 @@
  *   npx tsx scripts/demo/pma-walkthrough.ts
  *
  * Scenario: a next-generation implantable continuous glucose monitor (CGM) with
- * a connected mobile app, seeking Premarket Approval. Deliberately shows the
- * "not-ready" end of the range — two open gaps the platform surfaces and
- * prioritizes.
+ * a connected mobile app, seeking Premarket Approval — a fully-prepared
+ * submission across all domains.
  */
 
 import { computeDiagnosticAccuracy, computeRoc } from '../../server/services/stats/clinical-performance';
@@ -30,29 +29,29 @@ const roc = computeRoc([
 ]);
 console.log(`AUC=${r3(roc.auc)} (DeLong CI ${r3(roc.aucCi.lower)}–${r3(roc.aucCi.upper)})`);
 
-h('§524B cybersecurity (connected device) — partial');
+h('§524B cybersecurity (connected device)');
 const cyber = assess524bReadiness({
-  sbom: true, threatModel: true, securityRiskAssessment: true,
-  // missing: vulnerabilityManagementPlan, securityTesting, secureByDesign,
-  //          coordinatedDisclosurePolicy, patchabilityPlan
+  sbom: true, threatModel: true, vulnerabilityManagementPlan: true, securityTesting: true,
+  secureByDesign: true, coordinatedDisclosurePolicy: true, patchabilityPlan: true,
+  securityRiskAssessment: true,
 });
-console.log(`§524B readiness: ${(cyber.readinessScore * 100).toFixed(0)}% — gaps: ${cyber.gaps.join(', ')}`);
+console.log(`§524B readiness: ${(cyber.readinessScore * 100).toFixed(0)}% (${cyber.ready ? 'ready' : 'gaps: ' + cyber.gaps.join(', ')})`);
 
 h('Human factors & UDI & labeling');
 const hfe = assessHfeCompleteness({
   useSpecification: true, userProfiles: true, useEnvironments: true,
   userInterfaceCharacteristics: true, knownUseProblems: true,
   hazardRelatedUseScenarios: true, criticalTasks: true, formativeEvaluation: true,
-  // missing: summativeEvaluation, hfeUeReport
+  summativeEvaluation: true, hfeUeReport: true,
 });
-console.log(`HFE (IEC 62366-1): ${(hfe.completenessScore * 100).toFixed(0)}% — gaps: ${hfe.gaps.join(', ')}`);
+console.log(`HFE (IEC 62366-1): ${(hfe.completenessScore * 100).toFixed(0)}% complete`);
 const di = validateGs1DeviceIdentifier('00012345678905');
 console.log(`UDI DI ${di.deviceIdentifier}: ${di.valid ? 'valid' : 'INVALID'}`);
 const spl = assessSplCompleteness({
   indicationsAndUsage: true, dosageAndAdministration: true, contraindications: true,
-  warningsAndPrecautions: true, adverseReactions: true, description: true,
-  clinicalPharmacology: true, howSupplied: true,
-  // missing: drugInteractions, useInSpecificPopulations
+  warningsAndPrecautions: true, adverseReactions: true, drugInteractions: true,
+  useInSpecificPopulations: true, description: true, clinicalPharmacology: true,
+  howSupplied: true,
 });
 console.log(`SPL labeling: ${(spl.completenessScore * 100).toFixed(0)}% complete`);
 
@@ -65,11 +64,13 @@ const readiness = assessSubmissionReadiness({
     humanFactors: hfe.completenessScore,
     udiGudid: di.valid ? 1 : 0,
     labelingSpl: spl.completenessScore,
-    postMarketPlan: 0.5,
+    postMarketPlan: 1,
   },
 });
 console.log(`Overall: ${(readiness.overallScore * 100).toFixed(0)}%  →  VERDICT: ${readiness.verdict.toUpperCase()}`);
 readiness.perDomain.forEach(d => console.log(`  ${d.complete ? '✓' : '○'} ${d.domain}: ${(d.score * 100).toFixed(0)}%`));
-console.log('Prioritized gaps:');
-readiness.prioritizedGaps.forEach((g, i) => console.log(`  ${i + 1}. ${g.domain} (${(g.score * 100).toFixed(0)}%)`));
+if (readiness.prioritizedGaps.length) {
+  console.log('Prioritized gaps:');
+  readiness.prioritizedGaps.forEach((g, i) => console.log(`  ${i + 1}. ${g.domain} (${(g.score * 100).toFixed(0)}%)`));
+}
 console.log('');
