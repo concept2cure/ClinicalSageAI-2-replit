@@ -183,14 +183,16 @@ export class IntelligenceService {
         trial.status === 'Approved'
     );
 
-    // Determine if the current protocol aligns with successful designs
-    // This would require more sophisticated analysis in a real implementation
-    // Here we're using a simplified approach
-    const alignedWithSuccessful = Math.floor(Math.random() * 5) + 1; // Simulate 1-5 alignments
+    // Design-level alignment scoring against the successful cohort requires
+    // protocol-feature comparison we do not yet compute. Earlier this surface
+    // fabricated that count with Math.random(); we now report only figures
+    // derived from the matched data and explicitly omit the alignment score
+    // rather than present an invented one in a regulated-facing report.
+    const failedTrials = allTrials.length - successfulTrials.length;
 
     return {
       title: 'Historical Trial Benchmarking',
-      content: `Matched ${allTrials.length} trials from CSRs and CTGov with similar ${indication || 'indication'} and ${phase || 'phase'}. ${successfulTrials.length} were successful; ${allTrials.length - successfulTrials.length} failed. Your trial aligns with ${alignedWithSuccessful} of the successful designs.`,
+      content: `Matched ${allTrials.length} trials from CSRs and CTGov with similar ${indication || 'indication'} and ${phase || 'phase'}. Of these, ${successfulTrials.length} reached a successful or approved outcome and ${failedTrials} did not. A design-level alignment score against the successful cohort is not yet computed and is intentionally omitted rather than estimated.`,
     };
   }
 
