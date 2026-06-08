@@ -49,7 +49,7 @@ email-validator==2.3.0
 
 # Testing
 pytest==9.0.3
-pytest-asyncio==1.3.0
+pytest-asyncio==1.4.0
 
 # Regulatory and compliance specific
 lxml==6.1.1
