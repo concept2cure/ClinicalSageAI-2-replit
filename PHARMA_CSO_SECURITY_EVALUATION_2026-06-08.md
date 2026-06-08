@@ -69,7 +69,7 @@ The takeaway for sales/security engineering: **we win on architecture and AI gov
 
 **Still open (follow-up):**
 - **Live-IdP interop validation** against Okta / Entra ID / Ping (the unit tests prove fail-closed but do not exercise a real signed assertion end-to-end). Recommend a staging IdP integration test before GA.
-- **SCIM** provisioning/deprovisioning — ✅ **core landed in this PR** (`server/routes/scim.ts`, mounted at `/scim/v2`): bearer-token auth, Users list/create/get/replace/patch, and the **deprovision/offboarding path** (PATCH `active:false` / DELETE → deactivate), tenant-scoped to a configured `SCIM_ORG_ID`. Groups + multi-org SCIM tokens are the follow-on.
+- **SCIM** provisioning/deprovisioning — ✅ **landed** (`server/routes/scim.ts`, mounted at `/scim/v2`): bearer-token auth, full **Users** lifecycle (list/create/get/replace/patch + the **deprovision/offboarding path**: PATCH `active:false` / DELETE → deactivate), **Groups** (mapped to org RBAC roles — list/get/patch membership for IdP-driven role assignment), and **discovery** (ServiceProviderConfig / ResourceTypes / Schemas), tenant-scoped to a configured `SCIM_ORG_ID`. Multi-org SCIM tokens + live-IdP interop are the follow-on.
 - **Shared InResponseTo cache (Redis)** for multi-instance HA (node-saml's default request cache is per-process; single-instance/sticky routing is fine until then).
 
 ### 3.2 🟠 HIGH — Third-party security attestations not evidenced

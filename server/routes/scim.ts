@@ -15,8 +15,8 @@
  * org is a fixed deployment constant, not request-derived.
  *
  * Scope: Users (list w/ userName filter + pagination, create, get, replace,
- * patch-active, deactivate) + ServiceProviderConfig. Groups are out of scope
- * for this core.
+ * patch-active, deactivate), Groups (RBAC-role-mapped: list/get/patch
+ * membership), and discovery (ServiceProviderConfig, ResourceTypes, Schemas).
  */
 
 import express, { Router, Request, Response, NextFunction } from 'express';
@@ -31,8 +31,18 @@ const router = Router();
 router.use(express.json({ type: ['application/json', 'application/scim+json'], limit: '1mb' }));
 
 const USER_SCHEMA = 'urn:ietf:params:scim:schemas:core:2.0:User';
+const GROUP_SCHEMA = 'urn:ietf:params:scim:schemas:core:2.0:Group';
 const LIST_SCHEMA = 'urn:ietf:params:scim:api:messages:2.0:ListResponse';
 const ERROR_SCHEMA = 'urn:ietf:params:scim:api:messages:2.0:Error';
+
+// SCIM Groups are mapped onto the org's RBAC roles (organization_users.role).
+// A user holds exactly one role per org, so assigning a user to a role-group
+// sets that role; removing them from their current role-group demotes to member.
+const VALID_ROLES = ['admin', 'manager', 'member', 'viewer'] as const;
+type OrgRole = (typeof VALID_ROLES)[number];
+function isValidRole(role: string): role is OrgRole {
+  return (VALID_ROLES as readonly string[]).includes(role);
+}
 
 interface ScimConfig {
   token: string;
@@ -75,6 +85,34 @@ function scimAuth(req: Request, res: Response, next: NextFunction): Response | v
 
 function orgOf(req: Request): number {
   return (req as Request & { scimOrgId?: number }).scimOrgId as number;
+}
+
+/**
+ * Best-effort audit of a SCIM account-lifecycle event to the append-only
+ * audit_events table. Account provisioning/deprovisioning is GxP-relevant
+ * (21 CFR Part 11 §11.10(d) — limiting system access to authorized individuals)
+ * and is the evidence a CSO/auditor expects for offboarding. Non-blocking: a
+ * provisioning sync is not failed on an audit hiccup, but the failure is logged.
+ */
+async function auditScim(
+  req: Request,
+  orgId: number,
+  eventType: string,
+  userId: number,
+  reason: string,
+  metadata?: Record<string, unknown>
+): Promise<void> {
+  try {
+    await query(
+      `INSERT INTO audit_events
+         (organization_id, event_type, entity_type, entity_id, user_id, user_name,
+          user_role, ip_address, reason, metadata, regulatory_significant, gxp_relevant)
+       VALUES ($1, $2, 'scim_user', $3, NULL, 'SCIM Provisioning', 'system', $4, $5, $6, false, true)`,
+      [orgId, eventType, userId, req.ip ?? null, reason, metadata ? JSON.stringify(metadata) : null]
+    );
+  } catch (err) {
+    logger.error('SCIM audit write failed', err as Record<string, unknown>);
+  }
 }
 
 // ─── Resource mapping ────────────────────────────────────────────────────────
@@ -298,6 +336,9 @@ router.post('/Users', scimAuth, async (req: Request, res: Response) => {
       'SELECT id, email, name, status, created_at, updated_at FROM users WHERE id = $1',
       [created.userId]
     );
+    await auditScim(req, orgId, 'scim.user.provisioned', created.userId, 'Provisioned via SCIM', {
+      email,
+    });
     res
       .status(201)
       .location(`${baseUrl(req)}/scim/v2/Users/${created.userId}`)
@@ -399,6 +440,16 @@ router.patch('/Users/:id', scimAuth, async (req: Request, res: Response) => {
       );
     }
 
+    if (nextStatus !== null) {
+      await auditScim(
+        req,
+        orgId,
+        nextStatus === 'inactive' ? 'scim.user.deactivated' : 'scim.user.activated',
+        id,
+        `SCIM patch set active=${nextStatus === 'active'}`
+      );
+    }
+
     const row = await query(
       'SELECT id, email, name, status, created_at, updated_at FROM users WHERE id = $1',
       [id]
@@ -426,11 +477,180 @@ router.delete('/Users/:id', scimAuth, async (req: Request, res: Response) => {
 
     // SCIM delete = deactivate (the user record is retained; access is revoked).
     await query("UPDATE users SET status = 'inactive', updated_at = now() WHERE id = $1", [id]);
+    await auditScim(req, orgId, 'scim.user.deactivated', id, 'Deactivated via SCIM DELETE (offboarding)');
     res.status(204).send();
   } catch (err) {
     logger.error('SCIM delete user failed', err as Record<string, unknown>);
     return scimError(res, 500, 'Failed to deactivate user.');
   }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GROUPS (mapped to org RBAC roles)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface GroupMemberRow {
+  id: number;
+  email: string;
+  name: string | null;
+}
+
+function toScimGroup(req: Request, role: string, members: GroupMemberRow[]): Record<string, unknown> {
+  return {
+    schemas: [GROUP_SCHEMA],
+    id: role,
+    displayName: role.charAt(0).toUpperCase() + role.slice(1),
+    members: members.map(m => ({
+      value: String(m.id),
+      display: m.email,
+      $ref: `${baseUrl(req)}/scim/v2/Users/${m.id}`,
+    })),
+    meta: { resourceType: 'Group', location: `${baseUrl(req)}/scim/v2/Groups/${role}` },
+  };
+}
+
+async function membersOfRole(orgId: number, role: string): Promise<GroupMemberRow[]> {
+  const result = await query(
+    `SELECT u.id, u.email, u.name
+       FROM users u JOIN organization_users ou ON ou.user_id = u.id
+      WHERE ou.organization_id = $1 AND ou.role = $2
+      ORDER BY u.id ASC`,
+    [orgId, role]
+  );
+  return result.rows as GroupMemberRow[];
+}
+
+/** Extract member user-ids from a SCIM group PatchOp (value array/object or path filter). */
+function extractMemberIds(op: PatchOp): number[] {
+  const ids: number[] = [];
+  if (typeof op.path === 'string') {
+    const m = /members\[value eq "([^"]+)"\]/i.exec(op.path);
+    if (m) {
+      const n = Number(m[1]);
+      if (Number.isFinite(n)) ids.push(n);
+    }
+  }
+  const val = op.value;
+  if (Array.isArray(val)) {
+    for (const v of val) {
+      const n = Number((v as { value?: unknown })?.value);
+      if (Number.isFinite(n)) ids.push(n);
+    }
+  } else if (val && typeof val === 'object') {
+    const n = Number((val as { value?: unknown }).value);
+    if (Number.isFinite(n)) ids.push(n);
+  }
+  return ids;
+}
+
+router.get('/Groups', scimAuth, async (req: Request, res: Response) => {
+  try {
+    const orgId = orgOf(req);
+    let roles: string[] = [...VALID_ROLES];
+    const filter = req.query.filter as string | undefined;
+    if (filter) {
+      const m = /^\s*displayName\s+eq\s+"([^"]+)"\s*$/i.exec(filter);
+      if (!m) return scimError(res, 400, `Unsupported filter: ${filter}`, 'invalidFilter');
+      const wanted = m[1].toLowerCase();
+      roles = roles.filter(r => r === wanted);
+    }
+
+    const resources: Record<string, unknown>[] = [];
+    for (const role of roles) {
+      resources.push(toScimGroup(req, role, await membersOfRole(orgId, role)));
+    }
+
+    res.json({
+      schemas: [LIST_SCHEMA],
+      totalResults: resources.length,
+      startIndex: 1,
+      itemsPerPage: resources.length,
+      Resources: resources,
+    });
+  } catch (err) {
+    logger.error('SCIM list groups failed', err as Record<string, unknown>);
+    return scimError(res, 500, 'Failed to list groups.');
+  }
+});
+
+router.get('/Groups/:id', scimAuth, async (req: Request, res: Response) => {
+  try {
+    const orgId = orgOf(req);
+    const role = String(req.params.id).toLowerCase();
+    if (!isValidRole(role)) return scimError(res, 404, 'Group not found.');
+    res.json(toScimGroup(req, role, await membersOfRole(orgId, role)));
+  } catch (err) {
+    logger.error('SCIM get group failed', err as Record<string, unknown>);
+    return scimError(res, 500, 'Failed to get group.');
+  }
+});
+
+router.patch('/Groups/:id', scimAuth, async (req: Request, res: Response) => {
+  try {
+    const orgId = orgOf(req);
+    const role = String(req.params.id).toLowerCase();
+    if (!isValidRole(role)) return scimError(res, 404, 'Group not found.');
+
+    const ops = ((req.body?.Operations ?? []) as PatchOp[]) || [];
+    for (const op of ops) {
+      const action = (op.op ?? '').toLowerCase();
+      const memberIds = extractMemberIds(op);
+      if (memberIds.length === 0) continue;
+
+      if (action === 'add' || action === 'replace') {
+        // Assign the group's role to existing org members (never cross-tenant).
+        for (const uid of memberIds) {
+          await query(
+            'UPDATE organization_users SET role = $1, updated_at = now() WHERE organization_id = $2 AND user_id = $3',
+            [role, orgId, uid]
+          );
+        }
+      } else if (action === 'remove') {
+        // Removing from a role-group demotes the user to the baseline 'member'
+        // role (only if they currently hold this group's role).
+        for (const uid of memberIds) {
+          await query(
+            "UPDATE organization_users SET role = 'member', updated_at = now() WHERE organization_id = $1 AND user_id = $2 AND role = $3",
+            [orgId, uid, role]
+          );
+        }
+      }
+    }
+
+    res.json(toScimGroup(req, role, await membersOfRole(orgId, role)));
+  } catch (err) {
+    logger.error('SCIM patch group failed', err as Record<string, unknown>);
+    return scimError(res, 500, 'Failed to patch group.');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DISCOVERY (ResourceTypes, Schemas) — IdPs query these during setup
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/ResourceTypes', scimAuth, (req: Request, res: Response) => {
+  const rt = (id: string, endpoint: string, schema: string) => ({
+    schemas: ['urn:ietf:params:scim:schemas:core:2.0:ResourceType'],
+    id,
+    name: id,
+    endpoint,
+    schema,
+    meta: { resourceType: 'ResourceType', location: `${baseUrl(req)}/scim/v2/ResourceTypes/${id}` },
+  });
+  const resources = [rt('User', '/Users', USER_SCHEMA), rt('Group', '/Groups', GROUP_SCHEMA)];
+  res.json({ schemas: [LIST_SCHEMA], totalResults: resources.length, Resources: resources });
+});
+
+router.get('/Schemas', scimAuth, (_req: Request, res: Response) => {
+  const resources = [
+    { id: USER_SCHEMA, name: 'User', description: 'SCIM core User resource.' },
+    {
+      id: GROUP_SCHEMA,
+      name: 'Group',
+      description: 'SCIM core Group resource, mapped to organization RBAC roles.',
+    },
+  ];
+  res.json({ schemas: [LIST_SCHEMA], totalResults: resources.length, Resources: resources });
 });
 
 export default router;
