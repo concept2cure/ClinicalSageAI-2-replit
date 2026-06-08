@@ -20,12 +20,30 @@
  */
 
 import express, { Router, Request, Response, NextFunction } from 'express';
+import rateLimit from 'express-rate-limit';
 import * as crypto from 'crypto';
 import { query, transaction } from '../db';
 import { createScopedLogger } from '../utils/logger';
 
 const logger = createScopedLogger('scim');
 const router = Router();
+
+// SCIM is mounted at /scim/v2 (OUTSIDE the /api global rate limiters), so it
+// gets its own per-IP limit — protects the bearer-token endpoints from
+// brute-force / flood. 60/min/IP comfortably covers real IdP sync traffic.
+const scimRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+    status: '429',
+    detail: 'Too many requests.',
+  },
+  validate: { xForwardedForHeader: false },
+});
+router.use(scimRateLimiter);
 
 // IdPs send application/scim+json; parse it (and plain json) on this router.
 router.use(express.json({ type: ['application/json', 'application/scim+json'], limit: '1mb' }));
