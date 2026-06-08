@@ -98,7 +98,11 @@ export async function assessSequenceDispatchReadiness(
       documentTable: l.documentTable,
       documentId: l.documentId,
     })),
-    { requiredSections: requiredModule1Codes(sequence.region) }
+    {
+      requiredSections: requiredModule1Codes(sequence.region),
+      // An original is type 'original' or sequence number '0000'.
+      isOriginalSequence: sequence.type === 'original' || sequence.sequenceNumber === '0000',
+    }
   );
 
   // 4. Open CRITICAL Shadow Review findings for this sequence (server truth).

@@ -87,4 +87,30 @@ describe('computeDispatchReadiness', () => {
     expect(r.warnings).toBe(1);
     expect(r.infos).toBe(1);
   });
+
+  it('flags replace/append/delete in an ORIGINAL sequence as errors', () => {
+    const r = computeDispatchReadiness(
+      [
+        goodLeaf({ sectionCode: 'm2.5', lifecycleOp: 'replace' }),
+        goodLeaf({ sectionCode: 'm2.4', lifecycleOp: 'append', documentId: 50 }),
+      ],
+      { isOriginalSequence: true }
+    );
+    expect(r.findings.filter(f => f.code === 'LIFECYCLE_OP_IN_ORIGINAL')).toHaveLength(2);
+    expect(r.errors).toBeGreaterThanOrEqual(2);
+  });
+
+  it('allows new leaves in an original sequence (no lifecycle error)', () => {
+    const r = computeDispatchReadiness([goodLeaf(), goodLeaf({ sectionCode: 'm2.4', documentId: 51 })], {
+      isOriginalSequence: true,
+    });
+    expect(r.findings.some(f => f.code === 'LIFECYCLE_OP_IN_ORIGINAL')).toBe(false);
+    expect(r.errors).toBe(0);
+  });
+
+  it('does NOT apply the original-sequence rule to amendments', () => {
+    const r = computeDispatchReadiness([goodLeaf({ lifecycleOp: 'replace' })], { isOriginalSequence: false });
+    expect(r.findings.some(f => f.code === 'LIFECYCLE_OP_IN_ORIGINAL')).toBe(false);
+    expect(r.errors).toBe(0);
+  });
 });

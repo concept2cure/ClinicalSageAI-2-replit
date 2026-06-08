@@ -49,6 +49,12 @@ export interface DispatchReadinessReport {
 export interface ComputeReadinessOptions {
   /** Section codes the region marks required (e.g. region profile Module-1). */
   requiredSections?: string[];
+  /**
+   * True for an original (0000) sequence. In an original there is no prior
+   * content, so any replace/append/delete lifecycle operation is a filing error —
+   * only `new` is valid.
+   */
+  isOriginalSequence?: boolean;
 }
 
 const VALID_OPS = new Set(['new', 'replace', 'append', 'delete']);
@@ -99,6 +105,19 @@ export function computeDispatchReadiness(
         code: 'UNRESOLVED_DOCUMENT',
         sectionCode: leaf.sectionCode,
         message: `Leaf "${leaf.title}" (${leaf.sectionCode}) has no resolvable document — it cannot be assembled into the package.`,
+      });
+    }
+
+    // ERROR: replace/append/delete in an original sequence — nothing to act on.
+    if (
+      opts.isOriginalSequence &&
+      (leaf.lifecycleOp === 'replace' || leaf.lifecycleOp === 'append' || leaf.lifecycleOp === 'delete')
+    ) {
+      findings.push({
+        severity: 'error',
+        code: 'LIFECYCLE_OP_IN_ORIGINAL',
+        sectionCode: leaf.sectionCode,
+        message: `Leaf "${leaf.title}" uses lifecycle operation "${leaf.lifecycleOp}" in an original (0000) sequence — only "new" is valid; there is no prior content to ${leaf.lifecycleOp}.`,
       });
     }
   }
