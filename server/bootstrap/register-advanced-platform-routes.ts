@@ -132,6 +132,11 @@ export async function registerAdvancedPlatformRoutes({
         mod: '../routes/spl-fhir.ts',
         name: 'Interoperability (LOINC + SPL + FHIR)',
       },
+      {
+        path: '/api/submission-readiness',
+        mod: '../routes/submission-readiness.ts',
+        name: 'Submission Readiness (capstone scorecard)',
+      },
     ] as const;
     const auditIntegResults = await Promise.allSettled(auditIntegConfig.map(c => import(c.mod)));
     auditIntegResults.forEach((r, i) => {
