@@ -115,6 +115,21 @@ describe('SCIM provisioning — lifecycle', () => {
       .set('Authorization', `Bearer ${TOKEN}`);
     expect(res.status).toBe(404);
   });
+
+  it('DELETE deactivates a member and writes a deprovision audit event (204)', async () => {
+    queryMock.mockResolvedValue({ rows: [{ id: 100 }] }); // member found; UPDATE/audit ok
+    const res = await request(app)
+      .delete('/scim/v2/Users/100')
+      .set('Authorization', `Bearer ${TOKEN}`);
+    expect(res.status).toBe(204);
+    const audit = queryMock.mock.calls.find(
+      c =>
+        /INSERT INTO audit_events/i.test(String(c[0])) &&
+        Array.isArray(c[1]) &&
+        c[1][1] === 'scim.user.deactivated'
+    );
+    expect(audit).toBeTruthy();
+  });
 });
 
 describe('SCIM provisioning — Groups (RBAC roles)', () => {

@@ -87,6 +87,34 @@ function orgOf(req: Request): number {
   return (req as Request & { scimOrgId?: number }).scimOrgId as number;
 }
 
+/**
+ * Best-effort audit of a SCIM account-lifecycle event to the append-only
+ * audit_events table. Account provisioning/deprovisioning is GxP-relevant
+ * (21 CFR Part 11 §11.10(d) — limiting system access to authorized individuals)
+ * and is the evidence a CSO/auditor expects for offboarding. Non-blocking: a
+ * provisioning sync is not failed on an audit hiccup, but the failure is logged.
+ */
+async function auditScim(
+  req: Request,
+  orgId: number,
+  eventType: string,
+  userId: number,
+  reason: string,
+  metadata?: Record<string, unknown>
+): Promise<void> {
+  try {
+    await query(
+      `INSERT INTO audit_events
+         (organization_id, event_type, entity_type, entity_id, user_id, user_name,
+          user_role, ip_address, reason, metadata, regulatory_significant, gxp_relevant)
+       VALUES ($1, $2, 'scim_user', $3, NULL, 'SCIM Provisioning', 'system', $4, $5, $6, false, true)`,
+      [orgId, eventType, userId, req.ip ?? null, reason, metadata ? JSON.stringify(metadata) : null]
+    );
+  } catch (err) {
+    logger.error('SCIM audit write failed', err as Record<string, unknown>);
+  }
+}
+
 // ─── Resource mapping ────────────────────────────────────────────────────────
 
 interface UserRow {
@@ -308,6 +336,9 @@ router.post('/Users', scimAuth, async (req: Request, res: Response) => {
       'SELECT id, email, name, status, created_at, updated_at FROM users WHERE id = $1',
       [created.userId]
     );
+    await auditScim(req, orgId, 'scim.user.provisioned', created.userId, 'Provisioned via SCIM', {
+      email,
+    });
     res
       .status(201)
       .location(`${baseUrl(req)}/scim/v2/Users/${created.userId}`)
@@ -409,6 +440,16 @@ router.patch('/Users/:id', scimAuth, async (req: Request, res: Response) => {
       );
     }
 
+    if (nextStatus !== null) {
+      await auditScim(
+        req,
+        orgId,
+        nextStatus === 'inactive' ? 'scim.user.deactivated' : 'scim.user.activated',
+        id,
+        `SCIM patch set active=${nextStatus === 'active'}`
+      );
+    }
+
     const row = await query(
       'SELECT id, email, name, status, created_at, updated_at FROM users WHERE id = $1',
       [id]
@@ -436,6 +477,7 @@ router.delete('/Users/:id', scimAuth, async (req: Request, res: Response) => {
 
     // SCIM delete = deactivate (the user record is retained; access is revoked).
     await query("UPDATE users SET status = 'inactive', updated_at = now() WHERE id = $1", [id]);
+    await auditScim(req, orgId, 'scim.user.deactivated', id, 'Deactivated via SCIM DELETE (offboarding)');
     res.status(204).send();
   } catch (err) {
     logger.error('SCIM delete user failed', err as Record<string, unknown>);
