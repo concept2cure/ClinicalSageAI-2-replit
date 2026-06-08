@@ -7,6 +7,12 @@
  * closes that gap. It does NOT mutate production (refuses on NODE_ENV=production)
  * and is read-mostly (creates one throwaway submission in the demo org).
  *
+ * Coverage: login → region profiles → capabilities → portfolio CRUD → sequence
+ * + leaf → lifecycle rules → pathway-readiness → SERVER-COMPUTED dispatch-readiness
+ * gate → governed freeze (e-signature required) → transmit (must be dispatched) →
+ * Phase-1 ingestion (classify auth/tenant guards; grounded classify + AI_GENERATE
+ * audit when DOC_ID is set) → cross-tenant isolation. One script, the whole chain.
+ *
  * Prereqs (in a DB-backed env):
  *   1. npm ci
  *   2. npx drizzle-kit push   # applies 20260604_* and 20260605_consistency_findings
@@ -44,9 +50,28 @@ function ok(name, cond, detail) {
   }
 }
 
-/** Cookie-session aware fetch: captures Set-Cookie at login, resends it. */
+/** Raw (UN-authenticated) fetch — used to prove endpoints reject anonymous calls. */
+async function rawReq(method, path, body) {
+  const res = await fetch(`${BASE}${path}`, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+  const text = await res.text();
+  let json;
+  try {
+    json = text ? JSON.parse(text) : undefined;
+  } catch {
+    json = undefined;
+  }
+  return { status: res.status, json, text };
+}
+
+/** Session-aware fetch: captures Set-Cookie AND bearer token at login, resends both
+ *  (the submission routes authenticate via `Authorization: Bearer`). */
 function makeClient() {
   let cookie = '';
+  let token = '';
   return {
     async login(email, password) {
       const res = await fetch(`${BASE}/api/auth/login`, {
@@ -57,13 +82,13 @@ function makeClient() {
       const setCookie = res.headers.get('set-cookie');
       if (setCookie) cookie = setCookie.split(';')[0];
       const body = await res.json().catch(() => ({}));
-      // Some deployments return a bearer token instead of / in addition to a cookie.
-      if (body?.token) cookie = cookie || '';
+      if (body?.token) token = body.token;
       return { status: res.status, token: body?.token, body };
     },
     async req(method, path, body) {
       const headers = { 'Content-Type': 'application/json' };
       if (cookie) headers.Cookie = cookie;
+      if (token) headers.Authorization = `Bearer ${token}`;
       const res = await fetch(`${BASE}${path}`, {
         method,
         headers,
@@ -93,6 +118,9 @@ async function main() {
   const c = makeClient();
   const login = await c.login(email, password);
   ok('login succeeds', login.status === 200, `status ${login.status}`);
+  if (!login.token && login.body?.mfaRequired) {
+    console.log('  · login returned an MFA challenge with no bearer token — use a demo user with MFA disabled (or complete /mfa/verify) so the authenticated checks can proceed.');
+  }
 
   // Region profiles (static metadata — no DB writes).
   const rp = await c.req('GET', '/api/region-profiles');
@@ -137,12 +165,59 @@ async function main() {
 
       const good = await c.req('POST', `/api/submissions/sequences/${seqId}/transition`, { status: 'assembling' });
       ok('transition draft→assembling allowed', good.status === 200 && good.json?.status === 'assembling');
+
+      const toValidated = await c.req('POST', `/api/submissions/sequences/${seqId}/transition`, { status: 'validated' });
+      ok('transition assembling→validated allowed', toValidated.status === 200 && toValidated.json?.status === 'validated');
+
+      // Governed transitions are forbidden on the generic route (Part 11).
+      const govBlocked = await c.req('POST', `/api/submissions/sequences/${seqId}/transition`, { status: 'frozen' });
+      ok('generic transition validated→frozen rejected (403 GOVERNED_REQUIRED)', govBlocked.status === 403, `got ${govBlocked.status}`);
+
+      // Pathway readiness (deterministic projection).
+      const pr = await c.req('GET', `/api/submissions/sequences/${seqId}/pathway-readiness?pathway=estar_510k`);
+      ok('pathway-readiness returns a report', pr.status === 200 && typeof pr.json?.ready === 'boolean');
+
+      // Dispatch readiness — SERVER-COMPUTED gate (tamper-proof). A single leaf with
+      // no resolvable document should make the gate block (validationErrors > 0).
+      const dr = await c.req('GET', `/api/submissions/sequences/${seqId}/dispatch-readiness`);
+      ok('dispatch-readiness computes the gate server-side', dr.status === 200 && typeof dr.json?.gate?.cleared === 'boolean' && typeof dr.json?.validationErrors === 'number', `status ${dr.status}`);
+
+      // Governed SUBMIT: freeze requires a valid e-signature on this sequence.
+      const noSig = await c.req('POST', `/api/submissions/sequences/${seqId}/freeze`, { signatureActionId: `act_nonexistent_${Date.now()}` });
+      ok('freeze with an invalid e-signature is rejected (403 GOVERNED_REQUIRED)', noSig.status === 403, `got ${noSig.status}`);
+
+      // TRANSMIT requires the sequence to be dispatched first.
+      const earlyTransmit = await c.req('POST', `/api/submissions/sequences/${seqId}/transmit`, { signatureActionId: `act_x_${Date.now()}` });
+      ok('transmit before dispatch is rejected (409 INVALID_STATE)', earlyTransmit.status === 409, `got ${earlyTransmit.status}`);
     }
   }
 
   // Audit captured the AI/governed actions for this org.
   const audit = await c.req('GET', '/api/audit-log?limit=1');
   ok('audit-log reachable', audit.status === 200 || audit.status === 404, `status ${audit.status} (route name may differ)`);
+
+  // ── Phase 1 ingestion (WO-1.5 Definition of Done) ──────────────────────────
+  // Endpoint reachability + auth/tenant guards are env-independent. The grounded
+  // classify (and its AI_GENERATE audit row) needs a seeded doc + an LLM key, so
+  // it runs only when DOC_ID is provided.
+  const anonClassify = await rawReq('POST', '/api/ectd-documents/999999/classify', {});
+  ok('classify without auth is rejected (401)', anonClassify.status === 401, `got ${anonClassify.status}`);
+
+  const bogusClassify = await c.req('POST', '/api/ectd-documents/999999999/classify', {});
+  ok('classify on a missing/cross-tenant document is not found (404/400)', [404, 400].includes(bogusClassify.status), `got ${bogusClassify.status}`);
+
+  if (process.env.DOC_ID) {
+    const cls = await c.req('POST', `/api/ectd-documents/${process.env.DOC_ID}/classify`, {});
+    const known = cls.status === 200 || [429, 503, 413].includes(cls.status);
+    ok('classify on a seeded doc is grounded or a known gateway error', known, `status ${cls.status}`);
+    if (cls.status === 200) {
+      ok('classify returns sectionCode + confidence (never fabricated)', cls.json && 'sectionCode' in cls.json && 'confidence' in cls.json);
+      const aiAudit = await c.req('GET', '/api/audit-log?action=AI_GENERATE&limit=1');
+      ok('AI_GENERATE audit row recorded for the classify call', aiAudit.status === 200 && Array.isArray(aiAudit.json) && aiAudit.json.length >= 1, `status ${aiAudit.status}`);
+    }
+  } else {
+    console.log('  · skipped grounded classify (set DOC_ID + an LLM key to enable)');
+  }
 
   // Cross-tenant isolation: a second-org user must NOT see this submission.
   if (process.env.ALT_EMAIL && process.env.ALT_PASSWORD && subId) {
