@@ -128,7 +128,7 @@ router.post('/query', checkForOpenAIKey, copilotLimiter, async (req, res) => {
       conversationId: chatId,
       query,
       response: responseContent,
-      usage: completion.usage,
+      usage: aiResult.usage,
     });
   } catch (error) {
     console.error('Error in CMC CoPilot query:', error);
@@ -238,7 +238,7 @@ router.post('/specialized-query', checkForOpenAIKey, copilotLimiter, async (req,
       query,
       response: responseContent,
       area,
-      usage: completion.usage,
+      usage: aiResult.usage,
     });
   } catch (error) {
     console.error('Error in CMC CoPilot specialized query:', error);

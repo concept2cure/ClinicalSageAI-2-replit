@@ -21,6 +21,7 @@ import pdfParse from '../utils/pdfParse';
 import mammoth from 'mammoth';
 import * as cheerio from 'cheerio';
 import { getEmbeddingProvider } from './ai-gateway/embeddings/embedding-provider';
+import { ai } from '../lib/unified-ai-client';
 
 // Embeddings are produced through the governed seam (getEmbeddingProvider), not
 // a direct client, so this service honors EMBEDDING_PROVIDER — including a
@@ -957,8 +958,8 @@ class BiotechRagService {
       return {
         answer: aiResult.content,
         confidence: 0.9,
-        model: response.model,
-        usage: response.usage,
+        model: aiResult.model,
+        usage: aiResult.usage,
       };
     } catch (error) {
       console.error('Answer generation error:', error);
