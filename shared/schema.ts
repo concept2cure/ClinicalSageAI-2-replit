@@ -19711,3 +19711,25 @@ export const importJobFindings = pgTable(
   }),
 );
 export type ImportJobFinding = InferSelectModel<typeof importJobFindings>;
+
+/**
+ * Per-organization AI placement policy — the data-residency / zero-retention /
+ * allowed-substrate requirements the AI gateway auto-applies to an org's
+ * requests (explicit request values always win). See
+ * server/services/ai-gateway/providers/org-placement.ts and
+ * migrations/20260608_ai_placement_policies.sql. Tenant-scoped + RLS-enforced;
+ * organization_id is INTEGER per the tenant-column-types contract.
+ */
+export const aiPlacementPolicies = pgTable('ai_placement_policies', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .references(() => organizations.id)
+    .notNull()
+    .unique(),
+  requiredDataResidency: text('required_data_residency'), // 'us' | 'eu' | 'apac' | 'on_prem' | null
+  zeroDataRetention: boolean('zero_data_retention').default(false).notNull(),
+  allowedSubstrates: text('allowed_substrates').array(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+export type AiPlacementPolicy = InferSelectModel<typeof aiPlacementPolicies>;
