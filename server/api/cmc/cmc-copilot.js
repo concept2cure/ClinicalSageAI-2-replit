@@ -430,20 +430,22 @@ router.post('/execute-task', checkForOpenAIKey, copilotLimiter, async (req, res)
       })),
     });
 
-    // Extract the response
-    const responseMessage = completion.choices[0].message;
+    // The gateway returns tool requests as aiResult.toolUses ({ id, name, input }),
+    // not the OpenAI choices[0].message.tool_calls shape. Take the first request.
+    const toolUse =
+      Array.isArray(aiResult.toolUses) && aiResult.toolUses.length > 0 ? aiResult.toolUses[0] : null;
 
-    // Check if there's a function call
     let functionResponse = null;
+    // Normalized to { name, arguments } regardless of provider tool shape.
     let functionCall = null;
 
-    if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
-      // Get the function call details
-      functionCall = responseMessage.tool_calls[0];
-      const functionName = functionCall.function.name;
-      const functionArgs = JSON.parse(functionCall.function.arguments);
+    if (toolUse) {
+      const functionName = toolUse.name;
+      const functionArgs = toolUse.input || {};
+      functionCall = { name: functionName, arguments: functionArgs };
 
-      // Simulate function execution (in a real implementation, these would be actual functions)
+      // NOTE: these actions are SIMULATED — they return synthetic ids, not real
+      // CAPA/document/annex/validation records. (Real execution is a follow-up.)
       switch (functionName) {
         case 'createCapa':
           functionResponse = {
@@ -494,40 +496,39 @@ router.post('/execute-task', checkForOpenAIKey, copilotLimiter, async (req, res)
       }
     }
 
-    // Get a follow-up response to explain what was done
-    const followUpMessages = [...messages];
+    // Explain what was done. If a tool ran, feed its result back as plain context
+    // (the gateway's chat takes plain messages, not OpenAI tool_result frames);
+    // otherwise the model's direct answer is the explanation.
+    let explanation;
     if (functionCall) {
-      followUpMessages.push(responseMessage);
-      followUpMessages.push({
-        role: 'function',
-        name: functionCall.function.name,
-        content: JSON.stringify(functionResponse),
+      const followUp = await ai.chat({
+        model: 'gpt-4o',
+        messages: [
+          ...messages,
+          {
+            role: 'assistant',
+            content: `I invoked ${functionCall.name} with ${JSON.stringify(functionCall.arguments)}.`,
+          },
+          {
+            role: 'user',
+            content: `The action returned: ${JSON.stringify(functionResponse)}. Briefly explain to the user what was done.`,
+          },
+        ],
+        temperature: 0.2,
+        max_tokens: 1000,
       });
+      explanation = followUp.content;
     } else {
-      followUpMessages.push(responseMessage);
+      explanation = aiResult.content;
     }
-
-    const followUpCompletion = await ai.chat({
-      model: 'gpt-4o',
-      messages: followUpMessages,
-      temperature: 0.2,
-      max_tokens: 1000,
-    });
-
-    const followUpResponse = followUpCompletion.choices[0].message.content;
 
     // Log the task execution
     logConversation(chatId, {
       timestamp: new Date().toISOString(),
       instruction,
-      functionCall: functionCall
-        ? {
-            name: functionCall.function.name,
-            arguments: JSON.parse(functionCall.function.arguments),
-          }
-        : null,
+      functionCall,
       functionResponse,
-      explanation: followUpResponse,
+      explanation,
     });
 
     // Return the results
@@ -535,14 +536,9 @@ router.post('/execute-task', checkForOpenAIKey, copilotLimiter, async (req, res)
       success: true,
       conversationId: chatId,
       instruction,
-      functionCall: functionCall
-        ? {
-            name: functionCall.function.name,
-            arguments: JSON.parse(functionCall.function.arguments),
-          }
-        : null,
+      functionCall,
       functionResponse,
-      explanation: followUpResponse,
+      explanation,
     });
   } catch (error) {
     console.error('Error in CMC CoPilot task execution:', error);
