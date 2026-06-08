@@ -63,11 +63,17 @@ router.get('/specifications/:id', async (req: Request, res: Response) => {
 });
 
 // Create specification
+// Not implemented. The shape is validated, but the prior stub echoed the input
+// back with 201 Created though nothing was persisted. Fail closed (validation
+// is preserved so callers still get 400 on malformed input).
 router.post('/specifications', async (req: Request, res: Response) => {
   try {
-    const validatedData = insertQcSpecificationSchema.parse(req.body);
-    const specification = await storage.createQcSpecification(validatedData);
-    res.status(201).json(specification);
+    insertQcSpecificationSchema.parse(req.body);
+    res.status(501).json({
+      error: 'QC specification creation is not implemented',
+      notImplemented: true,
+      message: 'The specification was validated but NOT created or persisted.',
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({ error: 'Invalid data', details: error.errors });
@@ -78,28 +84,27 @@ router.post('/specifications', async (req: Request, res: Response) => {
 });
 
 // Update specification
-router.put('/specifications/:id', async (req: Request, res: Response) => {
-  try {
-    const specification = await storage.updateQcSpecification(Number(req.params.id), req.body);
-    res.json(specification);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to update specification' });
-  }
+// Not implemented. The prior stub echoed the request body back as if the QC
+// specification had been updated — a 21 CFR Part 11 change-control fabrication.
+// Fail closed.
+router.put('/specifications/:id', async (_req: Request, res: Response) => {
+  res.status(501).json({
+    error: 'QC specification update is not implemented',
+    notImplemented: true,
+    message: 'The specification was NOT updated. No change was persisted.',
+  });
 });
 
 // Create new version of specification
-router.post('/specifications/:id/version', async (req: Request, res: Response) => {
-  try {
-    const { changeReason, changeDescription } = req.body;
-    const newVersion = await storage.createSpecificationVersion(
-      Number(req.params.id),
-      changeReason,
-      changeDescription
-    );
-    res.status(201).json(newVersion);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create specification version' });
-  }
+// Not implemented. The prior stub returned {} as if a new versioned change
+// record (with change reason/description) had been created. Specification
+// versioning is a Part 11 change-control record; fail closed.
+router.post('/specifications/:id/version', async (_req: Request, res: Response) => {
+  res.status(501).json({
+    error: 'QC specification versioning is not implemented',
+    notImplemented: true,
+    message: 'No specification version was created. No change-control record was persisted.',
+  });
 });
 
 // Get specification versions

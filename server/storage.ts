@@ -1393,20 +1393,26 @@ export class MemStorage {
     return undefined;
   }
 
-  async createQcSpecification(spec: any): Promise<any> {
-    return spec;
+  async createQcSpecification(_spec: any): Promise<any> {
+    // Not implemented — must not echo the spec back as if it were created and
+    // persisted (the route would otherwise return 201 Created). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createQcSpecification');
   }
 
-  async updateQcSpecification(id: number, spec: any): Promise<any> {
-    return spec;
+  async updateQcSpecification(_id: number, _spec: any): Promise<any> {
+    // Not implemented — must not echo the spec back as if it were persisted
+    // (a 21 CFR Part 11 change-control fabrication). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: updateQcSpecification');
   }
 
   async createSpecificationVersion(
-    id: number,
-    changeReason: string,
-    changeDescription: string
+    _id: number,
+    _changeReason: string,
+    _changeDescription: string
   ): Promise<any> {
-    return {};
+    // Not implemented — must not report a versioned change-control record as
+    // created when nothing was persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createSpecificationVersion');
   }
 
   async getSpecificationVersions(id: number, _organizationId: number | string): Promise<any[]> {
@@ -3561,20 +3567,26 @@ export class DatabaseStorage {
     return undefined;
   }
 
-  async createQcSpecification(spec: any): Promise<any> {
-    return spec;
+  async createQcSpecification(_spec: any): Promise<any> {
+    // Not implemented — must not echo the spec back as if it were created and
+    // persisted (the route would otherwise return 201 Created). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createQcSpecification');
   }
 
-  async updateQcSpecification(id: number, spec: any): Promise<any> {
-    return spec;
+  async updateQcSpecification(_id: number, _spec: any): Promise<any> {
+    // Not implemented — must not echo the spec back as if it were persisted
+    // (a 21 CFR Part 11 change-control fabrication). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: updateQcSpecification');
   }
 
   async createSpecificationVersion(
-    id: number,
-    changeReason: string,
-    changeDescription: string
+    _id: number,
+    _changeReason: string,
+    _changeDescription: string
   ): Promise<any> {
-    return {};
+    // Not implemented — must not report a versioned change-control record as
+    // created when nothing was persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createSpecificationVersion');
   }
 
   async getSpecificationVersions(id: number, _organizationId: number | string): Promise<any[]> {
