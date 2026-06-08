@@ -9,7 +9,8 @@
  *
  * Coverage: login → region profiles → capabilities → portfolio CRUD → sequence
  * + leaf → lifecycle rules → pathway-readiness → SERVER-COMPUTED dispatch-readiness
- * gate → governed freeze (e-signature required) → transmit (must be dispatched) →
+ * gate → device technical-file manifest + ZIP assemble → dispatch-qc auth guard →
+ * governed freeze (e-signature required) → transmit (must be dispatched) →
  * Phase-1 ingestion (classify auth/tenant guards; grounded classify + AI_GENERATE
  * audit when DOC_ID is set) → cross-tenant isolation. One script, the whole chain.
  *
@@ -181,6 +182,20 @@ async function main() {
       // no resolvable document should make the gate block (validationErrors > 0).
       const dr = await c.req('GET', `/api/submissions/sequences/${seqId}/dispatch-readiness`);
       ok('dispatch-readiness computes the gate server-side', dr.status === 200 && typeof dr.json?.gate?.cleared === 'boolean' && typeof dr.json?.validationErrors === 'number', `status ${dr.status}`);
+
+      // Device technical-file manifest (MDR/IVDR assemble structure) — deterministic.
+      const tf = await c.req('GET', `/api/submissions/sequences/${seqId}/technical-file?regulation=mdr`);
+      ok('technical-file returns the MDR Annex II/III ToC', tf.status === 200 && Array.isArray(tf.json?.entries) && tf.json.entries.length > 0 && typeof tf.json?.totals?.sections === 'number', `status ${tf.status}`);
+      const tfBad = await c.req('GET', `/api/submissions/sequences/${seqId}/technical-file?regulation=xyz`);
+      ok('technical-file rejects an unknown regulation (400)', tfBad.status === 400, `got ${tfBad.status}`);
+
+      // Device technical-file ASSEMBLE — materializes a real ZIP (no LLM needed).
+      const tfa = await c.req('POST', `/api/submissions/sequences/${seqId}/technical-file/assemble`, { regulation: 'mdr' });
+      ok('technical-file/assemble materializes a ZIP (sha256 + size)', tfa.status === 200 && tfa.json?.ok === true && /^[0-9a-f]{64}$/.test(tfa.json?.sha256 || '') && typeof tfa.json?.sizeBytes === 'number', `status ${tfa.status}`);
+
+      // Dispatch-qc hardening: a sequenceId routes through the SERVER-COMPUTED gate.
+      const qcAnon = await rawReq('POST', `/api/submissions/${subId}/dispatch-qc`, { region: 'fda', sequenceId: seqId, validationErrors: 0, unresolvedShadowCriticals: 0, leaves: [] });
+      ok('dispatch-qc without auth is rejected (401)', qcAnon.status === 401, `got ${qcAnon.status}`);
 
       // Governed SUBMIT: freeze requires a valid e-signature on this sequence.
       const noSig = await c.req('POST', `/api/submissions/sequences/${seqId}/freeze`, { signatureActionId: `act_nonexistent_${Date.now()}` });
