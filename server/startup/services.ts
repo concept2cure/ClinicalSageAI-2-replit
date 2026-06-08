@@ -129,6 +129,20 @@ export async function initializeEarlyServices(): Promise<void> {
   try {
     const { getGateway } = await import('../services/ai-gateway/index.js');
     const gw = getGateway();
+
+    // Activate the DB-backed per-org placement resolver so the gateway applies
+    // each org's required residency / zero-retention as request defaults.
+    // Non-fatal: if it can't load, the gateway falls back to explicit-only.
+    try {
+      const [{ setOrgPlacementResolver }, { DbOrgPlacementResolver }] = await Promise.all([
+        import('../services/ai-gateway/providers/org-placement.js'),
+        import('../services/ai-gateway/providers/org-placement-db.js'),
+      ]);
+      setOrgPlacementResolver(new DbOrgPlacementResolver());
+    } catch (e: any) {
+      console.warn('⚠️ Org placement resolver not activated (explicit-only):', e?.message);
+    }
+
     const providers = gw.getEnabledProviders();
     console.log(
       `✅ AI Gateway pre-warmed (${providers.length} provider${providers.length === 1 ? '' : 's'} ready)`

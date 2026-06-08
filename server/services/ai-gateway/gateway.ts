@@ -43,6 +43,10 @@ import {
   resolvePlacement,
   isPlacementCompliant,
 } from './providers/placement';
+import {
+  getOrgPlacementResolver,
+  mergeOrgPolicyDefaults,
+} from './providers/org-placement';
 import { createScopedLogger } from '../../utils/logger.js';
 const log = createScopedLogger('ai-gateway');
 
@@ -373,6 +377,11 @@ export class AIGateway {
     const requestId = randomUUID();
     const startTime = Date.now();
     const strategy = request.strategy || this.config.defaultStrategy;
+
+    // Apply the org's default placement policy (residency / zero-retention) when
+    // the request doesn't specify it. Explicit request values always win; if no
+    // policy or the lookup fails, behavior is unchanged (explicit-only).
+    request = await this.applyOrgPlacementDefaults(request);
 
     // Policy check
     const policyResult = this.policyEngine.evaluate(request);
@@ -1315,6 +1324,30 @@ export class AIGateway {
       zeroDataRetention: needsZdr,
       residency,
     });
+  }
+
+  /**
+   * Fill in residency / zero-retention from the org's placement policy when the
+   * request didn't specify them. Explicit request values always win. Never
+   * throws — a failed lookup leaves the request unchanged (explicit-only).
+   */
+  private async applyOrgPlacementDefaults(request: GatewayRequest): Promise<GatewayRequest> {
+    if (request.organizationId === undefined || request.organizationId === null) return request;
+    // Both already pinned — nothing for a default to fill.
+    if (request.dataResidency !== undefined && request.zeroDataRetention !== undefined) {
+      return request;
+    }
+    try {
+      const policy = await getOrgPlacementResolver().resolve(request.organizationId);
+      if (!policy) return request;
+      const merged = mergeOrgPolicyDefaults(
+        { dataResidency: request.dataResidency, zeroDataRetention: request.zeroDataRetention },
+        policy,
+      );
+      return { ...request, ...merged };
+    } catch {
+      return request; // never let policy resolution break a request
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
