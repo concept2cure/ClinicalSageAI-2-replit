@@ -37,6 +37,7 @@ import {
   updateDocument,
   validateDocument,
 } from '../services/gspr-postmarket/post-market.service';
+import { generatePmcfPlan } from '../services/gspr-postmarket/pmcf-plan-generator';
 import auditService from '../services/auditService';
 
 function userIdFromReq(req: Request): string | null {
@@ -262,6 +263,67 @@ postMarketRouter.post(
       res.status(201).json(doc);
     } catch (err: any) {
       res.status(500).json({ error: 'Create failed', detail: err?.message });
+    }
+  }
+);
+
+// Author a DRAFT PMCF plan (MDR Annex XIV Part B §6.2) for the program, derived
+// from the supplied device context (or a related CER report). Persists through
+// the same createDocument lifecycle in `draft` status and returns the document
+// plus its conformance validation — it never approves, locks, or asserts
+// sufficiency. The sponsor must specialise and approve it.
+postMarketRouter.post(
+  '/programs/:programId/documents/pmcf-plan/generate',
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const body = req.body ?? {};
+    const relatedCerReportId =
+      body.relatedCerReportId != null ? Number(body.relatedCerReportId) : undefined;
+    if (relatedCerReportId != null && !Number.isInteger(relatedCerReportId)) {
+      return res.status(422).json({ error: 'relatedCerReportId must be an integer' });
+    }
+    if (!body.deviceName && relatedCerReportId == null) {
+      return res.status(422).json({ error: 'deviceName or relatedCerReportId is required' });
+    }
+    if (body.regulation && body.regulation !== 'MDR' && body.regulation !== 'IVDR') {
+      return res.status(422).json({ error: 'regulation must be MDR or IVDR' });
+    }
+    const createdBy = userIdFromReq(req) ?? 'system';
+    try {
+      const result = await generatePmcfPlan({
+        organizationId: orgId,
+        programId: String(req.params.programId),
+        createdBy,
+        deviceName: typeof body.deviceName === 'string' ? body.deviceName : '',
+        deviceClass: typeof body.deviceClass === 'string' ? body.deviceClass : null,
+        regulation: body.regulation,
+        relatedCerReportId,
+        title: typeof body.title === 'string' ? body.title : undefined,
+      });
+
+      void auditService.logAction({
+        tenantId: orgId,
+        userId: createdBy,
+        action: 'post_market.pmcf_plan.generate',
+        resourceType: 'post_market_document',
+        resourceId: String(result.document.id),
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: {
+          programId: req.params.programId,
+          documentId: result.document.id,
+          version: result.document.version,
+          relatedCerReportId: relatedCerReportId ?? null,
+        },
+      });
+
+      res.status(201).json(result);
+    } catch (err: any) {
+      if (err?.code === 'PMCF_NO_DEVICE') {
+        return res.status(422).json({ error: err.message });
+      }
+      res.status(500).json({ error: 'PMCF plan generation failed', detail: err?.message });
     }
   }
 );
