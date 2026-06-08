@@ -161,8 +161,8 @@ export async function vectorSimilaritySearch(params) {
   const client = await pool.connect();
 
   try {
-    let whereConditions = [`(embedding <=> $1) < $2`];
-    let queryParams = [JSON.stringify(query_embedding), 1 - similarity_threshold];
+    const whereConditions = [`(embedding <=> $1) < $2`];
+    const queryParams = [JSON.stringify(query_embedding), 1 - similarity_threshold];
     let paramIndex = 3;
 
     // Add regulatory filters

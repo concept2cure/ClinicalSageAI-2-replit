@@ -86,7 +86,7 @@ router.get('/:projectId', async (req, res) => {
     ];
 
     // Fetch section status from database if project exists
-    let sectionStatus = {};
+    const sectionStatus = {};
     if (projectId !== 'default') {
       const statusQuery = await db.query(
         `

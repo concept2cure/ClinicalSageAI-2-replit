@@ -246,7 +246,7 @@ async function processDocument(job: ProcessingJob): Promise<void> {
       [job.document_id]
     );
 
-    let text = docResult.rows[0]?.content_text || '';
+    const text = docResult.rows[0]?.content_text || '';
 
     if (!text) {
       log.debug(`No text content for document ${job.document_id}, skipping`);

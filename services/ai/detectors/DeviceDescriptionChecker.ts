@@ -541,7 +541,7 @@ export class DeviceDescriptionChecker {
     input: DeviceDescriptionInput
   ): number {
     // Weight sections based on device type
-    let weights = {
+    const weights = {
       basicDescription: 0.25,
       materials: 0.15,
       software: 0.20,

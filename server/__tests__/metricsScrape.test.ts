@@ -19,7 +19,7 @@ import client from 'prom-client';
 
 import { tenantSessionVarMissing, tenantSessionVarPresent } from '../db/tenantSessionMetrics';
 // metrics.js is a JS module; rely on dynamic require typing.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+ 
 const { setupMetricsEndpoint } = require('../metrics.js');
 
 describe('/metrics scrape merges global + custom registries', () => {

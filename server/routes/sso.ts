@@ -442,7 +442,7 @@ async function findOrCreateSamlUser(
   // In production, org mapping would be determined by SAML config or attribute
   const defaultOrgId = 1;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Drizzle overload inference issue with default columns
+     
     await (db.insert(organizationUsers) as any).values({
       userId: newUser.id,
       organizationId: defaultOrgId,

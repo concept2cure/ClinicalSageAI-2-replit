@@ -76,7 +76,7 @@ async function handleDataFreshnessCheck(config: ScheduledJobConfig): Promise<Sch
   // Check how old each source document is relative to its dependent artifacts
   const maxAgeDays = Number(config.parameters.maxAgeDays) || 30;
   let processed = 0;
-  let flagged = 0;
+  const flagged = 0;
 
   // In production, this would query:
   //   SELECT * FROM concept2cure_artifacts WHERE type = 'source_document'

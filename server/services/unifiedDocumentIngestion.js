@@ -715,7 +715,7 @@ export class UnifiedDocumentIngestion {
     const lowerText = text.toLowerCase();
     const lowerFilename = filename.toLowerCase();
 
-    let detectedTypes = [];
+    const detectedTypes = [];
 
     // Check filename patterns first
     for (const [type, config] of Object.entries(REGULATORY_CONFIG.documentTypes)) {
@@ -778,7 +778,7 @@ export class UnifiedDocumentIngestion {
    * Extract content for a detected section
    */
   extractSectionContent(lines, startIndex) {
-    let content = [];
+    const content = [];
     let i = startIndex + 1;
 
     // Extract content until next section or end of document

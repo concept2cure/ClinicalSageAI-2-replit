@@ -148,7 +148,7 @@ export const runAgenticTurn: RunTurn = async (input, signal, emit) => {
     },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const raw = (response as any)?.content ?? (response as any)?.text ?? (response as any)?.message ?? '';
   return { text: typeof raw === 'string' ? raw : String(raw ?? '') };
 };

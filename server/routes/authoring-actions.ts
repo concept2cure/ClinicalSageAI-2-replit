@@ -2869,7 +2869,7 @@ router.post('/contradiction-scan', async (req: Request, res: Response) => {
     }
 
     // Build consequence paths for each finding
-    let consequencePathsByFinding: Record<string, any[]> = {};
+    const consequencePathsByFinding: Record<string, any[]> = {};
     try {
       const { contradictionConsequenceService } = await import(
         '../services/contradiction-consequence-service.js'

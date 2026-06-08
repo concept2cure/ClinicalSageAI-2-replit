@@ -807,7 +807,7 @@ const NEEDS_PARAMS_MESSAGE =
 registerToolHandler('compute_sample_size', async (input: Record<string, unknown>, ctx) => {
   try {
     const { anaBiostatsOrchestrator } = await import('../ana-biostats/index.js');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const result = anaBiostatsOrchestrator.quickCompute(toBiostatsInput(input, ctx) as any);
 
     if (!result.validation.valid) {
@@ -857,7 +857,7 @@ registerToolHandler('compute_sample_size', async (input: Record<string, unknown>
 registerToolHandler('compute_fih_dose', async (input: Record<string, unknown>) => {
   try {
     const { computeFirstInHumanDose } = await import('../preclinical/fih-dose-engine.js');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const result = computeFirstInHumanDose(input as any);
     return JSON.stringify({
       status: 'computed',
@@ -883,7 +883,7 @@ registerToolHandler('classify_tox_findings', async (input: Record<string, unknow
       return JSON.stringify({ status: 'needs_parameters', message: 'findings[] (organ + finding) is required.' });
     }
     const { classifyToxFindings } = await import('../preclinical/tox-findings-classifier.js');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const summary = classifyToxFindings(findings as any);
     return JSON.stringify({
       status: 'classified',
@@ -911,7 +911,7 @@ registerToolHandler('select_exposure_response_dose', async (input: Record<string
       normalized.exposuresByDose = map;
     }
     const { selectExposureResponseDose } = await import('../clinical-pharmacology/exposure-response-engine.js');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const result = selectExposureResponseDose(normalized as any);
     return JSON.stringify({
       status: 'computed',
@@ -938,9 +938,9 @@ registerToolHandler('draft_nonclinical_overview_m2_4', async (input: Record<stri
     }
     const { buildEnrichedM24 } = await import('../preclinical/nonclinical-m24-adapter.js');
     const { summary, toxProfile } = buildEnrichedM24({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       studies: studies as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       findings: input.findings as any,
       drugSubstanceName: input.drugSubstanceName as string | undefined,
       indication: input.indication as string | undefined,
@@ -1042,7 +1042,7 @@ registerToolHandler('list_platform_commands', async (input: Record<string, unkno
   try {
     const { COMMAND_REGISTRY } = await import('../ana-ri/command-executor.js');
     const q = typeof input.query === 'string' ? input.query.toLowerCase().trim() : '';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     let list = COMMAND_REGISTRY as Array<any>;
     if (q) list = list.filter(c => `${c.name} ${c.description ?? ''}`.toLowerCase().includes(q));
     return JSON.stringify({
@@ -1070,7 +1070,7 @@ registerToolHandler('execute_platform_command', async (input: Record<string, unk
     }
     const params = input.params && typeof input.params === 'object' ? (input.params as Record<string, unknown>) : {};
     const { executeCommands, COMMAND_REGISTRY } = await import('../ana-ri/command-executor.js');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     if (!(COMMAND_REGISTRY as Array<any>).some(c => c.name === command)) {
       return JSON.stringify({ status: 'unknown_command', message: `Unknown command "${command}". Call list_platform_commands to see the catalog.` });
     }
@@ -1079,7 +1079,7 @@ registerToolHandler('execute_platform_command', async (input: Record<string, unk
       organizationId: Number(organizationId),
       activeProjectId: ctx?.projectId != null ? Number(ctx.projectId) : undefined,
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const results = await executeCommands([{ command, params } as any], cmdCtx as any);
     const result = results[0];
     return JSON.stringify({
@@ -1103,7 +1103,7 @@ registerToolHandler('draft_quality_overall_summary_m2_3', async (input: Record<s
     }
     const { composeModule3FromCanonicalSources } = await import('../module3Composer.js');
     const { buildM23QualityOverallSummary } = await import('../m2-summary-builders.js');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const module3Sections = composeModule3FromCanonicalSources(cmcSources as any);
     const summary = buildM23QualityOverallSummary({
       module3Sections,
@@ -1134,7 +1134,7 @@ registerToolHandler('draft_nonclinical_summaries_m2_6', async (input: Record<str
       return JSON.stringify({ status: 'needs_parameters', message: 'studies[] is required to draft the M2.6 summaries.' });
     }
     const { buildM26NonclinicalSummaries } = await import('../preclinical/m26-nonclinical-summaries.js');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const r = buildM26NonclinicalSummaries(input as any);
     return JSON.stringify({
       status: 'drafted',
@@ -1157,7 +1157,7 @@ registerToolHandler('draft_nonclinical_summaries_m2_6', async (input: Record<str
 registerToolHandler('assess_nonclinical_safety', async (input: Record<string, unknown>) => {
   try {
     const { assessNonclinicalSafety } = await import('../preclinical/nonclinical-safety-assessment.js');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const a = assessNonclinicalSafety(input as any);
     return JSON.stringify({
       status: 'assessed',
@@ -1186,9 +1186,9 @@ registerToolHandler('assess_nonclinical_program', async (input: Record<string, u
     const { assessNonclinicalProgram } = await import('../preclinical/nonclinical-program-requirements.js');
     const present = Array.isArray(input.present) ? input.present : [];
     const result = assessNonclinicalProgram(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       input as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       present as any,
     );
     return JSON.stringify({
@@ -1209,7 +1209,7 @@ registerToolHandler('assess_nonclinical_program', async (input: Record<string, u
 registerToolHandler('assess_concentration_qtc', async (input: Record<string, unknown>) => {
   try {
     const { assessConcentrationQtc } = await import('../clinical-pharmacology/concentration-qtc.js');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const result = assessConcentrationQtc(input as any);
     return JSON.stringify({
       status: 'computed',
@@ -1237,7 +1237,7 @@ registerToolHandler('characterize_pk', async (input: Record<string, unknown>) =>
     const mod = await import('../clinical-pharmacology/pk-characterization.js');
     const result: Record<string, unknown> = { status: 'computed', engine: 'deterministic' };
     if (dp) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       result.doseProportionality = mod.assessDoseProportionality(dp as any);
     }
     if (acc) {
@@ -1258,7 +1258,7 @@ registerToolHandler('characterize_pk', async (input: Record<string, unknown>) =>
 registerToolHandler('assess_ddi_risk', async (input: Record<string, unknown>) => {
   try {
     const { assessDdiRisk } = await import('../clinical-pharmacology/ddi-static-model.js');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const result = assessDdiRisk(input as any);
     return JSON.stringify({
       status: 'computed',
@@ -1280,7 +1280,7 @@ registerToolHandler('draft_clinical_summary_m2_7', async (input: Record<string, 
     }
     const { buildM27ClinicalSummary } = await import('../m2-summary-builders.js');
     const summary = buildM27ClinicalSummary({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       csrs: csrs as any,
       indication: (input.indication as string) ?? '',
       investigationalProduct: (input.investigationalProduct as string) ?? '',
@@ -1312,9 +1312,9 @@ registerToolHandler('compare_statistical_scenarios', async (input: Record<string
     }
     const meta = { userId: ctx?.userId ?? 0, organizationId: ctx?.organizationId ?? 0 };
     const result = await anaBiostatsOrchestrator.compareScenarios(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       toBiostatsInput(a, ctx) as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       toBiostatsInput(b, ctx) as any,
       meta,
     );
@@ -1345,7 +1345,7 @@ registerToolHandler('compare_statistical_scenarios', async (input: Record<string
 registerToolHandler('assess_statistical_defensibility', async (input: Record<string, unknown>, ctx) => {
   try {
     const { anaBiostatsOrchestrator } = await import('../ana-biostats/index.js');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const result = anaBiostatsOrchestrator.quickCompute(toBiostatsInput(input, ctx) as any);
     if (!result.validation.valid) {
       return JSON.stringify({ status: 'needs_parameters', errors: result.validation.errors, message: NEEDS_PARAMS_MESSAGE });
@@ -1409,7 +1409,7 @@ registerToolHandler('generate_statistical_document', async (input: Record<string
     if (!documentType) {
       return JSON.stringify({ error: 'generate_statistical_document requires a documentType.' });
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const result = anaBiostatsOrchestrator.quickCompute(toBiostatsInput(input, ctx) as any);
     if (!result.validation.valid) {
       return JSON.stringify({ status: 'needs_parameters', errors: result.validation.errors, message: NEEDS_PARAMS_MESSAGE });
@@ -1418,7 +1418,7 @@ registerToolHandler('generate_statistical_document', async (input: Record<string
       return JSON.stringify({ error: 'Engine did not return a complete computation; cannot generate the document.' });
     }
     const doc = documentGenerator.generate(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       documentType as any,
       result.validation.normalizedInput,
       result.computation,
@@ -1451,7 +1451,7 @@ registerToolHandler('generate_statistical_document', async (input: Record<string
 registerToolHandler('assess_analytical_similarity', async (input: Record<string, unknown>) => {
   try {
     const { assessAnalyticalSimilarity } = await import('../biologics/analytical-similarity.js');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const result = assessAnalyticalSimilarity(input as any);
     return JSON.stringify({
       status: 'computed',
@@ -1469,7 +1469,7 @@ registerToolHandler('assess_analytical_similarity', async (input: Record<string,
 registerToolHandler('assess_comparability', async (input: Record<string, unknown>) => {
   try {
     const { assessComparability } = await import('../biologics/comparability.js');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const result = assessComparability(input as any);
     return JSON.stringify({
       status: 'computed',
@@ -1487,7 +1487,7 @@ registerToolHandler('assess_comparability', async (input: Record<string, unknown
 registerToolHandler('assess_immunogenicity', async (input: Record<string, unknown>) => {
   try {
     const { assessImmunogenicity } = await import('../biologics/immunogenicity.js');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const result = assessImmunogenicity(input as any);
     return JSON.stringify({
       status: 'computed',
@@ -1505,7 +1505,7 @@ registerToolHandler('assess_immunogenicity', async (input: Record<string, unknow
 registerToolHandler('assess_bla_filing_risk', async (input: Record<string, unknown>) => {
   try {
     const { assessBlaFilingRisk } = await import('../biologics/regulatory-risk.js');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const result = assessBlaFilingRisk(input as any);
     return JSON.stringify({
       status: 'computed',
@@ -1523,7 +1523,7 @@ registerToolHandler('assess_bla_filing_risk', async (input: Record<string, unkno
 registerToolHandler('generate_sop', async (input: Record<string, unknown>) => {
   try {
     const { generateSop } = await import('../sop-generator.js');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const result = generateSop(input as any);
     return JSON.stringify({
       status: 'generated',
@@ -1546,7 +1546,7 @@ registerToolHandler('generate_sop', async (input: Record<string, unknown>) => {
 registerToolHandler('resolve_submission_plan', async (input: Record<string, unknown>) => {
   try {
     const { resolveSubmissionPlan, submissionCoverageMatrix } = await import('../regulatory/submission-resolver.js');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const plan = resolveSubmissionPlan(input as any);
     const coverage = submissionCoverageMatrix();
     return JSON.stringify({

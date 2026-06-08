@@ -165,7 +165,7 @@ export async function applySafeFixes(subId: string, blockers: any[], actor: stri
   for (const b of blockers) {
     let title = '';
     let entity: string = 'SECTION';
-    let entity_id: string | null = null;
+    const entity_id: string | null = null;
     if (b.id === 'METHODS') {
       title = 'Validate/Link methods for CQA specs (P.5)';
       entity = 'SECTION';

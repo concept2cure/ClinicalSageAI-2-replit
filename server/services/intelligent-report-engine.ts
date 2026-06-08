@@ -1289,7 +1289,7 @@ export class IntelligentReportEngine {
       offset?: number;
     }
   ) {
-    let query = db
+    const query = db
       .select()
       .from(immutableReportRecords)
       .where(eq(immutableReportRecords.organizationId, organizationId))

@@ -2235,7 +2235,7 @@ export class StatisticsService {
       }
 
       // Calculate expected success probability
-      let successProbabilityChange = improvements.reduce(
+      const successProbabilityChange = improvements.reduce(
         (sum, improvement) => sum + improvement.impact,
         0
       );
@@ -3519,7 +3519,7 @@ export class StatisticsService {
 
       // Simulate from posterior distributions
       const simulations = 10000;
-      let counts = new Array(responses.length).fill(0);
+      const counts = new Array(responses.length).fill(0);
 
       for (let i = 0; i < simulations; i++) {
         const draws = posteriorAlphas.map((a, j) => this.betaRandom(a, posteriorBetas[j]));
@@ -3560,7 +3560,7 @@ export class StatisticsService {
     rules: { type: 'bayesian' | 'frequentist'; threshold: number; minAllocation: number }
   ): number[] {
     const numArms = observedRates.length;
-    let allocation = new Array(numArms).fill(0);
+    const allocation = new Array(numArms).fill(0);
 
     // Only allocate to active arms
     const activeIndices = activeArms.map((a, i) => (a ? i : -1)).filter(i => i >= 0);
@@ -5609,7 +5609,7 @@ export class StatisticsService {
 
         // Extract results
         Object.entries(resultsData).forEach(([endpoint, value]) => {
-          let normalizedEndpoint = endpoint
+          const normalizedEndpoint = endpoint
             .toLowerCase()
             .replace(/primary endpoint:?/i, '')
             .replace(/secondary endpoint:?/i, '')

@@ -372,7 +372,7 @@ router.post('/agent', async (req: Request, res: Response) => {
     );
 
     // Build system prompt
-    let system = systemPrompt || 'You are a regulatory affairs expert with access to clinical trial databases, FDA guidance, and literature search tools. Use the available tools to research and provide evidence-based answers.';
+    const system = systemPrompt || 'You are a regulatory affairs expert with access to clinical trial databases, FDA guidance, and literature search tools. Use the available tools to research and provide evidence-based answers.';
     /* Framework context is embedded directly in the system prompt below;
        the dynamic AnaDocumentDraftingService import was unused dead code
        and was removed. */

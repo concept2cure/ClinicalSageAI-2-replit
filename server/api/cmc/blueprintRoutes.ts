@@ -136,7 +136,7 @@ router.get('/templates', async (req, res) => {
     const { category, drugType, developmentStage, organizationId } = req.query;
 
     let queryText = 'SELECT * FROM workflow_templates WHERE 1=1';
-    let params = [];
+    const params = [];
 
     if (organizationId) {
       queryText += ` AND organization_id = $${params.length + 1}`;

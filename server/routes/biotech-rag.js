@@ -907,7 +907,7 @@ router.post('/ingest/regulatory-sources', async (req, res) => {
 
     // Process each source
     for (const source of sources) {
-      let sourceResult = { source, documentsQueued: 0, error: null };
+      const sourceResult = { source, documentsQueued: 0, error: null };
       
       try {
         switch(source.toUpperCase()) {

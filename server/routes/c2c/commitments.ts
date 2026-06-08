@@ -113,7 +113,7 @@ router.post('/extract', async (req: Request, res: Response) => {
   const persist = req.body?.persist !== false;
   try {
     const extracted = await extractCommitments(text, { documentId: req.body?.documentId });
-    let created: string[] = [];
+    const created: string[] = [];
     if (persist && extracted.length > 0) {
       for (const c of extracted) {
         try {

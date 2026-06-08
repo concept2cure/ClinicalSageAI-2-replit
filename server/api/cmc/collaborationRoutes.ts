@@ -27,10 +27,10 @@ const NotificationSchema = z.object({
 });
 
 // In-memory storage for real-time features (replace with database/Redis in production)
-let comments = new Map();
-let notifications = new Map();
-let activeUsers = new Map();
-let realtimeConnections = new Map();
+const comments = new Map();
+const notifications = new Map();
+const activeUsers = new Map();
+const realtimeConnections = new Map();
 
 /**
  * @route GET /api/cmc/collaboration/comments/:workflowId

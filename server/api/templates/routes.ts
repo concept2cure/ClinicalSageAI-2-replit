@@ -107,7 +107,7 @@ router.get('/catalog', async (req: Request, res: Response) => {
       organizationId = '6' 
     } = req.query;
     
-    let conditions: (SQL<unknown> | undefined)[] = [
+    const conditions: (SQL<unknown> | undefined)[] = [
       eq(ectdTemplates.organizationId, parseInt(organizationId as string)),
       eq(ectdTemplates.isActive, true)
     ];

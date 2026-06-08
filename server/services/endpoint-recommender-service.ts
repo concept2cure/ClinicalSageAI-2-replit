@@ -528,7 +528,7 @@ export class EndpointRecommenderService {
             if (!item.endpoint_text) continue;
 
             // Extract endpoint text and clean it
-            let endpoint = item.endpoint_text.trim();
+            const endpoint = item.endpoint_text.trim();
 
             // Skip if it's not suitable for the phase
             if (phase && item.phase && !item.phase.toLowerCase().includes(phase.toLowerCase())) {

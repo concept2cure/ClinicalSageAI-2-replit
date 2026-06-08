@@ -61,7 +61,7 @@ export async function runBootSecuritySelfTest(pool: Pool): Promise<void> {
     overall: report.overall,
     failures: failures.map(f => ({ name: f.name, reason: f.reason })),
   });
-  // eslint-disable-next-line no-console
+   
   console.error(
     `[security-self-test] FAILED. Critical checks:\n` +
       failures.map(f => `  - ${f.name}: ${f.reason ?? 'no reason'}`).join('\n') +

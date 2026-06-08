@@ -210,7 +210,7 @@ router.get('/studies', async (req, res) => {
 
     // fetch one-line condition strings per study for frontend compatibility
     const ids = rows.map((r: any) => r.study_id);
-    let condMap = new Map<string, string[]>();
+    const condMap = new Map<string, string[]>();
     if (ids.length) {
       // Use the same client with tenant context
       const { rows: conds } = await client.query(

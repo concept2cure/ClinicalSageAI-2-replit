@@ -321,7 +321,7 @@ router.post('/document/generate', requireTier('standard'), async (req: Request, 
     const templates = sectionTemplates[documentType] || sectionTemplates.csr;
 
     // ── Retrieve Data Room evidence for richer generation context ──────
-    let dataRoomEvidence = new Map<string, string>();
+    const dataRoomEvidence = new Map<string, string>();
     try {
       const { pool } = await import('../db.js');
       const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');

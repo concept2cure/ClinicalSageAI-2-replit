@@ -47,7 +47,7 @@ class LiteratureService {
   async searchLiterature(params: LiteratureSearchParams): Promise<PubMedArticle[]> {
     try {
       // Build search query for PubMed API
-      let searchTerms = [];
+      const searchTerms = [];
 
       if (params.deviceName) {
         searchTerms.push(`"${params.deviceName}"`);

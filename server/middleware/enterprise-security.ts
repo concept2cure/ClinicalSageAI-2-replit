@@ -516,7 +516,7 @@ export function validateTenantContext(req: Request, res: Response, next: NextFun
         }
       })();
       // Keep the structured-log line as well for ops dashboards.
-      // eslint-disable-next-line no-console
+       
       console.warn('[SECURITY] Tenant impersonation attempt blocked', impersonationDetail);
       return res.status(403).json({
         error: 'Organization mismatch',
@@ -794,7 +794,7 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
       reason: 'no_origin_no_referer_no_bearer',
       method: req.method,
     });
-    // eslint-disable-next-line no-console
+     
     console.warn(
       `[SECURITY] CSRF: state-changing request without Origin/Referer/Bearer on ${req.path}`
     );
@@ -810,7 +810,7 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
       method: req.method,
       origin: source,
     });
-    // eslint-disable-next-line no-console
+     
     console.warn(
       `[SECURITY] CSRF: origin mismatch — ${source} not in allowedOrigins for ${req.path}`
     );

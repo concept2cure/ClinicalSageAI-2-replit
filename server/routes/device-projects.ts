@@ -35,7 +35,7 @@ router.get('/', async (req: Request, res: Response) => {
       ? Number(req.query.client_workspace_id)
       : undefined;
 
-    let conditions = [
+    const conditions = [
       eq(projects.organizationId, organization_id),
       eq(projects.type, 'medical-device'),
     ];

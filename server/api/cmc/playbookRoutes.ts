@@ -178,7 +178,7 @@ router.post('/ai-tools/execute', async (req: Request, res: Response) => {
     ]);
 
     // Execute the AI tool based on command
-    let result = await executeAITool(command, drugName, additionalContext);
+    const result = await executeAITool(command, drugName, additionalContext);
 
     // Update execution status
     await pool.query(

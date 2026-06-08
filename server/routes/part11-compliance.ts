@@ -649,7 +649,7 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
 
     // Walk the chain and recompute hashes
     const brokenLinks: Array<{ id: number; sequenceNumber: number; orgId: number; expected: string; actual: string }> = [];
-    let prevHashByOrg: Record<number, string> = {};
+    const prevHashByOrg: Record<number, string> = {};
     let totalVerified = 0;
 
     for (const row of rows) {

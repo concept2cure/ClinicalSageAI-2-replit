@@ -495,7 +495,7 @@ router.post('/execute-task', checkForOpenAIKey, copilotLimiter, async (req, res)
     }
 
     // Get a follow-up response to explain what was done
-    let followUpMessages = [...messages];
+    const followUpMessages = [...messages];
     if (functionCall) {
       followUpMessages.push(responseMessage);
       followUpMessages.push({

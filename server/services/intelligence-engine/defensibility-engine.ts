@@ -175,7 +175,7 @@ function scoreConsistency(report: ConsistencyReport): {
   const drivers: DefensibilityDriver[] = [];
 
   // Direct mapping from consistency score (0-100) → (0-25)
-  let score = Math.round(report.consistencyScore / 4);
+  const score = Math.round(report.consistencyScore / 4);
 
   const highInconsistencies = report.inconsistencies.filter(i => i.severity === 'high').length;
   if (highInconsistencies > 0) {

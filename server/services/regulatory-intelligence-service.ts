@@ -709,7 +709,7 @@ export class RegulatoryIntelligenceService {
 
     // Create phrases from consecutive meaningful words
     const phrases = [];
-    let currentPhrase = [];
+    const currentPhrase = [];
 
     for (const word of filteredWords) {
       currentPhrase.push(word);

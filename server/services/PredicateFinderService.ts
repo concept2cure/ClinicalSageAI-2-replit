@@ -39,7 +39,7 @@ class PredicateFinderService {
   async findPredicates(params: SearchParams): Promise<PredicateDevice[]> {
     try {
       // Build FDA API query
-      let query = [];
+      const query = [];
 
       // SECURITY/correctness: percent-encode the user-supplied VALUES only,
       // leaving the openFDA query operators (field:"", +AND+, (), +) intact.

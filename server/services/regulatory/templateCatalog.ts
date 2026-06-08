@@ -109,7 +109,7 @@ export function getTemplateCategories(): string[] {
  */
 export function searchTemplates(query: string, registryIdOrLegacy?: string): DocumentTemplate[] {
   const q = query.toLowerCase();
-  let templates = registryIdOrLegacy
+  const templates = registryIdOrLegacy
     ? getTemplatesForType(registryIdOrLegacy)
     : [...CTD_TEMPLATES, ...DEVICE_TEMPLATES, ...EU_SPECIFIC_TEMPLATES];
 

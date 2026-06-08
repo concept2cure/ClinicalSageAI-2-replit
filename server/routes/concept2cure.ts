@@ -11398,7 +11398,7 @@ router.get('/audit-logs', async (req: Request, res: Response) => {
     const { entityType, entityId, limit: limitParam } = req.query;
     const queryLimit = Math.min(Number(limitParam) || 50, 200);
 
-    let query = db
+    const query = db
       .select()
       .from(regulatoryAuditLogs)
       .where(eq(regulatoryAuditLogs.organizationId, organizationId))
@@ -13206,7 +13206,7 @@ router.get('/projects/:projectId/tasks', async (req: Request, res: Response) => 
 
     const { status, priority, category } = req.query;
 
-    let query = db.select().from(projectTasks).where(eq(projectTasks.projectId, projectId));
+    const query = db.select().from(projectTasks).where(eq(projectTasks.projectId, projectId));
 
     const tasks = await query.orderBy(projectTasks.dueDate).limit(500);
 
@@ -13407,7 +13407,7 @@ router.get('/projects/:projectId/tasks/summary', async (req: Request, res: Respo
     const byPriority: Record<string, number> = {};
     let overdue = 0;
     let completed = 0;
-    let total = tasks.length;
+    const total = tasks.length;
 
     for (const task of tasks) {
       const s = (task as any).status || 'todo';
@@ -14440,7 +14440,7 @@ router.get(
 
       // Get comment counts per thread
       const threadIds = threads.map(t => t.id);
-      let commentCounts = new Map<number, number>();
+      const commentCounts = new Map<number, number>();
       if (threadIds.length > 0) {
         const counts = await db
           .select({
@@ -17734,7 +17734,7 @@ router.post(
       const conversation = convResult.rows[0];
 
       // Load messages (optionally filtered by range)
-      let messagesQuery = `SELECT role, content, created_at FROM concept2cure_messages
+      const messagesQuery = `SELECT role, content, created_at FROM concept2cure_messages
        WHERE conversation_id = $1 AND organization_id = $2
        ORDER BY created_at ASC`;
       const messagesResult = await pool.query(messagesQuery, [conversationId, organizationId]);
