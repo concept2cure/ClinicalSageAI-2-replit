@@ -13,7 +13,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { logAction } = vi.hoisted(() => ({ logAction: vi.fn(async () => {}) }));
+const { logAction } = vi.hoisted(() => ({ logAction: vi.fn(async (_entry: any) => {}) }));
 
 // auditLogger imports auditService via '../auditService'; intercept that module.
 vi.mock('../../services/auditService', () => ({
@@ -48,7 +48,7 @@ describe('Part 11 — auditLogger forwards every event to the persistent store',
 
     expect(typeof id).toBe('string');
     expect(logAction).toHaveBeenCalledTimes(1);
-    const entry = logAction.mock.calls[0][0];
+    const entry = logAction.mock.calls[0]![0];
     expect(entry).toMatchObject({
       action: 'document.opened',
       resourceType: 'document',
@@ -74,7 +74,7 @@ describe('Part 11 — auditLogger forwards every event to the persistent store',
       organizationId: 'org7',
       success: false,
     });
-    expect(logAction.mock.calls[0][0]).toMatchObject({
+    expect(logAction.mock.calls[0]![0]).toMatchObject({
       action: 'authentication.login',
       resourceType: 'authentication',
     });
@@ -82,7 +82,7 @@ describe('Part 11 — auditLogger forwards every event to the persistent store',
 
   it('carries previousValue/newValue for data-change events', async () => {
     await logDataChange('u1', 'org7', 'ind_section', 's1', 'update', { a: 1 }, { a: 2 });
-    const entry = logAction.mock.calls[0][0];
+    const entry = logAction.mock.calls[0]![0];
     expect(entry.action).toBe('data_change.ind_section_update');
     expect(entry.details).toMatchObject({ previousValue: { a: 1 }, newValue: { a: 2 } });
   });
@@ -96,7 +96,7 @@ describe('Part 11 — auditLogger forwards every event to the persistent store',
       resourceId: 'p1',
     });
     expect(logAction).toHaveBeenCalledTimes(1);
-    expect(logAction.mock.calls[0][0]).toMatchObject({
+    expect(logAction.mock.calls[0]![0]).toMatchObject({
       action: 'system.packet_built',
       resourceType: 'defense_packet',
       resourceId: 'p1',
