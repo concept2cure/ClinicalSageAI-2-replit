@@ -1,23 +1,29 @@
 /**
- * Regression — UnifiedCERService (EU MDR CER) fails closed rather than
- * fabricating a result. Locks the fix that replaced an unconditional
- * validateReport() => { valid: true } (which falsely certified any
- * unvalidated clinical evaluation report as conformant) with an honest,
- * fail-closed result. No real validation engine exists yet, so the service
- * must never report success.
+ * Regression — UnifiedCERService (EU MDR CER).
+ *
+ * generateReport() is now wired to the real cerGenerationService, but it must
+ * still FAIL CLOSED on error (e.g. a non-existent device) rather than fabricate
+ * or partially fake a report. validateReport() must never certify an
+ * unvalidated clinical evaluation report as conformant (no conformance engine
+ * exists yet), so it always returns valid: false with a reason.
  */
 
 import { describe, it, expect } from 'vitest';
 import UnifiedCERService from '../index';
 
-describe('UnifiedCERService — fails closed instead of fabricating', () => {
-  const svc = new UnifiedCERService({ organizationId: 'org1', deviceName: 'Acme Infusion Pump' });
+describe('UnifiedCERService — wired but never fabricates', () => {
+  const svc = new UnifiedCERService({
+    organizationId: 1,
+    deviceId: 999_999_999, // intentionally non-existent
+    userId: 1,
+    regulatoryFramework: 'MDR_2017_745',
+  });
 
   it('validateReport never certifies an unvalidated report as valid', async () => {
     const result = await svc.validateReport('report-123');
     expect(result.valid).toBe(false);
     expect(result.issues.length).toBeGreaterThan(0);
-    expect(result.issues.join(' ')).toMatch(/not implemented|not wired|cannot be certified/i);
+    expect(result.issues.join(' ')).toMatch(/not implemented|cannot be certified/i);
   });
 
   it('validateReport is deterministic across calls (no fabricated variability)', async () => {
@@ -26,10 +32,13 @@ describe('UnifiedCERService — fails closed instead of fabricating', () => {
     expect(a).toEqual(b);
   });
 
-  it('generateReport fails closed rather than returning a partial/fabricated report', async () => {
+  it('generateReport fails closed for a non-existent device instead of fabricating success', async () => {
     const result = await svc.generateReport();
+    // Underlying generateCER throws (device not found / DB error); the facade
+    // must surface a failed result with no fabricated sections — never success.
     expect(result.status).toBe('failed');
     expect(result.sections).toEqual([]);
-    expect(result.warnings?.join(' ')).toMatch(/not wired/i);
+    expect(result.reportId).toBe('');
+    expect(result.warnings?.join(' ')).toMatch(/failed/i);
   });
 });
