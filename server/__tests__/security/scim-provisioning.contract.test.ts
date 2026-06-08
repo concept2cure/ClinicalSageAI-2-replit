@@ -116,3 +116,72 @@ describe('SCIM provisioning — lifecycle', () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe('SCIM provisioning — Groups (RBAC roles)', () => {
+  it('lists the four role-groups (200, ListResponse)', async () => {
+    queryMock.mockResolvedValue({ rows: [{ id: 1, email: 'a@acme.test', name: 'A' }] });
+    const res = await request(app).get('/scim/v2/Groups').set('Authorization', `Bearer ${TOKEN}`);
+    expect(res.status).toBe(200);
+    expect(res.body.schemas).toContain('urn:ietf:params:scim:api:messages:2.0:ListResponse');
+    expect(res.body.totalResults).toBe(4);
+    const ids = (res.body.Resources as Array<{ id: string }>).map(g => g.id).sort();
+    expect(ids).toEqual(['admin', 'manager', 'member', 'viewer']);
+  });
+
+  it('gets a single role-group with members (200)', async () => {
+    queryMock.mockResolvedValue({ rows: [{ id: 1, email: 'a@acme.test', name: 'A' }] });
+    const res = await request(app)
+      .get('/scim/v2/Groups/admin')
+      .set('Authorization', `Bearer ${TOKEN}`);
+    expect(res.status).toBe(200);
+    expect(res.body.id).toBe('admin');
+    expect(res.body.displayName).toBe('Admin');
+    expect(res.body.members[0].value).toBe('1');
+  });
+
+  it('404 for an unknown group (not a valid role)', async () => {
+    const res = await request(app)
+      .get('/scim/v2/Groups/superuser')
+      .set('Authorization', `Bearer ${TOKEN}`);
+    expect(res.status).toBe(404);
+  });
+
+  it('PATCH add assigns the group role to a member (org-scoped UPDATE)', async () => {
+    queryMock.mockResolvedValue({ rows: [{ id: 100, email: 'jane@acme.test', name: 'Jane' }] });
+    const res = await request(app)
+      .patch('/scim/v2/Groups/admin')
+      .set('Authorization', `Bearer ${TOKEN}`)
+      .send({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
+        Operations: [{ op: 'add', path: 'members', value: [{ value: '100' }] }],
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.id).toBe('admin');
+    const update = queryMock.mock.calls.find(c => /UPDATE organization_users SET role = \$1/.test(c[0]));
+    expect(update).toBeTruthy();
+    expect(update?.[1]).toEqual(['admin', 7, 100]); // role, orgId, userId
+  });
+});
+
+describe('SCIM provisioning — discovery', () => {
+  it('exposes ResourceTypes (User + Group)', async () => {
+    const res = await request(app)
+      .get('/scim/v2/ResourceTypes')
+      .set('Authorization', `Bearer ${TOKEN}`);
+    expect(res.status).toBe(200);
+    const ids = (res.body.Resources as Array<{ id: string }>).map(r => r.id);
+    expect(ids).toContain('User');
+    expect(ids).toContain('Group');
+  });
+
+  it('exposes Schemas (User + Group)', async () => {
+    const res = await request(app).get('/scim/v2/Schemas').set('Authorization', `Bearer ${TOKEN}`);
+    expect(res.status).toBe(200);
+    expect(res.body.totalResults).toBe(2);
+  });
+
+  it('discovery still requires the bearer token (401)', async () => {
+    const res = await request(app).get('/scim/v2/ResourceTypes');
+    expect(res.status).toBe(401);
+  });
+});
