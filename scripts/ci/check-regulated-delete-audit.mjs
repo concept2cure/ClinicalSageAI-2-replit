@@ -39,7 +39,7 @@ const REGULATED = [
 ];
 
 const AUDIT_RE =
-  /\b(writeMutation|logAuditEntry|recordGovernedAction|logAuditEvent|recordGovernedDecision|auditService|logRegulatedDeletion)\b/;
+  /\b(writeMutation|logAuditEntry|recordGovernedAction|logAuditEvent|recordGovernedDecision|auditService|logRegulatedDeletion)\b|INSERT\s+INTO\s+audit_events\b/i;
 
 // Known-unaudited regulated deletes, operator-tracked (PRODUCT_QC_REVIEW Part 11).
 // Keyed by route file (each holds a single regulated-delete handler).
@@ -50,8 +50,6 @@ const ALLOWLIST = {
     'coauthor_documents hard-delete; soft-delete migration + audit pending (Part 11 #1)',
   'server/routes/authoring.router.ts':
     'authoring_documents UAT-cleanup hard-delete; audit pending (Part 11 #5)',
-  'server/routes/ind.ts':
-    'ind_applications hard-delete (regulated FDA submission) with no audit; audit pending (Part 11 #1 scope)',
 };
 
 const WINDOW = 25; // lines around a delete to search for an audit call

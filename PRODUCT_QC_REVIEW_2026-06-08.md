@@ -107,11 +107,39 @@ DELETE on a regulated table (`coauthor_documents`, `c2c_document_*`,
 `authoring_documents`, `ind_applications`) has no audit call nearby. The
 currently-unaudited deletes are allow-listed as operator-tracked, so the gate
 blocks the gap from **widening** while the soft-delete migration is scheduled.
-Two sites the swarm missed were found by this gate's scan and added to the
-allow-list / Part 11 #1 scope: `coauthor.ts:237` (`coauthor_documents`) and —
-notably — **`ind.ts:266` (`ind_applications`)**, a hard-delete of a regulated
-**IND/FDA submission record** with no audit at all (a §11.10(e) gap on one of
-the most regulation-significant records in the product).
+Two sites the swarm missed were found by this gate's scan: `coauthor.ts:237`
+(`coauthor_documents`, allow-listed) and — notably — `ind.ts:266`
+(`ind_applications`), a hard-delete of a regulated **IND/FDA submission record**
+with no audit at all. ✅ **`ind.ts` is now fixed** (below) and recognised by the
+gate as positively audited (no allow-list); the gate's audit-signal set was
+extended to count a raw `INSERT INTO audit_events`.
+
+### ✅ Fixed — IND application delete now audited (architecture call made)
+
+`ind.ts` DELETE `/applications/:id` now deletes the IND record **and** writes an
+`ind_application.deleted` row to the hash-chained, append-only `audit_events`
+table **in the same transaction** (atomic, fail-closed — an audit failure rolls
+the delete back). Contract test
+`ind-application-delete-audit.contract.test.ts` (3 tests, no DB) locks the
+order, the rollback-on-audit-failure, and the non-draft guard.
+
+**Audit-store choice (the green-lit architecture call):** I used `audit_events`
+(public, trigger-computed hash chain + immutability migration) — the most robust
+general-purpose store. This surfaced a real **finding: the audit trail is
+fragmented** across ≥5 uncoordinated stores — the in-memory `auditLogger` stub
+(#4), `audit_events` (public, trigger-chained), `audit.event_log` (the GCC
+Part 11 table, UUID entity_id), the `audit_logs` c2c ledger, and
+`regulatoryAuditLogs`. There is no single canonical Part 11 trail, which is why
+"which audit store" is a genuine architecture decision. **Recommendation:**
+consolidate onto one canonical, chained, queryable store and migrate the others
+(incl. the in-memory stub) onto it.
+
+**CI note:** a DB-backed integration test for these audit fixes is **not**
+runnable in the current CI Integration job — its DB applies only the GCC + RLS
+SQL migrations, which do **not** create `ind_applications` / `audit_events`
+(those come from the Drizzle schema in `migrations/0000_*`). The mocked contract
+tests are therefore the CI-enforced verification; a DB-backed test would run
+only against a full-schema database (the operator's environment).
 A DB-backed integration test (delete ⇒ matching `audit_logs` row) remains the
 complementary runtime check.
 
