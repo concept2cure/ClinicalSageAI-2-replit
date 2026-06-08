@@ -111,7 +111,10 @@ jobs:
   security-tests:
     name: Security Contract Tests
     runs-on: ubuntu-latest
-    needs: lint
+    # Intentionally independent of `lint`. The other test jobs `needs: lint`, so
+    # they are skipped whenever the lint job is red (e.g. pre-existing
+    # tenant-isolation baseline drift). A security regression must always report,
+    # so this gate runs on its own.
     steps:
       - uses: actions/checkout@v4
 
