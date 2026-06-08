@@ -43,6 +43,7 @@
     "test:submission": "vitest run --config vitest.config.ts server/services/ectd server/services/submission-service server/services/region-profiles server/services/ana/__tests__/submission-center-tools.test.ts",
     "test:security": "vitest run --config vitest.config.ts server/__tests__/security server/services/ai-gateway/__tests__/promptInjection.test.ts server/services/__tests__/saml-provider.test.ts",
     "verify:submission": "node scripts/verify-submission-center.mjs",
+    "verify:submission:bootstrap": "node scripts/bootstrap-and-verify-submission.mjs",
     "ci:ban-new-pool": "bash scripts/ci/ban-new-pool.sh",
     "ci:gateway-bypass": "node scripts/ci/check-gateway-bypass.mjs",
     "ai:model-cards": "tsx scripts/ai-governance/generate-model-cards.ts",
