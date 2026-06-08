@@ -329,6 +329,70 @@ function solveLinearSystem(A: number[][], b: number[]): number[] {
   return solution;
 }
 
+// ── EP09 · Method comparison (bias estimation) ───────────────────────────────
+
+export interface MethodComparisonArgs {
+  /** Reference (comparator) measurements. */
+  reference: number[];
+  /** Test (candidate) measurements, paired with `reference`. */
+  test: number[];
+  /** Optional medical-decision level at which to report systematic bias. */
+  decisionLevel?: number;
+}
+
+export interface MethodComparisonResult {
+  /** OLS slope/intercept/R² of test on reference. */
+  slope: number;
+  intercept: number;
+  r2: number;
+  /** Mean of (test − reference) and its SD — the average bias. */
+  meanBias: number;
+  sdBias: number;
+  /** Predicted bias (regression estimate − level) at the decision level, if given. */
+  biasAtDecisionLevel: number | null;
+  n: number;
+  provenance: StatsProvenance;
+}
+
+/**
+ * CLSI EP09 method comparison: regress the candidate method on the comparator
+ * and report systematic bias (mean and, optionally, at a medical-decision level).
+ */
+export function compareMethods(args: MethodComparisonArgs): MethodComparisonResult {
+  const { reference, test } = args;
+  const n = reference.length;
+  if (n < 2 || test.length !== n) {
+    throw new Error('EP09 method comparison requires paired reference/test of length ≥ 2.');
+  }
+  const fit = linearRegression(reference, test);
+  const diffs = test.map((t, i) => t - reference[i]);
+  const meanBias = diffs.reduce((s, d) => s + d, 0) / n;
+  const sdBias =
+    n > 1
+      ? Math.sqrt(diffs.reduce((s, d) => s + (d - meanBias) ** 2, 0) / (n - 1))
+      : 0;
+  const biasAtDecisionLevel =
+    args.decisionLevel !== undefined
+      ? fit.intercept + fit.slope * args.decisionLevel - args.decisionLevel
+      : null;
+
+  return {
+    slope: fit.slope,
+    intercept: fit.intercept,
+    r2: fit.r2,
+    meanBias,
+    sdBias,
+    biasAtDecisionLevel,
+    n,
+    provenance: buildProvenance({
+      method: 'CLSI EP09 method comparison',
+      seed: 0,
+      inputs: args,
+      note: 'OLS regression of test on reference; systematic bias estimates.',
+    }),
+  };
+}
+
 export interface LinearityLevel {
   /** Assigned/relative concentration for the level. */
   concentration: number;

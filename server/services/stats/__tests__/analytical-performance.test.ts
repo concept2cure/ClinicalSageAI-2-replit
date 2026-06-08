@@ -10,6 +10,7 @@ import {
   linearRegression,
   polynomialFit,
   assessLinearity,
+  compareMethods,
 } from '../analytical-performance';
 
 describe('EP05 imprecision (one-way ANOVA)', () => {
@@ -135,5 +136,28 @@ describe('EP06 linearity', () => {
         { concentration: 2, measurements: [2] },
       ])
     ).toThrow();
+  });
+});
+
+describe('EP09 method comparison', () => {
+  it('estimates slope/intercept and bias from paired data', () => {
+    // test = 2·reference exactly → slope 2, intercept 0.
+    const r = compareMethods({ reference: [1, 2, 3, 4], test: [2, 4, 6, 8] });
+    expect(r.slope).toBeCloseTo(2, 10);
+    expect(r.intercept).toBeCloseTo(0, 10);
+    expect(r.r2).toBeCloseTo(1, 10);
+    // mean(test − reference) = mean([1,2,3,4]) = 2.5
+    expect(r.meanBias).toBeCloseTo(2.5, 10);
+  });
+
+  it('reports systematic bias at a decision level', () => {
+    // At Xc=5, predicted test = 10 → bias = 10 − 5 = 5.
+    const r = compareMethods({ reference: [1, 2, 3, 4], test: [2, 4, 6, 8], decisionLevel: 5 });
+    expect(r.biasAtDecisionLevel).toBeCloseTo(5, 10);
+  });
+
+  it('null decision-level bias when not requested; rejects unpaired input', () => {
+    expect(compareMethods({ reference: [1, 2], test: [1, 2] }).biasAtDecisionLevel).toBeNull();
+    expect(() => compareMethods({ reference: [1, 2, 3], test: [1, 2] })).toThrow();
   });
 });
