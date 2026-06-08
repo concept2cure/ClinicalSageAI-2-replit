@@ -93,6 +93,30 @@ async function indexExists(tableName: string, indexName: string): Promise<boolea
 }
 
 /**
+ * Lightweight health check: are user-defined (non primary-key) indexes present
+ * in the public schema? Used by the performance diagnostics instead of assuming
+ * indexes exist. Returns false when the DB is unavailable, on error, or when no
+ * secondary indexes are found — never a fabricated "true".
+ */
+export async function secondaryIndexesPresent(): Promise<boolean> {
+  if (!db) {
+    logger.error('Database connection is not initialized when checking index presence');
+    return false;
+  }
+
+  try {
+    const result = await db.execute(sql`
+      SELECT COUNT(*)::int AS n FROM pg_indexes
+      WHERE schemaname = 'public' AND indexname NOT LIKE '%_pkey'
+    `);
+    return Number((result.rows[0] as { n?: number } | undefined)?.n ?? 0) > 0;
+  } catch (error) {
+    logger.error('Error checking secondary index presence', error);
+    return false;
+  }
+}
+
+/**
  * Create organization_id indexes for all tenant tables
  */
 export async function createTenantIndexes(): Promise<void> {

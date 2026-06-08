@@ -114,8 +114,10 @@ export async function runPerformanceCheck(): Promise<{
     // Get batch stats
     const batchStats = queryBatcher.getBatchStats();
 
-    // Check if DB indexes exist (simple check)
-    const dbIndexStatus = true; // placeholder, would need a real check
+    // Real check: are our secondary (non primary-key) indexes actually present?
+    // Previously hardcoded to true, which reported "indexes OK" even when the DB
+    // was down or initialization had failed.
+    const dbIndexStatus = await indexOptimizer.secondaryIndexesPresent();
 
     // Log performance stats
     logger.info('Performance check results', {
