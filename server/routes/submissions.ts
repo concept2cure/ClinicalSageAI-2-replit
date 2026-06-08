@@ -611,4 +611,40 @@ router.post('/sequences/:seqId/dispatch', limiter, requireRole(AUTHOR), async (r
   }
 });
 
+// ── Transmit (the final step — assemble → send to the agency gateway) ─────────
+// Requires the sequence to be dispatched, a Part 11 e-signature on the sequence
+// target, and a clear dispatch gate. Real transmission only happens when the org
+// has gateway credentials for the chosen environment; otherwise the response
+// reports `transmitted: false, reason: "gateway_not_configured"` honestly.
+const transmitSchema = z.object({
+  signatureActionId: z.string().min(1).max(128),
+  environment: z.enum(['staging', 'production']).optional(),
+  applicationId: z.string().min(1).max(128).optional(),
+  sponsorId: z.string().min(1).max(128).optional(),
+  sponsorName: z.string().min(1).max(256).optional(),
+});
+router.post('/sequences/:seqId/transmit', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = transmitSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { transmitSequence } = await import('../services/submission-service/submission-service');
+    const result = await transmitSequence({
+      sequenceId: seqId,
+      ctx,
+      signatureActionId: parsed.data.signatureActionId,
+      environment: parsed.data.environment,
+      applicationId: parsed.data.applicationId,
+      sponsorId: parsed.data.sponsorId,
+      sponsorName: parsed.data.sponsorName,
+    });
+    res.json(result);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 export default router;

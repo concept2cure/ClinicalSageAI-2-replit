@@ -352,6 +352,164 @@ export function dispatchSequence(
   return applyGovernedSequenceTransition(id, 'dispatched', ctx, signatureActionId);
 }
 
+// ── Transmit (the TRANSMIT step — assemble → send to the agency gateway) ──────
+//
+// Connects a DISPATCHED sequence to the real agency gateway: it re-verifies the
+// e-signature + dispatch gate, assembles the package bytes, selects the regional
+// gateway, and transmits — but ONLY when the org has credentials for that
+// gateway+environment (otherwise it reports `gateway_not_configured` honestly
+// rather than failing). The gateway implementation persists the
+// submission_transmittals record and performs the real transport (AS2 / OAuth2 /
+// mTLS+HMAC). Tenant-scoped + audited.
+
+/** Map a submission region (fda|eu|jp) to its primary eCTD agency gateway. */
+const REGION_GATEWAY: Record<string, { gwRegion: 'fda' | 'ema' | 'pmda'; gwName: 'esg' | 'cesp' | 'pmda_gateway' }> = {
+  fda: { gwRegion: 'fda', gwName: 'esg' },
+  eu: { gwRegion: 'ema', gwName: 'cesp' },
+  jp: { gwRegion: 'pmda', gwName: 'pmda_gateway' },
+};
+
+/** Project a gateway transmit status onto the sequence's coarse dispatch_status. */
+function toDispatchStatus(status: string): 'sent' | 'acknowledged' | 'rejected' {
+  if (status === 'rejected' || status === 'validation_failed') return 'rejected';
+  if (status === 'ack3_received' || status === 'validation_passed' || status === 'completed') return 'acknowledged';
+  return 'sent';
+}
+
+export interface TransmitSequenceParams {
+  sequenceId: number;
+  ctx: { organizationId: number; userId: number };
+  signatureActionId: string;
+  environment?: 'staging' | 'production';
+  applicationId?: string;
+  sponsorId?: string;
+  sponsorName?: string;
+}
+
+export interface TransmitSequenceResult {
+  transmitted: boolean;
+  /** Set when not transmitted (e.g. 'gateway_not_configured'). */
+  reason?: string;
+  region: string;
+  gateway: string;
+  transmittalId?: number;
+  transmissionId?: string | null;
+  status?: string;
+  dispatchStatus: string;
+}
+
+/**
+ * Transmit a dispatched sequence to its regional agency gateway. Governed:
+ * requires a valid e-signature on the sequence target AND a clear dispatch gate.
+ * Real transmission only occurs when the gateway is configured for the org.
+ */
+export async function transmitSequence(params: TransmitSequenceParams): Promise<TransmitSequenceResult> {
+  const { sequenceId, ctx, signatureActionId } = params;
+  const environment = params.environment ?? 'production';
+
+  const seq = await getSequence(sequenceId, ctx);
+  if (seq.status !== 'dispatched') {
+    throw new SubmissionError('INVALID_STATE', `Sequence must be dispatched before transmit (current: ${seq.status}).`);
+  }
+
+  // Gate 1 — Part 11 e-signature on this sequence, by this actor.
+  const target = `ectd-sequence:${sequenceId}`;
+  if (!(await verifyGovernedSignature(signatureActionId, target, ctx))) {
+    throw new SubmissionError(
+      'GOVERNED_REQUIRED',
+      `A valid e-signature is required: sign ${target} via POST /api/c2c/actions/sign, then pass its actionId.`
+    );
+  }
+
+  // Gate 2 — deterministic dispatch gate must still be clear (defense in depth).
+  const { assessSequenceDispatchReadiness } = await import('../ectd/assess-dispatch-readiness');
+  const assessment = await assessSequenceDispatchReadiness({ sequenceId, organizationId: ctx.organizationId });
+  if (!assessment.gate.cleared) {
+    throw new SubmissionError('DISPATCH_BLOCKED', `Dispatch gate blocks transmit: ${assessment.gate.blockers.join(' ')}`);
+  }
+
+  const route = REGION_GATEWAY[seq.region];
+  if (!route) {
+    throw new SubmissionError('VALIDATION', `No transmit gateway is mapped for region "${seq.region}".`);
+  }
+
+  const { getGateway } = await import('../submission-gateways/index');
+  const gw = getGateway(route.gwRegion, route.gwName);
+
+  // Honest: only transmit when the org has credentials for this gateway+env.
+  if (!(await gw.isConfigured(ctx.organizationId, environment))) {
+    await auditService.logAction({
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      action: 'ECTD_TRANSMIT_SKIPPED',
+      resourceType: 'ectd_sequence',
+      resourceId: sequenceId,
+      details: { region: seq.region, gateway: route.gwName, reason: 'gateway_not_configured', environment },
+    });
+    return {
+      transmitted: false,
+      reason: 'gateway_not_configured',
+      region: seq.region,
+      gateway: route.gwName,
+      dispatchStatus: seq.dispatchStatus ?? 'pending',
+    };
+  }
+
+  // Assemble the package bytes, then hand them to the gateway.
+  const { assembleSequence } = await import('../ectd/assemble-from-core');
+  const assembled = await assembleSequence({
+    sequenceId,
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    applicationId: params.applicationId ?? `SEQ-${sequenceId}`,
+    sponsorId: params.sponsorId ?? `ORG-${ctx.organizationId}`,
+    sponsorName: params.sponsorName ?? `Organization ${ctx.organizationId}`,
+  });
+
+  const result = await gw.transmit({
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    programId: null,
+    packageId: null,
+    bundle: assembled.bundle,
+    environment,
+    submissionType: seq.type ?? undefined,
+    metadata: { applicationId: params.applicationId ?? `SEQ-${sequenceId}`, sequence: seq.sequenceNumber, environment },
+  });
+
+  const dispatchStatus = toDispatchStatus(result.status);
+  await db
+    .update(ectdSequences)
+    .set({ dispatchStatus, updatedAt: new Date() })
+    .where(and(eq(ectdSequences.id, sequenceId), eq(ectdSequences.organizationId, ctx.organizationId)));
+
+  await auditService.logAction({
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    action: 'ECTD_TRANSMITTED',
+    resourceType: 'ectd_sequence',
+    resourceId: sequenceId,
+    details: {
+      region: seq.region,
+      gateway: route.gwName,
+      transmittalId: result.transmittalId,
+      status: result.status,
+      environment,
+    },
+  });
+  logger.info('Transmitted sequence to agency gateway', { sequenceId, region: seq.region, gateway: route.gwName, status: result.status });
+
+  return {
+    transmitted: true,
+    region: seq.region,
+    gateway: route.gwName,
+    transmittalId: result.transmittalId,
+    transmissionId: result.transmissionId,
+    status: result.status,
+    dispatchStatus,
+  };
+}
+
 // ── Leaves (Builder tree) ──────────────────────────────────────────────────
 
 export async function listLeaves(

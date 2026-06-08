@@ -292,6 +292,29 @@ export interface GovernedTransitionRequest {
 }
 export type GovernedTransitionResponse = EctdSequence;
 
+// ── Transmit (POST /sequences/:seqId/transmit) ────────────────────────────────
+// The final step. Requires the sequence to be dispatched + a signatureActionId
+// (from /api/c2c/actions/sign on "ectd-sequence:<seqId>") + a clear dispatch gate.
+// Real transmission only occurs when the org has gateway credentials; otherwise
+// `transmitted` is false with `reason: "gateway_not_configured"`.
+export interface TransmitRequest {
+  signatureActionId: string;
+  environment?: 'staging' | 'production';
+  applicationId?: string;
+  sponsorId?: string;
+  sponsorName?: string;
+}
+export interface TransmitResponse {
+  transmitted: boolean;
+  reason?: string;
+  region: string;
+  gateway: string;
+  transmittalId?: number;
+  transmissionId?: string | null;
+  status?: string;
+  dispatchStatus: string;
+}
+
 // ── Assemble (POST /api/submissions/sequences/:seqId/assemble) ────────────────
 export interface AssembleRequest {
   applicationId?: string;
