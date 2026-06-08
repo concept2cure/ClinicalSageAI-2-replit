@@ -76,6 +76,17 @@ change in compliance-critical code, so not done unilaterally without a DB):**
    `IMMUTABLE_ROUTE_PATTERNS` only guards `/api/audit/*`. Regulated-data DELETEs
    elsewhere are not policy-blocked. Fix is a policy decision (expand patterns
    vs enforce soft-delete everywhere) — operator call.
+4. **HIGH — a second, non-persistent audit logger
+   (`services/audit/auditLogger.ts`):** `logAuditEvent` (and `logDataChange` /
+   `logSecurityEvent` / `logExport`) push to an **in-memory array**
+   (`auditStore`, "replace with database in production"), not a table — ~28 call
+   sites (incl. routes `se-matrix`, `defense-packet`) record audit events that
+   are lost on restart and are neither queryable nor tamper-evident. The c2c
+   governed flow (`writeMutation`) and `regulatoryAuditLogs`/tamper-proof-log are
+   the persistent mechanisms; these surfaces must be migrated onto one of them.
+   This also blocks a clean fix of #1/#2 — there is no safe *generic* persistent
+   logger to drop into the delete handlers; `writeMutation` is coupled to the
+   c2c typed-target resolver.
 
 **Durable guard — added (static, no DB needed):**
 `scripts/ci/check-regulated-delete-audit.mjs` (wired into CI Lint) fails if a
