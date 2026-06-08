@@ -13,7 +13,7 @@
  * @module server/services/submission-service/submission-service
  */
 
-import { eq, and, isNull, desc } from 'drizzle-orm';
+import { eq, and, isNull, desc, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import {
   submissions,
@@ -33,7 +33,13 @@ const logger = createScopedLogger('submission-service');
 
 // ── Standardized errors ───────────────────────────────────────────────────────
 
-export type SubmissionErrorCode = 'NOT_FOUND' | 'INVALID_STATE' | 'VALIDATION' | 'GOVERNED_REQUIRED' | 'FORBIDDEN';
+export type SubmissionErrorCode =
+  | 'NOT_FOUND'
+  | 'INVALID_STATE'
+  | 'VALIDATION'
+  | 'GOVERNED_REQUIRED'
+  | 'DISPATCH_BLOCKED'
+  | 'FORBIDDEN';
 
 /**
  * Transitions that are irreversible / outward-facing and must go through the
@@ -234,6 +240,116 @@ export async function transitionSequence(
     details: { from: seq.status, to: toStatus },
   });
   return row as EctdSequence;
+}
+
+// ── Governed freeze / dispatch (the SUBMIT step of assemble→submit→transmit) ──
+//
+// `frozen` and `dispatched` are irreversible and outward-facing, so the generic
+// transitionSequence() above refuses them. These appliers are the ONLY path that
+// can produce those states, and each enforces — atomically — BOTH governance
+// gates, so neither can be bypassed:
+//   1. a Part 11 e-signature: a recorded `sign` governed action on THIS exact
+//      sequence target, by THIS actor (proves a human authorized it); and
+//   2. the deterministic dispatch gate: server-computed validation errors + open
+//      Shadow Review criticals (proves the dossier is actually clear).
+// The actual transmission to the agency gateway stays separate, behind the
+// governed transmit_submission tool.
+
+/** Confirm a recorded governed `sign` action authorizes this target for this actor. */
+async function verifyGovernedSignature(
+  signatureActionId: string,
+  target: string,
+  ctx: { organizationId: number; userId: number }
+): Promise<boolean> {
+  const result = await db.execute(sql`
+    SELECT id FROM c2c_ana_actions
+    WHERE id = ${signatureActionId}
+      AND org_id = ${ctx.organizationId}
+      AND command = 'sign'
+      AND target = ${target}
+      AND state = 'executed'
+      AND proposed_by = ${ctx.userId}
+    LIMIT 1
+  `);
+  return ((result as { rows?: unknown[] }).rows?.length ?? 0) > 0;
+}
+
+async function applyGovernedSequenceTransition(
+  id: number,
+  toStatus: 'frozen' | 'dispatched',
+  ctx: { organizationId: number; userId: number },
+  signatureActionId: string
+): Promise<EctdSequence> {
+  const seq = await getSequence(id, ctx);
+  if (!canTransitionSequence(seq.status, toStatus)) {
+    throw new SubmissionError('INVALID_STATE', `Cannot transition sequence from ${seq.status} to ${toStatus}.`);
+  }
+
+  // Gate 1 — Part 11 e-signature must govern THIS sequence, signed by THIS actor.
+  const target = `ectd-sequence:${id}`;
+  if (!(await verifyGovernedSignature(signatureActionId, target, ctx))) {
+    throw new SubmissionError(
+      'GOVERNED_REQUIRED',
+      `A valid e-signature is required: sign ${target} via POST /api/c2c/actions/sign, then pass its actionId.`
+    );
+  }
+
+  // Gate 2 — deterministic dispatch gate (server-computed inputs; tamper-proof).
+  const { assessSequenceDispatchReadiness } = await import('../ectd/assess-dispatch-readiness');
+  const assessment = await assessSequenceDispatchReadiness({ sequenceId: id, organizationId: ctx.organizationId });
+  if (!assessment.gate.cleared) {
+    throw new SubmissionError(
+      'DISPATCH_BLOCKED',
+      `Dispatch gate blocks ${toStatus}: ${assessment.gate.blockers.join(' ')}`
+    );
+  }
+
+  const now = new Date();
+  const patch: Record<string, unknown> = { status: toStatus, updatedAt: now };
+  if (toStatus === 'frozen') patch.frozenAt = now;
+  if (toStatus === 'dispatched') patch.dispatchStatus = 'pending'; // queued for transmit; not yet sent
+
+  const [row] = await db
+    .update(ectdSequences)
+    .set(patch)
+    .where(and(eq(ectdSequences.id, id), eq(ectdSequences.organizationId, ctx.organizationId)))
+    .returning();
+
+  await auditService.logAction({
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    action: toStatus === 'frozen' ? 'SEQUENCE_FROZEN' : 'SEQUENCE_DISPATCHED',
+    resourceType: 'ectd_sequence',
+    resourceId: id,
+    details: {
+      from: seq.status,
+      to: toStatus,
+      signatureActionId,
+      validationErrors: assessment.validationErrors,
+      unacknowledgedShadowCriticals: assessment.unacknowledgedShadowCriticals,
+    },
+  });
+  logger.info('Governed sequence transition applied', { id, toStatus, organizationId: ctx.organizationId });
+  return row as EctdSequence;
+}
+
+/** Freeze a validated sequence. Governed: requires e-signature + a clear dispatch gate. */
+export function freezeSequence(
+  id: number,
+  ctx: { organizationId: number; userId: number },
+  signatureActionId: string
+): Promise<EctdSequence> {
+  return applyGovernedSequenceTransition(id, 'frozen', ctx, signatureActionId);
+}
+
+/** Mark a frozen sequence dispatched. Governed: requires e-signature + a clear gate.
+ *  This records intent; actual transmission stays behind transmit_submission. */
+export function dispatchSequence(
+  id: number,
+  ctx: { organizationId: number; userId: number },
+  signatureActionId: string
+): Promise<EctdSequence> {
+  return applyGovernedSequenceTransition(id, 'dispatched', ctx, signatureActionId);
 }
 
 // ── Leaves (Builder tree) ──────────────────────────────────────────────────

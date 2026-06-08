@@ -160,6 +160,14 @@ async function resolveTarget(
         );
         return r.rows.length > 0 ? { exists: true, table: 'pma_submissions', id: rest } : null;
       }
+      case 'ectd-sequence': {
+        // eCTD sequence freeze/dispatch e-signature target (the SUBMIT step).
+        const r = await pool.query(
+          `SELECT id FROM ectd_sequences WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+          [rest, orgId],
+        );
+        return r.rows.length > 0 ? { exists: true, table: 'ectd_sequences', id: rest } : null;
+      }
       case 'specification': {
         const r = await pool.query(
           `SELECT id FROM quality_specifications WHERE id = $1 LIMIT 1`, [rest],

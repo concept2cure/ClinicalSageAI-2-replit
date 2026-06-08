@@ -70,6 +70,7 @@ const CODE_STATUS: Record<string, number> = {
   NOT_FOUND: 404,
   INVALID_STATE: 409,
   GOVERNED_REQUIRED: 403,
+  DISPATCH_BLOCKED: 422,
   FORBIDDEN: 403,
   VALIDATION: 400,
   RATE_LIMITED: 429,
@@ -565,6 +566,46 @@ router.get('/sequences/:seqId/dispatch-readiness', limiter, requireRole(AUTHOR),
     const { assessSequenceDispatchReadiness } = await import('../services/ectd/assess-dispatch-readiness');
     const assessment = await assessSequenceDispatchReadiness({ sequenceId: seqId, organizationId: ctx.organizationId });
     res.json(assessment);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Governed freeze / dispatch (the SUBMIT step) ──────────────────────────────
+// Each requires a Part 11 e-signature: first POST /api/c2c/actions/sign with
+// target "ectd-sequence:<seqId>" (re-auth + separation-of-duties + ledger), then
+// pass the returned actionId here. The service applies BOTH gates atomically —
+// the e-signature AND the deterministic dispatch gate — so a sequence cannot be
+// frozen or dispatched while the gate blocks. Neither transmits.
+const governedTransitionSchema = z.object({ signatureActionId: z.string().min(1).max(128) });
+
+router.post('/sequences/:seqId/freeze', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = governedTransitionSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { freezeSequence } = await import('../services/submission-service/submission-service');
+    const seq = await freezeSequence(seqId, ctx, parsed.data.signatureActionId);
+    res.json(seq);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+router.post('/sequences/:seqId/dispatch', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = governedTransitionSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { dispatchSequence } = await import('../services/submission-service/submission-service');
+    const seq = await dispatchSequence(seqId, ctx, parsed.data.signatureActionId);
+    res.json(seq);
   } catch (err) {
     fail(res, err);
   }

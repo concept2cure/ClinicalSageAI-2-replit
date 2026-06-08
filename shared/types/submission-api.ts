@@ -281,6 +281,17 @@ export interface DispatchReadinessResponse {
   leafCount: number;
 }
 
+// ── Governed freeze / dispatch (POST /sequences/:seqId/{freeze,dispatch}) ─────
+// The SUBMIT step. Obtain the signatureActionId first from
+// POST /api/c2c/actions/sign with target "ectd-sequence:<seqId>". The server
+// enforces the e-signature AND the deterministic dispatch gate atomically; a
+// blocked gate returns 422 DISPATCH_BLOCKED. Response is the updated sequence.
+export interface GovernedTransitionRequest {
+  /** actionId returned by POST /api/c2c/actions/sign for this sequence target. */
+  signatureActionId: string;
+}
+export type GovernedTransitionResponse = EctdSequence;
+
 // ── Assemble (POST /api/submissions/sequences/:seqId/assemble) ────────────────
 export interface AssembleRequest {
   applicationId?: string;
