@@ -11,8 +11,9 @@
  * @module server/routes/ind
  */
 import { Router, Request, Response } from 'express';
-import { query } from '../db';
+import { query, getPool } from '../db';
 import { createScopedLogger } from '../utils/logger';
+import { logRegulatedDeletion } from '../services/audit/regulatedDeletion';
 import indCopilot from '../services/indCopilot.js';
 
 const router = Router();
@@ -237,30 +238,50 @@ router.put('/applications/:id', async (req: Request, res: Response) => {
 // ── DELETE /applications/:id ──────────────────────────────────────────────────
 
 router.delete('/applications/:id', async (req: Request, res: Response) => {
+  // 21 CFR Part 11 §11.10(e): an IND application is a regulated FDA submission
+  // record. Audit the deletion (with a full pre-image) BEFORE removing the row,
+  // in the SAME transaction, so an audit failure rolls back the delete.
+  const client = await getPool().connect();
   try {
     const { organizationId } = tenantHeaders(req);
     const { id } = req.params;
+    const actorId = (req as any).user?.id ?? null;
+    const reason = (req.body?.reason as string) || 'IND application deleted';
 
-    // SAFETY: Only allow deletion of draft applications
+    await client.query('BEGIN');
+
+    // Lock + load the full pre-image (org-scoped, SAFETY: draft only).
     const checkParams: unknown[] = [id];
-    let checkSql = 'SELECT id, status FROM ind_applications WHERE id = $1';
+    let checkSql = 'SELECT * FROM ind_applications WHERE id = $1';
     if (organizationId) {
       checkParams.push(organizationId);
       checkSql += ` AND organization_id = $${checkParams.length}`;
     }
+    checkSql += ' FOR UPDATE';
 
-    const existing = await query(checkSql, checkParams);
+    const existing = await client.query(checkSql, checkParams);
     if (!existing.rows.length) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ success: false, error: 'IND application not found' });
     }
 
     const app = existing.rows[0];
     if (app.status && app.status !== 'draft') {
+      await client.query('ROLLBACK');
       return res.status(409).json({
         success: false,
         error: `Cannot delete application in "${app.status}" status. Only draft applications can be deleted.`,
       });
     }
+
+    await logRegulatedDeletion(client, {
+      table: 'ind_applications',
+      recordId: app.id,
+      tenantId: Number(app.organization_id),
+      actorId,
+      reason,
+      snapshot: app,
+    });
 
     const params: unknown[] = [id];
     let sql = 'DELETE FROM ind_applications WHERE id = $1';
@@ -270,10 +291,18 @@ router.delete('/applications/:id', async (req: Request, res: Response) => {
     }
     sql += ' RETURNING id';
 
-    const result = await query(sql, params);
+    const result = await client.query(sql, params);
+    await client.query('COMMIT');
     res.json({ success: true, deleted: result.rows[0].id });
   } catch (err: any) {
+    try {
+      await client.query('ROLLBACK');
+    } catch {
+      /* connection already broken */
+    }
     sendError(res, 500, 'Failed to delete IND application', err);
+  } finally {
+    client.release();
   }
 });
 

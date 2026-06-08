@@ -76,9 +76,13 @@ The takeaway for sales/security engineering: **we win on architecture and AI gov
 
 SOC 2 Type II was targeted for Q1 2026; as of this review (2026-06-08) **no SOC 2 report, ISO 27001 certificate, or independent pen-test attestation is present in the repository or referenced as available.** Most enterprise pharma procurement will not sign without at least a SOC 2 Type II report (or a Type I + bridge letter) and a recent pen-test summary. *Action: confirm current audit status with Compliance; if achieved, publish to the trust center; if not, set a credible date and offer the bridge artifacts (security whitepaper, this evaluation, the CI-gate evidence).* 
 
-### 3.3 🟠 HIGH — Hard-delete of regulated records (Part 11 §11.10(e))
+### 3.3 ✅ HIGH — Hard-delete of regulated records (Part 11 §11.10(e)) — **REMEDIATED IN THIS PR**
 
-Regulated tables still permit unaudited hard-deletes: `coauthor_documents` (`server/routes/ectd-documents.ts`, `coauthor.ts:237`), `authoring_documents` (`authoring.router.ts`), and **`ind_applications`** (`server/routes/ind.ts:266`) — actual IND submission records. These are operator-allow-listed in the `check-regulated-delete-audit` CI gate so they cannot *regress*, but they remain open. *Action: `deleted_at` soft-delete + in-transaction audit-before-mutate (the pattern already shipped for `c2c_document_section_evidence`), then read-filter `deleted_at IS NULL`.*
+Regulated tables previously permitted unaudited hard-deletes: `coauthor_documents` (`ectd-documents.ts`, `coauthor.ts`), `authoring_documents` (`authoring.router.ts`), and **`ind_applications`** (`ind.ts`) — actual IND submission records.
+
+**Fix (landed):** a new fail-closed primitive `server/services/audit/regulatedDeletion.ts` (`logRegulatedDeletion`) writes a **hash-chained `audit_logs` row with a full pre-image snapshot** of the record into the immutable trail, reusing the same `computeAuditChain` serialization as `recordGovernedAction` (so the chain stays valid) but **decoupled from the c2c target resolver**. All four handlers now, in a **single transaction**: lock + load the pre-image (`SELECT … FOR UPDATE`) → `await logRegulatedDeletion(...)` → `DELETE` → `COMMIT`. An audit-write failure rolls the transaction back, so the delete never commits. This satisfies §11.10(e) (attributed, reason-stamped, time-stamped audit of the deletion) **and** §11.10(c) (the deleted record's content is retained, retrievable, in the tamper-evident chain). The four `check-regulated-delete-audit` allowlist entries are removed (the gate now runs with an **empty allowlist**), and a Part 11 contract test (`ind-applications-delete-audit-order.contract.test.ts`) proves audit-before-delete, fail-closed rollback, and no-op on 404/409.
+
+**Follow-up (not blocking):** `deleted_at` *soft-delete* with read-path filtering (`deleted_at IS NULL`) across the ~30 read sites mapped for these tables is the stronger product ideal, but it requires the DB-backed integration test lane to verify no read path leaks/hides rows — deferred rather than done blind.
 
 ### 3.4 🟠 HIGH — Supply-chain / IaC scans are advisory, not gating
 
@@ -144,7 +148,7 @@ Ratings are A (client-CSO-ready) → C (questionnaire risk). "Enforced" means a 
 |---|---|---|---|---|
 | ~~P0~~ ✅ | SAML fail-closed + vetted-library rewrite + fail-closed tests + CI gate (§3.1) — **landed in this PR**; live-IdP interop + SCIM are follow-ups | Eng (Security) | done | `ci:saml-fail-closed` ✅ |
 | **P0** | Confirm/publish SOC 2 Type II (or Type I + bridge) + pen-test summary (§3.2) | Compliance | Calendar | trust center |
-| **P1** | Soft-delete + audit for `ind_applications`/`coauthor_documents`/`authoring_documents` (§3.3) | Eng | ~2–3 d | `check-regulated-delete-audit` allowlist → 0 |
+| ~~P1~~ ✅ | Audit-before-delete (fail-closed, pre-image snapshot) for `ind_applications`/`coauthor_documents`/`authoring_documents` (§3.3) — **landed in this PR**; soft-delete read-filtering is the deferred follow-up | Eng | done | `check-regulated-delete-audit` allowlist = 0 ✅ |
 | **P1** | Make Trivy CRITICAL/HIGH gating; add gitleaks; emit SBOM; clear HIGH npm advisories (§3.4) | DevSecOps | ~2–3 d | CI hard-fail |
 | **P1** | Add SCIM provisioning; org-default enforce-MFA | Eng | ~1 wk | — |
 | **P2** | Confirm classifier gates AI placement; finish gateway-bypass burn-down → `--strict` | Eng (AI) | ~1 wk | `check-gateway-bypass --strict` |

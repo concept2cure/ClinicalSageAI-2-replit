@@ -11,6 +11,7 @@ import * as jose from 'jose';
 import { getPool } from '../db';
 import auditService from '../services/auditService';
 import { authedOrgId } from '../utils/authedOrgId';
+import { logRegulatedDeletion } from '../services/audit/regulatedDeletion';
 
 const router = Router();
 
@@ -3666,24 +3667,54 @@ router.delete('/docs/:docId', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'admin token required' });
     }
 
-    const doc = (
-      await getPool().query(
-        `SELECT id as doc_id, product_code FROM authoring_documents WHERE id = $1`,
-        [req.params.docId]
-      )
-    ).rows[0];
+    // 21 CFR Part 11 §11.10(e): authoring_documents are regulated records.
+    // Audit the deletion (with a full pre-image) BEFORE removing the row, in the
+    // SAME transaction, so an audit failure rolls back the delete (fail-closed).
+    const client = await getPool().connect();
+    try {
+      await client.query('BEGIN');
 
-    if (!doc) return res.status(404).json({ error: 'document not found' });
+      const doc = (
+        await client.query(`SELECT * FROM authoring_documents WHERE id = $1 FOR UPDATE`, [
+          req.params.docId,
+        ])
+      ).rows[0];
 
-    // UAT naming convention guard
-    if (!doc.product_code || !/^UAT-/i.test(doc.product_code)) {
-      return res.status(409).json({
-        error: "document not UAT-scoped (product_code must start with 'UAT-')",
+      if (!doc) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'document not found' });
+      }
+
+      // UAT naming convention guard
+      if (!doc.product_code || !/^UAT-/i.test(doc.product_code)) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          error: "document not UAT-scoped (product_code must start with 'UAT-')",
+        });
+      }
+
+      await logRegulatedDeletion(client, {
+        table: 'authoring_documents',
+        recordId: doc.id,
+        tenantId: Number(doc.tenant_id),
+        actorId: null, // admin-token cleanup; no end-user actor
+        reason: 'Admin UAT fixture cleanup',
+        snapshot: doc,
       });
-    }
 
-    await getPool().query(`DELETE FROM authoring_documents WHERE id = $1`, [req.params.docId]);
-    res.json({ ok: true, deleted: req.params.docId });
+      await client.query(`DELETE FROM authoring_documents WHERE id = $1`, [req.params.docId]);
+      await client.query('COMMIT');
+      res.json({ ok: true, deleted: req.params.docId });
+    } catch (txErr) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        /* connection already broken */
+      }
+      throw txErr;
+    } finally {
+      client.release();
+    }
   } catch (error) {
     console.error('DELETE /docs/:id', error);
     res.status(500).json({ error: 'Failed to delete document' });
