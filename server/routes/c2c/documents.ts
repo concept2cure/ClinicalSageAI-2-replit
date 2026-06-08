@@ -557,16 +557,22 @@ router.delete('/:id/sections/:key/evidence/:evId', async (req: Request, res: Res
 
     if (check.rows.length === 0) return send404(res);
 
-    await pool.query(`DELETE FROM c2c_document_section_evidence WHERE id = $1`, [evId]);
-
-    writeMutation(
+    // 21 CFR Part 11 §11.10(e): record the audit BEFORE removing the evidence,
+    // and AWAIT it. Previously the audit ran fire-and-forget AFTER the delete
+    // with a swallowed error — a crash in between, or an audit failure, left a
+    // deletion of regulated evidence with no audit trail. Auditing first and
+    // awaiting makes it fail-closed: if the governed-action write fails, the
+    // delete does not happen.
+    await writeMutation(
       'resolve',
       { target: `section:${id}:${key}`, reason: 'evidence unlinked', payload: { evidenceId: evId } },
       userId,
       orgId,
       'api',
       'documents',
-    ).catch(err => console.error('[c2c/documents] writeMutation resolve (delete) error:', err));
+    );
+
+    await pool.query(`DELETE FROM c2c_document_section_evidence WHERE id = $1`, [evId]);
 
     return res.status(204).send();
   } catch (err: unknown) {

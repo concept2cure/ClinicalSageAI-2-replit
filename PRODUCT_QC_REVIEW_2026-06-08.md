@@ -68,10 +68,13 @@ change in compliance-critical code, so not done unilaterally without a DB):**
    no soft-delete (violates §11.10(e)). *This is the known-deferred QA_REPORT
    item #14.* Fix: add `deleted_at` to `coauthor_documents` (migration), switch
    to soft-delete, audit before the write, filter reads on `deleted_at IS NULL`.
-2. **CRITICAL — audit after a raw DELETE, `routes/c2c/documents.ts:~560`:** the
-   evidence-unlink DELETEs first, then fires a non-awaited `writeMutation`; a
-   crash in between loses the audit. Fix: audit **inside** the transaction,
-   before the delete (the `c2c/actions` flow is the correct model to mirror).
+2. ✅ **Fixed — audit after a raw DELETE, `routes/c2c/documents.ts:560`:** the
+   evidence-unlink DELETEd first, then fired a non-awaited `writeMutation` with a
+   swallowed error. Now audits first via `writeMutation` and **awaits** it
+   (fail-closed — an audit failure blocks the delete; a crash can't leave an
+   unaudited deletion). Contract test
+   `c2c-documents-delete-audit-order.contract.test.ts` locks the order, the
+   fail-closed behaviour, and the 404 path (3 tests, no DB).
 3. **HIGH — immutability middleware is narrow (`startup/middleware.ts:113`):**
    `IMMUTABLE_ROUTE_PATTERNS` only guards `/api/audit/*`. Regulated-data DELETEs
    elsewhere are not policy-blocked. Fix is a policy decision (expand patterns
