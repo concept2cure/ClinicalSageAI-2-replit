@@ -44,10 +44,6 @@ const AUDIT_RE =
 // Known-unaudited regulated deletes, operator-tracked (PRODUCT_QC_REVIEW Part 11).
 // Keyed by route file (each holds a single regulated-delete handler).
 const ALLOWLIST = {
-  'server/routes/ectd-documents.ts':
-    'coauthor_documents hard-delete; soft-delete migration + audit pending (Part 11 #1)',
-  'server/routes/coauthor.ts':
-    'coauthor_documents hard-delete; soft-delete migration + audit pending (Part 11 #1)',
   'server/routes/authoring.router.ts':
     'authoring_documents UAT-cleanup hard-delete; audit pending (Part 11 #5)',
 };

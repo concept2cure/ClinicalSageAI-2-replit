@@ -63,11 +63,16 @@ Environment caveat: no Neon DB and no deploy here, so fixes are verified by
 
 **Real gaps — documented for the operator (each needs a migration / transaction
 change in compliance-critical code, so not done unilaterally without a DB):**
-1. **CRITICAL — hard-delete without audit, `routes/ectd-documents.ts:~327`:**
-   `DELETE` on `coauthor_documents` (regulated eCTD docs) with no audit row and
-   no soft-delete (violates §11.10(e)). *This is the known-deferred QA_REPORT
-   item #14.* Fix: add `deleted_at` to `coauthor_documents` (migration), switch
-   to soft-delete, audit before the write, filter reads on `deleted_at IS NULL`.
+1. ◑ **Audit gap closed (soft-delete still pending) — `coauthor_documents`:**
+   both routes that hard-delete regulated eCTD documents — `ectd-documents.ts`
+   and `coauthor.ts` — previously deleted with **no audit** (§11.10(e),
+   QA_REPORT #14). ✅ Both now delete and write an `audit_events` row **in the
+   same transaction** (atomic, fail-closed), via the proven `transaction()` +
+   `audit_events` pattern; removed from the gate allow-list (positively
+   enforced). Contract test `coauthor-document-delete-audit.contract.test.ts`
+   (6 tests, no DB). ⏭ The remaining enhancement is **soft-delete** (add
+   `deleted_at`, retain the row, filter reads) — a schema migration, still
+   operator-track; the audit gap itself is now closed.
 2. ✅ **Fixed — fire-and-forget audit on `routes/c2c/documents.ts` mutations:**
    both the evidence **delete** (`:560`) and the section **transition** (`:452`)
    recorded the audit *after* the mutation, non-awaited, with a swallowed error
