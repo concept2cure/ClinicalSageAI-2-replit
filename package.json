@@ -133,7 +133,7 @@
     "audit:prune-artifacts": "node scripts/audits/prune-generated-audit-artifacts.mjs --retain-days 14",
     "audit:dead-code": "npx knip --no-exit-code --reporter compact",
     "audit:bundle": "ANALYZE=true vite build",
-    "sbom": "npm sbom --sbom-format cyclonedx",
+    "sbom": "npm sbom --sbom-format cyclonedx --omit dev",
     "audit:repo-health": "node scripts/audits/repo-health-scan.mjs",
     "audit:repo-health:strict": "node scripts/audits/repo-health-scan.mjs --strict --owners docs/reports/repo-health-owners.json --write-markdown docs/reports/repo-health-scan-latest.md",
     "audit:repo-health:no-regression": "node scripts/audits/repo-health-scan.mjs --strict-no-regression --baseline docs/reports/repo-health-scan-latest.json --owners docs/reports/repo-health-owners.json --write-markdown docs/reports/repo-health-scan-latest.md",
