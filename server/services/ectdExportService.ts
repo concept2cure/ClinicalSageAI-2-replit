@@ -28,6 +28,7 @@ import {
 } from '../../shared/schema';
 import { eq, and, asc } from 'drizzle-orm';
 import crypto from 'crypto';
+import { renderLeafPdf } from './ectd/leaf-pdf-renderer';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -539,8 +540,8 @@ export async function generateEctdPackage(
       documentContent = granule.metadata.content;
     }
 
-    // Use .txt extension for placeholder content (not .pdf) to avoid FDA ESG rejection
-    const isPlaceholder = !documentContent;
+    // Leaves are rendered to real PDF below (renderLeafPdf); when no authored
+    // content exists, a structured placeholder document is rendered instead.
     const fileContent = documentContent || generateStructuredDocument({
       sectionCode: granule.granuleId,
       title: granule.granuleName,
@@ -551,14 +552,22 @@ export async function generateEctdPackage(
       generatedAt,
     });
 
-    zip.file(filePath, fileContent);
+    // Render to a real PDF when the leaf is a .pdf (the eCTD norm); otherwise
+    // write the raw bytes. Checksums are computed on the bytes actually written.
+    const leafBytes: string | Buffer = filePath.toLowerCase().endsWith('.pdf')
+      ? await renderLeafPdf(fileContent, {
+          title: granule.granuleName,
+          sectionCode: granule.granuleId,
+        })
+      : fileContent;
+    zip.file(filePath, leafBytes);
     totalFiles++;
 
     entry.granules.push({
       granuleId: granule.granuleId,
       granuleName: granule.granuleName,
       filePath,
-      checksum: md5(fileContent),
+      checksum: md5(leafBytes),
       operation: 'new',
     });
   }
@@ -603,14 +612,18 @@ export async function generateEctdPackage(
     const folder = MODULE_DEFS[moduleNum].folder;
     const filePath = `${folder}/${section.section_code?.replace(/\./g, '/')}/${sectionSlug}.pdf`;
 
-    zip.file(filePath, docContent);
+    const sectionPdf = await renderLeafPdf(docContent, {
+      title: section.title || section.section_code,
+      sectionCode: section.section_code,
+    });
+    zip.file(filePath, sectionPdf);
     totalFiles++;
 
     entry.granules.push({
       granuleId: section.section_code,
       granuleName: section.title || section.section_code,
       filePath,
-      checksum: md5(docContent),
+      checksum: md5(sectionPdf),
       operation: 'new',
     });
   }

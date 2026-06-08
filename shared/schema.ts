@@ -310,6 +310,50 @@ export type AuditLog = InferSelectModel<typeof auditLogs>;
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 
 /**
+ * Application audit log — the durable backing store for the general-purpose
+ * audit logger (`server/services/audit/auditLogger.ts`). Previously those ~28
+ * call sites (logins, data access, exports, security events) wrote only to an
+ * in-memory array that was lost on restart and not queryable (PRODUCT_QC_REVIEW
+ * Part 11 #4). This table makes them durable and queryable while keeping the
+ * hash-chained `audit_events` table as the canonical, tamper-evident
+ * regulated-RECORD trail — the two have distinct, non-overlapping roles.
+ *
+ * Identifiers are stored as text to match the logger's API faithfully (no FK
+ * coercion / lossy mapping), so every field the logger captures is preserved.
+ */
+export const applicationAuditLog = pgTable(
+  'application_audit_log',
+  {
+    id: text('id').primaryKey(), // logger-generated event id
+    organizationId: text('organization_id').notNull(),
+    userId: text('user_id').notNull(),
+    category: text('category').notNull(),
+    severity: text('severity').notNull(),
+    action: text('action').notNull(),
+    resourceType: text('resource_type'),
+    resourceId: text('resource_id'),
+    previousValue: json('previous_value'),
+    newValue: json('new_value'),
+    metadata: json('metadata'),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+    success: boolean('success').notNull(),
+    errorMessage: text('error_message'),
+    eventTimestamp: timestamp('event_timestamp', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('application_audit_org_idx').on(table.organizationId),
+    resourceIdx: index('application_audit_resource_idx').on(
+      table.resourceType,
+      table.resourceId
+    ),
+    categoryIdx: index('application_audit_category_idx').on(table.category),
+    timestampIdx: index('application_audit_timestamp_idx').on(table.eventTimestamp),
+  })
+);
+
+/**
  * ======================================================================================
  * SHAREPOINT FILE MANAGEMENT SYSTEM
  * ======================================================================================

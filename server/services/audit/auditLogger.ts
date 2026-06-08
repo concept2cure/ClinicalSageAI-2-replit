@@ -9,6 +9,7 @@
  */
 
 import { createScopedLogger } from '../../utils/logger';
+import { query } from '../../db';
 
 const logger = createScopedLogger('audit');
 
@@ -66,8 +67,13 @@ export async function logAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>)
     timestamp: new Date(),
   };
 
-  // Store event
+  // In-memory cache: a hot, process-local copy and the fallback read source
+  // when the database is unavailable.
   auditStore.push(auditEvent);
+
+  // Durable persistence to the canonical application audit log (best-effort,
+  // non-blocking — a logging failure must never break the audited action).
+  void persistAuditEvent(auditEvent);
 
   // Log to console for debugging
   logger.info(`[AUDIT] ${event.category}:${event.action}`, {
@@ -85,10 +91,68 @@ export async function logAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>)
   return auditEvent.id;
 }
 
-/**
- * Query audit events with filters
- */
-export async function queryAuditEvents(filters: {
+/** Persist one event to `application_audit_log`. Never throws. */
+async function persistAuditEvent(e: AuditEvent): Promise<void> {
+  try {
+    await query(
+      `INSERT INTO application_audit_log
+         (id, organization_id, user_id, category, severity, action, resource_type,
+          resource_id, previous_value, new_value, metadata, ip_address, user_agent,
+          success, error_message, event_timestamp)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::json,$10::json,$11::json,$12,$13,$14,$15,$16)
+       ON CONFLICT (id) DO NOTHING`,
+      [
+        e.id,
+        e.organizationId,
+        e.userId,
+        e.category,
+        e.severity,
+        e.action,
+        e.resourceType ?? null,
+        e.resourceId ?? null,
+        e.previousValue === undefined ? null : JSON.stringify(e.previousValue),
+        e.newValue === undefined ? null : JSON.stringify(e.newValue),
+        e.metadata === undefined ? null : JSON.stringify(e.metadata),
+        e.ipAddress ?? null,
+        e.userAgent ?? null,
+        e.success,
+        e.errorMessage ?? null,
+        e.timestamp.toISOString(),
+      ]
+    );
+  } catch (err) {
+    // Durability is best-effort; the in-memory cache retains the event for this
+    // process. A missing database in dev/test is an expected, non-actionable case.
+    logger.warn('[AUDIT] persist failed (kept in-memory)', {
+      id: e.id,
+      err: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+/** Map an `application_audit_log` row back to the {@link AuditEvent} shape. */
+function rowToAuditEvent(row: Record<string, unknown>): AuditEvent {
+  return {
+    id: String(row.id),
+    timestamp: new Date(row.event_timestamp as string),
+    category: row.category as AuditCategory,
+    severity: row.severity as AuditSeverity,
+    action: String(row.action),
+    userId: String(row.user_id),
+    organizationId: String(row.organization_id),
+    resourceType: (row.resource_type as string) ?? undefined,
+    resourceId: (row.resource_id as string) ?? undefined,
+    previousValue: row.previous_value ?? undefined,
+    newValue: row.new_value ?? undefined,
+    metadata: (row.metadata as Record<string, unknown>) ?? undefined,
+    ipAddress: (row.ip_address as string) ?? undefined,
+    userAgent: (row.user_agent as string) ?? undefined,
+    success: Boolean(row.success),
+    errorMessage: (row.error_message as string) ?? undefined,
+  };
+}
+
+export interface AuditQueryFilters {
   organizationId?: string;
   userId?: string;
   category?: AuditCategory;
@@ -98,7 +162,68 @@ export async function queryAuditEvents(filters: {
   endDate?: Date;
   limit?: number;
   offset?: number;
-}): Promise<{ events: AuditEvent[]; total: number }> {
+}
+
+/**
+ * Query audit events with filters. Reads the durable `application_audit_log`
+ * first; if the database is unavailable, falls back to the in-memory cache so
+ * the API still works in dev/test and during a transient outage.
+ */
+export async function queryAuditEvents(
+  filters: AuditQueryFilters
+): Promise<{ events: AuditEvent[]; total: number }> {
+  try {
+    return await queryAuditEventsFromDb(filters);
+  } catch (err) {
+    logger.warn('[AUDIT] DB query failed; serving from in-memory cache', {
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return queryAuditEventsInMemory(filters);
+  }
+}
+
+/** DB-backed audit query against `application_audit_log`. */
+async function queryAuditEventsFromDb(
+  filters: AuditQueryFilters
+): Promise<{ events: AuditEvent[]; total: number }> {
+  const where: string[] = [];
+  const params: unknown[] = [];
+  const add = (clause: string, value: unknown) => {
+    params.push(value);
+    where.push(clause.replace('$?', `$${params.length}`));
+  };
+  if (filters.organizationId) add('organization_id = $?', filters.organizationId);
+  if (filters.userId) add('user_id = $?', filters.userId);
+  if (filters.category) add('category = $?', filters.category);
+  if (filters.resourceType) add('resource_type = $?', filters.resourceType);
+  if (filters.resourceId) add('resource_id = $?', filters.resourceId);
+  if (filters.startDate) add('event_timestamp >= $?', filters.startDate.toISOString());
+  if (filters.endDate) add('event_timestamp <= $?', filters.endDate.toISOString());
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+  const countRes = await query(
+    `SELECT COUNT(*)::int AS total FROM application_audit_log ${whereSql}`,
+    params
+  );
+  const total = Number(countRes.rows[0]?.total ?? 0);
+
+  const limit = filters.limit ?? 100;
+  const offset = filters.offset ?? 0;
+  const pageParams = [...params, limit, offset];
+  const rowsRes = await query(
+    `SELECT * FROM application_audit_log ${whereSql}
+     ORDER BY event_timestamp DESC
+     LIMIT $${pageParams.length - 1} OFFSET $${pageParams.length}`,
+    pageParams
+  );
+  return { events: rowsRes.rows.map(rowToAuditEvent), total };
+}
+
+/** In-memory fallback query over the process-local cache. */
+function queryAuditEventsInMemory(filters: AuditQueryFilters): {
+  events: AuditEvent[];
+  total: number;
+} {
   let results = [...auditStore];
 
   // Apply filters

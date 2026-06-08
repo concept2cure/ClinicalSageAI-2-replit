@@ -87,9 +87,19 @@ math (now added).
   **EP17** LoB/LoD, **EP06** linearity, pure/deterministic, 12 closed-form unit tests.
 - **Validation traceability**: `docs/validation/TM-CORTEX-001-PART11-TRACEABILITY.md`.
 
-**Deliberately not done blind** (need a live DB/runtime; documented in the
-traceability matrix's open items): audit-store consolidation and eCTD leaf PDF
-rendering.
+**Both previously-deferred items now completed** (verifiable without a live
+DB/runtime via a mockable DB seam and a pure-JS PDF library):
+- **eCTD leaf PDF rendering** — `server/services/ectd/leaf-pdf-renderer.ts`
+  (pdf-lib, deterministic) renders leaf content to real, valid PDF bytes;
+  `generateEctdPackage` routes both leaf-writing sites through it and checksums
+  the PDF bytes. Residual: true PDF/A-1b conformance (embedded fonts + ICC) is a
+  documented enhancement; current output is a valid, non-encrypted PDF that the
+  existing `classifyPdfA` check accepts.
+- **Audit durability** — the general-purpose `auditLogger.ts` now persists every
+  event to a new durable `application_audit_log` table (DB-first read, in-memory
+  fallback), replacing the lost-on-restart array. The hash-chained `audit_events`
+  remains the canonical regulated-record trail. Residual: migrating each of the
+  ~28 call sites' semantics and a DB-backed integration test are operator steps.
 
 ---
 

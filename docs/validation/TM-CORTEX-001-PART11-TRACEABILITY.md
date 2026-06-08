@@ -25,7 +25,7 @@ to running evidence without a code tour. Paths are repository-relative.
 | ID | Part 11 clause | Requirement | Implementing code | Verification |
 |----|----------------|-------------|-------------------|--------------|
 | P11-01 | §11.10(a) | System validation | `docs/validation/VMP-CORTEX-001-…`, `docs/beta/validation/{IQ,OQ,PQ}_TEMPLATE.md` | IQ/OQ/PQ execution records (operator) |
-| P11-02 | §11.10(b) | Accurate, complete copies of records (human-readable + electronic) | `server/services/ectdExportService.ts` (`generateEctdPackage`, `validateEctdPackage`); `server/services/pdf-converter.ts` | `npm run test:submission` (ectd export/validate); deterministic PDF SHA-256 |
+| P11-02 | §11.10(b) | Accurate, complete copies of records (human-readable + electronic) | `server/services/ectdExportService.ts` (`generateEctdPackage`, `validateEctdPackage`); leaves rendered to real PDF via `server/services/ectd/leaf-pdf-renderer.ts`; `server/services/pdf-converter.ts` | `server/services/ectd/__tests__/leaf-pdf-renderer.test.ts`; `npm run test:submission` |
 | P11-03 | §11.10(c) | Protection of records for accurate, ready retrieval | `server/services/pdf-converter.ts` (deterministic, metadata-stripped → stable SHA-256); `lib/tamper-proof-audit.ts` | converter determinism asserts; audit chain verify |
 | P11-04 | §11.10(d) | Limit system access to authorized individuals | `server/middleware/tenantIsolation.ts`, `server/utils/authedOrgId.ts`, `server/services/roleBasedAccess.ts` | `scripts/ci/check-tenant-isolation.mjs` (gate); `server/__tests__/security/*` tenant-isolation suite |
 | P11-05 | §11.10(e) | Secure, computer-generated, time-stamped audit trail of record changes | `server/services/audit/chain.ts` (hash chain), `shared/schema.ts` `audit_events` (trigger-immutable); `server/services/audit/auditLoggerV2.ts` | `audit_events` immutability migration; chain-verify tests |
@@ -35,26 +35,35 @@ to running evidence without a code tour. Paths are repository-relative.
 | P11-09 | §11.10(g)/(h) | Authority + device checks via re-auth on governed actions | `server/routes/c2c/actions.ts` (bcrypt + TOTP re-auth, separation of duties) | governed-action contract tests |
 | P11-10 | §11.10(k) | Reproducibility of computer-generated outputs | `server/services/ai-gateway/*` (model+prompt-hash+seed logging); `server/services/stats/computation-provenance.ts` (`buildProvenance`) | stats provenance unit tests; gateway audit-log assertions |
 | P11-11 | ALCOA+ | Diagnostic/analytical computations are deterministic and attributable | `server/services/stats/diagnostic-design.ts` (clinical sizing), `server/services/stats/analytical-performance.ts` (CLSI EP05/EP17/EP06) | `server/services/stats/__tests__/analytical-performance.test.ts` (closed-form references) |
+| P11-12 | §11.10(e),(c) | General application/security/access events are **durably** recorded (not in-memory only) and queryable | `server/services/audit/auditLogger.ts` → `application_audit_log` (DB-first read, in-memory fallback) | `server/services/audit/__tests__/auditLogger.persistence.test.ts` |
+
+## Addressed since v1.0
+
+1. **Audit durability (§11.10(e) completeness) — addressed.** The general-purpose
+   logger (`server/services/audit/auditLogger.ts`) no longer relies on an
+   in-memory array: it now persists to the durable `application_audit_log` table
+   (DB-first read, in-memory fallback) — see P11-12. The hash-chained
+   `audit_events` remains the canonical regulated-record trail; the two have
+   distinct roles, which resolves the "no single canonical persistent trail"
+   concern for these events without conflating record-level and
+   application-level audit.
+2. **eCTD leaf PDF rendering — addressed.** `generateEctdPackage` now renders
+   leaf content to real PDF bytes via `server/services/ectd/leaf-pdf-renderer.ts`
+   (pure-JS pdf-lib, deterministic) and checksums the PDF bytes — see P11-02.
 
 ## Open items (tracked, not yet closed)
 
-These are recorded here so the matrix is honest about residual risk rather than
-implying full coverage:
-
-1. **Audit-store consolidation (§11.10(e) completeness).** A non-persistent,
-   in-memory logger still exists at `server/services/audit/auditLogger.ts`
-   (~28 call sites). Its event shape does not map cleanly onto the hash-chained
-   `audit_events` table, so consolidation is a deliberate architecture decision
-   requiring a live database to verify (per `PRODUCT_QC_REVIEW_2026-06-08.md`
-   #2/#4). **Recommendation:** migrate those call sites onto a single canonical,
-   chained, queryable store; do not force the mapping blind.
-2. **eCTD leaf PDF rendering.** `generateEctdPackage` writes leaf paths with a
-   `.pdf` extension; routing leaf content through `pdf-converter.ts` so the bytes
-   are true PDF (granular-PDF-spec conformant) is a runtime-dependent integration
-   (LibreOffice/Puppeteer) to be qualified in OQ against a real eCTD validator
-   profile.
-3. **DB-backed audit integration test.** The delete→audit contract tests are
-   mocked (CI has no Neon DB); a database-backed test (delete ⇒ matching
+1. **Per-call-site audit migration + DB-backed integration test.** The durable
+   store and its mapping are contract-tested without a DB; migrating each of the
+   ~28 call sites' semantics and a database-backed integration test (event ⇒ row)
+   remain operator qualification steps.
+2. **eCTD PDF/A conformance.** The leaf renderer emits a valid, non-encrypted PDF
+   (accepted by `classifyPdfA` as "acceptable but undeclared"). True PDF/A-1b
+   (embedded subset fonts + ICC OutputIntent + XMP) is a fidelity enhancement to
+   qualify in OQ against an eCTD validator profile; the high-fidelity DOCX/HTML
+   path remains `pdf-converter.ts` (LibreOffice/Puppeteer).
+3. **DB-backed delete→audit integration test.** The delete→audit contract tests
+   are mocked (CI has no Neon DB); a database-backed test (delete ⇒ matching
    `audit_events` row) is the operator's complementary qualification step.
 
 ## Revision history
