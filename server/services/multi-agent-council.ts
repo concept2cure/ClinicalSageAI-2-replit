@@ -16,8 +16,8 @@
  * - Role-based access control hooks
  *
  * System Survivability Features:
- * - Multi-provider LLM with automatic failover (Kimi AI primary, OpenAI secondary)
- * - Circuit breaker for LLM resilience
+ * - Governed AI gateway (Claude-first) with provider failover + circuit breaking
+ *   handled centrally and audited (model, prompt hash, temperature, fallback chain)
  * - Prompt injection protection
  * - Tamper-proof audit logging
  * - Graceful degradation when LLM providers unavailable
@@ -31,14 +31,12 @@ import { Pool, PoolClient } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import { createHash, randomBytes } from 'crypto';
 
-// Survivability imports - Multi-provider LLM (Kimi primary, OpenAI secondary)
-import { MultiProviderLLMService, LLMResponse } from '../lib/multi-provider-llm';
-import {
-  getKimiCircuitBreaker,
-  getOpenAICircuitBreaker,
-  getBestAvailableLLMBreaker,
-  CircuitBreakerError,
-} from '../lib/circuit-breaker';
+// Governed AI gateway — the single audited seam for all council LLM calls
+// (records model, prompt hash, temperature, seed, and fallback chain). It owns
+// provider selection, failover, and resilience, replacing the legacy
+// multi-provider service and the council's bespoke per-provider circuit breakers.
+import { getGateway } from './ai-gateway/gateway.js';
+import type { TaskType } from './ai-gateway/types.js';
 import {
   getPromptInjectionProtection,
   PromptInjectionError,
@@ -149,29 +147,36 @@ export class AgentExecutionError extends CouncilError {
   }
 }
 
+/**
+ * Normalized result of a council LLM call. Mirrors the fields the council
+ * consumes downstream, mapped from the governed gateway's response.
+ */
+interface CouncilLLMResult {
+  content: string;
+  provider: string;
+  model: string;
+  fallbackUsed: boolean;
+  latencyMs: number;
+  tokensUsed: { prompt: number; completion: number; total: number };
+}
+
 export class MultiAgentCouncilService {
   private pool: Pool;
-  private llmService: MultiProviderLLMService;
+  private readonly gateway = getGateway();
   private readonly MAX_RETRIES = 3;
   private readonly RETRY_DELAY_MS = 1000;
   private readonly DEFAULT_TIMEOUT_MS = 120000;
 
-  // Survivability components
-  private readonly kimiCircuitBreaker = getKimiCircuitBreaker();
-  private readonly openaiCircuitBreaker = getOpenAICircuitBreaker();
+  // Survivability components (provider failover + circuit breaking now live in
+  // the gateway; the council keeps prompt-injection screening and degradation).
   private readonly promptProtection = getPromptInjectionProtection();
   private readonly degradation = getGracefulDegradationService();
 
   constructor(pool: Pool) {
     this.pool = pool;
 
-    // Initialize multi-provider LLM service (Kimi primary, OpenAI secondary)
-    this.llmService = new MultiProviderLLMService(pool, {
-      providerPriority: ['KIMI', 'OPENAI'], // Kimi AI is PRIMARY
-    });
-
     log.debug(
-      '[MultiAgentCouncil] Initialized with multi-provider LLM (Kimi AI primary, OpenAI secondary)'
+      '[MultiAgentCouncil] Initialized — routing LLM calls through the governed AI gateway (Claude-first)'
     );
   }
 
@@ -180,16 +185,19 @@ export class MultiAgentCouncilService {
   // ==========================================================================
 
   /**
-   * Execute LLM call with multi-provider failover and circuit breaker protection
-   * Primary: Kimi AI (Moonshot)
-   * Secondary Fallback: OpenAI (GPT-4)
+   * Execute an LLM call for a council agent through the governed AI gateway.
+   *
+   * The gateway is the single audited seam — it records model, prompt hash,
+   * temperature, seed, and the fallback chain, and owns provider selection and
+   * failover (Claude-first via its task-based routing policy). Prompt-injection
+   * screening and graceful-degradation gating remain the council's concern.
    */
   private async executeLLMWithFailover(
     operation: string,
     messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
     correlationId: string,
     options?: { temperature?: number; maxTokens?: number; responseFormat?: 'text' | 'json'; organizationId?: number; projectId?: number | string }
-  ): Promise<LLMResponse> {
+  ): Promise<CouncilLLMResult> {
     // Inject client/project intelligence so council agents read SKILL/.MD context
     if (options?.organizationId || options?.projectId) {
       const intelligencePrefix = await getIntelligencePrefix(options.organizationId, options.projectId).catch(() => '');
@@ -210,64 +218,60 @@ export class MultiAgentCouncilService {
       );
     }
 
+    const wantsJson = (options?.responseFormat ?? 'text') === 'json';
+    const taskType: TaskType = wantsJson ? 'structured_output' : 'document_drafting';
+
     try {
-      // Use multi-provider service which handles Kimi→OpenAI failover automatically
-      const response = await this.llmService.chatCompletion({
+      const response = await this.gateway.route({
+        taskType,
         messages,
         temperature: options?.temperature ?? 0.3,
         maxTokens: options?.maxTokens ?? 4096,
-        responseFormat: options?.responseFormat ?? 'text',
-        provider: 'AUTO', // Let the service choose (Kimi first, then OpenAI)
+        jsonMode: wantsJson,
+        organizationId: options?.organizationId,
+        projectId: options?.projectId,
+        callerModule: 'multi-agent-council',
+        metadata: { operation, correlationId },
       });
 
-      // Log provider usage for monitoring
-      if (response.fallbackUsed) {
-        log.warn(
-          `[Council:${correlationId}] ${operation}: Used fallback provider ${response.provider}`
-        );
-
-        const auditLog = getTamperProofAuditLog(this.pool);
-        await auditLog.log(
-          'LLM_FALLBACK_USED',
-          `Operation ${operation} used fallback provider ${response.provider}`,
-          {
-            operation,
-            provider: response.provider,
-            fallbackUsed: true,
-            latencyMs: response.latencyMs,
-          },
-          { correlationId }
-        );
-      }
-
-      return response;
+      return {
+        content: response.content,
+        provider: response.provider,
+        model: response.model,
+        // Provider failover and its audit trail now live inside the gateway;
+        // the council no longer surfaces a bespoke fallback flag.
+        fallbackUsed: false,
+        latencyMs: response.latencyMs,
+        tokensUsed: {
+          prompt: response.usage.inputTokens,
+          completion: response.usage.outputTokens,
+          total: response.usage.totalTokens,
+        },
+      };
     } catch (error) {
-      if (error instanceof CircuitBreakerError) {
-        log.error(`[Council:${correlationId}] All LLM providers unavailable: ${error.message}`);
+      const messageText = error instanceof Error ? error.message : String(error);
+      log.error(
+        `[Council:${correlationId}] ${operation}: LLM call failed via gateway: ${messageText}`
+      );
 
-        // Log to tamper-proof audit
-        const auditLog = getTamperProofAuditLog(this.pool);
-        await auditLog.log(
+      // Tamper-proof audit of the failure (best-effort — never mask the original error).
+      const auditLog = getTamperProofAuditLog(this.pool);
+      await auditLog
+        .log(
           'CIRCUIT_BREAKER_OPENED',
           `All LLM providers unavailable during ${operation}`,
-          {
-            operation,
-            errorCode: error.code,
-            kimiMetrics: this.kimiCircuitBreaker.getMetrics(),
-            openaiMetrics: this.openaiCircuitBreaker.getMetrics(),
-          },
+          { operation, error: messageText },
           { correlationId }
-        );
+        )
+        .catch(err => log.error('Failed to log LLM failure:', err));
 
-        throw new CouncilError(
-          'AI service is temporarily unavailable. Both primary (Kimi AI) and secondary (OpenAI) providers are unreachable. The system will automatically retry when services recover.',
-          'ALL_PROVIDERS_UNAVAILABLE',
-          undefined,
-          correlationId,
-          true
-        );
-      }
-      throw error;
+      throw new CouncilError(
+        'AI service is temporarily unavailable. The system will automatically retry when services recover.',
+        'ALL_PROVIDERS_UNAVAILABLE',
+        undefined,
+        correlationId,
+        true
+      );
     }
   }
 

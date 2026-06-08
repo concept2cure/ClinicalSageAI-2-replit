@@ -33,15 +33,8 @@ export {
   type CircuitBreakerMetrics
 } from './circuit-breaker';
 
-// Multi-Provider LLM - Kimi AI primary, OpenAI secondary
-export {
-  MultiProviderLLMService,
-  type LLMProvider,
-  type LLMProviderConfig,
-  type LLMRequest,
-  type LLMResponse,
-  type ProviderHealth
-} from './multi-provider-llm';
+// Multi-Provider LLM removed — all LLM calls now route through the governed
+// AI gateway (server/services/ai-gateway). See gateway-bypass-baseline.json.
 
 // Prompt Injection Protection - LLM security
 export {
