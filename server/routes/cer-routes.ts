@@ -559,4 +559,33 @@ router.post('/mdr/generate', async (req, res) => {
   }
 });
 
+// Validate a stored CER report against the deterministic MEDDEV 2.7/1 rev 4 /
+// Annex I GSPR / Annex XIV conformance checklist (completeness of mandatory CER
+// elements). Returns the structured result; 404 when the report does not exist
+// for the tenant. Never returns an auto-"valid" — a missing mandatory element
+// fails the report.
+router.get('/mdr/:reportId/validate', async (req, res) => {
+  try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
+    const { reportId } = req.params;
+    if (!isSafeReportId(reportId)) {
+      return res.status(400).json({ error: 'Invalid report id' });
+    }
+
+    const service = new UnifiedCERService({ organizationId: guard.orgId });
+    const result = await service.validateReportDetailed(reportId);
+    if ('notFound' in result) {
+      return res.status(404).json({ error: 'CER report not found' });
+    }
+    return res.json(result);
+  } catch (error) {
+    cerLog.error('CER conformance validation error', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({ error: 'Failed to validate CER' });
+  }
+});
+
 export default router;

@@ -11,10 +11,20 @@
  * @module server/services/cer/index
  */
 
+import { and, eq } from 'drizzle-orm';
 import cerGen from '../cerGenerationService';
+import { db } from '../../db';
+import { cerReports } from '../../../shared/schema';
+import {
+  validateCerConformance,
+  type CerConformanceResult,
+  type CerReportLike,
+} from './cerConformanceValidator';
 
 // Re-export from primary service (default singleton instance)
 export { default as cerGenerationService } from '../cerGenerationService';
+export { validateCerConformance } from './cerConformanceValidator';
+export type { CerConformanceResult, CerConformanceCheck } from './cerConformanceValidator';
 
 // Re-export generator utilities
 export { generateCerSections, assembleHtml, renderPdf, setupWorkers } from '../cerGenerator';
@@ -31,9 +41,11 @@ export type CERRegulatoryFramework =
 // them instead of failing closed.
 export interface CERServiceConfig {
   organizationId: number;
-  deviceId: number;
-  userId: number;
-  regulatoryFramework: CERRegulatoryFramework;
+  // Required for generateReport(); optional so the facade can be constructed
+  // for validation-only use (validateReport needs only organizationId).
+  deviceId?: number;
+  userId?: number;
+  regulatoryFramework?: CERRegulatoryFramework;
   templateId?: string;
   notifiedBodyId?: string;
   deviceName?: string;
@@ -79,12 +91,22 @@ export class UnifiedCERService {
 
   async generateReport(): Promise<CERGenerationResult> {
     const warnings: string[] = [];
+    const { deviceId, userId, regulatoryFramework } = this.config;
+    if (deviceId == null || userId == null || !regulatoryFramework) {
+      return {
+        reportId: '',
+        status: 'failed',
+        sections: [],
+        generatedAt: new Date(),
+        warnings: ['deviceId, userId and regulatoryFramework are required to generate a CER.'],
+      };
+    }
     try {
       const cer = await cerGen.generateCER({
-        deviceId: this.config.deviceId,
+        deviceId,
         organizationId: this.config.organizationId,
-        userId: this.config.userId,
-        regulatoryFramework: this.config.regulatoryFramework,
+        userId,
+        regulatoryFramework,
         templateId: this.config.templateId,
         notifiedBodyId: this.config.notifiedBodyId,
       });
@@ -133,18 +155,51 @@ export class UnifiedCERService {
     return sections;
   }
 
-  async validateReport(_reportId: string): Promise<{ valid: boolean; issues: string[] }> {
-    // Generation is wired, but conformance validation (MEDDEV 2.7/1 rev 4,
-    // Annex I GSPR, Annex XIV) is a separate engine that does not yet exist.
-    // Returning { valid: true } would falsely certify an unvalidated regulated
-    // report as conformant — a dangerous false positive. Fail closed.
-    return {
-      valid: false,
-      issues: [
-        'CER conformance validation is not implemented (MEDDEV 2.7/1 rev 4 / ' +
-          'Annex I GSPR / Annex XIV). A generated report cannot be certified valid yet.',
-      ],
-    };
+  async validateReport(reportId: string): Promise<{ valid: boolean; issues: string[] }> {
+    let result: CerConformanceResult | { notFound: true };
+    try {
+      result = await this.validateReportDetailed(reportId);
+    } catch (error) {
+      // Cannot validate (e.g. DB error) — fail closed, never certify valid.
+      return {
+        valid: false,
+        issues: [
+          `CER validation could not be completed: ${error instanceof Error ? error.message : String(error)}`,
+        ],
+      };
+    }
+    if ('notFound' in result) {
+      return {
+        valid: false,
+        issues: [`CER report "${reportId}" was not found for this organization.`],
+      };
+    }
+    const issues = result.checks
+      .filter(c => c.status === 'fail')
+      .map(c => `[${c.severity}] ${c.requirement} (${c.reference}): ${c.detail}`);
+    return { valid: result.valid, issues };
+  }
+
+  /**
+   * Run the full conformance checklist against the stored CER report and return
+   * the structured result. Scoped to this facade's organization. Returns
+   * { notFound: true } when no such report exists for the tenant.
+   */
+  async validateReportDetailed(
+    reportId: string,
+  ): Promise<CerConformanceResult | { notFound: true }> {
+    const [row] = await db
+      .select()
+      .from(cerReports)
+      .where(
+        and(
+          eq(cerReports.reportId, reportId),
+          eq(cerReports.organizationId, this.config.organizationId),
+        ),
+      )
+      .limit(1);
+    if (!row) return { notFound: true };
+    return validateCerConformance(row as CerReportLike);
   }
 }
 
