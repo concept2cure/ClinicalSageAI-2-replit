@@ -1,42 +1,34 @@
-#!/usr/bin/env node
-
+#!/usr/bin/env tsx
 /**
- * Manual runner for the document retention job
+ * Manual / scheduled runner for the document retention job.
  *
- * This script allows administrators to run the retention job manually
- * for testing or to execute it outside the normal schedule.
+ * Runs one retention sweep (see server/jobs/retentionCron.ts): archives expired
+ * documents per policy, soft- or hard-deletes them, audits each action. Intended
+ * for an external scheduler (cron / CI) or manual admin runs.
  *
- * Usage: node server/bin/run-retention.js
+ * Usage: tsx server/bin/run-retention.ts   (or: npm run retention:run)
  */
 
 import dotenv from 'dotenv';
-
-// Load environment variables
 dotenv.config();
 
-import { runRetentionJob } from '../jobs/retentionCron.js';
+import { runRetentionJob } from '../jobs/retentionCron';
 
 console.log('╔═══════════════════════════════════════════════════════════════╗');
 console.log('║                 Concept2Cure Vault Retention Job                 ║');
 console.log('╚═══════════════════════════════════════════════════════════════╝');
 console.log('');
-console.log('⚠️  WARNING: This will archive and permanently delete documents');
-console.log('   based on configured retention rules.');
+console.log('⚠️  Archives and deletes documents whose retention period has elapsed.');
+console.log('   Soft-delete by default; hard-delete only when a matched policy says so.');
 console.log('');
 console.log('Starting job...');
 console.log('');
 
 runRetentionJob()
   .then(success => {
-    if (success) {
-      console.log('');
-      console.log('✅ Retention job completed successfully');
-      process.exit(0);
-    } else {
-      console.log('');
-      console.log('❌ Retention job failed');
-      process.exit(1);
-    }
+    console.log('');
+    console.log(success ? '✅ Retention job completed successfully' : '❌ Retention job completed with errors');
+    process.exit(success ? 0 : 1);
   })
   .catch(err => {
     console.error('');

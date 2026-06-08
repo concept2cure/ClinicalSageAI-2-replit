@@ -94,6 +94,7 @@
     "db:seed:mdx-templates": "node scripts/seed-mdx-templates.mjs",
     "db:seed:regulatory-patterns": "node scripts/seed-regulatory-patterns.mjs",
     "audit:archive": "tsx scripts/run-audit-archive.mjs",
+    "retention:run": "tsx server/bin/run-retention.ts",
     "audit:verify:24h": "node scripts/run-chain-verify.mjs --window=24h",
     "audit:verify:full": "node scripts/run-chain-verify.mjs --window=full",
     "db:check": "node scripts/db_check.js",
