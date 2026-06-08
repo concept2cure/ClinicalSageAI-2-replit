@@ -30,25 +30,11 @@ const describeLegacyV3 = hasAllLegacyV3Components ? describe : describe.skip;
 // ═══════════════════════════════════════════════════════════════════════════════
 
 describe('V3 Component Files', () => {
-  it('should have design system directory', () => {
-    const designSystemPath = path.join(CLIENT_SRC, 'design-system');
-    expect(fs.existsSync(designSystemPath)).toBe(true);
-  });
-
-  it('should have tokens.ts file', () => {
-    const tokensPath = path.join(CLIENT_SRC, 'design-system', 'tokens.ts');
-    expect(fs.existsSync(tokensPath)).toBe(true);
-  });
-
-  it('should have motion.ts file', () => {
-    const motionPath = path.join(CLIENT_SRC, 'design-system', 'motion.ts');
-    expect(fs.existsSync(motionPath)).toBe(true);
-  });
-
-  it('should have index.ts file', () => {
-    const indexPath = path.join(CLIENT_SRC, 'design-system', 'index.ts');
-    expect(fs.existsSync(indexPath)).toBe(true);
-  });
+  // The `client/src/design-system/` island (tokens.ts, motion.ts, index.ts and
+  // the patterns/ dir) was removed in the Tier 1B dead-client cleanup (commit
+  // 4e26c7b, vite build verified). The authoritative design system lives in
+  // `design-system/` and `ui_kits/` per CLAUDE.md, not under client/src, so the
+  // file-existence assertions for that removed island were dropped.
 
   it('should have DashboardV3 component', () => {
     const dashboardPath = path.join(CLIENT_SRC, 'components', 'dashboard', 'DashboardV3.tsx');
@@ -82,149 +68,6 @@ describe('V3 Component Files', () => {
 
   it('should avoid partial legacy V3 component snapshots', () => {
     expect(hasAnyLegacyV3Component && !hasAllLegacyV3Components).toBe(false);
-  });
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// DESIGN SYSTEM PATTERN FILES
-// ═══════════════════════════════════════════════════════════════════════════════
-
-describe('Design System Patterns', () => {
-  it('should have patterns directory', () => {
-    const patternsPath = path.join(CLIENT_SRC, 'design-system', 'patterns');
-    expect(fs.existsSync(patternsPath)).toBe(true);
-  });
-
-  it('should have ConversationBubble pattern', () => {
-    const bubblePath = path.join(CLIENT_SRC, 'design-system', 'patterns', 'ConversationBubble.tsx');
-    expect(fs.existsSync(bubblePath)).toBe(true);
-  });
-
-  it('should have MetricCard pattern', () => {
-    const metricPath = path.join(CLIENT_SRC, 'design-system', 'patterns', 'MetricCard.tsx');
-    expect(fs.existsSync(metricPath)).toBe(true);
-  });
-
-  it('should have EmptyState pattern', () => {
-    const emptyPath = path.join(CLIENT_SRC, 'design-system', 'patterns', 'EmptyState.tsx');
-    expect(fs.existsSync(emptyPath)).toBe(true);
-  });
-
-  it('should have ActionBar pattern', () => {
-    const actionPath = path.join(CLIENT_SRC, 'design-system', 'patterns', 'ActionBar.tsx');
-    expect(fs.existsSync(actionPath)).toBe(true);
-  });
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// FILE CONTENT VALIDATION
-// ═══════════════════════════════════════════════════════════════════════════════
-
-describe('Design Tokens Content', () => {
-  let tokensContent: string;
-
-  beforeAll(() => {
-    tokensContent = fs.readFileSync(path.join(CLIENT_SRC, 'design-system', 'tokens.ts'), 'utf-8');
-  });
-
-  it('should export colors object', () => {
-    expect(tokensContent).toContain('export const colors');
-  });
-
-  it('should have neutral color scale', () => {
-    expect(tokensContent).toContain('neutral:');
-    expect(tokensContent).toContain("50: '#FAFAFA'");
-    expect(tokensContent).toContain('950:');
-  });
-
-  it('should have primary color scale', () => {
-    expect(tokensContent).toContain('primary:');
-  });
-
-  it('should have semantic colors', () => {
-    expect(tokensContent).toContain('success:');
-    expect(tokensContent).toContain('warning:');
-    expect(tokensContent).toContain('error:');
-    expect(tokensContent).toContain('info:');
-  });
-
-  it('should export typography system', () => {
-    expect(tokensContent).toContain('export const typography');
-    expect(tokensContent).toContain('fontFamily');
-    expect(tokensContent).toContain('fontSize');
-    expect(tokensContent).toContain('fontWeight');
-  });
-
-  it('should export spacing scale', () => {
-    expect(tokensContent).toContain('export const spacing');
-    expect(tokensContent).toContain("0: '0'");
-    expect(tokensContent).toContain("1: '0.25rem'"); // 4px in rem
-  });
-
-  it('should export shadows', () => {
-    expect(tokensContent).toContain('export const shadows');
-    expect(tokensContent).toContain('sm:');
-    expect(tokensContent).toContain('md:');
-    expect(tokensContent).toContain('lg:');
-  });
-
-  it('should export transitions', () => {
-    expect(tokensContent).toContain('export const transitions');
-    expect(tokensContent).toContain('duration');
-    expect(tokensContent).toContain('easing');
-  });
-
-  it('should export z-index scale', () => {
-    expect(tokensContent).toContain('export const zIndex');
-  });
-
-  it('should export breakpoints', () => {
-    expect(tokensContent).toContain('export const breakpoints');
-    expect(tokensContent).toContain('sm:');
-    expect(tokensContent).toContain('md:');
-    expect(tokensContent).toContain('lg:');
-  });
-});
-
-describe('Motion System Content', () => {
-  let motionContent: string;
-
-  beforeAll(() => {
-    motionContent = fs.readFileSync(path.join(CLIENT_SRC, 'design-system', 'motion.ts'), 'utf-8');
-  });
-
-  it('should export keyframe animations', () => {
-    expect(motionContent).toContain('export const fadeIn');
-    expect(motionContent).toContain('export const slideIn');
-  });
-
-  it('should export animation presets', () => {
-    expect(motionContent).toContain('export const animationPresets');
-  });
-
-  it('should export spring configurations', () => {
-    expect(motionContent).toContain('export const springConfigs');
-    expect(motionContent).toContain('snappy');
-    expect(motionContent).toContain('gentle');
-    expect(motionContent).toContain('bouncy');
-  });
-
-  it('should export motion variants for framer-motion', () => {
-    expect(motionContent).toContain('export const motionVariants');
-    expect(motionContent).toContain('page');
-    expect(motionContent).toContain('modal');
-    expect(motionContent).toContain('listItem');
-  });
-
-  it('should export stagger containers', () => {
-    expect(motionContent).toContain('export const staggerContainers');
-    expect(motionContent).toContain('fast');
-    expect(motionContent).toContain('normal'); // Using 'normal' instead of 'default'
-    expect(motionContent).toContain('slow');
-  });
-
-  it('should export reduced motion variants for accessibility', () => {
-    expect(motionContent).toContain('export const reducedMotionVariants');
   });
 });
 
@@ -463,15 +306,8 @@ describe('Component Size Validation', () => {
     return content.split('\n').length;
   };
 
-  it('tokens.ts should be comprehensive (>200 lines)', () => {
-    const lines = getLineCount(path.join(CLIENT_SRC, 'design-system', 'tokens.ts'));
-    expect(lines).toBeGreaterThan(200);
-  });
-
-  it('motion.ts should be comprehensive (>200 lines)', () => {
-    const lines = getLineCount(path.join(CLIENT_SRC, 'design-system', 'motion.ts'));
-    expect(lines).toBeGreaterThan(200);
-  });
+  // tokens.ts / motion.ts size checks removed — the client/src/design-system
+  // island was deleted in the Tier 1B cleanup (see note above).
 
   it('DashboardV3 should be a full component (>300 lines)', () => {
     if (!hasAllLegacyV3Components) return;
