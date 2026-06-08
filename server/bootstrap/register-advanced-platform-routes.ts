@@ -112,6 +112,11 @@ export async function registerAdvancedPlatformRoutes({
         mod: '../routes/postmarket-surveillance.ts',
         name: 'Post-market Surveillance (openFDA MAUDE + recalls)',
       },
+      {
+        path: '/api/udi-ivdr',
+        mod: '../routes/udi-ivdr.ts',
+        name: 'UDI/GUDID + EU IVDR Performance Evaluation',
+      },
     ] as const;
     const auditIntegResults = await Promise.allSettled(auditIntegConfig.map(c => import(c.mod)));
     auditIntegResults.forEach((r, i) => {

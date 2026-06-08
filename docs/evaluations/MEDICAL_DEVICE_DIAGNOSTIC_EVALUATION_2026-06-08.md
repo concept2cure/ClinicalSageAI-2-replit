@@ -114,6 +114,13 @@ non-overlapping value:
   — openFDA MAUDE adverse-event and recall ingestion (behind a mockable fetch
   seam) with signal aggregation (event-type counts, top problems, spike detection)
   and recall summaries by classification. `/api/postmarket-surveillance`.
+- **UDI/GUDID (gap #10)**: `server/services/regulatory/udi-gudid.ts` — GS1 GTIN-14
+  Device Identifier validation (mod-10 check digit) and GUDID record completeness.
+  `/api/udi-ivdr`.
+- **EU IVDR Performance Evaluation (closes the IVDR registry-only gap)**:
+  `server/services/regulatory/ivdr-performance-evaluation.ts` — PER completeness
+  across the Annex XIII pillars (scientific validity, analytical performance,
+  clinical performance). `/api/udi-ivdr`.
 - **eCTD leaf PDF rendering**: `server/services/ectd/leaf-pdf-renderer.ts` (pdf-lib,
   deterministic); `generateEctdPackage` renders both leaf sites to real PDF bytes
   and checksums them. Residual: true PDF/A-1b conformance is a documented OQ enhancement.
