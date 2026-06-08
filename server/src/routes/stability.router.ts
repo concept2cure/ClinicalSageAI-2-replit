@@ -1092,7 +1092,12 @@ router.post('/studies/:id/p8/push', async (req, res) => {
         .join(', '),
       DURATION_MONTHS: study.duration_months || 24,
       LABEL_STORAGE: study.label_storage || 'Store in a dry place at room temperature',
-      COMPLIANCE_STATUS: 'Compliant with ICH Q1A(R2) guidelines',
+      // Do not certify a compliance verdict in a regulated submission document:
+      // conformance to ICH Q1A(R2) is determined by evaluating completed results
+      // against acceptance criteria, which this token generator does not do.
+      // State the study's design basis instead of asserting "Compliant".
+      COMPLIANCE_STATUS:
+        'Study designed to follow ICH Q1A(R2); conformance to be confirmed against acceptance criteria on completion',
       RESULTS_SUMMARY:
         results.length > 0 ? `${results.length} test results recorded` : 'Testing in progress',
     };
@@ -1773,7 +1778,11 @@ router.get('/oot-surveillance', async (req, res) => {
 
       const { m, s, b } = checkWE(series, rules);
 
-      // Add some outliers for demonstration - force at least one WE1 trigger
+      // Flag a series only when a real signal is present: a Western Electric
+      // rule break from checkWE (b), or a genuine trend — first-to-last shift
+      // beyond 2 SD, or any point beyond 2.5 SD from the mean. (An earlier
+      // version's comment claimed it "forced" a trigger for demonstration; it
+      // does not — detection is computed from the real series statistics.)
       const hasSignificantTrend =
         series.length >= 5 &&
         (Math.abs(series[0] - series[series.length - 1]) > s * 2 ||
@@ -1798,7 +1807,10 @@ router.get('/oot-surveillance', async (req, res) => {
             sd: parseFloat(s.toFixed(3)),
             n: series.length,
           },
-          status: 'confirmed',
+          // Auto-detected statistical signal — NOT yet investigated/confirmed.
+          // 'confirmed' would overstate the investigation state of an OOT signal
+          // in a regulated stability surface; it is 'detected' until reviewed.
+          status: 'detected',
           detected_date: new Date().toISOString(),
           result_value: parseFloat(series[series.length - 1].toFixed(2)),
           specification_limit: `${(m - 3 * s).toFixed(1)} - ${(m + 3 * s).toFixed(1)}`,
