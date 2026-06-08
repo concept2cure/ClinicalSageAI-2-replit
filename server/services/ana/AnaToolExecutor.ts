@@ -17,6 +17,7 @@
 import { getGateway } from '../ai-gateway/gateway';
 import fdaMaudeClient from '../../fda_maude_client.js';
 import { searchTrials } from '../integrations/clinicaltrials-client.js';
+import { searchPubmed } from '../integrations/pubmed-client.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 import type {
   GatewayRequest,
@@ -271,71 +272,36 @@ registerToolHandler('search_drug_adverse_events', async (input) => {
   }
 });
 
-// Search Literature — queries PubMed via E-utilities
+// Search Literature — live PubMed via the governed E-utilities client.
 registerToolHandler('search_literature', async (input) => {
-  const query = input.query as string;
-  const maxResults = (input.max_results as number) || 5;
+  const query = typeof input.query === 'string' ? input.query : '';
+  const maxResults = Math.min((input.max_results as number) || 5, 20);
+  const asStr = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v.trim() : undefined;
 
   try {
-    const searchParams = new URLSearchParams({
-      db: 'pubmed',
-      term: query,
-      retmax: String(Math.min(maxResults, 10)),
-      retmode: 'json',
+    const result = await searchPubmed({
+      query,
+      maxResults,
+      dateRange: asStr(input.date_range),
+      studyType: asStr(input.study_type),
     });
-    const response = await fetch(
-      `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?${searchParams.toString()}`,
-      { signal: AbortSignal.timeout(10000) }
-    );
-
-    if (response.ok) {
-      const data = await response.json();
-      const ids = data.esearchresult?.idlist || [];
-      if (ids.length > 0) {
-        // Fetch summaries
-        const summaryParams = new URLSearchParams({
-          db: 'pubmed',
-          id: ids.join(','),
-          retmode: 'json',
-        });
-        const summaryResp = await fetch(
-          `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?${summaryParams.toString()}`,
-          { signal: AbortSignal.timeout(10000) }
-        );
-
-        if (summaryResp.ok) {
-          const summaryData = await summaryResp.json();
-          const articles = ids.map((id: string) => {
-            const article = summaryData.result?.[id] || {};
-            return {
-              pmid: id,
-              title: article.title,
-              authors: (article.authors || []).slice(0, 3).map((a: any) => a.name).join(', '),
-              journal: article.fulljournalname || article.source,
-              pubDate: article.pubdate,
-              doi: article.elocationid,
-            };
-          });
-
-          return JSON.stringify({
-            source: 'PubMed',
-            query,
-            resultCount: articles.length,
-            articles,
-          });
-        }
-      }
-    }
-  } catch (e) {
-    // Fall through
+    return JSON.stringify({
+      source: result.source,
+      query,
+      totalCount: result.totalCount,
+      resultCount: result.articles.length,
+      articles: result.articles,
+      citation_hint: 'Cite each article by PMID (and DOI when present) and link to the provided url.',
+    });
+  } catch {
+    return JSON.stringify({
+      source: 'PubMed',
+      query,
+      note: 'PubMed API unavailable — use manual search',
+      url: `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(query)}`,
+    });
   }
-
-  return JSON.stringify({
-    source: 'PubMed',
-    query,
-    note: 'PubMed API unavailable — use manual search',
-    url: `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(query)}`,
-  });
 });
 
 // Lookup FDA Guidance
