@@ -99,6 +99,11 @@ non-overlapping value:
   — IMDRF SaMD N12 risk categorization (the 4×3 matrix → category I–IV) and
   IEC 62304 software safety classification (A/B/C); exposed at
   `/api/device-classification`.
+- **Substantial-equivalence reasoning (gap #7)**: `server/services/regulatory/substantial-equivalence.ts`
+  — the FDA 510(k) SE decision flowchart as a deterministic, auditable walk
+  (SE / NSE / INSUFFICIENT_DATA with the decision path + rationale), plus
+  attribute-by-attribute technological-characteristics comparison. This turns the
+  prior "data shape" into an actual SE decision. Exposed at `/api/substantial-equivalence`.
 - **eCTD leaf PDF rendering**: `server/services/ectd/leaf-pdf-renderer.ts` (pdf-lib,
   deterministic); `generateEctdPackage` renders both leaf sites to real PDF bytes
   and checksums them. Residual: true PDF/A-1b conformance is a documented OQ enhancement.

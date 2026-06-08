@@ -92,6 +92,11 @@ export async function registerAdvancedPlatformRoutes({
         mod: '../routes/device-classification.ts',
         name: 'Device Classification (IMDRF SaMD + IEC 62304)',
       },
+      {
+        path: '/api/substantial-equivalence',
+        mod: '../routes/substantial-equivalence.ts',
+        name: 'Substantial Equivalence (FDA 510(k) SE flowchart)',
+      },
     ] as const;
     const auditIntegResults = await Promise.allSettled(auditIntegConfig.map(c => import(c.mod)));
     auditIntegResults.forEach((r, i) => {
