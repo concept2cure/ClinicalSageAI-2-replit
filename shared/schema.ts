@@ -10925,12 +10925,18 @@ export const coauthorDocuments = pgTable(
 
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+
+    // Soft-delete tombstone (21 CFR Part 11 §11.10(e)). A regulated eCTD
+    // document is never hard-deleted; deletes set this and write an audit_events
+    // row in the same transaction. Reads filter on `deleted_at IS NULL`.
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
   table => ({
     orgIdx: index('coauthor_document_org_idx').on(table.organizationId),
     statusIdx: index('coauthor_document_status_idx').on(table.status),
     moduleIdx: index('coauthor_document_module_idx').on(table.ectdModuleId),
     moduleNumberIdx: index('coauthor_document_module_number_idx').on(table.moduleNumber),
+    deletedAtIdx: index('coauthor_document_deleted_at_idx').on(table.deletedAt),
   })
 );
 

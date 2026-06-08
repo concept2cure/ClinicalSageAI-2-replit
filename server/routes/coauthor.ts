@@ -3,8 +3,8 @@
  * eCTD collaborative authoring service
  */
 import { Router, Request, Response } from 'express';
-import { eq, desc, and } from 'drizzle-orm';
-import { db } from '../db';
+import { eq, desc, and, isNull } from 'drizzle-orm';
+import { db, query, transaction } from '../db';
 import { coauthorDocuments, coauthorSections } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 
@@ -93,7 +93,12 @@ router.get('/documents', authMiddleware, async (req: any, res: Response) => {
     const documents = await db
       .select()
       .from(coauthorDocuments)
-      .where(eq(coauthorDocuments.organizationId, organizationId))
+      .where(
+        and(
+          eq(coauthorDocuments.organizationId, organizationId),
+          isNull(coauthorDocuments.deletedAt)
+        )
+      )
       .orderBy(desc(coauthorDocuments.updatedAt))
       .limit(limit);
 
@@ -127,7 +132,11 @@ router.get('/documents/:id', authMiddleware, async (req: any, res: Response) => 
       .select()
       .from(coauthorDocuments)
       .where(
-        and(eq(coauthorDocuments.id, docId), eq(coauthorDocuments.organizationId, organizationId))
+        and(
+          eq(coauthorDocuments.id, docId),
+          eq(coauthorDocuments.organizationId, organizationId),
+          isNull(coauthorDocuments.deletedAt)
+        )
       )
       .limit(1);
 
@@ -203,7 +212,11 @@ router.put('/documents/:id', authMiddleware, async (req: any, res: Response) => 
       .update(coauthorDocuments)
       .set(updateValues)
       .where(
-        and(eq(coauthorDocuments.id, docId), eq(coauthorDocuments.organizationId, organizationId))
+        and(
+          eq(coauthorDocuments.id, docId),
+          eq(coauthorDocuments.organizationId, organizationId),
+          isNull(coauthorDocuments.deletedAt)
+        )
       )
       .returning();
 
@@ -233,18 +246,55 @@ router.delete('/documents/:id', authMiddleware, async (req: any, res: Response) 
       return res.status(400).json({ error: 'Invalid document ID' });
     }
 
-    const [deleted] = await db
-      .delete(coauthorDocuments)
-      .where(
-        and(eq(coauthorDocuments.id, docId), eq(coauthorDocuments.organizationId, organizationId))
-      )
-      .returning();
-
-    if (!deleted) {
+    // Existence + tenant + not-already-deleted check (clean 404 before the txn).
+    const existing = await query(
+      'SELECT id, status, organization_id FROM coauthor_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL',
+      [docId, organizationId]
+    );
+    if (!existing.rows.length) {
       return res.status(404).json({ error: 'Document not found' });
     }
+    const doc = existing.rows[0];
 
-    return res.json({ success: true, deletedId: deleted.id });
+    const u = req.user || {};
+    const auditUserId = Number(u.id ?? u.userId) || null;
+
+    // 21 CFR Part 11 §11.10(e): SOFT-delete the regulated eCTD document and
+    // record the deletion in the hash-chained, append-only audit_events table
+    // IN THE SAME TRANSACTION — atomic and fail-closed (an audit failure rolls
+    // the soft-delete back, so a regulated record is never removed unaudited).
+    const deletedId = await transaction(async (client: any) => {
+      const del = await client.query(
+        'UPDATE coauthor_documents SET deleted_at = NOW() WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL RETURNING id',
+        [docId, organizationId]
+      );
+      if (!del.rows.length) {
+        throw new Error('Document not found');
+      }
+
+      await client.query(
+        `INSERT INTO audit_events
+           (organization_id, event_type, entity_type, entity_id, user_id, user_name,
+            user_role, ip_address, timestamp, reason, metadata,
+            regulatory_significant, gxp_relevant, created_at)
+         VALUES ($1, 'coauthor_document.deleted', 'coauthor_document', $2, $3, $4, $5, $6,
+                 NOW(), $7, $8, true, true, NOW())`,
+        [
+          doc.organization_id,
+          docId,
+          auditUserId,
+          u.name ?? u.email ?? 'System',
+          u.role ?? 'user',
+          req.ip ?? '',
+          'eCTD document deleted',
+          JSON.stringify({ previousStatus: doc.status ?? null }),
+        ]
+      );
+
+      return del.rows[0].id;
+    });
+
+    return res.json({ success: true, deletedId });
   } catch (error: any) {
     logger.error('Delete document error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to delete document', message: 'An unexpected error occurred' });
@@ -274,7 +324,11 @@ router.get('/documents/:docId/sections', authMiddleware, async (req: any, res: R
       .select()
       .from(coauthorDocuments)
       .where(
-        and(eq(coauthorDocuments.id, docId), eq(coauthorDocuments.organizationId, organizationId))
+        and(
+          eq(coauthorDocuments.id, docId),
+          eq(coauthorDocuments.organizationId, organizationId),
+          isNull(coauthorDocuments.deletedAt)
+        )
       )
       .limit(1);
 
@@ -325,7 +379,11 @@ router.post('/documents/:docId/sections', authMiddleware, async (req: any, res: 
       .select()
       .from(coauthorDocuments)
       .where(
-        and(eq(coauthorDocuments.id, docId), eq(coauthorDocuments.organizationId, organizationId))
+        and(
+          eq(coauthorDocuments.id, docId),
+          eq(coauthorDocuments.organizationId, organizationId),
+          isNull(coauthorDocuments.deletedAt)
+        )
       )
       .limit(1);
 
@@ -520,7 +578,11 @@ router.post('/documents/:docId/validate', authMiddleware, async (req: any, res: 
       .select()
       .from(coauthorDocuments)
       .where(
-        and(eq(coauthorDocuments.id, docId), eq(coauthorDocuments.organizationId, organizationId))
+        and(
+          eq(coauthorDocuments.id, docId),
+          eq(coauthorDocuments.organizationId, organizationId),
+          isNull(coauthorDocuments.deletedAt)
+        )
       )
       .limit(1);
 
@@ -651,7 +713,11 @@ router.post('/documents/:docId/compile', authMiddleware, async (req: any, res: R
       .select()
       .from(coauthorDocuments)
       .where(
-        and(eq(coauthorDocuments.id, docId), eq(coauthorDocuments.organizationId, organizationId))
+        and(
+          eq(coauthorDocuments.id, docId),
+          eq(coauthorDocuments.organizationId, organizationId),
+          isNull(coauthorDocuments.deletedAt)
+        )
       )
       .limit(1);
 
@@ -754,7 +820,11 @@ router.get('/documents/:docId/compliance', authMiddleware, async (req: any, res:
       .select()
       .from(coauthorDocuments)
       .where(
-        and(eq(coauthorDocuments.id, docId), eq(coauthorDocuments.organizationId, organizationId))
+        and(
+          eq(coauthorDocuments.id, docId),
+          eq(coauthorDocuments.organizationId, organizationId),
+          isNull(coauthorDocuments.deletedAt)
+        )
       )
       .limit(1);
 

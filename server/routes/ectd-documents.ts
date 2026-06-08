@@ -5,9 +5,9 @@
  * Backed by coauthor_documents table with eCTD-specific filtering.
  */
 import { Router, Request, Response } from 'express';
-import { eq, desc, and, like, sql } from 'drizzle-orm';
+import { eq, desc, and, like, isNull } from 'drizzle-orm';
 import { z } from 'zod';
-import { db } from '../db';
+import { db, query, transaction } from '../db';
 import { coauthorDocuments } from '../../shared/schema';
 import { requireRole } from '../middleware/auth';
 import { createRateLimiter } from '../middleware/rateLimiter';
@@ -50,8 +50,8 @@ router.get('/', requireRole('regulatory-author'), async (req: Request, res: Resp
     const limit = Math.min(Number(req.query.limit) || 50, 200);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
 
-    // Build conditions array
-    const conditions: any[] = [];
+    // Build conditions array. Soft-deleted documents are never listed.
+    const conditions: any[] = [isNull(coauthorDocuments.deletedAt)];
     if (organizationId) {
       conditions.push(eq(coauthorDocuments.organizationId, organizationId));
     }
@@ -116,7 +116,7 @@ router.get('/:id', requireRole('regulatory-author'), async (req: Request, res: R
     const organizationId = resolveOrganizationId(req);
     if (organizationId === null) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
 
-    const conditions: any[] = [eq(coauthorDocuments.id, docId)];
+    const conditions: any[] = [eq(coauthorDocuments.id, docId), isNull(coauthorDocuments.deletedAt)];
     if (organizationId) {
       conditions.push(eq(coauthorDocuments.organizationId, organizationId));
     }
@@ -231,7 +231,7 @@ router.put('/:id', requireRole('regulatory-author'), async (req: Request, res: R
     const organizationId = resolveOrganizationId(req);
     if (organizationId === null) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
 
-    const conditions: any[] = [eq(coauthorDocuments.id, docId)];
+    const conditions: any[] = [eq(coauthorDocuments.id, docId), isNull(coauthorDocuments.deletedAt)];
     if (organizationId) {
       conditions.push(eq(coauthorDocuments.organizationId, organizationId));
     }
@@ -318,21 +318,65 @@ router.delete('/:id', requireRole('regulatory-author'), async (req: Request, res
     const organizationId = resolveOrganizationId(req);
     if (organizationId === null) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
 
-    const conditions: any[] = [eq(coauthorDocuments.id, docId)];
+    // Existence + tenant + not-already-deleted check (clean 404 before the txn).
+    const checkParams: unknown[] = [docId];
+    let checkSql =
+      'SELECT id, status, organization_id FROM coauthor_documents WHERE id = $1 AND deleted_at IS NULL';
     if (organizationId) {
-      conditions.push(eq(coauthorDocuments.organizationId, organizationId));
+      checkParams.push(organizationId);
+      checkSql += ` AND organization_id = $${checkParams.length}`;
     }
-
-    const [deleted] = await db
-      .delete(coauthorDocuments)
-      .where(and(...conditions))
-      .returning();
-
-    if (!deleted) {
+    const existing = await query(checkSql, checkParams);
+    if (!existing.rows.length) {
       return res.status(404).json({ error: 'eCTD document not found' });
     }
+    const doc = existing.rows[0];
 
-    res.json({ success: true, deletedId: deleted.id });
+    const u = (req as any).user || {};
+    const auditUserId = Number(u.id ?? u.userId) || null;
+
+    // 21 CFR Part 11 §11.10(e): SOFT-delete the regulated eCTD document and
+    // record the deletion in the hash-chained, append-only audit_events table
+    // IN THE SAME TRANSACTION — atomic and fail-closed (an audit failure rolls
+    // the soft-delete back, so a regulated record is never removed unaudited).
+    const deletedId = await transaction(async (client: any) => {
+      const delParams: unknown[] = [docId];
+      let delSql =
+        'UPDATE coauthor_documents SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL';
+      if (organizationId) {
+        delParams.push(organizationId);
+        delSql += ` AND organization_id = $${delParams.length}`;
+      }
+      delSql += ' RETURNING id';
+
+      const del = await client.query(delSql, delParams);
+      if (!del.rows.length) {
+        throw new Error('eCTD document not found');
+      }
+
+      await client.query(
+        `INSERT INTO audit_events
+           (organization_id, event_type, entity_type, entity_id, user_id, user_name,
+            user_role, ip_address, timestamp, reason, metadata,
+            regulatory_significant, gxp_relevant, created_at)
+         VALUES ($1, 'coauthor_document.deleted', 'coauthor_document', $2, $3, $4, $5, $6,
+                 NOW(), $7, $8, true, true, NOW())`,
+        [
+          doc.organization_id,
+          docId,
+          auditUserId,
+          u.name ?? u.email ?? 'System',
+          u.role ?? 'user',
+          req.ip ?? '',
+          'eCTD document deleted',
+          JSON.stringify({ previousStatus: doc.status ?? null }),
+        ],
+      );
+
+      return del.rows[0].id;
+    });
+
+    res.json({ success: true, deletedId });
   } catch (error: any) {
     logger.error('Delete error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to delete eCTD document', code: 'INTERNAL' });
