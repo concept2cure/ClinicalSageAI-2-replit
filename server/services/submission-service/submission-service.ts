@@ -362,12 +362,29 @@ export function dispatchSequence(
 // submission_transmittals record and performs the real transport (AS2 / OAuth2 /
 // mTLS+HMAC). Tenant-scoped + audited.
 
-/** Map a submission region (fda|eu|jp) to its primary eCTD agency gateway. */
-const REGION_GATEWAY: Record<string, { gwRegion: 'fda' | 'ema' | 'pmda'; gwName: 'esg' | 'cesp' | 'pmda_gateway' }> = {
-  fda: { gwRegion: 'fda', gwName: 'esg' },
-  eu: { gwRegion: 'ema', gwName: 'cesp' },
-  jp: { gwRegion: 'pmda', gwName: 'pmda_gateway' },
-};
+/**
+ * Select the agency gateway for a submission by region AND client type. The EU
+ * splits by product class: device/IVD (mdx|ivd) register through EUDAMED, while
+ * drug/biologic dossiers go through CESP. FDA (incl. eSTAR) routes through ESG;
+ * Japan through the PMDA gateway.
+ */
+export function selectGateway(
+  region: string,
+  clientType: string
+): { gwRegion: 'fda' | 'ema' | 'pmda'; gwName: 'esg' | 'cesp' | 'eudamed' | 'pmda_gateway' } | null {
+  switch (region) {
+    case 'fda':
+      return { gwRegion: 'fda', gwName: 'esg' };
+    case 'jp':
+      return { gwRegion: 'pmda', gwName: 'pmda_gateway' };
+    case 'eu':
+      return clientType === 'mdx' || clientType === 'ivd'
+        ? { gwRegion: 'ema', gwName: 'eudamed' }
+        : { gwRegion: 'ema', gwName: 'cesp' };
+    default:
+      return null;
+  }
+}
 
 /** Project a gateway transmit status onto the sequence's coarse dispatch_status. */
 function toDispatchStatus(status: string): 'sent' | 'acknowledged' | 'rejected' {
@@ -428,7 +445,9 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     throw new SubmissionError('DISPATCH_BLOCKED', `Dispatch gate blocks transmit: ${assessment.gate.blockers.join(' ')}`);
   }
 
-  const route = REGION_GATEWAY[seq.region];
+  // Route by region AND client type (EU device/IVD → EUDAMED, else CESP).
+  const submission = await getSubmission(seq.submissionId, ctx);
+  const route = selectGateway(seq.region, submission.clientType);
   if (!route) {
     throw new SubmissionError('VALIDATION', `No transmit gateway is mapped for region "${seq.region}".`);
   }
