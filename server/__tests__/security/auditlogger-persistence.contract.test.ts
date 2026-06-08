@@ -13,7 +13,11 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { logAction } = vi.hoisted(() => ({ logAction: vi.fn(async (_entry: any) => {}) }));
+const { logAction } = vi.hoisted(() => ({
+  // Typed param so `logAction.mock.calls[0][0]` is the forwarded entry (not an
+  // empty-tuple element) — keeps the field-mapping assertions below type-safe.
+  logAction: vi.fn(async (_entry: Record<string, any>) => {}),
+}));
 
 // auditLogger imports auditService via '../auditService'; intercept that module.
 vi.mock('../../services/auditService', () => ({

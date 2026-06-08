@@ -24,6 +24,7 @@ import {
   upsertLeaf,
   SubmissionError,
 } from '../services/submission-service/submission-service';
+import { assessPathwayReadiness, PATHWAYS, type Pathway } from '../services/pathway-engines';
 import {
   generateSubmissionPlan,
   explainValidation,
@@ -474,6 +475,34 @@ router.post('/:id/sections/generate', limiter, requireRole(AUTHOR), async (req, 
     send('error', { code, message: err instanceof Error ? err.message : 'Generation failed.' });
   } finally {
     res.end();
+  }
+});
+
+// ── Pathway readiness (CTIS / MDR / IVDR / eSTAR — non-eCTD projections) ──────
+// Projects the sequence's canonical leaves onto a target pathway's required
+// structure and returns a gap/readiness report. Map + gap-check only; never
+// submits. Deterministic — no AI.
+router.get('/sequences/:seqId/pathway-readiness', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const pathway = String(Array.isArray(req.query.pathway) ? req.query.pathway[0] : req.query.pathway ?? '');
+  if (!(PATHWAYS as string[]).includes(pathway)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: `pathway must be one of: ${PATHWAYS.join(', ')}.` } });
+  }
+  const msRaw = Array.isArray(req.query.memberStates) ? req.query.memberStates[0] : req.query.memberStates;
+  const memberStates = typeof msRaw === 'string' && msRaw ? msRaw.split(',').map((s) => s.trim()).filter(Boolean) : [];
+  try {
+    const leaves = await listLeaves(seqId, ctx); // tenant-scoped
+    const result = assessPathwayReadiness({
+      pathway: pathway as Pathway,
+      leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title })),
+      memberStates,
+    });
+    res.json(result);
+  } catch (err) {
+    fail(res, err);
   }
 });
 

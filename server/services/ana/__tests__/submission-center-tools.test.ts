@@ -28,6 +28,7 @@ const SUBMISSION_TOOLS = [
   'dispatch_qc_check',
   'trace_provenance',
   'check_consistency',
+  'assess_pathway_readiness',
 ];
 
 describe('submission-center AnA tools — registration', () => {
@@ -162,6 +163,17 @@ describe('submission AI tasks — tenant + input guards', () => {
     const handler = getToolHandler('check_consistency')!;
     const out = JSON.parse(await handler({ submission_id: 1 }, { organizationId: 1, userId: 2 } as ToolContext));
     expect(out.error).toMatch(/dimension|left|right/);
+  });
+
+  it('assess_pathway_readiness refuses without org/user context', async () => {
+    const handler = getToolHandler('assess_pathway_readiness')!;
+    const out = JSON.parse(await handler({ sequence_id: 1, pathway: 'ctis' }, {} as ToolContext));
+    expect(out.error).toMatch(/tenant context/);
+  });
+  it('assess_pathway_readiness validates the pathway enum', async () => {
+    const handler = getToolHandler('assess_pathway_readiness')!;
+    const out = JSON.parse(await handler({ sequence_id: 1, pathway: 'bogus' }, { organizationId: 1, userId: 2 } as ToolContext));
+    expect(out.error).toMatch(/pathway must be one of/);
   });
 });
 

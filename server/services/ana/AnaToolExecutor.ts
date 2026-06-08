@@ -3722,6 +3722,31 @@ registerToolHandler('check_consistency', async (input, ctx) => {
   }
 });
 
+registerToolHandler('assess_pathway_readiness', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) {
+    return JSON.stringify({ error: 'assess_pathway_readiness requires tenant context (organizationId and userId).' });
+  }
+  const sequenceId = typeof input.sequence_id === 'number' ? input.sequence_id : NaN;
+  const pathway = typeof input.pathway === 'string' ? input.pathway : '';
+  const memberStates = Array.isArray(input.member_states) ? (input.member_states as string[]) : [];
+  const allowed = ['ctis', 'mdr', 'ivdr', 'estar_510k', 'estar_de_novo', 'pmda_shonin'];
+  if (!Number.isFinite(sequenceId)) return JSON.stringify({ error: 'sequence_id (number) is required.' });
+  if (!allowed.includes(pathway)) return JSON.stringify({ error: `pathway must be one of: ${allowed.join(', ')}.` });
+  try {
+    const { listLeaves } = await import('../submission-service/submission-service.js');
+    const { assessPathwayReadiness } = await import('../pathway-engines/index.js');
+    const leaves = await listLeaves(sequenceId, { organizationId: ctx.organizationId });
+    const result = assessPathwayReadiness({
+      pathway: pathway as 'ctis' | 'mdr' | 'ivdr' | 'estar_510k' | 'estar_de_novo' | 'pmda_shonin',
+      leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title })),
+      memberStates,
+    });
+    return JSON.stringify({ ok: true, ...result });
+  } catch (err) {
+    return JSON.stringify({ error: `assess_pathway_readiness failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Notifications + clinical-study + memory handlers (migration 20260510).
 // ─────────────────────────────────────────────────────────────────────────────
