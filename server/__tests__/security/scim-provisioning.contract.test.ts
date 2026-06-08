@@ -6,7 +6,7 @@
  * deprovisions (the offboarding path). Data layer is mocked — no DB needed.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.hoisted(() => {
   process.env.NODE_ENV = process.env.NODE_ENV || 'test';
@@ -175,6 +175,32 @@ describe('SCIM provisioning — Groups (RBAC roles)', () => {
     const update = queryMock.mock.calls.find(c => /UPDATE organization_users SET role = \$1/.test(c[0]));
     expect(update).toBeTruthy();
     expect(update?.[1]).toEqual(['admin', 7, 100]); // role, orgId, userId
+  });
+});
+
+describe('SCIM provisioning — multi-tenant tokens', () => {
+  const ORIGINAL = process.env.SCIM_TENANTS;
+  afterEach(() => {
+    if (ORIGINAL === undefined) delete process.env.SCIM_TENANTS;
+    else process.env.SCIM_TENANTS = ORIGINAL;
+  });
+
+  it('resolves a second tenant token to its own org (org-scoped queries)', async () => {
+    process.env.SCIM_TENANTS = JSON.stringify([{ token: 'tenant-two-token', orgId: 42 }]);
+    queryMock.mockResolvedValue({ rows: [] });
+    const res = await request(app)
+      .get('/scim/v2/Users')
+      .set('Authorization', 'Bearer tenant-two-token');
+    expect(res.status).toBe(200);
+    // every users query for this request must be scoped to org 42
+    const scoped = queryMock.mock.calls.find(c => Array.isArray(c[1]) && c[1][0] === 42);
+    expect(scoped).toBeTruthy();
+  });
+
+  it('still rejects an unknown token under multi-tenant config (401)', async () => {
+    process.env.SCIM_TENANTS = JSON.stringify([{ token: 'tenant-two-token', orgId: 42 }]);
+    const res = await request(app).get('/scim/v2/Users').set('Authorization', 'Bearer nope-not-valid');
+    expect(res.status).toBe(401);
   });
 });
 

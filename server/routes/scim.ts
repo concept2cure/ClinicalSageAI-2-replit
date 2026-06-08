@@ -44,16 +44,43 @@ function isValidRole(role: string): role is OrgRole {
   return (VALID_ROLES as readonly string[]).includes(role);
 }
 
-interface ScimConfig {
+interface ScimTenant {
   token: string;
   orgId: number;
 }
 
-function getScimConfig(): ScimConfig | null {
+/**
+ * Resolve the configured SCIM tenants. Multi-tenant: SCIM_TENANTS is a JSON
+ * array of `{ "token": "...", "orgId": <int> }` so one deployment can serve
+ * several client orgs (each IdP gets its own token → org). The single-tenant
+ * env pair (SCIM_BEARER_TOKEN / SCIM_ORG_ID) is still honored for back-compat.
+ */
+function loadScimTenants(): ScimTenant[] {
+  const tenants: ScimTenant[] = [];
+
+  const raw = process.env.SCIM_TENANTS;
+  if (raw) {
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        for (const entry of parsed) {
+          const token = (entry as { token?: unknown })?.token;
+          const orgId = Number((entry as { orgId?: unknown })?.orgId);
+          if (typeof token === 'string' && token.length > 0 && Number.isFinite(orgId)) {
+            tenants.push({ token, orgId });
+          }
+        }
+      }
+    } catch {
+      /* malformed SCIM_TENANTS — ignore, fall back to the single-tenant pair */
+    }
+  }
+
   const token = process.env.SCIM_BEARER_TOKEN;
   const orgId = Number(process.env.SCIM_ORG_ID);
-  if (!token || !Number.isFinite(orgId)) return null;
-  return { token, orgId };
+  if (token && Number.isFinite(orgId)) tenants.push({ token, orgId });
+
+  return tenants;
 }
 
 function scimError(res: Response, status: number, detail: string, scimType?: string): Response {
@@ -65,21 +92,29 @@ function scimError(res: Response, status: number, detail: string, scimType?: str
   });
 }
 
-/** Constant-time bearer-token check; sets req-local org on success. */
+/**
+ * Constant-time bearer-token check across all configured tenants; resolves the
+ * matching org and pins it on the request. The match loop does constant work
+ * per tenant (no early break) so timing does not reveal which tenant matched.
+ */
 function scimAuth(req: Request, res: Response, next: NextFunction): Response | void {
-  const config = getScimConfig();
-  if (!config) return scimError(res, 503, 'SCIM provisioning is not configured.');
+  const tenants = loadScimTenants();
+  if (tenants.length === 0) return scimError(res, 503, 'SCIM provisioning is not configured.');
 
   const header = req.headers.authorization ?? '';
   const match = /^Bearer\s+(\S+)$/i.exec(header);
   if (!match) return scimError(res, 401, 'Missing or malformed bearer token.');
 
   const provided = Buffer.from(match[1]);
-  const expected = Buffer.from(config.token);
-  if (provided.length !== expected.length || !crypto.timingSafeEqual(provided, expected)) {
-    return scimError(res, 401, 'Invalid bearer token.');
+  let matchedOrgId: number | null = null;
+  for (const tenant of tenants) {
+    const expected = Buffer.from(tenant.token);
+    const ok = provided.length === expected.length && crypto.timingSafeEqual(provided, expected);
+    if (ok) matchedOrgId = tenant.orgId;
   }
-  (req as Request & { scimOrgId?: number }).scimOrgId = config.orgId;
+  if (matchedOrgId === null) return scimError(res, 401, 'Invalid bearer token.');
+
+  (req as Request & { scimOrgId?: number }).scimOrgId = matchedOrgId;
   next();
 }
 

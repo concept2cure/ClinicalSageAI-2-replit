@@ -84,6 +84,61 @@ function getSamlConfig(orgSlug: string): SAMLConfig | null {
   return null;
 }
 
+/**
+ * Populate the per-org SAML config store from the SAML_TENANTS env var, so one
+ * deployment can serve several client orgs' IdPs. SAML_TENANTS is a JSON object
+ * keyed by org slug: `{ "<slug>": { "idpSsoUrl", "idpEntityId", "idpCertificate",
+ * ...optional entityId/assertionConsumerServiceUrl/signRequests/sp keys } }`.
+ * The single-org env vars (SAML_IDP_*) remain the fallback for the default org.
+ */
+function loadSamlTenants(): void {
+  const raw = process.env.SAML_TENANTS;
+  if (!raw) return;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    logger.warn('SAML_TENANTS is not valid JSON — ignoring');
+    return;
+  }
+  if (!parsed || typeof parsed !== 'object') return;
+
+  const baseUrl = process.env.APP_BASE_URL || 'https://app.concept2cure.ai';
+  for (const [slug, value] of Object.entries(parsed as Record<string, unknown>)) {
+    if (!value || typeof value !== 'object') continue;
+    const cfg = value as Record<string, unknown>;
+    const idpSsoUrl = cfg.idpSsoUrl;
+    const idpEntityId = cfg.idpEntityId;
+    const idpCertificate = cfg.idpCertificate;
+    if (
+      typeof idpSsoUrl !== 'string' ||
+      typeof idpEntityId !== 'string' ||
+      typeof idpCertificate !== 'string'
+    ) {
+      continue;
+    }
+    samlConfigs.set(slug, {
+      entityId:
+        typeof cfg.entityId === 'string' ? cfg.entityId : `${baseUrl}/saml/${slug}/metadata`,
+      assertionConsumerServiceUrl:
+        typeof cfg.assertionConsumerServiceUrl === 'string'
+          ? cfg.assertionConsumerServiceUrl
+          : `${baseUrl}/api/auth/sso/saml/callback`,
+      idpSsoUrl,
+      idpEntityId,
+      idpCertificate,
+      signRequests: cfg.signRequests === true,
+      spPrivateKey: typeof cfg.spPrivateKey === 'string' ? cfg.spPrivateKey : undefined,
+      spCertificate: typeof cfg.spCertificate === 'string' ? cfg.spCertificate : undefined,
+      nameIdFormat: typeof cfg.nameIdFormat === 'string' ? cfg.nameIdFormat : undefined,
+    });
+  }
+  logger.info(`Loaded ${samlConfigs.size} SAML tenant config(s) from SAML_TENANTS`);
+}
+
+loadSamlTenants();
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // SAML 2.0 ROUTES (registered BEFORE generic :provider routes to avoid capture)
 // ═══════════════════════════════════════════════════════════════════════════════
