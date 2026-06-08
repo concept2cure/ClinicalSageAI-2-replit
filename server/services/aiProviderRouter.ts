@@ -30,13 +30,18 @@
  * @license Proprietary - Concept2Cure Inc.
  */
 
-import OpenAI from 'openai';
-import { getOpenAIClient } from './openai-client';
-import Anthropic from '@anthropic-ai/sdk';
 import { Pool } from 'pg';
 import crypto from 'crypto';
 import { LiteLLMAdapter } from './ai/LiteLLMAdapter';
 import { LangfuseService } from './observability/langfuseService';
+// Provider execution is delegated to the governed AI gateway — it owns the
+// audit trail and selects a *current* model for the chosen provider (the
+// router's logical MODEL_CONFIGS otherwise pin retired snapshots).
+import { getGateway } from './ai-gateway/gateway.js';
+import type {
+  TaskType as GatewayTaskType,
+  ProviderName as GatewayProviderName,
+} from './ai-gateway/types.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
@@ -264,9 +269,38 @@ const TASK_MODEL_PREFERENCES: Record<TaskType, string[]> = {
 //                          AI PROVIDER ROUTER CLASS
 // ═══════════════════════════════════════════════════════════════════════════
 
+/**
+ * Map the router's task taxonomy onto the gateway's. Categories the gateway
+ * doesn't model (long_context, reasoning, safety_critical) fall back to
+ * 'general'. This only affects gateway audit + its internal fallback ordering,
+ * since the router passes an explicit provider override.
+ */
+function mapToGatewayTaskType(t: TaskType): GatewayTaskType {
+  switch (t) {
+    case 'document_analysis':
+      return 'document_analysis';
+    case 'structured_output':
+      return 'structured_output';
+    case 'code_generation':
+      return 'code_generation';
+    case 'chat':
+      return 'chat';
+    case 'embedding':
+      return 'embedding';
+    case 'regulatory_review':
+      return 'regulatory_review';
+    default:
+      return 'general';
+  }
+}
+
 export class AIProviderRouter {
-  private openai: OpenAI | null = null;
-  private anthropic: Anthropic | null = null;
+  // Provider failover, audit, and current-model selection live in the gateway.
+  private readonly gateway = getGateway();
+  // Availability flags drive selectModel()'s provider gating; the actual SDK
+  // clients live inside the gateway, not here.
+  private openaiAvailable = false;
+  private anthropicAvailable = false;
   private pool: Pool;
   private providerHealth: Map<AIProvider, ProviderHealth> = new Map();
   private defaultStrategy: RoutingStrategy = 'task_based';
@@ -285,24 +319,23 @@ export class AIProviderRouter {
   }
 
   /**
-   * Initialize AI provider clients
+   * Detect which providers are configured. The gateway holds the real clients;
+   * these flags only gate model selection below.
    */
   private initializeProviders(): void {
-    // OpenAI
-    try {
-      this.openai = getOpenAIClient();
-      console.log('✅ OpenAI provider initialized');
-    } catch {
-      console.warn('⚠️ OpenAI API key not configured');
-    }
+    this.openaiAvailable = !!process.env.OPENAI_API_KEY;
+    console.log(
+      this.openaiAvailable
+        ? '✅ OpenAI provider available'
+        : '⚠️ OpenAI API key not configured'
+    );
 
-    // Anthropic
-    if (process.env.ANTHROPIC_API_KEY) {
-      this.anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-      console.log('✅ Anthropic provider initialized');
-    } else {
-      console.warn('⚠️ Anthropic API key not configured');
-    }
+    this.anthropicAvailable = !!process.env.ANTHROPIC_API_KEY;
+    console.log(
+      this.anthropicAvailable
+        ? '✅ Anthropic provider available'
+        : '⚠️ Anthropic API key not configured'
+    );
 
     // Moonshot (future)
     if (process.env.MOONSHOT_API_KEY) {
@@ -361,8 +394,8 @@ export class AIProviderRouter {
       if (health && !health.isHealthy) return false;
 
       // Check provider availability
-      if (config.provider === 'openai' && !this.openai) return false;
-      if (config.provider === 'anthropic' && !this.anthropic) return false;
+      if (config.provider === 'openai' && !this.openaiAvailable) return false;
+      if (config.provider === 'anthropic' && !this.anthropicAvailable) return false;
 
       return true;
     });
@@ -419,94 +452,38 @@ export class AIProviderRouter {
   }
 
   /**
-   * Execute request against OpenAI
+   * Execute a request through the governed AI gateway.
+   *
+   * Replaces the former direct OpenAI/Anthropic/Moonshot SDK calls. The router
+   * still chooses the *provider* (via selectModel + its routing strategy); the
+   * gateway supplies a current, audited model for that provider — so the
+   * router's logical MODEL_CONFIGS no longer pin retired model snapshots
+   * (e.g. claude-3-opus-20240229, claude-3-5-sonnet-20241022) that now 404.
+   * The gateway also applies model-aware sampling params (Opus 4.7+ safe).
    */
-  private async executeOpenAI(
+  private async executeViaGateway(
     request: AIRequest,
-    model: string
+    modelConfig: ModelConfig
   ): Promise<{ content: string; usage: { inputTokens: number; outputTokens: number } }> {
-    if (!this.openai) {
-      throw new Error('OpenAI provider not initialized');
-    }
-
-    const response = await this.openai.chat.completions.create({
-      model,
-      messages: request.messages as OpenAI.Chat.ChatCompletionMessageParam[],
-      max_tokens: request.maxTokens || 4096,
-      temperature: request.temperature ?? 0.7,
-      response_format: request.jsonMode ? { type: 'json_object' } : undefined,
+    const response = await this.gateway.route({
+      taskType: mapToGatewayTaskType(request.taskType),
+      messages: request.messages.map(m => ({ role: m.role, content: m.content })),
+      maxTokens: request.maxTokens ?? 4096,
+      temperature: request.temperature,
+      jsonMode: request.jsonMode,
+      // Honor the router's provider choice; the gateway picks a live model for it.
+      provider: modelConfig.provider as GatewayProviderName,
+      organizationId: request.organizationId,
+      userId: request.userId,
+      projectId: request.projectId,
+      callerModule: 'aiProviderRouter',
     });
 
     return {
-      content: response.choices[0]?.message?.content || '',
+      content: response.content,
       usage: {
-        inputTokens: response.usage?.prompt_tokens || 0,
-        outputTokens: response.usage?.completion_tokens || 0,
-      },
-    };
-  }
-
-  /**
-   * Execute request against Anthropic
-   */
-  private async executeAnthropic(
-    request: AIRequest,
-    model: string
-  ): Promise<{ content: string; usage: { inputTokens: number; outputTokens: number } }> {
-    if (!this.anthropic) {
-      throw new Error('Anthropic provider not initialized');
-    }
-
-    // Extract system message if present
-    const systemMessage = request.messages.find(m => m.role === 'system');
-    const otherMessages = request.messages.filter(m => m.role !== 'system');
-
-    const response = await this.anthropic.messages.create({
-      model,
-      max_tokens: request.maxTokens || 4096,
-      system: systemMessage?.content,
-      messages: otherMessages.map(m => ({
-        role: m.role as 'user' | 'assistant',
-        content: m.content,
-      })),
-    });
-
-    const textContent = response.content.find(c => c.type === 'text');
-
-    return {
-      content: textContent?.type === 'text' ? textContent.text : '',
-      usage: {
-        inputTokens: response.usage.input_tokens,
-        outputTokens: response.usage.output_tokens,
-      },
-    };
-  }
-
-  /**
-   * Execute request against Moonshot/Kimi
-   */
-  private async executeMoonshot(
-    request: AIRequest,
-    model: string
-  ): Promise<{ content: string; usage: { inputTokens: number; outputTokens: number } }> {
-    // Moonshot uses OpenAI-compatible API
-    const moonshot = new OpenAI({
-      apiKey: process.env.MOONSHOT_API_KEY,
-      baseURL: 'https://api.moonshot.ai/v1',
-    });
-
-    const response = await moonshot.chat.completions.create({
-      model,
-      messages: request.messages as OpenAI.Chat.ChatCompletionMessageParam[],
-      max_tokens: request.maxTokens || 4096,
-      temperature: request.temperature ?? 0.7,
-    });
-
-    return {
-      content: response.choices[0]?.message?.content || '',
-      usage: {
-        inputTokens: response.usage?.prompt_tokens || 0,
-        outputTokens: response.usage?.completion_tokens || 0,
+        inputTokens: response.usage.inputTokens,
+        outputTokens: response.usage.outputTokens,
       },
     };
   }
@@ -632,19 +609,7 @@ export class AIProviderRouter {
           },
         };
       } else {
-        switch (modelConfig.provider) {
-          case 'openai':
-            result = await this.executeOpenAI(request, modelConfig.model);
-            break;
-          case 'anthropic':
-            result = await this.executeAnthropic(request, modelConfig.model);
-            break;
-          case 'moonshot':
-            result = await this.executeMoonshot(request, modelConfig.model);
-            break;
-          default:
-            throw new Error(`Unsupported provider: ${modelConfig.provider}`);
-        }
+        result = await this.executeViaGateway(request, modelConfig);
       }
     } catch (error) {
       success = false;
@@ -683,12 +648,8 @@ export class AIProviderRouter {
                 outputTokens: liteLLMResult.usage.outputTokens,
               },
             };
-          } else if (fallbackConfig.provider === 'openai') {
-            result = await this.executeOpenAI(request, fallbackConfig.model);
-          } else if (fallbackConfig.provider === 'anthropic') {
-            result = await this.executeAnthropic(request, fallbackConfig.model);
           } else {
-            throw new Error('No fallback available');
+            result = await this.executeViaGateway(request, fallbackConfig);
           }
           executedModelConfig = fallbackConfig;
           success = true;
