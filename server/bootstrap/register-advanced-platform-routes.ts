@@ -127,6 +127,11 @@ export async function registerAdvancedPlatformRoutes({
         mod: '../routes/companion-diagnostics.ts',
         name: 'Companion Diagnostics (drug↔Dx co-development)',
       },
+      {
+        path: '/api/spl-fhir',
+        mod: '../routes/spl-fhir.ts',
+        name: 'Interoperability (LOINC + SPL + FHIR)',
+      },
     ] as const;
     const auditIntegResults = await Promise.allSettled(auditIntegConfig.map(c => import(c.mod)));
     auditIntegResults.forEach((r, i) => {

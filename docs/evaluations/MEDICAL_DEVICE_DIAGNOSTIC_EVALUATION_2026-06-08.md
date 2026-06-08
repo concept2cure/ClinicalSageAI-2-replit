@@ -128,6 +128,10 @@ non-overlapping value:
   `server/services/regulatory/companion-diagnostics.ts` — CDx co-development
   readiness + drug↔Dx linkage validation (therapeutic + device + biomarker +
   intended-use alignment). `/api/companion-diagnostics`.
+- **Interoperability — LOINC / SPL / FHIR (gap #10 remainder)**:
+  `server/services/regulatory/spl-fhir.ts` — LOINC validation incl. the official
+  Mod-10 check digit (verified vs published codes), SPL section completeness
+  (FDA PLR, LOINC-coded), and minimal FHIR resource validation. `/api/spl-fhir`.
 - **eCTD leaf PDF rendering**: `server/services/ectd/leaf-pdf-renderer.ts` (pdf-lib,
   deterministic); `generateEctdPackage` renders both leaf sites to real PDF bytes
   and checksums them. Residual: true PDF/A-1b conformance is a documented OQ enhancement.
