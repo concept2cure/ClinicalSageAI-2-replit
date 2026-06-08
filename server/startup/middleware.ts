@@ -54,7 +54,7 @@ export function applyCoreMiddleware(app: Express, debugLog: DebugLogger): void {
 
   // 3. Enterprise performance middleware (compression, monitoring)
   applyPerformanceMiddleware(app);
-  console.log('✅ Enterprise security and performance middleware enabled');
+  console.info('✅ Enterprise security and performance middleware enabled');
 
   // 4. Structured HTTP logging, scoped to /api (health/static short-circuit above).
   app.use('/api', httpLogger);
@@ -77,7 +77,7 @@ export function applyCoreMiddleware(app: Express, debugLog: DebugLogger): void {
   // 7. Beta route fence (mock/scaffold families blocked by default).
   app.use('/api', createBetaRouteFence());
   if (isBetaRouteFenceEnabled()) {
-    console.log('🛡️ Guided beta route fence enabled for /api (mock/scaffold families blocked)');
+    console.info('🛡️ Guided beta route fence enabled for /api (mock/scaffold families blocked)');
   }
 
   // 8. Cookie parsing (required for CSRF double-submit pattern).
@@ -110,16 +110,33 @@ export function applyDebugRequestLogging(app: Express, debugLog: DebugLogger): v
   });
 }
 
+// Append-only trails protected by the 21 CFR Part 11 immutability policy. A
+// destructive mutation (DELETE / bulk-delete) on any of these is refused, so an
+// audit or e-signature record can never be modified or removed over HTTP. None
+// of these prefixes registers a destructive handler today; the guard keeps it
+// that way and blocks any future regression. (Previously only /api/audit/events
+// and /api/audit/bulk-delete were covered — both still match the first pattern.)
 const IMMUTABLE_ROUTE_PATTERNS = [
-  /^\/api\/audit\/events/, // Audit trail events — append-only
-  /^\/api\/audit\/bulk-delete/, // Explicit bulk-delete block
+  /^\/api\/audit(?:\/|$)/, // Audit trail: events, logs, signatures, exports — append-only (§11.10(e))
+  /^\/api\/audit-logs(?:\/|$)/, // Legacy audit-logs read surface
+  /^\/api\/audit-services(?:\/|$)/, // Audit services
+  /^\/api\/mdx\/audit(?:\/|$)/, // MDX audit trail
+  /^\/api\/esignature(?:\/|$)/, // Electronic-signature records — append-only (§11.70)
 ];
+
+/**
+ * True when a path addresses an append-only Part 11 trail (audit or
+ * e-signature). Pure and exported so the immutability scope is unit-tested.
+ */
+export function isImmutableAuditPath(path: string): boolean {
+  return IMMUTABLE_ROUTE_PATTERNS.some(pattern => pattern.test(path));
+}
 
 function applyImmutabilityPolicy(app: Express): void {
   app.use((req: Request, res: Response, next: NextFunction) => {
     const isDestructive = isDestructiveAuditMutation(req);
     if (isDestructive) {
-      const isImmutable = IMMUTABLE_ROUTE_PATTERNS.some(pattern => pattern.test(req.path));
+      const isImmutable = isImmutableAuditPath(req.path);
       if (isImmutable) {
         console.warn(
           `[IMMUTABILITY] Blocked ${req.method} ${req.path} — audit records are append-only`

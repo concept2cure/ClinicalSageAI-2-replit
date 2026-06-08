@@ -45,6 +45,54 @@ Two themes temper the verdict:
 
 ---
 
+## 1a. Corrections after deeper code verification (2026-06-08)
+
+The initial panel read was a broad fan-out and **over-stated several gaps**.
+Direct verification of the source corrects the record — recorded here so the
+assessment stays honest:
+
+- **eCTD XML export is implemented and wired** (`server/services/ectdExportService.ts`:
+  `generateEctdPackage` + `validateEctdPackage`, mounted via `server/routes/ectd-export.ts`).
+  Gap #8 below is **downgraded**: the residual is real PDF *rendering* of leaves
+  (a `pdf-converter.ts` exists), not the XML backbone.
+- **Biostatistics and diagnostic *clinical* sizing are NOT stubs.**
+  `server/services/stats/diagnostic-design.ts` (single-proportion + co-primary
+  sensitivity/specificity sizing, Clopper–Pearson intervals) and
+  `server/services/ana-biostats/computation-engine.ts` (diagnostic-accuracy
+  sizing, multiplicity, missing-data methods) are substantive. Gap #5 is
+  **corrected**; the true diagnostic gap was *analytical (bench) performance*,
+  now implemented (see §1b).
+- **A validation (CSV) package already exists**: `docs/validation/VMP-CORTEX-001-…`
+  plus `docs/beta/validation/{IQ,OQ,PQ}_TEMPLATE.md` and a Validation Summary
+  Report. Gap #9 is **corrected**: the genuinely-missing artifact was a
+  *populated* requirement→code→test traceability matrix, now authored at
+  `docs/validation/TM-CORTEX-001-PART11-TRACEABILITY.md`.
+
+Net: the platform is **more complete than the first-pass evaluation implied**.
+The genuinely real items were the Part 11 delete-audit gap and the narrow
+immutability guard (both now fixed), and the absence of analytical-performance
+math (now added).
+
+## 1b. Implemented in this pass
+
+- **P0 (Part 11) — audited soft-delete for regulated eCTD documents** (§11.10(e)):
+  `server/routes/ectd-documents.ts`, `server/routes/coauthor.ts` now soft-delete +
+  audit in-transaction; reads filter `deleted_at IS NULL`. Contract tests +
+  `check-regulated-delete-audit.mjs` gate.
+- **P0 (Part 11) — broadened immutability guard**: `server/startup/middleware.ts`
+  now protects the whole audit + e-signature trail (`isImmutableAuditPath`), with
+  unit coverage.
+- **IVD analytical performance (the real diagnostic gap)**:
+  `server/services/stats/analytical-performance.ts` — CLSI **EP05** imprecision,
+  **EP17** LoB/LoD, **EP06** linearity, pure/deterministic, 12 closed-form unit tests.
+- **Validation traceability**: `docs/validation/TM-CORTEX-001-PART11-TRACEABILITY.md`.
+
+**Deliberately not done blind** (need a live DB/runtime; documented in the
+traceability matrix's open items): audit-store consolidation and eCTD leaf PDF
+rendering.
+
+---
+
 ## 2. What impressed the panel
 
 - **eCTD engine** — deterministic M1–M5 assembly, regional FDA/EMA/PMDA/HC/TGA rule variants, sequence
