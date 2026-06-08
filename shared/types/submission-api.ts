@@ -236,3 +236,14 @@ export interface CapabilitiesResponse {
     publishTransmit: boolean;
   };
 }
+
+// ── Pathway readiness (GET /api/submissions/sequences/:seqId/pathway-readiness) ─
+export type Pathway = 'ctis' | 'mdr' | 'ivdr' | 'estar_510k' | 'estar_de_novo';
+export interface PathwayReadinessResponse {
+  pathway: Pathway;
+  ready: boolean;
+  /** Missing required slot ids (CTIS uses 'I:<id>' / 'II:<state>:<id>' prefixes). */
+  missingRequired: string[];
+  /** Full engine result (section/slot breakdown) — shape varies by pathway. */
+  detail: unknown;
+}
