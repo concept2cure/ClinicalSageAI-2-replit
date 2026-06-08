@@ -3738,7 +3738,7 @@ registerToolHandler('assess_pathway_readiness', async (input, ctx) => {
     const leaves = await listLeaves(sequenceId, { organizationId: ctx.organizationId });
     const result = assessPathwayReadiness({
       pathway: pathway as 'ctis' | 'mdr' | 'ivdr' | 'estar_510k' | 'estar_de_novo' | 'pmda_shonin',
-      leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title })),
+      leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, documentType: l.documentType ?? undefined })),
       memberStates,
     });
     return JSON.stringify({ ok: true, ...result });

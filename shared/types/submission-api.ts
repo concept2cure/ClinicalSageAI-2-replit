@@ -54,6 +54,7 @@ export interface UpsertLeafRequest {
   lifecycleOp?: 'new' | 'replace' | 'append' | 'delete';
   documentTable?: string;
   documentId?: number;
+  documentType?: string;
   parentLeafId?: number;
 }
 export type LeafResponse = SubmissionLeaf;
@@ -224,15 +225,19 @@ export interface CapabilitiesResponse {
   environment: 'staging' | 'production';
   gateways: Array<{ configured: boolean; [k: string]: unknown }>;
   gatewaysConfigured: number;
+  // Keyed by the canonical workspace ids in submission-ui.ts (SUBMISSION_WORKSPACES).
   workspaces: {
     portfolio: boolean;
     planner: boolean;
     builder: boolean;
     sequences: boolean;
     validation: boolean;
-    shadowReview: boolean;
-    crossRegion: boolean;
-    dispatchQc: boolean;
+    'shadow-review': boolean;
+    'cross-region': boolean;
+    dispatch: boolean;
+  };
+  // Capability flags that are not workspaces.
+  features: {
     publishTransmit: boolean;
   };
 }

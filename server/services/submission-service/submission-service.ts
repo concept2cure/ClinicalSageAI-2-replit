@@ -266,6 +266,7 @@ export interface UpsertLeafInput {
   lifecycleOp?: string;
   documentTable?: string | null;
   documentId?: number | null;
+  documentType?: string | null;
   parentLeafId?: number | null;
 }
 
@@ -302,6 +303,7 @@ export async function upsertLeaf(
         ...(input.lifecycleOp ? { lifecycleOp: input.lifecycleOp } : {}),
         documentTable: input.documentTable ?? null,
         documentId: input.documentId ?? null,
+        documentType: input.documentType ?? null,
         parentLeafId: input.parentLeafId ?? null,
         updatedAt: new Date(),
       })
@@ -335,6 +337,7 @@ export async function upsertLeaf(
       lifecycleOp: input.lifecycleOp ?? 'new',
       documentTable: input.documentTable ?? null,
       documentId: input.documentId ?? null,
+      documentType: input.documentType ?? null,
       parentLeafId: input.parentLeafId ?? null,
       organizationId: ctx.organizationId,
       createdBy: ctx.userId,

@@ -147,6 +147,7 @@ export const submissionLeaves = pgTable(
     lifecycleOp: text('lifecycle_op').default('new').notNull(), // new|replace|append|delete
     documentTable: text('document_table'), // coauthor_documents|ctd_onboarding_documents|unified_documents|vault_documents
     documentId: integer('document_id'), // polymorphic id within documentTable
+    documentType: text('document_type'), // classifier hint for pathway leaf→slot matching (e.g. 'protocol', 'cer')
     leafGuid: text('leaf_guid'),
     parentLeafId: integer('parent_leaf_id'),
     checksum: text('checksum'),

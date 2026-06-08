@@ -120,6 +120,7 @@ const upsertLeafSchema = z.object({
   lifecycleOp: z.enum(['new', 'replace', 'append', 'delete']).optional(),
   documentTable: z.string().max(64).optional(),
   documentId: z.coerce.number().int().positive().optional(),
+  documentType: z.string().max(64).optional(),
   parentLeafId: z.coerce.number().int().positive().optional(),
 });
 
@@ -166,17 +167,21 @@ router.get('/capabilities', limiter, requireRole(AUTHOR), async (req, res) => {
       environment,
       gateways,
       gatewaysConfigured: gateways.filter((g) => g.configured).length,
-      // Which workspaces are server-ready today. Dispatch transmit + Publish
-      // bytes are pending the storage resolver (see SUBMISSION_CENTER_API.md).
+      // Which workspaces are server-ready today, keyed by the canonical workspace
+      // ids in shared/types/submission-ui.ts (SUBMISSION_WORKSPACES) — no key drift.
       workspaces: {
         portfolio: true,
         planner: true,
         builder: true,
         sequences: true,
         validation: true,
-        shadowReview: true,
-        crossRegion: true,
-        dispatchQc: true,
+        'shadow-review': true,
+        'cross-region': true,
+        dispatch: true,
+      },
+      // Capability flags (not workspaces). Dispatch transmit + Publish bytes are
+      // pending the storage resolver (see SUBMISSION_CENTER_API.md).
+      features: {
         publishTransmit: false,
       },
     });
@@ -497,7 +502,7 @@ router.get('/sequences/:seqId/pathway-readiness', limiter, requireRole(AUTHOR), 
     const leaves = await listLeaves(seqId, ctx); // tenant-scoped
     const result = assessPathwayReadiness({
       pathway: pathway as Pathway,
-      leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title })),
+      leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, documentType: l.documentType ?? undefined })),
       memberStates,
     });
     res.json(result);
