@@ -256,6 +256,29 @@ export interface PathwayReadinessResponse {
   detail: unknown;
 }
 
+// ── Device technical file (GET /sequences/:seqId/technical-file?regulation=mdr|ivdr) ─
+// The assembled EU MDR/IVDR technical-documentation table-of-contents (device
+// equivalent of the eCTD index). Deterministic; maps + reports gaps.
+export interface TechnicalFileEntry {
+  path: string;
+  id: string;
+  label: string;
+  annex: string;
+  required: boolean;
+  status: 'present' | 'missing' | 'optional-absent';
+  sources: string[];
+}
+export interface TechnicalFileResponse {
+  regulation: 'mdr' | 'ivdr';
+  framework: string;
+  productName?: string;
+  manufacturer?: string;
+  generatedFrom: 'canonical-core';
+  ready: boolean;
+  totals: { sections: number; requiredPresent: number; requiredMissing: number };
+  entries: TechnicalFileEntry[];
+}
+
 // ── Dispatch readiness (GET /api/submissions/sequences/:seqId/dispatch-readiness) ─
 // Deterministic, SERVER-COMPUTED gate inputs — the tamper-proof counterpart to
 // the AI dispatch-qc advisory.

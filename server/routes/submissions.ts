@@ -524,6 +524,34 @@ router.get('/sequences/:seqId/pathway-readiness', limiter, requireRole(AUTHOR), 
   }
 });
 
+// ── Device technical-file manifest (EU MDR/IVDR assemble structure) ───────────
+// The device equivalent of the eCTD index: projects the sequence's canonical
+// leaves onto the MDR/IVDR Annex II/III structure and returns the assembled
+// table-of-contents (ordered sections, paths, present/missing, sources).
+// Deterministic, read-only — maps + reports gaps, never invents content.
+router.get('/sequences/:seqId/technical-file', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const regulation = String(Array.isArray(req.query.regulation) ? req.query.regulation[0] : req.query.regulation ?? '');
+  if (regulation !== 'mdr' && regulation !== 'ivdr') {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'regulation must be one of: mdr, ivdr.' } });
+  }
+  try {
+    const leaves = await listLeaves(seqId, ctx); // tenant-scoped
+    const { assembleTechDoc } = await import('../services/pathway-engines');
+    const { buildTechnicalFileManifest } = await import('../services/pathway-engines/technical-file-manifest');
+    const result = assembleTechDoc({
+      regulation,
+      leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, documentType: l.documentType ?? undefined })),
+    });
+    res.json(buildTechnicalFileManifest(result));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 // ── Assemble (assemble step of assemble→submit→transmit) ──────────────────────
 // Drives the real eCTD publisher off the sequence's canonical leaves. Returns a
 // sanitized package descriptor (no server paths). Does NOT transmit — submit/
