@@ -42,6 +42,7 @@ import {
   authorPostMarketDocument,
   AUTHORABLE_DOCUMENT_TYPES,
 } from '../services/gspr-postmarket/post-market-authoring';
+import { getPostMarketDocStatus } from '../services/gspr-postmarket/post-market-readiness';
 import type { PostMarketDocumentType } from '../../shared/schema/gspr-postmarket';
 import auditService from '../services/auditService';
 
@@ -404,6 +405,30 @@ postMarketRouter.post(
         return res.status(422).json({ error: err.message });
       }
       res.status(500).json({ error: 'Post-market document generation failed', detail: err?.message });
+    }
+  }
+);
+
+// Honest post-market documentation status for a program: per-type presence,
+// lifecycle status and validation-gate result, with required-vs-optional driven
+// by device class. Not a fabricated readiness score.
+postMarketRouter.get(
+  '/programs/:programId/documentation-status',
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const deviceClass = typeof req.query.deviceClass === 'string' ? req.query.deviceClass : null;
+    const regulation = req.query.regulation === 'IVDR' ? 'IVDR' : 'MDR';
+    try {
+      const report = await getPostMarketDocStatus(
+        orgId,
+        String(req.params.programId),
+        deviceClass,
+        regulation
+      );
+      res.json(report);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Documentation status failed', detail: err?.message });
     }
   }
 );
