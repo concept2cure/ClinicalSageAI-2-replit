@@ -3833,12 +3833,13 @@ registerToolHandler('build_pathway_manifest', async (input, ctx) => {
 registerToolHandler('list_validation_rules', async (input) => {
   // Static reference data — not tenant-specific, so no org/user context required.
   const region = typeof input.region === 'string' ? input.region : '';
-  if (region && !['fda', 'eu', 'jp'].includes(region)) {
-    return JSON.stringify({ error: 'region must be one of: fda, eu, jp.' });
+  const REGIONS = ['fda', 'eu', 'jp', 'ca', 'au', 'ch'] as const;
+  if (region && !(REGIONS as readonly string[]).includes(region)) {
+    return JSON.stringify({ error: `region must be one of: ${REGIONS.join(', ')}.` });
   }
   try {
     const { RULE_CORPUS, rulesForRegion, corpusSummary } = await import('../ectd/validation-rule-corpus.js');
-    const rules = region ? rulesForRegion(region as 'fda' | 'eu' | 'jp') : RULE_CORPUS;
+    const rules = region ? rulesForRegion(region as (typeof REGIONS)[number]) : RULE_CORPUS;
     return JSON.stringify({ ok: true, region: region || 'all', summary: corpusSummary(), rules });
   } catch (err) {
     return JSON.stringify({ error: `list_validation_rules failed: ${err instanceof Error ? err.message : String(err)}` });

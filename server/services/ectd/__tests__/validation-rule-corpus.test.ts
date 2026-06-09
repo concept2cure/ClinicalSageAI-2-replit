@@ -9,6 +9,7 @@ import {
   RULE_CORPUS,
   getRule,
   rulesForRegion,
+  supportedRegions,
   rulesByEnforcement,
   dispatchFindingCodes,
   corpusSummary,
@@ -54,6 +55,26 @@ describe('validation rule corpus — internal consistency', () => {
   it('looks rules up by id', () => {
     expect(getRule('EMPTY_SEQUENCE')?.severity).toBe('high');
     expect(getRule('does-not-exist')).toBeUndefined();
+  });
+
+  it('covers the global eCTD-adopting regions (US, EU, JP, CA, AU, CH)', () => {
+    const regions = supportedRegions();
+    for (const r of ['fda', 'eu', 'jp', 'ca', 'au', 'ch']) {
+      expect(regions, `region ${r} must have at least one rule`).toContain(r);
+    }
+    // Each region resolves a non-empty rule set (shared ich rules + regional).
+    for (const r of ['ca', 'au', 'ch'] as const) {
+      const rules = rulesForRegion(r);
+      expect(rules.some((rule) => rule.regions.includes(r))).toBe(true);
+      expect(rules.some((rule) => rule.regions.includes('ich'))).toBe(true);
+    }
+    // The new regional backbone rules are cataloged and sourced.
+    for (const id of ['CA_REGIONAL_BACKBONE', 'AU_REGIONAL_BACKBONE', 'CH_REGIONAL_BACKBONE']) {
+      const rule = getRule(id);
+      expect(rule, `${id} must exist`).toBeTruthy();
+      expect(rule!.source).toBeTruthy();
+      expect(rule!.enforcement).not.toBe('dispatch-readiness'); // documented, not a new gate code
+    }
   });
 });
 

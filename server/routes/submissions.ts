@@ -204,12 +204,13 @@ router.get('/validation-rules', limiter, requireRole(AUTHOR), async (req, res) =
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const region = String(Array.isArray(req.query.region) ? req.query.region[0] : req.query.region ?? '');
-  if (region && region !== 'fda' && region !== 'eu' && region !== 'jp') {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: 'region must be one of: fda, eu, jp.' } });
+  const REGIONS = ['fda', 'eu', 'jp', 'ca', 'au', 'ch'] as const;
+  if (region && !(REGIONS as readonly string[]).includes(region)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: `region must be one of: ${REGIONS.join(', ')}.` } });
   }
   try {
     const { RULE_CORPUS, rulesForRegion, corpusSummary } = await import('../services/ectd/validation-rule-corpus.js');
-    const rules = region ? rulesForRegion(region as 'fda' | 'eu' | 'jp') : RULE_CORPUS;
+    const rules = region ? rulesForRegion(region as (typeof REGIONS)[number]) : RULE_CORPUS;
     res.json({ region: region || 'all', summary: corpusSummary(), rules });
   } catch (err) {
     fail(res, err);
