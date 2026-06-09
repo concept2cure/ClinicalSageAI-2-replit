@@ -700,27 +700,29 @@ class Part11ComplianceService {
   }
 
   /**
-   * Get submission data for integrity check
+   * Get submission data for integrity check.
+   *
+   * Fails closed: an integrity check computed over fabricated data would
+   * produce a meaningless (and potentially falsely reassuring) Part 11
+   * verification result. Implement a real fetch before wiring callers.
    */
-  async getSubmissionData(submissionId: number) {
-    // Implementation would fetch actual submission data
-    return {
-      id: submissionId,
-      organizationId: 1,
-      data: 'submission_data',
-    };
+  async getSubmissionData(submissionId: number): Promise<{ id: number; organizationId: number; data: string }> {
+    throw new Error(
+      `Part 11 integrity check for submission ${submissionId} is not implemented: ` +
+      `real submission data retrieval is required before integrity can be verified.`
+    );
   }
 
   /**
-   * Get document data for integrity check
+   * Get document data for integrity check.
+   *
+   * Fails closed for the same reason as getSubmissionData above.
    */
-  async getDocumentData(documentId: number) {
-    // Implementation would fetch actual document data
-    return {
-      id: documentId,
-      organizationId: 1,
-      data: 'document_data',
-    };
+  async getDocumentData(documentId: number): Promise<{ id: number; organizationId: number; data: string }> {
+    throw new Error(
+      `Part 11 integrity check for document ${documentId} is not implemented: ` +
+      `real document data retrieval is required before integrity can be verified.`
+    );
   }
 }
 

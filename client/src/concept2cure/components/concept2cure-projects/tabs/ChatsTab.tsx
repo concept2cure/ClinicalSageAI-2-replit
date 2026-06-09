@@ -51,17 +51,22 @@ export function ChatsTab({ project, onSwitchTab, onProjectMutated, prefillText }
     if (!fileList || fileList.length === 0) return;
     setUploading(true);
     try {
+      const failed: string[] = [];
       for (const file of Array.from(fileList)) {
         const fd = new FormData();
         fd.append('file', file);
         fd.append('projectId', project.id);
-        await fetch('/api/concept2cure/documents/upload', {
+        const res = await fetch('/api/concept2cure/documents/upload', {
           method: 'POST',
           credentials: 'include',
           body: fd,
         });
+        if (!res.ok) failed.push(`${file.name} (${res.status})`);
       }
-      onProjectMutated?.();
+      if (failed.length) console.error(`Attachment upload failed: ${failed.join(', ')}`);
+      if (failed.length < fileList.length) onProjectMutated?.();
+    } catch (err) {
+      console.error('Attachment upload failed:', err);
     } finally {
       setUploading(false);
       if (attachRef.current) attachRef.current.value = '';
@@ -97,7 +102,7 @@ export function ChatsTab({ project, onSwitchTab, onProjectMutated, prefillText }
       }
 
       if (convId) {
-        await fetch(
+        const msgRes = await fetch(
           `/api/concept2cure/projects/${encodeURIComponent(pid)}/conversations/${encodeURIComponent(convId)}/messages`,
           {
             method: 'POST',
@@ -106,6 +111,7 @@ export function ChatsTab({ project, onSwitchTab, onProjectMutated, prefillText }
             body: JSON.stringify({ role: 'user', content: text }),
           }
         );
+        if (!msgRes.ok) throw new Error(`Message post failed: ${msgRes.status}`);
       }
       onProjectMutated?.();
     } catch { /* network error — composer already cleared */ }

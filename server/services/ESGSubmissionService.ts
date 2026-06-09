@@ -306,23 +306,16 @@ class ESGSubmissionService {
       return this.simulateESGSubmission(packageId);
     }
 
-    // In production, would use actual FDA ESG API/AS2 protocol
-    try {
-      // This would be the actual FDA ESG submission code
-      // Using their AS2 protocol or SFTP gateway
-      
-      // For now, return a mock response
-      return {
-        transactionId: `TXN-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`,
-        acknowledgmentNumber: `ACK${new Date().getFullYear()}${Math.random().toString().slice(2, 8)}`,
-        status: 'submitted',
-        message: 'Submission received and queued for processing',
-        timestamp: new Date()
-      };
-    } catch (error) {
-      console.error('ESG transmission error:', error);
-      throw new Error('Failed to transmit to FDA ESG');
-    }
+    // Production transport (AS2 / SFTP) is not implemented in this repo.
+    // Fail closed rather than fabricate an FDA transaction ID / ACK number
+    // (same policy as downloadAcknowledgment below and
+    // fdaIntegrationService.sendToESG).
+    throw new Error(
+      `ESG production transmission requires the production ESG transport client ` +
+      `(AS2 over HTTPS or SFTP gateway) to be configured. ` +
+      `Package: ${packageId}, bundle: ${bundlePath}. Error class: not-implemented. ` +
+      `See docs/runbooks/esg-production-setup.md.`
+    );
   }
 
   /**
@@ -345,26 +338,26 @@ class ESGSubmissionService {
   async checkSubmissionStatus(
     transactionId: string
   ): Promise<ESGResponse> {
-    // In test mode, return mock status
+    // In test mode, return a deterministic mock status
     if (this.config.testMode) {
       return {
         transactionId,
-        acknowledgmentNumber: `ACK-${Math.random().toString(36).substr(2, 9)}`,
+        acknowledgmentNumber: `TEST-ACK-${transactionId.replace(/[^a-z0-9]/gi, '').slice(0, 9)}`,
         status: 'accepted',
-        message: 'Submission has been accepted',
+        message: 'Test submission accepted successfully',
         timestamp: new Date()
       };
     }
 
-    // In production, would check actual FDA ESG status
-    // This would involve calling FDA ESG API to check status
-    
-    return {
-      transactionId,
-      status: 'processing',
-      message: 'Submission is being processed',
-      timestamp: new Date()
-    };
+    // Production status polling requires the real ESG transport client.
+    // Fail closed rather than report a fabricated 'processing' state
+    // (same policy as transmitToESG / downloadAcknowledgment).
+    throw new Error(
+      `ESG production status check requires the production ESG transport client ` +
+      `(AS2 over HTTPS or SFTP gateway) to be configured. ` +
+      `Tracking number: ${transactionId}. Error class: not-implemented. ` +
+      `See docs/runbooks/esg-production-setup.md.`
+    );
   }
 
   /**

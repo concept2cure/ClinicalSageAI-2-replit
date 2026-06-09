@@ -1,4 +1,4 @@
-import { q } from '../db';
+import { query as q } from '../../db';
 
 /** Log explainable AI decisions for audit trail */
 export async function logDecision(

@@ -583,7 +583,7 @@ export class TemplateService {
   /**
    * Duplicate existing template
    */
-  async duplicateTemplate(templateId: number, organizationId: number, newName?: string) {
+  async duplicateTemplate(templateId: number, organizationId: number, userId: number, newName?: string) {
     try {
       if (!db) throw new Error('Database not available');
 
@@ -615,7 +615,7 @@ export class TemplateService {
         version: '1.0',
         usageCount: 0,
         tags: originalTemplate.tags || [],
-        createdBy: 1, // TODO: Get from authentication
+        createdBy: userId,
       };
 
       const [duplicatedTemplate] = await db.insert(ectdTemplates).values(duplicateData).returning();

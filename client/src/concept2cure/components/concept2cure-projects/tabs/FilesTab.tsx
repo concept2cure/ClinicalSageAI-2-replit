@@ -37,18 +37,25 @@ export function FilesTab({ project, onProjectMutated, onAskAna }: Props) {
     if (!fileList || fileList.length === 0) return;
     setUploading(true);
     try {
+      const failed: string[] = [];
       for (const file of Array.from(fileList)) {
         const fd = new FormData();
         fd.append('file', file);
         fd.append('projectId', project.id);
-        await fetch('/api/concept2cure/documents/upload', {
+        const res = await fetch('/api/concept2cure/documents/upload', {
           method: 'POST',
           credentials: 'include',
           body: fd,
         });
+        if (!res.ok) failed.push(`${file.name} (${res.status})`);
       }
-      onProjectMutated?.();
-      refetchFiles();
+      if (failed.length) console.error(`File upload failed: ${failed.join(', ')}`);
+      if (failed.length < fileList.length) {
+        onProjectMutated?.();
+        refetchFiles();
+      }
+    } catch (err) {
+      console.error('File upload failed:', err);
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';

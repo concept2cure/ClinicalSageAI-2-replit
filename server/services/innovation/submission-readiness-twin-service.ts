@@ -464,52 +464,54 @@ export class SubmissionReadinessTwinService {
       .replace(/[^a-z0-9]+/g, '_')
       .slice(0, 40);
     const client = await this.pool.connect();
-    await client.query("SET app.bypass_rls = 'true'");
-    await client.query("SET app.is_admin = 'true'");
-    const result = await client.query(
-      `
-      INSERT INTO innovation.readiness_criteria (
-        submission_type, agency, module_path, criterion_code,
-        criterion_name, description, requirement_type, weight,
-        is_active
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE)
-      RETURNING *
-    `,
-      [
-        'NDA',
-        'FDA',
-        input.category,
-        criterionCode,
-        input.name,
-        input.description,
-        'mandatory',
-        input.weight,
-      ]
-    );
+    try {
+      await client.query("SET app.bypass_rls = 'true'");
+      await client.query("SET app.is_admin = 'true'");
+      const result = await client.query(
+        `
+        INSERT INTO innovation.readiness_criteria (
+          submission_type, agency, module_path, criterion_code,
+          criterion_name, description, requirement_type, weight,
+          is_active
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE)
+        RETURNING *
+      `,
+        [
+          'NDA',
+          'FDA',
+          input.category,
+          criterionCode,
+          input.name,
+          input.description,
+          'mandatory',
+          input.weight,
+        ]
+      );
 
-    const row = result?.rows?.[0];
-    if (!row) {
-      const fallback: ReadinessCriterion = {
-        id: crypto.randomUUID(),
-        submissionType: 'NDA',
-        agency: 'FDA',
-        modulePath: input.category,
-        criterionCode,
-        criterionName: input.name,
-        description: input.description,
-        requirementType: 'mandatory',
-        weight: input.weight,
-        isActive: true,
-      } as ReadinessCriterion;
-      SubmissionReadinessTwinService.criteriaCache.push(fallback);
+      const row = result?.rows?.[0];
+      if (!row) {
+        const fallback: ReadinessCriterion = {
+          id: crypto.randomUUID(),
+          submissionType: 'NDA',
+          agency: 'FDA',
+          modulePath: input.category,
+          criterionCode,
+          criterionName: input.name,
+          description: input.description,
+          requirementType: 'mandatory',
+          weight: input.weight,
+          isActive: true,
+        } as ReadinessCriterion;
+        SubmissionReadinessTwinService.criteriaCache.push(fallback);
+        return fallback;
+      }
+
+      const mapped = this.mapCriterion(row);
+      SubmissionReadinessTwinService.criteriaCache.push(mapped);
+      return mapped;
+    } finally {
       client.release();
-      return fallback;
     }
-
-    const mapped = this.mapCriterion(row);
-    SubmissionReadinessTwinService.criteriaCache.push(mapped);
-    client.release();
-    return mapped;
   }
 
   /**

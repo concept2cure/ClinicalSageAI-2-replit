@@ -211,75 +211,79 @@ export class AdaptiveReviewerWorkspaceService {
     if (typeof orgIdOrInput !== 'string') {
       const key = `${orgIdOrInput.category}_${orgIdOrInput.name}`.toLowerCase().replace(/[^a-z0-9]+/g, '_');
       const client = await this.pool.connect();
+      try {
+        await client.query("SET app.bypass_rls = 'true'");
+        await client.query("SET app.is_admin = 'true'");
+        const result = await client.query(
+          `
+          INSERT INTO innovation.workspace_roles (
+            org_id, role_key, role_name, description, default_capabilities, is_system_role, is_active
+          ) VALUES (NULL, $1, $2, $3, $4, FALSE, TRUE)
+          RETURNING *
+        `,
+          [key, orgIdOrInput.name, orgIdOrInput.category, orgIdOrInput.permissions || []]
+        );
+
+        const row = result?.rows?.[0];
+        if (!row) {
+          const fallback: WorkspaceRole = {
+            id: crypto.randomUUID(),
+            roleKey: key,
+            roleName: orgIdOrInput.name,
+            description: orgIdOrInput.category,
+            defaultCapabilities: orgIdOrInput.permissions || [],
+            isSystemRole: false,
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          } as WorkspaceRole;
+          AdaptiveReviewerWorkspaceService.roleCache.push(fallback);
+          return fallback;
+        }
+
+        const mapped = this.mapRole(row);
+        AdaptiveReviewerWorkspaceService.roleCache.push(mapped);
+        return mapped;
+      } finally {
+        client.release();
+      }
+    }
+
+    const client = await this.pool.connect();
+    try {
       await client.query("SET app.bypass_rls = 'true'");
       await client.query("SET app.is_admin = 'true'");
-      const result = await client.query(
-        `
+      const result = await client.query(`
         INSERT INTO innovation.workspace_roles (
           org_id, role_key, role_name, description, default_capabilities, is_system_role, is_active
-        ) VALUES (NULL, $1, $2, $3, $4, FALSE, TRUE)
+        ) VALUES ($1, $2, $3, $4, $5, FALSE, TRUE)
         RETURNING *
-      `,
-        [key, orgIdOrInput.name, orgIdOrInput.category, orgIdOrInput.permissions || []]
-      );
+      `, [orgIdOrInput, roleKey, roleName, description, defaultCapabilities || []]);
 
       const row = result?.rows?.[0];
       if (!row) {
         const fallback: WorkspaceRole = {
           id: crypto.randomUUID(),
-          roleKey: key,
-          roleName: orgIdOrInput.name,
-          description: orgIdOrInput.category,
-          defaultCapabilities: orgIdOrInput.permissions || [],
+          orgId: orgIdOrInput,
+          roleKey: roleKey || 'role',
+          roleName: roleName || 'Role',
+          description,
+          defaultCapabilities: defaultCapabilities || [],
           isSystemRole: false,
           isActive: true,
           createdAt: new Date(),
           updatedAt: new Date()
         } as WorkspaceRole;
         AdaptiveReviewerWorkspaceService.roleCache.push(fallback);
-        client.release();
         return fallback;
       }
 
       const mapped = this.mapRole(row);
       AdaptiveReviewerWorkspaceService.roleCache.push(mapped);
-      client.release();
       return mapped;
-    }
-
-    const client = await this.pool.connect();
-    await client.query("SET app.bypass_rls = 'true'");
-    await client.query("SET app.is_admin = 'true'");
-    const result = await client.query(`
-      INSERT INTO innovation.workspace_roles (
-        org_id, role_key, role_name, description, default_capabilities, is_system_role, is_active
-      ) VALUES ($1, $2, $3, $4, $5, FALSE, TRUE)
-      RETURNING *
-    `, [orgIdOrInput, roleKey, roleName, description, defaultCapabilities || []]);
-
-    const row = result?.rows?.[0];
-    if (!row) {
-      const fallback: WorkspaceRole = {
-        id: crypto.randomUUID(),
-        orgId: orgIdOrInput,
-        roleKey: roleKey || 'role',
-        roleName: roleName || 'Role',
-        description,
-        defaultCapabilities: defaultCapabilities || [],
-        isSystemRole: false,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      } as WorkspaceRole;
-      AdaptiveReviewerWorkspaceService.roleCache.push(fallback);
+    } finally {
       client.release();
-      return fallback;
     }
-
-    const mapped = this.mapRole(row);
-    AdaptiveReviewerWorkspaceService.roleCache.push(mapped);
-    client.release();
-    return mapped;
   }
 
   // ==================== PRESET MANAGEMENT ====================
@@ -413,59 +417,60 @@ export class AdaptiveReviewerWorkspaceService {
 
     // Try to get existing
     const client = await this.pool.connect();
-    await client.query("SET app.bypass_rls = 'true'");
-    await client.query("SET app.is_admin = 'true'");
-    const existing = await client.query(`
-      SELECT * FROM innovation.user_workspace_preferences WHERE user_id = $1
-    `, [userId]);
+    try {
+      await client.query("SET app.bypass_rls = 'true'");
+      await client.query("SET app.is_admin = 'true'");
+      const existing = await client.query(`
+        SELECT * FROM innovation.user_workspace_preferences WHERE user_id = $1
+      `, [userId]);
 
-    if (existing?.rows?.length > 0) {
-      const mapped = this.mapUserPreferences(existing.rows[0]);
+      if (existing?.rows?.length > 0) {
+        const mapped = this.mapUserPreferences(existing.rows[0]);
+        AdaptiveReviewerWorkspaceService.preferenceCache.set(userId, mapped);
+        return mapped;
+      }
+
+      // Create default preferences
+      const result = await client.query(`
+        INSERT INTO innovation.user_workspace_preferences (
+          user_id, layout_overrides, sidebar_overrides, toolbar_overrides, shortcut_overrides,
+          theme, font_size, accessibility_settings
+        ) VALUES ($1, '{}', '{}', '{}', '{}', 'system', 'medium', '{}')
+        RETURNING *
+      `, [userId]);
+
+      const row = result?.rows?.[0];
+      if (!row) {
+        const fallback: UserWorkspacePreferences = {
+          id: crypto.randomUUID(),
+          userId,
+          layoutOverrides: {},
+          sidebarOverrides: {},
+          toolbarOverrides: {},
+          shortcutOverrides: {},
+          theme: 'system',
+          fontSize: 'medium',
+          accessibilitySettings: {
+            highContrast: false,
+            reducedMotion: false,
+            screenReaderOptimized: false,
+            keyboardNavigationEnhanced: false,
+            fontSize: 14,
+            lineSpacing: 1.4
+          },
+          createdAt: new Date(),
+          updatedAt: new Date()
+        } as UserWorkspacePreferences;
+        AdaptiveReviewerWorkspaceService.preferenceCache.set(userId, fallback);
+        return fallback;
+      }
+
+      const mapped = this.mapUserPreferences(row);
       AdaptiveReviewerWorkspaceService.preferenceCache.set(userId, mapped);
-      client.release();
       return mapped;
-    }
-
-    // Create default preferences
-    const result = await client.query(`
-      INSERT INTO innovation.user_workspace_preferences (
-        user_id, layout_overrides, sidebar_overrides, toolbar_overrides, shortcut_overrides,
-        theme, font_size, accessibility_settings
-      ) VALUES ($1, '{}', '{}', '{}', '{}', 'system', 'medium', '{}')
-      RETURNING *
-    `, [userId]);
-
-    const row = result?.rows?.[0];
-    if (!row) {
-      const fallback: UserWorkspacePreferences = {
-        id: crypto.randomUUID(),
-        userId,
-        layoutOverrides: {},
-        sidebarOverrides: {},
-        toolbarOverrides: {},
-        shortcutOverrides: {},
-        theme: 'system',
-        fontSize: 'medium',
-        accessibilitySettings: {
-          highContrast: false,
-          reducedMotion: false,
-          screenReaderOptimized: false,
-          keyboardNavigationEnhanced: false,
-          fontSize: 14,
-          lineSpacing: 1.4
-        },
-        createdAt: new Date(),
-        updatedAt: new Date()
-      } as UserWorkspacePreferences;
-      AdaptiveReviewerWorkspaceService.preferenceCache.set(userId, fallback);
+    } finally {
       client.release();
-      return fallback;
     }
-
-    const mapped = this.mapUserPreferences(row);
-    AdaptiveReviewerWorkspaceService.preferenceCache.set(userId, mapped);
-    client.release();
-    return mapped;
   }
 
   /**
@@ -522,60 +527,61 @@ export class AdaptiveReviewerWorkspaceService {
     setClauses.push('updated_at = NOW()');
 
     const client = await this.pool.connect();
-    await client.query("SET app.bypass_rls = 'true'");
-    await client.query("SET app.is_admin = 'true'");
-    const result = await client.query(`
-      UPDATE innovation.user_workspace_preferences
-      SET ${setClauses.join(', ')}
-      WHERE user_id = $1
-      RETURNING *
-    `, params);
+    try {
+      await client.query("SET app.bypass_rls = 'true'");
+      await client.query("SET app.is_admin = 'true'");
+      const result = await client.query(`
+        UPDATE innovation.user_workspace_preferences
+        SET ${setClauses.join(', ')}
+        WHERE user_id = $1
+        RETURNING *
+      `, params);
 
-    const row = result?.rows?.[0];
-    if (!row) {
-      const fallback = AdaptiveReviewerWorkspaceService.preferenceCache.get(userId);
-      if (fallback) {
-        const updated = { ...fallback, ...updates, updatedAt: new Date() } as UserWorkspacePreferences;
+      const row = result?.rows?.[0];
+      if (!row) {
+        const fallback = AdaptiveReviewerWorkspaceService.preferenceCache.get(userId);
+        if (fallback) {
+          const updated = { ...fallback, ...updates, updatedAt: new Date() } as UserWorkspacePreferences;
+          AdaptiveReviewerWorkspaceService.preferenceCache.set(userId, updated);
+          return updated;
+        }
+
+        const base: UserWorkspacePreferences = {
+          id: crypto.randomUUID(),
+          userId,
+          activePresetId: undefined,
+          activeRoleId: undefined,
+          layoutOverrides: {},
+          sidebarOverrides: {},
+          toolbarOverrides: {},
+          shortcutOverrides: {},
+          favoriteFeatures: [],
+          pinnedDocuments: [],
+          recentDocuments: [],
+          theme: 'system',
+          fontSize: 'medium',
+          accessibilitySettings: {
+            highContrast: false,
+            reducedMotion: false,
+            screenReaderOptimized: false,
+            keyboardNavigationEnhanced: false,
+            fontSize: 14,
+            lineSpacing: 1.4
+          },
+          createdAt: new Date(),
+          updatedAt: new Date()
+        } as UserWorkspacePreferences;
+        const updated = { ...base, ...updates, updatedAt: new Date() } as UserWorkspacePreferences;
         AdaptiveReviewerWorkspaceService.preferenceCache.set(userId, updated);
-        client.release();
         return updated;
       }
 
-      const base: UserWorkspacePreferences = {
-        id: crypto.randomUUID(),
-        userId,
-        activePresetId: undefined,
-        activeRoleId: undefined,
-        layoutOverrides: {},
-        sidebarOverrides: {},
-        toolbarOverrides: {},
-        shortcutOverrides: {},
-        favoriteFeatures: [],
-        pinnedDocuments: [],
-        recentDocuments: [],
-        theme: 'system',
-        fontSize: 'medium',
-        accessibilitySettings: {
-          highContrast: false,
-          reducedMotion: false,
-          screenReaderOptimized: false,
-          keyboardNavigationEnhanced: false,
-          fontSize: 14,
-          lineSpacing: 1.4
-        },
-        createdAt: new Date(),
-        updatedAt: new Date()
-      } as UserWorkspacePreferences;
-      const updated = { ...base, ...updates, updatedAt: new Date() } as UserWorkspacePreferences;
-      AdaptiveReviewerWorkspaceService.preferenceCache.set(userId, updated);
+      const mapped = this.mapUserPreferences(row);
+      AdaptiveReviewerWorkspaceService.preferenceCache.set(userId, mapped);
+      return mapped;
+    } finally {
       client.release();
-      return updated;
     }
-
-    const mapped = this.mapUserPreferences(row);
-    AdaptiveReviewerWorkspaceService.preferenceCache.set(userId, mapped);
-    client.release();
-    return mapped;
   }
 
   /**

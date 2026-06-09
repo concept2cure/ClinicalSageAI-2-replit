@@ -5,7 +5,7 @@
  * which is needed for specialized operations like RLS setup.
  */
 import { createScopedLogger } from '../utils/logger';
-import { db } from './index';
+import { db } from './runtime';
 
 const logger = createScopedLogger('sql-executor');
 
