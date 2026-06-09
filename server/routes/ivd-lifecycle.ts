@@ -56,6 +56,7 @@ import {
 } from '../services/regulatory/global-pathways';
 import { classifyIvdrAnnexVIII } from '../services/regulatory/ivdr-classification';
 import { pairCompanionDiagnostic } from '../services/regulatory/cdx-pairing';
+import { designIvdStudyProgram } from '../services/regulatory/cdx-study-design';
 import { knowledgeFor, type LifecycleConcept } from '../services/ivd-knowledge/links';
 
 const router = Router();
@@ -108,6 +109,20 @@ router.post('/cdx/pair', (req: Request, res: Response) => {
   }
   const result = pairCompanionDiagnostic(b);
   res.json({ ...result, knowledge: knowledgeFor(result.knowledgeRefs) });
+});
+
+// ── IVD study-program designer (analytical + clinical, citation-grounded) ────
+router.post('/study-design', (req: Request, res: Response) => {
+  const b = req.body ?? {};
+  const ASSAY = ['quantitative', 'qualitative', 'ihc', 'ngs', 'molecular'];
+  const USE = ['cdx', 'screening', 'diagnosis', 'monitoring', 'aid_to_diagnosis'];
+  if (!ASSAY.includes(b.assayType)) {
+    return res.status(422).json({ error: `assayType must be one of: ${ASSAY.join(', ')}` });
+  }
+  if (!USE.includes(b.intendedUse)) {
+    return res.status(422).json({ error: `intendedUse must be one of: ${USE.join(', ')}` });
+  }
+  res.json(designIvdStudyProgram(b));
 });
 
 // ── Analytical performance ──────────────────────────────────────────────────
