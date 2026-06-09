@@ -33,5 +33,12 @@ export async function registerIndLifecycleRoutes(app: Express): Promise<void> {
     console.error('❌ Failed to mount IND lifecycle routes:', error.message);
   }
 
+  try {
+    const authoringPdfRoutes = (await import('../routes/authoring-pdf.routes')).default;
+    app.use('/api/authoring-pdf', authenticateToken, authoringPdfRoutes);
+  } catch (error: any) {
+    console.error('❌ Failed to mount authoring-PDF routes:', error.message);
+  }
+
   console.log('✅ IND lifecycle route bundle mounted (auth-gated)');
 }
