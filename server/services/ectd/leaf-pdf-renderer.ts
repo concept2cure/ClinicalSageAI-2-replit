@@ -160,3 +160,94 @@ export async function renderLeafPdf(content: string, options: LeafPdfOptions = {
 
   return Buffer.from(bytes);
 }
+
+/** One section of a structured leaf (heading + body, optionally nested). */
+export interface LeafSection {
+  /** Section heading (drawn bold, becomes a bookmark). */
+  heading: string;
+  /** Narrative body (plain text or HTML; empty bodies render a placeholder). */
+  body?: string;
+  /** Optional section code shown before the heading and on the bookmark. */
+  sectionCode?: string;
+  /** Nested subsections (rendered with deeper indentation + nested bookmarks). */
+  children?: LeafSection[];
+}
+
+/**
+ * Render a STRUCTURED leaf (a tree of heading/body sections) to a deterministic
+ * PDF whose bookmarks point at the ACTUAL page each section starts on. Unlike
+ * renderLeafPdf (flat content + a single document bookmark), this tracks the
+ * live page index as it lays each heading out, so a multi-section document
+ * (a CSR, an IND Safety Report, an Annual Report) gets a real, navigable
+ * outline — what FDA eCTD guidance requires for multi-section PDFs.
+ *
+ * Deterministic: fixed metadata + epoch dates + deterministic bookmark objects,
+ * so identical input yields byte-identical output (the md5 contract).
+ */
+export async function renderStructuredLeafPdf(
+  sections: LeafSection[],
+  options: LeafPdfOptions = {},
+): Promise<Buffer> {
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+
+  doc.setTitle(options.title ?? 'eCTD leaf');
+  doc.setProducer('Concept2Cure eCTD leaf renderer');
+  doc.setCreator('Concept2Cure eCTD leaf renderer');
+  doc.setCreationDate(EPOCH);
+  doc.setModificationDate(EPOCH);
+
+  const maxWidth = PAGE_WIDTH - 2 * MARGIN;
+  let page = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  let y = PAGE_HEIGHT - MARGIN;
+  const newPage = () => {
+    page = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+    y = PAGE_HEIGHT - MARGIN;
+  };
+  const draw = (text: string, f = font, indent = 0) => {
+    if (y < MARGIN) newPage();
+    page.drawText(text, { x: MARGIN + indent, y, size: FONT_SIZE, font: f, color: rgb(0, 0, 0) });
+    y -= LINE_HEIGHT;
+  };
+
+  // Document title header.
+  const header = options.sectionCode
+    ? `${options.sectionCode}  ${options.title ?? ''}`.trim()
+    : options.title ?? '';
+  if (header) {
+    draw(header, bold);
+    y -= LINE_HEIGHT / 2;
+  }
+
+  // Walk the section tree depth-first, recording the page index at which each
+  // heading is drawn so the bookmark jumps to the right page.
+  const walk = (nodes: LeafSection[], depth: number): OutlineNode[] =>
+    nodes.map((s) => {
+      const indent = depth * 14;
+      // A heading near the bottom of a page should start the next page so it is
+      // not orphaned away from its body — and so its bookmark page is accurate.
+      if (y < MARGIN + LINE_HEIGHT * 2) newPage();
+      const pageIndex = doc.getPageCount() - 1;
+      const label = s.sectionCode ? `${s.sectionCode}  ${s.heading}` : s.heading;
+      draw(label, bold, indent);
+
+      const bodyText = htmlToPlainText(s.body ?? '');
+      const lines = bodyText.length ? bodyText.split('\n') : ['—'];
+      for (const logical of lines) {
+        for (const wrapped of wrapLine(logical, font, maxWidth - indent)) {
+          draw(wrapped, font, indent);
+        }
+      }
+      y -= LINE_HEIGHT / 2;
+
+      const children = s.children && s.children.length > 0 ? walk(s.children, depth + 1) : undefined;
+      return { title: label, sectionCode: s.sectionCode ?? '', pageIndex, children };
+    });
+
+  const outline = walk(sections.length ? sections : [{ heading: '(no content)' }], 0);
+
+  let bytes = await doc.save({ useObjectStreams: false });
+  bytes = await addBookmarks(bytes, outline);
+  return Buffer.from(bytes);
+}

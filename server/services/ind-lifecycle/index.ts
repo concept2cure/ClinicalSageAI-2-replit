@@ -19,3 +19,4 @@ export * from './ind-safety-report-service';
 export * from './ind-annual-report-service';
 export * from './ind-amendment-service';
 export * from './ind-readiness-service';
+export * from './ind-document-renderer';

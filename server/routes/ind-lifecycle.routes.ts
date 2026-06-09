@@ -25,6 +25,10 @@ import {
 import { assembleIndAnnualReport } from '../services/ind-lifecycle/ind-annual-report-service';
 import { planIndAmendment } from '../services/ind-lifecycle/ind-amendment-service';
 import { evaluateIndReadiness } from '../services/ind-lifecycle/ind-readiness-service';
+import {
+  renderIndSafetyReportPdf,
+  renderIndAnnualReportPdf,
+} from '../services/ind-lifecycle/ind-document-renderer';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('ind-lifecycle-routes');
@@ -84,6 +88,40 @@ router.post('/safety-report/classify', limiter, requireRole(AUTHOR), (req, res) 
 router.post('/annual-report', limiter, requireRole(AUTHOR), (req, res) => {
   try {
     res.json(assembleIndAnnualReport(body(req)));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+function sendPdf(res: Response, filename: string, buf: Buffer): void {
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+  res.status(200).send(buf);
+}
+
+/** Render the 312.32 IND Safety Report to a navigable, submission-ready PDF leaf. */
+router.post('/safety-report/pdf', limiter, requireRole(AUTHOR), async (req, res) => {
+  const b = body(req);
+  if (!b.event) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'event (AdverseEvent) is required.' } });
+  }
+  try {
+    const { document } = assembleIndSafetyReport(b.event, {
+      icsr: b.icsr ?? null,
+      aggregateContext: b.aggregateContext,
+      now: b.now ? new Date(b.now) : undefined,
+    });
+    sendPdf(res, 'ind-safety-report.pdf', await renderIndSafetyReportPdf(document));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** Render the 312.33 IND Annual Report / DSUR to a navigable PDF leaf. */
+router.post('/annual-report/pdf', limiter, requireRole(AUTHOR), async (req, res) => {
+  try {
+    const model = assembleIndAnnualReport(body(req));
+    sendPdf(res, 'ind-annual-report.pdf', await renderIndAnnualReportPdf(model));
   } catch (err) {
     fail(res, err);
   }
