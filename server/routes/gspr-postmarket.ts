@@ -38,6 +38,11 @@ import {
   validateDocument,
 } from '../services/gspr-postmarket/post-market.service';
 import { generatePmcfPlan } from '../services/gspr-postmarket/pmcf-plan-generator';
+import {
+  authorPostMarketDocument,
+  AUTHORABLE_DOCUMENT_TYPES,
+} from '../services/gspr-postmarket/post-market-authoring';
+import type { PostMarketDocumentType } from '../../shared/schema/gspr-postmarket';
 import auditService from '../services/auditService';
 
 function userIdFromReq(req: Request): string | null {
@@ -324,6 +329,81 @@ postMarketRouter.post(
         return res.status(422).json({ error: err.message });
       }
       res.status(500).json({ error: 'PMCF plan generation failed', detail: err?.message });
+    }
+  }
+);
+
+// Author a DRAFT post-market document of any supported type (pms_plan,
+// pms_report, pmcf_plan, pmcf_evaluation, psur, sscp) from device/CER context.
+// Persists in `draft` via the same lifecycle and returns the document plus its
+// conformance validation. Never approves, locks, or asserts sufficiency.
+postMarketRouter.post(
+  '/programs/:programId/documents/:documentType/generate',
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const documentType = String(req.params.documentType).replace(/-/g, '_') as PostMarketDocumentType;
+    if (!AUTHORABLE_DOCUMENT_TYPES.includes(documentType)) {
+      return res
+        .status(422)
+        .json({ error: `documentType must be one of: ${AUTHORABLE_DOCUMENT_TYPES.join(', ')}` });
+    }
+    const body = req.body ?? {};
+    const relatedCerReportId =
+      body.relatedCerReportId != null ? Number(body.relatedCerReportId) : undefined;
+    if (relatedCerReportId != null && !Number.isInteger(relatedCerReportId)) {
+      return res.status(422).json({ error: 'relatedCerReportId must be an integer' });
+    }
+    if (!body.deviceName && relatedCerReportId == null) {
+      return res.status(422).json({ error: 'deviceName or relatedCerReportId is required' });
+    }
+    if (body.regulation && body.regulation !== 'MDR' && body.regulation !== 'IVDR') {
+      return res.status(422).json({ error: 'regulation must be MDR or IVDR' });
+    }
+    const parseDate = (v: unknown): Date | undefined => {
+      if (v == null) return undefined;
+      const d = new Date(v as string);
+      return Number.isNaN(d.getTime()) ? undefined : d;
+    };
+    const createdBy = userIdFromReq(req) ?? 'system';
+    try {
+      const result = await authorPostMarketDocument({
+        organizationId: orgId,
+        programId: String(req.params.programId),
+        createdBy,
+        documentType,
+        deviceName: typeof body.deviceName === 'string' ? body.deviceName : undefined,
+        deviceClass: typeof body.deviceClass === 'string' ? body.deviceClass : null,
+        regulation: body.regulation,
+        relatedCerReportId,
+        title: typeof body.title === 'string' ? body.title : undefined,
+        reportingPeriodStart: parseDate(body.reportingPeriodStart),
+        reportingPeriodEnd: parseDate(body.reportingPeriodEnd),
+      });
+
+      void auditService.logAction({
+        tenantId: orgId,
+        userId: createdBy,
+        action: 'post_market.document.generate',
+        resourceType: 'post_market_document',
+        resourceId: String(result.document.id),
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: {
+          programId: req.params.programId,
+          documentType,
+          documentId: result.document.id,
+          version: result.document.version,
+          relatedCerReportId: relatedCerReportId ?? null,
+        },
+      });
+
+      res.status(201).json(result);
+    } catch (err: any) {
+      if (err?.code === 'PM_NO_DEVICE' || err?.code === 'PM_BAD_TYPE') {
+        return res.status(422).json({ error: err.message });
+      }
+      res.status(500).json({ error: 'Post-market document generation failed', detail: err?.message });
     }
   }
 );
