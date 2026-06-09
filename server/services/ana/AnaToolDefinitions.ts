@@ -124,6 +124,22 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   },
 };
 
+export const DESCRIBE_CAPABILITIES: AnaTool = {
+  name: 'describe_capabilities',
+  description:
+    "Introspect AnA's OWN live abilities in this deployment: every registered tool, and which " +
+    'integrations (evidence APIs, Gmail mailbox, Google Calendar, HubSpot CRM, document connectors) ' +
+    'are actually configured right now. ALWAYS call this before answering "what can you do?", when ' +
+    'planning a multi-tool workflow, or before relying on a workflow integration — so you only ' +
+    'promise and attempt what is truly available, and can tell the user exactly what to connect to ' +
+    'unlock the rest. Deterministic and read-only.',
+  input_schema: {
+    type: 'object',
+    properties: {},
+    required: [],
+  },
+};
+
 export const ASSESS_REGULATORY_LANDSCAPE: AnaTool = {
   name: 'assess_regulatory_landscape',
   description:
@@ -3890,6 +3906,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_DRUG_LABELS,
   SEARCH_DRUG_APPROVALS,
   ASSESS_REGULATORY_LANDSCAPE,
+  DESCRIBE_CAPABILITIES,
   PROJECT_KNOWLEDGE_SEARCH,
   SIMULATE_STUDY_DESIGN,
   SEARCH_DEVICE_ADVERSE_EVENTS,

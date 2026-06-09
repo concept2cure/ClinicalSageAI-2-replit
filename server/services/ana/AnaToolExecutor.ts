@@ -27,6 +27,8 @@ import { searchDeviceRecalls } from '../integrations/device-recalls.js';
 import { searchDrugLabels } from '../integrations/drug-label-client.js';
 import { searchDrugApprovals } from '../integrations/drug-approvals-client.js';
 import { assessRegulatoryLandscape } from '../integrations/landscape.js';
+import { getIntegrationStatuses, summarizeStatuses } from '../integrations/integration-status.js';
+import { getAllEnabledTools } from './AnaToolDefinitions.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 import type {
   GatewayRequest,
@@ -351,6 +353,46 @@ registerToolHandler('search_connected_repositories', async (input, ctx) => {
       source: 'Connected Repositories',
       error: e instanceof Error ? e.message : 'Connected-repository search failed',
       documents: [],
+    });
+  }
+});
+
+// Describe Capabilities — AnA's deterministic self-knowledge: registered tools
+// + which integrations are actually live in this deployment/org.
+registerToolHandler('describe_capabilities', async (_input, ctx) => {
+  try {
+    const orgId = ctx?.organizationId ? Number(ctx.organizationId) : null;
+    const integrations = await getIntegrationStatuses(orgId);
+    const summary = summarizeStatuses(integrations);
+
+    // Enumerate the declared tool surface and whether each has a live handler.
+    // Tools without a direct handler are executed via platform-command dispatch,
+    // so they are reported separately rather than as missing.
+    const declared = getAllEnabledTools()
+      .map(t => (t as { name?: string }).name)
+      .filter((n): n is string => !!n);
+    const directHandlers = declared.filter(n => toolHandlers.has(n));
+    const viaPlatformDispatch = declared.filter(n => !toolHandlers.has(n));
+
+    return JSON.stringify({
+      source: 'AnA Capability Introspection',
+      toolSurface: {
+        total: declared.length,
+        directHandlers: directHandlers.length,
+        viaPlatformDispatch: viaPlatformDispatch.length,
+        tools: declared,
+      },
+      integrations,
+      integrationSummary: summary,
+      guidance:
+        'Only offer or attempt tools whose integration is configured. For configured:false entries, ' +
+        'tell the user what unlocks them (the `requires` field). configured:null means org context ' +
+        'is needed to resolve — ask the user to open a project.',
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'AnA Capability Introspection',
+      error: e instanceof Error ? e.message : 'Capability introspection failed',
     });
   }
 });
