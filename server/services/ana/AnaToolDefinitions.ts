@@ -2212,6 +2212,24 @@ export const GET_MARKET_SUBMISSION_SPEC: AnaTool = {
   },
 };
 
+export const GET_DOCUMENT_TEMPLATE: AnaTool = {
+  name: 'get_document_template',
+  description:
+    "Look up the canonical SECTION STRUCTURE (heading skeleton) of a key submission document — the ordered sections (number + heading + purpose + required) with the regulatory basis. Covers the CTD Module 2 summaries (Quality Overall Summary 2.3, Nonclinical Overview 2.4, Clinical Overview 2.5, Clinical Summary 2.7), the cover letter, the FDA 510(k) Summary (21 CFR 807.92), the EU SmPC, the MDR/IVDR GSPR checklist, the IVDR Performance Evaluation Report, and the CTA IMPD. These are factual document spines from published guidance, not drafted prose — use them to scaffold authoring or to check a document's completeness. Static reference data, read-only. Pass `template_id` for one (e.g. 'clinical_overview', 'k510_summary', 'smpc'), or `family` (ectd|estar|eu_mdr|eu_ivdr|ctis) to list a family's templates.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      template_id: { type: 'string', description: "A specific template id, e.g. 'clinical_overview', 'k510_summary', 'smpc', 'gspr_checklist'." },
+      family: {
+        type: 'string',
+        enum: ['ectd', 'estar', 'eu_mdr', 'eu_ivdr', 'ctis'],
+        description: 'Submission family to list templates for.',
+      },
+    },
+    required: [],
+  },
+};
+
 export const ASSESS_DISPATCH_READINESS: AnaTool = {
   name: 'assess_dispatch_readiness',
   description:
@@ -3687,6 +3705,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   BUILD_PATHWAY_MANIFEST,
   LIST_VALIDATION_RULES,
   GET_MARKET_SUBMISSION_SPEC,
+  GET_DOCUMENT_TEMPLATE,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,

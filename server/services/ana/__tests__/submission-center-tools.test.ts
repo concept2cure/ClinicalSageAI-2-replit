@@ -32,6 +32,7 @@ const SUBMISSION_TOOLS = [
   'build_pathway_manifest',
   'list_validation_rules',
   'get_market_submission_spec',
+  'get_document_template',
   'assess_dispatch_readiness',
 ];
 
@@ -223,6 +224,20 @@ describe('submission AI tasks — tenant + input guards', () => {
     const handler = getToolHandler('get_market_submission_spec')!;
     const out = JSON.parse(await handler({ family: 'bogus' }, {} as ToolContext));
     expect(out.error).toMatch(/family must be one of/);
+  });
+
+  it('get_document_template returns a document spine by id', async () => {
+    const handler = getToolHandler('get_document_template')!;
+    const out = JSON.parse(await handler({ template_id: 'clinical_overview' }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.template.ctdSection).toBe('2.5');
+    expect(out.template.sections.length).toBeGreaterThan(0);
+  });
+  it('get_document_template lists a family without tenant context', async () => {
+    const handler = getToolHandler('get_document_template')!;
+    const out = JSON.parse(await handler({ family: 'estar' }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.templates.some((t: { id: string }) => t.id === 'k510_summary')).toBe(true);
   });
 });
 

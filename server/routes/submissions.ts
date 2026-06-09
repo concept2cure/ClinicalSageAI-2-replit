@@ -255,6 +255,39 @@ router.get('/market-specs/:specId', limiter, requireRole(AUTHOR), async (req, re
   }
 });
 
+// ── Document template structures (canonical section skeletons) ───────────────
+// The heading skeleton of the key submission documents (CTD M2 summaries, 510(k)
+// summary, SmPC, GSPR, PER, IMPD) with each section's purpose + regulatory basis.
+// Static reference data; `?family=` filters. Before '/:id' so it is not shadowed.
+router.get('/document-templates', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const family = String(Array.isArray(req.query.family) ? req.query.family[0] : req.query.family ?? '');
+  const FAMILIES = ['ectd', 'estar', 'eu_mdr', 'eu_ivdr', 'ctis'];
+  if (family && !FAMILIES.includes(family)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: `family must be one of: ${FAMILIES.join(', ')}.` } });
+  }
+  try {
+    const m = await import('../services/market-specs/document-template-library.js');
+    const templates = family ? m.templatesForFamily(family as 'ectd' | 'estar' | 'eu_mdr' | 'eu_ivdr' | 'ctis') : m.DOCUMENT_TEMPLATES;
+    res.json({ family: family || 'all', templates });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+router.get('/document-templates/:templateId', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  try {
+    const { getDocumentTemplate } = await import('../services/market-specs/document-template-library.js');
+    const t = getDocumentTemplate(String(req.params.templateId));
+    if (!t) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No document template "${req.params.templateId}".` } });
+    res.json(t);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 router.get('/:id', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });

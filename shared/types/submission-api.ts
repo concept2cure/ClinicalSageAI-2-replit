@@ -339,6 +339,27 @@ export interface MarketSpecsResponse {
   specs: MarketSubmissionSpec[];
 }
 
+// ── Document template structures (GET /api/submissions/document-templates[/:id]) ─
+// Canonical section/heading skeletons of the key submission documents.
+export interface TemplateSection {
+  number: string;
+  heading: string;
+  purpose: string;
+  required: boolean;
+}
+export interface DocumentTemplateStructure {
+  id: string;
+  title: string;
+  families: SubmissionFamily[];
+  ctdSection?: string;
+  regulatoryBasis: string;
+  sections: TemplateSection[];
+}
+export interface DocumentTemplatesResponse {
+  family: string;
+  templates: DocumentTemplateStructure[];
+}
+
 // ── Universal pathway manifest (GET /sequences/:seqId/pathway-manifest?pathway=&memberStates=) ─
 // Assembled table-of-contents for ANY non-eCTD pathway (eSTAR / CTIS / MDR / IVDR
 // / PMDA). Deterministic; maps + reports gaps across a uniform entry shape.

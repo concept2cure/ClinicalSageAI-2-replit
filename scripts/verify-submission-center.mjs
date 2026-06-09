@@ -150,6 +150,14 @@ async function main() {
   const msFamBad = await c.req('GET', '/api/submissions/market-specs?family=zzz');
   ok('market-specs rejects an unknown family (400)', msFamBad.status === 400, `got ${msFamBad.status}`);
 
+  // Document template structures (canonical section skeletons) — static reference data.
+  const dt = await c.req('GET', '/api/submissions/document-templates?family=ectd');
+  ok('document-templates returns CTD spines with sections', dt.status === 200 && Array.isArray(dt.json?.templates) && dt.json.templates.length > 0 && dt.json.templates.every((t) => Array.isArray(t.sections) && t.sections.length > 0), `status ${dt.status}`);
+  const dtOne = await c.req('GET', '/api/submissions/document-templates/clinical_overview');
+  ok('document-templates/:id returns one spine', dtOne.status === 200 && dtOne.json?.ctdSection === '2.5' && dtOne.json?.sections?.length === 6, `status ${dtOne.status}`);
+  const dtBad = await c.req('GET', '/api/submissions/document-templates/nope');
+  ok('document-templates/:id 404s on unknown', dtBad.status === 404, `got ${dtBad.status}`);
+
   // Portfolio + create (throwaway).
   const list0 = await c.req('GET', '/api/submissions');
   ok('GET /api/submissions (portfolio) ok', list0.status === 200 && Array.isArray(list0.json));
