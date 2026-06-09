@@ -124,6 +124,25 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   },
 };
 
+export const SEARCH_DRUG_LABELS: AnaTool = {
+  name: 'search_drug_labels',
+  description:
+    'Search FDA drug labeling (openFDA Structured Product Labeling) by brand or generic name. ' +
+    'Returns the key label sections — indications & usage, boxed/warnings, dosage & administration — ' +
+    'plus manufacturer. Use for label-claim grounding, comparing against a reference/predicate label, ' +
+    'and drafting safety sections.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      brand_name: { type: 'string', description: 'Brand (trade) name, e.g. "Keytruda".' },
+      generic_name: { type: 'string', description: 'Generic (nonproprietary) name, e.g. "pembrolizumab".' },
+      query: { type: 'string', description: 'Free-text fallback matched against the brand name.' },
+      max_results: { type: 'number', description: 'Maximum labels to return (default: 3, max: 10).' },
+    },
+    required: [],
+  },
+};
+
 export const SEARCH_DEVICE_RECALLS: AnaTool = {
   name: 'search_device_recalls',
   description:
@@ -3745,6 +3764,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CRM,
   SEARCH_IVD_KNOWLEDGE,
   SEARCH_DEVICE_RECALLS,
+  SEARCH_DRUG_LABELS,
   PROJECT_KNOWLEDGE_SEARCH,
   SIMULATE_STUDY_DESIGN,
   SEARCH_DEVICE_ADVERSE_EVENTS,
