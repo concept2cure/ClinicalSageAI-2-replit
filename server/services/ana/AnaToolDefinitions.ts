@@ -2064,6 +2064,23 @@ export const BUILD_PATHWAY_MANIFEST: AnaTool = {
   },
 };
 
+export const LIST_VALIDATION_RULES: AnaTool = {
+  name: 'list_validation_rules',
+  description:
+    "List the named, sourced eCTD validation rule corpus the Submission Center checks against (ICH/FDA/EU/JP criteria). Returns each rule's id, title, category, regions, severity (high/medium/low), rationale, published source, and enforcement (whether the rule is floored by the deterministic dispatch gate, guaranteed by the packager, or requires the agency validator). Static reference data — read-only, not tenant-specific. Use it to explain WHY a validation finding blocks dispatch and to cite the rule behind a gate verdict (a finding's code equals the rule id).",
+  input_schema: {
+    type: 'object',
+    properties: {
+      region: {
+        type: 'string',
+        enum: ['fda', 'eu', 'jp'],
+        description: 'Optional — scope to one region (includes shared ICH rules). Omit for the full corpus.',
+      },
+    },
+    required: [],
+  },
+};
+
 export const ASSESS_DISPATCH_READINESS: AnaTool = {
   name: 'assess_dispatch_readiness',
   description:
@@ -3533,6 +3550,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CHECK_CONSISTENCY,
   ASSESS_PATHWAY_READINESS,
   BUILD_PATHWAY_MANIFEST,
+  LIST_VALIDATION_RULES,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,

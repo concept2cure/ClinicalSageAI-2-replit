@@ -30,6 +30,7 @@ const SUBMISSION_TOOLS = [
   'check_consistency',
   'assess_pathway_readiness',
   'build_pathway_manifest',
+  'list_validation_rules',
   'assess_dispatch_readiness',
 ];
 
@@ -187,6 +188,20 @@ describe('submission AI tasks — tenant + input guards', () => {
     const handler = getToolHandler('build_pathway_manifest')!;
     const out = JSON.parse(await handler({ sequence_id: 1, pathway: 'bogus' }, { organizationId: 1, userId: 2 } as ToolContext));
     expect(out.error).toMatch(/pathway must be one of/);
+  });
+
+  it('list_validation_rules returns the corpus without tenant context', async () => {
+    const handler = getToolHandler('list_validation_rules')!;
+    const out = JSON.parse(await handler({}, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(Array.isArray(out.rules)).toBe(true);
+    expect(out.rules.length).toBeGreaterThan(0);
+    expect(out.summary.total).toBe(out.rules.length);
+  });
+  it('list_validation_rules validates the region enum', async () => {
+    const handler = getToolHandler('list_validation_rules')!;
+    const out = JSON.parse(await handler({ region: 'zz' }, {} as ToolContext));
+    expect(out.error).toMatch(/region must be one of/);
   });
 });
 
