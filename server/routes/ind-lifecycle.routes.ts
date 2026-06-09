@@ -37,6 +37,7 @@ import {
 import {
   persistSafetyReportIntent,
   persistAmendmentPlan,
+  persistAnnualReport,
 } from '../services/ind-lifecycle/ind-lifecycle-persistence';
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -302,6 +303,25 @@ router.post('/safety-report/file', limiter, requireRole(AUTHOR), async (req, res
       return res.status(422).json({ error: { code: 'NOT_REPORTABLE', message: 'Event is not an expedited IND safety report; nothing to file.' } });
     }
     res.status(201).json(await persistSafetyReportIntent(submissionId, amendmentIntent, String(b.sequenceNumber), ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * File a 312.33 IND Annual Report as an `annual` eCTD sequence + m1.13 leaf.
+ * Body: { submissionId, sequenceNumber }.
+ */
+router.post('/annual-report/file', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const b = body(req);
+  const submissionId = Number(b.submissionId);
+  if (!Number.isInteger(submissionId) || submissionId <= 0 || !/^\d{4}$/.test(String(b.sequenceNumber ?? ''))) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'submissionId (int) and 4-digit sequenceNumber are required.' } });
+  }
+  try {
+    res.status(201).json(await persistAnnualReport(submissionId, String(b.sequenceNumber), ctx));
   } catch (err) {
     fail(res, err);
   }
