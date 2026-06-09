@@ -244,6 +244,15 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
     console.error('❌ Failed to mount CER routes:', error);
   }
 
+  // ── Knowledge Base (static, citable reference corpora) ──
+  try {
+    const knowledgeModule = await import('../routes/knowledge.js');
+    app.use('/api/knowledge', authenticateToken, knowledgeModule.default);
+    console.log('✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)');
+  } catch (error) {
+    console.error('❌ Failed to mount Knowledge Base routes:', error);
+  }
+
   // ── Preclinical (Module 4) ingestion ──
   // Mounted unconditionally; the router itself returns 503 when
   // PRECLINICAL_INGEST_ENABLED is unset so the deny is uniform per env.
