@@ -4118,6 +4118,24 @@ registerToolHandler('lookup_regulatory_pathway', async (input) => {
   }
 });
 
+registerToolHandler('resolve_regulatory_structure', async (input) => {
+  // Deterministic reasoning-engine resolution — not tenant-specific, no LLM.
+  const regions = Array.isArray(input.regions)
+    ? input.regions.filter((r): r is string => typeof r === 'string')
+    : [];
+  const applicationType = typeof input.application_type === 'string' ? input.application_type : '';
+  if (regions.length === 0 || !applicationType) {
+    return JSON.stringify({ error: 'regions (non-empty array) and application_type are required.' });
+  }
+  try {
+    const { buildSubmissionStructure } = await import('../reasoning-engine/index.js');
+    const structure = buildSubmissionStructure(regions, applicationType);
+    return JSON.stringify({ ok: true, ...structure });
+  } catch (err) {
+    return JSON.stringify({ error: `resolve_regulatory_structure failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('get_market_submission_spec', async (input) => {
   // Static reference data — not tenant-specific, so no org/user context required.
   const specId = typeof input.spec_id === 'string' ? input.spec_id : '';

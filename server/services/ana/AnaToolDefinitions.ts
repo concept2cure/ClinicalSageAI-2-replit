@@ -2363,6 +2363,27 @@ export const LOOKUP_REGULATORY_PATHWAY: AnaTool = {
   },
 };
 
+export const RESOLVE_REGULATORY_STRUCTURE: AnaTool = {
+  name: 'resolve_regulatory_structure',
+  description:
+    "Resolve the DETERMINISTIC submission structure for a region + application type via the reasoning engine (not the LLM): the required CTD sections (regional Module 1 + ICH M4 common Modules 2–5) and the review-clock model. Use this to ground a submission plan's structure — it is rule-resolved and citable, never invented. Covers regions fda|eu|jp and application types ind|nda|bla|maa|cta|anda|510k|pma; unsupported combinations are reported as unsupported (no fabrication). Read-only, deterministic, not tenant-specific.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      regions: {
+        type: 'array',
+        items: { type: 'string' },
+        description: "Target regions, e.g. ['fda','eu']. Aliases like 'us'/'europe'/'japan' are accepted.",
+      },
+      application_type: {
+        type: 'string',
+        description: "Application type, e.g. 'ind', 'nda', 'maa', '510k'.",
+      },
+    },
+    required: ['regions', 'application_type'],
+  },
+};
+
 export const GET_MARKET_SUBMISSION_SPEC: AnaTool = {
   name: 'get_market_submission_spec',
   description:
@@ -3965,6 +3986,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   BUILD_PATHWAY_MANIFEST,
   LIST_VALIDATION_RULES,
   LOOKUP_REGULATORY_PATHWAY,
+  RESOLVE_REGULATORY_STRUCTURE,
   GET_MARKET_SUBMISSION_SPEC,
   GET_DOCUMENT_TEMPLATE,
   VALIDATE_MARKET_FORMATTING,

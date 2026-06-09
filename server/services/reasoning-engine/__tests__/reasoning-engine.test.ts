@@ -12,6 +12,9 @@ import {
   rulesResolver,
   hrmResolver,
   HRM_ENABLED,
+  buildSubmissionStructure,
+  normalizeRegion,
+  normalizeApplicationType,
   type RequiredSection,
   type ReviewClock,
 } from '../index';
@@ -90,5 +93,40 @@ describe('reasoning-engine — CTD dependencies & granularity', () => {
   it('granularity resolves for a known section', () => {
     const g = resolve<string>({ task: 'granularity', region: 'fda', applicationType: 'nda', sectionCode: '5' }).data;
     expect(g).toBe('one-per-study');
+  });
+});
+
+describe('reasoning-engine — submission structure (planner grounding)', () => {
+  it('normalizes region/application-type aliases', () => {
+    expect(normalizeRegion('US')).toBe('fda');
+    expect(normalizeRegion('europe')).toBe('eu');
+    expect(normalizeRegion('PMDA')).toBe('jp');
+    expect(normalizeRegion('mars')).toBeNull();
+    expect(normalizeApplicationType('510(k)')).toBe('510k');
+    expect(normalizeApplicationType('NDA')).toBe('nda');
+    expect(normalizeApplicationType('nonsense')).toBeNull();
+  });
+
+  it('builds deterministic per-region structure for a multi-region plan', () => {
+    const s = buildSubmissionStructure(['fda', 'eu'], 'nda');
+    expect(s.resolver).toBe('reasoning-engine');
+    expect(s.profileVersion).toBeTruthy();
+    const fda = s.regions.find(r => r.region === 'fda')!;
+    const eu = s.regions.find(r => r.region === 'eu')!;
+    expect(fda.supported).toBe(true);
+    expect(fda.reviewClock!.model).toBe('PDUFA');
+    expect(eu.reviewClock!.model).toBe('EU centralised');
+    expect(fda.requiredSections!.length).toBeGreaterThan(0);
+  });
+
+  it('reports unsupported regions/types without fabricating structure', () => {
+    const s = buildSubmissionStructure(['fda', 'mars'], 'nda');
+    const mars = s.regions.find(r => r.region === 'mars')!;
+    expect(mars.supported).toBe(false);
+    expect(mars.requiredSections).toBeUndefined();
+    expect(mars.note).toMatch(/not in the reasoning-engine/i);
+
+    const bad = buildSubmissionStructure(['fda'], 'unknown-app');
+    expect(bad.regions[0].supported).toBe(false);
   });
 });
