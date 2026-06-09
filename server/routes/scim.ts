@@ -101,6 +101,48 @@ function loadScimTenants(): ScimTenant[] {
   return tenants;
 }
 
+// ─── DB-backed tenants (scim_tenants table; tokens stored as SHA-256 hashes) ──
+
+interface DbScimTenant {
+  orgId: number;
+  tokenHash: string;
+}
+
+const DB_TENANT_TTL_MS = 60_000;
+let dbTenantCache: { tenants: DbScimTenant[]; at: number } = { tenants: [], at: 0 };
+
+/** Test-only: force the next loadDbScimTenants() to re-query. */
+export function __resetScimDbTenantCache(): void {
+  dbTenantCache = { tenants: [], at: 0 };
+}
+
+/** Load enabled DB tenants, cached with a short TTL (keeps stale cache on error). */
+async function loadDbScimTenants(): Promise<DbScimTenant[]> {
+  if (Date.now() - dbTenantCache.at < DB_TENANT_TTL_MS) return dbTenantCache.tenants;
+  try {
+    const result = await query(
+      'SELECT organization_id, token_hash FROM scim_tenants WHERE enabled = true'
+    );
+    dbTenantCache = {
+      tenants: result.rows.map((r: { organization_id: number; token_hash: string }) => ({
+        orgId: Number(r.organization_id),
+        tokenHash: String(r.token_hash),
+      })),
+      at: Date.now(),
+    };
+  } catch (err) {
+    // Keep the stale cache on a transient DB error, but mark refreshed so we
+    // don't hammer the DB on every request.
+    logger.error('Failed to load SCIM tenants from DB', err as Record<string, unknown>);
+    dbTenantCache.at = Date.now();
+  }
+  return dbTenantCache.tenants;
+}
+
+function sha256Hex(value: string): string {
+  return crypto.createHash('sha256').update(value).digest('hex');
+}
+
 function scimError(res: Response, status: number, detail: string, scimType?: string): Response {
   return res.status(status).json({
     schemas: [ERROR_SCHEMA],
@@ -115,25 +157,57 @@ function scimError(res: Response, status: number, detail: string, scimType?: str
  * matching org and pins it on the request. The match loop does constant work
  * per tenant (no early break) so timing does not reveal which tenant matched.
  */
-function scimAuth(req: Request, res: Response, next: NextFunction): Response | void {
-  const tenants = loadScimTenants();
-  if (tenants.length === 0) return scimError(res, 503, 'SCIM provisioning is not configured.');
+async function scimAuth(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> {
+  try {
+    const envTenants = loadScimTenants();
+    const dbTenants = await loadDbScimTenants();
+    if (envTenants.length === 0 && dbTenants.length === 0) {
+      return scimError(res, 503, 'SCIM provisioning is not configured.');
+    }
 
-  const header = req.headers.authorization ?? '';
-  const match = /^Bearer\s+(\S+)$/i.exec(header);
-  if (!match) return scimError(res, 401, 'Missing or malformed bearer token.');
+    const header = req.headers.authorization ?? '';
+    const match = /^Bearer\s+(\S+)$/i.exec(header);
+    if (!match) return scimError(res, 401, 'Missing or malformed bearer token.');
 
-  const provided = Buffer.from(match[1]);
-  let matchedOrgId: number | null = null;
-  for (const tenant of tenants) {
-    const expected = Buffer.from(tenant.token);
-    const ok = provided.length === expected.length && crypto.timingSafeEqual(provided, expected);
-    if (ok) matchedOrgId = tenant.orgId;
+    const provided = Buffer.from(match[1]);
+    let matchedOrgId: number | null = null;
+
+    // 1) env tokens — plaintext, constant-time (constant work per tenant).
+    for (const tenant of envTenants) {
+      const expected = Buffer.from(tenant.token);
+      const ok = provided.length === expected.length && crypto.timingSafeEqual(provided, expected);
+      if (ok) matchedOrgId = tenant.orgId;
+    }
+
+    // 2) DB tokens — compared by SHA-256 hash (plaintext is never stored).
+    if (matchedOrgId === null) {
+      const providedHash = Buffer.from(sha256Hex(match[1]), 'hex');
+      for (const tenant of dbTenants) {
+        let expected: Buffer;
+        try {
+          expected = Buffer.from(tenant.tokenHash, 'hex');
+        } catch {
+          continue; // malformed stored hash — skip
+        }
+        const ok =
+          expected.length === providedHash.length &&
+          crypto.timingSafeEqual(providedHash, expected);
+        if (ok) matchedOrgId = tenant.orgId;
+      }
+    }
+
+    if (matchedOrgId === null) return scimError(res, 401, 'Invalid bearer token.');
+
+    (req as Request & { scimOrgId?: number }).scimOrgId = matchedOrgId;
+    next();
+  } catch (err) {
+    logger.error('SCIM auth error', err as Record<string, unknown>);
+    return scimError(res, 500, 'SCIM authentication failed.');
   }
-  if (matchedOrgId === null) return scimError(res, 401, 'Invalid bearer token.');
-
-  (req as Request & { scimOrgId?: number }).scimOrgId = matchedOrgId;
-  next();
 }
 
 function orgOf(req: Request): number {
