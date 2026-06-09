@@ -159,4 +159,48 @@ describe('recommendApplicability', () => {
       expect(r.confidence).toBeLessThanOrEqual(1);
     }
   });
+
+  test('combination-product standards apply to a combination program', async () => {
+    const recs = await recommendApplicability({ ...baseProfile, productType: 'combination' });
+    const rec = recs.find(r => r.standard.standardCode === 'ISO 11608-1:2022')!;
+    expect(rec.applicability).toBe('applies');
+  });
+
+  test('combination-product standards do_not_apply to a pure IVD program', async () => {
+    const recs = await recommendApplicability({ ...baseProfile, productType: 'ivd', isIvd: true });
+    const rec = recs.find(r => r.standard.standardCode === 'ISO 11608-1:2022')!;
+    expect(rec.applicability).toBe('does_not_apply');
+  });
+
+  test('added biocompatibility parts apply when hasPatientContact=true', async () => {
+    const recs = await recommendApplicability({ ...baseProfile, hasPatientContact: true });
+    const byCode = new Map(recs.map(r => [r.standard.standardCode, r]));
+    expect(byCode.get('ISO 10993-5:2009')!.applicability).toBe('applies');
+    expect(byCode.get('ISO 10993-23:2021')!.applicability).toBe('applies');
+  });
+});
+
+describe('regulatory standards seed — integrity', () => {
+  test('standard codes are unique and entries are well-formed', () => {
+    const codes = REGULATORY_STANDARDS_SEED.map(s => s.standardCode);
+    expect(new Set(codes).size).toBe(codes.length);
+    for (const s of REGULATORY_STANDARDS_SEED) {
+      expect(s.standardCode.trim().length).toBeGreaterThan(0);
+      expect(s.standardName.trim().length).toBeGreaterThan(0);
+      expect(s.standardBody.trim().length).toBeGreaterThan(0);
+      expect(s.domain.trim().length).toBeGreaterThan(0);
+      expect(s.appliesTo.length).toBeGreaterThan(0);
+    }
+  });
+
+  test('covers the combination-product domain (drug-device delivery)', () => {
+    const combo = REGULATORY_STANDARDS_SEED.filter(s => s.domain === 'combination_product');
+    expect(combo.length).toBeGreaterThanOrEqual(3);
+    expect(combo.map(s => s.standardCode)).toContain('ISO 11608-1:2022');
+  });
+
+  test('jurisdictions on global standards span multiple regions', () => {
+    const iso13485 = REGULATORY_STANDARDS_SEED.find(s => s.standardCode === 'ISO 13485:2016')!;
+    expect((iso13485.jurisdictions ?? []).length).toBeGreaterThanOrEqual(5);
+  });
 });

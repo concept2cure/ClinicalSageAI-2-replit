@@ -228,6 +228,33 @@ const ruleClinicalInvestigation: Rule = (std, profile) => {
   };
 };
 
+/** Combination products — drug/biologic delivery systems (injectors, prefilled syringes). */
+const ruleCombinationProduct: Rule = (std, profile) => {
+  if (std.domain !== 'combination_product') return null;
+  const isCombination =
+    profile.productType === 'combination' ||
+    ((std.appliesTo ?? []) as string[]).includes('device');
+  if (profile.productType === 'combination') {
+    return {
+      applicability: 'applies',
+      rationale: `${std.standardCode} applies because the program is a drug/biologic-device combination product (delivery system).`,
+      confidence: 0.9,
+    };
+  }
+  if (profile.productType === 'device' && isCombination) {
+    return {
+      applicability: 'conditional',
+      rationale: `${std.standardCode} applies if the device delivers a drug/biologic (e.g. an injection or delivery system).`,
+      confidence: 0.6,
+    };
+  }
+  return {
+    applicability: 'does_not_apply',
+    rationale: `${std.standardCode} targets drug/biologic delivery combination products; this program is not one.`,
+    confidence: 0.8,
+  };
+};
+
 const RULES: Rule[] = [
   ruleUniversal,
   ruleSoftware,
@@ -237,6 +264,7 @@ const RULES: Rule[] = [
   ruleIvd,
   ruleUsability,
   ruleClinicalInvestigation,
+  ruleCombinationProduct,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
