@@ -31,6 +31,7 @@ import { assembleCoverLetterContext } from '../services/ind-lifecycle/cover-lett
 import { evaluateRegulatoryClock } from '../services/ind-lifecycle/ind-regulatory-clock';
 import { buildUsRegionalEnvelope } from '../services/ind-lifecycle/ind-ectd-envelope';
 import { summarizeSequences } from '../services/ind-lifecycle/ind-submission-overview';
+import { buildIndDashboard } from '../services/ind-lifecycle/ind-dashboard';
 import {
   renderIndSafetyReportPdf,
   renderIndAnnualReportPdf,
@@ -409,6 +410,42 @@ router.get('/submission/:id/overview', limiter, requireRole(AUTHOR), async (req,
       listSequences(submissionId, ctx),
     ]);
     res.json({ submission, sequences, summary: summarizeSequences(sequences) });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Unified IND dashboard — sequence summary + (optional) readiness + (optional)
+ * regulatory clock, with a single headline. Body: { readinessInput?, clockInput? }.
+ */
+router.post('/submission/:id/dashboard', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const submissionId = Number(req.params.id);
+  if (!Number.isInteger(submissionId) || submissionId <= 0) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
+  }
+  const b = body(req);
+  try {
+    const sequences = await listSequences(submissionId, ctx);
+    const readiness =
+      b.readinessInput && (b.readinessInput.filingType === 'initial' || b.readinessInput.filingType === 'amendment')
+        ? evaluateIndReadiness({
+            filingType: b.readinessInput.filingType,
+            sectionStatus: b.readinessInput.sectionStatus ?? {},
+            completedForms: b.readinessInput.completedForms,
+            overdueSafetyReports: b.readinessInput.overdueSafetyReports,
+          })
+        : null;
+    const clock = b.clockInput?.receiptDate
+      ? evaluateRegulatoryClock({
+          receiptDate: b.clockInput.receiptDate,
+          events: b.clockInput.events,
+          asOf: b.clockInput.asOf,
+        })
+      : null;
+    res.json(buildIndDashboard({ sequenceSummary: summarizeSequences(sequences), readiness, clock }));
   } catch (err) {
     fail(res, err);
   }

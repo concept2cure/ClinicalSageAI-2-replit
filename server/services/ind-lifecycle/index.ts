@@ -27,3 +27,4 @@ export * from './cover-letter-context';
 export * from './ind-regulatory-clock';
 export * from './ind-ectd-envelope';
 export * from './ind-submission-overview';
+export * from './ind-dashboard';
