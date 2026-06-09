@@ -29,6 +29,10 @@ import {
   renderIndSafetyReportPdf,
   renderIndAnnualReportPdf,
 } from '../services/ind-lifecycle/ind-document-renderer';
+import {
+  persistSafetyReportIntent,
+  persistAmendmentPlan,
+} from '../services/ind-lifecycle/ind-lifecycle-persistence';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('ind-lifecycle-routes');
@@ -36,17 +40,46 @@ const router = Router();
 const limiter = createRateLimiter();
 const AUTHOR = 'regulatory-author';
 
+interface Ctx {
+  userId: number;
+  organizationId: number;
+}
+function ctxOf(req: Request): Ctx | null {
+  const r = req as any;
+  const userId = Number(r.user?.id);
+  const orgRaw = r.tenantContext?.organizationId ?? r.tenantId ?? r.user?.organizationId;
+  const organizationId = Number(orgRaw);
+  if (!Number.isInteger(userId) || userId <= 0 || !Number.isInteger(organizationId) || organizationId <= 0) {
+    return null;
+  }
+  return { userId, organizationId };
+}
+
 function body(req: Request): any {
   return req.body && typeof req.body === 'object' ? req.body : {};
 }
 
+// submission-service error codes → HTTP status (for the /file persistence routes).
+const SUBMISSION_CODE_STATUS: Record<string, number> = {
+  NOT_FOUND: 404,
+  INVALID_STATE: 409,
+  FORBIDDEN: 403,
+  VALIDATION: 400,
+};
+
 function fail(res: Response, err: unknown): void {
+  const code = (err as { code?: string } | null)?.code;
+  if (code && SUBMISSION_CODE_STATUS[code]) {
+    return void res.status(SUBMISSION_CODE_STATUS[code]).json({
+      error: { code, message: err instanceof Error ? err.message : 'Request failed.' },
+    });
+  }
   const msg = err instanceof Error ? err.message : String(err);
   // The lifecycle services throw `CODE: message` strings for caller errors
   // (e.g. IND_AMENDMENT_NO_DOCUMENTS); treat those as 400, everything else 500.
   if (/^[A-Z_]+:/.test(msg)) {
-    const [code] = msg.split(':', 1);
-    return void res.status(400).json({ error: { code, message: msg } });
+    const [c] = msg.split(':', 1);
+    return void res.status(400).json({ error: { code: c, message: msg } });
   }
   logger.error('ind-lifecycle route error', { err: msg });
   res.status(500).json({ error: { code: 'INTERNAL', message: 'Request failed.' } });
@@ -154,6 +187,60 @@ router.post('/readiness', limiter, requireRole(AUTHOR), (req, res) => {
         overdueSafetyReports: b.overdueSafetyReports,
       }),
     );
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+function noAuth(res: Response) {
+  return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+}
+
+/**
+ * File a 312.32 IND Safety Report as an eCTD amendment sequence + leaves.
+ * Body: { submissionId, sequenceNumber, event, icsr?, aggregateContext?, now? }.
+ */
+router.post('/safety-report/file', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const b = body(req);
+  const submissionId = Number(b.submissionId);
+  if (!Number.isInteger(submissionId) || submissionId <= 0 || !/^\d{4}$/.test(String(b.sequenceNumber ?? ''))) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'submissionId (int) and 4-digit sequenceNumber are required.' } });
+  }
+  if (!b.event) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'event (AdverseEvent) is required.' } });
+  }
+  try {
+    const { amendmentIntent } = assembleIndSafetyReport(b.event, {
+      icsr: b.icsr ?? null,
+      aggregateContext: b.aggregateContext,
+      now: b.now ? new Date(b.now) : undefined,
+    });
+    if (!amendmentIntent) {
+      return res.status(422).json({ error: { code: 'NOT_REPORTABLE', message: 'Event is not an expedited IND safety report; nothing to file.' } });
+    }
+    res.status(201).json(await persistSafetyReportIntent(submissionId, amendmentIntent, String(b.sequenceNumber), ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * File a 312.30 / 312.31 amendment as an eCTD amendment sequence + leaves.
+ * Body: { submissionId, sequenceNumber, projectId, indNumber, changedDocuments }.
+ */
+router.post('/amendment/file', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const b = body(req);
+  const submissionId = Number(b.submissionId);
+  if (!Number.isInteger(submissionId) || submissionId <= 0 || !/^\d{4}$/.test(String(b.sequenceNumber ?? ''))) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'submissionId (int) and 4-digit sequenceNumber are required.' } });
+  }
+  try {
+    const plan = planIndAmendment(b);
+    res.status(201).json(await persistAmendmentPlan(submissionId, plan, String(b.sequenceNumber), ctx));
   } catch (err) {
     fail(res, err);
   }
