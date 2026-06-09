@@ -39,6 +39,44 @@ const ROLE_OVERLAYS: Record<UserRole, string> = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Language / Locale Overlays
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Supported response languages, mirroring the client language registry
+ * (client/src/i18n/languages.ts). 'en' is the default and needs no overlay.
+ */
+export type AnaLanguage = 'en' | 'fr' | 'de' | 'ja' | 'zh';
+
+/**
+ * Per-language directives. Each tells AnA to respond in the client's language
+ * with that culture's professional register, norms and conventions — while
+ * holding every normalised regulatory identifier (CFR/ICH citations, agency
+ * acronyms, eCTD module codes, evidence labels, slash commands, and the
+ * machine-read ana-action / ana-grounding JSON blocks) in its canonical form.
+ * AnA translates meaning, never the identifiers a reviewer or the system reads.
+ */
+const LANGUAGE_OVERLAYS: Record<AnaLanguage, string> = {
+  en: '',
+
+  fr: `## LANGUE DE RÉPONSE — FRANÇAIS
+Réponds intégralement en français professionnel, au vouvoiement, comme un consultant senior en affaires réglementaires s'adressant à son client. Garde un ton posé et précis : pas d'enthousiasme manufacturé, pas de points d'exclamation. Applique les conventions françaises (espace insécable avant : ; ? !, dates au format JJ/MM/AAAA) et privilégie la terminologie réglementaire française et européenne (EMA, ANSM) lorsqu'elle s'applique.
+Conserve INCHANGÉS, dans leur forme d'origine, sans les traduire : les citations et codes réglementaires (21 CFR, ICH E6(R2), eCTD, modules M1–M5), les noms d'agences et acronymes (FDA, EMA, PMDA), les étiquettes de preuve [KNOWN] / [INFERRED] / [MISSING], les commandes slash (/audit, /readiness…) et les blocs JSON \`ana-action\` et \`ana-grounding\` (leurs clés et valeurs structurelles restent en anglais). Traduis le sens, jamais les identifiants normalisés.`,
+
+  de: `## ANTWORTSPRACHE — DEUTSCH
+Antworte vollständig auf professionellem Deutsch in der Sie-Form, wie ein erfahrener Regulatory-Affairs-Berater gegenüber einem Mandanten. Bleib sachlich und präzise: keine aufgesetzte Begeisterung, keine Ausrufezeichen. Verwende deutsche Konventionen (Datumsformat TT.MM.JJJJ, Dezimalkomma) und bevorzuge deutsche bzw. europäische regulatorische Terminologie (EMA, BfArM, PEI), wo zutreffend.
+Lass UNVERÄNDERT und unübersetzt in Originalform: regulatorische Zitate und Codes (21 CFR, ICH, eCTD, Module M1–M5), Behördennamen und Akronyme (FDA, EMA, PMDA), die Evidenz-Labels [KNOWN] / [INFERRED] / [MISSING], Slash-Befehle (/audit, /readiness …) sowie die JSON-Blöcke \`ana-action\` und \`ana-grounding\` (deren Schlüssel und strukturelle Werte bleiben englisch). Übersetze die Bedeutung, niemals die normierten Bezeichner.`,
+
+  ja: `## 回答言語 — 日本語
+すべて日本語で回答してください。経験豊富な薬事コンサルタントがクライアントに対して話すように、です・ます調を基本とし、状況に応じて適切な敬語（尊敬語・謙譲語）を用います。過度にくだけた表現や感嘆符は避け、簡潔で落ち着いた専門家の語り口を保ってください。日本の規制当局（PMDA、厚生労働省）の用語や慣行に言及できる場合はそれを優先し、日付は「YYYY年M月D日」の形式を用います。
+ただし、以下は英語・正式表記の原文のまま変更・翻訳しないでください：規制の引用およびコード（21 CFR、ICH E6(R2)、eCTD、M1〜M5 モジュール）、当局名・略語（FDA、EMA、PMDA）、エビデンスのラベル [KNOWN] / [INFERRED] / [MISSING]、スラッシュコマンド（/audit、/readiness など）、ならびに \`ana-action\` および \`ana-grounding\` の JSON ブロック（構造上のキーと値は英語のまま）。意味は翻訳し、規格化された識別子は翻訳しないでください。`,
+
+  zh: `## 回答语言 — 中文
+请全程使用简体中文回答，语气应为专业、稳重的资深药政事务顾问对客户讲话的口吻，使用敬辞（如"您"），避免过度口语化和感叹号。在适用时优先采用中国监管机构（NMPA、国家药监局）的术语与惯例，日期使用"YYYY年M月D日"格式。
+但以下内容须保持英文原文、不得翻译：法规引用与代码（21 CFR、ICH、eCTD、M1–M5 模块）、机构名称与缩写（FDA、EMA、PMDA、NMPA）、证据标签 [KNOWN] / [INFERRED] / [MISSING]、斜杠命令（/audit、/readiness 等），以及 \`ana-action\` 与 \`ana-grounding\` 的 JSON 块（其结构性键与值保持英文）。请翻译含义，但不要翻译这些规范化的标识符。`,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Core System Prompt
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -534,6 +572,8 @@ Use tables and structured comparisons.`,
 export interface AnaRIPromptOptions {
   userRole?: UserRole;
   intentLens?: IntentLens;
+  /** Response language. Defaults to English; non-English values add a locale overlay. */
+  language?: AnaLanguage;
   projectContext?: {
     productName?: string;
     therapeuticArea?: string;
@@ -555,6 +595,13 @@ export interface AnaRIPromptOptions {
  */
 export function buildAnaRISystemPrompt(options: AnaRIPromptOptions = {}): string {
   const parts: string[] = [ANA_RI_CORE_PROMPT];
+
+  // Language overlay — high priority so it governs the whole response. Only
+  // applied for non-English so the default path is byte-for-byte unchanged.
+  const language = options.language || 'en';
+  if (language !== 'en' && LANGUAGE_OVERLAYS[language]) {
+    parts.push(`\n${LANGUAGE_OVERLAYS[language]}`);
+  }
 
   // Role overlay
   const role = options.userRole || 'general';
@@ -738,4 +785,4 @@ export function getIntelligencePriorities(role: UserRole): RoleIntelligencePrior
   return ROLE_INTELLIGENCE_PRIORITIES[role];
 }
 
-export { ROLE_OVERLAYS, INTENT_OVERLAYS };
+export { ROLE_OVERLAYS, INTENT_OVERLAYS, LANGUAGE_OVERLAYS };

@@ -78,6 +78,7 @@ import {
   ensureGateway,
   VALID_LENSES,
   VALID_ROLES,
+  VALID_LANGUAGES,
 } from './shared.js';
 
 // Idempotency cache — per-request-id memoisation so a client retry within
@@ -126,6 +127,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       authoring_context,
       preferred_provider,
       useFirecrawl,
+      language,
     } = req.body;
 
     const correlationId =
@@ -154,6 +156,9 @@ router.post('/chat', async (req: Request, res: Response) => {
     // Validate user_role if provided
     const validatedRole: UserRole | undefined =
       user_role && VALID_ROLES.has(user_role as UserRole) ? (user_role as UserRole) : undefined;
+
+    // Validate response language if provided (defaults to English downstream)
+    const validatedLanguage = VALID_LANGUAGES.has(language) ? language : undefined;
 
     // Resolve org/user context
     const { orgId, userId } = extractRequestContext(req);
@@ -295,6 +300,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       message,
       intentLens: validatedLens,
       userRole: effectiveRole,
+      language: validatedLanguage,
       projectContext: project_context,
       documentContext: document_context,
       submissionType: submission_type as SubmissionType | undefined,

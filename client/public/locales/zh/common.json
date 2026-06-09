@@ -1,0 +1,37 @@
+{
+  "actions": {
+    "save": "保存",
+    "cancel": "取消",
+    "close": "关闭",
+    "next": "下一步",
+    "previous": "上一步",
+    "delete": "删除",
+    "continue": "继续",
+    "back": "返回",
+    "search": "搜索"
+  },
+  "density": {
+    "label": "显示密度",
+    "compact": "紧凑",
+    "comfortable": "舒适",
+    "spacious": "宽松"
+  },
+  "topbar": {
+    "notifications": "通知",
+    "help": "帮助",
+    "askAna": "向 AnA 提问或快速跳转…",
+    "command": "命令",
+    "activeProject": "当前项目",
+    "noProjects": "暂无项目",
+    "selectProject": "选择项目",
+    "filter": "筛选",
+    "clientType": "客户类型",
+    "pharma": "制药",
+    "biotech": "生物科技",
+    "switchProgram": "切换项目"
+  },
+  "language": {
+    "label": "语言",
+    "select": "选择语言"
+  }
+}

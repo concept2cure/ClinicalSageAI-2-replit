@@ -70,6 +70,7 @@ import {
   ensureGateway,
   VALID_LENSES,
   VALID_ROLES,
+  VALID_LANGUAGES,
 } from './shared.js';
 
 // Thin facade over getPool() so the extracted body keeps its `dbPool.query(...)`
@@ -97,6 +98,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       authoring_context,
       project_id,
       selected_tools,
+      language,
     } = req.body;
 
     if (!message || typeof message !== 'string') {
@@ -166,6 +168,8 @@ router.post('/stream', async (req: Request, res: Response) => {
     const validatedRole: UserRole | undefined =
       user_role && VALID_ROLES.has(user_role as UserRole) ? (user_role as UserRole) : undefined;
 
+    const validatedLanguage = VALID_LANGUAGES.has(language) ? language : undefined;
+
     const effectiveRole: UserRole =
       validatedRole ||
       inferRole({
@@ -205,6 +209,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       message,
       intentLens: validatedLens,
       userRole: effectiveRole,
+      language: validatedLanguage,
       projectContext: project_context,
       documentContext: document_context,
       submissionType: submission_type as SubmissionType | undefined,

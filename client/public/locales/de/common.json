@@ -1,0 +1,37 @@
+{
+  "actions": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "close": "Schließen",
+    "next": "Weiter",
+    "previous": "Zurück",
+    "delete": "Löschen",
+    "continue": "Fortfahren",
+    "back": "Zurück",
+    "search": "Suchen"
+  },
+  "density": {
+    "label": "Dichte",
+    "compact": "Kompakt",
+    "comfortable": "Komfortabel",
+    "spacious": "Geräumig"
+  },
+  "topbar": {
+    "notifications": "Benachrichtigungen",
+    "help": "Hilfe",
+    "askAna": "AnA fragen, springen zu …",
+    "command": "Befehl",
+    "activeProject": "Aktives Projekt",
+    "noProjects": "Keine Projekte",
+    "selectProject": "Projekt auswählen",
+    "filter": "Filter",
+    "clientType": "Kundentyp",
+    "pharma": "Pharma",
+    "biotech": "Biotech",
+    "switchProgram": "Programm wechseln"
+  },
+  "language": {
+    "label": "Sprache",
+    "select": "Sprache wählen"
+  }
+}
