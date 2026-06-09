@@ -120,6 +120,58 @@ Berücksichtigen Sie die deutsche Regulierungs- und Geschäftskultur.
 - 法规术语、代码与缩写（NMPA、ICH、21 CFR、eCTD 等）保持英文正式表记。`,
 };
 
+/**
+ * English-language market briefs keyed by the project's target agency, for
+ * clients working in English on a non-US program (common: Japanese or Chinese
+ * submissions drafted in English). They carry the same local regulatory
+ * landscape and interaction norms as the CULTURAL_OVERLAYS, so AnA stays
+ * market-aware even when no language overlay is active. When the active
+ * language's cultural overlay already covers the target market (e.g. ja+PMDA),
+ * the brief is skipped to avoid duplication.
+ */
+const MARKET_BRIEFS: Record<string, string> = {
+  pmda: `## TARGET MARKET AWARENESS — JAPAN (PMDA)
+The program targets Japan. Apply Japanese regulatory and professional context even though the conversation is not in Japanese:
+
+- **Authority & pathway:** PMDA review with MHLW approval (J-NDA/Shonin). Know the accelerators (SAKIGAKE designation, conditional early approval) and Japan-specific expectations: J-GMP, ICH E5 bridging strategy, the question of Japanese-subject data, and the consultation system (PMDA面談) — strategy in Japan is built around pre-submission consultations, not around filing first. Reimbursement via Chuikyo pricing decisions often shapes the business case as much as approval.
+- **Interaction norms:** Japanese counterparts and reviewers value careful evidence over assertive conclusions, indirect and concrete framing of risk, and respect for internal consensus-building (nemawashi/ringi). When advising on meetings or correspondence with Japanese partners or PMDA, shape recommendations to support that consensus process and avoid putting any party in a face-losing position.
+- **Conventions:** Japanese fiscal year starts in April; dates may appear in the Japanese era calendar; family name precedes given name.`,
+
+  nmpa: `## TARGET MARKET AWARENESS — CHINA (NMPA)
+The program targets China. Apply Chinese regulatory and professional context even though the conversation is not in Chinese:
+
+- **Authority & pathway:** NMPA with CDE technical review. Know the China-specific machinery: registration categories, the implicit (60-working-day) clinical trial authorization, the MAH system, data-localization requirements, the Chinese Pharmacopoeia (ChP), and expectations around Chinese-patient data or real-world evidence. China is an ICH member but does not simply transplant FDA/EMA logic. NRDL (national reimbursement) negotiation frequently determines commercial viability.
+- **Interaction norms:** hierarchy and face matter; disagreement is best raised privately and with room to maneuver. Relationships and trust are built over time — advise with that horizon in mind, and frame recommendations so they help the sponsor coordinate across CDE, local partners, and internal stakeholders.
+- **Conventions:** dates as YYYY-MM-DD (年月日); family name precedes given name.`,
+
+  ema: `## TARGET MARKET AWARENESS — EUROPEAN UNION (EMA)
+The program targets the EU. Apply European regulatory context:
+
+- **Authority & pathway:** EMA/CHMP for the centralised procedure; decentralised/MRP run through national agencies (e.g. BfArM and PEI in Germany, ANSM in France). CTIS for clinical trials, EUDAMED for devices. Approval is only half the battle: national HTA and reimbursement (Germany's AMNOG benefit assessment via G-BA/IQWiG, France's HAS with SMR/ASMR ratings) gate real market access — flag those consequences when they bear on evidence strategy.
+- **Interaction norms:** expect formality and precision; German counterparts prize factual directness and thoroughness, French counterparts structured argumentation. National agencies differ in style — do not assume one EU voice.`,
+};
+
+/** Map each supported language to the home market its cultural overlay already covers. */
+const LANGUAGE_HOME_MARKET: Partial<Record<AnaLanguage, string>> = {
+  ja: 'pmda',
+  zh: 'nmpa',
+  de: 'ema',
+  fr: 'ema',
+};
+
+/** Normalise a free-text target agency to a MARKET_BRIEFS key, or null. */
+export function resolveMarketKey(targetAgency: string | undefined | null): string | null {
+  if (!targetAgency) return null;
+  const a = targetAgency.toLowerCase();
+  if (a.includes('pmda') || a.includes('mhlw') || a.includes('japan')) return 'pmda';
+  if (a.includes('nmpa') || a.includes('cde') || a.includes('china')) return 'nmpa';
+  if (
+    a.includes('ema') || a.includes('chmp') || a.includes('bfarm') ||
+    a.includes('ansm') || a.includes('europe') || a.trim() === 'eu'
+  ) return 'ema';
+  return null;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Core System Prompt
 // ─────────────────────────────────────────────────────────────────────────────
@@ -652,6 +704,14 @@ export function buildAnaRISystemPrompt(options: AnaRIPromptOptions = {}): string
     }
   }
 
+  // Target-market brief — market awareness keyed to the program's target
+  // agency, independent of UI language (e.g. a PMDA program worked in
+  // English). Skipped when the language overlay already covers that market.
+  const marketKey = resolveMarketKey(options.projectContext?.targetAgency);
+  if (marketKey && MARKET_BRIEFS[marketKey] && LANGUAGE_HOME_MARKET[language] !== marketKey) {
+    parts.push(`\n${MARKET_BRIEFS[marketKey]}`);
+  }
+
   // Role overlay
   const role = options.userRole || 'general';
   parts.push(`\n## CURRENT USER ROLE\n${ROLE_OVERLAYS[role]}`);
@@ -834,4 +894,4 @@ export function getIntelligencePriorities(role: UserRole): RoleIntelligencePrior
   return ROLE_INTELLIGENCE_PRIORITIES[role];
 }
 
-export { ROLE_OVERLAYS, INTENT_OVERLAYS, LANGUAGE_OVERLAYS, CULTURAL_OVERLAYS };
+export { ROLE_OVERLAYS, INTENT_OVERLAYS, LANGUAGE_OVERLAYS, CULTURAL_OVERLAYS, MARKET_BRIEFS };

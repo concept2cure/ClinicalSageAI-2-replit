@@ -595,6 +595,57 @@ describe('AnA RI Persona', () => {
     expect(en).not.toContain('ASPECTS CULTURELS');
     expect(en).not.toContain('KULTURELLE');
   });
+
+  it('injects an English market brief when the target agency is non-US', () => {
+    const pmda = buildAnaRISystemPrompt({
+      language: 'en',
+      projectContext: { targetAgency: 'PMDA' },
+    });
+    expect(pmda).toContain('TARGET MARKET AWARENESS — JAPAN (PMDA)');
+    expect(pmda).toContain('SAKIGAKE');
+    expect(pmda).toContain('nemawashi');
+
+    const nmpa = buildAnaRISystemPrompt({
+      language: 'en',
+      projectContext: { targetAgency: 'NMPA (China)' },
+    });
+    expect(nmpa).toContain('TARGET MARKET AWARENESS — CHINA (NMPA)');
+
+    const ema = buildAnaRISystemPrompt({
+      language: 'en',
+      projectContext: { targetAgency: 'EMA' },
+    });
+    expect(ema).toContain('TARGET MARKET AWARENESS — EUROPEAN UNION (EMA)');
+    expect(ema).toContain('AMNOG');
+  });
+
+  it('skips the market brief when the language overlay already covers that market', () => {
+    // ja already carries the Japan cultural overlay — no duplicate PMDA brief.
+    const jaPmda = buildAnaRISystemPrompt({
+      language: 'ja',
+      projectContext: { targetAgency: 'PMDA' },
+    });
+    expect(jaPmda).toContain('文化・市場への配慮 — 日本');
+    expect(jaPmda).not.toContain('TARGET MARKET AWARENESS — JAPAN');
+
+    // ja targeting NMPA gets the China brief alongside the Japan overlay.
+    const jaNmpa = buildAnaRISystemPrompt({
+      language: 'ja',
+      projectContext: { targetAgency: 'NMPA' },
+    });
+    expect(jaNmpa).toContain('TARGET MARKET AWARENESS — CHINA (NMPA)');
+  });
+
+  it('adds no market brief for FDA or unknown agencies', () => {
+    const fda = buildAnaRISystemPrompt({
+      language: 'en',
+      projectContext: { targetAgency: 'FDA' },
+    });
+    expect(fda).not.toContain('TARGET MARKET AWARENESS');
+
+    const none = buildAnaRISystemPrompt({ language: 'en' });
+    expect(none).not.toContain('TARGET MARKET AWARENESS');
+  });
 });
 
 // ── Edge Case Tests ──────────────────────────────────────────────────────────
