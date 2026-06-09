@@ -31,6 +31,7 @@ import { buildFirstSessionTour } from './onboarding-tour.js';
 import { buildDecisionFrameworkBlock, detectRelevantFrameworks } from './decision-frameworks.js';
 import { buildAgencyTacticsBlock, detectRelevantTactics } from './agency-tactics.js';
 import { buildIchGuidelineBlock } from './ich-guideline-corpus.js';
+import { buildPathwaysBlock } from './regulatory-pathways-corpus.js';
 import { buildCompetitiveBlock, detectRelevantPlays } from './competitive-strategy.js';
 import { buildAlignmentBlock, detectRelevantAlignment } from './stakeholder-alignment.js';
 import { buildAttunementBlock, detectClientState } from './client-attunement.js';
@@ -185,6 +186,9 @@ export const SUPPORTED_SLASH_COMMANDS = [
   'ich',
   'guideline',
   'guidelines',
+  'pathway',
+  'pathways',
+  'expedited',
   'capabilities',
   'whatcanyoudo',
 ] as const;
@@ -196,6 +200,7 @@ const ROLE_FRAMEABLE_SOURCES = new Set<string>([
   'decide', 'tradeoff', 'framework', 'meeting', 'agency', 'tactics', 'proactive-tour-guide',
   'competitive-strategy', 'position', 'landscape', 'compete',
   'ich-guidelines', 'ich', 'guideline', 'guidelines',
+  'regulatory-pathways', 'pathway', 'pathways', 'expedited',
 ]);
 
 const SUPPORTED_SLASH_COMMAND_REGEX = new RegExp(
@@ -1253,6 +1258,9 @@ export async function enrichContextForChat(params: {
       ich: () => Promise.resolve(buildIchGuidelineBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message) ?? undefined })),
       guideline: () => Promise.resolve(buildIchGuidelineBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message) ?? undefined })),
       guidelines: () => Promise.resolve(buildIchGuidelineBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message) ?? undefined })),
+      pathway: () => Promise.resolve(buildPathwaysBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message) ?? undefined })),
+      pathways: () => Promise.resolve(buildPathwaysBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message) ?? undefined })),
+      expedited: () => Promise.resolve(buildPathwaysBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message) ?? undefined })),
       capabilities: () => Promise.resolve(buildCapabilityCatalogue()),
       whatcanyoudo: () => Promise.resolve(buildCapabilityCatalogue()),
       workflow: () => submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
@@ -1387,6 +1395,11 @@ export async function enrichContextForChat(params: {
         : 'Orient the user to the relevant ICH guidelines using the reference block. Cite exact codes and titles; do not invent revisions.',
       guideline: 'Identify and explain the relevant ICH guideline using the reference block. Cite the exact code and title; confirm the current revision on ich.org.',
       guidelines: 'Identify and explain the relevant ICH guidelines using the reference block. Cite exact codes and titles; confirm the current revisions on ich.org.',
+      pathway: slash.args
+        ? `Identify the expedited / early-access pathways relevant to: ${slash.args}. Use the pathways reference block — name the agency, the program, who qualifies and what it gives the program; remind the user to confirm eligibility against current agency guidance.`
+        : 'Orient the user to the relevant expedited / access pathways using the reference block. Name real programs per agency; do not invent designations.',
+      pathways: 'Identify the relevant expedited / early-access pathways per agency using the reference block. Name real programs and their eligibility; confirm against current agency guidance.',
+      expedited: 'Identify the relevant expedited development/review and early-access pathways per agency using the reference block. Name real programs and eligibility; confirm against current agency guidance.',
       export: 'Export this conversation.',
     };
 

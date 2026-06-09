@@ -124,6 +124,55 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   },
 };
 
+export const ASSESS_REGULATORY_LANDSCAPE: AnaTool = {
+  name: 'assess_regulatory_landscape',
+  description:
+    'Assemble a cross-source regulatory landscape for a topic in ONE call — fans out across ' +
+    'ClinicalTrials.gov, PubMed, and CMS coverage, plus FDA device recalls (device domain) and/or ' +
+    'FDA drug labels + Drugs@FDA approvals (drug domain). Returns compact, citeable sections to ' +
+    'synthesize into a competitive / safety / reimbursement briefing. Prefer this over calling each ' +
+    'source separately when the user wants an overview or landscape.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      topic: {
+        type: 'string',
+        description: 'The product, indication, or device/drug to profile (e.g. "pembrolizumab NSCLC").',
+      },
+      domain: {
+        type: 'string',
+        enum: ['device', 'drug', 'auto'],
+        description: "Scope the FDA sources: 'device', 'drug', or 'auto' (both). Default: auto.",
+      },
+      max_per_source: {
+        type: 'number',
+        description: 'Max items per source (default: 5, max: 15).',
+      },
+    },
+    required: ['topic'],
+  },
+};
+
+export const SEARCH_DRUG_APPROVALS: AnaTool = {
+  name: 'search_drug_approvals',
+  description:
+    'Look up FDA drug approval status and regulatory history (Drugs@FDA) by brand name, generic ' +
+    'name, or application number. Returns the application number (NDA/BLA/ANDA), sponsor, approval ' +
+    'count + latest approval date, marketing status, and brand/generic names. Use for "is X ' +
+    'approved / when / under what application" and reference-product / 505(b)(2) strategy.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      brand_name: { type: 'string', description: 'Brand (trade) name, e.g. "Keytruda".' },
+      generic_name: { type: 'string', description: 'Generic name, e.g. "pembrolizumab".' },
+      application_number: { type: 'string', description: 'FDA application number, e.g. "BLA125514".' },
+      query: { type: 'string', description: 'Free-text fallback matched against the brand name.' },
+      max_results: { type: 'number', description: 'Maximum applications to return (default: 5, max: 10).' },
+    },
+    required: [],
+  },
+};
+
 export const SEARCH_DRUG_LABELS: AnaTool = {
   name: 'search_drug_labels',
   description:
@@ -2280,6 +2329,24 @@ export const LIST_VALIDATION_RULES: AnaTool = {
   },
 };
 
+export const LOOKUP_REGULATORY_PATHWAY: AnaTool = {
+  name: 'lookup_regulatory_pathway',
+  description:
+    "Look up expedited-development, accelerated-review and early-access pathways across the major global regulators (FDA, EMA, PMDA, MHRA, Health Canada, TGA, NMPA, ANVISA, Swissmedic). Returns the agency, program name, kind, eligibility, benefits and a statute/guidance citation. Static reference data — read-only, not tenant-specific. NOTE: designations and criteria change; confirm eligibility against the agency's current guidance before relying on a pathway. Pass `agency` to list a regulator's programs, `query` to search by goal (e.g. 'breakthrough', 'conditional approval', 'orphan', 'priority review'), or omit both for a summary across agencies.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      agency: {
+        type: 'string',
+        enum: ['FDA', 'EMA', 'PMDA', 'MHRA', 'Health Canada', 'TGA', 'NMPA', 'ANVISA', 'Swissmedic'],
+        description: 'Optional — scope to one regulator.',
+      },
+      query: { type: 'string', description: "Goal/keyword to search, e.g. 'breakthrough', 'orphan'." },
+    },
+    required: [],
+  },
+};
+
 export const GET_MARKET_SUBMISSION_SPEC: AnaTool = {
   name: 'get_market_submission_spec',
   description:
@@ -2342,6 +2409,62 @@ export const VALIDATE_MARKET_FORMATTING: AnaTool = {
       },
     },
     required: ['spec_id', 'leaves'],
+  },
+};
+
+export const GET_SUBMISSION_REQUIREMENTS: AnaTool = {
+  name: 'get_submission_requirements',
+  description:
+    "Get the required content for a submission TYPE (ind, nda, bla, anda, 510k, de_novo, pma, maa, cta, jnda, mdr_td, ivdr_td): the required CTD modules, document templates, and forms, with the regulatory basis. Optionally ASSESS a candidate set — pass `present_template_ids`, `present_document_names`, and/or `present_forms` and it returns which required documents/forms are present vs missing (optional documents never block). Read-only, static reference data. Use it to plan a submission or to gap-check what's assembled. Omit `submission_type` to list all types.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      submission_type: { type: 'string', description: "e.g. 'nda', '510k', 'maa', 'cta', 'mdr_td'." },
+      present_template_ids: { type: 'array', items: { type: 'string' }, description: 'Document-template ids already present (for assessment).' },
+      present_document_names: { type: 'array', items: { type: 'string' }, description: 'Document names already present (for assessment).' },
+      present_forms: { type: 'array', items: { type: 'string' }, description: 'Forms already present (for assessment).' },
+    },
+    required: [],
+  },
+};
+
+export const ASSESS_PATHWAY_ELIGIBILITY: AnaTool = {
+  name: 'assess_pathway_eligibility',
+  description:
+    "Check eligibility for an expedited/special regulatory designation (fda_breakthrough, fda_fast_track, fda_accelerated_approval, fda_priority_review, fda_orphan, eu_prime, eu_orphan, eu_conditional_ma, pmda_sakigake, pmda_orphan). Without `answers` it returns the designation's criteria. With `answers` (a map of criterion id → true/false) it returns eligibility — eligible only when EVERY criterion is met, undetermined while any is unanswered. This is a structured check against the published program definition, NOT the agency's designation decision. Omit `designation` to list all; pass `market` to scope.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      designation: { type: 'string', description: "e.g. 'fda_breakthrough', 'eu_prime', 'pmda_sakigake'." },
+      market: { type: 'string', description: 'Filter the list by market (us, eu, jp).' },
+      answers: { type: 'object', description: 'Map of criterion id → boolean, to assess eligibility.' },
+    },
+    required: [],
+  },
+};
+
+export const CLASSIFY_POST_SUBMISSION_CHANGE: AnaTool = {
+  name: 'classify_post_submission_change',
+  description:
+    "Classify a post-approval change into its lifecycle category — FDA supplements (Prior Approval Supplement, CBE-30, CBE-0, Annual Report) or EU variations (Type IA, IAIN, IB, II, Line Extension) — and the canonical sequence type it maps to. Without `flags` it returns the catalog for the market. With `flags` (scope_extension, major_impact, moderate_impact, immediate_safety_change, minimal_impact, eu_immediate_notification) it recommends a category by deterministic precedence. This is a structured decision aid from your flags, NOT the agency's classification decision — confirm against the variation/classification guideline. `market` is 'us' or 'eu'.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      market: { type: 'string', enum: ['us', 'eu'], description: "The market: 'us' (FDA supplements) or 'eu' (variations)." },
+      flags: {
+        type: 'object',
+        description: 'Structured change characteristics. Omit to list the category catalog.',
+        properties: {
+          scope_extension: { type: 'boolean', description: 'New indication/strength/form/route.' },
+          major_impact: { type: 'boolean', description: 'Substantial potential impact on safety/efficacy/quality.' },
+          moderate_impact: { type: 'boolean', description: 'Moderate potential impact.' },
+          immediate_safety_change: { type: 'boolean', description: 'Safety-related change to take effect immediately (US CBE-0).' },
+          minimal_impact: { type: 'boolean', description: 'Minimal/no impact (administrative / within validated ranges).' },
+          eu_immediate_notification: { type: 'boolean', description: 'EU: requires immediate notification (Type IAIN).' },
+        },
+      },
+    },
+    required: ['market'],
   },
 };
 
@@ -3765,6 +3888,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_IVD_KNOWLEDGE,
   SEARCH_DEVICE_RECALLS,
   SEARCH_DRUG_LABELS,
+  SEARCH_DRUG_APPROVALS,
+  ASSESS_REGULATORY_LANDSCAPE,
   PROJECT_KNOWLEDGE_SEARCH,
   SIMULATE_STUDY_DESIGN,
   SEARCH_DEVICE_ADVERSE_EVENTS,
@@ -3822,9 +3947,13 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ASSESS_PATHWAY_READINESS,
   BUILD_PATHWAY_MANIFEST,
   LIST_VALIDATION_RULES,
+  LOOKUP_REGULATORY_PATHWAY,
   GET_MARKET_SUBMISSION_SPEC,
   GET_DOCUMENT_TEMPLATE,
   VALIDATE_MARKET_FORMATTING,
+  GET_SUBMISSION_REQUIREMENTS,
+  ASSESS_PATHWAY_ELIGIBILITY,
+  CLASSIFY_POST_SUBMISSION_CHANGE,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,

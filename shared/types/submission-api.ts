@@ -339,6 +339,99 @@ export interface MarketSpecsResponse {
   specs: MarketSubmissionSpec[];
 }
 
+// ── Submission requirements (GET/POST /api/submissions/requirements[...]) ─────
+export interface RequiredDocument {
+  templateId?: string;
+  name: string;
+  required: boolean;
+}
+export interface SubmissionRequirement {
+  submissionType: string;
+  label: string;
+  market: string;
+  family: SubmissionFamily;
+  requiredModules?: string[];
+  requiredDocuments: RequiredDocument[];
+  requiredForms: string[];
+  basis: string;
+}
+export interface RequirementsResponse {
+  market: string;
+  requirements: SubmissionRequirement[];
+}
+export interface RequirementsAssessRequest {
+  templateIds?: string[];
+  documentNames?: string[];
+  forms?: string[];
+}
+export interface RequirementsAssessment {
+  submissionType: string;
+  ready: boolean;
+  missingDocuments: string[];
+  missingForms: string[];
+  presentRequiredCount: number;
+  totalRequiredCount: number;
+}
+
+// ── Expedited-pathway eligibility (GET/POST /api/submissions/designations[...]) ─
+export interface DesignationProfile {
+  id: string;
+  label: string;
+  market: string;
+  basis: string;
+  criteria: Array<{ id: string; question: string }>;
+}
+export interface DesignationsResponse {
+  market: string;
+  designations: DesignationProfile[];
+}
+export interface EligibilityAssessRequest {
+  answers: Record<string, boolean>;
+}
+export interface EligibilityAssessment {
+  designation: string;
+  label: string;
+  eligible: boolean;
+  met: string[];
+  unmet: string[];
+  unanswered: string[];
+}
+
+// ── Post-submission change classification (GET/POST /api/submissions/change-categories[...]) ─
+export interface ChangeCategory {
+  id: string;
+  market: 'us' | 'eu';
+  label: string;
+  definition: string;
+  reviewTiming: string;
+  sequenceType: 'variation' | 'amendment' | 'annual' | 'response';
+  examples: string[];
+  basis: string;
+}
+export interface ChangeCategoriesResponse {
+  market: string;
+  categories: ChangeCategory[];
+}
+export interface ChangeClassifyRequest {
+  market: 'us' | 'eu';
+  flags: {
+    scopeExtension?: boolean;
+    majorImpact?: boolean;
+    moderateImpact?: boolean;
+    immediateSafetyChange?: boolean;
+    minimalImpact?: boolean;
+    euImmediateNotification?: boolean;
+  };
+}
+export interface ChangeRecommendation {
+  market: 'us' | 'eu';
+  categoryId: string;
+  label: string;
+  sequenceType: 'variation' | 'amendment' | 'annual' | 'response';
+  rationale: string;
+  caveat: string;
+}
+
 // ── Market formatting validation (POST /api/submissions/market-specs/:specId/validate) ─
 export interface FormattingValidateRequest {
   leaves: Array<{

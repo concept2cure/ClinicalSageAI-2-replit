@@ -152,3 +152,16 @@ export {
   type IchStatus,
   type IchCorpusSummary,
 } from './ich-guideline-corpus.js';
+export {
+  REGULATORY_PATHWAYS,
+  getPathway,
+  pathwaysByAgency,
+  pathwaysByKind,
+  searchPathways,
+  buildPathwaysBlock,
+  pathwaysSummary,
+  type RegulatoryPathway,
+  type PathwayAgency,
+  type PathwayKind,
+  type PathwaysSummary,
+} from './regulatory-pathways-corpus.js';

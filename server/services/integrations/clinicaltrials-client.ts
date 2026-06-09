@@ -13,6 +13,8 @@
  * @module server/services/integrations/clinicaltrials-client
  */
 
+import { fetchWithRetry } from './http.js';
+
 const DEFAULT_BASE_URL = 'https://clinicaltrials.gov/api/v2';
 const REQUEST_TIMEOUT_MS = 10_000;
 const MAX_PAGE_SIZE = 50;
@@ -132,10 +134,7 @@ export async function searchTrials(params: CtgovSearchParams): Promise<CtgovSear
   const qs = buildStudiesQuery(params);
   const url = `${baseUrl()}/studies?${qs.toString()}`;
 
-  const res = await fetch(url, {
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    headers: { 'User-Agent': USER_AGENT },
-  });
+  const res = await fetchWithRetry(url, { headers: { 'User-Agent': USER_AGENT } }, { timeoutMs: REQUEST_TIMEOUT_MS });
   if (!res.ok) {
     throw new Error(`ClinicalTrials.gov API returned HTTP ${res.status}`);
   }

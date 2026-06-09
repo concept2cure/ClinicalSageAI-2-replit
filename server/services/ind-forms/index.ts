@@ -8,3 +8,4 @@
 
 export * from './ind-form-data-builders';
 export * from './ind-form-fill-service';
+export * from './form-context-assembler';

@@ -21,6 +21,7 @@ import type {
   IndSafetyReportSection,
 } from './ind-safety-report-service';
 import type { IndAnnualReportModel } from './ind-annual-report-service';
+import type { BriefingBookModel } from './ind-briefing-book-service';
 
 /** Map a (possibly nested) safety-report section to a renderer LeafSection, numbering it. */
 function safetySectionToLeaf(
@@ -56,5 +57,17 @@ export async function renderIndAnnualReportPdf(model: IndAnnualReportModel): Pro
   return renderStructuredLeafPdf(sections, {
     title: `IND Annual Report — ${model.productName} (IND ${model.indNumber})`,
     sectionCode: 'm1.13',
+  });
+}
+
+/** Render an FDA meeting briefing book (Pre-IND / Type A/B/C) to a PDF. */
+export async function renderBriefingBookPdf(model: BriefingBookModel): Promise<Buffer> {
+  const sections: LeafSection[] = model.sections.map((s) => ({
+    heading: s.heading,
+    body: s.body && s.body.length > 0 ? s.body : '[To be completed by the sponsor.]',
+  }));
+  return renderStructuredLeafPdf(sections, {
+    title: `FDA Briefing Document — ${model.productName} (${model.indication})`,
+    sectionCode: 'm1.6',
   });
 }

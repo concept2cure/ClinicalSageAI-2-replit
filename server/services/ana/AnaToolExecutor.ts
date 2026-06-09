@@ -25,6 +25,8 @@ import { createCalendarEvent } from '../integrations/calendar-event.js';
 import { searchHubSpotCrm, type HubSpotObject } from '../integrations/hubspot-client.js';
 import { searchDeviceRecalls } from '../integrations/device-recalls.js';
 import { searchDrugLabels } from '../integrations/drug-label-client.js';
+import { searchDrugApprovals } from '../integrations/drug-approvals-client.js';
+import { assessRegulatoryLandscape } from '../integrations/landscape.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 import type {
   GatewayRequest,
@@ -353,6 +355,70 @@ registerToolHandler('search_connected_repositories', async (input, ctx) => {
   }
 });
 
+// Assess Regulatory Landscape — cross-source synthesis (fans out in parallel).
+registerToolHandler('assess_regulatory_landscape', async (input) => {
+  const topic = typeof input.topic === 'string' ? input.topic.trim() : '';
+  if (!topic) {
+    return JSON.stringify({ error: 'assess_regulatory_landscape requires a topic.' });
+  }
+  const domain = ['device', 'drug', 'auto'].includes(input.domain as string)
+    ? (input.domain as 'device' | 'drug' | 'auto')
+    : 'auto';
+  try {
+    const result = await assessRegulatoryLandscape({
+      topic,
+      domain,
+      limitPerSource: Math.min((input.max_per_source as number) || 5, 15),
+    });
+    return JSON.stringify({
+      ...result,
+      citation_hint:
+        'Synthesize across sections; cite trials by NCT, literature by PMID, coverage by MCD number, ' +
+        'recalls by recall number, approvals by FDA application number — each with its url where present.',
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'Regulatory Landscape',
+      topic,
+      error: e instanceof Error ? e.message : 'Landscape assessment failed',
+      sections: {},
+    });
+  }
+});
+
+// Search Drug Approvals — Drugs@FDA (openFDA drug/drugsfda).
+registerToolHandler('search_drug_approvals', async (input) => {
+  const asStr = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v.trim() : undefined;
+  try {
+    const result = await searchDrugApprovals({
+      brandName: asStr(input.brand_name),
+      genericName: asStr(input.generic_name),
+      applicationNumber: asStr(input.application_number),
+      query: asStr(input.query),
+      limit: Math.min((input.max_results as number) || 5, 10),
+    });
+    if (!result.searchExpression) {
+      return JSON.stringify({
+        error: 'Provide brand_name, generic_name, application_number, or query to search approvals.',
+      });
+    }
+    return JSON.stringify({
+      source: result.source,
+      total: result.total,
+      resultCount: result.approvals.length,
+      approvals: result.approvals,
+      citation_hint: 'Reference approvals by FDA application number (NDA/BLA/ANDA) and sponsor.',
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'Drugs@FDA (openFDA)',
+      error: e instanceof Error ? e.message : 'Drug approval search failed',
+      approvals: [],
+    });
+  }
+});
+
 // Search Drug Labels — FDA openFDA drug/label (SPL).
 registerToolHandler('search_drug_labels', async (input) => {
   const asStr = (v: unknown): string | undefined =>
@@ -584,61 +650,31 @@ registerToolHandler('lookup_fda_guidance', async (input) => {
 
 // Lookup ICH Guideline
 registerToolHandler('lookup_ich_guideline', async (input) => {
-  const guideline = input.guideline as string;
-
-  const ichDatabase: Record<string, any> = {
-    'E6': {
-      code: 'ICH E6(R2)',
-      title: 'Good Clinical Practice',
-      scope: 'Standards for design, conduct, performance, monitoring, auditing, recording, analysis, and reporting of clinical trials',
-      keySections: [
-        '1. Glossary', '2. Principles of ICH GCP', '3. IRB/IEC',
-        '4. Investigator', '5. Sponsor', '6. Clinical Trial Protocol',
-        '7. Investigator\'s Brochure', '8. Essential Documents',
-      ],
-    },
-    'E8': {
-      code: 'ICH E8(R1)',
-      title: 'General Considerations for Clinical Studies',
-      scope: 'Framework for quality-by-design approach to clinical development',
-      keySections: [
-        'Quality factors critical to study', 'Study design considerations',
-        'Data quality and integrity', 'Stakeholder engagement',
-      ],
-    },
-    'E9': {
-      code: 'ICH E9(R1)',
-      title: 'Statistical Principles for Clinical Trials',
-      scope: 'Statistical methodology including estimands framework',
-      keySections: [
-        'Estimands and sensitivity analysis', 'Trial design',
-        'Analysis sets', 'Missing data handling', 'Multiplicity',
-      ],
-    },
-    'M4': {
-      code: 'ICH M4',
-      title: 'Common Technical Document (CTD)',
-      scope: 'Organization of regulatory submissions',
-      keySections: [
-        'Module 1: Regional Administrative Info',
-        'Module 2: Summaries (2.5 Clinical Overview, 2.7 Clinical Summary)',
-        'Module 3: Quality', 'Module 4: Nonclinical', 'Module 5: Clinical',
-      ],
-    },
-  };
-
-  const guidelineLower = guideline.toUpperCase();
-  for (const [key, value] of Object.entries(ichDatabase)) {
-    if (guidelineLower.includes(key)) {
-      return JSON.stringify({ source: 'ICH Guidelines', ...value });
+  // Backed by the structured, citable ICH guideline corpus (Q/S/E/M families
+  // implemented across the major global regulators). Read-only reference data.
+  const guideline = typeof input.guideline === 'string' ? input.guideline.trim() : '';
+  if (!guideline) return JSON.stringify({ error: 'guideline (code or topic) is required.' });
+  const note = 'ICH revisions/step status evolve. Confirm the current revision on ich.org before citing.';
+  try {
+    const m = await import('../ana-ri/ich-guideline-corpus.js');
+    // Try an exact code match first (e.g. "E6(R3)"), then a bare-prefix/topic search.
+    const exact = m.getGuideline(guideline);
+    if (exact) {
+      return JSON.stringify({ source: 'ICH Guidelines', match: 'exact', guideline: exact, note });
     }
+    const matches = m.searchGuidelines(guideline, 8);
+    if (matches.length > 0) {
+      return JSON.stringify({ source: 'ICH Guidelines', match: 'search', count: matches.length, guidelines: matches, note });
+    }
+    return JSON.stringify({
+      source: 'ICH Guidelines',
+      guideline,
+      guidelines: [],
+      note: `No ICH guideline matched "${guideline}". See https://ich.org/page/ich-guidelines. ${note}`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `lookup_ich_guideline failed: ${err instanceof Error ? err.message : String(err)}` });
   }
-
-  return JSON.stringify({
-    source: 'ICH Guidelines',
-    guideline,
-    note: `Guideline "${guideline}" not in local database. Refer to https://ich.org/page/ich-guidelines`,
-  });
 });
 
 // Check Regulatory Compliance
@@ -3957,6 +3993,29 @@ registerToolHandler('list_validation_rules', async (input) => {
   }
 });
 
+registerToolHandler('lookup_regulatory_pathway', async (input) => {
+  // Static reference data — not tenant-specific.
+  const agency = typeof input.agency === 'string' ? input.agency : '';
+  const query = typeof input.query === 'string' ? input.query : '';
+  try {
+    const m = await import('../ana-ri/regulatory-pathways-corpus.js');
+    const pathways = agency
+      ? m.pathwaysByAgency(agency as Parameters<typeof m.pathwaysByAgency>[0])
+      : query
+        ? m.searchPathways(query, 12)
+        : m.REGULATORY_PATHWAYS;
+    return JSON.stringify({
+      ok: true,
+      count: pathways.length,
+      summary: m.pathwaysSummary(),
+      pathways,
+      note: 'Designations and criteria change; confirm eligibility against current agency guidance.',
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `lookup_regulatory_pathway failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('get_market_submission_spec', async (input) => {
   // Static reference data — not tenant-specific, so no org/user context required.
   const specId = typeof input.spec_id === 'string' ? input.spec_id : '';
@@ -4062,6 +4121,76 @@ registerToolHandler('validate_market_formatting', async (input) => {
     return JSON.stringify({ ok: true, ...validateLeavesAgainstMarketSpec(spec, leaves) });
   } catch (err) {
     return JSON.stringify({ error: `validate_market_formatting failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('get_submission_requirements', async (input) => {
+  // Static reference data + pure assessment — no tenant context required.
+  const type = typeof input.submission_type === 'string' ? input.submission_type : '';
+  try {
+    const m = await import('../market-specs/submission-requirements.js');
+    if (!type) return JSON.stringify({ ok: true, requirements: m.SUBMISSION_REQUIREMENTS });
+    const req = m.getRequirements(type);
+    if (!req) return JSON.stringify({ error: `No requirements for "${type}".` });
+    const hasPresent =
+      Array.isArray(input.present_template_ids) || Array.isArray(input.present_document_names) || Array.isArray(input.present_forms);
+    if (hasPresent) {
+      const assessment = m.assessRequirements(type, {
+        templateIds: Array.isArray(input.present_template_ids) ? (input.present_template_ids as string[]) : [],
+        documentNames: Array.isArray(input.present_document_names) ? (input.present_document_names as string[]) : [],
+        forms: Array.isArray(input.present_forms) ? (input.present_forms as string[]) : [],
+      });
+      return JSON.stringify({ ok: true, requirements: req, assessment });
+    }
+    return JSON.stringify({ ok: true, requirements: req });
+  } catch (err) {
+    return JSON.stringify({ error: `get_submission_requirements failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('assess_pathway_eligibility', async (input) => {
+  // Static reference data + pure assessment — no tenant context required.
+  const designation = typeof input.designation === 'string' ? input.designation : '';
+  const market = typeof input.market === 'string' ? input.market : '';
+  try {
+    const m = await import('../market-specs/pathway-eligibility.js');
+    if (!designation) {
+      const designations = market ? m.designationsForMarket(market) : m.DESIGNATIONS;
+      return JSON.stringify({ ok: true, designations });
+    }
+    const profile = m.getDesignation(designation);
+    if (!profile) return JSON.stringify({ error: `No designation "${designation}".` });
+    if (input.answers && typeof input.answers === 'object') {
+      const assessment = m.assessEligibility(designation, input.answers as Record<string, boolean>);
+      return JSON.stringify({ ok: true, designation: profile, assessment });
+    }
+    return JSON.stringify({ ok: true, designation: profile });
+  } catch (err) {
+    return JSON.stringify({ error: `assess_pathway_eligibility failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('classify_post_submission_change', async (input) => {
+  // Static reference data + pure decision aid — no tenant context required.
+  const market = input.market === 'us' || input.market === 'eu' ? input.market : '';
+  if (!market) return JSON.stringify({ error: "market must be one of: us, eu." });
+  try {
+    const m = await import('../market-specs/post-submission-changes.js');
+    const rawFlags = (input.flags && typeof input.flags === 'object' ? input.flags : null) as Record<string, unknown> | null;
+    if (!rawFlags) {
+      return JSON.stringify({ ok: true, categories: m.categoriesForMarket(market) });
+    }
+    const flags = {
+      scopeExtension: rawFlags.scope_extension === true,
+      majorImpact: rawFlags.major_impact === true,
+      moderateImpact: rawFlags.moderate_impact === true,
+      immediateSafetyChange: rawFlags.immediate_safety_change === true,
+      minimalImpact: rawFlags.minimal_impact === true,
+      euImmediateNotification: rawFlags.eu_immediate_notification === true,
+    };
+    return JSON.stringify({ ok: true, ...m.recommendChangeCategory(market, flags) });
+  } catch (err) {
+    return JSON.stringify({ error: `classify_post_submission_change failed: ${err instanceof Error ? err.message : String(err)}` });
   }
 });
 
