@@ -124,6 +124,36 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   },
 };
 
+export const CREATE_CALENDAR_EVENT: AnaTool = {
+  name: 'create_calendar_event',
+  description:
+    'Create an all-day event on the team Google Calendar for a regulatory milestone — a submission ' +
+    'deadline, IR response due date, or document freeze date. This WRITES to the shared calendar; ' +
+    'confirm the date and summary with the user before calling. Reports if the calendar is not connected.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      summary: {
+        type: 'string',
+        description: 'Short event title, e.g. "IND sequence 0003 submission deadline".',
+      },
+      date: {
+        type: 'string',
+        description: 'All-day date in YYYY-MM-DD format.',
+      },
+      description: {
+        type: 'string',
+        description: 'Optional details (context, links, owner).',
+      },
+      timezone: {
+        type: 'string',
+        description: 'Optional IANA timezone (default: server TZ / UTC).',
+      },
+    },
+    required: ['summary', 'date'],
+  },
+};
+
 export const SEARCH_REGULATORY_CORRESPONDENCE: AnaTool = {
   name: 'search_regulatory_correspondence',
   description:
@@ -3550,6 +3580,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_MEDICARE_COVERAGE,
   SEARCH_CONNECTED_REPOSITORIES,
   SEARCH_REGULATORY_CORRESPONDENCE,
+  CREATE_CALENDAR_EVENT,
   PROJECT_KNOWLEDGE_SEARCH,
   SIMULATE_STUDY_DESIGN,
   SEARCH_DEVICE_ADVERSE_EVENTS,

@@ -21,6 +21,7 @@ import { searchPubmed } from '../integrations/pubmed-client.js';
 import { searchMedicareCoverage } from '../integrations/cms-coverage-client.js';
 import { searchConnectedRepositories } from '../integrations/connector-search.js';
 import { searchRegulatoryCorrespondence } from '../integrations/correspondence-search.js';
+import { createCalendarEvent } from '../integrations/calendar-event.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 import type {
   GatewayRequest,
@@ -345,6 +346,26 @@ registerToolHandler('search_connected_repositories', async (input, ctx) => {
       source: 'Connected Repositories',
       error: e instanceof Error ? e.message : 'Connected-repository search failed',
       documents: [],
+    });
+  }
+});
+
+// Create Calendar Event — writes an all-day milestone to the team Google Calendar.
+registerToolHandler('create_calendar_event', async (input) => {
+  try {
+    const result = await createCalendarEvent({
+      summary: typeof input.summary === 'string' ? input.summary : '',
+      date: typeof input.date === 'string' ? input.date : '',
+      description: typeof input.description === 'string' ? input.description : undefined,
+      timezone: typeof input.timezone === 'string' ? input.timezone : undefined,
+    });
+    return JSON.stringify(result);
+  } catch (e) {
+    return JSON.stringify({
+      source: 'Google Calendar',
+      configured: true,
+      created: false,
+      error: e instanceof Error ? e.message : 'Calendar event creation failed',
     });
   }
 });
