@@ -24,6 +24,7 @@ import {
 } from '../services/ind-lifecycle/ind-safety-report-service';
 import { assembleIndAnnualReport } from '../services/ind-lifecycle/ind-annual-report-service';
 import { planIndAmendment } from '../services/ind-lifecycle/ind-amendment-service';
+import { evaluateIndReadiness } from '../services/ind-lifecycle/ind-readiness-service';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('ind-lifecycle-routes');
@@ -92,6 +93,29 @@ router.post('/annual-report', limiter, requireRole(AUTHOR), (req, res) => {
 router.post('/amendment-plan', limiter, requireRole(AUTHOR), (req, res) => {
   try {
     res.json(planIndAmendment(body(req)));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * IND filing readiness — deterministic verdict over the 108-section blueprint +
+ * Module 1 forms + safety clock. Body is IndReadinessInput.
+ */
+router.post('/readiness', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = body(req);
+  if (b.filingType !== 'initial' && b.filingType !== 'amendment') {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: "filingType must be 'initial' or 'amendment'." } });
+  }
+  try {
+    res.json(
+      evaluateIndReadiness({
+        filingType: b.filingType,
+        sectionStatus: b.sectionStatus ?? {},
+        completedForms: b.completedForms,
+        overdueSafetyReports: b.overdueSafetyReports,
+      }),
+    );
   } catch (err) {
     fail(res, err);
   }
