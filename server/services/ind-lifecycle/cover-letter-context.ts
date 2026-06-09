@@ -11,13 +11,14 @@
  */
 
 import type { Sponsor } from '@shared/schema/ind-master-data';
-import type { Submission } from '@shared/schema/submissions';
 import type { CoverLetterInput, IndSubmissionType } from './ind-cover-letter-service';
+import { composeAddress } from '../ind-common/format';
 
-/** Join non-empty address parts into a single one-line address. */
-function composeAddress(parts: Array<string | null | undefined>): string | undefined {
-  const joined = parts.map((p) => (p ?? '').trim()).filter((p) => p.length > 0).join(', ');
-  return joined.length > 0 ? joined : undefined;
+/** The submission fields the cover letter reads (a structural subset of the
+ *  submissions row, so this stays decoupled from the full Drizzle select type). */
+export interface CoverLetterSubmission {
+  productName?: string | null;
+  lifecycleStage?: string | null;
 }
 
 /** Map a submission lifecycle stage to the cover letter's submission type. */
@@ -38,7 +39,7 @@ export function lifecycleStageToSubmissionType(stage: string | null | undefined)
 
 export interface CoverLetterRecords {
   sponsor?: Sponsor | null;
-  submission?: Submission | null;
+  submission?: CoverLetterSubmission | null;
   /** Fields not held in master data / the submission row (indNumber, indication, fdaDivision, …). */
   overrides?: Partial<CoverLetterInput>;
 }
