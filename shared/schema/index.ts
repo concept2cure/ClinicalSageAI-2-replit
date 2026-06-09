@@ -400,3 +400,8 @@ export type {
 // layer underneath the existing living-file cascade.
 // See docs/architecture/LIVING_RECORD_SPINE.md.
 export * from './living-record-spine';
+
+// IND master data — sponsor, US agent (21 CFR 312.3) and investigator
+// registries that feed FDA Forms 1571/1572/3674 and submission metadata.
+// Service: server/services/ind-master-data; migration: migrations/20260609_ind_master_data.sql.
+export * from './ind-master-data';
