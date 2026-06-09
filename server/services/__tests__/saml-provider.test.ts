@@ -108,3 +108,24 @@ describe('saml-provider — fail-closed signature enforcement', () => {
     expect(xml).toContain(CONFIG.entityId);
   });
 });
+
+describe('saml-provider — Single Logout (SLO)', () => {
+  it('reports no logout support without idpSloUrl', () => {
+    const provider = getSamlProvider('slo-off', CONFIG);
+    expect(provider.supportsLogout).toBe(false);
+  });
+
+  it('builds an SP-initiated LogoutRequest URL when idpSloUrl is configured', async () => {
+    const provider = getSamlProvider('slo-on', {
+      ...CONFIG,
+      idpSloUrl: 'https://idp.example.test/slo',
+    });
+    expect(provider.supportsLogout).toBe(true);
+    const url = await provider.getLogoutUrl(
+      { nameID: 'user@acme.test', sessionIndex: 'sess-123' },
+      'relay'
+    );
+    expect(url).toContain('https://idp.example.test/slo');
+    expect(url).toContain('SAMLRequest=');
+  });
+});

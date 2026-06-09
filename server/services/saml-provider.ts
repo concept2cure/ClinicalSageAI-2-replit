@@ -44,6 +44,8 @@ export interface SAMLConfig {
   spPrivateKey?: string;
   spCertificate?: string;
   nameIdFormat?: string;
+  /** IdP Single Logout (SLO) endpoint — enables SP-initiated logout. */
+  idpSloUrl?: string;
 }
 
 export interface SAMLUser {
@@ -140,6 +142,11 @@ function toNodeSamlConfig(c: SAMLConfig): NodeSamlConfig {
     base.privateKey = c.spPrivateKey;
   }
 
+  // Enable SP-initiated Single Logout when the IdP SLO endpoint is configured.
+  if (c.idpSloUrl) {
+    base.logoutUrl = c.idpSloUrl;
+  }
+
   return base;
 }
 
@@ -193,6 +200,29 @@ export class SamlProvider {
       throw new SAMLValidationError('SAML response did not yield a validated assertion');
     }
     return profileToUser(profile);
+  }
+
+  /** Whether IdP Single Logout is configured for this org. */
+  get supportsLogout(): boolean {
+    return Boolean(this.config.idpSloUrl);
+  }
+
+  /**
+   * Build the SP-initiated SAML LogoutRequest redirect URL for the IdP's SLO
+   * endpoint, so logging out of the app also terminates the IdP session.
+   * Requires idpSloUrl to be configured (see {@link supportsLogout}).
+   */
+  async getLogoutUrl(
+    user: { nameID: string; nameIDFormat?: string; sessionIndex?: string },
+    relayState: string
+  ): Promise<string> {
+    const profile: Profile = {
+      issuer: this.config.idpEntityId,
+      nameID: user.nameID,
+      nameIDFormat: user.nameIDFormat || DEFAULT_NAME_ID_FORMAT,
+      sessionIndex: user.sessionIndex,
+    };
+    return this.saml.getLogoutUrlAsync(profile, relayState ?? '', {});
   }
 
   /** SP metadata XML for IdP federation setup. */
