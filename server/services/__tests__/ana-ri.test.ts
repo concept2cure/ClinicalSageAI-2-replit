@@ -567,6 +567,34 @@ describe('AnA RI Persona', () => {
     expect(ja).toContain('eCTD');
     expect(ja).toContain('ana-action');
   });
+
+  it('injects market-specific cultural awareness for each non-English market', () => {
+    const ja = buildAnaRISystemPrompt({ language: 'ja' });
+    expect(ja).toContain('文化・市場への配慮 — 日本');
+    expect(ja).toContain('PMDA'); // home authority
+    expect(ja).toContain('根回し'); // local consensus/decision norm
+
+    const zh = buildAnaRISystemPrompt({ language: 'zh' });
+    expect(zh).toContain('文化与市场考量 — 中国');
+    expect(zh).toContain('NMPA');
+
+    const de = buildAnaRISystemPrompt({ language: 'de' });
+    expect(de).toContain('DEUTSCHLAND');
+    expect(de).toContain('BfArM');
+    expect(de).toContain('PEI');
+
+    const fr = buildAnaRISystemPrompt({ language: 'fr' });
+    expect(fr).toContain('FRANCE');
+    expect(fr).toContain('ANSM');
+    expect(fr).toContain('HAS');
+  });
+
+  it('does not add any cultural overlay for English', () => {
+    const en = buildAnaRISystemPrompt({ language: 'en' });
+    expect(en).not.toContain('文化・市場');
+    expect(en).not.toContain('ASPECTS CULTURELS');
+    expect(en).not.toContain('KULTURELLE');
+  });
 });
 
 // ── Edge Case Tests ──────────────────────────────────────────────────────────
