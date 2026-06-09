@@ -33,6 +33,7 @@ come from it. Do not send tenant ids in the body.
 ## 4. Validation (`/submissions/:id/validation`)
 | POST | `/api/submissions/:id/validation/explain` | `ValidationExplainRequest` → `ValidationExplainResponse` | plain-language causes + fixes (AI; never changes verdicts) |
 | — | (deterministic validator) | AnA tool `validate_ectd_package` / `server/services/ectd/ectd4-validator.ts` | structured findings to feed `explain` |
+| GET | `/api/submissions/validation-rules?region=fda\|eu\|jp` | → `ValidationRulesResponse` | The named, sourced eCTD validation **rule corpus** (ICH/FDA/EU/JP criteria) with regional severity + enforcement (`dispatch-readiness` rules are floored by the gate; others are packager-guaranteed or agency-validator). A dispatch-readiness finding's `code` equals the rule `id`, so every gate verdict traces to a cataloged rule. Static reference data. |
 
 ## 5. Shadow Review — the moat (`/submissions/:id/shadow-review`)
 | POST | `/api/submissions/sequences/:seqId/shadow-review` | `ShadowReviewRequest` → `ShadowReviewRunResponse` | run a reviewer-lens pass (RTF/CRL risk) |
@@ -62,13 +63,17 @@ AnA can drive all of the above through her governed tools (tenant from
 `extract_submission_document`, `compute_lifecycle_operations`, `generate_stf`,
 `check_ectd_cross_references`, `validate_ectd_package`, `run_shadow_review`,
 `explain_validation_findings`, `cross_region_gap_analysis`, `dispatch_qc_check`,
-`trace_provenance`, `check_consistency`. The UI's AnA panel passes page context
+`trace_provenance`, `check_consistency`, `assess_pathway_readiness`,
+`build_pathway_manifest`, `list_validation_rules`, `assess_dispatch_readiness`. The UI's AnA panel passes page context
 (`{ submissionId, sectionCode, region }`); the tools supply nothing tenant-related.
 
 ## Still server-side TODO before some screens are fully live
-- **Dispatch transmit + Publish**: `packageSequenceFromCore` (core→publisher
-  bridge) needs a storage `resolveFile` and a route; transmit stays behind the
-  e-sign gate.
+- **Publish/assemble bytes**: DONE. `assembleSequence` (eCTD) and
+  `assembleTechnicalFileFromCore` (device MDR/IVDR ZIP) both supply the storage
+  `resolveFile` and have routes (`POST .../assemble`, `POST .../technical-file/assemble`).
+  `capabilities.features.{assemble,deviceTechnicalFile,pathwayManifest}` are now `true`.
+- **Wire transmit**: stays behind the governed transmit path + Part 11 e-signature
+  (`publishTransmit:false` by design — it is a signature gate, not a missing feature).
 - **DB-runtime**: nothing here is runtime-verified — needs `drizzle-kit push` +
   the new `20260605_consistency_findings.sql` migration applied, then live calls.
 
@@ -90,13 +95,14 @@ consistency status, lifecycle stages) with sentence-case labels + a neutral
 mirroring the server's lifecycle rules. Render dropdowns/badges/pills from these.
 
 ## Capabilities (feature-gating)
-| GET | `/api/submissions/capabilities?environment=` | → `CapabilitiesResponse` | which gateways are configured + which workspaces are server-ready; UI disables/empties screens accordingly. `publishTransmit: false` until the storage resolver lands. |
+| GET | `/api/submissions/capabilities?environment=` | → `CapabilitiesResponse` | which gateways are configured + which workspaces are server-ready; UI disables/empties screens accordingly. `features.{assemble,deviceTechnicalFile,pathwayManifest}` are `true` (assemble bytes landed); `publishTransmit:false` by design (wire transmit is an e-signature gate, not a missing feature). |
 
 Workspace map + error catalog for nav/error handling: `shared/types/submission-ui.ts`
 (`SUBMISSION_WORKSPACES`, `SUBMISSION_ERROR_CODES`, `submissionErrorMessage()`).
 
 ## Pathway readiness (non-eCTD projections — Cross-Region / Dispatch)
 | GET | `/api/submissions/sequences/:seqId/pathway-readiness?pathway=&memberStates=` | → `PathwayReadinessResponse` | projects the sequence's canonical leaves onto CTIS \| MDR \| IVDR \| eSTAR (510k/de_novo) and returns a required-slot gap/readiness report. Deterministic, map+gap only — never submits. `memberStates` (comma list) applies to CTIS Part II. |
+| GET | `/api/submissions/sequences/:seqId/pathway-manifest?pathway=&memberStates=` | → `PathwayManifestResponse` | Universal assembled table-of-contents for ANY non-eCTD pathway (eSTAR 510k/de_novo \| CTIS \| MDR \| IVDR \| PMDA Shōnin): uniform ordered entries with group label (annex / eSTAR / CTIS part+state / STED), deterministic paths, present/missing status, and source leaves. Maps + reports gaps, never invents. |
 | GET | `/api/submissions/sequences/:seqId/technical-file?regulation=mdr\|ivdr` | → `TechnicalFileResponse` | The device assemble structure (mdx/ivd): the assembled EU MDR/IVDR Annex II/III technical-file table-of-contents — ordered sections with deterministic paths, annex refs, present/missing status, and source leaves. The device equivalent of the eCTD index. Maps + reports gaps, never invents. |
 
 ## Assemble (Publish step — Dispatch workspace)

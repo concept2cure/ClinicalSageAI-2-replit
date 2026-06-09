@@ -180,12 +180,37 @@ router.get('/capabilities', limiter, requireRole(AUTHOR), async (req, res) => {
         'cross-region': true,
         dispatch: true,
       },
-      // Capability flags (not workspaces). Dispatch transmit + Publish bytes are
-      // pending the storage resolver (see SUBMISSION_CENTER_API.md).
+      // Capability flags (not workspaces). The assemble/publish BYTES are now
+      // server-ready (eCTD packager + device technical-file ZIP both materialize
+      // from the canonical core via the storage resolver). The wire TRANSMIT to the
+      // agency stays gated behind the governed transmit path + Part 11 e-signature.
       features: {
+        assemble: true,
+        deviceTechnicalFile: true,
+        pathwayManifest: true,
         publishTransmit: false,
       },
     });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Validation rule corpus (Validation workspace reference data) ──────────────
+// The named, sourced eCTD validation criteria the gate checks against. Static
+// reference data (not tenant-specific). Registered before '/:id' so the literal
+// path is not shadowed by the id param route. `?region=` scopes to a framework.
+router.get('/validation-rules', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const region = String(Array.isArray(req.query.region) ? req.query.region[0] : req.query.region ?? '');
+  if (region && region !== 'fda' && region !== 'eu' && region !== 'jp') {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'region must be one of: fda, eu, jp.' } });
+  }
+  try {
+    const { RULE_CORPUS, rulesForRegion, corpusSummary } = await import('../services/ectd/validation-rule-corpus.js');
+    const rules = region ? rulesForRegion(region as 'fda' | 'eu' | 'jp') : RULE_CORPUS;
+    res.json({ region: region || 'all', summary: corpusSummary(), rules });
   } catch (err) {
     fail(res, err);
   }
@@ -519,6 +544,35 @@ router.get('/sequences/:seqId/pathway-readiness', limiter, requireRole(AUTHOR), 
       memberStates,
     });
     res.json(result);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Universal pathway manifest (assembled ToC for ANY non-eCTD pathway) ───────
+// One uniform table-of-contents across eSTAR / CTIS / MDR / IVDR / PMDA: runs the
+// pathway engine, then projects its result into ordered entries (group + path +
+// present/missing + sources). Deterministic, read-only — maps + reports gaps.
+router.get('/sequences/:seqId/pathway-manifest', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const pathway = String(Array.isArray(req.query.pathway) ? req.query.pathway[0] : req.query.pathway ?? '');
+  if (!(PATHWAYS as string[]).includes(pathway)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: `pathway must be one of: ${PATHWAYS.join(', ')}.` } });
+  }
+  const msRaw = Array.isArray(req.query.memberStates) ? req.query.memberStates[0] : req.query.memberStates;
+  const memberStates = typeof msRaw === 'string' && msRaw ? msRaw.split(',').map((s) => s.trim()).filter(Boolean) : [];
+  try {
+    const leaves = await listLeaves(seqId, ctx); // tenant-scoped
+    const { buildPathwayManifest } = await import('../services/pathway-engines/pathway-manifest');
+    const result = assessPathwayReadiness({
+      pathway: pathway as Pathway,
+      leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, documentType: l.documentType ?? undefined })),
+      memberStates,
+    });
+    res.json(buildPathwayManifest(pathway as Pathway, result.detail));
   } catch (err) {
     fail(res, err);
   }

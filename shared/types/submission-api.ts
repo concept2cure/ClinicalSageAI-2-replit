@@ -241,6 +241,14 @@ export interface CapabilitiesResponse {
   };
   // Capability flags that are not workspaces.
   features: {
+    /** eCTD package bytes assemble from the canonical core (storage resolver landed). */
+    assemble: boolean;
+    /** EU MDR/IVDR technical-file ZIP materializes from the canonical core. */
+    deviceTechnicalFile: boolean;
+    /** Universal assembled table-of-contents across every non-eCTD pathway. */
+    pathwayManifest: boolean;
+    /** Wire transmit to the agency — stays false; gated behind the governed
+     *  transmit path + Part 11 e-signature regardless of assemble readiness. */
     publishTransmit: boolean;
   };
 }
@@ -254,6 +262,53 @@ export interface PathwayReadinessResponse {
   missingRequired: string[];
   /** Full engine result (section/slot breakdown) — shape varies by pathway. */
   detail: unknown;
+}
+
+// ── Validation rule corpus (GET /api/submissions/validation-rules?region=) ───
+// The named, sourced eCTD validation criteria the gate checks against. A
+// dispatch-readiness finding's `code` equals the rule `id`, so findings are
+// traceable to a cataloged rule.
+export interface ValidationRule {
+  id: string;
+  title: string;
+  category: 'structure' | 'backbone' | 'lifecycle' | 'integrity' | 'format' | 'naming' | 'content';
+  regions: Array<'ich' | 'fda' | 'eu' | 'jp'>;
+  severity: 'high' | 'medium' | 'low';
+  rationale: string;
+  source: string;
+  enforcement: 'dispatch-readiness' | 'ectd-validator' | 'packager' | 'external';
+  findingCode?: string;
+}
+export interface ValidationRulesResponse {
+  region: 'all' | 'fda' | 'eu' | 'jp';
+  summary: {
+    total: number;
+    byRegion: Record<'ich' | 'fda' | 'eu' | 'jp', number>;
+    bySeverity: Record<'high' | 'medium' | 'low', number>;
+    byEnforcement: Record<'dispatch-readiness' | 'ectd-validator' | 'packager' | 'external', number>;
+  };
+  rules: ValidationRule[];
+}
+
+// ── Universal pathway manifest (GET /sequences/:seqId/pathway-manifest?pathway=&memberStates=) ─
+// Assembled table-of-contents for ANY non-eCTD pathway (eSTAR / CTIS / MDR / IVDR
+// / PMDA). Deterministic; maps + reports gaps across a uniform entry shape.
+export interface PathwayManifestEntry {
+  path: string;
+  id: string;
+  label: string;
+  group: string; // annex / "eSTAR" / "Part I" / "Part II — DE" / "STED"
+  required: boolean;
+  status: 'present' | 'missing' | 'optional-absent';
+  sources: string[];
+}
+export interface PathwayManifestResponse {
+  pathway: Pathway;
+  framework: string;
+  generatedFrom: 'canonical-core';
+  ready: boolean;
+  totals: { sections: number; requiredPresent: number; requiredMissing: number };
+  entries: PathwayManifestEntry[];
 }
 
 // ── Device technical file (GET /sequences/:seqId/technical-file?regulation=mdr|ivdr) ─

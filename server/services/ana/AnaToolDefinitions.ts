@@ -18,13 +18,37 @@ import type { AnaTool, AnthropicServerTool, AnyAnaTool } from '../ai-gateway/typ
 export const SEARCH_CLINICAL_EVIDENCE: AnaTool = {
   name: 'search_clinical_evidence',
   description:
-    'Search for clinical evidence by condition, intervention, or outcome. Returns relevant clinical trial data, study results, and evidence summaries from ClinicalTrials.gov and internal databases.',
+    'Search live ClinicalTrials.gov for clinical evidence and competitive/precedent intelligence. ' +
+    'Use structured filters (condition, intervention, sponsor, status, phase) for precision, or a ' +
+    'free-text query. Returns trials with NCT IDs and canonical URLs for citation, plus the total ' +
+    'match count. Cite results by NCT ID and link to the provided url.',
   input_schema: {
     type: 'object',
     properties: {
       query: {
         type: 'string',
-        description: 'Search query for clinical evidence (condition, drug, device, etc.)',
+        description: 'Free-text query for clinical evidence (condition, drug, device, etc.)',
+      },
+      condition: {
+        type: 'string',
+        description: 'Disease / condition filter, e.g. "non-small cell lung cancer"',
+      },
+      intervention: {
+        type: 'string',
+        description: 'Intervention / drug / device name filter',
+      },
+      sponsor: {
+        type: 'string',
+        description: 'Lead sponsor or collaborator (company/institution) filter',
+      },
+      status: {
+        type: 'string',
+        description:
+          'Overall status filter, e.g. RECRUITING, COMPLETED, ACTIVE_NOT_RECRUITING, TERMINATED',
+      },
+      phase: {
+        type: 'string',
+        description: 'Trial phase filter, e.g. PHASE3 or 3',
       },
       evidence_type: {
         type: 'string',
@@ -33,7 +57,67 @@ export const SEARCH_CLINICAL_EVIDENCE: AnaTool = {
       },
       max_results: {
         type: 'number',
-        description: 'Maximum number of results to return (default: 5)',
+        description: 'Maximum number of results to return (default: 5, max: 20)',
+      },
+    },
+    required: ['query'],
+  },
+};
+
+export const SEARCH_MEDICARE_COVERAGE: AnaTool = {
+  name: 'search_medicare_coverage',
+  description:
+    'Search the CMS Medicare Coverage Database for National Coverage Determinations (NCDs) ' +
+    'and final Local Coverage Determinations (LCDs). Use for market-access / reimbursement ' +
+    'readiness — whether and how Medicare covers a procedure, device, lab test, or service — ' +
+    'alongside regulatory analysis. Returns coverage documents with their MCD numbers, ' +
+    'last-updated dates, and canonical CMS URLs for citation.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      keyword: {
+        type: 'string',
+        description:
+          'Term to match in the coverage document title (e.g. "cardiac", "next generation sequencing").',
+      },
+      coverage_type: {
+        type: 'string',
+        enum: ['ncd', 'lcd'],
+        description: "Coverage level: 'ncd' (national, all states) or 'lcd' (local, by MAC). Default: ncd.",
+      },
+      max_results: {
+        type: 'number',
+        description: 'Maximum number of documents to return (default: 10, max: 25).',
+      },
+    },
+    required: ['keyword'],
+  },
+};
+
+export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
+  name: 'search_connected_repositories',
+  description:
+    "Search the organization's connected external document repositories (Google Drive, Box, " +
+    'OneDrive, SharePoint, Veeva Vault, …) for source material relevant to a query. Use when the ' +
+    "user references documents that live in their own connected systems rather than this project's " +
+    'uploaded corpus (use project_knowledge_search for the latter). Returns matching documents with ' +
+    'their source system, summary, and a link. Reports which systems are not yet connected.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      query: {
+        type: 'string',
+        description: 'What to look for across connected repositories (keywords or a topic).',
+      },
+      connectors: {
+        type: 'array',
+        items: { type: 'string' },
+        description:
+          "Optional connector ids to restrict the search (e.g. ['google-drive']). Omit to search all connected systems.",
+      },
+      max_results: {
+        type: 'number',
+        description: 'Maximum documents to return (default: 8, max: 25).',
       },
     },
     required: ['query'],
@@ -1987,6 +2071,46 @@ export const ASSESS_PATHWAY_READINESS: AnaTool = {
   },
 };
 
+export const BUILD_PATHWAY_MANIFEST: AnaTool = {
+  name: 'build_pathway_manifest',
+  description:
+    "Build the assembled table-of-contents for a non-eCTD pathway (EU CTIS, EU MDR/IVDR, FDA eSTAR 510(k)/De Novo, Japan PMDA Shōnin). Reads the sequence's leaves from the active tenant context, projects them onto the pathway's section registry, and returns a uniform ordered manifest: each slot as an entry with a group label (annex / eSTAR / CTIS part+state / STED), a deterministic path, present/missing status, and the source leaves mapped into it. Deterministic, read-only — it maps and reports gaps, it never invents a missing slot and never submits. Use after assess_pathway_readiness when you need the full ordered structure, not just the gap list.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      sequence_id: { type: 'number', description: 'The sequence whose leaves are assembled into the manifest.' },
+      pathway: {
+        type: 'string',
+        enum: ['ctis', 'mdr', 'ivdr', 'estar_510k', 'estar_de_novo', 'pmda_shonin'],
+        description: 'The target pathway.',
+      },
+      member_states: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'CTIS only — concerned EU member-state codes (e.g. ["DE","FR"]).',
+      },
+    },
+    required: ['sequence_id', 'pathway'],
+  },
+};
+
+export const LIST_VALIDATION_RULES: AnaTool = {
+  name: 'list_validation_rules',
+  description:
+    "List the named, sourced eCTD validation rule corpus the Submission Center checks against (ICH/FDA/EU/JP criteria). Returns each rule's id, title, category, regions, severity (high/medium/low), rationale, published source, and enforcement (whether the rule is floored by the deterministic dispatch gate, guaranteed by the packager, or requires the agency validator). Static reference data — read-only, not tenant-specific. Use it to explain WHY a validation finding blocks dispatch and to cite the rule behind a gate verdict (a finding's code equals the rule id).",
+  input_schema: {
+    type: 'object',
+    properties: {
+      region: {
+        type: 'string',
+        enum: ['fda', 'eu', 'jp'],
+        description: 'Optional — scope to one region (includes shared ICH rules). Omit for the full corpus.',
+      },
+    },
+    required: [],
+  },
+};
+
 export const ASSESS_DISPATCH_READINESS: AnaTool = {
   name: 'assess_dispatch_readiness',
   description:
@@ -3399,6 +3523,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   EXECUTE_PLATFORM_COMMAND,
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
+  SEARCH_MEDICARE_COVERAGE,
+  SEARCH_CONNECTED_REPOSITORIES,
   PROJECT_KNOWLEDGE_SEARCH,
   SIMULATE_STUDY_DESIGN,
   SEARCH_DEVICE_ADVERSE_EVENTS,
@@ -3454,6 +3580,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   TRACE_PROVENANCE,
   CHECK_CONSISTENCY,
   ASSESS_PATHWAY_READINESS,
+  BUILD_PATHWAY_MANIFEST,
+  LIST_VALIDATION_RULES,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,

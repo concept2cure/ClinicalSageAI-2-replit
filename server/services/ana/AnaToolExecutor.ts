@@ -16,6 +16,10 @@
 
 import { getGateway } from '../ai-gateway/gateway';
 import fdaMaudeClient from '../../fda_maude_client.js';
+import { searchTrials } from '../integrations/clinicaltrials-client.js';
+import { searchPubmed } from '../integrations/pubmed-client.js';
+import { searchMedicareCoverage } from '../integrations/cms-coverage-client.js';
+import { searchConnectedRepositories } from '../integrations/connector-search.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 import type {
   GatewayRequest,
@@ -177,56 +181,41 @@ registerToolHandler('project_knowledge_search', async (input, ctx) => {
 
 // Search Clinical Evidence — queries internal DB and ClinicalTrials.gov
 registerToolHandler('search_clinical_evidence', async (input) => {
-  const query = input.query as string;
-  const evidenceType = input.evidence_type as string || 'any';
-  const maxResults = (input.max_results as number) || 5;
+  const query = typeof input.query === 'string' ? input.query : '';
+  const maxResults = Math.min((input.max_results as number) || 5, 20);
+  const asStr = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v.trim() : undefined;
 
   try {
-    // Try ClinicalTrials.gov API via fetch
-    const searchParams = new URLSearchParams({
-      'query.term': query,
-      pageSize: String(Math.min(maxResults, 10)),
-      format: 'json',
+    // Live ClinicalTrials.gov v2 via the governed client (structured filters
+    // when supplied, free-text otherwise). Returns citeable trials + total count.
+    const result = await searchTrials({
+      query: query || undefined,
+      condition: asStr(input.condition),
+      intervention: asStr(input.intervention),
+      sponsor: asStr(input.sponsor),
+      status: asStr(input.status),
+      phase: asStr(input.phase),
+      pageSize: maxResults,
     });
-    const ctResponse = await fetch(
-      `https://clinicaltrials.gov/api/v2/studies?${searchParams.toString()}`,
-      { signal: AbortSignal.timeout(10000) }
-    );
 
-    if (ctResponse.ok) {
-      const data = await ctResponse.json();
-      const studies = (data.studies || []).slice(0, maxResults);
-      const results = studies.map((s: any) => {
-        const proto = s.protocolSection || {};
-        const id = proto.identificationModule || {};
-        const status = proto.statusModule || {};
-        const design = proto.designModule || {};
-        return {
-          nctId: id.nctId,
-          title: id.briefTitle || id.officialTitle,
-          status: status.overallStatus,
-          phase: (design.phases || []).join(', '),
-          enrollment: status.enrollmentInfo?.count,
-          studyType: design.studyType,
-        };
-      });
-      return JSON.stringify({
-        source: 'ClinicalTrials.gov',
-        query,
-        resultCount: results.length,
-        studies: results,
-      });
-    }
-  } catch (e) {
-    // Fall through to fallback
+    return JSON.stringify({
+      source: result.source,
+      query: query || undefined,
+      totalCount: result.totalCount,
+      resultCount: result.trials.length,
+      studies: result.trials,
+      citation_hint: 'Cite each trial by its NCT ID and link to the provided url.',
+    });
+  } catch {
+    // Never regress below the prior behavior: degrade to manual-search guidance.
+    return JSON.stringify({
+      source: 'search',
+      query,
+      note: 'ClinicalTrials.gov API unavailable — returning guidance for manual search',
+      suggestion: `Search ClinicalTrials.gov for: "${query || [asStr(input.condition), asStr(input.intervention)].filter(Boolean).join(' ')}"`,
+    });
   }
-
-  return JSON.stringify({
-    source: 'search',
-    query,
-    note: 'ClinicalTrials.gov API unavailable — returning guidance for manual search',
-    suggestion: `Search ClinicalTrials.gov for: "${query}" filtered by ${evidenceType}`,
-  });
 });
 
 // Search Device Adverse Events — live FDA MAUDE via openFDA passthrough.
@@ -285,71 +274,112 @@ registerToolHandler('search_drug_adverse_events', async (input) => {
   }
 });
 
-// Search Literature — queries PubMed via E-utilities
+// Search Literature — live PubMed via the governed E-utilities client.
 registerToolHandler('search_literature', async (input) => {
-  const query = input.query as string;
-  const maxResults = (input.max_results as number) || 5;
+  const query = typeof input.query === 'string' ? input.query : '';
+  const maxResults = Math.min((input.max_results as number) || 5, 20);
+  const asStr = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v.trim() : undefined;
 
   try {
-    const searchParams = new URLSearchParams({
-      db: 'pubmed',
-      term: query,
-      retmax: String(Math.min(maxResults, 10)),
-      retmode: 'json',
+    const result = await searchPubmed({
+      query,
+      maxResults,
+      dateRange: asStr(input.date_range),
+      studyType: asStr(input.study_type),
     });
-    const response = await fetch(
-      `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?${searchParams.toString()}`,
-      { signal: AbortSignal.timeout(10000) }
-    );
+    return JSON.stringify({
+      source: result.source,
+      query,
+      totalCount: result.totalCount,
+      resultCount: result.articles.length,
+      articles: result.articles,
+      citation_hint: 'Cite each article by PMID (and DOI when present) and link to the provided url.',
+    });
+  } catch {
+    return JSON.stringify({
+      source: 'PubMed',
+      query,
+      note: 'PubMed API unavailable — use manual search',
+      url: `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(query)}`,
+    });
+  }
+});
 
-    if (response.ok) {
-      const data = await response.json();
-      const ids = data.esearchresult?.idlist || [];
-      if (ids.length > 0) {
-        // Fetch summaries
-        const summaryParams = new URLSearchParams({
-          db: 'pubmed',
-          id: ids.join(','),
-          retmode: 'json',
-        });
-        const summaryResp = await fetch(
-          `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?${summaryParams.toString()}`,
-          { signal: AbortSignal.timeout(10000) }
-        );
-
-        if (summaryResp.ok) {
-          const summaryData = await summaryResp.json();
-          const articles = ids.map((id: string) => {
-            const article = summaryData.result?.[id] || {};
-            return {
-              pmid: id,
-              title: article.title,
-              authors: (article.authors || []).slice(0, 3).map((a: any) => a.name).join(', '),
-              journal: article.fulljournalname || article.source,
-              pubDate: article.pubdate,
-              doi: article.elocationid,
-            };
-          });
-
-          return JSON.stringify({
-            source: 'PubMed',
-            query,
-            resultCount: articles.length,
-            articles,
-          });
-        }
-      }
-    }
-  } catch (e) {
-    // Fall through
+// Search Connected Repositories — fan out across the org's configured data
+// connectors (Google Drive, Box, OneDrive, SharePoint, Veeva, …) via the
+// existing authenticated connector framework.
+registerToolHandler('search_connected_repositories', async (input, ctx) => {
+  const query = typeof input.query === 'string' ? input.query : '';
+  const organizationId = ctx?.organizationId;
+  if (!organizationId) {
+    return JSON.stringify({
+      status: 'needs_context',
+      message:
+        'Searching connected repositories requires an active organization context. Ask the user to open a project first.',
+    });
+  }
+  if (!query.trim()) {
+    return JSON.stringify({ error: 'search_connected_repositories requires a non-empty query.' });
   }
 
-  return JSON.stringify({
-    source: 'PubMed',
-    query,
-    note: 'PubMed API unavailable — use manual search',
-    url: `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(query)}`,
-  });
+  const connectors = Array.isArray(input.connectors)
+    ? (input.connectors as unknown[]).filter((c): c is string => typeof c === 'string')
+    : undefined;
+  const maxResults = Math.min((input.max_results as number) || 8, 25);
+
+  try {
+    const result = await searchConnectedRepositories(Number(organizationId), {
+      query,
+      connectors,
+      limit: maxResults,
+    });
+    return JSON.stringify({
+      ...result,
+      citation_hint:
+        'Cite each document by its title and source system, and link to the provided url when present.',
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'Connected Repositories',
+      error: e instanceof Error ? e.message : 'Connected-repository search failed',
+      documents: [],
+    });
+  }
+});
+
+// Search Medicare Coverage — live CMS Coverage Database (NCDs / final LCDs).
+registerToolHandler('search_medicare_coverage', async (input) => {
+  const keyword = typeof input.keyword === 'string' ? input.keyword : '';
+  const coverageType = input.coverage_type === 'lcd' ? 'lcd' : 'ncd';
+  const maxResults = Math.min((input.max_results as number) || 10, 25);
+
+  try {
+    const result = await searchMedicareCoverage({
+      keyword: keyword || undefined,
+      type: coverageType,
+      limit: maxResults,
+    });
+    return JSON.stringify({
+      source: result.source,
+      coverageType: result.type,
+      keyword,
+      matched: result.matched,
+      resultCount: result.documents.length,
+      documents: result.documents,
+      citation_hint:
+        'Cite each coverage document by its MCD number and link to the provided url. ' +
+        'NCDs apply nationally; LCDs apply only within the issuing MAC jurisdiction.',
+    });
+  } catch {
+    return JSON.stringify({
+      source: 'CMS Medicare Coverage Database',
+      coverageType,
+      keyword,
+      note: 'CMS Coverage API unavailable — search manually.',
+      url: 'https://www.cms.gov/medicare-coverage-database/search.aspx',
+    });
+  }
 });
 
 // Lookup FDA Guidance
@@ -3744,6 +3774,51 @@ registerToolHandler('assess_pathway_readiness', async (input, ctx) => {
     return JSON.stringify({ ok: true, ...result });
   } catch (err) {
     return JSON.stringify({ error: `assess_pathway_readiness failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });
+  }
+});
+
+registerToolHandler('build_pathway_manifest', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) {
+    return JSON.stringify({ error: 'build_pathway_manifest requires tenant context (organizationId and userId).' });
+  }
+  const sequenceId = typeof input.sequence_id === 'number' ? input.sequence_id : NaN;
+  const pathway = typeof input.pathway === 'string' ? input.pathway : '';
+  const memberStates = Array.isArray(input.member_states) ? (input.member_states as string[]) : [];
+  const allowed = ['ctis', 'mdr', 'ivdr', 'estar_510k', 'estar_de_novo', 'pmda_shonin'];
+  if (!Number.isFinite(sequenceId)) return JSON.stringify({ error: 'sequence_id (number) is required.' });
+  if (!allowed.includes(pathway)) return JSON.stringify({ error: `pathway must be one of: ${allowed.join(', ')}.` });
+  try {
+    const { listLeaves } = await import('../submission-service/submission-service.js');
+    const { assessPathwayReadiness } = await import('../pathway-engines/index.js');
+    const { buildPathwayManifest } = await import('../pathway-engines/pathway-manifest.js');
+    const leaves = await listLeaves(sequenceId, { organizationId: ctx.organizationId });
+    const result = assessPathwayReadiness({
+      pathway: pathway as 'ctis' | 'mdr' | 'ivdr' | 'estar_510k' | 'estar_de_novo' | 'pmda_shonin',
+      leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, documentType: l.documentType ?? undefined })),
+      memberStates,
+    });
+    const manifest = buildPathwayManifest(
+      pathway as 'ctis' | 'mdr' | 'ivdr' | 'estar_510k' | 'estar_de_novo' | 'pmda_shonin',
+      result.detail
+    );
+    return JSON.stringify({ ok: true, ...manifest });
+  } catch (err) {
+    return JSON.stringify({ error: `build_pathway_manifest failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });
+  }
+});
+
+registerToolHandler('list_validation_rules', async (input) => {
+  // Static reference data — not tenant-specific, so no org/user context required.
+  const region = typeof input.region === 'string' ? input.region : '';
+  if (region && !['fda', 'eu', 'jp'].includes(region)) {
+    return JSON.stringify({ error: 'region must be one of: fda, eu, jp.' });
+  }
+  try {
+    const { RULE_CORPUS, rulesForRegion, corpusSummary } = await import('../ectd/validation-rule-corpus.js');
+    const rules = region ? rulesForRegion(region as 'fda' | 'eu' | 'jp') : RULE_CORPUS;
+    return JSON.stringify({ ok: true, region: region || 'all', summary: corpusSummary(), rules });
+  } catch (err) {
+    return JSON.stringify({ error: `list_validation_rules failed: ${err instanceof Error ? err.message : String(err)}` });
   }
 });
 

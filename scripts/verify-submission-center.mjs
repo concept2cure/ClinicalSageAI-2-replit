@@ -132,6 +132,13 @@ async function main() {
   // Capabilities.
   const cap = await c.req('GET', '/api/submissions/capabilities');
   ok('GET /api/submissions/capabilities returns workspaces', cap.status === 200 && !!cap.json);
+  ok('capabilities advertise assemble bytes server-ready', cap.json?.features?.assemble === true && cap.json?.features?.deviceTechnicalFile === true && cap.json?.features?.pathwayManifest === true && cap.json?.features?.publishTransmit === false, `features ${JSON.stringify(cap.json?.features)}`);
+
+  // Validation rule corpus (named, sourced eCTD criteria) — static reference data.
+  const vr = await c.req('GET', '/api/submissions/validation-rules?region=fda');
+  ok('validation-rules returns the cataloged corpus + summary', vr.status === 200 && Array.isArray(vr.json?.rules) && vr.json.rules.length > 0 && typeof vr.json?.summary?.total === 'number' && vr.json.rules.every((r) => r.id && r.severity && r.source), `status ${vr.status}`);
+  const vrBad = await c.req('GET', '/api/submissions/validation-rules?region=zz');
+  ok('validation-rules rejects an unknown region (400)', vrBad.status === 400, `got ${vrBad.status}`);
 
   // Portfolio + create (throwaway).
   const list0 = await c.req('GET', '/api/submissions');
@@ -182,6 +189,12 @@ async function main() {
       // no resolvable document should make the gate block (validationErrors > 0).
       const dr = await c.req('GET', `/api/submissions/sequences/${seqId}/dispatch-readiness`);
       ok('dispatch-readiness computes the gate server-side', dr.status === 200 && typeof dr.json?.gate?.cleared === 'boolean' && typeof dr.json?.validationErrors === 'number', `status ${dr.status}`);
+
+      // Universal pathway manifest (assembled ToC across pathways) — deterministic.
+      const pm = await c.req('GET', `/api/submissions/sequences/${seqId}/pathway-manifest?pathway=estar_510k`);
+      ok('pathway-manifest returns an ordered ToC with entries', pm.status === 200 && Array.isArray(pm.json?.entries) && pm.json.entries.length > 0 && /^01-/.test(pm.json.entries[0]?.path || ''), `status ${pm.status}`);
+      const pmCtis = await c.req('GET', `/api/submissions/sequences/${seqId}/pathway-manifest?pathway=ctis&memberStates=DE,FR`);
+      ok('pathway-manifest flattens CTIS Part I + per-state Part II', pmCtis.status === 200 && Array.isArray(pmCtis.json?.entries) && pmCtis.json.entries.some((e) => e.group === 'Part II — DE'), `status ${pmCtis.status}`);
 
       // Device technical-file manifest (MDR/IVDR assemble structure) — deterministic.
       const tf = await c.req('GET', `/api/submissions/sequences/${seqId}/technical-file?regulation=mdr`);

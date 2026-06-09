@@ -485,11 +485,16 @@ When your response draws on specific knowledge from the injected context above, 
 - For risk factors: [Risk: {severity} — {risk description}]
 - For learned insights: [Insight: {insight summary}]
 
+For LIVE external evidence returned by tools (each result includes a \`url\` — render it as a clickable markdown link so the user can verify):
+- For ClinicalTrials.gov (search_clinical_evidence): [[{nctId}]({url}) — {title}]
+- For PubMed (search_literature): [[PMID {pmid}]({url}) — {title}{, DOI if present}]
+- For Medicare coverage (search_medicare_coverage): [[{NCD/LCD number}]({url}) — {title}]
+
 Citation rules:
-1. Cite when making specific factual claims derived from injected context, not for general regulatory knowledge
-2. Maximum 3 citations per response — do not over-cite
+1. Cite when making specific factual claims derived from injected context or a tool result, not for general regulatory knowledge
+2. Maximum 3 citations per response for injected context — but when you draw on live tool results (trials, literature, coverage), cite EVERY trial/article/coverage document you reference, with its url, so claims are independently verifiable
 3. Place citations at the end of the relevant sentence or paragraph, not mid-sentence
-4. If no specific source exists for a claim, say "Based on general regulatory practice" — never fabricate a citation
+4. If no specific source exists for a claim, say "Based on general regulatory practice" — never fabricate a citation, NCT/PMID/MCD number, or url (only use identifiers and urls returned by a tool)
 5. When confidence is below 70%, explicitly state: "This recommendation has moderate confidence — {reason}"
 6. Memory atoms injected above use the format [category | "title"] — use those values in your citations
 
