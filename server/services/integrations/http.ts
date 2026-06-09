@@ -45,7 +45,7 @@ function retryAfterMs(res: Response): number | null {
  */
 export async function fetchWithRetry(
   url: string,
-  init: RequestInit = {},
+  init: Parameters<typeof fetch>[1] = {},
   opts: FetchRetryOptions = {}
 ): Promise<Response> {
   const retries = Math.max(0, opts.retries ?? DEFAULT_RETRIES);

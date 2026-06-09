@@ -124,6 +124,22 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   },
 };
 
+export const DESCRIBE_CAPABILITIES: AnaTool = {
+  name: 'describe_capabilities',
+  description:
+    "Introspect AnA's OWN live abilities in this deployment: every registered tool, and which " +
+    'integrations (evidence APIs, Gmail mailbox, Google Calendar, HubSpot CRM, document connectors) ' +
+    'are actually configured right now. ALWAYS call this before answering "what can you do?", when ' +
+    'planning a multi-tool workflow, or before relying on a workflow integration — so you only ' +
+    'promise and attempt what is truly available, and can tell the user exactly what to connect to ' +
+    'unlock the rest. Deterministic and read-only.',
+  input_schema: {
+    type: 'object',
+    properties: {},
+    required: [],
+  },
+};
+
 export const ASSESS_REGULATORY_LANDSCAPE: AnaTool = {
   name: 'assess_regulatory_landscape',
   description:
@@ -2347,6 +2363,27 @@ export const LOOKUP_REGULATORY_PATHWAY: AnaTool = {
   },
 };
 
+export const RESOLVE_REGULATORY_STRUCTURE: AnaTool = {
+  name: 'resolve_regulatory_structure',
+  description:
+    "Resolve the DETERMINISTIC submission structure for a region + application type via the reasoning engine (not the LLM): the required CTD sections (regional Module 1 + ICH M4 common Modules 2–5) and the review-clock model. Use this to ground a submission plan's structure — it is rule-resolved and citable, never invented. Covers regions fda|eu|jp and application types ind|nda|bla|maa|cta|anda|510k|pma; unsupported combinations are reported as unsupported (no fabrication). Read-only, deterministic, not tenant-specific.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      regions: {
+        type: 'array',
+        items: { type: 'string' },
+        description: "Target regions, e.g. ['fda','eu']. Aliases like 'us'/'europe'/'japan' are accepted.",
+      },
+      application_type: {
+        type: 'string',
+        description: "Application type, e.g. 'ind', 'nda', 'maa', '510k'.",
+      },
+    },
+    required: ['regions', 'application_type'],
+  },
+};
+
 export const GET_MARKET_SUBMISSION_SPEC: AnaTool = {
   name: 'get_market_submission_spec',
   description:
@@ -2465,6 +2502,48 @@ export const CLASSIFY_POST_SUBMISSION_CHANGE: AnaTool = {
       },
     },
     required: ['market'],
+  },
+};
+
+export const ASSESS_DEVICE_EVIDENCE_STRUCTURE: AnaTool = {
+  name: 'assess_device_evidence_structure',
+  description:
+    "Assess a device/IVD evidence document against its regulated structure. For `document: 'cer'` it checks the CER against MEDDEV 2.7/1 Rev 4 / MDR Annex XIV (set `equivalence_claimed` if equivalence is used); for `document: 'per'` it checks the IVDR Annex XIII Performance Evaluation Report and reports which of the three pillars (scientific validity, analytical, clinical) are covered. Pass `present_section_ids` (the sections you have). Without `present_section_ids` it returns the full structure (stages/pillars/sections + reviewer questions). Deterministic, read-only. Use it to gap-check a CER/PER before Notified-Body review.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      document: { type: 'string', enum: ['cer', 'per'], description: "'cer' (MDR clinical evaluation) or 'per' (IVDR performance evaluation)." },
+      present_section_ids: { type: 'array', items: { type: 'string' }, description: 'Section ids present in the document (for assessment).' },
+      equivalence_claimed: { type: 'boolean', description: 'CER only — set true if equivalence to another device is claimed.' },
+    },
+    required: ['document'],
+  },
+};
+
+export const CLASSIFY_DEVICE: AnaTool = {
+  name: 'classify_device',
+  description:
+    "Determine a device/IVD risk classification or FDA pathway from structured facts. `framework: 'mdr'` applies the EU MDR Annex VIII principal rules (facts like invasive, surgicallyInvasive, implantable, active, softwareDecisionSupport, contactsCnsOrCentralCirculation, incorporatesMedicinalSubstance, duration) → Class I/IIa/IIb/III with the rule that drove it. `framework: 'ivdr'` applies IVDR Annex VIII (facts like bloodDonationScreening, companionDiagnostic, infectiousOrCancerOrGenetic, selfTesting) → Class A/B/C/D. `framework: 'fda'` recommends a pathway (facts: fdaClass, predicateAvailable, exempt, novelLowModerateRisk) → exempt/510k/de_novo/pma. Each result carries a caveat to confirm against the full Annex / FDA classification database. Deterministic.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      framework: { type: 'string', enum: ['mdr', 'ivdr', 'fda'], description: 'The classification framework.' },
+      facts: { type: 'object', description: 'Structured device facts (see description for the keys per framework).' },
+    },
+    required: ['framework', 'facts'],
+  },
+};
+
+export const GET_DEVICE_REVIEWER_CHECKLIST: AnaTool = {
+  name: 'get_device_reviewer_checklist',
+  description:
+    "Get the shadow-reviewer checklist for a device submission — the section-anchored questions an FDA or Notified-Body reviewer asks of a 510k, de_novo, pma, cer, or per, each with severity and the regulatory basis. This is the reverse-workflow oversight: what a reviewer will ask of YOUR submission, always-on and independent of risk flags. Use it to pre-empt deficiencies and to ask the client the right questions. Deterministic, read-only.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      submission_type: { type: 'string', enum: ['510k', 'de_novo', 'pma', 'cer', 'per'], description: 'The device submission type.' },
+    },
+    required: ['submission_type'],
   },
 };
 
@@ -3890,6 +3969,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_DRUG_LABELS,
   SEARCH_DRUG_APPROVALS,
   ASSESS_REGULATORY_LANDSCAPE,
+  DESCRIBE_CAPABILITIES,
   PROJECT_KNOWLEDGE_SEARCH,
   SIMULATE_STUDY_DESIGN,
   SEARCH_DEVICE_ADVERSE_EVENTS,
@@ -3948,12 +4028,16 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   BUILD_PATHWAY_MANIFEST,
   LIST_VALIDATION_RULES,
   LOOKUP_REGULATORY_PATHWAY,
+  RESOLVE_REGULATORY_STRUCTURE,
   GET_MARKET_SUBMISSION_SPEC,
   GET_DOCUMENT_TEMPLATE,
   VALIDATE_MARKET_FORMATTING,
   GET_SUBMISSION_REQUIREMENTS,
   ASSESS_PATHWAY_ELIGIBILITY,
   CLASSIFY_POST_SUBMISSION_CHANGE,
+  ASSESS_DEVICE_EVIDENCE_STRUCTURE,
+  CLASSIFY_DEVICE,
+  GET_DEVICE_REVIEWER_CHECKLIST,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,

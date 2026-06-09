@@ -82,6 +82,24 @@ describe('GET /api/knowledge/deficiencies', () => {
   });
 });
 
+describe('GET /api/knowledge/pharmacopoeia', () => {
+  it('lists pharmacopoeias and chapters with the verify caveat', async () => {
+    const res = await request(app()).get('/api/knowledge/pharmacopoeia');
+    expect(res.status).toBe(200);
+    expect(res.body.pharmacopoeias.some((p: any) => p.code === 'Ph.Eur.')).toBe(true);
+    expect(res.body.count).toBeGreaterThanOrEqual(15);
+    expect(res.body.note).toMatch(/current pharmacopoeia/i);
+  });
+
+  it('resolves an exact chapter and searches by test', async () => {
+    const exact = await request(app()).get('/api/knowledge/pharmacopoeia?code=USP <85>');
+    expect(exact.body.match).toBe('exact');
+    expect(exact.body.chapter.topic).toBe('Endotoxins');
+    const search = await request(app()).get('/api/knowledge/pharmacopoeia?query=dissolution');
+    expect(search.body.chapters.some((c: any) => c.code === 'USP <711>')).toBe(true);
+  });
+});
+
 describe('GET /api/knowledge/validation-rules', () => {
   it('returns the corpus and scopes by region', async () => {
     const all = await request(app()).get('/api/knowledge/validation-rules');

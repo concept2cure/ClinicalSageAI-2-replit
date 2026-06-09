@@ -37,6 +37,9 @@ const SUBMISSION_TOOLS = [
   'get_submission_requirements',
   'assess_pathway_eligibility',
   'classify_post_submission_change',
+  'assess_device_evidence_structure',
+  'classify_device',
+  'get_device_reviewer_checklist',
   'assess_dispatch_readiness',
 ];
 
@@ -287,6 +290,32 @@ describe('submission AI tasks — tenant + input guards', () => {
     const out = JSON.parse(await handler({ market: 'eu' }, {} as ToolContext));
     expect(out.ok).toBe(true);
     expect(out.categories.some((c: { id: string }) => c.id === 'eu_type_ii')).toBe(true);
+  });
+
+  it('assess_device_evidence_structure gap-checks a CER', async () => {
+    const handler = getToolHandler('assess_device_evidence_structure')!;
+    const out = JSON.parse(await handler({ document: 'cer', present_section_ids: ['summary', 'scope'] }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.assessment.ready).toBe(false);
+    expect(out.assessment.missingRequiredSections).toContain('analysis');
+  });
+  it('classify_device applies the MDR rules', async () => {
+    const handler = getToolHandler('classify_device')!;
+    const out = JSON.parse(await handler({ framework: 'mdr', facts: { implantable: true, contactsCnsOrCentralCirculation: true } }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.class).toBe('III');
+  });
+  it('get_device_reviewer_checklist returns the 510(k) reviewer questions', async () => {
+    const handler = getToolHandler('get_device_reviewer_checklist')!;
+    const out = JSON.parse(await handler({ submission_type: '510k' }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.questions.length).toBeGreaterThan(0);
+    expect(out.counts.total).toBe(out.questions.length);
+  });
+  it('classify_device validates the framework', async () => {
+    const handler = getToolHandler('classify_device')!;
+    const out = JSON.parse(await handler({ framework: 'nope', facts: {} }, {} as ToolContext));
+    expect(out.error).toMatch(/framework must be one of/);
   });
 });
 

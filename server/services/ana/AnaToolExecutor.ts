@@ -27,6 +27,15 @@ import { searchDeviceRecalls } from '../integrations/device-recalls.js';
 import { searchDrugLabels } from '../integrations/drug-label-client.js';
 import { searchDrugApprovals } from '../integrations/drug-approvals-client.js';
 import { assessRegulatoryLandscape } from '../integrations/landscape.js';
+import { getIntegrationStatuses, summarizeStatuses } from '../integrations/integration-status.js';
+import { getAllEnabledTools } from './AnaToolDefinitions.js';
+import {
+  recordToolOutcome,
+  recordContractViolation,
+  classifyResult,
+  getToolReliability,
+  getUnhealthyTools,
+} from './tool-telemetry.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 import type {
   GatewayRequest,
@@ -60,9 +69,46 @@ type ToolHandler = (input: Record<string, unknown>, ctx?: ToolContext) => Promis
 
 const toolHandlers: Map<string, ToolHandler> = new Map();
 
-/** Register a handler for a named tool */
+// Lazily built map of tool name → schema-required input keys, for the
+// report-only contract check in the telemetry wrapper.
+let requiredInputKeys: Map<string, string[]> | null = null;
+function getRequiredInputKeys(tool: string): string[] {
+  if (!requiredInputKeys) {
+    requiredInputKeys = new Map();
+    for (const def of getAllEnabledTools()) {
+      const d = def as { name?: string; input_schema?: { required?: string[] } };
+      if (d.name && Array.isArray(d.input_schema?.required)) {
+        requiredInputKeys.set(d.name, d.input_schema.required);
+      }
+    }
+  }
+  return requiredInputKeys.get(tool) ?? [];
+}
+
+/**
+ * Register a handler for a named tool. Every handler is wrapped with execution
+ * telemetry (AnA's self-awareness of what is actually working) and a
+ * report-only input-contract check — every dispatch path resolves handlers
+ * from this map, so coverage is total with no call-site changes.
+ */
 export function registerToolHandler(name: string, handler: ToolHandler): void {
-  toolHandlers.set(name, handler);
+  const instrumented: ToolHandler = async (input, ctx) => {
+    // Report-only contract check: note when the model omitted required fields.
+    const missing = getRequiredInputKeys(name).filter(k => input?.[k] === undefined);
+    if (missing.length > 0) recordContractViolation(name);
+
+    const start = Date.now();
+    try {
+      const result = await handler(input, ctx);
+      const { outcome, note } = classifyResult(result);
+      recordToolOutcome(name, outcome, Date.now() - start, note);
+      return result;
+    } catch (e) {
+      recordToolOutcome(name, 'failure', Date.now() - start, e instanceof Error ? e.message : String(e));
+      throw e;
+    }
+  };
+  toolHandlers.set(name, instrumented);
 }
 
 /** Retrieve a registered tool handler, or undefined if the name is unknown. */
@@ -351,6 +397,62 @@ registerToolHandler('search_connected_repositories', async (input, ctx) => {
       source: 'Connected Repositories',
       error: e instanceof Error ? e.message : 'Connected-repository search failed',
       documents: [],
+    });
+  }
+});
+
+// Describe Capabilities — AnA's deterministic self-knowledge: registered tools
+// + which integrations are actually live in this deployment/org.
+registerToolHandler('describe_capabilities', async (_input, ctx) => {
+  try {
+    const orgId = ctx?.organizationId ? Number(ctx.organizationId) : null;
+    const integrations = await getIntegrationStatuses(orgId);
+    const summary = summarizeStatuses(integrations);
+
+    // Enumerate the declared tool surface and whether each has a live handler.
+    // Tools without a direct handler are executed via platform-command dispatch,
+    // so they are reported separately rather than as missing.
+    const declared = getAllEnabledTools()
+      .map(t => (t as { name?: string }).name)
+      .filter((n): n is string => !!n);
+    const directHandlers = declared.filter(n => toolHandlers.has(n));
+    const viaPlatformDispatch = declared.filter(n => !toolHandlers.has(n));
+
+    // Execution self-awareness: what has actually been working this process
+    // lifetime (only tools that have been called appear).
+    const reliability = getToolReliability();
+    const unhealthy = getUnhealthyTools(3).map(t => ({
+      tool: t.tool,
+      consecutiveFailures: t.consecutiveFailures,
+      lastError: t.lastError,
+    }));
+
+    return JSON.stringify({
+      source: 'AnA Capability Introspection',
+      toolSurface: {
+        total: declared.length,
+        directHandlers: directHandlers.length,
+        viaPlatformDispatch: viaPlatformDispatch.length,
+        tools: declared,
+      },
+      integrations,
+      integrationSummary: summary,
+      execution: {
+        toolsUsedThisSession: reliability.length,
+        reliability,
+        unhealthy,
+      },
+      guidance:
+        'Only offer or attempt tools whose integration is configured. For configured:false entries, ' +
+        'tell the user what unlocks them (the `requires` field). configured:null means org context ' +
+        'is needed to resolve — ask the user to open a project. Treat tools listed in ' +
+        'execution.unhealthy as currently unreliable: warn the user and prefer alternatives until ' +
+        'they recover.',
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'AnA Capability Introspection',
+      error: e instanceof Error ? e.message : 'Capability introspection failed',
     });
   }
 });
@@ -4016,6 +4118,24 @@ registerToolHandler('lookup_regulatory_pathway', async (input) => {
   }
 });
 
+registerToolHandler('resolve_regulatory_structure', async (input) => {
+  // Deterministic reasoning-engine resolution — not tenant-specific, no LLM.
+  const regions = Array.isArray(input.regions)
+    ? input.regions.filter((r): r is string => typeof r === 'string')
+    : [];
+  const applicationType = typeof input.application_type === 'string' ? input.application_type : '';
+  if (regions.length === 0 || !applicationType) {
+    return JSON.stringify({ error: 'regions (non-empty array) and application_type are required.' });
+  }
+  try {
+    const { buildSubmissionStructure } = await import('../reasoning-engine/index.js');
+    const structure = buildSubmissionStructure(regions, applicationType);
+    return JSON.stringify({ ok: true, ...structure });
+  } catch (err) {
+    return JSON.stringify({ error: `resolve_regulatory_structure failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('get_market_submission_spec', async (input) => {
   // Static reference data — not tenant-specific, so no org/user context required.
   const specId = typeof input.spec_id === 'string' ? input.spec_id : '';
@@ -4191,6 +4311,56 @@ registerToolHandler('classify_post_submission_change', async (input) => {
     return JSON.stringify({ ok: true, ...m.recommendChangeCategory(market, flags) });
   } catch (err) {
     return JSON.stringify({ error: `classify_post_submission_change failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('assess_device_evidence_structure', async (input) => {
+  // Static structure + pure assessment — no tenant context required.
+  const document = input.document === 'cer' || input.document === 'per' ? input.document : '';
+  if (!document) return JSON.stringify({ error: "document must be one of: cer, per." });
+  const present = Array.isArray(input.present_section_ids) ? (input.present_section_ids as string[]) : null;
+  try {
+    if (document === 'cer') {
+      const m = await import('../market-specs/cer-structure.js');
+      if (!present) return JSON.stringify({ ok: true, stages: m.CER_STAGES, sections: m.CER_SECTIONS });
+      return JSON.stringify({ ok: true, assessment: m.assessCerStructure(present, { equivalenceClaimed: input.equivalence_claimed === true }) });
+    }
+    const m = await import('../market-specs/per-structure.js');
+    if (!present) return JSON.stringify({ ok: true, pillars: m.PER_PILLARS, sections: m.PER_SECTIONS });
+    return JSON.stringify({ ok: true, assessment: m.assessPerStructure(present) });
+  } catch (err) {
+    return JSON.stringify({ error: `assess_device_evidence_structure failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('classify_device', async (input) => {
+  // Pure rules — no tenant context required.
+  const framework = input.framework;
+  if (framework !== 'mdr' && framework !== 'ivdr' && framework !== 'fda') {
+    return JSON.stringify({ error: 'framework must be one of: mdr, ivdr, fda.' });
+  }
+  const facts = (input.facts && typeof input.facts === 'object' ? input.facts : {}) as Record<string, never>;
+  try {
+    const m = await import('../market-specs/device-classification.js');
+    const result = framework === 'mdr' ? m.classifyMdr(facts) : framework === 'ivdr' ? m.classifyIvdr(facts) : m.recommendFdaPathway(facts);
+    return JSON.stringify({ ok: true, framework, ...result });
+  } catch (err) {
+    return JSON.stringify({ error: `classify_device failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('get_device_reviewer_checklist', async (input) => {
+  // Static reference — no tenant context required.
+  const type = input.submission_type;
+  const TYPES = ['510k', 'de_novo', 'pma', 'cer', 'per'];
+  if (typeof type !== 'string' || !TYPES.includes(type)) {
+    return JSON.stringify({ error: `submission_type must be one of: ${TYPES.join(', ')}.` });
+  }
+  try {
+    const { buildShadowReviewerChecklist } = await import('../market-specs/device-shadow-reviewer.js');
+    return JSON.stringify({ ok: true, ...buildShadowReviewerChecklist(type as '510k' | 'de_novo' | 'pma' | 'cer' | 'per') });
+  } catch (err) {
+    return JSON.stringify({ error: `get_device_reviewer_checklist failed: ${err instanceof Error ? err.message : String(err)}` });
   }
 });
 
