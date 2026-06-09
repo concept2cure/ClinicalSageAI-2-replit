@@ -357,11 +357,100 @@ const PHARMA_FRAMEWORKS: DecisionFramework[] = [
 
 // ─── Registry ────────────────────────────────────────────────────────────────
 
+// ─── Global / multi-market frameworks ────────────────────────────────────────
+
+const GLOBAL_FRAMEWORKS: DecisionFramework[] = [
+  {
+    id: 'g-reference-first-vs-parallel',
+    segment: null,
+    stage: 'strategy',
+    choice: 'File the reference market first, or file multiple markets in parallel',
+    triggers: [
+      /\b(?:file|submit|launch)\b[^.?!]{0,40}\b(?:first|sequence|parallel|simultaneous)\b/i,
+      /\b(?:which (?:market|region|agency)) (?:first|to file)/i,
+      /\bsequenc\w+\b[^.?!]{0,30}\b(?:market|region|filing)/i,
+    ],
+    theTradeoff:
+      'A strong reference-market decision (FDA/EMA) becomes leverage in reliance markets, but waiting for it delays revenue and access in the other markets.',
+    optionA: 'File the reference market first, then use its decision in reliance/recognition routes elsewhere.',
+    optionB: 'File the major markets in parallel to compress the global timeline.',
+    tiltsTowardA: [
+      'Many target markets offer reliance/recognition routes off a reference approval',
+      'The reference decision is likely to be clean and quotable',
+      'Bandwidth or budget limits how many full reviews you can run at once',
+    ],
+    tiltsTowardB: [
+      'Markets are large enough to justify independent full reviews',
+      'Competitive timing makes simultaneous launch decisive',
+      'The dossier and labelling are stable enough to run several reviews together',
+    ],
+    howToDecide:
+      'For each target market, ask whether it offers a reliance route off your reference approval and how much earlier a parallel filing would actually launch it; reserve parallel full reviews for the markets where reliance is unavailable or speed is worth the cost.',
+    basis: 'WHO/ICMRA reliance frameworks; MHRA IRP; TGA comparable-overseas-regulator pathways.',
+  },
+  {
+    id: 'g-accelerated-take-or-wait',
+    segment: null,
+    stage: 'strategy',
+    choice: 'Take an accelerated/conditional approval now, or wait for the full data package',
+    triggers: [
+      /\b(?:accelerated|conditional|provisional)\b[^.?!]{0,30}\b(?:approval|pathway|now|wait)/i,
+      /\b(?:surrogate|interim)\b[^.?!]{0,30}\bendpoint\b/i,
+    ],
+    theTradeoff:
+      'Accelerated/conditional approval gets the product to patients earlier on less data, but it commits you to confirmatory work and carries withdrawal risk if the confirmation slips or fails.',
+    optionA: 'Pursue accelerated/conditional approval on a surrogate or interim endpoint.',
+    optionB: 'Wait and file on the complete outcome data.',
+    tiltsTowardA: [
+      'Serious condition with meaningful unmet need and a credible surrogate',
+      'A confirmatory trial is already designed and can enrol quickly',
+      'Earlier access has a decisive patient or competitive benefit',
+    ],
+    tiltsTowardB: [
+      'The surrogate-to-outcome link is weak or contested',
+      'The confirmatory trial would be slow or hard to enrol post-approval',
+      'A failed confirmation would do more reputational/commercial damage than the delay',
+    ],
+    howToDecide:
+      'Decide whether you can stand behind the surrogate and start the confirmatory trial immediately; if either is shaky, the full-data route is usually the lower-risk path.',
+    basis: 'FDA Accelerated Approval (21 CFR 314 Subpart H / 601 Subpart E); EMA conditional MA (Reg 507/2006).',
+  },
+  {
+    id: 'g-mrct-vs-local-bridging',
+    segment: null,
+    stage: 'clinical',
+    choice: 'Run one multi-regional trial, or run a local bridging study for a region',
+    triggers: [
+      /\bmrct\b/i,
+      /\bbridg\w+\b[^.?!]{0,30}\b(?:study|trial|data)/i,
+      /\b(?:japan|china)\b[^.?!]{0,30}\b(?:trial|study|data|inclusion)/i,
+    ],
+    theTradeoff:
+      'A single MRCT that includes a region avoids a separate bridging study, but it constrains the design (timing, sites, regional sizing) to that region’s expectations.',
+    optionA: 'Include the region in one ICH E17 multi-regional trial.',
+    optionB: 'Run the global trial without the region, then bridge locally (ICH E5).',
+    tiltsTowardA: [
+      'The region is a priority market worth designing for from the start',
+      'You can meet the region’s sizing and consistency expectations in one trial',
+      'Regulatory timing in the region aligns with the global program',
+    ],
+    tiltsTowardB: [
+      'The region is a later-stage market and would slow the global trial',
+      'Ethnic-factor sensitivity is low enough that a focused bridge suffices',
+      'Operational constraints make including the region in the pivotal impractical',
+    ],
+    howToDecide:
+      'Weigh the region’s commercial priority and ethnic-factor sensitivity against the design constraints of including it; a priority market with real ethnic-factor questions usually justifies designing the MRCT to include it.',
+    basis: 'ICH E17; ICH E5(R1); PMDA/NMPA MRCT acceptance.',
+  },
+];
+
 export const DECISION_FRAMEWORKS: DecisionFramework[] = [
   ...CROSS_CUTTING,
   ...MDX_FRAMEWORKS,
   ...BIOTECH_FRAMEWORKS,
   ...PHARMA_FRAMEWORKS,
+  ...GLOBAL_FRAMEWORKS,
 ];
 
 // ─── Detection ───────────────────────────────────────────────────────────────
