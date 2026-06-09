@@ -124,6 +124,35 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   },
 };
 
+export const ASSESS_REGULATORY_LANDSCAPE: AnaTool = {
+  name: 'assess_regulatory_landscape',
+  description:
+    'Assemble a cross-source regulatory landscape for a topic in ONE call — fans out across ' +
+    'ClinicalTrials.gov, PubMed, and CMS coverage, plus FDA device recalls (device domain) and/or ' +
+    'FDA drug labels + Drugs@FDA approvals (drug domain). Returns compact, citeable sections to ' +
+    'synthesize into a competitive / safety / reimbursement briefing. Prefer this over calling each ' +
+    'source separately when the user wants an overview or landscape.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      topic: {
+        type: 'string',
+        description: 'The product, indication, or device/drug to profile (e.g. "pembrolizumab NSCLC").',
+      },
+      domain: {
+        type: 'string',
+        enum: ['device', 'drug', 'auto'],
+        description: "Scope the FDA sources: 'device', 'drug', or 'auto' (both). Default: auto.",
+      },
+      max_per_source: {
+        type: 'number',
+        description: 'Max items per source (default: 5, max: 15).',
+      },
+    },
+    required: ['topic'],
+  },
+};
+
 export const SEARCH_DRUG_APPROVALS: AnaTool = {
   name: 'search_drug_approvals',
   description:
@@ -3860,6 +3889,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_DEVICE_RECALLS,
   SEARCH_DRUG_LABELS,
   SEARCH_DRUG_APPROVALS,
+  ASSESS_REGULATORY_LANDSCAPE,
   PROJECT_KNOWLEDGE_SEARCH,
   SIMULATE_STUDY_DESIGN,
   SEARCH_DEVICE_ADVERSE_EVENTS,

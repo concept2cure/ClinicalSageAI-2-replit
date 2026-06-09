@@ -26,6 +26,7 @@ import { searchHubSpotCrm, type HubSpotObject } from '../integrations/hubspot-cl
 import { searchDeviceRecalls } from '../integrations/device-recalls.js';
 import { searchDrugLabels } from '../integrations/drug-label-client.js';
 import { searchDrugApprovals } from '../integrations/drug-approvals-client.js';
+import { assessRegulatoryLandscape } from '../integrations/landscape.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 import type {
   GatewayRequest,
@@ -350,6 +351,37 @@ registerToolHandler('search_connected_repositories', async (input, ctx) => {
       source: 'Connected Repositories',
       error: e instanceof Error ? e.message : 'Connected-repository search failed',
       documents: [],
+    });
+  }
+});
+
+// Assess Regulatory Landscape — cross-source synthesis (fans out in parallel).
+registerToolHandler('assess_regulatory_landscape', async (input) => {
+  const topic = typeof input.topic === 'string' ? input.topic.trim() : '';
+  if (!topic) {
+    return JSON.stringify({ error: 'assess_regulatory_landscape requires a topic.' });
+  }
+  const domain = ['device', 'drug', 'auto'].includes(input.domain as string)
+    ? (input.domain as 'device' | 'drug' | 'auto')
+    : 'auto';
+  try {
+    const result = await assessRegulatoryLandscape({
+      topic,
+      domain,
+      limitPerSource: Math.min((input.max_per_source as number) || 5, 15),
+    });
+    return JSON.stringify({
+      ...result,
+      citation_hint:
+        'Synthesize across sections; cite trials by NCT, literature by PMID, coverage by MCD number, ' +
+        'recalls by recall number, approvals by FDA application number — each with its url where present.',
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'Regulatory Landscape',
+      topic,
+      error: e instanceof Error ? e.message : 'Landscape assessment failed',
+      sections: {},
     });
   }
 });
