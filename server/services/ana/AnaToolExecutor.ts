@@ -24,6 +24,7 @@ import { searchRegulatoryCorrespondence } from '../integrations/correspondence-s
 import { createCalendarEvent } from '../integrations/calendar-event.js';
 import { searchHubSpotCrm, type HubSpotObject } from '../integrations/hubspot-client.js';
 import { searchDeviceRecalls } from '../integrations/device-recalls.js';
+import { searchDrugLabels } from '../integrations/drug-label-client.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 import type {
   GatewayRequest,
@@ -348,6 +349,36 @@ registerToolHandler('search_connected_repositories', async (input, ctx) => {
       source: 'Connected Repositories',
       error: e instanceof Error ? e.message : 'Connected-repository search failed',
       documents: [],
+    });
+  }
+});
+
+// Search Drug Labels — FDA openFDA drug/label (SPL).
+registerToolHandler('search_drug_labels', async (input) => {
+  const asStr = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v.trim() : undefined;
+  try {
+    const result = await searchDrugLabels({
+      brandName: asStr(input.brand_name),
+      genericName: asStr(input.generic_name),
+      query: asStr(input.query),
+      limit: Math.min((input.max_results as number) || 3, 10),
+    });
+    if (!result.searchExpression) {
+      return JSON.stringify({ error: 'Provide brand_name, generic_name, or query to search drug labels.' });
+    }
+    return JSON.stringify({
+      source: result.source,
+      total: result.total,
+      resultCount: result.labels.length,
+      labels: result.labels,
+      citation_hint: 'Reference labels by brand/generic name and manufacturer; quote sections verbatim.',
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'FDA Drug Labels (openFDA SPL)',
+      error: e instanceof Error ? e.message : 'Drug label search failed',
+      labels: [],
     });
   }
 });
