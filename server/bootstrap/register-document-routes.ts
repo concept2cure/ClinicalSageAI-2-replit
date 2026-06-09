@@ -220,6 +220,21 @@ export async function registerDocumentRoutes({
         name: 'CAPA + complaint + MDR / vigilance triage',
       },
       {
+        path: '/api/design-risk',
+        mod: '../routes/design-risk.js',
+        name: 'Design controls (DHF) + Risk Management File (ISO 14971)',
+      },
+      {
+        path: '/api/qms',
+        mod: '../routes/qms.js',
+        name: 'Quality Management System (document control, training, suppliers, audits)',
+      },
+      {
+        path: '/api/ivd-lifecycle',
+        mod: '../routes/ivd-lifecycle.js',
+        name: 'IVD lifecycle calculators (analytical, software, change, registration)',
+      },
+      {
         path: '/api/_ops/predicate-intelligence',
         mod: '../routes/_ops-predicate-shadow.js',
         name: 'Predicate Intelligence — ops probes',
