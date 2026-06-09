@@ -7,6 +7,7 @@ import { db } from '../db';
 import { eq } from 'drizzle-orm';
 import { users, organizationUsers } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger';
+import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import {
   getSamlProvider,
   SAMLValidationError,
@@ -368,10 +369,8 @@ router.get('/saml/logout', async (req: Request, res: Response) => {
 
     let claims: Record<string, unknown>;
     try {
-      claims = jwt.verify(token, config.jwt.secret, { algorithms: ['HS256'] }) as unknown as Record<
-        string,
-        unknown
-      >;
+      // Use the rotation-aware verifier (HS256-pinned, prev-secret fallback).
+      claims = verifyJwtWithRotation<Record<string, unknown>>(token);
     } catch {
       return res.status(401).json({ success: false, error: 'INVALID_TOKEN' });
     }
