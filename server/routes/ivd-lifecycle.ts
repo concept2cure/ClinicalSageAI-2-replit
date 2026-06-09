@@ -55,6 +55,7 @@ import {
   assessPathwayReadiness, listPathways, type Jurisdiction,
 } from '../services/regulatory/global-pathways';
 import { classifyIvdrAnnexVIII } from '../services/regulatory/ivdr-classification';
+import { pairCompanionDiagnostic } from '../services/regulatory/cdx-pairing';
 import { knowledgeFor, type LifecycleConcept } from '../services/ivd-knowledge/links';
 
 const router = Router();
@@ -96,6 +97,16 @@ router.post('/classify/ivdr', (req: Request, res: Response) => {
     return res.status(422).json({ error: 'intendedPurpose is required' });
   }
   const result = classifyIvdrAnnexVIII(b);
+  res.json({ ...result, knowledge: knowledgeFor(result.knowledgeRefs) });
+});
+
+// ── Companion-diagnostic pairing (biomarker-knowledge-aware) ────────────────
+router.post('/cdx/pair', (req: Request, res: Response) => {
+  const b = req.body ?? {};
+  if (typeof b.biomarker !== 'string' || b.biomarker.trim().length === 0) {
+    return res.status(422).json({ error: 'biomarker is required' });
+  }
+  const result = pairCompanionDiagnostic(b);
   res.json({ ...result, knowledge: knowledgeFor(result.knowledgeRefs) });
 });
 

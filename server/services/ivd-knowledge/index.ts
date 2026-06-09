@@ -11,10 +11,12 @@ import { EU_IVDR_KNOWLEDGE } from './regulatory/eu-ivdr';
 import { GLOBAL_IVD_KNOWLEDGE } from './regulatory/global-ivd';
 import { MDCG_GUIDANCE_KNOWLEDGE } from './regulatory/mdcg-guidance';
 import { LABELING_RULES_KNOWLEDGE } from './regulatory/labeling-rules';
+import { AI_GOVERNANCE_KNOWLEDGE } from './regulatory/ai-governance';
 import { ANALYTICAL_PERFORMANCE_KNOWLEDGE } from './scientific/analytical-performance';
 import { CLINICAL_PERFORMANCE_KNOWLEDGE } from './scientific/clinical-performance';
 import { BIOMARKER_VALIDITY_KNOWLEDGE } from './scientific/biomarker-validity';
 import { LEGAL_IVD_KNOWLEDGE } from './legal/legal-ivd';
+import { DTC_GENETIC_LEGAL_KNOWLEDGE } from './legal/dtc-genetic';
 import { IVD_STANDARDS_KNOWLEDGE } from './standards/ivd-standards';
 
 export * from './types';
@@ -26,10 +28,12 @@ export const IVD_KNOWLEDGE_BASE: readonly KnowledgeEntry[] = Object.freeze([
   ...GLOBAL_IVD_KNOWLEDGE,
   ...MDCG_GUIDANCE_KNOWLEDGE,
   ...LABELING_RULES_KNOWLEDGE,
+  ...AI_GOVERNANCE_KNOWLEDGE,
   ...ANALYTICAL_PERFORMANCE_KNOWLEDGE,
   ...CLINICAL_PERFORMANCE_KNOWLEDGE,
   ...BIOMARKER_VALIDITY_KNOWLEDGE,
   ...LEGAL_IVD_KNOWLEDGE,
+  ...DTC_GENETIC_LEGAL_KNOWLEDGE,
   ...IVD_STANDARDS_KNOWLEDGE,
 ]);
 
@@ -40,9 +44,11 @@ export const IVD_KNOWLEDGE_CORPORA = {
   'global-ivd': GLOBAL_IVD_KNOWLEDGE,
   'mdcg-guidance': MDCG_GUIDANCE_KNOWLEDGE,
   'labeling-rules': LABELING_RULES_KNOWLEDGE,
+  'ai-governance': AI_GOVERNANCE_KNOWLEDGE,
   'analytical-performance': ANALYTICAL_PERFORMANCE_KNOWLEDGE,
   'clinical-performance': CLINICAL_PERFORMANCE_KNOWLEDGE,
   'biomarker-validity': BIOMARKER_VALIDITY_KNOWLEDGE,
   legal: LEGAL_IVD_KNOWLEDGE,
+  'dtc-genetic': DTC_GENETIC_LEGAL_KNOWLEDGE,
   standards: IVD_STANDARDS_KNOWLEDGE,
 } as const;
