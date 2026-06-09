@@ -4145,6 +4145,30 @@ registerToolHandler('assess_pathway_eligibility', async (input) => {
   }
 });
 
+registerToolHandler('classify_post_submission_change', async (input) => {
+  // Static reference data + pure decision aid — no tenant context required.
+  const market = input.market === 'us' || input.market === 'eu' ? input.market : '';
+  if (!market) return JSON.stringify({ error: "market must be one of: us, eu." });
+  try {
+    const m = await import('../market-specs/post-submission-changes.js');
+    const rawFlags = (input.flags && typeof input.flags === 'object' ? input.flags : null) as Record<string, unknown> | null;
+    if (!rawFlags) {
+      return JSON.stringify({ ok: true, categories: m.categoriesForMarket(market) });
+    }
+    const flags = {
+      scopeExtension: rawFlags.scope_extension === true,
+      majorImpact: rawFlags.major_impact === true,
+      moderateImpact: rawFlags.moderate_impact === true,
+      immediateSafetyChange: rawFlags.immediate_safety_change === true,
+      minimalImpact: rawFlags.minimal_impact === true,
+      euImmediateNotification: rawFlags.eu_immediate_notification === true,
+    };
+    return JSON.stringify({ ok: true, ...m.recommendChangeCategory(market, flags) });
+  } catch (err) {
+    return JSON.stringify({ error: `classify_post_submission_change failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('assess_dispatch_readiness', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) {
     return JSON.stringify({ error: 'assess_dispatch_readiness requires tenant context (organizationId and userId).' });

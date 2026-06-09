@@ -2396,6 +2396,31 @@ export const ASSESS_PATHWAY_ELIGIBILITY: AnaTool = {
   },
 };
 
+export const CLASSIFY_POST_SUBMISSION_CHANGE: AnaTool = {
+  name: 'classify_post_submission_change',
+  description:
+    "Classify a post-approval change into its lifecycle category — FDA supplements (Prior Approval Supplement, CBE-30, CBE-0, Annual Report) or EU variations (Type IA, IAIN, IB, II, Line Extension) — and the canonical sequence type it maps to. Without `flags` it returns the catalog for the market. With `flags` (scope_extension, major_impact, moderate_impact, immediate_safety_change, minimal_impact, eu_immediate_notification) it recommends a category by deterministic precedence. This is a structured decision aid from your flags, NOT the agency's classification decision — confirm against the variation/classification guideline. `market` is 'us' or 'eu'.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      market: { type: 'string', enum: ['us', 'eu'], description: "The market: 'us' (FDA supplements) or 'eu' (variations)." },
+      flags: {
+        type: 'object',
+        description: 'Structured change characteristics. Omit to list the category catalog.',
+        properties: {
+          scope_extension: { type: 'boolean', description: 'New indication/strength/form/route.' },
+          major_impact: { type: 'boolean', description: 'Substantial potential impact on safety/efficacy/quality.' },
+          moderate_impact: { type: 'boolean', description: 'Moderate potential impact.' },
+          immediate_safety_change: { type: 'boolean', description: 'Safety-related change to take effect immediately (US CBE-0).' },
+          minimal_impact: { type: 'boolean', description: 'Minimal/no impact (administrative / within validated ranges).' },
+          eu_immediate_notification: { type: 'boolean', description: 'EU: requires immediate notification (Type IAIN).' },
+        },
+      },
+    },
+    required: ['market'],
+  },
+};
+
 export const ASSESS_DISPATCH_READINESS: AnaTool = {
   name: 'assess_dispatch_readiness',
   description:
@@ -3879,6 +3904,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   VALIDATE_MARKET_FORMATTING,
   GET_SUBMISSION_REQUIREMENTS,
   ASSESS_PATHWAY_ELIGIBILITY,
+  CLASSIFY_POST_SUBMISSION_CHANGE,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,

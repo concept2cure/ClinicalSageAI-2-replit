@@ -396,6 +396,47 @@ router.post('/designations/:id/assess', limiter, requireRole(AUTHOR), async (req
   }
 });
 
+// ── Post-submission change classification (lifecycle) ────────────────────────
+// The FDA supplement / EU variation category catalog + a flag-driven classifier
+// that maps a proposed change to its category and the canonical sequence type.
+router.get('/change-categories', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const market = String(Array.isArray(req.query.market) ? req.query.market[0] : req.query.market ?? '').toLowerCase();
+  if (market && market !== 'us' && market !== 'eu') {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'market must be one of: us, eu.' } });
+  }
+  try {
+    const { CHANGE_CATEGORIES, categoriesForMarket } = await import('../services/market-specs/post-submission-changes.js');
+    res.json({ market: market || 'all', categories: market ? categoriesForMarket(market as 'us' | 'eu') : CHANGE_CATEGORIES });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+const changeClassifySchema = z.object({
+  market: z.enum(['us', 'eu']),
+  flags: z.object({
+    scopeExtension: z.boolean().optional(),
+    majorImpact: z.boolean().optional(),
+    moderateImpact: z.boolean().optional(),
+    immediateSafetyChange: z.boolean().optional(),
+    minimalImpact: z.boolean().optional(),
+    euImmediateNotification: z.boolean().optional(),
+  }).default({}),
+});
+router.post('/change-categories/classify', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = changeClassifySchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { recommendChangeCategory } = await import('../services/market-specs/post-submission-changes.js');
+    res.json(recommendChangeCategory(parsed.data.market, parsed.data.flags));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 router.get('/:id', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });

@@ -36,6 +36,7 @@ const SUBMISSION_TOOLS = [
   'validate_market_formatting',
   'get_submission_requirements',
   'assess_pathway_eligibility',
+  'classify_post_submission_change',
   'assess_dispatch_readiness',
 ];
 
@@ -272,6 +273,20 @@ describe('submission AI tasks — tenant + input guards', () => {
     const handler = getToolHandler('assess_pathway_eligibility')!;
     const out = JSON.parse(await handler({ designation: 'nope' }, {} as ToolContext));
     expect(out.error).toMatch(/No designation/);
+  });
+
+  it('classify_post_submission_change recommends a category from flags', async () => {
+    const handler = getToolHandler('classify_post_submission_change')!;
+    const out = JSON.parse(await handler({ market: 'us', flags: { major_impact: true } }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.categoryId).toBe('fda_pas');
+    expect(out.sequenceType).toBe('variation');
+  });
+  it('classify_post_submission_change lists the catalog without flags', async () => {
+    const handler = getToolHandler('classify_post_submission_change')!;
+    const out = JSON.parse(await handler({ market: 'eu' }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.categories.some((c: { id: string }) => c.id === 'eu_type_ii')).toBe(true);
   });
 });
 

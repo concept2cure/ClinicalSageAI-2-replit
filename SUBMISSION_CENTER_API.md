@@ -30,6 +30,10 @@ come from it. Do not send tenant ids in the body.
 | POST | `/api/ectd-documents/:id/classify` | `ClassifyRequest` → `ClassifyResponse` | auto-propose leaf placement (Ingestion) |
 | POST | `/api/ectd-documents/:id/extract` | `ExtractRequest` → `ExtractResponse` | structure + provenance capture |
 
+## Post-submission lifecycle (Sequences / Dispatch)
+| GET | `/api/submissions/change-categories[?market=us\|eu]` | → `ChangeCategoriesResponse` | FDA supplement (PAS/CBE-30/CBE-0/AR) and EU variation (Type IA/IAIN/IB/II/Extension) category catalog, each with definition, timing, examples, basis, and the canonical sequence type. |
+| POST | `/api/submissions/change-categories/classify` | `ChangeClassifyRequest` → `ChangeRecommendation` | Flag-driven classifier (scopeExtension/majorImpact/moderateImpact/immediateSafetyChange/minimalImpact/euImmediateNotification) → recommended category + sequence type. A decision aid, not the agency's classification decision. |
+
 ## 3. Sequences / Lifecycle (`/submissions/:id/sequences`)
 | GET | `/api/submissions/:id/sequences` | → `EctdSequence[]` | sequence timeline |
 | POST | `/api/submissions/:id/sequences` | `CreateSequenceRequest` → `EctdSequence` | new sequence |
@@ -71,7 +75,8 @@ AnA can drive all of the above through her governed tools (tenant from
 `trace_provenance`, `check_consistency`, `assess_pathway_readiness`,
 `build_pathway_manifest`, `list_validation_rules`, `get_market_submission_spec`,
 `get_document_template`, `validate_market_formatting`, `get_submission_requirements`,
-`assess_pathway_eligibility`, `assess_dispatch_readiness`. The UI's AnA panel passes page context
+`assess_pathway_eligibility`, `classify_post_submission_change`,
+`assess_dispatch_readiness`. The UI's AnA panel passes page context
 (`{ submissionId, sectionCode, region }`); the tools supply nothing tenant-related.
 
 ## Still server-side TODO before some screens are fully live

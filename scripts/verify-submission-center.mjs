@@ -172,6 +172,14 @@ async function main() {
   const eligBad = await c.req('POST', '/api/submissions/designations/nope/assess', { answers: {} });
   ok('eligibility 404s on unknown designation', eligBad.status === 404, `got ${eligBad.status}`);
 
+  // Post-submission change classification (lifecycle).
+  const cc = await c.req('GET', '/api/submissions/change-categories?market=eu');
+  ok('change-categories lists EU variations', cc.status === 200 && Array.isArray(cc.json?.categories) && cc.json.categories.some((x) => x.id === 'eu_type_ii'), `status ${cc.status}`);
+  const ccClass = await c.req('POST', '/api/submissions/change-categories/classify', { market: 'us', flags: { major_impact: true } });
+  ok('change classify maps a major US change to PAS', ccClass.status === 200 && ccClass.json?.categoryId === 'fda_pas' && ccClass.json?.sequenceType === 'variation', `status ${ccClass.status}`);
+  const ccBad = await c.req('POST', '/api/submissions/change-categories/classify', { market: 'zz', flags: {} });
+  ok('change classify rejects an unknown market (400)', ccBad.status === 400, `got ${ccBad.status}`);
+
   // Document template structures (canonical section skeletons) — static reference data.
   const dt = await c.req('GET', '/api/submissions/document-templates?family=ectd');
   ok('document-templates returns CTD spines with sections', dt.status === 200 && Array.isArray(dt.json?.templates) && dt.json.templates.length > 0 && dt.json.templates.every((t) => Array.isArray(t.sections) && t.sections.length > 0), `status ${dt.status}`);

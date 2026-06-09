@@ -397,6 +397,41 @@ export interface EligibilityAssessment {
   unanswered: string[];
 }
 
+// ── Post-submission change classification (GET/POST /api/submissions/change-categories[...]) ─
+export interface ChangeCategory {
+  id: string;
+  market: 'us' | 'eu';
+  label: string;
+  definition: string;
+  reviewTiming: string;
+  sequenceType: 'variation' | 'amendment' | 'annual' | 'response';
+  examples: string[];
+  basis: string;
+}
+export interface ChangeCategoriesResponse {
+  market: string;
+  categories: ChangeCategory[];
+}
+export interface ChangeClassifyRequest {
+  market: 'us' | 'eu';
+  flags: {
+    scopeExtension?: boolean;
+    majorImpact?: boolean;
+    moderateImpact?: boolean;
+    immediateSafetyChange?: boolean;
+    minimalImpact?: boolean;
+    euImmediateNotification?: boolean;
+  };
+}
+export interface ChangeRecommendation {
+  market: 'us' | 'eu';
+  categoryId: string;
+  label: string;
+  sequenceType: 'variation' | 'amendment' | 'annual' | 'response';
+  rationale: string;
+  caveat: string;
+}
+
 // ── Market formatting validation (POST /api/submissions/market-specs/:specId/validate) ─
 export interface FormattingValidateRequest {
   leaves: Array<{
