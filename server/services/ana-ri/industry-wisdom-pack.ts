@@ -514,6 +514,89 @@ const PHARMA_WISDOM: WisdomHeuristic[] = [
   },
 ];
 
+// ─── Global / cross-market strategy ──────────────────────────────────────────
+
+const GLOBAL_STRATEGY: WisdomHeuristic[] = [
+  {
+    id: 'x-global-mrct-once',
+    segment: null,
+    stage: 'strategy',
+    title: 'Build one multi-regional trial, not a stack of regional ones',
+    situation:
+      'A team plans separate pivotal trials per region to satisfy each agency individually, treating Japan, China and the West as different programs.',
+    consequence:
+      'Cost and timeline multiply, and the inconsistencies between near-identical trials become questions reviewers raise in every region.',
+    veteranMove:
+      'Anchor the program on one ICH E17-compliant multi-regional trial and a single CTD, sized to support a regional consistency assessment, then localise only Module 1 per market.',
+    basis: 'ICH E17; ICH M4 (CTD); PMDA/NMPA acceptance of MRCT data.',
+  },
+  {
+    id: 'x-reliance-leverage',
+    segment: null,
+    stage: 'strategy',
+    title: 'A strong reference-market approval is an asset in every reliance market',
+    situation:
+      'A team files each market from scratch, ignoring that many regulators run reliance or recognition routes off a trusted reference decision.',
+    consequence:
+      'The team pays full review time and cost in markets that would have accepted a reliance pathway off an existing FDA/EMA decision.',
+    veteranMove:
+      'Sequence the reference filing first where its decision and label strengthen later reviews, then use reliance/recognition routes (MHRA IRP, TGA COR, Swiss/Brazil reliance, WHO collaborative registration) downstream.',
+    basis: 'WHO/ICMRA reliance frameworks; MHRA IRP; TGA comparable-overseas-regulator pathways.',
+  },
+  {
+    id: 'pharma-nitrosamine-early',
+    segment: 'pharma',
+    stage: 'nonclinical_cmc',
+    title: 'A nitrosamine risk assessment is now table stakes, not an afterthought',
+    situation:
+      'A small-molecule program leaves mutagenic-impurity (nitrosamine) evaluation until late, assuming the route of synthesis is clean.',
+    consequence:
+      'A late finding can force a control strategy change, additional testing, or a recall, and a missing assessment is a predictable global deficiency.',
+    veteranMove:
+      'Run the ICH M7 (Q)SAR / TTC assessment across API, excipients and process early, document control limits against published acceptable intakes, and confirm by testing where flagged.',
+    basis: 'ICH M7(R2); FDA/EMA nitrosamine guidance.',
+  },
+  {
+    id: 'biotech-comparability-before-pivotal',
+    segment: 'biotech',
+    stage: 'nonclinical_cmc',
+    title: 'Lock the process before the pivotal, or carry a comparability burden into the filing',
+    situation:
+      'A biologics team changes scale, site or formulation after the pivotal trial has started, expecting comparability to be a formality.',
+    consequence:
+      'A material post-pivotal change can require a comparability package, bridging data, or even a bridging study that delays the filing.',
+    veteranMove:
+      'Freeze the commercial process before the pivotal where feasible, and design an ICH Q5E comparability strategy for any change you cannot avoid.',
+    basis: 'ICH Q5E; ICH Q11.',
+  },
+  {
+    id: 'x-accelerated-confirmatory',
+    segment: null,
+    stage: 'strategy',
+    title: 'Accelerated / conditional approval is a promise to confirm, not a shortcut to stop',
+    situation:
+      'A team treats accelerated or conditional approval as the finish line and defers planning the confirmatory trial.',
+    consequence:
+      'The confirmatory obligation becomes the critical path, and a failed or slow confirmation risks withdrawal of the approval.',
+    veteranMove:
+      'Design and start enrolling the confirmatory trial before filing for accelerated/conditional approval, and agree its design with the agency up front.',
+    basis: 'FDA Accelerated Approval (21 CFR 314 Subpart H / 601 Subpart E); EMA conditional MA (Reg 507/2006).',
+  },
+  {
+    id: 'biotech-orphan-sequence',
+    segment: 'biotech',
+    stage: 'strategy',
+    title: 'Orphan designation is a development and commercial lever — file it early',
+    situation:
+      'A rare-disease program treats orphan designation as a late administrative step rather than a strategic decision.',
+    consequence:
+      'The team forgoes early protocol assistance, fee relief and the exclusivity clock advantages that shape the whole development plan.',
+    veteranMove:
+      'Seek orphan designation (FDA and EU) early to unlock scientific advice / protocol assistance and fee reductions, and factor the exclusivity into the lifecycle plan.',
+    basis: 'US Orphan Drug Act (21 CFR 316); EU Regulation (EC) 141/2000.',
+  },
+];
+
 // ─── Registry ────────────────────────────────────────────────────────────────
 
 export const INDUSTRY_WISDOM: WisdomHeuristic[] = [
@@ -521,6 +604,7 @@ export const INDUSTRY_WISDOM: WisdomHeuristic[] = [
   ...MDX_WISDOM,
   ...BIOTECH_WISDOM,
   ...PHARMA_WISDOM,
+  ...GLOBAL_STRATEGY,
 ];
 
 // ─── Segment inference ───────────────────────────────────────────────────────
