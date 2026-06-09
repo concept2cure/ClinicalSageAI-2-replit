@@ -25,9 +25,11 @@ import {
 import { assembleIndAnnualReport } from '../services/ind-lifecycle/ind-annual-report-service';
 import { planIndAmendment } from '../services/ind-lifecycle/ind-amendment-service';
 import { evaluateIndReadiness } from '../services/ind-lifecycle/ind-readiness-service';
+import { assembleBriefingBook } from '../services/ind-lifecycle/ind-briefing-book-service';
 import {
   renderIndSafetyReportPdf,
   renderIndAnnualReportPdf,
+  renderBriefingBookPdf,
 } from '../services/ind-lifecycle/ind-document-renderer';
 import {
   persistSafetyReportIntent,
@@ -187,6 +189,36 @@ router.post('/readiness', limiter, requireRole(AUTHOR), (req, res) => {
         overdueSafetyReports: b.overdueSafetyReports,
       }),
     );
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+function briefingValid(b: any): boolean {
+  return Boolean(b?.productName && b?.indication && b?.meetingType && Array.isArray(b?.questions));
+}
+
+/** Assemble an FDA meeting briefing-book model (Pre-IND / Type A/B/C). */
+router.post('/briefing-book', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = body(req);
+  if (!briefingValid(b)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'productName, indication, meetingType and questions[] are required.' } });
+  }
+  try {
+    res.json(assembleBriefingBook(b));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** Render an FDA meeting briefing book to a navigable PDF. */
+router.post('/briefing-book/pdf', limiter, requireRole(AUTHOR), async (req, res) => {
+  const b = body(req);
+  if (!briefingValid(b)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'productName, indication, meetingType and questions[] are required.' } });
+  }
+  try {
+    sendPdf(res, 'fda-briefing-book.pdf', await renderBriefingBookPdf(assembleBriefingBook(b)));
   } catch (err) {
     fail(res, err);
   }
