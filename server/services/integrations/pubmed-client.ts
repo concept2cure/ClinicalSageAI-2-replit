@@ -56,6 +56,18 @@ function baseUrl(): string {
   return (process.env.PUBMED_EUTILS_BASE_URL || DEFAULT_BASE_URL).replace(/\/+$/, '');
 }
 
+/**
+ * Apply NCBI E-utilities usage-policy params. NCBI asks every caller to identify
+ * itself with `tool` and `email`; requests omitting them are throttled/blocked
+ * once usage is non-trivial. `api_key` (when set) raises the rate limit.
+ */
+function applyEtiquette(qs: URLSearchParams): URLSearchParams {
+  qs.set('tool', process.env.NCBI_TOOL_NAME || 'concept2cure');
+  if (process.env.NCBI_TOOL_EMAIL) qs.set('email', process.env.NCBI_TOOL_EMAIL);
+  if (process.env.NCBI_API_KEY) qs.set('api_key', process.env.NCBI_API_KEY);
+  return qs;
+}
+
 /** Map a study type to a PubMed publication-type term fragment, or '' for any. */
 export function studyTypeFilter(studyType?: string): string {
   switch ((studyType || 'any').toLowerCase()) {
@@ -102,8 +114,7 @@ export function buildEsearchParams(params: PubmedSearchParams): URLSearchParams 
     qs.set('mindate', dates.mindate);
     qs.set('maxdate', dates.maxdate);
   }
-  if (process.env.NCBI_API_KEY) qs.set('api_key', process.env.NCBI_API_KEY);
-  return qs;
+  return applyEtiquette(qs);
 }
 
 function normalizeArticle(pmid: string, raw: any): PubmedArticle {
@@ -122,8 +133,14 @@ function normalizeArticle(pmid: string, raw: any): PubmedArticle {
   };
 }
 
+const USER_AGENT =
+  process.env.INTEGRATION_USER_AGENT || 'Concept2Cure-AnA/1.0 (regulatory intelligence)';
+
 async function getJson(url: string): Promise<any> {
-  const res = await fetch(url, { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+  const res = await fetch(url, {
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    headers: { 'User-Agent': USER_AGENT },
+  });
   if (!res.ok) throw new Error(`PubMed E-utilities returned HTTP ${res.status}`);
   return res.json();
 }
@@ -141,8 +158,9 @@ export async function searchPubmed(params: PubmedSearchParams): Promise<PubmedSe
     return { source: 'PubMed', totalCount: 0, articles: [] };
   }
 
-  const summaryQs = new URLSearchParams({ db: 'pubmed', id: ids.join(','), retmode: 'json' });
-  if (process.env.NCBI_API_KEY) summaryQs.set('api_key', process.env.NCBI_API_KEY);
+  const summaryQs = applyEtiquette(
+    new URLSearchParams({ db: 'pubmed', id: ids.join(','), retmode: 'json' })
+  );
   const summary = await getJson(`${baseUrl()}/esummary.fcgi?${summaryQs.toString()}`);
 
   const articles = ids.map(id => normalizeArticle(id, summary?.result?.[id]));

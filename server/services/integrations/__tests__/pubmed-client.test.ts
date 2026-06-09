@@ -17,6 +17,7 @@ describe('pubmed-client', () => {
     global.fetch = realFetch;
     delete process.env.PUBMED_EUTILS_BASE_URL;
     delete process.env.NCBI_API_KEY;
+    delete process.env.NCBI_TOOL_EMAIL;
     vi.restoreAllMocks();
   });
 
@@ -63,9 +64,18 @@ describe('pubmed-client', () => {
       expect(qs.get('mindate')).toBeNull();
     });
 
-    it('includes api_key when NCBI_API_KEY is set', () => {
+    it('always identifies the caller per NCBI usage policy (tool), email/api_key when set', () => {
+      // Default: tool present, no email/api_key.
+      const base = buildEsearchParams({ query: 'x' });
+      expect(base.get('tool')).toBe('concept2cure');
+      expect(base.get('email')).toBeNull();
+      expect(base.get('api_key')).toBeNull();
+
+      process.env.NCBI_TOOL_EMAIL = 'reg@concept2cure.example';
       process.env.NCBI_API_KEY = 'secret-key';
-      expect(buildEsearchParams({ query: 'x' }).get('api_key')).toBe('secret-key');
+      const withEnv = buildEsearchParams({ query: 'x' });
+      expect(withEnv.get('email')).toBe('reg@concept2cure.example');
+      expect(withEnv.get('api_key')).toBe('secret-key');
     });
   });
 
