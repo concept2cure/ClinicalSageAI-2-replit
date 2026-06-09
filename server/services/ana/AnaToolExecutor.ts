@@ -19,6 +19,7 @@ import fdaMaudeClient from '../../fda_maude_client.js';
 import { searchTrials } from '../integrations/clinicaltrials-client.js';
 import { searchPubmed } from '../integrations/pubmed-client.js';
 import { searchMedicareCoverage } from '../integrations/cms-coverage-client.js';
+import { searchConnectedRepositories } from '../integrations/connector-search.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 import type {
   GatewayRequest,
@@ -301,6 +302,48 @@ registerToolHandler('search_literature', async (input) => {
       query,
       note: 'PubMed API unavailable — use manual search',
       url: `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(query)}`,
+    });
+  }
+});
+
+// Search Connected Repositories — fan out across the org's configured data
+// connectors (Google Drive, Box, OneDrive, SharePoint, Veeva, …) via the
+// existing authenticated connector framework.
+registerToolHandler('search_connected_repositories', async (input, ctx) => {
+  const query = typeof input.query === 'string' ? input.query : '';
+  const organizationId = ctx?.organizationId;
+  if (!organizationId) {
+    return JSON.stringify({
+      status: 'needs_context',
+      message:
+        'Searching connected repositories requires an active organization context. Ask the user to open a project first.',
+    });
+  }
+  if (!query.trim()) {
+    return JSON.stringify({ error: 'search_connected_repositories requires a non-empty query.' });
+  }
+
+  const connectors = Array.isArray(input.connectors)
+    ? (input.connectors as unknown[]).filter((c): c is string => typeof c === 'string')
+    : undefined;
+  const maxResults = Math.min((input.max_results as number) || 8, 25);
+
+  try {
+    const result = await searchConnectedRepositories(Number(organizationId), {
+      query,
+      connectors,
+      limit: maxResults,
+    });
+    return JSON.stringify({
+      ...result,
+      citation_hint:
+        'Cite each document by its title and source system, and link to the provided url when present.',
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'Connected Repositories',
+      error: e instanceof Error ? e.message : 'Connected-repository search failed',
+      documents: [],
     });
   }
 });

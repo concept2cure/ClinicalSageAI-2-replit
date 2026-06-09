@@ -94,6 +94,36 @@ export const SEARCH_MEDICARE_COVERAGE: AnaTool = {
   },
 };
 
+export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
+  name: 'search_connected_repositories',
+  description:
+    "Search the organization's connected external document repositories (Google Drive, Box, " +
+    'OneDrive, SharePoint, Veeva Vault, …) for source material relevant to a query. Use when the ' +
+    "user references documents that live in their own connected systems rather than this project's " +
+    'uploaded corpus (use project_knowledge_search for the latter). Returns matching documents with ' +
+    'their source system, summary, and a link. Reports which systems are not yet connected.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      query: {
+        type: 'string',
+        description: 'What to look for across connected repositories (keywords or a topic).',
+      },
+      connectors: {
+        type: 'array',
+        items: { type: 'string' },
+        description:
+          "Optional connector ids to restrict the search (e.g. ['google-drive']). Omit to search all connected systems.",
+      },
+      max_results: {
+        type: 'number',
+        description: 'Maximum documents to return (default: 8, max: 25).',
+      },
+    },
+    required: ['query'],
+  },
+};
+
 export const SEARCH_LITERATURE: AnaTool = {
   name: 'search_literature',
   description:
@@ -3494,6 +3524,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
   SEARCH_MEDICARE_COVERAGE,
+  SEARCH_CONNECTED_REPOSITORIES,
   PROJECT_KNOWLEDGE_SEARCH,
   SIMULATE_STUDY_DESIGN,
   SEARCH_DEVICE_ADVERSE_EVENTS,
