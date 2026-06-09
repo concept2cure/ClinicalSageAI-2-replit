@@ -29,6 +29,8 @@ const SUBMISSION_TOOLS = [
   'trace_provenance',
   'check_consistency',
   'assess_pathway_readiness',
+  'build_pathway_manifest',
+  'assess_dispatch_readiness',
 ];
 
 describe('submission-center AnA tools — registration', () => {
@@ -172,6 +174,17 @@ describe('submission AI tasks — tenant + input guards', () => {
   });
   it('assess_pathway_readiness validates the pathway enum', async () => {
     const handler = getToolHandler('assess_pathway_readiness')!;
+    const out = JSON.parse(await handler({ sequence_id: 1, pathway: 'bogus' }, { organizationId: 1, userId: 2 } as ToolContext));
+    expect(out.error).toMatch(/pathway must be one of/);
+  });
+
+  it('build_pathway_manifest refuses without org/user context', async () => {
+    const handler = getToolHandler('build_pathway_manifest')!;
+    const out = JSON.parse(await handler({ sequence_id: 1, pathway: 'mdr' }, {} as ToolContext));
+    expect(out.error).toMatch(/tenant context/);
+  });
+  it('build_pathway_manifest validates the pathway enum', async () => {
+    const handler = getToolHandler('build_pathway_manifest')!;
     const out = JSON.parse(await handler({ sequence_id: 1, pathway: 'bogus' }, { organizationId: 1, userId: 2 } as ToolContext));
     expect(out.error).toMatch(/pathway must be one of/);
   });

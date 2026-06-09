@@ -2011,6 +2011,29 @@ export const ASSESS_PATHWAY_READINESS: AnaTool = {
   },
 };
 
+export const BUILD_PATHWAY_MANIFEST: AnaTool = {
+  name: 'build_pathway_manifest',
+  description:
+    "Build the assembled table-of-contents for a non-eCTD pathway (EU CTIS, EU MDR/IVDR, FDA eSTAR 510(k)/De Novo, Japan PMDA Shōnin). Reads the sequence's leaves from the active tenant context, projects them onto the pathway's section registry, and returns a uniform ordered manifest: each slot as an entry with a group label (annex / eSTAR / CTIS part+state / STED), a deterministic path, present/missing status, and the source leaves mapped into it. Deterministic, read-only — it maps and reports gaps, it never invents a missing slot and never submits. Use after assess_pathway_readiness when you need the full ordered structure, not just the gap list.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      sequence_id: { type: 'number', description: 'The sequence whose leaves are assembled into the manifest.' },
+      pathway: {
+        type: 'string',
+        enum: ['ctis', 'mdr', 'ivdr', 'estar_510k', 'estar_de_novo', 'pmda_shonin'],
+        description: 'The target pathway.',
+      },
+      member_states: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'CTIS only — concerned EU member-state codes (e.g. ["DE","FR"]).',
+      },
+    },
+    required: ['sequence_id', 'pathway'],
+  },
+};
+
 export const ASSESS_DISPATCH_READINESS: AnaTool = {
   name: 'assess_dispatch_readiness',
   description:
@@ -3478,6 +3501,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   TRACE_PROVENANCE,
   CHECK_CONSISTENCY,
   ASSESS_PATHWAY_READINESS,
+  BUILD_PATHWAY_MANIFEST,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,

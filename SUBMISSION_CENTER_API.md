@@ -62,7 +62,8 @@ AnA can drive all of the above through her governed tools (tenant from
 `extract_submission_document`, `compute_lifecycle_operations`, `generate_stf`,
 `check_ectd_cross_references`, `validate_ectd_package`, `run_shadow_review`,
 `explain_validation_findings`, `cross_region_gap_analysis`, `dispatch_qc_check`,
-`trace_provenance`, `check_consistency`. The UI's AnA panel passes page context
+`trace_provenance`, `check_consistency`, `assess_pathway_readiness`,
+`build_pathway_manifest`, `assess_dispatch_readiness`. The UI's AnA panel passes page context
 (`{ submissionId, sectionCode, region }`); the tools supply nothing tenant-related.
 
 ## Still server-side TODO before some screens are fully live
