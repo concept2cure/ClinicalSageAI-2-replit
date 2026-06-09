@@ -27,7 +27,10 @@ import { planIndAmendment } from '../services/ind-lifecycle/ind-amendment-servic
 import { evaluateIndReadiness } from '../services/ind-lifecycle/ind-readiness-service';
 import { assembleBriefingBook } from '../services/ind-lifecycle/ind-briefing-book-service';
 import { assembleCoverLetter } from '../services/ind-lifecycle/ind-cover-letter-service';
+import { assembleCoverLetterContext } from '../services/ind-lifecycle/cover-letter-context';
 import { evaluateRegulatoryClock } from '../services/ind-lifecycle/ind-regulatory-clock';
+import { buildUsRegionalEnvelope } from '../services/ind-lifecycle/ind-ectd-envelope';
+import { summarizeSequences } from '../services/ind-lifecycle/ind-submission-overview';
 import {
   renderIndSafetyReportPdf,
   renderIndAnnualReportPdf,
@@ -39,6 +42,8 @@ import {
   persistAmendmentPlan,
   persistAnnualReport,
 } from '../services/ind-lifecycle/ind-lifecycle-persistence';
+import { getSubmission, listSequences } from '../services/submission-service/submission-service';
+import { getSponsor } from '../services/ind-master-data/ind-master-data-service';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('ind-lifecycle-routes');
@@ -342,6 +347,68 @@ router.post('/amendment/file', limiter, requireRole(AUTHOR), async (req, res) =>
   try {
     const plan = planIndAmendment(b);
     res.status(201).json(await persistAmendmentPlan(submissionId, plan, String(b.sequenceNumber), ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Render the IND cover letter from stored records.
+ * Body: { sponsorId?, submissionId?, overrides? }. Loads the sponsor + submission
+ * tenant-scoped, assembles the letter, and returns the PDF.
+ */
+router.post('/cover-letter/pdf-from-records', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const b = body(req);
+  try {
+    const [sponsor, submission] = await Promise.all([
+      b.sponsorId ? getSponsor(String(b.sponsorId), ctx) : Promise.resolve(null),
+      b.submissionId ? getSubmission(Number(b.submissionId), ctx) : Promise.resolve(null),
+    ]);
+    const input = assembleCoverLetterContext({ sponsor, submission, overrides: b.overrides });
+    sendPdf(res, 'ind-cover-letter.pdf', await renderCoverLetterPdf(assembleCoverLetter(input)));
+  } catch (err) {
+    const code = (err as { code?: string } | null)?.code;
+    if (code === 'NOT_FOUND') {
+      return res.status(404).json({ error: { code, message: 'A referenced sponsor or submission was not found.' } });
+    }
+    fail(res, err);
+  }
+});
+
+/**
+ * Build the FDA eCTD us-regional administrative envelope for a sequence.
+ * Body: EctdEnvelopeInput. Returns application/xml.
+ */
+router.post('/envelope', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = body(req);
+  try {
+    const xml = buildUsRegionalEnvelope(b);
+    res.setHeader('Content-Type', 'application/xml');
+    res.status(200).send(xml);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * IND submission overview — the submission, its eCTD sequences, and a summary
+ * (counts by type/status, latest sequence number, dispatch/validation roll-ups).
+ */
+router.get('/submission/:id/overview', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const submissionId = Number(req.params.id);
+  if (!Number.isInteger(submissionId) || submissionId <= 0) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
+  }
+  try {
+    const [submission, sequences] = await Promise.all([
+      getSubmission(submissionId, ctx),
+      listSequences(submissionId, ctx),
+    ]);
+    res.json({ submission, sequences, summary: summarizeSequences(sequences) });
   } catch (err) {
     fail(res, err);
   }
