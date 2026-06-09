@@ -26,10 +26,12 @@ import { assembleIndAnnualReport } from '../services/ind-lifecycle/ind-annual-re
 import { planIndAmendment } from '../services/ind-lifecycle/ind-amendment-service';
 import { evaluateIndReadiness } from '../services/ind-lifecycle/ind-readiness-service';
 import { assembleBriefingBook } from '../services/ind-lifecycle/ind-briefing-book-service';
+import { assembleCoverLetter } from '../services/ind-lifecycle/ind-cover-letter-service';
 import {
   renderIndSafetyReportPdf,
   renderIndAnnualReportPdf,
   renderBriefingBookPdf,
+  renderCoverLetterPdf,
 } from '../services/ind-lifecycle/ind-document-renderer';
 import {
   persistSafetyReportIntent,
@@ -189,6 +191,36 @@ router.post('/readiness', limiter, requireRole(AUTHOR), (req, res) => {
         overdueSafetyReports: b.overdueSafetyReports,
       }),
     );
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+function coverLetterValid(b: any): boolean {
+  return Boolean(b?.sponsorName && b?.drugName && b?.submissionType);
+}
+
+/** Assemble the IND cover letter (eCTD Module 1.2). */
+router.post('/cover-letter', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = body(req);
+  if (!coverLetterValid(b)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'sponsorName, drugName and submissionType are required.' } });
+  }
+  try {
+    res.json(assembleCoverLetter(b));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** Render the IND cover letter to a PDF leaf. */
+router.post('/cover-letter/pdf', limiter, requireRole(AUTHOR), async (req, res) => {
+  const b = body(req);
+  if (!coverLetterValid(b)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'sponsorName, drugName and submissionType are required.' } });
+  }
+  try {
+    sendPdf(res, 'ind-cover-letter.pdf', await renderCoverLetterPdf(assembleCoverLetter(b)));
   } catch (err) {
     fail(res, err);
   }

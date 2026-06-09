@@ -22,3 +22,4 @@ export * from './ind-readiness-service';
 export * from './ind-document-renderer';
 export * from './ind-lifecycle-persistence';
 export * from './ind-briefing-book-service';
+export * from './ind-cover-letter-service';
