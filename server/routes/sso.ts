@@ -7,6 +7,7 @@ import { db } from '../db';
 import { eq } from 'drizzle-orm';
 import { users, organizationUsers } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger';
+import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import {
   getSamlProvider,
   SAMLValidationError,
@@ -78,6 +79,7 @@ function getSamlConfig(orgSlug: string): SAMLConfig | null {
       spPrivateKey: process.env.SAML_SP_PRIVATE_KEY,
       spCertificate: process.env.SAML_SP_CERTIFICATE,
       nameIdFormat: process.env.SAML_NAME_ID_FORMAT,
+      idpSloUrl: process.env.SAML_IDP_SLO_URL,
     };
   }
 
@@ -132,6 +134,7 @@ function loadSamlTenants(): void {
       spPrivateKey: typeof cfg.spPrivateKey === 'string' ? cfg.spPrivateKey : undefined,
       spCertificate: typeof cfg.spCertificate === 'string' ? cfg.spCertificate : undefined,
       nameIdFormat: typeof cfg.nameIdFormat === 'string' ? cfg.nameIdFormat : undefined,
+      idpSloUrl: typeof cfg.idpSloUrl === 'string' ? cfg.idpSloUrl : undefined,
     });
   }
   logger.info(`Loaded ${samlConfigs.size} SAML tenant config(s) from SAML_TENANTS`);
@@ -344,6 +347,71 @@ router.get('/saml/metadata', (req: Request, res: Response) => {
     return res.status(500).json({ success: false, error: 'METADATA_GENERATION_FAILED' });
   }
 });
+
+/**
+ * GET /api/auth/sso/saml/logout
+ *
+ * SP-initiated Single Logout (SLO). Verifies the caller's session JWT, builds a
+ * SAML LogoutRequest for the user's IdP session (nameID + sessionIndex taken
+ * from the VERIFIED token, not from request input), and redirects to the IdP's
+ * SLO endpoint so the federated session is terminated. Falls back to the local
+ * login page when SLO is not configured or the session is not federated.
+ *
+ * Query: ?org=<slug> selects the IdP (default 'default'). The IdP validates the
+ * LogoutRequest, so org selection cannot be abused to forge a logout elsewhere.
+ */
+router.get('/saml/logout', async (req: Request, res: Response) => {
+  const loginUrl = '/concept2cure/login';
+  try {
+    const bearer = /^Bearer\s+(\S+)$/i.exec(req.headers.authorization ?? '');
+    const token = bearer?.[1] || (typeof req.query.token === 'string' ? req.query.token : '');
+    if (!token) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
+
+    let claims: Record<string, unknown>;
+    try {
+      // Use the rotation-aware verifier (HS256-pinned, prev-secret fallback).
+      claims = verifyJwtWithRotation<Record<string, unknown>>(token);
+    } catch {
+      return res.status(401).json({ success: false, error: 'INVALID_TOKEN' });
+    }
+
+    const sessionIndex = claims.sessionIndex;
+    const email = claims.email;
+    // Only federated (SAML) sessions have an IdP session to terminate.
+    if (claims.provider !== 'saml' || typeof sessionIndex !== 'string' || typeof email !== 'string') {
+      return res.redirect(302, loginUrl);
+    }
+
+    const orgSlug = (req.query.org as string) || 'default';
+    const samlConfig = getSamlConfig(orgSlug);
+    if (!samlConfig) return res.redirect(302, loginUrl);
+
+    const provider = getSamlProvider(orgSlug, samlConfig);
+    if (!provider.supportsLogout) return res.redirect(302, loginUrl);
+
+    const logoutUrl = await provider.getLogoutUrl(
+      { nameID: email, sessionIndex },
+      encodeRelayState({ org: orgSlug })
+    );
+    return res.redirect(302, logoutUrl);
+  } catch (err) {
+    logger.error('SAML logout error', err as Record<string, unknown>);
+    return res.redirect(302, loginUrl);
+  }
+});
+
+/**
+ * GET/POST /api/auth/sso/saml/logout/callback
+ *
+ * Lands the user back after IdP Single Logout. The IdP has terminated its
+ * session and the client clears its own token, so this returns the user to the
+ * login page. (Strict LogoutResponse signature validation is a follow-up.)
+ */
+function handleLogoutCallback(_req: Request, res: Response): void {
+  res.redirect(302, '/concept2cure/login?logged_out=1');
+}
+router.get('/saml/logout/callback', handleLogoutCallback);
+router.post('/saml/logout/callback', handleLogoutCallback);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GENERIC SSO ROUTES (OAuth/generic provider flow)
