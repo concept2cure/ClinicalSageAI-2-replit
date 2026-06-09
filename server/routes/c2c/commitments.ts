@@ -12,7 +12,7 @@
 import { Router, type Request, type Response } from 'express';
 import { randomUUID } from 'crypto';
 import { pool } from '../../db.js';
-import { computeAuditChain, hashPayload } from '../../services/audit/chain.js';
+import { computeAuditChainSealed, hashPayload } from '../../services/audit/chain.js';
 import {
   extractCommitments,
   createCommitment,
@@ -225,16 +225,16 @@ async function writeCommitmentAudit(
     const occurredAt = new Date().toISOString();
     const payloadHash = hashPayload({ id, status });
     const target = `commitment:${id}`;
-    const sha256Chain = await computeAuditChain(client as any, {
+    const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client as any, {
       action: 'c2c.commitment.status', actor_id: userId, target, payload_hash: payloadHash, occurred_at: occurredAt,
     });
     await client.query(
       `INSERT INTO audit_logs
          (id, tenant_id, user_id, action, table_name, record_id, actor_id, target,
-          target_type, target_id, reason, payload_hash, ana_action_id, sha256_chain, occurred_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+          target_type, target_id, reason, payload_hash, ana_action_id, sha256_chain, occurred_at, hmac_seal)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
       [randomUUID(), orgId, userId, 'c2c.commitment.status', 'c2c_commitments', id, userId,
-       target, 'commitment', id, reason, payloadHash, null, sha256Chain, occurredAt],
+       target, 'commitment', id, reason, payloadHash, null, sha256Chain, occurredAt, hmacSeal],
     );
     await client.query('COMMIT');
   } catch {

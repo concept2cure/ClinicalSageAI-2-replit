@@ -26,7 +26,7 @@ import { Router, type Request, type Response } from 'express';
 import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
 import { pool } from '../../db.js';
-import { computeAuditChain, hashPayload, verifyAuditChain } from '../../services/audit/chain.js';
+import { computeAuditChainSealed, hashPayload, verifyAuditChain } from '../../services/audit/chain.js';
 import { verifyToken as verifyMfaToken } from '../../services/mfaService.js';
 import { evaluateAcceptGate, GroundednessReviewError } from '../../services/ai-governance/review-policy.js';
 import {
@@ -288,7 +288,7 @@ export async function recordGovernedAction(
   const targetType   = target.split(':')[0];
   const targetId     = target.slice(targetType.length + 1);
 
-  const sha256Chain = await computeAuditChain(client as any, {
+  const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client as any, {
     action:       `c2c.work.${command}`,
     actor_id:     userId,
     target,
@@ -301,8 +301,8 @@ export async function recordGovernedAction(
     `INSERT INTO audit_logs
        (id, tenant_id, user_id, action, table_name, record_id,
         actor_id, target, target_type, target_id, reason, payload_hash,
-        ana_action_id, sha256_chain, occurred_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+        ana_action_id, sha256_chain, occurred_at, hmac_seal)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
     [
       auditId,
       orgId,
@@ -319,6 +319,7 @@ export async function recordGovernedAction(
       actionId,
       sha256Chain,
       occurredAt,
+      hmacSeal,
     ],
   );
 

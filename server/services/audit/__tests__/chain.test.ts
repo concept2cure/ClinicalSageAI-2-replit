@@ -8,14 +8,17 @@
  * the exact serialization the writer uses and flag the first tampered row.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import {
   computeAuditChain,
+  computeAuditChainSealed,
   hashPayload,
   verifyAuditChain,
+  verifyAuditChainSeals,
   type ChainRow,
   type PoolClient,
 } from '../chain';
+import { sealRecord, verifySeal } from '../audit-hmac-seal';
 
 const GENESIS = '0'.repeat(64);
 
@@ -115,5 +118,70 @@ describe('verifyAuditChain', () => {
     const result = await verifyAuditChain(fakeClient(rows));
     expect(result.ok).toBe(false);
     expect(result.brokenAt?.id).toBe('1');
+  });
+});
+
+describe('computeAuditChainSealed + verifyAuditChainSeals (21 CFR Part 11 §11.70)', () => {
+  const KEY = 'test-audit-hmac-key';
+  const row: ChainRow = {
+    action: 'demo.action',
+    actor_id: 7,
+    target: 'case:1',
+    payload_hash: 'a'.repeat(64),
+    occurred_at: '2026-06-09T00:00:00.000Z',
+  };
+
+  afterEach(() => {
+    delete process.env.AUDIT_HMAC_KEY;
+  });
+
+  it('produces an UNSEALED row (hmacSeal null) when AUDIT_HMAC_KEY is absent', async () => {
+    delete process.env.AUDIT_HMAC_KEY;
+    const { sha256Chain, hmacSeal } = await computeAuditChainSealed(fakeClient([]), row);
+    expect(hmacSeal).toBeNull();
+    // The stored chain hash is identical to the unsealed writer's output.
+    expect(sha256Chain).toBe(await computeAuditChain(fakeClient([]), row));
+  });
+
+  it('produces a verifiable seal when AUDIT_HMAC_KEY is set', async () => {
+    process.env.AUDIT_HMAC_KEY = KEY;
+    const { sha256Chain, previousHash, hmacSeal } = await computeAuditChainSealed(fakeClient([]), row);
+    expect(previousHash).toBe(GENESIS);
+    expect(hmacSeal).not.toBeNull();
+    expect(verifySeal({ recordHash: sha256Chain, previousHash, sequenceNumber: 0 }, hmacSeal!, KEY)).toBe(true);
+    // A different key must not verify.
+    expect(verifySeal({ recordHash: sha256Chain, previousHash, sequenceNumber: 0 }, hmacSeal!, 'other')).toBe(false);
+  });
+
+  it('verifies a correctly-sealed chain and tolerates interleaved unsealed rows', async () => {
+    process.env.AUDIT_HMAC_KEY = KEY;
+    // Build a real sha256 chain, then seal only rows 0 and 2 (row 1 is unsealed).
+    const chained = await buildChain(baseRows.concat(baseRows[0]));
+    let previous = GENESIS;
+    const rows = chained.map((r, i) => {
+      const recordHash = r.sha256_chain as string;
+      const seal = i === 1 ? null : sealRecord({ recordHash, previousHash: previous, sequenceNumber: 0 }, KEY);
+      previous = recordHash;
+      return { sha256_chain: recordHash, hmac_seal: seal };
+    });
+    const ok = await verifyAuditChainSeals(fakeClient(rows));
+    expect(ok.valid).toBe(true);
+    expect(ok.brokenAt).toBeNull();
+  });
+
+  it('detects a tampered seal', async () => {
+    process.env.AUDIT_HMAC_KEY = KEY;
+    const chained = await buildChain(baseRows);
+    let previous = GENESIS;
+    const rows = chained.map((r) => {
+      const recordHash = r.sha256_chain as string;
+      const seal = sealRecord({ recordHash, previousHash: previous, sequenceNumber: 0 }, KEY);
+      previous = recordHash;
+      return { sha256_chain: recordHash, hmac_seal: seal };
+    });
+    (rows[0] as any).hmac_seal = 'd'.repeat(64); // tamper the first seal
+    const result = await verifyAuditChainSeals(fakeClient(rows));
+    expect(result.valid).toBe(false);
+    expect(result.brokenAt).toBe(0);
   });
 });

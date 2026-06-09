@@ -27,7 +27,7 @@ import { pool } from '../../db';
 import { randomUUID } from 'crypto';
 
 import { createScopedLogger } from '../../utils/logger.js';
-import { computeAuditChain, hashPayload } from '../audit/chain.js';
+import { computeAuditChainSealed, hashPayload } from '../audit/chain.js';
 
 const logger = createScopedLogger('pharmacovigilanceService');
 
@@ -1247,7 +1247,7 @@ async function writePvAudit(entry: {
     const actorId = Number.isFinite(Number(entry.userId)) ? Number(entry.userId) : null;
     const tenantId = Number.isFinite(Number(entry.organizationId)) ? Number(entry.organizationId) : null;
     const target = `case:${entry.recordId}`;
-    const sha256Chain = await computeAuditChain(client as any, {
+    const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client as any, {
       action: entry.action,
       actor_id: actorId,
       target,
@@ -1258,12 +1258,12 @@ async function writePvAudit(entry: {
       `INSERT INTO audit_logs
          (id, tenant_id, user_id, action, table_name, record_id,
           actor_id, target, target_type, target_id, reason, payload_hash,
-          ana_action_id, sha256_chain, occurred_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+          ana_action_id, sha256_chain, occurred_at, hmac_seal)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
       [
         randomUUID(), tenantId, actorId, entry.action, 'adverse_events', entry.recordId,
         actorId, target, 'case', entry.recordId, entry.reason, payloadHash,
-        null, sha256Chain, occurredAt,
+        null, sha256Chain, occurredAt, hmacSeal,
       ],
     );
     await client.query('COMMIT');
