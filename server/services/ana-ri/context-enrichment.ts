@@ -30,6 +30,7 @@ import { buildChallengeBlock, detectChallengeableClaims } from './challenge-libr
 import { buildFirstSessionTour } from './onboarding-tour.js';
 import { buildDecisionFrameworkBlock, detectRelevantFrameworks } from './decision-frameworks.js';
 import { buildAgencyTacticsBlock, detectRelevantTactics } from './agency-tactics.js';
+import { buildIchGuidelineBlock } from './ich-guideline-corpus.js';
 import { buildCompetitiveBlock, detectRelevantPlays } from './competitive-strategy.js';
 import { buildAlignmentBlock, detectRelevantAlignment } from './stakeholder-alignment.js';
 import { buildAttunementBlock, detectClientState } from './client-attunement.js';
@@ -181,6 +182,9 @@ export const SUPPORTED_SLASH_COMMANDS = [
   'landscape',
   'compete',
   'align',
+  'ich',
+  'guideline',
+  'guidelines',
   'capabilities',
   'whatcanyoudo',
 ] as const;
@@ -191,6 +195,7 @@ const ROLE_FRAMEABLE_SOURCES = new Set<string>([
   'agency-tactics', 'wisdom', 'guide', 'playbook', 'orient', 'tour', 'challenge', 'redteam', 'devil',
   'decide', 'tradeoff', 'framework', 'meeting', 'agency', 'tactics', 'proactive-tour-guide',
   'competitive-strategy', 'position', 'landscape', 'compete',
+  'ich-guidelines', 'ich', 'guideline', 'guidelines',
 ]);
 
 const SUPPORTED_SLASH_COMMAND_REGEX = new RegExp(
@@ -1245,6 +1250,9 @@ export async function enrichContextForChat(params: {
       landscape: () => Promise.resolve(buildCompetitiveForMessage(slash.args || message, submissionType, true)),
       compete: () => Promise.resolve(buildCompetitiveForMessage(slash.args || message, submissionType, true)),
       align: () => Promise.resolve(buildAlignmentBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), forceGeneric: true })),
+      ich: () => Promise.resolve(buildIchGuidelineBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message) ?? undefined })),
+      guideline: () => Promise.resolve(buildIchGuidelineBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message) ?? undefined })),
+      guidelines: () => Promise.resolve(buildIchGuidelineBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message) ?? undefined })),
       capabilities: () => Promise.resolve(buildCapabilityCatalogue()),
       whatcanyoudo: () => Promise.resolve(buildCapabilityCatalogue()),
       workflow: () => submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
@@ -1374,6 +1382,11 @@ export async function enrichContextForChat(params: {
         : 'Help the user navigate an internal or partner tension. Name the friction, tie it to the regulatory consequence that makes it matter, and give a concrete way to align the parties around what moves the program. Make the trade-off visible; the internal decision is theirs.',
       capabilities: 'The user is asking what you can do. Use the grounded capability inventory in context. Do not recite it as a menu — name the two or three capabilities that fit their actual situation and offer to apply one now.',
       whatcanyoudo: 'The user is asking what you can do. Use the grounded capability inventory in context. Do not recite it as a menu — name the two or three capabilities that fit their actual situation and offer to apply one now.',
+      ich: slash.args
+        ? `Identify and explain the ICH guideline(s) relevant to: ${slash.args}. Cite the exact code and title from the reference block, say what it governs and why it matters here, and remind the user to confirm the current revision on ich.org.`
+        : 'Orient the user to the relevant ICH guidelines using the reference block. Cite exact codes and titles; do not invent revisions.',
+      guideline: 'Identify and explain the relevant ICH guideline using the reference block. Cite the exact code and title; confirm the current revision on ich.org.',
+      guidelines: 'Identify and explain the relevant ICH guidelines using the reference block. Cite exact codes and titles; confirm the current revisions on ich.org.',
       export: 'Export this conversation.',
     };
 

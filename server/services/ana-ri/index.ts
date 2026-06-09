@@ -138,3 +138,17 @@ export {
   formatFabricStateForPrompt,
   type GovernedContextEnvelope,
 } from './governed-context-envelope.js';
+export {
+  ICH_GUIDELINES,
+  ICH_IMPLEMENTING_REGULATORS,
+  getGuideline,
+  guidelinesByCategory,
+  guidelinesForSegment,
+  searchGuidelines,
+  buildIchGuidelineBlock,
+  ichCorpusSummary,
+  type IchGuideline,
+  type IchCategory,
+  type IchStatus,
+  type IchCorpusSummary,
+} from './ich-guideline-corpus.js';
