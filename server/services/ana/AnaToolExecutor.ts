@@ -618,61 +618,31 @@ registerToolHandler('lookup_fda_guidance', async (input) => {
 
 // Lookup ICH Guideline
 registerToolHandler('lookup_ich_guideline', async (input) => {
-  const guideline = input.guideline as string;
-
-  const ichDatabase: Record<string, any> = {
-    'E6': {
-      code: 'ICH E6(R2)',
-      title: 'Good Clinical Practice',
-      scope: 'Standards for design, conduct, performance, monitoring, auditing, recording, analysis, and reporting of clinical trials',
-      keySections: [
-        '1. Glossary', '2. Principles of ICH GCP', '3. IRB/IEC',
-        '4. Investigator', '5. Sponsor', '6. Clinical Trial Protocol',
-        '7. Investigator\'s Brochure', '8. Essential Documents',
-      ],
-    },
-    'E8': {
-      code: 'ICH E8(R1)',
-      title: 'General Considerations for Clinical Studies',
-      scope: 'Framework for quality-by-design approach to clinical development',
-      keySections: [
-        'Quality factors critical to study', 'Study design considerations',
-        'Data quality and integrity', 'Stakeholder engagement',
-      ],
-    },
-    'E9': {
-      code: 'ICH E9(R1)',
-      title: 'Statistical Principles for Clinical Trials',
-      scope: 'Statistical methodology including estimands framework',
-      keySections: [
-        'Estimands and sensitivity analysis', 'Trial design',
-        'Analysis sets', 'Missing data handling', 'Multiplicity',
-      ],
-    },
-    'M4': {
-      code: 'ICH M4',
-      title: 'Common Technical Document (CTD)',
-      scope: 'Organization of regulatory submissions',
-      keySections: [
-        'Module 1: Regional Administrative Info',
-        'Module 2: Summaries (2.5 Clinical Overview, 2.7 Clinical Summary)',
-        'Module 3: Quality', 'Module 4: Nonclinical', 'Module 5: Clinical',
-      ],
-    },
-  };
-
-  const guidelineLower = guideline.toUpperCase();
-  for (const [key, value] of Object.entries(ichDatabase)) {
-    if (guidelineLower.includes(key)) {
-      return JSON.stringify({ source: 'ICH Guidelines', ...value });
+  // Backed by the structured, citable ICH guideline corpus (Q/S/E/M families
+  // implemented across the major global regulators). Read-only reference data.
+  const guideline = typeof input.guideline === 'string' ? input.guideline.trim() : '';
+  if (!guideline) return JSON.stringify({ error: 'guideline (code or topic) is required.' });
+  const note = 'ICH revisions/step status evolve. Confirm the current revision on ich.org before citing.';
+  try {
+    const m = await import('../ana-ri/ich-guideline-corpus.js');
+    // Try an exact code match first (e.g. "E6(R3)"), then a bare-prefix/topic search.
+    const exact = m.getGuideline(guideline);
+    if (exact) {
+      return JSON.stringify({ source: 'ICH Guidelines', match: 'exact', guideline: exact, note });
     }
+    const matches = m.searchGuidelines(guideline, 8);
+    if (matches.length > 0) {
+      return JSON.stringify({ source: 'ICH Guidelines', match: 'search', count: matches.length, guidelines: matches, note });
+    }
+    return JSON.stringify({
+      source: 'ICH Guidelines',
+      guideline,
+      guidelines: [],
+      note: `No ICH guideline matched "${guideline}". See https://ich.org/page/ich-guidelines. ${note}`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `lookup_ich_guideline failed: ${err instanceof Error ? err.message : String(err)}` });
   }
-
-  return JSON.stringify({
-    source: 'ICH Guidelines',
-    guideline,
-    note: `Guideline "${guideline}" not in local database. Refer to https://ich.org/page/ich-guidelines`,
-  });
 });
 
 // Check Regulatory Compliance
@@ -3988,6 +3958,29 @@ registerToolHandler('list_validation_rules', async (input) => {
     return JSON.stringify({ ok: true, region: region || 'all', summary: corpusSummary(), rules });
   } catch (err) {
     return JSON.stringify({ error: `list_validation_rules failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('lookup_regulatory_pathway', async (input) => {
+  // Static reference data — not tenant-specific.
+  const agency = typeof input.agency === 'string' ? input.agency : '';
+  const query = typeof input.query === 'string' ? input.query : '';
+  try {
+    const m = await import('../ana-ri/regulatory-pathways-corpus.js');
+    const pathways = agency
+      ? m.pathwaysByAgency(agency as Parameters<typeof m.pathwaysByAgency>[0])
+      : query
+        ? m.searchPathways(query, 12)
+        : m.REGULATORY_PATHWAYS;
+    return JSON.stringify({
+      ok: true,
+      count: pathways.length,
+      summary: m.pathwaysSummary(),
+      pathways,
+      note: 'Designations and criteria change; confirm eligibility against current agency guidance.',
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `lookup_regulatory_pathway failed: ${err instanceof Error ? err.message : String(err)}` });
   }
 });
 

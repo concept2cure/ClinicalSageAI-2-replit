@@ -2300,6 +2300,24 @@ export const LIST_VALIDATION_RULES: AnaTool = {
   },
 };
 
+export const LOOKUP_REGULATORY_PATHWAY: AnaTool = {
+  name: 'lookup_regulatory_pathway',
+  description:
+    "Look up expedited-development, accelerated-review and early-access pathways across the major global regulators (FDA, EMA, PMDA, MHRA, Health Canada, TGA, NMPA, ANVISA, Swissmedic). Returns the agency, program name, kind, eligibility, benefits and a statute/guidance citation. Static reference data — read-only, not tenant-specific. NOTE: designations and criteria change; confirm eligibility against the agency's current guidance before relying on a pathway. Pass `agency` to list a regulator's programs, `query` to search by goal (e.g. 'breakthrough', 'conditional approval', 'orphan', 'priority review'), or omit both for a summary across agencies.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      agency: {
+        type: 'string',
+        enum: ['FDA', 'EMA', 'PMDA', 'MHRA', 'Health Canada', 'TGA', 'NMPA', 'ANVISA', 'Swissmedic'],
+        description: 'Optional — scope to one regulator.',
+      },
+      query: { type: 'string', description: "Goal/keyword to search, e.g. 'breakthrough', 'orphan'." },
+    },
+    required: [],
+  },
+};
+
 export const GET_MARKET_SUBMISSION_SPEC: AnaTool = {
   name: 'get_market_submission_spec',
   description:
@@ -3899,6 +3917,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ASSESS_PATHWAY_READINESS,
   BUILD_PATHWAY_MANIFEST,
   LIST_VALIDATION_RULES,
+  LOOKUP_REGULATORY_PATHWAY,
   GET_MARKET_SUBMISSION_SPEC,
   GET_DOCUMENT_TEMPLATE,
   VALIDATE_MARKET_FORMATTING,
