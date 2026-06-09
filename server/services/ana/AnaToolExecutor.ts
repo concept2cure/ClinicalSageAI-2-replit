@@ -3973,6 +3973,29 @@ registerToolHandler('get_document_template', async (input) => {
   }
 });
 
+registerToolHandler('validate_market_formatting', async (input) => {
+  // Static reference data + pure computation — no tenant context required.
+  const specId = typeof input.spec_id === 'string' ? input.spec_id : '';
+  if (!specId) return JSON.stringify({ error: 'spec_id is required.' });
+  const rawLeaves = Array.isArray(input.leaves) ? input.leaves : [];
+  try {
+    const { getMarketSpec } = await import('../market-specs/market-submission-specs.js');
+    const spec = getMarketSpec(specId);
+    if (!spec) return JSON.stringify({ error: `No market spec "${specId}".` });
+    const { validateLeavesAgainstMarketSpec } = await import('../market-specs/market-formatting-validator.js');
+    const leaves = rawLeaves.map((l: Record<string, unknown>) => ({
+      fileName: String(l.file_name ?? ''),
+      filePath: typeof l.file_path === 'string' ? l.file_path : undefined,
+      fileSizeBytes: typeof l.file_size_bytes === 'number' ? l.file_size_bytes : undefined,
+      fileFormat: typeof l.file_format === 'string' ? l.file_format : undefined,
+      encrypted: typeof l.encrypted === 'boolean' ? l.encrypted : undefined,
+    }));
+    return JSON.stringify({ ok: true, ...validateLeavesAgainstMarketSpec(spec, leaves) });
+  } catch (err) {
+    return JSON.stringify({ error: `validate_market_formatting failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('assess_dispatch_readiness', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) {
     return JSON.stringify({ error: 'assess_dispatch_readiness requires tenant context (organizationId and userId).' });

@@ -150,6 +150,14 @@ async function main() {
   const msFamBad = await c.req('GET', '/api/submissions/market-specs?family=zzz');
   ok('market-specs rejects an unknown family (400)', msFamBad.status === 400, `got ${msFamBad.status}`);
 
+  // Market formatting enforcement (datasheet → deterministic checks).
+  const fmtOk = await c.req('POST', '/api/submissions/market-specs/us-ectd/validate', { leaves: [{ fileName: 'cover-letter.pdf', filePath: 'm1/us/cover-letter.pdf', fileFormat: 'PDF', fileSizeBytes: 1024 }] });
+  ok('market formatting validation passes clean FDA files', fmtOk.status === 200 && fmtOk.json?.errors === 0, `status ${fmtOk.status}`);
+  const fmtBad = await c.req('POST', '/api/submissions/market-specs/us-ectd/validate', { leaves: [{ fileName: 'Bad Name.PDF' }] });
+  ok('market formatting validation flags a bad file name', fmtBad.status === 200 && Array.isArray(fmtBad.json?.findings) && fmtBad.json.findings.some((f) => f.rule === 'FILE_NAMING'), `status ${fmtBad.status}`);
+  const fmt404 = await c.req('POST', '/api/submissions/market-specs/nope-xx/validate', { leaves: [] });
+  ok('market formatting validation 404s on unknown spec', fmt404.status === 404, `got ${fmt404.status}`);
+
   // Document template structures (canonical section skeletons) — static reference data.
   const dt = await c.req('GET', '/api/submissions/document-templates?family=ectd');
   ok('document-templates returns CTD spines with sections', dt.status === 200 && Array.isArray(dt.json?.templates) && dt.json.templates.length > 0 && dt.json.templates.every((t) => Array.isArray(t.sections) && t.sections.length > 0), `status ${dt.status}`);

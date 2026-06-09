@@ -339,6 +339,31 @@ export interface MarketSpecsResponse {
   specs: MarketSubmissionSpec[];
 }
 
+// ── Market formatting validation (POST /api/submissions/market-specs/:specId/validate) ─
+export interface FormattingValidateRequest {
+  leaves: Array<{
+    fileName: string;
+    filePath?: string;
+    fileSizeBytes?: number;
+    fileFormat?: string;
+    encrypted?: boolean;
+  }>;
+}
+export interface FormattingFinding {
+  severity: 'error' | 'warning';
+  rule: 'FILE_NAMING' | 'FILE_NAME_LENGTH' | 'PATH_LENGTH' | 'ACCEPTED_FILE_TYPES' | 'FILE_SIZE' | 'SUBMISSION_SIZE' | 'PDF_NO_SECURITY';
+  leaf?: string;
+  message: string;
+}
+export interface FormattingReport {
+  specId: string;
+  market: string;
+  family: string;
+  errors: number;
+  warnings: number;
+  findings: FormattingFinding[];
+}
+
 // ── Document template structures (GET /api/submissions/document-templates[/:id]) ─
 // Canonical section/heading skeletons of the key submission documents.
 export interface TemplateSection {

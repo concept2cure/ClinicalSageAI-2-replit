@@ -65,7 +65,7 @@ AnA can drive all of the above through her governed tools (tenant from
 `explain_validation_findings`, `cross_region_gap_analysis`, `dispatch_qc_check`,
 `trace_provenance`, `check_consistency`, `assess_pathway_readiness`,
 `build_pathway_manifest`, `list_validation_rules`, `get_market_submission_spec`,
-`get_document_template`, `assess_dispatch_readiness`. The UI's AnA panel passes page context
+`get_document_template`, `validate_market_formatting`, `assess_dispatch_readiness`. The UI's AnA panel passes page context
 (`{ submissionId, sectionCode, region }`); the tools supply nothing tenant-related.
 
 ## Still server-side TODO before some screens are fully live
@@ -90,6 +90,7 @@ second person; numbers over adjectives. Loading/empty/error states mandatory.
 ## Market submission specifications (per-market governance + formatting — every workspace)
 | GET | `/api/submissions/market-specs?market=&family=` | → `MarketSpecsResponse` | The consolidated per-market-per-format **datasheet**: file formats / PDF versions / naming + size + path limits / checksum, regional backbone, e-signature basis + sequencing + lifecycle governance, language/translation, gateway, forms, template refs, rule-corpus linkage, and source citations. Covers drug/biologic eCTD (FDA/EU/JP/Health Canada), FDA eSTAR (510(k)/De Novo), EU MDR & IVDR (EUDAMED), and EU CTIS. `market=us\|eu\|jp\|ca`, `family=ectd\|estar\|eu_mdr\|eu_ivdr\|ctis`. Static reference data. |
 | GET | `/api/submissions/market-specs/:specId` | → `MarketSubmissionSpec` | One spec (e.g. `us-ectd`, `eu-mdr`, `eu-ctis`); 404 on unknown. |
+| POST | `/api/submissions/market-specs/:specId/validate` | `FormattingValidateRequest` → `FormattingReport` | **Enforces** the spec's formatting rules against supplied file descriptors (naming pattern, name/path length, accepted formats, per-file + total size, encryption ban). Deterministic pre-flight; each finding's `rule` aligns to the rule corpus. Does NOT transmit. |
 | GET | `/api/submissions/document-templates?family=` | → `DocumentTemplatesResponse` | Canonical **section skeletons** of the key submission documents — ordered sections (number + heading + purpose + required) with regulatory basis. CTD M2 summaries (QOS 2.3, Nonclinical 2.4, Clinical Overview 2.5, Clinical Summary 2.7), cover letter, FDA 510(k) Summary (21 CFR 807.92), EU SmPC, MDR/IVDR GSPR, IVDR PER, CTA IMPD. Factual spines, not prose. `family=ectd\|estar\|eu_mdr\|eu_ivdr\|ctis`. |
 | GET | `/api/submissions/document-templates/:templateId` | → `DocumentTemplateStructure` | One document spine (e.g. `clinical_overview`, `k510_summary`, `smpc`); 404 on unknown. |
 

@@ -33,6 +33,7 @@ const SUBMISSION_TOOLS = [
   'list_validation_rules',
   'get_market_submission_spec',
   'get_document_template',
+  'validate_market_formatting',
   'assess_dispatch_readiness',
 ];
 
@@ -238,6 +239,18 @@ describe('submission AI tasks — tenant + input guards', () => {
     const out = JSON.parse(await handler({ family: 'estar' }, {} as ToolContext));
     expect(out.ok).toBe(true);
     expect(out.templates.some((t: { id: string }) => t.id === 'k510_summary')).toBe(true);
+  });
+
+  it('validate_market_formatting enforces a spec and flags a bad name', async () => {
+    const handler = getToolHandler('validate_market_formatting')!;
+    const out = JSON.parse(await handler({ spec_id: 'us-ectd', leaves: [{ file_name: 'Bad Name.PDF' }] }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.findings.some((f: { rule: string }) => f.rule === 'FILE_NAMING')).toBe(true);
+  });
+  it('validate_market_formatting errors on an unknown spec', async () => {
+    const handler = getToolHandler('validate_market_formatting')!;
+    const out = JSON.parse(await handler({ spec_id: 'nope', leaves: [] }, {} as ToolContext));
+    expect(out.error).toMatch(/No market spec/);
   });
 });
 

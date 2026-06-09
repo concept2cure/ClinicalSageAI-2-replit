@@ -2261,6 +2261,34 @@ export const GET_DOCUMENT_TEMPLATE: AnaTool = {
   },
 };
 
+export const VALIDATE_MARKET_FORMATTING: AnaTool = {
+  name: 'validate_market_formatting',
+  description:
+    "Enforce a market's FORMATTING rules against a set of files. Given a market spec id (e.g. 'us-ectd', 'eu-ectd') and a list of file descriptors (fileName, optional filePath, fileSizeBytes, fileFormat, encrypted), it deterministically reports every formatting violation — file-naming pattern, name/path length caps, accepted file types, per-file and total size limits, and encryption ban — with each finding's rule aligned to the validation-rule-corpus id. Read-only; it checks bytes-level conformance before a filing, it does not transmit. Use it to pre-flight an assembled package against the target market.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      spec_id: { type: 'string', description: "The market spec id, e.g. 'us-ectd', 'eu-ectd', 'jp-ectd'." },
+      leaves: {
+        type: 'array',
+        description: 'The files to check.',
+        items: {
+          type: 'object',
+          properties: {
+            file_name: { type: 'string', description: 'Base file name, e.g. "overview.pdf".' },
+            file_path: { type: 'string', description: 'Full relative path within the package.' },
+            file_size_bytes: { type: 'number', description: 'File size in bytes.' },
+            file_format: { type: 'string', description: 'Format hint, e.g. "PDF".' },
+            encrypted: { type: 'boolean', description: 'Whether the file is encrypted / permission-restricted.' },
+          },
+          required: ['file_name'],
+        },
+      },
+    },
+    required: ['spec_id', 'leaves'],
+  },
+};
+
 export const ASSESS_DISPATCH_READINESS: AnaTool = {
   name: 'assess_dispatch_readiness',
   description:
@@ -3738,6 +3766,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   LIST_VALIDATION_RULES,
   GET_MARKET_SUBMISSION_SPEC,
   GET_DOCUMENT_TEMPLATE,
+  VALIDATE_MARKET_FORMATTING,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,
