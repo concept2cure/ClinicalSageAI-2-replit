@@ -20,6 +20,7 @@
  */
 
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { addBookmarks, type OutlineNode } from './pdf-bookmark-generator';
 
 const PAGE_WIDTH = 612; // US Letter, points
 const PAGE_HEIGHT = 792;
@@ -33,6 +34,14 @@ export interface LeafPdfOptions {
   title?: string;
   /** eCTD section code, shown in the header for traceability. */
   sectionCode?: string;
+  /**
+   * Optional explicit bookmark outline for a multi-section leaf (e.g. a CSR or
+   * a summary with its own ToC). When omitted, a single document-level bookmark
+   * (the section code + title) is added so every rendered leaf is navigable —
+   * FDA eCTD guidance requires PDF bookmarks for navigation. Page indices are
+   * caller-supplied (zero-based); they should match this renderer's layout.
+   */
+  bookmarks?: OutlineNode[];
 }
 
 /** Reduce HTML to readable plain text: block tags → newlines, strip the rest. */
@@ -133,6 +142,21 @@ export async function renderLeafPdf(content: string, options: LeafPdfOptions = {
     }
   }
 
-  const bytes = await doc.save({ useObjectStreams: false });
+  let bytes = await doc.save({ useObjectStreams: false });
+
+  // Bookmarks: an explicit multi-section outline when provided, otherwise a
+  // single document-level bookmark so every leaf is navigable per FDA eCTD
+  // guidance. addBookmarks is deterministic (no dates/random), so the byte
+  // stability / md5 contract above is preserved.
+  const outline: OutlineNode[] =
+    options.bookmarks && options.bookmarks.length > 0
+      ? options.bookmarks
+      : header
+        ? [{ title: header, sectionCode: options.sectionCode ?? '', pageIndex: 0 }]
+        : [];
+  if (outline.length > 0) {
+    bytes = await addBookmarks(bytes, outline);
+  }
+
   return Buffer.from(bytes);
 }

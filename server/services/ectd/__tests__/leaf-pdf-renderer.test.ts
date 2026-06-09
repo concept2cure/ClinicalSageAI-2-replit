@@ -29,6 +29,15 @@ describe('renderLeafPdf', () => {
     expect(reloaded.getPageCount()).toBeGreaterThanOrEqual(1);
   });
 
+  it('adds a document-level bookmark (/Outlines) for navigation per FDA eCTD guidance', async () => {
+    const buf = await renderLeafPdf('<p>Body.</p>', { title: 'Clinical Overview', sectionCode: '2.5' });
+    // A valid /Outlines tree makes the leaf navigable in a reader's bookmark pane.
+    const reloaded = await PDFDocument.load(buf);
+    expect(reloaded.getPageCount()).toBeGreaterThanOrEqual(1);
+    expect(buf.toString('latin1')).toContain('/Outlines');
+    expect(buf.toString('latin1')).toContain('Clinical Overview');
+  });
+
   it('is deterministic — identical input yields byte-identical output', async () => {
     const a = await renderLeafPdf('Deterministic content', { title: 'T', sectionCode: '1.1' });
     const b = await renderLeafPdf('Deterministic content', { title: 'T', sectionCode: '1.1' });
