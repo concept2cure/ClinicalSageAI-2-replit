@@ -22,6 +22,7 @@ import { searchMedicareCoverage } from '../integrations/cms-coverage-client.js';
 import { searchConnectedRepositories } from '../integrations/connector-search.js';
 import { searchRegulatoryCorrespondence } from '../integrations/correspondence-search.js';
 import { createCalendarEvent } from '../integrations/calendar-event.js';
+import { searchHubSpotCrm, type HubSpotObject } from '../integrations/hubspot-client.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 import type {
   GatewayRequest,
@@ -346,6 +347,34 @@ registerToolHandler('search_connected_repositories', async (input, ctx) => {
       source: 'Connected Repositories',
       error: e instanceof Error ? e.message : 'Connected-repository search failed',
       documents: [],
+    });
+  }
+});
+
+// Search CRM — read-only HubSpot CRM lookup (contacts/companies/deals/tickets).
+registerToolHandler('search_crm', async (input) => {
+  const query = typeof input.query === 'string' ? input.query : '';
+  if (!query.trim()) {
+    return JSON.stringify({ error: 'search_crm requires a non-empty query.' });
+  }
+  const object = ['contacts', 'companies', 'deals', 'tickets'].includes(input.object as string)
+    ? (input.object as HubSpotObject)
+    : undefined;
+  const maxResults = Math.min((input.max_results as number) || 10, 25);
+  try {
+    const result = await searchHubSpotCrm({ query, object, limit: maxResults });
+    return JSON.stringify({
+      ...result,
+      citation_hint: result.configured
+        ? 'Reference records by title and link to the provided url when present.'
+        : undefined,
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'HubSpot CRM',
+      configured: true,
+      error: e instanceof Error ? e.message : 'CRM search failed',
+      records: [],
     });
   }
 });

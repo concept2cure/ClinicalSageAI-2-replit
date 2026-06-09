@@ -124,6 +124,34 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   },
 };
 
+export const SEARCH_CRM: AnaTool = {
+  name: 'search_crm',
+  description:
+    'Search the HubSpot CRM (read-only) for contacts, companies, deals, or tickets related to a ' +
+    'client account or project — to tie regulatory work to the commercial relationship (who the ' +
+    'sponsor contacts are, deal stage, open tickets). Returns matching records with key properties ' +
+    'and a link. Reports if the CRM is not connected.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      query: {
+        type: 'string',
+        description: 'Search text (name, email, company, deal name, etc.).',
+      },
+      object: {
+        type: 'string',
+        enum: ['contacts', 'companies', 'deals', 'tickets'],
+        description: 'CRM object type to search. Default: contacts.',
+      },
+      max_results: {
+        type: 'number',
+        description: 'Maximum records to return (default: 10, max: 25).',
+      },
+    },
+    required: ['query'],
+  },
+};
+
 export const CREATE_CALENDAR_EVENT: AnaTool = {
   name: 'create_calendar_event',
   description:
@@ -3600,6 +3628,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CONNECTED_REPOSITORIES,
   SEARCH_REGULATORY_CORRESPONDENCE,
   CREATE_CALENDAR_EVENT,
+  SEARCH_CRM,
   PROJECT_KNOWLEDGE_SEARCH,
   SIMULATE_STUDY_DESIGN,
   SEARCH_DEVICE_ADVERSE_EVENTS,
