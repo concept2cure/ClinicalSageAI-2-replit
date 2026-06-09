@@ -124,6 +124,26 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   },
 };
 
+export const SEARCH_DRUG_APPROVALS: AnaTool = {
+  name: 'search_drug_approvals',
+  description:
+    'Look up FDA drug approval status and regulatory history (Drugs@FDA) by brand name, generic ' +
+    'name, or application number. Returns the application number (NDA/BLA/ANDA), sponsor, approval ' +
+    'count + latest approval date, marketing status, and brand/generic names. Use for "is X ' +
+    'approved / when / under what application" and reference-product / 505(b)(2) strategy.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      brand_name: { type: 'string', description: 'Brand (trade) name, e.g. "Keytruda".' },
+      generic_name: { type: 'string', description: 'Generic name, e.g. "pembrolizumab".' },
+      application_number: { type: 'string', description: 'FDA application number, e.g. "BLA125514".' },
+      query: { type: 'string', description: 'Free-text fallback matched against the brand name.' },
+      max_results: { type: 'number', description: 'Maximum applications to return (default: 5, max: 10).' },
+    },
+    required: [],
+  },
+};
+
 export const SEARCH_DRUG_LABELS: AnaTool = {
   name: 'search_drug_labels',
   description:
@@ -3765,6 +3785,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_IVD_KNOWLEDGE,
   SEARCH_DEVICE_RECALLS,
   SEARCH_DRUG_LABELS,
+  SEARCH_DRUG_APPROVALS,
   PROJECT_KNOWLEDGE_SEARCH,
   SIMULATE_STUDY_DESIGN,
   SEARCH_DEVICE_ADVERSE_EVENTS,

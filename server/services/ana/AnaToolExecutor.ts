@@ -25,6 +25,7 @@ import { createCalendarEvent } from '../integrations/calendar-event.js';
 import { searchHubSpotCrm, type HubSpotObject } from '../integrations/hubspot-client.js';
 import { searchDeviceRecalls } from '../integrations/device-recalls.js';
 import { searchDrugLabels } from '../integrations/drug-label-client.js';
+import { searchDrugApprovals } from '../integrations/drug-approvals-client.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 import type {
   GatewayRequest,
@@ -349,6 +350,39 @@ registerToolHandler('search_connected_repositories', async (input, ctx) => {
       source: 'Connected Repositories',
       error: e instanceof Error ? e.message : 'Connected-repository search failed',
       documents: [],
+    });
+  }
+});
+
+// Search Drug Approvals — Drugs@FDA (openFDA drug/drugsfda).
+registerToolHandler('search_drug_approvals', async (input) => {
+  const asStr = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v.trim() : undefined;
+  try {
+    const result = await searchDrugApprovals({
+      brandName: asStr(input.brand_name),
+      genericName: asStr(input.generic_name),
+      applicationNumber: asStr(input.application_number),
+      query: asStr(input.query),
+      limit: Math.min((input.max_results as number) || 5, 10),
+    });
+    if (!result.searchExpression) {
+      return JSON.stringify({
+        error: 'Provide brand_name, generic_name, application_number, or query to search approvals.',
+      });
+    }
+    return JSON.stringify({
+      source: result.source,
+      total: result.total,
+      resultCount: result.approvals.length,
+      approvals: result.approvals,
+      citation_hint: 'Reference approvals by FDA application number (NDA/BLA/ANDA) and sponsor.',
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'Drugs@FDA (openFDA)',
+      error: e instanceof Error ? e.message : 'Drug approval search failed',
+      approvals: [],
     });
   }
 });
