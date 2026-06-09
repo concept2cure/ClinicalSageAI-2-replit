@@ -196,6 +196,26 @@ router.get('/capabilities', limiter, requireRole(AUTHOR), async (req, res) => {
   }
 });
 
+// ── Validation rule corpus (Validation workspace reference data) ──────────────
+// The named, sourced eCTD validation criteria the gate checks against. Static
+// reference data (not tenant-specific). Registered before '/:id' so the literal
+// path is not shadowed by the id param route. `?region=` scopes to a framework.
+router.get('/validation-rules', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const region = String(Array.isArray(req.query.region) ? req.query.region[0] : req.query.region ?? '');
+  if (region && region !== 'fda' && region !== 'eu' && region !== 'jp') {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'region must be one of: fda, eu, jp.' } });
+  }
+  try {
+    const { RULE_CORPUS, rulesForRegion, corpusSummary } = await import('../services/ectd/validation-rule-corpus.js');
+    const rules = region ? rulesForRegion(region as 'fda' | 'eu' | 'jp') : RULE_CORPUS;
+    res.json({ region: region || 'all', summary: corpusSummary(), rules });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 router.get('/:id', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });

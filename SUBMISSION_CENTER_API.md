@@ -33,6 +33,7 @@ come from it. Do not send tenant ids in the body.
 ## 4. Validation (`/submissions/:id/validation`)
 | POST | `/api/submissions/:id/validation/explain` | `ValidationExplainRequest` → `ValidationExplainResponse` | plain-language causes + fixes (AI; never changes verdicts) |
 | — | (deterministic validator) | AnA tool `validate_ectd_package` / `server/services/ectd/ectd4-validator.ts` | structured findings to feed `explain` |
+| GET | `/api/submissions/validation-rules?region=fda\|eu\|jp` | → `ValidationRulesResponse` | The named, sourced eCTD validation **rule corpus** (ICH/FDA/EU/JP criteria) with regional severity + enforcement (`dispatch-readiness` rules are floored by the gate; others are packager-guaranteed or agency-validator). A dispatch-readiness finding's `code` equals the rule `id`, so every gate verdict traces to a cataloged rule. Static reference data. |
 
 ## 5. Shadow Review — the moat (`/submissions/:id/shadow-review`)
 | POST | `/api/submissions/sequences/:seqId/shadow-review` | `ShadowReviewRequest` → `ShadowReviewRunResponse` | run a reviewer-lens pass (RTF/CRL risk) |

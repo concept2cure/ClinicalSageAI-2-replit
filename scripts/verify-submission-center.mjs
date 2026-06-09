@@ -134,6 +134,12 @@ async function main() {
   ok('GET /api/submissions/capabilities returns workspaces', cap.status === 200 && !!cap.json);
   ok('capabilities advertise assemble bytes server-ready', cap.json?.features?.assemble === true && cap.json?.features?.deviceTechnicalFile === true && cap.json?.features?.pathwayManifest === true && cap.json?.features?.publishTransmit === false, `features ${JSON.stringify(cap.json?.features)}`);
 
+  // Validation rule corpus (named, sourced eCTD criteria) — static reference data.
+  const vr = await c.req('GET', '/api/submissions/validation-rules?region=fda');
+  ok('validation-rules returns the cataloged corpus + summary', vr.status === 200 && Array.isArray(vr.json?.rules) && vr.json.rules.length > 0 && typeof vr.json?.summary?.total === 'number' && vr.json.rules.every((r) => r.id && r.severity && r.source), `status ${vr.status}`);
+  const vrBad = await c.req('GET', '/api/submissions/validation-rules?region=zz');
+  ok('validation-rules rejects an unknown region (400)', vrBad.status === 400, `got ${vrBad.status}`);
+
   // Portfolio + create (throwaway).
   const list0 = await c.req('GET', '/api/submissions');
   ok('GET /api/submissions (portfolio) ok', list0.status === 200 && Array.isArray(list0.json));

@@ -264,6 +264,32 @@ export interface PathwayReadinessResponse {
   detail: unknown;
 }
 
+// ── Validation rule corpus (GET /api/submissions/validation-rules?region=) ───
+// The named, sourced eCTD validation criteria the gate checks against. A
+// dispatch-readiness finding's `code` equals the rule `id`, so findings are
+// traceable to a cataloged rule.
+export interface ValidationRule {
+  id: string;
+  title: string;
+  category: 'structure' | 'backbone' | 'lifecycle' | 'integrity' | 'format' | 'naming' | 'content';
+  regions: Array<'ich' | 'fda' | 'eu' | 'jp'>;
+  severity: 'high' | 'medium' | 'low';
+  rationale: string;
+  source: string;
+  enforcement: 'dispatch-readiness' | 'ectd-validator' | 'packager' | 'external';
+  findingCode?: string;
+}
+export interface ValidationRulesResponse {
+  region: 'all' | 'fda' | 'eu' | 'jp';
+  summary: {
+    total: number;
+    byRegion: Record<'ich' | 'fda' | 'eu' | 'jp', number>;
+    bySeverity: Record<'high' | 'medium' | 'low', number>;
+    byEnforcement: Record<'dispatch-readiness' | 'ectd-validator' | 'packager' | 'external', number>;
+  };
+  rules: ValidationRule[];
+}
+
 // ── Universal pathway manifest (GET /sequences/:seqId/pathway-manifest?pathway=&memberStates=) ─
 // Assembled table-of-contents for ANY non-eCTD pathway (eSTAR / CTIS / MDR / IVDR
 // / PMDA). Deterministic; maps + reports gaps across a uniform entry shape.
