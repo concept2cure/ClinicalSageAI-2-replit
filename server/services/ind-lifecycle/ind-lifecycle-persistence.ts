@@ -82,6 +82,27 @@ export async function persistSafetyReportIntent(
 }
 
 /**
+ * Persist a 312.33 IND Annual Report as an `annual` sequence + its m1.13 leaf.
+ * (The annual report has no per-event "intent"; it is a single scheduled leaf.)
+ */
+export async function persistAnnualReport(
+  submissionId: number,
+  sequenceNumber: string,
+  ctx: PersistCtx,
+): Promise<PersistedAmendment> {
+  const sequence = await createSequence(
+    { submissionId, region: 'fda', sequenceNumber, type: 'annual' },
+    ctx,
+  );
+  const leaves = await persistLeaves(
+    sequence.id,
+    [{ sectionCode: 'm1.13', title: 'IND Annual Report', lifecycleOp: 'new', documentType: 'ind_annual_report' }],
+    ctx,
+  );
+  return { sequence, leaves };
+}
+
+/**
  * Persist a 312.30 / 312.31 amendment plan as an amendment sequence + its leaves.
  */
 export async function persistAmendmentPlan(

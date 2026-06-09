@@ -15,13 +15,14 @@
  * safety report, 'annual' for the annual report) per each service's header.
  */
 
-import { renderStructuredLeafPdf, type LeafSection } from '../ectd/leaf-pdf-renderer';
+import { renderStructuredLeafPdf, renderLeafPdf, type LeafSection } from '../ectd/leaf-pdf-renderer';
 import type {
   IndSafetyReportDocument,
   IndSafetyReportSection,
 } from './ind-safety-report-service';
 import type { IndAnnualReportModel } from './ind-annual-report-service';
 import type { BriefingBookModel } from './ind-briefing-book-service';
+import type { CoverLetterModel } from './ind-cover-letter-service';
 
 /** Map a (possibly nested) safety-report section to a renderer LeafSection, numbering it. */
 function safetySectionToLeaf(
@@ -58,6 +59,13 @@ export async function renderIndAnnualReportPdf(model: IndAnnualReportModel): Pro
     title: `IND Annual Report — ${model.productName} (IND ${model.indNumber})`,
     sectionCode: 'm1.13',
   });
+}
+
+/** Render an IND cover letter (eCTD Module 1.2) to a PDF leaf. */
+export async function renderCoverLetterPdf(model: CoverLetterModel): Promise<Buffer> {
+  // A cover letter is one continuous letter, not a section tree — render flat
+  // with a single document-level bookmark.
+  return renderLeafPdf(model.body, { title: 'IND Cover Letter', sectionCode: 'm1.2' });
 }
 
 /** Render an FDA meeting briefing book (Pre-IND / Type A/B/C) to a PDF. */

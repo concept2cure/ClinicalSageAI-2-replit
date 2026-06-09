@@ -26,14 +26,18 @@ import { assembleIndAnnualReport } from '../services/ind-lifecycle/ind-annual-re
 import { planIndAmendment } from '../services/ind-lifecycle/ind-amendment-service';
 import { evaluateIndReadiness } from '../services/ind-lifecycle/ind-readiness-service';
 import { assembleBriefingBook } from '../services/ind-lifecycle/ind-briefing-book-service';
+import { assembleCoverLetter } from '../services/ind-lifecycle/ind-cover-letter-service';
+import { evaluateRegulatoryClock } from '../services/ind-lifecycle/ind-regulatory-clock';
 import {
   renderIndSafetyReportPdf,
   renderIndAnnualReportPdf,
   renderBriefingBookPdf,
+  renderCoverLetterPdf,
 } from '../services/ind-lifecycle/ind-document-renderer';
 import {
   persistSafetyReportIntent,
   persistAmendmentPlan,
+  persistAnnualReport,
 } from '../services/ind-lifecycle/ind-lifecycle-persistence';
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -194,6 +198,52 @@ router.post('/readiness', limiter, requireRole(AUTHOR), (req, res) => {
   }
 });
 
+/**
+ * Evaluate the IND regulatory clock — 30-day safe-to-proceed + clinical-hold
+ * state (21 CFR 312.40 / 312.42). Body: { receiptDate, events?, asOf? }.
+ */
+router.post('/clock', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = body(req);
+  if (!b.receiptDate) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'receiptDate (ISO) is required.' } });
+  }
+  try {
+    res.json(evaluateRegulatoryClock({ receiptDate: b.receiptDate, events: b.events, asOf: b.asOf }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+function coverLetterValid(b: any): boolean {
+  return Boolean(b?.sponsorName && b?.drugName && b?.submissionType);
+}
+
+/** Assemble the IND cover letter (eCTD Module 1.2). */
+router.post('/cover-letter', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = body(req);
+  if (!coverLetterValid(b)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'sponsorName, drugName and submissionType are required.' } });
+  }
+  try {
+    res.json(assembleCoverLetter(b));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** Render the IND cover letter to a PDF leaf. */
+router.post('/cover-letter/pdf', limiter, requireRole(AUTHOR), async (req, res) => {
+  const b = body(req);
+  if (!coverLetterValid(b)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'sponsorName, drugName and submissionType are required.' } });
+  }
+  try {
+    sendPdf(res, 'ind-cover-letter.pdf', await renderCoverLetterPdf(assembleCoverLetter(b)));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 function briefingValid(b: any): boolean {
   return Boolean(b?.productName && b?.indication && b?.meetingType && Array.isArray(b?.questions));
 }
@@ -253,6 +303,25 @@ router.post('/safety-report/file', limiter, requireRole(AUTHOR), async (req, res
       return res.status(422).json({ error: { code: 'NOT_REPORTABLE', message: 'Event is not an expedited IND safety report; nothing to file.' } });
     }
     res.status(201).json(await persistSafetyReportIntent(submissionId, amendmentIntent, String(b.sequenceNumber), ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * File a 312.33 IND Annual Report as an `annual` eCTD sequence + m1.13 leaf.
+ * Body: { submissionId, sequenceNumber }.
+ */
+router.post('/annual-report/file', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const b = body(req);
+  const submissionId = Number(b.submissionId);
+  if (!Number.isInteger(submissionId) || submissionId <= 0 || !/^\d{4}$/.test(String(b.sequenceNumber ?? ''))) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'submissionId (int) and 4-digit sequenceNumber are required.' } });
+  }
+  try {
+    res.status(201).json(await persistAnnualReport(submissionId, String(b.sequenceNumber), ctx));
   } catch (err) {
     fail(res, err);
   }

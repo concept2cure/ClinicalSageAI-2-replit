@@ -15,7 +15,7 @@ const { createSequence, upsertLeaf } = vi.hoisted(() => ({
 
 vi.mock('../../submission-service/submission-service', () => ({ createSequence, upsertLeaf }));
 
-import { persistSafetyReportIntent, persistAmendmentPlan } from '../ind-lifecycle-persistence';
+import { persistSafetyReportIntent, persistAmendmentPlan, persistAnnualReport } from '../ind-lifecycle-persistence';
 import { assembleIndSafetyReport } from '../ind-safety-report-service';
 import { planIndAmendment } from '../ind-amendment-service';
 import type {
@@ -77,6 +77,19 @@ describe('persistSafetyReportIntent', () => {
     }
     expect(result.leaves).toHaveLength(amendmentIntent!.leaves.length);
     expect(upsertLeaf.mock.calls.map((c) => c[0].sectionCode)).toContain('m1.12.4');
+  });
+});
+
+describe('persistAnnualReport', () => {
+  it('creates an "annual" sequence with a single m1.13 leaf', async () => {
+    const result = await persistAnnualReport(7, '0003', ctx);
+    expect(createSequence).toHaveBeenCalledWith(
+      { submissionId: 7, region: 'fda', sequenceNumber: '0003', type: 'annual' },
+      ctx,
+    );
+    expect(upsertLeaf).toHaveBeenCalledTimes(1);
+    expect(upsertLeaf.mock.calls[0][0]).toMatchObject({ sequenceId: 42, sectionCode: 'm1.13', lifecycleOp: 'new' });
+    expect(result.leaves).toHaveLength(1);
   });
 });
 
