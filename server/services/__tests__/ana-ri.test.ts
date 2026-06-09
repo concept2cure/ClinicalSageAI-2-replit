@@ -533,6 +533,119 @@ describe('AnA RI Persona', () => {
     expect(prompt).toContain('From: submission_strategy');
     expect(prompt).toContain('To: document_authoring');
   });
+
+  it('leaves the prompt unchanged for English (default language)', () => {
+    const base = buildAnaRISystemPrompt();
+    const en = buildAnaRISystemPrompt({ language: 'en' });
+    expect(en).toBe(base);
+    expect(en).not.toContain('回答言語');
+    expect(en).not.toContain('LANGUE DE RÉPONSE');
+  });
+
+  it('injects a localized response-language overlay for non-English', () => {
+    const ja = buildAnaRISystemPrompt({ language: 'ja' });
+    expect(ja).toContain('回答言語 — 日本語');
+    expect(ja).toContain('敬語'); // instructs keigo / honorific register
+
+    const fr = buildAnaRISystemPrompt({ language: 'fr' });
+    expect(fr).toContain('LANGUE DE RÉPONSE — FRANÇAIS');
+
+    const de = buildAnaRISystemPrompt({ language: 'de' });
+    expect(de).toContain('ANTWORTSPRACHE — DEUTSCH');
+
+    const zh = buildAnaRISystemPrompt({ language: 'zh' });
+    expect(zh).toContain('回答语言 — 中文');
+  });
+
+  it('keeps regulatory identifiers canonical while localizing prose', () => {
+    // The overlay must instruct AnA to translate meaning but not the
+    // normalised identifiers a reviewer or the system reads.
+    const ja = buildAnaRISystemPrompt({ language: 'ja' });
+    expect(ja).toContain('[KNOWN]');
+    expect(ja).toContain('[INFERRED]');
+    expect(ja).toContain('21 CFR');
+    expect(ja).toContain('eCTD');
+    expect(ja).toContain('ana-action');
+  });
+
+  it('injects market-specific cultural awareness for each non-English market', () => {
+    const ja = buildAnaRISystemPrompt({ language: 'ja' });
+    expect(ja).toContain('文化・市場への配慮 — 日本');
+    expect(ja).toContain('PMDA'); // home authority
+    expect(ja).toContain('根回し'); // local consensus/decision norm
+
+    const zh = buildAnaRISystemPrompt({ language: 'zh' });
+    expect(zh).toContain('文化与市场考量 — 中国');
+    expect(zh).toContain('NMPA');
+
+    const de = buildAnaRISystemPrompt({ language: 'de' });
+    expect(de).toContain('DEUTSCHLAND');
+    expect(de).toContain('BfArM');
+    expect(de).toContain('PEI');
+
+    const fr = buildAnaRISystemPrompt({ language: 'fr' });
+    expect(fr).toContain('FRANCE');
+    expect(fr).toContain('ANSM');
+    expect(fr).toContain('HAS');
+  });
+
+  it('does not add any cultural overlay for English', () => {
+    const en = buildAnaRISystemPrompt({ language: 'en' });
+    expect(en).not.toContain('文化・市場');
+    expect(en).not.toContain('ASPECTS CULTURELS');
+    expect(en).not.toContain('KULTURELLE');
+  });
+
+  it('injects an English market brief when the target agency is non-US', () => {
+    const pmda = buildAnaRISystemPrompt({
+      language: 'en',
+      projectContext: { targetAgency: 'PMDA' },
+    });
+    expect(pmda).toContain('TARGET MARKET AWARENESS — JAPAN (PMDA)');
+    expect(pmda).toContain('SAKIGAKE');
+    expect(pmda).toContain('nemawashi');
+
+    const nmpa = buildAnaRISystemPrompt({
+      language: 'en',
+      projectContext: { targetAgency: 'NMPA (China)' },
+    });
+    expect(nmpa).toContain('TARGET MARKET AWARENESS — CHINA (NMPA)');
+
+    const ema = buildAnaRISystemPrompt({
+      language: 'en',
+      projectContext: { targetAgency: 'EMA' },
+    });
+    expect(ema).toContain('TARGET MARKET AWARENESS — EUROPEAN UNION (EMA)');
+    expect(ema).toContain('AMNOG');
+  });
+
+  it('skips the market brief when the language overlay already covers that market', () => {
+    // ja already carries the Japan cultural overlay — no duplicate PMDA brief.
+    const jaPmda = buildAnaRISystemPrompt({
+      language: 'ja',
+      projectContext: { targetAgency: 'PMDA' },
+    });
+    expect(jaPmda).toContain('文化・市場への配慮 — 日本');
+    expect(jaPmda).not.toContain('TARGET MARKET AWARENESS — JAPAN');
+
+    // ja targeting NMPA gets the China brief alongside the Japan overlay.
+    const jaNmpa = buildAnaRISystemPrompt({
+      language: 'ja',
+      projectContext: { targetAgency: 'NMPA' },
+    });
+    expect(jaNmpa).toContain('TARGET MARKET AWARENESS — CHINA (NMPA)');
+  });
+
+  it('adds no market brief for FDA or unknown agencies', () => {
+    const fda = buildAnaRISystemPrompt({
+      language: 'en',
+      projectContext: { targetAgency: 'FDA' },
+    });
+    expect(fda).not.toContain('TARGET MARKET AWARENESS');
+
+    const none = buildAnaRISystemPrompt({ language: 'en' });
+    expect(none).not.toContain('TARGET MARKET AWARENESS');
+  });
 });
 
 // ── Edge Case Tests ──────────────────────────────────────────────────────────

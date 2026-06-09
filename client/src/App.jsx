@@ -23,6 +23,7 @@ import { lazy, Suspense } from 'react';
 import { AuthProvider } from './services/portal/authService';
 import queryClient from './lib/queryClient';
 import { TenantProvider } from './contexts/TenantContext.tsx';
+import { LanguageProvider } from './contexts/LanguageContext.tsx';
 import { EvidenceGraphProvider } from './contexts/EvidenceGraphContext';
 import { memoryOptimizer } from './utils/memoryOptimizer';
 
@@ -48,8 +49,9 @@ function App() {
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <TenantProvider>
-              <EvidenceGraphProvider>
+            <LanguageProvider>
+              <TenantProvider>
+                <EvidenceGraphProvider>
                 <Switch>
                   {/* Auth aliases — every flavour funnels into the
                       canonical Concept2Cure login page. */}
@@ -72,8 +74,9 @@ function App() {
                     )}
                   </Route>
                 </Switch>
-              </EvidenceGraphProvider>
-            </TenantProvider>
+                </EvidenceGraphProvider>
+              </TenantProvider>
+            </LanguageProvider>
           </AuthProvider>
         </QueryClientProvider>
       </ErrorBoundary>

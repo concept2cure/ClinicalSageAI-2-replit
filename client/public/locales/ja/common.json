@@ -1,0 +1,37 @@
+{
+  "actions": {
+    "save": "保存",
+    "cancel": "キャンセル",
+    "close": "閉じる",
+    "next": "次へ",
+    "previous": "前へ",
+    "delete": "削除",
+    "continue": "続行",
+    "back": "戻る",
+    "search": "検索"
+  },
+  "density": {
+    "label": "表示密度",
+    "compact": "コンパクト",
+    "comfortable": "標準",
+    "spacious": "ゆったり"
+  },
+  "topbar": {
+    "notifications": "通知",
+    "help": "ヘルプ",
+    "askAna": "AnA に質問・ジャンプ…",
+    "command": "コマンド",
+    "activeProject": "アクティブなプロジェクト",
+    "noProjects": "プロジェクトなし",
+    "selectProject": "プロジェクトを選択",
+    "filter": "フィルター",
+    "clientType": "クライアント種別",
+    "pharma": "製薬",
+    "biotech": "バイオテック",
+    "switchProgram": "プログラムを切り替え"
+  },
+  "language": {
+    "label": "言語",
+    "select": "言語を選択"
+  }
+}

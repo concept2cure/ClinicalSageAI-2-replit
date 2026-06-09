@@ -1,0 +1,37 @@
+{
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "next": "Next",
+    "previous": "Previous",
+    "delete": "Delete",
+    "continue": "Continue",
+    "back": "Back",
+    "search": "Search"
+  },
+  "density": {
+    "label": "Density",
+    "compact": "Compact",
+    "comfortable": "Comfortable",
+    "spacious": "Spacious"
+  },
+  "topbar": {
+    "notifications": "Notifications",
+    "help": "Help",
+    "askAna": "Ask AnA, jump to…",
+    "command": "Command",
+    "activeProject": "Active project",
+    "noProjects": "No projects",
+    "selectProject": "Select a project",
+    "filter": "Filter",
+    "clientType": "Client type",
+    "pharma": "Pharma",
+    "biotech": "Biotech",
+    "switchProgram": "Switch program"
+  },
+  "language": {
+    "label": "Language",
+    "select": "Select language"
+  }
+}

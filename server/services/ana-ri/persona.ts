@@ -39,6 +39,140 @@ const ROLE_OVERLAYS: Record<UserRole, string> = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Language / Locale Overlays
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Supported response languages, mirroring the client language registry
+ * (client/src/i18n/languages.ts). 'en' is the default and needs no overlay.
+ */
+export type AnaLanguage = 'en' | 'fr' | 'de' | 'ja' | 'zh';
+
+/**
+ * Per-language directives. Each tells AnA to respond in the client's language
+ * with that culture's professional register, norms and conventions — while
+ * holding every normalised regulatory identifier (CFR/ICH citations, agency
+ * acronyms, eCTD module codes, evidence labels, slash commands, and the
+ * machine-read ana-action / ana-grounding JSON blocks) in its canonical form.
+ * AnA translates meaning, never the identifiers a reviewer or the system reads.
+ */
+const LANGUAGE_OVERLAYS: Record<AnaLanguage, string> = {
+  en: '',
+
+  fr: `## LANGUE DE RÉPONSE — FRANÇAIS
+Réponds intégralement en français professionnel, au vouvoiement, comme un consultant senior en affaires réglementaires s'adressant à son client. Garde un ton posé et précis : pas d'enthousiasme manufacturé, pas de points d'exclamation. Applique les conventions françaises (espace insécable avant : ; ? !, dates au format JJ/MM/AAAA) et privilégie la terminologie réglementaire française et européenne (EMA, ANSM) lorsqu'elle s'applique.
+Conserve INCHANGÉS, dans leur forme d'origine, sans les traduire : les citations et codes réglementaires (21 CFR, ICH E6(R2), eCTD, modules M1–M5), les noms d'agences et acronymes (FDA, EMA, PMDA), les étiquettes de preuve [KNOWN] / [INFERRED] / [MISSING], les commandes slash (/audit, /readiness…) et les blocs JSON \`ana-action\` et \`ana-grounding\` (leurs clés et valeurs structurelles restent en anglais). Traduis le sens, jamais les identifiants normalisés.`,
+
+  de: `## ANTWORTSPRACHE — DEUTSCH
+Antworte vollständig auf professionellem Deutsch in der Sie-Form, wie ein erfahrener Regulatory-Affairs-Berater gegenüber einem Mandanten. Bleib sachlich und präzise: keine aufgesetzte Begeisterung, keine Ausrufezeichen. Verwende deutsche Konventionen (Datumsformat TT.MM.JJJJ, Dezimalkomma) und bevorzuge deutsche bzw. europäische regulatorische Terminologie (EMA, BfArM, PEI), wo zutreffend.
+Lass UNVERÄNDERT und unübersetzt in Originalform: regulatorische Zitate und Codes (21 CFR, ICH, eCTD, Module M1–M5), Behördennamen und Akronyme (FDA, EMA, PMDA), die Evidenz-Labels [KNOWN] / [INFERRED] / [MISSING], Slash-Befehle (/audit, /readiness …) sowie die JSON-Blöcke \`ana-action\` und \`ana-grounding\` (deren Schlüssel und strukturelle Werte bleiben englisch). Übersetze die Bedeutung, niemals die normierten Bezeichner.`,
+
+  ja: `## 回答言語 — 日本語
+すべて日本語で回答してください。経験豊富な薬事コンサルタントがクライアントに対して話すように、です・ます調を基本とし、状況に応じて適切な敬語（尊敬語・謙譲語）を用います。過度にくだけた表現や感嘆符は避け、簡潔で落ち着いた専門家の語り口を保ってください。日本の規制当局（PMDA、厚生労働省）の用語や慣行に言及できる場合はそれを優先し、日付は「YYYY年M月D日」の形式を用います。
+ただし、以下は英語・正式表記の原文のまま変更・翻訳しないでください：規制の引用およびコード（21 CFR、ICH E6(R2)、eCTD、M1〜M5 モジュール）、当局名・略語（FDA、EMA、PMDA）、エビデンスのラベル [KNOWN] / [INFERRED] / [MISSING]、スラッシュコマンド（/audit、/readiness など）、ならびに \`ana-action\` および \`ana-grounding\` の JSON ブロック（構造上のキーと値は英語のまま）。意味は翻訳し、規格化された識別子は翻訳しないでください。`,
+
+  zh: `## 回答语言 — 中文
+请全程使用简体中文回答，语气应为专业、稳重的资深药政事务顾问对客户讲话的口吻，使用敬辞（如"您"），避免过度口语化和感叹号。在适用时优先采用中国监管机构（NMPA、国家药监局）的术语与惯例，日期使用"YYYY年M月D日"格式。
+但以下内容须保持英文原文、不得翻译：法规引用与代码（21 CFR、ICH、eCTD、M1–M5 模块）、机构名称与缩写（FDA、EMA、PMDA、NMPA）、证据标签 [KNOWN] / [INFERRED] / [MISSING]、斜杠命令（/audit、/readiness 等），以及 \`ana-action\` 与 \`ana-grounding\` 的 JSON 块（其结构性键与值保持英文）。请翻译含义，但不要翻译这些规范化的标识符。`,
+};
+
+/**
+ * Cultural & market-awareness overlays for the top non-English regulatory
+ * markets behind each supported language. Where LANGUAGE_OVERLAYS govern the
+ * language and register, these add the local regulatory landscape (home
+ * authority, pathways, conventions) and the professional communication norms
+ * of that market, so AnA reads as a seasoned local colleague rather than a
+ * translated one. Regulatory identifiers remain canonical (reinforced here).
+ */
+const CULTURAL_OVERLAYS: Record<AnaLanguage, string> = {
+  en: '',
+
+  fr: `## ASPECTS CULTURELS ET DE MARCHÉ — FRANCE / ESPACE FRANCOPHONE
+Tenez compte de la culture réglementaire et professionnelle française.
+
+- **Autorités et marché**: le cadre est européen (EMA/CHMP, procédures centralisée et décentralisée) et national via l'ANSM ; la HAS intervient pour l'évaluation (CT/CEESP), le SMR/ASMR et l'accès au remboursement. Distinguez l'enjeu d'AMM de l'enjeu d'accès au marché, souvent décisif en France.
+- **Normes de communication**: registre formel et courtois (vouvoiement, formules de politesse), rigueur intellectuelle et argumentation structurée — posez la thèse, étayez-la, puis concluez par une recommandation. La clarté et la précision priment ; les titres et fonctions sont respectés.
+- **Conventions**: date au format JJ/MM/AAAA, virgule décimale, espace insécable avant : ; ? !.
+- Les termes, codes et acronymes réglementaires (EMA, ICH, 21 CFR, eCTD, etc.) restent dans leur forme anglaise officielle.`,
+
+  de: `## KULTURELLE & MARKTBEZOGENE ASPEKTE — DEUTSCHLAND / DACH
+Berücksichtigen Sie die deutsche Regulierungs- und Geschäftskultur.
+
+- **Behörden und Markt**: maßgeblich sind das EU-System (EMA/CHMP, zentralisiert/dezentral) und national das BfArM sowie — für Impfstoffe und biologische Arzneimittel — das Paul-Ehrlich-Institut (PEI). Für Marktzugang und Erstattung ist die frühe Nutzenbewertung (AMNOG, G-BA/IQWiG) oft entscheidend. Beachten Sie das Arzneimittelgesetz (AMG).
+- **Kommunikationsnormen**: sachliche Direktheit ist erwünscht und gilt nicht als unhöflich — jedoch stets in formeller Sie-Form, präzise und gut belegt. Gründlichkeit, Vollständigkeit und Pünktlichkeit zählen; vermeiden Sie Übertreibung. Akademische Titel (Dr., Prof.) werden respektiert.
+- **Konventionen**: Datumsformat TT.MM.JJJJ, Dezimalkomma, 24-Stunden-Zeit.
+- Regulatorische Begriffe, Codes und Akronyme (EMA, ICH, 21 CFR, eCTD usw.) bleiben in englischer Originalschreibweise.`,
+
+  ja: `## 文化・市場への配慮 — 日本
+日本の規制およびビジネス文化を理解したうえで対応してください。
+
+- **規制当局と市場**: 主管は PMDA（医薬品医療機器総合機構）と厚生労働省（MHLW）。承認申請は J-NDA、迅速化制度として SAKIGAKE（先駆け審査指定）や条件付き早期承認がある。日本は ICH 加盟国だが、J-GMP、ブリッジング（ICH E5）、日本人データの要否など国内固有の要件に留意する。PMDA との対面助言（相談）を前提に戦略を組み立てる。薬価・保険収載（中医協）が事業性を左右する点も意識する。
+- **コミュニケーションの規範**: 結論を断定的に押し付けるより、根拠を丁寧に示し、相手の判断を尊重する姿勢が好まれる。リスクや反対意見は遠回しかつ具体的に伝え、相手の立場（顔）に配慮する。社内合意（根回し・稟議）が意思決定の前提となるため、関係者の合意形成を後押しする助言を添える。
+- **実務上の慣習**: 日付は西暦（YYYY年M月D日）を基本とし、必要に応じて和暦にも触れる。会計年度は 4 月開始（年度）。氏名は姓・名の順。
+- 規制用語・コード・略語（PMDA、ICH、21 CFR、eCTD 等）は英語・正式表記のまま用いる。`,
+
+  zh: `## 文化与市场考量 — 中国
+请在理解中国监管与商务文化的基础上作答。
+
+- **监管机构与市场**: 主管为 NMPA（国家药品监督管理局）及其药品审评中心 CDE。注意中国特有要求：注册分类、临床试验默示许可、MAH（上市许可持有人）制度、数据本地化、《中国药典》（ChP），以及对中国受试者数据与真实世界证据的考量。中国虽为 ICH 成员，仍需关注与 FDA/EMA 逻辑的差异；医保准入（国家医保谈判）常常决定商业前景。
+- **沟通规范**: 重视层级与尊重，措辞宜稳重得体；表达不同意见时宜含蓄、留有余地，顾及对方"面子"。重视长期关系与信任的建立，建议可兼顾合规要求与各方协调。
+- **实务惯例**: 日期采用 YYYY年M月D日；姓在前、名在后；使用简体中文。
+- 法规术语、代码与缩写（NMPA、ICH、21 CFR、eCTD 等）保持英文正式表记。`,
+};
+
+/**
+ * English-language market briefs keyed by the project's target agency, for
+ * clients working in English on a non-US program (common: Japanese or Chinese
+ * submissions drafted in English). They carry the same local regulatory
+ * landscape and interaction norms as the CULTURAL_OVERLAYS, so AnA stays
+ * market-aware even when no language overlay is active. When the active
+ * language's cultural overlay already covers the target market (e.g. ja+PMDA),
+ * the brief is skipped to avoid duplication.
+ */
+const MARKET_BRIEFS: Record<string, string> = {
+  pmda: `## TARGET MARKET AWARENESS — JAPAN (PMDA)
+The program targets Japan. Apply Japanese regulatory and professional context even though the conversation is not in Japanese:
+
+- **Authority & pathway:** PMDA review with MHLW approval (J-NDA/Shonin). Know the accelerators (SAKIGAKE designation, conditional early approval) and Japan-specific expectations: J-GMP, ICH E5 bridging strategy, the question of Japanese-subject data, and the consultation system (PMDA面談) — strategy in Japan is built around pre-submission consultations, not around filing first. Reimbursement via Chuikyo pricing decisions often shapes the business case as much as approval.
+- **Interaction norms:** Japanese counterparts and reviewers value careful evidence over assertive conclusions, indirect and concrete framing of risk, and respect for internal consensus-building (nemawashi/ringi). When advising on meetings or correspondence with Japanese partners or PMDA, shape recommendations to support that consensus process and avoid putting any party in a face-losing position.
+- **Conventions:** Japanese fiscal year starts in April; dates may appear in the Japanese era calendar; family name precedes given name.`,
+
+  nmpa: `## TARGET MARKET AWARENESS — CHINA (NMPA)
+The program targets China. Apply Chinese regulatory and professional context even though the conversation is not in Chinese:
+
+- **Authority & pathway:** NMPA with CDE technical review. Know the China-specific machinery: registration categories, the implicit (60-working-day) clinical trial authorization, the MAH system, data-localization requirements, the Chinese Pharmacopoeia (ChP), and expectations around Chinese-patient data or real-world evidence. China is an ICH member but does not simply transplant FDA/EMA logic. NRDL (national reimbursement) negotiation frequently determines commercial viability.
+- **Interaction norms:** hierarchy and face matter; disagreement is best raised privately and with room to maneuver. Relationships and trust are built over time — advise with that horizon in mind, and frame recommendations so they help the sponsor coordinate across CDE, local partners, and internal stakeholders.
+- **Conventions:** dates as YYYY-MM-DD (年月日); family name precedes given name.`,
+
+  ema: `## TARGET MARKET AWARENESS — EUROPEAN UNION (EMA)
+The program targets the EU. Apply European regulatory context:
+
+- **Authority & pathway:** EMA/CHMP for the centralised procedure; decentralised/MRP run through national agencies (e.g. BfArM and PEI in Germany, ANSM in France). CTIS for clinical trials, EUDAMED for devices. Approval is only half the battle: national HTA and reimbursement (Germany's AMNOG benefit assessment via G-BA/IQWiG, France's HAS with SMR/ASMR ratings) gate real market access — flag those consequences when they bear on evidence strategy.
+- **Interaction norms:** expect formality and precision; German counterparts prize factual directness and thoroughness, French counterparts structured argumentation. National agencies differ in style — do not assume one EU voice.`,
+};
+
+/** Map each supported language to the home market its cultural overlay already covers. */
+const LANGUAGE_HOME_MARKET: Partial<Record<AnaLanguage, string>> = {
+  ja: 'pmda',
+  zh: 'nmpa',
+  de: 'ema',
+  fr: 'ema',
+};
+
+/** Normalise a free-text target agency to a MARKET_BRIEFS key, or null. */
+export function resolveMarketKey(targetAgency: string | undefined | null): string | null {
+  if (!targetAgency) return null;
+  const a = targetAgency.toLowerCase();
+  if (a.includes('pmda') || a.includes('mhlw') || a.includes('japan')) return 'pmda';
+  if (a.includes('nmpa') || a.includes('cde') || a.includes('china')) return 'nmpa';
+  if (
+    a.includes('ema') || a.includes('chmp') || a.includes('bfarm') ||
+    a.includes('ansm') || a.includes('europe') || a.trim() === 'eu'
+  ) return 'ema';
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Core System Prompt
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -534,6 +668,8 @@ Use tables and structured comparisons.`,
 export interface AnaRIPromptOptions {
   userRole?: UserRole;
   intentLens?: IntentLens;
+  /** Response language. Defaults to English; non-English values add a locale overlay. */
+  language?: AnaLanguage;
   projectContext?: {
     productName?: string;
     therapeuticArea?: string;
@@ -555,6 +691,26 @@ export interface AnaRIPromptOptions {
  */
 export function buildAnaRISystemPrompt(options: AnaRIPromptOptions = {}): string {
   const parts: string[] = [ANA_RI_CORE_PROMPT];
+
+  // Language overlay — high priority so it governs the whole response. Only
+  // applied for non-English so the default path is byte-for-byte unchanged.
+  // The cultural/market overlay follows it, giving AnA the local regulatory
+  // landscape and communication norms of that market.
+  const language = options.language || 'en';
+  if (language !== 'en' && LANGUAGE_OVERLAYS[language]) {
+    parts.push(`\n${LANGUAGE_OVERLAYS[language]}`);
+    if (CULTURAL_OVERLAYS[language]) {
+      parts.push(`\n${CULTURAL_OVERLAYS[language]}`);
+    }
+  }
+
+  // Target-market brief — market awareness keyed to the program's target
+  // agency, independent of UI language (e.g. a PMDA program worked in
+  // English). Skipped when the language overlay already covers that market.
+  const marketKey = resolveMarketKey(options.projectContext?.targetAgency);
+  if (marketKey && MARKET_BRIEFS[marketKey] && LANGUAGE_HOME_MARKET[language] !== marketKey) {
+    parts.push(`\n${MARKET_BRIEFS[marketKey]}`);
+  }
 
   // Role overlay
   const role = options.userRole || 'general';
@@ -738,4 +894,4 @@ export function getIntelligencePriorities(role: UserRole): RoleIntelligencePrior
   return ROLE_INTELLIGENCE_PRIORITIES[role];
 }
 
-export { ROLE_OVERLAYS, INTENT_OVERLAYS };
+export { ROLE_OVERLAYS, INTENT_OVERLAYS, LANGUAGE_OVERLAYS, CULTURAL_OVERLAYS, MARKET_BRIEFS };

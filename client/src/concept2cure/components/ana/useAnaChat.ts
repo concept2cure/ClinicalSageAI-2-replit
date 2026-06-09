@@ -23,6 +23,7 @@
 import { useCallback, useRef, useState } from 'react';
 
 import { getAuthHeaders } from '../../../utils/authToken';
+import i18n from '@/i18n';
 import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
 
 /**
@@ -368,6 +369,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         project_id: options.projectId || ac?.projectId || undefined,
         submission_type: submissionTypeForContext,
         user_role: options.userRole || undefined,
+        // Current UI language so AnA speaks/writes/translates to match the client.
+        language: (i18n.language || 'en').split('-')[0],
         project_context: projectContext,
         document_context: documentContext,
         authoring_context: authoringContextOut,

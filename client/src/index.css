@@ -856,3 +856,29 @@ button:focus-visible {
     page-break-after: avoid;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * CJK typography fallbacks (i18n)
+ *
+ * When the active language is Japanese or Chinese, append locale-appropriate
+ * CJK font families so glyphs render with native shaping rather than tofu.
+ * Driven by the <html lang> attribute that i18next keeps in sync, so the
+ * :lang() selectors activate automatically on language switch. CJK scripts
+ * also read better with slightly looser line-height.
+ * ───────────────────────────────────────────────────────────────────────── */
+:lang(ja) {
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN",
+    "Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", system-ui, sans-serif;
+}
+
+:lang(zh) {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC",
+    "Noto Sans SC", "Microsoft YaHei", "Hiragino Sans GB", system-ui, sans-serif;
+}
+
+:lang(ja) body,
+:lang(zh) body,
+html:lang(ja) .greetH1,
+html:lang(zh) .greetH1 {
+  line-height: 1.7;
+}
