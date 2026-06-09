@@ -235,6 +235,43 @@ export const SEARCH_LITERATURE: AnaTool = {
   },
 };
 
+export const SEARCH_IVD_KNOWLEDGE: AnaTool = {
+  name: 'search_ivd_knowledge',
+  description:
+    'Search the curated IVD (in-vitro diagnostic) knowledge base — a citable corpus of scientific, ' +
+    'legal, and regulatory intelligence spanning FDA (510(k)/De Novo/PMA, CLIA, CDx, LDT), EU IVDR ' +
+    '(Annex VIII classification, performance evaluation, transition timeline), global pathways ' +
+    '(Health Canada, PMDA, NMPA, ANVISA, TGA, MDSAP, IMDRF), analytical & clinical performance ' +
+    '(CLSI EP series, traceability, ROC/cut-off), legal topics (LDT rule, patent eligibility, ' +
+    'privacy, reimbursement), and key standards. Returns entries with summaries and source ' +
+    'citations (CFR/IVDR article/ISO/CLSI/case law). Use this to ground IVD answers in a defensible ' +
+    'source and cite the returned citations.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      query: {
+        type: 'string',
+        description: 'What to look up (a topic, term, standard, article, or question).',
+      },
+      domain: {
+        type: 'string',
+        enum: ['regulatory', 'scientific', 'legal', 'standard'],
+        description: 'Optional domain filter.',
+      },
+      jurisdiction: {
+        type: 'string',
+        enum: ['US', 'EU', 'UK', 'JP', 'CN', 'BR', 'CA', 'AU', 'global'],
+        description: 'Optional jurisdiction filter.',
+      },
+      max_results: {
+        type: 'number',
+        description: 'Maximum entries to return (default: 5, max: 15).',
+      },
+    },
+    required: ['query'],
+  },
+};
+
 export const PROJECT_KNOWLEDGE_SEARCH: AnaTool = {
   name: 'project_knowledge_search',
   description:
@@ -3647,6 +3684,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_REGULATORY_CORRESPONDENCE,
   CREATE_CALENDAR_EVENT,
   SEARCH_CRM,
+  SEARCH_IVD_KNOWLEDGE,
   PROJECT_KNOWLEDGE_SEARCH,
   SIMULATE_STUDY_DESIGN,
   SEARCH_DEVICE_ADVERSE_EVENTS,

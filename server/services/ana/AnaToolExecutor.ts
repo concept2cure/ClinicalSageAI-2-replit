@@ -3943,6 +3943,44 @@ registerToolHandler('get_document_template', async (input) => {
   }
 });
 
+registerToolHandler('search_ivd_knowledge', async (input) => {
+  // Static, citable reference corpus — global, not tenant-specific.
+  const query = typeof input.query === 'string' ? input.query : '';
+  if (!query.trim()) {
+    return JSON.stringify({ error: 'query is required.' });
+  }
+  const domain = typeof input.domain === 'string' ? input.domain : undefined;
+  const jurisdiction = typeof input.jurisdiction === 'string' ? input.jurisdiction : undefined;
+  const rawMax = typeof input.max_results === 'number' ? input.max_results : 5;
+  const limit = Math.min(15, Math.max(1, rawMax));
+  try {
+    const { search } = await import('../ivd-knowledge/knowledge.service.js');
+    const { isKnowledgeDomain } = await import('../ivd-knowledge/types.js');
+    const results = search(query, {
+      domain: domain && isKnowledgeDomain(domain) ? domain : undefined,
+      jurisdiction: jurisdiction as never,
+      limit,
+    });
+    return JSON.stringify({
+      ok: true,
+      query,
+      count: results.length,
+      results: results.map(r => ({
+        id: r.entry.id,
+        domain: r.entry.domain,
+        topic: r.entry.topic,
+        title: r.entry.title,
+        jurisdictions: r.entry.jurisdictions,
+        summary: r.entry.summary,
+        keyPoints: r.entry.keyPoints,
+        citations: r.entry.citations,
+      })),
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `search_ivd_knowledge failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('assess_dispatch_readiness', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) {
     return JSON.stringify({ error: 'assess_dispatch_readiness requires tenant context (organizationId and userId).' });
