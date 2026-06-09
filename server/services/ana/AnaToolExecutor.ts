@@ -29,6 +29,13 @@ import { searchDrugApprovals } from '../integrations/drug-approvals-client.js';
 import { assessRegulatoryLandscape } from '../integrations/landscape.js';
 import { getIntegrationStatuses, summarizeStatuses } from '../integrations/integration-status.js';
 import { getAllEnabledTools } from './AnaToolDefinitions.js';
+import {
+  recordToolOutcome,
+  recordContractViolation,
+  classifyResult,
+  getToolReliability,
+  getUnhealthyTools,
+} from './tool-telemetry.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 import type {
   GatewayRequest,
@@ -62,9 +69,46 @@ type ToolHandler = (input: Record<string, unknown>, ctx?: ToolContext) => Promis
 
 const toolHandlers: Map<string, ToolHandler> = new Map();
 
-/** Register a handler for a named tool */
+// Lazily built map of tool name → schema-required input keys, for the
+// report-only contract check in the telemetry wrapper.
+let requiredInputKeys: Map<string, string[]> | null = null;
+function getRequiredInputKeys(tool: string): string[] {
+  if (!requiredInputKeys) {
+    requiredInputKeys = new Map();
+    for (const def of getAllEnabledTools()) {
+      const d = def as { name?: string; input_schema?: { required?: string[] } };
+      if (d.name && Array.isArray(d.input_schema?.required)) {
+        requiredInputKeys.set(d.name, d.input_schema.required);
+      }
+    }
+  }
+  return requiredInputKeys.get(tool) ?? [];
+}
+
+/**
+ * Register a handler for a named tool. Every handler is wrapped with execution
+ * telemetry (AnA's self-awareness of what is actually working) and a
+ * report-only input-contract check — every dispatch path resolves handlers
+ * from this map, so coverage is total with no call-site changes.
+ */
 export function registerToolHandler(name: string, handler: ToolHandler): void {
-  toolHandlers.set(name, handler);
+  const instrumented: ToolHandler = async (input, ctx) => {
+    // Report-only contract check: note when the model omitted required fields.
+    const missing = getRequiredInputKeys(name).filter(k => input?.[k] === undefined);
+    if (missing.length > 0) recordContractViolation(name);
+
+    const start = Date.now();
+    try {
+      const result = await handler(input, ctx);
+      const { outcome, note } = classifyResult(result);
+      recordToolOutcome(name, outcome, Date.now() - start, note);
+      return result;
+    } catch (e) {
+      recordToolOutcome(name, 'failure', Date.now() - start, e instanceof Error ? e.message : String(e));
+      throw e;
+    }
+  };
+  toolHandlers.set(name, instrumented);
 }
 
 /** Retrieve a registered tool handler, or undefined if the name is unknown. */
@@ -374,6 +418,15 @@ registerToolHandler('describe_capabilities', async (_input, ctx) => {
     const directHandlers = declared.filter(n => toolHandlers.has(n));
     const viaPlatformDispatch = declared.filter(n => !toolHandlers.has(n));
 
+    // Execution self-awareness: what has actually been working this process
+    // lifetime (only tools that have been called appear).
+    const reliability = getToolReliability();
+    const unhealthy = getUnhealthyTools(3).map(t => ({
+      tool: t.tool,
+      consecutiveFailures: t.consecutiveFailures,
+      lastError: t.lastError,
+    }));
+
     return JSON.stringify({
       source: 'AnA Capability Introspection',
       toolSurface: {
@@ -384,10 +437,17 @@ registerToolHandler('describe_capabilities', async (_input, ctx) => {
       },
       integrations,
       integrationSummary: summary,
+      execution: {
+        toolsUsedThisSession: reliability.length,
+        reliability,
+        unhealthy,
+      },
       guidance:
         'Only offer or attempt tools whose integration is configured. For configured:false entries, ' +
         'tell the user what unlocks them (the `requires` field). configured:null means org context ' +
-        'is needed to resolve — ask the user to open a project.',
+        'is needed to resolve — ask the user to open a project. Treat tools listed in ' +
+        'execution.unhealthy as currently unreliable: warn the user and prefer alternatives until ' +
+        'they recover.',
     });
   } catch (e) {
     return JSON.stringify({
