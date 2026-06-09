@@ -124,6 +124,37 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   },
 };
 
+export const SEARCH_DEVICE_RECALLS: AnaTool = {
+  name: 'search_device_recalls',
+  description:
+    'Search FDA device recalls (openFDA) by device name, manufacturer, or keyword. Returns a ' +
+    'classification breakdown (Class I/II/III — Class I is most serious) plus recall details ' +
+    '(reason, status, recalling firm). Use for post-market surveillance, CER safety sections, and ' +
+    'competitive safety analysis.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      device_name: {
+        type: 'string',
+        description: 'Device name / product description to search recalls for.',
+      },
+      manufacturer: {
+        type: 'string',
+        description: 'Recalling firm / manufacturer (used when no device name is given).',
+      },
+      query: {
+        type: 'string',
+        description: 'Free-text fallback matched against the recall product description.',
+      },
+      max_results: {
+        type: 'number',
+        description: 'Maximum recalls to return (default: 25, max: 100).',
+      },
+    },
+    required: [],
+  },
+};
+
 export const SEARCH_CRM: AnaTool = {
   name: 'search_crm',
   description:
@@ -3647,6 +3678,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_REGULATORY_CORRESPONDENCE,
   CREATE_CALENDAR_EVENT,
   SEARCH_CRM,
+  SEARCH_DEVICE_RECALLS,
   PROJECT_KNOWLEDGE_SEARCH,
   SIMULATE_STUDY_DESIGN,
   SEARCH_DEVICE_ADVERSE_EVENTS,
