@@ -18,6 +18,11 @@ come from it. Do not send tenant ids in the body.
 
 ## 1. Planner (`/submissions/:id/plan`)
 | POST | `/api/submissions/:id/plan` | `PlanRequest` → `PlanResponse` | Submission Strategist (AI, audited) |
+| GET | `/api/submissions/requirements[?market=]` | → `RequirementsResponse` | Per submission TYPE (ind/nda/bla/anda/510k/de_novo/pma/maa/cta/jnda/mdr_td/ivdr_td) the required CTD modules, document templates, and forms. Static reference data. |
+| GET | `/api/submissions/requirements/:type` | → `SubmissionRequirement` | One type; 404 on unknown. |
+| POST | `/api/submissions/requirements/:type/assess` | `RequirementsAssessRequest` → `RequirementsAssessment` | Deterministic gap check: which required documents/forms are present vs missing (optional docs never block). |
+| GET | `/api/submissions/designations[?market=]` | → `DesignationsResponse` | Expedited/special designation criteria (FDA Breakthrough/Fast Track/Accelerated/Priority/Orphan, EU PRIME/Orphan/Conditional MA, PMDA SAKIGAKE/Orphan). |
+| POST | `/api/submissions/designations/:id/assess` | `EligibilityAssessRequest` → `EligibilityAssessment` | Eligibility from yes/no answers — eligible only when every criterion is met; undetermined while any is unanswered. A structured check, not the agency's decision. |
 
 ## 2. Builder (`/submissions/:id/builder`)
 | GET | `/api/submissions/sequences/:seqId/leaves` | → `SubmissionLeaf[]` | the assembly tree |
@@ -65,7 +70,8 @@ AnA can drive all of the above through her governed tools (tenant from
 `explain_validation_findings`, `cross_region_gap_analysis`, `dispatch_qc_check`,
 `trace_provenance`, `check_consistency`, `assess_pathway_readiness`,
 `build_pathway_manifest`, `list_validation_rules`, `get_market_submission_spec`,
-`get_document_template`, `validate_market_formatting`, `assess_dispatch_readiness`. The UI's AnA panel passes page context
+`get_document_template`, `validate_market_formatting`, `get_submission_requirements`,
+`assess_pathway_eligibility`, `assess_dispatch_readiness`. The UI's AnA panel passes page context
 (`{ submissionId, sectionCode, region }`); the tools supply nothing tenant-related.
 
 ## Still server-side TODO before some screens are fully live

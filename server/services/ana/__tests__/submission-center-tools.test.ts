@@ -34,6 +34,8 @@ const SUBMISSION_TOOLS = [
   'get_market_submission_spec',
   'get_document_template',
   'validate_market_formatting',
+  'get_submission_requirements',
+  'assess_pathway_eligibility',
   'assess_dispatch_readiness',
 ];
 
@@ -251,6 +253,25 @@ describe('submission AI tasks — tenant + input guards', () => {
     const handler = getToolHandler('validate_market_formatting')!;
     const out = JSON.parse(await handler({ spec_id: 'nope', leaves: [] }, {} as ToolContext));
     expect(out.error).toMatch(/No market spec/);
+  });
+
+  it('get_submission_requirements returns and assesses a type', async () => {
+    const handler = getToolHandler('get_submission_requirements')!;
+    const out = JSON.parse(await handler({ submission_type: 'nda', present_template_ids: ['quality_overall_summary'] }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.assessment.ready).toBe(false);
+    expect(out.assessment.missingForms).toContain('FDA 356h');
+  });
+  it('assess_pathway_eligibility checks all-criteria-met', async () => {
+    const handler = getToolHandler('assess_pathway_eligibility')!;
+    const out = JSON.parse(await handler({ designation: 'fda_breakthrough', answers: { serious: true, preliminary_substantial: true } }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.assessment.eligible).toBe(true);
+  });
+  it('assess_pathway_eligibility errors on an unknown designation', async () => {
+    const handler = getToolHandler('assess_pathway_eligibility')!;
+    const out = JSON.parse(await handler({ designation: 'nope' }, {} as ToolContext));
+    expect(out.error).toMatch(/No designation/);
   });
 });
 

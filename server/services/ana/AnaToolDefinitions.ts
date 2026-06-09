@@ -2365,6 +2365,37 @@ export const VALIDATE_MARKET_FORMATTING: AnaTool = {
   },
 };
 
+export const GET_SUBMISSION_REQUIREMENTS: AnaTool = {
+  name: 'get_submission_requirements',
+  description:
+    "Get the required content for a submission TYPE (ind, nda, bla, anda, 510k, de_novo, pma, maa, cta, jnda, mdr_td, ivdr_td): the required CTD modules, document templates, and forms, with the regulatory basis. Optionally ASSESS a candidate set — pass `present_template_ids`, `present_document_names`, and/or `present_forms` and it returns which required documents/forms are present vs missing (optional documents never block). Read-only, static reference data. Use it to plan a submission or to gap-check what's assembled. Omit `submission_type` to list all types.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      submission_type: { type: 'string', description: "e.g. 'nda', '510k', 'maa', 'cta', 'mdr_td'." },
+      present_template_ids: { type: 'array', items: { type: 'string' }, description: 'Document-template ids already present (for assessment).' },
+      present_document_names: { type: 'array', items: { type: 'string' }, description: 'Document names already present (for assessment).' },
+      present_forms: { type: 'array', items: { type: 'string' }, description: 'Forms already present (for assessment).' },
+    },
+    required: [],
+  },
+};
+
+export const ASSESS_PATHWAY_ELIGIBILITY: AnaTool = {
+  name: 'assess_pathway_eligibility',
+  description:
+    "Check eligibility for an expedited/special regulatory designation (fda_breakthrough, fda_fast_track, fda_accelerated_approval, fda_priority_review, fda_orphan, eu_prime, eu_orphan, eu_conditional_ma, pmda_sakigake, pmda_orphan). Without `answers` it returns the designation's criteria. With `answers` (a map of criterion id → true/false) it returns eligibility — eligible only when EVERY criterion is met, undetermined while any is unanswered. This is a structured check against the published program definition, NOT the agency's designation decision. Omit `designation` to list all; pass `market` to scope.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      designation: { type: 'string', description: "e.g. 'fda_breakthrough', 'eu_prime', 'pmda_sakigake'." },
+      market: { type: 'string', description: 'Filter the list by market (us, eu, jp).' },
+      answers: { type: 'object', description: 'Map of criterion id → boolean, to assess eligibility.' },
+    },
+    required: [],
+  },
+};
+
 export const ASSESS_DISPATCH_READINESS: AnaTool = {
   name: 'assess_dispatch_readiness',
   description:
@@ -3846,6 +3877,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   GET_MARKET_SUBMISSION_SPEC,
   GET_DOCUMENT_TEMPLATE,
   VALIDATE_MARKET_FORMATTING,
+  GET_SUBMISSION_REQUIREMENTS,
+  ASSESS_PATHWAY_ELIGIBILITY,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,

@@ -158,6 +158,20 @@ async function main() {
   const fmt404 = await c.req('POST', '/api/submissions/market-specs/nope-xx/validate', { leaves: [] });
   ok('market formatting validation 404s on unknown spec', fmt404.status === 404, `got ${fmt404.status}`);
 
+  // Submission requirements matrix + gap assessment (Planner).
+  const reqOne = await c.req('GET', '/api/submissions/requirements/nda');
+  ok('requirements/:type returns the NDA matrix', reqOne.status === 200 && Array.isArray(reqOne.json?.requiredDocuments) && reqOne.json.requiredForms?.includes('FDA 356h'), `status ${reqOne.status}`);
+  const reqAssess = await c.req('POST', '/api/submissions/requirements/nda/assess', { templateIds: ['quality_overall_summary'] });
+  ok('requirements assess reports missing required docs/forms', reqAssess.status === 200 && reqAssess.json?.ready === false && reqAssess.json.missingForms?.includes('FDA 356h'), `status ${reqAssess.status}`);
+
+  // Expedited-pathway eligibility (Planner).
+  const desig = await c.req('GET', '/api/submissions/designations?market=us');
+  ok('designations lists US expedited programs', desig.status === 200 && Array.isArray(desig.json?.designations) && desig.json.designations.some((d) => d.id === 'fda_breakthrough'), `status ${desig.status}`);
+  const elig = await c.req('POST', '/api/submissions/designations/fda_breakthrough/assess', { answers: { serious: true, preliminary_substantial: true } });
+  ok('eligibility is eligible only when all criteria are met', elig.status === 200 && elig.json?.eligible === true, `status ${elig.status}`);
+  const eligBad = await c.req('POST', '/api/submissions/designations/nope/assess', { answers: {} });
+  ok('eligibility 404s on unknown designation', eligBad.status === 404, `got ${eligBad.status}`);
+
   // Document template structures (canonical section skeletons) — static reference data.
   const dt = await c.req('GET', '/api/submissions/document-templates?family=ectd');
   ok('document-templates returns CTD spines with sections', dt.status === 200 && Array.isArray(dt.json?.templates) && dt.json.templates.length > 0 && dt.json.templates.every((t) => Array.isArray(t.sections) && t.sections.length > 0), `status ${dt.status}`);

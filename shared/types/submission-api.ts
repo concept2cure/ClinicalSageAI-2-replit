@@ -339,6 +339,64 @@ export interface MarketSpecsResponse {
   specs: MarketSubmissionSpec[];
 }
 
+// ── Submission requirements (GET/POST /api/submissions/requirements[...]) ─────
+export interface RequiredDocument {
+  templateId?: string;
+  name: string;
+  required: boolean;
+}
+export interface SubmissionRequirement {
+  submissionType: string;
+  label: string;
+  market: string;
+  family: SubmissionFamily;
+  requiredModules?: string[];
+  requiredDocuments: RequiredDocument[];
+  requiredForms: string[];
+  basis: string;
+}
+export interface RequirementsResponse {
+  market: string;
+  requirements: SubmissionRequirement[];
+}
+export interface RequirementsAssessRequest {
+  templateIds?: string[];
+  documentNames?: string[];
+  forms?: string[];
+}
+export interface RequirementsAssessment {
+  submissionType: string;
+  ready: boolean;
+  missingDocuments: string[];
+  missingForms: string[];
+  presentRequiredCount: number;
+  totalRequiredCount: number;
+}
+
+// ── Expedited-pathway eligibility (GET/POST /api/submissions/designations[...]) ─
+export interface DesignationProfile {
+  id: string;
+  label: string;
+  market: string;
+  basis: string;
+  criteria: Array<{ id: string; question: string }>;
+}
+export interface DesignationsResponse {
+  market: string;
+  designations: DesignationProfile[];
+}
+export interface EligibilityAssessRequest {
+  answers: Record<string, boolean>;
+}
+export interface EligibilityAssessment {
+  designation: string;
+  label: string;
+  eligible: boolean;
+  met: string[];
+  unmet: string[];
+  unanswered: string[];
+}
+
 // ── Market formatting validation (POST /api/submissions/market-specs/:specId/validate) ─
 export interface FormattingValidateRequest {
   leaves: Array<{

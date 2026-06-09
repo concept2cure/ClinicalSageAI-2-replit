@@ -4099,6 +4099,52 @@ registerToolHandler('validate_market_formatting', async (input) => {
   }
 });
 
+registerToolHandler('get_submission_requirements', async (input) => {
+  // Static reference data + pure assessment — no tenant context required.
+  const type = typeof input.submission_type === 'string' ? input.submission_type : '';
+  try {
+    const m = await import('../market-specs/submission-requirements.js');
+    if (!type) return JSON.stringify({ ok: true, requirements: m.SUBMISSION_REQUIREMENTS });
+    const req = m.getRequirements(type);
+    if (!req) return JSON.stringify({ error: `No requirements for "${type}".` });
+    const hasPresent =
+      Array.isArray(input.present_template_ids) || Array.isArray(input.present_document_names) || Array.isArray(input.present_forms);
+    if (hasPresent) {
+      const assessment = m.assessRequirements(type, {
+        templateIds: Array.isArray(input.present_template_ids) ? (input.present_template_ids as string[]) : [],
+        documentNames: Array.isArray(input.present_document_names) ? (input.present_document_names as string[]) : [],
+        forms: Array.isArray(input.present_forms) ? (input.present_forms as string[]) : [],
+      });
+      return JSON.stringify({ ok: true, requirements: req, assessment });
+    }
+    return JSON.stringify({ ok: true, requirements: req });
+  } catch (err) {
+    return JSON.stringify({ error: `get_submission_requirements failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('assess_pathway_eligibility', async (input) => {
+  // Static reference data + pure assessment — no tenant context required.
+  const designation = typeof input.designation === 'string' ? input.designation : '';
+  const market = typeof input.market === 'string' ? input.market : '';
+  try {
+    const m = await import('../market-specs/pathway-eligibility.js');
+    if (!designation) {
+      const designations = market ? m.designationsForMarket(market) : m.DESIGNATIONS;
+      return JSON.stringify({ ok: true, designations });
+    }
+    const profile = m.getDesignation(designation);
+    if (!profile) return JSON.stringify({ error: `No designation "${designation}".` });
+    if (input.answers && typeof input.answers === 'object') {
+      const assessment = m.assessEligibility(designation, input.answers as Record<string, boolean>);
+      return JSON.stringify({ ok: true, designation: profile, assessment });
+    }
+    return JSON.stringify({ ok: true, designation: profile });
+  } catch (err) {
+    return JSON.stringify({ error: `assess_pathway_eligibility failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('assess_dispatch_readiness', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) {
     return JSON.stringify({ error: 'assess_dispatch_readiness requires tenant context (organizationId and userId).' });

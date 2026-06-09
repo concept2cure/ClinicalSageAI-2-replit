@@ -317,6 +317,85 @@ router.get('/document-templates/:templateId', limiter, requireRole(AUTHOR), asyn
   }
 });
 
+// ── Submission requirements matrix (Planner) ─────────────────────────────────
+// Per submission TYPE, the required CTD modules / document templates / forms, and
+// a deterministic gap assessment. Static reference data + pure assessment.
+router.get('/requirements', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const market = String(Array.isArray(req.query.market) ? req.query.market[0] : req.query.market ?? '').toLowerCase();
+  try {
+    const { SUBMISSION_REQUIREMENTS } = await import('../services/market-specs/submission-requirements.js');
+    const requirements = market ? SUBMISSION_REQUIREMENTS.filter((r) => r.market === market) : SUBMISSION_REQUIREMENTS;
+    res.json({ market: market || 'all', requirements });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+router.get('/requirements/:type', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  try {
+    const { getRequirements } = await import('../services/market-specs/submission-requirements.js');
+    const r = getRequirements(String(req.params.type));
+    if (!r) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No requirements for "${req.params.type}".` } });
+    res.json(r);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+const requirementsAssessSchema = z.object({
+  templateIds: z.array(z.string().max(128)).max(2000).optional(),
+  documentNames: z.array(z.string().max(512)).max(2000).optional(),
+  forms: z.array(z.string().max(256)).max(2000).optional(),
+});
+router.post('/requirements/:type/assess', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = requirementsAssessSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { assessRequirements } = await import('../services/market-specs/submission-requirements.js');
+    const a = assessRequirements(String(req.params.type), parsed.data);
+    if (!a) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No requirements for "${req.params.type}".` } });
+    res.json(a);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Expedited-pathway eligibility (Planner) ──────────────────────────────────
+// The criteria for the major accelerated/special designations + a deterministic
+// eligibility assessment from yes/no answers.
+router.get('/designations', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const market = String(Array.isArray(req.query.market) ? req.query.market[0] : req.query.market ?? '').toLowerCase();
+  try {
+    const { DESIGNATIONS, designationsForMarket } = await import('../services/market-specs/pathway-eligibility.js');
+    res.json({ market: market || 'all', designations: market ? designationsForMarket(market) : DESIGNATIONS });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+const eligibilityAssessSchema = z.object({
+  answers: z.record(z.string(), z.boolean()).default({}),
+});
+router.post('/designations/:id/assess', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = eligibilityAssessSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { assessEligibility } = await import('../services/market-specs/pathway-eligibility.js');
+    const a = assessEligibility(String(req.params.id), parsed.data.answers);
+    if (!a) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No designation "${req.params.id}".` } });
+    res.json(a);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 router.get('/:id', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
