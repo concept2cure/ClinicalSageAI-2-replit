@@ -27,6 +27,7 @@ import { planIndAmendment } from '../services/ind-lifecycle/ind-amendment-servic
 import { evaluateIndReadiness } from '../services/ind-lifecycle/ind-readiness-service';
 import { assembleBriefingBook } from '../services/ind-lifecycle/ind-briefing-book-service';
 import { assembleCoverLetter } from '../services/ind-lifecycle/ind-cover-letter-service';
+import { evaluateRegulatoryClock } from '../services/ind-lifecycle/ind-regulatory-clock';
 import {
   renderIndSafetyReportPdf,
   renderIndAnnualReportPdf,
@@ -191,6 +192,22 @@ router.post('/readiness', limiter, requireRole(AUTHOR), (req, res) => {
         overdueSafetyReports: b.overdueSafetyReports,
       }),
     );
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Evaluate the IND regulatory clock — 30-day safe-to-proceed + clinical-hold
+ * state (21 CFR 312.40 / 312.42). Body: { receiptDate, events?, asOf? }.
+ */
+router.post('/clock', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = body(req);
+  if (!b.receiptDate) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'receiptDate (ISO) is required.' } });
+  }
+  try {
+    res.json(evaluateRegulatoryClock({ receiptDate: b.receiptDate, events: b.events, asOf: b.asOf }));
   } catch (err) {
     fail(res, err);
   }
