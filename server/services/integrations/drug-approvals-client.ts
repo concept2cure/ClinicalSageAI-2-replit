@@ -12,6 +12,8 @@
  * @module server/services/integrations/drug-approvals-client
  */
 
+import { fetchWithRetry } from './http.js';
+
 const DEFAULT_BASE_URL = 'https://api.fda.gov';
 const REQUEST_TIMEOUT_MS = 10_000;
 const MAX_LIMIT = 10;
@@ -112,10 +114,11 @@ export async function searchDrugApprovals(
   const qs = new URLSearchParams({ search, limit: String(limit) });
   if (process.env.OPENFDA_API_KEY) qs.set('api_key', process.env.OPENFDA_API_KEY);
 
-  const res = await fetch(`${baseUrl()}/drug/drugsfda.json?${qs.toString()}`, {
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    headers: { 'User-Agent': USER_AGENT },
-  });
+  const res = await fetchWithRetry(
+    `${baseUrl()}/drug/drugsfda.json?${qs.toString()}`,
+    { headers: { 'User-Agent': USER_AGENT } },
+    { timeoutMs: REQUEST_TIMEOUT_MS }
+  );
   if (!res.ok) {
     if (res.status === 404) {
       return { source: 'Drugs@FDA (openFDA)', searchExpression: search, total: 0, approvals: [] };

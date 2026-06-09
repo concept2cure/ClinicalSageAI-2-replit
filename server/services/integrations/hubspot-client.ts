@@ -13,6 +13,8 @@
  * @module server/services/integrations/hubspot-client
  */
 
+import { fetchWithRetry } from './http.js';
+
 const DEFAULT_BASE_URL = 'https://api.hubapi.com';
 const REQUEST_TIMEOUT_MS = 10_000;
 const MAX_LIMIT = 25;
@@ -115,19 +117,22 @@ export async function searchHubSpotCrm(params: HubSpotSearchParams): Promise<Hub
     };
   }
 
-  const res = await fetch(`${baseUrl()}/crm/v3/objects/${object}/search`, {
-    method: 'POST',
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    headers: {
-      Authorization: `Bearer ${process.env.HUBSPOT_ACCESS_TOKEN}`,
-      'Content-Type': 'application/json',
+  const res = await fetchWithRetry(
+    `${baseUrl()}/crm/v3/objects/${object}/search`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.HUBSPOT_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: params.query,
+        limit,
+        properties: OBJECT_CONFIG[object].properties,
+      }),
     },
-    body: JSON.stringify({
-      query: params.query,
-      limit,
-      properties: OBJECT_CONFIG[object].properties,
-    }),
-  });
+    { timeoutMs: REQUEST_TIMEOUT_MS }
+  );
   if (!res.ok) {
     throw new Error(`HubSpot CRM API returned HTTP ${res.status}`);
   }
