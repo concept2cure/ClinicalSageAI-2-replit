@@ -64,6 +64,36 @@ export const SEARCH_CLINICAL_EVIDENCE: AnaTool = {
   },
 };
 
+export const SEARCH_MEDICARE_COVERAGE: AnaTool = {
+  name: 'search_medicare_coverage',
+  description:
+    'Search the CMS Medicare Coverage Database for National Coverage Determinations (NCDs) ' +
+    'and final Local Coverage Determinations (LCDs). Use for market-access / reimbursement ' +
+    'readiness — whether and how Medicare covers a procedure, device, lab test, or service — ' +
+    'alongside regulatory analysis. Returns coverage documents with their MCD numbers, ' +
+    'last-updated dates, and canonical CMS URLs for citation.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      keyword: {
+        type: 'string',
+        description:
+          'Term to match in the coverage document title (e.g. "cardiac", "next generation sequencing").',
+      },
+      coverage_type: {
+        type: 'string',
+        enum: ['ncd', 'lcd'],
+        description: "Coverage level: 'ncd' (national, all states) or 'lcd' (local, by MAC). Default: ncd.",
+      },
+      max_results: {
+        type: 'number',
+        description: 'Maximum number of documents to return (default: 10, max: 25).',
+      },
+    },
+    required: ['keyword'],
+  },
+};
+
 export const SEARCH_LITERATURE: AnaTool = {
   name: 'search_literature',
   description:
@@ -3446,6 +3476,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   EXECUTE_PLATFORM_COMMAND,
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
+  SEARCH_MEDICARE_COVERAGE,
   PROJECT_KNOWLEDGE_SEARCH,
   SIMULATE_STUDY_DESIGN,
   SEARCH_DEVICE_ADVERSE_EVENTS,

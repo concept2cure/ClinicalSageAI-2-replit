@@ -18,6 +18,7 @@ import { getGateway } from '../ai-gateway/gateway';
 import fdaMaudeClient from '../../fda_maude_client.js';
 import { searchTrials } from '../integrations/clinicaltrials-client.js';
 import { searchPubmed } from '../integrations/pubmed-client.js';
+import { searchMedicareCoverage } from '../integrations/cms-coverage-client.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 import type {
   GatewayRequest,
@@ -300,6 +301,40 @@ registerToolHandler('search_literature', async (input) => {
       query,
       note: 'PubMed API unavailable — use manual search',
       url: `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(query)}`,
+    });
+  }
+});
+
+// Search Medicare Coverage — live CMS Coverage Database (NCDs / final LCDs).
+registerToolHandler('search_medicare_coverage', async (input) => {
+  const keyword = typeof input.keyword === 'string' ? input.keyword : '';
+  const coverageType = input.coverage_type === 'lcd' ? 'lcd' : 'ncd';
+  const maxResults = Math.min((input.max_results as number) || 10, 25);
+
+  try {
+    const result = await searchMedicareCoverage({
+      keyword: keyword || undefined,
+      type: coverageType,
+      limit: maxResults,
+    });
+    return JSON.stringify({
+      source: result.source,
+      coverageType: result.type,
+      keyword,
+      matched: result.matched,
+      resultCount: result.documents.length,
+      documents: result.documents,
+      citation_hint:
+        'Cite each coverage document by its MCD number and link to the provided url. ' +
+        'NCDs apply nationally; LCDs apply only within the issuing MAC jurisdiction.',
+    });
+  } catch {
+    return JSON.stringify({
+      source: 'CMS Medicare Coverage Database',
+      coverageType,
+      keyword,
+      note: 'CMS Coverage API unavailable — search manually.',
+      url: 'https://www.cms.gov/medicare-coverage-database/search.aspx',
     });
   }
 });
