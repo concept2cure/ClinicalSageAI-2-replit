@@ -16,6 +16,8 @@ vi.hoisted(() => {
 
 import express from 'express';
 import request from 'supertest';
+import { createHash } from 'crypto';
+import { __resetScimDbTenantCache } from '../../routes/scim';
 
 const { queryMock, clientQueryMock } = vi.hoisted(() => ({
   queryMock: vi.fn(),
@@ -223,6 +225,46 @@ describe('SCIM provisioning — discovery', () => {
 
   it('discovery still requires the bearer token (401)', async () => {
     const res = await request(app).get('/scim/v2/ResourceTypes');
+    expect(res.status).toBe(401);
+  });
+});
+
+describe('SCIM provisioning — DB-backed tenant tokens', () => {
+  beforeEach(() => __resetScimDbTenantCache());
+  afterEach(() => __resetScimDbTenantCache());
+
+  it('resolves a DB token (matched by SHA-256 hash) to its org', async () => {
+    const dbToken = 'db-secret-token-abc';
+    const tokenHash = createHash('sha256').update(dbToken).digest('hex');
+    queryMock.mockImplementation(async (sql: string) => {
+      if (/FROM scim_tenants/i.test(sql)) {
+        return { rows: [{ organization_id: 99, token_hash: tokenHash }] };
+      }
+      return { rows: [] }; // count + list users
+    });
+
+    const res = await request(app).get('/scim/v2/Users').set('Authorization', `Bearer ${dbToken}`);
+    expect(res.status).toBe(200);
+    // the users queries for this request must be scoped to the DB tenant's org (99)
+    const scoped = queryMock.mock.calls.find(
+      c =>
+        /FROM users u JOIN organization_users/i.test(String(c[0])) &&
+        Array.isArray(c[1]) &&
+        c[1][0] === 99
+    );
+    expect(scoped).toBeTruthy();
+  });
+
+  it('rejects a token present in neither env nor DB (401)', async () => {
+    queryMock.mockImplementation(async (sql: string) => {
+      if (/FROM scim_tenants/i.test(sql)) {
+        return { rows: [{ organization_id: 99, token_hash: 'abc123' }] };
+      }
+      return { rows: [] };
+    });
+    const res = await request(app)
+      .get('/scim/v2/Users')
+      .set('Authorization', 'Bearer not-in-env-or-db');
     expect(res.status).toBe(401);
   });
 });

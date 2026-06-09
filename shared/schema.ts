@@ -2550,6 +2550,34 @@ export type OrganizationUser = InferSelectModel<typeof organizationUsers>;
 export type InsertOrganizationUser = z.infer<typeof insertOrganizationUserSchema>;
 
 /**
+ * SCIM tenant tokens (enterprise identity provisioning).
+ *
+ * DB-backed, per-org SCIM bearer tokens so multiple client orgs can be
+ * provisioned from one deployment without env JSON. Tokens are stored as
+ * SHA-256 hashes only (21 CFR Part 11 §11.10(d) — controlled system access).
+ */
+export const scimTenants = pgTable(
+  'scim_tenants',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    tokenHash: text('token_hash').notNull().unique(),
+    label: text('label'),
+    enabled: boolean('enabled').notNull().default(true),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    scimTenantsOrgIdx: index('scim_tenants_org_idx').on(table.organizationId),
+    scimTenantsEnabledIdx: index('scim_tenants_enabled_idx').on(table.enabled),
+  })
+);
+
+export type ScimTenant = InferSelectModel<typeof scimTenants>;
+
+/**
  * CER Projects Table
  *
  * Stores CER (Clinical Evaluation Report) projects.
