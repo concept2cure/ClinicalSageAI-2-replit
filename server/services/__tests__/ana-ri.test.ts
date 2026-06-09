@@ -533,6 +533,40 @@ describe('AnA RI Persona', () => {
     expect(prompt).toContain('From: submission_strategy');
     expect(prompt).toContain('To: document_authoring');
   });
+
+  it('leaves the prompt unchanged for English (default language)', () => {
+    const base = buildAnaRISystemPrompt();
+    const en = buildAnaRISystemPrompt({ language: 'en' });
+    expect(en).toBe(base);
+    expect(en).not.toContain('回答言語');
+    expect(en).not.toContain('LANGUE DE RÉPONSE');
+  });
+
+  it('injects a localized response-language overlay for non-English', () => {
+    const ja = buildAnaRISystemPrompt({ language: 'ja' });
+    expect(ja).toContain('回答言語 — 日本語');
+    expect(ja).toContain('敬語'); // instructs keigo / honorific register
+
+    const fr = buildAnaRISystemPrompt({ language: 'fr' });
+    expect(fr).toContain('LANGUE DE RÉPONSE — FRANÇAIS');
+
+    const de = buildAnaRISystemPrompt({ language: 'de' });
+    expect(de).toContain('ANTWORTSPRACHE — DEUTSCH');
+
+    const zh = buildAnaRISystemPrompt({ language: 'zh' });
+    expect(zh).toContain('回答语言 — 中文');
+  });
+
+  it('keeps regulatory identifiers canonical while localizing prose', () => {
+    // The overlay must instruct AnA to translate meaning but not the
+    // normalised identifiers a reviewer or the system reads.
+    const ja = buildAnaRISystemPrompt({ language: 'ja' });
+    expect(ja).toContain('[KNOWN]');
+    expect(ja).toContain('[INFERRED]');
+    expect(ja).toContain('21 CFR');
+    expect(ja).toContain('eCTD');
+    expect(ja).toContain('ana-action');
+  });
 });
 
 // ── Edge Case Tests ──────────────────────────────────────────────────────────
