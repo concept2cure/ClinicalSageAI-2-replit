@@ -8,14 +8,14 @@
  * checked against the textbook disproportionality formulas, plus the
  * conventional PRR>=2 AND chi2>=4 AND a>=3 signal rule.
  *
- * NOTE ON TEST DISCOVERY: the repo's vitest.config.ts `include` globs cover
- * `tests/**` and `server/**​/__tests__/**`, not the repo-root `__tests__/`
- * directory. This file lives at the path requested in the task; run it
- * explicitly with:
+ * NOTE ON TEST DISCOVERY: the repo's vitest.config.ts include globs cover the
+ * `tests` tree and `__tests__` directories under `server`, not the repo-root
+ * `__tests__` directory. This file lives at the path requested in the task; run
+ * it explicitly with:
  *   npx vitest run --config vitest.config.ts __tests__/pv-signal-detection.test.ts
  * (Passing a file path overrides the include globs.) To wire it into the
- * default run, add `'__tests__/**​/*.test.ts'` to the include array in
- * vitest.config.ts.
+ * default run, add the recursive `__tests__` test-file glob to the include
+ * array in vitest.config.ts.
  */
 
 import { describe, it, expect } from 'vitest';
