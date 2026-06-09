@@ -165,3 +165,16 @@ export {
   type PathwayKind,
   type PathwaysSummary,
 } from './regulatory-pathways-corpus.js';
+export {
+  PHARMACOPOEIAS,
+  PHARMACOPOEIAL_CHAPTERS,
+  getPharmacopoeia,
+  getChapter,
+  harmonizedChapters,
+  searchChapters,
+  buildPharmacopoeiaBlock,
+  pharmacopoeiaSummary,
+  type Pharmacopoeia,
+  type PharmacopoeialChapter,
+  type PharmacopoeiaSummary,
+} from './pharmacopoeia-corpus.js';

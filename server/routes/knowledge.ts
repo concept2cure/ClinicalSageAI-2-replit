@@ -31,6 +31,13 @@ import {
   type PathwayAgency,
 } from '../services/ana-ri/regulatory-pathways-corpus.js';
 import { DEFICIENCY_TAXONOMY } from '../services/ana-ri/deficiency-taxonomy.js';
+import {
+  PHARMACOPOEIAS,
+  PHARMACOPOEIAL_CHAPTERS,
+  getChapter,
+  searchChapters,
+  pharmacopoeiaSummary,
+} from '../services/ana-ri/pharmacopoeia-corpus.js';
 import { REGULATORY_STANDARDS_SEED } from '../../shared/schema/regulatory-standards.seed.js';
 
 const router = Router();
@@ -54,7 +61,23 @@ router.get('/summary', (_req: Request, res: Response) => {
     pathways: pathwaysSummary(),
     standards: { total: REGULATORY_STANDARDS_SEED.length },
     deficiencies: { total: DEFICIENCY_TAXONOMY.length },
+    pharmacopoeia: pharmacopoeiaSummary(),
   });
+});
+
+const PHARM_NOTE =
+  'Compendial chapter numbers and harmonisation status are revised. Confirm against the current pharmacopoeia (and ICH Q4B annex) before citing.';
+
+// ── Pharmacopoeia (bodies + general chapters) ────────────────────────────────
+router.get('/pharmacopoeia', (req: Request, res: Response) => {
+  const code = qstr(req.query.code);
+  const query = qstr(req.query.query);
+  if (code) {
+    const chapter = getChapter(code);
+    return res.json({ match: chapter ? 'exact' : 'none', chapter: chapter ?? null, note: PHARM_NOTE });
+  }
+  const chapters = query ? searchChapters(query, 25) : PHARMACOPOEIAL_CHAPTERS;
+  res.json({ pharmacopoeias: PHARMACOPOEIAS, count: chapters.length, chapters, note: PHARM_NOTE });
 });
 
 // ── ICH guidelines ───────────────────────────────────────────────────────────
