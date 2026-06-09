@@ -291,10 +291,120 @@ const POSTURE: AgencyTactic[] = [
 
 // ─── Registry ────────────────────────────────────────────────────────────────
 
+// ─── Global agencies (beyond FDA / EMA) ──────────────────────────────────────
+// How to engage the other major regulators a global biotech/pharma program
+// touches. Each rests on that agency's real, published pathway; verify current
+// procedure names and timelines with the agency before relying on them.
+
+const GLOBAL_AGENCIES: AgencyTactic[] = [
+  {
+    id: 'g-pmda-japan',
+    segment: null,
+    kind: 'meeting_prep',
+    situation: 'Planning a Japan filing or a PMDA consultation.',
+    triggers: [/\bpmda\b/i, /\bjapan(?:ese)?\b/i, /\bmhlw\b/i],
+    tactic:
+      'Use the PMDA face-to-face consultation system early, and bring a concrete development plan that addresses ethnic-factor and bridging strategy (ICH E5) or a Japan-inclusive MRCT (ICH E17) up front.',
+    why: 'PMDA consultations are decision-oriented; an explicit bridging or MRCT position lets them concur on a plan rather than defer.',
+    watchOut: 'Treating Japan as a late add-on forces a separate bridging study and a delayed launch.',
+    basis: 'PMDA consultation framework; ICH E5 / E17.',
+  },
+  {
+    id: 'g-health-canada',
+    segment: null,
+    kind: 'meeting_prep',
+    situation: 'Planning a Canadian filing alongside an FDA or EU dossier.',
+    triggers: [/\bhealth canada\b/i, /\bhpfb\b/i, /\bcanad(?:a|ian)\b/i, /\bnotice of compliance\b/i],
+    tactic:
+      'Request a pre-submission meeting and reuse the CTD already built for FDA/EU, adding the CA Module 1, bilingual (English/French) labelling, and the Notice of Compliance pathway specifics.',
+    why: 'Most of the science transfers; the Canadian-specific work is Module 1, labelling and language, which is predictable when planned early.',
+    watchOut: 'Leaving bilingual labelling and CA Module 1 to the end is a common, avoidable delay.',
+    basis: 'Health Canada pre-submission meeting policy; CA Module 1 specification.',
+  },
+  {
+    id: 'g-mhra-uk',
+    segment: null,
+    kind: 'posture',
+    situation: 'Planning a UK filing after Brexit, or seeking faster UK access.',
+    triggers: [/\bmhra\b/i, /\buk\b[^.?!]{0,20}\b(?:approval|filing|market)/i, /\bilap\b/i, /\binternational recognition\b/i],
+    tactic:
+      'Consider the International Recognition Procedure (IRP), which leans on an approval from a trusted reference regulator, and the Innovative Licensing and Access Pathway (ILAP) for earlier engagement on innovative products.',
+    why: 'Since the UK left the EU centralised procedure, reliance-based routes are the efficient path when you already hold a reference approval.',
+    watchOut: 'Assuming an EU approval automatically carries into the UK; it does not.',
+    basis: 'MHRA International Recognition Procedure; ILAP.',
+  },
+  {
+    id: 'g-tga-australia',
+    segment: null,
+    kind: 'posture',
+    situation: 'Planning an Australian registration where an FDA/EMA approval exists.',
+    triggers: [/\btga\b/i, /\baustralia(?:n)?\b/i, /\bcomparable overseas regulator\b/i],
+    tactic:
+      'Use the TGA comparable-overseas-regulator (COR) report-based or work-sharing pathways to leverage an existing FDA/EMA assessment and shorten review.',
+    why: 'The TGA explicitly relies on assessments from comparable regulators, so a clean FDA/EMA review is a registration asset.',
+    watchOut: 'Australia-specific labelling and the ARTG entry still require local work even on a COR pathway.',
+    basis: 'TGA prescription medicines registration process; COR pathways.',
+  },
+  {
+    id: 'g-nmpa-china',
+    segment: null,
+    kind: 'posture',
+    situation: 'Planning a China filing or including China in a global trial.',
+    triggers: [/\bnmpa\b/i, /\bchin(?:a|ese)\b/i, /\bhgr\b/i, /\bhuman genetic resources\b/i],
+    tactic:
+      'Plan a China-inclusive MRCT (ICH E17) so overseas data are accepted, secure local representation, and start the Human Genetic Resources (HGR) approval early because it gates trial start.',
+    why: 'Since joining ICH, the NMPA accepts well-designed overseas/MRCT data, but HGR and local-representation timelines are often the true critical path.',
+    watchOut: 'Underestimating HGR approval time can strand an otherwise-ready China program.',
+    basis: 'NMPA acceptance of overseas clinical data; ICH E17; HGR regulations.',
+  },
+  {
+    id: 'g-swissmedic',
+    segment: null,
+    kind: 'posture',
+    situation: 'Planning a Swiss filing alongside the EU.',
+    triggers: [/\bswissmedic\b/i, /\bswitzerland\b/i, /\bswiss\b/i],
+    tactic:
+      'Run Swissmedic as its own review (Switzerland is outside the EU, so there is no automatic EU carry-over) and use its reliance procedures, aligning timing with the EU MAA.',
+    why: 'Swissmedic decisions are independent; reliance routes reduce duplication when an EU or other reference review is available.',
+    watchOut: 'Assuming an EU centralised approval covers Switzerland.',
+    basis: 'Swissmedic authorisation and reliance procedures.',
+  },
+  {
+    id: 'g-anvisa-brazil',
+    segment: null,
+    kind: 'posture',
+    situation: 'Planning a Brazilian filing.',
+    triggers: [/\banvisa\b/i, /\bbrazil(?:ian)?\b/i],
+    tactic:
+      'Use ANVISA reliance/equivalence (optimized analysis) where an equivalent foreign regulator has approved, and start Brazilian GMP certification early because the inspection lead time is frequently the critical path.',
+    why: 'Reliance shortens the dossier review, but GMP certification timing, not the dossier, usually determines the Brazilian launch date.',
+    watchOut: 'Sequencing GMP certification late turns it into the bottleneck.',
+    basis: 'ANVISA reliance/equivalence (RDC); Brazilian GMP certification.',
+  },
+  {
+    id: 'g-global-sequencing',
+    segment: null,
+    kind: 'posture',
+    situation: 'Deciding how to sequence multi-market filings for one product.',
+    triggers: [
+      /\b(?:global|multi.?(?:region|market|national))\b[^.?!]{0,30}\b(?:filing|submission|strategy|launch|sequenc)/i,
+      /\bmrct\b/i,
+      /\breliance\b/i,
+      /\bwhich (?:market|region|agency) (?:first|to file)/i,
+    ],
+    tactic:
+      'Anchor the program on one ICH-compliant MRCT (ICH E17) and a single CTD, then localise Module 1 per region; file the reference market first only when its decision and label will strengthen reliance-based reviews elsewhere.',
+    why: 'A single MRCT plus a shared CTD is the lowest-cost route to many markets, and a strong reference approval is leverage in reliance jurisdictions.',
+    watchOut: 'Running separate regional trials and dossiers multiplies cost and creates inconsistencies reviewers will question.',
+    basis: 'ICH E17; reliance frameworks (WHO, ICMRA).',
+  },
+];
+
 export const AGENCY_TACTICS: AgencyTactic[] = [
   ...MEETING_PREP,
   ...RESPONSE_STRATEGY,
   ...POSTURE,
+  ...GLOBAL_AGENCIES,
 ];
 
 // ─── Detection ───────────────────────────────────────────────────────────────
