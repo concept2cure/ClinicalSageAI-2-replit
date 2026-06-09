@@ -2165,6 +2165,25 @@ export const LIST_VALIDATION_RULES: AnaTool = {
   },
 };
 
+export const GET_MARKET_SUBMISSION_SPEC: AnaTool = {
+  name: 'get_market_submission_spec',
+  description:
+    "Look up the per-market submission specification — the governance + FORMATTING datasheet for a market and submission format. Returns, in one place: accepted file formats / PDF versions / file-naming + size + path limits / checksum, the regional backbone, e-signature basis + sequencing + lifecycle governance, language/translation rules, required forms, template references, and source citations. Covers drug/biologic eCTD (FDA/EU/JP/Health Canada), FDA eSTAR (device 510(k)/De Novo), EU MDR & IVDR technical documentation (EUDAMED), and EU CTIS. Static reference data — read-only, not tenant-specific. Pass `spec_id` (e.g. 'us-ectd', 'eu-mdr') for one spec, or `market` (us|eu|jp|ca) / `family` (ectd|estar|eu_mdr|eu_ivdr|ctis) to filter; omit all for the full registry.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      spec_id: { type: 'string', description: "A specific spec id, e.g. 'us-ectd', 'eu-mdr', 'eu-ctis'." },
+      market: { type: 'string', description: 'Market code to filter by (us, eu, jp, ca, …).' },
+      family: {
+        type: 'string',
+        enum: ['ectd', 'estar', 'eu_mdr', 'eu_ivdr', 'ctis'],
+        description: 'Submission family to filter by.',
+      },
+    },
+    required: [],
+  },
+};
+
 export const ASSESS_DISPATCH_READINESS: AnaTool = {
   name: 'assess_dispatch_readiness',
   description:
@@ -3638,6 +3657,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ASSESS_PATHWAY_READINESS,
   BUILD_PATHWAY_MANIFEST,
   LIST_VALIDATION_RULES,
+  GET_MARKET_SUBMISSION_SPEC,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,

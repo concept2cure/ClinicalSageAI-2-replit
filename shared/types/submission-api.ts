@@ -290,6 +290,55 @@ export interface ValidationRulesResponse {
   rules: ValidationRule[];
 }
 
+// ── Market submission specs (GET /api/submissions/market-specs[/:specId]) ─────
+// The per-market-per-format governance + formatting datasheet.
+export type SubmissionFamily = 'ectd' | 'estar' | 'eu_mdr' | 'eu_ivdr' | 'ctis';
+export interface MarketSubmissionSpec {
+  id: string;
+  market: string;
+  authority: string;
+  authorityId: string;
+  region?: 'fda' | 'eu' | 'jp';
+  family: SubmissionFamily;
+  submissionFormat: string;
+  gateway: string;
+  productScope: Array<'drug' | 'biologic' | 'generic' | 'device' | 'ivd' | 'clinical-trial'>;
+  language: { primary: string; productInfoLanguages?: string; translationRequired: boolean; note: string };
+  formatting: {
+    fileFormats: string[];
+    pdfVersions?: string[];
+    pdfA?: string;
+    encryptionAllowed: boolean;
+    fileNaming: string;
+    fileNamePattern?: string;
+    maxFileNameLength?: number;
+    maxPathLength?: number;
+    maxFileSizeMb?: number | null;
+    maxSubmissionSizeMb?: number | null;
+    checksumAlgorithm?: string;
+    folderConvention?: string;
+  };
+  backbone?: { indexXml: boolean; regionalXmlPath?: string; module1Folder?: string; studyTaggingFiles?: boolean; note?: string };
+  governance: {
+    eSignature: { required: boolean; basis: string };
+    sequenceNumbering?: string;
+    lifecycleOperations?: string[];
+    validationBeforeDispatch: boolean;
+    immutabilityAfterSubmission: boolean;
+    note?: string;
+  };
+  forms: Array<{ formId?: string; name: string; required: boolean }>;
+  templates: string[];
+  ruleCorpusRegion?: 'fda' | 'eu' | 'jp';
+  sources: string[];
+}
+export interface MarketSpecsResponse {
+  market: string;
+  family: string;
+  summary: { total: number; markets: string[]; byFamily: Record<SubmissionFamily, number> };
+  specs: MarketSubmissionSpec[];
+}
+
 // ── Universal pathway manifest (GET /sequences/:seqId/pathway-manifest?pathway=&memberStates=) ─
 // Assembled table-of-contents for ANY non-eCTD pathway (eSTAR / CTIS / MDR / IVDR
 // / PMDA). Deterministic; maps + reports gaps across a uniform entry shape.

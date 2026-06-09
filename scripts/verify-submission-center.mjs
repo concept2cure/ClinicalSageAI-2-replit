@@ -140,6 +140,16 @@ async function main() {
   const vrBad = await c.req('GET', '/api/submissions/validation-rules?region=zz');
   ok('validation-rules rejects an unknown region (400)', vrBad.status === 400, `got ${vrBad.status}`);
 
+  // Market submission specs (per-market governance + formatting) — static reference data.
+  const ms = await c.req('GET', '/api/submissions/market-specs?market=eu');
+  ok('market-specs returns the EU datasheets + summary', ms.status === 200 && Array.isArray(ms.json?.specs) && ms.json.specs.length >= 4 && ms.json.specs.every((s) => s.market === 'eu' && s.governance?.eSignature?.basis), `status ${ms.status}`);
+  const msOne = await c.req('GET', '/api/submissions/market-specs/us-ectd');
+  ok('market-specs/:id returns one spec', msOne.status === 200 && msOne.json?.id === 'us-ectd' && Array.isArray(msOne.json?.formatting?.pdfVersions), `status ${msOne.status}`);
+  const msBad = await c.req('GET', '/api/submissions/market-specs/nope-xx');
+  ok('market-specs/:id 404s on unknown spec', msBad.status === 404, `got ${msBad.status}`);
+  const msFamBad = await c.req('GET', '/api/submissions/market-specs?family=zzz');
+  ok('market-specs rejects an unknown family (400)', msFamBad.status === 400, `got ${msFamBad.status}`);
+
   // Portfolio + create (throwaway).
   const list0 = await c.req('GET', '/api/submissions');
   ok('GET /api/submissions (portfolio) ok', list0.status === 200 && Array.isArray(list0.json));

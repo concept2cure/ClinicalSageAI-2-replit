@@ -31,6 +31,7 @@ const SUBMISSION_TOOLS = [
   'assess_pathway_readiness',
   'build_pathway_manifest',
   'list_validation_rules',
+  'get_market_submission_spec',
   'assess_dispatch_readiness',
 ];
 
@@ -202,6 +203,26 @@ describe('submission AI tasks — tenant + input guards', () => {
     const handler = getToolHandler('list_validation_rules')!;
     const out = JSON.parse(await handler({ region: 'zz' }, {} as ToolContext));
     expect(out.error).toMatch(/region must be one of/);
+  });
+
+  it('get_market_submission_spec returns a single spec by id', async () => {
+    const handler = getToolHandler('get_market_submission_spec')!;
+    const out = JSON.parse(await handler({ spec_id: 'us-ectd' }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.spec.market).toBe('us');
+    expect(out.spec.governance.eSignature.basis).toMatch(/Part 11/);
+  });
+  it('get_market_submission_spec filters by market without tenant context', async () => {
+    const handler = getToolHandler('get_market_submission_spec')!;
+    const out = JSON.parse(await handler({ market: 'eu' }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.specs.length).toBeGreaterThanOrEqual(4);
+    expect(out.specs.every((s: { market: string }) => s.market === 'eu')).toBe(true);
+  });
+  it('get_market_submission_spec validates the family enum', async () => {
+    const handler = getToolHandler('get_market_submission_spec')!;
+    const out = JSON.parse(await handler({ family: 'bogus' }, {} as ToolContext));
+    expect(out.error).toMatch(/family must be one of/);
   });
 });
 

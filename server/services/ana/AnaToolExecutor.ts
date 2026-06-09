@@ -3867,6 +3867,32 @@ registerToolHandler('list_validation_rules', async (input) => {
   }
 });
 
+registerToolHandler('get_market_submission_spec', async (input) => {
+  // Static reference data — not tenant-specific, so no org/user context required.
+  const specId = typeof input.spec_id === 'string' ? input.spec_id : '';
+  const market = typeof input.market === 'string' ? input.market.toLowerCase() : '';
+  const family = typeof input.family === 'string' ? input.family : '';
+  const FAMILIES = ['ectd', 'estar', 'eu_mdr', 'eu_ivdr', 'ctis'];
+  if (family && !FAMILIES.includes(family)) {
+    return JSON.stringify({ error: `family must be one of: ${FAMILIES.join(', ')}.` });
+  }
+  try {
+    const m = await import('../market-specs/market-submission-specs.js');
+    if (specId) {
+      const spec = m.getMarketSpec(specId);
+      return spec
+        ? JSON.stringify({ ok: true, spec })
+        : JSON.stringify({ error: `No market spec "${specId}".` });
+    }
+    let specs = m.MARKET_SUBMISSION_SPECS;
+    if (market) specs = specs.filter((s) => s.market === market);
+    if (family) specs = specs.filter((s) => s.family === family);
+    return JSON.stringify({ ok: true, summary: m.marketSpecSummary(), specs });
+  } catch (err) {
+    return JSON.stringify({ error: `get_market_submission_spec failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('assess_dispatch_readiness', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) {
     return JSON.stringify({ error: 'assess_dispatch_readiness requires tenant context (organizationId and userId).' });

@@ -217,6 +217,44 @@ router.get('/validation-rules', limiter, requireRole(AUTHOR), async (req, res) =
   }
 });
 
+// ── Market submission specifications (per-market governance + formatting) ─────
+// The consolidated, per-market-per-format datasheet: formatting requirements, the
+// governance (e-signature basis, sequencing, lifecycle), language/translation,
+// gateway, forms, templates, and rule-corpus linkage. Static reference data.
+// `?market=` (us|eu|jp|ca|…) and `?family=` (ectd|estar|eu_mdr|eu_ivdr|ctis) filter.
+// Registered before '/:id' so the literal path is not shadowed.
+router.get('/market-specs', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const market = String(Array.isArray(req.query.market) ? req.query.market[0] : req.query.market ?? '').toLowerCase();
+  const family = String(Array.isArray(req.query.family) ? req.query.family[0] : req.query.family ?? '');
+  const FAMILIES = ['ectd', 'estar', 'eu_mdr', 'eu_ivdr', 'ctis'];
+  if (family && !FAMILIES.includes(family)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: `family must be one of: ${FAMILIES.join(', ')}.` } });
+  }
+  try {
+    const m = await import('../services/market-specs/market-submission-specs.js');
+    let specs = m.MARKET_SUBMISSION_SPECS;
+    if (market) specs = specs.filter((s) => s.market === market);
+    if (family) specs = specs.filter((s) => s.family === family);
+    res.json({ market: market || 'all', family: family || 'all', summary: m.marketSpecSummary(), specs });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+router.get('/market-specs/:specId', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  try {
+    const { getMarketSpec } = await import('../services/market-specs/market-submission-specs.js');
+    const spec = getMarketSpec(String(req.params.specId));
+    if (!spec) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No market spec "${req.params.specId}".` } });
+    res.json(spec);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 router.get('/:id', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });

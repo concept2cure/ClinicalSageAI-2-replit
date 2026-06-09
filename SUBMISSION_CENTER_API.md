@@ -64,7 +64,8 @@ AnA can drive all of the above through her governed tools (tenant from
 `check_ectd_cross_references`, `validate_ectd_package`, `run_shadow_review`,
 `explain_validation_findings`, `cross_region_gap_analysis`, `dispatch_qc_check`,
 `trace_provenance`, `check_consistency`, `assess_pathway_readiness`,
-`build_pathway_manifest`, `list_validation_rules`, `assess_dispatch_readiness`. The UI's AnA panel passes page context
+`build_pathway_manifest`, `list_validation_rules`, `get_market_submission_spec`,
+`assess_dispatch_readiness`. The UI's AnA panel passes page context
 (`{ submissionId, sectionCode, region }`); the tools supply nothing tenant-related.
 
 ## Still server-side TODO before some screens are fully live
@@ -85,6 +86,10 @@ second person; numbers over adjectives. Loading/empty/error states mandatory.
 ## Region profiles (static metadata — Planner / Builder / Validation / Cross-Region)
 | GET | `/api/region-profiles` | → `RegionProfileResponse[]` | all regions: Module 1 structure, forms, pathways, rule-pack size |
 | GET | `/api/region-profiles/:region` | → `RegionProfileResponse` | one region (fda \| eu \| jp); 404 on unknown |
+
+## Market submission specifications (per-market governance + formatting — every workspace)
+| GET | `/api/submissions/market-specs?market=&family=` | → `MarketSpecsResponse` | The consolidated per-market-per-format **datasheet**: file formats / PDF versions / naming + size + path limits / checksum, regional backbone, e-signature basis + sequencing + lifecycle governance, language/translation, gateway, forms, template refs, rule-corpus linkage, and source citations. Covers drug/biologic eCTD (FDA/EU/JP/Health Canada), FDA eSTAR (510(k)/De Novo), EU MDR & IVDR (EUDAMED), and EU CTIS. `market=us\|eu\|jp\|ca`, `family=ectd\|estar\|eu_mdr\|eu_ivdr\|ctis`. Static reference data. |
+| GET | `/api/submissions/market-specs/:specId` | → `MarketSubmissionSpec` | One spec (e.g. `us-ectd`, `eu-mdr`, `eu-ctis`); 404 on unknown. |
 
 ## Shared UI constants
 `shared/types/submission-constants.ts` — canonical `Choice[]` arrays for every
