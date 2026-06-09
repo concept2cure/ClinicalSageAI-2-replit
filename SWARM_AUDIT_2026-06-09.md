@@ -108,6 +108,11 @@ were audited and already correct.)
   Style-only; matching sibling files left untouched.
 - **"`tmp/lumen-cortex-ft-control-plane.json` is a dead fixture."** False —
   referenced by `server/routes/ana-cortex-ft.ts:152`.
+- **"Demo login button renders unconditionally in production."** False — the
+  button is gated behind `isDev` (`Concept2CureLogin.tsx:463`), and the
+  `/api/auth/dev-login` endpoint is hard-gated server-side behind
+  `isDevAuthAllowed()` (`NODE_ENV=development` AND `ALLOW_DEV_AUTH=1`),
+  returning 404 otherwise.
 
 ---
 
@@ -145,7 +150,5 @@ were audited and already correct.)
    by `fda510k-unified.ts`. Delete at sunset after confirming unified absorption.
 10. **Prisma remnant** — `server/prisma/schema.prisma` (3 models) in a
     Drizzle codebase; remove or justify.
-11. **Demo login** (`Concept2CureLogin.tsx`) posts a hardcoded demo email and the
-    button renders unconditionally; gate behind a flag for production builds.
-12. **`_sync/` directory** — stale 2026-06-02 audit artifacts, no code references.
+11. **`_sync/` directory** — stale 2026-06-02 audit artifacts, no code references.
     Left in place (documentation, not code); delete at will.
