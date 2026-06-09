@@ -255,6 +255,35 @@ router.get('/market-specs/:specId', limiter, requireRole(AUTHOR), async (req, re
   }
 });
 
+// ── Market formatting validation (enforce the datasheet against files) ────────
+// Deterministically checks supplied file descriptors against a market spec's
+// formatting rules (naming pattern, name/path length, accepted formats, size,
+// encryption). Read-only computation; does NOT transmit.
+const formattingValidateSchema = z.object({
+  leaves: z.array(z.object({
+    fileName: z.string().min(1).max(512),
+    filePath: z.string().max(2048).optional(),
+    fileSizeBytes: z.number().int().nonnegative().optional(),
+    fileFormat: z.string().max(64).optional(),
+    encrypted: z.boolean().optional(),
+  })).max(10000),
+});
+router.post('/market-specs/:specId/validate', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = formattingValidateSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { getMarketSpec } = await import('../services/market-specs/market-submission-specs.js');
+    const spec = getMarketSpec(String(req.params.specId));
+    if (!spec) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No market spec "${req.params.specId}".` } });
+    const { validateLeavesAgainstMarketSpec } = await import('../services/market-specs/market-formatting-validator.js');
+    res.json(validateLeavesAgainstMarketSpec(spec, parsed.data.leaves));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 // ── Document template structures (canonical section skeletons) ───────────────
 // The heading skeleton of the key submission documents (CTD M2 summaries, 510(k)
 // summary, SmPC, GSPR, PER, IMPD) with each section's purpose + regulatory basis.

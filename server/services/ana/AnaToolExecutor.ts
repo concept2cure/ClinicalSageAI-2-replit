@@ -23,6 +23,7 @@ import { searchConnectedRepositories } from '../integrations/connector-search.js
 import { searchRegulatoryCorrespondence } from '../integrations/correspondence-search.js';
 import { createCalendarEvent } from '../integrations/calendar-event.js';
 import { searchHubSpotCrm, type HubSpotObject } from '../integrations/hubspot-client.js';
+import { searchDeviceRecalls } from '../integrations/device-recalls.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 import type {
   GatewayRequest,
@@ -347,6 +348,35 @@ registerToolHandler('search_connected_repositories', async (input, ctx) => {
       source: 'Connected Repositories',
       error: e instanceof Error ? e.message : 'Connected-repository search failed',
       documents: [],
+    });
+  }
+});
+
+// Search Device Recalls — FDA openFDA device/recall via the post-market module.
+registerToolHandler('search_device_recalls', async (input) => {
+  const asStr = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v.trim() : undefined;
+  try {
+    const result = await searchDeviceRecalls({
+      deviceName: asStr(input.device_name),
+      manufacturer: asStr(input.manufacturer),
+      query: asStr(input.query),
+      limit: Math.min((input.max_results as number) || 25, 100),
+    });
+    if (!result.searchExpression) {
+      return JSON.stringify({ error: 'Provide device_name, manufacturer, or query to search recalls.' });
+    }
+    return JSON.stringify({
+      source: result.source,
+      summary: result.summary,
+      recalls: result.recalls.slice(0, 15),
+      citation_hint: 'Reference recalls by recall number and classification; Class I is most serious.',
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'FDA Device Recalls (openFDA)',
+      error: e instanceof Error ? e.message : 'Recall search failed',
+      recalls: [],
     });
   }
 });
@@ -3978,6 +4008,29 @@ registerToolHandler('search_ivd_knowledge', async (input) => {
     });
   } catch (err) {
     return JSON.stringify({ error: `search_ivd_knowledge failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('validate_market_formatting', async (input) => {
+  // Static reference data + pure computation — no tenant context required.
+  const specId = typeof input.spec_id === 'string' ? input.spec_id : '';
+  if (!specId) return JSON.stringify({ error: 'spec_id is required.' });
+  const rawLeaves = Array.isArray(input.leaves) ? input.leaves : [];
+  try {
+    const { getMarketSpec } = await import('../market-specs/market-submission-specs.js');
+    const spec = getMarketSpec(specId);
+    if (!spec) return JSON.stringify({ error: `No market spec "${specId}".` });
+    const { validateLeavesAgainstMarketSpec } = await import('../market-specs/market-formatting-validator.js');
+    const leaves = rawLeaves.map((l: Record<string, unknown>) => ({
+      fileName: String(l.file_name ?? ''),
+      filePath: typeof l.file_path === 'string' ? l.file_path : undefined,
+      fileSizeBytes: typeof l.file_size_bytes === 'number' ? l.file_size_bytes : undefined,
+      fileFormat: typeof l.file_format === 'string' ? l.file_format : undefined,
+      encrypted: typeof l.encrypted === 'boolean' ? l.encrypted : undefined,
+    }));
+    return JSON.stringify({ ok: true, ...validateLeavesAgainstMarketSpec(spec, leaves) });
+  } catch (err) {
+    return JSON.stringify({ error: `validate_market_formatting failed: ${err instanceof Error ? err.message : String(err)}` });
   }
 });
 
