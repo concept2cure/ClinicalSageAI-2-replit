@@ -4314,6 +4314,56 @@ registerToolHandler('classify_post_submission_change', async (input) => {
   }
 });
 
+registerToolHandler('assess_device_evidence_structure', async (input) => {
+  // Static structure + pure assessment — no tenant context required.
+  const document = input.document === 'cer' || input.document === 'per' ? input.document : '';
+  if (!document) return JSON.stringify({ error: "document must be one of: cer, per." });
+  const present = Array.isArray(input.present_section_ids) ? (input.present_section_ids as string[]) : null;
+  try {
+    if (document === 'cer') {
+      const m = await import('../market-specs/cer-structure.js');
+      if (!present) return JSON.stringify({ ok: true, stages: m.CER_STAGES, sections: m.CER_SECTIONS });
+      return JSON.stringify({ ok: true, assessment: m.assessCerStructure(present, { equivalenceClaimed: input.equivalence_claimed === true }) });
+    }
+    const m = await import('../market-specs/per-structure.js');
+    if (!present) return JSON.stringify({ ok: true, pillars: m.PER_PILLARS, sections: m.PER_SECTIONS });
+    return JSON.stringify({ ok: true, assessment: m.assessPerStructure(present) });
+  } catch (err) {
+    return JSON.stringify({ error: `assess_device_evidence_structure failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('classify_device', async (input) => {
+  // Pure rules — no tenant context required.
+  const framework = input.framework;
+  if (framework !== 'mdr' && framework !== 'ivdr' && framework !== 'fda') {
+    return JSON.stringify({ error: 'framework must be one of: mdr, ivdr, fda.' });
+  }
+  const facts = (input.facts && typeof input.facts === 'object' ? input.facts : {}) as Record<string, never>;
+  try {
+    const m = await import('../market-specs/device-classification.js');
+    const result = framework === 'mdr' ? m.classifyMdr(facts) : framework === 'ivdr' ? m.classifyIvdr(facts) : m.recommendFdaPathway(facts);
+    return JSON.stringify({ ok: true, framework, ...result });
+  } catch (err) {
+    return JSON.stringify({ error: `classify_device failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('get_device_reviewer_checklist', async (input) => {
+  // Static reference — no tenant context required.
+  const type = input.submission_type;
+  const TYPES = ['510k', 'de_novo', 'pma', 'cer', 'per'];
+  if (typeof type !== 'string' || !TYPES.includes(type)) {
+    return JSON.stringify({ error: `submission_type must be one of: ${TYPES.join(', ')}.` });
+  }
+  try {
+    const { buildShadowReviewerChecklist } = await import('../market-specs/device-shadow-reviewer.js');
+    return JSON.stringify({ ok: true, ...buildShadowReviewerChecklist(type as '510k' | 'de_novo' | 'pma' | 'cer' | 'per') });
+  } catch (err) {
+    return JSON.stringify({ error: `get_device_reviewer_checklist failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('assess_dispatch_readiness', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) {
     return JSON.stringify({ error: 'assess_dispatch_readiness requires tenant context (organizationId and userId).' });

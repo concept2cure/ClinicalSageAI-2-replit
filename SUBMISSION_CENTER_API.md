@@ -75,7 +75,8 @@ AnA can drive all of the above through her governed tools (tenant from
 `trace_provenance`, `check_consistency`, `assess_pathway_readiness`,
 `build_pathway_manifest`, `list_validation_rules`, `get_market_submission_spec`,
 `get_document_template`, `validate_market_formatting`, `get_submission_requirements`,
-`assess_pathway_eligibility`, `classify_post_submission_change`,
+`assess_pathway_eligibility`, `classify_post_submission_change`, `assess_device_evidence_structure`,
+`classify_device`, `get_device_reviewer_checklist`,
 `assess_dispatch_readiness`. The UI's AnA panel passes page context
 (`{ submissionId, sectionCode, region }`); the tools supply nothing tenant-related.
 
@@ -118,6 +119,14 @@ mirroring the server's lifecycle rules. Render dropdowns/badges/pills from these
 
 Workspace map + error catalog for nav/error handling: `shared/types/submission-ui.ts`
 (`SUBMISSION_WORKSPACES`, `SUBMISSION_ERROR_CODES`, `submissionErrorMessage()`).
+
+## Device evidence + classification + shadow reviewer (mdx/ivd)
+| GET | `/api/submissions/device/cer/structure` | → `{ stages, sections }` | The CER (MEDDEV 2.7/1 Rev 4 / MDR Annex XIV) — 5 stages + report sections, each with NB reviewer questions. |
+| POST | `/api/submissions/device/cer/assess` | `{ presentSectionIds, equivalenceClaimed? }` → `CerAssessment` | CER completeness gap-check (equivalence required only when claimed; flags sections needing clinical data). |
+| GET | `/api/submissions/device/per/structure` | → `{ pillars, analyticalMetrics, clinicalMetrics, sections }` | The PER (IVDR Annex XIII) — three pillars + metrics (LoD/LoQ/precision…, sensitivity/specificity/PPV/NPV) + sections with reviewer questions. |
+| POST | `/api/submissions/device/per/assess` | `{ presentSectionIds }` → `PerAssessment` | PER completeness + which of the three pillars are covered/missing. |
+| POST | `/api/submissions/device/classify` | `{ framework: mdr\|ivdr\|fda, facts }` → classification | Deterministic MDR/IVDR Annex VIII class (with the rule applied) or FDA pathway heuristic, each with a confirm caveat. |
+| GET | `/api/submissions/device/reviewer-checklist?type=510k\|de_novo\|pma\|cer\|per` | → reviewer checklist | The reverse-workflow oversight: the section-anchored questions an FDA/NB reviewer asks of your submission, with severity + 21 CFR/Annex basis. |
 
 ## Pathway readiness (non-eCTD projections — Cross-Region / Dispatch)
 | GET | `/api/submissions/sequences/:seqId/pathway-readiness?pathway=&memberStates=` | → `PathwayReadinessResponse` | projects the sequence's canonical leaves onto CTIS \| MDR \| IVDR \| eSTAR (510k/de_novo) and returns a required-slot gap/readiness report. Deterministic, map+gap only — never submits. `memberStates` (comma list) applies to CTIS Part II. |

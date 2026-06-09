@@ -180,6 +180,20 @@ async function main() {
   const ccBad = await c.req('POST', '/api/submissions/change-categories/classify', { market: 'zz', flags: {} });
   ok('change classify rejects an unknown market (400)', ccBad.status === 400, `got ${ccBad.status}`);
 
+  // Device evidence structures + classification + shadow reviewer (mdx/ivd).
+  const cerS = await c.req('GET', '/api/submissions/device/cer/structure');
+  ok('CER structure returns MEDDEV stages + sections', cerS.status === 200 && Array.isArray(cerS.json?.stages) && cerS.json.stages.length === 5 && Array.isArray(cerS.json?.sections), `status ${cerS.status}`);
+  const cerA = await c.req('POST', '/api/submissions/device/cer/assess', { presentSectionIds: ['summary', 'scope'] });
+  ok('CER assess reports missing required sections', cerA.status === 200 && cerA.json?.ready === false && cerA.json.missingRequiredSections?.includes('analysis'), `status ${cerA.status}`);
+  const perA = await c.req('POST', '/api/submissions/device/per/assess', { presentSectionIds: ['pep', 'scientific_validity'] });
+  ok('PER assess reports a missing pillar', perA.status === 200 && perA.json?.ready === false && perA.json.pillarsMissing?.includes('clinical'), `status ${perA.status}`);
+  const clsMdr = await c.req('POST', '/api/submissions/device/classify', { framework: 'mdr', facts: { implantable: true, contactsCnsOrCentralCirculation: true } });
+  ok('MDR classify returns Class III for implantable+CNS contact', clsMdr.status === 200 && clsMdr.json?.class === 'III', `status ${clsMdr.status}`);
+  const rev = await c.req('GET', '/api/submissions/device/reviewer-checklist?type=510k');
+  ok('reviewer checklist returns 510(k) reviewer questions', rev.status === 200 && Array.isArray(rev.json?.questions) && rev.json.questions.length > 0 && typeof rev.json?.counts?.total === 'number', `status ${rev.status}`);
+  const revBad = await c.req('GET', '/api/submissions/device/reviewer-checklist?type=zzz');
+  ok('reviewer checklist rejects an unknown type (400)', revBad.status === 400, `got ${revBad.status}`);
+
   // Document template structures (canonical section skeletons) — static reference data.
   const dt = await c.req('GET', '/api/submissions/document-templates?family=ectd');
   ok('document-templates returns CTD spines with sections', dt.status === 200 && Array.isArray(dt.json?.templates) && dt.json.templates.length > 0 && dt.json.templates.every((t) => Array.isArray(t.sections) && t.sections.length > 0), `status ${dt.status}`);

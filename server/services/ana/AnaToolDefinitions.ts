@@ -2505,6 +2505,48 @@ export const CLASSIFY_POST_SUBMISSION_CHANGE: AnaTool = {
   },
 };
 
+export const ASSESS_DEVICE_EVIDENCE_STRUCTURE: AnaTool = {
+  name: 'assess_device_evidence_structure',
+  description:
+    "Assess a device/IVD evidence document against its regulated structure. For `document: 'cer'` it checks the CER against MEDDEV 2.7/1 Rev 4 / MDR Annex XIV (set `equivalence_claimed` if equivalence is used); for `document: 'per'` it checks the IVDR Annex XIII Performance Evaluation Report and reports which of the three pillars (scientific validity, analytical, clinical) are covered. Pass `present_section_ids` (the sections you have). Without `present_section_ids` it returns the full structure (stages/pillars/sections + reviewer questions). Deterministic, read-only. Use it to gap-check a CER/PER before Notified-Body review.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      document: { type: 'string', enum: ['cer', 'per'], description: "'cer' (MDR clinical evaluation) or 'per' (IVDR performance evaluation)." },
+      present_section_ids: { type: 'array', items: { type: 'string' }, description: 'Section ids present in the document (for assessment).' },
+      equivalence_claimed: { type: 'boolean', description: 'CER only — set true if equivalence to another device is claimed.' },
+    },
+    required: ['document'],
+  },
+};
+
+export const CLASSIFY_DEVICE: AnaTool = {
+  name: 'classify_device',
+  description:
+    "Determine a device/IVD risk classification or FDA pathway from structured facts. `framework: 'mdr'` applies the EU MDR Annex VIII principal rules (facts like invasive, surgicallyInvasive, implantable, active, softwareDecisionSupport, contactsCnsOrCentralCirculation, incorporatesMedicinalSubstance, duration) → Class I/IIa/IIb/III with the rule that drove it. `framework: 'ivdr'` applies IVDR Annex VIII (facts like bloodDonationScreening, companionDiagnostic, infectiousOrCancerOrGenetic, selfTesting) → Class A/B/C/D. `framework: 'fda'` recommends a pathway (facts: fdaClass, predicateAvailable, exempt, novelLowModerateRisk) → exempt/510k/de_novo/pma. Each result carries a caveat to confirm against the full Annex / FDA classification database. Deterministic.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      framework: { type: 'string', enum: ['mdr', 'ivdr', 'fda'], description: 'The classification framework.' },
+      facts: { type: 'object', description: 'Structured device facts (see description for the keys per framework).' },
+    },
+    required: ['framework', 'facts'],
+  },
+};
+
+export const GET_DEVICE_REVIEWER_CHECKLIST: AnaTool = {
+  name: 'get_device_reviewer_checklist',
+  description:
+    "Get the shadow-reviewer checklist for a device submission — the section-anchored questions an FDA or Notified-Body reviewer asks of a 510k, de_novo, pma, cer, or per, each with severity and the regulatory basis. This is the reverse-workflow oversight: what a reviewer will ask of YOUR submission, always-on and independent of risk flags. Use it to pre-empt deficiencies and to ask the client the right questions. Deterministic, read-only.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      submission_type: { type: 'string', enum: ['510k', 'de_novo', 'pma', 'cer', 'per'], description: 'The device submission type.' },
+    },
+    required: ['submission_type'],
+  },
+};
+
 export const ASSESS_DISPATCH_READINESS: AnaTool = {
   name: 'assess_dispatch_readiness',
   description:
@@ -3993,6 +4035,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   GET_SUBMISSION_REQUIREMENTS,
   ASSESS_PATHWAY_ELIGIBILITY,
   CLASSIFY_POST_SUBMISSION_CHANGE,
+  ASSESS_DEVICE_EVIDENCE_STRUCTURE,
+  CLASSIFY_DEVICE,
+  GET_DEVICE_REVIEWER_CHECKLIST,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,
