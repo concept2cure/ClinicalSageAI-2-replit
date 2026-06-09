@@ -35,12 +35,33 @@ import {
   FORM_3455,
   type IndProjectMetadata,
 } from '../services/ind-forms/ind-form-data-builders';
+import { assembleFormMetadata } from '../services/ind-forms/form-context-assembler';
+import {
+  getSponsor,
+  getRegulatoryAgent,
+  getInvestigator,
+} from '../services/ind-master-data/ind-master-data-service';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('ind-forms-routes');
 const router = Router();
 const limiter = createRateLimiter();
 const AUTHOR = 'regulatory-author';
+
+interface Ctx {
+  userId: number;
+  organizationId: number;
+}
+function ctxOf(req: Request): Ctx | null {
+  const r = req as any;
+  const userId = Number(r.user?.id);
+  const orgRaw = r.tenantContext?.organizationId ?? r.tenantId ?? r.user?.organizationId;
+  const organizationId = Number(orgRaw);
+  if (!Number.isInteger(userId) || userId <= 0 || !Number.isInteger(organizationId) || organizationId <= 0) {
+    return null;
+  }
+  return { userId, organizationId };
+}
 
 function isSupported(formId: string): formId is SupportedFormId {
   return (SUPPORTED_FORM_IDS as readonly string[]).includes(formId);
@@ -115,6 +136,38 @@ router.post('/:formId/pdf', limiter, requireRole(AUTHOR), async (req, res) => {
   try {
     sendPdf(res, await generateIndForm(formId, metaOf(req)));
   } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Render a form to PDF auto-populated from the master-data registries.
+ * Body: { sponsorId?, agentId?, investigatorIds?: string[], overrides?: IndProjectMetadata }.
+ * Records are loaded tenant-scoped; `overrides` layer project fields on top.
+ */
+router.post('/:formId/pdf-from-records', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const formId = String(req.params.formId);
+  if (!isSupported(formId)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: `Unsupported form id: ${formId}` } });
+  }
+  const b = req.body && typeof req.body === 'object' ? req.body : {};
+  try {
+    const [sponsor, agent, investigators] = await Promise.all([
+      b.sponsorId ? getSponsor(String(b.sponsorId), ctx) : Promise.resolve(null),
+      b.agentId ? getRegulatoryAgent(String(b.agentId), ctx) : Promise.resolve(null),
+      Array.isArray(b.investigatorIds)
+        ? Promise.all(b.investigatorIds.map((id: unknown) => getInvestigator(String(id), ctx)))
+        : Promise.resolve([]),
+    ]);
+    const meta = assembleFormMetadata({ sponsor, agent, investigators, overrides: b.overrides });
+    sendPdf(res, await generateIndForm(formId, meta));
+  } catch (err) {
+    const code = (err as { code?: string } | null)?.code;
+    if (code === 'NOT_FOUND') {
+      return res.status(404).json({ error: { code, message: 'A referenced master-data record was not found.' } });
+    }
     fail(res, err);
   }
 });
