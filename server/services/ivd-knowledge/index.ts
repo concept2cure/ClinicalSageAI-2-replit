@@ -20,8 +20,11 @@ import { BIOMARKER_VALIDITY_KNOWLEDGE_2 } from './scientific/biomarker-validity-
 import { STANDARDIZATION_QC_KNOWLEDGE } from './scientific/standardization-qc';
 import { NGS_MOLECULAR_KNOWLEDGE } from './scientific/ngs-molecular';
 import { PREANALYTICAL_MICRO_KNOWLEDGE } from './scientific/preanalytical-micro';
+import { PLATFORM_METHODOLOGY_KNOWLEDGE } from './scientific/platform-methodology';
+import { CLINICAL_AREAS_KNOWLEDGE } from './scientific/clinical-areas';
 import { LEGAL_IVD_KNOWLEDGE } from './legal/legal-ivd';
 import { DTC_GENETIC_LEGAL_KNOWLEDGE } from './legal/dtc-genetic';
+import { HTA_MARKET_ACCESS_KNOWLEDGE } from './legal/hta-market-access';
 import { IVD_STANDARDS_KNOWLEDGE } from './standards/ivd-standards';
 
 export * from './types';
@@ -42,8 +45,11 @@ export const IVD_KNOWLEDGE_BASE: readonly KnowledgeEntry[] = Object.freeze([
   ...STANDARDIZATION_QC_KNOWLEDGE,
   ...NGS_MOLECULAR_KNOWLEDGE,
   ...PREANALYTICAL_MICRO_KNOWLEDGE,
+  ...PLATFORM_METHODOLOGY_KNOWLEDGE,
+  ...CLINICAL_AREAS_KNOWLEDGE,
   ...LEGAL_IVD_KNOWLEDGE,
   ...DTC_GENETIC_LEGAL_KNOWLEDGE,
+  ...HTA_MARKET_ACCESS_KNOWLEDGE,
   ...IVD_STANDARDS_KNOWLEDGE,
 ]);
 
@@ -63,7 +69,10 @@ export const IVD_KNOWLEDGE_CORPORA = {
   'standardization-qc': STANDARDIZATION_QC_KNOWLEDGE,
   'ngs-molecular': NGS_MOLECULAR_KNOWLEDGE,
   'preanalytical-micro': PREANALYTICAL_MICRO_KNOWLEDGE,
+  'platform-methodology': PLATFORM_METHODOLOGY_KNOWLEDGE,
+  'clinical-areas': CLINICAL_AREAS_KNOWLEDGE,
   legal: LEGAL_IVD_KNOWLEDGE,
   'dtc-genetic': DTC_GENETIC_LEGAL_KNOWLEDGE,
+  'hta-market-access': HTA_MARKET_ACCESS_KNOWLEDGE,
   standards: IVD_STANDARDS_KNOWLEDGE,
 } as const;

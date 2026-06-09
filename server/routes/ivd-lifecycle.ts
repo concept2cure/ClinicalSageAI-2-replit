@@ -57,6 +57,7 @@ import {
 import { classifyIvdrAnnexVIII } from '../services/regulatory/ivdr-classification';
 import { pairCompanionDiagnostic } from '../services/regulatory/cdx-pairing';
 import { designIvdStudyProgram } from '../services/regulatory/cdx-study-design';
+import { simulateIvdReview } from '../services/regulatory/reviewer-simulation-ivd';
 import { knowledgeFor, type LifecycleConcept } from '../services/ivd-knowledge/links';
 
 const router = Router();
@@ -123,6 +124,20 @@ router.post('/study-design', (req: Request, res: Response) => {
     return res.status(422).json({ error: `intendedUse must be one of: ${USE.join(', ')}` });
   }
   res.json(designIvdStudyProgram(b));
+});
+
+// ── Reviewer simulation (mock FDA / notified-body deficiencies) ─────────────
+router.post('/review-simulation', (req: Request, res: Response) => {
+  const b = req.body ?? {};
+  const PATHWAYS = ['510k', 'de_novo', 'pma', 'eu_ivdr'];
+  const ASSAY = ['quantitative', 'qualitative', 'ihc', 'ngs', 'molecular'];
+  if (!PATHWAYS.includes(b.pathway)) {
+    return res.status(422).json({ error: `pathway must be one of: ${PATHWAYS.join(', ')}` });
+  }
+  if (!ASSAY.includes(b.assayType)) {
+    return res.status(422).json({ error: `assayType must be one of: ${ASSAY.join(', ')}` });
+  }
+  res.json(simulateIvdReview(b));
 });
 
 // ── Analytical performance ──────────────────────────────────────────────────

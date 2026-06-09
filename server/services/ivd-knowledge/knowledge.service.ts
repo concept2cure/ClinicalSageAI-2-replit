@@ -38,6 +38,27 @@ export function corpusSize(): number {
   return IVD_KNOWLEDGE_BASE.length;
 }
 
+/**
+ * Deterministic version stamp for the knowledge corpus. Stamped onto every
+ * saved assessment so a regulated computation is reproducible against the exact
+ * knowledge snapshot that informed it. Changes whenever an entry id or its
+ * lastReviewed date changes. FNV-1a over sorted "id@lastReviewed" pairs.
+ */
+let cachedVersion: string | null = null;
+export function corpusVersion(): string {
+  if (cachedVersion) return cachedVersion;
+  const basis = IVD_KNOWLEDGE_BASE.map(e => `${e.id}@${e.lastReviewed}`)
+    .sort()
+    .join('|');
+  let h = 0x811c9dc5;
+  for (let i = 0; i < basis.length; i++) {
+    h ^= basis.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  cachedVersion = `v${IVD_KNOWLEDGE_BASE.length}-${(h >>> 0).toString(16).padStart(8, '0')}`;
+  return cachedVersion;
+}
+
 /** Fetch a single entry by its stable id. */
 export function getEntry(id: string): KnowledgeEntry | null {
   return byId.get(id) ?? null;
