@@ -124,6 +124,30 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   },
 };
 
+export const SEARCH_REGULATORY_CORRESPONDENCE: AnaTool = {
+  name: 'search_regulatory_correspondence',
+  description:
+    "Search the organization's connected regulatory mailbox (read-only Gmail) for recent agency / " +
+    'regulatory correspondence — information requests, deficiency letters, deadline notices, reviewer ' +
+    'emails. Use for "what did the agency ask for recently?", deadline awareness, or pulling the ' +
+    'context of an IR. Returns recent messages (subject, sender, date, snippet). Reports if the ' +
+    'mailbox is not connected.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      query: {
+        type: 'string',
+        description: 'Optional keyword to filter messages (subject/sender/snippet). Omit for the most recent.',
+      },
+      max_results: {
+        type: 'number',
+        description: 'Maximum messages to return (default: 10, max: 25).',
+      },
+    },
+    required: [],
+  },
+};
+
 export const SEARCH_LITERATURE: AnaTool = {
   name: 'search_literature',
   description:
@@ -3525,6 +3549,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_LITERATURE,
   SEARCH_MEDICARE_COVERAGE,
   SEARCH_CONNECTED_REPOSITORIES,
+  SEARCH_REGULATORY_CORRESPONDENCE,
   PROJECT_KNOWLEDGE_SEARCH,
   SIMULATE_STUDY_DESIGN,
   SEARCH_DEVICE_ADVERSE_EVENTS,

@@ -20,6 +20,7 @@ import { searchTrials } from '../integrations/clinicaltrials-client.js';
 import { searchPubmed } from '../integrations/pubmed-client.js';
 import { searchMedicareCoverage } from '../integrations/cms-coverage-client.js';
 import { searchConnectedRepositories } from '../integrations/connector-search.js';
+import { searchRegulatoryCorrespondence } from '../integrations/correspondence-search.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 import type {
   GatewayRequest,
@@ -344,6 +345,28 @@ registerToolHandler('search_connected_repositories', async (input, ctx) => {
       source: 'Connected Repositories',
       error: e instanceof Error ? e.message : 'Connected-repository search failed',
       documents: [],
+    });
+  }
+});
+
+// Search Regulatory Correspondence — read-only Gmail (env-configured mailbox).
+registerToolHandler('search_regulatory_correspondence', async (input) => {
+  const query = typeof input.query === 'string' ? input.query : undefined;
+  const maxResults = Math.min((input.max_results as number) || 10, 25);
+  try {
+    const result = await searchRegulatoryCorrespondence({ query, limit: maxResults });
+    return JSON.stringify({
+      ...result,
+      citation_hint: result.configured
+        ? 'Reference messages by subject and sender; note the date for deadline/recency context.'
+        : undefined,
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'Regulatory Mailbox (Gmail)',
+      configured: true,
+      error: e instanceof Error ? e.message : 'Mailbox search failed',
+      messages: [],
     });
   }
 });
