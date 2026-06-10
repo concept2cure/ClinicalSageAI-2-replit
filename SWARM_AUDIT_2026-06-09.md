@@ -212,6 +212,13 @@ claims), auth/middleware/workers auditor, AI-gateway/orchestration auditor.
   invoked lexically inside the stream try block; a throwing callback is caught
   by the existing `streamErr` handler, which preserves partial content and
   clears the watchdog in `finally`.
+- **"Gateway error responses pollute cost accounting (zeroed tokens look like
+  cheap successes)."** False — `logAudit` is called with `success: false` and the
+  provider error message; the audit table has `success`/`error` columns, so
+  error rows are fully distinguishable.
+- **"Audit-chain cron callback has no error handler."** False —
+  `runAuditChainIntegrityCheck` is documented "Never throws", wraps everything
+  in try/catch, logs failures, and emits a process warning on chain breaks.
 - **No gateway bypasses and no prompt-injection-prone concatenation** were
   found in the AI orchestration layer (per dedicated sweep).
 
@@ -219,16 +226,12 @@ claims), auth/middleware/workers auditor, AI-gateway/orchestration auditor.
 
 - `charterSections`, `timelinePhases`, `projectCommitments`: migrated but
   unqueried (staged feature surface) — keep or implement.
-- Gateway error responses are audited with zeroed token usage, indistinguishable
-  from cheap successes in cost metrics; consider a success flag in the audit row.
 - `AnaDocumentDraftingService` pins explicit model IDs instead of delegating
   selection to the gateway registry.
 - `startup-invariants` logs critical failures but lets boot continue; decide
   whether `criticalFailures > 0` should halt.
-- `auditChainIntegritySweep` / retention job notify failures are logged but not
-  surfaced to monitoring; tenant-impersonation audit writes are fire-and-forget.
-- `performanceOptimizer.initializeIndexes` resolves before the deferred index
-  work runs (5s setTimeout) and has no re-entry guard.
+- Retention-job notify failures are logged but not surfaced to monitoring;
+  tenant-impersonation audit writes are fire-and-forget.
 - Two env vars (`AI_GATEWAY_DETERMINISTIC`, `DETERMINISTIC_MODE`) both enable
   deterministic mode; document the canonical one.
 
