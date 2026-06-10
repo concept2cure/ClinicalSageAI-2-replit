@@ -1120,8 +1120,11 @@ export async function exportPersonalData(
 
     const [profile, conversations, artifacts, comments] = await Promise.all([
       safeQuery(
-        `SELECT id, email, name, title, department, created_at, updated_at
-         FROM users WHERE organization_id = $1 AND id = $2`,
+        `SELECT u.id, u.email, u.name, u.title, u.department, u.created_at, u.updated_at
+         FROM users u
+         WHERE u.id = $2
+           AND EXISTS (SELECT 1 FROM organization_users ou
+                        WHERE ou.user_id = u.id AND ou.organization_id = $1)`,
         [ctx.organizationId, dataSubjectId]
       ),
       safeQuery(
@@ -1202,7 +1205,9 @@ export async function erasePersonalData(
            department = NULL,
            preferences = '{}'::jsonb,
            updated_at = NOW()
-       WHERE organization_id = $1 AND id = $2
+       WHERE id = $2
+         AND EXISTS (SELECT 1 FROM organization_users ou
+                      WHERE ou.user_id = users.id AND ou.organization_id = $1)
        RETURNING id`,
       [ctx.organizationId, dataSubjectId]
     );

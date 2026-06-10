@@ -481,3 +481,41 @@ passes (baseline 61); restored bridge suite 7/7; security suite 183/183.
 - Advisory note: `rpi.ts` contains a documented `trendRisk = 85` proxy
   component (5% weight) — a disclosed modeling simplification, left for a
   product decision rather than silently altered.
+
+---
+
+# Wave 6 — 2026-06-10 (deep tenant pass, GDPR fix, coverage completion)
+
+- **Tenant-isolation baseline 61 → 30** (second pass; 31 queries addressed).
+  Real isolation fixes: org filters threaded through all four
+  `project_memory_entries` enrichment queries (~25 call sites, NULL-tolerant);
+  `project-rollup-service.recomputePaths/validateMove` now require
+  `organizationId` (closes a cross-org existence/depth oracle);
+  `user-intelligence` project JOINs org-scoped (another org's project names
+  could leak into session intelligence); deep-research jobs org-filtered.
+  Remainder were checker-visibility normalizations plus 23 documented-justified
+  entries (webhooks, bootstrap seeds, self-lookups — `users` carries no tenant
+  column by design; tenancy lives in `organization_users`).
+- **GDPR Art. 17 erasure was broken at runtime**: both the personal-data
+  export SELECT and the erasure UPDATE filtered `users.organization_id` — a
+  column that does not exist on `users` — so any real erasure request would
+  42703 and roll back. Tests passed only because their pools are mocked.
+  Rewritten to scope through `organization_users` membership (EXISTS).
+- **35 more skipped tests restored — every skip note was stale**: the
+  mdx-explain-audit-row (8), mdx-agent-audit-contract (18 — full tool/audit
+  net incl. `section.approve`/`audit.explain`), k510-document-preview (5),
+  and communication-center heuristic-intake (4) suites all pass verbatim;
+  the implementations had been fixed by later work and nobody removed the
+  skips. Campaign total: **73 restored tests**.
+- **Home surface demo data labelled**: "Sample data" pill (ProjectsList
+  pattern, zero new styles) on "At a glance" (only the Active-projects tile
+  has a live source today) and on "Recent activity" when demo rows render.
+  Study confirmed the briefing cards were already honest (no demo fallback).
+- **CI advisory closed**: ci.yml provisions a real Postgres service +
+  DATABASE_URL, so DB-gated suites run in CI. OCR-live still requires
+  `npm run ocr:vendor` (documented; adding a download step to CI is a
+  pipeline-cost decision, left to the team).
+- Remaining flagged (not fixed, documented): legacy `document-processor.js`
+  stub queries (barrel-only export, schema-mismatched inserts), dead
+  `ind_sequence.js`, and the invite-flow email-dedupe updating users who may
+  belong only to another org (needs a membership pre-check).
