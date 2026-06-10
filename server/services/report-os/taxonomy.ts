@@ -246,4 +246,20 @@ export const REPORT_TYPE_SEED: ReportTypeDefinition[] = [
     governanceRequirements: { part11: true, auditTrail: true, region: 'USA_OHRP' },
     truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true },
   },
+  {
+    // IBC biosafety registration + containment register (NIH Guidelines; C2C-07).
+    typeId: 'ibc.registration_register',
+    label: 'IBC Biosafety Registration & Containment Register',
+    family: 'ibc_biosafety',
+    allowedScopes: ['project', 'submission', 'program'],
+    allowedPersonas: ['biosafety_officer', 'ra_lead', 'qa'],
+    allowedClientSegments: ['biotech', 'academic', 'pharma'],
+    dataDependencies: ['ibc_registrations', 'ibc_biological_agents', 'ibc_reviews', 'provenance_links'],
+    artifactDependencies: ['concept2cure_artifacts'],
+    workflowDependencies: ['governance_boundary'],
+    anaModules: ['ana-ri'],
+    exportTemplate: 'ibc-registration-register',
+    governanceRequirements: { part11: true, auditTrail: true, region: 'USA_NIH' },
+    truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true },
+  },
 ];

@@ -5407,6 +5407,109 @@ registerToolHandler('review_irb_submission', async (input, ctx) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// IBC / Biosafety (C2C-07). Conversational building shares the governed/audited
+// path (recordGovernedAction, surface 'ana'). Determinations (approve) are done
+// in the review panel, not via AnA.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_ibc_registration', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_ibc_registration requires tenant + user context.' });
+  const registrationNumber = typeof input.registration_number === 'string' ? input.registration_number.trim() : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  const biosafetyLevel = typeof input.biosafety_level === 'string' ? input.biosafety_level : '';
+  if (!registrationNumber || !title || !['BSL-1', 'BSL-2', 'BSL-3', 'BSL-4'].includes(biosafetyLevel)) {
+    return JSON.stringify({ error: 'registration_number, title, and a valid biosafety_level are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createRegistrationTx } = await import('../ibc/ibc-service.js');
+  const { requiresConvenedReview } = await import('../ibc/ibc-logic.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const section = typeof input.nih_guidelines_section === 'string' ? input.nih_guidelines_section : 'not_applicable';
+    const { id } = await createRegistrationTx(client, ctx.organizationId, ctx.userId, {
+      registrationNumber, title, biosafetyLevel: biosafetyLevel as any,
+      nihGuidelinesSection: section as any,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+      involvesRecombinantDna: input.involves_recombinant_dna === true,
+      involvesHumanGeneTransfer: input.involves_human_gene_transfer === true,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `ibc-registration:${id}`, reason: fcoiReason(input, 'IBC registration opened via AnA'),
+      payload: { biosafetyLevel }, domain: 'ibc', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    const convened = requiresConvenedReview(section as any, input.involves_human_gene_transfer === true);
+    return JSON.stringify({ ok: true, id, requiresConvenedReview: convened, message: `Opened IBC registration "${title}" (id ${id}) at ${biosafetyLevel}${convened ? '; requires convened IBC review' : ''}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_ibc_registration failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('add_biological_agent', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_biological_agent requires tenant + user context.' });
+  const registrationId = typeof input.registration_id === 'number' ? input.registration_id : NaN;
+  const agentName = typeof input.agent_name === 'string' ? input.agent_name.trim() : '';
+  const agentType = typeof input.agent_type === 'string' ? input.agent_type : '';
+  const riskGroup = typeof input.risk_group === 'string' ? input.risk_group : '';
+  if (!Number.isInteger(registrationId) || !agentName ||
+      !['virus', 'bacterium', 'fungus', 'toxin', 'viral_vector', 'cell_line', 'recombinant_construct', 'other'].includes(agentType) ||
+      !['RG1', 'RG2', 'RG3', 'RG4'].includes(riskGroup)) {
+    return JSON.stringify({ error: 'registration_id, agent_name, a valid agent_type, and a valid risk_group are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addAgentTx } = await import('../ibc/ibc-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, requiredBsl } = await addAgentTx(client, ctx.organizationId, ctx.userId, registrationId, { agentName, agentType: agentType as any, riskGroup: riskGroup as any });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `ibc-registration:${registrationId}`, reason: fcoiReason(input, 'Biological agent added via AnA'),
+      payload: { agentId: id, riskGroup, requiredBsl }, domain: 'ibc', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, agentId: id, requiredBsl, message: `Added ${agentName} (${riskGroup}, requires ${requiredBsl}) to registration ${registrationId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_biological_agent failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_ibc_registration', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_ibc_registration requires tenant context.' });
+  const registrationId = typeof input.registration_id === 'number' ? input.registration_id : NaN;
+  if (!Number.isInteger(registrationId)) return JSON.stringify({ error: 'registration_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { getContainmentInput } = await import('../ibc/ibc-service.js');
+  const { evaluateContainment, registrationExpiration } = await import('../ibc/ibc-logic.js');
+  const client = await getPool().connect();
+  try {
+    const inp = await getContainmentInput(client, ctx.organizationId, registrationId);
+    const gate = evaluateContainment(inp);
+    const exp = registrationExpiration(inp.approvalDate, new Date().toISOString().slice(0, 10));
+    return JSON.stringify({
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, highestRequiredBsl: gate.highestRequiredBsl, expiration: exp,
+      message: gate.riskLevel === 'high'
+        ? 'Critical biosafety finding (containment below the agents’ requirement) — resolve before approval.'
+        : `Registration passes the deterministic containment gate (${gate.riskLevel} risk).`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_ibc_registration failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
 registerToolHandler('log_study_deviation', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'log_study_deviation requires tenant context.' });

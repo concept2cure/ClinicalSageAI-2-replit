@@ -3377,6 +3377,54 @@ export const REVIEW_IRB_SUBMISSION: AnaTool = {
   },
 };
 
+export const CREATE_IBC_REGISTRATION: AnaTool = {
+  name: 'create_ibc_registration',
+  description:
+    "Open an IBC biosafety registration (NIH Guidelines / BMBL) for recombinant or synthetic nucleic acid work — the clearance modality-heavy CGT/mRNA programs need. biosafety_level is the declared containment (BSL-1..4); nih_guidelines_section is the experiment category (III-A..III-F/exempt). Returns the registration id and whether convened IBC review is required. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      registration_number: { type: 'string' },
+      title: { type: 'string' },
+      biosafety_level: { type: 'string', enum: ['BSL-1', 'BSL-2', 'BSL-3', 'BSL-4'] },
+      nih_guidelines_section: { type: 'string', enum: ['III-A', 'III-B', 'III-C', 'III-D', 'III-E', 'III-F', 'exempt', 'not_applicable'] },
+      submission_id: { type: 'number', description: 'Optional IND-enabling submission this clearance supports.' },
+      involves_recombinant_dna: { type: 'boolean' },
+      involves_human_gene_transfer: { type: 'boolean' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['registration_number', 'title', 'biosafety_level'],
+  },
+};
+
+export const ADD_BIOLOGICAL_AGENT: AnaTool = {
+  name: 'add_biological_agent',
+  description:
+    "Add a biological agent to an IBC registration. risk_group is RG1-4; the required containment BSL is DERIVED from the risk group (RG1→BSL-1 … RG4→BSL-4) — you do not set it. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      registration_id: { type: 'number' },
+      agent_name: { type: 'string' },
+      agent_type: { type: 'string', enum: ['virus', 'bacterium', 'fungus', 'toxin', 'viral_vector', 'cell_line', 'recombinant_construct', 'other'] },
+      risk_group: { type: 'string', enum: ['RG1', 'RG2', 'RG3', 'RG4'] },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['registration_id', 'agent_name', 'agent_type', 'risk_group'],
+  },
+};
+
+export const REVIEW_IBC_REGISTRATION: AnaTool = {
+  name: 'review_ibc_registration',
+  description:
+    "Run the deterministic IBC containment gate on a registration (read-only): does the declared BSL meet the highest containment its agents require, are agents at the right level for their risk group, and does the work need convened IBC review — plus annual-review expiration. Returns cited findings + risk level.",
+  input_schema: {
+    type: 'object',
+    properties: { registration_id: { type: 'number' } },
+    required: ['registration_id'],
+  },
+};
+
 export const LOG_STUDY_DEVIATION: AnaTool = {
   name: 'log_study_deviation',
   description:
@@ -4839,6 +4887,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CREATE_IRB_SUBMISSION,
   ADD_IRB_SITE,
   REVIEW_IRB_SUBMISSION,
+  CREATE_IBC_REGISTRATION,
+  ADD_BIOLOGICAL_AGENT,
+  REVIEW_IBC_REGISTRATION,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,

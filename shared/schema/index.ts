@@ -430,3 +430,10 @@ export * from './iacuc';
 // (45 CFR 46), 21 CFR 56, ICH E6. Service: server/services/irb;
 // migration: migrations/20260610_irb_submissions.sql.
 export * from './irb';
+
+// IBC / biosafety (C2C-07): recombinant/synthetic nucleic acid registrations,
+// biological agents (risk groups RG1-4), containment (BSL-1..4) and committee
+// determinations — clearance for modality-heavy CGT/mRNA programs. NIH Guidelines
+// / BMBL. Service: server/services/ibc;
+// migration: migrations/20260610_ibc_biosafety.sql.
+export * from './ibc';

@@ -14,7 +14,7 @@ and to run the deferred DB-backed verification. Updated as each capability lands
 | C2C-04 | Nonclinical Study Mgmt + SEND | 2 | Planned |
 | C2C-05 | IACUC / Animal Study Governance | 2 | **Backend complete** |
 | C2C-06 | IRB/IEC Submission & Amendment Mgmt | 2 | **Backend complete** |
-| C2C-07 | IBC / Biosafety (Novel Modality) | 2 | Planned |
+| C2C-07 | IBC / Biosafety (Novel Modality) | 2 | **Backend complete** |
 | C2C-08 | AI-native eTMF | 2 | Planned |
 | C2C-09 | Device / IVD Technical Documentation | 2 | Planned |
 | C2C-10 | PV Intake + DSUR/PBRER | 3 | Planned |
@@ -211,3 +211,44 @@ USDA pain-category catalog (cited); `recommendReviewType` (category E → full c
 
 ### Tests landed (no-DB)
 `irb-logic.test.ts` (11), `ana/__tests__/irb-tools.test.ts` (7). Typecheck clean.
+
+---
+
+## C2C-07 — IBC / Biosafety
+
+### Data model (`shared/schema/ibc.ts`; migration `migrations/20260610_ibc_biosafety.sql`)
+- `ibc_registrations` (NIH Guidelines section III-A..F/exempt; declared BSL-1..4; recombinant DNA / human gene transfer flags; annual expiration), `ibc_biological_agents` (risk group RG1-4 → derived required BSL), `ibc_reviews` (determinations; convened-quorum flag).
+- Approval threads `ibc_registration → submission_module4` (role `supports`) via `provenance_links` — biosafety clearance into the IND-enabling record.
+
+### API (`/api/ibc`, governed + org-scoped)
+| Method | Path | Governed action |
+|--------|------|-----------------|
+| POST | `/registrations` | `create` (returns convened-review flag) |
+| GET | `/registrations?submissionId=` | — |
+| PATCH | `/registrations/:id/status` | `transition` |
+| POST | `/registrations/:id/agents` | `update` (required BSL derived from risk group) |
+| POST | `/registrations/:id/reviews` | `sign` (approve → expiration + provenance) / `resolve` |
+| GET | `/registrations/:id/containment` | — (containment-adequacy gate + expiration) |
+
+### AnA tools (same governed path, surface `ana`)
+`create_ibc_registration`, `add_biological_agent` (derives required BSL), `review_ibc_registration` (read-only gate).
+
+### Deterministic core (`ibc-logic.ts`, pure, tested)
+Risk-group catalog (RG1-4 → BSL-1..4, cited NIH Guidelines/BMBL); `evaluateContainment` (declared BSL must meet the highest agent requirement; agent vs risk-group check; convened-review note for III-A/B/C + human gene transfer — cited findings + risk); `requiresConvenedReview`; `registrationExpiration` (annual).
+
+### Central-module wiring
+- **Reports:** `ibc.registration_register` in `REPORT_TYPE_SEED`.
+- **Metrics:** `server/services/ibc-metrics.ts` → `/api/metrics` (`ibc_registrations_created_total{bsl}`, `ibc_approvals_total`, `ibc_agents_registered_total{risk_group}`).
+
+### UI surfaces to build (deferred)
+1. **Registration register** — table by status/BSL/section/expiration; KPI band; human-gene-transfer indicator.
+2. **Registration detail** — biological-agents sub-table (risk group → required BSL), the containment gate panel (`GET /:id/containment`), determination action (`POST /reviews`, convened quorum), provenance "supports Module 4" chip.
+3. **AnA panel** — conversational tools wired.
+
+### Deferred DB verification
+- [ ] `drizzle-kit push` clean; 3 tables + indexes + CHECK constraints in `information_schema`.
+- [ ] Org-scoping; governed audit rows; provenance link written on approval; required BSL derived (not trusted from input).
+- [ ] `ibc.registration_register` report run resolves; `/api/metrics` exposes `ibc_*`.
+
+### Tests landed (no-DB)
+`ibc-logic.test.ts` (9), `ana/__tests__/ibc-tools.test.ts` (7). Typecheck clean.

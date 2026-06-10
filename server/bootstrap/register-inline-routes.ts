@@ -358,6 +358,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount IRB routes:', error);
   }
 
+  // IBC / biosafety (NIH Guidelines / BMBL; CGT/mRNA clearance → IND enabling).
+  try {
+    const ibcModule = await import('../routes/ibc');
+    app.use('/api/ibc', authMiddleware, ibcModule.default);
+    console.info('✅ IBC routes mounted (/api/ibc)');
+  } catch (error) {
+    console.error('❌ Failed to mount IBC routes:', error);
+  }
+
   // C2C study digital twins + simulation (study/protocol design module).
   try {
     const c2cStudyTwinModule = await import('../routes/c2c/study-twin');
