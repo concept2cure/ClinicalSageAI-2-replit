@@ -29,3 +29,4 @@ export * from './ind-timeline-service';
 export * from './ind-ectd-envelope';
 export * from './ind-submission-overview';
 export * from './ind-dashboard';
+export * from './ind-sequence-validation';

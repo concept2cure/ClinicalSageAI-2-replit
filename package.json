@@ -49,6 +49,7 @@
     "ai:model-cards": "tsx scripts/ai-governance/generate-model-cards.ts",
     "ai:evidence-pack": "tsx scripts/ai-governance/generate-evidence-pack.ts",
     "ai:eval-doc-quality": "tsx server/eval/doc-quality/run-eval.ts",
+    "benchmark:rtf": "tsx server/services/shadow-review/benchmark/cli.ts",
     "ci:migration-prefix-collisions": "node scripts/ci/check-migration-prefix-collisions.mjs",
     "ci:migration-prefix-collisions:strict": "node scripts/ci/check-migration-prefix-collisions.mjs --strict",
     "ci:migration-prefix-collisions:write-baseline": "node scripts/ci/check-migration-prefix-collisions.mjs --write-baseline",

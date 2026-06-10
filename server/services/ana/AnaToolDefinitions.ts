@@ -124,6 +124,122 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   },
 };
 
+export const LOOKUP_ICD10_CODE: AnaTool = {
+  name: 'lookup_icd10_code',
+  description:
+    'Map a diagnosis / indication / condition term to billable ICD-10-CM codes (NLM Clinical Tables). ' +
+    'Use to code an indication for labeling, claims/coverage, or case reporting, and to confirm exact ' +
+    'code descriptions. Returns matching codes with their official descriptions.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      term: { type: 'string', description: 'Diagnosis/condition/indication to code, e.g. "type 2 diabetes".' },
+      max_results: { type: 'number', description: 'Maximum codes to return (default 10, max 25).' },
+    },
+    required: ['term'],
+  },
+};
+
+export const MEDICAL_WRITING_GUIDANCE: AnaTool = {
+  name: 'medical_writing_guidance',
+  description:
+    'Get authoritative medical-writing standards and craft for a deliverable — document structure, ' +
+    'governing standards, therapeutic-area endpoints/terminology/reporting conventions, region/market ' +
+    'style, audience register, and universal craft rules. ALWAYS call this before drafting or ' +
+    'critiquing a regulatory/scientific document (CSR, protocol, CER, CTD summary, manuscript, lay ' +
+    'summary, regulatory response, RMP, briefing package, IVD PER, PMCF) so the writing follows ICH/' +
+    'EU MDR/IVDR/ICMJE/GPP conventions for the specific document × therapeutic area × market × ' +
+    'audience. Combine with the evidence search tools to ground every claim.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_type: {
+        type: 'string',
+        description:
+          'Deliverable, e.g. csr, protocol, ib, clinical_overview, clinical_summary, cer, pmcf, per, ' +
+          'manuscript, plain_language_summary, regulatory_response, rmp, meeting_package.',
+      },
+      therapeutic_area: {
+        type: 'string',
+        description: 'e.g. oncology, cardiology, neuroscience, infectious_disease, immunology, metabolic, respiratory, rare_disease, vaccines (or a disease name).',
+      },
+      region: {
+        type: 'string',
+        description: 'Target market: fda, ema, pmda, nmpa, hc, mhra, tga, or ich (global). Default ich.',
+      },
+      audience: {
+        type: 'string',
+        description: 'regulator, payer, clinician, or patient. Defaults to the document type’s primary audience.',
+      },
+      client_segment: {
+        type: 'string',
+        description: 'Optional: pharma, biotech, device, ivd, or cro (informational).',
+      },
+    },
+    required: ['document_type'],
+  },
+};
+
+export const ASSESS_READABILITY: AnaTool = {
+  name: 'assess_readability',
+  description:
+    'Score text readability (Flesch Reading Ease + Flesch–Kincaid grade, sentence/word/syllable ' +
+    'stats) against a target audience and return whether it meets the reading-level target with ' +
+    'concrete suggestions. Use to QC lay/plain-language summaries and EU patient information leaflets ' +
+    '(target ~grade 8), or to check that any document is not needlessly dense.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: { type: 'string', description: 'The text to assess.' },
+      audience: {
+        type: 'string',
+        enum: ['patient', 'general', 'clinician', 'regulator'],
+        description: 'Reading-level target. patient≈grade 8, general≈10, clinician≈16, regulator≈18.',
+      },
+    },
+    required: ['text'],
+  },
+};
+
+export const BUILD_ABBREVIATION_LIST: AnaTool = {
+  name: 'build_abbreviation_list',
+  description:
+    'Extract acronyms/abbreviations from a draft, detect which are defined at first use (via "Full ' +
+    'Term (ABC)" / "ABC (Full Term)" patterns), and return the abbreviation table plus a list of ' +
+    'undefined ones to fix. Every CSR, CTD summary, CER, and manuscript needs a complete, ' +
+    'defined-at-first-use abbreviation list — run this before finalizing.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: { type: 'string', description: 'The document text to scan for abbreviations.' },
+    },
+    required: ['text'],
+  },
+};
+
+export const MEDICAL_WRITING_REVIEW: AnaTool = {
+  name: 'medical_writing_review',
+  description:
+    "Self-review a draft (or pre-draft) against a document type's governing standard — checks section " +
+    'coverage vs the required structure (ICH E3/M4E, EU MDR/IVDR, ICMJE, …) and returns a conformance ' +
+    'checklist (structure, key requirements, pitfalls) plus a readiness verdict. Use before handing ' +
+    'off or finalizing any regulatory/scientific document to QC it like an expert medical writer.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_type: {
+        type: 'string',
+        description: 'Document type to review against, e.g. csr, protocol, cer, clinical_summary, manuscript.',
+      },
+      draft_text: {
+        type: 'string',
+        description: 'Optional draft text — when provided, section coverage is assessed against it.',
+      },
+    },
+    required: ['document_type'],
+  },
+};
+
 export const DESCRIBE_CAPABILITIES: AnaTool = {
   name: 'describe_capabilities',
   description:
@@ -4001,6 +4117,11 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_DRUG_LABELS,
   SEARCH_DRUG_APPROVALS,
   ASSESS_REGULATORY_LANDSCAPE,
+  LOOKUP_ICD10_CODE,
+  MEDICAL_WRITING_GUIDANCE,
+  MEDICAL_WRITING_REVIEW,
+  ASSESS_READABILITY,
+  BUILD_ABBREVIATION_LIST,
   DESCRIBE_CAPABILITIES,
   PROJECT_KNOWLEDGE_SEARCH,
   SIMULATE_STUDY_DESIGN,

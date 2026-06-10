@@ -860,11 +860,11 @@ button:focus-visible {
 /* ─────────────────────────────────────────────────────────────────────────
  * CJK typography fallbacks (i18n)
  *
- * When the active language is Japanese or Chinese, append locale-appropriate
- * CJK font families so glyphs render with native shaping rather than tofu.
- * Driven by the <html lang> attribute that i18next keeps in sync, so the
- * :lang() selectors activate automatically on language switch. CJK scripts
- * also read better with slightly looser line-height.
+ * When the active language is Japanese, Chinese or Korean, append
+ * locale-appropriate CJK font families so glyphs render with native shaping
+ * rather than tofu. Driven by the <html lang> attribute that i18next keeps in
+ * sync, so the :lang() selectors activate automatically on language switch.
+ * CJK scripts also read better with slightly looser line-height.
  * ───────────────────────────────────────────────────────────────────────── */
 :lang(ja) {
   font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN",
@@ -876,9 +876,16 @@ button:focus-visible {
     "Noto Sans SC", "Microsoft YaHei", "Hiragino Sans GB", system-ui, sans-serif;
 }
 
+:lang(ko) {
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+    "Noto Sans KR", "Malgun Gothic", "Nanum Gothic", system-ui, sans-serif;
+}
+
 :lang(ja) body,
 :lang(zh) body,
+:lang(ko) body,
 html:lang(ja) .greetH1,
-html:lang(zh) .greetH1 {
+html:lang(zh) .greetH1,
+html:lang(ko) .greetH1 {
   line-height: 1.7;
 }

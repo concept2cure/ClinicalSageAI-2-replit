@@ -35,8 +35,17 @@ import {
   classifyResult,
   getToolReliability,
   getUnhealthyTools,
+  getLowYieldTools,
   isTelemetryPersistenceEnabled,
 } from './tool-telemetry.js';
+import { composeMedicalWritingGuidance, listMedicalWritingCatalog } from './medical-writing.js';
+import { reviewMedicalWriting } from './medical-writing-review.js';
+import {
+  assessReadability,
+  buildAbbreviationList,
+  type ReadabilityAudience,
+} from './medical-writing-qc.js';
+import { lookupIcd10 } from '../integrations/icd10-client.js';
 import { initToolTelemetryPersistence } from './tool-telemetry-persistence.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 
@@ -100,18 +109,19 @@ function getRequiredInputKeys(tool: string): string[] {
  */
 export function registerToolHandler(name: string, handler: ToolHandler): void {
   const instrumented: ToolHandler = async (input, ctx) => {
+    const orgId = ctx?.organizationId ?? undefined;
     // Report-only contract check: note when the model omitted required fields.
     const missing = getRequiredInputKeys(name).filter(k => input?.[k] === undefined);
-    if (missing.length > 0) recordContractViolation(name);
+    if (missing.length > 0) recordContractViolation(name, orgId);
 
     const start = Date.now();
     try {
       const result = await handler(input, ctx);
-      const { outcome, note } = classifyResult(result);
-      recordToolOutcome(name, outcome, Date.now() - start, note);
+      const { outcome, note, resultYield } = classifyResult(result);
+      recordToolOutcome(name, outcome, Date.now() - start, note, orgId, resultYield);
       return result;
     } catch (e) {
-      recordToolOutcome(name, 'failure', Date.now() - start, e instanceof Error ? e.message : String(e));
+      recordToolOutcome(name, 'failure', Date.now() - start, e instanceof Error ? e.message : String(e), orgId);
       throw e;
     }
   };
@@ -408,6 +418,82 @@ registerToolHandler('search_connected_repositories', async (input, ctx) => {
   }
 });
 
+// Medical Writing Guidance — authoritative standards + craft for a deliverable,
+// composed by document type × therapeutic area × region × audience.
+registerToolHandler('medical_writing_guidance', async (input) => {
+  const documentType = typeof input.document_type === 'string' ? input.document_type : '';
+  if (!documentType.trim()) {
+    return JSON.stringify({
+      error: 'medical_writing_guidance requires document_type.',
+      catalog: listMedicalWritingCatalog(),
+    });
+  }
+  const asStr = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v.trim() : undefined;
+  const guidance = composeMedicalWritingGuidance({
+    documentType,
+    therapeuticArea: asStr(input.therapeutic_area),
+    region: asStr(input.region),
+    audience: asStr(input.audience),
+    clientSegment: asStr(input.client_segment),
+  });
+  return JSON.stringify({
+    source: 'AnA Medical-Writing Knowledge Base',
+    ...guidance,
+    citation_hint:
+      'Apply this structure and these conventions, then ground every clinical claim with the evidence ' +
+      'search tools and cite per the citation protocol.',
+  });
+});
+
+// ICD-10-CM coding — map a diagnosis/indication term to billable codes.
+registerToolHandler('lookup_icd10_code', async (input) => {
+  const term = typeof input.term === 'string' ? input.term : '';
+  if (!term.trim()) return JSON.stringify({ error: 'lookup_icd10_code requires a term.' });
+  const maxResults = Math.min((input.max_results as number) || 10, 25);
+  try {
+    return JSON.stringify(await lookupIcd10(term, maxResults));
+  } catch (e) {
+    return JSON.stringify({
+      source: 'NLM ICD-10-CM (Clinical Tables)',
+      query: term,
+      error: e instanceof Error ? e.message : 'ICD-10 lookup failed',
+      codes: [],
+    });
+  }
+});
+
+// Readability QC — Flesch metrics vs the target audience reading level.
+registerToolHandler('assess_readability', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) return JSON.stringify({ error: 'assess_readability requires non-empty text.' });
+  const audience = ['patient', 'general', 'clinician', 'regulator'].includes(input.audience as string)
+    ? (input.audience as ReadabilityAudience)
+    : 'general';
+  return JSON.stringify({ source: 'AnA Readability QC', ...assessReadability(text, audience) });
+});
+
+// Abbreviation QC — extract acronyms + flag undefined-at-first-use.
+registerToolHandler('build_abbreviation_list', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) return JSON.stringify({ error: 'build_abbreviation_list requires non-empty text.' });
+  return JSON.stringify({ source: 'AnA Abbreviation QC', ...buildAbbreviationList(text) });
+});
+
+// Medical Writing Review — standards-conformance QC of a draft (or pre-draft).
+registerToolHandler('medical_writing_review', async (input) => {
+  const documentType = typeof input.document_type === 'string' ? input.document_type : '';
+  if (!documentType.trim()) {
+    return JSON.stringify({
+      error: 'medical_writing_review requires document_type.',
+      catalog: listMedicalWritingCatalog(),
+    });
+  }
+  const draftText = typeof input.draft_text === 'string' ? input.draft_text : undefined;
+  const review = reviewMedicalWriting(documentType, draftText);
+  return JSON.stringify({ source: 'AnA Medical-Writing QC', ...review });
+});
+
 // Describe Capabilities — AnA's deterministic self-knowledge: registered tools
 // + which integrations are actually live in this deployment/org.
 registerToolHandler('describe_capabilities', async (_input, ctx) => {
@@ -425,13 +511,21 @@ registerToolHandler('describe_capabilities', async (_input, ctx) => {
     const directHandlers = declared.filter(n => toolHandlers.has(n));
     const viaPlatformDispatch = declared.filter(n => !toolHandlers.has(n));
 
-    // Execution self-awareness: what has actually been working this process
-    // lifetime (only tools that have been called appear).
-    const reliability = getToolReliability();
-    const unhealthy = getUnhealthyTools(3).map(t => ({
+    // Execution self-awareness. When an org is in context, report THIS tenant's
+    // learned reliability (more accurate for the user); otherwise the global view.
+    const scope = orgId ? 'organization' : 'global';
+    const reliability = getToolReliability(orgId);
+    const unhealthy = getUnhealthyTools(3, orgId).map(t => ({
       tool: t.tool,
       consecutiveFailures: t.consecutiveFailures,
       lastError: t.lastError,
+    }));
+    // Working-but-unhelpful: succeed yet usually return nothing for this scope.
+    const lowYield = getLowYieldTools(4, 0.75, orgId).map(t => ({
+      tool: t.tool,
+      emptyRate: Math.round(t.emptyRate * 100) / 100,
+      resultfulCalls: t.resultfulCalls,
+      emptyCalls: t.emptyCalls,
     }));
 
     return JSON.stringify({
@@ -445,18 +539,21 @@ registerToolHandler('describe_capabilities', async (_input, ctx) => {
       integrations,
       integrationSummary: summary,
       execution: {
+        scope,
         toolsUsedThisSession: reliability.length,
         reliability,
         unhealthy,
+        lowYield,
         // When persistence is enabled, reliability is learned across restarts.
         learningPersisted: isTelemetryPersistenceEnabled(),
       },
       guidance:
         'Only offer or attempt tools whose integration is configured. For configured:false entries, ' +
         'tell the user what unlocks them (the `requires` field). configured:null means org context ' +
-        'is needed to resolve — ask the user to open a project. Treat tools listed in ' +
-        'execution.unhealthy as currently unreliable: warn the user and prefer alternatives until ' +
-        'they recover.',
+        'is needed to resolve — ask the user to open a project. Treat tools in execution.unhealthy ' +
+        'as currently unreliable (warn + prefer alternatives until they recover). Tools in ' +
+        'execution.lowYield work but usually return nothing for this scope — broaden the query or ' +
+        'set expectations rather than relying on them.',
     });
   } catch (e) {
     return JSON.stringify({

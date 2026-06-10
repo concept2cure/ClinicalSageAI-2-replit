@@ -561,6 +561,8 @@ export interface UpsertLeafInput {
   documentId?: number | null;
   documentType?: string | null;
   parentLeafId?: number | null;
+  /** MD5 (or other) checksum of the leaf's rendered bytes, for the eCTD index-md5. */
+  checksum?: string | null;
 }
 
 /** Create or update a leaf placement. Refuses if the parent sequence is locked. */
@@ -598,6 +600,7 @@ export async function upsertLeaf(
         documentId: input.documentId ?? null,
         documentType: input.documentType ?? null,
         parentLeafId: input.parentLeafId ?? null,
+        ...(input.checksum !== undefined ? { checksum: input.checksum } : {}),
         updatedAt: new Date(),
       })
       .where(
@@ -632,6 +635,7 @@ export async function upsertLeaf(
       documentId: input.documentId ?? null,
       documentType: input.documentType ?? null,
       parentLeafId: input.parentLeafId ?? null,
+      checksum: input.checksum ?? null,
       organizationId: ctx.organizationId,
       createdBy: ctx.userId,
     })

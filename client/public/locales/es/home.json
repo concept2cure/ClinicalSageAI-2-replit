@@ -1,0 +1,10 @@
+{
+  "greeting": {
+    "late": "Trabajando hasta tarde",
+    "morning": "Buenos días",
+    "afternoon": "Buenas tardes",
+    "evening": "Buenas noches"
+  },
+  "greetingLine": "{{greeting}}, {{name}}",
+  "prompt": "¿En qué te gustaría trabajar? Pregunta a AnA o entra en un módulo más abajo."
+}

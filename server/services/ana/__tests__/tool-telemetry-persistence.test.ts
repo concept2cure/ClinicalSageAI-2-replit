@@ -40,7 +40,7 @@ describe('createFileTelemetryBackend', () => {
     expect(await be.load()).toBeNull();
     await fs.writeFile(tmpFile, 'not json{');
     expect(await be.load()).toBeNull();
-    await fs.writeFile(tmpFile, JSON.stringify({ version: 2, tools: [] })); // wrong version
+    await fs.writeFile(tmpFile, JSON.stringify({ version: 3, tools: [] })); // unsupported version
     expect(await be.load()).toBeNull();
   });
 
@@ -50,7 +50,7 @@ describe('createFileTelemetryBackend', () => {
       version: 1,
       savedAt: '2026-01-01T00:00:00Z',
       tools: [
-        { tool: 'search_crm', calls: 3, successes: 2, degraded: 1, failures: 0, consecutiveFailures: 0, avgLatencyMs: 42, lastError: 'x', lastUsedAt: 'old', contractViolations: 0 },
+        { tool: 'search_crm', calls: 3, successes: 2, degraded: 1, failures: 0, consecutiveFailures: 0, avgLatencyMs: 42, lastError: 'x', lastUsedAt: 'old', contractViolations: 0, resultfulCalls: 0, emptyCalls: 0 },
       ],
     };
     await be.save(snap);
@@ -74,7 +74,7 @@ describe('initToolTelemetryPersistence', () => {
       version: 1,
       savedAt: '2026-01-01T00:00:00Z',
       tools: [
-        { tool: 'search_device_recalls', calls: 7, successes: 7, degraded: 0, failures: 0, consecutiveFailures: 0, avgLatencyMs: 88, lastError: null, lastUsedAt: 'old', contractViolations: 0 },
+        { tool: 'search_device_recalls', calls: 7, successes: 7, degraded: 0, failures: 0, consecutiveFailures: 0, avgLatencyMs: 88, lastError: null, lastUsedAt: 'old', contractViolations: 0, resultfulCalls: 0, emptyCalls: 0 },
       ],
     });
 
