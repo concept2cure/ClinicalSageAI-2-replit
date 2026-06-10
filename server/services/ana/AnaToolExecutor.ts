@@ -46,6 +46,8 @@ import {
   type ReadabilityAudience,
 } from './medical-writing-qc.js';
 import { lookupIcd10 } from '../integrations/icd10-client.js';
+import { composeSafetyNarrative } from './safety-narrative.js';
+import { screenPromotionalLanguage } from './promotional-screening.js';
 import { initToolTelemetryPersistence } from './tool-telemetry-persistence.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 
@@ -443,6 +445,60 @@ registerToolHandler('medical_writing_guidance', async (input) => {
     citation_hint:
       'Apply this structure and these conventions, then ground every clinical claim with the evidence ' +
       'search tools and cite per the citation protocol.',
+  });
+});
+
+// Promotional-language screen — FDA OPDP / EU advertising claims QC.
+registerToolHandler('screen_promotional_language', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) return JSON.stringify({ error: 'screen_promotional_language requires non-empty text.' });
+  return JSON.stringify({ source: 'AnA Promotional-Claims Screen', ...screenPromotionalLanguage(text) });
+});
+
+// Safety narrative — ICH E3 §16 patient narrative from structured case facts.
+registerToolHandler('draft_safety_narrative', async (input) => {
+  const subjectId = typeof input.subject_id === 'string' ? input.subject_id : '';
+  const ev = (input.event ?? {}) as Record<string, unknown>;
+  if (!subjectId.trim() || typeof ev.term !== 'string' || !ev.term.trim()) {
+    return JSON.stringify({ error: 'draft_safety_narrative requires subject_id and event.term.' });
+  }
+  const arr = (v: unknown): string[] | undefined =>
+    Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : undefined;
+  const str = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v : undefined);
+
+  const result = composeSafetyNarrative({
+    subjectId,
+    age: str(input.age),
+    sex: str(input.sex),
+    studyId: str(input.study_id),
+    treatmentArm: str(input.treatment_arm),
+    studyDrug: str(input.study_drug),
+    dose: str(input.dose),
+    firstDoseDate: str(input.first_dose_date),
+    medicalHistory: arr(input.medical_history),
+    concomitantMeds: arr(input.concomitant_meds),
+    event: {
+      term: String(ev.term),
+      onsetDate: str(ev.onset_date),
+      dayOnStudy: str(ev.day_on_study),
+      severity: str(ev.severity),
+      seriousnessCriteria: arr(ev.seriousness_criteria),
+      causality: str(ev.causality),
+      actionTaken: str(ev.action_taken),
+      treatment: str(ev.treatment),
+      dechallenge: str(ev.dechallenge),
+      rechallenge: str(ev.rechallenge),
+      outcome: str(ev.outcome),
+      notes: str(ev.notes),
+    },
+  });
+  return JSON.stringify({
+    source: 'AnA Safety Narrative (ICH E3 §16)',
+    ...result,
+    citation_hint:
+      result.missingFields.length
+        ? `Confirm the missing fields before finalizing: ${result.missingFields.join(', ')}.`
+        : 'All key fields present; verify against the CRF/source before sign-off.',
   });
 });
 
@@ -4619,6 +4675,145 @@ registerToolHandler('create_clinical_study', async (input, ctx) => {
     return JSON.stringify({
       error: `create_clinical_study failed: ${err instanceof Error ? err.message : String(err)}`,
     });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FCOI — 21 CFR 54 financial disclosure (C2C-01). Conversational building shares
+// the SAME governed/audited path as the REST routes: each mutation runs in a
+// transaction with recordGovernedAction (surface 'ana'). Certification (e-sign)
+// is intentionally NOT an AnA tool — it requires re-auth in the disclosure panel.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const FCOI_REASON_MIN = 8;
+function fcoiReason(input: Record<string, unknown>, fallback: string): string {
+  const r = typeof input.reason === 'string' ? input.reason.trim() : '';
+  return r.length >= FCOI_REASON_MIN ? r : fallback;
+}
+
+registerToolHandler('create_clinical_investigator', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_clinical_investigator requires tenant + user context.' });
+  const fullName = typeof input.full_name === 'string' ? input.full_name.trim() : '';
+  const role = typeof input.role === 'string' ? input.role : '';
+  if (!fullName || !['principal_investigator', 'sub_investigator', 'coordinator', 'other'].includes(role)) {
+    return JSON.stringify({ error: 'full_name and a valid role are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createInvestigatorTx } = await import('../financial-disclosures/fcoi-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createInvestigatorTx(client, ctx.organizationId, ctx.userId, {
+      fullName, role: role as any,
+      institution: typeof input.institution === 'string' ? input.institution : null,
+      studyId: typeof input.study_id === 'number' ? input.study_id : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `clinical-investigator:${id}`, reason: fcoiReason(input, 'Investigator registered via AnA'),
+      payload: { fullName, role }, domain: 'fcoi', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Registered investigator "${fullName}" (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_clinical_investigator failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('create_financial_disclosure', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_financial_disclosure requires tenant + user context.' });
+  const investigatorId = typeof input.investigator_id === 'number' ? input.investigator_id : NaN;
+  if (!Number.isInteger(investigatorId) || typeof input.has_disclosable_interests !== 'boolean') {
+    return JSON.stringify({ error: 'investigator_id and has_disclosable_interests (boolean) are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createDisclosureTx } = await import('../financial-disclosures/fcoi-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, formType } = await createDisclosureTx(client, ctx.organizationId, ctx.userId, {
+      investigatorId,
+      hasDisclosableInterests: input.has_disclosable_interests,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+      disclosurePeriodStart: typeof input.disclosure_period_start === 'string' ? input.disclosure_period_start : null,
+      disclosurePeriodEnd: typeof input.disclosure_period_end === 'string' ? input.disclosure_period_end : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `financial-disclosure:${id}`, reason: fcoiReason(input, 'Disclosure opened via AnA'),
+      payload: { investigatorId, formType }, domain: 'fcoi', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, formType, message: `Opened ${formType} disclosure (id ${id}). Certify it in the disclosure panel.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_financial_disclosure failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('add_disclosure_interest', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_disclosure_interest requires tenant + user context.' });
+  const disclosureId = typeof input.disclosure_id === 'number' ? input.disclosure_id : NaN;
+  const interestType = typeof input.interest_type === 'string' ? input.interest_type : '';
+  const description = typeof input.description === 'string' ? input.description.trim() : '';
+  if (!Number.isInteger(disclosureId) || !['COMPENSATION_BY_OUTCOME', 'EQUITY_INTEREST', 'PROPRIETARY_INTEREST', 'SIGNIFICANT_PAYMENTS'].includes(interestType) || !description) {
+    return JSON.stringify({ error: 'disclosure_id, a valid interest_type, and description are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addInterestTx } = await import('../financial-disclosures/fcoi-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await addInterestTx(client, ctx.organizationId, ctx.userId, disclosureId, {
+      interestType: interestType as any, description,
+      monetaryValue: typeof input.monetary_value === 'number' ? input.monetary_value : null,
+      arrangementsToMinimizeBias: typeof input.arrangements_to_minimize_bias === 'string' ? input.arrangements_to_minimize_bias : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `financial-disclosure:${disclosureId}`, reason: fcoiReason(input, 'Interest added via AnA'),
+      payload: { addedInterestId: id, interestType }, domain: 'fcoi', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, interestId: id, message: `Added ${interestType} interest to disclosure ${disclosureId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_disclosure_interest failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_financial_disclosure', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_financial_disclosure requires tenant context.' });
+  const disclosureId = typeof input.disclosure_id === 'number' ? input.disclosure_id : NaN;
+  if (!Number.isInteger(disclosureId)) return JSON.stringify({ error: 'disclosure_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { loadDisclosureSnapshot } = await import('../financial-disclosures/fcoi-service.js');
+  const { validateDisclosureCompleteness } = await import('../financial-disclosures/fcoi-logic.js');
+  const client = await getPool().connect();
+  try {
+    const snap = await loadDisclosureSnapshot(client, ctx.organizationId, disclosureId);
+    const gate = validateDisclosureCompleteness(snap);
+    return JSON.stringify({
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings,
+      certifiable: gate.riskLevel !== 'high',
+      message: gate.riskLevel === 'high'
+        ? 'Critical 21 CFR 54 findings — cannot certify until resolved.'
+        : `Disclosure passes the deterministic gate (${gate.riskLevel} risk).`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_financial_disclosure failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
   }
 });
 

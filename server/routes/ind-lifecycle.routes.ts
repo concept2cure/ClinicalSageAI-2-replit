@@ -47,6 +47,7 @@ import {
 import { getSubmission, listSequences, listLeaves } from '../services/submission-service/submission-service';
 import { getSponsor } from '../services/ind-master-data/ind-master-data-service';
 import { validateSequenceLeaves } from '../services/ind-lifecycle/ind-sequence-validation';
+import { deriveIndActionItems } from '../services/ind-lifecycle/ind-action-items';
 import { createHash } from 'crypto';
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -479,7 +480,56 @@ router.post('/submission/:id/dashboard', limiter, requireRole(AUTHOR), async (re
         })
       : null;
     const timeline = b.timelineInput?.receiptDate ? buildIndTimeline(b.timelineInput) : null;
-    res.json(buildIndDashboard({ sequenceSummary: summarizeSequences(sequences), readiness, clock, timeline }));
+    const sequenceValidation =
+      b.sequenceValidationInput &&
+      (b.sequenceValidationInput.filingType === 'initial' || b.sequenceValidationInput.filingType === 'amendment') &&
+      Array.isArray(b.sequenceValidationInput.leaves)
+        ? validateSequenceLeaves({
+            filingType: b.sequenceValidationInput.filingType,
+            leaves: b.sequenceValidationInput.leaves,
+          })
+        : null;
+    res.json(
+      buildIndDashboard({
+        sequenceSummary: summarizeSequences(sequences),
+        readiness,
+        clock,
+        timeline,
+        sequenceValidation,
+        overdueSafetyReports: b.overdueSafetyReports,
+      }),
+    );
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Prioritized next-actions for an IND, computed from the supplied analysis
+ * inputs. Body: { readinessInput?, clockInput?, timelineInput?,
+ * sequenceValidationInput?, overdueSafetyReports? }.
+ */
+router.post('/action-items', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = body(req);
+  try {
+    const readiness =
+      b.readinessInput && (b.readinessInput.filingType === 'initial' || b.readinessInput.filingType === 'amendment')
+        ? evaluateIndReadiness({
+            filingType: b.readinessInput.filingType,
+            sectionStatus: b.readinessInput.sectionStatus ?? {},
+            completedForms: b.readinessInput.completedForms,
+            overdueSafetyReports: b.readinessInput.overdueSafetyReports,
+          })
+        : null;
+    const clock = b.clockInput?.receiptDate ? evaluateRegulatoryClock(b.clockInput) : null;
+    const timeline = b.timelineInput?.receiptDate ? buildIndTimeline(b.timelineInput) : null;
+    const sequenceValidation =
+      b.sequenceValidationInput &&
+      (b.sequenceValidationInput.filingType === 'initial' || b.sequenceValidationInput.filingType === 'amendment') &&
+      Array.isArray(b.sequenceValidationInput.leaves)
+        ? validateSequenceLeaves(b.sequenceValidationInput)
+        : null;
+    res.json(deriveIndActionItems({ readiness, clock, timeline, sequenceValidation, overdueSafetyReports: b.overdueSafetyReports }));
   } catch (err) {
     fail(res, err);
   }

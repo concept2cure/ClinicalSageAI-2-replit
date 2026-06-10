@@ -12,6 +12,8 @@ import type { SequenceSummary } from './ind-submission-overview';
 import type { IndReadinessReport } from './ind-readiness-service';
 import type { ClockState } from './ind-regulatory-clock';
 import type { IndTimeline, TimelineMilestone } from './ind-timeline-service';
+import type { SequenceValidationReport } from './ind-sequence-validation';
+import { deriveIndActionItems, type IndActionItems } from './ind-action-items';
 
 export interface IndDashboardHeadline {
   /** Filing readiness (null when no readiness input was supplied). */
@@ -24,6 +26,8 @@ export interface IndDashboardHeadline {
   openValidationFailures: number;
   /** Count of distinct blocking conditions across readiness + clock + validation. */
   blockerCount: number;
+  /** Number of critical next-actions (clinical hold, overdue safety reports). */
+  criticalActions: number;
   /** The next not-yet-past regulatory milestone, when a timeline was supplied. */
   nextMilestone: TimelineMilestone | null;
 }
@@ -33,6 +37,9 @@ export interface IndDashboard {
   readiness: IndReadinessReport | null;
   clock: ClockState | null;
   timeline: IndTimeline | null;
+  sequenceValidation: SequenceValidationReport | null;
+  /** Prioritized next-actions derived from every supplied part. */
+  actionItems: IndActionItems;
   headline: IndDashboardHeadline;
 }
 
@@ -41,6 +48,9 @@ export interface IndDashboardParts {
   readiness?: IndReadinessReport | null;
   clock?: ClockState | null;
   timeline?: IndTimeline | null;
+  sequenceValidation?: SequenceValidationReport | null;
+  /** Count of expedited IND safety reports past deadline (feeds the action list). */
+  overdueSafetyReports?: number;
 }
 
 /**
@@ -52,7 +62,16 @@ export function buildIndDashboard(parts: IndDashboardParts): IndDashboard {
   const readiness = parts.readiness ?? null;
   const clock = parts.clock ?? null;
   const timeline = parts.timeline ?? null;
+  const sequenceValidation = parts.sequenceValidation ?? null;
   const openValidationFailures = parts.sequenceSummary.validationFailures;
+
+  const actionItems = deriveIndActionItems({
+    readiness,
+    clock,
+    timeline,
+    sequenceValidation,
+    overdueSafetyReports: parts.overdueSafetyReports,
+  });
 
   const onHold = clock ? clock.onHold : null;
   const blockerCount =
@@ -66,8 +85,9 @@ export function buildIndDashboard(parts: IndDashboardParts): IndDashboard {
     safeToProceed: clock ? clock.safeToProceed : null,
     openValidationFailures,
     blockerCount,
+    criticalActions: actionItems.criticalCount,
     nextMilestone: timeline ? timeline.next : null,
   };
 
-  return { sequenceSummary: parts.sequenceSummary, readiness, clock, timeline, headline };
+  return { sequenceSummary: parts.sequenceSummary, readiness, clock, timeline, sequenceValidation, actionItems, headline };
 }

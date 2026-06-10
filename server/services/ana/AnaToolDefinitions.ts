@@ -124,6 +124,68 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   },
 };
 
+export const SCREEN_PROMOTIONAL_LANGUAGE: AnaTool = {
+  name: 'screen_promotional_language',
+  description:
+    'Screen text for promotional / non-compliant claim language (FDA OPDP & EU advertising risk) — ' +
+    'superlatives/superiority, absolutes/guarantees, unqualified safety claims, causal/curative ' +
+    'overreach, and unsupported comparatives — returning each flagged phrase with its category, ' +
+    'severity, context, and a remediation suggestion. Run on any externally-facing or regulatory ' +
+    'text before release. (A QC aid, not a substitute for regulatory/legal review.)',
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: { type: 'string', description: 'The text to screen for claims/promotional language.' },
+    },
+    required: ['text'],
+  },
+};
+
+export const DRAFT_SAFETY_NARRATIVE: AnaTool = {
+  name: 'draft_safety_narrative',
+  description:
+    'Draft an ICH E3 §16-style patient safety narrative from structured case facts (death/SAE/' +
+    'discontinuation): subject → relevant history & concomitant meds → study-drug exposure → event ' +
+    '(severity, seriousness, onset) → action taken & treatment → dechallenge/rechallenge → outcome → ' +
+    'investigator causality. Drafts ONLY from the supplied facts and reports any missing required ' +
+    'fields for QC — never invents clinical detail.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      subject_id: { type: 'string', description: 'Subject/patient identifier.' },
+      age: { type: 'string', description: 'Age (years).' },
+      sex: { type: 'string', description: 'Sex (e.g. male/female).' },
+      study_id: { type: 'string', description: 'Study/protocol identifier.' },
+      treatment_arm: { type: 'string', description: 'Randomized arm / treatment group.' },
+      study_drug: { type: 'string', description: 'Investigational product name.' },
+      dose: { type: 'string', description: 'Dose/regimen.' },
+      first_dose_date: { type: 'string', description: 'Date of first dose.' },
+      medical_history: { type: 'array', items: { type: 'string' }, description: 'Relevant medical history.' },
+      concomitant_meds: { type: 'array', items: { type: 'string' }, description: 'Concomitant medications.' },
+      event: {
+        type: 'object',
+        description: 'The adverse event facts.',
+        properties: {
+          term: { type: 'string', description: 'Event term (verbatim or MedDRA PT).' },
+          onset_date: { type: 'string' },
+          day_on_study: { type: 'string' },
+          severity: { type: 'string', description: 'mild/moderate/severe or CTCAE grade.' },
+          seriousness_criteria: { type: 'array', items: { type: 'string' }, description: 'e.g. hospitalization, life-threatening, death.' },
+          causality: { type: 'string', description: 'Investigator causality, e.g. related/possibly related/not related.' },
+          action_taken: { type: 'string', description: 'e.g. drug withdrawn/dose reduced/none.' },
+          treatment: { type: 'string', description: 'Treatment given for the event.' },
+          dechallenge: { type: 'string' },
+          rechallenge: { type: 'string' },
+          outcome: { type: 'string', description: 'e.g. recovered/recovering/fatal.' },
+          notes: { type: 'string', description: 'Additional clinical course.' },
+        },
+        required: ['term'],
+      },
+    },
+    required: ['subject_id', 'event'],
+  },
+};
+
 export const LOOKUP_ICD10_CODE: AnaTool = {
   name: 'lookup_icd10_code',
   description:
@@ -2766,6 +2828,70 @@ export const CREATE_CLINICAL_STUDY: AnaTool = {
   },
 };
 
+export const CREATE_CLINICAL_INVESTIGATOR: AnaTool = {
+  name: 'create_clinical_investigator',
+  description:
+    "Register a clinical investigator for financial-disclosure tracking (21 CFR 54). Returns the investigator id for follow-up disclosure calls. Governed + audited; org-scoped from context.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      full_name: { type: 'string' },
+      role: { type: 'string', enum: ['principal_investigator', 'sub_investigator', 'coordinator', 'other'] },
+      institution: { type: 'string' },
+      study_id: { type: 'number', description: 'Optional clinical_studies.id to link.' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['full_name', 'role'],
+  },
+};
+
+export const CREATE_FINANCIAL_DISCLOSURE: AnaTool = {
+  name: 'create_financial_disclosure',
+  description:
+    "Open a 21 CFR 54 financial disclosure for an investigator. form_type is DERIVED from has_disclosable_interests (false → Form FDA 3454 certification of none; true → Form FDA 3455 disclosure). Returns the disclosure id. Creates a DRAFT — certification (e-signature) is done in the disclosure panel, not here.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      investigator_id: { type: 'number' },
+      submission_id: { type: 'number', description: 'The filing this disclosure supports (Module 1).' },
+      has_disclosable_interests: { type: 'boolean' },
+      disclosure_period_start: { type: 'string', description: 'YYYY-MM-DD.' },
+      disclosure_period_end: { type: 'string', description: 'YYYY-MM-DD.' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['investigator_id', 'has_disclosable_interests'],
+  },
+};
+
+export const ADD_DISCLOSURE_INTEREST: AnaTool = {
+  name: 'add_disclosure_interest',
+  description:
+    "Add a disclosable financial interest (one of the four 21 CFR 54.2 categories) to a financial disclosure (a Form FDA 3455). Org-scoped, governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      disclosure_id: { type: 'number' },
+      interest_type: { type: 'string', enum: ['COMPENSATION_BY_OUTCOME', 'EQUITY_INTEREST', 'PROPRIETARY_INTEREST', 'SIGNIFICANT_PAYMENTS'] },
+      description: { type: 'string' },
+      monetary_value: { type: 'number' },
+      arrangements_to_minimize_bias: { type: 'string' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['disclosure_id', 'interest_type', 'description'],
+  },
+};
+
+export const REVIEW_FINANCIAL_DISCLOSURE: AnaTool = {
+  name: 'review_financial_disclosure',
+  description:
+    "Run the deterministic 21 CFR 54 completeness gate on a financial disclosure (read-only). Returns cited findings + a risk level (high blocks certification). Use this to tell the user what is missing before they certify.",
+  input_schema: {
+    type: 'object',
+    properties: { disclosure_id: { type: 'number' } },
+    required: ['disclosure_id'],
+  },
+};
+
 export const LOG_STUDY_DEVIATION: AnaTool = {
   name: 'log_study_deviation',
   description:
@@ -4118,6 +4244,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_DRUG_APPROVALS,
   ASSESS_REGULATORY_LANDSCAPE,
   LOOKUP_ICD10_CODE,
+  DRAFT_SAFETY_NARRATIVE,
+  SCREEN_PROMOTIONAL_LANGUAGE,
   MEDICAL_WRITING_GUIDANCE,
   MEDICAL_WRITING_REVIEW,
   ASSESS_READABILITY,
@@ -4196,6 +4324,10 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,
+  CREATE_CLINICAL_INVESTIGATOR,
+  CREATE_FINANCIAL_DISCLOSURE,
+  ADD_DISCLOSURE_INTEREST,
+  REVIEW_FINANCIAL_DISCLOSURE,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,

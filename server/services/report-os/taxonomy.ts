@@ -182,4 +182,20 @@ export const REPORT_TYPE_SEED: ReportTypeDefinition[] = [
     governanceRequirements: { part11: true, auditTrail: true, region: 'CN_NMPA' },
     truthfulnessRules: { allowPartial: false, requireBlockers: true, requireExplicitGaps: true },
   },
+  {
+    // Clinical investigator financial-disclosure register (21 CFR 54; C2C-01).
+    typeId: 'fcoi.disclosure_register',
+    label: 'Financial Disclosure Register (21 CFR 54)',
+    family: 'fcoi_compliance',
+    allowedScopes: ['submission', 'project'],
+    allowedPersonas: ['ra_lead', 'qa', 'submission_coordinator'],
+    allowedClientSegments: ['pharma', 'biotech', 'device'],
+    dataDependencies: ['financial_disclosures', 'disclosure_interests', 'provenance_links'],
+    artifactDependencies: ['concept2cure_artifacts'],
+    workflowDependencies: ['signature_workflow', 'governance_boundary'],
+    anaModules: ['ana-ri'],
+    exportTemplate: 'fcoi-disclosure-register',
+    governanceRequirements: { part11: true, auditTrail: true, region: 'USA_FDA' },
+    truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true },
+  },
 ];
