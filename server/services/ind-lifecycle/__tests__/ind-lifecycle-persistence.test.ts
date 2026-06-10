@@ -91,6 +91,20 @@ describe('persistAnnualReport', () => {
     expect(upsertLeaf.mock.calls[0][0]).toMatchObject({ sequenceId: 42, sectionCode: 'm1.13', lifecycleOp: 'new' });
     expect(result.leaves).toHaveLength(1);
   });
+
+  it('attaches the checksum to the m1.13 leaf when supplied', async () => {
+    await persistAnnualReport(7, '0004', ctx, 'abc123md5');
+    expect(upsertLeaf.mock.calls[0][0]).toMatchObject({ sectionCode: 'm1.13', checksum: 'abc123md5' });
+  });
+});
+
+describe('persistSafetyReportIntent — checksum pass-through', () => {
+  it('attaches a checksum to the matching section leaf', async () => {
+    const { amendmentIntent } = assembleIndSafetyReport(reportableEvent(), { icsr: null, now: D });
+    await persistSafetyReportIntent(7, amendmentIntent!, '0005', ctx, { 'm1.12.4': 'deadbeef' });
+    const m1Leaf = upsertLeaf.mock.calls.map((c) => c[0]).find((l) => l.sectionCode === 'm1.12.4');
+    expect(m1Leaf).toMatchObject({ checksum: 'deadbeef' });
+  });
 });
 
 describe('persistAmendmentPlan', () => {

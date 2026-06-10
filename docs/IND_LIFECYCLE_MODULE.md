@@ -37,7 +37,8 @@ All HTTP routes are auth-gated (`authenticateToken` at mount) and tenant-scoped
 | IND Safety Report (7/15-day classify + narrative + amendment intent) | 21 CFR 312.32 | `ind-lifecycle/ind-safety-report-service` | `POST /api/ind-lifecycle/safety-report`, `/safety-report/classify`, `/safety-report/pdf`, `/safety-report/file` |
 | Annual Report / DSUR | 21 CFR 312.33 / ICH E2F | `ind-lifecycle/ind-annual-report-service` | `/annual-report`, `/annual-report/pdf`, `/annual-report/file` |
 | Protocol / information amendment planning | 21 CFR 312.30/312.31 | `ind-lifecycle/ind-amendment-service` | `/amendment-plan`, `/amendment/file` |
-| Filing → audited eCTD sequence + leaves | — | `ind-lifecycle/ind-lifecycle-persistence` (→ submission-service) | the `*/file` routes above |
+| Filing → audited eCTD sequence + leaves | — | `ind-lifecycle/ind-lifecycle-persistence` (→ submission-service) | the `*/file` routes above; the safety-report/annual-report `*/file` routes render the PDF and attach its md5 to the leaf (`submission_leaves.checksum`) for the eCTD index-md5 |
+| Sequence structural validation (required leaves present) | 21 CFR 312.23 | `ind-lifecycle/ind-sequence-validation` | `POST /api/ind-lifecycle/sequence/validate`, `GET /api/ind-lifecycle/sequence/:seqId/validate?filingType=` |
 | Filing-readiness verdict | 21 CFR 312.23 | `ind-lifecycle/ind-readiness-service` | `POST /api/ind-lifecycle/readiness` |
 | Regulatory clock + clinical-hold tracker | 21 CFR 312.40/312.42/312.45 | `ind-lifecycle/ind-regulatory-clock` | `POST /api/ind-lifecycle/clock` |
 | Regulatory timeline / milestones | 21 CFR 312.40 + 312.33 | `ind-lifecycle/ind-timeline-service` | `POST /api/ind-lifecycle/timeline` |

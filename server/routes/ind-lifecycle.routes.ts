@@ -44,8 +44,10 @@ import {
   persistAmendmentPlan,
   persistAnnualReport,
 } from '../services/ind-lifecycle/ind-lifecycle-persistence';
-import { getSubmission, listSequences } from '../services/submission-service/submission-service';
+import { getSubmission, listSequences, listLeaves } from '../services/submission-service/submission-service';
 import { getSponsor } from '../services/ind-master-data/ind-master-data-service';
+import { validateSequenceLeaves } from '../services/ind-lifecycle/ind-sequence-validation';
+import { createHash } from 'crypto';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('ind-lifecycle-routes');
@@ -318,7 +320,7 @@ router.post('/safety-report/file', limiter, requireRole(AUTHOR), async (req, res
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'event (AdverseEvent) is required.' } });
   }
   try {
-    const { amendmentIntent } = assembleIndSafetyReport(b.event, {
+    const { document, amendmentIntent } = assembleIndSafetyReport(b.event, {
       icsr: b.icsr ?? null,
       aggregateContext: b.aggregateContext,
       now: b.now ? new Date(b.now) : undefined,
@@ -326,7 +328,13 @@ router.post('/safety-report/file', limiter, requireRole(AUTHOR), async (req, res
     if (!amendmentIntent) {
       return res.status(422).json({ error: { code: 'NOT_REPORTABLE', message: 'Event is not an expedited IND safety report; nothing to file.' } });
     }
-    res.status(201).json(await persistSafetyReportIntent(submissionId, amendmentIntent, String(b.sequenceNumber), ctx));
+    // Render the safety-report PDF and attach its md5 to the m1.12.4 leaf so the
+    // eCTD index-md5 matches the filed bytes.
+    const pdf = await renderIndSafetyReportPdf(document);
+    const md5 = createHash('md5').update(pdf).digest('hex');
+    res.status(201).json(
+      await persistSafetyReportIntent(submissionId, amendmentIntent, String(b.sequenceNumber), ctx, { 'm1.12.4': md5 }),
+    );
   } catch (err) {
     fail(res, err);
   }
@@ -345,7 +353,14 @@ router.post('/annual-report/file', limiter, requireRole(AUTHOR), async (req, res
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'submissionId (int) and 4-digit sequenceNumber are required.' } });
   }
   try {
-    res.status(201).json(await persistAnnualReport(submissionId, String(b.sequenceNumber), ctx));
+    // When the annual-report content is supplied, render it and attach the md5
+    // to the m1.13 leaf; otherwise file the leaf as metadata only.
+    let checksum: string | undefined;
+    if (b.productName && b.indNumber) {
+      const pdf = await renderIndAnnualReportPdf(assembleIndAnnualReport(b));
+      checksum = createHash('md5').update(pdf).digest('hex');
+    }
+    res.status(201).json(await persistAnnualReport(submissionId, String(b.sequenceNumber), ctx, checksum));
   } catch (err) {
     fail(res, err);
   }
@@ -465,6 +480,42 @@ router.post('/submission/:id/dashboard', limiter, requireRole(AUTHOR), async (re
       : null;
     const timeline = b.timelineInput?.receiptDate ? buildIndTimeline(b.timelineInput) : null;
     res.json(buildIndDashboard({ sequenceSummary: summarizeSequences(sequences), readiness, clock, timeline }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Validate a set of leaves against the required IND section map (pure).
+ * Body: { filingType: 'initial'|'amendment', leaves: [{ sectionCode }] }.
+ */
+router.post('/sequence/validate', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = body(req);
+  if ((b.filingType !== 'initial' && b.filingType !== 'amendment') || !Array.isArray(b.leaves)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: "filingType ('initial'|'amendment') and leaves[] are required." } });
+  }
+  try {
+    res.json(validateSequenceLeaves({ filingType: b.filingType, leaves: b.leaves }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Validate an existing sequence's leaves against the required section map.
+ * Loads the sequence's leaves tenant-scoped. Query: ?filingType=initial|amendment.
+ */
+router.get('/sequence/:seqId/validate', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const seqId = Number(req.params.seqId);
+  if (!Number.isInteger(seqId) || seqId <= 0) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid sequence id.' } });
+  }
+  const filingType = req.query.filingType === 'amendment' ? 'amendment' : 'initial';
+  try {
+    const leaves = await listLeaves(seqId, ctx);
+    res.json(validateSequenceLeaves({ filingType, leaves: leaves.map((l) => ({ sectionCode: l.sectionCode })) }));
   } catch (err) {
     fail(res, err);
   }

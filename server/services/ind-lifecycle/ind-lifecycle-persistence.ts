@@ -43,9 +43,15 @@ interface LeafIntentLike {
   granularity?: string | null;
 }
 
-async function persistLeaves(sequenceId: number, intents: LeafIntentLike[], ctx: PersistCtx): Promise<Leaf[]> {
+async function persistLeaves(
+  sequenceId: number,
+  intents: LeafIntentLike[],
+  ctx: PersistCtx,
+  checksumBySection?: Record<string, string>,
+): Promise<Leaf[]> {
   const leaves: Leaf[] = [];
   for (const l of intents) {
+    const checksum = checksumBySection?.[l.sectionCode];
     leaves.push(
       await upsertLeaf(
         {
@@ -55,6 +61,7 @@ async function persistLeaves(sequenceId: number, intents: LeafIntentLike[], ctx:
           granularity: l.granularity ?? 'leaf',
           lifecycleOp: l.lifecycleOp,
           documentType: l.documentType,
+          ...(checksum ? { checksum } : {}),
         },
         ctx,
       ),
@@ -72,12 +79,13 @@ export async function persistSafetyReportIntent(
   intent: IndSafetyReportAmendmentIntent,
   sequenceNumber: string,
   ctx: PersistCtx,
+  checksumBySection?: Record<string, string>,
 ): Promise<PersistedAmendment> {
   const sequence = await createSequence(
     { submissionId, region: intent.region, sequenceNumber, type: intent.sequenceType },
     ctx,
   );
-  const leaves = await persistLeaves(sequence.id, intent.leaves, ctx);
+  const leaves = await persistLeaves(sequence.id, intent.leaves, ctx, checksumBySection);
   return { sequence, leaves };
 }
 
@@ -89,6 +97,7 @@ export async function persistAnnualReport(
   submissionId: number,
   sequenceNumber: string,
   ctx: PersistCtx,
+  checksum?: string,
 ): Promise<PersistedAmendment> {
   const sequence = await createSequence(
     { submissionId, region: 'fda', sequenceNumber, type: 'annual' },
@@ -98,6 +107,7 @@ export async function persistAnnualReport(
     sequence.id,
     [{ sectionCode: 'm1.13', title: 'IND Annual Report', lifecycleOp: 'new', documentType: 'ind_annual_report' }],
     ctx,
+    checksum ? { 'm1.13': checksum } : undefined,
   );
   return { sequence, leaves };
 }
