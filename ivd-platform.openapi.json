@@ -102,6 +102,27 @@
         "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReviewResult" } } } }, "422": { "$ref": "#/components/responses/ValidationError" } }
       }
     },
+    "/ivd-lifecycle/review-simulation/distribution": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "Probabilistic review-outcome distribution (Monte-Carlo)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["profile", "evidenceProbabilities"], "properties": { "profile": { "type": "object" }, "evidenceProbabilities": { "type": "object", "additionalProperties": { "type": "number" } }, "iterations": { "type": "integer" }, "seed": { "type": "integer" } } } } } },
+        "responses": { "200": { "description": "Outcome distribution (readiness summary + verdict probabilities)" }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
+    "/ivd-lifecycle/portfolio/simulate": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "Portfolio-level simulation across multiple programs",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["programs"], "properties": { "programs": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "profile": { "type": "object" } } } }, "save": { "type": "boolean" }, "programId": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "Portfolio readiness, verdict mix, worklist, deficiency themes" }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
+    "/ivd-lifecycle/diagnostic-accuracy/montecarlo": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "Monte-Carlo credible intervals for diagnostic accuracy (Beta posterior)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["tp", "fp", "fn", "tn"], "properties": { "tp": { "type": "integer" }, "fp": { "type": "integer" }, "fn": { "type": "integer" }, "tn": { "type": "integer" }, "iterations": { "type": "integer" }, "seed": { "type": "integer" } } } } } },
+        "responses": { "200": { "description": "Distribution summaries for sensitivity/specificity/PPV/NPV" }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
     "/ivd-lifecycle/{calculator}": {
       "post": {
         "tags": ["lifecycle"],
