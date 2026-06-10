@@ -25,6 +25,7 @@ export * from './ind-briefing-book-service';
 export * from './ind-cover-letter-service';
 export * from './cover-letter-context';
 export * from './ind-regulatory-clock';
+export * from './ind-timeline-service';
 export * from './ind-ectd-envelope';
 export * from './ind-submission-overview';
 export * from './ind-dashboard';

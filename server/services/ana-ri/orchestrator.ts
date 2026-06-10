@@ -207,6 +207,8 @@ export interface OrchestratorInput {
   intentLens?: IntentLens;
   /** User role (from profile or context) */
   userRole?: UserRole;
+  /** Response language (from the client's UI language). Defaults to English. */
+  language?: AnaRIPromptOptions['language'];
   /** Project context */
   projectContext?: AnaRIPromptOptions['projectContext'];
   /**
@@ -314,6 +316,7 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   const promptOptions: AnaRIPromptOptions = {
     userRole: appliedRole,
     intentLens: detectedIntent.lens,
+    language: input.language,
     projectContext: input.projectContext,
     documentContext: input.documentContext,
   };

@@ -1,0 +1,10 @@
+{
+  "greeting": {
+    "late": "お疲れさまです",
+    "morning": "おはようございます",
+    "afternoon": "こんにちは",
+    "evening": "こんばんは"
+  },
+  "greetingLine": "{{greeting}}、{{name}} さん",
+  "prompt": "何に取り組みますか？AnA に質問するか、下のモジュールからお選びください。"
+}

@@ -512,6 +512,89 @@ router.get('/device/reviewer-checklist', limiter, requireRole(AUTHOR), async (re
   } catch (err) { fail(res, err); }
 });
 
+// Risk management file (ISO 14971), biocompatibility (ISO 10993), software (IEC 62304).
+router.get('/device/risk-management/structure', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  try {
+    const { RMF_SECTIONS } = await import('../services/market-specs/risk-management-structure.js');
+    res.json({ sections: RMF_SECTIONS });
+  } catch (err) { fail(res, err); }
+});
+const rmfAssessSchema = z.object({ presentSectionIds: z.array(z.string().max(64)).max(200).default([]) });
+router.post('/device/risk-management/assess', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = rmfAssessSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { assessRmfStructure } = await import('../services/market-specs/risk-management-structure.js');
+    res.json(assessRmfStructure(parsed.data.presentSectionIds));
+  } catch (err) { fail(res, err); }
+});
+const biocompSchema = z.object({
+  nature: z.enum(['skin', 'mucosal_membrane', 'breached_surface', 'blood_path_indirect', 'tissue_bone_dentin', 'circulating_blood', 'implant_tissue_bone', 'implant_blood']),
+  duration: z.enum(['limited', 'prolonged', 'long_term']),
+});
+router.post('/device/biocompatibility', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = biocompSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { requiredBiocompEndpoints } = await import('../services/market-specs/biocompatibility-matrix.js');
+    res.json(requiredBiocompEndpoints(parsed.data.nature, parsed.data.duration));
+  } catch (err) { fail(res, err); }
+});
+const softwareSchema = z.object({
+  canContributeToDeathOrSeriousInjury: z.boolean().optional(),
+  canContributeToNonSeriousInjury: z.boolean().optional(),
+});
+router.post('/device/software/classify', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = softwareSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const m = await import('../services/market-specs/software-lifecycle.js');
+    const cls = m.classifySoftware(parsed.data);
+    res.json({ ...cls, deliverables: m.deliverablesForClass(cls.class), reviewerQuestions: m.SOFTWARE_REVIEWER_QUESTIONS });
+  } catch (err) { fail(res, err); }
+});
+
+// The unified reverse-workflow blueprint — classification + requirements +
+// applicable evidence modules + reviewer checklist in one object.
+const blueprintSchema = z.object({
+  submissionType: z.enum(['510k', 'de_novo', 'pma', 'mdr_td', 'ivdr_td']),
+  classification: z.object({ framework: z.enum(['mdr', 'ivdr', 'fda']), facts: z.record(z.string(), z.unknown()) }).optional(),
+  contact: z.object({
+    nature: z.enum(['skin', 'mucosal_membrane', 'breached_surface', 'blood_path_indirect', 'tissue_bone_dentin', 'circulating_blood', 'implant_tissue_bone', 'implant_blood']),
+    duration: z.enum(['limited', 'prolonged', 'long_term']),
+  }).optional(),
+  software: z.object({
+    applicable: z.boolean(),
+    canContributeToDeathOrSeriousInjury: z.boolean().optional(),
+    canContributeToNonSeriousInjury: z.boolean().optional(),
+    presentDeliverableIds: z.array(z.string().max(64)).max(100).optional(),
+  }).optional(),
+  present: z.object({
+    cerSectionIds: z.array(z.string().max(64)).max(200).optional(),
+    perSectionIds: z.array(z.string().max(64)).max(200).optional(),
+    rmfSectionIds: z.array(z.string().max(64)).max(200).optional(),
+  }).optional(),
+  equivalenceClaimed: z.boolean().optional(),
+});
+router.post('/device/blueprint', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = blueprintSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { buildDeviceBlueprint } = await import('../services/market-specs/device-blueprint.js');
+    res.json(buildDeviceBlueprint(parsed.data as Parameters<typeof buildDeviceBlueprint>[0]));
+  } catch (err) { fail(res, err); }
+});
+
 router.get('/:id', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });

@@ -8,6 +8,7 @@ import { buildIndDashboard } from '../ind-dashboard';
 import type { SequenceSummary } from '../ind-submission-overview';
 import type { IndReadinessReport } from '../ind-readiness-service';
 import type { ClockState } from '../ind-regulatory-clock';
+import { buildIndTimeline } from '../ind-timeline-service';
 
 const summary: SequenceSummary = {
   total: 3,
@@ -40,14 +41,23 @@ const clock = (onHold: boolean, safe: boolean): ClockState => ({
 });
 
 describe('buildIndDashboard', () => {
-  it('returns nulls in the headline when readiness/clock are absent', () => {
+  it('returns nulls in the headline when readiness/clock/timeline are absent', () => {
     const d = buildIndDashboard({ sequenceSummary: summary });
     expect(d.headline.ready).toBeNull();
     expect(d.headline.onHold).toBeNull();
     expect(d.headline.safeToProceed).toBeNull();
+    expect(d.headline.nextMilestone).toBeNull();
+    expect(d.timeline).toBeNull();
     // Only the validation failures count as blockers when nothing else is supplied.
     expect(d.headline.openValidationFailures).toBe(1);
     expect(d.headline.blockerCount).toBe(1);
+  });
+
+  it('surfaces the next timeline milestone in the headline', () => {
+    const timeline = buildIndTimeline({ receiptDate: '2026-01-01T00:00:00.000Z', asOf: '2026-01-10T00:00:00.000Z' });
+    const d = buildIndDashboard({ sequenceSummary: summary, timeline });
+    expect(d.headline.nextMilestone?.key).toBe('safe_to_proceed');
+    expect(d.timeline).not.toBeNull();
   });
 
   it('aggregates readiness blockers + active hold + validation failures', () => {

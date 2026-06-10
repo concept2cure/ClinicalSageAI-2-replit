@@ -2508,11 +2508,11 @@ export const CLASSIFY_POST_SUBMISSION_CHANGE: AnaTool = {
 export const ASSESS_DEVICE_EVIDENCE_STRUCTURE: AnaTool = {
   name: 'assess_device_evidence_structure',
   description:
-    "Assess a device/IVD evidence document against its regulated structure. For `document: 'cer'` it checks the CER against MEDDEV 2.7/1 Rev 4 / MDR Annex XIV (set `equivalence_claimed` if equivalence is used); for `document: 'per'` it checks the IVDR Annex XIII Performance Evaluation Report and reports which of the three pillars (scientific validity, analytical, clinical) are covered. Pass `present_section_ids` (the sections you have). Without `present_section_ids` it returns the full structure (stages/pillars/sections + reviewer questions). Deterministic, read-only. Use it to gap-check a CER/PER before Notified-Body review.",
+    "Assess a device/IVD evidence document against its regulated structure. For `document: 'cer'` it checks the CER against MEDDEV 2.7/1 Rev 4 / MDR Annex XIV (set `equivalence_claimed` if equivalence is used); for `document: 'per'` it checks the IVDR Annex XIII Performance Evaluation Report and reports which of the three pillars (scientific validity, analytical, clinical) are covered; for `document: 'rmf'` it checks the ISO 14971 risk management file. Pass `present_section_ids` (the sections you have). Without `present_section_ids` it returns the full structure (stages/pillars/sections + reviewer questions). Deterministic, read-only. Use it to gap-check a CER/PER/RMF before Notified-Body review.",
   input_schema: {
     type: 'object',
     properties: {
-      document: { type: 'string', enum: ['cer', 'per'], description: "'cer' (MDR clinical evaluation) or 'per' (IVDR performance evaluation)." },
+      document: { type: 'string', enum: ['cer', 'per', 'rmf'], description: "'cer' (MDR clinical evaluation), 'per' (IVDR performance evaluation), or 'rmf' (ISO 14971 risk management file)." },
       present_section_ids: { type: 'array', items: { type: 'string' }, description: 'Section ids present in the document (for assessment).' },
       equivalence_claimed: { type: 'boolean', description: 'CER only — set true if equivalence to another device is claimed.' },
     },
@@ -2542,6 +2542,38 @@ export const GET_DEVICE_REVIEWER_CHECKLIST: AnaTool = {
     type: 'object',
     properties: {
       submission_type: { type: 'string', enum: ['510k', 'de_novo', 'pma', 'cer', 'per'], description: 'The device submission type.' },
+    },
+    required: ['submission_type'],
+  },
+};
+
+export const GET_BIOCOMPATIBILITY_ENDPOINTS: AnaTool = {
+  name: 'get_biocompatibility_endpoints',
+  description:
+    "Return the ISO 10993-1 biological-evaluation endpoints a reviewer expects addressed for a device's contact category. Pass `nature` (skin, mucosal_membrane, breached_surface, blood_path_indirect, tissue_bone_dentin, circulating_blood, implant_tissue_bone, implant_blood) and `duration` (limited ≤24h, prolonged >24h–30d, long_term >30d). Returns the endpoint set (cytotoxicity, sensitization, irritation, pyrogenicity, haemocompatibility, implantation, systemic toxicity, genotoxicity, chronic toxicity, carcinogenicity as applicable). Deterministic; the Biological Evaluation Plan determines the actual tests vs. justifications.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      nature: { type: 'string', enum: ['skin', 'mucosal_membrane', 'breached_surface', 'blood_path_indirect', 'tissue_bone_dentin', 'circulating_blood', 'implant_tissue_bone', 'implant_blood'], description: 'Nature of body contact.' },
+      duration: { type: 'string', enum: ['limited', 'prolonged', 'long_term'], description: 'Duration of contact.' },
+    },
+    required: ['nature', 'duration'],
+  },
+};
+
+export const BUILD_DEVICE_BLUEPRINT: AnaTool = {
+  name: 'build_device_blueprint',
+  description:
+    "Build the COMPLETE reverse-workflow blueprint for a device/IVD submission: from the submission type + structured device facts it returns the risk classification, the required documents/forms, the APPLICABLE evidence modules (risk management always; clinical evaluation for mdr_td; performance evaluation for ivdr_td; biocompatibility when body-contacting → ISO 10993 endpoints; software when present → IEC 62304 class + deliverables) each with its gap assessment, and the matching FDA/NB reviewer checklist. This is the one-call planning + oversight view working backward from a submitted application. Deterministic, read-only. `submission_type` ∈ 510k|de_novo|pma|mdr_td|ivdr_td.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      submission_type: { type: 'string', enum: ['510k', 'de_novo', 'pma', 'mdr_td', 'ivdr_td'], description: 'The device submission type.' },
+      classification: { type: 'object', description: 'Optional { framework: mdr|ivdr|fda, facts: {...} } to classify the device.' },
+      contact: { type: 'object', description: 'Optional { nature, duration } — when present, biocompatibility applies.' },
+      software: { type: 'object', description: 'Optional { applicable, canContributeToDeathOrSeriousInjury?, canContributeToNonSeriousInjury?, presentDeliverableIds? }.' },
+      present: { type: 'object', description: 'Optional { cerSectionIds?, perSectionIds?, rmfSectionIds? } already authored, for gap assessment.' },
+      equivalence_claimed: { type: 'boolean', description: 'CER equivalence claim (mdr_td).' },
     },
     required: ['submission_type'],
   },
@@ -4038,6 +4070,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ASSESS_DEVICE_EVIDENCE_STRUCTURE,
   CLASSIFY_DEVICE,
   GET_DEVICE_REVIEWER_CHECKLIST,
+  GET_BIOCOMPATIBILITY_ENDPOINTS,
+  BUILD_DEVICE_BLUEPRINT,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,
