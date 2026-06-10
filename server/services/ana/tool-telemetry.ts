@@ -33,75 +33,116 @@ export interface ToolReliability {
   contractViolations: number;
 }
 
+// Global (cross-tenant) reliability, plus an optional per-organization breakdown.
+// Every outcome updates global; when an org is supplied it also updates that
+// org's view, so AnA can adapt per-customer (e.g. a tenant whose HubSpot is
+// misconfigured deprioritizes search_crm for THAT tenant only).
 const stats = new Map<string, ToolReliability>();
+const orgStats = new Map<string, Map<string, ToolReliability>>();
 
-function entry(tool: string): ToolReliability {
-  let e = stats.get(tool);
+function newEntry(tool: string): ToolReliability {
+  return {
+    tool,
+    calls: 0,
+    successes: 0,
+    degraded: 0,
+    failures: 0,
+    consecutiveFailures: 0,
+    avgLatencyMs: 0,
+    lastError: null,
+    lastUsedAt: null,
+    contractViolations: 0,
+  };
+}
+
+function entryIn(map: Map<string, ToolReliability>, tool: string): ToolReliability {
+  let e = map.get(tool);
   if (!e) {
-    e = {
-      tool,
-      calls: 0,
-      successes: 0,
-      degraded: 0,
-      failures: 0,
-      consecutiveFailures: 0,
-      avgLatencyMs: 0,
-      lastError: null,
-      lastUsedAt: null,
-      contractViolations: 0,
-    };
-    stats.set(tool, e);
+    e = newEntry(tool);
+    map.set(tool, e);
   }
   return e;
 }
 
+function orgMap(orgId: string): Map<string, ToolReliability> {
+  let m = orgStats.get(orgId);
+  if (!m) {
+    m = new Map();
+    orgStats.set(orgId, m);
+  }
+  return m;
+}
+
 export type ToolOutcome = 'success' | 'degraded' | 'failure';
 
-/** Record one tool execution outcome. */
-export function recordToolOutcome(
-  tool: string,
-  outcome: ToolOutcome,
-  latencyMs: number,
-  errorNote?: string
-): void {
-  const e = entry(tool);
+function applyOutcome(e: ToolReliability, outcome: ToolOutcome, latencyMs: number, errorNote?: string): void {
   e.calls++;
   // Running mean keeps this O(1) with no history buffer.
   e.avgLatencyMs = Math.round(e.avgLatencyMs + (latencyMs - e.avgLatencyMs) / e.calls);
   e.lastUsedAt = new Date().toISOString();
-
   if (outcome === 'success') {
     e.successes++;
     e.consecutiveFailures = 0;
-  } else if (outcome === 'degraded') {
-    e.degraded++;
-    e.consecutiveFailures++;
-    if (errorNote) e.lastError = errorNote.slice(0, 300);
   } else {
-    e.failures++;
+    if (outcome === 'degraded') e.degraded++;
+    else e.failures++;
     e.consecutiveFailures++;
     if (errorNote) e.lastError = errorNote.slice(0, 300);
   }
 }
 
+/**
+ * Record one tool execution outcome. Always updates the global view; when
+ * `orgId` is given, also updates that organization's per-tenant view.
+ */
+export function recordToolOutcome(
+  tool: string,
+  outcome: ToolOutcome,
+  latencyMs: number,
+  errorNote?: string,
+  orgId?: string | number | null
+): void {
+  applyOutcome(entryIn(stats, tool), outcome, latencyMs, errorNote);
+  if (orgId !== undefined && orgId !== null && orgId !== '') {
+    applyOutcome(entryIn(orgMap(String(orgId)), tool), outcome, latencyMs, errorNote);
+  }
+}
+
 /** Record a schema-contract violation (missing required input fields). */
-export function recordContractViolation(tool: string): void {
-  entry(tool).contractViolations++;
+export function recordContractViolation(tool: string, orgId?: string | number | null): void {
+  entryIn(stats, tool).contractViolations++;
+  if (orgId !== undefined && orgId !== null && orgId !== '') {
+    entryIn(orgMap(String(orgId)), tool).contractViolations++;
+  }
 }
 
-/** Snapshot of every tool that has been called this process lifetime. */
-export function getToolReliability(): ToolReliability[] {
-  return Array.from(stats.values()).map(e => ({ ...e }));
+/**
+ * Reliability for every tool called this process lifetime. Global by default;
+ * pass an `orgId` for that organization's per-tenant view (empty if none yet).
+ */
+export function getToolReliability(orgId?: string | number | null): ToolReliability[] {
+  const map =
+    orgId !== undefined && orgId !== null && orgId !== '' ? orgStats.get(String(orgId)) : stats;
+  return map ? Array.from(map.values()).map(e => ({ ...e })) : [];
 }
 
-/** Tools currently looking unhealthy (N+ consecutive non-successes). */
-export function getUnhealthyTools(minConsecutiveFailures = 3): ToolReliability[] {
-  return getToolReliability().filter(e => e.consecutiveFailures >= minConsecutiveFailures);
+/** Tools currently looking unhealthy (N+ consecutive non-successes), global or per-org. */
+export function getUnhealthyTools(
+  minConsecutiveFailures = 3,
+  orgId?: string | number | null
+): ToolReliability[] {
+  return getToolReliability(orgId).filter(e => e.consecutiveFailures >= minConsecutiveFailures);
+}
+
+/** Organization ids with a per-tenant reliability view. */
+export function getTrackedOrgIds(): string[] {
+  return Array.from(orgStats.keys());
 }
 
 /** Test hook. */
 export function resetToolTelemetry(): void {
   stats.clear();
+  orgStats.clear();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -112,9 +153,13 @@ export function resetToolTelemetry(): void {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface TelemetrySnapshot {
-  version: 1;
+  /** v1 = global only; v2 adds the per-org breakdown. Both load. */
+  version: 1 | 2;
   savedAt: string;
+  /** Global (cross-tenant) reliability. */
   tools: ToolReliability[];
+  /** Per-organization reliability (v2+). */
+  byOrg?: Record<string, ToolReliability[]>;
 }
 
 export interface TelemetryBackend {
@@ -133,26 +178,42 @@ export function isTelemetryPersistenceEnabled(): boolean {
   return backend !== null;
 }
 
-/** Current state as a serializable snapshot. */
+/** Current state as a serializable snapshot (global + per-org). */
 export function snapshotTelemetry(): TelemetrySnapshot {
-  return { version: 1, savedAt: new Date().toISOString(), tools: getToolReliability() };
+  const byOrg: Record<string, ToolReliability[]> = {};
+  for (const [orgId, m] of orgStats) {
+    byOrg[orgId] = Array.from(m.values()).map(e => ({ ...e }));
+  }
+  return { version: 2, savedAt: new Date().toISOString(), tools: getToolReliability(), byOrg };
+}
+
+/** Seed a target map with snapshot rows for tools not already tracked. */
+function seedMap(target: Map<string, ToolReliability>, rows: ToolReliability[] | undefined): number {
+  if (!Array.isArray(rows)) return 0;
+  let n = 0;
+  for (const t of rows) {
+    if (t && t.tool && !target.has(t.tool)) {
+      target.set(t.tool, { ...t });
+      n++;
+    }
+  }
+  return n;
 }
 
 /**
  * Load a prior snapshot and seed tools not already tracked this process. Live
  * in-process counts always win (we never clobber what's happening right now);
  * persistence only re-establishes history for tools not yet seen since boot.
- * Returns the number of tools seeded.
+ * Accepts v1 (global only) and v2 (global + per-org). Returns tools seeded.
  */
 export async function hydrateTelemetry(): Promise<number> {
   if (!backend) return 0;
   const snap = await backend.load();
   if (!snap || !Array.isArray(snap.tools)) return 0;
-  let seeded = 0;
-  for (const t of snap.tools) {
-    if (t && t.tool && !stats.has(t.tool)) {
-      stats.set(t.tool, { ...t });
-      seeded++;
+  let seeded = seedMap(stats, snap.tools);
+  if (snap.byOrg && typeof snap.byOrg === 'object') {
+    for (const [orgId, rows] of Object.entries(snap.byOrg)) {
+      seeded += seedMap(orgMap(orgId), rows);
     }
   }
   return seeded;

@@ -135,7 +135,7 @@ describe('tool-telemetry (persistence)', () => {
     await persistTelemetry();
 
     expect(be.save).toHaveBeenCalledTimes(1);
-    expect(be.saved[0].version).toBe(1);
+    expect(be.saved[0].version).toBe(2);
     expect(be.saved[0].tools.find(t => t.tool === 'search_literature')?.successes).toBe(1);
   });
 
@@ -160,11 +160,48 @@ describe('tool-telemetry (persistence)', () => {
     expect(byTool.get('search_drug_labels')?.calls).toBe(5); // history restored
   });
 
-  it('snapshotTelemetry is versioned and round-trippable', () => {
+  it('snapshotTelemetry is versioned (v2) and round-trippable', () => {
     recordToolOutcome('t', 'failure', 1, 'boom');
     const snap = snapshotTelemetry();
-    expect(snap.version).toBe(1);
+    expect(snap.version).toBe(2);
     expect(snap.savedAt).toBeTruthy();
     expect(snap.tools[0].tool).toBe('t');
+  });
+});
+
+describe('tool-telemetry (per-tenant)', () => {
+  beforeEach(() => resetToolTelemetry());
+  afterEach(() => setTelemetryBackend(null));
+
+  it('records to global always and to the org view when an org is given', () => {
+    recordToolOutcome('search_crm', 'failure', 10, 'down', 'org-1');
+    recordToolOutcome('search_crm', 'success', 10, undefined); // global-only
+
+    const global = getToolReliability().find(t => t.tool === 'search_crm')!;
+    const org1 = getToolReliability('org-1').find(t => t.tool === 'search_crm')!;
+    expect(global.calls).toBe(2); // both calls hit global
+    expect(org1.calls).toBe(1); // only the org-scoped call hit org-1
+    expect(org1.failures).toBe(1);
+    expect(getToolReliability('org-2')).toEqual([]); // untouched org is empty
+  });
+
+  it('computes unhealthy per-org independently of global', () => {
+    for (let i = 0; i < 3; i++) recordToolOutcome('search_crm', 'failure', 5, 'x', 'org-1');
+    // org-2 used it successfully; global mixes both.
+    recordToolOutcome('search_crm', 'success', 5, undefined, 'org-2');
+
+    expect(getUnhealthyTools(3, 'org-1').map(t => t.tool)).toEqual(['search_crm']);
+    expect(getUnhealthyTools(3, 'org-2')).toEqual([]); // healthy for org-2
+  });
+
+  it('snapshots and re-hydrates the per-org breakdown (v2)', async () => {
+    recordToolOutcome('search_literature', 'success', 20, undefined, 'org-9');
+    const snap = snapshotTelemetry();
+    expect(snap.byOrg?.['org-9']?.[0].tool).toBe('search_literature');
+
+    resetToolTelemetry();
+    setTelemetryBackend({ load: async () => snap, save: async () => {} });
+    await hydrateTelemetry();
+    expect(getToolReliability('org-9').find(t => t.tool === 'search_literature')?.successes).toBe(1);
   });
 });

@@ -100,18 +100,19 @@ function getRequiredInputKeys(tool: string): string[] {
  */
 export function registerToolHandler(name: string, handler: ToolHandler): void {
   const instrumented: ToolHandler = async (input, ctx) => {
+    const orgId = ctx?.organizationId ?? undefined;
     // Report-only contract check: note when the model omitted required fields.
     const missing = getRequiredInputKeys(name).filter(k => input?.[k] === undefined);
-    if (missing.length > 0) recordContractViolation(name);
+    if (missing.length > 0) recordContractViolation(name, orgId);
 
     const start = Date.now();
     try {
       const result = await handler(input, ctx);
       const { outcome, note } = classifyResult(result);
-      recordToolOutcome(name, outcome, Date.now() - start, note);
+      recordToolOutcome(name, outcome, Date.now() - start, note, orgId);
       return result;
     } catch (e) {
-      recordToolOutcome(name, 'failure', Date.now() - start, e instanceof Error ? e.message : String(e));
+      recordToolOutcome(name, 'failure', Date.now() - start, e instanceof Error ? e.message : String(e), orgId);
       throw e;
     }
   };
@@ -425,10 +426,11 @@ registerToolHandler('describe_capabilities', async (_input, ctx) => {
     const directHandlers = declared.filter(n => toolHandlers.has(n));
     const viaPlatformDispatch = declared.filter(n => !toolHandlers.has(n));
 
-    // Execution self-awareness: what has actually been working this process
-    // lifetime (only tools that have been called appear).
-    const reliability = getToolReliability();
-    const unhealthy = getUnhealthyTools(3).map(t => ({
+    // Execution self-awareness. When an org is in context, report THIS tenant's
+    // learned reliability (more accurate for the user); otherwise the global view.
+    const scope = orgId ? 'organization' : 'global';
+    const reliability = getToolReliability(orgId);
+    const unhealthy = getUnhealthyTools(3, orgId).map(t => ({
       tool: t.tool,
       consecutiveFailures: t.consecutiveFailures,
       lastError: t.lastError,
@@ -445,6 +447,7 @@ registerToolHandler('describe_capabilities', async (_input, ctx) => {
       integrations,
       integrationSummary: summary,
       execution: {
+        scope,
         toolsUsedThisSession: reliability.length,
         reliability,
         unhealthy,

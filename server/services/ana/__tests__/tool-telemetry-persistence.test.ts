@@ -40,7 +40,7 @@ describe('createFileTelemetryBackend', () => {
     expect(await be.load()).toBeNull();
     await fs.writeFile(tmpFile, 'not json{');
     expect(await be.load()).toBeNull();
-    await fs.writeFile(tmpFile, JSON.stringify({ version: 2, tools: [] })); // wrong version
+    await fs.writeFile(tmpFile, JSON.stringify({ version: 3, tools: [] })); // unsupported version
     expect(await be.load()).toBeNull();
   });
 

@@ -510,8 +510,9 @@ router.post('/stream', async (req: Request, res: Response) => {
         surface: asStr(intent_lens) ?? asStr(authoring_context),
       },
       // Reliability-aware: trim currently-unhealthy tools first when over the cap
-      // (the always-on core + platform bridge are unaffected).
-      deprioritize: new Set(getUnhealthyTools().map(t => t.tool)),
+      // (the always-on core + platform bridge are unaffected). Per-tenant when an
+      // org is in context, else the global view.
+      deprioritize: new Set(getUnhealthyTools(3, orgId ?? undefined).map(t => t.tool)),
     });
 
     const gwResponse = await gw.route({

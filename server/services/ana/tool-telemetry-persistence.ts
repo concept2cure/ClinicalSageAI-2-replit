@@ -34,7 +34,7 @@ export function createFileTelemetryBackend(filePath: string): TelemetryBackend {
       try {
         const raw = await fs.readFile(filePath, 'utf8');
         const parsed = JSON.parse(raw);
-        if (parsed && parsed.version === 1 && Array.isArray(parsed.tools)) {
+        if (parsed && (parsed.version === 1 || parsed.version === 2) && Array.isArray(parsed.tools)) {
           return parsed as TelemetrySnapshot;
         }
         return null;
