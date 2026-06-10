@@ -199,7 +199,7 @@ export async function listSequences(
   return rows as EctdSequence[];
 }
 
-async function getSequence(id: number, ctx: { organizationId: number }): Promise<EctdSequence> {
+export async function getSequence(id: number, ctx: { organizationId: number }): Promise<EctdSequence> {
   const [row] = await db
     .select()
     .from(ectdSequences)

@@ -13,8 +13,10 @@ import { validateSequenceLeaves } from '../../services/ind-lifecycle/ind-sequenc
 import { deriveIndActionItems } from '../../services/ind-lifecycle/ind-action-items';
 import { summarizeSequences } from '../../services/ind-lifecycle/ind-submission-overview';
 import { buildIndDashboard } from '../../services/ind-lifecycle/ind-dashboard';
-import { getSubmission, listSequences, listLeaves } from '../../services/submission-service/submission-service';
-import { AUTHOR, limiter, ctxOf, body, fail, noAuth } from './shared';
+import { buildPackageManifest } from '../../services/ind-lifecycle/ind-package-manifest';
+import { renderPackageManifestPdf } from '../../services/ind-lifecycle/ind-document-renderer';
+import { getSubmission, listSequences, listLeaves, getSequence } from '../../services/submission-service/submission-service';
+import { AUTHOR, limiter, ctxOf, body, fail, noAuth, sendPdf } from './shared';
 
 const router = Router();
 
@@ -147,6 +149,46 @@ router.get('/sequence/:seqId/validate', limiter, requireRole(AUTHOR), async (req
   try {
     const leaves = await listLeaves(seqId, ctx);
     res.json(validateSequenceLeaves({ filingType, leaves: leaves.map((l) => ({ sectionCode: l.sectionCode })) }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** Internal: load a sequence + its leaves and build the package manifest. */
+async function manifestForSequence(seqId: number, ctx: { organizationId: number; userId: number }) {
+  const [sequence, leaves] = await Promise.all([getSequence(seqId, ctx), listLeaves(seqId, ctx)]);
+  return buildPackageManifest({
+    sequenceNumber: sequence.sequenceNumber,
+    submissionType: sequence.type,
+    leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, lifecycleOp: l.lifecycleOp, checksum: l.checksum })),
+  });
+}
+
+/** Package manifest (QC review): every leaf grouped by module, with checksums. */
+router.get('/sequence/:seqId/manifest', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const seqId = Number(req.params.seqId);
+  if (!Number.isInteger(seqId) || seqId <= 0) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid sequence id.' } });
+  }
+  try {
+    res.json(await manifestForSequence(seqId, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** Render the package manifest to a PDF QC sheet. */
+router.get('/sequence/:seqId/manifest/pdf', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const seqId = Number(req.params.seqId);
+  if (!Number.isInteger(seqId) || seqId <= 0) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid sequence id.' } });
+  }
+  try {
+    sendPdf(res, 'ind-package-manifest.pdf', await renderPackageManifestPdf(await manifestForSequence(seqId, ctx)));
   } catch (err) {
     fail(res, err);
   }
