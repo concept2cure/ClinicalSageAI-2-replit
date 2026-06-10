@@ -416,3 +416,10 @@ export * from './financial-disclosures';
 // onto the provenance spine. Service: server/services/ha-interactions;
 // migration: migrations/20260610_ha_interactions_commitments.sql.
 export * from './ha-interactions';
+
+// IACUC / animal study governance (C2C-05): animal-use protocols, census,
+// committee review/determinations, amendments, semi-annual facility inspections.
+// Origin node of the preclinical provenance chain (→ Module 4). PHS Policy / AWA
+// / OLAW; USDA pain categories B-E. Service: server/services/iacuc;
+// migration: migrations/20260610_iacuc_animal_governance.sql.
+export * from './iacuc';

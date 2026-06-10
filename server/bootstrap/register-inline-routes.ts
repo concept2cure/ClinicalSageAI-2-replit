@@ -340,6 +340,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount HA Interaction routes:', error);
   }
 
+  // IACUC / animal study governance (PHS Policy / AWA / OLAW; → Module 4).
+  try {
+    const iacucModule = await import('../routes/iacuc');
+    app.use('/api/iacuc', authMiddleware, iacucModule.default);
+    console.info('✅ IACUC routes mounted (/api/iacuc)');
+  } catch (error) {
+    console.error('❌ Failed to mount IACUC routes:', error);
+  }
+
   // C2C study digital twins + simulation (study/protocol design module).
   try {
     const c2cStudyTwinModule = await import('../routes/c2c/study-twin');

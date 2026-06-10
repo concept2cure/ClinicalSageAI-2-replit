@@ -5024,6 +5024,111 @@ registerToolHandler('review_commitment_portfolio', async (input, ctx) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// IACUC / Animal Study Governance (C2C-05). Conversational building shares the
+// same governed/audited path (recordGovernedAction, surface 'ana'). Committee
+// determinations (approve) are done in the review panel, not via AnA.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_iacuc_protocol', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_iacuc_protocol requires tenant + user context.' });
+  const protocolNumber = typeof input.protocol_number === 'string' ? input.protocol_number.trim() : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  const painCategory = typeof input.pain_category === 'string' ? input.pain_category : '';
+  if (!protocolNumber || !title || !['B', 'C', 'D', 'E'].includes(painCategory)) {
+    return JSON.stringify({ error: 'protocol_number, title, and a valid pain_category (B/C/D/E) are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createProtocolTx } = await import('../iacuc/iacuc-service.js');
+  const { recommendReviewType } = await import('../iacuc/iacuc-logic.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createProtocolTx(client, ctx.organizationId, ctx.userId, {
+      protocolNumber, title, painCategory: painCategory as any,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+      threeRsReplacement: typeof input.three_rs_replacement === 'string' ? input.three_rs_replacement : null,
+      threeRsReduction: typeof input.three_rs_reduction === 'string' ? input.three_rs_reduction : null,
+      threeRsRefinement: typeof input.three_rs_refinement === 'string' ? input.three_rs_refinement : null,
+      painJustification: typeof input.pain_justification === 'string' ? input.pain_justification : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `iacuc-protocol:${id}`, reason: fcoiReason(input, 'IACUC protocol opened via AnA'),
+      payload: { painCategory }, domain: 'iacuc', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    const rec = recommendReviewType(painCategory as any);
+    return JSON.stringify({ ok: true, id, recommendedReview: rec, message: `Opened IACUC protocol "${title}" (id ${id}); recommended ${rec.reviewType.replace(/_/g, ' ')}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_iacuc_protocol failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('register_animal_cohort', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'register_animal_cohort requires tenant + user context.' });
+  const protocolId = typeof input.protocol_id === 'number' ? input.protocol_id : NaN;
+  const species = typeof input.species === 'string' ? input.species.trim() : '';
+  const painCategory = typeof input.pain_category === 'string' ? input.pain_category : '';
+  const plannedCount = typeof input.planned_count === 'number' ? Math.round(input.planned_count) : NaN;
+  if (!Number.isInteger(protocolId) || !species || !['B', 'C', 'D', 'E'].includes(painCategory) || !Number.isInteger(plannedCount)) {
+    return JSON.stringify({ error: 'protocol_id, species, planned_count, and a valid pain_category are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addCohortTx } = await import('../iacuc/iacuc-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await addCohortTx(client, ctx.organizationId, ctx.userId, protocolId, {
+      species, plannedCount, painCategory: painCategory as any,
+      strain: typeof input.strain === 'string' ? input.strain : null,
+      housingLocation: typeof input.housing_location === 'string' ? input.housing_location : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `iacuc-protocol:${protocolId}`, reason: fcoiReason(input, 'Animal cohort registered via AnA'),
+      payload: { cohortId: id, species }, domain: 'iacuc', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, cohortId: id, message: `Registered ${plannedCount} ${species} (cohort ${id}) on protocol ${protocolId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `register_animal_cohort failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_iacuc_protocol', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_iacuc_protocol requires tenant context.' });
+  const protocolId = typeof input.protocol_id === 'number' ? input.protocol_id : NaN;
+  if (!Number.isInteger(protocolId)) return JSON.stringify({ error: 'protocol_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { getProtocolCompletenessInput } = await import('../iacuc/iacuc-service.js');
+  const { evaluateProtocolCompleteness, reviewStatus } = await import('../iacuc/iacuc-logic.js');
+  const client = await getPool().connect();
+  try {
+    const inp = await getProtocolCompletenessInput(client, ctx.organizationId, protocolId);
+    const gate = evaluateProtocolCompleteness(inp);
+    const rs = reviewStatus(inp.approvalDate, new Date().toISOString().slice(0, 10));
+    return JSON.stringify({
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, reviewStatus: rs,
+      message: gate.riskLevel === 'high'
+        ? 'Critical IACUC findings (e.g. category-E justification) — resolve before committee review.'
+        : `Protocol passes the deterministic gate (${gate.riskLevel} risk).`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_iacuc_protocol failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
 registerToolHandler('log_study_deviation', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'log_study_deviation requires tenant context.' });

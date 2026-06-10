@@ -214,4 +214,20 @@ export const REPORT_TYPE_SEED: ReportTypeDefinition[] = [
     governanceRequirements: { part11: true, auditTrail: true },
     truthfulnessRules: { allowPartial: true, requireBlockers: true, requireConfidence: true },
   },
+  {
+    // IACUC animal-use protocol register + census (PHS Policy/AWA/OLAW; C2C-05).
+    typeId: 'iacuc.protocol_register',
+    label: 'IACUC Protocol & Animal Census Register',
+    family: 'iacuc_governance',
+    allowedScopes: ['project', 'submission', 'program'],
+    allowedPersonas: ['iacuc_coordinator', 'ra_lead', 'qa'],
+    allowedClientSegments: ['academic', 'biotech', 'pharma'],
+    dataDependencies: ['iacuc_protocols', 'iacuc_animal_cohorts', 'iacuc_reviews', 'iacuc_amendments', 'provenance_links'],
+    artifactDependencies: ['concept2cure_artifacts'],
+    workflowDependencies: ['governance_boundary'],
+    anaModules: ['ana-ri'],
+    exportTemplate: 'iacuc-protocol-register',
+    governanceRequirements: { part11: true, auditTrail: true, region: 'USA_OLAW' },
+    truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true },
+  },
 ];

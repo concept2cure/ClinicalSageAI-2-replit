@@ -3071,6 +3071,57 @@ export const REVIEW_COMMITMENT_PORTFOLIO: AnaTool = {
   },
 };
 
+export const CREATE_IACUC_PROTOCOL: AnaTool = {
+  name: 'create_iacuc_protocol',
+  description:
+    "Open an IACUC animal-use protocol (PHS Policy / Animal Welfare Act / OLAW). pain_category is the USDA category (B breeding, C no pain, D pain relieved, E unrelieved pain — E needs scientific justification). Returns the protocol id and the recommended review pathway. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      protocol_number: { type: 'string' },
+      title: { type: 'string' },
+      pain_category: { type: 'string', enum: ['B', 'C', 'D', 'E'] },
+      submission_id: { type: 'number', description: 'Optional submission this preclinical work feeds (Module 4).' },
+      three_rs_replacement: { type: 'string' },
+      three_rs_reduction: { type: 'string' },
+      three_rs_refinement: { type: 'string' },
+      pain_justification: { type: 'string', description: 'Required for category E.' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['protocol_number', 'title', 'pain_category'],
+  },
+};
+
+export const REGISTER_ANIMAL_COHORT: AnaTool = {
+  name: 'register_animal_cohort',
+  description:
+    "Register an animal cohort (census) on an IACUC protocol: species, strain, planned count, USDA pain category, and housing location. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      protocol_id: { type: 'number' },
+      species: { type: 'string' },
+      strain: { type: 'string' },
+      planned_count: { type: 'number' },
+      pain_category: { type: 'string', enum: ['B', 'C', 'D', 'E'] },
+      housing_location: { type: 'string' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['protocol_id', 'species', 'planned_count', 'pain_category'],
+  },
+};
+
+export const REVIEW_IACUC_PROTOCOL: AnaTool = {
+  name: 'review_iacuc_protocol',
+  description:
+    "Run the deterministic IACUC completeness gate on a protocol (read-only): the 3 Rs, category-D analgesia / category-E justification, animal numbers, plus continuing-review/expiration status. Returns cited findings + risk level. Use to tell the user what is missing before committee review.",
+  input_schema: {
+    type: 'object',
+    properties: { protocol_id: { type: 'number' } },
+    required: ['protocol_id'],
+  },
+};
+
 export const LOG_STUDY_DEVIATION: AnaTool = {
   name: 'log_study_deviation',
   description:
@@ -4516,6 +4567,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CREATE_HA_INTERACTION,
   CREATE_REGULATORY_COMMITMENT,
   REVIEW_COMMITMENT_PORTFOLIO,
+  CREATE_IACUC_PROTOCOL,
+  REGISTER_ANIMAL_COHORT,
+  REVIEW_IACUC_PROTOCOL,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,

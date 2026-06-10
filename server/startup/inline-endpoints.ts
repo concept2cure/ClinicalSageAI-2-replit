@@ -115,6 +115,14 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // IACUC / animal study governance metrics (C2C-05).
+      try {
+        const { renderIacucMetrics } = await import('../services/iacuc-metrics.js');
+        lines.push(...renderIacucMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RAG retrieval metrics — recorded at the ragRouter chokepoint.
       try {
         const { renderRagMetrics } = await import('../services/rag-runtime-metrics.js');
