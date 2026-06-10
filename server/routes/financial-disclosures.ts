@@ -29,6 +29,12 @@ import {
   listDisclosures,
 } from '../services/financial-disclosures/fcoi-service';
 import { validateDisclosureCompleteness } from '../services/financial-disclosures/fcoi-logic';
+import {
+  recordFcoiDisclosureCreated,
+  recordFcoiCertification,
+  recordFcoiSignatureInvalidation,
+  recordFcoiReview,
+} from '../services/fcoi-metrics';
 
 const router = Router();
 
@@ -130,6 +136,7 @@ router.post('/disclosures', async (req, res) => {
       reason: parsed.data.reason, payload: { investigatorId: parsed.data.investigatorId, formType }, domain: 'fcoi',
     });
     await client.query('COMMIT');
+    recordFcoiDisclosureCreated(formType as 'FDA_3454' | 'FDA_3455');
     res.status(201).json({ id, formType, ...gov });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
@@ -195,6 +202,7 @@ router.patch('/disclosures/:id', async (req, res) => {
       reason: parsed.data.reason, payload: { formType, signatureInvalidated }, domain: 'fcoi',
     });
     await client.query('COMMIT');
+    if (signatureInvalidated) recordFcoiSignatureInvalidation();
     res.json({ id, formType, signatureInvalidated, ...gov });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
@@ -301,6 +309,7 @@ router.post('/disclosures/:id/certify', async (req, res) => {
       reason: parsed.data.reason, payload: { contentHash, provenanceLinkId, meaning: parsed.data.meaning ?? 'Certified' }, domain: 'fcoi',
     });
     await client.query('COMMIT');
+    recordFcoiCertification();
     res.json({ id, status: 'signed', contentHash, provenanceLinkId, ...gov });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
@@ -352,6 +361,7 @@ router.post('/disclosures/:id/ai-review', async (req, res) => {
     } catch {
       // Gateway unavailable (e.g. no provider configured): return the deterministic floor.
     }
+    recordFcoiReview(gate.riskLevel);
     res.json({ riskLevel: gate.riskLevel, findings: gate.findings, aiFindings, recommendations: aiRecommendations });
   } catch (err) {
     fail(res, err);
