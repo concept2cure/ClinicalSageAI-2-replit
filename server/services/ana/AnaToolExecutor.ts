@@ -50,6 +50,7 @@ import { composeSafetyNarrative } from './safety-narrative.js';
 import { screenPromotionalLanguage } from './promotional-screening.js';
 import { narrateStatisticalResult, type AnalysisType, type EffectMeasure } from './statistical-narrator.js';
 import { composeValueDossierGuidance, listValueDossierCatalog } from './value-dossier.js';
+import { adviseRegulatoryPathway, listRegulatoryPathways } from './regulatory-pathway.js';
 import { initToolTelemetryPersistence } from './tool-telemetry-persistence.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 
@@ -496,6 +497,24 @@ registerToolHandler('value_dossier_guidance', async (input) => {
   return JSON.stringify({
     source: 'AnA Market-Access Knowledge',
     ...composeValueDossierGuidance({ deliverable, htaBody }),
+  });
+});
+
+// Regulatory-pathway advisor — drug/biologic/device/IVD routes (FDA & EU).
+registerToolHandler('advise_regulatory_pathway', async (input) => {
+  const pathway = typeof input.pathway === 'string' ? input.pathway : undefined;
+  const domain = typeof input.domain === 'string' ? input.domain : undefined;
+  const jurisdiction = typeof input.jurisdiction === 'string' ? input.jurisdiction : undefined;
+  if (!pathway && !domain && !jurisdiction) {
+    return JSON.stringify({
+      source: 'AnA Regulatory-Strategy Advisor',
+      hint: 'Specify a pathway, and/or a domain (drug|biologic|device|ivd) and jurisdiction (us|eu).',
+      pathways: listRegulatoryPathways(),
+    });
+  }
+  return JSON.stringify({
+    source: 'AnA Regulatory-Strategy Advisor',
+    ...adviseRegulatoryPathway({ pathway, domain, jurisdiction }),
   });
 });
 

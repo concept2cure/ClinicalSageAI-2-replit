@@ -193,6 +193,27 @@ export const VALUE_DOSSIER_GUIDANCE: AnaTool = {
   },
 };
 
+export const ADVISE_REGULATORY_PATHWAY: AnaTool = {
+  name: 'advise_regulatory_pathway',
+  description:
+    'Regulatory-strategy advisor: returns the authority, statutory basis, evidentiary expectations, key ' +
+    'requirements and common pitfalls of a marketing-authorization route — or, given a product domain ' +
+    'and/or jurisdiction, a ranked candidate set. Covers US drug/biologic routes (505(b)(1), 505(b)(2), ' +
+    'ANDA, BLA 351(a)/351(k) biosimilar), US device/IVD routes (510(k), PMA, De Novo), and EU routes ' +
+    '(centralised MA, MDR, IVDR). Advisory only — not a substitute for an agency pre-submission meeting.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      pathway: {
+        type: 'string',
+        description: 'Specific pathway id/alias (e.g. 505b2, anda, 510k, pma, de_novo, biosimilar, mdr, ivdr).',
+      },
+      domain: { type: 'string', enum: ['drug', 'biologic', 'device', 'ivd'] },
+      jurisdiction: { type: 'string', enum: ['us', 'eu'] },
+    },
+  },
+};
+
 export const SCREEN_PROMOTIONAL_LANGUAGE: AnaTool = {
   name: 'screen_promotional_language',
   description:
@@ -4405,6 +4426,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   DRAFT_SAFETY_NARRATIVE,
   NARRATE_STATISTICAL_RESULT,
   VALUE_DOSSIER_GUIDANCE,
+  ADVISE_REGULATORY_PATHWAY,
   SCREEN_PROMOTIONAL_LANGUAGE,
   MEDICAL_WRITING_GUIDANCE,
   MEDICAL_WRITING_REVIEW,
