@@ -35,8 +35,15 @@ import {
   classifyResult,
   getToolReliability,
   getUnhealthyTools,
+  isTelemetryPersistenceEnabled,
 } from './tool-telemetry.js';
+import { initToolTelemetryPersistence } from './tool-telemetry-persistence.js';
 import fdaFaersClient from '../../fda_faers_client.js';
+
+// Opt-in (ANA_TELEMETRY_PERSIST_PATH): hydrate learned tool reliability on boot
+// so it survives restarts. No-op when the env var is unset — default behavior
+// (in-memory, process-lifetime) is unchanged.
+void initToolTelemetryPersistence().catch(() => {});
 import type {
   GatewayRequest,
   GatewayMessage,
@@ -441,6 +448,8 @@ registerToolHandler('describe_capabilities', async (_input, ctx) => {
         toolsUsedThisSession: reliability.length,
         reliability,
         unhealthy,
+        // When persistence is enabled, reliability is learned across restarts.
+        learningPersisted: isTelemetryPersistenceEnabled(),
       },
       guidance:
         'Only offer or attempt tools whose integration is configured. For configured:false entries, ' +

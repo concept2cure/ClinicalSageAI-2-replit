@@ -104,6 +104,66 @@ export function resetToolTelemetry(): void {
   stats.clear();
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Persistence (opt-in) — lets learned reliability survive restarts.
+//
+// The store is pluggable so this module stays fs/DB-free and unit-testable; a
+// reference file backend + boot wiring live in tool-telemetry-persistence.ts.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface TelemetrySnapshot {
+  version: 1;
+  savedAt: string;
+  tools: ToolReliability[];
+}
+
+export interface TelemetryBackend {
+  load(): Promise<TelemetrySnapshot | null>;
+  save(snapshot: TelemetrySnapshot): Promise<void>;
+}
+
+let backend: TelemetryBackend | null = null;
+
+/** Install (or clear, with null) the persistence backend. */
+export function setTelemetryBackend(b: TelemetryBackend | null): void {
+  backend = b;
+}
+
+export function isTelemetryPersistenceEnabled(): boolean {
+  return backend !== null;
+}
+
+/** Current state as a serializable snapshot. */
+export function snapshotTelemetry(): TelemetrySnapshot {
+  return { version: 1, savedAt: new Date().toISOString(), tools: getToolReliability() };
+}
+
+/**
+ * Load a prior snapshot and seed tools not already tracked this process. Live
+ * in-process counts always win (we never clobber what's happening right now);
+ * persistence only re-establishes history for tools not yet seen since boot.
+ * Returns the number of tools seeded.
+ */
+export async function hydrateTelemetry(): Promise<number> {
+  if (!backend) return 0;
+  const snap = await backend.load();
+  if (!snap || !Array.isArray(snap.tools)) return 0;
+  let seeded = 0;
+  for (const t of snap.tools) {
+    if (t && t.tool && !stats.has(t.tool)) {
+      stats.set(t.tool, { ...t });
+      seeded++;
+    }
+  }
+  return seeded;
+}
+
+/** Persist the current snapshot (no-op when no backend is installed). */
+export async function persistTelemetry(): Promise<void> {
+  if (!backend) return;
+  await backend.save(snapshotTelemetry());
+}
+
 /**
  * Classify a handler's string result: a top-level truthy `error` field means
  * the integration degraded (handlers never throw for graceful fallbacks).

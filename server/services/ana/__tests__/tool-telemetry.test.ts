@@ -5,7 +5,7 @@
  * wrapper seam in AnaToolExecutor: every registered handler is instrumented, so
  * outcomes recorded here prove coverage for all dispatch paths.
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   recordToolOutcome,
   recordContractViolation,
@@ -13,6 +13,13 @@ import {
   getToolReliability,
   getUnhealthyTools,
   resetToolTelemetry,
+  setTelemetryBackend,
+  hydrateTelemetry,
+  persistTelemetry,
+  snapshotTelemetry,
+  isTelemetryPersistenceEnabled,
+  type TelemetryBackend,
+  type TelemetrySnapshot,
 } from '../tool-telemetry';
 import { registerToolHandler, getToolHandler } from '../AnaToolExecutor.js';
 
@@ -96,5 +103,68 @@ describe('tool-telemetry (registration wrapper)', () => {
     const e = getToolReliability().find(t => t.tool === 'search_crm')!;
     expect(e.contractViolations).toBe(1);
     expect(e.successes).toBe(2); // report-only: both calls still executed
+  });
+});
+
+describe('tool-telemetry (persistence)', () => {
+  beforeEach(() => resetToolTelemetry());
+  afterEach(() => setTelemetryBackend(null));
+
+  function fakeBackend(initial: TelemetrySnapshot | null = null): TelemetryBackend & { saved: TelemetrySnapshot[] } {
+    const saved: TelemetrySnapshot[] = [];
+    return {
+      saved,
+      load: vi.fn().mockResolvedValue(initial),
+      save: vi.fn().mockImplementation(async (s: TelemetrySnapshot) => {
+        saved.push(s);
+      }),
+    };
+  }
+
+  it('no-ops with no backend installed', async () => {
+    expect(isTelemetryPersistenceEnabled()).toBe(false);
+    await persistTelemetry(); // must not throw
+    expect(await hydrateTelemetry()).toBe(0);
+  });
+
+  it('persistTelemetry saves the current snapshot via the backend', async () => {
+    const be = fakeBackend();
+    setTelemetryBackend(be);
+    expect(isTelemetryPersistenceEnabled()).toBe(true);
+    recordToolOutcome('search_literature', 'success', 120);
+    await persistTelemetry();
+
+    expect(be.save).toHaveBeenCalledTimes(1);
+    expect(be.saved[0].version).toBe(1);
+    expect(be.saved[0].tools.find(t => t.tool === 'search_literature')?.successes).toBe(1);
+  });
+
+  it('hydrateTelemetry seeds prior tools but never clobbers live counts', async () => {
+    // Live: one call this session for search_crm.
+    recordToolOutcome('search_crm', 'success', 50);
+    const prior: TelemetrySnapshot = {
+      version: 1,
+      savedAt: '2026-01-01T00:00:00Z',
+      tools: [
+        { tool: 'search_crm', calls: 99, successes: 99, degraded: 0, failures: 0, consecutiveFailures: 0, avgLatencyMs: 10, lastError: null, lastUsedAt: 'old', contractViolations: 0 },
+        { tool: 'search_drug_labels', calls: 5, successes: 4, degraded: 1, failures: 0, consecutiveFailures: 0, avgLatencyMs: 200, lastError: 'x', lastUsedAt: 'old', contractViolations: 0 },
+      ],
+    };
+    setTelemetryBackend(fakeBackend(prior));
+
+    const seeded = await hydrateTelemetry();
+    expect(seeded).toBe(1); // only search_drug_labels seeded; search_crm already live
+
+    const byTool = new Map(getToolReliability().map(t => [t.tool, t]));
+    expect(byTool.get('search_crm')?.calls).toBe(1); // live count preserved, NOT 99
+    expect(byTool.get('search_drug_labels')?.calls).toBe(5); // history restored
+  });
+
+  it('snapshotTelemetry is versioned and round-trippable', () => {
+    recordToolOutcome('t', 'failure', 1, 'boom');
+    const snap = snapshotTelemetry();
+    expect(snap.version).toBe(1);
+    expect(snap.savedAt).toBeTruthy();
+    expect(snap.tools[0].tool).toBe('t');
   });
 });
