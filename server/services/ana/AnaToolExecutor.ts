@@ -61,6 +61,9 @@ import { advisePharmacovigilance, listPvDeliverables } from './pharmacovigilance
 import { adviseStudyDesign, listStudyDesigns, type SampleSizeInput, type EndpointFamily, type DesignGoal } from './study-design.js';
 import { adviseLabelingStructure, listLabelTemplates } from './labeling-structure.js';
 import { adviseMedicalInformation, listMedInfoResponseTypes } from './medical-information.js';
+import { adviseReportingGuideline, listReportingGuidelines } from './reporting-guidelines.js';
+import { adviseDataIntegrity, listDataIntegrity } from './data-integrity.js';
+import { adviseRweDesign, listRweDesigns } from './rwe-design.js';
 import { initToolTelemetryPersistence } from './tool-telemetry-persistence.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 
@@ -508,6 +511,35 @@ registerToolHandler('value_dossier_guidance', async (input) => {
     source: 'AnA Market-Access Knowledge',
     ...composeValueDossierGuidance({ deliverable, htaBody }),
   });
+});
+
+// Reporting-guideline advisor — EQUATOR network (CONSORT/SPIRIT/STROBE/...).
+registerToolHandler('advise_reporting_guideline', async (input) => {
+  const guideline = typeof input.guideline === 'string' ? input.guideline : undefined;
+  const studyType = typeof input.study_type === 'string' ? input.study_type : undefined;
+  if (!guideline && !studyType) {
+    return JSON.stringify({ source: 'AnA Reporting-Guideline Advisor', guidelines: listReportingGuidelines(), ...adviseReportingGuideline({}) });
+  }
+  return JSON.stringify({ source: 'AnA Reporting-Guideline Advisor', ...adviseReportingGuideline({ guideline, studyType }) });
+});
+
+// Data-integrity / 21 CFR Part 11 advisor — ALCOA+ + Part 11 controls.
+registerToolHandler('advise_data_integrity', async (input) => {
+  const requirement = typeof input.requirement === 'string' ? input.requirement : undefined;
+  const description = typeof input.description === 'string' ? input.description : undefined;
+  if (!requirement && !description) {
+    return JSON.stringify({ source: 'AnA Data-Integrity Advisor', catalog: listDataIntegrity(), ...adviseDataIntegrity({}) });
+  }
+  return JSON.stringify({ source: 'AnA Data-Integrity Advisor', ...adviseDataIntegrity({ requirement, description }) });
+});
+
+// Real-world-evidence study-design advisor.
+registerToolHandler('advise_rwe_design', async (input) => {
+  const design = typeof input.design === 'string' ? input.design : undefined;
+  if (!design) {
+    return JSON.stringify({ source: 'AnA RWE-Design Advisor', catalog: listRweDesigns(), ...adviseRweDesign({}) });
+  }
+  return JSON.stringify({ source: 'AnA RWE-Design Advisor', ...adviseRweDesign({ design }) });
 });
 
 // Study-design & sample-size advisor.

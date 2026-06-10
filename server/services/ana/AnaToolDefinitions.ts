@@ -191,6 +191,54 @@ export const ADVISE_MEDICAL_INFORMATION: AnaTool = {
   },
 };
 
+export const ADVISE_REPORTING_GUIDELINE: AnaTool = {
+  name: 'advise_reporting_guideline',
+  description:
+    'Reporting-guideline advisor (EQUATOR network): selects the right guideline for a study type and ' +
+    'returns its essential checklist items + common pitfalls — CONSORT (RCTs), SPIRIT (protocols), ' +
+    'STROBE (observational), PRISMA (systematic reviews/meta-analyses), STARD (diagnostic accuracy), ' +
+    'ARRIVE (animal), CARE (case reports). Use when preparing/QC-ing a manuscript or protocol.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      guideline: { type: 'string', description: 'consort | spirit | strobe | prisma | stard | arrive | care.' },
+      study_type: { type: 'string', description: 'Free-text study type to auto-select the guideline.' },
+    },
+  },
+};
+
+export const ADVISE_DATA_INTEGRITY: AnaTool = {
+  name: 'advise_data_integrity',
+  description:
+    'Data-integrity / 21 CFR Part 11 advisor: explains the ALCOA+ principles and the core Part 11 / EU ' +
+    'Annex 11 control areas (audit trails, access control, e-signatures, CSV/GAMP 5, copies & retention), ' +
+    'or runs a cue-based ALCOA+ gap check on a free-text system/process description with a coverage score. ' +
+    'Use when QC-ing a GxP computerized system or process. Advisory — formal CSV/QA is authoritative.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      requirement: { type: 'string', description: 'audit_trail | access_control | esignature | validation | copies_retention.' },
+      description: { type: 'string', description: 'System/process description to gap-check against ALCOA+.' },
+    },
+  },
+};
+
+export const ADVISE_RWE_DESIGN: AnaTool = {
+  name: 'advise_rwe_design',
+  description:
+    'Real-world-evidence (RWE) study-design advisor: explains retrospective cohort, case-control, ' +
+    'self-controlled (SCCS/case-crossover), target-trial emulation and pragmatic trials (strengths/' +
+    'weaknesses), common real-world data sources, and the FDA RWE-framework / causal-inference ' +
+    'guardrails (fit-for-purpose data, time-zero, confounding control, pre-specification). Use when ' +
+    'planning or QC-ing an RWE study.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      design: { type: 'string', description: 'retrospective_cohort | case_control | self_controlled | target_trial_emulation | pragmatic_trial.' },
+    },
+  },
+};
+
 export const NARRATE_STATISTICAL_RESULT: AnaTool = {
   name: 'narrate_statistical_result',
   description:
@@ -4825,6 +4873,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ADVISE_STUDY_DESIGN,
   ADVISE_LABELING_STRUCTURE,
   ADVISE_MEDICAL_INFORMATION,
+  ADVISE_REPORTING_GUIDELINE,
+  ADVISE_DATA_INTEGRITY,
+  ADVISE_RWE_DESIGN,
   SCREEN_PROMOTIONAL_LANGUAGE,
   MEDICAL_WRITING_GUIDANCE,
   MEDICAL_WRITING_REVIEW,
