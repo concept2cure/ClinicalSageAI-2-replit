@@ -49,6 +49,7 @@ import { lookupIcd10 } from '../integrations/icd10-client.js';
 import { composeSafetyNarrative } from './safety-narrative.js';
 import { screenPromotionalLanguage } from './promotional-screening.js';
 import { narrateStatisticalResult, type AnalysisType, type EffectMeasure } from './statistical-narrator.js';
+import { composeValueDossierGuidance, listValueDossierCatalog } from './value-dossier.js';
 import { initToolTelemetryPersistence } from './tool-telemetry-persistence.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 
@@ -479,6 +480,23 @@ registerToolHandler('narrate_statistical_result', async (input) => {
     multiplicityControlled: typeof input.multiplicity_controlled === 'boolean' ? input.multiplicity_controlled : undefined,
   });
   return JSON.stringify({ source: 'AnA Statistical Narrator', ...result });
+});
+
+// Market-access / HEOR value-dossier guidance.
+registerToolHandler('value_dossier_guidance', async (input) => {
+  const deliverable = typeof input.deliverable === 'string' ? input.deliverable : undefined;
+  const htaBody = typeof input.hta_body === 'string' ? input.hta_body : undefined;
+  if (!deliverable && !htaBody) {
+    return JSON.stringify({
+      source: 'AnA Market-Access Knowledge',
+      hint: 'Specify a deliverable and/or hta_body.',
+      catalog: listValueDossierCatalog(),
+    });
+  }
+  return JSON.stringify({
+    source: 'AnA Market-Access Knowledge',
+    ...composeValueDossierGuidance({ deliverable, htaBody }),
+  });
 });
 
 // Promotional-language screen — FDA OPDP / EU advertising claims QC.

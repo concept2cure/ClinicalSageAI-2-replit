@@ -168,6 +168,31 @@ export const NARRATE_STATISTICAL_RESULT: AnaTool = {
   },
 };
 
+export const VALUE_DOSSIER_GUIDANCE: AnaTool = {
+  name: 'value_dossier_guidance',
+  description:
+    'Market-access / HEOR guidance: returns the framework, structure, key requirements and common ' +
+    'pitfalls for a value deliverable (AMCP formulary dossier, NICE/HTA submission, budget-impact ' +
+    'model, global value dossier, value-message framework) and, optionally, the decision basis and ' +
+    'conventions for a specific HTA body (NICE, ICER, G-BA/IQWiG, HAS, CADTH, PBAC). Use when planning ' +
+    'or QC-ing payer/HTA deliverables so they follow the right comparator/economic conventions per market.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      deliverable: {
+        type: 'string',
+        description:
+          'Value deliverable: amcp_dossier, nice_submission, hta_submission, budget_impact_model, ' +
+          'global_value_dossier, value_message_framework (aliases accepted).',
+      },
+      hta_body: {
+        type: 'string',
+        description: 'Optional HTA body: nice, icer, gba, has, cadth, pbac (country names accepted).',
+      },
+    },
+  },
+};
+
 export const SCREEN_PROMOTIONAL_LANGUAGE: AnaTool = {
   name: 'screen_promotional_language',
   description:
@@ -4352,6 +4377,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   LOOKUP_ICD10_CODE,
   DRAFT_SAFETY_NARRATIVE,
   NARRATE_STATISTICAL_RESULT,
+  VALUE_DOSSIER_GUIDANCE,
   SCREEN_PROMOTIONAL_LANGUAGE,
   MEDICAL_WRITING_GUIDANCE,
   MEDICAL_WRITING_REVIEW,
