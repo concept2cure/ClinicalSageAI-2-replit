@@ -7,7 +7,20 @@
 
 export { ocrService } from './ocrService';
 export type { OcrCapabilities, OcrPdfResult, OcrPdfTextResult } from './ocrService';
-export { rasterizePdf, type RasterizeOptions } from './pdfRasterizer';
+export {
+  rasterizePdf,
+  rasterizePdfPages,
+  type RasterizeOptions,
+  type RasterizeRegion,
+  type RasterizedPage,
+} from './pdfRasterizer';
+export {
+  inspectPdf,
+  extractPdfPagesText,
+  type PdfInventory,
+  type PdfOutlineEntry,
+  type PdfPageTextStat,
+} from './pdfInspector';
 export {
   extractDocumentText,
   type ExtractedDocumentText,

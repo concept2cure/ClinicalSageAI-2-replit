@@ -15,7 +15,7 @@
 import { spawnSync } from 'node:child_process';
 import { OcrMyPdfClient } from '../../integrations/ocrmypdf/client';
 import { createScopedLogger } from '../../utils/logger';
-import { rasterizePdf, type RasterizeOptions } from './pdfRasterizer';
+import { rasterizePdfPages, type RasterizeOptions } from './pdfRasterizer';
 import {
   tesseractOcrService,
   type OcrImageOptions,
@@ -64,6 +64,8 @@ export interface OcrPdfTextResult {
   text: string;
   /** Per-page recognised text, in order. */
   pages: string[];
+  /** Per-page detail with source page numbers and confidences. */
+  pageDetails: { page: number; text: string; confidence: number }[];
   /** Mean confidence across pages, 0–100. */
   confidence: number;
   engine: 'pdfjs+tesseract.js';
@@ -114,25 +116,33 @@ class OcrService {
   /**
    * Extract text from a (possibly scanned) PDF with no system binary: rasterise
    * each page with pdfjs and OCR it with the WASM engine. Works in every runtime.
+   * Supports targeted runs — page list/range and a fractional page region — so
+   * huge scanned documents can be swept selectively (see RasterizeOptions).
    */
   async ocrPdfToText(
     data: Buffer | Uint8Array,
     options: (OcrImageOptions & RasterizeOptions) | undefined = undefined,
   ): Promise<OcrPdfTextResult> {
     const startedAt = Date.now();
-    const images = await rasterizePdf(data, {
+    const images = await rasterizePdfPages(data, {
       dpi: options?.dpi,
       maxPages: options?.maxPages,
+      firstPage: options?.firstPage,
+      lastPage: options?.lastPage,
+      pages: options?.pages,
+      region: options?.region,
     });
 
     const pages: string[] = [];
+    const pageDetails: OcrPdfTextResult['pageDetails'] = [];
     const confidences: number[] = [];
-    for (const png of images) {
+    for (const { page, png } of images) {
       const result = await tesseractOcrService.recognizeImage(
         png,
         options?.languages ? { languages: options.languages } : undefined,
       );
       pages.push(result.text);
+      pageDetails.push({ page, text: result.text, confidence: result.confidence });
       confidences.push(result.confidence);
     }
 
@@ -145,6 +155,7 @@ class OcrService {
     return {
       text: pages.join('\n\n').trim(),
       pages,
+      pageDetails,
       confidence,
       engine: 'pdfjs+tesseract.js',
       durationMs,
