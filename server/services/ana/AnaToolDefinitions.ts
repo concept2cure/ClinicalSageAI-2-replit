@@ -124,6 +124,22 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   },
 };
 
+export const LOOKUP_ICD10_CODE: AnaTool = {
+  name: 'lookup_icd10_code',
+  description:
+    'Map a diagnosis / indication / condition term to billable ICD-10-CM codes (NLM Clinical Tables). ' +
+    'Use to code an indication for labeling, claims/coverage, or case reporting, and to confirm exact ' +
+    'code descriptions. Returns matching codes with their official descriptions.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      term: { type: 'string', description: 'Diagnosis/condition/indication to code, e.g. "type 2 diabetes".' },
+      max_results: { type: 'number', description: 'Maximum codes to return (default 10, max 25).' },
+    },
+    required: ['term'],
+  },
+};
+
 export const MEDICAL_WRITING_GUIDANCE: AnaTool = {
   name: 'medical_writing_guidance',
   description:
@@ -4101,6 +4117,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_DRUG_LABELS,
   SEARCH_DRUG_APPROVALS,
   ASSESS_REGULATORY_LANDSCAPE,
+  LOOKUP_ICD10_CODE,
   MEDICAL_WRITING_GUIDANCE,
   MEDICAL_WRITING_REVIEW,
   ASSESS_READABILITY,

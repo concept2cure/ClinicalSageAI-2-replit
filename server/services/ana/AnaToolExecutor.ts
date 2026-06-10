@@ -45,6 +45,7 @@ import {
   buildAbbreviationList,
   type ReadabilityAudience,
 } from './medical-writing-qc.js';
+import { lookupIcd10 } from '../integrations/icd10-client.js';
 import { initToolTelemetryPersistence } from './tool-telemetry-persistence.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 
@@ -443,6 +444,23 @@ registerToolHandler('medical_writing_guidance', async (input) => {
       'Apply this structure and these conventions, then ground every clinical claim with the evidence ' +
       'search tools and cite per the citation protocol.',
   });
+});
+
+// ICD-10-CM coding — map a diagnosis/indication term to billable codes.
+registerToolHandler('lookup_icd10_code', async (input) => {
+  const term = typeof input.term === 'string' ? input.term : '';
+  if (!term.trim()) return JSON.stringify({ error: 'lookup_icd10_code requires a term.' });
+  const maxResults = Math.min((input.max_results as number) || 10, 25);
+  try {
+    return JSON.stringify(await lookupIcd10(term, maxResults));
+  } catch (e) {
+    return JSON.stringify({
+      source: 'NLM ICD-10-CM (Clinical Tables)',
+      query: term,
+      error: e instanceof Error ? e.message : 'ICD-10 lookup failed',
+      codes: [],
+    });
+  }
 });
 
 // Readability QC — Flesch metrics vs the target audience reading level.
