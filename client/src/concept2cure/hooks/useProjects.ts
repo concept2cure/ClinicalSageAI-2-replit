@@ -18,6 +18,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Project, Conversation, SubmissionType, ProjectOwnership } from '../types';
 import { queryKeys } from './queryKeys';
 import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 /** Storage key for localStorage fallback */
 const STORAGE_KEY = 'concept2cure_projects';
@@ -323,6 +324,7 @@ async function fetchProjectTeamMembersAPI(projectId: string): Promise<ProjectTea
  */
 export function useProjects() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   /**
    * Fetches all projects with API-first approach
@@ -399,7 +401,16 @@ export function useProjects() {
       saveStoredProjects(projects);
       return newProject;
     },
-    onSuccess: () => {
+    onError: error => {
+      toast({
+        title: 'Failed to create project',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      });
+    },
+    onSettled: () => {
+      // Invalidate on settle (not just success) so a failed API write that
+      // partially landed server-side is reconciled on the next fetch.
       queryClient.invalidateQueries({ queryKey: [...queryKeys.projects.all] });
     },
   });

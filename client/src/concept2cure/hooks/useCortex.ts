@@ -275,7 +275,7 @@ export function useCortexChat(options: UseCortexChatOptions = {}): UseCortexChat
         },
       });
     },
-    [threadId, options, queryClient, messages.length, projectContext]
+    [threadId, options, queryClient, messages.length, projectContext, isStreaming]
   );
 
   const cancelStream = useCallback(() => {
