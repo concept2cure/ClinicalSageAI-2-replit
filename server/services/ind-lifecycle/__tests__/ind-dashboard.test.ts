@@ -73,6 +73,19 @@ describe('buildIndDashboard', () => {
     expect(d.headline.blockerCount).toBe(4);
   });
 
+  it('derives prioritized action items and surfaces the critical count', () => {
+    const d = buildIndDashboard({
+      sequenceSummary: summary,
+      readiness: readyReport(false, 1),
+      clock: clock(true, false),
+      overdueSafetyReports: 1,
+    });
+    // hold + overdue safety = 2 critical; the readiness blocker is high.
+    expect(d.headline.criticalActions).toBe(2);
+    expect(d.actionItems.items[0].priority).toBe('critical');
+    expect(d.actionItems.total).toBeGreaterThanOrEqual(3);
+  });
+
   it('a clean submission has zero blockers', () => {
     const clean: SequenceSummary = { ...summary, validationFailures: 0 };
     const d = buildIndDashboard({
