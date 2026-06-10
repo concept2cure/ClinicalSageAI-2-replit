@@ -39,6 +39,7 @@ import {
   isTelemetryPersistenceEnabled,
 } from './tool-telemetry.js';
 import { composeMedicalWritingGuidance, listMedicalWritingCatalog } from './medical-writing.js';
+import { reviewMedicalWriting } from './medical-writing-review.js';
 import { initToolTelemetryPersistence } from './tool-telemetry-persistence.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 
@@ -437,6 +438,20 @@ registerToolHandler('medical_writing_guidance', async (input) => {
       'Apply this structure and these conventions, then ground every clinical claim with the evidence ' +
       'search tools and cite per the citation protocol.',
   });
+});
+
+// Medical Writing Review — standards-conformance QC of a draft (or pre-draft).
+registerToolHandler('medical_writing_review', async (input) => {
+  const documentType = typeof input.document_type === 'string' ? input.document_type : '';
+  if (!documentType.trim()) {
+    return JSON.stringify({
+      error: 'medical_writing_review requires document_type.',
+      catalog: listMedicalWritingCatalog(),
+    });
+  }
+  const draftText = typeof input.draft_text === 'string' ? input.draft_text : undefined;
+  const review = reviewMedicalWriting(documentType, draftText);
+  return JSON.stringify({ source: 'AnA Medical-Writing QC', ...review });
 });
 
 // Describe Capabilities — AnA's deterministic self-knowledge: registered tools

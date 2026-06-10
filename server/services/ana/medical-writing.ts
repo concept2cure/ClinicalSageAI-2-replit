@@ -417,6 +417,11 @@ export interface MedicalWritingGuidance {
   availableDocumentTypes?: string[];
 }
 
+/** Resolve a document-type standard by id/alias/label (null if unknown). */
+export function getDocumentTypeStandard(key: string | undefined): DocumentTypeStandard | null {
+  return findBy(DOCUMENT_TYPES, key) ?? null;
+}
+
 /** List the supported knowledge keys (for discovery / the tool schema). */
 export function listMedicalWritingCatalog() {
   return {

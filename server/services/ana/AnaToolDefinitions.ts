@@ -164,6 +164,29 @@ export const MEDICAL_WRITING_GUIDANCE: AnaTool = {
   },
 };
 
+export const MEDICAL_WRITING_REVIEW: AnaTool = {
+  name: 'medical_writing_review',
+  description:
+    "Self-review a draft (or pre-draft) against a document type's governing standard — checks section " +
+    'coverage vs the required structure (ICH E3/M4E, EU MDR/IVDR, ICMJE, …) and returns a conformance ' +
+    'checklist (structure, key requirements, pitfalls) plus a readiness verdict. Use before handing ' +
+    'off or finalizing any regulatory/scientific document to QC it like an expert medical writer.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_type: {
+        type: 'string',
+        description: 'Document type to review against, e.g. csr, protocol, cer, clinical_summary, manuscript.',
+      },
+      draft_text: {
+        type: 'string',
+        description: 'Optional draft text — when provided, section coverage is assessed against it.',
+      },
+    },
+    required: ['document_type'],
+  },
+};
+
 export const DESCRIBE_CAPABILITIES: AnaTool = {
   name: 'describe_capabilities',
   description:
@@ -4042,6 +4065,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_DRUG_APPROVALS,
   ASSESS_REGULATORY_LANDSCAPE,
   MEDICAL_WRITING_GUIDANCE,
+  MEDICAL_WRITING_REVIEW,
   DESCRIBE_CAPABILITIES,
   PROJECT_KNOWLEDGE_SEARCH,
   SIMULATE_STUDY_DESIGN,
