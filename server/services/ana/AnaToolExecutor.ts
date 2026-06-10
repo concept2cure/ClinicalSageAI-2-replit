@@ -47,6 +47,7 @@ import {
 } from './medical-writing-qc.js';
 import { lookupIcd10 } from '../integrations/icd10-client.js';
 import { composeSafetyNarrative } from './safety-narrative.js';
+import { screenPromotionalLanguage } from './promotional-screening.js';
 import { initToolTelemetryPersistence } from './tool-telemetry-persistence.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 
@@ -445,6 +446,13 @@ registerToolHandler('medical_writing_guidance', async (input) => {
       'Apply this structure and these conventions, then ground every clinical claim with the evidence ' +
       'search tools and cite per the citation protocol.',
   });
+});
+
+// Promotional-language screen — FDA OPDP / EU advertising claims QC.
+registerToolHandler('screen_promotional_language', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) return JSON.stringify({ error: 'screen_promotional_language requires non-empty text.' });
+  return JSON.stringify({ source: 'AnA Promotional-Claims Screen', ...screenPromotionalLanguage(text) });
 });
 
 // Safety narrative — ICH E3 §16 patient narrative from structured case facts.

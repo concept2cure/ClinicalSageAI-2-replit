@@ -124,6 +124,23 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   },
 };
 
+export const SCREEN_PROMOTIONAL_LANGUAGE: AnaTool = {
+  name: 'screen_promotional_language',
+  description:
+    'Screen text for promotional / non-compliant claim language (FDA OPDP & EU advertising risk) — ' +
+    'superlatives/superiority, absolutes/guarantees, unqualified safety claims, causal/curative ' +
+    'overreach, and unsupported comparatives — returning each flagged phrase with its category, ' +
+    'severity, context, and a remediation suggestion. Run on any externally-facing or regulatory ' +
+    'text before release. (A QC aid, not a substitute for regulatory/legal review.)',
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: { type: 'string', description: 'The text to screen for claims/promotional language.' },
+    },
+    required: ['text'],
+  },
+};
+
 export const DRAFT_SAFETY_NARRATIVE: AnaTool = {
   name: 'draft_safety_narrative',
   description:
@@ -4164,6 +4181,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ASSESS_REGULATORY_LANDSCAPE,
   LOOKUP_ICD10_CODE,
   DRAFT_SAFETY_NARRATIVE,
+  SCREEN_PROMOTIONAL_LANGUAGE,
   MEDICAL_WRITING_GUIDANCE,
   MEDICAL_WRITING_REVIEW,
   ASSESS_READABILITY,
