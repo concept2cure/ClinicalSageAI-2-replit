@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-10T13:02:50.538Z",
+  "generatedAt": "2026-06-10T13:49:20.244Z",
   "git": {
-    "sha": "87a01e07c6161584bd19493352e4919514e42363",
+    "sha": "5e0176575698b1ebf6e9cbb7f5a133d1290e2c1d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -11,7 +11,7 @@
   "summary": {
     "duplicateBasenames": 198,
     "largeFilesByBytes": 14,
-    "largeFilesByLines": 43
+    "largeFilesByLines": 44
   },
   "findings": {
     "duplicateBasenames": [
@@ -2123,6 +2123,10 @@
         "lines": 2007
       },
       {
+        "file": "server/routes/submission-ops.ts",
+        "lines": 1961
+      },
+      {
         "file": "server/routes/auth.ts",
         "lines": 1937
       },
@@ -2222,7 +2226,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 293,
       "largeByBytes": 11,
-      "largeByLines": 33
+      "largeByLines": 34
     },
     {
       "owner": "Unassigned (TBD)",
