@@ -696,6 +696,10 @@ describe('AnA RI Persona', () => {
       ['Health Canada', 'CANADA (HEALTH CANADA)'],
       ['Swissmedic', 'SWITZERLAND (SWISSMEDIC)'],
       ['TGA', 'AUSTRALIA (TGA)'],
+      ['SFDA', 'SAUDI ARABIA (SFDA)'],
+      ['CDSCO', 'INDIA (CDSCO)'],
+      ['HSA', 'SINGAPORE (HSA)'],
+      ['TFDA', 'TAIWAN (TFDA)'],
     ];
     for (const [agency, heading] of cases) {
       const prompt = buildAnaRISystemPrompt({ language: 'en', projectContext: { targetAgency: agency } });

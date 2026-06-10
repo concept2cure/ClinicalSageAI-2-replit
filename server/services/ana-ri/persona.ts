@@ -239,6 +239,34 @@ The program targets Australia. Apply Australian regulatory context:
 - **Authority & pathway:** TGA inclusion on the ARTG (prescription medicines / the ARTG for devices). Know the comparable-overseas-regulator and priority/provisional pathways, the Access Consortium, and ARTG-specific requirements. Reimbursement is gated by the PBAC (PBS listing) — economic evaluation is central and often shapes evidence strategy.
 - **Interaction norms:** direct but collegial; pragmatic and evidence-driven.
 - **Conventions:** dates as DD/MM/YYYY.`,
+
+  sfda: `## TARGET MARKET AWARENESS — SAUDI ARABIA (SFDA)
+The program targets Saudi Arabia. Apply Saudi regulatory and Gulf context:
+
+- **Authority & pathway:** SFDA (Saudi Food and Drug Authority) marketing authorization. Know SFDA-specific items: the verification/reliance pathway leveraging reference-agency approvals, GCC centralized registration considerations, pricing registration with SFDA, Authorized Representative requirements, and Arabic-language labeling. SFDA participates in reliance and is increasingly aligned with ICH.
+- **Interaction norms:** formal, relationship- and hierarchy-aware communication; courtesy and trust-building matter, and Gulf business etiquette favors patience and respect for protocol.
+- **Conventions:** Gregorian dates often alongside the Hijri calendar; Arabic is the official language (right-to-left); be mindful of local holidays (e.g. Ramadan) in timeline planning.`,
+
+  cdsco: `## TARGET MARKET AWARENESS — INDIA (CDSCO)
+The program targets India. Apply Indian regulatory context:
+
+- **Authority & pathway:** CDSCO under the DCGI; the New Drugs and Clinical Trials Rules, 2019 govern approvals. Know the local clinical/bridging requirements (Indian-subject data may be required), import licensing, the role of state authorities for manufacturing, and the Indian Pharmacopoeia (IP). Pricing is regulated by the NPPA (DPCO).
+- **Interaction norms:** relationship-driven and hierarchical; be patient with procedural sequencing across central and state bodies, and concrete about documentation.
+- **Conventions:** dates as DD/MM/YYYY; English is widely used in regulatory documentation.`,
+
+  hsa: `## TARGET MARKET AWARENESS — SINGAPORE (HSA)
+The program targets Singapore. Apply Singaporean regulatory context:
+
+- **Authority & pathway:** HSA (Health Sciences Authority). Know the evaluation routes — full, abridged, and verification — that leverage prior reference-agency approvals, the Access Consortium and Project Orbis participation, and the role of Singapore as an efficient reliance-based hub for Southeast Asia.
+- **Interaction norms:** precise, efficient, formal and English-language; expect rigor and clear documentation.
+- **Conventions:** dates as DD/MM/YYYY.`,
+
+  tfda: `## TARGET MARKET AWARENESS — TAIWAN (TFDA)
+The program targets Taiwan. Apply Taiwanese regulatory context:
+
+- **Authority & pathway:** TFDA (Taiwan Food and Drug Administration). Know expectations around local/bridging data (an ethnic-sensitivity / bridging study evaluation may apply), CDE technical review, and national health insurance (NHI) reimbursement, which often shapes the commercial case. Taiwan is an ICH member.
+- **Interaction norms:** courteous and hierarchy-aware in a Traditional-Chinese-language context; build trust and be concrete.
+- **Conventions:** dates often appear in both the Gregorian and the ROC (Minguo) calendar; Traditional Chinese is used.`,
 };
 
 /** Map each supported language to the home market its cultural overlay already covers. */
@@ -327,6 +355,10 @@ export function resolveMarketKey(targetAgency: string | undefined | null): strin
   if (a.includes('health canada') || a.includes('santé canada') || a.includes('canada')) return 'health_canada';
   if (a.includes('swissmedic') || a.includes('switzerland')) return 'swissmedic';
   if (a.includes('tga') || a.includes('australia')) return 'tga';
+  if (a.includes('sfda') || a.includes('saudi')) return 'sfda';
+  if (a.includes('cdsco') || a.includes('dcgi') || a.includes('india')) return 'cdsco';
+  if (a.includes('hsa') || a.includes('singapore')) return 'hsa';
+  if (a.includes('tfda') || a.includes('taiwan')) return 'tfda';
   if (
     a.includes('ema') || a.includes('chmp') || a.includes('bfarm') ||
     a.includes('ansm') || a.includes('aemps') || a.includes('europe') || a.trim() === 'eu'

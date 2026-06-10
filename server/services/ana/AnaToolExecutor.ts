@@ -51,6 +51,16 @@ import { screenPromotionalLanguage } from './promotional-screening.js';
 import { narrateStatisticalResult, type AnalysisType, type EffectMeasure } from './statistical-narrator.js';
 import { composeValueDossierGuidance, listValueDossierCatalog } from './value-dossier.js';
 import { adviseRegulatoryPathway, listRegulatoryPathways } from './regulatory-pathway.js';
+import { adviseRiskManagement, listRiskManagementPrograms } from './risk-management.js';
+import { adviseGcp, reviewInformedConsent, listGcpDomains } from './gcp-consent.js';
+import { adviseCoaSelection, listCoaTypes } from './coa-selection.js';
+import { adviseCtdStructure, listCtdModules } from './ctd-structure.js';
+import { adviseSpecialDesignation, listDesignations } from './special-designations.js';
+import { adviseEstimand, listEstimandFramework } from './estimands.js';
+import { advisePharmacovigilance, listPvDeliverables } from './pharmacovigilance.js';
+import { adviseStudyDesign, listStudyDesigns, type SampleSizeInput, type EndpointFamily, type DesignGoal } from './study-design.js';
+import { adviseLabelingStructure, listLabelTemplates } from './labeling-structure.js';
+import { adviseMedicalInformation, listMedInfoResponseTypes } from './medical-information.js';
 import { initToolTelemetryPersistence } from './tool-telemetry-persistence.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 
@@ -497,6 +507,172 @@ registerToolHandler('value_dossier_guidance', async (input) => {
   return JSON.stringify({
     source: 'AnA Market-Access Knowledge',
     ...composeValueDossierGuidance({ deliverable, htaBody }),
+  });
+});
+
+// Study-design & sample-size advisor.
+registerToolHandler('advise_study_design', async (input) => {
+  const goal = typeof input.goal === 'string' ? input.goal : undefined;
+  const ssRaw = input.sample_size && typeof input.sample_size === 'object' ? (input.sample_size as Record<string, unknown>) : undefined;
+  const num = (v: unknown): number | undefined => (typeof v === 'number' && !Number.isNaN(v) ? v : undefined);
+  let sampleSize: SampleSizeInput | undefined;
+  if (ssRaw && typeof ssRaw.endpoint_family === 'string' && ['continuous', 'binary', 'time_to_event'].includes(ssRaw.endpoint_family)) {
+    sampleSize = {
+      endpointFamily: ssRaw.endpoint_family as EndpointFamily,
+      goal: typeof goal === 'string' && ['superiority', 'non_inferiority', 'equivalence'].includes(goal) ? (goal as DesignGoal) : undefined,
+      alpha: num(ssRaw.alpha),
+      power: num(ssRaw.power),
+      twoSided: typeof ssRaw.two_sided === 'boolean' ? ssRaw.two_sided : undefined,
+      meanDifference: num(ssRaw.mean_difference),
+      sd: num(ssRaw.sd),
+      p1: num(ssRaw.p1),
+      p2: num(ssRaw.p2),
+      hazardRatio: num(ssRaw.hazard_ratio),
+      probEvent: num(ssRaw.prob_event),
+      allocationRatio: num(ssRaw.allocation_ratio),
+      margin: num(ssRaw.margin),
+    };
+  }
+  if (!goal && !sampleSize) {
+    return JSON.stringify({ source: 'AnA Study-Design Advisor', designs: listStudyDesigns(), ...adviseStudyDesign({}) });
+  }
+  return JSON.stringify({ source: 'AnA Study-Design Advisor', ...adviseStudyDesign({ goal, sampleSize }) });
+});
+
+// Product-labeling structure advisor — USPI / SmPC.
+registerToolHandler('advise_labeling_structure', async (input) => {
+  const format = typeof input.format === 'string' ? input.format : undefined;
+  const content = typeof input.content === 'string' ? input.content : undefined;
+  if (!format && !content) {
+    return JSON.stringify({ source: 'AnA Labeling-Structure Advisor', templates: listLabelTemplates(), ...adviseLabelingStructure({}) });
+  }
+  return JSON.stringify({ source: 'AnA Labeling-Structure Advisor', ...adviseLabelingStructure({ format, content }) });
+});
+
+// Medical-information / standard-response advisor.
+registerToolHandler('advise_medical_information', async (input) => {
+  const responseType = typeof input.response_type === 'string' ? input.response_type : undefined;
+  return JSON.stringify({
+    source: 'AnA Medical-Information Advisor',
+    responseTypes: responseType ? undefined : listMedInfoResponseTypes(),
+    ...adviseMedicalInformation({ responseType }),
+  });
+});
+
+// Estimand / study-design advisor — ICH E9(R1).
+registerToolHandler('advise_estimand', async (input) => {
+  const strategy = typeof input.strategy === 'string' ? input.strategy : undefined;
+  const d = input.draft && typeof input.draft === 'object' ? (input.draft as Record<string, unknown>) : undefined;
+  const draft = d
+    ? {
+        treatment: typeof d.treatment === 'string' ? d.treatment : undefined,
+        population: typeof d.population === 'string' ? d.population : undefined,
+        variable: typeof d.variable === 'string' ? d.variable : undefined,
+        intercurrentEvents: typeof d.intercurrent_events === 'string' ? d.intercurrent_events : undefined,
+        summary: typeof d.summary === 'string' ? d.summary : undefined,
+      }
+    : undefined;
+  if (!strategy && !draft) {
+    return JSON.stringify({
+      source: 'AnA Estimand Advisor',
+      framework: listEstimandFramework(),
+      ...adviseEstimand({}),
+    });
+  }
+  return JSON.stringify({ source: 'AnA Estimand Advisor', ...adviseEstimand({ strategy, draft }) });
+});
+
+// Pharmacovigilance aggregate-reporting & signal-management advisor.
+registerToolHandler('advise_pharmacovigilance', async (input) => {
+  const deliverable = typeof input.deliverable === 'string' ? input.deliverable : undefined;
+  const stage = typeof input.stage === 'string' ? input.stage : undefined;
+  if (!deliverable && !stage) {
+    return JSON.stringify({
+      source: 'AnA Pharmacovigilance Advisor',
+      hint: 'Specify a deliverable (dsur | pbrer | icsr | signal_management) or a stage.',
+      deliverables: listPvDeliverables(),
+    });
+  }
+  return JSON.stringify({ source: 'AnA Pharmacovigilance Advisor', ...advisePharmacovigilance({ deliverable, stage }) });
+});
+
+// CTD / eCTD structure advisor — ICH M4 modules + document placement.
+registerToolHandler('advise_ctd_structure', async (input) => {
+  const module = typeof input.module === 'string' ? input.module : undefined;
+  const document = typeof input.document === 'string' ? input.document : undefined;
+  if (!module && !document) {
+    return JSON.stringify({
+      source: 'AnA CTD-Structure Advisor',
+      hint: 'Specify a module (m1..m5) or a document description to place.',
+      modules: listCtdModules(),
+    });
+  }
+  return JSON.stringify({ source: 'AnA CTD-Structure Advisor', ...adviseCtdStructure({ module, document }) });
+});
+
+// Expedited-program & special-designation advisor — FDA & EMA.
+registerToolHandler('advise_special_designation', async (input) => {
+  const designation = typeof input.designation === 'string' ? input.designation : undefined;
+  const jurisdiction = typeof input.jurisdiction === 'string' ? input.jurisdiction : undefined;
+  if (!designation && !jurisdiction) {
+    return JSON.stringify({
+      source: 'AnA Special-Designation Advisor',
+      hint: 'Specify a designation, or a jurisdiction (us | eu) for the candidate set.',
+      designations: listDesignations(),
+    });
+  }
+  return JSON.stringify({ source: 'AnA Special-Designation Advisor', ...adviseSpecialDesignation({ designation, jurisdiction }) });
+});
+
+// GCP advisor — ICH E6(R2) responsibility domains.
+registerToolHandler('advise_gcp', async (input) => {
+  const domain = typeof input.domain === 'string' ? input.domain : undefined;
+  return JSON.stringify({
+    source: 'AnA GCP Advisor',
+    catalog: domain ? undefined : listGcpDomains(),
+    ...adviseGcp(domain),
+  });
+});
+
+// Informed-consent QC — required elements (ICH E6(R2) §4.8 / 21 CFR 50.25).
+registerToolHandler('review_informed_consent', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) return JSON.stringify({ error: 'review_informed_consent requires non-empty text.' });
+  return JSON.stringify({ source: 'AnA Informed-Consent QC', ...reviewInformedConsent(text) });
+});
+
+// COA selection advisor — FDA COA framework (PRO/ClinRO/ObsRO/PerfO).
+registerToolHandler('advise_coa_selection', async (input) => {
+  const coaType = typeof input.coa_type === 'string' ? input.coa_type : undefined;
+  const concept = typeof input.concept === 'string' ? input.concept : undefined;
+  const reporter = typeof input.reporter === 'string' ? input.reporter : undefined;
+  if (!coaType && !concept && !reporter) {
+    return JSON.stringify({
+      source: 'AnA COA-Selection Advisor',
+      hint: 'Specify a coa_type, or a concept (and optionally reporter) for a suggestion.',
+      coaTypes: listCoaTypes(),
+    });
+  }
+  return JSON.stringify({
+    source: 'AnA COA-Selection Advisor',
+    ...adviseCoaSelection({ coaType, concept, reporter }),
+  });
+});
+
+// Risk-management / safety-governance advisor — US REMS & EU RMP.
+registerToolHandler('advise_risk_management', async (input) => {
+  const program = typeof input.program === 'string' ? input.program : undefined;
+  const jurisdiction = typeof input.jurisdiction === 'string' ? input.jurisdiction : undefined;
+  if (!program && !jurisdiction) {
+    return JSON.stringify({
+      source: 'AnA Risk-Management Advisor',
+      hint: 'Specify a program (rems | eu_rmp) or jurisdiction (us | eu).',
+      catalog: listRiskManagementPrograms(),
+    });
+  }
+  return JSON.stringify({
+    source: 'AnA Risk-Management Advisor',
+    ...adviseRiskManagement({ program, jurisdiction }),
   });
 });
 
@@ -5021,6 +5197,111 @@ registerToolHandler('review_commitment_portfolio', async (input, ctx) => {
     });
   } catch (err) {
     return JSON.stringify({ error: `review_commitment_portfolio failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IACUC / Animal Study Governance (C2C-05). Conversational building shares the
+// same governed/audited path (recordGovernedAction, surface 'ana'). Committee
+// determinations (approve) are done in the review panel, not via AnA.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_iacuc_protocol', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_iacuc_protocol requires tenant + user context.' });
+  const protocolNumber = typeof input.protocol_number === 'string' ? input.protocol_number.trim() : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  const painCategory = typeof input.pain_category === 'string' ? input.pain_category : '';
+  if (!protocolNumber || !title || !['B', 'C', 'D', 'E'].includes(painCategory)) {
+    return JSON.stringify({ error: 'protocol_number, title, and a valid pain_category (B/C/D/E) are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createProtocolTx } = await import('../iacuc/iacuc-service.js');
+  const { recommendReviewType } = await import('../iacuc/iacuc-logic.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createProtocolTx(client, ctx.organizationId, ctx.userId, {
+      protocolNumber, title, painCategory: painCategory as any,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+      threeRsReplacement: typeof input.three_rs_replacement === 'string' ? input.three_rs_replacement : null,
+      threeRsReduction: typeof input.three_rs_reduction === 'string' ? input.three_rs_reduction : null,
+      threeRsRefinement: typeof input.three_rs_refinement === 'string' ? input.three_rs_refinement : null,
+      painJustification: typeof input.pain_justification === 'string' ? input.pain_justification : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `iacuc-protocol:${id}`, reason: fcoiReason(input, 'IACUC protocol opened via AnA'),
+      payload: { painCategory }, domain: 'iacuc', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    const rec = recommendReviewType(painCategory as any);
+    return JSON.stringify({ ok: true, id, recommendedReview: rec, message: `Opened IACUC protocol "${title}" (id ${id}); recommended ${rec.reviewType.replace(/_/g, ' ')}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_iacuc_protocol failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('register_animal_cohort', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'register_animal_cohort requires tenant + user context.' });
+  const protocolId = typeof input.protocol_id === 'number' ? input.protocol_id : NaN;
+  const species = typeof input.species === 'string' ? input.species.trim() : '';
+  const painCategory = typeof input.pain_category === 'string' ? input.pain_category : '';
+  const plannedCount = typeof input.planned_count === 'number' ? Math.round(input.planned_count) : NaN;
+  if (!Number.isInteger(protocolId) || !species || !['B', 'C', 'D', 'E'].includes(painCategory) || !Number.isInteger(plannedCount)) {
+    return JSON.stringify({ error: 'protocol_id, species, planned_count, and a valid pain_category are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addCohortTx } = await import('../iacuc/iacuc-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await addCohortTx(client, ctx.organizationId, ctx.userId, protocolId, {
+      species, plannedCount, painCategory: painCategory as any,
+      strain: typeof input.strain === 'string' ? input.strain : null,
+      housingLocation: typeof input.housing_location === 'string' ? input.housing_location : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `iacuc-protocol:${protocolId}`, reason: fcoiReason(input, 'Animal cohort registered via AnA'),
+      payload: { cohortId: id, species }, domain: 'iacuc', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, cohortId: id, message: `Registered ${plannedCount} ${species} (cohort ${id}) on protocol ${protocolId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `register_animal_cohort failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_iacuc_protocol', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_iacuc_protocol requires tenant context.' });
+  const protocolId = typeof input.protocol_id === 'number' ? input.protocol_id : NaN;
+  if (!Number.isInteger(protocolId)) return JSON.stringify({ error: 'protocol_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { getProtocolCompletenessInput } = await import('../iacuc/iacuc-service.js');
+  const { evaluateProtocolCompleteness, reviewStatus } = await import('../iacuc/iacuc-logic.js');
+  const client = await getPool().connect();
+  try {
+    const inp = await getProtocolCompletenessInput(client, ctx.organizationId, protocolId);
+    const gate = evaluateProtocolCompleteness(inp);
+    const rs = reviewStatus(inp.approvalDate, new Date().toISOString().slice(0, 10));
+    return JSON.stringify({
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, reviewStatus: rs,
+      message: gate.riskLevel === 'high'
+        ? 'Critical IACUC findings (e.g. category-E justification) — resolve before committee review.'
+        : `Protocol passes the deterministic gate (${gate.riskLevel} risk).`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_iacuc_protocol failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
   }
 });
 

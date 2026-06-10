@@ -124,6 +124,73 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   },
 };
 
+export const ADVISE_STUDY_DESIGN: AnaTool = {
+  name: 'advise_study_design',
+  description:
+    'Study-design & sample-size advisor: explains superiority / non-inferiority / equivalence designs ' +
+    '(hypotheses, key considerations, pitfalls) and, given endpoint family and assumptions, returns a ' +
+    'two-arm sample-size planning estimate (continuous: mean difference + SD; binary: p1/p2; ' +
+    'time-to-event: hazard ratio + event probability via Schoenfeld). Planning estimate only — confirm ' +
+    'with a statistician; define the estimand first (advise_estimand).',
+  input_schema: {
+    type: 'object',
+    properties: {
+      goal: { type: 'string', enum: ['superiority', 'non_inferiority', 'equivalence'] },
+      sample_size: {
+        type: 'object',
+        description: 'Inputs for a sample-size estimate.',
+        properties: {
+          endpoint_family: { type: 'string', enum: ['continuous', 'binary', 'time_to_event'] },
+          alpha: { type: 'number', description: 'Default 0.05.' },
+          power: { type: 'number', description: 'Default 0.8.' },
+          two_sided: { type: 'boolean' },
+          mean_difference: { type: 'number' },
+          sd: { type: 'number' },
+          p1: { type: 'number' },
+          p2: { type: 'number' },
+          hazard_ratio: { type: 'number' },
+          prob_event: { type: 'number', description: 'Overall event probability (TTE → patients).' },
+          allocation_ratio: { type: 'number', description: 'n2/n1, default 1.' },
+          margin: { type: 'number', description: 'NI/equivalence margin.' },
+        },
+        required: ['endpoint_family'],
+      },
+    },
+  },
+};
+
+export const ADVISE_LABELING_STRUCTURE: AnaTool = {
+  name: 'advise_labeling_structure',
+  description:
+    'Product-labeling structure advisor: explains the section architecture of the US Prescribing ' +
+    'Information (PLR, 21 CFR 201.56/201.57) or EU SmPC (QRD template), or routes free-text content to ' +
+    'the right section ("which section does this go in?") with the US↔EU cross-map. Use when drafting or ' +
+    'QC-ing a label.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      format: { type: 'string', enum: ['uspi', 'smpc'], description: 'uspi (US PI) | smpc (EU). Aliases accepted.' },
+      content: { type: 'string', description: 'Free-text content to place into a label section.' },
+    },
+  },
+};
+
+export const ADVISE_MEDICAL_INFORMATION: AnaTool = {
+  name: 'advise_medical_information',
+  description:
+    'Medical-information / standard-response advisor: the structure of a Standard Response Document (SRD), ' +
+    'the on-label vs unsolicited off-label distinction with compliance guardrails, product-complaint ' +
+    'handling, and the pharmacovigilance/AE-capture overlay that applies to every interaction. Use when ' +
+    'scaffolding or QC-ing a response to an unsolicited HCP/patient enquiry. Advisory — MI/compliance ' +
+    'review is authoritative; off-label responses are strictly regulated.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      response_type: { type: 'string', description: 'on_label | off_label | product_complaint (aliases accepted).' },
+    },
+  },
+};
+
 export const NARRATE_STATISTICAL_RESULT: AnaTool = {
   name: 'narrate_statistical_result',
   description:
@@ -189,6 +256,144 @@ export const VALUE_DOSSIER_GUIDANCE: AnaTool = {
         type: 'string',
         description: 'Optional HTA body: nice, icer, gba, has, cadth, pbac (country names accepted).',
       },
+    },
+  },
+};
+
+export const ADVISE_ESTIMAND: AnaTool = {
+  name: 'advise_estimand',
+  description:
+    'Estimand / study-design advisor (ICH E9(R1)): explains the five estimand attributes (treatment, ' +
+    'population, variable, intercurrent-event handling, population-level summary) and the five ' +
+    'intercurrent-event strategies (treatment-policy, hypothetical, composite, while-on-treatment, ' +
+    'principal-stratum); given a structured draft, QCs which of the five attributes are specified. Use ' +
+    'when defining or reviewing an estimand before choosing the estimator.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      strategy: { type: 'string', description: 'Focus an intercurrent-event strategy (treatment_policy, hypothetical, composite, while_on_treatment, principal_stratum).' },
+      draft: {
+        type: 'object',
+        description: 'A structured estimand to QC against the five attributes.',
+        properties: {
+          treatment: { type: 'string' },
+          population: { type: 'string' },
+          variable: { type: 'string' },
+          intercurrent_events: { type: 'string' },
+          summary: { type: 'string' },
+        },
+      },
+    },
+  },
+};
+
+export const ADVISE_PHARMACOVIGILANCE: AnaTool = {
+  name: 'advise_pharmacovigilance',
+  description:
+    'Pharmacovigilance aggregate-reporting & signal-management advisor: purpose, cadence, key sections ' +
+    'and pitfalls for the DSUR (ICH E2F), PBRER/PSUR (ICH E2C(R2)), expedited ICSR/SUSAR reporting ' +
+    '(ICH E2A/E2B) and the GVP Module IX signal-management cycle — or a candidate set by stage ' +
+    '(development | post-authorization). Use when scaffolding or QC-ing safety reports.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      deliverable: { type: 'string', description: 'dsur | pbrer | icsr | signal_management (aliases accepted).' },
+      stage: { type: 'string', enum: ['development', 'post-authorization'] },
+    },
+  },
+};
+
+export const ADVISE_CTD_STRUCTURE: AnaTool = {
+  name: 'advise_ctd_structure',
+  description:
+    'CTD / eCTD structure advisor (ICH M4): explains a CTD module (1–5) and its key sections, or routes ' +
+    'a free-text document description to the best-fit module ("where does this go?"). Covers Module 1 ' +
+    '(regional/administrative), Module 2 (summaries: QOS, overviews), Module 3 (quality/CMC), Module 4 ' +
+    '(nonclinical), Module 5 (clinical). Use when assembling or QC-ing a submission dossier.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      module: { type: 'string', description: 'm1..m5, a module number, or alias (quality, clinical, …).' },
+      document: { type: 'string', description: 'Free-text document description to place into a module.' },
+    },
+  },
+};
+
+export const ADVISE_SPECIAL_DESIGNATION: AnaTool = {
+  name: 'advise_special_designation',
+  description:
+    'Expedited-program & special-designation advisor: eligibility, benefit conferred, evidence and ' +
+    'common pitfalls for FDA programs (Fast Track, Breakthrough Therapy, Accelerated Approval, Priority ' +
+    'Review, Orphan) and EMA programs (PRIME, conditional MA, accelerated assessment, orphan) — or a ' +
+    'candidate set by jurisdiction. Advisory — eligibility is determined by the agency.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      designation: { type: 'string', description: 'e.g. fast_track, breakthrough, accelerated_approval, orphan, prime, conditional_ma.' },
+      jurisdiction: { type: 'string', enum: ['us', 'eu'] },
+    },
+  },
+};
+
+export const ADVISE_GCP: AnaTool = {
+  name: 'advise_gcp',
+  description:
+    'Good Clinical Practice (ICH E6(R2)) advisor: returns the GCP principles or a specific ' +
+    'responsibility domain (sponsor, investigator, IRB/IEC) with the key obligations and citation. ' +
+    'Use when briefing teams on GCP roles or preparing for inspection readiness.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      domain: { type: 'string', description: 'principles | sponsor | investigator | irb_ec (aliases accepted).' },
+    },
+  },
+};
+
+export const REVIEW_INFORMED_CONSENT: AnaTool = {
+  name: 'review_informed_consent',
+  description:
+    'QC an informed-consent form draft for the required elements of informed consent (ICH E6(R2) §4.8 ' +
+    'and 21 CFR 50.25 / 45 CFR 46.116): flags missing required and when-appropriate elements with their ' +
+    'citation and returns a completeness score. Cue-based and advisory — IRB/EC review is authoritative.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: { type: 'string', description: 'The consent-form text to review.' },
+    },
+    required: ['text'],
+  },
+};
+
+export const ADVISE_COA_SELECTION: AnaTool = {
+  name: 'advise_coa_selection',
+  description:
+    'Clinical Outcome Assessment (COA) selection advisor (FDA COA framework / PRO Guidance / Roadmap): ' +
+    'explains PRO/ClinRO/ObsRO/PerfO, suggests the best-fit COA type from a concept of interest and ' +
+    'reporter, and returns the fit-for-purpose evidence and endpoint-positioning needed to support a ' +
+    'label claim. Advisory — endpoint/label-claim strategy must be agreed with the agency.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      coa_type: { type: 'string', enum: ['pro', 'clinro', 'obsro', 'perfo'] },
+      concept: { type: 'string', description: 'Concept of interest, e.g. "pain", "6-minute walk", for a suggestion.' },
+      reporter: { type: 'string', description: 'Who reports it (patient, clinician, caregiver) — refines the suggestion.' },
+    },
+  },
+};
+
+export const ADVISE_RISK_MANAGEMENT: AnaTool = {
+  name: 'advise_risk_management',
+  description:
+    'Risk-management / safety-governance advisor: returns the components, when-required criteria and ' +
+    'common pitfalls of the US REMS (FDAAA §505-1) or EU RMP (GVP Module V), plus a routine-vs-' +
+    'additional risk-minimization toolbox (labeling, Medication Guide, HCP education, controlled access/' +
+    'ETASU, pregnancy-prevention programmes, registries). Use when scaffolding or QC-ing a post-' +
+    'authorization safety strategy. Advisory only — must be agreed with FDA/EMA PRAC.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      program: { type: 'string', description: 'rems | eu_rmp (aliases accepted).' },
+      jurisdiction: { type: 'string', enum: ['us', 'eu'] },
     },
   },
 };
@@ -3071,6 +3276,57 @@ export const REVIEW_COMMITMENT_PORTFOLIO: AnaTool = {
   },
 };
 
+export const CREATE_IACUC_PROTOCOL: AnaTool = {
+  name: 'create_iacuc_protocol',
+  description:
+    "Open an IACUC animal-use protocol (PHS Policy / Animal Welfare Act / OLAW). pain_category is the USDA category (B breeding, C no pain, D pain relieved, E unrelieved pain — E needs scientific justification). Returns the protocol id and the recommended review pathway. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      protocol_number: { type: 'string' },
+      title: { type: 'string' },
+      pain_category: { type: 'string', enum: ['B', 'C', 'D', 'E'] },
+      submission_id: { type: 'number', description: 'Optional submission this preclinical work feeds (Module 4).' },
+      three_rs_replacement: { type: 'string' },
+      three_rs_reduction: { type: 'string' },
+      three_rs_refinement: { type: 'string' },
+      pain_justification: { type: 'string', description: 'Required for category E.' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['protocol_number', 'title', 'pain_category'],
+  },
+};
+
+export const REGISTER_ANIMAL_COHORT: AnaTool = {
+  name: 'register_animal_cohort',
+  description:
+    "Register an animal cohort (census) on an IACUC protocol: species, strain, planned count, USDA pain category, and housing location. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      protocol_id: { type: 'number' },
+      species: { type: 'string' },
+      strain: { type: 'string' },
+      planned_count: { type: 'number' },
+      pain_category: { type: 'string', enum: ['B', 'C', 'D', 'E'] },
+      housing_location: { type: 'string' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['protocol_id', 'species', 'planned_count', 'pain_category'],
+  },
+};
+
+export const REVIEW_IACUC_PROTOCOL: AnaTool = {
+  name: 'review_iacuc_protocol',
+  description:
+    "Run the deterministic IACUC completeness gate on a protocol (read-only): the 3 Rs, category-D analgesia / category-E justification, animal numbers, plus continuing-review/expiration status. Returns cited findings + risk level. Use to tell the user what is missing before committee review.",
+  input_schema: {
+    type: 'object',
+    properties: { protocol_id: { type: 'number' } },
+    required: ['protocol_id'],
+  },
+};
+
 export const LOG_STUDY_DEVIATION: AnaTool = {
   name: 'log_study_deviation',
   description:
@@ -4427,6 +4683,17 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   NARRATE_STATISTICAL_RESULT,
   VALUE_DOSSIER_GUIDANCE,
   ADVISE_REGULATORY_PATHWAY,
+  ADVISE_RISK_MANAGEMENT,
+  ADVISE_GCP,
+  REVIEW_INFORMED_CONSENT,
+  ADVISE_COA_SELECTION,
+  ADVISE_CTD_STRUCTURE,
+  ADVISE_SPECIAL_DESIGNATION,
+  ADVISE_ESTIMAND,
+  ADVISE_PHARMACOVIGILANCE,
+  ADVISE_STUDY_DESIGN,
+  ADVISE_LABELING_STRUCTURE,
+  ADVISE_MEDICAL_INFORMATION,
   SCREEN_PROMOTIONAL_LANGUAGE,
   MEDICAL_WRITING_GUIDANCE,
   MEDICAL_WRITING_REVIEW,
@@ -4516,6 +4783,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CREATE_HA_INTERACTION,
   CREATE_REGULATORY_COMMITMENT,
   REVIEW_COMMITMENT_PORTFOLIO,
+  CREATE_IACUC_PROTOCOL,
+  REGISTER_ANIMAL_COHORT,
+  REVIEW_IACUC_PROTOCOL,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,

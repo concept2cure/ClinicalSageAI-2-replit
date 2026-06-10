@@ -12,7 +12,7 @@ and to run the deferred DB-backed verification. Updated as each capability lands
 | C2C-02 | ALCOA+ Provenance Spine | 1 | **Seed landed** (`provenance_links` + service); full spine later |
 | C2C-03 | HA Interaction & Commitment Mgmt | 1 | **Backend complete** |
 | C2C-04 | Nonclinical Study Mgmt + SEND | 2 | Planned |
-| C2C-05 | IACUC / Animal Study Governance | 2 | Planned |
+| C2C-05 | IACUC / Animal Study Governance | 2 | **Backend complete** |
 | C2C-06 | IRB/IEC Submission & Amendment Mgmt | 2 | Planned |
 | C2C-07 | IBC / Biosafety (Novel Modality) | 2 | Planned |
 | C2C-08 | AI-native eTMF | 2 | Planned |
@@ -124,3 +124,46 @@ Request bodies are zod-validated; mutations require `reason` (≥8 chars).
 
 ### Tests landed (no-DB)
 `ha-logic.test.ts` (8), `ana/__tests__/ha-tools.test.ts` (7). Typecheck clean.
+
+---
+
+## C2C-05 — IACUC / Animal Study Governance
+
+### Data model (`shared/schema/iacuc.ts`; migration `migrations/20260610_iacuc_animal_governance.sql`)
+- `iacuc_protocols` (USDA pain category B-E; 3 Rs; category-E justification; 3-year de novo expiration), `iacuc_animal_cohorts` (census), `iacuc_reviews` (DMR/FCR determinations), `iacuc_amendments`, `iacuc_facility_inspections` (semi-annual).
+- The IACUC protocol is the **origin node of the preclinical provenance chain**: approval threads `iacuc_protocol → submission_module4` (role `supports`) via `provenance_links`.
+
+### API (`/api/iacuc`, governed + org-scoped)
+| Method | Path | Governed action |
+|--------|------|-----------------|
+| POST | `/protocols` | `create` (returns recommended review pathway) |
+| GET | `/protocols?submissionId=` | — |
+| PATCH | `/protocols/:id/status` | `transition` |
+| POST | `/protocols/:id/reviews` | `sign` (approve) / `resolve` — sets 3-yr expiration + provenance |
+| POST | `/protocols/:id/cohorts` | `update` (census) |
+| POST | `/protocols/:id/amendments` | `update` |
+| GET | `/protocols/:id/completeness` | — (3 Rs gate + continuing-review status) |
+
+### AnA tools (same governed path, surface `ana`)
+`create_iacuc_protocol`, `register_animal_cohort`, `review_iacuc_protocol` (read-only gate).
+
+### Deterministic core (`iacuc-logic.ts`, pure, tested)
+USDA pain-category catalog (cited); `recommendReviewType` (category E → full committee review); `evaluateProtocolCompleteness` (3 Rs, category-D analgesia / category-E justification, animal numbers — cited findings + risk); `reviewStatus` (3-year expiration + annual continuing-review due).
+
+### Central-module wiring
+- **Reports:** `iacuc.protocol_register` in `REPORT_TYPE_SEED`.
+- **Metrics:** `server/services/iacuc-metrics.ts` → `/api/metrics` (`iacuc_protocols_created_total{pain_category}`, `iacuc_approvals_total`, `iacuc_reviews_total{outcome}`).
+
+### UI surfaces to build (deferred)
+1. **Protocol register** — table by status/pain-category/expiration; KPI band (open/approved/expiring).
+2. **Protocol detail** — 3 Rs editor, animal census (cohorts) sub-table, the completeness gate panel (`GET /:id/completeness`), committee determination action (`POST /reviews`, FCR/DMR), amendments, provenance "supports Module 4" chip.
+3. **Facility inspections** mini-CRUD (semi-annual schedule).
+4. **AnA panel** — conversational tools wired.
+
+### Deferred DB verification
+- [ ] `drizzle-kit push` clean; 5 tables + indexes + CHECK constraints in `information_schema`.
+- [ ] Org-scoping; governed audit rows; provenance link written on approval; 3-yr expiration stamped.
+- [ ] `iacuc.protocol_register` report run resolves; `/api/metrics` exposes `iacuc_*`.
+
+### Tests landed (no-DB)
+`iacuc-logic.test.ts` (12), `ana/__tests__/iacuc-tools.test.ts` (7). Typecheck clean.
