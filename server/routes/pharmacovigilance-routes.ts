@@ -36,6 +36,8 @@ import {
   createRMP,
   getRMPsForProject,
   calculateReportingDeadline,
+  searchMeddraTerms,
+  submitCaseToTriage,
   type EventType,
   type SeriousnessCriteria,
   type Causality,
@@ -68,6 +70,21 @@ const adverseEventSchema = z.object({
   reporterType: z.enum(['investigator', 'sponsor', 'patient', 'healthcare_provider']),
   countryOfOccurrence: z.string().length(2),
   reportedToAuthorities: z.boolean().default(false),
+  // ── E2B(R3) intake detail (optional) ──────────────────────────────────────
+  reactionPt: z.string().optional(),
+  reactionPtCode: z.string().optional(),
+  reactionSoc: z.string().optional(),
+  reactionSocCode: z.string().optional(),
+  suspectProduct: z.string().optional(),
+  suspectProductStrength: z.string().optional(),
+  suspectProductRoute: z.string().optional(),
+  suspectProductDose: z.string().optional(),
+  expectedness: z.enum(['expected', 'unexpected', 'unknown']).optional(),
+  rsiReference: z.string().optional(),
+  reporterName: z.string().optional(),
+  reporterContact: z.string().optional(),
+  reporterOrganization: z.string().optional(),
+  narrative: z.string().max(50000).optional(),
 });
 
 const periodicReportSchema = z.object({
@@ -276,6 +293,20 @@ export default function createPharmacovigilanceRoutes(): Router {
         reporterType: data.reporterType as ReporterType,
         countryOfOccurrence: data.countryOfOccurrence,
         reportedToAuthorities: data.reportedToAuthorities,
+        reactionPt: data.reactionPt ?? null,
+        reactionPtCode: data.reactionPtCode ?? null,
+        reactionSoc: data.reactionSoc ?? null,
+        reactionSocCode: data.reactionSocCode ?? null,
+        suspectProduct: data.suspectProduct ?? null,
+        suspectProductStrength: data.suspectProductStrength ?? null,
+        suspectProductRoute: data.suspectProductRoute ?? null,
+        suspectProductDose: data.suspectProductDose ?? null,
+        expectedness: data.expectedness ?? null,
+        rsiReference: data.rsiReference ?? null,
+        reporterName: data.reporterName ?? null,
+        reporterContact: data.reporterContact ?? null,
+        reporterOrganization: data.reporterOrganization ?? null,
+        narrative: data.narrative ?? null,
       });
 
       return res.status(201).json({ success: true, data: event });
@@ -577,6 +608,58 @@ export default function createPharmacovigilanceRoutes(): Router {
     } catch (error) {
       logger.error('compliance matrix error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to generate compliance matrix' });
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MEDDRA LOOKUP (drives the case-intake PT picker)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * GET /api/pharmacovigilance/meddra/search?q=nausea&limit=20
+   * Returns matching MedDRA terms (PT + SOC). Empty until the licensed MedDRA
+   * dictionary is ingested for the org.
+   */
+  router.get('/meddra/search', async (req: Request, res: Response) => {
+    try {
+      const orgId = getOrgId(req);
+      const q = String(req.query.q ?? '');
+      const limit = Number(req.query.limit) || 20;
+      const terms = await searchMeddraTerms(orgId, q, limit);
+      return res.json({ success: true, data: terms });
+    } catch (error) {
+      logger.error('meddra search error', { err: error instanceof Error ? error.message : String(error) });
+      res.status(500).json({ success: false, error: 'MedDRA search failed' });
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CASE TRIAGE (Submit-to-triage: assigns clock + writes Part 11 audit)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * POST /api/pharmacovigilance/adverse-events/:id/submit-to-triage
+   * Body: { reason } (>= 8 chars). Transitions a drafted case to triage.
+   */
+  router.post('/adverse-events/:id/submit-to-triage', async (req: Request, res: Response) => {
+    try {
+      const orgId = getOrgId(req);
+      const userId = String((req as any).user?.id ?? (req as any).userId ?? '');
+      const reason = String(req.body?.reason ?? '');
+      if (reason.trim().length < 8) {
+        return res.status(400).json({ success: false, error: 'REASON_REQUIRED', detail: 'Minimum 8 characters.' });
+      }
+      const result = await submitCaseToTriage(orgId, userId, String(req.params.id), reason);
+      return res.json({ success: true, data: result });
+    } catch (error: any) {
+      if (error?.message === 'CASE_NOT_FOUND') {
+        return res.status(404).json({ success: false, error: 'CASE_NOT_FOUND' });
+      }
+      if (error?.message === 'PV_TABLE_MISSING') {
+        return res.status(503).json({ success: false, error: 'PV_TABLE_MISSING' });
+      }
+      logger.error('submit-to-triage error', { err: error instanceof Error ? error.message : String(error) });
+      res.status(500).json({ success: false, error: 'Submit to triage failed' });
     }
   });
 

@@ -16,6 +16,7 @@ import { anaCapabilityRegistry, anaOutcomeLog, anaProjectCapabilities } from 'sh
 import { eq, and, desc, sql, or, inArray } from 'drizzle-orm';
 
 import { createScopedLogger } from '../utils/logger.js';
+import { governanceFor } from './ai-governance/risk-tiers';
 
 const logger = createScopedLogger('ana-capability-registry');
 
@@ -23,7 +24,7 @@ const logger = createScopedLogger('ana-capability-registry');
 // SEED DATA — 33 Core Capabilities
 // ============================================================
 
-interface SeedCapability {
+export interface SeedCapability {
   capabilityKey: string;
   category: string;
   name: string;
@@ -34,7 +35,7 @@ interface SeedCapability {
   documentTypesApplicable: string[];
 }
 
-const SEED_CAPABILITIES: SeedCapability[] = [
+export const SEED_CAPABILITIES: SeedCapability[] = [
   // ── Drafting (8) ──────────────────────────────────────────
   {
     capabilityKey: 'draft-csr',
@@ -85,6 +86,28 @@ const SEED_CAPABILITIES: SeedCapability[] = [
     regulatoryBodiesApplicable: ['FDA'],
     projectTypesApplicable: ['NDA', 'BLA'],
     documentTypesApplicable: ['nda-section', 'ctd-module'],
+  },
+  {
+    capabilityKey: 'draft-jnda-section',
+    category: 'drafting',
+    name: 'Draft JNDA Section',
+    description:
+      'Generate J-NDA (PMDA) submission sections with the Japanese eCTD Module 1 structure, similar-drug selection rationale, and J-RMP, in line with PMDA expectations.',
+    slashCommand: '/draft-jnda-section',
+    regulatoryBodiesApplicable: ['PMDA'],
+    projectTypesApplicable: ['JNDA', 'IND'],
+    documentTypesApplicable: ['jnda-section', 'ctd-module'],
+  },
+  {
+    capabilityKey: 'draft-bridging-strategy',
+    category: 'drafting',
+    name: 'Draft Bridging / Ethnic-Sensitivity Strategy',
+    description:
+      'Draft a Japan bridging-study strategy and ethnic-sensitivity assessment (ICH E5) to justify the extrapolation of foreign clinical data for a JNDA, including SAKIGAKE eligibility where applicable.',
+    slashCommand: '/draft-bridging-strategy',
+    regulatoryBodiesApplicable: ['PMDA'],
+    projectTypesApplicable: ['JNDA', 'IND'],
+    documentTypesApplicable: ['jnda-section', 'ctd-module'],
   },
   {
     capabilityKey: 'draft-510k',
@@ -145,7 +168,7 @@ const SEED_CAPABILITIES: SeedCapability[] = [
     description: 'Scan document against PMDA-specific requirements, J-NDA formatting, and Japanese regulatory expectations.',
     slashCommand: '/compliance-scan',
     regulatoryBodiesApplicable: ['PMDA'],
-    projectTypesApplicable: ['J-NDA', 'IND'],
+    projectTypesApplicable: ['JNDA', 'IND'],
     documentTypesApplicable: ['csr', 'protocol', 'ib', 'ctd-module'],
   },
   {
@@ -414,6 +437,30 @@ const SEED_CAPABILITIES: SeedCapability[] = [
     projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
     documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
   },
+
+  // ── Commitments (2) ───────────────────────────────────────
+  {
+    capabilityKey: 'extract-commitments',
+    category: 'commitments',
+    name: 'Extract Regulatory Commitments',
+    description:
+      'Find every binding commitment in a document — inbound (PMR, PMC, REMS, EU Annex II / specific obligations / PASS / PAES, PMA conditions, 522 studies) and outbound (the applicant’s own promises) — source-anchored to the exact span, with direction, type, owner, and deadline.',
+    slashCommand: '/extract-commitments',
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['approval-letter', 'meeting-minutes', 'correspondence', 'submission'],
+  },
+  {
+    capabilityKey: 'track-commitments',
+    category: 'commitments',
+    name: 'Track Regulatory Commitments',
+    description:
+      'Track inbound and outbound commitments to closure across the post-approval lifecycle: deadlines, owners, status, and evidence, with governed status changes and an audit trail.',
+    slashCommand: '/commitments',
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['approval-letter', 'submission'],
+  },
 ];
 
 // ============================================================
@@ -429,6 +476,10 @@ export async function seedCapabilityRegistry(): Promise<{ seeded: number; total:
   let seeded = 0;
 
   for (const cap of SEED_CAPABILITIES) {
+    const gov = governanceFor(cap.capabilityKey, cap.category, {
+      name: cap.name,
+      description: cap.description,
+    });
     const result = await db
       .insert(anaCapabilityRegistry)
       .values({
@@ -440,6 +491,11 @@ export async function seedCapabilityRegistry(): Promise<{ seeded: number; total:
         regulatoryBodiesApplicable: cap.regulatoryBodiesApplicable,
         projectTypesApplicable: cap.projectTypesApplicable,
         documentTypesApplicable: cap.documentTypesApplicable,
+        intendedUse: gov.intendedUse,
+        riskTier: gov.riskTier,
+        humanOversight: gov.humanOversight,
+        groundednessThreshold: gov.groundednessThreshold,
+        gxpApplicable: gov.gxpApplicable,
       })
       .onConflictDoNothing({ target: anaCapabilityRegistry.capabilityKey })
       .returning({ id: anaCapabilityRegistry.id });
@@ -449,11 +505,57 @@ export async function seedCapabilityRegistry(): Promise<{ seeded: number; total:
     }
   }
 
+  // Existing rows are skipped by onConflictDoNothing above, so refresh their
+  // governance contract from the code source of truth (governanceFor) too.
+  const { updated } = await backfillCapabilityGovernance();
+  if (updated > 0) {
+    logger.info(`Refreshed AI governance contract on ${updated} capabilities`);
+  }
+
   const [countResult] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(anaCapabilityRegistry);
 
   return { seeded, total: countResult?.count ?? 0 };
+}
+
+/**
+ * Refresh the per-capability governance contract (intended use, risk tier,
+ * human oversight, groundedness threshold, GxP applicability) on every row of
+ * the registry from the single code source of truth (`governanceFor`). Safe to
+ * run repeatedly; brings existing installs up to date when the policy changes.
+ */
+export async function backfillCapabilityGovernance(): Promise<{ updated: number }> {
+  const rows = await db
+    .select({
+      id: anaCapabilityRegistry.id,
+      capabilityKey: anaCapabilityRegistry.capabilityKey,
+      category: anaCapabilityRegistry.category,
+      name: anaCapabilityRegistry.name,
+      description: anaCapabilityRegistry.description,
+    })
+    .from(anaCapabilityRegistry);
+
+  let updated = 0;
+  for (const row of rows) {
+    const gov = governanceFor(row.capabilityKey, row.category, {
+      name: row.name,
+      description: row.description,
+    });
+    await db
+      .update(anaCapabilityRegistry)
+      .set({
+        intendedUse: gov.intendedUse,
+        riskTier: gov.riskTier,
+        humanOversight: gov.humanOversight,
+        groundednessThreshold: gov.groundednessThreshold,
+        gxpApplicable: gov.gxpApplicable,
+        updatedAt: new Date(),
+      })
+      .where(eq(anaCapabilityRegistry.id, row.id));
+    updated++;
+  }
+  return { updated };
 }
 
 /**

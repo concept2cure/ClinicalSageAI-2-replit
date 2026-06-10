@@ -109,6 +109,7 @@ router.get('/regions', async (_req: Request, res: Response) => {
 router.get('/regions/:orgId/config', async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(String(req.params.orgId), 10);
+    if (!enforceOrgScope(req, res, orgId)) return;
     const result = await pool.query(
       `SELECT id, organization_id, region_code, framework_id, enabled, configuration,
               audit_retention_years, required_languages, timezone_rule,
@@ -130,6 +131,7 @@ router.get('/regions/:orgId/config', async (req: Request, res: Response) => {
 router.post('/regions/:orgId/enable', async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(String(req.params.orgId), 10);
+    if (!enforceOrgScope(req, res, orgId)) return;
     const { regionCode, frameworkId, configuration } = req.body;
 
     if (!regionCode || !frameworkId) {
@@ -180,6 +182,7 @@ router.post('/regions/:orgId/enable', async (req: Request, res: Response) => {
 router.post('/gap-analysis/:orgId', async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(String(req.params.orgId), 10);
+    if (!enforceOrgScope(req, res, orgId)) return;
     const { targetRegions } = req.body;
 
     if (!targetRegions || !Array.isArray(targetRegions)) {
@@ -237,6 +240,7 @@ router.post('/gap-analysis/:orgId', async (req: Request, res: Response) => {
 router.get('/gdpr/:orgId/ropa', async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(String(req.params.orgId), 10);
+    if (!enforceOrgScope(req, res, orgId)) return;
     const result = await pool.query(
       `SELECT id, organization_id, name, purpose, lawful_basis, data_categories,
               data_subject_categories, recipients, third_country_transfers,
@@ -258,6 +262,7 @@ router.get('/gdpr/:orgId/ropa', async (req: Request, res: Response) => {
 router.post('/gdpr/:orgId/ropa', async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(String(req.params.orgId), 10);
+    if (!enforceOrgScope(req, res, orgId)) return;
     const { name, purpose, lawfulBasis, dataCategories, dataSubjectCategories,
             recipients, retentionPeriodMonths, technicalMeasures, organizationalMeasures } = req.body;
 
@@ -288,6 +293,7 @@ router.post('/gdpr/:orgId/ropa', async (req: Request, res: Response) => {
 router.post('/gdpr/:orgId/breach', async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(String(req.params.orgId), 10);
+    if (!enforceOrgScope(req, res, orgId)) return;
     const { description, dataAffected, subjectsAffected, severity, detectedAt } = req.body;
 
     if (!description || !dataAffected || !severity) {
@@ -332,6 +338,7 @@ router.post('/gdpr/:orgId/breach', async (req: Request, res: Response) => {
 router.post('/gdpr/:orgId/dsr', async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(String(req.params.orgId), 10);
+    if (!enforceOrgScope(req, res, orgId)) return;
     const { dataSubjectId, requestType } = req.body;
 
     if (!dataSubjectId || !requestType) {
@@ -369,6 +376,7 @@ router.post('/gdpr/:orgId/dsr', async (req: Request, res: Response) => {
 router.get('/gdpr/:orgId/dsr/overdue', async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(String(req.params.orgId), 10);
+    if (!enforceOrgScope(req, res, orgId)) return;
     const result = await pool.query(
       `SELECT id, organization_id, data_subject_id, request_type, status,
               received_at, response_deadline, completed_at, response_details,
@@ -400,13 +408,13 @@ router.get('/gdpr/:orgId/dsr/overdue', async (req: Request, res: Response) => {
 router.get('/gdpr/:orgId/data-subject/:dataSubjectId/export', async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(String(req.params.orgId), 10);
+    if (!enforceOrgScope(req, res, orgId)) return;
     const dataSubjectIdRaw = String(req.params.dataSubjectId);
     const userId = Number.parseInt(dataSubjectIdRaw, 10);
 
     if (!orgId || !dataSubjectIdRaw) {
       return res.status(400).json({ error: 'orgId and dataSubjectId are required' });
     }
-    if (!enforceOrgScope(req, res, orgId)) return;
     if (!Number.isFinite(userId) || !enforceSubjectAccess(req, res, userId)) return;
 
     const safeQuery = async (query: string, params: any[]) => {
@@ -518,6 +526,7 @@ router.delete('/gdpr/:orgId/data-subject/:dataSubjectId', async (req: Request, r
   const client = await pool.connect();
   try {
     const orgId = parseInt(String(req.params.orgId), 10);
+    if (!enforceOrgScope(req, res, orgId)) return;
     const dataSubjectIdRaw = String(req.params.dataSubjectId);
     const userId = Number.parseInt(dataSubjectIdRaw, 10);
     const reason = req.body?.reason || 'Data subject erasure request (Art. 17)';
@@ -525,7 +534,6 @@ router.delete('/gdpr/:orgId/data-subject/:dataSubjectId', async (req: Request, r
     if (!orgId || !dataSubjectIdRaw || !Number.isFinite(userId)) {
       return res.status(400).json({ error: 'orgId and numeric dataSubjectId are required' });
     }
-    if (!enforceOrgScope(req, res, orgId)) return;
     if (!enforceSubjectAccess(req, res, userId)) return;
 
     await client.query('BEGIN');
@@ -615,6 +623,7 @@ router.delete('/gdpr/:orgId/data-subject/:dataSubjectId', async (req: Request, r
 router.post('/gdpr/:orgId/transfer-assessment', async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(String(req.params.orgId), 10);
+    if (!enforceOrgScope(req, res, orgId)) return;
     const { sourceRegion, destinationRegion, transferMechanism, legalBasis,
             riskLevel, tiaCompleted, supplementaryMeasures } = req.body;
 
@@ -647,6 +656,7 @@ router.post('/gdpr/:orgId/transfer-assessment', async (req: Request, res: Respon
 router.post('/gdpr/:orgId/dpia', async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(String(req.params.orgId), 10);
+    if (!enforceOrgScope(req, res, orgId)) return;
     const { processingActivityId, description, necessityAssessment, riskAssessment, dpoOpinion } = req.body;
 
     if (!description) {
@@ -679,6 +689,7 @@ router.post('/gdpr/:orgId/dpia', async (req: Request, res: Response) => {
 router.post('/pharmacovigilance/:orgId/adverse-event', async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(String(req.params.orgId), 10);
+    if (!enforceOrgScope(req, res, orgId)) return;
     const { projectId, eventType, patientId, eventDescription, onsetDate,
             seriousnessCriteria, causality, outcome, reporterType,
             countryOfOccurrence } = req.body;
@@ -735,6 +746,7 @@ router.post('/pharmacovigilance/:orgId/adverse-event', async (req: Request, res:
 router.get('/pharmacovigilance/:orgId/adverse-events', async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(String(req.params.orgId), 10);
+    if (!enforceOrgScope(req, res, orgId)) return;
     const eventType = req.query.eventType;
     const projectId = req.query.projectId;
 
@@ -770,6 +782,7 @@ router.get('/pharmacovigilance/:orgId/adverse-events', async (req: Request, res:
 router.get('/pharmacovigilance/:orgId/overdue-reports', async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(String(req.params.orgId), 10);
+    if (!enforceOrgScope(req, res, orgId)) return;
     const result = await pool.query(
       `SELECT id, organization_id, project_id, event_type, patient_id,
               event_description, onset_date, report_date, seriousness_criteria,
@@ -804,6 +817,7 @@ router.get('/pharmacovigilance/:orgId/overdue-reports', async (req: Request, res
 router.post('/pharmacovigilance/:orgId/signal', async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(String(req.params.orgId), 10);
+    if (!enforceOrgScope(req, res, orgId)) return;
     const { projectId, signalSource, description, riskBenefitAssessment } = req.body;
 
     if (!description) {
@@ -831,6 +845,7 @@ router.post('/pharmacovigilance/:orgId/signal', async (req: Request, res: Respon
 router.post('/pharmacovigilance/:orgId/rmp', async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(String(req.params.orgId), 10);
+    if (!enforceOrgScope(req, res, orgId)) return;
     const { projectId, version, identifiedRisks, potentialRisks, missingInformation,
             pharmacovigilanceActivities, riskMinimizationMeasures, region } = req.body;
 
@@ -864,6 +879,7 @@ router.post('/pharmacovigilance/:orgId/rmp', async (req: Request, res: Response)
 router.get('/dashboard/:orgId', async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(String(req.params.orgId), 10);
+    if (!enforceOrgScope(req, res, orgId)) return;
 
     // Parallel queries for dashboard data
     const [

@@ -8,19 +8,19 @@
  *   npx ts-node scripts/test-cognitive-fabric.ts
  */
 import { Pool } from 'pg';
-import OpenAI from 'openai';
 import { v4 as uuidv4 } from 'uuid';
+import { getEmbeddingProvider } from '../server/services/ai-gateway/embeddings/embedding-provider';
+import { createScopedLogger } from '../server/utils/logger';
+
+const logger = createScopedLogger('test-cognitive-fabric');
 
 // Configuration
 const DATABASE_URL = process.env.DATABASE_URL || '';
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 
 const pool = new Pool({
   connectionString: DATABASE_URL,
   ssl: DATABASE_URL.includes('neon') ? { rejectUnauthorized: false } : undefined,
 });
-
-const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
 // Sample clinical table data (simulating extracted table from CSR)
 const SAMPLE_TABLE = {
@@ -48,12 +48,13 @@ function tableToMarkdown(table: typeof SAMPLE_TABLE): string {
 
 // Generate embedding
 async function generateEmbedding(text: string): Promise<number[]> {
-  const response = await openai.embeddings.create({
-    model: 'text-embedding-3-small',
+  // Route through the governed embedding seam (honors EMBEDDING_PROVIDER,
+  // including a self-hosted/offline embedder) rather than a direct client.
+  const { embeddings } = await getEmbeddingProvider().embed({
     input: text.slice(0, 8000),
     dimensions: 1536,
   });
-  return response.data[0].embedding;
+  return embeddings[0];
 }
 
 async function main() {

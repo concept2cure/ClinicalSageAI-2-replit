@@ -140,7 +140,7 @@ export async function buildManifestV1(opts: BuildManifestOpts): Promise<{
   } = opts;
 
   // ── Fetch claims + evidence ────────────────────────────────────────────
-  let claimsData: ManifestV1['binderEvidence']['claims'] = [];
+  const claimsData: ManifestV1['binderEvidence']['claims'] = [];
   let approvedCount = 0;
   let requiredCount = 0;
 

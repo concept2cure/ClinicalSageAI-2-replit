@@ -52,6 +52,15 @@ jobs:
       - name: Guardrails — password hygiene
         run: npm run ci:password-hygiene
 
+      - name: Guardrails — SAML SSO fail-closed (no auth bypass)
+        run: npm run ci:saml-fail-closed
+
+      - name: Guardrails — design-system non-negotiables (Lucide-only, no spring)
+        run: npm run ci:design-system
+
+      - name: Guardrails — regulated-data delete audit coverage (Part 11)
+        run: npm run ci:regulated-delete-audit
+
       - name: Guardrails — route mount authority audit (no regressions)
         run: npm run ci:audit-route-mounts:no-regression
 
@@ -105,6 +114,32 @@ jobs:
 
       - name: Run tests
         run: npm test
+        env:
+          CI: true
+
+  security-tests:
+    name: Security Contract Tests
+    runs-on: ubuntu-latest
+    # Intentionally independent of `lint`. The other test jobs `needs: lint`, so
+    # they are skipped whenever the lint job is red (e.g. pre-existing
+    # tenant-isolation baseline drift). A security regression must always report,
+    # so this gate runs on its own.
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Tenant-isolation + prompt-injection contract tests. These mock the data
+      # layer (no DB), so they run fast and gate every PR independently of the
+      # heavier DB-backed suite.
+      - name: Run security contract tests
+        run: npm run test:security
         env:
           CI: true
 
@@ -269,6 +304,21 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
+      - name: Generate SBOM (CycloneDX)
+        # Software Bill of Materials (production tree) for vendor security
+        # questionnaires / supply-chain transparency. Published as a build
+        # artifact. Value-add only — never block the security scan on it.
+        continue-on-error: true
+        run: npm run sbom > sbom.cyclonedx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx
+          path: sbom.cyclonedx.json
+          retention-days: 90
+          if-no-files-found: ignore
 
       - name: Run npm audit (with documented false-positive allowlist)
         # The wrapper filters out registry-lag false positives where installed

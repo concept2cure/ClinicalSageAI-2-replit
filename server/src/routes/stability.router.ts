@@ -210,7 +210,7 @@ router.get('/studies', async (req, res) => {
 
     // fetch one-line condition strings per study for frontend compatibility
     const ids = rows.map((r: any) => r.study_id);
-    let condMap = new Map<string, string[]>();
+    const condMap = new Map<string, string[]>();
     if (ids.length) {
       // Use the same client with tenant context
       const { rows: conds } = await client.query(
@@ -813,55 +813,15 @@ router.post(
       // });
       // const records = parseResult.data;
 
-      // For now, return a simple message about CSV import being temporarily unavailable
+      // CSV import is disabled until a CSV parser (papaparse) is wired in.
+      // The parse + per-row upsert into stab_results lived here; it was removed
+      // as dead code once the early return above made it unreachable. Restore it
+      // alongside the parser when the feature is re-enabled.
       return res.status(200).json({
         message: 'CSV import feature temporarily unavailable',
         imported: 0,
         errors: ['CSV parsing library not available'],
       });
-
-      // Get lookup data
-      const conditionsResult = await client.query(
-        'SELECT * FROM stab_conditions WHERE study_id = $1',
-        [id]
-      );
-      const conditions = new Map(conditionsResult.rows.map(c => [c.kind, c]));
-
-      const timepointsResult = await client.query(
-        'SELECT * FROM stab_timepoints WHERE study_id = $1',
-        [id]
-      );
-      const timepoints = new Map(
-        timepointsResult.rows.map(tp => [`${tp.cond_id}-${tp.label}`, tp])
-      );
-
-      const testsResult = await client.query('SELECT * FROM stab_tests WHERE study_id = $1', [id]);
-      const tests = new Map(testsResult.rows.map(t => [t.name, t]));
-
-      let imported = 0;
-      // CSV import functionality temporarily disabled
-      // const records = parseResult.data;
-
-      // for (const record of records) {
-      //   const row = record as any;
-      //   const condition = conditions.get(row.condition);
-      //   const timepoint = timepoints.get(`${condition?.cond_id}-${row.timepoint}`);
-      //   const test = tests.get(row.test);
-      //
-      //   if (condition && timepoint && test) {
-      //     await client.query(`
-      //       INSERT INTO stab_results (study_id, cond_id, tp_id, test_id, value, unit, pass, remarks)
-      //       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      //       ON CONFLICT (cond_id, tp_id, test_id) DO UPDATE SET
-      //         value = $5, unit = $6, pass = $7, remarks = $8
-      //     `, [id, condition.cond_id, timepoint.tp_id, test.test_id, row.value, row.unit, row.pass === 'true', row.remarks]);
-      //     imported++;
-      //   }
-      // }
-
-      await client.query('COMMIT');
-
-      res.json({ imported, total: 0 });
     } catch (error) {
       await client.query('ROLLBACK');
       console.error('Error importing results:', error);
@@ -1132,7 +1092,12 @@ router.post('/studies/:id/p8/push', async (req, res) => {
         .join(', '),
       DURATION_MONTHS: study.duration_months || 24,
       LABEL_STORAGE: study.label_storage || 'Store in a dry place at room temperature',
-      COMPLIANCE_STATUS: 'Compliant with ICH Q1A(R2) guidelines',
+      // Do not certify a compliance verdict in a regulated submission document:
+      // conformance to ICH Q1A(R2) is determined by evaluating completed results
+      // against acceptance criteria, which this token generator does not do.
+      // State the study's design basis instead of asserting "Compliant".
+      COMPLIANCE_STATUS:
+        'Study designed to follow ICH Q1A(R2); conformance to be confirmed against acceptance criteria on completion',
       RESULTS_SUMMARY:
         results.length > 0 ? `${results.length} test results recorded` : 'Testing in progress',
     };
@@ -1813,7 +1778,11 @@ router.get('/oot-surveillance', async (req, res) => {
 
       const { m, s, b } = checkWE(series, rules);
 
-      // Add some outliers for demonstration - force at least one WE1 trigger
+      // Flag a series only when a real signal is present: a Western Electric
+      // rule break from checkWE (b), or a genuine trend — first-to-last shift
+      // beyond 2 SD, or any point beyond 2.5 SD from the mean. (An earlier
+      // version's comment claimed it "forced" a trigger for demonstration; it
+      // does not — detection is computed from the real series statistics.)
       const hasSignificantTrend =
         series.length >= 5 &&
         (Math.abs(series[0] - series[series.length - 1]) > s * 2 ||
@@ -1838,7 +1807,10 @@ router.get('/oot-surveillance', async (req, res) => {
             sd: parseFloat(s.toFixed(3)),
             n: series.length,
           },
-          status: 'confirmed',
+          // Auto-detected statistical signal — NOT yet investigated/confirmed.
+          // 'confirmed' would overstate the investigation state of an OOT signal
+          // in a regulated stability surface; it is 'detected' until reviewed.
+          status: 'detected',
           detected_date: new Date().toISOString(),
           result_value: parseFloat(series[series.length - 1].toFixed(2)),
           specification_limit: `${(m - 3 * s).toFixed(1)} - ${(m + 3 * s).toFixed(1)}`,

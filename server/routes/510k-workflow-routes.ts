@@ -59,7 +59,7 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
 
       // For now, we'll use the project ID directly as the workflow ID
       // since we're working with project-based workflows
-      let workflow = {
+      const workflow = {
         id: parseInt(projectId),
         currentStep: stage,
         workflowData: data,

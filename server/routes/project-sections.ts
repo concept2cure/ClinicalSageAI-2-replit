@@ -403,9 +403,10 @@ router.patch('/:code/status', async (req: Request, res: Response) => {
 
     // Notify on lock
     if (new_status === 'locked') {
-      const projectResult = await pool.query('SELECT owner_id FROM projects WHERE id = $1', [
-        projectId,
-      ]);
+      const projectResult = await pool.query(
+        'SELECT owner_id FROM projects WHERE id = $1 AND organization_id = $2',
+        [projectId, orgId]
+      );
       const ownerId = projectResult.rows[0]?.owner_id;
       if (ownerId) {
         await createNotification({

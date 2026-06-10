@@ -766,15 +766,10 @@ export class PowerSampleSizeService {
   /**
    * Create simulation models for complex designs
    */
-  async createSimulationModel(params: any): Promise<any> {
-    // Implementation would depend on specific simulation requirements
-    // This is a placeholder for future expansion
-    return {
-      modelCreated: true,
-      simulationParameters: params,
-      runSimulation: () => {
-        // Run simulation logic would go here
-      },
-    };
+  async createSimulationModel(_params: any): Promise<any> {
+    // Not implemented — previously returned { modelCreated: true } with a no-op
+    // runSimulation(), falsely signalling a usable simulation model. Fail closed
+    // rather than hand back a model that silently does nothing.
+    throw new Error('NOT_IMPLEMENTED: createSimulationModel');
   }
 }

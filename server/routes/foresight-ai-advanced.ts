@@ -23,10 +23,33 @@ import {
   indNarratives,
   indNarrativeSections 
 } from '@shared/schema';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, and, or, desc, sql } from 'drizzle-orm';
 
 const router = Router();
 const aiEngine = new ForesightAIEngine();
+
+/**
+ * Overwrite a parsed body's organizationId with the caller's JWT-bound org.
+ *
+ * SECURITY: every schema below declares `organizationId` as a client-supplied
+ * field, but trusting it lets an authenticated user of org A persist/read
+ * org B's dose-escalation, PKPD and trial data (cross-tenant IDOR). The org
+ * is therefore always taken from the verified JWT and the body value ignored.
+ * Returns the params, or null after sending a 403 when no tenant context.
+ */
+function forceJwtOrg<T extends { organizationId?: string }>(
+  req: any,
+  res: any,
+  params: T
+): T | null {
+  const orgId = authedOrgId(req);
+  if (orgId == null) {
+    res.status(403).json({ error: 'Tenant context required' });
+    return null;
+  }
+  params.organizationId = String(orgId);
+  return params;
+}
 
 // Advanced multi-modal prediction endpoint
 const PredictionRequestSchema = z.object({
@@ -41,7 +64,8 @@ const PredictionRequestSchema = z.object({
 
 router.post('/predictions/advanced', async (req, res) => {
   try {
-    const params = PredictionRequestSchema.parse(req.body);
+    const params = forceJwtOrg(req, res, PredictionRequestSchema.parse(req.body));
+    if (!params) return;
     const result = await aiEngine.generateAdvancedPrediction(params);
     res.json(result);
   } catch (error) {
@@ -65,8 +89,9 @@ const DoseEscalationRequestSchema = z.object({
 
 router.post('/dose-escalation/optimize', async (req, res) => {
   try {
-    const params = DoseEscalationRequestSchema.parse(req.body);
-    
+    const params = forceJwtOrg(req, res, DoseEscalationRequestSchema.parse(req.body));
+    if (!params) return;
+
     // Create or fetch study
     let studyId = params.studyId;
     if (!studyId) {
@@ -116,12 +141,33 @@ const DLTReportSchema = z.object({
 
 router.post('/dose-escalation/report-dlt', async (req, res) => {
   try {
+    const orgId = authedOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     const params = DLTReportSchema.parse(req.body);
 
     // Fetch cohort first to resolve studyId (required on dltEvents)
     const [cohort] = await db!.select()
       .from(doseCohorts)
       .where(eq(doseCohorts.id, params.cohortId));
+
+    // SECURITY: an adverse event must only be recorded against a cohort whose
+    // study belongs to the caller's org. Without this an authenticated user of
+    // one tenant could write DLT events into another tenant's trial (and read
+    // back its escalation recommendation). Cross-tenant / unknown cohort → 404.
+    if (!cohort) {
+      return res.status(404).json({ error: 'Cohort not found' });
+    }
+    const [ownStudy] = await db!.select({ id: doseEscalationStudies.id })
+      .from(doseEscalationStudies)
+      .where(and(
+        eq(doseEscalationStudies.id, cohort.studyId),
+        eq(doseEscalationStudies.organizationId, orgId),
+      ));
+    if (!ownStudy) {
+      return res.status(404).json({ error: 'Cohort not found' });
+    }
 
     // Map outcome / attribution onto the current schema's enumerations
     const relatednessMap: Record<string, string> = {
@@ -191,7 +237,8 @@ const ProtocolGenerationSchema = z.object({
 
 router.post('/protocol/generate', async (req, res) => {
   try {
-    const params = ProtocolGenerationSchema.parse(req.body);
+    const params = forceJwtOrg(req, res, ProtocolGenerationSchema.parse(req.body));
+    if (!params) return;
     const protocol = await aiEngine.generateClinicalProtocol(params);
     
     // Fetch the complete protocol with sections
@@ -231,7 +278,8 @@ const CrossSpeciesAnalysisSchema = z.object({
 
 router.post('/pkpd/cross-species-analysis', async (req, res) => {
   try {
-    const params = CrossSpeciesAnalysisSchema.parse(req.body);
+    const params = forceJwtOrg(req, res, CrossSpeciesAnalysisSchema.parse(req.body));
+    if (!params) return;
     // Standard reference body weights (kg) when not supplied per species
     const defaultBodyWeights: Record<string, number> = {
       mouse: 0.02, rat: 0.15, rabbit: 1.8, dog: 10, monkey: 3, minipig: 20
@@ -263,7 +311,8 @@ const RiskAnalysisSchema = z.object({
 
 router.post('/risk-analysis/clinical', async (req, res) => {
   try {
-    const params = RiskAnalysisSchema.parse(req.body);
+    const params = forceJwtOrg(req, res, RiskAnalysisSchema.parse(req.body));
+    if (!params) return;
     const risks = await aiEngine.analyzeClinicalRisks(params);
     
     // Generate risk mitigation plan
@@ -304,7 +353,25 @@ router.post('/learning/adaptive', async (req, res) => {
 // Real-time study monitoring
 router.get('/monitor/study/:studyId', async (req, res) => {
   try {
+    const orgId = authedOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     const studyIdRaw = String(req.params.studyId ?? ""); const studyId = Array.isArray(studyIdRaw) ? studyIdRaw[0] : (studyIdRaw ?? "");
+    // SECURITY: only expose study intelligence for a study owned by the
+    // caller's org. Match on the human study id, plus the PK when the value is
+    // a UUID (comparing a non-UUID against the uuid column would error).
+    // Unknown or cross-tenant id → 404 (no existence disclosure).
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(studyId);
+    const studyMatch = isUuid
+      ? or(eq(doseEscalationStudies.id, studyId), eq(doseEscalationStudies.studyId, studyId))
+      : eq(doseEscalationStudies.studyId, studyId);
+    const [ownStudy] = await db!.select({ id: doseEscalationStudies.id })
+      .from(doseEscalationStudies)
+      .where(and(eq(doseEscalationStudies.organizationId, orgId), studyMatch));
+    if (!ownStudy) {
+      return res.status(404).json({ error: 'Study not found' });
+    }
     const intelligence = await aiEngine.monitorStudyIntelligence(studyId);
     res.json(intelligence);
   } catch (error) {
@@ -521,7 +588,8 @@ const PredictiveSuccessSchema = z.object({
 
 router.post('/predictive-success/calculate', async (req, res) => {
   try {
-    const params = PredictiveSuccessSchema.parse(req.body);
+    const params = forceJwtOrg(req, res, PredictiveSuccessSchema.parse(req.body));
+    if (!params) return;
     const result = await aiEngine.calculatePredictiveSuccessScore(params);
     res.json(result);
   } catch (error) {
@@ -543,7 +611,8 @@ const INDNarrativeSchema = z.object({
 
 router.post('/ind-narrative/generate', async (req, res) => {
   try {
-    const params = INDNarrativeSchema.parse(req.body);
+    const params = forceJwtOrg(req, res, INDNarrativeSchema.parse(req.body));
+    if (!params) return;
     const result = await aiEngine.generateINDNarrative(params);
     res.json(result);
   } catch (error) {
@@ -629,7 +698,8 @@ const CSRIngestSchema = z.object({
 router.post('/csr/ingest', async (req, res) => {
   try {
     const { csrForesightOrchestrator } = await import('../services/csr-foresight-orchestrator');
-    const params = CSRIngestSchema.parse(req.body);
+    const params = forceJwtOrg(req, res, CSRIngestSchema.parse(req.body));
+    if (!params) return;
     
     console.log('[AnA Predictions] Processing CSR ingestion:', params);
     
@@ -696,7 +766,8 @@ const RecalibrateSchema = z.object({
 router.post('/predictions/recalibrate', async (req, res) => {
   try {
     const { csrForesightOrchestrator } = await import('../services/csr-foresight-orchestrator');
-    const params = RecalibrateSchema.parse(req.body);
+    const params = forceJwtOrg(req, res, RecalibrateSchema.parse(req.body));
+    if (!params) return;
     
     // Get CSR insights first
     const insights = await csrForesightOrchestrator.getCSRInsights(params.organizationId);

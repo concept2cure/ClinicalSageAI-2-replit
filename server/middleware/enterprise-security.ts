@@ -34,30 +34,45 @@ const config = {
   isProduction: process.env.NODE_ENV === 'production',
   isDevelopment: process.env.NODE_ENV === 'development',
 
-  // CORS — production origins always included; localhost only in dev
-  allowedOrigins: (process.env.ALLOWED_ORIGINS || '')
-    .split(',')
-    .filter(Boolean)
-    .concat([
-      'https://trialsage.com',
-      'https://www.trialsage.com',
-      'https://app.trialsage.com',
-      'https://concept2cure-ri.ai',
-      'https://app.concept2cure-ri.ai',
-      'https://clinicalsage.ai',
-      'https://app.clinicalsage.ai',
-    ])
-    .concat(
-      process.env.NODE_ENV !== 'production'
-        ? ['http://localhost:5000', 'http://localhost:3000']
-        : []
+  // CORS — production origins always included; localhost only in dev.
+  // Env-supplied origins are trimmed and validated (malformed entries dropped),
+  // and the final list is de-duplicated so an operator typo cannot widen or
+  // corrupt the allowlist.
+  allowedOrigins: Array.from(
+    new Set(
+      (process.env.ALLOWED_ORIGINS || '')
+        .split(',')
+        .map(o => o.trim())
+        .filter(Boolean)
+        .concat([
+          'https://trialsage.com',
+          'https://www.trialsage.com',
+          'https://app.trialsage.com',
+          'https://concept2cure-ri.ai',
+          'https://app.concept2cure-ri.ai',
+          'https://clinicalsage.ai',
+          'https://app.clinicalsage.ai',
+        ])
+        .concat(
+          process.env.NODE_ENV !== 'production'
+            ? ['http://localhost:5000', 'http://localhost:3000']
+            : []
+        )
+        .concat(
+          // Allow GitHub Codespaces forwarded origins
+          process.env.CODESPACES === 'true' || process.env.CODESPACE_NAME
+            ? [`https://${process.env.CODESPACE_NAME}-5000.app.github.dev`]
+            : []
+        )
     )
-    .concat(
-      // Allow GitHub Codespaces forwarded origins
-      process.env.CODESPACES === 'true' || process.env.CODESPACE_NAME
-        ? [`https://${process.env.CODESPACE_NAME}-5000.app.github.dev`]
-        : []
-    ),
+  ).filter(origin => {
+    try {
+      const u = new URL(origin);
+      return u.protocol === 'https:' || u.protocol === 'http:';
+    } catch {
+      return false;
+    }
+  }),
 
   // Rate Limits — environment-aware (single canonical definition)
   rateLimits: (() => {
@@ -421,21 +436,46 @@ function sanitizeObject(obj: any, depth = 0): any {
   return obj;
 }
 
+// In-place variant of sanitizeObject for objects that cannot be reassigned.
+// Express 5 exposes req.query (and req.params on the prototype) via getters,
+// so `req.query = sanitizeObject(req.query)` throws — which previously hit
+// the fail-open catch below and silently skipped the scrub on every request.
+function scrubObjectInPlace(obj: any, depth = 0): void {
+  if (depth > 10 || !obj || typeof obj !== 'object') return;
+
+  if (Array.isArray(obj)) {
+    for (const item of obj) scrubObjectInPlace(item, depth + 1);
+    return;
+  }
+
+  for (const key of Object.keys(obj)) {
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+      console.warn(`[SECURITY] Blocked prototype pollution attempt: ${key}`);
+      delete obj[key];
+      continue;
+    }
+    scrubObjectInPlace(obj[key], depth + 1);
+  }
+}
+
 export function sanitizeInput(req: Request, res: Response, next: NextFunction) {
   try {
     if (req.body && typeof req.body === 'object') {
       req.body = sanitizeObject(req.body);
     }
+    // req.query / req.params are getter-backed in Express 5 — scrub in place.
     if (req.query && typeof req.query === 'object') {
-      req.query = sanitizeObject(req.query);
+      scrubObjectInPlace(req.query);
     }
     if (req.params && typeof req.params === 'object') {
-      req.params = sanitizeObject(req.params);
+      scrubObjectInPlace(req.params);
     }
     next();
   } catch (error) {
+    // Fail closed: a request the scrubber cannot process is rejected rather
+    // than passed through unsanitized.
     console.error('[SECURITY] Input sanitization error:', error);
-    next(); // Continue even on error to not break request flow
+    res.status(400).json({ error: 'Malformed request payload' });
   }
 }
 
@@ -501,7 +541,7 @@ export function validateTenantContext(req: Request, res: Response, next: NextFun
         }
       })();
       // Keep the structured-log line as well for ops dashboards.
-      // eslint-disable-next-line no-console
+       
       console.warn('[SECURITY] Tenant impersonation attempt blocked', impersonationDetail);
       return res.status(403).json({
         error: 'Organization mismatch',
@@ -655,11 +695,15 @@ export async function validateApiKey(req: Request, res: Response, next: NextFunc
     (req as any).tenantId = result.organizationId;
     (req as any).apiScopes = result.scopes;
     (req as any).apiRateLimit = result.rateLimit;
-  } catch {
-    // If api_keys table doesn't exist yet, fall through gracefully
-    const keyHash = createHash('sha256').update(apiKey).digest('hex');
-    (req as any).authMethod = 'api_key';
-    (req as any).apiKeyHash = keyHash;
+  } catch (error) {
+    // Fail closed: the client presented an API key but the key store could
+    // not validate it (service error / table missing). Falling through here
+    // used to mark the request authMethod='api_key' without any validation.
+    console.error('[SECURITY] API key validation unavailable:', (error as Error)?.message);
+    return res.status(503).json({
+      error: 'API key validation unavailable',
+      code: 'API_KEY_SERVICE_UNAVAILABLE',
+    });
   }
 
   next();
@@ -779,7 +823,7 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
       reason: 'no_origin_no_referer_no_bearer',
       method: req.method,
     });
-    // eslint-disable-next-line no-console
+     
     console.warn(
       `[SECURITY] CSRF: state-changing request without Origin/Referer/Bearer on ${req.path}`
     );
@@ -795,7 +839,7 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
       method: req.method,
       origin: source,
     });
-    // eslint-disable-next-line no-console
+     
     console.warn(
       `[SECURITY] CSRF: origin mismatch — ${source} not in allowedOrigins for ${req.path}`
     );

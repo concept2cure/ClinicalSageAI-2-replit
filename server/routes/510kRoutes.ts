@@ -628,7 +628,7 @@ router.post('/validate-submission', async (req: Request, res: Response) => {
 
     // Validate each required section
     const sectionResults: any[] = [];
-    let totalSections = allRequired.length;
+    const totalSections = allRequired.length;
     let completedSections = 0;
 
     for (const required of allRequired) {

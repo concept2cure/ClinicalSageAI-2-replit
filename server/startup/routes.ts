@@ -38,6 +38,7 @@ import { registerAiRoutes } from '../bootstrap/register-ai-routes';
 import { registerAdminRoutes } from '../bootstrap/register-admin-routes';
 import { registerIntegrationRoutes } from '../bootstrap/register-integrations-routes';
 import { registerGovernanceRoutes } from '../bootstrap/register-governance-routes';
+import { registerIndLifecycleRoutes } from '../bootstrap/register-ind-lifecycle-routes';
 import { registerPlatformRoutes } from '../bootstrap/register-platform-routes';
 import { registerRegulatoryRoutes } from '../bootstrap/register-regulatory-routes';
 import { registerDocumentRoutes } from '../bootstrap/register-document-routes';
@@ -128,6 +129,10 @@ export async function registerPreStartRoutes(
 
   // Governance + intelligence bundle.
   await registerGovernanceRoutes(app);
+
+  // IND lifecycle bundle — FDA forms, sponsor/agent/investigator master data,
+  // and RA lifecycle workflows (safety reports / annual report / amendments).
+  await registerIndLifecycleRoutes(app);
 
   // Slot 6 — Regulatory submissions / Submission ops / Correspondence /
   // 510k + PMA workflows / beta-safe / FDA forms / field sync / content

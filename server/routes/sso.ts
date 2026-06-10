@@ -7,13 +7,9 @@ import { db } from '../db';
 import { eq } from 'drizzle-orm';
 import { users, organizationUsers } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger';
+import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import {
-  buildAuthnRequest,
-  parseAssertion,
-  validateAssertion,
-  assertionToUser,
-  verifySignature,
-  generateSpMetadata,
+  getSamlProvider,
   SAMLValidationError,
   type SAMLConfig,
 } from '../services/saml-provider';
@@ -34,24 +30,26 @@ const isDev = process.env.NODE_ENV === 'development';
 const samlConfigs: Map<string, SAMLConfig> = new Map();
 
 /**
- * Pending AuthnRequest IDs for InResponseTo validation.
- * Maps requestId -> { createdAt, organizationSlug }.
- * Entries expire after 10 minutes.
+ * RelayState carries the org slug (and optional same-origin return path) through
+ * the IdP round-trip. It is UNTRUSTED on return — it only selects which org's IdP
+ * certificate validates the response. A forged response cannot validate against
+ * any org's trust anchor, so RelayState cannot be used to forge a login.
+ * InResponseTo/replay validation is handled inside node-saml (see saml-provider).
  */
-const pendingRequests: Map<string, { createdAt: number; organizationSlug: string }> = new Map();
-const PENDING_REQUEST_TTL_MS = 10 * 60 * 1000;
+function encodeRelayState(state: { org: string; returnTo?: string }): string {
+  return Buffer.from(JSON.stringify(state), 'utf-8').toString('base64url');
+}
 
-/** Clean up expired pending requests periodically */
-function cleanupPendingRequests(): void {
-  const now = Date.now();
-  const keysToDelete: string[] = [];
-  pendingRequests.forEach((entry, id) => {
-    if (now - entry.createdAt > PENDING_REQUEST_TTL_MS) {
-      keysToDelete.push(id);
-    }
-  });
-  for (const key of keysToDelete) {
-    pendingRequests.delete(key);
+function decodeRelayState(relayState: unknown): { org: string; returnTo?: string } {
+  if (typeof relayState !== 'string' || relayState.length === 0) return { org: 'default' };
+  try {
+    const parsed = JSON.parse(Buffer.from(relayState, 'base64url').toString('utf-8'));
+    return {
+      org: typeof parsed?.org === 'string' ? parsed.org : 'default',
+      returnTo: typeof parsed?.returnTo === 'string' ? parsed.returnTo : undefined,
+    };
+  } catch {
+    return { org: 'default' };
   }
 }
 
@@ -81,11 +79,68 @@ function getSamlConfig(orgSlug: string): SAMLConfig | null {
       spPrivateKey: process.env.SAML_SP_PRIVATE_KEY,
       spCertificate: process.env.SAML_SP_CERTIFICATE,
       nameIdFormat: process.env.SAML_NAME_ID_FORMAT,
+      idpSloUrl: process.env.SAML_IDP_SLO_URL,
     };
   }
 
   return null;
 }
+
+/**
+ * Populate the per-org SAML config store from the SAML_TENANTS env var, so one
+ * deployment can serve several client orgs' IdPs. SAML_TENANTS is a JSON object
+ * keyed by org slug: `{ "<slug>": { "idpSsoUrl", "idpEntityId", "idpCertificate",
+ * ...optional entityId/assertionConsumerServiceUrl/signRequests/sp keys } }`.
+ * The single-org env vars (SAML_IDP_*) remain the fallback for the default org.
+ */
+function loadSamlTenants(): void {
+  const raw = process.env.SAML_TENANTS;
+  if (!raw) return;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    logger.warn('SAML_TENANTS is not valid JSON — ignoring');
+    return;
+  }
+  if (!parsed || typeof parsed !== 'object') return;
+
+  const baseUrl = process.env.APP_BASE_URL || 'https://app.concept2cure.ai';
+  for (const [slug, value] of Object.entries(parsed as Record<string, unknown>)) {
+    if (!value || typeof value !== 'object') continue;
+    const cfg = value as Record<string, unknown>;
+    const idpSsoUrl = cfg.idpSsoUrl;
+    const idpEntityId = cfg.idpEntityId;
+    const idpCertificate = cfg.idpCertificate;
+    if (
+      typeof idpSsoUrl !== 'string' ||
+      typeof idpEntityId !== 'string' ||
+      typeof idpCertificate !== 'string'
+    ) {
+      continue;
+    }
+    samlConfigs.set(slug, {
+      entityId:
+        typeof cfg.entityId === 'string' ? cfg.entityId : `${baseUrl}/saml/${slug}/metadata`,
+      assertionConsumerServiceUrl:
+        typeof cfg.assertionConsumerServiceUrl === 'string'
+          ? cfg.assertionConsumerServiceUrl
+          : `${baseUrl}/api/auth/sso/saml/callback`,
+      idpSsoUrl,
+      idpEntityId,
+      idpCertificate,
+      signRequests: cfg.signRequests === true,
+      spPrivateKey: typeof cfg.spPrivateKey === 'string' ? cfg.spPrivateKey : undefined,
+      spCertificate: typeof cfg.spCertificate === 'string' ? cfg.spCertificate : undefined,
+      nameIdFormat: typeof cfg.nameIdFormat === 'string' ? cfg.nameIdFormat : undefined,
+      idpSloUrl: typeof cfg.idpSloUrl === 'string' ? cfg.idpSloUrl : undefined,
+    });
+  }
+  logger.info(`Loaded ${samlConfigs.size} SAML tenant config(s) from SAML_TENANTS`);
+}
+
+loadSamlTenants();
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SAML 2.0 ROUTES (registered BEFORE generic :provider routes to avoid capture)
@@ -100,7 +155,7 @@ function getSamlConfig(orgSlug: string): SAMLConfig | null {
  * Query params:
  *   - org: organization slug (required in multi-tenant mode)
  */
-router.get('/saml/initiate', (req: Request, res: Response) => {
+router.get('/saml/initiate', async (req: Request, res: Response) => {
   try {
     const orgSlug = (req.query.org as string) || 'default';
     const samlConfig = getSamlConfig(orgSlug);
@@ -114,13 +169,14 @@ router.get('/saml/initiate', (req: Request, res: Response) => {
       });
     }
 
-    const { requestId, redirectUrl } = buildAuthnRequest(samlConfig);
+    // Only honor a same-origin return path (prevents open-redirect / token leak).
+    const returnTo = sanitizeReturnTo(req.query.returnTo);
+    const relayState = encodeRelayState({ org: orgSlug, returnTo });
 
-    // Store the request ID for InResponseTo validation
-    pendingRequests.set(requestId, { createdAt: Date.now(), organizationSlug: orgSlug });
-    cleanupPendingRequests();
+    const provider = getSamlProvider(orgSlug, samlConfig);
+    const redirectUrl = await provider.getAuthorizeUrl(relayState);
 
-    logger.info(`SAML SSO initiated for org="${orgSlug}", requestId=${requestId}`);
+    logger.info(`SAML SSO initiated for org="${orgSlug}"`);
 
     return res.redirect(302, redirectUrl);
   } catch (err) {
@@ -132,6 +188,14 @@ router.get('/saml/initiate', (req: Request, res: Response) => {
     });
   }
 });
+
+/** Accept only a relative, same-origin path as a post-login return target. */
+function sanitizeReturnTo(value: unknown): string | undefined {
+  if (typeof value !== 'string' || value.length === 0) return undefined;
+  // Must be a root-relative path with no scheme/host and no protocol-relative form.
+  if (value.startsWith('/') && !value.startsWith('//')) return value;
+  return undefined;
+}
 
 /**
  * POST /api/auth/sso/saml/callback
@@ -157,24 +221,10 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
       });
     }
 
-    // Parse the assertion to determine which org this is for
-    // We need a config to validate, so we try to determine org from the assertion issuer
-    // or from a pending request
-    let orgSlug = 'default';
-    let expectedRequestId: string | undefined;
-
-    // Try to find org from pending requests by checking InResponseTo
-    const responseXml = Buffer.from(samlResponseB64, 'base64').toString('utf-8');
-    const inResponseToMatch = responseXml.match(/InResponseTo="([^"]*)"/);
-    if (inResponseToMatch) {
-      const inResponseTo = inResponseToMatch[1];
-      const pending = pendingRequests.get(inResponseTo);
-      if (pending) {
-        orgSlug = pending.organizationSlug;
-        expectedRequestId = inResponseTo;
-        pendingRequests.delete(inResponseTo);
-      }
-    }
+    // The org is selected from (untrusted) RelayState. This only picks which
+    // org's IdP certificate validates the response; a forged response cannot
+    // validate against any org's trust anchor, so this cannot forge a login.
+    const { org: orgSlug, returnTo } = decodeRelayState(relayState);
 
     const samlConfig = getSamlConfig(orgSlug);
     if (!samlConfig) {
@@ -186,22 +236,15 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
       });
     }
 
-    // Verify signature if IdP certificate is available
-    const signatureValid = verifySignature(samlResponseB64, samlConfig);
-    if (!signatureValid) {
-      logger.warn('SAML Response signature verification failed — proceeding with caution');
-      // Note: In strict production mode, you may want to reject unsigned/invalid responses.
-      // For now we log the warning but continue, as some IdPs sign only the assertion, not the response.
-    }
-
-    // Parse the SAML assertion
-    const assertion = parseAssertion(samlResponseB64, samlConfig);
-
-    // Validate the assertion (timestamps, audience, InResponseTo)
-    validateAssertion(assertion, samlConfig, expectedRequestId);
-
-    // Convert assertion to user profile
-    const samlUser = assertionToUser(assertion);
+    // FAIL CLOSED: real XML-DSig verification (signed assertion required),
+    // audience + InResponseTo enforced. Throws SAMLValidationError on any
+    // missing/invalid signature or forged/expired assertion — there is no
+    // "proceed with caution" path.
+    const provider = getSamlProvider(orgSlug, samlConfig);
+    const samlUser = await provider.validateResponse({
+      SAMLResponse: samlResponseB64,
+      ...(typeof relayState === 'string' ? { RelayState: relayState } : {}),
+    });
 
     if (!samlUser.email) {
       logger.error('SAML assertion did not contain an email address');
@@ -233,11 +276,15 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
 
     logger.info(`SAML SSO login successful for user=${dbUser.email}, org=${organizationId}`);
 
-    // If RelayState is provided, redirect with token in query param
-    if (relayState) {
-      const redirectUrl = new URL(relayState);
-      redirectUrl.searchParams.set('token', token);
-      return res.redirect(302, redirectUrl.toString());
+    // Redirect to a SAME-ORIGIN return path with the token, when one was
+    // requested. RelayState round-trips through the IdP unauthenticated, so the
+    // return path is re-validated here as same-origin; an attacker-supplied
+    // absolute URL is rejected (would otherwise leak the token cross-origin).
+    const safeReturnTo = sanitizeReturnTo(returnTo);
+    if (safeReturnTo) {
+      const params = new URLSearchParams({ token });
+      const sep = safeReturnTo.includes('?') ? '&' : '?';
+      return res.redirect(302, `${safeReturnTo}${sep}${params.toString()}`);
     }
 
     // Otherwise return JSON response
@@ -292,7 +339,7 @@ router.get('/saml/metadata', (req: Request, res: Response) => {
       });
     }
 
-    const metadata = generateSpMetadata(samlConfig);
+    const metadata = getSamlProvider(orgSlug, samlConfig).metadata();
     res.set('Content-Type', 'application/xml');
     return res.send(metadata);
   } catch (err) {
@@ -300,6 +347,71 @@ router.get('/saml/metadata', (req: Request, res: Response) => {
     return res.status(500).json({ success: false, error: 'METADATA_GENERATION_FAILED' });
   }
 });
+
+/**
+ * GET /api/auth/sso/saml/logout
+ *
+ * SP-initiated Single Logout (SLO). Verifies the caller's session JWT, builds a
+ * SAML LogoutRequest for the user's IdP session (nameID + sessionIndex taken
+ * from the VERIFIED token, not from request input), and redirects to the IdP's
+ * SLO endpoint so the federated session is terminated. Falls back to the local
+ * login page when SLO is not configured or the session is not federated.
+ *
+ * Query: ?org=<slug> selects the IdP (default 'default'). The IdP validates the
+ * LogoutRequest, so org selection cannot be abused to forge a logout elsewhere.
+ */
+router.get('/saml/logout', async (req: Request, res: Response) => {
+  const loginUrl = '/concept2cure/login';
+  try {
+    const bearer = /^Bearer\s+(\S+)$/i.exec(req.headers.authorization ?? '');
+    const token = bearer?.[1] || (typeof req.query.token === 'string' ? req.query.token : '');
+    if (!token) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
+
+    let claims: Record<string, unknown>;
+    try {
+      // Use the rotation-aware verifier (HS256-pinned, prev-secret fallback).
+      claims = verifyJwtWithRotation<Record<string, unknown>>(token);
+    } catch {
+      return res.status(401).json({ success: false, error: 'INVALID_TOKEN' });
+    }
+
+    const sessionIndex = claims.sessionIndex;
+    const email = claims.email;
+    // Only federated (SAML) sessions have an IdP session to terminate.
+    if (claims.provider !== 'saml' || typeof sessionIndex !== 'string' || typeof email !== 'string') {
+      return res.redirect(302, loginUrl);
+    }
+
+    const orgSlug = (req.query.org as string) || 'default';
+    const samlConfig = getSamlConfig(orgSlug);
+    if (!samlConfig) return res.redirect(302, loginUrl);
+
+    const provider = getSamlProvider(orgSlug, samlConfig);
+    if (!provider.supportsLogout) return res.redirect(302, loginUrl);
+
+    const logoutUrl = await provider.getLogoutUrl(
+      { nameID: email, sessionIndex },
+      encodeRelayState({ org: orgSlug })
+    );
+    return res.redirect(302, logoutUrl);
+  } catch (err) {
+    logger.error('SAML logout error', err as Record<string, unknown>);
+    return res.redirect(302, loginUrl);
+  }
+});
+
+/**
+ * GET/POST /api/auth/sso/saml/logout/callback
+ *
+ * Lands the user back after IdP Single Logout. The IdP has terminated its
+ * session and the client clears its own token, so this returns the user to the
+ * login page. (Strict LogoutResponse signature validation is a follow-up.)
+ */
+function handleLogoutCallback(_req: Request, res: Response): void {
+  res.redirect(302, '/concept2cure/login?logged_out=1');
+}
+router.get('/saml/logout/callback', handleLogoutCallback);
+router.post('/saml/logout/callback', handleLogoutCallback);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GENERIC SSO ROUTES (OAuth/generic provider flow)
@@ -442,7 +554,7 @@ async function findOrCreateSamlUser(
   // In production, org mapping would be determined by SAML config or attribute
   const defaultOrgId = 1;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Drizzle overload inference issue with default columns
+     
     await (db.insert(organizationUsers) as any).values({
       userId: newUser.id,
       organizationId: defaultOrgId,

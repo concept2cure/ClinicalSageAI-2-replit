@@ -177,6 +177,38 @@ function assessEstimand(e: EstimandInput): EstimandAssessment {
   return { missing, warnings, attributesSpecified };
 }
 
+/** Per-estimand ICH E9(R1) completeness, surfaced for the design gates and the SAP. */
+export interface EstimandCompleteness {
+  endpointName: string;
+  /** Complete ⇔ no structural (error-severity) gaps. Warnings do not block. */
+  complete: boolean;
+  /** How many of the five ICH E9(R1) attributes are explicitly present (0–5). */
+  attributesSpecified: number;
+  totalAttributes: 5;
+  /** Structural gaps that block completeness. */
+  missing: string[];
+  /** Defensibility weaknesses that do not block completeness. */
+  warnings: string[];
+}
+
+/**
+ * Assess a single estimand against ICH E9(R1) and return its completeness. This is
+ * the one place the five-attribute bar is defined; the estimand→SAP renderer and the
+ * study-design estimand gate both consume it so they can never drift apart. Pure and
+ * honest: it reports gaps, never fills them.
+ */
+export function assessEstimandCompleteness(e: EstimandInput): EstimandCompleteness {
+  const { missing, warnings, attributesSpecified } = assessEstimand(e);
+  return {
+    endpointName: e.endpointName,
+    complete: missing.length === 0,
+    attributesSpecified,
+    totalAttributes: 5,
+    missing,
+    warnings,
+  };
+}
+
 /** Render the intercurrent-event handling lines for one estimand. */
 function renderIntercurrentEvents(events: IntercurrentEventInput[]): string {
   if (!events || events.length === 0) {
@@ -263,17 +295,7 @@ function renderDeferral(): string {
 export function renderEstimandSection(estimands?: EstimandInput[]): RenderedEstimandSection {
   const list = Array.isArray(estimands) ? estimands : [];
 
-  const attributeCompleteness = list.map(e => {
-    const { missing, warnings, attributesSpecified } = assessEstimand(e);
-    return {
-      endpointName: e.endpointName,
-      complete: missing.length === 0,
-      attributesSpecified,
-      totalAttributes: 5 as const,
-      missing,
-      warnings,
-    };
-  });
+  const attributeCompleteness = list.map(assessEstimandCompleteness);
 
   if (list.length === 0) {
     return {

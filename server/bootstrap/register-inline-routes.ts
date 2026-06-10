@@ -294,6 +294,97 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount C2C Actions routes:', error);
   }
 
+  // C2C governance projections — the permission-atom engine surfaced as
+  // who-can / can reads ("permission is the source of truth, derived").
+  try {
+    const c2cGovernanceModule = await import('../routes/c2c/governance');
+    app.use('/api/c2c/governance', authMiddleware, c2cGovernanceModule.default);
+    console.info('✅ C2C Governance routes mounted (/api/c2c/governance)');
+  } catch (error) {
+    console.error('❌ Failed to mount C2C Governance routes:', error);
+  }
+
+  // C2C regulatory commitments (source-anchored inbound + outbound obligations).
+  try {
+    const c2cCommitmentsModule = await import('../routes/c2c/commitments');
+    app.use('/api/c2c/commitments', authMiddleware, c2cCommitmentsModule.default);
+    console.info('✅ C2C Commitments routes mounted (/api/c2c/commitments)');
+  } catch (error) {
+    console.error('❌ Failed to mount C2C Commitments routes:', error);
+  }
+
+  // Study-design spine (validate / simulate / persist onto the CDISC PRM tables).
+  try {
+    const studyDesignModule = await import('../routes/study-design');
+    app.use('/api/study-design', authMiddleware, studyDesignModule.default);
+    console.info('✅ Study Design routes mounted (/api/study-design)');
+  } catch (error) {
+    console.error('❌ Failed to mount Study Design routes:', error);
+  }
+
+  // Financial disclosures — 21 CFR 54 (FCOI, Forms FDA 3454/3455 → Module 1).
+  try {
+    const fcoiModule = await import('../routes/financial-disclosures');
+    app.use('/api/financial-disclosures', authMiddleware, fcoiModule.default);
+    console.info('✅ Financial Disclosure routes mounted (/api/financial-disclosures)');
+  } catch (error) {
+    console.error('❌ Failed to mount Financial Disclosure routes:', error);
+  }
+
+  // HA interaction & commitment management (Pre-IND/EOP2/pre-NDA; PMR/PMC/REMS).
+  try {
+    const haModule = await import('../routes/ha-interactions');
+    app.use('/api/ha-interactions', authMiddleware, haModule.default);
+    console.info('✅ HA Interaction routes mounted (/api/ha-interactions)');
+  } catch (error) {
+    console.error('❌ Failed to mount HA Interaction routes:', error);
+  }
+
+  // IACUC / animal study governance (PHS Policy / AWA / OLAW; → Module 4).
+  try {
+    const iacucModule = await import('../routes/iacuc');
+    app.use('/api/iacuc', authMiddleware, iacucModule.default);
+    console.info('✅ IACUC routes mounted (/api/iacuc)');
+  } catch (error) {
+    console.error('❌ Failed to mount IACUC routes:', error);
+  }
+
+  // IRB / IEC submission & amendment management (Common Rule / 21 CFR 56; → Module 5).
+  try {
+    const irbModule = await import('../routes/irb');
+    app.use('/api/irb', authMiddleware, irbModule.default);
+    console.info('✅ IRB routes mounted (/api/irb)');
+  } catch (error) {
+    console.error('❌ Failed to mount IRB routes:', error);
+  }
+
+  // IBC / biosafety (NIH Guidelines / BMBL; CGT/mRNA clearance → IND enabling).
+  try {
+    const ibcModule = await import('../routes/ibc');
+    app.use('/api/ibc', authMiddleware, ibcModule.default);
+    console.info('✅ IBC routes mounted (/api/ibc)');
+  } catch (error) {
+    console.error('❌ Failed to mount IBC routes:', error);
+  }
+
+  // Nonclinical study management + SEND (ICH M4/S-series; CDISC SEND → Module 4).
+  try {
+    const nonclinicalModule = await import('../routes/nonclinical');
+    app.use('/api/nonclinical', authMiddleware, nonclinicalModule.default);
+    console.info('✅ Nonclinical/SEND routes mounted (/api/nonclinical)');
+  } catch (error) {
+    console.error('❌ Failed to mount Nonclinical routes:', error);
+  }
+
+  // C2C study digital twins + simulation (study/protocol design module).
+  try {
+    const c2cStudyTwinModule = await import('../routes/c2c/study-twin');
+    app.use('/api/c2c/study-twin', authMiddleware, c2cStudyTwinModule.default);
+    console.info('✅ C2C Study Twin routes mounted (/api/c2c/study-twin)');
+  } catch (error) {
+    console.error('❌ Failed to mount C2C Study Twin routes:', error);
+  }
+
   // C2C document family (Phase 9 Day 3 — document + section + evidence routes).
   try {
     const c2cDocsModule = await import('../routes/c2c/documents');
@@ -335,6 +426,35 @@ export async function registerInlineAiWorkflowRoutes({
     console.info('✅ C2C Templates routes mounted (/api/c2c/templates)');
   } catch (error) {
     console.error('❌ Failed to mount C2C Templates routes:', error);
+  }
+
+  // BLA 351(a) biologics workbench — analytical similarity, comparability,
+  // immunogenicity engines (/api/biopharma/bla/*). Mounted before the programs
+  // router so its multi-segment paths resolve ahead of programs' GET /:id.
+  try {
+    const blaWorkbenchModule = await import('../routes/biopharma/bla-workbench');
+    app.use('/api/biopharma/bla', authMiddleware, blaWorkbenchModule.default);
+    console.info('✅ BLA workbench routes mounted (/api/biopharma/bla)');
+  } catch (error) {
+    console.error('❌ Failed to mount BLA workbench routes:', error);
+  }
+
+  // Multi-region submission planning (build+submit resolver, FDA/EMA/PMDA).
+  try {
+    const submissionsModule = await import('../routes/biopharma/submissions');
+    app.use('/api/biopharma/submissions', authMiddleware, submissionsModule.default);
+    console.info('✅ Biopharma submissions routes mounted (/api/biopharma/submissions)');
+  } catch (error) {
+    console.error('❌ Failed to mount Biopharma submissions routes:', error);
+  }
+
+  // CTD Module 1 (regional administrative) + Module 2 (CTD summaries) home.
+  try {
+    const ctdModule = await import('../routes/biopharma/ctd');
+    app.use('/api/biopharma/ctd', authMiddleware, ctdModule.default);
+    console.info('✅ Biopharma CTD M1/M2 routes mounted (/api/biopharma/ctd)');
+  } catch (error) {
+    console.error('❌ Failed to mount Biopharma CTD routes:', error);
   }
 
   // Biopharma domain programs + meetings (Phase 10 — /api/biopharma/*).

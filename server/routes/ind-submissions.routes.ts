@@ -353,7 +353,7 @@ router.post('/:submissionId/ind-step', async (req: Request, res: Response) => {
     }
     
     // Generate summary data if step 7 is completed
-    let updates: any = {
+    const updates: any = {
       indStepData,
       indStepsCompleted,
       indWizardStatus,

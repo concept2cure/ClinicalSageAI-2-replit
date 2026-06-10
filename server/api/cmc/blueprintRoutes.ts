@@ -136,7 +136,7 @@ router.get('/templates', async (req, res) => {
     const { category, drugType, developmentStage, organizationId } = req.query;
 
     let queryText = 'SELECT * FROM workflow_templates WHERE 1=1';
-    let params = [];
+    const params = [];
 
     if (organizationId) {
       queryText += ` AND organization_id = $${params.length + 1}`;
@@ -352,8 +352,9 @@ Structure the response as a comprehensive regulatory strategy document.`;
     };
   } catch (error) {
     console.error('Error generating AI blueprint:', error);
-    // Return a structured fallback blueprint
-    return generateFallbackBlueprint(params);
+    // Return a structured fallback blueprint, explicitly labelled so the
+    // client/user can tell it is not AI-generated content.
+    return { ...generateFallbackBlueprint(params), generatedFrom: 'fallback' };
   }
 }
 

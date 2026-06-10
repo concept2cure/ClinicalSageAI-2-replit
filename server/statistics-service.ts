@@ -1,6 +1,6 @@
 import { db } from './db';
 import { csrReports, csrDetails } from 'shared/schema';
-import { eq, sql, and, gte, lte, desc, count, avg, max, min } from 'drizzle-orm';
+import { eq, sql, and, gte, lte, desc, count, avg, max, min, inArray } from 'drizzle-orm';
 import * as math from 'mathjs';
 import { Rng, createRng, seedFromObject } from './services/stats/rng';
 import { buildProvenance, type StatsProvenance } from './services/stats/computation-provenance';
@@ -84,7 +84,7 @@ export class StatisticsService {
       const details = (await dbInstance
         .select()
         .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${reportIds.join(',')})`)) as any[];
+        .where(inArray(csrDetails.reportId, reportIds))) as any[];
 
       // Count studies by phase
       const phaseCount: Record<string, number> = {};
@@ -173,7 +173,7 @@ export class StatisticsService {
       const details = (await dbInstance
         .select()
         .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${reportIds.join(',')})`)) as any[];
+        .where(inArray(csrDetails.reportId, reportIds))) as any[];
 
       // Count studies by indication
       const indicationCount: Record<string, number> = {};
@@ -294,7 +294,7 @@ export class StatisticsService {
       const details = await dbInstance
         .select()
         .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${reportIds.join(',')})`);
+        .where(inArray(csrDetails.reportId, reportIds));
 
       // Calculate success rate
       const successfulTrials = reports.filter(
@@ -448,7 +448,7 @@ export class StatisticsService {
       const details = await dbInstance
         .select()
         .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${reportIds.join(',')})`);
+        .where(inArray(csrDetails.reportId, reportIds));
 
       // Extract endpoints from details
       const endpointMap = new Map<
@@ -780,7 +780,7 @@ export class StatisticsService {
       const details = await dbInstance
         .select()
         .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${allReportIds.join(',')})`);
+        .where(inArray(csrDetails.reportId, allReportIds));
 
       // Find trending endpoints
       const trendingEndpoints = this.findTrendingEndpoints(details, indicationReports);
@@ -1466,8 +1466,8 @@ export class StatisticsService {
         .from(csrReports)
         .where(
           and(
-            sql`${csrReports.indication} IN (${indications.join(',')})`,
-            sql`${csrReports.phase} IN (${phases.join(',')})`
+            inArray(csrReports.indication, indications),
+            inArray(csrReports.phase, phases)
           )
         );
 
@@ -1486,7 +1486,7 @@ export class StatisticsService {
       const details = await dbInstance
         .select()
         .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${reportIds.join(',')})`);
+        .where(inArray(csrDetails.reportId, reportIds));
 
       // Group data by indication and phase
       const groupedData = new Map<
@@ -1902,8 +1902,12 @@ export class StatisticsService {
     originalDesign: any;
     optimizedDesign: any;
     improvements: Array<{ factor: string; change: string; impact: number }>;
-    expectedSuccessProbability: number;
+    // null when the probability could not be assessed (no data / DB
+    // unavailable / error) — never a fabricated placeholder.
+    expectedSuccessProbability: number | null;
     confidence: number;
+    assessable?: boolean;
+    note?: string;
   }> {
     try {
       const { indication, phase, currentDesign, optimizationGoal, constraints } = params;
@@ -1914,9 +1918,10 @@ export class StatisticsService {
           originalDesign: { ...currentDesign },
           optimizedDesign: { ...currentDesign },
           improvements: [],
-          expectedSuccessProbability: 0.5,
-          confidence: 0.1,
-          error: 'Database unavailable',
+          expectedSuccessProbability: null,
+          confidence: 0,
+          assessable: false,
+          note: 'Database unavailable; expected success probability could not be assessed.',
         } as any;
       }
 
@@ -1938,8 +1943,10 @@ export class StatisticsService {
           originalDesign,
           optimizedDesign,
           improvements: [],
-          expectedSuccessProbability: 0.5,
-          confidence: 0.1,
+          expectedSuccessProbability: null,
+          confidence: 0,
+          assessable: false,
+          note: 'No comparable trials found for this indication/phase; expected success probability could not be assessed.',
         };
       }
 
@@ -1947,7 +1954,7 @@ export class StatisticsService {
       const details = await dbInstance
         .select()
         .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${reportIds.join(',')})`);
+        .where(inArray(csrDetails.reportId, reportIds));
 
       // Extract valuable patterns from successful trials
       const successfulTrials = reports.filter(
@@ -2235,7 +2242,7 @@ export class StatisticsService {
       }
 
       // Calculate expected success probability
-      let successProbabilityChange = improvements.reduce(
+      const successProbabilityChange = improvements.reduce(
         (sum, improvement) => sum + improvement.impact,
         0
       );
@@ -2263,6 +2270,7 @@ export class StatisticsService {
         improvements,
         expectedSuccessProbability: adjustedProbability,
         confidence,
+        assessable: true,
       };
     } catch (error) {
       console.error('Error optimizing trial design:', error);
@@ -2270,8 +2278,10 @@ export class StatisticsService {
         originalDesign: params.currentDesign,
         optimizedDesign: params.currentDesign,
         improvements: [],
-        expectedSuccessProbability: 0.5,
-        confidence: 0.1,
+        expectedSuccessProbability: null,
+        confidence: 0,
+        assessable: false,
+        note: 'Trial design optimization failed; expected success probability could not be assessed.',
       };
     }
   }
@@ -3519,7 +3529,7 @@ export class StatisticsService {
 
       // Simulate from posterior distributions
       const simulations = 10000;
-      let counts = new Array(responses.length).fill(0);
+      const counts = new Array(responses.length).fill(0);
 
       for (let i = 0; i < simulations; i++) {
         const draws = posteriorAlphas.map((a, j) => this.betaRandom(a, posteriorBetas[j]));
@@ -3560,7 +3570,7 @@ export class StatisticsService {
     rules: { type: 'bayesian' | 'frequentist'; threshold: number; minAllocation: number }
   ): number[] {
     const numArms = observedRates.length;
-    let allocation = new Array(numArms).fill(0);
+    const allocation = new Array(numArms).fill(0);
 
     // Only allocate to active arms
     const activeIndices = activeArms.map((a, i) => (a ? i : -1)).filter(i => i >= 0);
@@ -5477,11 +5487,11 @@ export class StatisticsService {
       const conditions: any[] = [];
 
       if (params.indications && params.indications.length > 0) {
-        conditions.push(sql`${csrReports.indication} IN (${params.indications.join(',')})`);
+        conditions.push(inArray(csrReports.indication, params.indications));
       }
 
       if (params.phases && params.phases.length > 0) {
-        conditions.push(sql`${csrReports.phase} IN (${params.phases.join(',')})`);
+        conditions.push(inArray(csrReports.phase, params.phases));
       }
 
       if (params.startDate) {
@@ -5527,7 +5537,7 @@ export class StatisticsService {
       const details = await dbInstance
         .select()
         .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${reportIds.join(',')})`);
+        .where(inArray(csrDetails.reportId, reportIds));
 
       // Meta-analysis results depend on analysis type
       switch (params.analysisType) {
@@ -5609,7 +5619,7 @@ export class StatisticsService {
 
         // Extract results
         Object.entries(resultsData).forEach(([endpoint, value]) => {
-          let normalizedEndpoint = endpoint
+          const normalizedEndpoint = endpoint
             .toLowerCase()
             .replace(/primary endpoint:?/i, '')
             .replace(/secondary endpoint:?/i, '')
@@ -6132,7 +6142,7 @@ export class StatisticsService {
       const conditions = [eq(csrReports.indication, indication), eq(csrReports.phase, phase)];
 
       if (sponsorFilter && sponsorFilter.length > 0) {
-        conditions.push(sql`${csrReports.sponsor} IN (${sponsorFilter.join(',')})`);
+        conditions.push(inArray(csrReports.sponsor, sponsorFilter));
       }
 
       // Get all relevant reports
@@ -6163,7 +6173,7 @@ export class StatisticsService {
       const details = await dbInstance
         .select()
         .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${reportIds.join(',')})`);
+        .where(inArray(csrDetails.reportId, reportIds));
 
       // Group reports by sponsor
       const sponsorGroups = new Map<

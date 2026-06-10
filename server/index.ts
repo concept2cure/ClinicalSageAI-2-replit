@@ -28,6 +28,8 @@ await initializeOpenTelemetry();
 
 import express from 'express';
 import { createServer, type Server as HttpServer } from 'http';
+import { startDriftSentinelSchedule } from './jobs/driftSentinelSweep';
+import { startAuditChainIntegritySchedule } from './jobs/auditChainIntegritySweep';
 import { errorHandler } from './src/mw/observability.js';
 
 // Audit + RBAC side-effect imports (initialize tables + cache on require).
@@ -143,6 +145,27 @@ async function startServer() {
     await runBootSecuritySelfTest(pool);
   }
 
+  // Schema/dependency invariants (revoked-tokens table, artifact columns,
+  // Redis, …). Previously only reachable via a diagnostics route, so a fresh
+  // deployment with a broken schema booted silently and crashed on first use.
+  // Logs by default; with STRICT_STARTUP_INVARIANTS=true a critical failure
+  // halts boot.
+  {
+    const { runStartupInvariants } = await import('./lib/startup-invariants');
+    const invariantReport = await runStartupInvariants();
+    if (
+      invariantReport.criticalFailures > 0 &&
+      process.env.STRICT_STARTUP_INVARIANTS === 'true'
+    ) {
+      console.error(
+        `Startup halted: ${invariantReport.criticalFailures} critical invariant failure(s) ` +
+          `(STRICT_STARTUP_INVARIANTS=true). Failed: ` +
+          invariantReport.invariants.filter(i => !i.passed).map(i => i.name).join(', ')
+      );
+      process.exit(1);
+    }
+  }
+
   // Periodic posture monitor — re-runs the self-test panel on a
   // fixed interval so drift (clamd down, audit chain broken, etc.)
   // is observed without an operator manually probing the admin
@@ -181,6 +204,12 @@ async function startServer() {
     console.log(`🚀 Server running on http://0.0.0.0:${flags.port}`);
     console.log(`📊 Health check: http://localhost:${flags.port}/api/health`);
     console.log(`🔐 Login: http://localhost:${flags.port}/auth`);
+    // Living Record Spine: start the Drift Sentinel periodic sweep. Self-guards
+    // to a no-op unless ENABLE_DRIFT_SENTINEL=true, so default boot is unchanged.
+    startDriftSentinelSchedule();
+    // 21 CFR Part 11 / ISO 14971: daily audit-chain tamper-evidence sweep.
+    // Self-guards to a no-op unless ENABLE_AUDIT_CHAIN_CHECK=true.
+    startAuditChainIntegritySchedule();
   });
 }
 

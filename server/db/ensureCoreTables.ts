@@ -64,6 +64,13 @@ const IMPORTANT_TABLES = [
   'rag_queries',
   'rag_knowledge_graph',
   'rag_ingestion_jobs',
+  // Pharmacovigilance + commitments (applied via `npm run db:apply-c2c`).
+  'adverse_events',
+  'icsrs',
+  'safety_signals',
+  'periodic_safety_reports',
+  'risk_management_plans',
+  'c2c_commitments',
 ];
 
 /**

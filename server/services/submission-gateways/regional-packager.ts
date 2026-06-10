@@ -31,6 +31,26 @@ import * as path from 'path';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
 import type { Region, SubmissionFormat, SubmissionBundle } from './types';
+import { finalizePdfA } from '../ectd/pdfa-pipeline';
+
+/**
+ * Finalize a leaf's bytes to submission grade before they are written + hashed.
+ * PDFs are run through the PDF/A-1b pipeline (a no-op when Ghostscript/veraPDF
+ * are absent, so behaviour is unchanged in environments without the binaries).
+ * When the bytes are actually converted the MD5 MUST be recomputed from the
+ * converted bytes — the eCTD checksum contract requires index-md5 to match the
+ * file that ships in the package — so any pre-computed leaf.md5 is dropped.
+ */
+async function finalizeLeafBytes(
+  buf: Buffer,
+  fileName: string,
+): Promise<{ bytes: Buffer; md5Override?: string }> {
+  if (!fileName.toLowerCase().endsWith('.pdf')) return { bytes: buf };
+  const result = await finalizePdfA(buf);
+  if (!result.converted) return { bytes: buf };
+  const bytes = Buffer.from(result.pdfBytes);
+  return { bytes, md5Override: createHash('md5').update(bytes).digest('hex') };
+}
 
 /** One leaf in the eCTD index — corresponds to one file under one CTD section. */
 export interface EctdLeaf {
@@ -272,12 +292,13 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   /* Write Module 1 leaves under the region-specific folder. */
   const m1Leaves = input.leaves.filter((l) => l.ctdSection.startsWith('1'));
   for (const leaf of m1Leaves) {
-    const buf = await fs.readFile(leaf.sourcePath);
+    const raw = await fs.readFile(leaf.sourcePath);
+    const { bytes, md5Override } = await finalizeLeafBytes(raw, leaf.fileName);
     const targetPath = `${m1FolderByRegion[region]}/${leaf.ctdSection.replace(/\./g, '-')}/${leaf.fileName}`;
-    zip.file(targetPath, buf);
+    zip.file(targetPath, bytes);
     checksums.push({
       relPath: targetPath,
-      md5: leaf.md5 ?? createHash('md5').update(buf).digest('hex'),
+      md5: md5Override ?? leaf.md5 ?? createHash('md5').update(bytes).digest('hex'),
     });
   }
 
@@ -285,12 +306,13 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   const m2to5 = input.leaves.filter((l) => !l.ctdSection.startsWith('1'));
   for (const leaf of m2to5) {
     const mod = `m${leaf.ctdSection.charAt(0)}`;
-    const buf = await fs.readFile(leaf.sourcePath);
+    const raw = await fs.readFile(leaf.sourcePath);
+    const { bytes, md5Override } = await finalizeLeafBytes(raw, leaf.fileName);
     const targetPath = `${mod}/${leaf.ctdSection.replace(/\./g, '-')}/${leaf.fileName}`;
-    zip.file(targetPath, buf);
+    zip.file(targetPath, bytes);
     checksums.push({
       relPath: targetPath,
-      md5: leaf.md5 ?? createHash('md5').update(buf).digest('hex'),
+      md5: md5Override ?? leaf.md5 ?? createHash('md5').update(bytes).digest('hex'),
     });
   }
 

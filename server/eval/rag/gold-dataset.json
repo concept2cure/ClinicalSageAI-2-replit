@@ -1,6 +1,6 @@
 {
   "$comment": "SEED gold dataset for RAG evaluation. Expand to 30-50 items before treating the numbers as a quality bar. Populate expectedSourceIds with real chunk/atom ids from your corpus (run scripts/verify-rag-corpus.mjs to find them) so the retrieval metrics become meaningful. expectedAnswerContains and referenceAnswer work without corpus ids.",
-  "version": "0.1.0-seed",
+  "version": "0.2.0-seed",
   "items": [
     {
       "id": "ich-q1a-stability",
@@ -71,6 +71,62 @@
       "expectedSourceIds": [],
       "expectedAnswerContains": ["active pharmaceutical ingredient", "starting material"],
       "tags": ["ICH", "GMP", "Q7"]
+    },
+    {
+      "id": "fda-510k-substantial-equivalence",
+      "question": "What two things must a 510(k) submission demonstrate to establish substantial equivalence to a predicate device?",
+      "expectedSourceIds": [],
+      "expectedAnswerContains": ["intended use", "technological characteristics"],
+      "tags": ["FDA", "510k", "substantial-equivalence"]
+    },
+    {
+      "id": "eu-mdr-clinical-evaluation",
+      "question": "Under the EU MDR, what is a Clinical Evaluation Report and why must it be kept up to date?",
+      "expectedSourceIds": [],
+      "expectedAnswerContains": ["clinical evaluation", "post-market", "updated"],
+      "tags": ["EU-MDR", "CER"]
+    },
+    {
+      "id": "ich-q2-method-validation",
+      "question": "Which analytical performance characteristics does ICH Q2(R1) address for validation of analytical procedures?",
+      "expectedSourceIds": [],
+      "expectedAnswerContains": ["accuracy", "precision", "specificity", "linearity"],
+      "tags": ["ICH", "analytical", "Q2"]
+    },
+    {
+      "id": "fda-orphan-drug-designation",
+      "question": "What US patient prevalence qualifies a drug for FDA orphan drug designation?",
+      "expectedSourceIds": [],
+      "expectedAnswerContains": ["200,000"],
+      "tags": ["FDA", "orphan"]
+    },
+    {
+      "id": "ich-e2a-serious-adverse-event",
+      "question": "Under ICH E2A, what outcomes make an adverse event 'serious'?",
+      "expectedSourceIds": [],
+      "expectedAnswerContains": ["death", "life-threatening", "hospitalization"],
+      "tags": ["ICH", "safety", "E2A"]
+    },
+    {
+      "id": "ich-e6-informed-consent",
+      "question": "What are key required elements of informed consent under ICH E6(R2) good clinical practice?",
+      "expectedSourceIds": [],
+      "expectedAnswerContains": ["voluntary", "risks", "purpose"],
+      "tags": ["ICH", "GCP", "consent"]
+    },
+    {
+      "id": "fda-breakthrough-therapy",
+      "question": "What is the purpose of FDA Breakthrough Therapy designation?",
+      "expectedSourceIds": [],
+      "expectedAnswerContains": ["expedite", "serious"],
+      "tags": ["FDA", "expedited"]
+    },
+    {
+      "id": "ich-q8-quality-by-design",
+      "question": "What does Quality by Design (QbD) mean in ICH Q8 and what is a design space?",
+      "expectedSourceIds": [],
+      "expectedAnswerContains": ["critical quality attributes", "design space"],
+      "tags": ["ICH", "QbD", "Q8"]
     },
     {
       "id": "negative-control-out-of-scope",

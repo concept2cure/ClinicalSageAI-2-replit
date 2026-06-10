@@ -162,7 +162,7 @@ router.post('/', async (req, res) => {
     }
 
     // Find an available client workspace for the organization first
-    let availableClients = await db
+    const availableClients = await db
       .select()
       .from(clientWorkspaces)
       .where(eq(clientWorkspaces.organizationId, organizationId))

@@ -262,7 +262,7 @@ export async function getProjectMemory(
 }>> {
   const limit = options?.limit ?? 20;
 
-  let query = db
+  const query = db
     .select({
       id: projectMemoryEntries.id,
       category: projectMemoryEntries.category,

@@ -39,6 +39,7 @@ import {
 import {
   buildM23QualityOverallSummary,
   buildM24NonclinicalOverview,
+  buildM25ClinicalOverview,
   buildM27ClinicalSummary,
   type M2Summary,
   type NonclinicalStudy,
@@ -61,6 +62,7 @@ export type StepKey =
   | 'csr.tabulate'
   | 'm2.3.qos'
   | 'm2.4.nonclinical'
+  | 'm2.5.clinical'
   | 'm2.7.clinical'
   | 'm1.admin'
   | 'package.assemble'
@@ -122,6 +124,7 @@ export interface OrchestratorOutputs {
   csrTables: CSRTables[];
   m23?: M2Summary;
   m24?: M2Summary;
+  m25?: M2Summary;
   m27?: M2Summary;
   /** Aggregate validation result if package.validate ran */
   validation?: HardenedValidationResult;
@@ -136,9 +139,10 @@ const STEP_DEPENDENCIES: Record<StepKey, StepKey[]> = {
   'csr.tabulate': [],
   'm2.3.qos': ['m3.compose', 'm3.appendices', 'm3.regional'],
   'm2.4.nonclinical': [],
+  'm2.5.clinical': ['csr.tabulate'],
   'm2.7.clinical': ['csr.tabulate'],
   'm1.admin': [],
-  'package.assemble': ['m2.3.qos', 'm2.4.nonclinical', 'm2.7.clinical', 'm1.admin'],
+  'package.assemble': ['m2.3.qos', 'm2.4.nonclinical', 'm2.5.clinical', 'm2.7.clinical', 'm1.admin'],
   'package.validate': ['package.assemble'],
 };
 
@@ -149,6 +153,7 @@ const ORDERED_STEPS: StepKey[] = [
   'csr.tabulate',
   'm2.3.qos',
   'm2.4.nonclinical',
+  'm2.5.clinical',
   'm2.7.clinical',
   'm1.admin',
   'package.assemble',
@@ -360,6 +365,18 @@ export async function runOrchestrator(
       return { outputRef: `m2.4.nonclinical:completeness=${outputs.m24.completeness}`, output: outputs.m24 };
     });
 
+    // m2.5.clinical-overview
+    const m25Hash = hashInputs(inputs.csrInputs, inputs.indication, inputs.drugProductName);
+    await runStep('m2.5.clinical', m25Hash, async () => {
+      if (inputs.csrInputs.length === 0) return null;
+      outputs.m25 = buildM25ClinicalOverview({
+        csrs: inputs.csrInputs,
+        indication: inputs.indication || '[indication not specified]',
+        investigationalProduct: inputs.drugProductName || inputs.drugSubstanceName || '[product]',
+      });
+      return { outputRef: `m2.5.clinical:completeness=${outputs.m25.completeness}`, output: outputs.m25 };
+    });
+
     // m2.7.clinical
     const m27Hash = hashInputs(inputs.csrInputs, inputs.indication);
     await runStep('m2.7.clinical', m27Hash, async () => {
@@ -387,6 +404,7 @@ export async function runOrchestrator(
         csrTableSets: outputs.csrTables.length,
         hasM23: !!outputs.m23,
         hasM24: !!outputs.m24,
+        hasM25: !!outputs.m25,
         hasM27: !!outputs.m27,
       };
       return {

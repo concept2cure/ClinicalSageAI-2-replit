@@ -129,7 +129,9 @@ export type LayoutMode =
   // ── Phase 11 surface ──
   | 'intelligence'
   // ── Phase 9 surface ──
-  | 'authoring';
+  | 'authoring'
+  // ── Quality system (SOP register + controlled-document control) ──
+  | 'quality';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // NAV MAPPINGS

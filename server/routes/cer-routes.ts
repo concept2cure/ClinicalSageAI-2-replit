@@ -7,8 +7,30 @@ import { getGateway } from '../services/ai-gateway';
 import auditService from '../services/auditService';
 import { createScopedLogger } from '../utils/logger.js';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
+import { UnifiedCERService, cerGenerationService } from '../services/cer';
 
 const cerLog = createScopedLogger('cer-routes');
+
+// Schema for structured EU MDR/IVDR CER generation from a device profile.
+const mdrCerGenerateSchema = z.object({
+  deviceId: z.number().int().positive(),
+  regulatoryFramework: z.enum(['MDR_2017_745', 'IVDR_2017_746', 'UK_MDR_2002', 'Swiss_MedDO']),
+  templateId: z.string().max(128).optional(),
+  notifiedBodyId: z.string().max(128).optional(),
+});
+
+// Schema for attaching a clinical evidence source to a CER report (MDR Annex
+// XIV Part A — clinical data underpinning the evaluation).
+const cerClinicalEvidenceSchema = z.object({
+  type: z.enum(['clinical_investigation', 'literature', 'post_market', 'registry', 'real_world']),
+  title: z.string().min(1).max(500),
+  authors: z.string().max(500).optional(),
+  year: z.number().int().min(1900).max(2100).optional(),
+  patients: z.number().int().min(0).optional(),
+  findings: z.string().min(1),
+  relevance: z.number().min(0).max(1),
+  quality: z.number().min(0).max(1),
+});
 
 /**
  * Strictly validate a CER report id used to build a filesystem path.
@@ -504,6 +526,114 @@ router.get('/reports/:id', async (req, res) => {
       err: error instanceof Error ? error.message : String(error),
     });
     res.status(500).json({ error: 'Failed to fetch CER report' });
+  }
+});
+
+// Generate a structured EU MDR/IVDR Clinical Evaluation Report from a device
+// profile using the deterministic template engine (DB-backed, audit-logged).
+// Tenant org id comes from the verified JWT; the authenticated user is recorded
+// as the author. Fails closed (422 with reason) rather than returning a
+// fabricated or empty report when generation cannot complete.
+router.post('/mdr/generate', async (req, res) => {
+  try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
+    const user = (req as any).user;
+    const userId = Number(user?.id ?? user?.userId);
+    if (!Number.isFinite(userId)) {
+      return res.status(401).json({ error: 'Authenticated user context required' });
+    }
+
+    const body = mdrCerGenerateSchema.parse(req.body);
+
+    const service = new UnifiedCERService({
+      organizationId: guard.orgId,
+      deviceId: body.deviceId,
+      userId,
+      regulatoryFramework: body.regulatoryFramework,
+      templateId: body.templateId,
+      notifiedBodyId: body.notifiedBodyId,
+    });
+
+    const result = await service.generateReport();
+    if (result.status === 'failed') {
+      return res.status(422).json({ error: 'CER generation failed', warnings: result.warnings });
+    }
+    return res.status(201).json(result);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid data', details: error.errors });
+    }
+    cerLog.error('MDR CER generation error', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({ error: 'Failed to generate CER' });
+  }
+});
+
+// Attach a clinical evidence source to an existing CER report. The underlying
+// service verifies the report belongs to the caller's organization before
+// inserting (tenant-scoped); returns 404 when it does not.
+router.post('/reports/:cerId/evidence', async (req, res) => {
+  try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
+    const user = (req as any).user;
+    const userId = Number(user?.id ?? user?.userId);
+    if (!Number.isFinite(userId)) {
+      return res.status(401).json({ error: 'Authenticated user context required' });
+    }
+
+    const cerId = Number(req.params.cerId);
+    if (!Number.isInteger(cerId) || cerId <= 0) {
+      return res.status(400).json({ error: 'Invalid CER report id' });
+    }
+
+    const evidence = cerClinicalEvidenceSchema.parse(req.body);
+    const saved = await cerGenerationService.addClinicalEvidence(cerId, evidence, userId, guard.orgId);
+    return res.status(201).json(saved);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid data', details: error.errors });
+    }
+    if (error instanceof Error && /not found or access denied/i.test(error.message)) {
+      return res.status(404).json({ error: 'CER report not found' });
+    }
+    cerLog.error('CER add clinical evidence error', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({ error: 'Failed to add clinical evidence' });
+  }
+});
+
+// Validate a stored CER report against the deterministic MEDDEV 2.7/1 rev 4 /
+// Annex I GSPR / Annex XIV conformance checklist (completeness of mandatory CER
+// elements). Returns the structured result; 404 when the report does not exist
+// for the tenant. Never returns an auto-"valid" — a missing mandatory element
+// fails the report.
+router.get('/mdr/:reportId/validate', async (req, res) => {
+  try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
+    const { reportId } = req.params;
+    if (!isSafeReportId(reportId)) {
+      return res.status(400).json({ error: 'Invalid report id' });
+    }
+
+    const service = new UnifiedCERService({ organizationId: guard.orgId });
+    const result = await service.validateReportDetailed(reportId);
+    if ('notFound' in result) {
+      return res.status(404).json({ error: 'CER report not found' });
+    }
+    return res.json(result);
+  } catch (error) {
+    cerLog.error('CER conformance validation error', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({ error: 'Failed to validate CER' });
   }
 });
 

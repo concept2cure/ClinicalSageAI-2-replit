@@ -38,6 +38,41 @@ export function readEnforcementMode(env: NodeJS.ProcessEnv = process.env): RlsEn
 }
 
 /**
+ * Production safety assertion for the RLS enforcement flip.
+ *
+ * Tenant isolation has two layers: (1) the PRIMARY app-layer boundary — the
+ * global `/api` auth gate + JWT-derived org scoping — and (2) Postgres RLS as
+ * defense-in-depth. RLS only actually filters rows when `RLS_ENFORCE=on`.
+ * Running production with RLS off is a deliberate rollout state, but it must be
+ * VISIBLE: this logs a loud warning at boot, and hard-fails only when the
+ * operator opts in via `RLS_REQUIRE_ENFORCE=true`. Default behaviour is
+ * unchanged (warn, do not block boot).
+ *
+ * @returns the resolved enforcement mode.
+ */
+export function assertRlsEnforcementForProduction(
+  env: NodeJS.ProcessEnv = process.env
+): RlsEnforcementMode {
+  const mode = readEnforcementMode(env);
+  const isProduction = (env.NODE_ENV ?? '').toLowerCase() === 'production';
+  if (!isProduction || mode === 'on') return mode;
+
+  const message =
+    `RLS_ENFORCE is "${mode}" in production — Postgres Row-Level Security is NOT ` +
+    'filtering rows (defense-in-depth disabled). Tenant isolation is relying solely ' +
+    'on the app-layer auth gate + JWT org scoping. Set RLS_ENFORCE=on once the policy ' +
+    'rollout is verified.';
+
+  if ((env.RLS_REQUIRE_ENFORCE ?? '').trim().toLowerCase() === 'true') {
+    // Operator opted into fail-closed: refuse to boot with RLS off in prod.
+    throw new Error(`[rls-enforcement] FAIL-CLOSED: ${message}`);
+  }
+
+  logger.warn(`⚠️  ${message}`);
+  return mode;
+}
+
+/**
  * Install a Pool 'connect' handler that sets `app.rls_enforce` on every
  * new connection based on the env var. Idempotent — calling twice on the
  * same pool installs only one handler.
@@ -51,7 +86,8 @@ export function installRlsEnforcement(pool: Pool): Pool {
   if (tagged.__rlsEnforcementInstalled) return pool;
   tagged.__rlsEnforcementInstalled = true;
 
-  const mode = readEnforcementMode();
+  // Surfaces (or, opt-in, blocks) a production boot with RLS not enforced.
+  const mode = assertRlsEnforcementForProduction();
   const settingValue = mode === 'on' ? 'on' : '';
 
   pool.on('connect', client => {

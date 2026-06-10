@@ -2116,7 +2116,7 @@ router.post(
       }
 
       // Use existing sessionId or create new one
-      let sessionId = req.body?.sessionId || crypto.randomUUID();
+      const sessionId = req.body?.sessionId || crypto.randomUUID();
       let session = autoDraftSessions.get(sessionId);
       if (!session) {
         session = { files: [], createdAt: Date.now() };

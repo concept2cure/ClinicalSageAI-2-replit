@@ -48,7 +48,7 @@ export async function generateDocumentation(
     }
 
     // Create the appropriate prompt based on document type
-    let prompt = `Generate an ICH-compliant Module 3 ${documentType.toUpperCase()} document for ${moleculeData.moleculeName} (${moleculeData.molecularFormula}).
+    const prompt = `Generate an ICH-compliant Module 3 ${documentType.toUpperCase()} document for ${moleculeData.moleculeName} (${moleculeData.molecularFormula}).
     
     The document should follow the CTD format and include all required sections for ${documentType.toUpperCase()}.
     

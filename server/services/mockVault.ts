@@ -10,7 +10,14 @@
  * mistaken for real regulatory submissions.
  */
 
-const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+// Allowlist, not a production denylist: an unset or unconventional NODE_ENV
+// (e.g. 'prod', 'staging', empty in a misconfigured container) must NOT
+// silently enable mock vault content. Only explicit development/test
+// environments — or an explicit operator override — may use it.
+const MOCK_VAULT_ALLOWED =
+  process.env.NODE_ENV === 'development' ||
+  process.env.NODE_ENV === 'test' ||
+  process.env.ALLOW_MOCK_VAULT === '1';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -116,11 +123,11 @@ function initializeDefaults() {
 // ── Guard ──────────────────────────────────────────────────────────────────────
 
 function assertNotProduction(method: string) {
-  if (IS_PRODUCTION) {
+  if (!MOCK_VAULT_ALLOWED) {
     throw new Error(
-      `mockVault.${method}() called in production. ` +
-      'The mock vault service must not be used in production environments. ' +
-      'Ensure real document storage is configured.'
+      `mockVault.${method}() called outside development/test (NODE_ENV=${process.env.NODE_ENV ?? 'unset'}). ` +
+      'The mock vault service must not supply content in production-like environments. ' +
+      'Ensure real document storage is configured, or set ALLOW_MOCK_VAULT=1 explicitly.'
     );
   }
 }

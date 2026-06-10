@@ -107,8 +107,8 @@ export async function launchResearchJob(request: DeepResearchRequest): Promise<D
   executeResearchJob(jobId, request).catch(err => {
     console.error(`[DeepResearch] Job ${jobId} failed:`, err);
     pool.query(
-      `UPDATE deep_research_jobs SET status = 'failed', completed_at = NOW() WHERE id = $1`,
-      [jobId]
+      `UPDATE deep_research_jobs SET status = $2, completed_at = NOW() WHERE id = $1 AND organization_id = $3`,
+      [jobId, 'failed', request.organizationId]
     ).catch(() => {});
   });
 
@@ -154,8 +154,8 @@ async function executeResearchJob(jobId: number, request: DeepResearchRequest): 
   }
 
   await pool.query(
-    `UPDATE deep_research_jobs SET connector_logs = $1 WHERE id = $2`,
-    [JSON.stringify(connectorLogs), jobId]
+    `UPDATE deep_research_jobs SET connector_logs = $1 WHERE id = $2 AND organization_id = $3`,
+    [JSON.stringify(connectorLogs), jobId, request.organizationId]
   );
 
   await updateJobProgress(jobId, 60, 'running');
@@ -196,9 +196,9 @@ async function executeResearchJob(jobId: number, request: DeepResearchRequest): 
   // Save final results
   await pool.query(
     `UPDATE deep_research_jobs SET
-     status = 'complete', progress = 100, results = $1, synthesis = $2, completed_at = NOW()
-     WHERE id = $3`,
-    [JSON.stringify(aggregated), synthesis, jobId]
+     status = $4, progress = 100, results = $1, synthesis = $2, completed_at = NOW()
+     WHERE id = $3 AND organization_id = $5`,
+    [JSON.stringify(aggregated), synthesis, jobId, 'complete', request.organizationId]
   );
 
   // Notify SSE listeners
@@ -374,12 +374,15 @@ function buildFallbackSynthesis(
 // JOB QUERIES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export async function getJobStatus(jobId: number): Promise<DeepResearchJob> {
+export async function getJobStatus(jobId: number, organizationId?: number): Promise<DeepResearchJob> {
+  // organizationId is optional only for internal callers that just created the
+  // job. Route handlers MUST pass the authenticated org so a caller can't read
+  // another tenant's job (results/synthesis included) by guessing ids.
   const result = await pool.query(
     `SELECT id, uuid, organization_id, project_id, user_id, status, query, progress,
             results, synthesis, credits_used, connector_logs, created_at, completed_at
-     FROM deep_research_jobs WHERE id = $1`,
-    [jobId]
+     FROM deep_research_jobs WHERE id = $1 AND ($2::int IS NULL OR organization_id = $2)`,
+    [jobId, organizationId ?? null]
   );
 
   if (result.rows.length === 0) throw new Error(`Job ${jobId} not found`);
@@ -434,10 +437,11 @@ export async function listJobs(
   }));
 }
 
-export async function cancelJob(jobId: number): Promise<void> {
+export async function cancelJob(jobId: number, organizationId: number): Promise<void> {
   await pool.query(
-    `UPDATE deep_research_jobs SET status = 'failed', completed_at = NOW() WHERE id = $1 AND status IN ('queued', 'running')`,
-    [jobId]
+    `UPDATE deep_research_jobs SET status = $3, completed_at = NOW()
+     WHERE id = $1 AND organization_id = $2 AND status IN ('queued', 'running')`,
+    [jobId, organizationId, 'failed']
   );
   jobCallbacks.delete(jobId);
 }

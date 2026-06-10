@@ -464,52 +464,54 @@ export class SubmissionReadinessTwinService {
       .replace(/[^a-z0-9]+/g, '_')
       .slice(0, 40);
     const client = await this.pool.connect();
-    await client.query("SET app.bypass_rls = 'true'");
-    await client.query("SET app.is_admin = 'true'");
-    const result = await client.query(
-      `
-      INSERT INTO innovation.readiness_criteria (
-        submission_type, agency, module_path, criterion_code,
-        criterion_name, description, requirement_type, weight,
-        is_active
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE)
-      RETURNING *
-    `,
-      [
-        'NDA',
-        'FDA',
-        input.category,
-        criterionCode,
-        input.name,
-        input.description,
-        'mandatory',
-        input.weight,
-      ]
-    );
+    try {
+      await client.query("SET app.bypass_rls = 'true'");
+      await client.query("SET app.is_admin = 'true'");
+      const result = await client.query(
+        `
+        INSERT INTO innovation.readiness_criteria (
+          submission_type, agency, module_path, criterion_code,
+          criterion_name, description, requirement_type, weight,
+          is_active
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE)
+        RETURNING *
+      `,
+        [
+          'NDA',
+          'FDA',
+          input.category,
+          criterionCode,
+          input.name,
+          input.description,
+          'mandatory',
+          input.weight,
+        ]
+      );
 
-    const row = result?.rows?.[0];
-    if (!row) {
-      const fallback: ReadinessCriterion = {
-        id: crypto.randomUUID(),
-        submissionType: 'NDA',
-        agency: 'FDA',
-        modulePath: input.category,
-        criterionCode,
-        criterionName: input.name,
-        description: input.description,
-        requirementType: 'mandatory',
-        weight: input.weight,
-        isActive: true,
-      } as ReadinessCriterion;
-      SubmissionReadinessTwinService.criteriaCache.push(fallback);
+      const row = result?.rows?.[0];
+      if (!row) {
+        const fallback: ReadinessCriterion = {
+          id: crypto.randomUUID(),
+          submissionType: 'NDA',
+          agency: 'FDA',
+          modulePath: input.category,
+          criterionCode,
+          criterionName: input.name,
+          description: input.description,
+          requirementType: 'mandatory',
+          weight: input.weight,
+          isActive: true,
+        } as ReadinessCriterion;
+        SubmissionReadinessTwinService.criteriaCache.push(fallback);
+        return fallback;
+      }
+
+      const mapped = this.mapCriterion(row);
+      SubmissionReadinessTwinService.criteriaCache.push(mapped);
+      return mapped;
+    } finally {
       client.release();
-      return fallback;
     }
-
-    const mapped = this.mapCriterion(row);
-    SubmissionReadinessTwinService.criteriaCache.push(mapped);
-    client.release();
-    return mapped;
   }
 
   /**
@@ -773,26 +775,21 @@ export class SubmissionReadinessTwinService {
       documentData?.has(criterion.modulePath || '') || documentData?.has(criterion.criterionCode);
 
     if (hasContent) {
-      // Simulate content analysis
-      const random = Math.random();
-      if (random > 0.7) {
-        status = 'met';
-        score = 100;
-      } else if (random > 0.4) {
-        status = 'partially_met';
-        score = 60;
-        gaps.push(
-          `Criterion "${criterion.criterionName}" is partially addressed but needs enhancement`
-        );
-        recommendations.push(`Review and enhance content for: ${criterion.description}`);
-        effortHours = 4;
-      } else {
-        status = 'not_met';
-        score = 20;
-        gaps.push(`Criterion "${criterion.criterionName}" is not adequately addressed`);
-        recommendations.push(`Add content addressing: ${criterion.description}`);
-        effortHours = 8;
-      }
+      // Content for this criterion is present, but automated content analysis
+      // is not implemented (see note above). This previously drew a
+      // Math.random() value and declared the criterion met/partially-met/not-met
+      // with a 100/60/20 score — a fabricated readiness verdict that changed on
+      // every run and could falsely report a criterion as fully satisfied.
+      // Until real document analysis exists, report the conservative, honest
+      // state: content is present but unverified, so treat it as partially met
+      // and explicitly flag it for manual review rather than claim it satisfied.
+      status = 'partially_met';
+      score = 50;
+      gaps.push(
+        `Criterion "${criterion.criterionName}" has content present, but automated content analysis is not yet implemented; it requires manual review to confirm adequacy.`
+      );
+      recommendations.push(`Manually review content for: ${criterion.description}`);
+      effortHours = 4;
     } else {
       // No content for this criterion
       if (criterion.requirementType === 'mandatory') {

@@ -7,6 +7,6 @@ celery==5.6.3
 redis==7.4.0
 
 # API/Dev
-fastapi==0.136.1
+fastapi==0.136.3
 uvicorn==0.47.0
 requests==2.34.2

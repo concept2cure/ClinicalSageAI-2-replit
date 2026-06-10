@@ -103,7 +103,7 @@ router.post('/generate', async (req, res) => {
     }
 
     // Get protocol data if ID is provided
-    let protocolData = null;
+    const protocolData = null;
     if (protocolId) {
       // Get protocol data from the database
       // In a real implementation, we would fetch the protocol data from wherever it's stored
@@ -175,8 +175,8 @@ router.get('/example/:persona', async (req, res) => {
     // Construct response with example files
     const exampleFiles = manifest.files.map((file: any) => {
       const filePath = path.join(EXAMPLE_REPORTS_PATH, persona, file);
-      let fileContent = null;
-      let fileExists = fs.existsSync(filePath);
+      const fileContent = null;
+      const fileExists = fs.existsSync(filePath);
 
       // For simplicity, we're not returning actual file content here
       // In a real implementation, you might want to send the files as downloads

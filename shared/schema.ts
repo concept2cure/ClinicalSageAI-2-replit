@@ -38,6 +38,9 @@ import { z } from 'zod';
 import { sql } from 'drizzle-orm';
 export * from './schema/vault';
 export * from './schema/csr-knowledge-db';
+export * from './schema/submissions';
+export * from './schema/evidence';
+export * from './schema/shadow-review';
 
 // ============================================================
 // SHARED ENUMS
@@ -2545,6 +2548,34 @@ export const insertOrganizationUserSchema = createInsertSchemaOmit(organizationU
 // Organization User Types
 export type OrganizationUser = InferSelectModel<typeof organizationUsers>;
 export type InsertOrganizationUser = z.infer<typeof insertOrganizationUserSchema>;
+
+/**
+ * SCIM tenant tokens (enterprise identity provisioning).
+ *
+ * DB-backed, per-org SCIM bearer tokens so multiple client orgs can be
+ * provisioned from one deployment without env JSON. Tokens are stored as
+ * SHA-256 hashes only (21 CFR Part 11 §11.10(d) — controlled system access).
+ */
+export const scimTenants = pgTable(
+  'scim_tenants',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    tokenHash: text('token_hash').notNull().unique(),
+    label: text('label'),
+    enabled: boolean('enabled').notNull().default(true),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    scimTenantsOrgIdx: index('scim_tenants_org_idx').on(table.organizationId),
+    scimTenantsEnabledIdx: index('scim_tenants_enabled_idx').on(table.enabled),
+  })
+);
+
+export type ScimTenant = InferSelectModel<typeof scimTenants>;
 
 /**
  * CER Projects Table
@@ -5088,6 +5119,11 @@ export const projects = pgTable(
     moduleReferences: json('module_references'), // References to specific module instances
     settings: json('settings'),
     metadata: json('metadata'),
+    // ── Projects spec A2: two-mode capacity model ────────────────────────────
+    // 'in_context' | 'retrieval', null until first computed. The estimated
+    // token size of the project knowledge corpus drives the selection.
+    retrievalMode: text('retrieval_mode'),
+    knowledgeTokenEstimate: integer('knowledge_token_estimate').default(0).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -10910,6 +10946,10 @@ export const coauthorDocuments = pgTable(
     ectdModuleId: integer('ectd_module_id').references(() => ectdModules.id),
     moduleNumber: text('module_number'), // e.g., "3.2.S.4.1" for quick lookups
     moduleName: text('module_name'), // Cached module name for display
+
+    // pgvector embedding for RAG grounding (Phase 1, WO-1.2). Canonical eCTD
+    // document table — see RECONCILE.md §2 and the companion migration.
+    embedding: vector('embedding', { dimensions: 1536 }),
 
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -17888,6 +17928,19 @@ export const evidenceClaims = pgTable(
     sourcePath: text('source_path'),
     tags: jsonb('tags').default([]),
     metadata: jsonb('metadata').default({}),
+    // Living Record Spine — value + verification axis (migration 20260603).
+    // The value columns let a claim assert a structured quantity, which is the
+    // join key (program_id, entity, field) into canonical_facts.
+    entity: text('entity'),
+    field: text('field'),
+    valueNum: numeric('value_num'),
+    valueText: text('value_text'),
+    unit: varchar('unit', { length: 40 }),
+    comparator: varchar('comparator', { length: 8 }).default('='),
+    valueType: varchar('value_type', { length: 20 }), // count | measure | date | categorical | boolean | text
+    verification: varchar('verification', { length: 16 }).notNull().default('unverified'),
+    // unverified | verified | drifted | disputed
+    canonicalFactId: uuid('canonical_fact_id'),
     extractedBy: integer('extracted_by'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -19686,3 +19739,25 @@ export const importJobFindings = pgTable(
   }),
 );
 export type ImportJobFinding = InferSelectModel<typeof importJobFindings>;
+
+/**
+ * Per-organization AI placement policy — the data-residency / zero-retention /
+ * allowed-substrate requirements the AI gateway auto-applies to an org's
+ * requests (explicit request values always win). See
+ * server/services/ai-gateway/providers/org-placement.ts and
+ * migrations/20260608_ai_placement_policies.sql. Tenant-scoped + RLS-enforced;
+ * organization_id is INTEGER per the tenant-column-types contract.
+ */
+export const aiPlacementPolicies = pgTable('ai_placement_policies', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .references(() => organizations.id)
+    .notNull()
+    .unique(),
+  requiredDataResidency: text('required_data_residency'), // 'us' | 'eu' | 'apac' | 'on_prem' | null
+  zeroDataRetention: boolean('zero_data_retention').default(false).notNull(),
+  allowedSubstrates: text('allowed_substrates').array(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+export type AiPlacementPolicy = InferSelectModel<typeof aiPlacementPolicies>;

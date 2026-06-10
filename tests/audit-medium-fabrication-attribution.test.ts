@@ -4,8 +4,9 @@
  * Locks in three MEDIUM fixes from FORENSIC_CODE_AUDIT_2026-05-29.md:
  *  - digital-twin CQA: synthetic Math.random() predictions can no longer auto-approve
  *    a real-time release (forced to manual review) and are disclosed as synthetic.
- *  - degraded-by-default RAG: biotechRagService initializes OpenAI when a key exists,
- *    instead of an empty try{} that pinned it to TF-IDF forever.
+ *  - degraded-by-default RAG: biotechRagService routes embeddings through the governed
+ *    embedding seam (a real OpenAI/self-hosted embedder), instead of an empty try{}
+ *    that pinned it to TF-IDF forever.
  *  - Part 11 attribution: no hardcoded userRole 'regulatory_specialist', no fabricated
  *    127.0.0.1 IP; real username resolved, role/IP honest (null when unknown).
  *
@@ -36,11 +37,17 @@ describe('MEDIUM · digital-twin CQA cannot auto-release on synthetic values', (
 describe('MEDIUM · biotechRagService initializes real embeddings when configured', () => {
   const src = read('services/biotechRagService.js');
 
-  it('no longer leaves the OpenAI init try block empty', () => {
-    expect(src).toContain("import OpenAI from 'openai'");
-    expect(src).toContain('new OpenAI({ apiKey: process.env.OPENAI_API_KEY })');
+  it('routes embeddings through the governed seam, never silently TF-IDF', () => {
+    // Embeddings go through the governed provider (a real OpenAI/self-hosted
+    // embedder) — not a direct, bypassable client, and not the degraded TF-IDF
+    // fallback by default. This preserves the original audit fix while removing
+    // the gateway bypass.
+    expect(src).toContain('getEmbeddingProvider');
+    expect(src).toMatch(/getEmbeddingProvider\(\)\.embed\(/);
     // The tell-tale empty try block must be gone.
     expect(src).not.toMatch(/try\s*\{\s*\}\s*catch/);
+    // The lexical fallback must stay explicitly gated, not silent.
+    expect(src).toContain('ALLOW_FALLBACK_EMBEDDINGS');
   });
 });
 

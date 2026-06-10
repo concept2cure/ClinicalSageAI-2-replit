@@ -320,6 +320,7 @@ router.get('/:projectId/stage', asyncHandler(async (req: Request, res: Response)
     SELECT settings
     FROM projects
     WHERE id = ${parseInt(projectId)}
+    AND organization_id = ${organizationId}
   `);
 
   if (settingsResult.rows && settingsResult.rows.length > 0) {

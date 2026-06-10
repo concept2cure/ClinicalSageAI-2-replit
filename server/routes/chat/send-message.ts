@@ -28,11 +28,17 @@ import {
 } from '../../services/kernel-adaptive-policy.js';
 import { interceptChatResponse } from '../../services/intelligence/rim-interceptors.js';
 import { getAllEnabledTools } from '../../services/ana/AnaToolDefinitions.js';
+import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
 import { executeAgenticLoop } from '../../services/ana/AnaToolExecutor.js';
 import { logToolRun } from '../../services/toolRegistry.js';
 import type { AnaGatewayResponse } from '../../services/ai-gateway/types.js';
 import { buildMemoryContextForChat, type MemoryAssemblyDiagnostics } from '../../services/memory-context-assembler.js';
 import { summarizeAndStoreWorkingMemoryForThread } from '../../services/working-memory.js';
+import { getProjectInstructionsBlock } from '../../services/projects/project-instructions.js';
+import {
+  getProjectRetrievalMode,
+  assembleProjectKnowledgeCorpus,
+} from '../../services/projects/retrieval-mode.js';
 import { getCachedSignalReliability } from '../../services/intelligence/learning-loop-service.js';
 import type { SignalReliability } from '../../services/intelligence/learning-loop-service.js';
 import { orchestrate, type OrchestratorOutput } from '../../services/ana-ri/orchestrator.js';
@@ -48,6 +54,13 @@ import { verifyClaim, type VerifierFlag } from './verifier.js';
 const RETRIEVAL_TOP_K = parseInt(process.env.ANA_RETRIEVAL_TOP_K ?? '5', 10);
 const RETRIEVAL_THRESHOLD = parseFloat(process.env.ANA_RETRIEVAL_THRESHOLD ?? '0.7');
 const GENERATION_MAX_TOKENS = parseInt(process.env.ANA_GENERATION_MAX_TOKENS ?? '4096', 10);
+// Projects spec A2: dark-launch flag for in-context full-corpus injection. Off
+// by default — the retrieval mode is still computed and surfaced via the
+// knowledge endpoint; this flag only controls whether the chat path injects the
+// full project corpus into the prompt (pending cost/cache validation in a live
+// environment). When off, this path does zero extra work.
+const INCONTEXT_INJECTION_ENABLED =
+  process.env.PROJECT_INCONTEXT_INJECTION_ENABLED === 'true';
 
 /**
  * POST /api/chat/send-message  (and POST /api/chat via root alias)
@@ -56,7 +69,7 @@ const GENERATION_MAX_TOKENS = parseInt(process.env.ANA_GENERATION_MAX_TOKENS ?? 
 export const sendMessageHandler = async (req: Request, res: Response) => {
   normalizeBody(req);
   try {
-    const { message, thread_id, file_id, system_prompt, project_id, preferred_provider } = req.body;
+    const { message, thread_id, file_id, system_prompt, project_id, preferred_provider, selected_tools, tool_context } = req.body;
 
     if (!message || typeof message !== 'string') {
       return res.status(400).json({
@@ -520,6 +533,40 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         }
       }
 
+      // Project instructions injection (spec A1.1) — read the project's
+      // authored instructions + knowledge context and prepend to the system
+      // context. Shared helper so this and submission-chat cannot drift; it is
+      // tenant-scoped and graceful (empty string when absent or on error).
+      const projectInstructionsBlock = await getProjectInstructionsBlock(
+        project_id,
+        numericOrgId
+      );
+
+      // A2 in-context mode (dark-launched behind INCONTEXT_INJECTION_ENABLED):
+      // when the project runs in_context, inject the full project knowledge
+      // corpus. Off by default → zero extra work and no behaviour change. The
+      // mode itself is surfaced separately by GET /projects/:id/knowledge.
+      let projectKnowledgeCorpusBlock = '';
+      if (INCONTEXT_INJECTION_ENABLED && project_id && numericOrgId) {
+        const pidNum =
+          typeof project_id === 'string'
+            ? parseInt(project_id.replace(/^proj_/, ''), 10)
+            : project_id;
+        if (Number.isFinite(pidNum) && pidNum > 0) {
+          try {
+            const modeState = await getProjectRetrievalMode(pidNum, numericOrgId);
+            if (modeState.mode === 'in_context') {
+              projectKnowledgeCorpusBlock = await assembleProjectKnowledgeCorpus(
+                pidNum,
+                numericOrgId
+              );
+            }
+          } catch {
+            /* non-fatal — fall back to retrieval-only */
+          }
+        }
+      }
+
       // AnA fix F2: always prepend a CONTEXT SNAPSHOT block so AnA can see
       // exactly what context is loaded right now — including explicit
       // "NOT LOADED" / "NONE" markers when something is missing. The Context
@@ -550,9 +597,11 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       const systemPrompt =
         contextSnapshot +
         intelligencePrefix +
+        projectInstructionsBlock +
         basePrompt +
         indContextBlock +
         deviceContextBlock +
+        projectKnowledgeCorpusBlock +
         memoryBlock +
         evidenceBlock;
 
@@ -601,9 +650,19 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         organizationId: numericOrgId ?? undefined,
         userId: numericUserId,
         strategy: selectedStrategy,
-        tools: getAllEnabledTools(),
+        // Offer the tools relevant to this turn's intent + context (the platform
+        // command bridge is always included, so nothing is ever truly out of
+        // reach), honouring any tools the user pinned in the tool picker.
+        tools: selectToolsForTurn(getAllEnabledTools(), typeof message === 'string' ? message : '', {
+          pinned: Array.isArray(selected_tools) ? selected_tools.filter((t: unknown): t is string => typeof t === 'string') : undefined,
+          context: tool_context && typeof tool_context === 'object' ? tool_context : undefined,
+        }),
         toolChoice: 'auto' as const,
         ...(validatedChatProvider ? { provider: validatedChatProvider } : {}),
+        // A2: cache the (large, stable) in-context corpus prefix when injected.
+        ...(projectKnowledgeCorpusBlock
+          ? { promptCache: { enabled: true, type: 'ephemeral' as const } }
+          : {}),
       };
 
       // Use agentic loop for multi-turn tool execution (max 5 rounds)
@@ -614,6 +673,8 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           userId: numericUserId || null,
           projectId:
             typeof project_id === 'string' ? parseInt(project_id, 10) || null : project_id || null,
+          // Tenant UUID so the project_knowledge_search tool can scope retrieval.
+          organizationUuid: orgUuid ?? null,
         },
         onToolExecution: (toolName, input, result) => {
           // Persist the invocation for usage analytics. Latency is 0 here

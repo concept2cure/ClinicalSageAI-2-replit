@@ -20,15 +20,11 @@
  *            on rows whose studyType = 'genotox'.
  */
 
-import { eq } from 'drizzle-orm';
-
-import { db } from '../../db';
-import { ctdNonclinicalStudies } from '../../../shared/schema/csr-knowledge-db';
 import type {
   NonclinicalIntelFacts,
   NonclinicalStudyFact,
 } from '../intelligence-engine/reviewer-personas';
-import { PRECLINICAL_REVIEWER_ENABLED } from './feature-flags';
+import { fetchNonclinicalRows } from './nonclinical-program-loader';
 
 const PIVOTAL_TYPES = new Set([
   'repeat_dose_tox',
@@ -106,15 +102,11 @@ export interface LoadPreclinicalIntelOptions {
 
 export async function loadPreclinicalIntel(
   ctdProgramId: number,
+  organizationId: number,
   options: LoadPreclinicalIntelOptions = {},
 ): Promise<NonclinicalIntelFacts | undefined> {
-  if (!PRECLINICAL_REVIEWER_ENABLED) return undefined;
-  if (!Number.isInteger(ctdProgramId) || ctdProgramId <= 0) return undefined;
-
-  const rows = await db
-    .select()
-    .from(ctdNonclinicalStudies)
-    .where(eq(ctdNonclinicalStudies.programId, ctdProgramId));
+  const rows = await fetchNonclinicalRows(ctdProgramId, organizationId);
+  if (!rows) return undefined;
 
   const studies: NonclinicalStudyFact[] = rows.map(r => ({
     studyType: r.studyType,

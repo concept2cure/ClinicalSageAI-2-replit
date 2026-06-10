@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 // jsonwebtoken lacks strong typings in this repo setup for tests.
 // Use require-style import to keep this smoke test lightweight.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+ 
 const jwt = require('jsonwebtoken');
 
 let authMiddleware: any;

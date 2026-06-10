@@ -15,7 +15,17 @@ export type Severity = 'critical' | 'major' | 'minor';
 export type Likelihood = 'very_likely' | 'likely' | 'possible' | 'unlikely';
 export type SubmissionType = 'ind' | 'nda' | 'bla' | '510k' | 'pma' | 'de_novo' | 'cer' | 'ectd' | 'general';
 export type ReviewPhase = 'filing' | 'substantive' | 'advisory_committee' | 'labeling' | 'post_market';
-export type Agency = 'fda' | 'ema' | 'pmda' | 'health_canada' | 'tga' | 'general';
+export type Agency =
+  | 'fda'
+  | 'ema'
+  | 'pmda'
+  | 'health_canada'
+  | 'mhra'
+  | 'swissmedic'
+  | 'tga'
+  | 'nmpa'
+  | 'anvisa'
+  | 'general';
 
 export interface DeficiencyPattern {
   id: string;
@@ -587,6 +597,152 @@ export const DEFICIENCY_TAXONOMY: DeficiencyPattern[] = [
       'Use structured templates for key summary documents',
     ],
     references: ['ICH M4(E)', 'ICH E1', 'FDA Guidance: Format and Content of ISS/ISE'],
+    relatedDeficiencies: [],
+  },
+
+  // ── Global / multi-regional ──────────────────────────────────────────────
+  {
+    id: 'GLOBAL-001',
+    category: 'Global',
+    subcategory: 'Multi-Regional Trials',
+    title: 'Regional Consistency of MRCT Results Not Demonstrated',
+    description:
+      'A multi-regional clinical trial is submitted without a pre-specified strategy to assess consistency of the treatment effect across regions, so a region (e.g. Japan or China) cannot confirm the result applies to its population.',
+    severity: 'major',
+    likelihood: 'likely',
+    submissionTypes: ['nda', 'bla', 'ind'],
+    agencies: ['pmda', 'nmpa', 'ema', 'fda'],
+    reviewPhase: ['substantive'],
+    reviewerLanguage: [
+      'The applicant has not demonstrated consistency of the treatment effect in the [region] subpopulation.',
+      'No pre-specified method for evaluating regional consistency was provided.',
+    ],
+    mitigations: [
+      'Pre-specify a regional consistency assessment per ICH E17',
+      'Size the regional subpopulation to support a consistency evaluation',
+      'Discuss the MRCT design at scientific advice / consultation before locking the protocol',
+    ],
+    references: ['ICH E17', 'ICH E5(R1)', 'PMDA Basic Principles on Global Clinical Trials'],
+    relatedDeficiencies: ['GLOBAL-002'],
+  },
+  {
+    id: 'GLOBAL-002',
+    category: 'Global',
+    subcategory: 'Foreign Data Acceptability',
+    title: 'Ethnic-Factor / Bridging Strategy Absent for Foreign Data',
+    description:
+      'A submission relies on foreign clinical data without evaluating intrinsic/extrinsic ethnic factors or providing a bridging rationale, leaving the receiving region unable to accept the data.',
+    severity: 'major',
+    likelihood: 'likely',
+    submissionTypes: ['nda', 'bla'],
+    agencies: ['pmda', 'nmpa'],
+    reviewPhase: ['filing', 'substantive'],
+    reviewerLanguage: [
+      'The applicability of the foreign clinical data to the [region] population has not been justified.',
+      'No bridging strategy was provided to address intrinsic and extrinsic ethnic factors.',
+    ],
+    mitigations: [
+      'Provide an ICH E5 ethnic-factor analysis (intrinsic and extrinsic)',
+      'Include region-representative subjects in a Japan/China-inclusive MRCT',
+      'Where needed, conduct a focused bridging (e.g. PK/PD) study',
+    ],
+    references: ['ICH E5(R1)', 'ICH E17'],
+    relatedDeficiencies: ['GLOBAL-001'],
+  },
+  {
+    id: 'CMC-NITROSAMINE-001',
+    category: 'CMC',
+    subcategory: 'Mutagenic Impurities',
+    title: 'Nitrosamine / Mutagenic-Impurity Risk Assessment Missing or Incomplete',
+    description:
+      'No documented risk assessment for N-nitrosamine and other DNA-reactive (mutagenic) impurities, or control limits are not justified against the acceptable intake — a frequent global deficiency since the sartan/ranitidine recalls.',
+    severity: 'critical',
+    likelihood: 'very_likely',
+    submissionTypes: ['nda', 'bla', 'ectd'],
+    agencies: ['fda', 'ema', 'mhra', 'health_canada', 'swissmedic', 'pmda'],
+    reviewPhase: ['substantive', 'post_market'],
+    reviewerLanguage: [
+      'A risk evaluation for the presence of N-nitrosamine impurities has not been provided.',
+      'The proposed control limit for [impurity] is not justified relative to the acceptable intake.',
+    ],
+    mitigations: [
+      'Perform and document a nitrosamine risk assessment across API, excipients and process',
+      'Apply the ICH M7 TTC / (Q)SAR framework and confirmatory testing where flagged',
+      'Justify control limits against the agency-published acceptable intakes',
+    ],
+    references: ['ICH M7(R2)', 'ICH Q3A/Q3B', 'EMA/FDA nitrosamine guidance'],
+    relatedDeficiencies: [],
+  },
+  {
+    id: 'GMP-CERT-001',
+    category: 'CMC',
+    subcategory: 'GMP / Inspection',
+    title: 'GMP Certification / Inspection Readiness Not Established',
+    description:
+      'The manufacturing sites lack current GMP certification recognised by the receiving agency, or inspection readiness is unaddressed — often the critical-path item for emerging-market approvals.',
+    severity: 'critical',
+    likelihood: 'likely',
+    submissionTypes: ['nda', 'bla', 'general'],
+    agencies: ['anvisa', 'nmpa', 'health_canada', 'tga'],
+    reviewPhase: ['filing', 'substantive'],
+    reviewerLanguage: [
+      'A valid GMP certificate for the proposed manufacturing site has not been provided.',
+      'The site has not been inspected by, or under an agreement recognised by, this agency.',
+    ],
+    mitigations: [
+      'Initiate GMP certification / inspection scheduling early (it is frequently the critical path)',
+      'Leverage MRA / reliance agreements where the agency recognises them',
+      'Maintain an inspection-ready dossier and site master file',
+    ],
+    references: ['ICH Q7', 'PIC/S GMP Guide', 'Agency GMP certification procedures'],
+    relatedDeficiencies: [],
+  },
+  {
+    id: 'PV-RMP-001',
+    category: 'Pharmacovigilance',
+    subcategory: 'Risk Management',
+    title: 'Risk Management Plan / Pharmacovigilance Plan Inadequate',
+    description:
+      'The RMP/PV plan does not adequately characterise important identified/potential risks or missing information, or proposes additional risk-minimisation measures without justification or measurable effectiveness criteria.',
+    severity: 'major',
+    likelihood: 'likely',
+    submissionTypes: ['nda', 'bla'],
+    agencies: ['ema', 'mhra', 'health_canada', 'tga', 'swissmedic'],
+    reviewPhase: ['substantive', 'labeling', 'post_market'],
+    reviewerLanguage: [
+      'The safety specification does not adequately reflect the important risks of the product.',
+      'The effectiveness of the proposed additional risk-minimisation measures cannot be evaluated.',
+    ],
+    mitigations: [
+      'Build the safety specification and PV plan per ICH E2E',
+      'Tie each important risk to a proportionate routine/additional activity',
+      'Define measurable effectiveness criteria for additional risk-minimisation measures',
+    ],
+    references: ['ICH E2E', 'GVP Module V (RMP)', 'ICH E2C(R2)'],
+    relatedDeficiencies: [],
+  },
+  {
+    id: 'LABEL-LOCAL-001',
+    category: 'Labeling',
+    subcategory: 'Regional Labeling',
+    title: 'Country-Specific Labeling / Language Requirements Not Met',
+    description:
+      'Product information does not meet the receiving region’s format and language requirements (e.g. bilingual English/French for Canada, local-language SmPC/PIL, regional product-information templates).',
+    severity: 'major',
+    likelihood: 'likely',
+    submissionTypes: ['nda', 'bla', 'general'],
+    agencies: ['health_canada', 'swissmedic', 'pmda', 'anvisa'],
+    reviewPhase: ['labeling'],
+    reviewerLanguage: [
+      'The product information does not conform to the required [region] template.',
+      'Bilingual / local-language labeling has not been provided as required.',
+    ],
+    mitigations: [
+      'Map labeling to each region’s product-information template early',
+      'Plan certified translations and bilingual layouts (e.g. Canada) into the timeline',
+      'Reconcile the core safety information across all regional labels',
+    ],
+    references: ['Regional product-information templates', 'ICH M1 (MedDRA terminology)'],
     relatedDeficiencies: [],
   },
 ];

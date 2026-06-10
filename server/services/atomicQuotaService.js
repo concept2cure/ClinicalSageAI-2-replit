@@ -193,13 +193,9 @@ export async function atomicCreateUser(organizationId, userData) {
         };
       }
 
-      // Update user if needed
-      if (userData.title || userData.department) {
-        await client.query(
-          'UPDATE users SET title = $1, department = $2, updated_at = NOW() WHERE id = $3',
-          [userData.title || null, userData.department || null, userId]
-        );
-      }
+      // Existing user: never overwrite their global profile from an invite —
+      // the inviting org has no authority over a user record that may belong
+      // to other organizations. Title/department apply only on user creation.
     } else {
       // Create new user
       const createUserResult = await client.query(

@@ -62,6 +62,8 @@
 .prj-list-sub {
   margin: 0; color: var(--text-400); font-size: 13px;
 }
+/* "Sample data" pill beside the title when the seed fallback is showing */
+.prj-list-seed { margin-left: 10px; vertical-align: 3px; }
 .prj-list-rows {
   display: flex; flex-direction: column;
   border-top: 1px solid var(--border);

@@ -513,7 +513,7 @@ class DocumentDataCenterService {
       throw new Error('Database connection not available');
     }
     try {
-      let baseQuery = db
+      const baseQuery = db
         .select()
         .from(deviceDataCenter)
         .where(eq(deviceDataCenter.organizationId, organizationId));

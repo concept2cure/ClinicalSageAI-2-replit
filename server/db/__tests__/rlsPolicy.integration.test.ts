@@ -56,7 +56,7 @@ const skip = !databaseUrl || isSentinelTestUrl;
 const describeIfDb = skip ? describe.skip : describe;
 
 if (skip) {
-  // eslint-disable-next-line no-console
+   
   console.warn(
     '[rls-integration] skipping — set TEST_DATABASE_URL or DATABASE_URL to run'
   );
@@ -135,7 +135,7 @@ describeIfDb('RLS policy — integration', () => {
         `INSERT INTO ${TABLE} (organization_id, payload) VALUES (2, 'tenant-2-row')`
       );
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error('[rls-integration] beforeAll failed:', err);
       throw err;
     }

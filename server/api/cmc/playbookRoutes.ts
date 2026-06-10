@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { randomUUID } from 'crypto';
 import { pool } from '../../db.js';
 import { ai } from '../../lib/unified-ai-client';
 
@@ -117,7 +118,7 @@ router.post('/workflows/:id/start', async (req: Request, res: Response) => {
       RETURNING *
     `;
 
-    const workflowInstanceId = `wf_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const workflowInstanceId = `wf_${randomUUID()}`;
 
     const result = await pool.query(insertQuery, [
       workflowInstanceId,
@@ -166,7 +167,7 @@ router.post('/ai-tools/execute', async (req: Request, res: Response) => {
       RETURNING *
     `;
 
-    const executionId = `ai_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const executionId = `ai_${randomUUID()}`;
 
     await pool.query(logQuery, [
       executionId,
@@ -178,7 +179,7 @@ router.post('/ai-tools/execute', async (req: Request, res: Response) => {
     ]);
 
     // Execute the AI tool based on command
-    let result = await executeAITool(command, drugName, additionalContext);
+    const result = await executeAITool(command, drugName, additionalContext);
 
     // Update execution status
     await pool.query(
@@ -254,7 +255,7 @@ router.post('/checklists/:id/create', async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
-    const instanceId = `checklist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const instanceId = `checklist_${randomUUID()}`;
 
     const insertQuery = `
       INSERT INTO cmc_checklist_instances (
@@ -373,7 +374,7 @@ async function createWorkflowTasks(workflowInstanceId: string, templateId: strin
       ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
     `,
       [
-        `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        `task_${randomUUID()}`,
         workflowInstanceId,
         task.name,
         task.order,

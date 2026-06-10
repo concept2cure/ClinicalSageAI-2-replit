@@ -1,15 +1,21 @@
 /**
  * Embedding Backfill Script for Lumen Cortex
  *
- * Runs embeddings on atoms that don't have them yet.
- * Use with caution - this will consume OpenAI API credits.
+ * Runs embeddings on atoms that don't have them yet. Routes through the governed
+ * embedding seam (server/services/ai-gateway/embeddings) rather than a direct
+ * OpenAI client, so the backfill honors EMBEDDING_PROVIDER — including a
+ * self-hosted/offline embedder — and is not a gateway bypass.
  */
 
 import pg from 'pg';
-import OpenAI from 'openai';
+import { getEmbeddingProvider } from '../server/services/ai-gateway/embeddings/embedding-provider';
+import { createScopedLogger } from '../server/utils/logger';
+
+const logger = createScopedLogger('embed-atoms');
 
 const BATCH_SIZE = 20;
 const MAX_ATOMS = 100; // Limit for this run
+const EMBEDDING_DIMENSIONS = 1536; // must match the lumen_data_atoms pgvector corpus
 
 async function main() {
   const connectionString = process.env.DATABASE_URL;
@@ -18,17 +24,15 @@ async function main() {
     process.exit(1);
   }
 
-  if (!process.env.OPENAI_API_KEY) {
-    logger.error('❌ OPENAI_API_KEY not set');
-    process.exit(1);
-  }
-
   const pool = new pg.Pool({
     connectionString,
     ssl: { rejectUnauthorized: false },
   });
 
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  // Resolve the configured embedding provider (OpenAI by default; a self-hosted
+  // OpenAI-compatible endpoint when EMBEDDING_PROVIDER=local). Auth/config errors
+  // surface at call time, not here.
+  const provider = getEmbeddingProvider();
 
   try {
     logger.info('═══════════════════════════════════════');
@@ -76,28 +80,26 @@ async function main() {
       });
 
       try {
-        // Generate embeddings
-        const response = await openai.embeddings.create({
-          model: 'text-embedding-3-small',
+        // Generate embeddings via the governed seam.
+        const { embeddings, model } = await provider.embed({
           input: texts,
-          dimensions: 1536,
+          dimensions: EMBEDDING_DIMENSIONS,
         });
 
-        // Update each atom with its embedding
+        // Update each atom with its embedding (record the model actually used).
         for (let i = 0; i < atoms.length; i++) {
-          const embedding = response.data[i].embedding;
-          const embeddingStr = `[${embedding.join(',')}]`;
+          const embeddingStr = `[${embeddings[i].join(',')}]`;
 
           await pool.query(
             `
             UPDATE lumen_data_atoms
             SET
               embedding = $1::vector,
-              embedding_model = 'text-embedding-3-small',
+              embedding_model = $2,
               embedding_updated_at = NOW()
-            WHERE id = $2
+            WHERE id = $3
           `,
-            [embeddingStr, atoms[i].id]
+            [embeddingStr, model, atoms[i].id]
           );
         }
 

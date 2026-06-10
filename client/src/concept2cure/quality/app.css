@@ -1,0 +1,162 @@
+/* Quality system / SOP register — scoped surface styles.
+   ──────────────────────────────────────────────────────────────
+   Tokens come from the host design system (loaded globally by the shell);
+   resets are scoped to .qms-shell so they don't clobber the host. Single
+   accent: Claude orange (--accent-main-100) is the one persistent focal
+   colour, on the primary CTA only. Body 13px. 200ms ease-out motion.
+   Mirrors the conventions of client/src/concept2cure/intelligence/app.css. */
+
+.qms-shell, .qms-shell * { box-sizing: border-box; }
+.qms-shell button { font-family: inherit; cursor: pointer; border: 0; background: transparent; color: inherit; padding: 0; }
+.qms-shell svg { flex: 0 0 auto; }
+
+.qms-shell {
+  display: flex; flex-direction: column; height: 100%;
+  font-family: var(--font-sans);
+  color: var(--text-100);
+  font-size: 13px; line-height: 1.55;
+  background: var(--bg-050);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Topbar ───────────────────────────────────────────────────── */
+.qms-topbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 20px; height: 48px; flex: 0 0 48px;
+  background: var(--background); border-bottom: 1px solid #f2f0e8;
+  font-size: 12px;
+}
+.qms-crumbs { display: flex; align-items: center; gap: 6px; color: var(--text-300); font-weight: 500; }
+.qms-crumbs .here { color: var(--text-100); font-weight: 600; }
+.qms-crumbs .sep { color: var(--text-500); }
+.qms-spacer { flex: 1; }
+.qms-tb-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 7px;
+  font-size: 12px; color: var(--text-300); font-weight: 500;
+  transition: background 200ms ease-out, color 200ms ease-out;
+}
+.qms-tb-btn:hover { background: var(--bg-100); color: var(--text-100); }
+
+/* ─── Page ─────────────────────────────────────────────────────── */
+.qms-page { flex: 1; overflow-y: auto; min-height: 0; padding: 22px 28px 60px; }
+.qms-page-inner { max-width: 1240px; margin: 0 auto; }
+
+/* ─── Header ───────────────────────────────────────────────────── */
+.qms-head { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 22px; }
+.qms-head > div:first-child { flex: 1; min-width: 0; }
+.qms-eyebrow { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-400); font-weight: 600; margin-bottom: 6px; }
+.qms-h1 { font-family: var(--font-serif); font-size: 24px; font-weight: 600; letter-spacing: -0.01em; color: var(--text-100); margin: 0 0 6px; }
+.qms-sub { font-size: 12.5px; color: var(--text-400); max-width: 760px; }
+.qms-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+.qms-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 12px; border-radius: 8px;
+  font-size: 12.5px; font-weight: 600; white-space: nowrap;
+  transition: background 200ms ease-out, color 200ms ease-out, border-color 200ms ease-out;
+}
+.qms-btn.ghost { color: var(--text-200); border: 1px solid #e8e6dc; background: var(--background); }
+.qms-btn.ghost:hover { background: var(--bg-100); color: var(--text-100); }
+.qms-btn.primary { background: var(--accent-main-100); color: #fff; }
+.qms-btn.primary:hover { background: var(--accent-main-200); }
+
+/* ─── KPIs ─────────────────────────────────────────────────────── */
+.qms-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.qms-kpi { background: var(--background); border: 1px solid #e8e6dc; border-radius: 10px; padding: 13px 15px; }
+.qms-kpi .lbl { font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-400); font-weight: 600; margin-bottom: 6px; }
+.qms-kpi .val { font-size: 22px; font-weight: 600; color: var(--text-100); font-variant-numeric: tabular-nums; }
+.qms-kpi .val .unit { font-size: 13px; color: var(--text-300); margin-left: 3px; font-weight: 500; }
+.qms-kpi .sub { font-size: 11.5px; color: var(--text-400); margin-top: 4px; }
+.qms-kpi[data-tone="err"] .val { color: #c84a4a; }
+.qms-kpi[data-tone="warn"] .val { color: #c2410c; }
+
+/* ─── Sections ─────────────────────────────────────────────────── */
+.qms-sec { margin-bottom: 26px; }
+.qms-sec-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+.qms-sec-head h2 { font-family: var(--font-serif); font-size: 16px; font-weight: 600; color: var(--text-100); margin: 0; white-space: nowrap; }
+.qms-sec-head .meta { font-size: 11.5px; color: var(--text-400); }
+.qms-sec-head .spacer { flex: 1; }
+.qms-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-300); font-weight: 500; transition: color 200ms ease-out; }
+.qms-link:hover { color: var(--accent-main-100); }
+.qms-seg { display: inline-flex; gap: 6px; }
+.qms-chip[data-on="true"] { border-color: var(--text-300); color: var(--text-100); background: var(--bg-100); }
+
+/* ─── Template gallery ─────────────────────────────────────────── */
+.qms-tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.qms-tpl-card {
+  text-align: left; background: var(--background); border: 1px solid #e8e6dc; border-radius: 10px;
+  padding: 14px; display: flex; flex-direction: column; gap: 6px;
+  transition: border-color 200ms ease-out, box-shadow 200ms ease-out;
+}
+.qms-tpl-card:hover { border-color: var(--accent-main-100); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
+.qms-tpl-top { display: flex; align-items: center; justify-content: space-between; }
+.qms-tpl-ico { color: var(--text-300); display: inline-flex; }
+.qms-tpl-prefix { font-size: 11px; color: var(--text-400); }
+.qms-tpl-label { font-size: 13.5px; font-weight: 600; color: var(--text-100); }
+.qms-tpl-desc { font-size: 11.5px; color: var(--text-400); line-height: 1.5; }
+
+/* ─── Register table ───────────────────────────────────────────── */
+.qms-table { border: 1px solid #e8e6dc; border-radius: 10px; overflow: hidden; background: var(--background); }
+.qms-thead, .qms-row { display: grid; align-items: center; gap: 10px; padding: 9px 14px; }
+.qms-thead { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-400); font-weight: 600; background: var(--bg-100); border-bottom: 1px solid #e8e6dc; }
+.qms-row { border-bottom: 1px solid #f2f0e8; font-size: 12.5px; }
+.qms-row:last-child { border-bottom: 0; }
+.qms-row[data-status="superseded"], .qms-row[data-status="retired"] { opacity: 0.6; }
+.qms-cell { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qms-num { color: var(--text-200); font-weight: 600; text-align: left; }
+.qms-num:hover { color: var(--accent-main-100); }
+.qms-title { color: var(--text-100); }
+.qms-shell .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.qms-tag { display: inline-block; font-size: 10.5px; padding: 2px 7px; border-radius: 5px; background: var(--bg-100); color: var(--text-300); border: 1px solid #e8e6dc; }
+.qms-overdue { color: #c84a4a; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+
+/* status pill */
+.qms-pill { display: inline-block; font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+.qms-pill[data-tone="effective"] { background: #e7efe2; color: #4a6b3a; }
+.qms-pill[data-tone="review"]    { background: #f6ead3; color: #8a5a1a; }
+.qms-pill[data-tone="draft"]     { background: var(--bg-100); color: var(--text-300); border: 1px solid #e8e6dc; }
+.qms-pill[data-tone="muted"]     { background: var(--bg-100); color: var(--text-400); }
+
+/* row actions — AnA-first */
+.qms-rowacts { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
+.qms-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 6px;
+  color: var(--text-300); border: 1px solid #e8e6dc; background: var(--background);
+  transition: background 200ms ease-out, color 200ms ease-out, border-color 200ms ease-out;
+}
+.qms-chip:hover { background: var(--bg-100); color: var(--text-100); }
+.qms-chip.ghost { border-color: transparent; padding: 3px 6px; }
+.qms-chip.ghost:hover { color: var(--accent-main-100); }
+
+/* ─── Review + training grid ───────────────────────────────────── */
+.qms-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 960px) {
+  .qms-grid2 { grid-template-columns: 1fr; }
+  .qms-kpis { grid-template-columns: repeat(2, 1fr); }
+}
+
+.qms-review { border: 1px solid #e8e6dc; border-radius: 10px; overflow: hidden; background: var(--background); }
+.qms-review-row {
+  display: grid; grid-template-columns: 100px minmax(0, 1fr) 96px; gap: 10px; align-items: center;
+  width: 100%; text-align: left; padding: 9px 13px; border-bottom: 1px solid #f2f0e8; font-size: 12.5px;
+  transition: background 200ms ease-out;
+}
+.qms-review-row:last-child { border-bottom: 0; }
+.qms-review-row:hover { background: var(--bg-100); }
+.qms-review-row[data-overdue] { background: #fbf2ef; }
+.qms-review-num { color: var(--text-200); font-weight: 600; }
+.qms-review-title { color: var(--text-100); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qms-review-when { text-align: right; color: var(--text-400); font-size: 11.5px; }
+.qms-flag-txt { color: #c84a4a; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; justify-content: flex-end; }
+.qms-empty { padding: 18px 14px; font-size: 12px; color: var(--text-400); text-align: center; }
+
+.qms-train { display: flex; flex-direction: column; gap: 9px; padding: 2px; }
+.qms-train-row { display: grid; grid-template-columns: minmax(0, 1fr) 90px 52px 84px; gap: 10px; align-items: center; font-size: 12px; }
+.qms-train-doc { color: var(--text-200); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qms-train-bar { height: 6px; border-radius: 999px; background: var(--bg-200); overflow: hidden; }
+.qms-train-fill { display: block; height: 100%; border-radius: 999px; background: #6f8c5a; transition: width 200ms ease-out; }
+.qms-train-fill[data-tone="warn"] { background: #d09a3c; }
+.qms-train-fill[data-tone="err"]  { background: #c84a4a; }
+.qms-train-pct { color: var(--text-300); text-align: right; }
+.qms-train-when { color: var(--text-400); font-size: 11px; text-align: right; }

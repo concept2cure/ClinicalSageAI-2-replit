@@ -28,6 +28,7 @@ import {
 import {
   buildM23QualityOverallSummary,
   buildM24NonclinicalOverview,
+  buildM25ClinicalOverview,
   buildM27ClinicalSummary,
 } from '../services/m2-summary-builders.js';
 import { buildCSRTables } from '../services/csr-tabulation-builders.js';
@@ -138,6 +139,10 @@ router.post('/runs', async (req: Request, res: Response) => {
         m24: result.outputs.m24 ? {
           completeness: result.outputs.m24.completeness,
           gaps: result.outputs.m24.gaps,
+        } : null,
+        m25: result.outputs.m25 ? {
+          completeness: result.outputs.m25.completeness,
+          gaps: result.outputs.m25.gaps,
         } : null,
         m27: result.outputs.m27 ? {
           completeness: result.outputs.m27.completeness,
@@ -260,6 +265,29 @@ router.post('/m2/clinical', (req: Request, res: Response) => {
     return res.json(summary);
   } catch (err) {
     return res.status(500).json({ error: 'm27_failed', message: err instanceof Error ? err.message : String(err) });
+  }
+});
+
+/**
+ * Build M2.5 Clinical Overview standalone (does not require a full orchestrator run).
+ */
+router.post('/m2/clinical-overview', (req: Request, res: Response) => {
+  const Schema = z.object({
+    csrs: z.array(CSRInputSchema),
+    indication: z.string(),
+    investigationalProduct: z.string(),
+    developmentRationale: z.string().optional(),
+    nonclinicalConclusion: z.string().optional(),
+  });
+  const parsed = Schema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'invalid_request', details: parsed.error.flatten() });
+  }
+  try {
+    const summary = buildM25ClinicalOverview(parsed.data);
+    return res.json(summary);
+  } catch (err) {
+    return res.status(500).json({ error: 'm25_failed', message: err instanceof Error ? err.message : String(err) });
   }
 });
 

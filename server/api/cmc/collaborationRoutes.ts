@@ -4,6 +4,7 @@
  */
 
 import express from 'express';
+import { randomUUID } from 'crypto';
 import { z } from 'zod';
 
 const router = express.Router();
@@ -27,10 +28,10 @@ const NotificationSchema = z.object({
 });
 
 // In-memory storage for real-time features (replace with database/Redis in production)
-let comments = new Map();
-let notifications = new Map();
-let activeUsers = new Map();
-let realtimeConnections = new Map();
+const comments = new Map();
+const notifications = new Map();
+const activeUsers = new Map();
+const realtimeConnections = new Map();
 
 /**
  * @route GET /api/cmc/collaboration/comments/:workflowId
@@ -93,7 +94,7 @@ router.post('/comments', async (req, res) => {
     // Create notifications for mentioned users
     if (mentions && mentions.length > 0) {
       mentions.forEach(mentionedUser => {
-        const notificationId = `notif-${Date.now()}-${Math.random()}`;
+        const notificationId = `notif-${randomUUID()}`;
         const notification = {
           id: notificationId,
           type: 'mention',
@@ -253,6 +254,7 @@ router.get('/team/:workflowId', async (req, res) => {
 
     // Fetch team from users table
     let teamMembers: any[] = [];
+    let teamLookupFailed = false;
     try {
       const usersRes = await fetch(`http://localhost:${process.env.PORT || 5000}/api/users`, {
         headers: { 'Content-Type': 'application/json' },
@@ -269,8 +271,11 @@ router.get('/team/:workflowId', async (req, res) => {
           permissions: ['read', 'write'],
         }));
       }
-    } catch (e) {
-      // Users endpoint unavailable — return empty team
+    } catch (e: any) {
+      // Users endpoint unavailable — surface the degradation instead of
+      // silently presenting an empty team as the real roster.
+      teamLookupFailed = true;
+      console.warn('[cmc-collaboration] team lookup failed:', e?.message ?? e);
     }
 
     // Merge presence data
@@ -288,6 +293,9 @@ router.get('/team/:workflowId', async (req, res) => {
         members: teamMembers,
         totalMembers: teamMembers.length,
         onlineCount: teamMembers.filter((m: any) => m.status === 'online').length,
+        // True when the roster lookup failed and members is empty for that
+        // reason rather than because the team is actually empty.
+        rosterUnavailable: teamLookupFailed,
       },
     });
   } catch (error) {
@@ -339,41 +347,17 @@ router.post('/presence', async (req, res) => {
  * @route POST /api/cmc/collaboration/share
  * @description Share workflow with external stakeholders
  */
-router.post('/share', async (req, res) => {
-  try {
-    const { workflowId, recipients, permissions, message } = req.body;
-
-    // Generate share link
-    const shareId = `share-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const shareLink = `${req.protocol}://${req.get('host')}/shared/workflow/${shareId}`;
-
-    const shareRecord = {
-      id: shareId,
-      workflowId,
-      sharedBy: req.user?.id || 'current-user-id',
-      recipients: recipients || [],
-      permissions: permissions || ['read'],
-      message: message || '',
-      shareLink,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
-      createdAt: new Date().toISOString(),
-      accessCount: 0,
-    };
-
-    // In production, save to database and send notification emails
-
-    res.json({
-      success: true,
-      data: shareRecord,
-      message: 'Workflow shared successfully',
-    });
-  } catch (error) {
-    console.error('Error sharing workflow:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Operation failed',
-    });
-  }
+router.post('/share', async (_req, res) => {
+  // Fail closed: this endpoint previously fabricated a successful share —
+  // the share record was never persisted and the generated
+  // /shared/workflow/:id link has no corresponding route anywhere in the
+  // application, so recipients could never access anything. Implement
+  // persistence + a real share surface before re-enabling.
+  res.status(501).json({
+    success: false,
+    error: 'Workflow sharing is not implemented yet',
+    code: 'NOT_IMPLEMENTED',
+  });
 });
 
 export default router;

@@ -144,6 +144,7 @@ import BiopharmaRoute from './biopharma/BiopharmaRoute';
 import CmcRoute from './cmc/CmcRoute';
 import IntelligenceRoute from './intelligence/IntelligenceRoute';
 import AuthoringRoute from './authoring/AuthoringRoute';
+import QualityRoute from './quality/QualityRoute';
 import type { IntTab } from './intelligence/data';
 import LabelingRoute from './labeling/LabelingRoute';
 import RiskRoute from './risk/RiskRoute';
@@ -1185,7 +1186,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         submission: '#submissions',
         protocol: '#templates',
         biostat: '', // no MDX surface yet → fall through to Ana
-        quality: '#validation',
         reporting: '#analytics',
         memory: '#memory',
         artifacts: '#vault',
@@ -1275,6 +1275,13 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         // editors). Must precede the BUNDLE_MDX_HASH check, which otherwise
         // routes 'artifacts' to the MDX #vault tab.
         setLayoutMode('authoring');
+        return;
+      }
+      // Quality system (SOP register + controlled-document control). Live
+      // surface over /api/mdx/qms/*. Must precede BUNDLE_MDX_HASH, which would
+      // otherwise route 'quality' to the MDX #validation tab.
+      if (normalizedPath === 'quality') {
+        setLayoutMode('quality');
         return;
       }
       if (normalizedPath in BUNDLE_MDX_HASH) {
@@ -1996,6 +2003,21 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     return (
       <IntelligenceRoute
         initialNav={intelligenceTab}
+        onNavigate={handleAnaPanelNavigate}
+        onAskAna={(text) => {
+          setExternalChatMessage({ text, ts: Date.now() });
+          setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'deep-research');
+        }}
+      />
+    );
+  }
+
+  // Quality system (SOP register + controlled-document control). Live surface
+  // over /api/mdx/qms/*. Reached via the home rail "Quality and Lifecycle"
+  // item; AnA prompts hand off to the conversation surface.
+  if (layoutMode === 'quality' && !embeddedModule) {
+    return (
+      <QualityRoute
         onNavigate={handleAnaPanelNavigate}
         onAskAna={(text) => {
           setExternalChatMessage({ text, ts: Date.now() });

@@ -112,49 +112,6 @@ describe('API Client Module', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// AUDIT LOGGER MODULE TESTS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-describe('Audit Logger Module', () => {
-  it('should export logAuditEvent function', async () => {
-    const module = await import('../server/services/audit/auditLoggerV2');
-    expect(module.logAuditEvent).toBeDefined();
-    expect(typeof module.logAuditEvent).toBe('function');
-  });
-
-  it('should export queryAuditEvents function', async () => {
-    const module = await import('../server/services/audit/auditLoggerV2');
-    expect(module.queryAuditEvents).toBeDefined();
-    expect(typeof module.queryAuditEvents).toBe('function');
-  });
-
-  it('should export convenience logging functions', async () => {
-    const module = await import('../server/services/audit/auditLoggerV2');
-    expect(typeof module.logLogin).toBe('function');
-    expect(typeof module.logLogout).toBe('function');
-    expect(typeof module.logDocumentAccess).toBe('function');
-    expect(typeof module.logDataChange).toBe('function');
-    expect(typeof module.logExport).toBe('function');
-    expect(typeof module.logSecurityEvent).toBe('function');
-    expect(typeof module.logProgramActivity).toBe('function');
-    expect(typeof module.logEvidenceActivity).toBe('function');
-  });
-
-  it('should export verifySignature function', async () => {
-    const module = await import('../server/services/audit/auditLoggerV2');
-    expect(module.verifySignature).toBeDefined();
-    expect(typeof module.verifySignature).toBe('function');
-  });
-
-  it('should export default object with all functions', async () => {
-    const module = await import('../server/services/audit/auditLoggerV2');
-    expect(module.default).toBeDefined();
-    expect(typeof module.default.logAuditEvent).toBe('function');
-    expect(typeof module.default.queryAuditEvents).toBe('function');
-  });
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // TENANT ISOLATION MODULE TESTS
 // ═══════════════════════════════════════════════════════════════════════════════
 

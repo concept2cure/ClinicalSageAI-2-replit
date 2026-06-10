@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   isConcept2cureApiRoute,
   isDestructiveAuditMutation,
+  isImmutableAuditPath,
   shouldLogRequestBody,
 } from '../middleware';
 
@@ -31,5 +32,23 @@ describe('startup middleware guard helpers', () => {
 
     expect(isDestructiveAuditMutation({ method: 'POST', path: '/api/audit/not-bulk-delete-ish' })).toBe(false);
     expect(isDestructiveAuditMutation({ method: 'PATCH', path: '/api/audit/bulk-delete' })).toBe(false);
+  });
+
+  it('protects the full audit and e-signature trail surface (Part 11 immutability)', () => {
+    // Previously-guarded paths still match.
+    expect(isImmutableAuditPath('/api/audit/events/1')).toBe(true);
+    expect(isImmutableAuditPath('/api/audit/bulk-delete')).toBe(true);
+    // Broadened coverage: the whole audit namespace + e-signature records.
+    expect(isImmutableAuditPath('/api/audit/logs')).toBe(true);
+    expect(isImmutableAuditPath('/api/audit/signatures/9')).toBe(true);
+    expect(isImmutableAuditPath('/api/audit')).toBe(true);
+    expect(isImmutableAuditPath('/api/audit-logs')).toBe(true);
+    expect(isImmutableAuditPath('/api/audit-services/export')).toBe(true);
+    expect(isImmutableAuditPath('/api/mdx/audit')).toBe(true);
+    expect(isImmutableAuditPath('/api/esignature/42')).toBe(true);
+    // Unrelated routes are not affected (no false-positive blocking).
+    expect(isImmutableAuditPath('/api/auditorium')).toBe(false);
+    expect(isImmutableAuditPath('/api/coauthor/documents/5')).toBe(false);
+    expect(isImmutableAuditPath('/api/submissions')).toBe(false);
   });
 });

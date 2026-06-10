@@ -173,6 +173,52 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     console.warn('⚠️ SSO helper routes not mounted - continuing without SSO helpers');
   }
 
+  // SCIM 2.0 provisioning — mounted OUTSIDE /api (it uses its own bearer-token
+  // auth, not session auth). Inert until SCIM_BEARER_TOKEN/SCIM_ORG_ID are set.
+  try {
+    const scimModule = await import('../routes/scim');
+    const scimRouter = scimModule.default;
+    if (scimRouter && (typeof scimRouter === 'function' || (scimRouter as any).handle)) {
+      app.use('/scim/v2', scimRouter);
+    }
+  } catch {
+    console.warn('⚠️ SCIM routes not mounted - continuing without SCIM provisioning');
+  }
+
+  // Admin API for SCIM tenant tokens (super-admin only; session-authed under /api).
+  try {
+    const scimAdminModule = await import('../routes/admin/scim-tenants');
+    const scimAdminRouter = scimAdminModule.default;
+    if (scimAdminRouter && (typeof scimAdminRouter === 'function' || (scimAdminRouter as any).handle)) {
+      app.use('/api/admin/scim-tenants', scimAdminRouter);
+    }
+  } catch {
+    console.warn('⚠️ SCIM tenant admin routes not mounted');
+  }
+
+  // SIEM audit feed (admin; org-scoped). Incremental, cursor-paginated NDJSON
+  // pull of this tenant's Part 11 audit trail for SOC/SIEM ingestion.
+  try {
+    const auditSiemModule = await import('../routes/admin/audit-siem');
+    const auditSiemRouter = auditSiemModule.default;
+    if (auditSiemRouter && (typeof auditSiemRouter === 'function' || (auditSiemRouter as any).handle)) {
+      app.use('/api/admin/audit', auditSiemRouter);
+    }
+  } catch {
+    console.warn('⚠️ SIEM audit feed routes not mounted');
+  }
+
+  // RFC 9116 vulnerability disclosure — /.well-known/security.txt (public).
+  try {
+    const wellKnownModule = await import('../routes/well-known');
+    const wellKnownRouter = wellKnownModule.default;
+    if (wellKnownRouter && (typeof wellKnownRouter === 'function' || (wellKnownRouter as any).handle)) {
+      app.use('/.well-known', wellKnownRouter);
+    }
+  } catch {
+    console.warn('⚠️ .well-known routes not mounted');
+  }
+
   // Global /api auth gate — routes not in the allowlist require session auth.
   // Routes that use their own auth (API keys, webhook signatures, etc.) MUST be listed here.
   app.use('/api', (req: Request, res: Response, next: NextFunction) => {

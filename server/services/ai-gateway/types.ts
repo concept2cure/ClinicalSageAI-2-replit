@@ -9,7 +9,31 @@
 // Provider & Routing Enums
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type ProviderName = 'openai' | 'anthropic' | 'moonshot';
+export type ProviderName =
+  | 'openai'
+  | 'anthropic'
+  | 'moonshot'
+  | 'bedrock' // Claude on AWS Bedrock — private-cloud (BAA / zero-retention)
+  | 'vertex' // Claude / Gemini on Google Vertex AI — private-cloud (regional residency)
+  | 'azure' // OpenAI on Azure — private-cloud (enterprise / Microsoft estate)
+  | 'local'; // Self-hosted open-weight models via vLLM/LiteLLM — air-gappable
+
+/**
+ * Where a provider physically runs inference. This is what determines which
+ * compliance guarantees (BAA, zero data retention, data residency) a request
+ * can be served under. See server/services/ai-gateway/providers/placement.ts
+ * for the per-provider placement registry.
+ */
+export type SubstrateClass =
+  | 'frontier_shared' // Multi-tenant frontier API (OpenAI / Anthropic / Moonshot direct)
+  | 'frontier_private' // Frontier model inside your own cloud account (Bedrock / Vertex / Azure)
+  | 'self_hosted'; // Open-weight model on infrastructure you control (on-prem / air-gapped)
+
+/** Data-residency requirement a tenant can impose on a request. */
+export type DataResidency = 'any' | 'us' | 'eu' | 'apac' | 'on_prem';
+
+/** Retention posture honored for a request's payload at the provider. */
+export type RetentionPolicy = 'standard' | 'zero_retention';
 
 export type TaskType =
   | 'chat'
@@ -184,6 +208,19 @@ export interface GatewayRequest {
   /** Temperature (0-2). Lower = more deterministic */
   temperature?: number;
 
+  /**
+   * Sampling seed for reproducible output. Passed through to providers that
+   * support it (OpenAI/Moonshot) and recorded in the audit trail regardless,
+   * so a generation can be tied to its sampling parameters.
+   */
+  seed?: number;
+
+  /**
+   * Version/identifier of the prompt template used (e.g. a git tag or content
+   * hash of the system prompt). Recorded in the audit trail for reproducibility.
+   */
+  promptVersion?: string;
+
   /** Request JSON-mode output */
   jsonMode?: boolean;
 
@@ -201,6 +238,24 @@ export interface GatewayRequest {
 
   /** Routing strategy override */
   strategy?: RoutingStrategy;
+
+  // ── Placement / Compliance Requirements ──────────────────────────────────
+
+  /**
+   * Data-residency requirement for this request. When set to anything other
+   * than 'any', the gateway only routes to providers whose placement satisfies
+   * it (see providers/placement.ts). Honors EU/APAC residency and on-prem-only
+   * tenants. Defaults to 'any' (no residency constraint).
+   */
+  dataResidency?: DataResidency;
+
+  /**
+   * When true, the request may only be served by a provider that contractually
+   * does not retain payloads — a private-cloud deployment with a zero-retention
+   * agreement (Bedrock/Vertex/Azure) or a self-hosted model. Shared frontier
+   * APIs without a ZDR agreement are excluded.
+   */
+  zeroDataRetention?: boolean;
 
   // ── Traceability Context ────────────────────────────────────────────────
 
@@ -386,5 +441,23 @@ export interface AuditLogEntry {
   error?: string;
   cached: boolean;
   deterministic: boolean;
+  // ── Reproducibility (which params + prompt produced this output) ──────────
+  /** Sampling temperature used for the request. */
+  temperature?: number;
+  /** Sampling seed, when supplied. */
+  seed?: number;
+  /** SHA-256 of the canonicalized prompt messages (role:content joined). */
+  promptHash?: string;
+  /** Caller-supplied prompt template version/identifier. */
+  promptVersion?: string;
+  /** Model ids attempted before the one that served this response (fallback chain). */
+  triedModels?: string[];
+  // ── Placement / Residency (which substrate + region served this) ──────────
+  /** Inference substrate that served this request (shared / private / self-hosted). */
+  substrate?: SubstrateClass;
+  /** Best-effort region the serving provider ran in (e.g. 'us', 'eu', 'on_prem'). */
+  region?: string;
+  /** Retention posture honored for this request. */
+  retentionPolicy?: RetentionPolicy;
   metadata?: Record<string, unknown>;
 }

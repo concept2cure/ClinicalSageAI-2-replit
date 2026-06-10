@@ -90,7 +90,7 @@ export class HuggingFaceService {
 
       // In a production implementation, this would use the HuggingFace model to enhance the analysis
       // For now, we'll add region-specific enhancements based on the provided region
-      let enhancedAnalysis = {
+      const enhancedAnalysis = {
         ...basicAnalysis,
         summary: `Enhanced by ML analysis: ${basicAnalysis.summary} Study follows a ${basicAnalysis.design} design with ${basicAnalysis.arms} treatment arms.`,
         inclusion_criteria:

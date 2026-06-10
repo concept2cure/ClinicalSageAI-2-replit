@@ -3682,6 +3682,16 @@ router.delete('/docs/:docId', async (req: Request, res: Response) => {
       });
     }
 
+    // 21 CFR Part 11 §11.10(e): record the deletion before removing the
+    // document. auditService persists to audit_logs + the tamper-proof
+    // hash-chain log (best-effort by design — it never throws).
+    await auditService.logAction({
+      action: 'authoring_document.deleted',
+      resourceType: 'authoring_document',
+      resourceId: String(req.params.docId),
+      details: { productCode: doc.product_code, via: 'admin-uat-cleanup' },
+    });
+
     await getPool().query(`DELETE FROM authoring_documents WHERE id = $1`, [req.params.docId]);
     res.json({ ok: true, deleted: req.params.docId });
   } catch (error) {

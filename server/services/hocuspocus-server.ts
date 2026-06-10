@@ -15,6 +15,7 @@ import type { IncomingMessage } from 'http';
 import type { Server as HttpServer } from 'http';
 import type { WebSocket } from 'ws';
 import { createScopedLogger } from '../utils/logger.js';
+import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 const log = createScopedLogger('hocuspocus');
 
 let hocuspocusInstance: Hocuspocus | null = null;
@@ -43,24 +44,34 @@ export function createHocuspocusServer(): Hocuspocus {
         throw new Error('Authentication required');
       }
 
-      // Verify JWT — lightweight check (full validation happens at HTTP layer)
+      // SECURITY: verify the JWT signature before trusting any identity claim.
+      // Previously the payload was base64-decoded WITHOUT verification, so a
+      // forged token granted attacker-chosen authorship in the collaborative
+      // editing session — an attribution-integrity break under 21 CFR Part 11.
+      // The signature is now checked (with key rotation) exactly like the HTTP
+      // API does via authenticateToken.
       try {
-        // Decode JWT payload without full verification for speed
-        // The HTTP upgrade already validates the session
-        const parts = token.split('.');
-        if (parts.length === 3) {
-          const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+        const payload = verifyJwtWithRotation<{
+          userId?: string | number;
+          sub?: string | number;
+          id?: string | number;
+          name?: string;
+          username?: string;
+          email?: string;
+        }>(token);
+        const subject = String(payload.userId ?? payload.sub ?? payload.id ?? '');
+        if (subject) {
           return {
             user: {
-              id: String(payload.userId || payload.sub || payload.id),
+              id: subject,
               name: payload.name || payload.username || 'User',
               email: payload.email || '',
-              color: getColorForUser(String(payload.userId || payload.sub || '')),
+              color: getColorForUser(subject),
             },
           };
         }
       } catch {
-        // Fall through to error
+        // Verification failed — fall through to the dev fallback / hard error.
       }
 
       if (process.env.NODE_ENV !== 'production') {

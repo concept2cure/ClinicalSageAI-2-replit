@@ -13,8 +13,43 @@
 
 import { Router, Request, Response } from 'express';
 import { intelligentReportEngine } from '../services/intelligent-report-engine';
+import { authedOrgId } from '../utils/authedOrgId';
 
 const router = Router();
+
+/**
+ * Resolve the caller's organization from the verified JWT only.
+ * Sends 403 and returns null when no tenant context is present.
+ *
+ * SECURITY: report records are tenant-scoped regulated artifacts. The org
+ * must never be sourced from req.params / req.query / req.body — doing so let
+ * any authenticated user read or mutate another tenant's reports (cross-tenant
+ * IDOR). All handlers below scope on this value, not on user-supplied input.
+ */
+function orgScope(req: Request, res: Response): number | null {
+  const orgId = authedOrgId(req);
+  if (orgId == null) {
+    res.status(403).json({ success: false, error: 'Tenant context required' });
+    return null;
+  }
+  return orgId;
+}
+
+/**
+ * Load a report and confirm it belongs to the caller's organization.
+ * Returns the record, or null after sending the response.
+ *
+ * A cross-tenant id returns 404 (not 403) so the endpoint never confirms the
+ * existence of another tenant's report.
+ */
+async function loadOwnedReport(res: Response, reportId: number, orgId: number) {
+  const report = await intelligentReportEngine.getReport(reportId);
+  if (!report || Number((report as any).organizationId) !== orgId) {
+    res.status(404).json({ success: false, error: 'Report not found' });
+    return null;
+  }
+  return report;
+}
 
 // ── Domain & Regulatory Catalog ─────────────────────────────
 
@@ -70,8 +105,10 @@ router.get('/catalog/regulations/:domain', (req: Request, res: Response) => {
  */
 router.post('/generate', async (req: Request, res: Response) => {
   try {
+    const organizationId = orgScope(req, res);
+    if (organizationId == null) return;
+
     const {
-      organizationId,
       clientWorkspaceId,
       projectId,
       domain,
@@ -83,15 +120,15 @@ router.post('/generate', async (req: Request, res: Response) => {
       persona,
     } = req.body;
 
-    if (!organizationId || !domain || !title) {
+    if (!domain || !title) {
       return res.status(400).json({
         success: false,
-        error: 'Required fields: organizationId, domain, title',
+        error: 'Required fields: domain, title',
       });
     }
 
-    const userId = (req as any).user?.id || req.body.userId;
-    const userName = (req as any).user?.name || req.body.userName || 'System';
+    const userId = (req as any).user?.id;
+    const userName = (req as any).user?.name || 'System';
 
     const result = await intelligentReportEngine.generateReport({
       organizationId,
@@ -142,7 +179,11 @@ router.post('/generate', async (req: Request, res: Response) => {
  */
 router.get('/list/:organizationId', async (req: Request, res: Response) => {
   try {
-    const organizationId = parseInt(String(req.params.organizationId));
+    // SECURITY: the :organizationId path segment is ignored. Reports are
+    // listed strictly for the caller's JWT-bound org to prevent cross-tenant
+    // enumeration.
+    const organizationId = orgScope(req, res);
+    if (organizationId == null) return;
     const { domain, sealStatus, targetRegulatory, projectId, limit, offset } = req.query;
 
     const reports = await intelligentReportEngine.listReports(organizationId, {
@@ -170,12 +211,11 @@ router.get('/list/:organizationId', async (req: Request, res: Response) => {
  */
 router.get('/:reportId', async (req: Request, res: Response) => {
   try {
+    const orgId = orgScope(req, res);
+    if (orgId == null) return;
     const reportId = parseInt(String(req.params.reportId));
-    const report = await intelligentReportEngine.getReport(reportId);
-
-    if (!report) {
-      return res.status(404).json({ success: false, error: 'Report not found' });
-    }
+    const report = await loadOwnedReport(res, reportId, orgId);
+    if (!report) return;
 
     res.json({ success: true, data: report });
   } catch (error: any) {
@@ -189,7 +229,10 @@ router.get('/:reportId', async (req: Request, res: Response) => {
  */
 router.get('/:reportId/provenance', async (req: Request, res: Response) => {
   try {
+    const orgId = orgScope(req, res);
+    if (orgId == null) return;
     const reportId = parseInt(String(req.params.reportId));
+    if (!(await loadOwnedReport(res, reportId, orgId))) return;
     const provenance = await intelligentReportEngine.getReportProvenance(reportId);
     res.json({ success: true, data: provenance, count: provenance.length });
   } catch (error: any) {
@@ -203,7 +246,10 @@ router.get('/:reportId/provenance', async (req: Request, res: Response) => {
  */
 router.get('/:reportId/seal-events', async (req: Request, res: Response) => {
   try {
+    const orgId = orgScope(req, res);
+    if (orgId == null) return;
     const reportId = parseInt(String(req.params.reportId));
+    if (!(await loadOwnedReport(res, reportId, orgId))) return;
     const events = await intelligentReportEngine.getReportSealEvents(reportId);
     res.json({ success: true, data: events, count: events.length });
   } catch (error: any) {
@@ -217,7 +263,10 @@ router.get('/:reportId/seal-events', async (req: Request, res: Response) => {
  */
 router.get('/:reportId/attestations', async (req: Request, res: Response) => {
   try {
+    const orgId = orgScope(req, res);
+    if (orgId == null) return;
     const reportId = parseInt(String(req.params.reportId));
+    if (!(await loadOwnedReport(res, reportId, orgId))) return;
     const attestations = await intelligentReportEngine.getReportAttestations(reportId);
     res.json({ success: true, data: attestations, count: attestations.length });
   } catch (error: any) {
@@ -233,15 +282,18 @@ router.get('/:reportId/attestations', async (req: Request, res: Response) => {
  */
 router.post('/:reportId/seal', async (req: Request, res: Response) => {
   try {
+    const orgId = orgScope(req, res);
+    if (orgId == null) return;
     const reportId = parseInt(String(req.params.reportId));
+    if (!(await loadOwnedReport(res, reportId, orgId))) return;
     const { justification } = req.body;
 
     if (!justification) {
       return res.status(400).json({ success: false, error: 'Justification required for sealing' });
     }
 
-    const userId = (req as any).user?.id || req.body.userId;
-    const userName = (req as any).user?.name || req.body.userName || 'System';
+    const userId = (req as any).user?.id;
+    const userName = (req as any).user?.name || 'System';
 
     const result = await intelligentReportEngine.sealReport(
       reportId,
@@ -263,7 +315,10 @@ router.post('/:reportId/seal', async (req: Request, res: Response) => {
  */
 router.get('/:reportId/verify', async (req: Request, res: Response) => {
   try {
+    const orgId = orgScope(req, res);
+    if (orgId == null) return;
     const reportId = parseInt(String(req.params.reportId));
+    if (!(await loadOwnedReport(res, reportId, orgId))) return;
     const result = await intelligentReportEngine.verifyReportIntegrity(reportId);
     res.json({ success: true, data: result });
   } catch (error: any) {
@@ -279,22 +334,25 @@ router.get('/:reportId/verify', async (req: Request, res: Response) => {
  */
 router.post('/:reportId/supersede', async (req: Request, res: Response) => {
   try {
+    const organizationId = orgScope(req, res);
+    if (organizationId == null) return;
     const originalReportId = parseInt(String(req.params.reportId));
+    if (!(await loadOwnedReport(res, originalReportId, organizationId))) return;
     const {
-      organizationId, clientWorkspaceId, projectId,
+      clientWorkspaceId, projectId,
       domain, subtype, title, targetRegulatory,
       complianceFrameworks, parameters, persona,
     } = req.body;
 
-    if (!organizationId || !domain || !title) {
+    if (!domain || !title) {
       return res.status(400).json({
         success: false,
-        error: 'Required fields: organizationId, domain, title',
+        error: 'Required fields: domain, title',
       });
     }
 
-    const userId = (req as any).user?.id || req.body.userId;
-    const userName = (req as any).user?.name || req.body.userName || 'System';
+    const userId = (req as any).user?.id;
+    const userName = (req as any).user?.name || 'System';
 
     const result = await intelligentReportEngine.supersedeReport(originalReportId, {
       organizationId,
@@ -336,15 +394,18 @@ router.post('/:reportId/supersede', async (req: Request, res: Response) => {
  */
 router.post('/:reportId/revoke', async (req: Request, res: Response) => {
   try {
+    const orgId = orgScope(req, res);
+    if (orgId == null) return;
     const reportId = parseInt(String(req.params.reportId));
+    if (!(await loadOwnedReport(res, reportId, orgId))) return;
     const { justification } = req.body;
 
     if (!justification) {
       return res.status(400).json({ success: false, error: 'Justification required for revocation' });
     }
 
-    const userId = (req as any).user?.id || req.body.userId;
-    const userName = (req as any).user?.name || req.body.userName || 'System';
+    const userId = (req as any).user?.id;
+    const userName = (req as any).user?.name || 'System';
 
     await intelligentReportEngine.revokeReport(
       reportId,
@@ -368,7 +429,10 @@ router.post('/:reportId/revoke', async (req: Request, res: Response) => {
  */
 router.get('/:reportId/export/:format', async (req: Request, res: Response) => {
   try {
+    const orgId = orgScope(req, res);
+    if (orgId == null) return;
     const reportId = parseInt(String(req.params.reportId));
+    if (!(await loadOwnedReport(res, reportId, orgId))) return;
     const format = req.params.format as 'json' | 'csv' | 'manifest';
 
     if (!['json', 'csv', 'manifest'].includes(format)) {

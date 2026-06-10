@@ -99,6 +99,54 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // FCOI metrics — 21 CFR 54 disclosure lifecycle (C2C-01).
+      try {
+        const { renderFcoiMetrics } = await import('../services/fcoi-metrics.js');
+        lines.push(...renderFcoiMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // HA interaction & commitment metrics (C2C-03).
+      try {
+        const { renderHaMetrics } = await import('../services/ha-metrics.js');
+        lines.push(...renderHaMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // IACUC / animal study governance metrics (C2C-05).
+      try {
+        const { renderIacucMetrics } = await import('../services/iacuc-metrics.js');
+        lines.push(...renderIacucMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // IRB / IEC metrics (C2C-06).
+      try {
+        const { renderIrbMetrics } = await import('../services/irb-metrics.js');
+        lines.push(...renderIrbMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // IBC / biosafety metrics (C2C-07).
+      try {
+        const { renderIbcMetrics } = await import('../services/ibc-metrics.js');
+        lines.push(...renderIbcMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Nonclinical + SEND metrics (C2C-04).
+      try {
+        const { renderNonclinicalMetrics } = await import('../services/nonclinical-metrics.js');
+        lines.push(...renderNonclinicalMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RAG retrieval metrics — recorded at the ragRouter chokepoint.
       try {
         const { renderRagMetrics } = await import('../services/rag-runtime-metrics.js');

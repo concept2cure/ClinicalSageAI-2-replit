@@ -193,7 +193,7 @@ export function logisticRegression(X: number[][], y: number[], iterations = 25):
   if (n === 0) return null;
   const p = X[0].length;
   const ridge = 1e-4;
-  let beta = new Array(p).fill(0);
+  const beta = new Array(p).fill(0);
 
   for (let iter = 0; iter < iterations; iter++) {
     const grad = new Array(p).fill(0);

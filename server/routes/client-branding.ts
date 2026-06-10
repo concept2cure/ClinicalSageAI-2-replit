@@ -95,9 +95,10 @@ router.patch('/settings', async (req: Request, res: Response) => {
 
 router.post('/upload-logo', async (req: Request, res: Response) => {
   try {
-    const { organizationId, logoBase64, fileName } = req.body;
-    const orgId = Number(organizationId);
-    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const orgId = guard.orgId;
+    const { logoBase64, fileName } = req.body;
     if (!logoBase64) return res.status(400).json({ error: 'logoBase64 is required' });
 
     const rows = await store.query(orgId, 'settings');
@@ -135,7 +136,15 @@ router.post('/upload-logo', async (req: Request, res: Response) => {
 
 router.get('/logo/:orgId', async (req: Request, res: Response) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    // SECURITY: serve only the caller's own branding. The :orgId path segment
+    // must match the JWT-bound org; a mismatch must not leak another tenant's
+    // logo. Returns 404 rather than 403 to avoid existence disclosure.
     const orgId = parseInt(String(req.params.orgId), 10);
+    if (orgId !== guard.orgId) {
+      return res.status(404).json({ error: 'No logo uploaded' });
+    }
     const rows = await store.query(orgId, 'settings');
     const settings = rows.length > 0 ? rows[0] : null;
 
@@ -160,9 +169,10 @@ router.get('/logo/:orgId', async (req: Request, res: Response) => {
 
 router.post('/upload-letterhead', async (req: Request, res: Response) => {
   try {
-    const { organizationId, letterheadBase64, fileName } = req.body;
-    const orgId = Number(organizationId);
-    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const orgId = guard.orgId;
+    const { letterheadBase64, fileName } = req.body;
     if (!letterheadBase64) return res.status(400).json({ error: 'letterheadBase64 is required' });
 
     const rows = await store.query(orgId, 'settings');

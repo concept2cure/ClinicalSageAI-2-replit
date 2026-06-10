@@ -18,6 +18,29 @@ import { requireAuthedOrgId } from '../utils/authedOrgId';
 
 const router = Router();
 
+/**
+ * Centralised error responder for QC routes. The QC storage layer is largely a
+ * stub facade whose write methods throw NOT_IMPLEMENTED (they previously
+ * fabricated success by echoing the input). Map that to an honest 501 Not
+ * Implemented rather than a 500 that implies a transient/retryable failure, and
+ * keep Zod validation errors as 400. Anything else is a real 500.
+ */
+function sendQcError(res: Response, error: unknown, failMessage: string): void {
+  if (error instanceof z.ZodError) {
+    res.status(400).json({ error: 'Invalid data', details: error.errors });
+    return;
+  }
+  if (error instanceof Error && error.message.startsWith('NOT_IMPLEMENTED')) {
+    res.status(501).json({
+      error: `${failMessage} is not implemented`,
+      notImplemented: true,
+      message: 'No action was taken and nothing was persisted.',
+    });
+    return;
+  }
+  res.status(500).json({ error: failMessage });
+}
+
 // SECURITY: every single-row QC getter requires a JWT-derived
 // organizationId. Pre-fix the route called storage.getQcSpecification(id)
 // with no tenant filter — when the storage layer's implementation is
@@ -44,7 +67,7 @@ router.get('/specifications', async (req: Request, res: Response) => {
     });
     res.json(specifications);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch specifications' });
+    sendQcError(res, error, 'Failed to fetch specifications');
   }
 });
 
@@ -58,48 +81,53 @@ router.get('/specifications/:id', async (req: Request, res: Response) => {
     }
     res.json(specification);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch specification' });
+    sendQcError(res, error, 'Failed to fetch specification');
   }
 });
 
 // Create specification
+// Not implemented. The shape is validated, but the prior stub echoed the input
+// back with 201 Created though nothing was persisted. Fail closed (validation
+// is preserved so callers still get 400 on malformed input).
 router.post('/specifications', async (req: Request, res: Response) => {
   try {
-    const validatedData = insertQcSpecificationSchema.parse(req.body);
-    const specification = await storage.createQcSpecification(validatedData);
-    res.status(201).json(specification);
+    insertQcSpecificationSchema.parse(req.body);
+    res.status(501).json({
+      error: 'QC specification creation is not implemented',
+      notImplemented: true,
+      message: 'The specification was validated but NOT created or persisted.',
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({ error: 'Invalid data', details: error.errors });
     } else {
-      res.status(500).json({ error: 'Failed to create specification' });
+      sendQcError(res, error, 'Failed to create specification');
     }
   }
 });
 
 // Update specification
-router.put('/specifications/:id', async (req: Request, res: Response) => {
-  try {
-    const specification = await storage.updateQcSpecification(Number(req.params.id), req.body);
-    res.json(specification);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to update specification' });
-  }
+// Not implemented. The prior stub echoed the request body back as if the QC
+// specification had been updated — a 21 CFR Part 11 change-control fabrication.
+// Fail closed.
+router.put('/specifications/:id', async (_req: Request, res: Response) => {
+  res.status(501).json({
+    error: 'QC specification update is not implemented',
+    notImplemented: true,
+    message: 'The specification was NOT updated. No change was persisted.',
+  });
 });
 
 // Create new version of specification
-router.post('/specifications/:id/version', async (req: Request, res: Response) => {
-  try {
-    const { changeReason, changeDescription } = req.body;
-    const newVersion = await storage.createSpecificationVersion(
-      Number(req.params.id),
-      changeReason,
-      changeDescription
-    );
-    res.status(201).json(newVersion);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create specification version' });
-  }
+// Not implemented. The prior stub returned {} as if a new versioned change
+// record (with change reason/description) had been created. Specification
+// versioning is a Part 11 change-control record; fail closed.
+router.post('/specifications/:id/version', async (_req: Request, res: Response) => {
+  res.status(501).json({
+    error: 'QC specification versioning is not implemented',
+    notImplemented: true,
+    message: 'No specification version was created. No change-control record was persisted.',
+  });
 });
 
 // Get specification versions
@@ -109,7 +137,7 @@ router.get('/specifications/:id/versions', async (req: Request, res: Response) =
     const versions = await storage.getSpecificationVersions(Number(req.params.id), guardVer.orgId);
     res.json(versions);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch specification versions' });
+    sendQcError(res, error, 'Failed to fetch specification versions');
   }
 });
 
@@ -129,7 +157,7 @@ router.get('/oos-investigations', async (req: Request, res: Response) => {
     });
     res.json(investigations);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch OOS investigations' });
+    sendQcError(res, error, 'Failed to fetch OOS investigations');
   }
 });
 
@@ -143,7 +171,7 @@ router.get('/oos-investigations/:id', async (req: Request, res: Response) => {
     }
     res.json(investigation);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch OOS investigation' });
+    sendQcError(res, error, 'Failed to fetch OOS investigation');
   }
 });
 
@@ -157,7 +185,7 @@ router.post('/oos-investigations', async (req: Request, res: Response) => {
     if (error instanceof z.ZodError) {
       res.status(400).json({ error: 'Invalid data', details: error.errors });
     } else {
-      res.status(500).json({ error: 'Failed to create OOS investigation' });
+      sendQcError(res, error, 'Failed to create OOS investigation');
     }
   }
 });
@@ -168,7 +196,7 @@ router.put('/oos-investigations/:id', async (req: Request, res: Response) => {
     const investigation = await storage.updateOosInvestigation(Number(req.params.id), req.body);
     res.json(investigation);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update OOS investigation' });
+    sendQcError(res, error, 'Failed to update OOS investigation');
   }
 });
 
@@ -185,7 +213,7 @@ router.post('/oos-investigations/:id/timeline', async (req: Request, res: Respon
     });
     res.json(investigation);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to add timeline event' });
+    sendQcError(res, error, 'Failed to add timeline event');
   }
 });
 
@@ -201,7 +229,7 @@ router.post('/oos-investigations/:id/root-cause', async (req: Request, res: Resp
     });
     res.json(investigation);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to perform root cause analysis' });
+    sendQcError(res, error, 'Failed to perform root cause analysis');
   }
 });
 
@@ -216,7 +244,7 @@ router.post('/oos-investigations/:id/capa', async (req: Request, res: Response) 
     });
     res.json(investigation);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to link CAPA' });
+    sendQcError(res, error, 'Failed to link CAPA');
   }
 });
 
@@ -235,7 +263,7 @@ router.get('/batch-releases', async (req: Request, res: Response) => {
     });
     res.json(releases);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch batch releases' });
+    sendQcError(res, error, 'Failed to fetch batch releases');
   }
 });
 
@@ -249,7 +277,7 @@ router.get('/batch-releases/:id', async (req: Request, res: Response) => {
     }
     res.json(release);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch batch release' });
+    sendQcError(res, error, 'Failed to fetch batch release');
   }
 });
 
@@ -263,7 +291,7 @@ router.post('/batch-releases', async (req: Request, res: Response) => {
     if (error instanceof z.ZodError) {
       res.status(400).json({ error: 'Invalid data', details: error.errors });
     } else {
-      res.status(500).json({ error: 'Failed to create batch release' });
+      sendQcError(res, error, 'Failed to create batch release');
     }
   }
 });
@@ -274,35 +302,31 @@ router.put('/batch-releases/:id', async (req: Request, res: Response) => {
     const release = await storage.updateBatchRelease(Number(req.params.id), req.body);
     res.json(release);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update batch release' });
+    sendQcError(res, error, 'Failed to update batch release');
   }
 });
 
 // Review batch record
-router.post('/batch-releases/:id/review', async (req: Request, res: Response) => {
-  try {
-    const { reviewer, comments, checklist, status } = req.body;
-    const release = await storage.reviewBatchRecord(Number(req.params.id), {
-      reviewer,
-      comments,
-      checklist,
-      status,
-    });
-    res.json(release);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to review batch record' });
-  }
+// Not implemented. The prior stub echoed the request body back, falsely
+// signalling that a GMP batch-record review had been recorded. Fail closed.
+router.post('/batch-releases/:id/review', async (_req: Request, res: Response) => {
+  res.status(501).json({
+    error: 'Batch-record review is not implemented',
+    notImplemented: true,
+    message: 'No batch-record review was recorded. This endpoint performs no action.',
+  });
 });
 
 // Generate Certificate of Analysis
-router.post('/batch-releases/:id/coa', async (req: Request, res: Response) => {
-  try {
-    const { testResults, conclusion, approvedBy } = req.body;
-    const coa = await storage.generateCertificateOfAnalysis(Number(req.params.id));
-    res.json(coa);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to generate COA' });
-  }
+// Not implemented. The prior stub returned an empty object as if a CoA had been
+// generated. A Certificate of Analysis is a GMP-released quality document; an
+// empty/fabricated one must never be presented as real. Fail closed.
+router.post('/batch-releases/:id/coa', async (_req: Request, res: Response) => {
+  res.status(501).json({
+    error: 'Certificate of Analysis generation is not implemented',
+    notImplemented: true,
+    message: 'No Certificate of Analysis was generated.',
+  });
 });
 
 // Get batch genealogy
@@ -312,35 +336,34 @@ router.get('/batch-releases/:id/genealogy', async (req: Request, res: Response) 
     const genealogy = await storage.getBatchGenealogy(Number(req.params.id), guardGen.orgId);
     res.json(genealogy);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch batch genealogy' });
+    sendQcError(res, error, 'Failed to fetch batch genealogy');
   }
 });
 
 // Validate release criteria
-router.post('/batch-releases/:id/validate-criteria', async (req: Request, res: Response) => {
-  try {
-    const { criteria } = req.body;
-    const validation = await storage.validateReleaseCriteria(Number(req.params.id));
-    res.json(validation);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to validate release criteria' });
-  }
+// Not implemented. The prior stub returned { valid: true } unconditionally —
+// certifying that a batch met ALL release criteria without performing any
+// check. That is a 21 CFR Part 211 data-integrity false positive (it could
+// drive a batch disposition decision). Fail closed.
+router.post('/batch-releases/:id/validate-criteria', async (_req: Request, res: Response) => {
+  res.status(501).json({
+    error: 'Release-criteria validation is not implemented',
+    notImplemented: true,
+    message:
+      'The batch was NOT evaluated against release criteria. No validation was performed; do not treat this as a passing result.',
+  });
 });
 
 // Release batch
-router.post('/batch-releases/:id/release', async (req: Request, res: Response) => {
-  try {
-    const { releasedBy, decision, conditions, restrictions } = req.body;
-    const release = await storage.releaseBatch(Number(req.params.id), {
-      releasedBy,
-      decision,
-      conditions,
-      restrictions,
-    });
-    res.json(release);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to release batch' });
-  }
+// Not implemented. The prior stub returned { released: true } unconditionally,
+// falsely signalling that a GMP batch had been released/dispositioned. Fail
+// closed — a batch must never be reported as released without a real action.
+router.post('/batch-releases/:id/release', async (_req: Request, res: Response) => {
+  res.status(501).json({
+    error: 'Batch release is not implemented',
+    notImplemented: true,
+    message: 'The batch was NOT released. No disposition action was taken.',
+  });
 });
 
 // ============================================================================
@@ -359,7 +382,7 @@ router.get('/deviations', async (req: Request, res: Response) => {
     });
     res.json(deviations);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch deviations' });
+    sendQcError(res, error, 'Failed to fetch deviations');
   }
 });
 
@@ -373,7 +396,7 @@ router.get('/deviations/:id', async (req: Request, res: Response) => {
     }
     res.json(deviation);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch deviation' });
+    sendQcError(res, error, 'Failed to fetch deviation');
   }
 });
 
@@ -387,7 +410,7 @@ router.post('/deviations', async (req: Request, res: Response) => {
     if (error instanceof z.ZodError) {
       res.status(400).json({ error: 'Invalid data', details: error.errors });
     } else {
-      res.status(500).json({ error: 'Failed to create deviation' });
+      sendQcError(res, error, 'Failed to create deviation');
     }
   }
 });
@@ -398,7 +421,7 @@ router.put('/deviations/:id', async (req: Request, res: Response) => {
     const deviation = await storage.updateQcDeviation(Number(req.params.id), req.body);
     res.json(deviation);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update deviation' });
+    sendQcError(res, error, 'Failed to update deviation');
   }
 });
 
@@ -409,7 +432,7 @@ router.post('/deviations/:id/impact-assessment', async (req: Request, res: Respo
     const deviation = await storage.performImpactAssessment(Number(req.params.id), assessment);
     res.json(deviation);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to perform impact assessment' });
+    sendQcError(res, error, 'Failed to perform impact assessment');
   }
 });
 
@@ -424,7 +447,7 @@ router.post('/deviations/:id/capa', async (req: Request, res: Response) => {
     });
     res.json(deviation);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to link CAPA' });
+    sendQcError(res, error, 'Failed to link CAPA');
   }
 });
 
@@ -440,7 +463,7 @@ router.get('/deviations/trending', async (req: Request, res: Response) => {
     });
     res.json(trending);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to get trending analysis' });
+    sendQcError(res, error, 'Failed to get trending analysis');
   }
 });
 
@@ -460,7 +483,7 @@ router.get('/microbiological-tests', async (req: Request, res: Response) => {
     });
     res.json(tests);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch microbiological tests' });
+    sendQcError(res, error, 'Failed to fetch microbiological tests');
   }
 });
 
@@ -474,7 +497,7 @@ router.get('/microbiological-tests/:id', async (req: Request, res: Response) => 
     }
     res.json(test);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch microbiological test' });
+    sendQcError(res, error, 'Failed to fetch microbiological test');
   }
 });
 
@@ -488,7 +511,7 @@ router.post('/microbiological-tests', async (req: Request, res: Response) => {
     if (error instanceof z.ZodError) {
       res.status(400).json({ error: 'Invalid data', details: error.errors });
     } else {
-      res.status(500).json({ error: 'Failed to create microbiological test' });
+      sendQcError(res, error, 'Failed to create microbiological test');
     }
   }
 });
@@ -499,7 +522,7 @@ router.put('/microbiological-tests/:id', async (req: Request, res: Response) => 
     const test = await storage.updateMicrobiologicalTest(Number(req.params.id), req.body);
     res.json(test);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update microbiological test' });
+    sendQcError(res, error, 'Failed to update microbiological test');
   }
 });
 
@@ -514,7 +537,7 @@ router.get('/microbiological-tests/environmental-monitoring/schedule', async (re
     });
     res.json(schedule);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch environmental monitoring schedule' });
+    sendQcError(res, error, 'Failed to fetch environmental monitoring schedule');
   }
 });
 
@@ -529,7 +552,7 @@ router.post('/microbiological-tests/environmental-monitoring/schedule', async (r
     });
     res.json(schedule);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create environmental monitoring schedule' });
+    sendQcError(res, error, 'Failed to create environmental monitoring schedule');
   }
 });
 
@@ -545,7 +568,7 @@ router.post('/microbiological-tests/:id/results', async (req: Request, res: Resp
     });
     res.json(test);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to record test results' });
+    sendQcError(res, error, 'Failed to record test results');
   }
 });
 
@@ -565,7 +588,7 @@ router.get('/reference-standards', async (req: Request, res: Response) => {
     });
     res.json(standards);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch reference standards' });
+    sendQcError(res, error, 'Failed to fetch reference standards');
   }
 });
 
@@ -579,7 +602,7 @@ router.get('/reference-standards/:id', async (req: Request, res: Response) => {
     }
     res.json(standard);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch reference standard' });
+    sendQcError(res, error, 'Failed to fetch reference standard');
   }
 });
 
@@ -593,7 +616,7 @@ router.post('/reference-standards', async (req: Request, res: Response) => {
     if (error instanceof z.ZodError) {
       res.status(400).json({ error: 'Invalid data', details: error.errors });
     } else {
-      res.status(500).json({ error: 'Failed to create reference standard' });
+      sendQcError(res, error, 'Failed to create reference standard');
     }
   }
 });
@@ -604,7 +627,7 @@ router.put('/reference-standards/:id', async (req: Request, res: Response) => {
     const standard = await storage.updateReferenceStandard(Number(req.params.id), req.body);
     res.json(standard);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update reference standard' });
+    sendQcError(res, error, 'Failed to update reference standard');
   }
 });
 
@@ -621,7 +644,7 @@ router.post('/reference-standards/:id/usage', async (req: Request, res: Response
     });
     res.json(standard);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to record usage' });
+    sendQcError(res, error, 'Failed to record usage');
   }
 });
 
@@ -635,7 +658,7 @@ router.get('/reference-standards/expiring', async (req: Request, res: Response) 
     });
     res.json(standards);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch expiring standards' });
+    sendQcError(res, error, 'Failed to fetch expiring standards');
   }
 });
 
@@ -650,7 +673,7 @@ router.post('/reference-standards/:id/qualify', async (req: Request, res: Respon
     });
     res.json(standard);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to qualify reference standard' });
+    sendQcError(res, error, 'Failed to qualify reference standard');
   }
 });
 
@@ -666,7 +689,7 @@ router.post('/reference-standards/:id/dispose', async (req: Request, res: Respon
     });
     res.json(standard);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to dispose reference standard' });
+    sendQcError(res, error, 'Failed to dispose reference standard');
   }
 });
 
@@ -677,7 +700,7 @@ router.get('/reference-standards/:id/usage-logs', async (req: Request, res: Resp
     const logs = await storage.getStandardUsageLogs(Number(req.params.id), guardLog.orgId);
     res.json(logs);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch usage logs' });
+    sendQcError(res, error, 'Failed to fetch usage logs');
   }
 });
 

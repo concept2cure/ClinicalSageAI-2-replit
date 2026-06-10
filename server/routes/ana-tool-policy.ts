@@ -114,4 +114,36 @@ router.put('/', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET /api/ana-tool-policy/catalog
+ * The full tool catalog for the user's tool picker, grouped by category, plus
+ * the org's current deny-list so the picker can show which tools are governed
+ * off. Available to any authenticated user (not admin-only).
+ */
+router.get('/catalog', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  try {
+    const [{ getAllEnabledTools }, { getToolCatalog }] = await Promise.all([
+      import('../services/ana/AnaToolDefinitions.js'),
+      import('../services/ana/tool-selection.js'),
+    ]);
+    const categories = getToolCatalog(getAllEnabledTools());
+    let deniedTools: string[] = [];
+    if (orgId !== null) {
+      try {
+        const policy = await loadAnaToolPolicy(pool, orgId);
+        deniedTools = policy.deny ?? [];
+      } catch {
+        /* fail-open — show the full catalog if policy can't be read */
+      }
+    }
+    res.json({ categories, deniedTools });
+  } catch (err) {
+    res.status(500).json({
+      error: 'Failed to load tool catalog',
+      detail: err instanceof Error ? err.message : 'unknown',
+    });
+  }
+});
+
 export default router;

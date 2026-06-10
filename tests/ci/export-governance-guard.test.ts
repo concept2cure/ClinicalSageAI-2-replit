@@ -17,7 +17,8 @@ const ROUTES_DIR = path.resolve(__dirname, '../../server/routes');
 const EXPORT_ROUTE_FILES = [
   'cerv2-export-routes.ts',
   '510k-estar-routes.ts',
-  'export-routes.ts',
+  // `export-routes.ts` was a dead/unmounted router removed in the dead-code
+  // cleanup (commit 3cc8547); dropped from the governance inventory.
   // `export_routes.ts` (underscore variant) was a transient alias that
   // never landed in the canonical layout — removed from the inventory.
   'ectd-export.ts',

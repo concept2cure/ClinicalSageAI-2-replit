@@ -1,158 +1,230 @@
+import express from 'express';
+import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// vi.hoisted ensures env vars are set BEFORE any ESM imports (including
-// transitive ones) are evaluated. Loading the auth/db/config chain at
-// module init requires these to be present, or the chain throws.
-vi.hoisted(() => {
-  process.env.NODE_ENV = process.env.NODE_ENV || 'test';
-  process.env.DATABASE_URL =
-    process.env.DATABASE_URL || 'postgresql://test:test@localhost:5432/test';
-  process.env.JWT_SECRET =
-    process.env.JWT_SECRET || 'stage3-test-secret-padded-to-32-chars-or-more-okay';
-  process.env.SKIP_DB_STARTUP_TEST = 'true';
-});
+// The beta-ops telemetry surface was redesigned during the route rename
+// (beta-ops-telemetry.ts -> beta-telemetry.routes.ts): the old
+// GET /beta-telemetry endpoint (env-flag gated, admin-only reset) was replaced
+// by an unauthenticated beta-feedback intake surface mounted at
+// /api/telemetry/beta-workspace (see server/betaRouteManifest.ts):
+//
+//   POST /event  — zod-validated telemetry event, 202 on accept, 400 on bad payload
+//   POST /issue  — zod-validated beta issue report, 202 on accept, 400 on bad payload
+//   GET  /events — in-memory event feed, filterable by ?type= and ?projectId=
+//
+// Persistence is fail-open NDJSON appends under test-results/beta-telemetry/
+// with a 50MB cap. fs is mocked here so tests never touch disk.
 
-import { createMockRequest, createMockResponse, expectStatus } from '../setup';
-
-const telemetryMocks = vi.hoisted(() => ({
-  getBetaFlowTelemetrySnapshot: vi.fn(),
-  resetBetaFlowTelemetry: vi.fn(),
+const fsMocks = vi.hoisted(() => ({
+  mkdir: vi.fn(),
+  appendFile: vi.fn(),
+  stat: vi.fn(),
 }));
 
-vi.mock('../../server/services/telemetry/betaFlowTelemetry', () => telemetryMocks);
+vi.mock('node:fs/promises', () => ({
+  ...fsMocks,
+  default: fsMocks,
+}));
 
-// The route file was renamed from `beta-ops-telemetry.ts` to
-// `beta-telemetry.routes.ts`.
-import betaOpsRouter from '../../server/routes/beta-telemetry.routes';
+import betaTelemetryRouter from '../../server/routes/beta-telemetry.routes';
 
-const getHandler = () => {
-  const layer = (betaOpsRouter as any).stack.find(
-    (l: any) => l.route?.path === '/beta-telemetry' && l.route?.methods?.get
-  );
-  return layer?.route?.stack?.[layer.route.stack.length - 1]?.handle as
-    | ((req: any, res: any) => Promise<void>)
-    | undefined;
+const buildApp = () => {
+  const app = express();
+  app.use(express.json());
+  // Mirrors mountBetaSafeRoutes in server/betaRouteManifest.ts.
+  app.use('/api/telemetry/beta-workspace', betaTelemetryRouter);
+  return app;
 };
 
-// The beta-ops telemetry endpoint shape was redesigned during the
-// route rename: GET /beta-telemetry (with optional reset query) was
-// replaced by POST /event + POST /issue + GET /events. This suite
-// asserts the old shape across 8 tests. Skip until contracts are
-// re-derived against the new endpoint surface.
-describe.skip('beta-ops telemetry route', () => {
+const validEvent = {
+  type: 'route_entry',
+  route: '/client-portal/510k',
+  activeTab: 'predicates',
+  projectId: 'proj-1',
+  detail: { source: 'test' },
+};
+
+const validIssue = {
+  summary: 'Export button renders disabled on the predicates tab',
+  severity: 'high',
+  route: '/client-portal/510k',
+  projectId: 'proj-2',
+};
+
+describe('beta workspace telemetry routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.ENABLE_BETA_OPS_TELEMETRY = 'true';
-    telemetryMocks.getBetaFlowTelemetrySnapshot.mockReturnValue({
-      telemetry: [{ flow: 'onboarding', requests: 1 }],
+    fsMocks.mkdir.mockResolvedValue(undefined);
+    fsMocks.appendFile.mockResolvedValue(undefined);
+    // Default: log file does not exist yet.
+    fsMocks.stat.mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
+  });
+
+  describe('POST /event', () => {
+    it('accepts a valid event with 202 and persists it with a server timestamp', async () => {
+      const res = await request(buildApp())
+        .post('/api/telemetry/beta-workspace/event')
+        .send(validEvent);
+
+      expect(res.status).toBe(202);
+      expect(res.body).toEqual({ ok: true });
+
+      expect(fsMocks.appendFile).toHaveBeenCalledTimes(1);
+      const [logPath, line] = fsMocks.appendFile.mock.calls[0];
+      expect(String(logPath)).toContain('beta-telemetry');
+      const persisted = JSON.parse(String(line));
+      expect(persisted.type).toBe('route_entry');
+      expect(persisted.route).toBe('/client-portal/510k');
+      expect(typeof persisted.createdAt).toBe('string');
+    });
+
+    it('rejects an unknown event type with 400 and does not persist', async () => {
+      const res = await request(buildApp())
+        .post('/api/telemetry/beta-workspace/event')
+        .send({ ...validEvent, type: 'not_a_real_type' });
+
+      expect(res.status).toBe(400);
+      expect(res.body).toEqual({ ok: false, error: 'invalid_event_payload' });
+      expect(fsMocks.appendFile).not.toHaveBeenCalled();
+    });
+
+    it('rejects an event missing the required route with 400', async () => {
+      const { route: _route, ...withoutRoute } = validEvent;
+      const res = await request(buildApp())
+        .post('/api/telemetry/beta-workspace/event')
+        .send(withoutRoute);
+
+      expect(res.status).toBe(400);
+      expect(res.body).toEqual({ ok: false, error: 'invalid_event_payload' });
+      expect(fsMocks.appendFile).not.toHaveBeenCalled();
+    });
+
+    it('fails open (still 202) when persistence throws', async () => {
+      fsMocks.appendFile.mockRejectedValue(new Error('disk full'));
+
+      const res = await request(buildApp())
+        .post('/api/telemetry/beta-workspace/event')
+        .send(validEvent);
+
+      expect(res.status).toBe(202);
+      expect(res.body).toEqual({ ok: true });
+    });
+
+    it('stops appending to the log once the 50MB cap is reached but still accepts events', async () => {
+      fsMocks.stat.mockResolvedValue({ size: 50 * 1024 * 1024 });
+
+      const res = await request(buildApp())
+        .post('/api/telemetry/beta-workspace/event')
+        .send(validEvent);
+
+      expect(res.status).toBe(202);
+      expect(res.body).toEqual({ ok: true });
+      expect(fsMocks.appendFile).not.toHaveBeenCalled();
     });
   });
 
-  it('returns telemetry for authenticated users without reset', async () => {
-    const req = createMockRequest({ query: {} }) as any;
-    req.user = { id: 10, role: 'reviewer' };
-    const res = createMockResponse();
-    const handler = getHandler();
-    expect(handler).toBeDefined();
+  describe('POST /issue', () => {
+    it('accepts a valid issue with 202 and persists it tagged type=issue', async () => {
+      const res = await request(buildApp())
+        .post('/api/telemetry/beta-workspace/issue')
+        .send(validIssue);
 
-    await handler!(req, res);
+      expect(res.status).toBe(202);
+      expect(res.body).toEqual({ ok: true });
 
-    expect(res.json).toHaveBeenCalled();
-    expect(telemetryMocks.resetBetaFlowTelemetry).not.toHaveBeenCalled();
+      expect(fsMocks.appendFile).toHaveBeenCalledTimes(1);
+      const persisted = JSON.parse(String(fsMocks.appendFile.mock.calls[0][1]));
+      expect(persisted.type).toBe('issue');
+      expect(persisted.severity).toBe('high');
+      expect(typeof persisted.createdAt).toBe('string');
+    });
+
+    it('defaults severity to medium when omitted', async () => {
+      const { severity: _severity, ...withoutSeverity } = validIssue;
+      const res = await request(buildApp())
+        .post('/api/telemetry/beta-workspace/issue')
+        .send(withoutSeverity);
+
+      expect(res.status).toBe(202);
+      const persisted = JSON.parse(String(fsMocks.appendFile.mock.calls[0][1]));
+      expect(persisted.severity).toBe('medium');
+    });
+
+    it('rejects a too-short summary with 400 and does not persist', async () => {
+      const res = await request(buildApp())
+        .post('/api/telemetry/beta-workspace/issue')
+        .send({ ...validIssue, summary: 'bad' });
+
+      expect(res.status).toBe(400);
+      expect(res.body).toEqual({ ok: false, error: 'invalid_issue_payload' });
+      expect(fsMocks.appendFile).not.toHaveBeenCalled();
+    });
+
+    it('rejects an invalid severity with 400', async () => {
+      const res = await request(buildApp())
+        .post('/api/telemetry/beta-workspace/issue')
+        .send({ ...validIssue, severity: 'catastrophic' });
+
+      expect(res.status).toBe(400);
+      expect(res.body).toEqual({ ok: false, error: 'invalid_issue_payload' });
+    });
   });
 
-  it('returns 404 when telemetry flag is disabled', async () => {
-    process.env.ENABLE_BETA_OPS_TELEMETRY = 'false';
-    const req = createMockRequest({ query: {} }) as any;
-    req.user = { id: 10, role: 'reviewer' };
-    const res = createMockResponse();
-    const handler = getHandler();
+  describe('GET /events', () => {
+    // The router keeps events in module-level memory shared across tests in
+    // this file, so feed assertions use unique projectIds and filters.
+    it('returns accepted events, filterable by projectId', async () => {
+      const app = buildApp();
+      const projectId = `proj-get-${Date.now()}`;
 
-    await handler!(req, res);
+      await request(app)
+        .post('/api/telemetry/beta-workspace/event')
+        .send({ ...validEvent, projectId });
+      await request(app)
+        .post('/api/telemetry/beta-workspace/event')
+        .send({ ...validEvent, type: 'export_attempt', projectId });
 
-    expectStatus(res, 404);
-    expect(telemetryMocks.getBetaFlowTelemetrySnapshot).not.toHaveBeenCalled();
-  });
+      const res = await request(app)
+        .get('/api/telemetry/beta-workspace/events')
+        .query({ projectId });
 
-  it('fails closed for reset when role is not admin', async () => {
-    const req = createMockRequest({ query: { reset: 'true' }, headers: {} }) as any;
-    req.user = { id: 10, role: 'reviewer' };
-    const res = createMockResponse();
-    const handler = getHandler();
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body.events)).toBe(true);
+      expect(res.body.events).toHaveLength(2);
+      expect(res.body.events.map((e: { type: string }) => e.type)).toEqual([
+        'route_entry',
+        'export_attempt',
+      ]);
+    });
 
-    await handler!(req, res);
+    it('filters by type, including issues reported via POST /issue', async () => {
+      const app = buildApp();
+      const projectId = `proj-type-${Date.now()}`;
 
-    expectStatus(res, 403);
-    expect(telemetryMocks.resetBetaFlowTelemetry).not.toHaveBeenCalled();
-  });
+      await request(app)
+        .post('/api/telemetry/beta-workspace/event')
+        .send({ ...validEvent, projectId });
+      await request(app)
+        .post('/api/telemetry/beta-workspace/issue')
+        .send({ ...validIssue, projectId });
 
-  it('allows reset for admin with explicit confirmation header', async () => {
-    const req = createMockRequest({
-      query: { reset: 'true', reason: 'weekly controlled beta window reset' },
-      headers: { 'x-confirm-reset': 'BETA_TELEMETRY_RESET' },
-    }) as any;
-    req.user = { id: 1, role: 'admin' };
-    const res = createMockResponse();
-    const handler = getHandler();
+      const res = await request(app)
+        .get('/api/telemetry/beta-workspace/events')
+        .query({ projectId, type: 'issue' });
 
-    await handler!(req, res);
+      expect(res.status).toBe(200);
+      expect(res.body.events).toHaveLength(1);
+      expect(res.body.events[0].type).toBe('issue');
+      expect(res.body.events[0].summary).toBe(validIssue.summary);
+    });
 
-    expect(telemetryMocks.resetBetaFlowTelemetry).toHaveBeenCalledTimes(1);
-    expect(res.json).toHaveBeenCalled();
-  });
+    it('returns an empty list for a projectId with no events', async () => {
+      const res = await request(buildApp())
+        .get('/api/telemetry/beta-workspace/events')
+        .query({ projectId: 'proj-never-used' });
 
-  it('fails closed for include_errors when role is not admin', async () => {
-    const req = createMockRequest({ query: { include_errors: 'true' } }) as any;
-    req.user = { id: 22, role: 'author' };
-    const res = createMockResponse();
-    const handler = getHandler();
-
-    await handler!(req, res);
-
-    expectStatus(res, 403);
-  });
-
-  it('fails closed for include_resets when role is not admin', async () => {
-    const req = createMockRequest({ query: { include_resets: 'true' } }) as any;
-    req.user = { id: 22, role: 'author' };
-    const res = createMockResponse();
-    const handler = getHandler();
-
-    await handler!(req, res);
-
-    expectStatus(res, 403);
-  });
-
-  it('requires reset reason for admin reset', async () => {
-    const req = createMockRequest({
-      query: { reset: 'true', reason: 'short' },
-      headers: { 'x-confirm-reset': 'BETA_TELEMETRY_RESET' },
-    }) as any;
-    req.user = { id: 1, role: 'admin' };
-    const res = createMockResponse();
-    const handler = getHandler();
-
-    await handler!(req, res);
-
-    expectStatus(res, 400);
-    expect(telemetryMocks.resetBetaFlowTelemetry).not.toHaveBeenCalled();
-  });
-
-  it('resets before reading snapshot so reset response is fresh', async () => {
-    const req = createMockRequest({
-      query: { reset: 'true', reason: 'weekly controlled beta window reset' },
-      headers: { 'x-confirm-reset': 'BETA_TELEMETRY_RESET' },
-    }) as any;
-    req.user = { id: 1, role: 'admin' };
-    const res = createMockResponse();
-    const handler = getHandler();
-
-    await handler!(req, res);
-
-    expect(telemetryMocks.resetBetaFlowTelemetry).toHaveBeenCalledOnce();
-    expect(telemetryMocks.getBetaFlowTelemetrySnapshot).toHaveBeenCalledOnce();
-    const resetOrder = telemetryMocks.resetBetaFlowTelemetry.mock.invocationCallOrder[0];
-    const snapshotOrder = telemetryMocks.getBetaFlowTelemetrySnapshot.mock.invocationCallOrder[0];
-    expect(resetOrder).toBeLessThan(snapshotOrder);
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ events: [] });
+    });
   });
 });

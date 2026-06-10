@@ -51,6 +51,21 @@ import {
 } from '../services/living-file/change-router.service';
 import { programFreshnessReport } from '../services/living-file/freshness-report.service';
 import auditService from '../services/auditService';
+import {
+  getFact,
+  listProgramFacts,
+  listBindingsForFact,
+  listOpenDriftForFact,
+  programFactDriftReport,
+} from '../services/living-record/canonical-fact-store';
+import { listProgramSequences } from '../services/living-record/sequence-store';
+import { linkLegacyProgram } from '../services/living-record/program-link';
+import {
+  reconcileClaim,
+  reconcileClaimById,
+  reconcileProgramClaims,
+  runDriftSentinel,
+} from '../services/living-record/reconciliation-engine';
 
 const router = Router();
 router.use(authenticateToken);
@@ -553,6 +568,203 @@ router.get(
     }
   }
 );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Living Record Spine: canonical facts, bindings, drift, sequences, reconcile.
+// uuid-program-scoped (requireUuidProgramAccess), matching the freshness route.
+//   GET  /programs/:programId/facts
+//   GET  /programs/:programId/drift
+//   GET  /programs/:programId/sequences
+//   GET  /facts/:factId/bindings
+//   POST /programs/:programId/reconcile                  (body: legacyProgramId)
+//   POST /programs/:programId/claims/:claimId/reconcile
+//   POST /programs/:programId/drift/scan
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function requireFactAccess(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  const factId = String(req.params.factId ?? '');
+  const orgId = getOrgId(req);
+  if (orgId === null) {
+    res.status(403).json({ error: 'Organization context required' });
+    return;
+  }
+  const fact = await getFact(factId);
+  if (!fact || fact.organizationId !== orgId) {
+    res.status(403).json({ error: 'Access denied' });
+    return;
+  }
+  (req as any).fact = fact;
+  next();
+}
+
+function actorId(req: Request): number | null {
+  const raw = (req as any).user?.id;
+  if (raw === undefined || raw === null) return null;
+  const n = typeof raw === 'number' ? raw : parseInt(String(raw), 10);
+  return Number.isFinite(n) ? n : null;
+}
+
+router.get(
+  '/programs/:programId/facts',
+  requireUuidProgramAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const facts = await listProgramFacts(String(req.params.programId));
+      res.json({ programId: String(req.params.programId), facts, count: facts.length });
+    } catch (err: any) {
+      res.status(500).json({ error: 'Facts query failed', detail: err?.message });
+    }
+  }
+);
+
+router.get(
+  '/programs/:programId/drift',
+  requireUuidProgramAccess,
+  async (req: Request, res: Response) => {
+    try {
+      res.json(await programFactDriftReport(String(req.params.programId)));
+    } catch (err: any) {
+      res.status(500).json({ error: 'Drift report failed', detail: err?.message });
+    }
+  }
+);
+
+router.get(
+  '/programs/:programId/sequences',
+  requireUuidProgramAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const sequences = await listProgramSequences(String(req.params.programId));
+      res.json({ programId: String(req.params.programId), sequences, count: sequences.length });
+    } catch (err: any) {
+      res.status(500).json({ error: 'Sequences query failed', detail: err?.message });
+    }
+  }
+);
+
+router.get('/facts/:factId/bindings', requireFactAccess, async (req: Request, res: Response) => {
+  try {
+    const factId = String(req.params.factId);
+    const [bindings, openDrift] = await Promise.all([
+      listBindingsForFact(factId),
+      listOpenDriftForFact(factId),
+    ]);
+    res.json({ fact: (req as any).fact, bindings, openDrift, bindingCount: bindings.length });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Bindings query failed', detail: err?.message });
+  }
+});
+
+router.post(
+  '/programs/:programId/reconcile',
+  requireUuidProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const legacyProgramId =
+      typeof req.body?.legacyProgramId === 'number' ? req.body.legacyProgramId : null;
+    if (legacyProgramId === null) {
+      return res.status(422).json({
+        error: 'legacyProgramId (integer) is required to locate the program claims',
+      });
+    }
+    try {
+      const result = await reconcileProgramClaims({
+        programId: String(req.params.programId),
+        legacyProgramId,
+        organizationId: orgId,
+        actor: actorId(req),
+      });
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Reconcile failed', detail: err?.message });
+    }
+  }
+);
+
+router.post(
+  '/programs/:programId/claims/:claimId/reconcile',
+  requireUuidProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const claimId = parseIntParam(req.params.claimId);
+    if (claimId === null) {
+      return res.status(422).json({ error: 'claimId must be an integer' });
+    }
+    const [claim] = await db
+      .select({ id: evidenceClaims.id })
+      .from(evidenceClaims)
+      .where(and(eq(evidenceClaims.id, claimId), eq(evidenceClaims.organizationId, orgId)))
+      .limit(1);
+    if (!claim) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    try {
+      const result = await reconcileClaim({
+        claimId,
+        programId: String(req.params.programId),
+        organizationId: orgId,
+        actor: actorId(req),
+      });
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Reconcile failed', detail: err?.message });
+    }
+  }
+);
+
+router.post(
+  '/programs/:programId/drift/scan',
+  requireUuidProgramAccess,
+  async (req: Request, res: Response) => {
+    try {
+      res.json(await runDriftSentinel(String(req.params.programId)));
+    } catch (err: any) {
+      res.status(500).json({ error: 'Drift scan failed', detail: err?.message });
+    }
+  }
+);
+
+// Bridge a legacy integer claim program to this uuid program, so claims can be
+// reconciled from their id alone (POST /claims/:claimId/reconcile).
+router.post(
+  '/programs/:programId/link',
+  requireUuidProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const legacyProgramId =
+      typeof req.body?.legacyProgramId === 'number' ? req.body.legacyProgramId : null;
+    if (legacyProgramId === null) {
+      return res.status(422).json({ error: 'legacyProgramId (integer) is required' });
+    }
+    try {
+      await linkLegacyProgram({
+        organizationId: orgId,
+        legacyProgramId,
+        programId: String(req.params.programId),
+        createdBy: actorId(req),
+      });
+      res.json({ linked: true, programId: String(req.params.programId), legacyProgramId });
+    } catch (err: any) {
+      res.status(500).json({ error: 'Link failed', detail: err?.message });
+    }
+  }
+);
+
+// Reconcile-on-write: reconcile a claim from its id alone (resolves the uuid
+// program via the bridge). No-ops with verdict 'skipped' if no link exists.
+router.post('/claims/:claimId/reconcile', requireClaimAccess, async (req: Request, res: Response) => {
+  const claimId = parseIntParam(req.params.claimId)!;
+  try {
+    const result = await reconcileClaimById(claimId, { actor: actorId(req) });
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Reconcile failed', detail: err?.message });
+  }
+});
 
 router.post('/propagate/risk-vocab', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);

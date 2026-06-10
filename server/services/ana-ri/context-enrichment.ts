@@ -30,6 +30,8 @@ import { buildChallengeBlock, detectChallengeableClaims } from './challenge-libr
 import { buildFirstSessionTour } from './onboarding-tour.js';
 import { buildDecisionFrameworkBlock, detectRelevantFrameworks } from './decision-frameworks.js';
 import { buildAgencyTacticsBlock, detectRelevantTactics } from './agency-tactics.js';
+import { buildIchGuidelineBlock } from './ich-guideline-corpus.js';
+import { buildPathwaysBlock } from './regulatory-pathways-corpus.js';
 import { buildCompetitiveBlock, detectRelevantPlays } from './competitive-strategy.js';
 import { buildAlignmentBlock, detectRelevantAlignment } from './stakeholder-alignment.js';
 import { buildAttunementBlock, detectClientState } from './client-attunement.js';
@@ -181,6 +183,12 @@ export const SUPPORTED_SLASH_COMMANDS = [
   'landscape',
   'compete',
   'align',
+  'ich',
+  'guideline',
+  'guidelines',
+  'pathway',
+  'pathways',
+  'expedited',
   'capabilities',
   'whatcanyoudo',
 ] as const;
@@ -191,6 +199,8 @@ const ROLE_FRAMEABLE_SOURCES = new Set<string>([
   'agency-tactics', 'wisdom', 'guide', 'playbook', 'orient', 'tour', 'challenge', 'redteam', 'devil',
   'decide', 'tradeoff', 'framework', 'meeting', 'agency', 'tactics', 'proactive-tour-guide',
   'competitive-strategy', 'position', 'landscape', 'compete',
+  'ich-guidelines', 'ich', 'guideline', 'guidelines',
+  'regulatory-pathways', 'pathway', 'pathways', 'expedited',
 ]);
 
 const SUPPORTED_SLASH_COMMAND_REGEX = new RegExp(
@@ -404,17 +414,21 @@ async function enrichWithProjectMemory(
   label: string,
   description: string,
   limit = 5,
+  orgId?: number,
 ): Promise<string> {
   try {
-    const catPlaceholders = categories.map((_, i) => `$${i + 2}`).join(', ');
-    const limitParam = `$${categories.length + 2}`;
+    const catPlaceholders = categories.map((_, i) => `$${i + 3}`).join(', ');
+    const limitParam = `$${categories.length + 3}`;
+    // Tenant guard: when the caller has org context we enforce it; a NULL $2
+    // (legacy paths without org context) preserves prior behavior exactly.
     const result = await pool.query(
       `SELECT content, title, confidence, importance, category
        FROM project_memory_entries
-       WHERE project_id = $1 AND category IN (${catPlaceholders})
+       WHERE project_id = $1 AND ($2::int IS NULL OR organization_id = $2)
+         AND category IN (${catPlaceholders})
        ORDER BY importance DESC, created_at DESC
        LIMIT ${limitParam}`,
-      [projectId, ...categories, limit]
+      [projectId, orgId ?? null, ...categories, limit]
     );
 
     if (result.rows.length === 0) return '';
@@ -462,13 +476,14 @@ async function enrichWithForesight(projectId: string | number, orgId?: number): 
     liveBlock
       ? 'Persisted risk signals and predictions for longer-term trend reference.'
       : 'The following risk signals and predictions exist for this project. Cite confidence levels when discussing risk.',
-    5
+    5,
+    orgId
   );
 
   return liveBlock + memoryBlock;
 }
 
-async function enrichWithPrecedents(projectId: string | number): Promise<string> {
+async function enrichWithPrecedents(projectId: string | number, orgId?: number): Promise<string> {
   // Structured precedent enrichment with category labels per type
   const categories = ['precedent_analysis', 'competitive_intelligence', 'predicate_device'] as const;
   const categoryLabels: Record<string, string> = {
@@ -478,14 +493,15 @@ async function enrichWithPrecedents(projectId: string | number): Promise<string>
   };
 
   try {
-    const catPlaceholders = categories.map((_, i) => `$${i + 2}`).join(', ');
+    const catPlaceholders = categories.map((_, i) => `$${i + 3}`).join(', ');
     const result = await pool.query(
       `SELECT content, title, confidence, importance, category
        FROM project_memory_entries
-       WHERE project_id = $1 AND category IN (${catPlaceholders})
+       WHERE project_id = $1 AND ($2::int IS NULL OR organization_id = $2)
+         AND category IN (${catPlaceholders})
        ORDER BY importance DESC, created_at DESC
-       LIMIT $${categories.length + 2}`,
-      [projectId, ...categories, 12]
+       LIMIT $${categories.length + 3}`,
+      [projectId, orgId ?? null, ...categories, 12]
     );
 
     if (result.rows.length === 0) return '';
@@ -543,7 +559,8 @@ async function enrichWithCRLRTF(projectId: string | number, orgId?: number): Pro
     liveBlock
       ? 'Persisted deficiency and rejection patterns for trend context.'
       : 'Known deficiency patterns and rejection risk signals. Use when discussing CRL/RTF risk.',
-    5
+    5,
+    orgId
   );
 
   return liveBlock + memoryBlock;
@@ -573,7 +590,8 @@ async function enrichWithReadiness(projectId: string | number, orgId?: number): 
     ['submission_readiness', 'readiness_score', 'completeness_assessment'],
     'Readiness Assessment',
     'Current readiness data for this project. Give concrete scores and gap details.',
-    5
+    5,
+    orgId
   );
 }
 
@@ -619,21 +637,23 @@ async function enrichWithRecommendations(projectId: string | number, orgId?: num
     ['recommendation_feedback', 'next_best_action', 'workflow_optimization'],
     'Recommendations & Next Actions',
     'Active recommendations and prioritized next steps. Present as an actionable list.',
-    6
+    6,
+    orgId
   );
   return memoryResult + feedbackNote;
 }
 
-async function enrichWithClaims(projectId: string | number): Promise<string> {
+async function enrichWithClaims(projectId: string | number, orgId?: number): Promise<string> {
   // Try to build evidence chains from stored memory
   try {
     const result = await pool.query(
       `SELECT content, title, confidence, category
        FROM project_memory_entries
-       WHERE project_id = $1 AND category IN ('evidence_assessment', 'claim_evidence_map', 'evidence_gap')
+       WHERE project_id = $1 AND ($2::int IS NULL OR organization_id = $2)
+         AND category IN ('evidence_assessment', 'claim_evidence_map', 'evidence_gap')
        ORDER BY importance DESC, created_at DESC
-       LIMIT $2`,
-      [projectId, 8]
+       LIMIT $3`,
+      [projectId, orgId ?? null, 8]
     );
 
     if (result.rows.length > 0) {
@@ -664,7 +684,8 @@ async function enrichWithClaims(projectId: string | number): Promise<string> {
     ['evidence_assessment', 'claim_evidence_map', 'evidence_gap'],
     'Claims & Evidence Intelligence',
     'Evidence chain data and claim-to-evidence mapping. Flag any unsupported claims.',
-    5
+    5,
+    orgId
   );
 }
 
@@ -706,7 +727,8 @@ async function enrichWithSignals(projectId: string | number, orgId?: number): Pr
     ['intelligence_signal_summary', 'rim_pattern_registry', 'risk_signal'],
     'RIM Signal History',
     'Accumulated regulatory intelligence signals for this project.',
-    8
+    8,
+    orgId
   );
 }
 
@@ -734,16 +756,16 @@ async function enrichWithDeficiencies(submissionType?: string): Promise<string> 
   }
 }
 
-async function enrichWithKnowledgeSearch(query: string, projectId: string | number): Promise<string> {
+async function enrichWithKnowledgeSearch(query: string, projectId: string | number, orgId?: number): Promise<string> {
   try {
     // Search project memory entries semantically
     const result = await pool.query(
       `SELECT title, content, category, confidence, importance
        FROM project_memory_entries
-       WHERE project_id = $1
+       WHERE project_id = $1 AND ($2::int IS NULL OR organization_id = $2)
        ORDER BY importance DESC, created_at DESC
-       LIMIT $2`,
-      [projectId, 10]
+       LIMIT $3`,
+      [projectId, orgId ?? null, 10]
     );
 
     if (result.rows.length === 0) return '';
@@ -1159,7 +1181,7 @@ export async function enrichContextForChat(params: {
     const enrichMap: Record<string, () => Promise<string>> = {
       risk: () => Promise.all([enrichWithForesight(projectId, organizationId), enrichWithCRLRTF(projectId, organizationId)]).then(r => r.join('')),
       readiness: () => enrichWithReadiness(projectId, organizationId),
-      precedent: () => enrichWithPrecedents(projectId),
+      precedent: () => enrichWithPrecedents(projectId, organizationId),
       draft: () =>
         Promise.resolve(detectDocumentType(slash.args || message))
           .then(doc => (doc ? buildDocumentGenerationContext(doc) : '\n\n## Draft Request Context\nNo specific document type detected. Ask which CTD section or artifact to draft, then produce submission-ready content.')),
@@ -1167,10 +1189,10 @@ export async function enrichContextForChat(params: {
         Promise.all([
           enrichWithReadiness(projectId, organizationId),
           submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
-          enrichWithClaims(projectId),
+          enrichWithClaims(projectId, organizationId),
           enrichWithCRLRTF(projectId, organizationId),
         ]).then(r => r.join('')),
-      claims: () => enrichWithClaims(projectId),
+      claims: () => enrichWithClaims(projectId, organizationId),
       recommend: () => enrichWithRecommendations(projectId, organizationId),
       next: () => enrichWithRecommendations(projectId, organizationId),
       signals: () => enrichWithSignals(projectId, organizationId),
@@ -1186,13 +1208,13 @@ export async function enrichContextForChat(params: {
         enrichWithForesight(projectId, organizationId),
       ]).then(r => r.join('')),
       twin: () => Promise.all([
-        enrichWithClaims(projectId),
+        enrichWithClaims(projectId, organizationId),
         enrichWithCRLRTF(projectId, organizationId),
         enrichWithReadiness(projectId, organizationId),
       ]).then(r => r.join('')),
       consistency: () => enrichWithCrossModule(projectId, organizationId),
       deficiencies: () => enrichWithDeficiencies(submissionType),
-      knowledge: () => enrichWithKnowledgeSearch(slash.args || message, projectId),
+      knowledge: () => enrichWithKnowledgeSearch(slash.args || message, projectId, organizationId),
       decisions: () => enrichWithDecisions(projectId),
       sap: () => enrichWithBiostatContext(projectId, submissionType),
       power: () => enrichWithBiostatContext(projectId, submissionType),
@@ -1206,27 +1228,27 @@ export async function enrichContextForChat(params: {
       diagnostics: () => enrichWithDiagnostics(projectId),
       cms: () => enrichWithCMS(projectId),
       ectd: () => enrichWithECTD(projectId),
-      audit: () => Promise.all([enrichWithReadiness(projectId, organizationId), enrichWithClaims(projectId)]).then(r => r.join('')),
-      amend: () => enrichWithProjectMemory(projectId, ['document_version', 'change_impact', 'amendment_tracking'], 'Amendment Context', 'Relevant version history and change impact data.', 5),
-      review: () => Promise.all([enrichWithClaims(projectId), enrichWithCRLRTF(projectId, organizationId)]).then(r => r.join('')),
+      audit: () => Promise.all([enrichWithReadiness(projectId, organizationId), enrichWithClaims(projectId, organizationId)]).then(r => r.join('')),
+      amend: () => enrichWithProjectMemory(projectId, ['document_version', 'change_impact', 'amendment_tracking'], 'Amendment Context', 'Relevant version history and change impact data.', 5, organizationId),
+      review: () => Promise.all([enrichWithClaims(projectId, organizationId), enrichWithCRLRTF(projectId, organizationId)]).then(r => r.join('')),
       memo: () => enrichWithForesight(projectId, organizationId),
       brief: () => enrichWithCRLRTF(projectId, organizationId),
-      strategy: () => Promise.all([enrichWithPrecedents(projectId), enrichWithForesight(projectId, organizationId)]).then(r => r.join('')),
+      strategy: () => Promise.all([enrichWithPrecedents(projectId, organizationId), enrichWithForesight(projectId, organizationId)]).then(r => r.join('')),
       freeze: () => enrichWithECTD(projectId),
       sign: () => enrichWithECTD(projectId),
-      scan: () => Promise.all([enrichWithClaims(projectId), enrichWithCRLRTF(projectId, organizationId)]).then(r => r.join('')),
+      scan: () => Promise.all([enrichWithClaims(projectId, organizationId), enrichWithCRLRTF(projectId, organizationId)]).then(r => r.join('')),
       checklist: () => enrichWithReadiness(projectId, organizationId),
       submit: () => Promise.all([enrichWithReadiness(projectId, organizationId), enrichWithECTD(projectId)]).then(r => r.join('')),
       narrative: () => enrichWithSafety(projectId),
-      report: () => Promise.all([enrichWithReadiness(projectId, organizationId), enrichWithClaims(projectId)]).then(r => r.join('')),
+      report: () => Promise.all([enrichWithReadiness(projectId, organizationId), enrichWithClaims(projectId, organizationId)]).then(r => r.join('')),
       iss: () => enrichWithSafety(projectId),
-      ise: () => enrichWithClaims(projectId),
-      ib: () => Promise.all([enrichWithSafety(projectId), enrichWithClaims(projectId)]).then(r => r.join('')),
+      ise: () => enrichWithClaims(projectId, organizationId),
+      ib: () => Promise.all([enrichWithSafety(projectId), enrichWithClaims(projectId, organizationId)]).then(r => r.join('')),
       smpc: () => enrichWithSafety(projectId),
       rmp: () => enrichWithSafety(projectId),
       uspi: () => enrichWithSafety(projectId),
-      haq: () => Promise.all([enrichWithCRLRTF(projectId, organizationId), enrichWithPrecedents(projectId), enrichWithClaims(projectId)]).then(r => r.join('')),
-      ask: () => enrichWithKnowledgeSearch(slash.args || message, projectId),
+      haq: () => Promise.all([enrichWithCRLRTF(projectId, organizationId), enrichWithPrecedents(projectId, organizationId), enrichWithClaims(projectId, organizationId)]).then(r => r.join('')),
+      ask: () => enrichWithKnowledgeSearch(slash.args || message, projectId, organizationId),
       wisdom: () => Promise.resolve(buildIndustryWisdomBlock({ submissionType, message: slash.args || message })),
       guide: () => Promise.resolve(buildTourGuideBlock({ submissionType, message: slash.args || message })),
       playbook: () => Promise.resolve(buildTourGuideBlock({ submissionType, message: slash.args || message })),
@@ -1245,6 +1267,12 @@ export async function enrichContextForChat(params: {
       landscape: () => Promise.resolve(buildCompetitiveForMessage(slash.args || message, submissionType, true)),
       compete: () => Promise.resolve(buildCompetitiveForMessage(slash.args || message, submissionType, true)),
       align: () => Promise.resolve(buildAlignmentBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message), forceGeneric: true })),
+      ich: () => Promise.resolve(buildIchGuidelineBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message) ?? undefined })),
+      guideline: () => Promise.resolve(buildIchGuidelineBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message) ?? undefined })),
+      guidelines: () => Promise.resolve(buildIchGuidelineBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message) ?? undefined })),
+      pathway: () => Promise.resolve(buildPathwaysBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message) ?? undefined })),
+      pathways: () => Promise.resolve(buildPathwaysBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message) ?? undefined })),
+      expedited: () => Promise.resolve(buildPathwaysBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message) ?? undefined })),
       capabilities: () => Promise.resolve(buildCapabilityCatalogue()),
       whatcanyoudo: () => Promise.resolve(buildCapabilityCatalogue()),
       workflow: () => submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
@@ -1374,6 +1402,16 @@ export async function enrichContextForChat(params: {
         : 'Help the user navigate an internal or partner tension. Name the friction, tie it to the regulatory consequence that makes it matter, and give a concrete way to align the parties around what moves the program. Make the trade-off visible; the internal decision is theirs.',
       capabilities: 'The user is asking what you can do. Use the grounded capability inventory in context. Do not recite it as a menu — name the two or three capabilities that fit their actual situation and offer to apply one now.',
       whatcanyoudo: 'The user is asking what you can do. Use the grounded capability inventory in context. Do not recite it as a menu — name the two or three capabilities that fit their actual situation and offer to apply one now.',
+      ich: slash.args
+        ? `Identify and explain the ICH guideline(s) relevant to: ${slash.args}. Cite the exact code and title from the reference block, say what it governs and why it matters here, and remind the user to confirm the current revision on ich.org.`
+        : 'Orient the user to the relevant ICH guidelines using the reference block. Cite exact codes and titles; do not invent revisions.',
+      guideline: 'Identify and explain the relevant ICH guideline using the reference block. Cite the exact code and title; confirm the current revision on ich.org.',
+      guidelines: 'Identify and explain the relevant ICH guidelines using the reference block. Cite exact codes and titles; confirm the current revisions on ich.org.',
+      pathway: slash.args
+        ? `Identify the expedited / early-access pathways relevant to: ${slash.args}. Use the pathways reference block — name the agency, the program, who qualifies and what it gives the program; remind the user to confirm eligibility against current agency guidance.`
+        : 'Orient the user to the relevant expedited / access pathways using the reference block. Name real programs per agency; do not invent designations.',
+      pathways: 'Identify the relevant expedited / early-access pathways per agency using the reference block. Name real programs and their eligibility; confirm against current agency guidance.',
+      expedited: 'Identify the relevant expedited development/review and early-access pathways per agency using the reference block. Name real programs and eligibility; confirm against current agency guidance.',
       export: 'Export this conversation.',
     };
 
@@ -1392,11 +1430,11 @@ export async function enrichContextForChat(params: {
     // Resolve enrichment sources for this app
     const appEnrichFnMap: Record<string, () => Promise<string>> = {
       'foresight': () => enrichWithForesight(projectId, organizationId),
-      'precedent': () => enrichWithPrecedents(projectId),
+      'precedent': () => enrichWithPrecedents(projectId, organizationId),
       'device': () => enrichWithDevice(projectId),
       'readiness': () => enrichWithReadiness(projectId, organizationId),
       'safety': () => enrichWithSafety(projectId),
-      'claims': () => enrichWithClaims(projectId),
+      'claims': () => enrichWithClaims(projectId, organizationId),
       'biostatistics': () => enrichWithBiostatContext(projectId, submissionType),
       'ectd': () => enrichWithECTD(projectId),
     };
@@ -1437,11 +1475,11 @@ export async function enrichContextForChat(params: {
   if (!slash && !appMention) {
     const triggers: Array<{ test: RegExp[]; fn: () => Promise<string>; name: string }> = [
       { test: FORESIGHT_TRIGGERS, fn: () => enrichWithForesight(projectId, organizationId), name: 'foresight' },
-      { test: PRECEDENT_TRIGGERS, fn: () => enrichWithPrecedents(projectId), name: 'precedent' },
+      { test: PRECEDENT_TRIGGERS, fn: () => enrichWithPrecedents(projectId, organizationId), name: 'precedent' },
       { test: CRL_RTF_TRIGGERS, fn: () => enrichWithCRLRTF(projectId, organizationId), name: 'deficiency' },
       { test: READINESS_TRIGGERS, fn: () => enrichWithReadiness(projectId, organizationId), name: 'readiness' },
       { test: RECOMMENDATION_TRIGGERS, fn: () => enrichWithRecommendations(projectId, organizationId), name: 'recommendations' },
-      { test: CLAIMS_TRIGGERS, fn: () => enrichWithClaims(projectId), name: 'claims' },
+      { test: CLAIMS_TRIGGERS, fn: () => enrichWithClaims(projectId, organizationId), name: 'claims' },
       { test: SIMULATION_TRIGGERS, fn: () => enrichWithCRLRTF(projectId, organizationId), name: 'simulation' },
       { test: BIOSTAT_TRIGGERS, fn: () => enrichWithBiostatContext(projectId, submissionType), name: 'biostatistics' },
       { test: SAFETY_TRIGGERS, fn: () => enrichWithSafety(projectId), name: 'safety' },
@@ -1451,7 +1489,7 @@ export async function enrichContextForChat(params: {
       { test: DIAGNOSTICS_TRIGGERS, fn: () => enrichWithDiagnostics(projectId), name: 'diagnostics' },
       { test: CMS_TRIGGERS, fn: () => enrichWithCMS(projectId), name: 'cms' },
       { test: ECTD_TRIGGERS, fn: () => enrichWithECTD(projectId), name: 'ectd' },
-      { test: HAQ_TRIGGERS, fn: () => Promise.all([enrichWithCRLRTF(projectId, organizationId), enrichWithPrecedents(projectId)]).then(r => r.join('')), name: 'haq' },
+      { test: HAQ_TRIGGERS, fn: () => Promise.all([enrichWithCRLRTF(projectId, organizationId), enrichWithPrecedents(projectId, organizationId)]).then(r => r.join('')), name: 'haq' },
       { test: WISDOM_TRIGGERS, fn: () => Promise.resolve(buildIndustryWisdomBlock({ submissionType, message })), name: 'industry-wisdom' },
       { test: WAYFINDING_TRIGGERS, fn: () => Promise.resolve(buildTourGuideBlock({ submissionType, message })), name: 'tour-guide' },
     ];

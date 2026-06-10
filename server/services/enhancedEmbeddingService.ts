@@ -21,8 +21,7 @@
  * @license Proprietary - Concept2Cure Inc.
  */
 
-import type OpenAI from 'openai';
-import { getOpenAIClient } from './openai-client';
+import { getEmbeddingProvider } from './ai-gateway/embeddings/embedding-provider';
 import pg from 'pg';
 import crypto from 'crypto';
 
@@ -105,7 +104,6 @@ const MODEL_COSTS: Record<EmbeddingModel, number> = {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export class EnhancedEmbeddingService {
-  private openai: OpenAI;
   private pool: pg.Pool;
   private defaultModel: EmbeddingModel = 'text-embedding-3-small';
   private embeddingCache: Map<string, number[]> = new Map();
@@ -115,7 +113,10 @@ export class EnhancedEmbeddingService {
   private isProcessing = false;
 
   constructor(pool: pg.Pool) {
-    this.openai = getOpenAIClient();
+    // Embeddings route through the gateway embedding-provider seam (OpenAI by
+    // default, or a self-hosted OpenAI-compatible endpoint when
+    // EMBEDDING_PROVIDER=local) — no hard OpenAI dependency at construction, so
+    // this service boots in an air-gapped deployment.
     this.pool = pool;
     console.log('✅ Enhanced Embedding Service initialized');
   }
@@ -142,14 +143,14 @@ export class EnhancedEmbeddingService {
     // Truncate if too long (8191 tokens max for embedding models)
     const truncatedText = this.truncateText(text, 8000);
 
-    const response = await this.openai.embeddings.create({
+    const response = await getEmbeddingProvider().embed({
       model,
       input: truncatedText,
       dimensions: MODEL_CONFIGS[model].dimensions,
     });
 
-    const embedding = response.data[0].embedding;
-    const tokenCount = response.usage.total_tokens;
+    const embedding = response.embeddings[0];
+    const tokenCount = response.inputTokens;
 
     // Cache the result
     this.embeddingCache.set(cacheKey, embedding);
@@ -187,14 +188,14 @@ export class EnhancedEmbeddingService {
       let retries = 0;
       while (retries < config.maxRetries) {
         try {
-          const response = await this.openai.embeddings.create({
+          const response = await getEmbeddingProvider().embed({
             model,
             input: truncatedBatch,
             dimensions: config.dimensions,
           });
 
           for (let j = 0; j < batch.length; j++) {
-            const embedding = response.data[j].embedding;
+            const embedding = response.embeddings[j];
             const cacheKey = this.getCacheKey(truncatedBatch[j], model);
             this.embeddingCache.set(cacheKey, embedding);
 
@@ -202,7 +203,7 @@ export class EnhancedEmbeddingService {
               text: truncatedBatch[j],
               embedding,
               model,
-              tokenCount: Math.ceil(response.usage.total_tokens / batch.length),
+              tokenCount: Math.ceil(response.inputTokens / batch.length),
               cached: false,
             });
           }

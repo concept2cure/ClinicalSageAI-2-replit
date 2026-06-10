@@ -74,6 +74,12 @@ import * as crypto from 'crypto';
 import { guardEmptyContent, guardDemoContent } from '../middleware/documentLoopGuards';
 import { computeConversationHealth } from '../services/conversation-health.js';
 import {
+  getProjectRetrievalMode,
+  refreshProjectRetrievalMode,
+} from '../services/projects/retrieval-mode.js';
+import { extractUploadedText } from '../services/projects/extract-text.js';
+import { ingestContextualChunks } from '../services/projects/contextual-ingest.js';
+import {
   interceptComplianceScan,
   interceptArtifactChange,
   interceptFeedback,
@@ -3427,7 +3433,14 @@ router.get('/projects/:projectId/knowledge', async (req: Request, res: Response)
 
     const settings = normalizeProjectSettings(project.settings);
     const knowledge = normalizeKnowledge(settings);
-    return sendSuccess(res, knowledge);
+    // A2: surface the retrieval mode (read-through compute when not yet set) so
+    // the UI can show the in-context vs retrieval indicator.
+    const modeState = await getProjectRetrievalMode(scope.numericId, organizationId);
+    return sendSuccess(res, {
+      ...knowledge,
+      retrievalMode: modeState.mode,
+      knowledgeTokenEstimate: modeState.tokenEstimate,
+    });
   } catch (error: any) {
     logger.error('Failed to fetch project knowledge', { error: error.message });
     return sendError(res, 500, 'Failed to fetch project knowledge');
@@ -4299,9 +4312,14 @@ router.post(
         sourceProcessingMode: req.body.sourceProcessingMode || 'artifact_only', // artifact_only | artifact_plus_source_object
       };
 
-      const extractedText = file.mimetype.startsWith('text/')
-        ? file.buffer.toString('utf8')
-        : `[${file.mimetype} document ${safeOriginalName}]`;
+      // Extract real text from PDF/DOCX (and pass through plain text) so binary
+      // uploads are searchable in retrieval and the in-context corpus; fall back
+      // to a placeholder when extraction yields nothing.
+      const extracted = await extractUploadedText(file.buffer, file.mimetype, safeOriginalName);
+      const extractedText =
+        extracted && extracted.length > 0
+          ? extracted
+          : `[${file.mimetype} document ${safeOriginalName}]`;
 
       const document: UploadedDocument = {
         id: documentId,
@@ -4450,6 +4468,26 @@ router.post(
         logger.warn('Auto-embedding failed (non-fatal)', { error: embedErr.message });
       }
 
+      // ── A3 contextual-retrieval ingest (dark-launched) ──
+      // When enabled, also store contextualized chunk atoms (chunk + a per-chunk
+      // situating context generated via the gateway) for finer-grained
+      // retrieval. Off by default — the per-chunk gateway calls cost tokens, so
+      // validate cost/quality before enabling. Fire-and-forget so it never
+      // blocks the upload response; additive to the whole-document atom above.
+      if (
+        process.env.PROJECT_CONTEXTUAL_INGEST_ENABLED === 'true' &&
+        extractedText &&
+        extractedText.length > 200
+      ) {
+        void ingestContextualChunks({
+          artifactId,
+          organizationId,
+          title: safeOriginalName,
+          text: extractedText,
+          ctdSection: dossierClassification.ctdSection,
+        });
+      }
+
       // ── Record dossier classification provenance ──
       if (dossierClassification.ctdSection || dossierClassification.feedsModule3) {
         try {
@@ -4517,6 +4555,10 @@ router.post(
         .returning();
 
       await logAuditEntry(req, 'UPDATE', 'project', projectIdRaw, project, updated);
+
+      // A2: the corpus grew with this upload — recompute the retrieval mode
+      // (fire-and-forget; never blocks the upload response).
+      void refreshProjectRetrievalMode(numericId, organizationId);
 
       res.status(201);
       return sendSuccess(res, {
@@ -5081,8 +5123,13 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
         const claimResult = await pool.query(
           `INSERT INTO ai_claims
              (generation_run_id, claim_index, claim_text, claim_hash_sha256, confidence, status)
-           VALUES ${claimPlaceholders.join(', ')} RETURNING id`,
+           VALUES ${claimPlaceholders.join(', ')} RETURNING id, claim_index`,
           claimValues
+        );
+        // Correlate returned ids by claim_index — RETURNING row order is not
+        // guaranteed to match the VALUES order.
+        const claimIdByIndex = new Map<number, string>(
+          claimResult.rows.map((r: any) => [Number(r.claim_index), r.id])
         );
 
         // Batch INSERT all citation linkages in one query
@@ -5090,7 +5137,7 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
         const citPlaceholders: string[] = [];
         let ci = 1;
         for (let idx = 0; idx < pendingClaims.length; idx++) {
-          const claimId = claimResult.rows[idx]?.id;
+          const claimId = claimIdByIndex.get(pendingClaims[idx].si);
           if (!claimId) continue;
           for (const link of pendingClaims[idx].citLinks) {
             citPlaceholders.push(`($${ci}, $${ci + 1}, $${ci + 2})`);
@@ -11356,7 +11403,7 @@ router.get('/audit-logs', async (req: Request, res: Response) => {
     const { entityType, entityId, limit: limitParam } = req.query;
     const queryLimit = Math.min(Number(limitParam) || 50, 200);
 
-    let query = db
+    const query = db
       .select()
       .from(regulatoryAuditLogs)
       .where(eq(regulatoryAuditLogs.organizationId, organizationId))
@@ -13164,7 +13211,7 @@ router.get('/projects/:projectId/tasks', async (req: Request, res: Response) => 
 
     const { status, priority, category } = req.query;
 
-    let query = db.select().from(projectTasks).where(eq(projectTasks.projectId, projectId));
+    const query = db.select().from(projectTasks).where(eq(projectTasks.projectId, projectId));
 
     const tasks = await query.orderBy(projectTasks.dueDate).limit(500);
 
@@ -13365,7 +13412,7 @@ router.get('/projects/:projectId/tasks/summary', async (req: Request, res: Respo
     const byPriority: Record<string, number> = {};
     let overdue = 0;
     let completed = 0;
-    let total = tasks.length;
+    const total = tasks.length;
 
     for (const task of tasks) {
       const s = (task as any).status || 'todo';
@@ -14398,7 +14445,7 @@ router.get(
 
       // Get comment counts per thread
       const threadIds = threads.map(t => t.id);
-      let commentCounts = new Map<number, number>();
+      const commentCounts = new Map<number, number>();
       if (threadIds.length > 0) {
         const counts = await db
           .select({
@@ -17692,7 +17739,7 @@ router.post(
       const conversation = convResult.rows[0];
 
       // Load messages (optionally filtered by range)
-      let messagesQuery = `SELECT role, content, created_at FROM concept2cure_messages
+      const messagesQuery = `SELECT role, content, created_at FROM concept2cure_messages
        WHERE conversation_id = $1 AND organization_id = $2
        ORDER BY created_at ASC`;
       const messagesResult = await pool.query(messagesQuery, [conversationId, organizationId]);

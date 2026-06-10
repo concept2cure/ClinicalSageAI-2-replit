@@ -15,7 +15,9 @@
  *    verbatim; outside a canvas iframe, append ?tweaks=1 to the URL to activate.
  */
 import { Fragment, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { HomeIcon } from './icons';
+import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 import {
   NAV_ITEMS, NAV_SUB, DASH, RECENTS, SUGGESTIONS, SCOPE_OPTIONS,
   visibleNavItems, visibleModules,
@@ -126,12 +128,15 @@ const DEFAULT_USER: User = {
   role: DEFAULTS.userRole,
 };
 
-function timeOfDay(): string {
+// Returns a translation key suffix, not a literal — word order and honorifics
+// (e.g. Japanese さん) differ by language, so the phrase is assembled in the
+// `home` namespace, never concatenated in code.
+function timeOfDayKey(): 'late' | 'morning' | 'afternoon' | 'evening' {
   const h = new Date().getHours();
-  if (h < 5) return 'Working late';
-  if (h < 12) return 'Good morning';
-  if (h < 18) return 'Good afternoon';
-  return 'Good evening';
+  if (h < 5) return 'late';
+  if (h < 12) return 'morning';
+  if (h < 18) return 'afternoon';
+  return 'evening';
 }
 
 /* ─── Rail ─── */
@@ -284,6 +289,7 @@ function TopBar({
   onOpenNotifications?: () => void;
   onOpenHelp?: () => void;
 }) {
+  const { t: tc } = useTranslation('common');
   return (
     <header className={styles.topbar}>
       <div className={styles.crumbs}>
@@ -305,13 +311,15 @@ function TopBar({
       </button>
       <div className={styles.tbDivider} />
       <div className={styles.tbActions}>
-        <button type="button" className={styles.tbBtn} title="Search (⌘K)" onClick={onOpenPalette}>
+        <LanguageSwitcher variant="topbar" />
+        <button type="button" className={styles.tbBtn} title={`${tc('actions.search')} (⌘K)`} aria-label={tc('actions.search')} onClick={onOpenPalette}>
           <HomeIcon name="search" size={16} />
         </button>
         <button
           type="button"
           className={styles.tbBtn}
-          title="Notifications"
+          title={tc('topbar.notifications')}
+          aria-label={tc('topbar.notifications')}
           onClick={onOpenNotifications}
         >
           <HomeIcon name="bell" size={16} />
@@ -320,7 +328,8 @@ function TopBar({
         <button
           type="button"
           className={styles.tbBtn}
-          title="Help"
+          title={tc('topbar.help')}
+          aria-label={tc('topbar.help')}
           onClick={onOpenHelp}
         >
           <HomeIcon name="help" size={16} />
@@ -344,6 +353,7 @@ function GreetAndCompose({
   onTools?: () => void;
   onModelPicker?: () => void;
 }) {
+  const { t } = useTranslation('home');
   const [draft, setDraft] = useState('');
   const send = () => {
     const text = draft.trim();
@@ -353,14 +363,14 @@ function GreetAndCompose({
     }
     setDraft('');
   };
-  const tod = timeOfDay();
+  const greeting = t(`greeting.${timeOfDayKey()}`);
 
   return (
     <div className={styles.greetBlock}>
       <span className={styles.greetStar} aria-hidden="true">✻</span>
-      <h1 className={styles.greetH1}>{tod}, {userName}</h1>
+      <h1 className={styles.greetH1}>{t('greetingLine', { greeting, name: userName })}</h1>
       <div className={styles.greetSub}>
-        What would you like to work on? Ask AnA, or jump into a module below.
+        {t('prompt')}
       </div>
 
       <div className={styles.composer}>
@@ -450,7 +460,20 @@ function Dashboard({
   return (
     <>
       <div className={styles.secHdr}>
-        <div className={styles.secTitle}>At a glance</div>
+        <div className={styles.secTitle}>
+          At a glance
+          {/* Honesty pill (same treatment as ProjectsList): these tiles are
+              demo constants from data.tsx. Only "Active projects" ever gets a
+              live overlay; Submission readiness, Tasks due and Alerts have no
+              live source yet, so this section is ALWAYS at least partly
+              sample — the pill renders unconditionally. */}
+          <span
+            className="ptl-pill prj-list-seed"
+            title="Showing prototype sample metrics — only the Active projects count is live; the other tiles have no live data source yet."
+          >
+            Sample data
+          </span>
+        </div>
         <button
           type="button"
           className={styles.secMore}
@@ -564,7 +587,20 @@ function Recents({
   return (
     <>
       <div className={styles.secHdr}>
-        <div className={styles.secTitle}>Recent activity</div>
+        <div className={styles.secTitle}>
+          Recent activity
+          {/* Honesty pill (same treatment as ProjectsList): when the chat
+              threads API returns no rows or errors, the rows below are the
+              RECENTS demo constants from data.tsx, not tenant activity. */}
+          {!showReal && (
+            <span
+              className="ptl-pill prj-list-seed"
+              title="Showing prototype sample activity — the chat threads API returned no rows or errored."
+            >
+              Sample data
+            </span>
+          )}
+        </div>
         <button type="button" className={styles.secMore} onClick={onViewAll}>
           View all <HomeIcon name="right" size={12} />
         </button>

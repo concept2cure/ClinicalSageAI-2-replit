@@ -75,7 +75,6 @@ export const AI_SERVICE_REGISTRY = {
 
   // Specialized AI
   regulatory: 'regulatoryAIServicePhase3',
-  kimi: 'kimiAIService',
 
   // Knowledge extraction
   factExtraction: 'openai-orchestrator',

@@ -93,7 +93,11 @@ async function loadFdaCredentials(
      ) VALUES ($1, 'fda', 'esg', $2, 'mtls', $3, $4, 'active')
      ON CONFLICT (organization_id, region, gateway, environment) DO NOTHING`,
     [organizationId, environment, as2From, certPath],
-  ).catch(() => { /* best-effort; do not block transmit */ });
+  ).catch((err) => {
+    // Best-effort; do not block transmit — but a missing credential audit row
+    // breaks "why did this org's submission go through?", so surface it.
+    console.error('[fda-esg] credential audit row insert failed:', err?.message ?? err);
+  });
 
   const [clientCertPem, clientKeyPem, fdaCertPem] = await Promise.all([
     fs.readFile(certPath!, 'utf8'),

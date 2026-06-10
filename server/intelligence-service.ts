@@ -1,6 +1,6 @@
 import { db } from './db';
-import { sql, eq, like, and } from 'drizzle-orm';
-import { reports, reportDetails } from 'shared/schema';
+import { like } from 'drizzle-orm';
+import { reports } from 'shared/schema';
 // Legacy import — module not present in current tree.
 // Stub class kept so call sites typecheck; runtime usage no-ops.
 class CSRSearchEngine {
@@ -30,6 +30,15 @@ export interface StrategicReportSection {
   content?: string;
   table?: Array<Record<string, string | number>>;
   bullets?: string[];
+  /**
+   * 'available'       — every figure/claim is derived from real matched data.
+   * 'not_implemented' — the underlying analysis is not yet computed; the section
+   *                     reports only what is real and explicitly omits the rest
+   *                     rather than presenting illustrative/estimated values.
+   * Consumers (UI/markdown) can surface a clear badge so a not-yet-computed
+   * section is never mistaken for a substantive finding.
+   */
+  status?: 'available' | 'not_implemented';
 }
 
 export interface StrategicReport {
@@ -183,14 +192,17 @@ export class IntelligenceService {
         trial.status === 'Approved'
     );
 
-    // Determine if the current protocol aligns with successful designs
-    // This would require more sophisticated analysis in a real implementation
-    // Here we're using a simplified approach
-    const alignedWithSuccessful = Math.floor(Math.random() * 5) + 1; // Simulate 1-5 alignments
+    // Design-level alignment scoring against the successful cohort requires
+    // protocol-feature comparison we do not yet compute. Earlier this surface
+    // fabricated that count with Math.random(); we now report only figures
+    // derived from the matched data and explicitly omit the alignment score
+    // rather than present an invented one in a regulated-facing report.
+    const failedTrials = allTrials.length - successfulTrials.length;
 
     return {
       title: 'Historical Trial Benchmarking',
-      content: `Matched ${allTrials.length} trials from CSRs and CTGov with similar ${indication || 'indication'} and ${phase || 'phase'}. ${successfulTrials.length} were successful; ${allTrials.length - successfulTrials.length} failed. Your trial aligns with ${alignedWithSuccessful} of the successful designs.`,
+      status: 'available',
+      content: `Matched ${allTrials.length} trials from CSRs and CTGov with similar ${indication || 'indication'} and ${phase || 'phase'}. Of these, ${successfulTrials.length} reached a successful or approved outcome and ${failedTrials} did not. A design-level alignment score against the successful cohort is not yet computed and is intentionally omitted rather than estimated.`,
     };
   }
 
@@ -201,21 +213,16 @@ export class IntelligenceService {
     similarCSRs: any[],
     competitorTrials: any[]
   ): Promise<StrategicReportSection> {
-    // Extract endpoints from trial data
-    // This is a simplified approach - in a real implementation you would parse
-    // the endpoints from the actual trial data
-
-    // Common endpoints for demonstration
-    const endpointData = [
-      { endpoint: 'BMI reduction ≥5%', frequency: 14, success_rate: '64%' },
-      { endpoint: 'Weight loss % at 12w', frequency: 4, success_rate: '25%' },
-      { endpoint: 'Waist circumference reduction', frequency: 8, success_rate: '38%' },
-      { endpoint: 'HbA1c reduction', frequency: 6, success_rate: '50%' },
-    ];
-
+    // Endpoint frequency/success-rate benchmarking requires parsing endpoints
+    // out of each matched trial record, which is not yet implemented. This
+    // surface previously returned a hardcoded illustrative table (BMI/HbA1c
+    // with invented success rates); it now reports only the real match count
+    // and omits the benchmark rather than presenting demonstration figures.
+    const matched = [...similarCSRs, ...competitorTrials].length;
     return {
       title: 'Endpoint Benchmarking',
-      table: endpointData,
+      status: 'not_implemented',
+      content: `Endpoint frequency and success-rate benchmarking requires parsing endpoints from the ${matched} matched trial record(s); this analysis is not yet implemented. No benchmark figures are shown rather than presenting illustrative values.`,
     };
   }
 
@@ -223,28 +230,25 @@ export class IntelligenceService {
    * Generate design risk prediction
    */
   private async generateDesignRiskPrediction(
-    similarCSRs: any[],
+    _similarCSRs: any[],
     summary: string
   ): Promise<StrategicReportSection> {
-    // Extract dropout rates from similar trials
-    // In a real implementation, you would analyze the actual dropout rates
-    // For demonstration, we'll create a simplified analysis
-
-    // Assume summary contains "10% dropout" or similar
+    // The planned dropout is read directly from the protocol summary (real
+    // input). A *projected* dropout from comparable trials was previously
+    // hardcoded to 18% and used to assert the sample size "may be too low";
+    // that projection is not computed (the similar-trial corpus is not wired
+    // in this build), so no projection or sample-size verdict is asserted.
     const dropoutMatch = summary.match(/(\d+)%\s*dropout/i);
-    const plannedDropout = dropoutMatch ? parseInt(dropoutMatch[1]) : 10;
-
-    // Simulate average dropout from similar trials
-    const projectedDropout = 18; // Would be calculated from similar trials
+    const plannedDropout = dropoutMatch ? parseInt(dropoutMatch[1], 10) : null;
+    const plannedText =
+      plannedDropout !== null
+        ? `The protocol states a planned dropout of ${plannedDropout}%.`
+        : 'No planned dropout rate was found in the protocol summary.';
 
     return {
       title: 'Design Risk Prediction',
-      content: `Your dropout-adjusted sample size may be too low. Based on similar trials, projected dropout is ${projectedDropout}% (vs your plan: ${plannedDropout}%).`,
-      bullets: [
-        `Increase sample size to account for ${projectedDropout}% dropout`,
-        'Consider interim analyses to monitor dropout rates',
-        'Implement retention strategies from successful trials',
-      ],
+      status: 'not_implemented',
+      content: `${plannedText} A projected dropout derived from comparable trials is not yet computed, so no dropout projection or sample-size adequacy verdict is asserted here.`,
     };
   }
 
@@ -252,23 +256,19 @@ export class IntelligenceService {
    * Generate regulatory alignment section
    */
   private async generateRegulatoryAlignment(
-    similarCSRs: any[],
-    competitorTrials: any[],
+    _similarCSRs: any[],
+    _competitorTrials: any[],
     indication?: string,
     phase?: string
   ): Promise<StrategicReportSection> {
-    // In a real implementation, you would analyze the regulatory approval
-    // history of similar trials
-
-    // Simplified example for demonstration
+    // Previously asserted invented approval precedent ("included in 3
+    // EMA-approved studies", "matches 3 recently approved drugs") regardless
+    // of the inputs. Approval-history analysis is not implemented, so no
+    // precedent or risk verdict is asserted.
     return {
       title: 'Regulatory Alignment',
-      content: `Your endpoint is included in 3 EMA-approved studies. Risk appears acceptable based on recent EMA ${indication || 'therapeutic'} guidance.`,
-      bullets: [
-        'Protocol aligns with FDA guidance for primary endpoints',
-        'Secondary endpoints match 3 recently approved drugs',
-        'Consider adding quality of life measures for payor negotiations',
-      ],
+      status: 'not_implemented',
+      content: `Regulatory alignment analysis — approval history and guidance precedent for comparable ${indication || 'indication'} / ${phase || 'phase'} programs — is not yet implemented. No approval-precedent or acceptable-risk claims are asserted here.`,
     };
   }
 
@@ -276,21 +276,17 @@ export class IntelligenceService {
    * Generate strategic positioning section
    */
   private async generateStrategicPositioning(
-    similarCSRs: any[],
-    competitorTrials: any[],
-    sponsor?: string
+    _similarCSRs: any[],
+    _competitorTrials: any[],
+    _sponsor?: string
   ): Promise<StrategicReportSection> {
-    // In a real implementation, you would analyze the competitive landscape
-    // and positioning of the protocol
-
+    // Previously asserted "faster timeline and fewer visits than the top 5
+    // comparators" with no comparator analysis behind it. Competitive
+    // positioning is not implemented, so no comparative-advantage claim is made.
     return {
       title: 'Strategic Positioning',
-      content: `Your trial has a faster timeline and fewer visits than the top 5 comparators. This is an advantage in both fundraising and regulatory conversation.`,
-      bullets: [
-        'Highlight streamlined visit schedule in investor presentations',
-        'Emphasize patient-friendly design in regulator discussions',
-        'Consider publishing protocol design as a methodology paper',
-      ],
+      status: 'not_implemented',
+      content: `Competitive positioning analysis — timeline and visit-burden comparison against comparator programs — is not yet implemented. No comparative-advantage claims are asserted here.`,
     };
   }
 
@@ -298,24 +294,20 @@ export class IntelligenceService {
    * Generate AI recommendations
    */
   private async generateRecommendations(
-    summary: string,
-    similarCSRs: any[],
-    competitorTrials: any[],
-    indication?: string,
-    phase?: string
+    _summary: string,
+    _similarCSRs: any[],
+    _competitorTrials: any[],
+    _indication?: string,
+    _phase?: string
   ): Promise<StrategicReportSection> {
-    // In a real implementation, you would use ML/AI to generate recommendations
-    // based on the analysis of similar trials
-
+    // Previously returned a fixed list of canned recommendations (BMI endpoint,
+    // +20% sample size, etc.) regardless of the protocol. Recommendations
+    // depend on the similar-trial analysis above, which is not yet computed, so
+    // no recommendations are presented in place of real ones.
     return {
       title: 'AI-Powered Recommendations',
-      bullets: [
-        "Replace endpoint with 'BMI reduction ≥5%'",
-        'Increase sample size by 20% to accommodate dropout risk',
-        'Include regulatory precedent in your protocol footnotes',
-        'Add quality of life measures as exploratory endpoints',
-        'Consider stratifying by baseline BMI for subgroup analysis',
-      ],
+      status: 'not_implemented',
+      content: `Protocol-specific recommendations are derived from the trial-analysis sections above, which are not yet computed in this build. No recommendations are presented rather than showing generic placeholders.`,
     };
   }
 

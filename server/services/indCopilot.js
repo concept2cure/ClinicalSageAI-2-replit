@@ -456,10 +456,10 @@ function getSectionPrompt(sectionCode) {
  */
 function createPrompt(sectionCode, context, guidelines, references) {
   // Get section-specific template
-  let template = getSectionPrompt(sectionCode);
+  const template = getSectionPrompt(sectionCode);
 
   // Format context information
-  let contextText = `
+  const contextText = `
 Drug Name: ${context.drugInfo.generic_name || 'Not specified'}
 Indication: ${context.drugInfo.indication || 'Not specified'}
 Phase: ${context.submission.phase || 'Not specified'}
@@ -472,7 +472,7 @@ ${formatExistingContent(context.existingContent)}
 `;
 
   // Replace template placeholders
-  let prompt = template
+  const prompt = template
     .replace('{{section_code}}', sectionCode)
     .replace('{{section_name}}', context.sectionInfo.name)
     .replace('{{context}}', contextText)
@@ -498,7 +498,7 @@ function parseCitations(content, references) {
   let match;
 
   while ((match = citationRegex.exec(content)) !== null) {
-    let citation = match[0];
+    const citation = match[0];
     let referenceIndex = null;
 
     // Check if it's a numeric citation [1]

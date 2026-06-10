@@ -1,13 +1,17 @@
-import OpenAI from 'openai';
 import pdfParse from './utils/pdfParse';
 import fs from 'fs';
 import { getGateway } from './services/ai-gateway/index.js';
+import { getEmbeddingProvider } from './services/ai-gateway/embeddings/embedding-provider';
 
-// OpenAI client — only used for embeddings (Claude doesn't offer embedding API).
-// All chat completions route through the AI Gateway which defaults to Claude.
-const client = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  : null;
+// Embeddings run through the governed seam (getEmbeddingProvider); chat
+// completions route through the AI Gateway (getGateway), which defaults to Claude.
+// A real embedder is available when an OpenAI key or a self-hosted embedding
+// endpoint is configured (the seam resolves which one at call time).
+const embeddingsEnabled = Boolean(
+  process.env.OPENAI_API_KEY ||
+    process.env.EMBEDDING_LOCAL_BASE_URL ||
+    process.env.LOCAL_AI_BASE_URL
+);
 
 /**
  * Check if an AI API key is available (Anthropic preferred, OpenAI fallback)
@@ -23,19 +27,19 @@ export function isApiKeyAvailable(): boolean {
  * @returns Vector embedding
  */
 export async function generateEmbeddings(text: string): Promise<number[]> {
-  if (!client) {
+  if (!embeddingsEnabled) {
     throw new Error(
-      'Embedding generation requires OPENAI_API_KEY. Claude does not provide an embedding API. ' +
-      'Set OPENAI_API_KEY for embedding functionality.'
+      'Embedding generation requires an embedding provider. Set OPENAI_API_KEY ' +
+      '(or a local EMBEDDING_LOCAL_BASE_URL). Claude does not provide an embedding API.'
     );
   }
   try {
-    const response = await client.embeddings.create({
+    const { embeddings } = await getEmbeddingProvider().embed({
       model: 'text-embedding-3-small',
       input: text,
     });
 
-    return response.data[0].embedding;
+    return embeddings[0];
   } catch (error) {
     console.error('Error generating embeddings:', error);
     throw new Error(
@@ -598,9 +602,6 @@ export async function processCerNlpQuery(query: string): Promise<any> {
   }
 }
 
-// Export OpenAI API client for direct usage (embeddings only — chat completions use gateway)
-export const openai = client;
-
 export default {
   analyzeText,
   analyzeProtocolSections,
@@ -613,5 +614,4 @@ export default {
   generateEmbeddings,
   generateStructuredResponse,
   processCerNlpQuery,
-  openai,
 };

@@ -41,10 +41,12 @@ import {
   ALL_ANA_TOOLS,
 } from '../../services/ana/AnaToolDefinitions.js';
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
+import { getUnhealthyTools } from '../../services/ana/tool-telemetry.js';
 import { runAgenticToolLoop, capToolResultForModel, mapWithConcurrency, describeToolPlan, type ToolCall, type ToolResultEntry, type ModelTurn } from '../../services/ana/agentic-loop.js';
 import { buildTraceEntry, collectTracesFromHistory, formatTraceForContext, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
 import { runStreamPostProcessing } from './post-processing.js';
 import { loadAnaToolPolicy, filterToolsByPolicy } from '../../services/ana-ri/mdx-tool-policy.js';
+import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
 import { isPdfIntakeEnabled, readLocalUploadBuffer } from '../../services/anthropic-files.js';
 import { logToolRun } from '../../services/toolRegistry.js';
 import type { AnaGatewayResponse } from '../../services/ai-gateway/types.js';
@@ -69,6 +71,7 @@ import {
   ensureGateway,
   VALID_LENSES,
   VALID_ROLES,
+  VALID_LANGUAGES,
 } from './shared.js';
 
 // Thin facade over getPool() so the extracted body keeps its `dbPool.query(...)`
@@ -95,6 +98,8 @@ router.post('/stream', async (req: Request, res: Response) => {
       conversation_history,
       authoring_context,
       project_id,
+      selected_tools,
+      language,
     } = req.body;
 
     if (!message || typeof message !== 'string') {
@@ -164,6 +169,8 @@ router.post('/stream', async (req: Request, res: Response) => {
     const validatedRole: UserRole | undefined =
       user_role && VALID_ROLES.has(user_role as UserRole) ? (user_role as UserRole) : undefined;
 
+    const validatedLanguage = VALID_LANGUAGES.has(language) ? language : undefined;
+
     const effectiveRole: UserRole =
       validatedRole ||
       inferRole({
@@ -203,6 +210,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       message,
       intentLens: validatedLens,
       userRole: effectiveRole,
+      language: validatedLanguage,
       projectContext: project_context,
       documentContext: document_context,
       submissionType: submission_type as SubmissionType | undefined,
@@ -489,7 +497,23 @@ router.post('/stream', async (req: Request, res: Response) => {
     // model. Loader is fail-open (default-allow) on any DB issue.
     const allTools = getAllEnabledTools();
     const toolPolicy = orgId ? await loadAnaToolPolicy(getPool(), Number(orgId)) : {};
-    const streamTools = filterToolsByPolicy(allTools, toolPolicy);
+    // Governance first (tenant deny-list), then offer the subset relevant to this
+    // turn's intent + context. The platform command bridge is always retained, so
+    // intent selection never removes a capability — anything dropped stays
+    // reachable through execute_platform_command. User-pinned tools are honoured.
+    const asStr = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+    const streamTools = selectToolsForTurn(filterToolsByPolicy(allTools, toolPolicy), typeof message === 'string' ? message : '', {
+      pinned: Array.isArray(selected_tools) ? selected_tools.filter((t: unknown): t is string => typeof t === 'string') : undefined,
+      context: {
+        projectType: asStr(submission_type),
+        documentType: asStr(document_context),
+        surface: asStr(intent_lens) ?? asStr(authoring_context),
+      },
+      // Reliability-aware: trim currently-unhealthy tools first when over the cap
+      // (the always-on core + platform bridge are unaffected). Per-tenant when an
+      // org is in context, else the global view.
+      deprioritize: new Set(getUnhealthyTools(3, orgId ?? undefined).map(t => t.tool)),
+    });
 
     const gwResponse = await gw.route({
       taskType: routingPlan.taskType,

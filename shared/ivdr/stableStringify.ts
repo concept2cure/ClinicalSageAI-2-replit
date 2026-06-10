@@ -79,7 +79,7 @@ export function stableStringify(value: unknown): string {
  */
 export function sha256Hex(input: string): string {
   // Dynamic require to avoid bundling crypto in client
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+   
   const { createHash } = require('crypto');
   return createHash('sha256').update(input, 'utf8').digest('hex');
 }

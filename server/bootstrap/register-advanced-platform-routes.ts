@@ -82,6 +82,61 @@ export async function registerAdvancedPlatformRoutes({
         mod: '../routes/connector-library.ts',
         name: 'Connector Library (catalog, toggle, guides)',
       },
+      {
+        path: '/api/diagnostics-performance',
+        mod: '../routes/diagnostics-performance.ts',
+        name: 'Diagnostics Performance (CLSI analytical + clinical)',
+      },
+      {
+        path: '/api/device-classification',
+        mod: '../routes/device-classification.ts',
+        name: 'Device Classification (IMDRF SaMD + IEC 62304)',
+      },
+      {
+        path: '/api/substantial-equivalence',
+        mod: '../routes/substantial-equivalence.ts',
+        name: 'Substantial Equivalence (FDA 510(k) SE flowchart)',
+      },
+      {
+        path: '/api/cybersecurity-524b',
+        mod: '../routes/cybersecurity-524b.ts',
+        name: 'Premarket Cybersecurity (FDA §524B SBOM + readiness)',
+      },
+      {
+        path: '/api/human-factors',
+        mod: '../routes/human-factors.ts',
+        name: 'Human Factors (IEC 62366-1)',
+      },
+      {
+        path: '/api/postmarket-surveillance',
+        mod: '../routes/postmarket-surveillance.ts',
+        name: 'Post-market Surveillance (openFDA MAUDE + recalls)',
+      },
+      {
+        path: '/api/udi-ivdr',
+        mod: '../routes/udi-ivdr.ts',
+        name: 'UDI/GUDID + EU IVDR Performance Evaluation',
+      },
+      {
+        path: '/api/market-access',
+        mod: '../routes/market-access.ts',
+        name: 'Market Access (CPT/HCPCS coding + coverage dossier)',
+      },
+      {
+        path: '/api/companion-diagnostics',
+        mod: '../routes/companion-diagnostics.ts',
+        name: 'Companion Diagnostics (drug↔Dx co-development)',
+      },
+      {
+        path: '/api/spl-fhir',
+        mod: '../routes/spl-fhir.ts',
+        name: 'Interoperability (LOINC + SPL + FHIR)',
+      },
+      {
+        path: '/api/submission-readiness',
+        mod: '../routes/submission-readiness.ts',
+        name: 'Submission Readiness (capstone scorecard)',
+      },
     ] as const;
     const auditIntegResults = await Promise.allSettled(auditIntegConfig.map(c => import(c.mod)));
     auditIntegResults.forEach((r, i) => {

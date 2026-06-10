@@ -1393,20 +1393,26 @@ export class MemStorage {
     return undefined;
   }
 
-  async createQcSpecification(spec: any): Promise<any> {
-    return spec;
+  async createQcSpecification(_spec: any): Promise<any> {
+    // Not implemented — must not echo the spec back as if it were created and
+    // persisted (the route would otherwise return 201 Created). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createQcSpecification');
   }
 
-  async updateQcSpecification(id: number, spec: any): Promise<any> {
-    return spec;
+  async updateQcSpecification(_id: number, _spec: any): Promise<any> {
+    // Not implemented — must not echo the spec back as if it were persisted
+    // (a 21 CFR Part 11 change-control fabrication). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: updateQcSpecification');
   }
 
   async createSpecificationVersion(
-    id: number,
-    changeReason: string,
-    changeDescription: string
+    _id: number,
+    _changeReason: string,
+    _changeDescription: string
   ): Promise<any> {
-    return {};
+    // Not implemented — must not report a versioned change-control record as
+    // created when nothing was persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createSpecificationVersion');
   }
 
   async getSpecificationVersions(id: number, _organizationId: number | string): Promise<any[]> {
@@ -1427,24 +1433,26 @@ export class MemStorage {
     return undefined;
   }
 
-  async createOosInvestigation(investigation: any): Promise<any> {
-    return investigation;
+  async createOosInvestigation(_investigation: any): Promise<any> {
+    // Not implemented — an Out-of-Specification investigation is a regulated GMP
+    // record; must not echo the input back as if it were persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createOosInvestigation');
   }
 
-  async updateOosInvestigation(id: number, investigation: any): Promise<any> {
-    return investigation;
+  async updateOosInvestigation(_id: number, _investigation: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: updateOosInvestigation');
   }
 
-  async addOosTimelineEvent(id: number, event: any): Promise<any> {
-    return event;
+  async addOosTimelineEvent(_id: number, _event: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: addOosTimelineEvent');
   }
 
-  async performRootCauseAnalysis(id: number, analysis: any): Promise<any> {
-    return analysis;
+  async performRootCauseAnalysis(_id: number, _analysis: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: performRootCauseAnalysis');
   }
 
-  async linkCapaToOos(id: number, capa: any): Promise<any> {
-    return capa;
+  async linkCapaToOos(_id: number, _capa: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: linkCapaToOos');
   }
 
   // Batch Release methods
@@ -1460,32 +1468,42 @@ export class MemStorage {
     return undefined;
   }
 
-  async createBatchRelease(release: any): Promise<any> {
-    return release;
+  async createBatchRelease(_release: any): Promise<any> {
+    // Not implemented — must not echo a GMP batch-release record back as if
+    // persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createBatchRelease');
   }
 
-  async updateBatchRelease(id: number, release: any): Promise<any> {
-    return release;
+  async updateBatchRelease(_id: number, _release: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: updateBatchRelease');
   }
 
-  async reviewBatchRecord(id: number, review: any): Promise<any> {
-    return review;
+  async reviewBatchRecord(_id: number, _review: any): Promise<any> {
+    // Not implemented — must not fabricate that a GMP batch-record review was
+    // recorded (the prior stub echoed the request back). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: reviewBatchRecord');
   }
 
-  async generateCertificateOfAnalysis(id: number): Promise<any> {
-    return {};
+  async generateCertificateOfAnalysis(_id: number): Promise<any> {
+    // Not implemented — a Certificate of Analysis is a released GMP quality
+    // document and must never be fabricated (the prior stub returned {}).
+    throw new Error('NOT_IMPLEMENTED: generateCertificateOfAnalysis');
   }
 
   async getBatchGenealogy(id: number, _organizationId: number | string): Promise<any> {
     return {};
   }
 
-  async validateReleaseCriteria(id: number): Promise<any> {
-    return { valid: true };
+  async validateReleaseCriteria(_id: number): Promise<any> {
+    // Not implemented — must not return { valid: true } and falsely certify a
+    // batch meets release criteria (21 CFR Part 211 integrity). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: validateReleaseCriteria');
   }
 
-  async releaseBatch(id: number, params: any): Promise<any> {
-    return { released: true };
+  async releaseBatch(_id: number, _params: any): Promise<any> {
+    // Not implemented — must not report a GMP batch as released without a real
+    // disposition action (the prior stub returned { released: true }).
+    throw new Error('NOT_IMPLEMENTED: releaseBatch');
   }
 
   // QC Deviation methods
@@ -1502,20 +1520,22 @@ export class MemStorage {
     return undefined;
   }
 
-  async createQcDeviation(deviation: any): Promise<any> {
-    return deviation;
+  async createQcDeviation(_deviation: any): Promise<any> {
+    // Not implemented — a QC deviation is a regulated GMP record; must not echo
+    // the input back as if persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createQcDeviation');
   }
 
-  async updateQcDeviation(id: number, deviation: any): Promise<any> {
-    return deviation;
+  async updateQcDeviation(_id: number, _deviation: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: updateQcDeviation');
   }
 
-  async performImpactAssessment(id: number, assessment: any): Promise<any> {
-    return assessment;
+  async performImpactAssessment(_id: number, _assessment: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: performImpactAssessment');
   }
 
-  async linkCapaToDeviation(id: number, capa: any): Promise<any> {
-    return capa;
+  async linkCapaToDeviation(_id: number, _capa: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: linkCapaToDeviation');
   }
 
   async getDeviationTrending(params: any): Promise<any> {
@@ -1536,24 +1556,30 @@ export class MemStorage {
     return undefined;
   }
 
-  async createMicrobiologicalTest(test: any): Promise<any> {
-    return test;
+  async createMicrobiologicalTest(_test: any): Promise<any> {
+    // Not implemented — must not echo a microbiological test record back as if
+    // persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createMicrobiologicalTest');
   }
 
-  async updateMicrobiologicalTest(id: number, test: any): Promise<any> {
-    return test;
+  async updateMicrobiologicalTest(_id: number, _test: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: updateMicrobiologicalTest');
   }
 
   async getEnvironmentalMonitoringSchedule(params: any): Promise<any> {
     return { schedule: [] };
   }
 
-  async createEnvironmentalMonitoringSchedule(schedule: any): Promise<any> {
-    return schedule;
+  async createEnvironmentalMonitoringSchedule(_schedule: any): Promise<any> {
+    // Not implemented — must not echo an environmental-monitoring schedule back
+    // as if persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createEnvironmentalMonitoringSchedule');
   }
 
-  async recordMicrobiologicalResults(id: number, results: any): Promise<any> {
-    return results;
+  async recordMicrobiologicalResults(_id: number, _results: any): Promise<any> {
+    // Not implemented — must not report micro results as recorded when nothing
+    // was persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: recordMicrobiologicalResults');
   }
 
   // Reference Standard methods
@@ -1570,28 +1596,30 @@ export class MemStorage {
     return undefined;
   }
 
-  async createReferenceStandard(standard: any): Promise<any> {
-    return standard;
+  async createReferenceStandard(_standard: any): Promise<any> {
+    // Not implemented — a reference standard is a regulated GMP record; must not
+    // echo the input back as if persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createReferenceStandard');
   }
 
-  async updateReferenceStandard(id: number, standard: any): Promise<any> {
-    return standard;
+  async updateReferenceStandard(_id: number, _standard: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: updateReferenceStandard');
   }
 
-  async recordStandardUsage(id: number, usage: any): Promise<any> {
-    return usage;
+  async recordStandardUsage(_id: number, _usage: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: recordStandardUsage');
   }
 
   async getExpiringStandards(params: any): Promise<any[]> {
     return [];
   }
 
-  async qualifyReferenceStandard(id: number, qualification: any): Promise<any> {
-    return qualification;
+  async qualifyReferenceStandard(_id: number, _qualification: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: qualifyReferenceStandard');
   }
 
-  async disposeReferenceStandard(id: number, disposal: any): Promise<any> {
-    return disposal;
+  async disposeReferenceStandard(_id: number, _disposal: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: disposeReferenceStandard');
   }
 
   async getStandardUsageLogs(id: number, _organizationId: number | string): Promise<any[]> {
@@ -3553,20 +3581,26 @@ export class DatabaseStorage {
     return undefined;
   }
 
-  async createQcSpecification(spec: any): Promise<any> {
-    return spec;
+  async createQcSpecification(_spec: any): Promise<any> {
+    // Not implemented — must not echo the spec back as if it were created and
+    // persisted (the route would otherwise return 201 Created). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createQcSpecification');
   }
 
-  async updateQcSpecification(id: number, spec: any): Promise<any> {
-    return spec;
+  async updateQcSpecification(_id: number, _spec: any): Promise<any> {
+    // Not implemented — must not echo the spec back as if it were persisted
+    // (a 21 CFR Part 11 change-control fabrication). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: updateQcSpecification');
   }
 
   async createSpecificationVersion(
-    id: number,
-    changeReason: string,
-    changeDescription: string
+    _id: number,
+    _changeReason: string,
+    _changeDescription: string
   ): Promise<any> {
-    return {};
+    // Not implemented — must not report a versioned change-control record as
+    // created when nothing was persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createSpecificationVersion');
   }
 
   async getSpecificationVersions(id: number, _organizationId: number | string): Promise<any[]> {
@@ -3587,24 +3621,26 @@ export class DatabaseStorage {
     return undefined;
   }
 
-  async createOosInvestigation(investigation: any): Promise<any> {
-    return investigation;
+  async createOosInvestigation(_investigation: any): Promise<any> {
+    // Not implemented — an Out-of-Specification investigation is a regulated GMP
+    // record; must not echo the input back as if it were persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createOosInvestigation');
   }
 
-  async updateOosInvestigation(id: number, investigation: any): Promise<any> {
-    return investigation;
+  async updateOosInvestigation(_id: number, _investigation: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: updateOosInvestigation');
   }
 
-  async addOosTimelineEvent(id: number, event: any): Promise<any> {
-    return event;
+  async addOosTimelineEvent(_id: number, _event: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: addOosTimelineEvent');
   }
 
-  async performRootCauseAnalysis(id: number, analysis: any): Promise<any> {
-    return analysis;
+  async performRootCauseAnalysis(_id: number, _analysis: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: performRootCauseAnalysis');
   }
 
-  async linkCapaToOos(id: number, capa: any): Promise<any> {
-    return capa;
+  async linkCapaToOos(_id: number, _capa: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: linkCapaToOos');
   }
 
   // Batch Release methods
@@ -3620,32 +3656,42 @@ export class DatabaseStorage {
     return undefined;
   }
 
-  async createBatchRelease(release: any): Promise<any> {
-    return release;
+  async createBatchRelease(_release: any): Promise<any> {
+    // Not implemented — must not echo a GMP batch-release record back as if
+    // persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createBatchRelease');
   }
 
-  async updateBatchRelease(id: number, release: any): Promise<any> {
-    return release;
+  async updateBatchRelease(_id: number, _release: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: updateBatchRelease');
   }
 
-  async reviewBatchRecord(id: number, review: any): Promise<any> {
-    return review;
+  async reviewBatchRecord(_id: number, _review: any): Promise<any> {
+    // Not implemented — must not fabricate that a GMP batch-record review was
+    // recorded (the prior stub echoed the request back). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: reviewBatchRecord');
   }
 
-  async generateCertificateOfAnalysis(id: number): Promise<any> {
-    return {};
+  async generateCertificateOfAnalysis(_id: number): Promise<any> {
+    // Not implemented — a Certificate of Analysis is a released GMP quality
+    // document and must never be fabricated (the prior stub returned {}).
+    throw new Error('NOT_IMPLEMENTED: generateCertificateOfAnalysis');
   }
 
   async getBatchGenealogy(id: number, _organizationId: number | string): Promise<any> {
     return {};
   }
 
-  async validateReleaseCriteria(id: number): Promise<any> {
-    return { valid: true };
+  async validateReleaseCriteria(_id: number): Promise<any> {
+    // Not implemented — must not return { valid: true } and falsely certify a
+    // batch meets release criteria (21 CFR Part 211 integrity). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: validateReleaseCriteria');
   }
 
-  async releaseBatch(id: number, params: any): Promise<any> {
-    return { released: true };
+  async releaseBatch(_id: number, _params: any): Promise<any> {
+    // Not implemented — must not report a GMP batch as released without a real
+    // disposition action (the prior stub returned { released: true }).
+    throw new Error('NOT_IMPLEMENTED: releaseBatch');
   }
 
   // QC Deviation methods
@@ -3662,20 +3708,22 @@ export class DatabaseStorage {
     return undefined;
   }
 
-  async createQcDeviation(deviation: any): Promise<any> {
-    return deviation;
+  async createQcDeviation(_deviation: any): Promise<any> {
+    // Not implemented — a QC deviation is a regulated GMP record; must not echo
+    // the input back as if persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createQcDeviation');
   }
 
-  async updateQcDeviation(id: number, deviation: any): Promise<any> {
-    return deviation;
+  async updateQcDeviation(_id: number, _deviation: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: updateQcDeviation');
   }
 
-  async performImpactAssessment(id: number, assessment: any): Promise<any> {
-    return assessment;
+  async performImpactAssessment(_id: number, _assessment: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: performImpactAssessment');
   }
 
-  async linkCapaToDeviation(id: number, capa: any): Promise<any> {
-    return capa;
+  async linkCapaToDeviation(_id: number, _capa: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: linkCapaToDeviation');
   }
 
   async getDeviationTrending(params: any): Promise<any> {
@@ -3696,24 +3744,30 @@ export class DatabaseStorage {
     return undefined;
   }
 
-  async createMicrobiologicalTest(test: any): Promise<any> {
-    return test;
+  async createMicrobiologicalTest(_test: any): Promise<any> {
+    // Not implemented — must not echo a microbiological test record back as if
+    // persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createMicrobiologicalTest');
   }
 
-  async updateMicrobiologicalTest(id: number, test: any): Promise<any> {
-    return test;
+  async updateMicrobiologicalTest(_id: number, _test: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: updateMicrobiologicalTest');
   }
 
   async getEnvironmentalMonitoringSchedule(params: any): Promise<any> {
     return { schedule: [] };
   }
 
-  async createEnvironmentalMonitoringSchedule(schedule: any): Promise<any> {
-    return schedule;
+  async createEnvironmentalMonitoringSchedule(_schedule: any): Promise<any> {
+    // Not implemented — must not echo an environmental-monitoring schedule back
+    // as if persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createEnvironmentalMonitoringSchedule');
   }
 
-  async recordMicrobiologicalResults(id: number, results: any): Promise<any> {
-    return results;
+  async recordMicrobiologicalResults(_id: number, _results: any): Promise<any> {
+    // Not implemented — must not report micro results as recorded when nothing
+    // was persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: recordMicrobiologicalResults');
   }
 
   // Reference Standard methods
@@ -3730,28 +3784,30 @@ export class DatabaseStorage {
     return undefined;
   }
 
-  async createReferenceStandard(standard: any): Promise<any> {
-    return standard;
+  async createReferenceStandard(_standard: any): Promise<any> {
+    // Not implemented — a reference standard is a regulated GMP record; must not
+    // echo the input back as if persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createReferenceStandard');
   }
 
-  async updateReferenceStandard(id: number, standard: any): Promise<any> {
-    return standard;
+  async updateReferenceStandard(_id: number, _standard: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: updateReferenceStandard');
   }
 
-  async recordStandardUsage(id: number, usage: any): Promise<any> {
-    return usage;
+  async recordStandardUsage(_id: number, _usage: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: recordStandardUsage');
   }
 
   async getExpiringStandards(params: any): Promise<any[]> {
     return [];
   }
 
-  async qualifyReferenceStandard(id: number, qualification: any): Promise<any> {
-    return qualification;
+  async qualifyReferenceStandard(_id: number, _qualification: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: qualifyReferenceStandard');
   }
 
-  async disposeReferenceStandard(id: number, disposal: any): Promise<any> {
-    return disposal;
+  async disposeReferenceStandard(_id: number, _disposal: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: disposeReferenceStandard');
   }
 
   async getStandardUsageLogs(id: number, _organizationId: number | string): Promise<any[]> {

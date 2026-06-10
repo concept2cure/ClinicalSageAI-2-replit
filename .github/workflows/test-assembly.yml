@@ -12,6 +12,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    # `secrets` cannot be referenced from a step-level `if:` (it raises
+    # "Unrecognized named-value: 'secrets'" and fails the workflow at
+    # startup). Surfacing presence through a job-level `env` — which CAN
+    # read `secrets` — lets the optional DB steps gate on `env` instead.
+    env:
+      HAS_TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL != '' }}
+
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js
@@ -23,12 +30,12 @@ jobs:
       - name: Run unit + route tests
         run: npx vitest run --run
       - name: Check assembly_docs table (optional)
-        if: ${{ secrets.TEST_DATABASE_URL != '' }}
+        if: ${{ env.HAS_TEST_DATABASE_URL == 'true' }}
         env:
           DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
         run: node scripts/check_assembly_docs.mjs
       - name: E2E smoke test (optional)
-        if: ${{ secrets.TEST_DATABASE_URL != '' }}
+        if: ${{ env.HAS_TEST_DATABASE_URL == 'true' }}
         env:
           TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
         run: node scripts/e2e_smoke_assembly.mjs

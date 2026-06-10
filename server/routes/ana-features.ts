@@ -1883,7 +1883,7 @@ router.post(
       }
 
       // Filter sections relevant to the requested submission type (if provided)
-      let affectedSections = guidance.affectedSections;
+      const affectedSections = guidance.affectedSections;
       if (submissionType) {
         const normalizedType = submissionType.toUpperCase().replace('-', '');
         if (!guidance.submissionTypes.includes(normalizedType)) {
