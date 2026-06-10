@@ -1,0 +1,37 @@
+{
+  "actions": {
+    "save": "저장",
+    "cancel": "취소",
+    "close": "닫기",
+    "next": "다음",
+    "previous": "이전",
+    "delete": "삭제",
+    "continue": "계속",
+    "back": "뒤로",
+    "search": "검색"
+  },
+  "density": {
+    "label": "표시 밀도",
+    "compact": "좁게",
+    "comfortable": "보통",
+    "spacious": "넓게"
+  },
+  "topbar": {
+    "notifications": "알림",
+    "help": "도움말",
+    "askAna": "AnA에게 질문하거나 이동…",
+    "command": "명령",
+    "activeProject": "활성 프로젝트",
+    "noProjects": "프로젝트 없음",
+    "selectProject": "프로젝트 선택",
+    "filter": "필터",
+    "clientType": "고객 유형",
+    "pharma": "제약",
+    "biotech": "바이오테크",
+    "switchProgram": "프로그램 전환"
+  },
+  "language": {
+    "label": "언어",
+    "select": "언어 선택"
+  }
+}

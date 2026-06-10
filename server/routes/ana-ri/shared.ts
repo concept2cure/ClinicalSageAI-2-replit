@@ -123,4 +123,6 @@ export const VALID_LANGUAGES: Set<string> = new Set<string>([
   'de',
   'ja',
   'zh',
+  'ko',
+  'es',
 ]);

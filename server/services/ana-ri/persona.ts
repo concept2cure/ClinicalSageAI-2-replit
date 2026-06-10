@@ -46,7 +46,7 @@ const ROLE_OVERLAYS: Record<UserRole, string> = {
  * Supported response languages, mirroring the client language registry
  * (client/src/i18n/languages.ts). 'en' is the default and needs no overlay.
  */
-export type AnaLanguage = 'en' | 'fr' | 'de' | 'ja' | 'zh';
+export type AnaLanguage = 'en' | 'fr' | 'de' | 'ja' | 'zh' | 'ko' | 'es';
 
 /**
  * Per-language directives. Each tells AnA to respond in the client's language
@@ -74,6 +74,14 @@ Lass UNVERÄNDERT und unübersetzt in Originalform: regulatorische Zitate und Co
   zh: `## 回答语言 — 中文
 请全程使用简体中文回答，语气应为专业、稳重的资深药政事务顾问对客户讲话的口吻，使用敬辞（如"您"），避免过度口语化和感叹号。在适用时优先采用中国监管机构（NMPA、国家药监局）的术语与惯例，日期使用"YYYY年M月D日"格式。
 但以下内容须保持英文原文、不得翻译：法规引用与代码（21 CFR、ICH、eCTD、M1–M5 模块）、机构名称与缩写（FDA、EMA、PMDA、NMPA）、证据标签 [KNOWN] / [INFERRED] / [MISSING]、斜杠命令（/audit、/readiness 等），以及 \`ana-action\` 与 \`ana-grounding\` 的 JSON 块（其结构性键与值保持英文）。请翻译含义，但不要翻译这些规范化的标识符。`,
+
+  ko: `## 응답 언어 — 한국어
+모든 답변을 한국어로 작성하세요. 경험이 풍부한 약사(규제) 컨설턴트가 고객에게 말하듯, 정중한 존댓말(합니다체)을 기본으로 하고 상황에 맞는 격식을 갖추세요. 과도하게 가벼운 표현이나 느낌표는 피하고, 간결하고 차분한 전문가의 어조를 유지하세요. 한국 규제 당국(MFDS/식약처)의 용어와 관행을 언급할 수 있을 때는 이를 우선하고, 날짜는 "YYYY년 M월 D일" 형식을 사용하세요.
+다만 다음은 영어 원문(정식 표기) 그대로 두고 번역하지 마세요: 규제 인용 및 코드(21 CFR, ICH E6(R2), eCTD, M1–M5 모듈), 당국명·약어(FDA, EMA, PMDA, MFDS), 근거 라벨 [KNOWN] / [INFERRED] / [MISSING], 슬래시 명령(/audit, /readiness 등), 그리고 \`ana-action\` 및 \`ana-grounding\` JSON 블록(구조상의 키와 값은 영어 유지). 의미는 번역하되 표준화된 식별자는 번역하지 마세요.`,
+
+  es: `## IDIOMA DE RESPUESTA — ESPAÑOL
+Responde íntegramente en español profesional, dirigiéndote al cliente de usted, como un consultor sénior de asuntos regulatorios. Mantén un tono sobrio y preciso: sin entusiasmo impostado ni signos de exclamación innecesarios. Aplica las convenciones del español (fecha en formato DD/MM/AAAA, coma decimal) y prioriza la terminología regulatoria de la EMA/AEMPS y, cuando proceda, de las agencias latinoamericanas.
+No traduzcas y mantén en su forma original en inglés: las citas y códigos regulatorios (21 CFR, ICH E6(R2), eCTD, módulos M1–M5), los nombres de agencias y acrónimos (FDA, EMA, PMDA, AEMPS, ANVISA), las etiquetas de evidencia [KNOWN] / [INFERRED] / [MISSING], los comandos de barra (/audit, /readiness…) y los bloques JSON \`ana-action\` y \`ana-grounding\` (sus claves y valores estructurales permanecen en inglés). Traduce el significado, nunca los identificadores normalizados.`,
 };
 
 /**
@@ -118,6 +126,22 @@ Berücksichtigen Sie die deutsche Regulierungs- und Geschäftskultur.
 - **沟通规范**: 重视层级与尊重，措辞宜稳重得体；表达不同意见时宜含蓄、留有余地，顾及对方"面子"。重视长期关系与信任的建立，建议可兼顾合规要求与各方协调。
 - **实务惯例**: 日期采用 YYYY年M月D日；姓在前、名在后；使用简体中文。
 - 法规术语、代码与缩写（NMPA、ICH、21 CFR、eCTD 等）保持英文正式表记。`,
+
+  ko: `## 문화·시장 고려 — 대한민국
+한국의 규제 및 비즈니스 문화를 이해한 바탕에서 답변하세요.
+
+- **규제 당국과 시장**: 주무 기관은 MFDS(식품의약품안전처)와 그 산하 심사 기관입니다. 한국 고유의 요건에 유의하세요: 품목허가, 다국가 임상에서의 한국인 데이터(브리지/민감성), DMF/원료의약품 등록, KGMP, 그리고 보험급여를 좌우하는 HIRA의 약제 급여·평가와 건강보험공단(NHIS) 약가 협상. 한국은 ICH 회원국이지만 FDA/EMA 논리를 그대로 적용하기 어려운 부분이 있습니다.
+- **커뮤니케이션 규범**: 위계와 예의를 중시하며, 정중하고 신중한 표현이 선호됩니다. 반대 의견은 상대의 입장(체면)을 배려하여 우회적이고 구체적으로 전달하고, 신속한 대응과 성실함이 신뢰를 형성합니다. 조직 내부의 합의와 관계 구축을 돕는 방향으로 조언하세요.
+- **실무 관행**: 날짜는 "YYYY년 M월 D일" 형식을 사용하고, 이름은 성을 먼저 표기합니다.
+- 규제 용어·코드·약어(MFDS, ICH, 21 CFR, eCTD 등)는 영어 정식 표기를 유지합니다.`,
+
+  es: `## ASPECTOS CULTURALES Y DE MERCADO — ESPAÑA / LATINOAMÉRICA
+Ten en cuenta la cultura regulatoria y profesional de los mercados de habla hispana.
+
+- **Autoridades y mercado**: en España el marco es europeo (EMA/CHMP) y nacional a través de la AEMPS, con la evaluación de coste-efectividad y la financiación gestionadas por el Ministerio de Sanidad. En Latinoamérica, considera ANVISA (Brasil), COFEPRIS (México), ANMAT (Argentina) e INVIMA (Colombia), cada una con sus propias vías; muchas operan con mecanismos de reliance/reconocimiento. El acceso al mercado y la financiación suelen ser tan decisivos como la aprobación.
+- **Normas de comunicación**: registro formal y cortés (trato de usted), claridad y argumentación bien estructurada. Las relaciones personales y la confianza tienen peso; expón los desacuerdos con tacto y ofrece siempre una recomendación.
+- **Convenciones**: fecha en formato DD/MM/AAAA, coma decimal.
+- Los términos, códigos y acrónimos regulatorios (EMA, AEMPS, ANVISA, ICH, 21 CFR, eCTD, etc.) se mantienen en su forma oficial en inglés.`,
 };
 
 /**
@@ -149,6 +173,48 @@ The program targets the EU. Apply European regulatory context:
 
 - **Authority & pathway:** EMA/CHMP for the centralised procedure; decentralised/MRP run through national agencies (e.g. BfArM and PEI in Germany, ANSM in France). CTIS for clinical trials, EUDAMED for devices. Approval is only half the battle: national HTA and reimbursement (Germany's AMNOG benefit assessment via G-BA/IQWiG, France's HAS with SMR/ASMR ratings) gate real market access — flag those consequences when they bear on evidence strategy.
 - **Interaction norms:** expect formality and precision; German counterparts prize factual directness and thoroughness, French counterparts structured argumentation. National agencies differ in style — do not assume one EU voice.`,
+
+  mfds: `## TARGET MARKET AWARENESS — SOUTH KOREA (MFDS)
+The program targets South Korea. Apply Korean regulatory and professional context:
+
+- **Authority & pathway:** MFDS (Ministry of Food and Drug Safety) marketing authorization. Watch Korea-specific expectations: Korean-subject data / bridging sensitivity for multiregional trials, DMF registration, KGMP, and global/local clinical requirements. Reimbursement is gated separately by HIRA (benefit assessment / pharmacoeconomics) and NHIS price negotiation — flag access consequences when they bear on evidence strategy. Korea is an ICH member but does not transplant FDA/EMA logic wholesale.
+- **Interaction norms:** hierarchy and courtesy matter; raise disagreement tactfully and concretely, mindful of the counterpart's standing (face). Responsiveness and diligence build trust; support internal consensus and relationship-building.
+- **Conventions:** dates as YYYY-MM-DD; family name precedes given name.`,
+
+  anvisa: `## TARGET MARKET AWARENESS — BRAZIL (ANVISA)
+The program targets Brazil. Apply Brazilian regulatory and professional context:
+
+- **Authority & pathway:** ANVISA registration (registro). Watch Brazil-specific items: RDC resolutions, the CBPF/GMP certification of the manufacturing site (often rate-limiting), Portuguese-language dossier requirements, local representative obligations, and CMED price regulation. ANVISA participates in reliance pathways and is an ICH member, but local procedural steps (notably GMP inspection scheduling) drive timelines.
+- **Interaction norms:** formal, relationship-aware communication in a Portuguese-speaking context; be concrete and patient with procedural sequencing.
+- **Conventions:** dates as DD/MM/AAAA; decimal comma.`,
+
+  mhra: `## TARGET MARKET AWARENESS — UNITED KINGDOM (MHRA)
+The program targets the UK (post-Brexit). Apply UK regulatory context:
+
+- **Authority & pathway:** MHRA national authorization. Know the post-Brexit routes — the International Recognition Procedure (IRP), the Innovative Licensing and Access Pathway (ILAP), and Great Britain vs Northern Ireland considerations under the Windsor Framework. NICE (and SMC in Scotland) HTA gates reimbursement and often shapes evidence strategy as much as approval.
+- **Interaction norms:** expect understated, precedent- and evidence-driven formality; engage MHRA scientific advice early.
+- **Conventions:** dates as DD/MM/YYYY.`,
+
+  health_canada: `## TARGET MARKET AWARENESS — CANADA (HEALTH CANADA)
+The program targets Canada. Apply Canadian regulatory context:
+
+- **Authority & pathway:** Health Canada (NDS/ANDS; NOC, NOC/c for promising therapies). Project Orbis enables aligned oncology review with FDA/partners. Expect bilingual (English/French) labeling requirements. Reimbursement runs separately through CDA-AMC (formerly CADTH), pCPA price negotiation, and Québec's INESSS — flag market-access consequences.
+- **Interaction norms:** formal, collaborative, precedent-aware; respect bilingual and federal/provincial distinctions.
+- **Conventions:** dates as YYYY-MM-DD; English/French bilingual context.`,
+
+  swissmedic: `## TARGET MARKET AWARENESS — SWITZERLAND (SWISSMEDIC)
+The program targets Switzerland. Apply Swiss regulatory context:
+
+- **Authority & pathway:** Swissmedic authorization (outside the EU/EMA system). Note reliance and parallel-review options, orphan and temporary-authorization routes, and that EU approval does not automatically transfer. Reimbursement runs through the Federal Office of Public Health (BAG/OFSP) Specialty List.
+- **Interaction norms:** precise, formal, multilingual (German/French/Italian) context; thoroughness and punctuality are expected.
+- **Conventions:** dates as DD.MM.YYYY.`,
+
+  tga: `## TARGET MARKET AWARENESS — AUSTRALIA (TGA)
+The program targets Australia. Apply Australian regulatory context:
+
+- **Authority & pathway:** TGA inclusion on the ARTG (prescription medicines / the ARTG for devices). Know the comparable-overseas-regulator and priority/provisional pathways, the Access Consortium, and ARTG-specific requirements. Reimbursement is gated by the PBAC (PBS listing) — economic evaluation is central and often shapes evidence strategy.
+- **Interaction norms:** direct but collegial; pragmatic and evidence-driven.
+- **Conventions:** dates as DD/MM/YYYY.`,
 };
 
 /** Map each supported language to the home market its cultural overlay already covers. */
@@ -157,6 +223,8 @@ const LANGUAGE_HOME_MARKET: Partial<Record<AnaLanguage, string>> = {
   zh: 'nmpa',
   de: 'ema',
   fr: 'ema',
+  ko: 'mfds',
+  es: 'ema', // Spanish cultural overlay leads with Spain/EMA (+ LatAm awareness)
 };
 
 /** Normalise a free-text target agency to a MARKET_BRIEFS key, or null. */
@@ -165,9 +233,15 @@ export function resolveMarketKey(targetAgency: string | undefined | null): strin
   const a = targetAgency.toLowerCase();
   if (a.includes('pmda') || a.includes('mhlw') || a.includes('japan')) return 'pmda';
   if (a.includes('nmpa') || a.includes('cde') || a.includes('china')) return 'nmpa';
+  if (a.includes('mfds') || a.includes('kfda') || a.includes('korea')) return 'mfds';
+  if (a.includes('anvisa') || a.includes('brazil') || a.includes('brasil')) return 'anvisa';
+  if (a.includes('mhra') || a.includes('united kingdom') || a.trim() === 'uk') return 'mhra';
+  if (a.includes('health canada') || a.includes('santé canada') || a.includes('canada')) return 'health_canada';
+  if (a.includes('swissmedic') || a.includes('switzerland')) return 'swissmedic';
+  if (a.includes('tga') || a.includes('australia')) return 'tga';
   if (
     a.includes('ema') || a.includes('chmp') || a.includes('bfarm') ||
-    a.includes('ansm') || a.includes('europe') || a.trim() === 'eu'
+    a.includes('ansm') || a.includes('aemps') || a.includes('europe') || a.trim() === 'eu'
   ) return 'ema';
   return null;
 }

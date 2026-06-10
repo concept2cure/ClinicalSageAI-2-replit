@@ -555,6 +555,14 @@ describe('AnA RI Persona', () => {
 
     const zh = buildAnaRISystemPrompt({ language: 'zh' });
     expect(zh).toContain('回答语言 — 中文');
+
+    const ko = buildAnaRISystemPrompt({ language: 'ko' });
+    expect(ko).toContain('응답 언어 — 한국어');
+    expect(ko).toContain('존댓말'); // instructs polite Korean register
+
+    const es = buildAnaRISystemPrompt({ language: 'es' });
+    expect(es).toContain('IDIOMA DE RESPUESTA — ESPAÑOL');
+    expect(es).toContain('de usted'); // formal register
   });
 
   it('keeps regulatory identifiers canonical while localizing prose', () => {
@@ -587,6 +595,16 @@ describe('AnA RI Persona', () => {
     expect(fr).toContain('FRANCE');
     expect(fr).toContain('ANSM');
     expect(fr).toContain('HAS');
+
+    const ko = buildAnaRISystemPrompt({ language: 'ko' });
+    expect(ko).toContain('문화·시장 고려 — 대한민국');
+    expect(ko).toContain('MFDS');
+    expect(ko).toContain('HIRA'); // reimbursement gate
+
+    const es = buildAnaRISystemPrompt({ language: 'es' });
+    expect(es).toContain('ESPAÑA / LATINOAMÉRICA');
+    expect(es).toContain('AEMPS');
+    expect(es).toContain('ANVISA');
   });
 
   it('does not add any cultural overlay for English', () => {
@@ -617,6 +635,21 @@ describe('AnA RI Persona', () => {
     });
     expect(ema).toContain('TARGET MARKET AWARENESS — EUROPEAN UNION (EMA)');
     expect(ema).toContain('AMNOG');
+  });
+
+  it('covers additional non-US target markets by agency name', () => {
+    const cases: Array<[string, string]> = [
+      ['MFDS', 'SOUTH KOREA (MFDS)'],
+      ['ANVISA', 'BRAZIL (ANVISA)'],
+      ['MHRA', 'UNITED KINGDOM (MHRA)'],
+      ['Health Canada', 'CANADA (HEALTH CANADA)'],
+      ['Swissmedic', 'SWITZERLAND (SWISSMEDIC)'],
+      ['TGA', 'AUSTRALIA (TGA)'],
+    ];
+    for (const [agency, heading] of cases) {
+      const prompt = buildAnaRISystemPrompt({ language: 'en', projectContext: { targetAgency: agency } });
+      expect(prompt).toContain(`TARGET MARKET AWARENESS — ${heading}`);
+    }
   });
 
   it('skips the market brief when the language overlay already covers that market', () => {
