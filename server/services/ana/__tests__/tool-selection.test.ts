@@ -99,3 +99,36 @@ describe('getToolCatalog', () => {
     expect(categorizeTool('draft_quality_overall_summary_m2_3').id).toBe('cmc_quality');
   });
 });
+
+describe('selectToolsForTurn — reliability-aware deprioritization', () => {
+  const bridge = [{ name: 'list_platform_commands' }, { name: 'execute_platform_command' }];
+  const filler = Array.from({ length: 50 }, (_, i) => ({ name: `filler_${i}`, description: 'unrelated utility' }));
+  const tools = [
+    ...bridge,
+    { name: 'zebra_alpha', description: 'zebra analysis' },
+    { name: 'zebra_beta', description: 'zebra analysis' },
+    ...filler,
+  ];
+
+  it('keeps a healthy relevant tool over an unhealthy one when over the cap', () => {
+    const sel = selectToolsForTurn(tools, 'zebra', { maxTools: 3, deprioritize: new Set(['zebra_alpha']) });
+    const n = names(sel);
+    expect(n.has('zebra_beta')).toBe(true);
+    expect(n.has('zebra_alpha')).toBe(false);
+  });
+
+  it('without deprioritization, ranks purely by relevance (stable order)', () => {
+    const sel = selectToolsForTurn(tools, 'zebra', { maxTools: 3 });
+    expect(names(sel).has('zebra_alpha')).toBe(true);
+  });
+
+  it('never drops an always-on tool even if marked unhealthy (capability guarantee)', () => {
+    const sel = selectToolsForTurn(tools, 'zebra', {
+      maxTools: 3,
+      deprioritize: new Set(['execute_platform_command']),
+    });
+    const n = names(sel);
+    expect(n.has('execute_platform_command')).toBe(true);
+    expect(n.has('list_platform_commands')).toBe(true);
+  });
+});

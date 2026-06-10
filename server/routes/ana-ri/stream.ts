@@ -41,6 +41,7 @@ import {
   ALL_ANA_TOOLS,
 } from '../../services/ana/AnaToolDefinitions.js';
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
+import { getUnhealthyTools } from '../../services/ana/tool-telemetry.js';
 import { runAgenticToolLoop, capToolResultForModel, mapWithConcurrency, describeToolPlan, type ToolCall, type ToolResultEntry, type ModelTurn } from '../../services/ana/agentic-loop.js';
 import { buildTraceEntry, collectTracesFromHistory, formatTraceForContext, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
 import { runStreamPostProcessing } from './post-processing.js';
@@ -508,6 +509,9 @@ router.post('/stream', async (req: Request, res: Response) => {
         documentType: asStr(document_context),
         surface: asStr(intent_lens) ?? asStr(authoring_context),
       },
+      // Reliability-aware: trim currently-unhealthy tools first when over the cap
+      // (the always-on core + platform bridge are unaffected).
+      deprioritize: new Set(getUnhealthyTools().map(t => t.tool)),
     });
 
     const gwResponse = await gw.route({

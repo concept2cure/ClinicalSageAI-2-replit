@@ -65,6 +65,13 @@ export interface ToolSelectionOptions {
   context?: ToolSelectionContext;
   /** Tool names the user explicitly selected in the picker — always included. */
   pinned?: string[];
+  /**
+   * Tools currently observed to be unreliable (caller supplies this from live
+   * execution telemetry — keeps this module pure). They are sorted BELOW healthy
+   * tools so they are cut first when the surface exceeds `maxTools`, but are
+   * never removed from the always-on core (the capability guarantee holds).
+   */
+  deprioritize?: ReadonlySet<string>;
 }
 
 interface NamedTool {
@@ -129,11 +136,15 @@ export function selectToolsForTurn<T extends NamedTool>(
   const terms = tokenize(signal);
   if (terms.length === 0) return always; // no intent signal — bridge covers the rest
 
+  // Reliability-aware ranking: healthy tools rank ahead of currently-unhealthy
+  // ones (caller-supplied), and within each group by relevance score. So when
+  // the surface is over the cap, unhealthy tools are the first to be trimmed.
+  const deprioritize = opts.deprioritize;
   const scored = allTools
     .filter(t => t.name && !alwaysNames.has(t.name))
-    .map(t => ({ t, score: scoreTool(t, terms) }))
+    .map(t => ({ t, score: scoreTool(t, terms), healthy: !deprioritize?.has(t.name as string) }))
     .filter(x => x.score > 0)
-    .sort((a, b) => b.score - a.score);
+    .sort((a, b) => (a.healthy === b.healthy ? b.score - a.score : a.healthy ? -1 : 1));
 
   const room = Math.max(0, max - always.length);
   return [...always, ...scored.slice(0, room).map(x => x.t)];
