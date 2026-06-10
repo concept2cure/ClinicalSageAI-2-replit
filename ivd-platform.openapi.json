@@ -220,12 +220,18 @@
         }
       },
       "ReviewFinding": { "type": "object", "properties": { "severity": { "type": "string", "enum": ["major", "deficiency", "minor", "info"] }, "area": { "type": "string" }, "finding": { "type": "string" }, "recommendation": { "type": "string" }, "knowledgeRef": { "type": "string" } } },
+      "RemediationStep": { "type": "object", "properties": { "priority": { "type": "integer" }, "severity": { "type": "string" }, "area": { "type": "string" }, "action": { "type": "string" } } },
       "ReviewResult": {
         "type": "object",
         "properties": {
           "pathway": { "type": "string" },
+          "riskTier": { "type": "string", "enum": ["standard", "elevated", "highest"] },
           "findings": { "type": "array", "items": { "$ref": "#/components/schemas/ReviewFinding" } },
+          "strengths": { "type": "array", "items": { "type": "string" } },
           "counts": { "type": "object", "additionalProperties": { "type": "integer" } },
+          "readinessScore": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "estimatedReviewCycles": { "type": "integer" },
+          "remediationRoadmap": { "type": "array", "items": { "$ref": "#/components/schemas/RemediationStep" } },
           "verdict": { "type": "string", "enum": ["likely_acceptance", "additional_information_likely", "not_substantially_complete"] },
           "citations": { "type": "array", "items": { "type": "object" } }
         }
