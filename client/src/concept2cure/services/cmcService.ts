@@ -355,11 +355,12 @@ export interface CmcPortfolioRow {
   ir_overdue: number;
   obligations_open: number;
   obligations_overdue: number;
-  stability_cov_m: number;
-  m3_missing: number;
-  preflight_critical: number;
-  qc_alerts: number;
-  playbook_open: number;
+  /** Null when not yet computed/implemented server-side (never fabricated). */
+  stability_cov_m: number | null;
+  m3_missing: number | null;
+  preflight_critical: number | null;
+  qc_alerts: number | null;
+  playbook_open: number | null;
 }
 
 /** GET /api/cmc/module3-os/readiness/:projectId → data. */

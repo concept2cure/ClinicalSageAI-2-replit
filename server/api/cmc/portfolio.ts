@@ -60,12 +60,24 @@ router.get('/overview', async (req: Request, res: Response) => {
       )
     ).rows[0] || { n: 0, overdue: 0 };
 
-    // Simplified metrics - using mock data since tables may not exist yet
-    const cov = 0;
-    const missing = 0;
-    const seqCrit = 0;
-    const pbOpen = 0;
-    const qcOpen = 0;
+    // Real Module 3 metrics from reg_m3_sections (same source the RPI
+    // engine uses). Preflight / playbook / QC alert counts have no backing
+    // tables yet — they are null (not yet implemented), never a fake zero.
+    const m3 = (
+      await q(
+        `select count(*) filter (where status not in ('READY','LOCKED'))::int as missing,
+                (select (up_stability->>'coverage_months')::int
+                   from reg_m3_sections
+                  where sub_id = $1 and code like '3.2.P.8%' limit 1) as cov
+           from reg_m3_sections where sub_id = $1`,
+        [s.sub_id]
+      )
+    ).rows[0] || { missing: null, cov: null };
+    const cov = m3.cov ?? null;
+    const missing = m3.missing ?? null;
+    const seqCrit = null;
+    const pbOpen = null;
+    const qcOpen = null;
 
     const rpi = await computeRPI(s.sub_id);
 
@@ -167,22 +179,50 @@ router.get('/export.csv', async (req: Request, res: Response) => {
 
     const rows = [];
     for (const s of subs) {
+      // Same real metrics as GET /overview (previously this export wrote
+      // hardcoded zeros for every metric column, including ones the
+      // overview endpoint already computed from real tables).
       const rpi = await computeRPI(s.sub_id);
+      const ir = (
+        await q(
+          `select count(*)::int n, sum(case when due_date < now() then 1 else 0 end)::int overdue
+             from reg_questions where sub_id=$1 and status in ('OPEN','DRAFTED','IN_REVIEW')`,
+          [s.sub_id]
+        )
+      ).rows[0] || { n: 0, overdue: 0 };
+      const obl = (
+        await q(
+          `select count(*)::int n, sum(case when due_date < now() then 1 else 0 end)::int overdue
+             from reg_obligations where sub_id=$1 and status in ('OPEN','IN_PROGRESS')`,
+          [s.sub_id]
+        )
+      ).rows[0] || { n: 0, overdue: 0 };
+      const m3 = (
+        await q(
+          `select count(*) filter (where status not in ('READY','LOCKED'))::int as missing,
+                  (select (up_stability->>'coverage_months')::int
+                     from reg_m3_sections
+                    where sub_id = $1 and code like '3.2.P.8%' limit 1) as cov
+             from reg_m3_sections where sub_id = $1`,
+          [s.sub_id]
+        )
+      ).rows[0] || { missing: null, cov: null };
       rows.push({
         sub_id: s.sub_id,
         product_id: s.product_id,
         region: s.region,
         app_type: s.app_type,
         rpi: rpi.rpi,
-        ir_open: 0,
-        ir_overdue: 0,
-        obligations_open: 0,
-        obligations_overdue: 0,
-        stability_cov_m: 0,
-        m3_missing: 0,
-        preflight_critical: 0,
-        qc_alerts: 0,
-        playbook_open: 0,
+        ir_open: ir.n,
+        ir_overdue: ir.overdue,
+        obligations_open: obl.n,
+        obligations_overdue: obl.overdue,
+        stability_cov_m: m3.cov ?? '',
+        m3_missing: m3.missing ?? '',
+        // Not yet implemented — empty cells, never fake zeros.
+        preflight_critical: '',
+        qc_alerts: '',
+        playbook_open: '',
       });
     }
 
