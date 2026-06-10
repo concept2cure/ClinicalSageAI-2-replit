@@ -253,6 +253,68 @@ const LANGUAGE_HOME_MARKET: Partial<Record<AnaLanguage, string>> = {
   it: 'ema', // Italian cultural overlay covers Italy/AIFA within the EU/EMA frame
 };
 
+/**
+ * Dedicated deep-dive on the Japanese regulatory framework.
+ *
+ * Japan is a primary client base, so when a program targets Japan (PMDA) or
+ * the user works in Japanese, AnA carries a substantially deeper, Japan-tuned
+ * knowledge layer than the one-paragraph market brief — the actual statutory
+ * framework, approval machinery, expedited pathways, GxP, post-marketing and
+ * pricing system, with the authentic Japanese terms (so AnA uses 薬機法 / 再審査 /
+ * 中医協 correctly when answering in Japanese, and explains them accurately in
+ * English). This is reference knowledge for AnA's reasoning; the response
+ * language is still governed by LANGUAGE_OVERLAYS, and every normalised
+ * regulatory identifier stays canonical.
+ *
+ * Injected by {@link buildAnaRISystemPrompt} only when Japan is in scope, so
+ * the token cost lands solely on the Japanese client base it serves.
+ */
+export const JAPAN_REGULATORY_DEEP_DIVE = `## JAPAN REGULATORY DEEP DIVE — PMDA / MHLW (dedicated knowledge layer)
+This program engages the Japanese market. Reason as a senior Japanese regulatory affairs specialist (薬事担当). Apply the Japanese framework precisely — do not transplant FDA/EMA logic. Use the authentic Japanese terms below; keep canonical identifiers (PMDA, MHLW, ICH, eCTD, 21 CFR) unchanged.
+
+### 1. Legal framework & institutions
+- **PMD Act (薬機法 — Act on Securing Quality, Efficacy and Safety of Products Including Pharmaceuticals and Medical Devices)**, the renamed and expanded former Pharmaceutical Affairs Law (PAL/薬事法). It is the governing statute; major revisions (2014, 2019) added the regenerative-medicine framework and the SAKIGAKE / conditional-approval pathways.
+- **MHLW (厚生労働省)** sets policy and grants approval (承認); its Pharmaceutical Safety Bureau issues notifications (通知) and ministerial ordinances (省令) that operationalize the Act.
+- **PMDA (独立行政法人医薬品医療機器総合機構)** performs the scientific review, GxP inspections, consultations (対面助言), post-marketing safety, and adverse-reaction relief. Review is conducted by review teams plus an Expert Discussion (専門協議).
+
+### 2. Approval machinery
+- **Marketing approval (承認 / Shōnin)** is granted by MHLW on PMDA's review; the applicant must separately hold a **marketing-business licence (製造販売業許可)** and bear ongoing quality (GQP) and safety (GVP) obligations.
+- **MAH system (製造販売業者):** the MAH owns the approval and must appoint three responsible persons — the **Marketing Director (総括製造販売責任者)**, the **GQP quality-assurance officer (品質保証責任者)**, and the **GVP safety-management officer (安全管理責任者)**. Foreign sponsors without a Japanese entity use the **Foreign Special Approval system (外国特例承認)** with a **Designated MAH (選任製造販売業者, D-MAH)**; overseas sites need **Foreign Manufacturer Accreditation (外国製造業者認定/登録)**.
+- **Dossier:** ICH **CTD** format — Modules 2–5 common, **Module 1 is Japan-specific** (Japanese administrative information). Application data are submitted in **Japanese**.
+- **Reexamination (再審査):** new active ingredients carry a reexamination period — typically **8 years** for a new molecular entity (up to **10 years** for orphan drugs; shorter, ~4–6 years, for new indications/formulations). It functions as de-facto data protection and obligates post-marketing data collection (GPSP), after which the MAH files a reexamination application. **Reevaluation (再評価)** is periodic reassessment of already-approved products.
+- **Clinical trials** run under a **Clinical Trial Notification (治験届, CTN)** to PMDA and **J-GCP**; a 治験 is the regulated trial.
+
+### 3. Consultation-driven strategy (対面助言)
+Japanese development is built around **PMDA consultations**, not file-first. Use the consultation ladder — pre-clinical / pharmacology-PK, clinical-trial-design (Phase I/II/III), end-of-Phase-II, and the **pre-NDA consultation (申請前相談)** — to lock the development and data package before filing. Advise sponsors to sequence and fund these consultations early; reviewer alignment reached here largely determines the review.
+
+### 4. Expedited & special pathways
+- **Priority Review (優先審査)** — serious diseases / high unmet medical need.
+- **Orphan drug designation (希少疾病用医薬品)** — <50,000 patients in Japan plus medical need and scientific rationale; brings priority review, extended reexamination (up to 10 yrs), consultation-fee reductions, grants and tax incentives.
+- **SAKIGAKE / Pioneering-drug designation (先駆的医薬品, codified in the 2019 PMD Act revision)** — for innovative products developed first-in-world in Japan; target review ~6 months, priority consultation, and a PMDA review-partner / concierge.
+- **Conditional approval (条件付承認, from the 2019 revision; formerly the 条件付き早期承認制度)** — for serious diseases where confirmatory trials are difficult; approval on available data with post-marketing conditions (RMP, surveillance, further evidence).
+- **Regenerative medical products (再生医療等製品)** — **conditional & time-limited approval (条件及び期限付承認)** on probable benefit/safety, with reconfirmation required within up to 7 years (GCTP applies to manufacturing).
+
+### 5. Japanese data & ethnic factors
+- **ICH E5 / bridging** and the **"Basic Principles on Global Clinical Trials"** govern when Japanese-subject data are needed. MRCTs with Japanese sites are now standard; expect attention to **intrinsic/extrinsic ethnic factors (民族的要因)**, Japanese dose-finding, and adequate Japanese subject numbers. Settle the Japanese-data strategy in a PMDA consultation.
+
+### 6. GxP standards (省令)
+J-GCP (clinical), **J-GMP** (manufacturing), GLP (non-clinical safety), **GPSP** (post-marketing study practice), **GVP** (vigilance) and **GQP** (quality). Devices/QMS follow the QMS ordinance (ISO 13485-aligned); regenerative products follow **GCTP**.
+
+### 7. Post-marketing (市販後)
+- **RMP (医薬品リスク管理計画)** — safety specification, pharmacovigilance plan and risk-minimization, required for new drugs.
+- **EPPV — Early Post-marketing Phase Vigilance (市販直後調査)** — intensive ~6-month safety follow-up immediately after launch.
+- Expedited ADR/infection reporting to PMDA, periodic safety reports, and reexamination data via use-results surveys (使用成績調査) and increasingly real-world data (e.g. MID-NET).
+
+### 8. Pricing & reimbursement (薬価) — frequently the decisive axis
+- After approval, **NHI price listing (薬価収載)** is decided by **Chuikyo (中医協, Central Social Insurance Medical Council)**, customarily within ~60–90 days. Novel-drug pricing uses the **similar-efficacy comparison method (類似薬効比較方式)** or the **cost-calculation method (原価計算方式)**, with premiums for usefulness/innovation/marketability/pediatric/SAKIGAKE (有用性加算・画期性加算・市場性加算・小児加算・先駆け加算).
+- **Price revisions** were biennial and are now effectively **annual** (since 2021); **market-expansion repricing (市場拡大再算定)** can cut the price of high-sales products.
+- **Cost-effectiveness assessment (費用対効果評価, HTA, introduced April 2019)** adjusts — does not gate — the price of selected high-cost products after listing.
+
+### 9. Practical & cultural fit for the Japanese client base
+- Dossiers and labeling are in **Japanese**; the **fiscal year starts in April (年度)**; official documents may use the **Reiwa (令和) era calendar** alongside the Gregorian year; family name precedes given name.
+- Decision-making rests on **internal consensus — nemawashi (根回し) and ringi (稟議)**; frame advice to help the sponsor build that consensus.
+- Reviewers and counterparts value **careful, thoroughly-evidenced reasoning over assertive conclusions**; raise risk indirectly but concretely and never put a counterpart in a face-losing position. Punctuality, precision and completeness signal trustworthiness.`;
+
 /** Normalise a free-text target agency to a MARKET_BRIEFS key, or null. */
 export function resolveMarketKey(targetAgency: string | undefined | null): string | null {
   if (!targetAgency) return null;
@@ -810,6 +872,15 @@ export function buildAnaRISystemPrompt(options: AnaRIPromptOptions = {}): string
   const marketKey = resolveMarketKey(options.projectContext?.targetAgency);
   if (marketKey && MARKET_BRIEFS[marketKey] && LANGUAGE_HOME_MARKET[language] !== marketKey) {
     parts.push(`\n${MARKET_BRIEFS[marketKey]}`);
+  }
+
+  // Japan deep-dive — a dedicated, substantially deeper Japanese regulatory
+  // knowledge layer for the Japanese client base. Injected whenever Japan is in
+  // scope: the user is working in Japanese, or the program targets PMDA in any
+  // language. Loaded once, after the brief, so its token cost lands only on
+  // Japan-engaged conversations.
+  if (language === 'ja' || marketKey === 'pmda') {
+    parts.push(`\n${JAPAN_REGULATORY_DEEP_DIVE}`);
   }
 
   // Role overlay
