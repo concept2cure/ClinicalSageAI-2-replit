@@ -61,6 +61,9 @@ import { simulateIvdReview } from '../services/regulatory/reviewer-simulation-iv
 import { simulatePortfolio } from '../services/regulatory/portfolio-simulation';
 import { sensitivityAnalysis } from '../services/regulatory/decision-analytics';
 import { buildProgramPlan, compareProgramScenarios } from '../services/regulatory/program-plan';
+import { expectedMonetaryValue, compareInvestmentBranches } from '../services/regulatory/decision-tree';
+import { benchmarkProgram } from '../services/regulatory/benchmarking';
+import { generateExecutiveBrief } from '../services/regulatory/executive-brief';
 import { diagnosticAccuracyMonteCarlo, reviewOutcomeMonteCarlo, timeToMarketMonteCarlo } from '../services/stats/monte-carlo';
 import { saveAssessment } from '../services/regulatory/ivd-assessments.service';
 import { corpusVersion } from '../services/ivd-knowledge/knowledge.service';
@@ -278,6 +281,57 @@ router.post('/scenarios/compare', (req: Request, res: Response) => {
   }
   try {
     res.json(compareProgramScenarios(b.scenarios));
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+  }
+});
+
+// ── Executive brief (Markdown artifact from a program plan) ──────────────────
+router.post('/program-plan/brief', async (req: Request, res: Response) => {
+  const b = req.body ?? {};
+  const PATHWAYS = ['510k', 'de_novo', 'pma', 'eu_ivdr'];
+  const ASSAY = ['quantitative', 'qualitative', 'ihc', 'ngs', 'molecular'];
+  if (!PATHWAYS.includes(b.pathway)) return res.status(422).json({ error: `pathway must be one of: ${PATHWAYS.join(', ')}` });
+  if (!ASSAY.includes(b.assayType)) return res.status(422).json({ error: `assayType must be one of: ${ASSAY.join(', ')}` });
+  try {
+    const plan = buildProgramPlan(b);
+    const brief = generateExecutiveBrief(plan);
+    const savedId = await maybeSave(req, 'other', b, { device: brief.device, markdown: brief.markdown }, plan.executiveSummary.verdict);
+    res.json(savedId ? { ...brief, savedAssessmentId: savedId } : brief);
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+  }
+});
+
+// ── Expected monetary value (go/no-go economics) ────────────────────────────
+router.post('/decision/emv', (req: Request, res: Response) => {
+  try {
+    res.json(expectedMonetaryValue(req.body ?? {}));
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+  }
+});
+
+// ── Two-branch decision tree (submit now vs complete evidence) ──────────────
+router.post('/decision/go-no-go', (req: Request, res: Response) => {
+  const b = req.body ?? {};
+  if (typeof b.marketValueUsd !== 'number' || !b.now || !b.afterEvidence) {
+    return res.status(422).json({ error: 'marketValueUsd, now, and afterEvidence are required' });
+  }
+  try {
+    res.json(compareInvestmentBranches(b));
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+  }
+});
+
+// ── Benchmarking against pathway norms ──────────────────────────────────────
+router.post('/benchmark', (req: Request, res: Response) => {
+  const b = req.body ?? {};
+  const PATHWAYS = ['510k', 'de_novo', 'pma', 'eu_ivdr'];
+  if (!PATHWAYS.includes(b.pathway)) return res.status(422).json({ error: `pathway must be one of: ${PATHWAYS.join(', ')}` });
+  try {
+    res.json(benchmarkProgram(b));
   } catch (e) {
     res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
   }

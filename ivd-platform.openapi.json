@@ -137,6 +137,34 @@
         "responses": { "200": { "description": "Per-scenario summaries + composite ranking + recommendation" }, "422": { "$ref": "#/components/responses/ValidationError" } }
       }
     },
+    "/ivd-lifecycle/program-plan/brief": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "Executive brief (Markdown artifact) from a program plan",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["pathway", "assayType", "intendedUse"], "properties": { "deviceName": { "type": "string" }, "pathway": { "type": "string" }, "assayType": { "type": "string" }, "intendedUse": { "type": "string" }, "biomarker": { "type": "string" }, "evidence": { "type": "object" }, "seed": { "type": "integer" }, "save": { "type": "boolean" } } } } } },
+        "responses": { "200": { "description": "device + markdown + structured sections" }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
+    "/ivd-lifecycle/decision/emv": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "Expected monetary value (go/no-go economics)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["marketValueUsd", "probabilityOfSuccess", "costToCompleteUsd"], "properties": { "marketValueUsd": { "type": "number" }, "probabilityOfSuccess": { "type": "number" }, "costToCompleteUsd": { "type": "number" }, "timeToMarketYears": { "type": "number" }, "discountRate": { "type": "number" } } } } } },
+        "responses": { "200": { "description": "EMV/NPV + break-even probability + recommendation" }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
+    "/ivd-lifecycle/decision/go-no-go": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "Two-branch decision tree (submit now vs complete evidence)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["marketValueUsd", "now", "afterEvidence"], "properties": { "marketValueUsd": { "type": "number" }, "discountRate": { "type": "number" }, "now": { "type": "object" }, "afterEvidence": { "type": "object" } } } } } },
+        "responses": { "200": { "description": "Both branches' NPV + recommended branch + uplift" }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
+    "/ivd-lifecycle/benchmark": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "Benchmark readiness/timeline/cost against pathway norms",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["pathway"], "properties": { "pathway": { "type": "string" }, "readinessScore": { "type": "number" }, "timelineWeeks": { "type": "number" }, "costUsd": { "type": "number" } } } } } },
+        "responses": { "200": { "description": "Per-metric percentile/z-score/band + overall favorable percentile" }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
     "/ivd-lifecycle/evidence/sensitivity": {
       "post": {
         "tags": ["lifecycle"], "summary": "Evidence sensitivity / tornado + ROI ranking",
