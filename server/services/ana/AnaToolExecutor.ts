@@ -4325,14 +4325,19 @@ registerToolHandler('classify_post_submission_change', async (input) => {
 
 registerToolHandler('assess_device_evidence_structure', async (input) => {
   // Static structure + pure assessment — no tenant context required.
-  const document = input.document === 'cer' || input.document === 'per' ? input.document : '';
-  if (!document) return JSON.stringify({ error: "document must be one of: cer, per." });
+  const document = ['cer', 'per', 'rmf'].includes(input.document as string) ? (input.document as string) : '';
+  if (!document) return JSON.stringify({ error: "document must be one of: cer, per, rmf." });
   const present = Array.isArray(input.present_section_ids) ? (input.present_section_ids as string[]) : null;
   try {
     if (document === 'cer') {
       const m = await import('../market-specs/cer-structure.js');
       if (!present) return JSON.stringify({ ok: true, stages: m.CER_STAGES, sections: m.CER_SECTIONS });
       return JSON.stringify({ ok: true, assessment: m.assessCerStructure(present, { equivalenceClaimed: input.equivalence_claimed === true }) });
+    }
+    if (document === 'rmf') {
+      const m = await import('../market-specs/risk-management-structure.js');
+      if (!present) return JSON.stringify({ ok: true, sections: m.RMF_SECTIONS });
+      return JSON.stringify({ ok: true, assessment: m.assessRmfStructure(present) });
     }
     const m = await import('../market-specs/per-structure.js');
     if (!present) return JSON.stringify({ ok: true, pillars: m.PER_PILLARS, sections: m.PER_SECTIONS });
@@ -4370,6 +4375,42 @@ registerToolHandler('get_device_reviewer_checklist', async (input) => {
     return JSON.stringify({ ok: true, ...buildShadowReviewerChecklist(type as '510k' | 'de_novo' | 'pma' | 'cer' | 'per') });
   } catch (err) {
     return JSON.stringify({ error: `get_device_reviewer_checklist failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('get_biocompatibility_endpoints', async (input) => {
+  // Pure ISO 10993 matrix — no tenant context required.
+  const NATURES = ['skin', 'mucosal_membrane', 'breached_surface', 'blood_path_indirect', 'tissue_bone_dentin', 'circulating_blood', 'implant_tissue_bone', 'implant_blood'];
+  const DURATIONS = ['limited', 'prolonged', 'long_term'];
+  if (typeof input.nature !== 'string' || !NATURES.includes(input.nature)) return JSON.stringify({ error: `nature must be one of: ${NATURES.join(', ')}.` });
+  if (typeof input.duration !== 'string' || !DURATIONS.includes(input.duration)) return JSON.stringify({ error: `duration must be one of: ${DURATIONS.join(', ')}.` });
+  try {
+    const { requiredBiocompEndpoints } = await import('../market-specs/biocompatibility-matrix.js');
+    return JSON.stringify({ ok: true, ...requiredBiocompEndpoints(input.nature as never, input.duration as never) });
+  } catch (err) {
+    return JSON.stringify({ error: `get_biocompatibility_endpoints failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('build_device_blueprint', async (input) => {
+  // Orchestration of pure modules — no tenant context required.
+  const TYPES = ['510k', 'de_novo', 'pma', 'mdr_td', 'ivdr_td'];
+  if (typeof input.submission_type !== 'string' || !TYPES.includes(input.submission_type)) {
+    return JSON.stringify({ error: `submission_type must be one of: ${TYPES.join(', ')}.` });
+  }
+  try {
+    const { buildDeviceBlueprint } = await import('../market-specs/device-blueprint.js');
+    const blueprint = buildDeviceBlueprint({
+      submissionType: input.submission_type as never,
+      classification: (input.classification ?? undefined) as never,
+      contact: (input.contact ?? undefined) as never,
+      software: (input.software ?? undefined) as never,
+      present: (input.present ?? undefined) as never,
+      equivalenceClaimed: input.equivalence_claimed === true,
+    });
+    return JSON.stringify({ ok: true, ...blueprint });
+  } catch (err) {
+    return JSON.stringify({ error: `build_device_blueprint failed: ${err instanceof Error ? err.message : String(err)}` });
   }
 });
 

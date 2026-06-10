@@ -194,6 +194,16 @@ async function main() {
   const revBad = await c.req('GET', '/api/submissions/device/reviewer-checklist?type=zzz');
   ok('reviewer checklist rejects an unknown type (400)', revBad.status === 400, `got ${revBad.status}`);
 
+  // Biocompatibility (ISO 10993), software (IEC 62304), and the unified blueprint.
+  const bio = await c.req('POST', '/api/submissions/device/biocompatibility', { nature: 'implant_tissue_bone', duration: 'long_term' });
+  ok('biocompatibility returns endpoints incl. implantation', bio.status === 200 && Array.isArray(bio.json?.endpoints) && bio.json.endpoints.some((e) => e.id === 'implantation'), `status ${bio.status}`);
+  const sw = await c.req('POST', '/api/submissions/device/software/classify', { canContributeToDeathOrSeriousInjury: true });
+  ok('software classify returns Class C + deliverables', sw.status === 200 && sw.json?.class === 'C' && Array.isArray(sw.json?.deliverables), `status ${sw.status}`);
+  const bp = await c.req('POST', '/api/submissions/device/blueprint', { submissionType: '510k', classification: { framework: 'fda', facts: { fdaClass: 'II', predicateAvailable: true } }, software: { applicable: true, canContributeToNonSeriousInjury: true } });
+  ok('device blueprint assembles classification + evidence modules + reviewer', bp.status === 200 && bp.json?.classification?.pathway === '510k' && Array.isArray(bp.json?.evidenceModules) && bp.json?.reviewer?.questionCount > 0, `status ${bp.status}`);
+  const bpBad = await c.req('POST', '/api/submissions/device/blueprint', { submissionType: 'nope' });
+  ok('device blueprint rejects an unknown submission type (400)', bpBad.status === 400, `got ${bpBad.status}`);
+
   // Document template structures (canonical section skeletons) — static reference data.
   const dt = await c.req('GET', '/api/submissions/document-templates?family=ectd');
   ok('document-templates returns CTD spines with sections', dt.status === 200 && Array.isArray(dt.json?.templates) && dt.json.templates.length > 0 && dt.json.templates.every((t) => Array.isArray(t.sections) && t.sections.length > 0), `status ${dt.status}`);
