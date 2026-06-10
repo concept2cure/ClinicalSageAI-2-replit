@@ -168,6 +168,52 @@ export const NARRATE_STATISTICAL_RESULT: AnaTool = {
   },
 };
 
+export const VALUE_DOSSIER_GUIDANCE: AnaTool = {
+  name: 'value_dossier_guidance',
+  description:
+    'Market-access / HEOR guidance: returns the framework, structure, key requirements and common ' +
+    'pitfalls for a value deliverable (AMCP formulary dossier, NICE/HTA submission, budget-impact ' +
+    'model, global value dossier, value-message framework) and, optionally, the decision basis and ' +
+    'conventions for a specific HTA body (NICE, ICER, G-BA/IQWiG, HAS, CADTH, PBAC). Use when planning ' +
+    'or QC-ing payer/HTA deliverables so they follow the right comparator/economic conventions per market.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      deliverable: {
+        type: 'string',
+        description:
+          'Value deliverable: amcp_dossier, nice_submission, hta_submission, budget_impact_model, ' +
+          'global_value_dossier, value_message_framework (aliases accepted).',
+      },
+      hta_body: {
+        type: 'string',
+        description: 'Optional HTA body: nice, icer, gba, has, cadth, pbac (country names accepted).',
+      },
+    },
+  },
+};
+
+export const ADVISE_REGULATORY_PATHWAY: AnaTool = {
+  name: 'advise_regulatory_pathway',
+  description:
+    'Regulatory-strategy advisor: returns the authority, statutory basis, evidentiary expectations, key ' +
+    'requirements and common pitfalls of a marketing-authorization route — or, given a product domain ' +
+    'and/or jurisdiction, a ranked candidate set. Covers US drug/biologic routes (505(b)(1), 505(b)(2), ' +
+    'ANDA, BLA 351(a)/351(k) biosimilar), US device/IVD routes (510(k), PMA, De Novo), and EU routes ' +
+    '(centralised MA, MDR, IVDR). Advisory only — not a substitute for an agency pre-submission meeting.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      pathway: {
+        type: 'string',
+        description: 'Specific pathway id/alias (e.g. 505b2, anda, 510k, pma, de_novo, biosimilar, mdr, ivdr).',
+      },
+      domain: { type: 'string', enum: ['drug', 'biologic', 'device', 'ivd'] },
+      jurisdiction: { type: 'string', enum: ['us', 'eu'] },
+    },
+  },
+};
+
 export const SCREEN_PROMOTIONAL_LANGUAGE: AnaTool = {
   name: 'screen_promotional_language',
   description:
@@ -2815,6 +2861,33 @@ export const ASSESS_STORED_CER: AnaTool = {
   },
 };
 
+export const BUILD_GLOBAL_DEVICE_STRATEGY: AnaTool = {
+  name: 'build_global_device_strategy',
+  description:
+    "Map how a single device/IVD's evidence carries across the major regions (FDA, EU MDR, EU IVDR, Japan PMDA): which evidence is SHARED via internationally-recognised standards (ISO 14971/10993/13485, IEC 60601/62304/62366 — build once) vs. REGION-SPECIFIC (the clinical/performance argument, labelling, UDI, forms — produce per region), with each region's pathway + registration. `kind` ∈ device|ivd (eu_mdr applies to devices, eu_ivdr to IVDs); optional `regions` to filter. A planning map, not a strategy decision — and a 510(k) SE story does NOT satisfy an MDR CER/IVDR PER. Deterministic.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      kind: { type: 'string', enum: ['device', 'ivd'], description: 'Device or IVD.' },
+      regions: { type: 'array', items: { type: 'string', enum: ['fda', 'eu_mdr', 'eu_ivdr', 'pmda'] }, description: 'Optional region filter.' },
+    },
+    required: ['kind'],
+  },
+};
+
+export const GET_REGULATORY_TIMELINE: AnaTool = {
+  name: 'get_regulatory_timeline',
+  description:
+    "Get the published review-clock goals + milestones for a submission pathway (510k, de_novo, pma, mdr_ce, ivdr_ce, eu_cta, pmda_device, fda_nda, eu_maa): the ordered milestones (day offsets from submission), the target decision horizon, and whether the clock stops for applicant responses. Honest: EU MDR/IVDR Notified-Body assessment has NO statutory clock (returned as null, not an invented number). These are TARGET/GOAL timelines subject to clock stops and program changes — planning anchors, not commitments. Deterministic.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      pathway: { type: 'string', enum: ['510k', 'de_novo', 'pma', 'mdr_ce', 'ivdr_ce', 'eu_cta', 'pmda_device', 'fda_nda', 'eu_maa'], description: 'The submission pathway.' },
+    },
+    required: ['pathway'],
+  },
+};
+
 export const ASSESS_DISPATCH_READINESS: AnaTool = {
   name: 'assess_dispatch_readiness',
   description:
@@ -2947,6 +3020,54 @@ export const REVIEW_FINANCIAL_DISCLOSURE: AnaTool = {
     type: 'object',
     properties: { disclosure_id: { type: 'number' } },
     required: ['disclosure_id'],
+  },
+};
+
+export const CREATE_HA_INTERACTION: AnaTool = {
+  name: 'create_ha_interaction',
+  description:
+    "Open a health-authority interaction (agency meeting): Pre-IND, EOP1/EOP2, pre-NDA/pre-BLA, Type A/B/C, or EMA scientific advice. Returns the interaction id for follow-up (questions, commitments). Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      interaction_type: { type: 'string', enum: ['pre_ind', 'eop1', 'eop2', 'pre_nda', 'pre_bla', 'type_a', 'type_b', 'type_c', 'scientific_advice', 'other'] },
+      agency: { type: 'string', enum: ['fda', 'ema', 'pmda', 'mhra', 'other'] },
+      title: { type: 'string' },
+      objective: { type: 'string' },
+      submission_id: { type: 'number' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['interaction_type', 'agency', 'title'],
+  },
+};
+
+export const CREATE_REGULATORY_COMMITMENT: AnaTool = {
+  name: 'create_regulatory_commitment',
+  description:
+    "Record a regulatory commitment (PMR / PMC / REMS / meeting commitment) with its due date and statutory basis (e.g. FDAAA 505(o)(3) for a PMR). Optionally link the source interaction (the meeting that created it) and the submission it supports — both are threaded onto the provenance spine. Returns the commitment id.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      commitment_type: { type: 'string', enum: ['pmr', 'pmc', 'rems', 'meeting_commitment', 'other'] },
+      description: { type: 'string' },
+      due_date: { type: 'string', description: 'YYYY-MM-DD.' },
+      regulatory_basis: { type: 'string' },
+      source_interaction_id: { type: 'number' },
+      submission_id: { type: 'number' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['commitment_type', 'description'],
+  },
+};
+
+export const REVIEW_COMMITMENT_PORTFOLIO: AnaTool = {
+  name: 'review_commitment_portfolio',
+  description:
+    "Summarize the regulatory commitment portfolio by urgency (overdue / due in 30 / due in 90 / later / undated / closed), read-only. Use to tell the user what is overdue or coming due. Optionally scope to a submission.",
+  input_schema: {
+    type: 'object',
+    properties: { submission_id: { type: 'number' } },
+    required: [],
   },
 };
 
@@ -4304,6 +4425,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   LOOKUP_ICD10_CODE,
   DRAFT_SAFETY_NARRATIVE,
   NARRATE_STATISTICAL_RESULT,
+  VALUE_DOSSIER_GUIDANCE,
+  ADVISE_REGULATORY_PATHWAY,
   SCREEN_PROMOTIONAL_LANGUAGE,
   MEDICAL_WRITING_GUIDANCE,
   MEDICAL_WRITING_REVIEW,
@@ -4381,6 +4504,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   GET_BIOCOMPATIBILITY_ENDPOINTS,
   BUILD_DEVICE_BLUEPRINT,
   ASSESS_STORED_CER,
+  BUILD_GLOBAL_DEVICE_STRATEGY,
+  GET_REGULATORY_TIMELINE,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,
@@ -4388,6 +4513,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CREATE_FINANCIAL_DISCLOSURE,
   ADD_DISCLOSURE_INTEREST,
   REVIEW_FINANCIAL_DISCLOSURE,
+  CREATE_HA_INTERACTION,
+  CREATE_REGULATORY_COMMITMENT,
+  REVIEW_COMMITMENT_PORTFOLIO,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,

@@ -49,6 +49,8 @@ import { lookupIcd10 } from '../integrations/icd10-client.js';
 import { composeSafetyNarrative } from './safety-narrative.js';
 import { screenPromotionalLanguage } from './promotional-screening.js';
 import { narrateStatisticalResult, type AnalysisType, type EffectMeasure } from './statistical-narrator.js';
+import { composeValueDossierGuidance, listValueDossierCatalog } from './value-dossier.js';
+import { adviseRegulatoryPathway, listRegulatoryPathways } from './regulatory-pathway.js';
 import { initToolTelemetryPersistence } from './tool-telemetry-persistence.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 
@@ -479,6 +481,41 @@ registerToolHandler('narrate_statistical_result', async (input) => {
     multiplicityControlled: typeof input.multiplicity_controlled === 'boolean' ? input.multiplicity_controlled : undefined,
   });
   return JSON.stringify({ source: 'AnA Statistical Narrator', ...result });
+});
+
+// Market-access / HEOR value-dossier guidance.
+registerToolHandler('value_dossier_guidance', async (input) => {
+  const deliverable = typeof input.deliverable === 'string' ? input.deliverable : undefined;
+  const htaBody = typeof input.hta_body === 'string' ? input.hta_body : undefined;
+  if (!deliverable && !htaBody) {
+    return JSON.stringify({
+      source: 'AnA Market-Access Knowledge',
+      hint: 'Specify a deliverable and/or hta_body.',
+      catalog: listValueDossierCatalog(),
+    });
+  }
+  return JSON.stringify({
+    source: 'AnA Market-Access Knowledge',
+    ...composeValueDossierGuidance({ deliverable, htaBody }),
+  });
+});
+
+// Regulatory-pathway advisor — drug/biologic/device/IVD routes (FDA & EU).
+registerToolHandler('advise_regulatory_pathway', async (input) => {
+  const pathway = typeof input.pathway === 'string' ? input.pathway : undefined;
+  const domain = typeof input.domain === 'string' ? input.domain : undefined;
+  const jurisdiction = typeof input.jurisdiction === 'string' ? input.jurisdiction : undefined;
+  if (!pathway && !domain && !jurisdiction) {
+    return JSON.stringify({
+      source: 'AnA Regulatory-Strategy Advisor',
+      hint: 'Specify a pathway, and/or a domain (drug|biologic|device|ivd) and jurisdiction (us|eu).',
+      pathways: listRegulatoryPathways(),
+    });
+  }
+  return JSON.stringify({
+    source: 'AnA Regulatory-Strategy Advisor',
+    ...adviseRegulatoryPathway({ pathway, domain, jurisdiction }),
+  });
 });
 
 // Promotional-language screen — FDA OPDP / EU advertising claims QC.
@@ -4586,6 +4623,7 @@ registerToolHandler('build_device_blueprint', async (input) => {
   }
   try {
     const { buildDeviceBlueprint } = await import('../market-specs/device-blueprint.js');
+    const { scorecardFromBlueprint } = await import('../market-specs/device-readiness-scorecard.js');
     const blueprint = buildDeviceBlueprint({
       submissionType: input.submission_type as never,
       classification: (input.classification ?? undefined) as never,
@@ -4594,9 +4632,33 @@ registerToolHandler('build_device_blueprint', async (input) => {
       present: (input.present ?? undefined) as never,
       equivalenceClaimed: input.equivalence_claimed === true,
     });
-    return JSON.stringify({ ok: true, ...blueprint });
+    return JSON.stringify({ ok: true, ...blueprint, scorecard: scorecardFromBlueprint(blueprint) });
   } catch (err) {
     return JSON.stringify({ error: `build_device_blueprint failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('build_global_device_strategy', async (input) => {
+  // Pure reference map — no tenant context required.
+  if (input.kind !== 'device' && input.kind !== 'ivd') return JSON.stringify({ error: 'kind must be one of: device, ivd.' });
+  const regions = Array.isArray(input.regions) ? (input.regions as string[]) : undefined;
+  try {
+    const { buildGlobalDeviceStrategy } = await import('../market-specs/device-global-strategy.js');
+    return JSON.stringify({ ok: true, ...buildGlobalDeviceStrategy(input.kind, regions as never) });
+  } catch (err) {
+    return JSON.stringify({ error: `build_global_device_strategy failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('get_regulatory_timeline', async (input) => {
+  // Pure reference data — no tenant context required.
+  const pathway = typeof input.pathway === 'string' ? input.pathway : '';
+  try {
+    const { getTimeline } = await import('../market-specs/regulatory-timelines.js');
+    const t = getTimeline(pathway);
+    return t ? JSON.stringify({ ok: true, ...t }) : JSON.stringify({ error: `No timeline for pathway "${pathway}".` });
+  } catch (err) {
+    return JSON.stringify({ error: `get_regulatory_timeline failed: ${err instanceof Error ? err.message : String(err)}` });
   }
 });
 
@@ -4863,6 +4925,102 @@ registerToolHandler('review_financial_disclosure', async (input, ctx) => {
     return JSON.stringify({ error: `review_financial_disclosure failed: ${err instanceof Error ? err.message : String(err)}` });
   } finally {
     client.release();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HA Interaction & Commitment (C2C-03). Conversational building shares the same
+// governed/audited path (recordGovernedAction, surface 'ana'). Commitments are
+// threaded onto the provenance spine by the service.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_ha_interaction', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_ha_interaction requires tenant + user context.' });
+  const interactionType = typeof input.interaction_type === 'string' ? input.interaction_type : '';
+  const agency = typeof input.agency === 'string' ? input.agency : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!['pre_ind', 'eop1', 'eop2', 'pre_nda', 'pre_bla', 'type_a', 'type_b', 'type_c', 'scientific_advice', 'other'].includes(interactionType) ||
+      !['fda', 'ema', 'pmda', 'mhra', 'other'].includes(agency) || !title) {
+    return JSON.stringify({ error: 'interaction_type, agency, and title are required and must be valid.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createInteractionTx } = await import('../ha-interactions/ha-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createInteractionTx(client, ctx.organizationId, ctx.userId, {
+      interactionType: interactionType as any, agency: agency as any, title,
+      objective: typeof input.objective === 'string' ? input.objective : null,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `ha-interaction:${id}`, reason: fcoiReason(input, 'HA interaction opened via AnA'),
+      payload: { interactionType, agency }, domain: 'ha', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Opened ${agency.toUpperCase()} ${interactionType} interaction "${title}" (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_ha_interaction failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('create_regulatory_commitment', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_regulatory_commitment requires tenant + user context.' });
+  const commitmentType = typeof input.commitment_type === 'string' ? input.commitment_type : '';
+  const description = typeof input.description === 'string' ? input.description.trim() : '';
+  if (!['pmr', 'pmc', 'rems', 'meeting_commitment', 'other'].includes(commitmentType) || !description) {
+    return JSON.stringify({ error: 'commitment_type and description are required and must be valid.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createCommitmentTx } = await import('../ha-interactions/ha-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, provenanceLinkIds } = await createCommitmentTx(client, ctx.organizationId, ctx.userId, {
+      commitmentType: commitmentType as any, description,
+      dueDate: typeof input.due_date === 'string' ? input.due_date : null,
+      regulatoryBasis: typeof input.regulatory_basis === 'string' ? input.regulatory_basis : null,
+      sourceInteractionId: typeof input.source_interaction_id === 'number' ? input.source_interaction_id : null,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `regulatory-commitment:${id}`, reason: fcoiReason(input, 'Commitment recorded via AnA'),
+      payload: { commitmentType, provenanceLinkIds }, domain: 'ha', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, provenanceLinkIds, message: `Recorded ${commitmentType.toUpperCase()} commitment (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_regulatory_commitment failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_commitment_portfolio', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_commitment_portfolio requires tenant context.' });
+  const { listCommitments } = await import('../ha-interactions/ha-service.js');
+  const { summarizeCommitmentPortfolio } = await import('../ha-interactions/ha-logic.js');
+  try {
+    const submissionId = typeof input.submission_id === 'number' ? input.submission_id : undefined;
+    const rows = await listCommitments(ctx.organizationId, submissionId);
+    const today = new Date().toISOString().slice(0, 10);
+    const summary = summarizeCommitmentPortfolio(rows.map((r: any) => ({ status: r.status, dueDate: r.due_date, fulfilledDate: r.fulfilled_date })), today);
+    return JSON.stringify({
+      ok: true, summary,
+      message: summary.overdue > 0
+        ? `${summary.overdue} commitment(s) overdue; ${summary.due_30} due within 30 days.`
+        : `No overdue commitments; ${summary.due_30} due within 30 days, ${summary.due_90} within 90.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_commitment_portfolio failed: ${err instanceof Error ? err.message : String(err)}` });
   }
 });
 

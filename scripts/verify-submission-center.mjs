@@ -217,6 +217,15 @@ async function main() {
   ok('device blueprint assembles classification + evidence modules + reviewer', bp.status === 200 && bp.json?.classification?.pathway === '510k' && Array.isArray(bp.json?.evidenceModules) && bp.json?.reviewer?.questionCount > 0, `status ${bp.status}`);
   const bpBad = await c.req('POST', '/api/submissions/device/blueprint', { submissionType: 'nope' });
   ok('device blueprint rejects an unknown submission type (400)', bpBad.status === 400, `got ${bpBad.status}`);
+  ok('device blueprint includes a readiness scorecard', bp.status === 200 && typeof bp.json?.scorecard?.score === 'number' && !!bp.json?.scorecard?.level, `scorecard ${JSON.stringify(bp.json?.scorecard)?.slice(0, 60)}`);
+
+  // Global multi-region strategy + regulatory timeline.
+  const gs = await c.req('GET', '/api/submissions/device/global-strategy?kind=device');
+  ok('global-strategy maps device evidence across regions', gs.status === 200 && Array.isArray(gs.json?.regions) && gs.json.regions.some((r) => r.region === 'eu_mdr') && Array.isArray(gs.json?.sharedAcrossAll), `status ${gs.status}`);
+  const tl = await c.req('GET', '/api/submissions/device/timeline?pathway=510k');
+  ok('timeline returns 510(k) milestones + decision goal', tl.status === 200 && tl.json?.targetDecisionDays === 90 && Array.isArray(tl.json?.milestones), `status ${tl.status}`);
+  const tlBad = await c.req('GET', '/api/submissions/device/timeline?pathway=zzz');
+  ok('timeline 404s on unknown pathway', tlBad.status === 404, `got ${tlBad.status}`);
 
   // Document template structures (canonical section skeletons) — static reference data.
   const dt = await c.req('GET', '/api/submissions/document-templates?family=ectd');

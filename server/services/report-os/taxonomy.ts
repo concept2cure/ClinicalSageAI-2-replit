@@ -198,4 +198,20 @@ export const REPORT_TYPE_SEED: ReportTypeDefinition[] = [
     governanceRequirements: { part11: true, auditTrail: true, region: 'USA_FDA' },
     truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true },
   },
+  {
+    // HA interaction history + commitment register (PMR/PMC/REMS; C2C-03).
+    typeId: 'ha.commitment_register',
+    label: 'HA Interaction & Commitment Register',
+    family: 'ha_commitment',
+    allowedScopes: ['submission', 'project', 'program'],
+    allowedPersonas: ['ra_lead', 'reg_strategy', 'executive'],
+    allowedClientSegments: ['pharma', 'biotech', 'device'],
+    dataDependencies: ['ha_interactions', 'regulatory_commitments', 'commitment_milestones', 'provenance_links'],
+    artifactDependencies: ['concept2cure_artifacts'],
+    workflowDependencies: ['governance_boundary'],
+    anaModules: ['ana-ri', 'foresight_risk_synthesis'],
+    exportTemplate: 'ha-commitment-register',
+    governanceRequirements: { part11: true, auditTrail: true },
+    truthfulnessRules: { allowPartial: true, requireBlockers: true, requireConfidence: true },
+  },
 ];
