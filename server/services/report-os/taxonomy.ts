@@ -230,4 +230,20 @@ export const REPORT_TYPE_SEED: ReportTypeDefinition[] = [
     governanceRequirements: { part11: true, auditTrail: true, region: 'USA_OLAW' },
     truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true },
   },
+  {
+    // IRB submission + ethics determination register (Common Rule/21 CFR 56; C2C-06).
+    typeId: 'irb.submission_register',
+    label: 'IRB Submission & Determination Register',
+    family: 'irb_ethics',
+    allowedScopes: ['study', 'submission', 'project'],
+    allowedPersonas: ['clinical_ops', 'ra_lead', 'qa'],
+    allowedClientSegments: ['biotech', 'pharma', 'academic'],
+    dataDependencies: ['irb_submissions', 'irb_sites', 'irb_reviews', 'irb_amendments', 'irb_reportable_events', 'provenance_links'],
+    artifactDependencies: ['concept2cure_artifacts'],
+    workflowDependencies: ['governance_boundary'],
+    anaModules: ['ana-ri'],
+    exportTemplate: 'irb-submission-register',
+    governanceRequirements: { part11: true, auditTrail: true, region: 'USA_OHRP' },
+    truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true },
+  },
 ];

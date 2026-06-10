@@ -13,7 +13,7 @@ and to run the deferred DB-backed verification. Updated as each capability lands
 | C2C-03 | HA Interaction & Commitment Mgmt | 1 | **Backend complete** |
 | C2C-04 | Nonclinical Study Mgmt + SEND | 2 | Planned |
 | C2C-05 | IACUC / Animal Study Governance | 2 | **Backend complete** |
-| C2C-06 | IRB/IEC Submission & Amendment Mgmt | 2 | Planned |
+| C2C-06 | IRB/IEC Submission & Amendment Mgmt | 2 | **Backend complete** |
 | C2C-07 | IBC / Biosafety (Novel Modality) | 2 | Planned |
 | C2C-08 | AI-native eTMF | 2 | Planned |
 | C2C-09 | Device / IVD Technical Documentation | 2 | Planned |
@@ -167,3 +167,47 @@ USDA pain-category catalog (cited); `recommendReviewType` (category E → full c
 
 ### Tests landed (no-DB)
 `iacuc-logic.test.ts` (12), `ana/__tests__/iacuc-tools.test.ts` (7). Typecheck clean.
+
+---
+
+## C2C-06 — IRB / IEC Submission & Amendment Management
+
+### Data model (`shared/schema/irb.ts`; migration `migrations/20260610_irb_submissions.sql`)
+- `irb_submissions` (review type exempt/expedited/full_board; risk minimal/greater; vulnerable populations; sIRB flag; consent waiver; continuing-review expiration), `irb_sites` (sIRB multi-site), `irb_consent_documents`, `irb_reviews` (determinations), `irb_amendments`, `irb_reportable_events` (UPIRSO).
+- Approval threads `irb_submission → submission_module5` (role `supports`) via `provenance_links` — ethics approval woven into the clinical conduct record.
+
+### API (`/api/irb`, governed + org-scoped)
+| Method | Path | Governed action |
+|--------|------|-----------------|
+| POST | `/submissions` | `create` (returns recommended review type) |
+| GET | `/submissions?submissionId=` | — |
+| PATCH | `/submissions/:id/status` | `transition` |
+| POST | `/submissions/:id/reviews` | `sign` (approve → expiration + provenance) / `resolve` |
+| POST | `/submissions/:id/sites` | `update` (sIRB) |
+| POST | `/submissions/:id/consent-documents` | `update` |
+| POST | `/submissions/:id/amendments` | `update` |
+| POST | `/submissions/:id/reportable-events` | `update` (UPIRSO) |
+| GET | `/submissions/:id/completeness` | — (45 CFR 46.111 gate + continuing review) |
+
+### AnA tools (same governed path, surface `ana`)
+`create_irb_submission`, `add_irb_site`, `review_irb_submission` (read-only gate).
+
+### Deterministic core (`irb-logic.ts`, pure, tested)
+`recommendReviewType` (greater-than-minimal → full board; minimal+category → expedited/exempt); `evaluateIrbCompleteness` (45 CFR 46.111: consent/waiver, vulnerable-population safeguards, sIRB for multi-site, risk-vs-review-type — cited findings + risk); `continuingReviewStatus` (full board → annual continuing review + 1-yr expiration; expedited/exempt exempt under the revised Common Rule).
+
+### Central-module wiring
+- **Reports:** `irb.submission_register` in `REPORT_TYPE_SEED`.
+- **Metrics:** `server/services/irb-metrics.ts` → `/api/metrics` (`irb_submissions_created_total{risk}`, `irb_approvals_total{review_type}`, `irb_reportable_events_total{event_type}`).
+
+### UI surfaces to build (deferred)
+1. **Submission register** — table by status/review-type/expiration; KPI band; sIRB indicator.
+2. **Submission detail** — sites (sIRB) sub-table, consent documents, the 45 CFR 46.111 gate panel (`GET /:id/completeness`), determination action (`POST /reviews`), amendments, reportable-events log, provenance "supports Module 5" chip.
+3. **AnA panel** — conversational tools wired.
+
+### Deferred DB verification
+- [ ] `drizzle-kit push` clean; 6 tables + indexes + CHECK constraints in `information_schema`.
+- [ ] Org-scoping; governed audit rows; provenance link written on approval; full-board 1-yr expiration stamped.
+- [ ] `irb.submission_register` report run resolves; `/api/metrics` exposes `irb_*`.
+
+### Tests landed (no-DB)
+`irb-logic.test.ts` (11), `ana/__tests__/irb-tools.test.ts` (7). Typecheck clean.

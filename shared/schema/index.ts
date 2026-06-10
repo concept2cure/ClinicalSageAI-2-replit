@@ -423,3 +423,10 @@ export * from './ha-interactions';
 // / OLAW; USDA pain categories B-E. Service: server/services/iacuc;
 // migration: migrations/20260610_iacuc_animal_governance.sql.
 export * from './iacuc';
+
+// IRB / IEC submission & amendment management (C2C-06): human-subjects ethics
+// review, sIRB multi-site coordination, informed consent, determinations,
+// amendments, reportable events. Threads ethics approval → Module 5. Common Rule
+// (45 CFR 46), 21 CFR 56, ICH E6. Service: server/services/irb;
+// migration: migrations/20260610_irb_submissions.sql.
+export * from './irb';

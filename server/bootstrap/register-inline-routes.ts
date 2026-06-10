@@ -349,6 +349,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount IACUC routes:', error);
   }
 
+  // IRB / IEC submission & amendment management (Common Rule / 21 CFR 56; → Module 5).
+  try {
+    const irbModule = await import('../routes/irb');
+    app.use('/api/irb', authMiddleware, irbModule.default);
+    console.info('✅ IRB routes mounted (/api/irb)');
+  } catch (error) {
+    console.error('❌ Failed to mount IRB routes:', error);
+  }
+
   // C2C study digital twins + simulation (study/protocol design module).
   try {
     const c2cStudyTwinModule = await import('../routes/c2c/study-twin');

@@ -3327,6 +3327,56 @@ export const REVIEW_IACUC_PROTOCOL: AnaTool = {
   },
 };
 
+export const CREATE_IRB_SUBMISSION: AnaTool = {
+  name: 'create_irb_submission',
+  description:
+    "Open an IRB/IEC human-subjects review submission (revised Common Rule 45 CFR 46 / 21 CFR 56 / ICH E6). risk_level drives the review pathway (greater-than-minimal → full board). Flag vulnerable populations and single-IRB (sIRB) for multi-site studies. Returns the submission id and recommended review type. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      protocol_number: { type: 'string' },
+      title: { type: 'string' },
+      risk_level: { type: 'string', enum: ['minimal', 'greater_than_minimal'] },
+      study_id: { type: 'number' },
+      submission_id: { type: 'number', description: 'Optional regulatory submission this ethics approval feeds (Module 5).' },
+      involves_vulnerable_populations: { type: 'boolean' },
+      vulnerable_population_protections: { type: 'string' },
+      is_single_irb: { type: 'boolean' },
+      consent_waiver_requested: { type: 'boolean' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['protocol_number', 'title', 'risk_level'],
+  },
+};
+
+export const ADD_IRB_SITE: AnaTool = {
+  name: 'add_irb_site',
+  description:
+    "Add a participating site to an IRB submission (single-IRB multi-site coordination): site name, PI, and local context. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      irb_submission_id: { type: 'number' },
+      site_name: { type: 'string' },
+      principal_investigator: { type: 'string' },
+      local_context: { type: 'string' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['irb_submission_id', 'site_name'],
+  },
+};
+
+export const REVIEW_IRB_SUBMISSION: AnaTool = {
+  name: 'review_irb_submission',
+  description:
+    "Run the deterministic IRB approval-criteria gate (45 CFR 46.111) on a submission (read-only): informed consent / waiver, vulnerable-population safeguards, sIRB for multi-site, risk-vs-review-type, plus continuing-review status. Returns cited findings + risk level.",
+  input_schema: {
+    type: 'object',
+    properties: { irb_submission_id: { type: 'number' } },
+    required: ['irb_submission_id'],
+  },
+};
+
 export const LOG_STUDY_DEVIATION: AnaTool = {
   name: 'log_study_deviation',
   description:
@@ -4786,6 +4836,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CREATE_IACUC_PROTOCOL,
   REGISTER_ANIMAL_COHORT,
   REVIEW_IACUC_PROTOCOL,
+  CREATE_IRB_SUBMISSION,
+  ADD_IRB_SITE,
+  REVIEW_IRB_SUBMISSION,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,

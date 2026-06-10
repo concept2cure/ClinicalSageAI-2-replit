@@ -5305,6 +5305,108 @@ registerToolHandler('review_iacuc_protocol', async (input, ctx) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// IRB / IEC (C2C-06). Conversational building shares the governed/audited path
+// (recordGovernedAction, surface 'ana'). Determinations (approve) are done in the
+// review panel, not via AnA.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_irb_submission', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_irb_submission requires tenant + user context.' });
+  const protocolNumber = typeof input.protocol_number === 'string' ? input.protocol_number.trim() : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  const riskLevel = typeof input.risk_level === 'string' ? input.risk_level : '';
+  if (!protocolNumber || !title || !['minimal', 'greater_than_minimal'].includes(riskLevel)) {
+    return JSON.stringify({ error: 'protocol_number, title, and a valid risk_level are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createSubmissionTx } = await import('../irb/irb-service.js');
+  const { recommendReviewType } = await import('../irb/irb-logic.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createSubmissionTx(client, ctx.organizationId, ctx.userId, {
+      protocolNumber, title, riskLevel: riskLevel as any,
+      studyId: typeof input.study_id === 'number' ? input.study_id : null,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+      involvesVulnerablePopulations: input.involves_vulnerable_populations === true,
+      vulnerablePopulationProtections: typeof input.vulnerable_population_protections === 'string' ? input.vulnerable_population_protections : null,
+      isSingleIrb: input.is_single_irb === true,
+      consentWaiverRequested: input.consent_waiver_requested === true,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `irb-submission:${id}`, reason: fcoiReason(input, 'IRB submission opened via AnA'),
+      payload: { riskLevel }, domain: 'irb', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    const rec = recommendReviewType({ riskLevel: riskLevel as any });
+    return JSON.stringify({ ok: true, id, recommendedReview: rec, message: `Opened IRB submission "${title}" (id ${id}); recommended ${rec.reviewType.replace(/_/g, ' ')}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_irb_submission failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('add_irb_site', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_irb_site requires tenant + user context.' });
+  const submissionId = typeof input.irb_submission_id === 'number' ? input.irb_submission_id : NaN;
+  const siteName = typeof input.site_name === 'string' ? input.site_name.trim() : '';
+  if (!Number.isInteger(submissionId) || !siteName) return JSON.stringify({ error: 'irb_submission_id and site_name are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addSiteTx } = await import('../irb/irb-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await addSiteTx(client, ctx.organizationId, ctx.userId, submissionId, {
+      siteName,
+      principalInvestigator: typeof input.principal_investigator === 'string' ? input.principal_investigator : null,
+      localContext: typeof input.local_context === 'string' ? input.local_context : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `irb-submission:${submissionId}`, reason: fcoiReason(input, 'IRB site added via AnA'),
+      payload: { siteId: id, siteName }, domain: 'irb', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, siteId: id, message: `Added site "${siteName}" (id ${id}) to IRB submission ${submissionId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_irb_site failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_irb_submission', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_irb_submission requires tenant context.' });
+  const submissionId = typeof input.irb_submission_id === 'number' ? input.irb_submission_id : NaN;
+  if (!Number.isInteger(submissionId)) return JSON.stringify({ error: 'irb_submission_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { getCompletenessInput } = await import('../irb/irb-service.js');
+  const { evaluateIrbCompleteness, continuingReviewStatus } = await import('../irb/irb-logic.js');
+  const client = await getPool().connect();
+  try {
+    const inp = await getCompletenessInput(client, ctx.organizationId, submissionId);
+    const gate = evaluateIrbCompleteness(inp);
+    const cr = continuingReviewStatus(inp.reviewType, inp.approvalDate, new Date().toISOString().slice(0, 10));
+    return JSON.stringify({
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, continuingReview: cr,
+      message: gate.riskLevel === 'high'
+        ? 'Critical IRB findings (e.g. consent or vulnerable-population safeguards) — resolve before approval.'
+        : `Submission passes the deterministic 45 CFR 46.111 gate (${gate.riskLevel} risk).`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_irb_submission failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
 registerToolHandler('log_study_deviation', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'log_study_deviation requires tenant context.' });
