@@ -1554,10 +1554,11 @@ export async function listArtifactVersions(
       `SELECT v.id, v.version, v.change_description, v.created_by_id, v.created_at,
               u.name as created_by_name
        FROM concept2cure_artifact_versions v
+       JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $2
        LEFT JOIN users u ON u.id = v.created_by_id
        WHERE v.artifact_id = $1
        ORDER BY v.version DESC`,
-      [params.artifactId]
+      [params.artifactId, ctx.organizationId]
     );
     return {
       success: true,
@@ -1828,10 +1829,11 @@ export async function compareVersions(
       `SELECT v.version, v.content, v.change_description, v.created_at,
               u.name as author
        FROM concept2cure_artifact_versions v
+       JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $4
        LEFT JOIN users u ON u.id = v.created_by_id
        WHERE v.artifact_id = $1 AND v.version IN ($2, $3)
        ORDER BY v.version`,
-      [params.artifactId, params.versionA, params.versionB]
+      [params.artifactId, params.versionA, params.versionB, ctx.organizationId]
     );
 
     if (versions.rows.length < 2) {
@@ -1934,10 +1936,11 @@ export async function reviewVersionImpact(
       `SELECT v.version, v.content, v.change_description, v.created_at,
               u.name as author
        FROM concept2cure_artifact_versions v
+       JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $4
        LEFT JOIN users u ON u.id = v.created_by_id
        WHERE v.artifact_id = $1 AND v.version IN ($2, $3)
        ORDER BY v.version`,
-      [params.artifactId, params.versionA, params.versionB]
+      [params.artifactId, params.versionA, params.versionB, ctx.organizationId]
     );
 
     if (versions.rows.length < 2) {
@@ -3611,19 +3614,20 @@ interface MemoryEntryRow {
 }
 
 async function loadProjectMemoryEntries(
+  organizationId: number,
   projectId: number,
   categories: string[],
   limit = 20
 ): Promise<MemoryEntryRow[]> {
   if (categories.length === 0) return [];
-  const placeholders = categories.map((_, i) => `$${i + 2}`).join(', ');
+  const placeholders = categories.map((_, i) => `$${i + 3}`).join(', ');
   const result = await pool.query(
     `SELECT title, content, category, confidence, importance
      FROM project_memory_entries
-     WHERE project_id = $1 AND category IN (${placeholders})
+     WHERE project_id = $1 AND organization_id = $2 AND category IN (${placeholders})
      ORDER BY importance DESC, created_at DESC
-     LIMIT $${categories.length + 2}`,
-    [projectId, ...categories, limit]
+     LIMIT $${categories.length + 3}`,
+    [projectId, organizationId, ...categories, limit]
   );
   return result.rows as MemoryEntryRow[];
 }
@@ -3650,7 +3654,7 @@ export async function analyzeCMSStrategy(
       'payer_evidence',
       'health_economics',
     ];
-    const entries = await loadProjectMemoryEntries(projectId, categories, 18);
+    const entries = await loadProjectMemoryEntries(ctx.organizationId, projectId, categories, 18);
 
     const riskKeywords = /\b(missing|insufficient|unclear|gap|uncertain|weak)\b/i;
     const riskSignals = entries
@@ -3731,7 +3735,7 @@ export async function assessDiagnosticsValidation(
       'clinical_performance',
       'companion_diagnostic',
     ];
-    const entries = await loadProjectMemoryEntries(projectId, categories, 20);
+    const entries = await loadProjectMemoryEntries(ctx.organizationId, projectId, categories, 20);
     const corpus = entries.map(entry => `${entry.title || ''} ${entry.content || ''}`).join(' ');
 
     const componentChecks = [

@@ -500,10 +500,10 @@ export async function generateEctdPackage(
           `SELECT dv.content, dv.file_content, d.title, d.description
            FROM document_versions dv
            JOIN documents d ON d.id = dv.document_id
-           WHERE d.id = $1 OR dv.id = $1
+           WHERE (d.id = $1 OR dv.id = $1) AND d.organization_id = $2
            ORDER BY dv.created_at DESC
            LIMIT 1`,
-          [granule.id]
+          [granule.id, organizationId]
         );
         if (docResult.rows.length > 0 && (docResult.rows[0].content || docResult.rows[0].file_content)) {
           documentContent = docResult.rows[0].content || docResult.rows[0].file_content;

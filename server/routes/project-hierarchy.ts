@@ -288,7 +288,11 @@ router.post('/:projectId/children', async (req: Request, res: Response) => {
 
     // Update the path to include the new project's own ID
     const finalPath = `${childPath}/${newProject.id}`;
-    await pool.query(`UPDATE projects SET path = $1 WHERE id = $2`, [finalPath, newProject.id]);
+    await pool.query(`UPDATE projects SET path = $1 WHERE id = $2 AND organization_id = $3`, [
+      finalPath,
+      newProject.id,
+      organizationId,
+    ]);
     newProject.path = finalPath;
 
     // Audit trail
@@ -375,8 +379,8 @@ router.patch('/:projectId/move', async (req: Request, res: Response) => {
     // If moving to root
     if (newParentId === null) {
       await pool.query(
-        `UPDATE projects SET parent_project_id = NULL, depth = 0, path = $1::text, updated_at = NOW() WHERE id = $2`,
-        [String(projectId), projectId]
+        `UPDATE projects SET parent_project_id = NULL, depth = 0, path = $1::text, updated_at = NOW() WHERE id = $2 AND organization_id = $3`,
+        [String(projectId), projectId, organizationId]
       );
     } else {
       // Verify new parent belongs to same org
@@ -405,8 +409,8 @@ router.patch('/:projectId/move', async (req: Request, res: Response) => {
         : `${newParentId}/${projectId}`;
 
       await pool.query(
-        `UPDATE projects SET parent_project_id = $1, depth = $2, path = $3, updated_at = NOW() WHERE id = $4`,
-        [newParentId, newDepth, newPath, projectId]
+        `UPDATE projects SET parent_project_id = $1, depth = $2, path = $3, updated_at = NOW() WHERE id = $4 AND organization_id = $5`,
+        [newParentId, newDepth, newPath, projectId, organizationId]
       );
     }
 

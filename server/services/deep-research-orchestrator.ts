@@ -374,12 +374,15 @@ function buildFallbackSynthesis(
 // JOB QUERIES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export async function getJobStatus(jobId: number): Promise<DeepResearchJob> {
+export async function getJobStatus(jobId: number, organizationId?: number): Promise<DeepResearchJob> {
+  // organizationId is optional only for internal callers that just created the
+  // job. Route handlers MUST pass the authenticated org so a caller can't read
+  // another tenant's job (results/synthesis included) by guessing ids.
   const result = await pool.query(
     `SELECT id, uuid, organization_id, project_id, user_id, status, query, progress,
             results, synthesis, credits_used, connector_logs, created_at, completed_at
-     FROM deep_research_jobs WHERE id = $1`,
-    [jobId]
+     FROM deep_research_jobs WHERE id = $1 AND ($2::int IS NULL OR organization_id = $2)`,
+    [jobId, organizationId ?? null]
   );
 
   if (result.rows.length === 0) throw new Error(`Job ${jobId} not found`);
@@ -434,10 +437,11 @@ export async function listJobs(
   }));
 }
 
-export async function cancelJob(jobId: number): Promise<void> {
+export async function cancelJob(jobId: number, organizationId: number): Promise<void> {
   await pool.query(
-    `UPDATE deep_research_jobs SET status = 'failed', completed_at = NOW() WHERE id = $1 AND status IN ('queued', 'running')`,
-    [jobId]
+    `UPDATE deep_research_jobs SET status = $3, completed_at = NOW()
+     WHERE id = $1 AND organization_id = $2 AND status IN ('queued', 'running')`,
+    [jobId, organizationId, 'failed']
   );
   jobCallbacks.delete(jobId);
 }

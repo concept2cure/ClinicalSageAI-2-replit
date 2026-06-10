@@ -352,8 +352,9 @@ Structure the response as a comprehensive regulatory strategy document.`;
     };
   } catch (error) {
     console.error('Error generating AI blueprint:', error);
-    // Return a structured fallback blueprint
-    return generateFallbackBlueprint(params);
+    // Return a structured fallback blueprint, explicitly labelled so the
+    // client/user can tell it is not AI-generated content.
+    return { ...generateFallbackBlueprint(params), generatedFrom: 'fallback' };
   }
 }
 

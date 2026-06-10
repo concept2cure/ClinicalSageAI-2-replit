@@ -75,6 +75,8 @@ export interface DecisionSourceSignal {
 export interface FormalDecisionRecord {
   id: string;
   projectId: string;
+  /** Tenant scope. Optional (additive): present when the creating context knows its org. */
+  organizationId?: number;
   kind: DecisionKind;
   status: DecisionStatus;
 
@@ -450,6 +452,7 @@ export function createReceiptId(): string {
  */
 export function buildPreflightDecision(opts: {
   projectId: string;
+  organizationId?: number;
   kind: DecisionKind;
   sectionCode?: string;
   moduleCode?: string;
@@ -491,6 +494,7 @@ export function buildPreflightDecision(opts: {
   return {
     id: createDecisionId(),
     projectId: opts.projectId,
+    organizationId: opts.organizationId,
     kind: opts.kind,
     status,
     regulatorBody: opts.regulatorBody,
@@ -518,6 +522,7 @@ export function buildPreflightDecision(opts: {
  */
 export function buildGovernedActionDecision(opts: {
   projectId: string;
+  organizationId?: number;
   kind: DecisionKind;
   governedAction: GovernedActionType;
   artifactId?: string;
@@ -542,6 +547,7 @@ export function buildGovernedActionDecision(opts: {
   return {
     id: createDecisionId(),
     projectId: opts.projectId,
+    organizationId: opts.organizationId,
     kind: opts.kind,
     status: 'recommended',
     regulatorBody: opts.regulatorBody,

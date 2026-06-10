@@ -315,3 +315,115 @@ client deep pass) plus a dedicated fixer for the innovation-routes tenant gap.
   should be documented as such.
 
 Verification: typecheck no-regression 0 errors; security suite green.
+
+---
+
+# Wave 4 — 2026-06-10 (test integrity + remaining advisories)
+
+## Test-integrity risk register (audited, mostly deliberate debt)
+
+659 test files audited; 24 contain skipped/disabled tests (~100+ individual
+tests, 8 whole suites). Most skips carry documented reasons tied to unshipped
+Phase 3/5 surfaces — they are honest debt, not hidden failures. The
+load-bearing gaps, in priority order:
+
+1. **Part 11 e-signature/snapshot lifecycle** — `tests/phase10-runtime-esign-snapshots.test.ts`
+   suites 10H–10K skipped pending the Phase 3+ workbench; includes the
+   '21 CFR Part 11 badge' check.
+2. **Tenant scoping at module level** — `tests/services/project-module-bridge.test.ts`
+   suite skipped after a signature change (being restored in this wave).
+3. **Agent audit trails** — `mdx-explain-audit-row` (4/8 skipped),
+   `mdx-agent-audit-contract` (`section.approve`, `audit.explain` probes
+   skipped) — mock pools missing column shapes.
+4. **AnA RI degraded-mode (503) resilience** — whole suite skipped
+   (mock surface incomplete).
+5. **Regulatory-correspondence heuristic intake** — 201 contract skipped
+   (issue-parser mock shape).
+6. **`ana-mdx-pen-scaffold.test.ts:278`** contains `expect(true).toBe(true)` —
+   an explicit scaffold acknowledging pen-testing is external; flagged so it
+   isn't mistaken for coverage.
+7. DB/asset-gated suites (`document-consequence`, `ocr-live`) silently skip
+   when DATABASE_URL/tessdata are absent — verify CI provides both.
+
+No orphaned test files (all match runner globs) and no missing snapshot
+fixtures were found.
+
+## Other wave-4 fixes (verified individually)
+
+- Seven dead controllers deleted from `server/controllers/` (976 lines,
+  zero static/dynamic importers; `governance-controller.ts` retained — it is
+  dynamically imported by `concept2cure.ts`).
+- Startup invariants now run at boot (previously diagnostics-route-only);
+  `STRICT_STARTUP_INVARIANTS=true` halts on critical failures.
+- `mockVault` guard flipped to a development/test allowlist
+  (+`ALLOW_MOCK_VAULT=1` override); deploy configs verified unaffected.
+- `vercel.json` deleted (build command and routes referenced nonexistent
+  files; no CI step deploys to Vercel).
+- Client: 'Sample data' pill when seed fallback is active; createProject
+  error toast + onSettled reconciliation; stream-guard stale-closure fix.
+- `services/README.md` documents the Python/Celery stack as E2E/staging-only;
+  `AI_GATEWAY_DETERMINISTIC` documented as the canonical deterministic switch.
+
+## Wave-4 advisories downgraded after verification
+
+- **IND automation**: missing `ind_automation/` Python backend degrades
+  honestly (logged + 503 from the route) — not a fake-success path.
+- **`export-service.getStudyInsights`**: returns `[]` with a warning, but the
+  enclosing archive path has no live callers and no insights table exists yet.
+
+## Wave 4 — deep remediation (fixer agents, all verified)
+
+- **Program-level tenant isolation closed** (`server/routes/innovation-routes.ts`,
+  +476 lines): every innovation route keyed by programId / scanId / findingId /
+  assessmentId / linkId / threadId / entryId / runId now resolves the row to its
+  owning program and verifies that program belongs to the authed org
+  (`assertProgramInOrg` / `assertChildInOrg` + parameterized child→program
+  resolvers). Nonexistent, unresolvable, and cross-tenant rows all return the
+  same 404; guard queries fail closed on DB errors.
+- **Tenant-isolation baseline shrunk 77 → 61**: 16 raw-SQL queries that had org
+  context available were fixed with real scoping across `contentAssembly.routes`,
+  `project-hierarchy`, `project-sections`, `deep-research`, `folder-management`,
+  `510k-project.routes`, `ectdExportService`, `semanticEmbeddingService`,
+  `rules-engine/actions`; `docs/reports/tenant-isolation-baseline.json` updated;
+  checker passes.
+- **Hardcoded identity eliminated**: `FormalDecisionRecord` gained optional
+  `organizationId`; `persistDecision` now uses the real org and SKIPS DB
+  persistence with a loud warning when the caller has no tenant context —
+  never fabricates org 1 (in-memory record retained). Creator call sites wired
+  (`authoring-actions`, `command-executor`, `contradiction-consequence`).
+  `DynamicContentAssembly.saveAssemblyToDatabase` and
+  `cerGenerationService.getOrCreateTemplate` take real user/org parameters.
+- **Tenant-scoping test suite restored**: `tests/services/project-module-bridge.test.ts`
+  un-skipped and re-derived against the current signature — 7 tests verifying
+  org scoping now run (previously dead coverage on a security boundary).
+- **Client honesty (committed earlier this wave)**: "Sample data" pill renders
+  when the projects list is showing seed fallback; `createProject` surfaces
+  errors; stream guard fixed.
+- **Dead legacy composition root removed**: `server/routes.js` (zero importers;
+  replaced by bootstrap registrars) plus its exclusive chain
+  `server/api/index.js`, `server/api/cer.js` (returned a hardcoded "Sample
+  Product" report for any reportId), `server/api/cmc-blueprint-generator.js`
+  (placeholder CMC sections with fake CAS numbers) — 1,085 lines. The
+  fabricated-data findings in those files are moot via deletion.
+- **Live `server/api/cmc` fixes**: `/collaboration/share` previously fabricated
+  a successful share (record never persisted; `/shared/workflow/:id` has no
+  route anywhere) — now 501 fail-closed. Workflow/AI/checklist/task/notification
+  IDs switched from `Math.random()` to `crypto.randomUUID()`. Team roster
+  lookup failure now logs and sets `rosterUnavailable: true` instead of
+  silently presenting an empty team. AI blueprint fallback responses are
+  labelled `generatedFrom: 'fallback'`.
+
+## Wave-4 advisories (remaining, need product decisions)
+
+- `server/api/cmc/portfolio.ts`: overview/export return hardcoded zeros for
+  cov/missing/seqCrit/pbOpen/qcOpen alongside real ir_* metrics, and
+  `snapshot/save` iterates `reg_submissions` without org scoping (now visible
+  in the 61-item baseline; needs schema-informed fix).
+- `/api/v1` session-auth bypass relies on a comment-level invariant that each
+  sub-route enforces API-key auth; consider a structural gate.
+- `playbookRoutes` checklists and `blueprintRoutes` workflow templates are
+  hardcoded defaults shared across orgs (acceptable as defaults; label or make
+  customizable per-org).
+
+Verification (wave 4 final): typecheck 0 errors; tenant-isolation checker
+passes (baseline 61); restored bridge suite 7/7; security suite 183/183.

@@ -38,6 +38,12 @@ interface ConditionalRule {
   action: 'include' | 'exclude' | 'require' | 'optional';
 }
 
+/** Authenticated identity required to persist an assembly (tenant + actor). */
+export interface AssemblyIdentity {
+  userId: number;
+  organizationId: number;
+}
+
 export class DynamicContentAssembly {
   private crossReferenceMapper: CrossReferenceMapper;
   private conditionalRules: Map<string, ConditionalRule[]> = new Map();
@@ -129,6 +135,8 @@ export class DynamicContentAssembly {
       includeOptional?: boolean;
       validateOnly?: boolean;
       format?: 'html' | 'markdown' | 'json';
+      /** Required for the DB save step; without it the save is skipped (never fabricated). */
+      identity?: AssemblyIdentity;
     }
   ): Promise<DocumentAssembly> {
     // Get all workflow data for the project
@@ -201,9 +209,17 @@ export class DynamicContentAssembly {
       }
     };
     
-    // Save assembly to database if not validate-only
+    // Save assembly to database if not validate-only.
+    // Persisting requires real user/org identity — never fabricate attribution.
     if (!options?.validateOnly && db) {
-      await this.saveAssembly(assembly, projectId);
+      if (options?.identity) {
+        await this.saveAssembly(assembly, projectId, options.identity);
+      } else {
+        console.warn(
+          `[DynamicContentAssembly] Skipping DB save for assembly ${assembly.documentId}: ` +
+          'no user/org identity provided by caller. Assembly still returned to caller.'
+        );
+      }
     }
     
     return assembly;
@@ -529,10 +545,11 @@ export class DynamicContentAssembly {
    */
   private async saveAssembly(
     assembly: DocumentAssembly,
-    projectId: number
+    projectId: number,
+    identity: AssemblyIdentity
   ): Promise<void> {
     if (!db) return;
-    
+
     const documentData = {
       documentId: assembly.documentId,
       projectId,
@@ -543,9 +560,9 @@ export class DynamicContentAssembly {
       status: assembly.metadata.validationStatus === 'valid' ? 'complete' : 'draft',
       completeness: assembly.overallCompleteness,
       formData: assembly.metadata,
-      createdBy: 1,
-      updatedBy: 1,
-      organizationId: 1,
+      createdBy: identity.userId,
+      updatedBy: identity.userId,
+      organizationId: identity.organizationId,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -692,11 +709,13 @@ export class DynamicContentAssembly {
   async generatePreview(
     projectId: number,
     documentType: string,
-    format: 'html' | 'markdown' | 'json' = 'html'
+    format: 'html' | 'markdown' | 'json' = 'html',
+    identity?: AssemblyIdentity
   ): Promise<string> {
     const assembly = await this.assembleDocument(projectId, documentType, {
       includeOptional: true,
-      format
+      format,
+      identity
     });
     
     if (format === 'json') {

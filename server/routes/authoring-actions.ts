@@ -368,6 +368,7 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
         );
         blockedDecision = decisionLifecycleService.recordGovernedActionDecision({
           projectId: String(projectId),
+          organizationId: Number(orgId),
           kind: 'promotion-decision',
           governedAction: 'promote-to-review',
           artifactId: String(artifactId),
@@ -501,6 +502,7 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
         );
         promotionDecision = decisionLifecycleService.recordGovernedActionDecision({
           projectId: String(projectId),
+          organizationId: Number(orgId),
           kind: 'promotion-decision',
           governedAction: 'promote-to-review',
           artifactId: String(artifactId),
@@ -623,7 +625,8 @@ router.post('/approve-artifact', async (req: Request, res: Response) => {
       try {
         const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
         blockedDecision = decisionLifecycleService.recordGovernedActionDecision({
-          projectId: String(projectId), kind: 'promotion-decision',
+          projectId: String(projectId), organizationId: Number(orgId),
+          kind: 'promotion-decision',
           governedAction: 'approve-artifact', artifactId: String(artifactId),
           summary: `Approval blocked: ${blockReasons.length} issue(s)`,
           rationale: blockReasons.join('; '),
@@ -744,7 +747,8 @@ router.post('/approve-artifact', async (req: Request, res: Response) => {
       try {
         const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
         approveDecision = decisionLifecycleService.recordGovernedActionDecision({
-          projectId: String(projectId), kind: 'promotion-decision',
+          projectId: String(projectId), organizationId: Number(orgId),
+          kind: 'promotion-decision',
           governedAction: 'approve-artifact', artifactId: String(artifactId),
           summary: 'Artifact approved', rationale: 'All governance gates passed. Reviewer approved.',
           sourceSignals: [{ kind: 'user-request' as const, summary: 'Reviewer approved artifact' }],
@@ -925,7 +929,8 @@ router.post('/lock-artifact', async (req: Request, res: Response) => {
       try {
         const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
         lockDecision = decisionLifecycleService.recordGovernedActionDecision({
-          projectId: String(projectId), kind: 'promotion-decision',
+          projectId: String(projectId), organizationId: Number(orgId),
+          kind: 'promotion-decision',
           governedAction: 'lock-artifact', artifactId: String(artifactId),
           summary: 'Artifact locked for submission', rationale: 'All decisions resolved. Content locked.',
           sourceSignals: [{ kind: 'user-request' as const, summary: 'Artifact locked by authorized user' }],
@@ -1022,7 +1027,8 @@ router.post('/mark-submission-ready', async (req: Request, res: Response) => {
     try {
       const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
       decision = decisionLifecycleService.recordGovernedActionDecision({
-        projectId: String(projectId), kind: 'promotion-decision',
+        projectId: String(projectId), organizationId: Number(orgId),
+        kind: 'promotion-decision',
         governedAction: 'judge-dossier-ready', artifactId: String(artifactId),
         summary: 'Artifact marked submission-ready',
         rationale: 'All assumptions approved, all decisions resolved, strong confidence. Ready for submission.',
@@ -1184,6 +1190,7 @@ router.post('/correction-draft', async (req: Request, res: Response) => {
         );
         correctionDecision = decisionLifecycleService.recordGovernedActionDecision({
           projectId: String(projectId),
+          organizationId: Number(orgId),
           kind: 'correction-decision',
           governedAction: 'prepare-correction-draft',
           artifactId: artifactId ? String(artifactId) : undefined,
@@ -1234,6 +1241,10 @@ router.post('/correction-draft', async (req: Request, res: Response) => {
 router.post('/harmonize-sections', async (req: Request, res: Response) => {
   try {
     const { projectId, sectionCodes, submissionType, productName } = req.body;
+    // Tenant context from verified auth middleware (non-failing here: decision
+    // recording below is best-effort and skips DB persistence without it).
+    const rawTenantId = Number((req as any).tenantId ?? (req as any).organizationId);
+    const orgId = Number.isFinite(rawTenantId) && rawTenantId > 0 ? rawTenantId : undefined;
     if (!projectId) return res.status(400).json({ error: 'projectId is required' });
     if (!sectionCodes || !Array.isArray(sectionCodes) || sectionCodes.length === 0) {
       return res.json({
@@ -1288,6 +1299,7 @@ router.post('/harmonize-sections', async (req: Request, res: Response) => {
         );
         harmonizeDecision = decisionLifecycleService.recordGovernedActionDecision({
           projectId: String(projectId),
+          organizationId: orgId,
           kind: 'harmonization-decision',
           governedAction: 'prepare-harmonization-suggestion',
           summary: `Harmonization: ${result.totalIssues} issue(s), score ${result.consistencyScore}%`,
@@ -2016,6 +2028,7 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
       }
       decisionRecord = decisionLifecycleService.recordPreflightDecision({
         projectId: String(projectId),
+        organizationId: Number(orgId),
         kind: 'module-preflight-judgment',
         moduleCode, regulatorBody, submissionType,
         workflowStage: 'dossier',
@@ -2217,6 +2230,7 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
       }
       decisionRecord = decisionLifecycleService.recordPreflightDecision({
         projectId: String(projectId),
+        organizationId: Number(orgId),
         kind: 'dossier-preflight-judgment',
         regulatorBody, submissionType,
         workflowStage: 'submissions',
@@ -2497,6 +2511,7 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
 
       decisionRecord = decisionLifecycleService.recordPreflightDecision({
         projectId: String(projectId),
+        organizationId: Number(orgId),
         kind: 'section-preflight-judgment',
         sectionCode, artifactId, artifactVersionId,
         regulatorBody, submissionType,
