@@ -15,9 +15,13 @@ import {
 } from '../format';
 
 describe('i18n format helpers', () => {
+  // Use explicit local-time Date constructors (year, monthIndex, day) rather
+  // than ISO strings: an ISO date string parses as UTC midnight, which can roll
+  // back a calendar day when the test runs in a timezone behind UTC. Local
+  // constructors keep these assertions deterministic in any timezone.
   describe('formatDate', () => {
     it('renders Japanese dates in 年月日 order for ja', () => {
-      const out = formatDate('2026-06-10', 'ja', { dateStyle: 'long' });
+      const out = formatDate(new Date(2026, 5, 10), 'ja', { dateStyle: 'long' });
       expect(out).toContain('年');
       expect(out).toContain('月');
       expect(out).toContain('日');
@@ -38,7 +42,7 @@ describe('i18n format helpers', () => {
   describe('formatJapaneseEraDate (和暦)', () => {
     it('formats a 2026 date in the Reiwa era', () => {
       // 2026 is Reiwa 8 (令和8年).
-      const out = formatJapaneseEraDate('2026-06-10');
+      const out = formatJapaneseEraDate(new Date(2026, 5, 10));
       expect(out).toContain('令和');
       expect(out).toContain('8年');
       expect(out).toContain('6月');
@@ -46,7 +50,7 @@ describe('i18n format helpers', () => {
     });
 
     it('is independent of UI language and stays Japanese', () => {
-      const out = formatJapaneseEraDate(new Date('2019-05-01')); // first day of Reiwa
+      const out = formatJapaneseEraDate(new Date(2019, 4, 1)); // first month of Reiwa
       expect(out).toContain('令和');
     });
 
@@ -57,18 +61,18 @@ describe('i18n format helpers', () => {
 
   describe('Japanese fiscal year (年度)', () => {
     it('assigns April–December to the same starting year', () => {
-      expect(getJapaneseFiscalYear('2026-04-01')).toBe(2026);
-      expect(getJapaneseFiscalYear('2026-12-31')).toBe(2026);
+      expect(getJapaneseFiscalYear(new Date(2026, 3, 1))).toBe(2026);
+      expect(getJapaneseFiscalYear(new Date(2026, 11, 31))).toBe(2026);
     });
 
     it('assigns January–March to the previous fiscal year', () => {
-      expect(getJapaneseFiscalYear('2026-03-31')).toBe(2025);
-      expect(getJapaneseFiscalYear('2026-01-15')).toBe(2025);
+      expect(getJapaneseFiscalYear(new Date(2026, 2, 31))).toBe(2025);
+      expect(getJapaneseFiscalYear(new Date(2026, 0, 15))).toBe(2025);
     });
 
     it('formats the 年度 label', () => {
-      expect(formatJapaneseFiscalYear('2026-06-10')).toBe('2026年度');
-      expect(formatJapaneseFiscalYear('2026-02-10')).toBe('2025年度');
+      expect(formatJapaneseFiscalYear(new Date(2026, 5, 10))).toBe('2026年度');
+      expect(formatJapaneseFiscalYear(new Date(2026, 1, 10))).toBe('2025年度');
     });
 
     it('returns empty string for invalid input', () => {
