@@ -4870,6 +4870,35 @@ registerToolHandler('get_regulatory_timeline', async (input) => {
   }
 });
 
+registerToolHandler('validate_udi', async (input) => {
+  // Pure algorithm — no tenant context required.
+  const udi = typeof input.udi === 'string' ? input.udi : '';
+  if (!udi) return JSON.stringify({ error: 'udi is required.' });
+  try {
+    const { validateUdi } = await import('../market-specs/udi-validator.js');
+    return JSON.stringify({ ok: true, ...validateUdi(udi) });
+  } catch (err) {
+    return JSON.stringify({ error: `validate_udi failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('get_electrical_standards', async (input) => {
+  // Pure reference + rule logic — no tenant context required.
+  try {
+    const { applicableElectricalStandards } = await import('../market-specs/electrical-safety.js');
+    return JSON.stringify({ ok: true, ...applicableElectricalStandards({
+      electricallyPowered: input.electricallyPowered === true,
+      hasAlarms: input.hasAlarms === true,
+      closedLoopControl: input.closedLoopControl === true,
+      homeUse: input.homeUse === true,
+      emsUse: input.emsUse === true,
+      hasParticularStandard: input.hasParticularStandard === true,
+    }) });
+  } catch (err) {
+    return JSON.stringify({ error: `get_electrical_standards failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('assess_stored_cer', async (input, ctx) => {
   // Tenant-scoped — reads the organization's stored CER.
   if (!ctx?.organizationId) {

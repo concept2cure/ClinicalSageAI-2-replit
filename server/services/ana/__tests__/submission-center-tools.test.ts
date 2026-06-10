@@ -45,6 +45,8 @@ const SUBMISSION_TOOLS = [
   'assess_stored_cer',
   'build_global_device_strategy',
   'get_regulatory_timeline',
+  'validate_udi',
+  'get_electrical_standards',
   'assess_dispatch_readiness',
 ];
 
@@ -389,6 +391,21 @@ describe('submission AI tasks — tenant + input guards', () => {
     expect(out.ok).toBe(true);
     expect(typeof out.scorecard?.score).toBe('number');
     expect(out.scorecard?.level).toBeTruthy();
+  });
+
+  it('validate_udi computes the GS1 check digit', async () => {
+    const handler = getToolHandler('validate_udi')!;
+    const ok = JSON.parse(await handler({ udi: '(01)00012345678905(10)LOT1' }, {} as ToolContext));
+    expect(ok.ok).toBe(true);
+    expect(ok.udiDiOk).toBe(true);
+    const bad = JSON.parse(await handler({ udi: '(01)00012345678900' }, {} as ToolContext));
+    expect(bad.udiDiOk).toBe(false);
+  });
+  it('get_electrical_standards adds collaterals from facts', async () => {
+    const handler = getToolHandler('get_electrical_standards')!;
+    const out = JSON.parse(await handler({ electricallyPowered: true, hasAlarms: true }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.standards.some((s: { code: string }) => s.code === 'IEC 60601-1-8')).toBe(true);
   });
 });
 

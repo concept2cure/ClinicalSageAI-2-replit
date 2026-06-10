@@ -3141,6 +3141,35 @@ export const GET_REGULATORY_TIMELINE: AnaTool = {
   },
 };
 
+export const VALIDATE_UDI: AnaTool = {
+  name: 'validate_udi',
+  description:
+    "Validate a device UDI carrier. For a GS1 carrier (the parenthesised AI form, e.g. '(01)00012345678905(17)241231(10)LOT1(21)SER1') it computes the GS1 mod-10 check digit, validates the GTIN-14 UDI-DI, and parses the UDI-PI (11 manufacture date / 17 expiry / 10 lot / 21 serial), then notes the GUDID (FDA) and EUDAMED (EU) registration. HIBCC/ICCBBA carriers are detected but not parsed. Returns udiDiOk + warnings. Exact algorithm, deterministic.",
+  input_schema: {
+    type: 'object',
+    properties: { udi: { type: 'string', description: 'The UDI carrier string (GS1 parenthesised AI form supported).' } },
+    required: ['udi'],
+  },
+};
+
+export const GET_ELECTRICAL_STANDARDS: AnaTool = {
+  name: 'get_electrical_standards',
+  description:
+    "Resolve the applicable IEC 60601 electrical-safety standards for a device from its facts (electricallyPowered, hasAlarms, closedLoopControl, homeUse, emsUse, hasParticularStandard). Returns the general standard + always-on collaterals (EMC, usability) plus the conditional collaterals triggered (alarms 60601-1-8, closed-loop 60601-1-10, home use 60601-1-11, EMS 60601-1-12), the core test categories (means of protection, leakage currents, dielectric, EMC…), and the reviewer questions. Not applicable when the device is not electrically powered. Deterministic.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      electricallyPowered: { type: 'boolean', description: 'Mains/battery powered medical electrical equipment.' },
+      hasAlarms: { type: 'boolean', description: 'Generates clinical alarms (→ 60601-1-8).' },
+      closedLoopControl: { type: 'boolean', description: 'Has a physiologic closed-loop controller (→ 60601-1-10).' },
+      homeUse: { type: 'boolean', description: 'Intended for home/lay use (→ 60601-1-11).' },
+      emsUse: { type: 'boolean', description: 'Intended for the EMS environment (→ 60601-1-12).' },
+      hasParticularStandard: { type: 'boolean', description: 'A device-type particular standard (60601-2-xx) applies.' },
+    },
+    required: ['electricallyPowered'],
+  },
+};
+
 export const ASSESS_DISPATCH_READINESS: AnaTool = {
   name: 'assess_dispatch_readiness',
   description:
@@ -4955,6 +4984,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ASSESS_STORED_CER,
   BUILD_GLOBAL_DEVICE_STRATEGY,
   GET_REGULATORY_TIMELINE,
+  VALIDATE_UDI,
+  GET_ELECTRICAL_STANDARDS,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,
