@@ -123,6 +123,20 @@
         "responses": { "200": { "description": "Distribution summaries for sensitivity/specificity/PPV/NPV" }, "422": { "$ref": "#/components/responses/ValidationError" } }
       }
     },
+    "/ivd-lifecycle/evidence/sensitivity": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "Evidence sensitivity / tornado + ROI ranking",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["pathway", "assayType"], "properties": { "pathway": { "type": "string" }, "assayType": { "type": "string" }, "intendedUse": { "type": "string" }, "biomarker": { "type": "string" }, "hasSoftware": { "type": "boolean" }, "evidence": { "type": "object", "additionalProperties": { "type": "boolean" } } } } } } },
+        "responses": { "200": { "description": "Tornado (by impact) + byRoi (gain per week) rankings of missing evidence" }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
+    "/ivd-lifecycle/time-to-market": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "Time-to-market Monte-Carlo (phased study durations)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["phases"], "properties": { "phases": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "studyWeeks": { "type": "array", "items": { "type": "number" } } } } }, "slipFactor": { "type": "number" }, "iterations": { "type": "integer" }, "seed": { "type": "integer" } } } } } },
+        "responses": { "200": { "description": "Total + per-phase week distributions with P50/P90" }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
     "/ivd-lifecycle/{calculator}": {
       "post": {
         "tags": ["lifecycle"],

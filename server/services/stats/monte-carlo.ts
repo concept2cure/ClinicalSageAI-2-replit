@@ -121,6 +121,79 @@ export function diagnosticAccuracyMonteCarlo(args: AccuracyMonteCarloArgs): Accu
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Time-to-market simulation
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Triangular variate with lower a, mode c, upper b. */
+function triangular(rng: Rng, a: number, c: number, b: number): number {
+  if (b <= a) return a;
+  const u = rng.uniform();
+  const fc = (c - a) / (b - a);
+  return u < fc ? a + Math.sqrt(u * (b - a) * (c - a)) : b - Math.sqrt((1 - u) * (b - a) * (b - c));
+}
+
+export interface TimeToMarketArgs {
+  /** Sequenced phases; studies within a phase run in parallel (duration ≈ max). */
+  phases: { name: string; studyWeeks: number[] }[];
+  /** Upside risk factor on the mode estimate (e.g., 0.6 → up to 1.6× slippage). */
+  slipFactor?: number;
+  iterations?: number;
+  seed?: number;
+}
+
+export interface TimeToMarketResult {
+  iterations: number;
+  /** Distribution of total calendar weeks (phases run sequentially). */
+  totalWeeks: DistributionSummary;
+  perPhase: { name: string; weeks: DistributionSummary }[];
+  /** Planning-friendly percentiles. */
+  p50Weeks: number;
+  p90Weeks: number;
+  method: 'Triangular per-study, parallel-within-phase Monte-Carlo';
+}
+
+/**
+ * Simulate program calendar time: each study's actual duration varies
+ * triangularly around its estimate (0.85× lower, 1× mode, (1+slip)·1.5 upper),
+ * phases run in parallel internally and sequentially overall.
+ */
+export function timeToMarketMonteCarlo(args: TimeToMarketArgs): TimeToMarketResult {
+  if (!Array.isArray(args.phases) || args.phases.length === 0) {
+    throw new Error('phases is required and must be non-empty.');
+  }
+  const iterations = Math.min(50000, Math.max(500, args.iterations ?? 5000));
+  const slip = Math.max(0, args.slipFactor ?? 0.5);
+  const rng = createRng(args.seed ?? 0x7117ee);
+  const totals: number[] = [];
+  const phaseSamples: number[][] = args.phases.map(() => []);
+
+  for (let i = 0; i < iterations; i++) {
+    let total = 0;
+    args.phases.forEach((phase, pi) => {
+      let phaseDuration = 0;
+      for (const base of phase.studyWeeks) {
+        if (base <= 0) continue;
+        const dur = triangular(rng, base * 0.85, base, base * (1 + slip) * 1.5);
+        if (dur > phaseDuration) phaseDuration = dur; // parallel within phase
+      }
+      phaseSamples[pi].push(phaseDuration);
+      total += phaseDuration;
+    });
+    totals.push(total);
+  }
+
+  const sortedTotals = [...totals].sort((a, b) => a - b);
+  return {
+    iterations,
+    totalWeeks: summarize(totals),
+    perPhase: args.phases.map((p, i) => ({ name: p.name, weeks: summarize(phaseSamples[i]) })),
+    p50Weeks: round(percentile(sortedTotals, 50), 1),
+    p90Weeks: round(percentile(sortedTotals, 90), 1),
+    method: 'Triangular per-study, parallel-within-phase Monte-Carlo',
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Probabilistic review-outcome simulation
 // ─────────────────────────────────────────────────────────────────────────────
 

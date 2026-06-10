@@ -7,6 +7,7 @@ import {
   percentile,
   diagnosticAccuracyMonteCarlo,
   reviewOutcomeMonteCarlo,
+  timeToMarketMonteCarlo,
 } from '../monte-carlo';
 
 describe('percentile', () => {
@@ -80,5 +81,31 @@ describe('reviewOutcomeMonteCarlo', () => {
       iterations: 1500, seed: 99,
     };
     expect(reviewOutcomeMonteCarlo(args).readinessScore.mean).toBe(reviewOutcomeMonteCarlo(args).readinessScore.mean);
+  });
+});
+
+describe('timeToMarketMonteCarlo', () => {
+  const phases = [
+    { name: 'Analytical', studyWeeks: [4, 3, 2, 12] },
+    { name: 'Clinical', studyWeeks: [18] },
+  ];
+
+  it('total ≈ sum of phase parallel durations, with slippage skew', () => {
+    const r = timeToMarketMonteCarlo({ phases, seed: 5, iterations: 3000 });
+    // Phase 1 parallel ≈ max(12), Phase 2 ≈ 18 → mode total ≈ 30, with upside.
+    expect(r.totalWeeks.median).toBeGreaterThan(25);
+    expect(r.p90Weeks).toBeGreaterThan(r.p50Weeks);
+    expect(r.perPhase).toHaveLength(2);
+    expect(r.perPhase[0].name).toBe('Analytical');
+  });
+
+  it('is reproducible for a fixed seed', () => {
+    const a = timeToMarketMonteCarlo({ phases, seed: 3, iterations: 2000 });
+    const b = timeToMarketMonteCarlo({ phases, seed: 3, iterations: 2000 });
+    expect(a.totalWeeks.mean).toBe(b.totalWeeks.mean);
+  });
+
+  it('rejects empty phases', () => {
+    expect(() => timeToMarketMonteCarlo({ phases: [] })).toThrow();
   });
 });

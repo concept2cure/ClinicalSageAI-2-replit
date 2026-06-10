@@ -59,7 +59,8 @@ import { pairCompanionDiagnostic } from '../services/regulatory/cdx-pairing';
 import { designIvdStudyProgram } from '../services/regulatory/cdx-study-design';
 import { simulateIvdReview } from '../services/regulatory/reviewer-simulation-ivd';
 import { simulatePortfolio } from '../services/regulatory/portfolio-simulation';
-import { diagnosticAccuracyMonteCarlo, reviewOutcomeMonteCarlo } from '../services/stats/monte-carlo';
+import { sensitivityAnalysis } from '../services/regulatory/decision-analytics';
+import { diagnosticAccuracyMonteCarlo, reviewOutcomeMonteCarlo, timeToMarketMonteCarlo } from '../services/stats/monte-carlo';
 import { saveAssessment } from '../services/regulatory/ivd-assessments.service';
 import { corpusVersion } from '../services/ivd-knowledge/knowledge.service';
 import { knowledgeFor, type LifecycleConcept } from '../services/ivd-knowledge/links';
@@ -220,6 +221,29 @@ router.post('/portfolio/simulate', async (req: Request, res: Response) => {
 router.post('/diagnostic-accuracy/montecarlo', (req: Request, res: Response) => {
   try {
     res.json(diagnosticAccuracyMonteCarlo(req.body ?? {}));
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+  }
+});
+
+// ── Evidence sensitivity / tornado + ROI ranking ────────────────────────────
+router.post('/evidence/sensitivity', (req: Request, res: Response) => {
+  const b = req.body ?? {};
+  const PATHWAYS = ['510k', 'de_novo', 'pma', 'eu_ivdr'];
+  const ASSAY = ['quantitative', 'qualitative', 'ihc', 'ngs', 'molecular'];
+  if (!PATHWAYS.includes(b.pathway)) {
+    return res.status(422).json({ error: `pathway must be one of: ${PATHWAYS.join(', ')}` });
+  }
+  if (!ASSAY.includes(b.assayType)) {
+    return res.status(422).json({ error: `assayType must be one of: ${ASSAY.join(', ')}` });
+  }
+  res.json(sensitivityAnalysis(b));
+});
+
+// ── Time-to-market Monte-Carlo ──────────────────────────────────────────────
+router.post('/time-to-market', (req: Request, res: Response) => {
+  try {
+    res.json(timeToMarketMonteCarlo(req.body ?? {}));
   } catch (e) {
     res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
   }
