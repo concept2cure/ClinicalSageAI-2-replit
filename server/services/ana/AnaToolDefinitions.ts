@@ -193,6 +193,144 @@ export const VALUE_DOSSIER_GUIDANCE: AnaTool = {
   },
 };
 
+export const ADVISE_ESTIMAND: AnaTool = {
+  name: 'advise_estimand',
+  description:
+    'Estimand / study-design advisor (ICH E9(R1)): explains the five estimand attributes (treatment, ' +
+    'population, variable, intercurrent-event handling, population-level summary) and the five ' +
+    'intercurrent-event strategies (treatment-policy, hypothetical, composite, while-on-treatment, ' +
+    'principal-stratum); given a structured draft, QCs which of the five attributes are specified. Use ' +
+    'when defining or reviewing an estimand before choosing the estimator.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      strategy: { type: 'string', description: 'Focus an intercurrent-event strategy (treatment_policy, hypothetical, composite, while_on_treatment, principal_stratum).' },
+      draft: {
+        type: 'object',
+        description: 'A structured estimand to QC against the five attributes.',
+        properties: {
+          treatment: { type: 'string' },
+          population: { type: 'string' },
+          variable: { type: 'string' },
+          intercurrent_events: { type: 'string' },
+          summary: { type: 'string' },
+        },
+      },
+    },
+  },
+};
+
+export const ADVISE_PHARMACOVIGILANCE: AnaTool = {
+  name: 'advise_pharmacovigilance',
+  description:
+    'Pharmacovigilance aggregate-reporting & signal-management advisor: purpose, cadence, key sections ' +
+    'and pitfalls for the DSUR (ICH E2F), PBRER/PSUR (ICH E2C(R2)), expedited ICSR/SUSAR reporting ' +
+    '(ICH E2A/E2B) and the GVP Module IX signal-management cycle — or a candidate set by stage ' +
+    '(development | post-authorization). Use when scaffolding or QC-ing safety reports.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      deliverable: { type: 'string', description: 'dsur | pbrer | icsr | signal_management (aliases accepted).' },
+      stage: { type: 'string', enum: ['development', 'post-authorization'] },
+    },
+  },
+};
+
+export const ADVISE_CTD_STRUCTURE: AnaTool = {
+  name: 'advise_ctd_structure',
+  description:
+    'CTD / eCTD structure advisor (ICH M4): explains a CTD module (1–5) and its key sections, or routes ' +
+    'a free-text document description to the best-fit module ("where does this go?"). Covers Module 1 ' +
+    '(regional/administrative), Module 2 (summaries: QOS, overviews), Module 3 (quality/CMC), Module 4 ' +
+    '(nonclinical), Module 5 (clinical). Use when assembling or QC-ing a submission dossier.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      module: { type: 'string', description: 'm1..m5, a module number, or alias (quality, clinical, …).' },
+      document: { type: 'string', description: 'Free-text document description to place into a module.' },
+    },
+  },
+};
+
+export const ADVISE_SPECIAL_DESIGNATION: AnaTool = {
+  name: 'advise_special_designation',
+  description:
+    'Expedited-program & special-designation advisor: eligibility, benefit conferred, evidence and ' +
+    'common pitfalls for FDA programs (Fast Track, Breakthrough Therapy, Accelerated Approval, Priority ' +
+    'Review, Orphan) and EMA programs (PRIME, conditional MA, accelerated assessment, orphan) — or a ' +
+    'candidate set by jurisdiction. Advisory — eligibility is determined by the agency.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      designation: { type: 'string', description: 'e.g. fast_track, breakthrough, accelerated_approval, orphan, prime, conditional_ma.' },
+      jurisdiction: { type: 'string', enum: ['us', 'eu'] },
+    },
+  },
+};
+
+export const ADVISE_GCP: AnaTool = {
+  name: 'advise_gcp',
+  description:
+    'Good Clinical Practice (ICH E6(R2)) advisor: returns the GCP principles or a specific ' +
+    'responsibility domain (sponsor, investigator, IRB/IEC) with the key obligations and citation. ' +
+    'Use when briefing teams on GCP roles or preparing for inspection readiness.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      domain: { type: 'string', description: 'principles | sponsor | investigator | irb_ec (aliases accepted).' },
+    },
+  },
+};
+
+export const REVIEW_INFORMED_CONSENT: AnaTool = {
+  name: 'review_informed_consent',
+  description:
+    'QC an informed-consent form draft for the required elements of informed consent (ICH E6(R2) §4.8 ' +
+    'and 21 CFR 50.25 / 45 CFR 46.116): flags missing required and when-appropriate elements with their ' +
+    'citation and returns a completeness score. Cue-based and advisory — IRB/EC review is authoritative.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: { type: 'string', description: 'The consent-form text to review.' },
+    },
+    required: ['text'],
+  },
+};
+
+export const ADVISE_COA_SELECTION: AnaTool = {
+  name: 'advise_coa_selection',
+  description:
+    'Clinical Outcome Assessment (COA) selection advisor (FDA COA framework / PRO Guidance / Roadmap): ' +
+    'explains PRO/ClinRO/ObsRO/PerfO, suggests the best-fit COA type from a concept of interest and ' +
+    'reporter, and returns the fit-for-purpose evidence and endpoint-positioning needed to support a ' +
+    'label claim. Advisory — endpoint/label-claim strategy must be agreed with the agency.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      coa_type: { type: 'string', enum: ['pro', 'clinro', 'obsro', 'perfo'] },
+      concept: { type: 'string', description: 'Concept of interest, e.g. "pain", "6-minute walk", for a suggestion.' },
+      reporter: { type: 'string', description: 'Who reports it (patient, clinician, caregiver) — refines the suggestion.' },
+    },
+  },
+};
+
+export const ADVISE_RISK_MANAGEMENT: AnaTool = {
+  name: 'advise_risk_management',
+  description:
+    'Risk-management / safety-governance advisor: returns the components, when-required criteria and ' +
+    'common pitfalls of the US REMS (FDAAA §505-1) or EU RMP (GVP Module V), plus a routine-vs-' +
+    'additional risk-minimization toolbox (labeling, Medication Guide, HCP education, controlled access/' +
+    'ETASU, pregnancy-prevention programmes, registries). Use when scaffolding or QC-ing a post-' +
+    'authorization safety strategy. Advisory only — must be agreed with FDA/EMA PRAC.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      program: { type: 'string', description: 'rems | eu_rmp (aliases accepted).' },
+      jurisdiction: { type: 'string', enum: ['us', 'eu'] },
+    },
+  },
+};
+
 export const ADVISE_REGULATORY_PATHWAY: AnaTool = {
   name: 'advise_regulatory_pathway',
   description:
@@ -4478,6 +4616,14 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   NARRATE_STATISTICAL_RESULT,
   VALUE_DOSSIER_GUIDANCE,
   ADVISE_REGULATORY_PATHWAY,
+  ADVISE_RISK_MANAGEMENT,
+  ADVISE_GCP,
+  REVIEW_INFORMED_CONSENT,
+  ADVISE_COA_SELECTION,
+  ADVISE_CTD_STRUCTURE,
+  ADVISE_SPECIAL_DESIGNATION,
+  ADVISE_ESTIMAND,
+  ADVISE_PHARMACOVIGILANCE,
   SCREEN_PROMOTIONAL_LANGUAGE,
   MEDICAL_WRITING_GUIDANCE,
   MEDICAL_WRITING_REVIEW,
