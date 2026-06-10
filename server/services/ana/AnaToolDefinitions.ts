@@ -2757,6 +2757,20 @@ export const BUILD_DEVICE_BLUEPRINT: AnaTool = {
   },
 };
 
+export const ASSESS_STORED_CER: AnaTool = {
+  name: 'assess_stored_cer',
+  description:
+    "Gap-check a STORED Clinical Evaluation Report (an existing cer_reports record + its cer_sections) against the canonical MEDDEV 2.7/1 / MDR Annex XIV structure. Reads the tenant's actual saved CER, maps its populated fields/sections onto the canonical sections, and reports readiness, the missing required sections, and which sections still need clinical-data substantiation. Tenant-scoped (the report must belong to the caller's organization). Pass `report_id` (the cer_reports.report_id) and optionally `equivalence_claimed`. Use this to oversee a real CER in progress, not a hand-supplied section list.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      report_id: { type: 'string', description: 'The cer_reports.report_id of the stored CER.' },
+      equivalence_claimed: { type: 'boolean', description: 'Set true if equivalence to another device is claimed.' },
+    },
+    required: ['report_id'],
+  },
+};
+
 export const ASSESS_DISPATCH_READINESS: AnaTool = {
   name: 'assess_dispatch_readiness',
   description:
@@ -4321,6 +4335,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   GET_DEVICE_REVIEWER_CHECKLIST,
   GET_BIOCOMPATIBILITY_ENDPOINTS,
   BUILD_DEVICE_BLUEPRINT,
+  ASSESS_STORED_CER,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,

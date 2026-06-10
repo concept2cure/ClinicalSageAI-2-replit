@@ -4567,6 +4567,22 @@ registerToolHandler('build_device_blueprint', async (input) => {
   }
 });
 
+registerToolHandler('assess_stored_cer', async (input, ctx) => {
+  // Tenant-scoped — reads the organization's stored CER.
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'assess_stored_cer requires tenant context (organizationId).' });
+  }
+  const reportId = typeof input.report_id === 'string' ? input.report_id : '';
+  if (!reportId) return JSON.stringify({ error: 'report_id is required.' });
+  try {
+    const { assessStoredCer } = await import('../market-specs/stored-cer-assessment.js');
+    const result = await assessStoredCer({ reportId, organizationId: ctx.organizationId, equivalenceClaimed: input.equivalence_claimed === true });
+    return JSON.stringify({ ok: true, ...result });
+  } catch (err) {
+    return JSON.stringify({ error: `assess_stored_cer failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as { code?: string })?.code });
+  }
+});
+
 registerToolHandler('assess_dispatch_readiness', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) {
     return JSON.stringify({ error: 'assess_dispatch_readiness requires tenant context (organizationId and userId).' });

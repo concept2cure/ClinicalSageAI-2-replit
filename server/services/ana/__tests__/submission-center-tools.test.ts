@@ -42,6 +42,7 @@ const SUBMISSION_TOOLS = [
   'get_device_reviewer_checklist',
   'get_biocompatibility_endpoints',
   'build_device_blueprint',
+  'assess_stored_cer',
   'assess_dispatch_readiness',
 ];
 
@@ -349,6 +350,16 @@ describe('submission AI tasks — tenant + input guards', () => {
     const handler = getToolHandler('build_device_blueprint')!;
     const out = JSON.parse(await handler({ submission_type: 'nope' }, {} as ToolContext));
     expect(out.error).toMatch(/submission_type must be one of/);
+  });
+  it('assess_stored_cer refuses without tenant context', async () => {
+    const handler = getToolHandler('assess_stored_cer')!;
+    const out = JSON.parse(await handler({ report_id: 'CER-1' }, {} as ToolContext));
+    expect(out.error).toMatch(/tenant context/);
+  });
+  it('assess_stored_cer requires a report_id', async () => {
+    const handler = getToolHandler('assess_stored_cer')!;
+    const out = JSON.parse(await handler({}, { organizationId: 1, userId: 2 } as ToolContext));
+    expect(out.error).toMatch(/report_id is required/);
   });
 });
 

@@ -595,6 +595,18 @@ router.post('/device/blueprint', limiter, requireRole(AUTHOR), async (req, res) 
   } catch (err) { fail(res, err); }
 });
 
+// Gap-check a STORED CER (cer_reports/cer_sections) against the canonical structure.
+// Tenant-scoped; needs a database. 404 when the report is not in the organization.
+router.get('/device/cer/:reportId/assess-stored', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const equivalenceClaimed = req.query.equivalenceClaimed === 'true' || req.query.equivalenceClaimed === '1';
+  try {
+    const { assessStoredCer } = await import('../services/market-specs/stored-cer-assessment.js');
+    res.json(await assessStoredCer({ reportId: String(req.params.reportId), organizationId: ctx.organizationId, equivalenceClaimed }));
+  } catch (err) { fail(res, err); }
+});
+
 router.get('/:id', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
