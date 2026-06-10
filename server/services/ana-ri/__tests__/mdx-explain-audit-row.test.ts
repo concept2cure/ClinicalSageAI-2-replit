@@ -63,11 +63,10 @@ describe('audit.explain', () => {
   });
 
   // These 4 tests exercise the explainAuditRow rendering path. The mock
-  // db pool returns rows verbatim and the underlying implementation now
-  // returns success=false on its first DB call (likely because the
-  // newer impl gates on additional column shapes the test mock doesn't
-  // supply). Needs an impl-side trace and a re-derived mock contract.
-  it.skip('renders an explainer for an agent-initiated Q-Sub create', async () => {
+  // rows mirror the exact column list the impl SELECTs from audit_logs:
+  // id, tenant_id, user_id, action, table_name, record_id, new_values,
+  // ip_address, user_agent, created_at.
+  it('renders an explainer for an agent-initiated Q-Sub create', async () => {
     dbState.rows = [
       {
         id: 1842,
@@ -109,7 +108,7 @@ describe('audit.explain', () => {
     expect(explainer).toContain('Thread id:');
   });
 
-  it.skip('flags reasons that did NOT cite an artifact', async () => {
+  it('flags reasons that did NOT cite an artifact', async () => {
     dbState.rows = [
       {
         id: 1843,
@@ -135,7 +134,7 @@ describe('audit.explain', () => {
     expect(explainer).toContain('the reason did NOT cite a concrete artifact');
   });
 
-  it.skip('handles human-side audit rows (no agent fields)', async () => {
+  it('handles human-side audit rows (no agent fields)', async () => {
     dbState.rows = [
       {
         id: 1900,
@@ -162,7 +161,7 @@ describe('audit.explain', () => {
     expect(explainer).not.toContain('AI did NOT cite');
   });
 
-  it.skip('emits audit.explain audit row for the explanation request itself', async () => {
+  it('emits audit.explain audit row for the explanation request itself', async () => {
     dbState.rows = [
       {
         id: 1842,
