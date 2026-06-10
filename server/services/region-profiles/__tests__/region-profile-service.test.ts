@@ -18,6 +18,21 @@ describe('getSubmissionRegionProfile', () => {
     expect(getSubmissionRegionProfile('jp')!.agency).toBe('PMDA');
   });
 
+  it('surfaces Japan-specific Module 1 structure and advisory requirements in the PMDA profile', () => {
+    const jp = getSubmissionRegionProfile('jp')!;
+    expect(jp.language).toBe('ja');
+    expect(jp.currency).toBe('JPY');
+    // Structural Module 1 depth: J-RMP and SAKIGAKE/conditional sections present.
+    const sectionTitles = jp.module1Sections.map((s) => s.titleLocal);
+    expect(sectionTitles).toContain('医薬品リスク管理計画書'); // J-RMP (1.7)
+    expect(sectionTitles).toContain('先駆け審査指定情報'); // SAKIGAKE (1.12)
+    // Advisory depth: reexamination period and electronic study data guidance.
+    const reqs = jp.specificRequirements.join(' ');
+    expect(reqs).toContain('再審査期間'); // reexamination period
+    expect(reqs).toContain('申請電子データ'); // CDISC-compliant electronic study data
+    expect(reqs).toContain('薬価収載'); // NHI price listing
+  });
+
   it('returns null for an unknown region', () => {
     expect(getSubmissionRegionProfile('cn')).toBeNull();
   });

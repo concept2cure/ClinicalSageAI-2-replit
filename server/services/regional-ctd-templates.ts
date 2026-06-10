@@ -175,6 +175,11 @@ export const PMDA_TEMPLATE: RegionalTemplate = {
     'eCTD format required since 2017',
     'PMDA review fee required',
     'Bridging study data may be required',
+    'Reexamination period (再審査期間) applies — typically 8 years for a new active ingredient (up to 10 for orphan drugs)',
+    'Electronic study data (申請電子データ, CDISC-compliant) required for new drug applications',
+    'Risk Management Plan (J-RMP) and Early Post-marketing Phase Vigilance (市販直後調査 / EPPV) required',
+    'Overseas sponsors without a Japanese MAH use the Foreign Special Approval system (外国特例承認) with a Designated MAH (選任製造販売業者 / D-MAH)',
+    'NHI price listing (薬価収載) via Chuikyo (中医協) follows approval and gates reimbursement',
   ],
   module1Sections: [
     { number: '1.1', title: 'Application Form', titleLocal: '承認申請書', required: true, description: 'PMDA application form (Japanese)' },
