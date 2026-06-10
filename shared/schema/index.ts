@@ -437,3 +437,9 @@ export * from './irb';
 // / BMBL. Service: server/services/ibc;
 // migration: migrations/20260610_ibc_biosafety.sql.
 export * from './ibc';
+
+// Nonclinical study management + SEND (C2C-04): governed, submission-linked tox/
+// pharmacology study registry + CDISC SEND dataset packaging, threading
+// IACUC → study → Module 4. ICH M4/S-series; SENDIG. Service: server/services/
+// nonclinical; migration: migrations/20260610_nonclinical_send.sql.
+export * from './nonclinical';

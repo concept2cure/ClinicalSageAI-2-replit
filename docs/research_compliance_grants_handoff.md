@@ -11,7 +11,7 @@ and to run the deferred DB-backed verification. Updated as each capability lands
 | C2C-01 | Clinical Investigator Financial Disclosure (21 CFR 54) | 1 | **Backend complete** (this report) |
 | C2C-02 | ALCOA+ Provenance Spine | 1 | **Seed landed** (`provenance_links` + service); full spine later |
 | C2C-03 | HA Interaction & Commitment Mgmt | 1 | **Backend complete** |
-| C2C-04 | Nonclinical Study Mgmt + SEND | 2 | Planned |
+| C2C-04 | Nonclinical Study Mgmt + SEND | 2 | **Backend complete** |
 | C2C-05 | IACUC / Animal Study Governance | 2 | **Backend complete** |
 | C2C-06 | IRB/IEC Submission & Amendment Mgmt | 2 | **Backend complete** |
 | C2C-07 | IBC / Biosafety (Novel Modality) | 2 | **Backend complete** |
@@ -252,3 +252,45 @@ Risk-group catalog (RG1-4 → BSL-1..4, cited NIH Guidelines/BMBL); `evaluateCon
 
 ### Tests landed (no-DB)
 `ibc-logic.test.ts` (9), `ana/__tests__/ibc-tools.test.ts` (7). Typecheck clean.
+
+---
+
+## C2C-04 — Nonclinical Study Management + SEND
+
+**Note:** distinct from `ctd_nonclinical_studies` (AI-extraction landing zone, program-keyed). This is the **governed, submission-linked management** layer.
+
+### Data model (`shared/schema/nonclinical.ts`; migration `migrations/20260610_nonclinical_send.sql`)
+- `nonclinical_studies` (study type → derived CTD Module 4 section; GLP; species; NOAEL; links to authorizing `iacuc_protocol_id` and `submission_id`), `send_datasets` (SENDIG version, domains present, define.xml, nSDRG, validation status/counts).
+- Provenance: `iacuc_protocol → nonclinical_study` (`authorizes`) and `nonclinical_study → submission_module4` (`supports`) — **completes the preclinical provenance chain** from IACUC (C2C-05) through Module 4.
+
+### API (`/api/nonclinical`, governed + org-scoped)
+| Method | Path | Governed action |
+|--------|------|-----------------|
+| POST | `/studies` | `create` (derives CTD section + provenance; returns required SEND domains) |
+| GET | `/studies?submissionId=` | — |
+| PATCH | `/studies/:id/status` | `transition` |
+| PUT | `/studies/:id/send` | `update` (upsert SEND dataset metadata) |
+| GET | `/studies/:id/send-readiness` | — (SENDIG readiness gate) |
+
+### AnA tools (same governed path, surface `ana`)
+`create_nonclinical_study` (threads provenance), `review_send_readiness` (read-only gate).
+
+### Deterministic core (`nonclinical-logic.ts`, pure, tested)
+`ctdSectionFor` (study type → CTD 4.2.x); `requiredSendDomains` + `sendInScope` (SENDIG 3.x domain catalog); `evaluateSendReadiness` (required domains, define.xml mandatory, nSDRG, validation errors — cited findings + risk + missing domains).
+
+### Central-module wiring
+- **Reports:** `nonclinical.study_send_register` in `REPORT_TYPE_SEED`.
+- **Metrics:** `server/services/nonclinical-metrics.ts` → `/api/metrics` (`nonclinical_studies_created_total{study_type}`, `nonclinical_send_validations_total{status}`).
+
+### UI surfaces to build (deferred)
+1. **Study register** — table by type/CTD section/status; KPI band; GLP indicator; provenance "authorized by IACUC / supports Module 4" chips.
+2. **Study detail** — SEND dataset panel (domains present vs required, define.xml/nSDRG, validation), the readiness gate (`GET /:id/send-readiness`), status transitions.
+3. **AnA panel** — conversational tools wired.
+
+### Deferred DB verification
+- [ ] `drizzle-kit push` clean; 2 tables + indexes + CHECK constraints in `information_schema`.
+- [ ] Org-scoping; governed audit rows; provenance links written on study create (IACUC + Module 4).
+- [ ] `nonclinical.study_send_register` report run resolves; `/api/metrics` exposes `nonclinical_*`.
+
+### Tests landed (no-DB)
+`nonclinical-logic.test.ts` (9), `ana/__tests__/nonclinical-tools.test.ts` (5). Typecheck clean.

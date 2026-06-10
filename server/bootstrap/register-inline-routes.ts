@@ -367,6 +367,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount IBC routes:', error);
   }
 
+  // Nonclinical study management + SEND (ICH M4/S-series; CDISC SEND → Module 4).
+  try {
+    const nonclinicalModule = await import('../routes/nonclinical');
+    app.use('/api/nonclinical', authMiddleware, nonclinicalModule.default);
+    console.info('✅ Nonclinical/SEND routes mounted (/api/nonclinical)');
+  } catch (error) {
+    console.error('❌ Failed to mount Nonclinical routes:', error);
+  }
+
   // C2C study digital twins + simulation (study/protocol design module).
   try {
     const c2cStudyTwinModule = await import('../routes/c2c/study-twin');

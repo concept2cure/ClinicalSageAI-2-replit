@@ -5510,6 +5510,76 @@ registerToolHandler('review_ibc_registration', async (input, ctx) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Nonclinical + SEND (C2C-04). Conversational building shares the governed/
+// audited path (recordGovernedAction, surface 'ana'); study creation threads
+// IACUC → study → Module 4 provenance.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_nonclinical_study', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_nonclinical_study requires tenant + user context.' });
+  const studyNumber = typeof input.study_number === 'string' ? input.study_number.trim() : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  const studyType = typeof input.study_type === 'string' ? input.study_type : '';
+  const VALID = ['single_dose_tox', 'repeat_dose_tox', 'safety_pharmacology', 'genotoxicity', 'carcinogenicity', 'reproductive_tox', 'local_tolerance', 'adme_pk', 'immunotoxicity', 'other'];
+  if (!studyNumber || !title || !VALID.includes(studyType)) {
+    return JSON.stringify({ error: 'study_number, title, and a valid study_type are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createStudyTx } = await import('../nonclinical/nonclinical-service.js');
+  const { requiredSendDomains } = await import('../nonclinical/nonclinical-logic.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, ctdSection, provenanceLinkIds } = await createStudyTx(client, ctx.organizationId, ctx.userId, {
+      studyNumber, title, studyType: studyType as any,
+      species: typeof input.species === 'string' ? input.species : null,
+      glpCompliant: input.glp_compliant === true,
+      testingFacility: typeof input.testing_facility === 'string' ? input.testing_facility : null,
+      noael: typeof input.noael === 'string' ? input.noael : null,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+      iacucProtocolId: typeof input.iacuc_protocol_id === 'number' ? input.iacuc_protocol_id : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `nonclinical-study:${id}`, reason: fcoiReason(input, 'Nonclinical study opened via AnA'),
+      payload: { studyType, ctdSection, provenanceLinkIds }, domain: 'nonclinical', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, ctdSection, requiredSendDomains: requiredSendDomains(studyType as any), message: `Opened nonclinical study "${title}" (id ${id}) → CTD ${ctdSection}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_nonclinical_study failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_send_readiness', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_send_readiness requires tenant context.' });
+  const studyId = typeof input.study_id === 'number' ? input.study_id : NaN;
+  if (!Number.isInteger(studyId)) return JSON.stringify({ error: 'study_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { getSendReadinessInput } = await import('../nonclinical/nonclinical-service.js');
+  const { evaluateSendReadiness } = await import('../nonclinical/nonclinical-logic.js');
+  const client = await getPool().connect();
+  try {
+    const inp = await getSendReadinessInput(client, ctx.organizationId, studyId);
+    const gate = evaluateSendReadiness(inp);
+    return JSON.stringify({
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, missingDomains: gate.missingDomains,
+      message: gate.riskLevel === 'high'
+        ? 'Critical SEND finding (define.xml or open validation errors) — resolve before submission.'
+        : `SEND package ${gate.riskLevel === 'low' ? 'is ready' : 'has gaps'} (${gate.riskLevel} risk).`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_send_readiness failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
 registerToolHandler('log_study_deviation', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'log_study_deviation requires tenant context.' });

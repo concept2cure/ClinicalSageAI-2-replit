@@ -262,4 +262,20 @@ export const REPORT_TYPE_SEED: ReportTypeDefinition[] = [
     governanceRequirements: { part11: true, auditTrail: true, region: 'USA_NIH' },
     truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true },
   },
+  {
+    // Nonclinical study + SEND readiness register (ICH M4/S; SENDIG; C2C-04).
+    typeId: 'nonclinical.study_send_register',
+    label: 'Nonclinical Study & SEND Readiness Register',
+    family: 'nonclinical_module4',
+    allowedScopes: ['submission', 'program', 'project'],
+    allowedPersonas: ['nonclinical_lead', 'ra_lead', 'qa'],
+    allowedClientSegments: ['pharma', 'biotech'],
+    dataDependencies: ['nonclinical_studies', 'send_datasets', 'provenance_links'],
+    artifactDependencies: ['concept2cure_artifacts'],
+    workflowDependencies: ['governance_boundary'],
+    anaModules: ['ana-ri'],
+    exportTemplate: 'nonclinical-study-send-register',
+    governanceRequirements: { part11: true, auditTrail: true },
+    truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true },
+  },
 ];

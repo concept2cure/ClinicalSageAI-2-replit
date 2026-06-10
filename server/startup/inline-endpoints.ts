@@ -139,6 +139,14 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // Nonclinical + SEND metrics (C2C-04).
+      try {
+        const { renderNonclinicalMetrics } = await import('../services/nonclinical-metrics.js');
+        lines.push(...renderNonclinicalMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RAG retrieval metrics — recorded at the ragRouter chokepoint.
       try {
         const { renderRagMetrics } = await import('../services/rag-runtime-metrics.js');

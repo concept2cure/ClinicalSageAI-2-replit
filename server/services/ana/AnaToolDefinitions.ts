@@ -3425,6 +3425,39 @@ export const REVIEW_IBC_REGISTRATION: AnaTool = {
   },
 };
 
+export const CREATE_NONCLINICAL_STUDY: AnaTool = {
+  name: 'create_nonclinical_study',
+  description:
+    "Open a governed nonclinical (tox/pharmacology) study record. study_type drives the CTD Module 4 section (derived automatically). Optionally link the authorizing IACUC protocol and the submission it supports — both are threaded onto the provenance spine. Returns the study id, CTD section, and the required SEND domains. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      study_number: { type: 'string' },
+      title: { type: 'string' },
+      study_type: { type: 'string', enum: ['single_dose_tox', 'repeat_dose_tox', 'safety_pharmacology', 'genotoxicity', 'carcinogenicity', 'reproductive_tox', 'local_tolerance', 'adme_pk', 'immunotoxicity', 'other'] },
+      species: { type: 'string' },
+      glp_compliant: { type: 'boolean' },
+      testing_facility: { type: 'string' },
+      noael: { type: 'string' },
+      submission_id: { type: 'number' },
+      iacuc_protocol_id: { type: 'number' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['study_number', 'title', 'study_type'],
+  },
+};
+
+export const REVIEW_SEND_READINESS: AnaTool = {
+  name: 'review_send_readiness',
+  description:
+    "Run the deterministic SEND (CDISC) submission-readiness gate on a nonclinical study (read-only): required domains for the study type, define.xml, nSDRG, and validation status. Returns cited findings, missing domains, and a risk level.",
+  input_schema: {
+    type: 'object',
+    properties: { study_id: { type: 'number' } },
+    required: ['study_id'],
+  },
+};
+
 export const LOG_STUDY_DEVIATION: AnaTool = {
   name: 'log_study_deviation',
   description:
@@ -4890,6 +4923,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CREATE_IBC_REGISTRATION,
   ADD_BIOLOGICAL_AGENT,
   REVIEW_IBC_REGISTRATION,
+  CREATE_NONCLINICAL_STUDY,
+  REVIEW_SEND_READINESS,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,
