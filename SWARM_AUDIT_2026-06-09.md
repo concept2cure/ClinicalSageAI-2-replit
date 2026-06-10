@@ -554,3 +554,28 @@ Acting as PM on the remaining open items:
   team: cached `npm run ocr:vendor` in ci.yml.
 
 Gates: typecheck 0; tenant checker exit 0 (baseline 25); security 183/183.
+
+---
+
+# Final disposition — 2026-06-10
+
+Every deferred item now has a durable home:
+
+- **Tenant-isolation baseline fully justified**: all 25 surviving entries are
+  documented per-entry in `docs/reports/tenant-isolation-justifications.md`
+  (policy: new baseline entries require a justification row). This closes the
+  original "77 violations lack documented justification" advisory completely.
+- **Dated action tracked**: 510(k) route sunset removal checklist → issue #726.
+- **All other deferred items**: decision register with reopen triggers →
+  issue #727 (12 items, each with decision, rationale, and the concrete
+  trigger that should reopen it — including the GA gate on the client seed
+  fallback and the staging-first rollout for STRICT_STARTUP_INVARIANTS).
+- Confirmed by study before deciding: no preflight/QC/playbook tables exist
+  anywhere in the schema (keep-null stands), and the RPI `components` payload
+  has zero client consumers (a disclosure flag would be dead metadata —
+  documented instead).
+
+Whole-platform validation: full vitest suite 6,585 passed / 96 phase-gated
+skips / 0 failures (the one initial failure was a source-integrity guard
+reading the deleted duplicate eventBus — updated to guard the deletion
+itself); production build clean; typecheck 0 across all 18 commits.
