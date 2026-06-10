@@ -7,6 +7,8 @@ WO-8 credibility gate, executed on the existing predictor — not a new one.
 
 **Run it:**
 ```bash
+npm run benchmark:rtf   # product artifact: prints the report + provenance, exits non-zero on regression
+# or, as a test:
 npx vitest run server/services/shadow-review/benchmark/__tests__/rtf-benchmark.test.ts
 ```
 Runner: `server/services/shadow-review/benchmark/run-rtf-benchmark.ts` ·

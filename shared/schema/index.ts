@@ -405,3 +405,41 @@ export * from './living-record-spine';
 // registries that feed FDA Forms 1571/1572/3674 and submission metadata.
 // Service: server/services/ind-master-data; migration: migrations/20260609_ind_master_data.sql.
 export * from './ind-master-data';
+
+// Clinical investigator financial disclosure — 21 CFR 54 (C2C-01) + the generic
+// ALCOA+ provenance spine seed (C2C-02). Forms FDA 3454/3455 → Module 1.
+// Service: server/services/financial-disclosures; migration: migrations/20260610_financial_disclosure_21cfr54.sql.
+export * from './financial-disclosures';
+
+// HA interaction & commitment management (C2C-03): agency meetings (Pre-IND/
+// EOP2/pre-NDA) → questions → commitments (PMR/PMC/REMS) → fulfillment, threaded
+// onto the provenance spine. Service: server/services/ha-interactions;
+// migration: migrations/20260610_ha_interactions_commitments.sql.
+export * from './ha-interactions';
+
+// IACUC / animal study governance (C2C-05): animal-use protocols, census,
+// committee review/determinations, amendments, semi-annual facility inspections.
+// Origin node of the preclinical provenance chain (→ Module 4). PHS Policy / AWA
+// / OLAW; USDA pain categories B-E. Service: server/services/iacuc;
+// migration: migrations/20260610_iacuc_animal_governance.sql.
+export * from './iacuc';
+
+// IRB / IEC submission & amendment management (C2C-06): human-subjects ethics
+// review, sIRB multi-site coordination, informed consent, determinations,
+// amendments, reportable events. Threads ethics approval → Module 5. Common Rule
+// (45 CFR 46), 21 CFR 56, ICH E6. Service: server/services/irb;
+// migration: migrations/20260610_irb_submissions.sql.
+export * from './irb';
+
+// IBC / biosafety (C2C-07): recombinant/synthetic nucleic acid registrations,
+// biological agents (risk groups RG1-4), containment (BSL-1..4) and committee
+// determinations — clearance for modality-heavy CGT/mRNA programs. NIH Guidelines
+// / BMBL. Service: server/services/ibc;
+// migration: migrations/20260610_ibc_biosafety.sql.
+export * from './ibc';
+
+// Nonclinical study management + SEND (C2C-04): governed, submission-linked tox/
+// pharmacology study registry + CDISC SEND dataset packaging, threading
+// IACUC → study → Module 4. ICH M4/S-series; SENDIG. Service: server/services/
+// nonclinical; migration: migrations/20260610_nonclinical_send.sql.
+export * from './nonclinical';

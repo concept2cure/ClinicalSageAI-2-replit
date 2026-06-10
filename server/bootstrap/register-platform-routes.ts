@@ -185,6 +185,29 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     console.warn('⚠️ SCIM routes not mounted - continuing without SCIM provisioning');
   }
 
+  // Admin API for SCIM tenant tokens (super-admin only; session-authed under /api).
+  try {
+    const scimAdminModule = await import('../routes/admin/scim-tenants');
+    const scimAdminRouter = scimAdminModule.default;
+    if (scimAdminRouter && (typeof scimAdminRouter === 'function' || (scimAdminRouter as any).handle)) {
+      app.use('/api/admin/scim-tenants', scimAdminRouter);
+    }
+  } catch {
+    console.warn('⚠️ SCIM tenant admin routes not mounted');
+  }
+
+  // SIEM audit feed (admin; org-scoped). Incremental, cursor-paginated NDJSON
+  // pull of this tenant's Part 11 audit trail for SOC/SIEM ingestion.
+  try {
+    const auditSiemModule = await import('../routes/admin/audit-siem');
+    const auditSiemRouter = auditSiemModule.default;
+    if (auditSiemRouter && (typeof auditSiemRouter === 'function' || (auditSiemRouter as any).handle)) {
+      app.use('/api/admin/audit', auditSiemRouter);
+    }
+  } catch {
+    console.warn('⚠️ SIEM audit feed routes not mounted');
+  }
+
   // RFC 9116 vulnerability disclosure — /.well-known/security.txt (public).
   try {
     const wellKnownModule = await import('../routes/well-known');

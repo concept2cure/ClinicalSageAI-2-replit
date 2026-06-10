@@ -75,7 +75,10 @@ AnA can drive all of the above through her governed tools (tenant from
 `trace_provenance`, `check_consistency`, `assess_pathway_readiness`,
 `build_pathway_manifest`, `list_validation_rules`, `get_market_submission_spec`,
 `get_document_template`, `validate_market_formatting`, `get_submission_requirements`,
-`assess_pathway_eligibility`, `classify_post_submission_change`,
+`assess_pathway_eligibility`, `classify_post_submission_change`, `assess_device_evidence_structure`,
+`classify_device`, `get_device_reviewer_checklist`, `get_biocompatibility_endpoints`,
+`build_device_blueprint`, `assess_stored_cer`, `build_global_device_strategy`,
+`get_regulatory_timeline`, `validate_udi`, `get_electrical_standards`,
 `assess_dispatch_readiness`. The UI's AnA panel passes page context
 (`{ submissionId, sectionCode, region }`); the tools supply nothing tenant-related.
 
@@ -118,6 +121,25 @@ mirroring the server's lifecycle rules. Render dropdowns/badges/pills from these
 
 Workspace map + error catalog for nav/error handling: `shared/types/submission-ui.ts`
 (`SUBMISSION_WORKSPACES`, `SUBMISSION_ERROR_CODES`, `submissionErrorMessage()`).
+
+## Device evidence + classification + shadow reviewer (mdx/ivd)
+| GET | `/api/submissions/device/cer/structure` | → `{ stages, sections }` | The CER (MEDDEV 2.7/1 Rev 4 / MDR Annex XIV) — 5 stages + report sections, each with NB reviewer questions. |
+| POST | `/api/submissions/device/cer/assess` | `{ presentSectionIds, equivalenceClaimed? }` → `CerAssessment` | CER completeness gap-check (equivalence required only when claimed; flags sections needing clinical data). |
+| GET | `/api/submissions/device/per/structure` | → `{ pillars, analyticalMetrics, clinicalMetrics, sections }` | The PER (IVDR Annex XIII) — three pillars + metrics (LoD/LoQ/precision…, sensitivity/specificity/PPV/NPV) + sections with reviewer questions. |
+| POST | `/api/submissions/device/per/assess` | `{ presentSectionIds }` → `PerAssessment` | PER completeness + which of the three pillars are covered/missing. |
+| POST | `/api/submissions/device/classify` | `{ framework: mdr\|ivdr\|fda, facts }` → classification | Deterministic MDR/IVDR Annex VIII class (with the rule applied) or FDA pathway heuristic, each with a confirm caveat. |
+| GET | `/api/submissions/device/reviewer-checklist?type=510k\|de_novo\|pma\|cer\|per` | → reviewer checklist | The reverse-workflow oversight: the section-anchored questions an FDA/NB reviewer asks of your submission, with severity + 21 CFR/Annex basis. |
+| GET/POST | `/api/submissions/device/risk-management/{structure,assess}` | → ISO 14971 RMF | The risk management file sections + gap assessment. |
+| POST | `/api/submissions/device/biocompatibility` | `{ nature, duration }` → endpoints | ISO 10993-1 biological endpoints for the contact category. |
+| POST | `/api/submissions/device/software/classify` | `{ canContribute… }` → class + deliverables | IEC 62304 software safety class (A/B/C) + per-class deliverables + reviewer questions. |
+| POST | `/api/submissions/device/blueprint` | `DeviceBlueprintInput` → `DeviceBlueprint` | **The reverse-workflow synthesis**: classification + required documents + applicable evidence modules (CER/PER/RMF/biocomp/software with gap assessment) + reviewer checklist, in one object. |
+| GET | `/api/submissions/device/cer/:reportId/assess-stored[?equivalenceClaimed=]` | → stored-CER assessment | Gap-checks a **stored** `cer_reports`/`cer_sections` record (tenant-scoped) against the canonical CER structure — maps populated fields/sections → canonical sections → readiness + gaps. 404 if not in the org. Needs the DB. |
+| GET | `/api/submissions/device/global-strategy?kind=device\|ivd[&regions=]` | → global strategy | For one device/IVD across FDA/EU-MDR/EU-IVDR/PMDA: shared (build-once) vs region-specific evidence + each region's pathway + registration. |
+| GET | `/api/submissions/device/timeline?pathway=510k\|de_novo\|pma\|mdr_ce\|ivdr_ce\|eu_cta\|pmda_device\|fda_nda\|eu_maa` | → `PathwayTimeline` | Published review-clock goals + milestones; EU MDR/IVDR honestly null (no statutory clock). 404 on unknown. |
+| POST | `/api/submissions/device/udi/validate` | `{ udi }` → UDI validation | Real GS1 mod-10 check digit + GTIN-14 validation + AI parsing (UDI-DI + UDI-PI) → GUDID/EUDAMED components. HIBCC/ICCBBA detected, not parsed. |
+| POST | `/api/submissions/device/electrical-safety` | `{ electricallyPowered, hasAlarms, … }` → IEC 60601 set | Applicable IEC 60601 standards (general + triggered collaterals) + test categories + reviewer questions. |
+
+> `POST /device/blueprint` now also returns a `scorecard` (weighted 0–100 readiness + level + top gaps).
 
 ## Pathway readiness (non-eCTD projections — Cross-Region / Dispatch)
 | GET | `/api/submissions/sequences/:seqId/pathway-readiness?pathway=&memberStates=` | → `PathwayReadinessResponse` | projects the sequence's canonical leaves onto CTIS \| MDR \| IVDR \| eSTAR (510k/de_novo) and returns a required-slot gap/readiness report. Deterministic, map+gap only — never submits. `memberStates` (comma list) applies to CTIS Part II. |

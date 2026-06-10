@@ -437,6 +437,248 @@ router.post('/change-categories/classify', limiter, requireRole(AUTHOR), async (
   }
 });
 
+// ── Device evidence structures + classification + shadow reviewer (mdx/ivd) ──
+// CER (MEDDEV 2.7/1 / MDR Annex XIV) and PER (IVDR Annex XIII) structure + gap
+// assessment, the MDR/IVDR/FDA classification engine, and the reverse-workflow
+// reviewer checklist. All deterministic, read-only/compute; never transmit.
+router.get('/device/cer/structure', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  try {
+    const { CER_STAGES, CER_SECTIONS } = await import('../services/market-specs/cer-structure.js');
+    res.json({ stages: CER_STAGES, sections: CER_SECTIONS });
+  } catch (err) { fail(res, err); }
+});
+const cerAssessSchema = z.object({
+  presentSectionIds: z.array(z.string().max(64)).max(200).default([]),
+  equivalenceClaimed: z.boolean().optional(),
+});
+router.post('/device/cer/assess', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = cerAssessSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { assessCerStructure } = await import('../services/market-specs/cer-structure.js');
+    res.json(assessCerStructure(parsed.data.presentSectionIds, { equivalenceClaimed: parsed.data.equivalenceClaimed }));
+  } catch (err) { fail(res, err); }
+});
+router.get('/device/per/structure', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  try {
+    const { PER_PILLARS, ANALYTICAL_METRICS, CLINICAL_METRICS, PER_SECTIONS } = await import('../services/market-specs/per-structure.js');
+    res.json({ pillars: PER_PILLARS, analyticalMetrics: ANALYTICAL_METRICS, clinicalMetrics: CLINICAL_METRICS, sections: PER_SECTIONS });
+  } catch (err) { fail(res, err); }
+});
+const perAssessSchema = z.object({ presentSectionIds: z.array(z.string().max(64)).max(200).default([]) });
+router.post('/device/per/assess', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = perAssessSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { assessPerStructure } = await import('../services/market-specs/per-structure.js');
+    res.json(assessPerStructure(parsed.data.presentSectionIds));
+  } catch (err) { fail(res, err); }
+});
+const classifySchema = z.object({ framework: z.enum(['mdr', 'ivdr', 'fda']), facts: z.record(z.string(), z.unknown()).default({}) });
+router.post('/device/classify', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = classifySchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const m = await import('../services/market-specs/device-classification.js');
+    const facts = parsed.data.facts as Record<string, never>;
+    const result =
+      parsed.data.framework === 'mdr' ? m.classifyMdr(facts)
+        : parsed.data.framework === 'ivdr' ? m.classifyIvdr(facts)
+          : m.recommendFdaPathway(facts);
+    res.json({ framework: parsed.data.framework, ...result });
+  } catch (err) { fail(res, err); }
+});
+router.get('/device/reviewer-checklist', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const type = String(Array.isArray(req.query.type) ? req.query.type[0] : req.query.type ?? '');
+  const TYPES = ['510k', 'de_novo', 'pma', 'cer', 'per'];
+  if (!TYPES.includes(type)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: `type must be one of: ${TYPES.join(', ')}.` } });
+  }
+  try {
+    const { buildShadowReviewerChecklist } = await import('../services/market-specs/device-shadow-reviewer.js');
+    res.json(buildShadowReviewerChecklist(type as '510k' | 'de_novo' | 'pma' | 'cer' | 'per'));
+  } catch (err) { fail(res, err); }
+});
+
+// Risk management file (ISO 14971), biocompatibility (ISO 10993), software (IEC 62304).
+router.get('/device/risk-management/structure', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  try {
+    const { RMF_SECTIONS } = await import('../services/market-specs/risk-management-structure.js');
+    res.json({ sections: RMF_SECTIONS });
+  } catch (err) { fail(res, err); }
+});
+const rmfAssessSchema = z.object({ presentSectionIds: z.array(z.string().max(64)).max(200).default([]) });
+router.post('/device/risk-management/assess', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = rmfAssessSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { assessRmfStructure } = await import('../services/market-specs/risk-management-structure.js');
+    res.json(assessRmfStructure(parsed.data.presentSectionIds));
+  } catch (err) { fail(res, err); }
+});
+const biocompSchema = z.object({
+  nature: z.enum(['skin', 'mucosal_membrane', 'breached_surface', 'blood_path_indirect', 'tissue_bone_dentin', 'circulating_blood', 'implant_tissue_bone', 'implant_blood']),
+  duration: z.enum(['limited', 'prolonged', 'long_term']),
+});
+router.post('/device/biocompatibility', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = biocompSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { requiredBiocompEndpoints } = await import('../services/market-specs/biocompatibility-matrix.js');
+    res.json(requiredBiocompEndpoints(parsed.data.nature, parsed.data.duration));
+  } catch (err) { fail(res, err); }
+});
+const softwareSchema = z.object({
+  canContributeToDeathOrSeriousInjury: z.boolean().optional(),
+  canContributeToNonSeriousInjury: z.boolean().optional(),
+});
+router.post('/device/software/classify', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = softwareSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const m = await import('../services/market-specs/software-lifecycle.js');
+    const cls = m.classifySoftware(parsed.data);
+    res.json({ ...cls, deliverables: m.deliverablesForClass(cls.class), reviewerQuestions: m.SOFTWARE_REVIEWER_QUESTIONS });
+  } catch (err) { fail(res, err); }
+});
+
+// The unified reverse-workflow blueprint — classification + requirements +
+// applicable evidence modules + reviewer checklist in one object.
+const blueprintSchema = z.object({
+  submissionType: z.enum(['510k', 'de_novo', 'pma', 'mdr_td', 'ivdr_td']),
+  classification: z.object({ framework: z.enum(['mdr', 'ivdr', 'fda']), facts: z.record(z.string(), z.unknown()) }).optional(),
+  contact: z.object({
+    nature: z.enum(['skin', 'mucosal_membrane', 'breached_surface', 'blood_path_indirect', 'tissue_bone_dentin', 'circulating_blood', 'implant_tissue_bone', 'implant_blood']),
+    duration: z.enum(['limited', 'prolonged', 'long_term']),
+  }).optional(),
+  software: z.object({
+    applicable: z.boolean(),
+    canContributeToDeathOrSeriousInjury: z.boolean().optional(),
+    canContributeToNonSeriousInjury: z.boolean().optional(),
+    presentDeliverableIds: z.array(z.string().max(64)).max(100).optional(),
+  }).optional(),
+  electrical: z.object({
+    electricallyPowered: z.boolean().optional(),
+    hasAlarms: z.boolean().optional(),
+    closedLoopControl: z.boolean().optional(),
+    homeUse: z.boolean().optional(),
+    emsUse: z.boolean().optional(),
+    hasParticularStandard: z.boolean().optional(),
+  }).optional(),
+  present: z.object({
+    cerSectionIds: z.array(z.string().max(64)).max(200).optional(),
+    perSectionIds: z.array(z.string().max(64)).max(200).optional(),
+    rmfSectionIds: z.array(z.string().max(64)).max(200).optional(),
+  }).optional(),
+  equivalenceClaimed: z.boolean().optional(),
+});
+router.post('/device/blueprint', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = blueprintSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { buildDeviceBlueprint } = await import('../services/market-specs/device-blueprint.js');
+    const { scorecardFromBlueprint } = await import('../services/market-specs/device-readiness-scorecard.js');
+    const blueprint = buildDeviceBlueprint(parsed.data as Parameters<typeof buildDeviceBlueprint>[0]);
+    res.json({ ...blueprint, scorecard: scorecardFromBlueprint(blueprint) });
+  } catch (err) { fail(res, err); }
+});
+
+// Global multi-region device strategy (build once, file many).
+router.get('/device/global-strategy', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const kind = String(Array.isArray(req.query.kind) ? req.query.kind[0] : req.query.kind ?? '');
+  if (kind !== 'device' && kind !== 'ivd') {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'kind must be one of: device, ivd.' } });
+  }
+  const regRaw = Array.isArray(req.query.regions) ? req.query.regions[0] : req.query.regions;
+  const regions = typeof regRaw === 'string' && regRaw ? regRaw.split(',').map((s) => s.trim()).filter(Boolean) : undefined;
+  try {
+    const { buildGlobalDeviceStrategy } = await import('../services/market-specs/device-global-strategy.js');
+    res.json(buildGlobalDeviceStrategy(kind as 'device' | 'ivd', regions as never));
+  } catch (err) { fail(res, err); }
+});
+
+// Regulatory timeline for a pathway.
+router.get('/device/timeline', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const pathway = String(Array.isArray(req.query.pathway) ? req.query.pathway[0] : req.query.pathway ?? '');
+  try {
+    const { getTimeline } = await import('../services/market-specs/regulatory-timelines.js');
+    const t = getTimeline(pathway);
+    if (!t) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No timeline for pathway "${pathway}".` } });
+    res.json(t);
+  } catch (err) { fail(res, err); }
+});
+
+// UDI validation (GS1 check digit + AI parsing → GUDID/EUDAMED components).
+const udiSchema = z.object({ udi: z.string().min(1).max(512) });
+router.post('/device/udi/validate', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = udiSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { validateUdi } = await import('../services/market-specs/udi-validator.js');
+    res.json(validateUdi(parsed.data.udi));
+  } catch (err) { fail(res, err); }
+});
+
+// Electrical safety (IEC 60601) applicable standards from device facts.
+const electricalSchema = z.object({
+  electricallyPowered: z.boolean().optional(),
+  hasAlarms: z.boolean().optional(),
+  closedLoopControl: z.boolean().optional(),
+  homeUse: z.boolean().optional(),
+  emsUse: z.boolean().optional(),
+  hasParticularStandard: z.boolean().optional(),
+});
+router.post('/device/electrical-safety', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = electricalSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { applicableElectricalStandards } = await import('../services/market-specs/electrical-safety.js');
+    res.json(applicableElectricalStandards(parsed.data));
+  } catch (err) { fail(res, err); }
+});
+
+// Gap-check a STORED CER (cer_reports/cer_sections) against the canonical structure.
+// Tenant-scoped; needs a database. 404 when the report is not in the organization.
+router.get('/device/cer/:reportId/assess-stored', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const equivalenceClaimed = req.query.equivalenceClaimed === 'true' || req.query.equivalenceClaimed === '1';
+  try {
+    const { assessStoredCer } = await import('../services/market-specs/stored-cer-assessment.js');
+    res.json(await assessStoredCer({ reportId: String(req.params.reportId), organizationId: ctx.organizationId, equivalenceClaimed }));
+  } catch (err) { fail(res, err); }
+});
+
 router.get('/:id', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });

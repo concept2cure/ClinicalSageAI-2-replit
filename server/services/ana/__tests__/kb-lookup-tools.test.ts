@@ -9,7 +9,7 @@ import { describe, it, expect } from 'vitest';
 import { getToolHandler, type ToolContext } from '../AnaToolExecutor.js';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
 
-const NEW_TOOLS = ['lookup_ich_guideline', 'lookup_regulatory_pathway'];
+const NEW_TOOLS = ['lookup_ich_guideline', 'lookup_regulatory_pathway', 'resolve_regulatory_structure'];
 
 describe('KB lookup tools — registration', () => {
   it.each(NEW_TOOLS)('%s is registered and defined', name => {
@@ -68,5 +68,28 @@ describe('lookup_regulatory_pathway', () => {
     const out = JSON.parse(await handler({}, {} as ToolContext));
     expect(out.summary.agencies).toBeGreaterThanOrEqual(8);
     expect(out.count).toBe(out.pathways.length);
+  });
+});
+
+describe('resolve_regulatory_structure (reasoning-engine)', () => {
+  it('resolves deterministic structure for a multi-region plan', async () => {
+    const handler = getToolHandler('resolve_regulatory_structure')!;
+    const out = JSON.parse(await handler({ regions: ['fda', 'eu'], application_type: 'nda' }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.resolver).toBe('reasoning-engine');
+    const fda = out.regions.find((r: any) => r.region === 'fda');
+    expect(fda.reviewClock.model).toBe('PDUFA');
+  });
+
+  it('requires regions and application_type', async () => {
+    const handler = getToolHandler('resolve_regulatory_structure')!;
+    const out = JSON.parse(await handler({ regions: [] }, {} as ToolContext));
+    expect(out.error).toMatch(/required/);
+  });
+
+  it('flags unsupported regions without fabricating', async () => {
+    const handler = getToolHandler('resolve_regulatory_structure')!;
+    const out = JSON.parse(await handler({ regions: ['mars'], application_type: 'nda' }, {} as ToolContext));
+    expect(out.regions[0].supported).toBe(false);
   });
 });

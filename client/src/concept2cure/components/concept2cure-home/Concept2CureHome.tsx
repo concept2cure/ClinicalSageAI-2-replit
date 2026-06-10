@@ -15,7 +15,9 @@
  *    verbatim; outside a canvas iframe, append ?tweaks=1 to the URL to activate.
  */
 import { Fragment, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { HomeIcon } from './icons';
+import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 import {
   NAV_ITEMS, NAV_SUB, DASH, RECENTS, SUGGESTIONS, SCOPE_OPTIONS,
   visibleNavItems, visibleModules,
@@ -126,12 +128,15 @@ const DEFAULT_USER: User = {
   role: DEFAULTS.userRole,
 };
 
-function timeOfDay(): string {
+// Returns a translation key suffix, not a literal — word order and honorifics
+// (e.g. Japanese さん) differ by language, so the phrase is assembled in the
+// `home` namespace, never concatenated in code.
+function timeOfDayKey(): 'late' | 'morning' | 'afternoon' | 'evening' {
   const h = new Date().getHours();
-  if (h < 5) return 'Working late';
-  if (h < 12) return 'Good morning';
-  if (h < 18) return 'Good afternoon';
-  return 'Good evening';
+  if (h < 5) return 'late';
+  if (h < 12) return 'morning';
+  if (h < 18) return 'afternoon';
+  return 'evening';
 }
 
 /* ─── Rail ─── */
@@ -284,6 +289,7 @@ function TopBar({
   onOpenNotifications?: () => void;
   onOpenHelp?: () => void;
 }) {
+  const { t: tc } = useTranslation('common');
   return (
     <header className={styles.topbar}>
       <div className={styles.crumbs}>
@@ -305,14 +311,15 @@ function TopBar({
       </button>
       <div className={styles.tbDivider} />
       <div className={styles.tbActions}>
-        <button type="button" className={styles.tbBtn} title="Search (⌘K)" aria-label="Search" onClick={onOpenPalette}>
+        <LanguageSwitcher variant="topbar" />
+        <button type="button" className={styles.tbBtn} title={`${tc('actions.search')} (⌘K)`} aria-label={tc('actions.search')} onClick={onOpenPalette}>
           <HomeIcon name="search" size={16} />
         </button>
         <button
           type="button"
           className={styles.tbBtn}
-          title="Notifications"
-          aria-label="Notifications"
+          title={tc('topbar.notifications')}
+          aria-label={tc('topbar.notifications')}
           onClick={onOpenNotifications}
         >
           <HomeIcon name="bell" size={16} />
@@ -321,8 +328,8 @@ function TopBar({
         <button
           type="button"
           className={styles.tbBtn}
-          title="Help"
-          aria-label="Help"
+          title={tc('topbar.help')}
+          aria-label={tc('topbar.help')}
           onClick={onOpenHelp}
         >
           <HomeIcon name="help" size={16} />
@@ -346,6 +353,7 @@ function GreetAndCompose({
   onTools?: () => void;
   onModelPicker?: () => void;
 }) {
+  const { t } = useTranslation('home');
   const [draft, setDraft] = useState('');
   const send = () => {
     const text = draft.trim();
@@ -355,14 +363,14 @@ function GreetAndCompose({
     }
     setDraft('');
   };
-  const tod = timeOfDay();
+  const greeting = t(`greeting.${timeOfDayKey()}`);
 
   return (
     <div className={styles.greetBlock}>
       <span className={styles.greetStar} aria-hidden="true">✻</span>
-      <h1 className={styles.greetH1}>{tod}, {userName}</h1>
+      <h1 className={styles.greetH1}>{t('greetingLine', { greeting, name: userName })}</h1>
       <div className={styles.greetSub}>
-        What would you like to work on? Ask AnA, or jump into a module below.
+        {t('prompt')}
       </div>
 
       <div className={styles.composer}>

@@ -10,7 +10,9 @@
 
 import React, { useState, useCallback } from 'react';
 import { useLocation } from 'wouter';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
+import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -132,6 +134,7 @@ const USE_CASES = [
 
 export const ZenSignup: React.FC = () => {
   const [, setLocation] = useLocation();
+  const { t } = useTranslation('auth');
 
   const [step, setStep] = useState<SignupStep>('info');
   const [isLoading, setIsLoading] = useState(false);
@@ -164,38 +167,39 @@ export const ZenSignup: React.FC = () => {
       const newErrors: Record<string, string> = {};
 
       if (currentStep === 'info') {
-        if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
-        if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
+        if (!formData.firstName.trim()) newErrors.firstName = t('signup.errors.firstNameRequired');
+        if (!formData.lastName.trim()) newErrors.lastName = t('signup.errors.lastNameRequired');
         if (!formData.email.trim()) {
-          newErrors.email = 'Email is required';
+          newErrors.email = t('signup.errors.emailRequired');
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-          newErrors.email = 'Please enter a valid email address';
+          newErrors.email = t('signup.errors.emailInvalid');
         }
-        if (!formData.jobTitle.trim()) newErrors.jobTitle = 'Job title is required';
-        if (!formData.password) newErrors.password = 'Password is required';
+        if (!formData.jobTitle.trim()) newErrors.jobTitle = t('signup.errors.jobTitleRequired');
+        if (!formData.password) newErrors.password = t('signup.errors.passwordRequired');
         if (formData.password && formData.password.length < 12) {
-          newErrors.password = 'Password must be at least 12 characters';
+          newErrors.password = t('signup.errors.passwordTooShort');
         }
         if (formData.password !== formData.confirmPassword) {
-          newErrors.confirmPassword = 'Passwords do not match';
+          newErrors.confirmPassword = t('signup.errors.passwordMismatch');
         }
       }
 
       if (currentStep === 'organization') {
-        if (!formData.organization.trim()) newErrors.organization = 'Organization name is required';
+        if (!formData.organization.trim())
+          newErrors.organization = t('signup.errors.organizationRequired');
         if (!formData.organizationType)
-          newErrors.organizationType = 'Please select an organization type';
-        if (!formData.country.trim()) newErrors.country = 'Country is required';
-        if (!formData.useCase) newErrors.useCase = 'Please select a primary use case';
+          newErrors.organizationType = t('signup.errors.organizationTypeRequired');
+        if (!formData.country.trim()) newErrors.country = t('signup.errors.countryRequired');
+        if (!formData.useCase) newErrors.useCase = t('signup.errors.useCaseRequired');
       }
 
       if (currentStep === 'compliance') {
         if (!formData.acceptedTerms)
-          newErrors.acceptedTerms = 'You must accept the Terms of Service';
+          newErrors.acceptedTerms = t('signup.errors.termsRequired');
         if (!formData.acceptedPrivacy)
-          newErrors.acceptedPrivacy = 'You must accept the Privacy Policy';
+          newErrors.acceptedPrivacy = t('signup.errors.privacyRequired');
         if (!formData.acceptedCompliance)
-          newErrors.acceptedCompliance = 'You must acknowledge compliance requirements';
+          newErrors.acceptedCompliance = t('signup.errors.complianceRequired');
       }
 
       setErrors(newErrors);
@@ -292,7 +296,7 @@ export const ZenSignup: React.FC = () => {
       setStep('submitted');
     } catch (error) {
       console.error('Signup error:', error);
-      const message = error instanceof Error ? error.message : 'Signup failed. Please try again.';
+      const message = error instanceof Error ? error.message : t('signup.errors.signupFailed');
       setErrors(prev => ({ ...prev, general: message }));
     } finally {
       setIsLoading(false);
@@ -431,23 +435,23 @@ export const ZenSignup: React.FC = () => {
       className="space-y-5"
     >
       <div className="grid grid-cols-2 gap-4">
-        <FormInput label="First name" field="firstName" placeholder="Jane" />
-        <FormInput label="Last name" field="lastName" placeholder="Smith" />
+        <FormInput label={t('signup.fields.firstName')} field="firstName" placeholder="Jane" />
+        <FormInput label={t('signup.fields.lastName')} field="lastName" placeholder="Smith" />
       </div>
-      <FormInput label="Work email" field="email" type="email" placeholder="jane@company.com" />
+      <FormInput label={t('signup.fields.email')} field="email" type="email" placeholder="jane@example.com" />
       <FormInput
-        label="Password"
+        label={t('signup.fields.password')}
         field="password"
         type="password"
-        placeholder="Create a password"
+        placeholder={t('signup.placeholder.createPassword')}
       />
       <FormInput
-        label="Confirm password"
+        label={t('signup.fields.confirmPassword')}
         field="confirmPassword"
         type="password"
-        placeholder="Confirm password"
+        placeholder={t('signup.placeholder.confirmPassword')}
       />
-      <FormInput label="Job title" field="jobTitle" placeholder="Regulatory Affairs Manager" />
+      <FormInput label={t('signup.fields.jobTitle')} field="jobTitle" placeholder="Regulatory Affairs Manager" />
 
       <button
         onClick={handleNext}
@@ -461,7 +465,7 @@ export const ZenSignup: React.FC = () => {
           focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none
         `}
       >
-        Continue
+        {t('signup.continue')}
         <ArrowRightIcon />
       </button>
     </motion.div>
@@ -481,22 +485,22 @@ export const ZenSignup: React.FC = () => {
         className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 mb-2"
       >
         <ArrowLeftIcon />
-        Back
+        {t('signup.back')}
       </button>
 
-      <FormInput label="Organization name" field="organization" placeholder="Acme Pharma Inc." />
+      <FormInput label={t('signup.fields.organization')} field="organization" placeholder="Acme Pharma Inc." />
       <FormSelect
-        label="Organization type"
+        label={t('signup.fields.organizationType')}
         field="organizationType"
         options={ORGANIZATION_TYPES}
-        placeholder="Select organization type"
+        placeholder={t('signup.placeholder.selectOrgType')}
       />
-      <FormInput label="Country" field="country" placeholder="United States" />
+      <FormInput label={t('signup.fields.country')} field="country" placeholder="United States" />
       <FormSelect
-        label="Primary use case"
+        label={t('signup.fields.useCase')}
         field="useCase"
         options={USE_CASES}
-        placeholder="Select primary use case"
+        placeholder={t('signup.placeholder.selectUseCase')}
       />
 
       <button
@@ -511,7 +515,7 @@ export const ZenSignup: React.FC = () => {
           focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none
         `}
       >
-        Continue
+        {t('signup.continue')}
         <ArrowRightIcon />
       </button>
     </motion.div>
@@ -559,7 +563,7 @@ export const ZenSignup: React.FC = () => {
         className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 mb-2"
       >
         <ArrowLeftIcon />
-        Back
+        {t('signup.back')}
       </button>
 
       <div className="space-y-3">
@@ -646,7 +650,7 @@ export const ZenSignup: React.FC = () => {
         className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 mb-2"
       >
         <ArrowLeftIcon />
-        Back
+        {t('signup.back')}
       </button>
 
       <div className="p-3 bg-stone-50 rounded-xl border border-stone-200">
@@ -889,11 +893,10 @@ export const ZenSignup: React.FC = () => {
         {isLoading ? (
           <SpinnerIcon />
         ) : formData.selectedPlan === 'free' ? (
-          'Create Account'
+          t('signup.createAccount')
         ) : (
-          'Create Account & Start Trial'
+          t('signup.createAccountTrial')
         )}
-        {isLoading ? <SpinnerIcon /> : 'Create Account'}
       </button>
 
       <p className="text-[10px] text-stone-400 text-center mt-2">
@@ -928,7 +931,7 @@ export const ZenSignup: React.FC = () => {
       </motion.div>
 
       <div className="space-y-2">
-        <h3 className="text-base font-medium text-stone-900">Account Created!</h3>
+        <h3 className="text-base font-medium text-stone-900">{t('signup.accountCreated')}</h3>
         <p className="text-stone-600">
           Welcome to Concept2Cure. Your workspace is ready at <strong>{formData.email}</strong>.
         </p>
@@ -950,7 +953,7 @@ export const ZenSignup: React.FC = () => {
           transition-all duration-150
         `}
       >
-        Open Concept2Cure
+        {t('signup.openApp')}
       </button>
     </motion.div>
   );
@@ -963,17 +966,22 @@ export const ZenSignup: React.FC = () => {
     <div className="min-h-screen bg-[#faf9f5] flex flex-col">
       <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
         <div className="w-full max-w-lg">
+          {/* Language toggle */}
+          <div className="flex justify-end mb-2">
+            <LanguageSwitcher variant="auth" />
+          </div>
+
           {/* Logo and title */}
           <div className="text-center mb-6">
             <div className="inline-flex items-center justify-center mb-4">
               <LogoIcon />
             </div>
             <h1 className="text-base font-semibold text-stone-900">
-              {step === 'submitted' ? '' : 'Create your account'}
+              {step === 'submitted' ? '' : t('signup.title')}
             </h1>
             {step !== 'submitted' && (
               <p className="mt-2 text-sm text-stone-600">
-                Start using Concept2Cure in minutes. No sales calls required.
+                {t('signup.subtitle')}
               </p>
             )}
           </div>
@@ -995,12 +1003,12 @@ export const ZenSignup: React.FC = () => {
           {/* Sign in link */}
           {step !== 'submitted' && (
             <p className="mt-6 text-center text-sm text-stone-600">
-              Already have an account?{' '}
+              {t('signup.haveAccount')}{' '}
               <button
                 onClick={() => setLocation('/login')}
                 className="text-blue-600 hover:text-stone-700 font-medium"
               >
-                Sign in
+                {t('signup.signIn')}
               </button>
             </p>
           )}

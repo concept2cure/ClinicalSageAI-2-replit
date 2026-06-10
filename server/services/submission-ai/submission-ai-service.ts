@@ -131,8 +131,14 @@ export interface SubmissionPlanInput {
   regions: string[];
   productProfile?: string;
 }
-export function generateSubmissionPlan<T = unknown>(input: SubmissionPlanInput, ctx: AiTaskCtx): Promise<T> {
-  return runJsonTask<T>('submission-plan', 'regulatory_review', input, ctx, 8000);
+export async function generateSubmissionPlan<T = unknown>(input: SubmissionPlanInput, ctx: AiTaskCtx): Promise<T> {
+  const narration = await runJsonTask<Record<string, unknown>>('submission-plan', 'regulatory_review', input, ctx, 8000);
+  // Ground the plan's STRUCTURE deterministically via the reasoning-engine, so
+  // required sections + review clocks are resolved by rule (not LLM-invented).
+  // The LLM narration sits on top; this is the determinism boundary (WO-5).
+  const { buildSubmissionStructure } = await import('../reasoning-engine/index.js');
+  const deterministicStructure = buildSubmissionStructure(input.regions ?? [], input.applicationType);
+  return { ...narration, deterministicStructure } as T;
 }
 
 export interface ValidationExplainInput {

@@ -9,6 +9,8 @@ import {
   getEntry,
   getRelated,
   listEntries,
+  listEntriesPaged,
+  searchPaged,
   listDomains,
   listTopics,
   corpusSize,
@@ -92,6 +94,36 @@ describe('search', () => {
   it('ranks title/tag matches above detail-only matches', () => {
     const r = search('reimbursement');
     expect(r[0].entry.id).toBe('legal.ivd.reimbursement');
+  });
+});
+
+describe('pagination', () => {
+  it('listEntriesPaged returns total + window and is stable across offsets', () => {
+    const p0 = listEntriesPaged({ limit: 10, offset: 0 });
+    const p1 = listEntriesPaged({ limit: 10, offset: 10 });
+    expect(p0.total).toBe(corpusSize());
+    expect(p0.rows).toHaveLength(10);
+    expect(p0.limit).toBe(10);
+    expect(p0.offset).toBe(0);
+    // No overlap between consecutive pages.
+    const ids0 = new Set(p0.rows.map(r => r.id));
+    expect(p1.rows.some(r => ids0.has(r.id))).toBe(false);
+  });
+
+  it('listEntriesPaged total reflects filters, not the page size', () => {
+    const p = listEntriesPaged({ domain: 'legal', limit: 2, offset: 0 });
+    expect(p.rows.length).toBeLessThanOrEqual(2);
+    expect(p.total).toBeGreaterThan(2);
+    expect(p.rows.every(r => r.domain === 'legal')).toBe(true);
+  });
+
+  it('searchPaged total counts all matches; window respects offset/limit', () => {
+    const p = searchPaged('ivd', { limit: 5, offset: 0 });
+    expect(p.rows.length).toBeLessThanOrEqual(5);
+    expect(p.total).toBeGreaterThanOrEqual(p.rows.length);
+    const p2 = searchPaged('ivd', { limit: 5, offset: 5 });
+    const ids = new Set(p.rows.map(r => r.entry.id));
+    expect(p2.rows.some(r => ids.has(r.entry.id))).toBe(false);
   });
 });
 

@@ -35,8 +35,42 @@ import {
   classifyResult,
   getToolReliability,
   getUnhealthyTools,
+  getLowYieldTools,
+  isTelemetryPersistenceEnabled,
 } from './tool-telemetry.js';
+import { composeMedicalWritingGuidance, listMedicalWritingCatalog } from './medical-writing.js';
+import { reviewMedicalWriting } from './medical-writing-review.js';
+import {
+  assessReadability,
+  buildAbbreviationList,
+  type ReadabilityAudience,
+} from './medical-writing-qc.js';
+import { lookupIcd10 } from '../integrations/icd10-client.js';
+import { composeSafetyNarrative } from './safety-narrative.js';
+import { screenPromotionalLanguage } from './promotional-screening.js';
+import { narrateStatisticalResult, type AnalysisType, type EffectMeasure } from './statistical-narrator.js';
+import { composeValueDossierGuidance, listValueDossierCatalog } from './value-dossier.js';
+import { adviseRegulatoryPathway, listRegulatoryPathways } from './regulatory-pathway.js';
+import { adviseRiskManagement, listRiskManagementPrograms } from './risk-management.js';
+import { adviseGcp, reviewInformedConsent, listGcpDomains } from './gcp-consent.js';
+import { adviseCoaSelection, listCoaTypes } from './coa-selection.js';
+import { adviseCtdStructure, listCtdModules } from './ctd-structure.js';
+import { adviseSpecialDesignation, listDesignations } from './special-designations.js';
+import { adviseEstimand, listEstimandFramework } from './estimands.js';
+import { advisePharmacovigilance, listPvDeliverables } from './pharmacovigilance.js';
+import { adviseStudyDesign, listStudyDesigns, type SampleSizeInput, type EndpointFamily, type DesignGoal } from './study-design.js';
+import { adviseLabelingStructure, listLabelTemplates } from './labeling-structure.js';
+import { adviseMedicalInformation, listMedInfoResponseTypes } from './medical-information.js';
+import { adviseReportingGuideline, listReportingGuidelines } from './reporting-guidelines.js';
+import { adviseDataIntegrity, listDataIntegrity } from './data-integrity.js';
+import { adviseRweDesign, listRweDesigns } from './rwe-design.js';
+import { initToolTelemetryPersistence } from './tool-telemetry-persistence.js';
 import fdaFaersClient from '../../fda_faers_client.js';
+
+// Opt-in (ANA_TELEMETRY_PERSIST_PATH): hydrate learned tool reliability on boot
+// so it survives restarts. No-op when the env var is unset — default behavior
+// (in-memory, process-lifetime) is unchanged.
+void initToolTelemetryPersistence().catch(() => {});
 import type {
   GatewayRequest,
   GatewayMessage,
@@ -93,18 +127,19 @@ function getRequiredInputKeys(tool: string): string[] {
  */
 export function registerToolHandler(name: string, handler: ToolHandler): void {
   const instrumented: ToolHandler = async (input, ctx) => {
+    const orgId = ctx?.organizationId ?? undefined;
     // Report-only contract check: note when the model omitted required fields.
     const missing = getRequiredInputKeys(name).filter(k => input?.[k] === undefined);
-    if (missing.length > 0) recordContractViolation(name);
+    if (missing.length > 0) recordContractViolation(name, orgId);
 
     const start = Date.now();
     try {
       const result = await handler(input, ctx);
-      const { outcome, note } = classifyResult(result);
-      recordToolOutcome(name, outcome, Date.now() - start, note);
+      const { outcome, note, resultYield } = classifyResult(result);
+      recordToolOutcome(name, outcome, Date.now() - start, note, orgId, resultYield);
       return result;
     } catch (e) {
-      recordToolOutcome(name, 'failure', Date.now() - start, e instanceof Error ? e.message : String(e));
+      recordToolOutcome(name, 'failure', Date.now() - start, e instanceof Error ? e.message : String(e), orgId);
       throw e;
     }
   };
@@ -401,6 +436,398 @@ registerToolHandler('search_connected_repositories', async (input, ctx) => {
   }
 });
 
+// Medical Writing Guidance — authoritative standards + craft for a deliverable,
+// composed by document type × therapeutic area × region × audience.
+registerToolHandler('medical_writing_guidance', async (input) => {
+  const documentType = typeof input.document_type === 'string' ? input.document_type : '';
+  if (!documentType.trim()) {
+    return JSON.stringify({
+      error: 'medical_writing_guidance requires document_type.',
+      catalog: listMedicalWritingCatalog(),
+    });
+  }
+  const asStr = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v.trim() : undefined;
+  const guidance = composeMedicalWritingGuidance({
+    documentType,
+    therapeuticArea: asStr(input.therapeutic_area),
+    region: asStr(input.region),
+    audience: asStr(input.audience),
+    clientSegment: asStr(input.client_segment),
+  });
+  return JSON.stringify({
+    source: 'AnA Medical-Writing Knowledge Base',
+    ...guidance,
+    citation_hint:
+      'Apply this structure and these conventions, then ground every clinical claim with the evidence ' +
+      'search tools and cite per the citation protocol.',
+  });
+});
+
+// Statistical-results narrator — hedged ICH-E3 prose from a structured result.
+registerToolHandler('narrate_statistical_result', async (input) => {
+  const endpoint = typeof input.endpoint === 'string' ? input.endpoint : '';
+  const analysisType = ['time_to_event', 'binary', 'continuous'].includes(input.analysis_type as string)
+    ? (input.analysis_type as AnalysisType)
+    : undefined;
+  if (!endpoint.trim() || !analysisType) {
+    return JSON.stringify({ error: 'narrate_statistical_result requires endpoint and a valid analysis_type.' });
+  }
+  const num = (v: unknown): number | undefined => (typeof v === 'number' && !Number.isNaN(v) ? v : undefined);
+  const arms = Array.isArray(input.arms)
+    ? (input.arms as any[])
+        .filter(a => a && typeof a.name === 'string')
+        .map(a => ({ name: String(a.name), n: num(a.n), value: a.value, unit: typeof a.unit === 'string' ? a.unit : undefined }))
+    : undefined;
+  const result = narrateStatisticalResult({
+    endpoint,
+    analysisType,
+    arms,
+    measure: typeof input.measure === 'string' ? (input.measure as EffectMeasure) : undefined,
+    estimate: num(input.estimate),
+    ciLower: num(input.ci_lower),
+    ciUpper: num(input.ci_upper),
+    ciLevel: num(input.ci_level),
+    pValue: num(input.p_value),
+    alpha: num(input.alpha),
+    exploratory: typeof input.exploratory === 'boolean' ? input.exploratory : undefined,
+    multiplicityControlled: typeof input.multiplicity_controlled === 'boolean' ? input.multiplicity_controlled : undefined,
+  });
+  return JSON.stringify({ source: 'AnA Statistical Narrator', ...result });
+});
+
+// Market-access / HEOR value-dossier guidance.
+registerToolHandler('value_dossier_guidance', async (input) => {
+  const deliverable = typeof input.deliverable === 'string' ? input.deliverable : undefined;
+  const htaBody = typeof input.hta_body === 'string' ? input.hta_body : undefined;
+  if (!deliverable && !htaBody) {
+    return JSON.stringify({
+      source: 'AnA Market-Access Knowledge',
+      hint: 'Specify a deliverable and/or hta_body.',
+      catalog: listValueDossierCatalog(),
+    });
+  }
+  return JSON.stringify({
+    source: 'AnA Market-Access Knowledge',
+    ...composeValueDossierGuidance({ deliverable, htaBody }),
+  });
+});
+
+// Reporting-guideline advisor — EQUATOR network (CONSORT/SPIRIT/STROBE/...).
+registerToolHandler('advise_reporting_guideline', async (input) => {
+  const guideline = typeof input.guideline === 'string' ? input.guideline : undefined;
+  const studyType = typeof input.study_type === 'string' ? input.study_type : undefined;
+  if (!guideline && !studyType) {
+    return JSON.stringify({ source: 'AnA Reporting-Guideline Advisor', guidelines: listReportingGuidelines(), ...adviseReportingGuideline({}) });
+  }
+  return JSON.stringify({ source: 'AnA Reporting-Guideline Advisor', ...adviseReportingGuideline({ guideline, studyType }) });
+});
+
+// Data-integrity / 21 CFR Part 11 advisor — ALCOA+ + Part 11 controls.
+registerToolHandler('advise_data_integrity', async (input) => {
+  const requirement = typeof input.requirement === 'string' ? input.requirement : undefined;
+  const description = typeof input.description === 'string' ? input.description : undefined;
+  if (!requirement && !description) {
+    return JSON.stringify({ source: 'AnA Data-Integrity Advisor', catalog: listDataIntegrity(), ...adviseDataIntegrity({}) });
+  }
+  return JSON.stringify({ source: 'AnA Data-Integrity Advisor', ...adviseDataIntegrity({ requirement, description }) });
+});
+
+// Real-world-evidence study-design advisor.
+registerToolHandler('advise_rwe_design', async (input) => {
+  const design = typeof input.design === 'string' ? input.design : undefined;
+  if (!design) {
+    return JSON.stringify({ source: 'AnA RWE-Design Advisor', catalog: listRweDesigns(), ...adviseRweDesign({}) });
+  }
+  return JSON.stringify({ source: 'AnA RWE-Design Advisor', ...adviseRweDesign({ design }) });
+});
+
+// Study-design & sample-size advisor.
+registerToolHandler('advise_study_design', async (input) => {
+  const goal = typeof input.goal === 'string' ? input.goal : undefined;
+  const ssRaw = input.sample_size && typeof input.sample_size === 'object' ? (input.sample_size as Record<string, unknown>) : undefined;
+  const num = (v: unknown): number | undefined => (typeof v === 'number' && !Number.isNaN(v) ? v : undefined);
+  let sampleSize: SampleSizeInput | undefined;
+  if (ssRaw && typeof ssRaw.endpoint_family === 'string' && ['continuous', 'binary', 'time_to_event'].includes(ssRaw.endpoint_family)) {
+    sampleSize = {
+      endpointFamily: ssRaw.endpoint_family as EndpointFamily,
+      goal: typeof goal === 'string' && ['superiority', 'non_inferiority', 'equivalence'].includes(goal) ? (goal as DesignGoal) : undefined,
+      alpha: num(ssRaw.alpha),
+      power: num(ssRaw.power),
+      twoSided: typeof ssRaw.two_sided === 'boolean' ? ssRaw.two_sided : undefined,
+      meanDifference: num(ssRaw.mean_difference),
+      sd: num(ssRaw.sd),
+      p1: num(ssRaw.p1),
+      p2: num(ssRaw.p2),
+      hazardRatio: num(ssRaw.hazard_ratio),
+      probEvent: num(ssRaw.prob_event),
+      allocationRatio: num(ssRaw.allocation_ratio),
+      margin: num(ssRaw.margin),
+    };
+  }
+  if (!goal && !sampleSize) {
+    return JSON.stringify({ source: 'AnA Study-Design Advisor', designs: listStudyDesigns(), ...adviseStudyDesign({}) });
+  }
+  return JSON.stringify({ source: 'AnA Study-Design Advisor', ...adviseStudyDesign({ goal, sampleSize }) });
+});
+
+// Product-labeling structure advisor — USPI / SmPC.
+registerToolHandler('advise_labeling_structure', async (input) => {
+  const format = typeof input.format === 'string' ? input.format : undefined;
+  const content = typeof input.content === 'string' ? input.content : undefined;
+  if (!format && !content) {
+    return JSON.stringify({ source: 'AnA Labeling-Structure Advisor', templates: listLabelTemplates(), ...adviseLabelingStructure({}) });
+  }
+  return JSON.stringify({ source: 'AnA Labeling-Structure Advisor', ...adviseLabelingStructure({ format, content }) });
+});
+
+// Medical-information / standard-response advisor.
+registerToolHandler('advise_medical_information', async (input) => {
+  const responseType = typeof input.response_type === 'string' ? input.response_type : undefined;
+  return JSON.stringify({
+    source: 'AnA Medical-Information Advisor',
+    responseTypes: responseType ? undefined : listMedInfoResponseTypes(),
+    ...adviseMedicalInformation({ responseType }),
+  });
+});
+
+// Estimand / study-design advisor — ICH E9(R1).
+registerToolHandler('advise_estimand', async (input) => {
+  const strategy = typeof input.strategy === 'string' ? input.strategy : undefined;
+  const d = input.draft && typeof input.draft === 'object' ? (input.draft as Record<string, unknown>) : undefined;
+  const draft = d
+    ? {
+        treatment: typeof d.treatment === 'string' ? d.treatment : undefined,
+        population: typeof d.population === 'string' ? d.population : undefined,
+        variable: typeof d.variable === 'string' ? d.variable : undefined,
+        intercurrentEvents: typeof d.intercurrent_events === 'string' ? d.intercurrent_events : undefined,
+        summary: typeof d.summary === 'string' ? d.summary : undefined,
+      }
+    : undefined;
+  if (!strategy && !draft) {
+    return JSON.stringify({
+      source: 'AnA Estimand Advisor',
+      framework: listEstimandFramework(),
+      ...adviseEstimand({}),
+    });
+  }
+  return JSON.stringify({ source: 'AnA Estimand Advisor', ...adviseEstimand({ strategy, draft }) });
+});
+
+// Pharmacovigilance aggregate-reporting & signal-management advisor.
+registerToolHandler('advise_pharmacovigilance', async (input) => {
+  const deliverable = typeof input.deliverable === 'string' ? input.deliverable : undefined;
+  const stage = typeof input.stage === 'string' ? input.stage : undefined;
+  if (!deliverable && !stage) {
+    return JSON.stringify({
+      source: 'AnA Pharmacovigilance Advisor',
+      hint: 'Specify a deliverable (dsur | pbrer | icsr | signal_management) or a stage.',
+      deliverables: listPvDeliverables(),
+    });
+  }
+  return JSON.stringify({ source: 'AnA Pharmacovigilance Advisor', ...advisePharmacovigilance({ deliverable, stage }) });
+});
+
+// CTD / eCTD structure advisor — ICH M4 modules + document placement.
+registerToolHandler('advise_ctd_structure', async (input) => {
+  const module = typeof input.module === 'string' ? input.module : undefined;
+  const document = typeof input.document === 'string' ? input.document : undefined;
+  if (!module && !document) {
+    return JSON.stringify({
+      source: 'AnA CTD-Structure Advisor',
+      hint: 'Specify a module (m1..m5) or a document description to place.',
+      modules: listCtdModules(),
+    });
+  }
+  return JSON.stringify({ source: 'AnA CTD-Structure Advisor', ...adviseCtdStructure({ module, document }) });
+});
+
+// Expedited-program & special-designation advisor — FDA & EMA.
+registerToolHandler('advise_special_designation', async (input) => {
+  const designation = typeof input.designation === 'string' ? input.designation : undefined;
+  const jurisdiction = typeof input.jurisdiction === 'string' ? input.jurisdiction : undefined;
+  if (!designation && !jurisdiction) {
+    return JSON.stringify({
+      source: 'AnA Special-Designation Advisor',
+      hint: 'Specify a designation, or a jurisdiction (us | eu) for the candidate set.',
+      designations: listDesignations(),
+    });
+  }
+  return JSON.stringify({ source: 'AnA Special-Designation Advisor', ...adviseSpecialDesignation({ designation, jurisdiction }) });
+});
+
+// GCP advisor — ICH E6(R2) responsibility domains.
+registerToolHandler('advise_gcp', async (input) => {
+  const domain = typeof input.domain === 'string' ? input.domain : undefined;
+  return JSON.stringify({
+    source: 'AnA GCP Advisor',
+    catalog: domain ? undefined : listGcpDomains(),
+    ...adviseGcp(domain),
+  });
+});
+
+// Informed-consent QC — required elements (ICH E6(R2) §4.8 / 21 CFR 50.25).
+registerToolHandler('review_informed_consent', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) return JSON.stringify({ error: 'review_informed_consent requires non-empty text.' });
+  return JSON.stringify({ source: 'AnA Informed-Consent QC', ...reviewInformedConsent(text) });
+});
+
+// COA selection advisor — FDA COA framework (PRO/ClinRO/ObsRO/PerfO).
+registerToolHandler('advise_coa_selection', async (input) => {
+  const coaType = typeof input.coa_type === 'string' ? input.coa_type : undefined;
+  const concept = typeof input.concept === 'string' ? input.concept : undefined;
+  const reporter = typeof input.reporter === 'string' ? input.reporter : undefined;
+  if (!coaType && !concept && !reporter) {
+    return JSON.stringify({
+      source: 'AnA COA-Selection Advisor',
+      hint: 'Specify a coa_type, or a concept (and optionally reporter) for a suggestion.',
+      coaTypes: listCoaTypes(),
+    });
+  }
+  return JSON.stringify({
+    source: 'AnA COA-Selection Advisor',
+    ...adviseCoaSelection({ coaType, concept, reporter }),
+  });
+});
+
+// Risk-management / safety-governance advisor — US REMS & EU RMP.
+registerToolHandler('advise_risk_management', async (input) => {
+  const program = typeof input.program === 'string' ? input.program : undefined;
+  const jurisdiction = typeof input.jurisdiction === 'string' ? input.jurisdiction : undefined;
+  if (!program && !jurisdiction) {
+    return JSON.stringify({
+      source: 'AnA Risk-Management Advisor',
+      hint: 'Specify a program (rems | eu_rmp) or jurisdiction (us | eu).',
+      catalog: listRiskManagementPrograms(),
+    });
+  }
+  return JSON.stringify({
+    source: 'AnA Risk-Management Advisor',
+    ...adviseRiskManagement({ program, jurisdiction }),
+  });
+});
+
+// Regulatory-pathway advisor — drug/biologic/device/IVD routes (FDA & EU).
+registerToolHandler('advise_regulatory_pathway', async (input) => {
+  const pathway = typeof input.pathway === 'string' ? input.pathway : undefined;
+  const domain = typeof input.domain === 'string' ? input.domain : undefined;
+  const jurisdiction = typeof input.jurisdiction === 'string' ? input.jurisdiction : undefined;
+  if (!pathway && !domain && !jurisdiction) {
+    return JSON.stringify({
+      source: 'AnA Regulatory-Strategy Advisor',
+      hint: 'Specify a pathway, and/or a domain (drug|biologic|device|ivd) and jurisdiction (us|eu).',
+      pathways: listRegulatoryPathways(),
+    });
+  }
+  return JSON.stringify({
+    source: 'AnA Regulatory-Strategy Advisor',
+    ...adviseRegulatoryPathway({ pathway, domain, jurisdiction }),
+  });
+});
+
+// Promotional-language screen — FDA OPDP / EU advertising claims QC.
+registerToolHandler('screen_promotional_language', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) return JSON.stringify({ error: 'screen_promotional_language requires non-empty text.' });
+  return JSON.stringify({ source: 'AnA Promotional-Claims Screen', ...screenPromotionalLanguage(text) });
+});
+
+// Safety narrative — ICH E3 §16 patient narrative from structured case facts.
+registerToolHandler('draft_safety_narrative', async (input) => {
+  const subjectId = typeof input.subject_id === 'string' ? input.subject_id : '';
+  const ev = (input.event ?? {}) as Record<string, unknown>;
+  if (!subjectId.trim() || typeof ev.term !== 'string' || !ev.term.trim()) {
+    return JSON.stringify({ error: 'draft_safety_narrative requires subject_id and event.term.' });
+  }
+  const arr = (v: unknown): string[] | undefined =>
+    Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : undefined;
+  const str = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v : undefined);
+
+  const result = composeSafetyNarrative({
+    subjectId,
+    age: str(input.age),
+    sex: str(input.sex),
+    studyId: str(input.study_id),
+    treatmentArm: str(input.treatment_arm),
+    studyDrug: str(input.study_drug),
+    dose: str(input.dose),
+    firstDoseDate: str(input.first_dose_date),
+    medicalHistory: arr(input.medical_history),
+    concomitantMeds: arr(input.concomitant_meds),
+    event: {
+      term: String(ev.term),
+      onsetDate: str(ev.onset_date),
+      dayOnStudy: str(ev.day_on_study),
+      severity: str(ev.severity),
+      seriousnessCriteria: arr(ev.seriousness_criteria),
+      causality: str(ev.causality),
+      actionTaken: str(ev.action_taken),
+      treatment: str(ev.treatment),
+      dechallenge: str(ev.dechallenge),
+      rechallenge: str(ev.rechallenge),
+      outcome: str(ev.outcome),
+      notes: str(ev.notes),
+    },
+  });
+  return JSON.stringify({
+    source: 'AnA Safety Narrative (ICH E3 §16)',
+    ...result,
+    citation_hint:
+      result.missingFields.length
+        ? `Confirm the missing fields before finalizing: ${result.missingFields.join(', ')}.`
+        : 'All key fields present; verify against the CRF/source before sign-off.',
+  });
+});
+
+// ICD-10-CM coding — map a diagnosis/indication term to billable codes.
+registerToolHandler('lookup_icd10_code', async (input) => {
+  const term = typeof input.term === 'string' ? input.term : '';
+  if (!term.trim()) return JSON.stringify({ error: 'lookup_icd10_code requires a term.' });
+  const maxResults = Math.min((input.max_results as number) || 10, 25);
+  try {
+    return JSON.stringify(await lookupIcd10(term, maxResults));
+  } catch (e) {
+    return JSON.stringify({
+      source: 'NLM ICD-10-CM (Clinical Tables)',
+      query: term,
+      error: e instanceof Error ? e.message : 'ICD-10 lookup failed',
+      codes: [],
+    });
+  }
+});
+
+// Readability QC — Flesch metrics vs the target audience reading level.
+registerToolHandler('assess_readability', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) return JSON.stringify({ error: 'assess_readability requires non-empty text.' });
+  const audience = ['patient', 'general', 'clinician', 'regulator'].includes(input.audience as string)
+    ? (input.audience as ReadabilityAudience)
+    : 'general';
+  return JSON.stringify({ source: 'AnA Readability QC', ...assessReadability(text, audience) });
+});
+
+// Abbreviation QC — extract acronyms + flag undefined-at-first-use.
+registerToolHandler('build_abbreviation_list', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) return JSON.stringify({ error: 'build_abbreviation_list requires non-empty text.' });
+  return JSON.stringify({ source: 'AnA Abbreviation QC', ...buildAbbreviationList(text) });
+});
+
+// Medical Writing Review — standards-conformance QC of a draft (or pre-draft).
+registerToolHandler('medical_writing_review', async (input) => {
+  const documentType = typeof input.document_type === 'string' ? input.document_type : '';
+  if (!documentType.trim()) {
+    return JSON.stringify({
+      error: 'medical_writing_review requires document_type.',
+      catalog: listMedicalWritingCatalog(),
+    });
+  }
+  const draftText = typeof input.draft_text === 'string' ? input.draft_text : undefined;
+  const review = reviewMedicalWriting(documentType, draftText);
+  return JSON.stringify({ source: 'AnA Medical-Writing QC', ...review });
+});
+
 // Describe Capabilities — AnA's deterministic self-knowledge: registered tools
 // + which integrations are actually live in this deployment/org.
 registerToolHandler('describe_capabilities', async (_input, ctx) => {
@@ -418,13 +845,21 @@ registerToolHandler('describe_capabilities', async (_input, ctx) => {
     const directHandlers = declared.filter(n => toolHandlers.has(n));
     const viaPlatformDispatch = declared.filter(n => !toolHandlers.has(n));
 
-    // Execution self-awareness: what has actually been working this process
-    // lifetime (only tools that have been called appear).
-    const reliability = getToolReliability();
-    const unhealthy = getUnhealthyTools(3).map(t => ({
+    // Execution self-awareness. When an org is in context, report THIS tenant's
+    // learned reliability (more accurate for the user); otherwise the global view.
+    const scope = orgId ? 'organization' : 'global';
+    const reliability = getToolReliability(orgId);
+    const unhealthy = getUnhealthyTools(3, orgId).map(t => ({
       tool: t.tool,
       consecutiveFailures: t.consecutiveFailures,
       lastError: t.lastError,
+    }));
+    // Working-but-unhelpful: succeed yet usually return nothing for this scope.
+    const lowYield = getLowYieldTools(4, 0.75, orgId).map(t => ({
+      tool: t.tool,
+      emptyRate: Math.round(t.emptyRate * 100) / 100,
+      resultfulCalls: t.resultfulCalls,
+      emptyCalls: t.emptyCalls,
     }));
 
     return JSON.stringify({
@@ -438,16 +873,21 @@ registerToolHandler('describe_capabilities', async (_input, ctx) => {
       integrations,
       integrationSummary: summary,
       execution: {
+        scope,
         toolsUsedThisSession: reliability.length,
         reliability,
         unhealthy,
+        lowYield,
+        // When persistence is enabled, reliability is learned across restarts.
+        learningPersisted: isTelemetryPersistenceEnabled(),
       },
       guidance:
         'Only offer or attempt tools whose integration is configured. For configured:false entries, ' +
         'tell the user what unlocks them (the `requires` field). configured:null means org context ' +
-        'is needed to resolve — ask the user to open a project. Treat tools listed in ' +
-        'execution.unhealthy as currently unreliable: warn the user and prefer alternatives until ' +
-        'they recover.',
+        'is needed to resolve — ask the user to open a project. Treat tools in execution.unhealthy ' +
+        'as currently unreliable (warn + prefer alternatives until they recover). Tools in ' +
+        'execution.lowYield work but usually return nothing for this scope — broaden the query or ' +
+        'set expectations rather than relying on them.',
     });
   } catch (e) {
     return JSON.stringify({
@@ -4118,6 +4558,24 @@ registerToolHandler('lookup_regulatory_pathway', async (input) => {
   }
 });
 
+registerToolHandler('resolve_regulatory_structure', async (input) => {
+  // Deterministic reasoning-engine resolution — not tenant-specific, no LLM.
+  const regions = Array.isArray(input.regions)
+    ? input.regions.filter((r): r is string => typeof r === 'string')
+    : [];
+  const applicationType = typeof input.application_type === 'string' ? input.application_type : '';
+  if (regions.length === 0 || !applicationType) {
+    return JSON.stringify({ error: 'regions (non-empty array) and application_type are required.' });
+  }
+  try {
+    const { buildSubmissionStructure } = await import('../reasoning-engine/index.js');
+    const structure = buildSubmissionStructure(regions, applicationType);
+    return JSON.stringify({ ok: true, ...structure });
+  } catch (err) {
+    return JSON.stringify({ error: `resolve_regulatory_structure failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('get_market_submission_spec', async (input) => {
   // Static reference data — not tenant-specific, so no org/user context required.
   const specId = typeof input.spec_id === 'string' ? input.spec_id : '';
@@ -4296,6 +4754,167 @@ registerToolHandler('classify_post_submission_change', async (input) => {
   }
 });
 
+registerToolHandler('assess_device_evidence_structure', async (input) => {
+  // Static structure + pure assessment — no tenant context required.
+  const document = ['cer', 'per', 'rmf'].includes(input.document as string) ? (input.document as string) : '';
+  if (!document) return JSON.stringify({ error: "document must be one of: cer, per, rmf." });
+  const present = Array.isArray(input.present_section_ids) ? (input.present_section_ids as string[]) : null;
+  try {
+    if (document === 'cer') {
+      const m = await import('../market-specs/cer-structure.js');
+      if (!present) return JSON.stringify({ ok: true, stages: m.CER_STAGES, sections: m.CER_SECTIONS });
+      return JSON.stringify({ ok: true, assessment: m.assessCerStructure(present, { equivalenceClaimed: input.equivalence_claimed === true }) });
+    }
+    if (document === 'rmf') {
+      const m = await import('../market-specs/risk-management-structure.js');
+      if (!present) return JSON.stringify({ ok: true, sections: m.RMF_SECTIONS });
+      return JSON.stringify({ ok: true, assessment: m.assessRmfStructure(present) });
+    }
+    const m = await import('../market-specs/per-structure.js');
+    if (!present) return JSON.stringify({ ok: true, pillars: m.PER_PILLARS, sections: m.PER_SECTIONS });
+    return JSON.stringify({ ok: true, assessment: m.assessPerStructure(present) });
+  } catch (err) {
+    return JSON.stringify({ error: `assess_device_evidence_structure failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('classify_device', async (input) => {
+  // Pure rules — no tenant context required.
+  const framework = input.framework;
+  if (framework !== 'mdr' && framework !== 'ivdr' && framework !== 'fda') {
+    return JSON.stringify({ error: 'framework must be one of: mdr, ivdr, fda.' });
+  }
+  const facts = (input.facts && typeof input.facts === 'object' ? input.facts : {}) as Record<string, never>;
+  try {
+    const m = await import('../market-specs/device-classification.js');
+    const result = framework === 'mdr' ? m.classifyMdr(facts) : framework === 'ivdr' ? m.classifyIvdr(facts) : m.recommendFdaPathway(facts);
+    return JSON.stringify({ ok: true, framework, ...result });
+  } catch (err) {
+    return JSON.stringify({ error: `classify_device failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('get_device_reviewer_checklist', async (input) => {
+  // Static reference — no tenant context required.
+  const type = input.submission_type;
+  const TYPES = ['510k', 'de_novo', 'pma', 'cer', 'per'];
+  if (typeof type !== 'string' || !TYPES.includes(type)) {
+    return JSON.stringify({ error: `submission_type must be one of: ${TYPES.join(', ')}.` });
+  }
+  try {
+    const { buildShadowReviewerChecklist } = await import('../market-specs/device-shadow-reviewer.js');
+    return JSON.stringify({ ok: true, ...buildShadowReviewerChecklist(type as '510k' | 'de_novo' | 'pma' | 'cer' | 'per') });
+  } catch (err) {
+    return JSON.stringify({ error: `get_device_reviewer_checklist failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('get_biocompatibility_endpoints', async (input) => {
+  // Pure ISO 10993 matrix — no tenant context required.
+  const NATURES = ['skin', 'mucosal_membrane', 'breached_surface', 'blood_path_indirect', 'tissue_bone_dentin', 'circulating_blood', 'implant_tissue_bone', 'implant_blood'];
+  const DURATIONS = ['limited', 'prolonged', 'long_term'];
+  if (typeof input.nature !== 'string' || !NATURES.includes(input.nature)) return JSON.stringify({ error: `nature must be one of: ${NATURES.join(', ')}.` });
+  if (typeof input.duration !== 'string' || !DURATIONS.includes(input.duration)) return JSON.stringify({ error: `duration must be one of: ${DURATIONS.join(', ')}.` });
+  try {
+    const { requiredBiocompEndpoints } = await import('../market-specs/biocompatibility-matrix.js');
+    return JSON.stringify({ ok: true, ...requiredBiocompEndpoints(input.nature as never, input.duration as never) });
+  } catch (err) {
+    return JSON.stringify({ error: `get_biocompatibility_endpoints failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('build_device_blueprint', async (input) => {
+  // Orchestration of pure modules — no tenant context required.
+  const TYPES = ['510k', 'de_novo', 'pma', 'mdr_td', 'ivdr_td'];
+  if (typeof input.submission_type !== 'string' || !TYPES.includes(input.submission_type)) {
+    return JSON.stringify({ error: `submission_type must be one of: ${TYPES.join(', ')}.` });
+  }
+  try {
+    const { buildDeviceBlueprint } = await import('../market-specs/device-blueprint.js');
+    const { scorecardFromBlueprint } = await import('../market-specs/device-readiness-scorecard.js');
+    const blueprint = buildDeviceBlueprint({
+      submissionType: input.submission_type as never,
+      classification: (input.classification ?? undefined) as never,
+      contact: (input.contact ?? undefined) as never,
+      software: (input.software ?? undefined) as never,
+      present: (input.present ?? undefined) as never,
+      equivalenceClaimed: input.equivalence_claimed === true,
+    });
+    return JSON.stringify({ ok: true, ...blueprint, scorecard: scorecardFromBlueprint(blueprint) });
+  } catch (err) {
+    return JSON.stringify({ error: `build_device_blueprint failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('build_global_device_strategy', async (input) => {
+  // Pure reference map — no tenant context required.
+  if (input.kind !== 'device' && input.kind !== 'ivd') return JSON.stringify({ error: 'kind must be one of: device, ivd.' });
+  const regions = Array.isArray(input.regions) ? (input.regions as string[]) : undefined;
+  try {
+    const { buildGlobalDeviceStrategy } = await import('../market-specs/device-global-strategy.js');
+    return JSON.stringify({ ok: true, ...buildGlobalDeviceStrategy(input.kind, regions as never) });
+  } catch (err) {
+    return JSON.stringify({ error: `build_global_device_strategy failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('get_regulatory_timeline', async (input) => {
+  // Pure reference data — no tenant context required.
+  const pathway = typeof input.pathway === 'string' ? input.pathway : '';
+  try {
+    const { getTimeline } = await import('../market-specs/regulatory-timelines.js');
+    const t = getTimeline(pathway);
+    return t ? JSON.stringify({ ok: true, ...t }) : JSON.stringify({ error: `No timeline for pathway "${pathway}".` });
+  } catch (err) {
+    return JSON.stringify({ error: `get_regulatory_timeline failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('validate_udi', async (input) => {
+  // Pure algorithm — no tenant context required.
+  const udi = typeof input.udi === 'string' ? input.udi : '';
+  if (!udi) return JSON.stringify({ error: 'udi is required.' });
+  try {
+    const { validateUdi } = await import('../market-specs/udi-validator.js');
+    return JSON.stringify({ ok: true, ...validateUdi(udi) });
+  } catch (err) {
+    return JSON.stringify({ error: `validate_udi failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('get_electrical_standards', async (input) => {
+  // Pure reference + rule logic — no tenant context required.
+  try {
+    const { applicableElectricalStandards } = await import('../market-specs/electrical-safety.js');
+    return JSON.stringify({ ok: true, ...applicableElectricalStandards({
+      electricallyPowered: input.electricallyPowered === true,
+      hasAlarms: input.hasAlarms === true,
+      closedLoopControl: input.closedLoopControl === true,
+      homeUse: input.homeUse === true,
+      emsUse: input.emsUse === true,
+      hasParticularStandard: input.hasParticularStandard === true,
+    }) });
+  } catch (err) {
+    return JSON.stringify({ error: `get_electrical_standards failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('assess_stored_cer', async (input, ctx) => {
+  // Tenant-scoped — reads the organization's stored CER.
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'assess_stored_cer requires tenant context (organizationId).' });
+  }
+  const reportId = typeof input.report_id === 'string' ? input.report_id : '';
+  if (!reportId) return JSON.stringify({ error: 'report_id is required.' });
+  try {
+    const { assessStoredCer } = await import('../market-specs/stored-cer-assessment.js');
+    const result = await assessStoredCer({ reportId, organizationId: ctx.organizationId, equivalenceClaimed: input.equivalence_claimed === true });
+    return JSON.stringify({ ok: true, ...result });
+  } catch (err) {
+    return JSON.stringify({ error: `assess_stored_cer failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as { code?: string })?.code });
+  }
+});
+
 registerToolHandler('assess_dispatch_readiness', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) {
     return JSON.stringify({ error: 'assess_dispatch_readiness requires tenant context (organizationId and userId).' });
@@ -4404,6 +5023,621 @@ registerToolHandler('create_clinical_study', async (input, ctx) => {
     return JSON.stringify({
       error: `create_clinical_study failed: ${err instanceof Error ? err.message : String(err)}`,
     });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FCOI — 21 CFR 54 financial disclosure (C2C-01). Conversational building shares
+// the SAME governed/audited path as the REST routes: each mutation runs in a
+// transaction with recordGovernedAction (surface 'ana'). Certification (e-sign)
+// is intentionally NOT an AnA tool — it requires re-auth in the disclosure panel.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const FCOI_REASON_MIN = 8;
+function fcoiReason(input: Record<string, unknown>, fallback: string): string {
+  const r = typeof input.reason === 'string' ? input.reason.trim() : '';
+  return r.length >= FCOI_REASON_MIN ? r : fallback;
+}
+
+registerToolHandler('create_clinical_investigator', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_clinical_investigator requires tenant + user context.' });
+  const fullName = typeof input.full_name === 'string' ? input.full_name.trim() : '';
+  const role = typeof input.role === 'string' ? input.role : '';
+  if (!fullName || !['principal_investigator', 'sub_investigator', 'coordinator', 'other'].includes(role)) {
+    return JSON.stringify({ error: 'full_name and a valid role are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createInvestigatorTx } = await import('../financial-disclosures/fcoi-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createInvestigatorTx(client, ctx.organizationId, ctx.userId, {
+      fullName, role: role as any,
+      institution: typeof input.institution === 'string' ? input.institution : null,
+      studyId: typeof input.study_id === 'number' ? input.study_id : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `clinical-investigator:${id}`, reason: fcoiReason(input, 'Investigator registered via AnA'),
+      payload: { fullName, role }, domain: 'fcoi', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Registered investigator "${fullName}" (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_clinical_investigator failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('create_financial_disclosure', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_financial_disclosure requires tenant + user context.' });
+  const investigatorId = typeof input.investigator_id === 'number' ? input.investigator_id : NaN;
+  if (!Number.isInteger(investigatorId) || typeof input.has_disclosable_interests !== 'boolean') {
+    return JSON.stringify({ error: 'investigator_id and has_disclosable_interests (boolean) are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createDisclosureTx } = await import('../financial-disclosures/fcoi-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, formType } = await createDisclosureTx(client, ctx.organizationId, ctx.userId, {
+      investigatorId,
+      hasDisclosableInterests: input.has_disclosable_interests,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+      disclosurePeriodStart: typeof input.disclosure_period_start === 'string' ? input.disclosure_period_start : null,
+      disclosurePeriodEnd: typeof input.disclosure_period_end === 'string' ? input.disclosure_period_end : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `financial-disclosure:${id}`, reason: fcoiReason(input, 'Disclosure opened via AnA'),
+      payload: { investigatorId, formType }, domain: 'fcoi', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, formType, message: `Opened ${formType} disclosure (id ${id}). Certify it in the disclosure panel.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_financial_disclosure failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('add_disclosure_interest', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_disclosure_interest requires tenant + user context.' });
+  const disclosureId = typeof input.disclosure_id === 'number' ? input.disclosure_id : NaN;
+  const interestType = typeof input.interest_type === 'string' ? input.interest_type : '';
+  const description = typeof input.description === 'string' ? input.description.trim() : '';
+  if (!Number.isInteger(disclosureId) || !['COMPENSATION_BY_OUTCOME', 'EQUITY_INTEREST', 'PROPRIETARY_INTEREST', 'SIGNIFICANT_PAYMENTS'].includes(interestType) || !description) {
+    return JSON.stringify({ error: 'disclosure_id, a valid interest_type, and description are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addInterestTx } = await import('../financial-disclosures/fcoi-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await addInterestTx(client, ctx.organizationId, ctx.userId, disclosureId, {
+      interestType: interestType as any, description,
+      monetaryValue: typeof input.monetary_value === 'number' ? input.monetary_value : null,
+      arrangementsToMinimizeBias: typeof input.arrangements_to_minimize_bias === 'string' ? input.arrangements_to_minimize_bias : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `financial-disclosure:${disclosureId}`, reason: fcoiReason(input, 'Interest added via AnA'),
+      payload: { addedInterestId: id, interestType }, domain: 'fcoi', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, interestId: id, message: `Added ${interestType} interest to disclosure ${disclosureId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_disclosure_interest failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_financial_disclosure', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_financial_disclosure requires tenant context.' });
+  const disclosureId = typeof input.disclosure_id === 'number' ? input.disclosure_id : NaN;
+  if (!Number.isInteger(disclosureId)) return JSON.stringify({ error: 'disclosure_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { loadDisclosureSnapshot } = await import('../financial-disclosures/fcoi-service.js');
+  const { validateDisclosureCompleteness } = await import('../financial-disclosures/fcoi-logic.js');
+  const client = await getPool().connect();
+  try {
+    const snap = await loadDisclosureSnapshot(client, ctx.organizationId, disclosureId);
+    const gate = validateDisclosureCompleteness(snap);
+    return JSON.stringify({
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings,
+      certifiable: gate.riskLevel !== 'high',
+      message: gate.riskLevel === 'high'
+        ? 'Critical 21 CFR 54 findings — cannot certify until resolved.'
+        : `Disclosure passes the deterministic gate (${gate.riskLevel} risk).`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_financial_disclosure failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HA Interaction & Commitment (C2C-03). Conversational building shares the same
+// governed/audited path (recordGovernedAction, surface 'ana'). Commitments are
+// threaded onto the provenance spine by the service.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_ha_interaction', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_ha_interaction requires tenant + user context.' });
+  const interactionType = typeof input.interaction_type === 'string' ? input.interaction_type : '';
+  const agency = typeof input.agency === 'string' ? input.agency : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!['pre_ind', 'eop1', 'eop2', 'pre_nda', 'pre_bla', 'type_a', 'type_b', 'type_c', 'scientific_advice', 'other'].includes(interactionType) ||
+      !['fda', 'ema', 'pmda', 'mhra', 'other'].includes(agency) || !title) {
+    return JSON.stringify({ error: 'interaction_type, agency, and title are required and must be valid.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createInteractionTx } = await import('../ha-interactions/ha-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createInteractionTx(client, ctx.organizationId, ctx.userId, {
+      interactionType: interactionType as any, agency: agency as any, title,
+      objective: typeof input.objective === 'string' ? input.objective : null,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `ha-interaction:${id}`, reason: fcoiReason(input, 'HA interaction opened via AnA'),
+      payload: { interactionType, agency }, domain: 'ha', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Opened ${agency.toUpperCase()} ${interactionType} interaction "${title}" (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_ha_interaction failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('create_regulatory_commitment', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_regulatory_commitment requires tenant + user context.' });
+  const commitmentType = typeof input.commitment_type === 'string' ? input.commitment_type : '';
+  const description = typeof input.description === 'string' ? input.description.trim() : '';
+  if (!['pmr', 'pmc', 'rems', 'meeting_commitment', 'other'].includes(commitmentType) || !description) {
+    return JSON.stringify({ error: 'commitment_type and description are required and must be valid.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createCommitmentTx } = await import('../ha-interactions/ha-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, provenanceLinkIds } = await createCommitmentTx(client, ctx.organizationId, ctx.userId, {
+      commitmentType: commitmentType as any, description,
+      dueDate: typeof input.due_date === 'string' ? input.due_date : null,
+      regulatoryBasis: typeof input.regulatory_basis === 'string' ? input.regulatory_basis : null,
+      sourceInteractionId: typeof input.source_interaction_id === 'number' ? input.source_interaction_id : null,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `regulatory-commitment:${id}`, reason: fcoiReason(input, 'Commitment recorded via AnA'),
+      payload: { commitmentType, provenanceLinkIds }, domain: 'ha', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, provenanceLinkIds, message: `Recorded ${commitmentType.toUpperCase()} commitment (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_regulatory_commitment failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_commitment_portfolio', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_commitment_portfolio requires tenant context.' });
+  const { listCommitments } = await import('../ha-interactions/ha-service.js');
+  const { summarizeCommitmentPortfolio } = await import('../ha-interactions/ha-logic.js');
+  try {
+    const submissionId = typeof input.submission_id === 'number' ? input.submission_id : undefined;
+    const rows = await listCommitments(ctx.organizationId, submissionId);
+    const today = new Date().toISOString().slice(0, 10);
+    const summary = summarizeCommitmentPortfolio(rows.map((r: any) => ({ status: r.status, dueDate: r.due_date, fulfilledDate: r.fulfilled_date })), today);
+    return JSON.stringify({
+      ok: true, summary,
+      message: summary.overdue > 0
+        ? `${summary.overdue} commitment(s) overdue; ${summary.due_30} due within 30 days.`
+        : `No overdue commitments; ${summary.due_30} due within 30 days, ${summary.due_90} within 90.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_commitment_portfolio failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IACUC / Animal Study Governance (C2C-05). Conversational building shares the
+// same governed/audited path (recordGovernedAction, surface 'ana'). Committee
+// determinations (approve) are done in the review panel, not via AnA.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_iacuc_protocol', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_iacuc_protocol requires tenant + user context.' });
+  const protocolNumber = typeof input.protocol_number === 'string' ? input.protocol_number.trim() : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  const painCategory = typeof input.pain_category === 'string' ? input.pain_category : '';
+  if (!protocolNumber || !title || !['B', 'C', 'D', 'E'].includes(painCategory)) {
+    return JSON.stringify({ error: 'protocol_number, title, and a valid pain_category (B/C/D/E) are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createProtocolTx } = await import('../iacuc/iacuc-service.js');
+  const { recommendReviewType } = await import('../iacuc/iacuc-logic.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createProtocolTx(client, ctx.organizationId, ctx.userId, {
+      protocolNumber, title, painCategory: painCategory as any,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+      threeRsReplacement: typeof input.three_rs_replacement === 'string' ? input.three_rs_replacement : null,
+      threeRsReduction: typeof input.three_rs_reduction === 'string' ? input.three_rs_reduction : null,
+      threeRsRefinement: typeof input.three_rs_refinement === 'string' ? input.three_rs_refinement : null,
+      painJustification: typeof input.pain_justification === 'string' ? input.pain_justification : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `iacuc-protocol:${id}`, reason: fcoiReason(input, 'IACUC protocol opened via AnA'),
+      payload: { painCategory }, domain: 'iacuc', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    const rec = recommendReviewType(painCategory as any);
+    return JSON.stringify({ ok: true, id, recommendedReview: rec, message: `Opened IACUC protocol "${title}" (id ${id}); recommended ${rec.reviewType.replace(/_/g, ' ')}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_iacuc_protocol failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('register_animal_cohort', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'register_animal_cohort requires tenant + user context.' });
+  const protocolId = typeof input.protocol_id === 'number' ? input.protocol_id : NaN;
+  const species = typeof input.species === 'string' ? input.species.trim() : '';
+  const painCategory = typeof input.pain_category === 'string' ? input.pain_category : '';
+  const plannedCount = typeof input.planned_count === 'number' ? Math.round(input.planned_count) : NaN;
+  if (!Number.isInteger(protocolId) || !species || !['B', 'C', 'D', 'E'].includes(painCategory) || !Number.isInteger(plannedCount)) {
+    return JSON.stringify({ error: 'protocol_id, species, planned_count, and a valid pain_category are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addCohortTx } = await import('../iacuc/iacuc-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await addCohortTx(client, ctx.organizationId, ctx.userId, protocolId, {
+      species, plannedCount, painCategory: painCategory as any,
+      strain: typeof input.strain === 'string' ? input.strain : null,
+      housingLocation: typeof input.housing_location === 'string' ? input.housing_location : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `iacuc-protocol:${protocolId}`, reason: fcoiReason(input, 'Animal cohort registered via AnA'),
+      payload: { cohortId: id, species }, domain: 'iacuc', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, cohortId: id, message: `Registered ${plannedCount} ${species} (cohort ${id}) on protocol ${protocolId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `register_animal_cohort failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_iacuc_protocol', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_iacuc_protocol requires tenant context.' });
+  const protocolId = typeof input.protocol_id === 'number' ? input.protocol_id : NaN;
+  if (!Number.isInteger(protocolId)) return JSON.stringify({ error: 'protocol_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { getProtocolCompletenessInput } = await import('../iacuc/iacuc-service.js');
+  const { evaluateProtocolCompleteness, reviewStatus } = await import('../iacuc/iacuc-logic.js');
+  const client = await getPool().connect();
+  try {
+    const inp = await getProtocolCompletenessInput(client, ctx.organizationId, protocolId);
+    const gate = evaluateProtocolCompleteness(inp);
+    const rs = reviewStatus(inp.approvalDate, new Date().toISOString().slice(0, 10));
+    return JSON.stringify({
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, reviewStatus: rs,
+      message: gate.riskLevel === 'high'
+        ? 'Critical IACUC findings (e.g. category-E justification) — resolve before committee review.'
+        : `Protocol passes the deterministic gate (${gate.riskLevel} risk).`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_iacuc_protocol failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IRB / IEC (C2C-06). Conversational building shares the governed/audited path
+// (recordGovernedAction, surface 'ana'). Determinations (approve) are done in the
+// review panel, not via AnA.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_irb_submission', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_irb_submission requires tenant + user context.' });
+  const protocolNumber = typeof input.protocol_number === 'string' ? input.protocol_number.trim() : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  const riskLevel = typeof input.risk_level === 'string' ? input.risk_level : '';
+  if (!protocolNumber || !title || !['minimal', 'greater_than_minimal'].includes(riskLevel)) {
+    return JSON.stringify({ error: 'protocol_number, title, and a valid risk_level are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createSubmissionTx } = await import('../irb/irb-service.js');
+  const { recommendReviewType } = await import('../irb/irb-logic.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createSubmissionTx(client, ctx.organizationId, ctx.userId, {
+      protocolNumber, title, riskLevel: riskLevel as any,
+      studyId: typeof input.study_id === 'number' ? input.study_id : null,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+      involvesVulnerablePopulations: input.involves_vulnerable_populations === true,
+      vulnerablePopulationProtections: typeof input.vulnerable_population_protections === 'string' ? input.vulnerable_population_protections : null,
+      isSingleIrb: input.is_single_irb === true,
+      consentWaiverRequested: input.consent_waiver_requested === true,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `irb-submission:${id}`, reason: fcoiReason(input, 'IRB submission opened via AnA'),
+      payload: { riskLevel }, domain: 'irb', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    const rec = recommendReviewType({ riskLevel: riskLevel as any });
+    return JSON.stringify({ ok: true, id, recommendedReview: rec, message: `Opened IRB submission "${title}" (id ${id}); recommended ${rec.reviewType.replace(/_/g, ' ')}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_irb_submission failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('add_irb_site', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_irb_site requires tenant + user context.' });
+  const submissionId = typeof input.irb_submission_id === 'number' ? input.irb_submission_id : NaN;
+  const siteName = typeof input.site_name === 'string' ? input.site_name.trim() : '';
+  if (!Number.isInteger(submissionId) || !siteName) return JSON.stringify({ error: 'irb_submission_id and site_name are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addSiteTx } = await import('../irb/irb-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await addSiteTx(client, ctx.organizationId, ctx.userId, submissionId, {
+      siteName,
+      principalInvestigator: typeof input.principal_investigator === 'string' ? input.principal_investigator : null,
+      localContext: typeof input.local_context === 'string' ? input.local_context : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `irb-submission:${submissionId}`, reason: fcoiReason(input, 'IRB site added via AnA'),
+      payload: { siteId: id, siteName }, domain: 'irb', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, siteId: id, message: `Added site "${siteName}" (id ${id}) to IRB submission ${submissionId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_irb_site failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_irb_submission', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_irb_submission requires tenant context.' });
+  const submissionId = typeof input.irb_submission_id === 'number' ? input.irb_submission_id : NaN;
+  if (!Number.isInteger(submissionId)) return JSON.stringify({ error: 'irb_submission_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { getCompletenessInput } = await import('../irb/irb-service.js');
+  const { evaluateIrbCompleteness, continuingReviewStatus } = await import('../irb/irb-logic.js');
+  const client = await getPool().connect();
+  try {
+    const inp = await getCompletenessInput(client, ctx.organizationId, submissionId);
+    const gate = evaluateIrbCompleteness(inp);
+    const cr = continuingReviewStatus(inp.reviewType, inp.approvalDate, new Date().toISOString().slice(0, 10));
+    return JSON.stringify({
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, continuingReview: cr,
+      message: gate.riskLevel === 'high'
+        ? 'Critical IRB findings (e.g. consent or vulnerable-population safeguards) — resolve before approval.'
+        : `Submission passes the deterministic 45 CFR 46.111 gate (${gate.riskLevel} risk).`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_irb_submission failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IBC / Biosafety (C2C-07). Conversational building shares the governed/audited
+// path (recordGovernedAction, surface 'ana'). Determinations (approve) are done
+// in the review panel, not via AnA.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_ibc_registration', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_ibc_registration requires tenant + user context.' });
+  const registrationNumber = typeof input.registration_number === 'string' ? input.registration_number.trim() : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  const biosafetyLevel = typeof input.biosafety_level === 'string' ? input.biosafety_level : '';
+  if (!registrationNumber || !title || !['BSL-1', 'BSL-2', 'BSL-3', 'BSL-4'].includes(biosafetyLevel)) {
+    return JSON.stringify({ error: 'registration_number, title, and a valid biosafety_level are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createRegistrationTx } = await import('../ibc/ibc-service.js');
+  const { requiresConvenedReview } = await import('../ibc/ibc-logic.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const section = typeof input.nih_guidelines_section === 'string' ? input.nih_guidelines_section : 'not_applicable';
+    const { id } = await createRegistrationTx(client, ctx.organizationId, ctx.userId, {
+      registrationNumber, title, biosafetyLevel: biosafetyLevel as any,
+      nihGuidelinesSection: section as any,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+      involvesRecombinantDna: input.involves_recombinant_dna === true,
+      involvesHumanGeneTransfer: input.involves_human_gene_transfer === true,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `ibc-registration:${id}`, reason: fcoiReason(input, 'IBC registration opened via AnA'),
+      payload: { biosafetyLevel }, domain: 'ibc', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    const convened = requiresConvenedReview(section as any, input.involves_human_gene_transfer === true);
+    return JSON.stringify({ ok: true, id, requiresConvenedReview: convened, message: `Opened IBC registration "${title}" (id ${id}) at ${biosafetyLevel}${convened ? '; requires convened IBC review' : ''}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_ibc_registration failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('add_biological_agent', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_biological_agent requires tenant + user context.' });
+  const registrationId = typeof input.registration_id === 'number' ? input.registration_id : NaN;
+  const agentName = typeof input.agent_name === 'string' ? input.agent_name.trim() : '';
+  const agentType = typeof input.agent_type === 'string' ? input.agent_type : '';
+  const riskGroup = typeof input.risk_group === 'string' ? input.risk_group : '';
+  if (!Number.isInteger(registrationId) || !agentName ||
+      !['virus', 'bacterium', 'fungus', 'toxin', 'viral_vector', 'cell_line', 'recombinant_construct', 'other'].includes(agentType) ||
+      !['RG1', 'RG2', 'RG3', 'RG4'].includes(riskGroup)) {
+    return JSON.stringify({ error: 'registration_id, agent_name, a valid agent_type, and a valid risk_group are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addAgentTx } = await import('../ibc/ibc-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, requiredBsl } = await addAgentTx(client, ctx.organizationId, ctx.userId, registrationId, { agentName, agentType: agentType as any, riskGroup: riskGroup as any });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `ibc-registration:${registrationId}`, reason: fcoiReason(input, 'Biological agent added via AnA'),
+      payload: { agentId: id, riskGroup, requiredBsl }, domain: 'ibc', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, agentId: id, requiredBsl, message: `Added ${agentName} (${riskGroup}, requires ${requiredBsl}) to registration ${registrationId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_biological_agent failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_ibc_registration', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_ibc_registration requires tenant context.' });
+  const registrationId = typeof input.registration_id === 'number' ? input.registration_id : NaN;
+  if (!Number.isInteger(registrationId)) return JSON.stringify({ error: 'registration_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { getContainmentInput } = await import('../ibc/ibc-service.js');
+  const { evaluateContainment, registrationExpiration } = await import('../ibc/ibc-logic.js');
+  const client = await getPool().connect();
+  try {
+    const inp = await getContainmentInput(client, ctx.organizationId, registrationId);
+    const gate = evaluateContainment(inp);
+    const exp = registrationExpiration(inp.approvalDate, new Date().toISOString().slice(0, 10));
+    return JSON.stringify({
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, highestRequiredBsl: gate.highestRequiredBsl, expiration: exp,
+      message: gate.riskLevel === 'high'
+        ? 'Critical biosafety finding (containment below the agents’ requirement) — resolve before approval.'
+        : `Registration passes the deterministic containment gate (${gate.riskLevel} risk).`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_ibc_registration failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Nonclinical + SEND (C2C-04). Conversational building shares the governed/
+// audited path (recordGovernedAction, surface 'ana'); study creation threads
+// IACUC → study → Module 4 provenance.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_nonclinical_study', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_nonclinical_study requires tenant + user context.' });
+  const studyNumber = typeof input.study_number === 'string' ? input.study_number.trim() : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  const studyType = typeof input.study_type === 'string' ? input.study_type : '';
+  const VALID = ['single_dose_tox', 'repeat_dose_tox', 'safety_pharmacology', 'genotoxicity', 'carcinogenicity', 'reproductive_tox', 'local_tolerance', 'adme_pk', 'immunotoxicity', 'other'];
+  if (!studyNumber || !title || !VALID.includes(studyType)) {
+    return JSON.stringify({ error: 'study_number, title, and a valid study_type are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createStudyTx } = await import('../nonclinical/nonclinical-service.js');
+  const { requiredSendDomains } = await import('../nonclinical/nonclinical-logic.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, ctdSection, provenanceLinkIds } = await createStudyTx(client, ctx.organizationId, ctx.userId, {
+      studyNumber, title, studyType: studyType as any,
+      species: typeof input.species === 'string' ? input.species : null,
+      glpCompliant: input.glp_compliant === true,
+      testingFacility: typeof input.testing_facility === 'string' ? input.testing_facility : null,
+      noael: typeof input.noael === 'string' ? input.noael : null,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+      iacucProtocolId: typeof input.iacuc_protocol_id === 'number' ? input.iacuc_protocol_id : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `nonclinical-study:${id}`, reason: fcoiReason(input, 'Nonclinical study opened via AnA'),
+      payload: { studyType, ctdSection, provenanceLinkIds }, domain: 'nonclinical', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, ctdSection, requiredSendDomains: requiredSendDomains(studyType as any), message: `Opened nonclinical study "${title}" (id ${id}) → CTD ${ctdSection}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_nonclinical_study failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_send_readiness', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_send_readiness requires tenant context.' });
+  const studyId = typeof input.study_id === 'number' ? input.study_id : NaN;
+  if (!Number.isInteger(studyId)) return JSON.stringify({ error: 'study_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { getSendReadinessInput } = await import('../nonclinical/nonclinical-service.js');
+  const { evaluateSendReadiness } = await import('../nonclinical/nonclinical-logic.js');
+  const client = await getPool().connect();
+  try {
+    const inp = await getSendReadinessInput(client, ctx.organizationId, studyId);
+    const gate = evaluateSendReadiness(inp);
+    return JSON.stringify({
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, missingDomains: gate.missingDomains,
+      message: gate.riskLevel === 'high'
+        ? 'Critical SEND finding (define.xml or open validation errors) — resolve before submission.'
+        : `SEND package ${gate.riskLevel === 'low' ? 'is ready' : 'has gaps'} (${gate.riskLevel} risk).`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_send_readiness failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
   }
 });
 

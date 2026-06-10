@@ -123,6 +123,20 @@ async function main() {
     console.log('  · login returned an MFA challenge with no bearer token — use a demo user with MFA disabled (or complete /mfa/verify) so the authenticated checks can proceed.');
   }
 
+  // ── Neon preflight ─────────────────────────────────────────────────────────
+  // Confirms the DB is reachable AND the expected tables exist (migrations applied)
+  // before the functional checks. A DB-query route returning 200/404 — never 500 —
+  // proves the table exists; a 500 here means migrations have not been applied.
+  console.log('\n  Neon preflight:');
+  const pfPortfolio = await c.req('GET', '/api/submissions');
+  ok('DB reachable — submissions table queryable (portfolio 200)', pfPortfolio.status === 200, `status ${pfPortfolio.status} (run drizzle-kit push if 500)`);
+  const pfCer = await c.req('GET', '/api/submissions/device/cer/__preflight_no_such_report__/assess-stored');
+  ok('cer_reports table exists — stored-CER query 404s (not 500) on a bogus id', pfCer.status === 404, `status ${pfCer.status} (500 ⇒ cer_reports/cer_sections missing — apply migrations)`);
+  if (pfCer.status === 500) {
+    console.log('  · PREFLIGHT FAIL: a 500 indicates the cer_reports/cer_sections tables are missing. Run `npx drizzle-kit push` before continuing.');
+  }
+  console.log('');
+
   // Region profiles (static metadata — no DB writes).
   const rp = await c.req('GET', '/api/region-profiles');
   ok('GET /api/region-profiles returns 3 regions', rp.status === 200 && Array.isArray(rp.json) && rp.json.length === 3, `status ${rp.status}`);
@@ -179,6 +193,47 @@ async function main() {
   ok('change classify maps a major US change to PAS', ccClass.status === 200 && ccClass.json?.categoryId === 'fda_pas' && ccClass.json?.sequenceType === 'variation', `status ${ccClass.status}`);
   const ccBad = await c.req('POST', '/api/submissions/change-categories/classify', { market: 'zz', flags: {} });
   ok('change classify rejects an unknown market (400)', ccBad.status === 400, `got ${ccBad.status}`);
+
+  // Device evidence structures + classification + shadow reviewer (mdx/ivd).
+  const cerS = await c.req('GET', '/api/submissions/device/cer/structure');
+  ok('CER structure returns MEDDEV stages + sections', cerS.status === 200 && Array.isArray(cerS.json?.stages) && cerS.json.stages.length === 5 && Array.isArray(cerS.json?.sections), `status ${cerS.status}`);
+  const cerA = await c.req('POST', '/api/submissions/device/cer/assess', { presentSectionIds: ['summary', 'scope'] });
+  ok('CER assess reports missing required sections', cerA.status === 200 && cerA.json?.ready === false && cerA.json.missingRequiredSections?.includes('analysis'), `status ${cerA.status}`);
+  const perA = await c.req('POST', '/api/submissions/device/per/assess', { presentSectionIds: ['pep', 'scientific_validity'] });
+  ok('PER assess reports a missing pillar', perA.status === 200 && perA.json?.ready === false && perA.json.pillarsMissing?.includes('clinical'), `status ${perA.status}`);
+  const clsMdr = await c.req('POST', '/api/submissions/device/classify', { framework: 'mdr', facts: { implantable: true, contactsCnsOrCentralCirculation: true } });
+  ok('MDR classify returns Class III for implantable+CNS contact', clsMdr.status === 200 && clsMdr.json?.class === 'III', `status ${clsMdr.status}`);
+  const rev = await c.req('GET', '/api/submissions/device/reviewer-checklist?type=510k');
+  ok('reviewer checklist returns 510(k) reviewer questions', rev.status === 200 && Array.isArray(rev.json?.questions) && rev.json.questions.length > 0 && typeof rev.json?.counts?.total === 'number', `status ${rev.status}`);
+  const revBad = await c.req('GET', '/api/submissions/device/reviewer-checklist?type=zzz');
+  ok('reviewer checklist rejects an unknown type (400)', revBad.status === 400, `got ${revBad.status}`);
+
+  // Biocompatibility (ISO 10993), software (IEC 62304), and the unified blueprint.
+  const bio = await c.req('POST', '/api/submissions/device/biocompatibility', { nature: 'implant_tissue_bone', duration: 'long_term' });
+  ok('biocompatibility returns endpoints incl. implantation', bio.status === 200 && Array.isArray(bio.json?.endpoints) && bio.json.endpoints.some((e) => e.id === 'implantation'), `status ${bio.status}`);
+  const sw = await c.req('POST', '/api/submissions/device/software/classify', { canContributeToDeathOrSeriousInjury: true });
+  ok('software classify returns Class C + deliverables', sw.status === 200 && sw.json?.class === 'C' && Array.isArray(sw.json?.deliverables), `status ${sw.status}`);
+  const bp = await c.req('POST', '/api/submissions/device/blueprint', { submissionType: '510k', classification: { framework: 'fda', facts: { fdaClass: 'II', predicateAvailable: true } }, software: { applicable: true, canContributeToNonSeriousInjury: true } });
+  ok('device blueprint assembles classification + evidence modules + reviewer', bp.status === 200 && bp.json?.classification?.pathway === '510k' && Array.isArray(bp.json?.evidenceModules) && bp.json?.reviewer?.questionCount > 0, `status ${bp.status}`);
+  const bpBad = await c.req('POST', '/api/submissions/device/blueprint', { submissionType: 'nope' });
+  ok('device blueprint rejects an unknown submission type (400)', bpBad.status === 400, `got ${bpBad.status}`);
+  ok('device blueprint includes a readiness scorecard', bp.status === 200 && typeof bp.json?.scorecard?.score === 'number' && !!bp.json?.scorecard?.level, `scorecard ${JSON.stringify(bp.json?.scorecard)?.slice(0, 60)}`);
+
+  // Global multi-region strategy + regulatory timeline.
+  const gs = await c.req('GET', '/api/submissions/device/global-strategy?kind=device');
+  ok('global-strategy maps device evidence across regions', gs.status === 200 && Array.isArray(gs.json?.regions) && gs.json.regions.some((r) => r.region === 'eu_mdr') && Array.isArray(gs.json?.sharedAcrossAll), `status ${gs.status}`);
+  const tl = await c.req('GET', '/api/submissions/device/timeline?pathway=510k');
+  ok('timeline returns 510(k) milestones + decision goal', tl.status === 200 && tl.json?.targetDecisionDays === 90 && Array.isArray(tl.json?.milestones), `status ${tl.status}`);
+  const tlBad = await c.req('GET', '/api/submissions/device/timeline?pathway=zzz');
+  ok('timeline 404s on unknown pathway', tlBad.status === 404, `got ${tlBad.status}`);
+
+  // UDI validation + electrical safety.
+  const udiOk = await c.req('POST', '/api/submissions/device/udi/validate', { udi: '(01)00012345678905(17)241231(10)LOT1' });
+  ok('UDI validate computes a valid GS1 check digit', udiOk.status === 200 && udiOk.json?.udiDiOk === true && udiOk.json?.productionIdentifiers?.lot === 'LOT1', `status ${udiOk.status}`);
+  const udiBad = await c.req('POST', '/api/submissions/device/udi/validate', { udi: '(01)00012345678900' });
+  ok('UDI validate flags a bad check digit', udiBad.status === 200 && udiBad.json?.udiDiOk === false, `status ${udiBad.status}`);
+  const elec = await c.req('POST', '/api/submissions/device/electrical-safety', { electricallyPowered: true, hasAlarms: true });
+  ok('electrical-safety returns IEC 60601 standards incl. alarms collateral', elec.status === 200 && Array.isArray(elec.json?.standards) && elec.json.standards.some((s) => s.code === 'IEC 60601-1-8'), `status ${elec.status}`);
 
   // Document template structures (canonical section skeletons) — static reference data.
   const dt = await c.req('GET', '/api/submissions/document-templates?family=ectd');

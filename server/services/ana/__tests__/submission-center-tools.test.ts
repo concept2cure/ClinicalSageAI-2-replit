@@ -37,6 +37,16 @@ const SUBMISSION_TOOLS = [
   'get_submission_requirements',
   'assess_pathway_eligibility',
   'classify_post_submission_change',
+  'assess_device_evidence_structure',
+  'classify_device',
+  'get_device_reviewer_checklist',
+  'get_biocompatibility_endpoints',
+  'build_device_blueprint',
+  'assess_stored_cer',
+  'build_global_device_strategy',
+  'get_regulatory_timeline',
+  'validate_udi',
+  'get_electrical_standards',
   'assess_dispatch_readiness',
 ];
 
@@ -287,6 +297,115 @@ describe('submission AI tasks — tenant + input guards', () => {
     const out = JSON.parse(await handler({ market: 'eu' }, {} as ToolContext));
     expect(out.ok).toBe(true);
     expect(out.categories.some((c: { id: string }) => c.id === 'eu_type_ii')).toBe(true);
+  });
+
+  it('assess_device_evidence_structure gap-checks a CER', async () => {
+    const handler = getToolHandler('assess_device_evidence_structure')!;
+    const out = JSON.parse(await handler({ document: 'cer', present_section_ids: ['summary', 'scope'] }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.assessment.ready).toBe(false);
+    expect(out.assessment.missingRequiredSections).toContain('analysis');
+  });
+  it('classify_device applies the MDR rules', async () => {
+    const handler = getToolHandler('classify_device')!;
+    const out = JSON.parse(await handler({ framework: 'mdr', facts: { implantable: true, contactsCnsOrCentralCirculation: true } }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.class).toBe('III');
+  });
+  it('get_device_reviewer_checklist returns the 510(k) reviewer questions', async () => {
+    const handler = getToolHandler('get_device_reviewer_checklist')!;
+    const out = JSON.parse(await handler({ submission_type: '510k' }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.questions.length).toBeGreaterThan(0);
+    expect(out.counts.total).toBe(out.questions.length);
+  });
+  it('classify_device validates the framework', async () => {
+    const handler = getToolHandler('classify_device')!;
+    const out = JSON.parse(await handler({ framework: 'nope', facts: {} }, {} as ToolContext));
+    expect(out.error).toMatch(/framework must be one of/);
+  });
+
+  it('get_biocompatibility_endpoints returns endpoints for a permanent implant', async () => {
+    const handler = getToolHandler('get_biocompatibility_endpoints')!;
+    const out = JSON.parse(await handler({ nature: 'implant_tissue_bone', duration: 'long_term' }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.endpoints.map((e: { id: string }) => e.id)).toEqual(expect.arrayContaining(['implantation', 'carcinogenicity']));
+  });
+  it('assess_device_evidence_structure now handles rmf', async () => {
+    const handler = getToolHandler('assess_device_evidence_structure')!;
+    const out = JSON.parse(await handler({ document: 'rmf', present_section_ids: ['plan'] }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.assessment.ready).toBe(false);
+    expect(out.assessment.missingRequiredSections).toContain('control');
+  });
+  it('build_device_blueprint assembles the reverse-workflow view', async () => {
+    const handler = getToolHandler('build_device_blueprint')!;
+    const out = JSON.parse(await handler({
+      submission_type: '510k',
+      classification: { framework: 'fda', facts: { fdaClass: 'II', predicateAvailable: true } },
+      software: { applicable: true, canContributeToNonSeriousInjury: true },
+    }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.classification.pathway).toBe('510k');
+    expect(out.evidenceModules.some((m: { id: string; applicable: boolean }) => m.id === 'software' && m.applicable)).toBe(true);
+    expect(out.reviewer.questionCount).toBeGreaterThan(0);
+  });
+  it('build_device_blueprint validates the submission type', async () => {
+    const handler = getToolHandler('build_device_blueprint')!;
+    const out = JSON.parse(await handler({ submission_type: 'nope' }, {} as ToolContext));
+    expect(out.error).toMatch(/submission_type must be one of/);
+  });
+  it('assess_stored_cer refuses without tenant context', async () => {
+    const handler = getToolHandler('assess_stored_cer')!;
+    const out = JSON.parse(await handler({ report_id: 'CER-1' }, {} as ToolContext));
+    expect(out.error).toMatch(/tenant context/);
+  });
+  it('assess_stored_cer requires a report_id', async () => {
+    const handler = getToolHandler('assess_stored_cer')!;
+    const out = JSON.parse(await handler({}, { organizationId: 1, userId: 2 } as ToolContext));
+    expect(out.error).toMatch(/report_id is required/);
+  });
+
+  it('build_global_device_strategy maps device evidence across regions', async () => {
+    const handler = getToolHandler('build_global_device_strategy')!;
+    const out = JSON.parse(await handler({ kind: 'device' }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.regions.some((r: { region: string }) => r.region === 'eu_mdr')).toBe(true);
+    expect(out.sharedAcrossAll).toContain('risk_management');
+  });
+  it('build_global_device_strategy validates the kind', async () => {
+    const handler = getToolHandler('build_global_device_strategy')!;
+    const out = JSON.parse(await handler({ kind: 'nope' }, {} as ToolContext));
+    expect(out.error).toMatch(/kind must be one of/);
+  });
+  it('get_regulatory_timeline returns the 510(k) RTA + decision goal', async () => {
+    const handler = getToolHandler('get_regulatory_timeline')!;
+    const out = JSON.parse(await handler({ pathway: '510k' }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.targetDecisionDays).toBe(90);
+    expect(out.milestones.some((m: { id: string }) => m.id === 'rta')).toBe(true);
+  });
+  it('build_device_blueprint now includes a readiness scorecard', async () => {
+    const handler = getToolHandler('build_device_blueprint')!;
+    const out = JSON.parse(await handler({ submission_type: '510k', classification: { framework: 'fda', facts: { fdaClass: 'II', predicateAvailable: true } } }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(typeof out.scorecard?.score).toBe('number');
+    expect(out.scorecard?.level).toBeTruthy();
+  });
+
+  it('validate_udi computes the GS1 check digit', async () => {
+    const handler = getToolHandler('validate_udi')!;
+    const ok = JSON.parse(await handler({ udi: '(01)00012345678905(10)LOT1' }, {} as ToolContext));
+    expect(ok.ok).toBe(true);
+    expect(ok.udiDiOk).toBe(true);
+    const bad = JSON.parse(await handler({ udi: '(01)00012345678900' }, {} as ToolContext));
+    expect(bad.udiDiOk).toBe(false);
+  });
+  it('get_electrical_standards adds collaterals from facts', async () => {
+    const handler = getToolHandler('get_electrical_standards')!;
+    const out = JSON.parse(await handler({ electricallyPowered: true, hasAlarms: true }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.standards.some((s: { code: string }) => s.code === 'IEC 60601-1-8')).toBe(true);
   });
 });
 
