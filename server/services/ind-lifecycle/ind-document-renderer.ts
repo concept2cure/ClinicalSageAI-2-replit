@@ -15,13 +15,15 @@
  * safety report, 'annual' for the annual report) per each service's header.
  */
 
-import { renderStructuredLeafPdf, type LeafSection } from '../ectd/leaf-pdf-renderer';
+import { renderStructuredLeafPdf, renderLeafPdf, type LeafSection } from '../ectd/leaf-pdf-renderer';
 import type {
   IndSafetyReportDocument,
   IndSafetyReportSection,
 } from './ind-safety-report-service';
 import type { IndAnnualReportModel } from './ind-annual-report-service';
 import type { BriefingBookModel } from './ind-briefing-book-service';
+import type { CoverLetterModel } from './ind-cover-letter-service';
+import type { PackageManifest } from './ind-package-manifest';
 
 /** Map a (possibly nested) safety-report section to a renderer LeafSection, numbering it. */
 function safetySectionToLeaf(
@@ -58,6 +60,35 @@ export async function renderIndAnnualReportPdf(model: IndAnnualReportModel): Pro
     title: `IND Annual Report — ${model.productName} (IND ${model.indNumber})`,
     sectionCode: 'm1.13',
   });
+}
+
+/** Render an IND submission package manifest (QC review artifact) to a PDF. */
+export async function renderPackageManifestPdf(manifest: PackageManifest): Promise<Buffer> {
+  const header = [
+    manifest.applicationNumber ? `Application: ${manifest.applicationNumber}` : null,
+    `Sequence: ${manifest.sequenceNumber}`,
+    manifest.submissionType ? `Submission type: ${manifest.submissionType}` : null,
+    `Total leaves: ${manifest.totalLeaves}  |  Missing checksums: ${manifest.missingChecksums}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const sections: LeafSection[] = [{ heading: 'Submission Summary', sectionCode: '', body: header }];
+  for (const mod of manifest.modules) {
+    const rows = mod.leaves
+      .map((l) => `${l.sectionCode}  [${l.lifecycleOp}]  ${l.title}  —  md5: ${l.checksum ?? '(none)'}`)
+      .join('\n');
+    sections.push({ heading: mod.label, sectionCode: mod.module, body: rows });
+  }
+
+  return renderStructuredLeafPdf(sections, { title: `IND Package Manifest — Sequence ${manifest.sequenceNumber}` });
+}
+
+/** Render an IND cover letter (eCTD Module 1.2) to a PDF leaf. */
+export async function renderCoverLetterPdf(model: CoverLetterModel): Promise<Buffer> {
+  // A cover letter is one continuous letter, not a section tree — render flat
+  // with a single document-level bookmark.
+  return renderLeafPdf(model.body, { title: 'IND Cover Letter', sectionCode: 'm1.2' });
 }
 
 /** Render an FDA meeting briefing book (Pre-IND / Type A/B/C) to a PDF. */

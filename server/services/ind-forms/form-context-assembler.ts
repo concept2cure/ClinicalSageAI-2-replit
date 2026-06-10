@@ -22,17 +22,7 @@ import type {
   AgentInfo,
   InvestigatorInfo,
 } from './ind-form-data-builders';
-
-/** Join non-empty address parts into a single one-line address string. */
-function composeAddress(parts: Array<string | null | undefined>): string | undefined {
-  const joined = parts.map((p) => (p ?? '').trim()).filter((p) => p.length > 0).join(', ');
-  return joined.length > 0 ? joined : undefined;
-}
-
-function fullName(first: string, last: string, credentials?: string | null): string {
-  const base = `${first} ${last}`.trim();
-  return credentials ? `${base}, ${credentials}` : base;
-}
+import { composeAddress, fullName } from '../ind-common/format';
 
 /** Map a sponsor record to the form builders' SponsorInfo. */
 export function sponsorToInfo(s: Sponsor): SponsorInfo {

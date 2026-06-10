@@ -26,7 +26,36 @@ import { searchHubSpotCrm, type HubSpotObject } from '../integrations/hubspot-cl
 import { searchDeviceRecalls } from '../integrations/device-recalls.js';
 import { searchDrugLabels } from '../integrations/drug-label-client.js';
 import { searchDrugApprovals } from '../integrations/drug-approvals-client.js';
+import { assessRegulatoryLandscape } from '../integrations/landscape.js';
+import { getIntegrationStatuses, summarizeStatuses } from '../integrations/integration-status.js';
+import { getAllEnabledTools } from './AnaToolDefinitions.js';
+import {
+  recordToolOutcome,
+  recordContractViolation,
+  classifyResult,
+  getToolReliability,
+  getUnhealthyTools,
+  getLowYieldTools,
+  isTelemetryPersistenceEnabled,
+} from './tool-telemetry.js';
+import { composeMedicalWritingGuidance, listMedicalWritingCatalog } from './medical-writing.js';
+import { reviewMedicalWriting } from './medical-writing-review.js';
+import {
+  assessReadability,
+  buildAbbreviationList,
+  type ReadabilityAudience,
+} from './medical-writing-qc.js';
+import { lookupIcd10 } from '../integrations/icd10-client.js';
+import { composeSafetyNarrative } from './safety-narrative.js';
+import { screenPromotionalLanguage } from './promotional-screening.js';
+import { narrateStatisticalResult, type AnalysisType, type EffectMeasure } from './statistical-narrator.js';
+import { initToolTelemetryPersistence } from './tool-telemetry-persistence.js';
 import fdaFaersClient from '../../fda_faers_client.js';
+
+// Opt-in (ANA_TELEMETRY_PERSIST_PATH): hydrate learned tool reliability on boot
+// so it survives restarts. No-op when the env var is unset — default behavior
+// (in-memory, process-lifetime) is unchanged.
+void initToolTelemetryPersistence().catch(() => {});
 import type {
   GatewayRequest,
   GatewayMessage,
@@ -59,9 +88,47 @@ type ToolHandler = (input: Record<string, unknown>, ctx?: ToolContext) => Promis
 
 const toolHandlers: Map<string, ToolHandler> = new Map();
 
-/** Register a handler for a named tool */
+// Lazily built map of tool name → schema-required input keys, for the
+// report-only contract check in the telemetry wrapper.
+let requiredInputKeys: Map<string, string[]> | null = null;
+function getRequiredInputKeys(tool: string): string[] {
+  if (!requiredInputKeys) {
+    requiredInputKeys = new Map();
+    for (const def of getAllEnabledTools()) {
+      const d = def as { name?: string; input_schema?: { required?: string[] } };
+      if (d.name && Array.isArray(d.input_schema?.required)) {
+        requiredInputKeys.set(d.name, d.input_schema.required);
+      }
+    }
+  }
+  return requiredInputKeys.get(tool) ?? [];
+}
+
+/**
+ * Register a handler for a named tool. Every handler is wrapped with execution
+ * telemetry (AnA's self-awareness of what is actually working) and a
+ * report-only input-contract check — every dispatch path resolves handlers
+ * from this map, so coverage is total with no call-site changes.
+ */
 export function registerToolHandler(name: string, handler: ToolHandler): void {
-  toolHandlers.set(name, handler);
+  const instrumented: ToolHandler = async (input, ctx) => {
+    const orgId = ctx?.organizationId ?? undefined;
+    // Report-only contract check: note when the model omitted required fields.
+    const missing = getRequiredInputKeys(name).filter(k => input?.[k] === undefined);
+    if (missing.length > 0) recordContractViolation(name, orgId);
+
+    const start = Date.now();
+    try {
+      const result = await handler(input, ctx);
+      const { outcome, note, resultYield } = classifyResult(result);
+      recordToolOutcome(name, outcome, Date.now() - start, note, orgId, resultYield);
+      return result;
+    } catch (e) {
+      recordToolOutcome(name, 'failure', Date.now() - start, e instanceof Error ? e.message : String(e), orgId);
+      throw e;
+    }
+  };
+  toolHandlers.set(name, instrumented);
 }
 
 /** Retrieve a registered tool handler, or undefined if the name is unknown. */
@@ -354,6 +421,268 @@ registerToolHandler('search_connected_repositories', async (input, ctx) => {
   }
 });
 
+// Medical Writing Guidance — authoritative standards + craft for a deliverable,
+// composed by document type × therapeutic area × region × audience.
+registerToolHandler('medical_writing_guidance', async (input) => {
+  const documentType = typeof input.document_type === 'string' ? input.document_type : '';
+  if (!documentType.trim()) {
+    return JSON.stringify({
+      error: 'medical_writing_guidance requires document_type.',
+      catalog: listMedicalWritingCatalog(),
+    });
+  }
+  const asStr = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v.trim() : undefined;
+  const guidance = composeMedicalWritingGuidance({
+    documentType,
+    therapeuticArea: asStr(input.therapeutic_area),
+    region: asStr(input.region),
+    audience: asStr(input.audience),
+    clientSegment: asStr(input.client_segment),
+  });
+  return JSON.stringify({
+    source: 'AnA Medical-Writing Knowledge Base',
+    ...guidance,
+    citation_hint:
+      'Apply this structure and these conventions, then ground every clinical claim with the evidence ' +
+      'search tools and cite per the citation protocol.',
+  });
+});
+
+// Statistical-results narrator — hedged ICH-E3 prose from a structured result.
+registerToolHandler('narrate_statistical_result', async (input) => {
+  const endpoint = typeof input.endpoint === 'string' ? input.endpoint : '';
+  const analysisType = ['time_to_event', 'binary', 'continuous'].includes(input.analysis_type as string)
+    ? (input.analysis_type as AnalysisType)
+    : undefined;
+  if (!endpoint.trim() || !analysisType) {
+    return JSON.stringify({ error: 'narrate_statistical_result requires endpoint and a valid analysis_type.' });
+  }
+  const num = (v: unknown): number | undefined => (typeof v === 'number' && !Number.isNaN(v) ? v : undefined);
+  const arms = Array.isArray(input.arms)
+    ? (input.arms as any[])
+        .filter(a => a && typeof a.name === 'string')
+        .map(a => ({ name: String(a.name), n: num(a.n), value: a.value, unit: typeof a.unit === 'string' ? a.unit : undefined }))
+    : undefined;
+  const result = narrateStatisticalResult({
+    endpoint,
+    analysisType,
+    arms,
+    measure: typeof input.measure === 'string' ? (input.measure as EffectMeasure) : undefined,
+    estimate: num(input.estimate),
+    ciLower: num(input.ci_lower),
+    ciUpper: num(input.ci_upper),
+    ciLevel: num(input.ci_level),
+    pValue: num(input.p_value),
+    alpha: num(input.alpha),
+    exploratory: typeof input.exploratory === 'boolean' ? input.exploratory : undefined,
+    multiplicityControlled: typeof input.multiplicity_controlled === 'boolean' ? input.multiplicity_controlled : undefined,
+  });
+  return JSON.stringify({ source: 'AnA Statistical Narrator', ...result });
+});
+
+// Promotional-language screen — FDA OPDP / EU advertising claims QC.
+registerToolHandler('screen_promotional_language', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) return JSON.stringify({ error: 'screen_promotional_language requires non-empty text.' });
+  return JSON.stringify({ source: 'AnA Promotional-Claims Screen', ...screenPromotionalLanguage(text) });
+});
+
+// Safety narrative — ICH E3 §16 patient narrative from structured case facts.
+registerToolHandler('draft_safety_narrative', async (input) => {
+  const subjectId = typeof input.subject_id === 'string' ? input.subject_id : '';
+  const ev = (input.event ?? {}) as Record<string, unknown>;
+  if (!subjectId.trim() || typeof ev.term !== 'string' || !ev.term.trim()) {
+    return JSON.stringify({ error: 'draft_safety_narrative requires subject_id and event.term.' });
+  }
+  const arr = (v: unknown): string[] | undefined =>
+    Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : undefined;
+  const str = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v : undefined);
+
+  const result = composeSafetyNarrative({
+    subjectId,
+    age: str(input.age),
+    sex: str(input.sex),
+    studyId: str(input.study_id),
+    treatmentArm: str(input.treatment_arm),
+    studyDrug: str(input.study_drug),
+    dose: str(input.dose),
+    firstDoseDate: str(input.first_dose_date),
+    medicalHistory: arr(input.medical_history),
+    concomitantMeds: arr(input.concomitant_meds),
+    event: {
+      term: String(ev.term),
+      onsetDate: str(ev.onset_date),
+      dayOnStudy: str(ev.day_on_study),
+      severity: str(ev.severity),
+      seriousnessCriteria: arr(ev.seriousness_criteria),
+      causality: str(ev.causality),
+      actionTaken: str(ev.action_taken),
+      treatment: str(ev.treatment),
+      dechallenge: str(ev.dechallenge),
+      rechallenge: str(ev.rechallenge),
+      outcome: str(ev.outcome),
+      notes: str(ev.notes),
+    },
+  });
+  return JSON.stringify({
+    source: 'AnA Safety Narrative (ICH E3 §16)',
+    ...result,
+    citation_hint:
+      result.missingFields.length
+        ? `Confirm the missing fields before finalizing: ${result.missingFields.join(', ')}.`
+        : 'All key fields present; verify against the CRF/source before sign-off.',
+  });
+});
+
+// ICD-10-CM coding — map a diagnosis/indication term to billable codes.
+registerToolHandler('lookup_icd10_code', async (input) => {
+  const term = typeof input.term === 'string' ? input.term : '';
+  if (!term.trim()) return JSON.stringify({ error: 'lookup_icd10_code requires a term.' });
+  const maxResults = Math.min((input.max_results as number) || 10, 25);
+  try {
+    return JSON.stringify(await lookupIcd10(term, maxResults));
+  } catch (e) {
+    return JSON.stringify({
+      source: 'NLM ICD-10-CM (Clinical Tables)',
+      query: term,
+      error: e instanceof Error ? e.message : 'ICD-10 lookup failed',
+      codes: [],
+    });
+  }
+});
+
+// Readability QC — Flesch metrics vs the target audience reading level.
+registerToolHandler('assess_readability', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) return JSON.stringify({ error: 'assess_readability requires non-empty text.' });
+  const audience = ['patient', 'general', 'clinician', 'regulator'].includes(input.audience as string)
+    ? (input.audience as ReadabilityAudience)
+    : 'general';
+  return JSON.stringify({ source: 'AnA Readability QC', ...assessReadability(text, audience) });
+});
+
+// Abbreviation QC — extract acronyms + flag undefined-at-first-use.
+registerToolHandler('build_abbreviation_list', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) return JSON.stringify({ error: 'build_abbreviation_list requires non-empty text.' });
+  return JSON.stringify({ source: 'AnA Abbreviation QC', ...buildAbbreviationList(text) });
+});
+
+// Medical Writing Review — standards-conformance QC of a draft (or pre-draft).
+registerToolHandler('medical_writing_review', async (input) => {
+  const documentType = typeof input.document_type === 'string' ? input.document_type : '';
+  if (!documentType.trim()) {
+    return JSON.stringify({
+      error: 'medical_writing_review requires document_type.',
+      catalog: listMedicalWritingCatalog(),
+    });
+  }
+  const draftText = typeof input.draft_text === 'string' ? input.draft_text : undefined;
+  const review = reviewMedicalWriting(documentType, draftText);
+  return JSON.stringify({ source: 'AnA Medical-Writing QC', ...review });
+});
+
+// Describe Capabilities — AnA's deterministic self-knowledge: registered tools
+// + which integrations are actually live in this deployment/org.
+registerToolHandler('describe_capabilities', async (_input, ctx) => {
+  try {
+    const orgId = ctx?.organizationId ? Number(ctx.organizationId) : null;
+    const integrations = await getIntegrationStatuses(orgId);
+    const summary = summarizeStatuses(integrations);
+
+    // Enumerate the declared tool surface and whether each has a live handler.
+    // Tools without a direct handler are executed via platform-command dispatch,
+    // so they are reported separately rather than as missing.
+    const declared = getAllEnabledTools()
+      .map(t => (t as { name?: string }).name)
+      .filter((n): n is string => !!n);
+    const directHandlers = declared.filter(n => toolHandlers.has(n));
+    const viaPlatformDispatch = declared.filter(n => !toolHandlers.has(n));
+
+    // Execution self-awareness. When an org is in context, report THIS tenant's
+    // learned reliability (more accurate for the user); otherwise the global view.
+    const scope = orgId ? 'organization' : 'global';
+    const reliability = getToolReliability(orgId);
+    const unhealthy = getUnhealthyTools(3, orgId).map(t => ({
+      tool: t.tool,
+      consecutiveFailures: t.consecutiveFailures,
+      lastError: t.lastError,
+    }));
+    // Working-but-unhelpful: succeed yet usually return nothing for this scope.
+    const lowYield = getLowYieldTools(4, 0.75, orgId).map(t => ({
+      tool: t.tool,
+      emptyRate: Math.round(t.emptyRate * 100) / 100,
+      resultfulCalls: t.resultfulCalls,
+      emptyCalls: t.emptyCalls,
+    }));
+
+    return JSON.stringify({
+      source: 'AnA Capability Introspection',
+      toolSurface: {
+        total: declared.length,
+        directHandlers: directHandlers.length,
+        viaPlatformDispatch: viaPlatformDispatch.length,
+        tools: declared,
+      },
+      integrations,
+      integrationSummary: summary,
+      execution: {
+        scope,
+        toolsUsedThisSession: reliability.length,
+        reliability,
+        unhealthy,
+        lowYield,
+        // When persistence is enabled, reliability is learned across restarts.
+        learningPersisted: isTelemetryPersistenceEnabled(),
+      },
+      guidance:
+        'Only offer or attempt tools whose integration is configured. For configured:false entries, ' +
+        'tell the user what unlocks them (the `requires` field). configured:null means org context ' +
+        'is needed to resolve — ask the user to open a project. Treat tools in execution.unhealthy ' +
+        'as currently unreliable (warn + prefer alternatives until they recover). Tools in ' +
+        'execution.lowYield work but usually return nothing for this scope — broaden the query or ' +
+        'set expectations rather than relying on them.',
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'AnA Capability Introspection',
+      error: e instanceof Error ? e.message : 'Capability introspection failed',
+    });
+  }
+});
+
+// Assess Regulatory Landscape — cross-source synthesis (fans out in parallel).
+registerToolHandler('assess_regulatory_landscape', async (input) => {
+  const topic = typeof input.topic === 'string' ? input.topic.trim() : '';
+  if (!topic) {
+    return JSON.stringify({ error: 'assess_regulatory_landscape requires a topic.' });
+  }
+  const domain = ['device', 'drug', 'auto'].includes(input.domain as string)
+    ? (input.domain as 'device' | 'drug' | 'auto')
+    : 'auto';
+  try {
+    const result = await assessRegulatoryLandscape({
+      topic,
+      domain,
+      limitPerSource: Math.min((input.max_per_source as number) || 5, 15),
+    });
+    return JSON.stringify({
+      ...result,
+      citation_hint:
+        'Synthesize across sections; cite trials by NCT, literature by PMID, coverage by MCD number, ' +
+        'recalls by recall number, approvals by FDA application number — each with its url where present.',
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'Regulatory Landscape',
+      topic,
+      error: e instanceof Error ? e.message : 'Landscape assessment failed',
+      sections: {},
+    });
+  }
+});
+
 // Search Drug Approvals — Drugs@FDA (openFDA drug/drugsfda).
 registerToolHandler('search_drug_approvals', async (input) => {
   const asStr = (v: unknown): string | undefined =>
@@ -618,61 +947,31 @@ registerToolHandler('lookup_fda_guidance', async (input) => {
 
 // Lookup ICH Guideline
 registerToolHandler('lookup_ich_guideline', async (input) => {
-  const guideline = input.guideline as string;
-
-  const ichDatabase: Record<string, any> = {
-    'E6': {
-      code: 'ICH E6(R2)',
-      title: 'Good Clinical Practice',
-      scope: 'Standards for design, conduct, performance, monitoring, auditing, recording, analysis, and reporting of clinical trials',
-      keySections: [
-        '1. Glossary', '2. Principles of ICH GCP', '3. IRB/IEC',
-        '4. Investigator', '5. Sponsor', '6. Clinical Trial Protocol',
-        '7. Investigator\'s Brochure', '8. Essential Documents',
-      ],
-    },
-    'E8': {
-      code: 'ICH E8(R1)',
-      title: 'General Considerations for Clinical Studies',
-      scope: 'Framework for quality-by-design approach to clinical development',
-      keySections: [
-        'Quality factors critical to study', 'Study design considerations',
-        'Data quality and integrity', 'Stakeholder engagement',
-      ],
-    },
-    'E9': {
-      code: 'ICH E9(R1)',
-      title: 'Statistical Principles for Clinical Trials',
-      scope: 'Statistical methodology including estimands framework',
-      keySections: [
-        'Estimands and sensitivity analysis', 'Trial design',
-        'Analysis sets', 'Missing data handling', 'Multiplicity',
-      ],
-    },
-    'M4': {
-      code: 'ICH M4',
-      title: 'Common Technical Document (CTD)',
-      scope: 'Organization of regulatory submissions',
-      keySections: [
-        'Module 1: Regional Administrative Info',
-        'Module 2: Summaries (2.5 Clinical Overview, 2.7 Clinical Summary)',
-        'Module 3: Quality', 'Module 4: Nonclinical', 'Module 5: Clinical',
-      ],
-    },
-  };
-
-  const guidelineLower = guideline.toUpperCase();
-  for (const [key, value] of Object.entries(ichDatabase)) {
-    if (guidelineLower.includes(key)) {
-      return JSON.stringify({ source: 'ICH Guidelines', ...value });
+  // Backed by the structured, citable ICH guideline corpus (Q/S/E/M families
+  // implemented across the major global regulators). Read-only reference data.
+  const guideline = typeof input.guideline === 'string' ? input.guideline.trim() : '';
+  if (!guideline) return JSON.stringify({ error: 'guideline (code or topic) is required.' });
+  const note = 'ICH revisions/step status evolve. Confirm the current revision on ich.org before citing.';
+  try {
+    const m = await import('../ana-ri/ich-guideline-corpus.js');
+    // Try an exact code match first (e.g. "E6(R3)"), then a bare-prefix/topic search.
+    const exact = m.getGuideline(guideline);
+    if (exact) {
+      return JSON.stringify({ source: 'ICH Guidelines', match: 'exact', guideline: exact, note });
     }
+    const matches = m.searchGuidelines(guideline, 8);
+    if (matches.length > 0) {
+      return JSON.stringify({ source: 'ICH Guidelines', match: 'search', count: matches.length, guidelines: matches, note });
+    }
+    return JSON.stringify({
+      source: 'ICH Guidelines',
+      guideline,
+      guidelines: [],
+      note: `No ICH guideline matched "${guideline}". See https://ich.org/page/ich-guidelines. ${note}`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `lookup_ich_guideline failed: ${err instanceof Error ? err.message : String(err)}` });
   }
-
-  return JSON.stringify({
-    source: 'ICH Guidelines',
-    guideline,
-    note: `Guideline "${guideline}" not in local database. Refer to https://ich.org/page/ich-guidelines`,
-  });
 });
 
 // Check Regulatory Compliance
@@ -3991,6 +4290,47 @@ registerToolHandler('list_validation_rules', async (input) => {
   }
 });
 
+registerToolHandler('lookup_regulatory_pathway', async (input) => {
+  // Static reference data — not tenant-specific.
+  const agency = typeof input.agency === 'string' ? input.agency : '';
+  const query = typeof input.query === 'string' ? input.query : '';
+  try {
+    const m = await import('../ana-ri/regulatory-pathways-corpus.js');
+    const pathways = agency
+      ? m.pathwaysByAgency(agency as Parameters<typeof m.pathwaysByAgency>[0])
+      : query
+        ? m.searchPathways(query, 12)
+        : m.REGULATORY_PATHWAYS;
+    return JSON.stringify({
+      ok: true,
+      count: pathways.length,
+      summary: m.pathwaysSummary(),
+      pathways,
+      note: 'Designations and criteria change; confirm eligibility against current agency guidance.',
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `lookup_regulatory_pathway failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('resolve_regulatory_structure', async (input) => {
+  // Deterministic reasoning-engine resolution — not tenant-specific, no LLM.
+  const regions = Array.isArray(input.regions)
+    ? input.regions.filter((r): r is string => typeof r === 'string')
+    : [];
+  const applicationType = typeof input.application_type === 'string' ? input.application_type : '';
+  if (regions.length === 0 || !applicationType) {
+    return JSON.stringify({ error: 'regions (non-empty array) and application_type are required.' });
+  }
+  try {
+    const { buildSubmissionStructure } = await import('../reasoning-engine/index.js');
+    const structure = buildSubmissionStructure(regions, applicationType);
+    return JSON.stringify({ ok: true, ...structure });
+  } catch (err) {
+    return JSON.stringify({ error: `resolve_regulatory_structure failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('get_market_submission_spec', async (input) => {
   // Static reference data — not tenant-specific, so no org/user context required.
   const specId = typeof input.spec_id === 'string' ? input.spec_id : '';
@@ -4169,6 +4509,113 @@ registerToolHandler('classify_post_submission_change', async (input) => {
   }
 });
 
+registerToolHandler('assess_device_evidence_structure', async (input) => {
+  // Static structure + pure assessment — no tenant context required.
+  const document = ['cer', 'per', 'rmf'].includes(input.document as string) ? (input.document as string) : '';
+  if (!document) return JSON.stringify({ error: "document must be one of: cer, per, rmf." });
+  const present = Array.isArray(input.present_section_ids) ? (input.present_section_ids as string[]) : null;
+  try {
+    if (document === 'cer') {
+      const m = await import('../market-specs/cer-structure.js');
+      if (!present) return JSON.stringify({ ok: true, stages: m.CER_STAGES, sections: m.CER_SECTIONS });
+      return JSON.stringify({ ok: true, assessment: m.assessCerStructure(present, { equivalenceClaimed: input.equivalence_claimed === true }) });
+    }
+    if (document === 'rmf') {
+      const m = await import('../market-specs/risk-management-structure.js');
+      if (!present) return JSON.stringify({ ok: true, sections: m.RMF_SECTIONS });
+      return JSON.stringify({ ok: true, assessment: m.assessRmfStructure(present) });
+    }
+    const m = await import('../market-specs/per-structure.js');
+    if (!present) return JSON.stringify({ ok: true, pillars: m.PER_PILLARS, sections: m.PER_SECTIONS });
+    return JSON.stringify({ ok: true, assessment: m.assessPerStructure(present) });
+  } catch (err) {
+    return JSON.stringify({ error: `assess_device_evidence_structure failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('classify_device', async (input) => {
+  // Pure rules — no tenant context required.
+  const framework = input.framework;
+  if (framework !== 'mdr' && framework !== 'ivdr' && framework !== 'fda') {
+    return JSON.stringify({ error: 'framework must be one of: mdr, ivdr, fda.' });
+  }
+  const facts = (input.facts && typeof input.facts === 'object' ? input.facts : {}) as Record<string, never>;
+  try {
+    const m = await import('../market-specs/device-classification.js');
+    const result = framework === 'mdr' ? m.classifyMdr(facts) : framework === 'ivdr' ? m.classifyIvdr(facts) : m.recommendFdaPathway(facts);
+    return JSON.stringify({ ok: true, framework, ...result });
+  } catch (err) {
+    return JSON.stringify({ error: `classify_device failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('get_device_reviewer_checklist', async (input) => {
+  // Static reference — no tenant context required.
+  const type = input.submission_type;
+  const TYPES = ['510k', 'de_novo', 'pma', 'cer', 'per'];
+  if (typeof type !== 'string' || !TYPES.includes(type)) {
+    return JSON.stringify({ error: `submission_type must be one of: ${TYPES.join(', ')}.` });
+  }
+  try {
+    const { buildShadowReviewerChecklist } = await import('../market-specs/device-shadow-reviewer.js');
+    return JSON.stringify({ ok: true, ...buildShadowReviewerChecklist(type as '510k' | 'de_novo' | 'pma' | 'cer' | 'per') });
+  } catch (err) {
+    return JSON.stringify({ error: `get_device_reviewer_checklist failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('get_biocompatibility_endpoints', async (input) => {
+  // Pure ISO 10993 matrix — no tenant context required.
+  const NATURES = ['skin', 'mucosal_membrane', 'breached_surface', 'blood_path_indirect', 'tissue_bone_dentin', 'circulating_blood', 'implant_tissue_bone', 'implant_blood'];
+  const DURATIONS = ['limited', 'prolonged', 'long_term'];
+  if (typeof input.nature !== 'string' || !NATURES.includes(input.nature)) return JSON.stringify({ error: `nature must be one of: ${NATURES.join(', ')}.` });
+  if (typeof input.duration !== 'string' || !DURATIONS.includes(input.duration)) return JSON.stringify({ error: `duration must be one of: ${DURATIONS.join(', ')}.` });
+  try {
+    const { requiredBiocompEndpoints } = await import('../market-specs/biocompatibility-matrix.js');
+    return JSON.stringify({ ok: true, ...requiredBiocompEndpoints(input.nature as never, input.duration as never) });
+  } catch (err) {
+    return JSON.stringify({ error: `get_biocompatibility_endpoints failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('build_device_blueprint', async (input) => {
+  // Orchestration of pure modules — no tenant context required.
+  const TYPES = ['510k', 'de_novo', 'pma', 'mdr_td', 'ivdr_td'];
+  if (typeof input.submission_type !== 'string' || !TYPES.includes(input.submission_type)) {
+    return JSON.stringify({ error: `submission_type must be one of: ${TYPES.join(', ')}.` });
+  }
+  try {
+    const { buildDeviceBlueprint } = await import('../market-specs/device-blueprint.js');
+    const blueprint = buildDeviceBlueprint({
+      submissionType: input.submission_type as never,
+      classification: (input.classification ?? undefined) as never,
+      contact: (input.contact ?? undefined) as never,
+      software: (input.software ?? undefined) as never,
+      present: (input.present ?? undefined) as never,
+      equivalenceClaimed: input.equivalence_claimed === true,
+    });
+    return JSON.stringify({ ok: true, ...blueprint });
+  } catch (err) {
+    return JSON.stringify({ error: `build_device_blueprint failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('assess_stored_cer', async (input, ctx) => {
+  // Tenant-scoped — reads the organization's stored CER.
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'assess_stored_cer requires tenant context (organizationId).' });
+  }
+  const reportId = typeof input.report_id === 'string' ? input.report_id : '';
+  if (!reportId) return JSON.stringify({ error: 'report_id is required.' });
+  try {
+    const { assessStoredCer } = await import('../market-specs/stored-cer-assessment.js');
+    const result = await assessStoredCer({ reportId, organizationId: ctx.organizationId, equivalenceClaimed: input.equivalence_claimed === true });
+    return JSON.stringify({ ok: true, ...result });
+  } catch (err) {
+    return JSON.stringify({ error: `assess_stored_cer failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as { code?: string })?.code });
+  }
+});
+
 registerToolHandler('assess_dispatch_readiness', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) {
     return JSON.stringify({ error: 'assess_dispatch_readiness requires tenant context (organizationId and userId).' });
@@ -4277,6 +4724,145 @@ registerToolHandler('create_clinical_study', async (input, ctx) => {
     return JSON.stringify({
       error: `create_clinical_study failed: ${err instanceof Error ? err.message : String(err)}`,
     });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FCOI — 21 CFR 54 financial disclosure (C2C-01). Conversational building shares
+// the SAME governed/audited path as the REST routes: each mutation runs in a
+// transaction with recordGovernedAction (surface 'ana'). Certification (e-sign)
+// is intentionally NOT an AnA tool — it requires re-auth in the disclosure panel.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const FCOI_REASON_MIN = 8;
+function fcoiReason(input: Record<string, unknown>, fallback: string): string {
+  const r = typeof input.reason === 'string' ? input.reason.trim() : '';
+  return r.length >= FCOI_REASON_MIN ? r : fallback;
+}
+
+registerToolHandler('create_clinical_investigator', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_clinical_investigator requires tenant + user context.' });
+  const fullName = typeof input.full_name === 'string' ? input.full_name.trim() : '';
+  const role = typeof input.role === 'string' ? input.role : '';
+  if (!fullName || !['principal_investigator', 'sub_investigator', 'coordinator', 'other'].includes(role)) {
+    return JSON.stringify({ error: 'full_name and a valid role are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createInvestigatorTx } = await import('../financial-disclosures/fcoi-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createInvestigatorTx(client, ctx.organizationId, ctx.userId, {
+      fullName, role: role as any,
+      institution: typeof input.institution === 'string' ? input.institution : null,
+      studyId: typeof input.study_id === 'number' ? input.study_id : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `clinical-investigator:${id}`, reason: fcoiReason(input, 'Investigator registered via AnA'),
+      payload: { fullName, role }, domain: 'fcoi', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Registered investigator "${fullName}" (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_clinical_investigator failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('create_financial_disclosure', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_financial_disclosure requires tenant + user context.' });
+  const investigatorId = typeof input.investigator_id === 'number' ? input.investigator_id : NaN;
+  if (!Number.isInteger(investigatorId) || typeof input.has_disclosable_interests !== 'boolean') {
+    return JSON.stringify({ error: 'investigator_id and has_disclosable_interests (boolean) are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createDisclosureTx } = await import('../financial-disclosures/fcoi-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, formType } = await createDisclosureTx(client, ctx.organizationId, ctx.userId, {
+      investigatorId,
+      hasDisclosableInterests: input.has_disclosable_interests,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+      disclosurePeriodStart: typeof input.disclosure_period_start === 'string' ? input.disclosure_period_start : null,
+      disclosurePeriodEnd: typeof input.disclosure_period_end === 'string' ? input.disclosure_period_end : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `financial-disclosure:${id}`, reason: fcoiReason(input, 'Disclosure opened via AnA'),
+      payload: { investigatorId, formType }, domain: 'fcoi', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, formType, message: `Opened ${formType} disclosure (id ${id}). Certify it in the disclosure panel.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_financial_disclosure failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('add_disclosure_interest', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_disclosure_interest requires tenant + user context.' });
+  const disclosureId = typeof input.disclosure_id === 'number' ? input.disclosure_id : NaN;
+  const interestType = typeof input.interest_type === 'string' ? input.interest_type : '';
+  const description = typeof input.description === 'string' ? input.description.trim() : '';
+  if (!Number.isInteger(disclosureId) || !['COMPENSATION_BY_OUTCOME', 'EQUITY_INTEREST', 'PROPRIETARY_INTEREST', 'SIGNIFICANT_PAYMENTS'].includes(interestType) || !description) {
+    return JSON.stringify({ error: 'disclosure_id, a valid interest_type, and description are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addInterestTx } = await import('../financial-disclosures/fcoi-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await addInterestTx(client, ctx.organizationId, ctx.userId, disclosureId, {
+      interestType: interestType as any, description,
+      monetaryValue: typeof input.monetary_value === 'number' ? input.monetary_value : null,
+      arrangementsToMinimizeBias: typeof input.arrangements_to_minimize_bias === 'string' ? input.arrangements_to_minimize_bias : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `financial-disclosure:${disclosureId}`, reason: fcoiReason(input, 'Interest added via AnA'),
+      payload: { addedInterestId: id, interestType }, domain: 'fcoi', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, interestId: id, message: `Added ${interestType} interest to disclosure ${disclosureId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_disclosure_interest failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_financial_disclosure', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_financial_disclosure requires tenant context.' });
+  const disclosureId = typeof input.disclosure_id === 'number' ? input.disclosure_id : NaN;
+  if (!Number.isInteger(disclosureId)) return JSON.stringify({ error: 'disclosure_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { loadDisclosureSnapshot } = await import('../financial-disclosures/fcoi-service.js');
+  const { validateDisclosureCompleteness } = await import('../financial-disclosures/fcoi-logic.js');
+  const client = await getPool().connect();
+  try {
+    const snap = await loadDisclosureSnapshot(client, ctx.organizationId, disclosureId);
+    const gate = validateDisclosureCompleteness(snap);
+    return JSON.stringify({
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings,
+      certifiable: gate.riskLevel !== 'high',
+      message: gate.riskLevel === 'high'
+        ? 'Critical 21 CFR 54 findings — cannot certify until resolved.'
+        : `Disclosure passes the deterministic gate (${gate.riskLevel} risk).`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_financial_disclosure failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
   }
 });
 

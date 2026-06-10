@@ -41,6 +41,7 @@ import {
   ALL_ANA_TOOLS,
 } from '../../services/ana/AnaToolDefinitions.js';
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
+import { getUnhealthyTools } from '../../services/ana/tool-telemetry.js';
 import { runAgenticToolLoop, capToolResultForModel, mapWithConcurrency, describeToolPlan, type ToolCall, type ToolResultEntry, type ModelTurn } from '../../services/ana/agentic-loop.js';
 import { buildTraceEntry, collectTracesFromHistory, formatTraceForContext, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
 import { runStreamPostProcessing } from './post-processing.js';
@@ -70,6 +71,7 @@ import {
   ensureGateway,
   VALID_LENSES,
   VALID_ROLES,
+  VALID_LANGUAGES,
 } from './shared.js';
 
 // Thin facade over getPool() so the extracted body keeps its `dbPool.query(...)`
@@ -97,6 +99,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       authoring_context,
       project_id,
       selected_tools,
+      language,
     } = req.body;
 
     if (!message || typeof message !== 'string') {
@@ -166,6 +169,8 @@ router.post('/stream', async (req: Request, res: Response) => {
     const validatedRole: UserRole | undefined =
       user_role && VALID_ROLES.has(user_role as UserRole) ? (user_role as UserRole) : undefined;
 
+    const validatedLanguage = VALID_LANGUAGES.has(language) ? language : undefined;
+
     const effectiveRole: UserRole =
       validatedRole ||
       inferRole({
@@ -205,6 +210,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       message,
       intentLens: validatedLens,
       userRole: effectiveRole,
+      language: validatedLanguage,
       projectContext: project_context,
       documentContext: document_context,
       submissionType: submission_type as SubmissionType | undefined,
@@ -503,6 +509,10 @@ router.post('/stream', async (req: Request, res: Response) => {
         documentType: asStr(document_context),
         surface: asStr(intent_lens) ?? asStr(authoring_context),
       },
+      // Reliability-aware: trim currently-unhealthy tools first when over the cap
+      // (the always-on core + platform bridge are unaffected). Per-tenant when an
+      // org is in context, else the global view.
+      deprioritize: new Set(getUnhealthyTools(3, orgId ?? undefined).map(t => t.tool)),
     });
 
     const gwResponse = await gw.route({

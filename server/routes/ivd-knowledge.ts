@@ -18,13 +18,14 @@ import { Router, Request, Response } from 'express';
 
 import { authenticateToken } from '../middleware/auth';
 import {
-  search,
-  listEntries,
+  searchPaged,
+  listEntriesPaged,
   getEntry,
   getRelated,
   listDomains,
   listTopics,
   corpusSize,
+  corpusVersion,
   type SearchOptions,
 } from '../services/ivd-knowledge/knowledge.service';
 import { isKnowledgeDomain, type KnowledgeDomain, type Jurisdiction } from '../services/ivd-knowledge/types';
@@ -50,6 +51,7 @@ function parseOptions(req: Request): SearchOptions {
   const domainRaw = q(req, 'domain');
   const jurisRaw = q(req, 'jurisdiction');
   const limitRaw = q(req, 'limit');
+  const offsetRaw = q(req, 'offset');
   return {
     domain: domainRaw && isKnowledgeDomain(domainRaw) ? (domainRaw as KnowledgeDomain) : undefined,
     jurisdiction:
@@ -58,7 +60,8 @@ function parseOptions(req: Request): SearchOptions {
         : undefined,
     topic: q(req, 'topic'),
     tag: q(req, 'tag'),
-    limit: limitRaw ? Math.min(100, Math.max(1, parseInt(limitRaw, 10) || 10)) : undefined,
+    limit: limitRaw ? Math.min(200, Math.max(1, parseInt(limitRaw, 10) || 10)) : undefined,
+    offset: offsetRaw ? Math.max(0, parseInt(offsetRaw, 10) || 0) : undefined,
   };
 }
 
@@ -67,19 +70,23 @@ router.get('/', (_req: Request, res: Response) => {
   res.json({
     name: 'IVD Knowledge Base',
     entries: corpusSize(),
+    corpusVersion: corpusVersion(),
     domains: listDomains(),
     topics: listTopics(),
   });
 });
 
-// ── Search ──────────────────────────────────────────────────────────────────
+// ── Search (paginated) ───────────────────────────────────────────────────────
 router.get('/search', (req: Request, res: Response) => {
   const query = q(req, 'q') ?? '';
-  const results = search(query, parseOptions(req));
+  const page = searchPaged(query, parseOptions(req));
   res.json({
     query,
-    count: results.length,
-    results: results.map(r => ({
+    total: page.total,
+    limit: page.limit,
+    offset: page.offset,
+    count: page.rows.length,
+    results: page.rows.map(r => ({
       id: r.entry.id,
       domain: r.entry.domain,
       topic: r.entry.topic,
@@ -93,10 +100,10 @@ router.get('/search', (req: Request, res: Response) => {
   });
 });
 
-// ── List entries (structured filters, full bodies) ──────────────────────────
+// ── List entries (paginated, structured filters, full bodies) ───────────────
 router.get('/entries', (req: Request, res: Response) => {
-  const rows = listEntries(parseOptions(req));
-  res.json({ count: rows.length, rows });
+  const page = listEntriesPaged(parseOptions(req));
+  res.json({ total: page.total, limit: page.limit, offset: page.offset, count: page.rows.length, rows: page.rows });
 });
 
 router.get('/entries/:id', (req: Request, res: Response) => {

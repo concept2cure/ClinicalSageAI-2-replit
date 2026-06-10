@@ -6,7 +6,7 @@
  * normalization, base-URL override, and error propagation that AnA's
  * search_clinical_evidence handler relies on.
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import {
   buildStudiesQuery,
   normalizeStudy,

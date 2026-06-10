@@ -20,6 +20,8 @@
  * @module server/services/integrations/cms-coverage-client
  */
 
+import { fetchWithRetry } from './http.js';
+
 const DEFAULT_BASE_URL = 'https://api.coverage.cms.gov/v1';
 const MCD_VIEWER_BASE = 'https://www.cms.gov/medicare-coverage-database/view';
 const REQUEST_TIMEOUT_MS = 10_000;
@@ -117,10 +119,11 @@ export async function searchMedicareCoverage(
   const query = qs.toString();
   const url = `${baseUrl()}/${endpointFor(type)}${query ? `?${query}` : ''}`;
 
-  const res = await fetch(url, {
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
-  });
+  const res = await fetchWithRetry(
+    url,
+    { headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' } },
+    { timeoutMs: REQUEST_TIMEOUT_MS }
+  );
   if (!res.ok) {
     throw new Error(`CMS Coverage API returned HTTP ${res.status}`);
   }

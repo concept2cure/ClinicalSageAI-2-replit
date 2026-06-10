@@ -75,8 +75,9 @@ AnA can drive all of the above through her governed tools (tenant from
 `trace_provenance`, `check_consistency`, `assess_pathway_readiness`,
 `build_pathway_manifest`, `list_validation_rules`, `get_market_submission_spec`,
 `get_document_template`, `validate_market_formatting`, `get_submission_requirements`,
-`assess_pathway_eligibility`, `classify_post_submission_change`,
-`assess_dispatch_readiness`. The UI's AnA panel passes page context
+`assess_pathway_eligibility`, `classify_post_submission_change`, `assess_device_evidence_structure`,
+`classify_device`, `get_device_reviewer_checklist`, `get_biocompatibility_endpoints`,
+`build_device_blueprint`, `assess_stored_cer`, `assess_dispatch_readiness`. The UI's AnA panel passes page context
 (`{ submissionId, sectionCode, region }`); the tools supply nothing tenant-related.
 
 ## Still server-side TODO before some screens are fully live
@@ -99,10 +100,10 @@ second person; numbers over adjectives. Loading/empty/error states mandatory.
 | GET | `/api/region-profiles/:region` | → `RegionProfileResponse` | one region (fda \| eu \| jp); 404 on unknown |
 
 ## Market submission specifications (per-market governance + formatting — every workspace)
-| GET | `/api/submissions/market-specs?market=&family=` | → `MarketSpecsResponse` | The consolidated per-market-per-format **datasheet**: file formats / PDF versions / naming + size + path limits / checksum, regional backbone, e-signature basis + sequencing + lifecycle governance, language/translation, gateway, forms, template refs, rule-corpus linkage, and source citations. Covers drug/biologic eCTD (FDA/EU/JP/Health Canada), FDA eSTAR (510(k)/De Novo), EU MDR & IVDR (EUDAMED), and EU CTIS. `market=us\|eu\|jp\|ca`, `family=ectd\|estar\|eu_mdr\|eu_ivdr\|ctis`. Static reference data. |
+| GET | `/api/submissions/market-specs?market=&family=` | → `MarketSpecsResponse` | The consolidated per-market-per-format **datasheet**: file formats / PDF versions / naming + size + path limits / checksum, regional backbone, e-signature basis + sequencing + lifecycle governance, language/translation, gateway, forms, template refs, rule-corpus linkage, and source citations. Covers drug/biologic eCTD across 11 markets (FDA, EU, JP, Health Canada, UK/MHRA, Switzerland, Australia, China, Brazil/ANVISA, Saudi/SFDA, Korea/MFDS), FDA eSTAR (510(k)/De Novo), EU MDR & IVDR (EUDAMED), and EU CTIS — 15 specs total. `market=us\|eu\|jp\|ca\|uk\|ch\|au\|cn\|br\|sa\|kr`, `family=ectd\|estar\|eu_mdr\|eu_ivdr\|ctis`. Static reference data. |
 | GET | `/api/submissions/market-specs/:specId` | → `MarketSubmissionSpec` | One spec (e.g. `us-ectd`, `eu-mdr`, `eu-ctis`); 404 on unknown. |
 | POST | `/api/submissions/market-specs/:specId/validate` | `FormattingValidateRequest` → `FormattingReport` | **Enforces** the spec's formatting rules against supplied file descriptors (naming pattern, name/path length, accepted formats, per-file + total size, encryption ban). Deterministic pre-flight; each finding's `rule` aligns to the rule corpus. Does NOT transmit. |
-| GET | `/api/submissions/document-templates?family=` | → `DocumentTemplatesResponse` | Canonical **section skeletons** of the key submission documents — ordered sections (number + heading + purpose + required) with regulatory basis. CTD M2 summaries (QOS 2.3, Nonclinical 2.4, Clinical Overview 2.5, Clinical Summary 2.7), cover letter, FDA 510(k) Summary (21 CFR 807.92), EU SmPC, MDR/IVDR GSPR, IVDR PER, CTA IMPD. Factual spines, not prose. `family=ectd\|estar\|eu_mdr\|eu_ivdr\|ctis`. |
+| GET | `/api/submissions/document-templates?family=` | → `DocumentTemplatesResponse` | Canonical **section skeletons** of the key submission documents — ordered sections (number + heading + purpose + required) with regulatory basis. CTD M2 summaries (QOS 2.3, Nonclinical 2.4, Clinical Overview 2.5, Clinical Summary 2.7), cover letter, IB (ICH E6), CSR (ICH E3), RMP (GVP Module V), PBRER/PSUR (ICH E2C), FDA 510(k) Summary (21 CFR 807.92), EU SmPC, MDR/IVDR GSPR, IVDR PER, CTA IMPD — 14 spines. Factual structures, not prose. `family=ectd\|estar\|eu_mdr\|eu_ivdr\|ctis`. |
 | GET | `/api/submissions/document-templates/:templateId` | → `DocumentTemplateStructure` | One document spine (e.g. `clinical_overview`, `k510_summary`, `smpc`); 404 on unknown. |
 
 ## Shared UI constants
@@ -118,6 +119,19 @@ mirroring the server's lifecycle rules. Render dropdowns/badges/pills from these
 
 Workspace map + error catalog for nav/error handling: `shared/types/submission-ui.ts`
 (`SUBMISSION_WORKSPACES`, `SUBMISSION_ERROR_CODES`, `submissionErrorMessage()`).
+
+## Device evidence + classification + shadow reviewer (mdx/ivd)
+| GET | `/api/submissions/device/cer/structure` | → `{ stages, sections }` | The CER (MEDDEV 2.7/1 Rev 4 / MDR Annex XIV) — 5 stages + report sections, each with NB reviewer questions. |
+| POST | `/api/submissions/device/cer/assess` | `{ presentSectionIds, equivalenceClaimed? }` → `CerAssessment` | CER completeness gap-check (equivalence required only when claimed; flags sections needing clinical data). |
+| GET | `/api/submissions/device/per/structure` | → `{ pillars, analyticalMetrics, clinicalMetrics, sections }` | The PER (IVDR Annex XIII) — three pillars + metrics (LoD/LoQ/precision…, sensitivity/specificity/PPV/NPV) + sections with reviewer questions. |
+| POST | `/api/submissions/device/per/assess` | `{ presentSectionIds }` → `PerAssessment` | PER completeness + which of the three pillars are covered/missing. |
+| POST | `/api/submissions/device/classify` | `{ framework: mdr\|ivdr\|fda, facts }` → classification | Deterministic MDR/IVDR Annex VIII class (with the rule applied) or FDA pathway heuristic, each with a confirm caveat. |
+| GET | `/api/submissions/device/reviewer-checklist?type=510k\|de_novo\|pma\|cer\|per` | → reviewer checklist | The reverse-workflow oversight: the section-anchored questions an FDA/NB reviewer asks of your submission, with severity + 21 CFR/Annex basis. |
+| GET/POST | `/api/submissions/device/risk-management/{structure,assess}` | → ISO 14971 RMF | The risk management file sections + gap assessment. |
+| POST | `/api/submissions/device/biocompatibility` | `{ nature, duration }` → endpoints | ISO 10993-1 biological endpoints for the contact category. |
+| POST | `/api/submissions/device/software/classify` | `{ canContribute… }` → class + deliverables | IEC 62304 software safety class (A/B/C) + per-class deliverables + reviewer questions. |
+| POST | `/api/submissions/device/blueprint` | `DeviceBlueprintInput` → `DeviceBlueprint` | **The reverse-workflow synthesis**: classification + required documents + applicable evidence modules (CER/PER/RMF/biocomp/software with gap assessment) + reviewer checklist, in one object. |
+| GET | `/api/submissions/device/cer/:reportId/assess-stored[?equivalenceClaimed=]` | → stored-CER assessment | Gap-checks a **stored** `cer_reports`/`cer_sections` record (tenant-scoped) against the canonical CER structure — maps populated fields/sections → canonical sections → readiness + gaps. 404 if not in the org. Needs the DB. |
 
 ## Pathway readiness (non-eCTD projections — Cross-Region / Dispatch)
 | GET | `/api/submissions/sequences/:seqId/pathway-readiness?pathway=&memberStates=` | → `PathwayReadinessResponse` | projects the sequence's canonical leaves onto CTIS \| MDR \| IVDR \| eSTAR (510k/de_novo) and returns a required-slot gap/readiness report. Deterministic, map+gap only — never submits. `memberStates` (comma list) applies to CTIS Part II. |

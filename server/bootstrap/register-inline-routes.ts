@@ -322,6 +322,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Study Design routes:', error);
   }
 
+  // Financial disclosures — 21 CFR 54 (FCOI, Forms FDA 3454/3455 → Module 1).
+  try {
+    const fcoiModule = await import('../routes/financial-disclosures');
+    app.use('/api/financial-disclosures', authMiddleware, fcoiModule.default);
+    console.info('✅ Financial Disclosure routes mounted (/api/financial-disclosures)');
+  } catch (error) {
+    console.error('❌ Failed to mount Financial Disclosure routes:', error);
+  }
+
   // C2C study digital twins + simulation (study/protocol design module).
   try {
     const c2cStudyTwinModule = await import('../routes/c2c/study-twin');

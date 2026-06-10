@@ -12,6 +12,8 @@
  * @module server/services/integrations/pubmed-client
  */
 
+import { fetchWithRetry } from './http.js';
+
 const DEFAULT_BASE_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
 const REQUEST_TIMEOUT_MS = 10_000;
 const MAX_RESULTS = 20;
@@ -137,10 +139,7 @@ const USER_AGENT =
   process.env.INTEGRATION_USER_AGENT || 'Concept2Cure-AnA/1.0 (regulatory intelligence)';
 
 async function getJson(url: string): Promise<any> {
-  const res = await fetch(url, {
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    headers: { 'User-Agent': USER_AGENT },
-  });
+  const res = await fetchWithRetry(url, { headers: { 'User-Agent': USER_AGENT } }, { timeoutMs: REQUEST_TIMEOUT_MS });
   if (!res.ok) throw new Error(`PubMed E-utilities returned HTTP ${res.status}`);
   return res.json();
 }

@@ -56,10 +56,57 @@ import {
 } from '../services/regulatory/global-pathways';
 import { classifyIvdrAnnexVIII } from '../services/regulatory/ivdr-classification';
 import { pairCompanionDiagnostic } from '../services/regulatory/cdx-pairing';
+import { designIvdStudyProgram } from '../services/regulatory/cdx-study-design';
+import { simulateIvdReview } from '../services/regulatory/reviewer-simulation-ivd';
+import { simulatePortfolio } from '../services/regulatory/portfolio-simulation';
+import { sensitivityAnalysis } from '../services/regulatory/decision-analytics';
+import { buildProgramPlan, compareProgramScenarios } from '../services/regulatory/program-plan';
+import { diagnosticAccuracyMonteCarlo, reviewOutcomeMonteCarlo, timeToMarketMonteCarlo } from '../services/stats/monte-carlo';
+import { saveAssessment } from '../services/regulatory/ivd-assessments.service';
+import { corpusVersion } from '../services/ivd-knowledge/knowledge.service';
 import { knowledgeFor, type LifecycleConcept } from '../services/ivd-knowledge/links';
 
 const router = Router();
 router.use(authenticateToken);
+
+function getOrgId(req: Request): number | null {
+  const raw = (req as any).user?.organizationId;
+  if (raw === undefined || raw === null) return null;
+  const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
+  return Number.isFinite(n) ? n : null;
+}
+function getUserId(req: Request): string | null {
+  const raw = (req as any).user?.id;
+  return raw === undefined || raw === null ? null : String(raw);
+}
+
+/**
+ * Opt-in persistence: when the request body sets `save: true` and the caller has
+ * an org context, persist the computed result as an audited ivd_assessment and
+ * return its id alongside the result. Failures to persist never block the
+ * computed response (best-effort, audit-friendly).
+ */
+async function maybeSave(
+  req: Request, assessmentType: string, inputs: unknown, result: any, verdict?: string | null
+): Promise<string | null> {
+  const body = req.body ?? {};
+  if (body.save !== true) return null;
+  const orgId = getOrgId(req);
+  if (orgId === null) return null;
+  try {
+    const row = await saveAssessment(orgId, {
+      assessmentType: assessmentType as any,
+      title: typeof body.title === 'string' ? body.title : null,
+      inputs, result, verdict: verdict ?? null,
+      corpusVersion: corpusVersion(),
+      createdBy: getUserId(req),
+      ...(typeof body.programId === 'string' ? { programId: body.programId } : {}),
+    } as any);
+    return row?.id ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /** Wrap a pure engine so thrown validation errors become 422s. */
 function calc<TIn, TOut>(fn: (input: TIn) => TOut) {
@@ -108,6 +155,132 @@ router.post('/cdx/pair', (req: Request, res: Response) => {
   }
   const result = pairCompanionDiagnostic(b);
   res.json({ ...result, knowledge: knowledgeFor(result.knowledgeRefs) });
+});
+
+// ── IVD study-program designer (analytical + clinical, citation-grounded) ────
+router.post('/study-design', (req: Request, res: Response) => {
+  const b = req.body ?? {};
+  const ASSAY = ['quantitative', 'qualitative', 'ihc', 'ngs', 'molecular'];
+  const USE = ['cdx', 'screening', 'diagnosis', 'monitoring', 'aid_to_diagnosis'];
+  if (!ASSAY.includes(b.assayType)) {
+    return res.status(422).json({ error: `assayType must be one of: ${ASSAY.join(', ')}` });
+  }
+  if (!USE.includes(b.intendedUse)) {
+    return res.status(422).json({ error: `intendedUse must be one of: ${USE.join(', ')}` });
+  }
+  res.json(designIvdStudyProgram(b));
+});
+
+// ── Reviewer simulation (mock FDA / notified-body deficiencies) ─────────────
+router.post('/review-simulation', async (req: Request, res: Response) => {
+  const b = req.body ?? {};
+  const PATHWAYS = ['510k', 'de_novo', 'pma', 'eu_ivdr'];
+  const ASSAY = ['quantitative', 'qualitative', 'ihc', 'ngs', 'molecular'];
+  if (!PATHWAYS.includes(b.pathway)) {
+    return res.status(422).json({ error: `pathway must be one of: ${PATHWAYS.join(', ')}` });
+  }
+  if (!ASSAY.includes(b.assayType)) {
+    return res.status(422).json({ error: `assayType must be one of: ${ASSAY.join(', ')}` });
+  }
+  const result = simulateIvdReview(b);
+  const savedId = await maybeSave(req, 'reviewer_simulation', b, result, result.verdict);
+  res.json(savedId ? { ...result, savedAssessmentId: savedId } : result);
+});
+
+// ── Probabilistic review-outcome distribution (Monte-Carlo) ─────────────────
+router.post('/review-simulation/distribution', (req: Request, res: Response) => {
+  const b = req.body ?? {};
+  if (!b.profile || typeof b.profile !== 'object') {
+    return res.status(422).json({ error: 'profile (without evidence) is required' });
+  }
+  if (!b.evidenceProbabilities || typeof b.evidenceProbabilities !== 'object') {
+    return res.status(422).json({ error: 'evidenceProbabilities (map of element → probability) is required' });
+  }
+  try {
+    res.json(reviewOutcomeMonteCarlo(b));
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+  }
+});
+
+// ── Portfolio simulation (roll up multiple programs) ────────────────────────
+router.post('/portfolio/simulate', async (req: Request, res: Response) => {
+  const b = req.body ?? {};
+  if (!Array.isArray(b.programs)) {
+    return res.status(422).json({ error: 'programs (array of { name, profile }) is required' });
+  }
+  try {
+    const result = simulatePortfolio(b.programs);
+    const savedId = await maybeSave(req, 'other', b, result, `${result.likelyAcceptances}/${result.programCount} ready`);
+    res.json(savedId ? { ...result, savedAssessmentId: savedId } : result);
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+  }
+});
+
+// ── Diagnostic-accuracy Monte-Carlo credible intervals ──────────────────────
+router.post('/diagnostic-accuracy/montecarlo', (req: Request, res: Response) => {
+  try {
+    res.json(diagnosticAccuracyMonteCarlo(req.body ?? {}));
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+  }
+});
+
+// ── Evidence sensitivity / tornado + ROI ranking ────────────────────────────
+router.post('/evidence/sensitivity', (req: Request, res: Response) => {
+  const b = req.body ?? {};
+  const PATHWAYS = ['510k', 'de_novo', 'pma', 'eu_ivdr'];
+  const ASSAY = ['quantitative', 'qualitative', 'ihc', 'ngs', 'molecular'];
+  if (!PATHWAYS.includes(b.pathway)) {
+    return res.status(422).json({ error: `pathway must be one of: ${PATHWAYS.join(', ')}` });
+  }
+  if (!ASSAY.includes(b.assayType)) {
+    return res.status(422).json({ error: `assayType must be one of: ${ASSAY.join(', ')}` });
+  }
+  res.json(sensitivityAnalysis(b));
+});
+
+// ── Time-to-market Monte-Carlo ──────────────────────────────────────────────
+router.post('/time-to-market', (req: Request, res: Response) => {
+  try {
+    res.json(timeToMarketMonteCarlo(req.body ?? {}));
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+  }
+});
+
+// ── Program-plan orchestrator (classify → design → readiness → ROI → timeline) ─
+router.post('/program-plan', async (req: Request, res: Response) => {
+  const b = req.body ?? {};
+  const PATHWAYS = ['510k', 'de_novo', 'pma', 'eu_ivdr'];
+  const ASSAY = ['quantitative', 'qualitative', 'ihc', 'ngs', 'molecular'];
+  if (!PATHWAYS.includes(b.pathway)) {
+    return res.status(422).json({ error: `pathway must be one of: ${PATHWAYS.join(', ')}` });
+  }
+  if (!ASSAY.includes(b.assayType)) {
+    return res.status(422).json({ error: `assayType must be one of: ${ASSAY.join(', ')}` });
+  }
+  try {
+    const result = buildProgramPlan(b);
+    const savedId = await maybeSave(req, 'other', b, result.executiveSummary, result.executiveSummary.verdict);
+    res.json(savedId ? { ...result, savedAssessmentId: savedId } : result);
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+  }
+});
+
+// ── What-if scenario comparison ─────────────────────────────────────────────
+router.post('/scenarios/compare', (req: Request, res: Response) => {
+  const b = req.body ?? {};
+  if (!Array.isArray(b.scenarios) || b.scenarios.length === 0) {
+    return res.status(422).json({ error: 'scenarios (array of { name, input }) is required' });
+  }
+  try {
+    res.json(compareProgramScenarios(b.scenarios));
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+  }
 });
 
 // ── Analytical performance ──────────────────────────────────────────────────

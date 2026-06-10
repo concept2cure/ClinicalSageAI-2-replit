@@ -124,6 +124,273 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   },
 };
 
+export const NARRATE_STATISTICAL_RESULT: AnaTool = {
+  name: 'narrate_statistical_result',
+  description:
+    'Turn a structured analysis result (effect measure + estimate + CI + p-value, plus per-arm ' +
+    'values) into correctly-hedged ICH-E3-style prose — determines significance from the confidence ' +
+    'interval (preferred) or p-value, distinguishes statistical from clinical significance, and flags ' +
+    'exploratory/post-hoc and multiplicity-uncontrolled analyses. Use when writing efficacy/safety ' +
+    'results so the language never overstates beyond the data.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      endpoint: { type: 'string', description: 'Endpoint name, e.g. "overall survival".' },
+      analysis_type: { type: 'string', enum: ['time_to_event', 'binary', 'continuous'] },
+      arms: {
+        type: 'array',
+        description: 'Per-arm values (median for TTE, rate/% for binary, mean change for continuous).',
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            n: { type: 'number' },
+            value: { type: 'string' },
+            unit: { type: 'string' },
+          },
+          required: ['name'],
+        },
+      },
+      measure: {
+        type: 'string',
+        enum: ['HR', 'OR', 'RR', 'rate ratio', 'risk difference', 'mean difference', 'rate difference'],
+      },
+      estimate: { type: 'number' },
+      ci_lower: { type: 'number' },
+      ci_upper: { type: 'number' },
+      ci_level: { type: 'number', description: 'Default 95.' },
+      p_value: { type: 'number' },
+      alpha: { type: 'number', description: 'Significance level (default 0.05).' },
+      exploratory: { type: 'boolean', description: 'Mark exploratory/post-hoc.' },
+      multiplicity_controlled: { type: 'boolean', description: 'Whether multiplicity was controlled.' },
+    },
+    required: ['endpoint', 'analysis_type'],
+  },
+};
+
+export const SCREEN_PROMOTIONAL_LANGUAGE: AnaTool = {
+  name: 'screen_promotional_language',
+  description:
+    'Screen text for promotional / non-compliant claim language (FDA OPDP & EU advertising risk) — ' +
+    'superlatives/superiority, absolutes/guarantees, unqualified safety claims, causal/curative ' +
+    'overreach, and unsupported comparatives — returning each flagged phrase with its category, ' +
+    'severity, context, and a remediation suggestion. Run on any externally-facing or regulatory ' +
+    'text before release. (A QC aid, not a substitute for regulatory/legal review.)',
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: { type: 'string', description: 'The text to screen for claims/promotional language.' },
+    },
+    required: ['text'],
+  },
+};
+
+export const DRAFT_SAFETY_NARRATIVE: AnaTool = {
+  name: 'draft_safety_narrative',
+  description:
+    'Draft an ICH E3 §16-style patient safety narrative from structured case facts (death/SAE/' +
+    'discontinuation): subject → relevant history & concomitant meds → study-drug exposure → event ' +
+    '(severity, seriousness, onset) → action taken & treatment → dechallenge/rechallenge → outcome → ' +
+    'investigator causality. Drafts ONLY from the supplied facts and reports any missing required ' +
+    'fields for QC — never invents clinical detail.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      subject_id: { type: 'string', description: 'Subject/patient identifier.' },
+      age: { type: 'string', description: 'Age (years).' },
+      sex: { type: 'string', description: 'Sex (e.g. male/female).' },
+      study_id: { type: 'string', description: 'Study/protocol identifier.' },
+      treatment_arm: { type: 'string', description: 'Randomized arm / treatment group.' },
+      study_drug: { type: 'string', description: 'Investigational product name.' },
+      dose: { type: 'string', description: 'Dose/regimen.' },
+      first_dose_date: { type: 'string', description: 'Date of first dose.' },
+      medical_history: { type: 'array', items: { type: 'string' }, description: 'Relevant medical history.' },
+      concomitant_meds: { type: 'array', items: { type: 'string' }, description: 'Concomitant medications.' },
+      event: {
+        type: 'object',
+        description: 'The adverse event facts.',
+        properties: {
+          term: { type: 'string', description: 'Event term (verbatim or MedDRA PT).' },
+          onset_date: { type: 'string' },
+          day_on_study: { type: 'string' },
+          severity: { type: 'string', description: 'mild/moderate/severe or CTCAE grade.' },
+          seriousness_criteria: { type: 'array', items: { type: 'string' }, description: 'e.g. hospitalization, life-threatening, death.' },
+          causality: { type: 'string', description: 'Investigator causality, e.g. related/possibly related/not related.' },
+          action_taken: { type: 'string', description: 'e.g. drug withdrawn/dose reduced/none.' },
+          treatment: { type: 'string', description: 'Treatment given for the event.' },
+          dechallenge: { type: 'string' },
+          rechallenge: { type: 'string' },
+          outcome: { type: 'string', description: 'e.g. recovered/recovering/fatal.' },
+          notes: { type: 'string', description: 'Additional clinical course.' },
+        },
+        required: ['term'],
+      },
+    },
+    required: ['subject_id', 'event'],
+  },
+};
+
+export const LOOKUP_ICD10_CODE: AnaTool = {
+  name: 'lookup_icd10_code',
+  description:
+    'Map a diagnosis / indication / condition term to billable ICD-10-CM codes (NLM Clinical Tables). ' +
+    'Use to code an indication for labeling, claims/coverage, or case reporting, and to confirm exact ' +
+    'code descriptions. Returns matching codes with their official descriptions.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      term: { type: 'string', description: 'Diagnosis/condition/indication to code, e.g. "type 2 diabetes".' },
+      max_results: { type: 'number', description: 'Maximum codes to return (default 10, max 25).' },
+    },
+    required: ['term'],
+  },
+};
+
+export const MEDICAL_WRITING_GUIDANCE: AnaTool = {
+  name: 'medical_writing_guidance',
+  description:
+    'Get authoritative medical-writing standards and craft for a deliverable — document structure, ' +
+    'governing standards, therapeutic-area endpoints/terminology/reporting conventions, region/market ' +
+    'style, audience register, and universal craft rules. ALWAYS call this before drafting or ' +
+    'critiquing a regulatory/scientific document (CSR, protocol, CER, CTD summary, manuscript, lay ' +
+    'summary, regulatory response, RMP, briefing package, IVD PER, PMCF) so the writing follows ICH/' +
+    'EU MDR/IVDR/ICMJE/GPP conventions for the specific document × therapeutic area × market × ' +
+    'audience. Combine with the evidence search tools to ground every claim.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_type: {
+        type: 'string',
+        description:
+          'Deliverable, e.g. csr, protocol, ib, clinical_overview, clinical_summary, cer, pmcf, per, ' +
+          'manuscript, plain_language_summary, regulatory_response, rmp, meeting_package.',
+      },
+      therapeutic_area: {
+        type: 'string',
+        description: 'e.g. oncology, cardiology, neuroscience, infectious_disease, immunology, metabolic, respiratory, rare_disease, vaccines (or a disease name).',
+      },
+      region: {
+        type: 'string',
+        description: 'Target market: fda, ema, pmda, nmpa, hc, mhra, tga, or ich (global). Default ich.',
+      },
+      audience: {
+        type: 'string',
+        description: 'regulator, payer, clinician, or patient. Defaults to the document type’s primary audience.',
+      },
+      client_segment: {
+        type: 'string',
+        description: 'Optional: pharma, biotech, device, ivd, or cro (informational).',
+      },
+    },
+    required: ['document_type'],
+  },
+};
+
+export const ASSESS_READABILITY: AnaTool = {
+  name: 'assess_readability',
+  description:
+    'Score text readability (Flesch Reading Ease + Flesch–Kincaid grade, sentence/word/syllable ' +
+    'stats) against a target audience and return whether it meets the reading-level target with ' +
+    'concrete suggestions. Use to QC lay/plain-language summaries and EU patient information leaflets ' +
+    '(target ~grade 8), or to check that any document is not needlessly dense.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: { type: 'string', description: 'The text to assess.' },
+      audience: {
+        type: 'string',
+        enum: ['patient', 'general', 'clinician', 'regulator'],
+        description: 'Reading-level target. patient≈grade 8, general≈10, clinician≈16, regulator≈18.',
+      },
+    },
+    required: ['text'],
+  },
+};
+
+export const BUILD_ABBREVIATION_LIST: AnaTool = {
+  name: 'build_abbreviation_list',
+  description:
+    'Extract acronyms/abbreviations from a draft, detect which are defined at first use (via "Full ' +
+    'Term (ABC)" / "ABC (Full Term)" patterns), and return the abbreviation table plus a list of ' +
+    'undefined ones to fix. Every CSR, CTD summary, CER, and manuscript needs a complete, ' +
+    'defined-at-first-use abbreviation list — run this before finalizing.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: { type: 'string', description: 'The document text to scan for abbreviations.' },
+    },
+    required: ['text'],
+  },
+};
+
+export const MEDICAL_WRITING_REVIEW: AnaTool = {
+  name: 'medical_writing_review',
+  description:
+    "Self-review a draft (or pre-draft) against a document type's governing standard — checks section " +
+    'coverage vs the required structure (ICH E3/M4E, EU MDR/IVDR, ICMJE, …) and returns a conformance ' +
+    'checklist (structure, key requirements, pitfalls) plus a readiness verdict. Use before handing ' +
+    'off or finalizing any regulatory/scientific document to QC it like an expert medical writer.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_type: {
+        type: 'string',
+        description: 'Document type to review against, e.g. csr, protocol, cer, clinical_summary, manuscript.',
+      },
+      draft_text: {
+        type: 'string',
+        description: 'Optional draft text — when provided, section coverage is assessed against it.',
+      },
+    },
+    required: ['document_type'],
+  },
+};
+
+export const DESCRIBE_CAPABILITIES: AnaTool = {
+  name: 'describe_capabilities',
+  description:
+    "Introspect AnA's OWN live abilities in this deployment: every registered tool, and which " +
+    'integrations (evidence APIs, Gmail mailbox, Google Calendar, HubSpot CRM, document connectors) ' +
+    'are actually configured right now. ALWAYS call this before answering "what can you do?", when ' +
+    'planning a multi-tool workflow, or before relying on a workflow integration — so you only ' +
+    'promise and attempt what is truly available, and can tell the user exactly what to connect to ' +
+    'unlock the rest. Deterministic and read-only.',
+  input_schema: {
+    type: 'object',
+    properties: {},
+    required: [],
+  },
+};
+
+export const ASSESS_REGULATORY_LANDSCAPE: AnaTool = {
+  name: 'assess_regulatory_landscape',
+  description:
+    'Assemble a cross-source regulatory landscape for a topic in ONE call — fans out across ' +
+    'ClinicalTrials.gov, PubMed, and CMS coverage, plus FDA device recalls (device domain) and/or ' +
+    'FDA drug labels + Drugs@FDA approvals (drug domain). Returns compact, citeable sections to ' +
+    'synthesize into a competitive / safety / reimbursement briefing. Prefer this over calling each ' +
+    'source separately when the user wants an overview or landscape.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      topic: {
+        type: 'string',
+        description: 'The product, indication, or device/drug to profile (e.g. "pembrolizumab NSCLC").',
+      },
+      domain: {
+        type: 'string',
+        enum: ['device', 'drug', 'auto'],
+        description: "Scope the FDA sources: 'device', 'drug', or 'auto' (both). Default: auto.",
+      },
+      max_per_source: {
+        type: 'number',
+        description: 'Max items per source (default: 5, max: 15).',
+      },
+    },
+    required: ['topic'],
+  },
+};
+
 export const SEARCH_DRUG_APPROVALS: AnaTool = {
   name: 'search_drug_approvals',
   description:
@@ -2300,6 +2567,45 @@ export const LIST_VALIDATION_RULES: AnaTool = {
   },
 };
 
+export const LOOKUP_REGULATORY_PATHWAY: AnaTool = {
+  name: 'lookup_regulatory_pathway',
+  description:
+    "Look up expedited-development, accelerated-review and early-access pathways across the major global regulators (FDA, EMA, PMDA, MHRA, Health Canada, TGA, NMPA, ANVISA, Swissmedic). Returns the agency, program name, kind, eligibility, benefits and a statute/guidance citation. Static reference data — read-only, not tenant-specific. NOTE: designations and criteria change; confirm eligibility against the agency's current guidance before relying on a pathway. Pass `agency` to list a regulator's programs, `query` to search by goal (e.g. 'breakthrough', 'conditional approval', 'orphan', 'priority review'), or omit both for a summary across agencies.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      agency: {
+        type: 'string',
+        enum: ['FDA', 'EMA', 'PMDA', 'MHRA', 'Health Canada', 'TGA', 'NMPA', 'ANVISA', 'Swissmedic'],
+        description: 'Optional — scope to one regulator.',
+      },
+      query: { type: 'string', description: "Goal/keyword to search, e.g. 'breakthrough', 'orphan'." },
+    },
+    required: [],
+  },
+};
+
+export const RESOLVE_REGULATORY_STRUCTURE: AnaTool = {
+  name: 'resolve_regulatory_structure',
+  description:
+    "Resolve the DETERMINISTIC submission structure for a region + application type via the reasoning engine (not the LLM): the required CTD sections (regional Module 1 + ICH M4 common Modules 2–5) and the review-clock model. Use this to ground a submission plan's structure — it is rule-resolved and citable, never invented. Covers regions fda|eu|jp and application types ind|nda|bla|maa|cta|anda|510k|pma; unsupported combinations are reported as unsupported (no fabrication). Read-only, deterministic, not tenant-specific.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      regions: {
+        type: 'array',
+        items: { type: 'string' },
+        description: "Target regions, e.g. ['fda','eu']. Aliases like 'us'/'europe'/'japan' are accepted.",
+      },
+      application_type: {
+        type: 'string',
+        description: "Application type, e.g. 'ind', 'nda', 'maa', '510k'.",
+      },
+    },
+    required: ['regions', 'application_type'],
+  },
+};
+
 export const GET_MARKET_SUBMISSION_SPEC: AnaTool = {
   name: 'get_market_submission_spec',
   description:
@@ -2421,6 +2727,94 @@ export const CLASSIFY_POST_SUBMISSION_CHANGE: AnaTool = {
   },
 };
 
+export const ASSESS_DEVICE_EVIDENCE_STRUCTURE: AnaTool = {
+  name: 'assess_device_evidence_structure',
+  description:
+    "Assess a device/IVD evidence document against its regulated structure. For `document: 'cer'` it checks the CER against MEDDEV 2.7/1 Rev 4 / MDR Annex XIV (set `equivalence_claimed` if equivalence is used); for `document: 'per'` it checks the IVDR Annex XIII Performance Evaluation Report and reports which of the three pillars (scientific validity, analytical, clinical) are covered; for `document: 'rmf'` it checks the ISO 14971 risk management file. Pass `present_section_ids` (the sections you have). Without `present_section_ids` it returns the full structure (stages/pillars/sections + reviewer questions). Deterministic, read-only. Use it to gap-check a CER/PER/RMF before Notified-Body review.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      document: { type: 'string', enum: ['cer', 'per', 'rmf'], description: "'cer' (MDR clinical evaluation), 'per' (IVDR performance evaluation), or 'rmf' (ISO 14971 risk management file)." },
+      present_section_ids: { type: 'array', items: { type: 'string' }, description: 'Section ids present in the document (for assessment).' },
+      equivalence_claimed: { type: 'boolean', description: 'CER only — set true if equivalence to another device is claimed.' },
+    },
+    required: ['document'],
+  },
+};
+
+export const CLASSIFY_DEVICE: AnaTool = {
+  name: 'classify_device',
+  description:
+    "Determine a device/IVD risk classification or FDA pathway from structured facts. `framework: 'mdr'` applies the EU MDR Annex VIII principal rules (facts like invasive, surgicallyInvasive, implantable, active, softwareDecisionSupport, contactsCnsOrCentralCirculation, incorporatesMedicinalSubstance, duration) → Class I/IIa/IIb/III with the rule that drove it. `framework: 'ivdr'` applies IVDR Annex VIII (facts like bloodDonationScreening, companionDiagnostic, infectiousOrCancerOrGenetic, selfTesting) → Class A/B/C/D. `framework: 'fda'` recommends a pathway (facts: fdaClass, predicateAvailable, exempt, novelLowModerateRisk) → exempt/510k/de_novo/pma. Each result carries a caveat to confirm against the full Annex / FDA classification database. Deterministic.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      framework: { type: 'string', enum: ['mdr', 'ivdr', 'fda'], description: 'The classification framework.' },
+      facts: { type: 'object', description: 'Structured device facts (see description for the keys per framework).' },
+    },
+    required: ['framework', 'facts'],
+  },
+};
+
+export const GET_DEVICE_REVIEWER_CHECKLIST: AnaTool = {
+  name: 'get_device_reviewer_checklist',
+  description:
+    "Get the shadow-reviewer checklist for a device submission — the section-anchored questions an FDA or Notified-Body reviewer asks of a 510k, de_novo, pma, cer, or per, each with severity and the regulatory basis. This is the reverse-workflow oversight: what a reviewer will ask of YOUR submission, always-on and independent of risk flags. Use it to pre-empt deficiencies and to ask the client the right questions. Deterministic, read-only.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      submission_type: { type: 'string', enum: ['510k', 'de_novo', 'pma', 'cer', 'per'], description: 'The device submission type.' },
+    },
+    required: ['submission_type'],
+  },
+};
+
+export const GET_BIOCOMPATIBILITY_ENDPOINTS: AnaTool = {
+  name: 'get_biocompatibility_endpoints',
+  description:
+    "Return the ISO 10993-1 biological-evaluation endpoints a reviewer expects addressed for a device's contact category. Pass `nature` (skin, mucosal_membrane, breached_surface, blood_path_indirect, tissue_bone_dentin, circulating_blood, implant_tissue_bone, implant_blood) and `duration` (limited ≤24h, prolonged >24h–30d, long_term >30d). Returns the endpoint set (cytotoxicity, sensitization, irritation, pyrogenicity, haemocompatibility, implantation, systemic toxicity, genotoxicity, chronic toxicity, carcinogenicity as applicable). Deterministic; the Biological Evaluation Plan determines the actual tests vs. justifications.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      nature: { type: 'string', enum: ['skin', 'mucosal_membrane', 'breached_surface', 'blood_path_indirect', 'tissue_bone_dentin', 'circulating_blood', 'implant_tissue_bone', 'implant_blood'], description: 'Nature of body contact.' },
+      duration: { type: 'string', enum: ['limited', 'prolonged', 'long_term'], description: 'Duration of contact.' },
+    },
+    required: ['nature', 'duration'],
+  },
+};
+
+export const BUILD_DEVICE_BLUEPRINT: AnaTool = {
+  name: 'build_device_blueprint',
+  description:
+    "Build the COMPLETE reverse-workflow blueprint for a device/IVD submission: from the submission type + structured device facts it returns the risk classification, the required documents/forms, the APPLICABLE evidence modules (risk management always; clinical evaluation for mdr_td; performance evaluation for ivdr_td; biocompatibility when body-contacting → ISO 10993 endpoints; software when present → IEC 62304 class + deliverables) each with its gap assessment, and the matching FDA/NB reviewer checklist. This is the one-call planning + oversight view working backward from a submitted application. Deterministic, read-only. `submission_type` ∈ 510k|de_novo|pma|mdr_td|ivdr_td.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      submission_type: { type: 'string', enum: ['510k', 'de_novo', 'pma', 'mdr_td', 'ivdr_td'], description: 'The device submission type.' },
+      classification: { type: 'object', description: 'Optional { framework: mdr|ivdr|fda, facts: {...} } to classify the device.' },
+      contact: { type: 'object', description: 'Optional { nature, duration } — when present, biocompatibility applies.' },
+      software: { type: 'object', description: 'Optional { applicable, canContributeToDeathOrSeriousInjury?, canContributeToNonSeriousInjury?, presentDeliverableIds? }.' },
+      present: { type: 'object', description: 'Optional { cerSectionIds?, perSectionIds?, rmfSectionIds? } already authored, for gap assessment.' },
+      equivalence_claimed: { type: 'boolean', description: 'CER equivalence claim (mdr_td).' },
+    },
+    required: ['submission_type'],
+  },
+};
+
+export const ASSESS_STORED_CER: AnaTool = {
+  name: 'assess_stored_cer',
+  description:
+    "Gap-check a STORED Clinical Evaluation Report (an existing cer_reports record + its cer_sections) against the canonical MEDDEV 2.7/1 / MDR Annex XIV structure. Reads the tenant's actual saved CER, maps its populated fields/sections onto the canonical sections, and reports readiness, the missing required sections, and which sections still need clinical-data substantiation. Tenant-scoped (the report must belong to the caller's organization). Pass `report_id` (the cer_reports.report_id) and optionally `equivalence_claimed`. Use this to oversee a real CER in progress, not a hand-supplied section list.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      report_id: { type: 'string', description: 'The cer_reports.report_id of the stored CER.' },
+      equivalence_claimed: { type: 'boolean', description: 'Set true if equivalence to another device is claimed.' },
+    },
+    required: ['report_id'],
+  },
+};
+
 export const ASSESS_DISPATCH_READINESS: AnaTool = {
   name: 'assess_dispatch_readiness',
   description:
@@ -2489,6 +2883,70 @@ export const CREATE_CLINICAL_STUDY: AnaTool = {
       irb_approved:         { type: 'boolean' },
     },
     required: ['study_id', 'title'],
+  },
+};
+
+export const CREATE_CLINICAL_INVESTIGATOR: AnaTool = {
+  name: 'create_clinical_investigator',
+  description:
+    "Register a clinical investigator for financial-disclosure tracking (21 CFR 54). Returns the investigator id for follow-up disclosure calls. Governed + audited; org-scoped from context.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      full_name: { type: 'string' },
+      role: { type: 'string', enum: ['principal_investigator', 'sub_investigator', 'coordinator', 'other'] },
+      institution: { type: 'string' },
+      study_id: { type: 'number', description: 'Optional clinical_studies.id to link.' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['full_name', 'role'],
+  },
+};
+
+export const CREATE_FINANCIAL_DISCLOSURE: AnaTool = {
+  name: 'create_financial_disclosure',
+  description:
+    "Open a 21 CFR 54 financial disclosure for an investigator. form_type is DERIVED from has_disclosable_interests (false → Form FDA 3454 certification of none; true → Form FDA 3455 disclosure). Returns the disclosure id. Creates a DRAFT — certification (e-signature) is done in the disclosure panel, not here.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      investigator_id: { type: 'number' },
+      submission_id: { type: 'number', description: 'The filing this disclosure supports (Module 1).' },
+      has_disclosable_interests: { type: 'boolean' },
+      disclosure_period_start: { type: 'string', description: 'YYYY-MM-DD.' },
+      disclosure_period_end: { type: 'string', description: 'YYYY-MM-DD.' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['investigator_id', 'has_disclosable_interests'],
+  },
+};
+
+export const ADD_DISCLOSURE_INTEREST: AnaTool = {
+  name: 'add_disclosure_interest',
+  description:
+    "Add a disclosable financial interest (one of the four 21 CFR 54.2 categories) to a financial disclosure (a Form FDA 3455). Org-scoped, governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      disclosure_id: { type: 'number' },
+      interest_type: { type: 'string', enum: ['COMPENSATION_BY_OUTCOME', 'EQUITY_INTEREST', 'PROPRIETARY_INTEREST', 'SIGNIFICANT_PAYMENTS'] },
+      description: { type: 'string' },
+      monetary_value: { type: 'number' },
+      arrangements_to_minimize_bias: { type: 'string' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['disclosure_id', 'interest_type', 'description'],
+  },
+};
+
+export const REVIEW_FINANCIAL_DISCLOSURE: AnaTool = {
+  name: 'review_financial_disclosure',
+  description:
+    "Run the deterministic 21 CFR 54 completeness gate on a financial disclosure (read-only). Returns cited findings + a risk level (high blocks certification). Use this to tell the user what is missing before they certify.",
+  input_schema: {
+    type: 'object',
+    properties: { disclosure_id: { type: 'number' } },
+    required: ['disclosure_id'],
   },
 };
 
@@ -3842,6 +4300,16 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_DEVICE_RECALLS,
   SEARCH_DRUG_LABELS,
   SEARCH_DRUG_APPROVALS,
+  ASSESS_REGULATORY_LANDSCAPE,
+  LOOKUP_ICD10_CODE,
+  DRAFT_SAFETY_NARRATIVE,
+  NARRATE_STATISTICAL_RESULT,
+  SCREEN_PROMOTIONAL_LANGUAGE,
+  MEDICAL_WRITING_GUIDANCE,
+  MEDICAL_WRITING_REVIEW,
+  ASSESS_READABILITY,
+  BUILD_ABBREVIATION_LIST,
+  DESCRIBE_CAPABILITIES,
   PROJECT_KNOWLEDGE_SEARCH,
   SIMULATE_STUDY_DESIGN,
   SEARCH_DEVICE_ADVERSE_EVENTS,
@@ -3899,15 +4367,27 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ASSESS_PATHWAY_READINESS,
   BUILD_PATHWAY_MANIFEST,
   LIST_VALIDATION_RULES,
+  LOOKUP_REGULATORY_PATHWAY,
+  RESOLVE_REGULATORY_STRUCTURE,
   GET_MARKET_SUBMISSION_SPEC,
   GET_DOCUMENT_TEMPLATE,
   VALIDATE_MARKET_FORMATTING,
   GET_SUBMISSION_REQUIREMENTS,
   ASSESS_PATHWAY_ELIGIBILITY,
   CLASSIFY_POST_SUBMISSION_CHANGE,
+  ASSESS_DEVICE_EVIDENCE_STRUCTURE,
+  CLASSIFY_DEVICE,
+  GET_DEVICE_REVIEWER_CHECKLIST,
+  GET_BIOCOMPATIBILITY_ENDPOINTS,
+  BUILD_DEVICE_BLUEPRINT,
+  ASSESS_STORED_CER,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,
+  CREATE_CLINICAL_INVESTIGATOR,
+  CREATE_FINANCIAL_DISCLOSURE,
+  ADD_DISCLOSURE_INTEREST,
+  REVIEW_FINANCIAL_DISCLOSURE,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,

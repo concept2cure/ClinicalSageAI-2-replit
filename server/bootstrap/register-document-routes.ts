@@ -240,6 +240,11 @@ export async function registerDocumentRoutes({
         name: 'IVD knowledge base (scientific / legal / regulatory intelligence corpus)',
       },
       {
+        path: '/api/ivd-assessments',
+        mod: '../routes/ivd-assessments.js',
+        name: 'IVD assessment persistence (saved calculator results + generated documents)',
+      },
+      {
         path: '/api/_ops/predicate-intelligence',
         mod: '../routes/_ops-predicate-shadow.js',
         name: 'Predicate Intelligence — ops probes',

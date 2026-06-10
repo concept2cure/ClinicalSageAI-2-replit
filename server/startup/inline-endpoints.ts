@@ -99,6 +99,14 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // FCOI metrics — 21 CFR 54 disclosure lifecycle (C2C-01).
+      try {
+        const { renderFcoiMetrics } = await import('../services/fcoi-metrics.js');
+        lines.push(...renderFcoiMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RAG retrieval metrics — recorded at the ragRouter chokepoint.
       try {
         const { renderRagMetrics } = await import('../services/rag-runtime-metrics.js');

@@ -200,6 +200,86 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
       { number: 'BR', heading: 'Overall Benefit-Risk Assessment', purpose: 'Integrated benefit-risk for the proposed trial.', required: true },
     ],
   },
+
+  // ── Investigator's Brochure (ICH E6) ────────────────────────────────────────
+  {
+    id: 'investigators_brochure',
+    title: "Investigator's Brochure (IB)",
+    families: ['ectd', 'ctis'],
+    regulatoryBasis: 'ICH E6(R2) Good Clinical Practice §7',
+    sections: [
+      { number: '1', heading: 'Summary', purpose: 'Concise summary of the significant physical, chemical, pharmaceutical, pharmacological, toxicological, and clinical information.', required: true },
+      { number: '2', heading: 'Introduction', purpose: 'Chemical/generic name, properties, rationale, and anticipated indications.', required: true },
+      { number: '3', heading: 'Physical, Chemical and Pharmaceutical Properties and Formulation', purpose: 'Description of the substance and formulation.', required: true },
+      { number: '4', heading: 'Nonclinical Studies', purpose: 'Nonclinical pharmacology, pharmacokinetics, and toxicology results.', required: true },
+      { number: '5', heading: 'Effects in Humans', purpose: 'Pharmacokinetics, safety, efficacy, and marketing experience in humans.', required: true },
+      { number: '6', heading: 'Summary of Data and Guidance for the Investigator', purpose: 'Overall discussion and guidance on recognising/treating possible overdose and adverse reactions.', required: true },
+    ],
+  },
+
+  // ── EU Risk Management Plan (GVP Module V) ──────────────────────────────────
+  {
+    id: 'risk_management_plan',
+    title: 'Risk Management Plan (RMP)',
+    families: ['ectd'],
+    regulatoryBasis: 'EU GVP Module V; Commission Implementing Regulation (EU) 520/2012',
+    sections: [
+      { number: 'I', heading: 'Product Overview', purpose: 'Administrative information about the product and the RMP.', required: true },
+      { number: 'II', heading: 'Safety Specification', purpose: 'Modules SI–SVIII: epidemiology, nonclinical, clinical-trial exposure, populations not studied, post-authorisation experience, and the safety concerns (important identified/potential risks, missing information).', required: true },
+      { number: 'III', heading: 'Pharmacovigilance Plan', purpose: 'Routine and additional pharmacovigilance activities to characterise the safety concerns.', required: true },
+      { number: 'IV', heading: 'Plans for Post-Authorisation Efficacy Studies', purpose: 'PAES where required.', required: false },
+      { number: 'V', heading: 'Risk Minimisation Measures', purpose: 'Routine and additional risk-minimisation measures and their effectiveness evaluation.', required: true },
+      { number: 'VI', heading: 'Summary of the Risk Management Plan', purpose: 'Public-facing summary.', required: true },
+      { number: 'VII', heading: 'Annexes', purpose: 'Supporting annexes.', required: false },
+    ],
+  },
+
+  // ── Periodic Benefit-Risk Evaluation Report (ICH E2C(R2)) ───────────────────
+  {
+    id: 'pbrer',
+    title: 'Periodic Benefit-Risk Evaluation Report (PBRER/PSUR)',
+    families: ['ectd'],
+    regulatoryBasis: 'ICH E2C(R2); EU GVP Module VII',
+    sections: [
+      { number: '1', heading: 'Introduction', purpose: 'Reporting interval, product(s), and scope.', required: true },
+      { number: '2', heading: 'Worldwide Marketing Authorisation Status', purpose: 'Authorisation dates and indications by country.', required: true },
+      { number: '3', heading: 'Actions Taken for Safety Reasons', purpose: 'Significant safety-related actions in the interval.', required: true },
+      { number: '4', heading: 'Changes to Reference Safety Information', purpose: 'Changes to the RSI in the interval.', required: true },
+      { number: '5', heading: 'Estimated Exposure and Use Patterns', purpose: 'Cumulative and interval patient exposure.', required: true },
+      { number: '6', heading: 'Data in Summary Tabulations', purpose: 'Cumulative and interval adverse-event tabulations.', required: true },
+      { number: '7', heading: 'Summaries of Significant Findings from Clinical Trials', purpose: 'Completed/ongoing trial safety findings.', required: true },
+      { number: '8', heading: 'Findings from Non-Interventional Studies', purpose: 'Safety findings from observational studies.', required: false },
+      { number: '9', heading: 'Information from Other Clinical Trials and Sources', purpose: 'Other relevant safety information.', required: false },
+      { number: '10', heading: 'Non-Clinical Data', purpose: 'Relevant nonclinical safety findings.', required: false },
+      { number: '11', heading: 'Literature', purpose: 'Relevant published literature.', required: false },
+      { number: '15', heading: 'Signal and Risk Evaluation', purpose: 'Summary of safety concerns, signal evaluation, and risk characterisation.', required: true },
+      { number: '16', heading: 'Benefit Evaluation', purpose: 'Baseline and newly identified benefit information.', required: true },
+      { number: '17', heading: 'Integrated Benefit-Risk Analysis', purpose: 'Integrated benefit-risk for approved indications.', required: true },
+      { number: '18', heading: 'Conclusions and Actions', purpose: 'Conclusions and any proposed/needed actions.', required: true },
+    ],
+  },
+
+  // ── Clinical Study Report (ICH E3) ──────────────────────────────────────────
+  {
+    id: 'clinical_study_report',
+    title: 'Clinical Study Report (CSR)',
+    families: ['ectd'],
+    ctdSection: '5.3.5.1',
+    regulatoryBasis: 'ICH E3 — Structure and Content of Clinical Study Reports',
+    sections: [
+      { number: '1', heading: 'Title Page', purpose: 'Study identification.', required: true },
+      { number: '2', heading: 'Synopsis', purpose: 'Brief structured summary of the study.', required: true },
+      { number: '6', heading: 'Introduction', purpose: 'Background and rationale.', required: true },
+      { number: '7', heading: 'Study Objectives', purpose: 'Primary and secondary objectives.', required: true },
+      { number: '8', heading: 'Investigational Plan', purpose: 'Design, methodology, randomisation, blinding, treatments, and endpoints.', required: true },
+      { number: '9', heading: 'Study Patients', purpose: 'Disposition, protocol deviations.', required: true },
+      { number: '10', heading: 'Efficacy Evaluation', purpose: 'Analysis populations, efficacy results, and statistical methods.', required: true },
+      { number: '11', heading: 'Safety Evaluation', purpose: 'Exposure, adverse events, deaths/SAEs, labs, vital signs.', required: true },
+      { number: '12', heading: 'Discussion and Overall Conclusions', purpose: 'Integrated interpretation of efficacy and safety.', required: true },
+      { number: '14', heading: 'Tables, Figures and Graphs', purpose: 'Referenced in-text displays.', required: false },
+      { number: '16', heading: 'Appendices', purpose: 'Protocol, sample CRF, statistical documentation, and listings.', required: false },
+    ],
+  },
 ];
 
 // ── Lookups (pure) ────────────────────────────────────────────────────────────

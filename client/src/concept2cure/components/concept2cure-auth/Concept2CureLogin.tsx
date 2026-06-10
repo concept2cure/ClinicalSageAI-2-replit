@@ -14,6 +14,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'wouter';
+import { Trans, useTranslation } from 'react-i18next';
 import { AlertCircle, ArrowLeft, CheckCircle2, Mail } from 'lucide-react';
 
 import {
@@ -21,6 +22,7 @@ import {
   useAuth as usePortalAuth,
   type MfaMethod,
 } from '@/services/portal/authService';
+import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 
 import { computeRedirect } from '../../auth/redirectUtils';
 import brandIcon from '../../../assets/concept2cure-icon.svg';
@@ -32,15 +34,6 @@ interface AuthError {
   field?: 'email' | 'password' | 'mfa' | 'reset';
   message: string;
 }
-
-const MFA_METHOD_LABELS: Record<MfaMethod['type'], string> = {
-  totp: 'Authenticator',
-  sms: 'Text message',
-  email: 'Email',
-  hardware_key: 'Security key',
-  biometric: 'Biometric',
-  backup_code: 'Recovery code',
-};
 
 /* ─── Password field with show/hide toggle ─── */
 function PasswordField({
@@ -57,6 +50,7 @@ function PasswordField({
   onSubmit?: () => void;
 }) {
   const [show, setShow] = useState(false);
+  const { t } = useTranslation('auth');
   return (
     <div className={styles.field}>
       <div className={styles.fieldLabelRow}>
@@ -66,7 +60,7 @@ function PasswordField({
           className={styles.toggle}
           onClick={() => setShow(s => !s)}
         >
-          {show ? 'Hide' : 'Show'}
+          {show ? t('action.hide') : t('action.show')}
         </button>
       </div>
       <input
@@ -145,6 +139,7 @@ function MfaCodeInput({
 export const Concept2CureLogin: React.FC = () => {
   const [, setLocation] = useLocation();
   const { login, verifyMfa } = usePortalAuth();
+  const { t } = useTranslation('auth');
 
   const search = typeof window !== 'undefined' ? window.location.search : '';
   const params = useMemo(() => new URLSearchParams(search), [search]);
@@ -210,9 +205,9 @@ export const Concept2CureLogin: React.FC = () => {
         window.location.href = '/concept2cure';
         return;
       }
-      setError({ message: data.error?.message || 'Demo login failed.' });
+      setError({ message: data.error?.message || t('error.demoFailed') });
     } catch {
-      setError({ message: 'Demo login request failed.' });
+      setError({ message: t('error.demoRequestFailed') });
     } finally {
       setIsLoading(false);
     }
@@ -220,11 +215,11 @@ export const Concept2CureLogin: React.FC = () => {
 
   const handleLogin = useCallback(async () => {
     if (!validateEmail(email)) {
-      setError({ field: 'email', message: 'Enter a valid email address.' });
+      setError({ field: 'email', message: t('error.invalidEmail') });
       return;
     }
     if (!password) {
-      setError({ field: 'password', message: 'Enter your password.' });
+      setError({ field: 'password', message: t('error.passwordRequired') });
       return;
     }
     setIsLoading(true);
@@ -234,7 +229,7 @@ export const Concept2CureLogin: React.FC = () => {
       if (!result.success) {
         setError({
           field: 'password',
-          message: result.error?.message || 'Unable to sign in. Check your credentials and try again.',
+          message: result.error?.message || t('error.signInFailed'),
         });
         return;
       }
@@ -248,7 +243,7 @@ export const Concept2CureLogin: React.FC = () => {
         return;
       }
       setView('success');
-      setSuccessMessage('Signed in successfully.');
+      setSuccessMessage(t('success.signedIn'));
       window.setTimeout(() => {
         setLocation(computeRedirect(undefined, undefined, () => authService.getUser()));
       }, 350);
@@ -264,8 +259,8 @@ export const Concept2CureLogin: React.FC = () => {
       setError({
         field: 'mfa',
         message: method === 'backup_code'
-          ? 'Enter one of your recovery codes.'
-          : 'Enter the full 6-digit verification code.',
+          ? t('error.recoveryCodeRequired')
+          : t('error.mfaCodeRequired'),
       });
       return;
     }
@@ -276,12 +271,12 @@ export const Concept2CureLogin: React.FC = () => {
       if (!result.success) {
         setError({
           field: 'mfa',
-          message: result.error?.message || 'That verification code was not accepted.',
+          message: result.error?.message || t('error.mfaRejected'),
         });
         return;
       }
       setView('success');
-      setSuccessMessage('Verification complete.');
+      setSuccessMessage(t('success.verified'));
       window.setTimeout(() => {
         setLocation(computeRedirect(undefined, undefined, () => authService.getUser()));
       }, 350);
@@ -292,7 +287,7 @@ export const Concept2CureLogin: React.FC = () => {
 
   const handleForgotPassword = useCallback(async () => {
     if (!validateEmail(email)) {
-      setError({ field: 'email', message: 'Enter the email address for your account first.' });
+      setError({ field: 'email', message: t('error.forgotEmailRequired') });
       return;
     }
     setIsLoading(true);
@@ -302,7 +297,7 @@ export const Concept2CureLogin: React.FC = () => {
       if (!result.success) {
         setError({
           field: 'email',
-          message: result.error?.message || 'Unable to send a reset link right now.',
+          message: result.error?.message || t('error.resetLinkFailed'),
         });
         return;
       }
@@ -314,15 +309,15 @@ export const Concept2CureLogin: React.FC = () => {
 
   const handleResetPassword = useCallback(async () => {
     if (!resetToken) {
-      setError({ field: 'reset', message: 'This reset link is missing a valid token.' });
+      setError({ field: 'reset', message: t('error.resetTokenMissing') });
       return;
     }
     if (!newPassword) {
-      setError({ field: 'reset', message: 'Enter a new password.' });
+      setError({ field: 'reset', message: t('error.newPasswordRequired') });
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError({ field: 'reset', message: 'Passwords do not match.' });
+      setError({ field: 'reset', message: t('error.passwordMismatch') });
       return;
     }
     setIsLoading(true);
@@ -332,12 +327,12 @@ export const Concept2CureLogin: React.FC = () => {
       if (!result.success) {
         setError({
           field: 'reset',
-          message: result.error?.message || 'Unable to reset your password.',
+          message: result.error?.message || t('error.resetFailed'),
         });
         return;
       }
       setView('success');
-      setSuccessMessage('Password updated. You can sign in now.');
+      setSuccessMessage(t('success.passwordUpdated'));
       window.setTimeout(() => setLocation('/concept2cure/login'), 500);
     } finally {
       setIsLoading(false);
@@ -348,7 +343,7 @@ export const Concept2CureLogin: React.FC = () => {
     if (resendCountdown > 0 || mfaMethod !== 'email') return;
     const result = await authService.resendLoginOtp();
     if (!result.success) {
-      setError({ field: 'mfa', message: result.error?.message || 'Unable to resend the code.' });
+      setError({ field: 'mfa', message: result.error?.message || t('error.resendFailed') });
       return;
     }
     setMaskedEmail(result.data?.maskedEmail || maskedEmail);
@@ -358,27 +353,27 @@ export const Concept2CureLogin: React.FC = () => {
   /* ─── Copy ─── */
 
   const title =
-    view === 'mfa' ? 'Verify it’s you'
-    : view === 'forgot-password' ? 'Reset your password'
-    : view === 'reset-sent' ? 'Check your email'
-    : view === 'reset-password' ? 'Set a new password'
-    : view === 'success' ? 'Signed in'
-    : 'Sign in';
+    view === 'mfa' ? t('title.mfa')
+    : view === 'forgot-password' ? t('title.forgotPassword')
+    : view === 'reset-sent' ? t('title.resetSent')
+    : view === 'reset-password' ? t('title.resetPassword')
+    : view === 'success' ? t('title.success')
+    : t('title.signIn');
 
   const subtitle =
     view === 'mfa'
       ? maskedEmail
-        ? `Enter the verification code sent to ${maskedEmail}.`
-        : 'Enter the verification code for your account.'
+        ? t('subtitle.mfaSent', { email: maskedEmail })
+        : t('subtitle.mfaGeneric')
     : view === 'forgot-password'
-      ? 'Enter your account email and we will send a reset link.'
+      ? t('subtitle.forgotPassword')
     : view === 'reset-sent'
-      ? 'If the account exists, a reset link is on its way.'
+      ? t('subtitle.resetSent')
     : view === 'reset-password'
-      ? 'Choose a strong password you have not used before.'
+      ? t('subtitle.resetPassword')
     : view === 'success'
-      ? successMessage || 'Taking you to your workspace.'
-    : 'Regulatory intelligence for biotech, pharma and medical-device teams.';
+      ? successMessage || t('subtitle.success')
+    : t('brand.tagline');
 
   return (
     <div className={styles.page}>
@@ -386,6 +381,7 @@ export const Concept2CureLogin: React.FC = () => {
         <div className={styles.brand}>
           <img src={brandIcon} alt="" className={styles.brandIcon} />
           <span className={styles.brandText}>Concept2Cure<span>.RI</span></span>
+          <LanguageSwitcher variant="auth" className={styles.brandLang} />
         </div>
 
         <div className={styles.card}>
@@ -407,14 +403,14 @@ export const Concept2CureLogin: React.FC = () => {
               onSubmit={e => { e.preventDefault(); handleLogin(); }}
             >
               <div className={styles.field}>
-                <label htmlFor="login-email" className={styles.label}>Email</label>
+                <label htmlFor="login-email" className={styles.label}>{t('field.email')}</label>
                 <input
                   id="login-email"
                   className={styles.input}
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="you@company.com"
+                  placeholder={t('placeholder.email')}
                   autoComplete="email"
                   autoFocus
                   disabled={isLoading}
@@ -423,11 +419,11 @@ export const Concept2CureLogin: React.FC = () => {
 
               <PasswordField
                 id="login-password"
-                label="Password"
+                label={t('field.password')}
                 value={password}
                 onChange={setPassword}
                 onSubmit={handleLogin}
-                placeholder="Enter your password"
+                placeholder={t('placeholder.password')}
                 autoComplete="current-password"
                 disabled={isLoading}
               />
@@ -440,14 +436,14 @@ export const Concept2CureLogin: React.FC = () => {
                     checked={rememberMe}
                     onChange={e => setRememberMe(e.target.checked)}
                   />
-                  Keep me signed in
+                  {t('action.rememberMe')}
                 </label>
                 <button
                   type="button"
                   className={styles.ghost}
                   onClick={() => setView('forgot-password')}
                 >
-                  Forgot password?
+                  {t('action.forgotPassword')}
                 </button>
               </div>
 
@@ -457,19 +453,19 @@ export const Concept2CureLogin: React.FC = () => {
                 disabled={isLoading}
               >
                 {isLoading && <span className={styles.spin} aria-hidden="true" />}
-                Sign in
+                {t('action.signIn')}
               </button>
 
               {isDev && (
                 <>
-                  <div className={styles.demoDivider}>Dev only</div>
+                  <div className={styles.demoDivider}>{t('action.devOnly')}</div>
                   <button
                     type="button"
                     className={styles.demo}
                     onClick={handleDemoAccess}
                     disabled={isLoading}
                   >
-                    Demo access
+                    {t('action.demoAccess')}
                   </button>
                 </>
               )}
@@ -493,7 +489,7 @@ export const Concept2CureLogin: React.FC = () => {
                         setResendCountdown(m.type === 'email' ? 60 : 0);
                       }}
                     >
-                      {MFA_METHOD_LABELS[m.type] || m.type.replace('_', ' ')}
+                      {t(`mfa.methods.${m.type}`, { defaultValue: m.type.replace('_', ' ') })}
                     </button>
                   ))}
                 </div>
@@ -501,13 +497,13 @@ export const Concept2CureLogin: React.FC = () => {
 
               {mfaMethod === 'backup_code' ? (
                 <div className={styles.field}>
-                  <label htmlFor="backup-code" className={styles.label}>Recovery code</label>
+                  <label htmlFor="backup-code" className={styles.label}>{t('field.recoveryCode')}</label>
                   <input
                     id="backup-code"
                     className={`${styles.input} ${styles.inputCode}`}
                     value={mfaCode}
                     onChange={e => setMfaCode(e.target.value)}
-                    placeholder="Enter a recovery code"
+                    placeholder={t('placeholder.recoveryCode')}
                     autoFocus
                   />
                 </div>
@@ -522,7 +518,7 @@ export const Concept2CureLogin: React.FC = () => {
                 disabled={isLoading}
               >
                 {isLoading && <span className={styles.spin} aria-hidden="true" />}
-                Verify
+                {t('action.verify')}
               </button>
 
               <div className={styles.row}>
@@ -536,15 +532,15 @@ export const Concept2CureLogin: React.FC = () => {
                   }}
                 >
                   <ArrowLeft size={12} strokeWidth={1.75} />
-                  Back
+                  {t('action.backToSignIn')}
                 </button>
 
                 {mfaMethod === 'email' ? (
                   resendCountdown > 0 ? (
-                    <span className={styles.hint}>Resend in {resendCountdown}s</span>
+                    <span className={styles.hint}>{t('action.resendIn', { count: resendCountdown })}</span>
                   ) : (
                     <button type="button" className={styles.ghost} onClick={handleResendCode}>
-                      Resend code
+                      {t('action.resendCode')}
                     </button>
                   )
                 ) : supportsRecoveryCodes && mfaMethod !== 'backup_code' ? (
@@ -553,7 +549,7 @@ export const Concept2CureLogin: React.FC = () => {
                     className={styles.ghost}
                     onClick={() => { setMfaMethod('backup_code'); setMfaCode(''); }}
                   >
-                    Use a recovery code
+                    {t('action.useRecoveryCode')}
                   </button>
                 ) : null}
               </div>
@@ -564,7 +560,7 @@ export const Concept2CureLogin: React.FC = () => {
           {view === 'forgot-password' && (
             <div className={styles.form}>
               <div className={styles.field}>
-                <label htmlFor="forgot-email" className={styles.label}>Account email</label>
+                <label htmlFor="forgot-email" className={styles.label}>{t('field.accountEmail')}</label>
                 <div className={styles.inputWithIcon}>
                   <Mail size={14} strokeWidth={1.75} className={styles.inputIcon} />
                   <input
@@ -573,7 +569,7 @@ export const Concept2CureLogin: React.FC = () => {
                     type="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder="you@company.com"
+                    placeholder={t('placeholder.email')}
                     autoFocus
                     disabled={isLoading}
                   />
@@ -587,7 +583,7 @@ export const Concept2CureLogin: React.FC = () => {
                 disabled={isLoading}
               >
                 {isLoading && <span className={styles.spin} aria-hidden="true" />}
-                Send reset link
+                {t('action.sendResetLink')}
               </button>
 
               <button
@@ -595,7 +591,7 @@ export const Concept2CureLogin: React.FC = () => {
                 className={styles.secondary}
                 onClick={() => setView('sign-in')}
               >
-                Back to sign in
+                {t('action.backToSignIn')}
               </button>
             </div>
           )}
@@ -607,14 +603,19 @@ export const Concept2CureLogin: React.FC = () => {
                 <CheckCircle2 size={20} strokeWidth={1.75} />
               </div>
               <p className={styles.subtitle} style={{ marginBottom: 0 }}>
-                If an account exists for <strong>{email}</strong>, a reset link is on its way.
+                <Trans
+                  i18nKey="resetSentDetail"
+                  ns="auth"
+                  values={{ email }}
+                  components={{ strong: <strong /> }}
+                />
               </p>
               <button
                 type="button"
                 className={styles.secondary}
                 onClick={() => setView('sign-in')}
               >
-                Return to sign in
+                {t('action.returnToSignIn')}
               </button>
             </div>
           )}
@@ -624,20 +625,20 @@ export const Concept2CureLogin: React.FC = () => {
             <div className={styles.form}>
               <PasswordField
                 id="reset-password"
-                label="New password"
+                label={t('field.newPassword')}
                 value={newPassword}
                 onChange={setNewPassword}
-                placeholder="Create a strong password"
+                placeholder={t('placeholder.newPassword')}
                 autoComplete="new-password"
                 autoFocus
                 disabled={isLoading}
               />
               <PasswordField
                 id="reset-password-confirm"
-                label="Confirm password"
+                label={t('field.confirmPassword')}
                 value={confirmPassword}
                 onChange={setConfirmPassword}
-                placeholder="Repeat your new password"
+                placeholder={t('placeholder.confirmPassword')}
                 autoComplete="new-password"
                 disabled={isLoading}
               />
@@ -648,14 +649,14 @@ export const Concept2CureLogin: React.FC = () => {
                 disabled={isLoading}
               >
                 {isLoading && <span className={styles.spin} aria-hidden="true" />}
-                Update password
+                {t('action.updatePassword')}
               </button>
               <button
                 type="button"
                 className={styles.secondary}
                 onClick={() => setLocation('/concept2cure/login')}
               >
-                Back to sign in
+                {t('action.backToSignIn')}
               </button>
             </div>
           )}
@@ -671,7 +672,7 @@ export const Concept2CureLogin: React.FC = () => {
                 className={styles.primary}
                 onClick={() => setLocation('/concept2cure')}
               >
-                Continue
+                {t('action.continue')}
               </button>
             </div>
           )}
@@ -679,13 +680,13 @@ export const Concept2CureLogin: React.FC = () => {
 
         {view === 'sign-in' && (
           <div className={styles.footerRow}>
-            <span>New to Concept2Cure?</span>
+            <span>{t('footer.newToConcept2Cure')}</span>
             <button
               type="button"
               className={styles.link}
               onClick={() => setLocation('/concept2cure/signup')}
             >
-              Create an account
+              {t('action.createAccount')}
             </button>
           </div>
         )}

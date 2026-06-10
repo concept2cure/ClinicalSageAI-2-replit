@@ -83,11 +83,24 @@ export interface CdxPairingInput {
   elements?: Partial<Record<CdxElement, boolean>>;
 }
 
+export interface DualPathReadiness {
+  /** FDA CDx co-development readiness (0–100). */
+  fdaScore: number;
+  /** EU IVDR CDx readiness (0–100), incl. the medicines-authority/EMA consultation. */
+  euScore: number;
+}
+
 export interface CdxPairingResult {
   biomarker: BiomarkerMatch;
   readiness: CdxReadinessResult;
   /** EU classification of a CDx is fixed: Class C (Annex VIII Rule 3). */
   euClassification: 'C';
+  /** 0–100 overall co-development readiness (weighted; biomarker validity counts). */
+  readinessScore: number;
+  /** Confidence in the assessment, driven by biomarker recognition + linkage. */
+  confidence: 'high' | 'moderate' | 'low';
+  /** Separate FDA vs EU readiness framing. */
+  dualPath: DualPathReadiness;
   /** Ids into the knowledge base supporting the pairing. */
   knowledgeRefs: string[];
   recommendations: string[];
@@ -135,10 +148,33 @@ export function pairCompanionDiagnostic(input: CdxPairingInput): CdxPairingResul
     }
   }
 
+  // Scoring: base on co-development readiness, with a biomarker-validity bonus
+  // (a corpus-recognized, CDx-documented biomarker materially de-risks the pair).
+  const biomarkerBonus = biomarker.recognized ? (biomarker.cdxDocumented ? 15 : 8) : 0;
+  const readinessScore = Math.max(0, Math.min(100, Math.round(readiness.readinessScore * 85) + biomarkerBonus));
+
+  const confidence: CdxPairingResult['confidence'] =
+    biomarker.recognized && biomarker.cdxDocumented && readiness.linkageEstablished
+      ? 'high'
+      : biomarker.recognized || readiness.linkageEstablished
+        ? 'moderate'
+        : 'low';
+
+  // FDA path weights contemporaneous review; EU path additionally weights the
+  // notified-body medicines-authority/EMA consultation (an extra dependency).
+  const euConsultationReady = readiness.present.includes('contemporaneousReview');
+  const dualPath: DualPathReadiness = {
+    fdaScore: readinessScore,
+    euScore: Math.max(0, readinessScore - (euConsultationReady ? 0 : 10)),
+  };
+
   return {
     biomarker,
     readiness,
     euClassification: 'C',
+    readinessScore,
+    confidence,
+    dualPath,
     knowledgeRefs: [...knowledgeRefs],
     recommendations,
   };

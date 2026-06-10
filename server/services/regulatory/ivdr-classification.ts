@@ -41,9 +41,31 @@ export interface IvdrClassificationResult {
   matchedRules: RuleTraceEntry[];
   /** Class A (non-sterile) self-declares; B/C/D require a notified body. */
   notifiedBodyRequired: boolean;
+  /** Confidence in the classification given the completeness of the inputs. */
+  confidence: 'high' | 'moderate' | 'low';
+  /** Notes where the inputs were sparse or multiple rules competed. */
+  ambiguityNotes: string[];
+  /** The likely-corresponding US FDA pathway (cross-jurisdiction orientation). */
+  fdaEquivalentPathway: string;
+  /** Plain-language conformity-route summary for the resulting class. */
+  conformityRoute: string;
   /** Ids into the IVD knowledge base explaining/justifying this classification. */
   knowledgeRefs: string[];
 }
+
+const FDA_PATHWAY_BY_CLASS: Record<IvdrClass, string> = {
+  A: 'US: typically Class I (often 510(k)-exempt) under general controls.',
+  B: 'US: typically Class II via 510(k) with special controls.',
+  C: 'US: typically Class II 510(k)/De Novo, or Class III PMA for higher-risk / companion diagnostics.',
+  D: 'US: typically Class III PMA (or biologics licensure for blood-screening/transfusion assays).',
+};
+
+const CONFORMITY_ROUTE_BY_CLASS: Record<IvdrClass, string> = {
+  A: 'Self-declaration (EU Declaration of Conformity); notified body only for sterile aspects.',
+  B: 'Notified body — Annex IX (QMS + tech-doc on a sampling basis) or Annex X+XI.',
+  C: 'Notified body — Annex IX or Annex X+XI; CDx adds a medicines-authority/EMA consultation.',
+  D: 'Notified body — Annex IX (per-device tech-doc) + EU reference-laboratory performance/batch verification.',
+};
 
 const CLASS_PRIORITY: Record<IvdrClass, number> = { A: 1, B: 2, C: 3, D: 4 };
 
@@ -186,11 +208,43 @@ export function classifyIvdrAnnexVIII(
   if (rule1Match) knowledgeRefs.add('bio.hiv');
   if (classResult === 'D') knowledgeRefs.add('eu.ivdr.notified-bodies');
 
+  // ── Confidence + ambiguity ─────────────────────────────────────────────────
+  const matched = ruleTrace.filter(r => r.matched);
+  const booleanInputs = [
+    isSelfTest, isNearPatient, isCompanionDiagnostic, detectsTransmissibleAgent,
+    bloodScreening, detectsCancer, prenatalScreening, isGeneticTest,
+  ].filter(v => v !== undefined).length;
+
+  const ambiguityNotes: string[] = [];
+  // A bare default-to-A with no risk inputs is low-confidence.
+  const onlyRule7 = classResult === 'A';
+  if (onlyRule7 && booleanInputs === 0 && riskToPatient === undefined) {
+    ambiguityNotes.push('Classified Class A by default (Rule 7) with no risk attributes supplied — confirm the intended purpose does not trigger Rules 1–6.');
+  }
+  // Multiple Rule-3 triggers (e.g., CDx + cancer + genetic) still resolve to C
+  // but are worth surfacing.
+  const ruleThreeTriggers = [isCompanionDiagnostic, detectsCancer, isGeneticTest, prenatalScreening].filter(Boolean).length;
+  if (ruleThreeTriggers > 1) {
+    ambiguityNotes.push('Multiple Rule 3 criteria apply; Class C governs, but document each applicable criterion.');
+  }
+  if (riskToPatient === undefined && classResult === 'A') {
+    ambiguityNotes.push('No risk-to-patient level supplied — Rule 6 (Class B catch-all) could apply if results inform critical patient decisions.');
+  }
+
+  let confidence: IvdrClassificationResult['confidence'];
+  if (matched.some(r => /Rule 1|Rule 2|Rule 3/.test(r.rule))) confidence = 'high';
+  else if (booleanInputs >= 2 || riskToPatient !== undefined) confidence = 'moderate';
+  else confidence = onlyRule7 ? 'low' : 'moderate';
+
   return {
     classification: classResult,
     ruleTrace,
-    matchedRules: ruleTrace.filter(r => r.matched),
+    matchedRules: matched,
     notifiedBodyRequired: classResult !== 'A',
+    confidence,
+    ambiguityNotes,
+    fdaEquivalentPathway: FDA_PATHWAY_BY_CLASS[classResult],
+    conformityRoute: CONFORMITY_ROUTE_BY_CLASS[classResult],
     knowledgeRefs: [...knowledgeRefs],
   };
 }
