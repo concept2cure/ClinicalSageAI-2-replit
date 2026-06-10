@@ -76,19 +76,14 @@ router.post('/', requireAdmin, async (req: Request, res: Response) => {
 
 // ─── List (never returns the hash) ───────────────────────────────────────────
 
-router.get('/', requireAdmin, async (req: Request, res: Response) => {
+router.get('/', requireAdmin, async (_req: Request, res: Response) => {
   try {
-    const organizationId = Number(req.query.organizationId);
-    const params: unknown[] = [];
-    let where = '';
-    if (Number.isFinite(organizationId)) {
-      params.push(organizationId);
-      where = 'WHERE organization_id = $1';
-    }
+    // Super-admin view: list every SCIM tenant (across orgs). We deliberately do
+    // NOT take an org filter from req.query — tenant ids from request input are
+    // banned (tenant-trust-query); callers filter client-side.
     const result = await query(
       `SELECT id, organization_id, label, enabled, created_at, updated_at
-         FROM scim_tenants ${where} ORDER BY id DESC`,
-      params
+         FROM scim_tenants ORDER BY id DESC`
     );
     return res.json({ tenants: (result.rows as TenantRow[]).map(toTenant) });
   } catch (err) {
