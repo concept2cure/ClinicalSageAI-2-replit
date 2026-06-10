@@ -1,0 +1,10 @@
+{
+  "greeting": {
+    "late": "늦게까지 수고가 많으십니다",
+    "morning": "좋은 아침입니다",
+    "afternoon": "안녕하세요",
+    "evening": "좋은 저녁입니다"
+  },
+  "greetingLine": "{{greeting}}, {{name}}님",
+  "prompt": "무엇을 도와드릴까요? AnA에게 질문하거나 아래 모듈로 이동하세요."
+}
