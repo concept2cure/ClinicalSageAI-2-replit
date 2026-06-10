@@ -255,8 +255,9 @@ export async function getOrgReadinessOverview(
   const concurrency = Math.max(1, Math.min(options.concurrency ?? DEFAULT_CONCURRENCY, 8));
   const excludeArchived = options.excludeArchived !== false;
 
-  // 1. Pull project metadata.
-  const filters: string[] = ['organization_id = $1'];
+  // 1. Pull project metadata. organization_id lives in the SQL literal (not
+  // the filters array) so the tenant-isolation CI gate can verify it.
+  const filters: string[] = [];
   const params: any[] = [organizationId];
   if (excludeArchived) {
     filters.push(`status <> 'archived'`);
@@ -265,14 +266,14 @@ export async function getOrgReadinessOverview(
     params.push(options.projectStatus);
     filters.push(`status = $${params.length}`);
   }
-  const where = `WHERE ${filters.join(' AND ')}`;
+  const extraWhere = filters.length ? ` AND ${filters.join(' AND ')}` : '';
 
   let metas: ProjectMeta[] = [];
   try {
     const { rows } = await getPool().query(
       `SELECT id, name, code, status, therapeutic_area
          FROM projects
-         ${where}
+         WHERE organization_id = $1${extraWhere}
         ORDER BY updated_at DESC`,
       params
     );

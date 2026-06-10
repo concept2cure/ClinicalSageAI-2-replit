@@ -79,7 +79,9 @@ router.get('/vault', async (req: Request, res: Response) => {
   /* The project ↔ regulatory_program bridge. projects.regulatory_program_id
      was added by the MDX migration. When it's null on legacy rows the
      filter degrades to "any project in this org". */
-  const filters: string[] = [`a.organization_id = $1`, `a.status != 'archived'`];
+  /* a.organization_id lives in the SQL literal below (not this array) so the
+     tenant-isolation CI gate can verify the scope statically. */
+  const filters: string[] = [`a.status != 'archived'`];
   const args: unknown[] = [orgId];
   if (programId) {
     args.push(programId);
@@ -102,7 +104,7 @@ router.get('/vault', async (req: Request, res: Response) => {
               a.locked_at, a.metadata
          FROM concept2cure_artifacts a
          LEFT JOIN projects p ON p.id = a.project_id
-        WHERE ${filters.join(' AND ')}
+        WHERE a.organization_id = $1 AND ${filters.join(' AND ')}
         ORDER BY a.updated_at DESC
         LIMIT $${args.length}`,
       args,

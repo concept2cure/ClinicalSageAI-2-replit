@@ -371,7 +371,7 @@ router.patch('/:projectId/move', async (req: Request, res: Response) => {
     const project = projResult.rows[0];
 
     // Validate the move
-    const validation = await rollupService.validateMove(projectId, newParentId, MAX_DEPTH);
+    const validation = await rollupService.validateMove(projectId, newParentId, MAX_DEPTH, organizationId);
     if (!validation.valid) {
       return res.status(400).json({ error: validation.reason });
     }
@@ -415,7 +415,7 @@ router.patch('/:projectId/move', async (req: Request, res: Response) => {
     }
 
     // Recompute paths for all descendants
-    await rollupService.recomputePaths(projectId);
+    await rollupService.recomputePaths(projectId, organizationId);
 
     // Audit trail
     try {

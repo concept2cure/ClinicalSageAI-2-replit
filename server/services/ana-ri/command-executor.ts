@@ -330,8 +330,9 @@ export async function updateProject(
     }
 
     setClauses.push('updated_at = NOW()');
+    const setSql = setClauses.join(', ');
     await pool.query(
-      `UPDATE projects SET ${setClauses.join(', ')} WHERE id = $1 AND organization_id = $2`,
+      `UPDATE projects SET ${setSql} WHERE id = $1 AND organization_id = $2`,
       values
     );
     const fieldList = Object.keys(updates).join(', ');
@@ -850,8 +851,9 @@ export async function updateTask(
     }
 
     setClauses.push('updated_at = NOW()');
+    const setSql = setClauses.join(', ');
     await pool.query(
-      `UPDATE project_tasks SET ${setClauses.join(', ')}
+      `UPDATE project_tasks SET ${setSql}
        WHERE id = $1 AND project_id = $2 AND organization_id = $3`,
       values
     );

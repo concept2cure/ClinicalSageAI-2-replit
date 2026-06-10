@@ -4579,13 +4579,13 @@ registerToolHandler('verify_memory_atom', async (input, ctx) => {
           SET is_verified_by_user = true,
               verified_at = NOW(),
               verified_by = $3,
-              importance_level = CASE WHEN $4 = true AND importance_level IN ('low','medium')
-                                      THEN 'high'
+              importance_level = CASE WHEN $4 = true AND importance_level IN ($5, $6)
+                                      THEN $7
                                       ELSE importance_level END,
               updated_at = NOW()
         WHERE id = $1 AND organization_id = $2
         RETURNING id, importance_level, is_verified_by_user`,
-      [id, ctx.organizationId, ctx.userId ?? null, input.bump_importance === true],
+      [id, ctx.organizationId, ctx.userId ?? null, input.bump_importance === true, 'low', 'medium', 'high'],
     );
     if (rows.length === 0) {
       return JSON.stringify({ error: `Memory atom ${id} not found in this organization.` });

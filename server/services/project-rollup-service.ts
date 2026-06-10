@@ -378,11 +378,14 @@ export class ProjectRollupService {
    * Recompute the materialized path for a project and all its descendants.
    * Called after insert or move operations.
    */
-  async recomputePaths(projectId: number): Promise<void> {
-    // Get the parent's path
+  async recomputePaths(projectId: number, organizationId: number): Promise<void> {
+    // Get the parent's path. All lookups are tenant-scoped: the caller has
+    // already verified projectId belongs to organizationId, and parents /
+    // children of an in-org project are in-org by construction, so the org
+    // filter can't drop legitimate rows — it only blocks cross-org ids.
     const projResult = await this.pool.query(
-      `SELECT id, parent_project_id FROM projects WHERE id = $1`,
-      [projectId]
+      `SELECT id, parent_project_id FROM projects WHERE id = $1 AND organization_id = $2`,
+      [projectId, organizationId]
     );
     if (projResult.rows.length === 0) return;
 
@@ -392,22 +395,28 @@ export class ProjectRollupService {
     if (!proj.parent_project_id) {
       newPath = String(proj.id);
     } else {
-      const parentResult = await this.pool.query(`SELECT path FROM projects WHERE id = $1`, [
-        proj.parent_project_id,
-      ]);
+      const parentResult = await this.pool.query(
+        `SELECT path FROM projects WHERE id = $1 AND organization_id = $2`,
+        [proj.parent_project_id, organizationId]
+      );
       const parentPath = parentResult.rows[0]?.path || String(proj.parent_project_id);
       newPath = `${parentPath}/${proj.id}`;
     }
 
     // Update self
-    await this.pool.query(`UPDATE projects SET path = $1 WHERE id = $2`, [newPath, projectId]);
+    await this.pool.query(`UPDATE projects SET path = $1 WHERE id = $2 AND organization_id = $3`, [
+      newPath,
+      projectId,
+      organizationId,
+    ]);
 
     // Recursively update children
-    const children = await this.pool.query(`SELECT id FROM projects WHERE parent_project_id = $1`, [
-      projectId,
-    ]);
+    const children = await this.pool.query(
+      `SELECT id FROM projects WHERE parent_project_id = $1 AND organization_id = $2`,
+      [projectId, organizationId]
+    );
     for (const child of children.rows) {
-      await this.recomputePaths(child.id);
+      await this.recomputePaths(child.id, organizationId);
     }
   }
 
@@ -417,19 +426,26 @@ export class ProjectRollupService {
   async validateMove(
     projectId: number,
     newParentId: number | null,
-    maxDepth: number = 3
+    maxDepth: number = 3,
+    organizationId: number
   ): Promise<{ valid: boolean; reason?: string }> {
     if (newParentId === null) return { valid: true }; // Moving to root is always valid
     if (projectId === newParentId)
       return { valid: false, reason: 'Cannot make a project its own parent' };
 
-    // Check that newParentId is not a descendant of projectId (circular reference)
-    const proj = await this.pool.query(`SELECT path FROM projects WHERE id = $1`, [projectId]);
+    // Check that newParentId is not a descendant of projectId (circular reference).
+    // Tenant-scoped: a cross-org parent id reads as "does not exist" instead of
+    // leaking another org's hierarchy data.
+    const proj = await this.pool.query(
+      `SELECT path FROM projects WHERE id = $1 AND organization_id = $2`,
+      [projectId, organizationId]
+    );
     const projPath = proj.rows[0]?.path;
 
-    const newParent = await this.pool.query(`SELECT path, depth FROM projects WHERE id = $1`, [
-      newParentId,
-    ]);
+    const newParent = await this.pool.query(
+      `SELECT path, depth FROM projects WHERE id = $1 AND organization_id = $2`,
+      [newParentId, organizationId]
+    );
     if (newParent.rows.length === 0)
       return { valid: false, reason: 'Target parent does not exist' };
 
@@ -445,8 +461,8 @@ export class ProjectRollupService {
     const parentDepth = newParent.rows[0].depth;
     // Get max depth of projectId subtree
     const subtreeResult = await this.pool.query(
-      `SELECT MAX(depth) - $1 as relative_depth FROM projects WHERE path LIKE $2 || '/%'`,
-      [parentDepth, projPath || String(projectId)]
+      `SELECT MAX(depth) - $1 as relative_depth FROM projects WHERE organization_id = $3 AND path LIKE $2 || '/%'`,
+      [parentDepth, projPath || String(projectId), organizationId]
     );
     const subtreeRelativeDepth = subtreeResult.rows[0]?.relative_depth || 0;
     const newMaxDepth = parentDepth + 1 + subtreeRelativeDepth;

@@ -107,8 +107,8 @@ export async function launchResearchJob(request: DeepResearchRequest): Promise<D
   executeResearchJob(jobId, request).catch(err => {
     console.error(`[DeepResearch] Job ${jobId} failed:`, err);
     pool.query(
-      `UPDATE deep_research_jobs SET status = 'failed', completed_at = NOW() WHERE id = $1`,
-      [jobId]
+      `UPDATE deep_research_jobs SET status = $2, completed_at = NOW() WHERE id = $1 AND organization_id = $3`,
+      [jobId, 'failed', request.organizationId]
     ).catch(() => {});
   });
 
@@ -154,8 +154,8 @@ async function executeResearchJob(jobId: number, request: DeepResearchRequest): 
   }
 
   await pool.query(
-    `UPDATE deep_research_jobs SET connector_logs = $1 WHERE id = $2`,
-    [JSON.stringify(connectorLogs), jobId]
+    `UPDATE deep_research_jobs SET connector_logs = $1 WHERE id = $2 AND organization_id = $3`,
+    [JSON.stringify(connectorLogs), jobId, request.organizationId]
   );
 
   await updateJobProgress(jobId, 60, 'running');
@@ -196,9 +196,9 @@ async function executeResearchJob(jobId: number, request: DeepResearchRequest): 
   // Save final results
   await pool.query(
     `UPDATE deep_research_jobs SET
-     status = 'complete', progress = 100, results = $1, synthesis = $2, completed_at = NOW()
-     WHERE id = $3`,
-    [JSON.stringify(aggregated), synthesis, jobId]
+     status = $4, progress = 100, results = $1, synthesis = $2, completed_at = NOW()
+     WHERE id = $3 AND organization_id = $5`,
+    [JSON.stringify(aggregated), synthesis, jobId, 'complete', request.organizationId]
   );
 
   // Notify SSE listeners
