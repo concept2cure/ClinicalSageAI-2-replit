@@ -348,7 +348,8 @@ export interface CmcPortfolioRow {
   product_id: string;
   region: string | null;
   app_type: string | null;
-  rpi: number;
+  /** Null when the server could not compute a score (never fabricated). */
+  rpi: number | null;
   components: Record<string, unknown>;
   ir_open: number;
   ir_overdue: number;

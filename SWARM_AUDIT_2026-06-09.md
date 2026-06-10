@@ -427,3 +427,23 @@ fixtures were found.
 
 Verification (wave 4 final): typecheck 0 errors; tenant-isolation checker
 passes (baseline 61); restored bridge suite 7/7; security suite 183/183.
+
+## Wave 4 finale — portfolio honesty + scoping
+
+- **`server/api/cmc/portfolio.ts` — fabricated RPI fixed at the root**: the
+  handler's dynamic `require('../../services/reg/rpi')` pointed at a path that
+  has never existed (the engine lives at `server/src/services/reg/rpi.ts`), so
+  the catch swallowed the failure and **every portfolio row rendered a
+  fabricated fallback score of 60**. The real engine is now imported; on
+  genuine computation failure the score is `null` (client type widened to
+  `number | null`; UI already renders null safely) and failed snapshots are
+  skipped (`{ saved, skipped }`), never stored.
+- **Org scoping added to all four portfolio handlers** (`overview`,
+  `rpi-trend`, `snapshot/save`, `export.csv`): `reg_submissions` is filtered by
+  `tenant_id` from `getSecureOrgId`, and `rpi-trend` joins snapshots to
+  submissions to verify tenant before returning trend data. Previously every
+  handler iterated/returned all tenants' submissions.
+- **`/api/v1` advisory closed as verified-acceptable**: single mount;
+  `/health` and `/docs` deliberately open; position-based
+  `router.use(requireApiKey)` plus per-route scope/quota guards cover all data
+  routes. No structural gate needed while the single-mount invariant holds.
