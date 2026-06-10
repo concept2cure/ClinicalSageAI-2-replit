@@ -40,6 +40,11 @@ import {
 } from './tool-telemetry.js';
 import { composeMedicalWritingGuidance, listMedicalWritingCatalog } from './medical-writing.js';
 import { reviewMedicalWriting } from './medical-writing-review.js';
+import {
+  assessReadability,
+  buildAbbreviationList,
+  type ReadabilityAudience,
+} from './medical-writing-qc.js';
 import { initToolTelemetryPersistence } from './tool-telemetry-persistence.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 
@@ -438,6 +443,23 @@ registerToolHandler('medical_writing_guidance', async (input) => {
       'Apply this structure and these conventions, then ground every clinical claim with the evidence ' +
       'search tools and cite per the citation protocol.',
   });
+});
+
+// Readability QC — Flesch metrics vs the target audience reading level.
+registerToolHandler('assess_readability', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) return JSON.stringify({ error: 'assess_readability requires non-empty text.' });
+  const audience = ['patient', 'general', 'clinician', 'regulator'].includes(input.audience as string)
+    ? (input.audience as ReadabilityAudience)
+    : 'general';
+  return JSON.stringify({ source: 'AnA Readability QC', ...assessReadability(text, audience) });
+});
+
+// Abbreviation QC — extract acronyms + flag undefined-at-first-use.
+registerToolHandler('build_abbreviation_list', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) return JSON.stringify({ error: 'build_abbreviation_list requires non-empty text.' });
+  return JSON.stringify({ source: 'AnA Abbreviation QC', ...buildAbbreviationList(text) });
 });
 
 // Medical Writing Review — standards-conformance QC of a draft (or pre-draft).

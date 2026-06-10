@@ -164,6 +164,43 @@ export const MEDICAL_WRITING_GUIDANCE: AnaTool = {
   },
 };
 
+export const ASSESS_READABILITY: AnaTool = {
+  name: 'assess_readability',
+  description:
+    'Score text readability (Flesch Reading Ease + Flesch–Kincaid grade, sentence/word/syllable ' +
+    'stats) against a target audience and return whether it meets the reading-level target with ' +
+    'concrete suggestions. Use to QC lay/plain-language summaries and EU patient information leaflets ' +
+    '(target ~grade 8), or to check that any document is not needlessly dense.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: { type: 'string', description: 'The text to assess.' },
+      audience: {
+        type: 'string',
+        enum: ['patient', 'general', 'clinician', 'regulator'],
+        description: 'Reading-level target. patient≈grade 8, general≈10, clinician≈16, regulator≈18.',
+      },
+    },
+    required: ['text'],
+  },
+};
+
+export const BUILD_ABBREVIATION_LIST: AnaTool = {
+  name: 'build_abbreviation_list',
+  description:
+    'Extract acronyms/abbreviations from a draft, detect which are defined at first use (via "Full ' +
+    'Term (ABC)" / "ABC (Full Term)" patterns), and return the abbreviation table plus a list of ' +
+    'undefined ones to fix. Every CSR, CTD summary, CER, and manuscript needs a complete, ' +
+    'defined-at-first-use abbreviation list — run this before finalizing.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: { type: 'string', description: 'The document text to scan for abbreviations.' },
+    },
+    required: ['text'],
+  },
+};
+
 export const MEDICAL_WRITING_REVIEW: AnaTool = {
   name: 'medical_writing_review',
   description:
@@ -4066,6 +4103,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ASSESS_REGULATORY_LANDSCAPE,
   MEDICAL_WRITING_GUIDANCE,
   MEDICAL_WRITING_REVIEW,
+  ASSESS_READABILITY,
+  BUILD_ABBREVIATION_LIST,
   DESCRIBE_CAPABILITIES,
   PROJECT_KNOWLEDGE_SEARCH,
   SIMULATE_STUDY_DESIGN,
