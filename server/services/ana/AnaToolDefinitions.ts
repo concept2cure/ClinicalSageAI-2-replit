@@ -124,6 +124,73 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   },
 };
 
+export const ADVISE_STUDY_DESIGN: AnaTool = {
+  name: 'advise_study_design',
+  description:
+    'Study-design & sample-size advisor: explains superiority / non-inferiority / equivalence designs ' +
+    '(hypotheses, key considerations, pitfalls) and, given endpoint family and assumptions, returns a ' +
+    'two-arm sample-size planning estimate (continuous: mean difference + SD; binary: p1/p2; ' +
+    'time-to-event: hazard ratio + event probability via Schoenfeld). Planning estimate only — confirm ' +
+    'with a statistician; define the estimand first (advise_estimand).',
+  input_schema: {
+    type: 'object',
+    properties: {
+      goal: { type: 'string', enum: ['superiority', 'non_inferiority', 'equivalence'] },
+      sample_size: {
+        type: 'object',
+        description: 'Inputs for a sample-size estimate.',
+        properties: {
+          endpoint_family: { type: 'string', enum: ['continuous', 'binary', 'time_to_event'] },
+          alpha: { type: 'number', description: 'Default 0.05.' },
+          power: { type: 'number', description: 'Default 0.8.' },
+          two_sided: { type: 'boolean' },
+          mean_difference: { type: 'number' },
+          sd: { type: 'number' },
+          p1: { type: 'number' },
+          p2: { type: 'number' },
+          hazard_ratio: { type: 'number' },
+          prob_event: { type: 'number', description: 'Overall event probability (TTE → patients).' },
+          allocation_ratio: { type: 'number', description: 'n2/n1, default 1.' },
+          margin: { type: 'number', description: 'NI/equivalence margin.' },
+        },
+        required: ['endpoint_family'],
+      },
+    },
+  },
+};
+
+export const ADVISE_LABELING_STRUCTURE: AnaTool = {
+  name: 'advise_labeling_structure',
+  description:
+    'Product-labeling structure advisor: explains the section architecture of the US Prescribing ' +
+    'Information (PLR, 21 CFR 201.56/201.57) or EU SmPC (QRD template), or routes free-text content to ' +
+    'the right section ("which section does this go in?") with the US↔EU cross-map. Use when drafting or ' +
+    'QC-ing a label.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      format: { type: 'string', enum: ['uspi', 'smpc'], description: 'uspi (US PI) | smpc (EU). Aliases accepted.' },
+      content: { type: 'string', description: 'Free-text content to place into a label section.' },
+    },
+  },
+};
+
+export const ADVISE_MEDICAL_INFORMATION: AnaTool = {
+  name: 'advise_medical_information',
+  description:
+    'Medical-information / standard-response advisor: the structure of a Standard Response Document (SRD), ' +
+    'the on-label vs unsolicited off-label distinction with compliance guardrails, product-complaint ' +
+    'handling, and the pharmacovigilance/AE-capture overlay that applies to every interaction. Use when ' +
+    'scaffolding or QC-ing a response to an unsolicited HCP/patient enquiry. Advisory — MI/compliance ' +
+    'review is authoritative; off-label responses are strictly regulated.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      response_type: { type: 'string', description: 'on_label | off_label | product_complaint (aliases accepted).' },
+    },
+  },
+};
+
 export const NARRATE_STATISTICAL_RESULT: AnaTool = {
   name: 'narrate_statistical_result',
   description:
@@ -4624,6 +4691,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ADVISE_SPECIAL_DESIGNATION,
   ADVISE_ESTIMAND,
   ADVISE_PHARMACOVIGILANCE,
+  ADVISE_STUDY_DESIGN,
+  ADVISE_LABELING_STRUCTURE,
+  ADVISE_MEDICAL_INFORMATION,
   SCREEN_PROMOTIONAL_LANGUAGE,
   MEDICAL_WRITING_GUIDANCE,
   MEDICAL_WRITING_REVIEW,

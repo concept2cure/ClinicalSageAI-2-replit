@@ -58,6 +58,9 @@ import { adviseCtdStructure, listCtdModules } from './ctd-structure.js';
 import { adviseSpecialDesignation, listDesignations } from './special-designations.js';
 import { adviseEstimand, listEstimandFramework } from './estimands.js';
 import { advisePharmacovigilance, listPvDeliverables } from './pharmacovigilance.js';
+import { adviseStudyDesign, listStudyDesigns, type SampleSizeInput, type EndpointFamily, type DesignGoal } from './study-design.js';
+import { adviseLabelingStructure, listLabelTemplates } from './labeling-structure.js';
+import { adviseMedicalInformation, listMedInfoResponseTypes } from './medical-information.js';
 import { initToolTelemetryPersistence } from './tool-telemetry-persistence.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 
@@ -504,6 +507,55 @@ registerToolHandler('value_dossier_guidance', async (input) => {
   return JSON.stringify({
     source: 'AnA Market-Access Knowledge',
     ...composeValueDossierGuidance({ deliverable, htaBody }),
+  });
+});
+
+// Study-design & sample-size advisor.
+registerToolHandler('advise_study_design', async (input) => {
+  const goal = typeof input.goal === 'string' ? input.goal : undefined;
+  const ssRaw = input.sample_size && typeof input.sample_size === 'object' ? (input.sample_size as Record<string, unknown>) : undefined;
+  const num = (v: unknown): number | undefined => (typeof v === 'number' && !Number.isNaN(v) ? v : undefined);
+  let sampleSize: SampleSizeInput | undefined;
+  if (ssRaw && typeof ssRaw.endpoint_family === 'string' && ['continuous', 'binary', 'time_to_event'].includes(ssRaw.endpoint_family)) {
+    sampleSize = {
+      endpointFamily: ssRaw.endpoint_family as EndpointFamily,
+      goal: typeof goal === 'string' && ['superiority', 'non_inferiority', 'equivalence'].includes(goal) ? (goal as DesignGoal) : undefined,
+      alpha: num(ssRaw.alpha),
+      power: num(ssRaw.power),
+      twoSided: typeof ssRaw.two_sided === 'boolean' ? ssRaw.two_sided : undefined,
+      meanDifference: num(ssRaw.mean_difference),
+      sd: num(ssRaw.sd),
+      p1: num(ssRaw.p1),
+      p2: num(ssRaw.p2),
+      hazardRatio: num(ssRaw.hazard_ratio),
+      probEvent: num(ssRaw.prob_event),
+      allocationRatio: num(ssRaw.allocation_ratio),
+      margin: num(ssRaw.margin),
+    };
+  }
+  if (!goal && !sampleSize) {
+    return JSON.stringify({ source: 'AnA Study-Design Advisor', designs: listStudyDesigns(), ...adviseStudyDesign({}) });
+  }
+  return JSON.stringify({ source: 'AnA Study-Design Advisor', ...adviseStudyDesign({ goal, sampleSize }) });
+});
+
+// Product-labeling structure advisor — USPI / SmPC.
+registerToolHandler('advise_labeling_structure', async (input) => {
+  const format = typeof input.format === 'string' ? input.format : undefined;
+  const content = typeof input.content === 'string' ? input.content : undefined;
+  if (!format && !content) {
+    return JSON.stringify({ source: 'AnA Labeling-Structure Advisor', templates: listLabelTemplates(), ...adviseLabelingStructure({}) });
+  }
+  return JSON.stringify({ source: 'AnA Labeling-Structure Advisor', ...adviseLabelingStructure({ format, content }) });
+});
+
+// Medical-information / standard-response advisor.
+registerToolHandler('advise_medical_information', async (input) => {
+  const responseType = typeof input.response_type === 'string' ? input.response_type : undefined;
+  return JSON.stringify({
+    source: 'AnA Medical-Information Advisor',
+    responseTypes: responseType ? undefined : listMedInfoResponseTypes(),
+    ...adviseMedicalInformation({ responseType }),
   });
 });
 
