@@ -107,6 +107,14 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // HA interaction & commitment metrics (C2C-03).
+      try {
+        const { renderHaMetrics } = await import('../services/ha-metrics.js');
+        lines.push(...renderHaMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RAG retrieval metrics — recorded at the ragRouter chokepoint.
       try {
         const { renderRagMetrics } = await import('../services/rag-runtime-metrics.js');

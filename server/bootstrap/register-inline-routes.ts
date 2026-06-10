@@ -331,6 +331,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Financial Disclosure routes:', error);
   }
 
+  // HA interaction & commitment management (Pre-IND/EOP2/pre-NDA; PMR/PMC/REMS).
+  try {
+    const haModule = await import('../routes/ha-interactions');
+    app.use('/api/ha-interactions', authMiddleware, haModule.default);
+    console.info('✅ HA Interaction routes mounted (/api/ha-interactions)');
+  } catch (error) {
+    console.error('❌ Failed to mount HA Interaction routes:', error);
+  }
+
   // C2C study digital twins + simulation (study/protocol design module).
   try {
     const c2cStudyTwinModule = await import('../routes/c2c/study-twin');

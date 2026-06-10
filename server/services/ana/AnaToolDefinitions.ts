@@ -2950,6 +2950,54 @@ export const REVIEW_FINANCIAL_DISCLOSURE: AnaTool = {
   },
 };
 
+export const CREATE_HA_INTERACTION: AnaTool = {
+  name: 'create_ha_interaction',
+  description:
+    "Open a health-authority interaction (agency meeting): Pre-IND, EOP1/EOP2, pre-NDA/pre-BLA, Type A/B/C, or EMA scientific advice. Returns the interaction id for follow-up (questions, commitments). Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      interaction_type: { type: 'string', enum: ['pre_ind', 'eop1', 'eop2', 'pre_nda', 'pre_bla', 'type_a', 'type_b', 'type_c', 'scientific_advice', 'other'] },
+      agency: { type: 'string', enum: ['fda', 'ema', 'pmda', 'mhra', 'other'] },
+      title: { type: 'string' },
+      objective: { type: 'string' },
+      submission_id: { type: 'number' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['interaction_type', 'agency', 'title'],
+  },
+};
+
+export const CREATE_REGULATORY_COMMITMENT: AnaTool = {
+  name: 'create_regulatory_commitment',
+  description:
+    "Record a regulatory commitment (PMR / PMC / REMS / meeting commitment) with its due date and statutory basis (e.g. FDAAA 505(o)(3) for a PMR). Optionally link the source interaction (the meeting that created it) and the submission it supports — both are threaded onto the provenance spine. Returns the commitment id.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      commitment_type: { type: 'string', enum: ['pmr', 'pmc', 'rems', 'meeting_commitment', 'other'] },
+      description: { type: 'string' },
+      due_date: { type: 'string', description: 'YYYY-MM-DD.' },
+      regulatory_basis: { type: 'string' },
+      source_interaction_id: { type: 'number' },
+      submission_id: { type: 'number' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['commitment_type', 'description'],
+  },
+};
+
+export const REVIEW_COMMITMENT_PORTFOLIO: AnaTool = {
+  name: 'review_commitment_portfolio',
+  description:
+    "Summarize the regulatory commitment portfolio by urgency (overdue / due in 30 / due in 90 / later / undated / closed), read-only. Use to tell the user what is overdue or coming due. Optionally scope to a submission.",
+  input_schema: {
+    type: 'object',
+    properties: { submission_id: { type: 'number' } },
+    required: [],
+  },
+};
+
 export const LOG_STUDY_DEVIATION: AnaTool = {
   name: 'log_study_deviation',
   description:
@@ -4388,6 +4436,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CREATE_FINANCIAL_DISCLOSURE,
   ADD_DISCLOSURE_INTEREST,
   REVIEW_FINANCIAL_DISCLOSURE,
+  CREATE_HA_INTERACTION,
+  CREATE_REGULATORY_COMMITMENT,
+  REVIEW_COMMITMENT_PORTFOLIO,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,
