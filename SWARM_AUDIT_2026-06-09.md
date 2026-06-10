@@ -152,3 +152,85 @@ were audited and already correct.)
     Drizzle codebase; remove or justify.
 11. **`_sync/` directory** — stale 2026-06-02 audit artifacts, no code references.
     Left in place (documentation, not code); delete at will.
+
+---
+
+# Wave 2 — 2026-06-10
+
+Three additional agents: data architect (verification pass on wave-1 schema
+claims), auth/middleware/workers auditor, AI-gateway/orchestration auditor.
+
+## Fixed in wave 2
+
+- **Express 5 sanitizer bug (live, every request)** —
+  `server/middleware/enterprise-security.ts` `sanitizeInput` assigned
+  `req.query = sanitizeObject(req.query)`. Express 5 exposes `req.query` via a
+  getter, so the assignment **throws on every request**; the fail-open catch
+  then skipped the query/params prototype-pollution scrub entirely (verified
+  empirically against express@5.2.1). Query/params are now scrubbed in place,
+  and the catch fails closed (400) instead of passing unsanitized input through.
+- **API-key validation failed open** — `validateApiKey` caught key-store errors
+  and marked the request `authMethod: 'api_key'` with only a hash, no
+  validation. Nothing downstream consumed those fields (so no tenant access was
+  granted), but the request proceeded as if no key was presented. Now fails
+  closed with 503 `API_KEY_SERVICE_UNAVAILABLE`.
+- **Duplicate EventBus deleted** — `server/services/eventBus.js` (409 lines) was
+  a second, divergent EventBus singleton alongside `server/events/eventBus.js`.
+  Zero importers (verified); the split-bus event-loss risk is gone with it.
+- **`server/brain/` deleted entirely** — all four files (`draftGenerator.js`,
+  `vaultIndexer.js`, `vaultRetriever.js`, `embeddings.json`) had zero importers
+  and no path-string references in scripts/Docker/CI. `draftGenerator` also
+  contained the "both branches return the mock" TODO the AI auditor flagged —
+  moot now.
+- **Drift sentinel silent failure** — `server/jobs/driftSentinelSweep.ts`
+  swallowed sweep errors with an empty catch; an ISO 14971 control could go
+  dark unnoticed. Failures are now logged.
+- **JWT rotation misconfiguration check** — `server/config/environment.ts` now
+  fails loud when the previous JWT secret equals the current one (a no-op
+  rotation slot).
+- **Orphaned schema tables removed** — `regulatoryMeetings` and
+  `charterAuditEvents` in `shared/schema/project-charter.ts` had no migration,
+  no bootstrap DDL, and zero queries/type consumers (any use would have hit
+  "relation does not exist"). Tables, insert schemas, types, and relations
+  removed.
+
+## Wave-1 claims overturned by the wave-2 data architect
+
+- `apiKeys`, `projectCharters`, `ctdOnboarding*`, and the CAPA/MDR tables are
+  **not** orphaned — they are migrated and queried (largely via raw SQL, which
+  the wave-1 grep missed).
+- The Prisma directory is **not** a remnant: `server/prisma/client.js` is a
+  deliberate Prisma-compatible facade over Drizzle/pg with tenant guards, used
+  by `semanticSearch.js` and `bulk_import.js`. `@prisma/client` is not a
+  dependency. Keep.
+- MFA/lockout columns are fully present in the Drizzle `users` schema
+  (shared/schema.ts:2479-2495) — no drift.
+
+## Wave-2 claims verified and REJECTED
+
+- **"Gateway stream callback errors are unhandled."** False — `onStream` is
+  invoked lexically inside the stream try block; a throwing callback is caught
+  by the existing `streamErr` handler, which preserves partial content and
+  clears the watchdog in `finally`.
+- **No gateway bypasses and no prompt-injection-prone concatenation** were
+  found in the AI orchestration layer (per dedicated sweep).
+
+## Wave-2 advisories (reported, not fixed)
+
+- `charterSections`, `timelinePhases`, `projectCommitments`: migrated but
+  unqueried (staged feature surface) — keep or implement.
+- Gateway error responses are audited with zeroed token usage, indistinguishable
+  from cheap successes in cost metrics; consider a success flag in the audit row.
+- `AnaDocumentDraftingService` pins explicit model IDs instead of delegating
+  selection to the gateway registry.
+- `startup-invariants` logs critical failures but lets boot continue; decide
+  whether `criticalFailures > 0` should halt.
+- `auditChainIntegritySweep` / retention job notify failures are logged but not
+  surfaced to monitoring; tenant-impersonation audit writes are fire-and-forget.
+- `performanceOptimizer.initializeIndexes` resolves before the deferred index
+  work runs (5s setTimeout) and has no re-entry guard.
+- Two env vars (`AI_GATEWAY_DETERMINISTIC`, `DETERMINISTIC_MODE`) both enable
+  deterministic mode; document the canonical one.
+
+Verification: typecheck no-regression 0 errors; 66 middleware tests and the
+full security suite (183 tests, 32 files) pass after all wave-2 changes.

@@ -165,6 +165,16 @@ const getJwtPreviousSecret = (): string | undefined => {
     );
   }
 
+  if (candidate === getJwtSecret()) {
+    // Previous == current means the rotation was misconfigured (nothing was
+    // actually rotated). Fail loud rather than carry a no-op rotation slot.
+    throw new Error(
+      `[FATAL] JWT previous secret is identical to the current secret. ` +
+        `Rotation requires a distinct previous secret; clear ${envVar} if ` +
+        `rotation is complete.`,
+    );
+  }
+
   return candidate;
 };
 
