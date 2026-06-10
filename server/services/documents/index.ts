@@ -6,7 +6,6 @@
  *
  * Services consolidated:
  * - documentService.js (core CRUD)
- * - documentProcessor.js (text extraction)
  * - documentReconstruction.js (version control)
  * - documentLocking.js (concurrent access)
  * - unifiedDocumentIngestion.js (multi-format ingestion — canonical ingestion path)
@@ -23,7 +22,6 @@
 export { default as documentService } from '../documentService.js';
 
 // Document processing
-export { default as documentProcessor } from '../document-processor.js';
 export { academicDocumentProcessor } from '../academic-document-processor';
 
 // Version control & locking
@@ -113,7 +111,6 @@ export const DOCUMENT_SERVICE_REGISTRY = {
   storage: 'documentService',
 
   // Processing
-  textExtraction: 'document-processor',
   academicParsing: 'academic-document-processor',
 
   // Version control

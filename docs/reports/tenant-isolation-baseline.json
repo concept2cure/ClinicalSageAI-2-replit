@@ -3,7 +3,6 @@
   "fingerprints": [
     "server/db/bootstrap/seed-default-org.ts#a183c3cd998e:users",
     "server/db/bootstrap/seed-default-org.ts#c7b7e41bb3f3:users",
-    "server/models/ind_sequence.js#7fb39c315529:documents",
     "server/routes/billing-dashboard.ts#207a97ebd894:stripe_events",
     "server/routes/esignature.ts#1e604c94ef8c:users",
     "server/routes/esignature.ts#bdd651a1d4c8:users",
@@ -20,10 +19,6 @@
     "server/services/billing.ts#f45ebb17e8ac:stripe_events",
     "server/services/billing.ts#fbf8b3f2cb11:stripe_events",
     "server/services/connectors/veeva-vault.ts#a24017a3ecbe:documents",
-    "server/services/document-processor.js#610e2aef3ff0:documents",
-    "server/services/document-processor.js#623fefcaf5b4:documents",
-    "server/services/document-processor.js#bfeb628d6017:documents",
-    "server/services/document-processor.js#bfeb628d6017:documents",
     "server/services/memory-consolidation-job.ts#2385b934f7ec:project_memory_entries",
     "server/services/securityHealth.ts#360ed9b15993:audit_events",
     "server/storage.ts#1298058df255:users",

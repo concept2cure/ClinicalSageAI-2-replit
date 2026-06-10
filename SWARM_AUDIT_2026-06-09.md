@@ -519,3 +519,38 @@ passes (baseline 61); restored bridge suite 7/7; security suite 183/183.
   stub queries (barrel-only export, schema-mismatched inserts), dead
   `ind_sequence.js`, and the invite-flow email-dedupe updating users who may
   belong only to another org (needs a membership pre-check).
+
+---
+
+# Wave 7 — 2026-06-10 (product decisions executed)
+
+Acting as PM on the remaining open items:
+
+## Decided and executed
+- **Invite-flow cross-org profile mutation — fixed** (`tenant-users.ts`,
+  `atomicQuotaService.js`): inviting an existing email no longer overwrites
+  that user's global title/department — fields a different org has no
+  authority over. They now apply only on user creation. Also replaced the
+  predictable `'temp_' + Math.random()` placeholder password sentinel with an
+  unguessable `'invited_' + randomUUID()` (still never bcrypt-valid, so it
+  cannot authenticate).
+- **Legacy stubs retired** (1,887 lines, all verified zero-consumer):
+  `document-processor.js` (barrel-only export with schema-mismatched inserts;
+  barrel + registry cleaned), `models/ind_sequence.js`,
+  `models/vector_chunks.js`, `utils/populate_vector_database.js`.
+  Tenant baseline 30 → 25 (their stale fingerprints removed).
+
+## Decided: keep / defer (with rationale)
+- **Portfolio null metrics (preflight/QC/playbook): keep as nulls.** Honest
+  roadmap markers; removing the columns churns three layers for cosmetic gain.
+- **RPI `trendRisk=85` proxy: keep.** Disclosed, 5% weight; silent formula
+  changes would shift customer-visible scores. Modeling backlog.
+- **510(k) deprecated routes: honor the published 2026-06-30 sunset** — no
+  early removal.
+- **Phase-gated skipped tests + home live wiring: defer to Phase 3/5
+  workbench.** Demo data is labeled, which satisfies the honesty bar.
+- **OCR vendoring in CI: defer** — pipeline edits can't be validated from this
+  environment; the skip is visible in vitest output. Recommended step for the
+  team: cached `npm run ocr:vendor` in ci.yml.
+
+Gates: typecheck 0; tenant checker exit 0 (baseline 25); security 183/183.
