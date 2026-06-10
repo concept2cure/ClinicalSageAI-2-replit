@@ -654,6 +654,40 @@ describe('AnA RI Persona', () => {
     expect(ema).toContain('AMNOG');
   });
 
+  it('injects the dedicated Japan regulatory deep-dive whenever Japan is in scope', () => {
+    // Japanese-language users get the deep layer...
+    const ja = buildAnaRISystemPrompt({ language: 'ja' });
+    expect(ja).toContain('JAPAN REGULATORY DEEP DIVE');
+    expect(ja).toContain('薬機法'); // PMD Act
+    expect(ja).toContain('再審査'); // reexamination period
+    expect(ja).toContain('中医協'); // Chuikyo / NHI pricing
+    expect(ja).toContain('総括製造販売責任者'); // MAH responsible person
+    expect(ja).toContain('RMP'); // canonical identifier preserved
+
+    // ...and so do English-language programs that target PMDA.
+    const enPmda = buildAnaRISystemPrompt({
+      language: 'en',
+      projectContext: { targetAgency: 'PMDA' },
+    });
+    expect(enPmda).toContain('JAPAN REGULATORY DEEP DIVE');
+    expect(enPmda).toContain('先駆的医薬品'); // SAKIGAKE / pioneering-drug designation
+    expect(enPmda).toContain('対面助言'); // PMDA consultation system
+  });
+
+  it('does not add the Japan deep-dive when Japan is not in scope', () => {
+    const enFda = buildAnaRISystemPrompt({
+      language: 'en',
+      projectContext: { targetAgency: 'FDA' },
+    });
+    expect(enFda).not.toContain('JAPAN REGULATORY DEEP DIVE');
+
+    const deEma = buildAnaRISystemPrompt({
+      language: 'de',
+      projectContext: { targetAgency: 'EMA' },
+    });
+    expect(deEma).not.toContain('JAPAN REGULATORY DEEP DIVE');
+  });
+
   it('covers additional non-US target markets by agency name', () => {
     const cases: Array<[string, string]> = [
       ['MFDS', 'SOUTH KOREA (MFDS)'],

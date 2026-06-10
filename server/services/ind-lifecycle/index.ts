@@ -31,3 +31,5 @@ export * from './ind-submission-overview';
 export * from './ind-dashboard';
 export * from './ind-sequence-validation';
 export * from './ind-action-items';
+export * from './ind-package-manifest';
+export * from './ind-dispatch-gate';

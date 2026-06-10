@@ -410,3 +410,9 @@ export * from './ind-master-data';
 // ALCOA+ provenance spine seed (C2C-02). Forms FDA 3454/3455 → Module 1.
 // Service: server/services/financial-disclosures; migration: migrations/20260610_financial_disclosure_21cfr54.sql.
 export * from './financial-disclosures';
+
+// HA interaction & commitment management (C2C-03): agency meetings (Pre-IND/
+// EOP2/pre-NDA) → questions → commitments (PMR/PMC/REMS) → fulfillment, threaded
+// onto the provenance spine. Service: server/services/ha-interactions;
+// migration: migrations/20260610_ha_interactions_commitments.sql.
+export * from './ha-interactions';

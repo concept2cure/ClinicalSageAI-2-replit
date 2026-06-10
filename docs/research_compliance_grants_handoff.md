@@ -10,7 +10,7 @@ and to run the deferred DB-backed verification. Updated as each capability lands
 |----|-----------|------|--------|
 | C2C-01 | Clinical Investigator Financial Disclosure (21 CFR 54) | 1 | **Backend complete** (this report) |
 | C2C-02 | ALCOA+ Provenance Spine | 1 | **Seed landed** (`provenance_links` + service); full spine later |
-| C2C-03 | HA Interaction & Commitment Mgmt | 1 | Planned |
+| C2C-03 | HA Interaction & Commitment Mgmt | 1 | **Backend complete** |
 | C2C-04 | Nonclinical Study Mgmt + SEND | 2 | Planned |
 | C2C-05 | IACUC / Animal Study Governance | 2 | Planned |
 | C2C-06 | IRB/IEC Submission & Amendment Mgmt | 2 | Planned |
@@ -80,3 +80,47 @@ Request bodies are zod-validated; mutations require `reason` (≥8 chars).
 
 ### Tests landed (no-DB)
 `fcoi-logic.test.ts` (12) — form-type, gate, content hash. `ana/__tests__/fcoi-tools.test.ts` (8) — tool registration + input guards. Whole-repo typecheck clean.
+
+---
+
+## C2C-03 — HA Interaction & Commitment Management
+
+### Data model (`shared/schema/ha-interactions.ts`; migration `migrations/20260610_ha_interactions_commitments.sql`)
+- `ha_interactions` (Pre-IND/EOP1/EOP2/pre-NDA/pre-BLA/Type A-B-C/scientific advice; status lifecycle planned→…→closed), `ha_interaction_questions` (sponsor question + agency response + agreement), `regulatory_commitments` (PMR/PMC/REMS/meeting; statutory basis; due/fulfilled dates), `commitment_milestones`.
+- Threading: commitments link to the source interaction and to the submission via `provenance_links` (`ha_interaction → regulatory_commitment` role `creates`; `regulatory_commitment → submission_module1` role `supports`).
+
+### API (`/api/ha-interactions`, governed + org-scoped)
+| Method | Path | Governed action |
+|--------|------|-----------------|
+| POST | `/interactions` | `create` |
+| GET | `/interactions?submissionId=` | — |
+| PATCH | `/interactions/:id/status` | `transition` |
+| POST | `/interactions/:id/questions` | `update` |
+| GET | `/interactions/:id/readiness` | — (deterministic meeting-readiness gate) |
+| POST | `/commitments` | `create` (writes provenance links) |
+| GET | `/commitments?submissionId=` | — (effective status + urgency summary) |
+| POST | `/commitments/:id/fulfill` | `resolve` |
+| POST | `/commitments/:id/milestones` | `update` |
+
+### AnA tools (same governed path, surface `ana`)
+`create_ha_interaction`, `create_regulatory_commitment` (threads provenance), `review_commitment_portfolio` (read-only urgency summary).
+
+### Deterministic core (`ha-logic.ts`, pure, tested)
+`deriveCommitmentStatus` (past-due → overdue, terminal states preserved), `commitmentUrgency` + `summarizeCommitmentPortfolio` (overdue/due_30/due_90/later/undated/closed), `evaluateMeetingReadiness` (FDA Formal Meetings guidance: briefing package + question list expected once scheduled/held).
+
+### Central-module wiring
+- **Reports:** `ha.commitment_register` in `REPORT_TYPE_SEED`.
+- **Metrics:** `server/services/ha-metrics.ts` → `/api/metrics` (`ha_interactions_created_total`, `ha_commitments_created_total{type}`, `ha_commitments_fulfilled_total`).
+
+### UI surfaces to build (deferred)
+1. **Interaction timeline** (per submission) — meeting cards with type/agency/status, the readiness gate panel (`GET /:id/readiness`), question/response table.
+2. **Commitment portfolio** — table sorted by urgency with the summary KPI band (from `GET /commitments`), fulfill action, milestone sub-rows; provenance "created by meeting / supports submission" chips.
+3. **AnA panel** — conversational tools already wired.
+
+### Deferred DB verification
+- [ ] `drizzle-kit push` clean; 4 tables + indexes + CHECK constraints in `information_schema`.
+- [ ] Org-scoping; governed audit rows for create/transition/update/resolve; provenance links written on commitment create.
+- [ ] `ha.commitment_register` report run resolves; `/api/metrics` exposes `ha_*`.
+
+### Tests landed (no-DB)
+`ha-logic.test.ts` (8), `ana/__tests__/ha-tools.test.ts` (7). Typecheck clean.
