@@ -46,6 +46,7 @@ import {
   type ReadabilityAudience,
 } from './medical-writing-qc.js';
 import { lookupIcd10 } from '../integrations/icd10-client.js';
+import { composeSafetyNarrative } from './safety-narrative.js';
 import { initToolTelemetryPersistence } from './tool-telemetry-persistence.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 
@@ -443,6 +444,53 @@ registerToolHandler('medical_writing_guidance', async (input) => {
     citation_hint:
       'Apply this structure and these conventions, then ground every clinical claim with the evidence ' +
       'search tools and cite per the citation protocol.',
+  });
+});
+
+// Safety narrative — ICH E3 §16 patient narrative from structured case facts.
+registerToolHandler('draft_safety_narrative', async (input) => {
+  const subjectId = typeof input.subject_id === 'string' ? input.subject_id : '';
+  const ev = (input.event ?? {}) as Record<string, unknown>;
+  if (!subjectId.trim() || typeof ev.term !== 'string' || !ev.term.trim()) {
+    return JSON.stringify({ error: 'draft_safety_narrative requires subject_id and event.term.' });
+  }
+  const arr = (v: unknown): string[] | undefined =>
+    Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : undefined;
+  const str = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v : undefined);
+
+  const result = composeSafetyNarrative({
+    subjectId,
+    age: str(input.age),
+    sex: str(input.sex),
+    studyId: str(input.study_id),
+    treatmentArm: str(input.treatment_arm),
+    studyDrug: str(input.study_drug),
+    dose: str(input.dose),
+    firstDoseDate: str(input.first_dose_date),
+    medicalHistory: arr(input.medical_history),
+    concomitantMeds: arr(input.concomitant_meds),
+    event: {
+      term: String(ev.term),
+      onsetDate: str(ev.onset_date),
+      dayOnStudy: str(ev.day_on_study),
+      severity: str(ev.severity),
+      seriousnessCriteria: arr(ev.seriousness_criteria),
+      causality: str(ev.causality),
+      actionTaken: str(ev.action_taken),
+      treatment: str(ev.treatment),
+      dechallenge: str(ev.dechallenge),
+      rechallenge: str(ev.rechallenge),
+      outcome: str(ev.outcome),
+      notes: str(ev.notes),
+    },
+  });
+  return JSON.stringify({
+    source: 'AnA Safety Narrative (ICH E3 §16)',
+    ...result,
+    citation_hint:
+      result.missingFields.length
+        ? `Confirm the missing fields before finalizing: ${result.missingFields.join(', ')}.`
+        : 'All key fields present; verify against the CRF/source before sign-off.',
   });
 });
 

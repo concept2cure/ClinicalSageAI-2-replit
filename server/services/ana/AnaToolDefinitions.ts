@@ -124,6 +124,51 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   },
 };
 
+export const DRAFT_SAFETY_NARRATIVE: AnaTool = {
+  name: 'draft_safety_narrative',
+  description:
+    'Draft an ICH E3 §16-style patient safety narrative from structured case facts (death/SAE/' +
+    'discontinuation): subject → relevant history & concomitant meds → study-drug exposure → event ' +
+    '(severity, seriousness, onset) → action taken & treatment → dechallenge/rechallenge → outcome → ' +
+    'investigator causality. Drafts ONLY from the supplied facts and reports any missing required ' +
+    'fields for QC — never invents clinical detail.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      subject_id: { type: 'string', description: 'Subject/patient identifier.' },
+      age: { type: 'string', description: 'Age (years).' },
+      sex: { type: 'string', description: 'Sex (e.g. male/female).' },
+      study_id: { type: 'string', description: 'Study/protocol identifier.' },
+      treatment_arm: { type: 'string', description: 'Randomized arm / treatment group.' },
+      study_drug: { type: 'string', description: 'Investigational product name.' },
+      dose: { type: 'string', description: 'Dose/regimen.' },
+      first_dose_date: { type: 'string', description: 'Date of first dose.' },
+      medical_history: { type: 'array', items: { type: 'string' }, description: 'Relevant medical history.' },
+      concomitant_meds: { type: 'array', items: { type: 'string' }, description: 'Concomitant medications.' },
+      event: {
+        type: 'object',
+        description: 'The adverse event facts.',
+        properties: {
+          term: { type: 'string', description: 'Event term (verbatim or MedDRA PT).' },
+          onset_date: { type: 'string' },
+          day_on_study: { type: 'string' },
+          severity: { type: 'string', description: 'mild/moderate/severe or CTCAE grade.' },
+          seriousness_criteria: { type: 'array', items: { type: 'string' }, description: 'e.g. hospitalization, life-threatening, death.' },
+          causality: { type: 'string', description: 'Investigator causality, e.g. related/possibly related/not related.' },
+          action_taken: { type: 'string', description: 'e.g. drug withdrawn/dose reduced/none.' },
+          treatment: { type: 'string', description: 'Treatment given for the event.' },
+          dechallenge: { type: 'string' },
+          rechallenge: { type: 'string' },
+          outcome: { type: 'string', description: 'e.g. recovered/recovering/fatal.' },
+          notes: { type: 'string', description: 'Additional clinical course.' },
+        },
+        required: ['term'],
+      },
+    },
+    required: ['subject_id', 'event'],
+  },
+};
+
 export const LOOKUP_ICD10_CODE: AnaTool = {
   name: 'lookup_icd10_code',
   description:
@@ -4118,6 +4163,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_DRUG_APPROVALS,
   ASSESS_REGULATORY_LANDSCAPE,
   LOOKUP_ICD10_CODE,
+  DRAFT_SAFETY_NARRATIVE,
   MEDICAL_WRITING_GUIDANCE,
   MEDICAL_WRITING_REVIEW,
   ASSESS_READABILITY,
