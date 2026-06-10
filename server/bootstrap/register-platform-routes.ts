@@ -196,6 +196,18 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     console.warn('⚠️ SCIM tenant admin routes not mounted');
   }
 
+  // SIEM audit feed (admin; org-scoped). Incremental, cursor-paginated NDJSON
+  // pull of this tenant's Part 11 audit trail for SOC/SIEM ingestion.
+  try {
+    const auditSiemModule = await import('../routes/admin/audit-siem');
+    const auditSiemRouter = auditSiemModule.default;
+    if (auditSiemRouter && (typeof auditSiemRouter === 'function' || (auditSiemRouter as any).handle)) {
+      app.use('/api/admin/audit', auditSiemRouter);
+    }
+  } catch {
+    console.warn('⚠️ SIEM audit feed routes not mounted');
+  }
+
   // RFC 9116 vulnerability disclosure — /.well-known/security.txt (public).
   try {
     const wellKnownModule = await import('../routes/well-known');
