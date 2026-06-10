@@ -9,9 +9,9 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 199,
-    "largeFilesByBytes": 16,
-    "largeFilesByLines": 47
+    "duplicateBasenames": 201,
+    "largeFilesByBytes": 14,
+    "largeFilesByLines": 43
   },
   "findings": {
     "duplicateBasenames": [
