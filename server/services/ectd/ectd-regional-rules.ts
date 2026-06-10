@@ -176,6 +176,13 @@ export const REGIONAL_RULES: RegionalRule[] = [
     severity: 'warning',
     citation: 'PMDA Notification 0926 §M1.13',
   },
+  {
+    id: 'PMDA-005',
+    region: 'JP',
+    description: 'Risk Management Plan (J-RMP / 医薬品リスク管理計画) required for new drug applications',
+    severity: 'warning',
+    citation: 'MHLW Risk Management Plan Guidance (April 2012)',
+  },
 
   // --- Health Canada (REP) ---
   {
