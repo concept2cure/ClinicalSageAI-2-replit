@@ -74,7 +74,15 @@ const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => P
  * Import guidance document
  */
 router.post('/delta-radar/guidance', asyncHandler(async (req: Request, res: Response) => {
-  const document = await deltaRadarService.importGuidanceDocument(req.body);
+  const orgGuard = requireAuthedOrgId(req, res);
+  if (!orgGuard.ok) return;
+  // importGuidanceDocument consumes organizationId (with an orgId fallback);
+  // override both with the authed org so the body can't target another tenant.
+  const document = await deltaRadarService.importGuidanceDocument({
+    ...req.body,
+    organizationId: String(orgGuard.orgId),
+    orgId: String(orgGuard.orgId),
+  });
   res.status(201).json({ success: true, data: document });
 }));
 
@@ -141,7 +149,13 @@ router.get('/delta-radar/statistics/:programId', asyncHandler(async (req: Reques
  * Configure scoring
  */
 router.post('/evidence-heatmap/config', asyncHandler(async (req: Request, res: Response) => {
-  const config = await heatmapService.createScoringConfig(req.body);
+  const orgGuard = requireAuthedOrgId(req, res);
+  if (!orgGuard.ok) return;
+  // createScoringConfig consumes organizationId; never trust the body's value.
+  const config = await heatmapService.createScoringConfig({
+    ...req.body,
+    organizationId: String(orgGuard.orgId),
+  });
   res.status(201).json({ success: true, data: config });
 }));
 
@@ -369,7 +383,13 @@ router.get('/workspace/presets', asyncHandler(async (req: Request, res: Response
  * Create workspace preset
  */
 router.post('/workspace/presets', asyncHandler(async (req: Request, res: Response) => {
-  const preset = await workspaceService.createPreset(req.body);
+  const orgGuard = requireAuthedOrgId(req, res);
+  if (!orgGuard.ok) return;
+  // createPreset consumes orgId; never trust the body's value.
+  const preset = await workspaceService.createPreset({
+    ...req.body,
+    orgId: String(orgGuard.orgId),
+  });
   res.status(201).json({ success: true, data: preset });
 }));
 
@@ -424,7 +444,15 @@ router.get('/workspace/recommendations/:userId', asyncHandler(async (req: Reques
  * Create template
  */
 router.post('/templates', asyncHandler(async (req: Request, res: Response) => {
-  const template = await templateLearningService.createTemplate(req.body);
+  const orgGuard = requireAuthedOrgId(req, res);
+  if (!orgGuard.ok) return;
+  // createTemplate consumes organizationId (simple shape) or orgId
+  // (LearningTemplate shape); override both with the authed org.
+  const template = await templateLearningService.createTemplate({
+    ...req.body,
+    organizationId: String(orgGuard.orgId),
+    orgId: String(orgGuard.orgId),
+  });
   res.status(201).json({ success: true, data: template });
 }));
 
@@ -662,7 +690,14 @@ router.get('/negotiations/statistics/:programId', asyncHandler(async (req: Reque
  * Create guardrail rule
  */
 router.post('/guardrails/rules', asyncHandler(async (req: Request, res: Response) => {
-  const rule = await guardrailsService.createRule(req.body);
+  const orgGuard = requireAuthedOrgId(req, res);
+  if (!orgGuard.ok) return;
+  // createRule consumes orgId (with an organizationId fallback); override both.
+  const rule = await guardrailsService.createRule({
+    ...req.body,
+    orgId: String(orgGuard.orgId),
+    organizationId: String(orgGuard.orgId),
+  });
   res.status(201).json({ success: true, data: rule });
 }));
 
@@ -698,7 +733,14 @@ router.get('/guardrails/rules/:ruleId', asyncHandler(async (req: Request, res: R
  * Create guardrail profile
  */
 router.post('/guardrails/profiles', asyncHandler(async (req: Request, res: Response) => {
-  const profile = await guardrailsService.createProfile(req.body);
+  const orgGuard = requireAuthedOrgId(req, res);
+  if (!orgGuard.ok) return;
+  // createProfile consumes orgId (with an organizationId fallback); override both.
+  const profile = await guardrailsService.createProfile({
+    ...req.body,
+    orgId: String(orgGuard.orgId),
+    organizationId: String(orgGuard.orgId),
+  });
   res.status(201).json({ success: true, data: profile });
 }));
 

@@ -104,12 +104,17 @@ function useProjectContext(projectId?: string) {
       return;
     }
 
-    fetch(`/api/concept2cure/projects/${projectId}/context`, { headers: getAuthHeaders() })
+    const abort = new AbortController();
+    fetch(`/api/concept2cure/projects/${encodeURIComponent(projectId)}/context`, {
+      headers: getAuthHeaders(),
+      signal: abort.signal,
+    })
       .then(r => (r.ok ? r.json() : null))
       .then(data => {
-        if (data) setContext(data);
+        if (data && !abort.signal.aborted) setContext(data);
       })
       .catch(() => {});
+    return () => abort.abort();
   }, [projectId]);
 
   return context;
@@ -270,7 +275,7 @@ export function useCortexChat(options: UseCortexChatOptions = {}): UseCortexChat
         },
       });
     },
-    [threadId, options, queryClient, messages.length]
+    [threadId, options, queryClient, messages.length, projectContext]
   );
 
   const cancelStream = useCallback(() => {

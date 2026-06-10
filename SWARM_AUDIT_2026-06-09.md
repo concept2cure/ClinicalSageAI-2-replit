@@ -237,3 +237,81 @@ claims), auth/middleware/workers auditor, AI-gateway/orchestration auditor.
 
 Verification: typecheck no-regression 0 errors; 66 middleware tests and the
 full security suite (183 tests, 32 files) pass after all wave-2 changes.
+
+---
+
+# Wave 3 — 2026-06-10
+
+Three auditors (remaining server services; top-level non-server directories;
+client deep pass) plus a dedicated fixer for the innovation-routes tenant gap.
+
+## Fixed in wave 3
+
+- **Tenant-isolation hardening (innovation routes)** — six write routes in
+  `server/routes/innovation-routes.ts` passed `req.body` (with caller-supplied
+  org) straight into services that run `SET app.bypass_rls = 'true'`:
+  delta-radar guidance import, heatmap scoring config, workspace presets,
+  template create, guardrail rules, guardrail profiles. All now apply the
+  existing `requireAuthedOrgId` guard and override `organizationId`/`orgId`
+  in the payload with the authenticated org (field names matched per-service).
+  Seven other write routes were verified NOT org-scoped and left unchanged.
+- **`server/repositories/learningRepository.ts` deleted** — its schema table
+  references were literally `null` (`const learningModules: any = null`), so
+  every method would crash at runtime; zero importers existed.
+- **Dead Python services deleted** — `services/ich_wiz/` and
+  `services/ich_ingest/` (11 files, zero references in code, CI, or Docker).
+- **Dead performance-optimizer chain deleted** —
+  `server/initializers/performanceOptimizer.ts`,
+  `server/utils/database-performance-optimizer.ts` (duplicate dead
+  implementations), `server/test/performance-test.ts`,
+  `server/db/indexOptimizer.ts` (only consumed by the above).
+- **`config/ui-surface-registry.json` deleted** (zero references).
+- **FDA-ESG credential audit write** — best-effort insert no longer swallows
+  its error silently; failures are logged.
+- **Client `useCortex.ts`** — `useProjectContext` fetch now has an
+  AbortController (no setState after unmount) and `encodeURIComponent` on the
+  project id; `streamMessage`'s dependency array now includes `projectContext`
+  (stale-closure bug: thread could stream with an outdated project context).
+
+## Wave-3 claims verified and REJECTED
+
+- **"`server/policies/` is missing — OPA mount will fail."** False — the
+  directory exists (`server/policies/concept2cure.rego`).
+- **"`services/ectd_generator.py` (40KB) is dead."** False — it is the
+  ENTRYPOINT of `services/Dockerfile` and imported by the CI-run
+  `services/tests/test_generator.py`.
+- **"`shared/utils/communication-center-rules.ts` and
+  `therapeutic-area-classifier.ts` are unused."** False — imported by
+  `server/routes/concept2cure-communication-center.ts` and
+  `server/protocol-analyzer-service.ts` respectively.
+- **"Governed-decision recording failure is invisible."** False — the
+  fire-and-forget catch defers to logging inside `recordGovernedDecision`.
+- **"`auto-vault.ts` swallows link-update errors."** It logs via
+  `console.error`; behavior change (rethrow) would alter the documented
+  best-effort design — left as-is.
+
+## Wave-3 advisories (reported, not fixed)
+
+- **Program-scoped innovation tables lack org columns** —
+  `negotiation_threads`, `auto_trace_links`, `template_usage`,
+  `submission_outcomes` are keyed by `program_id` under RLS bypass; program
+  ownership is never verified, so a guessed programId can cross tenants.
+  Fixing requires schema + service changes (org column or program-ownership
+  join).
+- **`mockVault.ts`** guards on `NODE_ENV === 'production'`; a misconfigured
+  NODE_ENV would let placeholder vault content reach export routes. Consider a
+  development/test allowlist instead of a production denylist.
+- **`vercel.json`** routes assume `server/index.js`, but the build outputs
+  `dist/index.js` — verify or retire the Vercel config.
+- **`server/ind-automation-service.ts`** spawns a Python service from an
+  `ind_automation/` directory that does not exist in the repo (knip-ignored).
+  Feature fails at runtime if invoked — implement or remove.
+- **`artifact-document-bridge.ts` / `s3-provider.ts`** return zeros/empty/false
+  on DB or S3 errors, indistinguishable from genuine empties (documented
+  graceful-degradation choices; revisit per-callsite).
+- **Client**: `streamMessage` has no concurrent-stream guard (two rapid sends
+  can interleave into the same assistant message); `createProject` mutation has
+  no `onError` surface; `services/` (Python/Celery) is E2E/staging-only and
+  should be documented as such.
+
+Verification: typecheck no-regression 0 errors; security suite green.
