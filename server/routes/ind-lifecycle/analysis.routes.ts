@@ -15,6 +15,7 @@ import { summarizeSequences } from '../../services/ind-lifecycle/ind-submission-
 import { buildIndDashboard } from '../../services/ind-lifecycle/ind-dashboard';
 import { buildPackageManifest } from '../../services/ind-lifecycle/ind-package-manifest';
 import { evaluateDispatchGate } from '../../services/ind-lifecycle/ind-dispatch-gate';
+import { buildIndCockpit, type SequenceGateSummary } from '../../services/ind-lifecycle/ind-cockpit';
 import { renderPackageManifestPdf } from '../../services/ind-lifecycle/ind-document-renderer';
 import { getSubmission, listSequences, listLeaves, getSequence } from '../../services/submission-service/submission-service';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, sendPdf } from './shared';
@@ -294,6 +295,80 @@ router.post('/submission/:id/dashboard', limiter, requireRole(AUTHOR), async (re
         overdueSafetyReports: b.overdueSafetyReports,
       }),
     );
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Submission cockpit — the program dashboard PLUS a dispatch-gate verdict for
+ * EVERY sequence in the submission, in one call. Body (all optional):
+ * { filingType?, readinessInput?, clockInput?, timelineInput?, sequenceValidationInput?, overdueSafetyReports? }.
+ */
+router.post('/submission/:id/cockpit', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const submissionId = Number(req.params.id);
+  if (!Number.isInteger(submissionId) || submissionId <= 0) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
+  }
+  const b = body(req);
+  const filingType = b.filingType === 'amendment' ? 'amendment' : 'initial';
+  try {
+    const sequences = await listSequences(submissionId, ctx);
+    const readiness = readinessFrom(b.readinessInput);
+    const clock = b.clockInput?.receiptDate ? evaluateRegulatoryClock(b.clockInput) : null;
+    const timeline = b.timelineInput?.receiptDate ? buildIndTimeline(b.timelineInput) : null;
+
+    // Evaluate a dispatch gate for each sequence (loads that sequence's leaves).
+    const sequenceGates: SequenceGateSummary[] = await Promise.all(
+      sequences.map(async (seq) => {
+        const leaves = await listLeaves(seq.id, ctx);
+        const sequenceValidation = validateSequenceLeaves({
+          filingType,
+          leaves: leaves.map((l) => ({ sectionCode: l.sectionCode })),
+        });
+        const manifest = buildPackageManifest({
+          sequenceNumber: seq.sequenceNumber,
+          submissionType: seq.type,
+          leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, lifecycleOp: l.lifecycleOp, checksum: l.checksum })),
+        });
+        const actions = deriveIndActionItems({
+          readiness,
+          clock,
+          timeline,
+          sequenceValidation,
+          overdueSafetyReports: b.overdueSafetyReports,
+        });
+        const verdict = evaluateDispatchGate({
+          sequenceValidation,
+          manifest,
+          criticalActions: actions.criticalCount,
+          sequenceStatus: seq.status,
+        });
+        return {
+          sequenceId: seq.id,
+          sequenceNumber: seq.sequenceNumber,
+          type: seq.type,
+          status: seq.status,
+          canDispatch: verdict.canDispatch,
+          blockerCount: verdict.blockers.length,
+          warningCount: verdict.warnings.length,
+          blockerCodes: verdict.blockers.map((x) => x.code),
+        };
+      }),
+    );
+
+    const dashboard = buildIndDashboard({
+      sequenceSummary: summarizeSequences(sequences),
+      readiness,
+      clock,
+      timeline,
+      sequenceValidation: validationFrom(b.sequenceValidationInput),
+      overdueSafetyReports: b.overdueSafetyReports,
+    });
+
+    res.json(buildIndCockpit({ dashboard, sequenceGates }));
   } catch (err) {
     fail(res, err);
   }
