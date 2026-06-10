@@ -124,6 +124,50 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   },
 };
 
+export const NARRATE_STATISTICAL_RESULT: AnaTool = {
+  name: 'narrate_statistical_result',
+  description:
+    'Turn a structured analysis result (effect measure + estimate + CI + p-value, plus per-arm ' +
+    'values) into correctly-hedged ICH-E3-style prose — determines significance from the confidence ' +
+    'interval (preferred) or p-value, distinguishes statistical from clinical significance, and flags ' +
+    'exploratory/post-hoc and multiplicity-uncontrolled analyses. Use when writing efficacy/safety ' +
+    'results so the language never overstates beyond the data.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      endpoint: { type: 'string', description: 'Endpoint name, e.g. "overall survival".' },
+      analysis_type: { type: 'string', enum: ['time_to_event', 'binary', 'continuous'] },
+      arms: {
+        type: 'array',
+        description: 'Per-arm values (median for TTE, rate/% for binary, mean change for continuous).',
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            n: { type: 'number' },
+            value: { type: 'string' },
+            unit: { type: 'string' },
+          },
+          required: ['name'],
+        },
+      },
+      measure: {
+        type: 'string',
+        enum: ['HR', 'OR', 'RR', 'rate ratio', 'risk difference', 'mean difference', 'rate difference'],
+      },
+      estimate: { type: 'number' },
+      ci_lower: { type: 'number' },
+      ci_upper: { type: 'number' },
+      ci_level: { type: 'number', description: 'Default 95.' },
+      p_value: { type: 'number' },
+      alpha: { type: 'number', description: 'Significance level (default 0.05).' },
+      exploratory: { type: 'boolean', description: 'Mark exploratory/post-hoc.' },
+      multiplicity_controlled: { type: 'boolean', description: 'Whether multiplicity was controlled.' },
+    },
+    required: ['endpoint', 'analysis_type'],
+  },
+};
+
 export const SCREEN_PROMOTIONAL_LANGUAGE: AnaTool = {
   name: 'screen_promotional_language',
   description:
@@ -4259,6 +4303,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ASSESS_REGULATORY_LANDSCAPE,
   LOOKUP_ICD10_CODE,
   DRAFT_SAFETY_NARRATIVE,
+  NARRATE_STATISTICAL_RESULT,
   SCREEN_PROMOTIONAL_LANGUAGE,
   MEDICAL_WRITING_GUIDANCE,
   MEDICAL_WRITING_REVIEW,

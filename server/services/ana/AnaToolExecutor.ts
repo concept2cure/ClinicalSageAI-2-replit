@@ -48,6 +48,7 @@ import {
 import { lookupIcd10 } from '../integrations/icd10-client.js';
 import { composeSafetyNarrative } from './safety-narrative.js';
 import { screenPromotionalLanguage } from './promotional-screening.js';
+import { narrateStatisticalResult, type AnalysisType, type EffectMeasure } from './statistical-narrator.js';
 import { initToolTelemetryPersistence } from './tool-telemetry-persistence.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 
@@ -446,6 +447,38 @@ registerToolHandler('medical_writing_guidance', async (input) => {
       'Apply this structure and these conventions, then ground every clinical claim with the evidence ' +
       'search tools and cite per the citation protocol.',
   });
+});
+
+// Statistical-results narrator — hedged ICH-E3 prose from a structured result.
+registerToolHandler('narrate_statistical_result', async (input) => {
+  const endpoint = typeof input.endpoint === 'string' ? input.endpoint : '';
+  const analysisType = ['time_to_event', 'binary', 'continuous'].includes(input.analysis_type as string)
+    ? (input.analysis_type as AnalysisType)
+    : undefined;
+  if (!endpoint.trim() || !analysisType) {
+    return JSON.stringify({ error: 'narrate_statistical_result requires endpoint and a valid analysis_type.' });
+  }
+  const num = (v: unknown): number | undefined => (typeof v === 'number' && !Number.isNaN(v) ? v : undefined);
+  const arms = Array.isArray(input.arms)
+    ? (input.arms as any[])
+        .filter(a => a && typeof a.name === 'string')
+        .map(a => ({ name: String(a.name), n: num(a.n), value: a.value, unit: typeof a.unit === 'string' ? a.unit : undefined }))
+    : undefined;
+  const result = narrateStatisticalResult({
+    endpoint,
+    analysisType,
+    arms,
+    measure: typeof input.measure === 'string' ? (input.measure as EffectMeasure) : undefined,
+    estimate: num(input.estimate),
+    ciLower: num(input.ci_lower),
+    ciUpper: num(input.ci_upper),
+    ciLevel: num(input.ci_level),
+    pValue: num(input.p_value),
+    alpha: num(input.alpha),
+    exploratory: typeof input.exploratory === 'boolean' ? input.exploratory : undefined,
+    multiplicityControlled: typeof input.multiplicity_controlled === 'boolean' ? input.multiplicity_controlled : undefined,
+  });
+  return JSON.stringify({ source: 'AnA Statistical Narrator', ...result });
 });
 
 // Promotional-language screen — FDA OPDP / EU advertising claims QC.
