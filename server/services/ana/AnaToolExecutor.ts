@@ -4604,6 +4604,7 @@ registerToolHandler('build_device_blueprint', async (input) => {
   }
   try {
     const { buildDeviceBlueprint } = await import('../market-specs/device-blueprint.js');
+    const { scorecardFromBlueprint } = await import('../market-specs/device-readiness-scorecard.js');
     const blueprint = buildDeviceBlueprint({
       submissionType: input.submission_type as never,
       classification: (input.classification ?? undefined) as never,
@@ -4612,9 +4613,33 @@ registerToolHandler('build_device_blueprint', async (input) => {
       present: (input.present ?? undefined) as never,
       equivalenceClaimed: input.equivalence_claimed === true,
     });
-    return JSON.stringify({ ok: true, ...blueprint });
+    return JSON.stringify({ ok: true, ...blueprint, scorecard: scorecardFromBlueprint(blueprint) });
   } catch (err) {
     return JSON.stringify({ error: `build_device_blueprint failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('build_global_device_strategy', async (input) => {
+  // Pure reference map — no tenant context required.
+  if (input.kind !== 'device' && input.kind !== 'ivd') return JSON.stringify({ error: 'kind must be one of: device, ivd.' });
+  const regions = Array.isArray(input.regions) ? (input.regions as string[]) : undefined;
+  try {
+    const { buildGlobalDeviceStrategy } = await import('../market-specs/device-global-strategy.js');
+    return JSON.stringify({ ok: true, ...buildGlobalDeviceStrategy(input.kind, regions as never) });
+  } catch (err) {
+    return JSON.stringify({ error: `build_global_device_strategy failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('get_regulatory_timeline', async (input) => {
+  // Pure reference data — no tenant context required.
+  const pathway = typeof input.pathway === 'string' ? input.pathway : '';
+  try {
+    const { getTimeline } = await import('../market-specs/regulatory-timelines.js');
+    const t = getTimeline(pathway);
+    return t ? JSON.stringify({ ok: true, ...t }) : JSON.stringify({ error: `No timeline for pathway "${pathway}".` });
+  } catch (err) {
+    return JSON.stringify({ error: `get_regulatory_timeline failed: ${err instanceof Error ? err.message : String(err)}` });
   }
 });
 

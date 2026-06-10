@@ -2840,6 +2840,33 @@ export const ASSESS_STORED_CER: AnaTool = {
   },
 };
 
+export const BUILD_GLOBAL_DEVICE_STRATEGY: AnaTool = {
+  name: 'build_global_device_strategy',
+  description:
+    "Map how a single device/IVD's evidence carries across the major regions (FDA, EU MDR, EU IVDR, Japan PMDA): which evidence is SHARED via internationally-recognised standards (ISO 14971/10993/13485, IEC 60601/62304/62366 — build once) vs. REGION-SPECIFIC (the clinical/performance argument, labelling, UDI, forms — produce per region), with each region's pathway + registration. `kind` ∈ device|ivd (eu_mdr applies to devices, eu_ivdr to IVDs); optional `regions` to filter. A planning map, not a strategy decision — and a 510(k) SE story does NOT satisfy an MDR CER/IVDR PER. Deterministic.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      kind: { type: 'string', enum: ['device', 'ivd'], description: 'Device or IVD.' },
+      regions: { type: 'array', items: { type: 'string', enum: ['fda', 'eu_mdr', 'eu_ivdr', 'pmda'] }, description: 'Optional region filter.' },
+    },
+    required: ['kind'],
+  },
+};
+
+export const GET_REGULATORY_TIMELINE: AnaTool = {
+  name: 'get_regulatory_timeline',
+  description:
+    "Get the published review-clock goals + milestones for a submission pathway (510k, de_novo, pma, mdr_ce, ivdr_ce, eu_cta, pmda_device, fda_nda, eu_maa): the ordered milestones (day offsets from submission), the target decision horizon, and whether the clock stops for applicant responses. Honest: EU MDR/IVDR Notified-Body assessment has NO statutory clock (returned as null, not an invented number). These are TARGET/GOAL timelines subject to clock stops and program changes — planning anchors, not commitments. Deterministic.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      pathway: { type: 'string', enum: ['510k', 'de_novo', 'pma', 'mdr_ce', 'ivdr_ce', 'eu_cta', 'pmda_device', 'fda_nda', 'eu_maa'], description: 'The submission pathway.' },
+    },
+    required: ['pathway'],
+  },
+};
+
 export const ASSESS_DISPATCH_READINESS: AnaTool = {
   name: 'assess_dispatch_readiness',
   description:
@@ -4455,6 +4482,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   GET_BIOCOMPATIBILITY_ENDPOINTS,
   BUILD_DEVICE_BLUEPRINT,
   ASSESS_STORED_CER,
+  BUILD_GLOBAL_DEVICE_STRATEGY,
+  GET_REGULATORY_TIMELINE,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,

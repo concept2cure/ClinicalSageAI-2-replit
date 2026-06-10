@@ -43,6 +43,8 @@ const SUBMISSION_TOOLS = [
   'get_biocompatibility_endpoints',
   'build_device_blueprint',
   'assess_stored_cer',
+  'build_global_device_strategy',
+  'get_regulatory_timeline',
   'assess_dispatch_readiness',
 ];
 
@@ -360,6 +362,33 @@ describe('submission AI tasks — tenant + input guards', () => {
     const handler = getToolHandler('assess_stored_cer')!;
     const out = JSON.parse(await handler({}, { organizationId: 1, userId: 2 } as ToolContext));
     expect(out.error).toMatch(/report_id is required/);
+  });
+
+  it('build_global_device_strategy maps device evidence across regions', async () => {
+    const handler = getToolHandler('build_global_device_strategy')!;
+    const out = JSON.parse(await handler({ kind: 'device' }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.regions.some((r: { region: string }) => r.region === 'eu_mdr')).toBe(true);
+    expect(out.sharedAcrossAll).toContain('risk_management');
+  });
+  it('build_global_device_strategy validates the kind', async () => {
+    const handler = getToolHandler('build_global_device_strategy')!;
+    const out = JSON.parse(await handler({ kind: 'nope' }, {} as ToolContext));
+    expect(out.error).toMatch(/kind must be one of/);
+  });
+  it('get_regulatory_timeline returns the 510(k) RTA + decision goal', async () => {
+    const handler = getToolHandler('get_regulatory_timeline')!;
+    const out = JSON.parse(await handler({ pathway: '510k' }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.targetDecisionDays).toBe(90);
+    expect(out.milestones.some((m: { id: string }) => m.id === 'rta')).toBe(true);
+  });
+  it('build_device_blueprint now includes a readiness scorecard', async () => {
+    const handler = getToolHandler('build_device_blueprint')!;
+    const out = JSON.parse(await handler({ submission_type: '510k', classification: { framework: 'fda', facts: { fdaClass: 'II', predicateAvailable: true } } }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(typeof out.scorecard?.score).toBe('number');
+    expect(out.scorecard?.level).toBeTruthy();
   });
 });
 

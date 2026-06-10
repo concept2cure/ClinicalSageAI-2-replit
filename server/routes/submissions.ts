@@ -591,7 +591,38 @@ router.post('/device/blueprint', limiter, requireRole(AUTHOR), async (req, res) 
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
     const { buildDeviceBlueprint } = await import('../services/market-specs/device-blueprint.js');
-    res.json(buildDeviceBlueprint(parsed.data as Parameters<typeof buildDeviceBlueprint>[0]));
+    const { scorecardFromBlueprint } = await import('../services/market-specs/device-readiness-scorecard.js');
+    const blueprint = buildDeviceBlueprint(parsed.data as Parameters<typeof buildDeviceBlueprint>[0]);
+    res.json({ ...blueprint, scorecard: scorecardFromBlueprint(blueprint) });
+  } catch (err) { fail(res, err); }
+});
+
+// Global multi-region device strategy (build once, file many).
+router.get('/device/global-strategy', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const kind = String(Array.isArray(req.query.kind) ? req.query.kind[0] : req.query.kind ?? '');
+  if (kind !== 'device' && kind !== 'ivd') {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'kind must be one of: device, ivd.' } });
+  }
+  const regRaw = Array.isArray(req.query.regions) ? req.query.regions[0] : req.query.regions;
+  const regions = typeof regRaw === 'string' && regRaw ? regRaw.split(',').map((s) => s.trim()).filter(Boolean) : undefined;
+  try {
+    const { buildGlobalDeviceStrategy } = await import('../services/market-specs/device-global-strategy.js');
+    res.json(buildGlobalDeviceStrategy(kind as 'device' | 'ivd', regions as never));
+  } catch (err) { fail(res, err); }
+});
+
+// Regulatory timeline for a pathway.
+router.get('/device/timeline', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const pathway = String(Array.isArray(req.query.pathway) ? req.query.pathway[0] : req.query.pathway ?? '');
+  try {
+    const { getTimeline } = await import('../services/market-specs/regulatory-timelines.js');
+    const t = getTimeline(pathway);
+    if (!t) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No timeline for pathway "${pathway}".` } });
+    res.json(t);
   } catch (err) { fail(res, err); }
 });
 
