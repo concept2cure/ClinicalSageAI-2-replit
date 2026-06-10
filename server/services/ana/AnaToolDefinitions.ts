@@ -2828,6 +2828,70 @@ export const CREATE_CLINICAL_STUDY: AnaTool = {
   },
 };
 
+export const CREATE_CLINICAL_INVESTIGATOR: AnaTool = {
+  name: 'create_clinical_investigator',
+  description:
+    "Register a clinical investigator for financial-disclosure tracking (21 CFR 54). Returns the investigator id for follow-up disclosure calls. Governed + audited; org-scoped from context.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      full_name: { type: 'string' },
+      role: { type: 'string', enum: ['principal_investigator', 'sub_investigator', 'coordinator', 'other'] },
+      institution: { type: 'string' },
+      study_id: { type: 'number', description: 'Optional clinical_studies.id to link.' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['full_name', 'role'],
+  },
+};
+
+export const CREATE_FINANCIAL_DISCLOSURE: AnaTool = {
+  name: 'create_financial_disclosure',
+  description:
+    "Open a 21 CFR 54 financial disclosure for an investigator. form_type is DERIVED from has_disclosable_interests (false → Form FDA 3454 certification of none; true → Form FDA 3455 disclosure). Returns the disclosure id. Creates a DRAFT — certification (e-signature) is done in the disclosure panel, not here.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      investigator_id: { type: 'number' },
+      submission_id: { type: 'number', description: 'The filing this disclosure supports (Module 1).' },
+      has_disclosable_interests: { type: 'boolean' },
+      disclosure_period_start: { type: 'string', description: 'YYYY-MM-DD.' },
+      disclosure_period_end: { type: 'string', description: 'YYYY-MM-DD.' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['investigator_id', 'has_disclosable_interests'],
+  },
+};
+
+export const ADD_DISCLOSURE_INTEREST: AnaTool = {
+  name: 'add_disclosure_interest',
+  description:
+    "Add a disclosable financial interest (one of the four 21 CFR 54.2 categories) to a financial disclosure (a Form FDA 3455). Org-scoped, governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      disclosure_id: { type: 'number' },
+      interest_type: { type: 'string', enum: ['COMPENSATION_BY_OUTCOME', 'EQUITY_INTEREST', 'PROPRIETARY_INTEREST', 'SIGNIFICANT_PAYMENTS'] },
+      description: { type: 'string' },
+      monetary_value: { type: 'number' },
+      arrangements_to_minimize_bias: { type: 'string' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['disclosure_id', 'interest_type', 'description'],
+  },
+};
+
+export const REVIEW_FINANCIAL_DISCLOSURE: AnaTool = {
+  name: 'review_financial_disclosure',
+  description:
+    "Run the deterministic 21 CFR 54 completeness gate on a financial disclosure (read-only). Returns cited findings + a risk level (high blocks certification). Use this to tell the user what is missing before they certify.",
+  input_schema: {
+    type: 'object',
+    properties: { disclosure_id: { type: 'number' } },
+    required: ['disclosure_id'],
+  },
+};
+
 export const LOG_STUDY_DEVIATION: AnaTool = {
   name: 'log_study_deviation',
   description:
@@ -4260,6 +4324,10 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,
+  CREATE_CLINICAL_INVESTIGATOR,
+  CREATE_FINANCIAL_DISCLOSURE,
+  ADD_DISCLOSURE_INTEREST,
+  REVIEW_FINANCIAL_DISCLOSURE,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,
