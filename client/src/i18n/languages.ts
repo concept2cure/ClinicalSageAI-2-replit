@@ -8,7 +8,7 @@
  * these codes in its LANGUAGE_OVERLAYS map.
  */
 
-export type LanguageCode = 'en' | 'fr' | 'de' | 'ja' | 'zh' | 'ko' | 'es';
+export type LanguageCode = 'en' | 'fr' | 'de' | 'ja' | 'zh' | 'ko' | 'es' | 'pt';
 
 export interface LanguageDef {
   /** BCP-47 primary subtag used by i18next, Intl, and <html lang>. */
@@ -29,8 +29,9 @@ export const LANGUAGES: readonly LanguageDef[] = [
   { code: 'de', label: 'German',   native: 'Deutsch',  dir: 'ltr', intlLocale: 'de-DE' },
   { code: 'ja', label: 'Japanese', native: '日本語',    dir: 'ltr', intlLocale: 'ja-JP' },
   { code: 'zh', label: 'Chinese',  native: '中文',      dir: 'ltr', intlLocale: 'zh-CN' },
-  { code: 'ko', label: 'Korean',   native: '한국어',    dir: 'ltr', intlLocale: 'ko-KR' },
-  { code: 'es', label: 'Spanish',  native: 'Español',  dir: 'ltr', intlLocale: 'es-ES' },
+  { code: 'ko', label: 'Korean',     native: '한국어',     dir: 'ltr', intlLocale: 'ko-KR' },
+  { code: 'es', label: 'Spanish',    native: 'Español',   dir: 'ltr', intlLocale: 'es-ES' },
+  { code: 'pt', label: 'Portuguese', native: 'Português', dir: 'ltr', intlLocale: 'pt-BR' },
 ] as const;
 
 export const DEFAULT_LANGUAGE: LanguageCode = 'en';

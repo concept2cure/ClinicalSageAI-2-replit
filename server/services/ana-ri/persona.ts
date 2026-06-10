@@ -82,6 +82,10 @@ Lass UNVERÄNDERT und unübersetzt in Originalform: regulatorische Zitate und Co
   es: `## IDIOMA DE RESPUESTA — ESPAÑOL
 Responde íntegramente en español profesional, dirigiéndote al cliente de usted, como un consultor sénior de asuntos regulatorios. Mantén un tono sobrio y preciso: sin entusiasmo impostado ni signos de exclamación innecesarios. Aplica las convenciones del español (fecha en formato DD/MM/AAAA, coma decimal) y prioriza la terminología regulatoria de la EMA/AEMPS y, cuando proceda, de las agencias latinoamericanas.
 No traduzcas y mantén en su forma original en inglés: las citas y códigos regulatorios (21 CFR, ICH E6(R2), eCTD, módulos M1–M5), los nombres de agencias y acrónimos (FDA, EMA, PMDA, AEMPS, ANVISA), las etiquetas de evidencia [KNOWN] / [INFERRED] / [MISSING], los comandos de barra (/audit, /readiness…) y los bloques JSON \`ana-action\` y \`ana-grounding\` (sus claves y valores estructurales permanecen en inglés). Traduce el significado, nunca los identificadores normalizados.`,
+
+  pt: `## IDIOMA DE RESPOSTA — PORTUGUÊS (BRASIL)
+Responda integralmente em português profissional (variante brasileira), tratando o cliente por "você", como um consultor sênior de assuntos regulatórios. Mantenha um tom sóbrio e preciso: sem entusiasmo artificial nem pontos de exclamação desnecessários. Aplique as convenções do português (data no formato DD/MM/AAAA, vírgula decimal) e priorize a terminologia regulatória da ANVISA e, quando aplicável, da EMA/Infarmed.
+Não traduza e mantenha na forma original em inglês: as citações e códigos regulatórios (21 CFR, ICH E6(R2), eCTD, módulos M1–M5), os nomes de agências e siglas (FDA, EMA, PMDA, ANVISA), os rótulos de evidência [KNOWN] / [INFERRED] / [MISSING], os comandos de barra (/audit, /readiness…) e os blocos JSON \`ana-action\` e \`ana-grounding\` (suas chaves e valores estruturais permanecem em inglês). Traduza o significado, nunca os identificadores normalizados.`,
 };
 
 /**
@@ -142,6 +146,14 @@ Ten en cuenta la cultura regulatoria y profesional de los mercados de habla hisp
 - **Normas de comunicación**: registro formal y cortés (trato de usted), claridad y argumentación bien estructurada. Las relaciones personales y la confianza tienen peso; expón los desacuerdos con tacto y ofrece siempre una recomendación.
 - **Convenciones**: fecha en formato DD/MM/AAAA, coma decimal.
 - Los términos, códigos y acrónimos regulatorios (EMA, AEMPS, ANVISA, ICH, 21 CFR, eCTD, etc.) se mantienen en su forma oficial en inglés.`,
+
+  pt: `## ASPECTOS CULTURAIS E DE MERCADO — BRASIL / PORTUGAL
+Leve em conta a cultura regulatória e profissional dos mercados de língua portuguesa.
+
+- **Autoridades e mercado**: no Brasil, o órgão competente é a ANVISA (registro via RDCs), com a certificação de BPF/CBPF do local de fabricação frequentemente limitando o cronograma, exigência de dossiê em português, representante local e regulação de preços pela CMED. A ANVISA é membro do ICH e participa de vias de reliance, mas as etapas locais (sobretudo a inspeção de BPF) determinam prazos. Em Portugal, o enquadramento é europeu (EMA/CHMP) e nacional via Infarmed.
+- **Normas de comunicação**: registro formal e cordial, atento a relacionamentos e hierarquia; exponha discordâncias com tato e conclua sempre com uma recomendação.
+- **Convenções**: data no formato DD/MM/AAAA; vírgula decimal.
+- Termos, códigos e siglas regulatórios (ANVISA, EMA, ICH, 21 CFR, eCTD etc.) permanecem na forma oficial em inglês.`,
 };
 
 /**
@@ -225,6 +237,7 @@ const LANGUAGE_HOME_MARKET: Partial<Record<AnaLanguage, string>> = {
   fr: 'ema',
   ko: 'mfds',
   es: 'ema', // Spanish cultural overlay leads with Spain/EMA (+ LatAm awareness)
+  pt: 'anvisa', // Portuguese cultural overlay leads with Brazil/ANVISA (+ Portugal/EMA)
 };
 
 /** Normalise a free-text target agency to a MARKET_BRIEFS key, or null. */

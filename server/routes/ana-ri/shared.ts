@@ -125,4 +125,5 @@ export const VALID_LANGUAGES: Set<string> = new Set<string>([
   'zh',
   'ko',
   'es',
+  'pt',
 ]);

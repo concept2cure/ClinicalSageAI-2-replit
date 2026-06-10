@@ -563,6 +563,10 @@ describe('AnA RI Persona', () => {
     const es = buildAnaRISystemPrompt({ language: 'es' });
     expect(es).toContain('IDIOMA DE RESPUESTA — ESPAÑOL');
     expect(es).toContain('de usted'); // formal register
+
+    const pt = buildAnaRISystemPrompt({ language: 'pt' });
+    expect(pt).toContain('IDIOMA DE RESPOSTA — PORTUGUÊS (BRASIL)');
+    expect(pt).toContain('ANVISA');
   });
 
   it('keeps regulatory identifiers canonical while localizing prose', () => {
@@ -605,6 +609,11 @@ describe('AnA RI Persona', () => {
     expect(es).toContain('ESPAÑA / LATINOAMÉRICA');
     expect(es).toContain('AEMPS');
     expect(es).toContain('ANVISA');
+
+    const pt = buildAnaRISystemPrompt({ language: 'pt' });
+    expect(pt).toContain('BRASIL / PORTUGAL');
+    expect(pt).toContain('ANVISA');
+    expect(pt).toContain('Infarmed');
   });
 
   it('does not add any cultural overlay for English', () => {
