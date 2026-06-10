@@ -447,3 +447,37 @@ passes (baseline 61); restored bridge suite 7/7; security suite 183/183.
   `/health` and `/docs` deliberately open; position-based
   `router.use(requireApiKey)` plus per-route scope/quota guards cover all data
   routes. No structural gate needed while the single-mount invariant holds.
+
+---
+
+# Wave 5 — 2026-06-10 (server/src reclamation + coverage restoration)
+
+- **`server/src/` transitive reachability analysis**: of the parallel tree, 22
+  files are reachable from 8 verified entry points (control-plane kernel,
+  observability middleware, stability/control-plane/pm-settings routers,
+  reg/evidence, manufacturingReviewer, reg/rpi). **32 dead files deleted
+  (~3,400 lines)**: the never-wired reg pipeline (`gatekeeper`, `preflight`,
+  `playbook`, `impact`, `timeline`, `upstream`, `emailParse`, `sign`,
+  `digest`, `policy` + orphan `policy.schema.json`), five dead `services/ai/*`
+  JS modules, duplicate `digest/ectd/ectdMap/gatekeeper/policy` copies,
+  `mw/rbac`, `cache.ts`, `lumen/extraction` prompt files, and an orphan SQL
+  script. One reachability false positive caught by the typecheck gate:
+  `integrations/gmail.ts` is dynamically imported by
+  `correspondence-search.ts` — restored; a follow-up string sweep confirmed no
+  other dynamic references to the deleted set.
+- **Portfolio metrics now real**: `m3_missing` and `stability_cov_m` computed
+  from `reg_m3_sections` in overview + CSV; the CSV previously wrote hardcoded
+  zeros for ALL metric columns including IR/obligation counts that overview
+  already computed. Unimplemented counts are null/empty, never zero.
+- **Three skipped test suites restored (31 tests)**:
+  `beta-ops-telemetry` rewritten against the current POST /event / POST /issue
+  / GET /events contract (12 tests incl. validation, fail-open persistence,
+  50MB log cap); `smoke.test.ts` Stage 4 un-skipped (its body had already been
+  rewritten for the bootstrap registrars — only the stale `.skip` remained;
+  all mount assertions verified against current sources, 18 tests);
+  `ana-cortex-correlation` un-skipped (the ESM blocker was fixed by
+  production's `jwtVerify.js`/`environment.js` shims since the skip was
+  added). Combined with the bridge suite: **38 restored tests passing**.
+- Advisory note: `rpi.ts` contains a documented `trendRisk = 85` proxy
+  component (5% weight) — a disclosed modeling simplification, left for a
+  product decision rather than silently altered.
