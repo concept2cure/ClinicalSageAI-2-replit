@@ -20,6 +20,16 @@ export interface SearchOptions {
   tag?: string;
   /** Max results (default 10). */
   limit?: number;
+  /** Number of results to skip (pagination). Default 0. */
+  offset?: number;
+}
+
+/** A paginated envelope for list/search responses. */
+export interface Paginated<T> {
+  rows: T[];
+  total: number;
+  limit: number;
+  offset: number;
 }
 
 export interface ScoredEntry {
@@ -156,4 +166,25 @@ export function search(query: string, opts: SearchOptions = {}): ScoredEntry[] {
 
   scored.sort((a, b) => b.score - a.score || a.entry.id.localeCompare(b.entry.id));
   return scored.slice(0, opts.limit ?? 10);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Paginated variants (for UI list virtualization — return total + window)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Structured list with a total count and an explicit page window. */
+export function listEntriesPaged(opts: SearchOptions = {}): Paginated<KnowledgeEntry> {
+  const all = IVD_KNOWLEDGE_BASE.filter(e => matchesFilters(e, opts));
+  const limit = Math.min(200, Math.max(1, opts.limit ?? 50));
+  const offset = Math.max(0, opts.offset ?? 0);
+  return { rows: all.slice(offset, offset + limit), total: all.length, limit, offset };
+}
+
+/** Relevance-ranked search with a total count and an explicit page window. */
+export function searchPaged(query: string, opts: SearchOptions = {}): Paginated<ScoredEntry> {
+  // Score the whole filtered pool, then window — so `total` reflects all matches.
+  const all = search(query, { ...opts, limit: IVD_KNOWLEDGE_BASE.length, offset: 0 });
+  const limit = Math.min(200, Math.max(1, opts.limit ?? 10));
+  const offset = Math.max(0, opts.offset ?? 0);
+  return { rows: all.slice(offset, offset + limit), total: all.length, limit, offset };
 }

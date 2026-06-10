@@ -1,0 +1,259 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "IVD Platform API",
+    "version": "1.0.0",
+    "description": "API contract for the IVD lifecycle engines, knowledge base, design/risk + QMS persistence, and saved-assessment persistence. All endpoints require a bearer token; persisted resources are organization-scoped. Generated for frontend client codegen (UI/DB readiness workstream)."
+  },
+  "servers": [{ "url": "/api" }],
+  "security": [{ "bearerAuth": [] }],
+  "tags": [
+    { "name": "knowledge", "description": "IVD scientific/legal/regulatory knowledge corpus (read-only)." },
+    { "name": "lifecycle", "description": "Stateless IVD lifecycle calculators (knowledge-cited)." },
+    { "name": "assessments", "description": "Persisted, audited saved calculator results + generated documents." },
+    { "name": "design-risk", "description": "Design controls (DHF) + ISO 14971 risk management (persisted)." },
+    { "name": "qms", "description": "Quality Management System (persisted)." }
+  ],
+  "paths": {
+    "/ivd-knowledge": {
+      "get": {
+        "tags": ["knowledge"], "summary": "Corpus stats + taxonomy",
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/KnowledgeIndex" } } } } }
+      }
+    },
+    "/ivd-knowledge/search": {
+      "get": {
+        "tags": ["knowledge"], "summary": "Relevance-ranked, paginated search",
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string" } },
+          { "$ref": "#/components/parameters/domain" },
+          { "$ref": "#/components/parameters/jurisdiction" },
+          { "name": "topic", "in": "query", "schema": { "type": "string" } },
+          { "name": "tag", "in": "query", "schema": { "type": "string" } },
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/offset" }
+        ],
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SearchResponse" } } } } }
+      }
+    },
+    "/ivd-knowledge/entries": {
+      "get": {
+        "tags": ["knowledge"], "summary": "List full entries (paginated, filtered)",
+        "parameters": [
+          { "$ref": "#/components/parameters/domain" },
+          { "$ref": "#/components/parameters/jurisdiction" },
+          { "name": "topic", "in": "query", "schema": { "type": "string" } },
+          { "name": "tag", "in": "query", "schema": { "type": "string" } },
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/offset" }
+        ],
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EntriesPage" } } } } }
+      }
+    },
+    "/ivd-knowledge/entries/{id}": {
+      "get": {
+        "tags": ["knowledge"], "summary": "Single entry",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/KnowledgeEntry" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/ivd-knowledge/entries/{id}/related": {
+      "get": {
+        "tags": ["knowledge"], "summary": "Resolved related entries",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "id": { "type": "string" }, "related": { "type": "array", "items": { "$ref": "#/components/schemas/KnowledgeEntry" } } } } } } } }
+      }
+    },
+    "/ivd-knowledge/domains": {
+      "get": { "tags": ["knowledge"], "summary": "Distinct domains", "responses": { "200": { "description": "OK" } } }
+    },
+    "/ivd-knowledge/topics": {
+      "get": { "tags": ["knowledge"], "summary": "Distinct topics (optionally by domain)", "parameters": [{ "$ref": "#/components/parameters/domain" }], "responses": { "200": { "description": "OK" } } }
+    },
+
+    "/ivd-lifecycle/classify/ivdr": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "IVDR Annex VIII classification (knowledge-cited)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/IvdrClassificationInput" } } } },
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/IvdrClassificationResult" } } } }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
+    "/ivd-lifecycle/cdx/pair": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "Biomarker-aware companion-diagnostic pairing",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["biomarker"], "properties": { "biomarker": { "type": "string" }, "therapeuticProduct": { "type": "string" }, "elements": { "type": "object", "additionalProperties": { "type": "boolean" } } } } } } },
+        "responses": { "200": { "description": "OK" }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
+    "/ivd-lifecycle/study-design": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "Analytical + clinical study-program designer",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["assayType", "intendedUse"], "properties": { "assayType": { "type": "string", "enum": ["quantitative", "qualitative", "ihc", "ngs", "molecular"] }, "intendedUse": { "type": "string", "enum": ["cdx", "screening", "diagnosis", "monitoring", "aid_to_diagnosis"] }, "specimen": { "type": "string", "enum": ["tissue", "plasma_ctdna", "blood", "other"] }, "biomarker": { "type": "string" }, "euIvdr": { "type": "boolean" } } } } } },
+        "responses": { "200": { "description": "OK" }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
+    "/ivd-lifecycle/review-simulation": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "Mock FDA / notified-body deficiency simulation",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["pathway", "assayType"], "properties": { "pathway": { "type": "string", "enum": ["510k", "de_novo", "pma", "eu_ivdr"] }, "assayType": { "type": "string", "enum": ["quantitative", "qualitative", "ihc", "ngs", "molecular"] }, "intendedUse": { "type": "string" }, "biomarker": { "type": "string" }, "hasSoftware": { "type": "boolean" }, "evidence": { "type": "object", "additionalProperties": { "type": "boolean" } } } } } } },
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReviewResult" } } } }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
+    "/ivd-lifecycle/{calculator}": {
+      "post": {
+        "tags": ["lifecycle"],
+        "summary": "Stateless analytical/software/change/manufacturing/surveillance/authoring/registration calculators",
+        "description": "Generic entry for the remaining lifecycle calculators (stability/real-time, stability/accelerated, carryover, hook-effect, recovery, cutoff, traceability, scientific-validity, software/safety-class, software/sdlc, software/sbom, software/cybersecurity, change/fda-510k, change/eu-significant, process-validation, process-capability, lot-release, signal/disproportionality, authoring/emdr, authoring/mir, authoring/fsn, authoring/psur, registration/fda, registration/eu, declaration-of-conformity, pathways/readiness). Each accepts the engine's input object and returns its typed result plus a `knowledge` citation block.",
+        "parameters": [{ "name": "calculator", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } },
+        "responses": { "200": { "description": "Typed engine result (+ knowledge citations)" }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
+    "/ivd-lifecycle/pathways": {
+      "get": { "tags": ["lifecycle"], "summary": "Global market-access pathway descriptors", "responses": { "200": { "description": "OK" } } }
+    },
+
+    "/ivd-assessments": {
+      "get": {
+        "tags": ["assessments"], "summary": "List saved assessments",
+        "parameters": [
+          { "name": "type", "in": "query", "schema": { "type": "string" } },
+          { "name": "program_id", "in": "query", "schema": { "type": "string" } },
+          { "$ref": "#/components/parameters/limit" }
+        ],
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "rows": { "type": "array", "items": { "$ref": "#/components/schemas/Assessment" } }, "count": { "type": "integer" } } } } } }, "403": { "$ref": "#/components/responses/OrgRequired" } }
+      },
+      "post": {
+        "tags": ["assessments"], "summary": "Save an assessment",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AssessmentInput" } } } },
+        "responses": { "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Assessment" } } } }, "422": { "$ref": "#/components/responses/ValidationError" }, "403": { "$ref": "#/components/responses/OrgRequired" } }
+      }
+    },
+    "/ivd-assessments/{id}": {
+      "get": {
+        "tags": ["assessments"], "summary": "Single assessment",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Assessment" } } } }, "404": { "$ref": "#/components/responses/NotFound" } }
+      },
+      "delete": {
+        "tags": ["assessments"], "summary": "Soft-delete an assessment",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Deleted" }, "404": { "$ref": "#/components/responses/NotFound" } }
+      }
+    },
+    "/ivd-assessments/documents": {
+      "get": { "tags": ["assessments"], "summary": "List generated documents", "responses": { "200": { "description": "OK" } } },
+      "post": {
+        "tags": ["assessments"], "summary": "Save a generated document (eMDR/MIR/FSN/PSUR/DoC)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["docType", "payload"], "properties": { "docType": { "type": "string", "enum": ["emdr", "mir", "fsn", "psur", "declaration_of_conformity"] }, "title": { "type": "string" }, "payload": { "type": "object" }, "status": { "type": "string" }, "programId": { "type": "string" } } } } } },
+        "responses": { "201": { "description": "Created" }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": { "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" } },
+    "parameters": {
+      "domain": { "name": "domain", "in": "query", "schema": { "type": "string", "enum": ["regulatory", "scientific", "legal", "standard"] } },
+      "jurisdiction": { "name": "jurisdiction", "in": "query", "schema": { "type": "string", "enum": ["US", "EU", "UK", "JP", "CN", "BR", "CA", "AU", "global"] } },
+      "limit": { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 200 } },
+      "offset": { "name": "offset", "in": "query", "schema": { "type": "integer", "minimum": 0 } }
+    },
+    "responses": {
+      "NotFound": { "description": "Not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "ValidationError": { "description": "Validation failed (422)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "OrgRequired": { "description": "Organization context required (403)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+    },
+    "schemas": {
+      "Error": { "type": "object", "properties": { "error": { "type": "string" }, "detail": { "type": "string" } }, "required": ["error"] },
+      "Citation": { "type": "object", "required": ["label", "source"], "properties": { "label": { "type": "string" }, "source": { "type": "string" }, "url": { "type": "string", "format": "uri" } } },
+      "AcceptanceCriterion": { "type": "object", "required": ["metric", "typical"], "properties": { "metric": { "type": "string" }, "typical": { "type": "string" }, "note": { "type": "string" } } },
+      "KnowledgeEntry": {
+        "type": "object",
+        "required": ["id", "domain", "topic", "title", "jurisdictions", "appliesTo", "summary", "detail", "keyPoints", "citations", "tags", "lastReviewed"],
+        "properties": {
+          "id": { "type": "string" },
+          "domain": { "type": "string", "enum": ["regulatory", "scientific", "legal", "standard"] },
+          "topic": { "type": "string" },
+          "title": { "type": "string" },
+          "jurisdictions": { "type": "array", "items": { "type": "string" } },
+          "appliesTo": { "type": "array", "items": { "type": "string", "enum": ["ivd", "cdx", "samd", "ldt", "ruo", "device"] } },
+          "summary": { "type": "string" },
+          "detail": { "type": "string" },
+          "keyPoints": { "type": "array", "items": { "type": "string" } },
+          "criteria": { "type": "array", "items": { "$ref": "#/components/schemas/AcceptanceCriterion" } },
+          "pitfalls": { "type": "array", "items": { "type": "string" } },
+          "citations": { "type": "array", "items": { "$ref": "#/components/schemas/Citation" } },
+          "related": { "type": "array", "items": { "type": "string" } },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "lastReviewed": { "type": "string", "format": "date" }
+        }
+      },
+      "KnowledgeIndex": { "type": "object", "properties": { "name": { "type": "string" }, "entries": { "type": "integer" }, "corpusVersion": { "type": "string" }, "domains": { "type": "array", "items": { "type": "string" } }, "topics": { "type": "array", "items": { "type": "string" } } } },
+      "SearchHit": { "type": "object", "properties": { "id": { "type": "string" }, "domain": { "type": "string" }, "topic": { "type": "string" }, "title": { "type": "string" }, "summary": { "type": "string" }, "jurisdictions": { "type": "array", "items": { "type": "string" } }, "tags": { "type": "array", "items": { "type": "string" } }, "score": { "type": "number" }, "matchedIn": { "type": "array", "items": { "type": "string" } } } },
+      "SearchResponse": { "type": "object", "properties": { "query": { "type": "string" }, "total": { "type": "integer" }, "limit": { "type": "integer" }, "offset": { "type": "integer" }, "count": { "type": "integer" }, "results": { "type": "array", "items": { "$ref": "#/components/schemas/SearchHit" } } } },
+      "EntriesPage": { "type": "object", "properties": { "total": { "type": "integer" }, "limit": { "type": "integer" }, "offset": { "type": "integer" }, "count": { "type": "integer" }, "rows": { "type": "array", "items": { "$ref": "#/components/schemas/KnowledgeEntry" } } } },
+      "KnowledgeLink": { "type": "object", "properties": { "id": { "type": "string" }, "title": { "type": "string" }, "summary": { "type": "string" }, "citations": { "type": "array", "items": { "$ref": "#/components/schemas/Citation" } } } },
+      "IvdrClassificationInput": {
+        "type": "object", "required": ["intendedPurpose"],
+        "properties": {
+          "deviceName": { "type": "string" }, "intendedPurpose": { "type": "string" },
+          "isSelfTest": { "type": "boolean" }, "isNearPatient": { "type": "boolean" },
+          "isCompanionDiagnostic": { "type": "boolean" }, "detectsTransmissibleAgent": { "type": "boolean" },
+          "bloodScreening": { "type": "boolean" }, "detectsCancer": { "type": "boolean" },
+          "prenatalScreening": { "type": "boolean" }, "riskToPatient": { "type": "string", "enum": ["low", "medium", "high"] },
+          "isGeneticTest": { "type": "boolean" }, "analytes": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "RuleTraceEntry": { "type": "object", "properties": { "rule": { "type": "string" }, "description": { "type": "string" }, "matched": { "type": "boolean" } } },
+      "IvdrClassificationResult": {
+        "type": "object",
+        "properties": {
+          "classification": { "type": "string", "enum": ["A", "B", "C", "D"] },
+          "ruleTrace": { "type": "array", "items": { "$ref": "#/components/schemas/RuleTraceEntry" } },
+          "matchedRules": { "type": "array", "items": { "$ref": "#/components/schemas/RuleTraceEntry" } },
+          "notifiedBodyRequired": { "type": "boolean" },
+          "knowledgeRefs": { "type": "array", "items": { "type": "string" } },
+          "knowledge": { "type": "array", "items": { "$ref": "#/components/schemas/KnowledgeLink" } }
+        }
+      },
+      "ReviewFinding": { "type": "object", "properties": { "severity": { "type": "string", "enum": ["major", "deficiency", "minor", "info"] }, "area": { "type": "string" }, "finding": { "type": "string" }, "recommendation": { "type": "string" }, "knowledgeRef": { "type": "string" } } },
+      "ReviewResult": {
+        "type": "object",
+        "properties": {
+          "pathway": { "type": "string" },
+          "findings": { "type": "array", "items": { "$ref": "#/components/schemas/ReviewFinding" } },
+          "counts": { "type": "object", "additionalProperties": { "type": "integer" } },
+          "verdict": { "type": "string", "enum": ["likely_acceptance", "additional_information_likely", "not_substantially_complete"] },
+          "citations": { "type": "array", "items": { "type": "object" } }
+        }
+      },
+      "AssessmentInput": {
+        "type": "object", "required": ["assessmentType", "result"],
+        "properties": {
+          "assessmentType": { "type": "string" },
+          "title": { "type": "string" },
+          "inputs": { "type": "object" },
+          "result": { "type": "object" },
+          "verdict": { "type": "string" },
+          "programId": { "type": "string" },
+          "corpusVersion": { "type": "string" },
+          "engineVersion": { "type": "string" }
+        }
+      },
+      "Assessment": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" }, "organization_id": { "type": "integer" }, "program_id": { "type": "string", "nullable": true },
+          "assessment_type": { "type": "string" }, "title": { "type": "string", "nullable": true },
+          "inputs": { "type": "object" }, "result": { "type": "object" }, "verdict": { "type": "string", "nullable": true },
+          "corpus_version": { "type": "string", "nullable": true }, "engine_version": { "type": "string", "nullable": true },
+          "created_by": { "type": "string", "nullable": true }, "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }, "deleted_at": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      }
+    }
+  }
+}
