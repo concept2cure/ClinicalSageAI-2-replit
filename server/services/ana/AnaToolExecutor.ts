@@ -35,6 +35,7 @@ import {
   classifyResult,
   getToolReliability,
   getUnhealthyTools,
+  getLowYieldTools,
   isTelemetryPersistenceEnabled,
 } from './tool-telemetry.js';
 import { initToolTelemetryPersistence } from './tool-telemetry-persistence.js';
@@ -108,8 +109,8 @@ export function registerToolHandler(name: string, handler: ToolHandler): void {
     const start = Date.now();
     try {
       const result = await handler(input, ctx);
-      const { outcome, note } = classifyResult(result);
-      recordToolOutcome(name, outcome, Date.now() - start, note, orgId);
+      const { outcome, note, resultYield } = classifyResult(result);
+      recordToolOutcome(name, outcome, Date.now() - start, note, orgId, resultYield);
       return result;
     } catch (e) {
       recordToolOutcome(name, 'failure', Date.now() - start, e instanceof Error ? e.message : String(e), orgId);
@@ -435,6 +436,13 @@ registerToolHandler('describe_capabilities', async (_input, ctx) => {
       consecutiveFailures: t.consecutiveFailures,
       lastError: t.lastError,
     }));
+    // Working-but-unhelpful: succeed yet usually return nothing for this scope.
+    const lowYield = getLowYieldTools(4, 0.75, orgId).map(t => ({
+      tool: t.tool,
+      emptyRate: Math.round(t.emptyRate * 100) / 100,
+      resultfulCalls: t.resultfulCalls,
+      emptyCalls: t.emptyCalls,
+    }));
 
     return JSON.stringify({
       source: 'AnA Capability Introspection',
@@ -451,15 +459,17 @@ registerToolHandler('describe_capabilities', async (_input, ctx) => {
         toolsUsedThisSession: reliability.length,
         reliability,
         unhealthy,
+        lowYield,
         // When persistence is enabled, reliability is learned across restarts.
         learningPersisted: isTelemetryPersistenceEnabled(),
       },
       guidance:
         'Only offer or attempt tools whose integration is configured. For configured:false entries, ' +
         'tell the user what unlocks them (the `requires` field). configured:null means org context ' +
-        'is needed to resolve — ask the user to open a project. Treat tools listed in ' +
-        'execution.unhealthy as currently unreliable: warn the user and prefer alternatives until ' +
-        'they recover.',
+        'is needed to resolve — ask the user to open a project. Treat tools in execution.unhealthy ' +
+        'as currently unreliable (warn + prefer alternatives until they recover). Tools in ' +
+        'execution.lowYield work but usually return nothing for this scope — broaden the query or ' +
+        'set expectations rather than relying on them.',
     });
   } catch (e) {
     return JSON.stringify({

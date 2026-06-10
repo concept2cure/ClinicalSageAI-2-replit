@@ -31,7 +31,14 @@ export interface ToolReliability {
   lastUsedAt: string | null;
   /** Calls missing schema-required fields (report-only). */
   contractViolations: number;
+  /** Successful calls that returned ≥1 result (the tool actually delivered). */
+  resultfulCalls: number;
+  /** Successful calls that returned zero results (working, but unhelpful). */
+  emptyCalls: number;
 }
+
+/** Result-yield signal derived from a successful handler's payload. */
+export type ResultYield = 'results' | 'empty';
 
 // Global (cross-tenant) reliability, plus an optional per-organization breakdown.
 // Every outcome updates global; when an org is supplied it also updates that
@@ -52,6 +59,8 @@ function newEntry(tool: string): ToolReliability {
     lastError: null,
     lastUsedAt: null,
     contractViolations: 0,
+    resultfulCalls: 0,
+    emptyCalls: 0,
   };
 }
 
@@ -75,7 +84,13 @@ function orgMap(orgId: string): Map<string, ToolReliability> {
 
 export type ToolOutcome = 'success' | 'degraded' | 'failure';
 
-function applyOutcome(e: ToolReliability, outcome: ToolOutcome, latencyMs: number, errorNote?: string): void {
+function applyOutcome(
+  e: ToolReliability,
+  outcome: ToolOutcome,
+  latencyMs: number,
+  errorNote?: string,
+  resultYield?: ResultYield
+): void {
   e.calls++;
   // Running mean keeps this O(1) with no history buffer.
   e.avgLatencyMs = Math.round(e.avgLatencyMs + (latencyMs - e.avgLatencyMs) / e.calls);
@@ -83,6 +98,8 @@ function applyOutcome(e: ToolReliability, outcome: ToolOutcome, latencyMs: numbe
   if (outcome === 'success') {
     e.successes++;
     e.consecutiveFailures = 0;
+    if (resultYield === 'results') e.resultfulCalls++;
+    else if (resultYield === 'empty') e.emptyCalls++;
   } else {
     if (outcome === 'degraded') e.degraded++;
     else e.failures++;
@@ -100,11 +117,12 @@ export function recordToolOutcome(
   outcome: ToolOutcome,
   latencyMs: number,
   errorNote?: string,
-  orgId?: string | number | null
+  orgId?: string | number | null,
+  resultYield?: ResultYield
 ): void {
-  applyOutcome(entryIn(stats, tool), outcome, latencyMs, errorNote);
+  applyOutcome(entryIn(stats, tool), outcome, latencyMs, errorNote, resultYield);
   if (orgId !== undefined && orgId !== null && orgId !== '') {
-    applyOutcome(entryIn(orgMap(String(orgId)), tool), outcome, latencyMs, errorNote);
+    applyOutcome(entryIn(orgMap(String(orgId)), tool), outcome, latencyMs, errorNote, resultYield);
   }
 }
 
@@ -225,19 +243,62 @@ export async function persistTelemetry(): Promise<void> {
   await backend.save(snapshotTelemetry());
 }
 
+// Common count/array fields handlers use to report how much they returned.
+const COUNT_FIELDS = ['resultCount', 'matched', 'total', 'totalCount'] as const;
+const ARRAY_FIELDS = [
+  'results', 'studies', 'trials', 'articles', 'documents', 'recalls', 'labels',
+  'approvals', 'messages', 'records', 'passages',
+] as const;
+
+/** Derive a result-yield signal from a successful payload, or undefined if N/A. */
+function detectYield(parsed: any): ResultYield | undefined {
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return undefined;
+  for (const f of COUNT_FIELDS) {
+    if (typeof parsed[f] === 'number') return parsed[f] > 0 ? 'results' : 'empty';
+  }
+  for (const f of ARRAY_FIELDS) {
+    if (Array.isArray(parsed[f])) return parsed[f].length > 0 ? 'results' : 'empty';
+  }
+  return undefined;
+}
+
 /**
  * Classify a handler's string result: a top-level truthy `error` field means
  * the integration degraded (handlers never throw for graceful fallbacks).
  * Non-JSON results are treated as success — many handlers return plain text.
+ * On success, also derive a result-yield signal (did the tool actually deliver?).
  */
-export function classifyResult(result: string): { outcome: ToolOutcome; note?: string } {
+export function classifyResult(result: string): {
+  outcome: ToolOutcome;
+  note?: string;
+  resultYield?: ResultYield;
+} {
   try {
     const parsed = JSON.parse(result);
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && parsed.error) {
       return { outcome: 'degraded', note: String(parsed.error) };
     }
+    return { outcome: 'success', resultYield: detectYield(parsed) };
   } catch {
-    // Plain-text result — fine.
+    // Plain-text result — success, yield not applicable.
+    return { outcome: 'success' };
   }
-  return { outcome: 'success' };
+}
+
+/**
+ * Tools that work but rarely deliver — succeed yet return empty most of the time
+ * (≥ minCalls yielding calls, emptyRate ≥ threshold). Working-but-unhelpful.
+ */
+export function getLowYieldTools(
+  minYieldingCalls = 4,
+  emptyRateThreshold = 0.75,
+  orgId?: string | number | null
+): Array<ToolReliability & { emptyRate: number }> {
+  return getToolReliability(orgId)
+    .map(e => {
+      const yielding = e.resultfulCalls + e.emptyCalls;
+      return { ...e, emptyRate: yielding > 0 ? e.emptyCalls / yielding : 0, _yielding: yielding };
+    })
+    .filter(e => e._yielding >= minYieldingCalls && e.emptyRate >= emptyRateThreshold)
+    .map(({ _yielding, ...rest }) => rest);
 }

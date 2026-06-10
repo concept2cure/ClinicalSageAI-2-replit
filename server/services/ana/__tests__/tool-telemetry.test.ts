@@ -12,6 +12,7 @@ import {
   classifyResult,
   getToolReliability,
   getUnhealthyTools,
+  getLowYieldTools,
   resetToolTelemetry,
   setTelemetryBackend,
   hydrateTelemetry,
@@ -58,6 +59,32 @@ describe('tool-telemetry (module)', () => {
     expect(classifyResult(JSON.stringify({ ok: true })).outcome).toBe('success');
     expect(classifyResult('plain text result').outcome).toBe('success');
     expect(classifyResult(JSON.stringify([{ error: 'x' }])).outcome).toBe('success'); // arrays not envelopes
+  });
+
+  it('classifyResult: derives a yield signal from count/array fields on success', () => {
+    expect(classifyResult(JSON.stringify({ resultCount: 3 })).resultYield).toBe('results');
+    expect(classifyResult(JSON.stringify({ resultCount: 0 })).resultYield).toBe('empty');
+    expect(classifyResult(JSON.stringify({ total: 0, labels: [] })).resultYield).toBe('empty');
+    expect(classifyResult(JSON.stringify({ studies: [{ nctId: 'NCT1' }] })).resultYield).toBe('results');
+    expect(classifyResult(JSON.stringify({ ok: true })).resultYield).toBeUndefined(); // no count/array → N/A
+    expect(classifyResult('plain text').resultYield).toBeUndefined();
+    expect(classifyResult(JSON.stringify({ error: 'x', resultCount: 0 })).resultYield).toBeUndefined(); // degraded → no yield
+  });
+
+  it('tracks result yield and flags low-yield (working-but-unhelpful) tools', () => {
+    // 1 resultful + 4 empty successes for a search tool.
+    recordToolOutcome('search_drug_labels', 'success', 10, undefined, undefined, 'results');
+    for (let i = 0; i < 4; i++) recordToolOutcome('search_drug_labels', 'success', 10, undefined, undefined, 'empty');
+    // A healthy tool that mostly delivers.
+    for (let i = 0; i < 5; i++) recordToolOutcome('search_clinical_evidence', 'success', 10, undefined, undefined, 'results');
+
+    const e = getToolReliability().find(t => t.tool === 'search_drug_labels')!;
+    expect(e.resultfulCalls).toBe(1);
+    expect(e.emptyCalls).toBe(4);
+
+    const low = getLowYieldTools(4, 0.75);
+    expect(low.map(t => t.tool)).toEqual(['search_drug_labels']); // 4/5 empty = 0.8 ≥ 0.75
+    expect(low[0].emptyRate).toBeCloseTo(0.8, 5);
   });
 
   it('counts contract violations separately', () => {
@@ -146,8 +173,8 @@ describe('tool-telemetry (persistence)', () => {
       version: 1,
       savedAt: '2026-01-01T00:00:00Z',
       tools: [
-        { tool: 'search_crm', calls: 99, successes: 99, degraded: 0, failures: 0, consecutiveFailures: 0, avgLatencyMs: 10, lastError: null, lastUsedAt: 'old', contractViolations: 0 },
-        { tool: 'search_drug_labels', calls: 5, successes: 4, degraded: 1, failures: 0, consecutiveFailures: 0, avgLatencyMs: 200, lastError: 'x', lastUsedAt: 'old', contractViolations: 0 },
+        { tool: 'search_crm', calls: 99, successes: 99, degraded: 0, failures: 0, consecutiveFailures: 0, avgLatencyMs: 10, lastError: null, lastUsedAt: 'old', contractViolations: 0, resultfulCalls: 0, emptyCalls: 0 },
+        { tool: 'search_drug_labels', calls: 5, successes: 4, degraded: 1, failures: 0, consecutiveFailures: 0, avgLatencyMs: 200, lastError: 'x', lastUsedAt: 'old', contractViolations: 0, resultfulCalls: 0, emptyCalls: 0 },
       ],
     };
     setTelemetryBackend(fakeBackend(prior));
