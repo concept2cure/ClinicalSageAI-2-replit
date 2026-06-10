@@ -29,6 +29,7 @@ import { assembleBriefingBook } from '../services/ind-lifecycle/ind-briefing-boo
 import { assembleCoverLetter } from '../services/ind-lifecycle/ind-cover-letter-service';
 import { assembleCoverLetterContext } from '../services/ind-lifecycle/cover-letter-context';
 import { evaluateRegulatoryClock } from '../services/ind-lifecycle/ind-regulatory-clock';
+import { buildIndTimeline } from '../services/ind-lifecycle/ind-timeline-service';
 import { buildUsRegionalEnvelope } from '../services/ind-lifecycle/ind-ectd-envelope';
 import { summarizeSequences } from '../services/ind-lifecycle/ind-submission-overview';
 import { buildIndDashboard } from '../services/ind-lifecycle/ind-dashboard';
@@ -199,6 +200,23 @@ router.post('/readiness', limiter, requireRole(AUTHOR), (req, res) => {
         overdueSafetyReports: b.overdueSafetyReports,
       }),
     );
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Project the IND regulatory timeline — 30-day safe-to-proceed + annual-report
+ * due-date milestones (21 CFR 312.40 / 312.33). Body: { receiptDate,
+ * effectiveDate?, asOf?, horizonDays?, dueSoonDays? }.
+ */
+router.post('/timeline', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = body(req);
+  if (!b.receiptDate) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'receiptDate (ISO) is required.' } });
+  }
+  try {
+    res.json(buildIndTimeline(b));
   } catch (err) {
     fail(res, err);
   }
