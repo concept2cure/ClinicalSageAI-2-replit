@@ -567,6 +567,10 @@ describe('AnA RI Persona', () => {
     const pt = buildAnaRISystemPrompt({ language: 'pt' });
     expect(pt).toContain('IDIOMA DE RESPOSTA — PORTUGUÊS (BRASIL)');
     expect(pt).toContain('ANVISA');
+
+    const it = buildAnaRISystemPrompt({ language: 'it' });
+    expect(it).toContain('LINGUA DI RISPOSTA — ITALIANO');
+    expect(it).toContain('AIFA');
   });
 
   it('keeps regulatory identifiers canonical while localizing prose', () => {
@@ -614,6 +618,10 @@ describe('AnA RI Persona', () => {
     expect(pt).toContain('BRASIL / PORTUGAL');
     expect(pt).toContain('ANVISA');
     expect(pt).toContain('Infarmed');
+
+    const it = buildAnaRISystemPrompt({ language: 'it' });
+    expect(it).toContain('ASPETTI CULTURALI E DI MERCATO — ITALIA');
+    expect(it).toContain('AIFA');
   });
 
   it('does not add any cultural overlay for English', () => {

@@ -1,0 +1,37 @@
+{
+  "actions": {
+    "save": "Salva",
+    "cancel": "Annulla",
+    "close": "Chiudi",
+    "next": "Avanti",
+    "previous": "Indietro",
+    "delete": "Elimina",
+    "continue": "Continua",
+    "back": "Indietro",
+    "search": "Cerca"
+  },
+  "density": {
+    "label": "Densità",
+    "compact": "Compatta",
+    "comfortable": "Comoda",
+    "spacious": "Ampia"
+  },
+  "topbar": {
+    "notifications": "Notifiche",
+    "help": "Aiuto",
+    "askAna": "Chiedi ad AnA o vai a…",
+    "command": "Comando",
+    "activeProject": "Progetto attivo",
+    "noProjects": "Nessun progetto",
+    "selectProject": "Seleziona un progetto",
+    "filter": "Filtra",
+    "clientType": "Tipo di cliente",
+    "pharma": "Farmaceutica",
+    "biotech": "Biotecnologie",
+    "switchProgram": "Cambia programma"
+  },
+  "language": {
+    "label": "Lingua",
+    "select": "Seleziona lingua"
+  }
+}

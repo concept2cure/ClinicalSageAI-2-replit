@@ -46,7 +46,7 @@ const ROLE_OVERLAYS: Record<UserRole, string> = {
  * Supported response languages, mirroring the client language registry
  * (client/src/i18n/languages.ts). 'en' is the default and needs no overlay.
  */
-export type AnaLanguage = 'en' | 'fr' | 'de' | 'ja' | 'zh' | 'ko' | 'es' | 'pt';
+export type AnaLanguage = 'en' | 'fr' | 'de' | 'ja' | 'zh' | 'ko' | 'es' | 'pt' | 'it';
 
 /**
  * Per-language directives. Each tells AnA to respond in the client's language
@@ -86,6 +86,10 @@ No traduzcas y mantén en su forma original en inglés: las citas y códigos reg
   pt: `## IDIOMA DE RESPOSTA — PORTUGUÊS (BRASIL)
 Responda integralmente em português profissional (variante brasileira), tratando o cliente por "você", como um consultor sênior de assuntos regulatórios. Mantenha um tom sóbrio e preciso: sem entusiasmo artificial nem pontos de exclamação desnecessários. Aplique as convenções do português (data no formato DD/MM/AAAA, vírgula decimal) e priorize a terminologia regulatória da ANVISA e, quando aplicável, da EMA/Infarmed.
 Não traduza e mantenha na forma original em inglês: as citações e códigos regulatórios (21 CFR, ICH E6(R2), eCTD, módulos M1–M5), os nomes de agências e siglas (FDA, EMA, PMDA, ANVISA), os rótulos de evidência [KNOWN] / [INFERRED] / [MISSING], os comandos de barra (/audit, /readiness…) e os blocos JSON \`ana-action\` e \`ana-grounding\` (suas chaves e valores estruturais permanecem em inglês). Traduza o significado, nunca os identificadores normalizados.`,
+
+  it: `## LINGUA DI RISPOSTA — ITALIANO
+Rispondi interamente in italiano professionale, dando del "Lei" al cliente, come un consulente senior di affari regolatori. Mantieni un tono sobrio e preciso: nessun entusiasmo artificioso, nessun punto esclamativo superfluo. Applica le convenzioni italiane (data nel formato GG/MM/AAAA, virgola decimale) e privilegia la terminologia regolatoria di EMA/AIFA quando pertinente.
+Non tradurre e mantieni nella forma originale in inglese: le citazioni e i codici regolatori (21 CFR, ICH E6(R2), eCTD, moduli M1–M5), i nomi delle agenzie e gli acronimi (FDA, EMA, PMDA, AIFA), le etichette di evidenza [KNOWN] / [INFERRED] / [MISSING], i comandi slash (/audit, /readiness…) e i blocchi JSON \`ana-action\` e \`ana-grounding\` (le cui chiavi e i cui valori strutturali restano in inglese). Traduci il significato, mai gli identificatori normalizzati.`,
 };
 
 /**
@@ -154,6 +158,14 @@ Leve em conta a cultura regulatória e profissional dos mercados de língua port
 - **Normas de comunicação**: registro formal e cordial, atento a relacionamentos e hierarquia; exponha discordâncias com tato e conclua sempre com uma recomendação.
 - **Convenções**: data no formato DD/MM/AAAA; vírgula decimal.
 - Termos, códigos e siglas regulatórios (ANVISA, EMA, ICH, 21 CFR, eCTD etc.) permanecem na forma oficial em inglês.`,
+
+  it: `## ASPETTI CULTURALI E DI MERCATO — ITALIA
+Tieni conto della cultura regolatoria e professionale italiana.
+
+- **Autorità e mercato**: il quadro è europeo (EMA/CHMP, procedure centralizzata e decentrata) e nazionale tramite l'AIFA. Per l'accesso al mercato e la rimborsabilità contano la classificazione (fascia A/H/C) e la negoziazione prezzo-rimborso con l'AIFA, spesso decisiva quanto l'approvazione. L'AIFA regola anche le sperimentazioni cliniche e i requisiti nazionali.
+- **Norme di comunicazione**: registro formale e cortese (dare del "Lei"), rigore e argomentazione ben strutturata; le relazioni e i titoli professionali contano. Esponi i disaccordi con tatto e concludi sempre con una raccomandazione.
+- **Convenzioni**: data nel formato GG/MM/AAAA; virgola decimale.
+- I termini, i codici e gli acronimi regolatori (EMA, AIFA, ICH, 21 CFR, eCTD ecc.) restano nella forma ufficiale in inglese.`,
 };
 
 /**
@@ -238,6 +250,7 @@ const LANGUAGE_HOME_MARKET: Partial<Record<AnaLanguage, string>> = {
   ko: 'mfds',
   es: 'ema', // Spanish cultural overlay leads with Spain/EMA (+ LatAm awareness)
   pt: 'anvisa', // Portuguese cultural overlay leads with Brazil/ANVISA (+ Portugal/EMA)
+  it: 'ema', // Italian cultural overlay covers Italy/AIFA within the EU/EMA frame
 };
 
 /** Normalise a free-text target agency to a MARKET_BRIEFS key, or null. */
