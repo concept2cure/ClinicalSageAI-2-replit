@@ -46,7 +46,7 @@ const ROLE_OVERLAYS: Record<UserRole, string> = {
  * Supported response languages, mirroring the client language registry
  * (client/src/i18n/languages.ts). 'en' is the default and needs no overlay.
  */
-export type AnaLanguage = 'en' | 'fr' | 'de' | 'ja' | 'zh' | 'ko' | 'es';
+export type AnaLanguage = 'en' | 'fr' | 'de' | 'ja' | 'zh' | 'ko' | 'es' | 'pt';
 
 /**
  * Per-language directives. Each tells AnA to respond in the client's language
