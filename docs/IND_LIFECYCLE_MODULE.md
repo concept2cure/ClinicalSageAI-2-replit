@@ -40,6 +40,7 @@ All HTTP routes are auth-gated (`authenticateToken` at mount) and tenant-scoped
 | Filing → audited eCTD sequence + leaves | — | `ind-lifecycle/ind-lifecycle-persistence` (→ submission-service) | the `*/file` routes above; the safety-report/annual-report `*/file` routes render the PDF and attach its md5 to the leaf (`submission_leaves.checksum`) for the eCTD index-md5 |
 | Sequence structural validation (required leaves present) | 21 CFR 312.23 | `ind-lifecycle/ind-sequence-validation` | `POST /api/ind-lifecycle/sequence/validate`, `GET /api/ind-lifecycle/sequence/:seqId/validate?filingType=` |
 | Package manifest (QC review: leaves by module + checksums) | — | `ind-lifecycle/ind-package-manifest` | `GET /api/ind-lifecycle/sequence/:seqId/manifest`, `GET /api/ind-lifecycle/sequence/:seqId/manifest/pdf` |
+| Dispatch-readiness gate (go/no-go before send) | — | `ind-lifecycle/ind-dispatch-gate` | `POST /api/ind-lifecycle/sequence/:seqId/dispatch-gate` (fuses sequence validation + manifest checksum completeness + unresolved critical actions; blocks an empty/invalid/incomplete or already-dispatched sequence) |
 | Filing-readiness verdict | 21 CFR 312.23 | `ind-lifecycle/ind-readiness-service` | `POST /api/ind-lifecycle/readiness` |
 | Regulatory clock + clinical-hold tracker | 21 CFR 312.40/312.42/312.45 | `ind-lifecycle/ind-regulatory-clock` | `POST /api/ind-lifecycle/clock` |
 | Regulatory timeline / milestones | 21 CFR 312.40 + 312.33 | `ind-lifecycle/ind-timeline-service` | `POST /api/ind-lifecycle/timeline` |

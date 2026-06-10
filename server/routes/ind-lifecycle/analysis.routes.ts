@@ -14,6 +14,7 @@ import { deriveIndActionItems } from '../../services/ind-lifecycle/ind-action-it
 import { summarizeSequences } from '../../services/ind-lifecycle/ind-submission-overview';
 import { buildIndDashboard } from '../../services/ind-lifecycle/ind-dashboard';
 import { buildPackageManifest } from '../../services/ind-lifecycle/ind-package-manifest';
+import { evaluateDispatchGate } from '../../services/ind-lifecycle/ind-dispatch-gate';
 import { renderPackageManifestPdf } from '../../services/ind-lifecycle/ind-document-renderer';
 import { getSubmission, listSequences, listLeaves, getSequence } from '../../services/submission-service/submission-service';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, sendPdf } from './shared';
@@ -163,6 +164,54 @@ async function manifestForSequence(seqId: number, ctx: { organizationId: number;
     leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, lifecycleOp: l.lifecycleOp, checksum: l.checksum })),
   });
 }
+
+/**
+ * Dispatch-readiness gate — the go/no-go for an eCTD sequence. Loads the
+ * sequence + leaves, validates structure, builds the manifest (checksum
+ * completeness), folds in unresolved critical actions from the optional
+ * analysis inputs, and returns the verdict + supporting detail.
+ * Body: { filingType?, readinessInput?, clockInput?, timelineInput?, overdueSafetyReports? }.
+ */
+router.post('/sequence/:seqId/dispatch-gate', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const seqId = Number(req.params.seqId);
+  if (!Number.isInteger(seqId) || seqId <= 0) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid sequence id.' } });
+  }
+  const b = body(req);
+  const filingType = b.filingType === 'amendment' ? 'amendment' : 'initial';
+  try {
+    const [sequence, leaves] = await Promise.all([getSequence(seqId, ctx), listLeaves(seqId, ctx)]);
+    const sequenceValidation = validateSequenceLeaves({
+      filingType,
+      leaves: leaves.map((l) => ({ sectionCode: l.sectionCode })),
+    });
+    const manifest = buildPackageManifest({
+      sequenceNumber: sequence.sequenceNumber,
+      submissionType: sequence.type,
+      leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, lifecycleOp: l.lifecycleOp, checksum: l.checksum })),
+    });
+    const clock = b.clockInput?.receiptDate ? evaluateRegulatoryClock(b.clockInput) : null;
+    const timeline = b.timelineInput?.receiptDate ? buildIndTimeline(b.timelineInput) : null;
+    const actionItems = deriveIndActionItems({
+      readiness: readinessFrom(b.readinessInput),
+      clock,
+      timeline,
+      sequenceValidation,
+      overdueSafetyReports: b.overdueSafetyReports,
+    });
+    const verdict = evaluateDispatchGate({
+      sequenceValidation,
+      manifest,
+      criticalActions: actionItems.criticalCount,
+      sequenceStatus: sequence.status,
+    });
+    res.json({ verdict, sequenceValidation, manifest, actionItems });
+  } catch (err) {
+    fail(res, err);
+  }
+});
 
 /** Package manifest (QC review): every leaf grouped by module, with checksums. */
 router.get('/sequence/:seqId/manifest', limiter, requireRole(AUTHOR), async (req, res) => {
