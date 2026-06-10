@@ -515,9 +515,10 @@ export class CreateChildProjectHandler implements ActionHandler {
       const params = action.params as any;
 
       // Get parent project info
-      const parentResult = await this.pool.query(`SELECT * FROM projects WHERE id = $1`, [
-        payload.projectId,
-      ]);
+      const parentResult = await this.pool.query(
+        `SELECT * FROM projects WHERE id = $1 AND organization_id = $2`,
+        [payload.projectId, payload.organizationId]
+      );
       if (parentResult.rows.length === 0) throw new Error('Parent project not found');
 
       const parent = parentResult.rows[0];
@@ -554,7 +555,11 @@ export class CreateChildProjectHandler implements ActionHandler {
       const child = result.rows[0];
       // Update path to include new ID
       const finalPath = `${childPath}/${child.id}`;
-      await this.pool.query(`UPDATE projects SET path = $1 WHERE id = $2`, [finalPath, child.id]);
+      await this.pool.query(`UPDATE projects SET path = $1 WHERE id = $2 AND organization_id = $3`, [
+        finalPath,
+        child.id,
+        parent.organization_id,
+      ]);
 
       return {
         actionType: 'create_child_project',

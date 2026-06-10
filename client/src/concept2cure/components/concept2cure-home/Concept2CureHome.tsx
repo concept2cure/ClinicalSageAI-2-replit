@@ -460,7 +460,20 @@ function Dashboard({
   return (
     <>
       <div className={styles.secHdr}>
-        <div className={styles.secTitle}>At a glance</div>
+        <div className={styles.secTitle}>
+          At a glance
+          {/* Honesty pill (same treatment as ProjectsList): these tiles are
+              demo constants from data.tsx. Only "Active projects" ever gets a
+              live overlay; Submission readiness, Tasks due and Alerts have no
+              live source yet, so this section is ALWAYS at least partly
+              sample — the pill renders unconditionally. */}
+          <span
+            className="ptl-pill prj-list-seed"
+            title="Showing prototype sample metrics — only the Active projects count is live; the other tiles have no live data source yet."
+          >
+            Sample data
+          </span>
+        </div>
         <button
           type="button"
           className={styles.secMore}
@@ -574,7 +587,20 @@ function Recents({
   return (
     <>
       <div className={styles.secHdr}>
-        <div className={styles.secTitle}>Recent activity</div>
+        <div className={styles.secTitle}>
+          Recent activity
+          {/* Honesty pill (same treatment as ProjectsList): when the chat
+              threads API returns no rows or errors, the rows below are the
+              RECENTS demo constants from data.tsx, not tenant activity. */}
+          {!showReal && (
+            <span
+              className="ptl-pill prj-list-seed"
+              title="Showing prototype sample activity — the chat threads API returned no rows or errored."
+            >
+              Sample data
+            </span>
+          )}
+        </div>
         <button type="button" className={styles.secMore} onClick={onViewAll}>
           View all <HomeIcon name="right" size={12} />
         </button>

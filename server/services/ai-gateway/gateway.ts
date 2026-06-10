@@ -1584,6 +1584,9 @@ export class AIGateway {
     const localEnabled = process.env.AI_LOCAL_ENABLED === 'true' && !!localBaseUrl;
 
     return {
+      // AI_GATEWAY_DETERMINISTIC is the canonical switch; DETERMINISTIC_MODE
+      // is honored as a legacy alias only — set the canonical var in new
+      // environments.
       deterministicMode:
         process.env.AI_GATEWAY_DETERMINISTIC === 'true' ||
         process.env.DETERMINISTIC_MODE === 'true' ||

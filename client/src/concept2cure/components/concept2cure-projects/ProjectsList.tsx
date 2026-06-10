@@ -76,7 +76,9 @@ export function ProjectsList({
 
   // Live projects with prototype-seed fallback. The hook returns the seed
   // when the API errors or has no rows, so the surface always renders.
-  const { projects: allProjects, refetch } = useProjectsApi();
+  // `usingSeed` drives the "Sample data" pill in the header so the
+  // fallback is never mistaken for live tenant data.
+  const { projects: allProjects, refetch, usingSeed } = useProjectsApi();
   const { archiveProject, deleteProject, exportProject } = useProjectsMutations({ onSuccess: refetch });
 
   const matches = (p: typeof allProjects[number]) => {
@@ -114,7 +116,17 @@ export function ProjectsList({
     <div className="prj-list-root" data-screen-label="01 Projects · list">
       <header className="prj-list-head">
         <div>
-          <h1 className="prj-list-title">Projects</h1>
+          <h1 className="prj-list-title">
+            Projects
+            {usingSeed && (
+              <span
+                className="ptl-pill prj-list-seed"
+                title="Showing prototype seed data — the live projects API returned no rows or errored."
+              >
+                Sample data
+              </span>
+            )}
+          </h1>
           <p className="prj-list-sub">
             Persistent workspaces with chats, memory, instructions and shared files.
           </p>

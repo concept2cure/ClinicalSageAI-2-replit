@@ -262,19 +262,21 @@ async function loadUserProjects(userId: number, organizationId: number): Promise
 /**
  * Load the user's current active work session (if any).
  */
-async function loadCurrentSession(userId: number): Promise<WorkSession | null> {
+async function loadCurrentSession(userId: number, organizationId: number): Promise<WorkSession | null> {
   try {
+    // Project-name resolution is org-scoped so a session row can never
+    // surface another org's project name.
     const result = await pool.query(
       `SELECT uws.context_type, uws.context_reference, uws.context_title,
               uws.project_id, p.name as project_name,
               uws.started_at, uws.last_activity_at, uws.duration_minutes,
               uws.messages_sent, uws.artifacts_created
        FROM user_work_sessions uws
-       LEFT JOIN projects p ON p.id = uws.project_id
+       LEFT JOIN projects p ON p.id = uws.project_id AND p.organization_id = $2
        WHERE uws.user_id = $1 AND uws.session_type = 'active'
        ORDER BY uws.last_activity_at DESC
        LIMIT 1`,
-      [userId]
+      [userId, organizationId]
     );
 
     if (result.rows.length === 0) return null;
@@ -301,19 +303,21 @@ async function loadCurrentSession(userId: number): Promise<WorkSession | null> {
 /**
  * Load recent completed work sessions.
  */
-async function loadRecentSessions(userId: number): Promise<WorkSession[]> {
+async function loadRecentSessions(userId: number, organizationId: number): Promise<WorkSession[]> {
   try {
+    // Project-name resolution is org-scoped so a session row can never
+    // surface another org's project name.
     const result = await pool.query(
       `SELECT uws.context_type, uws.context_reference, uws.context_title,
               uws.project_id, p.name as project_name,
               uws.started_at, uws.last_activity_at, uws.duration_minutes,
               uws.messages_sent, uws.artifacts_created
        FROM user_work_sessions uws
-       LEFT JOIN projects p ON p.id = uws.project_id
+       LEFT JOIN projects p ON p.id = uws.project_id AND p.organization_id = $2
        WHERE uws.user_id = $1 AND uws.session_type = 'completed'
        ORDER BY uws.last_activity_at DESC
        LIMIT 5`,
-      [userId]
+      [userId, organizationId]
     );
 
     return result.rows.map((s: any) => ({
@@ -388,13 +392,13 @@ async function loadRecentActivity(
               p.name as project_name
        FROM activity_feed af
        LEFT JOIN projects p ON p.id = CASE
-         WHEN af.entity_type = 'project' THEN CAST(af.entity_id AS INTEGER)
+         WHEN af.entity_type = $3 THEN CAST(af.entity_id AS INTEGER)
          ELSE NULL
        END
        WHERE af.user_id = $1 AND af.organization_id = $2
        ORDER BY af.created_at DESC
        LIMIT 10`,
-      [userId, organizationId]
+      [userId, organizationId, 'project']
     );
 
     return result.rows.map((a: any) => ({
@@ -496,8 +500,8 @@ export async function loadUserIntelligence(params: {
     loadUserIdentity(userId, organizationId),
     loadOrganizationProfile(organizationId),
     loadUserProjects(userId, organizationId),
-    loadCurrentSession(userId),
-    loadRecentSessions(userId),
+    loadCurrentSession(userId, organizationId),
+    loadRecentSessions(userId, organizationId),
     loadWorkQueue(userId, organizationId),
     loadRecentActivity(userId, organizationId),
     loadConversationMemory(userId, organizationId),

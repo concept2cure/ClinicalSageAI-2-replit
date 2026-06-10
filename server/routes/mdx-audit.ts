@@ -53,7 +53,9 @@ router.get('/audit', async (req: Request, res: Response) => {
   if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
   const { action, resource, actor, program, from, to, limit = 200 } = parsed.data;
 
-  const filters = ['al.tenant_id = $1'];
+  // Tenant scope lives in the SQL literal below (not this array) so the
+  // tenant-isolation CI gate can verify it statically.
+  const filters: string[] = [];
   const args: unknown[] = [orgId];
   if (action)   { args.push(action);   filters.push(`al.action = $${args.length}`); }
   if (resource) { args.push(resource); filters.push(`al.table_name = $${args.length}`); }
@@ -68,6 +70,7 @@ router.get('/audit', async (req: Request, res: Response) => {
   if (from)     { args.push(from);     filters.push(`al.created_at >= $${args.length}`); }
   if (to)       { args.push(to);       filters.push(`al.created_at <= $${args.length}`); }
   args.push(limit);
+  const extraFilters = filters.length ? ` AND ${filters.join(' AND ')}` : '';
 
   try {
     const { rows } = await pool.query<AuditRow>(
@@ -76,7 +79,7 @@ router.get('/audit', async (req: Request, res: Response) => {
               COALESCE(u.name, u.email) AS actor_name
          FROM audit_logs al
          LEFT JOIN users u ON u.id = al.user_id
-        WHERE ${filters.join(' AND ')}
+        WHERE al.tenant_id = $1${extraFilters}
         ORDER BY al.created_at DESC
         LIMIT $${args.length}`,
       args,

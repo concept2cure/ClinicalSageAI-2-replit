@@ -55,8 +55,10 @@ export function startDriftSentinelSchedule(intervalMs: number = DEFAULT_INTERVAL
   if (process.env.ENABLE_DRIFT_SENTINEL !== 'true') return;
   if (timer) return;
   timer = setInterval(() => {
-    void runDriftSentinelSweep().catch(() => {
-      /* swept best-effort; route-level scans surface detail */
+    void runDriftSentinelSweep().catch((err) => {
+      // Best-effort sweep, but a silent failure means drift detection has
+      // gone dark — log it so ops can see the schedule is failing.
+      console.error('[drift-sentinel] scheduled sweep failed:', err?.message ?? err);
     });
   }, intervalMs);
   if (typeof timer.unref === 'function') timer.unref();

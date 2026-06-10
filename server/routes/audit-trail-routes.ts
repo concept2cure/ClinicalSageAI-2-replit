@@ -21,16 +21,15 @@ async function queryAuditEvents(
   limitVal = 10,
   offsetVal = 0
 ) {
-  const conditions: string[] = [];
-  const params: any[] = [];
-  let idx = 1;
-
   // Tenant scope is mandatory and always sourced from the authenticated org,
   // never from user-supplied query params. Sourcing it from req.query.org_id
   // let any authenticated caller read another org's audit trail (or omit it
   // and read every org's) — a cross-tenant IDOR on 21 CFR Part 11 data.
-  conditions.push(`organization_id = $${idx++}`);
-  params.push(orgId);
+  // The organization_id predicate lives in the SQL literal below (not in this
+  // array) so the tenant-isolation CI gate can verify it statically.
+  const conditions: string[] = [];
+  const params: any[] = [orgId];
+  let idx = 2;
 
   if (queryParams.event_type) {
     conditions.push(`event_type = $${idx++}`);
@@ -64,10 +63,10 @@ async function queryAuditEvents(
     idx++;
   }
 
-  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const extraWhere = conditions.length > 0 ? ` AND ${conditions.join(' AND ')}` : '';
 
   const countResult = await pool.query(
-    `SELECT COUNT(*)::int AS total FROM audit_events ${where}`,
+    `SELECT COUNT(*)::int AS total FROM audit_events WHERE organization_id = $1${extraWhere}`,
     params
   );
   const total = countResult.rows[0]?.total || 0;
@@ -78,7 +77,7 @@ async function queryAuditEvents(
     `SELECT id, organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role,
             ip_address, timestamp, reason, comments, regulatory_significant, gxp_relevant, metadata,
             record_hash, previous_hash, sequence_number, created_at
-     FROM audit_events ${where} ORDER BY timestamp DESC LIMIT $${idx++} OFFSET $${idx++}`,
+     FROM audit_events WHERE organization_id = $1${extraWhere} ORDER BY timestamp DESC LIMIT $${idx++} OFFSET $${idx++}`,
     params
   );
 
@@ -337,7 +336,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
       const sigId = String(req.params.signatureId).replace('SIG_', '');
       const result = await pool.query(
         `SELECT id, entity_type, entity_id, signed_by, signed_date, signature_meaning, reason, signature_status
-         FROM audit_events WHERE id = $1 AND event_type = 'signature.create' AND organization_id = $2`,
+         FROM audit_events WHERE id = $1 AND organization_id = $2 AND event_type = 'signature.create'`,
         [parseInt(sigId) || 0, guard.orgId]
       );
 

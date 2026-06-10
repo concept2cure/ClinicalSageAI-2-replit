@@ -18,7 +18,7 @@ interface MaudPool {
 // Import the database pool - with fallback if not available
 let pool: MaudPool;
 try {
-  const db = require('./index');
+  const db = require('./runtime');
   pool = db.pool || db.default;
 } catch (error) {
   console.warn('Database pool not available, using fallback implementation');

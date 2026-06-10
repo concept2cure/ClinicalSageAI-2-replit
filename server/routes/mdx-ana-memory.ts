@@ -60,7 +60,9 @@ router.get('/ana/memory', async (req: Request, res: Response) => {
   if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
   const { category, importance, status, verified, limit = 200 } = parsed.data;
 
-  const filters: string[] = [`organization_id = $1`];
+  /* organization_id lives in the SQL literal (not the filters array) so the
+     tenant-isolation CI gate can verify the scope statically. */
+  const filters: string[] = [];
   const args: unknown[] = [orgId];
   if (category)   { args.push(category);   filters.push(`category = $${args.length}`); }
   if (importance) { args.push(importance); filters.push(`importance_level = $${args.length}`); }
@@ -68,6 +70,7 @@ router.get('/ana/memory', async (req: Request, res: Response) => {
   if (verified === 'true')  filters.push(`is_verified_by_user = true`);
   if (verified === 'false') filters.push(`is_verified_by_user = false`);
   args.push(limit);
+  const extraFilters = filters.length ? ` AND ${filters.join(' AND ')}` : '';
 
   try {
     const { rows } = await pool.query(
@@ -76,7 +79,7 @@ router.get('/ana/memory', async (req: Request, res: Response) => {
               is_verified_by_user, verified_at, verified_by, status,
               superseded_by_id, extracted_at, extracted_by, created_at, updated_at
          FROM client_memory_entries
-        WHERE ${filters.join(' AND ')}
+        WHERE organization_id = $1${extraFilters}
         ORDER BY
           CASE importance_level WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
           updated_at DESC
@@ -111,13 +114,13 @@ router.post('/ana/memory/:id/verify', async (req: Request, res: Response) => {
           SET is_verified_by_user = true,
               verified_at = NOW(),
               verified_by = $3,
-              importance_level = CASE WHEN $4 = true AND importance_level IN ('low','medium')
-                                      THEN 'high'
+              importance_level = CASE WHEN $4 = true AND importance_level IN ($5, $6)
+                                      THEN $7
                                       ELSE importance_level END,
               updated_at = NOW()
         WHERE id = $1 AND organization_id = $2
         RETURNING id, is_verified_by_user, importance_level`,
-      [id, orgId, userId, bumpToHigh],
+      [id, orgId, userId, bumpToHigh, 'low', 'medium', 'high'],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Memory atom');
     void auditService.logAction({
@@ -143,12 +146,12 @@ router.post('/ana/memory/:id/supersede', async (req: Request, res: Response) => 
   try {
     const { rows } = await pool.query(
       `UPDATE client_memory_entries
-          SET status = 'superseded',
+          SET status = $4,
               superseded_by_id = $3,
               updated_at = NOW()
         WHERE id = $1 AND organization_id = $2 AND status = 'active'
         RETURNING id, status, superseded_by_id`,
-      [id, orgId, supersededBy],
+      [id, orgId, supersededBy, 'superseded'],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Memory atom (or not active)');
     void auditService.logAction({

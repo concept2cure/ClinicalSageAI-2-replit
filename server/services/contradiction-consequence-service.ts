@@ -147,6 +147,7 @@ class ContradictionConsequenceService {
       const { decision: decisionRecord, consequencePaths } =
         decisionLifecycleService.recordContradictionConsequence({
           projectId: String(projectId),
+          organizationId,
           contradictionId: finding.id,
           severity: finding.severity === 'critical' ? 'critical' : finding.severity === 'high' ? 'major' : 'minor',
           explanation: finding.description,
