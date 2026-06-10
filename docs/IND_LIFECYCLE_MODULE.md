@@ -40,7 +40,8 @@ All HTTP routes are auth-gated (`authenticateToken` at mount) and tenant-scoped
 | Filing → audited eCTD sequence + leaves | — | `ind-lifecycle/ind-lifecycle-persistence` (→ submission-service) | the `*/file` routes above |
 | Filing-readiness verdict | 21 CFR 312.23 | `ind-lifecycle/ind-readiness-service` | `POST /api/ind-lifecycle/readiness` |
 | Regulatory clock + clinical-hold tracker | 21 CFR 312.40/312.42/312.45 | `ind-lifecycle/ind-regulatory-clock` | `POST /api/ind-lifecycle/clock` |
-| Submission overview / dashboard | — | `ind-lifecycle/ind-submission-overview`, `ind-dashboard` | `GET /api/ind-lifecycle/submission/:id/overview`, `POST /submission/:id/dashboard` |
+| Regulatory timeline / milestones | 21 CFR 312.40 + 312.33 | `ind-lifecycle/ind-timeline-service` | `POST /api/ind-lifecycle/timeline` |
+| Submission overview / dashboard | — | `ind-lifecycle/ind-submission-overview`, `ind-dashboard` | `GET /api/ind-lifecycle/submission/:id/overview`, `POST /submission/:id/dashboard` (folds in readiness + clock + timeline) |
 
 ## 4. Module 2/4/5 — Medical writing
 

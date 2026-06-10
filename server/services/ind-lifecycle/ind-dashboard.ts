@@ -11,6 +11,7 @@
 import type { SequenceSummary } from './ind-submission-overview';
 import type { IndReadinessReport } from './ind-readiness-service';
 import type { ClockState } from './ind-regulatory-clock';
+import type { IndTimeline, TimelineMilestone } from './ind-timeline-service';
 
 export interface IndDashboardHeadline {
   /** Filing readiness (null when no readiness input was supplied). */
@@ -23,12 +24,15 @@ export interface IndDashboardHeadline {
   openValidationFailures: number;
   /** Count of distinct blocking conditions across readiness + clock + validation. */
   blockerCount: number;
+  /** The next not-yet-past regulatory milestone, when a timeline was supplied. */
+  nextMilestone: TimelineMilestone | null;
 }
 
 export interface IndDashboard {
   sequenceSummary: SequenceSummary;
   readiness: IndReadinessReport | null;
   clock: ClockState | null;
+  timeline: IndTimeline | null;
   headline: IndDashboardHeadline;
 }
 
@@ -36,6 +40,7 @@ export interface IndDashboardParts {
   sequenceSummary: SequenceSummary;
   readiness?: IndReadinessReport | null;
   clock?: ClockState | null;
+  timeline?: IndTimeline | null;
 }
 
 /**
@@ -46,6 +51,7 @@ export interface IndDashboardParts {
 export function buildIndDashboard(parts: IndDashboardParts): IndDashboard {
   const readiness = parts.readiness ?? null;
   const clock = parts.clock ?? null;
+  const timeline = parts.timeline ?? null;
   const openValidationFailures = parts.sequenceSummary.validationFailures;
 
   const onHold = clock ? clock.onHold : null;
@@ -60,7 +66,8 @@ export function buildIndDashboard(parts: IndDashboardParts): IndDashboard {
     safeToProceed: clock ? clock.safeToProceed : null,
     openValidationFailures,
     blockerCount,
+    nextMilestone: timeline ? timeline.next : null,
   };
 
-  return { sequenceSummary: parts.sequenceSummary, readiness, clock, headline };
+  return { sequenceSummary: parts.sequenceSummary, readiness, clock, timeline, headline };
 }

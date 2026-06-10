@@ -463,7 +463,8 @@ router.post('/submission/:id/dashboard', limiter, requireRole(AUTHOR), async (re
           asOf: b.clockInput.asOf,
         })
       : null;
-    res.json(buildIndDashboard({ sequenceSummary: summarizeSequences(sequences), readiness, clock }));
+    const timeline = b.timelineInput?.receiptDate ? buildIndTimeline(b.timelineInput) : null;
+    res.json(buildIndDashboard({ sequenceSummary: summarizeSequences(sequences), readiness, clock, timeline }));
   } catch (err) {
     fail(res, err);
   }
