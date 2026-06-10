@@ -123,6 +123,20 @@ async function main() {
     console.log('  · login returned an MFA challenge with no bearer token — use a demo user with MFA disabled (or complete /mfa/verify) so the authenticated checks can proceed.');
   }
 
+  // ── Neon preflight ─────────────────────────────────────────────────────────
+  // Confirms the DB is reachable AND the expected tables exist (migrations applied)
+  // before the functional checks. A DB-query route returning 200/404 — never 500 —
+  // proves the table exists; a 500 here means migrations have not been applied.
+  console.log('\n  Neon preflight:');
+  const pfPortfolio = await c.req('GET', '/api/submissions');
+  ok('DB reachable — submissions table queryable (portfolio 200)', pfPortfolio.status === 200, `status ${pfPortfolio.status} (run drizzle-kit push if 500)`);
+  const pfCer = await c.req('GET', '/api/submissions/device/cer/__preflight_no_such_report__/assess-stored');
+  ok('cer_reports table exists — stored-CER query 404s (not 500) on a bogus id', pfCer.status === 404, `status ${pfCer.status} (500 ⇒ cer_reports/cer_sections missing — apply migrations)`);
+  if (pfCer.status === 500) {
+    console.log('  · PREFLIGHT FAIL: a 500 indicates the cer_reports/cer_sections tables are missing. Run `npx drizzle-kit push` before continuing.');
+  }
+  console.log('');
+
   // Region profiles (static metadata — no DB writes).
   const rp = await c.req('GET', '/api/region-profiles');
   ok('GET /api/region-profiles returns 3 regions', rp.status === 200 && Array.isArray(rp.json) && rp.json.length === 3, `status ${rp.status}`);

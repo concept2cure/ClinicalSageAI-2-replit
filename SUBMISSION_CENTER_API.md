@@ -77,7 +77,7 @@ AnA can drive all of the above through her governed tools (tenant from
 `get_document_template`, `validate_market_formatting`, `get_submission_requirements`,
 `assess_pathway_eligibility`, `classify_post_submission_change`, `assess_device_evidence_structure`,
 `classify_device`, `get_device_reviewer_checklist`, `get_biocompatibility_endpoints`,
-`build_device_blueprint`, `assess_dispatch_readiness`. The UI's AnA panel passes page context
+`build_device_blueprint`, `assess_stored_cer`, `assess_dispatch_readiness`. The UI's AnA panel passes page context
 (`{ submissionId, sectionCode, region }`); the tools supply nothing tenant-related.
 
 ## Still server-side TODO before some screens are fully live
@@ -131,6 +131,7 @@ Workspace map + error catalog for nav/error handling: `shared/types/submission-u
 | POST | `/api/submissions/device/biocompatibility` | `{ nature, duration }` → endpoints | ISO 10993-1 biological endpoints for the contact category. |
 | POST | `/api/submissions/device/software/classify` | `{ canContribute… }` → class + deliverables | IEC 62304 software safety class (A/B/C) + per-class deliverables + reviewer questions. |
 | POST | `/api/submissions/device/blueprint` | `DeviceBlueprintInput` → `DeviceBlueprint` | **The reverse-workflow synthesis**: classification + required documents + applicable evidence modules (CER/PER/RMF/biocomp/software with gap assessment) + reviewer checklist, in one object. |
+| GET | `/api/submissions/device/cer/:reportId/assess-stored[?equivalenceClaimed=]` | → stored-CER assessment | Gap-checks a **stored** `cer_reports`/`cer_sections` record (tenant-scoped) against the canonical CER structure — maps populated fields/sections → canonical sections → readiness + gaps. 404 if not in the org. Needs the DB. |
 
 ## Pathway readiness (non-eCTD projections — Cross-Region / Dispatch)
 | GET | `/api/submissions/sequences/:seqId/pathway-readiness?pathway=&memberStates=` | → `PathwayReadinessResponse` | projects the sequence's canonical leaves onto CTIS \| MDR \| IVDR \| eSTAR (510k/de_novo) and returns a required-slot gap/readiness report. Deterministic, map+gap only — never submits. `memberStates` (comma list) applies to CTIS Part II. |
