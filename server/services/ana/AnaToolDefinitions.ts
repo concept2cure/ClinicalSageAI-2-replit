@@ -124,6 +124,46 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   },
 };
 
+export const MEDICAL_WRITING_GUIDANCE: AnaTool = {
+  name: 'medical_writing_guidance',
+  description:
+    'Get authoritative medical-writing standards and craft for a deliverable — document structure, ' +
+    'governing standards, therapeutic-area endpoints/terminology/reporting conventions, region/market ' +
+    'style, audience register, and universal craft rules. ALWAYS call this before drafting or ' +
+    'critiquing a regulatory/scientific document (CSR, protocol, CER, CTD summary, manuscript, lay ' +
+    'summary, regulatory response, RMP, briefing package, IVD PER, PMCF) so the writing follows ICH/' +
+    'EU MDR/IVDR/ICMJE/GPP conventions for the specific document × therapeutic area × market × ' +
+    'audience. Combine with the evidence search tools to ground every claim.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_type: {
+        type: 'string',
+        description:
+          'Deliverable, e.g. csr, protocol, ib, clinical_overview, clinical_summary, cer, pmcf, per, ' +
+          'manuscript, plain_language_summary, regulatory_response, rmp, meeting_package.',
+      },
+      therapeutic_area: {
+        type: 'string',
+        description: 'e.g. oncology, cardiology, neuroscience, infectious_disease, immunology, metabolic, respiratory, rare_disease, vaccines (or a disease name).',
+      },
+      region: {
+        type: 'string',
+        description: 'Target market: fda, ema, pmda, nmpa, hc, mhra, tga, or ich (global). Default ich.',
+      },
+      audience: {
+        type: 'string',
+        description: 'regulator, payer, clinician, or patient. Defaults to the document type’s primary audience.',
+      },
+      client_segment: {
+        type: 'string',
+        description: 'Optional: pharma, biotech, device, ivd, or cro (informational).',
+      },
+    },
+    required: ['document_type'],
+  },
+};
+
 export const DESCRIBE_CAPABILITIES: AnaTool = {
   name: 'describe_capabilities',
   description:
@@ -4001,6 +4041,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_DRUG_LABELS,
   SEARCH_DRUG_APPROVALS,
   ASSESS_REGULATORY_LANDSCAPE,
+  MEDICAL_WRITING_GUIDANCE,
   DESCRIBE_CAPABILITIES,
   PROJECT_KNOWLEDGE_SEARCH,
   SIMULATE_STUDY_DESIGN,

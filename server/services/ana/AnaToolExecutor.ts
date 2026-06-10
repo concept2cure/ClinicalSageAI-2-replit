@@ -38,6 +38,7 @@ import {
   getLowYieldTools,
   isTelemetryPersistenceEnabled,
 } from './tool-telemetry.js';
+import { composeMedicalWritingGuidance, listMedicalWritingCatalog } from './medical-writing.js';
 import { initToolTelemetryPersistence } from './tool-telemetry-persistence.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 
@@ -408,6 +409,34 @@ registerToolHandler('search_connected_repositories', async (input, ctx) => {
       documents: [],
     });
   }
+});
+
+// Medical Writing Guidance — authoritative standards + craft for a deliverable,
+// composed by document type × therapeutic area × region × audience.
+registerToolHandler('medical_writing_guidance', async (input) => {
+  const documentType = typeof input.document_type === 'string' ? input.document_type : '';
+  if (!documentType.trim()) {
+    return JSON.stringify({
+      error: 'medical_writing_guidance requires document_type.',
+      catalog: listMedicalWritingCatalog(),
+    });
+  }
+  const asStr = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v.trim() : undefined;
+  const guidance = composeMedicalWritingGuidance({
+    documentType,
+    therapeuticArea: asStr(input.therapeutic_area),
+    region: asStr(input.region),
+    audience: asStr(input.audience),
+    clientSegment: asStr(input.client_segment),
+  });
+  return JSON.stringify({
+    source: 'AnA Medical-Writing Knowledge Base',
+    ...guidance,
+    citation_hint:
+      'Apply this structure and these conventions, then ground every clinical claim with the evidence ' +
+      'search tools and cite per the citation protocol.',
+  });
 });
 
 // Describe Capabilities — AnA's deterministic self-knowledge: registered tools
