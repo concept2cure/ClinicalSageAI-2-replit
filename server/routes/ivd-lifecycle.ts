@@ -60,6 +60,7 @@ import { designIvdStudyProgram } from '../services/regulatory/cdx-study-design';
 import { simulateIvdReview } from '../services/regulatory/reviewer-simulation-ivd';
 import { simulatePortfolio } from '../services/regulatory/portfolio-simulation';
 import { sensitivityAnalysis } from '../services/regulatory/decision-analytics';
+import { buildProgramPlan, compareProgramScenarios } from '../services/regulatory/program-plan';
 import { diagnosticAccuracyMonteCarlo, reviewOutcomeMonteCarlo, timeToMarketMonteCarlo } from '../services/stats/monte-carlo';
 import { saveAssessment } from '../services/regulatory/ivd-assessments.service';
 import { corpusVersion } from '../services/ivd-knowledge/knowledge.service';
@@ -244,6 +245,39 @@ router.post('/evidence/sensitivity', (req: Request, res: Response) => {
 router.post('/time-to-market', (req: Request, res: Response) => {
   try {
     res.json(timeToMarketMonteCarlo(req.body ?? {}));
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+  }
+});
+
+// ── Program-plan orchestrator (classify → design → readiness → ROI → timeline) ─
+router.post('/program-plan', async (req: Request, res: Response) => {
+  const b = req.body ?? {};
+  const PATHWAYS = ['510k', 'de_novo', 'pma', 'eu_ivdr'];
+  const ASSAY = ['quantitative', 'qualitative', 'ihc', 'ngs', 'molecular'];
+  if (!PATHWAYS.includes(b.pathway)) {
+    return res.status(422).json({ error: `pathway must be one of: ${PATHWAYS.join(', ')}` });
+  }
+  if (!ASSAY.includes(b.assayType)) {
+    return res.status(422).json({ error: `assayType must be one of: ${ASSAY.join(', ')}` });
+  }
+  try {
+    const result = buildProgramPlan(b);
+    const savedId = await maybeSave(req, 'other', b, result.executiveSummary, result.executiveSummary.verdict);
+    res.json(savedId ? { ...result, savedAssessmentId: savedId } : result);
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+  }
+});
+
+// ── What-if scenario comparison ─────────────────────────────────────────────
+router.post('/scenarios/compare', (req: Request, res: Response) => {
+  const b = req.body ?? {};
+  if (!Array.isArray(b.scenarios) || b.scenarios.length === 0) {
+    return res.status(422).json({ error: 'scenarios (array of { name, input }) is required' });
+  }
+  try {
+    res.json(compareProgramScenarios(b.scenarios));
   } catch (e) {
     res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
   }

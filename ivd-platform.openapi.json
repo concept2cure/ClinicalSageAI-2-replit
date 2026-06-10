@@ -123,6 +123,20 @@
         "responses": { "200": { "description": "Distribution summaries for sensitivity/specificity/PPV/NPV" }, "422": { "$ref": "#/components/responses/ValidationError" } }
       }
     },
+    "/ivd-lifecycle/program-plan": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "Program-plan orchestrator (classify → design → readiness → ROI → timeline → cost)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["pathway", "assayType", "intendedUse"], "properties": { "deviceName": { "type": "string" }, "pathway": { "type": "string" }, "assayType": { "type": "string" }, "intendedUse": { "type": "string" }, "specimen": { "type": "string" }, "biomarker": { "type": "string" }, "hasSoftware": { "type": "boolean" }, "evidence": { "type": "object", "additionalProperties": { "type": "boolean" } }, "classification": { "type": "object" }, "seed": { "type": "integer" }, "save": { "type": "boolean" }, "programId": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "Executive summary + classification + CDx + study program + review + sensitivity + time-to-market + citations" }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
+    "/ivd-lifecycle/scenarios/compare": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "What-if scenario comparison (rank candidate plans by readiness × time × cost)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["scenarios"], "properties": { "scenarios": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "input": { "type": "object" } } } } } } } } },
+        "responses": { "200": { "description": "Per-scenario summaries + composite ranking + recommendation" }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
     "/ivd-lifecycle/evidence/sensitivity": {
       "post": {
         "tags": ["lifecycle"], "summary": "Evidence sensitivity / tornado + ROI ranking",

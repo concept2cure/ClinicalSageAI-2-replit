@@ -43,6 +43,30 @@ const EVIDENCE_EFFORT_WEEKS: Record<keyof EvidencePresence, number> = {
 
 const ALL_EVIDENCE_KEYS = Object.keys(EVIDENCE_EFFORT_WEEKS) as (keyof EvidencePresence)[];
 
+/** Rough fully-loaded cost (USD) to generate each evidence element. Planning-grade. */
+export const EVIDENCE_COST_USD: Record<keyof EvidencePresence, number> = {
+  scientificValidity: 20000,
+  analyticalPrecision: 40000,
+  detectionCapability: 35000,
+  linearity: 20000,
+  interference: 25000,
+  methodComparison: 50000,
+  stability: 80000,
+  traceability: 25000,
+  cutoffValidation: 60000,
+  clinicalPerformance: 500000,
+  intendedUseMatchesPredicate: 5000,
+  pmpfPlan: 15000,
+  softwareValidation: 120000,
+  cybersecurity: 80000,
+  bioinformaticsValidation: 90000,
+  manufacturingProcessValidation: 200000,
+  benefitRiskAnalysis: 20000,
+  specialControlsProposed: 25000,
+  euReferenceLabReady: 60000,
+  qmsCertified: 150000,
+};
+
 /** Human labels for evidence elements (for UI/report rendering). */
 const EVIDENCE_LABEL: Record<keyof EvidencePresence, string> = {
   scientificValidity: 'Scientific validity report',
@@ -76,8 +100,12 @@ export interface EvidenceImpact {
   removesMajor: boolean;
   /** Estimated effort to complete (weeks). */
   effortWeeks: number;
-  /** Readiness-gain per week of effort (the ROI metric). */
+  /** Readiness-gain per week of effort (the time-ROI metric). */
   gainPerWeek: number;
+  /** Estimated cost to complete (USD). */
+  costUsd: number;
+  /** Readiness-gain per $100k of spend (the cost-ROI metric). */
+  gainPer100k: number;
 }
 
 export interface SensitivityAnalysisResult {
@@ -85,11 +113,15 @@ export interface SensitivityAnalysisResult {
   baselineMajors: number;
   /** All currently-missing elements, ranked by absolute readiness impact (tornado). */
   tornado: EvidenceImpact[];
-  /** Same elements ranked by readiness-gain per week of effort (best ROI first). */
+  /** Same elements ranked by readiness-gain per week of effort (best time-ROI first). */
   byRoi: EvidenceImpact[];
+  /** Same elements ranked by readiness-gain per dollar (best cost-ROI first). */
+  byCostRoi: EvidenceImpact[];
+  /** Total remaining cost to complete all missing relevant evidence (USD). */
+  totalRemainingCostUsd: number;
   /** The single highest-impact next action. */
   highestImpact: EvidenceImpact | null;
-  /** The single best-ROI next action. */
+  /** The single best-ROI (per-week) next action. */
   bestRoi: EvidenceImpact | null;
 }
 
@@ -125,6 +157,7 @@ export function sensitivityAnalysis(profile: ReviewProfile): SensitivityAnalysis
     const variant = simulateIvdReview(variantProfile);
     const readinessGain = variant.readinessScore - baseline.readinessScore;
     const effortWeeks = EVIDENCE_EFFORT_WEEKS[key];
+    const costUsd = EVIDENCE_COST_USD[key];
     impacts.push({
       element: key,
       label: EVIDENCE_LABEL[key],
@@ -132,17 +165,23 @@ export function sensitivityAnalysis(profile: ReviewProfile): SensitivityAnalysis
       removesMajor: variant.counts.major < baseline.counts.major,
       effortWeeks,
       gainPerWeek: effortWeeks > 0 ? Math.round((readinessGain / effortWeeks) * 100) / 100 : readinessGain,
+      costUsd,
+      gainPer100k: costUsd > 0 ? Math.round((readinessGain / (costUsd / 100000)) * 100) / 100 : readinessGain,
     });
   }
 
   const tornado = [...impacts].sort((a, b) => b.readinessGain - a.readinessGain || a.effortWeeks - b.effortWeeks);
   const byRoi = [...impacts].sort((a, b) => b.gainPerWeek - a.gainPerWeek || b.readinessGain - a.readinessGain);
+  const byCostRoi = [...impacts].sort((a, b) => b.gainPer100k - a.gainPer100k || b.readinessGain - a.readinessGain);
+  const totalRemainingCostUsd = impacts.reduce((s, i) => s + i.costUsd, 0);
 
   return {
     baselineReadiness: baseline.readinessScore,
     baselineMajors: baseline.counts.major,
     tornado,
     byRoi,
+    byCostRoi,
+    totalRemainingCostUsd,
     highestImpact: tornado.find(i => i.readinessGain > 0) ?? null,
     bestRoi: byRoi.find(i => i.gainPerWeek > 0) ?? null,
   };
