@@ -165,6 +165,27 @@
         "responses": { "200": { "description": "Per-metric percentile/z-score/band + overall favorable percentile" }, "422": { "$ref": "#/components/responses/ValidationError" } }
       }
     },
+    "/ivd-lifecycle/decision/evpi": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "Expected value of perfect information (de-risking worth)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["scenarios", "marketValueUsd", "costToCompleteUsd"], "properties": { "marketValueUsd": { "type": "number" }, "costToCompleteUsd": { "type": "number" }, "scenarios": { "type": "array", "items": { "type": "object", "properties": { "label": { "type": "string" }, "probability": { "type": "number" }, "probabilityOfSuccess": { "type": "number" } } } } } } } } },
+        "responses": { "200": { "description": "EVPI + with/without-info expected values + per-scenario payoffs" }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
+    "/ivd-lifecycle/risk-register/simulate": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "Residual-risk Monte-Carlo (ISO 14971)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["items"], "properties": { "items": { "type": "array", "items": { "type": "object", "properties": { "id": { "type": "string" }, "severity": { "type": "string" }, "p1": { "type": "string" }, "p2": { "type": "string" } } } }, "iterations": { "type": "integer" }, "seed": { "type": "integer" }, "harmThreshold": { "type": "number" } } } } } },
+        "responses": { "200": { "description": "Harm distribution + serious-event probability + threshold exceedance" }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
+    "/ivd-lifecycle/portfolio/batch": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "Batch portfolio runner (build plans for many programs, roll up)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["programs"], "properties": { "programs": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "input": { "type": "object" } } } }, "save": { "type": "boolean" } } } } } },
+        "responses": { "200": { "description": "Per-program lines + portfolio aggregates + worklist" }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
     "/ivd-lifecycle/evidence/sensitivity": {
       "post": {
         "tags": ["lifecycle"], "summary": "Evidence sensitivity / tornado + ROI ranking",

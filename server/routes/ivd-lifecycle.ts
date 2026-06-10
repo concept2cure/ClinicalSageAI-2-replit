@@ -64,6 +64,9 @@ import { buildProgramPlan, compareProgramScenarios } from '../services/regulator
 import { expectedMonetaryValue, compareInvestmentBranches } from '../services/regulatory/decision-tree';
 import { benchmarkProgram } from '../services/regulatory/benchmarking';
 import { generateExecutiveBrief } from '../services/regulatory/executive-brief';
+import { expectedValueOfPerfectInformation } from '../services/regulatory/value-of-information';
+import { simulateRiskRegister } from '../services/regulatory/risk-register-sim';
+import { runPortfolioPlans } from '../services/regulatory/batch-portfolio';
 import { diagnosticAccuracyMonteCarlo, reviewOutcomeMonteCarlo, timeToMarketMonteCarlo } from '../services/stats/monte-carlo';
 import { saveAssessment } from '../services/regulatory/ivd-assessments.service';
 import { corpusVersion } from '../services/ivd-knowledge/knowledge.service';
@@ -332,6 +335,39 @@ router.post('/benchmark', (req: Request, res: Response) => {
   if (!PATHWAYS.includes(b.pathway)) return res.status(422).json({ error: `pathway must be one of: ${PATHWAYS.join(', ')}` });
   try {
     res.json(benchmarkProgram(b));
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+  }
+});
+
+// ── Expected value of perfect information ────────────────────────────────────
+router.post('/decision/evpi', (req: Request, res: Response) => {
+  try {
+    res.json(expectedValueOfPerfectInformation(req.body ?? {}));
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+  }
+});
+
+// ── Residual-risk Monte-Carlo (ISO 14971) ───────────────────────────────────
+router.post('/risk-register/simulate', (req: Request, res: Response) => {
+  try {
+    res.json(simulateRiskRegister(req.body ?? {}));
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+  }
+});
+
+// ── Batch portfolio (build plans for many programs, roll up) ────────────────
+router.post('/portfolio/batch', async (req: Request, res: Response) => {
+  const b = req.body ?? {};
+  if (!Array.isArray(b.programs) || b.programs.length === 0) {
+    return res.status(422).json({ error: 'programs (array of { name, input }) is required' });
+  }
+  try {
+    const result = runPortfolioPlans(b.programs);
+    const savedId = await maybeSave(req, 'other', { programCount: result.programCount }, result, `${result.likelyAcceptances}/${result.programCount} ready`);
+    res.json(savedId ? { ...result, savedAssessmentId: savedId } : result);
   } catch (e) {
     res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
   }
