@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-06-11T23:24:06.314Z",
+  "generatedAt": "2026-06-11T23:43:02.055Z",
   "git": {
-    "sha": "dcc73c52ea648676b9a86b72b26b5c18719a7add",
-    "branch": "concept2cure-v2"
+    "sha": "0499ba2a5d847e4c91164324281ad44bafa3b384",
+    "branch": "claude/eu-languages-sv-da"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -10,7 +10,7 @@
   },
   "summary": {
     "duplicateBasenames": 205,
-    "largeFilesByBytes": 14,
+    "largeFilesByBytes": 15,
     "largeFilesByLines": 44
   },
   "findings": {
@@ -2087,7 +2087,7 @@
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
-        "bytes": 115995
+        "bytes": 116433
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2096,6 +2096,10 @@
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "bytes": 114269
+      },
+      {
+        "file": "server/services/ana-ri/persona.ts",
+        "bytes": 103721
       }
     ],
     "largeFilesByLines": [
@@ -2153,7 +2157,7 @@
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
-        "lines": 2730
+        "lines": 2738
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2277,12 +2281,19 @@
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": 0
+    }
+  },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 303,
-      "largeByBytes": 11,
+      "largeByBytes": 12,
       "largeByLines": 34
     },
     {

@@ -1,0 +1,37 @@
+{
+  "actions": {
+    "save": "Gem",
+    "cancel": "Annuller",
+    "close": "Luk",
+    "next": "Næste",
+    "previous": "Forrige",
+    "delete": "Slet",
+    "continue": "Fortsæt",
+    "back": "Tilbage",
+    "search": "Søg"
+  },
+  "density": {
+    "label": "Tæthed",
+    "compact": "Kompakt",
+    "comfortable": "Behagelig",
+    "spacious": "Luftig"
+  },
+  "topbar": {
+    "notifications": "Notifikationer",
+    "help": "Hjælp",
+    "askAna": "Spørg AnA eller gå til…",
+    "command": "Kommando",
+    "activeProject": "Aktivt projekt",
+    "noProjects": "Ingen projekter",
+    "selectProject": "Vælg et projekt",
+    "filter": "Filtrer",
+    "clientType": "Kundetype",
+    "pharma": "Medicinal",
+    "biotech": "Bioteknologi",
+    "switchProgram": "Skift program"
+  },
+  "language": {
+    "label": "Sprog",
+    "select": "Vælg sprog"
+  }
+}

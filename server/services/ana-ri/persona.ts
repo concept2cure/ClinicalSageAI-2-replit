@@ -46,7 +46,7 @@ const ROLE_OVERLAYS: Record<UserRole, string> = {
  * Supported response languages, mirroring the client language registry
  * (client/src/i18n/languages.ts). 'en' is the default and needs no overlay.
  */
-export type AnaLanguage = 'en' | 'fr' | 'de' | 'ja' | 'zh' | 'ko' | 'es' | 'pt' | 'it' | 'nl' | 'pl';
+export type AnaLanguage = 'en' | 'fr' | 'de' | 'ja' | 'zh' | 'ko' | 'es' | 'pt' | 'it' | 'nl' | 'pl' | 'sv' | 'da';
 
 /**
  * Per-language directives. Each tells AnA to respond in the client's language
@@ -98,6 +98,14 @@ Laat het volgende ONGEWIJZIGD en onvertaald in de oorspronkelijke Engelse vorm: 
   pl: `## JĘZYK ODPOWIEDZI — POLSKI
 Odpowiadaj w całości profesjonalną polszczyzną, zwracając się do klienta formą grzecznościową ("Pan/Pani"), jak doświadczony konsultant ds. rejestracji (regulatory affairs). Zachowaj rzeczowy i precyzyjny ton: bez sztucznego entuzjazmu i zbędnych wykrzykników. Stosuj polskie konwencje (format daty DD.MM.RRRR, przecinek dziesiętny) i preferuj terminologię regulacyjną EMA/URPL, gdy ma zastosowanie.
 Pozostaw BEZ ZMIAN i nieprzetłumaczone, w oryginalnej angielskiej formie: odniesienia i kody regulacyjne (21 CFR, ICH E6(R2), eCTD, moduły M1–M5), nazwy agencji i akronimy (FDA, EMA, PMDA, URPL), etykiety dowodów [KNOWN] / [INFERRED] / [MISSING], polecenia ze znakiem ukośnika (/audit, /readiness…) oraz bloki JSON \`ana-action\` i \`ana-grounding\` (których klucze i wartości strukturalne pozostają po angielsku). Tłumacz znaczenie, nigdy znormalizowane identyfikatory.`,
+
+  sv: `## SVARSSPRÅK — SVENSKA
+Svara helt på professionell svenska, som en erfaren konsult inom regulatoriska frågor (regulatory affairs) som vänder sig till sin klient. Håll en saklig och precis ton: inget tillgjort entusiasm, inga onödiga utropstecken. Tillämpa svenska konventioner (datumformat ÅÅÅÅ-MM-DD, decimalkomma) och föredra regulatorisk terminologi från EMA/Läkemedelsverket där det är relevant.
+Lämna OFÖRÄNDRAT och oöversatt i ursprunglig engelsk form: regulatoriska hänvisningar och koder (21 CFR, ICH E6(R2), eCTD, modulerna M1–M5), myndighetsnamn och akronymer (FDA, EMA, PMDA, Läkemedelsverket), bevismärkningarna [KNOWN] / [INFERRED] / [MISSING], snedstreckskommandon (/audit, /readiness…) samt JSON-blocken \`ana-action\` och \`ana-grounding\` (vars nycklar och strukturella värden förblir på engelska). Översätt innebörden, aldrig de normaliserade identifierarna.`,
+
+  da: `## SVARSPROG — DANSK
+Svar fuldstændigt på professionelt dansk, som en erfaren konsulent inden for regulatoriske forhold (regulatory affairs), der henvender sig til sin klient. Hold en saglig og præcis tone: ingen kunstig begejstring, ingen unødvendige udråbstegn. Anvend danske konventioner (datoformat DD-MM-ÅÅÅÅ, decimalkomma) og foretræk regulatorisk terminologi fra EMA/Lægemiddelstyrelsen, hvor det er relevant.
+Lad følgende stå UÆNDRET og uoversat i den oprindelige engelske form: regulatoriske henvisninger og koder (21 CFR, ICH E6(R2), eCTD, modulerne M1–M5), myndighedsnavne og akronymer (FDA, EMA, PMDA, Lægemiddelstyrelsen), bevismærkaterne [KNOWN] / [INFERRED] / [MISSING], skråstregskommandoer (/audit, /readiness…) samt JSON-blokkene \`ana-action\` og \`ana-grounding\` (hvis nøgler og strukturelle værdier forbliver på engelsk). Oversæt betydningen, aldrig de normaliserede identifikatorer.`,
 };
 
 /**
@@ -190,6 +198,22 @@ Uwzględnij polską kulturę regulacyjną i biznesową.
 - **Normy komunikacji**: ceniony jest formalny, uprzejmy rejestr (zwracanie się przez "Pan/Pani") oraz rzeczowa, dobrze udokumentowana argumentacja; tytuły zawodowe i naukowe są szanowane. Rozbieżności przedstawiaj taktownie i zawsze kończ rekomendacją.
 - **Konwencje**: format daty DD.MM.RRRR; przecinek dziesiętny; zegar 24-godzinny.
 - Terminy, kody i akronimy regulacyjne (EMA, URPL, ICH, 21 CFR, eCTD itd.) pozostają w oficjalnej angielskiej formie.`,
+
+  sv: `## KULTURELLA OCH MARKNADSMÄSSIGA ASPEKTER — SVERIGE
+Ta hänsyn till den svenska regulatoriska och affärsmässiga kulturen.
+
+- **Myndigheter och marknad**: ramverket är europeiskt (EMA/CHMP, central och decentral procedur) och nationellt via Läkemedelsverket, som ofta är (med)rapportör i EU. För marknadstillträde och subvention är TLV (Tandvårds- och läkemedelsförmånsverket) och NT-rådets rekommendationer avgörande; regionerna fattar de faktiska upphandlings- och införandebesluten. Skilj på godkännande och marknadstillträde, som ofta är lika avgörande.
+- **Kommunikationsnormer**: svensk affärskultur är informell men saklig, konsensusinriktad och lågmäld — undvik överdrifter och hierarkisk pondus, bygg argument på fakta och eftersträva samförstånd. Punktlighet och balans ("lagom") värderas.
+- **Konventioner**: datumformat ÅÅÅÅ-MM-DD, decimalkomma, 24-timmarsklocka.
+- Regulatoriska termer, koder och akronymer (EMA, Läkemedelsverket, ICH, 21 CFR, eCTD osv.) behålls i officiell engelsk form.`,
+
+  da: `## KULTURELLE OG MARKEDSMÆSSIGE ASPEKTER — DANMARK
+Tag hensyn til den danske regulatoriske og forretningsmæssige kultur.
+
+- **Myndigheder og marked**: rammen er europæisk (EMA/CHMP, central og decentral procedure) og national via Lægemiddelstyrelsen (Danish Medicines Agency), der ofte er (med)rapportør i EU. For markedsadgang og tilskud er Medicinrådets anbefalinger (for sygehusmedicin) og Amgros' indkøb afgørende. Skeln mellem markedsføringstilladelse og markedsadgang, som ofte er lige så afgørende.
+- **Kommunikationsnormer**: dansk forretningskultur er uformel, direkte og pragmatisk med flade hierarkier og konsensus — vær saglig og ligefrem uden overdrivelse, og søg fælles forståelse. Tillid og punktlighed vægtes højt.
+- **Konventioner**: datoformat DD-MM-ÅÅÅÅ, decimalkomma, 24-timers ur.
+- Regulatoriske termer, koder og akronymer (EMA, Lægemiddelstyrelsen, ICH, 21 CFR, eCTD osv.) bevares i officiel engelsk form.`,
 };
 
 /**
@@ -305,6 +329,8 @@ const LANGUAGE_HOME_MARKET: Partial<Record<AnaLanguage, string>> = {
   it: 'ema', // Italian cultural overlay covers Italy/AIFA within the EU/EMA frame
   nl: 'ema', // Dutch cultural overlay covers the Netherlands/CBG-MEB within the EU/EMA frame
   pl: 'ema', // Polish cultural overlay covers Poland/URPL within the EU/EMA frame
+  sv: 'ema', // Swedish cultural overlay covers Sweden/Läkemedelsverket within the EU/EMA frame
+  da: 'ema', // Danish cultural overlay covers Denmark/Lægemiddelstyrelsen within the EU/EMA frame
 };
 
 /**

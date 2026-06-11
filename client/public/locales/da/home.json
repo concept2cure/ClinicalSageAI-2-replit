@@ -1,0 +1,10 @@
+{
+  "greeting": {
+    "late": "Arbejder sent",
+    "morning": "Godmorgen",
+    "afternoon": "God eftermiddag",
+    "evening": "God aften"
+  },
+  "greetingLine": "{{greeting}}, {{name}}",
+  "prompt": "Hvad vil du arbejde med? Spørg AnA, eller hop ind i et modul nedenfor."
+}
