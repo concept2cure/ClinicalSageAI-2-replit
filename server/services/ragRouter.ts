@@ -86,6 +86,11 @@ export interface RagRetrievalParams {
   mmrLambda?: number;
   /** Override the intent's hybrid (dense+full-text RRF) default for vault/rag_chunks. */
   useHybrid?: boolean;
+  /** Expand each vault/rag_chunks result to a ±contextWindow neighbour window for generation. */
+  useContextExpansion?: boolean;
+  contextWindow?: number;
+  /** Enable the agentic corrective loop (grade + rewrite/re-retrieve + groundedness guard) for ragQuery. */
+  useCorrectiveLoop?: boolean;
   useCompression?: boolean;
   filters?: RetrievalOptions['filters'];
 }
@@ -94,6 +99,8 @@ export interface RagRouterResult {
   answer: string;
   sources: RetrievedDocument[];
   context: RAGContext;
+  /** Faithfulness verdict from the corrective loop; present only when useCorrectiveLoop is set. */
+  grounded?: boolean;
 }
 
 /** Per-intent default policy. Centralised so the trade-offs are reviewed in one place. */
@@ -130,6 +137,9 @@ export function optionsForIntent(params: RagRetrievalParams): RetrievalOptions {
     useMmr: pick(params.useMmr, defaults.useMmr),
     mmrLambda: pick(params.mmrLambda, defaults.mmrLambda),
     useHybrid: pick(params.useHybrid, defaults.useHybrid),
+    useContextExpansion: params.useContextExpansion,
+    contextWindow: params.contextWindow,
+    useCorrectiveLoop: params.useCorrectiveLoop,
     useCompression: params.useCompression,
     organizationUuid: params.organizationUuid,
     artifactScope: params.artifactScope,
@@ -226,6 +236,7 @@ export async function ragQuery(params: RagRetrievalParams): Promise<RagRouterRes
       answer: result.answer,
       sources: result.sources,
       context: result.context,
+      ...(result.grounded === undefined ? {} : { grounded: result.grounded }),
     };
   } catch (err) {
     recordRetrieval(params, options, wallStart, undefined);

@@ -6007,6 +6007,188 @@ registerToolHandler('review_send_readiness', async (input, ctx) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// eGrants (C2C-14). Conversational building shares the governed/audited path
+// (recordGovernedAction, surface 'ana'). Awards thread proposal → award provenance.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_grant_proposal', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_grant_proposal requires tenant + user context.' });
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!title) return JSON.stringify({ error: 'title is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createProposalTx } = await import('../grants/grants-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createProposalTx(client, ctx.organizationId, ctx.userId, {
+      title,
+      opportunityId: typeof input.opportunity_id === 'number' ? input.opportunity_id : null,
+      projectId: typeof input.project_id === 'number' ? input.project_id : null,
+      principalInvestigator: typeof input.principal_investigator === 'string' ? input.principal_investigator : null,
+      requestedAmount: typeof input.requested_amount === 'number' ? input.requested_amount : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `grant-proposal:${id}`, reason: fcoiReason(input, 'Grant proposal opened via AnA'),
+      payload: { title }, domain: 'grants', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Opened grant proposal "${title}" (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_grant_proposal failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('record_grant_award', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'record_grant_award requires tenant + user context.' });
+  const awardNumber = typeof input.award_number === 'string' ? input.award_number.trim() : '';
+  const fundingAgency = typeof input.funding_agency === 'string' ? input.funding_agency : '';
+  if (!awardNumber || !['nih', 'nsf', 'barda', 'dod', 'cdc', 'arpa_h', 'foundation', 'industry', 'other'].includes(fundingAgency)) {
+    return JSON.stringify({ error: 'award_number and a valid funding_agency are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createAwardTx } = await import('../grants/grants-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, provenanceLinkId } = await createAwardTx(client, ctx.organizationId, ctx.userId, {
+      awardNumber, fundingAgency: fundingAgency as any,
+      proposalId: typeof input.proposal_id === 'number' ? input.proposal_id : null,
+      projectId: typeof input.project_id === 'number' ? input.project_id : null,
+      totalAmount: typeof input.total_amount === 'number' ? input.total_amount : null,
+      periodStart: typeof input.period_start === 'string' ? input.period_start : null,
+      periodEnd: typeof input.period_end === 'string' ? input.period_end : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `grant-award:${id}`, reason: fcoiReason(input, 'Grant award recorded via AnA'),
+      payload: { fundingAgency, provenanceLinkId }, domain: 'grants', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, provenanceLinkId, message: `Recorded ${fundingAgency.toUpperCase()} award "${awardNumber}" (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `record_grant_award failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_grant_reporting', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_grant_reporting requires tenant context.' });
+  const awardId = typeof input.award_id === 'number' ? input.award_id : NaN;
+  if (!Number.isInteger(awardId)) return JSON.stringify({ error: 'award_id is required.' });
+  const { getAwardPeriod } = await import('../grants/grants-service.js');
+  const { reportingObligations, awardPeriodState } = await import('../grants/grants-logic.js');
+  try {
+    const { periodStart, periodEnd } = await getAwardPeriod(ctx.organizationId, awardId);
+    const today = new Date().toISOString().slice(0, 10);
+    const obligations = reportingObligations(periodStart, periodEnd);
+    return JSON.stringify({
+      ok: true, periodState: awardPeriodState(periodStart, periodEnd, today), obligations,
+      message: `${obligations.length} reporting obligation(s); award is ${awardPeriodState(periodStart, periodEnd, today).replace(/_/g, ' ')}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_grant_reporting failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RIM-lite (C2C-12). Conversational building shares the governed/audited path
+// (recordGovernedAction, surface 'ana').
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_rim_product', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_rim_product requires tenant + user context.' });
+  const productName = typeof input.product_name === 'string' ? input.product_name.trim() : '';
+  if (!productName) return JSON.stringify({ error: 'product_name is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createProductTx } = await import('../rim/rim-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createProductTx(client, ctx.organizationId, ctx.userId, {
+      productName,
+      inn: typeof input.inn === 'string' ? input.inn : null,
+      dosageForm: typeof input.dosage_form === 'string' ? input.dosage_form : null,
+      atcCode: typeof input.atc_code === 'string' ? input.atc_code : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `rim-product:${id}`, reason: fcoiReason(input, 'RIM product opened via AnA'),
+      payload: { productName }, domain: 'rim', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Opened RIM product "${productName}" (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_rim_product failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('set_registration_status', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'set_registration_status requires tenant + user context.' });
+  const productId = typeof input.product_id === 'number' ? input.product_id : NaN;
+  const country = typeof input.country === 'string' ? input.country.trim() : '';
+  if (!Number.isInteger(productId) || !country) return JSON.stringify({ error: 'product_id and country are required.' });
+  const VALID = ['planned', 'submitted', 'under_review', 'approved', 'withdrawn', 'suspended', 'cancelled'];
+  const marketStatus = typeof input.market_status === 'string' ? input.market_status : undefined;
+  if (marketStatus && !VALID.includes(marketStatus)) return JSON.stringify({ error: 'market_status must be a valid status.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { upsertRegistrationTx } = await import('../rim/rim-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await upsertRegistrationTx(client, ctx.organizationId, ctx.userId, productId, {
+      country, marketStatus: marketStatus as any,
+      registrationNumber: typeof input.registration_number === 'string' ? input.registration_number : null,
+      marketingAuthHolder: typeof input.marketing_auth_holder === 'string' ? input.marketing_auth_holder : null,
+      approvalDate: typeof input.approval_date === 'string' ? input.approval_date : null,
+      renewalDueDate: typeof input.renewal_due_date === 'string' ? input.renewal_due_date : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `rim-product:${productId}`, reason: fcoiReason(input, 'Registration status set via AnA'),
+      payload: { registrationId: id, country, status: marketStatus }, domain: 'rim', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, registrationId: id, message: `Set ${country.toUpperCase()} status${marketStatus ? ` to ${marketStatus}` : ''} for product ${productId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `set_registration_status failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_label_currency', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_label_currency requires tenant context.' });
+  const productId = typeof input.product_id === 'number' ? input.product_id : NaN;
+  if (!Number.isInteger(productId)) return JSON.stringify({ error: 'product_id is required.' });
+  const { getLabelCurrencyInput } = await import('../rim/rim-service.js');
+  const { evaluateLabelCurrency } = await import('../rim/rim-logic.js');
+  try {
+    const inp = await getLabelCurrencyInput(ctx.organizationId, productId);
+    const gate = evaluateLabelCurrency(inp);
+    return JSON.stringify({
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings,
+      message: gate.findings.length === 0 ? 'All approved markets have current labels.' : `${gate.findings.length} approved market(s) missing a current label.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_label_currency failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('log_study_deviation', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'log_study_deviation requires tenant context.' });

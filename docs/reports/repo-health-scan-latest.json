@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-11T12:28:49.846Z",
+  "generatedAt": "2026-06-11T15:08:37.175Z",
   "git": {
-    "sha": "537ac2be9c2b7bdbd6563332442ca979b8e0da8d",
+    "sha": "5fda9403184a578ba0716573071ed38ffa8dbe7c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 200,
+    "duplicateBasenames": 202,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -954,6 +954,15 @@
         ]
       },
       {
+        "basename": "rim",
+        "count": 3,
+        "paths": [
+          "server/routes/rim.ts",
+          "server/services/intelligence/rim.ts",
+          "shared/schema/rim.ts"
+        ]
+      },
+      {
         "basename": "setup",
         "count": 3,
         "paths": [
@@ -1476,6 +1485,14 @@
         "paths": [
           "client/src/services/regulatory/globalPyramids.ts",
           "services/regulatory/globalPyramids.ts"
+        ]
+      },
+      {
+        "basename": "grants",
+        "count": 2,
+        "paths": [
+          "server/routes/grants.ts",
+          "shared/schema/grants.ts"
         ]
       },
       {
@@ -2010,11 +2027,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 345981
+        "bytes": 357566
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 285281
+        "bytes": 289701
       },
       {
         "file": "server/statistics-service.ts",
@@ -2068,7 +2085,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 7363
+        "lines": 7545
       },
       {
         "file": "server/statistics-service.ts",
@@ -2080,7 +2097,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 5348
+        "lines": 5451
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2240,7 +2257,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 297,
+      "duplicateGroups": 300,
       "largeByBytes": 11,
       "largeByLines": 34
     },
@@ -2258,7 +2275,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 38,
+      "duplicateGroups": 40,
       "largeByBytes": 1,
       "largeByLines": 2
     },
