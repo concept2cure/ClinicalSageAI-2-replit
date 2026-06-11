@@ -1214,6 +1214,166 @@ export const SEARCH_DOCUMENT: AnaTool = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Document Intake, OCR & Spreadsheet Tools — read/study/OCR/edit uploaded files
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const INSPECT_UPLOADED_DOCUMENT: AnaTool = {
+  name: 'inspect_uploaded_document',
+  description:
+    'Inventory/triage an uploaded file by file_id BEFORE reading it — the first move on any large or unknown document. ' +
+    'For PDFs: page count, embedded bookmarks/TOC outline, document metadata, a sampled per-page text-layer census, a ' +
+    'scanned-vs-born-digital verdict, and a recommended extraction strategy (e.g. for a 1,000-page scanned binder with no ' +
+    'bookmarks: sweep the top band of each page with ocr_document_pages to find section/exhibit separators cheaply, then ' +
+    'full-OCR only the pages that matter). For Excel/CSV: the sheet inventory (names, dimensions, formula counts). For ' +
+    'DOCX/Markdown/text: size, word count, and the heading outline. The file_id comes from a chat upload (response field ' +
+    '`fileId`, e.g. "file_17…") or a Data Room source ref like "upload:file_17…".',
+  input_schema: {
+    type: 'object',
+    properties: {
+      file_id: { type: 'string', description: 'The upload\'s file_id, e.g. "file_1712345678_ab12cd".' },
+      max_sampled_pages: {
+        type: 'number',
+        description: 'For PDFs: how many pages to census for text-layer presence (default 30, max 200).',
+      },
+    },
+    required: ['file_id'],
+  },
+};
+
+export const READ_UPLOADED_DOCUMENT: AnaTool = {
+  name: 'read_uploaded_document',
+  description:
+    'Read and extract the content of an uploaded file by file_id — AnA\'s front door to learn from and study any client ' +
+    'document. Handles PDF (born-digital text with automatic OCR fallback for scanned pages), DOCX, Markdown, plain ' +
+    'text/CSV/JSON, Excel (.xlsx, all sheets rendered as text), and images (OCR). Returns the extracted text (paged via ' +
+    'max_chars/offset), the extraction method and OCR confidence, plus a structural outline (sections, tables, figures). ' +
+    'For PDFs you can scope to a page range (page_start/page_end) — preferred for large documents; run ' +
+    'inspect_uploaded_document first to plan. For cell-level Excel access (values, formulas, specific sheets) use ' +
+    'read_spreadsheet instead. Set force_ocr to re-read a PDF/image with OCR even when a text layer exists (e.g. a bad ' +
+    'or partial text layer).',
+  input_schema: {
+    type: 'object',
+    properties: {
+      file_id: { type: 'string', description: 'The upload\'s file_id, e.g. "file_1712345678_ab12cd".' },
+      max_chars: {
+        type: 'number',
+        description: 'Maximum characters of text to return (default 30000, max 80000). Page with `offset`.',
+      },
+      offset: { type: 'number', description: 'Character offset to start from (for paging long documents). Default 0.' },
+      page_start: { type: 'number', description: 'PDF only: first page to extract, 1-based inclusive.' },
+      page_end: { type: 'number', description: 'PDF only: last page to extract, 1-based inclusive.' },
+      force_ocr: { type: 'boolean', description: 'PDF/image only: OCR even if a text layer exists (default false).' },
+      languages: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'OCR languages when OCR is used: eng, fra, deu, spa, ita (default ["eng"]).',
+      },
+    },
+    required: ['file_id'],
+  },
+};
+
+export const OCR_DOCUMENT_PAGES: AnaTool = {
+  name: 'ocr_document_pages',
+  description:
+    'Targeted optical character recognition over specific pages — and optionally a REGION of each page — of an uploaded ' +
+    'PDF or image. This is the precision instrument for big scanned documents: OCR costs ~0.5–2s per page, so never ' +
+    'brute-force a huge binder. Proven strategy: (1) inspect_uploaded_document to get the page count and bookmark/text ' +
+    'census; (2) sweep cheaply with region "top_band" at modest dpi to find separators/headings (e.g. "EXHIBIT 12") and ' +
+    'build an index; (3) full-OCR only the page ranges that matter. Select pages with page_start/page_end or an explicit ' +
+    '`pages` list. Returns per-page text with per-page confidence (0–100). Languages supported: eng, fra, deu, spa, ita.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      file_id: { type: 'string', description: 'The upload\'s file_id (a PDF or an image).' },
+      page_start: { type: 'number', description: 'First page to OCR, 1-based inclusive (default 1).' },
+      page_end: { type: 'number', description: 'Last page to OCR, 1-based inclusive.' },
+      pages: {
+        type: 'array',
+        items: { type: 'number' },
+        description: 'Explicit 1-based page list — overrides page_start/page_end.',
+      },
+      region: {
+        type: 'string',
+        enum: ['full', 'top_band', 'bottom_band', 'left_half', 'right_half', 'custom'],
+        description:
+          'Page region to OCR. "top_band"/"bottom_band" = top/bottom 25% (cheap separator/header sweeps); ' +
+          '"custom" uses the region_* fractions. Default "full".',
+      },
+      region_top: { type: 'number', description: 'custom region: top edge as a fraction of page height (0–1).' },
+      region_left: { type: 'number', description: 'custom region: left edge as a fraction of page width (0–1).' },
+      region_width: { type: 'number', description: 'custom region: width as a fraction of page width (0–1).' },
+      region_height: { type: 'number', description: 'custom region: height as a fraction of page height (0–1).' },
+      dpi: { type: 'number', description: 'Render resolution for OCR, 72–400 (default 200; ~110 is fine for separator sweeps).' },
+      max_pages: { type: 'number', description: 'Hard cap on pages OCRed in this call (default 20, max 50).' },
+      languages: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'OCR languages: eng, fra, deu, spa, ita (default ["eng"]).',
+      },
+    },
+    required: ['file_id'],
+  },
+};
+
+export const READ_SPREADSHEET: AnaTool = {
+  name: 'read_spreadsheet',
+  description:
+    'Structured, cell-level read of an uploaded Excel (.xlsx) or CSV file: returns the sheet inventory plus the requested ' +
+    'sheet\'s rows as a table — display values with row numbers, and formulas preserved alongside their cached results. ' +
+    'Page through big sheets with start_row/max_rows. Use this (not read_uploaded_document) whenever you need to study ' +
+    'specific cells, formulas, or a particular sheet; use edit_spreadsheet to change cells afterwards.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      file_id: { type: 'string', description: 'The upload\'s file_id (.xlsx or .csv).' },
+      sheet: {
+        type: 'string',
+        description: 'Sheet name, or 1-based sheet index as a string (e.g. "2"). Default: first sheet.',
+      },
+      start_row: { type: 'number', description: 'First row to return, 1-based (default 1).' },
+      end_row: { type: 'number', description: 'Last row to return, 1-based inclusive.' },
+      max_rows: { type: 'number', description: 'Row cap per call (default 100, max 1000).' },
+      include_formulas: { type: 'boolean', description: 'Include the formulas list (default true).' },
+    },
+    required: ['file_id'],
+  },
+};
+
+export const EDIT_SPREADSHEET: AnaTool = {
+  name: 'edit_spreadsheet',
+  description:
+    'Edit an uploaded Excel workbook (or CSV, promoted to .xlsx on save) and persist the result as a NEW uploaded file — ' +
+    'the original is never mutated, so provenance is preserved. Supply cell edits as A1 addresses with either a literal ' +
+    '`value` (string/number/boolean; null clears the cell) or an Excel `formula` (without the leading "="). Optionally ' +
+    'create missing sheets. Returns the new file_id of the edited copy plus a summary of every applied edit — report that ' +
+    'new file_id to the user. ALWAYS read_spreadsheet first to confirm the target cells before editing.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      file_id: { type: 'string', description: 'The upload\'s file_id (.xlsx or .csv).' },
+      edits: {
+        type: 'array',
+        description: 'Cell edits to apply, in order.',
+        items: {
+          type: 'object',
+          properties: {
+            sheet: { type: 'string', description: 'Sheet name (default: first sheet).' },
+            cell: { type: 'string', description: 'A1-style address, e.g. "B7".' },
+            value: { description: 'New literal value (string/number/boolean). null clears the cell.' },
+            formula: { type: 'string', description: 'Excel formula without "=", e.g. "SUM(B2:B6)". Overrides value.' },
+          },
+          required: ['cell'],
+        },
+      },
+      create_missing_sheets: { type: 'boolean', description: 'Create sheets named in edits that don\'t exist (default false).' },
+      new_file_name: { type: 'string', description: 'Filename for the edited copy (default: "<original> (edited).xlsx").' },
+    },
+    required: ['file_id', 'edits'],
+  },
+};
+
 export const MINE_PRECEDENTS: AnaTool = {
   name: 'mine_precedents',
   description:
@@ -1503,6 +1663,10 @@ export const DOCUMENT_REVIEW_TOOLS: AnaTool[] = [
   EXTRACT_DOCUMENT_STRUCTURE,
   COMPARE_DOCUMENT_VERSIONS,
   SEARCH_DOCUMENT,
+  INSPECT_UPLOADED_DOCUMENT,
+  READ_UPLOADED_DOCUMENT,
+  OCR_DOCUMENT_PAGES,
+  READ_SPREADSHEET,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -5031,6 +5195,11 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   EXTRACT_DOCUMENT_STRUCTURE,
   COMPARE_DOCUMENT_VERSIONS,
   SEARCH_DOCUMENT,
+  INSPECT_UPLOADED_DOCUMENT,
+  READ_UPLOADED_DOCUMENT,
+  OCR_DOCUMENT_PAGES,
+  READ_SPREADSHEET,
+  EDIT_SPREADSHEET,
   CHECK_DOSSIER_CONSISTENCY,
   CHECK_NUMERICAL_INTEGRITY,
   COMPUTE_SAMPLE_SIZE,
