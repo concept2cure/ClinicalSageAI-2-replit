@@ -86,6 +86,9 @@ export interface RagRetrievalParams {
   mmrLambda?: number;
   /** Override the intent's hybrid (dense+full-text RRF) default for vault/rag_chunks. */
   useHybrid?: boolean;
+  /** Expand each vault/rag_chunks result to a ±contextWindow neighbour window for generation. */
+  useContextExpansion?: boolean;
+  contextWindow?: number;
   useCompression?: boolean;
   filters?: RetrievalOptions['filters'];
 }
@@ -130,6 +133,8 @@ export function optionsForIntent(params: RagRetrievalParams): RetrievalOptions {
     useMmr: pick(params.useMmr, defaults.useMmr),
     mmrLambda: pick(params.mmrLambda, defaults.mmrLambda),
     useHybrid: pick(params.useHybrid, defaults.useHybrid),
+    useContextExpansion: params.useContextExpansion,
+    contextWindow: params.contextWindow,
     useCompression: params.useCompression,
     organizationUuid: params.organizationUuid,
     artifactScope: params.artifactScope,

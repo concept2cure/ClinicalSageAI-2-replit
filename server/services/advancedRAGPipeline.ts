@@ -22,6 +22,8 @@
  *    cross-encoder reranker when RAG_RERANKER_* env is configured.
  * 4. MMR - Balance relevance with diversity, measured in embedding space
  * 5. Contextual Compression - Extract only relevant passages
+ * 6. Small-to-Big - Rank on precise chunks, then expand each to its neighbour
+ *    window in the source document so generation reads the surrounding context
  *
  * The auxiliary reasoning steps (HyDE, query expansion, reranking, compression)
  * are cached in-memory per identical request to cut redundant LLM round-trips;
@@ -69,6 +71,16 @@ export interface RetrievalOptions {
    * similarity-pure). Off unless set — the router enables it per intent.
    */
   useHybrid?: boolean;
+  /**
+   * Small-to-big context expansion. After ranking on precise small chunks,
+   * expand each vault / rag_chunks result to include its neighbouring chunks in
+   * the same document (a ±`contextWindow` sentence-window) so generation sees
+   * the surrounding context the chunk alone omits. Off unless set. No effect on
+   * project-atom / memory corpora (no chunk index to window over).
+   */
+  useContextExpansion?: boolean;
+  /** Neighbours to include on each side for useContextExpansion (default 1). */
+  contextWindow?: number;
   useCompression?: boolean;
   organizationUuid?: string;
   persistCitations?: boolean;
@@ -144,6 +156,15 @@ export interface RetrievedDocument {
   rerankScore?: number; // From the LLM relevance judge (LLM-as-judge, not a cross-encoder)
   finalScore: number; // Combined score
   compressedContent?: string; // Extracted relevant passage
+  /**
+   * Small-to-big context expansion: the retrieved chunk concatenated with its
+   * neighbours in the source document (sentence-window). Set by expandContext
+   * when useContextExpansion is on; generation and compression prefer it over
+   * the bare chunk so the model sees surrounding context the precise chunk omits.
+   */
+  expandedContent?: string;
+  /** Sequential index of this chunk within its document; enables window expansion. */
+  chunkIndex?: number;
   pageNumber?: number;
   sectionTitle?: string | null;
   locator?: string;
@@ -182,6 +203,7 @@ type VaultChunkRow = {
   content: string | null;
   page_number: number | null;
   section_title: string | null;
+  chunk_index: number | null;
   similarity: number;
   /** Stored index vector in pgvector text form ('[a,b,...]'); only selected when needEmbeddings. */
   embedding?: string | null;
@@ -404,6 +426,17 @@ export class AdvancedRAGPipeline {
     } else {
       // Just take top results
       candidates = candidates.slice(0, limit);
+    }
+
+    // Step 3.5: Small-to-big context expansion (ranked on small chunks, read on
+    // a wider window). Runs before compression so compression extracts from the
+    // expanded window.
+    if (options.useContextExpansion && candidates.length > 0) {
+      candidates = await this.expandContext(
+        candidates,
+        options.contextWindow ?? 1,
+        options.organizationUuid
+      );
     }
 
     // Step 4: Contextual compression
@@ -641,6 +674,59 @@ export class AdvancedRAGPipeline {
   }
 
   /**
+   * Small-to-big context expansion. Replaces each vault / rag_chunks result's
+   * text with the chunk plus its ±window neighbours in the same document, so
+   * generation sees the surrounding context the precise chunk omits (the chunk
+   * stays the unit we *rank* on; the window is the unit we *read*). Results
+   * without a chunk index (project atoms, memory) pass through unchanged, and a
+   * per-chunk failure degrades to the bare chunk — expansion never drops a
+   * result. Both windows are backed by a (document_id, chunk_index) index.
+   */
+  private async expandContext(
+    documents: RetrievedDocument[],
+    window: number,
+    organizationUuid?: string
+  ): Promise<RetrievedDocument[]> {
+    if (window <= 0) return documents;
+    return Promise.all(
+      documents.map(async doc => {
+        if (doc.chunkIndex == null || !doc.documentId) return doc;
+        const lo = doc.chunkIndex - window;
+        const hi = doc.chunkIndex + window;
+        try {
+          let texts: string[];
+          if (doc.atomType === 'vault_chunk') {
+            texts = await withTenantContext(this.pool, organizationUuid, async client => {
+              const { rows } = await client.query<{ chunk_text: string | null }>(
+                `SELECT chunk_text FROM vault.document_chunks
+                 WHERE document_id = $1 AND chunk_index BETWEEN $2 AND $3
+                 ORDER BY chunk_index`,
+                [doc.documentId, lo, hi]
+              );
+              return rows.map(r => r.chunk_text || '').filter(Boolean);
+            });
+          } else if (doc.atomType === 'rag_chunk') {
+            const { rows } = await this.pool.query<{ content: string | null }>(
+              `SELECT content FROM rag_chunks
+               WHERE document_id = $1 AND chunk_index BETWEEN $2 AND $3
+               ORDER BY chunk_index`,
+              [doc.documentId, lo, hi]
+            );
+            texts = rows.map(r => r.content || '').filter(Boolean);
+          } else {
+            return doc;
+          }
+          // Only annotate when the window actually added neighbours.
+          return texts.length > 1 ? { ...doc, expandedContent: texts.join('\n\n') } : doc;
+        } catch (error) {
+          console.warn('[RAG] context expansion failed for a chunk; using the chunk alone:', error);
+          return doc;
+        }
+      })
+    );
+  }
+
+  /**
    * Contextual compression - extract relevant passages
    */
   private async compressContexts(
@@ -651,9 +737,11 @@ export class AdvancedRAGPipeline {
 
     const compressedDocs = await Promise.all(
       documents.map(async doc => {
-        if (doc.content.length < 500) {
+        // Compress the expanded window when present (small-to-big), else the chunk.
+        const text = doc.expandedContent || doc.content;
+        if (text.length < 500) {
           // Too short to compress
-          return { ...doc, compressedContent: doc.content };
+          return { ...doc, compressedContent: text };
         }
 
         const compressResponse = await this.routeCached({
@@ -665,7 +753,7 @@ export class AdvancedRAGPipeline {
             },
             {
               role: 'user',
-              content: `Query: "${query}"\n\nDocument:\n${doc.content}`,
+              content: `Query: "${query}"\n\nDocument:\n${text}`,
             },
           ],
           maxTokens: 400,
@@ -718,6 +806,7 @@ export class AdvancedRAGPipeline {
       finalScore: Number(row.similarity),
       pageNumber: row.page_number ?? undefined,
       sectionTitle: row.section_title,
+      chunkIndex: row.chunk_index ?? undefined,
       locator: buildLocator(row),
       embedding: needEmbeddings ? parsePgVector(row.embedding) : undefined,
     });
@@ -732,6 +821,7 @@ export class AdvancedRAGPipeline {
           c.chunk_text AS content,
           c.page_number AS page_number,
           c.section_title AS section_title,
+          c.chunk_index AS chunk_index,
           ${embeddingCol}
           1 - (c.embedding <=> $1::vector) AS similarity
         FROM vault.document_chunks c
@@ -765,6 +855,7 @@ export class AdvancedRAGPipeline {
             c.chunk_text AS content,
             c.page_number AS page_number,
             c.section_title AS section_title,
+            c.chunk_index AS chunk_index,
             ${embeddingCol}
             0::float8 AS similarity
           FROM vault.document_chunks c
@@ -829,6 +920,7 @@ export class AdvancedRAGPipeline {
       finalScore: Number(row.similarity),
       pageNumber: row.page_number ?? undefined,
       sectionTitle: row.section_title,
+      chunkIndex: row.chunk_index ?? undefined,
       locator: buildLocator(row),
       embedding: needEmbeddings ? parsePgVector(row.embedding) : undefined,
     });
@@ -842,6 +934,7 @@ export class AdvancedRAGPipeline {
           c.content AS content,
           c.page_number AS page_number,
           c.section_title AS section_title,
+          c.chunk_index AS chunk_index,
           ${embeddingCol}
           1 - (c.embedding <=> $1::vector) AS similarity
         FROM rag_chunks c
@@ -880,6 +973,7 @@ export class AdvancedRAGPipeline {
           c.content AS content,
           c.page_number AS page_number,
           c.section_title AS section_title,
+          c.chunk_index AS chunk_index,
           ${embeddingCol}
           0::float8 AS similarity
         FROM rag_chunks c
@@ -1206,7 +1300,8 @@ export class AdvancedRAGPipeline {
     // Build context for generation
     const sourceText = context.documents
       .map(
-        (doc, idx) => `[Source ${idx + 1}: ${doc.title}]\n${doc.compressedContent || doc.content}`
+        (doc, idx) =>
+          `[Source ${idx + 1}: ${doc.title}]\n${doc.compressedContent || doc.expandedContent || doc.content}`
       )
       .join('\n\n---\n\n');
 
@@ -1233,7 +1328,7 @@ If the sources don't contain enough information to fully answer, say so clearly.
       const citations = context.documents.map(doc => ({
         documentId: doc.documentId,
         chunkId: doc.chunkId,
-        quote: doc.compressedContent || doc.content,
+        quote: doc.compressedContent || doc.expandedContent || doc.content,
         locator: doc.locator,
         confidence: doc.finalScore,
       }));
