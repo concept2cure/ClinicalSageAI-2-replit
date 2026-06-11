@@ -147,6 +147,54 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // eGrants metrics (C2C-14).
+      try {
+        const { renderGrantsMetrics } = await import('../services/grants-metrics.js');
+        lines.push(...renderGrantsMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // RIM-lite metrics (C2C-12).
+      try {
+        const { renderRimMetrics } = await import('../services/rim-metrics.js');
+        lines.push(...renderRimMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Inspection readiness metrics (C2C-13).
+      try {
+        const { renderInspectionMetrics } = await import('../services/inspection-metrics.js');
+        lines.push(...renderInspectionMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Controlled substances metrics (C2C-15).
+      try {
+        const { renderCsMetrics } = await import('../services/cs-metrics.js');
+        lines.push(...renderCsMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Lifecycle obligation metrics (C2C-11).
+      try {
+        const { renderLifecycleMetrics } = await import('../services/lifecycle-metrics.js');
+        lines.push(...renderLifecycleMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // eTMF metrics (C2C-08).
+      try {
+        const { renderEtmfMetrics } = await import('../services/etmf-metrics.js');
+        lines.push(...renderEtmfMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RAG retrieval metrics — recorded at the ragRouter chokepoint.
       try {
         const { renderRagMetrics } = await import('../services/rag-runtime-metrics.js');

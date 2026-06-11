@@ -137,8 +137,8 @@ export function scorecardFromBlueprint(
   requirementsAssessment?: { presentRequiredCount: number; totalRequiredCount: number }
 ): DeviceReadinessScorecard {
   const evidence = blueprint.evidenceModules
-    // Biocompatibility + electrical safety are reference sets, not scored gaps.
-    .filter((m) => m.id !== 'biocompatibility' && m.id !== 'electrical_safety')
+    // Biocompatibility, electrical safety + sterilization are reference sets, not scored gaps.
+    .filter((m) => m.id !== 'biocompatibility' && m.id !== 'electrical_safety' && m.id !== 'sterilization')
     .map((m) => ({ id: m.id, label: m.title, applicable: m.applicable, ...moduleReadiness(m.detail) }));
 
   return computeDeviceReadinessScorecard({

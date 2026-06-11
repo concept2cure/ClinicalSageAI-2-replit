@@ -215,16 +215,11 @@ async function request(method: 'GET' | 'POST', path: string, body?: any) {
   });
 }
 
-// The /api/ana-ri/chat handler transitively loads the orchestrator,
-// which calls many helper functions (buildDeficiencyContext,
-// buildDocumentActionContext, etc.) that this test's per-module mocks
-// don't expose. Each call surfaces a fresh "No 'X' export is defined"
-// error and the route hangs to the 10s timeout. The degraded-mode
-// resilience contract this suite covers (503 + GATEWAY_UNAVAILABLE)
-// is exercised end-to-end in the smoke + integration jobs against a
-// real DB; skipping the unit test rather than chasing the long mock
-// surface here.
-describe.skip('AnA RI resilience', () => {
+// Re-enabled 2026-06-11: the orchestrator's helper-mock surface that used to
+// produce "No 'X' export is defined" errors and 10s hangs no longer bites —
+// the degraded-mode contract (503 + GATEWAY_UNAVAILABLE) now passes as a
+// unit test against the current route wiring.
+describe('AnA RI resilience', () => {
   it('returns degraded mode response when gateway is unavailable', async () => {
     const res = await request('POST', '/api/ana-ri/chat', { message: 'Help with IND strategy' });
     expect(res.status).toBe(503);

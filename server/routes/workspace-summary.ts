@@ -65,7 +65,7 @@ router.get('/workspace/summary', async (req: Request, res: Response) => {
     const clientsRes = await sq(
       `SELECT id, COALESCE(name, company_name, 'Client') AS name
        FROM cro_clients
-       WHERE org_id = $1 OR organization_id = $1 OR TRUE
+       WHERE organization_id = $1
        ORDER BY created_at DESC LIMIT 20`,
       [orgId]
     );
@@ -103,12 +103,17 @@ router.get('/workspace/summary', async (req: Request, res: Response) => {
               COALESCE(title, 'Untitled conversation') AS title,
               COALESCE(updated_at, created_at) AS updated_at
        FROM chat_threads
+       WHERE organization_id = $1
        ORDER BY COALESCE(updated_at, created_at) DESC NULLS LAST
-       LIMIT 5`
+       LIMIT 5`,
+      [orgId]
     );
 
     // ── 6. Thread count ─────────────────────────────────────────────────────
-    const threadCountRes = await sq(`SELECT COUNT(*) AS n FROM chat_threads`);
+    const threadCountRes = await sq(
+      `SELECT COUNT(*) AS n FROM chat_threads WHERE organization_id = $1`,
+      [orgId]
+    );
     const threadCount = parseInt(threadCountRes.rows[0]?.n || '0', 10);
 
     // ── 7. Recent uploads ───────────────────────────────────────────────────
@@ -117,16 +122,20 @@ router.get('/workspace/summary', async (req: Request, res: Response) => {
               COALESCE(original_filename, filename, file_name, 'document') AS name,
               COALESCE(created_at, uploaded_at, NOW()) AS uploaded_at
        FROM file_uploads
-       ORDER BY COALESCE(created_at, uploaded_at) DESC LIMIT 5`
+       WHERE organization_id = $1
+       ORDER BY COALESCE(created_at, uploaded_at) DESC LIMIT 5`,
+      [orgId]
     );
 
     // ── 8. Recent exports ───────────────────────────────────────────────────
     const recentExportsRes = await sq(
-      `SELECT id::text,
-              COALESCE(export_type, format, 'DOCX') AS type,
-              COALESCE(created_at, exported_at) AS created_at
-       FROM cer_exports
-       ORDER BY COALESCE(created_at, exported_at) DESC NULLS LAST LIMIT 5`
+      `SELECT e.id::text,
+              COALESCE(e.format, 'DOCX') AS type,
+              COALESCE(e.created_at, e.exported_at) AS created_at
+       FROM cer_exports e
+       JOIN cer_reports r ON r.report_id = e.report_id AND r.organization_id = $1
+       ORDER BY COALESCE(e.created_at, e.exported_at) DESC NULLS LAST LIMIT 5`,
+      [orgId]
     );
 
     // ── 8b. Recent artifacts (generated outlines, validation reports, etc.) ──
@@ -141,20 +150,23 @@ router.get('/workspace/summary', async (req: Request, res: Response) => {
     // ── 9. Pending validations (open QC issues, advisory flags) ────────────
     const pendingRes = await sq(
       `SELECT COUNT(*) AS n FROM ivdr_analytical_validations
-       WHERE status = 'in_progress' OR status = 'pending' OR validation_status = 'pending'`
+       WHERE organization_id = $1
+         AND (status = 'in_progress' OR status = 'pending' OR validation_status = 'pending')`,
+      [orgId]
     );
     const pendingReviews = parseInt(pendingRes.rows[0]?.n || '0', 10);
 
     // ── 10. Most recent project (for "continue where you left off") ─────────
     const lastProjectRes = await sq(
       `SELECT id, name, source, submission_type, updated_at FROM (
-         SELECT id, name, 'ind' AS source, submission_type, updated_at FROM ind_projects
+         SELECT id, name, 'ind' AS source, submission_type, updated_at FROM ind_projects WHERE organization_id = $1
          UNION ALL
-         SELECT id, title AS name, 'cer' AS source, 'CER' AS submission_type, updated_at FROM cer_projects
+         SELECT id, title AS name, 'cer' AS source, 'CER' AS submission_type, updated_at FROM cer_projects WHERE organization_id = $1
          UNION ALL
-         SELECT id::text, name, '510k' AS source, '510K' AS submission_type, updated_at FROM fda_510k_projects
+         SELECT id::text, name, '510k' AS source, '510K' AS submission_type, updated_at FROM fda_510k_projects WHERE organization_id = $1
        ) p
-       ORDER BY updated_at DESC NULLS LAST LIMIT 1`
+       ORDER BY updated_at DESC NULLS LAST LIMIT 1`,
+      [orgId]
     );
     const lastProject = lastProjectRes.rows[0] || null;
 

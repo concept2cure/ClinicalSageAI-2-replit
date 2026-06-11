@@ -155,7 +155,7 @@ export class ProjectRollupService {
     this.computeRollupFromCache(rootNode, taskCountsMap, moduleCountsMap);
 
     // Persist rollups for all nodes
-    await this.persistRollups(nodeMap);
+    await this.persistRollups(nodeMap, organizationId);
 
     return rootNode;
   }
@@ -322,7 +322,10 @@ export class ProjectRollupService {
   /**
    * Persist rollup metadata for all nodes in a single batched update.
    */
-  private async persistRollups(nodeMap: Map<number, ProjectTreeNode>): Promise<void> {
+  private async persistRollups(
+    nodeMap: Map<number, ProjectTreeNode>,
+    organizationId: number
+  ): Promise<void> {
     const updates: Array<{ id: number; rollup: RollupMetrics }> = [];
     for (const [id, node] of nodeMap) {
       if (node.rollup) {
@@ -345,8 +348,9 @@ export class ProjectRollupService {
        SET metadata = COALESCE(p.metadata::jsonb, '{}'::jsonb) || jsonb_build_object('rollup', v.rollup_data),
            updated_at = NOW()
        FROM (VALUES ${idParams.join(', ')}) AS v(project_id, rollup_data)
-       WHERE p.id = v.project_id`,
-      values
+       WHERE p.id = v.project_id
+         AND p.organization_id = $${values.length + 1}`,
+      [...values, organizationId]
     );
   }
 

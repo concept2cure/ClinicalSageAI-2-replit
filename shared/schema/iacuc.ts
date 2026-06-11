@@ -37,7 +37,7 @@ export type IacucProtocolStatus =
 
 export type CohortStatus = 'requested' | 'approved' | 'housed' | 'completed';
 export type AmendmentStatus = 'submitted' | 'approved' | 'rejected';
-export type InspectionStatus = 'scheduled' | 'completed';
+export type FacilityInspectionStatus = 'scheduled' | 'completed';
 
 // ─── IACUC protocols ─────────────────────────────────────────────────────────
 
@@ -168,7 +168,7 @@ export const iacucFacilityInspections = pgTable(
     organizationId: integer('organization_id').notNull().references(() => organizations.id),
     facilityName: text('facility_name').notNull(),
     inspectionDate: date('inspection_date'),
-    status: text('status').$type<InspectionStatus>().notNull().default('scheduled'),
+    status: text('status').$type<FacilityInspectionStatus>().notNull().default('scheduled'),
     findings: text('findings'),
     deficiencyCount: integer('deficiency_count').notNull().default(0),
     significantDeficiencyCount: integer('significant_deficiency_count').notNull().default(0),

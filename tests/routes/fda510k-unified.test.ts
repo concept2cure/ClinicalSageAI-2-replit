@@ -18,14 +18,7 @@ import {
 } from '../setup';
 
 // Mock the sub-routers before importing main router
-vi.mock('../../server/routes/510kRoutes', () => ({
-  default: {
-    use: vi.fn(),
-    get: vi.fn(),
-    post: vi.fn(),
-  },
-}));
-
+// (510kRoutes mock removed: file deleted at 2026-06-30 sunset, issue #726)
 vi.mock('../../server/routes/510k-api-routes', () => ({
   default: {
     use: vi.fn(),

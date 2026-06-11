@@ -121,7 +121,7 @@ export const REGIONAL_RULES: RegionalRule[] = [
   {
     id: 'EMA-CESP-002',
     region: 'EU',
-    description: 'Application number must follow EU format: EMEA/H/C/[5-digit] or [country]/H/[5-digit]/[year]',
+    description: 'Application number must follow EU format: EMEA/H/C/[6-digit] for the centralised procedure, or [country]/H/[number]/[year] for MRP/DCP',
     severity: 'error',
     citation: 'EU eCTD Specification v3.2.2 §3.1',
   },
@@ -142,7 +142,7 @@ export const REGIONAL_RULES: RegionalRule[] = [
   {
     id: 'EMA-CESP-005',
     region: 'EU',
-    description: 'Filenames must use only lowercase a-z, 0-9, hyphens, and periods (max 64 chars)',
+    description: 'Filenames must use only lowercase a-z, 0-9, hyphens and periods (max 64 chars incl. extension); the total folder path must not exceed 180 characters',
     severity: 'error',
     citation: 'EU eCTD Specification v3.2.2 §4.1',
   },
@@ -179,9 +179,9 @@ export const REGIONAL_RULES: RegionalRule[] = [
   {
     id: 'PMDA-005',
     region: 'JP',
-    description: 'Risk Management Plan (J-RMP / 医薬品リスク管理計画) required for new drug applications',
+    description: 'Risk Management Plan (J-RMP / 医薬品リスク管理計画) required for new drug applications; the J-RMP draft is submitted at CTD Module 1.11',
     severity: 'warning',
-    citation: 'MHLW Risk Management Plan Guidance (April 2012)',
+    citation: 'MHLW Risk Management Plan Guidance (April 2012); JP CTD Module 1 structure',
   },
 
   // --- Health Canada (REP) ---

@@ -115,13 +115,17 @@ describe('SSO hidden in production', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 7. Sign-out is wired (design-system port pending — Phase 5 auth surface)
+// 7. Sign-out is wired (sign-out UI still unshipped — re-audited 2026-06-11)
 // ---------------------------------------------------------------------------
 describe.skip('Sign-out is wired', () => {
   // Legacy components (ZenSettings.tsx, IndustryAwareApp.tsx) were removed
-  // during the design-system port. The Phase 5 auth surface hasn't been
-  // implemented yet — see CLAUDE.md / HANDOFF.md.
+  // during the design-system port. The Phase 5 auth surface has PARTIALLY
+  // shipped: client/src/concept2cure/auth/ now contains ZenLogin / ZenSignup /
+  // ZenAuthLayout, but no sign-out control exists anywhere in client/ —
+  // authService.logout() (client/src/services/portal/authService.tsx) is
+  // never invoked from any UI component. Re-enable (with real assertions
+  // against the sign-out control) when a logout flow ships.
   it('logout flow lives in the new auth surface', () => {
-    // Re-enable when ui_kits/auth/ ships into client/src/concept2cure/.
+    // Re-enable when a sign-out control ships in client/src/concept2cure/.
   });
 });

@@ -338,7 +338,7 @@ test.describe('Phase 15 — Submission Operations Command Center', () => {
   test('SO-14: Resolve a blocker', async ({ request }) => {
     if (!blockerId) {
       // No blocker to resolve — still passes (no open blockers is valid state)
-      test.skip();
+      test.skip(true, 'No open blocker captured in SO-13 — nothing to resolve (valid state)');
       return;
     }
 

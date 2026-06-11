@@ -571,6 +571,14 @@ describe('AnA RI Persona', () => {
     const it = buildAnaRISystemPrompt({ language: 'it' });
     expect(it).toContain('LINGUA DI RISPOSTA — ITALIANO');
     expect(it).toContain('AIFA');
+
+    const nl = buildAnaRISystemPrompt({ language: 'nl' });
+    expect(nl).toContain('ANTWOORDTAAL — NEDERLANDS');
+    expect(nl).toContain('CBG-MEB'); // Dutch national authority in the cultural overlay
+
+    const pl = buildAnaRISystemPrompt({ language: 'pl' });
+    expect(pl).toContain('JĘZYK ODPOWIEDZI — POLSKI');
+    expect(pl).toContain('URPL'); // Polish national authority in the cultural overlay
   });
 
   it('keeps regulatory identifiers canonical while localizing prose', () => {
@@ -686,6 +694,37 @@ describe('AnA RI Persona', () => {
       projectContext: { targetAgency: 'EMA' },
     });
     expect(deEma).not.toContain('JAPAN REGULATORY DEEP DIVE');
+  });
+
+  it('injects the dedicated EU regulatory deep-dive whenever the EU is in scope', () => {
+    // Major EU-language users get the deep layer (incl. Dutch and Polish)...
+    for (const lng of ['de', 'fr', 'it', 'es', 'nl', 'pl'] as const) {
+      const out = buildAnaRISystemPrompt({ language: lng });
+      expect(out).toContain('EUROPEAN UNION REGULATORY DEEP DIVE');
+      expect(out).toContain('CHMP'); // canonical identifier preserved
+    }
+    // ...and so do programs that target the EMA in any language.
+    const enEma = buildAnaRISystemPrompt({
+      language: 'en',
+      projectContext: { targetAgency: 'EMA' },
+    });
+    expect(enEma).toContain('EUROPEAN UNION REGULATORY DEEP DIVE');
+    expect(enEma).toContain('Joint Clinical Assessment'); // EU HTA Regulation
+    expect(enEma).toContain('Clinical Trials Regulation (EU) No 536/2014'); // CTR/CTIS
+  });
+
+  it('does not add the EU deep-dive when the EU is not in scope', () => {
+    const enFda = buildAnaRISystemPrompt({
+      language: 'en',
+      projectContext: { targetAgency: 'FDA' },
+    });
+    expect(enFda).not.toContain('EUROPEAN UNION REGULATORY DEEP DIVE');
+
+    const jaPmda = buildAnaRISystemPrompt({
+      language: 'ja',
+      projectContext: { targetAgency: 'PMDA' },
+    });
+    expect(jaPmda).not.toContain('EUROPEAN UNION REGULATORY DEEP DIVE');
   });
 
   it('covers additional non-US target markets by agency name', () => {

@@ -138,9 +138,11 @@ function relTime(iso: string): string {
 
 export interface UseProjectsApiOptions {
   /**
-   * When true (default) and the API returns no rows or errors, the hook
-   * returns the prototype seed (PR_PROJECTS) so the surface renders.
-   * Set false in production once seed is no longer desired.
+   * When true (default in dev) and the API returns no rows or errors, the
+   * hook returns the prototype seed (PR_PROJECTS) so the surface renders.
+   * GA gate (decision register #727 item 5): the seed is hard-disabled in
+   * production builds regardless of this option — a customer must never
+   * see prototype data presented as their own.
    */
   seedFallback?: boolean;
 }
@@ -156,7 +158,7 @@ export interface UseProjectsApiReturn {
 }
 
 export function useProjectsApi(opts: UseProjectsApiOptions = {}): UseProjectsApiReturn {
-  const seedFallback = opts.seedFallback !== false;
+  const seedFallback = opts.seedFallback !== false && !import.meta.env.PROD;
   const [projects, setProjects] = useState<Project[]>(seedFallback ? PR_PROJECTS : []);
   const [loading, setLoading] = useState(true);
   const [usingSeed, setUsingSeed] = useState(seedFallback);

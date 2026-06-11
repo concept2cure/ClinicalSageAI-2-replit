@@ -3334,6 +3334,27 @@ export const GET_ELECTRICAL_STANDARDS: AnaTool = {
   },
 };
 
+export const GET_STERILIZATION_REQUIREMENTS: AnaTool = {
+  name: 'get_sterilization_requirements',
+  description:
+    "Resolve sterilization requirements for a device from its facts. Pass `sterile` (true/false) and optionally `method` (eo, radiation, steam, dry_heat, vh2o2, aseptic). Returns the governing ISO standard (11135 EO / 11137 radiation / 17665 steam / …), the Sterility Assurance Level (SAL 10⁻⁶ for terminal; aseptic makes no SAL claim), the validation elements (bioburden, dose-setting/half-cycle, EO residuals), the packaging standard (ISO 11607), and the reviewer questions. Not applicable for a non-sterile device. Deterministic.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      sterile: { type: 'boolean', description: 'Whether the device is supplied sterile.' },
+      method: { type: 'string', enum: ['eo', 'radiation', 'steam', 'dry_heat', 'vh2o2', 'aseptic', 'unknown'], description: 'Sterilization method, if known.' },
+    },
+    required: ['sterile'],
+  },
+};
+
+export const LIST_REGULATORY_CAPABILITIES: AnaTool = {
+  name: 'list_regulatory_capabilities',
+  description:
+    "List the Submission Center's deterministic regulatory capabilities — each with its category (reference/classification/evidence/oversight/planning/enforcement), description, primary HTTP route, and AnA tool. Use it to discover what regulatory tooling is available (market specs, document templates, requirements, eligibility, device classification, CER/PER/RMF structures, biocompatibility, electrical safety, sterilization, UDI, reviewer checklists, blueprint, global strategy, timelines, dispatch gate). Static reference data, deterministic.",
+  input_schema: { type: 'object', properties: {}, required: [] },
+};
+
 export const ASSESS_DISPATCH_READINESS: AnaTool = {
   name: 'assess_dispatch_readiness',
   description:
@@ -3696,6 +3717,266 @@ export const REVIEW_SEND_READINESS: AnaTool = {
     type: 'object',
     properties: { study_id: { type: 'number' } },
     required: ['study_id'],
+  },
+};
+
+export const CREATE_GRANT_PROPOSAL: AnaTool = {
+  name: 'create_grant_proposal',
+  description:
+    "Open a grant proposal (application) in the sponsored-programs pipeline. Optionally link the funding opportunity it responds to and the Project it belongs to. Returns the proposal id. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      title: { type: 'string' },
+      opportunity_id: { type: 'number' },
+      project_id: { type: 'number' },
+      principal_investigator: { type: 'string' },
+      requested_amount: { type: 'number' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['title'],
+  },
+};
+
+export const RECORD_GRANT_AWARD: AnaTool = {
+  name: 'record_grant_award',
+  description:
+    "Record a grant award (post-award). When linked to its proposal, the proposal is marked awarded and the proposal → award provenance link is written (preserving pre→post-award continuity). Returns the award id. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      award_number: { type: 'string' },
+      funding_agency: { type: 'string', enum: ['nih', 'nsf', 'barda', 'dod', 'cdc', 'arpa_h', 'foundation', 'industry', 'other'] },
+      proposal_id: { type: 'number' },
+      project_id: { type: 'number' },
+      total_amount: { type: 'number' },
+      period_start: { type: 'string', description: 'YYYY-MM-DD.' },
+      period_end: { type: 'string', description: 'YYYY-MM-DD.' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['award_number', 'funding_agency'],
+  },
+};
+
+export const REVIEW_GRANT_REPORTING: AnaTool = {
+  name: 'review_grant_reporting',
+  description:
+    "Compute the federal post-award reporting obligations for an award (read-only): annual RPPRs and the final performance + financial reports (2 CFR 200.344, 120 days after period end), plus where the award sits in its period of performance. Use to tell the user what reports are coming due.",
+  input_schema: {
+    type: 'object',
+    properties: { award_id: { type: 'number' } },
+    required: ['award_id'],
+  },
+};
+
+export const CREATE_RIM_PRODUCT: AnaTool = {
+  name: 'create_rim_product',
+  description:
+    "Open a product in the RIM (Regulatory Information Management) registry for registration-grid and labeling tracking. Returns the product id. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      product_name: { type: 'string' },
+      inn: { type: 'string', description: 'International Nonproprietary Name.' },
+      dosage_form: { type: 'string' },
+      atc_code: { type: 'string' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['product_name'],
+  },
+};
+
+export const SET_REGISTRATION_STATUS: AnaTool = {
+  name: 'set_registration_status',
+  description:
+    "Upsert a product's registration status in a country/market (the RIM grid): planned/submitted/under_review/approved/withdrawn/suspended/cancelled, with registration number, MA holder, approval and renewal dates. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      product_id: { type: 'number' },
+      country: { type: 'string', description: "ISO country (e.g. 'US','DE') or 'EU'." },
+      market_status: { type: 'string', enum: ['planned','submitted','under_review','approved','withdrawn','suspended','cancelled'] },
+      registration_number: { type: 'string' },
+      marketing_auth_holder: { type: 'string' },
+      approval_date: { type: 'string' },
+      renewal_due_date: { type: 'string' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['product_id', 'country'],
+  },
+};
+
+export const REVIEW_LABEL_CURRENCY: AnaTool = {
+  name: 'review_label_currency',
+  description:
+    "Run the deterministic label-currency gate on a product (read-only): every approved market should carry a current approved label of the region-appropriate type (US→USPI, EU→SmPC, else CCDS). Returns cited findings + risk level.",
+  input_schema: {
+    type: 'object',
+    properties: { product_id: { type: 'number' } },
+    required: ['product_id'],
+  },
+};
+
+export const CREATE_INSPECTION: AnaTool = {
+  name: 'create_inspection',
+  description:
+    "Open an inspection record (FDA BIMO / pre-approval, EMA GCP/GMP, routine, for-cause). Returns the inspection id for follow-up (findings, readiness). Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      inspection_type: { type: 'string', enum: ['bimo','pai','gcp','gmp','routine','for_cause','other'] },
+      agency: { type: 'string', enum: ['fda','ema','mhra','pmda','other'] },
+      site_name: { type: 'string' },
+      scheduled_date: { type: 'string', description: 'YYYY-MM-DD.' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['inspection_type', 'agency', 'site_name'],
+  },
+};
+
+export const LOG_INSPECTION_FINDING: AnaTool = {
+  name: 'log_inspection_finding',
+  description:
+    "Log a Form 483 observation / inspection finding with its classification (critical/major/minor/observation). The 15-business-day response clock starts from the inspection end date. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      inspection_id: { type: 'number' },
+      observation_number: { type: 'number' },
+      description: { type: 'string' },
+      classification: { type: 'string', enum: ['critical','major','minor','observation'] },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['inspection_id', 'observation_number', 'description', 'classification'],
+  },
+};
+
+export const REVIEW_INSPECTION_READINESS: AnaTool = {
+  name: 'review_inspection_readiness',
+  description:
+    "Score inspection readiness across assessment areas (read-only): ready/in-progress/at-risk → a 0-100 score, verdict, and blockers (any at-risk area). Optionally scope to one inspection. Use to tell the user if they are inspection-ready.",
+  input_schema: {
+    type: 'object',
+    properties: { inspection_id: { type: 'number' } },
+    required: [],
+  },
+};
+
+export const REGISTER_DEA: AnaTool = {
+  name: 'register_dea',
+  description:
+    "Record a DEA registration (Controlled Substances Act / 21 CFR 1301) for controlled-substance tracking: registrant, DEA number, business activity, authorized schedules (I-V), expiration. Returns the registration id. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      registrant_name: { type: 'string' },
+      dea_number: { type: 'string' },
+      business_activity: { type: 'string', enum: ['researcher','analytical_lab','manufacturer','distributor','practitioner','teaching_institution','other'] },
+      schedules: { type: 'array', items: { type: 'string', enum: ['I','II','III','IV','V'] } },
+      expiration_date: { type: 'string', description: 'YYYY-MM-DD.' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['registrant_name', 'dea_number', 'business_activity'],
+  },
+};
+
+export const LOG_CS_TRANSACTION: AnaTool = {
+  name: 'log_cs_transaction',
+  description:
+    "Record a controlled-substance transaction on the perpetual ledger (receipt/dispense/use/disposal/transfer/adjustment). The balance is reconciled automatically and a subtraction that would go negative is rejected. Disposals should name a witness. Returns the new balance. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      substance_id: { type: 'number' },
+      transaction_type: { type: 'string', enum: ['receipt','dispense','use','disposal','transfer','adjustment'] },
+      quantity: { type: 'number', description: 'Use a signed value for adjustment; magnitude for others.' },
+      transaction_date: { type: 'string' },
+      witnessed_by: { type: 'string' },
+      reference: { type: 'string' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['substance_id', 'transaction_type', 'quantity'],
+  },
+};
+
+export const REVIEW_CS_BALANCE: AnaTool = {
+  name: 'review_cs_balance',
+  description:
+    "List controlled-substance inventory balances (read-only) so the user can see current on-hand quantities by schedule. Org-scoped.",
+  input_schema: { type: 'object', properties: {}, required: [] },
+};
+
+export const CREATE_LIFECYCLE_OBLIGATION: AnaTool = {
+  name: 'create_lifecycle_obligation',
+  description:
+    "Open a post-approval lifecycle obligation: variation (EU IA/IB/II), supplement (FDA PAS/CBE-30/CBE-0/annual report), periodic safety report (PSUR/PBRER), pediatric (PREA/PIP), or renewal. For a periodic_report with recurrence_months + anchor_date, the recurring occurrences are generated automatically. Returns the obligation id, the review pathway, and how many occurrences were created. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      obligation_type: { type: 'string', enum: ['variation','supplement','periodic_report','pediatric','renewal','annual_report'] },
+      region: { type: 'string', enum: ['fda','eu','jp','mhra','other'] },
+      title: { type: 'string' },
+      classification: { type: 'string', description: "e.g. 'II','CBE-30','PSUR','PREA'." },
+      product_id: { type: 'number' },
+      submission_id: { type: 'number' },
+      due_date: { type: 'string' },
+      recurrence_months: { type: 'number', description: 'For periodic reports, e.g. 6 or 12.' },
+      anchor_date: { type: 'string', description: 'Start date to generate periodic occurrences from.' },
+      occurrences_to_generate: { type: 'number' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['obligation_type', 'region', 'title'],
+  },
+};
+
+export const REVIEW_LIFECYCLE_CALENDAR: AnaTool = {
+  name: 'review_lifecycle_calendar',
+  description:
+    "Summarize the post-approval obligation calendar by urgency (overdue / due in 30 / due in 90 / later / undated / closed), read-only — covers both obligations and their recurring occurrences. Use to tell the user what filings are coming due.",
+  input_schema: { type: 'object', properties: {}, required: [] },
+};
+
+export const CREATE_TMF: AnaTool = {
+  name: 'create_tmf',
+  description:
+    "Open a Trial Master File (eTMF) for a study, organized to the DIA TMF Reference Model. Returns the TMF id for adding artifacts. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      title: { type: 'string' },
+      study_id: { type: 'number', description: 'Optional clinical_studies.id.' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['title'],
+  },
+};
+
+export const CLASSIFY_TMF_ARTIFACT: AnaTool = {
+  name: 'classify_tmf_artifact',
+  description:
+    "File a TMF artifact: when no zone is given, it is AUTO-CLASSIFIED into a DIA TMF Reference Model zone by name (deterministic). Set status (expected/received/in_review/final/missing/not_applicable). Returns the artifact id and the assigned zone. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      tmf_file_id: { type: 'number' },
+      artifact_name: { type: 'string' },
+      zone: { type: 'number', description: 'DIA RM zone 1-11; omit to auto-classify.' },
+      status: { type: 'string', enum: ['expected','received','in_review','final','missing','not_applicable'] },
+      document_date: { type: 'string' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['tmf_file_id', 'artifact_name'],
+  },
+};
+
+export const REVIEW_TMF_COMPLETENESS: AnaTool = {
+  name: 'review_tmf_completeness',
+  description:
+    "Run the deterministic TMF completeness gap-check on a TMF (read-only): completeness %, per-zone coverage, the list of required artifacts not yet final, and an inspection-readiness verdict. Use to tell the user where the TMF has gaps before an inspection.",
+  input_schema: {
+    type: 'object',
+    properties: { tmf_file_id: { type: 'number' } },
+    required: ['tmf_file_id'],
   },
 };
 
@@ -5150,6 +5431,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   GET_REGULATORY_TIMELINE,
   VALIDATE_UDI,
   GET_ELECTRICAL_STANDARDS,
+  GET_STERILIZATION_REQUIREMENTS,
+  LIST_REGULATORY_CAPABILITIES,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,
@@ -5171,6 +5454,23 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   REVIEW_IBC_REGISTRATION,
   CREATE_NONCLINICAL_STUDY,
   REVIEW_SEND_READINESS,
+  CREATE_GRANT_PROPOSAL,
+  RECORD_GRANT_AWARD,
+  REVIEW_GRANT_REPORTING,
+  CREATE_RIM_PRODUCT,
+  SET_REGISTRATION_STATUS,
+  REVIEW_LABEL_CURRENCY,
+  CREATE_INSPECTION,
+  LOG_INSPECTION_FINDING,
+  REVIEW_INSPECTION_READINESS,
+  REGISTER_DEA,
+  LOG_CS_TRANSACTION,
+  REVIEW_CS_BALANCE,
+  CREATE_LIFECYCLE_OBLIGATION,
+  REVIEW_LIFECYCLE_CALENDAR,
+  CREATE_TMF,
+  CLASSIFY_TMF_ARTIFACT,
+  REVIEW_TMF_COMPLETENESS,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,

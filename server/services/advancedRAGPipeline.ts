@@ -13,11 +13,20 @@
  * TECHNIQUES IMPLEMENTED:
  * 1. HyDE - Generate hypothetical answer, embed that
  * 2. Multi-Query - Expand query into multiple perspectives
+ * 2b. Step-Back - Derive a broader question (rag-query-transforms.ts) and
+ *     retrieve on it alongside the original for background context
+ * 2c. Decompose - Split a multi-part question into atomic sub-questions
+ *     (rag-query-transforms.ts) and retrieve each alongside the original
  * 3. Reranking - pluggable via rag-reranker.ts. Defaults to an LLM-as-judge
  *    (a prompted relevance score, NOT a cross-encoder); swaps to a true
  *    cross-encoder reranker when RAG_RERANKER_* env is configured.
  * 4. MMR - Balance relevance with diversity, measured in embedding space
  * 5. Contextual Compression - Extract only relevant passages
+ * 6. Small-to-Big - Rank on precise chunks, then expand each to its neighbour
+ *    window in the source document so generation reads the surrounding context
+ * 7. Corrective loop (CRAG/Self-RAG) - rag-corrective-loop.ts. Opt-in: grade
+ *    context sufficiency + rewrite/re-retrieve, then a groundedness guard that
+ *    flags answers unsupported by sources. Annotates rather than withholds.
  *
  * The auxiliary reasoning steps (HyDE, query expansion, reranking, compression)
  * are cached in-memory per identical request to cut redundant LLM round-trips;
@@ -36,14 +45,34 @@ import { EnhancedEmbeddingService, getEmbeddingService } from './enhancedEmbeddi
 import { AIProviderRouter, getAIRouter, type AIRequest, type AIResponse } from './aiProviderRouter.js';
 import { getOpenAIClient } from './openai-client.js';
 import { getReranker, type Reranker } from './rag-reranker.js';
-import { reciprocalRankFusion, normalizeToUnit } from './rag-fusion.js';
+import { fuseHybrid, mergeByMaxScore } from './rag-fusion.js';
+import {
+  hydeRetrieval,
+  multiQueryRetrieval,
+  stepBackRetrieval,
+  decomposeRetrieval,
+  type StrategyDeps,
+} from './rag-retrieval-strategies.js';
+import {
+  gradeContextSufficiency,
+  rewriteQuery,
+  verifyGroundedness,
+} from './rag-corrective-loop.js';
+import { extractQueryFilters } from './rag-query-transforms.js';
+import {
+  buildDocFilterClause,
+  mergeFilters,
+  VAULT_FILTER_COLUMNS,
+  RAG_FILTER_COLUMNS,
+  type QueryFilters,
+} from './rag-filters.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
 export interface RetrievalOptions {
-  strategy: 'basic' | 'hyde' | 'multi_query' | 'advanced';
+  strategy: 'basic' | 'hyde' | 'multi_query' | 'step_back' | 'decompose' | 'advanced';
   limit?: number;
   threshold?: number;
   useReranking?: boolean;
@@ -58,6 +87,32 @@ export interface RetrievalOptions {
    * similarity-pure). Off unless set — the router enables it per intent.
    */
   useHybrid?: boolean;
+  /**
+   * Small-to-big context expansion. After ranking on precise small chunks,
+   * expand each vault / rag_chunks result to include its neighbouring chunks in
+   * the same document (a ±`contextWindow` sentence-window) so generation sees
+   * the surrounding context the chunk alone omits. Off unless set. No effect on
+   * project-atom / memory corpora (no chunk index to window over).
+   */
+  useContextExpansion?: boolean;
+  /** Neighbours to include on each side for useContextExpansion (default 1). */
+  contextWindow?: number;
+  /**
+   * Agentic corrective loop (CRAG / Self-RAG) around generation: grade whether
+   * the retrieved sources can answer the question and, if not, rewrite the query
+   * and retrieve once more; then verify the drafted answer is grounded in the
+   * sources and flag it when it is not. Off unless set — opt-in on the generation
+   * path, and it annotates (a `grounded` flag) rather than withholding answers.
+   */
+  useCorrectiveLoop?: boolean;
+  /**
+   * Self-querying: extract metadata constraints (document type, source, date
+   * range) from the natural-language query via the LLM and apply them as SQL
+   * pre-filters on the vault / rag_chunks corpora, merged under any explicit
+   * `filters` (explicit wins). Off unless set. No effect on project-atom /
+   * memory corpora, and `filters.domain` is never applied (no column exists).
+   */
+  useSelfQuery?: boolean;
   useCompression?: boolean;
   organizationUuid?: string;
   persistCitations?: boolean;
@@ -133,6 +188,15 @@ export interface RetrievedDocument {
   rerankScore?: number; // From the LLM relevance judge (LLM-as-judge, not a cross-encoder)
   finalScore: number; // Combined score
   compressedContent?: string; // Extracted relevant passage
+  /**
+   * Small-to-big context expansion: the retrieved chunk concatenated with its
+   * neighbours in the source document (sentence-window). Set by expandContext
+   * when useContextExpansion is on; generation and compression prefer it over
+   * the bare chunk so the model sees surrounding context the precise chunk omits.
+   */
+  expandedContent?: string;
+  /** Sequential index of this chunk within its document; enables window expansion. */
+  chunkIndex?: number;
   pageNumber?: number;
   sectionTitle?: string | null;
   locator?: string;
@@ -171,6 +235,7 @@ type VaultChunkRow = {
   content: string | null;
   page_number: number | null;
   section_title: string | null;
+  chunk_index: number | null;
   similarity: number;
   /** Stored index vector in pgvector text form ('[a,b,...]'); only selected when needEmbeddings. */
   embedding?: string | null;
@@ -186,6 +251,12 @@ type CorpusScope = {
    * only by the vault and rag_chunks paths; the memory paths ignore it.
    */
   hybrid?: boolean;
+  /**
+   * Metadata pre-filters (document type / source / date range) applied in the
+   * vault and rag_chunks SQL. Honoured only by those corpora; project atoms and
+   * memory ignore them.
+   */
+  filters?: QueryFilters;
   /**
    * Pull each candidate's stored embedding out of the vector search so MMR can
    * reuse it instead of re-embedding. Set only when the caller requested MMR,
@@ -313,6 +384,9 @@ export class AdvancedRAGPipeline {
       // Only carry stored vectors out of the search when MMR will consume them.
       needEmbeddings: !!options.useMmr,
       hybrid: !!options.useHybrid,
+      // Explicit filters apply on the chunk corpora regardless of self-query;
+      // the self-query step below augments these in place.
+      filters: options.filters,
     };
 
     let candidates: RetrievedDocument[];
@@ -321,79 +395,69 @@ export class AdvancedRAGPipeline {
     let retrievalStrategy: string = options.strategy;
     let tokensUsed = 0;
 
+    // Primitives the query-transform strategies fan out through, bound to this
+    // call's scope (tenant, threshold, corpus). See rag-retrieval-strategies.ts.
+    const deps: StrategyDeps = {
+      route: req => this.routeCached(req),
+      embedBatch: queries => this.embeddingService.embedBatch(queries, 'text-embedding-3-small'),
+      search: (q, l) => this.searchInitial(q, l, threshold, options.organizationUuid, artifactScope, scope),
+    };
+
+    // Step 0: Self-querying. Extract metadata constraints from the question and
+    // merge them under any explicit filters (explicit wins), then pre-filter the
+    // chunk-corpus SQL via scope.filters. deps.search closes over `scope`, so
+    // setting it here applies to every strategy's retrieval below.
+    if (options.useSelfQuery) {
+      const extracted = await extractQueryFilters(deps.route, query);
+      tokensUsed += extracted.tokensUsed;
+      scope.filters = mergeFilters(extracted.filters, options.filters);
+    }
+
     // Step 1: Initial retrieval based on strategy
     switch (options.strategy) {
-      case 'hyde':
-        const hydeResult = await this.hydeRetrieval(
-          query,
-          limit * 3,
-          threshold,
-          options.filters,
-          options.organizationUuid,
-          artifactScope,
-          scope
-        );
-        candidates = hydeResult.documents;
-        tokensUsed += hydeResult.tokensUsed;
+      case 'hyde': {
+        const result = await hydeRetrieval(deps, query, limit * 3);
+        candidates = result.documents;
+        tokensUsed += result.tokensUsed;
         break;
+      }
 
-      case 'multi_query':
-        const multiResult = await this.multiQueryRetrieval(
-          query,
-          limit * 3,
-          threshold,
-          options.filters,
-          options.organizationUuid,
-          artifactScope,
-          scope
-        );
-        candidates = multiResult.documents;
-        tokensUsed += multiResult.tokensUsed;
+      case 'multi_query': {
+        const result = await multiQueryRetrieval(deps, query, limit * 3);
+        candidates = result.documents;
+        tokensUsed += result.tokensUsed;
         break;
+      }
 
-      case 'advanced':
+      case 'step_back': {
+        const result = await stepBackRetrieval(deps, query, limit * 3);
+        candidates = result.documents;
+        tokensUsed += result.tokensUsed;
+        break;
+      }
+
+      case 'decompose': {
+        const result = await decomposeRetrieval(deps, query, limit * 3);
+        candidates = result.documents;
+        tokensUsed += result.tokensUsed;
+        break;
+      }
+
+      case 'advanced': {
         // Combine HyDE + Multi-Query
-        const [hydeAdvanced, multiAdvanced] = await Promise.all([
-          this.hydeRetrieval(
-            query,
-            limit * 2,
-            threshold,
-            options.filters,
-            options.organizationUuid,
-            artifactScope,
-            scope
-          ),
-          this.multiQueryRetrieval(
-            query,
-            limit * 2,
-            threshold,
-            options.filters,
-            options.organizationUuid,
-            artifactScope,
-            scope
-          ),
+        const [hyde, multi] = await Promise.all([
+          hydeRetrieval(deps, query, limit * 2),
+          multiQueryRetrieval(deps, query, limit * 2),
         ]);
-
-        // Merge and deduplicate
-        candidates = this.mergeAndDeduplicate([
-          ...hydeAdvanced.documents,
-          ...multiAdvanced.documents,
-        ]);
-        tokensUsed += hydeAdvanced.tokensUsed + multiAdvanced.tokensUsed;
+        candidates = mergeByMaxScore([...hyde.documents, ...multi.documents]);
+        tokensUsed += hyde.tokensUsed + multi.tokensUsed;
         retrievalStrategy = 'advanced';
         break;
+      }
 
       case 'basic':
       default:
-        candidates = await this.basicRetrieval(
-          query,
-          limit * 3,
-          threshold,
-          options.filters,
-          options.organizationUuid,
-          artifactScope,
-          scope
-        );
+        candidates = await deps.search(query, limit * 3);
         break;
     }
 
@@ -413,6 +477,17 @@ export class AdvancedRAGPipeline {
     } else {
       // Just take top results
       candidates = candidates.slice(0, limit);
+    }
+
+    // Step 3.5: Small-to-big context expansion (ranked on small chunks, read on
+    // a wider window). Runs before compression so compression extracts from the
+    // expanded window.
+    if (options.useContextExpansion && candidates.length > 0) {
+      candidates = await this.expandContext(
+        candidates,
+        options.contextWindow ?? 1,
+        options.organizationUuid
+      );
     }
 
     // Step 4: Contextual compression
@@ -456,7 +531,8 @@ export class AdvancedRAGPipeline {
         threshold,
         scope.organizationId,
         scope.needEmbeddings,
-        scope.hybrid
+        scope.hybrid,
+        scope.filters
       );
     }
     if (scope?.corpus === 'client_memory') {
@@ -471,7 +547,8 @@ export class AdvancedRAGPipeline {
       threshold,
       organizationUuid,
       scope?.needEmbeddings,
-      scope?.hybrid
+      scope?.hybrid,
+      scope?.filters
     );
   }
 
@@ -506,147 +583,6 @@ export class AdvancedRAGPipeline {
         initialScore: h.score,
         finalScore: h.score,
       }));
-  }
-
-  /**
-   * Basic semantic retrieval
-   */
-  private async basicRetrieval(
-    query: string,
-    limit: number,
-    threshold: number,
-    _filters?: RetrievalOptions['filters'],
-    organizationUuid?: string,
-    artifactScope?: RetrievalOptions['artifactScope'],
-    scope?: CorpusScope
-  ): Promise<RetrievedDocument[]> {
-    return this.searchInitial(query, limit, threshold, organizationUuid, artifactScope, scope);
-  }
-
-  /**
-   * HyDE: Hypothetical Document Embeddings
-   * Generate a hypothetical answer, then search for similar documents
-   */
-  private async hydeRetrieval(
-    query: string,
-    limit: number,
-    threshold: number,
-    _filters?: RetrievalOptions['filters'],
-    organizationUuid?: string,
-    artifactScope?: RetrievalOptions['artifactScope'],
-    scope?: CorpusScope
-  ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }> {
-    // Generate hypothetical answer using Claude for better reasoning
-    const hydeResponse = await this.routeCached({
-      taskType: 'reasoning',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a regulatory affairs expert. Generate a detailed, factual answer to the following question as if you were an authoritative regulatory document. Include specific regulatory references, requirements, and guidance. Do not mention that this is hypothetical.`,
-        },
-        {
-          role: 'user',
-          content: query,
-        },
-      ],
-      maxTokens: 500,
-      temperature: 0.3,
-    });
-
-    const hypotheticalDoc = hydeResponse.content;
-
-    // Search using the hypothetical document
-    const results = await this.searchInitial(
-      hypotheticalDoc,
-      limit,
-      threshold,
-      organizationUuid,
-      artifactScope,
-      scope
-    );
-
-    return {
-      documents: results,
-      tokensUsed: hydeResponse.usage.totalTokens,
-    };
-  }
-
-  /**
-   * Multi-Query: Generate multiple query perspectives
-   */
-  private async multiQueryRetrieval(
-    query: string,
-    limit: number,
-    threshold: number,
-    _filters?: RetrievalOptions['filters'],
-    organizationUuid?: string,
-    artifactScope?: RetrievalOptions['artifactScope'],
-    scope?: CorpusScope
-  ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }> {
-    // Generate alternative queries
-    const queryExpansionResponse = await this.routeCached({
-      taskType: 'structured_output',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a search query expert. Generate 4 alternative versions of the user's question that capture different perspectives or aspects. Return ONLY a JSON array of strings, no other text.`,
-        },
-        {
-          role: 'user',
-          content: `Original question: "${query}"\n\nGenerate 4 alternative phrasings that would help find relevant regulatory information.`,
-        },
-      ],
-      maxTokens: 300,
-      temperature: 0.5,
-      jsonMode: true,
-    });
-
-    let alternativeQueries: string[];
-    try {
-      const parsed = JSON.parse(queryExpansionResponse.content);
-      alternativeQueries = Array.isArray(parsed) ? parsed : parsed.queries || [query];
-    } catch {
-      alternativeQueries = [query];
-    }
-
-    // Add original query
-    const allQueries = [query, ...alternativeQueries.slice(0, 4)];
-
-    // Collapse the per-sub-query embedding round-trips into a single batch call.
-    // searchInitial embeds each query internally; pre-warming the embedding
-    // service's text->vector cache here turns those into cache hits, so the N
-    // sub-queries cost one embeddings request instead of N. Queries are short
-    // (no truncation), so the batch cache keys match the per-query embed keys.
-    // Best-effort: on failure we fall back to per-query embedding inside the
-    // searches, and corpora that embed elsewhere (project atoms via
-    // searchHybrid) are simply unaffected.
-    try {
-      await this.embeddingService.embedBatch(allQueries, 'text-embedding-3-small');
-    } catch (error) {
-      console.warn('[RAG] multi-query batch embed failed, falling back to per-query embed:', error);
-    }
-
-    // Search with all queries in parallel
-    const searchPromises = allQueries.map(q =>
-      this.searchInitial(
-        q,
-        Math.ceil(limit / allQueries.length),
-        threshold,
-        organizationUuid,
-        artifactScope,
-        scope
-      )
-    );
-
-    const allResults = await Promise.all(searchPromises);
-
-    // Merge results
-    const merged = this.mergeAndDeduplicate(allResults.flat());
-
-    return {
-      documents: merged,
-      tokensUsed: queryExpansionResponse.usage.totalTokens,
-    };
   }
 
   /**
@@ -791,6 +727,59 @@ export class AdvancedRAGPipeline {
   }
 
   /**
+   * Small-to-big context expansion. Replaces each vault / rag_chunks result's
+   * text with the chunk plus its ±window neighbours in the same document, so
+   * generation sees the surrounding context the precise chunk omits (the chunk
+   * stays the unit we *rank* on; the window is the unit we *read*). Results
+   * without a chunk index (project atoms, memory) pass through unchanged, and a
+   * per-chunk failure degrades to the bare chunk — expansion never drops a
+   * result. Both windows are backed by a (document_id, chunk_index) index.
+   */
+  private async expandContext(
+    documents: RetrievedDocument[],
+    window: number,
+    organizationUuid?: string
+  ): Promise<RetrievedDocument[]> {
+    if (window <= 0) return documents;
+    return Promise.all(
+      documents.map(async doc => {
+        if (doc.chunkIndex == null || !doc.documentId) return doc;
+        const lo = doc.chunkIndex - window;
+        const hi = doc.chunkIndex + window;
+        try {
+          let texts: string[];
+          if (doc.atomType === 'vault_chunk') {
+            texts = await withTenantContext(this.pool, organizationUuid, async client => {
+              const { rows } = await client.query<{ chunk_text: string | null }>(
+                `SELECT chunk_text FROM vault.document_chunks
+                 WHERE document_id = $1 AND chunk_index BETWEEN $2 AND $3
+                 ORDER BY chunk_index`,
+                [doc.documentId, lo, hi]
+              );
+              return rows.map(r => r.chunk_text || '').filter(Boolean);
+            });
+          } else if (doc.atomType === 'rag_chunk') {
+            const { rows } = await this.pool.query<{ content: string | null }>(
+              `SELECT content FROM rag_chunks
+               WHERE document_id = $1 AND chunk_index BETWEEN $2 AND $3
+               ORDER BY chunk_index`,
+              [doc.documentId, lo, hi]
+            );
+            texts = rows.map(r => r.content || '').filter(Boolean);
+          } else {
+            return doc;
+          }
+          // Only annotate when the window actually added neighbours.
+          return texts.length > 1 ? { ...doc, expandedContent: texts.join('\n\n') } : doc;
+        } catch (error) {
+          console.warn('[RAG] context expansion failed for a chunk; using the chunk alone:', error);
+          return doc;
+        }
+      })
+    );
+  }
+
+  /**
    * Contextual compression - extract relevant passages
    */
   private async compressContexts(
@@ -801,9 +790,11 @@ export class AdvancedRAGPipeline {
 
     const compressedDocs = await Promise.all(
       documents.map(async doc => {
-        if (doc.content.length < 500) {
+        // Compress the expanded window when present (small-to-big), else the chunk.
+        const text = doc.expandedContent || doc.content;
+        if (text.length < 500) {
           // Too short to compress
-          return { ...doc, compressedContent: doc.content };
+          return { ...doc, compressedContent: text };
         }
 
         const compressResponse = await this.routeCached({
@@ -815,7 +806,7 @@ export class AdvancedRAGPipeline {
             },
             {
               role: 'user',
-              content: `Query: "${query}"\n\nDocument:\n${doc.content}`,
+              content: `Query: "${query}"\n\nDocument:\n${text}`,
             },
           ],
           maxTokens: 400,
@@ -848,10 +839,16 @@ export class AdvancedRAGPipeline {
     threshold: number,
     organizationUuid?: string,
     needEmbeddings?: boolean,
-    hybrid?: boolean
+    hybrid?: boolean,
+    filters?: QueryFilters
   ): Promise<RetrievedDocument[]> {
     const queryResult = await this.embeddingService.embed(query, 'text-embedding-3-small');
     const vector = `[${queryResult.embedding.join(',')}]`;
+
+    // Metadata pre-filters on the joined documents table. Each arm has its own
+    // param array, so each gets its own clause with arm-local placeholders.
+    const denseParams: Array<string | number | Date> = [vector, threshold, limit];
+    const denseFilter = buildDocFilterClause(filters, denseParams, VAULT_FILTER_COLUMNS);
 
     // Ship the stored vector (as text) only when MMR will reuse it. SELECT-list
     // columns take no params, so this doesn't shift the $1..$3 placeholders.
@@ -868,6 +865,7 @@ export class AdvancedRAGPipeline {
       finalScore: Number(row.similarity),
       pageNumber: row.page_number ?? undefined,
       sectionTitle: row.section_title,
+      chunkIndex: row.chunk_index ?? undefined,
       locator: buildLocator(row),
       embedding: needEmbeddings ? parsePgVector(row.embedding) : undefined,
     });
@@ -882,11 +880,12 @@ export class AdvancedRAGPipeline {
           c.chunk_text AS content,
           c.page_number AS page_number,
           c.section_title AS section_title,
+          c.chunk_index AS chunk_index,
           ${embeddingCol}
           1 - (c.embedding <=> $1::vector) AS similarity
         FROM vault.document_chunks c
         JOIN vault.documents d ON d.id = c.document_id
-        WHERE c.embedding IS NOT NULL
+        WHERE c.embedding IS NOT NULL${denseFilter}
           -- (1 - sim) filter as a distance bound: 1 - dist > t  <=>  dist < 1 - t.
           -- Uses the same bare <=> operator as ORDER BY so the planner reuses
           -- the distance and the predicate matches the indexed cosine operator.
@@ -894,7 +893,7 @@ export class AdvancedRAGPipeline {
         ORDER BY c.embedding <=> $1::vector
         LIMIT $3
       `,
-        [vector, threshold, limit]
+        denseParams
       );
       const dense = denseRows.map(toDoc);
       if (!hybrid) return dense;
@@ -905,6 +904,8 @@ export class AdvancedRAGPipeline {
       // performance_indexes.sql so this stays index-backed. A lexical failure
       // must not break retrieval — fall back to the dense arm alone.
       let lexical: RetrievedDocument[];
+      const lexParams: Array<string | number | Date> = [query, limit];
+      const lexFilter = buildDocFilterClause(filters, lexParams, VAULT_FILTER_COLUMNS);
       try {
         const { rows: lexRows } = await client.query<VaultChunkRow>(
           `
@@ -915,16 +916,17 @@ export class AdvancedRAGPipeline {
             c.chunk_text AS content,
             c.page_number AS page_number,
             c.section_title AS section_title,
+            c.chunk_index AS chunk_index,
             ${embeddingCol}
             0::float8 AS similarity
           FROM vault.document_chunks c
           JOIN vault.documents d ON d.id = c.document_id
-          WHERE c.embedding IS NOT NULL
+          WHERE c.embedding IS NOT NULL${lexFilter}
             AND to_tsvector('english', c.chunk_text) @@ websearch_to_tsquery('english', $1)
           ORDER BY ts_rank_cd(to_tsvector('english', c.chunk_text), websearch_to_tsquery('english', $1)) DESC
           LIMIT $2
         `,
-          [query, limit]
+          lexParams
         );
         lexical = lexRows.map(toDoc);
       } catch (error) {
@@ -932,7 +934,7 @@ export class AdvancedRAGPipeline {
         return dense;
       }
 
-      return this.fuseHybrid(dense, lexical, limit);
+      return fuseHybrid(dense, lexical, limit);
     });
   }
 
@@ -953,17 +955,20 @@ export class AdvancedRAGPipeline {
     threshold: number,
     organizationId?: number,
     needEmbeddings?: boolean,
-    hybrid?: boolean
+    hybrid?: boolean,
+    filters?: QueryFilters
   ): Promise<RetrievedDocument[]> {
     const queryResult = await this.embeddingService.embed(query, 'text-embedding-3-small');
     const vector = `[${queryResult.embedding.join(',')}]`;
 
-    const params: Array<string | number> = [vector, threshold, limit];
+    const params: Array<string | number | Date> = [vector, threshold, limit];
     let orgFilter = '';
     if (organizationId !== undefined && organizationId !== null) {
       params.push(organizationId);
       orgFilter = `AND d.organization_id = $${params.length}`;
     }
+    // Metadata pre-filters follow the org filter so placeholders stay sequential.
+    const denseFilter = buildDocFilterClause(filters, params, RAG_FILTER_COLUMNS);
 
     // Ship the stored vector (as text) only when MMR will reuse it.
     const embeddingCol = needEmbeddings ? 'c.embedding::text AS embedding,' : '';
@@ -979,6 +984,7 @@ export class AdvancedRAGPipeline {
       finalScore: Number(row.similarity),
       pageNumber: row.page_number ?? undefined,
       sectionTitle: row.section_title,
+      chunkIndex: row.chunk_index ?? undefined,
       locator: buildLocator(row),
       embedding: needEmbeddings ? parsePgVector(row.embedding) : undefined,
     });
@@ -992,12 +998,13 @@ export class AdvancedRAGPipeline {
           c.content AS content,
           c.page_number AS page_number,
           c.section_title AS section_title,
+          c.chunk_index AS chunk_index,
           ${embeddingCol}
           1 - (c.embedding <=> $1::vector) AS similarity
         FROM rag_chunks c
         JOIN rag_documents d ON d.id = c.document_id
         WHERE c.embedding IS NOT NULL
-          ${orgFilter}
+          ${orgFilter}${denseFilter}
           -- (1 - sim) filter as a distance bound: 1 - dist > t  <=>  dist < 1 - t.
           -- Uses the same bare <=> operator as ORDER BY so the planner reuses
           -- the distance and the predicate matches the indexed cosine operator.
@@ -1013,12 +1020,13 @@ export class AdvancedRAGPipeline {
     // Sparse arm: same RRF hybrid as the vault path. The org filter reuses the
     // $N placeholder already bound above; the lexical query takes the raw query
     // text as $1 and limit as $2, so its own org placeholder (if any) is $3.
-    const lexParams: Array<string | number> = [query, limit];
+    const lexParams: Array<string | number | Date> = [query, limit];
     let lexOrgFilter = '';
     if (organizationId !== undefined && organizationId !== null) {
       lexParams.push(organizationId);
       lexOrgFilter = `AND d.organization_id = $${lexParams.length}`;
     }
+    const lexFilter = buildDocFilterClause(filters, lexParams, RAG_FILTER_COLUMNS);
     let lexical: RetrievedDocument[];
     try {
       const { rows: lexRows } = await this.pool.query<VaultChunkRow>(
@@ -1030,12 +1038,13 @@ export class AdvancedRAGPipeline {
           c.content AS content,
           c.page_number AS page_number,
           c.section_title AS section_title,
+          c.chunk_index AS chunk_index,
           ${embeddingCol}
           0::float8 AS similarity
         FROM rag_chunks c
         JOIN rag_documents d ON d.id = c.document_id
         WHERE c.embedding IS NOT NULL
-          ${lexOrgFilter}
+          ${lexOrgFilter}${lexFilter}
           AND to_tsvector('english', c.content) @@ websearch_to_tsquery('english', $1)
         ORDER BY ts_rank_cd(to_tsvector('english', c.content), websearch_to_tsquery('english', $1)) DESC
         LIMIT $2
@@ -1048,35 +1057,7 @@ export class AdvancedRAGPipeline {
       return dense;
     }
 
-    return this.fuseHybrid(dense, lexical, limit);
-  }
-
-  /**
-   * Reciprocal Rank Fusion of a dense and a sparse candidate list. Fuses on
-   * rank (cosine similarity and ts_rank_cd aren't comparable magnitudes), then
-   * min-max normalizes the fused score into [0,1] and writes it onto
-   * initialScore/finalScore so the downstream rerank blend stays meaningful.
-   * Dense payloads win on documents that appear in both lists (added first).
-   */
-  private fuseHybrid(
-    dense: RetrievedDocument[],
-    sparse: RetrievedDocument[],
-    limit: number
-  ): RetrievedDocument[] {
-    const rrf = reciprocalRankFusion([dense.map(d => d.id), sparse.map(d => d.id)]);
-    const normalized = normalizeToUnit(rrf);
-
-    const byId = new Map<string, RetrievedDocument>();
-    for (const doc of [...dense, ...sparse]) {
-      if (!byId.has(doc.id)) byId.set(doc.id, doc);
-    }
-
-    const fused = [...byId.values()].map(doc => {
-      const score = normalized.get(doc.id) ?? 0;
-      return { ...doc, initialScore: score, finalScore: score };
-    });
-    fused.sort((a, b) => b.finalScore - a.finalScore);
-    return fused.slice(0, limit);
+    return fuseHybrid(dense, lexical, limit);
   }
 
   /**
@@ -1271,19 +1252,6 @@ export class AdvancedRAGPipeline {
   /**
    * Merge and deduplicate documents from multiple sources
    */
-  private mergeAndDeduplicate(documents: RetrievedDocument[]): RetrievedDocument[] {
-    const seen = new Map<string, RetrievedDocument>();
-
-    for (const doc of documents) {
-      const existing = seen.get(doc.id);
-      if (!existing || doc.finalScore > existing.finalScore) {
-        seen.set(doc.id, doc);
-      }
-    }
-
-    return Array.from(seen.values()).sort((a, b) => b.finalScore - a.finalScore);
-  }
-
   /**
    * Lexical fallback similarity (Jaccard on words). Only used when embedding
    * the candidates for MMR fails; the primary path is cosine in embedding space.
@@ -1371,9 +1339,16 @@ export class AdvancedRAGPipeline {
     return value;
   }
 
-  /**
-   * Full RAG query with generation
-   */
+  /** Assemble the `[Source N: title]` block fed to generation and the self-checks. */
+  private buildSourceText(documents: RetrievedDocument[]): string {
+    return documents
+      .map(
+        (doc, idx) =>
+          `[Source ${idx + 1}: ${doc.title}]\n${doc.compressedContent || doc.expandedContent || doc.content}`
+      )
+      .join('\n\n---\n\n');
+  }
+
   async queryWithGeneration(
     query: string,
     options: RetrievalOptions = { strategy: 'advanced', useReranking: true, useMmr: true }
@@ -1381,9 +1356,11 @@ export class AdvancedRAGPipeline {
     answer: string;
     sources: RetrievedDocument[];
     context: RAGContext;
+    /** Faithfulness verdict; only present when useCorrectiveLoop is set. */
+    grounded?: boolean;
   }> {
     // Retrieve relevant documents
-    const context = await this.retrieve(query, options);
+    let context = await this.retrieve(query, options);
 
     if (context.documents.length === 0) {
       return {
@@ -1394,12 +1371,29 @@ export class AdvancedRAGPipeline {
       };
     }
 
+    const route = (req: AIRequest) => this.routeCached(req);
+
+    // Corrective pre-generation (CRAG): grade whether the retrieved sources can
+    // answer the question; if not, rewrite the query and retrieve once more,
+    // keeping the new context when it returns results. Bounded to a single retry.
+    if (options.useCorrectiveLoop) {
+      const grade = await gradeContextSufficiency(route, query, this.buildSourceText(context.documents));
+      context.tokensUsed += grade.tokensUsed;
+      if (!grade.sufficient) {
+        const rewrite = await rewriteQuery(route, query);
+        context.tokensUsed += rewrite.tokensUsed;
+        if (rewrite.query !== query) {
+          const retried = await this.retrieve(rewrite.query, options);
+          if (retried.documents.length > 0) {
+            retried.tokensUsed += context.tokensUsed; // carry the grading/rewrite cost
+            context = retried;
+          }
+        }
+      }
+    }
+
     // Build context for generation
-    const sourceText = context.documents
-      .map(
-        (doc, idx) => `[Source ${idx + 1}: ${doc.title}]\n${doc.compressedContent || doc.content}`
-      )
-      .join('\n\n---\n\n');
+    const sourceText = this.buildSourceText(context.documents);
 
     // Generate answer
     const response = await this.aiRouter.route({
@@ -1424,7 +1418,7 @@ If the sources don't contain enough information to fully answer, say so clearly.
       const citations = context.documents.map(doc => ({
         documentId: doc.documentId,
         chunkId: doc.chunkId,
-        quote: doc.compressedContent || doc.content,
+        quote: doc.compressedContent || doc.expandedContent || doc.content,
         locator: doc.locator,
         confidence: doc.finalScore,
       }));
@@ -1438,10 +1432,21 @@ If the sources don't contain enough information to fully answer, say so clearly.
       }
     }
 
+    // Corrective post-generation: groundedness / faithfulness guard. Opt-in, and
+    // it annotates the result (a `grounded` flag the caller can act on) rather
+    // than withholding the answer.
+    let grounded: boolean | undefined;
+    if (options.useCorrectiveLoop) {
+      const check = await verifyGroundedness(route, response.content, sourceText);
+      context.tokensUsed += check.tokensUsed;
+      grounded = check.grounded;
+    }
+
     return {
       answer: response.content,
       sources: context.documents,
       context,
+      ...(grounded === undefined ? {} : { grounded }),
     };
   }
 }

@@ -376,6 +376,60 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Nonclinical routes:', error);
   }
 
+  // eGrants / funder-milestone management (2 CFR 200; SBIR/STTR; pre→post-award).
+  try {
+    const grantsModule = await import('../routes/grants');
+    app.use('/api/grants', authMiddleware, grantsModule.default);
+    console.info('✅ eGrants routes mounted (/api/grants)');
+  } catch (error) {
+    console.error('❌ Failed to mount eGrants routes:', error);
+  }
+
+  // RIM-lite — registration grid + labeling (21 CFR 201; EU 2001/83/EC).
+  try {
+    const rimModule = await import('../routes/rim');
+    app.use('/api/rim', authMiddleware, rimModule.default);
+    console.info('✅ RIM-lite routes mounted (/api/rim)');
+  } catch (error) {
+    console.error('❌ Failed to mount RIM-lite routes:', error);
+  }
+
+  // Inspection readiness — BIMO/PAI, Form 483 responses, mock-inspection prep.
+  try {
+    const inspectionsModule = await import('../routes/inspections');
+    app.use('/api/inspections', authMiddleware, inspectionsModule.default);
+    console.info('✅ Inspection Readiness routes mounted (/api/inspections)');
+  } catch (error) {
+    console.error('❌ Failed to mount Inspection Readiness routes:', error);
+  }
+
+  // Controlled substances (DEA) — registrations, inventory, perpetual ledger.
+  try {
+    const csModule = await import('../routes/controlled-substances');
+    app.use('/api/controlled-substances', authMiddleware, csModule.default);
+    console.info('✅ Controlled Substances routes mounted (/api/controlled-substances)');
+  } catch (error) {
+    console.error('❌ Failed to mount Controlled Substances routes:', error);
+  }
+
+  // Lifecycle obligations — post-approval recurring-obligation engine.
+  try {
+    const lifecycleModule = await import('../routes/lifecycle');
+    app.use('/api/lifecycle', authMiddleware, lifecycleModule.default);
+    console.info('✅ Lifecycle Obligation routes mounted (/api/lifecycle)');
+  } catch (error) {
+    console.error('❌ Failed to mount Lifecycle Obligation routes:', error);
+  }
+
+  // AI-native eTMF — DIA TMF Reference Model artifacts + completeness gap-check.
+  try {
+    const etmfModule = await import('../routes/etmf');
+    app.use('/api/etmf', authMiddleware, etmfModule.default);
+    console.info('✅ eTMF routes mounted (/api/etmf)');
+  } catch (error) {
+    console.error('❌ Failed to mount eTMF routes:', error);
+  }
+
   // C2C study digital twins + simulation (study/protocol design module).
   try {
     const c2cStudyTwinModule = await import('../routes/c2c/study-twin');

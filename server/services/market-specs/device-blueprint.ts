@@ -28,6 +28,7 @@ import { RMF_SECTIONS, assessRmfStructure } from './risk-management-structure';
 import { requiredBiocompEndpoints, type ContactNature, type ContactDuration } from './biocompatibility-matrix';
 import { classifySoftware, deliverablesForClass, assessSoftwareDeliverables } from './software-lifecycle';
 import { applicableElectricalStandards, type ElectricalDeviceFacts } from './electrical-safety';
+import { sterilizationRequirements, type SterilizationFacts } from './sterilization';
 import { buildShadowReviewerChecklist, type DeviceSubmissionType as ReviewerType } from './device-shadow-reviewer';
 
 export type DeviceSubmissionType = '510k' | 'de_novo' | 'pma' | 'mdr_td' | 'ivdr_td';
@@ -45,6 +46,8 @@ export interface DeviceBlueprintInput {
   software?: { applicable: boolean; canContributeToDeathOrSeriousInjury?: boolean; canContributeToNonSeriousInjury?: boolean; presentDeliverableIds?: string[] };
   /** Electrical facts — when electricallyPowered, the IEC 60601 module applies. */
   electrical?: ElectricalDeviceFacts;
+  /** Sterilization facts — when sterile, the ISO 11135/11137/17665 module applies. */
+  sterilization?: SterilizationFacts;
   /** Sections already authored, per evidence module, for the gap assessment. */
   present?: { cerSectionIds?: string[]; perSectionIds?: string[]; rmfSectionIds?: string[] };
   /** CER equivalence claim. */
@@ -52,7 +55,7 @@ export interface DeviceBlueprintInput {
 }
 
 export interface EvidenceModuleStatus {
-  id: 'risk_management' | 'clinical_evaluation' | 'performance_evaluation' | 'biocompatibility' | 'software' | 'electrical_safety';
+  id: 'risk_management' | 'clinical_evaluation' | 'performance_evaluation' | 'biocompatibility' | 'software' | 'electrical_safety' | 'sterilization';
   title: string;
   applicable: boolean;
   basis: string;
@@ -162,6 +165,13 @@ export function buildDeviceBlueprint(input: DeviceBlueprintInput): DeviceBluepri
     const applicable = input.electrical?.electricallyPowered === true;
     const detail = applicable ? applicableElectricalStandards(input.electrical!) : undefined;
     evidenceModules.push({ id: 'electrical_safety', title: 'Electrical Safety (IEC 60601)', applicable, basis: 'IEC 60601-1 family', detail });
+  }
+
+  // Sterilization — when the device is supplied sterile.
+  {
+    const applicable = input.sterilization?.sterile === true;
+    const detail = applicable ? sterilizationRequirements(input.sterilization!) : undefined;
+    evidenceModules.push({ id: 'sterilization', title: 'Sterilization (ISO 11135/11137/17665)', applicable, basis: 'ISO 11135 / 11137 / 17665; SAL 10⁻⁶', detail });
   }
 
   // 4. Reviewer checklist.

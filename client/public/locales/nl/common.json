@@ -1,0 +1,37 @@
+{
+  "actions": {
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "close": "Sluiten",
+    "next": "Volgende",
+    "previous": "Vorige",
+    "delete": "Verwijderen",
+    "continue": "Doorgaan",
+    "back": "Terug",
+    "search": "Zoeken"
+  },
+  "density": {
+    "label": "Dichtheid",
+    "compact": "Compact",
+    "comfortable": "Comfortabel",
+    "spacious": "Ruim"
+  },
+  "topbar": {
+    "notifications": "Meldingen",
+    "help": "Help",
+    "askAna": "Vraag het AnA of ga naar…",
+    "command": "Opdracht",
+    "activeProject": "Actief project",
+    "noProjects": "Geen projecten",
+    "selectProject": "Selecteer een project",
+    "filter": "Filteren",
+    "clientType": "Type klant",
+    "pharma": "Farma",
+    "biotech": "Biotech",
+    "switchProgram": "Programma wisselen"
+  },
+  "language": {
+    "label": "Taal",
+    "select": "Selecteer taal"
+  }
+}

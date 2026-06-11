@@ -5242,6 +5242,29 @@ registerToolHandler('get_electrical_standards', async (input) => {
   }
 });
 
+registerToolHandler('get_sterilization_requirements', async (input) => {
+  // Pure reference + rule logic — no tenant context required.
+  try {
+    const { sterilizationRequirements } = await import('../market-specs/sterilization.js');
+    return JSON.stringify({ ok: true, ...sterilizationRequirements({
+      sterile: input.sterile === true,
+      method: typeof input.method === 'string' ? (input.method as never) : undefined,
+    }) });
+  } catch (err) {
+    return JSON.stringify({ error: `get_sterilization_requirements failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('list_regulatory_capabilities', async () => {
+  // Static reference data — no tenant context required.
+  try {
+    const { regulatoryCapabilitiesIndex } = await import('../market-specs/regulatory-capabilities-index.js');
+    return JSON.stringify({ ok: true, ...regulatoryCapabilitiesIndex() });
+  } catch (err) {
+    return JSON.stringify({ error: `list_regulatory_capabilities failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('assess_stored_cer', async (input, ctx) => {
   // Tenant-scoped — reads the organization's stored CER.
   if (!ctx?.organizationId) {
@@ -5981,6 +6004,508 @@ registerToolHandler('review_send_readiness', async (input, ctx) => {
     return JSON.stringify({ error: `review_send_readiness failed: ${err instanceof Error ? err.message : String(err)}` });
   } finally {
     client.release();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// eGrants (C2C-14). Conversational building shares the governed/audited path
+// (recordGovernedAction, surface 'ana'). Awards thread proposal → award provenance.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_grant_proposal', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_grant_proposal requires tenant + user context.' });
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!title) return JSON.stringify({ error: 'title is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createProposalTx } = await import('../grants/grants-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createProposalTx(client, ctx.organizationId, ctx.userId, {
+      title,
+      opportunityId: typeof input.opportunity_id === 'number' ? input.opportunity_id : null,
+      projectId: typeof input.project_id === 'number' ? input.project_id : null,
+      principalInvestigator: typeof input.principal_investigator === 'string' ? input.principal_investigator : null,
+      requestedAmount: typeof input.requested_amount === 'number' ? input.requested_amount : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `grant-proposal:${id}`, reason: fcoiReason(input, 'Grant proposal opened via AnA'),
+      payload: { title }, domain: 'grants', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Opened grant proposal "${title}" (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_grant_proposal failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('record_grant_award', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'record_grant_award requires tenant + user context.' });
+  const awardNumber = typeof input.award_number === 'string' ? input.award_number.trim() : '';
+  const fundingAgency = typeof input.funding_agency === 'string' ? input.funding_agency : '';
+  if (!awardNumber || !['nih', 'nsf', 'barda', 'dod', 'cdc', 'arpa_h', 'foundation', 'industry', 'other'].includes(fundingAgency)) {
+    return JSON.stringify({ error: 'award_number and a valid funding_agency are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createAwardTx } = await import('../grants/grants-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, provenanceLinkId } = await createAwardTx(client, ctx.organizationId, ctx.userId, {
+      awardNumber, fundingAgency: fundingAgency as any,
+      proposalId: typeof input.proposal_id === 'number' ? input.proposal_id : null,
+      projectId: typeof input.project_id === 'number' ? input.project_id : null,
+      totalAmount: typeof input.total_amount === 'number' ? input.total_amount : null,
+      periodStart: typeof input.period_start === 'string' ? input.period_start : null,
+      periodEnd: typeof input.period_end === 'string' ? input.period_end : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `grant-award:${id}`, reason: fcoiReason(input, 'Grant award recorded via AnA'),
+      payload: { fundingAgency, provenanceLinkId }, domain: 'grants', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, provenanceLinkId, message: `Recorded ${fundingAgency.toUpperCase()} award "${awardNumber}" (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `record_grant_award failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_grant_reporting', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_grant_reporting requires tenant context.' });
+  const awardId = typeof input.award_id === 'number' ? input.award_id : NaN;
+  if (!Number.isInteger(awardId)) return JSON.stringify({ error: 'award_id is required.' });
+  const { getAwardPeriod } = await import('../grants/grants-service.js');
+  const { reportingObligations, awardPeriodState } = await import('../grants/grants-logic.js');
+  try {
+    const { periodStart, periodEnd } = await getAwardPeriod(ctx.organizationId, awardId);
+    const today = new Date().toISOString().slice(0, 10);
+    const obligations = reportingObligations(periodStart, periodEnd);
+    return JSON.stringify({
+      ok: true, periodState: awardPeriodState(periodStart, periodEnd, today), obligations,
+      message: `${obligations.length} reporting obligation(s); award is ${awardPeriodState(periodStart, periodEnd, today).replace(/_/g, ' ')}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_grant_reporting failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RIM-lite (C2C-12). Conversational building shares the governed/audited path
+// (recordGovernedAction, surface 'ana').
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_rim_product', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_rim_product requires tenant + user context.' });
+  const productName = typeof input.product_name === 'string' ? input.product_name.trim() : '';
+  if (!productName) return JSON.stringify({ error: 'product_name is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createProductTx } = await import('../rim/rim-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createProductTx(client, ctx.organizationId, ctx.userId, {
+      productName,
+      inn: typeof input.inn === 'string' ? input.inn : null,
+      dosageForm: typeof input.dosage_form === 'string' ? input.dosage_form : null,
+      atcCode: typeof input.atc_code === 'string' ? input.atc_code : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `rim-product:${id}`, reason: fcoiReason(input, 'RIM product opened via AnA'),
+      payload: { productName }, domain: 'rim', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Opened RIM product "${productName}" (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_rim_product failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('set_registration_status', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'set_registration_status requires tenant + user context.' });
+  const productId = typeof input.product_id === 'number' ? input.product_id : NaN;
+  const country = typeof input.country === 'string' ? input.country.trim() : '';
+  if (!Number.isInteger(productId) || !country) return JSON.stringify({ error: 'product_id and country are required.' });
+  const VALID = ['planned', 'submitted', 'under_review', 'approved', 'withdrawn', 'suspended', 'cancelled'];
+  const marketStatus = typeof input.market_status === 'string' ? input.market_status : undefined;
+  if (marketStatus && !VALID.includes(marketStatus)) return JSON.stringify({ error: 'market_status must be a valid status.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { upsertRegistrationTx } = await import('../rim/rim-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await upsertRegistrationTx(client, ctx.organizationId, ctx.userId, productId, {
+      country, marketStatus: marketStatus as any,
+      registrationNumber: typeof input.registration_number === 'string' ? input.registration_number : null,
+      marketingAuthHolder: typeof input.marketing_auth_holder === 'string' ? input.marketing_auth_holder : null,
+      approvalDate: typeof input.approval_date === 'string' ? input.approval_date : null,
+      renewalDueDate: typeof input.renewal_due_date === 'string' ? input.renewal_due_date : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `rim-product:${productId}`, reason: fcoiReason(input, 'Registration status set via AnA'),
+      payload: { registrationId: id, country, status: marketStatus }, domain: 'rim', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, registrationId: id, message: `Set ${country.toUpperCase()} status${marketStatus ? ` to ${marketStatus}` : ''} for product ${productId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `set_registration_status failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_label_currency', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_label_currency requires tenant context.' });
+  const productId = typeof input.product_id === 'number' ? input.product_id : NaN;
+  if (!Number.isInteger(productId)) return JSON.stringify({ error: 'product_id is required.' });
+  const { getLabelCurrencyInput } = await import('../rim/rim-service.js');
+  const { evaluateLabelCurrency } = await import('../rim/rim-logic.js');
+  try {
+    const inp = await getLabelCurrencyInput(ctx.organizationId, productId);
+    const gate = evaluateLabelCurrency(inp);
+    return JSON.stringify({
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings,
+      message: gate.findings.length === 0 ? 'All approved markets have current labels.' : `${gate.findings.length} approved market(s) missing a current label.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_label_currency failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Inspection Readiness (C2C-13). Conversational building shares the governed/
+// audited path (recordGovernedAction, surface 'ana').
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_inspection', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_inspection requires tenant + user context.' });
+  const inspectionType = typeof input.inspection_type === 'string' ? input.inspection_type : '';
+  const agency = typeof input.agency === 'string' ? input.agency : '';
+  const siteName = typeof input.site_name === 'string' ? input.site_name.trim() : '';
+  if (!['bimo', 'pai', 'gcp', 'gmp', 'routine', 'for_cause', 'other'].includes(inspectionType) || !['fda', 'ema', 'mhra', 'pmda', 'other'].includes(agency) || !siteName) {
+    return JSON.stringify({ error: 'inspection_type, agency, and site_name are required and must be valid.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createInspectionTx } = await import('../inspection/inspection-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createInspectionTx(client, ctx.organizationId, ctx.userId, {
+      inspectionType: inspectionType as any, agency: agency as any, siteName,
+      scheduledDate: typeof input.scheduled_date === 'string' ? input.scheduled_date : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `inspection:${id}`, reason: fcoiReason(input, 'Inspection opened via AnA'),
+      payload: { inspectionType, agency }, domain: 'inspection', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Opened ${agency.toUpperCase()} ${inspectionType} inspection at "${siteName}" (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_inspection failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('log_inspection_finding', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'log_inspection_finding requires tenant + user context.' });
+  const inspectionId = typeof input.inspection_id === 'number' ? input.inspection_id : NaN;
+  const observationNumber = typeof input.observation_number === 'number' ? Math.round(input.observation_number) : NaN;
+  const description = typeof input.description === 'string' ? input.description.trim() : '';
+  const classification = typeof input.classification === 'string' ? input.classification : '';
+  if (!Number.isInteger(inspectionId) || !Number.isInteger(observationNumber) || !description || !['critical', 'major', 'minor', 'observation'].includes(classification)) {
+    return JSON.stringify({ error: 'inspection_id, observation_number, description, and a valid classification are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addFindingTx } = await import('../inspection/inspection-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await addFindingTx(client, ctx.organizationId, ctx.userId, inspectionId, { observationNumber, description, classification: classification as any });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `inspection:${inspectionId}`, reason: fcoiReason(input, 'Inspection finding logged via AnA'),
+      payload: { findingId: id, classification }, domain: 'inspection', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, findingId: id, message: `Logged ${classification} observation #${observationNumber} on inspection ${inspectionId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `log_inspection_finding failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_inspection_readiness', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_inspection_readiness requires tenant context.' });
+  const inspectionId = typeof input.inspection_id === 'number' ? input.inspection_id : undefined;
+  const { listReadinessAreas } = await import('../inspection/inspection-service.js');
+  const { scoreReadiness } = await import('../inspection/inspection-logic.js');
+  try {
+    const areas = await listReadinessAreas(ctx.organizationId, inspectionId);
+    const score = scoreReadiness(areas);
+    return JSON.stringify({
+      ok: true, score: score.score, verdict: score.verdict, blockers: score.blockers,
+      message: `Readiness ${score.score}% — ${score.verdict.replace(/_/g, ' ')}${score.blockers.length ? `; ${score.blockers.length} blocker(s)` : ''}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_inspection_readiness failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Controlled Substances / DEA (C2C-15). Conversational building shares the
+// governed/audited path (recordGovernedAction, surface 'ana').
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('register_dea', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'register_dea requires tenant + user context.' });
+  const registrantName = typeof input.registrant_name === 'string' ? input.registrant_name.trim() : '';
+  const deaNumber = typeof input.dea_number === 'string' ? input.dea_number.trim() : '';
+  const businessActivity = typeof input.business_activity === 'string' ? input.business_activity : '';
+  if (!registrantName || !deaNumber || !['researcher', 'analytical_lab', 'manufacturer', 'distributor', 'practitioner', 'teaching_institution', 'other'].includes(businessActivity)) {
+    return JSON.stringify({ error: 'registrant_name, dea_number, and a valid business_activity are required.' });
+  }
+  const schedules = Array.isArray(input.schedules) ? input.schedules.filter((s): s is string => typeof s === 'string' && ['I', 'II', 'III', 'IV', 'V'].includes(s)) : [];
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createRegistrationTx } = await import('../controlled-substances/cs-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createRegistrationTx(client, ctx.organizationId, ctx.userId, {
+      registrantName, deaNumber, businessActivity: businessActivity as any, schedules,
+      expirationDate: typeof input.expiration_date === 'string' ? input.expiration_date : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `dea-registration:${id}`, reason: fcoiReason(input, 'DEA registration recorded via AnA'),
+      payload: { deaNumber }, domain: 'controlled_substances', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Recorded DEA registration ${deaNumber} (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `register_dea failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('log_cs_transaction', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'log_cs_transaction requires tenant + user context.' });
+  const substanceId = typeof input.substance_id === 'number' ? input.substance_id : NaN;
+  const transactionType = typeof input.transaction_type === 'string' ? input.transaction_type : '';
+  const quantity = typeof input.quantity === 'number' ? input.quantity : NaN;
+  if (!Number.isInteger(substanceId) || !['receipt', 'dispense', 'use', 'disposal', 'transfer', 'adjustment'].includes(transactionType) || !Number.isFinite(quantity)) {
+    return JSON.stringify({ error: 'substance_id, a valid transaction_type, and a numeric quantity are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { recordTransactionTx } = await import('../controlled-substances/cs-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, balanceAfter } = await recordTransactionTx(client, ctx.organizationId, ctx.userId, substanceId, {
+      transactionType: transactionType as any, quantity,
+      transactionDate: typeof input.transaction_date === 'string' ? input.transaction_date : null,
+      witnessedBy: typeof input.witnessed_by === 'string' ? input.witnessed_by : null,
+      reference: typeof input.reference === 'string' ? input.reference : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `controlled-substance:${substanceId}`, reason: fcoiReason(input, 'CS transaction logged via AnA'),
+      payload: { transactionId: id, type: transactionType, balanceAfter }, domain: 'controlled_substances', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, transactionId: id, balanceAfter, message: `Logged ${transactionType}; new balance ${balanceAfter}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `log_cs_transaction failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_cs_balance', async (_input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_cs_balance requires tenant context.' });
+  const { listSubstances } = await import('../controlled-substances/cs-service.js');
+  try {
+    const rows = await listSubstances(ctx.organizationId);
+    return JSON.stringify({
+      ok: true,
+      substances: rows.map((r: any) => ({ id: r.id, name: r.substance_name, schedule: r.dea_schedule, balance: r.current_balance, unit: r.unit })),
+      message: `${rows.length} controlled substance(s) on inventory.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_cs_balance failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Lifecycle Obligations (C2C-11). Conversational building shares the governed/
+// audited path (recordGovernedAction, surface 'ana'); periodic obligations
+// generate their occurrences automatically.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_lifecycle_obligation', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_lifecycle_obligation requires tenant + user context.' });
+  const obligationType = typeof input.obligation_type === 'string' ? input.obligation_type : '';
+  const region = typeof input.region === 'string' ? input.region : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!['variation', 'supplement', 'periodic_report', 'pediatric', 'renewal', 'annual_report'].includes(obligationType) || !['fda', 'eu', 'jp', 'mhra', 'other'].includes(region) || !title) {
+    return JSON.stringify({ error: 'obligation_type, region, and title are required and must be valid.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createObligationTx } = await import('../lifecycle-obligations/lifecycle-service.js');
+  const { classificationPathway } = await import('../lifecycle-obligations/lifecycle-logic.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, occurrencesCreated } = await createObligationTx(client, ctx.organizationId, ctx.userId, {
+      obligationType: obligationType as any, region: region as any, title,
+      classification: typeof input.classification === 'string' ? input.classification : null,
+      productId: typeof input.product_id === 'number' ? input.product_id : null,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+      dueDate: typeof input.due_date === 'string' ? input.due_date : null,
+      recurrenceMonths: typeof input.recurrence_months === 'number' ? Math.round(input.recurrence_months) : null,
+      anchorDate: typeof input.anchor_date === 'string' ? input.anchor_date : null,
+      occurrencesToGenerate: typeof input.occurrences_to_generate === 'number' ? Math.round(input.occurrences_to_generate) : undefined,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `lifecycle-obligation:${id}`, reason: fcoiReason(input, 'Lifecycle obligation opened via AnA'),
+      payload: { obligationType, occurrencesCreated }, domain: 'lifecycle', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    const pathway = classificationPathway(typeof input.classification === 'string' ? input.classification : null);
+    return JSON.stringify({ ok: true, id, occurrencesCreated, pathway, message: `Opened ${obligationType.replace(/_/g, ' ')} "${title}" (id ${id})${occurrencesCreated ? `; generated ${occurrencesCreated} occurrence(s)` : ''}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_lifecycle_obligation failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_lifecycle_calendar', async (_input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_lifecycle_calendar requires tenant context.' });
+  const { listCalendar } = await import('../lifecycle-obligations/lifecycle-service.js');
+  const { summarizeCalendar } = await import('../lifecycle-obligations/lifecycle-logic.js');
+  try {
+    const items = await listCalendar(ctx.organizationId);
+    const today = new Date().toISOString().slice(0, 10);
+    const summary = summarizeCalendar(items.map((i: any) => ({ dueDate: i.dueDate, terminal: i.status === 'approved' || i.status === 'closed' || i.status === 'submitted' })), today);
+    return JSON.stringify({
+      ok: true, summary,
+      message: summary.overdue > 0 ? `${summary.overdue} obligation(s) overdue; ${summary.due_30} due within 30 days.` : `No overdue obligations; ${summary.due_30} due within 30 days, ${summary.due_90} within 90.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_lifecycle_calendar failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI-native eTMF (C2C-08). Conversational building shares the governed/audited
+// path (recordGovernedAction, surface 'ana'); artifacts auto-classify by name.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_tmf', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_tmf requires tenant + user context.' });
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!title) return JSON.stringify({ error: 'title is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createTmfTx } = await import('../etmf/etmf-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createTmfTx(client, ctx.organizationId, ctx.userId, { title, studyId: typeof input.study_id === 'number' ? input.study_id : null });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `tmf-file:${id}`, reason: fcoiReason(input, 'TMF opened via AnA'),
+      payload: { title }, domain: 'etmf', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Opened TMF "${title}" (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_tmf failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('classify_tmf_artifact', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'classify_tmf_artifact requires tenant + user context.' });
+  const tmfFileId = typeof input.tmf_file_id === 'number' ? input.tmf_file_id : NaN;
+  const artifactName = typeof input.artifact_name === 'string' ? input.artifact_name.trim() : '';
+  if (!Number.isInteger(tmfFileId) || !artifactName) return JSON.stringify({ error: 'tmf_file_id and artifact_name are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addArtifactTx } = await import('../etmf/etmf-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, zone, classification } = await addArtifactTx(client, ctx.organizationId, ctx.userId, tmfFileId, {
+      artifactName,
+      zone: typeof input.zone === 'number' ? input.zone : null,
+      status: typeof input.status === 'string' ? (input.status as any) : undefined,
+      documentDate: typeof input.document_date === 'string' ? input.document_date : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `tmf-file:${tmfFileId}`, reason: fcoiReason(input, 'TMF artifact filed via AnA'),
+      payload: { artifactId: id, zone, classification }, domain: 'etmf', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, artifactId: id, zone, classification, message: `Filed "${artifactName}" to TMF zone ${zone}${classification !== 'explicit' ? ' (auto-classified)' : ''}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `classify_tmf_artifact failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_tmf_completeness', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_tmf_completeness requires tenant context.' });
+  const tmfFileId = typeof input.tmf_file_id === 'number' ? input.tmf_file_id : NaN;
+  if (!Number.isInteger(tmfFileId)) return JSON.stringify({ error: 'tmf_file_id is required.' });
+  const { getCompletenessInput } = await import('../etmf/etmf-service.js');
+  const { evaluateCompleteness } = await import('../etmf/etmf-logic.js');
+  try {
+    const artifacts = await getCompletenessInput(ctx.organizationId, tmfFileId);
+    const r = evaluateCompleteness(artifacts);
+    return JSON.stringify({
+      ok: true, completenessPct: r.completenessPct, verdict: r.verdict, gapCount: r.gaps.length, gaps: r.gaps.slice(0, 20),
+      message: `TMF ${r.completenessPct}% complete — ${r.verdict.replace(/_/g, ' ')}${r.gaps.length ? `; ${r.gaps.length} gap(s)` : ''}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_tmf_completeness failed: ${err instanceof Error ? err.message : String(err)}` });
   }
 });
 

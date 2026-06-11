@@ -34,6 +34,19 @@ describe('ragRouter optionsForIntent', () => {
       expect(optionsForIntent({ query: 'q', intent: 'foresight' }).useHybrid).toBe(true);
       expect(optionsForIntent({ query: 'q', intent: 'project_scoped' }).useHybrid).toBe(true);
     });
+
+    it('enables small-to-big context expansion on the document-Q&A intents', () => {
+      expect(optionsForIntent({ query: 'q', intent: 'regulatory_qa' }).useContextExpansion).toBe(true);
+      expect(optionsForIntent({ query: 'q', intent: 'foresight' }).useContextExpansion).toBe(true);
+      // project_scoped retrieves project atoms (no chunk window) — expansion is a no-op there.
+      expect(optionsForIntent({ query: 'q', intent: 'project_scoped' }).useContextExpansion).toBeUndefined();
+    });
+
+    it('does NOT default the generation-path corrective loop on any intent (stays opt-in)', () => {
+      expect(optionsForIntent({ query: 'q', intent: 'regulatory_qa' }).useCorrectiveLoop).toBeUndefined();
+      expect(optionsForIntent({ query: 'q', intent: 'foresight' }).useCorrectiveLoop).toBeUndefined();
+      expect(optionsForIntent({ query: 'q', intent: 'project_scoped' }).useCorrectiveLoop).toBeUndefined();
+    });
   });
 
   describe('explicit overrides', () => {
@@ -45,6 +58,11 @@ describe('ragRouter optionsForIntent', () => {
     it('an explicit useHybrid:false overrides the intent default', () => {
       const o = optionsForIntent({ query: 'q', intent: 'regulatory_qa', useHybrid: false });
       expect(o.useHybrid).toBe(false);
+    });
+
+    it('self-query is opt-in: undefined by default, passed through when set', () => {
+      expect(optionsForIntent({ query: 'q', intent: 'regulatory_qa' }).useSelfQuery).toBeUndefined();
+      expect(optionsForIntent({ query: 'q', useSelfQuery: true }).useSelfQuery).toBe(true);
     });
 
     it('overrides strategy, mmrLambda, and limit', () => {

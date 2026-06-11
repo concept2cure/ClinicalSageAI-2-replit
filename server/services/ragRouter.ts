@@ -86,6 +86,13 @@ export interface RagRetrievalParams {
   mmrLambda?: number;
   /** Override the intent's hybrid (dense+full-text RRF) default for vault/rag_chunks. */
   useHybrid?: boolean;
+  /** Expand each vault/rag_chunks result to a ±contextWindow neighbour window for generation. */
+  useContextExpansion?: boolean;
+  contextWindow?: number;
+  /** Extract metadata filters (document type / source / date) from the query and pre-filter retrieval. */
+  useSelfQuery?: boolean;
+  /** Enable the agentic corrective loop (grade + rewrite/re-retrieve + groundedness guard) for ragQuery. */
+  useCorrectiveLoop?: boolean;
   useCompression?: boolean;
   filters?: RetrievalOptions['filters'];
 }
@@ -94,6 +101,8 @@ export interface RagRouterResult {
   answer: string;
   sources: RetrievedDocument[];
   context: RAGContext;
+  /** Faithfulness verdict from the corrective loop; present only when useCorrectiveLoop is set. */
+  grounded?: boolean;
 }
 
 /** Per-intent default policy. Centralised so the trade-offs are reviewed in one place. */
@@ -102,14 +111,33 @@ function intentDefaults(intent: RagIntent | undefined): Partial<RetrievalOptions
     case 'project_scoped':
       // Project interrogation: stay inside the dossier, favour precision.
       // (useHybrid is a no-op here — project atoms already retrieve via their
-      // own dense+BM25 hybrid — but we set it for policy consistency.)
+      // own dense+BM25 hybrid — and context expansion is a no-op too, since
+      // project atoms carry no chunk index to window over.)
       return { strategy: 'advanced', useReranking: true, useMmr: true, mmrLambda: 0.8, useHybrid: true };
     case 'foresight':
-      // Forward-looking synthesis: a touch more diversity across sources.
-      return { strategy: 'advanced', useReranking: true, useMmr: true, mmrLambda: 0.6, useHybrid: true };
+      // Forward-looking synthesis: a touch more diversity across sources, plus
+      // small-to-big expansion so each cited chunk carries its surrounding context.
+      return {
+        strategy: 'advanced',
+        useReranking: true,
+        useMmr: true,
+        mmrLambda: 0.6,
+        useHybrid: true,
+        useContextExpansion: true,
+      };
     case 'regulatory_qa':
     default:
-      return { strategy: 'advanced', useReranking: true, useMmr: true, mmrLambda: 0.7, useHybrid: true };
+      // Document Q&A: hybrid recall + small-to-big context (a ±1 neighbour
+      // window) so answers see the surrounding clause, not just the matched
+      // sentence. The corrective loop stays opt-in (callers pass useCorrectiveLoop).
+      return {
+        strategy: 'advanced',
+        useReranking: true,
+        useMmr: true,
+        mmrLambda: 0.7,
+        useHybrid: true,
+        useContextExpansion: true,
+      };
   }
 }
 
@@ -130,6 +158,10 @@ export function optionsForIntent(params: RagRetrievalParams): RetrievalOptions {
     useMmr: pick(params.useMmr, defaults.useMmr),
     mmrLambda: pick(params.mmrLambda, defaults.mmrLambda),
     useHybrid: pick(params.useHybrid, defaults.useHybrid),
+    useContextExpansion: pick(params.useContextExpansion, defaults.useContextExpansion),
+    contextWindow: params.contextWindow,
+    useSelfQuery: pick(params.useSelfQuery, defaults.useSelfQuery),
+    useCorrectiveLoop: params.useCorrectiveLoop,
     useCompression: params.useCompression,
     organizationUuid: params.organizationUuid,
     artifactScope: params.artifactScope,
@@ -226,6 +258,7 @@ export async function ragQuery(params: RagRetrievalParams): Promise<RagRouterRes
       answer: result.answer,
       sources: result.sources,
       context: result.context,
+      ...(result.grounded === undefined ? {} : { grounded: result.grounded }),
     };
   } catch (err) {
     recordRetrieval(params, options, wallStart, undefined);
