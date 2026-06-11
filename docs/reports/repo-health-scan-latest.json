@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-11T17:41:34.348Z",
+  "generatedAt": "2026-06-11T17:47:58.089Z",
   "git": {
-    "sha": "05d2babce1444ed202c32aca9c0ebb8d3df835fd",
+    "sha": "54696721a88d7fa54633e0f256e40fdcd9f55a12",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 204,
+    "duplicateBasenames": 205,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -1416,6 +1416,14 @@
         ]
       },
       {
+        "basename": "etmf",
+        "count": 2,
+        "paths": [
+          "server/routes/etmf.ts",
+          "shared/schema/etmf.ts"
+        ]
+      },
+      {
         "basename": "evidence-sufficiency",
         "count": 2,
         "paths": [
@@ -2043,11 +2051,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 373963
+        "bytes": 379055
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 296029
+        "bytes": 298017
       },
       {
         "file": "server/statistics-service.ts",
@@ -2101,7 +2109,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 7784
+        "lines": 7865
       },
       {
         "file": "server/statistics-service.ts",
@@ -2109,7 +2117,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 5578
+        "lines": 5625
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2273,7 +2281,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 302,
+      "duplicateGroups": 303,
       "largeByBytes": 11,
       "largeByLines": 34
     },
@@ -2291,7 +2299,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 42,
+      "duplicateGroups": 43,
       "largeByBytes": 1,
       "largeByLines": 2
     },
