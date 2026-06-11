@@ -619,6 +619,14 @@
   text-transform: uppercase; letter-spacing: 0.08em;
   color: var(--text-400);
 }
+/* Per-tile "Sample data" honesty pill — composes with the global .ptl-pill
+   from projects-prototype.css; undoes the uppercase label styling. */
+.dashSamplePill {
+  margin-left: 6px;
+  vertical-align: 1px;
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
 .dashMetric {
   font-size: 26px;
   font-weight: 600;

@@ -25,7 +25,7 @@ import {
 } from './data';
 import { AnaCard } from './AnaCard';
 import { CommandPalette, type PaletteItem } from './CommandPalette';
-import { useHomeData, type HomeProject } from './useHomeData';
+import { useHomeData, type HomeMetrics, type HomeProject } from './useHomeData';
 import { useHomeBriefing } from './useHomeBriefing';
 import { ProjectsScreen } from '../concept2cure-projects';
 import brandIcon from '../../../assets/concept2cure-icon.svg';
@@ -442,38 +442,68 @@ function dashKey(label: string): string {
 }
 
 function Dashboard({
-  projectCount,
-  artifactTotal,
+  metrics,
   onTileClick,
 }: {
-  projectCount: number | null;
-  artifactTotal: number | null;
+  metrics: HomeMetrics;
   onTileClick?: (key: string) => void;
 }) {
-  // Overlay real counts on top of the static demo metrics where we have them.
+  // Overlay real counts on top of the static demo metrics where a genuine
+  // org-scoped source exists. Each tile carries its own honesty pill: a tile
+  // only drops the "Sample data" pill when its live fetch actually succeeded.
+  // A failed fetch keeps the labeled sample fallback — honest null/empty
+  // beats fake numbers, and a fetch error must never render as a real zero.
+  //
+  // Live sources:
+  //  - Active projects → GET /api/concept2cure/projects (org-scoped list)
+  //  - Tasks due       → GET /api/concept2cure/reviews/my-queue (open review
+  //                      tasks assigned to the current user, overdue/due-soon)
+  //  - Alerts          → same my-queue payload (unread notification count)
+  //  - Submission readiness has NO workspace-level aggregate yet (only the
+  //    per-project readiness-summary exists), so it stays sample — its pill
+  //    renders unconditionally until a real org-level aggregate ships.
   const cards = DASH.map(d => {
-    if (d.label === 'Active projects' && projectCount !== null) {
-      return { ...d, metric: String(projectCount), meta: `${projectCount} project${projectCount !== 1 ? 's' : ''} in this workspace` };
+    if (d.label === 'Active projects' && metrics.projectCount !== null) {
+      const n = metrics.projectCount;
+      return {
+        ...d,
+        live: true,
+        metric: String(n),
+        meta: `${n} project${n !== 1 ? 's' : ''} in this workspace`,
+      };
     }
-    return d;
+    if (d.label === 'Tasks due' && metrics.tasksOpen !== null) {
+      const open = metrics.tasksOpen;
+      const overdue = metrics.tasksOverdue ?? 0;
+      const dueSoon = metrics.tasksDueSoon ?? 0;
+      return {
+        ...d,
+        live: true,
+        metric: String(open),
+        meta: open === 0
+          ? 'No open review tasks assigned to you'
+          : `Assigned to you · ${overdue} overdue · ${dueSoon} due in 24h`,
+      };
+    }
+    if (d.label === 'Alerts' && metrics.alertsUnread !== null) {
+      const n = metrics.alertsUnread;
+      return {
+        ...d,
+        live: true,
+        metric: String(n),
+        meta: n === 0 ? 'No unread notifications' : `${n} unread notification${n !== 1 ? 's' : ''}`,
+      };
+    }
+    return { ...d, live: false };
   });
+  const pillTitle = (label: string): string =>
+    label === 'Submission readiness'
+      ? 'Prototype sample metric — no workspace-level readiness aggregate exists yet.'
+      : 'Prototype sample metric — the live API request failed or returned no data.';
   return (
     <>
       <div className={styles.secHdr}>
-        <div className={styles.secTitle}>
-          At a glance
-          {/* Honesty pill (same treatment as ProjectsList): these tiles are
-              demo constants from data.tsx. Only "Active projects" ever gets a
-              live overlay; Submission readiness, Tasks due and Alerts have no
-              live source yet, so this section is ALWAYS at least partly
-              sample — the pill renders unconditionally. */}
-          <span
-            className="ptl-pill prj-list-seed"
-            title="Showing prototype sample metrics — only the Active projects count is live; the other tiles have no live data source yet."
-          >
-            Sample data
-          </span>
-        </div>
+        <div className={styles.secTitle}>At a glance</div>
         <button
           type="button"
           className={styles.secMore}
@@ -490,7 +520,17 @@ function Dashboard({
             className={styles.dashCard}
             onClick={() => onTileClick?.(dashKey(d.label))}
           >
-            <div className={styles.dashLabel}>{d.label}</div>
+            <div className={styles.dashLabel}>
+              {d.label}
+              {!d.live && (
+                <span
+                  className={`ptl-pill ${styles.dashSamplePill}`}
+                  title={pillTitle(d.label)}
+                >
+                  Sample data
+                </span>
+              )}
+            </div>
             <div className={styles.dashMetric}>
               {d.metric}{d.unit && <span className={styles.unit}>{d.unit}</span>}
             </div>
@@ -899,8 +939,7 @@ export function Concept2CureHome({
                 onStartFirst={onStartFirstBriefing}
               />
               <Dashboard
-                projectCount={metrics.projectCount}
-                artifactTotal={metrics.artifactTotal}
+                metrics={metrics}
                 onTileClick={onDashboardTileClick}
               />
               <div style={{ height: 24 }} />
