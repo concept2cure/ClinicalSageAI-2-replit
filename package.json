@@ -428,7 +428,8 @@
     "vitest": "4.1.7"
   },
   "overrides": {
-    "tar": "7.5.7"
+    "tar": "7.5.7",
+    "@grpc/grpc-js": "^1.9.16"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8",
