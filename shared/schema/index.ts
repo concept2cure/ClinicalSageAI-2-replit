@@ -478,3 +478,9 @@ export * from './lifecycle';
 // inspection readiness. ICH E6(R2) §8. Service: server/services/etmf; migration:
 // migrations/20260610_etmf.sql.
 export * from './etmf';
+
+// Research-compliance shared foundation: personnel roster + training/clearance
+// records that gate committee approvals ("no index until trained"), feeding the
+// compliance-checklist reasoning engine. Service: server/services/research-
+// compliance; migration: migrations/20260611_research_compliance.sql.
+export * from './research-compliance';

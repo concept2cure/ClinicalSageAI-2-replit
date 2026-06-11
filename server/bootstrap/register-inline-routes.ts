@@ -430,6 +430,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount eTMF routes:', error);
   }
 
+  // Research compliance — roster, training-gating, compliance-checklist engine.
+  try {
+    const rcModule = await import('../routes/research-compliance');
+    app.use('/api/research-compliance', authMiddleware, rcModule.default);
+    console.info('✅ Research Compliance routes mounted (/api/research-compliance)');
+  } catch (error) {
+    console.error('❌ Failed to mount Research Compliance routes:', error);
+  }
+
   // C2C study digital twins + simulation (study/protocol design module).
   try {
     const c2cStudyTwinModule = await import('../routes/c2c/study-twin');

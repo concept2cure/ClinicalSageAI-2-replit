@@ -6528,6 +6528,85 @@ registerToolHandler('review_tmf_completeness', async (input, ctx) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Research Compliance — foundation (roster + training-gating + checklist engine).
+// run_compliance_checklist + review_training_gate are read-only deterministic;
+// add_personnel_training is governed (surface 'ana').
+// ─────────────────────────────────────────────────────────────────────────────
+
+function rcProfile(input: Record<string, unknown>) {
+  return {
+    involvesHumanSubjects: input.involves_human_subjects === true,
+    involvesAnimals: input.involves_animals === true,
+    involvesRecombinantDNA: input.involves_recombinant_dna === true,
+    involvesHumanGeneTransfer: input.involves_human_gene_transfer === true,
+    fundingSource: (typeof input.funding_source === 'string' ? input.funding_source : 'other') as any,
+    region: (typeof input.region === 'string' ? input.region : 'us') as any,
+  };
+}
+
+registerToolHandler('run_compliance_checklist', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'run_compliance_checklist requires tenant context.' });
+  const { resolveComplianceChecklist } = await import('../research-compliance/compliance-checklist.js');
+  const c = resolveComplianceChecklist(rcProfile(input));
+  const committees = c.requiredApprovals.map((a) => a.committee).join(', ') || 'none';
+  return JSON.stringify({
+    ok: true, ruleVersion: c.ruleVersion, requiredApprovals: c.requiredApprovals, requiredTraining: c.requiredTraining, steps: c.steps,
+    message: `Required committee approvals: ${committees}; ${c.requiredTraining.length} training requirement(s).`,
+  });
+});
+
+registerToolHandler('add_personnel_training', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_personnel_training requires tenant + user context.' });
+  const personnelId = typeof input.personnel_id === 'number' ? input.personnel_id : NaN;
+  const trainingType = typeof input.training_type === 'string' ? input.training_type : '';
+  const VALID = ['citi_human_subjects', 'citi_gcp', 'citi_animal', 'citi_rcr', 'biosafety', 'bloodborne_pathogens', 'iata_shipping', 'hipaa', 'fcoi_disclosure', 'other'];
+  if (!Number.isInteger(personnelId) || !VALID.includes(trainingType)) return JSON.stringify({ error: 'personnel_id and a valid training_type are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addTrainingTx } = await import('../research-compliance/roster-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await addTrainingTx(client, ctx.organizationId, ctx.userId, personnelId, {
+      trainingType: trainingType as any,
+      completedDate: typeof input.completed_date === 'string' ? input.completed_date : null,
+      expiresDate: typeof input.expires_date === 'string' ? input.expires_date : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `research-personnel:${personnelId}`, reason: fcoiReason(input, 'Training recorded via AnA'),
+      payload: { trainingId: id, trainingType }, domain: 'research_compliance', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, trainingId: id, message: `Recorded ${trainingType} for personnel ${personnelId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_personnel_training failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_training_gate', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_training_gate requires tenant context.' });
+  const personnelIds = Array.isArray(input.personnel_ids) ? input.personnel_ids.filter((n): n is number => typeof n === 'number') : [];
+  const { resolveComplianceChecklist, evaluateTrainingGate } = await import('../research-compliance/compliance-checklist.js');
+  const { loadRosterForGate } = await import('../research-compliance/roster-service.js');
+  try {
+    const checklist = resolveComplianceChecklist(rcProfile(input));
+    const roster = await loadRosterForGate(ctx.organizationId, personnelIds);
+    const today = new Date().toISOString().slice(0, 10);
+    const gate = evaluateTrainingGate(roster.personnel, checklist.requiredTraining, roster.records, today);
+    return JSON.stringify({
+      ok: true, cleared: gate.cleared, missing: gate.missing, expiringSoon: gate.expiringSoon,
+      message: gate.cleared ? 'Training gate cleared — all required training is current.' : `Training gate BLOCKED — ${gate.missing.length} missing/expired requirement(s).`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_training_gate failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('log_study_deviation', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'log_study_deviation requires tenant context.' });
