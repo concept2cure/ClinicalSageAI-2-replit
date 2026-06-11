@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-11T15:00:34.167Z",
+  "generatedAt": "2026-06-11T15:08:37.175Z",
   "git": {
-    "sha": "7be5cd6d7260f0b95dce9a84b6c241d39a82be9b",
+    "sha": "5fda9403184a578ba0716573071ed38ffa8dbe7c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 201,
+    "duplicateBasenames": 202,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -951,6 +951,15 @@
           "server/routes/resolution.ts",
           "shared/schema/resolution.ts",
           "shared/types/resolution.ts"
+        ]
+      },
+      {
+        "basename": "rim",
+        "count": 3,
+        "paths": [
+          "server/routes/rim.ts",
+          "server/services/intelligence/rim.ts",
+          "shared/schema/rim.ts"
         ]
       },
       {
@@ -2018,11 +2027,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 351802
+        "bytes": 357566
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 287535
+        "bytes": 289701
       },
       {
         "file": "server/statistics-service.ts",
@@ -2076,7 +2085,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 7455
+        "lines": 7545
       },
       {
         "file": "server/statistics-service.ts",
@@ -2088,7 +2097,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 5400
+        "lines": 5451
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2248,7 +2257,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 298,
+      "duplicateGroups": 300,
       "largeByBytes": 11,
       "largeByLines": 34
     },
@@ -2266,7 +2275,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 39,
+      "duplicateGroups": 40,
       "largeByBytes": 1,
       "largeByLines": 2
     },
