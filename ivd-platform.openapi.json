@@ -186,6 +186,27 @@
         "responses": { "200": { "description": "Per-program lines + portfolio aggregates + worklist" }, "422": { "$ref": "#/components/responses/ValidationError" } }
       }
     },
+    "/ivd-lifecycle/coverage/simulate": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "Coverage / reimbursement revenue model (produces marketValueUsd)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["annualTestVolume", "basePriceUsd", "payerMix"], "properties": { "annualTestVolume": { "type": "number" }, "basePriceUsd": { "type": "number" }, "payerMix": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "sharePct": { "type": "number" }, "coverageProbability": { "type": "number" }, "reimbursementUsd": { "type": "number" } } } }, "clinicalUtilityStrength": { "type": "string", "enum": ["strong", "moderate", "weak", "none"] }, "rampYears": { "type": "number" }, "horizonYears": { "type": "number" }, "discountRate": { "type": "number" }, "grossMargin": { "type": "number" } } } } } },
+        "responses": { "200": { "description": "Per-segment economics + blended coverage + steady-state revenue + NPV" }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
+    "/ivd-lifecycle/calibration/backtest": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "Back-test the readiness→approval model against labeled cases",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["cases"], "properties": { "cases": { "type": "array", "items": { "type": "object", "properties": { "profile": { "type": "object" }, "approved": { "type": "boolean" }, "label": { "type": "string" } } } } } } } } },
+        "responses": { "200": { "description": "Brier/logloss/accuracy/AUC + reliability bins" }, "422": { "$ref": "#/components/responses/ValidationError" } }
+      }
+    },
+    "/ivd-lifecycle/drift/detect": {
+      "post": {
+        "tags": ["lifecycle"], "summary": "Detect stale saved assessments and re-score where recomputable",
+        "requestBody": { "content": { "application/json": { "schema": { "type": "object", "properties": { "currentVersion": { "type": "string" }, "assessments": { "type": "array", "items": { "type": "object" }, "description": "Optional; if omitted, the org's saved assessments are loaded" } } } } } },
+        "responses": { "200": { "description": "Drift report (stale/recomputed/changed counts + per-item deltas)" }, "403": { "$ref": "#/components/responses/OrgRequired" } }
+      }
+    },
     "/ivd-lifecycle/evidence/sensitivity": {
       "post": {
         "tags": ["lifecycle"], "summary": "Evidence sensitivity / tornado + ROI ranking",

@@ -67,6 +67,10 @@ import { generateExecutiveBrief } from '../services/regulatory/executive-brief';
 import { expectedValueOfPerfectInformation } from '../services/regulatory/value-of-information';
 import { simulateRiskRegister } from '../services/regulatory/risk-register-sim';
 import { runPortfolioPlans } from '../services/regulatory/batch-portfolio';
+import { simulateCoverage } from '../services/regulatory/coverage-simulation';
+import { calibrate } from '../services/regulatory/calibration';
+import { detectDrift } from '../services/regulatory/drift-detection';
+import { listAssessments } from '../services/regulatory/ivd-assessments.service';
 import { diagnosticAccuracyMonteCarlo, reviewOutcomeMonteCarlo, timeToMarketMonteCarlo } from '../services/stats/monte-carlo';
 import { saveAssessment } from '../services/regulatory/ivd-assessments.service';
 import { corpusVersion } from '../services/ivd-knowledge/knowledge.service';
@@ -368,6 +372,47 @@ router.post('/portfolio/batch', async (req: Request, res: Response) => {
     const result = runPortfolioPlans(b.programs);
     const savedId = await maybeSave(req, 'other', { programCount: result.programCount }, result, `${result.likelyAcceptances}/${result.programCount} ready`);
     res.json(savedId ? { ...result, savedAssessmentId: savedId } : result);
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+  }
+});
+
+// ── Coverage / reimbursement revenue model (produces marketValueUsd) ────────
+router.post('/coverage/simulate', (req: Request, res: Response) => {
+  try {
+    res.json(simulateCoverage(req.body ?? {}));
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+  }
+});
+
+// ── Calibration / back-test of the readiness→approval model ─────────────────
+router.post('/calibration/backtest', (req: Request, res: Response) => {
+  const b = req.body ?? {};
+  if (!Array.isArray(b.cases) || b.cases.length === 0) {
+    return res.status(422).json({ error: 'cases (array of { profile, approved }) is required' });
+  }
+  try {
+    res.json(calibrate(b.cases));
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+  }
+});
+
+// ── Drift detection (re-score stale saved assessments) ──────────────────────
+router.post('/drift/detect', async (req: Request, res: Response) => {
+  const b = req.body ?? {};
+  const currentVersion = typeof b.currentVersion === 'string' ? b.currentVersion : corpusVersion();
+  try {
+    // Use supplied records, or load the org's saved assessments from the DB.
+    let records = Array.isArray(b.assessments) ? b.assessments : null;
+    if (!records) {
+      const orgId = getOrgId(req);
+      if (orgId === null) return res.status(403).json({ error: 'Organization context required when assessments are not supplied' });
+      const rows = await listAssessments(orgId, { limit: 500 });
+      records = rows.map((r: any) => ({ id: r.id, assessment_type: r.assessment_type, inputs: r.inputs, result: r.result, corpus_version: r.corpus_version }));
+    }
+    res.json(detectDrift(records, currentVersion));
   } catch (e) {
     res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
   }
