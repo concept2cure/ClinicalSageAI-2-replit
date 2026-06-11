@@ -232,16 +232,11 @@ describe('Rescue Cut: Core Workflow API Integration', () => {
   });
 });
 
-// The "Stage 4: Backend beta contract smoke net" suite asserts a route
-// composition that's been heavily refactored. server/routes/vault-auto.ts
-// and server/routes/ectd-validate.ts no longer exist (vault-auto was
-// folded into the documents-unified surface, ectd-validate is now
-// served via the registerInlineRoutes path with a different name).
-// The asserted mounts in server/index.ts now live in
-// server/bootstrap/register-inline-routes.ts. The contract is being
-// re-derived against the current composition root; until that lands,
-// skip the suite rather than carry stale structural assertions.
-describe.skip('Stage 4: Backend beta contract smoke net', () => {
+// Composition root was refactored from server/index.ts into per-domain
+// bootstrap registrars under server/bootstrap/register-*.ts. This suite is a
+// cheap static smoke net: it reads the registrar and route source files and
+// asserts the beta-critical mounts and contracts are still present.
+describe('Stage 4: Backend beta contract smoke net', () => {
   const repoRoot = path.resolve(__dirname, '../../..');
 
   it('mounts beta-critical route families via bootstrap registrars', () => {

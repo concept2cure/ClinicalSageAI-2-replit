@@ -89,7 +89,10 @@ router.get('/jobs', async (req: Request, res: Response) => {
  */
 router.get('/jobs/:id', async (req: Request, res: Response) => {
   try {
-    const job = await getJobStatus(parseInt(String(req.params.id), 10));
+    const orgId = (req as any).user?.organizationId || (req as any).tenantContext?.organizationId;
+    if (!orgId) return res.status(400).json({ error: 'Organization context required' });
+
+    const job = await getJobStatus(parseInt(String(req.params.id), 10), Number(orgId));
     res.json(job);
   } catch (err) {
     res.status(404).json({ error: String(err) });
@@ -101,7 +104,10 @@ router.get('/jobs/:id', async (req: Request, res: Response) => {
  */
 router.post('/jobs/:id/stop', async (req: Request, res: Response) => {
   try {
-    await cancelJob(parseInt(String(req.params.id), 10));
+    const orgId = (req as any).user?.organizationId || (req as any).tenantContext?.organizationId;
+    if (!orgId) return res.status(400).json({ error: 'Organization context required' });
+
+    await cancelJob(parseInt(String(req.params.id), 10), Number(orgId));
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: String(err) });
@@ -113,6 +119,7 @@ router.post('/jobs/:id/stop', async (req: Request, res: Response) => {
  */
 router.get('/jobs/:id/stream', async (req: Request, res: Response) => {
   const jobId = parseInt(String(req.params.id), 10);
+  const streamOrgId = (req as any).user?.organizationId || (req as any).tenantContext?.organizationId;
 
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -120,9 +127,9 @@ router.get('/jobs/:id/stream', async (req: Request, res: Response) => {
     Connection: 'keep-alive',
   });
 
-  // Send initial status
+  // Send initial status (org-scoped: a foreign-tenant job id reads as not found)
   try {
-    const job = await getJobStatus(jobId);
+    const job = await getJobStatus(jobId, streamOrgId ? Number(streamOrgId) : undefined);
     res.write(`data: ${JSON.stringify({ progress: job.progress, status: job.status })}\n\n`);
 
     if (job.status === 'complete' || job.status === 'failed') {

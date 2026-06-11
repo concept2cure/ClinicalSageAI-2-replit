@@ -78,7 +78,8 @@ AnA can drive all of the above through her governed tools (tenant from
 `assess_pathway_eligibility`, `classify_post_submission_change`, `assess_device_evidence_structure`,
 `classify_device`, `get_device_reviewer_checklist`, `get_biocompatibility_endpoints`,
 `build_device_blueprint`, `assess_stored_cer`, `build_global_device_strategy`,
-`get_regulatory_timeline`, `assess_dispatch_readiness`. The UI's AnA panel passes page context
+`get_regulatory_timeline`, `validate_udi`, `get_electrical_standards`,
+`assess_dispatch_readiness`. The UI's AnA panel passes page context
 (`{ submissionId, sectionCode, region }`); the tools supply nothing tenant-related.
 
 ## Still server-side TODO before some screens are fully live
@@ -135,6 +136,8 @@ Workspace map + error catalog for nav/error handling: `shared/types/submission-u
 | GET | `/api/submissions/device/cer/:reportId/assess-stored[?equivalenceClaimed=]` | → stored-CER assessment | Gap-checks a **stored** `cer_reports`/`cer_sections` record (tenant-scoped) against the canonical CER structure — maps populated fields/sections → canonical sections → readiness + gaps. 404 if not in the org. Needs the DB. |
 | GET | `/api/submissions/device/global-strategy?kind=device\|ivd[&regions=]` | → global strategy | For one device/IVD across FDA/EU-MDR/EU-IVDR/PMDA: shared (build-once) vs region-specific evidence + each region's pathway + registration. |
 | GET | `/api/submissions/device/timeline?pathway=510k\|de_novo\|pma\|mdr_ce\|ivdr_ce\|eu_cta\|pmda_device\|fda_nda\|eu_maa` | → `PathwayTimeline` | Published review-clock goals + milestones; EU MDR/IVDR honestly null (no statutory clock). 404 on unknown. |
+| POST | `/api/submissions/device/udi/validate` | `{ udi }` → UDI validation | Real GS1 mod-10 check digit + GTIN-14 validation + AI parsing (UDI-DI + UDI-PI) → GUDID/EUDAMED components. HIBCC/ICCBBA detected, not parsed. |
+| POST | `/api/submissions/device/electrical-safety` | `{ electricallyPowered, hasAlarms, … }` → IEC 60601 set | Applicable IEC 60601 standards (general + triggered collaterals) + test categories + reviewer questions. |
 
 > `POST /device/blueprint` now also returns a `scorecard` (weighted 0–100 readiness + level + top gaps).
 

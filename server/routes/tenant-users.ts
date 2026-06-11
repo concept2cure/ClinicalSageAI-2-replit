@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import { pool } from '../db';
 import { createScopedLogger } from '../utils/logger.js';
@@ -249,20 +250,14 @@ router.post('/legacy', async (req, res) => {
         return res.status(400).json({ error: 'User is already a member of this organization' });
       }
 
-      // Update existing user's title and department if provided
+      // Existing user: do NOT overwrite their global profile. The inviter's
+      // org has no authority over a user record that may belong to other
+      // organizations — title/department from the invite form apply only when
+      // the user is created here. (organization_users carries no per-org
+      // profile fields today; add them there if org-specific titles are needed.)
       if (validatedData.title || validatedData.department) {
-        const updateUserQuery = `
-          UPDATE users
-          SET title = $1, department = $2, updated_at = NOW()
-          WHERE id = $3
-        `;
-        await pool.query(updateUserQuery, [
-          validatedData.title || null,
-          validatedData.department || null,
-          userId,
-        ]);
         log.debug(
-          `Updated existing user ${userId} with title: ${validatedData.title}, department: ${validatedData.department}`
+          `Invite for existing user ${userId}: ignoring title/department from invite form (cross-org profile is not overwritten)`
         );
       }
     } else {
@@ -273,8 +268,9 @@ router.post('/legacy', async (req, res) => {
         RETURNING id
       `;
 
-      // Generate a temporary password hash (in real app, this would be handled differently)
-      const tempPasswordHash = 'temp_' + Math.random().toString(36).substring(2, 15);
+      // Unguessable sentinel — not a valid bcrypt hash, so it can never
+      // authenticate; the user must complete password setup/reset.
+      const tempPasswordHash = 'invited_' + randomUUID();
 
       const createUserResult = await pool.query(createUserQuery, [
         validatedData.email,

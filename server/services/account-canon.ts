@@ -247,9 +247,9 @@ export async function validateCanonFact(
   actorName?: string
 ): Promise<void> {
   await pool.query(
-    `UPDATE account_canon_items SET status = 'active', confidence_score = 1.0, updated_at = NOW()
+    `UPDATE account_canon_items SET status = $3, confidence_score = 1.0, updated_at = NOW()
      WHERE id = $1 AND organization_id = $2`,
-    [canonItemId, organizationId]
+    [canonItemId, organizationId, 'active']
   );
 
   await appendEvent({
@@ -273,9 +273,9 @@ export async function lockCanonFact(
   actorName?: string
 ): Promise<void> {
   await pool.query(
-    `UPDATE account_canon_items SET status = 'locked', locked_at = NOW(), locked_by_id = $3, updated_at = NOW()
+    `UPDATE account_canon_items SET status = $4, locked_at = NOW(), locked_by_id = $3, updated_at = NOW()
      WHERE id = $1 AND organization_id = $2`,
-    [canonItemId, organizationId, actorId]
+    [canonItemId, organizationId, actorId, 'locked']
   );
 
   await appendEvent({
@@ -361,9 +361,9 @@ export async function supersedeCanonFact(
 
     // Mark the old item as superseded
     await client.query(
-      `UPDATE account_canon_items SET status = 'superseded', superseded_by_id = $1, updated_at = NOW()
+      `UPDATE account_canon_items SET status = $4, superseded_by_id = $1, updated_at = NOW()
        WHERE id = $2 AND organization_id = $3`,
-      [newItem.id, oldCanonItemId, newInput.organizationId]
+      [newItem.id, oldCanonItemId, newInput.organizationId, 'superseded']
     );
 
     await client.query('COMMIT');
@@ -398,7 +398,9 @@ export async function getCanonItems(
   organizationId: number,
   options?: { category?: string; status?: string; limit?: number; offset?: number }
 ): Promise<{ items: CanonItem[]; total: number }> {
-  const conditions = ['organization_id = $1', "status != 'superseded'"];
+  // organization_id lives in the SQL literals below (not this array) so the
+  // tenant-isolation CI gate can verify the scope statically.
+  const conditions = ["status != 'superseded'"];
   const params: unknown[] = [organizationId];
 
   if (options?.category) {
@@ -415,12 +417,12 @@ export async function getCanonItems(
   const offset = options?.offset || 0;
 
   const countResult = await pool.query(
-    `SELECT COUNT(*) FROM account_canon_items WHERE ${where}`,
+    `SELECT COUNT(*) FROM account_canon_items WHERE organization_id = $1 AND ${where}`,
     params
   );
 
   const result = await pool.query(
-    `SELECT * FROM account_canon_items WHERE ${where}
+    `SELECT * FROM account_canon_items WHERE organization_id = $1 AND ${where}
      ORDER BY category, key, created_at DESC
      LIMIT ${limit} OFFSET ${offset}`,
     params

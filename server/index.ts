@@ -145,6 +145,27 @@ async function startServer() {
     await runBootSecuritySelfTest(pool);
   }
 
+  // Schema/dependency invariants (revoked-tokens table, artifact columns,
+  // Redis, …). Previously only reachable via a diagnostics route, so a fresh
+  // deployment with a broken schema booted silently and crashed on first use.
+  // Logs by default; with STRICT_STARTUP_INVARIANTS=true a critical failure
+  // halts boot.
+  {
+    const { runStartupInvariants } = await import('./lib/startup-invariants');
+    const invariantReport = await runStartupInvariants();
+    if (
+      invariantReport.criticalFailures > 0 &&
+      process.env.STRICT_STARTUP_INVARIANTS === 'true'
+    ) {
+      console.error(
+        `Startup halted: ${invariantReport.criticalFailures} critical invariant failure(s) ` +
+          `(STRICT_STARTUP_INVARIANTS=true). Failed: ` +
+          invariantReport.invariants.filter(i => !i.passed).map(i => i.name).join(', ')
+      );
+      process.exit(1);
+    }
+  }
+
   // Periodic posture monitor — re-runs the self-test panel on a
   // fixed interval so drift (clamd down, audit chain broken, etc.)
   // is observed without an operator manually probing the admin

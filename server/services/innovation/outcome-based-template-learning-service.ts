@@ -153,6 +153,7 @@ export class OutcomeBasedTemplateLearningService {
         };
 
     const client = await this.pool.connect();
+    try {
     await client.query("SET app.bypass_rls = 'true'");
     await client.query("SET app.is_admin = 'true'");
     const result = await client.query(`
@@ -202,14 +203,15 @@ export class OutcomeBasedTemplateLearningService {
         updatedAt: new Date()
       } as LearningTemplate;
       OutcomeBasedTemplateLearningService.templateCache.push(fallback);
-      client.release();
       return fallback;
     }
 
     const mapped = this.mapTemplate(row);
     OutcomeBasedTemplateLearningService.templateCache.push(mapped);
-    client.release();
     return mapped;
+    } finally {
+      client.release();
+    }
   }
 
   /**
@@ -285,6 +287,7 @@ export class OutcomeBasedTemplateLearningService {
    */
   async recordUsage(usage: Partial<TemplateUsage>): Promise<TemplateUsage> {
     const client = await this.pool.connect();
+    try {
     await client.query("SET app.bypass_rls = 'true'");
     await client.query("SET app.is_admin = 'true'");
     const result = await client.query(`
@@ -326,14 +329,15 @@ export class OutcomeBasedTemplateLearningService {
         usedBy: usage.usedBy || 'system'
       } as TemplateUsage;
       OutcomeBasedTemplateLearningService.usageCache.push(fallback);
-      client.release();
       return fallback;
     }
 
     const mapped = this.mapUsage(row);
     OutcomeBasedTemplateLearningService.usageCache.push(mapped);
-    client.release();
     return mapped;
+    } finally {
+      client.release();
+    }
   }
 
   /**
@@ -386,6 +390,7 @@ export class OutcomeBasedTemplateLearningService {
 
   private async recordOutcomeInternal(outcome: Partial<SubmissionOutcome>): Promise<SubmissionOutcome> {
     const client = await this.pool.connect();
+    try {
     await client.query("SET app.bypass_rls = 'true'");
     await client.query("SET app.is_admin = 'true'");
     const result = await client.query(`
@@ -428,7 +433,6 @@ export class OutcomeBasedTemplateLearningService {
         outcomeStatus: outcome.outcomeStatus || 'approved'
       } as SubmissionOutcome;
       OutcomeBasedTemplateLearningService.outcomeCache.push(fallback);
-      client.release();
       return fallback;
     }
 
@@ -439,8 +443,10 @@ export class OutcomeBasedTemplateLearningService {
 
     const mapped = this.mapOutcome(row);
     OutcomeBasedTemplateLearningService.outcomeCache.push(mapped);
-    client.release();
     return mapped;
+    } finally {
+      client.release();
+    }
   }
 
   /**

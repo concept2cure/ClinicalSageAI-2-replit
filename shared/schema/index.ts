@@ -423,3 +423,23 @@ export * from './ha-interactions';
 // / OLAW; USDA pain categories B-E. Service: server/services/iacuc;
 // migration: migrations/20260610_iacuc_animal_governance.sql.
 export * from './iacuc';
+
+// IRB / IEC submission & amendment management (C2C-06): human-subjects ethics
+// review, sIRB multi-site coordination, informed consent, determinations,
+// amendments, reportable events. Threads ethics approval → Module 5. Common Rule
+// (45 CFR 46), 21 CFR 56, ICH E6. Service: server/services/irb;
+// migration: migrations/20260610_irb_submissions.sql.
+export * from './irb';
+
+// IBC / biosafety (C2C-07): recombinant/synthetic nucleic acid registrations,
+// biological agents (risk groups RG1-4), containment (BSL-1..4) and committee
+// determinations — clearance for modality-heavy CGT/mRNA programs. NIH Guidelines
+// / BMBL. Service: server/services/ibc;
+// migration: migrations/20260610_ibc_biosafety.sql.
+export * from './ibc';
+
+// Nonclinical study management + SEND (C2C-04): governed, submission-linked tox/
+// pharmacology study registry + CDISC SEND dataset packaging, threading
+// IACUC → study → Module 4. ICH M4/S-series; SENDIG. Service: server/services/
+// nonclinical; migration: migrations/20260610_nonclinical_send.sql.
+export * from './nonclinical';

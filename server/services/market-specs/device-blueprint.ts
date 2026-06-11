@@ -27,6 +27,7 @@ import { PER_SECTIONS, assessPerStructure } from './per-structure';
 import { RMF_SECTIONS, assessRmfStructure } from './risk-management-structure';
 import { requiredBiocompEndpoints, type ContactNature, type ContactDuration } from './biocompatibility-matrix';
 import { classifySoftware, deliverablesForClass, assessSoftwareDeliverables } from './software-lifecycle';
+import { applicableElectricalStandards, type ElectricalDeviceFacts } from './electrical-safety';
 import { buildShadowReviewerChecklist, type DeviceSubmissionType as ReviewerType } from './device-shadow-reviewer';
 
 export type DeviceSubmissionType = '510k' | 'de_novo' | 'pma' | 'mdr_td' | 'ivdr_td';
@@ -42,6 +43,8 @@ export interface DeviceBlueprintInput {
   contact?: { nature: ContactNature; duration: ContactDuration };
   /** Software — when present and applicable, the IEC 62304 module applies. */
   software?: { applicable: boolean; canContributeToDeathOrSeriousInjury?: boolean; canContributeToNonSeriousInjury?: boolean; presentDeliverableIds?: string[] };
+  /** Electrical facts — when electricallyPowered, the IEC 60601 module applies. */
+  electrical?: ElectricalDeviceFacts;
   /** Sections already authored, per evidence module, for the gap assessment. */
   present?: { cerSectionIds?: string[]; perSectionIds?: string[]; rmfSectionIds?: string[] };
   /** CER equivalence claim. */
@@ -49,7 +52,7 @@ export interface DeviceBlueprintInput {
 }
 
 export interface EvidenceModuleStatus {
-  id: 'risk_management' | 'clinical_evaluation' | 'performance_evaluation' | 'biocompatibility' | 'software';
+  id: 'risk_management' | 'clinical_evaluation' | 'performance_evaluation' | 'biocompatibility' | 'software' | 'electrical_safety';
   title: string;
   applicable: boolean;
   basis: string;
@@ -152,6 +155,13 @@ export function buildDeviceBlueprint(input: DeviceBlueprintInput): DeviceBluepri
       detail = { classification: cls, deliverables, assessment };
     }
     evidenceModules.push({ id: 'software', title: 'Software Lifecycle (IEC 62304)', applicable, basis: 'IEC 62304:2006+A1:2015', detail });
+  }
+
+  // Electrical safety — when the device is electrically powered.
+  {
+    const applicable = input.electrical?.electricallyPowered === true;
+    const detail = applicable ? applicableElectricalStandards(input.electrical!) : undefined;
+    evidenceModules.push({ id: 'electrical_safety', title: 'Electrical Safety (IEC 60601)', applicable, basis: 'IEC 60601-1 family', detail });
   }
 
   // 4. Reviewer checklist.

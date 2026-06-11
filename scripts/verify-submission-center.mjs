@@ -227,6 +227,14 @@ async function main() {
   const tlBad = await c.req('GET', '/api/submissions/device/timeline?pathway=zzz');
   ok('timeline 404s on unknown pathway', tlBad.status === 404, `got ${tlBad.status}`);
 
+  // UDI validation + electrical safety.
+  const udiOk = await c.req('POST', '/api/submissions/device/udi/validate', { udi: '(01)00012345678905(17)241231(10)LOT1' });
+  ok('UDI validate computes a valid GS1 check digit', udiOk.status === 200 && udiOk.json?.udiDiOk === true && udiOk.json?.productionIdentifiers?.lot === 'LOT1', `status ${udiOk.status}`);
+  const udiBad = await c.req('POST', '/api/submissions/device/udi/validate', { udi: '(01)00012345678900' });
+  ok('UDI validate flags a bad check digit', udiBad.status === 200 && udiBad.json?.udiDiOk === false, `status ${udiBad.status}`);
+  const elec = await c.req('POST', '/api/submissions/device/electrical-safety', { electricallyPowered: true, hasAlarms: true });
+  ok('electrical-safety returns IEC 60601 standards incl. alarms collateral', elec.status === 200 && Array.isArray(elec.json?.standards) && elec.json.standards.some((s) => s.code === 'IEC 60601-1-8'), `status ${elec.status}`);
+
   // Document template structures (canonical section skeletons) — static reference data.
   const dt = await c.req('GET', '/api/submissions/document-templates?family=ectd');
   ok('document-templates returns CTD spines with sections', dt.status === 200 && Array.isArray(dt.json?.templates) && dt.json.templates.length > 0 && dt.json.templates.every((t) => Array.isArray(t.sections) && t.sections.length > 0), `status ${dt.status}`);

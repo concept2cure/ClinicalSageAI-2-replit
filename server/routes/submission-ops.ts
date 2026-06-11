@@ -19,7 +19,10 @@
  */
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { db } from '../db';
+import * as fs from 'fs';
+import * as path from 'path';
+import { createHash } from 'crypto';
+import { db, pool } from '../db';
 import {
   c2cSubmissionPackages,
   c2cPackageSections,
@@ -45,6 +48,27 @@ import { computePackageReadiness } from '../submission-ops/readiness-engine';
 import { runAutomationSweep } from '../submission-ops/automation-runner';
 import { getProjectSignals, analyzeCrossArtifactIntelligence } from '../services/intelligence/index.js';
 import { readCanonicalDueSoonAndWorkload } from '../services/regulatory-correspondence/operating-layer';
+import { buildECTDZip } from '../src/services/ectd';
+import { recordGovernedAction } from './c2c/actions';
+import PDFDocument from 'pdfkit';
+import { PassThrough } from 'stream';
+import {
+  renderMarkdownToPDF,
+  mapSectionToECTDPath,
+} from '../services/documentExportService';
+import {
+  isBundleStorageEnabled,
+  bundleStorageBucket,
+  bundleStorageKey,
+  putBundle,
+  readBundleBytes,
+} from '../services/submission-bundle-storage';
+import { validateEctdLeafs } from '../services/submission-gateways/ectd-structural-validator';
+import type { EctdFinding } from '../services/submission-gateways/ectd-structural-validator';
+import {
+  VALIDATOR_REGISTRY,
+  runHttpValidator,
+} from '../services/submission-gateways/validator-registry';
 
 const router = Router();
 
@@ -1337,6 +1361,596 @@ router.post('/packages/:packageId/publish', async (req: Request, res: Response) 
       message: 'Package locked for submission',
       data: updated,
       readiness,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+  }
+});
+
+// ============================================================
+// BUNDLE ASSEMBLY
+// ============================================================
+
+/**
+ * Root directory under which assembled submission bundles are persisted.
+ * Configurable via SUBMISSION_BUNDLE_DIR. Defaults to a repo-/cwd-local
+ * `uploads/submission-bundles` directory, matching the repo's existing
+ * `uploads/` file convention (see server/pdf-processor.ts, data-importer.ts).
+ */
+const BUNDLE_DIR = process.env.SUBMISSION_BUNDLE_DIR
+  ? path.resolve(process.env.SUBMISSION_BUNDLE_DIR)
+  : path.resolve(process.cwd(), 'uploads', 'submission-bundles');
+
+const SUBMISSION_FORMATS = ['ectd', 'estar', 'eudamed_register', 'pmda_ectd'] as const;
+type SubmissionFormatTag = typeof SUBMISSION_FORMATS[number];
+
+/**
+ * Derive an eCTD region (for the backbone) and a transmit `format` tag from the
+ * package family. Conservative defaults: FDA / 'ectd'. Medtech families map to
+ * eSTAR / EUDAMED register; PMDA families map to pmda_ectd.
+ */
+function deriveRegionAndFormat(
+  packageFamily: string,
+): { region: 'FDA' | 'EMA' | 'PMDA'; format: SubmissionFormatTag } {
+  const fam = (packageFamily || '').toLowerCase();
+  if (fam.includes('estar') || fam === '510k' || fam.includes('510')) {
+    return { region: 'FDA', format: 'estar' };
+  }
+  if (fam.includes('eudamed') || fam.includes('ivdr') || fam.includes('mdr') || fam.includes('cer')) {
+    return { region: 'EMA', format: 'eudamed_register' };
+  }
+  if (fam.includes('pmda') || fam.includes('jnda')) {
+    return { region: 'PMDA', format: 'pmda_ectd' };
+  }
+  return { region: 'FDA', format: 'ectd' };
+}
+
+/** Deterministic, filesystem-safe slug for a section's leaf path. */
+function leafSlug(value: string): string {
+  return (value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80) || 'section';
+}
+
+/**
+ * Best-effort ICH module (1–5) for a c2c_package_sections sectionKey. These
+ * keys are semantic (e.g. `module3_cmc`, `labeling`, `cer`), not ICH-numeric,
+ * so we derive the module from, in order: an explicit module-N prefix, an
+ * ICH-numeric leading digit, or well-known content keywords. Returns null when
+ * nothing matches (caller defaults to module 1 / regional).
+ */
+function moduleForSectionKey(sectionKey: string): 1 | 2 | 3 | 4 | 5 | null {
+  const k = (sectionKey || '').toLowerCase();
+  const prefix = k.match(/(?:^|[^a-z0-9])(?:module|mod|m)[\s_-]?([1-5])(?:[^0-9]|$)/);
+  if (prefix) return Number(prefix[1]) as 1 | 2 | 3 | 4 | 5;
+  const numeric = k.match(/^\s*([1-5])\./);
+  if (numeric) return Number(numeric[1]) as 1 | 2 | 3 | 4 | 5;
+  // Order matters: module-2 "overview/summary" before the broad clinical
+  // keywords; "nonclinical" (m4) is matched before "clinical" (m5).
+  if (/(cover|admin|labeling|label|user-?fee|1571|1572|3674|\bform\b|regional)/.test(k)) return 1;
+  if (/(qos|quality-overall|overall-summary|overview|\bsummary\b)/.test(k)) return 2;
+  if (/(cmc|quality|drug-substance|drug-product|stability|specification|manufactur)/.test(k)) return 3;
+  if (/(nonclinical|pharmacolog|toxicolog|pharmacokinetic|\bpk\b|\badme\b)/.test(k)) return 4;
+  if (/(clinical|efficacy|safety|\bcsr\b|\bcer\b|study-report)/.test(k)) return 5;
+  return null;
+}
+
+/**
+ * Map a sectionKey to an eCTD leaf path. ICH-numeric keys keep the canonical
+ * documentExportService mapping; semantic keys are routed by module via
+ * moduleForSectionKey. Module 1 (regional) is nested under the region code.
+ */
+function sectionKeyToEctdPath(sectionKey: string, regionCode: string): string {
+  if (/^\s*[1-5](\.|\s*$)/.test(sectionKey || '')) {
+    return mapSectionToECTDPath(sectionKey, regionCode);
+  }
+  const mod = moduleForSectionKey(sectionKey) ?? 1;
+  const slug = leafSlug(sectionKey);
+  return mod === 1 ? `m1/${regionCode}/${slug}.pdf` : `m${mod}/${slug}.pdf`;
+}
+
+/**
+ * Renders a single eCTD leaf as a real PDF: a bold title line followed by the
+ * section markdown rendered via the canonical pdfkit markdown renderer. Resolves
+ * a `%PDF`-prefixed Buffer. Mirrors the buffer pattern in documentExportService.
+ */
+async function buildLeafPdf(title: string, markdown: string): Promise<Buffer> {
+  const doc: any = new (PDFDocument as any)({
+    size: 'A4',
+    margins: { top: 72, right: 72, bottom: 72, left: 72 },
+    bufferPages: true,
+  });
+
+  const chunks: Buffer[] = [];
+  const bufferStream = new PassThrough();
+  bufferStream.on('data', (chunk: Buffer) => chunks.push(chunk));
+  doc.pipe(bufferStream);
+
+  doc.fontSize(14).font('Helvetica-Bold').text(title);
+  doc.moveDown();
+  doc.fontSize(11).font('Helvetica');
+  renderMarkdownToPDF(doc, markdown, 11);
+
+  doc.end();
+
+  return new Promise<Buffer>((resolve) => {
+    bufferStream.on('end', () => resolve(Buffer.concat(chunks)));
+  });
+}
+
+const assembleBody = z.object({
+  // Optional explicit overrides; otherwise derived from packageFamily.
+  region: z.enum(['FDA', 'EMA', 'PMDA']).optional(),
+  format: z.enum(SUBMISSION_FORMATS).optional(),
+  sequence: z.string().max(20).optional(),
+  reason: z.string().min(8).optional(),
+});
+
+/**
+ * POST /api/submission-ops/packages/:packageId/assemble
+ *
+ * Assembles a real eCTD zip bundle from the package's sections + their mapped
+ * artifact content, persists it to disk, computes a bundle-level SHA-256, and
+ * records a `bundle` descriptor on the package's metadata JSONB. The transmit
+ * endpoint (mdx-submission-gateway) consumes this descriptor.
+ *
+ * Gating: the package MUST be `locked` (published) before assembly. This keeps
+ * the bundle hash bound to a frozen package. Re-assembling overwrites (idempotent
+ * per content); no confirmation header is required.
+ */
+router.post('/packages/:packageId/assemble', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+
+    const parsed = assembleBody.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res
+        .status(400)
+        .json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
+    }
+
+    // Resolve package (tenant-scoped).
+    const [pkg] = await db
+      .select()
+      .from(c2cSubmissionPackages)
+      .where(
+        and(
+          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          eq(c2cSubmissionPackages.orgId, orgId),
+        ),
+      );
+
+    if (!pkg) return res.status(404).json({ error: 'Package not found' });
+
+    // Gate: only locked (published) packages may be assembled for transmit.
+    if (pkg.status !== 'locked') {
+      return res.status(409).json({
+        error: `Package must be locked (published) before assembly; current status: ${pkg.status}`,
+        gate: 'not_locked',
+        status: pkg.status,
+      });
+    }
+
+    // Load sections (same query as the sections route).
+    const sections = await db
+      .select()
+      .from(c2cPackageSections)
+      .where(eq(c2cPackageSections.packageDbId, pkg.id))
+      .orderBy(asc(c2cPackageSections.sortOrder));
+
+    // Resolve region/format up front so leaf paths can be routed to the correct
+    // ICH module region directory.
+    const { region, format } = (() => {
+      const derived = deriveRegionAndFormat(pkg.packageFamily);
+      return {
+        region: parsed.data.region ?? derived.region,
+        format: parsed.data.format ?? derived.format,
+      };
+    })();
+    const sequence = parsed.data.sequence ?? '0000';
+
+    // Region code used in m1/<region>/.. leaf paths (per ICH M4 / regional M1).
+    const regionCode = region === 'EMA' ? 'eu' : region === 'PMDA' ? 'jp' : 'us';
+
+    // Build eCTD leafs from section content. Section content is sourced from the
+    // artifacts mapped to each section (c2c_artifact_section_map -> concept2cure
+    // artifacts.content). Each leaf is a real PDF placed at an ICH module path.
+    // An empty section produces an explicitly-empty PDF leaf.
+    const seenPaths = new Set<string>();
+    const leafs: { path: string; mediaType: string; content: Buffer }[] = [];
+    const emptyLeafPaths: string[] = [];
+    let emptyLeafCount = 0;
+
+    for (const section of sections) {
+      const mapped = await db
+        .select({
+          artifactDbId: concept2cureArtifacts.id,
+          artifactId: concept2cureArtifacts.artifactId,
+          title: concept2cureArtifacts.title,
+          content: concept2cureArtifacts.content,
+          version: concept2cureArtifacts.version,
+        })
+        .from(c2cArtifactSectionMap)
+        .innerJoin(
+          concept2cureArtifacts,
+          eq(concept2cureArtifacts.id, c2cArtifactSectionMap.artifactId),
+        )
+        .where(
+          and(
+            eq(c2cArtifactSectionMap.sectionDbId, section.id),
+            eq(c2cArtifactSectionMap.orgId, orgId),
+          ),
+        )
+        .orderBy(asc(concept2cureArtifacts.id));
+
+      // Deterministic leaf path at an ICH module path; de-dupe collisions by
+      // inserting the section db id BEFORE the .pdf extension.
+      let leafPath = sectionKeyToEctdPath(section.sectionKey, regionCode);
+      if (seenPaths.has(leafPath)) {
+        leafPath = leafPath.replace(/\.pdf$/, `-${section.id}.pdf`);
+      }
+      seenPaths.add(leafPath);
+
+      let markdown: string;
+      if (mapped.length === 0) {
+        // No artifact content mapped — emit an explicitly empty placeholder leaf.
+        markdown = `[EMPTY SECTION] ${section.sectionLabel} (${section.sectionKey})\n`;
+        emptyLeafCount += 1;
+        emptyLeafPaths.push(leafPath);
+      } else {
+        // Serialize mapped artifact content deterministically. Real content only —
+        // no fabrication.
+        markdown = mapped
+          .map(
+            (a) =>
+              `### ${a.title} (${a.artifactId} v${a.version})\n\n${a.content ?? ''}\n`,
+          )
+          .join('\n');
+      }
+
+      const leafTitle = `${section.sectionLabel} (${section.sectionKey})`;
+      leafs.push({
+        path: leafPath,
+        mediaType: 'application/pdf',
+        content: await buildLeafPdf(leafTitle, markdown),
+      });
+    }
+
+    // Internal eCTD structural validation (pre-flight). Findings are stored on
+    // the descriptor and surfaced to the UI; transmit hard-blocks on errors.
+    // This is INTERNAL structural validation only — NOT an agency validator.
+    const validation = validateEctdLeafs(leafs, { region, emptyLeafPaths });
+
+    // Assemble the real zip buffer.
+    const zipBuffer = await buildECTDZip({
+      region,
+      sequence,
+      operation: 'new',
+      leafs,
+    });
+    const zip: Buffer = Buffer.isBuffer(zipBuffer) ? zipBuffer : Buffer.from(zipBuffer as Uint8Array);
+
+    // Bundle-level SHA-256 over the full zip + size.
+    const sha256 = createHash('sha256').update(zip).digest('hex');
+    const sizeBytes = zip.length;
+
+    // Persist to disk at a deterministic path keyed by packageId + content hash.
+    await fs.promises.mkdir(BUNDLE_DIR, { recursive: true });
+    const fileName = `${leafSlug(pkg.packageId)}-${sha256.slice(0, 16)}.zip`;
+    const bundlePath = path.join(BUNDLE_DIR, fileName);
+    await fs.promises.writeFile(bundlePath, zip);
+
+    // Optionally persist a durable copy to S3 (env-gated). The local file is the
+    // primary and is already written above; a durable-archive failure must NOT
+    // fail assembly, so we fall back to provider:'local' on any error.
+    let storage: { provider: 'local' } | { provider: 's3'; bucket: string; key: string } = {
+      provider: 'local',
+    };
+    if (isBundleStorageEnabled()) {
+      const key = bundleStorageKey(pkg.packageId, sha256);
+      try {
+        await putBundle(key, zip);
+        storage = { provider: 's3', bucket: bundleStorageBucket(), key };
+      } catch (storageErr) {
+        console.error(
+          '[submission-ops] assemble-durable-storage-failed (falling back to local)',
+          storageErr instanceof Error ? storageErr.message : storageErr,
+        );
+        storage = { provider: 'local' };
+      }
+    }
+
+    const assembledAt = new Date().toISOString();
+    const descriptor = {
+      path: bundlePath,
+      sha256,
+      sizeBytes,
+      format,
+      leafCount: leafs.length,
+      emptyLeafCount,
+      storage,
+      validation: {
+        errorCount: validation.errorCount,
+        warningCount: validation.warningCount,
+        infoCount: validation.infoCount,
+        findings: validation.findings,
+      },
+      assembledAt,
+      assembledBy: userId,
+    };
+
+    // Store the descriptor under metadata.bundle (JSONB) and bump updated_at.
+    const existingMetadata =
+      pkg.metadata && typeof pkg.metadata === 'object' ? (pkg.metadata as Record<string, unknown>) : {};
+    await db
+      .update(c2cSubmissionPackages)
+      .set({
+        metadata: { ...existingMetadata, bundle: descriptor },
+        updatedAt: new Date(),
+      })
+      .where(eq(c2cSubmissionPackages.id, pkg.id));
+
+    // Audit: medium-risk governed transition (no reauth). Written in its own
+    // transaction via the shared ledger primitive.
+    try {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await recordGovernedAction(client as any, {
+          orgId,
+          userId,
+          command: 'transition',
+          target: `submission:${pkg.id}`,
+          reason: parsed.data.reason ?? 'eCTD bundle assembled',
+          payload: { sha256, sizeBytes, format, leafCount: leafs.length },
+          domain: 'mdx',
+          surface: 'submission-gateway',
+        });
+        await client.query('COMMIT');
+      } catch (ledgerErr) {
+        try { await client.query('ROLLBACK'); } catch { /* noop */ }
+        throw ledgerErr;
+      } finally {
+        client.release();
+      }
+    } catch (ledgerErr) {
+      // The bundle is persisted; an audit-write failure must not lose the
+      // descriptor. Log and continue (mirrors the transmit route's fallback).
+      console.error(
+        '[submission-ops] assemble-ledger-write-failed',
+        ledgerErr instanceof Error ? ledgerErr.message : ledgerErr,
+      );
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        packageId: pkg.packageId,
+        bundle: {
+          path: descriptor.path,
+          sha256: descriptor.sha256,
+          sizeBytes: descriptor.sizeBytes,
+          format: descriptor.format,
+          leafCount: descriptor.leafCount,
+          storage: { provider: descriptor.storage.provider },
+          validation: {
+            errorCount: descriptor.validation.errorCount,
+            warningCount: descriptor.validation.warningCount,
+            infoCount: descriptor.validation.infoCount,
+          },
+          assembledAt: descriptor.assembledAt,
+        },
+      },
+    });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+  }
+});
+
+// ============================================================
+// PRE-FLIGHT VALIDATION
+// ============================================================
+
+/**
+ * POST /api/submission-ops/packages/:packageId/preflight
+ *
+ * Runs the validator layer over a package's assembled bundle and returns the
+ * combined findings, a per-validator configuration/run status, and a `blocking`
+ * flag (true iff any error-severity finding exists). The UI calls this before
+ * showing the e-sign / transmit affordance.
+ *
+ * Findings come from:
+ *  - `internal` — the eCTD structural validator, already computed at assemble.
+ *    We reuse the stored `metadata.bundle.validation` (do NOT recompute).
+ *  - external agency validators (`fda_evalidator`, `ema_validator`,
+ *    `pmda_precheck`) — only when CONFIGURED (their `*_VALIDATOR_URL` env is set).
+ *    When unconfigured (the default) they contribute nothing and report
+ *    `ran:false`. A configured validator that fails to run is recorded
+ *    `ran:true` with an `error` AND adds an error-severity finding, so a failed
+ *    validator never looks like a pass.
+ *
+ * This endpoint is read-only relative to the package: it runs/aggregates
+ * validation and writes nothing (no governed action needed). Tenant-scoped.
+ */
+router.post('/packages/:packageId/preflight', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+
+    // Resolve package (tenant-scoped).
+    const [pkg] = await db
+      .select()
+      .from(c2cSubmissionPackages)
+      .where(
+        and(
+          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          eq(c2cSubmissionPackages.orgId, orgId),
+        ),
+      );
+
+    if (!pkg) return res.status(404).json({ error: 'Package not found' });
+
+    const metadata =
+      pkg.metadata && typeof pkg.metadata === 'object'
+        ? (pkg.metadata as Record<string, any>)
+        : {};
+    const bundle = metadata.bundle as
+      | {
+          sha256?: string;
+          sizeBytes?: number;
+          format?: string;
+          path?: string;
+          storage?: { provider?: string; key?: string };
+          validation?: {
+            errorCount?: number;
+            warningCount?: number;
+            infoCount?: number;
+            findings?: EctdFinding[];
+          };
+        }
+      | undefined;
+
+    if (!bundle) {
+      return res.status(409).json({
+        gate: 'not_assembled',
+        error: 'No assembled bundle; call assemble first.',
+      });
+    }
+
+    const validators: {
+      id: string;
+      label: string;
+      configured: boolean;
+      ran: boolean;
+      errorCount: number;
+      warningCount: number;
+      error?: string;
+    }[] = [];
+    const findings: EctdFinding[] = [];
+
+    // INTERNAL: reuse the structural findings computed at assemble.
+    const internalFindings = Array.isArray(bundle.validation?.findings)
+      ? bundle.validation!.findings!
+      : [];
+    findings.push(...internalFindings);
+    const internalProvider = VALIDATOR_REGISTRY.find((v) => v.id === 'internal');
+    validators.push({
+      id: 'internal',
+      label: internalProvider?.label ?? 'Internal structural',
+      configured: true,
+      ran: true,
+      errorCount: bundle.validation?.errorCount ?? 0,
+      warningCount: bundle.validation?.warningCount ?? 0,
+    });
+
+    // EXTERNAL: run each configured agency validator over the bundle bytes.
+    const externalProviders = VALIDATOR_REGISTRY.filter((v) => v.id !== 'internal');
+    const anyExternalConfigured = externalProviders.some((v) => v.configured());
+
+    // Read the bundle bytes once, lazily, only if at least one external runs.
+    let zipBytes: Buffer | null = null;
+    let zipError: string | null = null;
+    if (anyExternalConfigured) {
+      try {
+        zipBytes = await readBundleBytes({
+          path: String(bundle.path ?? ''),
+          storage: bundle.storage,
+        });
+      } catch (e) {
+        zipError = e instanceof Error ? e.message : 'Failed to read bundle bytes';
+      }
+    }
+
+    for (const provider of externalProviders) {
+      if (!provider.configured()) {
+        validators.push({
+          id: provider.id,
+          label: provider.label,
+          configured: false,
+          ran: false,
+          errorCount: 0,
+          warningCount: 0,
+        });
+        continue;
+      }
+
+      // Configured but could not read the bundle bytes — record as errored.
+      if (!zipBytes) {
+        const message = `Validator '${provider.id}' could not read the bundle: ${zipError ?? 'bundle bytes unavailable'}`;
+        findings.push({ severity: 'error', ruleId: 'VALIDATOR-ERROR', message });
+        validators.push({
+          id: provider.id,
+          label: provider.label,
+          configured: true,
+          ran: true,
+          errorCount: 1,
+          warningCount: 0,
+          error: message,
+        });
+        continue;
+      }
+
+      try {
+        const result = await runHttpValidator(provider.id, zipBytes, {
+          sha256: String(bundle.sha256 ?? ''),
+          format: String(bundle.format ?? ''),
+        });
+        findings.push(...result);
+        let errs = 0;
+        let warns = 0;
+        for (const f of result) {
+          if (f.severity === 'error') errs += 1;
+          else if (f.severity === 'warning') warns += 1;
+        }
+        validators.push({
+          id: provider.id,
+          label: provider.label,
+          configured: true,
+          ran: true,
+          errorCount: errs,
+          warningCount: warns,
+        });
+      } catch (e) {
+        const message = e instanceof Error ? e.message : 'Validator failed';
+        // A validator that fails to run must NOT look like a pass.
+        findings.push({ severity: 'error', ruleId: 'VALIDATOR-ERROR', message });
+        validators.push({
+          id: provider.id,
+          label: provider.label,
+          configured: true,
+          ran: true,
+          errorCount: 1,
+          warningCount: 0,
+          error: message,
+        });
+      }
+    }
+
+    // Combined counts across all findings.
+    let errorCount = 0;
+    let warningCount = 0;
+    for (const f of findings) {
+      if (f.severity === 'error') errorCount += 1;
+      else if (f.severity === 'warning') warningCount += 1;
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        packageId: pkg.packageId,
+        bundle: {
+          sha256: bundle.sha256 ?? null,
+          sizeBytes: bundle.sizeBytes ?? null,
+          format: bundle.format ?? null,
+        },
+        validators,
+        findings,
+        blocking: errorCount > 0,
+        errorCount,
+        warningCount,
+      },
     });
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });

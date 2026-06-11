@@ -370,16 +370,16 @@ describe('AnA-MDX audit contract — every tool emits one agent.ana.* audit row'
     audit.logAction.mockClear();
   });
 
-  // section.approve and audit.explain probes fail to emit their audit
-  // rows in this mock harness because their underlying handlers (the
-  // real sectionApprove + audit-explain code paths) reach a db query
-  // step that the inline mock pool doesn't satisfy. The other 16
-  // probes pass — the contract for those tools is preserved. Filter
-  // out the two known-bad probes so the rest of the suite stays green.
-  const SKIPPED_PROBES = new Set(['section.approve', 'audit.explain']);
+  // All 18 probes run — no skips. section.approve is satisfied by the
+  // top-level db mock: its first query SELECTs id, section_number,
+  // section_title, status from cerv2_510k_sections, which the mock
+  // pool keys on via 'SELECT id, section_number'. audit.explain is
+  // satisfied by the vi.doMock in its probe closure: explainAuditRow
+  // resolves the db module lazily (dynamic import at call time), so
+  // the doMock'd pool — returning one audit_logs row in the caller's
+  // org — is what it reads.
   for (const probe of PROBES) {
-    const it_ = SKIPPED_PROBES.has(probe.tool) ? it.skip : it;
-    it_(`${probe.tool} → ${probe.expectedAction}`, async () => {
+    it(`${probe.tool} → ${probe.expectedAction}`, async () => {
       audit.logAction.mockClear();
       await probe.invoke();
       const actions = audit.logAction.mock.calls.map(c => (c[0] as any)?.action);

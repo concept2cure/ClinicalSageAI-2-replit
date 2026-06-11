@@ -84,6 +84,8 @@ export interface RagRetrievalParams {
   useReranking?: boolean;
   useMmr?: boolean;
   mmrLambda?: number;
+  /** Override the intent's hybrid (dense+full-text RRF) default for vault/rag_chunks. */
+  useHybrid?: boolean;
   useCompression?: boolean;
   filters?: RetrievalOptions['filters'];
 }
@@ -99,13 +101,15 @@ function intentDefaults(intent: RagIntent | undefined): Partial<RetrievalOptions
   switch (intent) {
     case 'project_scoped':
       // Project interrogation: stay inside the dossier, favour precision.
-      return { strategy: 'advanced', useReranking: true, useMmr: true, mmrLambda: 0.8 };
+      // (useHybrid is a no-op here — project atoms already retrieve via their
+      // own dense+BM25 hybrid — but we set it for policy consistency.)
+      return { strategy: 'advanced', useReranking: true, useMmr: true, mmrLambda: 0.8, useHybrid: true };
     case 'foresight':
       // Forward-looking synthesis: a touch more diversity across sources.
-      return { strategy: 'advanced', useReranking: true, useMmr: true, mmrLambda: 0.6 };
+      return { strategy: 'advanced', useReranking: true, useMmr: true, mmrLambda: 0.6, useHybrid: true };
     case 'regulatory_qa':
     default:
-      return { strategy: 'advanced', useReranking: true, useMmr: true, mmrLambda: 0.7 };
+      return { strategy: 'advanced', useReranking: true, useMmr: true, mmrLambda: 0.7, useHybrid: true };
   }
 }
 
@@ -125,6 +129,7 @@ export function optionsForIntent(params: RagRetrievalParams): RetrievalOptions {
     useReranking: pick(params.useReranking, defaults.useReranking),
     useMmr: pick(params.useMmr, defaults.useMmr),
     mmrLambda: pick(params.mmrLambda, defaults.mmrLambda),
+    useHybrid: pick(params.useHybrid, defaults.useHybrid),
     useCompression: params.useCompression,
     organizationUuid: params.organizationUuid,
     artifactScope: params.artifactScope,

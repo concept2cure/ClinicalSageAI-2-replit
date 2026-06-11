@@ -11,10 +11,10 @@ and to run the deferred DB-backed verification. Updated as each capability lands
 | C2C-01 | Clinical Investigator Financial Disclosure (21 CFR 54) | 1 | **Backend complete** (this report) |
 | C2C-02 | ALCOA+ Provenance Spine | 1 | **Seed landed** (`provenance_links` + service); full spine later |
 | C2C-03 | HA Interaction & Commitment Mgmt | 1 | **Backend complete** |
-| C2C-04 | Nonclinical Study Mgmt + SEND | 2 | Planned |
+| C2C-04 | Nonclinical Study Mgmt + SEND | 2 | **Backend complete** |
 | C2C-05 | IACUC / Animal Study Governance | 2 | **Backend complete** |
-| C2C-06 | IRB/IEC Submission & Amendment Mgmt | 2 | Planned |
-| C2C-07 | IBC / Biosafety (Novel Modality) | 2 | Planned |
+| C2C-06 | IRB/IEC Submission & Amendment Mgmt | 2 | **Backend complete** |
+| C2C-07 | IBC / Biosafety (Novel Modality) | 2 | **Backend complete** |
 | C2C-08 | AI-native eTMF | 2 | Planned |
 | C2C-09 | Device / IVD Technical Documentation | 2 | Planned |
 | C2C-10 | PV Intake + DSUR/PBRER | 3 | Planned |
@@ -167,3 +167,130 @@ USDA pain-category catalog (cited); `recommendReviewType` (category E → full c
 
 ### Tests landed (no-DB)
 `iacuc-logic.test.ts` (12), `ana/__tests__/iacuc-tools.test.ts` (7). Typecheck clean.
+
+---
+
+## C2C-06 — IRB / IEC Submission & Amendment Management
+
+### Data model (`shared/schema/irb.ts`; migration `migrations/20260610_irb_submissions.sql`)
+- `irb_submissions` (review type exempt/expedited/full_board; risk minimal/greater; vulnerable populations; sIRB flag; consent waiver; continuing-review expiration), `irb_sites` (sIRB multi-site), `irb_consent_documents`, `irb_reviews` (determinations), `irb_amendments`, `irb_reportable_events` (UPIRSO).
+- Approval threads `irb_submission → submission_module5` (role `supports`) via `provenance_links` — ethics approval woven into the clinical conduct record.
+
+### API (`/api/irb`, governed + org-scoped)
+| Method | Path | Governed action |
+|--------|------|-----------------|
+| POST | `/submissions` | `create` (returns recommended review type) |
+| GET | `/submissions?submissionId=` | — |
+| PATCH | `/submissions/:id/status` | `transition` |
+| POST | `/submissions/:id/reviews` | `sign` (approve → expiration + provenance) / `resolve` |
+| POST | `/submissions/:id/sites` | `update` (sIRB) |
+| POST | `/submissions/:id/consent-documents` | `update` |
+| POST | `/submissions/:id/amendments` | `update` |
+| POST | `/submissions/:id/reportable-events` | `update` (UPIRSO) |
+| GET | `/submissions/:id/completeness` | — (45 CFR 46.111 gate + continuing review) |
+
+### AnA tools (same governed path, surface `ana`)
+`create_irb_submission`, `add_irb_site`, `review_irb_submission` (read-only gate).
+
+### Deterministic core (`irb-logic.ts`, pure, tested)
+`recommendReviewType` (greater-than-minimal → full board; minimal+category → expedited/exempt); `evaluateIrbCompleteness` (45 CFR 46.111: consent/waiver, vulnerable-population safeguards, sIRB for multi-site, risk-vs-review-type — cited findings + risk); `continuingReviewStatus` (full board → annual continuing review + 1-yr expiration; expedited/exempt exempt under the revised Common Rule).
+
+### Central-module wiring
+- **Reports:** `irb.submission_register` in `REPORT_TYPE_SEED`.
+- **Metrics:** `server/services/irb-metrics.ts` → `/api/metrics` (`irb_submissions_created_total{risk}`, `irb_approvals_total{review_type}`, `irb_reportable_events_total{event_type}`).
+
+### UI surfaces to build (deferred)
+1. **Submission register** — table by status/review-type/expiration; KPI band; sIRB indicator.
+2. **Submission detail** — sites (sIRB) sub-table, consent documents, the 45 CFR 46.111 gate panel (`GET /:id/completeness`), determination action (`POST /reviews`), amendments, reportable-events log, provenance "supports Module 5" chip.
+3. **AnA panel** — conversational tools wired.
+
+### Deferred DB verification
+- [ ] `drizzle-kit push` clean; 6 tables + indexes + CHECK constraints in `information_schema`.
+- [ ] Org-scoping; governed audit rows; provenance link written on approval; full-board 1-yr expiration stamped.
+- [ ] `irb.submission_register` report run resolves; `/api/metrics` exposes `irb_*`.
+
+### Tests landed (no-DB)
+`irb-logic.test.ts` (11), `ana/__tests__/irb-tools.test.ts` (7). Typecheck clean.
+
+---
+
+## C2C-07 — IBC / Biosafety
+
+### Data model (`shared/schema/ibc.ts`; migration `migrations/20260610_ibc_biosafety.sql`)
+- `ibc_registrations` (NIH Guidelines section III-A..F/exempt; declared BSL-1..4; recombinant DNA / human gene transfer flags; annual expiration), `ibc_biological_agents` (risk group RG1-4 → derived required BSL), `ibc_reviews` (determinations; convened-quorum flag).
+- Approval threads `ibc_registration → submission_module4` (role `supports`) via `provenance_links` — biosafety clearance into the IND-enabling record.
+
+### API (`/api/ibc`, governed + org-scoped)
+| Method | Path | Governed action |
+|--------|------|-----------------|
+| POST | `/registrations` | `create` (returns convened-review flag) |
+| GET | `/registrations?submissionId=` | — |
+| PATCH | `/registrations/:id/status` | `transition` |
+| POST | `/registrations/:id/agents` | `update` (required BSL derived from risk group) |
+| POST | `/registrations/:id/reviews` | `sign` (approve → expiration + provenance) / `resolve` |
+| GET | `/registrations/:id/containment` | — (containment-adequacy gate + expiration) |
+
+### AnA tools (same governed path, surface `ana`)
+`create_ibc_registration`, `add_biological_agent` (derives required BSL), `review_ibc_registration` (read-only gate).
+
+### Deterministic core (`ibc-logic.ts`, pure, tested)
+Risk-group catalog (RG1-4 → BSL-1..4, cited NIH Guidelines/BMBL); `evaluateContainment` (declared BSL must meet the highest agent requirement; agent vs risk-group check; convened-review note for III-A/B/C + human gene transfer — cited findings + risk); `requiresConvenedReview`; `registrationExpiration` (annual).
+
+### Central-module wiring
+- **Reports:** `ibc.registration_register` in `REPORT_TYPE_SEED`.
+- **Metrics:** `server/services/ibc-metrics.ts` → `/api/metrics` (`ibc_registrations_created_total{bsl}`, `ibc_approvals_total`, `ibc_agents_registered_total{risk_group}`).
+
+### UI surfaces to build (deferred)
+1. **Registration register** — table by status/BSL/section/expiration; KPI band; human-gene-transfer indicator.
+2. **Registration detail** — biological-agents sub-table (risk group → required BSL), the containment gate panel (`GET /:id/containment`), determination action (`POST /reviews`, convened quorum), provenance "supports Module 4" chip.
+3. **AnA panel** — conversational tools wired.
+
+### Deferred DB verification
+- [ ] `drizzle-kit push` clean; 3 tables + indexes + CHECK constraints in `information_schema`.
+- [ ] Org-scoping; governed audit rows; provenance link written on approval; required BSL derived (not trusted from input).
+- [ ] `ibc.registration_register` report run resolves; `/api/metrics` exposes `ibc_*`.
+
+### Tests landed (no-DB)
+`ibc-logic.test.ts` (9), `ana/__tests__/ibc-tools.test.ts` (7). Typecheck clean.
+
+---
+
+## C2C-04 — Nonclinical Study Management + SEND
+
+**Note:** distinct from `ctd_nonclinical_studies` (AI-extraction landing zone, program-keyed). This is the **governed, submission-linked management** layer.
+
+### Data model (`shared/schema/nonclinical.ts`; migration `migrations/20260610_nonclinical_send.sql`)
+- `nonclinical_studies` (study type → derived CTD Module 4 section; GLP; species; NOAEL; links to authorizing `iacuc_protocol_id` and `submission_id`), `send_datasets` (SENDIG version, domains present, define.xml, nSDRG, validation status/counts).
+- Provenance: `iacuc_protocol → nonclinical_study` (`authorizes`) and `nonclinical_study → submission_module4` (`supports`) — **completes the preclinical provenance chain** from IACUC (C2C-05) through Module 4.
+
+### API (`/api/nonclinical`, governed + org-scoped)
+| Method | Path | Governed action |
+|--------|------|-----------------|
+| POST | `/studies` | `create` (derives CTD section + provenance; returns required SEND domains) |
+| GET | `/studies?submissionId=` | — |
+| PATCH | `/studies/:id/status` | `transition` |
+| PUT | `/studies/:id/send` | `update` (upsert SEND dataset metadata) |
+| GET | `/studies/:id/send-readiness` | — (SENDIG readiness gate) |
+
+### AnA tools (same governed path, surface `ana`)
+`create_nonclinical_study` (threads provenance), `review_send_readiness` (read-only gate).
+
+### Deterministic core (`nonclinical-logic.ts`, pure, tested)
+`ctdSectionFor` (study type → CTD 4.2.x); `requiredSendDomains` + `sendInScope` (SENDIG 3.x domain catalog); `evaluateSendReadiness` (required domains, define.xml mandatory, nSDRG, validation errors — cited findings + risk + missing domains).
+
+### Central-module wiring
+- **Reports:** `nonclinical.study_send_register` in `REPORT_TYPE_SEED`.
+- **Metrics:** `server/services/nonclinical-metrics.ts` → `/api/metrics` (`nonclinical_studies_created_total{study_type}`, `nonclinical_send_validations_total{status}`).
+
+### UI surfaces to build (deferred)
+1. **Study register** — table by type/CTD section/status; KPI band; GLP indicator; provenance "authorized by IACUC / supports Module 4" chips.
+2. **Study detail** — SEND dataset panel (domains present vs required, define.xml/nSDRG, validation), the readiness gate (`GET /:id/send-readiness`), status transitions.
+3. **AnA panel** — conversational tools wired.
+
+### Deferred DB verification
+- [ ] `drizzle-kit push` clean; 2 tables + indexes + CHECK constraints in `information_schema`.
+- [ ] Org-scoping; governed audit rows; provenance links written on study create (IACUC + Module 4).
+- [ ] `nonclinical.study_send_register` report run resolves; `/api/metrics` exposes `nonclinical_*`.
+
+### Tests landed (no-DB)
+`nonclinical-logic.test.ts` (9), `ana/__tests__/nonclinical-tools.test.ts` (5). Typecheck clean.

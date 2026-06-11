@@ -25,6 +25,7 @@ import { createHash, createHmac } from 'crypto';
 import * as https from 'https';
 import { URL } from 'url';
 import { pool } from '../../db';
+import { readVerifiedBundle } from './bundle-integrity';
 import {
   CredentialError, GatewayError, TransportError,
   type GatewayAcknowledgment, type GatewayStatusResult, type GatewayTransmitRequest,
@@ -203,7 +204,7 @@ export class PmdaGateway implements SubmissionGateway {
       const creds = await loadPmdaCredentials(req.environment);
       await updateTransmittal(transmittalId, { status: 'in_transit' });
 
-      const zipBuf = await fs.readFile(req.bundle.path);
+      const zipBuf = await readVerifiedBundle(req.bundle);
       const boundary = `----c2c-pmda-${Date.now()}`;
       const metaPart = Buffer.from(
         '﻿' + JSON.stringify({

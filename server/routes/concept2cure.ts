@@ -5123,8 +5123,13 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
         const claimResult = await pool.query(
           `INSERT INTO ai_claims
              (generation_run_id, claim_index, claim_text, claim_hash_sha256, confidence, status)
-           VALUES ${claimPlaceholders.join(', ')} RETURNING id`,
+           VALUES ${claimPlaceholders.join(', ')} RETURNING id, claim_index`,
           claimValues
+        );
+        // Correlate returned ids by claim_index — RETURNING row order is not
+        // guaranteed to match the VALUES order.
+        const claimIdByIndex = new Map<number, string>(
+          claimResult.rows.map((r: any) => [Number(r.claim_index), r.id])
         );
 
         // Batch INSERT all citation linkages in one query
@@ -5132,7 +5137,7 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
         const citPlaceholders: string[] = [];
         let ci = 1;
         for (let idx = 0; idx < pendingClaims.length; idx++) {
-          const claimId = claimResult.rows[idx]?.id;
+          const claimId = claimIdByIndex.get(pendingClaims[idx].si);
           if (!claimId) continue;
           for (const link of pendingClaims[idx].citLinks) {
             citPlaceholders.push(`($${ci}, $${ci + 1}, $${ci + 2})`);

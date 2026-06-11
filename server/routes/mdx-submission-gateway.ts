@@ -29,6 +29,9 @@ import {
   type Region, type GatewayName,
 } from '../services/submission-gateways';
 import { recordGovernedAction, verifyReauth } from './c2c/actions';
+import { getBundle } from '../services/submission-bundle-storage';
+import { promises as fsp } from 'fs';
+import { dirname } from 'path';
 
 const router = Router();
 const log = createScopedLogger('mdx-submission-gateway');
@@ -44,6 +47,32 @@ function getUserId(req: Request): number | null {
   if (raw === undefined || raw === null) return null;
   const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
   return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Rematerialize a bundle's local file from durable storage if it is missing.
+ *
+ * Bundles are local-first, but ephemeral containers can recycle between assemble
+ * and transmit. If the local file at bundle.path is gone AND the descriptor
+ * records a durable S3 copy, download it back to bundle.path before the gateway
+ * reads it. No-op when the local file is present, when there is no storage
+ * descriptor, or when provider is 'local'. A genuinely-missing local file with
+ * no durable copy is left for the gateway's integrity gate to refuse (422).
+ */
+async function ensureBundleLocal(bundle: {
+  path: string;
+  storage?: { provider: 'local' } | { provider: 's3'; bucket: string; key: string };
+}): Promise<void> {
+  try {
+    await fsp.access(bundle.path);
+    return; // local file present — nothing to do
+  } catch {
+    // local file missing — fall through to durable rematerialization
+  }
+  if (bundle.storage?.provider !== 's3') return; // no durable copy to restore
+  const buf = await getBundle(bundle.storage.key);
+  await fsp.mkdir(dirname(bundle.path), { recursive: true });
+  await fsp.writeFile(bundle.path, buf);
 }
 
 const REGION_SET   = ['fda', 'ema', 'pmda'] as const;
@@ -148,7 +177,7 @@ const transmitBody = z.object({
     sizeBytes:   z.number().int().nonnegative(),
     format:      z.enum(['ectd', 'estar', 'eudamed_register', 'pmda_ectd']),
     displayName: z.string().optional(),
-  }),
+  }).optional(),
   metadata: z.record(z.unknown()).optional(),
   reason: z.string().min(8, 'A reason of at least 8 characters is required.'),
   reauth: z
@@ -185,6 +214,87 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
     return res.status(401).json({ error: reauthResult.error ?? 'REAUTH_REQUIRED' });
   }
 
+  // Resolve the bundle. An explicit `bundle` in the body always wins (back-compat).
+  // Otherwise, if a `packageId` is provided, load the stored bundle descriptor that
+  // the assemble endpoint persisted on c2c_submission_packages.metadata.bundle.
+  let bundle: {
+    path: string;
+    sha256: string;
+    sizeBytes: number;
+    format: 'ectd' | 'estar' | 'eudamed_register' | 'pmda_ectd';
+    displayName?: string;
+    storage?: { provider: 'local' } | { provider: 's3'; bucket: string; key: string };
+    validation?: { errorCount: number; warningCount?: number; infoCount?: number; findings?: unknown[] };
+  } | null = p.bundle ?? null;
+
+  if (!bundle && p.packageId != null) {
+    try {
+      const { rows } = await pool.query<{ metadata: any }>(
+        `SELECT metadata FROM c2c_submission_packages
+          WHERE id = $1 AND org_id = $2`,
+        [p.packageId, orgId],
+      );
+      const stored = rows[0]?.metadata?.bundle;
+      if (
+        stored &&
+        typeof stored.path === 'string' &&
+        typeof stored.sha256 === 'string' &&
+        typeof stored.sizeBytes === 'number' &&
+        typeof stored.format === 'string'
+      ) {
+        bundle = {
+          path:        stored.path,
+          sha256:      stored.sha256,
+          sizeBytes:   stored.sizeBytes,
+          format:      stored.format,
+          displayName: typeof stored.displayName === 'string' ? stored.displayName : undefined,
+          // Carry the durable-storage descriptor (if any) so ensureBundleLocal can
+          // rematerialize the local file after a container recycle. Not passed to
+          // the gateway — the gateway contract stays path/sha256/sizeBytes/format.
+          storage:     stored.storage && typeof stored.storage === 'object' ? stored.storage : undefined,
+          // Carry internal eCTD structural validation findings (if any) so the
+          // transmit hard-gate can block on error-severity findings.
+          validation:  stored.validation && typeof stored.validation === 'object' ? stored.validation : undefined,
+        };
+      }
+    } catch (err) {
+      return serverError(res, log, 'transmit-load-bundle', err);
+    }
+  }
+
+  if (!bundle) {
+    return clientError(
+      res,
+      422,
+      'No assembled bundle; call POST /api/submission-ops/packages/:packageId/assemble first.',
+    );
+  }
+
+  // Internal eCTD structural-validation hard-gate. If the stored descriptor
+  // recorded error-severity findings at assemble-time, refuse the transmit and
+  // return the findings so the caller can re-assemble after fixing. Warnings do
+  // NOT block. A missing `validation` field is treated as zero errors
+  // (back-compat: explicit-bundle callers and pre-existing descriptors). This
+  // runs AFTER the re-auth gate — governance order is unchanged. Note: this is
+  // INTERNAL structural validation only, not an agency validator.
+  const errorCount = bundle.validation?.errorCount ?? 0;
+  if (errorCount > 0) {
+    return clientError(
+      res,
+      422,
+      `Bundle failed eCTD structural validation (${errorCount} error${errorCount === 1 ? '' : 's'}); re-assemble after fixing.`,
+      { findings: bundle.validation?.findings ?? [] },
+    );
+  }
+
+  // Rematerialize the local bundle file from durable storage if a container
+  // recycle lost it since assembly. No-op for local-only descriptors.
+  try {
+    await ensureBundleLocal(bundle);
+  } catch (err) {
+    return serverError(res, log, 'transmit-rematerialize-bundle', err);
+  }
+
   try {
     const gw = getGateway(region, gateway);
     const result = await gw.transmit({
@@ -193,11 +303,11 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
       programId:      p.programId ?? null,
       packageId:      p.packageId ?? null,
       bundle: {
-        path:        p.bundle.path,
-        sha256:      p.bundle.sha256,
-        sizeBytes:   p.bundle.sizeBytes,
-        format:      p.bundle.format,
-        displayName: p.bundle.displayName,
+        path:        bundle.path,
+        sha256:      bundle.sha256,
+        sizeBytes:   bundle.sizeBytes,
+        format:      bundle.format,
+        displayName: bundle.displayName,
       },
       environment:    p.environment,
       submissionType: p.submissionType,
@@ -223,7 +333,7 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
             meaning: 'submission',
             region,
             gateway,
-            bundleSha256: p.bundle.sha256,
+            bundleSha256: bundle.sha256,
             transactionId: (result as any)?.transactionId ?? null,
           },
           domain: 'mdx',

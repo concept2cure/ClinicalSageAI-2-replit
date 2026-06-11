@@ -191,6 +191,54 @@ export const ADVISE_MEDICAL_INFORMATION: AnaTool = {
   },
 };
 
+export const ADVISE_REPORTING_GUIDELINE: AnaTool = {
+  name: 'advise_reporting_guideline',
+  description:
+    'Reporting-guideline advisor (EQUATOR network): selects the right guideline for a study type and ' +
+    'returns its essential checklist items + common pitfalls — CONSORT (RCTs), SPIRIT (protocols), ' +
+    'STROBE (observational), PRISMA (systematic reviews/meta-analyses), STARD (diagnostic accuracy), ' +
+    'ARRIVE (animal), CARE (case reports). Use when preparing/QC-ing a manuscript or protocol.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      guideline: { type: 'string', description: 'consort | spirit | strobe | prisma | stard | arrive | care.' },
+      study_type: { type: 'string', description: 'Free-text study type to auto-select the guideline.' },
+    },
+  },
+};
+
+export const ADVISE_DATA_INTEGRITY: AnaTool = {
+  name: 'advise_data_integrity',
+  description:
+    'Data-integrity / 21 CFR Part 11 advisor: explains the ALCOA+ principles and the core Part 11 / EU ' +
+    'Annex 11 control areas (audit trails, access control, e-signatures, CSV/GAMP 5, copies & retention), ' +
+    'or runs a cue-based ALCOA+ gap check on a free-text system/process description with a coverage score. ' +
+    'Use when QC-ing a GxP computerized system or process. Advisory — formal CSV/QA is authoritative.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      requirement: { type: 'string', description: 'audit_trail | access_control | esignature | validation | copies_retention.' },
+      description: { type: 'string', description: 'System/process description to gap-check against ALCOA+.' },
+    },
+  },
+};
+
+export const ADVISE_RWE_DESIGN: AnaTool = {
+  name: 'advise_rwe_design',
+  description:
+    'Real-world-evidence (RWE) study-design advisor: explains retrospective cohort, case-control, ' +
+    'self-controlled (SCCS/case-crossover), target-trial emulation and pragmatic trials (strengths/' +
+    'weaknesses), common real-world data sources, and the FDA RWE-framework / causal-inference ' +
+    'guardrails (fit-for-purpose data, time-zero, confounding control, pre-specification). Use when ' +
+    'planning or QC-ing an RWE study.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      design: { type: 'string', description: 'retrospective_cohort | case_control | self_controlled | target_trial_emulation | pragmatic_trial.' },
+    },
+  },
+};
+
 export const NARRATE_STATISTICAL_RESULT: AnaTool = {
   name: 'narrate_statistical_result',
   description:
@@ -1166,6 +1214,166 @@ export const SEARCH_DOCUMENT: AnaTool = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Document Intake, OCR & Spreadsheet Tools — read/study/OCR/edit uploaded files
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const INSPECT_UPLOADED_DOCUMENT: AnaTool = {
+  name: 'inspect_uploaded_document',
+  description:
+    'Inventory/triage an uploaded file by file_id BEFORE reading it — the first move on any large or unknown document. ' +
+    'For PDFs: page count, embedded bookmarks/TOC outline, document metadata, a sampled per-page text-layer census, a ' +
+    'scanned-vs-born-digital verdict, and a recommended extraction strategy (e.g. for a 1,000-page scanned binder with no ' +
+    'bookmarks: sweep the top band of each page with ocr_document_pages to find section/exhibit separators cheaply, then ' +
+    'full-OCR only the pages that matter). For Excel/CSV: the sheet inventory (names, dimensions, formula counts). For ' +
+    'DOCX/Markdown/text: size, word count, and the heading outline. The file_id comes from a chat upload (response field ' +
+    '`fileId`, e.g. "file_17…") or a Data Room source ref like "upload:file_17…".',
+  input_schema: {
+    type: 'object',
+    properties: {
+      file_id: { type: 'string', description: 'The upload\'s file_id, e.g. "file_1712345678_ab12cd".' },
+      max_sampled_pages: {
+        type: 'number',
+        description: 'For PDFs: how many pages to census for text-layer presence (default 30, max 200).',
+      },
+    },
+    required: ['file_id'],
+  },
+};
+
+export const READ_UPLOADED_DOCUMENT: AnaTool = {
+  name: 'read_uploaded_document',
+  description:
+    'Read and extract the content of an uploaded file by file_id — AnA\'s front door to learn from and study any client ' +
+    'document. Handles PDF (born-digital text with automatic OCR fallback for scanned pages), DOCX, Markdown, plain ' +
+    'text/CSV/JSON, Excel (.xlsx, all sheets rendered as text), and images (OCR). Returns the extracted text (paged via ' +
+    'max_chars/offset), the extraction method and OCR confidence, plus a structural outline (sections, tables, figures). ' +
+    'For PDFs you can scope to a page range (page_start/page_end) — preferred for large documents; run ' +
+    'inspect_uploaded_document first to plan. For cell-level Excel access (values, formulas, specific sheets) use ' +
+    'read_spreadsheet instead. Set force_ocr to re-read a PDF/image with OCR even when a text layer exists (e.g. a bad ' +
+    'or partial text layer).',
+  input_schema: {
+    type: 'object',
+    properties: {
+      file_id: { type: 'string', description: 'The upload\'s file_id, e.g. "file_1712345678_ab12cd".' },
+      max_chars: {
+        type: 'number',
+        description: 'Maximum characters of text to return (default 30000, max 80000). Page with `offset`.',
+      },
+      offset: { type: 'number', description: 'Character offset to start from (for paging long documents). Default 0.' },
+      page_start: { type: 'number', description: 'PDF only: first page to extract, 1-based inclusive.' },
+      page_end: { type: 'number', description: 'PDF only: last page to extract, 1-based inclusive.' },
+      force_ocr: { type: 'boolean', description: 'PDF/image only: OCR even if a text layer exists (default false).' },
+      languages: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'OCR languages when OCR is used: eng, fra, deu, spa, ita (default ["eng"]).',
+      },
+    },
+    required: ['file_id'],
+  },
+};
+
+export const OCR_DOCUMENT_PAGES: AnaTool = {
+  name: 'ocr_document_pages',
+  description:
+    'Targeted optical character recognition over specific pages — and optionally a REGION of each page — of an uploaded ' +
+    'PDF or image. This is the precision instrument for big scanned documents: OCR costs ~0.5–2s per page, so never ' +
+    'brute-force a huge binder. Proven strategy: (1) inspect_uploaded_document to get the page count and bookmark/text ' +
+    'census; (2) sweep cheaply with region "top_band" at modest dpi to find separators/headings (e.g. "EXHIBIT 12") and ' +
+    'build an index; (3) full-OCR only the page ranges that matter. Select pages with page_start/page_end or an explicit ' +
+    '`pages` list. Returns per-page text with per-page confidence (0–100). Languages supported: eng, fra, deu, spa, ita.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      file_id: { type: 'string', description: 'The upload\'s file_id (a PDF or an image).' },
+      page_start: { type: 'number', description: 'First page to OCR, 1-based inclusive (default 1).' },
+      page_end: { type: 'number', description: 'Last page to OCR, 1-based inclusive.' },
+      pages: {
+        type: 'array',
+        items: { type: 'number' },
+        description: 'Explicit 1-based page list — overrides page_start/page_end.',
+      },
+      region: {
+        type: 'string',
+        enum: ['full', 'top_band', 'bottom_band', 'left_half', 'right_half', 'custom'],
+        description:
+          'Page region to OCR. "top_band"/"bottom_band" = top/bottom 25% (cheap separator/header sweeps); ' +
+          '"custom" uses the region_* fractions. Default "full".',
+      },
+      region_top: { type: 'number', description: 'custom region: top edge as a fraction of page height (0–1).' },
+      region_left: { type: 'number', description: 'custom region: left edge as a fraction of page width (0–1).' },
+      region_width: { type: 'number', description: 'custom region: width as a fraction of page width (0–1).' },
+      region_height: { type: 'number', description: 'custom region: height as a fraction of page height (0–1).' },
+      dpi: { type: 'number', description: 'Render resolution for OCR, 72–400 (default 200; ~110 is fine for separator sweeps).' },
+      max_pages: { type: 'number', description: 'Hard cap on pages OCRed in this call (default 20, max 50).' },
+      languages: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'OCR languages: eng, fra, deu, spa, ita (default ["eng"]).',
+      },
+    },
+    required: ['file_id'],
+  },
+};
+
+export const READ_SPREADSHEET: AnaTool = {
+  name: 'read_spreadsheet',
+  description:
+    'Structured, cell-level read of an uploaded Excel (.xlsx) or CSV file: returns the sheet inventory plus the requested ' +
+    'sheet\'s rows as a table — display values with row numbers, and formulas preserved alongside their cached results. ' +
+    'Page through big sheets with start_row/max_rows. Use this (not read_uploaded_document) whenever you need to study ' +
+    'specific cells, formulas, or a particular sheet; use edit_spreadsheet to change cells afterwards.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      file_id: { type: 'string', description: 'The upload\'s file_id (.xlsx or .csv).' },
+      sheet: {
+        type: 'string',
+        description: 'Sheet name, or 1-based sheet index as a string (e.g. "2"). Default: first sheet.',
+      },
+      start_row: { type: 'number', description: 'First row to return, 1-based (default 1).' },
+      end_row: { type: 'number', description: 'Last row to return, 1-based inclusive.' },
+      max_rows: { type: 'number', description: 'Row cap per call (default 100, max 1000).' },
+      include_formulas: { type: 'boolean', description: 'Include the formulas list (default true).' },
+    },
+    required: ['file_id'],
+  },
+};
+
+export const EDIT_SPREADSHEET: AnaTool = {
+  name: 'edit_spreadsheet',
+  description:
+    'Edit an uploaded Excel workbook (or CSV, promoted to .xlsx on save) and persist the result as a NEW uploaded file — ' +
+    'the original is never mutated, so provenance is preserved. Supply cell edits as A1 addresses with either a literal ' +
+    '`value` (string/number/boolean; null clears the cell) or an Excel `formula` (without the leading "="). Optionally ' +
+    'create missing sheets. Returns the new file_id of the edited copy plus a summary of every applied edit — report that ' +
+    'new file_id to the user. ALWAYS read_spreadsheet first to confirm the target cells before editing.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      file_id: { type: 'string', description: 'The upload\'s file_id (.xlsx or .csv).' },
+      edits: {
+        type: 'array',
+        description: 'Cell edits to apply, in order.',
+        items: {
+          type: 'object',
+          properties: {
+            sheet: { type: 'string', description: 'Sheet name (default: first sheet).' },
+            cell: { type: 'string', description: 'A1-style address, e.g. "B7".' },
+            value: { description: 'New literal value (string/number/boolean). null clears the cell.' },
+            formula: { type: 'string', description: 'Excel formula without "=", e.g. "SUM(B2:B6)". Overrides value.' },
+          },
+          required: ['cell'],
+        },
+      },
+      create_missing_sheets: { type: 'boolean', description: 'Create sheets named in edits that don\'t exist (default false).' },
+      new_file_name: { type: 'string', description: 'Filename for the edited copy (default: "<original> (edited).xlsx").' },
+    },
+    required: ['file_id', 'edits'],
+  },
+};
+
 export const MINE_PRECEDENTS: AnaTool = {
   name: 'mine_precedents',
   description:
@@ -1455,6 +1663,10 @@ export const DOCUMENT_REVIEW_TOOLS: AnaTool[] = [
   EXTRACT_DOCUMENT_STRUCTURE,
   COMPARE_DOCUMENT_VERSIONS,
   SEARCH_DOCUMENT,
+  INSPECT_UPLOADED_DOCUMENT,
+  READ_UPLOADED_DOCUMENT,
+  OCR_DOCUMENT_PAGES,
+  READ_SPREADSHEET,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -3093,6 +3305,35 @@ export const GET_REGULATORY_TIMELINE: AnaTool = {
   },
 };
 
+export const VALIDATE_UDI: AnaTool = {
+  name: 'validate_udi',
+  description:
+    "Validate a device UDI carrier. For a GS1 carrier (the parenthesised AI form, e.g. '(01)00012345678905(17)241231(10)LOT1(21)SER1') it computes the GS1 mod-10 check digit, validates the GTIN-14 UDI-DI, and parses the UDI-PI (11 manufacture date / 17 expiry / 10 lot / 21 serial), then notes the GUDID (FDA) and EUDAMED (EU) registration. HIBCC/ICCBBA carriers are detected but not parsed. Returns udiDiOk + warnings. Exact algorithm, deterministic.",
+  input_schema: {
+    type: 'object',
+    properties: { udi: { type: 'string', description: 'The UDI carrier string (GS1 parenthesised AI form supported).' } },
+    required: ['udi'],
+  },
+};
+
+export const GET_ELECTRICAL_STANDARDS: AnaTool = {
+  name: 'get_electrical_standards',
+  description:
+    "Resolve the applicable IEC 60601 electrical-safety standards for a device from its facts (electricallyPowered, hasAlarms, closedLoopControl, homeUse, emsUse, hasParticularStandard). Returns the general standard + always-on collaterals (EMC, usability) plus the conditional collaterals triggered (alarms 60601-1-8, closed-loop 60601-1-10, home use 60601-1-11, EMS 60601-1-12), the core test categories (means of protection, leakage currents, dielectric, EMC…), and the reviewer questions. Not applicable when the device is not electrically powered. Deterministic.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      electricallyPowered: { type: 'boolean', description: 'Mains/battery powered medical electrical equipment.' },
+      hasAlarms: { type: 'boolean', description: 'Generates clinical alarms (→ 60601-1-8).' },
+      closedLoopControl: { type: 'boolean', description: 'Has a physiologic closed-loop controller (→ 60601-1-10).' },
+      homeUse: { type: 'boolean', description: 'Intended for home/lay use (→ 60601-1-11).' },
+      emsUse: { type: 'boolean', description: 'Intended for the EMS environment (→ 60601-1-12).' },
+      hasParticularStandard: { type: 'boolean', description: 'A device-type particular standard (60601-2-xx) applies.' },
+    },
+    required: ['electricallyPowered'],
+  },
+};
+
 export const ASSESS_DISPATCH_READINESS: AnaTool = {
   name: 'assess_dispatch_readiness',
   description:
@@ -3324,6 +3565,137 @@ export const REVIEW_IACUC_PROTOCOL: AnaTool = {
     type: 'object',
     properties: { protocol_id: { type: 'number' } },
     required: ['protocol_id'],
+  },
+};
+
+export const CREATE_IRB_SUBMISSION: AnaTool = {
+  name: 'create_irb_submission',
+  description:
+    "Open an IRB/IEC human-subjects review submission (revised Common Rule 45 CFR 46 / 21 CFR 56 / ICH E6). risk_level drives the review pathway (greater-than-minimal → full board). Flag vulnerable populations and single-IRB (sIRB) for multi-site studies. Returns the submission id and recommended review type. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      protocol_number: { type: 'string' },
+      title: { type: 'string' },
+      risk_level: { type: 'string', enum: ['minimal', 'greater_than_minimal'] },
+      study_id: { type: 'number' },
+      submission_id: { type: 'number', description: 'Optional regulatory submission this ethics approval feeds (Module 5).' },
+      involves_vulnerable_populations: { type: 'boolean' },
+      vulnerable_population_protections: { type: 'string' },
+      is_single_irb: { type: 'boolean' },
+      consent_waiver_requested: { type: 'boolean' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['protocol_number', 'title', 'risk_level'],
+  },
+};
+
+export const ADD_IRB_SITE: AnaTool = {
+  name: 'add_irb_site',
+  description:
+    "Add a participating site to an IRB submission (single-IRB multi-site coordination): site name, PI, and local context. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      irb_submission_id: { type: 'number' },
+      site_name: { type: 'string' },
+      principal_investigator: { type: 'string' },
+      local_context: { type: 'string' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['irb_submission_id', 'site_name'],
+  },
+};
+
+export const REVIEW_IRB_SUBMISSION: AnaTool = {
+  name: 'review_irb_submission',
+  description:
+    "Run the deterministic IRB approval-criteria gate (45 CFR 46.111) on a submission (read-only): informed consent / waiver, vulnerable-population safeguards, sIRB for multi-site, risk-vs-review-type, plus continuing-review status. Returns cited findings + risk level.",
+  input_schema: {
+    type: 'object',
+    properties: { irb_submission_id: { type: 'number' } },
+    required: ['irb_submission_id'],
+  },
+};
+
+export const CREATE_IBC_REGISTRATION: AnaTool = {
+  name: 'create_ibc_registration',
+  description:
+    "Open an IBC biosafety registration (NIH Guidelines / BMBL) for recombinant or synthetic nucleic acid work — the clearance modality-heavy CGT/mRNA programs need. biosafety_level is the declared containment (BSL-1..4); nih_guidelines_section is the experiment category (III-A..III-F/exempt). Returns the registration id and whether convened IBC review is required. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      registration_number: { type: 'string' },
+      title: { type: 'string' },
+      biosafety_level: { type: 'string', enum: ['BSL-1', 'BSL-2', 'BSL-3', 'BSL-4'] },
+      nih_guidelines_section: { type: 'string', enum: ['III-A', 'III-B', 'III-C', 'III-D', 'III-E', 'III-F', 'exempt', 'not_applicable'] },
+      submission_id: { type: 'number', description: 'Optional IND-enabling submission this clearance supports.' },
+      involves_recombinant_dna: { type: 'boolean' },
+      involves_human_gene_transfer: { type: 'boolean' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['registration_number', 'title', 'biosafety_level'],
+  },
+};
+
+export const ADD_BIOLOGICAL_AGENT: AnaTool = {
+  name: 'add_biological_agent',
+  description:
+    "Add a biological agent to an IBC registration. risk_group is RG1-4; the required containment BSL is DERIVED from the risk group (RG1→BSL-1 … RG4→BSL-4) — you do not set it. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      registration_id: { type: 'number' },
+      agent_name: { type: 'string' },
+      agent_type: { type: 'string', enum: ['virus', 'bacterium', 'fungus', 'toxin', 'viral_vector', 'cell_line', 'recombinant_construct', 'other'] },
+      risk_group: { type: 'string', enum: ['RG1', 'RG2', 'RG3', 'RG4'] },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['registration_id', 'agent_name', 'agent_type', 'risk_group'],
+  },
+};
+
+export const REVIEW_IBC_REGISTRATION: AnaTool = {
+  name: 'review_ibc_registration',
+  description:
+    "Run the deterministic IBC containment gate on a registration (read-only): does the declared BSL meet the highest containment its agents require, are agents at the right level for their risk group, and does the work need convened IBC review — plus annual-review expiration. Returns cited findings + risk level.",
+  input_schema: {
+    type: 'object',
+    properties: { registration_id: { type: 'number' } },
+    required: ['registration_id'],
+  },
+};
+
+export const CREATE_NONCLINICAL_STUDY: AnaTool = {
+  name: 'create_nonclinical_study',
+  description:
+    "Open a governed nonclinical (tox/pharmacology) study record. study_type drives the CTD Module 4 section (derived automatically). Optionally link the authorizing IACUC protocol and the submission it supports — both are threaded onto the provenance spine. Returns the study id, CTD section, and the required SEND domains. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      study_number: { type: 'string' },
+      title: { type: 'string' },
+      study_type: { type: 'string', enum: ['single_dose_tox', 'repeat_dose_tox', 'safety_pharmacology', 'genotoxicity', 'carcinogenicity', 'reproductive_tox', 'local_tolerance', 'adme_pk', 'immunotoxicity', 'other'] },
+      species: { type: 'string' },
+      glp_compliant: { type: 'boolean' },
+      testing_facility: { type: 'string' },
+      noael: { type: 'string' },
+      submission_id: { type: 'number' },
+      iacuc_protocol_id: { type: 'number' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['study_number', 'title', 'study_type'],
+  },
+};
+
+export const REVIEW_SEND_READINESS: AnaTool = {
+  name: 'review_send_readiness',
+  description:
+    "Run the deterministic SEND (CDISC) submission-readiness gate on a nonclinical study (read-only): required domains for the study type, define.xml, nSDRG, and validation status. Returns cited findings, missing domains, and a risk level.",
+  input_schema: {
+    type: 'object',
+    properties: { study_id: { type: 'number' } },
+    required: ['study_id'],
   },
 };
 
@@ -4694,6 +5066,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ADVISE_STUDY_DESIGN,
   ADVISE_LABELING_STRUCTURE,
   ADVISE_MEDICAL_INFORMATION,
+  ADVISE_REPORTING_GUIDELINE,
+  ADVISE_DATA_INTEGRITY,
+  ADVISE_RWE_DESIGN,
   SCREEN_PROMOTIONAL_LANGUAGE,
   MEDICAL_WRITING_GUIDANCE,
   MEDICAL_WRITING_REVIEW,
@@ -4773,6 +5148,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ASSESS_STORED_CER,
   BUILD_GLOBAL_DEVICE_STRATEGY,
   GET_REGULATORY_TIMELINE,
+  VALIDATE_UDI,
+  GET_ELECTRICAL_STANDARDS,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,
@@ -4786,6 +5163,14 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CREATE_IACUC_PROTOCOL,
   REGISTER_ANIMAL_COHORT,
   REVIEW_IACUC_PROTOCOL,
+  CREATE_IRB_SUBMISSION,
+  ADD_IRB_SITE,
+  REVIEW_IRB_SUBMISSION,
+  CREATE_IBC_REGISTRATION,
+  ADD_BIOLOGICAL_AGENT,
+  REVIEW_IBC_REGISTRATION,
+  CREATE_NONCLINICAL_STUDY,
+  REVIEW_SEND_READINESS,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,
@@ -4810,6 +5195,11 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   EXTRACT_DOCUMENT_STRUCTURE,
   COMPARE_DOCUMENT_VERSIONS,
   SEARCH_DOCUMENT,
+  INSPECT_UPLOADED_DOCUMENT,
+  READ_UPLOADED_DOCUMENT,
+  OCR_DOCUMENT_PAGES,
+  READ_SPREADSHEET,
+  EDIT_SPREADSHEET,
   CHECK_DOSSIER_CONSISTENCY,
   CHECK_NUMERICAL_INTEGRITY,
   COMPUTE_SAMPLE_SIZE,

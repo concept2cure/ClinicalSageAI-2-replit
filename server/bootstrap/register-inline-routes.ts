@@ -349,6 +349,33 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount IACUC routes:', error);
   }
 
+  // IRB / IEC submission & amendment management (Common Rule / 21 CFR 56; → Module 5).
+  try {
+    const irbModule = await import('../routes/irb');
+    app.use('/api/irb', authMiddleware, irbModule.default);
+    console.info('✅ IRB routes mounted (/api/irb)');
+  } catch (error) {
+    console.error('❌ Failed to mount IRB routes:', error);
+  }
+
+  // IBC / biosafety (NIH Guidelines / BMBL; CGT/mRNA clearance → IND enabling).
+  try {
+    const ibcModule = await import('../routes/ibc');
+    app.use('/api/ibc', authMiddleware, ibcModule.default);
+    console.info('✅ IBC routes mounted (/api/ibc)');
+  } catch (error) {
+    console.error('❌ Failed to mount IBC routes:', error);
+  }
+
+  // Nonclinical study management + SEND (ICH M4/S-series; CDISC SEND → Module 4).
+  try {
+    const nonclinicalModule = await import('../routes/nonclinical');
+    app.use('/api/nonclinical', authMiddleware, nonclinicalModule.default);
+    console.info('✅ Nonclinical/SEND routes mounted (/api/nonclinical)');
+  } catch (error) {
+    console.error('❌ Failed to mount Nonclinical routes:', error);
+  }
+
   // C2C study digital twins + simulation (study/protocol design module).
   try {
     const c2cStudyTwinModule = await import('../routes/c2c/study-twin');

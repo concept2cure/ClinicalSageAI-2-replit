@@ -1,6 +1,7 @@
 import express from 'express';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
-import { dynamicContentAssembly } from '../services/DynamicContentAssembly.js';
+import { dynamicContentAssembly, type AssemblyIdentity } from '../services/DynamicContentAssembly.js';
+import { authedOrgId } from '../utils/authedOrgId.js';
 import { createScopedLogger } from '../utils/logger.js';
 
 const log = createScopedLogger('content-assembly');
@@ -27,6 +28,18 @@ function authenticateSse(req: express.Request, res: express.Response): boolean {
   }
 }
 
+/**
+ * Resolve the authenticated user/org identity from the request (populated by
+ * the global /api auth gate). Returns undefined when either is missing —
+ * the assembly service then skips DB persistence rather than fabricating ids.
+ */
+function resolveAssemblyIdentity(req: express.Request): AssemblyIdentity | undefined {
+  const organizationId = authedOrgId(req);
+  const userId = Number((req as any).user?.id ?? (req as any).userId);
+  if (organizationId == null || !Number.isFinite(userId)) return undefined;
+  return { userId, organizationId };
+}
+
 function resolveSseOrigin(req: express.Request): string | null {
   const origin = (req.headers.origin as string) || '';
   if (!origin) return null;
@@ -51,7 +64,7 @@ router.post('/assemble/:projectId', async (req, res) => {
     const assembly = await dynamicContentAssembly.assembleDocument(
       parseInt(projectId),
       documentType,
-      options
+      { ...options, identity: resolveAssemblyIdentity(req) }
     );
     
     res.json({
@@ -103,9 +116,10 @@ router.get('/preview/:projectId/:documentType', async (req, res) => {
     const preview = await dynamicContentAssembly.generatePreview(
       parseInt(projectId),
       documentType,
-      format
+      format,
+      resolveAssemblyIdentity(req)
     );
-    
+
     // Set appropriate content type
     let contentType = 'text/html';
     if (format === 'markdown') contentType = 'text/markdown';
@@ -194,7 +208,8 @@ router.get('/live-preview/:projectId/:documentType', async (req, res) => {
     const preview = await dynamicContentAssembly.generatePreview(
       parseInt(projectId),
       documentType,
-      'html'
+      'html',
+      resolveAssemblyIdentity(req)
     );
     
     res.write(`data: ${JSON.stringify({
@@ -212,7 +227,8 @@ router.get('/live-preview/:projectId/:documentType', async (req, res) => {
       const preview = await dynamicContentAssembly.generatePreview(
         parseInt(projectId),
         documentType,
-        'html'
+        'html',
+        resolveAssemblyIdentity(req)
       );
       
       const report = await dynamicContentAssembly.getCompletenessReport(

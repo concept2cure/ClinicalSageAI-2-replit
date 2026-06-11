@@ -577,6 +577,14 @@ const blueprintSchema = z.object({
     canContributeToNonSeriousInjury: z.boolean().optional(),
     presentDeliverableIds: z.array(z.string().max(64)).max(100).optional(),
   }).optional(),
+  electrical: z.object({
+    electricallyPowered: z.boolean().optional(),
+    hasAlarms: z.boolean().optional(),
+    closedLoopControl: z.boolean().optional(),
+    homeUse: z.boolean().optional(),
+    emsUse: z.boolean().optional(),
+    hasParticularStandard: z.boolean().optional(),
+  }).optional(),
   present: z.object({
     cerSectionIds: z.array(z.string().max(64)).max(200).optional(),
     perSectionIds: z.array(z.string().max(64)).max(200).optional(),
@@ -623,6 +631,39 @@ router.get('/device/timeline', limiter, requireRole(AUTHOR), async (req, res) =>
     const t = getTimeline(pathway);
     if (!t) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No timeline for pathway "${pathway}".` } });
     res.json(t);
+  } catch (err) { fail(res, err); }
+});
+
+// UDI validation (GS1 check digit + AI parsing → GUDID/EUDAMED components).
+const udiSchema = z.object({ udi: z.string().min(1).max(512) });
+router.post('/device/udi/validate', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = udiSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { validateUdi } = await import('../services/market-specs/udi-validator.js');
+    res.json(validateUdi(parsed.data.udi));
+  } catch (err) { fail(res, err); }
+});
+
+// Electrical safety (IEC 60601) applicable standards from device facts.
+const electricalSchema = z.object({
+  electricallyPowered: z.boolean().optional(),
+  hasAlarms: z.boolean().optional(),
+  closedLoopControl: z.boolean().optional(),
+  homeUse: z.boolean().optional(),
+  emsUse: z.boolean().optional(),
+  hasParticularStandard: z.boolean().optional(),
+});
+router.post('/device/electrical-safety', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = electricalSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { applicableElectricalStandards } = await import('../services/market-specs/electrical-safety.js');
+    res.json(applicableElectricalStandards(parsed.data));
   } catch (err) { fail(res, err); }
 });
 

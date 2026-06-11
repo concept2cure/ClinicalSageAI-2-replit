@@ -61,6 +61,9 @@ import { advisePharmacovigilance, listPvDeliverables } from './pharmacovigilance
 import { adviseStudyDesign, listStudyDesigns, type SampleSizeInput, type EndpointFamily, type DesignGoal } from './study-design.js';
 import { adviseLabelingStructure, listLabelTemplates } from './labeling-structure.js';
 import { adviseMedicalInformation, listMedInfoResponseTypes } from './medical-information.js';
+import { adviseReportingGuideline, listReportingGuidelines } from './reporting-guidelines.js';
+import { adviseDataIntegrity, listDataIntegrity } from './data-integrity.js';
+import { adviseRweDesign, listRweDesigns } from './rwe-design.js';
 import { initToolTelemetryPersistence } from './tool-telemetry-persistence.js';
 import fdaFaersClient from '../../fda_faers_client.js';
 
@@ -508,6 +511,35 @@ registerToolHandler('value_dossier_guidance', async (input) => {
     source: 'AnA Market-Access Knowledge',
     ...composeValueDossierGuidance({ deliverable, htaBody }),
   });
+});
+
+// Reporting-guideline advisor — EQUATOR network (CONSORT/SPIRIT/STROBE/...).
+registerToolHandler('advise_reporting_guideline', async (input) => {
+  const guideline = typeof input.guideline === 'string' ? input.guideline : undefined;
+  const studyType = typeof input.study_type === 'string' ? input.study_type : undefined;
+  if (!guideline && !studyType) {
+    return JSON.stringify({ source: 'AnA Reporting-Guideline Advisor', guidelines: listReportingGuidelines(), ...adviseReportingGuideline({}) });
+  }
+  return JSON.stringify({ source: 'AnA Reporting-Guideline Advisor', ...adviseReportingGuideline({ guideline, studyType }) });
+});
+
+// Data-integrity / 21 CFR Part 11 advisor — ALCOA+ + Part 11 controls.
+registerToolHandler('advise_data_integrity', async (input) => {
+  const requirement = typeof input.requirement === 'string' ? input.requirement : undefined;
+  const description = typeof input.description === 'string' ? input.description : undefined;
+  if (!requirement && !description) {
+    return JSON.stringify({ source: 'AnA Data-Integrity Advisor', catalog: listDataIntegrity(), ...adviseDataIntegrity({}) });
+  }
+  return JSON.stringify({ source: 'AnA Data-Integrity Advisor', ...adviseDataIntegrity({ requirement, description }) });
+});
+
+// Real-world-evidence study-design advisor.
+registerToolHandler('advise_rwe_design', async (input) => {
+  const design = typeof input.design === 'string' ? input.design : undefined;
+  if (!design) {
+    return JSON.stringify({ source: 'AnA RWE-Design Advisor', catalog: listRweDesigns(), ...adviseRweDesign({}) });
+  }
+  return JSON.stringify({ source: 'AnA RWE-Design Advisor', ...adviseRweDesign({ design }) });
 });
 
 // Study-design & sample-size advisor.
@@ -1376,6 +1408,349 @@ registerToolHandler('search_document', async (input) => {
     return JSON.stringify(r);
   } catch (e: any) {
     return JSON.stringify({ error: e.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Uploaded-document intake tools — AnA inspects, reads, OCRs and edits the
+// user's actual files (PDF / DOCX / MD / text / images / Excel / CSV) by
+// file_id, tenant-scoped through uploaded-file-access.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const isPdfFile = (mime: string, name: string) =>
+  mime.toLowerCase() === 'application/pdf' || /\.pdf$/i.test(name);
+const isImageFile = (mime: string, name: string) =>
+  mime.toLowerCase().startsWith('image/') || /\.(png|jpe?g|gif|webp|tiff?|bmp)$/i.test(name);
+const isWorkbookFile = (mime: string, name: string) =>
+  mime.toLowerCase() === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+  mime.toLowerCase() === 'text/csv' ||
+  /\.(xlsx|csv)$/i.test(name);
+
+// Inspect Uploaded Document — page/bookmark/text-layer inventory before reading.
+registerToolHandler('inspect_uploaded_document', async (input, ctx) => {
+  try {
+    const { loadUploadedFile } = await import('./uploaded-file-access.js');
+    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId);
+    const base = { fileId: file.fileId, fileName: file.fileName, mimeType: file.mimeType, fileSize: file.fileSize };
+
+    if (isPdfFile(file.mimeType, file.fileName)) {
+      const { inspectPdf } = await import('../ocr/pdfInspector.js');
+      const inv = await inspectPdf(file.buffer, {
+        maxSampledPages: typeof input.max_sampled_pages === 'number' ? input.max_sampled_pages : undefined,
+      });
+      return JSON.stringify({ ...base, kind: 'pdf', ...inv });
+    }
+    if (isWorkbookFile(file.mimeType, file.fileName)) {
+      const { inspectWorkbook } = await import('../documentIntelligence/spreadsheetService.js');
+      const inv = await inspectWorkbook(file.buffer, file.fileName, file.mimeType);
+      return JSON.stringify({
+        ...base,
+        kind: 'spreadsheet',
+        ...inv,
+        recommendation: 'Use read_spreadsheet for cell-level data and formulas; edit_spreadsheet to change cells.',
+      });
+    }
+    if (isImageFile(file.mimeType, file.fileName)) {
+      return JSON.stringify({
+        ...base,
+        kind: 'image',
+        recommendation: 'Use read_uploaded_document (or ocr_document_pages) to OCR this image.',
+      });
+    }
+    // DOCX / Markdown / text: extract, then outline.
+    const { extractDocumentText } = await import('../ocr/index.js');
+    const extracted = await extractDocumentText(file.buffer, file.mimeType, file.fileName);
+    const { parseDocumentStructure } = await import('../document-analysis');
+    const s = parseDocumentStructure(extracted.text);
+    return JSON.stringify({
+      ...base,
+      kind: extracted.method === 'docx' ? 'docx' : 'text',
+      extractionMethod: extracted.method,
+      totalChars: extracted.text.length,
+      wordCount: extracted.text.trim() ? extracted.text.trim().split(/\s+/).length : 0,
+      counts: s.counts,
+      toc: s.toc.slice(0, 100),
+      recommendation: 'Use read_uploaded_document to read the content (page with offset/max_chars if long).',
+    });
+  } catch (e) {
+    return JSON.stringify({ error: `inspect_uploaded_document failed: ${e instanceof Error ? e.message : String(e)}` });
+  }
+});
+
+// Read Uploaded Document — full extraction cascade with OCR fallback + paging.
+registerToolHandler('read_uploaded_document', async (input, ctx) => {
+  try {
+    const { loadUploadedFile } = await import('./uploaded-file-access.js');
+    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId);
+    const languages = Array.isArray(input.languages)
+      ? input.languages.filter((l): l is string => typeof l === 'string')
+      : undefined;
+    const pdf = isPdfFile(file.mimeType, file.fileName);
+
+    let text = '';
+    let method: string = 'none';
+    let confidence: number | undefined;
+    let pageRange: { start: number; end: number; numPages: number } | null = null;
+
+    const pageStart = typeof input.page_start === 'number' ? input.page_start : undefined;
+    const pageEnd = typeof input.page_end === 'number' ? input.page_end : undefined;
+
+    if (pdf && (pageStart !== undefined || pageEnd !== undefined)) {
+      // Page-scoped PDF read: embedded text layer first, OCR the range when thin.
+      const { extractPdfPagesText } = await import('../ocr/pdfInspector.js');
+      const first = Math.max(1, pageStart ?? 1);
+      const r = await extractPdfPagesText(file.buffer, first, pageEnd ?? first + 49);
+      text = r.pages.map((p) => `[page ${p.page}]\n${p.text}`).join('\n\n').trim();
+      method = 'pdf-text';
+      pageRange = { start: first, end: Math.min(pageEnd ?? first + 49, r.numPages), numPages: r.numPages };
+      const thin = r.pages.every((p) => p.text.length < 32);
+      if (input.force_ocr === true || thin) {
+        const { ocrService } = await import('../ocr/index.js');
+        const ocr = await ocrService.ocrPdfToText(file.buffer, {
+          firstPage: pageRange.start,
+          lastPage: pageRange.end,
+          maxPages: 50,
+          languages,
+        });
+        if (ocr.text.length > text.length || input.force_ocr === true) {
+          text = ocr.pageDetails.map((p) => `[page ${p.page}]\n${p.text}`).join('\n\n').trim();
+          method = 'pdf-ocr';
+          confidence = ocr.confidence;
+        }
+      }
+    } else if (input.force_ocr === true && (pdf || isImageFile(file.mimeType, file.fileName))) {
+      const { ocrService } = await import('../ocr/index.js');
+      if (pdf) {
+        const ocr = await ocrService.ocrPdfToText(file.buffer, { maxPages: 50, languages });
+        text = ocr.text;
+        method = 'pdf-ocr';
+        confidence = ocr.confidence;
+      } else {
+        const ocr = await ocrService.recognizeImage(file.buffer, languages ? { languages } : undefined);
+        text = ocr.text;
+        method = 'image-ocr';
+        confidence = ocr.confidence;
+      }
+    } else {
+      const { extractDocumentText } = await import('../ocr/index.js');
+      const extracted = await extractDocumentText(file.buffer, file.mimeType, file.fileName);
+      text = extracted.text;
+      method = extracted.method;
+      confidence = extracted.confidence;
+    }
+
+    if (!text.trim()) {
+      return JSON.stringify({
+        fileId: file.fileId,
+        fileName: file.fileName,
+        method,
+        error:
+          'No text could be extracted. For a scanned PDF try ocr_document_pages; run inspect_uploaded_document to plan a strategy.',
+      });
+    }
+
+    const maxChars = Math.min(Math.max(1000, typeof input.max_chars === 'number' ? input.max_chars : 30000), 80000);
+    const offset = Math.max(0, typeof input.offset === 'number' ? input.offset : 0);
+    const slice = text.slice(offset, offset + maxChars);
+
+    const { parseDocumentStructure } = await import('../document-analysis');
+    const s = parseDocumentStructure(text);
+
+    return JSON.stringify({
+      fileId: file.fileId,
+      fileName: file.fileName,
+      mimeType: file.mimeType,
+      method,
+      ...(confidence !== undefined ? { ocrConfidence: Math.round(confidence) } : {}),
+      ...(pageRange ? { pageRange } : {}),
+      totalChars: text.length,
+      offset,
+      returnedChars: slice.length,
+      truncated: offset + slice.length < text.length,
+      structure: { counts: s.counts, toc: s.toc.slice(0, 60) },
+      text: slice,
+    });
+  } catch (e) {
+    return JSON.stringify({ error: `read_uploaded_document failed: ${e instanceof Error ? e.message : String(e)}` });
+  }
+});
+
+// OCR Document Pages — targeted page/region OCR for big scanned documents.
+registerToolHandler('ocr_document_pages', async (input, ctx) => {
+  try {
+    const { loadUploadedFile } = await import('./uploaded-file-access.js');
+    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId);
+    const { ocrService } = await import('../ocr/index.js');
+    const languages = Array.isArray(input.languages)
+      ? input.languages.filter((l): l is string => typeof l === 'string')
+      : undefined;
+
+    if (isImageFile(file.mimeType, file.fileName)) {
+      const r = await ocrService.recognizeImage(file.buffer, languages ? { languages } : undefined);
+      return JSON.stringify({
+        fileId: file.fileId,
+        fileName: file.fileName,
+        kind: 'image',
+        confidence: Math.round(r.confidence),
+        durationMs: r.durationMs,
+        text: r.text,
+      });
+    }
+    if (!isPdfFile(file.mimeType, file.fileName)) {
+      return JSON.stringify({
+        error: `ocr_document_pages supports PDFs and images; "${file.fileName}" (${file.mimeType}) is neither. Use read_uploaded_document instead.`,
+      });
+    }
+
+    const REGIONS: Record<string, { top?: number; left?: number; width?: number; height?: number } | undefined> = {
+      full: undefined,
+      top_band: { top: 0, height: 0.25 },
+      bottom_band: { top: 0.75, height: 0.25 },
+      left_half: { left: 0, width: 0.5 },
+      right_half: { left: 0.5, width: 0.5 },
+    };
+    const regionKey = typeof input.region === 'string' ? input.region : 'full';
+    const region =
+      regionKey === 'custom'
+        ? {
+            top: typeof input.region_top === 'number' ? input.region_top : undefined,
+            left: typeof input.region_left === 'number' ? input.region_left : undefined,
+            width: typeof input.region_width === 'number' ? input.region_width : undefined,
+            height: typeof input.region_height === 'number' ? input.region_height : undefined,
+          }
+        : REGIONS[regionKey];
+
+    const maxPages = Math.min(Math.max(1, typeof input.max_pages === 'number' ? input.max_pages : 20), 50);
+    const dpi = Math.min(Math.max(72, typeof input.dpi === 'number' ? input.dpi : 200), 400);
+    const pages = Array.isArray(input.pages)
+      ? input.pages.filter((p): p is number => typeof p === 'number')
+      : undefined;
+
+    const r = await ocrService.ocrPdfToText(file.buffer, {
+      dpi,
+      maxPages,
+      firstPage: typeof input.page_start === 'number' ? input.page_start : undefined,
+      lastPage: typeof input.page_end === 'number' ? input.page_end : undefined,
+      ...(pages?.length ? { pages } : {}),
+      ...(region ? { region } : {}),
+      languages,
+    });
+
+    return JSON.stringify({
+      fileId: file.fileId,
+      fileName: file.fileName,
+      kind: 'pdf',
+      region: regionKey,
+      dpi,
+      pagesOcred: r.pageDetails.length,
+      meanConfidence: Math.round(r.confidence),
+      durationMs: r.durationMs,
+      pages: r.pageDetails.map((p) => ({
+        page: p.page,
+        confidence: Math.round(p.confidence),
+        text: p.text,
+      })),
+      note:
+        r.pageDetails.length >= maxPages
+          ? `Hit the ${maxPages}-page cap for this call — continue with page_start=${(r.pageDetails[r.pageDetails.length - 1]?.page ?? 0) + 1}.`
+          : undefined,
+    });
+  } catch (e) {
+    return JSON.stringify({ error: `ocr_document_pages failed: ${e instanceof Error ? e.message : String(e)}` });
+  }
+});
+
+// Read Spreadsheet — sheet inventory + cell-level rows with formulas preserved.
+registerToolHandler('read_spreadsheet', async (input, ctx) => {
+  try {
+    const { loadUploadedFile } = await import('./uploaded-file-access.js');
+    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId);
+    if (!isWorkbookFile(file.mimeType, file.fileName)) {
+      return JSON.stringify({
+        error: `read_spreadsheet supports .xlsx and .csv; "${file.fileName}" (${file.mimeType}) is neither. Use read_uploaded_document instead.`,
+      });
+    }
+    const { inspectWorkbook, readWorksheet } = await import('../documentIntelligence/spreadsheetService.js');
+    const inventory = await inspectWorkbook(file.buffer, file.fileName, file.mimeType);
+    const read = await readWorksheet(
+      file.buffer,
+      file.fileName,
+      {
+        sheet: typeof input.sheet === 'string' ? input.sheet : undefined,
+        startRow: typeof input.start_row === 'number' ? input.start_row : undefined,
+        endRow: typeof input.end_row === 'number' ? input.end_row : undefined,
+        maxRows: typeof input.max_rows === 'number' ? input.max_rows : undefined,
+        includeFormulas: input.include_formulas !== false,
+      },
+      file.mimeType,
+    );
+    return JSON.stringify({ fileId: file.fileId, fileName: file.fileName, inventory, ...read });
+  } catch (e) {
+    return JSON.stringify({ error: `read_spreadsheet failed: ${e instanceof Error ? e.message : String(e)}` });
+  }
+});
+
+// Edit Spreadsheet — apply cell edits, save as a NEW upload (original untouched).
+registerToolHandler('edit_spreadsheet', async (input, ctx) => {
+  try {
+    const { loadUploadedFile, saveDerivedUpload } = await import('./uploaded-file-access.js');
+    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId);
+    if (!isWorkbookFile(file.mimeType, file.fileName)) {
+      return JSON.stringify({
+        error: `edit_spreadsheet supports .xlsx and .csv; "${file.fileName}" (${file.mimeType}) is neither.`,
+      });
+    }
+    const rawEdits = Array.isArray(input.edits) ? input.edits : [];
+    const edits = rawEdits
+      .filter((e): e is Record<string, unknown> => !!e && typeof e === 'object')
+      .map((e) => ({
+        sheet: typeof e.sheet === 'string' ? e.sheet : undefined,
+        cell: String(e.cell ?? ''),
+        value:
+          typeof e.value === 'string' || typeof e.value === 'number' || typeof e.value === 'boolean'
+            ? e.value
+            : e.value === null
+              ? null
+              : undefined,
+        formula: typeof e.formula === 'string' ? e.formula : undefined,
+      }));
+    if (!edits.length) {
+      return JSON.stringify({ error: 'edit_spreadsheet requires a non-empty `edits` array.' });
+    }
+
+    const { applyWorkbookEdits } = await import('../documentIntelligence/spreadsheetService.js');
+    const result = await applyWorkbookEdits(
+      file.buffer,
+      file.fileName,
+      edits,
+      { createMissingSheets: input.create_missing_sheets === true },
+      file.mimeType,
+    );
+
+    const defaultName = `${file.fileName.replace(/\.(xlsx|csv)$/i, '')} (edited).xlsx`;
+    const newFileName =
+      typeof input.new_file_name === 'string' && input.new_file_name.trim()
+        ? input.new_file_name.trim()
+        : defaultName;
+    const saved = await saveDerivedUpload({
+      buffer: result.buffer,
+      fileName: newFileName,
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      organizationId: ctx?.organizationId,
+      userId: ctx?.userId,
+    });
+
+    return JSON.stringify({
+      ok: true,
+      sourceFileId: file.fileId,
+      newFileId: saved.fileId,
+      newFileName,
+      appliedEdits: result.applied,
+      createdSheets: result.createdSheets,
+      message: `Applied ${result.applied.length} edit(s) and saved the result as a new file (${saved.fileId}). The original upload is unchanged.`,
+    });
+  } catch (e) {
+    return JSON.stringify({ error: `edit_spreadsheet failed: ${e instanceof Error ? e.message : String(e)}` });
   }
 });
 
@@ -4838,6 +5213,35 @@ registerToolHandler('get_regulatory_timeline', async (input) => {
   }
 });
 
+registerToolHandler('validate_udi', async (input) => {
+  // Pure algorithm — no tenant context required.
+  const udi = typeof input.udi === 'string' ? input.udi : '';
+  if (!udi) return JSON.stringify({ error: 'udi is required.' });
+  try {
+    const { validateUdi } = await import('../market-specs/udi-validator.js');
+    return JSON.stringify({ ok: true, ...validateUdi(udi) });
+  } catch (err) {
+    return JSON.stringify({ error: `validate_udi failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('get_electrical_standards', async (input) => {
+  // Pure reference + rule logic — no tenant context required.
+  try {
+    const { applicableElectricalStandards } = await import('../market-specs/electrical-safety.js');
+    return JSON.stringify({ ok: true, ...applicableElectricalStandards({
+      electricallyPowered: input.electricallyPowered === true,
+      hasAlarms: input.hasAlarms === true,
+      closedLoopControl: input.closedLoopControl === true,
+      homeUse: input.homeUse === true,
+      emsUse: input.emsUse === true,
+      hasParticularStandard: input.hasParticularStandard === true,
+    }) });
+  } catch (err) {
+    return JSON.stringify({ error: `get_electrical_standards failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('assess_stored_cer', async (input, ctx) => {
   // Tenant-scoped — reads the organization's stored CER.
   if (!ctx?.organizationId) {
@@ -5305,6 +5709,281 @@ registerToolHandler('review_iacuc_protocol', async (input, ctx) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// IRB / IEC (C2C-06). Conversational building shares the governed/audited path
+// (recordGovernedAction, surface 'ana'). Determinations (approve) are done in the
+// review panel, not via AnA.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_irb_submission', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_irb_submission requires tenant + user context.' });
+  const protocolNumber = typeof input.protocol_number === 'string' ? input.protocol_number.trim() : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  const riskLevel = typeof input.risk_level === 'string' ? input.risk_level : '';
+  if (!protocolNumber || !title || !['minimal', 'greater_than_minimal'].includes(riskLevel)) {
+    return JSON.stringify({ error: 'protocol_number, title, and a valid risk_level are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createSubmissionTx } = await import('../irb/irb-service.js');
+  const { recommendReviewType } = await import('../irb/irb-logic.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createSubmissionTx(client, ctx.organizationId, ctx.userId, {
+      protocolNumber, title, riskLevel: riskLevel as any,
+      studyId: typeof input.study_id === 'number' ? input.study_id : null,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+      involvesVulnerablePopulations: input.involves_vulnerable_populations === true,
+      vulnerablePopulationProtections: typeof input.vulnerable_population_protections === 'string' ? input.vulnerable_population_protections : null,
+      isSingleIrb: input.is_single_irb === true,
+      consentWaiverRequested: input.consent_waiver_requested === true,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `irb-submission:${id}`, reason: fcoiReason(input, 'IRB submission opened via AnA'),
+      payload: { riskLevel }, domain: 'irb', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    const rec = recommendReviewType({ riskLevel: riskLevel as any });
+    return JSON.stringify({ ok: true, id, recommendedReview: rec, message: `Opened IRB submission "${title}" (id ${id}); recommended ${rec.reviewType.replace(/_/g, ' ')}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_irb_submission failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('add_irb_site', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_irb_site requires tenant + user context.' });
+  const submissionId = typeof input.irb_submission_id === 'number' ? input.irb_submission_id : NaN;
+  const siteName = typeof input.site_name === 'string' ? input.site_name.trim() : '';
+  if (!Number.isInteger(submissionId) || !siteName) return JSON.stringify({ error: 'irb_submission_id and site_name are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addSiteTx } = await import('../irb/irb-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await addSiteTx(client, ctx.organizationId, ctx.userId, submissionId, {
+      siteName,
+      principalInvestigator: typeof input.principal_investigator === 'string' ? input.principal_investigator : null,
+      localContext: typeof input.local_context === 'string' ? input.local_context : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `irb-submission:${submissionId}`, reason: fcoiReason(input, 'IRB site added via AnA'),
+      payload: { siteId: id, siteName }, domain: 'irb', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, siteId: id, message: `Added site "${siteName}" (id ${id}) to IRB submission ${submissionId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_irb_site failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_irb_submission', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_irb_submission requires tenant context.' });
+  const submissionId = typeof input.irb_submission_id === 'number' ? input.irb_submission_id : NaN;
+  if (!Number.isInteger(submissionId)) return JSON.stringify({ error: 'irb_submission_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { getCompletenessInput } = await import('../irb/irb-service.js');
+  const { evaluateIrbCompleteness, continuingReviewStatus } = await import('../irb/irb-logic.js');
+  const client = await getPool().connect();
+  try {
+    const inp = await getCompletenessInput(client, ctx.organizationId, submissionId);
+    const gate = evaluateIrbCompleteness(inp);
+    const cr = continuingReviewStatus(inp.reviewType, inp.approvalDate, new Date().toISOString().slice(0, 10));
+    return JSON.stringify({
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, continuingReview: cr,
+      message: gate.riskLevel === 'high'
+        ? 'Critical IRB findings (e.g. consent or vulnerable-population safeguards) — resolve before approval.'
+        : `Submission passes the deterministic 45 CFR 46.111 gate (${gate.riskLevel} risk).`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_irb_submission failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IBC / Biosafety (C2C-07). Conversational building shares the governed/audited
+// path (recordGovernedAction, surface 'ana'). Determinations (approve) are done
+// in the review panel, not via AnA.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_ibc_registration', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_ibc_registration requires tenant + user context.' });
+  const registrationNumber = typeof input.registration_number === 'string' ? input.registration_number.trim() : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  const biosafetyLevel = typeof input.biosafety_level === 'string' ? input.biosafety_level : '';
+  if (!registrationNumber || !title || !['BSL-1', 'BSL-2', 'BSL-3', 'BSL-4'].includes(biosafetyLevel)) {
+    return JSON.stringify({ error: 'registration_number, title, and a valid biosafety_level are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createRegistrationTx } = await import('../ibc/ibc-service.js');
+  const { requiresConvenedReview } = await import('../ibc/ibc-logic.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const section = typeof input.nih_guidelines_section === 'string' ? input.nih_guidelines_section : 'not_applicable';
+    const { id } = await createRegistrationTx(client, ctx.organizationId, ctx.userId, {
+      registrationNumber, title, biosafetyLevel: biosafetyLevel as any,
+      nihGuidelinesSection: section as any,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+      involvesRecombinantDna: input.involves_recombinant_dna === true,
+      involvesHumanGeneTransfer: input.involves_human_gene_transfer === true,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `ibc-registration:${id}`, reason: fcoiReason(input, 'IBC registration opened via AnA'),
+      payload: { biosafetyLevel }, domain: 'ibc', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    const convened = requiresConvenedReview(section as any, input.involves_human_gene_transfer === true);
+    return JSON.stringify({ ok: true, id, requiresConvenedReview: convened, message: `Opened IBC registration "${title}" (id ${id}) at ${biosafetyLevel}${convened ? '; requires convened IBC review' : ''}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_ibc_registration failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('add_biological_agent', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_biological_agent requires tenant + user context.' });
+  const registrationId = typeof input.registration_id === 'number' ? input.registration_id : NaN;
+  const agentName = typeof input.agent_name === 'string' ? input.agent_name.trim() : '';
+  const agentType = typeof input.agent_type === 'string' ? input.agent_type : '';
+  const riskGroup = typeof input.risk_group === 'string' ? input.risk_group : '';
+  if (!Number.isInteger(registrationId) || !agentName ||
+      !['virus', 'bacterium', 'fungus', 'toxin', 'viral_vector', 'cell_line', 'recombinant_construct', 'other'].includes(agentType) ||
+      !['RG1', 'RG2', 'RG3', 'RG4'].includes(riskGroup)) {
+    return JSON.stringify({ error: 'registration_id, agent_name, a valid agent_type, and a valid risk_group are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addAgentTx } = await import('../ibc/ibc-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, requiredBsl } = await addAgentTx(client, ctx.organizationId, ctx.userId, registrationId, { agentName, agentType: agentType as any, riskGroup: riskGroup as any });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `ibc-registration:${registrationId}`, reason: fcoiReason(input, 'Biological agent added via AnA'),
+      payload: { agentId: id, riskGroup, requiredBsl }, domain: 'ibc', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, agentId: id, requiredBsl, message: `Added ${agentName} (${riskGroup}, requires ${requiredBsl}) to registration ${registrationId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_biological_agent failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_ibc_registration', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_ibc_registration requires tenant context.' });
+  const registrationId = typeof input.registration_id === 'number' ? input.registration_id : NaN;
+  if (!Number.isInteger(registrationId)) return JSON.stringify({ error: 'registration_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { getContainmentInput } = await import('../ibc/ibc-service.js');
+  const { evaluateContainment, registrationExpiration } = await import('../ibc/ibc-logic.js');
+  const client = await getPool().connect();
+  try {
+    const inp = await getContainmentInput(client, ctx.organizationId, registrationId);
+    const gate = evaluateContainment(inp);
+    const exp = registrationExpiration(inp.approvalDate, new Date().toISOString().slice(0, 10));
+    return JSON.stringify({
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, highestRequiredBsl: gate.highestRequiredBsl, expiration: exp,
+      message: gate.riskLevel === 'high'
+        ? 'Critical biosafety finding (containment below the agents’ requirement) — resolve before approval.'
+        : `Registration passes the deterministic containment gate (${gate.riskLevel} risk).`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_ibc_registration failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Nonclinical + SEND (C2C-04). Conversational building shares the governed/
+// audited path (recordGovernedAction, surface 'ana'); study creation threads
+// IACUC → study → Module 4 provenance.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_nonclinical_study', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_nonclinical_study requires tenant + user context.' });
+  const studyNumber = typeof input.study_number === 'string' ? input.study_number.trim() : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  const studyType = typeof input.study_type === 'string' ? input.study_type : '';
+  const VALID = ['single_dose_tox', 'repeat_dose_tox', 'safety_pharmacology', 'genotoxicity', 'carcinogenicity', 'reproductive_tox', 'local_tolerance', 'adme_pk', 'immunotoxicity', 'other'];
+  if (!studyNumber || !title || !VALID.includes(studyType)) {
+    return JSON.stringify({ error: 'study_number, title, and a valid study_type are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createStudyTx } = await import('../nonclinical/nonclinical-service.js');
+  const { requiredSendDomains } = await import('../nonclinical/nonclinical-logic.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, ctdSection, provenanceLinkIds } = await createStudyTx(client, ctx.organizationId, ctx.userId, {
+      studyNumber, title, studyType: studyType as any,
+      species: typeof input.species === 'string' ? input.species : null,
+      glpCompliant: input.glp_compliant === true,
+      testingFacility: typeof input.testing_facility === 'string' ? input.testing_facility : null,
+      noael: typeof input.noael === 'string' ? input.noael : null,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+      iacucProtocolId: typeof input.iacuc_protocol_id === 'number' ? input.iacuc_protocol_id : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `nonclinical-study:${id}`, reason: fcoiReason(input, 'Nonclinical study opened via AnA'),
+      payload: { studyType, ctdSection, provenanceLinkIds }, domain: 'nonclinical', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, ctdSection, requiredSendDomains: requiredSendDomains(studyType as any), message: `Opened nonclinical study "${title}" (id ${id}) → CTD ${ctdSection}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_nonclinical_study failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_send_readiness', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_send_readiness requires tenant context.' });
+  const studyId = typeof input.study_id === 'number' ? input.study_id : NaN;
+  if (!Number.isInteger(studyId)) return JSON.stringify({ error: 'study_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { getSendReadinessInput } = await import('../nonclinical/nonclinical-service.js');
+  const { evaluateSendReadiness } = await import('../nonclinical/nonclinical-logic.js');
+  const client = await getPool().connect();
+  try {
+    const inp = await getSendReadinessInput(client, ctx.organizationId, studyId);
+    const gate = evaluateSendReadiness(inp);
+    return JSON.stringify({
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, missingDomains: gate.missingDomains,
+      message: gate.riskLevel === 'high'
+        ? 'Critical SEND finding (define.xml or open validation errors) — resolve before submission.'
+        : `SEND package ${gate.riskLevel === 'low' ? 'is ready' : 'has gaps'} (${gate.riskLevel} risk).`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_send_readiness failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
 registerToolHandler('log_study_deviation', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'log_study_deviation requires tenant context.' });
@@ -5477,13 +6156,13 @@ registerToolHandler('verify_memory_atom', async (input, ctx) => {
           SET is_verified_by_user = true,
               verified_at = NOW(),
               verified_by = $3,
-              importance_level = CASE WHEN $4 = true AND importance_level IN ('low','medium')
-                                      THEN 'high'
+              importance_level = CASE WHEN $4 = true AND importance_level IN ($5, $6)
+                                      THEN $7
                                       ELSE importance_level END,
               updated_at = NOW()
         WHERE id = $1 AND organization_id = $2
         RETURNING id, importance_level, is_verified_by_user`,
-      [id, ctx.organizationId, ctx.userId ?? null, input.bump_importance === true],
+      [id, ctx.organizationId, ctx.userId ?? null, input.bump_importance === true, 'low', 'medium', 'high'],
     );
     if (rows.length === 0) {
       return JSON.stringify({ error: `Memory atom ${id} not found in this organization.` });
@@ -6643,6 +7322,11 @@ export function getAvailableTools(): Array<{ name: string; registered: boolean }
     'generate_citation',
     'analyze_predicate_device',
     'extract_document_structure',
+    'inspect_uploaded_document',
+    'read_uploaded_document',
+    'ocr_document_pages',
+    'read_spreadsheet',
+    'edit_spreadsheet',
     'check_dossier_consistency',
     'check_numerical_integrity',
     'mine_precedents',

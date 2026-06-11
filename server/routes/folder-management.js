@@ -132,8 +132,8 @@ router.delete(
 
     // Check if folder has documents
     const docCheck = await pool.query(
-      'SELECT COUNT(*) as count FROM documents WHERE folder_id = $1',
-      [req.params.id]
+      'SELECT COUNT(*) as count FROM documents WHERE folder_id = $1 AND organization_id = $2',
+      [req.params.id, organizationId]
     );
 
     if (parseInt(docCheck.rows[0].count) > 0) {
@@ -142,8 +142,8 @@ router.delete(
 
     // Check if folder has subfolders
     const folderCheck = await pool.query(
-      'SELECT COUNT(*) as count FROM document_folders WHERE parent_id = $1',
-      [req.params.id]
+      'SELECT COUNT(*) as count FROM document_folders WHERE parent_id = $1 AND organization_id = $2',
+      [req.params.id, organizationId]
     );
 
     if (parseInt(folderCheck.rows[0].count) > 0) {

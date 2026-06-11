@@ -38,14 +38,17 @@ describe('HI-4 · export-service does not fabricate export content', () => {
 });
 
 describe('HI-4 · eventBus does not claim phantom success', () => {
-  const src = read('services/eventBus.js');
+  it('the duplicate eventBus with the fabricating createSubmissionContainer stays deleted', () => {
+    // The 2026-06-10 swarm audit found services/eventBus.js was a dead
+    // duplicate of events/eventBus.js (zero importers) and deleted it —
+    // the strongest form of this remediation: the phantom-success code no
+    // longer exists. Guard against resurrection.
+    expect(fs.existsSync(path.join(SERVER, 'services/eventBus.js'))).toBe(false);
+  });
 
-  it('createSubmissionContainer does not return a fabricated success/containerId', () => {
-    const fn = src.slice(src.indexOf('async createSubmissionContainer'));
-    const body = fn.slice(0, fn.indexOf('\n  }') + 4);
-    expect(body).not.toContain('success: true');
-    expect(body).not.toContain('containerId: `ectd_${data.packageId}`');
-    // It must report the honest, unimplemented state instead.
-    expect(body).toContain('implemented: false');
+  it('the surviving event bus has no createSubmissionContainer fabrication', () => {
+    const src = read('events/eventBus.js');
+    expect(src).not.toContain('createSubmissionContainer');
+    expect(src).not.toContain('containerId: `ectd_${data.packageId}`');
   });
 });

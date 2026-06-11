@@ -161,7 +161,8 @@ class CerGenerationService {
       // Get or create template
       const template = await this.getOrCreateTemplate(
         options.templateId || 'default_cer_template',
-        options.organizationId
+        options.organizationId,
+        options.userId
       );
 
       // Generate CER number
@@ -466,7 +467,8 @@ class CerGenerationService {
 
   private async getOrCreateTemplate(
     templateId: string,
-    organizationId: number
+    organizationId: number,
+    createdBy: number
   ): Promise<CerTemplate> {
     const [existing] = await db
       .select()
@@ -496,7 +498,7 @@ class CerGenerationService {
           requiredFields: this.getRequiredFields(),
           deviceClasses: ['I', 'IIa', 'IIb', 'III'],
           regulatoryFrameworks: ['MDR_2017_745', 'IVDR_2017_746'],
-          createdBy: 1,
+          createdBy,
           templateChecksum: this.calculateChecksum(this.getDefaultTemplateStructure()),
         }
       })

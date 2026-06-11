@@ -37,6 +37,7 @@ import { createHash, randomUUID, createSign } from 'crypto';
 import * as https from 'https';
 import { URL } from 'url';
 import { pool } from '../../db';
+import { readVerifiedBundle } from './bundle-integrity';
 import {
   CredentialError, GatewayError, TransportError,
   type GatewayAcknowledgment, type GatewayStatusResult, type GatewayTransmitRequest,
@@ -93,7 +94,11 @@ async function loadFdaCredentials(
      ) VALUES ($1, 'fda', 'esg', $2, 'mtls', $3, $4, 'active')
      ON CONFLICT (organization_id, region, gateway, environment) DO NOTHING`,
     [organizationId, environment, as2From, certPath],
-  ).catch(() => { /* best-effort; do not block transmit */ });
+  ).catch((err) => {
+    // Best-effort; do not block transmit — but a missing credential audit row
+    // breaks "why did this org's submission go through?", so surface it.
+    console.error('[fda-esg] credential audit row insert failed:', err?.message ?? err);
+  });
 
   const [clientCertPem, clientKeyPem, fdaCertPem] = await Promise.all([
     fs.readFile(certPath!, 'utf8'),
@@ -342,6 +347,9 @@ export class FdaEsgGateway implements SubmissionGateway {
           (req.metadata?.applicationId as string | undefined) ?? `APP-${req.packageId ?? 'pkg'}`;
         const sequence =
           (req.metadata?.sequence as string | undefined) ?? '0001';
+        // Verify the on-disk bytes match the signed descriptor before SFTP
+        // streams the file by path.
+        await readVerifiedBundle(req.bundle);
         const result = await transmitViaSftp(creds, req.bundle.path, applicationId, sequence);
         await updateTransmittal(transmittalId, {
           status: 'received',
@@ -360,7 +368,7 @@ export class FdaEsgGateway implements SubmissionGateway {
       }
 
       /* AS2 transmit. */
-      const body = await fs.readFile(req.bundle.path);
+      const body = await readVerifiedBundle(req.bundle);
       const messageId = `<${randomUUID()}@${creds.as2From}>`;
       const headers = buildAs2Headers({
         messageId, from: creds.as2From, to: creds.as2To,

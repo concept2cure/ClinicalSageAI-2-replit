@@ -4,10 +4,11 @@
  *
  * Picks the right method per file, with OCR as the recovery path so scanned/image
  * documents are no longer opaque:
- *   • text/*           → utf8
+ *   • text/* (.txt/.md/.csv/.json/.log) → utf8
  *   • images           → WASM Tesseract OCR
  *   • PDFs             → born-digital text (pdf-parse), OCR fallback when scanned
  *   • .docx            → mammoth raw text
+ *   • .xlsx            → exceljs, all sheets rendered as text
  *
  * Pure composition over existing dependencies — no new extractor engine.
  */
@@ -23,6 +24,7 @@ export type ExtractionMethod =
   | 'pdf-ocr'
   | 'image-ocr'
   | 'docx'
+  | 'xlsx'
   | 'none';
 
 export interface ExtractedDocumentText {
@@ -33,6 +35,7 @@ export interface ExtractedDocumentText {
 }
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 /** Below this many characters a PDF text layer is treated as missing → OCR. */
 const PDF_TEXT_MIN = 200;
 
@@ -42,10 +45,22 @@ export async function extractDocumentText(
   filename = '',
 ): Promise<ExtractedDocumentText> {
   const m = (mime || '').toLowerCase();
-  const isText = m.startsWith('text/') || /\.(txt|md|csv|json|log)$/i.test(filename);
+  const isXlsx = m === XLSX_MIME || /\.xlsx$/i.test(filename);
+  const isText = !isXlsx && (m.startsWith('text/') || /\.(txt|md|csv|json|log)$/i.test(filename));
   const isImage = m.startsWith('image/') || /\.(png|jpe?g|gif|webp|tiff?|bmp)$/i.test(filename);
   const isPdf = m === 'application/pdf' || /\.pdf$/i.test(filename);
   const isDocx = m === DOCX_MIME || /\.docx$/i.test(filename);
+
+  if (isXlsx) {
+    try {
+      const { workbookToText } = await import('../documentIntelligence/spreadsheetService');
+      const text = await workbookToText(buffer, filename, undefined, mime);
+      return { text, method: 'xlsx' };
+    } catch (error) {
+      logger.warn('xlsx extraction failed', { error: error instanceof Error ? error.message : String(error) });
+      return { text: '', method: 'none' };
+    }
+  }
 
   if (isText) {
     return { text: buffer.toString('utf8').trim(), method: 'utf8' };

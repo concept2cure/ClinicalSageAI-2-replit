@@ -598,129 +598,6 @@ export interface GateRequirement {
 // REGULATORY MEETINGS (Pre-IND, EOP2, Pre-NDA, Advisory Committee, etc.)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/**
- * Regulatory Meetings — unified tracking for FDA/EMA/PMDA interactions.
- *
- * Covers pre-IND, End-of-Phase 2, pre-NDA/BLA/PMA meetings,
- * Type A/B/C meetings, advisory committees, and information requests.
- * Meeting minutes and action items are captured as the regulatory
- * paper trail that drives strategy.
- */
-export const regulatoryMeetings = pgTable(
-  'regulatory_meetings',
-  {
-    id: serial('id').primaryKey(),
-    organizationId: integer('organization_id').notNull(),
-    charterId: integer('charter_id')
-      .notNull()
-      .references(() => projectCharters.id, { onDelete: 'cascade' }),
-
-    // ── Meeting Type ───────────────────────────────────────────────────────
-    meetingType: text('meeting_type').notNull(),
-    // pre_ind, end_of_phase_1, end_of_phase_2, pre_nda, pre_bla, pre_pma,
-    // pre_ide, type_a, type_b, type_c, advisory_committee,
-    // information_request, correspondence, pre_submission
-
-    // ── Agency & Division ──────────────────────────────────────────────────
-    agency: text('agency').notNull(), // FDA, EMA, PMDA, MHRA, HealthCanada, TGA, NMPA
-    division: text('division'), // CDER, CBER, CDRH
-
-    // ── Schedule ───────────────────────────────────────────────────────────
-    requestedDate: timestamp('requested_date', { withTimezone: true }),
-    confirmedDate: timestamp('confirmed_date', { withTimezone: true }),
-    actualDate: timestamp('actual_date', { withTimezone: true }),
-    status: text('status').default('planned'), // planned, requested, confirmed, completed, cancelled
-
-    // ── Content ────────────────────────────────────────────────────────────
-    agenda: text('agenda'),
-    keyQuestions: json('key_questions').$type<string[]>(),
-    sponsorAttendees: json('sponsor_attendees').$type<{ name: string; role: string }[]>(),
-    agencyAttendees: json('agency_attendees').$type<{ name: string; title?: string }[]>(),
-
-    // ── Outcomes ────────────────────────────────────────────────────────────
-    meetingMinutes: text('meeting_minutes'),
-    keyDecisions: json('key_decisions').$type<string[]>(),
-    actionItems: json('action_items').$type<MeetingActionItem[]>(),
-    fdaFeedback: text('fda_feedback'),
-    majorConcerns: json('major_concerns').$type<string[]>(),
-
-    // ── Documents ──────────────────────────────────────────────────────────
-    briefingDocumentId: integer('briefing_document_id'),
-    minutesDocumentId: integer('minutes_document_id'),
-
-    // ── Audit ──────────────────────────────────────────────────────────────
-    createdBy: integer('created_by'),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-  },
-  (table) => ({
-    charterIdx: index('reg_meetings_charter_idx').on(table.charterId),
-    typeIdx: index('reg_meetings_type_idx').on(table.meetingType),
-    statusIdx: index('reg_meetings_status_idx').on(table.status),
-    orgIdx: index('reg_meetings_org_idx').on(table.organizationId),
-  })
-);
-
-export interface MeetingActionItem {
-  action: string;
-  owner: string;
-  dueDate?: string;
-  status: 'pending' | 'completed';
-  completedDate?: string;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// CHARTER AUDIT EVENTS (21 CFR 11.10(b) — immutable audit trail)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Charter Audit Events — immutable record of all charter modifications.
- *
- * Every change to charter, sections, commitments, or meetings produces
- * an audit event. This satisfies 21 CFR Part 11.10(b) requirements for
- * secure, computer-generated, time-stamped audit trails.
- */
-export const charterAuditEvents = pgTable(
-  'charter_audit_events',
-  {
-    id: serial('id').primaryKey(),
-    organizationId: integer('organization_id').notNull(),
-    charterId: integer('charter_id')
-      .notNull()
-      .references(() => projectCharters.id, { onDelete: 'cascade' }),
-
-    // What changed
-    entityType: text('entity_type').notNull(), // charter, section, commitment, meeting, phase
-    entityId: integer('entity_id').notNull(),
-    eventType: text('event_type').notNull(), // created, modified, status_changed, approved, locked, signed, deleted
-
-    // Who changed it
-    performedBy: integer('performed_by').notNull(),
-    performedByUsername: text('performed_by_username'),
-    performedByRole: text('performed_by_role'),
-
-    // Change details
-    previousValues: json('previous_values'), // snapshot before change
-    newValues: json('new_values'), // snapshot after change
-    contentHashBefore: text('content_hash_before'),
-    contentHashAfter: text('content_hash_after'),
-    changeDescription: text('change_description'),
-
-    // Context
-    ipAddress: text('ip_address'),
-    reason: text('reason'),
-
-    // Timestamp (UTC, high precision)
-    timestamp: timestamp('timestamp', { withTimezone: true }).defaultNow().notNull(),
-  },
-  (table) => ({
-    charterIdx: index('charter_audit_charter_idx').on(table.charterId),
-    entityIdx: index('charter_audit_entity_idx').on(table.entityType, table.entityId),
-    eventIdx: index('charter_audit_event_idx').on(table.eventType),
-    timestampIdx: index('charter_audit_ts_idx').on(table.timestamp),
-  })
-);
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // INSERT SCHEMAS (Zod validation)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -749,17 +626,6 @@ export const insertProjectCommitmentSchema = createInsertSchema(projectCommitmen
   updatedAt: true,
 });
 
-export const insertRegulatoryMeetingSchema = createInsertSchema(regulatoryMeetings).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertCharterAuditEventSchema = createInsertSchema(charterAuditEvents).omit({
-  id: true,
-  timestamp: true,
-});
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPE EXPORTS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -776,12 +642,6 @@ export type InsertTimelinePhase = z.infer<typeof insertTimelinePhaseSchema>;
 export type ProjectCommitment = InferSelectModel<typeof projectCommitments>;
 export type InsertProjectCommitment = z.infer<typeof insertProjectCommitmentSchema>;
 
-export type RegulatoryMeeting = InferSelectModel<typeof regulatoryMeetings>;
-export type InsertRegulatoryMeeting = z.infer<typeof insertRegulatoryMeetingSchema>;
-
-export type CharterAuditEvent = InferSelectModel<typeof charterAuditEvents>;
-export type InsertCharterAuditEvent = z.infer<typeof insertCharterAuditEventSchema>;
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // RELATIONS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -790,8 +650,6 @@ export const projectChartersRelations = relations(projectCharters, ({ many }) =>
   sections: many(charterSections),
   phases: many(timelinePhases),
   commitments: many(projectCommitments),
-  meetings: many(regulatoryMeetings),
-  auditEvents: many(charterAuditEvents),
 }));
 
 export const charterSectionsRelations = relations(charterSections, ({ one }) => ({
@@ -817,19 +675,5 @@ export const projectCommitmentsRelations = relations(projectCommitments, ({ one 
   phase: one(timelinePhases, {
     fields: [projectCommitments.phaseId],
     references: [timelinePhases.id],
-  }),
-}));
-
-export const regulatoryMeetingsRelations = relations(regulatoryMeetings, ({ one }) => ({
-  charter: one(projectCharters, {
-    fields: [regulatoryMeetings.charterId],
-    references: [projectCharters.id],
-  }),
-}));
-
-export const charterAuditEventsRelations = relations(charterAuditEvents, ({ one }) => ({
-  charter: one(projectCharters, {
-    fields: [charterAuditEvents.charterId],
-    references: [projectCharters.id],
   }),
 }));
