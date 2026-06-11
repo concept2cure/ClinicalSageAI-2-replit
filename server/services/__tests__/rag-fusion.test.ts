@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { reciprocalRankFusion, normalizeToUnit, RRF_K } from '../rag-fusion';
-import { AdvancedRAGPipeline, type RetrievedDocument } from '../advancedRAGPipeline';
+import {
+  reciprocalRankFusion,
+  normalizeToUnit,
+  fuseHybrid,
+  mergeByMaxScore,
+  RRF_K,
+} from '../rag-fusion';
+import type { RetrievedDocument } from '../advancedRAGPipeline';
 
 describe('reciprocalRankFusion', () => {
   it('scores a single list as 1/(k + rank), rank 1-based', () => {
@@ -64,18 +70,6 @@ describe('normalizeToUnit', () => {
 // Pipeline-side fusion: fuseHybrid combines the dense + sparse candidate lists,
 // writes the normalized RRF score onto initialScore/finalScore, dedupes with
 // dense payloads winning, and trims to the limit.
-type WithFuse = {
-  fuseHybrid(
-    dense: RetrievedDocument[],
-    sparse: RetrievedDocument[],
-    limit: number
-  ): RetrievedDocument[];
-};
-
-function pipeline(): WithFuse {
-  return Object.create(AdvancedRAGPipeline.prototype) as WithFuse;
-}
-
 function doc(id: string, extra: Partial<RetrievedDocument> = {}): RetrievedDocument {
   return {
     id,
@@ -88,11 +82,11 @@ function doc(id: string, extra: Partial<RetrievedDocument> = {}): RetrievedDocum
   };
 }
 
-describe('AdvancedRAGPipeline.fuseHybrid', () => {
+describe('fuseHybrid', () => {
   it('puts the doc both arms agree on first and normalizes scores to [0,1]', () => {
     const dense = [doc('a'), doc('shared')];
     const sparse = [doc('shared'), doc('p')];
-    const out = pipeline().fuseHybrid(dense, sparse, 10);
+    const out = fuseHybrid(dense, sparse, 10);
 
     expect(out[0].id).toBe('shared'); // appears in both -> highest RRF
     expect(out[0].finalScore).toBe(1); // top of min-max range
@@ -107,11 +101,27 @@ describe('AdvancedRAGPipeline.fuseHybrid', () => {
   it('dedupes by id, preferring the dense payload, and trims to the limit', () => {
     const dense = [doc('x', { content: 'DENSE', embedding: [1, 0] })];
     const sparse = [doc('x', { content: 'SPARSE' }), doc('y'), doc('z')];
-    const out = pipeline().fuseHybrid(dense, sparse, 2);
+    const out = fuseHybrid(dense, sparse, 2);
 
     expect(out).toHaveLength(2); // trimmed
     const x = out.find(d => d.id === 'x');
     expect(x?.content).toBe('DENSE'); // dense payload won the dedupe
     expect(x?.embedding).toEqual([1, 0]); // dense embedding preserved
+  });
+});
+
+describe('mergeByMaxScore', () => {
+  it('keeps the highest-scoring copy of each id, sorted by finalScore desc', () => {
+    const out = mergeByMaxScore([
+      doc('a', { finalScore: 0.4 }),
+      doc('b', { finalScore: 0.9 }),
+      doc('a', { finalScore: 0.7 }), // higher copy of 'a' wins
+    ]);
+    expect(out.map(d => d.id)).toEqual(['b', 'a']);
+    expect(out.find(d => d.id === 'a')?.finalScore).toBe(0.7);
+  });
+
+  it('returns an empty array unchanged', () => {
+    expect(mergeByMaxScore([])).toEqual([]);
   });
 });

@@ -38,7 +38,7 @@ import { EnhancedEmbeddingService, getEmbeddingService } from './enhancedEmbeddi
 import { AIProviderRouter, getAIRouter, type AIRequest, type AIResponse } from './aiProviderRouter.js';
 import { getOpenAIClient } from './openai-client.js';
 import { getReranker, type Reranker } from './rag-reranker.js';
-import { reciprocalRankFusion, normalizeToUnit } from './rag-fusion.js';
+import { fuseHybrid, mergeByMaxScore } from './rag-fusion.js';
 import { generateStepBackQuery } from './rag-query-transforms.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -393,7 +393,7 @@ export class AdvancedRAGPipeline {
         ]);
 
         // Merge and deduplicate
-        candidates = this.mergeAndDeduplicate([
+        candidates = mergeByMaxScore([
           ...hydeAdvanced.documents,
           ...multiAdvanced.documents,
         ]);
@@ -659,7 +659,7 @@ export class AdvancedRAGPipeline {
     const allResults = await Promise.all(searchPromises);
 
     // Merge results
-    const merged = this.mergeAndDeduplicate(allResults.flat());
+    const merged = mergeByMaxScore(allResults.flat());
 
     return {
       documents: merged,
@@ -714,7 +714,7 @@ export class AdvancedRAGPipeline {
     );
 
     return {
-      documents: this.mergeAndDeduplicate(results.flat()),
+      documents: mergeByMaxScore(results.flat()),
       tokensUsed,
     };
   }
@@ -1002,7 +1002,7 @@ export class AdvancedRAGPipeline {
         return dense;
       }
 
-      return this.fuseHybrid(dense, lexical, limit);
+      return fuseHybrid(dense, lexical, limit);
     });
   }
 
@@ -1118,35 +1118,7 @@ export class AdvancedRAGPipeline {
       return dense;
     }
 
-    return this.fuseHybrid(dense, lexical, limit);
-  }
-
-  /**
-   * Reciprocal Rank Fusion of a dense and a sparse candidate list. Fuses on
-   * rank (cosine similarity and ts_rank_cd aren't comparable magnitudes), then
-   * min-max normalizes the fused score into [0,1] and writes it onto
-   * initialScore/finalScore so the downstream rerank blend stays meaningful.
-   * Dense payloads win on documents that appear in both lists (added first).
-   */
-  private fuseHybrid(
-    dense: RetrievedDocument[],
-    sparse: RetrievedDocument[],
-    limit: number
-  ): RetrievedDocument[] {
-    const rrf = reciprocalRankFusion([dense.map(d => d.id), sparse.map(d => d.id)]);
-    const normalized = normalizeToUnit(rrf);
-
-    const byId = new Map<string, RetrievedDocument>();
-    for (const doc of [...dense, ...sparse]) {
-      if (!byId.has(doc.id)) byId.set(doc.id, doc);
-    }
-
-    const fused = [...byId.values()].map(doc => {
-      const score = normalized.get(doc.id) ?? 0;
-      return { ...doc, initialScore: score, finalScore: score };
-    });
-    fused.sort((a, b) => b.finalScore - a.finalScore);
-    return fused.slice(0, limit);
+    return fuseHybrid(dense, lexical, limit);
   }
 
   /**
@@ -1341,19 +1313,6 @@ export class AdvancedRAGPipeline {
   /**
    * Merge and deduplicate documents from multiple sources
    */
-  private mergeAndDeduplicate(documents: RetrievedDocument[]): RetrievedDocument[] {
-    const seen = new Map<string, RetrievedDocument>();
-
-    for (const doc of documents) {
-      const existing = seen.get(doc.id);
-      if (!existing || doc.finalScore > existing.finalScore) {
-        seen.set(doc.id, doc);
-      }
-    }
-
-    return Array.from(seen.values()).sort((a, b) => b.finalScore - a.finalScore);
-  }
-
   /**
    * Lexical fallback similarity (Jaccard on words). Only used when embedding
    * the candidates for MMR fails; the primary path is cosine in embedding space.

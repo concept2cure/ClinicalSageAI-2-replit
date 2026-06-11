@@ -56,3 +56,50 @@ export function normalizeToUnit(scores: Map<string, number>): Map<string, number
   }
   return out;
 }
+
+/** Minimal shape the document-fusion helpers need; satisfied by RetrievedDocument. */
+export interface RankedDoc {
+  id: string;
+  initialScore: number;
+  finalScore: number;
+}
+
+/**
+ * Fuse a dense and a sparse candidate list via Reciprocal Rank Fusion. Fuses on
+ * rank (cosine similarity and ts_rank_cd aren't comparable magnitudes), then
+ * min-max normalizes the fused score into [0,1] and writes it onto
+ * initialScore/finalScore so the downstream rerank blend stays meaningful.
+ * Dense payloads win on documents that appear in both lists (added first).
+ */
+export function fuseHybrid<T extends RankedDoc>(dense: T[], sparse: T[], limit: number): T[] {
+  const rrf = reciprocalRankFusion([dense.map(d => d.id), sparse.map(d => d.id)]);
+  const normalized = normalizeToUnit(rrf);
+
+  const byId = new Map<string, T>();
+  for (const doc of [...dense, ...sparse]) {
+    if (!byId.has(doc.id)) byId.set(doc.id, doc);
+  }
+
+  const fused = [...byId.values()].map(doc => {
+    const score = normalized.get(doc.id) ?? 0;
+    return { ...doc, initialScore: score, finalScore: score };
+  });
+  fused.sort((a, b) => b.finalScore - a.finalScore);
+  return fused.slice(0, limit);
+}
+
+/**
+ * Deduplicate a flattened candidate list by id, keeping the highest-scoring copy
+ * of each, sorted by finalScore descending. Used to merge the per-sub-query
+ * result sets produced by multi-query / step-back retrieval.
+ */
+export function mergeByMaxScore<T extends { id: string; finalScore: number }>(documents: T[]): T[] {
+  const seen = new Map<string, T>();
+  for (const doc of documents) {
+    const existing = seen.get(doc.id);
+    if (!existing || doc.finalScore > existing.finalScore) {
+      seen.set(doc.id, doc);
+    }
+  }
+  return Array.from(seen.values()).sort((a, b) => b.finalScore - a.finalScore);
+}
