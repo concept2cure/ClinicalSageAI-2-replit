@@ -39,13 +39,7 @@ function createMockDb() {
 }
 
 describe('test-assembly routes', () => {
-  // The polish flow asserts a literal "AI added: Polish tone and shorten"
-  // string baked into the deterministic-polish response. The current impl
-  // returns the gateway's raw chat() output (the mock returns
-  // 'AI-polish-response'). The route delegates polish-text construction to
-  // the gateway; the literal contract is no longer owned at this layer.
-  // Other 3 tests (validates input / disabled in prod / tenant gating) pass.
-  it.skip('works end-to-end', async () => {
+  it('works end-to-end', async () => {
     // Ensure no AI key/mocks active for the initial steps
     delete process.env.OPENAI_API_KEY;
     vi.resetModules();
@@ -83,10 +77,12 @@ describe('test-assembly routes', () => {
     expect(polishResp.body.success).toBe(true);
     expect(polishResp.body.data.content).toContain('AI added: Polish tone and shorten');
 
-    // AI path: replace the gateway with a working chat mock
+    // AI path: replace the gateway with a working chat mock.
+    // AssemblyLine.polish reads result.content from gateway.chat(), so the
+    // mock must resolve a { content } envelope, not a raw string.
     vi.doMock('../../services/ai-gateway/index.js', () => ({
       getGateway: vi.fn().mockReturnValue({
-        chat: vi.fn().mockResolvedValue('AI-polish-response'),
+        chat: vi.fn().mockResolvedValue({ content: 'AI-polish-response' }),
       }),
     }));
 

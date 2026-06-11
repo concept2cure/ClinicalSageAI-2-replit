@@ -267,8 +267,15 @@ describe('Auto-Retention Scheduler Tests', () => {
     });
   });
 
-  // This test needs to be adapted to work with the actual implementation
-  // Here it's simplified to avoid excessive mocking
+  // Skipped (re-audited 2026-06-11): these tests mock a Supabase client
+  // (retention_policies / documents / storage.remove) that the retention job
+  // no longer uses. runRetentionJob (server/jobs/retentionCron.ts) was
+  // rewritten on the Drizzle vault model (vault.documents,
+  // vault.retention_policies, vault.document_archives) and queries the real
+  // `db` import directly — mockSupabase here is never injected, so the
+  // assertions cannot exercise the implementation. Re-enabling requires a
+  // rewrite against the Drizzle job (or moving to the DB-backed integration
+  // tier), not a mechanical mock fix.
   describe.skip('Retention Job Tests', () => {
     beforeEach(() => {
       // Set up mock data for document processing
