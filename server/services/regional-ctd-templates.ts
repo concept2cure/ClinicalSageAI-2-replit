@@ -121,36 +121,56 @@ export const EMA_TEMPLATE: RegionalTemplate = {
     'English preferred for centralised procedure',
     'Pharmacovigilance System Master File required',
   ],
+  // Module 1 per the authoritative EU Module 1 eCTD Specification (EMA eSubmission
+  // portal / Notice to Applicants). Verified headings: 1.0 Cover Letter, 1.1 TOC,
+  // 1.2 Application Form, 1.3 Product Information, 1.4 Experts, 1.5 Specific
+  // Requirements, 1.6 Environmental Risk Assessment, 1.7 Orphan Market Exclusivity,
+  // 1.8 Pharmacovigilance (1.8.1 PSMF / 1.8.2 RMP), 1.9 Clinical Trials, 1.10 Paediatrics.
   module1Sections: [
-    { number: '1.0', title: 'Regional Cover Letter', required: true, description: 'EU-specific cover letter' },
-    { number: '1.2', title: 'Application Form', required: true, description: 'Completed EMA application form' },
+    { number: '1.0', title: 'Cover Letter', required: true, description: 'EU regional cover letter' },
+    { number: '1.1', title: 'Comprehensive Table of Contents', required: true, description: 'Table of contents covering Modules 1–5' },
+    { number: '1.2', title: 'Application Form', required: true, description: 'Completed EU application form' },
     {
-      number: '1.3', title: 'Product Information', required: true, description: 'SmPC, PIL, Labelling',
+      number: '1.3', title: 'Product Information', required: true, description: 'SmPC, labelling and package leaflet',
       childSections: [
-        { number: '1.3.1', title: 'Summary of Product Characteristics (SmPC)', titleLocal: 'SmPC', required: true, description: 'Harmonised SmPC for all EU member states' },
-        { number: '1.3.2', title: 'Mock-up/Specimen of Outer/Inner Packaging', required: true, description: 'Artwork for packaging' },
-        { number: '1.3.3', title: 'Package Leaflet (PIL)', required: true, description: 'Patient Information Leaflet' },
-        { number: '1.3.4', title: 'Labelling', required: true, description: 'Labelling text' },
+        { number: '1.3.1', title: 'SmPC, Labelling and Package Leaflet', titleLocal: 'SmPC', required: true, description: 'Proposed Summary of Product Characteristics, labelling and package leaflet' },
+        { number: '1.3.2', title: 'Mock-up', required: false, description: 'Mock-ups of the outer/immediate packaging and the package leaflet' },
+        { number: '1.3.3', title: 'Specimen', required: false, description: 'Specimens of the packaging, where applicable' },
+        { number: '1.3.4', title: 'Consultation with Target Patient Groups', required: false, description: 'Package-leaflet readability / user-testing results' },
       ],
     },
-    { number: '1.4', title: 'Information about the Experts', required: true, description: 'Qualifications of module 2-5 experts' },
     {
-      number: '1.5', title: 'Specific Requirements for Different Types of Applications', required: false, description: 'Additional requirements by procedure type',
+      number: '1.4', title: 'Information about the Experts', required: true, description: 'Expert declarations and signatures',
       childSections: [
-        { number: '1.5.1', title: 'Bibliographic Applications', required: false, description: 'For well-established use applications' },
-        { number: '1.5.2', title: 'Generic/Hybrid/Biosimilar', required: false, description: 'For generic, hybrid, or biosimilar applications' },
+        { number: '1.4.1', title: 'Quality', required: true, description: 'Quality expert declaration' },
+        { number: '1.4.2', title: 'Non-Clinical', required: true, description: 'Non-clinical expert declaration' },
+        { number: '1.4.3', title: 'Clinical', required: true, description: 'Clinical expert declaration' },
       ],
     },
-    { number: '1.6', title: 'Environmental Risk Assessment', required: true, description: 'ERA as per CHMP/SWP/4447/00' },
-    { number: '1.7', title: 'Pharmacovigilance System', required: true, description: 'PSMF summary, QPPV information, RMP summary' },
     {
-      number: '1.8', title: 'Risk Management Plan', required: true, description: 'Full RMP per GVP Module V',
+      number: '1.5', title: 'Specific Requirements for Different Types of Applications', required: false, description: 'Additional requirements by application type',
       childSections: [
-        { number: '1.8.1', title: 'Risk Management Plan', required: true, description: 'Complete EU-RMP' },
-        { number: '1.8.2', title: 'RMP Summary', required: true, description: 'Summary of the RMP for public assessment' },
+        { number: '1.5.1', title: 'Information for Bibliographical Applications', required: false, description: 'Well-established use applications' },
+        { number: '1.5.2', title: 'Information for Generic, Hybrid or Bio-similar Applications', required: false, description: 'Generic / hybrid / biosimilar applications' },
       ],
     },
-    { number: '1.9', title: 'Information Relating to Orphan Market Exclusivity', required: false, description: 'Orphan designation details' },
+    { number: '1.6', title: 'Environmental Risk Assessment', required: true, description: 'ERA (incl. GMO aspects where applicable)' },
+    {
+      number: '1.7', title: 'Information relating to Orphan Market Exclusivity', required: false, description: 'Orphan similarity and market exclusivity',
+      childSections: [
+        { number: '1.7.1', title: 'Similarity', required: false, description: 'Report on similarity with authorised orphan medicinal products' },
+        { number: '1.7.2', title: 'Market Exclusivity', required: false, description: 'Market-exclusivity considerations' },
+      ],
+    },
+    {
+      number: '1.8', title: 'Information relating to Pharmacovigilance', required: true, description: 'Pharmacovigilance system and risk management',
+      childSections: [
+        { number: '1.8.1', title: 'Pharmacovigilance System', required: true, description: 'Summary of the pharmacovigilance system (PSMF summary), incl. the QPPV' },
+        { number: '1.8.2', title: 'Risk Management System', required: true, description: 'EU Risk Management Plan (EU-RMP)' },
+      ],
+    },
+    { number: '1.9', title: 'Information relating to Clinical Trials', required: false, description: 'Statement on GCP compliance for clinical trials conducted outside the EU/EEA' },
+    { number: '1.10', title: 'Information relating to Paediatrics', required: false, description: 'PIP / PDCO decision, deferral or waiver information' },
   ],
 };
 
