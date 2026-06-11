@@ -15,6 +15,8 @@
  * 2. Multi-Query - Expand query into multiple perspectives
  * 2b. Step-Back - Derive a broader question (rag-query-transforms.ts) and
  *     retrieve on it alongside the original for background context
+ * 2c. Decompose - Split a multi-part question into atomic sub-questions
+ *     (rag-query-transforms.ts) and retrieve each alongside the original
  * 3. Reranking - pluggable via rag-reranker.ts. Defaults to an LLM-as-judge
  *    (a prompted relevance score, NOT a cross-encoder); swaps to a true
  *    cross-encoder reranker when RAG_RERANKER_* env is configured.
@@ -39,14 +41,20 @@ import { AIProviderRouter, getAIRouter, type AIRequest, type AIResponse } from '
 import { getOpenAIClient } from './openai-client.js';
 import { getReranker, type Reranker } from './rag-reranker.js';
 import { fuseHybrid, mergeByMaxScore } from './rag-fusion.js';
-import { generateStepBackQuery } from './rag-query-transforms.js';
+import {
+  hydeRetrieval,
+  multiQueryRetrieval,
+  stepBackRetrieval,
+  decomposeRetrieval,
+  type StrategyDeps,
+} from './rag-retrieval-strategies.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
 export interface RetrievalOptions {
-  strategy: 'basic' | 'hyde' | 'multi_query' | 'step_back' | 'advanced';
+  strategy: 'basic' | 'hyde' | 'multi_query' | 'step_back' | 'decompose' | 'advanced';
   limit?: number;
   threshold?: number;
   useReranking?: boolean;
@@ -324,94 +332,59 @@ export class AdvancedRAGPipeline {
     let retrievalStrategy: string = options.strategy;
     let tokensUsed = 0;
 
+    // Primitives the query-transform strategies fan out through, bound to this
+    // call's scope (tenant, threshold, corpus). See rag-retrieval-strategies.ts.
+    const deps: StrategyDeps = {
+      route: req => this.routeCached(req),
+      embedBatch: queries => this.embeddingService.embedBatch(queries, 'text-embedding-3-small'),
+      search: (q, l) => this.searchInitial(q, l, threshold, options.organizationUuid, artifactScope, scope),
+    };
+
     // Step 1: Initial retrieval based on strategy
     switch (options.strategy) {
-      case 'hyde':
-        const hydeResult = await this.hydeRetrieval(
-          query,
-          limit * 3,
-          threshold,
-          options.filters,
-          options.organizationUuid,
-          artifactScope,
-          scope
-        );
-        candidates = hydeResult.documents;
-        tokensUsed += hydeResult.tokensUsed;
-        break;
-
-      case 'multi_query':
-        const multiResult = await this.multiQueryRetrieval(
-          query,
-          limit * 3,
-          threshold,
-          options.filters,
-          options.organizationUuid,
-          artifactScope,
-          scope
-        );
-        candidates = multiResult.documents;
-        tokensUsed += multiResult.tokensUsed;
-        break;
-
-      case 'step_back': {
-        const stepBackResult = await this.stepBackRetrieval(
-          query,
-          limit * 3,
-          threshold,
-          options.filters,
-          options.organizationUuid,
-          artifactScope,
-          scope
-        );
-        candidates = stepBackResult.documents;
-        tokensUsed += stepBackResult.tokensUsed;
+      case 'hyde': {
+        const result = await hydeRetrieval(deps, query, limit * 3);
+        candidates = result.documents;
+        tokensUsed += result.tokensUsed;
         break;
       }
 
-      case 'advanced':
-        // Combine HyDE + Multi-Query
-        const [hydeAdvanced, multiAdvanced] = await Promise.all([
-          this.hydeRetrieval(
-            query,
-            limit * 2,
-            threshold,
-            options.filters,
-            options.organizationUuid,
-            artifactScope,
-            scope
-          ),
-          this.multiQueryRetrieval(
-            query,
-            limit * 2,
-            threshold,
-            options.filters,
-            options.organizationUuid,
-            artifactScope,
-            scope
-          ),
-        ]);
+      case 'multi_query': {
+        const result = await multiQueryRetrieval(deps, query, limit * 3);
+        candidates = result.documents;
+        tokensUsed += result.tokensUsed;
+        break;
+      }
 
-        // Merge and deduplicate
-        candidates = mergeByMaxScore([
-          ...hydeAdvanced.documents,
-          ...multiAdvanced.documents,
+      case 'step_back': {
+        const result = await stepBackRetrieval(deps, query, limit * 3);
+        candidates = result.documents;
+        tokensUsed += result.tokensUsed;
+        break;
+      }
+
+      case 'decompose': {
+        const result = await decomposeRetrieval(deps, query, limit * 3);
+        candidates = result.documents;
+        tokensUsed += result.tokensUsed;
+        break;
+      }
+
+      case 'advanced': {
+        // Combine HyDE + Multi-Query
+        const [hyde, multi] = await Promise.all([
+          hydeRetrieval(deps, query, limit * 2),
+          multiQueryRetrieval(deps, query, limit * 2),
         ]);
-        tokensUsed += hydeAdvanced.tokensUsed + multiAdvanced.tokensUsed;
+        candidates = mergeByMaxScore([...hyde.documents, ...multi.documents]);
+        tokensUsed += hyde.tokensUsed + multi.tokensUsed;
         retrievalStrategy = 'advanced';
         break;
+      }
 
       case 'basic':
       default:
-        candidates = await this.basicRetrieval(
-          query,
-          limit * 3,
-          threshold,
-          options.filters,
-          options.organizationUuid,
-          artifactScope,
-          scope
-        );
+        candidates = await deps.search(query, limit * 3);
         break;
     }
 
@@ -524,199 +497,6 @@ export class AdvancedRAGPipeline {
         initialScore: h.score,
         finalScore: h.score,
       }));
-  }
-
-  /**
-   * Basic semantic retrieval
-   */
-  private async basicRetrieval(
-    query: string,
-    limit: number,
-    threshold: number,
-    _filters?: RetrievalOptions['filters'],
-    organizationUuid?: string,
-    artifactScope?: RetrievalOptions['artifactScope'],
-    scope?: CorpusScope
-  ): Promise<RetrievedDocument[]> {
-    return this.searchInitial(query, limit, threshold, organizationUuid, artifactScope, scope);
-  }
-
-  /**
-   * HyDE: Hypothetical Document Embeddings
-   * Generate a hypothetical answer, then search for similar documents
-   */
-  private async hydeRetrieval(
-    query: string,
-    limit: number,
-    threshold: number,
-    _filters?: RetrievalOptions['filters'],
-    organizationUuid?: string,
-    artifactScope?: RetrievalOptions['artifactScope'],
-    scope?: CorpusScope
-  ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }> {
-    // Generate hypothetical answer using Claude for better reasoning
-    const hydeResponse = await this.routeCached({
-      taskType: 'reasoning',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a regulatory affairs expert. Generate a detailed, factual answer to the following question as if you were an authoritative regulatory document. Include specific regulatory references, requirements, and guidance. Do not mention that this is hypothetical.`,
-        },
-        {
-          role: 'user',
-          content: query,
-        },
-      ],
-      maxTokens: 500,
-      temperature: 0.3,
-    });
-
-    const hypotheticalDoc = hydeResponse.content;
-
-    // Search using the hypothetical document
-    const results = await this.searchInitial(
-      hypotheticalDoc,
-      limit,
-      threshold,
-      organizationUuid,
-      artifactScope,
-      scope
-    );
-
-    return {
-      documents: results,
-      tokensUsed: hydeResponse.usage.totalTokens,
-    };
-  }
-
-  /**
-   * Multi-Query: Generate multiple query perspectives
-   */
-  private async multiQueryRetrieval(
-    query: string,
-    limit: number,
-    threshold: number,
-    _filters?: RetrievalOptions['filters'],
-    organizationUuid?: string,
-    artifactScope?: RetrievalOptions['artifactScope'],
-    scope?: CorpusScope
-  ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }> {
-    // Generate alternative queries
-    const queryExpansionResponse = await this.routeCached({
-      taskType: 'structured_output',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a search query expert. Generate 4 alternative versions of the user's question that capture different perspectives or aspects. Return ONLY a JSON array of strings, no other text.`,
-        },
-        {
-          role: 'user',
-          content: `Original question: "${query}"\n\nGenerate 4 alternative phrasings that would help find relevant regulatory information.`,
-        },
-      ],
-      maxTokens: 300,
-      temperature: 0.5,
-      jsonMode: true,
-    });
-
-    let alternativeQueries: string[];
-    try {
-      const parsed = JSON.parse(queryExpansionResponse.content);
-      alternativeQueries = Array.isArray(parsed) ? parsed : parsed.queries || [query];
-    } catch {
-      alternativeQueries = [query];
-    }
-
-    // Add original query
-    const allQueries = [query, ...alternativeQueries.slice(0, 4)];
-
-    // Collapse the per-sub-query embedding round-trips into a single batch call.
-    // searchInitial embeds each query internally; pre-warming the embedding
-    // service's text->vector cache here turns those into cache hits, so the N
-    // sub-queries cost one embeddings request instead of N. Queries are short
-    // (no truncation), so the batch cache keys match the per-query embed keys.
-    // Best-effort: on failure we fall back to per-query embedding inside the
-    // searches, and corpora that embed elsewhere (project atoms via
-    // searchHybrid) are simply unaffected.
-    try {
-      await this.embeddingService.embedBatch(allQueries, 'text-embedding-3-small');
-    } catch (error) {
-      console.warn('[RAG] multi-query batch embed failed, falling back to per-query embed:', error);
-    }
-
-    // Search with all queries in parallel
-    const searchPromises = allQueries.map(q =>
-      this.searchInitial(
-        q,
-        Math.ceil(limit / allQueries.length),
-        threshold,
-        organizationUuid,
-        artifactScope,
-        scope
-      )
-    );
-
-    const allResults = await Promise.all(searchPromises);
-
-    // Merge results
-    const merged = mergeByMaxScore(allResults.flat());
-
-    return {
-      documents: merged,
-      tokensUsed: queryExpansionResponse.usage.totalTokens,
-    };
-  }
-
-  /**
-   * Step-back retrieval. Derives a more general "step-back" question and
-   * retrieves on both it and the original, then fuses. The broader pass pulls in
-   * background context (governing regulation, definitions) that a narrow query
-   * alone misses. When no useful step-back is produced (model echoed/declined),
-   * this degrades to a single-query retrieval on the original — same cost shape
-   * as basic retrieval plus one cheap reasoning call.
-   */
-  private async stepBackRetrieval(
-    query: string,
-    limit: number,
-    threshold: number,
-    _filters?: RetrievalOptions['filters'],
-    organizationUuid?: string,
-    artifactScope?: RetrievalOptions['artifactScope'],
-    scope?: CorpusScope
-  ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }> {
-    const { stepBackQuery, tokensUsed } = await generateStepBackQuery(
-      req => this.routeCached(req),
-      query
-    );
-
-    const queries = stepBackQuery ? [query, stepBackQuery] : [query];
-
-    // Pre-warm the embedding cache with one batch call so the per-query embeds
-    // inside searchInitial become cache hits (same optimization as multi-query).
-    // Best-effort; on failure each search embeds its own query.
-    try {
-      await this.embeddingService.embedBatch(queries, 'text-embedding-3-small');
-    } catch (error) {
-      console.warn('[RAG] step-back batch embed failed, falling back to per-query embed:', error);
-    }
-
-    const results = await Promise.all(
-      queries.map(q =>
-        this.searchInitial(
-          q,
-          Math.ceil(limit / queries.length),
-          threshold,
-          organizationUuid,
-          artifactScope,
-          scope
-        )
-      )
-    );
-
-    return {
-      documents: mergeByMaxScore(results.flat()),
-      tokensUsed,
-    };
   }
 
   /**
