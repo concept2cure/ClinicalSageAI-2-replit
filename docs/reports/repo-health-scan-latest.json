@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-11T12:13:26.476Z",
+  "generatedAt": "2026-06-11T12:17:54.849Z",
   "git": {
-    "sha": "0e354904713058403524a9071ac76db9ddab3371",
+    "sha": "f23ffe1035739abb75673a9f51d28d6b0aba3846",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 198,
+    "duplicateBasenames": 200,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -1143,6 +1143,22 @@
         ]
       },
       {
+        "basename": "calibration",
+        "count": 2,
+        "paths": [
+          "server/services/intelligence/calibration.ts",
+          "server/services/regulatory/calibration.ts"
+        ]
+      },
+      {
+        "basename": "calibration.test",
+        "count": 2,
+        "paths": [
+          "server/services/intelligence/__tests__/calibration.test.ts",
+          "server/services/regulatory/__tests__/calibration.test.ts"
+        ]
+      },
+      {
         "basename": "capa-mdr",
         "count": 2,
         "paths": [
@@ -2224,7 +2240,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 293,
+      "duplicateGroups": 297,
       "largeByBytes": 11,
       "largeByLines": 34
     },
