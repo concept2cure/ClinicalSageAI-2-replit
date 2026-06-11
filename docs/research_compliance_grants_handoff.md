@@ -1,5 +1,15 @@
 # Build & Handoff Report — Research Compliance + Sponsored Programs Suite
 
+
+## ✅ DB verification — DONE (no longer deferred)
+
+The governed backend was run and verified against a live Postgres 16:
+- All 12 domain migrations apply cleanly (DDL + CHECK constraints + FKs + indexes); a negative insert is rejected by the `chk_fcoi_form_matches_flag` constraint.
+- **17/17 governed-path assertions pass** (`scripts/db-verify/`): FCOI derive→certify→provenance→audit-hash-chain→c2c_ana_actions ledger→signature-invalidation; controlled-substances perpetual ledger rejects negative inventory; HA commitment threads 2 provenance links; IACUC approval stamps the 3-year expiration + Module 4 provenance.
+- Reproducible via `scripts/db-verify/README.md`.
+
+Remaining per-capability DB checks (RLS session-var enforcement, full report-run resolution) are listed under each capability below.
+
 Living handoff for the roadmap (C2C-01 … C2C-15). Backend lands first (no UI per
 directive); this report is what the follow-on session uses to build UI surfaces
 and to run the deferred DB-backed verification. Updated as each capability lands.
