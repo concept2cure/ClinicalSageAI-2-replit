@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-11T23:52:39.425Z",
+  "generatedAt": "2026-06-11T23:54:34.419Z",
   "git": {
-    "sha": "bd328d81044954b0cb5cae624e6d12cae8e9ac72",
+    "sha": "a2ea9e0b910b71aca5044b275a499a4fb353faec",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 205,
+    "duplicateBasenames": 206,
     "largeFilesByBytes": 15,
     "largeFilesByLines": 44
   },
@@ -1816,6 +1816,14 @@
         ]
       },
       {
+        "basename": "research-compliance",
+        "count": 2,
+        "paths": [
+          "server/routes/research-compliance.ts",
+          "shared/schema/research-compliance.ts"
+        ]
+      },
+      {
         "basename": "rolebasedaccess",
         "count": 2,
         "paths": [
@@ -2051,11 +2059,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 380145
+        "bytes": 385459
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 299358
+        "bytes": 302171
       },
       {
         "file": "server/statistics-service.ts",
@@ -2113,7 +2121,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 7884
+        "lines": 7963
       },
       {
         "file": "server/statistics-service.ts",
@@ -2121,7 +2129,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 5641
+        "lines": 5698
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2285,7 +2293,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 303,
+      "duplicateGroups": 304,
       "largeByBytes": 12,
       "largeByLines": 34
     },
@@ -2303,7 +2311,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 43,
+      "duplicateGroups": 44,
       "largeByBytes": 1,
       "largeByLines": 2
     },
