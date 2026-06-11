@@ -186,6 +186,13 @@
         "responses": { "200": { "description": "Per-program lines + portfolio aggregates + worklist" }, "422": { "$ref": "#/components/responses/ValidationError" } }
       }
     },
+    "/ivd-lifecycle/capabilities": {
+      "get": {
+        "tags": ["lifecycle"], "summary": "Capability manifest (self-documenting engine surface)",
+        "parameters": [{ "name": "category", "in": "query", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "count + categories + capability list (path/method/title/description/flags)" } }
+      }
+    },
     "/ivd-lifecycle/coverage/simulate": {
       "post": {
         "tags": ["lifecycle"], "summary": "Coverage / reimbursement revenue model (produces marketValueUsd)",

@@ -71,6 +71,11 @@ import { simulateCoverage } from '../services/regulatory/coverage-simulation';
 import { calibrate } from '../services/regulatory/calibration';
 import { detectDrift } from '../services/regulatory/drift-detection';
 import { listAssessments } from '../services/regulatory/ivd-assessments.service';
+import { listCapabilities } from '../services/regulatory/ivd-capabilities';
+import { ComputeCache } from '../services/stats/compute-cache';
+
+/** Deterministic (seeded) program-plan cache — production hardening. */
+const programPlanCache = new ComputeCache<any>(300);
 import { diagnosticAccuracyMonteCarlo, reviewOutcomeMonteCarlo, timeToMarketMonteCarlo } from '../services/stats/monte-carlo';
 import { saveAssessment } from '../services/regulatory/ivd-assessments.service';
 import { corpusVersion } from '../services/ivd-knowledge/knowledge.service';
@@ -272,7 +277,8 @@ router.post('/program-plan', async (req: Request, res: Response) => {
     return res.status(422).json({ error: `assayType must be one of: ${ASSAY.join(', ')}` });
   }
   try {
-    const result = buildProgramPlan(b);
+    // Deterministic given the inputs (seed defaulted in the engine) → cacheable.
+    const result = programPlanCache.memoize(b, () => buildProgramPlan(b));
     const savedId = await maybeSave(req, 'other', b, result.executiveSummary, result.executiveSummary.verdict);
     res.json(savedId ? { ...result, savedAssessmentId: savedId } : result);
   } catch (e) {
@@ -280,11 +286,20 @@ router.post('/program-plan', async (req: Request, res: Response) => {
   }
 });
 
+// ── Capability manifest (self-documenting surface) ──────────────────────────
+router.get('/capabilities', (req: Request, res: Response) => {
+  const cat = req.query.category;
+  res.json(listCapabilities(typeof cat === 'string' ? cat : undefined));
+});
+
 // ── What-if scenario comparison ─────────────────────────────────────────────
 router.post('/scenarios/compare', (req: Request, res: Response) => {
   const b = req.body ?? {};
   if (!Array.isArray(b.scenarios) || b.scenarios.length === 0) {
     return res.status(422).json({ error: 'scenarios (array of { name, input }) is required' });
+  }
+  if (b.scenarios.length > 50) {
+    return res.status(422).json({ error: 'scenarios is limited to 50 per request' });
   }
   try {
     res.json(compareProgramScenarios(b.scenarios));
@@ -368,6 +383,9 @@ router.post('/portfolio/batch', async (req: Request, res: Response) => {
   if (!Array.isArray(b.programs) || b.programs.length === 0) {
     return res.status(422).json({ error: 'programs (array of { name, input }) is required' });
   }
+  if (b.programs.length > 200) {
+    return res.status(422).json({ error: 'programs is limited to 200 per request' });
+  }
   try {
     const result = runPortfolioPlans(b.programs);
     const savedId = await maybeSave(req, 'other', { programCount: result.programCount }, result, `${result.likelyAcceptances}/${result.programCount} ready`);
@@ -391,6 +409,9 @@ router.post('/calibration/backtest', (req: Request, res: Response) => {
   const b = req.body ?? {};
   if (!Array.isArray(b.cases) || b.cases.length === 0) {
     return res.status(422).json({ error: 'cases (array of { profile, approved }) is required' });
+  }
+  if (b.cases.length > 5000) {
+    return res.status(422).json({ error: 'cases is limited to 5000 per request' });
   }
   try {
     res.json(calibrate(b.cases));
