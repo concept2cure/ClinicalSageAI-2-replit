@@ -45,6 +45,8 @@ export interface ChatMessageView {
     groundedClaims: number;
     weakClaims: number;
     missingSupport: number;
+    riskSummary?: string;
+    flaggedClaims?: { kind: 'ungrounded' | 'overclaim' | 'contradiction'; text: string }[];
   };
   /** Degraded-mode warnings to surface as a chip. */
   warnings?: string[];
