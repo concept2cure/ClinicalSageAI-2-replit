@@ -2550,6 +2550,52 @@ export type OrganizationUser = InferSelectModel<typeof organizationUsers>;
 export type InsertOrganizationUser = z.infer<typeof insertOrganizationUserSchema>;
 
 /**
+ * Organization Invitations
+ *
+ * Consent register for cross-org invites (decision-register item 12, #727).
+ * When an org admin invites an email that already belongs to a user in
+ * ANOTHER organization, a pending row is created here instead of silently
+ * inserting an organization_users membership; the membership is only created
+ * when the invited user accepts. Resolved rows are retained as an audit
+ * record of consent. See db/migrations/20260611_organization_invitations.sql.
+ */
+export const organizationInvitations = pgTable(
+  'organization_invitations',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    // Nullable to allow invites for not-yet-registered emails; the current
+    // invite flow always resolves an existing user, so it is populated today.
+    userId: integer('user_id').references(() => users.id),
+    email: text('email').notNull(),
+    role: text('role').default('member').notNull(), // admin, manager, member, viewer
+    invitedById: integer('invited_by_id').references(() => users.id),
+    status: text('status').default('pending').notNull(), // pending | accepted | declined
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    respondedAt: timestamp('responded_at'),
+  },
+  table => ({
+    orgInvitationsOrgIdx: index('organization_invitations_org_idx').on(table.organizationId),
+    orgInvitationsUserIdx: index('organization_invitations_user_idx').on(table.userId),
+    // One live (pending) invitation per org + email; resolved invitations
+    // don't block a re-invite.
+    orgInvitationsPendingUniq: uniqueIndex('organization_invitations_pending_uniq')
+      .on(table.organizationId, sql`lower(${table.email})`)
+      .where(sql`${table.status} = 'pending'`),
+  })
+);
+
+export const insertOrganizationInvitationSchema = createInsertSchemaOmit(organizationInvitations, {
+  id: true,
+  createdAt: true,
+});
+
+export type OrganizationInvitation = InferSelectModel<typeof organizationInvitations>;
+export type InsertOrganizationInvitation = z.infer<typeof insertOrganizationInvitationSchema>;
+
+/**
  * SCIM tenant tokens (enterprise identity provisioning).
  *
  * DB-backed, per-org SCIM bearer tokens so multiple client orgs can be

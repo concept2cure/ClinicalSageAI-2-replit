@@ -193,9 +193,66 @@ export async function atomicCreateUser(organizationId, userData) {
         };
       }
 
-      // Existing user: never overwrite their global profile from an invite —
-      // the inviting org has no authority over a user record that may belong
-      // to other organizations. Title/department apply only on user creation.
+      // Existing user in ANOTHER organization: do NOT silently add a
+      // membership. Memberships require the user's consent, so create (or
+      // reuse) a PENDING invitation instead (decision-register item 12,
+      // issue #727). The organization_users row is only created when the
+      // invited user accepts via atomicAcceptInvitation().
+      // Also: never overwrite their global profile from an invite — the
+      // inviting org has no authority over a user record that may belong to
+      // other organizations. Title/department apply only on user creation.
+      const existingInviteResult = await client.query(
+        `SELECT id FROM organization_invitations
+         WHERE organization_id = $1 AND lower(email) = lower($2) AND status = 'pending'`,
+        [organizationId, userData.email]
+      );
+
+      let invitationId;
+      if (existingInviteResult.rows.length > 0) {
+        // Idempotent: a pending invitation for this org+email already exists.
+        invitationId = existingInviteResult.rows[0].id;
+      } else {
+        const inviteInsertResult = await client.query(
+          `INSERT INTO organization_invitations
+             (organization_id, user_id, email, role, invited_by_id, status, created_at)
+           VALUES ($1, $2, $3, $4, $5, 'pending', NOW())
+           ON CONFLICT DO NOTHING
+           RETURNING id`,
+          [
+            organizationId,
+            userId,
+            userData.email,
+            userData.role || 'member',
+            userData.invitedById || null,
+          ]
+        );
+        if (inviteInsertResult.rows.length > 0) {
+          invitationId = inviteInsertResult.rows[0].id;
+        } else {
+          // Lost a race against a concurrent invite — reuse the winner's row.
+          const raced = await client.query(
+            `SELECT id FROM organization_invitations
+             WHERE organization_id = $1 AND lower(email) = lower($2) AND status = 'pending'`,
+            [organizationId, userData.email]
+          );
+          invitationId = raced.rows[0]?.id;
+        }
+      }
+
+      await client.query('COMMIT');
+
+      return {
+        success: true,
+        pendingInvitation: true,
+        data: {
+          invitationId,
+          email: userData.email,
+          role: userData.role || 'member',
+          status: 'pending',
+        },
+        message:
+          'User already belongs to another organization. A pending invitation requiring their consent was created; membership will be added when they accept.',
+      };
     } else {
       // Create new user
       const createUserResult = await client.query(
@@ -251,6 +308,145 @@ export async function atomicCreateUser(organizationId, userData) {
       success: false,
       error: 'DATABASE_ERROR',
       message: 'Failed to create user atomically',
+      details: error.message,
+    };
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Atomically accept a pending cross-org invitation (decision-register item
+ * 12, issue #727). Self-only: the caller must BE the invited user. Creates
+ * the organization_users membership (and license_users quota row) inside the
+ * same transaction that marks the invitation accepted, re-checking the user
+ * quota with the same SELECT...FOR UPDATE discipline as atomicCreateUser.
+ *
+ * @param {number} invitationId - Invitation to accept
+ * @param {number} callerUserId - Session user id (must equal invitation.user_id)
+ * @returns {object} Result with success, data, and error details
+ */
+export async function atomicAcceptInvitation(invitationId, callerUserId) {
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const inviteResult = await client.query(
+      `SELECT id, organization_id, user_id, email, role, status
+       FROM organization_invitations
+       WHERE id = $1
+       FOR UPDATE`,
+      [invitationId]
+    );
+
+    if (inviteResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return { success: false, error: 'NOT_FOUND', message: 'Invitation not found' };
+    }
+
+    const invitation = inviteResult.rows[0];
+
+    if (Number(invitation.user_id) !== Number(callerUserId)) {
+      await client.query('ROLLBACK');
+      return {
+        success: false,
+        error: 'FORBIDDEN',
+        message: 'Only the invited user may respond to this invitation',
+      };
+    }
+
+    if (invitation.status !== 'pending') {
+      await client.query('ROLLBACK');
+      return {
+        success: false,
+        error: 'NOT_PENDING',
+        message: `Invitation has already been ${invitation.status}`,
+      };
+    }
+
+    const organizationId = invitation.organization_id;
+
+    // Re-check quota at accept time — the invite path no longer consumes it.
+    const licenseResult = await client.query(
+      `SELECT * FROM licenses
+       WHERE organization_id = $1 AND status = 'active'
+       FOR UPDATE`,
+      [organizationId]
+    );
+
+    if (licenseResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return {
+        success: false,
+        error: 'NO_LICENSE',
+        message: 'No active license found for this organization',
+      };
+    }
+
+    const license = licenseResult.rows[0];
+
+    const countResult = await client.query(
+      `SELECT COUNT(*) as count
+       FROM license_users
+       WHERE license_id = $1`,
+      [license.id]
+    );
+
+    const currentCount = parseInt(countResult.rows[0].count);
+    const maxUsers = license.max_users || 10;
+
+    if (currentCount >= maxUsers) {
+      await client.query('ROLLBACK');
+      return {
+        success: false,
+        error: 'QUOTA_EXCEEDED',
+        message: `User quota exceeded. Current: ${currentCount}, Maximum: ${maxUsers}`,
+        details: { current: currentCount, maximum: maxUsers, remaining: 0 },
+      };
+    }
+
+    // Consent given: create the membership now.
+    await client.query(
+      `INSERT INTO organization_users (organization_id, user_id, role, created_at, updated_at)
+       VALUES ($1, $2, $3, NOW(), NOW())
+       ON CONFLICT (user_id, organization_id) DO NOTHING`,
+      [organizationId, invitation.user_id, invitation.role || 'member']
+    );
+
+    await client.query(
+      `INSERT INTO license_users (license_id, user_id, created_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (license_id, user_id) DO NOTHING`,
+      [license.id, invitation.user_id]
+    );
+
+    await client.query(
+      `UPDATE organization_invitations
+       SET status = 'accepted', responded_at = NOW()
+       WHERE id = $1 AND organization_id = $2`,
+      [invitationId, organizationId]
+    );
+
+    await client.query('COMMIT');
+
+    return {
+      success: true,
+      data: {
+        invitationId,
+        organizationId,
+        userId: invitation.user_id,
+        role: invitation.role || 'member',
+        status: 'accepted',
+      },
+    };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Atomic invitation accept failed:', error);
+    return {
+      success: false,
+      error: 'DATABASE_ERROR',
+      message: 'Failed to accept invitation atomically',
       details: error.message,
     };
   } finally {

@@ -66,6 +66,178 @@ async function authorizeOrgAccess(
   return true;
 }
 
+/** Resolve the authenticated user's id from the request (set upstream). */
+function getCallerId(req: any): number | null {
+  const callerId = Number(req.user?.id ?? req.userId);
+  return callerId && !Number.isNaN(callerId) ? callerId : null;
+}
+
+/**
+ * GET /api/tenant-users/invitations/mine
+ * List the session user's PENDING cross-org invitations (decision-register
+ * item 12, #727). Self-only by construction: scoped to the caller's user_id.
+ *
+ * NOTE: must be registered before GET /:tenantId so "invitations" is not
+ * swallowed by the tenantId param route.
+ */
+router.get('/invitations/mine', async (req, res) => {
+  try {
+    if (!pool) {
+      log.error('Database pool not available');
+      return res.status(500).json({ error: 'Database connection not available' });
+    }
+
+    const callerId = getCallerId(req);
+    if (!callerId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const result = await pool.query(
+      `SELECT
+         id,
+         organization_id as "organizationId",
+         email,
+         role,
+         status,
+         invited_by_id as "invitedById",
+         created_at as "createdAt"
+       FROM organization_invitations
+       WHERE user_id = $1 AND status = 'pending'
+       ORDER BY created_at DESC`,
+      [callerId]
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    log.error('Error retrieving pending invitations', error);
+    res.status(500).json({ error: 'Failed to retrieve pending invitations' });
+  }
+});
+
+/**
+ * POST /api/tenant-users/invitations/:invitationId/accept
+ * Accept a pending invitation. Self-only: the session user must BE the
+ * invited user. Creates the organization_users membership atomically (with
+ * quota re-check) and marks the invitation accepted.
+ */
+router.post('/invitations/:invitationId/accept', async (req, res) => {
+  try {
+    if (!pool) {
+      log.error('Database pool not available');
+      return res.status(500).json({ error: 'Database connection not available' });
+    }
+
+    const callerId = getCallerId(req);
+    if (!callerId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const invitationId = parseInt(req.params.invitationId);
+    if (isNaN(invitationId)) {
+      return res.status(400).json({ error: 'Invalid invitation ID' });
+    }
+
+    const atomicQuotaService = (await import(
+      '../services/atomicQuotaService.js'
+    )) as unknown as {
+      atomicAcceptInvitation: (
+        invitationId: number,
+        callerUserId: number,
+      ) => Promise<{
+        success: boolean;
+        error?: string;
+        message?: string;
+        details?: unknown;
+        data?: unknown;
+      }>;
+    };
+
+    const result = await atomicQuotaService.atomicAcceptInvitation(invitationId, callerId);
+
+    if (!result.success) {
+      const statusByError: Record<string, number> = {
+        NOT_FOUND: 404,
+        FORBIDDEN: 403,
+        NOT_PENDING: 409,
+        QUOTA_EXCEEDED: 403,
+        NO_LICENSE: 400,
+      };
+      return res.status(statusByError[result.error ?? ''] ?? 400).json({
+        success: false,
+        error: result.error,
+        message: result.message,
+        details: result.details,
+      });
+    }
+
+    log.debug('Invitation accepted:', result.data);
+    res.json({ success: true, message: 'Invitation accepted', data: result.data });
+  } catch (error) {
+    log.error('Error accepting invitation', error);
+    res.status(500).json({ error: 'Failed to accept invitation' });
+  }
+});
+
+/**
+ * POST /api/tenant-users/invitations/:invitationId/decline
+ * Decline a pending invitation. Self-only: the session user must BE the
+ * invited user. No membership is created; the row is kept as an audit record.
+ */
+router.post('/invitations/:invitationId/decline', async (req, res) => {
+  try {
+    if (!pool) {
+      log.error('Database pool not available');
+      return res.status(500).json({ error: 'Database connection not available' });
+    }
+
+    const callerId = getCallerId(req);
+    if (!callerId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const invitationId = parseInt(req.params.invitationId);
+    if (isNaN(invitationId)) {
+      return res.status(400).json({ error: 'Invalid invitation ID' });
+    }
+
+    const inviteResult = await pool.query(
+      `SELECT id, organization_id, user_id, status
+       FROM organization_invitations
+       WHERE id = $1`,
+      [invitationId]
+    );
+
+    if (inviteResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Invitation not found' });
+    }
+
+    const invitation = inviteResult.rows[0];
+
+    if (Number(invitation.user_id) !== callerId) {
+      return res
+        .status(403)
+        .json({ error: 'Only the invited user may respond to this invitation' });
+    }
+
+    if (invitation.status !== 'pending') {
+      return res.status(409).json({ error: `Invitation has already been ${invitation.status}` });
+    }
+
+    await pool.query(
+      `UPDATE organization_invitations
+       SET status = 'declined', responded_at = NOW()
+       WHERE id = $1 AND organization_id = $2 AND user_id = $3 AND status = 'pending'`,
+      [invitationId, invitation.organization_id, callerId]
+    );
+
+    log.debug(`Invitation ${invitationId} declined by user ${callerId}`);
+    res.json({ success: true, message: 'Invitation declined' });
+  } catch (error) {
+    log.error('Error declining invitation', error);
+    res.status(500).json({ error: 'Failed to decline invitation' });
+  }
+});
+
 /**
  * GET /api/tenant-users/:tenantId
  * Get users for a specific tenant
@@ -148,6 +320,7 @@ router.post('/', async (req, res) => {
         userData: Record<string, unknown>,
       ) => Promise<{
         success: boolean;
+        pendingInvitation?: boolean;
         error?: string;
         message?: string;
         details?: unknown;
@@ -161,6 +334,7 @@ router.post('/', async (req, res) => {
       role: validatedData.role,
       title: validatedData.title,
       department: validatedData.department,
+      invitedById: getCallerId(req),
     });
 
     if (!result.success) {
@@ -183,6 +357,18 @@ router.post('/', async (req, res) => {
         success: false,
         error: result.error,
         message: result.message,
+      });
+    }
+
+    if (result.pendingInvitation) {
+      // Existing user in another org: consent required — a pending invitation
+      // was created instead of a membership (decision-register item 12, #727).
+      log.debug('Cross-org invite resulted in pending invitation:', result.data);
+      return res.status(202).json({
+        success: true,
+        pendingInvitation: true,
+        message: result.message,
+        data: result.data,
       });
     }
 
@@ -260,6 +446,43 @@ router.post('/legacy', async (req, res) => {
           `Invite for existing user ${userId}: ignoring title/department from invite form (cross-org profile is not overwritten)`
         );
       }
+
+      // Existing user in ANOTHER organization: membership requires the user's
+      // consent, so create (or reuse) a PENDING invitation instead of adding
+      // them to organization_users (decision-register item 12, #727).
+      const existingInviteResult = await pool.query(
+        `SELECT id FROM organization_invitations
+         WHERE organization_id = $1 AND lower(email) = lower($2) AND status = 'pending'`,
+        [organizationId, validatedData.email]
+      );
+
+      let invitationId;
+      if (existingInviteResult.rows.length > 0) {
+        invitationId = existingInviteResult.rows[0].id;
+      } else {
+        const inviteInsertResult = await pool.query(
+          `INSERT INTO organization_invitations
+             (organization_id, user_id, email, role, invited_by_id, status, created_at)
+           VALUES ($1, $2, $3, $4, $5, 'pending', NOW())
+           ON CONFLICT DO NOTHING
+           RETURNING id`,
+          [organizationId, userId, validatedData.email, validatedData.role, getCallerId(req)]
+        );
+        invitationId = inviteInsertResult.rows[0]?.id;
+      }
+
+      return res.status(202).json({
+        success: true,
+        pendingInvitation: true,
+        message:
+          'User already belongs to another organization. A pending invitation requiring their consent was created; membership will be added when they accept.',
+        data: {
+          invitationId,
+          email: validatedData.email,
+          role: validatedData.role,
+          status: 'pending',
+        },
+      });
     } else {
       // Create new user
       const createUserQuery = `
