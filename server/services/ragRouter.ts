@@ -89,6 +89,8 @@ export interface RagRetrievalParams {
   /** Expand each vault/rag_chunks result to a ±contextWindow neighbour window for generation. */
   useContextExpansion?: boolean;
   contextWindow?: number;
+  /** Extract metadata filters (document type / source / date) from the query and pre-filter retrieval. */
+  useSelfQuery?: boolean;
   /** Enable the agentic corrective loop (grade + rewrite/re-retrieve + groundedness guard) for ragQuery. */
   useCorrectiveLoop?: boolean;
   useCompression?: boolean;
@@ -158,6 +160,7 @@ export function optionsForIntent(params: RagRetrievalParams): RetrievalOptions {
     useHybrid: pick(params.useHybrid, defaults.useHybrid),
     useContextExpansion: pick(params.useContextExpansion, defaults.useContextExpansion),
     contextWindow: params.contextWindow,
+    useSelfQuery: pick(params.useSelfQuery, defaults.useSelfQuery),
     useCorrectiveLoop: params.useCorrectiveLoop,
     useCompression: params.useCompression,
     organizationUuid: params.organizationUuid,

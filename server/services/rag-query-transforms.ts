@@ -13,6 +13,7 @@
  */
 
 import type { AIRequest, AIResponse } from './aiProviderRouter.js';
+import type { QueryFilters } from './rag-filters.js';
 
 /** Inject the pipeline's cached router so identical transforms reuse the result. */
 export type RouteFn = (request: AIRequest) => Promise<AIResponse>;
@@ -124,4 +125,65 @@ export async function generateSubQuestions(
   }
 
   return { subQuestions, tokensUsed: response.usage.totalTokens };
+}
+
+export interface FilterExtractionResult {
+  /** Filters detected in the query; empty object when the query carries no constraints. */
+  filters: QueryFilters;
+  tokensUsed: number;
+}
+
+/**
+ * Self-querying: extract structured metadata constraints embedded in a natural
+ * language question so retrieval can pre-filter, not just rank. We only ask for
+ * fields a corpus can actually filter on — a document type, a source/publisher,
+ * and a date range (there is no `domain` column anywhere, so we don't pretend to
+ * extract one). Anything not clearly present is omitted; the model must not
+ * invent constraints (over-filtering silently drops relevant results).
+ *
+ * Returns an empty `filters` object on parse failure or when nothing is present,
+ * so the caller simply retrieves unfiltered.
+ */
+export async function extractQueryFilters(
+  route: RouteFn,
+  query: string
+): Promise<FilterExtractionResult> {
+  const response = await route({
+    taskType: 'structured_output',
+    messages: [
+      {
+        role: 'system',
+        content: `Extract metadata filters explicitly present in the user's question, for pre-filtering a document search. Return ONLY a JSON object with any of these optional keys:
+- "documentType": a document/record type if the user names one (e.g. "protocol", "guidance", "CSR", "SAP").
+- "source": a source system or publisher if named (e.g. "FDA", "EMA", "ICH").
+- "dateStart" / "dateEnd": ISO-8601 dates (YYYY-MM-DD) if the user constrains a time range.
+Omit any key not explicitly and unambiguously present. Do NOT guess. Return {} if there are no constraints.`,
+      },
+      { role: 'user', content: `Question: "${query}"\n\nFilters (JSON):` },
+    ],
+    maxTokens: 150,
+    temperature: 0,
+    jsonMode: true,
+  });
+
+  const filters: QueryFilters = {};
+  try {
+    const parsed = JSON.parse(response.content) as Record<string, unknown>;
+    if (typeof parsed.documentType === 'string' && parsed.documentType.trim()) {
+      filters.atomType = parsed.documentType.trim();
+    }
+    if (typeof parsed.source === 'string' && parsed.source.trim()) {
+      filters.source = parsed.source.trim();
+    }
+    const start = typeof parsed.dateStart === 'string' ? new Date(parsed.dateStart) : null;
+    const end = typeof parsed.dateEnd === 'string' ? new Date(parsed.dateEnd) : null;
+    // Only honour a range when both ends parse to valid dates.
+    if (start && end && !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
+      filters.dateRange = { start, end };
+    }
+  } catch {
+    // Unparseable -> no filters; retrieval proceeds unfiltered.
+  }
+
+  return { filters, tokensUsed: response.usage.totalTokens };
 }

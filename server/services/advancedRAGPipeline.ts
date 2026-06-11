@@ -58,6 +58,14 @@ import {
   rewriteQuery,
   verifyGroundedness,
 } from './rag-corrective-loop.js';
+import { extractQueryFilters } from './rag-query-transforms.js';
+import {
+  buildDocFilterClause,
+  mergeFilters,
+  VAULT_FILTER_COLUMNS,
+  RAG_FILTER_COLUMNS,
+  type QueryFilters,
+} from './rag-filters.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
@@ -97,6 +105,14 @@ export interface RetrievalOptions {
    * path, and it annotates (a `grounded` flag) rather than withholding answers.
    */
   useCorrectiveLoop?: boolean;
+  /**
+   * Self-querying: extract metadata constraints (document type, source, date
+   * range) from the natural-language query via the LLM and apply them as SQL
+   * pre-filters on the vault / rag_chunks corpora, merged under any explicit
+   * `filters` (explicit wins). Off unless set. No effect on project-atom /
+   * memory corpora, and `filters.domain` is never applied (no column exists).
+   */
+  useSelfQuery?: boolean;
   useCompression?: boolean;
   organizationUuid?: string;
   persistCitations?: boolean;
@@ -236,6 +252,12 @@ type CorpusScope = {
    */
   hybrid?: boolean;
   /**
+   * Metadata pre-filters (document type / source / date range) applied in the
+   * vault and rag_chunks SQL. Honoured only by those corpora; project atoms and
+   * memory ignore them.
+   */
+  filters?: QueryFilters;
+  /**
    * Pull each candidate's stored embedding out of the vector search so MMR can
    * reuse it instead of re-embedding. Set only when the caller requested MMR,
    * so non-MMR queries don't pay to ship vector text they won't use.
@@ -362,6 +384,9 @@ export class AdvancedRAGPipeline {
       // Only carry stored vectors out of the search when MMR will consume them.
       needEmbeddings: !!options.useMmr,
       hybrid: !!options.useHybrid,
+      // Explicit filters apply on the chunk corpora regardless of self-query;
+      // the self-query step below augments these in place.
+      filters: options.filters,
     };
 
     let candidates: RetrievedDocument[];
@@ -377,6 +402,16 @@ export class AdvancedRAGPipeline {
       embedBatch: queries => this.embeddingService.embedBatch(queries, 'text-embedding-3-small'),
       search: (q, l) => this.searchInitial(q, l, threshold, options.organizationUuid, artifactScope, scope),
     };
+
+    // Step 0: Self-querying. Extract metadata constraints from the question and
+    // merge them under any explicit filters (explicit wins), then pre-filter the
+    // chunk-corpus SQL via scope.filters. deps.search closes over `scope`, so
+    // setting it here applies to every strategy's retrieval below.
+    if (options.useSelfQuery) {
+      const extracted = await extractQueryFilters(deps.route, query);
+      tokensUsed += extracted.tokensUsed;
+      scope.filters = mergeFilters(extracted.filters, options.filters);
+    }
 
     // Step 1: Initial retrieval based on strategy
     switch (options.strategy) {
@@ -496,7 +531,8 @@ export class AdvancedRAGPipeline {
         threshold,
         scope.organizationId,
         scope.needEmbeddings,
-        scope.hybrid
+        scope.hybrid,
+        scope.filters
       );
     }
     if (scope?.corpus === 'client_memory') {
@@ -511,7 +547,8 @@ export class AdvancedRAGPipeline {
       threshold,
       organizationUuid,
       scope?.needEmbeddings,
-      scope?.hybrid
+      scope?.hybrid,
+      scope?.filters
     );
   }
 
@@ -802,10 +839,16 @@ export class AdvancedRAGPipeline {
     threshold: number,
     organizationUuid?: string,
     needEmbeddings?: boolean,
-    hybrid?: boolean
+    hybrid?: boolean,
+    filters?: QueryFilters
   ): Promise<RetrievedDocument[]> {
     const queryResult = await this.embeddingService.embed(query, 'text-embedding-3-small');
     const vector = `[${queryResult.embedding.join(',')}]`;
+
+    // Metadata pre-filters on the joined documents table. Each arm has its own
+    // param array, so each gets its own clause with arm-local placeholders.
+    const denseParams: Array<string | number | Date> = [vector, threshold, limit];
+    const denseFilter = buildDocFilterClause(filters, denseParams, VAULT_FILTER_COLUMNS);
 
     // Ship the stored vector (as text) only when MMR will reuse it. SELECT-list
     // columns take no params, so this doesn't shift the $1..$3 placeholders.
@@ -842,7 +885,7 @@ export class AdvancedRAGPipeline {
           1 - (c.embedding <=> $1::vector) AS similarity
         FROM vault.document_chunks c
         JOIN vault.documents d ON d.id = c.document_id
-        WHERE c.embedding IS NOT NULL
+        WHERE c.embedding IS NOT NULL${denseFilter}
           -- (1 - sim) filter as a distance bound: 1 - dist > t  <=>  dist < 1 - t.
           -- Uses the same bare <=> operator as ORDER BY so the planner reuses
           -- the distance and the predicate matches the indexed cosine operator.
@@ -850,7 +893,7 @@ export class AdvancedRAGPipeline {
         ORDER BY c.embedding <=> $1::vector
         LIMIT $3
       `,
-        [vector, threshold, limit]
+        denseParams
       );
       const dense = denseRows.map(toDoc);
       if (!hybrid) return dense;
@@ -861,6 +904,8 @@ export class AdvancedRAGPipeline {
       // performance_indexes.sql so this stays index-backed. A lexical failure
       // must not break retrieval — fall back to the dense arm alone.
       let lexical: RetrievedDocument[];
+      const lexParams: Array<string | number | Date> = [query, limit];
+      const lexFilter = buildDocFilterClause(filters, lexParams, VAULT_FILTER_COLUMNS);
       try {
         const { rows: lexRows } = await client.query<VaultChunkRow>(
           `
@@ -876,12 +921,12 @@ export class AdvancedRAGPipeline {
             0::float8 AS similarity
           FROM vault.document_chunks c
           JOIN vault.documents d ON d.id = c.document_id
-          WHERE c.embedding IS NOT NULL
+          WHERE c.embedding IS NOT NULL${lexFilter}
             AND to_tsvector('english', c.chunk_text) @@ websearch_to_tsquery('english', $1)
           ORDER BY ts_rank_cd(to_tsvector('english', c.chunk_text), websearch_to_tsquery('english', $1)) DESC
           LIMIT $2
         `,
-          [query, limit]
+          lexParams
         );
         lexical = lexRows.map(toDoc);
       } catch (error) {
@@ -910,17 +955,20 @@ export class AdvancedRAGPipeline {
     threshold: number,
     organizationId?: number,
     needEmbeddings?: boolean,
-    hybrid?: boolean
+    hybrid?: boolean,
+    filters?: QueryFilters
   ): Promise<RetrievedDocument[]> {
     const queryResult = await this.embeddingService.embed(query, 'text-embedding-3-small');
     const vector = `[${queryResult.embedding.join(',')}]`;
 
-    const params: Array<string | number> = [vector, threshold, limit];
+    const params: Array<string | number | Date> = [vector, threshold, limit];
     let orgFilter = '';
     if (organizationId !== undefined && organizationId !== null) {
       params.push(organizationId);
       orgFilter = `AND d.organization_id = $${params.length}`;
     }
+    // Metadata pre-filters follow the org filter so placeholders stay sequential.
+    const denseFilter = buildDocFilterClause(filters, params, RAG_FILTER_COLUMNS);
 
     // Ship the stored vector (as text) only when MMR will reuse it.
     const embeddingCol = needEmbeddings ? 'c.embedding::text AS embedding,' : '';
@@ -956,7 +1004,7 @@ export class AdvancedRAGPipeline {
         FROM rag_chunks c
         JOIN rag_documents d ON d.id = c.document_id
         WHERE c.embedding IS NOT NULL
-          ${orgFilter}
+          ${orgFilter}${denseFilter}
           -- (1 - sim) filter as a distance bound: 1 - dist > t  <=>  dist < 1 - t.
           -- Uses the same bare <=> operator as ORDER BY so the planner reuses
           -- the distance and the predicate matches the indexed cosine operator.
@@ -972,12 +1020,13 @@ export class AdvancedRAGPipeline {
     // Sparse arm: same RRF hybrid as the vault path. The org filter reuses the
     // $N placeholder already bound above; the lexical query takes the raw query
     // text as $1 and limit as $2, so its own org placeholder (if any) is $3.
-    const lexParams: Array<string | number> = [query, limit];
+    const lexParams: Array<string | number | Date> = [query, limit];
     let lexOrgFilter = '';
     if (organizationId !== undefined && organizationId !== null) {
       lexParams.push(organizationId);
       lexOrgFilter = `AND d.organization_id = $${lexParams.length}`;
     }
+    const lexFilter = buildDocFilterClause(filters, lexParams, RAG_FILTER_COLUMNS);
     let lexical: RetrievedDocument[];
     try {
       const { rows: lexRows } = await this.pool.query<VaultChunkRow>(
@@ -995,7 +1044,7 @@ export class AdvancedRAGPipeline {
         FROM rag_chunks c
         JOIN rag_documents d ON d.id = c.document_id
         WHERE c.embedding IS NOT NULL
-          ${lexOrgFilter}
+          ${lexOrgFilter}${lexFilter}
           AND to_tsvector('english', c.content) @@ websearch_to_tsquery('english', $1)
         ORDER BY ts_rank_cd(to_tsvector('english', c.content), websearch_to_tsquery('english', $1)) DESC
         LIMIT $2
