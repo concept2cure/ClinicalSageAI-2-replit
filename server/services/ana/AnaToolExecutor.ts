@@ -5242,6 +5242,29 @@ registerToolHandler('get_electrical_standards', async (input) => {
   }
 });
 
+registerToolHandler('get_sterilization_requirements', async (input) => {
+  // Pure reference + rule logic — no tenant context required.
+  try {
+    const { sterilizationRequirements } = await import('../market-specs/sterilization.js');
+    return JSON.stringify({ ok: true, ...sterilizationRequirements({
+      sterile: input.sterile === true,
+      method: typeof input.method === 'string' ? (input.method as never) : undefined,
+    }) });
+  } catch (err) {
+    return JSON.stringify({ error: `get_sterilization_requirements failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('list_regulatory_capabilities', async () => {
+  // Static reference data — no tenant context required.
+  try {
+    const { regulatoryCapabilitiesIndex } = await import('../market-specs/regulatory-capabilities-index.js');
+    return JSON.stringify({ ok: true, ...regulatoryCapabilitiesIndex() });
+  } catch (err) {
+    return JSON.stringify({ error: `list_regulatory_capabilities failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('assess_stored_cer', async (input, ctx) => {
   // Tenant-scoped — reads the organization's stored CER.
   if (!ctx?.organizationId) {

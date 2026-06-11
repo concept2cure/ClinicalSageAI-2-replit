@@ -3334,6 +3334,27 @@ export const GET_ELECTRICAL_STANDARDS: AnaTool = {
   },
 };
 
+export const GET_STERILIZATION_REQUIREMENTS: AnaTool = {
+  name: 'get_sterilization_requirements',
+  description:
+    "Resolve sterilization requirements for a device from its facts. Pass `sterile` (true/false) and optionally `method` (eo, radiation, steam, dry_heat, vh2o2, aseptic). Returns the governing ISO standard (11135 EO / 11137 radiation / 17665 steam / …), the Sterility Assurance Level (SAL 10⁻⁶ for terminal; aseptic makes no SAL claim), the validation elements (bioburden, dose-setting/half-cycle, EO residuals), the packaging standard (ISO 11607), and the reviewer questions. Not applicable for a non-sterile device. Deterministic.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      sterile: { type: 'boolean', description: 'Whether the device is supplied sterile.' },
+      method: { type: 'string', enum: ['eo', 'radiation', 'steam', 'dry_heat', 'vh2o2', 'aseptic', 'unknown'], description: 'Sterilization method, if known.' },
+    },
+    required: ['sterile'],
+  },
+};
+
+export const LIST_REGULATORY_CAPABILITIES: AnaTool = {
+  name: 'list_regulatory_capabilities',
+  description:
+    "List the Submission Center's deterministic regulatory capabilities — each with its category (reference/classification/evidence/oversight/planning/enforcement), description, primary HTTP route, and AnA tool. Use it to discover what regulatory tooling is available (market specs, document templates, requirements, eligibility, device classification, CER/PER/RMF structures, biocompatibility, electrical safety, sterilization, UDI, reviewer checklists, blueprint, global strategy, timelines, dispatch gate). Static reference data, deterministic.",
+  input_schema: { type: 'object', properties: {}, required: [] },
+};
+
 export const ASSESS_DISPATCH_READINESS: AnaTool = {
   name: 'assess_dispatch_readiness',
   description:
@@ -5150,6 +5171,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   GET_REGULATORY_TIMELINE,
   VALIDATE_UDI,
   GET_ELECTRICAL_STANDARDS,
+  GET_STERILIZATION_REQUIREMENTS,
+  LIST_REGULATORY_CAPABILITIES,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,

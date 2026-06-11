@@ -585,6 +585,10 @@ const blueprintSchema = z.object({
     emsUse: z.boolean().optional(),
     hasParticularStandard: z.boolean().optional(),
   }).optional(),
+  sterilization: z.object({
+    sterile: z.boolean().optional(),
+    method: z.enum(['eo', 'radiation', 'steam', 'dry_heat', 'vh2o2', 'aseptic', 'unknown']).optional(),
+  }).optional(),
   present: z.object({
     cerSectionIds: z.array(z.string().max(64)).max(200).optional(),
     perSectionIds: z.array(z.string().max(64)).max(200).optional(),
@@ -664,6 +668,32 @@ router.post('/device/electrical-safety', limiter, requireRole(AUTHOR), async (re
   try {
     const { applicableElectricalStandards } = await import('../services/market-specs/electrical-safety.js');
     res.json(applicableElectricalStandards(parsed.data));
+  } catch (err) { fail(res, err); }
+});
+
+// Sterilization requirements (ISO 11135/11137/17665) from device facts.
+const sterilizationSchema = z.object({
+  sterile: z.boolean().optional(),
+  method: z.enum(['eo', 'radiation', 'steam', 'dry_heat', 'vh2o2', 'aseptic', 'unknown']).optional(),
+});
+router.post('/device/sterilization', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = sterilizationSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { sterilizationRequirements } = await import('../services/market-specs/sterilization.js');
+    res.json(sterilizationRequirements(parsed.data));
+  } catch (err) { fail(res, err); }
+});
+
+// Regulatory capabilities index — one call for the UI to discover the whole layer.
+router.get('/regulatory-capabilities', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  try {
+    const { regulatoryCapabilitiesIndex } = await import('../services/market-specs/regulatory-capabilities-index.js');
+    res.json(regulatoryCapabilitiesIndex());
   } catch (err) { fail(res, err); }
 });
 

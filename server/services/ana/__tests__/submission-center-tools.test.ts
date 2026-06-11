@@ -47,6 +47,8 @@ const SUBMISSION_TOOLS = [
   'get_regulatory_timeline',
   'validate_udi',
   'get_electrical_standards',
+  'get_sterilization_requirements',
+  'list_regulatory_capabilities',
   'assess_dispatch_readiness',
 ];
 
@@ -406,6 +408,19 @@ describe('submission AI tasks — tenant + input guards', () => {
     const out = JSON.parse(await handler({ electricallyPowered: true, hasAlarms: true }, {} as ToolContext));
     expect(out.ok).toBe(true);
     expect(out.standards.some((s: { code: string }) => s.code === 'IEC 60601-1-8')).toBe(true);
+  });
+  it('get_sterilization_requirements resolves the method standard', async () => {
+    const handler = getToolHandler('get_sterilization_requirements')!;
+    const out = JSON.parse(await handler({ sterile: true, method: 'eo' }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.method?.standard).toBe('ISO 11135');
+  });
+  it('list_regulatory_capabilities enumerates the layer', async () => {
+    const handler = getToolHandler('list_regulatory_capabilities')!;
+    const out = JSON.parse(await handler({}, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.total).toBeGreaterThan(0);
+    expect(out.capabilities.some((c: { id: string }) => c.id === 'device_blueprint')).toBe(true);
   });
 });
 
