@@ -24,6 +24,9 @@
  * 5. Contextual Compression - Extract only relevant passages
  * 6. Small-to-Big - Rank on precise chunks, then expand each to its neighbour
  *    window in the source document so generation reads the surrounding context
+ * 7. Corrective loop (CRAG/Self-RAG) - rag-corrective-loop.ts. Opt-in: grade
+ *    context sufficiency + rewrite/re-retrieve, then a groundedness guard that
+ *    flags answers unsupported by sources. Annotates rather than withholds.
  *
  * The auxiliary reasoning steps (HyDE, query expansion, reranking, compression)
  * are cached in-memory per identical request to cut redundant LLM round-trips;
@@ -50,6 +53,11 @@ import {
   decomposeRetrieval,
   type StrategyDeps,
 } from './rag-retrieval-strategies.js';
+import {
+  gradeContextSufficiency,
+  rewriteQuery,
+  verifyGroundedness,
+} from './rag-corrective-loop.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
@@ -81,6 +89,14 @@ export interface RetrievalOptions {
   useContextExpansion?: boolean;
   /** Neighbours to include on each side for useContextExpansion (default 1). */
   contextWindow?: number;
+  /**
+   * Agentic corrective loop (CRAG / Self-RAG) around generation: grade whether
+   * the retrieved sources can answer the question and, if not, rewrite the query
+   * and retrieve once more; then verify the drafted answer is grounded in the
+   * sources and flag it when it is not. Off unless set — opt-in on the generation
+   * path, and it annotates (a `grounded` flag) rather than withholding answers.
+   */
+  useCorrectiveLoop?: boolean;
   useCompression?: boolean;
   organizationUuid?: string;
   persistCitations?: boolean;
@@ -1274,9 +1290,16 @@ export class AdvancedRAGPipeline {
     return value;
   }
 
-  /**
-   * Full RAG query with generation
-   */
+  /** Assemble the `[Source N: title]` block fed to generation and the self-checks. */
+  private buildSourceText(documents: RetrievedDocument[]): string {
+    return documents
+      .map(
+        (doc, idx) =>
+          `[Source ${idx + 1}: ${doc.title}]\n${doc.compressedContent || doc.expandedContent || doc.content}`
+      )
+      .join('\n\n---\n\n');
+  }
+
   async queryWithGeneration(
     query: string,
     options: RetrievalOptions = { strategy: 'advanced', useReranking: true, useMmr: true }
@@ -1284,9 +1307,11 @@ export class AdvancedRAGPipeline {
     answer: string;
     sources: RetrievedDocument[];
     context: RAGContext;
+    /** Faithfulness verdict; only present when useCorrectiveLoop is set. */
+    grounded?: boolean;
   }> {
     // Retrieve relevant documents
-    const context = await this.retrieve(query, options);
+    let context = await this.retrieve(query, options);
 
     if (context.documents.length === 0) {
       return {
@@ -1297,13 +1322,29 @@ export class AdvancedRAGPipeline {
       };
     }
 
+    const route = (req: AIRequest) => this.routeCached(req);
+
+    // Corrective pre-generation (CRAG): grade whether the retrieved sources can
+    // answer the question; if not, rewrite the query and retrieve once more,
+    // keeping the new context when it returns results. Bounded to a single retry.
+    if (options.useCorrectiveLoop) {
+      const grade = await gradeContextSufficiency(route, query, this.buildSourceText(context.documents));
+      context.tokensUsed += grade.tokensUsed;
+      if (!grade.sufficient) {
+        const rewrite = await rewriteQuery(route, query);
+        context.tokensUsed += rewrite.tokensUsed;
+        if (rewrite.query !== query) {
+          const retried = await this.retrieve(rewrite.query, options);
+          if (retried.documents.length > 0) {
+            retried.tokensUsed += context.tokensUsed; // carry the grading/rewrite cost
+            context = retried;
+          }
+        }
+      }
+    }
+
     // Build context for generation
-    const sourceText = context.documents
-      .map(
-        (doc, idx) =>
-          `[Source ${idx + 1}: ${doc.title}]\n${doc.compressedContent || doc.expandedContent || doc.content}`
-      )
-      .join('\n\n---\n\n');
+    const sourceText = this.buildSourceText(context.documents);
 
     // Generate answer
     const response = await this.aiRouter.route({
@@ -1342,10 +1383,21 @@ If the sources don't contain enough information to fully answer, say so clearly.
       }
     }
 
+    // Corrective post-generation: groundedness / faithfulness guard. Opt-in, and
+    // it annotates the result (a `grounded` flag the caller can act on) rather
+    // than withholding the answer.
+    let grounded: boolean | undefined;
+    if (options.useCorrectiveLoop) {
+      const check = await verifyGroundedness(route, response.content, sourceText);
+      context.tokensUsed += check.tokensUsed;
+      grounded = check.grounded;
+    }
+
     return {
       answer: response.content,
       sources: context.documents,
       context,
+      ...(grounded === undefined ? {} : { grounded }),
     };
   }
 }
