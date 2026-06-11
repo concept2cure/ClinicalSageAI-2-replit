@@ -6099,6 +6099,96 @@ registerToolHandler('review_grant_reporting', async (input, ctx) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// RIM-lite (C2C-12). Conversational building shares the governed/audited path
+// (recordGovernedAction, surface 'ana').
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_rim_product', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_rim_product requires tenant + user context.' });
+  const productName = typeof input.product_name === 'string' ? input.product_name.trim() : '';
+  if (!productName) return JSON.stringify({ error: 'product_name is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createProductTx } = await import('../rim/rim-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createProductTx(client, ctx.organizationId, ctx.userId, {
+      productName,
+      inn: typeof input.inn === 'string' ? input.inn : null,
+      dosageForm: typeof input.dosage_form === 'string' ? input.dosage_form : null,
+      atcCode: typeof input.atc_code === 'string' ? input.atc_code : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `rim-product:${id}`, reason: fcoiReason(input, 'RIM product opened via AnA'),
+      payload: { productName }, domain: 'rim', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Opened RIM product "${productName}" (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_rim_product failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('set_registration_status', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'set_registration_status requires tenant + user context.' });
+  const productId = typeof input.product_id === 'number' ? input.product_id : NaN;
+  const country = typeof input.country === 'string' ? input.country.trim() : '';
+  if (!Number.isInteger(productId) || !country) return JSON.stringify({ error: 'product_id and country are required.' });
+  const VALID = ['planned', 'submitted', 'under_review', 'approved', 'withdrawn', 'suspended', 'cancelled'];
+  const marketStatus = typeof input.market_status === 'string' ? input.market_status : undefined;
+  if (marketStatus && !VALID.includes(marketStatus)) return JSON.stringify({ error: 'market_status must be a valid status.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { upsertRegistrationTx } = await import('../rim/rim-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await upsertRegistrationTx(client, ctx.organizationId, ctx.userId, productId, {
+      country, marketStatus: marketStatus as any,
+      registrationNumber: typeof input.registration_number === 'string' ? input.registration_number : null,
+      marketingAuthHolder: typeof input.marketing_auth_holder === 'string' ? input.marketing_auth_holder : null,
+      approvalDate: typeof input.approval_date === 'string' ? input.approval_date : null,
+      renewalDueDate: typeof input.renewal_due_date === 'string' ? input.renewal_due_date : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `rim-product:${productId}`, reason: fcoiReason(input, 'Registration status set via AnA'),
+      payload: { registrationId: id, country, status: marketStatus }, domain: 'rim', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, registrationId: id, message: `Set ${country.toUpperCase()} status${marketStatus ? ` to ${marketStatus}` : ''} for product ${productId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `set_registration_status failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_label_currency', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_label_currency requires tenant context.' });
+  const productId = typeof input.product_id === 'number' ? input.product_id : NaN;
+  if (!Number.isInteger(productId)) return JSON.stringify({ error: 'product_id is required.' });
+  const { getLabelCurrencyInput } = await import('../rim/rim-service.js');
+  const { evaluateLabelCurrency } = await import('../rim/rim-logic.js');
+  try {
+    const inp = await getLabelCurrencyInput(ctx.organizationId, productId);
+    const gate = evaluateLabelCurrency(inp);
+    return JSON.stringify({
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings,
+      message: gate.findings.length === 0 ? 'All approved markets have current labels.' : `${gate.findings.length} approved market(s) missing a current label.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_label_currency failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('log_study_deviation', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'log_study_deviation requires tenant context.' });

@@ -294,4 +294,20 @@ export const REPORT_TYPE_SEED: ReportTypeDefinition[] = [
     governanceRequirements: { part11: true, auditTrail: true },
     truthfulnessRules: { allowPartial: true, requireBlockers: true, requireConfidence: true },
   },
+  {
+    // RIM-lite product registration grid + labeling (21 CFR 201 / 2001/83/EC; C2C-12).
+    typeId: 'rim.registration_grid',
+    label: 'Product Registration Grid & Labeling Register',
+    family: 'rim_registration',
+    allowedScopes: ['program', 'project', 'account'],
+    allowedPersonas: ['ra_ops', 'labeling_lead', 'executive'],
+    allowedClientSegments: ['pharma', 'biotech'],
+    dataDependencies: ['rim_products', 'rim_registrations', 'rim_labels'],
+    artifactDependencies: ['concept2cure_artifacts'],
+    workflowDependencies: ['governance_boundary'],
+    anaModules: ['ana-ri'],
+    exportTemplate: 'rim-registration-grid',
+    governanceRequirements: { part11: true, auditTrail: true },
+    truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true },
+  },
 ];

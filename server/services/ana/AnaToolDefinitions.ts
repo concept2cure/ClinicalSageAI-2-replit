@@ -3769,6 +3769,54 @@ export const REVIEW_GRANT_REPORTING: AnaTool = {
   },
 };
 
+export const CREATE_RIM_PRODUCT: AnaTool = {
+  name: 'create_rim_product',
+  description:
+    "Open a product in the RIM (Regulatory Information Management) registry for registration-grid and labeling tracking. Returns the product id. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      product_name: { type: 'string' },
+      inn: { type: 'string', description: 'International Nonproprietary Name.' },
+      dosage_form: { type: 'string' },
+      atc_code: { type: 'string' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['product_name'],
+  },
+};
+
+export const SET_REGISTRATION_STATUS: AnaTool = {
+  name: 'set_registration_status',
+  description:
+    "Upsert a product's registration status in a country/market (the RIM grid): planned/submitted/under_review/approved/withdrawn/suspended/cancelled, with registration number, MA holder, approval and renewal dates. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      product_id: { type: 'number' },
+      country: { type: 'string', description: "ISO country (e.g. 'US','DE') or 'EU'." },
+      market_status: { type: 'string', enum: ['planned','submitted','under_review','approved','withdrawn','suspended','cancelled'] },
+      registration_number: { type: 'string' },
+      marketing_auth_holder: { type: 'string' },
+      approval_date: { type: 'string' },
+      renewal_due_date: { type: 'string' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['product_id', 'country'],
+  },
+};
+
+export const REVIEW_LABEL_CURRENCY: AnaTool = {
+  name: 'review_label_currency',
+  description:
+    "Run the deterministic label-currency gate on a product (read-only): every approved market should carry a current approved label of the region-appropriate type (US→USPI, EU→SmPC, else CCDS). Returns cited findings + risk level.",
+  input_schema: {
+    type: 'object',
+    properties: { product_id: { type: 'number' } },
+    required: ['product_id'],
+  },
+};
+
 export const LOG_STUDY_DEVIATION: AnaTool = {
   name: 'log_study_deviation',
   description:
@@ -5246,6 +5294,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CREATE_GRANT_PROPOSAL,
   RECORD_GRANT_AWARD,
   REVIEW_GRANT_REPORTING,
+  CREATE_RIM_PRODUCT,
+  SET_REGISTRATION_STATUS,
+  REVIEW_LABEL_CURRENCY,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,

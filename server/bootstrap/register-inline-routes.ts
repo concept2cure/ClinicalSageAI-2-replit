@@ -385,6 +385,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount eGrants routes:', error);
   }
 
+  // RIM-lite — registration grid + labeling (21 CFR 201; EU 2001/83/EC).
+  try {
+    const rimModule = await import('../routes/rim');
+    app.use('/api/rim', authMiddleware, rimModule.default);
+    console.info('✅ RIM-lite routes mounted (/api/rim)');
+  } catch (error) {
+    console.error('❌ Failed to mount RIM-lite routes:', error);
+  }
+
   // C2C study digital twins + simulation (study/protocol design module).
   try {
     const c2cStudyTwinModule = await import('../routes/c2c/study-twin');

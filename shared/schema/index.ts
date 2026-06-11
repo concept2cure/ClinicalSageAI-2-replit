@@ -449,3 +449,9 @@ export * from './nonclinical';
 // milestones/reporting → sponsor invoicing. 2 CFR 200; SBIR/STTR; NIH RPPR.
 // Service: server/services/grants; migration: migrations/20260610_egrants.sql.
 export * from './grants';
+
+// RIM-lite — registration grid + labeling (C2C-12): product registry, product ×
+// country registration status grid (renewals), and label versions (USPI/SmPC/PIL/
+// CCDS). FDA 21 CFR 201; EU Directive 2001/83/EC. Service: server/services/rim;
+// migration: migrations/20260610_rim_lite.sql.
+export * from './rim';
