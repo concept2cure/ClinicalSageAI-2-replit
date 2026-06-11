@@ -78,8 +78,8 @@ router.get('/programs', async (req: Request, res: Response) => {
     const programsWithCounts = await Promise.all(
       programs.map(async (program: any) => {
         const countResult = await pool.query(
-          `SELECT COUNT(*)::int as child_count FROM projects WHERE parent_project_id = $1`,
-          [program.id]
+          `SELECT COUNT(*)::int as child_count FROM projects WHERE parent_project_id = $1 AND organization_id = $2`,
+          [program.id, organizationId]
         );
         return {
           ...program,

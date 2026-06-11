@@ -253,8 +253,8 @@ export class EscalateHandler implements ActionHandler {
 
       // Update project risk level
       await this.pool.query(
-        `UPDATE projects SET risk_level = 'critical', updated_at = NOW() WHERE id = $1`,
-        [payload.projectId]
+        `UPDATE projects SET risk_level = 'critical', updated_at = NOW() WHERE id = $1 AND organization_id = $2`,
+        [payload.projectId, payload.organizationId]
       );
 
       return {

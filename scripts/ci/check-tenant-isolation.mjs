@@ -49,6 +49,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { extractStringLiterals } from './lib/extract-string-literals.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
@@ -235,9 +236,11 @@ function normalizeSqlForHash(sql) {
     .toLowerCase();
 }
 
-// Match a SQL string literal (template, single, or double quoted) likely
-// to be a query — must contain SELECT/INSERT/UPDATE/DELETE somewhere.
-const SQL_STRING = /[`'"](?:\\.|[^\\`'"])*?(?:SELECT|INSERT\s+INTO|UPDATE|DELETE\s+FROM)[\s\S]*?[`'"]/gi;
+// A string literal is SQL-shaped when it contains a DML keyword.
+const SQL_KEYWORD_RE = /\b(?:SELECT|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\b/i;
+
+// String-literal extraction lives in ./lib/extract-string-literals.mjs so it
+// can be unit-tested without executing this script's scan-and-exit flow.
 
 const findings = [];
 
@@ -248,10 +251,9 @@ for (const file of walk(path.join(repoRoot, 'server'))) {
   const text = fs.readFileSync(file, 'utf8');
 
   // Iterate every SQL-shaped string literal in the file.
-  SQL_STRING.lastIndex = 0;
-  let sqlMatch;
-  while ((sqlMatch = SQL_STRING.exec(text)) !== null) {
-    const sql = sqlMatch[0];
+  for (const literal of extractStringLiterals(text)) {
+    const sql = literal.value;
+    if (!SQL_KEYWORD_RE.test(sql)) continue;
     TABLE_PATTERN.lastIndex = 0;
     const tableHits = new Set();
     let tm;
@@ -268,7 +270,7 @@ for (const file of walk(path.join(repoRoot, 'server'))) {
     // the same file. (Previously the fingerprint was `file:line:tables`,
     // which made every unrelated edit in a flagged file look like a new
     // finding + a resolved finding on the old line — pure noise.)
-    const lineNumber = text.slice(0, sqlMatch.index).split('\n').length;
+    const lineNumber = text.slice(0, literal.start).split('\n').length;
     const lineText = text.split('\n')[lineNumber - 1]?.trim().slice(0, 160) ?? '';
     const sqlHash = crypto
       .createHash('sha1')

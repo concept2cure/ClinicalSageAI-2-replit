@@ -46,16 +46,20 @@ router.get('/api/licenses/client/:clientId', async (req, res) => {
 
     console.log('Fetching license for client:', clientId, 'org:', orgId);
 
-    // Verify the client belongs to the requesting organization
-    if (orgId) {
+    // Verify the client belongs to the requesting organization. Fail closed:
+    // no tenant context means no access, not unverified access.
+    if (!orgId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+    {
       const clientCheck = await db.query(`
         SELECT organization_id FROM client_workspaces WHERE id = $1
       `, [clientId]);
-      
+
       if (clientCheck.rows.length === 0) {
         return res.status(404).json({ error: 'Client not found' });
       }
-      
+
       if (clientCheck.rows[0].organization_id !== parseInt(orgId)) {
         return res.status(403).json({ error: 'Access denied to this client' });
       }
@@ -117,16 +121,20 @@ router.get('/api/licenses/client/:clientId/usage', async (req, res) => {
 
     console.log('Fetching usage for client:', clientId, 'org:', orgId);
 
-    // Verify the client belongs to the requesting organization
-    if (orgId) {
+    // Verify the client belongs to the requesting organization. Fail closed:
+    // no tenant context means no access, not unverified access.
+    if (!orgId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+    {
       const clientCheck = await db.query(`
         SELECT organization_id FROM client_workspaces WHERE id = $1
       `, [clientId]);
-      
+
       if (clientCheck.rows.length === 0) {
         return res.status(404).json({ error: 'Client not found' });
       }
-      
+
       if (clientCheck.rows[0].organization_id !== parseInt(orgId)) {
         return res.status(403).json({ error: 'Access denied to this client' });
       }
@@ -171,12 +179,13 @@ router.get('/api/licenses/client/:clientId/usage', async (req, res) => {
         COALESCE(SUM(s.file_size_mb), 0) as total_storage_used_mb,
         COALESCE(COUNT(DISTINCT p.id), 0) as active_projects
       FROM licenses l
+      JOIN client_workspaces cw ON cw.id = l.client_id AND cw.organization_id = $2
       LEFT JOIN license_users lu ON l.id = lu.license_id AND lu.active = true
       LEFT JOIN submissions s ON l.id = s.license_id
       LEFT JOIN projects p ON l.id = p.license_id AND p.status = 'active'
       WHERE l.id = $1
       GROUP BY l.id
-    `, [licenseId]);
+    `, [licenseId, parseInt(orgId)]);
     
     // Default values if no result
     const defaultUsage = {
@@ -536,9 +545,15 @@ router.post('/api/licenses/:id/regenerate-key', async (req, res) => {
 router.get('/api/licenses/:id/usage', async (req, res) => {
   try {
     const { id } = req.params;
-    
+    const orgId = req.tenantId || req.tenantContext?.organizationId || req.user?.organizationId;
+    // Fail closed: a license id is not a capability — the license must belong
+    // to a client workspace in the caller's org.
+    if (!orgId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+
     const usageResult = await db.query(`
-      SELECT 
+      SELECT
         COUNT(DISTINCT lu.user_id) as active_users,
         COUNT(DISTINCT s.id) as total_submissions,
         SUM(CASE WHEN s.created_at >= DATE_TRUNC('month', CURRENT_DATE) THEN 1 ELSE 0 END) as monthly_submissions,
@@ -546,12 +561,13 @@ router.get('/api/licenses/:id/usage', async (req, res) => {
         COALESCE(SUM(s.file_size_mb), 0) as total_storage_used_mb,
         COUNT(DISTINCT p.id) as active_projects
       FROM licenses l
+      JOIN client_workspaces cw ON cw.id = l.client_id AND cw.organization_id = $2
       LEFT JOIN license_users lu ON l.id = lu.license_id AND lu.active = true
       LEFT JOIN submissions s ON l.id = s.license_id
       LEFT JOIN projects p ON l.id = p.license_id AND p.status = 'active'
       WHERE l.id = $1
       GROUP BY l.id
-    `, [id]);
+    `, [id, parseInt(orgId)]);
     
     if (usageResult.rows.length === 0) {
       return res.status(404).json({ error: 'License not found' });

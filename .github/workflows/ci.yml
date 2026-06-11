@@ -43,6 +43,9 @@ jobs:
       - name: Guardrails — tenant-isolation in raw SQL (no regressions)
         run: npm run ci:tenant-isolation:no-regression
 
+      - name: Guardrails — tenant baseline ↔ justification parity
+        run: npm run ci:baseline-justifications
+
       - name: Guardrails — requestDb (RLS) adoption (no regressions)
         run: node scripts/ci/audit-requestdb-coverage.mjs --strict-no-regression
 

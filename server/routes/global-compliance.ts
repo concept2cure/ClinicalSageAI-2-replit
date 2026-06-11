@@ -434,9 +434,10 @@ router.get('/gdpr/:orgId/data-subject/:dataSubjectId/export', async (req: Reques
       dsrResult,
     ] = await Promise.all([
       safeQuery(
-        `SELECT id, organization_id, email, name, title, department, created_at, updated_at
-         FROM users
-         WHERE organization_id = $1 AND id = $2`,
+        `SELECT u.id, ou.organization_id, u.email, u.name, u.title, u.department, u.created_at, u.updated_at
+         FROM users u
+         JOIN organization_users ou ON ou.user_id = u.id AND ou.organization_id = $1
+         WHERE u.id = $2`,
         [orgId, Number.isFinite(userId) ? userId : -1]
       ),
       safeQuery(
@@ -546,7 +547,11 @@ router.delete('/gdpr/:orgId/data-subject/:dataSubjectId', async (req: Request, r
            department = NULL,
            preferences = '{}'::jsonb,
            updated_at = NOW()
-       WHERE organization_id = $1 AND id = $2
+       WHERE id = $2
+         AND EXISTS (
+           SELECT 1 FROM organization_users ou
+           WHERE ou.user_id = users.id AND ou.organization_id = $1
+         )
        RETURNING id`,
       [orgId, userId]
     );
