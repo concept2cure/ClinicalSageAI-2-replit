@@ -32,6 +32,7 @@ import {
 // audit-logger is plain JS; logAction is fire-and-forget, logSystemEvent records
 // job-level events. Typed via the adjacent audit-logger.d.ts.
 import { logSystemEvent, logAction } from '../utils/audit-logger.js';
+import { reportSecurityAlert } from '../services/security-alerts';
 
 type VaultDocument = typeof vaultDocuments.$inferSelect;
 type RetentionPolicy = typeof vaultRetentionPolicies.$inferSelect;
@@ -181,7 +182,19 @@ async function notifyAdmins(summary: RetentionSummary): Promise<void> {
         </ul>`,
     });
   } catch (error) {
-    console.error('[RETENTION] Failed to send notification:', error instanceof Error ? error.message : error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[RETENTION] Failed to send notification:', message);
+    reportSecurityAlert({
+      kind: 'retention_notify_failed',
+      message: 'Retention sweep admin notification failed',
+      detail: {
+        error: message,
+        scanned: summary.scanned,
+        softDeleted: summary.softDeleted,
+        hardDeleted: summary.hardDeleted,
+        errors: summary.errors,
+      },
+    });
   }
 }
 

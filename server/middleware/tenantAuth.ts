@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { reportSecurityAlert } from '../services/security-alerts';
 
 /**
  * Tenant Auth Middleware for Test Assembly Tenants
@@ -26,10 +27,13 @@ export function tenantAuthMiddleware(req: Request, res: Response, next: NextFunc
 
   // Log impersonation attempts
   if (headerTenant && jwtTenant && headerTenant !== jwtTenant) {
-    console.warn(
-      `[SECURITY] tenantAuth: header tenant (${headerTenant}) differs from ` +
-      `JWT tenant (${jwtTenant}). Using JWT value. userId=${(req as any).user?.id || 'unknown'}`
-    );
+    reportSecurityAlert({
+      kind: 'tenant_header_mismatch',
+      message:
+        `tenantAuth: header tenant (${headerTenant}) differs from ` +
+        `JWT tenant (${jwtTenant}). Using JWT value.`,
+      detail: { headerTenant, jwtTenant, userId: (req as any).user?.id || 'unknown' },
+    });
   }
 
   const tenant = jwtTenant || headerTenant;

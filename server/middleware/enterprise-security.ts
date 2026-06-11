@@ -24,6 +24,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { createHash, randomBytes } from 'crypto';
+import { reportSecurityAlert } from '../services/security-alerts';
 
 // ============================================================================
 // CONFIGURATION
@@ -540,9 +541,13 @@ export function validateTenantContext(req: Request, res: Response, next: NextFun
           /* audit failure is non-fatal */
         }
       })();
-      // Keep the structured-log line as well for ops dashboards.
-       
-      console.warn('[SECURITY] Tenant impersonation attempt blocked', impersonationDetail);
+      // Keep the structured-log line as well for ops dashboards; also
+      // forward to the monitoring webhook when one is configured.
+      reportSecurityAlert({
+        kind: 'tenant_impersonation_blocked',
+        message: 'Tenant impersonation attempt blocked',
+        detail: impersonationDetail as unknown as Record<string, unknown>,
+      });
       return res.status(403).json({
         error: 'Organization mismatch',
         code: 'TENANT_MISMATCH',
