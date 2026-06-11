@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-11T15:08:37.175Z",
+  "generatedAt": "2026-06-11T17:15:43.038Z",
   "git": {
-    "sha": "5fda9403184a578ba0716573071ed38ffa8dbe7c",
+    "sha": "23967e76befe163439fd5fb7989bc5d592d51b42",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2062,16 +2062,16 @@
         "bytes": 126429
       },
       {
+        "file": "server/services/__tests__/ana-ri.test.ts",
+        "bytes": 115547
+      },
+      {
         "file": "server/services/intelligent-report-engine.ts",
         "bytes": 114705
       },
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "bytes": 114269
-      },
-      {
-        "file": "server/services/__tests__/ana-ri.test.ts",
-        "bytes": 114242
       }
     ],
     "largeFilesByLines": [
@@ -2129,7 +2129,7 @@
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
-        "lines": 2691
+        "lines": 2722
       },
       {
         "file": "server/routes/knowledge-base.ts",
