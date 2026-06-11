@@ -181,16 +181,24 @@ export const PMDA_TEMPLATE: RegionalTemplate = {
     'Overseas sponsors without a Japanese MAH use the Foreign Special Approval system (外国特例承認) with a Designated MAH (選任製造販売業者 / D-MAH)',
     'NHI price listing (薬価収載) via Chuikyo (中医協) follows approval and gates reimbursement',
   ],
+  // Module 1 structure per the Japanese CTD framework (MHLW/PMDA CTD構成 notification
+  // and the JPMA eCTD 作成の手引き). Section numbers verified against authoritative JP
+  // guidance: 承認申請書 = 1.2, 同種同効品一覧表 = 1.7, 添付文書 = 1.8,
+  // 製造販売後調査基本計画書 = 1.11 (the J-RMP draft is submitted here), その他 = 1.13.
   module1Sections: [
-    { number: '1.1', title: 'Application Form', titleLocal: '承認申請書', required: true, description: 'PMDA application form (Japanese)' },
-    { number: '1.2', title: 'Certificate of Compliance with GMP', titleLocal: '適合性調査結果通知書', required: true, description: 'GMP compliance certificate' },
-    { number: '1.3', title: 'Origin and Manufacturing Certificate', titleLocal: '原薬等製造管理証明書', required: true, description: 'Certificate of origin and manufacturing location' },
-    { number: '1.4', title: 'Drug Master File Information', titleLocal: 'MF登録情報', required: false, description: 'MF registration details if applicable' },
-    { number: '1.5', title: 'Response to Preliminary Review', titleLocal: '照会事項回答', required: false, description: 'Responses to PMDA review questions' },
-    { number: '1.6', title: 'Package Insert', titleLocal: '添付文書', required: true, description: 'Japanese Package Insert (JPI)' },
-    { number: '1.7', title: 'Risk Management Plan', titleLocal: '医薬品リスク管理計画書', required: true, description: 'J-RMP (Japanese Risk Management Plan)' },
-    { number: '1.8', title: 'Information on Similar Drugs in Japan', titleLocal: '類似薬選定情報', required: false, description: 'Comparison with similar products approved in Japan' },
-    { number: '1.12', title: 'SAKIGAKE/Conditional Approval Information', titleLocal: '先駆け審査指定情報', required: false, description: 'If applicable to accelerated review programs' },
+    { number: '1.1', title: 'Table of Contents', titleLocal: '第1部（モジュール1）目次', required: true, description: 'Module 1 table of contents' },
+    { number: '1.2', title: 'Application Form', titleLocal: '承認申請書(写)', required: true, description: 'Copy of the marketing-approval application form (承認申請書)' },
+    { number: '1.3', title: 'Certificates', titleLocal: '証明書類', required: false, description: 'Certificates required for the application (e.g. GMP compliance, foreign approval)' },
+    { number: '1.4', title: 'Patent Status', titleLocal: '特許状況', required: false, description: 'Patent information relevant to the application' },
+    { number: '1.5', title: 'Origin / History of Discovery and Development', titleLocal: '起原又は発見の経緯及び開発の経緯', required: true, description: 'Background on the origin/discovery and the development history' },
+    { number: '1.6', title: 'Status of Use in Foreign Countries', titleLocal: '外国における使用状況等に関する資料', required: false, description: 'Approval and use status in other countries' },
+    { number: '1.7', title: 'List of Drugs with Similar Indications/Efficacy', titleLocal: '同種同効品一覧表', required: true, description: 'Comparison table of products with similar indications/efficacy in Japan' },
+    { number: '1.8', title: 'Package Insert (Draft)', titleLocal: '添付文書(案)', required: true, description: 'Draft Japanese Package Insert (添付文書 / JPI)' },
+    { number: '1.9', title: 'Documents on the Nonproprietary Name', titleLocal: '一般的名称に係る文書', required: false, description: 'Documents related to the Japanese Accepted Name (JAN), if applicable' },
+    { number: '1.10', title: 'Poisonous/Powerful Drug Designation Materials', titleLocal: '毒薬・劇薬等の指定審査資料のまとめ', required: false, description: 'Summary supporting poisonous/powerful-drug or related designations' },
+    { number: '1.11', title: 'Post-Marketing Surveillance Plan / Risk Management Plan', titleLocal: '製造販売後調査基本計画書(案)／医薬品リスク管理計画書(案)', required: false, description: 'Post-marketing surveillance basic plan; the J-RMP (医薬品リスク管理計画(案)) is submitted here for new drug applications' },
+    { number: '1.12', title: 'List of Attached Materials', titleLocal: '添付資料一覧', required: true, description: 'Index/list of all attached data and materials' },
+    { number: '1.13', title: 'Others', titleLocal: 'その他', required: false, description: 'Japan-specific items (e.g. 1.13.x: references to previously approved products, electronic study-data notices, and accelerated-review / SAKIGAKE / 先駆的医薬品 designation information)' },
   ],
 };
 
