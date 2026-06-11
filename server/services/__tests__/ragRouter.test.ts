@@ -60,6 +60,11 @@ describe('ragRouter optionsForIntent', () => {
       expect(o.useHybrid).toBe(false);
     });
 
+    it('self-query is opt-in: undefined by default, passed through when set', () => {
+      expect(optionsForIntent({ query: 'q', intent: 'regulatory_qa' }).useSelfQuery).toBeUndefined();
+      expect(optionsForIntent({ query: 'q', useSelfQuery: true }).useSelfQuery).toBe(true);
+    });
+
     it('overrides strategy, mmrLambda, and limit', () => {
       const o = optionsForIntent({
         query: 'q',

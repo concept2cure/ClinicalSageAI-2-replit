@@ -1,6 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { AIRequest, AIResponse } from '../aiProviderRouter';
-import { generateStepBackQuery, generateSubQuestions } from '../rag-query-transforms';
+import {
+  generateStepBackQuery,
+  generateSubQuestions,
+  extractQueryFilters,
+} from '../rag-query-transforms';
 
 function aiResponse(content: string): AIResponse {
   return {
@@ -87,5 +91,35 @@ describe('generateSubQuestions', () => {
     const route = vi.fn(async () => aiResponse('not json'));
     const { subQuestions } = await generateSubQuestions(route, 'q');
     expect(subQuestions).toEqual([]);
+  });
+});
+
+describe('extractQueryFilters', () => {
+  it('maps documentType->atomType, source, and a date range', async () => {
+    const route = vi.fn(async (_req: AIRequest) =>
+      aiResponse('{"documentType":"protocol","source":"FDA","dateStart":"2024-01-01","dateEnd":"2024-12-31"}')
+    );
+    const { filters, tokensUsed } = await extractQueryFilters(route, 'FDA protocols from 2024');
+    expect(filters.atomType).toBe('protocol');
+    expect(filters.source).toBe('FDA');
+    expect(filters.dateRange?.start.getUTCFullYear()).toBe(2024);
+    expect(filters.dateRange?.end.getUTCFullYear()).toBe(2024);
+    expect(tokensUsed).toBe(11);
+    expect(route.mock.calls[0][0].taskType).toBe('structured_output');
+  });
+
+  it('omits absent fields and returns {} for an unconstrained query', async () => {
+    const route = vi.fn(async () => aiResponse('{}'));
+    expect((await extractQueryFilters(route, 'q')).filters).toEqual({});
+  });
+
+  it('drops the date range when an endpoint does not parse', async () => {
+    const route = vi.fn(async () => aiResponse('{"dateStart":"2024-01-01","dateEnd":"not-a-date"}'));
+    expect((await extractQueryFilters(route, 'q')).filters.dateRange).toBeUndefined();
+  });
+
+  it('returns empty filters on unparseable output', async () => {
+    const route = vi.fn(async () => aiResponse('nonsense'));
+    expect((await extractQueryFilters(route, 'q')).filters).toEqual({});
   });
 });
