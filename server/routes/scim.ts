@@ -24,6 +24,7 @@ import rateLimit from 'express-rate-limit';
 import * as crypto from 'crypto';
 import { query, transaction } from '../db';
 import { createScopedLogger } from '../utils/logger';
+import { ipInAnyCidr } from '../utils/cidr';
 
 const logger = createScopedLogger('scim');
 const router = Router();
@@ -139,6 +140,62 @@ async function loadDbScimTenants(): Promise<DbScimTenant[]> {
   return dbTenantCache.tenants;
 }
 
+// ─── Per-org source-IP allowlist (scim_ip_allowlist; network access policy) ──
+//
+// Opt-in, fail-closed: an org with NO enabled rows is unrestricted; once any row
+// is enabled, the request source IP must fall within one of its CIDRs or the
+// (otherwise valid) token is rejected. Cached with a short TTL like the tokens.
+const IP_ALLOWLIST_TTL_MS = 60_000;
+let ipAllowlistCache: { byOrg: Map<number, string[]>; at: number } = {
+  byOrg: new Map(),
+  at: 0,
+};
+
+/** Test-only: force the next loadIpAllowlist() to re-query. */
+export function __resetScimIpAllowlistCache(): void {
+  ipAllowlistCache = { byOrg: new Map(), at: 0 };
+}
+
+/** Load enabled allowlist CIDRs grouped by org, cached (keeps stale on error). */
+async function loadIpAllowlist(): Promise<Map<number, string[]>> {
+  if (Date.now() - ipAllowlistCache.at < IP_ALLOWLIST_TTL_MS) return ipAllowlistCache.byOrg;
+  try {
+    const result = await query(
+      'SELECT organization_id, cidr FROM scim_ip_allowlist WHERE enabled = true'
+    );
+    const byOrg = new Map<number, string[]>();
+    for (const r of result.rows as Array<{ organization_id: number; cidr: string }>) {
+      const orgId = Number(r.organization_id);
+      const list = byOrg.get(orgId) ?? [];
+      list.push(String(r.cidr));
+      byOrg.set(orgId, list);
+    }
+    ipAllowlistCache = { byOrg, at: Date.now() };
+  } catch (err) {
+    logger.error('Failed to load SCIM IP allowlist from DB', err as Record<string, unknown>);
+    ipAllowlistCache.at = Date.now(); // keep stale cache, don't hammer the DB
+  }
+  return ipAllowlistCache.byOrg;
+}
+
+/** Best source IP for the request (Express derives req.ip from trust-proxy). */
+function clientIpOf(req: Request): string {
+  return req.ip || req.socket?.remoteAddress || '';
+}
+
+/**
+ * Network access policy: true when `ip` is permitted for `orgId`. Opt-in — an
+ * org with no enabled allowlist rows is always permitted. When rows exist, the
+ * IP must match one (fail-closed: an empty/unknown IP is denied).
+ */
+async function isIpAllowedForOrg(orgId: number, ip: string): Promise<boolean> {
+  const byOrg = await loadIpAllowlist();
+  const cidrs = byOrg.get(orgId);
+  if (!cidrs || cidrs.length === 0) return true; // unrestricted
+  if (!ip) return false; // configured but no resolvable source IP → fail closed
+  return ipInAnyCidr(ip, cidrs);
+}
+
 function sha256Hex(value: string): string {
   return crypto.createHash('sha256').update(value).digest('hex');
 }
@@ -201,6 +258,15 @@ async function scimAuth(
     }
 
     if (matchedOrgId === null) return scimError(res, 401, 'Invalid bearer token.');
+
+    // Network access policy (opt-in, fail-closed): once a tenant configures an
+    // IP allowlist, an otherwise-valid token is only accepted from its CIDRs —
+    // a leaked token can't be replayed from outside the IdP's egress ranges.
+    const sourceIp = clientIpOf(req);
+    if (!(await isIpAllowedForOrg(matchedOrgId, sourceIp))) {
+      logger.warn('SCIM request from non-allowlisted IP', { orgId: matchedOrgId, sourceIp });
+      return scimError(res, 403, 'Source IP not permitted for this tenant.');
+    }
 
     (req as Request & { scimOrgId?: number }).scimOrgId = matchedOrgId;
     next();
