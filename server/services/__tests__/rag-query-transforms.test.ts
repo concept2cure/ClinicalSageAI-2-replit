@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { AIRequest, AIResponse } from '../aiProviderRouter';
-import { generateStepBackQuery } from '../rag-query-transforms';
-import { AdvancedRAGPipeline, type RetrievedDocument } from '../advancedRAGPipeline';
+import { generateStepBackQuery, generateSubQuestions } from '../rag-query-transforms';
 
 function aiResponse(content: string): AIResponse {
   return {
@@ -51,55 +50,42 @@ describe('generateStepBackQuery', () => {
   });
 });
 
-// Pipeline wiring: stepBackRetrieval retrieves on the original + the step-back
-// query and fuses, and degrades to original-only when no step-back is produced.
-type StepBackPipeline = {
-  routeCached: (req: AIRequest) => Promise<AIResponse>;
-  embeddingService: { embedBatch: (...args: unknown[]) => Promise<unknown> };
-  searchInitial: (query: string, ...rest: unknown[]) => Promise<RetrievedDocument[]>;
-  stepBackRetrieval(
-    query: string,
-    limit: number,
-    threshold: number
-  ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }>;
-};
-
-function doc(id: string, score: number): RetrievedDocument {
-  return { id, content: `c-${id}`, title: `t-${id}`, atomType: 'vault_chunk', initialScore: score, finalScore: score };
-}
-
-function makePipeline(stepBackText: string) {
-  const p = Object.create(AdvancedRAGPipeline.prototype) as StepBackPipeline;
-  p.routeCached = vi.fn(async () => aiResponse(stepBackText));
-  p.embeddingService = { embedBatch: vi.fn(async () => []) };
-  // Return a distinct doc per query so we can prove which queries were searched.
-  const searched: string[] = [];
-  p.searchInitial = vi.fn(async (q: string) => {
-    searched.push(q);
-    return [doc(`hit-for:${q}`, 0.5)];
-  });
-  return { p, searched };
-}
-
-describe('AdvancedRAGPipeline.stepBackRetrieval', () => {
-  it('retrieves on both the original and the step-back query and merges', async () => {
-    const { p, searched } = makePipeline('What is the governing framework?');
-    const out = await p.stepBackRetrieval('specific question', 6, 0.5);
-
-    expect(searched).toEqual(['specific question', 'What is the governing framework?']);
-    expect(out.documents.map(d => d.id).sort()).toEqual([
-      'hit-for:What is the governing framework?',
-      'hit-for:specific question',
-    ]);
-    expect(out.tokensUsed).toBe(11); // from the step-back reasoning call
-    expect(p.embeddingService.embedBatch).toHaveBeenCalledTimes(1);
+describe('generateSubQuestions', () => {
+  it('parses a JSON array of sub-questions and caps the fan-out', async () => {
+    const route = vi.fn(async (_req: AIRequest) =>
+      aiResponse('["What is A?", "What is B?", "What is C?", "What is D?", "What is E?"]')
+    );
+    const { subQuestions, tokensUsed } = await generateSubQuestions(
+      route,
+      'How do A, B, C, D and E compare?',
+      4
+    );
+    expect(subQuestions).toEqual(['What is A?', 'What is B?', 'What is C?', 'What is D?']); // capped at 4
+    expect(tokensUsed).toBe(11);
+    expect(route.mock.calls[0][0].taskType).toBe('structured_output');
   });
 
-  it('degrades to original-only retrieval when the step-back echoes the query', async () => {
-    const { p, searched } = makePipeline('specific question'); // echo -> null
-    const out = await p.stepBackRetrieval('specific question', 6, 0.5);
+  it('accepts an object-wrapped array and drops blank entries', async () => {
+    const route = vi.fn(async () => aiResponse('{"questions": ["What is A?", "  ", "What is B?"]}'));
+    const { subQuestions } = await generateSubQuestions(route, 'q');
+    expect(subQuestions).toEqual(['What is A?', 'What is B?']);
+  });
 
-    expect(searched).toEqual(['specific question']); // no second search
-    expect(out.documents.map(d => d.id)).toEqual(['hit-for:specific question']);
+  it('returns an empty array for an atomic question ([])', async () => {
+    const route = vi.fn(async () => aiResponse('[]'));
+    const { subQuestions } = await generateSubQuestions(route, 'What is the capital?');
+    expect(subQuestions).toEqual([]);
+  });
+
+  it('treats a single echo of the original as no decomposition', async () => {
+    const route = vi.fn(async () => aiResponse('["What is GCP?"]'));
+    const { subQuestions } = await generateSubQuestions(route, 'What is GCP?');
+    expect(subQuestions).toEqual([]);
+  });
+
+  it('returns an empty array on unparseable output', async () => {
+    const route = vi.fn(async () => aiResponse('not json'));
+    const { subQuestions } = await generateSubQuestions(route, 'q');
+    expect(subQuestions).toEqual([]);
   });
 });
