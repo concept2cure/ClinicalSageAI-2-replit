@@ -1,14 +1,12 @@
 /**
  * MDX proactive signals — table-aware alerts AnA surfaces without being asked.
  *
- * Peer (not replacement) of `server/services/intelligence/proactive-commitment-engine.ts`,
- * which is generic ProjectCommitment-shaped. This module reads the
- * MDX-specific tables (q_submissions, q_sub_commitments, cerv2_510k_sections,
- * regulatory_correspondence, regulatory_programs, evidence_sufficiency_assessments)
- * and emits MDX-shaped alerts.
- *
- * Output shape mirrors `ProactiveCheckResult` so a future caller can union
- * MDX signals with the existing engine's output.
+ * Originally a peer of the generic `proactive-commitment-engine` (removed with
+ * the formal drop of the staged charter tables — decision register #727,
+ * item 10). This module reads the MDX-specific tables (q_submissions,
+ * q_sub_commitments, cerv2_510k_sections, regulatory_correspondence,
+ * regulatory_programs, evidence_sufficiency_assessments) and emits MDX-shaped
+ * alerts.
  *
  * All queries are tenant-scoped via `regulatory_programs.organization_id`.
  * Read-only. Never mutates.

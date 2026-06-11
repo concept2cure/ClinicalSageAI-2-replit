@@ -174,15 +174,11 @@ export {
   type RIMIntegrationContext,
 } from './rim-integration.js';
 
-export {
-  ProactiveCommitmentEngine,
-  type ProactiveCheckResult,
-  type ProactiveCommitment,
-  type AtRiskCommitment,
-  type OverdueCommitment,
-  type PhaseGateAlert,
-  type CriticalPathWarning,
-} from './proactive-commitment-engine.js';
+// NOTE: proactive-commitment-engine was removed with the formal drop of the
+// staged charter tables (decision register #727, item 10) — it was a pure
+// computation engine typed against the dropped charterSections/timelinePhases/
+// projectCommitments rows and had no consumers. The MDX-specific peer lives in
+// server/services/ana-ri/mdx-proactive-signals.ts.
 
 export {
   interceptFabricDecision,

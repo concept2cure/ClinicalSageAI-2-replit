@@ -1,0 +1,41 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Concept2Cure RIAI — Schema Hygiene (formal drop of staged charter tables)
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Formally drop the three staged project-charter tables
+--          (charter_sections, timeline_phases, project_commitments) that were
+--          migrated but never queried — decision register issue #727, item 10.
+--
+-- eCTD/CTD Context:
+--   - Module(s): N/A — internal project-management staging surface; no eCTD
+--     content, cross-references, or evidence pointers touch these tables.
+--   - Integrity Risk Addressed: schema drift between shared/schema and the
+--     live database (Drizzle definitions removed in the same change; dropping
+--     only the code would leave orphaned tables in production).
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--     These tables hold no evidence pointers; no spec version bump required.
+--
+-- Notes:
+--   - Decision register #727, item 10: the charter feature is nowhere in the
+--     build backlog (#619); owner approved resolution as a formal drop.
+--   - Created by migrations/0012_project_charter_timeline.sql (2026-03-27) and
+--     never queried by any code path: zero table-object and zero raw SQL-name
+--     references across server/, client/, scripts/, shared/ (verified
+--     2026-06-11). No data loss in practice; fully re-creatable from git
+--     history (0012 + shared/schema/project-charter.ts pre-drop) if the
+--     charter feature is ever scheduled.
+--   - project_charters itself is KEPT — it is live (queried via raw SQL, e.g.
+--     pmaConfig in server/routes/pma-workflow-routes.ts).
+--   - Idempotent: DROP TABLE IF EXISTS. CASCADE intentionally omitted — if a
+--     drop fails on a dependency, that dependency is evidence the table is
+--     not dead; investigate rather than cascade.
+--   - Dependency order: project_commitments references timeline_phases
+--     (phase_id FK), so it drops first. charter_sections and timeline_phases
+--     only reference project_charters (which remains).
+-- =============================================================================
+
+DROP TABLE IF EXISTS project_commitments;
+DROP TABLE IF EXISTS charter_sections;
+DROP TABLE IF EXISTS timeline_phases;
