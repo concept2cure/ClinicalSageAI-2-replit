@@ -403,6 +403,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Inspection Readiness routes:', error);
   }
 
+  // Controlled substances (DEA) — registrations, inventory, perpetual ledger.
+  try {
+    const csModule = await import('../routes/controlled-substances');
+    app.use('/api/controlled-substances', authMiddleware, csModule.default);
+    console.info('✅ Controlled Substances routes mounted (/api/controlled-substances)');
+  } catch (error) {
+    console.error('❌ Failed to mount Controlled Substances routes:', error);
+  }
+
   // C2C study digital twins + simulation (study/protocol design module).
   try {
     const c2cStudyTwinModule = await import('../routes/c2c/study-twin');

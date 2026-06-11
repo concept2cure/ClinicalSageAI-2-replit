@@ -326,4 +326,20 @@ export const REPORT_TYPE_SEED: ReportTypeDefinition[] = [
     governanceRequirements: { part11: true, auditTrail: true },
     truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true },
   },
+  {
+    // Controlled-substances inventory + DEA ledger (21 CFR 1300s; C2C-15).
+    typeId: 'controlled_substances.inventory_ledger',
+    label: 'Controlled Substances Inventory & DEA Ledger',
+    family: 'controlled_substances',
+    allowedScopes: ['program', 'project', 'account'],
+    allowedPersonas: ['research_ops', 'qa', 'ra_lead'],
+    allowedClientSegments: ['academic', 'biotech', 'pharma'],
+    dataDependencies: ['dea_registrations', 'controlled_substances', 'cs_transactions'],
+    artifactDependencies: ['concept2cure_artifacts'],
+    workflowDependencies: ['governance_boundary'],
+    anaModules: ['ana-ri'],
+    exportTemplate: 'controlled-substances-ledger',
+    governanceRequirements: { part11: true, auditTrail: true, region: 'USA_DEA' },
+    truthfulnessRules: { allowPartial: false, requireBlockers: true, requireExplicitGaps: true },
+  },
 ];

@@ -171,6 +171,14 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // Controlled substances metrics (C2C-15).
+      try {
+        const { renderCsMetrics } = await import('../services/cs-metrics.js');
+        lines.push(...renderCsMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RAG retrieval metrics — recorded at the ragRouter chokepoint.
       try {
         const { renderRagMetrics } = await import('../services/rag-runtime-metrics.js');

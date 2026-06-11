@@ -3862,6 +3862,50 @@ export const REVIEW_INSPECTION_READINESS: AnaTool = {
   },
 };
 
+export const REGISTER_DEA: AnaTool = {
+  name: 'register_dea',
+  description:
+    "Record a DEA registration (Controlled Substances Act / 21 CFR 1301) for controlled-substance tracking: registrant, DEA number, business activity, authorized schedules (I-V), expiration. Returns the registration id. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      registrant_name: { type: 'string' },
+      dea_number: { type: 'string' },
+      business_activity: { type: 'string', enum: ['researcher','analytical_lab','manufacturer','distributor','practitioner','teaching_institution','other'] },
+      schedules: { type: 'array', items: { type: 'string', enum: ['I','II','III','IV','V'] } },
+      expiration_date: { type: 'string', description: 'YYYY-MM-DD.' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['registrant_name', 'dea_number', 'business_activity'],
+  },
+};
+
+export const LOG_CS_TRANSACTION: AnaTool = {
+  name: 'log_cs_transaction',
+  description:
+    "Record a controlled-substance transaction on the perpetual ledger (receipt/dispense/use/disposal/transfer/adjustment). The balance is reconciled automatically and a subtraction that would go negative is rejected. Disposals should name a witness. Returns the new balance. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      substance_id: { type: 'number' },
+      transaction_type: { type: 'string', enum: ['receipt','dispense','use','disposal','transfer','adjustment'] },
+      quantity: { type: 'number', description: 'Use a signed value for adjustment; magnitude for others.' },
+      transaction_date: { type: 'string' },
+      witnessed_by: { type: 'string' },
+      reference: { type: 'string' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['substance_id', 'transaction_type', 'quantity'],
+  },
+};
+
+export const REVIEW_CS_BALANCE: AnaTool = {
+  name: 'review_cs_balance',
+  description:
+    "List controlled-substance inventory balances (read-only) so the user can see current on-hand quantities by schedule. Org-scoped.",
+  input_schema: { type: 'object', properties: {}, required: [] },
+};
+
 export const LOG_STUDY_DEVIATION: AnaTool = {
   name: 'log_study_deviation',
   description:
@@ -5345,6 +5389,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CREATE_INSPECTION,
   LOG_INSPECTION_FINDING,
   REVIEW_INSPECTION_READINESS,
+  REGISTER_DEA,
+  LOG_CS_TRANSACTION,
+  REVIEW_CS_BALANCE,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,

@@ -22,7 +22,7 @@ and to run the deferred DB-backed verification. Updated as each capability lands
 | C2C-12 | RIM-lite Registration Grid + Labeling | 3 | **Backend complete** |
 | C2C-13 | Inspection Readiness (BIMO/PAI) | 3 | Planned |
 | C2C-14 | eGrants / Funder-Milestone Mgmt | 3 | **Backend complete** |
-| C2C-15 | Controlled Substances Tracking (DEA) | 3 | Planned |
+| C2C-15 | Controlled Substances Tracking (DEA) | 3 | **Backend complete** |
 
 **Principle:** reuse central infra (governed-actions + audit, tasking, Projects,
 Report-OS, `/api/metrics`, connectors, ingestion, reasoning-engine); every
@@ -423,3 +423,44 @@ Directly fulfills the original grants/pre-award/post-award/invoicing ask. Grants
 
 ### Tests landed (no-DB)
 `inspection-logic.test.ts` (8), `ana/__tests__/inspection-tools.test.ts` (7). Typecheck clean.
+
+
+---
+
+## C2C-15 — Controlled Substances Tracking (DEA)
+
+### Data model (`shared/schema/controlled-substances.ts`; migration `migrations/20260610_controlled_substances.sql`)
+- `dea_registrations` (registrant, DEA number, business activity, authorized schedules, expiration), `controlled_substances` (inventory; schedule I-V, unit, current_balance), `cs_transactions` (perpetual ledger; type, quantity, running balance_after, witness).
+
+### API (`/api/controlled-substances`, governed + org-scoped)
+| Method | Path | Governed action |
+|--------|------|-----------------|
+| POST/GET | `/registrations` | `create` (GET adds expiry status) |
+| POST/GET | `/substances` | `create` |
+| POST | `/substances/:id/transactions` | `update` (reconciles balance; rejects negative) |
+| GET | `/substances/:id/transactions` | — |
+| GET | `/substances/:id/recordkeeping` | — (recordkeeping gate) |
+
+### AnA tools (same governed path, surface `ana`)
+`register_dea`, `log_cs_transaction` (reconciles balance), `review_cs_balance` (read-only inventory).
+
+### Deterministic core (`cs-logic.ts`, pure, tested)
+DEA schedule catalog (I-V, cited 21 CFR 1308); `reconcileBalance` (receipt/adjustment add, dispense/use/disposal/transfer subtract, signed adjustments, no-negative invariant); `registrationExpiryStatus`; `evaluateRecordkeeping` (active registration required; disposal witness; Schedule II Form 222 — cited).
+
+### Central-module wiring
+- **Reports:** `controlled_substances.inventory_ledger` in `REPORT_TYPE_SEED`.
+- **Metrics:** `server/services/cs-metrics.ts` → `/api/metrics` (`cs_registrations_created_total`, `cs_substances_created_total{schedule}`, `cs_transactions_total{type}`).
+
+### UI surfaces to build (deferred)
+1. **Registration list** — DEA registrations with expiry status; schedules chips.
+2. **Inventory** — substances with current balance by schedule; low/negative guards.
+3. **Substance ledger** — perpetual transaction history with running balance; record-transaction form (witness for disposals); the recordkeeping gate panel.
+4. **AnA panel** — conversational tools wired.
+
+### Deferred DB verification
+- [ ] `drizzle-kit push` clean; 3 tables + indexes + CHECK constraints in `information_schema`.
+- [ ] Org-scoping; governed audit rows; balance reconciliation rejects negative inventory under the row lock.
+- [ ] `controlled_substances.inventory_ledger` report run resolves; `/api/metrics` exposes `cs_*`.
+
+### Tests landed (no-DB)
+`cs-logic.test.ts` (9), `ana/__tests__/cs-tools.test.ts` (7). Typecheck clean.

@@ -6275,6 +6275,95 @@ registerToolHandler('review_inspection_readiness', async (input, ctx) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Controlled Substances / DEA (C2C-15). Conversational building shares the
+// governed/audited path (recordGovernedAction, surface 'ana').
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('register_dea', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'register_dea requires tenant + user context.' });
+  const registrantName = typeof input.registrant_name === 'string' ? input.registrant_name.trim() : '';
+  const deaNumber = typeof input.dea_number === 'string' ? input.dea_number.trim() : '';
+  const businessActivity = typeof input.business_activity === 'string' ? input.business_activity : '';
+  if (!registrantName || !deaNumber || !['researcher', 'analytical_lab', 'manufacturer', 'distributor', 'practitioner', 'teaching_institution', 'other'].includes(businessActivity)) {
+    return JSON.stringify({ error: 'registrant_name, dea_number, and a valid business_activity are required.' });
+  }
+  const schedules = Array.isArray(input.schedules) ? input.schedules.filter((s): s is string => typeof s === 'string' && ['I', 'II', 'III', 'IV', 'V'].includes(s)) : [];
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createRegistrationTx } = await import('../controlled-substances/cs-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createRegistrationTx(client, ctx.organizationId, ctx.userId, {
+      registrantName, deaNumber, businessActivity: businessActivity as any, schedules,
+      expirationDate: typeof input.expiration_date === 'string' ? input.expiration_date : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `dea-registration:${id}`, reason: fcoiReason(input, 'DEA registration recorded via AnA'),
+      payload: { deaNumber }, domain: 'controlled_substances', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Recorded DEA registration ${deaNumber} (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `register_dea failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('log_cs_transaction', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'log_cs_transaction requires tenant + user context.' });
+  const substanceId = typeof input.substance_id === 'number' ? input.substance_id : NaN;
+  const transactionType = typeof input.transaction_type === 'string' ? input.transaction_type : '';
+  const quantity = typeof input.quantity === 'number' ? input.quantity : NaN;
+  if (!Number.isInteger(substanceId) || !['receipt', 'dispense', 'use', 'disposal', 'transfer', 'adjustment'].includes(transactionType) || !Number.isFinite(quantity)) {
+    return JSON.stringify({ error: 'substance_id, a valid transaction_type, and a numeric quantity are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { recordTransactionTx } = await import('../controlled-substances/cs-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, balanceAfter } = await recordTransactionTx(client, ctx.organizationId, ctx.userId, substanceId, {
+      transactionType: transactionType as any, quantity,
+      transactionDate: typeof input.transaction_date === 'string' ? input.transaction_date : null,
+      witnessedBy: typeof input.witnessed_by === 'string' ? input.witnessed_by : null,
+      reference: typeof input.reference === 'string' ? input.reference : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `controlled-substance:${substanceId}`, reason: fcoiReason(input, 'CS transaction logged via AnA'),
+      payload: { transactionId: id, type: transactionType, balanceAfter }, domain: 'controlled_substances', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, transactionId: id, balanceAfter, message: `Logged ${transactionType}; new balance ${balanceAfter}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `log_cs_transaction failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_cs_balance', async (_input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_cs_balance requires tenant context.' });
+  const { listSubstances } = await import('../controlled-substances/cs-service.js');
+  try {
+    const rows = await listSubstances(ctx.organizationId);
+    return JSON.stringify({
+      ok: true,
+      substances: rows.map((r: any) => ({ id: r.id, name: r.substance_name, schedule: r.dea_schedule, balance: r.current_balance, unit: r.unit })),
+      message: `${rows.length} controlled substance(s) on inventory.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_cs_balance failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('log_study_deviation', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'log_study_deviation requires tenant context.' });

@@ -460,3 +460,8 @@ export * from './rim';
 // responses (15-business-day clock), per-area readiness. FDA BIMO/PAI; EMA GCP/
 // GMP. Service: server/services/inspection; migration: migrations/20260610_inspection_readiness.sql.
 export * from './inspection';
+
+// Controlled substances tracking (C2C-15): DEA registrations, controlled-
+// substance inventory, perpetual transaction ledger. CSA / 21 CFR 1300s.
+// Service: server/services/controlled-substances; migration: migrations/20260610_controlled_substances.sql.
+export * from './controlled-substances';
