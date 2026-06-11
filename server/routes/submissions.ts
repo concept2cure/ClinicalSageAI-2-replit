@@ -697,6 +697,23 @@ router.get('/regulatory-capabilities', limiter, requireRole(AUTHOR), async (req,
   } catch (err) { fail(res, err); }
 });
 
+// Combination product assessment (21 CFR Part 3 PMOA → lead center).
+const combinationSchema = z.object({
+  components: z.array(z.enum(['drug', 'biologic', 'device'])).min(1).max(5),
+  primaryModeOfAction: z.enum(['drug', 'biologic', 'device']).optional(),
+  combinationType: z.enum(['single_entity', 'co_packaged', 'cross_labeled']).optional(),
+});
+router.post('/combination-product/assess', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = combinationSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { assessCombinationProduct } = await import('../services/market-specs/combination-products.js');
+    res.json(assessCombinationProduct(parsed.data));
+  } catch (err) { fail(res, err); }
+});
+
 // Gap-check a STORED CER (cer_reports/cer_sections) against the canonical structure.
 // Tenant-scoped; needs a database. 404 when the report is not in the organization.
 router.get('/device/cer/:reportId/assess-stored', limiter, requireRole(AUTHOR), async (req, res) => {

@@ -79,8 +79,8 @@ AnA can drive all of the above through her governed tools (tenant from
 `classify_device`, `get_device_reviewer_checklist`, `get_biocompatibility_endpoints`,
 `build_device_blueprint`, `assess_stored_cer`, `build_global_device_strategy`,
 `get_regulatory_timeline`, `validate_udi`, `get_electrical_standards`,
-`get_sterilization_requirements`, `list_regulatory_capabilities`,
-`assess_dispatch_readiness`. The UI's AnA panel passes page context
+`get_sterilization_requirements`, `assess_combination_product`,
+`list_regulatory_capabilities`, `assess_dispatch_readiness`. The UI's AnA panel passes page context
 (`{ submissionId, sectionCode, region }`); the tools supply nothing tenant-related.
 
 ## Still server-side TODO before some screens are fully live
@@ -141,6 +141,7 @@ Workspace map + error catalog for nav/error handling: `shared/types/submission-u
 | POST | `/api/submissions/device/electrical-safety` | `{ electricallyPowered, hasAlarms, … }` → IEC 60601 set | Applicable IEC 60601 standards (general + triggered collaterals) + test categories + reviewer questions. |
 | POST | `/api/submissions/device/sterilization` | `{ sterile, method }` → sterilization reqs | ISO 11135/11137/17665 method standard + SAL (10⁻⁶ terminal) + validation elements + ISO 11607 packaging + reviewer questions. |
 | GET | `/api/submissions/regulatory-capabilities` | → capabilities index | One call to discover the whole deterministic regulatory layer — each capability's category, description, route, and AnA tool. |
+| POST | `/api/submissions/combination-product/assess` | `{ components, primaryModeOfAction?, combinationType? }` → assessment | 21 CFR Part 3: combination detection + PMOA → FDA lead center (CDER/CBER/CDRH) + EU Article 117 consideration; recommends an RFD when PMOA is unestablished. |
 
 > `POST /device/blueprint` now also returns a `scorecard` (weighted 0–100 readiness + level + top gaps).
 

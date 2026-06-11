@@ -3348,6 +3348,21 @@ export const GET_STERILIZATION_REQUIREMENTS: AnaTool = {
   },
 };
 
+export const ASSESS_COMBINATION_PRODUCT: AnaTool = {
+  name: 'assess_combination_product',
+  description:
+    "Assess a (possible) combination product under 21 CFR Part 3. Pass `components` (drug/biologic/device — ≥2 distinct types makes it a combination), optionally the `primary_mode_of_action` (the PMOA component) and `combination_type` (single_entity/co_packaged/cross_labeled). Returns whether it's a combination, the FDA lead center from the PMOA (drug→CDER, biologic→CBER, device→CDRH), the EU consideration (MDR Article 117 / medicines framework), and practical considerations (21 CFR Part 4 cGMP, RFD). When the PMOA isn't established it recommends a Request for Designation rather than guessing. Deterministic.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      components: { type: 'array', items: { type: 'string', enum: ['drug', 'biologic', 'device'] }, description: 'The constituent component types.' },
+      primary_mode_of_action: { type: 'string', enum: ['drug', 'biologic', 'device'], description: 'The component providing the primary mode of action, if established.' },
+      combination_type: { type: 'string', enum: ['single_entity', 'co_packaged', 'cross_labeled'], description: 'How the constituents are combined.' },
+    },
+    required: ['components'],
+  },
+};
+
 export const LIST_REGULATORY_CAPABILITIES: AnaTool = {
   name: 'list_regulatory_capabilities',
   description:
@@ -5432,6 +5447,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   VALIDATE_UDI,
   GET_ELECTRICAL_STANDARDS,
   GET_STERILIZATION_REQUIREMENTS,
+  ASSESS_COMBINATION_PRODUCT,
   LIST_REGULATORY_CAPABILITIES,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,

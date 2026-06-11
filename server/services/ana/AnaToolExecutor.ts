@@ -5265,6 +5265,25 @@ registerToolHandler('list_regulatory_capabilities', async () => {
   }
 });
 
+registerToolHandler('assess_combination_product', async (input) => {
+  // Pure 21 CFR Part 3 logic — no tenant context required.
+  const components = Array.isArray(input.components) ? (input.components as string[]) : [];
+  const allowed = ['drug', 'biologic', 'device'];
+  if (components.length === 0 || !components.every((c) => allowed.includes(c))) {
+    return JSON.stringify({ error: 'components must be a non-empty array of: drug, biologic, device.' });
+  }
+  try {
+    const { assessCombinationProduct } = await import('../market-specs/combination-products.js');
+    return JSON.stringify({ ok: true, ...assessCombinationProduct({
+      components: components as never,
+      primaryModeOfAction: typeof input.primary_mode_of_action === 'string' ? (input.primary_mode_of_action as never) : undefined,
+      combinationType: typeof input.combination_type === 'string' ? (input.combination_type as never) : undefined,
+    }) });
+  } catch (err) {
+    return JSON.stringify({ error: `assess_combination_product failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('assess_stored_cer', async (input, ctx) => {
   // Tenant-scoped — reads the organization's stored CER.
   if (!ctx?.organizationId) {

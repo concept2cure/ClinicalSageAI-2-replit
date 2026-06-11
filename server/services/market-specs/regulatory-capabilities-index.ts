@@ -42,6 +42,7 @@ export const REGULATORY_CAPABILITIES: RegulatoryCapability[] = [
 
   // Classification.
   { id: 'device_classification', label: 'Device classification', category: 'classification', description: 'MDR/IVDR Annex VIII rule-based class + FDA pathway heuristic.', route: 'POST /device/classify', anaTool: 'classify_device', deterministic: true },
+  { id: 'combination_product', label: 'Combination product assessment', category: 'classification', description: '21 CFR Part 3 PMOA → FDA lead center (CDER/CBER/CDRH) + EU Article 117 consideration.', route: 'POST /combination-product/assess', anaTool: 'assess_combination_product', deterministic: true },
 
   // Planning / requirements / eligibility.
   { id: 'submission_requirements', label: 'Submission requirements matrix', category: 'planning', description: 'Per submission type: required modules/documents/forms + gap assessment.', route: 'GET /requirements', anaTool: 'get_submission_requirements', deterministic: true },

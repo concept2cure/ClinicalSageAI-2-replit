@@ -238,6 +238,8 @@ async function main() {
   ok('sterilization resolves the EO standard (ISO 11135) + SAL', ster.status === 200 && ster.json?.method?.standard === 'ISO 11135' && /11607/.test(ster.json?.packagingStandard || ''), `status ${ster.status}`);
   const caps = await c.req('GET', '/api/submissions/regulatory-capabilities');
   ok('regulatory-capabilities index enumerates the layer', caps.status === 200 && typeof caps.json?.total === 'number' && Array.isArray(caps.json?.capabilities) && caps.json.capabilities.some((x) => x.id === 'device_blueprint'), `status ${caps.status}`);
+  const combo = await c.req('POST', '/api/submissions/combination-product/assess', { components: ['drug', 'device'], primaryModeOfAction: 'device' });
+  ok('combination-product maps device PMOA to CDRH', combo.status === 200 && combo.json?.isCombination === true && combo.json?.fdaLeadCenter === 'CDRH', `status ${combo.status}`);
 
   // Document template structures (canonical section skeletons) — static reference data.
   const dt = await c.req('GET', '/api/submissions/document-templates?family=ectd');

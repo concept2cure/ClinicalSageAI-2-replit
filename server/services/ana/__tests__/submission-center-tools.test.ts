@@ -48,6 +48,7 @@ const SUBMISSION_TOOLS = [
   'validate_udi',
   'get_electrical_standards',
   'get_sterilization_requirements',
+  'assess_combination_product',
   'list_regulatory_capabilities',
   'assess_dispatch_readiness',
 ];
@@ -421,6 +422,18 @@ describe('submission AI tasks — tenant + input guards', () => {
     expect(out.ok).toBe(true);
     expect(out.total).toBeGreaterThan(0);
     expect(out.capabilities.some((c: { id: string }) => c.id === 'device_blueprint')).toBe(true);
+  });
+  it('assess_combination_product maps PMOA to the lead center', async () => {
+    const handler = getToolHandler('assess_combination_product')!;
+    const out = JSON.parse(await handler({ components: ['drug', 'device'], primary_mode_of_action: 'device' }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.isCombination).toBe(true);
+    expect(out.fdaLeadCenter).toBe('CDRH');
+  });
+  it('assess_combination_product validates components', async () => {
+    const handler = getToolHandler('assess_combination_product')!;
+    const out = JSON.parse(await handler({ components: ['nope'] }, {} as ToolContext));
+    expect(out.error).toMatch(/components must be/);
   });
 });
 
