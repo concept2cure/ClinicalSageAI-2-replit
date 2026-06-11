@@ -121,7 +121,7 @@ export const REGIONAL_RULES: RegionalRule[] = [
   {
     id: 'EMA-CESP-002',
     region: 'EU',
-    description: 'Application number must follow EU format: EMEA/H/C/[5-digit] or [country]/H/[5-digit]/[year]',
+    description: 'Application number must follow EU format: EMEA/H/C/[6-digit] for the centralised procedure, or [country]/H/[number]/[year] for MRP/DCP',
     severity: 'error',
     citation: 'EU eCTD Specification v3.2.2 §3.1',
   },
@@ -142,7 +142,7 @@ export const REGIONAL_RULES: RegionalRule[] = [
   {
     id: 'EMA-CESP-005',
     region: 'EU',
-    description: 'Filenames must use only lowercase a-z, 0-9, hyphens, and periods (max 64 chars)',
+    description: 'Filenames must use only lowercase a-z, 0-9, hyphens and periods (max 64 chars incl. extension); the total folder path must not exceed 180 characters',
     severity: 'error',
     citation: 'EU eCTD Specification v3.2.2 §4.1',
   },
