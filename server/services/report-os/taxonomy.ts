@@ -310,4 +310,20 @@ export const REPORT_TYPE_SEED: ReportTypeDefinition[] = [
     governanceRequirements: { part11: true, auditTrail: true },
     truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true },
   },
+  {
+    // Inspection readiness + 483 response tracker (FDA BIMO/PAI; C2C-13).
+    typeId: 'inspection.readiness_pack',
+    label: 'Inspection Readiness & 483 Response Pack',
+    family: 'inspection_readiness',
+    allowedScopes: ['program', 'project', 'submission'],
+    allowedPersonas: ['qa', 'ra_lead', 'executive'],
+    allowedClientSegments: ['pharma', 'biotech', 'device', 'ivd'],
+    dataDependencies: ['inspections', 'inspection_findings', 'finding_responses', 'readiness_assessments'],
+    artifactDependencies: ['concept2cure_artifacts'],
+    workflowDependencies: ['governance_boundary'],
+    anaModules: ['ana-ri'],
+    exportTemplate: 'inspection-readiness-pack',
+    governanceRequirements: { part11: true, auditTrail: true },
+    truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true },
+  },
 ];

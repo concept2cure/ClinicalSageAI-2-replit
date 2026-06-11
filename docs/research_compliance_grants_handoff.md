@@ -381,3 +381,45 @@ Directly fulfills the original grants/pre-award/post-award/invoicing ask. Grants
 
 ### Tests landed (no-DB)
 `rim-logic.test.ts` (8), `ana/__tests__/rim-tools.test.ts` (7). Typecheck clean.
+
+
+---
+
+## C2C-13 — Inspection Readiness (BIMO / PAI)
+
+### Data model (`shared/schema/inspection.ts`; migration `migrations/20260610_inspection_readiness.sql`)
+- `inspections` (BIMO/PAI/GCP/GMP; outcome NAI/VAI/OAI), `inspection_findings` (Form 483 observations; classification), `finding_responses` (CAPA; 15-business-day due date), `readiness_assessments` (per-area mock-inspection prep).
+- (Note: iacuc's facility-inspection status type renamed to `FacilityInspectionStatus` to free `InspectionStatus` for this module.)
+
+### API (`/api/inspections`, governed + org-scoped)
+| Method | Path | Governed action |
+|--------|------|-----------------|
+| POST/GET | `/` | `create` |
+| PATCH | `/:id/status` | `transition` (status + outcome) |
+| POST/GET | `/:id/findings` | `update` |
+| POST | `/findings/responses` | `resolve` (auto 15-business-day due date) |
+| PUT | `/readiness` | `update` (per-area) |
+| GET | `/readiness/score` | — (readiness score + blockers) |
+
+### AnA tools (same governed path, surface `ana`)
+`create_inspection`, `log_inspection_finding`, `review_inspection_readiness` (read-only score).
+
+### Deterministic core (`inspection-logic.ts`, pure, tested)
+`addBusinessDays` / `responseDueDate` (the 15-business-day 483 clock, weekend-aware); `responseUrgency`; `outcomeSeverity` (OAI>VAI>NAI); `findingPriority`; `scoreReadiness` (ready=1/in_progress=0.5/at_risk=0 → 0-100 + verdict + blockers).
+
+### Central-module wiring
+- **Reports:** `inspection.readiness_pack` in `REPORT_TYPE_SEED`.
+- **Metrics:** `server/services/inspection-metrics.ts` → `/api/metrics` (`inspections_created_total{type}`, `inspection_findings_total{classification}`, `inspection_outcomes_total{outcome}`).
+
+### UI surfaces to build (deferred)
+1. **Inspection list** — by type/agency/status/outcome; readiness band.
+2. **Inspection detail** — 483 findings table with classification, response tracker (15-business-day clock + urgency), per-area readiness checklist with the score gauge.
+3. **AnA panel** — conversational tools wired.
+
+### Deferred DB verification
+- [ ] `drizzle-kit push` clean; 4 tables + indexes + CHECK constraints in `information_schema`.
+- [ ] Org-scoping; governed audit rows; response due date defaults to 15 business days from inspection end.
+- [ ] `inspection.readiness_pack` report run resolves; `/api/metrics` exposes inspection counters.
+
+### Tests landed (no-DB)
+`inspection-logic.test.ts` (8), `ana/__tests__/inspection-tools.test.ts` (7). Typecheck clean.

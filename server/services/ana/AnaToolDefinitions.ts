@@ -3817,6 +3817,51 @@ export const REVIEW_LABEL_CURRENCY: AnaTool = {
   },
 };
 
+export const CREATE_INSPECTION: AnaTool = {
+  name: 'create_inspection',
+  description:
+    "Open an inspection record (FDA BIMO / pre-approval, EMA GCP/GMP, routine, for-cause). Returns the inspection id for follow-up (findings, readiness). Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      inspection_type: { type: 'string', enum: ['bimo','pai','gcp','gmp','routine','for_cause','other'] },
+      agency: { type: 'string', enum: ['fda','ema','mhra','pmda','other'] },
+      site_name: { type: 'string' },
+      scheduled_date: { type: 'string', description: 'YYYY-MM-DD.' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['inspection_type', 'agency', 'site_name'],
+  },
+};
+
+export const LOG_INSPECTION_FINDING: AnaTool = {
+  name: 'log_inspection_finding',
+  description:
+    "Log a Form 483 observation / inspection finding with its classification (critical/major/minor/observation). The 15-business-day response clock starts from the inspection end date. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      inspection_id: { type: 'number' },
+      observation_number: { type: 'number' },
+      description: { type: 'string' },
+      classification: { type: 'string', enum: ['critical','major','minor','observation'] },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['inspection_id', 'observation_number', 'description', 'classification'],
+  },
+};
+
+export const REVIEW_INSPECTION_READINESS: AnaTool = {
+  name: 'review_inspection_readiness',
+  description:
+    "Score inspection readiness across assessment areas (read-only): ready/in-progress/at-risk → a 0-100 score, verdict, and blockers (any at-risk area). Optionally scope to one inspection. Use to tell the user if they are inspection-ready.",
+  input_schema: {
+    type: 'object',
+    properties: { inspection_id: { type: 'number' } },
+    required: [],
+  },
+};
+
 export const LOG_STUDY_DEVIATION: AnaTool = {
   name: 'log_study_deviation',
   description:
@@ -5297,6 +5342,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CREATE_RIM_PRODUCT,
   SET_REGISTRATION_STATUS,
   REVIEW_LABEL_CURRENCY,
+  CREATE_INSPECTION,
+  LOG_INSPECTION_FINDING,
+  REVIEW_INSPECTION_READINESS,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,

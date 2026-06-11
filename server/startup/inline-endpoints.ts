@@ -163,6 +163,14 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // Inspection readiness metrics (C2C-13).
+      try {
+        const { renderInspectionMetrics } = await import('../services/inspection-metrics.js');
+        lines.push(...renderInspectionMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RAG retrieval metrics — recorded at the ragRouter chokepoint.
       try {
         const { renderRagMetrics } = await import('../services/rag-runtime-metrics.js');

@@ -6189,6 +6189,92 @@ registerToolHandler('review_label_currency', async (input, ctx) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Inspection Readiness (C2C-13). Conversational building shares the governed/
+// audited path (recordGovernedAction, surface 'ana').
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_inspection', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_inspection requires tenant + user context.' });
+  const inspectionType = typeof input.inspection_type === 'string' ? input.inspection_type : '';
+  const agency = typeof input.agency === 'string' ? input.agency : '';
+  const siteName = typeof input.site_name === 'string' ? input.site_name.trim() : '';
+  if (!['bimo', 'pai', 'gcp', 'gmp', 'routine', 'for_cause', 'other'].includes(inspectionType) || !['fda', 'ema', 'mhra', 'pmda', 'other'].includes(agency) || !siteName) {
+    return JSON.stringify({ error: 'inspection_type, agency, and site_name are required and must be valid.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createInspectionTx } = await import('../inspection/inspection-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createInspectionTx(client, ctx.organizationId, ctx.userId, {
+      inspectionType: inspectionType as any, agency: agency as any, siteName,
+      scheduledDate: typeof input.scheduled_date === 'string' ? input.scheduled_date : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `inspection:${id}`, reason: fcoiReason(input, 'Inspection opened via AnA'),
+      payload: { inspectionType, agency }, domain: 'inspection', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Opened ${agency.toUpperCase()} ${inspectionType} inspection at "${siteName}" (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_inspection failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('log_inspection_finding', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'log_inspection_finding requires tenant + user context.' });
+  const inspectionId = typeof input.inspection_id === 'number' ? input.inspection_id : NaN;
+  const observationNumber = typeof input.observation_number === 'number' ? Math.round(input.observation_number) : NaN;
+  const description = typeof input.description === 'string' ? input.description.trim() : '';
+  const classification = typeof input.classification === 'string' ? input.classification : '';
+  if (!Number.isInteger(inspectionId) || !Number.isInteger(observationNumber) || !description || !['critical', 'major', 'minor', 'observation'].includes(classification)) {
+    return JSON.stringify({ error: 'inspection_id, observation_number, description, and a valid classification are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addFindingTx } = await import('../inspection/inspection-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await addFindingTx(client, ctx.organizationId, ctx.userId, inspectionId, { observationNumber, description, classification: classification as any });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `inspection:${inspectionId}`, reason: fcoiReason(input, 'Inspection finding logged via AnA'),
+      payload: { findingId: id, classification }, domain: 'inspection', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, findingId: id, message: `Logged ${classification} observation #${observationNumber} on inspection ${inspectionId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `log_inspection_finding failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_inspection_readiness', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_inspection_readiness requires tenant context.' });
+  const inspectionId = typeof input.inspection_id === 'number' ? input.inspection_id : undefined;
+  const { listReadinessAreas } = await import('../inspection/inspection-service.js');
+  const { scoreReadiness } = await import('../inspection/inspection-logic.js');
+  try {
+    const areas = await listReadinessAreas(ctx.organizationId, inspectionId);
+    const score = scoreReadiness(areas);
+    return JSON.stringify({
+      ok: true, score: score.score, verdict: score.verdict, blockers: score.blockers,
+      message: `Readiness ${score.score}% — ${score.verdict.replace(/_/g, ' ')}${score.blockers.length ? `; ${score.blockers.length} blocker(s)` : ''}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_inspection_readiness failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('log_study_deviation', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'log_study_deviation requires tenant context.' });

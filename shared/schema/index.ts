@@ -455,3 +455,8 @@ export * from './grants';
 // CCDS). FDA 21 CFR 201; EU Directive 2001/83/EC. Service: server/services/rim;
 // migration: migrations/20260610_rim_lite.sql.
 export * from './rim';
+
+// Inspection readiness (C2C-13): BIMO/PAI inspections, Form 483 observations +
+// responses (15-business-day clock), per-area readiness. FDA BIMO/PAI; EMA GCP/
+// GMP. Service: server/services/inspection; migration: migrations/20260610_inspection_readiness.sql.
+export * from './inspection';

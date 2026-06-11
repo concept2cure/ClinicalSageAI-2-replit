@@ -394,6 +394,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount RIM-lite routes:', error);
   }
 
+  // Inspection readiness — BIMO/PAI, Form 483 responses, mock-inspection prep.
+  try {
+    const inspectionsModule = await import('../routes/inspections');
+    app.use('/api/inspections', authMiddleware, inspectionsModule.default);
+    console.info('✅ Inspection Readiness routes mounted (/api/inspections)');
+  } catch (error) {
+    console.error('❌ Failed to mount Inspection Readiness routes:', error);
+  }
+
   // C2C study digital twins + simulation (study/protocol design module).
   try {
     const c2cStudyTwinModule = await import('../routes/c2c/study-twin');
