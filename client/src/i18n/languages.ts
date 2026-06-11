@@ -8,7 +8,7 @@
  * these codes in its LANGUAGE_OVERLAYS map.
  */
 
-export type LanguageCode = 'en' | 'fr' | 'de' | 'ja' | 'zh' | 'ko' | 'es' | 'pt' | 'it' | 'nl' | 'pl';
+export type LanguageCode = 'en' | 'fr' | 'de' | 'ja' | 'zh' | 'ko' | 'es' | 'pt' | 'it' | 'nl' | 'pl' | 'sv' | 'da';
 
 export interface LanguageDef {
   /** BCP-47 primary subtag used by i18next, Intl, and <html lang>. */
@@ -35,6 +35,8 @@ export const LANGUAGES: readonly LanguageDef[] = [
   { code: 'it', label: 'Italian',    native: 'Italiano',  dir: 'ltr', intlLocale: 'it-IT' },
   { code: 'nl', label: 'Dutch',      native: 'Nederlands', dir: 'ltr', intlLocale: 'nl-NL' },
   { code: 'pl', label: 'Polish',     native: 'Polski',    dir: 'ltr', intlLocale: 'pl-PL' },
+  { code: 'sv', label: 'Swedish',    native: 'Svenska',   dir: 'ltr', intlLocale: 'sv-SE' },
+  { code: 'da', label: 'Danish',     native: 'Dansk',     dir: 'ltr', intlLocale: 'da-DK' },
 ] as const;
 
 export const DEFAULT_LANGUAGE: LanguageCode = 'en';

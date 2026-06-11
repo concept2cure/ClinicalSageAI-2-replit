@@ -1,0 +1,37 @@
+{
+  "actions": {
+    "save": "Spara",
+    "cancel": "Avbryt",
+    "close": "Stäng",
+    "next": "Nästa",
+    "previous": "Föregående",
+    "delete": "Ta bort",
+    "continue": "Fortsätt",
+    "back": "Tillbaka",
+    "search": "Sök"
+  },
+  "density": {
+    "label": "Täthet",
+    "compact": "Kompakt",
+    "comfortable": "Bekväm",
+    "spacious": "Luftig"
+  },
+  "topbar": {
+    "notifications": "Aviseringar",
+    "help": "Hjälp",
+    "askAna": "Fråga AnA eller gå till…",
+    "command": "Kommando",
+    "activeProject": "Aktivt projekt",
+    "noProjects": "Inga projekt",
+    "selectProject": "Välj ett projekt",
+    "filter": "Filtrera",
+    "clientType": "Kundtyp",
+    "pharma": "Läkemedel",
+    "biotech": "Bioteknik",
+    "switchProgram": "Byt program"
+  },
+  "language": {
+    "label": "Språk",
+    "select": "Välj språk"
+  }
+}
