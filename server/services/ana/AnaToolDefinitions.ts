@@ -3936,6 +3936,50 @@ export const REVIEW_LIFECYCLE_CALENDAR: AnaTool = {
   input_schema: { type: 'object', properties: {}, required: [] },
 };
 
+export const CREATE_TMF: AnaTool = {
+  name: 'create_tmf',
+  description:
+    "Open a Trial Master File (eTMF) for a study, organized to the DIA TMF Reference Model. Returns the TMF id for adding artifacts. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      title: { type: 'string' },
+      study_id: { type: 'number', description: 'Optional clinical_studies.id.' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['title'],
+  },
+};
+
+export const CLASSIFY_TMF_ARTIFACT: AnaTool = {
+  name: 'classify_tmf_artifact',
+  description:
+    "File a TMF artifact: when no zone is given, it is AUTO-CLASSIFIED into a DIA TMF Reference Model zone by name (deterministic). Set status (expected/received/in_review/final/missing/not_applicable). Returns the artifact id and the assigned zone. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      tmf_file_id: { type: 'number' },
+      artifact_name: { type: 'string' },
+      zone: { type: 'number', description: 'DIA RM zone 1-11; omit to auto-classify.' },
+      status: { type: 'string', enum: ['expected','received','in_review','final','missing','not_applicable'] },
+      document_date: { type: 'string' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['tmf_file_id', 'artifact_name'],
+  },
+};
+
+export const REVIEW_TMF_COMPLETENESS: AnaTool = {
+  name: 'review_tmf_completeness',
+  description:
+    "Run the deterministic TMF completeness gap-check on a TMF (read-only): completeness %, per-zone coverage, the list of required artifacts not yet final, and an inspection-readiness verdict. Use to tell the user where the TMF has gaps before an inspection.",
+  input_schema: {
+    type: 'object',
+    properties: { tmf_file_id: { type: 'number' } },
+    required: ['tmf_file_id'],
+  },
+};
+
 export const LOG_STUDY_DEVIATION: AnaTool = {
   name: 'log_study_deviation',
   description:
@@ -5424,6 +5468,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   REVIEW_CS_BALANCE,
   CREATE_LIFECYCLE_OBLIGATION,
   REVIEW_LIFECYCLE_CALENDAR,
+  CREATE_TMF,
+  CLASSIFY_TMF_ARTIFACT,
+  REVIEW_TMF_COMPLETENESS,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,

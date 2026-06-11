@@ -358,4 +358,20 @@ export const REPORT_TYPE_SEED: ReportTypeDefinition[] = [
     governanceRequirements: { part11: true, auditTrail: true },
     truthfulnessRules: { allowPartial: true, requireBlockers: true, requireConfidence: true },
   },
+  {
+    // eTMF completeness + gap pack (DIA TMF RM; ICH E6 §8; C2C-08).
+    typeId: 'etmf.completeness_pack',
+    label: 'eTMF Completeness & Gap Pack',
+    family: 'etmf',
+    allowedScopes: ['study', 'submission', 'project'],
+    allowedPersonas: ['clinical_ops', 'tmf_lead', 'qa'],
+    allowedClientSegments: ['pharma', 'biotech', 'cro'],
+    dataDependencies: ['tmf_files', 'tmf_artifacts'],
+    artifactDependencies: ['concept2cure_artifacts'],
+    workflowDependencies: ['governance_boundary'],
+    anaModules: ['ana-ri'],
+    exportTemplate: 'etmf-completeness-pack',
+    governanceRequirements: { part11: true, auditTrail: true },
+    truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true },
+  },
 ];

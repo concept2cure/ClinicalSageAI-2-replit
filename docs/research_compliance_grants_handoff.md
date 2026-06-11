@@ -15,7 +15,7 @@ and to run the deferred DB-backed verification. Updated as each capability lands
 | C2C-05 | IACUC / Animal Study Governance | 2 | **Backend complete** |
 | C2C-06 | IRB/IEC Submission & Amendment Mgmt | 2 | **Backend complete** |
 | C2C-07 | IBC / Biosafety (Novel Modality) | 2 | **Backend complete** |
-| C2C-08 | AI-native eTMF | 2 | Planned |
+| C2C-08 | AI-native eTMF | 2 | **Backend complete** |
 | C2C-09 | Device / IVD Technical Documentation | 2 | Pre-existing on trunk (CER/PER/IVDR/510k/DHF) — not rebuilt |
 | C2C-10 | PV Intake + DSUR/PBRER | 3 | Planned |
 | C2C-11 | Lifecycle Obligation Tracking | 3 | **Backend complete** |
@@ -503,3 +503,51 @@ DEA schedule catalog (I-V, cited 21 CFR 1308); `reconcileBalance` (receipt/adjus
 
 ### Tests landed (no-DB)
 `lifecycle-logic.test.ts` (4), `ana/__tests__/lifecycle-tools.test.ts` (5). Typecheck clean.
+
+
+---
+
+## C2C-08 — AI-native eTMF
+
+### Data model (`shared/schema/etmf.ts`; migration `migrations/20260610_etmf.sql`)
+- `tmf_files` (per-study TMF container; DIA RM model), `tmf_artifacts` (classified to zone 1-11/section; expected + completeness-required flags; status expected/received/in_review/final/missing/not_applicable).
+
+### API (`/api/etmf`, governed + org-scoped)
+| Method | Path | Governed action |
+|--------|------|-----------------|
+| POST/GET | `/files` | `create` |
+| POST | `/files/:id/artifacts` | `update` (auto-classifies when zone omitted) |
+| GET | `/files/:id/artifacts` | — |
+| PATCH | `/artifacts/:id/status` | `transition` |
+| GET | `/files/:id/completeness` | — (gap-check; feeds inspection readiness) |
+| GET | `/classify?artifactName=` | — (deterministic auto-classify preview) |
+
+### AnA tools (same governed path, surface `ana`)
+`create_tmf`, `classify_tmf_artifact` (auto-classifies), `review_tmf_completeness` (read-only gap-check).
+
+### Deterministic core (`etmf-logic.ts`, pure, tested)
+DIA TMF RM 11-zone catalog; `classifyArtifact` (keyword auto-classifier baseline an LLM can refine; defaults to Zone 2); `evaluateCompleteness` (required-and-final → completeness %, per-zone coverage, gap list, inspection-readiness verdict).
+
+### Central-module wiring
+- **Reports:** `etmf.completeness_pack` in `REPORT_TYPE_SEED`.
+- **Metrics:** `server/services/etmf-metrics.ts` → `/api/metrics` (`etmf_files_created_total`, `etmf_artifacts_added_total{zone}`, `etmf_artifacts_auto_classified_total`).
+- **Cross-link:** the completeness gap-check is the data feed for C2C-13 inspection readiness (TMF readiness area).
+
+### UI surfaces to build (deferred)
+1. **TMF dashboard** — completeness gauge + per-zone coverage heatmap; gap list.
+2. **Artifact grid** — zone × artifact with status; auto-classify-on-add (with override); status transitions.
+3. **AnA panel** — conversational tools wired.
+
+### Deferred DB verification
+- [ ] `drizzle-kit push` clean; 2 tables + indexes + CHECK constraints in `information_schema`.
+- [ ] Org-scoping; governed audit rows; artifact auto-classification matches the deterministic classifier.
+- [ ] `etmf.completeness_pack` report run resolves; `/api/metrics` exposes `etmf_*`.
+
+### Tests landed (no-DB)
+`etmf-logic.test.ts` (10), `ana/__tests__/etmf-tools.test.ts` (6). Typecheck clean.
+
+---
+
+## Roadmap complete
+
+All 15 capabilities are accounted for: **C2C-01 through C2C-08, C2C-11 through C2C-15 built end-to-end (backend)**; **C2C-02** is the provenance spine threaded by 7+ consumers; **C2C-09** (Device/IVD) and **C2C-10** (PV/DSUR) pre-exist on the trunk and were not rebuilt. Every built capability: CHECK-constrained schema + authored migration, a regulation-cited pure deterministic gate with tests, a governed transactional service, governed REST + AnA conversational tools on one audited path, a Report-OS report type + `/api/metrics` counters, and this handoff entry. DB-backed paths are authored-but-not-runtime-verified in this container; each capability carries its deferred DB-verification checklist above.

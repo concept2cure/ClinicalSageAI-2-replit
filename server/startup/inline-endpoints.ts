@@ -187,6 +187,14 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // eTMF metrics (C2C-08).
+      try {
+        const { renderEtmfMetrics } = await import('../services/etmf-metrics.js');
+        lines.push(...renderEtmfMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RAG retrieval metrics — recorded at the ragRouter chokepoint.
       try {
         const { renderRagMetrics } = await import('../services/rag-runtime-metrics.js');

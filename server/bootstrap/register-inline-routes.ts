@@ -421,6 +421,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Lifecycle Obligation routes:', error);
   }
 
+  // AI-native eTMF — DIA TMF Reference Model artifacts + completeness gap-check.
+  try {
+    const etmfModule = await import('../routes/etmf');
+    app.use('/api/etmf', authMiddleware, etmfModule.default);
+    console.info('✅ eTMF routes mounted (/api/etmf)');
+  } catch (error) {
+    console.error('❌ Failed to mount eTMF routes:', error);
+  }
+
   // C2C study digital twins + simulation (study/protocol design module).
   try {
     const c2cStudyTwinModule = await import('../routes/c2c/study-twin');

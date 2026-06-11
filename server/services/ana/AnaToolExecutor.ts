@@ -6428,6 +6428,87 @@ registerToolHandler('review_lifecycle_calendar', async (_input, ctx) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// AI-native eTMF (C2C-08). Conversational building shares the governed/audited
+// path (recordGovernedAction, surface 'ana'); artifacts auto-classify by name.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_tmf', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_tmf requires tenant + user context.' });
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!title) return JSON.stringify({ error: 'title is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createTmfTx } = await import('../etmf/etmf-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createTmfTx(client, ctx.organizationId, ctx.userId, { title, studyId: typeof input.study_id === 'number' ? input.study_id : null });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `tmf-file:${id}`, reason: fcoiReason(input, 'TMF opened via AnA'),
+      payload: { title }, domain: 'etmf', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Opened TMF "${title}" (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_tmf failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('classify_tmf_artifact', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'classify_tmf_artifact requires tenant + user context.' });
+  const tmfFileId = typeof input.tmf_file_id === 'number' ? input.tmf_file_id : NaN;
+  const artifactName = typeof input.artifact_name === 'string' ? input.artifact_name.trim() : '';
+  if (!Number.isInteger(tmfFileId) || !artifactName) return JSON.stringify({ error: 'tmf_file_id and artifact_name are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addArtifactTx } = await import('../etmf/etmf-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, zone, classification } = await addArtifactTx(client, ctx.organizationId, ctx.userId, tmfFileId, {
+      artifactName,
+      zone: typeof input.zone === 'number' ? input.zone : null,
+      status: typeof input.status === 'string' ? (input.status as any) : undefined,
+      documentDate: typeof input.document_date === 'string' ? input.document_date : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `tmf-file:${tmfFileId}`, reason: fcoiReason(input, 'TMF artifact filed via AnA'),
+      payload: { artifactId: id, zone, classification }, domain: 'etmf', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, artifactId: id, zone, classification, message: `Filed "${artifactName}" to TMF zone ${zone}${classification !== 'explicit' ? ' (auto-classified)' : ''}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `classify_tmf_artifact failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_tmf_completeness', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_tmf_completeness requires tenant context.' });
+  const tmfFileId = typeof input.tmf_file_id === 'number' ? input.tmf_file_id : NaN;
+  if (!Number.isInteger(tmfFileId)) return JSON.stringify({ error: 'tmf_file_id is required.' });
+  const { getCompletenessInput } = await import('../etmf/etmf-service.js');
+  const { evaluateCompleteness } = await import('../etmf/etmf-logic.js');
+  try {
+    const artifacts = await getCompletenessInput(ctx.organizationId, tmfFileId);
+    const r = evaluateCompleteness(artifacts);
+    return JSON.stringify({
+      ok: true, completenessPct: r.completenessPct, verdict: r.verdict, gapCount: r.gaps.length, gaps: r.gaps.slice(0, 20),
+      message: `TMF ${r.completenessPct}% complete — ${r.verdict.replace(/_/g, ' ')}${r.gaps.length ? `; ${r.gaps.length} gap(s)` : ''}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_tmf_completeness failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('log_study_deviation', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'log_study_deviation requires tenant context.' });
