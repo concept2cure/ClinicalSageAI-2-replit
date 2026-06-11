@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-11T23:51:07.570Z",
+  "generatedAt": "2026-06-11T23:52:39.425Z",
   "git": {
-    "sha": "cc589f8823810f8879b6ddb7ca5039c1da254d20",
+    "sha": "bd328d81044954b0cb5cae624e6d12cae8e9ac72",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2185,7 +2185,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "lines": 1961
+        "lines": 2002
       },
       {
         "file": "server/routes/auth.ts",
