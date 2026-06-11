@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-06-11T23:43:02.055Z",
+  "generatedAt": "2026-06-11T23:49:54.069Z",
   "git": {
-    "sha": "0499ba2a5d847e4c91164324281ad44bafa3b384",
-    "branch": "claude/eu-languages-sv-da"
+    "sha": "03237b4949e98e2a581699ad32261e6a17bd03a8",
+    "branch": "concept2cure-v2"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -2051,11 +2051,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 379055
+        "bytes": 380145
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 298017
+        "bytes": 299358
       },
       {
         "file": "server/statistics-service.ts",
@@ -2113,7 +2113,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 7865
+        "lines": 7884
       },
       {
         "file": "server/statistics-service.ts",
@@ -2121,7 +2121,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 5625
+        "lines": 5641
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2281,14 +2281,7 @@
       }
     ]
   },
-  "comparison": {
-    "baseline": "docs/reports/repo-health-scan-latest.json",
-    "delta": {
-      "duplicateBasenames": 0,
-      "largeFilesByBytes": 0,
-      "largeFilesByLines": 0
-    }
-  },
+  "comparison": null,
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
