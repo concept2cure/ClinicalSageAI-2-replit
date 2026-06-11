@@ -13,6 +13,8 @@
  * TECHNIQUES IMPLEMENTED:
  * 1. HyDE - Generate hypothetical answer, embed that
  * 2. Multi-Query - Expand query into multiple perspectives
+ * 2b. Step-Back - Derive a broader question (rag-query-transforms.ts) and
+ *     retrieve on it alongside the original for background context
  * 3. Reranking - pluggable via rag-reranker.ts. Defaults to an LLM-as-judge
  *    (a prompted relevance score, NOT a cross-encoder); swaps to a true
  *    cross-encoder reranker when RAG_RERANKER_* env is configured.
@@ -37,13 +39,14 @@ import { AIProviderRouter, getAIRouter, type AIRequest, type AIResponse } from '
 import { getOpenAIClient } from './openai-client.js';
 import { getReranker, type Reranker } from './rag-reranker.js';
 import { reciprocalRankFusion, normalizeToUnit } from './rag-fusion.js';
+import { generateStepBackQuery } from './rag-query-transforms.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
 export interface RetrievalOptions {
-  strategy: 'basic' | 'hyde' | 'multi_query' | 'advanced';
+  strategy: 'basic' | 'hyde' | 'multi_query' | 'step_back' | 'advanced';
   limit?: number;
   threshold?: number;
   useReranking?: boolean;
@@ -351,6 +354,21 @@ export class AdvancedRAGPipeline {
         tokensUsed += multiResult.tokensUsed;
         break;
 
+      case 'step_back': {
+        const stepBackResult = await this.stepBackRetrieval(
+          query,
+          limit * 3,
+          threshold,
+          options.filters,
+          options.organizationUuid,
+          artifactScope,
+          scope
+        );
+        candidates = stepBackResult.documents;
+        tokensUsed += stepBackResult.tokensUsed;
+        break;
+      }
+
       case 'advanced':
         // Combine HyDE + Multi-Query
         const [hydeAdvanced, multiAdvanced] = await Promise.all([
@@ -646,6 +664,58 @@ export class AdvancedRAGPipeline {
     return {
       documents: merged,
       tokensUsed: queryExpansionResponse.usage.totalTokens,
+    };
+  }
+
+  /**
+   * Step-back retrieval. Derives a more general "step-back" question and
+   * retrieves on both it and the original, then fuses. The broader pass pulls in
+   * background context (governing regulation, definitions) that a narrow query
+   * alone misses. When no useful step-back is produced (model echoed/declined),
+   * this degrades to a single-query retrieval on the original — same cost shape
+   * as basic retrieval plus one cheap reasoning call.
+   */
+  private async stepBackRetrieval(
+    query: string,
+    limit: number,
+    threshold: number,
+    _filters?: RetrievalOptions['filters'],
+    organizationUuid?: string,
+    artifactScope?: RetrievalOptions['artifactScope'],
+    scope?: CorpusScope
+  ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }> {
+    const { stepBackQuery, tokensUsed } = await generateStepBackQuery(
+      req => this.routeCached(req),
+      query
+    );
+
+    const queries = stepBackQuery ? [query, stepBackQuery] : [query];
+
+    // Pre-warm the embedding cache with one batch call so the per-query embeds
+    // inside searchInitial become cache hits (same optimization as multi-query).
+    // Best-effort; on failure each search embeds its own query.
+    try {
+      await this.embeddingService.embedBatch(queries, 'text-embedding-3-small');
+    } catch (error) {
+      console.warn('[RAG] step-back batch embed failed, falling back to per-query embed:', error);
+    }
+
+    const results = await Promise.all(
+      queries.map(q =>
+        this.searchInitial(
+          q,
+          Math.ceil(limit / queries.length),
+          threshold,
+          organizationUuid,
+          artifactScope,
+          scope
+        )
+      )
+    );
+
+    return {
+      documents: this.mergeAndDeduplicate(results.flat()),
+      tokensUsed,
     };
   }
 
