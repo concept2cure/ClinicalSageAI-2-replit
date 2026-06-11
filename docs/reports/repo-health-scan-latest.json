@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-11T17:27:52.201Z",
+  "generatedAt": "2026-06-11T17:34:27.012Z",
   "git": {
-    "sha": "73907a6bbb73ca9fb8400d90fc38af7cc70b31e4",
+    "sha": "79f20d47f6c74b99baf6d8195e99b98aff600de8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 202,
+    "duplicateBasenames": 203,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -1240,6 +1240,14 @@
         ]
       },
       {
+        "basename": "controlled-substances",
+        "count": 2,
+        "paths": [
+          "server/routes/controlled-substances.ts",
+          "shared/schema/controlled-substances.ts"
+        ]
+      },
+      {
         "basename": "conversation",
         "count": 2,
         "paths": [
@@ -2027,11 +2035,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 363337
+        "bytes": 369194
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 291798
+        "bytes": 294107
       },
       {
         "file": "server/statistics-service.ts",
@@ -2085,7 +2093,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 7631
+        "lines": 7720
       },
       {
         "file": "server/statistics-service.ts",
@@ -2097,7 +2105,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 5499
+        "lines": 5546
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2257,7 +2265,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 300,
+      "duplicateGroups": 301,
       "largeByBytes": 11,
       "largeByLines": 34
     },
@@ -2275,7 +2283,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 40,
+      "duplicateGroups": 41,
       "largeByBytes": 1,
       "largeByLines": 2
     },
