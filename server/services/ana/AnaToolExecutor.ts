@@ -6007,6 +6007,98 @@ registerToolHandler('review_send_readiness', async (input, ctx) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// eGrants (C2C-14). Conversational building shares the governed/audited path
+// (recordGovernedAction, surface 'ana'). Awards thread proposal → award provenance.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_grant_proposal', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_grant_proposal requires tenant + user context.' });
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!title) return JSON.stringify({ error: 'title is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createProposalTx } = await import('../grants/grants-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createProposalTx(client, ctx.organizationId, ctx.userId, {
+      title,
+      opportunityId: typeof input.opportunity_id === 'number' ? input.opportunity_id : null,
+      projectId: typeof input.project_id === 'number' ? input.project_id : null,
+      principalInvestigator: typeof input.principal_investigator === 'string' ? input.principal_investigator : null,
+      requestedAmount: typeof input.requested_amount === 'number' ? input.requested_amount : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `grant-proposal:${id}`, reason: fcoiReason(input, 'Grant proposal opened via AnA'),
+      payload: { title }, domain: 'grants', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Opened grant proposal "${title}" (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_grant_proposal failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('record_grant_award', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'record_grant_award requires tenant + user context.' });
+  const awardNumber = typeof input.award_number === 'string' ? input.award_number.trim() : '';
+  const fundingAgency = typeof input.funding_agency === 'string' ? input.funding_agency : '';
+  if (!awardNumber || !['nih', 'nsf', 'barda', 'dod', 'cdc', 'arpa_h', 'foundation', 'industry', 'other'].includes(fundingAgency)) {
+    return JSON.stringify({ error: 'award_number and a valid funding_agency are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createAwardTx } = await import('../grants/grants-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, provenanceLinkId } = await createAwardTx(client, ctx.organizationId, ctx.userId, {
+      awardNumber, fundingAgency: fundingAgency as any,
+      proposalId: typeof input.proposal_id === 'number' ? input.proposal_id : null,
+      projectId: typeof input.project_id === 'number' ? input.project_id : null,
+      totalAmount: typeof input.total_amount === 'number' ? input.total_amount : null,
+      periodStart: typeof input.period_start === 'string' ? input.period_start : null,
+      periodEnd: typeof input.period_end === 'string' ? input.period_end : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `grant-award:${id}`, reason: fcoiReason(input, 'Grant award recorded via AnA'),
+      payload: { fundingAgency, provenanceLinkId }, domain: 'grants', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, provenanceLinkId, message: `Recorded ${fundingAgency.toUpperCase()} award "${awardNumber}" (id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `record_grant_award failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_grant_reporting', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_grant_reporting requires tenant context.' });
+  const awardId = typeof input.award_id === 'number' ? input.award_id : NaN;
+  if (!Number.isInteger(awardId)) return JSON.stringify({ error: 'award_id is required.' });
+  const { getAwardPeriod } = await import('../grants/grants-service.js');
+  const { reportingObligations, awardPeriodState } = await import('../grants/grants-logic.js');
+  try {
+    const { periodStart, periodEnd } = await getAwardPeriod(ctx.organizationId, awardId);
+    const today = new Date().toISOString().slice(0, 10);
+    const obligations = reportingObligations(periodStart, periodEnd);
+    return JSON.stringify({
+      ok: true, periodState: awardPeriodState(periodStart, periodEnd, today), obligations,
+      message: `${obligations.length} reporting obligation(s); award is ${awardPeriodState(periodStart, periodEnd, today).replace(/_/g, ' ')}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_grant_reporting failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('log_study_deviation', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'log_study_deviation requires tenant context.' });

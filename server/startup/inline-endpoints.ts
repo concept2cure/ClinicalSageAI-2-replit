@@ -147,6 +147,14 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // eGrants metrics (C2C-14).
+      try {
+        const { renderGrantsMetrics } = await import('../services/grants-metrics.js');
+        lines.push(...renderGrantsMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RAG retrieval metrics — recorded at the ragRouter chokepoint.
       try {
         const { renderRagMetrics } = await import('../services/rag-runtime-metrics.js');

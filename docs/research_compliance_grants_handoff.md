@@ -16,12 +16,12 @@ and to run the deferred DB-backed verification. Updated as each capability lands
 | C2C-06 | IRB/IEC Submission & Amendment Mgmt | 2 | **Backend complete** |
 | C2C-07 | IBC / Biosafety (Novel Modality) | 2 | **Backend complete** |
 | C2C-08 | AI-native eTMF | 2 | Planned |
-| C2C-09 | Device / IVD Technical Documentation | 2 | Planned |
+| C2C-09 | Device / IVD Technical Documentation | 2 | Pre-existing on trunk (CER/PER/IVDR/510k/DHF) — not rebuilt |
 | C2C-10 | PV Intake + DSUR/PBRER | 3 | Planned |
 | C2C-11 | Lifecycle Obligation Tracking | 3 | Planned |
 | C2C-12 | RIM-lite Registration Grid + Labeling | 3 | Planned |
 | C2C-13 | Inspection Readiness (BIMO/PAI) | 3 | Planned |
-| C2C-14 | eGrants / Funder-Milestone Mgmt | 3 | Planned |
+| C2C-14 | eGrants / Funder-Milestone Mgmt | 3 | **Backend complete** |
 | C2C-15 | Controlled Substances Tracking (DEA) | 3 | Planned |
 
 **Principle:** reuse central infra (governed-actions + audit, tasking, Projects,
@@ -294,3 +294,49 @@ Risk-group catalog (RG1-4 → BSL-1..4, cited NIH Guidelines/BMBL); `evaluateCon
 
 ### Tests landed (no-DB)
 `nonclinical-logic.test.ts` (9), `ana/__tests__/nonclinical-tools.test.ts` (5). Typecheck clean.
+
+---
+
+## C2C-14 — eGrants / Funder-Milestone Management
+
+Directly fulfills the original grants/pre-award/post-award/invoicing ask. Grants is greenfield (no prior tables).
+
+### Data model (`shared/schema/grants.ts`; migration `migrations/20260610_egrants.sql`)
+- `grant_opportunities` (pre-award; agency, mechanism SBIR/STTR/R01…, grants.gov `external_id`), `grant_proposals` (applications; opportunity + Project links), `grant_awards` (post-award; period, total), `grant_milestones` (scientific/progress/financial/deliverable/regulatory + reporting deadlines), `grant_invoices` (sponsor billing).
+- Provenance: `grant_proposal → grant_award` (`results_in`) preserves the pre→post-award thread. Proposals/awards attach to `projects`.
+
+### API (`/api/grants`, governed + org-scoped)
+| Method | Path | Governed action |
+|--------|------|-----------------|
+| POST | `/opportunities` | `create` |
+| POST | `/proposals` · GET `/proposals` · PATCH `/proposals/:id/status` | `create`/`transition` |
+| POST | `/awards` (proposal→award provenance) · GET `/awards` | `create` |
+| GET | `/awards/:id/reporting` | — (2 CFR 200.344 obligations + period state) |
+| POST | `/awards/:id/milestones` · GET `/milestones` (urgency summary) | `update` |
+| POST | `/awards/:id/invoices` · GET `/invoices` · PATCH `/invoices/:id/status` | `create`/`transition` |
+
+### AnA tools (same governed path, surface `ana`)
+`create_grant_proposal`, `record_grant_award` (threads provenance), `review_grant_reporting` (read-only federal obligations).
+
+### Deterministic core (`grants-logic.ts`, pure, tested)
+`deadlineUrgency` + `summarizeDeadlines` (overdue/due_30/due_90/later/undated/closed) for proposals/milestones/invoices; `reportingObligations` (annual RPPR + final performance/financial 120 days post-period, 2 CFR 200.344); `awardPeriodState` (pre_start/active/closeout_window/lapsed).
+
+### Central-module wiring
+- **Reports:** `grants.portfolio_register` in `REPORT_TYPE_SEED`.
+- **Metrics:** `server/services/grants-metrics.ts` → `/api/metrics` (`grants_proposals_created_total`, `grants_awards_recorded_total{agency}`, `grants_invoices_total{status}`).
+- **Tasking (documented follow-on):** milestone/invoice deadlines are the natural feed for `unified_tasks`; wiring needs a `'Grants'` `moduleType` registered in `unifiedTaskService` MODULE_CONFIG.
+- **grants.gov connector (documented follow-on):** `external_id` on opportunities is the hook; build `server/services/connectors/grants-gov.ts` per the `DataConnector` + credentialVault pattern.
+
+### UI surfaces to build (deferred)
+1. **Pre-award pipeline** — opportunities + proposals kanban by status; deadline urgency band.
+2. **Post-award dashboard** — awards with period state, budget vs invoiced, the reporting-obligations panel (`GET /awards/:id/reporting`), milestone urgency.
+3. **Invoice register** — sponsor invoices by status/aging; status transitions.
+4. **AnA panel** — conversational tools wired.
+
+### Deferred DB verification
+- [ ] `drizzle-kit push` clean; 5 tables + indexes + CHECK constraints in `information_schema`.
+- [ ] Org-scoping; governed audit rows; proposal→award provenance link written; proposal marked awarded.
+- [ ] `grants.portfolio_register` report run resolves; `/api/metrics` exposes `grants_*`.
+
+### Tests landed (no-DB)
+`grants-logic.test.ts` (5), `ana/__tests__/grants-tools.test.ts` (6). Typecheck clean.

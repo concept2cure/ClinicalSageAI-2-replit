@@ -376,6 +376,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Nonclinical routes:', error);
   }
 
+  // eGrants / funder-milestone management (2 CFR 200; SBIR/STTR; pre→post-award).
+  try {
+    const grantsModule = await import('../routes/grants');
+    app.use('/api/grants', authMiddleware, grantsModule.default);
+    console.info('✅ eGrants routes mounted (/api/grants)');
+  } catch (error) {
+    console.error('❌ Failed to mount eGrants routes:', error);
+  }
+
   // C2C study digital twins + simulation (study/protocol design module).
   try {
     const c2cStudyTwinModule = await import('../routes/c2c/study-twin');

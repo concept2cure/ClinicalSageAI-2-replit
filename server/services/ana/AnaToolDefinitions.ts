@@ -3720,6 +3720,55 @@ export const REVIEW_SEND_READINESS: AnaTool = {
   },
 };
 
+export const CREATE_GRANT_PROPOSAL: AnaTool = {
+  name: 'create_grant_proposal',
+  description:
+    "Open a grant proposal (application) in the sponsored-programs pipeline. Optionally link the funding opportunity it responds to and the Project it belongs to. Returns the proposal id. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      title: { type: 'string' },
+      opportunity_id: { type: 'number' },
+      project_id: { type: 'number' },
+      principal_investigator: { type: 'string' },
+      requested_amount: { type: 'number' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['title'],
+  },
+};
+
+export const RECORD_GRANT_AWARD: AnaTool = {
+  name: 'record_grant_award',
+  description:
+    "Record a grant award (post-award). When linked to its proposal, the proposal is marked awarded and the proposal → award provenance link is written (preserving pre→post-award continuity). Returns the award id. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      award_number: { type: 'string' },
+      funding_agency: { type: 'string', enum: ['nih', 'nsf', 'barda', 'dod', 'cdc', 'arpa_h', 'foundation', 'industry', 'other'] },
+      proposal_id: { type: 'number' },
+      project_id: { type: 'number' },
+      total_amount: { type: 'number' },
+      period_start: { type: 'string', description: 'YYYY-MM-DD.' },
+      period_end: { type: 'string', description: 'YYYY-MM-DD.' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['award_number', 'funding_agency'],
+  },
+};
+
+export const REVIEW_GRANT_REPORTING: AnaTool = {
+  name: 'review_grant_reporting',
+  description:
+    "Compute the federal post-award reporting obligations for an award (read-only): annual RPPRs and the final performance + financial reports (2 CFR 200.344, 120 days after period end), plus where the award sits in its period of performance. Use to tell the user what reports are coming due.",
+  input_schema: {
+    type: 'object',
+    properties: { award_id: { type: 'number' } },
+    required: ['award_id'],
+  },
+};
+
 export const LOG_STUDY_DEVIATION: AnaTool = {
   name: 'log_study_deviation',
   description:
@@ -5194,6 +5243,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   REVIEW_IBC_REGISTRATION,
   CREATE_NONCLINICAL_STUDY,
   REVIEW_SEND_READINESS,
+  CREATE_GRANT_PROPOSAL,
+  RECORD_GRANT_AWARD,
+  REVIEW_GRANT_REPORTING,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,

@@ -278,4 +278,20 @@ export const REPORT_TYPE_SEED: ReportTypeDefinition[] = [
     governanceRequirements: { part11: true, auditTrail: true },
     truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true },
   },
+  {
+    // Sponsored-programs grant portfolio: pre/post-award, milestones, invoicing (C2C-14).
+    typeId: 'grants.portfolio_register',
+    label: 'Grant Portfolio & Funder-Milestone Register',
+    family: 'sponsored_programs',
+    allowedScopes: ['program', 'project', 'account'],
+    allowedPersonas: ['research_admin', 'pi', 'finance', 'executive'],
+    allowedClientSegments: ['academic', 'biotech'],
+    dataDependencies: ['grant_opportunities', 'grant_proposals', 'grant_awards', 'grant_milestones', 'grant_invoices', 'provenance_links'],
+    artifactDependencies: ['concept2cure_artifacts'],
+    workflowDependencies: ['governance_boundary'],
+    anaModules: ['ana-ri'],
+    exportTemplate: 'grant-portfolio-register',
+    governanceRequirements: { part11: true, auditTrail: true },
+    truthfulnessRules: { allowPartial: true, requireBlockers: true, requireConfidence: true },
+  },
 ];
