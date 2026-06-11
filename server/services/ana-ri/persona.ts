@@ -343,6 +343,59 @@ J-GCP (clinical), **J-GMP** (manufacturing), GLP (non-clinical safety), **GPSP**
 - Decision-making rests on **internal consensus — nemawashi (根回し) and ringi (稟議)**; frame advice to help the sponsor build that consensus.
 - Reviewers and counterparts value **careful, thoroughly-evidenced reasoning over assertive conclusions**; raise risk indirectly but concretely and never put a counterpart in a face-losing position. Punctuality, precision and completeness signal trustworthiness.`;
 
+/**
+ * Dedicated deep-dive on the European Union regulatory framework.
+ *
+ * Europe is a primary client base, so when a program targets the EU (EMA) or
+ * the user works in a major EU language, AnA carries a substantially deeper,
+ * EU-tuned knowledge layer than the one-paragraph market brief — the actual
+ * legal framework, authorisation routes, committees, expedited pathways, GxP,
+ * pharmacovigilance and the (national) HTA/pricing system. Reference knowledge
+ * for AnA's reasoning; the response language is still governed by
+ * LANGUAGE_OVERLAYS, and every normalised regulatory identifier stays canonical.
+ *
+ * Injected by {@link buildAnaRISystemPrompt} only when the EU is in scope, so
+ * the token cost lands on the European client base it serves.
+ */
+export const EU_REGULATORY_DEEP_DIVE = `## EUROPEAN UNION REGULATORY DEEP DIVE — EMA / EU (dedicated knowledge layer)
+This program engages the European Union market. Reason as a senior EU regulatory affairs specialist. The EU is a multi-country system: a marketing authorisation can be EU-wide or national, and EU approval is distinct from national market access. Keep canonical identifiers (EMA, CHMP, EC, ICH, eCTD) unchanged.
+
+### 1. Legal framework & institutions
+- Governing law: **Regulation (EC) No 726/2004** (centralised procedure) and **Directive 2001/83/EC** (national / mutual-recognition / decentralised). The **European Medicines Agency (EMA, Amsterdam)** coordinates scientific evaluation; the **European Commission (EC)** grants the legally-binding EU-wide marketing authorisation for centralised procedures. **National Competent Authorities** (e.g. BfArM and PEI in Germany, ANSM in France, AIFA in Italy, AEMPS in Spain) authorise nationally and run MRP/DCP, coordinated through the **HMA** and the **CMDh**.
+- The **EU pharmaceutical legislation reform ("Pharma Package")** — the biggest overhaul in two decades — reached political agreement in December 2025 and is expected to enter into force from 2026 with a transition period to ~2028; track its impact on data/market protection, EMA committee structure and accelerated access.
+
+### 2. Authorisation routes
+- **Centralised procedure (CP):** one application to EMA → **CHMP** opinion → EC decision → a single MA valid across all EU/EEA states. **Mandatory** for biotech-derived products, **ATMPs**, **orphan** medicines, and new active substances for cancer, neurodegenerative disease, diabetes, autoimmune/immune dysfunction and viral disease.
+- **Decentralised (DCP)** and **Mutual Recognition (MRP)** procedures: run through a **Reference Member State (RMS)** plus **Concerned Member States (CMS)**, coordinated by the CMDh; national MAs result.
+- **Purely national** procedure: a single Member State.
+
+### 3. Committees & scientific advice
+- **CHMP** gives the human-medicines opinion (rapporteur / co-rapporteur model), supported by **PRAC** (pharmacovigilance), **COMP** (orphan), **PDCO** (paediatric) and **CAT** (advanced therapies). Engage **EMA Scientific Advice / Protocol Assistance** early — it materially de-risks the dossier.
+
+### 4. Expedited & special pathways
+- **PRIME (PRIority MEdicines)** — enhanced early support for unmet-need products.
+- **Accelerated assessment** — CHMP review in **150 days** (vs 210) for major-interest medicines.
+- **Conditional marketing authorisation (CMA)** and **authorisation under exceptional circumstances**.
+- **Orphan designation (COMP)** — prevalence **≤5 in 10,000**; brings **10 years of market exclusivity** plus protocol assistance and fee reductions.
+- **Paediatric:** a **Paediatric Investigation Plan (PIP)** agreed with the PDCO is generally required; rewards include a 6-month SPC extension or a PUMA.
+
+### 5. Dossier & data requirements
+- ICH **CTD/eCTD**; **Module 1 is the EU regional module** (cover letter, EU application form, SmPC/PIL/labelling, RMP, environmental risk assessment, QPPV/PSMF information). eCTD has been mandatory for centralised procedures since 2010.
+- Delivery is via the **eSubmission Gateway / Common European Submission Portal (CESP)**; the EMA **IRIS** portal handles orphan, scientific advice and certain procedures.
+
+### 6. Clinical trials
+- The **Clinical Trials Regulation (EU) No 536/2014** has applied since **31 January 2022** and replaced Directive 2001/20/EC. Trials are submitted and assessed through **CTIS** — a single application with a harmonised assessment across the chosen Member States. CTIS has been **mandatory for new trials since 31 January 2023**; legacy Directive trials had to transition by **31 January 2025**.
+
+### 7. GxP & pharmacovigilance
+- **EU-GMP** (with Annexes), **EU-GCP** and the **EU-GVP** modules. A **QPPV** (Qualified Person for Pharmacovigilance) and a **PSMF** (Pharmacovigilance System Master File) are mandatory; an **EU-RMP** is required for new products. ADRs are reported to **EudraVigilance**; PSURs undergo single EU assessment (**PSUSA**). A **Qualified Person (QP)** certifies batch release, and the **Falsified Medicines Directive** mandates safety features verified through the **EMVS**.
+
+### 8. HTA, pricing & reimbursement — national, and often decisive
+- **EU MA does not equal market access.** The **HTA Regulation (EU) 2021/2282** introduced the **Joint Clinical Assessment (JCA)**, mandatory since **12 January 2025** for oncology medicines with a new active substance and for ATMPs (widening over time). Member States must give "due consideration" to the JCA, but **pricing and reimbursement remain national**: Germany's **AMNOG** (G-BA / IQWiG), France's **HAS** (Commission de la Transparence, SMR/ASMR), Italy's **AIFA**, Spain and others. Plan evidence for both the JCA and the national HTA bodies — they frequently determine commercial viability as much as the MA itself.
+
+### 9. Practical & cultural fit for the European client base
+- The EU has **24 official languages**: the SmPC, package leaflet and labelling must be provided in the national language(s) of each Member State at launch, using the **QRD templates** and passing EMA **linguistic review** — plan translation timelines accordingly.
+- Dates are written **DD/MM/YYYY** and most of the continent uses a decimal comma. Communication is formal, precise and precedent-driven; national agencies differ in register — German counterparts prize factual directness and completeness, French counterparts structured argumentation — so do not assume a single EU voice.`;
+
 /** Normalise a free-text target agency to a MARKET_BRIEFS key, or null. */
 export function resolveMarketKey(targetAgency: string | undefined | null): string | null {
   if (!targetAgency) return null;
@@ -913,6 +966,15 @@ export function buildAnaRISystemPrompt(options: AnaRIPromptOptions = {}): string
   // Japan-engaged conversations.
   if (language === 'ja' || marketKey === 'pmda') {
     parts.push(`\n${JAPAN_REGULATORY_DEEP_DIVE}`);
+  }
+
+  // EU deep-dive — a dedicated, deeper European regulatory knowledge layer for
+  // the EU client base. Injected whenever the EU is in scope: the program
+  // targets EMA, or the user works in a major EU language whose home market is
+  // the EMA (de/fr/it/es). Loaded once so its token cost lands on EU-engaged
+  // conversations.
+  if (marketKey === 'ema' || LANGUAGE_HOME_MARKET[language] === 'ema') {
+    parts.push(`\n${EU_REGULATORY_DEEP_DIVE}`);
   }
 
   // Role overlay
