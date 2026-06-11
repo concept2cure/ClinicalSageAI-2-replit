@@ -18,6 +18,17 @@ describe('getSubmissionRegionProfile', () => {
     expect(getSubmissionRegionProfile('jp')!.agency).toBe('PMDA');
   });
 
+  it('uses the authoritative EU Module 1 numbering in the EMA profile', () => {
+    const eu = getSubmissionRegionProfile('eu')!;
+    const byNumber = new Map(eu.module1Sections.map((s) => [s.number, s.title]));
+    // Verified against the EU Module 1 eCTD Specification (EMA eSubmission / NTA).
+    expect(byNumber.get('1.1')).toMatch(/Table of Contents/i);
+    expect(byNumber.get('1.7')).toMatch(/Orphan Market Exclusivity/i);
+    expect(byNumber.get('1.8')).toMatch(/Pharmacovigilance/i);
+    expect(byNumber.get('1.9')).toMatch(/Clinical Trials/i);
+    expect(byNumber.get('1.10')).toMatch(/Paediatrics/i);
+  });
+
   it('surfaces Japan-specific Module 1 structure and advisory requirements in the PMDA profile', () => {
     const jp = getSubmissionRegionProfile('jp')!;
     expect(jp.language).toBe('ja');
