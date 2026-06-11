@@ -14,6 +14,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { createHash } from 'crypto';
 import {
   getAnaDraftingService,
   type DocumentDraftRequest,
@@ -22,6 +23,46 @@ import {
 import { getGateway } from '../services/ai-gateway/gateway';
 
 const router = Router();
+
+/**
+ * Model-governance provenance (decision register #727 item 8): every
+ * generation on a regulated-drafting surface writes an append-only audit
+ * row recording WHICH pinned model produced WHAT content (sha256 of the
+ * output), so any document later saved from this content can be traced
+ * back to its model version by hashing it. Fire-and-forget — provenance
+ * recording must never fail the drafting request; the dynamic import
+ * keeps audit/DB code off this router's load path.
+ */
+function recordModelProvenance(params: {
+  req: Request;
+  surface: string;
+  model: string | undefined;
+  content: string | undefined;
+  usage?: { inputTokens?: number; outputTokens?: number };
+}): void {
+  void (async () => {
+    try {
+      const { default: auditService } = await import('../services/auditService');
+      await auditService.logAction({
+        tenantId: (params.req as any).organizationId,
+        userId: (params.req as any).userId,
+        action: 'ai_generation',
+        resourceType: 'ai_drafting_surface',
+        resourceId: params.surface,
+        details: {
+          model: params.model || 'unknown',
+          contentSha256: params.content
+            ? createHash('sha256').update(params.content).digest('hex')
+            : null,
+          inputTokens: params.usage?.inputTokens ?? null,
+          outputTokens: params.usage?.outputTokens ?? null,
+        },
+      });
+    } catch (err: any) {
+      console.warn('[Claude Intelligence] model provenance record failed:', err?.message);
+    }
+  })();
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Document Drafting
@@ -62,6 +103,14 @@ router.post('/draft', async (req: Request, res: Response) => {
       enableTools: enableTools ?? true,
       organizationId: (req as any).organizationId,
       userId: (req as any).userId,
+    });
+
+    recordModelProvenance({
+      req,
+      surface: 'draft',
+      model: result.model,
+      content: result.content,
+      usage: result.usage,
     });
 
     res.json({
@@ -132,6 +181,13 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
     });
 
     // Send final event with full response metadata
+    recordModelProvenance({
+      req,
+      surface: 'draft/stream',
+      model: result.model,
+      content: result.content,
+      usage: result.usage,
+    });
     res.write(`data: ${JSON.stringify({
       type: 'done',
       model: result.model,
@@ -179,6 +235,14 @@ router.post('/review', async (req: Request, res: Response) => {
       userId: (req as any).userId,
     });
 
+    recordModelProvenance({
+      req,
+      surface: 'review',
+      model: result.model,
+      content: result.content,
+      usage: result.usage,
+    });
+
     res.json({ success: true, data: result });
   } catch (error: any) {
     console.error('[Claude Intelligence] Review error:', error.message);
@@ -216,6 +280,14 @@ router.post('/gap-analysis', async (req: Request, res: Response) => {
       }
     );
 
+    recordModelProvenance({
+      req,
+      surface: 'gap-analysis',
+      model: result.model,
+      content: result.content,
+      usage: result.usage,
+    });
+
     res.json({ success: true, data: result });
   } catch (error: any) {
     console.error('[Claude Intelligence] Gap analysis error:', error.message);
@@ -250,6 +322,14 @@ router.post('/vision', async (req: Request, res: Response) => {
       enableThinking,
       organizationId: (req as any).organizationId,
       userId: (req as any).userId,
+    });
+
+    recordModelProvenance({
+      req,
+      surface: 'vision',
+      model: result.model,
+      content: result.content,
+      usage: result.usage,
     });
 
     res.json({ success: true, data: result });
@@ -310,6 +390,15 @@ router.post('/batch', async (req: Request, res: Response) => {
         },
       },
     });
+    for (const r of results) {
+      recordModelProvenance({
+        req,
+        surface: 'batch',
+        model: r.model,
+        content: r.content,
+        usage: r.usage,
+      });
+    }
   } catch (error: any) {
     console.error('[Claude Intelligence] Batch error:', error.message);
     res.status(500).json({ error: error.message });
@@ -338,6 +427,15 @@ router.post('/quick', async (req: Request, res: Response) => {
       maxTokens,
       organizationId: (req as any).organizationId,
       userId: (req as any).userId,
+    });
+
+    recordModelProvenance({
+      req,
+      surface: 'quick',
+      // quickComplete returns content only; mirror its pinned model
+      // (AnaDocumentDraftingService.quickComplete).
+      model: 'claude-sonnet-4-6',
+      content: result,
     });
 
     res.json({ success: true, data: { content: result } });
@@ -402,6 +500,14 @@ router.post('/agent', async (req: Request, res: Response) => {
         },
       }
     );
+
+    recordModelProvenance({
+      req,
+      surface: 'agent',
+      model: result.model,
+      content: result.content,
+      usage: result.usage,
+    });
 
     res.json({
       success: true,
