@@ -208,6 +208,17 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     console.warn('⚠️ SIEM audit feed routes not mounted');
   }
 
+  // Admin API for the SCIM source-IP allowlist (super-admin; session-authed).
+  try {
+    const scimIpModule = await import('../routes/admin/scim-ip-allowlist');
+    const scimIpRouter = scimIpModule.default;
+    if (scimIpRouter && (typeof scimIpRouter === 'function' || (scimIpRouter as any).handle)) {
+      app.use('/api/admin/scim-ip-allowlist', scimIpRouter);
+    }
+  } catch {
+    console.warn('⚠️ SCIM IP allowlist admin routes not mounted');
+  }
+
   // RFC 9116 vulnerability disclosure — /.well-known/security.txt (public).
   try {
     const wellKnownModule = await import('../routes/well-known');

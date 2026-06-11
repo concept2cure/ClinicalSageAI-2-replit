@@ -2577,6 +2577,30 @@ export const scimTenants = pgTable(
 
 export type ScimTenant = InferSelectModel<typeof scimTenants>;
 
+// Per-org SCIM source-IP allowlist (network access policy). Opt-in: no enabled
+// rows = unrestricted; once any row is enabled, requests from outside the listed
+// CIDRs are denied (fail-closed). See db/migrations/20260611_scim_ip_allowlist.sql.
+export const scimIpAllowlist = pgTable(
+  'scim_ip_allowlist',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    cidr: text('cidr').notNull(),
+    label: text('label'),
+    enabled: boolean('enabled').notNull().default(true),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    scimIpAllowlistOrgIdx: index('scim_ip_allowlist_org_idx').on(table.organizationId),
+    scimIpAllowlistEnabledIdx: index('scim_ip_allowlist_enabled_idx').on(table.enabled),
+  })
+);
+
+export type ScimIpAllowlistRow = InferSelectModel<typeof scimIpAllowlist>;
+
 /**
  * CER Projects Table
  *
