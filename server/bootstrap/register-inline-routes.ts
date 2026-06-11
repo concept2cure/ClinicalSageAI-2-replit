@@ -412,6 +412,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Controlled Substances routes:', error);
   }
 
+  // Lifecycle obligations — post-approval recurring-obligation engine.
+  try {
+    const lifecycleModule = await import('../routes/lifecycle');
+    app.use('/api/lifecycle', authMiddleware, lifecycleModule.default);
+    console.info('✅ Lifecycle Obligation routes mounted (/api/lifecycle)');
+  } catch (error) {
+    console.error('❌ Failed to mount Lifecycle Obligation routes:', error);
+  }
+
   // C2C study digital twins + simulation (study/protocol design module).
   try {
     const c2cStudyTwinModule = await import('../routes/c2c/study-twin');

@@ -342,4 +342,20 @@ export const REPORT_TYPE_SEED: ReportTypeDefinition[] = [
     governanceRequirements: { part11: true, auditTrail: true, region: 'USA_DEA' },
     truthfulnessRules: { allowPartial: false, requireBlockers: true, requireExplicitGaps: true },
   },
+  {
+    // Post-approval lifecycle obligation calendar (variations/PSUR/pediatric; C2C-11).
+    typeId: 'lifecycle.obligation_calendar',
+    label: 'Lifecycle Obligation Calendar',
+    family: 'lifecycle_obligations',
+    allowedScopes: ['program', 'project', 'submission'],
+    allowedPersonas: ['ra_ops', 'ra_lead', 'executive'],
+    allowedClientSegments: ['pharma', 'biotech'],
+    dataDependencies: ['lifecycle_obligations', 'lifecycle_obligation_events'],
+    artifactDependencies: ['concept2cure_artifacts'],
+    workflowDependencies: ['governance_boundary'],
+    anaModules: ['ana-ri', 'foresight_risk_synthesis'],
+    exportTemplate: 'lifecycle-obligation-calendar',
+    governanceRequirements: { part11: true, auditTrail: true },
+    truthfulnessRules: { allowPartial: true, requireBlockers: true, requireConfidence: true },
+  },
 ];

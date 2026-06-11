@@ -465,3 +465,10 @@ export * from './inspection';
 // substance inventory, perpetual transaction ledger. CSA / 21 CFR 1300s.
 // Service: server/services/controlled-substances; migration: migrations/20260610_controlled_substances.sql.
 export * from './controlled-substances';
+
+// Lifecycle obligation tracking (C2C-11): post-approval recurring-obligation
+// engine — variations (IA/IB/II), supplements (PAS/CBE), periodic reports (PSUR
+// cadence), pediatric (PREA/PIP), renewals. EU Reg 1234/2008; 21 CFR 314.70;
+// ICH E2C. Service: server/services/lifecycle-obligations; migration:
+// migrations/20260610_lifecycle_obligations.sql.
+export * from './lifecycle';

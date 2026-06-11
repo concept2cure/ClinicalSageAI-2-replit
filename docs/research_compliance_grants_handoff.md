@@ -18,7 +18,7 @@ and to run the deferred DB-backed verification. Updated as each capability lands
 | C2C-08 | AI-native eTMF | 2 | Planned |
 | C2C-09 | Device / IVD Technical Documentation | 2 | Pre-existing on trunk (CER/PER/IVDR/510k/DHF) — not rebuilt |
 | C2C-10 | PV Intake + DSUR/PBRER | 3 | Planned |
-| C2C-11 | Lifecycle Obligation Tracking | 3 | Planned |
+| C2C-11 | Lifecycle Obligation Tracking | 3 | **Backend complete** |
 | C2C-12 | RIM-lite Registration Grid + Labeling | 3 | **Backend complete** |
 | C2C-13 | Inspection Readiness (BIMO/PAI) | 3 | Planned |
 | C2C-14 | eGrants / Funder-Milestone Mgmt | 3 | **Backend complete** |
@@ -464,3 +464,42 @@ DEA schedule catalog (I-V, cited 21 CFR 1308); `reconcileBalance` (receipt/adjus
 
 ### Tests landed (no-DB)
 `cs-logic.test.ts` (9), `ana/__tests__/cs-tools.test.ts` (7). Typecheck clean.
+
+
+---
+
+## C2C-11 — Lifecycle Obligation Tracking
+
+### Data model (`shared/schema/lifecycle.ts`; migration `migrations/20260610_lifecycle_obligations.sql`)
+- `lifecycle_obligations` (variation/supplement/periodic_report/pediatric/renewal/annual_report; region; classification IA/IB/II/PAS/CBE/PSUR/PREA; due date; recurrence cadence), `lifecycle_obligation_events` (generated recurring occurrences). Links to `rim_products` and submissions.
+
+### API (`/api/lifecycle`, governed + org-scoped)
+| Method | Path | Governed action |
+|--------|------|-----------------|
+| POST/GET | `/obligations` | `create` (periodic → auto-generates occurrences; returns review pathway) |
+| GET | `/obligations/:id/events` | — |
+| PATCH | `/obligations/:id/status` · `/events/:id/status` | `transition` |
+| GET | `/calendar` | — (urgency summary across obligations + events) |
+
+### AnA tools (same governed path, surface `ana`)
+`create_lifecycle_obligation` (generates occurrences), `review_lifecycle_calendar` (read-only urgency).
+
+### Deterministic core (`lifecycle-logic.ts`, pure, tested)
+`OBLIGATION_CLASSIFICATIONS` + `classificationPathway` (EU IA/IB/II per Reg 1234/2008; FDA PAS/CBE/annual report per 21 CFR 314.70 — cited pathways); `generateOccurrences` (PSUR cadence engine: period windows + due ~70 days after period end, ICH E2C); `obligationUrgency` + `summarizeCalendar`.
+
+### Central-module wiring
+- **Reports:** `lifecycle.obligation_calendar` in `REPORT_TYPE_SEED`.
+- **Metrics:** `server/services/lifecycle-metrics.ts` → `/api/metrics` (`lifecycle_obligations_created_total{type}`, `lifecycle_occurrences_generated_total`, `lifecycle_submissions_total`).
+
+### UI surfaces to build (deferred)
+1. **Obligation calendar** — timeline/list by urgency across obligations + recurring occurrences; KPI band.
+2. **Obligation detail** — classification pathway, recurrence settings, generated occurrences with per-occurrence status.
+3. **AnA panel** — conversational tools wired.
+
+### Deferred DB verification
+- [ ] `drizzle-kit push` clean; 2 tables + indexes + CHECK constraints in `information_schema`.
+- [ ] Org-scoping; governed audit rows; periodic obligation generates the expected occurrences with correct dates.
+- [ ] `lifecycle.obligation_calendar` report run resolves; `/api/metrics` exposes `lifecycle_*`.
+
+### Tests landed (no-DB)
+`lifecycle-logic.test.ts` (4), `ana/__tests__/lifecycle-tools.test.ts` (5). Typecheck clean.

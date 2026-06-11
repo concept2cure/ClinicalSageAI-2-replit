@@ -6364,6 +6364,70 @@ registerToolHandler('review_cs_balance', async (_input, ctx) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Lifecycle Obligations (C2C-11). Conversational building shares the governed/
+// audited path (recordGovernedAction, surface 'ana'); periodic obligations
+// generate their occurrences automatically.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_lifecycle_obligation', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_lifecycle_obligation requires tenant + user context.' });
+  const obligationType = typeof input.obligation_type === 'string' ? input.obligation_type : '';
+  const region = typeof input.region === 'string' ? input.region : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!['variation', 'supplement', 'periodic_report', 'pediatric', 'renewal', 'annual_report'].includes(obligationType) || !['fda', 'eu', 'jp', 'mhra', 'other'].includes(region) || !title) {
+    return JSON.stringify({ error: 'obligation_type, region, and title are required and must be valid.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createObligationTx } = await import('../lifecycle-obligations/lifecycle-service.js');
+  const { classificationPathway } = await import('../lifecycle-obligations/lifecycle-logic.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, occurrencesCreated } = await createObligationTx(client, ctx.organizationId, ctx.userId, {
+      obligationType: obligationType as any, region: region as any, title,
+      classification: typeof input.classification === 'string' ? input.classification : null,
+      productId: typeof input.product_id === 'number' ? input.product_id : null,
+      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+      dueDate: typeof input.due_date === 'string' ? input.due_date : null,
+      recurrenceMonths: typeof input.recurrence_months === 'number' ? Math.round(input.recurrence_months) : null,
+      anchorDate: typeof input.anchor_date === 'string' ? input.anchor_date : null,
+      occurrencesToGenerate: typeof input.occurrences_to_generate === 'number' ? Math.round(input.occurrences_to_generate) : undefined,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `lifecycle-obligation:${id}`, reason: fcoiReason(input, 'Lifecycle obligation opened via AnA'),
+      payload: { obligationType, occurrencesCreated }, domain: 'lifecycle', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    const pathway = classificationPathway(typeof input.classification === 'string' ? input.classification : null);
+    return JSON.stringify({ ok: true, id, occurrencesCreated, pathway, message: `Opened ${obligationType.replace(/_/g, ' ')} "${title}" (id ${id})${occurrencesCreated ? `; generated ${occurrencesCreated} occurrence(s)` : ''}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_lifecycle_obligation failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_lifecycle_calendar', async (_input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_lifecycle_calendar requires tenant context.' });
+  const { listCalendar } = await import('../lifecycle-obligations/lifecycle-service.js');
+  const { summarizeCalendar } = await import('../lifecycle-obligations/lifecycle-logic.js');
+  try {
+    const items = await listCalendar(ctx.organizationId);
+    const today = new Date().toISOString().slice(0, 10);
+    const summary = summarizeCalendar(items.map((i: any) => ({ dueDate: i.dueDate, terminal: i.status === 'approved' || i.status === 'closed' || i.status === 'submitted' })), today);
+    return JSON.stringify({
+      ok: true, summary,
+      message: summary.overdue > 0 ? `${summary.overdue} obligation(s) overdue; ${summary.due_30} due within 30 days.` : `No overdue obligations; ${summary.due_30} due within 30 days, ${summary.due_90} within 90.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_lifecycle_calendar failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('log_study_deviation', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'log_study_deviation requires tenant context.' });

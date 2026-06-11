@@ -3906,6 +3906,36 @@ export const REVIEW_CS_BALANCE: AnaTool = {
   input_schema: { type: 'object', properties: {}, required: [] },
 };
 
+export const CREATE_LIFECYCLE_OBLIGATION: AnaTool = {
+  name: 'create_lifecycle_obligation',
+  description:
+    "Open a post-approval lifecycle obligation: variation (EU IA/IB/II), supplement (FDA PAS/CBE-30/CBE-0/annual report), periodic safety report (PSUR/PBRER), pediatric (PREA/PIP), or renewal. For a periodic_report with recurrence_months + anchor_date, the recurring occurrences are generated automatically. Returns the obligation id, the review pathway, and how many occurrences were created. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      obligation_type: { type: 'string', enum: ['variation','supplement','periodic_report','pediatric','renewal','annual_report'] },
+      region: { type: 'string', enum: ['fda','eu','jp','mhra','other'] },
+      title: { type: 'string' },
+      classification: { type: 'string', description: "e.g. 'II','CBE-30','PSUR','PREA'." },
+      product_id: { type: 'number' },
+      submission_id: { type: 'number' },
+      due_date: { type: 'string' },
+      recurrence_months: { type: 'number', description: 'For periodic reports, e.g. 6 or 12.' },
+      anchor_date: { type: 'string', description: 'Start date to generate periodic occurrences from.' },
+      occurrences_to_generate: { type: 'number' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['obligation_type', 'region', 'title'],
+  },
+};
+
+export const REVIEW_LIFECYCLE_CALENDAR: AnaTool = {
+  name: 'review_lifecycle_calendar',
+  description:
+    "Summarize the post-approval obligation calendar by urgency (overdue / due in 30 / due in 90 / later / undated / closed), read-only — covers both obligations and their recurring occurrences. Use to tell the user what filings are coming due.",
+  input_schema: { type: 'object', properties: {}, required: [] },
+};
+
 export const LOG_STUDY_DEVIATION: AnaTool = {
   name: 'log_study_deviation',
   description:
@@ -5392,6 +5422,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   REGISTER_DEA,
   LOG_CS_TRANSACTION,
   REVIEW_CS_BALANCE,
+  CREATE_LIFECYCLE_OBLIGATION,
+  REVIEW_LIFECYCLE_CALENDAR,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,

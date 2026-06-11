@@ -179,6 +179,14 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // Lifecycle obligation metrics (C2C-11).
+      try {
+        const { renderLifecycleMetrics } = await import('../services/lifecycle-metrics.js');
+        lines.push(...renderLifecycleMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RAG retrieval metrics — recorded at the ragRouter chokepoint.
       try {
         const { renderRagMetrics } = await import('../services/rag-runtime-metrics.js');
