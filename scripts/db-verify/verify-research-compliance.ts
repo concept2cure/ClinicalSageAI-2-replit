@@ -16,6 +16,7 @@ import { emitDeadlineTask } from '../../server/services/research-compliance/task
 import * as effort from '../../server/services/effort-certification/effort-service';
 import * as coi from '../../server/services/research-security/coi-service';
 import { bridgeIngestedStudyTx, mapStudyType } from '../../server/services/preclinical/preclinical-governed-bridge';
+import * as grants from '../../server/services/grants/grants-service';
 
 let pass = 0, fail = 0;
 function ok(cond: boolean, msg: string) { if (cond) { pass++; console.log('  ✓', msg); } else { fail++; console.log('  ✗ FAIL:', msg); } }
@@ -168,12 +169,37 @@ async function main() {
   ok(bridged.governedStudyId > 0 && bridged.ctdSection.startsWith('4.2'), `bridge created governed study (id ${bridged.governedStudyId}, CTD ${bridged.ctdSection})`);
   const govRow = await pool.query(`SELECT study_type, species, glp_compliant, submission_id FROM nonclinical_studies WHERE id=$1`, [bridged.governedStudyId]);
   ok(govRow.rows[0].study_type === 'repeat_dose_tox' && govRow.rows[0].glp_compliant === true && Number(govRow.rows[0].submission_id) === 1, 'governed study persisted with mapped type, GLP flag, submission link');
-  const derivedLink = await pool.query(`SELECT * FROM provenance_links WHERE source_type='ctd_nonclinical_study' AND source_id=$1 AND target_type='nonclinical_study'`, [SYNTHETIC_CTD_ID]);
+  const derivedLink = await pool.query(`SELECT * FROM provenance_links WHERE source_type='ctd_nonclinical_study' AND source_id=$1 AND target_type='nonclinical_study' AND target_id=$2`, [SYNTHETIC_CTD_ID, bridged.governedStudyId]);
   ok(derivedLink.rows.length === 1 && derivedLink.rows[0].link_role === 'derived_from', 'provenance: ctd_nonclinical_study → nonclinical_study (derived_from)');
   const m4Link = await pool.query(`SELECT * FROM provenance_links WHERE source_type='nonclinical_study' AND source_id=$1 AND target_type='submission_module4'`, [bridged.governedStudyId]);
   ok(m4Link.rows.length === 1 && m4Link.rows[0].link_role === 'supports', 'provenance: nonclinical_study → submission_module4 (supports)');
   const ncRep = await computeDomainReport('nonclinical.study_send_register', ORG);
   ok(ncRep != null && (ncRep!.summary.studies as number) >= 1, `nonclinical.study_send_register computes (studies=${ncRep?.summary.studies})`);
+
+  console.log('\n[Grants] milestone lifecycle + closeout (2 CFR 200.344) — finalize is gated');
+  const awardId = await tx((c) => grants.createAwardTx(c, ORG, USER, { awardNumber: `AWD-${Date.now()}`, fundingAgency: 'nih', periodStart: '2024-01-01', periodEnd: '2025-01-01' })).then((r: any) => r.id);
+  const mid = await tx((c) => grants.addMilestoneTx(c, ORG, USER, awardId, { title: 'Year-1 RPPR', milestoneType: 'progress_report', dueDate: '2024-12-01' })).then((r: any) => r.id);
+  await tx((c) => grants.setMilestoneStatusTx(c, ORG, mid, 'met', null));
+  const mrow = await pool.query(`SELECT status, completed_date FROM grant_milestones WHERE id=$1`, [mid]);
+  ok(mrow.rows[0].status === 'met' && mrow.rows[0].completed_date != null, 'milestone → met stamps completed_date (lifecycle completed)');
+
+  const co = await tx((c) => grants.openCloseoutTx(c, ORG, USER, awardId));
+  ok(co.closeoutDueDate === '2025-05-01', `closeout opened with 2 CFR 200.344 due date period_end+120 (${co.closeoutDueDate})`);
+  // Opening a second closeout for the same award is rejected (one per award).
+  let dupRejected = false;
+  try { await tx((c) => grants.openCloseoutTx(c, ORG, USER, awardId)); } catch (e: any) { dupRejected = e?.code === 'INVALID_STATE'; }
+  ok(dupRejected, 'a second closeout for the same award is REJECTED (one per award)');
+  // Finalize with outstanding items is blocked by the deterministic gate.
+  let prematureBlocked = false;
+  try { await tx((c) => grants.finalizeCloseoutTx(c, ORG, USER, awardId)); } catch (e: any) { prematureBlocked = e?.code === 'INVALID_STATE'; }
+  ok(prematureBlocked, 'finalize BLOCKED while closeout items are outstanding (gate is the floor)');
+  await tx((c) => grants.updateCloseoutTx(c, ORG, USER, awardId, { finalRpprSubmitted: true, finalFfrSubmitted: true, equipmentInventoryReturned: true, finalInvoicesReconciled: true }));
+  const fin = await tx((c) => grants.finalizeCloseoutTx(c, ORG, USER, awardId));
+  ok(fin.closedAward === true, 'finalize succeeds once all four items complete; closes the award');
+  const arow = await pool.query(`SELECT a.status AS award_status, c.status AS closeout_status FROM grant_awards a JOIN grant_closeout_records c ON c.award_id=a.id WHERE a.id=$1`, [awardId]);
+  ok(arow.rows[0].award_status === 'closed' && arow.rows[0].closeout_status === 'completed', 'award status=closed, closeout status=completed after finalize');
+  const grRep = await computeDomainReport('grants.portfolio_register', ORG);
+  ok(grRep != null && grRep!.summary.closeoutsByStatus != null && (grRep!.summary.closeoutsByStatus as any).completed >= 1, 'grants.portfolio_register reports closeout rollup (completed >= 1)');
 
   console.log('\n[Tasking] deadline event → central unified_tasks');
   const taskId = await emitDeadlineTask({ organizationId: ORG, title: 'Verify milestone due', sourceEntityType: 'grant_milestone', sourceEntityId: 999, dueDate: '2026-12-01', taskType: 'milestone' });

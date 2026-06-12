@@ -77,7 +77,10 @@ export async function computeDomainReport(reportTypeId: string, orgId: number): 
       const aw = await countBy('grant_awards', 'status', orgId);
       const pr = await countBy('grant_proposals', 'status', orgId);
       const inv = await countBy('grant_invoices', 'status', orgId);
-      return result('grants_portfolio', aw.total + pr.total, { awards: aw.total, awardsByStatus: aw.byCol, proposals: pr.total, proposalsByStatus: pr.byCol, invoicesByStatus: inv.byCol });
+      const co = await countBy('grant_closeout_records', 'status', orgId);
+      // Closeouts past their 2 CFR 200.344 due date and not yet completed.
+      const overdueCloseouts = (await pool.query(`SELECT count(*)::int n FROM grant_closeout_records WHERE organization_id=$1 AND deleted_at IS NULL AND status <> 'completed' AND closeout_due_date < CURRENT_DATE`, [orgId])).rows[0].n;
+      return result('grants_portfolio', aw.total + pr.total, { awards: aw.total, awardsByStatus: aw.byCol, proposals: pr.total, proposalsByStatus: pr.byCol, invoicesByStatus: inv.byCol, closeoutsByStatus: co.byCol, overdueCloseouts });
     }
     case 'rim.registration_grid': {
       const r = await countBy('rim_registrations', 'market_status', orgId);

@@ -311,8 +311,8 @@ Risk-group catalog (RG1-4 → BSL-1..4, cited NIH Guidelines/BMBL); `evaluateCon
 
 Directly fulfills the original grants/pre-award/post-award/invoicing ask. Grants is greenfield (no prior tables).
 
-### Data model (`shared/schema/grants.ts`; migration `migrations/20260610_egrants.sql`)
-- `grant_opportunities` (pre-award; agency, mechanism SBIR/STTR/R01…, grants.gov `external_id`), `grant_proposals` (applications; opportunity + Project links), `grant_awards` (post-award; period, total), `grant_milestones` (scientific/progress/financial/deliverable/regulatory + reporting deadlines), `grant_invoices` (sponsor billing).
+### Data model (`shared/schema/grants.ts`; migrations `20260610_egrants.sql`, `20260612_grant_closeout.sql`)
+- `grant_opportunities` (pre-award; agency, mechanism SBIR/STTR/R01…, grants.gov `external_id`), `grant_proposals` (applications; opportunity + Project links), `grant_awards` (post-award; period, total), `grant_milestones` (scientific/progress/financial/deliverable/regulatory + reporting deadlines), `grant_invoices` (sponsor billing), **`grant_closeout_records`** (one per award; the four 2 CFR 200.344 items + 120-day due date + deobligation).
 - Provenance: `grant_proposal → grant_award` (`results_in`) preserves the pre→post-award thread. Proposals/awards attach to `projects`.
 
 ### API (`/api/grants`, governed + org-scoped)
@@ -322,20 +322,22 @@ Directly fulfills the original grants/pre-award/post-award/invoicing ask. Grants
 | POST | `/proposals` · GET `/proposals` · PATCH `/proposals/:id/status` | `create`/`transition` |
 | POST | `/awards` (proposal→award provenance) · GET `/awards` | `create` |
 | GET | `/awards/:id/reporting` | — (2 CFR 200.344 obligations + period state) |
-| POST | `/awards/:id/milestones` · GET `/milestones` (urgency summary) | `update` |
+| POST | `/awards/:id/milestones` · GET `/milestones` (urgency summary) · **PATCH `/milestones/:id/status`** | `update`/`transition` |
 | POST | `/awards/:id/invoices` · GET `/invoices` · PATCH `/invoices/:id/status` | `create`/`transition` |
+| **POST** | **`/awards/:id/closeout`** (open) · **PATCH `/awards/:id/closeout`** (items) · **GET `/awards/:id/closeout`** (state) | `create`/`update` |
+| **POST** | **`/awards/:id/closeout/finalize`** (gated; closes the award) | `sign` |
 
 ### AnA tools (same governed path, surface `ana`)
-`create_grant_proposal`, `record_grant_award` (threads provenance), `review_grant_reporting` (read-only federal obligations).
+`create_grant_proposal`, `record_grant_award` (threads provenance), `review_grant_reporting` (read-only federal obligations), **`set_grant_milestone_status`**, **`open_grant_closeout`**, **`update_grant_closeout`**, **`finalize_grant_closeout`** (gated sign).
 
 ### Deterministic core (`grants-logic.ts`, pure, tested)
-`deadlineUrgency` + `summarizeDeadlines` (overdue/due_30/due_90/later/undated/closed) for proposals/milestones/invoices; `reportingObligations` (annual RPPR + final performance/financial 120 days post-period, 2 CFR 200.344); `awardPeriodState` (pre_start/active/closeout_window/lapsed).
+`deadlineUrgency` + `summarizeDeadlines` (overdue/due_30/due_90/later/undated/closed) for proposals/milestones/invoices; `reportingObligations` (annual RPPR + final performance/financial 120 days post-period, 2 CFR 200.344); `awardPeriodState` (pre_start/active/closeout_window/lapsed); **`closeoutDueDate`** (period_end + 120) and **`evaluateCloseout`** (the four required items → outstanding list, overdue flag, and the `readyToFinalize` gate that finalize enforces — citing 2 CFR 200.344 / 200.313).
 
 ### Central-module wiring
-- **Reports:** `grants.portfolio_register` in `REPORT_TYPE_SEED`.
-- **Metrics:** `server/services/grants-metrics.ts` → `/api/metrics` (`grants_proposals_created_total`, `grants_awards_recorded_total{agency}`, `grants_invoices_total{status}`).
-- **Tasking (documented follow-on):** milestone/invoice deadlines are the natural feed for `unified_tasks`; wiring needs a `'Grants'` `moduleType` registered in `unifiedTaskService` MODULE_CONFIG.
-- **grants.gov connector (documented follow-on):** `external_id` on opportunities is the hook; build `server/services/connectors/grants-gov.ts` per the `DataConnector` + credentialVault pattern.
+- **Reports:** `grants.portfolio_register` in `REPORT_TYPE_SEED` (now includes `closeoutsByStatus` + `overdueCloseouts`).
+- **Metrics:** `server/services/grants-metrics.ts` → `/api/metrics` (`grants_proposals_created_total`, `grants_awards_recorded_total{agency}`, `grants_invoices_total{status}`, `grants_milestone_status_total{status}`, `grants_closeouts_opened_total`, `grants_closeouts_finalized_total`).
+- **Tasking:** milestone deadlines flow to central `unified_tasks` via `emitDeadlineTask` (verified). A dedicated `'Grants'` `moduleType` remains a cosmetic follow-on (they currently surface under `ResearchCompliance`).
+- **grants.gov connector:** **DONE** — `server/services/connectors/grants-gov.ts` (`grants_gov` catalog entry) + `search_grants_gov` AnA tool. `external_id` on opportunities is the linkage hook.
 
 ### UI surfaces to build (deferred)
 1. **Pre-award pipeline** — opportunities + proposals kanban by status; deadline urgency band.
@@ -348,8 +350,11 @@ Directly fulfills the original grants/pre-award/post-award/invoicing ask. Grants
 - [ ] Org-scoping; governed audit rows; proposal→award provenance link written; proposal marked awarded.
 - [ ] `grants.portfolio_register` report run resolves; `/api/metrics` exposes `grants_*`.
 
-### Tests landed (no-DB)
-`grants-logic.test.ts` (5), `ana/__tests__/grants-tools.test.ts` (6). Typecheck clean.
+### Closeout (2 CFR 200.344) — added
+Per-award closeout record tracking the four required deliverables (final RPPR, final FFR/SF-425, final property inventory per 2 CFR 200.313, final-invoice reconciliation) with the 120-day due date. `finalizeCloseoutTx` is **gated** on all four being complete and, on success, sets the award `status='closed'`. DB-verified end-to-end (open → premature-finalize rejected → complete items → finalize → award closed; portfolio report shows the closeout rollup).
+
+### Tests landed
+`grants-logic.test.ts` (10 — incl. `closeoutDueDate` + `evaluateCloseout` gate), `ana/__tests__/grants-tools.test.ts` (9 — incl. milestone-status + closeout tools). DB harness covers the full closeout + milestone lifecycle (`scripts/db-verify/verify-research-compliance.ts`, now **47/47**). Typecheck clean.
 
 
 ---

@@ -19,6 +19,7 @@
 
 import { pool } from '../../db';
 import { linkProvenanceTx } from '../provenance/provenance-service';
+import { closeoutDueDate, evaluateCloseout } from './grants-logic';
 import type { FundingAgency, FundingMechanism, MilestoneType } from '../../../shared/schema/grants';
 
 interface Queryable {
@@ -140,6 +141,19 @@ export async function addMilestoneTx(client: Queryable, orgId: number, userId: n
   return { id: Number(rows[0].id) };
 }
 
+const MILESTONE_STATUSES = ['pending', 'in_progress', 'met', 'missed', 'submitted'];
+/** Complete the milestone lifecycle: transition status and stamp completion when met/submitted. */
+export async function setMilestoneStatusTx(client: Queryable, orgId: number, id: number, status: string, completedDate?: string | null): Promise<void> {
+  if (!MILESTONE_STATUSES.includes(status)) throw new GrantsError('BAD_INPUT', `Invalid status "${status}".`);
+  const stamps = status === 'met' || status === 'submitted';
+  const r = await client.query(
+    `UPDATE grant_milestones SET status = $3, completed_date = ${stamps ? 'COALESCE($4, completed_date, CURRENT_DATE)' : '$4'}, updated_at = now()
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    [id, orgId, status, stamps ? (completedDate ?? null) : (completedDate ?? null)],
+  );
+  if ((r as any).rowCount === 0) throw new GrantsError('NOT_FOUND', 'Milestone not found for this organization.');
+}
+
 export async function createInvoiceTx(client: Queryable, orgId: number, userId: number, awardId: number, input: { invoiceNumber: string; amount: string | number; periodStart?: string | null; periodEnd?: string | null }): Promise<{ id: number }> {
   await assertAward(client, orgId, awardId);
   const { rows } = await client.query(
@@ -160,6 +174,85 @@ export async function setInvoiceStatusTx(client: Queryable, orgId: number, id: n
     [id, orgId, status],
   );
   if ((r as any).rowCount === 0) throw new GrantsError('NOT_FOUND', 'Invoice not found for this organization.');
+}
+
+// ─── Closeout (2 CFR 200.344) ────────────────────────────────────────────────
+
+/** Open the closeout record for an award; derives the 120-day due date from the period end. One per award. */
+export async function openCloseoutTx(client: Queryable, orgId: number, userId: number, awardId: number): Promise<{ id: number; closeoutDueDate: string | null }> {
+  // Cast date → text so the pure logic receives an ISO 'YYYY-MM-DD' string (pg returns Date objects otherwise).
+  const a = await client.query(`SELECT period_end::text AS period_end, status FROM grant_awards WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [awardId, orgId]);
+  if (a.rows.length === 0) throw new GrantsError('NOT_FOUND', 'Award not found for this organization.');
+  const existing = await client.query(`SELECT id FROM grant_closeout_records WHERE award_id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [awardId, orgId]);
+  if (existing.rows.length > 0) throw new GrantsError('INVALID_STATE', 'A closeout record already exists for this award.');
+  const due = closeoutDueDate(a.rows[0].period_end);
+  const { rows } = await client.query(
+    `INSERT INTO grant_closeout_records (organization_id, award_id, closeout_due_date, status, created_by) VALUES ($1,$2,$3,'open',$4) RETURNING id`,
+    [orgId, awardId, due, userId],
+  );
+  return { id: Number(rows[0].id), closeoutDueDate: due };
+}
+
+export interface CloseoutItemsInput {
+  finalRpprSubmitted?: boolean;
+  finalFfrSubmitted?: boolean;
+  equipmentInventoryReturned?: boolean;
+  finalInvoicesReconciled?: boolean;
+  deobligationAmount?: string | number | null;
+  notes?: string | null;
+}
+
+/** Update closeout checklist items. Stamps the report dates when an item flips to submitted. */
+export async function updateCloseoutTx(client: Queryable, orgId: number, userId: number, awardId: number, input: CloseoutItemsInput): Promise<void> {
+  const cur = await client.query(`SELECT status FROM grant_closeout_records WHERE award_id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [awardId, orgId]);
+  if (cur.rows.length === 0) throw new GrantsError('NOT_FOUND', 'Closeout record not found for this award.');
+  if (cur.rows[0].status === 'completed') throw new GrantsError('INVALID_STATE', 'Closeout is already completed.');
+  const r = await client.query(
+    `UPDATE grant_closeout_records SET
+        final_rppr_submitted = COALESCE($3, final_rppr_submitted),
+        final_rppr_date = CASE WHEN $3 IS TRUE THEN COALESCE(final_rppr_date, CURRENT_DATE) ELSE final_rppr_date END,
+        final_ffr_submitted = COALESCE($4, final_ffr_submitted),
+        final_ffr_date = CASE WHEN $4 IS TRUE THEN COALESCE(final_ffr_date, CURRENT_DATE) ELSE final_ffr_date END,
+        equipment_inventory_returned = COALESCE($5, equipment_inventory_returned),
+        final_invoices_reconciled = COALESCE($6, final_invoices_reconciled),
+        deobligation_amount = COALESCE($7, deobligation_amount),
+        notes = COALESCE($8, notes),
+        status = CASE WHEN status = 'open' THEN 'in_progress' ELSE status END,
+        updated_at = now()
+      WHERE award_id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    [awardId, orgId, input.finalRpprSubmitted ?? null, input.finalFfrSubmitted ?? null,
+      input.equipmentInventoryReturned ?? null, input.finalInvoicesReconciled ?? null, input.deobligationAmount ?? null, input.notes ?? null],
+  );
+  if ((r as any).rowCount === 0) throw new GrantsError('NOT_FOUND', 'Closeout record not found for this award.');
+}
+
+/** Finalize closeout — gated: all four 2 CFR 200.344 items must be complete. Closes the award. */
+export async function finalizeCloseoutTx(client: Queryable, orgId: number, userId: number, awardId: number): Promise<{ closedAward: boolean }> {
+  const rec = await client.query(
+    `SELECT c.*, a.period_end::text AS period_end FROM grant_closeout_records c JOIN grant_awards a ON a.id = c.award_id
+       WHERE c.award_id = $1 AND c.organization_id = $2 AND c.deleted_at IS NULL LIMIT 1`,
+    [awardId, orgId],
+  );
+  if (rec.rows.length === 0) throw new GrantsError('NOT_FOUND', 'Closeout record not found for this award.');
+  const row = rec.rows[0];
+  if (row.status === 'completed') throw new GrantsError('INVALID_STATE', 'Closeout is already completed.');
+  const state = evaluateCloseout({
+    finalRpprSubmitted: row.final_rppr_submitted, finalFfrSubmitted: row.final_ffr_submitted,
+    equipmentInventoryReturned: row.equipment_inventory_returned, finalInvoicesReconciled: row.final_invoices_reconciled,
+  }, row.period_end, new Date().toISOString().slice(0, 10));
+  if (!state.readyToFinalize) throw new GrantsError('INVALID_STATE', `Cannot finalize closeout — outstanding: ${state.outstanding.join(', ')}`);
+  await client.query(`UPDATE grant_closeout_records SET status = 'completed', finalized_by = $3, finalized_at = now(), updated_at = now() WHERE award_id = $1 AND organization_id = $2`, [awardId, orgId, userId]);
+  await client.query(`UPDATE grant_awards SET status = 'closed', updated_at = now() WHERE id = $1 AND organization_id = $2 AND status <> 'terminated'`, [awardId, orgId]);
+  return { closedAward: true };
+}
+
+export async function getCloseoutRecord(orgId: number, awardId: number): Promise<any | null> {
+  const { rows } = await pool.query(
+    `SELECT c.*, a.period_end::text AS period_end FROM grant_closeout_records c JOIN grant_awards a ON a.id = c.award_id
+       WHERE c.award_id = $1 AND c.organization_id = $2 AND c.deleted_at IS NULL LIMIT 1`,
+    [awardId, orgId],
+  );
+  return rows[0] ?? null;
 }
 
 // ─── Reads ───────────────────────────────────────────────────────────────────
