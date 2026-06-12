@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-12T00:37:18.059Z",
+  "generatedAt": "2026-06-12T00:51:40.968Z",
   "git": {
-    "sha": "c7fa254678ef58256238cf5c95c025dd848535f2",
+    "sha": "84df0fab1270a518edac27798dcf03a42c90a57a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 208,
+    "duplicateBasenames": 209,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -755,6 +755,15 @@
         ]
       },
       {
+        "basename": "anadock",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/biopharma/shell/AnaDock.tsx",
+          "client/src/concept2cure/pdev/shell/AnaDock.tsx",
+          "ui_kits/biopharma/AnaDock.jsx"
+        ]
+      },
+      {
         "basename": "anadrafter",
         "count": 3,
         "paths": [
@@ -1052,14 +1061,6 @@
         "paths": [
           "design-system/ui_kits/mdx/data/ana-review.js",
           "ui_kits/mdx/data/ana-review.js"
-        ]
-      },
-      {
-        "basename": "anadock",
-        "count": 2,
-        "paths": [
-          "client/src/concept2cure/pdev/shell/AnaDock.tsx",
-          "ui_kits/biopharma/AnaDock.jsx"
         ]
       },
       {
@@ -1476,6 +1477,14 @@
         "paths": [
           "server/routes/financial-disclosures.ts",
           "shared/schema/financial-disclosures.ts"
+        ]
+      },
+      {
+        "basename": "fixtures",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/biopharma/data/fixtures.ts",
+          "client/src/concept2cure/submission/_install/fixtures.ts"
         ]
       },
       {
@@ -2066,7 +2075,7 @@
     "largeFilesByBytes": [
       {
         "file": "shared/schema.ts",
-        "bytes": 820734
+        "bytes": 821159
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2124,7 +2133,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19834
+        "lines": 19841
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2316,7 +2325,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 138,
+      "duplicateGroups": 141,
       "largeByBytes": 0,
       "largeByLines": 1
     },
