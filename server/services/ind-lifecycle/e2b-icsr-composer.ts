@@ -103,6 +103,8 @@ export interface E2bIcsrResult {
   gaps: E2bGap[];
   /** 0..1 fraction of the tracked mandatory elements that are populated. */
   completeness: number;
+  /** Report lifecycle stage (from the ICSR envelope; defaults to 'initial'). */
+  lifecycle: ICSR['icsrType'];
 }
 
 // ---------------------------------------------------------------------------
@@ -125,32 +127,58 @@ function isoDateTime(d: Date | string | undefined | null): string {
  * Compose the E2B(R3) ICSR data elements from an intake adverse event and the
  * optional ICSR transport metadata.
  *
+ * Handles the report lifecycle via `icsr.icsrType` (C.1.* admin):
+ *   - initial      — first transmission of the case.
+ *   - follow_up    — a new version carrying updated information; the worldwide
+ *                    unique id (C.1.8.1) is stable and C.1.5 reflects the most
+ *                    recent information date.
+ *   - nullification— the case was sent in error / is invalid; C.1.11.1 marks it
+ *                    a nullification and C.1.11.2 carries the (mandatory) reason.
+ *
  * @param event   the intake AdverseEvent (dates may be Date or ISO strings)
  * @param options icsr — ICSR envelope metadata (worldwide id, type, sender);
  *                expedited — whether the case is expedited-reportable (C.1.7);
+ *                nullificationReason — C.1.11.2 (required when nullifying);
+ *                mostRecentInfoDate — C.1.5 (defaults to the report date);
  *                now — creation timestamp (defaults to current time)
  */
 export function composeE2bR3Icsr(
   event: AdverseEvent,
-  options: { icsr?: ICSR | null; expedited?: boolean; now?: Date } = {},
+  options: {
+    icsr?: ICSR | null;
+    expedited?: boolean;
+    nullificationReason?: string;
+    mostRecentInfoDate?: Date | string;
+    now?: Date;
+  } = {},
 ): E2bIcsrResult {
-  const { icsr = null, expedited, now = new Date() } = options;
+  const { icsr = null, expedited, nullificationReason, mostRecentInfoDate, now = new Date() } = options;
 
   const reporterQual = REPORTER_QUALIFICATION[event.reporterType];
   const outcome = OUTCOME_CODE[event.outcome];
   const seriousness = SERIOUSNESS_ELEMENT[event.seriousnessCriteria];
   // C.1.7: prefer the explicit option; fall back to the intake flag.
   const isExpedited = typeof expedited === 'boolean' ? expedited : event.expeditedReportRequired;
+  // Report lifecycle stage (C.1.* admin). Defaults to an initial report.
+  const lifecycle = icsr?.icsrType ?? 'initial';
+  const isNullification = lifecycle === 'nullification';
 
   const caseAdmin: E2bElement[] = [
     { id: 'C.1.1', label: "Sender's safety report unique identifier", value: event.id },
     { id: 'C.1.2', label: 'Date of creation', value: isoDateTime(now) },
     { id: 'C.1.3', label: 'Type of report', value: '2 (report from study)' },
     { id: 'C.1.4', label: 'Date report was first received from source', value: isoDate(event.reportDate) },
-    { id: 'C.1.5', label: 'Date of most recent information', value: isoDate(event.reportDate) },
+    { id: 'C.1.5', label: 'Date of most recent information', value: isoDate(mostRecentInfoDate ?? event.reportDate) },
     { id: 'C.1.7', label: 'Fulfils local criteria for an expedited report', value: isExpedited ? '1 (Yes)' : '2 (No)' },
     { id: 'C.1.8.1', label: 'Worldwide unique case identification number', value: icsr?.worldwideUniqueId ?? '' },
     { id: 'C.1.8.2', label: 'First sender of this case', value: icsr?.senderType === 'regulatory_authority' ? '1 (Regulator)' : '2 (Other)' },
+    // C.1.11 — report nullification/amendment (only emitted for a nullification).
+    ...(isNullification
+      ? [
+          { id: 'C.1.11.1', label: 'Report nullification / amendment', value: '1 (Nullification)' },
+          { id: 'C.1.11.2', label: 'Reason for nullification / amendment', value: nullificationReason ?? '' },
+        ]
+      : []),
   ];
 
   const primarySource: E2bElement[] = [
@@ -212,11 +240,15 @@ export function composeE2bR3Icsr(
     { id: 'E.i.1.1a', label: 'Reaction/event term', value: event.reactionPt ?? event.eventDescription },
     { id: 'G.k.2.2', label: 'Suspect medicinal product name', value: event.suspectProduct ?? '' },
     { id: 'H.1', label: 'Case narrative', value: narrativeText },
+    // A nullification is invalid without its reason (C.1.11.2).
+    ...(isNullification
+      ? [{ id: 'C.1.11.2', label: 'Reason for nullification', value: nullificationReason ?? '' }]
+      : []),
   ];
   const gaps: E2bGap[] = mandatory.filter((m) => !m.value || m.value.trim() === '').map((m) => ({ id: m.id, label: m.label }));
   const completeness = (mandatory.length - gaps.length) / mandatory.length;
 
-  return { icsr: icsrModel, xml: serializeE2bXml(icsrModel), gaps, completeness };
+  return { icsr: icsrModel, xml: serializeE2bXml(icsrModel), gaps, completeness, lifecycle };
 }
 
 // ---------------------------------------------------------------------------

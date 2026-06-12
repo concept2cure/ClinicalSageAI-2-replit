@@ -82,13 +82,15 @@ router.post('/safety-report/icsr', limiter, requireRole(AUTHOR), (req, res) => {
     const result = composeE2bR3Icsr(coerceEventDates(b.event), {
       icsr: b.icsr ?? null,
       expedited: typeof b.expedited === 'boolean' ? b.expedited : undefined,
+      nullificationReason: b.nullificationReason,
+      mostRecentInfoDate: b.mostRecentInfoDate,
       now: b.now ? new Date(b.now) : undefined,
     });
     if (String(req.query.format).toLowerCase() === 'xml') {
       res.setHeader('Content-Type', 'application/xml');
       return res.status(200).send(result.xml);
     }
-    res.json({ icsr: result.icsr, gaps: result.gaps, completeness: result.completeness });
+    res.json({ icsr: result.icsr, lifecycle: result.lifecycle, gaps: result.gaps, completeness: result.completeness });
   } catch (err) {
     fail(res, err);
   }

@@ -137,3 +137,50 @@ describe('composeE2bR3Icsr', () => {
     expect(b).toBe(a.xml);
   });
 });
+
+describe('composeE2bR3Icsr — report lifecycle (C.1.* admin)', () => {
+  it('defaults to an initial report with no C.1.11 nullification elements', () => {
+    const { icsr, lifecycle } = composeE2bR3Icsr(baseEvent, { icsr: icsrMeta });
+    expect(lifecycle).toBe('initial');
+    const ids = icsr.caseAdmin.map((e) => e.id);
+    expect(ids).not.toContain('C.1.11.1');
+  });
+
+  it('follow_up keeps the worldwide id stable and reflects the most-recent-info date', () => {
+    const followUp = { ...icsrMeta, icsrType: 'follow_up' as const };
+    const { icsr, lifecycle } = composeE2bR3Icsr(baseEvent, {
+      icsr: followUp,
+      mostRecentInfoDate: '2026-02-01T00:00:00.000Z',
+    });
+    expect(lifecycle).toBe('follow_up');
+    const byId = Object.fromEntries(icsr.caseAdmin.map((e) => [e.id, e.value]));
+    expect(byId['C.1.8.1']).toBe('US-C2C-2026-000123'); // stable across versions
+    expect(byId['C.1.5']).toBe('2026-02-01'); // updated information date
+  });
+
+  it('nullification emits C.1.11.1 + the reason (C.1.11.2)', () => {
+    const nullify = { ...icsrMeta, icsrType: 'nullification' as const };
+    const { icsr, lifecycle } = composeE2bR3Icsr(baseEvent, {
+      icsr: nullify,
+      nullificationReason: 'Case reported in error (duplicate of US-C2C-2026-000100).',
+    });
+    expect(lifecycle).toBe('nullification');
+    const byId = Object.fromEntries(icsr.caseAdmin.map((e) => [e.id, e.value]));
+    expect(byId['C.1.11.1']).toContain('Nullification');
+    expect(byId['C.1.11.2']).toContain('duplicate');
+  });
+
+  it('nullification without a reason is a completeness gap (C.1.11.2)', () => {
+    const nullify = { ...icsrMeta, icsrType: 'nullification' as const };
+    const { gaps, completeness } = composeE2bR3Icsr(baseEvent, { icsr: nullify });
+    expect(gaps.map((g) => g.id)).toContain('C.1.11.2');
+    expect(completeness).toBeLessThan(1);
+  });
+
+  it('nullification XML carries the nullification flag', () => {
+    const nullify = { ...icsrMeta, icsrType: 'nullification' as const };
+    const { xml } = composeE2bR3Icsr(baseEvent, { icsr: nullify, nullificationReason: 'Invalid case.' });
+    expect(xml).toContain('id="C.1.11.1"');
+    expect(xml).toContain('Invalid case.');
+  });
+});
