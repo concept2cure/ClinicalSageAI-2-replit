@@ -23,8 +23,13 @@ import filingRoutes from './ind-lifecycle/filing.routes';
 import computeRoutes from './ind-lifecycle/compute.routes';
 import sequenceRoutes from './ind-lifecycle/sequence.routes';
 import submissionRoutes from './ind-lifecycle/submission.routes';
+import { buildIndLifecycleOpenApi } from './ind-lifecycle/openapi';
 
 const router = Router();
+
+// Self-documenting API: the OpenAPI 3.1 spec is generated from the routers
+// (cannot drift). Authenticated discovery; no specific role required.
+router.get('/openapi.json', (_req, res) => res.json(buildIndLifecycleOpenApi()));
 
 router.use(documentsRoutes);
 router.use(filingRoutes);

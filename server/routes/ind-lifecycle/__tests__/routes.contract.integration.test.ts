@@ -175,6 +175,16 @@ describe('document routes', () => {
   });
 });
 
+describe('API discovery', () => {
+  it('GET /openapi.json → 200 with a generated OpenAPI 3.1 spec', async () => {
+    const res = await request(app).get('/api/ind-lifecycle/openapi.json');
+    expect(res.status).toBe(200);
+    expect(res.body.openapi).toBe('3.1.0');
+    expect(Object.keys(res.body.paths).length).toBeGreaterThanOrEqual(30);
+    expect(res.body.paths['/api/ind-lifecycle/readiness']?.post).toBeTruthy();
+  });
+});
+
 describe('DB-write + program surface (full HTTP flow)', () => {
   let filedSequenceId: number;
 
