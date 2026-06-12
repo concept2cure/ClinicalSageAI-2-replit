@@ -6736,6 +6736,49 @@ registerToolHandler('create_coi_disclosure', async (input, ctx) => {
   }
 });
 
+registerToolHandler('search_grants_gov', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'search_grants_gov requires tenant context.' });
+  const query = typeof input.query === 'string' ? input.query.trim() : '';
+  if (!query) return JSON.stringify({ error: 'A query is required to search Grants.gov.' });
+  const limit = Math.min(typeof input.limit === 'number' ? input.limit : 15, 50);
+  const { searchConnectors } = await import('../connectors/connector-registry.js');
+  try {
+    const [res] = await searchConnectors(ctx.organizationId, ['grants_gov'], { keywords: [query], limit });
+    if (res?.error) return JSON.stringify({ error: `Grants.gov search failed: ${res.error}` });
+    const opportunities = (res?.results ?? []).map((r) => ({ id: r.id, title: r.title, summary: r.summary, url: r.url, ...r.metadata }));
+    return JSON.stringify({
+      ok: true, count: opportunities.length, opportunities,
+      message: opportunities.length ? `Found ${opportunities.length} Grants.gov opportunit${opportunities.length === 1 ? 'y' : 'ies'} for "${query}".` : `No posted/forecasted Grants.gov opportunities matched "${query}".`,
+      citation_hint: 'Cite each opportunity by its number and agency, and link to the provided url.',
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `search_grants_gov failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('screen_restricted_party', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'screen_restricted_party requires tenant context.' });
+  const partyName = typeof input.party_name === 'string' ? input.party_name.trim() : '';
+  if (!partyName) return JSON.stringify({ error: 'party_name is required to screen against SAM.gov exclusions.' });
+  const { searchConnectors } = await import('../connectors/connector-registry.js');
+  try {
+    const [res] = await searchConnectors(ctx.organizationId, ['sam_exclusions'], { sponsor: partyName, limit: 25 });
+    if (res?.error) {
+      // Most commonly: the SAM.gov connector is not configured for this org.
+      return JSON.stringify({ status: 'unavailable', message: `SAM.gov screening is not available: ${res.error}. Configure the SAM.gov connector (API key) in connector settings.` });
+    }
+    const matches = res?.results ?? [];
+    return JSON.stringify({
+      ok: true, cleared: matches.length === 0, matchCount: matches.length, matches: matches.map((m) => ({ name: m.title, ...m.metadata })),
+      message: matches.length === 0
+        ? `CLEAN screen — no SAM.gov exclusion found for "${partyName}".`
+        : `EXCLUSION FOUND — ${matches.length} potential SAM.gov exclusion match(es) for "${partyName}". Confirm by UEI/address before acting; do not proceed with award/procurement on a confirmed match.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `screen_restricted_party failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('log_study_deviation', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'log_study_deviation requires tenant context.' });

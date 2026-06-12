@@ -573,6 +573,7 @@ Four ISU-brief-driven additions, built on existing infrastructure (no rebuilds).
 - Deterministic gate `validateEffort` (total ≤ 100%; sponsored committed↔actual deviation > 25% triggers recertification) — 7 unit tests; `computeEffortContentHash` (order-independent).
 - Governed service `certifyTx` (gate is the floor — over-commit certify is rejected; binds sha256 content hash).
 - **API** `/api/effort-certification` (CRUD + `/:id/validation` + `/:id/certify` [command `sign`]). **AnA:** `create_effort_certification`, `add_effort_line`. **Report:** `effort.certification_register`. **Metrics:** `effort-metrics.ts` → `/api/metrics` (`effort_statements_created_total`, `effort_lines_added_total`, `effort_certifications_signed_total`, `effort_recertifications_required_total`).
+- **Tests:** `effort-logic.test.ts` (7); add-on AnA registration + guards in `ana/__tests__/addons-tools.test.ts` (13, shared with COI + connector tools).
 
 ### A2 — Research security / COI-FCOI (NSPM-33 / NOT-OD-26-017 / 42 CFR 50 F)
 - Schema `coi_disclosures`; migration `20260611_research_security.sql`. Foreign appointment/support (or non-US country) auto-flagged for research-security review.
@@ -583,6 +584,8 @@ Four ISU-brief-driven additions, built on existing infrastructure (no rebuilds).
 - `sam_exclusions` (apiKey) — SAM.gov Exclusions restricted-party screening (2 CFR 200.214 / research security); a "search" is a screen, zero matches = clean.
 - `ellucian_banner` (baseUrl + apiKey) — Banner via Ethos Integration as **system of record**; read-only by design (Banner stays authoritative).
 - Registered in `connector-registry.ts`; catalog entries carry full setup guides. New categories `funding` / `compliance` / `sor`.
+- **AnA (conversational):** `search_grants_gov` (read-only NOFO discovery) and `screen_restricted_party` (SAM.gov exclusion screen; empty result = CLEAN). Both route through the registry's `searchConnectors` (per-org credentials).
+- **Tests:** `__tests__/sponsored-programs-connectors.test.ts` (12 — request shaping, parsing, screening semantics, auth + error paths, mocked `fetch`). Live egress to these hosts is blocked in sandbox/CI; mocked tests are the verification of record until the hosts are allowlisted.
 
 ### A4 — Preclinical ingestion → governed registry bridge
 - `preclinical-governed-bridge.ts`: maps the extraction taxonomy → CTD Module 4 study-type union (`mapStudyType`) and threads a digested `ctd_nonclinical_studies` row into the governed `nonclinical_studies` registry under a governed action, with provenance `ctd_nonclinical_study → nonclinical_study (derived_from)` and `nonclinical_study → submission_module4 (supports)`.

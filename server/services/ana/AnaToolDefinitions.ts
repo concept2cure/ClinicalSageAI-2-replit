@@ -4093,6 +4093,16 @@ export const CREATE_COI_DISCLOSURE: AnaTool = {
   description: "File a research-security / conflict-of-interest disclosure (NOT-OD-26-017 / NSPM-33): outside activity, financial interest, foreign appointment/support, other support, gift, or IP. Foreign appointments/support are flagged for research-security review. Governed + audited, org-scoped.",
   input_schema: { type: 'object', properties: { personnel_id: { type: 'number' }, disclosure_type: { type: 'string', enum: ['financial_interest','outside_activity','foreign_appointment','foreign_support','other_support','gift','intellectual_property','other'] }, entity_name: { type: 'string' }, country: { type: 'string' }, description: { type: 'string' }, monetary_value: { type: 'number' }, reason: { type: 'string' } }, required: ['personnel_id', 'disclosure_type', 'entity_name'] },
 };
+export const SEARCH_GRANTS_GOV: AnaTool = {
+  name: 'search_grants_gov',
+  description: "Search US federal funding opportunities on Grants.gov (public, no credentials). Use to build the pre-award pipeline: find NOFOs by keyword, topic, or agency. Read-only; returns opportunity number, agency, status, and close date. Org context required.",
+  input_schema: { type: 'object', properties: { query: { type: 'string', description: 'Keyword / topic / therapeutic area to search.' }, limit: { type: 'number', description: 'Max opportunities (default 15).' } }, required: ['query'] },
+};
+export const SCREEN_RESTRICTED_PARTY: AnaTool = {
+  name: 'screen_restricted_party',
+  description: "Screen a person or organization against the US SAM.gov Exclusions (debarment/suspension) list for research-security and 2 CFR 200.214 suspension-and-debarment checks. Requires the org to have configured the SAM.gov connector. Read-only; an empty result is a CLEAN screen (no exclusion found).",
+  input_schema: { type: 'object', properties: { party_name: { type: 'string', description: 'Full legal name of the investigator, sub-recipient, or vendor to screen.' } }, required: ['party_name'] },
+};
 
 export const LOG_STUDY_DEVIATION: AnaTool = {
   name: 'log_study_deviation',
@@ -5594,6 +5604,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CREATE_EFFORT_CERTIFICATION,
   ADD_EFFORT_LINE,
   CREATE_COI_DISCLOSURE,
+  SEARCH_GRANTS_GOV,
+  SCREEN_RESTRICTED_PARTY,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,
