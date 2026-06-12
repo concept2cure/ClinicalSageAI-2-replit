@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-12T00:31:17.160Z",
+  "generatedAt": "2026-06-12T00:37:18.059Z",
   "git": {
-    "sha": "435b3bcc78f1c5fcc2b54915fe28b90fa97f0915",
+    "sha": "c7fa254678ef58256238cf5c95c025dd848535f2",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 206,
+    "duplicateBasenames": 208,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -1367,6 +1367,14 @@
         ]
       },
       {
+        "basename": "effort-certification",
+        "count": 2,
+        "paths": [
+          "server/routes/effort-certification.ts",
+          "shared/schema/effort-certification.ts"
+        ]
+      },
+      {
         "basename": "engine",
         "count": 2,
         "paths": [
@@ -1823,6 +1831,14 @@
         ]
       },
       {
+        "basename": "research-security",
+        "count": 2,
+        "paths": [
+          "server/routes/research-security.ts",
+          "shared/schema/research-security.ts"
+        ]
+      },
+      {
         "basename": "rolebasedaccess",
         "count": 2,
         "paths": [
@@ -2058,11 +2074,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 386959
+        "bytes": 393317
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 304244
+        "bytes": 306419
       },
       {
         "file": "server/statistics-service.ts",
@@ -2116,7 +2132,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 7994
+        "lines": 8092
       },
       {
         "file": "server/statistics-service.ts",
@@ -2124,7 +2140,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 5729
+        "lines": 5748
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2288,7 +2304,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 303,
+      "duplicateGroups": 305,
       "largeByBytes": 11,
       "largeByLines": 34
     },
@@ -2306,7 +2322,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 44,
+      "duplicateGroups": 46,
       "largeByBytes": 1,
       "largeByLines": 2
     },
