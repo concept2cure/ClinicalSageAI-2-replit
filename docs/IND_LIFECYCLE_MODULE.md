@@ -64,6 +64,7 @@ All HTTP routes are auth-gated (`authenticateToken` at mount) and tenant-scoped
 | Module 2 cross-summary QC (presence / traceability / orphan-input / content / completeness / gaps / structure; honest-by-construction verdict) | `authoring/m2-summary-qc` | `POST /api/authoring-pdf/m2-summary/qc` |
 | Investigator's Brochure (ICH E6 §7) | `authoring/ib-builder` | — |
 | Module 4 nonclinical study report | `authoring/nonclinical-study-report-builder` | — |
+| Module 4 nonclinical assembly QC (ICH M3(R2) coverage / required-section status / CTD 4.2.x placement / GLP / structure; honest-by-construction verdict) | `authoring/m4-nonclinical-qc` | `POST /api/authoring-pdf/m4-nonclinical/qc` |
 | Lifecycle document → bookmarked PDF | `ind-lifecycle/ind-document-renderer` | (used by the `*/pdf` routes) |
 
 ## 5. eCTD submission-grade output

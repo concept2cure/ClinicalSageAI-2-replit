@@ -16,6 +16,7 @@ import { requireRole } from '../middleware/auth';
 import { createRateLimiter } from '../middleware/rateLimiter';
 import { renderM2SummaryPdf } from '../services/authoring/m2-summary-renderer';
 import { runM2SummaryQc } from '../services/authoring/m2-summary-qc';
+import { runM4NonclinicalQc } from '../services/authoring/m4-nonclinical-qc';
 import type { M2Summary } from '../services/m2-summary-builders';
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -72,6 +73,29 @@ router.post('/m2-summary/qc', limiter, requireRole(AUTHOR), (req, res) => {
         expectedSummaries: b.expectedSummaries,
         minCompleteness: b.minCompleteness,
         availableUpstreamKeys: b.availableUpstreamKeys,
+      }),
+    );
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Module 4 nonclinical assembly QC over a set of study reports (ICH M4S(R2)).
+ * Body: { reports: M4StudyReportInput[], expectedStudyTypes?, requireCoverage? }.
+ * Returns the verdict + findings (coverage, section status, CTD placement, GLP).
+ */
+router.post('/m4-nonclinical/qc', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!Array.isArray(b.reports)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'reports[] (nonclinical study report summaries) is required.' } });
+  }
+  try {
+    res.json(
+      runM4NonclinicalQc({
+        reports: b.reports,
+        expectedStudyTypes: b.expectedStudyTypes,
+        requireCoverage: b.requireCoverage,
       }),
     );
   } catch (err) {
