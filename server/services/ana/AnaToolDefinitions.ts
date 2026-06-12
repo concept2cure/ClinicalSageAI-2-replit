@@ -4078,6 +4078,22 @@ export const REVIEW_TRAINING_GATE: AnaTool = {
   },
 };
 
+export const CREATE_EFFORT_CERTIFICATION: AnaTool = {
+  name: 'create_effort_certification',
+  description: "Open a time-&-effort certification statement for a person and period (2 CFR 200.430). Returns the statement id for adding effort lines. Governed + audited, org-scoped.",
+  input_schema: { type: 'object', properties: { personnel_id: { type: 'number' }, period_start: { type: 'string' }, period_end: { type: 'string' }, reason: { type: 'string', description: 'Audit reason (>= 8 chars).' } }, required: ['personnel_id', 'period_start', 'period_end'] },
+};
+export const ADD_EFFORT_LINE: AnaTool = {
+  name: 'add_effort_line',
+  description: "Add an effort line to a certification: an activity/award with committed % and actual %. Total across lines must not exceed 100%; a sponsored line whose actual deviates materially from committed triggers recertification. Governed + audited.",
+  input_schema: { type: 'object', properties: { certification_id: { type: 'number' }, activity_label: { type: 'string' }, committed_pct: { type: 'number' }, actual_pct: { type: 'number' }, award_id: { type: 'number' }, reason: { type: 'string' } }, required: ['certification_id', 'activity_label', 'committed_pct', 'actual_pct'] },
+};
+export const CREATE_COI_DISCLOSURE: AnaTool = {
+  name: 'create_coi_disclosure',
+  description: "File a research-security / conflict-of-interest disclosure (NOT-OD-26-017 / NSPM-33): outside activity, financial interest, foreign appointment/support, other support, gift, or IP. Foreign appointments/support are flagged for research-security review. Governed + audited, org-scoped.",
+  input_schema: { type: 'object', properties: { personnel_id: { type: 'number' }, disclosure_type: { type: 'string', enum: ['financial_interest','outside_activity','foreign_appointment','foreign_support','other_support','gift','intellectual_property','other'] }, entity_name: { type: 'string' }, country: { type: 'string' }, description: { type: 'string' }, monetary_value: { type: 'number' }, reason: { type: 'string' } }, required: ['personnel_id', 'disclosure_type', 'entity_name'] },
+};
+
 export const LOG_STUDY_DEVIATION: AnaTool = {
   name: 'log_study_deviation',
   description:
@@ -5575,6 +5591,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   RUN_COMPLIANCE_CHECKLIST,
   ADD_PERSONNEL_TRAINING,
   REVIEW_TRAINING_GATE,
+  CREATE_EFFORT_CERTIFICATION,
+  ADD_EFFORT_LINE,
+  CREATE_COI_DISCLOSURE,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,

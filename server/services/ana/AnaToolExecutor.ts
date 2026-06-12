@@ -6638,6 +6638,104 @@ registerToolHandler('review_training_gate', async (input, ctx) => {
   }
 });
 
+registerToolHandler('create_effort_certification', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_effort_certification requires tenant + user context.' });
+  const personnelId = typeof input.personnel_id === 'number' ? input.personnel_id : NaN;
+  const periodStart = typeof input.period_start === 'string' ? input.period_start : '';
+  const periodEnd = typeof input.period_end === 'string' ? input.period_end : '';
+  if (!Number.isInteger(personnelId) || !periodStart || !periodEnd) return JSON.stringify({ error: 'personnel_id, period_start, and period_end are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createCertificationTx } = await import('../effort-certification/effort-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createCertificationTx(client, ctx.organizationId, ctx.userId, { personnelId, periodStart, periodEnd });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `effort-certification:${id}`, reason: fcoiReason(input, 'Effort statement opened via AnA'),
+      payload: { personnelId, periodStart, periodEnd }, domain: 'effort_certification', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Opened effort statement (id ${id}) for ${periodStart}–${periodEnd}. Add effort lines, then certify.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_effort_certification failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('add_effort_line', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_effort_line requires tenant + user context.' });
+  const certId = typeof input.certification_id === 'number' ? input.certification_id : NaN;
+  const activityLabel = typeof input.activity_label === 'string' ? input.activity_label.trim() : '';
+  const committedPct = typeof input.committed_pct === 'number' ? input.committed_pct : NaN;
+  const actualPct = typeof input.actual_pct === 'number' ? input.actual_pct : NaN;
+  if (!Number.isInteger(certId) || !activityLabel || !Number.isFinite(committedPct) || !Number.isFinite(actualPct)) {
+    return JSON.stringify({ error: 'certification_id, activity_label, committed_pct, and actual_pct are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addLineTx } = await import('../effort-certification/effort-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await addLineTx(client, ctx.organizationId, ctx.userId, certId, {
+      activityLabel, committedPct, actualPct,
+      awardId: typeof input.award_id === 'number' ? input.award_id : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `effort-certification:${certId}`, reason: fcoiReason(input, 'Effort line added via AnA'),
+      payload: { lineId: id, activityLabel, committedPct, actualPct }, domain: 'effort_certification', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, lineId: id, certificationId: certId, message: `Added effort line "${activityLabel}" (${committedPct}% committed / ${actualPct}% actual).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_effort_line failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('create_coi_disclosure', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_coi_disclosure requires tenant + user context.' });
+  const personnelId = typeof input.personnel_id === 'number' ? input.personnel_id : NaN;
+  const disclosureType = typeof input.disclosure_type === 'string' ? input.disclosure_type : '';
+  const entityName = typeof input.entity_name === 'string' ? input.entity_name.trim() : '';
+  const VALID = ['financial_interest', 'outside_activity', 'foreign_appointment', 'foreign_support', 'other_support', 'gift', 'intellectual_property', 'other'];
+  if (!Number.isInteger(personnelId) || !VALID.includes(disclosureType) || !entityName) {
+    return JSON.stringify({ error: 'personnel_id, a valid disclosure_type, and entity_name are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createDisclosureTx } = await import('../research-security/coi-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, foreignFlag } = await createDisclosureTx(client, ctx.organizationId, ctx.userId, {
+      personnelId, disclosureType: disclosureType as any, entityName,
+      country: typeof input.country === 'string' ? input.country : null,
+      description: typeof input.description === 'string' ? input.description : null,
+      monetaryValue: typeof input.monetary_value === 'number' ? input.monetary_value : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `coi-disclosure:${id}`, reason: fcoiReason(input, 'COI disclosure filed via AnA'),
+      payload: { personnelId, disclosureType, foreignFlag }, domain: 'research_security', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, foreignFlag, message: `Filed ${disclosureType} disclosure for "${entityName}" (id ${id}).${foreignFlag ? ' Flagged for research-security review (foreign nexus).' : ''}` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_coi_disclosure failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
 registerToolHandler('log_study_deviation', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'log_study_deviation requires tenant context.' });

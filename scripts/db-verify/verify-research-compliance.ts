@@ -13,6 +13,8 @@ import * as roster from '../../server/services/research-compliance/roster-servic
 import { resolveComplianceChecklist, evaluateTrainingGate } from '../../server/services/research-compliance/compliance-checklist';
 import { computeDomainReport } from '../../server/services/report-os/research-compliance-report-providers';
 import { emitDeadlineTask } from '../../server/services/research-compliance/tasking-bridge';
+import * as effort from '../../server/services/effort-certification/effort-service';
+import * as coi from '../../server/services/research-security/coi-service';
 
 let pass = 0, fail = 0;
 function ok(cond: boolean, msg: string) { if (cond) { pass++; console.log('  ✓', msg); } else { fail++; console.log('  ✗ FAIL:', msg); } }
@@ -116,6 +118,38 @@ async function main() {
   ok(haRep != null && (haRep!.summary.commitments as number) >= 1, `ha.commitment_register computes (commitments=${haRep?.summary.commitments})`);
   const unknown = await computeDomainReport('not.a.domain.report', ORG);
   ok(unknown === null, 'unknown report type → null (generic orchestrator unchanged)');
+
+  console.log('\n[Effort Certification] add-on — lines, validation gate, certify, content hash');
+  // Reuse the trained PI (piId) as the certifier subject.
+  const certId = await tx((c) => effort.createCertificationTx(c, ORG, USER, { personnelId: piId, periodStart: '2026-01-01', periodEnd: '2026-06-30' })).then((r: any) => r.id);
+  await tx((c) => effort.addLineTx(c, ORG, USER, certId, { activityLabel: 'R01', committedPct: 40, actualPct: 40, awardId: null }));
+  await tx((c) => effort.addLineTx(c, ORG, USER, certId, { activityLabel: 'Teaching', committedPct: 60, actualPct: 60, awardId: null }));
+  const certRes = await tx((c) => effort.certifyTx(c, ORG, USER, certId));
+  ok(certRes.contentHash.length === 64, 'effort certify computes a sha256 content hash');
+  const certRow = await pool.query(`SELECT status, content_hash FROM effort_certifications WHERE id=$1`, [certId]);
+  ok(certRow.rows[0].status === 'certified' && certRow.rows[0].content_hash, 'effort statement persisted as certified with content_hash');
+  // Over-100% statement must be REJECTED at certify (deterministic gate is the floor).
+  const badCert = await tx((c) => effort.createCertificationTx(c, ORG, USER, { personnelId: piId, periodStart: '2026-07-01', periodEnd: '2026-12-31' })).then((r: any) => r.id);
+  await tx((c) => effort.addLineTx(c, ORG, USER, badCert, { activityLabel: 'A', committedPct: 70, actualPct: 70, awardId: null }));
+  await tx((c) => effort.addLineTx(c, ORG, USER, badCert, { activityLabel: 'B', committedPct: 50, actualPct: 50, awardId: null }));
+  let effortRejected = false;
+  try { await tx((c) => effort.certifyTx(c, ORG, USER, badCert)); } catch (e: any) { effortRejected = e?.code === 'INVALID_STATE'; }
+  ok(effortRejected, 'certify REJECTED when total committed > 100% (no over-commit certify)');
+
+  console.log('\n[Research Security / COI] add-on — disclosure, foreign-nexus flag, review');
+  const coiRes = await tx((c) => coi.createDisclosureTx(c, ORG, USER, { personnelId: piId, disclosureType: 'foreign_appointment', entityName: 'Overseas University', country: 'CN' }));
+  ok(coiRes.foreignFlag === true, 'foreign_appointment disclosure raises the research-security foreign flag');
+  const coiUs = await tx((c) => coi.createDisclosureTx(c, ORG, USER, { personnelId: piId, disclosureType: 'financial_interest', entityName: 'US Startup', country: 'US' }));
+  ok(coiUs.foreignFlag === false, 'US financial interest does not raise the foreign flag');
+  await tx((c) => coi.reviewDisclosureTx(c, ORG, USER, coiRes.id, { status: 'managed', managementPlan: 'recuse from review' }));
+  const coiRow = await pool.query(`SELECT status, management_plan FROM coi_disclosures WHERE id=$1`, [coiRes.id]);
+  ok(coiRow.rows[0].status === 'managed' && coiRow.rows[0].management_plan != null, 'COI review persists status=managed + management plan');
+
+  console.log('\n[Reports] effort + research-security domain providers compute real numbers');
+  const effRep = await computeDomainReport('effort.certification_register', ORG);
+  ok(effRep != null && (effRep!.summary.statements as number) >= 1 && (effRep!.summary.certified as number) >= 1, `effort.certification_register computes (statements=${effRep?.summary.statements}, certified=${effRep?.summary.certified})`);
+  const coiRep = await computeDomainReport('research_security.coi_register', ORG);
+  ok(coiRep != null && (coiRep!.summary.disclosures as number) >= 2 && (coiRep!.summary.foreignNexus as number) >= 1, `research_security.coi_register computes (disclosures=${coiRep?.summary.disclosures}, foreignNexus=${coiRep?.summary.foreignNexus})`);
 
   console.log('\n[Tasking] deadline event → central unified_tasks');
   const taskId = await emitDeadlineTask({ organizationId: ORG, title: 'Verify milestone due', sourceEntityType: 'grant_milestone', sourceEntityId: 999, dueDate: '2026-12-01', taskType: 'milestone' });
