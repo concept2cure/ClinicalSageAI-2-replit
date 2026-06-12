@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getSubmissionRegionProfile, getAllSubmissionRegionProfiles } from '../region-profile-service';
+import { getRegionalTemplate } from '../../regional-ctd-templates';
 
 describe('getSubmissionRegionProfile', () => {
   it('composes an FDA profile with agency, Module 1, forms, and pathways', () => {
@@ -27,6 +28,21 @@ describe('getSubmissionRegionProfile', () => {
     expect(byNumber.get('1.8')).toMatch(/Pharmacovigilance/i);
     expect(byNumber.get('1.9')).toMatch(/Clinical Trials/i);
     expect(byNumber.get('1.10')).toMatch(/Paediatrics/i);
+  });
+
+  it('uses the authoritative NMPA Module 1 numbering in the China (NMPA) template', () => {
+    const cn = getRegionalTemplate('NMPA')!;
+    expect(cn.agency).toBe('NMPA');
+    const byNumber = new Map(cn.module1Sections.map((s) => [s.number, s.title]));
+    // Verified against NMPA M4 Module 1 (行政文件和药品信息, 2019 No. 17).
+    expect(byNumber.get('1.0')).toMatch(/Cover Letter/i);
+    expect(byNumber.get('1.1')).toMatch(/Table of Contents/i);
+    expect(byNumber.get('1.2')).toMatch(/Application Form/i);
+    expect(byNumber.get('1.3')).toMatch(/Product Information/i);
+    // The prior template's FDA-artifact section number (1.15) must be gone.
+    expect(byNumber.has('1.15')).toBe(false);
+    const oneThree = cn.module1Sections.find((s) => s.number === '1.3');
+    expect(oneThree?.childSections?.some((c) => c.number === '1.3.1')).toBe(true);
   });
 
   it('surfaces Japan-specific Module 1 structure and advisory requirements in the PMDA profile', () => {
