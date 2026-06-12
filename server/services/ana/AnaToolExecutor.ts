@@ -300,12 +300,21 @@ registerToolHandler('search_clinical_evidence', async (input) => {
       pageSize: maxResults,
     });
 
+    const provenance = result.trials.map(t =>
+      buildProvenance({
+        sourceId: 'clinicaltrials',
+        citation: { title: t.title || t.nctId, identifier: t.nctId, url: t.url },
+        query: query || undefined,
+        confidence: 'high',
+      })
+    );
     return JSON.stringify({
       source: result.source,
       query: query || undefined,
       totalCount: result.totalCount,
       resultCount: result.trials.length,
       studies: result.trials,
+      provenance,
       citation_hint: 'Cite each trial by its NCT ID and link to the provided url.',
     });
   } catch {
@@ -389,12 +398,21 @@ registerToolHandler('search_literature', async (input) => {
       dateRange: asStr(input.date_range),
       studyType: asStr(input.study_type),
     });
+    const provenance = result.articles.map(a =>
+      buildProvenance({
+        sourceId: 'pubmed',
+        citation: { title: a.title || a.pmid, identifier: a.doi || `PMID:${a.pmid}`, url: a.url },
+        query,
+        confidence: 'high',
+      })
+    );
     return JSON.stringify({
       source: result.source,
       query,
       totalCount: result.totalCount,
       resultCount: result.articles.length,
       articles: result.articles,
+      provenance,
       citation_hint: 'Cite each article by PMID (and DOI when present) and link to the provided url.',
     });
   } catch {
@@ -799,7 +817,16 @@ registerToolHandler('lookup_icd10_code', async (input) => {
   if (!term.trim()) return JSON.stringify({ error: 'lookup_icd10_code requires a term.' });
   const maxResults = Math.min((input.max_results as number) || 10, 25);
   try {
-    return JSON.stringify(await lookupIcd10(term, maxResults));
+    const result = await lookupIcd10(term, maxResults);
+    const provenance = result.codes.map(c =>
+      buildProvenance({
+        sourceId: 'icd10',
+        citation: { title: `${c.code} — ${c.description}`, identifier: c.code, url: null },
+        query: term,
+        confidence: 'high',
+      })
+    );
+    return JSON.stringify({ ...result, provenance });
   } catch (e) {
     return JSON.stringify({
       source: 'NLM ICD-10-CM (Clinical Tables)',
@@ -958,11 +985,23 @@ registerToolHandler('search_drug_approvals', async (input) => {
         error: 'Provide brand_name, generic_name, application_number, or query to search approvals.',
       });
     }
+    const provenance = result.approvals.map(a =>
+      buildProvenance({
+        sourceId: 'openfda',
+        citation: {
+          title: a.brandNames?.[0] || a.genericNames?.[0] || a.applicationNumber,
+          identifier: a.applicationNumber,
+          url: null,
+        },
+        confidence: 'high',
+      })
+    );
     return JSON.stringify({
       source: result.source,
       total: result.total,
       resultCount: result.approvals.length,
       approvals: result.approvals,
+      provenance,
       citation_hint: 'Reference approvals by FDA application number (NDA/BLA/ANDA) and sponsor.',
     });
   } catch (e) {
@@ -1161,11 +1200,20 @@ registerToolHandler('search_drug_labels', async (input) => {
     if (!result.searchExpression) {
       return JSON.stringify({ error: 'Provide brand_name, generic_name, or query to search drug labels.' });
     }
+    const provenance = result.labels.map(l =>
+      buildProvenance({
+        sourceId: 'openfda',
+        citation: { title: l.brandName || l.genericName || l.id, identifier: l.id, url: null },
+        query: asStr(input.query) ?? asStr(input.brand_name) ?? asStr(input.generic_name) ?? null,
+        confidence: 'high',
+      })
+    );
     return JSON.stringify({
       source: result.source,
       total: result.total,
       resultCount: result.labels.length,
       labels: result.labels,
+      provenance,
       citation_hint: 'Reference labels by brand/generic name and manufacturer; quote sections verbatim.',
     });
   } catch (e) {
@@ -1288,6 +1336,14 @@ registerToolHandler('search_medicare_coverage', async (input) => {
       type: coverageType,
       limit: maxResults,
     });
+    const provenance = result.documents.map(d =>
+      buildProvenance({
+        sourceId: 'cms_coverage',
+        citation: { title: d.title || d.documentId, identifier: d.documentId, url: d.url },
+        query: keyword || undefined,
+        confidence: 'high',
+      })
+    );
     return JSON.stringify({
       source: result.source,
       coverageType: result.type,
@@ -1295,6 +1351,7 @@ registerToolHandler('search_medicare_coverage', async (input) => {
       matched: result.matched,
       resultCount: result.documents.length,
       documents: result.documents,
+      provenance,
       citation_hint:
         'Cite each coverage document by its MCD number and link to the provided url. ' +
         'NCDs apply nationally; LCDs apply only within the issuing MAC jurisdiction.',
