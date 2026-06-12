@@ -29,7 +29,7 @@ import { searchDrugApprovals } from '../integrations/drug-approvals-client.js';
 import { searchChemblCompounds, getChemblMechanisms } from '../integrations/chembl-client.js';
 import { searchPreprints, type PreprintServerFilter } from '../integrations/preprint-client.js';
 import { screenStructuralAlerts, assessDevelopability } from '../chem/index.js';
-import { buildProvenance } from '../evidence/provenance.js';
+import { buildProvenance, confidenceFromScore } from '../evidence/provenance.js';
 import { assessRegulatoryLandscape } from '../integrations/landscape.js';
 import { getIntegrationStatuses, summarizeStatuses } from '../integrations/integration-status.js';
 import { getAllEnabledTools } from './AnaToolDefinitions.js';
@@ -267,14 +267,38 @@ registerToolHandler('project_knowledge_search', async (input, ctx) => {
     if (docs.length === 0) {
       return `No matching passages were found in this project's knowledge for "${query}".`;
     }
-    const formatted = docs
-      .map((d, i) => {
-        const passage = (d.compressedContent || d.content || '').slice(0, 800);
-        const score = typeof d.finalScore === 'number' ? d.finalScore.toFixed(3) : 'n/a';
-        return `[${i + 1}] ${d.title || 'Untitled'} (relevance ${score})\n${passage}`;
-      })
-      .join('\n\n');
-    return `Project knowledge results for "${query}":\n\n${formatted}`;
+    const locatorOf = (d: (typeof docs)[number]): string | null =>
+      d.locator || d.sectionTitle || (typeof d.pageNumber === 'number' ? `p.${d.pageNumber}` : null);
+    const passages = docs.map((d, i) => ({
+      rank: i + 1,
+      title: d.title || 'Untitled',
+      relevance: typeof d.finalScore === 'number' ? Number(d.finalScore.toFixed(3)) : null,
+      locator: locatorOf(d),
+      text: (d.compressedContent || d.content || '').slice(0, 800),
+    }));
+    const provenance = docs.map(d => {
+      const locator = locatorOf(d);
+      return buildProvenance({
+        sourceId: 'project_corpus',
+        citation: {
+          title: locator ? `${d.title || 'Untitled'} (${locator})` : d.title || 'Untitled',
+          identifier: d.documentId || d.chunkId || d.id || null,
+          url: null,
+        },
+        query,
+        confidence: confidenceFromScore(d.finalScore),
+      });
+    });
+    return JSON.stringify({
+      source: 'Project knowledge corpus (RAG)',
+      query,
+      resultCount: passages.length,
+      passages,
+      provenance,
+      citation_hint:
+        "Ground statements in these passages and cite each by its document title and locator (page/section); " +
+        "these are the organization's own project documents.",
+    });
   } catch (err: any) {
     return `Project knowledge search failed: ${err?.message ?? 'unknown error'}.`;
   }

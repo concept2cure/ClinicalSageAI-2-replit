@@ -112,6 +112,17 @@ export const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
     confidenceBasis: 'curated',
     lineageObjectType: 'atom',
   },
+  project_corpus: {
+    id: 'project_corpus',
+    label: 'Project knowledge corpus (RAG)',
+    type: 'curated_corpus',
+    retrievalMethod: 'corpus_lookup',
+    peerReviewed: null,
+    freshness: 'curated',
+    authority: 'secondary',
+    confidenceBasis: 'validation_based',
+    lineageObjectType: 'retrieval_chunk',
+  },
   c2c_cheminformatics: {
     id: 'c2c_cheminformatics',
     label: 'Concept2Cure cheminformatics (deterministic)',
@@ -319,4 +330,16 @@ export function toLineageSource(record: ProvenanceRecord): LineageSourceInput {
 
 function dedupe(items: string[]): string[] {
   return [...new Set(items.filter(Boolean))];
+}
+
+/**
+ * Map a 0..1 retrieval/relevance score to a confidence level for provenance.
+ * Used by RAG-backed tools where the score is a relevance judgement, not a
+ * validated probability. Returns null when no score is available.
+ */
+export function confidenceFromScore(score: number | null | undefined): ConfidenceLevel | null {
+  if (score == null || !Number.isFinite(score)) return null;
+  if (score >= 0.8) return 'high';
+  if (score >= 0.6) return 'moderate';
+  return 'low';
 }
