@@ -8,6 +8,7 @@
  */
 
 import { summarizeSequences, type SequenceLike, type SequenceSummary } from './ind-submission-overview';
+import type { DriftDigest } from './ind-cockpit';
 
 /** The submission fields the portfolio reads (a structural subset of the row). */
 export interface PortfolioSubmission {
@@ -69,4 +70,57 @@ export function buildIndPortfolio(entries: IndPortfolioEntry[]): IndPortfolio {
 /** Whether a submission is an IND (drives the portfolio filter). */
 export function isIndSubmission(s: PortfolioSubmission): boolean {
   return (s.applicationType ?? '').toLowerCase() === 'ind';
+}
+
+// ── Org-wide drift sweep ─────────────────────────────────────────────────────
+
+export interface PortfolioDriftEntry {
+  submissionId: number;
+  title: string;
+  productName: string | null;
+  drift: DriftDigest;
+}
+
+export interface PortfolioDrift {
+  /** Only submissions that have at least one drifted/never-verified sequence. */
+  submissions: PortfolioDriftEntry[];
+  totals: {
+    submissionsWithIssues: number;
+    sequencesDrifted: number;
+    sequencesNeverVerified: number;
+  };
+}
+
+/**
+ * Aggregate per-submission drift digests into an org-wide compliance feed.
+ * Only submissions with at least one issue are listed; totals sum across all.
+ */
+export function buildPortfolioDrift(
+  inputs: Array<{ submission: PortfolioSubmission; drift: DriftDigest }>,
+): PortfolioDrift {
+  const submissions: PortfolioDriftEntry[] = [];
+  let sequencesDrifted = 0;
+  let sequencesNeverVerified = 0;
+
+  for (const { submission, drift } of inputs) {
+    sequencesDrifted += drift.summary.drifted;
+    sequencesNeverVerified += drift.summary.neverVerified;
+    if (drift.summary.total > 0) {
+      submissions.push({
+        submissionId: submission.id,
+        title: submission.title,
+        productName: submission.productName ?? null,
+        drift,
+      });
+    }
+  }
+
+  return {
+    submissions,
+    totals: {
+      submissionsWithIssues: submissions.length,
+      sequencesDrifted,
+      sequencesNeverVerified,
+    },
+  };
 }

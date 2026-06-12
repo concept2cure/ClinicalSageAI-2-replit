@@ -3,8 +3,9 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { buildIndPortfolioEntry, buildIndPortfolio, isIndSubmission } from '../ind-portfolio';
+import { buildIndPortfolioEntry, buildIndPortfolio, isIndSubmission, buildPortfolioDrift } from '../ind-portfolio';
 import type { SequenceLike } from '../ind-submission-overview';
+import type { DriftDigest } from '../ind-cockpit';
 
 const seqs = (defs: Array<Partial<SequenceLike>>): SequenceLike[] =>
   defs.map((d, i) => ({ sequenceNumber: String(i).padStart(4, '0'), type: 'original', status: 'draft', ...d }));
@@ -48,5 +49,28 @@ describe('buildIndPortfolio', () => {
 
   it('is empty for no submissions', () => {
     expect(buildIndPortfolio([]).totals).toEqual({ submissions: 0, totalSequences: 0, dispatched: 0, validationFailures: 0 });
+  });
+});
+
+const digest = (drifted: number, neverVerified: number): DriftDigest => ({
+  entries: [],
+  summary: { total: drifted + neverVerified, drifted, neverVerified },
+});
+
+describe('buildPortfolioDrift', () => {
+  it('lists only submissions with issues and sums totals across all', () => {
+    const p = buildPortfolioDrift([
+      { submission: { id: 1, title: 'Clean IND' }, drift: digest(0, 0) },
+      { submission: { id: 2, title: 'Drifted IND' }, drift: digest(2, 1) },
+      { submission: { id: 3, title: 'Unverified IND' }, drift: digest(0, 1) },
+    ]);
+    expect(p.submissions.map((s) => s.submissionId)).toEqual([2, 3]); // clean one excluded
+    expect(p.totals).toEqual({ submissionsWithIssues: 2, sequencesDrifted: 2, sequencesNeverVerified: 2 });
+  });
+
+  it('is empty when every submission is clean', () => {
+    const p = buildPortfolioDrift([{ submission: { id: 1, title: 'A' }, drift: digest(0, 0) }]);
+    expect(p.submissions).toHaveLength(0);
+    expect(p.totals.submissionsWithIssues).toBe(0);
   });
 });
