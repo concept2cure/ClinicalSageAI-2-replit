@@ -48,6 +48,8 @@ export interface ChatMessageView {
     riskSummary?: string;
     flaggedClaims?: { kind: 'ungrounded' | 'overclaim' | 'contradiction'; text: string }[];
   };
+  /** Context layers ANA drew on this turn (enrichment source names). */
+  groundingSources?: string[];
   /** Degraded-mode warnings to surface as a chip. */
   warnings?: string[];
   /** Tools AnA invoked this turn, shown as transparency/audit status rows. */
@@ -72,6 +74,9 @@ export interface ChatViewProps {
   suggestedActionLabels?: Record<string, string>;
   /** Scopes composer uploads to a project so extracted text lands in its memory. */
   projectId?: string;
+  /** Tools pinned for the next turn, forwarded to the composer's tool picker. */
+  selectedTools?: string[];
+  onSelectedToolsChange?: (tools: string[]) => void;
 }
 
 export function ChatView({
@@ -87,6 +92,8 @@ export function ChatView({
   onSuggestedAction,
   suggestedActionLabels,
   projectId,
+  selectedTools,
+  onSelectedToolsChange,
 }: ChatViewProps) {
   const [draft, setDraft] = useState('');
   // Attachments the composer hands up at send time, consumed by `send`.
@@ -156,6 +163,7 @@ export function ChatView({
               suggestedActionLabels={suggestedActionLabels}
               thinking={m.thinking}
               evidence={m.evidence}
+              groundingSources={m.groundingSources}
               warnings={m.warnings}
               toolCalls={m.toolCalls}
               sentAt={m.sentAt}
@@ -200,6 +208,8 @@ export function ChatView({
           isStreaming={isStreaming}
           placeholder="Reply to AnA…"
           projectId={projectId}
+          selectedTools={selectedTools}
+          onSelectedToolsChange={onSelectedToolsChange}
         />
       </div>
     </div>

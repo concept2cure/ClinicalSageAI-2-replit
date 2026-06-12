@@ -22,6 +22,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 
 import { I } from './icons';
 import styles from './styles.module.css';
+import { ToolPicker } from './ToolPicker';
 import {
   useChatUpload,
   attachmentReadLabel as readLabel,
@@ -43,6 +44,10 @@ export interface ComposerProps {
    * can render them. The composer clears its attachment chips afterwards.
    */
   onAttachmentsSend?: (attachments: ComposerReadyAttachment[]) => void;
+  /** Tools the user has pinned for the next turn (additive focus, not a hard limit). */
+  selectedTools?: string[];
+  /** Replace the pinned tool set. When omitted, the Tools control is read-only auto. */
+  onSelectedToolsChange?: (tools: string[]) => void;
 }
 
 /** A successfully-uploaded attachment, handed to the host on send. */
@@ -63,9 +68,10 @@ export function Composer({
   placeholder = 'How can AnA help you today?',
   projectId,
   onAttachmentsSend,
+  selectedTools,
+  onSelectedToolsChange,
 }: ComposerProps) {
   const AttachIco = I.attach;
-  const ToolsIco = I.tools;
   const DownIco = I.down;
   const ArrowUpIco = I.arrowUp;
   const StopIco = I.stop;
@@ -205,9 +211,16 @@ export function Composer({
           >
             <AttachIco size={16} />
           </button>
-          <button className={styles.composerIcon} title="Tools" type="button">
-            <ToolsIco size={16} />
-          </button>
+          {onSelectedToolsChange ? (
+            <ToolPicker
+              selectedTools={selectedTools ?? []}
+              onChange={onSelectedToolsChange}
+            />
+          ) : (
+            <button className={styles.composerIcon} title="Tools" type="button" disabled>
+              <I.tools size={16} />
+            </button>
+          )}
           <button className={styles.composerChip} type="button">
             AnA 1.0 RI
             <DownIco size={12} />
