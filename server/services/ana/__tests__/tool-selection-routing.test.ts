@@ -36,6 +36,7 @@ const CASES: { prompt: string; expect: string }[] = [
   { prompt: 'is this FDA formal meeting interaction ready, do we have a briefing book', expect: 'review_ha_interaction' },
   { prompt: 'record an institutional cost share contribution toward the match commitment', expect: 'record_cost_share_contribution' },
   { prompt: 'review the training gate, is the PI cleared to be listed on the protocol', expect: 'review_training_gate' },
+  { prompt: 'record this grants.gov funding opportunity NOFO into our pre-award pipeline', expect: 'record_grant_opportunity' },
 ];
 
 describe('AnA tool-selection routing eval', () => {

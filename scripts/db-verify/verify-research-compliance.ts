@@ -265,6 +265,14 @@ async function main() {
   const grRep4 = await computeDomainReport('grants.portfolio_register', ORG);
   ok(grRep4 != null && (grRep4!.summary.costShareCommitted as number) >= 50000 && grRep4!.summary.ncesByStatus != null, `grants.portfolio_register reports cost-share + NCE rollups (committed=${grRep4?.summary.costShareCommitted})`);
 
+  console.log('\n[Grants] pre-award pipeline — grants.gov opportunity → linked proposal');
+  const oppId = await tx((c) => grants.createOpportunityTx(c, ORG, USER, { opportunityNumber: 'PA-26-VERIFY', title: 'Verify NOFO', fundingAgency: 'nih', externalId: 'GG-350001' })).then((r: any) => r.id);
+  const oppRow = await pool.query(`SELECT external_id FROM grant_opportunities WHERE id=$1`, [oppId]);
+  ok(oppRow.rows[0].external_id === 'GG-350001', 'opportunity persisted with the grants.gov external_id linkage');
+  const propId = await tx((c) => grants.createProposalTx(c, ORG, USER, { title: 'Verify proposal', opportunityId: oppId })).then((r: any) => r.id);
+  const propRow = await pool.query(`SELECT opportunity_id FROM grant_proposals WHERE id=$1`, [propId]);
+  ok(Number(propRow.rows[0].opportunity_id) === oppId, 'proposal threads back to the opportunity (pre-award continuity)');
+
   console.log('\n[CS] register controlled substance → log against perpetual inventory');
   const newSubId = await tx((c) => cs.createSubstanceTx(c, ORG, USER, { substanceName: 'Briefing-II', deaSchedule: 'II' })).then((r: any) => r.id);
   const recv = await tx((c) => cs.recordTransactionTx(c, ORG, USER, newSubId, { transactionType: 'receipt', quantity: 5 }));

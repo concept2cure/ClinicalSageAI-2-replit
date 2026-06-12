@@ -3951,6 +3951,23 @@ export const APPROVE_NO_COST_EXTENSION: AnaTool = {
   input_schema: { type: 'object', properties: { nce_id: { type: 'number' }, authority: { type: 'string', enum: ['grantee', 'sponsor'] }, reason: { type: 'string' } }, required: ['nce_id', 'authority'] },
 };
 
+export const RECORD_GRANT_OPPORTUNITY: AnaTool = {
+  name: 'record_grant_opportunity',
+  description:
+    "Record a federal funding opportunity (NOFO) into the pre-award pipeline as a governed grant_opportunities row. Pairs with search_grants_gov: pass the Grants.gov opportunity id as external_id to thread the external link. Specify agency and (optionally) the mechanism (SBIR/STTR/R01…), due date, and ceiling. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      opportunity_number: { type: 'string' }, title: { type: 'string' },
+      funding_agency: { type: 'string', enum: ['nih', 'nsf', 'barda', 'dod', 'cdc', 'arpa_h', 'foundation', 'industry', 'other'] },
+      mechanism: { type: 'string', enum: ['sbir', 'sttr', 'r01', 'r21', 'u01', 'p01', 'contract', 'cooperative_agreement', 'other'] },
+      external_id: { type: 'string', description: 'Grants.gov opportunity id (from search_grants_gov).' },
+      due_date: { type: 'string', description: 'YYYY-MM-DD.' }, ceiling_amount: { type: 'number' }, reason: { type: 'string' },
+    },
+    required: ['opportunity_number', 'title', 'funding_agency'],
+  },
+};
+
 export const RESEARCH_COMPLIANCE_BRIEFING: AnaTool = {
   name: 'research_compliance_briefing',
   description:
@@ -5863,6 +5880,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   REVIEW_COST_SHARE,
   REQUEST_NO_COST_EXTENSION,
   APPROVE_NO_COST_EXTENSION,
+  RECORD_GRANT_OPPORTUNITY,
   RESEARCH_COMPLIANCE_BRIEFING,
   FULFILL_REGULATORY_COMMITMENT,
   REVIEW_HA_INTERACTION,

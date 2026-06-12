@@ -6707,6 +6707,45 @@ registerToolHandler('approve_no_cost_extension', async (input, ctx) => {
 // Cross-domain briefing + coverage-gap fills (HA fulfill/readiness, CS substance).
 // ─────────────────────────────────────────────────────────────────────────────
 
+registerToolHandler('record_grant_opportunity', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'record_grant_opportunity requires tenant + user context.' });
+  const opportunityNumber = typeof input.opportunity_number === 'string' ? input.opportunity_number.trim() : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  const fundingAgency = typeof input.funding_agency === 'string' ? input.funding_agency : '';
+  const AGENCIES = ['nih', 'nsf', 'barda', 'dod', 'cdc', 'arpa_h', 'foundation', 'industry', 'other'];
+  const MECHANISMS = ['sbir', 'sttr', 'r01', 'r21', 'u01', 'p01', 'contract', 'cooperative_agreement', 'other'];
+  if (!opportunityNumber || !title || !AGENCIES.includes(fundingAgency)) {
+    return JSON.stringify({ error: 'opportunity_number, title, and a valid funding_agency are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createOpportunityTx } = await import('../grants/grants-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createOpportunityTx(client, ctx.organizationId, ctx.userId, {
+      opportunityNumber, title, fundingAgency: fundingAgency as any,
+      mechanism: typeof input.mechanism === 'string' && MECHANISMS.includes(input.mechanism) ? input.mechanism as any : null,
+      // The grants.gov opportunity id (from search_grants_gov) threads the external pipeline link.
+      externalId: typeof input.external_id === 'string' ? input.external_id : (typeof input.external_id === 'number' ? String(input.external_id) : null),
+      dueDate: typeof input.due_date === 'string' ? input.due_date : null,
+      ceilingAmount: typeof input.ceiling_amount === 'number' ? input.ceiling_amount : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `grant-opportunity:${id}`, reason: fcoiReason(input, 'Funding opportunity recorded via AnA'),
+      payload: { opportunityNumber, fundingAgency }, domain: 'grants', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Recorded ${fundingAgency.toUpperCase()} opportunity "${opportunityNumber}" into the pre-award pipeline (id ${id}). Open a proposal against it with create_grant_proposal.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `record_grant_opportunity failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
 registerToolHandler('research_compliance_briefing', async (_input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'research_compliance_briefing requires tenant context.' });
   const { buildComplianceBriefing } = await import('../research-compliance/compliance-briefing.js');
