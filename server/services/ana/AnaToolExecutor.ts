@@ -26,6 +26,8 @@ import { searchHubSpotCrm, type HubSpotObject } from '../integrations/hubspot-cl
 import { searchDeviceRecalls } from '../integrations/device-recalls.js';
 import { searchDrugLabels } from '../integrations/drug-label-client.js';
 import { searchDrugApprovals } from '../integrations/drug-approvals-client.js';
+import { searchChemblCompounds, getChemblMechanisms } from '../integrations/chembl-client.js';
+import { screenStructuralAlerts, assessDevelopability } from '../chem/index.js';
 import { assessRegulatoryLandscape } from '../integrations/landscape.js';
 import { getIntegrationStatuses, summarizeStatuses } from '../integrations/integration-status.js';
 import { getAllEnabledTools } from './AnaToolDefinitions.js';
@@ -959,6 +961,105 @@ registerToolHandler('search_drug_approvals', async (input) => {
       approvals: [],
     });
   }
+});
+
+// Search ChEMBL — curated bioactive-molecule discovery / developability data (EMBL-EBI).
+registerToolHandler('search_chembl_compound', async (input) => {
+  const query = typeof input.query === 'string' ? input.query.trim() : '';
+  if (!query) {
+    return JSON.stringify({ error: 'Provide a compound or drug name in `query`.' });
+  }
+  const maxResults = Math.min((input.max_results as number) || 5, 20);
+  const includeMechanism = input.include_mechanism === true;
+  try {
+    const result = await searchChemblCompounds(query, maxResults);
+    let mechanisms;
+    if (includeMechanism && result.molecules[0]?.chemblId) {
+      try {
+        mechanisms = (await getChemblMechanisms(result.molecules[0].chemblId)).mechanisms;
+      } catch {
+        // Mechanism lookup is best-effort; omit on failure rather than fail the whole call.
+      }
+    }
+    return JSON.stringify({
+      source: result.source,
+      query: result.query,
+      totalCount: result.totalCount,
+      resultCount: result.molecules.length,
+      molecules: result.molecules,
+      ...(mechanisms ? { topMatchMechanisms: mechanisms } : {}),
+      citation_hint: 'Cite each molecule by ChEMBL ID and link to the provided url; descriptors are ChEMBL-curated.',
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'ChEMBL',
+      query,
+      error: e instanceof Error ? e.message : 'ChEMBL search failed',
+      note: 'ChEMBL API unavailable — try the public compound report card.',
+      url: `https://www.ebi.ac.uk/chembl/g/#search_results/all/query=${encodeURIComponent(query)}`,
+      molecules: [],
+    });
+  }
+});
+
+// Screen Compound Liabilities — deterministic ICH M7 structural-alert + developability screen.
+registerToolHandler('screen_compound_liabilities', async (input) => {
+  const asStr = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v.trim() : undefined;
+  let smiles = asStr(input.smiles);
+  const compoundName = asStr(input.compound_name);
+
+  if (!smiles && !compoundName) {
+    return JSON.stringify({ error: 'Provide a `smiles` string and/or a `compound_name` to screen.' });
+  }
+
+  // Resolve SMILES + curated descriptors from ChEMBL when only a name is given.
+  let resolved: { chemblId: string; preferredName: string | null; url: string } | undefined;
+  let developabilityInput: Record<string, number | null | undefined> = {};
+  if (!smiles && compoundName) {
+    try {
+      const found = await searchChemblCompounds(compoundName, 1);
+      const top = found.molecules[0];
+      if (top?.smiles) {
+        smiles = top.smiles;
+        resolved = { chemblId: top.chemblId, preferredName: top.preferredName, url: top.url };
+        developabilityInput = {
+          molecularWeight: top.properties.molecularWeight,
+          alogp: top.properties.alogp,
+          psa: top.properties.psa,
+          hba: top.properties.hba,
+          hbd: top.properties.hbd,
+          rotatableBonds: top.properties.rotatableBonds,
+          ro5Violations: top.properties.ro5Violations,
+          qed: top.properties.qed,
+        };
+      }
+    } catch {
+      // Fall through — without a SMILES we cannot screen.
+    }
+    if (!smiles) {
+      return JSON.stringify({
+        error: `Could not resolve a structure for "${compoundName}" from ChEMBL. Provide a SMILES directly.`,
+      });
+    }
+  }
+
+  const screen = screenStructuralAlerts(smiles!);
+  const developability = assessDevelopability(developabilityInput);
+
+  return JSON.stringify({
+    source: 'Concept2Cure cheminformatics (deterministic) + ChEMBL descriptors',
+    resolvedFrom: resolved ?? null,
+    smiles,
+    validation: screen.validation,
+    structuralAlerts: screen.alerts,
+    hasMutagenicAlert: screen.hasMutagenicAlert,
+    developability,
+    disclaimer: screen.disclaimer,
+    citation_hint:
+      'Structural alerts are a deterministic substructure screen (cite as a screen, not an ICH M7 classification); ' +
+      'physicochemical descriptors are ChEMBL-curated. Recommend confirmatory (Q)SAR + expert review for any alert.',
+  });
 });
 
 // Search Drug Labels — FDA openFDA drug/label (SPL).

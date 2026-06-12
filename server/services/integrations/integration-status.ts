@@ -97,6 +97,13 @@ export async function getIntegrationStatuses(
       requires: env.OPENFDA_API_KEY ? undefined : 'Optional OPENFDA_API_KEY raises rate limits',
     },
     {
+      id: 'chembl',
+      label: 'ChEMBL (EMBL-EBI) — curated compounds, descriptors, mechanisms',
+      kind: 'public_api',
+      configured: true,
+      tools: ['search_chembl_compound', 'screen_compound_liabilities'],
+    },
+    {
       id: 'gmail',
       label: 'Regulatory mailbox (Gmail, read-only)',
       kind: 'env_gated',
