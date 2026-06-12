@@ -38,6 +38,12 @@ import {
   pdfaRequiredFromEnv,
   type LeafGradeRecord,
 } from '../ectd/pdfa-readiness';
+import {
+  listVendoredDtds,
+  assessDtdReadiness,
+  dtdRequiredFromEnv,
+  type DtdRegion,
+} from '../ectd/dtd-bundler';
 
 /**
  * Finalize a leaf's bytes to submission grade before they are written + hashed.
@@ -349,6 +355,34 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   }
   const submissionGrade = gradeGate.summary;
 
+  /* Bundle vendored DTDs into util/dtd/ so the package is DTD self-contained
+     (the backbones' DOCTYPEs reference util/dtd/*.dtd). The licensed DTD files
+     are not committed — they come from assets/ectd-dtd/ or $ECTD_DTD_DIR — so
+     this is a no-op when absent. DTDs are package files, so they are checksummed
+     into index-md5.txt alongside the leaves. */
+  const vendoredDtds = await listVendoredDtds();
+  for (const dtd of vendoredDtds) {
+    const relPath = `util/dtd/${dtd.fileName}`;
+    zip.file(relPath, dtd.bytes);
+    checksums.push({ relPath, md5: createHash('md5').update(dtd.bytes).digest('hex') });
+  }
+
+  /* DTD self-containment gate (audit gap P0-1): when ECTD_REQUIRE_DTD=true and
+     this is a production package, refuse to ship a package that references DTDs
+     it does not contain. Default (flag unset) is report-only. */
+  const dtdGate = assessDtdReadiness({
+    region: region as DtdRegion,
+    present: vendoredDtds.map((d) => d.fileName),
+    environment: input.environment ?? 'production',
+    requireDtd: dtdRequiredFromEnv(),
+  });
+  if (!dtdGate.cleared) {
+    throw new ValidationError(
+      `eCTD package is not DTD self-contained: ${dtdGate.blockers.join(' ')}`,
+      dtdGate.blockers,
+    );
+  }
+
   /* Write the ICH M2-M5 index.xml + index-md5.txt. */
   const indexXml = buildIndexXml(input, m2to5);
   zip.file('index.xml', indexXml);
@@ -389,5 +423,11 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     format,
     displayName: `${input.productName} · ${region.toUpperCase()} ${input.submissionType} #${input.sequence}`,
     submissionGrade,
+    dtdStatus: {
+      required: dtdGate.required,
+      present: dtdGate.present,
+      missing: dtdGate.missing,
+      selfContained: dtdGate.selfContained,
+    },
   };
 }
