@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { buildIndPortfolioEntry, buildIndPortfolio, isIndSubmission, buildPortfolioDrift } from '../ind-portfolio';
+import { buildIndPortfolioEntry, buildIndPortfolio, isIndSubmission, buildPortfolioDrift, portfolioDriftToCsv } from '../ind-portfolio';
 import type { SequenceLike } from '../ind-submission-overview';
 import type { DriftDigest } from '../ind-cockpit';
 
@@ -72,5 +72,49 @@ describe('buildPortfolioDrift', () => {
     const p = buildPortfolioDrift([{ submission: { id: 1, title: 'A' }, drift: digest(0, 0) }]);
     expect(p.submissions).toHaveLength(0);
     expect(p.totals.submissionsWithIssues).toBe(0);
+  });
+});
+
+const digestWithEntry = (reason: 'drifted' | 'never_verified', overrides: any = {}): DriftDigest => ({
+  entries: [
+    {
+      sequenceId: 42,
+      sequenceNumber: '0001',
+      type: 'amendment',
+      status: 'draft',
+      reason,
+      canDispatch: false,
+      lastVerifiedAt: reason === 'drifted' ? '2026-01-01T00:00:00.000Z' : null,
+      ...overrides,
+    },
+  ],
+  summary: { total: 1, drifted: reason === 'drifted' ? 1 : 0, neverVerified: reason === 'never_verified' ? 1 : 0 },
+});
+
+describe('portfolioDriftToCsv', () => {
+  it('emits a header and one row per flagged sequence', () => {
+    const p = buildPortfolioDrift([
+      { submission: { id: 2, title: 'Drifted IND', productName: 'C2C-001' }, drift: digestWithEntry('drifted') },
+      { submission: { id: 3, title: 'Unverified IND' }, drift: digestWithEntry('never_verified') },
+    ]);
+    const csv = portfolioDriftToCsv(p);
+    const lines = csv.trim().split('\n');
+    expect(lines[0]).toBe('submission_id,submission_title,product_name,sequence_id,sequence_number,sequence_type,sequence_status,reason,can_dispatch,last_verified_at');
+    expect(lines).toHaveLength(3); // header + 2 rows
+    expect(lines[1]).toContain('2,Drifted IND,C2C-001,42,0001,amendment,draft,drifted,false,2026-01-01T00:00:00.000Z');
+    expect(lines[2]).toContain('3,Unverified IND,,42,0001,amendment,draft,never_verified,false,');
+  });
+
+  it('quotes/escapes fields containing commas or quotes', () => {
+    const p = buildPortfolioDrift([
+      { submission: { id: 9, title: 'Acme, Inc. "IND"' }, drift: digestWithEntry('drifted') },
+    ]);
+    const csv = portfolioDriftToCsv(p);
+    expect(csv).toContain('"Acme, Inc. ""IND"""');
+  });
+
+  it('emits just the header when there are no issues', () => {
+    const csv = portfolioDriftToCsv(buildPortfolioDrift([]));
+    expect(csv.trim().split('\n')).toHaveLength(1);
   });
 });

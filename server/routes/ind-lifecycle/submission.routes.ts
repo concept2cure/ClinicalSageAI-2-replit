@@ -15,7 +15,7 @@ import { buildIndTimeline } from '../../services/ind-lifecycle/ind-timeline-serv
 import { summarizeSequences } from '../../services/ind-lifecycle/ind-submission-overview';
 import { buildIndDashboard } from '../../services/ind-lifecycle/ind-dashboard';
 import { buildIndCockpit, annotateGateWithSnapshot, buildDriftDigest, type SequenceGateSummary } from '../../services/ind-lifecycle/ind-cockpit';
-import { buildIndPortfolio, buildIndPortfolioEntry, isIndSubmission, buildPortfolioDrift } from '../../services/ind-lifecycle/ind-portfolio';
+import { buildIndPortfolio, buildIndPortfolioEntry, isIndSubmission, buildPortfolioDrift, portfolioDriftToCsv } from '../../services/ind-lifecycle/ind-portfolio';
 import { getLatestDispatchSnapshot } from '../../services/ind-lifecycle/ind-dispatch-snapshot-service';
 import { getSubmission, listSubmissions, listSequences, listLeaves } from '../../services/submission-service/submission-service';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, readinessFrom, validationFrom } from './shared';
@@ -103,19 +103,38 @@ router.get('/portfolio', limiter, requireRole(AUTHOR), async (req, res) => {
  * The portfolio-level compliance feed. (Computes the structural live verdict; no
  * per-submission analysis inputs.)
  */
+/** Compute the org-wide drift sweep across every IND submission. */
+async function computePortfolioDrift(ctx: Ctx) {
+  const inds = (await listSubmissions(ctx)).filter(isIndSubmission);
+  const inputs = await Promise.all(
+    inds.map(async (submission) => {
+      const sequences = await listSequences(submission.id, ctx);
+      const gates = await annotatedGatesForSubmission(sequences, {}, ctx);
+      return { submission, drift: buildDriftDigest(gates) };
+    }),
+  );
+  return buildPortfolioDrift(inputs);
+}
+
 router.get('/portfolio/drift', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return noAuth(res);
   try {
-    const inds = (await listSubmissions(ctx)).filter(isIndSubmission);
-    const inputs = await Promise.all(
-      inds.map(async (submission) => {
-        const sequences = await listSequences(submission.id, ctx);
-        const gates = await annotatedGatesForSubmission(sequences, {}, ctx);
-        return { submission, drift: buildDriftDigest(gates) };
-      }),
-    );
-    res.json(buildPortfolioDrift(inputs));
+    res.json(await computePortfolioDrift(ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** The org-wide drift sweep as a CSV — an attachable QA / inspection artifact. */
+router.get('/portfolio/drift/csv', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  try {
+    const csv = portfolioDriftToCsv(await computePortfolioDrift(ctx));
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="ind-portfolio-drift.csv"');
+    res.status(200).send(csv);
   } catch (err) {
     fail(res, err);
   }

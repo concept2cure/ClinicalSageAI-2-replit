@@ -50,7 +50,7 @@ All HTTP routes are auth-gated (`authenticateToken` at mount) and tenant-scoped
 | Submission overview / dashboard | — | `ind-lifecycle/ind-submission-overview`, `ind-dashboard` | `GET /api/ind-lifecycle/submission/:id/overview`, `POST /submission/:id/dashboard` (folds in readiness + clock + timeline + sequence validation + **prioritized action items**) |
 | Submission cockpit (dashboard + per-sequence gates + last-verified) | — | `ind-lifecycle/ind-cockpit` | `POST /api/ind-lifecycle/submission/:id/cockpit` — the dashboard plus a dispatch-gate verdict for every sequence, each annotated with its last snapshot time + a drift flag (live verdict vs last recorded), with dispatch-ready/blocked/unverified/drifted roll-ups, in one call |
 | Portfolio view (all IND submissions for the org) | — | `ind-lifecycle/ind-portfolio` | `GET /api/ind-lifecycle/portfolio` — every IND submission with its sequence summary + org-level totals (a CRO / program-manager roll-up) |
-| Org-wide drift sweep (compliance feed) | — | `ind-lifecycle/ind-portfolio` (`buildPortfolioDrift`) | `GET /api/ind-lifecycle/portfolio/drift` — across every IND submission, the sequences that drifted or were never verified, with org-level totals |
+| Org-wide drift sweep (compliance feed) | — | `ind-lifecycle/ind-portfolio` (`buildPortfolioDrift`) | `GET /api/ind-lifecycle/portfolio/drift` — across every IND submission, the sequences that drifted or were never verified, with org-level totals. `GET /portfolio/drift/csv` for an attachable CSV |
 | Prioritized next-actions engine | 312.23/.32/.42 | `ind-lifecycle/ind-action-items` | `POST /api/ind-lifecycle/action-items` (also embedded in the dashboard) |
 
 ## 4. Module 2/4/5 — Medical writing

@@ -124,3 +124,50 @@ export function buildPortfolioDrift(
     },
   };
 }
+
+/** Quote a CSV field when it contains a comma, quote, or newline. */
+function csvField(value: string | number | boolean | null | undefined): string {
+  const s = value === null || value === undefined ? '' : String(value);
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+const PORTFOLIO_DRIFT_CSV_HEADER = [
+  'submission_id',
+  'submission_title',
+  'product_name',
+  'sequence_id',
+  'sequence_number',
+  'sequence_type',
+  'sequence_status',
+  'reason',
+  'can_dispatch',
+  'last_verified_at',
+] as const;
+
+/**
+ * Serialize the org-wide drift feed to CSV (one row per flagged sequence) — an
+ * attachable artifact for QA / inspection review. Always emits the header; rows
+ * are ordered as the feed lists them.
+ */
+export function portfolioDriftToCsv(portfolio: PortfolioDrift): string {
+  const lines = [PORTFOLIO_DRIFT_CSV_HEADER.join(',')];
+  for (const sub of portfolio.submissions) {
+    for (const e of sub.drift.entries) {
+      lines.push(
+        [
+          csvField(sub.submissionId),
+          csvField(sub.title),
+          csvField(sub.productName),
+          csvField(e.sequenceId),
+          csvField(e.sequenceNumber),
+          csvField(e.type),
+          csvField(e.status),
+          csvField(e.reason),
+          csvField(e.canDispatch),
+          csvField(e.lastVerifiedAt),
+        ].join(','),
+      );
+    }
+  }
+  return lines.join('\n') + '\n';
+}
