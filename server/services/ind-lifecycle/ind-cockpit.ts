@@ -19,6 +19,34 @@ export interface SequenceGateSummary {
   warningCount: number;
   /** Blocker codes (e.g. MISSING_CHECKSUMS) for a compact at-a-glance view. */
   blockerCodes: string[];
+  /** ISO time of the last persisted dispatch snapshot, or null if never verified. */
+  lastVerifiedAt: string | null;
+  /** True when the live verdict differs from the last recorded snapshot. */
+  drift: boolean;
+}
+
+/** The minimal latest-snapshot shape used to annotate a gate. */
+export interface LatestSnapshotLike {
+  canDispatch: boolean;
+  createdAt: string | Date;
+}
+
+/**
+ * Annotate a freshly-computed gate with its last-verified status: when it was
+ * last snapshotted and whether the live verdict has drifted from that snapshot.
+ * Pure.
+ */
+export function annotateGateWithSnapshot(
+  gate: Omit<SequenceGateSummary, 'lastVerifiedAt' | 'drift'>,
+  snapshot: LatestSnapshotLike | null,
+): SequenceGateSummary {
+  const lastVerifiedAt = snapshot
+    ? snapshot.createdAt instanceof Date
+      ? snapshot.createdAt.toISOString()
+      : snapshot.createdAt
+    : null;
+  const drift = snapshot ? snapshot.canDispatch !== gate.canDispatch : false;
+  return { ...gate, lastVerifiedAt, drift };
 }
 
 export interface IndCockpit {
@@ -28,6 +56,10 @@ export interface IndCockpit {
     totalSequences: number;
     dispatchReady: number;
     blocked: number;
+    /** Sequences with no recorded dispatch snapshot. */
+    unverified: number;
+    /** Sequences whose live verdict differs from their last snapshot. */
+    drifted: number;
   };
 }
 
@@ -36,14 +68,17 @@ export function buildIndCockpit(input: {
   dashboard: IndDashboard;
   sequenceGates: SequenceGateSummary[];
 }): IndCockpit {
-  const dispatchReady = input.sequenceGates.filter((g) => g.canDispatch).length;
+  const gates = input.sequenceGates;
+  const dispatchReady = gates.filter((g) => g.canDispatch).length;
   return {
     dashboard: input.dashboard,
-    sequenceGates: input.sequenceGates,
+    sequenceGates: gates,
     summary: {
-      totalSequences: input.sequenceGates.length,
+      totalSequences: gates.length,
       dispatchReady,
-      blocked: input.sequenceGates.length - dispatchReady,
+      blocked: gates.length - dispatchReady,
+      unverified: gates.filter((g) => g.lastVerifiedAt === null).length,
+      drifted: gates.filter((g) => g.drift).length,
     },
   };
 }

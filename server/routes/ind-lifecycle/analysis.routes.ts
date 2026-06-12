@@ -15,9 +15,9 @@ import { summarizeSequences } from '../../services/ind-lifecycle/ind-submission-
 import { buildIndDashboard } from '../../services/ind-lifecycle/ind-dashboard';
 import { buildPackageManifest } from '../../services/ind-lifecycle/ind-package-manifest';
 import { evaluateDispatchGate } from '../../services/ind-lifecycle/ind-dispatch-gate';
-import { buildIndCockpit, type SequenceGateSummary } from '../../services/ind-lifecycle/ind-cockpit';
+import { buildIndCockpit, annotateGateWithSnapshot, type SequenceGateSummary } from '../../services/ind-lifecycle/ind-cockpit';
 import { diffSequences } from '../../services/ind-lifecycle/ind-sequence-diff';
-import { createDispatchSnapshot, listDispatchSnapshots } from '../../services/ind-lifecycle/ind-dispatch-snapshot-service';
+import { createDispatchSnapshot, listDispatchSnapshots, getLatestDispatchSnapshot } from '../../services/ind-lifecycle/ind-dispatch-snapshot-service';
 import { renderPackageManifestPdf, renderSequenceDiffPdf } from '../../services/ind-lifecycle/ind-document-renderer';
 import { getSubmission, listSequences, listLeaves, getSequence } from '../../services/submission-service/submission-service';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, sendPdf } from './shared';
@@ -444,16 +444,20 @@ router.post('/submission/:id/cockpit', limiter, requireRole(AUTHOR), async (req,
           criticalActions: actions.criticalCount,
           sequenceStatus: seq.status,
         });
-        return {
-          sequenceId: seq.id,
-          sequenceNumber: seq.sequenceNumber,
-          type: seq.type,
-          status: seq.status,
-          canDispatch: verdict.canDispatch,
-          blockerCount: verdict.blockers.length,
-          warningCount: verdict.warnings.length,
-          blockerCodes: verdict.blockers.map((x) => x.code),
-        };
+        const latest = await getLatestDispatchSnapshot(seq.id, ctx);
+        return annotateGateWithSnapshot(
+          {
+            sequenceId: seq.id,
+            sequenceNumber: seq.sequenceNumber,
+            type: seq.type,
+            status: seq.status,
+            canDispatch: verdict.canDispatch,
+            blockerCount: verdict.blockers.length,
+            warningCount: verdict.warnings.length,
+            blockerCodes: verdict.blockers.map((x) => x.code),
+          },
+          latest,
+        );
       }),
     );
 

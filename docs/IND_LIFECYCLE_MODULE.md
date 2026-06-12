@@ -47,7 +47,7 @@ All HTTP routes are auth-gated (`authenticateToken` at mount) and tenant-scoped
 | Regulatory clock + clinical-hold tracker | 21 CFR 312.40/312.42/312.45 | `ind-lifecycle/ind-regulatory-clock` | `POST /api/ind-lifecycle/clock` |
 | Regulatory timeline / milestones | 21 CFR 312.40 + 312.33 | `ind-lifecycle/ind-timeline-service` | `POST /api/ind-lifecycle/timeline` |
 | Submission overview / dashboard | — | `ind-lifecycle/ind-submission-overview`, `ind-dashboard` | `GET /api/ind-lifecycle/submission/:id/overview`, `POST /submission/:id/dashboard` (folds in readiness + clock + timeline + sequence validation + **prioritized action items**) |
-| Submission cockpit (dashboard + per-sequence gates) | — | `ind-lifecycle/ind-cockpit` | `POST /api/ind-lifecycle/submission/:id/cockpit` — the dashboard plus a dispatch-gate verdict for every sequence, with a dispatch-ready/blocked roll-up, in one call |
+| Submission cockpit (dashboard + per-sequence gates + last-verified) | — | `ind-lifecycle/ind-cockpit` | `POST /api/ind-lifecycle/submission/:id/cockpit` — the dashboard plus a dispatch-gate verdict for every sequence, each annotated with its last snapshot time + a drift flag (live verdict vs last recorded), with dispatch-ready/blocked/unverified/drifted roll-ups, in one call |
 | Prioritized next-actions engine | 312.23/.32/.42 | `ind-lifecycle/ind-action-items` | `POST /api/ind-lifecycle/action-items` (also embedded in the dashboard) |
 
 ## 4. Module 2/4/5 — Medical writing
