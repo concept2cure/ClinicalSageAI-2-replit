@@ -96,6 +96,67 @@ CREATE TABLE IF NOT EXISTS ind_dispatch_snapshots (
 );
 `;
 
+/**
+ * Submission core tables (submissions / ectd_sequences / submission_leaves)
+ * mirrored from shared/schema/submissions.ts, WITHOUT the organizations/users
+ * foreign-key constraints (not needed for a test harness). Enables exercising
+ * the full filing → sequence → leaf flow via submission-service against PGlite.
+ */
+export const SUBMISSION_CORE_PGLITE_DDL = `
+CREATE TABLE IF NOT EXISTS submissions (
+  id               SERIAL PRIMARY KEY,
+  title            TEXT NOT NULL,
+  product_name     TEXT,
+  application_type TEXT NOT NULL,
+  client_type      TEXT NOT NULL,
+  primary_region   TEXT NOT NULL,
+  status           TEXT NOT NULL DEFAULT 'planning',
+  lifecycle_stage  TEXT NOT NULL DEFAULT 'planning',
+  organization_id  INTEGER NOT NULL,
+  created_by       INTEGER NOT NULL,
+  created_at       TIMESTAMPTZ DEFAULT now(),
+  updated_at       TIMESTAMPTZ DEFAULT now(),
+  deleted_at       TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS ectd_sequences (
+  id                SERIAL PRIMARY KEY,
+  submission_id     INTEGER NOT NULL,
+  region            TEXT NOT NULL,
+  sequence_number   TEXT NOT NULL,
+  type              TEXT NOT NULL DEFAULT 'original',
+  status            TEXT NOT NULL DEFAULT 'draft',
+  validation_status TEXT,
+  dispatch_status   TEXT,
+  frozen_at         TIMESTAMPTZ,
+  organization_id   INTEGER NOT NULL,
+  created_by        INTEGER NOT NULL,
+  created_at        TIMESTAMPTZ DEFAULT now(),
+  updated_at        TIMESTAMPTZ DEFAULT now(),
+  deleted_at        TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS submission_leaves (
+  id              SERIAL PRIMARY KEY,
+  sequence_id     INTEGER NOT NULL,
+  section_code    TEXT NOT NULL,
+  title           TEXT NOT NULL,
+  granularity     TEXT,
+  lifecycle_op    TEXT NOT NULL DEFAULT 'new',
+  document_table  TEXT,
+  document_id     INTEGER,
+  document_type   TEXT,
+  leaf_guid       TEXT,
+  parent_leaf_id  INTEGER,
+  checksum        TEXT,
+  organization_id INTEGER NOT NULL,
+  created_by      INTEGER,
+  created_at      TIMESTAMPTZ DEFAULT now(),
+  updated_at      TIMESTAMPTZ DEFAULT now(),
+  deleted_at      TIMESTAMPTZ
+);
+`;
+
 export interface IndPgliteDb {
   pglite: PGlite;
   /** Drizzle instance over PGlite (insert/select against the pg-core schema). */
@@ -103,10 +164,15 @@ export interface IndPgliteDb {
   close: () => Promise<void>;
 }
 
-/** Create an in-process PGlite database with the IND tables applied. */
-export async function createIndPgliteDb(): Promise<IndPgliteDb> {
+/**
+ * Create an in-process PGlite database with the IND tables applied. Pass
+ * `{ submissionCore: true }` to also create submissions / ectd_sequences /
+ * submission_leaves (for the full filing → sequence → leaf flow).
+ */
+export async function createIndPgliteDb(opts: { submissionCore?: boolean } = {}): Promise<IndPgliteDb> {
   const pglite = new PGlite();
   await pglite.exec(IND_PGLITE_DDL);
+  if (opts.submissionCore) await pglite.exec(SUBMISSION_CORE_PGLITE_DDL);
   const db = drizzle(pglite);
   return { pglite, db, close: () => pglite.close() };
 }
