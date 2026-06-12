@@ -51,6 +51,7 @@ import { getCachedSignalReliability } from '../../services/intelligence/learning
 import { getEnabledServerTools } from '../../services/ana/AnaToolDefinitions.js';
 import { enrichContextForChat } from '../../services/ana-ri/context-enrichment.js';
 import { processResponseActions } from '../../services/ana-guidance-executor.js';
+import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
 import {
   processCommandsInResponse,
   type CommandContext,
@@ -282,6 +283,9 @@ router.post('/chat', async (req: Request, res: Response) => {
       projectId: chatProjectId,
       organizationId: orgId,
       authoringContext: chatAuthoringContext,
+      userId: typeof userId === 'number' ? userId : Number(userId) || null,
+      targetAgency:
+        typeof project_context?.targetAgency === 'string' ? project_context.targetAgency : null,
     });
     const chatDecisionContext = prefetchedChatContext.decisionContext;
     const chatFeedbackContext = prefetchedChatContext.feedbackContext;
@@ -308,6 +312,8 @@ router.post('/chat', async (req: Request, res: Response) => {
       authoringContext: orchestratorAuthoringContext,
       _feedbackContext: chatFeedbackContext,
       _projectIntelligenceProfile: chatProjectProfile,
+      _relationalOverlay: prefetchedChatContext.relationalOverlay,
+      _externalIntelBlock: prefetchedChatContext.externalIntelBlock,
     };
 
     const orchestration = orchestrate(orchestratorInput);
@@ -755,6 +761,17 @@ router.post('/chat', async (req: Request, res: Response) => {
     if (idempotency_key && typeof idempotency_key === 'string') {
       idempotencyCache.set(idempotency_key, { response: responsePayload, timestamp: Date.now() });
     }
+
+    // AnA's relational self-development: reflect on this turn and update her
+    // notes about the user + project (throttled inside; never on the
+    // request path).
+    void reflectAfterTurn({
+      organizationId: orgId ? Number(orgId) : null,
+      userId: typeof userId === 'number' ? userId : Number(userId) || null,
+      projectId: chatProjectId != null ? Number(chatProjectId) : null,
+      userMessage: message,
+      assistantMessage: finalAssistantContent,
+    }).catch(() => {});
 
     return sendSuccess(res, responsePayload);
   } catch (error: any) {

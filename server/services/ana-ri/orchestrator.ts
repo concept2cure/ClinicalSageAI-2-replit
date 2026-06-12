@@ -239,6 +239,18 @@ export interface OrchestratorInput {
   };
   /** Pre-fetched project intelligence profile (loaded by route layer, injected into system prompt) */
   _projectIntelligenceProfile?: ProjectIntelligenceSummary | null;
+  /**
+   * Pre-rendered RELATIONAL CONTEXT block — AnA's self-developed notes about
+   * this user + project (loaded async by the route layer via
+   * relational-profile-service). Drives the per-user personality adaptation.
+   */
+  _relationalOverlay?: string | null;
+  /**
+   * Pre-rendered EXTERNAL INTELLIGENCE block — fresh regulatory-agency and
+   * study-methodology findings from the nightly sweep (loaded async by the
+   * route layer via external-intelligence-service).
+   */
+  _externalIntelBlock?: string | null;
   /** Pre-fetched user feedback patterns from the learning loop (async, injected by chat-context-builder) */
   _feedbackContext?: {
     totalFeedback: number;
@@ -327,8 +339,18 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   if (workstreamHandoff) {
     promptOptions.workstreamHandoff = workstreamHandoff;
   }
+  if (input._relationalOverlay && input._relationalOverlay.trim()) {
+    promptOptions.relationalContext = input._relationalOverlay;
+  }
 
   let systemPrompt = buildAnaRISystemPrompt(promptOptions);
+
+  // 4a. Inject nightly external intelligence (pre-fetched by route layer):
+  //     fresh agency updates + study-methodology findings AnA may surface
+  //     when relevant to the user's program.
+  if (input._externalIntelBlock && input._externalIntelBlock.trim()) {
+    systemPrompt += '\n\n' + input._externalIntelBlock.trim();
+  }
 
   // 4b. Inject project intelligence profile (pre-fetched by route layer)
   //     Role-based priorities filter WHAT intelligence surfaces, not just tone.

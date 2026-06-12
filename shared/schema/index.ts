@@ -152,6 +152,12 @@ export * from './project-charter';
 // AnA Intelligence System (CLAUDE.md Memory Compression Model)
 export * from './ana-intelligence';
 
+// AnA Relational Profiles (self-developed per-user/per-project personality)
+export * from './ana-relational';
+
+// External Intelligence (nightly regulatory + study-methodology monitoring)
+export * from './external-intelligence';
+
 export * from './report-os';
 
 // Programs & Evidence

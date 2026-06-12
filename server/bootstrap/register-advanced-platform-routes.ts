@@ -43,6 +43,17 @@ export async function registerAdvancedPlatformRoutes({
     console.error('Failed to mount Regulatory Intelligence routes:', error);
   }
 
+  // ── External Intelligence (AnA's nightly agency + study-methods scan) ──
+  // Digest + findings from the scheduled sweep over FDA/EMA/MHRA/TGA feeds
+  // and academic/industry knowledge sources (SCDM, PubMed, medRxiv).
+  try {
+    const externalIntelligenceRoutes = await import('../routes/external-intelligence');
+    app.use('/api/external-intelligence', authenticateToken, externalIntelligenceRoutes.default);
+    console.log('✅ External Intelligence routes mounted at /api/external-intelligence');
+  } catch (error) {
+    console.error('Failed to mount External Intelligence routes:', error);
+  }
+
   try {
     const notificationRoutes = await import('../routes/notification_routes');
     // notification_routes exports a function(app) that registers routes directly
