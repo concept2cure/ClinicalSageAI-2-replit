@@ -599,6 +599,14 @@ describe('AnA RI Persona', () => {
     const el = buildAnaRISystemPrompt({ language: 'el' });
     expect(el).toContain('ΓΛΩΣΣΑ ΑΠΑΝΤΗΣΗΣ — ΕΛΛΗΝΙΚΑ');
     expect(el).toContain('EOF'); // Greek national authority
+
+    const hu = buildAnaRISystemPrompt({ language: 'hu' });
+    expect(hu).toContain('VÁLASZ NYELVE — MAGYAR');
+    expect(hu).toContain('OGYÉI'); // Hungarian national authority
+
+    const ro = buildAnaRISystemPrompt({ language: 'ro' });
+    expect(ro).toContain('LIMBA RĂSPUNSULUI — ROMÂNĂ');
+    expect(ro).toContain('ANMDMR'); // Romanian national authority
   });
 
   it('keeps regulatory identifiers canonical while localizing prose', () => {
@@ -718,7 +726,7 @@ describe('AnA RI Persona', () => {
 
   it('injects the dedicated EU regulatory deep-dive whenever the EU is in scope', () => {
     // Major EU-language users get the deep layer (incl. Dutch and Polish)...
-    for (const lng of ['de', 'fr', 'it', 'es', 'nl', 'pl', 'sv', 'da', 'fi', 'cs', 'el'] as const) {
+    for (const lng of ['de', 'fr', 'it', 'es', 'nl', 'pl', 'sv', 'da', 'fi', 'cs', 'el', 'hu', 'ro'] as const) {
       const out = buildAnaRISystemPrompt({ language: lng });
       expect(out).toContain('EUROPEAN UNION REGULATORY DEEP DIVE');
       expect(out).toContain('CHMP'); // canonical identifier preserved
