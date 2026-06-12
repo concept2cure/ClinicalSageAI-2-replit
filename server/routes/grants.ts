@@ -22,14 +22,19 @@ import {
   addMilestoneTx,
   createInvoiceTx,
   setInvoiceStatusTx,
+  setMilestoneStatusTx,
+  openCloseoutTx,
+  updateCloseoutTx,
+  finalizeCloseoutTx,
+  getCloseoutRecord,
   listAwards,
   listMilestones,
   listProposals,
   listInvoices,
   getAwardPeriod,
 } from '../services/grants/grants-service';
-import { summarizeDeadlines, reportingObligations, awardPeriodState } from '../services/grants/grants-logic';
-import { recordGrantProposalCreated, recordGrantAwardRecorded, recordGrantInvoice } from '../services/grants-metrics';
+import { summarizeDeadlines, reportingObligations, awardPeriodState, evaluateCloseout } from '../services/grants/grants-logic';
+import { recordGrantProposalCreated, recordGrantAwardRecorded, recordGrantInvoice, recordGrantMilestoneStatus, recordGrantCloseoutOpened, recordGrantCloseoutFinalized } from '../services/grants-metrics';
 
 const router = Router();
 
@@ -211,6 +216,82 @@ router.get('/milestones', async (req, res) => {
     const rows = await listMilestones(orgId, Number.isFinite(awardId) ? awardId : undefined);
     const summary = summarizeDeadlines(rows.map((r) => ({ dueDate: r.due_date, terminal: r.status === 'met' || r.status === 'submitted' })), today());
     res.json({ milestones: rows, summary });
+  } catch (err) { fail(res, err); }
+});
+
+const milestoneStatusSchema = z.object({ status: z.enum(['pending', 'in_progress', 'met', 'missed', 'submitted']), completedDate: z.string().optional(), reason });
+router.patch('/milestones/:id/status', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = milestoneStatusSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governed(req, res, 'transition', parsed.data.reason, async (client, orgId) => {
+    await setMilestoneStatusTx(client, orgId, id, parsed.data.status, parsed.data.completedDate);
+    recordGrantMilestoneStatus(parsed.data.status);
+    return { target: `grant-milestone:${id}`, payload: { status: parsed.data.status }, body: { id, status: parsed.data.status } };
+  });
+});
+
+// ─── Closeout (2 CFR 200.344) ────────────────────────────────────────────────
+
+router.post('/awards/:id/closeout', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = z.object({ reason }).safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governed(req, res, 'create', parsed.data.reason, async (client, orgId, userId) => {
+    const { id: cid, closeoutDueDate } = await openCloseoutTx(client, orgId, userId, id);
+    recordGrantCloseoutOpened();
+    return { target: `grant-award:${id}`, payload: { closeoutId: cid, closeoutDueDate }, body: { awardId: id, closeoutId: cid, closeoutDueDate } };
+  });
+});
+
+const closeoutItemsSchema = z.object({
+  finalRpprSubmitted: z.boolean().optional(),
+  finalFfrSubmitted: z.boolean().optional(),
+  equipmentInventoryReturned: z.boolean().optional(),
+  finalInvoicesReconciled: z.boolean().optional(),
+  deobligationAmount: amount.optional(),
+  notes: z.string().max(2000).optional(),
+  reason,
+});
+router.patch('/awards/:id/closeout', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = closeoutItemsSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governed(req, res, 'update', parsed.data.reason, async (client, orgId, userId) => {
+    await updateCloseoutTx(client, orgId, userId, id, parsed.data);
+    return { target: `grant-award:${id}`, payload: { closeout: 'updated' }, body: { awardId: id } };
+  });
+});
+
+router.post('/awards/:id/closeout/finalize', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = z.object({ reason }).safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governed(req, res, 'sign', parsed.data.reason, async (client, orgId, userId) => {
+    const { closedAward } = await finalizeCloseoutTx(client, orgId, userId, id);
+    recordGrantCloseoutFinalized();
+    return { target: `grant-award:${id}`, payload: { closeout: 'completed', closedAward }, body: { awardId: id, status: 'completed', closedAward } };
+  });
+});
+
+router.get('/awards/:id/closeout', async (req, res) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  try {
+    const rec = await getCloseoutRecord(orgId, id);
+    if (!rec) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'No closeout record for this award.' } });
+    const state = evaluateCloseout({
+      finalRpprSubmitted: rec.final_rppr_submitted, finalFfrSubmitted: rec.final_ffr_submitted,
+      equipmentInventoryReturned: rec.equipment_inventory_returned, finalInvoicesReconciled: rec.final_invoices_reconciled,
+      status: rec.status,
+    }, rec.period_end, today());
+    res.json({ record: rec, state });
   } catch (err) { fail(res, err); }
 });
 

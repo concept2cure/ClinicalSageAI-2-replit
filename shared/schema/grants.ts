@@ -15,7 +15,7 @@
  * @module shared/schema/grants
  */
 
-import { index, integer, pgTable, serial, text, date, numeric, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, index, integer, pgTable, serial, text, date, numeric, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { organizations, users, projects } from '../schema';
 
 export type FundingAgency = 'nih' | 'nsf' | 'barda' | 'dod' | 'cdc' | 'arpa_h' | 'foundation' | 'industry' | 'other';
@@ -26,6 +26,7 @@ export type AwardStatus = 'active' | 'no_cost_extension' | 'closed' | 'terminate
 export type MilestoneType = 'scientific' | 'progress_report' | 'financial_report' | 'deliverable' | 'regulatory';
 export type GrantMilestoneStatus = 'pending' | 'in_progress' | 'met' | 'missed' | 'submitted';
 export type InvoiceStatus = 'draft' | 'submitted' | 'paid' | 'disputed' | 'void';
+export type CloseoutStatus = 'open' | 'in_progress' | 'submitted' | 'completed';
 
 // ─── Funding opportunities (pre-award discovery) ─────────────────────────────
 
@@ -168,3 +169,40 @@ export const grantInvoices = pgTable(
 
 export type GrantInvoice = typeof grantInvoices.$inferSelect;
 export type NewGrantInvoice = typeof grantInvoices.$inferInsert;
+
+// ─── Closeout records (2 CFR 200.344) ────────────────────────────────────────
+// One closeout record per award: tracks the four required federal closeout
+// deliverables and their due date (period_end + 120 days). Finalizing the record
+// is gated on all four being complete and closes the parent award.
+
+export const grantCloseoutRecords = pgTable(
+  'grant_closeout_records',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    awardId: integer('award_id').notNull().references(() => grantAwards.id),
+    closeoutDueDate: date('closeout_due_date'),
+    finalRpprSubmitted: boolean('final_rppr_submitted').notNull().default(false),
+    finalRpprDate: date('final_rppr_date'),
+    finalFfrSubmitted: boolean('final_ffr_submitted').notNull().default(false),
+    finalFfrDate: date('final_ffr_date'),
+    equipmentInventoryReturned: boolean('equipment_inventory_returned').notNull().default(false),
+    finalInvoicesReconciled: boolean('final_invoices_reconciled').notNull().default(false),
+    deobligationAmount: numeric('deobligation_amount', { precision: 14, scale: 2 }),
+    status: text('status').$type<CloseoutStatus>().notNull().default('open'),
+    notes: text('notes'),
+    finalizedBy: integer('finalized_by').references(() => users.id),
+    finalizedAt: timestamp('finalized_at', { withTimezone: true }),
+    createdBy: integer('created_by').notNull().references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  },
+  (t) => ({
+    orgIdx: index('idx_grant_closeout_org').on(t.organizationId),
+    awardUniq: uniqueIndex('uq_grant_closeout_award').on(t.awardId),
+  })
+);
+
+export type GrantCloseoutRecord = typeof grantCloseoutRecords.$inferSelect;
+export type NewGrantCloseoutRecord = typeof grantCloseoutRecords.$inferInsert;

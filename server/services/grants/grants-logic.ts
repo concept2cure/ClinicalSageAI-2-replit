@@ -119,3 +119,62 @@ export function awardPeriodState(periodStart: string | null, periodEnd: string |
   }
   return 'active';
 }
+
+// ─── Closeout (2 CFR 200.344) ────────────────────────────────────────────────
+
+/** Federal closeout deadline: 120 days after the period of performance ends. Pure. */
+export function closeoutDueDate(periodEnd: string | null): string | null {
+  return periodEnd ? addDays(periodEnd, 120) : null;
+}
+
+/** The four required closeout deliverables under 2 CFR 200.344 / 200.313. */
+export interface CloseoutRecordState {
+  finalRpprSubmitted: boolean;
+  finalFfrSubmitted: boolean;
+  equipmentInventoryReturned: boolean;
+  finalInvoicesReconciled: boolean;
+  status?: string | null;
+}
+
+export interface CloseoutChecklistItem { key: string; label: string; complete: boolean; basis: string }
+
+export interface CloseoutState {
+  dueDate: string | null;
+  daysRemaining: number | null;
+  overdue: boolean;
+  items: CloseoutChecklistItem[];
+  outstanding: string[];
+  readyToFinalize: boolean;
+  status: 'not_due' | 'open' | 'overdue' | 'complete';
+}
+
+/**
+ * Evaluate a recipient's closeout posture against the federal requirements:
+ * final performance report, final FFR (SF-425), final property inventory, and
+ * liquidation/reconciliation of final invoices — all due within 120 days of the
+ * period end (2 CFR 200.344; property per 2 CFR 200.313). Pure; the deterministic
+ * gate for finalize (a closeout cannot be finalized with outstanding items).
+ */
+export function evaluateCloseout(record: CloseoutRecordState, periodEnd: string | null, today: string): CloseoutState {
+  const items: CloseoutChecklistItem[] = [
+    { key: 'final_rppr', label: 'Final performance / progress report submitted', complete: record.finalRpprSubmitted, basis: '2 CFR 200.344(a) — final performance report' },
+    { key: 'final_ffr', label: 'Final Federal Financial Report (SF-425) submitted', complete: record.finalFfrSubmitted, basis: '2 CFR 200.344(a) — final financial report' },
+    { key: 'equipment_inventory', label: 'Final property / equipment inventory returned', complete: record.equipmentInventoryReturned, basis: '2 CFR 200.313 — equipment inventory & disposition' },
+    { key: 'invoices_reconciled', label: 'Final invoices reconciled / obligations liquidated', complete: record.finalInvoicesReconciled, basis: '2 CFR 200.344(b) — liquidation of obligations' },
+  ];
+  const outstanding = items.filter((i) => !i.complete).map((i) => i.key);
+  const readyToFinalize = outstanding.length === 0;
+  const dueDate = closeoutDueDate(periodEnd);
+  const due = toDays(dueDate);
+  const now = toDays(today);
+  const daysRemaining = due != null && now != null ? due - now : null;
+
+  let status: CloseoutState['status'];
+  if (record.status === 'completed' || readyToFinalize && record.status === 'completed') status = 'complete';
+  else if (due != null && now != null && now > due) status = 'overdue';
+  else if (due == null) status = 'not_due';
+  else status = 'open';
+  const overdue = status === 'overdue';
+
+  return { dueDate, daysRemaining, overdue, items, outstanding, readyToFinalize, status };
+}

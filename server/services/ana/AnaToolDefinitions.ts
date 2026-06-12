@@ -3813,6 +3813,47 @@ export const REVIEW_GRANT_REPORTING: AnaTool = {
   },
 };
 
+export const SET_GRANT_MILESTONE_STATUS: AnaTool = {
+  name: 'set_grant_milestone_status',
+  description:
+    "Transition a grant milestone's status (pending → in_progress → met/submitted, or missed). Met/submitted stamps the completion date. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: { milestone_id: { type: 'number' }, status: { type: 'string', enum: ['pending', 'in_progress', 'met', 'missed', 'submitted'] }, completed_date: { type: 'string', description: 'YYYY-MM-DD.' }, reason: { type: 'string' } },
+    required: ['milestone_id', 'status'],
+  },
+};
+
+export const OPEN_GRANT_CLOSEOUT: AnaTool = {
+  name: 'open_grant_closeout',
+  description:
+    "Open the closeout record for a grant award. Derives the federal closeout due date (period of performance end + 120 days, 2 CFR 200.344). One closeout per award. Governed + audited, org-scoped.",
+  input_schema: { type: 'object', properties: { award_id: { type: 'number' }, reason: { type: 'string' } }, required: ['award_id'] },
+};
+
+export const UPDATE_GRANT_CLOSEOUT: AnaTool = {
+  name: 'update_grant_closeout',
+  description:
+    "Mark grant-closeout checklist items complete: final performance report (RPPR), final FFR (SF-425), final property/equipment inventory, and reconciliation of final invoices (2 CFR 200.344 / 200.313). Submitting an item stamps its date. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      award_id: { type: 'number' },
+      final_rppr_submitted: { type: 'boolean' }, final_ffr_submitted: { type: 'boolean' },
+      equipment_inventory_returned: { type: 'boolean' }, final_invoices_reconciled: { type: 'boolean' },
+      deobligation_amount: { type: 'number' }, notes: { type: 'string' }, reason: { type: 'string' },
+    },
+    required: ['award_id'],
+  },
+};
+
+export const FINALIZE_GRANT_CLOSEOUT: AnaTool = {
+  name: 'finalize_grant_closeout',
+  description:
+    "Finalize a grant closeout. Gated: all four 2 CFR 200.344 items must be complete (final RPPR, final FFR, property inventory, invoice reconciliation); otherwise it is rejected with the outstanding items. On success the award is closed. Governed + audited (signature).",
+  input_schema: { type: 'object', properties: { award_id: { type: 'number' }, reason: { type: 'string' } }, required: ['award_id'] },
+};
+
 export const CREATE_RIM_PRODUCT: AnaTool = {
   name: 'create_rim_product',
   description:
@@ -5584,6 +5625,10 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CREATE_GRANT_PROPOSAL,
   RECORD_GRANT_AWARD,
   REVIEW_GRANT_REPORTING,
+  SET_GRANT_MILESTONE_STATUS,
+  OPEN_GRANT_CLOSEOUT,
+  UPDATE_GRANT_CLOSEOUT,
+  FINALIZE_GRANT_CLOSEOUT,
   CREATE_RIM_PRODUCT,
   SET_REGISTRATION_STATUS,
   REVIEW_LABEL_CURRENCY,
