@@ -68,9 +68,24 @@ describe('getSubmissionRegionProfile', () => {
 });
 
 describe('getAllSubmissionRegionProfiles', () => {
-  it('returns fda, eu, jp, cn in canonical order', () => {
+  it('returns fda, eu, jp, cn, kr in canonical order', () => {
     const all = getAllSubmissionRegionProfiles();
-    expect(all.map((p) => p.region)).toEqual(['fda', 'eu', 'jp', 'cn']);
+    expect(all.map((p) => p.region)).toEqual(['fda', 'eu', 'jp', 'cn', 'kr']);
+  });
+});
+
+describe('Korea (kr) region profile', () => {
+  it('exposes the MFDS submission profile via kr', () => {
+    const kr = getSubmissionRegionProfile('kr');
+    expect(kr).toBeTruthy();
+    expect(kr!.agency).toBe('MFDS');
+    expect(kr!.language).toBe('ko');
+    expect(kr!.currency).toBe('KRW');
+    expect(kr!.pathways).toContain('ectd_v322');
+    expect(kr!.module1Sections.length).toBeGreaterThan(0);
+    // The approximate-numbering caveat must be carried on the profile, not hidden.
+    expect(kr!.specificRequirements.join(' ')).toMatch(/APPROXIMATE|verify against/i);
+    expect(kr!.validationRuleCount).toBeGreaterThanOrEqual(0);
   });
 });
 
