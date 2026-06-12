@@ -157,7 +157,14 @@ P0 is built, wired, and tested; a credible P1 corpus seed is in. Concretely:
 
 **Verification:** project typecheck clean (0 errors); new and affected suites green (RAG provenance, evidence-tools provenance, evidence provenance unit, cheminformatics, ChEMBL client, AnA chem + preprint tools).
 
-**Still scoped, not yet built (honest):** the aggregate adverse-event tools (FAERS/MAUDE signals), persisting the in-flight provenance to `data_lineage_records` at answer time, deeper CNS coverage, MMRM, the empirical trial-feasibility model, and the offline grounding/hallucination eval harness. These are larger efforts and are deliberately left as follow-ups rather than shipped as stubs.
+**Increment 6 (this follow-up) — durable provenance persistence (the Part 11 capstone):**
+
+- `server/services/evidence/persist-provenance.ts` — a bridge that maps the in-flight `ProvenanceRecord[]` onto durable `data_lineage_records` rows via the existing append-only `recordLineageBatch` write path. `provenanceToLineageEntry` projects each record into a SOURCE→TARGET lineage link (source columns from `toLineageSource`; target columns + linkage verb from the answer/section/claim it grounded; the rich envelope — peer-review, authority, retrieval method, caveats, url — preserved in `metadata`). `persistProvenance` writes the batch and never throws, so an audit-write hiccup never breaks answering. The recorder is injectable, so it is fully unit-tested with no database.
+- This turns the citation envelope into a permanent 21 CFR Part 11 §11.10(e) / ICH E6(R3) §5.5.3 audit record: every cited source — external API, deterministic computation, or the org's own document — can now be persisted as a queryable lineage link from the evidence to the answer it grounded.
+
+**Verification:** project typecheck clean (0 errors); new and affected suites green (persist-provenance, RAG provenance, evidence-tools provenance, evidence provenance unit).
+
+**Still scoped, not yet built (honest):** wiring `persistProvenance` into the live streaming answer pipeline (extracting the per-turn provenance and targeting the answer message) — a higher-risk orchestrator change best done as its own increment; the aggregate adverse-event tools (FAERS/MAUDE); deeper CNS; MMRM; the empirical trial-feasibility model; and the offline grounding/hallucination eval harness.
 
 ## 7. The single most important move
 
