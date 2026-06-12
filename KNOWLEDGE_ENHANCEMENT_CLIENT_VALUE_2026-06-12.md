@@ -131,9 +131,14 @@ P0 is built, wired, and tested; a credible P1 corpus seed is in. Concretely:
 - **Wired into AnA (P0).** Two new tools — `search_chembl_compound` and `screen_compound_liabilities` — registered in `AnaToolDefinitions.ts` / `AnaToolExecutor.ts`, surfaced in AnA's integration self-knowledge (`integration-status.ts`), with handler-level tests. `screen_compound_liabilities` works offline from a SMILES and auto-resolves structure+descriptors from ChEMBL when given only a compound name.
 - **CNS biomarker corpus seed (P1 start).** `server/services/ivd-knowledge/scientific/biomarker-validity-cns.ts` — seven citation-backed entries (amyloid Aβ42/40 + PET, p-tau181/217, NfL, GFAP, CSF oligoclonal bands, α-synuclein SAA, HTT CAG repeat) on the exact `KnowledgeEntry` schema as the oncology corpus, registered in the IVD knowledge index and passing the corpus integrity tests.
 
-**Verification:** project typecheck clean (0 errors); new and affected suites green (cheminformatics, ChEMBL client, AnA chem tools, integration-status, IVD knowledge corpus).
+**Increment 2 (this follow-up):**
 
-**Still scoped, not yet built (honest):** full CNS corpus to oncology parity (disease-progression models, agency precedent), the single retrieval router + provenance enforcement, MMRM, the empirical trial-feasibility model, and the offline grounding/hallucination eval harness. These are multi-week curation/modeling efforts and are deliberately left as follow-ups rather than shipped as stubs.
+- **bioRxiv / medRxiv activated — last dormant discovery connector.** `server/services/integrations/preprint-client.ts` — keyword preprint search backed by Europe PMC (which indexes bioRxiv/medRxiv and, unlike the native bioRxiv API, supports full-text query), with server filtering, citeable DOI/URL, server derivation, and a standing "not peer-reviewed" caveat. Wired into AnA as `search_preprints` and surfaced in integration self-knowledge; mocked client + handler tests.
+- **CNS corpus toward oncology parity (P1 wave 2).** `server/services/ivd-knowledge/scientific/biomarker-validity-cns-2.ts` — six more citation-backed entries (APOE ε4 + anti-amyloid ARIA stratification, DaT-SPECT imaging, AQP4-IgG/MOG-IgG for NMOSD/MOGAD, CSF RT-QuIC/14-3-3 for CJD, CSF total tau, CYP2D6/CYP2C19 psychiatric pharmacogenomics). The CNS corpus now stands at 13 entries, approaching the oncology corpus's depth.
+
+**Verification:** project typecheck clean (0 errors); new and affected suites green (cheminformatics, ChEMBL client, AnA chem tools, preprint client + tool, integration-status, IVD knowledge corpus).
+
+**Still scoped, not yet built (honest):** remaining CNS depth (disease-progression models, agency precedent), the single retrieval router + provenance enforcement, MMRM, the empirical trial-feasibility model, and the offline grounding/hallucination eval harness. These are multi-week curation/modeling efforts and are deliberately left as follow-ups rather than shipped as stubs.
 
 ## 7. The single most important move
 
