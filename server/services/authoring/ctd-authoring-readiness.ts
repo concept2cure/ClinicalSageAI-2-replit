@@ -19,6 +19,7 @@
 
 import type { M2QcResult } from './m2-summary-qc';
 import type { M4QcResult } from './m4-nonclinical-qc';
+import type { M5QcResult } from './m5-clinical-qc';
 import type { M2Summary } from '../m2-summary-builders';
 
 export type CtdReadinessSeverity = 'error' | 'warning';
@@ -51,6 +52,8 @@ export interface CtdAuthoringReadinessInput {
   m2?: M2QcResult;
   /** Module 4 nonclinical assembly QC verdict (from runM4NonclinicalQc). */
   m4?: M4QcResult;
+  /** Module 5 clinical assembly QC verdict (from runM5ClinicalQc). */
+  m5?: M5QcResult;
   /**
    * The built M2.4 Nonclinical Overview — used only for the M2.4←M4 feed-forward
    * check. Its inputSectionKeys (CTD 4.2.x sections) must trace to the M4 program.
@@ -86,6 +89,16 @@ export function aggregateCtdAuthoringReadiness(input: CtdAuthoringReadinessInput
   } else {
     modules.push({ module: 'M4', present: false, ready: false, errors: 0, warnings: 0 });
     findings.push({ area: 'M4', severity: 'warning', code: 'MODULE_ABSENT', message: 'No Module 4 QC verdict supplied.' });
+  }
+
+  if (input.m5) {
+    modules.push({ module: 'M5', present: true, ready: input.m5.ready, errors: input.m5.counts.errors, warnings: input.m5.counts.warnings });
+    if (!input.m5.ready) {
+      findings.push({ area: 'M5', severity: 'error', code: 'MODULE_NOT_READY', message: `Module 5 clinical program is not assembly-ready (${input.m5.counts.errors} error(s)).` });
+    }
+  } else {
+    modules.push({ module: 'M5', present: false, ready: false, errors: 0, warnings: 0 });
+    findings.push({ area: 'M5', severity: 'warning', code: 'MODULE_ABSENT', message: 'No Module 5 QC verdict supplied.' });
   }
 
   // FEED_FORWARD — the M2.4 overview must trace to study reports that exist.
