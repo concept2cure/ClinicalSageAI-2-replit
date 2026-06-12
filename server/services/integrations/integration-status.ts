@@ -64,7 +64,7 @@ export async function getIntegrationStatuses(
       label: 'ClinicalTrials.gov (live trials)',
       kind: 'public_api',
       configured: true,
-      tools: ['search_clinical_evidence', 'assess_regulatory_landscape'],
+      tools: ['search_clinical_evidence', 'assess_regulatory_landscape', 'assess_trial_feasibility'],
     },
     {
       id: 'pubmed',

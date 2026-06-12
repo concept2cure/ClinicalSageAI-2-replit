@@ -28,6 +28,7 @@ import { searchDrugLabels } from '../integrations/drug-label-client.js';
 import { searchDrugApprovals } from '../integrations/drug-approvals-client.js';
 import { searchChemblCompounds, getChemblMechanisms } from '../integrations/chembl-client.js';
 import { searchPreprints, type PreprintServerFilter } from '../integrations/preprint-client.js';
+import { assessTrialFeasibility } from '../study-design/trial-feasibility-service.js';
 import { screenStructuralAlerts, assessDevelopability } from '../chem/index.js';
 import { buildProvenance, confidenceFromScore } from '../evidence/provenance.js';
 import { assessRegulatoryLandscape } from '../integrations/landscape.js';
@@ -1166,6 +1167,37 @@ registerToolHandler('search_preprints', async (input) => {
       note: 'Preprint API unavailable — try bioRxiv/medRxiv search directly.',
       url: `https://www.biorxiv.org/search/${encodeURIComponent(query)}`,
       preprints: [],
+    });
+  }
+});
+
+// Assess Trial Feasibility — empirical operational base rates from ClinicalTrials.gov.
+registerToolHandler('assess_trial_feasibility', async (input) => {
+  const asStr = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v.trim() : undefined;
+  const condition = asStr(input.condition);
+  if (!condition) {
+    return JSON.stringify({ error: 'Provide a `condition` to assess trial feasibility.' });
+  }
+  try {
+    const result = await assessTrialFeasibility({
+      condition,
+      intervention: asStr(input.intervention),
+      phase: asStr(input.phase),
+      maxComparators: typeof input.max_comparators === 'number' ? input.max_comparators : undefined,
+    });
+    return JSON.stringify({
+      ...result,
+      citation_hint:
+        'Report the completion rate with its 95% CI and the comparator count; these are empirical ' +
+        'ClinicalTrials.gov base rates, not a prediction. Honor the insufficient_evidence verdict.',
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'ClinicalTrials.gov',
+      condition,
+      error: e instanceof Error ? e.message : 'Feasibility assessment failed',
+      note: 'ClinicalTrials.gov unavailable — feasibility base rates could not be computed.',
     });
   }
 });

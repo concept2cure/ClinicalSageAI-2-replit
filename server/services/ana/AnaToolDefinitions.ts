@@ -5715,6 +5715,41 @@ export const SEARCH_CHEMBL_COMPOUND: AnaTool = {
   },
 };
 
+export const ASSESS_TRIAL_FEASIBILITY: AnaTool = {
+  name: 'assess_trial_feasibility',
+  description:
+    'Assess the OPERATIONAL feasibility of a planned clinical trial from empirical ClinicalTrials.gov ' +
+    'base rates for comparable studies (by condition, optional intervention and phase). Returns the ' +
+    'completion vs discontinuation rate among trials that reached a terminal state — each with a 95% ' +
+    'confidence interval — the realised enrollment distribution of completed comparators, the number ' +
+    'of currently-active competing trials, sponsor breadth, and a feasibility verdict. Every figure is ' +
+    'a count-based statistic; when too few comparable trials have resolved, it returns ' +
+    "'insufficient_evidence' rather than an invented number. This answers 'can the trial be run?' " +
+    "(recruitment, completion, competition) — distinct from the statistical probability of the endpoint hitting.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      condition: {
+        type: 'string',
+        description: 'Disease / condition for the planned trial, e.g. "non-small cell lung cancer".',
+      },
+      intervention: {
+        type: 'string',
+        description: 'Optional intervention / drug / device to narrow the comparator set.',
+      },
+      phase: {
+        type: 'string',
+        description: 'Optional trial phase filter, e.g. PHASE3 or 3.',
+      },
+      max_comparators: {
+        type: 'number',
+        description: 'Maximum comparable trials to analyze (default 100, max 200).',
+      },
+    },
+    required: ['condition'],
+  },
+};
+
 export const SEARCH_PREPRINTS: AnaTool = {
   name: 'search_preprints',
   description:
@@ -5778,6 +5813,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CHEMBL_COMPOUND,
   SCREEN_COMPOUND_LIABILITIES,
   SEARCH_PREPRINTS,
+  ASSESS_TRIAL_FEASIBILITY,
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
   SEARCH_MEDICARE_COVERAGE,
