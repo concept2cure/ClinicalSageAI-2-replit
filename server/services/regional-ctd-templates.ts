@@ -267,6 +267,48 @@ export const NMPA_TEMPLATE: RegionalTemplate = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// MFDS (South Korea)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const MFDS_TEMPLATE: RegionalTemplate = {
+  agency: 'MFDS',
+  region: 'KR',
+  language: 'ko',
+  currency: 'KRW',
+  forms: [
+    { name: 'Marketing Authorization Application', formId: 'mfds-maa', required: true, description: '의약품 품목허가·신고 신청서 (MFDS marketing-authorization / notification application form, Korean)' },
+  ],
+  prescribingInfoTemplate: 'mfds-prescribing-information',
+  coverLetterTemplate: 'mfds-cover-letter',
+  specificRequirements: [
+    'Korea uses the K-CTD (의약품 국제공통기술문서); Module 1 = Administrative Information and Prescribing Information',
+    'Korean-language Module 1 documents required (행정정보 / 표지문서 / 신청서 / 제품정보)',
+    'MFDS electronic submission; eCTD v4.0 voluntary phase expected from 2027 (mandatory date not yet set)',
+    'Korean GMP (KGMP) compliance; DMF (Drug Master File) where applicable',
+    'Local marketing-authorization holder or Korean agent required for foreign applicants',
+    '⚠ APPROXIMATE: the Module 1 section numbering below reflects confirmed K-CTD content areas and general ICH M1 convention — verify against the official MFDS K-CTD guidance (의약품 국제공통기술문서(CTD) 해설서) before relying on exact numbers',
+  ],
+  // NOTE: K-CTD Module 1 — Administrative Information and Prescribing Information.
+  // The content areas (행정정보 / 표지문서 / 신청서 / 제품정보) are confirmed from MFDS
+  // guidance, but the exact section numbering is not published in accessible English
+  // sources; the numbering below is an ICH-M1-convention approximation and is flagged
+  // as such in specificRequirements above. Verify against the official MFDS K-CTD 해설서.
+  module1Sections: [
+    { number: '1.1', title: 'Comprehensive Table of Contents', titleLocal: '목차', required: true, description: 'Table of contents for the K-CTD submission' },
+    { number: '1.2', title: 'Cover Letter', titleLocal: '표지문서', required: true, description: 'Submission cover document' },
+    { number: '1.3', title: 'Application Form', titleLocal: '신청서', required: true, description: '의약품 품목허가·신고 신청서 (MFDS marketing-authorization application form, Korean)' },
+    { number: '1.4', title: 'Administrative Information', titleLocal: '행정정보', required: true, description: 'Certificates, authorizations and qualification documents (e.g., KGMP, manufacturer / Korean-agent authorization)' },
+    {
+      number: '1.5', title: 'Product Information', titleLocal: '제품정보', required: true, description: 'Korean prescribing information and labeling',
+      childSections: [
+        { number: '1.5.1', title: 'Prescribing Information', titleLocal: '첨부문서(허가사항)', required: true, description: 'Korean prescribing information / package insert' },
+        { number: '1.5.2', title: 'Labeling', titleLocal: '표시기재', required: true, description: 'Korean labeling and packaging text' },
+      ],
+    },
+  ],
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // SERVICE API
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -275,6 +317,7 @@ const TEMPLATES: Record<string, RegionalTemplate> = {
   EMA: EMA_TEMPLATE,
   PMDA: PMDA_TEMPLATE,
   NMPA: NMPA_TEMPLATE,
+  MFDS: MFDS_TEMPLATE,
 };
 
 /**
