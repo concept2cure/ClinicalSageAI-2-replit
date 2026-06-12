@@ -42,7 +42,8 @@ const APPROVED = new Set([
   // Pre-existing direct callers (documented at gate-introduction time,
   // 2026-05-07). Migration target: route through embeddingService.embed().
   'server/services/biotechRagService.js',
-  'server/services/LiteratureAggregatorService.ts',
+  // LiteratureAggregatorService.ts — deleted 2026-06-12 (510k-orphaned dead
+  // code removed per issue #726; was a direct embedding caller).
   // documentIngestionWorkflow.js — deleted 2026-05-07 (was dead + broken
   // syntax, never imported by a live route). See git log.
   'server/services/innovation/regulatory-delta-radar-service.ts',

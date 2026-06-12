@@ -19,7 +19,6 @@ export * as fda from './fda';
 export * as cer from './cer';
 export * as csr from './csr';
 export * as foresight from './foresight';
-export * as literature from './literature';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AI SERVICES
