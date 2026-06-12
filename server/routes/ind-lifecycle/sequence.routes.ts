@@ -23,9 +23,9 @@ const router = Router();
 
 type Ctx = { organizationId: number; userId: number };
 
-/** Validate a numeric path param > 0. */
-function seqIdOf(raw: string): number | null {
-  const n = Number(raw);
+/** Validate a numeric path/query param > 0. */
+function seqIdOf(raw: string | string[] | undefined): number | null {
+  const n = Number(Array.isArray(raw) ? raw[0] : raw);
   return Number.isInteger(n) && n > 0 ? n : null;
 }
 
