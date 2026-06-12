@@ -15,9 +15,9 @@ import { summarizeSequences } from '../../services/ind-lifecycle/ind-submission-
 import { buildIndDashboard } from '../../services/ind-lifecycle/ind-dashboard';
 import { buildPackageManifest } from '../../services/ind-lifecycle/ind-package-manifest';
 import { evaluateDispatchGate } from '../../services/ind-lifecycle/ind-dispatch-gate';
-import { buildIndCockpit, type SequenceGateSummary } from '../../services/ind-lifecycle/ind-cockpit';
+import { buildIndCockpit, annotateGateWithSnapshot, buildDriftDigest, type SequenceGateSummary } from '../../services/ind-lifecycle/ind-cockpit';
 import { diffSequences } from '../../services/ind-lifecycle/ind-sequence-diff';
-import { createDispatchSnapshot, listDispatchSnapshots } from '../../services/ind-lifecycle/ind-dispatch-snapshot-service';
+import { createDispatchSnapshot, listDispatchSnapshots, getLatestDispatchSnapshot } from '../../services/ind-lifecycle/ind-dispatch-snapshot-service';
 import { renderPackageManifestPdf, renderSequenceDiffPdf } from '../../services/ind-lifecycle/ind-document-renderer';
 import { getSubmission, listSequences, listLeaves, getSequence } from '../../services/submission-service/submission-service';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, sendPdf } from './shared';
@@ -403,48 +403,42 @@ router.post('/submission/:id/dashboard', limiter, requireRole(AUTHOR), async (re
  * EVERY sequence in the submission, in one call. Body (all optional):
  * { filingType?, readinessInput?, clockInput?, timelineInput?, sequenceValidationInput?, overdueSafetyReports? }.
  */
-router.post('/submission/:id/cockpit', limiter, requireRole(AUTHOR), async (req, res) => {
-  const ctx = ctxOf(req);
-  if (!ctx) return noAuth(res);
-  const submissionId = Number(req.params.id);
-  if (!Number.isInteger(submissionId) || submissionId <= 0) {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
-  }
-  const b = body(req);
+/**
+ * Build a snapshot-annotated dispatch gate for every sequence in a submission.
+ * Shared by the cockpit and drift routes.
+ */
+async function annotatedGatesForSubmission(
+  sequences: Awaited<ReturnType<typeof listSequences>>,
+  b: any,
+  ctx: { organizationId: number; userId: number },
+): Promise<SequenceGateSummary[]> {
   const filingType = b.filingType === 'amendment' ? 'amendment' : 'initial';
-  try {
-    const sequences = await listSequences(submissionId, ctx);
-    const readiness = readinessFrom(b.readinessInput);
-    const clock = b.clockInput?.receiptDate ? evaluateRegulatoryClock(b.clockInput) : null;
-    const timeline = b.timelineInput?.receiptDate ? buildIndTimeline(b.timelineInput) : null;
+  const readiness = readinessFrom(b.readinessInput);
+  const clock = b.clockInput?.receiptDate ? evaluateRegulatoryClock(b.clockInput) : null;
+  const timeline = b.timelineInput?.receiptDate ? buildIndTimeline(b.timelineInput) : null;
 
-    // Evaluate a dispatch gate for each sequence (loads that sequence's leaves).
-    const sequenceGates: SequenceGateSummary[] = await Promise.all(
-      sequences.map(async (seq) => {
-        const leaves = await listLeaves(seq.id, ctx);
-        const sequenceValidation = validateSequenceLeaves({
-          filingType,
-          leaves: leaves.map((l) => ({ sectionCode: l.sectionCode })),
-        });
-        const manifest = buildPackageManifest({
-          sequenceNumber: seq.sequenceNumber,
-          submissionType: seq.type,
-          leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, lifecycleOp: l.lifecycleOp, checksum: l.checksum })),
-        });
-        const actions = deriveIndActionItems({
-          readiness,
-          clock,
-          timeline,
-          sequenceValidation,
-          overdueSafetyReports: b.overdueSafetyReports,
-        });
-        const verdict = evaluateDispatchGate({
-          sequenceValidation,
-          manifest,
-          criticalActions: actions.criticalCount,
-          sequenceStatus: seq.status,
-        });
-        return {
+  return Promise.all(
+    sequences.map(async (seq) => {
+      const leaves = await listLeaves(seq.id, ctx);
+      const sequenceValidation = validateSequenceLeaves({
+        filingType,
+        leaves: leaves.map((l) => ({ sectionCode: l.sectionCode })),
+      });
+      const manifest = buildPackageManifest({
+        sequenceNumber: seq.sequenceNumber,
+        submissionType: seq.type,
+        leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, lifecycleOp: l.lifecycleOp, checksum: l.checksum })),
+      });
+      const actions = deriveIndActionItems({ readiness, clock, timeline, sequenceValidation, overdueSafetyReports: b.overdueSafetyReports });
+      const verdict = evaluateDispatchGate({
+        sequenceValidation,
+        manifest,
+        criticalActions: actions.criticalCount,
+        sequenceStatus: seq.status,
+      });
+      const latest = await getLatestDispatchSnapshot(seq.id, ctx);
+      return annotateGateWithSnapshot(
+        {
           sequenceId: seq.id,
           sequenceNumber: seq.sequenceNumber,
           type: seq.type,
@@ -453,20 +447,55 @@ router.post('/submission/:id/cockpit', limiter, requireRole(AUTHOR), async (req,
           blockerCount: verdict.blockers.length,
           warningCount: verdict.warnings.length,
           blockerCodes: verdict.blockers.map((x) => x.code),
-        };
-      }),
-    );
+        },
+        latest,
+      );
+    }),
+  );
+}
 
+router.post('/submission/:id/cockpit', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const submissionId = Number(req.params.id);
+  if (!Number.isInteger(submissionId) || submissionId <= 0) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
+  }
+  const b = body(req);
+  try {
+    const sequences = await listSequences(submissionId, ctx);
+    const sequenceGates = await annotatedGatesForSubmission(sequences, b, ctx);
     const dashboard = buildIndDashboard({
       sequenceSummary: summarizeSequences(sequences),
-      readiness,
-      clock,
-      timeline,
+      readiness: readinessFrom(b.readinessInput),
+      clock: b.clockInput?.receiptDate ? evaluateRegulatoryClock(b.clockInput) : null,
+      timeline: b.timelineInput?.receiptDate ? buildIndTimeline(b.timelineInput) : null,
       sequenceValidation: validationFrom(b.sequenceValidationInput),
       overdueSafetyReports: b.overdueSafetyReports,
     });
-
     res.json(buildIndCockpit({ dashboard, sequenceGates }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Drift-alert digest — the sequences in a submission whose live dispatch verdict
+ * has drifted from their last recorded snapshot, or that were never verified.
+ * A proactive compliance feed. Body (all optional): same analysis inputs as the
+ * cockpit, so the live verdict is computed consistently.
+ */
+router.post('/submission/:id/drift', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const submissionId = Number(req.params.id);
+  if (!Number.isInteger(submissionId) || submissionId <= 0) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
+  }
+  try {
+    const sequences = await listSequences(submissionId, ctx);
+    const gates = await annotatedGatesForSubmission(sequences, body(req), ctx);
+    res.json(buildDriftDigest(gates));
   } catch (err) {
     fail(res, err);
   }

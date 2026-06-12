@@ -13,6 +13,9 @@ import * as roster from '../../server/services/research-compliance/roster-servic
 import { resolveComplianceChecklist, evaluateTrainingGate } from '../../server/services/research-compliance/compliance-checklist';
 import { computeDomainReport } from '../../server/services/report-os/research-compliance-report-providers';
 import { emitDeadlineTask } from '../../server/services/research-compliance/tasking-bridge';
+import * as effort from '../../server/services/effort-certification/effort-service';
+import * as coi from '../../server/services/research-security/coi-service';
+import { bridgeIngestedStudyTx, mapStudyType } from '../../server/services/preclinical/preclinical-governed-bridge';
 
 let pass = 0, fail = 0;
 function ok(cond: boolean, msg: string) { if (cond) { pass++; console.log('  ✓', msg); } else { fail++; console.log('  ✗ FAIL:', msg); } }
@@ -116,6 +119,61 @@ async function main() {
   ok(haRep != null && (haRep!.summary.commitments as number) >= 1, `ha.commitment_register computes (commitments=${haRep?.summary.commitments})`);
   const unknown = await computeDomainReport('not.a.domain.report', ORG);
   ok(unknown === null, 'unknown report type → null (generic orchestrator unchanged)');
+
+  console.log('\n[Effort Certification] add-on — lines, validation gate, certify, content hash');
+  // Reuse the trained PI (piId) as the certifier subject.
+  const certId = await tx((c) => effort.createCertificationTx(c, ORG, USER, { personnelId: piId, periodStart: '2026-01-01', periodEnd: '2026-06-30' })).then((r: any) => r.id);
+  await tx((c) => effort.addLineTx(c, ORG, USER, certId, { activityLabel: 'R01', committedPct: 40, actualPct: 40, awardId: null }));
+  await tx((c) => effort.addLineTx(c, ORG, USER, certId, { activityLabel: 'Teaching', committedPct: 60, actualPct: 60, awardId: null }));
+  const certRes = await tx((c) => effort.certifyTx(c, ORG, USER, certId));
+  ok(certRes.contentHash.length === 64, 'effort certify computes a sha256 content hash');
+  const certRow = await pool.query(`SELECT status, content_hash FROM effort_certifications WHERE id=$1`, [certId]);
+  ok(certRow.rows[0].status === 'certified' && certRow.rows[0].content_hash, 'effort statement persisted as certified with content_hash');
+  // Over-100% statement must be REJECTED at certify (deterministic gate is the floor).
+  const badCert = await tx((c) => effort.createCertificationTx(c, ORG, USER, { personnelId: piId, periodStart: '2026-07-01', periodEnd: '2026-12-31' })).then((r: any) => r.id);
+  await tx((c) => effort.addLineTx(c, ORG, USER, badCert, { activityLabel: 'A', committedPct: 70, actualPct: 70, awardId: null }));
+  await tx((c) => effort.addLineTx(c, ORG, USER, badCert, { activityLabel: 'B', committedPct: 50, actualPct: 50, awardId: null }));
+  let effortRejected = false;
+  try { await tx((c) => effort.certifyTx(c, ORG, USER, badCert)); } catch (e: any) { effortRejected = e?.code === 'INVALID_STATE'; }
+  ok(effortRejected, 'certify REJECTED when total committed > 100% (no over-commit certify)');
+
+  console.log('\n[Research Security / COI] add-on — disclosure, foreign-nexus flag, review');
+  const coiRes = await tx((c) => coi.createDisclosureTx(c, ORG, USER, { personnelId: piId, disclosureType: 'foreign_appointment', entityName: 'Overseas University', country: 'CN' }));
+  ok(coiRes.foreignFlag === true, 'foreign_appointment disclosure raises the research-security foreign flag');
+  const coiUs = await tx((c) => coi.createDisclosureTx(c, ORG, USER, { personnelId: piId, disclosureType: 'financial_interest', entityName: 'US Startup', country: 'US' }));
+  ok(coiUs.foreignFlag === false, 'US financial interest does not raise the foreign flag');
+  await tx((c) => coi.reviewDisclosureTx(c, ORG, USER, coiRes.id, { status: 'managed', managementPlan: 'recuse from review' }));
+  const coiRow = await pool.query(`SELECT status, management_plan FROM coi_disclosures WHERE id=$1`, [coiRes.id]);
+  ok(coiRow.rows[0].status === 'managed' && coiRow.rows[0].management_plan != null, 'COI review persists status=managed + management plan');
+
+  console.log('\n[Reports] effort + research-security domain providers compute real numbers');
+  const effRep = await computeDomainReport('effort.certification_register', ORG);
+  ok(effRep != null && (effRep!.summary.statements as number) >= 1 && (effRep!.summary.certified as number) >= 1, `effort.certification_register computes (statements=${effRep?.summary.statements}, certified=${effRep?.summary.certified})`);
+  const coiRep = await computeDomainReport('research_security.coi_register', ORG);
+  ok(coiRep != null && (coiRep!.summary.disclosures as number) >= 2 && (coiRep!.summary.foreignNexus as number) >= 1, `research_security.coi_register computes (disclosures=${coiRep?.summary.disclosures}, foreignNexus=${coiRep?.summary.foreignNexus})`);
+
+  console.log('\n[Preclinical bridge] digested study → governed registry + Module 4 provenance');
+  ok(mapStudyType('genotox') === 'genotoxicity' && mapStudyType('dart') === 'reproductive_tox' && mapStudyType('tk') === 'adme_pk', 'mapStudyType maps extraction taxonomy → CTD Module 4 study-type union');
+  const SYNTHETIC_CTD_ID = 90001; // provenance source int (ctd_nonclinical_studies row); generic spine, no FK
+  const synthData: any = {
+    studyType: 'repeat_dose_tox', studyTitle: '13-week oral toxicity in rat', species: 'Rattus norvegicus',
+    strain: 'Sprague-Dawley', glpCompliant: true, noael: '50 mg/kg/day', studyReportNumber: 'TX-2026-013',
+    testingFacility: 'Acme GLP Labs', extractionConfidence: 0.92,
+  };
+  const bridged = await tx(async (c) => {
+    const b = await bridgeIngestedStudyTx(c, ORG, USER, { ctdStudyId: SYNTHETIC_CTD_ID, data: synthData, sourcePdfId: 'pdf-verify-1', submissionId: 1, iacucProtocolId: null });
+    await recordGovernedAction(c, { orgId: ORG, userId: USER, command: 'create', target: `nonclinical-study:${b.governedStudyId}`, reason: 'verify preclinical bridge', domain: 'nonclinical', surface: 'preclinical-ingest' });
+    return b;
+  });
+  ok(bridged.governedStudyId > 0 && bridged.ctdSection.startsWith('4.2'), `bridge created governed study (id ${bridged.governedStudyId}, CTD ${bridged.ctdSection})`);
+  const govRow = await pool.query(`SELECT study_type, species, glp_compliant, submission_id FROM nonclinical_studies WHERE id=$1`, [bridged.governedStudyId]);
+  ok(govRow.rows[0].study_type === 'repeat_dose_tox' && govRow.rows[0].glp_compliant === true && Number(govRow.rows[0].submission_id) === 1, 'governed study persisted with mapped type, GLP flag, submission link');
+  const derivedLink = await pool.query(`SELECT * FROM provenance_links WHERE source_type='ctd_nonclinical_study' AND source_id=$1 AND target_type='nonclinical_study'`, [SYNTHETIC_CTD_ID]);
+  ok(derivedLink.rows.length === 1 && derivedLink.rows[0].link_role === 'derived_from', 'provenance: ctd_nonclinical_study → nonclinical_study (derived_from)');
+  const m4Link = await pool.query(`SELECT * FROM provenance_links WHERE source_type='nonclinical_study' AND source_id=$1 AND target_type='submission_module4'`, [bridged.governedStudyId]);
+  ok(m4Link.rows.length === 1 && m4Link.rows[0].link_role === 'supports', 'provenance: nonclinical_study → submission_module4 (supports)');
+  const ncRep = await computeDomainReport('nonclinical.study_send_register', ORG);
+  ok(ncRep != null && (ncRep!.summary.studies as number) >= 1, `nonclinical.study_send_register computes (studies=${ncRep?.summary.studies})`);
 
   console.log('\n[Tasking] deadline event → central unified_tasks');
   const taskId = await emitDeadlineTask({ organizationId: ORG, title: 'Verify milestone due', sourceEntityType: 'grant_milestone', sourceEntityId: 999, dueDate: '2026-12-01', taskType: 'milestone' });

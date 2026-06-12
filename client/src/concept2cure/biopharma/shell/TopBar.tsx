@@ -1,29 +1,35 @@
 // Biopharma TopBar — port of ui_kits/biopharma/shell.jsx TopBar.
+//
+// Phase 10.2: the kit-only tenant-type switcher is stripped — in v2 the
+// client type comes from organizations.client_type via the session
+// (PHASE_10_2_INSTALL.md §3.1). The density toggle persists per user via
+// users.preferences.density.
 
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { BioIcon } from '../icons';
 import type { BiopharmaProgram } from '../data/programs';
+import type { Density } from '../data/preferences';
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 
 interface TopBarProps {
   hereLabel:      string;
   program:        BiopharmaProgram | null;
-  density:        string;
-  onDensity:      (d: string) => void;
-  clientType:     string;
-  setClientType:  (t: string) => void;
+  density:        Density;
+  onDensity:      (d: Density) => void;
+  /** Display label for the tenant's domain (from organizations.client_type). */
+  domainLabel:    string;
   onOpenPalette:  () => void;
 }
 
-export function BiopharmaTopBar({ hereLabel, program, density, onDensity, clientType, setClientType, onOpenPalette }: TopBarProps) {
+export function BiopharmaTopBar({ hereLabel, program, density, onDensity, domainLabel, onOpenPalette }: TopBarProps) {
   const { t } = useTranslation('common');
   return (
     <header className="topbar">
       <div className="crumbs">
         <span>Concept2Cure.RI</span>
         <span className="sep">›</span>
-        <span>Biotech and Pharma</span>
+        <span>{domainLabel}</span>
         <span className="sep">›</span>
         <span className="here">{hereLabel}</span>
       </div>
@@ -41,7 +47,7 @@ export function BiopharmaTopBar({ hereLabel, program, density, onDensity, client
         <span className="kbd">⌘K</span>
       </button>
       <div className="bp-density-toggle" role="tablist" aria-label={t('density.label')}>
-        {(['compact','comfortable','spacious'] as const).map(d => (
+        {(['compact', 'comfortable', 'spacious'] as const).map(d => (
           <button key={d} type="button"
                   data-active={density === d || undefined}
                   onClick={() => onDensity(d)}
@@ -51,14 +57,6 @@ export function BiopharmaTopBar({ hereLabel, program, density, onDensity, client
         ))}
       </div>
       <div className="tb-actions">
-        <select
-          value={clientType}
-          onChange={e => setClientType(e.target.value)}
-          aria-label={t('topbar.clientType')}
-          style={{ fontSize: 12, padding: '4px 6px', borderRadius: 6, border: '1px solid var(--border)' }}>
-          <option value="pharma">{t('topbar.pharma')}</option>
-          <option value="biotech">{t('topbar.biotech')}</option>
-        </select>
         <LanguageSwitcher variant="topbar" />
         <button className="tb-btn" type="button" title={t('topbar.filter')}><BioIcon name="filter" /></button>
         <button className="tb-btn" type="button" title={t('topbar.notifications')}><BioIcon name="bell" /></button>

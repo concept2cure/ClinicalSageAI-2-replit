@@ -535,6 +535,65 @@
 }
 .cite:hover { background: var(--bg-200); color: var(--ink, var(--text-100)); }
 
+/* Evidence chip rendered as a toggle button — same look as .cite, with a
+   button reset and a pointer so it reads as expandable. */
+.citeButton {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 0 6px; border-radius: 4px; border: 0;
+  background: var(--muted); font-family: var(--font-sans);
+  font-size: 11px; color: var(--ink-muted, var(--text-300));
+  vertical-align: 1px; margin: 0 1px;
+  font-weight: 500; cursor: pointer;
+}
+.citeButton:hover { background: var(--bg-200); color: var(--ink, var(--text-100)); }
+
+/* Evidence drill-down panel — mirrors the reasoning panel pattern. */
+.evidencePanel {
+  margin: 4px 0 10px;
+  border-left: 2px solid var(--accent-main-100, #6366f1);
+  padding-left: 10px;
+}
+.evidenceHeading {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600;
+  color: var(--ink-muted, var(--text-300));
+  letter-spacing: 0.02em;
+}
+.evidenceHeading svg { color: var(--accent-main-100); }
+.evidenceSummary {
+  margin: 6px 0 0;
+  font-size: 13px; line-height: 1.6;
+  color: var(--ink-body, var(--text-200));
+  font-family: var(--font-sans, inherit);
+}
+.evidenceClaims {
+  margin: 8px 0 0; padding: 0; list-style: none;
+  display: flex; flex-direction: column; gap: 6px;
+  max-height: 260px; overflow-y: auto;
+}
+.evidenceClaim {
+  display: flex; align-items: baseline; gap: 8px;
+  font-size: 13px; line-height: 1.5;
+}
+.evidenceKind {
+  flex-shrink: 0;
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 5px; border-radius: 3px;
+  background: var(--muted); color: var(--ink-muted, var(--text-300));
+}
+.evidenceKind[data-kind="ungrounded"],
+.evidenceKind[data-kind="overclaim"],
+.evidenceKind[data-kind="contradiction"] {
+  color: var(--accent-100, #d97757);
+}
+.evidenceClaimText { color: var(--ink-body, var(--text-200)); min-width: 0; }
+.evidenceChevron { transition: transform 200ms ease-out; }
+.evidenceChevronOpen { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) {
+  .evidenceChevron { transition: none; }
+}
+
 /* Typing dots */
 .typing { display: inline-flex; gap: 4px; padding: 4px 0; }
 .typing span {

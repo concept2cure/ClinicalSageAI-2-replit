@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-12T00:31:17.160Z",
+  "generatedAt": "2026-06-12T00:51:40.968Z",
   "git": {
-    "sha": "435b3bcc78f1c5fcc2b54915fe28b90fa97f0915",
+    "sha": "84df0fab1270a518edac27798dcf03a42c90a57a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 206,
+    "duplicateBasenames": 209,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -755,6 +755,15 @@
         ]
       },
       {
+        "basename": "anadock",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/biopharma/shell/AnaDock.tsx",
+          "client/src/concept2cure/pdev/shell/AnaDock.tsx",
+          "ui_kits/biopharma/AnaDock.jsx"
+        ]
+      },
+      {
         "basename": "anadrafter",
         "count": 3,
         "paths": [
@@ -1052,14 +1061,6 @@
         "paths": [
           "design-system/ui_kits/mdx/data/ana-review.js",
           "ui_kits/mdx/data/ana-review.js"
-        ]
-      },
-      {
-        "basename": "anadock",
-        "count": 2,
-        "paths": [
-          "client/src/concept2cure/pdev/shell/AnaDock.tsx",
-          "ui_kits/biopharma/AnaDock.jsx"
         ]
       },
       {
@@ -1367,6 +1368,14 @@
         ]
       },
       {
+        "basename": "effort-certification",
+        "count": 2,
+        "paths": [
+          "server/routes/effort-certification.ts",
+          "shared/schema/effort-certification.ts"
+        ]
+      },
+      {
         "basename": "engine",
         "count": 2,
         "paths": [
@@ -1468,6 +1477,14 @@
         "paths": [
           "server/routes/financial-disclosures.ts",
           "shared/schema/financial-disclosures.ts"
+        ]
+      },
+      {
+        "basename": "fixtures",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/biopharma/data/fixtures.ts",
+          "client/src/concept2cure/submission/_install/fixtures.ts"
         ]
       },
       {
@@ -1823,6 +1840,14 @@
         ]
       },
       {
+        "basename": "research-security",
+        "count": 2,
+        "paths": [
+          "server/routes/research-security.ts",
+          "shared/schema/research-security.ts"
+        ]
+      },
+      {
         "basename": "rolebasedaccess",
         "count": 2,
         "paths": [
@@ -2050,7 +2075,7 @@
     "largeFilesByBytes": [
       {
         "file": "shared/schema.ts",
-        "bytes": 820734
+        "bytes": 821159
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2058,11 +2083,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 386959
+        "bytes": 393317
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 304244
+        "bytes": 306419
       },
       {
         "file": "server/statistics-service.ts",
@@ -2108,7 +2133,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19834
+        "lines": 19841
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2116,7 +2141,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 7994
+        "lines": 8092
       },
       {
         "file": "server/statistics-service.ts",
@@ -2124,7 +2149,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 5729
+        "lines": 5748
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2288,7 +2313,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 303,
+      "duplicateGroups": 305,
       "largeByBytes": 11,
       "largeByLines": 34
     },
@@ -2300,13 +2325,13 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 138,
+      "duplicateGroups": 141,
       "largeByBytes": 0,
       "largeByLines": 1
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 44,
+      "duplicateGroups": 46,
       "largeByBytes": 1,
       "largeByLines": 2
     },

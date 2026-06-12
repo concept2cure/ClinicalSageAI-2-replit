@@ -87,6 +87,8 @@ export interface MessageProps {
     groundedClaims: number;
     weakClaims: number;
     missingSupport: number;
+    riskSummary?: string;
+    flaggedClaims?: { kind: 'ungrounded' | 'overclaim' | 'contradiction'; text: string }[];
   };
   /** Server-side degraded-mode warnings. */
   warnings?: string[];
@@ -153,6 +155,7 @@ export function Message({
   // Reasoning section is open while thinking arrives so users see it form,
   // auto-collapses once the answer starts flowing.
   const [thinkingOpen, setThinkingOpen] = useState(true);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
   const hasText = text.length > 0;
   useEffect(() => {
     if (hasText) setThinkingOpen(false);
@@ -317,21 +320,45 @@ export function Message({
           )}
           {evidence && (evidence.sourceCount > 0 || evidence.groundedClaims > 0 || evidence.weakClaims > 0) && (() => {
             const weak = evidence.weakClaims > 0 || evidence.missingSupport > 0;
+            const label = weak
+              ? `${evidence.weakClaims + evidence.missingSupport} weak`
+              : `${evidence.sourceCount} source${evidence.sourceCount !== 1 ? 's' : ''}`;
+            const detail = weak
+              ? `${evidence.weakClaims} weak / ${evidence.missingSupport} unsupported claim(s)`
+              : `${evidence.sourceCount} source${evidence.sourceCount !== 1 ? 's' : ''} · ${evidence.groundedClaims} grounded claim${evidence.groundedClaims !== 1 ? 's' : ''}`;
+            const icon = weak ? <I.alert size={11} /> : <I.shieldCheck size={11} />;
+            // Only offer a drill-down when the server sent something to show.
+            const expandable =
+              (evidence.flaggedClaims && evidence.flaggedClaims.length > 0) ||
+              !!evidence.riskSummary;
+            if (!expandable) {
+              return (
+                <span
+                  className={styles.cite}
+                  style={{ marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                  title={detail}
+                >
+                  {icon}
+                  {label}
+                </span>
+              );
+            }
             return (
-              <span
-                className={styles.cite}
-                style={{ marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 3 }}
-                title={
-                  weak
-                    ? `${evidence.weakClaims} weak / ${evidence.missingSupport} unsupported claim(s)`
-                    : `${evidence.sourceCount} source${evidence.sourceCount !== 1 ? 's' : ''} · ${evidence.groundedClaims} grounded claim${evidence.groundedClaims !== 1 ? 's' : ''}`
-                }
+              <button
+                type="button"
+                className={styles.citeButton}
+                style={{ marginLeft: 8 }}
+                onClick={() => setEvidenceOpen(v => !v)}
+                aria-expanded={evidenceOpen}
+                title={evidenceOpen ? 'Hide evidence detail' : `${detail} — show detail`}
               >
-                {weak ? <I.alert size={11} /> : <I.shieldCheck size={11} />}
-                {weak
-                  ? `${evidence.weakClaims + evidence.missingSupport} weak`
-                  : `${evidence.sourceCount} source${evidence.sourceCount !== 1 ? 's' : ''}`}
-              </span>
+                {icon}
+                {label}
+                <I.down
+                  size={11}
+                  className={`${styles.evidenceChevron}${evidenceOpen ? ' ' + styles.evidenceChevronOpen : ''}`}
+                />
+              </button>
             );
           })()}
           {typeof latencyMs === 'number' && latencyMs > 0 && (
@@ -349,6 +376,43 @@ export function Message({
             </span>
           )}
         </div>
+
+        {evidence && evidenceOpen && (() => {
+          const weak = evidence.weakClaims > 0 || evidence.missingSupport > 0;
+          const claims = evidence.flaggedClaims ?? [];
+          const kindLabel: Record<string, string> = {
+            ungrounded: 'Ungrounded',
+            overclaim: 'Overclaim',
+            contradiction: 'Contradiction',
+          };
+          return (
+            <div className={styles.evidencePanel}>
+              <div className={styles.evidenceHeading}>
+                {weak ? <I.alert size={12} /> : <I.shieldCheck size={12} />}
+                {weak ? 'Claims to verify' : 'Evidence grounding'}
+              </div>
+              {evidence.riskSummary && (
+                <p className={styles.evidenceSummary}>{evidence.riskSummary}</p>
+              )}
+              {claims.length > 0 ? (
+                <ul className={styles.evidenceClaims}>
+                  {claims.map((c, i) => (
+                    <li key={i} className={styles.evidenceClaim}>
+                      <span className={styles.evidenceKind} data-kind={c.kind}>
+                        {kindLabel[c.kind] ?? c.kind}
+                      </span>
+                      <span className={styles.evidenceClaimText}>{c.text}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className={styles.evidenceSummary}>
+                  No specific claims were flagged this turn.
+                </p>
+              )}
+            </div>
+          );
+        })()}
 
         {thinking && thinking.length > 0 && (
           <div className={styles.thinking}>

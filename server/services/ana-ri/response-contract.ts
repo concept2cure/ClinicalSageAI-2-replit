@@ -10,6 +10,16 @@
 
 // ── Evidence Verdict ──────────────────────────────────────────────────────────
 
+/**
+ * A specific claim the evidence validator flagged, carried so the client can
+ * show *which* claims are weak — not just a count. `kind` explains why it was
+ * flagged; `text` is the offending sentence/phrase (trimmed).
+ */
+export interface FlaggedClaim {
+  kind: 'ungrounded' | 'overclaim' | 'contradiction';
+  text: string;
+}
+
 export interface EvidenceVerdict {
   /** Whether evidence validation was attempted */
   attempted: boolean;
@@ -31,6 +41,12 @@ export interface EvidenceVerdict {
   error?: string;
   /** Reviewer risk summary */
   reviewer_risk_summary?: string;
+  /**
+   * The specific claims behind `weak_or_ungrounded_claim_count` — so the client
+   * can let a reviewer see *which* claims are weak and why, rather than only a
+   * number. Bounded (the validator caps the list); omitted when nothing flagged.
+   */
+  flagged_claims?: FlaggedClaim[];
 }
 
 // ── Memory Metadata ───────────────────────────────────────────────────────────

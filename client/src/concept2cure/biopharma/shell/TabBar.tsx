@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { BioIcon } from '../icons';
-import { CLIENT_TYPES } from '../data/nav';
+import { CLIENT_TYPES, asClientType } from '../data/nav';
 import type { BiopharmaProgram } from '../data/programs';
 
 interface Tab {
@@ -31,9 +31,10 @@ export function BiopharmaTabBar({ activeNav, setActiveNav, programs, clientType 
     { id: 'precedent', label: 'Precedent intel',icon: 'scale' },
   ];
 
-  const cfg = CLIENT_TYPES[clientType];
-  const allowed = cfg ? new Set([...cfg.workstream, 'overview', 'lifecycle']) : null;
-  const tabs = allowed ? allTabs.filter(t => allowed.has(t.id)) : allTabs;
+  // Filter tabs by the tenant's client type (organizations.client_type).
+  const cfg = CLIENT_TYPES[asClientType(clientType)];
+  const allowed = new Set([...cfg.workstream, 'overview']);
+  const tabs = allTabs.filter(t => allowed.has(t.id));
 
   return (
     <div className="tabbar">

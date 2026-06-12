@@ -439,6 +439,17 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Research Compliance routes:', error);
   }
 
+  // Effort certification (2 CFR 200.430) + research-security COI (NOT-OD-26-017).
+  try {
+    const effortModule = await import('../routes/effort-certification');
+    app.use('/api/effort-certification', authMiddleware, effortModule.default);
+    const rsModule = await import('../routes/research-security');
+    app.use('/api/research-security', authMiddleware, rsModule.default);
+    console.info('✅ Effort Certification + Research Security routes mounted');
+  } catch (error) {
+    console.error('❌ Failed to mount Effort/Research-Security routes:', error);
+  }
+
   // C2C study digital twins + simulation (study/protocol design module).
   try {
     const c2cStudyTwinModule = await import('../routes/c2c/study-twin');

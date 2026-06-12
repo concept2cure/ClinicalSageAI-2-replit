@@ -112,6 +112,19 @@ export async function computeDomainReport(reportTypeId: string, orgId: number): 
       const t = await countBy('personnel_training', 'training_type', orgId);
       return result('research_compliance_training', ppl, { personnel: ppl, trainingRecords: t.total, byType: t.byCol, expired });
     }
+    case 'effort.certification_register': {
+      const c = await countBy('effort_certifications', 'status', orgId);
+      // Lines where actual deviates materially from committed on a sponsored award (2 CFR 200.430) — recert candidates.
+      const recert = (await pool.query(`SELECT count(DISTINCT certification_id)::int n FROM effort_lines WHERE organization_id=$1 AND deleted_at IS NULL AND award_id IS NOT NULL AND abs(actual_pct - committed_pct) > 25`, [orgId])).rows[0].n;
+      return result('effort_certifications', c.total, { statements: c.total, byStatus: c.byCol, certified: c.byCol['certified'] ?? 0, recertCandidates: recert });
+    }
+    case 'research_security.coi_register': {
+      const d = await countBy('coi_disclosures', 'status', orgId);
+      const ty = await countBy('coi_disclosures', 'disclosure_type', orgId);
+      // Foreign nexus: foreign appointment/support type OR a non-US country (NSPM-33 / NOT-OD-26-017).
+      const foreign = (await pool.query(`SELECT count(*)::int n FROM coi_disclosures WHERE organization_id=$1 AND deleted_at IS NULL AND (disclosure_type IN ('foreign_appointment','foreign_support') OR (country IS NOT NULL AND upper(country) <> 'US'))`, [orgId])).rows[0].n;
+      return result('research_security_coi', d.total, { disclosures: d.total, byStatus: d.byCol, byType: ty.byCol, foreignNexus: foreign, unmanagedConflicts: d.byCol['conflict'] ?? 0 });
+    }
     default:
       return null;
   }
@@ -123,4 +136,5 @@ export const DOMAIN_REPORT_TYPE_IDS = [
   'ibc.registration_register', 'nonclinical.study_send_register', 'grants.portfolio_register', 'rim.registration_grid',
   'inspection.readiness_pack', 'controlled_substances.inventory_ledger', 'lifecycle.obligation_calendar',
   'etmf.completeness_pack', 'research_compliance.training_status',
+  'effort.certification_register', 'research_security.coi_register',
 ] as const;

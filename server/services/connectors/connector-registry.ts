@@ -29,6 +29,9 @@ import { FHIRR4Connector } from './fhir-r4.js';
 import { OneDriveConnector } from './onedrive.js';
 import { GoogleDriveConnector } from './google-drive.js';
 import { BoxConnector } from './box.js';
+import { GrantsGovConnector } from './grants-gov.js';
+import { SamExclusionsConnector } from './sam-exclusions.js';
+import { EllucianBannerConnector } from './ellucian-banner.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ENCRYPTION
@@ -97,6 +100,10 @@ function initializeConnectors(): void {
   connectors.set('onedrive', new OneDriveConnector());
   connectors.set('google_drive', new GoogleDriveConnector());
   connectors.set('box', new BoxConnector());
+  // Sponsored programs / research administration.
+  connectors.set('grants_gov', new GrantsGovConnector());
+  connectors.set('sam_exclusions', new SamExclusionsConnector());
+  connectors.set('ellucian_banner', new EllucianBannerConnector());
 }
 
 /**

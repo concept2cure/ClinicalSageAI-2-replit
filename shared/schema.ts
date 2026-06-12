@@ -149,6 +149,9 @@ export const organizations = pgTable('organizations', {
   domain: text('domain'),
   logo: text('logo'),
   industryMode: text('industry_mode'),
+  // Phase 10.2 — tenant IA: which biopharma surfaces this tenant sees.
+  // medtech tenants are redirected to the MDX shell.
+  clientType: text('client_type').default('pharma').notNull(), // medtech | biotech | pharma
   stripeCustomerId: text('stripe_customer_id'),
   stripeSubscriptionId: text('stripe_subscription_id'),
   billingCycle: text('billing_cycle').default('monthly'), // monthly, annual
@@ -2474,7 +2477,11 @@ export const users = pgTable('users', {
   status: text('status').default('active').notNull(), // active, inactive, suspended
   lastLogin: timestamp('last_login'),
   defaultOrganizationId: integer('default_organization_id').references(() => organizations.id),
-  preferences: json('preferences'),
+  // Phase 10.2 — display preferences only (density | railGroups | dockOpen),
+  // merge-patched via PUT /api/users/me/preferences. Never carries tenancy.
+  preferences: jsonb('preferences')
+    .default(sql`'{}'::jsonb`)
+    .notNull(),
   // MFA fields
   mfaEnabled: boolean('mfa_enabled').default(false),
   mfaSecret: text('mfa_secret'), // encrypted TOTP secret

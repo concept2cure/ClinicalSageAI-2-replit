@@ -489,3 +489,11 @@ export * from './etmf';
 // compliance-checklist reasoning engine. Service: server/services/research-
 // compliance; migration: migrations/20260611_research_compliance.sql.
 export * from './research-compliance';
+
+// Effort certification (add-on): per-person per-period committed-vs-actual effort
+// across awards; total <= 100%; deviation triggers recertification. 2 CFR 200.430.
+export * from './effort-certification';
+
+// Research security / COI-FCOI disclosure (add-on; NOT-OD-26-017 / NSPM-33):
+// outside activities, foreign appointments/support, financial interests + review.
+export * from './research-security';

@@ -138,6 +138,10 @@ export interface AnaChatMessage {
     groundedClaims: number;
     weakClaims: number;
     missingSupport: number;
+    /** One-line reviewer risk summary from the server verdict. */
+    riskSummary?: string;
+    /** The specific claims the verdict flagged, so the chip can drill down. */
+    flaggedClaims?: { kind: 'ungrounded' | 'overclaim' | 'contradiction'; text: string }[];
   };
   /** Degraded-mode signals from server `warning` events (thread persistence etc.). */
   warnings?: string[];
@@ -545,6 +549,23 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                               : 0,
                           missingSupport:
                             typeof ev.missing_support_count === 'number' ? ev.missing_support_count : 0,
+                          riskSummary:
+                            typeof ev.reviewer_risk_summary === 'string'
+                              ? ev.reviewer_risk_summary
+                              : undefined,
+                          flaggedClaims: Array.isArray(ev.flagged_claims)
+                            ? ev.flagged_claims
+                                .filter(
+                                  (c: unknown): c is { kind: string; text: string } =>
+                                    !!c &&
+                                    typeof (c as { text?: unknown }).text === 'string' &&
+                                    typeof (c as { kind?: unknown }).kind === 'string'
+                                )
+                                .map((c: { kind: string; text: string }) => ({
+                                  kind: c.kind as 'ungrounded' | 'overclaim' | 'contradiction',
+                                  text: c.text,
+                                }))
+                            : undefined,
                         },
                       }
                     : m

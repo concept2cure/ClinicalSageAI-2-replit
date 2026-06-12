@@ -81,4 +81,18 @@ export async function listDispatchSnapshots(
   return rows as IndDispatchSnapshot[];
 }
 
-export default { createDispatchSnapshot, listDispatchSnapshots };
+/** The most recent dispatch snapshot for a sequence, or null (org-scoped). */
+export async function getLatestDispatchSnapshot(
+  sequenceId: number,
+  ctx: { organizationId: number },
+): Promise<IndDispatchSnapshot | null> {
+  const [row] = await db
+    .select()
+    .from(indDispatchSnapshots)
+    .where(and(eq(indDispatchSnapshots.sequenceId, sequenceId), eq(indDispatchSnapshots.organizationId, ctx.organizationId)))
+    .orderBy(desc(indDispatchSnapshots.createdAt))
+    .limit(1);
+  return (row as IndDispatchSnapshot) ?? null;
+}
+
+export default { createDispatchSnapshot, listDispatchSnapshots, getLatestDispatchSnapshot };
