@@ -9,6 +9,7 @@ import {
   assembleIndSafetyReport,
   classifyIndSafetyReport,
 } from '../../services/ind-lifecycle/ind-safety-report-service';
+import { composeE2bR3Icsr } from '../../services/ind-lifecycle/e2b-icsr-composer';
 import { assembleIndAnnualReport } from '../../services/ind-lifecycle/ind-annual-report-service';
 import { planIndAmendment } from '../../services/ind-lifecycle/ind-amendment-service';
 import { assembleBriefingBook } from '../../services/ind-lifecycle/ind-briefing-book-service';
@@ -62,6 +63,32 @@ router.post('/safety-report/classify', limiter, requireRole(AUTHOR), (req, res) 
   }
   try {
     res.json(classifyIndSafetyReport(coerceEventDates(b.event), b.now ? new Date(b.now) : undefined));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Compose the ICH E2B(R3) ICSR data elements for a 312.32 case and return them.
+ * Body: { event, icsr?, expedited?, now? }. JSON (model + gaps + completeness)
+ * by default; `?format=xml` returns the escaped E2B(R3) XML projection.
+ */
+router.post('/safety-report/icsr', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = body(req);
+  if (!b.event) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'event (AdverseEvent) is required.' } });
+  }
+  try {
+    const result = composeE2bR3Icsr(coerceEventDates(b.event), {
+      icsr: b.icsr ?? null,
+      expedited: typeof b.expedited === 'boolean' ? b.expedited : undefined,
+      now: b.now ? new Date(b.now) : undefined,
+    });
+    if (String(req.query.format).toLowerCase() === 'xml') {
+      res.setHeader('Content-Type', 'application/xml');
+      return res.status(200).send(result.xml);
+    }
+    res.json({ icsr: result.icsr, gaps: result.gaps, completeness: result.completeness });
   } catch (err) {
     fail(res, err);
   }

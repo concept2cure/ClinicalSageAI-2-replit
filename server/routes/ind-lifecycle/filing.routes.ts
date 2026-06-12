@@ -8,6 +8,7 @@ import { Router } from 'express';
 import { createHash } from 'crypto';
 import { requireRole } from '../../middleware/auth';
 import { assembleIndSafetyReport } from '../../services/ind-lifecycle/ind-safety-report-service';
+import { composeE2bR3Icsr } from '../../services/ind-lifecycle/e2b-icsr-composer';
 import { assembleIndAnnualReport } from '../../services/ind-lifecycle/ind-annual-report-service';
 import { planIndAmendment } from '../../services/ind-lifecycle/ind-amendment-service';
 import {
@@ -44,7 +45,8 @@ router.post('/safety-report/file', limiter, requireRole(AUTHOR), async (req, res
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'event (AdverseEvent) is required.' } });
   }
   try {
-    const { document, amendmentIntent } = assembleIndSafetyReport(coerceEventDates(b.event), {
+    const event = coerceEventDates(b.event);
+    const { document, amendmentIntent } = assembleIndSafetyReport(event, {
       icsr: b.icsr ?? null,
       aggregateContext: b.aggregateContext,
       now: b.now ? new Date(b.now) : undefined,
@@ -55,9 +57,19 @@ router.post('/safety-report/file', limiter, requireRole(AUTHOR), async (req, res
     // Render the safety-report PDF and attach its md5 to the m1.12.4 leaf so the
     // eCTD index-md5 matches the filed bytes.
     const pdf = await renderIndSafetyReportPdf(document);
-    const md5 = createHash('md5').update(pdf).digest('hex');
+    const checksums: Record<string, string> = { 'm1.12.4': createHash('md5').update(pdf).digest('hex') };
+    // When an ICSR backs the case, the intent also carries an m5.3.5 leaf; file
+    // the deterministic E2B(R3) XML projection and checksum it likewise.
+    if (b.icsr) {
+      const { xml } = composeE2bR3Icsr(event, {
+        icsr: b.icsr,
+        expedited: true,
+        now: b.now ? new Date(b.now) : undefined,
+      });
+      checksums['m5.3.5'] = createHash('md5').update(xml).digest('hex');
+    }
     res.status(201).json(
-      await persistSafetyReportIntent(Number(b.submissionId), amendmentIntent, String(b.sequenceNumber), ctx, { 'm1.12.4': md5 }),
+      await persistSafetyReportIntent(Number(b.submissionId), amendmentIntent, String(b.sequenceNumber), ctx, checksums),
     );
   } catch (err) {
     fail(res, err);

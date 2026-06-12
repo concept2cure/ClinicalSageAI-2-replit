@@ -376,10 +376,24 @@ registerToolHandler('search_device_adverse_events', async (input) => {
       limit: maxResults,
     });
     const analysis = fdaMaudeClient.analyzeMaudeData(reports);
+    const total = Number(analysis?.total_reports) || 0;
+    const subject = (input.device_name as string) || (input.product_code as string) || 'the device';
+    const provenance = [
+      buildProvenance({
+        sourceId: 'openfda',
+        citation: { title: `MAUDE device adverse-event signal for ${subject} (${total} reports)`, identifier: null, url: null },
+        query: subject,
+        confidence: total > 0 ? 'moderate' : null,
+        extraCaveats: [
+          'MAUDE is passive surveillance — reports are unverified, subject to reporting bias, and do not establish causality or rates.',
+        ],
+      }),
+    ];
     return JSON.stringify({
       source: 'FDA MAUDE (openFDA)',
       summary: analysis,
       sample: Array.isArray(reports) ? reports.slice(0, 15) : [],
+      provenance,
     });
   } catch (e) {
     return JSON.stringify({
@@ -404,10 +418,24 @@ registerToolHandler('search_drug_adverse_events', async (input) => {
       limit: maxResults,
     });
     const analysis = fdaFaersClient.analyzeFaersData(reports);
+    const total = Number(analysis?.total_reports) || 0;
+    const subject = (input.product_name as string) || (input.product_ndc as string) || 'the product';
+    const provenance = [
+      buildProvenance({
+        sourceId: 'openfda',
+        citation: { title: `FAERS adverse-event signal for ${subject} (${total} reports)`, identifier: null, url: null },
+        query: subject,
+        confidence: total > 0 ? 'moderate' : null,
+        extraCaveats: [
+          'FAERS is spontaneous reporting — counts have no denominator and do not establish causality, incidence, or rates.',
+        ],
+      }),
+    ];
     return JSON.stringify({
       source: 'FDA FAERS (openFDA)',
       summary: analysis,
       sample: Array.isArray(reports) ? reports.slice(0, 15) : [],
+      provenance,
     });
   } catch (e) {
     return JSON.stringify({
@@ -1276,10 +1304,24 @@ registerToolHandler('search_device_recalls', async (input) => {
     if (!result.searchExpression) {
       return JSON.stringify({ error: 'Provide device_name, manufacturer, or query to search recalls.' });
     }
+    const recalls = result.recalls.slice(0, 15);
+    const provenance = recalls.map(r =>
+      buildProvenance({
+        sourceId: 'openfda',
+        citation: {
+          title: `Recall ${r.recallNumber} (${r.classification})${r.recallingFirm ? ` — ${r.recallingFirm}` : ''}`,
+          identifier: r.recallNumber,
+          url: null,
+        },
+        query: asStr(input.device_name) ?? asStr(input.manufacturer) ?? asStr(input.query) ?? null,
+        confidence: 'high',
+      })
+    );
     return JSON.stringify({
       source: result.source,
       summary: result.summary,
-      recalls: result.recalls.slice(0, 15),
+      recalls,
+      provenance,
       citation_hint: 'Reference recalls by recall number and classification; Class I is most serious.',
     });
   } catch (e) {

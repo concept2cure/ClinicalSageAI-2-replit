@@ -165,6 +165,30 @@ describe('document routes', () => {
     expect(res.status).toBe(400);
   });
 
+  it('POST /safety-report/icsr → 200 E2B(R3) elements + completeness', async () => {
+    const res = await request(app).post('/api/ind-lifecycle/safety-report/icsr').send({ event: reportableEvent() });
+    expect(res.status).toBe(200);
+    expect(res.body.icsr).toHaveProperty('caseAdmin');
+    expect(res.body.icsr.narrative.id).toBe('H.1');
+    expect(res.body).toHaveProperty('completeness');
+    expect(Array.isArray(res.body.gaps)).toBe(true);
+  });
+
+  it('POST /safety-report/icsr?format=xml → 200 application/xml', async () => {
+    const res = await request(app)
+      .post('/api/ind-lifecycle/safety-report/icsr?format=xml')
+      .send({ event: reportableEvent() });
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('xml');
+    expect(res.text).toContain('standard="E2B(R3)"');
+    expect(res.text).toContain('id="H.1"');
+  });
+
+  it('POST /safety-report/icsr → 400 without an event', async () => {
+    const res = await request(app).post('/api/ind-lifecycle/safety-report/icsr').send({});
+    expect(res.status).toBe(400);
+  });
+
   it('POST /envelope → 200 application/xml', async () => {
     const res = await request(app)
       .post('/api/ind-lifecycle/envelope')
@@ -203,6 +227,22 @@ describe('DB-write + program surface (full HTTP flow)', () => {
       .post('/api/ind-lifecycle/safety-report/file')
       .send({ submissionId: seededSubmissionId, sequenceNumber: '3', event: reportableEvent() });
     expect(res.status).toBe(400);
+  });
+
+  it('POST /safety-report/file with an ICSR → 201 also files a checksummed m5.3.5 leaf', async () => {
+    const res = await request(app)
+      .post('/api/ind-lifecycle/safety-report/file')
+      .send({
+        submissionId: seededSubmissionId,
+        sequenceNumber: '0004',
+        event: reportableEvent(),
+        icsr: { worldwideUniqueId: 'US-C2C-2026-000999', senderType: 'sponsor' },
+      });
+    expect(res.status).toBe(201);
+    const m535 = res.body.leaves.find((l: any) => l.sectionCode === 'm5.3.5');
+    expect(m535).toBeTruthy();
+    expect(typeof m535.checksum).toBe('string');
+    expect(m535.checksum.length).toBe(32); // md5 hex
   });
 
   it('GET /sequence/:id/manifest → 200 with the filed leaf', async () => {

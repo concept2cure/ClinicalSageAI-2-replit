@@ -68,6 +68,72 @@ export type SignatureMeaning =
   | 'responsibility' // Takes responsibility for content
   | 'custom'; // Custom meaning (see customMeaning field)
 
+/** Human-readable label for each signature meaning, per 21 CFR Part 11 §11.50(a)(3). */
+const SIGNATURE_MEANING_LABELS: Record<SignatureMeaning, string> = {
+  authorship: 'Authorship',
+  review: 'Reviewed',
+  approval: 'Approved',
+  rejection: 'Rejected',
+  verification: 'Verified',
+  authorization: 'Authorized for release',
+  acknowledgment: 'Acknowledged',
+  witnessing: 'Witnessed',
+  responsibility: 'Responsibility for content',
+  custom: 'Custom',
+};
+
+/** The fields needed to manifest a signature; a subset of a stored row. */
+export interface SignatureManifestInput {
+  signerName: string;
+  signerTitle?: string | null;
+  signerOrganization?: string | null;
+  meaning: SignatureMeaning | string;
+  customMeaning?: string | null;
+  timestamp: Date | string;
+}
+
+/**
+ * Assemble the human-readable signature manifestation required by 21 CFR Part 11
+ * §11.50 — the signed record must display (1) the printed name of the signer,
+ * (2) the date and time of signing, and (3) the meaning of the signature. Pure
+ * and deterministic so it can be embedded in a PDF/printed record and unit-tested
+ * without a database.
+ */
+export function buildSignatureManifest(sig: SignatureManifestInput): {
+  signerName: string;
+  signerTitle: string | null;
+  signerOrganization: string | null;
+  meaning: string;
+  meaningLabel: string;
+  signedAt: string;
+  manifestText: string;
+} {
+  const meaning = String(sig.meaning);
+  const meaningLabel =
+    meaning === 'custom' && sig.customMeaning
+      ? sig.customMeaning
+      : SIGNATURE_MEANING_LABELS[meaning as SignatureMeaning] ?? meaning;
+  const signedAt = new Date(sig.timestamp).toISOString();
+  const manifestText = [
+    sig.signerName,
+    sig.signerTitle ? `Title: ${sig.signerTitle}` : '',
+    sig.signerOrganization ? `Organization: ${sig.signerOrganization}` : '',
+    `Date/Time: ${signedAt}`,
+    `Meaning: ${meaningLabel}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+  return {
+    signerName: sig.signerName,
+    signerTitle: sig.signerTitle ?? null,
+    signerOrganization: sig.signerOrganization ?? null,
+    meaning,
+    meaningLabel,
+    signedAt,
+    manifestText,
+  };
+}
+
 export interface AuditTrailEntry {
   id: string;
   entityType: 'document' | 'signature' | 'user' | 'system' | 'configuration' | 'access';
@@ -455,6 +521,48 @@ router.get('/signatures/:documentId', async (req: Request, res: Response) => {
     res.json({ success: true, data: result.rows });
   } catch {
     res.json({ success: true, data: [], message: 'Signature table not yet initialized' });
+  }
+});
+
+/**
+ * GET /signatures/:signatureId/manifest
+ * Return the 21 CFR Part 11 §11.50 signature manifestation — printed name,
+ * date/time, and meaning — pre-formatted for embedding in a PDF or printed
+ * record. Read-only; the data is captured at signing time, this assembles it.
+ */
+router.get('/signatures/:signatureId/manifest', async (req: Request, res: Response) => {
+  const pool: Pool = (req as any).pool || (req.app as any).pool;
+  const { signatureId } = req.params as { signatureId: string };
+
+  try {
+    const result = await pool.query(
+      `SELECT id, signer_name, signer_title, signer_organization,
+              meaning, custom_meaning, timestamp
+       FROM electronic_signatures
+       WHERE id = $1`,
+      [signatureId]
+    );
+    if (!result.rows.length) {
+      return res.status(404).json({ success: false, error: 'Signature not found' });
+    }
+    const row = result.rows[0];
+    const manifest = buildSignatureManifest({
+      signerName: row.signer_name,
+      signerTitle: row.signer_title,
+      signerOrganization: row.signer_organization,
+      meaning: row.meaning,
+      customMeaning: row.custom_meaning,
+      timestamp: row.timestamp,
+    });
+    res.json({
+      success: true,
+      data: { id: row.id, ...manifest, compliance: '21 CFR Part 11 §11.50' },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to build signature manifest',
+    });
   }
 });
 
