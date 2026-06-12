@@ -244,16 +244,25 @@ export const NMPA_TEMPLATE: RegionalTemplate = {
     'Drug MAH (Marketing Authorization Holder) system since 2019',
     'Drug agent in China required for overseas applicants',
   ],
+  // Module 1 per the authoritative NMPA M4 Module 1 — Administrative Documents and
+  // Drug Information (行政文件和药品信息, NMPA notice 2019 No. 17, effective 1 July 2019;
+  // nmpa.gov.cn). Verified headings: 1.0 说明函 Cover Letter, 1.1 目录 Table of
+  // Contents, 1.2 申请表 Application Form, 1.3 产品信息相关材料 Product Information
+  // (说明书 / 包装标签 / 产品质量标准和生产工艺 / 临床试验相关资料 / 产品证明性文件).
   module1Sections: [
-    { number: '1.1', title: 'Application Form', titleLocal: '药品注册申请表', required: true, description: 'CDE application form in Chinese' },
-    { number: '1.2', title: 'Drug Certificate', titleLocal: '药品证书', required: true, description: 'Proof of approval in country of origin (if imported)' },
-    { number: '1.3', title: 'GMP Certificate', titleLocal: 'GMP证书', required: true, description: 'GMP compliance certification' },
-    { number: '1.4', title: 'Manufacturer Authorization', titleLocal: '生产企业授权书', required: true, description: 'Authorization from manufacturer to MAH' },
-    { number: '1.5', title: 'Agent Authorization', titleLocal: '代理人授权书', required: false, description: 'Authorization for Chinese agent (imported drugs)' },
-    { number: '1.6', title: 'Package Label and Insert', titleLocal: '说明书和标签', required: true, description: 'Chinese labeling and package insert' },
-    { number: '1.7', title: 'Drug Sample Information', titleLocal: '药品样品信息', required: false, description: 'Sample submission requirements' },
-    { number: '1.8', title: 'Self-Inspection Report', titleLocal: '自查报告', required: true, description: 'Clinical trial data self-inspection report' },
-    { number: '1.15', title: 'Clinical Trial Protocol', titleLocal: '临床试验方案', required: false, description: 'Protocol for Chinese clinical trials if required' },
+    { number: '1.0', title: 'Cover Letter', titleLocal: '说明函', required: true, description: 'Cover letter summarizing the key information of the application' },
+    { number: '1.1', title: 'Comprehensive Table of Contents', titleLocal: '目录', required: true, description: 'Table of contents / navigation structure for the submission' },
+    { number: '1.2', title: 'Application Form', titleLocal: '申请表', required: true, description: 'CDE drug registration application form (Chinese)' },
+    {
+      number: '1.3', title: 'Product Information', titleLocal: '产品信息相关材料', required: true, description: 'Prescribing information, labelling, quality/process, clinical and certification documents',
+      childSections: [
+        { number: '1.3.1', title: 'Prescribing Information', titleLocal: '说明书', required: true, description: 'Chinese package insert / prescribing information' },
+        { number: '1.3.2', title: 'Packaging and Labels', titleLocal: '包装标签', required: true, description: 'Chinese packaging and label text' },
+        { number: '1.3.3', title: 'Product Quality Standards and Manufacturing Process', titleLocal: '产品质量标准和生产工艺', required: true, description: 'Drug quality standards and manufacturing process (incl. GMP compliance)' },
+        { number: '1.3.4', title: 'Clinical Trial Materials', titleLocal: '临床试验相关资料', required: false, description: 'Clinical trial protocol/data and self-inspection report, where applicable' },
+        { number: '1.3.5', title: 'Product Certification Documents', titleLocal: '产品证明性文件', required: true, description: 'Drug approval/origin certificate, manufacturer authorization, and Chinese agent authorization (imported drugs)' },
+      ],
+    },
   ],
 };
 
