@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-12T00:51:40.968Z",
+  "generatedAt": "2026-06-12T01:14:38.297Z",
   "git": {
-    "sha": "84df0fab1270a518edac27798dcf03a42c90a57a",
+    "sha": "f1aeae006a988f64f4c4ab034598e1dbfe93464b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2119,7 +2119,7 @@
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
-        "bytes": 116433
+        "bytes": 117013
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2180,12 +2180,12 @@
         "lines": 3246
       },
       {
-        "file": "server/src/routes/stability.router.ts",
-        "lines": 2745
+        "file": "server/services/__tests__/ana-ri.test.ts",
+        "lines": 2750
       },
       {
-        "file": "server/services/__tests__/ana-ri.test.ts",
-        "lines": 2738
+        "file": "server/src/routes/stability.router.ts",
+        "lines": 2745
       },
       {
         "file": "server/routes/knowledge-base.ts",
