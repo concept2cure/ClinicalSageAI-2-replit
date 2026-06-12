@@ -311,12 +311,19 @@ async function main() {
     await tx((c) => grants.recordExpenditureTx(c, ORG, USER, overAwd, { category: 'personnel', amount: 2000 }));
     const { triageComplianceAttention } = await import('../../server/services/research-compliance/compliance-triage');
     const r1 = await triageComplianceAttention(ORG);
-    ok(r1.criticalItems >= 1 && r1.created.length >= 1, `triage created task(s) for critical item(s) (critical=${r1.criticalItems}, created=${r1.created.length})`);
+    // Re-run-safe: the critical item is tracked, whether newly created this run or
+    // already tracked from a prior harness run (the source key is stable).
+    ok(r1.criticalItems >= 1 && (r1.created.length + r1.alreadyTracked.length) >= 1, `triage tracks the critical item(s) as task(s) (critical=${r1.criticalItems}, created=${r1.created.length}, tracked=${r1.alreadyTracked.length})`);
     const overTask = await pool.query(`SELECT priority FROM unified_tasks WHERE organization_id=$1 AND source_entity_type='compliance_attention' LIMIT 1`, [ORG]);
     ok(overTask.rows.length >= 1 && overTask.rows[0].priority === 'critical', 'triage tasks land in unified_tasks as critical priority');
     const r2 = await triageComplianceAttention(ORG);
     ok(r2.created.length === 0 && r2.alreadyTracked.length >= 1, 're-running triage is idempotent (already-tracked, no duplicates)');
   }
+
+  console.log('\n[Reports] research-administration scorecard (cross-domain report type)');
+  const scorecard = await computeDomainReport('research_admin.scorecard', ORG);
+  ok(scorecard != null && (scorecard!.summary.totalAttentionItems as number) >= 1, `research_admin.scorecard computes (attentionItems=${scorecard?.summary.totalAttentionItems})`);
+  ok(scorecard != null && (scorecard!.summary.critical as number) >= 1 && scorecard!.summary.byDomain != null && Array.isArray(scorecard!.summary.topItems), 'scorecard rolls up severity counts + by-domain + ranked top items');
 
   console.log('\n[Tasking] deadline event → central unified_tasks');
   const taskId = await emitDeadlineTask({ organizationId: ORG, title: 'Verify milestone due', sourceEntityType: 'grant_milestone', sourceEntityId: 999, dueDate: '2026-12-01', taskType: 'milestone' });

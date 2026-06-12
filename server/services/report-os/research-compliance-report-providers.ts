@@ -140,6 +140,19 @@ export async function computeDomainReport(reportTypeId: string, orgId: number): 
       const foreign = (await pool.query(`SELECT count(*)::int n FROM coi_disclosures WHERE organization_id=$1 AND deleted_at IS NULL AND (disclosure_type IN ('foreign_appointment','foreign_support') OR (country IS NOT NULL AND upper(country) <> 'US'))`, [orgId])).rows[0].n;
       return result('research_security_coi', d.total, { disclosures: d.total, byStatus: d.byCol, byType: ty.byCol, foreignNexus: foreign, unmanagedConflicts: d.byCol['conflict'] ?? 0 });
     }
+    case 'research_admin.scorecard': {
+      // The cross-domain briefing rendered as a report. Lazy import breaks the
+      // import cycle (the briefing module reads this provider for each domain).
+      const { buildComplianceBriefing } = await import('../research-compliance/compliance-briefing');
+      const b = await buildComplianceBriefing(orgId);
+      const byDomain: Record<string, number> = {};
+      for (const it of b.items) byDomain[it.domain] = (byDomain[it.domain] ?? 0) + 1;
+      return result('research_admin_scorecard', b.totalAttentionItems, {
+        totalAttentionItems: b.totalAttentionItems,
+        critical: b.bySeverity.critical, warning: b.bySeverity.warning, info: b.bySeverity.info,
+        byDomain, topItems: b.items.slice(0, 12),
+      }, 'No attention items across research administration for this organization');
+    }
     default:
       return null;
   }
@@ -152,4 +165,5 @@ export const DOMAIN_REPORT_TYPE_IDS = [
   'inspection.readiness_pack', 'controlled_substances.inventory_ledger', 'lifecycle.obligation_calendar',
   'etmf.completeness_pack', 'research_compliance.training_status',
   'effort.certification_register', 'research_security.coi_register',
+  'research_admin.scorecard',
 ] as const;

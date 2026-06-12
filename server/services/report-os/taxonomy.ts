@@ -422,4 +422,21 @@ export const REPORT_TYPE_SEED: ReportTypeDefinition[] = [
     governanceRequirements: { part11: true, auditTrail: true },
     truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true },
   },
+  {
+    // Cross-domain research-administration scorecard — the briefing as a first-class
+    // report (overdue/at-risk items across IRB/IACUC/IBC, grants, effort, COI, etc.).
+    typeId: 'research_admin.scorecard',
+    label: 'Research Administration Scorecard',
+    family: 'research_admin',
+    allowedScopes: ['program', 'account'],
+    allowedPersonas: ['compliance_officer', 'ra_lead', 'executive'],
+    allowedClientSegments: ['academic', 'biotech', 'pharma'],
+    dataDependencies: ['regulatory_commitments', 'iacuc_protocols', 'personnel_training', 'coi_disclosures', 'grant_awards', 'grant_closeout_records', 'effort_certifications'],
+    artifactDependencies: ['concept2cure_artifacts'],
+    workflowDependencies: ['governance_boundary'],
+    anaModules: ['ana-ri'],
+    exportTemplate: 'research-admin-scorecard',
+    governanceRequirements: { part11: true, auditTrail: true },
+    truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true },
+  },
 ];
