@@ -22,7 +22,8 @@ interface Queryable { query: (sql: string, params?: unknown[]) => Promise<unknow
  * Stamp the RLS tenant session vars on the current transaction. Call immediately
  * after BEGIN. `app.current_tenant_id` is the numeric org id the policy matches.
  */
-export async function setTenantContextTx(client: Queryable, orgId: number, role?: string | null): Promise<void> {
+export async function setTenantContextTx(client: Queryable, orgId: number | null | undefined, role?: string | null): Promise<void> {
+  if (orgId == null) return; // governed handlers guard on org context already; no-op defensively
   await client.query("SELECT set_config('app.current_tenant_id', $1, true)", [String(orgId)]);
   if (role) await client.query("SELECT set_config('app.current_user_role', $1, true)", [role]);
 }

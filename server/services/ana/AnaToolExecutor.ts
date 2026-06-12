@@ -44,6 +44,7 @@ import {
   getLowYieldTools,
   isTelemetryPersistenceEnabled,
 } from './tool-telemetry.js';
+import { setTenantContextTx } from '../tenant/governed-tenant-context';
 import { composeMedicalWritingGuidance, listMedicalWritingCatalog } from './medical-writing.js';
 import { reviewMedicalWriting } from './medical-writing-review.js';
 import {
@@ -5815,6 +5816,7 @@ registerToolHandler('create_clinical_investigator', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await createInvestigatorTx(client, ctx.organizationId, ctx.userId, {
       fullName, role: role as any,
       institution: typeof input.institution === 'string' ? input.institution : null,
@@ -5847,6 +5849,7 @@ registerToolHandler('create_financial_disclosure', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id, formType } = await createDisclosureTx(client, ctx.organizationId, ctx.userId, {
       investigatorId,
       hasDisclosableInterests: input.has_disclosable_interests,
@@ -5883,6 +5886,7 @@ registerToolHandler('add_disclosure_interest', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await addInterestTx(client, ctx.organizationId, ctx.userId, disclosureId, {
       interestType: interestType as any, description,
       monetaryValue: typeof input.monetary_value === 'number' ? input.monetary_value : null,
@@ -5949,6 +5953,7 @@ registerToolHandler('create_ha_interaction', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await createInteractionTx(client, ctx.organizationId, ctx.userId, {
       interactionType: interactionType as any, agency: agency as any, title,
       objective: typeof input.objective === 'string' ? input.objective : null,
@@ -5982,6 +5987,7 @@ registerToolHandler('create_regulatory_commitment', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id, provenanceLinkIds } = await createCommitmentTx(client, ctx.organizationId, ctx.userId, {
       commitmentType: commitmentType as any, description,
       dueDate: typeof input.due_date === 'string' ? input.due_date : null,
@@ -6045,6 +6051,7 @@ registerToolHandler('create_iacuc_protocol', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await createProtocolTx(client, ctx.organizationId, ctx.userId, {
       protocolNumber, title, painCategory: painCategory as any,
       submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
@@ -6084,6 +6091,7 @@ registerToolHandler('register_animal_cohort', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await addCohortTx(client, ctx.organizationId, ctx.userId, protocolId, {
       species, plannedCount, painCategory: painCategory as any,
       strain: typeof input.strain === 'string' ? input.strain : null,
@@ -6150,6 +6158,7 @@ registerToolHandler('create_irb_submission', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await createSubmissionTx(client, ctx.organizationId, ctx.userId, {
       protocolNumber, title, riskLevel: riskLevel as any,
       studyId: typeof input.study_id === 'number' ? input.study_id : null,
@@ -6186,6 +6195,7 @@ registerToolHandler('add_irb_site', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await addSiteTx(client, ctx.organizationId, ctx.userId, submissionId, {
       siteName,
       principalInvestigator: typeof input.principal_investigator === 'string' ? input.principal_investigator : null,
@@ -6252,6 +6262,7 @@ registerToolHandler('create_ibc_registration', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const section = typeof input.nih_guidelines_section === 'string' ? input.nih_guidelines_section : 'not_applicable';
     const { id } = await createRegistrationTx(client, ctx.organizationId, ctx.userId, {
       registrationNumber, title, biosafetyLevel: biosafetyLevel as any,
@@ -6293,6 +6304,7 @@ registerToolHandler('add_biological_agent', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id, requiredBsl } = await addAgentTx(client, ctx.organizationId, ctx.userId, registrationId, { agentName, agentType: agentType as any, riskGroup: riskGroup as any });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
@@ -6356,6 +6368,7 @@ registerToolHandler('create_nonclinical_study', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id, ctdSection, provenanceLinkIds } = await createStudyTx(client, ctx.organizationId, ctx.userId, {
       studyNumber, title, studyType: studyType as any,
       species: typeof input.species === 'string' ? input.species : null,
@@ -6419,6 +6432,7 @@ registerToolHandler('create_grant_proposal', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await createProposalTx(client, ctx.organizationId, ctx.userId, {
       title,
       opportunityId: typeof input.opportunity_id === 'number' ? input.opportunity_id : null,
@@ -6454,6 +6468,7 @@ registerToolHandler('record_grant_award', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id, provenanceLinkId } = await createAwardTx(client, ctx.organizationId, ctx.userId, {
       awardNumber, fundingAgency: fundingAgency as any,
       proposalId: typeof input.proposal_id === 'number' ? input.proposal_id : null,
@@ -6509,6 +6524,7 @@ registerToolHandler('set_grant_milestone_status', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     await setMilestoneStatusTx(client, ctx.organizationId, milestoneId, status, typeof input.completed_date === 'string' ? input.completed_date : null);
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
@@ -6535,6 +6551,7 @@ registerToolHandler('open_grant_closeout', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id, closeoutDueDate } = await openCloseoutTx(client, ctx.organizationId, ctx.userId, awardId);
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
@@ -6562,6 +6579,7 @@ registerToolHandler('update_grant_closeout', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     await updateCloseoutTx(client, ctx.organizationId, ctx.userId, awardId, {
       finalRpprSubmitted: bool(input.final_rppr_submitted),
       finalFfrSubmitted: bool(input.final_ffr_submitted),
@@ -6595,6 +6613,7 @@ registerToolHandler('finalize_grant_closeout', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { closedAward } = await finalizeCloseoutTx(client, ctx.organizationId, ctx.userId, awardId);
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'sign',
@@ -6625,6 +6644,7 @@ registerToolHandler('record_subaward', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await createSubawardTx(client, ctx.organizationId, ctx.userId, awardId, {
       subrecipientName,
       subrecipientUei: typeof input.subrecipient_uei === 'string' ? input.subrecipient_uei : null,
@@ -6663,6 +6683,7 @@ registerToolHandler('screen_subaward', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     await screenSubawardTx(client, ctx.organizationId, subawardId, {
       screenStatus: screenStatus as any,
       screenSource: typeof input.screen_source === 'string' ? input.screen_source : 'sam_exclusions',
@@ -6693,6 +6714,7 @@ registerToolHandler('execute_subaward', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     await executeSubawardTx(client, ctx.organizationId, ctx.userId, subawardId);
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'sign',
@@ -6726,6 +6748,7 @@ registerToolHandler('add_grant_budget_line', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await addBudgetLineTx(client, ctx.organizationId, ctx.userId, awardId, {
       category: category as any, budgetedAmount,
       indirectRatePct: typeof input.indirect_rate_pct === 'number' ? input.indirect_rate_pct : null,
@@ -6761,6 +6784,7 @@ registerToolHandler('record_grant_expenditure', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await recordExpenditureTx(client, ctx.organizationId, ctx.userId, awardId, {
       category: category as any, amount,
       expenditureDate: typeof input.expenditure_date === 'string' ? input.expenditure_date : null,
@@ -6812,6 +6836,7 @@ registerToolHandler('record_cost_share_contribution', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await recordCostShareContributionTx(client, ctx.organizationId, ctx.userId, awardId, {
       source: source as any, amount,
       contributionDate: typeof input.contribution_date === 'string' ? input.contribution_date : null,
@@ -6861,6 +6886,7 @@ registerToolHandler('request_no_cost_extension', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id, requiresSponsorApproval, months } = await requestNceTx(client, ctx.organizationId, ctx.userId, awardId, { newEndDate, reason: typeof input.reason === 'string' ? input.reason : null });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
@@ -6888,6 +6914,7 @@ registerToolHandler('approve_no_cost_extension', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { newEndDate } = await approveNceTx(client, ctx.organizationId, ctx.userId, nceId, authority as any);
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'sign',
@@ -6925,6 +6952,7 @@ registerToolHandler('record_grant_opportunity', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await createOpportunityTx(client, ctx.organizationId, ctx.userId, {
       opportunityNumber, title, fundingAgency: fundingAgency as any,
       mechanism: typeof input.mechanism === 'string' && MECHANISMS.includes(input.mechanism) ? input.mechanism as any : null,
@@ -6993,6 +7021,7 @@ registerToolHandler('triage_compliance_attention', async (input, ctx) => {
     const client = await getPool().connect();
     try {
       await client.query('BEGIN');
+      await setTenantContextTx(client, ctx.organizationId);
       await recordGovernedAction(client, {
         orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
         target: `compliance-triage:${ctx.organizationId}`, reason: fcoiReason(input, 'Compliance attention triaged to tasks via AnA'),
@@ -7021,6 +7050,7 @@ registerToolHandler('fulfill_regulatory_commitment', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const fulfilledDate = typeof input.fulfilled_date === 'string' ? input.fulfilled_date : null;
     await fulfillCommitmentTx(client, ctx.organizationId, commitmentId, fulfilledDate);
     await recordGovernedAction(client, {
@@ -7094,6 +7124,7 @@ registerToolHandler('register_controlled_substance', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await createSubstanceTx(client, ctx.organizationId, ctx.userId, {
       substanceName, deaSchedule: deaSchedule as any,
       unit: typeof input.unit === 'string' ? input.unit : undefined,
@@ -7129,6 +7160,7 @@ registerToolHandler('create_rim_product', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await createProductTx(client, ctx.organizationId, ctx.userId, {
       productName,
       inn: typeof input.inn === 'string' ? input.inn : null,
@@ -7164,6 +7196,7 @@ registerToolHandler('set_registration_status', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await upsertRegistrationTx(client, ctx.organizationId, ctx.userId, productId, {
       country, marketStatus: marketStatus as any,
       registrationNumber: typeof input.registration_number === 'string' ? input.registration_number : null,
@@ -7223,6 +7256,7 @@ registerToolHandler('create_inspection', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await createInspectionTx(client, ctx.organizationId, ctx.userId, {
       inspectionType: inspectionType as any, agency: agency as any, siteName,
       scheduledDate: typeof input.scheduled_date === 'string' ? input.scheduled_date : null,
@@ -7257,6 +7291,7 @@ registerToolHandler('log_inspection_finding', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await addFindingTx(client, ctx.organizationId, ctx.userId, inspectionId, { observationNumber, description, classification: classification as any });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
@@ -7310,6 +7345,7 @@ registerToolHandler('register_dea', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await createRegistrationTx(client, ctx.organizationId, ctx.userId, {
       registrantName, deaNumber, businessActivity: businessActivity as any, schedules,
       expirationDate: typeof input.expiration_date === 'string' ? input.expiration_date : null,
@@ -7343,6 +7379,7 @@ registerToolHandler('log_cs_transaction', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id, balanceAfter } = await recordTransactionTx(client, ctx.organizationId, ctx.userId, substanceId, {
       transactionType: transactionType as any, quantity,
       transactionDate: typeof input.transaction_date === 'string' ? input.transaction_date : null,
@@ -7400,6 +7437,7 @@ registerToolHandler('create_lifecycle_obligation', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id, occurrencesCreated } = await createObligationTx(client, ctx.organizationId, ctx.userId, {
       obligationType: obligationType as any, region: region as any, title,
       classification: typeof input.classification === 'string' ? input.classification : null,
@@ -7458,6 +7496,7 @@ registerToolHandler('create_tmf', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await createTmfTx(client, ctx.organizationId, ctx.userId, { title, studyId: typeof input.study_id === 'number' ? input.study_id : null });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
@@ -7485,6 +7524,7 @@ registerToolHandler('classify_tmf_artifact', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id, zone, classification } = await addArtifactTx(client, ctx.organizationId, ctx.userId, tmfFileId, {
       artifactName,
       zone: typeof input.zone === 'number' ? input.zone : null,
@@ -7564,6 +7604,7 @@ registerToolHandler('add_personnel_training', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await addTrainingTx(client, ctx.organizationId, ctx.userId, personnelId, {
       trainingType: trainingType as any,
       completedDate: typeof input.completed_date === 'string' ? input.completed_date : null,
@@ -7615,6 +7656,7 @@ registerToolHandler('create_effort_certification', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await createCertificationTx(client, ctx.organizationId, ctx.userId, { personnelId, periodStart, periodEnd });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
@@ -7646,6 +7688,7 @@ registerToolHandler('add_effort_line', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id } = await addLineTx(client, ctx.organizationId, ctx.userId, certId, {
       activityLabel, committedPct, actualPct,
       awardId: typeof input.award_id === 'number' ? input.award_id : null,
@@ -7680,6 +7723,7 @@ registerToolHandler('create_coi_disclosure', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
     const { id, foreignFlag } = await createDisclosureTx(client, ctx.organizationId, ctx.userId, {
       personnelId, disclosureType: disclosureType as any, entityName,
       country: typeof input.country === 'string' ? input.country : null,
