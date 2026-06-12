@@ -675,6 +675,11 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
             typeof project_id === 'string' ? parseInt(project_id, 10) || null : project_id || null,
           // Tenant UUID so the project_knowledge_search tool can scope retrieval.
           organizationUuid: orgUuid ?? null,
+          // Situational context (surface/project/document type) — same signal the
+          // tool selector uses; threaded to handlers for telemetry + tailoring.
+          surface: tool_context && typeof tool_context === 'object' ? ((tool_context as any).surface ?? null) : null,
+          projectType: tool_context && typeof tool_context === 'object' ? ((tool_context as any).projectType ?? null) : null,
+          documentType: tool_context && typeof tool_context === 'object' ? ((tool_context as any).documentType ?? null) : null,
         },
         onToolExecution: (toolName, input, result) => {
           // Persist the invocation for usage analytics. Latency is 0 here

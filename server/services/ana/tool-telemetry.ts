@@ -134,6 +134,30 @@ export function recordContractViolation(tool: string, orgId?: string | number | 
   }
 }
 
+// ── Surface usage: which UI surface a tool was invoked from ───────────────────
+// Threaded from the chat route's ToolContext.surface. Process-lifetime, like the
+// rest of this module. Answers "which tools matter on which surface" — input to
+// per-surface tool tiering and description tuning, with no per-handler changes.
+const surfaceUsage = new Map<string, Map<string, number>>();
+
+export function recordToolSurface(tool: string, surface: string): void {
+  if (!surface) return;
+  let m = surfaceUsage.get(tool);
+  if (!m) { m = new Map(); surfaceUsage.set(tool, m); }
+  m.set(surface, (m.get(surface) ?? 0) + 1);
+}
+
+export interface ToolSurfaceUsage { tool: string; bySurface: Record<string, number> }
+
+/** Per-tool usage broken down by originating surface (only tools used with a surface). */
+export function getToolSurfaceUsage(): ToolSurfaceUsage[] {
+  return [...surfaceUsage.entries()].map(([tool, m]) => ({ tool, bySurface: Object.fromEntries(m) }));
+}
+
+export function resetToolSurfaceUsage(): void {
+  surfaceUsage.clear();
+}
+
 /**
  * Reliability for every tool called this process lifetime. Global by default;
  * pass an `orgId` for that organization's per-tenant view (empty if none yet).

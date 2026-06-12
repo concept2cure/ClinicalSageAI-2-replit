@@ -36,6 +36,8 @@ import { getAllEnabledTools } from './AnaToolDefinitions.js';
 import {
   recordToolOutcome,
   recordContractViolation,
+  recordToolSurface,
+  getToolSurfaceUsage,
   classifyResult,
   getToolReliability,
   getUnhealthyTools,
@@ -101,6 +103,12 @@ export interface ToolContext {
   projectId?: number | null;
   /** Tenant UUID — required to scope project_knowledge_search retrieval. */
   organizationUuid?: string | null;
+  /** Active UI surface/screen (e.g. 'nonclinical', 'cmc', 'sponsored_programs') — situational context. */
+  surface?: string | null;
+  /** Submission/program type (e.g. 'IND', 'NDA', '510k') — situational context. */
+  projectType?: string | null;
+  /** Active document / CTD type (e.g. 'nonclinical_overview', 'qos') — situational context. */
+  documentType?: string | null;
 }
 
 type ToolHandler = (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>;
@@ -135,6 +143,9 @@ export function registerToolHandler(name: string, handler: ToolHandler): void {
     // Report-only contract check: note when the model omitted required fields.
     const missing = getRequiredInputKeys(name).filter(k => input?.[k] === undefined);
     if (missing.length > 0) recordContractViolation(name, orgId);
+
+    // Situational context: record which surface this tool was invoked from.
+    if (ctx?.surface) recordToolSurface(name, ctx.surface);
 
     const start = Date.now();
     try {
@@ -944,6 +955,8 @@ registerToolHandler('describe_capabilities', async (_input, ctx) => {
         lowYield,
         // When persistence is enabled, reliability is learned across restarts.
         learningPersisted: isTelemetryPersistenceEnabled(),
+        // Which tools are used from which UI surface this session (threaded via ToolContext.surface).
+        surfaceUsage: getToolSurfaceUsage(),
       },
       guidance:
         'Only offer or attempt tools whose integration is configured. For configured:false entries, ' +
