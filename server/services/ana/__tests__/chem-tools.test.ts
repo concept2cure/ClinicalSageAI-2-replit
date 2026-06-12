@@ -48,6 +48,11 @@ describe('screen_compound_liabilities — deterministic offline path', () => {
     const alert = out.structuralAlerts.find((a: any) => a.id === 'n_nitrosamine');
     expect(alert?.confidence).toBe('high');
     expect(out.disclaimer).toMatch(/ICH M7/);
+    // Unified provenance: deterministic computation source, high confidence on a mutagenic hit.
+    expect(out.provenance).toHaveLength(1);
+    expect(out.provenance[0].sourceId).toBe('c2c_cheminformatics');
+    expect(out.provenance[0].sourceType).toBe('computation');
+    expect(out.provenance[0].confidence).toBe('high');
   });
 
   it('returns no alerts and an invalid verdict for malformed SMILES', async () => {
