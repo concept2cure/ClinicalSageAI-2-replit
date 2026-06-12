@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-12T04:18:10.663Z",
+  "generatedAt": "2026-06-12T04:26:42.436Z",
   "git": {
-    "sha": "3045eb9f7d3941fdf64403088fe006a64859e12e",
+    "sha": "6594dbfa326bc0051ea7d7d6d04e6575dff1a4ef",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 209,
+    "duplicateBasenames": 210,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -1761,6 +1761,14 @@
         ]
       },
       {
+        "basename": "provenance",
+        "count": 2,
+        "paths": [
+          "server/routes/chat/provenance.ts",
+          "server/services/evidence/provenance.ts"
+        ]
+      },
+      {
         "basename": "q-sub",
         "count": 2,
         "paths": [
@@ -2084,7 +2092,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 438281
+        "bytes": 439714
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2142,7 +2150,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 8852
+        "lines": 8893
       },
       {
         "file": "server/statistics-service.ts",
@@ -2314,7 +2322,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 306,
+      "duplicateGroups": 308,
       "largeByBytes": 11,
       "largeByLines": 34
     },
