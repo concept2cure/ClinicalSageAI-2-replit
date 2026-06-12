@@ -23,9 +23,10 @@ const holder = vi.hoisted(() => ({ db: null as any }));
 vi.mock('../../../db', () => ({ get db() { return holder.db; } }));
 vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => {}) } }));
 
-import { createSubmission, listSequences, listLeaves } from '../../submission-service/submission-service';
+import { createSubmission, listSubmissions, listSequences, listLeaves } from '../../submission-service/submission-service';
 import { persistAnnualReport, persistSafetyReportIntent } from '../ind-lifecycle-persistence';
 import { assembleIndSafetyReport } from '../ind-safety-report-service';
+import { buildIndPortfolio, buildIndPortfolioEntry, isIndSubmission } from '../ind-portfolio';
 
 let harness: IndPgliteDb;
 const ctx = { organizationId: 1, userId: 9 };
@@ -113,5 +114,25 @@ describe('safety-report filing flow against PGlite', () => {
     expect(codes).toContain('m1.12.4');
     const m1 = persisted.find((l) => l.sectionCode === 'm1.12.4')!;
     expect(m1.checksum).toBe('md5-safety-xyz');
+  });
+});
+
+describe('IND portfolio against PGlite', () => {
+  it('lists only IND submissions for the org, with per-submission sequence rollups', async () => {
+    const portfolioCtx = { organizationId: 50, userId: 9 };
+    const ind1 = await createSubmission({ title: 'IND One', applicationType: 'ind', clientType: 'biotech', primaryRegion: 'fda' }, portfolioCtx);
+    await createSubmission({ title: 'IND Two', applicationType: 'ind', clientType: 'pharma', primaryRegion: 'fda' }, portfolioCtx);
+    await createSubmission({ title: 'An NDA', applicationType: 'nda', clientType: 'pharma', primaryRegion: 'fda' }, portfolioCtx);
+    await persistAnnualReport(ind1.id, '0001', portfolioCtx, 'cs');
+
+    // Replicate the portfolio route's service-level logic against the real DB.
+    const all = await listSubmissions(portfolioCtx);
+    const inds = all.filter(isIndSubmission);
+    const entries = await Promise.all(inds.map(async (s) => buildIndPortfolioEntry(s, await listSequences(s.id, portfolioCtx))));
+    const portfolio = buildIndPortfolio(entries);
+
+    expect(portfolio.totals.submissions).toBe(2); // the NDA is excluded
+    expect(portfolio.entries.map((e) => e.title).sort()).toEqual(['IND One', 'IND Two']);
+    expect(portfolio.totals.totalSequences).toBe(1); // only ind1 has a sequence
   });
 });

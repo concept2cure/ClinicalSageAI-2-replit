@@ -15,8 +15,9 @@ import { buildIndTimeline } from '../../services/ind-lifecycle/ind-timeline-serv
 import { summarizeSequences } from '../../services/ind-lifecycle/ind-submission-overview';
 import { buildIndDashboard } from '../../services/ind-lifecycle/ind-dashboard';
 import { buildIndCockpit, annotateGateWithSnapshot, buildDriftDigest, type SequenceGateSummary } from '../../services/ind-lifecycle/ind-cockpit';
+import { buildIndPortfolio, buildIndPortfolioEntry, isIndSubmission } from '../../services/ind-lifecycle/ind-portfolio';
 import { getLatestDispatchSnapshot } from '../../services/ind-lifecycle/ind-dispatch-snapshot-service';
-import { getSubmission, listSequences, listLeaves } from '../../services/submission-service/submission-service';
+import { getSubmission, listSubmissions, listSequences, listLeaves } from '../../services/submission-service/submission-service';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, readinessFrom, validationFrom } from './shared';
 
 const router = Router();
@@ -75,6 +76,26 @@ async function annotatedGatesForSubmission(
     }),
   );
 }
+
+/**
+ * IND portfolio — every IND submission for the org at a glance, each with its
+ * eCTD sequence summary, plus portfolio totals. One call for a CRO / program
+ * manager.
+ */
+router.get('/portfolio', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  try {
+    const all = await listSubmissions(ctx);
+    const inds = all.filter(isIndSubmission);
+    const entries = await Promise.all(
+      inds.map(async (s) => buildIndPortfolioEntry(s, await listSequences(s.id, ctx))),
+    );
+    res.json(buildIndPortfolio(entries));
+  } catch (err) {
+    fail(res, err);
+  }
+});
 
 /**
  * IND submission overview — the submission, its eCTD sequences, and a summary
