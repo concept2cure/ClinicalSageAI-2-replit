@@ -19,12 +19,25 @@
  * @module server/services/ana-ri/evidence-validation
  */
 
-import type { EvidenceVerdict } from './response-contract.js';
+import type { EvidenceVerdict, FlaggedClaim } from './response-contract.js';
 
 // ── Configuration ─────────────────────────────────────────────────────────────
 
 /** Minimum response length to trigger full validation (short responses get a pass) */
 const MIN_VALIDATION_LENGTH = 200;
+
+/**
+ * Maximum number of flagged claims carried back to the client. The validator
+ * can match many overlapping patterns; cap the itemized list so the streamed
+ * verdict payload (and the reviewer's drill-down panel) stays bounded.
+ */
+const MAX_FLAGGED_CLAIMS = 8;
+
+/** Trim a flagged claim to a single readable line for the client panel. */
+function trimClaim(text: string): string {
+  const collapsed = text.replace(/\s+/g, ' ').trim();
+  return collapsed.length > 180 ? collapsed.slice(0, 179) + '…' : collapsed;
+}
 
 /** Proximity window: how many characters around a claim to search for evidence labels */
 const EVIDENCE_PROXIMITY_CHARS = 500;
@@ -321,7 +334,28 @@ export function validateEvidence(
     if (label.type === 'MISSING') sourceTypes.add('identified_gap');
   }
 
-  // Step 7: Build verdict
+  // Step 7: Itemize the flagged claims so the client can show *which* claims
+  // are weak — these were previously computed and then discarded. Order:
+  // ungrounded claims first (most actionable), then overclaims, then
+  // contradictions; deduped and bounded.
+  const flaggedClaims: FlaggedClaim[] = [];
+  const seenClaimText = new Set<string>();
+  const pushFlagged = (kind: FlaggedClaim['kind'], raw: string) => {
+    const text = trimClaim(raw);
+    if (!text || seenClaimText.has(text)) return;
+    seenClaimText.add(text);
+    flaggedClaims.push({ kind, text });
+  };
+  for (const claim of claims) {
+    if (!claim.grounded) pushFlagged('ungrounded', claim.text);
+  }
+  for (const overclaim of overclaims) pushFlagged('overclaim', overclaim);
+  for (const contradiction of contradictionResult.contradictions) {
+    pushFlagged('contradiction', contradiction);
+  }
+  const boundedFlaggedClaims = flaggedClaims.slice(0, MAX_FLAGGED_CLAIMS);
+
+  // Step 8: Build verdict
   const totalIssues =
     ungroundedCount + overclaims.length + contradictionResult.contradictions.length;
   const validated =
@@ -343,6 +377,7 @@ export function validateEvidence(
       totalClaims: claims.length,
       totalLabels: labels.length,
     }),
+    ...(boundedFlaggedClaims.length > 0 ? { flagged_claims: boundedFlaggedClaims } : {}),
   };
 }
 
