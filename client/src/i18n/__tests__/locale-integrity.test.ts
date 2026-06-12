@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 // @ts-expect-error — pure-Node ESM checker, no type declarations needed for the test
-import { checkI18nIntegrity } from '../../../../scripts/ci/check-i18n-integrity.mjs';
+import { checkI18nIntegrity, checkI18nKeyUsage } from '../../../../scripts/ci/check-i18n-integrity.mjs';
 import { LANGUAGES, SUPPORTED_LANGUAGE_CODES, DEFAULT_LANGUAGE } from '../languages';
 import {
   LANGUAGE_OVERLAYS,
@@ -25,6 +25,15 @@ describe('i18n locale & overlay integrity', () => {
     expect(errors).toEqual([]);
     expect(languages.length).toBeGreaterThanOrEqual(SUPPORTED_LANGUAGE_CODES.length);
     expect(namespaces).toContain('common');
+  });
+
+  it('resolves every static t()/i18nKey reference in the client to a real key', () => {
+    const { errors, checked } = checkI18nKeyUsage();
+    // Catches code that references a missing/renamed key (renders the raw key to
+    // the user) — the failure mode bundle-vs-bundle parity cannot see.
+    expect(errors).toEqual([]);
+    // Guard against a vacuous pass (e.g. the scanner silently matching nothing).
+    expect(checked).toBeGreaterThan(50);
   });
 
   it('keeps the client registry, locale dirs and server AnaLanguage overlays in sync', () => {
