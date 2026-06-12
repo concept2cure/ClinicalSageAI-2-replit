@@ -1,0 +1,10 @@
+{
+  "greeting": {
+    "late": "Töissä myöhään",
+    "morning": "Hyvää huomenta",
+    "afternoon": "Hyvää iltapäivää",
+    "evening": "Hyvää iltaa"
+  },
+  "greetingLine": "{{greeting}}, {{name}}",
+  "prompt": "Mitä haluaisit työstää? Kysy AnA:lta tai siirry alla olevaan moduuliin."
+}

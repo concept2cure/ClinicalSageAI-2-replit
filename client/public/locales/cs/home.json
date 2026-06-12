@@ -1,0 +1,10 @@
+{
+  "greeting": {
+    "late": "Pracujete dlouho do noci",
+    "morning": "Dobré ráno",
+    "afternoon": "Dobré odpoledne",
+    "evening": "Dobrý večer"
+  },
+  "greetingLine": "{{greeting}}, {{name}}",
+  "prompt": "Na čem byste chtěli pracovat? Zeptejte se AnA nebo se pusťte do modulu níže."
+}
