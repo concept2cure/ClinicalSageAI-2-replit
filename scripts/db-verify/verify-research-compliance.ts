@@ -16,6 +16,7 @@ import { emitDeadlineTask } from '../../server/services/research-compliance/task
 import * as effort from '../../server/services/effort-certification/effort-service';
 import * as coi from '../../server/services/research-security/coi-service';
 import { bridgeIngestedStudyTx, mapStudyType } from '../../server/services/preclinical/preclinical-governed-bridge';
+import * as grants from '../../server/services/grants/grants-service';
 
 let pass = 0, fail = 0;
 function ok(cond: boolean, msg: string) { if (cond) { pass++; console.log('  ✓', msg); } else { fail++; console.log('  ✗ FAIL:', msg); } }
@@ -174,6 +175,51 @@ async function main() {
   ok(m4Link.rows.length === 1 && m4Link.rows[0].link_role === 'supports', 'provenance: nonclinical_study → submission_module4 (supports)');
   const ncRep = await computeDomainReport('nonclinical.study_send_register', ORG);
   ok(ncRep != null && (ncRep!.summary.studies as number) >= 1, `nonclinical.study_send_register computes (studies=${ncRep?.summary.studies})`);
+
+  console.log('\n[Grants] milestone lifecycle + closeout (2 CFR 200.344) — finalize is gated');
+  const awardId = await tx((c) => grants.createAwardTx(c, ORG, USER, { awardNumber: `AWD-${Date.now()}`, fundingAgency: 'nih', periodStart: '2024-01-01', periodEnd: '2025-01-01' })).then((r: any) => r.id);
+  const mid = await tx((c) => grants.addMilestoneTx(c, ORG, USER, awardId, { title: 'Year-1 RPPR', milestoneType: 'progress_report', dueDate: '2024-12-01' })).then((r: any) => r.id);
+  await tx((c) => grants.setMilestoneStatusTx(c, ORG, mid, 'met', null));
+  const mrow = await pool.query(`SELECT status, completed_date FROM grant_milestones WHERE id=$1`, [mid]);
+  ok(mrow.rows[0].status === 'met' && mrow.rows[0].completed_date != null, 'milestone → met stamps completed_date (lifecycle completed)');
+
+  const co = await tx((c) => grants.openCloseoutTx(c, ORG, USER, awardId));
+  ok(co.closeoutDueDate === '2025-05-01', `closeout opened with 2 CFR 200.344 due date period_end+120 (${co.closeoutDueDate})`);
+  // Opening a second closeout for the same award is rejected (one per award).
+  let dupRejected = false;
+  try { await tx((c) => grants.openCloseoutTx(c, ORG, USER, awardId)); } catch (e: any) { dupRejected = e?.code === 'INVALID_STATE'; }
+  ok(dupRejected, 'a second closeout for the same award is REJECTED (one per award)');
+  // Finalize with outstanding items is blocked by the deterministic gate.
+  let prematureBlocked = false;
+  try { await tx((c) => grants.finalizeCloseoutTx(c, ORG, USER, awardId)); } catch (e: any) { prematureBlocked = e?.code === 'INVALID_STATE'; }
+  ok(prematureBlocked, 'finalize BLOCKED while closeout items are outstanding (gate is the floor)');
+  await tx((c) => grants.updateCloseoutTx(c, ORG, USER, awardId, { finalRpprSubmitted: true, finalFfrSubmitted: true, equipmentInventoryReturned: true, finalInvoicesReconciled: true }));
+  const fin = await tx((c) => grants.finalizeCloseoutTx(c, ORG, USER, awardId));
+  ok(fin.closedAward === true, 'finalize succeeds once all four items complete; closes the award');
+  const arow = await pool.query(`SELECT a.status AS award_status, c.status AS closeout_status FROM grant_awards a JOIN grant_closeout_records c ON c.award_id=a.id WHERE a.id=$1`, [awardId]);
+  ok(arow.rows[0].award_status === 'closed' && arow.rows[0].closeout_status === 'completed', 'award status=closed, closeout status=completed after finalize');
+  const grRep = await computeDomainReport('grants.portfolio_register', ORG);
+  ok(grRep != null && grRep!.summary.closeoutsByStatus != null && (grRep!.summary.closeoutsByStatus as any).completed >= 1, 'grants.portfolio_register reports closeout rollup (completed >= 1)');
+
+  console.log('\n[Grants] subaward eligibility gate (2 CFR 200.214 / 200.332)');
+  const subAwardId = await tx((c) => grants.createAwardTx(c, ORG, USER, { awardNumber: `SUBAWD-${Date.now()}`, fundingAgency: 'nih', periodStart: '2026-01-01', periodEnd: '2027-01-01' })).then((r: any) => r.id);
+  const subwId = await tx((c) => grants.createSubawardTx(c, ORG, USER, subAwardId, { subrecipientName: 'Partner University', institutionType: 'higher_ed', amount: 250000 })).then((r: any) => r.id);
+  let unscreenedBlocked = false;
+  try { await tx((c) => grants.executeSubawardTx(c, ORG, USER, subwId)); } catch (e: any) { unscreenedBlocked = e?.code === 'INVALID_STATE'; }
+  ok(unscreenedBlocked, 'execute BLOCKED on an unscreened / unassessed subaward (gate is the floor)');
+  await tx((c) => grants.screenSubawardTx(c, ORG, subwId, { screenStatus: 'cleared', riskLevel: 'low' }));
+  const execd = await tx((c) => grants.executeSubawardTx(c, ORG, USER, subwId));
+  ok(execd.eligible === true, 'execute SUCCEEDS once cleared + risk-assessed');
+  const srow = await pool.query(`SELECT status, screen_status FROM grant_subawards WHERE id=$1`, [subwId]);
+  ok(srow.rows[0].status === 'executed' && srow.rows[0].screen_status === 'cleared', 'subaward persisted executed with cleared screen');
+  // An excluded subrecipient can never be executed (2 CFR 200.214).
+  const exclId = await tx((c) => grants.createSubawardTx(c, ORG, USER, subAwardId, { subrecipientName: 'Debarred Co', institutionType: 'commercial' })).then((r: any) => r.id);
+  await tx((c) => grants.screenSubawardTx(c, ORG, exclId, { screenStatus: 'excluded', riskLevel: 'high' }));
+  let excludedBlocked = false;
+  try { await tx((c) => grants.executeSubawardTx(c, ORG, USER, exclId)); } catch (e: any) { excludedBlocked = e?.code === 'INVALID_STATE'; }
+  ok(excludedBlocked, 'execute BLOCKED for a SAM-excluded subrecipient (2 CFR 200.214)');
+  const grRep2 = await computeDomainReport('grants.portfolio_register', ORG);
+  ok(grRep2 != null && (grRep2!.summary.subawards as number) >= 2 && grRep2!.summary.subawardsByScreen != null, `grants.portfolio_register reports subaward rollup (subawards=${grRep2?.summary.subawards})`);
 
   console.log('\n[Tasking] deadline event → central unified_tasks');
   const taskId = await emitDeadlineTask({ organizationId: ORG, title: 'Verify milestone due', sourceEntityType: 'grant_milestone', sourceEntityId: 999, dueDate: '2026-12-01', taskType: 'milestone' });

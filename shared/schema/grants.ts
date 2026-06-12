@@ -15,7 +15,7 @@
  * @module shared/schema/grants
  */
 
-import { index, integer, pgTable, serial, text, date, numeric, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, index, integer, pgTable, serial, text, date, numeric, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { organizations, users, projects } from '../schema';
 
 export type FundingAgency = 'nih' | 'nsf' | 'barda' | 'dod' | 'cdc' | 'arpa_h' | 'foundation' | 'industry' | 'other';
@@ -26,6 +26,11 @@ export type AwardStatus = 'active' | 'no_cost_extension' | 'closed' | 'terminate
 export type MilestoneType = 'scientific' | 'progress_report' | 'financial_report' | 'deliverable' | 'regulatory';
 export type GrantMilestoneStatus = 'pending' | 'in_progress' | 'met' | 'missed' | 'submitted';
 export type InvoiceStatus = 'draft' | 'submitted' | 'paid' | 'disputed' | 'void';
+export type CloseoutStatus = 'open' | 'in_progress' | 'submitted' | 'completed';
+export type SubawardInstitutionType = 'higher_ed' | 'nonprofit' | 'commercial' | 'foreign' | 'government' | 'other';
+export type SubawardScreenStatus = 'not_screened' | 'cleared' | 'excluded';
+export type SubawardRiskLevel = 'low' | 'medium' | 'high';
+export type SubawardStatus = 'draft' | 'screened' | 'executed' | 'terminated';
 
 // ─── Funding opportunities (pre-award discovery) ─────────────────────────────
 
@@ -168,3 +173,78 @@ export const grantInvoices = pgTable(
 
 export type GrantInvoice = typeof grantInvoices.$inferSelect;
 export type NewGrantInvoice = typeof grantInvoices.$inferInsert;
+
+// ─── Closeout records (2 CFR 200.344) ────────────────────────────────────────
+// One closeout record per award: tracks the four required federal closeout
+// deliverables and their due date (period_end + 120 days). Finalizing the record
+// is gated on all four being complete and closes the parent award.
+
+export const grantCloseoutRecords = pgTable(
+  'grant_closeout_records',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    awardId: integer('award_id').notNull().references(() => grantAwards.id),
+    closeoutDueDate: date('closeout_due_date'),
+    finalRpprSubmitted: boolean('final_rppr_submitted').notNull().default(false),
+    finalRpprDate: date('final_rppr_date'),
+    finalFfrSubmitted: boolean('final_ffr_submitted').notNull().default(false),
+    finalFfrDate: date('final_ffr_date'),
+    equipmentInventoryReturned: boolean('equipment_inventory_returned').notNull().default(false),
+    finalInvoicesReconciled: boolean('final_invoices_reconciled').notNull().default(false),
+    deobligationAmount: numeric('deobligation_amount', { precision: 14, scale: 2 }),
+    status: text('status').$type<CloseoutStatus>().notNull().default('open'),
+    notes: text('notes'),
+    finalizedBy: integer('finalized_by').references(() => users.id),
+    finalizedAt: timestamp('finalized_at', { withTimezone: true }),
+    createdBy: integer('created_by').notNull().references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  },
+  (t) => ({
+    orgIdx: index('idx_grant_closeout_org').on(t.organizationId),
+    awardUniq: uniqueIndex('uq_grant_closeout_award').on(t.awardId),
+  })
+);
+
+export type GrantCloseoutRecord = typeof grantCloseoutRecords.$inferSelect;
+export type NewGrantCloseoutRecord = typeof grantCloseoutRecords.$inferInsert;
+
+// ─── Subawards / subrecipient monitoring (2 CFR 200.331–200.332, 200.214) ────
+// Pass-through subawards under a prime award. A subaward may not be executed
+// until the subrecipient is screened against SAM.gov exclusions (not debarred/
+// suspended) and a risk assessment is recorded — enforced by the eligibility gate.
+
+export const grantSubawards = pgTable(
+  'grant_subawards',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    awardId: integer('award_id').notNull().references(() => grantAwards.id),
+    subrecipientName: text('subrecipient_name').notNull(),
+    subrecipientUei: text('subrecipient_uei'),
+    institutionType: text('institution_type').$type<SubawardInstitutionType>(),
+    amount: numeric('amount', { precision: 14, scale: 2 }),
+    periodStart: date('period_start'),
+    periodEnd: date('period_end'),
+    riskLevel: text('risk_level').$type<SubawardRiskLevel>(),
+    screenStatus: text('screen_status').$type<SubawardScreenStatus>().notNull().default('not_screened'),
+    screenDate: date('screen_date'),
+    screenSource: text('screen_source'),
+    status: text('status').$type<SubawardStatus>().notNull().default('draft'),
+    executedBy: integer('executed_by').references(() => users.id),
+    executedAt: timestamp('executed_at', { withTimezone: true }),
+    createdBy: integer('created_by').notNull().references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  },
+  (t) => ({
+    orgIdx: index('idx_grant_subawards_org').on(t.organizationId),
+    awardIdx: index('idx_grant_subawards_award').on(t.awardId),
+  })
+);
+
+export type GrantSubaward = typeof grantSubawards.$inferSelect;
+export type NewGrantSubaward = typeof grantSubawards.$inferInsert;

@@ -3813,6 +3813,81 @@ export const REVIEW_GRANT_REPORTING: AnaTool = {
   },
 };
 
+export const SET_GRANT_MILESTONE_STATUS: AnaTool = {
+  name: 'set_grant_milestone_status',
+  description:
+    "Transition a grant milestone's status (pending → in_progress → met/submitted, or missed). Met/submitted stamps the completion date. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: { milestone_id: { type: 'number' }, status: { type: 'string', enum: ['pending', 'in_progress', 'met', 'missed', 'submitted'] }, completed_date: { type: 'string', description: 'YYYY-MM-DD.' }, reason: { type: 'string' } },
+    required: ['milestone_id', 'status'],
+  },
+};
+
+export const OPEN_GRANT_CLOSEOUT: AnaTool = {
+  name: 'open_grant_closeout',
+  description:
+    "Open the closeout record for a grant award. Derives the federal closeout due date (period of performance end + 120 days, 2 CFR 200.344). One closeout per award. Governed + audited, org-scoped.",
+  input_schema: { type: 'object', properties: { award_id: { type: 'number' }, reason: { type: 'string' } }, required: ['award_id'] },
+};
+
+export const UPDATE_GRANT_CLOSEOUT: AnaTool = {
+  name: 'update_grant_closeout',
+  description:
+    "Mark grant-closeout checklist items complete: final performance report (RPPR), final FFR (SF-425), final property/equipment inventory, and reconciliation of final invoices (2 CFR 200.344 / 200.313). Submitting an item stamps its date. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      award_id: { type: 'number' },
+      final_rppr_submitted: { type: 'boolean' }, final_ffr_submitted: { type: 'boolean' },
+      equipment_inventory_returned: { type: 'boolean' }, final_invoices_reconciled: { type: 'boolean' },
+      deobligation_amount: { type: 'number' }, notes: { type: 'string' }, reason: { type: 'string' },
+    },
+    required: ['award_id'],
+  },
+};
+
+export const FINALIZE_GRANT_CLOSEOUT: AnaTool = {
+  name: 'finalize_grant_closeout',
+  description:
+    "Finalize a grant closeout. Gated: all four 2 CFR 200.344 items must be complete (final RPPR, final FFR, property inventory, invoice reconciliation); otherwise it is rejected with the outstanding items. On success the award is closed. Governed + audited (signature).",
+  input_schema: { type: 'object', properties: { award_id: { type: 'number' }, reason: { type: 'string' } }, required: ['award_id'] },
+};
+
+export const RECORD_SUBAWARD: AnaTool = {
+  name: 'record_subaward',
+  description:
+    "Record a subaward to a subrecipient under a prime award (2 CFR 200.331). Capture institution type, amount, period, and an initial risk level. The subaward starts in 'draft' and cannot be executed until screened and risk-assessed. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      award_id: { type: 'number' }, subrecipient_name: { type: 'string' }, subrecipient_uei: { type: 'string' },
+      institution_type: { type: 'string', enum: ['higher_ed', 'nonprofit', 'commercial', 'foreign', 'government', 'other'] },
+      amount: { type: 'number' }, period_start: { type: 'string' }, period_end: { type: 'string' },
+      risk_level: { type: 'string', enum: ['low', 'medium', 'high'] }, reason: { type: 'string' },
+    },
+    required: ['award_id', 'subrecipient_name'],
+  },
+};
+
+export const SCREEN_SUBAWARD: AnaTool = {
+  name: 'screen_subaward',
+  description:
+    "Record the restricted-party screening result for a subaward's subrecipient (2 CFR 200.214). Use screen_restricted_party first to perform the live SAM.gov exclusions lookup, then record 'cleared' or 'excluded' here. Optionally set the risk level. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { subaward_id: { type: 'number' }, screen_status: { type: 'string', enum: ['cleared', 'excluded'] }, screen_source: { type: 'string' }, risk_level: { type: 'string', enum: ['low', 'medium', 'high'] }, reason: { type: 'string' } },
+    required: ['subaward_id', 'screen_status'],
+  },
+};
+
+export const EXECUTE_SUBAWARD: AnaTool = {
+  name: 'execute_subaward',
+  description:
+    "Execute a subaward. Gated: rejected unless the subrecipient was screened CLEAR of SAM.gov exclusions and a risk assessment is recorded (2 CFR 200.214 / 200.332). Governed + audited (signature).",
+  input_schema: { type: 'object', properties: { subaward_id: { type: 'number' }, reason: { type: 'string' } }, required: ['subaward_id'] },
+};
+
 export const CREATE_RIM_PRODUCT: AnaTool = {
   name: 'create_rim_product',
   description:
@@ -5584,6 +5659,13 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CREATE_GRANT_PROPOSAL,
   RECORD_GRANT_AWARD,
   REVIEW_GRANT_REPORTING,
+  SET_GRANT_MILESTONE_STATUS,
+  OPEN_GRANT_CLOSEOUT,
+  UPDATE_GRANT_CLOSEOUT,
+  FINALIZE_GRANT_CLOSEOUT,
+  RECORD_SUBAWARD,
+  SCREEN_SUBAWARD,
+  EXECUTE_SUBAWARD,
   CREATE_RIM_PRODUCT,
   SET_REGISTRATION_STATUS,
   REVIEW_LABEL_CURRENCY,

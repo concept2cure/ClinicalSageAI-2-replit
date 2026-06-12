@@ -9,7 +9,11 @@ import {
   summarizeDeadlines,
   reportingObligations,
   awardPeriodState,
+  closeoutDueDate,
+  evaluateCloseout,
+  evaluateSubawardEligibility,
   type DeadlineItem,
+  type CloseoutRecordState,
 } from '../grants-logic';
 
 const TODAY = '2026-06-10';
@@ -64,5 +68,64 @@ describe('awardPeriodState', () => {
     expect(awardPeriodState('2026-01-01', '2026-12-31', TODAY)).toBe('active');
     expect(awardPeriodState('2025-01-01', '2026-05-01', TODAY)).toBe('closeout_window'); // within 120d
     expect(awardPeriodState('2024-01-01', '2025-01-01', TODAY)).toBe('lapsed'); // > 120d past
+  });
+});
+
+describe('closeoutDueDate', () => {
+  it('is 120 days after the period end (2 CFR 200.344)', () => {
+    expect(closeoutDueDate('2026-01-01')).toBe('2026-05-01');
+    expect(closeoutDueDate(null)).toBeNull();
+  });
+});
+
+describe('evaluateCloseout', () => {
+  const none: CloseoutRecordState = { finalRpprSubmitted: false, finalFfrSubmitted: false, equipmentInventoryReturned: false, finalInvoicesReconciled: false };
+  const all: CloseoutRecordState = { finalRpprSubmitted: true, finalFfrSubmitted: true, equipmentInventoryReturned: true, finalInvoicesReconciled: true };
+
+  it('lists all four required items and blocks finalize when any is outstanding', () => {
+    const s = evaluateCloseout(none, '2026-05-01', TODAY); // due 2026-08-29, still open
+    expect(s.items).toHaveLength(4);
+    expect(s.outstanding).toHaveLength(4);
+    expect(s.readyToFinalize).toBe(false);
+    expect(s.status).toBe('open');
+    expect(s.dueDate).toBe('2026-08-29');
+  });
+
+  it('is ready to finalize once all items are complete', () => {
+    const s = evaluateCloseout(all, '2026-05-01', TODAY);
+    expect(s.readyToFinalize).toBe(true);
+    expect(s.outstanding).toHaveLength(0);
+  });
+
+  it('flags overdue when past the due date and not complete', () => {
+    const s = evaluateCloseout(none, '2025-01-01', TODAY); // due 2025-05-01, well past
+    expect(s.overdue).toBe(true);
+    expect(s.status).toBe('overdue');
+  });
+
+  it('reports complete when the record is already completed', () => {
+    const s = evaluateCloseout({ ...all, status: 'completed' }, '2025-01-01', TODAY);
+    expect(s.status).toBe('complete');
+  });
+});
+
+describe('evaluateSubawardEligibility', () => {
+  it('is eligible only when cleared and risk-assessed', () => {
+    expect(evaluateSubawardEligibility({ screenStatus: 'cleared', riskLevel: 'low' }).eligible).toBe(true);
+  });
+  it('blocks an excluded subrecipient (2 CFR 200.214)', () => {
+    const r = evaluateSubawardEligibility({ screenStatus: 'excluded', riskLevel: 'low' });
+    expect(r.eligible).toBe(false);
+    expect(r.blockers.some((b) => /200\.214/.test(b))).toBe(true);
+  });
+  it('blocks when not screened', () => {
+    const r = evaluateSubawardEligibility({ screenStatus: 'not_screened', riskLevel: 'low' });
+    expect(r.eligible).toBe(false);
+    expect(r.blockers.some((b) => /screening not performed/.test(b))).toBe(true);
+  });
+  it('blocks when risk assessment is missing (2 CFR 200.332)', () => {
+    const r = evaluateSubawardEligibility({ screenStatus: 'cleared', riskLevel: null });
+    expect(r.eligible).toBe(false);
+    expect(r.blockers.some((b) => /200\.332/.test(b))).toBe(true);
   });
 });

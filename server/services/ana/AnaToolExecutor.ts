@@ -6149,6 +6149,220 @@ registerToolHandler('review_grant_reporting', async (input, ctx) => {
   }
 });
 
+registerToolHandler('set_grant_milestone_status', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'set_grant_milestone_status requires tenant + user context.' });
+  const milestoneId = typeof input.milestone_id === 'number' ? input.milestone_id : NaN;
+  const status = typeof input.status === 'string' ? input.status : '';
+  if (!Number.isInteger(milestoneId) || !['pending', 'in_progress', 'met', 'missed', 'submitted'].includes(status)) {
+    return JSON.stringify({ error: 'milestone_id and a valid status (pending|in_progress|met|missed|submitted) are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { setMilestoneStatusTx } = await import('../grants/grants-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setMilestoneStatusTx(client, ctx.organizationId, milestoneId, status, typeof input.completed_date === 'string' ? input.completed_date : null);
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
+      target: `grant-milestone:${milestoneId}`, reason: fcoiReason(input, 'Milestone status set via AnA'),
+      payload: { status }, domain: 'grants', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id: milestoneId, status, message: `Milestone ${milestoneId} → ${status}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `set_grant_milestone_status failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('open_grant_closeout', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'open_grant_closeout requires tenant + user context.' });
+  const awardId = typeof input.award_id === 'number' ? input.award_id : NaN;
+  if (!Number.isInteger(awardId)) return JSON.stringify({ error: 'award_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { openCloseoutTx } = await import('../grants/grants-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, closeoutDueDate } = await openCloseoutTx(client, ctx.organizationId, ctx.userId, awardId);
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `grant-award:${awardId}`, reason: fcoiReason(input, 'Grant closeout opened via AnA'),
+      payload: { closeoutId: id, closeoutDueDate }, domain: 'grants', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, closeoutId: id, closeoutDueDate, message: `Opened closeout for award ${awardId}${closeoutDueDate ? ` — final reports due ${closeoutDueDate} (2 CFR 200.344)` : ''}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `open_grant_closeout failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('update_grant_closeout', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'update_grant_closeout requires tenant + user context.' });
+  const awardId = typeof input.award_id === 'number' ? input.award_id : NaN;
+  if (!Number.isInteger(awardId)) return JSON.stringify({ error: 'award_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { updateCloseoutTx } = await import('../grants/grants-service.js');
+  const bool = (v: unknown) => (typeof v === 'boolean' ? v : undefined);
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await updateCloseoutTx(client, ctx.organizationId, ctx.userId, awardId, {
+      finalRpprSubmitted: bool(input.final_rppr_submitted),
+      finalFfrSubmitted: bool(input.final_ffr_submitted),
+      equipmentInventoryReturned: bool(input.equipment_inventory_returned),
+      finalInvoicesReconciled: bool(input.final_invoices_reconciled),
+      deobligationAmount: typeof input.deobligation_amount === 'number' ? input.deobligation_amount : null,
+      notes: typeof input.notes === 'string' ? input.notes : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `grant-award:${awardId}`, reason: fcoiReason(input, 'Grant closeout updated via AnA'),
+      payload: { closeout: 'updated' }, domain: 'grants', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, awardId, message: `Updated closeout items for award ${awardId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `update_grant_closeout failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('finalize_grant_closeout', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_grant_closeout requires tenant + user context.' });
+  const awardId = typeof input.award_id === 'number' ? input.award_id : NaN;
+  if (!Number.isInteger(awardId)) return JSON.stringify({ error: 'award_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { finalizeCloseoutTx } = await import('../grants/grants-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { closedAward } = await finalizeCloseoutTx(client, ctx.organizationId, ctx.userId, awardId);
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'sign',
+      target: `grant-award:${awardId}`, reason: fcoiReason(input, 'Grant closeout finalized via AnA'),
+      payload: { closeout: 'completed', closedAward }, domain: 'grants', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, awardId, closedAward, message: `Closeout finalized — award ${awardId} is closed (all 2 CFR 200.344 items complete).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    // The deterministic gate blocks finalize with outstanding items — surface it.
+    return JSON.stringify({ error: `finalize_grant_closeout failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('record_subaward', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'record_subaward requires tenant + user context.' });
+  const awardId = typeof input.award_id === 'number' ? input.award_id : NaN;
+  const subrecipientName = typeof input.subrecipient_name === 'string' ? input.subrecipient_name.trim() : '';
+  if (!Number.isInteger(awardId) || !subrecipientName) return JSON.stringify({ error: 'award_id and subrecipient_name are required.' });
+  const RISK = ['low', 'medium', 'high'];
+  const INST = ['higher_ed', 'nonprofit', 'commercial', 'foreign', 'government', 'other'];
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createSubawardTx } = await import('../grants/grants-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createSubawardTx(client, ctx.organizationId, ctx.userId, awardId, {
+      subrecipientName,
+      subrecipientUei: typeof input.subrecipient_uei === 'string' ? input.subrecipient_uei : null,
+      institutionType: typeof input.institution_type === 'string' && INST.includes(input.institution_type) ? input.institution_type as any : null,
+      amount: typeof input.amount === 'number' ? input.amount : null,
+      periodStart: typeof input.period_start === 'string' ? input.period_start : null,
+      periodEnd: typeof input.period_end === 'string' ? input.period_end : null,
+      riskLevel: typeof input.risk_level === 'string' && RISK.includes(input.risk_level) ? input.risk_level as any : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `grant-award:${awardId}`, reason: fcoiReason(input, 'Subaward recorded via AnA'),
+      payload: { subawardId: id, subrecipientName }, domain: 'grants', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, subawardId: id, message: `Recorded subaward to "${subrecipientName}" (id ${id}). Screen the subrecipient and record risk before executing.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `record_subaward failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('screen_subaward', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'screen_subaward requires tenant + user context.' });
+  const subawardId = typeof input.subaward_id === 'number' ? input.subaward_id : NaN;
+  const screenStatus = typeof input.screen_status === 'string' ? input.screen_status : '';
+  if (!Number.isInteger(subawardId) || !['cleared', 'excluded'].includes(screenStatus)) {
+    return JSON.stringify({ error: 'subaward_id and screen_status (cleared|excluded) are required. Use screen_restricted_party to perform the live SAM.gov lookup first.' });
+  }
+  const RISK = ['low', 'medium', 'high'];
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { screenSubawardTx } = await import('../grants/grants-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await screenSubawardTx(client, ctx.organizationId, subawardId, {
+      screenStatus: screenStatus as any,
+      screenSource: typeof input.screen_source === 'string' ? input.screen_source : 'sam_exclusions',
+      riskLevel: typeof input.risk_level === 'string' && RISK.includes(input.risk_level) ? input.risk_level as any : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `grant-subaward:${subawardId}`, reason: fcoiReason(input, 'Subaward screening recorded via AnA'),
+      payload: { screenStatus }, domain: 'grants', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, subawardId, screenStatus, message: `Recorded ${screenStatus === 'excluded' ? 'an EXCLUSION (subaward prohibited, 2 CFR 200.214)' : 'a clean screen'} for subaward ${subawardId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `screen_subaward failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('execute_subaward', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'execute_subaward requires tenant + user context.' });
+  const subawardId = typeof input.subaward_id === 'number' ? input.subaward_id : NaN;
+  if (!Number.isInteger(subawardId)) return JSON.stringify({ error: 'subaward_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { executeSubawardTx } = await import('../grants/grants-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await executeSubawardTx(client, ctx.organizationId, ctx.userId, subawardId);
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'sign',
+      target: `grant-subaward:${subawardId}`, reason: fcoiReason(input, 'Subaward executed via AnA'),
+      payload: { status: 'executed' }, domain: 'grants', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, subawardId, status: 'executed', message: `Subaward ${subawardId} executed (cleared screen + risk assessment, 2 CFR 200.214/200.332).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    // The eligibility gate blocks execution of an unscreened/excluded/unassessed subaward — surface it.
+    return JSON.stringify({ error: `execute_subaward failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // RIM-lite (C2C-12). Conversational building shares the governed/audited path
 // (recordGovernedAction, surface 'ana').
