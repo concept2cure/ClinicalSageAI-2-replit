@@ -14,6 +14,46 @@ import {
   ConnectorCredentials,
 } from './connector-interface.js';
 
+/**
+ * Escape a value for safe interpolation into a VQL single-quoted string
+ * literal. VQL (like SQL) escapes a single quote by doubling it. Without this,
+ * a value containing an apostrophe — a real indication/drug name like
+ * "Crohn's", or hostile input — produces malformed VQL or an injection.
+ */
+export function escapeVqlLiteral(value: string): string {
+  return value.replace(/'/g, "''");
+}
+
+/**
+ * Build the document-search VQL for a connector query. Pure and exported so the
+ * escaping + clause-assembly contract is unit-testable. Every user-supplied
+ * value is escaped; the limit is coerced to a positive integer (default 20).
+ */
+export function buildDocumentVql(query: ConnectorQuery): string {
+  const conditions: string[] = [];
+  if (query.indication) {
+    conditions.push(`product__v CONTAINS '${escapeVqlLiteral(query.indication)}'`);
+  }
+  if (query.therapeuticArea) {
+    conditions.push(`therapeutic_area__c CONTAINS '${escapeVqlLiteral(query.therapeuticArea)}'`);
+  }
+  const keywords = (query.keywords ?? []).map(k => k.trim()).filter(Boolean);
+  if (keywords.length) {
+    const ors = keywords.map(k => `name__v CONTAINS '${escapeVqlLiteral(k)}'`).join(' OR ');
+    conditions.push(`(${ors})`);
+  }
+
+  const fromClause =
+    conditions.length > 0 ? `FROM documents WHERE ${conditions.join(' AND ')}` : 'FROM documents';
+  const limit =
+    Number.isFinite(query.limit) && (query.limit as number) > 0 ? Math.floor(query.limit as number) : 20;
+
+  return (
+    `SELECT id, name__v, type__v, subtype__v, status__v, product__v, version_created_date__v ` +
+    `${fromClause} ORDER BY version_created_date__v DESC LIMIT ${limit}`
+  );
+}
+
 export class VeevaVaultConnector implements DataConnector {
   id = 'veeva_vault';
   name = 'Veeva Vault';
@@ -42,16 +82,9 @@ export class VeevaVaultConnector implements DataConnector {
   async search(query: ConnectorQuery): Promise<ConnectorResult[]> {
     if (!this.baseUrl || !this.sessionId) return [];
 
-    // Veeva VQL query for documents
-    const conditions: string[] = [];
-    if (query.indication) conditions.push(`product__v CONTAINS '${query.indication}'`);
-    if (query.therapeuticArea) conditions.push(`therapeutic_area__c CONTAINS '${query.therapeuticArea}'`);
-    if (query.keywords?.length) {
-      conditions.push(`(name__v CONTAINS '${query.keywords.join("' OR name__v CONTAINS '")}')`);
-    }
-
-    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-    const vql = `SELECT id, name__v, type__v, subtype__v, status__v, product__v, version_created_date__v FROM documents ${where} ORDER BY version_created_date__v DESC LIMIT ${query.limit || 20}`;
+    // Veeva VQL query for documents. Built via buildDocumentVql so every
+    // user-supplied value is escaped (apostrophes break/inject the VQL).
+    const vql = buildDocumentVql(query);
 
     const res = await fetch(`${this.baseUrl}/api/v24.0/query?q=${encodeURIComponent(vql)}`, {
       headers: { Authorization: this.sessionId },
@@ -65,7 +98,9 @@ export class VeevaVaultConnector implements DataConnector {
       sourceConnector: this.id,
       title: doc.name__v || 'Untitled',
       summary: `${doc.type__v || ''} / ${doc.subtype__v || ''} | Status: ${doc.status__v || ''} | Product: ${doc.product__v || ''}`,
-      relevanceScore: 1 - i * 0.05,
+      // Rank descending by position, floored at 0 so large result sets never
+      // emit a negative relevance.
+      relevanceScore: Math.max(0, 1 - i * 0.05),
       metadata: doc,
       url: `${this.baseUrl}/ui/#doc/${doc.id}`,
     }));
