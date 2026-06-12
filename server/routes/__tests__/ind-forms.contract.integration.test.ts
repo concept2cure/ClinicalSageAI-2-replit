@@ -1,0 +1,151 @@
+/**
+ * IND forms router HTTP contract — FDA Forms 1571/1572/3674/3454/3455 over the
+ * mounted router (supertest), db pointed at in-process PGlite, faked auth.
+ * Validates auth/RBAC, form listing, field-map build, PDF rendering (with the
+ * X-Form-* headers), the 1572-per-investigator path, and the DB-backed
+ * pdf-from-records flow (master-data lookups, tenant scoping, 404s).
+ */
+
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import express from 'express';
+import request from 'supertest';
+import { createIndPgliteDb, type IndPgliteDb } from '../../db/pglite-harness';
+
+const holder = vi.hoisted(() => ({ db: null as any }));
+vi.mock('../../db', () => ({ get db() { return holder.db; } }));
+vi.mock('../../services/auditService', () => ({ default: { logAction: vi.fn(async () => {}) } }));
+
+import formsRouter from '../ind-forms.routes';
+import { createSponsor, createInvestigator } from '../../services/ind-master-data/ind-master-data-service';
+
+let harness: IndPgliteDb;
+let currentUser: any = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
+let sponsorId: string;
+let investigatorId: string;
+
+function makeApp() {
+  const app = express();
+  app.use(express.json({ limit: '5mb' }));
+  app.use((req, _res, next) => {
+    if (currentUser) (req as any).user = currentUser;
+    next();
+  });
+  app.use('/api/ind-forms', formsRouter);
+  return app;
+}
+let app: express.Express;
+
+beforeAll(async () => {
+  harness = await createIndPgliteDb();
+  holder.db = harness.db;
+  app = makeApp();
+  const ctx = { organizationId: 1, userId: 9 };
+  const sponsor = await createSponsor({ name: 'Acme Therapeutics', contactEmail: 'ra@acme.example' }, ctx);
+  sponsorId = sponsor.id;
+  const inv = await createInvestigator({ firstName: 'Pat', lastName: 'Smith', credentials: 'MD' }, ctx);
+  investigatorId = inv.id;
+});
+afterAll(async () => {
+  await harness.close();
+});
+
+describe('auth + RBAC', () => {
+  it('401/403 unauthenticated or wrong role', async () => {
+    currentUser = null;
+    const unauth = await request(app).get('/api/ind-forms/');
+    expect([401, 403]).toContain(unauth.status);
+    currentUser = { id: 9, organizationId: 1, roles: ['viewer'] };
+    const forbidden = await request(app).get('/api/ind-forms/');
+    expect(forbidden.status).toBe(403);
+    currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
+  });
+});
+
+describe('form discovery + build', () => {
+  it('GET / → 200 lists the supported form ids', async () => {
+    const res = await request(app).get('/api/ind-forms/');
+    expect(res.status).toBe(200);
+    expect(res.body.forms).toEqual(
+      expect.arrayContaining(['FDA_1571', 'FDA_1572', 'FDA_3674', 'FDA_3454', 'FDA_3455']),
+    );
+  });
+
+  it('POST /FDA_1571/build → 200 returns a field map + missingRequired', async () => {
+    const res = await request(app).post('/api/ind-forms/FDA_1571/build').send({ sponsorName: 'Acme', drugName: 'C2C-001' });
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('fields');
+    expect(res.body).toHaveProperty('missingRequired');
+  });
+
+  it('POST /nope/build → 400 for an unsupported form', async () => {
+    const res = await request(app).post('/api/ind-forms/nope/build').send({});
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION');
+  });
+});
+
+describe('PDF rendering', () => {
+  it('POST /FDA_3674/pdf → 200 application/pdf with X-Form-* headers', async () => {
+    const res = await request(app).post('/api/ind-forms/FDA_3674/pdf').send({ drugName: 'C2C-001' });
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('application/pdf');
+    expect(res.headers).toHaveProperty('x-form-field-coverage');
+    expect(res.headers).toHaveProperty('x-form-used-official-template');
+    expect(res.body.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+  });
+
+  it('POST /nope/pdf → 400 for an unsupported form', async () => {
+    const res = await request(app).post('/api/ind-forms/nope/pdf').send({});
+    expect(res.status).toBe(400);
+  });
+
+  it('POST /1572/pdf-all → 200 returns base64 PDFs per investigator', async () => {
+    const res = await request(app)
+      .post('/api/ind-forms/1572/pdf-all')
+      .send({ investigators: [{ firstName: 'Pat', lastName: 'Smith' }] });
+    expect(res.status).toBe(200);
+    expect(res.body.formId).toBe('FDA_1572');
+    expect(Array.isArray(res.body.documents)).toBe(true);
+    expect(res.body.documents.length).toBeGreaterThanOrEqual(1);
+    expect(typeof res.body.documents[0].pdfBase64).toBe('string');
+  });
+});
+
+describe('pdf-from-records (DB-backed)', () => {
+  it('401 when unauthenticated', async () => {
+    currentUser = null;
+    const res = await request(app).post('/api/ind-forms/FDA_1571/pdf-from-records').send({ sponsorId });
+    expect(res.status).toBe(401);
+    currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
+  });
+
+  it('POST /1571/pdf-from-records → 200 PDF from stored sponsor', async () => {
+    const res = await request(app).post('/api/ind-forms/FDA_1571/pdf-from-records').send({ sponsorId });
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('application/pdf');
+    expect(res.body.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+  });
+
+  it('POST /1572/pdf-from-records → 200 with investigator records', async () => {
+    const res = await request(app)
+      .post('/api/ind-forms/FDA_1572/pdf-from-records')
+      .send({ investigatorIds: [investigatorId] });
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('application/pdf');
+  });
+
+  it('POST /1571/pdf-from-records → 404 for an unknown sponsor', async () => {
+    const res = await request(app)
+      .post('/api/ind-forms/FDA_1571/pdf-from-records')
+      .send({ sponsorId: '00000000-0000-0000-0000-000000000000' });
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('NOT_FOUND');
+  });
+
+  it('does not load another org\'s sponsor (tenant scoping → 404)', async () => {
+    currentUser = { id: 9, organizationId: 2, roles: ['regulatory-author'] };
+    const res = await request(app).post('/api/ind-forms/FDA_1571/pdf-from-records').send({ sponsorId });
+    expect(res.status).toBe(404);
+    currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
+  });
+});
