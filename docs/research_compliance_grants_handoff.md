@@ -5,7 +5,7 @@
 
 The governed backend was run and verified against a live Postgres 16:
 - All domain migrations apply cleanly (DDL + CHECK constraints + FKs + indexes); a negative insert is rejected by the `chk_fcoi_form_matches_flag` constraint.
-- **40/40 governed-path assertions pass** (`scripts/db-verify/verify-research-compliance.ts`): FCOI derive→certify→provenance→audit-hash-chain→c2c_ana_actions ledger→signature-invalidation; controlled-substances perpetual ledger rejects negative inventory; HA commitment threads 2 provenance links; IACUC approval stamps the 3-year expiration + Module 4 provenance; training gate ("no index until trained") blocks then clears; effort certification (certify + content hash + over-commit rejection); research-security COI (foreign-nexus flag + review); preclinical bridge (digested → governed registry + Module 4 provenance); Report-OS domain providers compute real numbers; deadline events flow to central `unified_tasks`.
+- **52/52 governed-path assertions pass** (`scripts/db-verify/verify-research-compliance.ts`): FCOI derive→certify→provenance→audit-hash-chain→c2c_ana_actions ledger→signature-invalidation; controlled-substances perpetual ledger rejects negative inventory; HA commitment threads 2 provenance links; IACUC approval stamps the 3-year expiration + Module 4 provenance; training gate ("no index until trained") blocks then clears; effort certification (certify + content hash + over-commit rejection); research-security COI (foreign-nexus flag + review); preclinical bridge (digested → governed registry + Module 4 provenance); grant closeout (2 CFR 200.344 gate + award close) and subaward eligibility (2 CFR 200.214 screen gate); Report-OS domain providers compute real numbers; deadline events flow to central `unified_tasks`.
 - Reproducible via `scripts/db-verify/README.md`.
 
 Remaining per-capability DB checks (RLS session-var enforcement, full report-run resolution) are listed under each capability below.
@@ -326,9 +326,11 @@ Directly fulfills the original grants/pre-award/post-award/invoicing ask. Grants
 | POST | `/awards/:id/invoices` · GET `/invoices` · PATCH `/invoices/:id/status` | `create`/`transition` |
 | **POST** | **`/awards/:id/closeout`** (open) · **PATCH `/awards/:id/closeout`** (items) · **GET `/awards/:id/closeout`** (state) | `create`/`update` |
 | **POST** | **`/awards/:id/closeout/finalize`** (gated; closes the award) | `sign` |
+| **POST** | **`/awards/:id/subawards`** · **GET `/subawards`** · **PATCH `/subawards/:id/screen`** | `create`/`update` |
+| **POST** | **`/subawards/:id/execute`** (gated on cleared screen + risk assessment) | `sign` |
 
 ### AnA tools (same governed path, surface `ana`)
-`create_grant_proposal`, `record_grant_award` (threads provenance), `review_grant_reporting` (read-only federal obligations), **`set_grant_milestone_status`**, **`open_grant_closeout`**, **`update_grant_closeout`**, **`finalize_grant_closeout`** (gated sign).
+`create_grant_proposal`, `record_grant_award` (threads provenance), `review_grant_reporting` (read-only federal obligations), **`set_grant_milestone_status`**, **`open_grant_closeout`**, **`update_grant_closeout`**, **`finalize_grant_closeout`** (gated sign), **`record_subaward`**, **`screen_subaward`**, **`execute_subaward`** (gated sign). The subaward screen pairs with the read-only `screen_restricted_party` tool (live SAM.gov lookup).
 
 ### Deterministic core (`grants-logic.ts`, pure, tested)
 `deadlineUrgency` + `summarizeDeadlines` (overdue/due_30/due_90/later/undated/closed) for proposals/milestones/invoices; `reportingObligations` (annual RPPR + final performance/financial 120 days post-period, 2 CFR 200.344); `awardPeriodState` (pre_start/active/closeout_window/lapsed); **`closeoutDueDate`** (period_end + 120) and **`evaluateCloseout`** (the four required items → outstanding list, overdue flag, and the `readyToFinalize` gate that finalize enforces — citing 2 CFR 200.344 / 200.313).
@@ -353,8 +355,11 @@ Directly fulfills the original grants/pre-award/post-award/invoicing ask. Grants
 ### Closeout (2 CFR 200.344) — added
 Per-award closeout record tracking the four required deliverables (final RPPR, final FFR/SF-425, final property inventory per 2 CFR 200.313, final-invoice reconciliation) with the 120-day due date. `finalizeCloseoutTx` is **gated** on all four being complete and, on success, sets the award `status='closed'`. DB-verified end-to-end (open → premature-finalize rejected → complete items → finalize → award closed; portfolio report shows the closeout rollup).
 
+### Subawards / subrecipient monitoring (2 CFR 200.331–200.332, 200.214) — added
+`grant_subawards` (migration `20260612_grant_subawards.sql`): subrecipient, institution type, amount, period, risk level, and SAM screen status. Lifecycle `draft → screened → executed`. `evaluateSubawardEligibility` is the **execute gate** — a subaward cannot be executed unless the subrecipient is screened CLEAR of SAM.gov exclusions (2 CFR 200.214) **and** a risk assessment is recorded (2 CFR 200.332(b)). The screen pairs with the `sam_exclusions` connector via the read-only `screen_restricted_party` tool. Report adds `subawards`, `subawardsByScreen`, and `unscreenedExecuted`; metrics add `grants_subawards_total{institution_type}` + `grants_subawards_executed_total`.
+
 ### Tests landed
-`grants-logic.test.ts` (10 — incl. `closeoutDueDate` + `evaluateCloseout` gate), `ana/__tests__/grants-tools.test.ts` (9 — incl. milestone-status + closeout tools). DB harness covers the full closeout + milestone lifecycle (`scripts/db-verify/verify-research-compliance.ts`, now **47/47**). Typecheck clean.
+`grants-logic.test.ts` (14 — incl. `evaluateCloseout` + `evaluateSubawardEligibility` gates), `ana/__tests__/grants-tools.test.ts` (12 — milestone-status + closeout + subaward tools). DB harness covers the full closeout, milestone, and subaward-eligibility lifecycle (`scripts/db-verify/verify-research-compliance.ts`, now **52/52**). Typecheck clean.
 
 
 ---

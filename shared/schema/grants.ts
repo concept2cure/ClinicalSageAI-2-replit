@@ -27,6 +27,10 @@ export type MilestoneType = 'scientific' | 'progress_report' | 'financial_report
 export type GrantMilestoneStatus = 'pending' | 'in_progress' | 'met' | 'missed' | 'submitted';
 export type InvoiceStatus = 'draft' | 'submitted' | 'paid' | 'disputed' | 'void';
 export type CloseoutStatus = 'open' | 'in_progress' | 'submitted' | 'completed';
+export type SubawardInstitutionType = 'higher_ed' | 'nonprofit' | 'commercial' | 'foreign' | 'government' | 'other';
+export type SubawardScreenStatus = 'not_screened' | 'cleared' | 'excluded';
+export type SubawardRiskLevel = 'low' | 'medium' | 'high';
+export type SubawardStatus = 'draft' | 'screened' | 'executed' | 'terminated';
 
 // ─── Funding opportunities (pre-award discovery) ─────────────────────────────
 
@@ -206,3 +210,41 @@ export const grantCloseoutRecords = pgTable(
 
 export type GrantCloseoutRecord = typeof grantCloseoutRecords.$inferSelect;
 export type NewGrantCloseoutRecord = typeof grantCloseoutRecords.$inferInsert;
+
+// ─── Subawards / subrecipient monitoring (2 CFR 200.331–200.332, 200.214) ────
+// Pass-through subawards under a prime award. A subaward may not be executed
+// until the subrecipient is screened against SAM.gov exclusions (not debarred/
+// suspended) and a risk assessment is recorded — enforced by the eligibility gate.
+
+export const grantSubawards = pgTable(
+  'grant_subawards',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    awardId: integer('award_id').notNull().references(() => grantAwards.id),
+    subrecipientName: text('subrecipient_name').notNull(),
+    subrecipientUei: text('subrecipient_uei'),
+    institutionType: text('institution_type').$type<SubawardInstitutionType>(),
+    amount: numeric('amount', { precision: 14, scale: 2 }),
+    periodStart: date('period_start'),
+    periodEnd: date('period_end'),
+    riskLevel: text('risk_level').$type<SubawardRiskLevel>(),
+    screenStatus: text('screen_status').$type<SubawardScreenStatus>().notNull().default('not_screened'),
+    screenDate: date('screen_date'),
+    screenSource: text('screen_source'),
+    status: text('status').$type<SubawardStatus>().notNull().default('draft'),
+    executedBy: integer('executed_by').references(() => users.id),
+    executedAt: timestamp('executed_at', { withTimezone: true }),
+    createdBy: integer('created_by').notNull().references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  },
+  (t) => ({
+    orgIdx: index('idx_grant_subawards_org').on(t.organizationId),
+    awardIdx: index('idx_grant_subawards_award').on(t.awardId),
+  })
+);
+
+export type GrantSubaward = typeof grantSubawards.$inferSelect;
+export type NewGrantSubaward = typeof grantSubawards.$inferInsert;

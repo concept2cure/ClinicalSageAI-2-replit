@@ -12,9 +12,11 @@ interface GrantsMetricsState {
   milestoneStatus: Record<string, number>; // by milestone status transition
   closeoutsOpened: number;
   closeoutsFinalized: number;
+  subawardsByType: Record<string, number>; // by institution type
+  subawardsExecuted: number;
 }
 
-const state: GrantsMetricsState = { proposalsCreated: 0, awardsRecorded: {}, invoicesByStatus: {}, milestoneStatus: {}, closeoutsOpened: 0, closeoutsFinalized: 0 };
+const state: GrantsMetricsState = { proposalsCreated: 0, awardsRecorded: {}, invoicesByStatus: {}, milestoneStatus: {}, closeoutsOpened: 0, closeoutsFinalized: 0, subawardsByType: {}, subawardsExecuted: 0 };
 
 export function recordGrantProposalCreated(): void {
   state.proposalsCreated += 1;
@@ -30,6 +32,10 @@ export function recordGrantMilestoneStatus(status: string): void {
 }
 export function recordGrantCloseoutOpened(): void { state.closeoutsOpened += 1; }
 export function recordGrantCloseoutFinalized(): void { state.closeoutsFinalized += 1; }
+export function recordGrantSubaward(institutionType: string): void {
+  state.subawardsByType[institutionType] = (state.subawardsByType[institutionType] ?? 0) + 1;
+}
+export function recordGrantSubawardExecuted(): void { state.subawardsExecuted += 1; }
 
 export function renderGrantsMetrics(): string[] {
   const lines: string[] = [];
@@ -51,6 +57,12 @@ export function renderGrantsMetrics(): string[] {
   lines.push('# HELP grants_closeouts_finalized_total Grant closeouts finalized (all required items complete)');
   lines.push('# TYPE grants_closeouts_finalized_total counter');
   lines.push(`grants_closeouts_finalized_total ${state.closeoutsFinalized}`);
+  lines.push('# HELP grants_subawards_total Subawards created, by subrecipient institution type');
+  lines.push('# TYPE grants_subawards_total counter');
+  for (const [t, n] of Object.entries(state.subawardsByType)) lines.push(`grants_subawards_total{institution_type="${t}"} ${n}`);
+  lines.push('# HELP grants_subawards_executed_total Subawards executed (cleared screen + risk assessment)');
+  lines.push('# TYPE grants_subawards_executed_total counter');
+  lines.push(`grants_subawards_executed_total ${state.subawardsExecuted}`);
   return lines;
 }
 
@@ -64,4 +76,6 @@ export function resetGrantsMetrics(): void {
   state.milestoneStatus = {};
   state.closeoutsOpened = 0;
   state.closeoutsFinalized = 0;
+  state.subawardsByType = {};
+  state.subawardsExecuted = 0;
 }

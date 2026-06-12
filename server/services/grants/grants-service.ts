@@ -19,8 +19,8 @@
 
 import { pool } from '../../db';
 import { linkProvenanceTx } from '../provenance/provenance-service';
-import { closeoutDueDate, evaluateCloseout } from './grants-logic';
-import type { FundingAgency, FundingMechanism, MilestoneType } from '../../../shared/schema/grants';
+import { closeoutDueDate, evaluateCloseout, evaluateSubawardEligibility } from './grants-logic';
+import type { FundingAgency, FundingMechanism, MilestoneType, SubawardInstitutionType, SubawardRiskLevel } from '../../../shared/schema/grants';
 
 interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
@@ -253,6 +253,61 @@ export async function getCloseoutRecord(orgId: number, awardId: number): Promise
     [awardId, orgId],
   );
   return rows[0] ?? null;
+}
+
+// ─── Subawards / subrecipient monitoring (2 CFR 200.331–200.332, 200.214) ────
+
+export interface SubawardInput {
+  subrecipientName: string;
+  subrecipientUei?: string | null;
+  institutionType?: SubawardInstitutionType | null;
+  amount?: string | number | null;
+  periodStart?: string | null;
+  periodEnd?: string | null;
+  riskLevel?: SubawardRiskLevel | null;
+}
+
+export async function createSubawardTx(client: Queryable, orgId: number, userId: number, awardId: number, input: SubawardInput): Promise<{ id: number }> {
+  await assertAward(client, orgId, awardId);
+  const { rows } = await client.query(
+    `INSERT INTO grant_subawards (organization_id, award_id, subrecipient_name, subrecipient_uei, institution_type, amount, period_start, period_end, risk_level, screen_status, status, created_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'not_screened','draft',$10) RETURNING id`,
+    [orgId, awardId, input.subrecipientName, input.subrecipientUei ?? null, input.institutionType ?? null, input.amount ?? null,
+      input.periodStart ?? null, input.periodEnd ?? null, input.riskLevel ?? null, userId],
+  );
+  return { id: Number(rows[0].id) };
+}
+
+/** Record a restricted-party screening result against SAM.gov exclusions. */
+export async function screenSubawardTx(client: Queryable, orgId: number, id: number, input: { screenStatus: 'cleared' | 'excluded'; screenSource?: string | null; riskLevel?: SubawardRiskLevel | null }): Promise<void> {
+  if (!['cleared', 'excluded'].includes(input.screenStatus)) throw new GrantsError('BAD_INPUT', `Invalid screen status "${input.screenStatus}".`);
+  const r = await client.query(
+    `UPDATE grant_subawards SET screen_status = $3, screen_date = CURRENT_DATE, screen_source = COALESCE($4, screen_source),
+        risk_level = COALESCE($5, risk_level), status = CASE WHEN status = 'draft' THEN 'screened' ELSE status END, updated_at = now()
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    [id, orgId, input.screenStatus, input.screenSource ?? 'sam_exclusions', input.riskLevel ?? null],
+  );
+  if ((r as any).rowCount === 0) throw new GrantsError('NOT_FOUND', 'Subaward not found for this organization.');
+}
+
+/** Execute a subaward — gated: cleared screen + recorded risk assessment (2 CFR 200.214/200.332). */
+export async function executeSubawardTx(client: Queryable, orgId: number, userId: number, id: number): Promise<{ eligible: true }> {
+  const s = await client.query(`SELECT screen_status, risk_level, status FROM grant_subawards WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [id, orgId]);
+  if (s.rows.length === 0) throw new GrantsError('NOT_FOUND', 'Subaward not found for this organization.');
+  if (s.rows[0].status === 'executed') throw new GrantsError('INVALID_STATE', 'Subaward is already executed.');
+  if (s.rows[0].status === 'terminated') throw new GrantsError('INVALID_STATE', 'Subaward is terminated.');
+  const elig = evaluateSubawardEligibility({ screenStatus: s.rows[0].screen_status, riskLevel: s.rows[0].risk_level });
+  if (!elig.eligible) throw new GrantsError('INVALID_STATE', `Cannot execute subaward — ${elig.blockers.join(' ')}`);
+  await client.query(`UPDATE grant_subawards SET status = 'executed', executed_by = $3, executed_at = now(), updated_at = now() WHERE id = $1 AND organization_id = $2`, [id, orgId, userId]);
+  return { eligible: true };
+}
+
+export async function listSubawards(orgId: number, awardId?: number): Promise<any[]> {
+  const params: unknown[] = [orgId];
+  let sql = `SELECT id, award_id, subrecipient_name, subrecipient_uei, institution_type, amount, risk_level, screen_status, screen_date, status FROM grant_subawards WHERE organization_id = $1 AND deleted_at IS NULL`;
+  if (awardId != null) { params.push(awardId); sql += ` AND award_id = $2`; }
+  sql += ` ORDER BY created_at DESC`;
+  return (await pool.query(sql, params)).rows;
 }
 
 // ─── Reads ───────────────────────────────────────────────────────────────────

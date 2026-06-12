@@ -27,6 +27,10 @@ import {
   updateCloseoutTx,
   finalizeCloseoutTx,
   getCloseoutRecord,
+  createSubawardTx,
+  screenSubawardTx,
+  executeSubawardTx,
+  listSubawards,
   listAwards,
   listMilestones,
   listProposals,
@@ -34,7 +38,7 @@ import {
   getAwardPeriod,
 } from '../services/grants/grants-service';
 import { summarizeDeadlines, reportingObligations, awardPeriodState, evaluateCloseout } from '../services/grants/grants-logic';
-import { recordGrantProposalCreated, recordGrantAwardRecorded, recordGrantInvoice, recordGrantMilestoneStatus, recordGrantCloseoutOpened, recordGrantCloseoutFinalized } from '../services/grants-metrics';
+import { recordGrantProposalCreated, recordGrantAwardRecorded, recordGrantInvoice, recordGrantMilestoneStatus, recordGrantCloseoutOpened, recordGrantCloseoutFinalized, recordGrantSubaward, recordGrantSubawardExecuted } from '../services/grants-metrics';
 
 const router = Router();
 
@@ -331,6 +335,63 @@ router.patch('/invoices/:id/status', async (req, res) => {
     await setInvoiceStatusTx(client, orgId, id, parsed.data.status);
     recordGrantInvoice(parsed.data.status);
     return { target: `grant-invoice:${id}`, payload: { status: parsed.data.status }, body: { id, status: parsed.data.status } };
+  });
+});
+
+// ─── Subawards / subrecipient monitoring (2 CFR 200.331–200.332, 200.214) ────
+
+const INSTITUTION = z.enum(['higher_ed', 'nonprofit', 'commercial', 'foreign', 'government', 'other']);
+const RISK = z.enum(['low', 'medium', 'high']);
+const subawardSchema = z.object({
+  subrecipientName: z.string().min(1).max(300),
+  subrecipientUei: z.string().max(40).optional(),
+  institutionType: INSTITUTION.optional(),
+  amount: amount.optional(),
+  periodStart: z.string().optional(),
+  periodEnd: z.string().optional(),
+  riskLevel: RISK.optional(),
+  reason,
+});
+router.post('/awards/:id/subawards', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = subawardSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governed(req, res, 'create', parsed.data.reason, async (client, orgId, userId) => {
+    const { id: sid } = await createSubawardTx(client, orgId, userId, id, parsed.data);
+    recordGrantSubaward(parsed.data.institutionType ?? 'other');
+    return { target: `grant-award:${id}`, payload: { subawardId: sid }, body: { awardId: id, subawardId: sid } };
+  });
+});
+
+router.get('/subawards', async (req, res) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const awardId = req.query.awardId ? Number(req.query.awardId) : undefined;
+  try { res.json(await listSubawards(orgId, Number.isFinite(awardId) ? awardId : undefined)); } catch (err) { fail(res, err); }
+});
+
+const screenSchema = z.object({ screenStatus: z.enum(['cleared', 'excluded']), screenSource: z.string().max(60).optional(), riskLevel: RISK.optional(), reason });
+router.patch('/subawards/:id/screen', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = screenSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governed(req, res, 'update', parsed.data.reason, async (client, orgId) => {
+    await screenSubawardTx(client, orgId, id, parsed.data);
+    return { target: `grant-subaward:${id}`, payload: { screenStatus: parsed.data.screenStatus }, body: { id, screenStatus: parsed.data.screenStatus } };
+  });
+});
+
+router.post('/subawards/:id/execute', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = z.object({ reason }).safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governed(req, res, 'sign', parsed.data.reason, async (client, orgId, userId) => {
+    await executeSubawardTx(client, orgId, userId, id);
+    recordGrantSubawardExecuted();
+    return { target: `grant-subaward:${id}`, payload: { status: 'executed' }, body: { id, status: 'executed' } };
   });
 });
 

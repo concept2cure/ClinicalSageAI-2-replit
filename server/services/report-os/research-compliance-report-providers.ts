@@ -80,7 +80,10 @@ export async function computeDomainReport(reportTypeId: string, orgId: number): 
       const co = await countBy('grant_closeout_records', 'status', orgId);
       // Closeouts past their 2 CFR 200.344 due date and not yet completed.
       const overdueCloseouts = (await pool.query(`SELECT count(*)::int n FROM grant_closeout_records WHERE organization_id=$1 AND deleted_at IS NULL AND status <> 'completed' AND closeout_due_date < CURRENT_DATE`, [orgId])).rows[0].n;
-      return result('grants_portfolio', aw.total + pr.total, { awards: aw.total, awardsByStatus: aw.byCol, proposals: pr.total, proposalsByStatus: pr.byCol, invoicesByStatus: inv.byCol, closeoutsByStatus: co.byCol, overdueCloseouts });
+      const sub = await countBy('grant_subawards', 'screen_status', orgId);
+      // Executed subawards that were never cleared by restricted-party screening (2 CFR 200.214 risk).
+      const unscreenedExecuted = (await pool.query(`SELECT count(*)::int n FROM grant_subawards WHERE organization_id=$1 AND deleted_at IS NULL AND status='executed' AND screen_status <> 'cleared'`, [orgId])).rows[0].n;
+      return result('grants_portfolio', aw.total + pr.total, { awards: aw.total, awardsByStatus: aw.byCol, proposals: pr.total, proposalsByStatus: pr.byCol, invoicesByStatus: inv.byCol, closeoutsByStatus: co.byCol, overdueCloseouts, subawards: sub.total, subawardsByScreen: sub.byCol, unscreenedExecuted });
     }
     case 'rim.registration_grid': {
       const r = await countBy('rim_registrations', 'market_status', orgId);
