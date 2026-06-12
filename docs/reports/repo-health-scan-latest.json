@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-12T04:29:45.749Z",
+  "generatedAt": "2026-06-12T04:34:52.817Z",
   "git": {
-    "sha": "a192f6a9fd67dce9f9e1fa6a861b6774d2e91936",
+    "sha": "1e788e2d02c0da990c22c8f30154ecfb3abe6d3f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2092,7 +2092,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 441027
+        "bytes": 442884
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2150,7 +2150,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 8913
+        "lines": 8970
       },
       {
         "file": "server/statistics-service.ts",
