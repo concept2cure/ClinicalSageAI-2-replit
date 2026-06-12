@@ -5284,6 +5284,18 @@ registerToolHandler('assess_combination_product', async (input) => {
   }
 });
 
+registerToolHandler('assess_qms', async (input) => {
+  // Static reference + pure assessment — no tenant context required.
+  const present = Array.isArray(input.present_clause_ids) ? (input.present_clause_ids as string[]) : null;
+  try {
+    const m = await import('../market-specs/quality-system.js');
+    if (!present) return JSON.stringify({ ok: true, clauses: m.QMS_CLAUSES, fdaNote: m.FDA_QMSR_NOTE });
+    return JSON.stringify({ ok: true, assessment: m.assessQmsReadiness(present) });
+  } catch (err) {
+    return JSON.stringify({ error: `assess_qms failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('assess_stored_cer', async (input, ctx) => {
   // Tenant-scoped — reads the organization's stored CER.
   if (!ctx?.organizationId) {

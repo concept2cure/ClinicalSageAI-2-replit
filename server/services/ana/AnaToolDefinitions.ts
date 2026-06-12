@@ -3363,6 +3363,19 @@ export const ASSESS_COMBINATION_PRODUCT: AnaTool = {
   },
 };
 
+export const ASSESS_QMS: AnaTool = {
+  name: 'assess_qms',
+  description:
+    "Inspect or gap-check a device quality management system against ISO 13485:2016 (with the FDA QSR→QMSR mapping). Without `present_clause_ids` it returns the major clause structure (design controls, purchasing, production, complaints/reporting, nonconforming product, CAPA…) with each clause's FDA mapping (21 CFR 820.x) and auditor questions, plus the QMSR transition note (effective 2026-02-02). With `present_clause_ids` it reports readiness + missing clauses. Static reference + pure assessment, deterministic — an audit-prep aid, not an audit verdict.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      present_clause_ids: { type: 'array', items: { type: 'string' }, description: 'Clause ids the QMS has in place (for the readiness assessment).' },
+    },
+    required: [],
+  },
+};
+
 export const LIST_REGULATORY_CAPABILITIES: AnaTool = {
   name: 'list_regulatory_capabilities',
   description:
@@ -5502,6 +5515,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   GET_ELECTRICAL_STANDARDS,
   GET_STERILIZATION_REQUIREMENTS,
   ASSESS_COMBINATION_PRODUCT,
+  ASSESS_QMS,
   LIST_REGULATORY_CAPABILITIES,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
