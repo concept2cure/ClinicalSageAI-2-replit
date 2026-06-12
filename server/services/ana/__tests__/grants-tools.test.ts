@@ -10,6 +10,7 @@ const TOOLS = [
   'create_grant_proposal', 'record_grant_award', 'review_grant_reporting',
   'set_grant_milestone_status', 'open_grant_closeout', 'update_grant_closeout', 'finalize_grant_closeout',
   'record_subaward', 'screen_subaward', 'execute_subaward',
+  'add_grant_budget_line', 'record_grant_expenditure', 'review_grant_budget',
 ];
 
 describe('eGrants AnA tools — registration', () => {
@@ -55,5 +56,17 @@ describe('eGrants AnA tools — context + input guards', () => {
   it('execute_subaward requires a subaward_id', async () => {
     const out = JSON.parse(await getToolHandler('execute_subaward')!({}, { organizationId: 1, userId: 1 } as any));
     expect(out.error).toMatch(/subaward_id is required/);
+  });
+  it('add_grant_budget_line rejects an invalid category', async () => {
+    const out = JSON.parse(await getToolHandler('add_grant_budget_line')!({ award_id: 1, category: 'yachts', budgeted_amount: 10 }, { organizationId: 1, userId: 1 } as any));
+    expect(out.error).toMatch(/valid category/);
+  });
+  it('record_grant_expenditure requires award_id, category, and amount', async () => {
+    const out = JSON.parse(await getToolHandler('record_grant_expenditure')!({ award_id: 1, category: 'travel' }, { organizationId: 1, userId: 1 } as any));
+    expect(out.error).toMatch(/valid category, and amount are required/);
+  });
+  it('review_grant_budget requires tenant context', async () => {
+    const out = JSON.parse(await getToolHandler('review_grant_budget')!({ award_id: 1 }, {} as any));
+    expect(out.error).toMatch(/tenant context/);
   });
 });

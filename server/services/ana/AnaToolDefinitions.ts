@@ -3888,6 +3888,37 @@ export const EXECUTE_SUBAWARD: AnaTool = {
   input_schema: { type: 'object', properties: { subaward_id: { type: 'number' }, reason: { type: 'string' } }, required: ['subaward_id'] },
 };
 
+const BUDGET_CATEGORY_ENUM = ['personnel', 'fringe', 'equipment', 'travel', 'supplies', 'contractual', 'construction', 'other_direct', 'indirect'];
+
+export const ADD_GRANT_BUDGET_LINE: AnaTool = {
+  name: 'add_grant_budget_line',
+  description:
+    "Add a budget line to an award by cost category (2 CFR 200.308). Gated: rejected if the running total budgeted would over-allocate the award amount. On the 'indirect' line, set indirect_rate_pct for the F&A rate (2 CFR 200.414). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { award_id: { type: 'number' }, category: { type: 'string', enum: BUDGET_CATEGORY_ENUM }, budgeted_amount: { type: 'number' }, indirect_rate_pct: { type: 'number' }, notes: { type: 'string' }, reason: { type: 'string' } },
+    required: ['award_id', 'category', 'budgeted_amount'],
+  },
+};
+
+export const RECORD_GRANT_EXPENDITURE: AnaTool = {
+  name: 'record_grant_expenditure',
+  description:
+    "Record an actual expenditure booked against an award, by cost category (2 CFR 200.403). Expenditures are recorded as-is; over-budget categories are surfaced by review_grant_budget, not blocked here. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { award_id: { type: 'number' }, category: { type: 'string', enum: BUDGET_CATEGORY_ENUM }, amount: { type: 'number' }, expenditure_date: { type: 'string', description: 'YYYY-MM-DD.' }, description: { type: 'string' }, reason: { type: 'string' } },
+    required: ['award_id', 'category', 'amount'],
+  },
+};
+
+export const REVIEW_GRANT_BUDGET: AnaTool = {
+  name: 'review_grant_budget',
+  description:
+    "Reconcile budget vs actual for an award (read-only): per-category budgeted/spent/remaining, over-budget and over-allocation flags, a risk level, and findings citing 2 CFR 200.308/200.403. Use to tell the user how the award is tracking financially.",
+  input_schema: { type: 'object', properties: { award_id: { type: 'number' } }, required: ['award_id'] },
+};
+
 export const CREATE_RIM_PRODUCT: AnaTool = {
   name: 'create_rim_product',
   description:
@@ -5666,6 +5697,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   RECORD_SUBAWARD,
   SCREEN_SUBAWARD,
   EXECUTE_SUBAWARD,
+  ADD_GRANT_BUDGET_LINE,
+  RECORD_GRANT_EXPENDITURE,
+  REVIEW_GRANT_BUDGET,
   CREATE_RIM_PRODUCT,
   SET_REGISTRATION_STATUS,
   REVIEW_LABEL_CURRENCY,

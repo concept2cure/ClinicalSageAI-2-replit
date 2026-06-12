@@ -31,6 +31,9 @@ import {
   screenSubawardTx,
   executeSubawardTx,
   listSubawards,
+  addBudgetLineTx,
+  recordExpenditureTx,
+  getBudgetVsActual,
   listAwards,
   listMilestones,
   listProposals,
@@ -38,7 +41,7 @@ import {
   getAwardPeriod,
 } from '../services/grants/grants-service';
 import { summarizeDeadlines, reportingObligations, awardPeriodState, evaluateCloseout } from '../services/grants/grants-logic';
-import { recordGrantProposalCreated, recordGrantAwardRecorded, recordGrantInvoice, recordGrantMilestoneStatus, recordGrantCloseoutOpened, recordGrantCloseoutFinalized, recordGrantSubaward, recordGrantSubawardExecuted } from '../services/grants-metrics';
+import { recordGrantProposalCreated, recordGrantAwardRecorded, recordGrantInvoice, recordGrantMilestoneStatus, recordGrantCloseoutOpened, recordGrantCloseoutFinalized, recordGrantSubaward, recordGrantSubawardExecuted, recordGrantBudgetLine, recordGrantExpenditure } from '../services/grants-metrics';
 
 const router = Router();
 
@@ -393,6 +396,44 @@ router.post('/subawards/:id/execute', async (req, res) => {
     recordGrantSubawardExecuted();
     return { target: `grant-subaward:${id}`, payload: { status: 'executed' }, body: { id, status: 'executed' } };
   });
+});
+
+// ─── Budget lines & expenditures (2 CFR 200.308 / 200.403 / 200.414) ─────────
+
+const CATEGORY = z.enum(['personnel', 'fringe', 'equipment', 'travel', 'supplies', 'contractual', 'construction', 'other_direct', 'indirect']);
+
+const budgetLineSchema = z.object({ category: CATEGORY, budgetedAmount: z.number().nonnegative(), indirectRatePct: z.number().min(0).max(100).optional(), notes: z.string().max(1000).optional(), reason });
+router.post('/awards/:id/budget', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = budgetLineSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governed(req, res, 'create', parsed.data.reason, async (client, orgId, userId) => {
+    const { id: bid } = await addBudgetLineTx(client, orgId, userId, id, parsed.data);
+    recordGrantBudgetLine(parsed.data.category);
+    return { target: `grant-award:${id}`, payload: { budgetLineId: bid, category: parsed.data.category }, body: { awardId: id, budgetLineId: bid } };
+  });
+});
+
+const expenditureSchema = z.object({ category: CATEGORY, amount: z.number().nonnegative(), expenditureDate: z.string().optional(), description: z.string().max(1000).optional(), reason });
+router.post('/awards/:id/expenditures', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = expenditureSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governed(req, res, 'create', parsed.data.reason, async (client, orgId, userId) => {
+    const { id: eid } = await recordExpenditureTx(client, orgId, userId, id, parsed.data);
+    recordGrantExpenditure(parsed.data.category);
+    return { target: `grant-award:${id}`, payload: { expenditureId: eid, category: parsed.data.category }, body: { awardId: id, expenditureId: eid } };
+  });
+});
+
+router.get('/awards/:id/budget', async (req, res) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  try { res.json(await getBudgetVsActual(orgId, id)); } catch (err) { fail(res, err); }
 });
 
 export default router;

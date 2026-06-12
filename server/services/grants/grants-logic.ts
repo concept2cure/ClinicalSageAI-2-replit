@@ -206,3 +206,99 @@ export function evaluateSubawardEligibility(input: SubawardEligibilityInput): Su
   if (input.riskLevel == null) blockers.push('Subrecipient risk assessment not recorded (2 CFR 200.332(b)).');
   return { eligible: blockers.length === 0, blockers };
 }
+
+// ─── Budget vs actual (2 CFR 200.308 / 200.403 / 200.414) ────────────────────
+
+export type BudgetCategory =
+  | 'personnel' | 'fringe' | 'equipment' | 'travel' | 'supplies'
+  | 'contractual' | 'construction' | 'other_direct' | 'indirect';
+
+/** Federal de minimis indirect (F&A) rate for recipients without a negotiated rate (2 CFR 200.414(f)). */
+export const DE_MINIMIS_INDIRECT_RATE = 15;
+/** Over-budget tolerance before a category variance is flagged high-risk (rebudgeting headroom, 2 CFR 200.308). */
+export const BUDGET_VARIANCE_TOLERANCE_PCT = 10;
+
+export interface BudgetLineView { category: BudgetCategory; budgetedAmount: number }
+export interface ExpenditureView { category: BudgetCategory; amount: number }
+
+export interface CategoryBudget {
+  category: BudgetCategory;
+  budgeted: number;
+  actual: number;
+  remaining: number;
+  variancePct: number; // (actual - budgeted) / budgeted * 100; 0 when nothing budgeted
+  overBudget: boolean;
+}
+
+export interface BudgetFinding { severity: 'info' | 'warning' | 'critical'; message: string }
+
+export interface BudgetSummary {
+  categories: CategoryBudget[];
+  totalBudgeted: number;
+  totalActual: number;
+  totalRemaining: number;
+  overAllocated: boolean; // total budgeted exceeds the award amount
+  riskLevel: 'low' | 'medium' | 'high';
+  findings: BudgetFinding[];
+}
+
+function round2(n: number): number { return Math.round(n * 100) / 100; }
+
+/**
+ * Compute the indirect (F&A) cost on a modified total direct cost base at a given
+ * rate (2 CFR 200.414). Pure. `ratePct` defaults to the 10% de minimis is NOT
+ * assumed — callers pass the negotiated or de minimis rate explicitly.
+ */
+export function computeIndirectCost(modifiedTotalDirect: number, ratePct: number): number {
+  if (!(modifiedTotalDirect > 0) || !(ratePct > 0)) return 0;
+  return round2(modifiedTotalDirect * (ratePct / 100));
+}
+
+/**
+ * Budget-vs-actual posture for an award: per-category budgeted/actual/remaining,
+ * over-budget flags, and an over-allocation check against the award total. Pure;
+ * the deterministic gate for budgeting (a budget may not over-allocate the award)
+ * lives in the service, which calls this. Findings cite 2 CFR 200.308/200.403.
+ */
+export function budgetVsActual(lines: BudgetLineView[], expenditures: ExpenditureView[], awardTotal: number | null): BudgetSummary {
+  const cats = new Map<BudgetCategory, { budgeted: number; actual: number }>();
+  for (const l of lines) {
+    const c = cats.get(l.category) ?? { budgeted: 0, actual: 0 };
+    c.budgeted += l.budgetedAmount;
+    cats.set(l.category, c);
+  }
+  for (const e of expenditures) {
+    const c = cats.get(e.category) ?? { budgeted: 0, actual: 0 };
+    c.actual += e.amount;
+    cats.set(e.category, c);
+  }
+
+  const findings: BudgetFinding[] = [];
+  const categories: CategoryBudget[] = [];
+  let totalBudgeted = 0, totalActual = 0;
+  for (const [category, v] of cats) {
+    const budgeted = round2(v.budgeted), actual = round2(v.actual);
+    const remaining = round2(budgeted - actual);
+    const variancePct = budgeted > 0 ? round2(((actual - budgeted) / budgeted) * 100) : 0;
+    const overBudget = actual > budgeted && budgeted > 0;
+    if (overBudget && variancePct > BUDGET_VARIANCE_TOLERANCE_PCT) {
+      findings.push({ severity: 'critical', message: `${category} is ${variancePct}% over budget (>${BUDGET_VARIANCE_TOLERANCE_PCT}% — prior approval may be required, 2 CFR 200.308).` });
+    } else if (overBudget) {
+      findings.push({ severity: 'warning', message: `${category} is over budget by ${round2(actual - budgeted)} (2 CFR 200.403 — costs must be allowable & reasonable).` });
+    }
+    categories.push({ category, budgeted, actual, remaining, variancePct, overBudget });
+    totalBudgeted += budgeted;
+    totalActual += actual;
+  }
+  totalBudgeted = round2(totalBudgeted);
+  totalActual = round2(totalActual);
+
+  const overAllocated = awardTotal != null && totalBudgeted > awardTotal;
+  if (overAllocated) findings.push({ severity: 'critical', message: `Total budgeted (${totalBudgeted}) exceeds the award amount (${awardTotal}).` });
+  if (awardTotal != null && totalActual > awardTotal) findings.push({ severity: 'critical', message: `Total expenditures (${totalActual}) exceed the award amount (${awardTotal}).` });
+
+  const hasCritical = findings.some((f) => f.severity === 'critical');
+  const riskLevel: BudgetSummary['riskLevel'] = hasCritical ? 'high' : findings.length > 0 || totalActual > totalBudgeted ? 'medium' : 'low';
+
+  return { categories, totalBudgeted, totalActual, totalRemaining: round2(totalBudgeted - totalActual), overAllocated, riskLevel, findings };
+}

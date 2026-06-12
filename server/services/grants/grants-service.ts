@@ -19,7 +19,7 @@
 
 import { pool } from '../../db';
 import { linkProvenanceTx } from '../provenance/provenance-service';
-import { closeoutDueDate, evaluateCloseout, evaluateSubawardEligibility } from './grants-logic';
+import { closeoutDueDate, evaluateCloseout, evaluateSubawardEligibility, budgetVsActual, type BudgetCategory, type BudgetSummary } from './grants-logic';
 import type { FundingAgency, FundingMechanism, MilestoneType, SubawardInstitutionType, SubawardRiskLevel } from '../../../shared/schema/grants';
 
 interface Queryable {
@@ -308,6 +308,52 @@ export async function listSubawards(orgId: number, awardId?: number): Promise<an
   if (awardId != null) { params.push(awardId); sql += ` AND award_id = $2`; }
   sql += ` ORDER BY created_at DESC`;
   return (await pool.query(sql, params)).rows;
+}
+
+// ─── Budget lines & expenditures (2 CFR 200.308 / 200.403 / 200.414) ─────────
+
+async function awardTotal(client: Queryable, orgId: number, awardId: number): Promise<number | null> {
+  const a = await client.query(`SELECT total_amount FROM grant_awards WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [awardId, orgId]);
+  if (a.rows.length === 0) throw new GrantsError('NOT_FOUND', 'Award not found for this organization.');
+  return a.rows[0].total_amount == null ? null : Number(a.rows[0].total_amount);
+}
+
+/** Add a budget line. Gate: the running total budgeted may not over-allocate the award amount. */
+export async function addBudgetLineTx(client: Queryable, orgId: number, userId: number, awardId: number, input: { category: BudgetCategory; budgetedAmount: number; indirectRatePct?: number | null; notes?: string | null }): Promise<{ id: number }> {
+  const total = await awardTotal(client, orgId, awardId);
+  if (total != null) {
+    const cur = await client.query(`SELECT COALESCE(sum(budgeted_amount),0)::float8 AS s FROM grant_budget_lines WHERE award_id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [awardId, orgId]);
+    const projected = Number(cur.rows[0].s) + input.budgetedAmount;
+    if (projected > total) throw new GrantsError('INVALID_STATE', `Budget over-allocation: total budgeted ${projected.toFixed(2)} would exceed the award amount ${total.toFixed(2)}.`);
+  }
+  const { rows } = await client.query(
+    `INSERT INTO grant_budget_lines (organization_id, award_id, category, budgeted_amount, indirect_rate_pct, notes, created_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
+    [orgId, awardId, input.category, input.budgetedAmount, input.indirectRatePct ?? null, input.notes ?? null, userId],
+  );
+  return { id: Number(rows[0].id) };
+}
+
+export async function recordExpenditureTx(client: Queryable, orgId: number, userId: number, awardId: number, input: { category: BudgetCategory; amount: number; expenditureDate?: string | null; description?: string | null }): Promise<{ id: number }> {
+  await assertAward(client, orgId, awardId);
+  const { rows } = await client.query(
+    `INSERT INTO grant_expenditures (organization_id, award_id, category, amount, expenditure_date, description, created_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
+    [orgId, awardId, input.category, input.amount, input.expenditureDate ?? null, input.description ?? null, userId],
+  );
+  return { id: Number(rows[0].id) };
+}
+
+/** Reconcile budget vs actual for an award. Read-only; pure aggregation in the logic layer. */
+export async function getBudgetVsActual(orgId: number, awardId: number): Promise<BudgetSummary> {
+  const total = await awardTotal(pool, orgId, awardId);
+  const lines = await pool.query(`SELECT category, budgeted_amount FROM grant_budget_lines WHERE award_id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [awardId, orgId]);
+  const exp = await pool.query(`SELECT category, amount FROM grant_expenditures WHERE award_id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [awardId, orgId]);
+  return budgetVsActual(
+    lines.rows.map((r) => ({ category: r.category, budgetedAmount: Number(r.budgeted_amount) })),
+    exp.rows.map((r) => ({ category: r.category, amount: Number(r.amount) })),
+    total,
+  );
 }
 
 // ─── Reads ───────────────────────────────────────────────────────────────────
