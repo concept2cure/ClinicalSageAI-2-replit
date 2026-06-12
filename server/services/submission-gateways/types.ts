@@ -73,6 +73,18 @@ export interface SubmissionBundle {
     notConverted: string[];
     allPdfA: boolean;
   };
+  /**
+   * Optional eCTD DTD self-containment status: whether every DTD the backbones
+   * reference is bundled in the package, and which are missing. Set by the
+   * packager; consumed by the DTD readiness gate. Shape matches the relevant
+   * fields of `DtdReadinessResult` in server/services/ectd/dtd-bundler.ts.
+   */
+  dtdStatus?: {
+    required: string[];
+    present: string[];
+    missing: string[];
+    selfContained: boolean;
+  };
 }
 
 export interface GatewayTransmitRequest {

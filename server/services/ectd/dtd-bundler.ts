@@ -1,0 +1,136 @@
+/**
+ * eCTD DTD bundling + readiness (audit gap P0-1: self-containment).
+ *
+ * The regional packager's backbones reference DTDs by DOCTYPE
+ * (e.g. `util/dtd/ich-ectd-3-2.dtd`), but a package is only DTD-validatable
+ * when those files actually ship inside it. The licensed DTD files are NOT
+ * committed (see `assets/ectd-dtd/README.md`); a maintainer drops them into
+ * `assets/ectd-dtd/` or points `ECTD_DTD_DIR` at a directory that holds them.
+ *
+ * This module is the code half of that gap: it lists the vendored DTDs, knows
+ * which DTDs each region's backbone references, and evaluates a readiness gate
+ * so a production package can fail closed when required DTDs are missing —
+ * the same opt-in pattern as the PDF/A gate. It NEVER throws on a missing
+ * directory; absence is reported, not fatal, so dev/staging keep flowing.
+ *
+ * @module server/services/ectd/dtd-bundler
+ */
+
+import { promises as fs } from 'fs';
+import * as path from 'path';
+
+export type DtdRegion = 'fda' | 'ema' | 'pmda';
+
+/** A vendored DTD read from the drop-point directory. */
+export interface VendoredDtd {
+  fileName: string;
+  bytes: Buffer;
+}
+
+/** The ICH backbone DTD every region's index.xml references. */
+export const ICH_BACKBONE_DTD = 'ich-ectd-3-2.dtd';
+
+/** Region → the regional backbone DTD its m1 references (plus the ICH backbone). */
+const REGIONAL_DTD: Record<DtdRegion, string> = {
+  fda: 'us-regional-v2-01.dtd',
+  ema: 'eu-regional.dtd',
+  pmda: 'jp-regional.dtd',
+};
+
+/** Resolve the DTD drop-point directory (ECTD_DTD_DIR or assets/ectd-dtd). */
+export function resolveDtdDir(env: NodeJS.ProcessEnv = process.env): string {
+  return env.ECTD_DTD_DIR || path.resolve(process.cwd(), 'assets/ectd-dtd');
+}
+
+/** The DTD filenames a region's package must contain to be self-contained. */
+export function requiredDtdsForRegion(region: DtdRegion): string[] {
+  return [ICH_BACKBONE_DTD, REGIONAL_DTD[region]];
+}
+
+/**
+ * List the vendored `*.dtd` files in the drop-point directory. Returns [] when
+ * the directory is absent or empty — never throws (graceful by design).
+ */
+export async function listVendoredDtds(dir: string = resolveDtdDir()): Promise<VendoredDtd[]> {
+  let names: string[];
+  try {
+    names = await fs.readdir(dir);
+  } catch {
+    return [];
+  }
+  const out: VendoredDtd[] = [];
+  for (const name of names.sort()) {
+    if (!name.toLowerCase().endsWith('.dtd')) continue;
+    try {
+      out.push({ fileName: name, bytes: await fs.readFile(path.join(dir, name)) });
+    } catch {
+      // Unreadable entry — skip; treated as absent by the readiness check.
+    }
+  }
+  return out;
+}
+
+export interface DtdReadinessInput {
+  region: DtdRegion;
+  /** Filenames actually present in the package's util/dtd/. */
+  present: string[];
+  environment: 'staging' | 'production';
+  /** Wire from `ECTD_REQUIRE_DTD`; false ⇒ report-only (never blocks). */
+  requireDtd: boolean;
+}
+
+export interface DtdReadinessResult {
+  required: string[];
+  present: string[];
+  missing: string[];
+  /** True when every required DTD for the region is present. */
+  selfContained: boolean;
+  cleared: boolean;
+  blockers: string[];
+}
+
+/**
+ * Evaluate DTD self-containment for a region's package. Blocks only when DTDs
+ * are required AND the package is for production AND a required DTD is missing —
+ * the "do not ship a production eCTD that references DTDs it doesn't contain"
+ * rule. Staging and `requireDtd:false` never block (they report for visibility).
+ */
+export function assessDtdReadiness(input: DtdReadinessInput): DtdReadinessResult {
+  const required = requiredDtdsForRegion(input.region);
+  const presentSet = new Set(input.present.map((p) => p.toLowerCase()));
+  const missing = required.filter((r) => !presentSet.has(r.toLowerCase()));
+  const selfContained = missing.length === 0;
+  const blockers: string[] = [];
+
+  if (input.requireDtd && input.environment === 'production' && !selfContained) {
+    blockers.push(
+      `${missing.length} required eCTD DTD(s) missing from the package (${missing.join(', ')}). ` +
+        `A production submission must be DTD self-contained. Place the licensed DTDs in ` +
+        `assets/ectd-dtd/ (or set ECTD_DTD_DIR), or clear ECTD_REQUIRE_DTD for non-submission builds. ` +
+        `See assets/ectd-dtd/README.md.`
+    );
+  }
+
+  return {
+    required,
+    present: input.present,
+    missing,
+    selfContained,
+    cleared: blockers.length === 0,
+    blockers,
+  };
+}
+
+/** Read the opt-in DTD enforcement flag from the environment. */
+export function dtdRequiredFromEnv(env: NodeJS.ProcessEnv = process.env): boolean {
+  return String(env.ECTD_REQUIRE_DTD ?? '').toLowerCase() === 'true';
+}
+
+export default {
+  ICH_BACKBONE_DTD,
+  resolveDtdDir,
+  requiredDtdsForRegion,
+  listVendoredDtds,
+  assessDtdReadiness,
+  dtdRequiredFromEnv,
+};
