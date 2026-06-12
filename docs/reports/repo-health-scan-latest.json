@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-12T03:38:29.348Z",
+  "generatedAt": "2026-06-12T03:52:22.365Z",
   "git": {
-    "sha": "5738f792ea45a5afcde8d134cf0f478d433e9805",
+    "sha": "6936fa004563b7e68471752f16866aba6d16a3d5",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 84,
+        "count": 85,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -58,6 +58,7 @@
           "server/services/biostatistics-judgment/index.ts",
           "server/services/biostats-signal-engine/index.ts",
           "server/services/cer/index.ts",
+          "server/services/chem/index.ts",
           "server/services/cognitive-ecosystem/index.ts",
           "server/services/corpus/index.ts",
           "server/services/cortex/index.ts",
@@ -2083,11 +2084,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 421407
+        "bytes": 425629
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 316539
+        "bytes": 319753
       },
       {
         "file": "server/statistics-service.ts",
@@ -2141,7 +2142,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 8544
+        "lines": 8645
       },
       {
         "file": "server/statistics-service.ts",
@@ -2149,7 +2150,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 5912
+        "lines": 5976
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2313,7 +2314,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 305,
+      "duplicateGroups": 306,
       "largeByBytes": 11,
       "largeByLines": 34
     },
