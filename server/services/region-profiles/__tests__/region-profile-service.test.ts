@@ -63,13 +63,29 @@ describe('getSubmissionRegionProfile', () => {
   });
 
   it('returns null for an unknown region', () => {
-    expect(getSubmissionRegionProfile('cn')).toBeNull();
+    expect(getSubmissionRegionProfile('zz')).toBeNull();
   });
 });
 
 describe('getAllSubmissionRegionProfiles', () => {
-  it('returns fda, eu, jp in canonical order', () => {
+  it('returns fda, eu, jp, cn in canonical order', () => {
     const all = getAllSubmissionRegionProfiles();
-    expect(all.map((p) => p.region)).toEqual(['fda', 'eu', 'jp']);
+    expect(all.map((p) => p.region)).toEqual(['fda', 'eu', 'jp', 'cn']);
+  });
+});
+
+describe('China (cn) region profile', () => {
+  it('exposes the NMPA submission profile via cn', () => {
+    const cn = getSubmissionRegionProfile('cn');
+    expect(cn).toBeTruthy();
+    expect(cn!.agency).toBe('NMPA');
+    expect(cn!.language).toBe('zh');
+    expect(cn!.currency).toBe('CNY');
+    expect(cn!.pathways).toContain('ectd_v322');
+    // Wired to the corrected NMPA Module 1 (Cover Letter at 1.0, no FDA-artifact 1.15).
+    const numbers = cn!.module1Sections.map((s) => s.number);
+    expect(numbers).toContain('1.0');
+    expect(numbers).not.toContain('1.15');
+    expect(cn!.validationRuleCount).toBeGreaterThanOrEqual(0);
   });
 });

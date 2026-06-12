@@ -19,7 +19,7 @@ router.get('/:region', (req: Request, res: Response) => {
   const region = Array.isArray(req.params.region) ? req.params.region[0] : req.params.region;
   const profile = getSubmissionRegionProfile(String(region));
   if (!profile) {
-    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `Unknown region "${region}" (expected fda | eu | jp).` } });
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `Unknown region "${region}" (expected fda | eu | jp | cn).` } });
   }
   res.json(profile);
 });
