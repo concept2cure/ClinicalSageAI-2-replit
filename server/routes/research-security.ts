@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
 import { createDisclosureTx, reviewDisclosureTx, listDisclosures } from '../services/research-security/coi-service';
+import { recordCoiDisclosure, recordCoiReview } from '../services/research-security-metrics';
 
 const router = Router();
 function uid(req: Request): number | null { const r = req as any; const x = r.userId ?? r.user?.id ?? r.user?.userId; const n = x == null ? NaN : Number(x); return Number.isFinite(n) ? n : null; }
@@ -33,10 +34,10 @@ const discSchema = z.object({
   disclosedDate: z.string().optional(),
   reason,
 });
-router.post('/disclosures', async (req, res) => { const p = discSchema.safeParse(req.body ?? {}); if (!p.success) return res.status(400).json({ error: { code: 'VALIDATION', details: p.error.flatten() } }); await governed(req, res, 'create', p.data.reason, async (c, o, u) => { const { id, foreignFlag } = await createDisclosureTx(c, o, u, p.data); return { target: `coi-disclosure:${id}`, payload: { type: p.data.disclosureType, foreignFlag }, body: { id, foreignFlag } }; }); });
+router.post('/disclosures', async (req, res) => { const p = discSchema.safeParse(req.body ?? {}); if (!p.success) return res.status(400).json({ error: { code: 'VALIDATION', details: p.error.flatten() } }); await governed(req, res, 'create', p.data.reason, async (c, o, u) => { const { id, foreignFlag } = await createDisclosureTx(c, o, u, p.data); recordCoiDisclosure(p.data.disclosureType, foreignFlag); return { target: `coi-disclosure:${id}`, payload: { type: p.data.disclosureType, foreignFlag }, body: { id, foreignFlag } }; }); });
 router.get('/disclosures', async (req, res) => { const o = oid(req); if (!o) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } }); const pid = req.query.personnelId ? Number(req.query.personnelId) : undefined; try { res.json(await listDisclosures(o, Number.isFinite(pid) ? pid : undefined)); } catch (e) { fail(res, e); } });
 
 const reviewSchema = z.object({ status: z.enum(['submitted', 'under_review', 'no_conflict', 'managed', 'conflict', 'denied']), managementPlan: z.string().max(4000).optional(), reason });
-router.patch('/disclosures/:id/review', async (req, res) => { const id = Number(req.params.id); if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } }); const p = reviewSchema.safeParse(req.body ?? {}); if (!p.success) return res.status(400).json({ error: { code: 'VALIDATION', details: p.error.flatten() } }); await governed(req, res, 'resolve', p.data.reason, async (c, o, u) => { await reviewDisclosureTx(c, o, u, id, p.data); return { target: `coi-disclosure:${id}`, payload: { status: p.data.status }, body: { id, status: p.data.status } }; }); });
+router.patch('/disclosures/:id/review', async (req, res) => { const id = Number(req.params.id); if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } }); const p = reviewSchema.safeParse(req.body ?? {}); if (!p.success) return res.status(400).json({ error: { code: 'VALIDATION', details: p.error.flatten() } }); await governed(req, res, 'resolve', p.data.reason, async (c, o, u) => { await reviewDisclosureTx(c, o, u, id, p.data); recordCoiReview(p.data.status); return { target: `coi-disclosure:${id}`, payload: { status: p.data.status }, body: { id, status: p.data.status } }; }); });
 
 export default router;

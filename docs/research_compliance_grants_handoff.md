@@ -572,11 +572,11 @@ Four ISU-brief-driven additions, built on existing infrastructure (no rebuilds).
 - Schema `effort_certifications` + `effort_lines`; migration `20260611_effort_certification.sql`.
 - Deterministic gate `validateEffort` (total ≤ 100%; sponsored committed↔actual deviation > 25% triggers recertification) — 7 unit tests; `computeEffortContentHash` (order-independent).
 - Governed service `certifyTx` (gate is the floor — over-commit certify is rejected; binds sha256 content hash).
-- **API** `/api/effort-certification` (CRUD + `/:id/validation` + `/:id/certify` [command `sign`]). **AnA:** `create_effort_certification`, `add_effort_line`. **Report:** `effort.certification_register`.
+- **API** `/api/effort-certification` (CRUD + `/:id/validation` + `/:id/certify` [command `sign`]). **AnA:** `create_effort_certification`, `add_effort_line`. **Report:** `effort.certification_register`. **Metrics:** `effort-metrics.ts` → `/api/metrics` (`effort_statements_created_total`, `effort_lines_added_total`, `effort_certifications_signed_total`, `effort_recertifications_required_total`).
 
 ### A2 — Research security / COI-FCOI (NSPM-33 / NOT-OD-26-017 / 42 CFR 50 F)
 - Schema `coi_disclosures`; migration `20260611_research_security.sql`. Foreign appointment/support (or non-US country) auto-flagged for research-security review.
-- Governed service create + review (management plan). **API** `/api/research-security` (CRUD + `/:id/review`). **AnA:** `create_coi_disclosure`. **Report:** `research_security.coi_register` (foreign-nexus + unmanaged-conflict rollups).
+- Governed service create + review (management plan). **API** `/api/research-security` (CRUD + `/:id/review`). **AnA:** `create_coi_disclosure`. **Report:** `research_security.coi_register` (foreign-nexus + unmanaged-conflict rollups). **Metrics:** `research-security-metrics.ts` → `/api/metrics` (`coi_disclosures_filed_total{type}`, `coi_foreign_nexus_total`, `coi_disclosures_reviewed_total{status}`).
 
 ### A3 — Sponsored-programs connectors (extend `DataConnector` catalog — not a new framework)
 - `grants_gov` (free) — Grants.gov Search2/fetchOpportunity; pre-award NOFO pipeline.

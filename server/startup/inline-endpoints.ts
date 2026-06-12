@@ -195,6 +195,22 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // Effort certification metrics (add-on, 2 CFR 200.430).
+      try {
+        const { renderEffortMetrics } = await import('../services/effort-metrics.js');
+        lines.push(...renderEffortMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Research-security / COI metrics (add-on, NSPM-33 / NOT-OD-26-017).
+      try {
+        const { renderResearchSecurityMetrics } = await import('../services/research-security-metrics.js');
+        lines.push(...renderResearchSecurityMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RAG retrieval metrics — recorded at the ragRouter chokepoint.
       try {
         const { renderRagMetrics } = await import('../services/rag-runtime-metrics.js');
