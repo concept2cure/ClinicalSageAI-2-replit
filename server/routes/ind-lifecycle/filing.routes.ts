@@ -19,7 +19,7 @@ import {
   persistAmendmentPlan,
   persistAnnualReport,
 } from '../../services/ind-lifecycle/ind-lifecycle-persistence';
-import { AUTHOR, limiter, ctxOf, body, fail, noAuth } from './shared';
+import { AUTHOR, limiter, ctxOf, body, fail, noAuth, coerceEventDates } from './shared';
 
 const router = Router();
 
@@ -44,7 +44,7 @@ router.post('/safety-report/file', limiter, requireRole(AUTHOR), async (req, res
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'event (AdverseEvent) is required.' } });
   }
   try {
-    const { document, amendmentIntent } = assembleIndSafetyReport(b.event, {
+    const { document, amendmentIntent } = assembleIndSafetyReport(coerceEventDates(b.event), {
       icsr: b.icsr ?? null,
       aggregateContext: b.aggregateContext,
       now: b.now ? new Date(b.now) : undefined,

@@ -29,6 +29,7 @@ import { searchDrugApprovals } from '../integrations/drug-approvals-client.js';
 import { searchChemblCompounds, getChemblMechanisms } from '../integrations/chembl-client.js';
 import { searchPreprints, type PreprintServerFilter } from '../integrations/preprint-client.js';
 import { screenStructuralAlerts, assessDevelopability } from '../chem/index.js';
+import { buildProvenance } from '../evidence/provenance.js';
 import { assessRegulatoryLandscape } from '../integrations/landscape.js';
 import { getIntegrationStatuses, summarizeStatuses } from '../integrations/integration-status.js';
 import { getAllEnabledTools } from './AnaToolDefinitions.js';
@@ -991,6 +992,14 @@ registerToolHandler('search_chembl_compound', async (input) => {
         // Mechanism lookup is best-effort; omit on failure rather than fail the whole call.
       }
     }
+    const provenance = result.molecules.map(m =>
+      buildProvenance({
+        sourceId: 'chembl',
+        citation: { title: m.preferredName || m.chemblId, identifier: m.chemblId, url: m.url },
+        query: result.query,
+        confidence: 'high',
+      })
+    );
     return JSON.stringify({
       source: result.source,
       query: result.query,
@@ -998,6 +1007,7 @@ registerToolHandler('search_chembl_compound', async (input) => {
       resultCount: result.molecules.length,
       molecules: result.molecules,
       ...(mechanisms ? { topMatchMechanisms: mechanisms } : {}),
+      provenance,
       citation_hint: 'Cite each molecule by ChEMBL ID and link to the provided url; descriptors are ChEMBL-curated.',
     });
   } catch (e) {
@@ -1024,6 +1034,14 @@ registerToolHandler('search_preprints', async (input) => {
     serverRaw === 'biorxiv' || serverRaw === 'medrxiv' ? serverRaw : 'any';
   try {
     const result = await searchPreprints({ query, maxResults, server });
+    const provenance = result.preprints.map(p =>
+      buildProvenance({
+        sourceId: 'biorxiv_medrxiv',
+        citation: { title: p.title || p.id, identifier: p.doi, url: p.url },
+        query: result.query,
+        confidence: 'low',
+      })
+    );
     return JSON.stringify({
       source: result.source,
       query: result.query,
@@ -1031,6 +1049,7 @@ registerToolHandler('search_preprints', async (input) => {
       resultCount: result.preprints.length,
       preprints: result.preprints,
       caveat: result.caveat,
+      provenance,
       citation_hint:
         'Cite each preprint by DOI and link to the provided url; label as a non-peer-reviewed preprint.',
     });
@@ -1091,6 +1110,27 @@ registerToolHandler('screen_compound_liabilities', async (input) => {
   const screen = screenStructuralAlerts(smiles!);
   const developability = assessDevelopability(developabilityInput);
 
+  // Provenance: the deterministic screen itself, plus the ChEMBL record when the
+  // structure/descriptors were resolved from a compound name.
+  const provenance = [
+    buildProvenance({
+      sourceId: 'c2c_cheminformatics',
+      citation: { title: `Structural-alert + developability screen (${smiles})`, identifier: null, url: null },
+      query: smiles ?? compoundName ?? null,
+      confidence: screen.hasMutagenicAlert ? 'high' : 'moderate',
+    }),
+    ...(resolved
+      ? [
+          buildProvenance({
+            sourceId: 'chembl',
+            citation: { title: resolved.preferredName || resolved.chemblId, identifier: resolved.chemblId, url: resolved.url },
+            query: compoundName ?? null,
+            confidence: 'high',
+          }),
+        ]
+      : []),
+  ];
+
   return JSON.stringify({
     source: 'Concept2Cure cheminformatics (deterministic) + ChEMBL descriptors',
     resolvedFrom: resolved ?? null,
@@ -1099,6 +1139,7 @@ registerToolHandler('screen_compound_liabilities', async (input) => {
     structuralAlerts: screen.alerts,
     hasMutagenicAlert: screen.hasMutagenicAlert,
     developability,
+    provenance,
     disclaimer: screen.disclaimer,
     citation_hint:
       'Structural alerts are a deterministic substructure screen (cite as a screen, not an ICH M7 classification); ' +
@@ -6743,6 +6784,26 @@ registerToolHandler('record_grant_opportunity', async (input, ctx) => {
     return JSON.stringify({ error: `record_grant_opportunity failed: ${err instanceof Error ? err.message : String(err)}` });
   } finally {
     client.release();
+  }
+});
+
+registerToolHandler('prepare_award_closeout', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'prepare_award_closeout requires tenant context.' });
+  const awardId = typeof input.award_id === 'number' ? input.award_id : NaN;
+  if (!Number.isInteger(awardId)) return JSON.stringify({ error: 'award_id is required.' });
+  const { prepareAwardCloseout } = await import('../grants/grants-service.js');
+  try {
+    const p = await prepareAwardCloseout(ctx.organizationId, awardId);
+    return JSON.stringify({
+      ok: true, awardId, readyToClose: p.readyToClose, blockers: p.blockers, warnings: p.warnings,
+      closeout: { dueDate: p.closeout.dueDate, outstanding: p.closeout.outstanding, items: p.closeout.items },
+      reportingObligations: p.reportingObligations, costShare: p.costShare, budget: p.budget,
+      message: p.readyToClose
+        ? `Award ${awardId} is ready to close — all 2 CFR 200.344 items done, milestones current, cost share met.`
+        : `Award ${awardId} is NOT ready to close — ${p.blockers.length} blocker(s): ${p.blockers.slice(0, 4).join('; ')}${p.blockers.length > 4 ? '…' : ''}`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `prepare_award_closeout failed: ${err instanceof Error ? err.message : String(err)}` });
   }
 });
 

@@ -12,7 +12,7 @@ const TOOLS = [
   'record_subaward', 'screen_subaward', 'execute_subaward',
   'add_grant_budget_line', 'record_grant_expenditure', 'review_grant_budget',
   'record_cost_share_contribution', 'review_cost_share', 'request_no_cost_extension', 'approve_no_cost_extension',
-  'record_grant_opportunity',
+  'record_grant_opportunity', 'prepare_award_closeout',
 ];
 
 describe('eGrants AnA tools — registration', () => {
@@ -86,5 +86,9 @@ describe('eGrants AnA tools — context + input guards', () => {
   it('record_grant_opportunity rejects an invalid funding_agency', async () => {
     const out = JSON.parse(await getToolHandler('record_grant_opportunity')!({ opportunity_number: 'PA-26-001', title: 'X', funding_agency: 'martian' }, { organizationId: 1, userId: 1 } as any));
     expect(out.error).toMatch(/valid funding_agency/);
+  });
+  it('prepare_award_closeout requires an award_id', async () => {
+    const out = JSON.parse(await getToolHandler('prepare_award_closeout')!({}, { organizationId: 1 } as any));
+    expect(out.error).toMatch(/award_id is required/);
   });
 });

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-12T04:18:10.663Z",
+  "generatedAt": "2026-06-12T04:29:45.749Z",
   "git": {
-    "sha": "3045eb9f7d3941fdf64403088fe006a64859e12e",
+    "sha": "a192f6a9fd67dce9f9e1fa6a861b6774d2e91936",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 209,
+    "duplicateBasenames": 210,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -1761,6 +1761,14 @@
         ]
       },
       {
+        "basename": "provenance",
+        "count": 2,
+        "paths": [
+          "server/routes/chat/provenance.ts",
+          "server/services/evidence/provenance.ts"
+        ]
+      },
+      {
         "basename": "q-sub",
         "count": 2,
         "paths": [
@@ -2084,11 +2092,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 438281
+        "bytes": 441027
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 326093
+        "bytes": 326844
       },
       {
         "file": "server/statistics-service.ts",
@@ -2142,7 +2150,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 8852
+        "lines": 8913
       },
       {
         "file": "server/statistics-service.ts",
@@ -2150,7 +2158,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 6081
+        "lines": 6089
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2314,7 +2322,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 306,
+      "duplicateGroups": 308,
       "largeByBytes": 11,
       "largeByLines": 34
     },

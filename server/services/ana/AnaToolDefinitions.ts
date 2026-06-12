@@ -3968,6 +3968,13 @@ export const RECORD_GRANT_OPPORTUNITY: AnaTool = {
   },
 };
 
+export const PREPARE_AWARD_CLOSEOUT: AnaTool = {
+  name: 'prepare_award_closeout',
+  description:
+    "One-shot closeout-readiness assessment for a grant award (read-only orchestration): pulls the four 2 CFR 200.344 closeout items, outstanding/overdue milestones, the federal reporting obligations (final RPPR/FFR), cost-share status (200.306), and budget posture (200.403) into a single verdict with a prioritized blocker list. `readyToClose` is stricter than finalize — it also wants milestones current, cost share met, and spending within the award. Use to answer 'can we close this award and what's left?'.",
+  input_schema: { type: 'object', properties: { award_id: { type: 'number' } }, required: ['award_id'] },
+};
+
 export const RESEARCH_COMPLIANCE_BRIEFING: AnaTool = {
   name: 'research_compliance_briefing',
   description:
@@ -5900,6 +5907,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   REQUEST_NO_COST_EXTENSION,
   APPROVE_NO_COST_EXTENSION,
   RECORD_GRANT_OPPORTUNITY,
+  PREPARE_AWARD_CLOSEOUT,
   RESEARCH_COMPLIANCE_BRIEFING,
   FULFILL_REGULATORY_COMMITMENT,
   REVIEW_HA_INTERACTION,

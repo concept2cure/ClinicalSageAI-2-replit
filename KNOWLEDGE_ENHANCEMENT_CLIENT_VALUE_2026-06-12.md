@@ -138,7 +138,14 @@ P0 is built, wired, and tested; a credible P1 corpus seed is in. Concretely:
 
 **Verification:** project typecheck clean (0 errors); new and affected suites green (cheminformatics, ChEMBL client, AnA chem tools, preprint client + tool, integration-status, IVD knowledge corpus).
 
-**Still scoped, not yet built (honest):** remaining CNS depth (disease-progression models, agency precedent), the single retrieval router + provenance enforcement, MMRM, the empirical trial-feasibility model, and the offline grounding/hallucination eval harness. These are multi-week curation/modeling efforts and are deliberately left as follow-ups rather than shipped as stubs.
+**Increment 3 (this follow-up) — the unified provenance spine (§3.5):**
+
+- **One evidence-provenance envelope.** `server/services/evidence/provenance.ts` — a single `ProvenanceRecord` shape plus a registry of the platform's evidence sources (ChEMBL, PubMed, bioRxiv/medRxiv, ClinicalTrials.gov, openFDA, CMS, ICD-10, the curated corpus, deterministic computation, web, connected repositories) with their intrinsic type, peer-review status, freshness, and authority tier. `buildProvenance` stamps any evidence item with citation + source facts + caveats; it **throws on an unknown source** so nothing can be surfaced un-attributable. Field names and `toLineageSource()` align to the existing `data_lineage_records` (21 CFR Part 11 / ICH E6(R3)) table, so persisting a citation is a field copy — and it complements (does not replace) the existing `StatsProvenance` and `SignalProvenance`.
+- **Enforced on the discovery tools.** `search_chembl_compound`, `search_preprints`, and `screen_compound_liabilities` now emit a `provenance` array — preprints carry the preliminary/non-peer-review tier; the chem screen carries the deterministic-computation source; ChEMBL carries the curated-primary tier. `rankByAuthority` orders competing evidence primary → preliminary.
+
+**Verification:** project typecheck clean (0 errors); new and affected suites green (evidence provenance, cheminformatics, ChEMBL client, AnA chem + preprint tools, integration-status, IVD knowledge corpus).
+
+**Still scoped, not yet built (honest):** remaining CNS depth (disease-progression models, agency precedent), retrofitting the provenance envelope onto the remaining evidence tools and the RAG retrieval path, MMRM, the empirical trial-feasibility model, and the offline grounding/hallucination eval harness. These are multi-week efforts and are deliberately left as follow-ups rather than shipped as stubs.
 
 ## 7. The single most important move
 

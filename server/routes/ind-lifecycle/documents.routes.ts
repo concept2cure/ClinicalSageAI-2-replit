@@ -23,7 +23,7 @@ import {
 } from '../../services/ind-lifecycle/ind-document-renderer';
 import { getSubmission } from '../../services/submission-service/submission-service';
 import { getSponsor } from '../../services/ind-master-data/ind-master-data-service';
-import { AUTHOR, limiter, ctxOf, body, fail, noAuth, sendPdf } from './shared';
+import { AUTHOR, limiter, ctxOf, body, fail, noAuth, sendPdf, coerceEventDates } from './shared';
 
 const router = Router();
 
@@ -43,7 +43,7 @@ router.post('/safety-report', limiter, requireRole(AUTHOR), (req, res) => {
   }
   try {
     res.json(
-      assembleIndSafetyReport(b.event, {
+      assembleIndSafetyReport(coerceEventDates(b.event), {
         icsr: b.icsr ?? null,
         aggregateContext: b.aggregateContext,
         now: b.now ? new Date(b.now) : undefined,
@@ -61,7 +61,7 @@ router.post('/safety-report/classify', limiter, requireRole(AUTHOR), (req, res) 
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'event (AdverseEvent) is required.' } });
   }
   try {
-    res.json(classifyIndSafetyReport(b.event, b.now ? new Date(b.now) : undefined));
+    res.json(classifyIndSafetyReport(coerceEventDates(b.event), b.now ? new Date(b.now) : undefined));
   } catch (err) {
     fail(res, err);
   }
@@ -83,7 +83,7 @@ router.post('/safety-report/pdf', limiter, requireRole(AUTHOR), async (req, res)
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'event (AdverseEvent) is required.' } });
   }
   try {
-    const { document } = assembleIndSafetyReport(b.event, {
+    const { document } = assembleIndSafetyReport(coerceEventDates(b.event), {
       icsr: b.icsr ?? null,
       aggregateContext: b.aggregateContext,
       now: b.now ? new Date(b.now) : undefined,
