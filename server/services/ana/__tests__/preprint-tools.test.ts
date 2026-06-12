@@ -53,5 +53,11 @@ describe('search_preprints AnA tool', () => {
     expect(out.resultCount).toBe(1);
     expect(out.preprints[0].server).toBe('bioRxiv');
     expect(out.caveat).toMatch(/not peer-reviewed/i);
+    // Unified provenance envelope: preliminary, not peer-reviewed, citeable.
+    expect(out.provenance).toHaveLength(1);
+    expect(out.provenance[0].sourceId).toBe('biorxiv_medrxiv');
+    expect(out.provenance[0].peerReviewed).toBe(false);
+    expect(out.provenance[0].authority).toBe('preliminary');
+    expect(out.provenance[0].citation.identifier).toBe('10.1101/2024.05.05.000001');
   });
 });
