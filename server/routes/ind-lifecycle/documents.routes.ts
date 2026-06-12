@@ -11,6 +11,7 @@ import {
 } from '../../services/ind-lifecycle/ind-safety-report-service';
 import { composeE2bR3Icsr } from '../../services/ind-lifecycle/e2b-icsr-composer';
 import { assembleIndAnnualReport } from '../../services/ind-lifecycle/ind-annual-report-service';
+import { buildSaeLineListing, saeLineListingToCsv } from '../../services/ind-lifecycle/ind-sae-line-listing';
 import { planIndAmendment } from '../../services/ind-lifecycle/ind-amendment-service';
 import { assembleBriefingBook } from '../../services/ind-lifecycle/ind-briefing-book-service';
 import { assembleCoverLetter } from '../../services/ind-lifecycle/ind-cover-letter-service';
@@ -100,6 +101,30 @@ router.post('/safety-report/icsr', limiter, requireRole(AUTHOR), (req, res) => {
 router.post('/annual-report', limiter, requireRole(AUTHOR), (req, res) => {
   try {
     res.json(assembleIndAnnualReport(body(req)));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * 21 CFR 312.33(b) / ICH E2F — aggregate serious-AE line listing + summary
+ * tabulation over the supplied events for a reporting period.
+ * Body: { events: AdverseEvent[], periodStart, periodEnd }. JSON by default;
+ * `?format=csv` returns the line listing as an attachable CSV appendix.
+ */
+router.post('/annual-report/line-listing', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = body(req);
+  if (!Array.isArray(b.events) || !b.periodStart || !b.periodEnd) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'events[], periodStart and periodEnd are required.' } });
+  }
+  try {
+    const listing = buildSaeLineListing({ events: b.events, periodStart: b.periodStart, periodEnd: b.periodEnd });
+    if (String(req.query.format).toLowerCase() === 'csv') {
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', 'attachment; filename="ind-sae-line-listing.csv"');
+      return res.status(200).send(saeLineListingToCsv(listing));
+    }
+    res.json(listing);
   } catch (err) {
     fail(res, err);
   }

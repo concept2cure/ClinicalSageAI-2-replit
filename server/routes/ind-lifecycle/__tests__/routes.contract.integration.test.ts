@@ -189,6 +189,30 @@ describe('document routes', () => {
     expect(res.status).toBe(400);
   });
 
+  it('POST /annual-report/line-listing → 200 with rows + tabulation', async () => {
+    const res = await request(app)
+      .post('/api/ind-lifecycle/annual-report/line-listing')
+      .send({ events: [reportableEvent()], periodStart: '2026-01-01', periodEnd: '2026-12-31' });
+    expect(res.status).toBe(200);
+    expect(res.body.rows.length).toBe(1);
+    expect(res.body.tabulation.totalSerious).toBe(1);
+  });
+
+  it('POST /annual-report/line-listing?format=csv → 200 text/csv attachment', async () => {
+    const res = await request(app)
+      .post('/api/ind-lifecycle/annual-report/line-listing?format=csv')
+      .send({ events: [reportableEvent()], periodStart: '2026-01-01', periodEnd: '2026-12-31' });
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('text/csv');
+    expect(res.headers['content-disposition']).toContain('attachment');
+    expect(res.text.split('\n')[0]).toContain('adverse_event_id');
+  });
+
+  it('POST /annual-report/line-listing → 400 without events/period', async () => {
+    const res = await request(app).post('/api/ind-lifecycle/annual-report/line-listing').send({ events: [] });
+    expect(res.status).toBe(400);
+  });
+
   it('POST /envelope → 200 application/xml', async () => {
     const res = await request(app)
       .post('/api/ind-lifecycle/envelope')
