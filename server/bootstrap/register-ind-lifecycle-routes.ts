@@ -40,5 +40,14 @@ export async function registerIndLifecycleRoutes(app: Express): Promise<void> {
     console.error('❌ Failed to mount authoring-PDF routes:', error.message);
   }
 
+  // Unified, self-documenting discovery for the whole IND API surface (generated
+  // from the routers, so it cannot drift). Authenticated; no specific role.
+  try {
+    const { buildIndApiOpenApi } = await import('../routes/ind-openapi');
+    app.get('/api/ind/openapi.json', authenticateToken, (_req, res) => res.json(buildIndApiOpenApi()));
+  } catch (error: any) {
+    console.error('❌ Failed to mount IND API OpenAPI discovery:', error.message);
+  }
+
   console.log('✅ IND lifecycle route bundle mounted (auth-gated)');
 }
