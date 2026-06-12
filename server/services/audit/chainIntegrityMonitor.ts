@@ -1,11 +1,19 @@
 /**
  * Audit Chain Integrity Monitor
  *
- * Background service that periodically verifies the SHA-256 hash chain
- * in the audit_events table. If any broken links are detected, it:
+ * Background service that periodically verifies the hash-chain *linkage* in the
+ * audit_events table. If any broken links are detected, it:
  *   1. Logs a CRITICAL error to console
  *   2. Inserts an audit event recording the integrity failure
  *   3. Exposes status via a health-check getter
+ *
+ * Scope — linkage only. This monitor checks that each row's `previous_hash`
+ * matches the prior row's `record_hash` within the same org (chain continuity).
+ * It does NOT re-derive `record_hash` from row content: audit_events is written
+ * by many services with no single canonical record_hash serialization (the
+ * signed compliance export, signedAuditExport.snapshotChainIntegrity, is
+ * linkage-only for the same reason). The stronger content-re-deriving verifier
+ * lives in chain.ts (`verifyAuditChain`) for the separate audit_logs chain.
  *
  * Compliance: 21 CFR Part 11 §11.10(e) — continuous monitoring of
  * audit trail integrity with alerting on anomalies.
@@ -14,7 +22,6 @@
  */
 
 import { Pool } from 'pg';
-import crypto from 'crypto';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -27,6 +34,57 @@ export interface ChainMonitorStatus {
   brokenLinks: number;
   details: Array<{ id: number; sequenceNumber: number; orgId: number }>;
   intervalMs: number;
+}
+
+/** One audit_events row as the linkage check consumes it. */
+export interface AuditEventChainRow {
+  id: number;
+  organization_id: number;
+  sequence_number: number;
+  record_hash: string;
+  previous_hash: string | null;
+}
+
+export interface BrokenChainLink {
+  id: number;
+  sequenceNumber: number;
+  orgId: number;
+}
+
+/**
+ * Pure linkage check over audit_events rows.
+ *
+ * `rows` MUST be ordered by (organization_id, sequence_number ASC). Walks each
+ * org's chain independently and returns the links whose `previous_hash` does
+ * not match the prior row's `record_hash`. A null `previous_hash` (genesis row,
+ * or a writer that left it null) is treated as "no claim about the predecessor"
+ * and never counts as a break — matching signedAuditExport's snapshot logic.
+ *
+ * This is linkage continuity only; it does not re-derive `record_hash` from
+ * content (see the module header for why).
+ */
+export function findBrokenChainLinks(
+  rows: readonly AuditEventChainRow[],
+): BrokenChainLink[] {
+  const broken: BrokenChainLink[] = [];
+  const prevHashByOrg: Record<number, string> = {};
+
+  for (const row of rows) {
+    const oid = row.organization_id;
+    const expectedPrev = prevHashByOrg[oid] ?? null;
+
+    if (
+      expectedPrev !== null &&
+      row.previous_hash !== null &&
+      row.previous_hash !== expectedPrev
+    ) {
+      broken.push({ id: row.id, sequenceNumber: row.sequence_number, orgId: oid });
+    }
+
+    prevHashByOrg[oid] = row.record_hash;
+  }
+
+  return broken;
 }
 
 // ---------------------------------------------------------------------------
@@ -57,12 +115,16 @@ async function runCheck(): Promise<ChainMonitorStatus> {
     return _status;
   }
   _checkInProgress = true;
-  if (!_pool) {
-    _status.status = 'error';
-    return _status;
-  }
 
   try {
+    // Guard inside the try so the `finally` always clears _checkInProgress.
+    // (Previously this returned early and leaked the flag, permanently
+    // wedging the monitor — every later cycle saw "check in progress".)
+    if (!_pool) {
+      _status = { ..._status, lastCheckAt: new Date().toISOString(), status: 'error' };
+      return _status;
+    }
+
     const { rows } = await _pool.query(
       `SELECT id, organization_id, sequence_number, record_hash, previous_hash
        FROM audit_events
@@ -74,25 +136,7 @@ async function runCheck(): Promise<ChainMonitorStatus> {
       return _status;
     }
 
-    const brokenDetails: ChainMonitorStatus['details'] = [];
-    const prevHashByOrg: Record<number, string> = {};
-
-    for (const row of rows) {
-      const oid = row.organization_id;
-      const expectedPrev = prevHashByOrg[oid] || null;
-
-      // Check that previous_hash matches the prior record's record_hash
-      if (expectedPrev !== null && row.previous_hash !== null && row.previous_hash !== expectedPrev) {
-        brokenDetails.push({
-          id: row.id,
-          sequenceNumber: row.sequence_number,
-          orgId: oid,
-        });
-      }
-
-      prevHashByOrg[oid] = row.record_hash;
-    }
-
+    const brokenDetails = findBrokenChainLinks(rows as AuditEventChainRow[]);
     const isHealthy = brokenDetails.length === 0;
 
     _status = {
