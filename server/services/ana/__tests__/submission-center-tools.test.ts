@@ -49,6 +49,7 @@ const SUBMISSION_TOOLS = [
   'get_electrical_standards',
   'get_sterilization_requirements',
   'assess_combination_product',
+  'get_device_labeling',
   'assess_qms',
   'list_regulatory_capabilities',
   'assess_dispatch_readiness',
@@ -444,6 +445,13 @@ describe('submission AI tasks — tenant + input guards', () => {
     const assessed = JSON.parse(await handler({ present_clause_ids: ['qms_general'] }, {} as ToolContext));
     expect(assessed.assessment.ready).toBe(false);
     expect(assessed.assessment.missingRequiredClauses).toContain('design_controls');
+  });
+  it('get_device_labeling adds sterile elements for a sterile device', async () => {
+    const handler = getToolHandler('get_device_labeling')!;
+    const out = JSON.parse(await handler({ sterile: true }, {} as ToolContext));
+    expect(out.ok).toBe(true);
+    expect(out.mdrLabel.some((e: { id: string }) => e.id === 'sterile_state')).toBe(true);
+    expect(out.symbols.some((s: { id: string }) => s.id === 'sterile')).toBe(true);
   });
 });
 

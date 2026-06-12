@@ -735,6 +735,28 @@ router.post('/device/qms/assess', limiter, requireRole(AUTHOR), async (req, res)
   } catch (err) { fail(res, err); }
 });
 
+// Device labeling requirements (21 CFR 801 / MDR Annex I §23 / ISO 15223-1) from facts.
+const labelingSchema = z.object({
+  sterile: z.boolean().optional(),
+  singleUse: z.boolean().optional(),
+  reusable: z.boolean().optional(),
+  implantable: z.boolean().optional(),
+  prescriptionOnly: z.boolean().optional(),
+  forClinicalInvestigation: z.boolean().optional(),
+  hasExpiry: z.boolean().optional(),
+  containsMedicinalSubstance: z.boolean().optional(),
+});
+router.post('/device/labeling', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = labelingSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { deviceLabelingRequirements } = await import('../services/market-specs/device-labeling.js');
+    res.json(deviceLabelingRequirements(parsed.data));
+  } catch (err) { fail(res, err); }
+});
+
 // Gap-check a STORED CER (cer_reports/cer_sections) against the canonical structure.
 // Tenant-scoped; needs a database. 404 when the report is not in the organization.
 router.get('/device/cer/:reportId/assess-stored', limiter, requireRole(AUTHOR), async (req, res) => {

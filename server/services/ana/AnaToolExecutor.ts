@@ -5296,6 +5296,25 @@ registerToolHandler('assess_qms', async (input) => {
   }
 });
 
+registerToolHandler('get_device_labeling', async (input) => {
+  // Pure rule logic — no tenant context required.
+  try {
+    const { deviceLabelingRequirements } = await import('../market-specs/device-labeling.js');
+    return JSON.stringify({ ok: true, ...deviceLabelingRequirements({
+      sterile: input.sterile === true,
+      singleUse: input.singleUse === true,
+      reusable: input.reusable === true,
+      implantable: input.implantable === true,
+      prescriptionOnly: input.prescriptionOnly === true,
+      forClinicalInvestigation: input.forClinicalInvestigation === true,
+      hasExpiry: input.hasExpiry === true,
+      containsMedicinalSubstance: input.containsMedicinalSubstance === true,
+    }) });
+  } catch (err) {
+    return JSON.stringify({ error: `get_device_labeling failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('assess_stored_cer', async (input, ctx) => {
   // Tenant-scoped — reads the organization's stored CER.
   if (!ctx?.organizationId) {

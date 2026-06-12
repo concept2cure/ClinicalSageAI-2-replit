@@ -58,6 +58,7 @@ export const REGULATORY_CAPABILITIES: RegulatoryCapability[] = [
   { id: 'sterilization', label: 'Sterilization', category: 'evidence', description: 'ISO 11135/11137/17665 method standard + SAL + validation elements.', route: 'POST /device/sterilization', anaTool: 'get_sterilization_requirements', deterministic: true },
   { id: 'pathway_manifest', label: 'Pathway manifest', category: 'evidence', description: 'Assembled table-of-contents for any non-eCTD pathway.', route: 'GET /sequences/:seqId/pathway-manifest', anaTool: 'build_pathway_manifest', deterministic: true },
   { id: 'quality_system', label: 'Quality management system', category: 'evidence', description: 'ISO 13485:2016 clause structure + FDA QSR/QMSR mapping + readiness.', route: 'GET /device/qms/structure', anaTool: 'assess_qms', deterministic: true },
+  { id: 'device_labeling', label: 'Device labeling requirements', category: 'reference', description: 'FDA 21 CFR 801 / MDR Annex I §23 label + IFU elements + ISO 15223-1 symbols from device facts.', route: 'POST /device/labeling', anaTool: 'get_device_labeling', deterministic: true },
 
   // Oversight.
   { id: 'reviewer_checklist', label: 'Shadow-reviewer checklist', category: 'oversight', description: 'Section-anchored reviewer questions per device submission type.', route: 'GET /device/reviewer-checklist', anaTool: 'get_device_reviewer_checklist', deterministic: true },
