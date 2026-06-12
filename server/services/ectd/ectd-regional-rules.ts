@@ -266,6 +266,13 @@ export const REGIONAL_RULES: RegionalRule[] = [
     severity: 'warning',
     citation: 'HC Plain Language Labelling Initiative',
   },
+  {
+    id: 'HC-REP-003',
+    region: 'CA',
+    description: 'Application number must match a valid HC identifier (NDS/SNDS/ANDS/DIN)',
+    severity: 'error',
+    citation: 'HC Guidance Document — Regulatory Enrolment Process (REP)',
+  },
 ];
 
 const RULES_BY_REGION = new Map<RegulatoryRegion, RegionalRule[]>();
@@ -282,7 +289,7 @@ const EU_APPLICATION_PREFIX = /^(EMEA\/H\/C\/\d{5}|[A-Z]{2}\/H\/\d{5}\/\d{4})/;
 const PMDA_APPLICATION_PREFIX = /^\d{8}$/;
 const HC_APPLICATION_PREFIX = /^(SNDS|NDS|ANDS|DIN)-?\d+/i;
 const SEQUENCE_PATTERN = /^\d{4}$/;
-const FILENAME_PATTERN = /^[a-z0-9][a-z0-9.\-]{0,63}$/;
+const FILENAME_PATTERN = /^[a-z0-9][a-z0-9.-]{0,63}$/;
 
 const FDA_GATEWAY_LIMIT_BYTES = 4 * 1024 * 1024 * 1024;
 const EMA_CESP_LIMIT_BYTES = 600 * 1024 * 1024;
@@ -293,6 +300,72 @@ const NMPA_LIMIT_BYTES = 1024 * 1024 * 1024;
 // MFDS does not publish a single eCTD gateway package-size limit in the accessible
 // guidance; use a conservative 1 GB default pending verification.
 const MFDS_LIMIT_BYTES = 1024 * 1024 * 1024;
+
+// Region → its M1 regional backbone path. Every eCTD region requires a
+// {code}-regional.xml backbone under /m1/{code}/; centralised here so the
+// per-region validators don't each hard-code the path.
+const REGIONAL_BACKBONE: Record<RegulatoryRegion, string> = {
+  US: 'm1/us/us-regional.xml',
+  EU: 'm1/eu/eu-regional.xml',
+  JP: 'm1/jp/jp-regional.xml',
+  CA: 'm1/ca/ca-regional.xml',
+  CN: 'm1/cn/cn-regional.xml',
+  KR: 'm1/kr/kr-regional.xml',
+};
+
+/**
+ * Push an error finding when the region's M1 regional backbone file is absent.
+ * The message is derived from the region's backbone path; the agency-specific
+ * remediation text is supplied by the caller via `fix`.
+ */
+function requireBackbone(
+  leaves: RegionalLeafRef[],
+  region: RegulatoryRegion,
+  ruleId: string,
+  fix: string,
+  findings: RegionalFinding[]
+): void {
+  const path = REGIONAL_BACKBONE[region];
+  if (!leaves.some((l) => l.filePath.endsWith(path))) {
+    const file = path.split('/').pop();
+    const dir = path.slice(0, path.lastIndexOf('/') + 1);
+    findings.push({
+      ruleId,
+      region,
+      severity: 'error',
+      message: `${file} is missing from /${dir}`,
+      fix,
+      scope: 'package',
+    });
+  }
+}
+
+/**
+ * Push a finding for every leaf whose file name violates the eCTD ASCII
+ * naming convention. Severity and the message/remediation text vary by region,
+ * so they are supplied by the caller.
+ */
+function checkAsciiFilenames(
+  leaves: RegionalLeafRef[],
+  region: RegulatoryRegion,
+  findings: RegionalFinding[],
+  opts: { ruleId: string; severity: RegionalSeverity; makeMessage: (filename: string) => string; fix: string }
+): void {
+  for (const leaf of leaves) {
+    const filename = leaf.filePath.split('/').pop() || '';
+    if (!FILENAME_PATTERN.test(filename)) {
+      findings.push({
+        ruleId: opts.ruleId,
+        region,
+        severity: opts.severity,
+        message: opts.makeMessage(filename),
+        fix: opts.fix,
+        scope: 'leaf',
+        leafPath: leaf.filePath,
+      });
+    }
+  }
+}
 
 // ── Validators ──────────────────────────────────────────────────────────────
 
@@ -368,17 +441,7 @@ function validateFDAPackage(
     });
   }
 
-  const hasUSRegional = leaves.some(l => l.filePath.endsWith('m1/us/us-regional.xml'));
-  if (!hasUSRegional) {
-    findings.push({
-      ruleId: 'FDA-ESG-004',
-      region: 'US',
-      severity: 'error',
-      message: 'us-regional.xml is missing from /m1/us/',
-      fix: 'Generate and include the US regional XML at /m1/us/us-regional.xml',
-      scope: 'package',
-    });
-  }
+  requireBackbone(leaves, 'US', 'FDA-ESG-004', 'Generate and include the US regional XML at /m1/us/us-regional.xml', findings);
 
   // STF check for M4/M5 study leaves
   const studyLeaves = leaves.filter(
@@ -426,33 +489,16 @@ function validateEMAPackage(
     });
   }
 
-  const hasEURegional = leaves.some(l => l.filePath.endsWith('m1/eu/eu-regional.xml'));
-  if (!hasEURegional) {
-    findings.push({
-      ruleId: 'EMA-CESP-001',
-      region: 'EU',
-      severity: 'error',
-      message: 'eu-regional.xml is missing from /m1/eu/',
-      fix: 'Generate and include the EU regional XML at /m1/eu/eu-regional.xml',
-      scope: 'package',
-    });
-  }
+  requireBackbone(leaves, 'EU', 'EMA-CESP-001', 'Generate and include the EU regional XML at /m1/eu/eu-regional.xml', findings);
 
-  // Filename strictness
-  for (const leaf of leaves) {
-    const filename = leaf.filePath.split('/').pop() || '';
-    if (!FILENAME_PATTERN.test(filename)) {
-      findings.push({
-        ruleId: 'EMA-CESP-005',
-        region: 'EU',
-        severity: 'error',
-        message: `Filename "${filename}" violates EU naming rules (lowercase a-z, 0-9, hyphens, periods only; max 64 chars)`,
-        fix: 'Rename to match EU eCTD specification §4.1',
-        scope: 'leaf',
-        leafPath: leaf.filePath,
-      });
-    }
-  }
+  // Filename strictness (EU treats violations as errors)
+  checkAsciiFilenames(leaves, 'EU', findings, {
+    ruleId: 'EMA-CESP-005',
+    severity: 'error',
+    makeMessage: (filename) =>
+      `Filename "${filename}" violates EU naming rules (lowercase a-z, 0-9, hyphens, periods only; max 64 chars)`,
+    fix: 'Rename to match EU eCTD specification §4.1',
+  });
 }
 
 function validatePMDAPackage(
@@ -482,17 +528,7 @@ function validatePMDAPackage(
     });
   }
 
-  const hasJPRegional = leaves.some(l => l.filePath.endsWith('m1/jp/jp-regional.xml'));
-  if (!hasJPRegional) {
-    findings.push({
-      ruleId: 'PMDA-001',
-      region: 'JP',
-      severity: 'error',
-      message: 'jp-regional.xml is missing from /m1/jp/',
-      fix: 'Generate and include the JP regional XML at /m1/jp/jp-regional.xml',
-      scope: 'package',
-    });
-  }
+  requireBackbone(leaves, 'JP', 'PMDA-001', 'Generate and include the JP regional XML at /m1/jp/jp-regional.xml', findings);
 
   const hasJpClinical = leaves.some(l => l.sectionCode.startsWith('m1.13'));
   const submissionRequiresJpClinical = context.submissionType.toLowerCase().includes('nda') ||
@@ -516,7 +552,7 @@ function validateHCPackage(
 ): void {
   if (!HC_APPLICATION_PREFIX.test(context.applicationNumber)) {
     findings.push({
-      ruleId: 'HC-REP-001',
+      ruleId: 'HC-REP-003',
       region: 'CA',
       severity: 'error',
       message: `Application number "${context.applicationNumber}" does not match HC format (NDS/SNDS/ANDS/DIN)`,
@@ -525,17 +561,7 @@ function validateHCPackage(
     });
   }
 
-  const hasCARegional = leaves.some(l => l.filePath.endsWith('m1/ca/ca-regional.xml'));
-  if (!hasCARegional) {
-    findings.push({
-      ruleId: 'HC-REP-001',
-      region: 'CA',
-      severity: 'error',
-      message: 'ca-regional.xml is missing from /m1/ca/',
-      fix: 'Generate and include the CA regional XML at /m1/ca/ca-regional.xml',
-      scope: 'package',
-    });
-  }
+  requireBackbone(leaves, 'CA', 'HC-REP-001', 'Generate and include the CA regional XML at /m1/ca/ca-regional.xml', findings);
 }
 
 function validateNMPAPackage(
@@ -544,34 +570,17 @@ function validateNMPAPackage(
   findings: RegionalFinding[]
 ): void {
   // NMPA-CDE-001: the M1 regional backbone file must be present.
-  const hasCNRegional = leaves.some(l => l.filePath.endsWith('m1/cn/cn-regional.xml'));
-  if (!hasCNRegional) {
-    findings.push({
-      ruleId: 'NMPA-CDE-001',
-      region: 'CN',
-      severity: 'error',
-      message: 'cn-regional.xml is missing from /m1/cn/',
-      fix: 'Generate and include the NMPA M1 regional XML at /m1/cn/cn-regional.xml',
-      scope: 'package',
-    });
-  }
+  requireBackbone(leaves, 'CN', 'NMPA-CDE-001', 'Generate and include the NMPA M1 regional XML at /m1/cn/cn-regional.xml', findings);
 
   // NMPA-CDE-005: file/folder names follow the eCTD ASCII naming convention. The
   // dossier content is Simplified Chinese, but eCTD file names remain ASCII.
-  for (const leaf of leaves) {
-    const filename = leaf.filePath.split('/').pop() || '';
-    if (!FILENAME_PATTERN.test(filename)) {
-      findings.push({
-        ruleId: 'NMPA-CDE-005',
-        region: 'CN',
-        severity: 'warning',
-        message: `Filename "${filename}" does not follow the NMPA eCTD ASCII naming convention (lowercase a-z, 0-9, hyphens, periods)`,
-        fix: 'Rename to ASCII per the NMPA eCTD技术规范 file-naming rules (Chinese belongs in document content, not file names)',
-        scope: 'leaf',
-        leafPath: leaf.filePath,
-      });
-    }
-  }
+  checkAsciiFilenames(leaves, 'CN', findings, {
+    ruleId: 'NMPA-CDE-005',
+    severity: 'warning',
+    makeMessage: (filename) =>
+      `Filename "${filename}" does not follow the NMPA eCTD ASCII naming convention (lowercase a-z, 0-9, hyphens, periods)`,
+    fix: 'Rename to ASCII per the NMPA eCTD技术规范 file-naming rules (Chinese belongs in document content, not file names)',
+  });
 }
 
 function validateMFDSPackage(
@@ -580,34 +589,17 @@ function validateMFDSPackage(
   findings: RegionalFinding[]
 ): void {
   // MFDS-KR-001: the M1 regional backbone file must be present.
-  const hasKRRegional = leaves.some(l => l.filePath.endsWith('m1/kr/kr-regional.xml'));
-  if (!hasKRRegional) {
-    findings.push({
-      ruleId: 'MFDS-KR-001',
-      region: 'KR',
-      severity: 'error',
-      message: 'kr-regional.xml is missing from /m1/kr/',
-      fix: 'Generate and include the KR eCTD M1 regional XML at /m1/kr/kr-regional.xml',
-      scope: 'package',
-    });
-  }
+  requireBackbone(leaves, 'KR', 'MFDS-KR-001', 'Generate and include the KR eCTD M1 regional XML at /m1/kr/kr-regional.xml', findings);
 
   // MFDS-KR-004: file/folder names follow the KR eCTD ASCII naming convention. The
   // dossier content is Korean (K-CTD), but eCTD file names remain ASCII.
-  for (const leaf of leaves) {
-    const filename = leaf.filePath.split('/').pop() || '';
-    if (!FILENAME_PATTERN.test(filename)) {
-      findings.push({
-        ruleId: 'MFDS-KR-004',
-        region: 'KR',
-        severity: 'warning',
-        message: `Filename "${filename}" does not follow the KR eCTD ASCII naming convention (lowercase a-z, 0-9, hyphens, periods)`,
-        fix: 'Rename to ASCII per the KR eCTD v1.0 file-naming rules (Korean belongs in document content, not file names)',
-        scope: 'leaf',
-        leafPath: leaf.filePath,
-      });
-    }
-  }
+  checkAsciiFilenames(leaves, 'KR', findings, {
+    ruleId: 'MFDS-KR-004',
+    severity: 'warning',
+    makeMessage: (filename) =>
+      `Filename "${filename}" does not follow the KR eCTD ASCII naming convention (lowercase a-z, 0-9, hyphens, periods)`,
+    fix: 'Rename to ASCII per the KR eCTD v1.0 file-naming rules (Korean belongs in document content, not file names)',
+  });
 }
 
 /**

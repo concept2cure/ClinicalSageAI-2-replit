@@ -154,3 +154,69 @@ describe('MFDS (Korea) package validator', () => {
     expect(findings.filter((x) => x.region === 'KR')).toHaveLength(0);
   });
 });
+
+// Every supported region. Kept in lock-step with the RegulatoryRegion union so
+// that adding a region without a rule pack, gateway limit, or dispatcher case
+// fails CI rather than silently shipping a half-wired region.
+const ALL_REGIONS = ['US', 'EU', 'JP', 'CA', 'CN', 'KR'] as const;
+
+describe('regional eCTD rule catalog — cross-region invariants', () => {
+  it('every catalog rule has a valid region, non-empty citation, and valid severity', () => {
+    for (const rule of REGIONAL_RULES) {
+      expect(ALL_REGIONS).toContain(rule.region);
+      expect(rule.id.trim().length).toBeGreaterThan(0);
+      expect(rule.citation.trim().length).toBeGreaterThan(0);
+      expect(['error', 'warning', 'info']).toContain(rule.severity);
+    }
+  });
+
+  it('every supported region has at least one rule and a positive gateway limit', () => {
+    for (const region of ALL_REGIONS) {
+      expect(getRulesForRegion(region).length).toBeGreaterThan(0);
+      expect(getGatewaySizeLimit(region)).toBeGreaterThan(0);
+    }
+  });
+
+  it('dispatches every region without throwing (validator wired for each)', () => {
+    for (const region of ALL_REGIONS) {
+      const ctx = {
+        region,
+        applicationNumber: 'X',
+        sequenceNumber: 'bad', // forces a deterministic sequence finding
+        submissionType: 'initial',
+      };
+      const findings = validateRegionalPackage(ctx, []);
+      // The universal sequence-format rule must always fire for an invalid value,
+      // proving the dispatcher ran rather than silently no-op'ing.
+      expect(findings.some((f) => f.ruleId === 'FDA-ESG-001')).toBe(true);
+    }
+  });
+});
+
+describe('Health Canada (CA) package validator', () => {
+  it('uses distinct rule ids for a bad application number vs a missing backbone', () => {
+    const findings = validateRegionalPackage(
+      { region: 'CA', applicationNumber: 'NOT-VALID', sequenceNumber: '0000', submissionType: 'initial' },
+      [{ sectionCode: 'm1.2', filePath: 'm1/ca/form.pdf', mimeType: 'application/pdf', fileSize: 100 }]
+    );
+    const appNumberFinding = findings.find((f) => /does not match HC format/.test(f.message));
+    const backboneFinding = findings.find((f) => /ca-regional\.xml is missing/.test(f.message));
+    expect(appNumberFinding).toBeDefined();
+    expect(backboneFinding).toBeDefined();
+    // The two conditions are different rules and must not share a rule id.
+    expect(appNumberFinding!.ruleId).toBe('HC-REP-003');
+    expect(backboneFinding!.ruleId).toBe('HC-REP-001');
+    expect(appNumberFinding!.ruleId).not.toBe(backboneFinding!.ruleId);
+  });
+
+  it('passes a well-formed CA package with no findings', () => {
+    const findings = validateRegionalPackage(
+      { region: 'CA', applicationNumber: 'NDS123456', sequenceNumber: '0000', submissionType: 'initial' },
+      [
+        { sectionCode: 'm1', filePath: 'm1/ca/ca-regional.xml', mimeType: 'application/xml', fileSize: 10 },
+        { sectionCode: 'm1.2', filePath: 'm1/ca/form.pdf', mimeType: 'application/pdf', fileSize: 100 },
+      ]
+    );
+    expect(findings.filter((f) => f.region === 'CA')).toHaveLength(0);
+  });
+});
