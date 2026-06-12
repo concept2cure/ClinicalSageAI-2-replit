@@ -12,6 +12,7 @@ const TOOLS = [
   'create_effort_certification', 'add_effort_line', 'create_coi_disclosure',
   'search_grants_gov', 'screen_restricted_party',
   'research_compliance_briefing', 'fulfill_regulatory_commitment', 'review_ha_interaction', 'register_controlled_substance',
+  'prepare_meeting_package',
 ];
 
 describe('Add-on AnA tools — registration', () => {
@@ -75,5 +76,9 @@ describe('Briefing + coverage-gap tools — context + input guards', () => {
   it('register_controlled_substance rejects an invalid schedule', async () => {
     const out = JSON.parse(await getToolHandler('register_controlled_substance')!({ substance_name: 'X', dea_schedule: 'VII' }, { organizationId: 1, userId: 1 } as any));
     expect(out.error).toMatch(/valid dea_schedule/);
+  });
+  it('prepare_meeting_package requires an interaction_id', async () => {
+    const out = JSON.parse(await getToolHandler('prepare_meeting_package')!({}, { organizationId: 1 } as any));
+    expect(out.error).toMatch(/interaction_id is required/);
   });
 });

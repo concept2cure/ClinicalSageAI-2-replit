@@ -81,12 +81,14 @@ async function main() {
   ok(Number(bal.rows[0].current_balance) === 6, 'balance remains 6 after rejected transaction');
 
   console.log('\n[HA] commitment threads provenance to submission');
-  const commitProv = await tx(async (c) => {
+  const haRes = await tx(async (c) => {
     const ix = await ha.createInteractionTx(c, ORG, USER, { interactionType: 'pre_nda', agency: 'fda', title: 'pre-NDA', submissionId: 1 });
     const cm = await ha.createCommitmentTx(c, ORG, USER, { commitmentType: 'pmr', description: 'PMR study', submissionId: 1, sourceInteractionId: ix.id });
-    return cm.provenanceLinkIds.length;
+    return { ixId: ix.id, links: cm.provenanceLinkIds.length };
   });
-  ok(commitProv === 2, 'commitment wrote 2 provenance links (interaction→commitment, commitment→submission)');
+  ok(haRes.links === 2, 'commitment wrote 2 provenance links (interaction→commitment, commitment→submission)');
+  const mtgPkg = await ha.prepareMeetingPackage(ORG, haRes.ixId);
+  ok(mtgPkg.ready === true && mtgPkg.outstandingCommitments >= 1, 'meeting package assembles readiness + the interaction-sourced commitment (orchestration)');
 
   console.log('\n[IACUC] approval stamps 3-yr expiration + Module 4 provenance');
   await pool.query(`INSERT INTO clinical_studies(id,organization_id,study_id,title) VALUES (1,$1,'S1','t') ON CONFLICT DO NOTHING`, [ORG]);

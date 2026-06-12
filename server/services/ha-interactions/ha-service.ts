@@ -190,6 +190,43 @@ export async function listCommitments(orgId: number, submissionId?: number): Pro
   return rows;
 }
 
+export async function listQuestionsByInteraction(orgId: number, interactionId: number): Promise<any[]> {
+  const { rows } = await pool.query(
+    `SELECT id, question_number, question_text, sponsor_position, agency_response, agreement_reached
+       FROM ha_interaction_questions WHERE interaction_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY question_number NULLS LAST, id`,
+    [interactionId, orgId],
+  );
+  return rows;
+}
+
+export async function listCommitmentsByInteraction(orgId: number, interactionId: number): Promise<any[]> {
+  const { rows } = await pool.query(
+    `SELECT id, commitment_type, description, status, due_date, fulfilled_date
+       FROM regulatory_commitments WHERE source_interaction_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY due_date ASC NULLS LAST, id`,
+    [interactionId, orgId],
+  );
+  return rows;
+}
+
+/**
+ * Orchestration: assemble a pre-meeting package for an interaction — readiness,
+ * open questions, and the commitments that originated from it. Read-only.
+ */
+export async function prepareMeetingPackage(orgId: number, interactionId: number) {
+  const { assembleMeetingPackage } = await import('./ha-logic');
+  const r = await getInteractionReadinessInput(pool as any, orgId, interactionId);
+  const questions = await listQuestionsByInteraction(orgId, interactionId);
+  const commitments = await listCommitmentsByInteraction(orgId, interactionId);
+  const today = new Date().toISOString().slice(0, 10);
+  const pkg = assembleMeetingPackage(
+    r as any,
+    questions.map((q) => ({ questionNumber: q.question_number, questionText: q.question_text, agreementReached: q.agreement_reached })),
+    commitments.map((c) => ({ status: c.status, dueDate: c.due_date, fulfilledDate: c.fulfilled_date })),
+    today,
+  );
+  return { interactionId, interactionType: r.interactionType, status: r.status, ...pkg };
+}
+
 export async function getInteractionReadinessInput(client: Queryable, orgId: number, id: number): Promise<{ interactionType: string; status: string; hasBriefingBook: boolean; questionCount: number; scheduledDate: string | null }> {
   const { rows } = await client.query(
     `SELECT interaction_type, status, briefing_book_artifact_id, scheduled_date FROM ha_interactions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,

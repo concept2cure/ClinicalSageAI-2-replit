@@ -6929,6 +6929,25 @@ registerToolHandler('review_ha_interaction', async (input, ctx) => {
   }
 });
 
+registerToolHandler('prepare_meeting_package', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'prepare_meeting_package requires tenant context.' });
+  const interactionId = typeof input.interaction_id === 'number' ? input.interaction_id : NaN;
+  if (!Number.isInteger(interactionId)) return JSON.stringify({ error: 'interaction_id is required.' });
+  const { prepareMeetingPackage } = await import('../ha-interactions/ha-service.js');
+  try {
+    const p = await prepareMeetingPackage(ctx.organizationId, interactionId);
+    return JSON.stringify({
+      ok: true, interactionId, ready: p.ready, findings: p.findings,
+      questionCount: p.questionCount, openQuestions: p.openQuestions, outstandingCommitments: p.outstandingCommitments, overdueCommitments: p.overdueCommitments, actions: p.actions,
+      message: p.ready
+        ? `${p.interactionType} meeting is ready — ${p.questionCount} question(s), ${p.outstandingCommitments} open commitment(s).`
+        : `${p.interactionType} meeting is NOT ready — ${p.actions.length} action(s): ${p.actions.slice(0, 4).join('; ')}${p.actions.length > 4 ? '…' : ''}`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `prepare_meeting_package failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('register_controlled_substance', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'register_controlled_substance requires tenant + user context.' });
   const substanceName = typeof input.substance_name === 'string' ? input.substance_name.trim() : '';

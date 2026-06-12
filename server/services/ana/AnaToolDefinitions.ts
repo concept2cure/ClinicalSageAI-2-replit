@@ -3996,6 +3996,13 @@ export const REVIEW_HA_INTERACTION: AnaTool = {
   input_schema: { type: 'object', properties: { interaction_id: { type: 'number' } }, required: ['interaction_id'] },
 };
 
+export const PREPARE_MEETING_PACKAGE: AnaTool = {
+  name: 'prepare_meeting_package',
+  description:
+    "One-shot pre-meeting package for a health-authority interaction (read-only orchestration): the readiness verdict (briefing book + question list present by the time it's scheduled/held, FDA Formal Meetings/PDUFA), the open questions (no agreement yet), and the commitments that originated from this interaction with their status — folded into a prioritized 'before the meeting' action list. Use to answer 'are we ready for this FDA meeting and what's left?'.",
+  input_schema: { type: 'object', properties: { interaction_id: { type: 'number' } }, required: ['interaction_id'] },
+};
+
 export const REGISTER_CONTROLLED_SUBSTANCE: AnaTool = {
   name: 'register_controlled_substance',
   description:
@@ -5911,6 +5918,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   RESEARCH_COMPLIANCE_BRIEFING,
   FULFILL_REGULATORY_COMMITMENT,
   REVIEW_HA_INTERACTION,
+  PREPARE_MEETING_PACKAGE,
   REGISTER_CONTROLLED_SUBSTANCE,
   CREATE_RIM_PRODUCT,
   SET_REGISTRATION_STATUS,

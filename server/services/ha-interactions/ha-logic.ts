@@ -120,3 +120,44 @@ export function evaluateMeetingReadiness(m: MeetingReadinessInput): { ready: boo
   const ready = !findings.some((f) => f.severity === 'critical');
   return { ready, findings };
 }
+
+// ─── Meeting-package assembly (orchestration) ────────────────────────────────
+
+export interface MeetingQuestionView { questionNumber?: number | null; questionText: string; agreementReached?: boolean | null }
+
+export interface MeetingPackage {
+  ready: boolean;
+  findings: ReadinessFinding[];
+  questionCount: number;
+  openQuestions: MeetingQuestionView[];
+  outstandingCommitments: number;
+  overdueCommitments: number;
+  actions: string[];
+}
+
+/**
+ * Assemble a pre-meeting package for a health-authority interaction: the readiness
+ * verdict (briefing book + question list present by the time it's scheduled/held),
+ * the open questions (no agreement yet), and the commitments that originated from
+ * this interaction with their effective status. Produces a single prioritized
+ * "before the meeting" action list. Pure — the service loads the reads.
+ */
+export function assembleMeetingPackage(
+  readiness: MeetingReadinessInput,
+  questions: MeetingQuestionView[],
+  commitments: CommitmentView[],
+  today: string,
+): MeetingPackage {
+  const { ready, findings } = evaluateMeetingReadiness(readiness);
+  const openQuestions = questions.filter((q) => q.agreementReached !== true);
+  const outstanding = commitments.filter((c) => deriveCommitmentStatus(c, today) !== 'fulfilled' && deriveCommitmentStatus(c, today) !== 'waived' && deriveCommitmentStatus(c, today) !== 'released');
+  const overdue = commitments.filter((c) => deriveCommitmentStatus(c, today) === 'overdue').length;
+
+  const actions: string[] = [];
+  for (const f of findings) actions.push(`[${f.severity}] ${f.message}`);
+  const expectsPrep = readiness.status === 'scheduled' || readiness.status === 'held';
+  if (expectsPrep && openQuestions.length > 0) actions.push(`Resolve or finalize ${openQuestions.length} open question(s) before the meeting.`);
+  if (overdue > 0) actions.push(`${overdue} commitment(s) from this interaction are overdue — address before the next engagement.`);
+
+  return { ready, findings, questionCount: questions.length, openQuestions, outstandingCommitments: outstanding.length, overdueCommitments: overdue, actions };
+}
