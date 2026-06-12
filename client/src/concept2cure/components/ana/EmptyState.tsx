@@ -32,6 +32,21 @@ export interface EmptySuggestion {
   iconKey?: 'file' | 'search' | 'flask' | 'clip' | 'globe' | 'book' | 'chat' | 'folder' | 'sparkles';
 }
 
+/**
+ * Project health snapshot surfaced above the composer on the empty state.
+ * Structurally matches the `projectIntelligence` prop assembled by ZenApp.
+ */
+export interface AnaProjectIntelligence {
+  documentCount: number;
+  signalCount: number;
+  readinessScore: number | null;
+  memoryAtomCount: number;
+  recommendations?: Array<{ id: string; title: string; severity: string; category: string }>;
+  nextActions?: Array<{ id: string; title: string; priority: string; reason: string }>;
+  riskFactors?: Array<{ description: string; likelihood: string; impact: string }>;
+  openQuestions?: Array<{ question: string; priority: string; context: string }>;
+}
+
 export interface EmptyStateProps {
   greetingName: string;
   onSend: (text: string, attachments?: MessageAttachment[]) => void;
@@ -43,6 +58,11 @@ export interface EmptyStateProps {
   suggestions?: ReadonlyArray<EmptySuggestion>;
   /** Scopes composer uploads to a project so extracted text lands in its memory. */
   projectId?: string;
+  /** Tools pinned for the next turn, forwarded to the composer's tool picker. */
+  selectedTools?: string[];
+  onSelectedToolsChange?: (tools: string[]) => void;
+  /** Project health snapshot, rendered as a compact card above the composer. */
+  projectIntelligence?: AnaProjectIntelligence;
 }
 
 function resolveIcon(key?: EmptySuggestion['iconKey']): typeof I.file {
@@ -68,6 +88,9 @@ export function EmptyState({
   greeting,
   suggestions,
   projectId,
+  selectedTools,
+  onSelectedToolsChange,
+  projectIntelligence,
 }: EmptyStateProps) {
   const [draft, setDraft] = useState('');
   // Attachments the composer hands up at send time, consumed by `send`.
@@ -95,12 +118,56 @@ export function EmptyState({
     ? suggestions.map(s => ({ Ico: resolveIcon(s.iconKey), label: s.label }))
     : DEFAULT_SUGGESTIONS;
 
+  // Show the health card only when there's real signal to report.
+  const pi = projectIntelligence;
+  const hasIntel =
+    !!pi &&
+    ((pi.readinessScore !== null && pi.readinessScore !== undefined) ||
+      pi.documentCount > 0 ||
+      pi.signalCount > 0 ||
+      pi.memoryAtomCount > 0);
+  const topAction = pi?.nextActions?.[0];
+  const intelStats = pi
+    ? ([
+        pi.readinessScore !== null && pi.readinessScore !== undefined
+          ? { label: 'Readiness', value: `${Math.round(pi.readinessScore)}%`, accent: true }
+          : null,
+        pi.signalCount > 0 ? { label: 'Signals', value: String(pi.signalCount) } : null,
+        pi.documentCount > 0 ? { label: 'Documents', value: String(pi.documentCount) } : null,
+        pi.memoryAtomCount > 0 ? { label: 'Memory atoms', value: String(pi.memoryAtomCount) } : null,
+      ].filter(Boolean) as Array<{ label: string; value: string; accent?: boolean }>)
+    : [];
+
   return (
     <div className={styles.empty}>
       <div className={styles.emptyInner}>
         <div className={styles.greet}>
           <span className={styles.star}>✻</span> {greeting || defaultGreeting}
         </div>
+        {hasIntel && (
+          <div className={styles.intelCard}>
+            <div className={styles.intelStats}>
+              {intelStats.map(s => (
+                <div key={s.label} className={styles.intelStat}>
+                  <span
+                    className={s.accent ? styles.intelValueAccent : styles.intelValue}
+                  >
+                    {s.value}
+                  </span>
+                  <span className={styles.intelLabel}>{s.label}</span>
+                </div>
+              ))}
+            </div>
+            {topAction && (
+              <div className={styles.intelNext} title={topAction.reason}>
+                <I.sparkles size={13} />
+                <span className={styles.intelNextText}>
+                  Next: {topAction.title}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
         <Composer
           value={draft}
           onChange={setDraft}
@@ -111,6 +178,8 @@ export function EmptyState({
           onStop={onStop}
           isStreaming={isStreaming}
           projectId={projectId}
+          selectedTools={selectedTools}
+          onSelectedToolsChange={onSelectedToolsChange}
         />
         <div className={styles.suggest}>
           {pills.map(({ Ico, label }) => (

@@ -90,6 +90,8 @@ export interface MessageProps {
     riskSummary?: string;
     flaggedClaims?: { kind: 'ungrounded' | 'overclaim' | 'contradiction'; text: string }[];
   };
+  /** Context layers ANA drew on this turn (enrichment source names). */
+  groundingSources?: string[];
   /** Server-side degraded-mode warnings. */
   warnings?: string[];
   /** Tools AnA invoked this turn — shown as transparency/audit status rows. */
@@ -140,6 +142,7 @@ export function Message({
   suggestedActionLabels,
   thinking,
   evidence,
+  groundingSources,
   warnings,
   toolCalls,
   sentAt,
@@ -330,7 +333,8 @@ export function Message({
             // Only offer a drill-down when the server sent something to show.
             const expandable =
               (evidence.flaggedClaims && evidence.flaggedClaims.length > 0) ||
-              !!evidence.riskSummary;
+              !!evidence.riskSummary ||
+              (groundingSources && groundingSources.length > 0);
             if (!expandable) {
               return (
                 <span
@@ -409,6 +413,14 @@ export function Message({
                 <p className={styles.evidenceSummary}>
                   No specific claims were flagged this turn.
                 </p>
+              )}
+              {groundingSources && groundingSources.length > 0 && (
+                <div className={styles.evidenceContext}>
+                  <span className={styles.evidenceContextLabel}>Context drawn on</span>
+                  <span className={styles.evidenceContextList}>
+                    {groundingSources.map(s => s.replace(/[-_]/g, ' ')).join(' · ')}
+                  </span>
+                </div>
               )}
             </div>
           );

@@ -143,6 +143,13 @@ export interface AnaChatMessage {
     /** The specific claims the verdict flagged, so the chip can drill down. */
     flaggedClaims?: { kind: 'ungrounded' | 'overclaim' | 'contradiction'; text: string }[];
   };
+  /**
+   * Context layers ANA drew on this turn (from the server's enrichment step,
+   * e.g. 'governance', 'precedent', 'safety'). Surfaced in the evidence panel
+   * so the user can see what grounded the answer. These are context sources,
+   * not document citations.
+   */
+  groundingSources?: string[];
   /** Degraded-mode signals from server `warning` events (thread persistence etc.). */
   warnings?: string[];
   /** Timestamp (ms) when this turn was kicked off. Used for relative time chips. */
@@ -191,6 +198,12 @@ export interface UseAnaChatOptions {
    * surface-specific server-side handling (e.g. eCTD coauthor pane state).
    */
   moduleContext?: Record<string, unknown> | null;
+  /**
+   * Tool names the user has pinned for the turn. Sent as `selected_tools`; the
+   * server treats them as additive focus (pinned on top of the context set),
+   * so a narrow pin can't break ANA. Empty/undefined = auto (server chooses).
+   */
+  selectedTools?: string[];
 }
 
 export interface UseAnaChatReturn {
@@ -399,6 +412,12 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           role: m.role,
           content: m.text,
         })),
+        // Pinned tools (additive focus). Omitted when empty so the server
+        // stays in auto/intent-based selection.
+        selected_tools:
+          options.selectedTools && options.selectedTools.length > 0
+            ? options.selectedTools
+            : undefined,
       });
 
       let streamedText = '';
@@ -510,6 +529,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               const actions: AnaChatAction[] | undefined = Array.isArray(event.executedActions)
                 ? (event.executedActions as AnaChatAction[])
                 : undefined;
+              // Context layers ANA drew on (names only), shown in the evidence panel.
+              const groundingSources: string[] | undefined = Array.isArray(event.enrichmentSources)
+                ? event.enrichmentSources.filter((s: unknown): s is string => typeof s === 'string')
+                : undefined;
               setMessages(prev =>
                 prev.map(m => {
                   if (m.id !== assistantId) return m;
@@ -522,6 +545,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     streaming: false,
                     statusPhase: undefined,
                     executedActions: actions,
+                    groundingSources:
+                      groundingSources && groundingSources.length > 0
+                        ? groundingSources
+                        : m.groundingSources,
                     latencyMs: capturedLatencyMs,
                     fallback:
                       capturedProvider !== undefined
@@ -705,6 +732,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       options.submissionType,
       options.authoringContext,
       options.moduleContext,
+      options.selectedTools,
     ]
   );
 

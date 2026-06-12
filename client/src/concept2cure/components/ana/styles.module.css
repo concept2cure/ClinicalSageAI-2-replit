@@ -176,6 +176,32 @@
   margin-right: 4px; display: inline-block; transform: translateY(-2px);
 }
 
+/* ───────── Project health card (empty state) ───────── */
+.intelCard {
+  width: 100%; max-width: 560px;
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 14px 18px; margin-top: -8px;
+  background: var(--bg-100, var(--muted)); border: 1px solid var(--border, var(--bg-200));
+  border-radius: 12px;
+}
+.intelStats {
+  display: flex; flex-wrap: wrap; gap: 24px; justify-content: center;
+}
+.intelStat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.intelValue { font-size: 20px; font-weight: 600; color: var(--ink, var(--text-100)); }
+.intelValueAccent { font-size: 20px; font-weight: 600; color: var(--accent-main-100); }
+.intelLabel {
+  font-size: 11px; color: var(--ink-subtle, var(--text-400));
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.intelNext {
+  display: flex; align-items: center; gap: 6px; justify-content: center;
+  font-size: 12px; color: var(--ink-muted, var(--text-300));
+  border-top: 1px solid var(--border, var(--bg-200)); padding-top: 8px;
+}
+.intelNext svg { color: var(--accent-main-100); flex-shrink: 0; }
+.intelNextText { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* ───────── Composer ───────── */
 .composer {
   width: 100%; max-width: 720px;
@@ -223,6 +249,56 @@
   background: transparent; border: 0; cursor: pointer;
 }
 .composerIcon:hover { background: var(--bg-200); color: var(--ink, var(--text-100)); }
+.composerIcon:disabled { opacity: 0.45; cursor: default; }
+
+/* Tool picker — button + popover anchored to the composer's Tools control. */
+.toolPicker { position: relative; display: inline-flex; }
+.toolPickerBadge {
+  position: absolute; top: 2px; right: 2px;
+  min-width: 14px; height: 14px; padding: 0 3px;
+  border-radius: 9999px; background: var(--accent-main-100); color: #fff;
+  font-size: 9px; line-height: 14px; font-weight: 600; text-align: center;
+}
+.toolPickerPop {
+  position: absolute; bottom: calc(100% + 8px); left: 0; z-index: 30;
+  width: 300px; max-height: 360px; overflow-y: auto;
+  background: var(--bg-100, #fff); color: var(--ink, var(--text-100));
+  border: 1px solid var(--border, var(--bg-200)); border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+  padding: 10px 12px;
+}
+.toolPickerHead {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 13px; font-weight: 600;
+}
+.toolPickerAuto { font-size: 11px; font-weight: 500; color: var(--ink-subtle, var(--text-400)); }
+.toolPickerReset {
+  background: transparent; border: 0; cursor: pointer; padding: 0;
+  font-size: 11px; font-weight: 500; color: var(--accent-main-100);
+  font-family: var(--font-sans, inherit);
+}
+.toolPickerHint {
+  margin: 4px 0 8px; font-size: 11px; line-height: 1.5;
+  color: var(--ink-subtle, var(--text-400));
+}
+.toolPickerState { font-size: 12px; color: var(--ink-muted, var(--text-300)); padding: 6px 0; }
+.toolPickerList { display: flex; flex-direction: column; gap: 8px; }
+.toolPickerCat { display: flex; flex-direction: column; gap: 2px; }
+.toolPickerCatLabel {
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.04em; color: var(--ink-subtle, var(--text-400));
+  margin-top: 2px;
+}
+.toolPickerRow {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; padding: 3px 4px; border-radius: 6px; cursor: pointer;
+}
+.toolPickerRow:hover { background: var(--bg-200); }
+.toolPickerRow[data-disabled] { opacity: 0.45; cursor: default; }
+.toolPickerRow[data-disabled]:hover { background: transparent; }
+.toolPickerRow input { accent-color: var(--accent-main-100); }
+.toolPickerName { min-width: 0; text-transform: capitalize; }
+
 .composerSend {
   width: 32px; height: 32px; border-radius: 9999px;
   background: var(--accent-main-100); color: #fff;
@@ -588,6 +664,19 @@
   color: var(--accent-100, #d97757);
 }
 .evidenceClaimText { color: var(--ink-body, var(--text-200)); min-width: 0; }
+.evidenceContext {
+  margin-top: 10px; padding-top: 8px;
+  border-top: 1px solid var(--border, var(--bg-200));
+  display: flex; flex-direction: column; gap: 2px;
+}
+.evidenceContextLabel {
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.04em; color: var(--ink-subtle, var(--text-400));
+}
+.evidenceContextList {
+  font-size: 12px; color: var(--ink-body, var(--text-200));
+  text-transform: capitalize;
+}
 .evidenceChevron { transition: transform 200ms ease-out; }
 .evidenceChevronOpen { transform: rotate(180deg); }
 @media (prefers-reduced-motion: reduce) {

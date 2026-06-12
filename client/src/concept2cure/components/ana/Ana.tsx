@@ -190,7 +190,7 @@ export function Ana({
   organizationId: _organizationId,
   customInstructions: _customInstructions,
   threadId: pinnedThreadId,
-  projectIntelligence: _projectIntelligence,
+  projectIntelligence,
   onThreadChange,
   onActionRun: _onActionRun,
   onNavigate,
@@ -228,6 +228,8 @@ export function Ana({
   const [view, setView] = useState<AnaView>('home');
   const [collapsed, setCollapsed] = useState(false);
   const [activeRecentId, setActiveRecentId] = useState<string | null>(null);
+  // Tools the user pins for the next turn (additive focus). Empty = auto.
+  const [selectedTools, setSelectedTools] = useState<string[]>([]);
 
   const chat = useAnaChat({
     projectId: resolvedProjectId,
@@ -237,6 +239,7 @@ export function Ana({
     submissionType,
     authoringContext: authoringContext ?? undefined,
     moduleContext: moduleContext ?? undefined,
+    selectedTools,
   });
 
   // Notify host when the active thread id changes (legacy parity with
@@ -506,6 +509,9 @@ export function Ana({
             greeting={greeting}
             suggestions={emptySuggestions}
             projectId={resolvedProjectId ?? undefined}
+            selectedTools={selectedTools}
+            onSelectedToolsChange={setSelectedTools}
+            projectIntelligence={projectIntelligence}
           />
         )}
         {view === 'chat' && (
@@ -522,6 +528,8 @@ export function Ana({
             onSuggestedAction={handleSuggestedAction}
             suggestedActionLabels={SUGGESTED_ACTION_LABELS}
             projectId={resolvedProjectId ?? undefined}
+            selectedTools={selectedTools}
+            onSelectedToolsChange={setSelectedTools}
           />
         )}
         {view === 'projects' && (
