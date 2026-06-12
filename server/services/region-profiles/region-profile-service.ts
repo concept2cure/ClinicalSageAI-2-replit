@@ -9,7 +9,7 @@
  *   - shared/regulatory/region-profiles.ts (region↔agency registry)
  *
  * This composes them into ONE typed `SubmissionRegionProfile` per submission
- * region (fda|eu|jp), so the UI fetches a single shape instead of stitching.
+ * region (fda|eu|jp|cn), so the UI fetches a single shape instead of stitching.
  *
  * PURE + DETERMINISTIC: a projection over static data — no DB, no network.
  *
@@ -23,11 +23,11 @@ import {
 } from '../regional-ctd-templates';
 import { REGIONAL_RULES } from '../ectd/ectd-regional-rules';
 
-export type SubmissionRegion = 'fda' | 'eu' | 'jp';
+export type SubmissionRegion = 'fda' | 'eu' | 'jp' | 'cn';
 
 export interface SubmissionRegionProfile {
   region: SubmissionRegion;
-  agency: string; // FDA | EMA | PMDA
+  agency: string; // FDA | EMA | PMDA | NMPA
   language: string;
   currency: string;
   /** Pathways available for this region (drives the PathwayBadge / selector). */
@@ -44,6 +44,7 @@ const REGION_MAP: Record<SubmissionRegion, { agency: string; ruleTokens: string[
   fda: { agency: 'FDA', ruleTokens: ['US', 'FDA'], pathways: ['ectd_v322', 'ectd_v40', 'estar'] },
   eu: { agency: 'EMA', ruleTokens: ['EU', 'EMA'], pathways: ['ectd_v322', 'mdr', 'ivdr', 'ctis'] },
   jp: { agency: 'PMDA', ruleTokens: ['JP', 'PMDA'], pathways: ['ectd_v322'] },
+  cn: { agency: 'NMPA', ruleTokens: ['CN', 'NMPA'], pathways: ['ectd_v322'] },
 };
 
 function ruleCountFor(tokens: string[]): number {
@@ -70,9 +71,9 @@ export function getSubmissionRegionProfile(region: string): SubmissionRegionProf
   };
 }
 
-/** All submission region profiles (fda, eu, jp), in canonical order. */
+/** All submission region profiles (fda, eu, jp, cn), in canonical order. */
 export function getAllSubmissionRegionProfiles(): SubmissionRegionProfile[] {
-  return (['fda', 'eu', 'jp'] as SubmissionRegion[])
+  return (['fda', 'eu', 'jp', 'cn'] as SubmissionRegion[])
     .map((r) => getSubmissionRegionProfile(r))
     .filter((p): p is SubmissionRegionProfile => p !== null);
 }
