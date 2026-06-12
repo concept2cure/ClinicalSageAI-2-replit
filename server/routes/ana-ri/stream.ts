@@ -43,6 +43,7 @@ import {
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
 import { getUnhealthyTools } from '../../services/ana/tool-telemetry.js';
 import { runAgenticToolLoop, capToolResultForModel, mapWithConcurrency, describeToolPlan, type ToolCall, type ToolResultEntry, type ModelTurn } from '../../services/ana/agentic-loop.js';
+import type { ProvenanceRecord } from '../../services/evidence/provenance.js';
 import { buildTraceEntry, collectTracesFromHistory, formatTraceForContext, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
 import { runStreamPostProcessing } from './post-processing.js';
 import { loadAnaToolPolicy, filterToolsByPolicy } from '../../services/ana-ri/mdx-tool-policy.js';
@@ -474,6 +475,11 @@ router.post('/stream', async (req: Request, res: Response) => {
     // Raw tool output this turn — the evidence corpus the final answer is
     // verified against in the self-verification round (see answer-grounding.ts).
     const toolEvidenceCorpus: string[] = [];
+    // Provenance envelopes emitted by evidence tools this turn — persisted to the
+    // durable lineage trail (data_lineage_records) by post-processing. Capped so a
+    // pathological multi-round turn can't accumulate unbounded records.
+    const collectedProvenance: ProvenanceRecord[] = [];
+    const PROVENANCE_CAP = 200;
 
     // Stream via gateway
     const streamGatewayStart = Date.now();
@@ -641,6 +647,14 @@ router.post('/stream', async (req: Request, res: Response) => {
           if (toolStatus === 'success') {
             try {
               const parsed = JSON.parse(resultStr);
+              // Accumulate any provenance envelope this evidence tool emitted, for
+              // durable persistence to the lineage trail in post-processing.
+              if (Array.isArray(parsed?.provenance)) {
+                for (const p of parsed.provenance) {
+                  if (collectedProvenance.length >= PROVENANCE_CAP) break;
+                  if (p && typeof p === 'object') collectedProvenance.push(p as ProvenanceRecord);
+                }
+              }
               if (parsed && parsed.status === 'generated' && typeof parsed.content === 'string' && parsed.content.length > 0) {
                 res.write(
                   `data: ${JSON.stringify({
@@ -793,6 +807,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       sectionCode,
       toolTrace,
       toolEvidenceCorpus,
+      collectedProvenance,
       messages,
       model: gwResponse.model,
       provider: gwResponse.provider,

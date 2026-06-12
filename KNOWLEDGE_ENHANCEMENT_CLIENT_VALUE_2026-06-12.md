@@ -164,7 +164,13 @@ P0 is built, wired, and tested; a credible P1 corpus seed is in. Concretely:
 
 **Verification:** project typecheck clean (0 errors); new and affected suites green (persist-provenance, RAG provenance, evidence-tools provenance, evidence provenance unit).
 
-**Still scoped, not yet built (honest):** wiring `persistProvenance` into the live streaming answer pipeline (extracting the per-turn provenance and targeting the answer message) — a higher-risk orchestrator change best done as its own increment; the aggregate adverse-event tools (FAERS/MAUDE); deeper CNS; MMRM; the empirical trial-feasibility model; and the offline grounding/hallucination eval harness.
+**Increment 7 (this follow-up) — provenance wired into the live answer pipeline:**
+
+- The AnA RI streaming route now accumulates the per-turn provenance envelopes from evidence tool results (`server/routes/ana-ri/stream.ts`, capped at 200/turn) and hands them to background post-processing, which fires `persistProvenance` targeting the answer (`server/routes/ana-ri/post-processing.ts`). The write is guarded by org + thread context, fire-and-forget, and never blocks or breaks the turn (the bridge swallows failures). Every grounded answer now leaves a durable `data_lineage_records` trail from each cited source — external API, computation, or the org's own document — to the answer it supported. The arc is closed end to end: retrieve → cite → answer → persist.
+
+**Verification:** project typecheck clean (0 errors); evidence suites green; lint clean on the touched route files (only pre-existing warnings). The persistence logic is unit-tested via the bridge; the wiring seam is a thin, guarded fire-and-forget verified by typecheck.
+
+**Still scoped, not yet built (honest):** the aggregate adverse-event tools (FAERS/MAUDE); deeper CNS coverage; MMRM; the empirical trial-feasibility model; and the offline grounding/hallucination eval harness. These are independent efforts and are deliberately left as follow-ups rather than shipped as stubs.
 
 ## 7. The single most important move
 
