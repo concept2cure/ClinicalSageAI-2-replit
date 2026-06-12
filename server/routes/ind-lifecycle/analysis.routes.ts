@@ -16,7 +16,8 @@ import { buildIndDashboard } from '../../services/ind-lifecycle/ind-dashboard';
 import { buildPackageManifest } from '../../services/ind-lifecycle/ind-package-manifest';
 import { evaluateDispatchGate } from '../../services/ind-lifecycle/ind-dispatch-gate';
 import { buildIndCockpit, type SequenceGateSummary } from '../../services/ind-lifecycle/ind-cockpit';
-import { renderPackageManifestPdf } from '../../services/ind-lifecycle/ind-document-renderer';
+import { diffSequences } from '../../services/ind-lifecycle/ind-sequence-diff';
+import { renderPackageManifestPdf, renderSequenceDiffPdf } from '../../services/ind-lifecycle/ind-document-renderer';
 import { getSubmission, listSequences, listLeaves, getSequence } from '../../services/submission-service/submission-service';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, sendPdf } from './shared';
 
@@ -209,6 +210,52 @@ router.post('/sequence/:seqId/dispatch-gate', limiter, requireRole(AUTHOR), asyn
       sequenceStatus: sequence.status,
     });
     res.json({ verdict, sequenceValidation, manifest, actionItems });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** Load a sequence's number + leaves (for the diff). */
+async function sequenceForDiff(seqId: number, ctx: { organizationId: number; userId: number }) {
+  const [sequence, leaves] = await Promise.all([getSequence(seqId, ctx), listLeaves(seqId, ctx)]);
+  return {
+    sequenceNumber: sequence.sequenceNumber,
+    leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, checksum: l.checksum })),
+  };
+}
+
+/**
+ * eCTD sequence diff (amendment review) — what changed between a prior and a
+ * current sequence. Query: ?priorId=<sequenceId>. Path: the current sequence id.
+ */
+router.get('/sequence/:currentId/diff', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const currentId = Number(req.params.currentId);
+  const priorId = Number(req.query.priorId);
+  if (!Number.isInteger(currentId) || currentId <= 0 || !Number.isInteger(priorId) || priorId <= 0) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'A valid current sequence id and ?priorId are required.' } });
+  }
+  try {
+    const [prior, current] = await Promise.all([sequenceForDiff(priorId, ctx), sequenceForDiff(currentId, ctx)]);
+    res.json(diffSequences(prior, current));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** Render the sequence diff to a PDF review sheet. */
+router.get('/sequence/:currentId/diff/pdf', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const currentId = Number(req.params.currentId);
+  const priorId = Number(req.query.priorId);
+  if (!Number.isInteger(currentId) || currentId <= 0 || !Number.isInteger(priorId) || priorId <= 0) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'A valid current sequence id and ?priorId are required.' } });
+  }
+  try {
+    const [prior, current] = await Promise.all([sequenceForDiff(priorId, ctx), sequenceForDiff(currentId, ctx)]);
+    sendPdf(res, 'ind-sequence-diff.pdf', await renderSequenceDiffPdf(diffSequences(prior, current)));
   } catch (err) {
     fail(res, err);
   }
