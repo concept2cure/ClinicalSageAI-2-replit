@@ -34,6 +34,12 @@ import {
   addBudgetLineTx,
   recordExpenditureTx,
   getBudgetVsActual,
+  setCostShareCommitmentTx,
+  recordCostShareContributionTx,
+  getCostShareStatus,
+  requestNceTx,
+  approveNceTx,
+  listNce,
   listAwards,
   listMilestones,
   listProposals,
@@ -41,7 +47,7 @@ import {
   getAwardPeriod,
 } from '../services/grants/grants-service';
 import { summarizeDeadlines, reportingObligations, awardPeriodState, evaluateCloseout } from '../services/grants/grants-logic';
-import { recordGrantProposalCreated, recordGrantAwardRecorded, recordGrantInvoice, recordGrantMilestoneStatus, recordGrantCloseoutOpened, recordGrantCloseoutFinalized, recordGrantSubaward, recordGrantSubawardExecuted, recordGrantBudgetLine, recordGrantExpenditure } from '../services/grants-metrics';
+import { recordGrantProposalCreated, recordGrantAwardRecorded, recordGrantInvoice, recordGrantMilestoneStatus, recordGrantCloseoutOpened, recordGrantCloseoutFinalized, recordGrantSubaward, recordGrantSubawardExecuted, recordGrantBudgetLine, recordGrantExpenditure, recordGrantCostShareContribution, recordGrantNceRequested, recordGrantNceApproved } from '../services/grants-metrics';
 
 const router = Router();
 
@@ -434,6 +440,76 @@ router.get('/awards/:id/budget', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   try { res.json(await getBudgetVsActual(orgId, id)); } catch (err) { fail(res, err); }
+});
+
+// ─── Cost share (2 CFR 200.306) ──────────────────────────────────────────────
+
+const costShareCommitSchema = z.object({ committed: z.number().nonnegative(), reason });
+router.patch('/awards/:id/cost-share', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = costShareCommitSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governed(req, res, 'update', parsed.data.reason, async (client, orgId) => {
+    await setCostShareCommitmentTx(client, orgId, id, parsed.data.committed);
+    return { target: `grant-award:${id}`, payload: { costShareCommitted: parsed.data.committed }, body: { awardId: id } };
+  });
+});
+
+const costShareContribSchema = z.object({ source: z.enum(['institutional', 'third_party', 'in_kind', 'other']), amount: z.number().nonnegative(), contributionDate: z.string().optional(), description: z.string().max(1000).optional(), reason });
+router.post('/awards/:id/cost-share/contributions', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = costShareContribSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governed(req, res, 'create', parsed.data.reason, async (client, orgId, userId) => {
+    const { id: cid } = await recordCostShareContributionTx(client, orgId, userId, id, parsed.data);
+    recordGrantCostShareContribution();
+    return { target: `grant-award:${id}`, payload: { contributionId: cid, source: parsed.data.source }, body: { awardId: id, contributionId: cid } };
+  });
+});
+
+router.get('/awards/:id/cost-share', async (req, res) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  try { res.json(await getCostShareStatus(orgId, id)); } catch (err) { fail(res, err); }
+});
+
+// ─── No-cost extensions (2 CFR 200.308) ──────────────────────────────────────
+
+const nceRequestSchema = z.object({ newEndDate: z.string(), reason });
+router.post('/awards/:id/nce', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = nceRequestSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governed(req, res, 'create', parsed.data.reason, async (client, orgId, userId) => {
+    const { id: nid, requiresSponsorApproval, months } = await requestNceTx(client, orgId, userId, id, parsed.data);
+    recordGrantNceRequested();
+    return { target: `grant-award:${id}`, payload: { nceId: nid, months, requiresSponsorApproval }, body: { awardId: id, nceId: nid, months, requiresSponsorApproval } };
+  });
+});
+
+const nceApproveSchema = z.object({ authority: z.enum(['grantee', 'sponsor']), reason });
+router.post('/nce/:id/approve', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = nceApproveSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governed(req, res, 'sign', parsed.data.reason, async (client, orgId, userId) => {
+    const { newEndDate } = await approveNceTx(client, orgId, userId, id, parsed.data.authority);
+    recordGrantNceApproved();
+    return { target: `grant-nce:${id}`, payload: { status: 'approved', newEndDate }, body: { id, status: 'approved', newEndDate } };
+  });
+});
+
+router.get('/nce', async (req, res) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const awardId = req.query.awardId ? Number(req.query.awardId) : undefined;
+  try { res.json(await listNce(orgId, Number.isFinite(awardId) ? awardId : undefined)); } catch (err) { fail(res, err); }
 });
 
 export default router;

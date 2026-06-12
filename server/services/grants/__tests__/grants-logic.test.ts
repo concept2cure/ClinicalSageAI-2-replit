@@ -15,6 +15,9 @@ import {
   budgetVsActual,
   computeIndirectCost,
   DE_MINIMIS_INDIRECT_RATE,
+  costShareStatus,
+  evaluateNce,
+  GRANTEE_NCE_MAX_MONTHS,
   type DeadlineItem,
   type CloseoutRecordState,
   type BudgetLineView,
@@ -175,5 +178,47 @@ describe('budgetVsActual', () => {
     const s = budgetVsActual(lines, [], 90000); // lines total 100k > 90k award
     expect(s.overAllocated).toBe(true);
     expect(s.riskLevel).toBe('high');
+  });
+});
+
+describe('costShareStatus', () => {
+  it('reports met when contributions reach the commitment', () => {
+    const s = costShareStatus(50000, [{ amount: 30000 }, { amount: 20000 }]);
+    expect(s.contributed).toBe(50000);
+    expect(s.met).toBe(true);
+    expect(s.metPct).toBe(100);
+    expect(s.shortfall).toBe(0);
+  });
+  it('reports a shortfall when under-contributed (2 CFR 200.306)', () => {
+    const s = costShareStatus(50000, [{ amount: 20000 }]);
+    expect(s.met).toBe(false);
+    expect(s.shortfall).toBe(30000);
+    expect(s.metPct).toBe(40);
+  });
+  it('treats no commitment as met', () => {
+    expect(costShareStatus(null, []).met).toBe(true);
+  });
+});
+
+describe('evaluateNce', () => {
+  it('a first extension of <=12 months is within grantee authority (2 CFR 200.308(d)(2))', () => {
+    const r = evaluateNce('2027-01-01', '2027-07-01', 0);
+    expect(r.months).toBe(6);
+    expect(r.withinGranteeAuthority).toBe(true);
+    expect(r.requiresSponsorApproval).toBe(false);
+  });
+  it('an extension over 12 months requires sponsor approval', () => {
+    const r = evaluateNce('2027-01-01', '2028-08-01', 0);
+    expect(r.months).toBeGreaterThan(GRANTEE_NCE_MAX_MONTHS);
+    expect(r.requiresSponsorApproval).toBe(true);
+  });
+  it('a second extension requires sponsor approval even if short', () => {
+    const r = evaluateNce('2027-01-01', '2027-04-01', 1);
+    expect(r.requiresSponsorApproval).toBe(true);
+  });
+  it('rejects a non-future end date', () => {
+    const r = evaluateNce('2027-01-01', '2026-06-01', 0);
+    expect(r.months).toBeLessThanOrEqual(0);
+    expect(r.requiresSponsorApproval).toBe(true);
   });
 });

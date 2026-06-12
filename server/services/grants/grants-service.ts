@@ -19,8 +19,8 @@
 
 import { pool } from '../../db';
 import { linkProvenanceTx } from '../provenance/provenance-service';
-import { closeoutDueDate, evaluateCloseout, evaluateSubawardEligibility, budgetVsActual, type BudgetCategory, type BudgetSummary } from './grants-logic';
-import type { FundingAgency, FundingMechanism, MilestoneType, SubawardInstitutionType, SubawardRiskLevel } from '../../../shared/schema/grants';
+import { closeoutDueDate, evaluateCloseout, evaluateSubawardEligibility, budgetVsActual, costShareStatus, evaluateNce, type BudgetCategory, type BudgetSummary, type CostShareStatus, type NceAuthority } from './grants-logic';
+import type { FundingAgency, FundingMechanism, MilestoneType, SubawardInstitutionType, SubawardRiskLevel, CostShareSource } from '../../../shared/schema/grants';
 
 interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
@@ -354,6 +354,72 @@ export async function getBudgetVsActual(orgId: number, awardId: number): Promise
     exp.rows.map((r) => ({ category: r.category, amount: Number(r.amount) })),
     total,
   );
+}
+
+// ─── Cost share (2 CFR 200.306) ──────────────────────────────────────────────
+
+export async function setCostShareCommitmentTx(client: Queryable, orgId: number, awardId: number, committed: number): Promise<void> {
+  const r = await client.query(`UPDATE grant_awards SET cost_share_committed = $3, updated_at = now() WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [awardId, orgId, committed]);
+  if ((r as any).rowCount === 0) throw new GrantsError('NOT_FOUND', 'Award not found for this organization.');
+}
+
+export async function recordCostShareContributionTx(client: Queryable, orgId: number, userId: number, awardId: number, input: { source: CostShareSource; amount: number; contributionDate?: string | null; description?: string | null }): Promise<{ id: number }> {
+  await assertAward(client, orgId, awardId);
+  const { rows } = await client.query(
+    `INSERT INTO grant_cost_share_contributions (organization_id, award_id, source, amount, contribution_date, description, created_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
+    [orgId, awardId, input.source, input.amount, input.contributionDate ?? null, input.description ?? null, userId],
+  );
+  return { id: Number(rows[0].id) };
+}
+
+export async function getCostShareStatus(orgId: number, awardId: number): Promise<CostShareStatus> {
+  const a = await pool.query(`SELECT cost_share_committed FROM grant_awards WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [awardId, orgId]);
+  if (a.rows.length === 0) throw new GrantsError('NOT_FOUND', 'Award not found for this organization.');
+  const contribs = await pool.query(`SELECT amount FROM grant_cost_share_contributions WHERE award_id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [awardId, orgId]);
+  return costShareStatus(a.rows[0].cost_share_committed == null ? null : Number(a.rows[0].cost_share_committed), contribs.rows.map((r) => ({ amount: Number(r.amount) })));
+}
+
+// ─── No-cost extensions (2 CFR 200.308) ──────────────────────────────────────
+
+/** Request a no-cost extension; evaluates grantee authority vs sponsor-approval requirement. */
+export async function requestNceTx(client: Queryable, orgId: number, userId: number, awardId: number, input: { newEndDate: string; reason?: string | null }): Promise<{ id: number; requiresSponsorApproval: boolean; months: number }> {
+  const a = await client.query(`SELECT period_end::text AS period_end FROM grant_awards WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [awardId, orgId]);
+  if (a.rows.length === 0) throw new GrantsError('NOT_FOUND', 'Award not found for this organization.');
+  const originalEnd = a.rows[0].period_end;
+  if (!originalEnd) throw new GrantsError('BAD_INPUT', 'Award has no period end date to extend.');
+  const prior = await client.query(`SELECT count(*)::int n FROM grant_nce_records WHERE award_id = $1 AND organization_id = $2 AND deleted_at IS NULL AND status = 'approved'`, [awardId, orgId]);
+  const evalNce = evaluateNce(originalEnd, input.newEndDate, Number(prior.rows[0].n));
+  if (evalNce.months <= 0) throw new GrantsError('BAD_INPUT', 'New end date must be after the current period end.');
+  const { rows } = await client.query(
+    `INSERT INTO grant_nce_records (organization_id, award_id, original_end_date, new_end_date, months, requires_sponsor_approval, reason, status, created_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,'requested',$8) RETURNING id`,
+    [orgId, awardId, originalEnd, input.newEndDate, evalNce.months, evalNce.requiresSponsorApproval, input.reason ?? evalNce.reason, userId],
+  );
+  return { id: Number(rows[0].id), requiresSponsorApproval: evalNce.requiresSponsorApproval, months: evalNce.months };
+}
+
+/** Approve an NCE. Gate: grantee authority cannot approve an extension that requires sponsor approval. Moves period_end. */
+export async function approveNceTx(client: Queryable, orgId: number, userId: number, nceId: number, authority: NceAuthority): Promise<{ newEndDate: string }> {
+  const n = await client.query(`SELECT award_id, new_end_date::text AS new_end_date, requires_sponsor_approval, status FROM grant_nce_records WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [nceId, orgId]);
+  if (n.rows.length === 0) throw new GrantsError('NOT_FOUND', 'NCE record not found for this organization.');
+  const rec = n.rows[0];
+  if (rec.status !== 'requested') throw new GrantsError('INVALID_STATE', `NCE is already ${rec.status}.`);
+  if (rec.requires_sponsor_approval && authority !== 'sponsor') {
+    throw new GrantsError('INVALID_STATE', 'This extension requires sponsor prior approval (2 CFR 200.308) — grantee cannot self-approve.');
+  }
+  await client.query(`UPDATE grant_nce_records SET status = 'approved', authority = $3, approved_by = $4, approved_at = now(), updated_at = now() WHERE id = $1 AND organization_id = $2`, [nceId, orgId, authority, userId]);
+  // Approving the extension moves the award's period of performance (and recomputes closeout downstream).
+  await client.query(`UPDATE grant_awards SET period_end = $3, status = 'no_cost_extension', updated_at = now() WHERE id = $1 AND organization_id = $2`, [rec.award_id, orgId, rec.new_end_date]);
+  return { newEndDate: rec.new_end_date };
+}
+
+export async function listNce(orgId: number, awardId?: number): Promise<any[]> {
+  const params: unknown[] = [orgId];
+  let sql = `SELECT id, award_id, original_end_date, new_end_date, months, authority, requires_sponsor_approval, status, approved_at FROM grant_nce_records WHERE organization_id = $1 AND deleted_at IS NULL`;
+  if (awardId != null) { params.push(awardId); sql += ` AND award_id = $2`; }
+  sql += ` ORDER BY created_at DESC`;
+  return (await pool.query(sql, params)).rows;
 }
 
 // ─── Reads ───────────────────────────────────────────────────────────────────

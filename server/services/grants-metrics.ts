@@ -16,9 +16,12 @@ interface GrantsMetricsState {
   subawardsExecuted: number;
   budgetLinesByCategory: Record<string, number>;
   expendituresByCategory: Record<string, number>;
+  costShareContributions: number;
+  ncesRequested: number;
+  ncesApproved: number;
 }
 
-const state: GrantsMetricsState = { proposalsCreated: 0, awardsRecorded: {}, invoicesByStatus: {}, milestoneStatus: {}, closeoutsOpened: 0, closeoutsFinalized: 0, subawardsByType: {}, subawardsExecuted: 0, budgetLinesByCategory: {}, expendituresByCategory: {} };
+const state: GrantsMetricsState = { proposalsCreated: 0, awardsRecorded: {}, invoicesByStatus: {}, milestoneStatus: {}, closeoutsOpened: 0, closeoutsFinalized: 0, subawardsByType: {}, subawardsExecuted: 0, budgetLinesByCategory: {}, expendituresByCategory: {}, costShareContributions: 0, ncesRequested: 0, ncesApproved: 0 };
 
 export function recordGrantProposalCreated(): void {
   state.proposalsCreated += 1;
@@ -44,6 +47,9 @@ export function recordGrantBudgetLine(category: string): void {
 export function recordGrantExpenditure(category: string): void {
   state.expendituresByCategory[category] = (state.expendituresByCategory[category] ?? 0) + 1;
 }
+export function recordGrantCostShareContribution(): void { state.costShareContributions += 1; }
+export function recordGrantNceRequested(): void { state.ncesRequested += 1; }
+export function recordGrantNceApproved(): void { state.ncesApproved += 1; }
 
 export function renderGrantsMetrics(): string[] {
   const lines: string[] = [];
@@ -77,6 +83,15 @@ export function renderGrantsMetrics(): string[] {
   lines.push('# HELP grants_expenditures_total Expenditures recorded, by cost category');
   lines.push('# TYPE grants_expenditures_total counter');
   for (const [c, n] of Object.entries(state.expendituresByCategory)) lines.push(`grants_expenditures_total{category="${c}"} ${n}`);
+  lines.push('# HELP grants_cost_share_contributions_total Cost-share contributions recorded');
+  lines.push('# TYPE grants_cost_share_contributions_total counter');
+  lines.push(`grants_cost_share_contributions_total ${state.costShareContributions}`);
+  lines.push('# HELP grants_nce_requested_total No-cost extensions requested');
+  lines.push('# TYPE grants_nce_requested_total counter');
+  lines.push(`grants_nce_requested_total ${state.ncesRequested}`);
+  lines.push('# HELP grants_nce_approved_total No-cost extensions approved');
+  lines.push('# TYPE grants_nce_approved_total counter');
+  lines.push(`grants_nce_approved_total ${state.ncesApproved}`);
   return lines;
 }
 
@@ -94,4 +109,7 @@ export function resetGrantsMetrics(): void {
   state.subawardsExecuted = 0;
   state.budgetLinesByCategory = {};
   state.expendituresByCategory = {};
+  state.costShareContributions = 0;
+  state.ncesRequested = 0;
+  state.ncesApproved = 0;
 }

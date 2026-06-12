@@ -237,6 +237,33 @@ async function main() {
   const grRep3 = await computeDomainReport('grants.portfolio_register', ORG);
   ok(grRep3 != null && (grRep3!.summary.totalBudgeted as number) >= 100000 && (grRep3!.summary.totalExpended as number) >= 42000, `grants.portfolio_register reports budget rollup (budgeted=${grRep3?.summary.totalBudgeted}, expended=${grRep3?.summary.totalExpended})`);
 
+  console.log('\n[Grants] cost share (2 CFR 200.306)');
+  const csAwardId = await tx((c) => grants.createAwardTx(c, ORG, USER, { awardNumber: `CSAWD-${Date.now()}`, fundingAgency: 'nsf' })).then((r: any) => r.id);
+  await tx((c) => grants.setCostShareCommitmentTx(c, ORG, csAwardId, 50000));
+  await tx((c) => grants.recordCostShareContributionTx(c, ORG, USER, csAwardId, { source: 'institutional', amount: 20000 }));
+  const cs1 = await grants.getCostShareStatus(ORG, csAwardId);
+  ok(cs1.committed === 50000 && cs1.contributed === 20000 && cs1.met === false && cs1.shortfall === 30000, `cost-share shortfall tracked (contributed ${cs1.contributed}/${cs1.committed}, shortfall ${cs1.shortfall})`);
+  await tx((c) => grants.recordCostShareContributionTx(c, ORG, USER, csAwardId, { source: 'third_party', amount: 30000 }));
+  const cs2 = await grants.getCostShareStatus(ORG, csAwardId);
+  ok(cs2.met === true && cs2.metPct === 100, 'cost share met once contributions reach the commitment');
+
+  console.log('\n[Grants] no-cost extension gate (2 CFR 200.308)');
+  const nceAwardId = await tx((c) => grants.createAwardTx(c, ORG, USER, { awardNumber: `NCEAWD-${Date.now()}`, fundingAgency: 'nih', periodStart: '2026-01-01', periodEnd: '2027-01-01' })).then((r: any) => r.id);
+  const nce1 = await tx((c) => grants.requestNceTx(c, ORG, USER, nceAwardId, { newEndDate: '2027-07-01' }));
+  ok(nce1.months === 6 && nce1.requiresSponsorApproval === false, 'first ≤12-month extension is within grantee authority');
+  await tx((c) => grants.approveNceTx(c, ORG, USER, nce1.id, 'grantee'));
+  const movedEnd = await pool.query(`SELECT period_end::text AS pe, status FROM grant_awards WHERE id=$1`, [nceAwardId]);
+  ok(movedEnd.rows[0].pe === '2027-07-01' && movedEnd.rows[0].status === 'no_cost_extension', 'approving NCE moved award period_end + set status no_cost_extension');
+  const nce2 = await tx((c) => grants.requestNceTx(c, ORG, USER, nceAwardId, { newEndDate: '2028-01-01' }));
+  ok(nce2.requiresSponsorApproval === true, 'a second extension requires sponsor approval');
+  let granteeBlocked = false;
+  try { await tx((c) => grants.approveNceTx(c, ORG, USER, nce2.id, 'grantee')); } catch (e: any) { granteeBlocked = e?.code === 'INVALID_STATE'; }
+  ok(granteeBlocked, 'grantee self-approval BLOCKED when sponsor approval is required (gate is the floor)');
+  const sponsorApproved = await tx((c) => grants.approveNceTx(c, ORG, USER, nce2.id, 'sponsor'));
+  ok(sponsorApproved.newEndDate === '2028-01-01', 'sponsor approval succeeds and moves the period end');
+  const grRep4 = await computeDomainReport('grants.portfolio_register', ORG);
+  ok(grRep4 != null && (grRep4!.summary.costShareCommitted as number) >= 50000 && grRep4!.summary.ncesByStatus != null, `grants.portfolio_register reports cost-share + NCE rollups (committed=${grRep4?.summary.costShareCommitted})`);
+
   console.log('\n[Tasking] deadline event → central unified_tasks');
   const taskId = await emitDeadlineTask({ organizationId: ORG, title: 'Verify milestone due', sourceEntityType: 'grant_milestone', sourceEntityId: 999, dueDate: '2026-12-01', taskType: 'milestone' });
   ok(typeof taskId === 'string' && taskId.length > 0, 'emitDeadlineTask created a unified_tasks row (best-effort bridge)');

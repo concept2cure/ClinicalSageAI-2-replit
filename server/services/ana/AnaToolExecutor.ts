@@ -6451,6 +6451,113 @@ registerToolHandler('review_grant_budget', async (input, ctx) => {
   }
 });
 
+registerToolHandler('record_cost_share_contribution', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'record_cost_share_contribution requires tenant + user context.' });
+  const awardId = typeof input.award_id === 'number' ? input.award_id : NaN;
+  const source = typeof input.source === 'string' ? input.source : '';
+  const amount = typeof input.amount === 'number' ? input.amount : NaN;
+  if (!Number.isInteger(awardId) || !['institutional', 'third_party', 'in_kind', 'other'].includes(source) || !Number.isFinite(amount)) {
+    return JSON.stringify({ error: 'award_id, a valid source, and amount are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { recordCostShareContributionTx } = await import('../grants/grants-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await recordCostShareContributionTx(client, ctx.organizationId, ctx.userId, awardId, {
+      source: source as any, amount,
+      contributionDate: typeof input.contribution_date === 'string' ? input.contribution_date : null,
+      description: typeof input.description === 'string' ? input.description : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `grant-award:${awardId}`, reason: fcoiReason(input, 'Cost-share contribution recorded via AnA'),
+      payload: { contributionId: id, source, amount }, domain: 'grants', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, contributionId: id, message: `Recorded ${source} cost-share contribution (${amount}) to award ${awardId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `record_cost_share_contribution failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_cost_share', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_cost_share requires tenant context.' });
+  const awardId = typeof input.award_id === 'number' ? input.award_id : NaN;
+  if (!Number.isInteger(awardId)) return JSON.stringify({ error: 'award_id is required.' });
+  const { getCostShareStatus } = await import('../grants/grants-service.js');
+  try {
+    const s = await getCostShareStatus(ctx.organizationId, awardId);
+    return JSON.stringify({
+      ok: true, ...s,
+      message: s.committed === 0
+        ? `No cost share committed for award ${awardId}.`
+        : `Cost share: ${s.contributed} of ${s.committed} met (${s.metPct}%)${s.met ? ' — fully met' : `, shortfall ${s.shortfall} (2 CFR 200.306)`}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_cost_share failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('request_no_cost_extension', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'request_no_cost_extension requires tenant + user context.' });
+  const awardId = typeof input.award_id === 'number' ? input.award_id : NaN;
+  const newEndDate = typeof input.new_end_date === 'string' ? input.new_end_date : '';
+  if (!Number.isInteger(awardId) || !/^\d{4}-\d{2}-\d{2}/.test(newEndDate)) return JSON.stringify({ error: 'award_id and a new_end_date (YYYY-MM-DD) are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { requestNceTx } = await import('../grants/grants-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id, requiresSponsorApproval, months } = await requestNceTx(client, ctx.organizationId, ctx.userId, awardId, { newEndDate, reason: typeof input.reason === 'string' ? input.reason : null });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `grant-award:${awardId}`, reason: fcoiReason(input, 'No-cost extension requested via AnA'),
+      payload: { nceId: id, months, requiresSponsorApproval }, domain: 'grants', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, nceId: id, months, requiresSponsorApproval, message: `Requested a ${months}-month extension on award ${awardId}${requiresSponsorApproval ? ' — requires sponsor prior approval (2 CFR 200.308)' : ' — within grantee authority'}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `request_no_cost_extension failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('approve_no_cost_extension', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'approve_no_cost_extension requires tenant + user context.' });
+  const nceId = typeof input.nce_id === 'number' ? input.nce_id : NaN;
+  const authority = typeof input.authority === 'string' ? input.authority : '';
+  if (!Number.isInteger(nceId) || !['grantee', 'sponsor'].includes(authority)) return JSON.stringify({ error: 'nce_id and authority (grantee|sponsor) are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { approveNceTx } = await import('../grants/grants-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { newEndDate } = await approveNceTx(client, ctx.organizationId, ctx.userId, nceId, authority as any);
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'sign',
+      target: `grant-nce:${nceId}`, reason: fcoiReason(input, 'No-cost extension approved via AnA'),
+      payload: { status: 'approved', authority, newEndDate }, domain: 'grants', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, nceId, newEndDate, message: `Approved NCE ${nceId} (${authority}); award period now ends ${newEndDate}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    // The gate rejects grantee self-approval of an extension that needs the sponsor — surface it.
+    return JSON.stringify({ error: `approve_no_cost_extension failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // RIM-lite (C2C-12). Conversational building shares the governed/audited path
 // (recordGovernedAction, surface 'ana').

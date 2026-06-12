@@ -302,3 +302,78 @@ export function budgetVsActual(lines: BudgetLineView[], expenditures: Expenditur
 
   return { categories, totalBudgeted, totalActual, totalRemaining: round2(totalBudgeted - totalActual), overAllocated, riskLevel, findings };
 }
+
+// ─── Cost share (2 CFR 200.306) ──────────────────────────────────────────────
+
+export interface CostShareContributionView { amount: number }
+
+export interface CostShareStatus {
+  committed: number;
+  contributed: number;
+  remaining: number;
+  metPct: number; // contributed / committed * 100 (0 when nothing committed)
+  met: boolean;
+  shortfall: number; // committed - contributed, floored at 0
+}
+
+/**
+ * Cost-share / matching posture for an award: committed vs actually contributed,
+ * the percentage met, and any shortfall. A recipient must meet its committed cost
+ * share (2 CFR 200.306); a shortfall is a closeout risk. Pure.
+ */
+export function costShareStatus(committed: number | null, contributions: CostShareContributionView[]): CostShareStatus {
+  const c = committed && committed > 0 ? round2(committed) : 0;
+  const contributed = round2(contributions.reduce((s, x) => s + x.amount, 0));
+  const remaining = round2(Math.max(0, c - contributed));
+  const metPct = c > 0 ? round2((contributed / c) * 100) : 0;
+  return { committed: c, contributed, remaining, metPct, met: c === 0 || contributed >= c, shortfall: remaining };
+}
+
+// ─── No-cost extension (2 CFR 200.308) ───────────────────────────────────────
+
+export type NceAuthority = 'grantee' | 'sponsor';
+
+/** Whole months between two ISO dates (floor). Pure. */
+function monthsBetween(fromIso: string, toIso: string): number {
+  const a = /^(\d{4})-(\d{2})-(\d{2})/.exec(fromIso);
+  const b = /^(\d{4})-(\d{2})-(\d{2})/.exec(toIso);
+  if (!a || !b) return 0;
+  let months = (Number(b[1]) - Number(a[1])) * 12 + (Number(b[2]) - Number(a[2]));
+  if (Number(b[3]) < Number(a[3])) months -= 1;
+  return months;
+}
+
+/** Maximum months a first, grantee-authorized no-cost extension may run (2 CFR 200.308(d)(2)). */
+export const GRANTEE_NCE_MAX_MONTHS = 12;
+
+export interface NceEvaluation {
+  months: number;
+  withinGranteeAuthority: boolean;
+  requiresSponsorApproval: boolean;
+  reason: string;
+}
+
+/**
+ * Evaluate a proposed no-cost extension. Under 2 CFR 200.308(d)(2) a recipient may
+ * make a one-time extension of up to 12 months without sponsor prior approval;
+ * a second extension, any extension over 12 months, or a shortened/invalid end
+ * date requires the sponsor (200.308(d)(3)/(e)). Pure; the gate for grantee approval.
+ */
+export function evaluateNce(originalEnd: string, newEnd: string, priorNceCount: number): NceEvaluation {
+  const months = monthsBetween(originalEnd, newEnd);
+  if (months <= 0) {
+    return { months, withinGranteeAuthority: false, requiresSponsorApproval: true, reason: 'New end date is not after the current end date.' };
+  }
+  const firstExtension = priorNceCount === 0;
+  const withinGranteeAuthority = firstExtension && months <= GRANTEE_NCE_MAX_MONTHS;
+  return {
+    months,
+    withinGranteeAuthority,
+    requiresSponsorApproval: !withinGranteeAuthority,
+    reason: withinGranteeAuthority
+      ? `First extension of ${months} month(s) — within grantee authority (2 CFR 200.308(d)(2)).`
+      : !firstExtension
+        ? 'A prior no-cost extension exists — sponsor prior approval required (2 CFR 200.308(d)(3)).'
+        : `Extension of ${months} months exceeds the 12-month grantee limit — sponsor prior approval required.`,
+  };
+}

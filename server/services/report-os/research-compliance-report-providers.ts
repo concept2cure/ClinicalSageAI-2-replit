@@ -88,7 +88,11 @@ export async function computeDomainReport(reportTypeId: string, orgId: number): 
       const totalExpended = Number((await pool.query(`SELECT COALESCE(sum(amount),0)::float8 s FROM grant_expenditures WHERE organization_id=$1 AND deleted_at IS NULL`, [orgId])).rows[0].s);
       // Awards whose total expenditures exceed their authorized amount.
       const overspentAwards = (await pool.query(`SELECT count(*)::int n FROM (SELECT a.id FROM grant_awards a JOIN grant_expenditures e ON e.award_id=a.id AND e.deleted_at IS NULL WHERE a.organization_id=$1 AND a.deleted_at IS NULL AND a.total_amount IS NOT NULL GROUP BY a.id, a.total_amount HAVING sum(e.amount) > a.total_amount) x`, [orgId])).rows[0].n;
-      return result('grants_portfolio', aw.total + pr.total, { awards: aw.total, awardsByStatus: aw.byCol, proposals: pr.total, proposalsByStatus: pr.byCol, invoicesByStatus: inv.byCol, closeoutsByStatus: co.byCol, overdueCloseouts, subawards: sub.total, subawardsByScreen: sub.byCol, unscreenedExecuted, totalBudgeted, totalExpended, overspentAwards });
+      // Cost share (2 CFR 200.306) + no-cost extensions (2 CFR 200.308).
+      const costShareCommitted = Number((await pool.query(`SELECT COALESCE(sum(cost_share_committed),0)::float8 s FROM grant_awards WHERE organization_id=$1 AND deleted_at IS NULL`, [orgId])).rows[0].s);
+      const costShareContributed = Number((await pool.query(`SELECT COALESCE(sum(amount),0)::float8 s FROM grant_cost_share_contributions WHERE organization_id=$1 AND deleted_at IS NULL`, [orgId])).rows[0].s);
+      const nce = await countBy('grant_nce_records', 'status', orgId);
+      return result('grants_portfolio', aw.total + pr.total, { awards: aw.total, awardsByStatus: aw.byCol, proposals: pr.total, proposalsByStatus: pr.byCol, invoicesByStatus: inv.byCol, closeoutsByStatus: co.byCol, overdueCloseouts, subawards: sub.total, subawardsByScreen: sub.byCol, unscreenedExecuted, totalBudgeted, totalExpended, overspentAwards, costShareCommitted, costShareContributed, costShareShortfall: Math.max(0, costShareCommitted - costShareContributed), ncesByStatus: nce.byCol });
     }
     case 'rim.registration_grid': {
       const r = await countBy('rim_registrations', 'market_status', orgId);

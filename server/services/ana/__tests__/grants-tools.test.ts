@@ -11,6 +11,7 @@ const TOOLS = [
   'set_grant_milestone_status', 'open_grant_closeout', 'update_grant_closeout', 'finalize_grant_closeout',
   'record_subaward', 'screen_subaward', 'execute_subaward',
   'add_grant_budget_line', 'record_grant_expenditure', 'review_grant_budget',
+  'record_cost_share_contribution', 'review_cost_share', 'request_no_cost_extension', 'approve_no_cost_extension',
 ];
 
 describe('eGrants AnA tools — registration', () => {
@@ -68,5 +69,17 @@ describe('eGrants AnA tools — context + input guards', () => {
   it('review_grant_budget requires tenant context', async () => {
     const out = JSON.parse(await getToolHandler('review_grant_budget')!({ award_id: 1 }, {} as any));
     expect(out.error).toMatch(/tenant context/);
+  });
+  it('record_cost_share_contribution rejects an invalid source', async () => {
+    const out = JSON.parse(await getToolHandler('record_cost_share_contribution')!({ award_id: 1, source: 'bitcoin', amount: 5 }, { organizationId: 1, userId: 1 } as any));
+    expect(out.error).toMatch(/valid source/);
+  });
+  it('request_no_cost_extension requires a new_end_date', async () => {
+    const out = JSON.parse(await getToolHandler('request_no_cost_extension')!({ award_id: 1 }, { organizationId: 1, userId: 1 } as any));
+    expect(out.error).toMatch(/new_end_date/);
+  });
+  it('approve_no_cost_extension rejects an invalid authority', async () => {
+    const out = JSON.parse(await getToolHandler('approve_no_cost_extension')!({ nce_id: 1, authority: 'wizard' }, { organizationId: 1, userId: 1 } as any));
+    expect(out.error).toMatch(/authority \(grantee\|sponsor\)/);
   });
 });

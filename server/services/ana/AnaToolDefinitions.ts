@@ -3919,6 +3919,38 @@ export const REVIEW_GRANT_BUDGET: AnaTool = {
   input_schema: { type: 'object', properties: { award_id: { type: 'number' } }, required: ['award_id'] },
 };
 
+export const RECORD_COST_SHARE_CONTRIBUTION: AnaTool = {
+  name: 'record_cost_share_contribution',
+  description:
+    "Record an actual cost-share / matching contribution against an award's committed cost share (2 CFR 200.306), by source (institutional, third-party, in-kind, other). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { award_id: { type: 'number' }, source: { type: 'string', enum: ['institutional', 'third_party', 'in_kind', 'other'] }, amount: { type: 'number' }, contribution_date: { type: 'string' }, description: { type: 'string' }, reason: { type: 'string' } },
+    required: ['award_id', 'source', 'amount'],
+  },
+};
+
+export const REVIEW_COST_SHARE: AnaTool = {
+  name: 'review_cost_share',
+  description:
+    "Report cost-share status for an award (read-only): committed vs contributed, percent met, and any shortfall (2 CFR 200.306). Use to tell the user whether the match commitment is on track.",
+  input_schema: { type: 'object', properties: { award_id: { type: 'number' } }, required: ['award_id'] },
+};
+
+export const REQUEST_NO_COST_EXTENSION: AnaTool = {
+  name: 'request_no_cost_extension',
+  description:
+    "Request a no-cost extension of an award's period of performance (2 CFR 200.308). Returns whether it is within grantee authority (first extension, ≤12 months) or requires sponsor prior approval. Governed + audited.",
+  input_schema: { type: 'object', properties: { award_id: { type: 'number' }, new_end_date: { type: 'string', description: 'YYYY-MM-DD.' }, reason: { type: 'string' } }, required: ['award_id', 'new_end_date'] },
+};
+
+export const APPROVE_NO_COST_EXTENSION: AnaTool = {
+  name: 'approve_no_cost_extension',
+  description:
+    "Approve a requested no-cost extension. Gated: grantee authority cannot self-approve an extension that requires sponsor prior approval (a second extension, or one over 12 months). On approval the award's period end moves out. Governed + audited (signature).",
+  input_schema: { type: 'object', properties: { nce_id: { type: 'number' }, authority: { type: 'string', enum: ['grantee', 'sponsor'] }, reason: { type: 'string' } }, required: ['nce_id', 'authority'] },
+};
+
 export const CREATE_RIM_PRODUCT: AnaTool = {
   name: 'create_rim_product',
   description:
@@ -5700,6 +5732,10 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ADD_GRANT_BUDGET_LINE,
   RECORD_GRANT_EXPENDITURE,
   REVIEW_GRANT_BUDGET,
+  RECORD_COST_SHARE_CONTRIBUTION,
+  REVIEW_COST_SHARE,
+  REQUEST_NO_COST_EXTENSION,
+  APPROVE_NO_COST_EXTENSION,
   CREATE_RIM_PRODUCT,
   SET_REGISTRATION_STATUS,
   REVIEW_LABEL_CURRENCY,
