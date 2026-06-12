@@ -2224,6 +2224,31 @@ registerToolHandler('get_nonclinical_template', async (input: Record<string, unk
   }
 });
 
+// Fetch a blank Module 5 / clinical-study-report document template (form)
+registerToolHandler('get_csr_template', async (input: Record<string, unknown>) => {
+  try {
+    const { getClinicalTemplate, listClinicalTemplates } = await import('../templates/clinical-csr-templates.js');
+    const key = typeof input.template === 'string' ? input.template.trim() : '';
+    if (!key) {
+      return JSON.stringify({ status: 'list', templates: listClinicalTemplates() });
+    }
+    const tmpl = getClinicalTemplate(key);
+    if (!tmpl) {
+      return JSON.stringify({ status: 'not_found', message: `No Module 5 / CSR template for "${key}".`, available: listClinicalTemplates() });
+    }
+    return JSON.stringify({
+      status: 'template',
+      granule_id: tmpl.granule_id,
+      sectionCode: tmpl.sectionCode,
+      title: tmpl.title,
+      content: tmpl.content,
+      instruction: 'Fill the [PLACEHOLDER] tokens. If the program has ingested study data, prefer the draft_* composer tools, which fill content from data. The author promotes the result through the governed authoring flow.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `Fetching CSR template failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Load a program's ingested nonclinical studies (feature-gated DB read)
 registerToolHandler('load_nonclinical_program', async (input: Record<string, unknown>, ctx) => {
   try {
