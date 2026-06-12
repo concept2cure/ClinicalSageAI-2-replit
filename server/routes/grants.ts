@@ -196,6 +196,9 @@ router.post('/awards/:id/milestones', async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   await governed(req, res, 'update', parsed.data.reason, async (client, orgId, userId) => {
     const { id: mid } = await addMilestoneTx(client, orgId, userId, id, parsed.data);
+    // Best-effort: surface the milestone deadline as a central task.
+    const { emitDeadlineTask } = await import('../services/research-compliance/tasking-bridge');
+    await emitDeadlineTask({ organizationId: orgId, title: `Grant milestone: ${parsed.data.title}`, sourceEntityType: 'grant_milestone', sourceEntityId: mid, dueDate: parsed.data.dueDate, taskType: 'milestone', regulatoryImpact: parsed.data.milestoneType === 'regulatory' });
     return { target: `grant-award:${id}`, payload: { milestoneId: mid, milestoneType: parsed.data.milestoneType }, body: { awardId: id, milestoneId: mid } };
   });
 });

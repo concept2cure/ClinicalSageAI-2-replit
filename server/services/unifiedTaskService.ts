@@ -49,6 +49,12 @@ export const MODULE_CONFIG = {
     icon: 'Clipboard',
     category: 'clinical',
   },
+  ResearchCompliance: {
+    name: 'Research Compliance & Sponsored Programs',
+    color: '#7C3AED', // Violet
+    icon: 'ShieldCheck',
+    category: 'compliance',
+  },
 };
 
 export interface UnifiedTaskInput {

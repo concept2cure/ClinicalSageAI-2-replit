@@ -11,6 +11,8 @@ import * as iacuc from '../../server/services/iacuc/iacuc-service';
 import * as cs from '../../server/services/controlled-substances/cs-service';
 import * as roster from '../../server/services/research-compliance/roster-service';
 import { resolveComplianceChecklist, evaluateTrainingGate } from '../../server/services/research-compliance/compliance-checklist';
+import { computeDomainReport } from '../../server/services/report-os/research-compliance-report-providers';
+import { emitDeadlineTask } from '../../server/services/research-compliance/tasking-bridge';
 
 let pass = 0, fail = 0;
 function ok(cond: boolean, msg: string) { if (cond) { pass++; console.log('  ✓', msg); } else { fail++; console.log('  ✗ FAIL:', msg); } }
@@ -104,6 +106,24 @@ async function main() {
   const loaded = await roster.loadRosterForGate(ORG, [piId]);
   g = evaluateTrainingGate(loaded.personnel, checklist.requiredTraining, loaded.records, '2026-06-10');
   ok(g.cleared === true, 'gate CLEARS once the PI completes all required training (DB-backed)');
+
+  console.log('\n[Reports] domain providers compute real numbers from the DB');
+  const fcoiRep = await computeDomainReport('fcoi.disclosure_register', ORG);
+  ok(fcoiRep != null && (fcoiRep!.summary.disclosures as number) >= 1 && fcoiRep!.provider.status === 'ready', `fcoi.disclosure_register computes (disclosures=${fcoiRep?.summary.disclosures})`);
+  const csRep = await computeDomainReport('controlled_substances.inventory_ledger', ORG);
+  ok(csRep != null && (csRep!.summary.substances as number) >= 1, `controlled_substances.inventory_ledger computes (substances=${csRep?.summary.substances})`);
+  const haRep = await computeDomainReport('ha.commitment_register', ORG);
+  ok(haRep != null && (haRep!.summary.commitments as number) >= 1, `ha.commitment_register computes (commitments=${haRep?.summary.commitments})`);
+  const unknown = await computeDomainReport('not.a.domain.report', ORG);
+  ok(unknown === null, 'unknown report type → null (generic orchestrator unchanged)');
+
+  console.log('\n[Tasking] deadline event → central unified_tasks');
+  const taskId = await emitDeadlineTask({ organizationId: ORG, title: 'Verify milestone due', sourceEntityType: 'grant_milestone', sourceEntityId: 999, dueDate: '2026-12-01', taskType: 'milestone' });
+  ok(typeof taskId === 'string' && taskId.length > 0, 'emitDeadlineTask created a unified_tasks row (best-effort bridge)');
+  if (taskId) {
+    const row = await pool.query(`SELECT module_type, source_entity_type, title FROM unified_tasks WHERE task_id=$1`, [taskId]);
+    ok(row.rows[0]?.module_type === 'ResearchCompliance' && row.rows[0]?.source_entity_type === 'grant_milestone', 'task is module ResearchCompliance, source grant_milestone');
+  }
 
   console.log(`\n==== DB VERIFICATION: ${pass} passed, ${fail} failed ====`);
   await pool.end();

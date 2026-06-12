@@ -1038,6 +1038,20 @@ router.post('/runs', async (req: Request, res: Response) => {
       explicitSubmissionType: submissionType,
     });
 
+    // Research-compliance / sponsored-programs domain providers: compute the real
+    // report summary from the domain tables and merge it into the run.
+    try {
+      const { computeDomainReport } = await import('../services/report-os/research-compliance-report-providers.js');
+      const domain = await computeDomainReport(reportTypeId, orgId);
+      if (domain) {
+        Object.assign(computed.summary, { domain: domain.summary });
+        computed.providers.push(domain.provider);
+        if (domain.provider.status === 'missing' && domain.provider.blocker) computed.blockers.push(domain.provider.blocker);
+      }
+    } catch {
+      // Domain provider is best-effort; the generic report run stands on its own.
+    }
+
     const [run] = await db
       .insert(reportRuns)
       .values({
