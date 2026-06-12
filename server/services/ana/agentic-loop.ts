@@ -225,6 +225,7 @@ const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = 
   select_exposure_response_dose: () => 'Selecting the dose from exposure-response',
   load_nonclinical_program: () => 'Loading the nonclinical studies for the program',
   get_nonclinical_template: () => 'Fetching the nonclinical document template',
+  get_csr_template: () => 'Fetching the Module 5 clinical study report template',
   draft_nonclinical_overview_m2_4: () => 'Drafting the Module 2.4 nonclinical overview',
   draft_nonclinical_summaries_m2_6: () => 'Drafting the Module 2.6 nonclinical summaries',
   draft_quality_overall_summary_m2_3: () => 'Drafting the Module 2.3 Quality Overall Summary',

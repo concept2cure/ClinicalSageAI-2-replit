@@ -5562,6 +5562,19 @@ export const GET_NONCLINICAL_TEMPLATE: AnaTool = {
   },
 };
 
+export const GET_CSR_TEMPLATE: AnaTool = {
+  name: 'get_csr_template',
+  description:
+    "Fetch a blank structured template (form) for a Module 5 clinical document: the full ICH E3 Clinical Study Report body (5.3.5.1, 16 sections), the standalone CSR synopsis (ICH E3 §2), the Integrated Summary of Safety or Efficacy (ISS/ISE, 5.3.5.3), or a clinical study protocol (ICH E6). Pass a template key (a granule id like 'm5-3-5-1-csr' or 'm5-3-5-3-iss', or a section code like '5.3.5.1'); omit it to list the available templates. Use this to start a Module 5 clinical document from scratch — the scaffold's [PLACEHOLDER] tokens guide what to fill. When the program already has ingested study data, prefer the draft_* composer tools, which fill content from data.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      template: { type: 'string', description: "Template key — granule id (e.g. 'm5-3-5-1-csr', 'm5-3-5-3-ise') or CTD section code (e.g. '5.3.5.1'). Omit to list templates." },
+    },
+    required: [],
+  },
+};
+
 export const ASSESS_NONCLINICAL_SAFETY: AnaTool = {
   name: 'assess_nonclinical_safety',
   description:
@@ -5984,6 +5997,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SELECT_EXPOSURE_RESPONSE_DOSE,
   LOAD_NONCLINICAL_PROGRAM,
   GET_NONCLINICAL_TEMPLATE,
+  GET_CSR_TEMPLATE,
   DRAFT_NONCLINICAL_OVERVIEW_M2_4,
   DRAFT_QUALITY_OVERALL_SUMMARY_M2_3,
   DRAFT_NONCLINICAL_SUMMARIES_M2_6,
