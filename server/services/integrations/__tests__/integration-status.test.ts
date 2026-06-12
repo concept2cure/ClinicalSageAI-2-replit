@@ -77,7 +77,7 @@ describe('getIntegrationStatuses', () => {
   it('summarizeStatuses counts live / notConfigured / unknown', async () => {
     const statuses = await getIntegrationStatuses(null, makeDeps({ HUBSPOT_ACCESS_TOKEN: 'pat' }));
     const summary = summarizeStatuses(statuses);
-    // 4 public + hubspot live; gmail + calendar not configured; connectors unknown.
-    expect(summary).toEqual({ live: 5, notConfigured: 2, unknown: 1 });
+    // 5 public (CT.gov, PubMed, CMS, openFDA, ChEMBL) + hubspot live; gmail + calendar not configured; connectors unknown.
+    expect(summary).toEqual({ live: 6, notConfigured: 2, unknown: 1 });
   });
 });

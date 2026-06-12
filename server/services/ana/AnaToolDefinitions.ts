@@ -5515,9 +5515,73 @@ export const EXECUTE_PLATFORM_COMMAND: AnaTool = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Discovery & Cheminformatics Tools
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const SEARCH_CHEMBL_COMPOUND: AnaTool = {
+  name: 'search_chembl_compound',
+  description:
+    'Search the curated ChEMBL database (EMBL-EBI) for a drug or compound by name. Returns ' +
+    'citeable molecule records (ChEMBL ID + canonical URL) with the curated physicochemical / ' +
+    'drug-likeness descriptors (molecular weight, cLogP, PSA, H-bond donors/acceptors, rotatable ' +
+    'bonds, rule-of-five violations, QED), the molecule type, and the highest development phase ' +
+    '(0–4, where 4 = approved). Optionally include mechanism(s) of action and molecular target(s). ' +
+    'Use for discovery / competitive-landscape / developability questions about a known compound. ' +
+    'Cite results by ChEMBL ID and link to the provided url.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      query: {
+        type: 'string',
+        description: 'Drug or compound name to search (e.g. "pembrolizumab", "osimertinib").',
+      },
+      include_mechanism: {
+        type: 'boolean',
+        description:
+          'When true, also fetch mechanism(s) of action and target(s) for the top match. Default false.',
+      },
+      max_results: {
+        type: 'number',
+        description: 'Maximum molecules to return (default: 5, max: 20).',
+      },
+    },
+    required: ['query'],
+  },
+};
+
+export const SCREEN_COMPOUND_LIABILITIES: AnaTool = {
+  name: 'screen_compound_liabilities',
+  description:
+    'Deterministic structural-alert and developability screen for a small molecule. Provide a SMILES ' +
+    'string and/or a compound name (if only a name is given, the SMILES and descriptors are pulled ' +
+    'from ChEMBL). Returns: (1) SMILES validation + heavy-atom inventory; (2) an ICH M7(R2)-relevant ' +
+    'structural-alert screen — most importantly the N-nitrosamine motif, plus aromatic amine/nitro, ' +
+    'epoxide/aziridine, azide, Michael acceptor, etc., each with a confidence level; and (3) a ' +
+    'Lipinski/Veber oral-developability read over curated descriptors. This is a SCREEN, not an ICH ' +
+    'M7 classification — always surface the returned disclaimer and recommend a qualified (Q)SAR ' +
+    '(e.g. Derek/Sarah Nexus) plus expert review before any regulatory conclusion. High value for ' +
+    'nitrosamine risk and early developability triage.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      smiles: {
+        type: 'string',
+        description: 'SMILES structure of the molecule to screen.',
+      },
+      compound_name: {
+        type: 'string',
+        description: 'Compound/drug name to resolve via ChEMBL when no SMILES is supplied.',
+      },
+    },
+  },
+};
+
 export const ALL_ANA_TOOLS: AnaTool[] = [
   LIST_PLATFORM_COMMANDS,
   EXECUTE_PLATFORM_COMMAND,
+  SEARCH_CHEMBL_COMPOUND,
+  SCREEN_COMPOUND_LIABILITIES,
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
   SEARCH_MEDICARE_COVERAGE,

@@ -122,6 +122,19 @@ This is called out separately because it is the **biggest therapeutic-area white
 
 ---
 
+## 6a. Implementation status — what shipped in this PR
+
+P0 is built, wired, and tested; a credible P1 corpus seed is in. Concretely:
+
+- **ChEMBL activated (P0.1).** `server/services/integrations/chembl-client.ts` — a live, governed EMBL-EBI ChEMBL client (compound search with curated MW/cLogP/PSA/HBD/HBA/Ro5/QED descriptors, max-phase, mechanism/target lookup), following the existing integration-client pattern, with mocked unit tests.
+- **Deterministic cheminformatics + ICH M7 alerts (P0.2).** `server/services/chem/` — SMILES validation + heavy-atom inventory, a structural-alert screen (high-confidence **N-nitrosamine** and azide; heuristic aromatic amine/nitro, epoxide/aziridine, Michael acceptor, azo, alkyl halide — each labeled with confidence and ICH M7 relevance), and a Lipinski/Veber developability read. Pure, offline, dependency-free, with a standing "screen, not an M7 classification" disclaimer. Correctness is locked against real molecules (NDMA, NDEA, N-nitrosopyrrolidine, nitrobenzene, ethylene oxide, caffeine).
+- **Wired into AnA (P0).** Two new tools — `search_chembl_compound` and `screen_compound_liabilities` — registered in `AnaToolDefinitions.ts` / `AnaToolExecutor.ts`, surfaced in AnA's integration self-knowledge (`integration-status.ts`), with handler-level tests. `screen_compound_liabilities` works offline from a SMILES and auto-resolves structure+descriptors from ChEMBL when given only a compound name.
+- **CNS biomarker corpus seed (P1 start).** `server/services/ivd-knowledge/scientific/biomarker-validity-cns.ts` — seven citation-backed entries (amyloid Aβ42/40 + PET, p-tau181/217, NfL, GFAP, CSF oligoclonal bands, α-synuclein SAA, HTT CAG repeat) on the exact `KnowledgeEntry` schema as the oncology corpus, registered in the IVD knowledge index and passing the corpus integrity tests.
+
+**Verification:** project typecheck clean (0 errors); new and affected suites green (cheminformatics, ChEMBL client, AnA chem tools, integration-status, IVD knowledge corpus).
+
+**Still scoped, not yet built (honest):** full CNS corpus to oncology parity (disease-progression models, agency precedent), the single retrieval router + provenance enforcement, MMRM, the empirical trial-feasibility model, and the offline grounding/hallucination eval harness. These are multi-week curation/modeling efforts and are deliberately left as follow-ups rather than shipped as stubs.
+
 ## 7. The single most important move
 
 If only one thing ships: **P0.1 + P0.2 — activate ChEMBL/ADMET and add the ICH M7 chemistry-alert layer.** It uses infrastructure we already have, closes the "concept" half of "Concept2Cure," and delivers an immediately billable de-risking read to every small-molecule client in every market. It is the highest value-to-effort enhancement available on this codebase today.
