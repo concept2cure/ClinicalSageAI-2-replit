@@ -304,6 +304,20 @@ async function main() {
   ok(brief.items.some((i) => /foreign-nexus/.test(i.signal)), 'briefing surfaces the foreign-nexus COI signal seeded earlier');
   ok(brief.items.every((i) => i.basis && i.count > 0), 'every briefing item carries a regulatory basis and a positive count');
 
+  console.log('\n[Triage] critical briefing items → central tasks (idempotent)');
+  {
+    // Seed a critical signal: an award whose expenditures exceed its authorized amount.
+    const overAwd = await tx((c) => grants.createAwardTx(c, ORG, USER, { awardNumber: `OVER-${Date.now()}`, fundingAgency: 'nih', totalAmount: 1000 })).then((r: any) => r.id);
+    await tx((c) => grants.recordExpenditureTx(c, ORG, USER, overAwd, { category: 'personnel', amount: 2000 }));
+    const { triageComplianceAttention } = await import('../../server/services/research-compliance/compliance-triage');
+    const r1 = await triageComplianceAttention(ORG);
+    ok(r1.criticalItems >= 1 && r1.created.length >= 1, `triage created task(s) for critical item(s) (critical=${r1.criticalItems}, created=${r1.created.length})`);
+    const overTask = await pool.query(`SELECT priority FROM unified_tasks WHERE organization_id=$1 AND source_entity_type='compliance_attention' LIMIT 1`, [ORG]);
+    ok(overTask.rows.length >= 1 && overTask.rows[0].priority === 'critical', 'triage tasks land in unified_tasks as critical priority');
+    const r2 = await triageComplianceAttention(ORG);
+    ok(r2.created.length === 0 && r2.alreadyTracked.length >= 1, 're-running triage is idempotent (already-tracked, no duplicates)');
+  }
+
   console.log('\n[Tasking] deadline event → central unified_tasks');
   const taskId = await emitDeadlineTask({ organizationId: ORG, title: 'Verify milestone due', sourceEntityType: 'grant_milestone', sourceEntityId: 999, dueDate: '2026-12-01', taskType: 'milestone' });
   ok(typeof taskId === 'string' && taskId.length > 0, 'emitDeadlineTask created a unified_tasks row (best-effort bridge)');

@@ -20,6 +20,7 @@ export interface DeadlineTaskInput {
   projectId?: number | null;
   taskType?: string; // 'milestone' | 'review' | 'deliverable' | ...
   regulatoryImpact?: boolean;
+  priority?: 'low' | 'medium' | 'high' | 'critical';
 }
 
 /** Create a deadline/review task in unified_tasks. Best-effort; returns the taskId or null. */
@@ -34,7 +35,7 @@ export async function emitDeadlineTask(input: DeadlineTaskInput): Promise<string
       organizationId: input.organizationId,
       projectId: input.projectId ?? undefined,
       dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
-      priority: 'medium',
+      priority: input.priority ?? (input.regulatoryImpact ? 'high' : 'medium'),
     });
     return (task as any)?.taskId ?? null;
   } catch {

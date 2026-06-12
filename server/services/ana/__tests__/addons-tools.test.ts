@@ -65,6 +65,10 @@ describe('Briefing + coverage-gap tools — context + input guards', () => {
     const out = JSON.parse(await getToolHandler('research_compliance_briefing')!({}, {} as any));
     expect(out.error).toMatch(/tenant context/);
   });
+  it('triage_compliance_attention requires tenant + user context', async () => {
+    const out = JSON.parse(await getToolHandler('triage_compliance_attention')!({}, { organizationId: 1 } as any));
+    expect(out.error).toMatch(/tenant \+ user context/);
+  });
   it('fulfill_regulatory_commitment requires a commitment_id', async () => {
     const out = JSON.parse(await getToolHandler('fulfill_regulatory_commitment')!({}, { organizationId: 1, userId: 1 } as any));
     expect(out.error).toMatch(/commitment_id is required/);

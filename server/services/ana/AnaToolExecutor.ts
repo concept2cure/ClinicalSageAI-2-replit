@@ -6940,6 +6940,35 @@ registerToolHandler('research_compliance_briefing', async (_input, ctx) => {
   }
 });
 
+registerToolHandler('triage_compliance_attention', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'triage_compliance_attention requires tenant + user context.' });
+  const { triageComplianceAttention } = await import('../research-compliance/compliance-triage.js');
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  try {
+    const r = await triageComplianceAttention(ctx.organizationId, ctx.projectId ?? null);
+    // Record one governed action over the batch (best-effort tasks already created).
+    const client = await getPool().connect();
+    try {
+      await client.query('BEGIN');
+      await recordGovernedAction(client, {
+        orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+        target: `compliance-triage:${ctx.organizationId}`, reason: fcoiReason(input, 'Compliance attention triaged to tasks via AnA'),
+        payload: { criticalItems: r.criticalItems, created: r.created.length, alreadyTracked: r.alreadyTracked.length }, domain: 'research_compliance', surface: 'ana',
+      });
+      await client.query('COMMIT');
+    } catch { await client.query('ROLLBACK').catch(() => undefined); } finally { client.release(); }
+    return JSON.stringify({
+      ok: true, ...r,
+      message: r.criticalItems === 0
+        ? 'No critical attention items — nothing to triage.'
+        : `Triaged ${r.criticalItems} critical item(s): ${r.created.length} new task(s) created, ${r.alreadyTracked.length} already tracked.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `triage_compliance_attention failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('fulfill_regulatory_commitment', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'fulfill_regulatory_commitment requires tenant + user context.' });
   const commitmentId = typeof input.commitment_id === 'number' ? input.commitment_id : NaN;

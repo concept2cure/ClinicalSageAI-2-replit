@@ -40,6 +40,7 @@ const CASES: { prompt: string; expect: string }[] = [
   { prompt: 'what approvals and training do we need to onboard this human subjects study and is the team ready', expect: 'assess_study_onboarding' },
   { prompt: 'can we close out this grant award yet, what closeout items and final reports are still outstanding', expect: 'prepare_award_closeout' },
   { prompt: 'are we ready for the FDA meeting, do we have the briefing book and open questions for this interaction', expect: 'prepare_meeting_package' },
+  { prompt: 'triage the critical compliance attention items into tasks for the team to action', expect: 'triage_compliance_attention' },
 ];
 
 describe('AnA tool-selection routing eval', () => {

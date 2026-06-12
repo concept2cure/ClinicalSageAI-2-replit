@@ -3982,6 +3982,13 @@ export const RESEARCH_COMPLIANCE_BRIEFING: AnaTool = {
   input_schema: { type: 'object', properties: {}, required: [] },
 };
 
+export const TRIAGE_COMPLIANCE_ATTENTION: AnaTool = {
+  name: 'triage_compliance_attention',
+  description:
+    "Turn the cross-domain compliance briefing into ACTION: for each CRITICAL attention item (overdue commitments/closeouts, expired training, unmanaged COI, unscreened subawards, over-spends, expiring IACUC, overdue lifecycle obligations) create a high-priority review task in the platform's central task list (unified_tasks). Idempotent — a critical item already tracked is left alone, so re-running won't duplicate. Governed + audited. Use after research_compliance_briefing to dispatch the work.",
+  input_schema: { type: 'object', properties: { reason: { type: 'string' } }, required: [] },
+};
+
 export const FULFILL_REGULATORY_COMMITMENT: AnaTool = {
   name: 'fulfill_regulatory_commitment',
   description:
@@ -5929,6 +5936,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   RECORD_GRANT_OPPORTUNITY,
   PREPARE_AWARD_CLOSEOUT,
   RESEARCH_COMPLIANCE_BRIEFING,
+  TRIAGE_COMPLIANCE_ATTENTION,
   FULFILL_REGULATORY_COMMITMENT,
   REVIEW_HA_INTERACTION,
   PREPARE_MEETING_PACKAGE,
