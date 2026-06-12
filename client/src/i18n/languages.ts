@@ -10,7 +10,7 @@
 
 export type LanguageCode =
   | 'en' | 'fr' | 'de' | 'ja' | 'zh' | 'ko' | 'es' | 'pt' | 'it' | 'nl' | 'pl' | 'sv' | 'da'
-  | 'fi' | 'cs' | 'el';
+  | 'fi' | 'cs' | 'el' | 'hu' | 'ro';
 
 export interface LanguageDef {
   /** BCP-47 primary subtag used by i18next, Intl, and <html lang>. */
@@ -42,6 +42,8 @@ export const LANGUAGES: readonly LanguageDef[] = [
   { code: 'fi', label: 'Finnish',    native: 'Suomi',     dir: 'ltr', intlLocale: 'fi-FI' },
   { code: 'cs', label: 'Czech',      native: 'Čeština',   dir: 'ltr', intlLocale: 'cs-CZ' },
   { code: 'el', label: 'Greek',      native: 'Ελληνικά',  dir: 'ltr', intlLocale: 'el-GR' },
+  { code: 'hu', label: 'Hungarian',  native: 'Magyar',    dir: 'ltr', intlLocale: 'hu-HU' },
+  { code: 'ro', label: 'Romanian',   native: 'Română',    dir: 'ltr', intlLocale: 'ro-RO' },
 ] as const;
 
 export const DEFAULT_LANGUAGE: LanguageCode = 'en';
