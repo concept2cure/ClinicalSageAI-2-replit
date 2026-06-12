@@ -3,10 +3,12 @@
  *
  * Verifies the pre-flight validator layer: the stored internal structural
  * findings are reused (not recomputed), the agency validators report their
- * configuration status, and a `blocking` flag is derived from the combined
- * error count. No *_VALIDATOR_URL env is set, so the agency validators stay
- * unconfigured and NO network calls are made. Drizzle + pool are mocked so the
- * test does not touch a DB, disk, or AWS.
+ * configuration status, a `blocking` flag is derived from the combined
+ * error count, and the run summary is persisted under the package's
+ * `metadata.preflight` JSONB (the source the CMC portfolio aggregates its
+ * `preflight_critical` column from). No *_VALIDATOR_URL env is set, so the
+ * agency validators stay unconfigured and NO network calls are made.
+ * Drizzle + pool are mocked so the test does not touch a DB, disk, or AWS.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -22,6 +24,8 @@ vi.mock('../server/routes/c2c/actions', () => ({
 const { dbState } = vi.hoisted(() => ({
   dbState: {
     pkg: null as any,
+    updates: [] as any[],
+    failUpdate: false,
   },
 }));
 
@@ -37,7 +41,11 @@ function makeDb() {
       return Promise.resolve(dbState.pkg ? [dbState.pkg] : []).then(resolve);
     },
     update() { return chain; },
-    set() { return chain; },
+    set(payload: any) {
+      if (dbState.failUpdate) throw new Error('simulated metadata write failure');
+      dbState.updates.push(payload);
+      return chain;
+    },
   };
   return chain;
 }
@@ -71,6 +79,8 @@ const fetchSpy = vi.fn();
 
 beforeEach(() => {
   dbState.pkg = null;
+  dbState.updates = [];
+  dbState.failUpdate = false;
   // Ensure no external validators are configured.
   delete process.env.FDA_VALIDATOR_URL;
   delete process.env.EMA_VALIDATOR_URL;
@@ -142,6 +152,26 @@ describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
 
     // No network call was made (no external validators configured).
     expect(fetchSpy).not.toHaveBeenCalled();
+
+    // The run summary is persisted under metadata.preflight; the assemble
+    // descriptor (metadata.bundle) is preserved by the spread.
+    expect(dbState.updates.length).toBe(1);
+    const persisted = dbState.updates[0];
+    expect(persisted.metadata.bundle).toBeDefined();
+    expect(persisted.metadata.preflight).toMatchObject({
+      errorCount: 0,
+      warningCount: 1,
+      blocking: false,
+      bundleSha256: 'a'.repeat(64),
+      ranBy: 777,
+    });
+    expect(typeof persisted.metadata.preflight.ranAt).toBe('string');
+    expect(persisted.metadata.preflight.validators.map((v: any) => v.id)).toEqual([
+      'internal',
+      'fda_evalidator',
+      'ema_validator',
+      'pmda_precheck',
+    ]);
   });
 
   it('marks blocking:true when the stored validation has an error', async () => {
@@ -175,5 +205,39 @@ describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
     expect(res.body.data.blocking).toBe(true);
     expect(res.body.data.errorCount).toBe(1);
     expect(fetchSpy).not.toHaveBeenCalled();
+
+    // The blocking outcome is persisted for portfolio aggregation.
+    expect(dbState.updates.length).toBe(1);
+    expect(dbState.updates[0].metadata.preflight).toMatchObject({
+      errorCount: 1,
+      blocking: true,
+    });
+  });
+
+  it('still returns the computed findings when the metadata persist fails', async () => {
+    dbState.pkg = {
+      id: 7,
+      packageId: 'pkg_persistfail',
+      orgId: 99,
+      status: 'locked',
+      packageFamily: 'ind',
+      metadata: {
+        bundle: {
+          sha256: 'c'.repeat(64),
+          sizeBytes: 10,
+          format: 'ectd',
+          path: '/tmp/x.zip',
+          storage: { provider: 'local' },
+          validation: { errorCount: 0, warningCount: 0, infoCount: 0, findings: [] },
+        },
+      },
+    };
+    dbState.failUpdate = true;
+
+    const res = await request(makeApp()).post('/api/submission-ops/packages/pkg_persistfail/preflight').send({});
+    // A failed derived-cache write must not lose the run's results.
+    expect(res.status).toBe(200);
+    expect(res.body.data.blocking).toBe(false);
+    expect(dbState.updates.length).toBe(0);
   });
 });

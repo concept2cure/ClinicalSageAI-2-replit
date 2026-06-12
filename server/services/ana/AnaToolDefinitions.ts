@@ -3363,6 +3363,19 @@ export const ASSESS_COMBINATION_PRODUCT: AnaTool = {
   },
 };
 
+export const ASSESS_QMS: AnaTool = {
+  name: 'assess_qms',
+  description:
+    "Inspect or gap-check a device quality management system against ISO 13485:2016 (with the FDA QSR→QMSR mapping). Without `present_clause_ids` it returns the major clause structure (design controls, purchasing, production, complaints/reporting, nonconforming product, CAPA…) with each clause's FDA mapping (21 CFR 820.x) and auditor questions, plus the QMSR transition note (effective 2026-02-02). With `present_clause_ids` it reports readiness + missing clauses. Static reference + pure assessment, deterministic — an audit-prep aid, not an audit verdict.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      present_clause_ids: { type: 'array', items: { type: 'string' }, description: 'Clause ids the QMS has in place (for the readiness assessment).' },
+    },
+    required: [],
+  },
+};
+
 export const LIST_REGULATORY_CAPABILITIES: AnaTool = {
   name: 'list_regulatory_capabilities',
   description:
@@ -3992,6 +4005,60 @@ export const REVIEW_TMF_COMPLETENESS: AnaTool = {
     type: 'object',
     properties: { tmf_file_id: { type: 'number' } },
     required: ['tmf_file_id'],
+  },
+};
+
+export const RUN_COMPLIANCE_CHECKLIST: AnaTool = {
+  name: 'run_compliance_checklist',
+  description:
+    "Resolve the DETERMINISTIC compliance checklist for a research activity (the auto-updating, regulation-cited engine, not the LLM): which committee approvals (IRB/IACUC/IBC) are required, which personnel training is required, and the ordered steps. Use to tell a client what they must do before they can start. Read-only.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      involves_human_subjects: { type: 'boolean' },
+      involves_animals: { type: 'boolean' },
+      involves_recombinant_dna: { type: 'boolean' },
+      involves_human_gene_transfer: { type: 'boolean' },
+      funding_source: { type: 'string', enum: ['nih','nsf','barda','dod','industry','internal','other'] },
+      region: { type: 'string', enum: ['us','eu','other'] },
+    },
+    required: [],
+  },
+};
+
+export const ADD_PERSONNEL_TRAINING: AnaTool = {
+  name: 'add_personnel_training',
+  description:
+    "Record a training/clearance completion for a person on the research roster (CITI human subjects/GCP/animal/RCR, biosafety, FCOI, etc.) with completion + expiry dates. This feeds the 'no index until trained' gate. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      personnel_id: { type: 'number' },
+      training_type: { type: 'string', enum: ['citi_human_subjects','citi_gcp','citi_animal','citi_rcr','biosafety','bloodborne_pathogens','iata_shipping','hipaa','fcoi_disclosure','other'] },
+      completed_date: { type: 'string', description: 'YYYY-MM-DD.' },
+      expires_date: { type: 'string', description: 'YYYY-MM-DD.' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['personnel_id', 'training_type'],
+  },
+};
+
+export const REVIEW_TRAINING_GATE: AnaTool = {
+  name: 'review_training_gate',
+  description:
+    "Run the 'no index until trained' gate for a set of personnel against the required training for a research activity (read-only): returns whether the team is cleared, who is missing or expired on what training, and who is expiring soon. Use before letting a protocol proceed.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      personnel_ids: { type: 'array', items: { type: 'number' } },
+      involves_human_subjects: { type: 'boolean' },
+      involves_animals: { type: 'boolean' },
+      involves_recombinant_dna: { type: 'boolean' },
+      involves_human_gene_transfer: { type: 'boolean' },
+      funding_source: { type: 'string', enum: ['nih','nsf','barda','dod','industry','internal','other'] },
+      region: { type: 'string', enum: ['us','eu','other'] },
+    },
+    required: ['personnel_ids'],
   },
 };
 
@@ -5448,6 +5515,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   GET_ELECTRICAL_STANDARDS,
   GET_STERILIZATION_REQUIREMENTS,
   ASSESS_COMBINATION_PRODUCT,
+  ASSESS_QMS,
   LIST_REGULATORY_CAPABILITIES,
   ASSESS_DISPATCH_READINESS,
   FIRE_NOTIFICATION,
@@ -5487,6 +5555,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CREATE_TMF,
   CLASSIFY_TMF_ARTIFACT,
   REVIEW_TMF_COMPLETENESS,
+  RUN_COMPLIANCE_CHECKLIST,
+  ADD_PERSONNEL_TRAINING,
+  REVIEW_TRAINING_GATE,
   LOG_STUDY_DEVIATION,
   LOG_STUDY_AE,
   RECORD_ENDPOINT_RESULT,

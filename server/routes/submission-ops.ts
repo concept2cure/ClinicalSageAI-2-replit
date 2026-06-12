@@ -1772,8 +1772,13 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
  *    `ran:true` with an `error` AND adds an error-severity finding, so a failed
  *    validator never looks like a pass.
  *
- * This endpoint is read-only relative to the package: it runs/aggregates
- * validation and writes nothing (no governed action needed). Tenant-scoped.
+ * Persistence: the run's summary (counts + per-validator status, no finding
+ * bodies) is stored under the package's `metadata.preflight` JSONB — the same
+ * pattern assemble uses for the `bundle` descriptor — so org-level rollups
+ * (the CMC portfolio's `preflight_critical` column) can aggregate REAL
+ * preflight outcomes instead of fabricating them. That write is a derived
+ * cache of the run just performed, not a governed state transition, so no
+ * governed action is recorded. Tenant-scoped.
  */
 router.post('/packages/:packageId/preflight', async (req: Request, res: Response) => {
   try {
@@ -1934,6 +1939,42 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
     for (const f of findings) {
       if (f.severity === 'error') errorCount += 1;
       else if (f.severity === 'warning') warningCount += 1;
+    }
+
+    // Persist the latest preflight summary under metadata.preflight (same
+    // JSONB pattern as assemble's `bundle` descriptor). Summary only — the
+    // finding bodies are already derivable (internal ones live on
+    // metadata.bundle.validation; external ones are re-runnable). A failed
+    // write must not lose the computed findings: log and still respond.
+    const preflightSummary = {
+      ranAt: new Date().toISOString(),
+      ranBy: (req as any).user?.id ?? null,
+      bundleSha256: bundle.sha256 ?? null,
+      errorCount,
+      warningCount,
+      blocking: errorCount > 0,
+      validators: validators.map(v => ({
+        id: v.id,
+        configured: v.configured,
+        ran: v.ran,
+        errorCount: v.errorCount,
+        warningCount: v.warningCount,
+        ...(v.error ? { error: v.error } : {}),
+      })),
+    };
+    try {
+      await db
+        .update(c2cSubmissionPackages)
+        .set({
+          metadata: { ...metadata, preflight: preflightSummary },
+          updatedAt: new Date(),
+        })
+        .where(eq(c2cSubmissionPackages.id, pkg.id));
+    } catch (persistErr) {
+      console.error(
+        '[submission-ops] preflight-persist-failed',
+        persistErr instanceof Error ? persistErr.message : persistErr,
+      );
     }
 
     return res.json({

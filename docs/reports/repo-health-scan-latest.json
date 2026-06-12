@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-12T00:01:15.885Z",
+  "generatedAt": "2026-06-12T00:12:39.182Z",
   "git": {
-    "sha": "240dce389daefae5e7dbbdec8dc1c1bf96a46af5",
+    "sha": "eac813cf55fa60134e0571030a41688381d32977",
     "branch": "claude/persona-overlay-extraction"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 205,
+    "duplicateBasenames": 206,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -1816,6 +1816,14 @@
         ]
       },
       {
+        "basename": "research-compliance",
+        "count": 2,
+        "paths": [
+          "server/routes/research-compliance.ts",
+          "shared/schema/research-compliance.ts"
+        ]
+      },
+      {
         "basename": "rolebasedaccess",
         "count": 2,
         "paths": [
@@ -2051,11 +2059,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 380145
+        "bytes": 386092
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 299358
+        "bytes": 303069
       },
       {
         "file": "server/statistics-service.ts",
@@ -2109,7 +2117,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 7884
+        "lines": 7975
       },
       {
         "file": "server/statistics-service.ts",
@@ -2117,7 +2125,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 5641
+        "lines": 5712
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2181,7 +2189,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "lines": 1961
+        "lines": 2002
       },
       {
         "file": "server/routes/auth.ts",
@@ -2281,14 +2289,14 @@
     "baseline": "docs/reports/repo-health-scan-latest.json",
     "delta": {
       "duplicateBasenames": 0,
-      "largeFilesByBytes": 0,
+      "largeFilesByBytes": -1,
       "largeFilesByLines": 0
     }
   },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 303,
+      "duplicateGroups": 304,
       "largeByBytes": 11,
       "largeByLines": 34
     },
@@ -2306,7 +2314,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 43,
+      "duplicateGroups": 44,
       "largeByBytes": 1,
       "largeByLines": 2
     },

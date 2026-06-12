@@ -9,6 +9,8 @@ import * as fcoi from '../../server/services/financial-disclosures/fcoi-service'
 import * as ha from '../../server/services/ha-interactions/ha-service';
 import * as iacuc from '../../server/services/iacuc/iacuc-service';
 import * as cs from '../../server/services/controlled-substances/cs-service';
+import * as roster from '../../server/services/research-compliance/roster-service';
+import { resolveComplianceChecklist, evaluateTrainingGate } from '../../server/services/research-compliance/compliance-checklist';
 
 let pass = 0, fail = 0;
 function ok(cond: boolean, msg: string) { if (cond) { pass++; console.log('  ✓', msg); } else { fail++; console.log('  ✗ FAIL:', msg); } }
@@ -88,6 +90,20 @@ async function main() {
   });
   ok(iacucRes.expirationDate === '2029-01-01', `approval set 3-year expiration (${iacucRes.expirationDate})`);
   ok(iacucRes.provenanceLinkId != null, 'IACUC approval wrote provenance link to Module 4');
+
+  console.log('\n[Foundation] training gate — no index until trained');
+  const profile = { involvesHumanSubjects: true, involvesAnimals: false, involvesRecombinantDNA: false, involvesHumanGeneTransfer: false, fundingSource: 'nih' as const, region: 'us' as const };
+  const checklist = resolveComplianceChecklist(profile);
+  ok(checklist.requiredApprovals.some((a) => a.committee === 'IRB'), 'checklist requires IRB for NIH human research');
+  const piId = await tx((c) => roster.createPersonnelTx(c, ORG, USER, { fullName: 'Dr Gate', role: 'principal_investigator' })).then((r:any)=>r.id);
+  let g = evaluateTrainingGate((await roster.loadRosterForGate(ORG, [piId])).personnel, checklist.requiredTraining, (await roster.loadRosterForGate(ORG, [piId])).records, '2026-06-10');
+  ok(g.cleared === false && g.missing.length > 0, 'gate BLOCKS a PI with no training');
+  for (const t of ['citi_human_subjects','citi_gcp','citi_rcr','fcoi_disclosure']) {
+    await tx((c) => roster.addTrainingTx(c, ORG, USER, piId, { trainingType: t as any, completedDate: '2025-01-01', expiresDate: '2027-01-01' }));
+  }
+  const loaded = await roster.loadRosterForGate(ORG, [piId]);
+  g = evaluateTrainingGate(loaded.personnel, checklist.requiredTraining, loaded.records, '2026-06-10');
+  ok(g.cleared === true, 'gate CLEARS once the PI completes all required training (DB-backed)');
 
   console.log(`\n==== DB VERIFICATION: ${pass} passed, ${fail} failed ====`);
   await pool.end();

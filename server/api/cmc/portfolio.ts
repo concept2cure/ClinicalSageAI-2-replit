@@ -30,6 +30,40 @@ async function computeRPI(subId: string): Promise<{ rpi: number | null; componen
   }
 }
 
+/**
+ * Org-wide critical (error-severity) pre-flight findings.
+ *
+ * Source: the `metadata.preflight` summary that the submission-ops preflight
+ * endpoint (POST /api/submission-ops/packages/:packageId/preflight) persists
+ * onto c2c_submission_packages at run time — a REAL, written-to source.
+ * Submission packages are not linked to reg_submissions rows, so this is one
+ * org-level aggregate repeated on every portfolio row (decision-register
+ * item 1a, owner-approved).
+ *
+ * Returns null when no package in the org has ever run preflight — an honest
+ * "not measured yet", never a fabricated zero.
+ */
+async function preflightCriticalForOrg(tenantId: number): Promise<number | null> {
+  try {
+    const row = (
+      await q(
+        `select count(*)::int as ran,
+                coalesce(sum((metadata->'preflight'->>'errorCount')::int), 0)::int as critical
+           from c2c_submission_packages
+          where org_id = $1 and metadata->'preflight' is not null`,
+        [tenantId]
+      )
+    ).rows[0];
+    if (!row || !(row.ran > 0)) return null;
+    return row.critical ?? 0;
+  } catch (err: any) {
+    // Honest degradation (e.g. table absent in a partial deployment): null,
+    // never a fake count.
+    console.warn('[cmc-portfolio] preflight aggregation failed:', err?.message ?? err);
+    return null;
+  }
+}
+
 /** GET /overview — one row per submission with live metrics */
 router.get('/overview', async (req: Request, res: Response) => {
   const tenantId = requireTenantId(req, res);
@@ -41,6 +75,9 @@ router.get('/overview', async (req: Request, res: Response) => {
       [tenantId]
     )
   ).rows;
+
+  // One org-level aggregate (packages are not linked to submissions).
+  const preflightCritical = await preflightCriticalForOrg(tenantId);
 
   const out: any[] = [];
   for (const s of subs) {
@@ -61,8 +98,7 @@ router.get('/overview', async (req: Request, res: Response) => {
     ).rows[0] || { n: 0, overdue: 0 };
 
     // Real Module 3 metrics from reg_m3_sections (same source the RPI
-    // engine uses). Preflight / playbook / QC alert counts have no backing
-    // tables yet — they are null (not yet implemented), never a fake zero.
+    // engine uses).
     const m3 = (
       await q(
         `select count(*) filter (where status not in ('READY','LOCKED'))::int as missing,
@@ -75,7 +111,12 @@ router.get('/overview', async (req: Request, res: Response) => {
     ).rows[0] || { missing: null, cov: null };
     const cov = m3.cov ?? null;
     const missing = m3.missing ?? null;
-    const seqCrit = null;
+    // playbook_open / qc_alerts stay null: nothing real writes to a backing
+    // store. The QC tables (shared/schema/qc-schemas.ts, legacy qc_alerts
+    // migration) have no writers anywhere in the codebase, and the
+    // cmc_workflow_* playbook tables exist only in an unapplied schema file
+    // (server/database/cmc-playbook-schema.sql, never migrated) — counting
+    // either would render a fake zero.
     const pbOpen = null;
     const qcOpen = null;
 
@@ -94,7 +135,7 @@ router.get('/overview', async (req: Request, res: Response) => {
       obligations_overdue: obl.overdue,
       stability_cov_m: cov,
       m3_missing: missing,
-      preflight_critical: seqCrit,
+      preflight_critical: preflightCritical,
       qc_alerts: qcOpen,
       playbook_open: pbOpen,
     });
@@ -160,6 +201,9 @@ router.get('/export.csv', async (req: Request, res: Response) => {
       )
     ).rows;
 
+    // Same org-level preflight aggregate as GET /overview.
+    const preflightCritical = await preflightCriticalForOrg(tenantId);
+
     const headers = [
       'sub_id',
       'product_id',
@@ -219,8 +263,11 @@ router.get('/export.csv', async (req: Request, res: Response) => {
         obligations_overdue: obl.overdue,
         stability_cov_m: m3.cov ?? '',
         m3_missing: m3.missing ?? '',
-        // Not yet implemented — empty cells, never fake zeros.
-        preflight_critical: '',
+        // Org-level aggregate of persisted preflight runs; empty cell when
+        // no package has run preflight (honest null, mirrors GET /overview).
+        preflight_critical: preflightCritical ?? '',
+        // No real written-to source exists (see GET /overview) — empty
+        // cells, never fake zeros.
         qc_alerts: '',
         playbook_open: '',
       });

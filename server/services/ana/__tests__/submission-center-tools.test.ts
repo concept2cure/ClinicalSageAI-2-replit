@@ -49,6 +49,7 @@ const SUBMISSION_TOOLS = [
   'get_electrical_standards',
   'get_sterilization_requirements',
   'assess_combination_product',
+  'assess_qms',
   'list_regulatory_capabilities',
   'assess_dispatch_readiness',
 ];
@@ -434,6 +435,15 @@ describe('submission AI tasks — tenant + input guards', () => {
     const handler = getToolHandler('assess_combination_product')!;
     const out = JSON.parse(await handler({ components: ['nope'] }, {} as ToolContext));
     expect(out.error).toMatch(/components must be/);
+  });
+  it('assess_qms returns the clause structure and gap-checks', async () => {
+    const handler = getToolHandler('assess_qms')!;
+    const structure = JSON.parse(await handler({}, {} as ToolContext));
+    expect(structure.ok).toBe(true);
+    expect(structure.clauses.some((c: { id: string }) => c.id === 'capa')).toBe(true);
+    const assessed = JSON.parse(await handler({ present_clause_ids: ['qms_general'] }, {} as ToolContext));
+    expect(assessed.assessment.ready).toBe(false);
+    expect(assessed.assessment.missingRequiredClauses).toContain('design_controls');
   });
 });
 

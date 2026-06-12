@@ -24,6 +24,7 @@ import type { IndAnnualReportModel } from './ind-annual-report-service';
 import type { BriefingBookModel } from './ind-briefing-book-service';
 import type { CoverLetterModel } from './ind-cover-letter-service';
 import type { PackageManifest } from './ind-package-manifest';
+import type { SequenceDiff } from './ind-sequence-diff';
 
 /** Map a (possibly nested) safety-report section to a renderer LeafSection, numbering it. */
 function safetySectionToLeaf(
@@ -59,6 +60,29 @@ export async function renderIndAnnualReportPdf(model: IndAnnualReportModel): Pro
   return renderStructuredLeafPdf(sections, {
     title: `IND Annual Report — ${model.productName} (IND ${model.indNumber})`,
     sectionCode: 'm1.13',
+  });
+}
+
+/** Render an eCTD sequence diff (amendment review) to a PDF. */
+export async function renderSequenceDiffPdf(diff: SequenceDiff): Promise<Buffer> {
+  const header = [
+    `Prior sequence: ${diff.priorSequenceNumber}`,
+    `Current sequence: ${diff.currentSequenceNumber}`,
+    `Added: ${diff.summary.added}  |  Replaced: ${diff.summary.replaced}  |  Unchanged: ${diff.summary.unchanged}  |  Deleted: ${diff.summary.deleted}`,
+  ].join('\n');
+
+  const sections: LeafSection[] = [{ heading: 'Diff Summary', sectionCode: '', body: header }];
+  for (const kind of ['added', 'replaced', 'deleted', 'unchanged'] as const) {
+    const rows = diff.entries.filter((e) => e.change === kind);
+    if (rows.length === 0) continue;
+    const body = rows
+      .map((e) => `${e.sectionCode}  ${e.title}  —  ${e.priorChecksum ?? '(none)'} → ${e.currentChecksum ?? '(none)'}`)
+      .join('\n');
+    sections.push({ heading: `${kind.charAt(0).toUpperCase()}${kind.slice(1)} (${rows.length})`, body });
+  }
+
+  return renderStructuredLeafPdf(sections, {
+    title: `eCTD Sequence Diff — ${diff.priorSequenceNumber} → ${diff.currentSequenceNumber}`,
   });
 }
 

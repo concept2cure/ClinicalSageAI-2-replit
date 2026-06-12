@@ -714,6 +714,27 @@ router.post('/combination-product/assess', limiter, requireRole(AUTHOR), async (
   } catch (err) { fail(res, err); }
 });
 
+// Quality management system (ISO 13485 ↔ FDA QMSR) structure + readiness.
+router.get('/device/qms/structure', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  try {
+    const { QMS_CLAUSES, FDA_QMSR_NOTE } = await import('../services/market-specs/quality-system.js');
+    res.json({ clauses: QMS_CLAUSES, fdaNote: FDA_QMSR_NOTE });
+  } catch (err) { fail(res, err); }
+});
+const qmsAssessSchema = z.object({ presentClauseIds: z.array(z.string().max(64)).max(100).default([]) });
+router.post('/device/qms/assess', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = qmsAssessSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { assessQmsReadiness } = await import('../services/market-specs/quality-system.js');
+    res.json(assessQmsReadiness(parsed.data.presentClauseIds));
+  } catch (err) { fail(res, err); }
+});
+
 // Gap-check a STORED CER (cer_reports/cer_sections) against the canonical structure.
 // Tenant-scoped; needs a database. 404 when the report is not in the organization.
 router.get('/device/cer/:reportId/assess-stored', limiter, requireRole(AUTHOR), async (req, res) => {

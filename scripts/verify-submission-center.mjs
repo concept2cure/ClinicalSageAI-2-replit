@@ -240,6 +240,8 @@ async function main() {
   ok('regulatory-capabilities index enumerates the layer', caps.status === 200 && typeof caps.json?.total === 'number' && Array.isArray(caps.json?.capabilities) && caps.json.capabilities.some((x) => x.id === 'device_blueprint'), `status ${caps.status}`);
   const combo = await c.req('POST', '/api/submissions/combination-product/assess', { components: ['drug', 'device'], primaryModeOfAction: 'device' });
   ok('combination-product maps device PMOA to CDRH', combo.status === 200 && combo.json?.isCombination === true && combo.json?.fdaLeadCenter === 'CDRH', `status ${combo.status}`);
+  const qms = await c.req('GET', '/api/submissions/device/qms/structure');
+  ok('QMS structure returns ISO 13485 clauses + QMSR note', qms.status === 200 && Array.isArray(qms.json?.clauses) && qms.json.clauses.some((x) => x.id === 'capa') && /2026-02-02/.test(qms.json?.fdaNote || ''), `status ${qms.status}`);
 
   // Document template structures (canonical section skeletons) — static reference data.
   const dt = await c.req('GET', '/api/submissions/document-templates?family=ectd');
