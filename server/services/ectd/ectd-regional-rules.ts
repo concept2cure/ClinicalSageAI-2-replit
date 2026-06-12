@@ -14,7 +14,7 @@
  *  - Health Canada Regulatory Enrolment Process (REP)
  */
 
-export type RegulatoryRegion = 'US' | 'EU' | 'JP' | 'CA';
+export type RegulatoryRegion = 'US' | 'EU' | 'JP' | 'CA' | 'CN';
 export type RegionalSeverity = 'error' | 'warning' | 'info';
 
 export interface RegionalRule {
@@ -184,6 +184,43 @@ export const REGIONAL_RULES: RegionalRule[] = [
     citation: 'MHLW Risk Management Plan Guidance (April 2012); JP CTD Module 1 structure',
   },
 
+  // --- NMPA (CDE) ---
+  {
+    id: 'NMPA-CDE-001',
+    region: 'CN',
+    description: 'eCTD submission must conform to the NMPA eCTD specification (XML backbone v1.0/v1.1), including the M1 regional backbone file',
+    severity: 'error',
+    citation: 'NMPA eCTD技术规范 V1.0 (2019); eCTD验证标准 V1.0',
+  },
+  {
+    id: 'NMPA-CDE-002',
+    region: 'CN',
+    description: 'All PDFs must be PDF/A, text-searchable, with working bookmarks and hyperlinks and embedded fonts (including Simplified Chinese fonts)',
+    severity: 'error',
+    citation: 'NMPA eCTD技术规范 V1.0 (2019)',
+  },
+  {
+    id: 'NMPA-CDE-003',
+    region: 'CN',
+    description: 'Dossier must be in Simplified Chinese: Module 1 administrative/product-information documents and Module 3 quality and manufacturing content require Chinese; English may be included only as a secondary copy',
+    severity: 'error',
+    citation: 'NMPA M4 Module 1 (2019 No. 17); NMPA eCTD技术规范 V1.0',
+  },
+  {
+    id: 'NMPA-CDE-004',
+    region: 'CN',
+    description: 'The eCTD must include the NMPA stylesheet (ectd-2-0.xsl for Modules 2–5) and the valid-value definition files defined by the NMPA eCTD specification',
+    severity: 'warning',
+    citation: 'NMPA eCTD技术规范 V1.0 (2019)',
+  },
+  {
+    id: 'NMPA-CDE-005',
+    region: 'CN',
+    description: 'File and folder names must follow the NMPA regional naming conventions defined in the eCTD technical specification',
+    severity: 'warning',
+    citation: 'NMPA eCTD技术规范 V1.0 (2019)',
+  },
+
   // --- Health Canada (REP) ---
   {
     id: 'HC-REP-001',
@@ -220,6 +257,9 @@ const FILENAME_PATTERN = /^[a-z0-9][a-z0-9.\-]{0,63}$/;
 const FDA_GATEWAY_LIMIT_BYTES = 4 * 1024 * 1024 * 1024;
 const EMA_CESP_LIMIT_BYTES = 600 * 1024 * 1024;
 const PMDA_LIMIT_BYTES = 1024 * 1024 * 1024;
+// NMPA does not publish a single eCTD gateway package-size limit in the accessible
+// technical specification; use a conservative 1 GB default pending verification.
+const NMPA_LIMIT_BYTES = 1024 * 1024 * 1024;
 
 // ── Validators ──────────────────────────────────────────────────────────────
 
@@ -475,5 +515,6 @@ export function getGatewaySizeLimit(region: RegulatoryRegion): number {
     case 'EU': return EMA_CESP_LIMIT_BYTES;
     case 'JP': return PMDA_LIMIT_BYTES;
     case 'CA': return FDA_GATEWAY_LIMIT_BYTES;
+    case 'CN': return NMPA_LIMIT_BYTES;
   }
 }

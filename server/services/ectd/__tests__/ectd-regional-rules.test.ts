@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 
-import { getRulesForRegion, REGIONAL_RULES } from '../ectd-regional-rules';
+import { getRulesForRegion, REGIONAL_RULES, getGatewaySizeLimit } from '../ectd-regional-rules';
 
 describe('regional eCTD rule catalog — PMDA (Japan)', () => {
   it('has unique rule ids across the whole catalog', () => {
@@ -30,5 +30,28 @@ describe('regional eCTD rule catalog — PMDA (Japan)', () => {
     expect(jrmp).toBeDefined();
     expect(jrmp!.severity).toBe('warning');
     expect(jrmp!.description).toMatch(/Risk Management Plan|J-RMP|医薬品リスク管理計画/);
+  });
+});
+
+describe('regional eCTD rule catalog — NMPA (China)', () => {
+  it('provides a CN rule pack, every rule tagged region=CN with a citation', () => {
+    const cn = getRulesForRegion('CN');
+    expect(cn.length).toBeGreaterThanOrEqual(5);
+    for (const rule of cn) {
+      expect(rule.region).toBe('CN');
+      expect(rule.id).toMatch(/^NMPA-CDE-/);
+      expect(rule.citation.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('codifies the Simplified-Chinese language requirement', () => {
+    const lang = getRulesForRegion('CN').find((r) => r.id === 'NMPA-CDE-003');
+    expect(lang).toBeDefined();
+    expect(lang!.severity).toBe('error');
+    expect(lang!.description).toMatch(/Simplified Chinese/i);
+  });
+
+  it('exposes a (conservative, flagged) gateway size limit for CN', () => {
+    expect(getGatewaySizeLimit('CN')).toBeGreaterThan(0);
   });
 });
