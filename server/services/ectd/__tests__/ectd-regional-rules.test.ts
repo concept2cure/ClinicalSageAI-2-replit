@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 
-import { getRulesForRegion, REGIONAL_RULES, getGatewaySizeLimit } from '../ectd-regional-rules';
+import { getRulesForRegion, REGIONAL_RULES, getGatewaySizeLimit, validateRegionalPackage } from '../ectd-regional-rules';
 
 describe('regional eCTD rule catalog — PMDA (Japan)', () => {
   it('has unique rule ids across the whole catalog', () => {
@@ -53,5 +53,43 @@ describe('regional eCTD rule catalog — NMPA (China)', () => {
 
   it('exposes a (conservative, flagged) gateway size limit for CN', () => {
     expect(getGatewaySizeLimit('CN')).toBeGreaterThan(0);
+  });
+});
+
+describe('NMPA (China) package validator', () => {
+  const ctx = {
+    region: 'CN' as const,
+    applicationNumber: 'CXHS2400001',
+    sequenceNumber: '0000',
+    submissionType: 'initial',
+  };
+
+  it('flags a missing cn-regional.xml backbone (NMPA-CDE-001, error)', () => {
+    const findings = validateRegionalPackage(ctx, [
+      { sectionCode: 'm1.2', filePath: 'm1/cn/application-form.pdf', mimeType: 'application/pdf', fileSize: 100 },
+    ]);
+    const f = findings.find((x) => x.ruleId === 'NMPA-CDE-001');
+    expect(f).toBeDefined();
+    expect(f!.severity).toBe('error');
+    expect(f!.region).toBe('CN');
+  });
+
+  it('flags a non-ASCII file name (NMPA-CDE-005, warning, leaf-scoped)', () => {
+    const findings = validateRegionalPackage(ctx, [
+      { sectionCode: 'm1', filePath: 'm1/cn/cn-regional.xml', mimeType: 'application/xml', fileSize: 10 },
+      { sectionCode: 'm1.2', filePath: 'm1/cn/申请表.pdf', mimeType: 'application/pdf', fileSize: 100 },
+    ]);
+    const f = findings.find((x) => x.ruleId === 'NMPA-CDE-005');
+    expect(f).toBeDefined();
+    expect(f!.severity).toBe('warning');
+    expect(f!.scope).toBe('leaf');
+  });
+
+  it('passes a well-formed CN package with no NMPA findings', () => {
+    const findings = validateRegionalPackage(ctx, [
+      { sectionCode: 'm1', filePath: 'm1/cn/cn-regional.xml', mimeType: 'application/xml', fileSize: 10 },
+      { sectionCode: 'm1.2', filePath: 'm1/cn/application-form.pdf', mimeType: 'application/pdf', fileSize: 100 },
+    ]);
+    expect(findings.filter((x) => x.region === 'CN')).toHaveLength(0);
   });
 });

@@ -297,6 +297,9 @@ export function validateRegionalPackage(
     case 'CA':
       validateHCPackage(context, leaves, findings);
       break;
+    case 'CN':
+      validateNMPAPackage(context, leaves, findings);
+      break;
   }
 
   return findings;
@@ -496,6 +499,42 @@ function validateHCPackage(
       fix: 'Generate and include the CA regional XML at /m1/ca/ca-regional.xml',
       scope: 'package',
     });
+  }
+}
+
+function validateNMPAPackage(
+  _context: RegionalContext,
+  leaves: RegionalLeafRef[],
+  findings: RegionalFinding[]
+): void {
+  // NMPA-CDE-001: the M1 regional backbone file must be present.
+  const hasCNRegional = leaves.some(l => l.filePath.endsWith('m1/cn/cn-regional.xml'));
+  if (!hasCNRegional) {
+    findings.push({
+      ruleId: 'NMPA-CDE-001',
+      region: 'CN',
+      severity: 'error',
+      message: 'cn-regional.xml is missing from /m1/cn/',
+      fix: 'Generate and include the NMPA M1 regional XML at /m1/cn/cn-regional.xml',
+      scope: 'package',
+    });
+  }
+
+  // NMPA-CDE-005: file/folder names follow the eCTD ASCII naming convention. The
+  // dossier content is Simplified Chinese, but eCTD file names remain ASCII.
+  for (const leaf of leaves) {
+    const filename = leaf.filePath.split('/').pop() || '';
+    if (!FILENAME_PATTERN.test(filename)) {
+      findings.push({
+        ruleId: 'NMPA-CDE-005',
+        region: 'CN',
+        severity: 'warning',
+        message: `Filename "${filename}" does not follow the NMPA eCTD ASCII naming convention (lowercase a-z, 0-9, hyphens, periods)`,
+        fix: 'Rename to ASCII per the NMPA eCTD技术规范 file-naming rules (Chinese belongs in document content, not file names)',
+        scope: 'leaf',
+        leafPath: leaf.filePath,
+      });
+    }
   }
 }
 
