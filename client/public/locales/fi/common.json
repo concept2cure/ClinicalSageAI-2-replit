@@ -1,0 +1,37 @@
+{
+  "actions": {
+    "save": "Tallenna",
+    "cancel": "Peruuta",
+    "close": "Sulje",
+    "next": "Seuraava",
+    "previous": "Edellinen",
+    "delete": "Poista",
+    "continue": "Jatka",
+    "back": "Takaisin",
+    "search": "Hae"
+  },
+  "density": {
+    "label": "Tiheys",
+    "compact": "Tiivis",
+    "comfortable": "Mukava",
+    "spacious": "Väljä"
+  },
+  "topbar": {
+    "notifications": "Ilmoitukset",
+    "help": "Ohje",
+    "askAna": "Kysy AnA:lta tai siirry…",
+    "command": "Komento",
+    "activeProject": "Aktiivinen projekti",
+    "noProjects": "Ei projekteja",
+    "selectProject": "Valitse projekti",
+    "filter": "Suodata",
+    "clientType": "Asiakastyyppi",
+    "pharma": "Lääketeollisuus",
+    "biotech": "Biotekniikka",
+    "switchProgram": "Vaihda ohjelmaa"
+  },
+  "language": {
+    "label": "Kieli",
+    "select": "Valitse kieli"
+  }
+}

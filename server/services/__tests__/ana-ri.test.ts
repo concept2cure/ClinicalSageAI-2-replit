@@ -587,6 +587,18 @@ describe('AnA RI Persona', () => {
     const da = buildAnaRISystemPrompt({ language: 'da' });
     expect(da).toContain('SVARSPROG — DANSK');
     expect(da).toContain('Lægemiddelstyrelsen'); // Danish national authority in the cultural overlay
+
+    const fi = buildAnaRISystemPrompt({ language: 'fi' });
+    expect(fi).toContain('VASTAUSKIELI — SUOMI');
+    expect(fi).toContain('Fimea'); // Finnish national authority
+
+    const cs = buildAnaRISystemPrompt({ language: 'cs' });
+    expect(cs).toContain('JAZYK ODPOVĚDI — ČEŠTINA');
+    expect(cs).toContain('SÚKL'); // Czech national authority
+
+    const el = buildAnaRISystemPrompt({ language: 'el' });
+    expect(el).toContain('ΓΛΩΣΣΑ ΑΠΑΝΤΗΣΗΣ — ΕΛΛΗΝΙΚΑ');
+    expect(el).toContain('EOF'); // Greek national authority
   });
 
   it('keeps regulatory identifiers canonical while localizing prose', () => {
@@ -706,7 +718,7 @@ describe('AnA RI Persona', () => {
 
   it('injects the dedicated EU regulatory deep-dive whenever the EU is in scope', () => {
     // Major EU-language users get the deep layer (incl. Dutch and Polish)...
-    for (const lng of ['de', 'fr', 'it', 'es', 'nl', 'pl', 'sv', 'da'] as const) {
+    for (const lng of ['de', 'fr', 'it', 'es', 'nl', 'pl', 'sv', 'da', 'fi', 'cs', 'el'] as const) {
       const out = buildAnaRISystemPrompt({ language: lng });
       expect(out).toContain('EUROPEAN UNION REGULATORY DEEP DIVE');
       expect(out).toContain('CHMP'); // canonical identifier preserved

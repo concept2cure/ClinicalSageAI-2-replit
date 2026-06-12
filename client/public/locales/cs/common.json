@@ -1,0 +1,37 @@
+{
+  "actions": {
+    "save": "Uložit",
+    "cancel": "Zrušit",
+    "close": "Zavřít",
+    "next": "Další",
+    "previous": "Předchozí",
+    "delete": "Smazat",
+    "continue": "Pokračovat",
+    "back": "Zpět",
+    "search": "Hledat"
+  },
+  "density": {
+    "label": "Hustota",
+    "compact": "Kompaktní",
+    "comfortable": "Pohodlná",
+    "spacious": "Prostorná"
+  },
+  "topbar": {
+    "notifications": "Oznámení",
+    "help": "Nápověda",
+    "askAna": "Zeptejte se AnA nebo přejděte na…",
+    "command": "Příkaz",
+    "activeProject": "Aktivní projekt",
+    "noProjects": "Žádné projekty",
+    "selectProject": "Vyberte projekt",
+    "filter": "Filtrovat",
+    "clientType": "Typ klienta",
+    "pharma": "Farmacie",
+    "biotech": "Biotechnologie",
+    "switchProgram": "Přepnout program"
+  },
+  "language": {
+    "label": "Jazyk",
+    "select": "Vyberte jazyk"
+  }
+}
