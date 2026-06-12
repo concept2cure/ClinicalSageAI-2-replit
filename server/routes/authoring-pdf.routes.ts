@@ -15,6 +15,7 @@ import { Router, Request, Response } from 'express';
 import { requireRole } from '../middleware/auth';
 import { createRateLimiter } from '../middleware/rateLimiter';
 import { renderM2SummaryPdf } from '../services/authoring/m2-summary-renderer';
+import { runM2SummaryQc } from '../services/authoring/m2-summary-qc';
 import type { M2Summary } from '../services/m2-summary-builders';
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -49,6 +50,30 @@ router.post('/m2-summary/pdf', limiter, requireRole(AUTHOR), async (req, res) =>
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="m2-${summary.sectionKey}.pdf"`);
     res.status(200).send(pdf);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Cross-summary Module 2 QC over a set of built M2 summaries (ICH M4).
+ * Body: { summaries: M2Summary[], expectedSummaries?, minCompleteness?,
+ * availableUpstreamKeys? }. Returns the verdict + findings.
+ */
+router.post('/m2-summary/qc', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!Array.isArray(b.summaries)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'summaries[] (built M2Summary objects) is required.' } });
+  }
+  try {
+    res.json(
+      runM2SummaryQc({
+        summaries: b.summaries,
+        expectedSummaries: b.expectedSummaries,
+        minCompleteness: b.minCompleteness,
+        availableUpstreamKeys: b.availableUpstreamKeys,
+      }),
+    );
   } catch (err) {
     fail(res, err);
   }

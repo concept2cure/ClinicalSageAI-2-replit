@@ -61,6 +61,7 @@ All HTTP routes are auth-gated (`authenticateToken` at mount) and tenant-scoped
 |---|---|---|
 | Module 2 summaries (2.3/2.4/2.5/2.7) | `m2-summary-builders` (existing) | — |
 | Module 2 summary → PDF leaf | `authoring/m2-summary-renderer` | `POST /api/authoring-pdf/m2-summary/pdf` |
+| Module 2 cross-summary QC (presence / traceability / orphan-input / content / completeness / gaps / structure; honest-by-construction verdict) | `authoring/m2-summary-qc` | `POST /api/authoring-pdf/m2-summary/qc` |
 | Investigator's Brochure (ICH E6 §7) | `authoring/ib-builder` | — |
 | Module 4 nonclinical study report | `authoring/nonclinical-study-report-builder` | — |
 | Lifecycle document → bookmarked PDF | `ind-lifecycle/ind-document-renderer` | (used by the `*/pdf` routes) |
