@@ -6787,6 +6787,26 @@ registerToolHandler('record_grant_opportunity', async (input, ctx) => {
   }
 });
 
+registerToolHandler('prepare_award_closeout', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'prepare_award_closeout requires tenant context.' });
+  const awardId = typeof input.award_id === 'number' ? input.award_id : NaN;
+  if (!Number.isInteger(awardId)) return JSON.stringify({ error: 'award_id is required.' });
+  const { prepareAwardCloseout } = await import('../grants/grants-service.js');
+  try {
+    const p = await prepareAwardCloseout(ctx.organizationId, awardId);
+    return JSON.stringify({
+      ok: true, awardId, readyToClose: p.readyToClose, blockers: p.blockers, warnings: p.warnings,
+      closeout: { dueDate: p.closeout.dueDate, outstanding: p.closeout.outstanding, items: p.closeout.items },
+      reportingObligations: p.reportingObligations, costShare: p.costShare, budget: p.budget,
+      message: p.readyToClose
+        ? `Award ${awardId} is ready to close — all 2 CFR 200.344 items done, milestones current, cost share met.`
+        : `Award ${awardId} is NOT ready to close — ${p.blockers.length} blocker(s): ${p.blockers.slice(0, 4).join('; ')}${p.blockers.length > 4 ? '…' : ''}`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `prepare_award_closeout failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('research_compliance_briefing', async (_input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'research_compliance_briefing requires tenant context.' });
   const { buildComplianceBriefing } = await import('../research-compliance/compliance-briefing.js');

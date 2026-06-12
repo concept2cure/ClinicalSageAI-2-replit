@@ -331,6 +331,47 @@ export function costShareStatus(committed: number | null, contributions: CostSha
 
 // ─── No-cost extension (2 CFR 200.308) ───────────────────────────────────────
 
+// ─── Closeout readiness assembly (orchestration) ─────────────────────────────
+
+export interface CloseoutReadinessInputs {
+  closeout: CloseoutState;
+  outstandingMilestones: { count: number; overdue: number };
+  reportingObligations: ReportingObligation[];
+  costShare: CostShareStatus;
+  budget: { riskLevel: BudgetSummary['riskLevel']; totalBudgeted: number; totalActual: number; overAllocated: boolean };
+}
+
+export interface CloseoutReadiness extends CloseoutReadinessInputs {
+  readyToClose: boolean;
+  blockers: string[];
+  warnings: string[];
+}
+
+/**
+ * Assemble a holistic closeout-readiness verdict for an award from its already-
+ * loaded parts. `readyToClose` is stricter than the finalize gate: beyond the four
+ * 2 CFR 200.344 items, it also wants no overdue milestones, the cost-share
+ * commitment met (200.306), and spending within the award (200.403). Pure — the
+ * service loads the pieces and calls this; the tool narrates it. Blockers stop a
+ * clean close; warnings are advisory.
+ */
+export function assembleCloseoutReadiness(i: CloseoutReadinessInputs): CloseoutReadiness {
+  const blockers: string[] = [];
+  const warnings: string[] = [];
+
+  for (const item of i.closeout.items.filter((x) => !x.complete)) {
+    blockers.push(`Closeout item outstanding: ${item.label} (${item.basis}).`);
+  }
+  if (i.closeout.overdue) warnings.push(`Closeout is past its due date${i.closeout.dueDate ? ` (${i.closeout.dueDate})` : ''} — 2 CFR 200.344.`);
+  if (i.outstandingMilestones.overdue > 0) blockers.push(`${i.outstandingMilestones.overdue} overdue milestone(s) still open.`);
+  else if (i.outstandingMilestones.count > 0) warnings.push(`${i.outstandingMilestones.count} milestone(s) not yet met/submitted.`);
+  if (!i.costShare.met) blockers.push(`Cost-share commitment not met — shortfall ${i.costShare.shortfall} (2 CFR 200.306).`);
+  if (i.budget.totalActual > i.budget.totalBudgeted && i.budget.totalBudgeted > 0) warnings.push(`Expenditures (${i.budget.totalActual}) exceed budget (${i.budget.totalBudgeted}) — verify allowability (2 CFR 200.403).`);
+  if (i.budget.overAllocated) warnings.push('Budget over-allocates the award amount.');
+
+  return { ...i, readyToClose: blockers.length === 0, blockers, warnings };
+}
+
 export type NceAuthority = 'grantee' | 'sponsor';
 
 /** Whole months between two ISO dates (floor). Pure. */

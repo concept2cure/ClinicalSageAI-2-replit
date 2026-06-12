@@ -38,6 +38,7 @@ const CASES: { prompt: string; expect: string }[] = [
   { prompt: 'review the training gate, is the PI cleared to be listed on the protocol', expect: 'review_training_gate' },
   { prompt: 'record this grants.gov funding opportunity NOFO into our pre-award pipeline', expect: 'record_grant_opportunity' },
   { prompt: 'what approvals and training do we need to onboard this human subjects study and is the team ready', expect: 'assess_study_onboarding' },
+  { prompt: 'can we close out this grant award yet, what closeout items and final reports are still outstanding', expect: 'prepare_award_closeout' },
 ];
 
 describe('AnA tool-selection routing eval', () => {

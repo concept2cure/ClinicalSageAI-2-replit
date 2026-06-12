@@ -19,7 +19,7 @@
 
 import { pool } from '../../db';
 import { linkProvenanceTx } from '../provenance/provenance-service';
-import { closeoutDueDate, evaluateCloseout, evaluateSubawardEligibility, budgetVsActual, costShareStatus, evaluateNce, type BudgetCategory, type BudgetSummary, type CostShareStatus, type NceAuthority } from './grants-logic';
+import { closeoutDueDate, evaluateCloseout, evaluateSubawardEligibility, budgetVsActual, costShareStatus, evaluateNce, reportingObligations, assembleCloseoutReadiness, type BudgetCategory, type BudgetSummary, type CostShareStatus, type NceAuthority, type CloseoutReadiness } from './grants-logic';
 import type { FundingAgency, FundingMechanism, MilestoneType, SubawardInstitutionType, SubawardRiskLevel, CostShareSource } from '../../../shared/schema/grants';
 
 interface Queryable {
@@ -420,6 +420,45 @@ export async function listNce(orgId: number, awardId?: number): Promise<any[]> {
   if (awardId != null) { params.push(awardId); sql += ` AND award_id = $2`; }
   sql += ` ORDER BY created_at DESC`;
   return (await pool.query(sql, params)).rows;
+}
+
+/**
+ * Orchestration: assemble a holistic closeout-readiness package for an award —
+ * closeout items, outstanding/overdue milestones, federal reporting obligations,
+ * cost-share status, and budget posture — into one verdict. Read-only.
+ */
+export async function prepareAwardCloseout(orgId: number, awardId: number): Promise<CloseoutReadiness & { awardId: number; reportingObligations: ReturnType<typeof reportingObligations> }> {
+  const a = await pool.query(`SELECT period_start::text AS ps, period_end::text AS pe FROM grant_awards WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [awardId, orgId]);
+  if (a.rows.length === 0) throw new GrantsError('NOT_FOUND', 'Award not found for this organization.');
+  const periodStart: string | null = a.rows[0].ps;
+  const periodEnd: string | null = a.rows[0].pe;
+  const today = new Date().toISOString().slice(0, 10);
+
+  const rec = await getCloseoutRecord(orgId, awardId);
+  const closeout = evaluateCloseout({
+    finalRpprSubmitted: rec?.final_rppr_submitted ?? false,
+    finalFfrSubmitted: rec?.final_ffr_submitted ?? false,
+    equipmentInventoryReturned: rec?.equipment_inventory_returned ?? false,
+    finalInvoicesReconciled: rec?.final_invoices_reconciled ?? false,
+    status: rec?.status ?? null,
+  }, periodEnd, today);
+
+  const milestones = await listMilestones(orgId, awardId);
+  const open = milestones.filter((m) => m.status !== 'met' && m.status !== 'submitted');
+  const overdue = open.filter((m) => m.due_date && String(m.due_date) < today).length;
+
+  const costShare = await getCostShareStatus(orgId, awardId);
+  const budgetFull = await getBudgetVsActual(orgId, awardId);
+  const obligations = reportingObligations(periodStart, periodEnd);
+
+  const readiness = assembleCloseoutReadiness({
+    closeout,
+    outstandingMilestones: { count: open.length, overdue },
+    reportingObligations: obligations,
+    costShare,
+    budget: { riskLevel: budgetFull.riskLevel, totalBudgeted: budgetFull.totalBudgeted, totalActual: budgetFull.totalActual, overAllocated: budgetFull.overAllocated },
+  });
+  return { ...readiness, awardId, reportingObligations: obligations };
 }
 
 // ─── Reads ───────────────────────────────────────────────────────────────────

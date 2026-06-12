@@ -265,6 +265,13 @@ async function main() {
   const grRep4 = await computeDomainReport('grants.portfolio_register', ORG);
   ok(grRep4 != null && (grRep4!.summary.costShareCommitted as number) >= 50000 && grRep4!.summary.ncesByStatus != null, `grants.portfolio_register reports cost-share + NCE rollups (committed=${grRep4?.summary.costShareCommitted})`);
 
+  console.log('\n[Grants] closeout-readiness orchestration (prepare_award_closeout)');
+  const readyPkg = await grants.prepareAwardCloseout(ORG, awardId); // this award was finalized earlier
+  ok(readyPkg.readyToClose === true && readyPkg.blockers.length === 0, 'finalized award assembles as ready-to-close (no blockers)');
+  const notReadyPkg = await grants.prepareAwardCloseout(ORG, budAwardId); // no closeout opened → items outstanding
+  ok(notReadyPkg.readyToClose === false && notReadyPkg.blockers.some((b) => /Closeout item outstanding/.test(b)), 'award with no closeout opened assembles as NOT ready (outstanding items blocked)');
+  ok(Array.isArray(notReadyPkg.reportingObligations) && notReadyPkg.reportingObligations.some((o: any) => o.type === 'final_rppr'), 'closeout package surfaces the federal final-report obligations (2 CFR 200.344)');
+
   console.log('\n[Onboarding] study-onboarding orchestration — checklist + gate cross-referenced');
   {
     const onboardRoster = await roster.loadRosterForGate(ORG, [piId]);
