@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-12T00:15:09.971Z",
+  "generatedAt": "2026-06-12T00:19:36.165Z",
   "git": {
-    "sha": "652db7ca78ae584948e626eedc57b5d86bdb6a25",
+    "sha": "d8ff9a8f3defa7d101a6e52f614bb76421801422",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2261,7 +2261,7 @@
       },
       {
         "file": "server/routes/report-os.ts",
-        "lines": 1613
+        "lines": 1627
       },
       {
         "file": "server/services/contradiction-engine-service.ts",
