@@ -63,6 +63,55 @@ export interface IndCockpit {
   };
 }
 
+export interface DriftDigestEntry {
+  sequenceId: number;
+  sequenceNumber: string;
+  type: string;
+  status: string;
+  /** Why it surfaced: the live verdict changed, or it was never snapshotted. */
+  reason: 'drifted' | 'never_verified';
+  canDispatch: boolean;
+  lastVerifiedAt: string | null;
+}
+
+export interface DriftDigest {
+  entries: DriftDigestEntry[];
+  summary: { total: number; drifted: number; neverVerified: number };
+}
+
+/**
+ * Filter annotated gates to those needing attention: a drifted live verdict
+ * (takes precedence) or a sequence never verified. Pure.
+ */
+export function buildDriftDigest(gates: SequenceGateSummary[]): DriftDigest {
+  const entries: DriftDigestEntry[] = [];
+  for (const g of gates) {
+    const reason: 'drifted' | 'never_verified' | null = g.drift
+      ? 'drifted'
+      : g.lastVerifiedAt === null
+        ? 'never_verified'
+        : null;
+    if (!reason) continue;
+    entries.push({
+      sequenceId: g.sequenceId,
+      sequenceNumber: g.sequenceNumber,
+      type: g.type,
+      status: g.status,
+      reason,
+      canDispatch: g.canDispatch,
+      lastVerifiedAt: g.lastVerifiedAt,
+    });
+  }
+  return {
+    entries,
+    summary: {
+      total: entries.length,
+      drifted: entries.filter((e) => e.reason === 'drifted').length,
+      neverVerified: entries.filter((e) => e.reason === 'never_verified').length,
+    },
+  };
+}
+
 /** Fold the dashboard + per-sequence gates into the cockpit with a roll-up. */
 export function buildIndCockpit(input: {
   dashboard: IndDashboard;

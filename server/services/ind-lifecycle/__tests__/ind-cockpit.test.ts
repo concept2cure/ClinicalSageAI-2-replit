@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { buildIndCockpit, annotateGateWithSnapshot, type SequenceGateSummary } from '../ind-cockpit';
+import { buildIndCockpit, annotateGateWithSnapshot, buildDriftDigest, type SequenceGateSummary } from '../ind-cockpit';
 import type { IndDashboard } from '../ind-dashboard';
 
 // Minimal dashboard stub (the combiner only passes it through).
@@ -87,5 +87,25 @@ describe('annotateGateWithSnapshot', () => {
     const a = annotateGateWithSnapshot(base, { canDispatch: false, createdAt: new Date('2026-01-01T00:00:00.000Z') });
     expect(a.drift).toBe(true);
     expect(a.lastVerifiedAt).toBe('2026-01-01T00:00:00.000Z');
+  });
+});
+
+describe('buildDriftDigest', () => {
+  it('surfaces drifted and never-verified sequences, with drift taking precedence', () => {
+    const d = buildDriftDigest([
+      gate(0, true, [], { lastVerifiedAt: '2026-01-01T00:00:00.000Z', drift: false }), // ok, excluded
+      gate(1, false, ['EMPTY_SEQUENCE'], { lastVerifiedAt: '2026-01-02T00:00:00.000Z', drift: true }), // drifted
+      gate(2, true), // never verified
+      gate(3, false, [], { lastVerifiedAt: null, drift: true }), // drift wins over never-verified
+    ]);
+    expect(d.summary).toEqual({ total: 3, drifted: 2, neverVerified: 1 });
+    expect(d.entries.find((e) => e.sequenceId === 3)!.reason).toBe('drifted');
+    expect(d.entries.find((e) => e.sequenceId === 2)!.reason).toBe('never_verified');
+    expect(d.entries.some((e) => e.sequenceId === 0)).toBe(false);
+  });
+
+  it('is empty when every sequence is verified and on-target', () => {
+    const d = buildDriftDigest([gate(0, true, [], { lastVerifiedAt: '2026-01-01T00:00:00.000Z', drift: false })]);
+    expect(d.summary.total).toBe(0);
   });
 });
