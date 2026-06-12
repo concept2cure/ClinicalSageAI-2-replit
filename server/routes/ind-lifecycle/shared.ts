@@ -7,6 +7,8 @@
 import { Request, Response } from 'express';
 import { createRateLimiter } from '../../middleware/rateLimiter';
 import { createScopedLogger } from '../../utils/logger.js';
+import { evaluateIndReadiness } from '../../services/ind-lifecycle/ind-readiness-service';
+import { validateSequenceLeaves } from '../../services/ind-lifecycle/ind-sequence-validation';
 
 const logger = createScopedLogger('ind-lifecycle-routes');
 
@@ -73,4 +75,23 @@ export function sendPdf(res: Response, filename: string, buf: Buffer): void {
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
   res.status(200).send(buf);
+}
+
+/** Build a readiness report from a `readinessInput` body fragment, or null. */
+export function readinessFrom(input: any) {
+  if (!input || (input.filingType !== 'initial' && input.filingType !== 'amendment')) return null;
+  return evaluateIndReadiness({
+    filingType: input.filingType,
+    sectionStatus: input.sectionStatus ?? {},
+    completedForms: input.completedForms,
+    overdueSafetyReports: input.overdueSafetyReports,
+  });
+}
+
+/** Validate a `sequenceValidationInput` body fragment, or null. */
+export function validationFrom(input: any) {
+  if (!input || (input.filingType !== 'initial' && input.filingType !== 'amendment') || !Array.isArray(input.leaves)) {
+    return null;
+  }
+  return validateSequenceLeaves({ filingType: input.filingType, leaves: input.leaves });
 }

@@ -1,28 +1,35 @@
 /**
- * IND lifecycle REST surface — composed from three cohesive sub-routers, all
+ * IND lifecycle REST surface — composed from five cohesive sub-routers, all
  * merged under /api/ind-lifecycle (authenticateToken applied at the mount in
  * server/bootstrap/register-ind-lifecycle-routes.ts):
  *
- *  - documents.routes : authoring + rendering (safety report / annual report /
- *                       amendment plan / cover letter / briefing book / envelope)
- *  - filing.routes    : persist a rendered document as an audited eCTD sequence
- *                       (safety-report / annual-report / amendment *file)
- *  - analysis.routes  : readiness, clock, timeline, action items, sequence
- *                       validation, submission overview/dashboard
+ *  - documents.routes  : authoring + rendering (safety report / annual report /
+ *                        amendment plan / cover letter / briefing book / envelope)
+ *  - filing.routes     : persist a rendered document as an audited eCTD sequence
+ *                        (safety-report / annual-report / amendment *file)
+ *  - compute.routes    : pure compute — readiness, timeline, clock, action items,
+ *                        stateless sequence validation
+ *  - sequence.routes   : sequence-scoped — validation, manifest, diff, dispatch
+ *                        gate + snapshot, snapshot history
+ *  - submission.routes : submission-scoped — overview, dashboard, cockpit, drift
  *
- * Shared helpers (ctx resolution, error mapping, PDF send) live in
- * ./ind-lifecycle/shared.ts.
+ * Shared helpers (ctx resolution, error mapping, PDF send, body-fragment
+ * builders) live in ./ind-lifecycle/shared.ts.
  */
 
 import { Router } from 'express';
 import documentsRoutes from './ind-lifecycle/documents.routes';
 import filingRoutes from './ind-lifecycle/filing.routes';
-import analysisRoutes from './ind-lifecycle/analysis.routes';
+import computeRoutes from './ind-lifecycle/compute.routes';
+import sequenceRoutes from './ind-lifecycle/sequence.routes';
+import submissionRoutes from './ind-lifecycle/submission.routes';
 
 const router = Router();
 
 router.use(documentsRoutes);
 router.use(filingRoutes);
-router.use(analysisRoutes);
+router.use(computeRoutes);
+router.use(sequenceRoutes);
+router.use(submissionRoutes);
 
 export default router;
