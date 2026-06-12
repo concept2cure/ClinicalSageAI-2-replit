@@ -168,7 +168,7 @@ async function main() {
   ok(bridged.governedStudyId > 0 && bridged.ctdSection.startsWith('4.2'), `bridge created governed study (id ${bridged.governedStudyId}, CTD ${bridged.ctdSection})`);
   const govRow = await pool.query(`SELECT study_type, species, glp_compliant, submission_id FROM nonclinical_studies WHERE id=$1`, [bridged.governedStudyId]);
   ok(govRow.rows[0].study_type === 'repeat_dose_tox' && govRow.rows[0].glp_compliant === true && Number(govRow.rows[0].submission_id) === 1, 'governed study persisted with mapped type, GLP flag, submission link');
-  const derivedLink = await pool.query(`SELECT * FROM provenance_links WHERE source_type='ctd_nonclinical_study' AND source_id=$1 AND target_type='nonclinical_study'`, [SYNTHETIC_CTD_ID]);
+  const derivedLink = await pool.query(`SELECT * FROM provenance_links WHERE source_type='ctd_nonclinical_study' AND source_id=$1 AND target_type='nonclinical_study' AND target_id=$2`, [SYNTHETIC_CTD_ID, bridged.governedStudyId]);
   ok(derivedLink.rows.length === 1 && derivedLink.rows[0].link_role === 'derived_from', 'provenance: ctd_nonclinical_study → nonclinical_study (derived_from)');
   const m4Link = await pool.query(`SELECT * FROM provenance_links WHERE source_type='nonclinical_study' AND source_id=$1 AND target_type='submission_module4'`, [bridged.governedStudyId]);
   ok(m4Link.rows.length === 1 && m4Link.rows[0].link_role === 'supports', 'provenance: nonclinical_study → submission_module4 (supports)');
