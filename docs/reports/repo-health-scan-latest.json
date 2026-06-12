@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-06-11T23:51:07.570Z",
+  "generatedAt": "2026-06-12T00:01:15.885Z",
   "git": {
-    "sha": "cc589f8823810f8879b6ddb7ca5039c1da254d20",
-    "branch": "concept2cure-v2"
+    "sha": "240dce389daefae5e7dbbdec8dc1c1bf96a46af5",
+    "branch": "claude/persona-overlay-extraction"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -10,7 +10,7 @@
   },
   "summary": {
     "duplicateBasenames": 205,
-    "largeFilesByBytes": 15,
+    "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
   "findings": {
@@ -2096,10 +2096,6 @@
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "bytes": 114269
-      },
-      {
-        "file": "server/services/ana-ri/persona.ts",
-        "bytes": 103721
       }
     ],
     "largeFilesByLines": [
@@ -2281,12 +2277,19 @@
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": 0
+    }
+  },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 303,
-      "largeByBytes": 12,
+      "largeByBytes": 11,
       "largeByLines": 34
     },
     {
