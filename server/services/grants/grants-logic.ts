@@ -178,3 +178,31 @@ export function evaluateCloseout(record: CloseoutRecordState, periodEnd: string 
 
   return { dueDate, daysRemaining, overdue, items, outstanding, readyToFinalize, status };
 }
+
+// ─── Subaward eligibility (2 CFR 200.214 / 200.331 / 200.332) ─────────────────
+
+export type SubawardScreenStatus = 'not_screened' | 'cleared' | 'excluded';
+export type SubawardRiskLevel = 'low' | 'medium' | 'high';
+
+export interface SubawardEligibilityInput {
+  screenStatus: SubawardScreenStatus;
+  riskLevel: SubawardRiskLevel | null;
+}
+
+export interface SubawardEligibility {
+  eligible: boolean;
+  blockers: string[];
+}
+
+/**
+ * Whether a subaward may be executed. A pass-through entity must not subaward to a
+ * debarred/suspended party (2 CFR 200.214) and must assess subrecipient risk before
+ * issuing the subaward (2 CFR 200.332(b)). Pure; the deterministic gate for execute.
+ */
+export function evaluateSubawardEligibility(input: SubawardEligibilityInput): SubawardEligibility {
+  const blockers: string[] = [];
+  if (input.screenStatus === 'excluded') blockers.push('Subrecipient is on the SAM.gov exclusions list — subaward prohibited (2 CFR 200.214).');
+  if (input.screenStatus === 'not_screened') blockers.push('Restricted-party screening not performed (2 CFR 200.214 — verify not suspended/debarred).');
+  if (input.riskLevel == null) blockers.push('Subrecipient risk assessment not recorded (2 CFR 200.332(b)).');
+  return { eligible: blockers.length === 0, blockers };
+}

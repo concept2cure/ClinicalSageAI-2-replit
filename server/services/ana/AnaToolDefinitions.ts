@@ -3854,6 +3854,40 @@ export const FINALIZE_GRANT_CLOSEOUT: AnaTool = {
   input_schema: { type: 'object', properties: { award_id: { type: 'number' }, reason: { type: 'string' } }, required: ['award_id'] },
 };
 
+export const RECORD_SUBAWARD: AnaTool = {
+  name: 'record_subaward',
+  description:
+    "Record a subaward to a subrecipient under a prime award (2 CFR 200.331). Capture institution type, amount, period, and an initial risk level. The subaward starts in 'draft' and cannot be executed until screened and risk-assessed. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      award_id: { type: 'number' }, subrecipient_name: { type: 'string' }, subrecipient_uei: { type: 'string' },
+      institution_type: { type: 'string', enum: ['higher_ed', 'nonprofit', 'commercial', 'foreign', 'government', 'other'] },
+      amount: { type: 'number' }, period_start: { type: 'string' }, period_end: { type: 'string' },
+      risk_level: { type: 'string', enum: ['low', 'medium', 'high'] }, reason: { type: 'string' },
+    },
+    required: ['award_id', 'subrecipient_name'],
+  },
+};
+
+export const SCREEN_SUBAWARD: AnaTool = {
+  name: 'screen_subaward',
+  description:
+    "Record the restricted-party screening result for a subaward's subrecipient (2 CFR 200.214). Use screen_restricted_party first to perform the live SAM.gov exclusions lookup, then record 'cleared' or 'excluded' here. Optionally set the risk level. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { subaward_id: { type: 'number' }, screen_status: { type: 'string', enum: ['cleared', 'excluded'] }, screen_source: { type: 'string' }, risk_level: { type: 'string', enum: ['low', 'medium', 'high'] }, reason: { type: 'string' } },
+    required: ['subaward_id', 'screen_status'],
+  },
+};
+
+export const EXECUTE_SUBAWARD: AnaTool = {
+  name: 'execute_subaward',
+  description:
+    "Execute a subaward. Gated: rejected unless the subrecipient was screened CLEAR of SAM.gov exclusions and a risk assessment is recorded (2 CFR 200.214 / 200.332). Governed + audited (signature).",
+  input_schema: { type: 'object', properties: { subaward_id: { type: 'number' }, reason: { type: 'string' } }, required: ['subaward_id'] },
+};
+
 export const CREATE_RIM_PRODUCT: AnaTool = {
   name: 'create_rim_product',
   description:
@@ -5629,6 +5663,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   OPEN_GRANT_CLOSEOUT,
   UPDATE_GRANT_CLOSEOUT,
   FINALIZE_GRANT_CLOSEOUT,
+  RECORD_SUBAWARD,
+  SCREEN_SUBAWARD,
+  EXECUTE_SUBAWARD,
   CREATE_RIM_PRODUCT,
   SET_REGISTRATION_STATUS,
   REVIEW_LABEL_CURRENCY,

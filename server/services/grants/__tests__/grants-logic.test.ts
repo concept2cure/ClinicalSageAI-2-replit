@@ -11,6 +11,7 @@ import {
   awardPeriodState,
   closeoutDueDate,
   evaluateCloseout,
+  evaluateSubawardEligibility,
   type DeadlineItem,
   type CloseoutRecordState,
 } from '../grants-logic';
@@ -105,5 +106,26 @@ describe('evaluateCloseout', () => {
   it('reports complete when the record is already completed', () => {
     const s = evaluateCloseout({ ...all, status: 'completed' }, '2025-01-01', TODAY);
     expect(s.status).toBe('complete');
+  });
+});
+
+describe('evaluateSubawardEligibility', () => {
+  it('is eligible only when cleared and risk-assessed', () => {
+    expect(evaluateSubawardEligibility({ screenStatus: 'cleared', riskLevel: 'low' }).eligible).toBe(true);
+  });
+  it('blocks an excluded subrecipient (2 CFR 200.214)', () => {
+    const r = evaluateSubawardEligibility({ screenStatus: 'excluded', riskLevel: 'low' });
+    expect(r.eligible).toBe(false);
+    expect(r.blockers.some((b) => /200\.214/.test(b))).toBe(true);
+  });
+  it('blocks when not screened', () => {
+    const r = evaluateSubawardEligibility({ screenStatus: 'not_screened', riskLevel: 'low' });
+    expect(r.eligible).toBe(false);
+    expect(r.blockers.some((b) => /screening not performed/.test(b))).toBe(true);
+  });
+  it('blocks when risk assessment is missing (2 CFR 200.332)', () => {
+    const r = evaluateSubawardEligibility({ screenStatus: 'cleared', riskLevel: null });
+    expect(r.eligible).toBe(false);
+    expect(r.blockers.some((b) => /200\.332/.test(b))).toBe(true);
   });
 });
