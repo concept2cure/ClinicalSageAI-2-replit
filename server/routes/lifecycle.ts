@@ -97,6 +97,9 @@ router.post('/obligations', async (req, res) => {
   await governed(req, res, 'create', parsed.data.reason, async (client, orgId, userId) => {
     const { id, occurrencesCreated } = await createObligationTx(client, orgId, userId, parsed.data);
     recordLifecycleObligation(parsed.data.obligationType, occurrencesCreated);
+    // Best-effort: surface the obligation deadline as a central task.
+    const { emitDeadlineTask } = await import('../services/research-compliance/tasking-bridge');
+    await emitDeadlineTask({ organizationId: orgId, title: `Lifecycle obligation: ${parsed.data.title}`, sourceEntityType: 'lifecycle_obligation', sourceEntityId: id, dueDate: parsed.data.dueDate, taskType: 'deliverable', regulatoryImpact: true });
     return { target: `lifecycle-obligation:${id}`, payload: { type: parsed.data.obligationType, occurrencesCreated }, body: { id, occurrencesCreated, pathway: classificationPathway(parsed.data.classification ?? null) } };
   });
 });

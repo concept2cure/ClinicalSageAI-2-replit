@@ -79,8 +79,9 @@ AnA can drive all of the above through her governed tools (tenant from
 `classify_device`, `get_device_reviewer_checklist`, `get_biocompatibility_endpoints`,
 `build_device_blueprint`, `assess_stored_cer`, `build_global_device_strategy`,
 `get_regulatory_timeline`, `validate_udi`, `get_electrical_standards`,
-`get_sterilization_requirements`, `assess_combination_product`, `assess_qms`,
-`list_regulatory_capabilities`, `assess_dispatch_readiness`. The UI's AnA panel passes page context
+`get_sterilization_requirements`, `assess_combination_product`,
+`get_device_labeling`, `assess_qms`, `list_regulatory_capabilities`,
+`assess_dispatch_readiness`. The UI's AnA panel passes page context
 (`{ submissionId, sectionCode, region }`); the tools supply nothing tenant-related.
 
 ## Still server-side TODO before some screens are fully live
@@ -143,6 +144,7 @@ Workspace map + error catalog for nav/error handling: `shared/types/submission-u
 | GET | `/api/submissions/regulatory-capabilities` | → capabilities index | One call to discover the whole deterministic regulatory layer — each capability's category, description, route, and AnA tool. |
 | POST | `/api/submissions/combination-product/assess` | `{ components, primaryModeOfAction?, combinationType? }` → assessment | 21 CFR Part 3: combination detection + PMOA → FDA lead center (CDER/CBER/CDRH) + EU Article 117 consideration; recommends an RFD when PMOA is unestablished. |
 | GET/POST | `/api/submissions/device/qms/{structure,assess}` | → ISO 13485 QMS | The ISO 13485:2016 clause structure with FDA QSR/QMSR mapping (21 CFR 820.x), auditor questions, the QMSR transition note (effective 2026-02-02), and a readiness gap-check. |
+| POST | `/api/submissions/device/labeling` | `{ sterile, singleUse, implantable, … }` → labeling reqs | FDA 21 CFR 801 + EU MDR Annex I §23 label elements + IFU sections + ISO 15223-1 symbols selected from device facts (sterile→sterile symbol; reusable→reprocessing; implant→implant-card note). |
 
 > `POST /device/blueprint` now also returns a `scorecard` (weighted 0–100 readiness + level + top gaps).
 

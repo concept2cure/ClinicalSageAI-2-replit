@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-06-12T00:12:39.182Z",
+  "generatedAt": "2026-06-12T00:20:50.765Z",
   "git": {
-    "sha": "eac813cf55fa60134e0571030a41688381d32977",
-    "branch": "claude/persona-overlay-extraction"
+    "sha": "a7f43356f4cd775611836feded3f8303afb2310e",
+    "branch": "concept2cure-v2"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -10,14 +10,14 @@
   },
   "summary": {
     "duplicateBasenames": 206,
-    "largeFilesByBytes": 14,
+    "largeFilesByBytes": 15,
     "largeFilesByLines": 44
   },
   "findings": {
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 85,
+        "count": 84,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -75,7 +75,6 @@
           "server/services/intelligence-engine/index.ts",
           "server/services/intelligence/index.ts",
           "server/services/ivd-knowledge/index.ts",
-          "server/services/literature/index.ts",
           "server/services/living-record/index.ts",
           "server/services/ocr/index.ts",
           "server/services/orchestration/index.ts",
@@ -2059,11 +2058,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 386092
+        "bytes": 386959
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 303069
+        "bytes": 304244
       },
       {
         "file": "server/statistics-service.ts",
@@ -2104,6 +2103,10 @@
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "bytes": 114269
+      },
+      {
+        "file": "server/services/ana-ri/persona.ts",
+        "bytes": 103721
       }
     ],
     "largeFilesByLines": [
@@ -2117,7 +2120,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 7975
+        "lines": 7994
       },
       {
         "file": "server/statistics-service.ts",
@@ -2125,7 +2128,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 5712
+        "lines": 5729
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2257,7 +2260,7 @@
       },
       {
         "file": "server/routes/report-os.ts",
-        "lines": 1613
+        "lines": 1627
       },
       {
         "file": "server/services/contradiction-engine-service.ts",
@@ -2285,19 +2288,12 @@
       }
     ]
   },
-  "comparison": {
-    "baseline": "docs/reports/repo-health-scan-latest.json",
-    "delta": {
-      "duplicateBasenames": 0,
-      "largeFilesByBytes": -1,
-      "largeFilesByLines": 0
-    }
-  },
+  "comparison": null,
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 304,
-      "largeByBytes": 11,
+      "duplicateGroups": 303,
+      "largeByBytes": 12,
       "largeByLines": 34
     },
     {

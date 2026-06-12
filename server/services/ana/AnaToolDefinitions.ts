@@ -3363,6 +3363,22 @@ export const ASSESS_COMBINATION_PRODUCT: AnaTool = {
   },
 };
 
+export const GET_DEVICE_LABELING: AnaTool = {
+  name: 'get_device_labeling',
+  description:
+    "Resolve the labeling requirements for a device from its facts (sterile, singleUse, reusable, implantable, prescriptionOnly, forClinicalInvestigation, hasExpiry, containsMedicinalSubstance). Returns the applicable FDA label elements (21 CFR 801), EU MDR label elements (Annex I §23.2), IFU content sections (Annex I §23.4), the ISO 15223-1 symbols, and reviewer questions — e.g. a sterile device adds the sterilisation method + sterile symbol; a reusable device adds reprocessing instructions; an implant adds the implant-card note. Labeling is a frequent deficiency; this is the required element set, not approved label text. Deterministic.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      sterile: { type: 'boolean' }, singleUse: { type: 'boolean' }, reusable: { type: 'boolean' },
+      implantable: { type: 'boolean' }, prescriptionOnly: { type: 'boolean' },
+      forClinicalInvestigation: { type: 'boolean' }, hasExpiry: { type: 'boolean' },
+      containsMedicinalSubstance: { type: 'boolean' },
+    },
+    required: [],
+  },
+};
+
 export const ASSESS_QMS: AnaTool = {
   name: 'assess_qms',
   description:
@@ -5515,6 +5531,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   GET_ELECTRICAL_STANDARDS,
   GET_STERILIZATION_REQUIREMENTS,
   ASSESS_COMBINATION_PRODUCT,
+  GET_DEVICE_LABELING,
   ASSESS_QMS,
   LIST_REGULATORY_CAPABILITIES,
   ASSESS_DISPATCH_READINESS,

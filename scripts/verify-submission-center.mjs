@@ -242,6 +242,8 @@ async function main() {
   ok('combination-product maps device PMOA to CDRH', combo.status === 200 && combo.json?.isCombination === true && combo.json?.fdaLeadCenter === 'CDRH', `status ${combo.status}`);
   const qms = await c.req('GET', '/api/submissions/device/qms/structure');
   ok('QMS structure returns ISO 13485 clauses + QMSR note', qms.status === 200 && Array.isArray(qms.json?.clauses) && qms.json.clauses.some((x) => x.id === 'capa') && /2026-02-02/.test(qms.json?.fdaNote || ''), `status ${qms.status}`);
+  const lbl = await c.req('POST', '/api/submissions/device/labeling', { sterile: true, singleUse: true });
+  ok('labeling adds sterile + single-use elements/symbols', lbl.status === 200 && Array.isArray(lbl.json?.mdrLabel) && lbl.json.mdrLabel.some((e) => e.id === 'sterile_state') && lbl.json.symbols.some((s) => s.id === 'do_not_reuse'), `status ${lbl.status}`);
 
   // Document template structures (canonical section skeletons) — static reference data.
   const dt = await c.req('GET', '/api/submissions/document-templates?family=ectd');

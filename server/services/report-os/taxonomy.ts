@@ -374,4 +374,20 @@ export const REPORT_TYPE_SEED: ReportTypeDefinition[] = [
     governanceRequirements: { part11: true, auditTrail: true },
     truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true },
   },
+  {
+    // Research-compliance roster training status (foundation; "no index until trained").
+    typeId: 'research_compliance.training_status',
+    label: 'Research Personnel Training Status',
+    family: 'research_compliance',
+    allowedScopes: ['program', 'project', 'account'],
+    allowedPersonas: ['compliance_officer', 'ra_lead', 'qa'],
+    allowedClientSegments: ['academic', 'biotech', 'pharma'],
+    dataDependencies: ['research_personnel', 'personnel_training'],
+    artifactDependencies: ['concept2cure_artifacts'],
+    workflowDependencies: ['governance_boundary'],
+    anaModules: ['ana-ri'],
+    exportTemplate: 'research-compliance-training-status',
+    governanceRequirements: { part11: true, auditTrail: true },
+    truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true },
+  },
 ];
