@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-12T00:20:50.765Z",
+  "generatedAt": "2026-06-12T00:31:17.160Z",
   "git": {
-    "sha": "a7f43356f4cd775611836feded3f8303afb2310e",
+    "sha": "435b3bcc78f1c5fcc2b54915fe28b90fa97f0915",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -10,7 +10,7 @@
   },
   "summary": {
     "duplicateBasenames": 206,
-    "largeFilesByBytes": 15,
+    "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
   "findings": {
@@ -2103,10 +2103,6 @@
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "bytes": 114269
-      },
-      {
-        "file": "server/services/ana-ri/persona.ts",
-        "bytes": 103721
       }
     ],
     "largeFilesByLines": [
@@ -2293,7 +2289,7 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 303,
-      "largeByBytes": 12,
+      "largeByBytes": 11,
       "largeByLines": 34
     },
     {
