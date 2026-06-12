@@ -145,7 +145,13 @@ P0 is built, wired, and tested; a credible P1 corpus seed is in. Concretely:
 
 **Verification:** project typecheck clean (0 errors); new and affected suites green (evidence provenance, cheminformatics, ChEMBL client, AnA chem + preprint tools, integration-status, IVD knowledge corpus).
 
-**Still scoped, not yet built (honest):** remaining CNS depth (disease-progression models, agency precedent), retrofitting the provenance envelope onto the remaining evidence tools and the RAG retrieval path, MMRM, the empirical trial-feasibility model, and the offline grounding/hallucination eval harness. These are multi-week efforts and are deliberately left as follow-ups rather than shipped as stubs.
+**Increment 4 (this follow-up) — provenance across the core evidence surface:**
+
+- The unified provenance envelope is now emitted by the major citeable evidence tools, not just the discovery three: `search_literature` (PubMed — primary, peer-reviewed), `search_clinical_evidence` (ClinicalTrials.gov — keyed by NCT id), `search_medicare_coverage` (CMS — keyed by MCD/document id), `search_drug_labels` and `search_drug_approvals` (openFDA — keyed by SPL id / application number), and `lookup_icd10_code` (ICD-10 — keyed by code). Each result now carries the same `provenance` array, so AnA's whole evidence surface is uniformly citeable and audit-ready under one shape.
+
+**Verification:** project typecheck clean (0 errors); new and affected suites green (evidence-tools provenance, evidence provenance unit, cheminformatics, ChEMBL client, AnA chem + preprint tools).
+
+**Still scoped, not yet built (honest):** retrofitting provenance onto the remaining aggregate tools (FAERS/MAUDE adverse-event signals) and the RAG retrieval path, deeper CNS coverage, MMRM, the empirical trial-feasibility model, and the offline grounding/hallucination eval harness. These are larger efforts and are deliberately left as follow-ups rather than shipped as stubs.
 
 ## 7. The single most important move
 
