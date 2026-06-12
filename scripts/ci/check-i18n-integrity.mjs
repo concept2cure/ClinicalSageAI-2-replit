@@ -116,13 +116,90 @@ export function checkI18nIntegrity() {
   return { errors, languages: dirs, namespaces };
 }
 
+const SRC_DIR = resolve(ROOT, 'client/src');
+const DEFAULT_NS = 'common';
+
+/** Recursively list .ts/.tsx source files (excluding tests). */
+function sourceFiles(dir = SRC_DIR, out = []) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = resolve(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name === 'node_modules' || entry.name === '__tests__') continue;
+      sourceFiles(full, out);
+    } else if (/\.tsx?$/.test(entry.name) && !/\.(test|spec)\.tsx?$/.test(entry.name)) {
+      out.push(full);
+    }
+  }
+  return out;
+}
+
+/**
+ * Verify that every statically-keyed t('…') / <Trans i18nKey="…"> reference in
+ * the client resolves to a key that actually exists in the English bundles — so a
+ * typo'd or renamed key fails CI instead of silently rendering its raw key string
+ * to a user (the failure mode the parity check can't see, since it only compares
+ * the bundles to each other).
+ *
+ * Dynamic keys (t(`greeting.${x}`)) are skipped. Each file's translator bindings
+ * (the `t` plus any `const { t: alias } = useTranslation(...)`) and the union of
+ * namespaces it loads are parsed from source; a reference is accepted if the key
+ * exists in ANY namespace the file loads, so aliasing and multi-namespace files
+ * never produce false positives.
+ */
+export function checkI18nKeyUsage() {
+  const errors = [];
+  const namespaces = readdirSync(resolve(LOCALES_DIR, REFERENCE))
+    .filter((f) => f.endsWith('.json')).map((f) => f.replace(/\.json$/, ''));
+  const enKeys = {};
+  for (const ns of namespaces) enKeys[ns] = new Set(Object.keys(loadNamespace(REFERENCE, ns).data || {}));
+
+  let checked = 0;
+  for (const file of sourceFiles()) {
+    const src = readFileSync(file, 'utf8');
+    if (!/useTranslation\s*\(/.test(src)) continue; // no translator bound here
+    const rel = file.slice(ROOT.length + 1);
+
+    // Parse `const { t[, …][: alias] } = useTranslation('ns' | ['a','b'] | )`.
+    const bindings = new Set();
+    const fileNs = new Set();
+    for (const m of src.matchAll(/\{([^}]*)\}\s*=\s*useTranslation\s*\(([^)]*)\)/g)) {
+      const tb = m[1].match(/\bt\b(?:\s*:\s*(\w+))?/);
+      if (tb) bindings.add(tb[1] || 't');
+      const nsHits = [...m[2].matchAll(/['"]([a-z]+)['"]/g)].map((x) => x[1]);
+      (nsHits.length ? nsHits : [DEFAULT_NS]).forEach((n) => fileNs.add(n));
+    }
+    if (bindings.size === 0) continue;
+    if (fileNs.size === 0) fileNs.add(DEFAULT_NS);
+
+    const verify = (rawKey, kind) => {
+      checked++;
+      let ns = null, key = rawKey;
+      if (rawKey.includes(':')) [ns, key] = rawKey.split(':');
+      const nsList = ns ? [ns] : [...fileNs];
+      if (!nsList.some((n) => enKeys[n]?.has(key)))
+        errors.push(`${rel}: ${kind} '${rawKey}' not found in en bundle(s) [${nsList.join(', ')}]`);
+    };
+
+    for (const b of bindings) {
+      // Static `binding('key')` / `binding("key")` — dynamic template keys are skipped.
+      const re = new RegExp(`\\b${b}\\(\\s*['"]([a-zA-Z0-9_.:]+)['"]`, 'g');
+      for (const m of src.matchAll(re)) verify(m[1], `${b}()`);
+    }
+    // <Trans i18nKey="key"> (static only).
+    for (const m of src.matchAll(/i18nKey=\s*["']([a-zA-Z0-9_.:]+)["']/g)) verify(m[1], 'i18nKey');
+  }
+  return { errors, checked };
+}
+
 // CLI
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const { errors, languages, namespaces } = checkI18nIntegrity();
+  const parity = checkI18nIntegrity();
+  const usage = checkI18nKeyUsage();
+  const errors = [...parity.errors, ...usage.errors];
   if (errors.length) {
     console.error(`[i18n-integrity] ${errors.length} violation(s):`);
     for (const e of errors) console.error(`  - ${e}`);
     process.exit(1);
   }
-  console.log(`[i18n-integrity] OK — ${languages.length} languages × ${namespaces.length} namespaces (${namespaces.join(', ')}) all consistent with '${REFERENCE}'.`);
+  console.log(`[i18n-integrity] OK — ${parity.languages.length} languages × ${parity.namespaces.length} namespaces (${parity.namespaces.join(', ')}) consistent with '${REFERENCE}'; ${usage.checked} t()/i18nKey references all resolve.`);
 }
