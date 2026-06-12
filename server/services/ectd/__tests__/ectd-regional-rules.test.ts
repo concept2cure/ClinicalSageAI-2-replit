@@ -93,3 +93,64 @@ describe('NMPA (China) package validator', () => {
     expect(findings.filter((x) => x.region === 'CN')).toHaveLength(0);
   });
 });
+
+describe('regional eCTD rule catalog — MFDS (Korea)', () => {
+  it('provides a KR rule pack, every rule tagged region=KR with a citation', () => {
+    const kr = getRulesForRegion('KR');
+    expect(kr.length).toBeGreaterThanOrEqual(4);
+    for (const rule of kr) {
+      expect(rule.region).toBe('KR');
+      expect(rule.id).toMatch(/^MFDS-KR-/);
+      expect(rule.citation.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('codifies the Korean-language (K-CTD) requirement', () => {
+    const lang = getRulesForRegion('KR').find((r) => r.id === 'MFDS-KR-002');
+    expect(lang).toBeDefined();
+    expect(lang!.severity).toBe('error');
+    expect(lang!.description).toMatch(/Korean/i);
+  });
+
+  it('exposes a (conservative, flagged) gateway size limit for KR', () => {
+    expect(getGatewaySizeLimit('KR')).toBeGreaterThan(0);
+  });
+});
+
+describe('MFDS (Korea) package validator', () => {
+  const ctx = {
+    region: 'KR' as const,
+    applicationNumber: '20240001',
+    sequenceNumber: '0000',
+    submissionType: 'initial',
+  };
+
+  it('flags a missing kr-regional.xml backbone (MFDS-KR-001, error)', () => {
+    const findings = validateRegionalPackage(ctx, [
+      { sectionCode: 'm1.2', filePath: 'm1/kr/application-form.pdf', mimeType: 'application/pdf', fileSize: 100 },
+    ]);
+    const f = findings.find((x) => x.ruleId === 'MFDS-KR-001');
+    expect(f).toBeDefined();
+    expect(f!.severity).toBe('error');
+    expect(f!.region).toBe('KR');
+  });
+
+  it('flags a non-ASCII file name (MFDS-KR-004, warning, leaf-scoped)', () => {
+    const findings = validateRegionalPackage(ctx, [
+      { sectionCode: 'm1', filePath: 'm1/kr/kr-regional.xml', mimeType: 'application/xml', fileSize: 10 },
+      { sectionCode: 'm1.2', filePath: 'm1/kr/신청서.pdf', mimeType: 'application/pdf', fileSize: 100 },
+    ]);
+    const f = findings.find((x) => x.ruleId === 'MFDS-KR-004');
+    expect(f).toBeDefined();
+    expect(f!.severity).toBe('warning');
+    expect(f!.scope).toBe('leaf');
+  });
+
+  it('passes a well-formed KR package with no MFDS findings', () => {
+    const findings = validateRegionalPackage(ctx, [
+      { sectionCode: 'm1', filePath: 'm1/kr/kr-regional.xml', mimeType: 'application/xml', fileSize: 10 },
+      { sectionCode: 'm1.2', filePath: 'm1/kr/application-form.pdf', mimeType: 'application/pdf', fileSize: 100 },
+    ]);
+    expect(findings.filter((x) => x.region === 'KR')).toHaveLength(0);
+  });
+});

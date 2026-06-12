@@ -14,7 +14,7 @@
  *  - Health Canada Regulatory Enrolment Process (REP)
  */
 
-export type RegulatoryRegion = 'US' | 'EU' | 'JP' | 'CA' | 'CN';
+export type RegulatoryRegion = 'US' | 'EU' | 'JP' | 'CA' | 'CN' | 'KR';
 export type RegionalSeverity = 'error' | 'warning' | 'info';
 
 export interface RegionalRule {
@@ -221,6 +221,36 @@ export const REGIONAL_RULES: RegionalRule[] = [
     citation: 'NMPA eCTD技术规范 V1.0 (2019)',
   },
 
+  // --- MFDS (Korea) — KR eCTD v1.0 ---
+  {
+    id: 'MFDS-KR-001',
+    region: 'KR',
+    description: 'eCTD must conform to the KR eCTD specification (KR eCTD v1.0 DTD / KR v1.0 Validation Criteria), including the M1 regional backbone file',
+    severity: 'error',
+    citation: 'MFDS KR eCTD v1.0 Validation Criteria',
+  },
+  {
+    id: 'MFDS-KR-002',
+    region: 'KR',
+    description: 'Module 1 administrative and product-information documents must be in Korean (K-CTD)',
+    severity: 'error',
+    citation: 'MFDS K-CTD guidance (의약품 국제공통기술문서)',
+  },
+  {
+    id: 'MFDS-KR-003',
+    region: 'KR',
+    description: 'Clinical study datasets should be CDISC-compliant per the MFDS adoption of CDISC standards',
+    severity: 'warning',
+    citation: 'MFDS CDISC adoption (2021 regulatory amendment)',
+  },
+  {
+    id: 'MFDS-KR-004',
+    region: 'KR',
+    description: 'File and folder names must follow the KR eCTD ASCII naming convention (Korean belongs in document content, not file names)',
+    severity: 'warning',
+    citation: 'MFDS KR eCTD v1.0 Validation Criteria',
+  },
+
   // --- Health Canada (REP) ---
   {
     id: 'HC-REP-001',
@@ -260,6 +290,9 @@ const PMDA_LIMIT_BYTES = 1024 * 1024 * 1024;
 // NMPA does not publish a single eCTD gateway package-size limit in the accessible
 // technical specification; use a conservative 1 GB default pending verification.
 const NMPA_LIMIT_BYTES = 1024 * 1024 * 1024;
+// MFDS does not publish a single eCTD gateway package-size limit in the accessible
+// guidance; use a conservative 1 GB default pending verification.
+const MFDS_LIMIT_BYTES = 1024 * 1024 * 1024;
 
 // ── Validators ──────────────────────────────────────────────────────────────
 
@@ -299,6 +332,9 @@ export function validateRegionalPackage(
       break;
     case 'CN':
       validateNMPAPackage(context, leaves, findings);
+      break;
+    case 'KR':
+      validateMFDSPackage(context, leaves, findings);
       break;
   }
 
@@ -538,6 +574,42 @@ function validateNMPAPackage(
   }
 }
 
+function validateMFDSPackage(
+  _context: RegionalContext,
+  leaves: RegionalLeafRef[],
+  findings: RegionalFinding[]
+): void {
+  // MFDS-KR-001: the M1 regional backbone file must be present.
+  const hasKRRegional = leaves.some(l => l.filePath.endsWith('m1/kr/kr-regional.xml'));
+  if (!hasKRRegional) {
+    findings.push({
+      ruleId: 'MFDS-KR-001',
+      region: 'KR',
+      severity: 'error',
+      message: 'kr-regional.xml is missing from /m1/kr/',
+      fix: 'Generate and include the KR eCTD M1 regional XML at /m1/kr/kr-regional.xml',
+      scope: 'package',
+    });
+  }
+
+  // MFDS-KR-004: file/folder names follow the KR eCTD ASCII naming convention. The
+  // dossier content is Korean (K-CTD), but eCTD file names remain ASCII.
+  for (const leaf of leaves) {
+    const filename = leaf.filePath.split('/').pop() || '';
+    if (!FILENAME_PATTERN.test(filename)) {
+      findings.push({
+        ruleId: 'MFDS-KR-004',
+        region: 'KR',
+        severity: 'warning',
+        message: `Filename "${filename}" does not follow the KR eCTD ASCII naming convention (lowercase a-z, 0-9, hyphens, periods)`,
+        fix: 'Rename to ASCII per the KR eCTD v1.0 file-naming rules (Korean belongs in document content, not file names)',
+        scope: 'leaf',
+        leafPath: leaf.filePath,
+      });
+    }
+  }
+}
+
 /**
  * Get all rules that apply to a given region (for documentation / UI display).
  */
@@ -555,5 +627,6 @@ export function getGatewaySizeLimit(region: RegulatoryRegion): number {
     case 'JP': return PMDA_LIMIT_BYTES;
     case 'CA': return FDA_GATEWAY_LIMIT_BYTES;
     case 'CN': return NMPA_LIMIT_BYTES;
+    case 'KR': return MFDS_LIMIT_BYTES;
   }
 }
