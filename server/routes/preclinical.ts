@@ -70,11 +70,31 @@ router.post(
         ? String(req.body.sourcePdfId).slice(0, 64)
         : `pdf-${randomUUID()}`;
 
+    // Opt-in governed bridge: when the request carries tenant + user context (and
+    // either governed=true or a submissionId), thread the digested study into the
+    // governed registry with Module 4 provenance. Falls back to legacy digestion.
+    const r = req as any;
+    const orgId = Number(r.tenantId ?? r.organizationId ?? r.user?.organizationId);
+    const userId = Number(r.userId ?? r.user?.id ?? r.user?.userId);
+    const submissionId = Number.parseInt(String(req.body?.submissionId ?? ''), 10);
+    const iacucProtocolId = Number.parseInt(String(req.body?.iacucProtocolId ?? ''), 10);
+    const wantsGoverned = String(req.body?.governed ?? '') === 'true' || Number.isInteger(submissionId);
+    const governance = wantsGoverned && Number.isFinite(orgId) && Number.isFinite(userId)
+      ? {
+          organizationId: orgId,
+          userId,
+          submissionId: Number.isInteger(submissionId) ? submissionId : null,
+          iacucProtocolId: Number.isInteger(iacucProtocolId) ? iacucProtocolId : null,
+          reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
+        }
+      : undefined;
+
     try {
       const result = await ingestStudy({
         programId,
         pdfBuffer: req.file.buffer,
         sourcePdfId,
+        governance,
       });
 
       log.info('Preclinical study ingested', {
@@ -91,6 +111,8 @@ router.post(
           sourcePdfId,
           extractionConfidence: result.extractionConfidence,
           model: result.model,
+          governedStudyId: result.governedStudyId,
+          ctdSection: result.ctdSection,
         },
       });
     } catch (err) {

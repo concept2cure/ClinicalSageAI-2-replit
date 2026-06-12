@@ -4,8 +4,8 @@
 ## ✅ DB verification — DONE (no longer deferred)
 
 The governed backend was run and verified against a live Postgres 16:
-- All 12 domain migrations apply cleanly (DDL + CHECK constraints + FKs + indexes); a negative insert is rejected by the `chk_fcoi_form_matches_flag` constraint.
-- **17/17 governed-path assertions pass** (`scripts/db-verify/`): FCOI derive→certify→provenance→audit-hash-chain→c2c_ana_actions ledger→signature-invalidation; controlled-substances perpetual ledger rejects negative inventory; HA commitment threads 2 provenance links; IACUC approval stamps the 3-year expiration + Module 4 provenance.
+- All domain migrations apply cleanly (DDL + CHECK constraints + FKs + indexes); a negative insert is rejected by the `chk_fcoi_form_matches_flag` constraint.
+- **40/40 governed-path assertions pass** (`scripts/db-verify/verify-research-compliance.ts`): FCOI derive→certify→provenance→audit-hash-chain→c2c_ana_actions ledger→signature-invalidation; controlled-substances perpetual ledger rejects negative inventory; HA commitment threads 2 provenance links; IACUC approval stamps the 3-year expiration + Module 4 provenance; training gate ("no index until trained") blocks then clears; effort certification (certify + content hash + over-commit rejection); research-security COI (foreign-nexus flag + review); preclinical bridge (digested → governed registry + Module 4 provenance); Report-OS domain providers compute real numbers; deadline events flow to central `unified_tasks`.
 - Reproducible via `scripts/db-verify/README.md`.
 
 Remaining per-capability DB checks (RLS session-var enforcement, full report-run resolution) are listed under each capability below.
@@ -561,3 +561,35 @@ DIA TMF RM 11-zone catalog; `classifyArtifact` (keyword auto-classifier baseline
 ## Roadmap complete
 
 All 15 capabilities are accounted for: **C2C-01 through C2C-08, C2C-11 through C2C-15 built end-to-end (backend)**; **C2C-02** is the provenance spine threaded by 7+ consumers; **C2C-09** (Device/IVD) and **C2C-10** (PV/DSUR) pre-exist on the trunk and were not rebuilt. Every built capability: CHECK-constrained schema + authored migration, a regulation-cited pure deterministic gate with tests, a governed transactional service, governed REST + AnA conversational tools on one audited path, a Report-OS report type + `/api/metrics` counters, and this handoff entry. DB-backed paths are authored-but-not-runtime-verified in this container; each capability carries its deferred DB-verification checklist above.
+
+---
+
+## Add-ons, connectors & ingestion bridge (post-roadmap workstreams)
+
+Four ISU-brief-driven additions, built on existing infrastructure (no rebuilds). **DB-verified end-to-end against live Postgres 16 — `scripts/db-verify/verify-research-compliance.ts`: 40/40 assertions pass.**
+
+### A1 — Effort certification (2 CFR 200.430)
+- Schema `effort_certifications` + `effort_lines`; migration `20260611_effort_certification.sql`.
+- Deterministic gate `validateEffort` (total ≤ 100%; sponsored committed↔actual deviation > 25% triggers recertification) — 7 unit tests; `computeEffortContentHash` (order-independent).
+- Governed service `certifyTx` (gate is the floor — over-commit certify is rejected; binds sha256 content hash).
+- **API** `/api/effort-certification` (CRUD + `/:id/validation` + `/:id/certify` [command `sign`]). **AnA:** `create_effort_certification`, `add_effort_line`. **Report:** `effort.certification_register`.
+
+### A2 — Research security / COI-FCOI (NSPM-33 / NOT-OD-26-017 / 42 CFR 50 F)
+- Schema `coi_disclosures`; migration `20260611_research_security.sql`. Foreign appointment/support (or non-US country) auto-flagged for research-security review.
+- Governed service create + review (management plan). **API** `/api/research-security` (CRUD + `/:id/review`). **AnA:** `create_coi_disclosure`. **Report:** `research_security.coi_register` (foreign-nexus + unmanaged-conflict rollups).
+
+### A3 — Sponsored-programs connectors (extend `DataConnector` catalog — not a new framework)
+- `grants_gov` (free) — Grants.gov Search2/fetchOpportunity; pre-award NOFO pipeline.
+- `sam_exclusions` (apiKey) — SAM.gov Exclusions restricted-party screening (2 CFR 200.214 / research security); a "search" is a screen, zero matches = clean.
+- `ellucian_banner` (baseUrl + apiKey) — Banner via Ethos Integration as **system of record**; read-only by design (Banner stays authoritative).
+- Registered in `connector-registry.ts`; catalog entries carry full setup guides. New categories `funding` / `compliance` / `sor`.
+
+### A4 — Preclinical ingestion → governed registry bridge
+- `preclinical-governed-bridge.ts`: maps the extraction taxonomy → CTD Module 4 study-type union (`mapStudyType`) and threads a digested `ctd_nonclinical_studies` row into the governed `nonclinical_studies` registry under a governed action, with provenance `ctd_nonclinical_study → nonclinical_study (derived_from)` and `nonclinical_study → submission_module4 (supports)`.
+- `ingestStudy()` gains an **opt-in** `governance` context; legacy program-only digestion is unchanged when it is omitted. Route `/api/preclinical/ingest` passes governance when tenant+user context and `governed=true`/`submissionId` are present. Digestion is retained even if the bridge fails (fail-open on the bridge, not the extraction).
+
+### UI surfaces to build (deferred — for the follow-on session)
+1. **Effort certification** — statement editor (lines, live validation banner, recert flag), certify-with-reason (e-sign), register grid.
+2. **Research security / COI** — disclosure intake, foreign-nexus queue, review/manage panel with management plan.
+3. **Connectors** — surface the 3 new catalog entries in the existing connector settings UI (setup guides already supplied); a "screen party" action for `sam_exclusions`; a Banner reconciliation view.
+4. **Preclinical** — show `governedStudyId` + CTD section + provenance chain on the ingest result; Module 4 evidence link.

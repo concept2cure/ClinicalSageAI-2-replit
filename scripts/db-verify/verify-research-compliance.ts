@@ -15,6 +15,7 @@ import { computeDomainReport } from '../../server/services/report-os/research-co
 import { emitDeadlineTask } from '../../server/services/research-compliance/tasking-bridge';
 import * as effort from '../../server/services/effort-certification/effort-service';
 import * as coi from '../../server/services/research-security/coi-service';
+import { bridgeIngestedStudyTx, mapStudyType } from '../../server/services/preclinical/preclinical-governed-bridge';
 
 let pass = 0, fail = 0;
 function ok(cond: boolean, msg: string) { if (cond) { pass++; console.log('  ✓', msg); } else { fail++; console.log('  ✗ FAIL:', msg); } }
@@ -150,6 +151,29 @@ async function main() {
   ok(effRep != null && (effRep!.summary.statements as number) >= 1 && (effRep!.summary.certified as number) >= 1, `effort.certification_register computes (statements=${effRep?.summary.statements}, certified=${effRep?.summary.certified})`);
   const coiRep = await computeDomainReport('research_security.coi_register', ORG);
   ok(coiRep != null && (coiRep!.summary.disclosures as number) >= 2 && (coiRep!.summary.foreignNexus as number) >= 1, `research_security.coi_register computes (disclosures=${coiRep?.summary.disclosures}, foreignNexus=${coiRep?.summary.foreignNexus})`);
+
+  console.log('\n[Preclinical bridge] digested study → governed registry + Module 4 provenance');
+  ok(mapStudyType('genotox') === 'genotoxicity' && mapStudyType('dart') === 'reproductive_tox' && mapStudyType('tk') === 'adme_pk', 'mapStudyType maps extraction taxonomy → CTD Module 4 study-type union');
+  const SYNTHETIC_CTD_ID = 90001; // provenance source int (ctd_nonclinical_studies row); generic spine, no FK
+  const synthData: any = {
+    studyType: 'repeat_dose_tox', studyTitle: '13-week oral toxicity in rat', species: 'Rattus norvegicus',
+    strain: 'Sprague-Dawley', glpCompliant: true, noael: '50 mg/kg/day', studyReportNumber: 'TX-2026-013',
+    testingFacility: 'Acme GLP Labs', extractionConfidence: 0.92,
+  };
+  const bridged = await tx(async (c) => {
+    const b = await bridgeIngestedStudyTx(c, ORG, USER, { ctdStudyId: SYNTHETIC_CTD_ID, data: synthData, sourcePdfId: 'pdf-verify-1', submissionId: 1, iacucProtocolId: null });
+    await recordGovernedAction(c, { orgId: ORG, userId: USER, command: 'create', target: `nonclinical-study:${b.governedStudyId}`, reason: 'verify preclinical bridge', domain: 'nonclinical', surface: 'preclinical-ingest' });
+    return b;
+  });
+  ok(bridged.governedStudyId > 0 && bridged.ctdSection.startsWith('4.2'), `bridge created governed study (id ${bridged.governedStudyId}, CTD ${bridged.ctdSection})`);
+  const govRow = await pool.query(`SELECT study_type, species, glp_compliant, submission_id FROM nonclinical_studies WHERE id=$1`, [bridged.governedStudyId]);
+  ok(govRow.rows[0].study_type === 'repeat_dose_tox' && govRow.rows[0].glp_compliant === true && Number(govRow.rows[0].submission_id) === 1, 'governed study persisted with mapped type, GLP flag, submission link');
+  const derivedLink = await pool.query(`SELECT * FROM provenance_links WHERE source_type='ctd_nonclinical_study' AND source_id=$1 AND target_type='nonclinical_study'`, [SYNTHETIC_CTD_ID]);
+  ok(derivedLink.rows.length === 1 && derivedLink.rows[0].link_role === 'derived_from', 'provenance: ctd_nonclinical_study → nonclinical_study (derived_from)');
+  const m4Link = await pool.query(`SELECT * FROM provenance_links WHERE source_type='nonclinical_study' AND source_id=$1 AND target_type='submission_module4'`, [bridged.governedStudyId]);
+  ok(m4Link.rows.length === 1 && m4Link.rows[0].link_role === 'supports', 'provenance: nonclinical_study → submission_module4 (supports)');
+  const ncRep = await computeDomainReport('nonclinical.study_send_register', ORG);
+  ok(ncRep != null && (ncRep!.summary.studies as number) >= 1, `nonclinical.study_send_register computes (studies=${ncRep?.summary.studies})`);
 
   console.log('\n[Tasking] deadline event → central unified_tasks');
   const taskId = await emitDeadlineTask({ organizationId: ORG, title: 'Verify milestone due', sourceEntityType: 'grant_milestone', sourceEntityId: 999, dueDate: '2026-12-01', taskType: 'milestone' });
