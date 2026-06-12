@@ -151,7 +151,13 @@ P0 is built, wired, and tested; a credible P1 corpus seed is in. Concretely:
 
 **Verification:** project typecheck clean (0 errors); new and affected suites green (evidence-tools provenance, evidence provenance unit, cheminformatics, ChEMBL client, AnA chem + preprint tools).
 
-**Still scoped, not yet built (honest):** retrofitting provenance onto the remaining aggregate tools (FAERS/MAUDE adverse-event signals) and the RAG retrieval path, deeper CNS coverage, MMRM, the empirical trial-feasibility model, and the offline grounding/hallucination eval harness. These are larger efforts and are deliberately left as follow-ups rather than shipped as stubs.
+**Increment 5 (this follow-up) — provenance on the RAG path (closing the loop):**
+
+- `project_knowledge_search` — the tool that grounds AnA in the org's own uploaded project corpus — now returns structured passages plus a `provenance` array under a new `project_corpus` source (curated-corpus type, `retrieval_chunk` lineage). Each retrieved passage is cited by document title + locator (page/section) and keyed by document/chunk id, with the retrieval relevance score mapped to a confidence level via the new `confidenceFromScore` helper. Internal corpus evidence now carries the **same** envelope as external evidence, so a regulated answer can cite uploaded documents and live external sources under one shape.
+
+**Verification:** project typecheck clean (0 errors); new and affected suites green (RAG provenance, evidence-tools provenance, evidence provenance unit, cheminformatics, ChEMBL client, AnA chem + preprint tools).
+
+**Still scoped, not yet built (honest):** the aggregate adverse-event tools (FAERS/MAUDE signals), persisting the in-flight provenance to `data_lineage_records` at answer time, deeper CNS coverage, MMRM, the empirical trial-feasibility model, and the offline grounding/hallucination eval harness. These are larger efforts and are deliberately left as follow-ups rather than shipped as stubs.
 
 ## 7. The single most important move
 
