@@ -84,6 +84,7 @@ import {
   type DoseLevelData,
 } from '../services/stats/dose-finding-boin';
 import { rmstDifference, restrictedMeanSurvival } from '../services/stats/rmst';
+import { mmrmSampleSize, type MmrmCovariance } from '../services/stats/mmrm-design';
 
 const router = Router();
 const authMiddleware = authenticateToken;
@@ -348,6 +349,54 @@ router.post('/diagnostic/sizing', authMiddleware, async (req: Request, res: Resp
       expected: b.expected,
       alpha: typeof b.alpha === 'number' ? b.alpha : undefined,
       power: typeof b.power === 'number' ? b.power : undefined,
+    });
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/biostat/mmrm/sample-size
+ * MMRM sample size / power for a longitudinal continuous endpoint, comparing
+ * arms at a target (default final) visit under an assumed within-subject
+ * correlation (compound symmetry or AR(1)) with monotone MAR dropout. Reports
+ * per-arm n, the variance factor, MMRM's efficiency vs a completers-only
+ * analysis, and achieved power. Deterministic and reproducible.
+ *
+ * Body: { visits, covariance: 'compound_symmetry'|'ar1', rho, sigma, delta,
+ *         alpha?, power?, retention?: number[], targetVisit?, allocationRatio? }
+ */
+router.post('/mmrm/sample-size', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    resolveOrganizationId(req);
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: error.message });
+  }
+  try {
+    const b = req.body ?? {};
+    if (b.covariance !== 'compound_symmetry' && b.covariance !== 'ar1') {
+      return res.status(400).json({
+        success: false,
+        error: "covariance must be 'compound_symmetry' or 'ar1'.",
+      });
+    }
+    for (const k of ['visits', 'rho', 'sigma', 'delta']) {
+      if (typeof b[k] !== 'number') {
+        return res.status(400).json({ success: false, error: `'${k}' must be a number.` });
+      }
+    }
+    const result = mmrmSampleSize({
+      visits: b.visits,
+      covariance: b.covariance as MmrmCovariance,
+      rho: b.rho,
+      sigma: b.sigma,
+      delta: b.delta,
+      alpha: typeof b.alpha === 'number' ? b.alpha : undefined,
+      power: typeof b.power === 'number' ? b.power : undefined,
+      retention: Array.isArray(b.retention) ? b.retention : undefined,
+      targetVisit: typeof b.targetVisit === 'number' ? b.targetVisit : undefined,
+      allocationRatio: typeof b.allocationRatio === 'number' ? b.allocationRatio : undefined,
     });
     res.json({ success: true, data: result });
   } catch (error: any) {
