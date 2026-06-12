@@ -1,0 +1,139 @@
+/**
+ * E2B(R3) ICSR composer — maps an intake adverse event to ICH E2B(R3) data
+ * elements + an escaped XML projection, and reports completeness/gaps.
+ */
+
+import { describe, it, expect } from 'vitest';
+import { composeE2bR3Icsr, serializeE2bXml } from '../e2b-icsr-composer';
+import type { AdverseEvent, ICSR } from '../../compliance/pharmacovigilanceService';
+
+const baseEvent: AdverseEvent = {
+  id: 'ae-123',
+  organizationId: 'org-1',
+  projectId: 'C2C-001',
+  eventType: 'SAE',
+  patientId: 'subj-007',
+  eventDescription: 'Acute hepatic failure',
+  onsetDate: new Date('2026-01-05T00:00:00.000Z'),
+  reportDate: new Date('2026-01-06T00:00:00.000Z'),
+  seriousnessCriteria: 'life_threatening',
+  causality: 'probable',
+  outcome: 'not_recovered',
+  reporterType: 'investigator',
+  countryOfOccurrence: 'US',
+  regulatoryReportingDeadline: new Date('2026-01-13T00:00:00.000Z'),
+  reportedToAuthorities: false,
+  expeditedReportRequired: true,
+  reactionPt: 'Hepatic failure',
+  reactionPtCode: '10019663',
+  suspectProduct: 'C2C-001',
+  suspectProductDose: '50 mg',
+  suspectProductRoute: 'Oral',
+  reporterName: 'Dr. Pat Smith',
+  narrative: 'Subject developed jaundice on day 5.',
+  createdAt: new Date('2026-01-06T00:00:00.000Z'),
+};
+
+const icsrMeta: ICSR = {
+  id: 'icsr-1',
+  adverseEventId: 'ae-123',
+  icsrType: 'initial',
+  senderType: 'sponsor',
+  receiverType: 'regulatory_authority',
+  transmissionDate: new Date('2026-01-07T00:00:00.000Z'),
+  e2bVersion: 'R3',
+  worldwideUniqueId: 'US-C2C-2026-000123',
+  reportType: 'study',
+  seriousness: 'life_threatening',
+  organizationId: 'org-1',
+};
+
+describe('composeE2bR3Icsr', () => {
+  it('maps the case admin block with E2B(R3) ids', () => {
+    const { icsr } = composeE2bR3Icsr(baseEvent, { icsr: icsrMeta, now: new Date('2026-01-07T12:00:00.000Z') });
+    const byId = Object.fromEntries(icsr.caseAdmin.map((e) => [e.id, e.value]));
+    expect(byId['C.1.1']).toBe('ae-123');
+    expect(byId['C.1.3']).toContain('report from study');
+    expect(byId['C.1.7']).toBe('1 (Yes)'); // expeditedReportRequired
+    expect(byId['C.1.8.1']).toBe('US-C2C-2026-000123');
+  });
+
+  it('maps the reaction block: term, PT code, seriousness flag, and outcome', () => {
+    const { icsr } = composeE2bR3Icsr(baseEvent, { icsr: icsrMeta });
+    const byId = Object.fromEntries(icsr.reaction.map((e) => [e.id, e.value]));
+    expect(byId['E.i.1.1a']).toBe('Hepatic failure');
+    expect(byId['E.i.2.1b']).toBe('10019663');
+    expect(byId['E.i.3.2b']).toBe('1 (Yes)'); // life_threatening
+    expect(byId['E.i.7']).toContain('3'); // not_recovered
+  });
+
+  it('maps the reporter qualification (investigator → physician)', () => {
+    const { icsr } = composeE2bR3Icsr(baseEvent, { icsr: icsrMeta });
+    const qual = icsr.primarySource.find((e) => e.id === 'C.2.r.4');
+    expect(qual?.value).toContain('Physician');
+  });
+
+  it('composes the H.1 narrative from the shared safety-narrative writer', () => {
+    const { icsr } = composeE2bR3Icsr(baseEvent, { icsr: icsrMeta });
+    expect(icsr.narrative.id).toBe('H.1');
+    expect(icsr.narrative.value).toContain('subj-007');
+    expect(icsr.narrative.value).toContain('Hepatic failure');
+  });
+
+  it('emits a well-formed, escaped XML projection keyed by E2B ids', () => {
+    const { xml } = composeE2bR3Icsr(baseEvent, { icsr: icsrMeta });
+    expect(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true);
+    expect(xml).toContain('standard="E2B(R3)"');
+    expect(xml).toContain('id="C.1.1"');
+    expect(xml).toContain('id="E.i.7"');
+    expect(xml).toContain('id="H.1"');
+    // No unescaped angle brackets inside values.
+    expect(xml).not.toContain('<element id="C.1.1" label="Sender\'s');
+  });
+
+  it('escapes XML special characters in values', () => {
+    const evt = { ...baseEvent, suspectProduct: 'Drug <X> & "Y"' };
+    const { xml } = composeE2bR3Icsr(evt, { icsr: icsrMeta });
+    expect(xml).toContain('Drug &lt;X&gt; &amp; &quot;Y&quot;');
+    expect(xml).not.toContain('Drug <X>');
+  });
+
+  it('reports completeness = 1 and no gaps when all mandatory elements are present', () => {
+    const { gaps, completeness } = composeE2bR3Icsr(baseEvent, { icsr: icsrMeta });
+    expect(gaps).toEqual([]);
+    expect(completeness).toBe(1);
+  });
+
+  it('flags missing mandatory elements as gaps (no worldwide id, no suspect product)', () => {
+    const evt = { ...baseEvent, suspectProduct: null };
+    const { gaps, completeness } = composeE2bR3Icsr(evt, { icsr: null });
+    const ids = gaps.map((g) => g.id);
+    expect(ids).toContain('C.1.8.1'); // worldwide unique id absent (no ICSR)
+    expect(ids).toContain('G.k.2.2'); // suspect product absent
+    expect(completeness).toBeLessThan(1);
+  });
+
+  it('falls back to eventDescription when no MedDRA PT is supplied', () => {
+    const evt = { ...baseEvent, reactionPt: null };
+    const { icsr } = composeE2bR3Icsr(evt, { icsr: icsrMeta });
+    const term = icsr.reaction.find((e) => e.id === 'E.i.1.1a');
+    expect(term?.value).toBe('Acute hepatic failure');
+  });
+
+  it('accepts ISO-string dates (HTTP path) without throwing', () => {
+    const evt = {
+      ...baseEvent,
+      onsetDate: '2026-01-05T00:00:00.000Z' as unknown as Date,
+      reportDate: '2026-01-06T00:00:00.000Z' as unknown as Date,
+    };
+    const { icsr } = composeE2bR3Icsr(evt, { icsr: icsrMeta });
+    const onset = icsr.reaction.find((e) => e.id === 'E.i.4');
+    expect(onset?.value).toBe('2026-01-05');
+  });
+
+  it('serializeE2bXml is deterministic for the same model', () => {
+    const a = composeE2bR3Icsr(baseEvent, { icsr: icsrMeta, now: new Date('2026-01-07T12:00:00.000Z') });
+    const b = serializeE2bXml(a.icsr);
+    expect(b).toBe(a.xml);
+  });
+});
