@@ -95,3 +95,17 @@ export function validationFrom(input: any) {
   }
   return validateSequenceLeaves({ filingType: input.filingType, leaves: input.leaves });
 }
+
+/**
+ * Coerce an AdverseEvent's date fields from JSON strings to Date objects. Over
+ * HTTP, dates arrive as ISO strings (JSON has no Date type); the safety-report
+ * services operate on Date, so coerce at the route boundary.
+ */
+export function coerceEventDates(event: any): any {
+  if (!event || typeof event !== 'object') return event;
+  const out = { ...event };
+  for (const f of ['onsetDate', 'reportDate', 'regulatoryReportingDeadline', 'createdAt']) {
+    if (typeof out[f] === 'string' && out[f]) out[f] = new Date(out[f]);
+  }
+  return out;
+}

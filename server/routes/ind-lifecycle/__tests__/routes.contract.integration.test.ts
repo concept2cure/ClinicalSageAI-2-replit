@@ -20,9 +20,31 @@ import { createSubmission } from '../../../services/submission-service/submissio
 import { persistAnnualReport } from '../../../services/ind-lifecycle/ind-lifecycle-persistence';
 
 let harness: IndPgliteDb;
+let seededSubmissionId: number;
 
 // Mutable "current user" so we can flip auth state per request.
 let currentUser: any = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
+
+const reportableEvent = () => ({
+  id: 'ae-1',
+  organizationId: 'org-1',
+  projectId: 'proj-1',
+  eventType: 'SAE',
+  patientId: 'subj-001',
+  eventDescription: 'Acute hepatic failure.',
+  onsetDate: '2026-01-01T00:00:00.000Z',
+  reportDate: '2026-01-01T00:00:00.000Z',
+  seriousnessCriteria: 'life_threatening',
+  causality: 'probable',
+  outcome: 'not_recovered',
+  reporterType: 'investigator',
+  countryOfOccurrence: 'US',
+  regulatoryReportingDeadline: '2026-01-01T00:00:00.000Z',
+  reportedToAuthorities: false,
+  expeditedReportRequired: true,
+  expectedness: 'unexpected',
+  createdAt: '2026-01-01T00:00:00.000Z',
+});
 
 function makeApp() {
   const app = express();
@@ -45,6 +67,7 @@ beforeAll(async () => {
     { title: 'C2C-001 IND', applicationType: 'ind', clientType: 'biotech', primaryRegion: 'fda' },
     { organizationId: 1, userId: 9 },
   );
+  seededSubmissionId = sub.id;
   await persistAnnualReport(sub.id, '0000', { organizationId: 1, userId: 9 }, 'cs');
 });
 afterAll(async () => {
@@ -149,5 +172,70 @@ describe('document routes', () => {
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toContain('xml');
     expect(res.text).toContain('<number>IND123456</number>');
+  });
+});
+
+describe('DB-write + program surface (full HTTP flow)', () => {
+  let filedSequenceId: number;
+
+  it('POST /safety-report/file → 201 creates an amendment sequence', async () => {
+    const res = await request(app)
+      .post('/api/ind-lifecycle/safety-report/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0003', event: reportableEvent() });
+    expect(res.status).toBe(201);
+    expect(res.body.sequence.type).toBe('amendment');
+    expect(res.body.leaves.length).toBeGreaterThanOrEqual(1);
+    filedSequenceId = res.body.sequence.id;
+  });
+
+  it('POST /safety-report/file → 400 without a 4-digit sequenceNumber', async () => {
+    const res = await request(app)
+      .post('/api/ind-lifecycle/safety-report/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '3', event: reportableEvent() });
+    expect(res.status).toBe(400);
+  });
+
+  it('GET /sequence/:id/manifest → 200 with the filed leaf', async () => {
+    const res = await request(app).get(`/api/ind-lifecycle/sequence/${filedSequenceId}/manifest`);
+    expect(res.status).toBe(200);
+    expect(res.body.totalLeaves).toBeGreaterThanOrEqual(1);
+    expect(res.body.modules.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('POST /sequence/:id/dispatch-gate → 200 with a verdict', async () => {
+    const res = await request(app).post(`/api/ind-lifecycle/sequence/${filedSequenceId}/dispatch-gate`).send({});
+    expect(res.status).toBe(200);
+    expect(res.body.verdict).toHaveProperty('canDispatch');
+  });
+
+  it('POST /sequence/:id/dispatch-gate/snapshot → 201 then GET /snapshots → 200', async () => {
+    const snap = await request(app).post(`/api/ind-lifecycle/sequence/${filedSequenceId}/dispatch-gate/snapshot`).send({});
+    expect(snap.status).toBe(201);
+    expect(snap.body.snapshot).toHaveProperty('id');
+
+    const hist = await request(app).get(`/api/ind-lifecycle/sequence/${filedSequenceId}/snapshots`);
+    expect(hist.status).toBe(200);
+    expect(Array.isArray(hist.body)).toBe(true);
+    expect(hist.body.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('POST /submission/:id/cockpit → 200 with per-sequence gates', async () => {
+    const res = await request(app).post(`/api/ind-lifecycle/submission/${seededSubmissionId}/cockpit`).send({});
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('dashboard');
+    expect(Array.isArray(res.body.sequenceGates)).toBe(true);
+    expect(res.body.summary).toHaveProperty('dispatchReady');
+  });
+
+  it('POST /submission/:id/dashboard → 200', async () => {
+    const res = await request(app).post(`/api/ind-lifecycle/submission/${seededSubmissionId}/dashboard`).send({});
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('headline');
+  });
+
+  it('POST /submission/:id/drift → 200 with a digest', async () => {
+    const res = await request(app).post(`/api/ind-lifecycle/submission/${seededSubmissionId}/drift`).send({});
+    expect(res.status).toBe(200);
+    expect(res.body.summary).toHaveProperty('total');
   });
 });
