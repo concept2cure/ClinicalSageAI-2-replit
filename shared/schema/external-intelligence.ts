@@ -13,7 +13,7 @@
  * Schema:  this file. Migration: migrations/20260612_ana_relational_external_intel.sql
  * Service: server/services/external-intelligence/
  * Job:     server/jobs/externalIntelligenceSweep.ts
- * Routes:  server/routes/external-intelligence.ts
+ * Routes:  server/routes/external-intelligence-routes.ts
  */
 
 import {

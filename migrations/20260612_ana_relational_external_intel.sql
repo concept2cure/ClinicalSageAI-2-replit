@@ -17,7 +17,7 @@
 -- Service: server/services/ana-ri/relational-profile-service.ts,
 --          server/services/external-intelligence/
 -- Job:     server/jobs/externalIntelligenceSweep.ts
--- Routes:  server/routes/external-intelligence.ts
+-- Routes:  server/routes/external-intelligence-routes.ts
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS ana_relational_profiles (

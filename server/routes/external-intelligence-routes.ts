@@ -19,7 +19,7 @@
  *
  * Mounted behind authenticateToken in register-advanced-platform-routes.
  *
- * @module server/routes/external-intelligence
+ * @module server/routes/external-intelligence-routes
  */
 
 import { Router, type Request, type Response } from 'express';

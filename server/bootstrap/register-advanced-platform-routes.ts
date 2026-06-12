@@ -47,7 +47,7 @@ export async function registerAdvancedPlatformRoutes({
   // Digest + findings from the scheduled sweep over FDA/EMA/MHRA/TGA feeds
   // and academic/industry knowledge sources (SCDM, PubMed, medRxiv).
   try {
-    const externalIntelligenceRoutes = await import('../routes/external-intelligence');
+    const externalIntelligenceRoutes = await import('../routes/external-intelligence-routes');
     app.use('/api/external-intelligence', authenticateToken, externalIntelligenceRoutes.default);
     console.log('✅ External Intelligence routes mounted at /api/external-intelligence');
   } catch (error) {
