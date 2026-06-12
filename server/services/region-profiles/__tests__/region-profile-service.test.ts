@@ -104,3 +104,25 @@ describe('China (cn) region profile', () => {
     expect(cn!.validationRuleCount).toBeGreaterThanOrEqual(0);
   });
 });
+
+describe('validationRules surfaced on the profile', () => {
+  it('exposes the full rule list, in lock-step with validationRuleCount', () => {
+    for (const region of getAllSubmissionRegionProfiles()) {
+      // The list and the count must agree — the count is derived from the list.
+      expect(region.validationRules.length).toBe(region.validationRuleCount);
+      for (const rule of region.validationRules) {
+        expect(rule.id.trim().length).toBeGreaterThan(0);
+        expect(rule.citation.trim().length).toBeGreaterThan(0);
+        expect(rule.description.trim().length).toBeGreaterThan(0);
+        expect(['error', 'warning', 'info']).toContain(rule.severity);
+      }
+    }
+  });
+
+  it('surfaces the China NMPA rule pack (e.g. the Simplified-Chinese rule) by id', () => {
+    const cn = getSubmissionRegionProfile('cn')!;
+    expect(cn.validationRules.length).toBeGreaterThan(0);
+    const ids = cn.validationRules.map((r) => r.id);
+    expect(ids).toContain('NMPA-CDE-003');
+  });
+});
