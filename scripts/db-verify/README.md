@@ -39,7 +39,23 @@ writes; no-context → zero rows (fail-closed); `app_super_admin` bypasses. The
 enforcement test runs in a rolled-back transaction, so the DB stays in shadow mode
 and `verify-research-compliance.ts` still passes 82/82.
 
+## Audit hash-chain (tamper-evidence) verification
+The other governance pillar (21 CFR Part 11 §11.10(e)): `audit_logs.sha256_chain`
+commits each governed action into a hash-chain. The main harness only checks the
+column is populated; `verify-audit-chain.ts` proves it VERIFIES and that tampering
+is DETECTED, using the real verifier (`server/services/audit/chain.ts:verifyAuditChain`).
+
+```bash
+npx tsx scripts/db-verify/verify-research-compliance.ts   # write governed actions first
+npx tsx scripts/db-verify/verify-audit-chain.ts           # → 6 passed, 0 failed
+```
+Proves: the chain across all governed-action rows re-derives correctly (intact);
+tampering a row's content breaks the chain and the verifier pinpoints the exact
+row; tampering the stored hash is detected; tamper tests run in rolled-back
+transactions so the real chain is never corrupted.
+
 ## Last result
-**verify-research-compliance.ts: 82 passed, 0 failed** (governed paths, provenance,
-gates, orchestrations, triage, scorecard). **verify-rls.ts: 10 passed, 0 failed**
-(tenant isolation now enforceable on the research-admin tables).
+**verify-research-compliance.ts: 82/0** (governed paths, provenance, gates,
+orchestrations, triage, scorecard) · **verify-rls.ts: 12/0** (tenant isolation
+enforceable across the governed surface) · **verify-audit-chain.ts: 6/0**
+(audit hash-chain intact + tamper-evident).
