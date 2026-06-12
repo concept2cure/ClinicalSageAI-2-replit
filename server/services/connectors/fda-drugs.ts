@@ -12,6 +12,37 @@ import {
   ConnectorCredentials,
 } from './connector-interface.js';
 
+/**
+ * URL-encode a user value for safe interpolation inside an openFDA search
+ * phrase (`field:"<value>"`). Embedded double quotes are stripped (they would
+ * break the phrase), then the value is percent-encoded so spaces, `&`, `#`,
+ * `+`, etc. can't break the request URL or inject extra query parameters.
+ */
+function encodeOpenFdaValue(value: string): string {
+  return encodeURIComponent(value.replace(/"/g, ' ').trim());
+}
+
+/**
+ * Build the openFDA `search` parameter for a connector query. Pure and exported
+ * so the encoding/grammar contract is unit-testable. Field names, quotes and
+ * the `+AND+` joiner are literal grammar; only the user values are encoded.
+ * Returns `*` (match-all) when no terms are supplied.
+ */
+export function buildOpenFdaDrugSearch(query: ConnectorQuery): string {
+  const terms: string[] = [];
+  if (query.indication?.trim()) {
+    terms.push(`products.active_ingredients.name:"${encodeOpenFdaValue(query.indication)}"`);
+  }
+  if (query.sponsor?.trim()) {
+    terms.push(`sponsor_name:"${encodeOpenFdaValue(query.sponsor)}"`);
+  }
+  const keywords = (query.keywords ?? []).map(k => k.trim()).filter(Boolean);
+  if (keywords.length) {
+    terms.push(keywords.map(k => `"${encodeOpenFdaValue(k)}"`).join('+AND+'));
+  }
+  return terms.join('+AND+') || '*';
+}
+
 export class FDADrugsConnector implements DataConnector {
   id = 'fda_drugs';
   name = 'FDA Drugs@FDA';
@@ -32,13 +63,12 @@ export class FDADrugsConnector implements DataConnector {
   }
 
   async search(query: ConnectorQuery): Promise<ConnectorResult[]> {
-    const searchTerms: string[] = [];
-    if (query.indication) searchTerms.push(`products.active_ingredients.name:"${query.indication}"`);
-    if (query.sponsor) searchTerms.push(`sponsor_name:"${query.sponsor}"`);
-    if (query.keywords?.length) searchTerms.push(query.keywords.map(k => `"${k}"`).join('+AND+'));
-
-    const searchStr = searchTerms.join('+AND+') || '*';
-    const limit = query.limit || 20;
+    // Build the openFDA search via buildOpenFdaDrugSearch so every user value
+    // is percent-encoded — a raw space/&/#/quote would break the URL or inject
+    // query params.
+    const searchStr = buildOpenFdaDrugSearch(query);
+    const limit =
+      Number.isFinite(query.limit) && (query.limit as number) > 0 ? Math.floor(query.limit as number) : 20;
 
     const res = await fetch(`${this.baseUrl}/drug/drugsfda.json?search=${searchStr}&limit=${limit}`);
     if (!res.ok) {
@@ -61,7 +91,7 @@ export class FDADrugsConnector implements DataConnector {
         sourceConnector: this.id,
         title: `${products || appNo} (${sponsor})`,
         summary: `Application: ${appNo} | Sponsor: ${sponsor} | Products: ${products} | Latest: ${latestAction}`,
-        relevanceScore: 1 - i * 0.04,
+        relevanceScore: Math.max(0, 1 - i * 0.04),
         metadata: { applicationNumber: appNo, sponsor, products: drug.products, submissions },
         url: `https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=${appNo.replace(/\D/g, '')}`,
       };
