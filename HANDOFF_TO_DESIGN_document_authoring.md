@@ -3,7 +3,7 @@
 **Date:** 2026-06-12
 **From:** Backend / platform audit follow-through
 **To:** Claude design
-**Companion:** `DOCUMENT_PLATFORM_AUDIT_2026-06-12.md` (full gap analysis)
+**Companion:** `GA_GAP_AUDIT_2026-06-10.md` (full gap analysis)
 
 ## Why this exists
 

@@ -3,7 +3,7 @@
 **Date:** 2026-06-12
 **Audit gap:** P0-4 (no external eValidator dry-run before live submission)
 **Status:** Design spec — implementation pending vendor selection
-**Companion:** `DOCUMENT_PLATFORM_AUDIT_2026-06-12.md`, `HI_8_ECTD_SCOPING_BRIEF.md` (G3, Phase E)
+**Companion:** `GA_GAP_AUDIT_2026-06-10.md`, `HI_8_ECTD_SCOPING_BRIEF.md` (G3, Phase E)
 
 ## The gap
 
