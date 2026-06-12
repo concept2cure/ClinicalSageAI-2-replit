@@ -54,7 +54,6 @@
     "ci:migration-prefix-collisions:strict": "node scripts/ci/check-migration-prefix-collisions.mjs --strict",
     "ci:migration-prefix-collisions:write-baseline": "node scripts/ci/check-migration-prefix-collisions.mjs --write-baseline",
     "ci:rls-allowlist-sync": "node scripts/ci/check-rls-allowlist-sync.mjs",
-    "ci:i18n-integrity": "node scripts/ci/check-i18n-integrity.mjs",
     "ci:tenant-column-types": "node scripts/ci/check-tenant-column-types.mjs",
     "ci:typecheck:no-regression": "node scripts/ci/typecheck-no-regression.mjs",
     "ci:typecheck:write-baseline": "node scripts/ci/typecheck-no-regression.mjs --write-baseline",
