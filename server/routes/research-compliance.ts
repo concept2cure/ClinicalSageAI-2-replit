@@ -15,6 +15,7 @@ import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
 import { createPersonnelTx, addTrainingTx, listPersonnel, loadRosterForGate } from '../services/research-compliance/roster-service';
 import { resolveComplianceChecklist, evaluateTrainingGate, type ActivityProfile } from '../services/research-compliance/compliance-checklist';
+import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 
 const router = Router();
 
@@ -58,6 +59,7 @@ async function governed(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, orgId);
     const { target, payload, body } = await run(client, orgId, userId);
     const gov = await recordGovernedAction(client, { orgId, userId, command, target, reason: reasonText, payload, domain: 'research_compliance' });
     await client.query('COMMIT');

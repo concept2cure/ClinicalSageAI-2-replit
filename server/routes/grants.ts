@@ -48,6 +48,7 @@ import {
 } from '../services/grants/grants-service';
 import { summarizeDeadlines, reportingObligations, awardPeriodState, evaluateCloseout } from '../services/grants/grants-logic';
 import { recordGrantProposalCreated, recordGrantAwardRecorded, recordGrantInvoice, recordGrantMilestoneStatus, recordGrantCloseoutOpened, recordGrantCloseoutFinalized, recordGrantSubaward, recordGrantSubawardExecuted, recordGrantBudgetLine, recordGrantExpenditure, recordGrantCostShareContribution, recordGrantNceRequested, recordGrantNceApproved } from '../services/grants-metrics';
+import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 
 const router = Router();
 
@@ -94,6 +95,7 @@ async function governed(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, orgId);
     const { target, payload, body } = await run(client, orgId, userId);
     const gov = await recordGovernedAction(client, { orgId, userId, command, target, reason: reasonText, payload, domain: 'grants' });
     await client.query('COMMIT');

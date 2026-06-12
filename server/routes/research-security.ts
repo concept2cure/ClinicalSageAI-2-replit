@@ -9,6 +9,7 @@ import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
 import { createDisclosureTx, reviewDisclosureTx, listDisclosures } from '../services/research-security/coi-service';
 import { recordCoiDisclosure, recordCoiReview } from '../services/research-security-metrics';
+import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 
 const router = Router();
 function uid(req: Request): number | null { const r = req as any; const x = r.userId ?? r.user?.id ?? r.user?.userId; const n = x == null ? NaN : Number(x); return Number.isFinite(n) ? n : null; }
@@ -19,7 +20,7 @@ const reason = z.string().trim().min(8);
 async function governed(req: Request, res: Response, command: string, reasonText: string, run: (c: any, o: number, u: number) => Promise<{ target: string; payload?: Record<string, unknown>; body: Record<string, unknown> }>) {
   const u = uid(req), o = oid(req); if (!u || !o) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const c = await pool.connect();
-  try { await c.query('BEGIN'); const { target, payload, body } = await run(c, o, u); const gov = await recordGovernedAction(c, { orgId: o, userId: u, command, target, reason: reasonText, payload, domain: 'research_security' }); await c.query('COMMIT'); res.status(201).json({ ...body, ...gov }); }
+  try { await c.query('BEGIN'); await setTenantContextTx(c, o); const { target, payload, body } = await run(c, o, u); const gov = await recordGovernedAction(c, { orgId: o, userId: u, command, target, reason: reasonText, payload, domain: 'research_security' }); await c.query('COMMIT'); res.status(201).json({ ...body, ...gov }); }
   catch (err) { await c.query('ROLLBACK').catch(() => undefined); fail(res, err); } finally { c.release(); }
 }
 

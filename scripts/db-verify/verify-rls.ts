@@ -85,6 +85,31 @@ async function main() {
     c.release();
   }
 
+  console.log('\n[RLS] governed path is enforcement-safe (setTenantContextTx)');
+  // The production helper the governed routes call right after BEGIN. With it set,
+  // a domain write under enforcement succeeds for the right tenant and is blocked
+  // for another — i.e. enforcement can be turned on without breaking the new domains.
+  const { setTenantContextTx } = await import('../../server/services/tenant/governed-tenant-context');
+  const gc = await pool.connect();
+  try {
+    await gc.query('BEGIN');
+    await gc.query(set('app.rls_enforce', 'on'));
+    await setTenantContextTx(gc, 1); // exactly what server/routes/*.ts governed() now does
+    const ins = await gc.query(INS(1, 'RLS-GOV') + ' RETURNING id');
+    ok(ins.rows.length === 1, 'governed-style write under setTenantContextTx + enforcement succeeds for the tenant');
+    let blocked = false;
+    await gc.query('SAVEPOINT s');
+    try { await gc.query(INS(2, 'RLS-GOV-bad')); }
+    catch (e: any) { blocked = /row-level security|policy/i.test(e.message); await gc.query('ROLLBACK TO SAVEPOINT s'); }
+    ok(blocked, 'the same governed context cannot write another tenant row (WITH CHECK)');
+    await gc.query('ROLLBACK');
+  } catch (e) {
+    await gc.query('ROLLBACK').catch(() => undefined);
+    console.error('HARNESS ERROR (governed path)', e); fail++;
+  } finally {
+    gc.release();
+  }
+
   console.log(`\n==== RLS VERIFICATION: ${pass} passed, ${fail} failed ====`);
   await pool.end();
   process.exit(fail === 0 ? 0 : 1);

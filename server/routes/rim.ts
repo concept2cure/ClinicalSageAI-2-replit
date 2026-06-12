@@ -13,6 +13,7 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
+import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import {
   createProductTx,
   upsertRegistrationTx,
@@ -68,6 +69,7 @@ async function governed(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, orgId);
     const { target, payload, body } = await run(client, orgId, userId);
     const gov = await recordGovernedAction(client, { orgId, userId, command, target, reason: reasonText, payload, domain: 'rim' });
     await client.query('COMMIT');
