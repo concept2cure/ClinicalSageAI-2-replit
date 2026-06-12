@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-12T00:19:36.165Z",
+  "generatedAt": "2026-06-12T00:20:50.765Z",
   "git": {
-    "sha": "d8ff9a8f3defa7d101a6e52f614bb76421801422",
+    "sha": "a7f43356f4cd775611836feded3f8303afb2310e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 85,
+        "count": 84,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -75,7 +75,6 @@
           "server/services/intelligence-engine/index.ts",
           "server/services/intelligence/index.ts",
           "server/services/ivd-knowledge/index.ts",
-          "server/services/literature/index.ts",
           "server/services/living-record/index.ts",
           "server/services/ocr/index.ts",
           "server/services/orchestration/index.ts",
@@ -2293,7 +2292,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 304,
+      "duplicateGroups": 303,
       "largeByBytes": 12,
       "largeByLines": 34
     },
