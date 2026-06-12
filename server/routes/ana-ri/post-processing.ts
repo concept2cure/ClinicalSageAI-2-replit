@@ -21,6 +21,8 @@ import {
 import { validateEvidence } from '../../services/ana-ri/evidence-validation.js';
 import { buildQueueMeta } from '../../services/ana-ri/response-contract.js';
 import { saveChatMessage as saveMessage } from '../../services/chat-thread-helpers.js';
+import { persistProvenance } from '../../services/evidence/persist-provenance.js';
+import type { ProvenanceRecord } from '../../services/evidence/provenance.js';
 import { summarizeAndStoreWorkingMemoryForThread } from '../../services/working-memory.js';
 import { getCachedSignalReliability } from '../../services/intelligence/learning-loop-service.js';
 import { verifyAnswerGrounding } from '../../services/ana/answer-grounding.js';
@@ -47,6 +49,8 @@ export interface StreamPostProcessingContext {
   toolTrace: ToolTraceEntry[];
   /** Raw tool output this turn — evidence corpus for the grounding round. */
   toolEvidenceCorpus: string[];
+  /** Provenance envelopes from evidence tools this turn — persisted to the lineage trail. */
+  collectedProvenance: ProvenanceRecord[];
   /** Gateway message history built for the turn (for working-memory write-back). */
   messages: GatewayMessage[];
   model: string | undefined;
@@ -72,6 +76,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     sectionCode,
     toolTrace,
     toolEvidenceCorpus,
+    collectedProvenance,
     messages,
     model,
     provider,
@@ -167,6 +172,22 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
               persistenceFailed = true;
             })
         : Promise.resolve();
+
+    // Durable provenance: persist this turn's evidence citations to the lineage
+    // trail (data_lineage_records), targeting the answer. Fire-and-forget — the
+    // bridge never throws, and an audit-write hiccup must never affect the turn.
+    if (orgId && threadId && collectedProvenance && collectedProvenance.length > 0) {
+      void persistProvenance(collectedProvenance, {
+        organizationId: Number(orgId),
+        projectId: streamProjectId ? Number(streamProjectId) || undefined : undefined,
+        targetObjectType: 'answer',
+        targetObjectId: threadId,
+        targetField: new Date().toISOString(),
+        targetTitle: 'AnA answer',
+        createdById: typeof userId === 'number' ? userId : undefined,
+        aiModelUsed: model,
+      });
+    }
 
     // Evidence discipline + structure checks are synchronous — run inline.
     const streamEvidenceCheck = finalAssistantContent
