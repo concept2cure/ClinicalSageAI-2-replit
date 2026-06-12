@@ -25,6 +25,7 @@ import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 import { createPolicyGuard } from '../services/policy/opaMiddleware';
 import rbacService from '../services/roleBasedAccess';
+import { verifyAuditIntegrity } from '../services/audit/audit-integrity-service';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -1151,6 +1152,31 @@ router.get('/health', (_req: Request, res: Response) => {
     auditChainLength: 'active',
     lastAuditHash: lastAuditHash.substring(0, 16) + '...',
   });
+});
+
+/**
+ * GET /audit-trail/seal-integrity
+ * Verify the GLOBAL audit_logs sha256 hash-chain AND its HMAC seals
+ * (21 CFR Part 11 §11.10(e), §11.70). The audit_logs chain is system-wide, so
+ * this is an admin/system integrity check (not tenant-scoped). Seal verification
+ * is skipped (not failed) when AUDIT_HMAC_KEY is unset.
+ */
+router.get('/audit-trail/seal-integrity', async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  const roles: string[] = user?.roles || (user?.role ? [user.role] : []);
+  if (!roles.includes('admin') && !roles.includes('super_admin')) {
+    return res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Admin role required for system audit-integrity verification.' } });
+  }
+  const pool: Pool = (req as any).pool || (req.app as any).pool;
+  if (!pool) {
+    return res.status(503).json({ error: { code: 'NO_DB', message: 'Audit database not available.' } });
+  }
+  try {
+    const result = await verifyAuditIntegrity(pool);
+    return res.json({ success: true, data: result });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Verification failed.' });
+  }
 });
 
 export { setAuditPool };

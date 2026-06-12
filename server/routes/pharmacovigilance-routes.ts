@@ -21,6 +21,7 @@ import { z } from 'zod';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { runSignalScreen } from '../services/compliance/pv-signal-screen';
+import { upcomingDeadlines } from '../services/compliance/pv-periodic-scheduler';
 
 const logger = createScopedLogger('pharmacovigilance-routes');
 
@@ -410,6 +411,34 @@ export default function createPharmacovigilanceRoutes(): Router {
     } catch (error) {
       logger.error('create periodic report error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to create periodic report' });
+    }
+  });
+
+  /**
+   * POST /api/pharmacovigilance/periodic-reports/schedule
+   * Compute upcoming periodic-report (DSUR/PSUR/PBRER/PADER) deadlines from
+   * data-lock points + per-type offsets. Pure.
+   * Body: { reports: [{ id?, reportType, dataLockPoint, frequencyMonths? }], withinDays?, now? }.
+   */
+  router.post('/periodic-reports/schedule', async (req: Request, res: Response) => {
+    try {
+      const body = req.body ?? {};
+      if (!Array.isArray(body.reports)) {
+        return res.status(400).json({ success: false, error: 'reports[] (each { reportType, dataLockPoint }) is required' });
+      }
+      const reports = body.reports.map((r: any) => ({
+        id: r.id,
+        reportType: r.reportType,
+        dataLockPoint: new Date(r.dataLockPoint),
+        frequencyMonths: r.frequencyMonths,
+      }));
+      const withinDays = Number.isFinite(Number(body.withinDays)) ? Number(body.withinDays) : 180;
+      const now = body.now ? new Date(body.now) : new Date();
+      const deadlines = upcomingDeadlines(reports, withinDays, now);
+      return res.json({ success: true, data: { deadlines, total: deadlines.length } });
+    } catch (error) {
+      logger.error('periodic-report schedule error', { err: error instanceof Error ? error.message : String(error) });
+      res.status(500).json({ success: false, error: 'Failed to compute periodic-report schedule' });
     }
   });
 

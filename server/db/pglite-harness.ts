@@ -157,6 +157,23 @@ CREATE TABLE IF NOT EXISTS submission_leaves (
 );
 `;
 
+/**
+ * Minimal audit_logs DDL (just the columns the chain + seal verifiers read),
+ * for testing audit-integrity verification in-process.
+ */
+export const AUDIT_LOGS_PGLITE_DDL = `
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id           TEXT PRIMARY KEY,
+  action       TEXT,
+  actor_id     INTEGER,
+  target       TEXT,
+  payload_hash TEXT,
+  occurred_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  sha256_chain TEXT,
+  hmac_seal    TEXT
+);
+`;
+
 export interface IndPgliteDb {
   pglite: PGlite;
   /** Drizzle instance over PGlite (insert/select against the pg-core schema). */
