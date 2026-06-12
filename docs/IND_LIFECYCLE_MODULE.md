@@ -65,6 +65,7 @@ All HTTP routes are auth-gated (`authenticateToken` at mount) and tenant-scoped
 | Investigator's Brochure (ICH E6 §7) | `authoring/ib-builder` | — |
 | Module 4 nonclinical study report | `authoring/nonclinical-study-report-builder` | — |
 | Module 4 nonclinical assembly QC (ICH M3(R2) coverage / required-section status / CTD 4.2.x placement / GLP / structure; honest-by-construction verdict) | `authoring/m4-nonclinical-qc` | `POST /api/authoring-pdf/m4-nonclinical/qc` |
+| CTD authoring-readiness rollup (composes the M2 + M4 QC verdicts and the M2.4←M4 feed-forward link into one cross-module "assembly-ready" verdict) | `authoring/ctd-authoring-readiness` | `POST /api/authoring-pdf/ctd-readiness` |
 | Lifecycle document → bookmarked PDF | `ind-lifecycle/ind-document-renderer` | (used by the `*/pdf` routes) |
 
 ## 5. eCTD submission-grade output

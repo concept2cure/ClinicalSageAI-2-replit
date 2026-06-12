@@ -17,6 +17,7 @@ import { createRateLimiter } from '../middleware/rateLimiter';
 import { renderM2SummaryPdf } from '../services/authoring/m2-summary-renderer';
 import { runM2SummaryQc } from '../services/authoring/m2-summary-qc';
 import { runM4NonclinicalQc } from '../services/authoring/m4-nonclinical-qc';
+import { aggregateCtdAuthoringReadiness } from '../services/authoring/ctd-authoring-readiness';
 import type { M2Summary } from '../services/m2-summary-builders';
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -96,6 +97,27 @@ router.post('/m4-nonclinical/qc', limiter, requireRole(AUTHOR), (req, res) => {
         reports: b.reports,
         expectedStudyTypes: b.expectedStudyTypes,
         requireCoverage: b.requireCoverage,
+      }),
+    );
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Cross-module CTD authoring-readiness rollup — composes the M2 + M4 QC verdicts
+ * and the M2.4←M4 feed-forward link into one "assembly-ready" answer.
+ * Body: { m2?, m4?, m24Summary?, m4ReportSections? }.
+ */
+router.post('/ctd-readiness', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  try {
+    res.json(
+      aggregateCtdAuthoringReadiness({
+        m2: b.m2,
+        m4: b.m4,
+        m24Summary: b.m24Summary,
+        m4ReportSections: b.m4ReportSections,
       }),
     );
   } catch (err) {

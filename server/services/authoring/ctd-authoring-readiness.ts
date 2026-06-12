@@ -1,0 +1,119 @@
+/**
+ * CTD authoring-readiness aggregator — cross-module rollup (ICH M4).
+ *
+ * The per-module QC passes answer "is Module 2 / Module 4 internally sound?".
+ * This aggregator answers the RA lead's question — "is the IND assembly-ready
+ * across modules?" — by composing those verdicts into a single rollup and
+ * adding the one check neither module can make alone:
+ *
+ *   - The M2.4 Nonclinical Overview must trace to study reports that exist and
+ *     passed the Module 4 assembly QC (FEED_FORWARD): every CTD 4.2.x section
+ *     the M2.4 summary cites must correspond to a checked nonclinical report.
+ *
+ * The verdict is honest-by-construction: `ready` is true only when every
+ * supplied module QC is ready AND there are no cross-module errors. Pure /
+ * deterministic — it composes verdicts, it does not re-run the QCs.
+ *
+ * @module server/services/authoring/ctd-authoring-readiness
+ */
+
+import type { M2QcResult } from './m2-summary-qc';
+import type { M4QcResult } from './m4-nonclinical-qc';
+import type { M2Summary } from '../m2-summary-builders';
+
+export type CtdReadinessSeverity = 'error' | 'warning';
+
+export interface CtdReadinessFinding {
+  /** The module/area the finding concerns ('M2', 'M4', or 'M2.4←M4'). */
+  area: string;
+  severity: CtdReadinessSeverity;
+  code: string;
+  message: string;
+}
+
+export interface CtdModuleStatus {
+  module: string;
+  present: boolean;
+  ready: boolean;
+  errors: number;
+  warnings: number;
+}
+
+export interface CtdAuthoringReadinessResult {
+  ready: boolean;
+  modules: CtdModuleStatus[];
+  findings: CtdReadinessFinding[];
+  counts: { errors: number; warnings: number };
+}
+
+export interface CtdAuthoringReadinessInput {
+  /** Module 2 cross-summary QC verdict (from runM2SummaryQc). */
+  m2?: M2QcResult;
+  /** Module 4 nonclinical assembly QC verdict (from runM4NonclinicalQc). */
+  m4?: M4QcResult;
+  /**
+   * The built M2.4 Nonclinical Overview — used only for the M2.4←M4 feed-forward
+   * check. Its inputSectionKeys (CTD 4.2.x sections) must trace to the M4 program.
+   */
+  m24Summary?: M2Summary;
+  /** The CTD 4.2.x sections actually present in the M4 program (for feed-forward). */
+  m4ReportSections?: string[];
+}
+
+/**
+ * Aggregate the per-module authoring QC verdicts into a single CTD readiness
+ * rollup. Pure / deterministic.
+ */
+export function aggregateCtdAuthoringReadiness(input: CtdAuthoringReadinessInput): CtdAuthoringReadinessResult {
+  const findings: CtdReadinessFinding[] = [];
+  const modules: CtdModuleStatus[] = [];
+
+  if (input.m2) {
+    modules.push({ module: 'M2', present: true, ready: input.m2.ready, errors: input.m2.counts.errors, warnings: input.m2.counts.warnings });
+    if (!input.m2.ready) {
+      findings.push({ area: 'M2', severity: 'error', code: 'MODULE_NOT_READY', message: `Module 2 summaries are not assembly-ready (${input.m2.counts.errors} error(s)).` });
+    }
+  } else {
+    modules.push({ module: 'M2', present: false, ready: false, errors: 0, warnings: 0 });
+    findings.push({ area: 'M2', severity: 'warning', code: 'MODULE_ABSENT', message: 'No Module 2 QC verdict supplied.' });
+  }
+
+  if (input.m4) {
+    modules.push({ module: 'M4', present: true, ready: input.m4.ready, errors: input.m4.counts.errors, warnings: input.m4.counts.warnings });
+    if (!input.m4.ready) {
+      findings.push({ area: 'M4', severity: 'error', code: 'MODULE_NOT_READY', message: `Module 4 nonclinical program is not assembly-ready (${input.m4.counts.errors} error(s)).` });
+    }
+  } else {
+    modules.push({ module: 'M4', present: false, ready: false, errors: 0, warnings: 0 });
+    findings.push({ area: 'M4', severity: 'warning', code: 'MODULE_ABSENT', message: 'No Module 4 QC verdict supplied.' });
+  }
+
+  // FEED_FORWARD — the M2.4 overview must trace to study reports that exist.
+  if (input.m24Summary && input.m4ReportSections) {
+    const present = new Set(input.m4ReportSections);
+    for (const cited of input.m24Summary.inputSectionKeys ?? []) {
+      // M2.4 cites CTD 4.2.x sections; a cited section with no corresponding
+      // (prefix-matching) report in the program is an orphan reference.
+      const traced = input.m4ReportSections.some((s) => s === cited || s.startsWith(cited) || cited.startsWith(s));
+      if (!present.has(cited) && !traced) {
+        findings.push({
+          area: 'M2.4←M4',
+          severity: 'error',
+          code: 'FEED_FORWARD',
+          message: `M2.4 Nonclinical Overview cites ${cited}, which has no corresponding Module 4 study report.`,
+        });
+      }
+    }
+  }
+
+  findings.sort((a, b) => (a.area === b.area ? severityRank(a.severity) - severityRank(b.severity) : a.area.localeCompare(b.area)));
+
+  const errors = findings.filter((f) => f.severity === 'error').length;
+  const warnings = findings.length - errors;
+
+  return { ready: errors === 0, modules, findings, counts: { errors, warnings } };
+}
+
+function severityRank(s: CtdReadinessSeverity): number {
+  return s === 'error' ? 0 : 1;
+}
