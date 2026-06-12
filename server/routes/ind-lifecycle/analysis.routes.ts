@@ -17,6 +17,7 @@ import { buildPackageManifest } from '../../services/ind-lifecycle/ind-package-m
 import { evaluateDispatchGate } from '../../services/ind-lifecycle/ind-dispatch-gate';
 import { buildIndCockpit, type SequenceGateSummary } from '../../services/ind-lifecycle/ind-cockpit';
 import { diffSequences } from '../../services/ind-lifecycle/ind-sequence-diff';
+import { createDispatchSnapshot, listDispatchSnapshots } from '../../services/ind-lifecycle/ind-dispatch-snapshot-service';
 import { renderPackageManifestPdf, renderSequenceDiffPdf } from '../../services/ind-lifecycle/ind-document-renderer';
 import { getSubmission, listSequences, listLeaves, getSequence } from '../../services/submission-service/submission-service';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, sendPdf } from './shared';
@@ -181,35 +182,85 @@ router.post('/sequence/:seqId/dispatch-gate', limiter, requireRole(AUTHOR), asyn
   if (!Number.isInteger(seqId) || seqId <= 0) {
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid sequence id.' } });
   }
-  const b = body(req);
-  const filingType = b.filingType === 'amendment' ? 'amendment' : 'initial';
   try {
-    const [sequence, leaves] = await Promise.all([getSequence(seqId, ctx), listLeaves(seqId, ctx)]);
-    const sequenceValidation = validateSequenceLeaves({
-      filingType,
-      leaves: leaves.map((l) => ({ sectionCode: l.sectionCode })),
-    });
-    const manifest = buildPackageManifest({
-      sequenceNumber: sequence.sequenceNumber,
-      submissionType: sequence.type,
-      leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, lifecycleOp: l.lifecycleOp, checksum: l.checksum })),
-    });
-    const clock = b.clockInput?.receiptDate ? evaluateRegulatoryClock(b.clockInput) : null;
-    const timeline = b.timelineInput?.receiptDate ? buildIndTimeline(b.timelineInput) : null;
-    const actionItems = deriveIndActionItems({
-      readiness: readinessFrom(b.readinessInput),
-      clock,
-      timeline,
-      sequenceValidation,
-      overdueSafetyReports: b.overdueSafetyReports,
-    });
-    const verdict = evaluateDispatchGate({
-      sequenceValidation,
-      manifest,
-      criticalActions: actionItems.criticalCount,
-      sequenceStatus: sequence.status,
-    });
-    res.json({ verdict, sequenceValidation, manifest, actionItems });
+    const { result } = await computeGateForSequence(seqId, body(req), ctx);
+    res.json(result);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Compute the dispatch gate for a sequence (loads it + its leaves). Returns both
+ * the API result shape and the parts needed to persist a snapshot.
+ */
+async function computeGateForSequence(seqId: number, b: any, ctx: { organizationId: number; userId: number }) {
+  const filingType = b.filingType === 'amendment' ? 'amendment' : 'initial';
+  const [sequence, leaves] = await Promise.all([getSequence(seqId, ctx), listLeaves(seqId, ctx)]);
+  const sequenceValidation = validateSequenceLeaves({
+    filingType,
+    leaves: leaves.map((l) => ({ sectionCode: l.sectionCode })),
+  });
+  const manifest = buildPackageManifest({
+    sequenceNumber: sequence.sequenceNumber,
+    submissionType: sequence.type,
+    leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, lifecycleOp: l.lifecycleOp, checksum: l.checksum })),
+  });
+  const clock = b.clockInput?.receiptDate ? evaluateRegulatoryClock(b.clockInput) : null;
+  const timeline = b.timelineInput?.receiptDate ? buildIndTimeline(b.timelineInput) : null;
+  const actionItems = deriveIndActionItems({
+    readiness: readinessFrom(b.readinessInput),
+    clock,
+    timeline,
+    sequenceValidation,
+    overdueSafetyReports: b.overdueSafetyReports,
+  });
+  const verdict = evaluateDispatchGate({
+    sequenceValidation,
+    manifest,
+    criticalActions: actionItems.criticalCount,
+    sequenceStatus: sequence.status,
+  });
+  return {
+    sequence,
+    verdict,
+    result: { verdict, sequenceValidation, manifest, actionItems },
+  };
+}
+
+/**
+ * Evaluate the dispatch gate AND persist it as an auditable snapshot, so the
+ * sequence's go/no-go history is reviewable over time.
+ */
+router.post('/sequence/:seqId/dispatch-gate/snapshot', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const seqId = Number(req.params.seqId);
+  if (!Number.isInteger(seqId) || seqId <= 0) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid sequence id.' } });
+  }
+  try {
+    const { sequence, verdict, result } = await computeGateForSequence(seqId, body(req), ctx);
+    const snapshot = await createDispatchSnapshot(
+      { submissionId: sequence.submissionId, sequenceId: seqId, sequenceNumber: sequence.sequenceNumber, verdict },
+      ctx,
+    );
+    res.status(201).json({ snapshot, ...result });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** List a sequence's dispatch-readiness snapshots (newest first). */
+router.get('/sequence/:seqId/snapshots', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const seqId = Number(req.params.seqId);
+  if (!Number.isInteger(seqId) || seqId <= 0) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid sequence id.' } });
+  }
+  try {
+    res.json(await listDispatchSnapshots(seqId, ctx));
   } catch (err) {
     fail(res, err);
   }
