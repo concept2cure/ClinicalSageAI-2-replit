@@ -19,6 +19,7 @@ import { BIOMARKER_VALIDITY_KNOWLEDGE } from './scientific/biomarker-validity';
 import { BIOMARKER_VALIDITY_KNOWLEDGE_2 } from './scientific/biomarker-validity-2';
 import { BIOMARKER_VALIDITY_CNS_KNOWLEDGE } from './scientific/biomarker-validity-cns';
 import { BIOMARKER_VALIDITY_CNS_KNOWLEDGE_2 } from './scientific/biomarker-validity-cns-2';
+import { BIOMARKER_VALIDITY_IMMUNOLOGY_KNOWLEDGE } from './scientific/biomarker-validity-immunology';
 import { STANDARDIZATION_QC_KNOWLEDGE } from './scientific/standardization-qc';
 import { NGS_MOLECULAR_KNOWLEDGE } from './scientific/ngs-molecular';
 import { PREANALYTICAL_MICRO_KNOWLEDGE } from './scientific/preanalytical-micro';
@@ -46,6 +47,7 @@ export const IVD_KNOWLEDGE_BASE: readonly KnowledgeEntry[] = Object.freeze([
   ...BIOMARKER_VALIDITY_KNOWLEDGE_2,
   ...BIOMARKER_VALIDITY_CNS_KNOWLEDGE,
   ...BIOMARKER_VALIDITY_CNS_KNOWLEDGE_2,
+  ...BIOMARKER_VALIDITY_IMMUNOLOGY_KNOWLEDGE,
   ...STANDARDIZATION_QC_KNOWLEDGE,
   ...NGS_MOLECULAR_KNOWLEDGE,
   ...PREANALYTICAL_MICRO_KNOWLEDGE,
@@ -72,6 +74,7 @@ export const IVD_KNOWLEDGE_CORPORA = {
   'biomarker-validity-2': BIOMARKER_VALIDITY_KNOWLEDGE_2,
   'biomarker-validity-cns': BIOMARKER_VALIDITY_CNS_KNOWLEDGE,
   'biomarker-validity-cns-2': BIOMARKER_VALIDITY_CNS_KNOWLEDGE_2,
+  'biomarker-validity-immunology': BIOMARKER_VALIDITY_IMMUNOLOGY_KNOWLEDGE,
   'standardization-qc': STANDARDIZATION_QC_KNOWLEDGE,
   'ngs-molecular': NGS_MOLECULAR_KNOWLEDGE,
   'preanalytical-micro': PREANALYTICAL_MICRO_KNOWLEDGE,
