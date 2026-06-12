@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-12T05:17:01.993Z",
+  "generatedAt": "2026-06-12T05:35:37.914Z",
   "git": {
-    "sha": "8474216a91a2f197e1a8e26ac2bbf3f9c1807e60",
+    "sha": "abfe34826c6daf6adb65e96d3ecbfd38fe70a193",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -273,7 +273,7 @@
       },
       {
         "basename": "client",
-        "count": 14,
+        "count": 15,
         "paths": [
           "client/src/lib/api/client.ts",
           "server/integrations/citationjs/client.ts",
@@ -287,6 +287,7 @@
           "server/integrations/tika/client.ts",
           "server/integrations/unstructured/client.ts",
           "server/integrations/vale/client.ts",
+          "server/integrations/veeva-vault/client.ts",
           "server/integrations/verapdf/client.ts",
           "server/prisma/client.js"
         ]
@@ -2322,7 +2323,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 308,
+      "duplicateGroups": 309,
       "largeByBytes": 11,
       "largeByLines": 34
     },
