@@ -27,6 +27,7 @@ import { searchDeviceRecalls } from '../integrations/device-recalls.js';
 import { searchDrugLabels } from '../integrations/drug-label-client.js';
 import { searchDrugApprovals } from '../integrations/drug-approvals-client.js';
 import { searchChemblCompounds, getChemblMechanisms } from '../integrations/chembl-client.js';
+import { searchPreprints, type PreprintServerFilter } from '../integrations/preprint-client.js';
 import { screenStructuralAlerts, assessDevelopability } from '../chem/index.js';
 import { assessRegulatoryLandscape } from '../integrations/landscape.js';
 import { getIntegrationStatuses, summarizeStatuses } from '../integrations/integration-status.js';
@@ -1007,6 +1008,40 @@ registerToolHandler('search_chembl_compound', async (input) => {
       note: 'ChEMBL API unavailable — try the public compound report card.',
       url: `https://www.ebi.ac.uk/chembl/g/#search_results/all/query=${encodeURIComponent(query)}`,
       molecules: [],
+    });
+  }
+});
+
+// Search Preprints — bioRxiv / medRxiv emerging evidence via Europe PMC.
+registerToolHandler('search_preprints', async (input) => {
+  const query = typeof input.query === 'string' ? input.query.trim() : '';
+  if (!query) {
+    return JSON.stringify({ error: 'Provide a search `query` (mechanism, target, biomarker, disease).' });
+  }
+  const maxResults = Math.min((input.max_results as number) || 5, 25);
+  const serverRaw = typeof input.server === 'string' ? input.server.toLowerCase() : 'any';
+  const server: PreprintServerFilter =
+    serverRaw === 'biorxiv' || serverRaw === 'medrxiv' ? serverRaw : 'any';
+  try {
+    const result = await searchPreprints({ query, maxResults, server });
+    return JSON.stringify({
+      source: result.source,
+      query: result.query,
+      totalCount: result.totalCount,
+      resultCount: result.preprints.length,
+      preprints: result.preprints,
+      caveat: result.caveat,
+      citation_hint:
+        'Cite each preprint by DOI and link to the provided url; label as a non-peer-reviewed preprint.',
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'Europe PMC (preprints)',
+      query,
+      error: e instanceof Error ? e.message : 'Preprint search failed',
+      note: 'Preprint API unavailable — try bioRxiv/medRxiv search directly.',
+      url: `https://www.biorxiv.org/search/${encodeURIComponent(query)}`,
+      preprints: [],
     });
   }
 });

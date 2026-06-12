@@ -5645,6 +5645,36 @@ export const SEARCH_CHEMBL_COMPOUND: AnaTool = {
   },
 };
 
+export const SEARCH_PREPRINTS: AnaTool = {
+  name: 'search_preprints',
+  description:
+    'Search preprints on bioRxiv / medRxiv (and other preprint servers) for emerging, ' +
+    'pre-peer-review evidence — new mechanisms, targets, biomarkers, and translational findings. ' +
+    'Backed by Europe PMC full-text preprint search. Returns records with a citeable DOI/URL, the ' +
+    'preprint server, and the posting date. IMPORTANT: preprints are NOT peer-reviewed — always ' +
+    'surface the returned caveat and label these findings as preliminary. Use to scout the leading ' +
+    'edge of a field; corroborate with search_literature (PubMed) for peer-reviewed support.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      query: {
+        type: 'string',
+        description: 'Free-text query (mechanism, target, biomarker, disease, method).',
+      },
+      server: {
+        type: 'string',
+        enum: ['biorxiv', 'medrxiv', 'any'],
+        description: "Restrict to a preprint server, or 'any' (default).",
+      },
+      max_results: {
+        type: 'number',
+        description: 'Maximum preprints to return (default: 5, max: 25).',
+      },
+    },
+    required: ['query'],
+  },
+};
+
 export const SCREEN_COMPOUND_LIABILITIES: AnaTool = {
   name: 'screen_compound_liabilities',
   description:
@@ -5677,6 +5707,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   EXECUTE_PLATFORM_COMMAND,
   SEARCH_CHEMBL_COMPOUND,
   SCREEN_COMPOUND_LIABILITIES,
+  SEARCH_PREPRINTS,
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
   SEARCH_MEDICARE_COVERAGE,

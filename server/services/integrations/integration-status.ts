@@ -104,6 +104,13 @@ export async function getIntegrationStatuses(
       tools: ['search_chembl_compound', 'screen_compound_liabilities'],
     },
     {
+      id: 'preprints',
+      label: 'bioRxiv / medRxiv preprints (via Europe PMC) — emerging, pre-peer-review evidence',
+      kind: 'public_api',
+      configured: true,
+      tools: ['search_preprints'],
+    },
+    {
       id: 'gmail',
       label: 'Regulatory mailbox (Gmail, read-only)',
       kind: 'env_gated',
