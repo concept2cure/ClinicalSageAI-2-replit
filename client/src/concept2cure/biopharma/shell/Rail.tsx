@@ -1,8 +1,14 @@
 // Biopharma rail — port of ui_kits/biopharma/shell.jsx Rail.
+//
+// Phase 10.2: collapsible group state is lifted to the host App, which
+// persists it per user via users.preferences.railGroups (smart defaults:
+// Workstream open; Lifecycle / Workbench / Intelligence / System collapsed).
+// The workstream + lifecycle groups filter by the tenant's client type
+// (organizations.client_type).
 
 import * as React from 'react';
 import { BioIcon } from '../icons';
-import { BIOPHARMA_NAV_GROUPS, BIOPHARMA_NAV, CLIENT_TYPES } from '../data/nav';
+import { BIOPHARMA_NAV_GROUPS, BIOPHARMA_NAV, CLIENT_TYPES, asClientType } from '../data/nav';
 import type { BioNavItem } from '../data/nav';
 
 interface RailProps {
@@ -12,37 +18,28 @@ interface RailProps {
   setCollapsed:  (v: boolean) => void;
   clientType:    string;
   user:          { name: string; initials: string; role: string };
+  /** Per-user group open state (users.preferences.railGroups). */
+  groupOpen:     Record<string, boolean>;
+  onToggleGroup: (groupId: string, open: boolean) => void;
 }
 
-const RAIL_GROUPS_KEY = 'biopharma.railGroupsOpen';
-
-export function BiopharmaRail({ activeNav, setActiveNav, collapsed, setCollapsed, clientType, user }: RailProps) {
+export function BiopharmaRail({
+  activeNav,
+  setActiveNav,
+  collapsed,
+  setCollapsed,
+  clientType,
+  user,
+  groupOpen,
+  onToggleGroup,
+}: RailProps) {
   const activeGroupId = React.useMemo(() => {
     const item = BIOPHARMA_NAV.find(i => i.id === activeNav);
     return item?.group ?? null;
   }, [activeNav]);
 
-  const [groupOpen, setGroupOpen] = React.useState<Record<string, boolean>>(() => {
-    let stored: Record<string, boolean> = {};
-    try {
-      const raw = localStorage.getItem(RAIL_GROUPS_KEY);
-      if (raw) stored = JSON.parse(raw);
-    } catch { /* ignore */ }
-    const out: Record<string, boolean> = {};
-    BIOPHARMA_NAV_GROUPS.forEach(g => {
-      out[g.id] = stored[g.id] != null ? stored[g.id] : (g.id === 'workstream' || g.id === 'system' || !g.label);
-    });
-    return out;
-  });
-
-  React.useEffect(() => {
-    try { localStorage.setItem(RAIL_GROUPS_KEY, JSON.stringify(groupOpen)); } catch { /* quota */ }
-  }, [groupOpen]);
-
-  const toggleGroup = (gid: string) => setGroupOpen(prev => ({ ...prev, [gid]: !prev[gid] }));
-
   function filterNav(items: BioNavItem[]): BioNavItem[] {
-    const cfg = CLIENT_TYPES[clientType];
+    const cfg = CLIENT_TYPES[asClientType(clientType)];
     if (!cfg) return items;
     const allowedWS = new Set(cfg.workstream);
     const allowedLC = new Set(cfg.lifecycle);
@@ -81,7 +78,9 @@ export function BiopharmaRail({ activeNav, setActiveNav, collapsed, setCollapsed
         const items = filterNav(BIOPHARMA_NAV).filter(i => i.group === g.id);
         if (!items.length) return null;
         const collapsible = !!g.label;
-        const isOpen = collapsible ? (groupOpen[g.id] || activeGroupId === g.id) : true;
+        // The active item's group always stays open so the current location
+        // never disappears from the rail.
+        const isOpen = collapsible ? (groupOpen[g.id] ?? false) || activeGroupId === g.id : true;
         const visibleItems = isOpen ? items : items.filter(i => i.id === activeNav);
         const hiddenCount = items.length - visibleItems.length;
         return (
@@ -89,7 +88,8 @@ export function BiopharmaRail({ activeNav, setActiveNav, collapsed, setCollapsed
             {collapsible && (
               <button className="rail-section rail-section-toggle" type="button"
                       data-open={isOpen || undefined}
-                      onClick={() => toggleGroup(g.id)}
+                      aria-expanded={isOpen}
+                      onClick={() => onToggleGroup(g.id, !isOpen)}
                       title={isOpen ? `Collapse ${g.label}` : `Expand ${g.label}`}>
                 <span className="rail-section-chev"><BioIcon name="chevronDown" /></span>
                 <span>{g.label}</span>

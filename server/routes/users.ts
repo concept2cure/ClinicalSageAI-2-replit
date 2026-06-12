@@ -161,8 +161,10 @@ router.get('/me', async (req: Request, res: Response) => {
     const [firstName = '', ...lastNameParts] = (userData.name || '').split(' ');
     const lastName = lastNameParts.join(' ');
 
-    // Get organization name
+    // Get organization name + client type (Phase 10.2 — tenant IA for the
+    // biopharma shell; medtech | biotech | pharma).
     let orgName = 'Concept2Cure Demo';
+    let orgClientType = 'pharma';
     if (decoded.organizationId) {
       const org = await db
         .select()
@@ -171,6 +173,7 @@ router.get('/me', async (req: Request, res: Response) => {
         .limit(1);
       if (org.length) {
         orgName = org[0].name;
+        orgClientType = org[0].clientType ?? 'pharma';
       }
     }
 
@@ -189,6 +192,7 @@ router.get('/me', async (req: Request, res: Response) => {
       permissions: [],
       organizationId: decoded.organizationId,
       organizationName: orgName,
+      organizationClientType: orgClientType,
       mfaEnabled: userData.mfaEnabled || false,
       mfaMethods: [],
       mustChangePassword: userData.mustChangePassword || false,
@@ -268,6 +272,172 @@ router.patch('/me', async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to update profile' } });
+  }
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+// Phase 10.2 — per-user UI preferences (PHASE_10_2_INSTALL.md §4).
+// Display preferences only; merge-patched into users.preferences (jsonb).
+// Allowed keys are validated explicitly — unknown keys are rejected so the
+// column never accumulates unaudited state.
+// ───────────────────────────────────────────────────────────────────────────
+
+const PREFERENCE_KEYS = ['density', 'railGroups', 'dockOpen'] as const;
+const DENSITY_VALUES = ['compact', 'comfortable', 'spacious'] as const;
+
+/**
+ * Validate a preferences merge-patch body. Returns an error string when the
+ * patch is invalid, otherwise null. A key set to `null` removes it (RFC 7396
+ * merge-patch semantics at the top level).
+ */
+function validatePreferencesPatch(patch: unknown): string | null {
+  if (!patch || typeof patch !== 'object' || Array.isArray(patch)) {
+    return 'Body must be a JSON object of preference keys';
+  }
+  const entries = Object.entries(patch as Record<string, unknown>);
+  if (entries.length === 0) return 'Empty preferences patch';
+  for (const [key, value] of entries) {
+    if (!(PREFERENCE_KEYS as readonly string[]).includes(key)) {
+      return `Unknown preference key: ${key}`;
+    }
+    if (value === null) continue; // null deletes the key
+    if (key === 'density') {
+      if (typeof value !== 'string' || !(DENSITY_VALUES as readonly string[]).includes(value)) {
+        return `density must be one of ${DENSITY_VALUES.join(' | ')}`;
+      }
+    }
+    if (key === 'dockOpen' && typeof value !== 'boolean') {
+      return 'dockOpen must be a boolean';
+    }
+    if (key === 'railGroups') {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return 'railGroups must be an object of group id -> open boolean';
+      }
+      const groups = Object.entries(value as Record<string, unknown>);
+      if (groups.length > 32) return 'railGroups has too many entries';
+      for (const [gid, open] of groups) {
+        if (gid.length > 64) return 'railGroups key too long';
+        if (typeof open !== 'boolean') return 'railGroups values must be booleans';
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * GET /api/users/me/preferences
+ * Read the session user's UI preferences (density, railGroups, dockOpen).
+ * Self-only — the user id comes from the verified JWT.
+ */
+router.get('/me/preferences', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
+    }
+
+    const decoded = verifyJwtWithRotation(token) as { userId: string };
+    const userId = parseInt(decoded.userId);
+    if (!Number.isFinite(userId)) {
+      return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
+    }
+
+    const rows = await db
+      .select({ preferences: users.preferences })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!rows.length) {
+      return res.status(404).json({ error: { code: 'USER_NOT_FOUND', message: 'User not found' } });
+    }
+
+    return res.json({ preferences: rows[0].preferences ?? {} });
+  } catch (error: any) {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
+    }
+    console.error('[users] Get preferences error:', error);
+    return res
+      .status(500)
+      .json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to get preferences' } });
+  }
+});
+
+/**
+ * PUT /api/users/me/preferences
+ * Merge-patch the session user's UI preferences. Self-only — the user id
+ * comes from the verified JWT; no other user's row is reachable from here.
+ * Allowed keys: density | railGroups | dockOpen. Unknown keys are rejected.
+ */
+router.put('/me/preferences', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
+    }
+
+    const decoded = verifyJwtWithRotation(token) as { userId: string };
+    const userId = parseInt(decoded.userId);
+    if (!Number.isFinite(userId)) {
+      return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
+    }
+
+    const patch = req.body as Record<string, unknown>;
+    const validationError = validatePreferencesPatch(patch);
+    if (validationError) {
+      return res
+        .status(400)
+        .json({ error: { code: 'VALIDATION_ERROR', message: validationError } });
+    }
+
+    // Read-merge-write via Drizzle (no raw SQL — tenant-isolation gate scans
+    // raw SQL strings). Display preferences are low-contention; last write
+    // wins is acceptable here.
+    const rows = await db
+      .select({ preferences: users.preferences })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!rows.length) {
+      return res.status(404).json({ error: { code: 'USER_NOT_FOUND', message: 'User not found' } });
+    }
+
+    const current =
+      rows[0].preferences && typeof rows[0].preferences === 'object' && !Array.isArray(rows[0].preferences)
+        ? (rows[0].preferences as Record<string, unknown>)
+        : {};
+
+    const next: Record<string, unknown> = { ...current };
+    for (const [key, value] of Object.entries(patch)) {
+      if (value === null) delete next[key];
+      else next[key] = value;
+    }
+
+    const [updated] = await db
+      .update(users)
+      .set({ preferences: next, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning({ preferences: users.preferences });
+
+    if (!updated) {
+      return res.status(404).json({ error: { code: 'USER_NOT_FOUND', message: 'User not found' } });
+    }
+
+    return res.json({ success: true, preferences: updated.preferences ?? {} });
+  } catch (error: any) {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
+    }
+    console.error('[users] Update preferences error:', error);
+    return res
+      .status(500)
+      .json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to update preferences' } });
   }
 });
 

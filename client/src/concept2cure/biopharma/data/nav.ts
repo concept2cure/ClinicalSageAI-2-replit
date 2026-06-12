@@ -17,7 +17,9 @@ export const BIOPHARMA_NAV_GROUPS: BioNavGroup[] = [
   { id: 'lifecycle',    label: 'Lifecycle' },
   { id: 'workbench',    label: 'Workbench' },
   { id: 'intelligence', label: 'Intelligence' },
-  { id: 'system',       label: '' },
+  // Phase 10.2 — labeled so the group collapses (brief smart defaults:
+  // Workstream open; Lifecycle / Intelligence / System collapsed).
+  { id: 'system',       label: 'System' },
 ];
 
 export const BIOPHARMA_NAV: BioNavItem[] = [
@@ -56,6 +58,17 @@ export const BIOPHARMA_NAV: BioNavItem[] = [
   { id: 'onboarding',    label: 'Onboarding',                icon: 'upload',        group: 'system' },
   { id: 'admin',         label: 'Admin and access',          icon: 'settings',      group: 'system' },
 ];
+
+/** Phase 10.2 smart defaults — Workstream open; Lifecycle / Workbench /
+ *  Intelligence / System collapsed. Persisted per user via
+ *  users.preferences.railGroups once the user toggles a group. */
+export function defaultRailGroupsOpen(): Record<string, boolean> {
+  const out: Record<string, boolean> = {};
+  BIOPHARMA_NAV_GROUPS.forEach(g => {
+    out[g.id] = g.id === 'workstream' || !g.label;
+  });
+  return out;
+}
 
 export const HERE_LABEL_BIOPHARMA: Record<string, string> = {
   overview:     'Overview',
@@ -100,26 +113,12 @@ export const BIOPHARMA_SUGGESTIONS: Record<string, string[]> = {
   orphan:    ['Find orphan precedents in RPE65 dystrophy', 'Draft FDA orphan application narrative', 'Pull every RPD voucher transaction 2022-2025'],
   meetings:  ['Generate Type C briefing book outline · BX-115', 'Pull every aligned FDA outcome 2024-2026', 'Cross-reference past minutes for stability strategy'],
   pediatric: ['Draft PSP rationale for adolescent extrapolation', 'Compare PIP modifications across BX-420 and BX-301', 'Surface every PIP milestone due in 90 days'],
+  cmc:       ['Reconcile drug substance specs across CSR-201 and §3.2.S.4.1', 'Pull stability trend at 24 months', 'Generate process performance summary'],
+  pharmacov: ['Adjudicate the highest-PRR signal', 'Draft PSUR §15 risk evaluation', 'Cross-reference EudraVigilance + FAERS'],
+  precedent: ['Find the 5 closest precedents to our lead program', 'Pull all accelerated approvals 2022–2025 for solid tumors', 'Cluster precedents by mechanism of action'],
 };
 
-export interface ClientTypeConfig {
-  label:       string;
-  domainLabel: string;
-  workstream:  string[];
-  lifecycle:   string[];
-}
-
-export const CLIENT_TYPES: Record<string, ClientTypeConfig> = {
-  biotech: {
-    label:       'Biotech',
-    domainLabel: 'Biotech',
-    workstream:  ['overview', 'ind', 'bla', 'maa', 'jnda', 'precedent'],
-    lifecycle:   ['cmc', 'clinical', 'pharmacov', 'pediatric', 'orphan', 'meetings', 'biostat'],
-  },
-  pharma: {
-    label:       'Pharma',
-    domainLabel: 'Pharma',
-    workstream:  ['overview', 'ind', 'nda', 'maa', 'jnda', 'lifecycle', 'precedent'],
-    lifecycle:   ['cmc', 'clinical', 'pharmacov', 'pediatric', 'biostat', 'meetings'],
-  },
-};
+// Phase 10.2 — client-type IA moved to ./clientTypes (typed, includes medtech
+// + per-type Overview config). Re-exported here for existing import sites.
+export { CLIENT_TYPES, asClientType, getClientTypeConfig } from './clientTypes';
+export type { ClientType, ClientTypeConfig, ClientTypeOverview } from './clientTypes';
