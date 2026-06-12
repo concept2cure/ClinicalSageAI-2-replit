@@ -12,8 +12,13 @@ import {
   closeoutDueDate,
   evaluateCloseout,
   evaluateSubawardEligibility,
+  budgetVsActual,
+  computeIndirectCost,
+  DE_MINIMIS_INDIRECT_RATE,
   type DeadlineItem,
   type CloseoutRecordState,
+  type BudgetLineView,
+  type ExpenditureView,
 } from '../grants-logic';
 
 const TODAY = '2026-06-10';
@@ -127,5 +132,48 @@ describe('evaluateSubawardEligibility', () => {
     const r = evaluateSubawardEligibility({ screenStatus: 'cleared', riskLevel: null });
     expect(r.eligible).toBe(false);
     expect(r.blockers.some((b) => /200\.332/.test(b))).toBe(true);
+  });
+});
+
+describe('computeIndirectCost', () => {
+  it('applies the F&A rate to the modified total direct cost (2 CFR 200.414)', () => {
+    expect(computeIndirectCost(100000, DE_MINIMIS_INDIRECT_RATE)).toBe(15000);
+    expect(computeIndirectCost(50000, 55)).toBe(27500);
+    expect(computeIndirectCost(0, 50)).toBe(0);
+    expect(computeIndirectCost(1000, 0)).toBe(0);
+  });
+});
+
+describe('budgetVsActual', () => {
+  const lines: BudgetLineView[] = [
+    { category: 'personnel', budgetedAmount: 60000 },
+    { category: 'travel', budgetedAmount: 10000 },
+    { category: 'indirect', budgetedAmount: 30000 },
+  ];
+
+  it('reconciles per category and totals; low risk when on budget', () => {
+    const exp: ExpenditureView[] = [{ category: 'personnel', amount: 30000 }, { category: 'travel', amount: 5000 }];
+    const s = budgetVsActual(lines, exp, 100000);
+    expect(s.totalBudgeted).toBe(100000);
+    expect(s.totalActual).toBe(35000);
+    expect(s.totalRemaining).toBe(65000);
+    expect(s.overAllocated).toBe(false);
+    expect(s.riskLevel).toBe('low');
+    const personnel = s.categories.find((c) => c.category === 'personnel')!;
+    expect(personnel.remaining).toBe(30000);
+  });
+
+  it('flags a category materially over budget as critical (>10%, 2 CFR 200.308)', () => {
+    const exp: ExpenditureView[] = [{ category: 'travel', amount: 12000 }]; // 20% over the 10k travel line
+    const s = budgetVsActual(lines, exp, 100000);
+    expect(s.categories.find((c) => c.category === 'travel')!.overBudget).toBe(true);
+    expect(s.riskLevel).toBe('high');
+    expect(s.findings.some((f) => f.severity === 'critical' && /over budget/.test(f.message))).toBe(true);
+  });
+
+  it('flags over-allocation when total budgeted exceeds the award amount', () => {
+    const s = budgetVsActual(lines, [], 90000); // lines total 100k > 90k award
+    expect(s.overAllocated).toBe(true);
+    expect(s.riskLevel).toBe('high');
   });
 });

@@ -221,6 +221,22 @@ async function main() {
   const grRep2 = await computeDomainReport('grants.portfolio_register', ORG);
   ok(grRep2 != null && (grRep2!.summary.subawards as number) >= 2 && grRep2!.summary.subawardsByScreen != null, `grants.portfolio_register reports subaward rollup (subawards=${grRep2?.summary.subawards})`);
 
+  console.log('\n[Grants] budget vs actual + over-allocation gate (2 CFR 200.308/200.403)');
+  const budAwardId = await tx((c) => grants.createAwardTx(c, ORG, USER, { awardNumber: `BUDAWD-${Date.now()}`, fundingAgency: 'nih', totalAmount: 100000, periodStart: '2026-01-01', periodEnd: '2027-01-01' })).then((r: any) => r.id);
+  await tx((c) => grants.addBudgetLineTx(c, ORG, USER, budAwardId, { category: 'personnel', budgetedAmount: 60000 }));
+  await tx((c) => grants.addBudgetLineTx(c, ORG, USER, budAwardId, { category: 'travel', budgetedAmount: 10000 }));
+  await tx((c) => grants.addBudgetLineTx(c, ORG, USER, budAwardId, { category: 'indirect', budgetedAmount: 30000, indirectRatePct: 30 }));
+  let overAllocBlocked = false;
+  try { await tx((c) => grants.addBudgetLineTx(c, ORG, USER, budAwardId, { category: 'supplies', budgetedAmount: 5000 })); } catch (e: any) { overAllocBlocked = e?.code === 'INVALID_STATE'; }
+  ok(overAllocBlocked, 'budget line BLOCKED when it would over-allocate the award amount (gate is the floor)');
+  await tx((c) => grants.recordExpenditureTx(c, ORG, USER, budAwardId, { category: 'personnel', amount: 30000 }));
+  await tx((c) => grants.recordExpenditureTx(c, ORG, USER, budAwardId, { category: 'travel', amount: 12000 }));
+  const bva = await grants.getBudgetVsActual(ORG, budAwardId);
+  ok(bva.totalBudgeted === 100000 && bva.totalActual === 42000 && bva.totalRemaining === 58000, `budget-vs-actual reconciles (budgeted=${bva.totalBudgeted}, actual=${bva.totalActual})`);
+  ok(bva.riskLevel === 'high' && bva.categories.find((c) => c.category === 'travel')!.overBudget === true, 'travel over budget flips risk to high (2 CFR 200.308 finding)');
+  const grRep3 = await computeDomainReport('grants.portfolio_register', ORG);
+  ok(grRep3 != null && (grRep3!.summary.totalBudgeted as number) >= 100000 && (grRep3!.summary.totalExpended as number) >= 42000, `grants.portfolio_register reports budget rollup (budgeted=${grRep3?.summary.totalBudgeted}, expended=${grRep3?.summary.totalExpended})`);
+
   console.log('\n[Tasking] deadline event → central unified_tasks');
   const taskId = await emitDeadlineTask({ organizationId: ORG, title: 'Verify milestone due', sourceEntityType: 'grant_milestone', sourceEntityId: 999, dueDate: '2026-12-01', taskType: 'milestone' });
   ok(typeof taskId === 'string' && taskId.length > 0, 'emitDeadlineTask created a unified_tasks row (best-effort bridge)');

@@ -83,7 +83,12 @@ export async function computeDomainReport(reportTypeId: string, orgId: number): 
       const sub = await countBy('grant_subawards', 'screen_status', orgId);
       // Executed subawards that were never cleared by restricted-party screening (2 CFR 200.214 risk).
       const unscreenedExecuted = (await pool.query(`SELECT count(*)::int n FROM grant_subawards WHERE organization_id=$1 AND deleted_at IS NULL AND status='executed' AND screen_status <> 'cleared'`, [orgId])).rows[0].n;
-      return result('grants_portfolio', aw.total + pr.total, { awards: aw.total, awardsByStatus: aw.byCol, proposals: pr.total, proposalsByStatus: pr.byCol, invoicesByStatus: inv.byCol, closeoutsByStatus: co.byCol, overdueCloseouts, subawards: sub.total, subawardsByScreen: sub.byCol, unscreenedExecuted });
+      // Budget vs actual, org-wide (2 CFR 200.308/200.403).
+      const totalBudgeted = Number((await pool.query(`SELECT COALESCE(sum(budgeted_amount),0)::float8 s FROM grant_budget_lines WHERE organization_id=$1 AND deleted_at IS NULL`, [orgId])).rows[0].s);
+      const totalExpended = Number((await pool.query(`SELECT COALESCE(sum(amount),0)::float8 s FROM grant_expenditures WHERE organization_id=$1 AND deleted_at IS NULL`, [orgId])).rows[0].s);
+      // Awards whose total expenditures exceed their authorized amount.
+      const overspentAwards = (await pool.query(`SELECT count(*)::int n FROM (SELECT a.id FROM grant_awards a JOIN grant_expenditures e ON e.award_id=a.id AND e.deleted_at IS NULL WHERE a.organization_id=$1 AND a.deleted_at IS NULL AND a.total_amount IS NOT NULL GROUP BY a.id, a.total_amount HAVING sum(e.amount) > a.total_amount) x`, [orgId])).rows[0].n;
+      return result('grants_portfolio', aw.total + pr.total, { awards: aw.total, awardsByStatus: aw.byCol, proposals: pr.total, proposalsByStatus: pr.byCol, invoicesByStatus: inv.byCol, closeoutsByStatus: co.byCol, overdueCloseouts, subawards: sub.total, subawardsByScreen: sub.byCol, unscreenedExecuted, totalBudgeted, totalExpended, overspentAwards });
     }
     case 'rim.registration_grid': {
       const r = await countBy('rim_registrations', 'market_status', orgId);

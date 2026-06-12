@@ -31,6 +31,7 @@ export type SubawardInstitutionType = 'higher_ed' | 'nonprofit' | 'commercial' |
 export type SubawardScreenStatus = 'not_screened' | 'cleared' | 'excluded';
 export type SubawardRiskLevel = 'low' | 'medium' | 'high';
 export type SubawardStatus = 'draft' | 'screened' | 'executed' | 'terminated';
+export type BudgetCategory = 'personnel' | 'fringe' | 'equipment' | 'travel' | 'supplies' | 'contractual' | 'construction' | 'other_direct' | 'indirect';
 
 // ─── Funding opportunities (pre-award discovery) ─────────────────────────────
 
@@ -248,3 +249,57 @@ export const grantSubawards = pgTable(
 
 export type GrantSubaward = typeof grantSubawards.$inferSelect;
 export type NewGrantSubaward = typeof grantSubawards.$inferInsert;
+
+// ─── Budget lines & expenditures (2 CFR 200.308 / 200.403 / 200.414) ─────────
+// Per-award budget by cost category and the actual expenditures booked against
+// it. budget_vs_actual reconciles the two; the budget may not over-allocate the
+// award amount (enforced when adding a line).
+
+export const grantBudgetLines = pgTable(
+  'grant_budget_lines',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    awardId: integer('award_id').notNull().references(() => grantAwards.id),
+    category: text('category').$type<BudgetCategory>().notNull(),
+    budgetedAmount: numeric('budgeted_amount', { precision: 14, scale: 2 }).notNull(),
+    /** On an 'indirect' line: the negotiated/de minimis F&A rate applied (2 CFR 200.414). */
+    indirectRatePct: numeric('indirect_rate_pct', { precision: 6, scale: 3 }),
+    notes: text('notes'),
+    createdBy: integer('created_by').notNull().references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  },
+  (t) => ({
+    orgIdx: index('idx_grant_budget_lines_org').on(t.organizationId),
+    awardIdx: index('idx_grant_budget_lines_award').on(t.awardId),
+  })
+);
+
+export type GrantBudgetLine = typeof grantBudgetLines.$inferSelect;
+export type NewGrantBudgetLine = typeof grantBudgetLines.$inferInsert;
+
+export const grantExpenditures = pgTable(
+  'grant_expenditures',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    awardId: integer('award_id').notNull().references(() => grantAwards.id),
+    category: text('category').$type<BudgetCategory>().notNull(),
+    amount: numeric('amount', { precision: 14, scale: 2 }).notNull(),
+    expenditureDate: date('expenditure_date'),
+    description: text('description'),
+    createdBy: integer('created_by').notNull().references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  },
+  (t) => ({
+    orgIdx: index('idx_grant_expenditures_org').on(t.organizationId),
+    awardIdx: index('idx_grant_expenditures_award').on(t.awardId),
+  })
+);
+
+export type GrantExpenditure = typeof grantExpenditures.$inferSelect;
+export type NewGrantExpenditure = typeof grantExpenditures.$inferInsert;

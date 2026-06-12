@@ -14,9 +14,11 @@ interface GrantsMetricsState {
   closeoutsFinalized: number;
   subawardsByType: Record<string, number>; // by institution type
   subawardsExecuted: number;
+  budgetLinesByCategory: Record<string, number>;
+  expendituresByCategory: Record<string, number>;
 }
 
-const state: GrantsMetricsState = { proposalsCreated: 0, awardsRecorded: {}, invoicesByStatus: {}, milestoneStatus: {}, closeoutsOpened: 0, closeoutsFinalized: 0, subawardsByType: {}, subawardsExecuted: 0 };
+const state: GrantsMetricsState = { proposalsCreated: 0, awardsRecorded: {}, invoicesByStatus: {}, milestoneStatus: {}, closeoutsOpened: 0, closeoutsFinalized: 0, subawardsByType: {}, subawardsExecuted: 0, budgetLinesByCategory: {}, expendituresByCategory: {} };
 
 export function recordGrantProposalCreated(): void {
   state.proposalsCreated += 1;
@@ -36,6 +38,12 @@ export function recordGrantSubaward(institutionType: string): void {
   state.subawardsByType[institutionType] = (state.subawardsByType[institutionType] ?? 0) + 1;
 }
 export function recordGrantSubawardExecuted(): void { state.subawardsExecuted += 1; }
+export function recordGrantBudgetLine(category: string): void {
+  state.budgetLinesByCategory[category] = (state.budgetLinesByCategory[category] ?? 0) + 1;
+}
+export function recordGrantExpenditure(category: string): void {
+  state.expendituresByCategory[category] = (state.expendituresByCategory[category] ?? 0) + 1;
+}
 
 export function renderGrantsMetrics(): string[] {
   const lines: string[] = [];
@@ -63,6 +71,12 @@ export function renderGrantsMetrics(): string[] {
   lines.push('# HELP grants_subawards_executed_total Subawards executed (cleared screen + risk assessment)');
   lines.push('# TYPE grants_subawards_executed_total counter');
   lines.push(`grants_subawards_executed_total ${state.subawardsExecuted}`);
+  lines.push('# HELP grants_budget_lines_total Budget lines added, by cost category');
+  lines.push('# TYPE grants_budget_lines_total counter');
+  for (const [c, n] of Object.entries(state.budgetLinesByCategory)) lines.push(`grants_budget_lines_total{category="${c}"} ${n}`);
+  lines.push('# HELP grants_expenditures_total Expenditures recorded, by cost category');
+  lines.push('# TYPE grants_expenditures_total counter');
+  for (const [c, n] of Object.entries(state.expendituresByCategory)) lines.push(`grants_expenditures_total{category="${c}"} ${n}`);
   return lines;
 }
 
@@ -78,4 +92,6 @@ export function resetGrantsMetrics(): void {
   state.closeoutsFinalized = 0;
   state.subawardsByType = {};
   state.subawardsExecuted = 0;
+  state.budgetLinesByCategory = {};
+  state.expendituresByCategory = {};
 }

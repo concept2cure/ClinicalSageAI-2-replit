@@ -15,8 +15,9 @@ import { buildIndTimeline } from '../../services/ind-lifecycle/ind-timeline-serv
 import { summarizeSequences } from '../../services/ind-lifecycle/ind-submission-overview';
 import { buildIndDashboard } from '../../services/ind-lifecycle/ind-dashboard';
 import { buildIndCockpit, annotateGateWithSnapshot, buildDriftDigest, type SequenceGateSummary } from '../../services/ind-lifecycle/ind-cockpit';
+import { buildIndPortfolio, buildIndPortfolioEntry, isIndSubmission, buildPortfolioDrift } from '../../services/ind-lifecycle/ind-portfolio';
 import { getLatestDispatchSnapshot } from '../../services/ind-lifecycle/ind-dispatch-snapshot-service';
-import { getSubmission, listSequences, listLeaves } from '../../services/submission-service/submission-service';
+import { getSubmission, listSubmissions, listSequences, listLeaves } from '../../services/submission-service/submission-service';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, readinessFrom, validationFrom } from './shared';
 
 const router = Router();
@@ -75,6 +76,50 @@ async function annotatedGatesForSubmission(
     }),
   );
 }
+
+/**
+ * IND portfolio — every IND submission for the org at a glance, each with its
+ * eCTD sequence summary, plus portfolio totals. One call for a CRO / program
+ * manager.
+ */
+router.get('/portfolio', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  try {
+    const all = await listSubmissions(ctx);
+    const inds = all.filter(isIndSubmission);
+    const entries = await Promise.all(
+      inds.map(async (s) => buildIndPortfolioEntry(s, await listSequences(s.id, ctx))),
+    );
+    res.json(buildIndPortfolio(entries));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Org-wide drift sweep — across every IND submission, the sequences whose live
+ * dispatch verdict has drifted from their last snapshot, or were never verified.
+ * The portfolio-level compliance feed. (Computes the structural live verdict; no
+ * per-submission analysis inputs.)
+ */
+router.get('/portfolio/drift', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  try {
+    const inds = (await listSubmissions(ctx)).filter(isIndSubmission);
+    const inputs = await Promise.all(
+      inds.map(async (submission) => {
+        const sequences = await listSequences(submission.id, ctx);
+        const gates = await annotatedGatesForSubmission(sequences, {}, ctx);
+        return { submission, drift: buildDriftDigest(gates) };
+      }),
+    );
+    res.json(buildPortfolioDrift(inputs));
+  } catch (err) {
+    fail(res, err);
+  }
+});
 
 /**
  * IND submission overview — the submission, its eCTD sequences, and a summary

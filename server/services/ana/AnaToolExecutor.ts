@@ -6363,6 +6363,94 @@ registerToolHandler('execute_subaward', async (input, ctx) => {
   }
 });
 
+const BUDGET_CATEGORIES = ['personnel', 'fringe', 'equipment', 'travel', 'supplies', 'contractual', 'construction', 'other_direct', 'indirect'];
+
+registerToolHandler('add_grant_budget_line', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_grant_budget_line requires tenant + user context.' });
+  const awardId = typeof input.award_id === 'number' ? input.award_id : NaN;
+  const category = typeof input.category === 'string' ? input.category : '';
+  const budgetedAmount = typeof input.budgeted_amount === 'number' ? input.budgeted_amount : NaN;
+  if (!Number.isInteger(awardId) || !BUDGET_CATEGORIES.includes(category) || !Number.isFinite(budgetedAmount)) {
+    return JSON.stringify({ error: 'award_id, a valid category, and budgeted_amount are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addBudgetLineTx } = await import('../grants/grants-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await addBudgetLineTx(client, ctx.organizationId, ctx.userId, awardId, {
+      category: category as any, budgetedAmount,
+      indirectRatePct: typeof input.indirect_rate_pct === 'number' ? input.indirect_rate_pct : null,
+      notes: typeof input.notes === 'string' ? input.notes : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `grant-award:${awardId}`, reason: fcoiReason(input, 'Budget line added via AnA'),
+      payload: { budgetLineId: id, category }, domain: 'grants', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, budgetLineId: id, message: `Added ${category} budget line (${budgetedAmount}) to award ${awardId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    // The over-allocation gate rejects a budget that exceeds the award amount — surface it.
+    return JSON.stringify({ error: `add_grant_budget_line failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('record_grant_expenditure', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'record_grant_expenditure requires tenant + user context.' });
+  const awardId = typeof input.award_id === 'number' ? input.award_id : NaN;
+  const category = typeof input.category === 'string' ? input.category : '';
+  const amount = typeof input.amount === 'number' ? input.amount : NaN;
+  if (!Number.isInteger(awardId) || !BUDGET_CATEGORIES.includes(category) || !Number.isFinite(amount)) {
+    return JSON.stringify({ error: 'award_id, a valid category, and amount are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { recordExpenditureTx } = await import('../grants/grants-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await recordExpenditureTx(client, ctx.organizationId, ctx.userId, awardId, {
+      category: category as any, amount,
+      expenditureDate: typeof input.expenditure_date === 'string' ? input.expenditure_date : null,
+      description: typeof input.description === 'string' ? input.description : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `grant-award:${awardId}`, reason: fcoiReason(input, 'Expenditure recorded via AnA'),
+      payload: { expenditureId: id, category, amount }, domain: 'grants', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, expenditureId: id, message: `Recorded ${category} expenditure (${amount}) against award ${awardId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `record_grant_expenditure failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_grant_budget', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_grant_budget requires tenant context.' });
+  const awardId = typeof input.award_id === 'number' ? input.award_id : NaN;
+  if (!Number.isInteger(awardId)) return JSON.stringify({ error: 'award_id is required.' });
+  const { getBudgetVsActual } = await import('../grants/grants-service.js');
+  try {
+    const s = await getBudgetVsActual(ctx.organizationId, awardId);
+    return JSON.stringify({
+      ok: true, riskLevel: s.riskLevel, totalBudgeted: s.totalBudgeted, totalActual: s.totalActual, totalRemaining: s.totalRemaining,
+      overAllocated: s.overAllocated, categories: s.categories, findings: s.findings,
+      message: `Budget vs actual: ${s.totalActual} of ${s.totalBudgeted} spent (${s.totalRemaining} remaining); risk ${s.riskLevel}${s.findings.length ? `, ${s.findings.length} finding(s)` : ''}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_grant_budget failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // RIM-lite (C2C-12). Conversational building shares the governed/audited path
 // (recordGovernedAction, surface 'ana').
