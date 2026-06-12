@@ -17,6 +17,7 @@ import * as effort from '../../server/services/effort-certification/effort-servi
 import * as coi from '../../server/services/research-security/coi-service';
 import { bridgeIngestedStudyTx, mapStudyType } from '../../server/services/preclinical/preclinical-governed-bridge';
 import * as grants from '../../server/services/grants/grants-service';
+import { buildComplianceBriefing } from '../../server/services/research-compliance/compliance-briefing';
 
 let pass = 0, fail = 0;
 function ok(cond: boolean, msg: string) { if (cond) { pass++; console.log('  ✓', msg); } else { fail++; console.log('  ✗ FAIL:', msg); } }
@@ -263,6 +264,20 @@ async function main() {
   ok(sponsorApproved.newEndDate === '2028-01-01', 'sponsor approval succeeds and moves the period end');
   const grRep4 = await computeDomainReport('grants.portfolio_register', ORG);
   ok(grRep4 != null && (grRep4!.summary.costShareCommitted as number) >= 50000 && grRep4!.summary.ncesByStatus != null, `grants.portfolio_register reports cost-share + NCE rollups (committed=${grRep4?.summary.costShareCommitted})`);
+
+  console.log('\n[CS] register controlled substance → log against perpetual inventory');
+  const newSubId = await tx((c) => cs.createSubstanceTx(c, ORG, USER, { substanceName: 'Briefing-II', deaSchedule: 'II' })).then((r: any) => r.id);
+  const recv = await tx((c) => cs.recordTransactionTx(c, ORG, USER, newSubId, { transactionType: 'receipt', quantity: 5 }));
+  ok(recv.balanceAfter === 5, 'a newly registered substance accepts a receipt onto the perpetual ledger');
+
+  console.log('\n[Briefing] cross-domain "what needs attention" aggregation (read-only)');
+  const brief = await buildComplianceBriefing(ORG);
+  ok(Array.isArray(brief.items) && brief.totalAttentionItems === brief.items.length, 'briefing returns a well-formed item list with a consistent total');
+  const rank: Record<string, number> = { critical: 0, warning: 1, info: 2 };
+  const ordered = brief.items.every((it, i) => i === 0 || rank[brief.items[i - 1].severity] <= rank[it.severity]);
+  ok(ordered, 'briefing items are ordered critical → warning → info');
+  ok(brief.items.some((i) => /foreign-nexus/.test(i.signal)), 'briefing surfaces the foreign-nexus COI signal seeded earlier');
+  ok(brief.items.every((i) => i.basis && i.count > 0), 'every briefing item carries a regulatory basis and a positive count');
 
   console.log('\n[Tasking] deadline event → central unified_tasks');
   const taskId = await emitDeadlineTask({ organizationId: ORG, title: 'Verify milestone due', sourceEntityType: 'grant_milestone', sourceEntityId: 999, dueDate: '2026-12-01', taskType: 'milestone' });

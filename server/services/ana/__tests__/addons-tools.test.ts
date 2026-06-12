@@ -11,6 +11,7 @@ import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
 const TOOLS = [
   'create_effort_certification', 'add_effort_line', 'create_coi_disclosure',
   'search_grants_gov', 'screen_restricted_party',
+  'research_compliance_briefing', 'fulfill_regulatory_commitment', 'review_ha_interaction', 'register_controlled_substance',
 ];
 
 describe('Add-on AnA tools — registration', () => {
@@ -55,5 +56,24 @@ describe('Sponsored-programs connector tools — context + input guards', () => 
   it('screen_restricted_party requires a party_name', async () => {
     const out = JSON.parse(await getToolHandler('screen_restricted_party')!({}, { organizationId: 1 } as any));
     expect(out.error).toMatch(/party_name is required/);
+  });
+});
+
+describe('Briefing + coverage-gap tools — context + input guards', () => {
+  it('research_compliance_briefing requires tenant context', async () => {
+    const out = JSON.parse(await getToolHandler('research_compliance_briefing')!({}, {} as any));
+    expect(out.error).toMatch(/tenant context/);
+  });
+  it('fulfill_regulatory_commitment requires a commitment_id', async () => {
+    const out = JSON.parse(await getToolHandler('fulfill_regulatory_commitment')!({}, { organizationId: 1, userId: 1 } as any));
+    expect(out.error).toMatch(/commitment_id is required/);
+  });
+  it('review_ha_interaction requires an interaction_id', async () => {
+    const out = JSON.parse(await getToolHandler('review_ha_interaction')!({}, { organizationId: 1 } as any));
+    expect(out.error).toMatch(/interaction_id is required/);
+  });
+  it('register_controlled_substance rejects an invalid schedule', async () => {
+    const out = JSON.parse(await getToolHandler('register_controlled_substance')!({ substance_name: 'X', dea_schedule: 'VII' }, { organizationId: 1, userId: 1 } as any));
+    expect(out.error).toMatch(/valid dea_schedule/);
   });
 });

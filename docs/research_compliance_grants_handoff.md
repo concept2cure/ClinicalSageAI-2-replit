@@ -583,9 +583,16 @@ All 15 capabilities are accounted for: **C2C-01 through C2C-08, C2C-11 through C
 
 ---
 
+## AnA conversational surface — build-out (read-only briefing, gap fills, safety net)
+
+- **Registry consistency (safety net):** `ana/__tests__/tool-registry-consistency.test.ts` asserts, across the whole ~240-tool surface, that every `ALL_ANA_TOOLS` entry has a registered handler **and** every registered handler is reachable from `ALL_ANA_TOOLS` — plus unique names and well-formed schemas. Backed by a new `getRegisteredToolNames()` export on the executor. Catches orphaned/unwired tools on every PR (previously only per-domain tests existed).
+- **Cross-domain briefing:** `research_compliance_briefing` (read-only) → `server/services/research-compliance/compliance-briefing.ts` fans across the Report-OS domain providers and returns a prioritized, regulation-cited "what needs attention" list (overdue HA commitments, expiring IACUC/training, unmanaged/foreign-nexus COI, effort recerts, grant closeouts/over-spends/unscreened subawards/cost-share shortfalls/pending NCEs, open inspection findings, unsigned FCOI). Ordered critical → warning → info. DB-verified.
+- **Coverage-gap fills (governed, same audited path):** `fulfill_regulatory_commitment` (HA commitment lifecycle close), `review_ha_interaction` (meeting-readiness, read-only, FDA Formal Meetings/PDUFA), `register_controlled_substance` (creates the substance the perpetual-inventory `log_cs_transaction` books against, 21 CFR 1304).
+- **Tests:** input-guards in `addons-tools.test.ts`; DB harness exercises the briefing aggregation + CS register→receipt path (harness now **69/69**).
+
 ## Add-ons, connectors & ingestion bridge (post-roadmap workstreams)
 
-Four ISU-brief-driven additions, built on existing infrastructure (no rebuilds). **DB-verified end-to-end against live Postgres 16 — `scripts/db-verify/verify-research-compliance.ts`: 40/40 assertions pass.**
+Four ISU-brief-driven additions, built on existing infrastructure (no rebuilds). **DB-verified end-to-end against live Postgres 16 — `scripts/db-verify/verify-research-compliance.ts`: 69/69 assertions pass.**
 
 ### A1 — Effort certification (2 CFR 200.430)
 - Schema `effort_certifications` + `effort_lines`; migration `20260611_effort_certification.sql`.

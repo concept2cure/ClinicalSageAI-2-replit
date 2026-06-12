@@ -153,6 +153,15 @@ export function getToolHandler(name: string): ToolHandler | undefined {
   return toolHandlers.get(name);
 }
 
+/**
+ * Names of all registered tool handlers. Used by the registry-consistency test to
+ * assert ALL_ANA_TOOLS ↔ handlers parity (no orphaned definitions, no unwired
+ * handlers) across the whole ~236-tool surface.
+ */
+export function getRegisteredToolNames(): string[] {
+  return [...toolHandlers.keys()];
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Built-in Tool Handlers
 // ─────────────────────────────────────────────────────────────────────────────
@@ -6654,6 +6663,108 @@ registerToolHandler('approve_no_cost_extension', async (input, ctx) => {
     await client.query('ROLLBACK').catch(() => undefined);
     // The gate rejects grantee self-approval of an extension that needs the sponsor — surface it.
     return JSON.stringify({ error: `approve_no_cost_extension failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cross-domain briefing + coverage-gap fills (HA fulfill/readiness, CS substance).
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('research_compliance_briefing', async (_input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'research_compliance_briefing requires tenant context.' });
+  const { buildComplianceBriefing } = await import('../research-compliance/compliance-briefing.js');
+  try {
+    const b = await buildComplianceBriefing(ctx.organizationId);
+    const headline = b.totalAttentionItems === 0
+      ? 'Nothing needs attention across research compliance & sponsored programs right now.'
+      : `${b.bySeverity.critical} critical, ${b.bySeverity.warning} warning, ${b.bySeverity.info} informational item(s) across ${new Set(b.items.map((i) => i.domain)).size} domain(s). Top: ${b.items.slice(0, 3).map((i) => `${i.count} ${i.signal} (${i.domain})`).join('; ')}.`;
+    return JSON.stringify({ ok: true, ...b, message: headline });
+  } catch (err) {
+    return JSON.stringify({ error: `research_compliance_briefing failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('fulfill_regulatory_commitment', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'fulfill_regulatory_commitment requires tenant + user context.' });
+  const commitmentId = typeof input.commitment_id === 'number' ? input.commitment_id : NaN;
+  if (!Number.isInteger(commitmentId)) return JSON.stringify({ error: 'commitment_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { fulfillCommitmentTx } = await import('../ha-interactions/ha-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const fulfilledDate = typeof input.fulfilled_date === 'string' ? input.fulfilled_date : null;
+    await fulfillCommitmentTx(client, ctx.organizationId, commitmentId, fulfilledDate);
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'resolve',
+      target: `regulatory-commitment:${commitmentId}`, reason: fcoiReason(input, 'Commitment fulfilled via AnA'),
+      payload: { fulfilledDate }, domain: 'ha', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id: commitmentId, message: `Marked commitment ${commitmentId} fulfilled.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `fulfill_regulatory_commitment failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_ha_interaction', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_ha_interaction requires tenant context.' });
+  const interactionId = typeof input.interaction_id === 'number' ? input.interaction_id : NaN;
+  if (!Number.isInteger(interactionId)) return JSON.stringify({ error: 'interaction_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { getInteractionReadinessInput } = await import('../ha-interactions/ha-service.js');
+  const { evaluateMeetingReadiness } = await import('../ha-interactions/ha-logic.js');
+  const client = await getPool().connect();
+  try {
+    const r = await getInteractionReadinessInput(client, ctx.organizationId, interactionId);
+    const { ready, findings } = evaluateMeetingReadiness(r as any);
+    return JSON.stringify({
+      ok: true, ready, findings,
+      message: ready
+        ? `Interaction ${interactionId} is meeting-ready.`
+        : `Interaction ${interactionId} is NOT ready — ${findings.filter((f) => f.severity === 'critical').length} critical gap(s): ${findings.map((f) => f.message).join('; ')}`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_ha_interaction failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('register_controlled_substance', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'register_controlled_substance requires tenant + user context.' });
+  const substanceName = typeof input.substance_name === 'string' ? input.substance_name.trim() : '';
+  const deaSchedule = typeof input.dea_schedule === 'string' ? input.dea_schedule : '';
+  if (!substanceName || !['I', 'II', 'III', 'IV', 'V'].includes(deaSchedule)) {
+    return JSON.stringify({ error: 'substance_name and a valid dea_schedule (I–V) are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createSubstanceTx } = await import('../controlled-substances/cs-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = await createSubstanceTx(client, ctx.organizationId, ctx.userId, {
+      substanceName, deaSchedule: deaSchedule as any,
+      unit: typeof input.unit === 'string' ? input.unit : undefined,
+      deaRegistrationId: typeof input.dea_registration_id === 'number' ? input.dea_registration_id : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `controlled-substance:${id}`, reason: fcoiReason(input, 'Controlled substance registered via AnA'),
+      payload: { substanceName, deaSchedule }, domain: 'controlled_substances', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Registered Schedule ${deaSchedule} substance "${substanceName}" (id ${id}). Log receipts/uses against it to maintain the perpetual inventory.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `register_controlled_substance failed: ${err instanceof Error ? err.message : String(err)}` });
   } finally {
     client.release();
   }

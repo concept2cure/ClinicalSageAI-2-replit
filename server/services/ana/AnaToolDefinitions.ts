@@ -3951,6 +3951,38 @@ export const APPROVE_NO_COST_EXTENSION: AnaTool = {
   input_schema: { type: 'object', properties: { nce_id: { type: 'number' }, authority: { type: 'string', enum: ['grantee', 'sponsor'] }, reason: { type: 'string' } }, required: ['nce_id', 'authority'] },
 };
 
+export const RESEARCH_COMPLIANCE_BRIEFING: AnaTool = {
+  name: 'research_compliance_briefing',
+  description:
+    "Cross-domain 'what needs my attention' briefing for research compliance & sponsored programs (read-only). Fans across the report providers and returns a prioritized list of time-sensitive items — overdue HA commitments, expiring IACUC protocols, expired training, unmanaged COI / foreign-nexus disclosures, effort recertifications, grant closeouts/over-spends/unscreened subawards/cost-share shortfalls/pending NCEs, open inspection findings, and unsigned FCOI disclosures — each cited to the regulation that makes it matter. Use to answer 'what's overdue / at risk across the org?'.",
+  input_schema: { type: 'object', properties: {}, required: [] },
+};
+
+export const FULFILL_REGULATORY_COMMITMENT: AnaTool = {
+  name: 'fulfill_regulatory_commitment',
+  description:
+    "Mark a regulatory commitment (PMR/PMC/REMS/meeting commitment) fulfilled, optionally with the date it was met. Closes the commitment lifecycle. Governed + audited, org-scoped.",
+  input_schema: { type: 'object', properties: { commitment_id: { type: 'number' }, fulfilled_date: { type: 'string', description: 'YYYY-MM-DD.' }, reason: { type: 'string' } }, required: ['commitment_id'] },
+};
+
+export const REVIEW_HA_INTERACTION: AnaTool = {
+  name: 'review_ha_interaction',
+  description:
+    "Assess a health-authority interaction's meeting readiness (read-only): whether a briefing package and a specific question list are in place by the time the meeting is scheduled/held, with cited findings (FDA Formal Meetings guidance / PDUFA). Use to tell the user if a meeting is ready.",
+  input_schema: { type: 'object', properties: { interaction_id: { type: 'number' } }, required: ['interaction_id'] },
+};
+
+export const REGISTER_CONTROLLED_SUBSTANCE: AnaTool = {
+  name: 'register_controlled_substance',
+  description:
+    "Register a controlled substance under a DEA registration so transactions can be booked against it (21 CFR 1304 perpetual inventory). Specify the DEA schedule (I–V); optionally link the DEA registration and set the unit. Governed + audited. Pair with log_cs_transaction to maintain the running balance.",
+  input_schema: {
+    type: 'object',
+    properties: { substance_name: { type: 'string' }, dea_schedule: { type: 'string', enum: ['I', 'II', 'III', 'IV', 'V'] }, unit: { type: 'string' }, dea_registration_id: { type: 'number' }, reason: { type: 'string' } },
+    required: ['substance_name', 'dea_schedule'],
+  },
+};
+
 export const CREATE_RIM_PRODUCT: AnaTool = {
   name: 'create_rim_product',
   description:
@@ -5800,6 +5832,10 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   REVIEW_COST_SHARE,
   REQUEST_NO_COST_EXTENSION,
   APPROVE_NO_COST_EXTENSION,
+  RESEARCH_COMPLIANCE_BRIEFING,
+  FULFILL_REGULATORY_COMMITMENT,
+  REVIEW_HA_INTERACTION,
+  REGISTER_CONTROLLED_SUBSTANCE,
   CREATE_RIM_PRODUCT,
   SET_REGISTRATION_STATUS,
   REVIEW_LABEL_CURRENCY,
