@@ -31,7 +31,13 @@ import * as path from 'path';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
 import type { Region, SubmissionFormat, SubmissionBundle } from './types';
+import { ValidationError } from './types';
 import { finalizePdfA } from '../ectd/pdfa-pipeline';
+import {
+  evaluateSubmissionGrade,
+  pdfaRequiredFromEnv,
+  type LeafGradeRecord,
+} from '../ectd/pdfa-readiness';
 
 /**
  * Finalize a leaf's bytes to submission grade before they are written + hashed.
@@ -40,16 +46,20 @@ import { finalizePdfA } from '../ectd/pdfa-pipeline';
  * When the bytes are actually converted the MD5 MUST be recomputed from the
  * converted bytes — the eCTD checksum contract requires index-md5 to match the
  * file that ships in the package — so any pre-computed leaf.md5 is dropped.
+ *
+ * Returns the conversion outcome alongside the bytes so the packager can build
+ * the submission-grade roll-up and enforce the PDF/A gate (audit gap P0-2).
  */
 async function finalizeLeafBytes(
   buf: Buffer,
   fileName: string,
-): Promise<{ bytes: Buffer; md5Override?: string }> {
-  if (!fileName.toLowerCase().endsWith('.pdf')) return { bytes: buf };
+): Promise<{ bytes: Buffer; md5Override?: string; isPdf: boolean; converted: boolean }> {
+  const isPdf = fileName.toLowerCase().endsWith('.pdf');
+  if (!isPdf) return { bytes: buf, isPdf: false, converted: false };
   const result = await finalizePdfA(buf);
-  if (!result.converted) return { bytes: buf };
+  if (!result.converted) return { bytes: buf, isPdf: true, converted: false };
   const bytes = Buffer.from(result.pdfBytes);
-  return { bytes, md5Override: createHash('md5').update(bytes).digest('hex') };
+  return { bytes, md5Override: createHash('md5').update(bytes).digest('hex'), isPdf: true, converted: true };
 }
 
 /** One leaf in the eCTD index — corresponds to one file under one CTD section. */
@@ -90,6 +100,9 @@ export interface PackagerInput {
   /** Whether to also write the unzipped tree alongside the zip (useful
    *  for validator runs that need to walk the folder structure). */
   emitUnzipped?: boolean;
+  /** Submission environment for the PDF/A gate. 'production' (the default)
+   *  enforces PDF/A when ECTD_REQUIRE_PDFA=true; 'staging' never blocks. */
+  environment?: 'staging' | 'production';
 }
 
 /** Compute MD5 of a file on disk. */
@@ -279,6 +292,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
 
   const zip = new JSZip();
   const checksums: ChecksumEntry[] = [];
+  const grades: LeafGradeRecord[] = [];
 
   /* Write regional Module 1 backbone. */
   const regionalXml = backboneByRegion[region]();
@@ -293,7 +307,8 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   const m1Leaves = input.leaves.filter((l) => l.ctdSection.startsWith('1'));
   for (const leaf of m1Leaves) {
     const raw = await fs.readFile(leaf.sourcePath);
-    const { bytes, md5Override } = await finalizeLeafBytes(raw, leaf.fileName);
+    const { bytes, md5Override, isPdf, converted } = await finalizeLeafBytes(raw, leaf.fileName);
+    grades.push({ fileName: leaf.fileName, isPdf, converted });
     const targetPath = `${m1FolderByRegion[region]}/${leaf.ctdSection.replace(/\./g, '-')}/${leaf.fileName}`;
     zip.file(targetPath, bytes);
     checksums.push({
@@ -307,7 +322,8 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   for (const leaf of m2to5) {
     const mod = `m${leaf.ctdSection.charAt(0)}`;
     const raw = await fs.readFile(leaf.sourcePath);
-    const { bytes, md5Override } = await finalizeLeafBytes(raw, leaf.fileName);
+    const { bytes, md5Override, isPdf, converted } = await finalizeLeafBytes(raw, leaf.fileName);
+    grades.push({ fileName: leaf.fileName, isPdf, converted });
     const targetPath = `${mod}/${leaf.ctdSection.replace(/\./g, '-')}/${leaf.fileName}`;
     zip.file(targetPath, bytes);
     checksums.push({
@@ -315,6 +331,23 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       md5: md5Override ?? leaf.md5 ?? createHash('md5').update(bytes).digest('hex'),
     });
   }
+
+  /* PDF/A submission-grade gate (audit gap P0-2): when ECTD_REQUIRE_PDFA=true
+     and this is a production package, refuse to ship any PDF leaf that the
+     PDF/A pipeline could not convert (e.g. Ghostscript missing). Default
+     (flag unset) is report-only, preserving graceful degradation. */
+  const gradeGate = evaluateSubmissionGrade({
+    leaves: grades,
+    environment: input.environment ?? 'production',
+    requirePdfA: pdfaRequiredFromEnv(),
+  });
+  if (!gradeGate.cleared) {
+    throw new ValidationError(
+      `eCTD package is not submission-grade: ${gradeGate.blockers.join(' ')}`,
+      gradeGate.blockers,
+    );
+  }
+  const submissionGrade = gradeGate.summary;
 
   /* Write the ICH M2-M5 index.xml + index-md5.txt. */
   const indexXml = buildIndexXml(input, m2to5);
@@ -355,5 +388,6 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     sizeBytes: buffer.length,
     format,
     displayName: `${input.productName} · ${region.toUpperCase()} ${input.submissionType} #${input.sequence}`,
+    submissionGrade,
   };
 }

@@ -59,6 +59,20 @@ export interface SubmissionBundle {
   format: SubmissionFormat;
   /** Optional human-readable display name. */
   displayName?: string;
+  /**
+   * Optional PDF/A submission-grade roll-up for the package's leaves — whether
+   * every PDF leaf was converted to PDF/A-1b and, if not, which were not. Set by
+   * the packager; consumed by the PDF/A readiness gate. Shape matches
+   * `SubmissionGradeSummary` in server/services/ectd/pdfa-readiness.ts (kept
+   * structural here to avoid a cross-layer import cycle).
+   */
+  submissionGrade?: {
+    total: number;
+    pdfLeaves: number;
+    pdfaConverted: number;
+    notConverted: string[];
+    allPdfA: boolean;
+  };
 }
 
 export interface GatewayTransmitRequest {
