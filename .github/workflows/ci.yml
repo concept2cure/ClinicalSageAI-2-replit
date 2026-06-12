@@ -37,6 +37,9 @@ jobs:
       - name: Guardrails — RLS allowlist TS↔SQL parity
         run: npm run ci:rls-allowlist-sync
 
+      - name: Guardrails — i18n locale integrity (key/placeholder/markup parity)
+        run: npm run ci:i18n-integrity
+
       - name: Guardrails — tenant column types (no TEXT-typed tenant cols)
         run: npm run ci:tenant-column-types
 
