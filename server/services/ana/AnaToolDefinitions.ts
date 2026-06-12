@@ -4229,6 +4229,25 @@ export const RUN_COMPLIANCE_CHECKLIST: AnaTool = {
   },
 };
 
+export const ASSESS_STUDY_ONBOARDING: AnaTool = {
+  name: 'assess_study_onboarding',
+  description:
+    "One-shot study-onboarding assessment (read-only orchestration): resolves the required committee approvals + training for the activity profile, runs the training gate over the named team, and CROSS-REFERENCES each training gap to the specific approval it blocks (e.g. a PI missing CITI human-subjects blocks the IRB submission, not the IACUC one). Returns per-committee readiness, overall readyToSubmit, and a prioritized blocker list. Answers 'what do I need to stand up this study and is my team ready?' in one turn.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      involves_human_subjects: { type: 'boolean' },
+      involves_animals: { type: 'boolean' },
+      involves_recombinant_dna: { type: 'boolean' },
+      involves_human_gene_transfer: { type: 'boolean' },
+      funding_source: { type: 'string', enum: ['nih', 'nsf', 'barda', 'dod', 'industry', 'internal', 'other'] },
+      region: { type: 'string', enum: ['us', 'eu', 'other'] },
+      personnel_ids: { type: 'array', items: { type: 'number' }, description: 'research_personnel ids of the study team to gate.' },
+    },
+    required: [],
+  },
+};
+
 export const ADD_PERSONNEL_TRAINING: AnaTool = {
   name: 'add_personnel_training',
   description:
@@ -5900,6 +5919,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CLASSIFY_TMF_ARTIFACT,
   REVIEW_TMF_COMPLETENESS,
   RUN_COMPLIANCE_CHECKLIST,
+  ASSESS_STUDY_ONBOARDING,
   ADD_PERSONNEL_TRAINING,
   REVIEW_TRAINING_GATE,
   CREATE_EFFORT_CERTIFICATION,

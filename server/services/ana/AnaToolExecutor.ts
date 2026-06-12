@@ -7474,6 +7474,28 @@ registerToolHandler('screen_restricted_party', async (input, ctx) => {
   }
 });
 
+registerToolHandler('assess_study_onboarding', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'assess_study_onboarding requires tenant context.' });
+  const personnelIds = Array.isArray(input.personnel_ids) ? input.personnel_ids.filter((n): n is number => typeof n === 'number') : [];
+  const { assessStudyOnboarding } = await import('../research-compliance/compliance-checklist.js');
+  const { loadRosterForGate } = await import('../research-compliance/roster-service.js');
+  try {
+    const roster = await loadRosterForGate(ctx.organizationId, personnelIds);
+    const today = new Date().toISOString().slice(0, 10);
+    const a = assessStudyOnboarding(rcProfile(input), roster.personnel, roster.records, today);
+    const committees = a.requiredApprovals.map((x) => x.committee).join(', ') || 'none';
+    return JSON.stringify({
+      ok: true, ruleVersion: a.ruleVersion, requiredApprovals: a.requiredApprovals, requiredTraining: a.requiredTraining,
+      steps: a.steps, approvals: a.approvals, readyToSubmit: a.readyToSubmit, blockers: a.blockers,
+      message: a.readyToSubmit
+        ? `Required approvals: ${committees}. Team training is current — ready to submit.`
+        : `Required approvals: ${committees}. NOT ready — ${a.blockers.length} blocker(s): ${a.blockers.slice(0, 4).join('; ')}${a.blockers.length > 4 ? '…' : ''}`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `assess_study_onboarding failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('log_study_deviation', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'log_study_deviation requires tenant context.' });

@@ -10,7 +10,7 @@ import * as ha from '../../server/services/ha-interactions/ha-service';
 import * as iacuc from '../../server/services/iacuc/iacuc-service';
 import * as cs from '../../server/services/controlled-substances/cs-service';
 import * as roster from '../../server/services/research-compliance/roster-service';
-import { resolveComplianceChecklist, evaluateTrainingGate } from '../../server/services/research-compliance/compliance-checklist';
+import { resolveComplianceChecklist, evaluateTrainingGate, assessStudyOnboarding } from '../../server/services/research-compliance/compliance-checklist';
 import { computeDomainReport } from '../../server/services/report-os/research-compliance-report-providers';
 import { emitDeadlineTask } from '../../server/services/research-compliance/tasking-bridge';
 import * as effort from '../../server/services/effort-certification/effort-service';
@@ -264,6 +264,14 @@ async function main() {
   ok(sponsorApproved.newEndDate === '2028-01-01', 'sponsor approval succeeds and moves the period end');
   const grRep4 = await computeDomainReport('grants.portfolio_register', ORG);
   ok(grRep4 != null && (grRep4!.summary.costShareCommitted as number) >= 50000 && grRep4!.summary.ncesByStatus != null, `grants.portfolio_register reports cost-share + NCE rollups (committed=${grRep4?.summary.costShareCommitted})`);
+
+  console.log('\n[Onboarding] study-onboarding orchestration — checklist + gate cross-referenced');
+  {
+    const onboardRoster = await roster.loadRosterForGate(ORG, [piId]);
+    const a = assessStudyOnboarding(profile, onboardRoster.personnel, onboardRoster.records, '2026-06-10');
+    ok(a.requiredApprovals.some((x) => x.committee === 'IRB'), 'onboarding assessment requires IRB for the NIH human-subjects profile');
+    ok(a.readyToSubmit === true && a.approvals.find((x) => x.committee === 'IRB')!.ready === true, 'fully-trained PI → IRB approval clear, ready to submit (DB-backed)');
+  }
 
   console.log('\n[Grants] pre-award pipeline — grants.gov opportunity → linked proposal');
   const oppId = await tx((c) => grants.createOpportunityTx(c, ORG, USER, { opportunityNumber: 'PA-26-VERIFY', title: 'Verify NOFO', fundingAgency: 'nih', externalId: 'GG-350001' })).then((r: any) => r.id);

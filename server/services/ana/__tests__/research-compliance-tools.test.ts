@@ -6,7 +6,7 @@ import { describe, it, expect } from 'vitest';
 import { getToolHandler } from '../AnaToolExecutor';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
 
-const TOOLS = ['run_compliance_checklist', 'add_personnel_training', 'review_training_gate'];
+const TOOLS = ['run_compliance_checklist', 'add_personnel_training', 'review_training_gate', 'assess_study_onboarding'];
 
 describe('Research-compliance AnA tools — registration', () => {
   it.each(TOOLS)('%s is registered and defined', (name) => {
@@ -34,6 +34,10 @@ describe('Research-compliance AnA tools — context + behavior', () => {
   });
   it('review_training_gate requires tenant context', async () => {
     const out = JSON.parse(await getToolHandler('review_training_gate')!({ personnel_ids: [1] }, {} as any));
+    expect(out.error).toMatch(/tenant context/);
+  });
+  it('assess_study_onboarding requires tenant context', async () => {
+    const out = JSON.parse(await getToolHandler('assess_study_onboarding')!({ involves_human_subjects: true }, {} as any));
     expect(out.error).toMatch(/tenant context/);
   });
 });

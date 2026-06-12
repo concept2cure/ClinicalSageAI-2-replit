@@ -180,3 +180,84 @@ export function evaluateTrainingGate(
 
   return { cleared: missing.length === 0, missing, expiringSoon };
 }
+
+// ─── Study-onboarding orchestration ──────────────────────────────────────────
+
+/** Which committee a required training gates (null = funding/institutional, not committee-specific). */
+const TRAINING_TO_COMMITTEE: Record<string, CommitteeApproval | null> = {
+  citi_human_subjects: 'IRB',
+  citi_gcp: 'IRB',
+  citi_animal: 'IACUC',
+  biosafety: 'IBC',
+  bloodborne_pathogens: 'IBC',
+  fcoi_disclosure: null,
+  citi_rcr: null,
+};
+
+export interface ApprovalReadiness {
+  committee: CommitteeApproval;
+  reason: string;
+  citation: string;
+  /** Missing/expired trainings that block submitting for THIS approval. */
+  blockingGaps: Array<{ personnelId: number; personnelName: string; trainingType: string; reason: 'missing' | 'expired' }>;
+  ready: boolean;
+}
+
+export interface StudyOnboardingAssessment {
+  ruleVersion: string;
+  requiredApprovals: RequiredApproval[];
+  requiredTraining: RequiredTraining[];
+  steps: ChecklistStep[];
+  gate: TrainingGateResult;
+  approvals: ApprovalReadiness[];
+  /** True when every required approval is clear of training gaps (the team can submit). */
+  readyToSubmit: boolean;
+  blockers: string[];
+}
+
+/**
+ * One-shot study-onboarding assessment: resolve the required approvals + training
+ * for the activity profile, run the training gate over the named team, and then
+ * CROSS-REFERENCE each training gap to the specific committee approval it blocks
+ * (e.g. a PI missing CITI human-subjects blocks the IRB submission, not the IACUC
+ * one). Answers "what do I need to stand up this study and is my team ready?" in a
+ * single, defensible pass. Pure — the AnA tool loads the roster and calls this.
+ */
+export function assessStudyOnboarding(
+  profile: ActivityProfile,
+  personnel: Array<{ id: number; name: string; role: string }>,
+  records: TrainingRecord[],
+  today: string,
+): StudyOnboardingAssessment {
+  const checklist = resolveComplianceChecklist(profile);
+  const gate = evaluateTrainingGate(personnel, checklist.requiredTraining, records, today);
+
+  const approvals: ApprovalReadiness[] = checklist.requiredApprovals.map((a) => {
+    const blockingGaps = gate.missing.filter((m) => TRAINING_TO_COMMITTEE[m.trainingType] === a.committee);
+    return { committee: a.committee, reason: a.reason, citation: a.citation, blockingGaps, ready: blockingGaps.length === 0 };
+  });
+
+  const blockers: string[] = [];
+  for (const ap of approvals) {
+    for (const g of ap.blockingGaps) {
+      blockers.push(`${ap.committee}: ${g.personnelName} ${g.reason === 'expired' ? 'has expired' : 'is missing'} ${g.trainingType}`);
+    }
+  }
+  // Funding/institutional training gaps (FCOI, RCR) block the study but no single committee.
+  for (const m of gate.missing) {
+    if (TRAINING_TO_COMMITTEE[m.trainingType] === null) {
+      blockers.push(`Pre-expenditure: ${m.personnelName} ${m.reason === 'expired' ? 'has expired' : 'is missing'} ${m.trainingType}`);
+    }
+  }
+
+  return {
+    ruleVersion: checklist.ruleVersion,
+    requiredApprovals: checklist.requiredApprovals,
+    requiredTraining: checklist.requiredTraining,
+    steps: checklist.steps,
+    gate,
+    approvals,
+    readyToSubmit: gate.cleared,
+    blockers,
+  };
+}
