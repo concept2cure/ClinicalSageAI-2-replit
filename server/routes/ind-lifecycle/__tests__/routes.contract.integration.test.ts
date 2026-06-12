@@ -229,6 +229,22 @@ describe('DB-write + program surface (full HTTP flow)', () => {
     expect(res.status).toBe(400);
   });
 
+  it('POST /safety-report/file with an ICSR → 201 also files a checksummed m5.3.5 leaf', async () => {
+    const res = await request(app)
+      .post('/api/ind-lifecycle/safety-report/file')
+      .send({
+        submissionId: seededSubmissionId,
+        sequenceNumber: '0004',
+        event: reportableEvent(),
+        icsr: { worldwideUniqueId: 'US-C2C-2026-000999', senderType: 'sponsor' },
+      });
+    expect(res.status).toBe(201);
+    const m535 = res.body.leaves.find((l: any) => l.sectionCode === 'm5.3.5');
+    expect(m535).toBeTruthy();
+    expect(typeof m535.checksum).toBe('string');
+    expect(m535.checksum.length).toBe(32); // md5 hex
+  });
+
   it('GET /sequence/:id/manifest → 200 with the filed leaf', async () => {
     const res = await request(app).get(`/api/ind-lifecycle/sequence/${filedSequenceId}/manifest`);
     expect(res.status).toBe(200);
