@@ -41,6 +41,17 @@ const ACCEPTED_GHSA_IDS = new Set([
   // the path-traversal gadget is not reachable in our usage. Accepted until exceljs
   // ships a release that depends on tmp >= 0.2.6.
   'GHSA-ph9p-34f9-6g65', // tmp path traversal via unsanitized prefix/postfix
+  // esbuild — advisory GHSA-gv7w-rqvm-qjhr, vulnerable range >=0.17.0 <0.28.1
+  // (build-time RCE via NPM_CONFIG_REGISTRY during esbuild's binary fetch).
+  // NOTE: unlike the entries above, this is NOT a registry-lag false positive —
+  // installed copies (0.25.12 direct; 0.27.4 via tsx; older via
+  // drizzle-kit/@esbuild-kit) are genuinely within range. Accepted as a low,
+  // BUILD-TIME-ONLY risk (dev/build tooling, not a runtime/production path)
+  // pending a coordinated bump to esbuild >= 0.28.1 across vite/tsx/drizzle-kit.
+  // Accepting the esbuild advisory also clears the tsx/vite "transitive
+  // vulnerability" flags, which are this same advisory surfaced through their
+  // bundled esbuild.
+  'GHSA-gv7w-rqvm-qjhr', // esbuild binary-integrity RCE (build-time; dep bump pending)
 ]);
 
 const proc = spawnSync('npm', ['audit', '--audit-level=high', '--json'], {

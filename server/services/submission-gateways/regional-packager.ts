@@ -125,10 +125,44 @@ function escapeXml(s: string): string {
 }
 
 /** Build leaf elements common to all regions. */
-function leafElement(leaf: EctdLeaf, sectionHref: string): string {
-  return `<leaf operation="${leaf.operation}" xlink:href="${escapeXml(sectionHref)}/${escapeXml(leaf.fileName)}" ID="leaf-${escapeXml(leaf.ctdSection.replace(/\./g, '-'))}">
+function leafElement(leaf: EctdLeaf, sectionHref: string, id: string): string {
+  return `<leaf operation="${leaf.operation}" xlink:href="${escapeXml(sectionHref)}/${escapeXml(leaf.fileName)}" ID="${escapeXml(id)}">
   <title>${escapeXml(leaf.title)}</title>
 </leaf>`;
+}
+
+/** A valid XML ID fragment from a filename: drop extension, non-alnum → '-'. */
+export function leafIdSlug(fileName: string): string {
+  return (
+    fileName
+      .replace(/\.[^.]+$/, '')
+      .replace(/[^a-zA-Z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .toLowerCase() || 'file'
+  );
+}
+
+/**
+ * Create a leaf-ID assigner scoped to a single backbone document.
+ *
+ * eCTD leaf IDs are XML ID-typed and must be unique within their document. The
+ * CTD section alone is NOT unique — a section commonly holds several leaves
+ * (e.g. multiple study reports in 5.3.5.1, multiple stability batches), and
+ * `leaf-5-3-5-1` for all of them is invalid XML. Each ID is therefore based on
+ * the section plus a filename slug, with a deterministic numeric suffix on the
+ * (rare) remaining collision. One assigner per document, so IDs are unique
+ * within — but may repeat across — separate backbones.
+ */
+export function createLeafIdAssigner(): (leaf: EctdLeaf) => string {
+  const used = new Set<string>();
+  return (leaf: EctdLeaf): string => {
+    const base = `leaf-${leaf.ctdSection.replace(/\./g, '-')}-${leafIdSlug(leaf.fileName)}`;
+    let id = base;
+    let n = 2;
+    while (used.has(id)) id = `${base}-${n++}`;
+    used.add(id);
+    return id;
+  };
 }
 
 /**
@@ -136,9 +170,10 @@ function leafElement(leaf: EctdLeaf, sectionHref: string): string {
  * Guide (current as of 2024). Module 1 sits under m1/us/.
  */
 function buildFdaBackbone(input: PackagerInput): string {
+  const assignId = createLeafIdAssigner();
   const m1Leaves = input.leaves
     .filter((l) => l.ctdSection.startsWith('1'))
-    .map((l) => leafElement(l, `m1/us/${l.ctdSection.replace(/\./g, '-')}`))
+    .map((l) => leafElement(l, `m1/us/${l.ctdSection.replace(/\./g, '-')}`, assignId(l)))
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -176,9 +211,10 @@ ${m1Leaves}
  * Module 1 sits under m1/eu/ with eu-regional.xml at the m1/eu/ root.
  */
 function buildEmaBackbone(input: PackagerInput): string {
+  const assignId = createLeafIdAssigner();
   const m1Leaves = input.leaves
     .filter((l) => l.ctdSection.startsWith('1'))
-    .map((l) => leafElement(l, `m1/eu/${l.ctdSection.replace(/\./g, '-')}`))
+    .map((l) => leafElement(l, `m1/eu/${l.ctdSection.replace(/\./g, '-')}`, assignId(l)))
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -212,9 +248,10 @@ ${m1Leaves}
  * sits under m1/jp/ with multi-byte titles permitted.
  */
 function buildPmdaBackbone(input: PackagerInput): string {
+  const assignId = createLeafIdAssigner();
   const m1Leaves = input.leaves
     .filter((l) => l.ctdSection.startsWith('1'))
-    .map((l) => leafElement(l, `m1/jp/${l.ctdSection.replace(/\./g, '-')}`))
+    .map((l) => leafElement(l, `m1/jp/${l.ctdSection.replace(/\./g, '-')}`, assignId(l)))
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -245,6 +282,8 @@ ${m1Leaves}
 /* ─── M2-M5 common backbone (ICH M8) ──────────────────────────────── */
 
 function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[]): string {
+  // One assigner for the whole index.xml document (all of m2–m5 live here).
+  const assignId = createLeafIdAssigner();
   const grouped: Record<string, EctdLeaf[]> = { m2: [], m3: [], m4: [], m5: [] };
   for (const leaf of m2to5) {
     const mod = `m${leaf.ctdSection.charAt(0)}`;
@@ -252,7 +291,7 @@ function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[]): string {
   }
   const moduleBlocks = (['m2', 'm3', 'm4', 'm5'] as const).map((m) => {
     const leaves = grouped[m]
-      .map((l) => leafElement(l, `${m}/${l.ctdSection.replace(/\./g, '-')}`))
+      .map((l) => leafElement(l, `${m}/${l.ctdSection.replace(/\./g, '-')}`, assignId(l)))
       .join('\n');
     return `  <${m}>\n${leaves}\n  </${m}>`;
   }).join('\n');
@@ -268,10 +307,13 @@ ${moduleBlocks}
 /* ─── index-md5.txt (one MD5 per file, sorted) ────────────────────── */
 
 interface ChecksumEntry { relPath: string; md5: string; }
-function buildMd5Index(entries: ChecksumEntry[]): string {
+export function buildMd5Index(entries: ChecksumEntry[]): string {
   return entries
     .slice()
-    .sort((a, b) => a.relPath.localeCompare(b.relPath))
+    // Codepoint order, not localeCompare: the manifest must be byte-identical
+    // across environments (the checksum contract), and locale collation is
+    // locale/ICU-dependent.
+    .sort((a, b) => (a.relPath < b.relPath ? -1 : a.relPath > b.relPath ? 1 : 0))
     .map((e) => `${e.md5}  ${e.relPath}`)
     .join('\n');
 }
