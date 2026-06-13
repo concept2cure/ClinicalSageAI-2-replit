@@ -195,6 +195,19 @@ const IND_REQUIRED_SECTIONS = new Set([
   'm5.3.5', // Phase 1 Protocol
 ]);
 
+const EMPTY_REQUIRED_SECTIONS: ReadonlySet<string> = new Set();
+
+/**
+ * The required-section profile for a submission type. Today only IND has a
+ * defined profile; other types (NDA, BLA, …) return an empty set so the
+ * completeness check does not falsely flag IND-specific sections as "missing"
+ * on a non-IND submission. (Previously both ternary branches were
+ * IND_REQUIRED_SECTIONS, so every type was validated against IND's sections.)
+ */
+function requiredSectionsFor(submissionType: string): ReadonlySet<string> {
+  return submissionType.toUpperCase() === 'IND' ? IND_REQUIRED_SECTIONS : EMPTY_REQUIRED_SECTIONS;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION ENGINE
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -214,7 +227,7 @@ export function validatePackage(
   let findingId = 0;
 
   const presentSections = new Set(leaves.map(l => l.sectionCode));
-  const requiredSections = submissionType === 'IND' ? IND_REQUIRED_SECTIONS : IND_REQUIRED_SECTIONS;
+  const requiredSections = requiredSectionsFor(submissionType);
   const missingSections: string[] = [];
 
   // 1. Check required sections
@@ -429,7 +442,7 @@ export function quickValidate(
   presentSectionCodes: string[],
   submissionType: string = 'IND'
 ): { completeness: number; missing: string[] } {
-  const required = submissionType === 'IND' ? IND_REQUIRED_SECTIONS : IND_REQUIRED_SECTIONS;
+  const required = requiredSectionsFor(submissionType);
   const present = new Set(presentSectionCodes);
   const missing: string[] = [];
 

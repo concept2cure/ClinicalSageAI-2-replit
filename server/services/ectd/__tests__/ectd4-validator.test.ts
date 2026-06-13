@@ -68,6 +68,26 @@ describe('quickValidate', () => {
     expect(r.completeness).toBeLessThan(100);
     expect(r.missing).toEqual(IND_REQUIRED.slice(10));
   });
+  it('does not apply IND required sections to a non-IND submission', () => {
+    // Previously both ternary branches were IND_REQUIRED_SECTIONS, so an NDA with
+    // no IND sections was wrongly reported as missing all of them.
+    const r = quickValidate([], 'NDA');
+    expect(r.missing).toHaveLength(0);
+    expect(r.completeness).toBe(100);
+  });
+});
+
+describe('validatePackage — submission type', () => {
+  it('does not flag IND sections as missing on a non-IND submission', () => {
+    const res = validatePackage([leaf({ sectionCode: 'm1.1' })], 'NDA');
+    expect(res.findings.filter(f => f.code === 'MISSING_REQUIRED_SECTION')).toHaveLength(0);
+  });
+  it('still validates IND required sections for an IND submission', () => {
+    const res = validatePackage([], 'IND');
+    expect(res.findings.filter(f => f.code === 'MISSING_REQUIRED_SECTION')).toHaveLength(
+      IND_REQUIRED.length,
+    );
+  });
 });
 
 describe('validatePackage', () => {
