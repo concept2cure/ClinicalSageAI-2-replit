@@ -71,6 +71,17 @@ describe('computeDispatchReadiness', () => {
     expect(r.warnings).toBe(0);
   });
 
+  it('a true sub-section satisfies a required parent section', () => {
+    const r = computeDispatchReadiness([goodLeaf({ sectionCode: '1.2.1' })], { requiredSections: ['1.2'] });
+    expect(r.findings.filter(f => f.code === 'MISSING_REQUIRED_SECTION')).toHaveLength(0);
+  });
+
+  it('a numerically-adjacent section does NOT satisfy a required section', () => {
+    // '1.20' must not satisfy required '1.2' (the dot-stripping collision bug).
+    const r = computeDispatchReadiness([goodLeaf({ sectionCode: '1.20' })], { requiredSections: ['1.2'] });
+    expect(r.findings.filter(f => f.code === 'MISSING_REQUIRED_SECTION')).toHaveLength(1);
+  });
+
   it('emits an info for duplicate "new" leaves in one section without erroring', () => {
     const r = computeDispatchReadiness([goodLeaf(), goodLeaf({ documentId: 99 })]);
     expect(r.errors).toBe(0);
