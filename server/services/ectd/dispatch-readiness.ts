@@ -61,9 +61,18 @@ export interface ComputeReadinessOptions {
 
 const VALID_OPS = new Set(['new', 'replace', 'append', 'delete']);
 
-/** Lowercase, drop a leading 'm' (module prefix), strip non-alphanumerics. */
+/**
+ * Lowercase, drop a leading 'm' (module prefix), and collapse separators to a
+ * single '.' so codes stay segment-comparable. Stripping dots entirely would
+ * conflate numerically-adjacent sections (e.g. '1.2' and '1.20' both → '12'),
+ * which is the boundary the presence check relies on.
+ */
 function normalizeCode(code: string): string {
-  return (code || '').toLowerCase().replace(/^m(?=\d)/, '').replace(/[^a-z0-9]/g, '');
+  return (code || '')
+    .toLowerCase()
+    .replace(/^m(?=\d)/, '')
+    .replace(/[^a-z0-9]+/g, '.')
+    .replace(/^\.+|\.+$/g, '');
 }
 
 /**
@@ -140,7 +149,10 @@ export function computeDispatchReadiness(
     for (const required of opts.requiredSections) {
       const reqNorm = normalizeCode(required);
       if (!reqNorm) continue;
-      const present = presentNorm.some(p => p === reqNorm || p.startsWith(reqNorm));
+      // Present iff a leaf is the required section itself or a true sub-section.
+      // The trailing '.' enforces a segment boundary so '1.20' does not satisfy
+      // required '1.2' (only '1.2', '1.2.1', '1.2.x', … do).
+      const present = presentNorm.some(p => p === reqNorm || p.startsWith(`${reqNorm}.`));
       if (!present) {
         findings.push({
           severity: 'warning',
