@@ -71,4 +71,34 @@ describe('resolveCrossReferences', () => {
   it('treats an empty reference set as ok', () => {
     expect(resolveCrossReferences(leaves, []).ok).toBe(true);
   });
+
+  it('does not let a href tail substring-match a shorter filename', () => {
+    // 'study-a.pdf' ends with 'a.pdf' as a substring; a correct resolver must
+    // require a path-segment boundary and bind to 'study-a.pdf', not 'a.pdf'.
+    const set: Array<EctdLeaf & { leafKey?: string }> = [
+      leaf({ ctdSection: '5.3.5.1', fileName: 'a.pdf' }),
+      leaf({ ctdSection: '5.3.5.2', fileName: 'study-a.pdf' }),
+    ];
+    const res = resolveCrossReferences(set, [
+      { source: '2.7.3', target: 'm5/53-clin-stud-rep/study-a.pdf' },
+    ]);
+    expect(res.ok).toBe(true);
+    expect(res.resolved[0]).toMatchObject({
+      resolvedSection: '5.3.5.2',
+      resolvedFileName: 'study-a.pdf',
+    });
+  });
+
+  it('flags a href whose tail only substring-matches as TARGET_NOT_FOUND', () => {
+    // 'x-report.pdf' ends with 'report.pdf' as a substring but is a different
+    // file — it must not resolve.
+    const set: Array<EctdLeaf & { leafKey?: string }> = [
+      leaf({ ctdSection: '5.3.5.1', fileName: 'report.pdf' }),
+    ];
+    const res = resolveCrossReferences(set, [
+      { source: '2.7.3', target: 'm5/53-clin-stud-rep/x-report.pdf' },
+    ]);
+    expect(res.ok).toBe(false);
+    expect(res.broken[0].reason).toBe('TARGET_NOT_FOUND');
+  });
 });

@@ -101,8 +101,10 @@ export function resolveCrossReferences(
       bySection.get(t) ||
       byKey.get(t) ||
       byFile.get(t) ||
-      // relative href like 'm5/.../study-a.pdf' → match by trailing filename
-      [...byFile.entries()].find(([file]) => t.endsWith(file))?.[1];
+      // relative href like 'm5/.../study-a.pdf' → match by trailing filename.
+      // Require a path-segment boundary ('/') before the filename so a href
+      // ending in 'study-a.pdf' does not falsely match a leaf named 'a.pdf'.
+      [...byFile.entries()].find(([file]) => t.endsWith(`/${file}`))?.[1];
 
     if (!match) {
       broken.push({ ...ref, reason: 'TARGET_NOT_FOUND' });
