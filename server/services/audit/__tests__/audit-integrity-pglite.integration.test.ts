@@ -64,13 +64,17 @@ describe('verifyAuditIntegrity against PGlite', () => {
     expect(result.ok).toBe(false);
   });
 
-  it('skips seal verification (does not fail) when AUDIT_HMAC_KEY is absent', async () => {
+  it('fails closed (unverifiable, ok=false) when AUDIT_HMAC_KEY is absent', async () => {
+    // Part 11 integrity (audit finding B-13): an unsealed/unverifiable chain
+    // must NOT report ok=true. The sha256 chain may still be intact, but with
+    // no HMAC key the seals cannot be checked, so overall integrity is
+    // unverifiable and the verifier fails closed.
     for (let i = 0; i < 2; i++) await appendRow(row(i));
     delete process.env.AUDIT_HMAC_KEY;
     const result = await verifyAuditIntegrity(pglite as unknown as PoolClient);
     expect(result.chain.ok).toBe(true);
     expect(result.seals).toMatchObject({ checked: false });
-    expect(result.ok).toBe(true);
+    expect(result.ok).toBe(false);
   });
 
   it('is ok for an empty log', async () => {
