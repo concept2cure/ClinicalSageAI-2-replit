@@ -19,6 +19,7 @@ import { runM2SummaryQc } from '../services/authoring/m2-summary-qc';
 import { runM4NonclinicalQc } from '../services/authoring/m4-nonclinical-qc';
 import { runM5ClinicalQc } from '../services/authoring/m5-clinical-qc';
 import { aggregateCtdAuthoringReadiness } from '../services/authoring/ctd-authoring-readiness';
+import { renderCtdReadinessPdf } from '../services/authoring/ctd-readiness-renderer';
 import type { M2Summary } from '../services/m2-summary-builders';
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -128,22 +129,28 @@ router.post('/m5-clinical/qc', limiter, requireRole(AUTHOR), (req, res) => {
  * QC verdicts and the M2.4←M4 / M2.5-2.7←M5 feed-forward links into one
  * "assembly-ready" answer.
  * Body: { m1?, m2?, m4?, m5?, m24Summary?, m4ReportSections?, clinicalSummaries?, m5StudyIds? }.
+ * JSON by default; `?format=pdf` returns an attachable inspector report.
  */
-router.post('/ctd-readiness', limiter, requireRole(AUTHOR), (req, res) => {
+router.post('/ctd-readiness', limiter, requireRole(AUTHOR), async (req, res) => {
   const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
   try {
-    res.json(
-      aggregateCtdAuthoringReadiness({
-        m1: b.m1,
-        m2: b.m2,
-        m4: b.m4,
-        m5: b.m5,
-        m24Summary: b.m24Summary,
-        m4ReportSections: b.m4ReportSections,
-        clinicalSummaries: b.clinicalSummaries,
-        m5StudyIds: b.m5StudyIds,
-      }),
-    );
+    const result = aggregateCtdAuthoringReadiness({
+      m1: b.m1,
+      m2: b.m2,
+      m4: b.m4,
+      m5: b.m5,
+      m24Summary: b.m24Summary,
+      m4ReportSections: b.m4ReportSections,
+      clinicalSummaries: b.clinicalSummaries,
+      m5StudyIds: b.m5StudyIds,
+    });
+    if (String(req.query.format).toLowerCase() === 'pdf') {
+      const pdf = await renderCtdReadinessPdf(result);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'inline; filename="ctd-readiness-report.pdf"');
+      return res.status(200).send(pdf);
+    }
+    res.json(result);
   } catch (err) {
     fail(res, err);
   }

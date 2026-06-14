@@ -67,7 +67,7 @@ All HTTP routes are auth-gated (`authenticateToken` at mount) and tenant-scoped
 | Module 4 nonclinical study report | `authoring/nonclinical-study-report-builder` | — |
 | Module 4 nonclinical assembly QC (ICH M3(R2) coverage / required-section status / absent-required-section detection vs the canonical structure / CTD 4.2.x placement / GLP / structure; honest-by-construction verdict) | `authoring/m4-nonclinical-qc` | `POST /api/authoring-pdf/m4-nonclinical/qc` |
 | Module 5 clinical assembly QC (phase coverage / required ICH E3 section status / absent-required-section detection vs the ICH E3 structure / CTD 5.3.x placement / structure; honest-by-construction verdict) | `authoring/m5-clinical-qc` | `POST /api/authoring-pdf/m5-clinical/qc` |
-| CTD authoring-readiness rollup (composes the M1 + M2 + M4 + M5 QC verdicts and the M2.4←M4 / M2.5-2.7←M5 feed-forward links into one cross-module "assembly-ready" verdict) | `authoring/ctd-authoring-readiness` | `POST /api/authoring-pdf/ctd-readiness` |
+| CTD authoring-readiness rollup (composes the M1 + M2 + M4 + M5 QC verdicts and the M2.4←M4 / M2.5-2.7←M5 feed-forward links into one cross-module "assembly-ready" verdict) | `authoring/ctd-authoring-readiness` | `POST /api/authoring-pdf/ctd-readiness` (JSON; `?format=pdf` for an attachable inspector report via `authoring/ctd-readiness-renderer`) |
 | Lifecycle document → bookmarked PDF | `ind-lifecycle/ind-document-renderer` | (used by the `*/pdf` routes) |
 
 ## 5. eCTD submission-grade output
