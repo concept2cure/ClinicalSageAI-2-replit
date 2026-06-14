@@ -238,7 +238,14 @@ describe('Audit-trail contract — every governed mutation logs one row', () => 
         action: 'approve',
       });
 
-    expect(res.status).toBeGreaterThanOrEqual(500);
+    // The contract is "fails closed + no esignature.sign audit row" for a
+    // signature that does not persist. The handler now performs server-side
+    // Part 11 credential verification (password / second factor) BEFORE the
+    // insert, so with the shared db mock (pool=null) it fails closed at that
+    // gate (4xx) rather than at the insert (5xx) — either way it never reports
+    // success and never emits the audit row. Assert the fail-closed contract,
+    // not the specific pre/post-persist status.
+    expect(res.status).toBeGreaterThanOrEqual(400);
     expect(res.status).not.toBe(201);
     expect(actionsFromAudit()).not.toContain('esignature.sign');
   });
