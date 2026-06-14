@@ -40,7 +40,12 @@ export class EllucianBannerConnector implements DataConnector {
    */
   private safeFetch(url: string, init?: RequestInit): Promise<Response> {
     assertSafePublicUrl(url, 'Ellucian Banner request');
-    return fetch(url, init);
+    // Bound every outbound Ethos call so a hung Banner instance can't pin the
+    // worker indefinitely (override via BANNER_TIMEOUT_MS, default 15s).
+    // Respect a caller-supplied signal if one is provided.
+    const timeoutMs = Number(process.env.BANNER_TIMEOUT_MS || 15000);
+    const signal = init?.signal ?? AbortSignal.timeout(timeoutMs);
+    return fetch(url, { ...init, signal });
   }
 
   async authenticate(credentials: ConnectorCredentials): Promise<void> {

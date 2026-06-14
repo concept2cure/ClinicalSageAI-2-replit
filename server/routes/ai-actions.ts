@@ -10,6 +10,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import {
   dispatchAction,
   getRegisteredActions,
@@ -33,6 +34,54 @@ import { createScopedLogger } from '../utils/logger.js';
 const logger = createScopedLogger('ai-actions');
 
 const router = Router();
+
+// ---------------------------------------------------------------------------
+// Body validation schema (typed, format/range-checked)
+//
+// NOTE: userId / organizationId / userName / userRole are intentionally NOT in
+// this schema — they are always derived from the authenticated request
+// (req.user / tenant context), never from the body. actionType and
+// sourceSurface keep their dedicated registry-backed guards below (which emit
+// contract-specific error codes); this schema validates the remaining field
+// TYPES and FORMATS so a malformed-but-present field is rejected with 400
+// instead of flowing into the dispatcher.
+// ---------------------------------------------------------------------------
+const AI_ACTION_TARGET_TYPES = [
+  'artifact',
+  'document',
+  'project',
+  'section',
+  'task',
+  'template',
+] as const;
+
+const AI_ACTION_MODULE_TYPES = [
+  'cmc',
+  'cer',
+  'study',
+  'ectd',
+  '510k',
+  'vault',
+  'ind',
+  'nda',
+  'ivdr',
+] as const;
+
+const executeActionBodySchema = z
+  .object({
+    targetType: z.enum(AI_ACTION_TARGET_TYPES),
+    targetId: z.union([z.string(), z.number(), z.null()]).optional(),
+    projectId: z.coerce.number().int().positive(),
+    module: z.enum(AI_ACTION_MODULE_TYPES).optional(),
+    context: z.record(z.unknown()).optional(),
+    payload: z.record(z.unknown()).optional(),
+    conversationId: z.union([z.number(), z.string()]).optional(),
+    threadId: z.string().optional(),
+    async: z.boolean().optional(),
+  })
+  // actionType / sourceSurface are validated separately (registry-backed);
+  // allow any other keys to pass through unchanged.
+  .passthrough();
 
 // ---------------------------------------------------------------------------
 // Error helper
@@ -189,6 +238,25 @@ router.post('/execute', async (req: Request, res: Response) => {
         buildRouteError(
           body.actionType,
           [{ code: 'INVALID_SOURCE_SURFACE', message: `Unknown sourceSurface: '${body.sourceSurface}'` }],
+          correlationId
+        )
+      );
+    }
+
+    // 2c. Typed/format validation of the remaining body fields. actionType,
+    // sourceSurface, targetType and projectId presence were already checked
+    // above with contract-specific codes; this rejects present-but-malformed
+    // values (e.g. non-numeric projectId, unknown targetType/module, wrong
+    // field types) before they reach the dispatcher.
+    const parsedBody = executeActionBodySchema.safeParse(body);
+    if (!parsedBody.success) {
+      return res.status(400).json(
+        buildRouteError(
+          body.actionType,
+          parsedBody.error.errors.map(e => ({
+            code: 'INVALID_REQUEST',
+            message: `${e.path.join('.') || 'body'}: ${e.message}`,
+          })),
           correlationId
         )
       );

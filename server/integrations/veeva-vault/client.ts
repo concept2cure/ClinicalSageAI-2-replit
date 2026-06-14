@@ -129,6 +129,20 @@ export interface VaultQueryResult {
 
 type FetchLike = (url: string, init?: RequestInit) => Promise<Response>;
 
+/**
+ * Default fetch implementation that bounds every outbound Vault call so a hung
+ * or slow Vault tenant can't pin the request handler/worker indefinitely.
+ * Uploads/downloads are multipart/binary and heavier, so the default is a
+ * generous 30s (override via VEEVA_VAULT_TIMEOUT_MS). A caller-supplied signal
+ * takes precedence. On timeout, fetch rejects with an AbortError that callers'
+ * existing try/catch surfaces as a normal failure.
+ */
+function timeoutFetch(url: string, init?: RequestInit): Promise<Response> {
+  const timeoutMs = Number(process.env.VEEVA_VAULT_TIMEOUT_MS || 30000);
+  const signal = init?.signal ?? AbortSignal.timeout(timeoutMs);
+  return fetch(url, { ...init, signal });
+}
+
 /** Parse a Vault JSON body; convert responseStatus FAILURE into VaultApiError. */
 function assertVaultSuccess(body: any, httpStatus: number, context: string): void {
   const status = body?.responseStatus;
@@ -149,8 +163,8 @@ export class VeevaVaultClient {
 
   constructor(
     private readonly config: VaultConfig,
-    /** Injectable for tests; defaults to global fetch. */
-    private readonly fetchImpl: FetchLike = (url, init) => fetch(url, init),
+    /** Injectable for tests; defaults to a timeout-bounded global fetch. */
+    private readonly fetchImpl: FetchLike = timeoutFetch,
   ) {}
 
   /** Build a client from the environment, or throw VaultCredentialError. */

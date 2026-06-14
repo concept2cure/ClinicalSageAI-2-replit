@@ -25,6 +25,12 @@ function endpoint(path: string): string {
   return `${base}/${index}${path}`;
 }
 
+// Bound every outbound OpenSearch call so a hung/slow cluster can't pin the
+// request handler indefinitely (override via OPENSEARCH_TIMEOUT_MS, default 15s).
+function opensearchTimeoutMs(): number {
+  return Number(process.env.OPENSEARCH_TIMEOUT_MS || 15000);
+}
+
 export async function indexGovernedDocument(doc: OpenSearchIndexDocument): Promise<void> {
   if (!isOpenSearchEnabled()) return;
 
@@ -39,6 +45,7 @@ export async function indexGovernedDocument(doc: OpenSearchIndexDocument): Promi
       searchableText: doc.content,
       updatedAt: new Date().toISOString(),
     }),
+    signal: AbortSignal.timeout(opensearchTimeoutMs()),
   });
 }
 
@@ -75,6 +82,7 @@ export async function searchGovernedDocuments(input: {
         },
       },
     }),
+    signal: AbortSignal.timeout(opensearchTimeoutMs()),
   });
 
   if (!resp.ok) {

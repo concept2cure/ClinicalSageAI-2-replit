@@ -73,7 +73,12 @@ export class VeevaVaultConnector implements DataConnector {
    */
   private safeFetch(url: string, init?: RequestInit): Promise<Response> {
     assertSafePublicUrl(url, 'Veeva Vault request');
-    return fetch(url, init);
+    // Bound every outbound call so a hung Vault tenant can't pin the worker
+    // indefinitely. Uploads (multipart) are heavier, so use a generous 30s
+    // default (override via VEEVA_TIMEOUT_MS). Respect a caller-supplied signal.
+    const timeoutMs = Number(process.env.VEEVA_TIMEOUT_MS || 30000);
+    const signal = init?.signal ?? AbortSignal.timeout(timeoutMs);
+    return fetch(url, { ...init, signal });
   }
 
   async status(): Promise<ConnectorHealth> {

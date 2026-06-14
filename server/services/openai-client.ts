@@ -58,7 +58,15 @@ export function getOpenAIClient(): OpenAI {
         },
       });
     }
-    _client = new OpenAI({ apiKey });
+    // Cap request time so a hung OpenAI request can't tie up a worker for the
+    // SDK's 10-minute default. 60s comfortably covers embeddings/DALL-E (the
+    // only OpenAI-specific uses here) while bounding worst-case latency.
+    // Override via OPENAI_TIMEOUT_MS.
+    _client = new OpenAI({
+      apiKey,
+      timeout: Number(process.env.OPENAI_TIMEOUT_MS || 60000),
+      maxRetries: 2,
+    });
   }
   return _client;
 }

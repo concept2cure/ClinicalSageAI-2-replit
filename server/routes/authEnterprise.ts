@@ -11,6 +11,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
 import { db } from '../db';
@@ -35,6 +36,98 @@ import * as mfaService from '../services/mfaService';
 
 const router = Router();
 // SECURITY FIX: isDev variable and devUser removed — no more dev-mode auth bypasses.
+
+// ─── Request body validation schemas ────────────────────────────────────────
+//
+// Typed, format-checked replacements for the previous presence-only
+// `if (!field)` guards. SECURITY: no org/user identity is trusted from these
+// bodies — userId/organizationId always come from the verified JWT. Each
+// handler keeps its exact error code/shape by translating ZodError into the
+// handler's existing { error, message } contract.
+//
+// MFA / verification codes are constrained to a bounded character set that
+// accepts every legitimate code shape used by this app — 6-digit TOTP, 6-digit
+// email OTP, and `XXXX-XXXX` / `XXXXXXXX` alphanumeric backup codes — while
+// rejecting oversized or injection-style input.
+
+const emailSchema = z.string().trim().min(1).max(320).email();
+
+const mfaCodeSchema = z
+  .string()
+  .trim()
+  .regex(/^[A-Za-z0-9-]{6,12}$/, 'Invalid verification code format');
+
+const checkEmailSchema = z.object({
+  email: emailSchema,
+});
+
+const verifyPasswordSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1).max(1024),
+  deviceFingerprint: z.string().max(512).optional(),
+});
+
+const verifyMfaSchema = z.object({
+  email: emailSchema.optional(),
+  code: mfaCodeSchema,
+  partialToken: z.string().min(1),
+});
+
+const mfaEnableSchema = z.object({
+  code: mfaCodeSchema,
+});
+
+const mfaDisableSchema = z.object({
+  password: z.string().min(1).max(1024),
+  code: mfaCodeSchema,
+});
+
+const selectOrganizationSchema = z.object({
+  // Accept the numeric org id as number or numeric string (callers send a
+  // string today); reject anything non-numeric. Membership is still verified
+  // against the DB below — this only constrains the format.
+  organizationId: z.union([
+    z.number().int().positive(),
+    z.string().trim().regex(/^\d+$/, 'organizationId must be numeric'),
+  ]),
+});
+
+const electronicSignatureSchema = z.object({
+  documentId: z.coerce.number().int().positive(),
+  versionId: z.coerce.number().int().positive(),
+  signerName: z.string().trim().min(1).max(255),
+  signerTitle: z.string().max(255).optional(),
+  signerEmail: emailSchema.optional(),
+  signatureType: z.enum([
+    'approval',
+    'review',
+    'witness',
+    'acknowledgment',
+    'authorship',
+  ]),
+  signaturePurpose: z.string().max(2000).optional(),
+  signatureMeaning: z.string().max(2000).optional(),
+  password: z.string().min(1).max(1024),
+  mfaCode: mfaCodeSchema.optional(),
+});
+
+/**
+ * Translate a ZodError into this router's existing { error, message } 400
+ * contract. `error` is the handler-specific code so client behaviour and
+ * status code are preserved; the message stays generic enough not to leak
+ * which field failed in a way that aids enumeration.
+ */
+function sendValidationError(
+  res: Response,
+  code: string,
+  message: string,
+  err: z.ZodError
+) {
+  console.warn(`[Enterprise Auth] ${code} validation failed:`, {
+    issues: err.errors.map(e => ({ path: e.path.join('.'), message: e.message })),
+  });
+  return res.status(400).json({ error: code, message });
+}
 
 // ─── Rate Limiters ──────────────────────────────────────────────────────────
 
@@ -113,14 +206,16 @@ router.get('/check-sso-domain', async (req: Request, res: Response) => {
  */
 router.post('/check-email', enterpriseAuthLimiter, async (req: Request, res: Response) => {
   try {
-    const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({
-        error: 'EMAIL_REQUIRED',
-        message: 'Email address is required',
-      });
+    const parsed = checkEmailSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return sendValidationError(
+        res,
+        'EMAIL_REQUIRED',
+        'A valid email address is required',
+        parsed.error
+      );
     }
+    const { email } = parsed.data;
 
     const normalizedEmail = email.trim().toLowerCase();
     console.log('[Enterprise Auth] Checking email:', normalizedEmail);
@@ -169,14 +264,16 @@ router.post('/check-email', enterpriseAuthLimiter, async (req: Request, res: Res
  */
 router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res: Response) => {
   try {
-    const { email, password, deviceFingerprint } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({
-        error: 'CREDENTIALS_REQUIRED',
-        message: 'Email and password are required',
-      });
+    const parsed = verifyPasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return sendValidationError(
+        res,
+        'CREDENTIALS_REQUIRED',
+        'Email and password are required',
+        parsed.error
+      );
     }
+    const { email, password } = parsed.data;
 
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -300,14 +397,16 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
  */
 router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Response) => {
   try {
-    const { email, code, partialToken } = req.body;
-
-    if (!code) {
-      return res.status(400).json({
-        error: 'MFA_CODE_REQUIRED',
-        message: 'MFA verification code is required',
-      });
+    const parsed = verifyMfaSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return sendValidationError(
+        res,
+        'MFA_CODE_REQUIRED',
+        'A valid MFA verification code is required',
+        parsed.error
+      );
     }
+    const { code, partialToken } = parsed.data;
 
     // SECURITY FIX: Dev-mode MFA bypass removed. MFA is always enforced.
 
@@ -444,10 +543,14 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const { code } = req.body;
-    if (!code) {
+    const parsed = mfaEnableSchema.safeParse(req.body);
+    if (!parsed.success) {
+      console.warn('[Enterprise Auth] mfa/enable validation failed:', {
+        issues: parsed.error.errors.map(e => ({ path: e.path.join('.'), message: e.message })),
+      });
       return res.status(400).json({ error: 'Verification code is required' });
     }
+    const { code } = parsed.data;
 
     const result = await mfaService.enableMfa(parseInt(decoded.userId), code);
 
@@ -481,13 +584,15 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const { password, code } = req.body;
-    if (!password) {
-      return res.status(400).json({ error: 'Password is required to disable MFA' });
+    const parsed = mfaDisableSchema.safeParse(req.body);
+    if (!parsed.success) {
+      const hasPasswordIssue = parsed.error.errors.some(e => e.path[0] === 'password');
+      const message = hasPasswordIssue
+        ? 'Password is required to disable MFA'
+        : 'Current MFA verification code is required to disable MFA';
+      return res.status(400).json({ error: message });
     }
-    if (!code) {
-      return res.status(400).json({ error: 'Current MFA verification code is required to disable MFA' });
-    }
+    const { password, code } = parsed.data;
 
     // Re-authenticate before disabling MFA
     const userResult = await db
@@ -527,18 +632,33 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
  */
 router.post('/electronic-signature', authMiddleware, async (req: Request, res: Response) => {
   try {
+    const parsed = electronicSignatureSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: parsed.error.errors.map(e => ({
+          field: e.path.join('.'),
+          message: e.message,
+        })),
+      });
+    }
+    const sig = parsed.data;
+
     const result = await createElectronicSignature({
-      documentId: req.body.documentId,
-      versionId: req.body.versionId,
+      documentId: sig.documentId,
+      versionId: sig.versionId,
+      // signerId is identity — sourced from the request body exactly as before
+      // (createElectronicSignature re-authenticates this user via password/MFA).
+      // It is intentionally NOT part of the validated schema as a trusted field.
       signerId: req.body.signerId,
-      signerName: req.body.signerName,
-      signerTitle: req.body.signerTitle,
-      signerEmail: req.body.signerEmail,
-      signatureType: req.body.signatureType,
-      signaturePurpose: req.body.signaturePurpose,
-      signatureMeaning: req.body.signatureMeaning,
-      password: req.body.password,
-      mfaCode: req.body.mfaCode,
+      signerName: sig.signerName,
+      signerTitle: sig.signerTitle as string,
+      signerEmail: sig.signerEmail as string,
+      signatureType: sig.signatureType,
+      signaturePurpose: sig.signaturePurpose as string,
+      signatureMeaning: sig.signatureMeaning as string,
+      password: sig.password,
+      mfaCode: sig.mfaCode,
       ipAddress: req.ip || (req.headers['x-forwarded-for'] as string),
       deviceInfo: {
         userAgent: req.headers['user-agent'],
@@ -590,14 +710,16 @@ router.get(
  */
 router.post('/select-organization', async (req: Request, res: Response) => {
   try {
-    const { organizationId } = req.body;
-
-    if (!organizationId) {
-      return res.status(400).json({
-        error: 'ORG_REQUIRED',
-        message: 'Organization ID is required',
-      });
+    const parsed = selectOrganizationSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return sendValidationError(
+        res,
+        'ORG_REQUIRED',
+        'A valid organization ID is required',
+        parsed.error
+      );
     }
+    const organizationId = String(parsed.data.organizationId);
 
     // Verify the caller's identity from the existing JWT
     const authHeader = req.headers.authorization;

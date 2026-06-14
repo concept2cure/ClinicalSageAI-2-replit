@@ -14,6 +14,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { authMiddleware, requireAdminRole } from '../auth.js';
 import {
   generateApiKey,
@@ -29,6 +30,27 @@ import { createScopedLogger } from '../utils/logger.js';
 const log = createScopedLogger('api-keys');
 
 const router = Router();
+
+// ============================================================================
+// Validation schema for API-key creation.
+//
+// organizationId / userId are intentionally absent — both are derived from the
+// authenticated request (req.tenantId / req.userId), never from the body.
+// expiresAt is validated as a future datetime; rateLimit/metadata stay optional
+// and are normalized by the handler exactly as before.
+// ============================================================================
+const createApiKeySchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(255),
+  scopes: z
+    .array(z.enum(API_KEY_SCOPES))
+    .min(1, 'At least one scope is required'),
+  expiresAt: z.coerce
+    .date()
+    .refine(d => d.getTime() > Date.now(), 'expiresAt must be in the future')
+    .optional(),
+  rateLimit: z.number().int().positive().optional(),
+  metadata: z.record(z.unknown()).optional(),
+});
 
 // All routes require authentication + admin role
 router.use(authMiddleware);
@@ -92,46 +114,25 @@ router.post('/', async (req: Request, res: Response) => {
     if (!userId) {
       return res.status(401).json({ error: 'User context required' });
     }
-    const { name, scopes, expiresAt, rateLimit, metadata } = req.body;
-
-    // Validate required fields
-    if (!name || typeof name !== 'string' || name.trim().length === 0) {
-      return res.status(400).json({ error: 'Name is required' });
-    }
-
-    if (!scopes || !Array.isArray(scopes) || scopes.length === 0) {
+    const parsed = createApiKeySchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
-        error: 'At least one scope is required',
+        error: 'Validation failed',
         availableScopes: API_KEY_SCOPES,
+        details: parsed.error.errors.map(e => ({
+          field: e.path.join('.'),
+          message: e.message,
+          code: e.code,
+        })),
       });
     }
-
-    // Validate each scope
-    const invalidScopes = scopes.filter(
-      (s: string) => !(API_KEY_SCOPES as readonly string[]).includes(s)
-    );
-    if (invalidScopes.length > 0) {
-      return res.status(400).json({
-        error: `Invalid scopes: ${invalidScopes.join(', ')}`,
-        availableScopes: API_KEY_SCOPES,
-      });
-    }
-
-    // Parse optional expiration
-    let parsedExpiry: Date | undefined;
-    if (expiresAt) {
-      parsedExpiry = new Date(expiresAt);
-      if (isNaN(parsedExpiry.getTime())) {
-        return res.status(400).json({ error: 'Invalid expiresAt date format' });
-      }
-      if (parsedExpiry <= new Date()) {
-        return res.status(400).json({ error: 'expiresAt must be in the future' });
-      }
-    }
+    // z.string().trim() has already normalized `name`.
+    const { name, scopes, expiresAt, rateLimit, metadata } = parsed.data;
+    const parsedExpiry: Date | undefined = expiresAt;
 
     const result = await generateApiKey(
       organizationId,
-      name.trim(),
+      name,
       scopes,
       userId,
       parsedExpiry,
@@ -160,7 +161,7 @@ router.post('/', async (req: Request, res: Response) => {
       apiKey: result.rawKey,
       keyId: result.keyId,
       keyPrefix: result.keyPrefix,
-      name: name.trim(),
+      name,
       scopes,
       expiresAt: parsedExpiry || null,
     });

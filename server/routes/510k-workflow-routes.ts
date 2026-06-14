@@ -29,6 +29,14 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
 
+    // SECURITY (21 CFR Part 11): the actor for audit/version attribution must
+    // come from the verified JWT, never from a client-supplied x-user-id header.
+    const actorId = (req as any).user?.id ?? (req as any).user?.userId;
+    if (actorId === undefined || actorId === null || actorId === '') {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+    const actorIdStr = String(actorId);
+
     if (!stage || !data) {
       return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
@@ -46,7 +54,7 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
           stage,
           section,
           action: 'SAVE',
-          userId: parseInt((req.headers['x-user-id'] as string) || ''),
+          userId: parseInt(actorIdStr),
           organizationId: parseInt(organizationId),
           data,
           metadata: {
@@ -215,7 +223,7 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
         await FDA510kComplianceTracker.createDocumentVersion({
           documentId: `510K_${projectId}`,
           projectId,
-          userId: parseInt((req.headers['x-user-id'] as string) || ''),
+          userId: parseInt(actorIdStr),
           organizationId: parseInt(organizationId),
           content: data,
           changeDescription: `Updated ${stage} - ${section || 'default'}`,
@@ -238,7 +246,7 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
         const orchestrationService = new DocumentOrchestrationService();
         const orchestrationResult = await orchestrationService.orchestrateDocumentGeneration(
           projectId,
-          req.headers['x-user-id'] as string,
+          actorIdStr,
           organizationId
         );
         autoPopulated = true;
@@ -250,7 +258,7 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
 
       void auditService.logAction({
         tenantId: parseInt(organizationId) || 0,
-        userId: parseInt((req.headers['x-user-id'] as string) || '') || undefined,
+        userId: parseInt(actorIdStr) || undefined,
         action: 'k510_workflow.transition',
         resourceType: 'fda_510k_project',
         resourceId: String(projectId),
