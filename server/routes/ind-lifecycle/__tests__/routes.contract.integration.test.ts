@@ -353,6 +353,7 @@ describe('DB-write + program surface (full HTTP flow)', () => {
     expect(res.body).toHaveProperty('dashboard');
     expect(Array.isArray(res.body.sequenceGates)).toBe(true);
     expect(res.body.summary).toHaveProperty('dispatchReady');
+    expect(res.body.crossReferences).toHaveProperty('missingLoa');
   });
 
   it('POST /submission/:id/dashboard → 200', async () => {

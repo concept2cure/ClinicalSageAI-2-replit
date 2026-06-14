@@ -225,7 +225,19 @@ router.post('/submission/:id/cockpit', limiter, requireRole(AUTHOR), async (req,
       sequenceValidation: validationFrom(b.sequenceValidationInput),
       overdueSafetyReports: b.overdueSafetyReports,
     });
-    res.json(buildIndCockpit({ dashboard, sequenceGates }));
+    const register = await getCrossReferenceRegister(submissionId, ctx);
+    res.json(
+      buildIndCockpit({
+        dashboard,
+        sequenceGates,
+        crossReferences: {
+          total: register.counts.total,
+          withLoa: register.counts.withLoa,
+          missingLoa: register.counts.missingLoa,
+          ready: register.ready,
+        },
+      }),
+    );
   } catch (err) {
     fail(res, err);
   }

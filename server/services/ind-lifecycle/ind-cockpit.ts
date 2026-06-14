@@ -52,6 +52,13 @@ export function annotateGateWithSnapshot(
 export interface IndCockpit {
   dashboard: IndDashboard;
   sequenceGates: SequenceGateSummary[];
+  /** Module 1.4 external-dependency authorization status (from the register). */
+  crossReferences?: {
+    total: number;
+    withLoa: number;
+    missingLoa: number;
+    ready: boolean;
+  };
   summary: {
     totalSequences: number;
     dispatchReady: number;
@@ -116,12 +123,14 @@ export function buildDriftDigest(gates: SequenceGateSummary[]): DriftDigest {
 export function buildIndCockpit(input: {
   dashboard: IndDashboard;
   sequenceGates: SequenceGateSummary[];
+  crossReferences?: IndCockpit['crossReferences'];
 }): IndCockpit {
   const gates = input.sequenceGates;
   const dispatchReady = gates.filter((g) => g.canDispatch).length;
   return {
     dashboard: input.dashboard,
     sequenceGates: gates,
+    ...(input.crossReferences ? { crossReferences: input.crossReferences } : {}),
     summary: {
       totalSequences: gates.length,
       dispatchReady,

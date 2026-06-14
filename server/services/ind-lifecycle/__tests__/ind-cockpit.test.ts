@@ -54,6 +54,19 @@ describe('buildIndCockpit', () => {
     expect(c.summary).toEqual({ totalSequences: 0, dispatchReady: 0, blocked: 0, unverified: 0, drifted: 0 });
   });
 
+  it('includes the cross-reference register summary when supplied', () => {
+    const c = buildIndCockpit({
+      dashboard,
+      sequenceGates: [],
+      crossReferences: { total: 3, withLoa: 2, missingLoa: 1, ready: false },
+    });
+    expect(c.crossReferences).toEqual({ total: 3, withLoa: 2, missingLoa: 1, ready: false });
+  });
+
+  it('omits crossReferences when not supplied', () => {
+    expect(buildIndCockpit({ dashboard, sequenceGates: [] }).crossReferences).toBeUndefined();
+  });
+
   it('rolls up unverified and drifted sequences', () => {
     const c = buildIndCockpit({
       dashboard,
