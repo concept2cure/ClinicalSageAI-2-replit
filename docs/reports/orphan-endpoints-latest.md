@@ -1,30 +1,32 @@
 # Orphan-endpoint inventory
 
-Generated: 2026-06-14T20:58:48.699Z
+Generated: 2026-05-07T05:53:54.250Z
 
 ## Summary
 
-- Declared server endpoints: **846**
-- Consumed (client + server-to-server, heuristic): **187**
-- Orphans (no caller reference): **659**
+- Declared server endpoints: **1184**
+- Consumed (client + server-to-server, heuristic): **331**
+- Orphans (no caller reference): **853**
 
 ## Orphans by owner
 
 | Owner | Count |
 | --- | ---: |
-| Platform API Gateway | 437 |
-| CMC Platform | 112 |
-| Identity Access | 75 |
-| Regulatory Intelligence | 23 |
-| Submission Workflows | 12 |
+| Platform API Gateway | 558 |
+| CMC Platform | 113 |
+| Regulatory Intelligence | 71 |
+| Identity Access | 47 |
+| Platform Kernel | 47 |
+| Submission Workflows | 16 |
+| AI Platform | 1 |
 
 ## Orphans by suggested decision
 
 | Decision | Count | Meaning |
 | --- | ---: | --- |
-| keep-server-only | 5 | Webhook / callback / health / export — legitimately not called from the client UI |
-| retire-candidate | 8 | Path or comment suggests test / demo / scaffold — review for removal |
-| needs-review | 646 | Heuristic could not classify — manual triage required |
+| keep-server-only | 6 | Webhook / callback / health / export — legitimately not called from the client UI |
+| retire-candidate | 10 | Path or comment suggests test / demo / scaffold — review for removal |
+| needs-review | 837 | Heuristic could not classify — manual triage required |
 
 ## Methodology + caveats
 

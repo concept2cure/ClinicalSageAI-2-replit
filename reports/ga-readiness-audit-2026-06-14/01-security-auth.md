@@ -8,7 +8,15 @@
 
 ## Executive Summary
 
-_(populated at end)_
+**Verdict: NOT READY (conditional — clears to Ready once the two HIGH findings are fixed).**
+Full summary with severity counts is repeated at the end of this document.
+
+- **BLOCKER:** 0 · **HIGH:** 2 · **MEDIUM:** 3 · **LOW:** 2
+- **Top blockers:** (1) post-auth OS command injection in `/api/analytics/upload-protocol`;
+  (2) dev SSO backdoor minting valid JWTs, gated only on `NODE_ENV`.
+- The auth/tenant-isolation core is otherwise strong (HS256-pinned JWT + rotation,
+  fail-closed SAML, JWT-derived tenant context, bcrypt-12 + lockout, hashed SCIM tokens,
+  allowlist CORS, double-submit CSRF, parameterized SQL, no hardcoded prod secrets).
 
 ---
 
@@ -132,4 +140,132 @@ the URL fragment (`#token=`) as the comment intends, though a cookie/exchange-co
 correct GA pattern.
 
 ---
+
+### [MEDIUM] Tenant isolation relies on application-level scoping; Postgres RLS not confirmed active
+
+**File:** `server/middleware/tenantContext.ts:272-306` (esp. comment at 293-296)
+
+The request DB client sets `app.current_tenant_id` / `app.current_user_role` /
+`app.current_org_id` via `set_config` on a per-request connection, and reviewed routes
+(e.g. `external-evidence.ts:82-138`) consistently filter `WHERE tenant_id = $1`. However
+the in-code comment states the AsyncLocalStorage scope exists to "count which queries run
+without a tenant boundary — the gap that would silently turn into 'zero rows' once RLS is
+enabled in PR B," implying database-enforced RLS may not yet be active in all paths. With
+~hundreds of route files and a single missing `WHERE tenant_id` clause sufficient to leak
+cross-tenant rows, defense-in-depth RLS (`ENABLE/FORCE ROW LEVEL SECURITY` + policies
+keyed on `app.current_tenant_id`) is the control that makes isolation robust against an
+individual query bug.
+
+**Why it matters for GA:** For regulated multi-tenant data, app-only scoping is a single
+point of failure. RLS must be confirmed enabled and `FORCE`d on every tenant-scoped table
+before GA. (DB schema/migrations are out of this report's scope — flagged for the DB/RLS
+workstream to verify policies are live, not just that `set_config` runs.)
+
+**Fix:** Confirm RLS is `ENABLE`d and `FORCE`d on all tenant tables with policies matching
+`app.current_tenant_id`; add a CI/integration test that a query with the wrong tenant
+context returns zero rows even when the `WHERE` clause is omitted.
+
+---
+
+### [LOW] `requireTenantContext` precondition checks bare `JWT_SECRET`, mismatching the env-suffixed verifier
+
+**File:** `server/middleware/tenantContext.ts:170-175` vs `server/utils/jwtVerify.ts:40-49`
+
+The middleware returns `503 Authentication unavailable` when `process.env.JWT_SECRET` is
+falsy, but the verifier resolves `JWT_SECRET_<ENV>` (e.g. `JWT_SECRET_PROD`) *first* and
+only falls back to bare `JWT_SECRET`. A production deployment that sets only
+`JWT_SECRET_PROD` (the documented pattern in `config/environment.ts`) would have a working
+verifier yet trip this 503 — a fail-closed availability bug, not a security hole, but it
+contradicts the supported secret layout and could mask real auth during incident response.
+
+**Fix:** Replace the bare-env check with the same resolution the verifier uses (or simply
+let `verifyJwtWithRotation` throw and handle it), so the precondition matches the actual
+secret source.
+
+---
+
+### [LOW] Generic `requireRole`/`requirePermission` grant implicit admin/wildcard escalation
+
+**File:** `server/middleware/auth.ts:149-151,217-221`; `server/middleware/tenantIsolation.ts:178-191`
+
+Authorization helpers treat membership of role `admin` as satisfying *any* role/permission
+check (`!userRoles?.includes('admin')`, `req.tenant?.roles.includes('admin')`), and
+`requirePermission` honors a `'*'` wildcard permission. This is conventional, but the
+`admin` role here is the *organization* admin (from `organization_users.role`), so an org
+admin implicitly passes every `requirePermission(...)` gate regardless of the specific
+permission. Ensure no cross-tenant or platform-level capability is guarded solely by a
+generic `requireRole('admin')` that an ordinary tenant admin can satisfy. Platform/super-
+admin actions correctly use the separate `requireSuperAdminRole` (`server/auth.ts:160-166`),
+which is good — this is a hardening note to audit that the two admin tiers are never
+conflated on sensitive routes.
+
+**Fix:** Keep tenant-admin and platform-admin authorities strictly separate; prefer
+explicit permission grants over blanket admin-implies-all on any route that crosses tenant
+or platform boundaries.
+
+---
+
+## Positive Controls Observed (not blockers)
+
+- **JWT verification is hardened:** algorithm pinned to HS256 (`jwtVerify.ts:81`) — blocks
+  alg-confusion; zero-downtime rotation with previous-secret fallback; min 32-char secret
+  enforced at config load and fails loud (`config/environment.ts:103-128`).
+- **No hardcoded production secrets** found in `server/`; the only hardcoded credential
+  (`tamper-proof-audit.ts:138`) is a dev-only fallback that *throws* in production
+  (`:125-131`). All real secrets come from `process.env`.
+- **SAML is fail-closed** via `@node-saml/node-saml` with `wantAssertionsSigned: true`,
+  audience pinning, InResponseTo/replay validation, SHA-256 (`saml-provider.ts:115-151`).
+  Replaces a prior regex-based bypass. RelayState is correctly treated as untrusted for
+  trust decisions.
+- **Tenant org id is derived from the verified JWT, never from headers**; header-based
+  impersonation attempts are detected and audit-logged as `critical`
+  (`tenantIsolation.ts:55-73`, `tenantContext.ts`, `tenantAuth.ts`).
+- **CSRF** uses a double-submit cookie with constant-time, fixed-length comparison and a
+  precise exempt-path matcher that avoids prefix-confusion (`csrf.ts`).
+- **CORS** is allowlist-based and blocks unknown origins in all environments; no wildcard
+  with credentials in production (`enterprise-security.ts:312-351`).
+- **Password hygiene:** bcrypt cost 12, legacy `temp_`/empty hashes rejected, account
+  lockout, login rate limiting, password history, audit logging (`auth.ts`, `routes/auth.ts`).
+- **SCIM** uses hashed tokens with constant-time compare, per-org source-IP allowlists,
+  and dedicated rate limiting (`routes/scim.ts`).
+- **SQL** in reviewed routes is parameterized (drizzle / `$1` placeholders); no string-
+  concatenated SQL with request input was found in the security-critical paths reviewed.
+- **Upload allowlist** rejects executable/script extensions and requires magic-byte +
+  malware verification downstream (`uploadAllowlist.ts`).
+
+---
+
+## Executive Summary
+
+**Verdict: NOT READY (conditional on fixing the two HIGH findings).**
+
+The authentication and tenant-isolation core of this platform is, with two notable
+exceptions, well-engineered for a regulated multi-tenant SaaS: HS256-pinned JWT
+verification with rotation, fail-closed SAML via a vetted library, JWT-derived (never
+header-derived) tenant context with re-checked DB membership, bcrypt-12 passwords with
+lockout and rate limiting, hashed SCIM tokens, parameterized SQL, allowlist CORS, and a
+correct double-submit CSRF. No hardcoded production secrets were found.
+
+Two findings block GA:
+
+1. **[HIGH] Post-auth OS command injection** in `/api/analytics/upload-protocol`
+   (`analytics-routes.ts:128,148`): attacker-controlled uploaded-document *content* is
+   interpolated into a `child_process.exec` shell string, giving any authenticated tenant
+   user remote code execution on the shared host — an OS-level break of tenant isolation.
+
+2. **[HIGH] Dev SSO backdoor** (`routes/sso.ts:444-467`) that mints valid signed JWTs and
+   is gated only on `NODE_ENV === 'development'` instead of the project's hardened
+   `isDevAuthAllowed()`. It is mounted unconditionally and reachable unauthenticated under
+   the `/api/auth` open prefix, so an environment misconfiguration becomes an auth bypass.
+
+Both are concrete, env- or input-triggerable, and must be fixed (and covered by the
+existing `ci:no-dev-auth-in-prod` style guards) before launch.
+
+**Count by severity:** BLOCKER 0 · HIGH 2 · MEDIUM 3 · LOW 2.
+
+Conditional path to GA: remediate the two HIGH items (use `execFile`/argv arrays; gate or
+delete the dev SSO mock), confirm Postgres RLS is `FORCE`d on tenant tables (MEDIUM #1),
+fix SAML JIT org mapping and stop returning JWTs in URLs (MEDIUM #2/#3). After those, the
+security/auth posture is GA-ready.
+
 
