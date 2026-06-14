@@ -65,8 +65,8 @@ All HTTP routes are auth-gated (`authenticateToken` at mount) and tenant-scoped
 | Module 2 cross-summary QC (presence / traceability / orphan-input / content / completeness / gaps / structure; honest-by-construction verdict) | `authoring/m2-summary-qc` | `POST /api/authoring-pdf/m2-summary/qc` |
 | Investigator's Brochure (ICH E6 §7) | `authoring/ib-builder` | — |
 | Module 4 nonclinical study report | `authoring/nonclinical-study-report-builder` | — |
-| Module 4 nonclinical assembly QC (ICH M3(R2) coverage / required-section status / CTD 4.2.x placement / GLP / structure; honest-by-construction verdict) | `authoring/m4-nonclinical-qc` | `POST /api/authoring-pdf/m4-nonclinical/qc` |
-| Module 5 clinical assembly QC (phase coverage / required ICH E3 section status / CTD 5.3.x placement / structure; honest-by-construction verdict) | `authoring/m5-clinical-qc` | `POST /api/authoring-pdf/m5-clinical/qc` |
+| Module 4 nonclinical assembly QC (ICH M3(R2) coverage / required-section status / absent-required-section detection vs the canonical structure / CTD 4.2.x placement / GLP / structure; honest-by-construction verdict) | `authoring/m4-nonclinical-qc` | `POST /api/authoring-pdf/m4-nonclinical/qc` |
+| Module 5 clinical assembly QC (phase coverage / required ICH E3 section status / absent-required-section detection vs the ICH E3 structure / CTD 5.3.x placement / structure; honest-by-construction verdict) | `authoring/m5-clinical-qc` | `POST /api/authoring-pdf/m5-clinical/qc` |
 | CTD authoring-readiness rollup (composes the M1 + M2 + M4 + M5 QC verdicts and the M2.4←M4 / M2.5-2.7←M5 feed-forward links into one cross-module "assembly-ready" verdict) | `authoring/ctd-authoring-readiness` | `POST /api/authoring-pdf/ctd-readiness` |
 | Lifecycle document → bookmarked PDF | `ind-lifecycle/ind-document-renderer` | (used by the `*/pdf` routes) |
 

@@ -88,6 +88,25 @@ describe('runM4NonclinicalQc — sections', () => {
   });
 });
 
+describe('runM4NonclinicalQc — structure coverage', () => {
+  // A report carrying only §1 omits required NSR sections 2–7.
+  const sparse = (): M4StudyReportInput[] => [
+    report({ studyId: 'TX-1', studyType: 'repeat_dose_tox', glpStatus: 'GLP', sections: [{ number: '1', title: 'Title Page', required: true, status: 'rendered' }] }),
+  ];
+
+  it('warns by default on an entirely absent required section (stays ready)', () => {
+    const res = runM4NonclinicalQc({ reports: sparse(), expectedStudyTypes: ['repeat_dose_tox'] });
+    expect(res.ready).toBe(true);
+    expect(res.findings.some((f) => f.code === 'SECTION_ABSENT')).toBe(true);
+  });
+
+  it('errors on an absent required section under requireFullStructure', () => {
+    const res = runM4NonclinicalQc({ reports: sparse(), expectedStudyTypes: ['repeat_dose_tox'], requireFullStructure: true });
+    expect(res.ready).toBe(false);
+    expect(res.findings.some((f) => f.code === 'SECTION_ABSENT' && f.severity === 'error')).toBe(true);
+  });
+});
+
 describe('runM4NonclinicalQc — placement, GLP, structure', () => {
   it('errors when the CTD 4.2.x placement is wrong for the study type', () => {
     const program = fullProgram();

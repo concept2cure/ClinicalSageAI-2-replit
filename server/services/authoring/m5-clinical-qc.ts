@@ -21,7 +21,10 @@
  * @module server/services/authoring/m5-clinical-qc
  */
 
-import type { CSRSection } from '../csr-builder';
+import { ICH_E3_STRUCTURE, type CSRSection } from '../csr-builder';
+
+/** Required ICH E3 top-level section numbers (1–13 are required; 14–16 optional). */
+const REQUIRED_E3_TOP_LEVEL: readonly string[] = ICH_E3_STRUCTURE.filter((s) => s.required).map((s) => s.number);
 
 /** A CSR section's drafting status (from the CSR builder's ICH E3 model). */
 export type CsrSectionStatus = CSRSection['status'];
@@ -60,6 +63,12 @@ export interface M5QcInput {
   csrs: M5CsrInput[];
   /** Study phases whose presence is required (no default — supply per program/stage). */
   expectedPhases?: Array<'1' | '2' | '3' | '4' | 'other'>;
+  /**
+   * When true, a required ICH E3 top-level section entirely absent from a CSR is
+   * an error (not just a warning) — catches a CSR that omits, say, §12 Safety
+   * altogether rather than leaving it empty.
+   */
+  requireFullStructure?: boolean;
 }
 
 /** Section statuses that count as "drafted or beyond" (acceptable for assembly). */
@@ -102,6 +111,21 @@ export function runM5ClinicalQc(input: M5QcInput): M5QcResult {
         findings.push({ studyId: c.studyId, severity: 'warning', code: 'SECTION_DRAFTING', message: `CSR "${c.studyId}" required section ${s.number} (${s.title}) is still drafting.` });
       }
     }
+
+    // STRUCTURE COVERAGE — a required ICH E3 top-level section entirely absent
+    // (the supplied report never carries it). Warning by default; error under
+    // requireFullStructure.
+    const supplied = new Set((c.sections ?? []).map((s) => topLevel(s.number)));
+    for (const reqNum of REQUIRED_E3_TOP_LEVEL) {
+      if (!supplied.has(reqNum)) {
+        findings.push({
+          studyId: c.studyId,
+          severity: input.requireFullStructure ? 'error' : 'warning',
+          code: 'SECTION_ABSENT',
+          message: `CSR "${c.studyId}" is missing required ICH E3 section ${reqNum} entirely.`,
+        });
+      }
+    }
   }
 
   // COVERAGE — only when the caller declares the expected phases.
@@ -129,4 +153,9 @@ export function runM5ClinicalQc(input: M5QcInput): M5QcResult {
 
 function severityRank(s: M5QcSeverity): number {
   return s === 'error' ? 0 : 1;
+}
+
+/** The top-level section number (e.g. '12.3' → '12'). */
+function topLevel(num: string): string {
+  return String(num).split('.')[0];
 }

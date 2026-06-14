@@ -73,6 +73,31 @@ describe('runM5ClinicalQc — placement', () => {
   });
 });
 
+describe('runM5ClinicalQc — structure coverage', () => {
+  // A CSR carrying only §1 omits required ICH E3 sections 2–13.
+  const sparse = (): M5CsrInput[] => [csr({ studyId: 'STUDY-1', sections: [{ number: '1', title: 'Title Page', required: true, status: 'approved' }] })];
+
+  it('warns by default on a required ICH E3 section that is entirely absent (stays ready)', () => {
+    const res = runM5ClinicalQc({ csrs: sparse() });
+    expect(res.ready).toBe(true);
+    const absent = res.findings.filter((f) => f.code === 'SECTION_ABSENT');
+    expect(absent.length).toBeGreaterThan(0);
+    expect(absent.some((f) => f.message.includes('section 12'))).toBe(true); // Safety
+  });
+
+  it('errors on an absent required section under requireFullStructure', () => {
+    const res = runM5ClinicalQc({ csrs: sparse(), requireFullStructure: true });
+    expect(res.ready).toBe(false);
+    expect(res.findings.some((f) => f.code === 'SECTION_ABSENT' && f.severity === 'error')).toBe(true);
+  });
+
+  it('does not flag absence when all required top-level sections are represented', () => {
+    const all = Array.from({ length: 13 }, (_, i) => ({ number: String(i + 1), title: `S${i + 1}`, required: true, status: 'drafted' as const }));
+    const res = runM5ClinicalQc({ csrs: [csr({ studyId: 'STUDY-1', sections: all })] });
+    expect(res.findings.some((f) => f.code === 'SECTION_ABSENT')).toBe(false);
+  });
+});
+
 describe('runM5ClinicalQc — coverage + structure', () => {
   it('errors on a missing expected phase only when expectedPhases is supplied', () => {
     const withReq = runM5ClinicalQc({ csrs: [csr({ studyId: 'STUDY-1', phase: '1' })], expectedPhases: ['1', '3'] });

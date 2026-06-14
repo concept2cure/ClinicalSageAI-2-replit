@@ -24,7 +24,15 @@
  * @module server/services/authoring/m4-nonclinical-qc
  */
 
-import { ctdSection, disciplineFor, type NSRSectionStatus } from './nonclinical-study-report-builder';
+import {
+  ctdSection,
+  disciplineFor,
+  NONCLINICAL_STUDY_REPORT_STRUCTURE,
+  type NSRSectionStatus,
+} from './nonclinical-study-report-builder';
+
+/** Required nonclinical study-report section numbers (per the canonical structure). */
+const REQUIRED_NSR_SECTIONS: readonly string[] = NONCLINICAL_STUDY_REPORT_STRUCTURE.filter((s) => s.required).map((s) => s.number);
 
 /** Minimal per-study-report shape this QC needs (a projection of the builder's job). */
 export interface M4StudyReportInput {
@@ -67,6 +75,12 @@ export interface M4QcInput {
   expectedStudyTypes?: string[];
   /** When true, missing coverage is an error (blocks `ready`) instead of a warning. */
   requireCoverage?: boolean;
+  /**
+   * When true, a required study-report section entirely absent from a report is
+   * an error (not just a warning) — catches a report that omits a section
+   * altogether rather than leaving it 'missing'.
+   */
+  requireFullStructure?: boolean;
 }
 
 /** ICH M3(R2) core nonclinical program for first-in-human / IND support. */
@@ -119,6 +133,19 @@ export function runM4NonclinicalQc(input: M4QcInput): M4QcResult {
         findings.push({ studyId: r.studyId, severity: 'error', code: 'SECTION_MISSING', message: `Study "${r.studyId}" required section ${s.number} (${s.title}) is missing.` });
       } else if (s.status === 'partial') {
         findings.push({ studyId: r.studyId, severity: 'warning', code: 'SECTION_PARTIAL', message: `Study "${r.studyId}" required section ${s.number} (${s.title}) is only partially rendered.` });
+      }
+    }
+
+    // STRUCTURE COVERAGE — a required study-report section entirely absent.
+    const supplied = new Set((r.sections ?? []).map((s) => s.number));
+    for (const reqNum of REQUIRED_NSR_SECTIONS) {
+      if (!supplied.has(reqNum)) {
+        findings.push({
+          studyId: r.studyId,
+          severity: input.requireFullStructure ? 'error' : 'warning',
+          code: 'SECTION_ABSENT',
+          message: `Study "${r.studyId}" is missing required study-report section ${reqNum} entirely.`,
+        });
       }
     }
 

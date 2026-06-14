@@ -98,6 +98,7 @@ router.post('/m4-nonclinical/qc', limiter, requireRole(AUTHOR), (req, res) => {
         reports: b.reports,
         expectedStudyTypes: b.expectedStudyTypes,
         requireCoverage: b.requireCoverage,
+        requireFullStructure: b.requireFullStructure,
       }),
     );
   } catch (err) {
@@ -116,7 +117,7 @@ router.post('/m5-clinical/qc', limiter, requireRole(AUTHOR), (req, res) => {
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'csrs[] (CSR summaries) is required.' } });
   }
   try {
-    res.json(runM5ClinicalQc({ csrs: b.csrs, expectedPhases: b.expectedPhases }));
+    res.json(runM5ClinicalQc({ csrs: b.csrs, expectedPhases: b.expectedPhases, requireFullStructure: b.requireFullStructure }));
   } catch (err) {
     fail(res, err);
   }
