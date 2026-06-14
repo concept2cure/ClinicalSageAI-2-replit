@@ -411,6 +411,11 @@ export * from './ind-master-data';
 // migration: migrations/20260610_ind_dispatch_snapshots.sql.
 export * from './ind-dispatch-snapshots';
 
+// IND cross-references — external files (DMF/IND/NDA/BLA) an IND depends on (m1.4).
+// Service: server/services/ind-lifecycle/ind-cross-reference-persistence;
+// migration: migrations/20260614_ind_cross_references.sql.
+export * from './ind-cross-references';
+
 // Clinical investigator financial disclosure — 21 CFR 54 (C2C-01) + the generic
 // ALCOA+ provenance spine seed (C2C-02). Forms FDA 3454/3455 → Module 1.
 // Service: server/services/financial-disclosures; migration: migrations/20260610_financial_disclosure_21cfr54.sql.

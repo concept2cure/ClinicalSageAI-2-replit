@@ -367,3 +367,64 @@ describe('DB-write + program surface (full HTTP flow)', () => {
     expect(res.body.summary).toHaveProperty('total');
   });
 });
+
+describe('persisted cross-references (eCTD m1.4)', () => {
+  let crossRefId: string;
+
+  it('POST /submission/:id/cross-references → 201', async () => {
+    const res = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references`)
+      .send({ referencedFileType: 'DMF', referencedFileNumber: '012345', subjectName: 'C2C-001 drug substance' });
+    expect(res.status).toBe(201);
+    expect(res.body.organizationId).toBe(1); // from session, not body
+    expect(res.body.loaOnFile).toBe(false);
+    crossRefId = res.body.id;
+  });
+
+  it('POST /submission/:id/cross-references → 400 on a bad file type', async () => {
+    const res = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references`)
+      .send({ referencedFileType: 'XYZ', referencedFileNumber: '1', subjectName: 's' });
+    expect(res.status).toBe(400);
+  });
+
+  it('GET /submission/:id/cross-references → 200 includes the record', async () => {
+    const res = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references`);
+    expect(res.status).toBe(200);
+    expect(res.body.map((r: any) => r.id)).toContain(crossRefId);
+  });
+
+  it('register is NOT ready while the LOA is not on file, then ready after PATCH', async () => {
+    const before = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-reference-register`);
+    expect(before.status).toBe(200);
+    expect(before.body.ready).toBe(false);
+    expect(before.body.counts.missingLoa).toBeGreaterThanOrEqual(1);
+
+    const patch = await request(app).patch(`/api/ind-lifecycle/cross-references/${crossRefId}`).send({ loaOnFile: true, loaLeafSection: 'm1.4.1' });
+    expect(patch.status).toBe(200);
+    expect(patch.body.loaOnFile).toBe(true);
+
+    const after = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-reference-register`);
+    expect(after.body.ready).toBe(true);
+    expect(after.body.counts.withLoa).toBeGreaterThanOrEqual(1);
+  });
+
+  it('does not leak another org\'s cross-references', async () => {
+    currentUser = { id: 9, organizationId: 2, roles: ['regulatory-author'] };
+    const res = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references`);
+    expect(res.body.map((r: any) => r.id)).not.toContain(crossRefId);
+    currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
+  });
+
+  it('PATCH unknown id → 404', async () => {
+    const res = await request(app).patch('/api/ind-lifecycle/cross-references/00000000-0000-0000-0000-000000000000').send({ loaOnFile: true });
+    expect(res.status).toBe(404);
+  });
+
+  it('DELETE /cross-references/:id → 204 then absent', async () => {
+    const del = await request(app).delete(`/api/ind-lifecycle/cross-references/${crossRefId}`);
+    expect(del.status).toBe(204);
+    const list = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references`);
+    expect(list.body.map((r: any) => r.id)).not.toContain(crossRefId);
+  });
+});

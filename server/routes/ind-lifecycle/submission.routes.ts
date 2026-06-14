@@ -18,6 +18,14 @@ import { buildIndCockpit, annotateGateWithSnapshot, buildDriftDigest, type Seque
 import { buildIndPortfolio, buildIndPortfolioEntry, isIndSubmission, buildPortfolioDrift, portfolioDriftToCsv } from '../../services/ind-lifecycle/ind-portfolio';
 import { getLatestDispatchSnapshot } from '../../services/ind-lifecycle/ind-dispatch-snapshot-service';
 import { getSubmission, listSubmissions, listSequences, listLeaves } from '../../services/submission-service/submission-service';
+import {
+  createCrossReference,
+  listCrossReferences,
+  updateCrossReference,
+  deleteCrossReference,
+  getCrossReferenceRegister,
+  CrossReferenceError,
+} from '../../services/ind-lifecycle/ind-cross-reference-persistence';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, readinessFrom, validationFrom } from './shared';
 
 const router = Router();
@@ -225,6 +233,107 @@ router.post('/submission/:id/drift', limiter, requireRole(AUTHOR), async (req, r
     const gates = await annotatedGatesForSubmission(sequences, body(req), ctx);
     res.json(buildDriftDigest(gates));
   } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Persisted cross-references (eCTD Module 1.4) ──────────────────────────────
+
+const VALID_FILE_TYPES = ['DMF', 'IND', 'NDA', 'BLA'];
+
+/** Record an external dependency (DMF/IND/NDA/BLA) for a submission. */
+router.post('/submission/:id/cross-references', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const submissionId = submissionIdOf(req.params.id);
+  if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
+  const b = body(req);
+  if (!VALID_FILE_TYPES.includes(b.referencedFileType) || !b.referencedFileNumber || !b.subjectName) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'referencedFileType (DMF|IND|NDA|BLA), referencedFileNumber and subjectName are required.' } });
+  }
+  try {
+    const row = await createCrossReference(
+      {
+        submissionId,
+        referencedFileType: b.referencedFileType,
+        referencedFileNumber: String(b.referencedFileNumber),
+        subjectName: String(b.subjectName),
+        authorizedSections: Array.isArray(b.authorizedSections) ? b.authorizedSections.map(String) : undefined,
+        loaOnFile: typeof b.loaOnFile === 'boolean' ? b.loaOnFile : undefined,
+        loaLeafSection: b.loaLeafSection ?? undefined,
+      },
+      ctx,
+    );
+    res.status(201).json(row);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** List a submission's cross-references. */
+router.get('/submission/:id/cross-references', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const submissionId = submissionIdOf(req.params.id);
+  if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
+  try {
+    res.json(await listCrossReferences(submissionId, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** The live cross-reference register (LOA-coverage QC) computed from stored rows. */
+router.get('/submission/:id/cross-reference-register', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const submissionId = submissionIdOf(req.params.id);
+  if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
+  try {
+    res.json(await getCrossReferenceRegister(submissionId, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** Patch a cross-reference (e.g. mark the LOA on file). */
+router.patch('/cross-references/:crossRefId', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const id = Array.isArray(req.params.crossRefId) ? req.params.crossRefId[0] : req.params.crossRefId;
+  const b = body(req);
+  try {
+    const row = await updateCrossReference(
+      String(id),
+      {
+        subjectName: b.subjectName,
+        authorizedSections: Array.isArray(b.authorizedSections) ? b.authorizedSections.map(String) : undefined,
+        loaOnFile: typeof b.loaOnFile === 'boolean' ? b.loaOnFile : undefined,
+        loaLeafSection: b.loaLeafSection,
+      },
+      ctx,
+    );
+    res.json(row);
+  } catch (err) {
+    if (err instanceof CrossReferenceError) {
+      return res.status(404).json({ error: { code: err.code, message: err.message } });
+    }
+    fail(res, err);
+  }
+});
+
+/** Delete a cross-reference. */
+router.delete('/cross-references/:crossRefId', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const id = Array.isArray(req.params.crossRefId) ? req.params.crossRefId[0] : req.params.crossRefId;
+  try {
+    await deleteCrossReference(String(id), ctx);
+    res.status(204).end();
+  } catch (err) {
+    if (err instanceof CrossReferenceError) {
+      return res.status(404).json({ error: { code: err.code, message: err.message } });
+    }
     fail(res, err);
   }
 });

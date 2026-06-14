@@ -94,6 +94,21 @@ CREATE TABLE IF NOT EXISTS ind_dispatch_snapshots (
   created_by      INTEGER,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS ind_cross_references (
+  id                     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id        INTEGER NOT NULL,
+  submission_id          INTEGER NOT NULL,
+  referenced_file_type   TEXT NOT NULL,
+  referenced_file_number TEXT NOT NULL,
+  subject_name           TEXT NOT NULL,
+  authorized_sections    JSONB NOT NULL DEFAULT '[]'::jsonb,
+  loa_on_file            BOOLEAN NOT NULL DEFAULT FALSE,
+  loa_leaf_section       TEXT,
+  created_by             INTEGER,
+  created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at             TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `;
 
 /**
