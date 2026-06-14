@@ -6,6 +6,7 @@
  */
 
 import express from 'express';
+import { requireAuth } from '../../middleware/auth.js';
 import blueprintGeneratorRouter from './blueprint-generator.js';
 import changeImpactSimulatorRouter from './change-impact-simulator.js';
 import manufacturingTunerRouter from './manufacturing-tuner.js';
@@ -25,18 +26,49 @@ router.use('/global-compliance', globalComplianceRouter);
 router.use('/audit-risk-monitor', auditRiskMonitorRouter);
 router.use('/cmc-copilot', cmcCopilotRouter);
 
-// Test endpoint to trigger CMC events
-router.post('/test-event', async (req, res) => {
-  const { eventType, data } = req.body;
-  
+// Allowed CMC lifecycle event types that the test hook may emit.
+// Mirrors the switch in server/services/cmcEvents.js::emitCMCEvent.
+const ALLOWED_TEST_EVENT_TYPES = new Set([
+  'spec.approved',
+  'stability.updated',
+  'method.validated',
+  'manufacturing.updated',
+  'batch.released',
+]);
+
+// Test endpoint to trigger CMC events.
+//
+// SECURITY: This is a development-only test hook that emits arbitrary CMC
+// lifecycle events. It is hard-blocked in production (returns 404) and
+// requires authentication everywhere else, and validates its input before
+// emitting. Mirrors the gating pattern used by other test/demo routes in
+// this repo (see server/routes/seed-demo.ts).
+router.post('/test-event', requireAuth, async (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ error: 'Not found' });
+  }
+
+  const { eventType, data } = req.body ?? {};
+
+  if (typeof eventType !== 'string' || !ALLOWED_TEST_EVENT_TYPES.has(eventType)) {
+    return res.status(400).json({
+      error: 'Invalid or missing eventType',
+      allowedEventTypes: Array.from(ALLOWED_TEST_EVENT_TYPES),
+    });
+  }
+
+  if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+    return res.status(400).json({ error: 'Invalid or missing data: expected an object' });
+  }
+
   try {
     const { emitCMCEvent } = await import('../../services/cmcEvents.js');
     const patch = await emitCMCEvent(eventType, data);
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       message: `Event ${eventType} triggered`,
-      patch 
+      patch,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -1,4 +1,130 @@
 {
-  "errors": 0,
-  "warnings": 16
+  "target": "server/index.ts,server/bootstrap/register-*.ts,server/startup/routes.ts,server/startup/inline-endpoints.ts,server/startup/middleware.ts",
+  "generatedAt": "2026-06-14T22:24:36.896Z",
+  "mounts": 241,
+  "errors": 8,
+  "warnings": 5,
+  "issues": {
+    "errors": [
+      {
+        "type": "duplicate-method-route",
+        "path": null,
+        "key": "get:/healthz"
+      },
+      {
+        "type": "duplicate-method-route",
+        "path": null,
+        "key": "get:/readyz"
+      },
+      {
+        "type": "duplicate-method-route",
+        "path": null,
+        "key": "get:/api/health"
+      },
+      {
+        "type": "duplicate-method-route",
+        "path": null,
+        "key": "get:/api/health/full"
+      },
+      {
+        "type": "duplicate-method-route",
+        "path": null,
+        "key": "get:/api/metrics"
+      },
+      {
+        "type": "duplicate-method-route",
+        "path": null,
+        "key": "get:/api/ai-gateway/health"
+      },
+      {
+        "type": "duplicate-method-route",
+        "path": null,
+        "key": "get:/api/time"
+      },
+      {
+        "type": "duplicate-method-route",
+        "path": null,
+        "key": "get:/api/diag"
+      }
+    ],
+    "warnings": [
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/ai",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/concept2cure",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/cmc",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/cmc/module3-os",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/mdx",
+        "key": null
+      }
+    ]
+  },
+  "ownership": [
+    {
+      "prefix": "/api",
+      "owner": "Platform API Gateway",
+      "contact": "server/index.ts"
+    },
+    {
+      "prefix": "/api/auth",
+      "owner": "Identity Access",
+      "contact": "server/routes/auth.ts"
+    },
+    {
+      "prefix": "/api/projects",
+      "owner": "Workspace Core",
+      "contact": "server/routes/projects-management.ts"
+    },
+    {
+      "prefix": "/api/documents",
+      "owner": "Authoring Governance",
+      "contact": "server/routes/documents-unified.ts"
+    },
+    {
+      "prefix": "/api/reports",
+      "owner": "Reporting Intelligence",
+      "contact": "server/routes/reports*.ts"
+    },
+    {
+      "prefix": "/api/ind",
+      "owner": "Submission Workflows",
+      "contact": "server/routes/ind*.ts"
+    },
+    {
+      "prefix": "/api/regulatory",
+      "owner": "Regulatory Intelligence",
+      "contact": "server/routes/regulatory*.ts"
+    },
+    {
+      "prefix": "/api/ai",
+      "owner": "AI Platform",
+      "contact": "server/services/ai-gateway/"
+    },
+    {
+      "prefix": "/api/cmc",
+      "owner": "CMC Platform",
+      "contact": "server/routes/cmc*.ts"
+    },
+    {
+      "prefix": "/api/concept2cure",
+      "owner": "Platform Kernel",
+      "contact": "server/routes/concept2cure.ts"
+    }
+  ]
 }

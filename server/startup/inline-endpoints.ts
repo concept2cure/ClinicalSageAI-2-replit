@@ -11,11 +11,47 @@
  *  - /api/shadow/health (shadow service proxy)
  */
 
-import type { Express, Request, Response } from 'express';
+import type { Express, NextFunction, Request, Response } from 'express';
 import type { Pool } from 'pg';
 import { createScopedLogger } from '../utils/logger';
 
 const logger = createScopedLogger('inline-endpoints');
+
+/** True when a Redis URL is configured. When false, Redis-backed
+ *  dependencies (cache, distributed lock, Bull action queue) run in their
+ *  in-memory fallback mode, so we treat them as "not configured" → healthy
+ *  (skip), never as a failure. */
+function isRedisConfigured(): boolean {
+  return Boolean(process.env.REDIS_URL || process.env.REDIS_TLS_URL);
+}
+
+/**
+ * Guard for sensitive observability endpoints (/api/metrics,
+ * /api/health/full). Allows the request when EITHER:
+ *   - a valid JWT is presented (reuses the platform auth middleware), OR
+ *   - a bearer token matching METRICS_TOKEN is presented (so Prometheus can
+ *     scrape with a shared secret, no user session required).
+ *
+ * If METRICS_TOKEN is unset, only JWT auth is accepted. The token path is
+ * checked first so a scrape never pays the JWT-verification cost.
+ */
+function requireMetricsAuth(req: Request, res: Response, next: NextFunction): void {
+  const metricsToken = process.env.METRICS_TOKEN;
+  if (metricsToken) {
+    const auth = req.headers.authorization;
+    const match = auth ? /^Bearer\s+(\S+)$/i.exec(auth) : null;
+    if (match && match[1] === metricsToken) {
+      return next();
+    }
+  }
+  // Fall back to the platform JWT auth middleware (loaded lazily to avoid a
+  // load-order coupling with the auth module at module-init time).
+  void import('../middleware/auth')
+    .then(({ authenticateToken }) => authenticateToken(req, res, next))
+    .catch(() => {
+      res.status(503).json({ error: { code: 'AUTH_UNAVAILABLE', message: 'Auth unavailable' } });
+    });
+}
 
 /**
  * Mount fast-path health endpoints BEFORE security/rate-limit/compression.
@@ -24,12 +60,51 @@ const logger = createScopedLogger('inline-endpoints');
 export function mountFastPathHealthEndpoints(app: Express, pool: Pool): void {
   app.get('/healthz', (_req, res) => res.json({ ok: true, ts: Date.now() }));
   app.get('/readyz', async (_req, res) => {
+    const deps: Record<string, 'ok' | 'skipped' | 'down'> = {};
+
+    // Database — always required.
     try {
       await pool.query('select 1');
-      return res.json({ ready: true });
+      deps.database = 'ok';
     } catch {
-      return res.status(500).json({ ready: false });
+      deps.database = 'down';
     }
+
+    // Redis + Bull action-queue worker tier. Only required when Redis is
+    // configured; otherwise the platform runs on in-memory fallbacks, so we
+    // skip (treat as healthy) rather than fail readiness.
+    if (isRedisConfigured()) {
+      try {
+        const { isRedisAvailable } = await import('../services/ai-actions/redis-manager.js');
+        deps.redis = isRedisAvailable() ? 'ok' : 'down';
+      } catch {
+        deps.redis = 'down';
+      }
+
+      // Worker tier health rides on Redis: the Bull queue cannot accept work
+      // without it. getQueueMetrics() returns null when the queue isn't
+      // reachable. Skip if the queue was never initialized (null with Redis
+      // down is already reflected by the redis check above).
+      try {
+        const { getQueueMetrics } = await import('../services/ai-actions/action-queue.js');
+        const metrics = await getQueueMetrics();
+        deps.worker = metrics ? 'ok' : 'down';
+      } catch {
+        deps.worker = 'down';
+      }
+    } else {
+      deps.redis = 'skipped';
+      deps.worker = 'skipped';
+    }
+
+    const failed = Object.entries(deps)
+      .filter(([, status]) => status === 'down')
+      .map(([name]) => name);
+
+    if (failed.length > 0) {
+      return res.status(503).json({ ready: false, failed, dependencies: deps });
+    }
+    return res.json({ ready: true, dependencies: deps });
   });
   app.get('/api/health', (_req: Request, res: Response) => {
     res.json({ status: 'healthy', timestamp: new Date().toISOString() });
@@ -40,7 +115,7 @@ export function mountFastPathHealthEndpoints(app: Express, pool: Pool): void {
  * Mount the richer diagnostic endpoints. These run after the security stack.
  */
 export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
-  app.get('/api/health/full', async (_req: Request, res: Response) => {
+  app.get('/api/health/full', requireMetricsAuth, async (_req: Request, res: Response) => {
     try {
       const { HealthCheckService } = await import('../lib/health-check.js');
       const healthCheck = new HealthCheckService(pool);
@@ -56,7 +131,7 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
     }
   });
 
-  app.get('/api/metrics', async (_req: Request, res: Response) => {
+  app.get('/api/metrics', requireMetricsAuth, async (_req: Request, res: Response) => {
     try {
       const memUsage = process.memoryUsage();
       const uptime = process.uptime();
