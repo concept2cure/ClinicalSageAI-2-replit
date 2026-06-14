@@ -21,6 +21,7 @@ import type {
   IndSafetyReportSection,
 } from './ind-safety-report-service';
 import type { IndAnnualReportModel } from './ind-annual-report-service';
+import type { LetterOfAuthorizationModel } from './ind-loa-service';
 import type { BriefingBookModel } from './ind-briefing-book-service';
 import type { CoverLetterModel } from './ind-cover-letter-service';
 import type { PackageManifest } from './ind-package-manifest';
@@ -60,6 +61,19 @@ export async function renderIndAnnualReportPdf(model: IndAnnualReportModel): Pro
   return renderStructuredLeafPdf(sections, {
     title: `IND Annual Report — ${model.productName} (IND ${model.indNumber})`,
     sectionCode: 'm1.13',
+  });
+}
+
+/** Render a Letter of Authorization (eCTD m1.4.1) to a PDF leaf. */
+export async function renderLetterOfAuthorizationPdf(model: LetterOfAuthorizationModel): Promise<Buffer> {
+  const sections: LeafSection[] = model.sections.map((s, i) => ({
+    heading: s.heading,
+    sectionCode: String(i + 1),
+    body: s.body && s.body.length > 0 ? s.body : '[To be completed.]',
+  }));
+  return renderStructuredLeafPdf(sections, {
+    title: `Letter of Authorization — ${model.referencedFileType} ${model.referencedFileNumber}`,
+    sectionCode: 'm1.4.1',
   });
 }
 

@@ -26,6 +26,7 @@ All HTTP routes are auth-gated (`authenticateToken` at mount) and tenant-scoped
 | FDA forms 1571/1572/3674/3454/3455 | `ind-forms/ind-form-data-builders`, `ind-form-fill-service` | `GET /api/ind-forms`, `POST /api/ind-forms/:formId/build`, `/:formId/pdf`, `/1572/pdf-all` |
 | Forms auto-filled from registries | `ind-forms/form-context-assembler` | `POST /api/ind-forms/:formId/pdf-from-records` |
 | Module 1 forms cross-validation (required-form presence / per-form completeness / sponsor-drug identity consistency across forms / structure; honest-by-construction verdict) | `ind-forms/ind-form-qc` | `POST /api/ind-forms/qc` |
+| Letter of Authorization / Right of Reference (cross-reference to a DMF / IND / NDA / BLA; model + gaps + m1.4.1 placement intent + PDF) | 21 CFR 314.420 | `ind-lifecycle/ind-loa-service` | `POST /api/ind-lifecycle/loa`, `/loa/pdf` |
 | Sponsor / US-agent (312.3) / investigator registries | `ind-master-data/ind-master-data-service`, schema `shared/schema/ind-master-data` | `GET/POST/PATCH /api/ind-master-data/{sponsors,agents,investigators}` |
 | Cover letter (m1.2) | `ind-lifecycle/ind-cover-letter-service`, `cover-letter-context` | `POST /api/ind-lifecycle/cover-letter`, `/cover-letter/pdf`, `/cover-letter/pdf-from-records` |
 | FDA meeting briefing book (Pre-IND / Type A/B/C) | `ind-lifecycle/ind-briefing-book-service` | `POST /api/ind-lifecycle/briefing-book`, `/briefing-book/pdf` |

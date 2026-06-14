@@ -65,6 +65,8 @@ const SUMMARIES: Record<string, string> = {
   'POST /api/ind-lifecycle/cover-letter': 'Assemble the IND cover letter (m1.2)',
   'POST /api/ind-lifecycle/cover-letter/pdf': 'Render the IND cover letter to PDF',
   'POST /api/ind-lifecycle/cover-letter/pdf-from-records': 'Render the cover letter from stored records',
+  'POST /api/ind-lifecycle/loa': 'Assemble a Letter of Authorization / Right of Reference (m1.4.1)',
+  'POST /api/ind-lifecycle/loa/pdf': 'Render the Letter of Authorization to PDF',
   'POST /api/ind-lifecycle/briefing-book': 'Assemble an FDA meeting briefing book',
   'POST /api/ind-lifecycle/briefing-book/pdf': 'Render the briefing book to PDF',
   'POST /api/ind-lifecycle/envelope': 'Build the us-regional eCTD envelope XML',

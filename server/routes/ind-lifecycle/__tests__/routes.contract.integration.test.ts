@@ -213,6 +213,29 @@ describe('document routes', () => {
     expect(res.status).toBe(400);
   });
 
+  it('POST /loa → 200 with the LOA model + m1.4.1 leaf intent', async () => {
+    const res = await request(app).post('/api/ind-lifecycle/loa').send({
+      referencedFileType: 'DMF', referencedFileNumber: '012345', holderName: 'Excipient Co.', authorizedPartyName: 'Acme', subjectName: 'C2C-001', signatoryName: 'Dana Holder',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.model.documentType).toBe('LETTER_OF_AUTHORIZATION');
+    expect(res.body.leafIntent.sectionCode).toBe('m1.4.1');
+  });
+
+  it('POST /loa → 400 without the required identifiers', async () => {
+    const res = await request(app).post('/api/ind-lifecycle/loa').send({ referencedFileType: 'DMF' });
+    expect(res.status).toBe(400);
+  });
+
+  it('POST /loa/pdf → 200 application/pdf', async () => {
+    const res = await request(app).post('/api/ind-lifecycle/loa/pdf').send({
+      referencedFileType: 'DMF', referencedFileNumber: '012345', holderName: 'Excipient Co.', authorizedPartyName: 'Acme', subjectName: 'C2C-001', signatoryName: 'Dana Holder',
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('application/pdf');
+    expect(res.body.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+  });
+
   it('POST /envelope → 200 application/xml', async () => {
     const res = await request(app)
       .post('/api/ind-lifecycle/envelope')

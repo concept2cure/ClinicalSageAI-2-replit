@@ -15,6 +15,7 @@ import { buildSaeLineListing, saeLineListingToCsv } from '../../services/ind-lif
 import { planIndAmendment } from '../../services/ind-lifecycle/ind-amendment-service';
 import { assembleBriefingBook } from '../../services/ind-lifecycle/ind-briefing-book-service';
 import { assembleCoverLetter } from '../../services/ind-lifecycle/ind-cover-letter-service';
+import { assembleLetterOfAuthorization, buildLoaLeafIntent } from '../../services/ind-lifecycle/ind-loa-service';
 import { assembleCoverLetterContext } from '../../services/ind-lifecycle/cover-letter-context';
 import { buildUsRegionalEnvelope } from '../../services/ind-lifecycle/ind-ectd-envelope';
 import {
@@ -22,6 +23,7 @@ import {
   renderIndAnnualReportPdf,
   renderBriefingBookPdf,
   renderCoverLetterPdf,
+  renderLetterOfAuthorizationPdf,
 } from '../../services/ind-lifecycle/ind-document-renderer';
 import { getSubmission } from '../../services/submission-service/submission-service';
 import { getSponsor } from '../../services/ind-master-data/ind-master-data-service';
@@ -35,6 +37,10 @@ function coverLetterValid(b: any): boolean {
 
 function briefingValid(b: any): boolean {
   return Boolean(b?.productName && b?.indication && b?.meetingType && Array.isArray(b?.questions));
+}
+
+function loaValid(b: any): boolean {
+  return Boolean(b?.referencedFileType && b?.referencedFileNumber && b?.holderName && b?.authorizedPartyName);
 }
 
 /** 21 CFR 312.32 — classify + build the IND Safety Report + amendment intent. */
@@ -214,6 +220,36 @@ router.post('/cover-letter/pdf-from-records', limiter, requireRole(AUTHOR), asyn
     if (code === 'NOT_FOUND') {
       return res.status(404).json({ error: { code, message: 'A referenced sponsor or submission was not found.' } });
     }
+    fail(res, err);
+  }
+});
+
+/**
+ * Assemble a Letter of Authorization / Right of Reference model (eCTD m1.4.1,
+ * 21 CFR 314.420) with its gap list + placement intent.
+ */
+router.post('/loa', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = body(req);
+  if (!loaValid(b)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'referencedFileType, referencedFileNumber, holderName and authorizedPartyName are required.' } });
+  }
+  try {
+    const model = assembleLetterOfAuthorization(b);
+    res.json({ model, leafIntent: buildLoaLeafIntent(model) });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** Render a Letter of Authorization to a PDF leaf (eCTD m1.4.1). */
+router.post('/loa/pdf', limiter, requireRole(AUTHOR), async (req, res) => {
+  const b = body(req);
+  if (!loaValid(b)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'referencedFileType, referencedFileNumber, holderName and authorizedPartyName are required.' } });
+  }
+  try {
+    sendPdf(res, 'ind-letter-of-authorization.pdf', await renderLetterOfAuthorizationPdf(assembleLetterOfAuthorization(b)));
+  } catch (err) {
     fail(res, err);
   }
 });
