@@ -409,6 +409,42 @@ describe('persisted cross-references (eCTD m1.4)', () => {
     expect(after.body.counts.withLoa).toBeGreaterThanOrEqual(1);
   });
 
+  it('POST …/cross-references/:id/file-loa → 201 files the m1.4.1 leaf and authorizes it', async () => {
+    // New, unauthorized dependency.
+    const created = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references`)
+      .send({ referencedFileType: 'DMF', referencedFileNumber: '099999', subjectName: 'Excipient X' });
+    const id = created.body.id;
+
+    const filed = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references/${id}/file-loa`)
+      .send({ sequenceNumber: '0007', holderName: 'Excipient Co.', authorizedPartyName: 'Acme', signatoryName: 'Dana Holder' });
+    expect(filed.status).toBe(201);
+    expect(filed.body.sequence.type).toBe('amendment');
+    const loaLeaf = filed.body.leaves.find((l: any) => l.sectionCode === 'm1.4.1');
+    expect(loaLeaf).toBeTruthy();
+    expect(typeof loaLeaf.checksum).toBe('string');
+    expect(filed.body.crossReference.loaOnFile).toBe(true);
+    expect(filed.body.crossReference.loaLeafSection).toBe('m1.4.1');
+  });
+
+  it('POST …/file-loa → 400 without a 4-digit sequenceNumber', async () => {
+    const created = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references`)
+      .send({ referencedFileType: 'DMF', referencedFileNumber: '088888', subjectName: 'Excipient Y' });
+    const res = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references/${created.body.id}/file-loa`)
+      .send({ sequenceNumber: '7', holderName: 'H', authorizedPartyName: 'A', signatoryName: 'S' });
+    expect(res.status).toBe(400);
+  });
+
+  it('POST …/file-loa → 404 for an unknown cross-reference', async () => {
+    const res = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references/00000000-0000-0000-0000-000000000000/file-loa`)
+      .send({ sequenceNumber: '0008', holderName: 'H', authorizedPartyName: 'A', signatoryName: 'S' });
+    expect(res.status).toBe(404);
+  });
+
   it('does not leak another org\'s cross-references', async () => {
     currentUser = { id: 9, organizationId: 2, roles: ['regulatory-author'] };
     const res = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references`);

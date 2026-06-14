@@ -128,3 +128,24 @@ export async function persistAmendmentPlan(
   const leaves = await persistLeaves(sequence.id, plan.leaves, ctx);
   return { sequence, leaves };
 }
+
+/**
+ * Persist a Module 1.4 cross-reference filing (Letter of Authorization, and
+ * optionally the Statement of Right of Reference) as an amendment sequence +
+ * leaves, with the rendered-PDF md5s attached per CTD section. Used to file the
+ * authorization for a tracked cross-reference dependency.
+ */
+export async function persistCrossReferenceFiling(
+  submissionId: number,
+  leafIntents: LeafIntentLike[],
+  sequenceNumber: string,
+  ctx: PersistCtx,
+  checksumBySection?: Record<string, string>,
+): Promise<PersistedAmendment> {
+  const sequence = await createSequence(
+    { submissionId, region: 'fda', sequenceNumber, type: 'amendment' },
+    ctx,
+  );
+  const leaves = await persistLeaves(sequence.id, leafIntents, ctx, checksumBySection);
+  return { sequence, leaves };
+}

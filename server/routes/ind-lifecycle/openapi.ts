@@ -91,6 +91,7 @@ const SUMMARIES: Record<string, string> = {
   'POST /api/ind-lifecycle/submission/{id}/cross-references': 'Record an external file dependency (m1.4)',
   'GET /api/ind-lifecycle/submission/{id}/cross-references': "List a submission's cross-references",
   'GET /api/ind-lifecycle/submission/{id}/cross-reference-register': 'Live cross-reference register + LOA-coverage QC',
+  'POST /api/ind-lifecycle/submission/{id}/cross-references/{crossRefId}/file-loa': 'File the LOA (m1.4.1 leaf) for a cross-reference + mark it authorized',
   'PATCH /api/ind-lifecycle/cross-references/{crossRefId}': 'Update a cross-reference (e.g. mark the LOA on file)',
   'DELETE /api/ind-lifecycle/cross-references/{crossRefId}': 'Delete a cross-reference',
   'GET /api/ind-lifecycle/portfolio': 'IND portfolio (all submissions)',

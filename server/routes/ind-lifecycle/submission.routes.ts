@@ -26,6 +26,10 @@ import {
   getCrossReferenceRegister,
   CrossReferenceError,
 } from '../../services/ind-lifecycle/ind-cross-reference-persistence';
+import { assembleLetterOfAuthorization, buildLoaLeafIntent } from '../../services/ind-lifecycle/ind-loa-service';
+import { renderLetterOfAuthorizationPdf } from '../../services/ind-lifecycle/ind-document-renderer';
+import { persistCrossReferenceFiling } from '../../services/ind-lifecycle/ind-lifecycle-persistence';
+import { createHash } from 'crypto';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, readinessFrom, validationFrom } from './shared';
 
 const router = Router();
@@ -292,6 +296,60 @@ router.get('/submission/:id/cross-reference-register', limiter, requireRole(AUTH
   try {
     res.json(await getCrossReferenceRegister(submissionId, ctx));
   } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * File the Letter of Authorization for a tracked cross-reference: render the LOA
+ * from the stored dependency + the supplied holder/signatory particulars, create
+ * an amendment sequence with the checksummed m1.4.1 leaf, and flip the
+ * cross-reference's loaOnFile (so the register becomes ready). Body:
+ * { sequenceNumber, holderName, authorizedPartyName, signatoryName, ... }.
+ */
+router.post('/submission/:id/cross-references/:crossRefId/file-loa', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const submissionId = submissionIdOf(req.params.id);
+  if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
+  const crossRefId = String(Array.isArray(req.params.crossRefId) ? req.params.crossRefId[0] : req.params.crossRefId);
+  const b = body(req);
+  if (!/^\d{4}$/.test(String(b.sequenceNumber ?? '')) || !b.holderName || !b.authorizedPartyName || !b.signatoryName) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: '4-digit sequenceNumber, holderName, authorizedPartyName and signatoryName are required.' } });
+  }
+  try {
+    const refs = await listCrossReferences(submissionId, ctx);
+    const ref = refs.find((r) => r.id === crossRefId);
+    if (!ref) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Cross-reference not found.' } });
+
+    const model = assembleLetterOfAuthorization({
+      referencedFileType: ref.referencedFileType as any,
+      referencedFileNumber: ref.referencedFileNumber,
+      subjectName: ref.subjectName,
+      authorizedSections: (ref.authorizedSections as string[]) ?? undefined,
+      holderName: String(b.holderName),
+      holderAddress: b.holderAddress,
+      authorizedPartyName: String(b.authorizedPartyName),
+      supportingIndNumber: b.supportingIndNumber,
+      signatoryName: String(b.signatoryName),
+      signatoryTitle: b.signatoryTitle,
+      signatureDate: b.signatureDate,
+    });
+    const pdf = await renderLetterOfAuthorizationPdf(model);
+    const md5 = createHash('md5').update(pdf).digest('hex');
+    const filed = await persistCrossReferenceFiling(
+      submissionId,
+      [buildLoaLeafIntent(model)],
+      String(b.sequenceNumber),
+      ctx,
+      { 'm1.4.1': md5 },
+    );
+    const crossReference = await updateCrossReference(crossRefId, { loaOnFile: true, loaLeafSection: 'm1.4.1' }, ctx);
+    res.status(201).json({ sequence: filed.sequence, leaves: filed.leaves, crossReference });
+  } catch (err) {
+    if (err instanceof CrossReferenceError) {
+      return res.status(404).json({ error: { code: err.code, message: err.message } });
+    }
     fail(res, err);
   }
 });
