@@ -61,6 +61,14 @@ export interface CtdAuthoringReadinessInput {
   m24Summary?: M2Summary;
   /** The CTD 4.2.x sections actually present in the M4 program (for feed-forward). */
   m4ReportSections?: string[];
+  /**
+   * The built M2.5 Clinical Overview and/or M2.7 Clinical Summary — used only for
+   * the M2.5/2.7←M5 feed-forward check. Their inputSectionKeys cite CSRs as
+   * `m5.3.5/<studyId>`, each of which must trace to a study in the M5 program.
+   */
+  clinicalSummaries?: M2Summary[];
+  /** The CSR study ids actually present in the M5 program (for feed-forward). */
+  m5StudyIds?: string[];
 }
 
 /**
@@ -115,6 +123,25 @@ export function aggregateCtdAuthoringReadiness(input: CtdAuthoringReadinessInput
           code: 'FEED_FORWARD',
           message: `M2.4 Nonclinical Overview cites ${cited}, which has no corresponding Module 4 study report.`,
         });
+      }
+    }
+  }
+
+  // FEED_FORWARD — the M2.5/2.7 clinical summaries must trace to CSRs that exist.
+  if (input.clinicalSummaries && input.m5StudyIds) {
+    const present = new Set(input.m5StudyIds);
+    for (const summary of input.clinicalSummaries) {
+      for (const cited of summary.inputSectionKeys ?? []) {
+        // Clinical summaries cite CSRs as `m5.3.5/<studyId>` (or a bare studyId).
+        const studyId = cited.includes('/') ? cited.slice(cited.lastIndexOf('/') + 1) : cited;
+        if (!present.has(studyId)) {
+          findings.push({
+            area: `M2.${summary.sectionKey === '2.7' ? '7' : '5'}←M5`,
+            severity: 'error',
+            code: 'FEED_FORWARD',
+            message: `M${summary.sectionKey} clinical summary cites CSR "${studyId}", which has no corresponding Module 5 clinical study report.`,
+          });
+        }
       }
     }
   }

@@ -84,4 +84,34 @@ describe('aggregateCtdAuthoringReadiness', () => {
       expect(res.findings.some((f) => f.code === 'FEED_FORWARD')).toBe(false);
     });
   });
+
+  describe('M2.5/2.7 ← M5 feed-forward', () => {
+    const clinical = (key: string, inputs: string[]): M2Summary => ({
+      sectionKey: key, title: `Module ${key}`, narrative: 'x', tables: [], inputSectionKeys: inputs, completeness: 100, gaps: [], generatedAt: new Date(0).toISOString(),
+    });
+
+    it('passes when every cited CSR exists in the M5 program', () => {
+      const res = aggregateCtdAuthoringReadiness({
+        m2: m2Ready,
+        m5: m5Ready,
+        clinicalSummaries: [clinical('2.5', ['m5.3.5/STUDY-1']), clinical('2.7', ['m5.3.5/STUDY-1'])],
+        m5StudyIds: ['STUDY-1', 'STUDY-2'],
+      });
+      expect(res.findings.some((f) => f.code === 'FEED_FORWARD')).toBe(false);
+      expect(res.ready).toBe(true);
+    });
+
+    it('errors when a clinical summary cites a CSR with no Module 5 report', () => {
+      const res = aggregateCtdAuthoringReadiness({
+        m2: m2Ready,
+        m5: m5Ready,
+        clinicalSummaries: [clinical('2.5', ['m5.3.5/GHOST-9'])],
+        m5StudyIds: ['STUDY-1'],
+      });
+      expect(res.ready).toBe(false);
+      const ff = res.findings.find((f) => f.code === 'FEED_FORWARD');
+      expect(ff?.message).toContain('GHOST-9');
+      expect(ff?.area).toBe('M2.5←M5');
+    });
+  });
 });
