@@ -16,6 +16,13 @@ import { planIndAmendment } from '../../services/ind-lifecycle/ind-amendment-ser
 import { assembleBriefingBook } from '../../services/ind-lifecycle/ind-briefing-book-service';
 import { assembleCoverLetter } from '../../services/ind-lifecycle/ind-cover-letter-service';
 import { assembleLetterOfAuthorization, buildLoaLeafIntent } from '../../services/ind-lifecycle/ind-loa-service';
+import {
+  assembleRightOfReferenceStatement,
+  buildRightOfReferenceLeafIntent,
+  assembleAuthorizedPersonsList,
+  buildAuthorizedPersonsLeafIntent,
+  buildCrossReferenceRegister,
+} from '../../services/ind-lifecycle/ind-cross-reference-service';
 import { assembleCoverLetterContext } from '../../services/ind-lifecycle/cover-letter-context';
 import { buildUsRegionalEnvelope } from '../../services/ind-lifecycle/ind-ectd-envelope';
 import {
@@ -24,6 +31,8 @@ import {
   renderBriefingBookPdf,
   renderCoverLetterPdf,
   renderLetterOfAuthorizationPdf,
+  renderRightOfReferenceStatementPdf,
+  renderAuthorizedPersonsListPdf,
 } from '../../services/ind-lifecycle/ind-document-renderer';
 import { getSubmission } from '../../services/submission-service/submission-service';
 import { getSponsor } from '../../services/ind-master-data/ind-master-data-service';
@@ -249,6 +258,76 @@ router.post('/loa/pdf', limiter, requireRole(AUTHOR), async (req, res) => {
   }
   try {
     sendPdf(res, 'ind-letter-of-authorization.pdf', await renderLetterOfAuthorizationPdf(assembleLetterOfAuthorization(b)));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** Assemble the m1.4.2 Statement of Right of Reference model + gaps + intent. */
+router.post('/right-of-reference', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = body(req);
+  if (!b?.sponsorName || !b?.referencedFileType || !b?.referencedFileNumber) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'sponsorName, referencedFileType and referencedFileNumber are required.' } });
+  }
+  try {
+    const model = assembleRightOfReferenceStatement(b);
+    res.json({ model, leafIntent: buildRightOfReferenceLeafIntent(model) });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** Render the Statement of Right of Reference to a PDF leaf (m1.4.2). */
+router.post('/right-of-reference/pdf', limiter, requireRole(AUTHOR), async (req, res) => {
+  const b = body(req);
+  if (!b?.sponsorName || !b?.referencedFileType || !b?.referencedFileNumber) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'sponsorName, referencedFileType and referencedFileNumber are required.' } });
+  }
+  try {
+    sendPdf(res, 'ind-right-of-reference.pdf', await renderRightOfReferenceStatementPdf(assembleRightOfReferenceStatement(b)));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** Assemble the m1.4.3 List of Authorized Persons model + gaps + intent. */
+router.post('/authorized-persons', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = body(req);
+  if (!Array.isArray(b?.persons)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'persons[] is required.' } });
+  }
+  try {
+    res.json({ model: assembleAuthorizedPersonsList(b), leafIntent: buildAuthorizedPersonsLeafIntent() });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** Render the List of Authorized Persons to a PDF leaf (m1.4.3). */
+router.post('/authorized-persons/pdf', limiter, requireRole(AUTHOR), async (req, res) => {
+  const b = body(req);
+  if (!Array.isArray(b?.persons)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'persons[] is required.' } });
+  }
+  try {
+    sendPdf(res, 'ind-authorized-persons.pdf', await renderAuthorizedPersonsListPdf(assembleAuthorizedPersonsList(b)));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Cross-reference register — every external file the IND depends on, with LOA
+ * coverage. Body: { references: CrossReferenceEntry[] }. A reference without an
+ * LOA on file is a blocking error.
+ */
+router.post('/cross-reference-register', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = body(req);
+  if (!Array.isArray(b?.references)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'references[] is required.' } });
+  }
+  try {
+    res.json(buildCrossReferenceRegister(b.references));
   } catch (err) {
     fail(res, err);
   }

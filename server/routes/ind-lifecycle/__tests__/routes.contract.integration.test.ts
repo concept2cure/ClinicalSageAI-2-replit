@@ -236,6 +236,37 @@ describe('document routes', () => {
     expect(res.body.subarray(0, 5).toString('latin1')).toBe('%PDF-');
   });
 
+  it('POST /right-of-reference → 200 with the m1.4.2 model', async () => {
+    const res = await request(app).post('/api/ind-lifecycle/right-of-reference').send({
+      sponsorName: 'Acme', referencedFileType: 'DMF', referencedFileNumber: '012345', subjectName: 'C2C-001', signatoryName: 'Dana',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.leafIntent.sectionCode).toBe('m1.4.2');
+  });
+
+  it('POST /authorized-persons/pdf → 200 application/pdf', async () => {
+    const res = await request(app).post('/api/ind-lifecycle/authorized-persons/pdf').send({ sponsorName: 'Acme', persons: [{ name: 'Pat Smith' }] });
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('application/pdf');
+  });
+
+  it('POST /cross-reference-register → 200 not ready when an LOA is missing', async () => {
+    const res = await request(app).post('/api/ind-lifecycle/cross-reference-register').send({
+      references: [
+        { referencedFileType: 'DMF', referencedFileNumber: '111', subjectName: 'Substance', loaOnFile: true },
+        { referencedFileType: 'DMF', referencedFileNumber: '222', subjectName: 'Excipient', loaOnFile: false },
+      ],
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.ready).toBe(false);
+    expect(res.body.counts.missingLoa).toBe(1);
+  });
+
+  it('POST /cross-reference-register → 400 without references[]', async () => {
+    const res = await request(app).post('/api/ind-lifecycle/cross-reference-register').send({});
+    expect(res.status).toBe(400);
+  });
+
   it('POST /envelope → 200 application/xml', async () => {
     const res = await request(app)
       .post('/api/ind-lifecycle/envelope')

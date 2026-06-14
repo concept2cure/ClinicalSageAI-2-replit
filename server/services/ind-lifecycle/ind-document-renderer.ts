@@ -22,6 +22,10 @@ import type {
 } from './ind-safety-report-service';
 import type { IndAnnualReportModel } from './ind-annual-report-service';
 import type { LetterOfAuthorizationModel } from './ind-loa-service';
+import type {
+  RightOfReferenceStatementModel,
+  AuthorizedPersonsListModel,
+} from './ind-cross-reference-service';
 import type { BriefingBookModel } from './ind-briefing-book-service';
 import type { CoverLetterModel } from './ind-cover-letter-service';
 import type { PackageManifest } from './ind-package-manifest';
@@ -74,6 +78,32 @@ export async function renderLetterOfAuthorizationPdf(model: LetterOfAuthorizatio
   return renderStructuredLeafPdf(sections, {
     title: `Letter of Authorization — ${model.referencedFileType} ${model.referencedFileNumber}`,
     sectionCode: 'm1.4.1',
+  });
+}
+
+/** Render a Statement of Right of Reference (eCTD m1.4.2) to a PDF leaf. */
+export async function renderRightOfReferenceStatementPdf(model: RightOfReferenceStatementModel): Promise<Buffer> {
+  const sections: LeafSection[] = model.sections.map((s, i) => ({
+    heading: s.heading,
+    sectionCode: String(i + 1),
+    body: s.body && s.body.length > 0 ? s.body : '[To be completed.]',
+  }));
+  return renderStructuredLeafPdf(sections, {
+    title: `Statement of Right of Reference — ${model.referencedFileType} ${model.referencedFileNumber}`,
+    sectionCode: 'm1.4.2',
+  });
+}
+
+/** Render a List of Authorized Persons (eCTD m1.4.3) to a PDF leaf. */
+export async function renderAuthorizedPersonsListPdf(model: AuthorizedPersonsListModel): Promise<Buffer> {
+  const sections: LeafSection[] = model.sections.map((s, i) => ({
+    heading: s.heading,
+    sectionCode: String(i + 1),
+    body: s.body && s.body.length > 0 ? s.body : '[To be completed.]',
+  }));
+  return renderStructuredLeafPdf(sections, {
+    title: 'List of Authorized Persons to Incorporate by Reference',
+    sectionCode: 'm1.4.3',
   });
 }
 
