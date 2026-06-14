@@ -9,8 +9,9 @@
  *  - Performance middleware cleanup
  *  - DB pool close
  *  - SIGTERM / SIGINT handlers
- *  - unhandledRejection counter (exit after 10)
- *  - uncaughtException fatal exit
+ *  - unhandledRejection circuit breaker (exit only on a burst within a rolling
+ *    window; a slow trickle ages out and never trips)
+ *  - uncaughtException: attempt a bounded graceful drain, then safety exit(1)
  */
 
 import type { Pool } from 'pg';
@@ -94,18 +95,44 @@ export function registerShutdownHandlers(ctx: ShutdownContext): void {
   process.on('SIGTERM', () => void gracefulShutdown('SIGTERM', ctx));
   process.on('SIGINT', () => void gracefulShutdown('SIGINT', ctx));
 
-  let unhandledRejectionCount = 0;
+  // Unhandled-rejection circuit breaker. We only want to bail when rejections
+  // arrive in a *burst* (a real cascade), not when a slow trickle accumulates
+  // over the lifetime of the process. So the counter ages out: each rejection
+  // is timestamped and we only count those within a rolling window. A handful
+  // of unrelated rejections spread over hours will never trip the breaker.
+  const REJECTION_WINDOW_MS = 60_000; // only rejections within the last minute count
+  const REJECTION_BURST_LIMIT = 10; // ...and only a burst of this many trips exit
+  let rejectionTimestamps: number[] = [];
   process.on('unhandledRejection', (reason, promise) => {
     console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason);
-    unhandledRejectionCount++;
-    if (unhandledRejectionCount >= 10) {
-      console.error('🚨 Too many unhandled rejections — shutting down');
+    const now = Date.now();
+    rejectionTimestamps.push(now);
+    // Age out anything older than the window so a slow trickle decays away.
+    rejectionTimestamps = rejectionTimestamps.filter(ts => now - ts <= REJECTION_WINDOW_MS);
+    if (rejectionTimestamps.length >= REJECTION_BURST_LIMIT) {
+      console.error(
+        `🚨 ${rejectionTimestamps.length} unhandled rejections within ${REJECTION_WINDOW_MS / 1000}s — shutting down`
+      );
       process.exit(1);
     }
   });
 
   process.on('uncaughtException', error => {
     console.error('UNCAUGHT EXCEPTION:', error);
-    process.exit(1);
+    // Attempt a graceful drain before the safety exit so in-flight work and
+    // open connections are flushed/closed. gracefulShutdown ends in
+    // process.exit(0); a bounded timer guarantees we still exit(1) even if the
+    // drain wedges. We never *skip* the exit — only try to drain first.
+    const FORCE_EXIT_MS = 12_000;
+    const forceExit = setTimeout(() => {
+      console.error('⚠️ Graceful drain timed out after uncaughtException — forcing exit');
+      process.exit(1);
+    }, FORCE_EXIT_MS);
+    // Do not keep the event loop alive solely for this timer.
+    if (typeof forceExit.unref === 'function') forceExit.unref();
+    gracefulShutdown('uncaughtException', ctx).catch(drainError => {
+      console.error('❌ Graceful drain failed after uncaughtException:', drainError);
+      process.exit(1);
+    });
   });
 }

@@ -8,6 +8,7 @@
 
 import { pool } from '../../db.js';
 import crypto from 'crypto';
+import { isSafePublicUrl } from '../../utils/ssrfGuard.js';
 import {
   DataConnector,
   ConnectorQuery,
@@ -129,13 +130,43 @@ export async function getConnectorCatalog(
 }
 
 /**
+ * Reject a connector credential URL that points anywhere private/internal.
+ *
+ * SECURITY (SSRF, first of two defenses): tenant-supplied `baseUrl` /
+ * `tokenEndpoint` are later fetched server-side. Block them at storage time so a
+ * literal private/metadata destination (e.g. 169.254.169.254) can never be
+ * persisted. The connector-level check (in each connector's authenticate/fetch)
+ * is the second defense against DNS rebinding.
+ *
+ * Some connectors use `baseUrl` as a bare domain / tenant identifier rather than
+ * a full URL (SharePoint host, Box enterprise id, Azure tenant id). Only values
+ * that parse as an http(s) URL are validated; an http(s) URL that resolves to an
+ * unsafe host (or any non-https scheme) is rejected.
+ */
+function assertSafeCredentialUrl(value: unknown, label: string): void {
+  if (typeof value !== 'string' || value.length === 0) return;
+  if (!/^https?:\/\//i.test(value)) return; // bare domain / tenant id — not a fetched URL here
+  if (!isSafePublicUrl(value)) {
+    throw new Error(
+      `Connector ${label} must be a public https URL; private/loopback/link-local/metadata hosts and non-https are not allowed`
+    );
+  }
+}
+
+/**
  * Store encrypted credentials for a connector.
+ *
+ * @throws Error (surface as HTTP 400) if baseUrl / tokenEndpoint is unsafe.
  */
 export async function storeCredentials(
   organizationId: number,
   connectorId: string,
   credentials: ConnectorCredentials
 ): Promise<void> {
+  // SSRF guard at storage time (see assertSafeCredentialUrl).
+  assertSafeCredentialUrl(credentials.baseUrl, 'baseUrl');
+  assertSafeCredentialUrl(credentials.customHeaders?.['tokenEndpoint'], 'customHeaders.tokenEndpoint');
+
   const encrypted = encrypt(JSON.stringify(credentials));
 
   await pool.query(

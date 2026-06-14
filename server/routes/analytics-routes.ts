@@ -3,7 +3,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import util from 'util';
 import { db } from '../db';
 import { csrReports } from '../../shared/schema';
@@ -15,8 +15,17 @@ import { createScopedLogger } from '../utils/logger.js';
 
 const log = createScopedLogger('analytics-routes');
 
-const execPromise = util.promisify(exec);
+// execFile does not invoke a shell, so arguments are passed verbatim with no
+// shell parsing. Use this for any command that includes user-controlled input.
+const execFilePromise = util.promisify(execFile);
 const router = Router();
+
+// Defensive cap on text passed to Python analyzers as a CLI argument.
+const MAX_ANALYZER_TEXT_LENGTH = 1_000_000;
+
+// Bounded options shared by analyzer subprocess calls (preserves prior defaults
+// of a 10MB stdout buffer; adds a hard timeout to avoid hung processes).
+const ANALYZER_EXEC_OPTIONS = { maxBuffer: 10 * 1024 * 1024, timeout: 120_000 };
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -85,7 +94,11 @@ router.post('/upload-protocol', upload.single('file'), async (req, res) => {
       const scriptPath = path.join(process.cwd(), 'trialsage', 'extract_protocol.py');
 
       try {
-        const { stdout } = await execPromise(`python ${scriptPath} "${filePath}"`);
+        const { stdout } = await execFilePromise(
+          'python3',
+          [scriptPath, filePath],
+          ANALYZER_EXEC_OPTIONS
+        );
         extractedText = stdout;
 
         // Validate we got meaningful text
@@ -125,7 +138,14 @@ For best results, please use PDF format.`;
     let analysisOutput;
 
     try {
-      const result = await execPromise(`python ${analyzerScriptPath} "${extractedText}"`);
+      // Pass extracted text as an argv element (no shell) to prevent command
+      // injection. Truncate to a sane limit to avoid oversized argv.
+      const analyzerText = extractedText.slice(0, MAX_ANALYZER_TEXT_LENGTH);
+      const result = await execFilePromise(
+        'python3',
+        [analyzerScriptPath, analyzerText],
+        ANALYZER_EXEC_OPTIONS
+      );
       analysisOutput = result.stdout;
     } catch (error) {
       log.error('Analysis execution error:', error);
@@ -145,8 +165,14 @@ For best results, please use PDF format.`;
       const tempScoreFile = path.join(process.cwd(), 'temp', `score-${Date.now()}.txt`);
       fs.writeFileSync(tempScoreFile, extractedText);
 
-      const scoreResult = await execPromise(
-        `python -c "from trialsage.confidence_scorer import score_protocol; import json; import sys; print(json.dumps(score_protocol(open('${tempScoreFile}', 'r').read())))"`
+      // Run a fixed inline program (no user input interpolated into source) and
+      // pass the temp file path as an argv element read via sys.argv[1].
+      const confidenceScript =
+        'from trialsage.confidence_scorer import score_protocol; import json; import sys; print(json.dumps(score_protocol(open(sys.argv[1], "r").read())))';
+      const scoreResult = await execFilePromise(
+        'python3',
+        ['-c', confidenceScript, tempScoreFile],
+        ANALYZER_EXEC_OPTIONS
       );
       confidenceOutput = scoreResult.stdout;
 
@@ -282,7 +308,11 @@ router.post('/analyze-protocol-text', async (req, res) => {
     let analysisOutput;
 
     try {
-      const result = await execPromise(`python ${analyzerScriptPath} "${tempFilePath}"`);
+      const result = await execFilePromise(
+        'python3',
+        [analyzerScriptPath, tempFilePath],
+        ANALYZER_EXEC_OPTIONS
+      );
       analysisOutput = result.stdout;
     } catch (error) {
       // Clean up temporary file
@@ -305,8 +335,12 @@ router.post('/analyze-protocol-text', async (req, res) => {
     // Score the protocol confidence
     let confidenceOutput;
     try {
-      const scoreResult = await execPromise(
-        `python -c "from trialsage.confidence_scorer import score_protocol; import json; import sys; print(json.dumps(score_protocol(open('${tempFilePath}', 'r').read())))"`
+      const confidenceScript =
+        'from trialsage.confidence_scorer import score_protocol; import json; import sys; print(json.dumps(score_protocol(open(sys.argv[1], "r").read())))';
+      const scoreResult = await execFilePromise(
+        'python3',
+        ['-c', confidenceScript, tempFilePath],
+        ANALYZER_EXEC_OPTIONS
       );
       confidenceOutput = scoreResult.stdout;
     } catch (error) {

@@ -12,6 +12,27 @@ if (!fs.existsSync(DOSSIERS_DIR)) {
   fs.mkdirSync(DOSSIERS_DIR, { recursive: true });
 }
 
+/**
+ * Resolve a `<DOSSIERS_DIR>/<id>.json` path while rejecting path traversal.
+ * Returns the absolute path on success, or null if `id` contains path
+ * separators / `..` or escapes DOSSIERS_DIR.
+ */
+function resolveDossierPath(id: string): string | null {
+  const raw = String(id);
+  if (raw.includes('..') || raw.includes('/') || raw.includes('\\')) {
+    return null;
+  }
+  const safe = path.basename(raw);
+  if (safe !== raw || safe === '' || safe === '.' || safe === '..') {
+    return null;
+  }
+  const resolved = path.resolve(DOSSIERS_DIR, `${safe}.json`);
+  if (!resolved.startsWith(path.resolve(DOSSIERS_DIR) + path.sep)) {
+    return null;
+  }
+  return resolved;
+}
+
 // Save protocol intelligence report to dossier
 router.post('/save-intelligence-report', express.json(), async (req, res) => {
   try {
@@ -24,11 +45,31 @@ router.post('/save-intelligence-report', express.json(), async (req, res) => {
       });
     }
 
-    // Generate a unique dossier ID if none exists
-    const dossierId = `dossier_${protocol_id}_${Date.now()}`;
+    // Reject any protocol_id containing path separators or traversal sequences
+    // before it is interpolated into a filename.
+    const protocolIdStr = String(protocol_id);
+    if (
+      protocolIdStr.includes('..') ||
+      protocolIdStr.includes('/') ||
+      protocolIdStr.includes('\\')
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid protocol ID',
+      });
+    }
 
-    // Create dossier file path
-    const dossierPath = path.join(DOSSIERS_DIR, `${dossierId}.json`);
+    // Generate a unique dossier ID if none exists
+    const dossierId = `dossier_${protocolIdStr}_${Date.now()}`;
+
+    // Create dossier file path (sanitized + confined to DOSSIERS_DIR)
+    const dossierPath = resolveDossierPath(dossierId);
+    if (!dossierPath) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid protocol ID',
+      });
+    }
 
     // Create dossier data object
     const dossierData = {
@@ -106,8 +147,14 @@ router.get('/:dossier_id', (req, res) => {
   try {
     const { dossier_id } = req.params;
 
-    // Create dossier file path
-    const dossierPath = path.join(DOSSIERS_DIR, `${dossier_id}.json`);
+    // Create dossier file path (sanitized + confined to DOSSIERS_DIR)
+    const dossierPath = resolveDossierPath(dossier_id);
+    if (!dossierPath) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid dossier ID',
+      });
+    }
 
     // Check if dossier exists
     if (!fs.existsSync(dossierPath)) {

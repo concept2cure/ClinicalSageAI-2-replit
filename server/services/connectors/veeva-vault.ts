@@ -13,6 +13,7 @@ import {
   ConnectorDocument,
   ConnectorCredentials,
 } from './connector-interface.js';
+import { assertSafePublicUrl } from '../../utils/ssrfGuard.js';
 
 /**
  * Escape a value for safe interpolation into a VQL single-quoted string
@@ -64,13 +65,24 @@ export class VeevaVaultConnector implements DataConnector {
   private baseUrl = '';
   private sessionId = '';
 
+  /**
+   * SSRF guard at the outbound sink. baseUrl is tenant-supplied and reused for
+   * every request — re-validate the effective URL before each fetch so a
+   * private/loopback/metadata host (incl. one reached via DNS rebinding after
+   * storage) can never be hit. Throws if unsafe.
+   */
+  private safeFetch(url: string, init?: RequestInit): Promise<Response> {
+    assertSafePublicUrl(url, 'Veeva Vault request');
+    return fetch(url, init);
+  }
+
   async status(): Promise<ConnectorHealth> {
     if (!this.baseUrl || !this.sessionId) {
       return { status: 'unavailable', lastChecked: new Date(), message: 'Not configured — provide Vault credentials' };
     }
     try {
       const start = Date.now();
-      const res = await fetch(`${this.baseUrl}/api/v24.0/metadata/objects`, {
+      const res = await this.safeFetch(`${this.baseUrl}/api/v24.0/metadata/objects`, {
         headers: { Authorization: this.sessionId },
       });
       return { status: res.ok ? 'healthy' : 'degraded', latencyMs: Date.now() - start, lastChecked: new Date() };
@@ -86,7 +98,7 @@ export class VeevaVaultConnector implements DataConnector {
     // user-supplied value is escaped (apostrophes break/inject the VQL).
     const vql = buildDocumentVql(query);
 
-    const res = await fetch(`${this.baseUrl}/api/v24.0/query?q=${encodeURIComponent(vql)}`, {
+    const res = await this.safeFetch(`${this.baseUrl}/api/v24.0/query?q=${encodeURIComponent(vql)}`, {
       headers: { Authorization: this.sessionId },
     });
 
@@ -109,7 +121,7 @@ export class VeevaVaultConnector implements DataConnector {
   async fetch(resourceId: string): Promise<ConnectorDocument> {
     const vaultId = resourceId.replace('veeva:', '');
 
-    const res = await fetch(`${this.baseUrl}/api/v24.0/objects/documents/${vaultId}`, {
+    const res = await this.safeFetch(`${this.baseUrl}/api/v24.0/objects/documents/${vaultId}`, {
       headers: { Authorization: this.sessionId },
     });
     if (!res.ok) throw new Error(`Veeva Vault document ${vaultId} not found`);
@@ -129,11 +141,13 @@ export class VeevaVaultConnector implements DataConnector {
 
   async authenticate(credentials: ConnectorCredentials): Promise<void> {
     if (!credentials.baseUrl) throw new Error('Veeva Vault base URL required');
+    // SSRF guard: reject a private/metadata base URL before any outbound call.
+    assertSafePublicUrl(credentials.baseUrl, 'Veeva Vault base URL');
     this.baseUrl = credentials.baseUrl.replace(/\/$/, '');
 
     if (credentials.username && credentials.password) {
       // Username/password auth
-      const res = await fetch(`${this.baseUrl}/api/v24.0/auth`, {
+      const res = await this.safeFetch(`${this.baseUrl}/api/v24.0/auth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: `username=${encodeURIComponent(credentials.username)}&password=${encodeURIComponent(credentials.password)}`,
@@ -187,7 +201,7 @@ export class VeevaVaultConnector implements DataConnector {
       Buffer.from(`\r\n--${boundary}--`),
     ]);
 
-    const res = await fetch(`${this.baseUrl}/api/v24.0/objects/documents`, {
+    const res = await this.safeFetch(`${this.baseUrl}/api/v24.0/objects/documents`, {
       method: 'POST',
       headers: {
         Authorization: this.sessionId,

@@ -12,6 +12,7 @@ import {
   ConnectorDocument,
   ConnectorCredentials,
 } from './connector-interface.js';
+import { assertSafePublicUrl } from '../../utils/ssrfGuard.js';
 
 export class MedidataRaveConnector implements DataConnector {
   id = 'medidata_rave';
@@ -24,13 +25,24 @@ export class MedidataRaveConnector implements DataConnector {
   private username = '';
   private password = '';
 
+  /**
+   * SSRF guard at the outbound sink. baseUrl is tenant-supplied and reused for
+   * every request — re-validate the effective URL before each fetch so a
+   * private/loopback/metadata host (incl. one reached via DNS rebinding after
+   * storage) can never be hit. Throws if unsafe.
+   */
+  private safeFetch(url: string, init?: RequestInit): Promise<Response> {
+    assertSafePublicUrl(url, 'Medidata Rave request');
+    return fetch(url, init);
+  }
+
   async status(): Promise<ConnectorHealth> {
     if (!this.baseUrl) {
       return { status: 'unavailable', lastChecked: new Date(), message: 'Not configured — provide Medidata credentials' };
     }
     try {
       const start = Date.now();
-      const res = await fetch(`${this.baseUrl}/RaveWebServices/version`, {
+      const res = await this.safeFetch(`${this.baseUrl}/RaveWebServices/version`, {
         headers: this.getAuthHeaders(),
       });
       return { status: res.ok ? 'healthy' : 'degraded', latencyMs: Date.now() - start, lastChecked: new Date() };
@@ -43,7 +55,7 @@ export class MedidataRaveConnector implements DataConnector {
     if (!this.baseUrl) return [];
 
     // Get list of studies
-    const res = await fetch(`${this.baseUrl}/RaveWebServices/studies`, {
+    const res = await this.safeFetch(`${this.baseUrl}/RaveWebServices/studies`, {
       headers: { ...this.getAuthHeaders(), Accept: 'application/json' },
     });
 
@@ -73,7 +85,7 @@ export class MedidataRaveConnector implements DataConnector {
   async fetch(resourceId: string): Promise<ConnectorDocument> {
     const studyOid = resourceId.replace('medidata:', '');
 
-    const res = await fetch(`${this.baseUrl}/RaveWebServices/studies/${studyOid}/datasets/regular`, {
+    const res = await this.safeFetch(`${this.baseUrl}/RaveWebServices/studies/${studyOid}/datasets/regular`, {
       headers: { ...this.getAuthHeaders(), Accept: 'application/json' },
     });
 
@@ -93,6 +105,8 @@ export class MedidataRaveConnector implements DataConnector {
 
   async authenticate(credentials: ConnectorCredentials): Promise<void> {
     if (!credentials.baseUrl) throw new Error('Medidata Rave base URL required');
+    // SSRF guard: reject a private/metadata base URL before any outbound call.
+    assertSafePublicUrl(credentials.baseUrl, 'Medidata Rave base URL');
     this.baseUrl = credentials.baseUrl.replace(/\/$/, '');
     this.username = credentials.username || '';
     this.password = credentials.password || '';

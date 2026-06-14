@@ -61,10 +61,67 @@ jobs:
       - name: Run tests
         run: npm test
 
+  # ── Gate: Security / SAST / governance must pass before any prod deploy ────
+  # Production deploys must not bypass the same security gates enforced on CI.
+  # ci.yml runs these on PRs/pushes, but deploy-aws.yml is triggered by tags /
+  # workflow_dispatch, so the relevant gates are re-run here and made a hard
+  # `needs:` dependency of the build/deploy jobs.
+  security-gate:
+    name: Pre-deploy Security Gate (SAST + Trivy + governance)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Guardrails — SAML SSO fail-closed (no auth bypass)
+        run: npm run ci:saml-fail-closed
+
+      - name: Guardrails — no leaky dev-auth gates in prod paths
+        run: npm run ci:no-dev-auth-in-prod
+
+      - name: Guardrails — password hygiene
+        run: npm run ci:password-hygiene
+
+      - name: Run security contract tests (tenant-isolation + prompt-injection)
+        run: npm run test:security
+        env:
+          CI: true
+
+      - name: Run npm audit (with documented false-positive allowlist)
+        run: node scripts/ci/audit-with-allowlist.mjs
+
+      - name: Trivy filesystem scan (deps + secrets)
+        # Blocking: HIGH/CRITICAL findings fail the deploy gate.
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          format: table
+
+      - name: Trivy config scan (Dockerfile/IaC)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          format: table
+          skip-dirs: node_modules
+
   # ── Build & Push container images ─────────────────────────────────────────
   build-push:
     name: Build & Push to ECR
-    needs: test
+    needs: [test, security-gate]
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.deploy_api == 'true' || github.event.inputs.deploy_worker == 'true' || startsWith(github.ref, 'refs/tags/v') }}
     outputs:
@@ -98,26 +155,29 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ steps.meta.outputs.tag }}
+        # Push ONLY the immutable, SHA/tag-pinned image. The mutable `:latest`
+        # tag was removed so prod can never resolve a floating image and so
+        # rollback (redeploy a prior IMAGE_TAG) is always possible.
+        # TODO(GA-blocker): capture the pushed image digest (docker buildx
+        # --metadata-file / `docker inspect`) and deploy by @sha256:<digest>.
         run: |
           docker build -f Dockerfile.optimized \
             -t "$ECR_REGISTRY/$ECR_API_REPO:$IMAGE_TAG" \
-            -t "$ECR_REGISTRY/$ECR_API_REPO:latest" \
             .
           docker push "$ECR_REGISTRY/$ECR_API_REPO:$IMAGE_TAG"
-          docker push "$ECR_REGISTRY/$ECR_API_REPO:latest"
 
       - name: Build & push Worker image
         if: ${{ github.event.inputs.deploy_worker != 'false' }}
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ steps.meta.outputs.tag }}
+        # Push ONLY the immutable, SHA/tag-pinned image (no mutable `:latest`).
+        # TODO(GA-blocker): deploy by image digest (@sha256:<digest>).
         run: |
           docker build -f worker/Dockerfile \
             -t "$ECR_REGISTRY/$ECR_WORKER_REPO:$IMAGE_TAG" \
-            -t "$ECR_REGISTRY/$ECR_WORKER_REPO:latest" \
             .
           docker push "$ECR_REGISTRY/$ECR_WORKER_REPO:$IMAGE_TAG"
-          docker push "$ECR_REGISTRY/$ECR_WORKER_REPO:latest"
 
   # ── Deploy API to ECS ────────────────────────────────────────────────────
   deploy-api:
@@ -135,6 +195,17 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Force new ECS deployment (API)
+        env:
+          # Immutable image tag built+pushed by build-push (e.g. sha-<gitsha> or
+          # the release tag). Passed through so the deploy is pinned to THIS
+          # build and is rollback-able to a prior IMAGE_TAG.
+          IMAGE_TAG: ${{ needs.build-push.outputs.image_tag }}
+        # TODO(GA-blocker): register a new task definition revision whose
+        # container image is "$ECR_REGISTRY/$ECR_API_REPO:$IMAGE_TAG" (ideally
+        # pinned by @sha256:<digest>) and deploy that revision, instead of
+        # --force-new-deployment which re-pulls whatever the current task def
+        # references. force-new-deployment alone does not guarantee the new
+        # immutable image is used unless the task def already points at it.
         run: |
           aws ecs update-service \
             --cluster "$ECS_CLUSTER" \
@@ -164,6 +235,12 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Force new ECS deployment (Worker)
+        env:
+          IMAGE_TAG: ${{ needs.build-push.outputs.image_tag }}
+        # TODO(GA-blocker): register a new task definition revision pinned to
+        # "$ECR_REGISTRY/$ECR_WORKER_REPO:$IMAGE_TAG" (ideally @sha256:<digest>)
+        # and deploy it, rather than --force-new-deployment of the current
+        # task def. See deploy-api note above.
         run: |
           aws ecs update-service \
             --cluster "$ECS_CLUSTER" \
@@ -180,7 +257,7 @@ jobs:
   # ── Deploy frontend to S3 + CloudFront ────────────────────────────────────
   deploy-frontend:
     name: Deploy Frontend → S3/CloudFront
-    needs: test
+    needs: [test, security-gate]
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.deploy_frontend != 'false' }}
     environment: production

@@ -168,6 +168,12 @@ router.get('/download/:documentId', (req, res) => {
     const { documentId } = req.params;
     const format = req.query.format || 'docx';
 
+    // Allowlist permitted formats to prevent directory traversal via `format`.
+    const ALLOWED_DOC_FORMATS = ['docx', 'pdf', 'html'];
+    if (!ALLOWED_DOC_FORMATS.includes(format)) {
+      return res.status(400).json({ error: 'Invalid format' });
+    }
+
     // Sanitize the document ID to prevent directory traversal
     const sanitizedId = documentId.replace(/[^a-zA-Z0-9-]/g, '');
 
@@ -218,6 +224,12 @@ router.get('/download/diagram/:diagramId', (req, res) => {
   try {
     const { diagramId } = req.params;
     const format = req.query.format || 'svg';
+
+    // Allowlist permitted formats to prevent directory traversal via `format`.
+    const ALLOWED_DIAGRAM_FORMATS = ['svg', 'png'];
+    if (!ALLOWED_DIAGRAM_FORMATS.includes(format)) {
+      return res.status(400).json({ error: 'Invalid format' });
+    }
 
     // Sanitize the diagram ID to prevent directory traversal
     const sanitizedId = diagramId.replace(/[^a-zA-Z0-9-]/g, '');

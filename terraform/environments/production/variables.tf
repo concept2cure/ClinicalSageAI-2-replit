@@ -50,6 +50,22 @@ variable "worker_desired_count" {
   default = 1
 }
 
+# ── Container image ──────────────────────────────────────────────────────────
+# Immutable, deployer-supplied image reference. No default so a mutable
+# `:latest` tag can never be silently deployed — the deploy pipeline must pass
+# an explicit SHA/digest-pinned tag (e.g. -var "image_tag=sha-<gitsha>").
+# TODO(GA-blocker): pin to image digest (sha256:...) instead of a tag for
+# fully reproducible, rollback-safe deploys.
+variable "image_tag" {
+  type        = string
+  description = "Immutable container image tag/digest to deploy (e.g. sha-<gitsha> or @sha256:...). Must not be 'latest'."
+
+  validation {
+    condition     = var.image_tag != "latest"
+    error_message = "image_tag must be an immutable tag or digest, not the mutable 'latest' tag."
+  }
+}
+
 # ── TLS / Domain ─────────────────────────────────────────────────────────────
 
 variable "acm_certificate_arn" {

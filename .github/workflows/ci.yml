@@ -334,7 +334,8 @@ jobs:
         run: node scripts/ci/audit-with-allowlist.mjs
 
       - name: Trivy filesystem scan (deps + secrets)
-        continue-on-error: true
+        # Blocking gate: fails the job on HIGH/CRITICAL findings so they cannot
+        # be merged. (severity threshold + exit-code 1; no continue-on-error.)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
@@ -344,7 +345,8 @@ jobs:
           format: table
 
       - name: Trivy config scan (Dockerfile/IaC)
-        continue-on-error: true
+        # Blocking gate: fails the job on HIGH/CRITICAL findings so they cannot
+        # be merged. (severity threshold + exit-code 1; no continue-on-error.)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: config

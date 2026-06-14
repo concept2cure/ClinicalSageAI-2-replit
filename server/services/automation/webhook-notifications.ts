@@ -13,6 +13,7 @@
  */
 
 import { createScopedLogger } from '../../utils/logger.js';
+import { isSafePublicUrl } from '../../utils/ssrfGuard.js';
 
 const log = createScopedLogger('webhook-notifications');
 
@@ -66,42 +67,12 @@ export interface WebhookDelivery {
  * (169.254.169.254) and turn outbound delivery into SSRF (credential theft,
  * internal port scanning). Private, loopback, link-local and unique-local
  * destinations are rejected by hostname inspection; non-https is rejected.
+ *
+ * Delegates to the shared {@link isSafePublicUrl} guard so the allow/deny logic
+ * lives in one audited place (also used by tenant connector URLs). Re-exported
+ * under the original name for backwards compatibility with existing callers.
  */
-export function isSafeWebhookUrl(rawUrl: string): boolean {
-  let url: URL;
-  try {
-    url = new URL(rawUrl);
-  } catch {
-    return false;
-  }
-  if (url.protocol !== 'https:') return false;
-  const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, '');
-  if (
-    host === 'localhost' ||
-    host.endsWith('.localhost') ||
-    host.endsWith('.local') ||
-    host.endsWith('.internal')
-  ) {
-    return false;
-  }
-  // IPv6 loopback (::1), unique-local (fc00::/7 → fc/fd) and link-local (fe80::).
-  if (host === '::1' || host.startsWith('fc') || host.startsWith('fd') || host.startsWith('fe80')) {
-    return false;
-  }
-  // IPv4 literal private / reserved ranges.
-  const m = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-  if (m) {
-    const a = Number(m[1]);
-    const b = Number(m[2]);
-    if (a === 0 || a === 10 || a === 127) return false;       // this-net, private, loopback
-    if (a === 169 && b === 254) return false;                 // link-local + metadata
-    if (a === 172 && b >= 16 && b <= 31) return false;        // 172.16.0.0/12
-    if (a === 192 && b === 168) return false;                 // 192.168.0.0/16
-    if (a === 100 && b >= 64 && b <= 127) return false;       // CGNAT 100.64.0.0/10
-    if (a >= 224) return false;                               // multicast / reserved
-  }
-  return true;
-}
+export const isSafeWebhookUrl = isSafePublicUrl;
 
 // ─── Channel Registry (in-memory, loaded from DB at startup) ────────────────
 

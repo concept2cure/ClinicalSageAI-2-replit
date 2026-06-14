@@ -63,11 +63,13 @@ services:
     environment:
       NODE_ENV: production
       PORT: 5000
-      # sslmode=prefer: encrypt when the server offers TLS, otherwise plaintext.
-      # The stock postgres:15-alpine image does not ship TLS-on by default, so
-      # `require` would break the boot. Follow-up: bind-mount certs and the
-      # postgres `command:` to enable ssl=on, then upgrade this to `require`.
-      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD}@db:5432/${DB_NAME:-concept2cure}?sslmode=prefer
+      # sslmode=require: refuse plaintext — the client always negotiates TLS for
+      # this data-bearing connection. The db service uses pgvector/pgvector:pg15
+      # (Debian-based postgres), which ships a default self-signed cert and
+      # serves TLS out of the box, so `require` works without extra cert mounts.
+      # TODO(GA-blocker): move to `verify-full` with a CA-pinned server cert so
+      # the connection is authenticated, not just encrypted.
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD}@db:5432/${DB_NAME:-concept2cure}?sslmode=require
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}

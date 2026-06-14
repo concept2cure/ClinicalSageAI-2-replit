@@ -3,8 +3,34 @@ import { getPool } from '../../db';
 import { z } from 'zod';
 import { writeThroughBatchRecord } from '../../services/cmc-write-through';
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
+import { createScopedLogger } from '../../utils/logger';
+import * as metricsModule from '../../metrics.js';
 
 const router = express.Router();
+const logger = createScopedLogger('cmc-batch');
+
+/**
+ * Observe a failed canonical write-through to the Module 3 submission source
+ * object. The 201/200 primary response is intentionally NOT blocked on this —
+ * but the failure MUST be observable (logged + metered) rather than silently
+ * swallowed.
+ * TODO(GA): consider retry/queue for guaranteed write-through.
+ */
+function observeWriteThroughFailure(recordId: string | number, err: unknown): void {
+  logger.error('Module 3 canonical write-through failed (batch record)', {
+    recordId: String(recordId),
+    propagation: 'writeThroughBatchRecord',
+    error: err instanceof Error ? err.message : String(err),
+  });
+  try {
+    (metricsModule as any).metrics.concept2cureErrors.inc({
+      operation: 'cmc_write_through_batch',
+      error_type: 'propagation_failed',
+    });
+  } catch {
+    /* metric increment must never affect request flow */
+  }
+}
 
 function resolveActorUserId(req: express.Request): number {
   const r = req as any;
@@ -143,7 +169,9 @@ router.post('/', async (req, res) => {
     console.log(`[CMC Batch] Created batch record ${batch.id}: ${data.batchNumber}`);
     // Write-through: upsert canonical source object for Module 3
     if (batch.project_id) {
-      writeThroughBatchRecord(Number(tenantId), batch.project_id, String(batch.id), batch).catch(() => {});
+      writeThroughBatchRecord(Number(tenantId), batch.project_id, String(batch.id), batch).catch(err =>
+        observeWriteThroughFailure(batch.id, err)
+      );
     }
 
     res.status(201).json({
@@ -242,7 +270,9 @@ router.put('/:id', async (req, res) => {
     // Write-through: upsert canonical source object for Module 3
     const updatedBatch = updateResult.rows[0];
     if (updatedBatch?.project_id) {
-      writeThroughBatchRecord(Number(tenantId), updatedBatch.project_id, String(id), updatedBatch).catch(() => {});
+      writeThroughBatchRecord(Number(tenantId), updatedBatch.project_id, String(id), updatedBatch).catch(err =>
+        observeWriteThroughFailure(id, err)
+      );
     }
 
     res.json({
@@ -390,7 +420,9 @@ router.post('/:id/release', async (req, res) => {
     // Write-through: upsert canonical source object for Module 3
     const releasedBatch = updateResult.rows[0];
     if (releasedBatch?.project_id) {
-      writeThroughBatchRecord(orgId, releasedBatch.project_id, String(id), releasedBatch).catch(() => {});
+      writeThroughBatchRecord(orgId, releasedBatch.project_id, String(id), releasedBatch).catch(err =>
+        observeWriteThroughFailure(id, err)
+      );
     }
 
     return res.json({

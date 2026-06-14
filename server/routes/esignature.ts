@@ -26,7 +26,7 @@ import { Router, type Request, type Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { createHash } from 'crypto';
 import { pool } from '../db.js';
-import { verifyToken as verifyMfaToken } from '../services/mfaService.js';
+import { verifyToken as verifyMfaToken, isMfaEnabled } from '../services/mfaService.js';
 import auditService from '../services/auditService';
 
 const router = Router();
@@ -122,7 +122,8 @@ router.post('/verify-mfa', async (req: Request, res: Response) => {
  *   signaturePurpose: string,    // "approval" | "review" | "verification" | …
  *   signatureMeaning: string,    // human-readable declaration text
  *   action: string,              // "approved" | "reviewed" | "rejected" | …
- *   secondFactorVerified?: boolean,
+ *   password: string,            // re-authenticated server-side (Part 11 §11.200)
+ *   mfaToken?: string,           // required when the signer has MFA enabled
  *   complianceStatement?: string,
  *   legalDisclaimer?: string,
  *   deviceInfo?: object,
@@ -130,9 +131,11 @@ router.post('/verify-mfa', async (req: Request, res: Response) => {
  * Response: { signatureId: number, signatureHash: string, signedAt: string }
  *
  * Records a complete e-signature event in `electronic_signatures` with the
- * server-computed hash, IP, and timestamp. Caller must have already passed
- * verify-password and verify-mfa for the same flow — this endpoint trusts
- * those checks and focuses on durability + audit-trail integrity.
+ * server-computed hash, IP, and timestamp. 21 CFR Part 11 §11.200(a)(1): the
+ * signature components (password + MFA when enabled) are RE-VERIFIED here
+ * server-side at the moment of signing — the endpoint NEVER trusts a
+ * client-supplied "already verified" flag. The audit-trail write is awaited and
+ * a failure fails the whole signing request (no signature without an audit row).
  */
 router.post('/sign', async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
@@ -145,7 +148,8 @@ router.post('/sign', async (req: Request, res: Response) => {
     signaturePurpose,
     signatureMeaning,
     action,
-    secondFactorVerified,
+    password,
+    mfaToken,
     complianceStatement,
     legalDisclaimer,
     deviceInfo,
@@ -162,6 +166,58 @@ router.post('/sign', async (req: Request, res: Response) => {
   if (typeof action !== 'string' || !action) {
     return res.status(400).json({ error: 'action is required' });
   }
+
+  // 21 CFR Part 11 §11.200(a)(1): RE-VERIFY the signer's identity server-side at
+  // the moment of signing. We never trust a client-supplied "already verified"
+  // flag — the password (first factor) and, when the user has MFA enabled, the
+  // TOTP/backup code (second factor) are checked here against stored credentials.
+  if (typeof password !== 'string' || password.length === 0) {
+    return res.status(400).json({ error: 'password is required to sign (Part 11 §11.200)' });
+  }
+  const passwordHash = await loadUserPasswordHash(userId);
+  let passwordVerified = false;
+  if (passwordHash) {
+    try {
+      passwordVerified = await bcrypt.compare(password, passwordHash);
+    } catch (err: any) {
+      console.warn('[esignature] bcrypt compare failed during sign:', err?.message);
+      passwordVerified = false;
+    }
+  }
+  if (!passwordVerified) {
+    return res.status(401).json({ error: 'Signature rejected: password verification failed (§11.200)' });
+  }
+
+  // Second factor: required only when the signer actually has MFA enabled. When
+  // enabled, the server must verify the supplied token — a missing/invalid token
+  // (or any failure of the MFA service) fails closed.
+  let mfaRequired = false;
+  let secondFactorVerified = false;
+  try {
+    mfaRequired = await isMfaEnabled(userId);
+  } catch (err: any) {
+    // Cannot determine MFA state → fail closed rather than skip the factor.
+    console.warn('[esignature] isMfaEnabled check failed:', err?.message);
+    return res.status(401).json({ error: 'Signature rejected: unable to verify second factor (§11.200)' });
+  }
+  if (mfaRequired) {
+    if (typeof mfaToken !== 'string' || !/^\d{6}$/.test(mfaToken)) {
+      return res.status(400).json({ error: 'mfaToken (6 digits) is required to sign; MFA is enabled for this account (§11.200)' });
+    }
+    try {
+      secondFactorVerified = await verifyMfaToken(userId, mfaToken);
+    } catch (err: any) {
+      console.warn('[esignature] MFA verify failed during sign:', err?.message);
+      secondFactorVerified = false;
+    }
+    if (!secondFactorVerified) {
+      return res.status(401).json({ error: 'Signature rejected: second-factor verification failed (§11.200)' });
+    }
+  }
+
+  // Server-derived validity — never a client boolean. Both required factors
+  // passed by the time we get here.
+  const signatureIsValid = passwordVerified && (!mfaRequired || secondFactorVerified);
 
   // Load signer profile so signer_name / signer_email are denormalised on
   // the signature row (required for offline audit reproduction per Part 11).
@@ -224,7 +280,7 @@ router.post('/sign', async (req: Request, res: Response) => {
          $5, $6, $7, $8,
          'password+totp', $9, $10,
          $11, $12, $13,
-         true, $14, $15,
+         $18, $14, $15,
          $16, $17, $9
        ) RETURNING id, signed_at`,
       [
@@ -237,7 +293,7 @@ router.post('/sign', async (req: Request, res: Response) => {
         signerTitle ?? null,
         signerEmail,
         signedAt,
-        Boolean(secondFactorVerified),
+        secondFactorVerified,
         signatureHash,
         signatureMeaning ?? null,
         JSON.stringify({ action, deviceInfo: deviceInfo ?? null }),
@@ -245,30 +301,44 @@ router.post('/sign', async (req: Request, res: Response) => {
         legalDisclaimer ?? null,
         ipAddress,
         deviceInfo ? JSON.stringify(deviceInfo) : null,
+        signatureIsValid,
       ]
     );
 
     // 21 CFR Part 11 §11.10(e): every signing event lands in the central
     // audit trail in addition to the electronic_signatures row. The signature
     // hash is included so an auditor can correlate the two tables.
-    void auditService.logAction({
-      tenantId: (req as any).user?.organizationId ?? null,
-      userId,
-      action: 'esignature.sign',
-      resourceType: 'electronic_signature',
-      resourceId: String(result.rows[0].id),
-      ipAddress: ipAddress ?? undefined,
-      userAgent: req.headers['user-agent'] as string | undefined,
-      details: {
-        documentId: Number(documentId),
-        versionId: Number(versionId),
-        signaturePurpose,
-        signatureMeaning: signatureMeaning ?? null,
-        action,
-        signatureHash,
-        secondFactorVerified: Boolean(secondFactorVerified),
-      },
-    });
+    //
+    // The audit write is AWAITED before we report success: a signing action
+    // whose audit record fails must NOT be reported as signed (no signature
+    // without a corresponding, durable audit-trail entry). If it throws we fail
+    // the request — the response below is never reached.
+    try {
+      await auditService.logAction({
+        tenantId: (req as any).user?.organizationId ?? null,
+        userId,
+        action: 'esignature.sign',
+        resourceType: 'electronic_signature',
+        resourceId: String(result.rows[0].id),
+        ipAddress: ipAddress ?? undefined,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: {
+          documentId: Number(documentId),
+          versionId: Number(versionId),
+          signaturePurpose,
+          signatureMeaning: signatureMeaning ?? null,
+          action,
+          signatureHash,
+          secondFactorVerified,
+        },
+      });
+    } catch (auditErr: any) {
+      console.error('[esignature] CRITICAL: audit write failed for signature', result.rows[0].id, '-', auditErr?.message);
+      return res.status(500).json({
+        error: 'Signature could not be recorded in the audit trail; signing aborted.',
+        code: 'ESIGNATURE_AUDIT_FAILED',
+      });
+    }
 
     return res.status(201).json({
       signatureId: result.rows[0].id,

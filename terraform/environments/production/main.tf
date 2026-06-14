@@ -111,8 +111,12 @@ module "ecs" {
   alb_security_group_id = module.alb.alb_security_group_id
   api_target_group_arn  = module.alb.api_target_group_arn
 
-  api_image    = "${module.ecr.repository_urls["api"]}:latest"
-  worker_image = "${module.ecr.repository_urls["worker"]}:latest"
+  # Immutable, parameterized image references (see var.image_tag). Never
+  # deploy a mutable `:latest` tag — that breaks rollback and reproducibility.
+  # TODO(GA-blocker): pin to image digest (e.g. "...@sha256:<digest>") rather
+  # than a tag once the deploy pipeline resolves the pushed image digest.
+  api_image    = "${module.ecr.repository_urls["api"]}:${var.image_tag}"
+  worker_image = "${module.ecr.repository_urls["worker"]}:${var.image_tag}"
 
   api_cpu    = var.api_cpu
   api_memory = var.api_memory

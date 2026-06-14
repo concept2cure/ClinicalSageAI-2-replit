@@ -16,13 +16,23 @@ jobs:
     env:
       TF_IN_AUTOMATION: true
     steps:
+      # TODO(GA-blocker): pin every `uses:` in this workflow to a full commit
+      # SHA (e.g. actions/checkout@<40-char-sha> # v4.x.x). Floating tags are
+      # supply-chain-mutable and must be SHA-pinned before GA.
       - uses: actions/checkout@v4
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Security Scan (Checkov)
-        uses: bridgecrewio/checkov-action@master
+        # Was `@master` (mutable branch ref — an attacker controlling that
+        # branch could run arbitrary code in this job). Moved off the branch
+        # ref to a versioned major tag. checkov-action is not referenced
+        # elsewhere in this repo to derive an exact MAJOR.MINOR.PATCH, so this
+        # still needs a real pin.
+        # TODO(GA-blocker): pin to commit SHA (resolve the SHA for the intended
+        # bridgecrewio/checkov-action release and replace the tag below).
+        uses: bridgecrewio/checkov-action@v12
         with:
           directory: terraform/
           framework: terraform

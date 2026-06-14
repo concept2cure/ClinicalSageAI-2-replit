@@ -28,8 +28,37 @@ import {
   insertDrugProductSchema,
 } from '../../../shared/schema';
 import { eq, and } from 'drizzle-orm';
+import { createScopedLogger } from '../../utils/logger';
+import * as metricsModule from '../../metrics.js';
 
 const router = express.Router();
+const logger = createScopedLogger('cmc-routes');
+
+/**
+ * Observe a failed canonical write-through to the Module 3 submission source
+ * object. The primary response is intentionally NOT blocked on this — but the
+ * failure MUST be observable (logged + metered) rather than silently swallowed.
+ * TODO(GA): consider retry/queue for guaranteed write-through.
+ */
+function observeWriteThroughFailure(
+  propagation: string,
+  recordId: string | number,
+  err: unknown
+): void {
+  logger.error('Module 3 canonical write-through failed', {
+    recordId: String(recordId),
+    propagation,
+    error: err instanceof Error ? err.message : String(err),
+  });
+  try {
+    (metricsModule as any).metrics.concept2cureErrors.inc({
+      operation: `cmc_${propagation}`,
+      error_type: 'propagation_failed',
+    });
+  } catch {
+    /* metric increment must never affect request flow */
+  }
+}
 
 // Helper to read organization ID from authenticated context
 function getOrgId(req: express.Request): number {
@@ -80,7 +109,9 @@ router.post('/analytical-methods', async (req, res) => {
     // projectId is not persisted on this table; it is supplied by the caller for canonical linkage.
     const projectId = (req.body as { projectId?: string }).projectId;
     if (projectId) {
-      writeThroughAnalyticalMethod(orgId, projectId, String(method.id), method).catch(() => {});
+      writeThroughAnalyticalMethod(orgId, projectId, String(method.id), method).catch(err =>
+        observeWriteThroughFailure('write_through_analytical_method', method.id, err)
+      );
     }
     res.json({ success: true, data: method });
   } catch (error) {
@@ -104,7 +135,9 @@ router.put('/analytical-methods/:id', async (req, res) => {
     // Write-through: upsert canonical source object for Module 3
     const projectId = (req.body as { projectId?: string }).projectId;
     if (method && projectId) {
-      writeThroughAnalyticalMethod(orgId, projectId, String(method.id), method).catch(() => {});
+      writeThroughAnalyticalMethod(orgId, projectId, String(method.id), method).catch(err =>
+        observeWriteThroughFailure('write_through_analytical_method', method.id, err)
+      );
     }
     res.json({ success: true, data: method });
   } catch (error) {
@@ -136,7 +169,9 @@ router.post('/process-validation', async (req, res) => {
     // Write-through: upsert canonical source object for Module 3
     const projectId = (req.body as { projectId?: string }).projectId;
     if (projectId) {
-      writeThroughProcessValidation(orgId, projectId, String(validation.id), validation).catch(() => {});
+      writeThroughProcessValidation(orgId, projectId, String(validation.id), validation).catch(err =>
+        observeWriteThroughFailure('write_through_process_validation', validation.id, err)
+      );
     }
     res.json({ success: true, data: validation });
   } catch (error) {
@@ -179,7 +214,9 @@ router.post('/stability-studies', async (req, res) => {
     // Write-through: upsert canonical source object for Module 3
     const projectId = (req.body as { projectId?: string }).projectId;
     if (projectId) {
-      writeThroughStabilityStudy(orgId, projectId, String(study.id), study).catch(() => {});
+      writeThroughStabilityStudy(orgId, projectId, String(study.id), study).catch(err =>
+        observeWriteThroughFailure('write_through_stability_study', study.id, err)
+      );
     }
     res.json({ success: true, data: study });
   } catch (error) {
@@ -235,7 +272,9 @@ router.post('/change-control', async (req, res) => {
     // Write-through: upsert canonical source object for Module 3
     const projectId = (req.body as { projectId?: string }).projectId;
     if (projectId) {
-      writeThroughChangeControl(orgId, projectId, String(change.id), change).catch(() => {});
+      writeThroughChangeControl(orgId, projectId, String(change.id), change).catch(err =>
+        observeWriteThroughFailure('write_through_change_control', change.id, err)
+      );
     }
     res.json({ success: true, data: change });
   } catch (error) {
@@ -277,7 +316,9 @@ router.post('/drug-substances', async (req, res) => {
     // Write-through: upsert canonical source object for Module 3
     const projectId = (req.body as { projectId?: string }).projectId;
     if (projectId) {
-      writeThroughDrugSubstance(orgId, projectId, String(substance.id), substance).catch(() => {});
+      writeThroughDrugSubstance(orgId, projectId, String(substance.id), substance).catch(err =>
+        observeWriteThroughFailure('write_through_drug_substance', substance.id, err)
+      );
     }
     res.json({ success: true, data: substance });
   } catch (error) {
@@ -319,7 +360,9 @@ router.post('/drug-products', async (req, res) => {
     // Write-through: upsert canonical source object for Module 3
     const projectId = (req.body as { projectId?: string }).projectId;
     if (projectId) {
-      writeThroughDrugProduct(orgId, projectId, String(product.id), product).catch(() => {});
+      writeThroughDrugProduct(orgId, projectId, String(product.id), product).catch(err =>
+        observeWriteThroughFailure('write_through_drug_product', product.id, err)
+      );
     }
     res.json({ success: true, data: product });
   } catch (error) {
@@ -548,7 +591,9 @@ router.post('/comparability-studies', async (req, res) => {
     );
     // Write-through: read projectId from DB return, not request body
     if (rows[0]?.project_id) {
-      writeThroughComparability(orgId, rows[0].project_id, String(rows[0].id), rows[0]).catch(() => {});
+      writeThroughComparability(orgId, rows[0].project_id, String(rows[0].id), rows[0]).catch(err =>
+        observeWriteThroughFailure('write_through_comparability', rows[0].id, err)
+      );
     }
     res.json({ success: true, data: rows[0] });
   } catch (error) {
@@ -592,7 +637,9 @@ router.put('/comparability-studies/:id', async (req, res) => {
     }
     // Write-through: read projectId from DB, not request body
     if (rows[0].project_id) {
-      writeThroughComparability(orgId, rows[0].project_id, String(req.params.id), rows[0]).catch(() => {});
+      writeThroughComparability(orgId, rows[0].project_id, String(req.params.id), rows[0]).catch(err =>
+        observeWriteThroughFailure('write_through_comparability', req.params.id, err)
+      );
     }
     res.json({ success: true, data: rows[0] });
   } catch (error) {
