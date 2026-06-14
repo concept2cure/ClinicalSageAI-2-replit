@@ -55,6 +55,13 @@ async function annotatedGatesForSubmission(
   const clock = b.clockInput?.receiptDate ? evaluateRegulatoryClock(b.clockInput) : null;
   const timeline = b.timelineInput?.receiptDate ? buildIndTimeline(b.timelineInput) : null;
 
+  // Unauthorized external dependencies hard-block dispatch for the whole
+  // submission; compute once from the cross-reference register.
+  const submissionId = (sequences[0] as { submissionId?: number } | undefined)?.submissionId;
+  const unauthorizedCrossReferences = submissionId
+    ? (await getCrossReferenceRegister(submissionId, ctx)).counts.missingLoa
+    : 0;
+
   return Promise.all(
     sequences.map(async (seq) => {
       const leaves = await listLeaves(seq.id, ctx);
@@ -70,6 +77,7 @@ async function annotatedGatesForSubmission(
         manifest,
         criticalActions: actions.criticalCount,
         sequenceStatus: seq.status,
+        unauthorizedCrossReferences,
       });
       const latest = await getLatestDispatchSnapshot(seq.id, ctx);
       return annotateGateWithSnapshot(

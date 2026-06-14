@@ -63,6 +63,18 @@ describe('evaluateDispatchGate', () => {
     expect(v.blockers.map((b) => b.code)).toContain('ALREADY_DISPATCHED');
   });
 
+  it('blocks when an external dependency has no Letter of Authorization', () => {
+    const v = evaluateDispatchGate({ sequenceValidation: validation([]), manifest: manifest(10, 0), unauthorizedCrossReferences: 1 });
+    expect(v.canDispatch).toBe(false);
+    expect(v.blockers.map((b) => b.code)).toContain('UNAUTHORIZED_CROSS_REFERENCES');
+    expect(v.summary.unauthorizedCrossReferences).toBe(1);
+  });
+
+  it('does not block when all cross-references are authorized (count 0)', () => {
+    const v = evaluateDispatchGate({ sequenceValidation: validation([]), manifest: manifest(10, 0), unauthorizedCrossReferences: 0 });
+    expect(v.canDispatch).toBe(true);
+  });
+
   it('treats unknown sections as a soft warning, not a blocker', () => {
     const v = evaluateDispatchGate({ sequenceValidation: validation([], ['m99.1']), manifest: manifest(10, 0) });
     expect(v.canDispatch).toBe(true);

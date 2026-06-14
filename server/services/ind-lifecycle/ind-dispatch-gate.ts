@@ -26,6 +26,13 @@ export interface DispatchGateInput {
   criticalActions?: number;
   /** Current sequence status; a sequence already dispatched is blocked from re-send. */
   sequenceStatus?: string;
+  /**
+   * External file dependencies (DMF/IND/NDA/BLA) with no Letter of Authorization
+   * on file. FDA cannot review an unauthorized referenced file, so any such
+   * dependency hard-blocks dispatch (21 CFR 314.420). From the submission's
+   * cross-reference register.
+   */
+  unauthorizedCrossReferences?: number;
 }
 
 export interface DispatchGateVerdict {
@@ -39,6 +46,7 @@ export interface DispatchGateVerdict {
     missingChecksums: number;
     criticalActions: number;
     unknownSections: number;
+    unauthorizedCrossReferences: number;
   };
 }
 
@@ -55,6 +63,7 @@ export function evaluateDispatchGate(input: DispatchGateInput): DispatchGateVerd
   const missingChecksums = input.manifest.missingChecksums;
   const criticalActions = input.criticalActions ?? 0;
   const unknownSections = input.sequenceValidation.unknownSections.length;
+  const unauthorizedCrossReferences = input.unauthorizedCrossReferences ?? 0;
 
   // Hard blockers.
   if (input.sequenceStatus === 'dispatched') {
@@ -81,6 +90,12 @@ export function evaluateDispatchGate(input: DispatchGateInput): DispatchGateVerd
       message: `${criticalActions} critical action(s) are unresolved (e.g. clinical hold or overdue IND safety report).`,
     });
   }
+  if (unauthorizedCrossReferences > 0) {
+    blockers.push({
+      code: 'UNAUTHORIZED_CROSS_REFERENCES',
+      message: `${unauthorizedCrossReferences} external file dependency/ies have no Letter of Authorization on file; FDA cannot review a referenced file without it (21 CFR 314.420).`,
+    });
+  }
 
   // Soft warnings.
   if (unknownSections > 0) {
@@ -94,6 +109,6 @@ export function evaluateDispatchGate(input: DispatchGateInput): DispatchGateVerd
     canDispatch: blockers.length === 0,
     blockers,
     warnings,
-    summary: { missingRequiredSections, totalLeaves, missingChecksums, criticalActions, unknownSections },
+    summary: { missingRequiredSections, totalLeaves, missingChecksums, criticalActions, unknownSections, unauthorizedCrossReferences },
   };
 }

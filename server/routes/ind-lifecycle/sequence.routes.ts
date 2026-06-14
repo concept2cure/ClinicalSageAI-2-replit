@@ -17,6 +17,7 @@ import { diffSequences } from '../../services/ind-lifecycle/ind-sequence-diff';
 import { createDispatchSnapshot, listDispatchSnapshots } from '../../services/ind-lifecycle/ind-dispatch-snapshot-service';
 import { renderPackageManifestPdf, renderSequenceDiffPdf } from '../../services/ind-lifecycle/ind-document-renderer';
 import { listLeaves, getSequence } from '../../services/submission-service/submission-service';
+import { getCrossReferenceRegister } from '../../services/ind-lifecycle/ind-cross-reference-persistence';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, sendPdf, readinessFrom } from './shared';
 
 const router = Router();
@@ -70,11 +71,16 @@ async function computeGateForSequence(seqId: number, b: any, ctx: Ctx) {
     sequenceValidation,
     overdueSafetyReports: b.overdueSafetyReports,
   });
+  const submissionId = (sequence as { submissionId?: number }).submissionId;
+  const unauthorizedCrossReferences = submissionId
+    ? (await getCrossReferenceRegister(submissionId, ctx)).counts.missingLoa
+    : 0;
   const verdict = evaluateDispatchGate({
     sequenceValidation,
     manifest,
     criticalActions: actionItems.criticalCount,
     sequenceStatus: sequence.status,
+    unauthorizedCrossReferences,
   });
   return { sequence, verdict, result: { verdict, sequenceValidation, manifest, actionItems } };
 }

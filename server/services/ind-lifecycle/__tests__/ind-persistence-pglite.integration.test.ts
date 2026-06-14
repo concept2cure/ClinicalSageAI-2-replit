@@ -33,7 +33,7 @@ const verdict = (canDispatch: boolean): DispatchGateVerdict => ({
   canDispatch,
   blockers: canDispatch ? [] : [{ code: 'MISSING_CHECKSUMS', message: 'x' }],
   warnings: [],
-  summary: { missingRequiredSections: 0, totalLeaves: 3, missingChecksums: canDispatch ? 0 : 1, criticalActions: 0, unknownSections: 0 },
+  summary: { missingRequiredSections: 0, totalLeaves: 3, missingChecksums: canDispatch ? 0 : 1, criticalActions: 0, unknownSections: 0, unauthorizedCrossReferences: 0 },
 });
 
 beforeAll(async () => {
