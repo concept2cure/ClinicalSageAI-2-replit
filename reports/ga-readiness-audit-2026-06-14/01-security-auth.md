@@ -21,10 +21,12 @@ Sub-audit results folded in:
 
 | Severity | Count |
 |----------|-------|
-| BLOCKER  | 6 |
-| HIGH     | 2 |
+| BLOCKER  | 7 |
+| HIGH     | 5 |
 | MEDIUM   | 6 |
 | LOW      | 5 |
+
+> This section merges two parallel security runs plus targeted injection/SSRF/path-traversal sub-audits. The IDOR-sweep run rated injection/SSRF/traversal as clean within its sample; the dedicated sub-audits found otherwise (B-7, H-3, H-4, H-5). Where they conflict, the dedicated finding wins and is reflected in the counts above.
 
 ### Verdict: **NOT READY**
 
@@ -97,6 +99,21 @@ This vault encrypts **tenant integration credentials** with AES-256-GCM. If neit
 
 **Fix:** Throw in `getEncryptionKey()` when `NODE_ENV==='production'` and no real key is set (mirror `connector-registry.ts:48-53`). Add a CI ban on the literal fallback in non-dev paths.
 
+### B-7. Post-authentication OS command injection (RCE) via uploaded-PDF content
+
+> Reconciliation note: surfaced by a parallel injection sub-audit; it supersedes the "no command injection" conclusion in the *Areas reviewed and found solid* section below, which was scoped to the IDOR sweep's sample.
+
+**Evidence:** `server/routes/analytics-routes.ts:128,148` — text extracted from an uploaded PDF is interpolated directly into a shell string passed to `child_process.exec`:
+```ts
+// extractedText is attacker-controlled (content of an uploaded PDF)
+exec(`python ${script} "${extractedText}"`, …)   // :128 (and :148)
+```
+The route is behind the global `/api` auth gate (registered at `register-platform-routes.ts:235` before the mount at `register-project-routes.ts:88`), so it is **post-authentication**, not unauthenticated.
+
+**Why it blocks GA:** Any authenticated tenant user can break out of the quoted argument (`"; … #`) and execute arbitrary OS commands on the shared application host — full RCE and an OS-level break of tenant isolation (read other tenants' files, env secrets, lateral movement). This is the single most severe technical finding in the security audit.
+
+**Fix:** Never build shell strings from user content. Use `execFile`/`spawn` with an argv array (`spawn('python',[script, extractedText])`); add an allowlist/size cap on the extracted text; consider running the Python step in the existing sandboxed runner.
+
 ---
 
 ## HIGH
@@ -119,6 +136,34 @@ This vault encrypts **tenant integration credentials** with AES-256-GCM. If neit
 **Why it's HIGH:** In a multi-tenant deployment serving multiple IdPs (`SAML_TENANTS`), a user authenticating via Org B's IdP is provisioned into Org 1 — a cross-tenant membership grant. The assertion is verified (no auth bypass), but the *tenant mapping* is wrong.
 
 **Fix:** Map the JIT user to the org owning the SAML config used for the callback (`orgSlug` from RelayState already identifies it); reject if it doesn't resolve. Add a test asserting JIT users land in the IdP's org.
+
+### H-3. Server-Side Request Forgery via tenant-controlled data-connector `baseUrl`/`tokenEndpoint`
+
+**Evidence:** `server/routes/deep-research.ts:186-201` — `POST /api/deep-research/connectors` takes `credentials` verbatim (incl. `baseUrl`) behind only `requireTier('professional')` (a license check, not an admin gate) and stores them (`connectors/connector-registry.ts:134-148`) with no URL validation. On job execution (`deep-research-orchestrator.ts:137`) or ANA tool calls (`ana/AnaToolExecutor.ts:7787`), `connector.authenticate(creds)` fetches the attacker-chosen host with no private-IP/metadata/scheme guard:
+- `connectors/fhir-r4.ts:267,281,315` — `baseUrl` fetched, and a user-supplied `customHeaders.tokenEndpoint` is **POSTed to verbatim** (`:315`), also leaking the org's `clientId`/`clientSecret`.
+- `connectors/veeva-vault.ts:73,89,112`, `connectors/medidata-rave.ts:33,46,76`, `connectors/ellucian-banner.ts:46,72,97` — same `baseUrl` SSRF.
+
+**Why it's HIGH:** A tenant user can point a connector at `http://169.254.169.254/…` (cloud metadata → credential theft) or internal hosts (port scan/SSRF), and the OAuth token-refresh path exfiltrates connector secrets to the attacker host. (`server/utils/cidr.ts`/`isSafeWebhookUrl` SSRF guards exist but are not applied here.)
+
+**Fix:** Apply a private-IP/loopback/link-local/metadata + scheme allowlist (reuse `isSafeWebhookUrl`/`cidr.ts`) at `storeCredentials` time AND at each `authenticate()`/fetch (DNS-rebinding defense-in-depth). Restrict connector registration to tenant admins.
+
+### H-4. Unauthenticated path traversal (arbitrary file read + write) in dossier routes
+
+**Evidence:** `server/routes/dossier_routes.ts` — mounted via `documents-unified.ts:201` → `register-clinical-intel-routes.ts:60` **without** `authenticateToken` (unlike sibling routes):
+- Read (`:105-110`): `path.join(DOSSIERS_DIR, \`${req.params.dossier_id}.json\`)` then `readFileSync` — `..%2f..%2f…` escapes `data/dossiers/` and returns any `.json`-suffixed file's parsed contents.
+- Write (`:16,28-56`): `protocol_id` from `req.body` is interpolated into the written filename — arbitrary `.json` file-write primitive.
+
+**Why it's HIGH:** Effectively unauthenticated arbitrary file read and write on the host. The IDOR-sweep run dismissed traversal as "dead/unmounted code" (true for `subscriptions-routes.ts`) but missed this reachable mount.
+
+**Fix:** Mount `/api/documents` behind `authenticateToken`; `const safe = path.basename(String(id))` and enforce `path.resolve(BASE, safe).startsWith(BASE + path.sep)`; reject any `..`/separator.
+
+### H-5. Path traversal via unsanitized `format` query param in CMC blueprint download
+
+**Evidence:** `server/api/cmc/blueprint-generator.js:169-203` (and diagram route `:220-251`) — `documentId` is stripped of traversal chars but `req.query.format` is interpolated raw: `path.join(outputDir, \`${sanitizedId}.${format}\`)` → `res.sendFile`. `format` can introduce `../` segments to read arbitrary-extension sibling files outside `outputDir`.
+
+**Why it's HIGH:** Arbitrary file read via a download endpoint; `format` is a clean injection point with no allowlist.
+
+**Fix:** Allowlist `format` to a fixed set (`docx|pdf|html`, `svg|png`).
 
 ---
 
@@ -193,7 +238,7 @@ This vault encrypts **tenant integration credentials** with AES-256-GCM. If neit
 - **CSRF** — double-submit cookie, constant-time compare, fixed-length token, anchored exempt-path matching (`server/middleware/csrf.ts`).
 - **Prototype pollution** — `__proto__`/`constructor`/`prototype` stripped from body/query/params, fail-closed (`enterprise-security.ts:417-481`).
 - **Upload allowlist** — extension + MIME allowlist, executable/script types always blocked; layered with magic-number + virus scan (`server/middleware/uploadAllowlist.ts`).
-- **Injection** — SQL parameterized (Drizzle / `$1`); reviewed `sql\`\`` interpolations are bound; no command injection with user-controlled args; the one path-traversal candidate (`reports/subscriptions-routes.ts`) is dead/unmounted code.
+- **Injection (SQL only)** — SQL is parameterized (Drizzle / `$1`); reviewed `sql\`\`` interpolations are bound. **NOTE:** command injection and path traversal are *not* clean — see B-7 (RCE in `analytics-routes.ts`), H-4 (`dossier_routes.ts`), and H-5 (`blueprint-generator.js`). `reports/subscriptions-routes.ts` traversal is dead/unmounted, but `dossier_routes.ts` is a reachable mount that this sweep missed.
 - **Crypto** — AES-256-GCM with per-message random IV; no `createCipher`/ECB/DES/RC4/hardcoded-IV; `crypto.randomBytes` for security tokens.
 - **Audit trail** — tamper-proof HMAC chain fails closed in prod; 21 CFR Part 11 immutability blocks DELETE on audit/esignature routes (`server/startup/middleware.ts:119-155`). (Actor-identity sourcing is the M-1 gap.)
 - **Stripe webhooks** — signature-verified and CSRF-exempt by design.
