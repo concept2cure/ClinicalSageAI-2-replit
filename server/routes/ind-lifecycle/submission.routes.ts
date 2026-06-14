@@ -109,7 +109,14 @@ router.get('/portfolio', limiter, requireRole(AUTHOR), async (req, res) => {
     const all = await listSubmissions(ctx);
     const inds = all.filter(isIndSubmission);
     const entries = await Promise.all(
-      inds.map(async (s) => buildIndPortfolioEntry(s, await listSequences(s.id, ctx))),
+      inds.map(async (s) => {
+        const [sequences, register] = await Promise.all([listSequences(s.id, ctx), getCrossReferenceRegister(s.id, ctx)]);
+        return buildIndPortfolioEntry(s, sequences, {
+          total: register.counts.total,
+          missingLoa: register.counts.missingLoa,
+          ready: register.ready,
+        });
+      }),
     );
     res.json(buildIndPortfolio(entries));
   } catch (err) {

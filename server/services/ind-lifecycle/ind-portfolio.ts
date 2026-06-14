@@ -20,6 +20,13 @@ export interface PortfolioSubmission {
   applicationType?: string | null;
 }
 
+/** Module 1.4 external-dependency authorization status for a submission. */
+export interface PortfolioCrossReferences {
+  total: number;
+  missingLoa: number;
+  ready: boolean;
+}
+
 export interface IndPortfolioEntry {
   submissionId: number;
   title: string;
@@ -27,6 +34,8 @@ export interface IndPortfolioEntry {
   lifecycleStage: string;
   status: string;
   sequenceSummary: SequenceSummary;
+  /** External-dependency authorization status (when the register was loaded). */
+  crossReferences?: PortfolioCrossReferences;
 }
 
 export interface IndPortfolio {
@@ -36,6 +45,8 @@ export interface IndPortfolio {
     totalSequences: number;
     dispatched: number;
     validationFailures: number;
+    /** Submissions with at least one external dependency lacking an LOA. */
+    submissionsWithUnauthorizedRefs: number;
   };
 }
 
@@ -43,6 +54,7 @@ export interface IndPortfolio {
 export function buildIndPortfolioEntry(
   submission: PortfolioSubmission,
   sequences: SequenceLike[],
+  crossReferences?: PortfolioCrossReferences,
 ): IndPortfolioEntry {
   return {
     submissionId: submission.id,
@@ -51,6 +63,7 @@ export function buildIndPortfolioEntry(
     lifecycleStage: submission.lifecycleStage ?? 'planning',
     status: submission.status ?? 'planning',
     sequenceSummary: summarizeSequences(sequences),
+    ...(crossReferences ? { crossReferences } : {}),
   };
 }
 
@@ -63,6 +76,7 @@ export function buildIndPortfolio(entries: IndPortfolioEntry[]): IndPortfolio {
       totalSequences: entries.reduce((n, e) => n + e.sequenceSummary.total, 0),
       dispatched: entries.reduce((n, e) => n + e.sequenceSummary.dispatched, 0),
       validationFailures: entries.reduce((n, e) => n + e.sequenceSummary.validationFailures, 0),
+      submissionsWithUnauthorizedRefs: entries.filter((e) => e.crossReferences && e.crossReferences.missingLoa > 0).length,
     },
   };
 }

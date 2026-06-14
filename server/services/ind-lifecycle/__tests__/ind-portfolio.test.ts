@@ -44,11 +44,19 @@ describe('buildIndPortfolio', () => {
     const a = buildIndPortfolioEntry({ id: 1, title: 'A' }, seqs([{ dispatchStatus: 'acknowledged' }, {}]));
     const b = buildIndPortfolioEntry({ id: 2, title: 'B' }, seqs([{ validationStatus: 'failed' }]));
     const p = buildIndPortfolio([a, b]);
-    expect(p.totals).toEqual({ submissions: 2, totalSequences: 3, dispatched: 1, validationFailures: 1 });
+    expect(p.totals).toEqual({ submissions: 2, totalSequences: 3, dispatched: 1, validationFailures: 1, submissionsWithUnauthorizedRefs: 0 });
+  });
+
+  it('counts submissions with unauthorized external dependencies', () => {
+    const a = buildIndPortfolioEntry({ id: 1, title: 'A' }, [], { total: 2, missingLoa: 1, ready: false });
+    const b = buildIndPortfolioEntry({ id: 2, title: 'B' }, [], { total: 1, missingLoa: 0, ready: true });
+    const p = buildIndPortfolio([a, b]);
+    expect(p.totals.submissionsWithUnauthorizedRefs).toBe(1);
+    expect(p.entries[0].crossReferences).toEqual({ total: 2, missingLoa: 1, ready: false });
   });
 
   it('is empty for no submissions', () => {
-    expect(buildIndPortfolio([]).totals).toEqual({ submissions: 0, totalSequences: 0, dispatched: 0, validationFailures: 0 });
+    expect(buildIndPortfolio([]).totals).toEqual({ submissions: 0, totalSequences: 0, dispatched: 0, validationFailures: 0, submissionsWithUnauthorizedRefs: 0 });
   });
 });
 
