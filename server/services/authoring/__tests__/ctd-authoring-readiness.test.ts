@@ -8,6 +8,7 @@ import { aggregateCtdAuthoringReadiness } from '../ctd-authoring-readiness';
 import type { M2QcResult } from '../m2-summary-qc';
 import type { M4QcResult } from '../m4-nonclinical-qc';
 import type { M5QcResult } from '../m5-clinical-qc';
+import type { M1QcResult } from '../../ind-forms/ind-form-qc';
 import type { M2Summary } from '../../m2-summary-builders';
 
 const m2Ready: M2QcResult = { ready: true, checked: ['2.3', '2.4'], missingSummaries: [], completenessByKey: {}, findings: [], counts: { errors: 0, warnings: 0 } };
@@ -16,6 +17,8 @@ const m4Ready: M4QcResult = { ready: true, checked: ['TX-1'], disciplinesPresent
 const m4NotReady: M4QcResult = { ...m4Ready, ready: false, counts: { errors: 1, warnings: 0 } };
 const m5Ready: M5QcResult = { ready: true, checked: ['STUDY-1'], phasesPresent: ['1'], missingPhases: [], findings: [], counts: { errors: 0, warnings: 0 } };
 const m5NotReady: M5QcResult = { ...m5Ready, ready: false, counts: { errors: 1, warnings: 0 } };
+const m1Ready: M1QcResult = { ready: true, present: ['FDA_1571', 'FDA_1572', 'FDA_3674'], missingForms: [], findings: [], counts: { errors: 0, warnings: 0 } };
+const m1NotReady: M1QcResult = { ...m1Ready, ready: false, counts: { errors: 1, warnings: 0 } };
 
 function m24(inputs: string[]): M2Summary {
   return { sectionKey: '2.4', title: 'Nonclinical Overview', narrative: 'x', tables: [], inputSectionKeys: inputs, completeness: 100, gaps: [], generatedAt: new Date(0).toISOString() };
@@ -23,11 +26,18 @@ function m24(inputs: string[]): M2Summary {
 
 describe('aggregateCtdAuthoringReadiness', () => {
   it('ready when all supplied module verdicts are ready', () => {
-    const res = aggregateCtdAuthoringReadiness({ m2: m2Ready, m4: m4Ready, m5: m5Ready });
+    const res = aggregateCtdAuthoringReadiness({ m1: m1Ready, m2: m2Ready, m4: m4Ready, m5: m5Ready });
     expect(res.ready).toBe(true);
+    expect(res.modules.find((m) => m.module === 'M1')?.ready).toBe(true);
     expect(res.modules.find((m) => m.module === 'M2')?.ready).toBe(true);
     expect(res.modules.find((m) => m.module === 'M5')?.ready).toBe(true);
     expect(res.counts.errors).toBe(0);
+  });
+
+  it('not ready when the Module 1 forms verdict is not ready', () => {
+    const res = aggregateCtdAuthoringReadiness({ m1: m1NotReady, m2: m2Ready, m4: m4Ready, m5: m5Ready });
+    expect(res.ready).toBe(false);
+    expect(res.findings.some((f) => f.area === 'M1' && f.code === 'MODULE_NOT_READY')).toBe(true);
   });
 
   it('not ready when the Module 5 verdict is not ready', () => {

@@ -123,16 +123,17 @@ router.post('/m5-clinical/qc', limiter, requireRole(AUTHOR), (req, res) => {
 });
 
 /**
- * Cross-module CTD authoring-readiness rollup — composes the M2 + M4 + M5 QC
- * verdicts and the M2.4←M4 / M2.5-2.7←M5 feed-forward links into one
+ * Cross-module CTD authoring-readiness rollup — composes the M1 + M2 + M4 + M5
+ * QC verdicts and the M2.4←M4 / M2.5-2.7←M5 feed-forward links into one
  * "assembly-ready" answer.
- * Body: { m2?, m4?, m5?, m24Summary?, m4ReportSections?, clinicalSummaries?, m5StudyIds? }.
+ * Body: { m1?, m2?, m4?, m5?, m24Summary?, m4ReportSections?, clinicalSummaries?, m5StudyIds? }.
  */
 router.post('/ctd-readiness', limiter, requireRole(AUTHOR), (req, res) => {
   const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
   try {
     res.json(
       aggregateCtdAuthoringReadiness({
+        m1: b.m1,
         m2: b.m2,
         m4: b.m4,
         m5: b.m5,

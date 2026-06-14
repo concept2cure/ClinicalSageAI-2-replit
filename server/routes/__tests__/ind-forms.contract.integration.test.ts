@@ -84,6 +84,43 @@ describe('form discovery + build', () => {
   });
 });
 
+describe('cross-form QC', () => {
+  it('POST /qc → 200 ready for a complete, consistent IND form set', async () => {
+    const res = await request(app)
+      .post('/api/ind-forms/qc')
+      .send({
+        forms: [
+          { formId: 'FDA_1571', fields: { sponsor_name: 'Acme', drug_name: 'C2C-001' }, missingRequired: [] },
+          { formId: 'FDA_1572', fields: { sponsor_name: 'Acme', drug_name: 'C2C-001' }, missingRequired: [] },
+          { formId: 'FDA_3674', fields: { sponsor_name: 'Acme', drug_name: 'C2C-001' }, missingRequired: [] },
+        ],
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.ready).toBe(true);
+    expect(res.body.present).toContain('FDA_1571');
+  });
+
+  it('POST /qc → 200 not ready when sponsor name diverges', async () => {
+    const res = await request(app)
+      .post('/api/ind-forms/qc')
+      .send({
+        forms: [
+          { formId: 'FDA_1571', fields: { sponsor_name: 'Acme', drug_name: 'C2C-001' }, missingRequired: [] },
+          { formId: 'FDA_1572', fields: { sponsor_name: 'Acme Bio', drug_name: 'C2C-001' }, missingRequired: [] },
+          { formId: 'FDA_3674', fields: { sponsor_name: 'Acme', drug_name: 'C2C-001' }, missingRequired: [] },
+        ],
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.ready).toBe(false);
+    expect(res.body.findings.some((f: any) => f.code === 'CONSISTENCY')).toBe(true);
+  });
+
+  it('POST /qc → 400 without forms[]', async () => {
+    const res = await request(app).post('/api/ind-forms/qc').send({});
+    expect(res.status).toBe(400);
+  });
+});
+
 describe('PDF rendering', () => {
   it('POST /FDA_3674/pdf → 200 application/pdf with X-Form-* headers', async () => {
     const res = await request(app).post('/api/ind-forms/FDA_3674/pdf').send({ drugName: 'C2C-001' });

@@ -36,6 +36,7 @@ import {
   type IndProjectMetadata,
 } from '../services/ind-forms/ind-form-data-builders';
 import { assembleFormMetadata } from '../services/ind-forms/form-context-assembler';
+import { runM1FormsQc } from '../services/ind-forms/ind-form-qc';
 import {
   getSponsor,
   getRegulatoryAgent,
@@ -119,6 +120,23 @@ router.post('/:formId/build', limiter, requireRole(AUTHOR), (req, res) => {
       default:
         return res.status(400).json({ error: { code: 'VALIDATION', message: `Unsupported form id: ${formId}` } });
     }
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Cross-form Module 1 QC over a set of built forms (eCTD Module 1).
+ * Body: { forms: BuiltForm[], requiredForms? }. Returns the verdict + findings
+ * (presence, completeness, sponsor/drug identity consistency, structure).
+ */
+router.post('/qc', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!Array.isArray(b.forms)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'forms[] (built FDA forms) is required.' } });
+  }
+  try {
+    res.json(runM1FormsQc({ forms: b.forms, requiredForms: b.requiredForms }));
   } catch (err) {
     fail(res, err);
   }

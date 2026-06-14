@@ -20,6 +20,7 @@
 import type { M2QcResult } from './m2-summary-qc';
 import type { M4QcResult } from './m4-nonclinical-qc';
 import type { M5QcResult } from './m5-clinical-qc';
+import type { M1QcResult } from '../ind-forms/ind-form-qc';
 import type { M2Summary } from '../m2-summary-builders';
 
 export type CtdReadinessSeverity = 'error' | 'warning';
@@ -48,6 +49,8 @@ export interface CtdAuthoringReadinessResult {
 }
 
 export interface CtdAuthoringReadinessInput {
+  /** Module 1 forms cross-validation verdict (from runM1FormsQc). */
+  m1?: M1QcResult;
   /** Module 2 cross-summary QC verdict (from runM2SummaryQc). */
   m2?: M2QcResult;
   /** Module 4 nonclinical assembly QC verdict (from runM4NonclinicalQc). */
@@ -78,6 +81,16 @@ export interface CtdAuthoringReadinessInput {
 export function aggregateCtdAuthoringReadiness(input: CtdAuthoringReadinessInput): CtdAuthoringReadinessResult {
   const findings: CtdReadinessFinding[] = [];
   const modules: CtdModuleStatus[] = [];
+
+  if (input.m1) {
+    modules.push({ module: 'M1', present: true, ready: input.m1.ready, errors: input.m1.counts.errors, warnings: input.m1.counts.warnings });
+    if (!input.m1.ready) {
+      findings.push({ area: 'M1', severity: 'error', code: 'MODULE_NOT_READY', message: `Module 1 forms are not assembly-ready (${input.m1.counts.errors} error(s)).` });
+    }
+  } else {
+    modules.push({ module: 'M1', present: false, ready: false, errors: 0, warnings: 0 });
+    findings.push({ area: 'M1', severity: 'warning', code: 'MODULE_ABSENT', message: 'No Module 1 QC verdict supplied.' });
+  }
 
   if (input.m2) {
     modules.push({ module: 'M2', present: true, ready: input.m2.ready, errors: input.m2.counts.errors, warnings: input.m2.counts.warnings });

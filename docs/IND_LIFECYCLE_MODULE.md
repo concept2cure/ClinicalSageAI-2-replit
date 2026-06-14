@@ -25,6 +25,7 @@ All HTTP routes are auth-gated (`authenticateToken` at mount) and tenant-scoped
 |---|---|---|
 | FDA forms 1571/1572/3674/3454/3455 | `ind-forms/ind-form-data-builders`, `ind-form-fill-service` | `GET /api/ind-forms`, `POST /api/ind-forms/:formId/build`, `/:formId/pdf`, `/1572/pdf-all` |
 | Forms auto-filled from registries | `ind-forms/form-context-assembler` | `POST /api/ind-forms/:formId/pdf-from-records` |
+| Module 1 forms cross-validation (required-form presence / per-form completeness / sponsor-drug identity consistency across forms / structure; honest-by-construction verdict) | `ind-forms/ind-form-qc` | `POST /api/ind-forms/qc` |
 | Sponsor / US-agent (312.3) / investigator registries | `ind-master-data/ind-master-data-service`, schema `shared/schema/ind-master-data` | `GET/POST/PATCH /api/ind-master-data/{sponsors,agents,investigators}` |
 | Cover letter (m1.2) | `ind-lifecycle/ind-cover-letter-service`, `cover-letter-context` | `POST /api/ind-lifecycle/cover-letter`, `/cover-letter/pdf`, `/cover-letter/pdf-from-records` |
 | FDA meeting briefing book (Pre-IND / Type A/B/C) | `ind-lifecycle/ind-briefing-book-service` | `POST /api/ind-lifecycle/briefing-book`, `/briefing-book/pdf` |
@@ -66,7 +67,7 @@ All HTTP routes are auth-gated (`authenticateToken` at mount) and tenant-scoped
 | Module 4 nonclinical study report | `authoring/nonclinical-study-report-builder` | — |
 | Module 4 nonclinical assembly QC (ICH M3(R2) coverage / required-section status / CTD 4.2.x placement / GLP / structure; honest-by-construction verdict) | `authoring/m4-nonclinical-qc` | `POST /api/authoring-pdf/m4-nonclinical/qc` |
 | Module 5 clinical assembly QC (phase coverage / required ICH E3 section status / CTD 5.3.x placement / structure; honest-by-construction verdict) | `authoring/m5-clinical-qc` | `POST /api/authoring-pdf/m5-clinical/qc` |
-| CTD authoring-readiness rollup (composes the M2 + M4 + M5 QC verdicts and the M2.4←M4 feed-forward link into one cross-module "assembly-ready" verdict) | `authoring/ctd-authoring-readiness` | `POST /api/authoring-pdf/ctd-readiness` |
+| CTD authoring-readiness rollup (composes the M1 + M2 + M4 + M5 QC verdicts and the M2.4←M4 / M2.5-2.7←M5 feed-forward links into one cross-module "assembly-ready" verdict) | `authoring/ctd-authoring-readiness` | `POST /api/authoring-pdf/ctd-readiness` |
 | Lifecycle document → bookmarked PDF | `ind-lifecycle/ind-document-renderer` | (used by the `*/pdf` routes) |
 
 ## 5. eCTD submission-grade output
