@@ -26,11 +26,17 @@ import {
   getCrossReferenceRegister,
   CrossReferenceError,
 } from '../../services/ind-lifecycle/ind-cross-reference-persistence';
+import {
+  createSafetyReportDraft,
+  listSafetyReports,
+  listOverdueSafetyReports,
+  SafetyReportError,
+} from '../../services/ind-lifecycle/ind-safety-report-persistence';
 import { assembleLetterOfAuthorization, buildLoaLeafIntent } from '../../services/ind-lifecycle/ind-loa-service';
 import { renderLetterOfAuthorizationPdf } from '../../services/ind-lifecycle/ind-document-renderer';
 import { persistCrossReferenceFiling } from '../../services/ind-lifecycle/ind-lifecycle-persistence';
 import { createHash } from 'crypto';
-import { AUTHOR, limiter, ctxOf, body, fail, noAuth, readinessFrom, validationFrom } from './shared';
+import { AUTHOR, limiter, ctxOf, body, fail, noAuth, readinessFrom, validationFrom, coerceEventDates } from './shared';
 
 const router = Router();
 
@@ -419,6 +425,69 @@ router.delete('/cross-references/:crossRefId', limiter, requireRole(AUTHOR), asy
     if (err instanceof CrossReferenceError) {
       return res.status(404).json({ error: { code: err.code, message: err.message } });
     }
+    fail(res, err);
+  }
+});
+
+// ── Persisted IND safety reports (21 CFR 312.32) ──────────────────────────────
+
+/**
+ * Draft a 312.32 IND Safety Report for a submission: classify the event, build
+ * the document model, and persist it as a tracked draft. Body: { event, icsr?,
+ * aggregateContext?, now? }. 422 when the event is not expedited-reportable.
+ */
+router.post('/submission/:id/safety-reports', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const submissionId = submissionIdOf(req.params.id);
+  if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
+  const b = body(req);
+  if (!b.event) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'event (AdverseEvent) is required.' } });
+  }
+  try {
+    const row = await createSafetyReportDraft(
+      {
+        submissionId,
+        event: coerceEventDates(b.event),
+        icsr: b.icsr ?? null,
+        aggregateContext: b.aggregateContext,
+        now: b.now ? new Date(b.now) : undefined,
+      },
+      ctx,
+    );
+    res.status(201).json(row);
+  } catch (err) {
+    if (err instanceof SafetyReportError && err.code === 'NOT_REPORTABLE') {
+      return res.status(422).json({ error: { code: err.code, message: err.message } });
+    }
+    fail(res, err);
+  }
+});
+
+/** List a submission's safety reports. */
+router.get('/submission/:id/safety-reports', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const submissionId = submissionIdOf(req.params.id);
+  if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
+  try {
+    res.json(await listSafetyReports(submissionId, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** The submission's overdue (unfiled, past-deadline) safety reports. */
+router.get('/submission/:id/safety-reports/overdue', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const submissionId = submissionIdOf(req.params.id);
+  if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
+  try {
+    const asOf = typeof req.query.asOf === 'string' ? new Date(req.query.asOf) : undefined;
+    res.json(await listOverdueSafetyReports(submissionId, ctx, asOf));
+  } catch (err) {
     fail(res, err);
   }
 });

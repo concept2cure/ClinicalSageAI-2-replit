@@ -9,6 +9,7 @@ import { createHash } from 'crypto';
 import { requireRole } from '../../middleware/auth';
 import { assembleIndSafetyReport } from '../../services/ind-lifecycle/ind-safety-report-service';
 import { composeE2bR3Icsr } from '../../services/ind-lifecycle/e2b-icsr-composer';
+import { markSafetyReportFiled, SafetyReportError } from '../../services/ind-lifecycle/ind-safety-report-persistence';
 import { assembleIndAnnualReport } from '../../services/ind-lifecycle/ind-annual-report-service';
 import { planIndAmendment } from '../../services/ind-lifecycle/ind-amendment-service';
 import {
@@ -68,9 +69,17 @@ router.post('/safety-report/file', limiter, requireRole(AUTHOR), async (req, res
       });
       checksums['m5.3.5'] = createHash('md5').update(xml).digest('hex');
     }
-    res.status(201).json(
-      await persistSafetyReportIntent(Number(b.submissionId), amendmentIntent, String(b.sequenceNumber), ctx, checksums),
-    );
+    const filed = await persistSafetyReportIntent(Number(b.submissionId), amendmentIntent, String(b.sequenceNumber), ctx, checksums);
+    // When filing a tracked draft, mark it filed + link the sequence.
+    let draft;
+    if (b.draftId) {
+      try {
+        draft = await markSafetyReportFiled(String(b.draftId), filed.sequence.id, ctx);
+      } catch (e) {
+        if (!(e instanceof SafetyReportError)) throw e; // unknown/foreign draft id is non-fatal to the filing
+      }
+    }
+    res.status(201).json({ ...filed, ...(draft ? { draft } : {}) });
   } catch (err) {
     fail(res, err);
   }

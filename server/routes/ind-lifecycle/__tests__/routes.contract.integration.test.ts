@@ -465,3 +465,59 @@ describe('persisted cross-references (eCTD m1.4)', () => {
     expect(list.body.map((r: any) => r.id)).not.toContain(crossRefId);
   });
 });
+
+describe('persisted IND safety reports (21 CFR 312.32)', () => {
+  let draftId: string;
+
+  it('POST /submission/:id/safety-reports → 201 drafts a tracked report', async () => {
+    const res = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/safety-reports`)
+      .send({ event: reportableEvent() });
+    expect(res.status).toBe(201);
+    expect(res.body.status).toBe('draft');
+    expect(res.body.obligation).toBe('SEVEN_DAY');
+    expect(res.body.organizationId).toBe(1);
+    draftId = res.body.id;
+  });
+
+  it('POST /safety-reports → 422 for a non-reportable event', async () => {
+    const notReportable = { ...reportableEvent(), id: 'ae-2', causality: 'unrelated', expectedness: 'expected (listed in IB)' };
+    const res = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/safety-reports`)
+      .send({ event: notReportable });
+    expect(res.status).toBe(422);
+    expect(res.body.error.code).toBe('NOT_REPORTABLE');
+  });
+
+  it('GET /safety-reports → 200 lists the draft', async () => {
+    const res = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/safety-reports`);
+    expect(res.status).toBe(200);
+    expect(res.body.map((r: any) => r.id)).toContain(draftId);
+  });
+
+  it('GET /safety-reports/overdue → 200 includes the unfiled past-deadline draft', async () => {
+    // The reportable event's deadline is in Jan 2026; "now" is well past it.
+    const res = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/safety-reports/overdue`);
+    expect(res.status).toBe(200);
+    expect(res.body.map((r: any) => r.id)).toContain(draftId);
+  });
+
+  it('filing with draftId marks it filed and drops it from overdue', async () => {
+    const filed = await request(app)
+      .post('/api/ind-lifecycle/safety-report/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0011', event: reportableEvent(), draftId });
+    expect(filed.status).toBe(201);
+    expect(filed.body.draft.status).toBe('filed');
+    expect(filed.body.draft.sequenceId).toBe(filed.body.sequence.id);
+
+    const overdue = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/safety-reports/overdue`);
+    expect(overdue.body.map((r: any) => r.id)).not.toContain(draftId);
+  });
+
+  it('does not leak another org\'s safety reports', async () => {
+    currentUser = { id: 9, organizationId: 2, roles: ['regulatory-author'] };
+    const res = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/safety-reports`);
+    expect(res.body.map((r: any) => r.id)).not.toContain(draftId);
+    currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
+  });
+});

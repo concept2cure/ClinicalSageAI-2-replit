@@ -109,6 +109,25 @@ CREATE TABLE IF NOT EXISTS ind_cross_references (
   created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at             TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS ind_safety_reports (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id       INTEGER NOT NULL,
+  submission_id         INTEGER NOT NULL,
+  adverse_event_id      TEXT NOT NULL,
+  obligation            TEXT NOT NULL,
+  reporting_window_days INTEGER,
+  deadline              TIMESTAMPTZ,
+  regulatory_basis      TEXT NOT NULL,
+  status                TEXT NOT NULL DEFAULT 'draft',
+  sequence_id           INTEGER,
+  filed_at              TIMESTAMPTZ,
+  classification        JSONB NOT NULL,
+  document              JSONB NOT NULL,
+  created_by            INTEGER,
+  created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at            TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `;
 
 /**
