@@ -13,7 +13,7 @@ import {
 } from '../sdtm-domain-conformance-checker';
 
 /** Build a fully-conformant variable list for a domain from its reference spec. */
-function variablesFor(domain: 'DM' | 'AE'): SdtmVariableInput[] {
+function variablesFor(domain: 'DM' | 'AE' | 'LB' | 'VS' | 'CM' | 'DS' | 'EX'): SdtmVariableInput[] {
   return SDTM_DOMAIN_SPECS[domain].variables.map((v) => ({
     name: v.name,
     dataType: v.dataType,
@@ -115,5 +115,40 @@ describe('checkSdtmDomainConformance — EXTRA_VARIABLE', () => {
     const f = res.findings.find((f) => f.code === 'EXTRA_VARIABLE' && f.variable === 'CUSTOMVAR');
     expect(f).toBeDefined();
     expect(f?.severity).toBe('warning');
+  });
+});
+
+describe('checkSdtmDomainConformance — additional SDTM-IG v3.4 domains', () => {
+  it('a complete, correctly-typed LB with all required variables is ready', () => {
+    const res = checkSdtmDomainConformance(input('LB', variablesFor('LB')));
+    expect(res.ready).toBe(true);
+    expect(res.recognized).toBe(true);
+    expect(res.counts.errors).toBe(0);
+    expect(res.missingRequired).toEqual([]);
+  });
+
+  it('recognizes a VS domain as a known SDTM-IG v3.4 spec', () => {
+    const res = checkSdtmDomainConformance(input('VS', variablesFor('VS')));
+    expect(res.recognized).toBe(true);
+    expect(res.ready).toBe(true);
+  });
+
+  it('a VS dataset missing VSSEQ raises MISSING_REQUIRED and is not ready', () => {
+    const vars = variablesFor('VS').filter((v) => v.name !== 'VSSEQ');
+    const res = checkSdtmDomainConformance(input('VS', vars));
+    expect(res.ready).toBe(false);
+    expect(res.missingRequired).toContain('VSSEQ');
+    expect(res.findings.some((f) => f.code === 'MISSING_REQUIRED' && f.variable === 'VSSEQ')).toBe(true);
+  });
+
+  it('an EX dataset with EXDOSE typed Char raises TYPE_MISMATCH (must be Num)', () => {
+    const vars = variablesFor('EX').map((v) =>
+      v.name === 'EXDOSE' ? { ...v, dataType: 'Char' as const } : v,
+    );
+    const res = checkSdtmDomainConformance(input('EX', vars));
+    expect(res.ready).toBe(false);
+    const f = res.findings.find((f) => f.code === 'TYPE_MISMATCH' && f.variable === 'EXDOSE');
+    expect(f).toBeDefined();
+    expect(f?.message).toContain('Num');
   });
 });

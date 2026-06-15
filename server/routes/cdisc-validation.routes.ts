@@ -16,6 +16,7 @@ import { requireRole } from '../middleware/auth';
 import { createRateLimiter } from '../middleware/rateLimiter';
 import { checkSdtmDomainConformance } from '../services/cdisc/sdtm-domain-conformance-checker';
 import { generateDefineXml } from '../services/cdisc/define-xml-generator';
+import { checkAdamAdslConformance } from '../services/cdisc/adam-adsl-conformance-checker';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('cdisc-validation-routes');
@@ -67,6 +68,23 @@ router.post('/define-xml', limiter, requireRole(AUTHOR), (req: Request, res: Res
       return res.status(200).send(result.xml);
     }
     res.json(result);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * ADaM ADSL (Subject-Level Analysis Dataset) conformance check (ADaM IG v1.1).
+ * Body: { variables: Array<{ name, dataType, controlledTerms? }> }. Returns the
+ * verdict + findings (missing required/expected, type mismatch, flag violation).
+ */
+router.post('/adam-adsl/conformance', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!Array.isArray(b.variables)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'variables[] (ADSL variable metadata) is required.' } });
+  }
+  try {
+    res.json(checkAdamAdslConformance({ variables: b.variables }));
   } catch (err) {
     fail(res, err);
   }

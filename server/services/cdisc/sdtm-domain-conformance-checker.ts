@@ -7,6 +7,11 @@
  *
  *   - DM (Demographics, SDTM-IG v3.4 §5.2) — one record per subject.
  *   - AE (Adverse Events, SDTM-IG v3.4 §6.3) — one record per AE per subject.
+ *   - LB (Laboratory Test Results, SDTM-IG v3.4 §6.3) — one record per lab test.
+ *   - VS (Vital Signs, SDTM-IG v3.4 §6.3) — one record per vital sign measurement.
+ *   - CM (Concomitant/Prior Medications, SDTM-IG v3.4 §6.1) — one record per medication.
+ *   - DS (Disposition, SDTM-IG v3.4 §6.2) — one record per disposition event.
+ *   - EX (Exposure, SDTM-IG v3.4 §6.1) — one record per protocol-specified study treatment.
  *
  * It checks what an FDA/PMDA reviewer (and Pinnacle 21 / the FDA Study Data
  * Technical Conformance Guide) would flag at the structural level:
@@ -59,7 +64,7 @@ export interface SdtmDomainSpec {
 }
 
 /**
- * SDTM-IG v3.4 reference specifications for DM and AE.
+ * SDTM-IG v3.4 reference specifications for DM, AE, LB, VS, CM, DS and EX.
  *
  * Variable selection, Core designations, types and codelists follow CDISC
  * SDTM-IG v3.4 (final, 2021) and the corresponding CDISC Controlled
@@ -146,6 +151,91 @@ export const SDTM_DOMAIN_SPECS: Readonly<Record<string, SdtmDomainSpec>> = {
       },
       { name: 'AESTDTC', dataType: 'Char', core: 'Exp', label: 'Start Date/Time of Adverse Event (ISO 8601)' },
       { name: 'AEENDTC', dataType: 'Char', core: 'Exp', label: 'End Date/Time of Adverse Event (ISO 8601)' },
+    ],
+  },
+  LB: {
+    domain: 'LB',
+    label: 'Laboratory Test Results',
+    variables: [
+      { name: 'STUDYID', dataType: 'Char', core: 'Req', label: 'Study Identifier' },
+      { name: 'DOMAIN', dataType: 'Char', core: 'Req', label: 'Domain Abbreviation' },
+      { name: 'USUBJID', dataType: 'Char', core: 'Req', label: 'Unique Subject Identifier' },
+      { name: 'LBSEQ', dataType: 'Num', core: 'Req', label: 'Sequence Number' },
+      { name: 'LBTESTCD', dataType: 'Char', core: 'Req', label: 'Lab Test or Examination Short Name' },
+      { name: 'LBTEST', dataType: 'Char', core: 'Req', label: 'Lab Test or Examination Name' },
+      { name: 'LBORRES', dataType: 'Char', core: 'Exp', label: 'Result or Finding in Original Units' },
+      { name: 'LBORRESU', dataType: 'Char', core: 'Exp', label: 'Original Units' },
+      { name: 'LBSTRESC', dataType: 'Char', core: 'Exp', label: 'Character Result/Finding in Std Format' },
+      { name: 'LBSTRESN', dataType: 'Num', core: 'Exp', label: 'Numeric Result/Finding in Standard Units' },
+      { name: 'LBSTRESU', dataType: 'Char', core: 'Exp', label: 'Standard Units' },
+      { name: 'LBNRIND', dataType: 'Char', core: 'Exp', label: 'Reference Range Indicator' },
+      { name: 'VISITNUM', dataType: 'Num', core: 'Exp', label: 'Visit Number' },
+      { name: 'LBDTC', dataType: 'Char', core: 'Exp', label: 'Date/Time of Specimen Collection (ISO 8601)' },
+    ],
+  },
+  VS: {
+    domain: 'VS',
+    label: 'Vital Signs',
+    variables: [
+      { name: 'STUDYID', dataType: 'Char', core: 'Req', label: 'Study Identifier' },
+      { name: 'DOMAIN', dataType: 'Char', core: 'Req', label: 'Domain Abbreviation' },
+      { name: 'USUBJID', dataType: 'Char', core: 'Req', label: 'Unique Subject Identifier' },
+      { name: 'VSSEQ', dataType: 'Num', core: 'Req', label: 'Sequence Number' },
+      { name: 'VSTESTCD', dataType: 'Char', core: 'Req', label: 'Vital Signs Test Short Name' },
+      { name: 'VSTEST', dataType: 'Char', core: 'Req', label: 'Vital Signs Test Name' },
+      { name: 'VSORRES', dataType: 'Char', core: 'Exp', label: 'Result or Finding in Original Units' },
+      { name: 'VSORRESU', dataType: 'Char', core: 'Exp', label: 'Original Units' },
+      { name: 'VSSTRESC', dataType: 'Char', core: 'Exp', label: 'Character Result/Finding in Std Format' },
+      { name: 'VSSTRESN', dataType: 'Num', core: 'Exp', label: 'Numeric Result/Finding in Standard Units' },
+      { name: 'VSPOS', dataType: 'Char', core: 'Perm', label: 'Vital Signs Position of Subject' },
+      { name: 'VSDTC', dataType: 'Char', core: 'Exp', label: 'Date/Time of Measurements (ISO 8601)' },
+    ],
+  },
+  CM: {
+    domain: 'CM',
+    label: 'Concomitant/Prior Medications',
+    variables: [
+      { name: 'STUDYID', dataType: 'Char', core: 'Req', label: 'Study Identifier' },
+      { name: 'DOMAIN', dataType: 'Char', core: 'Req', label: 'Domain Abbreviation' },
+      { name: 'USUBJID', dataType: 'Char', core: 'Req', label: 'Unique Subject Identifier' },
+      { name: 'CMSEQ', dataType: 'Num', core: 'Req', label: 'Sequence Number' },
+      { name: 'CMTRT', dataType: 'Char', core: 'Req', label: 'Reported Name of Drug, Med, or Therapy' },
+      { name: 'CMDECOD', dataType: 'Char', core: 'Perm', label: 'Standardized Medication Name' },
+      { name: 'CMINDC', dataType: 'Char', core: 'Perm', label: 'Indication' },
+      { name: 'CMDOSE', dataType: 'Num', core: 'Perm', label: 'Dose per Administration' },
+      { name: 'CMDOSU', dataType: 'Char', core: 'Perm', label: 'Dose Units' },
+      { name: 'CMSTDTC', dataType: 'Char', core: 'Perm', label: 'Start Date/Time of Medication (ISO 8601)' },
+      { name: 'CMENDTC', dataType: 'Char', core: 'Perm', label: 'End Date/Time of Medication (ISO 8601)' },
+    ],
+  },
+  DS: {
+    domain: 'DS',
+    label: 'Disposition',
+    variables: [
+      { name: 'STUDYID', dataType: 'Char', core: 'Req', label: 'Study Identifier' },
+      { name: 'DOMAIN', dataType: 'Char', core: 'Req', label: 'Domain Abbreviation' },
+      { name: 'USUBJID', dataType: 'Char', core: 'Req', label: 'Unique Subject Identifier' },
+      { name: 'DSSEQ', dataType: 'Num', core: 'Req', label: 'Sequence Number' },
+      { name: 'DSTERM', dataType: 'Char', core: 'Req', label: 'Reported Term for the Disposition Event' },
+      { name: 'DSDECOD', dataType: 'Char', core: 'Req', label: 'Standardized Disposition Term' },
+      { name: 'DSCAT', dataType: 'Char', core: 'Req', label: 'Category for Disposition Event' },
+      { name: 'DSSTDTC', dataType: 'Char', core: 'Exp', label: 'Start Date/Time of Disposition Event (ISO 8601)' },
+    ],
+  },
+  EX: {
+    domain: 'EX',
+    label: 'Exposure',
+    variables: [
+      { name: 'STUDYID', dataType: 'Char', core: 'Req', label: 'Study Identifier' },
+      { name: 'DOMAIN', dataType: 'Char', core: 'Req', label: 'Domain Abbreviation' },
+      { name: 'USUBJID', dataType: 'Char', core: 'Req', label: 'Unique Subject Identifier' },
+      { name: 'EXSEQ', dataType: 'Num', core: 'Req', label: 'Sequence Number' },
+      { name: 'EXTRT', dataType: 'Char', core: 'Req', label: 'Name of Treatment' },
+      { name: 'EXDOSE', dataType: 'Num', core: 'Req', label: 'Dose' },
+      { name: 'EXDOSU', dataType: 'Char', core: 'Perm', label: 'Dose Units' },
+      { name: 'EXROUTE', dataType: 'Char', core: 'Perm', label: 'Route of Administration' },
+      { name: 'EXSTDTC', dataType: 'Char', core: 'Exp', label: 'Start Date/Time of Treatment (ISO 8601)' },
+      { name: 'EXENDTC', dataType: 'Char', core: 'Exp', label: 'End Date/Time of Treatment (ISO 8601)' },
     ],
   },
 } as const;

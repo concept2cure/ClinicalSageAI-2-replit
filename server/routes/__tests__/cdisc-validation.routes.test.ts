@@ -80,3 +80,20 @@ describe('Define-XML generation', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('ADaM ADSL conformance', () => {
+  it('200 with a verdict for an ADSL dataset', async () => {
+    const res = await request(app)
+      .post('/api/cdisc-validation/adam-adsl/conformance')
+      .send({ variables: [{ name: 'STUDYID', dataType: 'Char' }, { name: 'USUBJID', dataType: 'Char' }] });
+    expect(res.status).toBe(200);
+    expect(res.body.datasetName).toBe('ADSL');
+    expect(res.body).toHaveProperty('ready');
+    expect(res.body).toHaveProperty('findings');
+  });
+
+  it('400 without variables[]', async () => {
+    const res = await request(app).post('/api/cdisc-validation/adam-adsl/conformance').send({});
+    expect(res.status).toBe(400);
+  });
+});
