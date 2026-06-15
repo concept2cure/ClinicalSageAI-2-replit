@@ -3,6 +3,9 @@ import type { Assistant } from 'openai/resources/beta/assistants';
 import type { Message as ThreadMessage } from 'openai/resources/beta/threads/messages';
 import type { Run } from 'openai/resources/beta/threads/runs/runs';
 import type { Thread } from 'openai/resources/beta/threads/threads';
+import { createScopedLogger } from '../utils/logger';
+
+const logger = createScopedLogger('openai-service');
 
 // Initialize OpenAI client (optional — Claude is the primary AI provider)
 // OpenAI is still needed for Assistants API features which don't have a Claude equivalent
@@ -33,10 +36,10 @@ export async function createAssistant(
       model: 'gpt-4o',
     });
 
-    console.log(`Created assistant with ID: ${assistant.id}`);
+    logger.info(`Created assistant with ID: ${assistant.id}`);
     return assistant;
   } catch (error) {
-    console.error('Error creating assistant:', error);
+    logger.error('Error creating assistant', { error });
     throw error;
   }
 }
@@ -47,10 +50,10 @@ export async function createAssistant(
 export async function createThread(): Promise<Thread> {
   try {
     const thread = await requireOpenAI().beta.threads.create();
-    console.log(`Created thread with ID: ${thread.id}`);
+    logger.info(`Created thread with ID: ${thread.id}`);
     return thread;
   } catch (error) {
-    console.error('Error creating thread:', error);
+    logger.error('Error creating thread', { error });
     throw error;
   }
 }
@@ -69,7 +72,7 @@ export async function addMessageToThread(
     });
     return message;
   } catch (error) {
-    console.error('Error adding message to thread:', error);
+    logger.error('Error adding message to thread', { error });
     throw error;
   }
 }
@@ -84,7 +87,7 @@ export async function runAssistant(threadId: string, assistantId: string): Promi
     });
     return run;
   } catch (error) {
-    console.error('Error running assistant:', error);
+    logger.error('Error running assistant', { error });
     throw error;
   }
 }
@@ -97,7 +100,7 @@ export async function getRunStatus(threadId: string, runId: string): Promise<Run
     const run = await requireOpenAI().beta.threads.runs.retrieve(runId, { thread_id: threadId });
     return run;
   } catch (error) {
-    console.error('Error getting run status:', error);
+    logger.error('Error getting run status', { error });
     throw error;
   }
 }
@@ -120,7 +123,7 @@ export async function listMessages(threadId: string): Promise<{
       hasMore: messages.has_more,
     };
   } catch (error) {
-    console.error('Error listing messages:', error);
+    logger.error('Error listing messages', { error });
     throw error;
   }
 }
@@ -154,11 +157,11 @@ export async function generateStructuredResponse<T>(
       // If the response is not in JSON format, this will throw an error
       return JSON.parse(response.output_text) as T;
     } catch (jsonError) {
-      console.error('Error parsing response as JSON:', jsonError);
+      logger.error('Error parsing response as JSON', { error: jsonError });
       throw new Error('The response was not in valid JSON format');
     }
   } catch (error) {
-    console.error('Error generating structured response:', error);
+    logger.error('Error generating structured response', { error });
     throw error;
   }
 }
@@ -181,7 +184,7 @@ export async function generateWithWebSearch(prompt: string): Promise<string> {
 
     return response.output_text;
   } catch (error) {
-    console.error('Error generating response with web search:', error);
+    logger.error('Error generating response with web search', { error });
     throw error;
   }
 }
@@ -200,7 +203,7 @@ export async function generateImage(prompt: string): Promise<string> {
 
     return response.data?.[0]?.url || '';
   } catch (error) {
-    console.error('Error generating image:', error);
+    logger.error('Error generating image', { error });
     throw error;
   }
 }
@@ -226,7 +229,7 @@ export async function analyzeText(text: string, instruction: string): Promise<st
 
     return response.choices[0].message.content || '';
   } catch (error) {
-    console.error('Error analyzing text:', error);
+    logger.error('Error analyzing text', { error });
     throw error;
   }
 }
@@ -259,7 +262,7 @@ export async function analyzeImage(imageBase64: string, prompt: string): Promise
 
     return response.choices[0].message.content || '';
   } catch (error) {
-    console.error('Error analyzing image:', error);
+    logger.error('Error analyzing image', { error });
     throw error;
   }
 }

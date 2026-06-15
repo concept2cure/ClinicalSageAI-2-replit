@@ -80,6 +80,9 @@ import {
   VALID_ROLES,
   VALID_LANGUAGES,
 } from './shared.js';
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('ana-ri-chat');
 
 // Idempotency cache — per-request-id memoisation so a client retry within
 // IDEMPOTENCY_TTL_MS replays the prior response instead of re-generating.
@@ -262,7 +265,15 @@ router.post('/chat', async (req: Request, res: Response) => {
         }
         const units = Number(firecrawlData?.quotaUnitsToCharge || docs.length || 0);
         if (units > 0) {
-          await recordSuccessfulFirecrawlScrape(Number(orgId), units).catch(() => {});
+          await recordSuccessfulFirecrawlScrape(Number(orgId), units).catch((err: any) => {
+            // Non-blocking: failing to record the scrape charge must not break the
+            // response, but un-metered usage is a billing concern — surface it.
+            console.error('[AnA RI] recordSuccessfulFirecrawlScrape failed', {
+              orgId: String(orgId),
+              units,
+              error: err?.message ?? String(err),
+            });
+          });
           const updatedQuota = await getFirecrawlQuotaStatus(Number(orgId)).catch(() => null);
           if (updatedQuota) {
             evidenceUsage.quotaConsumed = units;
@@ -584,7 +595,12 @@ router.post('/chat', async (req: Request, res: Response) => {
         submissionType: orchestration.detectedSubmissionType,
         evidenceCompliant: evidenceCheck.compliant,
       },
-    }).catch(() => {});
+    }).catch((err: unknown) => {
+      logger.warn('Failed to persist kernel decision record (success path)', {
+        route: '/api/ana-ri/chat',
+        err: err instanceof Error ? err.message : String(err),
+      });
+    });
 
     // Guidance executor — auto-create artifacts if response contains action signals
     // (Parity with /stream — previously only ran on stream path)
@@ -769,7 +785,12 @@ router.post('/chat', async (req: Request, res: Response) => {
       outcome: 'failed',
       errorMessage: error?.message || 'unknown error',
       decisionRationale: 'AnA RI route failed before completion.',
-    }).catch(() => {});
+    }).catch((logErr: unknown) => {
+      logger.warn('Failed to persist kernel decision record (failure path)', {
+        route: '/api/ana-ri/chat',
+        err: logErr instanceof Error ? logErr.message : String(logErr),
+      });
+    });
     return sendError(res, 500, error?.message || 'Internal server error', null, 'INTERNAL_ERROR');
   }
 });

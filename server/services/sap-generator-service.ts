@@ -9,6 +9,9 @@ import {
   type EstimandInput,
   type RenderedEstimandSection,
 } from './estimand-sap-section';
+import { createScopedLogger } from '../utils/logger';
+
+const logger = createScopedLogger('sap-generator-service');
 
 // Define the file paths
 const SAP_DIR = path.join(process.cwd(), 'data/sap');
@@ -261,7 +264,7 @@ Study Information:
             createdById: protocolData.createdById,
           });
         } catch (err) {
-          console.warn('Operating system assumption capture failed (non-fatal):', err);
+          logger.warn('Operating system assumption capture failed (non-fatal)', { error: err });
         }
       }
 
@@ -274,7 +277,7 @@ Study Information:
         estimandSection,
       };
     } catch (error) {
-      console.error('Error in SAP generator service:', error);
+      logger.error('Error in SAP generator service', { error });
       throw error;
     }
   }
@@ -298,7 +301,7 @@ Study Information:
 
       return similarTrials;
     } catch (error) {
-      console.error('Error finding similar protocols:', error);
+      logger.error('Error finding similar protocols', { error });
       return [];
     }
   }
@@ -319,19 +322,19 @@ Study Information:
         .limit(1);
 
       if (protocol.length === 0) {
-        console.warn(`No protocol found with ID ${protocolId}`);
+        logger.warn(`No protocol found with ID ${protocolId}`);
         return;
       }
 
       // Extract sections from SAP content
       const sections = this.extractSapSections(sapContent);
 
-      console.log(`SAP segments extracted for protocol ${protocolId}`, {
+      logger.info(`SAP segments extracted for protocol ${protocolId}`, {
         reportId: protocol[0].id,
         sections: Object.keys(sections).length,
       });
     } catch (error) {
-      console.error('Error storing SAP segments:', error);
+      logger.error('Error storing SAP segments', { error });
     }
   }
 
@@ -500,7 +503,7 @@ Study Information:
       // Read and return SAP content
       return fs.readFileSync(sapPath, 'utf8');
     } catch (error) {
-      console.error('Error retrieving SAP:', error);
+      logger.error('Error retrieving SAP', { error });
       return null;
     }
   }
@@ -530,7 +533,7 @@ Study Information:
         order: index + 1,
       }));
     } catch (error) {
-      console.error('Error retrieving SAP segments:', error);
+      logger.error('Error retrieving SAP segments', { error });
       return [];
     }
   }
@@ -555,7 +558,7 @@ Study Information:
         .limit(1);
 
       if (protocol.length === 0) {
-        console.warn(`No protocol found with ID ${protocolId}`);
+        logger.warn(`No protocol found with ID ${protocolId}`);
         return null;
       }
 
@@ -575,7 +578,7 @@ Study Information:
       // Generate updated SAP
       return await this.generateSAP(requestData);
     } catch (error) {
-      console.error('Error updating SAP:', error);
+      logger.error('Error updating SAP', { error });
       return null;
     }
   }

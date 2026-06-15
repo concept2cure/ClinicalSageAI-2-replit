@@ -109,7 +109,13 @@ export async function launchResearchJob(request: DeepResearchRequest): Promise<D
     pool.query(
       `UPDATE deep_research_jobs SET status = $2, completed_at = NOW() WHERE id = $1 AND organization_id = $3`,
       [jobId, 'failed', request.organizationId]
-    ).catch(() => {});
+    ).catch((updateErr) => {
+      // If this fails the job is left without a terminal status — surface it.
+      console.error(
+        `[DeepResearch] Failed to mark job ${jobId} as failed:`,
+        updateErr,
+      );
+    });
   });
 
   return getJobStatus(jobId);

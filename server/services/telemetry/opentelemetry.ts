@@ -18,6 +18,10 @@
  * lost every trace. The new behavior surfaces the misconfiguration at
  * boot time.
  */
+import { createScopedLogger } from '../../utils/logger';
+
+const logger = createScopedLogger('OTel');
+
 let started = false;
 
 function isEnabled() {
@@ -41,21 +45,21 @@ export async function initializeOpenTelemetry(): Promise<void> {
   if (!exporterEndpoint) {
     const banner = '='.repeat(70);
     if (isProduction() && !allowNoExporter()) {
-      console.error('');
-      console.error(banner);
-      console.error('[FATAL] OTEL_ENABLED=true but OTEL_EXPORTER_OTLP_ENDPOINT is not set.');
-      console.error('   Production must export traces to a collector. Set the endpoint, or');
-      console.error('   set OTEL_ALLOW_NO_EXPORTER=true explicitly to override (NOT recommended).');
-      console.error(banner);
-      console.error('');
+      logger.error('');
+      logger.error(banner);
+      logger.error('[FATAL] OTEL_ENABLED=true but OTEL_EXPORTER_OTLP_ENDPOINT is not set.');
+      logger.error('   Production must export traces to a collector. Set the endpoint, or');
+      logger.error('   set OTEL_ALLOW_NO_EXPORTER=true explicitly to override (NOT recommended).');
+      logger.error(banner);
+      logger.error('');
       process.exit(1);
     }
-    console.warn('');
-    console.warn(banner);
-    console.warn('[OTel] OTEL_ENABLED=true but OTEL_EXPORTER_OTLP_ENDPOINT is not set —');
-    console.warn('   traces will be DROPPED. Set the endpoint to ship to your collector.');
-    console.warn(banner);
-    console.warn('');
+    logger.warn('');
+    logger.warn(banner);
+    logger.warn('OTEL_ENABLED=true but OTEL_EXPORTER_OTLP_ENDPOINT is not set —');
+    logger.warn('   traces will be DROPPED. Set the endpoint to ship to your collector.');
+    logger.warn(banner);
+    logger.warn('');
     // Mark as started so we don't re-warn on subsequent calls. The SDK
     // itself stays uninitialized.
     started = true;
@@ -88,9 +92,9 @@ export async function initializeOpenTelemetry(): Promise<void> {
 
     await sdk.start();
     started = true;
-    console.info(`[OTel] enabled for service=${serviceName} endpoint=${exporterEndpoint}`);
+    logger.info(`enabled for service=${serviceName} endpoint=${exporterEndpoint}`);
   } catch (error: any) {
-    console.warn('[OTel] initialization skipped:', error?.message || String(error));
+    logger.warn('initialization skipped', { error: error?.message || String(error) });
   }
 }
 
