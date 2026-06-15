@@ -96,7 +96,7 @@ export async function fillEstarSubmission(input: FillEstarInput): Promise<FillEs
   base.templateAvailable = !!templateBytes;
 
   const fieldMap = input.fieldMap ?? getEstarFieldMap(descriptor.id);
-  const mapPopulated = !!input.fieldMap
+  const mapPopulated = input.fieldMap
     ? Object.keys(input.fieldMap).length > 0
     : isFieldMapPopulated(descriptor.id);
   base.fieldMapPopulated = mapPopulated;
