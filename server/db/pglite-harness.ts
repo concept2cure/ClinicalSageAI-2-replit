@@ -199,6 +199,19 @@ CREATE TABLE IF NOT EXISTS regulatory_assessments (
   created_by       INTEGER,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS tmf_artifact_filings (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id  INTEGER NOT NULL,
+  trial_id         TEXT NOT NULL,
+  artifact_code    TEXT NOT NULL,
+  zone_number      INTEGER,
+  document_ref     TEXT,
+  created_by       INTEGER,
+  filed_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT tmf_artifact_filings_unique UNIQUE (organization_id, trial_id, artifact_code)
+);
 `;
 
 /**

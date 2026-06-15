@@ -441,6 +441,12 @@ export * from './ind-icsr-transmissions';
 // migration: migrations/20260615_regulatory_assessments.sql.
 export * from './regulatory-assessments';
 
+// TMF artifact filings — durable per-trial log of filed reference-model artifact
+// codes (powers the code-based completeness checker; distinct from etmf.ts).
+// Service: etmf/tmf-artifact-persistence;
+// migration: migrations/20260615_tmf_artifact_filings.sql.
+export * from './tmf-artifacts';
+
 // Clinical investigator financial disclosure — 21 CFR 54 (C2C-01) + the generic
 // ALCOA+ provenance spine seed (C2C-02). Forms FDA 3454/3455 → Module 1.
 // Service: server/services/financial-disclosures; migration: migrations/20260610_financial_disclosure_21cfr54.sql.
