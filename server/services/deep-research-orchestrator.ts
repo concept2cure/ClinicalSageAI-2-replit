@@ -126,7 +126,7 @@ export async function launchResearchJob(request: DeepResearchRequest): Promise<D
  */
 async function executeResearchJob(jobId: number, request: DeepResearchRequest): Promise<void> {
   // Update status to running
-  await updateJobProgress(jobId, 5, 'running');
+  await updateJobProgress(jobId, 5, 'running', request.organizationId);
 
   const connectorQuery: ConnectorQuery = {
     indication: request.query.indication,
@@ -139,7 +139,7 @@ async function executeResearchJob(jobId: number, request: DeepResearchRequest): 
   };
 
   // Fan out to connectors
-  await updateJobProgress(jobId, 15, 'running');
+  await updateJobProgress(jobId, 15, 'running', request.organizationId);
   const connectorResults = await searchConnectors(
     request.organizationId,
     request.connectorIds,
@@ -164,7 +164,7 @@ async function executeResearchJob(jobId: number, request: DeepResearchRequest): 
     [JSON.stringify(connectorLogs), jobId, request.organizationId]
   );
 
-  await updateJobProgress(jobId, 60, 'running');
+  await updateJobProgress(jobId, 60, 'running', request.organizationId);
 
   // Aggregate and rank results
   const allResults = connectorResults.flatMap(cr => cr.results);
@@ -192,12 +192,12 @@ async function executeResearchJob(jobId: number, request: DeepResearchRequest): 
     literatureResults,
   };
 
-  await updateJobProgress(jobId, 75, 'synthesizing');
+  await updateJobProgress(jobId, 75, 'synthesizing', request.organizationId);
 
   // Generate LLM synthesis
   const synthesis = await generateSynthesis(request.query, aggregated);
 
-  await updateJobProgress(jobId, 95, 'synthesizing');
+  await updateJobProgress(jobId, 95, 'synthesizing', request.organizationId);
 
   // Save final results
   await pool.query(
@@ -463,10 +463,18 @@ export function onJobProgress(jobId: number, callback: (progress: number, status
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-async function updateJobProgress(jobId: number, progress: number, status: string): Promise<void> {
+async function updateJobProgress(
+  jobId: number,
+  progress: number,
+  status: string,
+  organizationId: number,
+): Promise<void> {
+  // Tenant-scoped: every other deep_research_jobs write in this file already
+  // carries `AND organization_id = $n`; match that so a job can only be mutated
+  // within its owning org (defense-in-depth + silences the tenant-isolation gate).
   await pool.query(
-    `UPDATE deep_research_jobs SET progress = $1, status = $2 WHERE id = $3`,
-    [progress, status, jobId]
+    `UPDATE deep_research_jobs SET progress = $1, status = $2 WHERE id = $3 AND organization_id = $4`,
+    [progress, status, jobId, organizationId]
   );
 
   const cb = jobCallbacks.get(jobId);
