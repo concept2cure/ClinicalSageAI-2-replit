@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-06-15T04:42:00.131Z",
+  "generatedAt": "2026-06-15T04:48:24.897Z",
   "git": {
-    "sha": "bb87d615576e880543b24d5ddc9771d1636b2343",
-    "branch": "concept2cure-v2"
+    "sha": "30aa3842bd672fa7df673632fbeacbd9c0c536df",
+    "branch": "claude/medical-device-audit-spec-9w994x"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 87,
+        "count": 91,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -52,6 +52,7 @@
           "server/services/ai-governance/classification/index.ts",
           "server/services/ai-governance/index.ts",
           "server/services/ai/index.ts",
+          "server/services/ana-advisory/index.ts",
           "server/services/ana-biostats/index.ts",
           "server/services/ana-ri/index.ts",
           "server/services/ana/index.ts",
@@ -66,8 +67,10 @@
           "server/services/cortex/index.ts",
           "server/services/csr/index.ts",
           "server/services/documents/index.ts",
+          "server/services/entitlements/index.ts",
           "server/services/fda/index.ts",
           "server/services/foresight/index.ts",
+          "server/services/global-markets/index.ts",
           "server/services/grdhe/exportGenerators/index.ts",
           "server/services/grdhe/index.ts",
           "server/services/ind-forms/index.ts",
@@ -79,6 +82,7 @@
           "server/services/intelligence/index.ts",
           "server/services/ivd-knowledge/index.ts",
           "server/services/living-record/index.ts",
+          "server/services/mdx-submission-planner/index.ts",
           "server/services/ocr/index.ts",
           "server/services/orchestration/index.ts",
           "server/services/pathway-engines/index.ts",
@@ -156,7 +160,7 @@
       },
       {
         "basename": "types",
-        "count": 36,
+        "count": 40,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/components/concept2cure-projects/types.ts",
@@ -169,6 +173,7 @@
           "server/config/types.ts",
           "server/services/ai-gateway/types.ts",
           "server/services/ai-governance/classification/types.ts",
+          "server/services/ana-advisory/types.ts",
           "server/services/ana-biostats/types.ts",
           "server/services/ana/therapeutic-area-profiles/types.ts",
           "server/services/biostatistics-judgment/types.ts",
@@ -176,9 +181,12 @@
           "server/services/cognitive-ecosystem/types.ts",
           "server/services/compute/types.ts",
           "server/services/conversation-os/types.ts",
+          "server/services/entitlements/types.ts",
+          "server/services/global-markets/types.ts",
           "server/services/grdhe/types.ts",
           "server/services/intelligence-engine/types.ts",
           "server/services/ivd-knowledge/types.ts",
+          "server/services/mdx-submission-planner/types.ts",
           "server/services/reasoning-engine/types.ts",
           "server/services/report-os/portfolio/types.ts",
           "server/services/report-os/prediction/types.ts",
@@ -2145,11 +2153,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 454448
+        "bytes": 457674
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 330991
+        "bytes": 331520
       },
       {
         "file": "server/statistics-service.ts",
@@ -2203,7 +2211,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 9198
+        "lines": 9268
       },
       {
         "file": "server/statistics-service.ts",
@@ -2211,7 +2219,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 6155
+        "lines": 6163
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2375,7 +2383,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 323,
+      "duplicateGroups": 331,
       "largeByBytes": 11,
       "largeByLines": 34
     },
