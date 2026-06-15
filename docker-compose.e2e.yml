@@ -21,6 +21,14 @@ services:
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      # Job store backing. Without REDIS_URL the store pings localhost (no redis
+      # inside this container), fails, and silently falls back to a per-process
+      # in-memory store — so the worker's COMPLETED write is invisible to the API
+      # and status polling never completes. Point both services at the shared redis.
+      - REDIS_URL=redis://redis:6379/0
+      # Shared-secret bearer token the API requires (fails closed when unset).
+      # Sourced from the host/CI env so it matches the token the E2E test presents.
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-}
     depends_on:
       - redis
 
@@ -43,5 +51,8 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
       - OUTPUT_DIR_BASE=/shared_data
+      # Shared job store (see api service note) — the worker writes job status
+      # here and the API reads it; both must point at the same redis.
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
       - redis

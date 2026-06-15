@@ -9,6 +9,12 @@ on:
 jobs:
   test-generator:
     runs-on: ubuntu-latest
+    # The generation service fails closed without INTERNAL_SERVICE_TOKEN (returns
+    # 503). The same throwaway value is injected into the api container via
+    # docker-compose (${INTERNAL_SERVICE_TOKEN}) and read by the E2E test client,
+    # so the bearer token the test presents matches what the service expects.
+    env:
+      INTERNAL_SERVICE_TOKEN: e2e-internal-service-token
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,6 +39,15 @@ jobs:
           TEST_OUTPUT_DIR: services/test_outputs
         run: |
           pytest -q services/tests/test_generator.py -q
+
+      - name: Prepare shared volume
+        # The bind-mounted ./test_shared (-> /shared_data) is created root-owned
+        # by Docker, but the worker container runs as a non-root user and writes
+        # generated docs / smoke files there. Pre-create it world-writable so the
+        # worker isn't denied (Errno 13). Throwaway E2E volume only.
+        run: |
+          mkdir -p test_shared
+          chmod 777 test_shared
 
       - name: Start E2E docker-compose
         run: |
