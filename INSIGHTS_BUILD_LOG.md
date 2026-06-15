@@ -30,6 +30,26 @@ four §8 decisions on 2026-06-15:
   (argv, no shell) exclusively, with input truncation and buffer/timeout limits. No shell `exec`
   remains. No further action required for that item.
 
+## Global market coverage (per sponsor directive: "think for all global markets")
+
+`taxonomy-global.ts` adds 30 regulatorily-accurate report types with no typeId collision
+against the existing seed: USA FDA drug/bio (IND, NDA/BLA, CRL response, Type A/B/C meeting
+brief, De Novo), EU EMA (MAA Day-120/180 LoQ, variations, PSUR/PBRER, scientific advice),
+EU devices (MDR tech doc, MDR CER, IVDR PER), Japan PMDA (J-NDA/Shonin, consultation,
+re-examination), Health Canada (NDS/SNDS, device licence), UK MHRA (MAA, ILAP), Australia
+TGA (prescription, device ARTG), Korea MFDS, Switzerland Swissmedic, Brazil ANVISA,
+cross-region comparison + ICH harmonization gap matrix + label-currency matrix, and global
+PV (DSUR, signal management). CRL/LoQ packs set `allowPartial:false` + `forbidFinalIfMissingCritical`.
+
+## AnA 1.0 RI reporting expertise (per directive: "expand AnA expertise")
+
+`ana/report-tools.ts` defines 7 reviewer-grade conversational tools (list_report_types,
+generate_report, explain_blockers, portfolio_readiness, regional_gap_analysis, compare_regions,
+get_prediction) with zod-validated args and the hard guardrail `ANA_REPORTING_GUARDRAIL`:
+AnA narrates and explains report outputs but never originates a metric, score, or probability.
+
 ## Increment history
 
 - _2026-06-15_ — Build log created; Step 0/1 backend foundations started.
+- _2026-06-15_ — Steps 0/1/2/5 backend pure-logic landed + tested (gate, providers, render, prediction).
+- _2026-06-15_ — Global-markets taxonomy (30 types) + AnA reporting tools (7) landed + tested.
