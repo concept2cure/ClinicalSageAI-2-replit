@@ -84,14 +84,23 @@ export interface ReportsData {
   bars: ReportBar[];
   forecast: ForecastRow[];
   models: PrecedentModel[];
+  /** True when any section shown is fixture/sample content rather than live
+   *  server data. Surfaces must label this and must not let sample data be
+   *  exported as a governed report (regulated-truthfulness rule). */
+  isSample: boolean;
 }
 export function useReports(): ReportsData {
   const { data } = useFetchJson<Envelope<ReportsData>>('/api/intelligence/reports');
   const d = data?.data;
+  // Sample unless every section the surface renders came from the server. The
+  // route currently only populates `forecast`, so the rest fall back to
+  // fixtures — flag that honestly rather than presenting it as live.
+  const isSample = !(d?.kpis && d?.bars && d?.forecast && d?.models);
   return {
     kpis: d?.kpis ?? REPORT_KPIS,
     bars: d?.bars ?? REPORT_BARS,
     forecast: d?.forecast ?? FORECAST,
     models: d?.models ?? PRECEDENT_MODELS,
+    isSample,
   };
 }

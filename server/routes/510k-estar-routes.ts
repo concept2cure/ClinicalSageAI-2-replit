@@ -168,16 +168,19 @@ router.post('/build', authMiddleware, requireEditorAccess, async (req, res) => {
       organizationId: getOrganizationId(req),
       projectId: meta.projectId,
       userId: getUserId(req),
-      title: meta.title || meta.submissionName || `${meta.id} eSTAR Export`,
+      title: meta.title || meta.submissionName || `${meta.id} — 510(k) content package (draft)`,
       contentForArtifact: typeof content === 'string' ? content : JSON.stringify(content),
       sourceType: 'export_estar_zip',
       ctdSection: meta.ctdSection || 'm1.5',
-      suggestedPlacement: 'Module 1 / 510(k) eSTAR package',
+      suggestedPlacement: 'Module 1 / 510(k) content package (draft)',
       backendRoute: 'POST /api/510k/estar/build',
       binaryOutput: zipBuffer,
       mimeType: 'application/zip',
       filename,
-      metadata: { format: 'zip', attachmentCount: attachments.length, package: 'eSTAR' },
+      // This route produces a ZIP of rendered section PDFs, NOT the official FDA
+      // eSTAR interactive PDF that CDRH ingests. `officialEstarPdf: false` keeps
+      // that honest so no downstream surface presents this as a submittable eSTAR.
+      metadata: { format: 'zip', attachmentCount: attachments.length, package: 'eSTAR', officialEstarPdf: false },
     });
 
     return res.status(200).json(consequence);

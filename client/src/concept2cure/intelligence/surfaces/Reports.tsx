@@ -18,12 +18,23 @@ export interface ReportsSurfaceProps {
 }
 
 export function ReportsSurface({ onAsk }: ReportsSurfaceProps) {
-  const { kpis: k, bars, forecast, models } = useReports();
+  const { kpis: k, bars, forecast, models, isSample } = useReports();
 
   return (
     <>
       <h1 className="in-h1">Reports</h1>
       <p className="in-sub">Readiness dashboards, timeline forecasting and precedent-likelihood models. Read-only — drives decisions, not edits.</p>
+
+      {isSample && (
+        <p
+          className="in-sub"
+          role="note"
+          style={{ color: '#d97706', fontWeight: 600 }}
+          data-testid="reports-sample-notice"
+        >
+          Sample data — not live. Connect live reporting to replace these figures. Export is disabled until data is live.
+        </p>
+      )}
 
       <div className="in-kpis">
         <div className="in-kpi"><div className="lbl">Programs tracked</div><div className="val">{k.programs}</div><div className="sub">Across MDX + Biopharma</div></div>
@@ -65,7 +76,11 @@ export function ReportsSurface({ onAsk }: ReportsSurfaceProps) {
           <h2>Timeline forecast vs target</h2>
           <span className="meta">Next milestones · {forecast.length} programs</span>
           <span className="spacer" />
-          <button className="link" type="button" onClick={() => onAsk('Export the timeline forecast as a PDF')}>Export PDF {I.right}</button>
+          {isSample ? (
+            <span className="meta" title="Export is disabled while showing sample data">Export unavailable (sample data)</span>
+          ) : (
+            <button className="link" type="button" onClick={() => onAsk('Export the timeline forecast as a PDF')}>Export PDF {I.right}</button>
+          )}
         </div>
         <div className="in-table">
           <div className="in-thead" style={{ gridTemplateColumns: FCOLS }}>
