@@ -394,6 +394,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Global RI routes:', error);
   }
 
+  // eTMF — Trial Master File completeness / inspection-readiness (DIA TMF RM).
+  try {
+    const etmfModule = await import('../routes/etmf.routes');
+    app.use('/api/etmf', authMiddleware, etmfModule.default);
+    console.info('✅ eTMF routes mounted (/api/etmf)');
+  } catch (error) {
+    console.error('❌ Failed to mount eTMF routes:', error);
+  }
+
   // eGrants / funder-milestone management (2 CFR 200; SBIR/STTR; pre→post-award).
   try {
     const grantsModule = await import('../routes/grants');
