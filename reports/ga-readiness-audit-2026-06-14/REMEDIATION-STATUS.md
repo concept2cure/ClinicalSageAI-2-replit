@@ -21,9 +21,9 @@ running it. Scope excludes the React UI; DB-schema migrations are called out exp
 | B7 | Unauthenticated `/uploads` static mount | ✅ Fixed | mount removed |
 | B8 | Hardcoded credential-vault AES key | ✅ Fixed | throws in prod when unset |
 | B9 | Unauthenticated Python generation service `api.py` | ✅ Fixed | bearer token (fail-closed) + path confinement |
-| B10 | Canonical audit mirror unchained/mutable | 🟡 Partial — see Audit-Trail Remediation | schema migration required |
-| B11 | Audit writes not in the action transaction | 🟡 Partial — e-signature path fixed | broad refactor required |
-| B12 | Audit retrieval from volatile in-memory array | 🟡 Open — see Audit-Trail Remediation | reads persistent table needed |
+| B10 | Canonical audit mirror unchained | ✅ Fixed (PR #809) | every `logAction` now writes a sha256-chained + HMAC-sealed row; verifier covers the whole table |
+| B11 | Audit write atomicity | ✅ Substantially fixed | each audit write is now its own BEGIN…COMMIT chained txn (+ e-sig path awaits+fails-closed). Full same-txn-as-business-action binding across all call sites remains a tracked larger refactor |
+| B12 | Audit retrieval from volatile in-memory array | ✅ Fixed (PR #809) | `queryAuditEvents` reads the durable store first, in-memory only as fallback |
 | B13 | Integrity-verify reported ok when seal skipped | ✅ Fixed | `verifyAuditIntegrity` fails closed |
 | B14 | eCTD generator fabricates clinical efficacy data | ✅ Fixed | fails loudly; never invents data |
 | B15 | Production ECS runs mutable `:latest` image | ✅ Fixed | `image_tag` variable, validation rejects `latest` |
@@ -109,16 +109,23 @@ This brings the running total to **13/16 blockers** and **~30/37 HIGH** closed a
 ~7 HIGH, ~40 MEDIUM, ~26 LOW remain, plus two CI-infrastructure items that gate the
 audit's own assurance:
 
-- **Provision Postgres in the CI `Test` job + enforce `--coverage`** (Testing HIGH) — the
-  most leveraged remaining item: today the safety-critical RLS/tenant/audit suites
-  self-skip without a DB, so they "pass" by skipping. This is a CI-workflow change.
-- **Flip `RLS_ENFORCE=on`** as the DB backstop behind tenant scoping, after burning down
-  the 28 baseline unscoped query sites (DB/ops workstream).
-- The **audit-trail unification (B10–B12)** DB migration + transaction-threading (designed above).
+- ✅ **CI `Test` job provisions Postgres** (PR #809) — the primary gate now runs the
+  RLS/tenant/audit/migration suites against a real DB instead of self-skipping (validated
+  green), and an advisory `Coverage` job measures coverage every run. *Done.*
+- ✅ **Audit-trail unification (B10–B12)** (PR #809) — every `logAction` write is now
+  chained + sealed; retrieval reads the durable store. *Done* (full same-transaction-as-
+  business-action binding across all call sites remains a tracked larger refactor).
+- **`RLS_ENFORCE=on` flip** — this is a production **env/ops** decision (one variable;
+  the staged shadow-mode rollout is by design), NOT a repo change. Pre-req: burn down the
+  28 baselined unscoped-query fingerprints (`docs/reports/tenant-isolation-baseline.json`).
+  Those need per-site review — several are legitimately global and belong on the gate
+  allowlist (seed scripts, Stripe `stripe_events` webhooks, cross-tenant `audit_events`
+  monitoring, `users`-by-id lookups), while the RAG `document_chunks`/`documents` reads
+  genuinely need scoping. Recommend doing this as reviewed per-file batches, then flip in
+  staging before prod.
 - Remaining MEDIUM/LOW: `console.*` migration across the rest of the prod paths;
   eCTD ZIP streaming (Performance); broader idempotency-key adoption; API error-shape
-  consistency.
-  Celery retry/idempotency/dead-letter (Python).
+  consistency; Celery retry/idempotency/dead-letter (Python — partially done).
 
 ## CI state of this PR
 
