@@ -435,6 +435,11 @@ export * from './ind-amendments';
 // transmitted → acknowledged). Service: ind-icsr-transmission-persistence;
 // migration: migrations/20260615_ind_icsr_transmissions.sql.
 export * from './ind-icsr-transmissions';
+// External eCTD validation reports — durable per-sequence external-validator
+// results folded into the dispatch gate (EVALIDATOR_INTEGRATION_SPEC.md).
+// Service: server/services/ectd/external-validator/validation-report-persistence;
+// migration: migrations/20260615_ectd_validation_reports.sql.
+export * from './ectd-validation-reports';
 
 // Regulatory assessments — durable RI/CDISC/eTMF verdict snapshots per program.
 // Service: regulatory-assessments/regulatory-assessment-persistence;

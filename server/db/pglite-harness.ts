@@ -199,6 +199,20 @@ CREATE TABLE IF NOT EXISTS regulatory_assessments (
   created_by       INTEGER,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS submission_validation_reports (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id   INTEGER NOT NULL,
+  submission_id     INTEGER NOT NULL,
+  sequence_id       INTEGER NOT NULL,
+  validator_name    TEXT NOT NULL,
+  validator_version TEXT NOT NULL,
+  error_count       INTEGER NOT NULL DEFAULT 0,
+  warning_count     INTEGER NOT NULL DEFAULT 0,
+  report            JSONB NOT NULL,
+  created_by        INTEGER,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `;
 
 /**

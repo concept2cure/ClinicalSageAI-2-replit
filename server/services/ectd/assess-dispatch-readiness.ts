@@ -23,10 +23,27 @@ import { shadowReviewFindings, shadowReviewRuns } from '../../../shared/schema/s
 import { getSubmissionRegionProfile } from '../region-profiles/region-profile-service';
 import { computeDispatchReadiness, type DispatchReadinessReport } from './dispatch-readiness';
 import { evaluateDispatchGate, type DispatchGateResult } from './dispatch-gate';
+import { getLatestValidationReport } from './external-validator/validation-report-persistence';
+import {
+  assessExternalValidationReadiness,
+  externalValidationRequiredFromEnv,
+  type ExternalValidationGateResult,
+} from './external-validator/evaluate-external-validation';
+import type { ExternalValidationReport } from './external-validator/types';
 
 export interface AssessDispatchReadinessParams {
   sequenceId: number;
   organizationId: number;
+  /**
+   * Opt-in external-validation enforcement. ADDITIVE + FLAG-GATED: when omitted
+   * the value is read from `ECTD_REQUIRE_EVALIDATOR` (default off), so the
+   * default dispatch behaviour is unchanged. When required (and production), the
+   * latest external validation report's error count is folded into the gate and
+   * a missing report blocks. Pass `false` to disable regardless of the env flag.
+   */
+  requireExternalValidation?: boolean;
+  /** Submission environment; only 'production' can be blocked by the external gate. */
+  environment?: 'staging' | 'production';
 }
 
 export interface DispatchReadinessAssessment {
@@ -45,6 +62,12 @@ export interface DispatchReadinessAssessment {
   /** Full structural breakdown (errors + non-blocking warnings/infos). */
   readiness: DispatchReadinessReport;
   leafCount: number;
+  /**
+   * External-validation gate result, present only when external validation is in
+   * effect for this assessment (the `ECTD_REQUIRE_EVALIDATOR` flag or an explicit
+   * `requireExternalValidation`). Undefined preserves the default-off shape.
+   */
+  externalValidation?: ExternalValidationGateResult;
 }
 
 /** Flatten a region profile's Module-1 tree to the section codes marked required. */
@@ -70,6 +93,15 @@ export async function assessSequenceDispatchReadiness(
   params: AssessDispatchReadinessParams
 ): Promise<DispatchReadinessAssessment> {
   const { sequenceId, organizationId } = params;
+
+  // ADDITIVE + FLAG-GATED: external validation is off by default. When omitted,
+  // the requirement comes from ECTD_REQUIRE_EVALIDATOR (default false), so the
+  // legacy path (no env flag, no explicit param) does ZERO extra work and the
+  // gate inputs are unchanged.
+  const requireExternalValidation =
+    params.requireExternalValidation ?? externalValidationRequiredFromEnv();
+  const environment: 'staging' | 'production' =
+    params.environment ?? (process.env.NODE_ENV === 'production' ? 'production' : 'staging');
 
   // 1. Tenant-scoped sequence (region + status).
   const [sequence] = await db
@@ -144,17 +176,51 @@ export async function assessSequenceDispatchReadiness(
     );
   const shadowReviewRunCount = shadowRunCount ?? 0;
 
-  // 5. Hard gate over the server-computed inputs.
+  // 4c. External validation (ADDITIVE + FLAG-GATED). Only when enforcement is in
+  //     effect do we load the latest persisted report and evaluate its gate —
+  //     the default-off path skips this entirely, leaving the gate inputs
+  //     unchanged so existing behaviour/tests are untouched.
+  let externalValidation: ExternalValidationGateResult | undefined;
+  let externalErrorCount = 0;
+  if (requireExternalValidation) {
+    let latest: ExternalValidationReport | null;
+    try {
+      const row = await getLatestValidationReport(sequenceId, { organizationId });
+      latest = (row?.report as ExternalValidationReport | undefined) ?? null;
+    } catch {
+      // A missing report surfaces as a blocker below; never a false green.
+      latest = null;
+    }
+    externalValidation = assessExternalValidationReadiness({
+      report: latest,
+      requireExternalValidation,
+      environment,
+    });
+    externalErrorCount = externalValidation.errorCount;
+  }
+
+  // 5. Hard gate over the server-computed inputs. When external validation is in
+  //    effect, its error count is folded into validationErrors so a failing
+  //    external validation blocks dispatch through the same hard gate.
   const gate = evaluateDispatchGate({
-    validationErrors: readiness.errors,
+    validationErrors: readiness.errors + externalErrorCount,
     unacknowledgedShadowCriticals,
   });
+
+  // Fold any external-validation "missing report" blocker into the gate verdict
+  // (folding error counts above only covers reports that exist with errors).
+  if (externalValidation && !externalValidation.cleared) {
+    gate.cleared = false;
+    for (const b of externalValidation.blockers) {
+      if (!gate.blockers.includes(b)) gate.blockers.push(b);
+    }
+  }
 
   return {
     sequenceId,
     region: sequence.region,
     sequenceStatus: sequence.status,
-    validationErrors: readiness.errors,
+    validationErrors: readiness.errors + externalErrorCount,
     unacknowledgedShadowCriticals,
     shadowReviewRunCount,
     /** True when the gate is clear but no Shadow Review has run — dispatch is
@@ -163,6 +229,7 @@ export async function assessSequenceDispatchReadiness(
     gate,
     readiness,
     leafCount: leaves.length,
+    externalValidation,
   };
 }
 
