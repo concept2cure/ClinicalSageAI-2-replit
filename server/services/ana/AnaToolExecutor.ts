@@ -37,8 +37,10 @@ import { getAllEnabledTools } from './AnaToolDefinitions.js';
 import {
   adviseDeviceReadiness,
   adviseGlobalMarketStrategy,
+  adviseGlobalSubmissionPlan,
   type DeviceReadinessAdviceInput,
   type GlobalMarketAdviceInput,
+  type SubmissionPlanAdviceInput,
 } from '../ana-advisory';
 import {
   recordToolOutcome,
@@ -655,6 +657,23 @@ registerToolHandler('advise_global_market_strategy', async (input) => {
   return JSON.stringify({
     source: 'AnA Global-Market Strategy Advisor',
     ...adviseGlobalMarketStrategy({ profile, candidateMarkets } as unknown as GlobalMarketAdviceInput),
+  });
+});
+
+// Global multi-market submission-plan advisor (grounded; never claims transmission).
+registerToolHandler('advise_global_submission_plan', async (input) => {
+  const rawProfile = input.profile && typeof input.profile === 'object' ? (input.profile as Record<string, unknown>) : {};
+  const profile = {
+    name: typeof rawProfile.name === 'string' ? rawProfile.name : 'Unnamed device',
+    isIvd: rawProfile.isIvd === true,
+    riskTier: typeof rawProfile.riskTier === 'string' ? rawProfile.riskTier : undefined,
+    intendedUse: typeof rawProfile.intendedUse === 'string' ? rawProfile.intendedUse : undefined,
+    availableArtifacts: Array.isArray(rawProfile.availableArtifacts) ? (rawProfile.availableArtifacts as string[]) : [],
+  };
+  const targetMarkets = Array.isArray(input.targetMarkets) ? (input.targetMarkets as string[]) : [];
+  return JSON.stringify({
+    source: 'AnA Global-Submission-Plan Advisor',
+    ...adviseGlobalSubmissionPlan({ profile, targetMarkets } as unknown as SubmissionPlanAdviceInput),
   });
 });
 

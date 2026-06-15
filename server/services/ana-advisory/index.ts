@@ -11,6 +11,7 @@
 
 export * from './types';
 export * from './device-market-advisor';
+export * from './submission-plan-advisor';
 
 import advisor from './device-market-advisor';
 
