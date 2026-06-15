@@ -12,7 +12,7 @@ four §8 decisions on 2026-06-15:
 
 | Step | Title | Status |
 |---|---|---|
-| 0 | Foundations, guardrails, truthfulness contract | Foundation landed (gate built + tested); run-lifecycle wiring pending DB-backed integration test |
+| 0 | Foundations, guardrails, truthfulness contract | Foundation landed (gate built + tested); criticalBlockers now severity-tagged through orchestrator → run → render; run-lifecycle finalize wiring pending DB-backed test |
 | 1 | Canonical insight/aggregation layer (read model) | Interface + registry + pure helpers landed + tested; DB-backed providers + orchestrator integration next |
 | 2 | Report content/render model | Pure model + renderer landed + tested; live read endpoint GET /runs/:id/rendered wired (typecheck-only, needs DB-backed CI test) |
 | 3 | Governed visualization system | Not started |
@@ -20,8 +20,8 @@ four §8 decisions on 2026-06-15:
 | 5 | Prediction reports (package the honest models) | Pure assembler + mandatory-disclosure guardrail landed + tested; wiring real model services next |
 | 6 | Scheduling, subscriptions, delivery | Core logic landed + tested (cadence, subscription model, e-sign/watermark delivery gate); Bull worker + subscriptions table next (DB/Redis) |
 | 7 | Enterprise / portfolio rollup reporting | Pure aggregator (board pack) + cross-region/harmonization engine landed + tested; DB-backed member fetch next |
-| 8 | Governance, audit, e-sign, Part 11 for reports | Not started |
-| 9 | Observability, quality, rollout | Not started |
+| 8 | Governance, audit, e-sign, Part 11 for reports | Core sealing logic landed + tested (canonical hash, provenance atoms, tamper-evident verifySeal, AI-disclosure detection); DB-backed immutable-record wiring next |
+| 9 | Observability, quality, rollout | Quality core landed + tested (Brier score, calibration buckets/quality, provider freshness rollup); admin quality view + metrics wiring next |
 
 ## Notes
 

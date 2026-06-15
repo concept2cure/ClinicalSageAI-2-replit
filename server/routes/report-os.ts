@@ -1072,6 +1072,7 @@ router.post('/runs', async (req: Request, res: Response) => {
           providers: computed.providers,
           scopeLineage: scope.lineage,
           summary: computed.summary,
+          criticalBlockers: computed.criticalBlockers,
         },
         blockers: computed.blockers,
         confidence: computed.confidence,
@@ -1256,13 +1257,23 @@ router.get('/runs/:id/rendered', async (req: Request, res: Response) => {
     const blockers = toBlockerArray(run.blockers);
     const rules = (reportType?.truthfulnessRules ?? {}) as TruthfulnessRules;
 
+    // Prefer the severity-tagged critical blockers persisted at run creation.
+    // Fall back (for runs created before this field existed) to the conservative
+    // posture of treating every blocker as critical when the type forbids final
+    // on missing critical evidence.
+    const storedCritical = Array.isArray(dependencySummary.criticalBlockers)
+      ? (dependencySummary.criticalBlockers as string[])
+      : null;
+    const criticalBlockers =
+      storedCritical ?? (rules.forbidFinalIfMissingCritical ? blockers : []);
+
     const requestedStatus: ReportRunStatus = run.status === 'completed' ? 'final' : 'partial';
     const truthfulness = evaluateTruthfulness(
       {
         requestedStatus,
         confidence: run.confidence ?? 0,
         blockers,
-        criticalBlockers: rules.forbidFinalIfMissingCritical ? blockers : [],
+        criticalBlockers,
         gapsSection: true,
       },
       rules
