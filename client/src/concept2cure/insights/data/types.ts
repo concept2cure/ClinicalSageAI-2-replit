@@ -1,0 +1,193 @@
+/**
+ * Client-side DTO mirror for the Report-OS Insights surface.
+ *
+ * These interfaces intentionally duplicate the shapes defined server-side in
+ * `server/services/report-os/render/types.ts` (and related modules). The client
+ * must NOT import server code, so the contract is re-declared here as the source
+ * of truth for the Insights data layer. Keep these in sync with the server
+ * render model when the report document shape changes.
+ */
+
+/** The scopes a report run can target. Mirrors `reportScopeEnum` server-side. */
+export type ReportScope =
+  | 'account'
+  | 'program'
+  | 'project'
+  | 'study'
+  | 'submission'
+  | 'document';
+
+/** Lifecycle status of a rendered report, post truthfulness gate. */
+export type ReportRunStatus = 'draft' | 'partial' | 'final';
+
+/**
+ * A pointer back to the source data a rendered value was derived from.
+ * Mirrors the server `ProvenanceRef`.
+ */
+export interface ProvenanceRef {
+  sourceTable: string;
+  sourceField?: string;
+  recordId?: string | number;
+  transformation?: string;
+  confidence?: number;
+  auditId?: string;
+}
+
+/** Result of the server-side truthfulness gate carried on a rendered report. */
+export interface TruthfulnessEvaluation {
+  allowedStatus: ReportRunStatus;
+  downgradedFrom?: ReportRunStatus;
+  reasons: string[];
+}
+
+/**
+ * A single renderable block. Discriminated on `kind` — mirrors the server
+ * `ReportBlock` union exactly.
+ */
+export type ReportBlock =
+  | { kind: 'summary'; text: string }
+  | { kind: 'narrative'; text: string; aiGenerated: true; disclosure: string }
+  | {
+      kind: 'metric';
+      label: string;
+      value: number | string | null;
+      unit?: string;
+      status?: 'ready' | 'partial' | 'missing';
+      provenance?: ProvenanceRef[];
+    }
+  | {
+      kind: 'table';
+      columns: string[];
+      rows: Array<Array<string | number | null>>;
+      provenance?: ProvenanceRef[];
+    }
+  | {
+      kind: 'chart';
+      chartType:
+        | 'readiness_ring'
+        | 'bar'
+        | 'trend'
+        | 'stacked_bar'
+        | 'forecast_band'
+        | 'calibration';
+      spec: Record<string, unknown>;
+      provenance?: ProvenanceRef[];
+    }
+  | {
+      kind: 'gap-list';
+      items: Array<{
+        title: string;
+        severity?: 'critical' | 'high' | 'medium' | 'low';
+        message?: string;
+      }>;
+    }
+  | { kind: 'blocker-list'; items: string[] }
+  | {
+      kind: 'disclosure';
+      method: string;
+      confidence?: number;
+      validated: boolean;
+      note: string;
+    };
+
+/** An ordered group of blocks under a titled heading. */
+export interface ReportSection {
+  id: string;
+  title: string;
+  blocks: ReportBlock[];
+}
+
+/** The full rendered report document returned by `/runs/:id/rendered`. */
+export interface RenderedReport {
+  reportTypeId: string;
+  scopeType: string;
+  scopeId: string;
+  generatedAt: string;
+  status: ReportRunStatus;
+  sections: ReportSection[];
+  truthfulness?: TruthfulnessEvaluation;
+}
+
+/**
+ * A report type from the taxonomy registry (`/taxonomy`). The server row carries
+ * additional dependency/governance fields; the Insights surface only needs the
+ * presentational subset.
+ */
+export interface ReportTypeSummary {
+  typeId: string;
+  label: string;
+  family: string;
+  allowedScopes: string[];
+  allowedPersonas: string[];
+}
+
+/**
+ * A summarized report run row (`/runs`). The list endpoint enriches rows with a
+ * `reportTypeLabel`; the core summary tracked here is sufficient for the surface.
+ */
+export interface ReportRunSummary {
+  id: string;
+  reportTypeId: string;
+  scopeType: string;
+  scopeId: string;
+  status: string;
+  confidence: number | null;
+  blockers?: string[];
+}
+
+/** A program group (`/program-groups`) with its member projects. */
+export interface ProgramGroupSummary {
+  id: number;
+  organizationId: number;
+  name: string;
+  description?: string | null;
+  status: string;
+  projects: Array<{
+    projectId: number;
+    projectName?: string | null;
+    projectType?: string | null;
+  }>;
+}
+
+/** A single dependency-provider record (`/runs/:id/dependencies`). */
+export interface ReportRunDependency {
+  id: number;
+  runId: number;
+  provider: string;
+  status: string;
+  blocker?: string | null;
+  observedAt: string;
+}
+
+/** Input accepted by `createReportRun` / `POST /runs`. */
+export interface CreateReportRunInput {
+  organizationId: number;
+  scopeType: ReportScope;
+  scopeId: string;
+  reportTypeId: string;
+  clientWorkspaceId?: number;
+  registryId?: string;
+  submissionType?: string;
+  requestedBy?: number;
+}
+
+/** Response payload from `POST /runs`. */
+export interface CreateReportRunResult {
+  run: ReportRunSummary & Record<string, unknown>;
+  snapshot: Record<string, unknown>;
+  blockers: string[];
+  confidence: number | null;
+}
+
+/** Query parameters accepted by `fetchRuns` / `GET /runs`. */
+export interface FetchRunsParams {
+  organizationId: number;
+  scopeType?: string;
+  scopeId?: string;
+  status?: string;
+  reportTypeId?: string;
+  search?: string;
+  sortBy?: 'createdAt' | 'completedAt' | 'confidence' | 'status' | 'reportType' | 'scopeType';
+  sortOrder?: 'asc' | 'desc';
+  limit?: number;
+}
