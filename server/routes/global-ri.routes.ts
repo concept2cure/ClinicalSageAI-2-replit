@@ -29,6 +29,7 @@ import { estimateFees, getFeeSchedule, type FeeMarket } from '../services/global
 import { assessLabeling, getLabelingRequirements, type LabelMarket } from '../services/global-ri/labeling-requirements';
 import { assessCtaReadiness, getCtaRequirements, type CtaMarket } from '../services/global-ri/clinical-trial-application-requirements';
 import { classifyChange, getChangeVehicles, CHANGE_CATEGORIES, type ChangeMarket } from '../services/global-ri/post-approval-changes';
+import { ICH_GUIDELINES, getGuideline, guidelinesByCategory, searchGuidelines, listCategories } from '../services/global-ri/ich-guideline-catalog';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('global-ri-routes');
@@ -305,6 +306,28 @@ router.post('/changes/classify', limiter, requireRole(AUTHOR), (req: Request, re
     // Unmodeled market/category → 400 validation.
     return res.status(400).json({ error: { code: 'VALIDATION', message: err instanceof Error ? err.message : 'Invalid change.' } });
   }
+});
+
+// ── ICH guideline reference catalog ───────────────────────────────────────────
+
+/** The ICH guideline catalog; ?category= filters, ?q= searches. */
+router.get('/ich-guidelines', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const q = typeof req.query.q === 'string' ? req.query.q : '';
+  const category = typeof req.query.category === 'string' ? req.query.category : '';
+  let guidelines = ICH_GUIDELINES;
+  if (q) guidelines = searchGuidelines(q);
+  else if (category) guidelines = guidelinesByCategory(category as any);
+  res.json({ categories: listCategories(), guidelines });
+});
+
+/** A single ICH guideline by code. */
+router.get('/ich-guidelines/:code', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const code = String(Array.isArray(req.params.code) ? req.params.code[0] : req.params.code);
+  const guideline = getGuideline(code);
+  if (!guideline) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No ICH guideline "${code}".` } });
+  }
+  res.json(guideline);
 });
 
 export default router;
