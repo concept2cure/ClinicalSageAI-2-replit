@@ -36,6 +36,10 @@ export type MarketId =
   | 'kr-mfds'
   | 'ch-swissmedic'
   | 'in-cdsco'
+  | 'sg-hsa'
+  | 'tw-tfda'
+  | 'sa-sfda'
+  | 'za-sahpra'
   | 'mdsap';
 
 /** Coarse geographic / harmonisation region grouping. */
@@ -44,6 +48,8 @@ export type MarketRegion =
   | 'europe'
   | 'asia-pacific'
   | 'south-america'
+  | 'middle-east'
+  | 'africa'
   | 'cross-market';
 
 /** The dossier standard / format a market's device or IVD filing uses. */

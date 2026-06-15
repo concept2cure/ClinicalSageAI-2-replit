@@ -533,6 +533,173 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
       'MDSAP Audit Model companion document',
     ],
   },
+
+  // ── Singapore — HSA ─────────────────────────────────────────────────────────
+  'sg-hsa': {
+    id: 'sg-hsa',
+    name: 'Singapore — HSA (Health Sciences Authority)',
+    region: 'asia-pacific',
+    authority: 'Health Sciences Authority — Medical Devices Branch',
+    authorityShort: 'HSA',
+    jurisdictions: ['SG'],
+    dossierStandard: 'imdrf-toc',
+    dossierFormatName: 'ASEAN CSDT / IMDRF ToC — product registration (Class A notification to D evaluation)',
+    ivdSupport:
+      'IVDs regulated under the same Health Products Act; risk Class A–D with abridged/expedited routes leveraging prior approvals (FDA/EU/TGA/Health Canada/PMDA reference agencies).',
+    classificationScheme:
+      'Risk Class A (low) to D (high), GHTF/IMDRF-aligned; reference-agency reliance shortens evaluation.',
+    devicePathways: ['Class A DB listing', 'Full/Abridged/Expedited evaluation', 'Reference-agency reliance'],
+    ivdPathways: ['Class A DB listing', 'Abridged/Expedited evaluation (IVD)'],
+    localRepresentativeRequired: true,
+    localization: {
+      primaryLanguage: 'en',
+      labellingLanguages: 'English',
+      translationRequired: true,
+      note: 'Registration held by a locally-licensed Registrant; English labelling.',
+    },
+    qmsExpectation: 'iso-13485',
+    requiredDossierElements: [
+      'device_classification',
+      'safety_effectiveness_evidence',
+      'performance_testing',
+      'labelling',
+      'qms_quality_system',
+      'local_representative',
+    ],
+    canAssemble: false,
+    assembleNote:
+      'Platform does not assemble the HSA CSDT/IMDRF ToC submission; descriptor is advisory + readiness only.',
+    canTransmit: false,
+    citations: [
+      'Health Products Act (Medical Devices) and HSA GN-15/GN-16 guidance',
+      'ASEAN CSDT; IMDRF Table of Contents',
+    ],
+  },
+
+  // ── Taiwan — TFDA ───────────────────────────────────────────────────────────
+  'tw-tfda': {
+    id: 'tw-tfda',
+    name: 'Taiwan — TFDA (Taiwan Food and Drug Administration)',
+    region: 'asia-pacific',
+    authority: 'Taiwan Food and Drug Administration',
+    authorityShort: 'TFDA',
+    jurisdictions: ['TW'],
+    dossierStandard: 'national-form-set',
+    dossierFormatName: 'TFDA QMS Documentation (QSD) + product registration dossier (national format)',
+    ivdSupport:
+      'IVDs regulated under the Medical Devices Act; Class I–III with QMS documentation (QSD) approval generally required before/with registration.',
+    classificationScheme:
+      'Risk Class I (low) to III (high) under the Medical Devices Act; GHTF-aligned rules.',
+    devicePathways: ['Class I listing', 'Class II/III registration', 'QSD (QMS) approval'],
+    ivdPathways: ['Class I listing', 'Class II/III IVD registration'],
+    localRepresentativeRequired: true,
+    localization: {
+      primaryLanguage: 'zh-TW',
+      labellingLanguages: 'Traditional Chinese',
+      translationRequired: true,
+      note: 'Local licence holder required; labelling in Traditional Chinese.',
+    },
+    qmsExpectation: 'iso-13485-or-national',
+    requiredDossierElements: [
+      'device_classification',
+      'safety_effectiveness_evidence',
+      'performance_testing',
+      'labelling',
+      'qms_quality_system',
+      'local_representative',
+    ],
+    canAssemble: false,
+    assembleNote:
+      'Platform does not assemble the TFDA national dossier/QSD; descriptor is advisory + readiness only.',
+    canTransmit: false,
+    citations: [
+      'Medical Devices Act (Taiwan) and TFDA registration regulations',
+      'TFDA QMS Documentation (QSD) requirements',
+    ],
+  },
+
+  // ── Saudi Arabia — SFDA ─────────────────────────────────────────────────────
+  'sa-sfda': {
+    id: 'sa-sfda',
+    name: 'Saudi Arabia — SFDA (Saudi Food and Drug Authority)',
+    region: 'middle-east',
+    authority: 'Saudi Food and Drug Authority — Medical Devices Sector',
+    authorityShort: 'SFDA',
+    jurisdictions: ['SA'],
+    dossierStandard: 'national-form-set',
+    dossierFormatName: 'Medical Device Marketing Authorization (MDMA) — national dossier (GHTF/IMDRF-aligned)',
+    ivdSupport:
+      'IVDs covered by the Medical Devices Interim Regulation; Class A–D with MDMA and reliance on approvals from founding GHTF jurisdictions to abridge review.',
+    classificationScheme:
+      'Risk Class A–D (GHTF rules); reliance on reference-jurisdiction approvals available.',
+    devicePathways: ['MDMA (Medical Device Marketing Authorization)', 'MDEL (establishment licence)', 'Reference-jurisdiction reliance'],
+    ivdPathways: ['MDMA (IVD)', 'Reference-jurisdiction reliance'],
+    localRepresentativeRequired: true,
+    localization: {
+      primaryLanguage: 'ar',
+      labellingLanguages: 'Arabic and English',
+      translationRequired: true,
+      note: 'Authorised Representative required; labelling in Arabic and English.',
+    },
+    qmsExpectation: 'iso-13485',
+    requiredDossierElements: [
+      'device_classification',
+      'safety_effectiveness_evidence',
+      'performance_testing',
+      'labelling',
+      'qms_quality_system',
+      'local_representative',
+    ],
+    canAssemble: false,
+    assembleNote:
+      'Platform does not assemble the SFDA MDMA dossier; descriptor is advisory + readiness only.',
+    canTransmit: false,
+    citations: [
+      'SFDA Medical Devices Interim Regulation; MDS-G5/G6 guidance',
+      'SFDA Authorised Representative & MDEL requirements',
+    ],
+  },
+
+  // ── South Africa — SAHPRA ───────────────────────────────────────────────────
+  'za-sahpra': {
+    id: 'za-sahpra',
+    name: 'South Africa — SAHPRA (Health Products Regulatory Authority)',
+    region: 'africa',
+    authority: 'South African Health Products Regulatory Authority',
+    authorityShort: 'SAHPRA',
+    jurisdictions: ['ZA'],
+    dossierStandard: 'national-form-set',
+    dossierFormatName: 'Medical Device / IVD Licence application — national format (establishment + product)',
+    ivdSupport:
+      'IVDs regulated under the Medicines and Related Substances Act; Class A–D with licensing of establishments and products.',
+    classificationScheme:
+      'Risk Class A–D (GHTF rules) under the Medicines and Related Substances Act.',
+    devicePathways: ['Medical Device Establishment Licence', 'Product registration/licence'],
+    ivdPathways: ['IVD Establishment Licence', 'IVD product registration/licence'],
+    localRepresentativeRequired: true,
+    localization: {
+      primaryLanguage: 'en',
+      labellingLanguages: 'English',
+      translationRequired: true,
+      note: 'Locally-licensed establishment/holder required; English labelling.',
+    },
+    qmsExpectation: 'iso-13485',
+    requiredDossierElements: [
+      'device_classification',
+      'safety_effectiveness_evidence',
+      'performance_testing',
+      'labelling',
+      'qms_quality_system',
+      'local_representative',
+    ],
+    canAssemble: false,
+    assembleNote:
+      'Platform does not assemble the SAHPRA licence application; descriptor is advisory + readiness only.',
+    canTransmit: false,
+    citations: [
+      'Medicines and Related Substances Act (South Africa); SAHPRA medical device & IVD licensing guidance',
+    ],
+  },
 };
 
 /** All market ids in canonical order. */
@@ -548,6 +715,10 @@ export const MARKET_IDS: MarketId[] = [
   'kr-mfds',
   'ch-swissmedic',
   'in-cdsco',
+  'sg-hsa',
+  'tw-tfda',
+  'sa-sfda',
+  'za-sahpra',
   'mdsap',
 ];
 
@@ -586,6 +757,8 @@ export function marketRegistrySummary(): MarketRegistrySummary {
     europe: 0,
     'asia-pacific': 0,
     'south-america': 0,
+    'middle-east': 0,
+    africa: 0,
     'cross-market': 0,
   };
   const assembleCapable: MarketId[] = [];

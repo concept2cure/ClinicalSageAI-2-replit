@@ -22,6 +22,10 @@ const EXPECTED_MARKETS: MarketId[] = [
   'kr-mfds',
   'ch-swissmedic',
   'in-cdsco',
+  'sg-hsa',
+  'tw-tfda',
+  'sa-sfda',
+  'za-sahpra',
   'mdsap',
 ];
 
@@ -112,7 +116,7 @@ describe('global-markets registry — honest capability invariants', () => {
 
 describe('global-markets registry — derived projections', () => {
   it('marketsByRegion partitions all markets', () => {
-    const regions = ['north-america', 'europe', 'asia-pacific', 'south-america', 'cross-market'] as const;
+    const regions = ['north-america', 'europe', 'asia-pacific', 'south-america', 'middle-east', 'africa', 'cross-market'] as const;
     const total = regions.reduce((acc, r) => acc + marketsByRegion(r).length, 0);
     expect(total).toBe(MARKET_IDS.length);
     expect(marketsByRegion('europe').map((m) => m.id)).toContain('eu-mdr-ivdr');
