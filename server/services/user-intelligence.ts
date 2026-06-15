@@ -21,6 +21,9 @@
  */
 
 import { pool } from '../db.js';
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('UserIntelligence');
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES — Deep User Profile
@@ -172,7 +175,7 @@ async function loadUserIdentity(
       lastLogin: u.last_login?.toISOString() || null,
     };
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to load identity:', error);
+    logger.warn('Failed to load identity', { error });
     return null;
   }
 }
@@ -213,7 +216,7 @@ async function loadOrganizationProfile(
       settings: o.settings || {},
     };
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to load org profile:', error);
+    logger.warn('Failed to load org profile', { error });
     return null;
   }
 }
@@ -254,7 +257,7 @@ async function loadUserProjects(userId: number, organizationId: number): Promise
       };
     });
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to load projects:', error);
+    logger.warn('Failed to load projects', { error });
     return [];
   }
 }
@@ -295,7 +298,7 @@ async function loadCurrentSession(userId: number, organizationId: number): Promi
       artifactsCreated: s.artifacts_created || 0,
     };
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to load current session:', error);
+    logger.warn('Failed to load current session', { error });
     return null;
   }
 }
@@ -333,7 +336,7 @@ async function loadRecentSessions(userId: number, organizationId: number): Promi
       artifactsCreated: s.artifacts_created || 0,
     }));
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to load recent sessions:', error);
+    logger.warn('Failed to load recent sessions', { error });
     return [];
   }
 }
@@ -373,7 +376,7 @@ async function loadWorkQueue(userId: number, organizationId: number): Promise<Wo
       aiReasoning: q.ai_reasoning,
     }));
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to load work queue:', error);
+    logger.warn('Failed to load work queue', { error });
     return [];
   }
 }
@@ -410,7 +413,7 @@ async function loadRecentActivity(
       createdAt: a.created_at?.toISOString(),
     }));
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to load activity:', error);
+    logger.warn('Failed to load activity', { error });
     return [];
   }
 }
@@ -464,7 +467,7 @@ async function loadConversationMemory(
       frequentTopics: frequentTopicsResult.rows.map((r: any) => r.topic),
     };
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to load conversation memory:', error);
+    logger.warn('Failed to load conversation memory', { error });
     return { totalConversations: 0, totalMessages: 0, lastTopics: [], frequentTopics: [] };
   }
 }
@@ -618,7 +621,7 @@ export async function touchWorkSession(params: {
 
     return insertResult.rows[0]?.id || null;
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to touch session:', error);
+    logger.warn('Failed to touch session', { error });
     return null;
   }
 }
@@ -690,7 +693,7 @@ export async function addToWorkQueue(params: {
     );
     return result.rows[0]?.id || null;
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to add to queue:', error);
+    logger.warn('Failed to add to queue', { error });
     return null;
   }
 }
@@ -808,6 +811,6 @@ export async function generateWorkRecommendations(params: {
       });
     }
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to generate recommendations:', error);
+    logger.warn('Failed to generate recommendations', { error });
   }
 }

@@ -164,6 +164,29 @@ CREATE TABLE IF NOT EXISTS ind_amendments (
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS ind_icsr_transmissions (
+  id                          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id             INTEGER NOT NULL,
+  submission_id               INTEGER NOT NULL,
+  adverse_event_id            TEXT NOT NULL,
+  gateway                     TEXT NOT NULL,
+  message_number              TEXT NOT NULL,
+  sender_id                   TEXT NOT NULL,
+  receiver_id                 TEXT NOT NULL,
+  status                      TEXT NOT NULL DEFAULT 'prepared',
+  transmit_ready              BOOLEAN NOT NULL DEFAULT FALSE,
+  transmitted_at              TIMESTAMPTZ,
+  acknowledged_at             TIMESTAMPTZ,
+  ack_code                    TEXT,
+  acknowledged_message_number TEXT,
+  errors                      JSONB NOT NULL DEFAULT '[]'::jsonb,
+  gaps                        JSONB NOT NULL DEFAULT '[]'::jsonb,
+  message                     TEXT NOT NULL,
+  created_by                  INTEGER,
+  created_at                  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at                  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `;
 
 /**

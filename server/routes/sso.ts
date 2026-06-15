@@ -450,13 +450,67 @@ router.get('/saml/logout', async (req: Request, res: Response) => {
 /**
  * GET/POST /api/auth/sso/saml/logout/callback
  *
- * Lands the user back after IdP Single Logout. The IdP has terminated its
- * session and the client clears its own token, so this returns the user to the
- * login page. (Strict LogoutResponse signature validation is a follow-up.)
+ * Lands the user back after IdP Single Logout. Before honoring the logout, the
+ * inbound IdP LogoutResponse signature is validated against the org's IdP trust
+ * anchor (same library/cert used for the ACS assertion path) and the flow FAILS
+ * CLOSED on any missing/invalid signature — a forged LogoutResponse is rejected.
+ *
+ *   - GET  → HTTP-Redirect binding: detached query signature (SAMLResponse +
+ *            optional RelayState + SigAlg), verified via validateRedirectAsync.
+ *            A LogoutResponse with no `Signature` query param is rejected.
+ *   - POST → HTTP-POST binding: XML-DSig-signed SAMLResponse, verified via
+ *            validatePostResponseAsync.
+ *
+ * The org (and thus which IdP cert validates the response) is selected from the
+ * RelayState that round-tripped through the IdP; as with the ACS path this is
+ * untrusted and only picks the trust anchor — a forged response validates
+ * against no org's certificate.
  */
-function handleLogoutCallback(_req: Request, res: Response): void {
-  res.redirect(302, '/concept2cure/login?logged_out=1');
+async function handleLogoutCallback(req: Request, res: Response): Promise<void> {
+  const loggedOutUrl = '/concept2cure/login?logged_out=1';
+  try {
+    const isPost = req.method === 'POST';
+    // RelayState selects the org's IdP cert (untrusted; only picks trust anchor).
+    const relayState = isPost ? req.body?.RelayState : req.query?.RelayState;
+    const { org: orgSlug } = decodeRelayState(relayState);
+
+    const samlConfig = getSamlConfig(orgSlug);
+    if (!samlConfig) {
+      // No config ⇒ no trust anchor to validate against. Fail closed.
+      logger.warn(`SAML logout callback for unconfigured org="${orgSlug}" — rejecting`);
+      res.status(401).json({ success: false, error: 'SAML_NOT_CONFIGURED' });
+      return;
+    }
+
+    const provider = getSamlProvider(orgSlug, samlConfig);
+    const container = (isPost ? req.body : req.query) as Record<string, unknown>;
+
+    // FAIL CLOSED: reject the logout on any missing/invalid signature.
+    await provider.validateLogoutResponse({
+      binding: isPost ? 'post' : 'redirect',
+      container: container ?? {},
+      // node-saml verifies the redirect signature over the RAW query string.
+      originalQuery: isPost ? undefined : extractRawQuery(req.originalUrl),
+    });
+
+    res.redirect(302, loggedOutUrl);
+  } catch (err) {
+    if (err instanceof SAMLValidationError) {
+      logger.warn(`SAML LogoutResponse validation failed: ${err.message}`);
+      res.status(401).json({ success: false, error: 'SAML_LOGOUT_VALIDATION_FAILED' });
+      return;
+    }
+    logger.error('SAML logout callback error', err as Record<string, unknown>);
+    res.status(401).json({ success: false, error: 'SAML_LOGOUT_FAILED' });
+  }
 }
+
+/** Return the raw (undecoded) query string from a request URL, without the '?'. */
+function extractRawQuery(originalUrl: string): string {
+  const idx = originalUrl.indexOf('?');
+  return idx >= 0 ? originalUrl.slice(idx + 1) : '';
+}
+
 router.get('/saml/logout/callback', handleLogoutCallback);
 router.post('/saml/logout/callback', handleLogoutCallback);
 

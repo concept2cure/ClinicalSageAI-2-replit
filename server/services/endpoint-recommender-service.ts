@@ -6,6 +6,9 @@ import { academicDocumentProcessor } from './academic-document-processor';
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { createScopedLogger } from '../utils/logger';
+const logger = createScopedLogger('endpoint-recommender');
+
 // Define types for recommendation results
 export interface EndpointRecommendation {
   endpoint: string;
@@ -137,7 +140,7 @@ export class EndpointRecommenderService {
 
       // Check if directory exists
       if (!fs.existsSync(regulatoryPath)) {
-        console.log('No regulatory data directory found, skipping guidance loading');
+        logger.info('No regulatory data directory found, skipping guidance loading');
         return;
       }
 
@@ -154,15 +157,13 @@ export class EndpointRecommenderService {
             this.regulatoryGuidanceCache.set(guidance.indication.toLowerCase(), guidance.guidance);
           }
         } catch (err) {
-          console.error(`Error processing regulatory file ${file}:`, err);
+          logger.error(`Error processing regulatory file ${file}:`, { error: err });
         }
       }
 
-      console.log(
-        `Loaded regulatory guidance for ${this.regulatoryGuidanceCache.size} indications`
-      );
+      logger.info(`Loaded regulatory guidance for ${this.regulatoryGuidanceCache.size} indications`);
     } catch (err) {
-      console.error('Error loading regulatory guidance:', err);
+      logger.error('Error loading regulatory guidance:', { error: err });
     }
   }
 
@@ -177,9 +178,7 @@ export class EndpointRecommenderService {
     therapeuticArea: string = ''
   ): Promise<EndpointRecommendation[]> {
     try {
-      console.log(
-        `Generating comprehensive recommendations for ${indication} (${phase || 'any phase'})`
-      );
+      logger.info(`Generating comprehensive recommendations for ${indication} (${phase || 'any phase'})`);
 
       // Step 1: Get CSR-based endpoints with statistics
       const csrEndpoints = await this.getEndpointsWithEvidence(indication, phase);
@@ -235,7 +234,7 @@ export class EndpointRecommenderService {
       // Return top ranked recommendations based on count
       return combinedEndpoints.slice(0, count);
     } catch (error) {
-      console.error('Error generating comprehensive endpoint recommendations:', error);
+      logger.error('Error generating comprehensive endpoint recommendations:', { error: error });
       return [];
     }
   }
@@ -351,9 +350,9 @@ export class EndpointRecommenderService {
             academicResults.push(...results);
           }
         } catch (err) {
-          console.error(`Error searching academic knowledge for "${searchTerm}":`, err);
+          logger.error(`Error searching academic knowledge for "${searchTerm}":`, { error: err });
           // If the standard search fails, try with local fallback
-          console.log(`Generating local response from CSR data...`);
+          logger.info(`Generating local response from CSR data...`);
         }
       }
 
@@ -423,13 +422,13 @@ export class EndpointRecommenderService {
             }
           }
         } catch (err) {
-          console.error('Error processing academic result:', err);
+          logger.error('Error processing academic result:', { error: err });
         }
       }
 
       return Array.from(academicEndpoints.values());
     } catch (error) {
-      console.error('Error getting academic endpoint guidance:', error);
+      logger.error('Error getting academic endpoint guidance:', { error: error });
       return [];
     }
   }
@@ -500,7 +499,7 @@ export class EndpointRecommenderService {
 
       return potentialEndpoints;
     } catch (error) {
-      console.error('Error extracting endpoints from text:', error);
+      logger.error('Error extracting endpoints from text:', { error: error });
       return [];
     }
   }
@@ -566,7 +565,7 @@ export class EndpointRecommenderService {
 
       return result;
     } catch (error) {
-      console.error('Error getting regulatory guidance:', error);
+      logger.error('Error getting regulatory guidance:', { error: error });
       return {};
     }
   }
@@ -620,13 +619,13 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
           }
         }
       } catch (parseError) {
-        console.error('Error parsing AI regulatory guidance:', parseError);
+        logger.error('Error parsing AI regulatory guidance:', { error: parseError });
       }
 
       // Return empty object if parsing failed
       return {};
     } catch (error) {
-      console.error('Error generating AI regulatory guidance:', error);
+      logger.error('Error generating AI regulatory guidance:', { error: error });
       return {};
     }
   }
@@ -806,7 +805,7 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
             }
           }
         } catch (error) {
-          console.error('Error processing CSR endpoints:', error);
+          logger.error('Error processing CSR endpoints:', { error: error });
         }
       }
 
@@ -852,7 +851,7 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
           return b.occurrence_count - a.occurrence_count;
         })) as unknown as EndpointRecommendation[];
     } catch (error) {
-      console.error('Error getting endpoints with evidence:', error);
+      logger.error('Error getting endpoints with evidence:', { error: error });
       return [];
     }
   }
@@ -877,7 +876,7 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
       // Extract just the endpoint strings
       return recommendations.map(rec => rec.endpoint);
     } catch (error) {
-      console.error('Error getting endpoint recommendations:', error);
+      logger.error('Error getting endpoint recommendations:', { error: error });
       return [];
     }
   }
@@ -935,7 +934,7 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
 
       return endpoints;
     } catch (error) {
-      console.error('Error getting endpoints from database:', error);
+      logger.error('Error getting endpoints from database:', { error: error });
       return [];
     }
   }
@@ -990,7 +989,7 @@ Guidelines:
           .filter(Boolean)
           .slice(0, count);
       } catch (parseError) {
-        console.error('Error parsing AI response:', parseError);
+        logger.error('Error parsing AI response:', { error: parseError });
 
         // Last resort fallback: Split by quotes or line breaks
         return response
@@ -1000,7 +999,7 @@ Guidelines:
           .slice(0, count);
       }
     } catch (error) {
-      console.error('Error generating AI endpoints:', error);
+      logger.error('Error generating AI endpoints:', { error: error });
       return [];
     }
   }
@@ -1064,7 +1063,7 @@ Provide a JSON response with:
           similarEndpoints: await this.getSimilarEndpoints(endpoint, indication, 3),
         };
       } catch (parseError) {
-        console.error('Error parsing endpoint evaluation:', parseError);
+        logger.error('Error parsing endpoint evaluation:', { error: parseError });
         return {
           score: 65,
           feedback:
@@ -1073,7 +1072,7 @@ Provide a JSON response with:
         };
       }
     } catch (error) {
-      console.error('Error evaluating endpoint:', error);
+      logger.error('Error evaluating endpoint:', { error: error });
       return {
         score: 60,
         feedback: 'An error occurred during evaluation. Please try again.',
@@ -1124,7 +1123,7 @@ Provide a JSON response with:
 
       return filteredEndpoints;
     } catch (error) {
-      console.error('Error finding similar endpoints:', error);
+      logger.error('Error finding similar endpoints:', { error: error });
       return [];
     }
   }

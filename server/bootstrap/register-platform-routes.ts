@@ -105,15 +105,12 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     }
   });
 
-  app.get('/api/time', (_req: Request, res: Response) => {
-    const now = new Date();
-    res.json({ iso: now.toISOString(), epoch: now.getTime(), timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });
-  });
-
-  app.get('/api/diag', (_req: Request, res: Response) => {
-    res.setHeader('Content-Type', 'text/html');
-    res.send(`<!DOCTYPE html><html><head><title>Diag</title></head><body style="font-family:system-ui;padding:40px;background:#f0fdf4"><h1 style="color:#16a34a">✅ Server is alive</h1><p>If you see this, the Simple Browser can render HTML from this server.</p><p>Timestamp: ${new Date().toISOString()}</p><p><a href="/">← Go to main app</a></p></body></html>`);
-  });
+  // NOTE: /api/time and /api/diag intentionally MOVED below the global auth
+  // gate (see further down). Everything registered ABOVE the gate bypasses
+  // auth entirely, so this pre-gate surface MUST stay minimal and limited to
+  // health/readiness probes that expose zero sensitive data. Do not add new
+  // pre-gate /api/* routes here; register them after the gate (and allowlist
+  // them only if they must be public).
 
   try {
     const authModule = await import('../routes/auth');
@@ -256,11 +253,29 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
       '/api/csp-report',
       // DTC pricing — public marketing page reads this. No tenant data.
       '/api/billing/dtc-pricing',
+      // Diagnostics — server-authoritative timestamp + a static "is the
+      // server alive" HTML page. No tenant/user data. Public by design so
+      // the in-editor Simple Browser can probe connectivity.
+      '/api/time', '/api/diag',
     ];
     const fullPath = req.baseUrl + req.path;
     const isOpen = openPrefixes.some(p => fullPath === p || fullPath.startsWith(p + '/'));
     if (isOpen) return next();
     return authMiddleware(req, res, next);
+  });
+
+  // Diagnostics — registered AFTER the gate so they pass through the same
+  // middleware chain as every other /api route; they remain reachable only
+  // because they're explicitly allowlisted above. Both expose nothing beyond
+  // a timestamp and a static liveness page.
+  app.get('/api/time', (_req: Request, res: Response) => {
+    const now = new Date();
+    res.json({ iso: now.toISOString(), epoch: now.getTime(), timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });
+  });
+
+  app.get('/api/diag', (_req: Request, res: Response) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.send(`<!DOCTYPE html><html><head><title>Diag</title></head><body style="font-family:system-ui;padding:40px;background:#f0fdf4"><h1 style="color:#16a34a">✅ Server is alive</h1><p>If you see this, the Simple Browser can render HTML from this server.</p><p>Timestamp: ${new Date().toISOString()}</p><p><a href="/">← Go to main app</a></p></body></html>`);
   });
 
   console.log('✅ Platform health/auth routes mounted');

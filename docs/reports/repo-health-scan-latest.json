@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-06-15T02:56:21.692Z",
+  "generatedAt": "2026-06-15T02:47:10.966Z",
   "git": {
-    "sha": "a856cc217b6397dbc23689b582b2101ad5e64463",
-    "branch": "claude/medical-device-audit-spec-9w994x"
+    "sha": "f041871c1f4fa593a14b80968b76c29daee7d9b9",
+    "branch": "concept2cure-v2"
   },
   "thresholds": {
     "maxBytes": 100000,
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 210,
+    "duplicateBasenames": 212,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 89,
+        "count": 85,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -50,7 +50,6 @@
           "server/services/ai-governance/classification/index.ts",
           "server/services/ai-governance/index.ts",
           "server/services/ai/index.ts",
-          "server/services/ana-advisory/index.ts",
           "server/services/ana-biostats/index.ts",
           "server/services/ana-ri/index.ts",
           "server/services/ana/index.ts",
@@ -65,10 +64,8 @@
           "server/services/cortex/index.ts",
           "server/services/csr/index.ts",
           "server/services/documents/index.ts",
-          "server/services/entitlements/index.ts",
           "server/services/fda/index.ts",
           "server/services/foresight/index.ts",
-          "server/services/global-markets/index.ts",
           "server/services/grdhe/exportGenerators/index.ts",
           "server/services/grdhe/index.ts",
           "server/services/ind-forms/index.ts",
@@ -80,7 +77,6 @@
           "server/services/intelligence/index.ts",
           "server/services/ivd-knowledge/index.ts",
           "server/services/living-record/index.ts",
-          "server/services/mdx-submission-planner/index.ts",
           "server/services/ocr/index.ts",
           "server/services/orchestration/index.ts",
           "server/services/pathway-engines/index.ts",
@@ -195,7 +191,7 @@
       },
       {
         "basename": "types",
-        "count": 31,
+        "count": 27,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/components/concept2cure-projects/types.ts",
@@ -207,7 +203,6 @@
           "server/config/types.ts",
           "server/services/ai-gateway/types.ts",
           "server/services/ai-governance/classification/types.ts",
-          "server/services/ana-advisory/types.ts",
           "server/services/ana-biostats/types.ts",
           "server/services/ana/therapeutic-area-profiles/types.ts",
           "server/services/biostatistics-judgment/types.ts",
@@ -215,12 +210,9 @@
           "server/services/cognitive-ecosystem/types.ts",
           "server/services/compute/types.ts",
           "server/services/conversation-os/types.ts",
-          "server/services/entitlements/types.ts",
-          "server/services/global-markets/types.ts",
           "server/services/grdhe/types.ts",
           "server/services/intelligence-engine/types.ts",
           "server/services/ivd-knowledge/types.ts",
-          "server/services/mdx-submission-planner/types.ts",
           "server/services/reasoning-engine/types.ts",
           "server/services/rules-engine/types.ts",
           "server/services/sentinel/types.ts",
@@ -1914,6 +1906,22 @@
         ]
       },
       {
+        "basename": "special-designations",
+        "count": 2,
+        "paths": [
+          "server/services/ana/special-designations.ts",
+          "server/services/global-ri/special-designations.ts"
+        ]
+      },
+      {
+        "basename": "special-designations.test",
+        "count": 2,
+        "paths": [
+          "server/services/ana/__tests__/special-designations.test.ts",
+          "server/services/global-ri/__tests__/special-designations.test.ts"
+        ]
+      },
+      {
         "basename": "spl-fhir",
         "count": 2,
         "paths": [
@@ -2101,11 +2109,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 457674
+        "bytes": 454448
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 331520
+        "bytes": 330991
       },
       {
         "file": "server/statistics-service.ts",
@@ -2159,7 +2167,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 9268
+        "lines": 9198
       },
       {
         "file": "server/statistics-service.ts",
@@ -2167,7 +2175,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 6163
+        "lines": 6155
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2327,18 +2335,11 @@
       }
     ]
   },
-  "comparison": {
-    "baseline": "docs/reports/repo-health-scan-latest.json",
-    "delta": {
-      "duplicateBasenames": 0,
-      "largeFilesByBytes": 0,
-      "largeFilesByLines": 0
-    }
-  },
+  "comparison": null,
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 317,
+      "duplicateGroups": 313,
       "largeByBytes": 11,
       "largeByLines": 34
     },

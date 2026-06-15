@@ -648,3 +648,67 @@ describe('persisted IND amendments (21 CFR 312.30/.31)', () => {
     expect(filed.body.draft.sequenceId).toBe(filed.body.sequence.id);
   });
 });
+
+describe('persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance)', () => {
+  it('prepare → transmit → acknowledge lifecycle (ready case)', async () => {
+    const prep = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/icsr-transmissions`)
+      .send({
+        event: { ...reportableEvent(), suspectProduct: 'C2C-001', reactionPt: 'Hepatic failure' },
+        gateway: 'FDA_FAERS',
+        senderId: 'C2C',
+        messageNumber: 'MSG-1001',
+        icsr: { worldwideUniqueId: 'US-C2C-2026-000123', senderType: 'sponsor' },
+      });
+    expect(prep.status).toBe(201);
+    expect(prep.body.status).toBe('prepared');
+    expect(prep.body.receiverId).toBe('ZZFDA');
+    expect(prep.body.transmitReady).toBe(true);
+    const txId = prep.body.id;
+
+    const list = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/icsr-transmissions`);
+    expect(list.body.map((t: any) => t.id)).toContain(txId);
+
+    const tx = await request(app).post(`/api/ind-lifecycle/icsr-transmissions/${txId}/transmit`);
+    expect(tx.status).toBe(200);
+    expect(tx.body.status).toBe('transmitted');
+
+    const ack = await request(app)
+      .post(`/api/ind-lifecycle/icsr-transmissions/${txId}/acknowledge`)
+      .send({ ackXml: '<ack><messagenumb>MSG-1001</messagenumb><transmissionacknowledgmentcode>AA</transmissionacknowledgmentcode></ack>' });
+    expect(ack.status).toBe(200);
+    expect(ack.body.status).toBe('acknowledged');
+    expect(ack.body.ackCode).toBe('AA');
+  });
+
+  it('rejects transmit when the ICSR is not transmit-ready (422)', async () => {
+    // No worldwide id + no suspect product → mandatory gaps → not ready.
+    const evt = { ...reportableEvent(), id: 'ae-notready', suspectProduct: null };
+    const prep = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/icsr-transmissions`)
+      .send({ event: evt, gateway: 'FDA_FAERS', senderId: 'C2C', messageNumber: 'MSG-1002' });
+    expect(prep.body.transmitReady).toBe(false);
+    const tx = await request(app).post(`/api/ind-lifecycle/icsr-transmissions/${prep.body.id}/transmit`);
+    expect(tx.status).toBe(422);
+    expect(tx.body.error.code).toBe('NOT_READY');
+  });
+
+  it('an AR acknowledgment marks the transmission rejected with errors', async () => {
+    const prep = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/icsr-transmissions`)
+      .send({ event: reportableEvent(), gateway: 'EMA_EUDRAVIGILANCE', senderId: 'C2C', messageNumber: 'MSG-1003', icsr: { worldwideUniqueId: 'EU-1', senderType: 'sponsor' } });
+    const ack = await request(app)
+      .post(`/api/ind-lifecycle/icsr-transmissions/${prep.body.id}/acknowledge`)
+      .send({ ackXml: '<ack><reportacknowledgmentcode>AR</reportacknowledgmentcode><error>Invalid MedDRA version</error></ack>' });
+    expect(ack.body.status).toBe('rejected');
+    expect(ack.body.ackCode).toBe('AR');
+    expect(ack.body.errors).toContain('Invalid MedDRA version');
+  });
+
+  it('400 without gateway; 404 transmitting an unknown id', async () => {
+    const bad = await request(app).post(`/api/ind-lifecycle/submission/${seededSubmissionId}/icsr-transmissions`).send({ event: reportableEvent(), senderId: 'C2C', messageNumber: 'X' });
+    expect(bad.status).toBe(400);
+    const missing = await request(app).post('/api/ind-lifecycle/icsr-transmissions/00000000-0000-0000-0000-000000000000/transmit');
+    expect(missing.status).toBe(404);
+  });
+});

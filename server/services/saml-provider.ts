@@ -225,6 +225,64 @@ export class SamlProvider {
     return this.saml.getLogoutUrlAsync(profile, relayState ?? '', {});
   }
 
+  /**
+   * Validate an inbound IdP LogoutResponse (the SLO callback) and FAIL CLOSED on
+   * any invalid/missing signature. Supports both SAML SLO bindings:
+   *
+   *   - HTTP-Redirect (GET): the LogoutResponse is signed over the raw query
+   *     string (`SAMLResponse` + optional `RelayState` + `SigAlg`). node-saml's
+   *     `validateRedirectAsync` verifies that detached query signature against the
+   *     IdP cert. node-saml ACCEPTS an *unsigned* redirect message (it only
+   *     rejects a present-but-invalid `Signature`), so we additionally REQUIRE a
+   *     `Signature` query parameter here — otherwise a forged, unsigned
+   *     LogoutResponse would be honored.
+   *   - HTTP-POST: the LogoutResponse is an XML-DSig-signed `SAMLResponse`;
+   *     `validatePostResponseAsync` performs full canonicalization + signature
+   *     verification against the IdP trust anchor.
+   *
+   * Throws {@link SAMLValidationError} on any missing/invalid signature or
+   * malformed response. The IdP signing certificate is the trust anchor, so a
+   * forged logout response cannot validate.
+   */
+  async validateLogoutResponse(input: {
+    binding: 'redirect' | 'post';
+    /** Parsed query params (redirect binding) or form body (post binding). */
+    container: Record<string, unknown>;
+    /** Raw, undecoded query string — REQUIRED for redirect-binding signature check. */
+    originalQuery?: string;
+  }): Promise<void> {
+    if (input.binding === 'redirect') {
+      // Reject unsigned redirect LogoutResponses: node-saml treats a missing
+      // Signature as valid, so we enforce its presence to remain fail-closed.
+      if (typeof input.container.Signature !== 'string' || input.container.Signature.length === 0) {
+        throw new SAMLValidationError('LogoutResponse is not signed (no Signature parameter)');
+      }
+      try {
+        await this.saml.validateRedirectAsync(
+          input.container as Record<string, string>,
+          input.originalQuery ?? ''
+        );
+      } catch (err) {
+        throw new SAMLValidationError(
+          `LogoutResponse signature validation failed: ${(err as Error)?.message ?? 'unknown error'}`
+        );
+      }
+      return;
+    }
+
+    // POST binding — XML-DSig verified by node-saml.
+    if (typeof input.container.SAMLResponse !== 'string' || input.container.SAMLResponse.length === 0) {
+      throw new SAMLValidationError('LogoutResponse is missing SAMLResponse');
+    }
+    try {
+      await this.saml.validatePostResponseAsync(input.container as Record<string, string>);
+    } catch (err) {
+      throw new SAMLValidationError(
+        `LogoutResponse signature validation failed: ${(err as Error)?.message ?? 'unknown error'}`
+      );
+    }
+  }
+
   /** SP metadata XML for IdP federation setup. */
   metadata(): string {
     return this.saml.generateServiceProviderMetadata(null, this.config.spCertificate ?? null);

@@ -10,6 +10,9 @@
 
 import { db } from '../../db';
 import { eq, and, desc, sql, gte } from 'drizzle-orm';
+import { createScopedLogger } from '../../utils/logger';
+
+const logger = createScopedLogger('cross-object-resolver');
 import {
   projects,
   concept2cureArtifacts,
@@ -148,7 +151,7 @@ async function resolveProjectSnapshot(
       overdueTasks: 0,
     };
   } catch (err) {
-    console.warn('[Cross-Object Resolver] Failed to resolve project snapshot:', err instanceof Error ? err.message : err);
+    logger.warn('Failed to resolve project snapshot', { error: err instanceof Error ? err.message : err });
     return {
       id: projectId,
       name: 'Project',
@@ -194,7 +197,7 @@ async function resolveDocuments(
       routedTo: (a as any).ctdSection,
     }));
   } catch (err) {
-    console.warn('[Cross-Object Resolver] Resolver query failed:', err instanceof Error ? err.message : err);
+    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
     return [];
   }
 }
@@ -229,7 +232,7 @@ async function resolveArtifacts(
       lastModified: a.updatedAt?.toISOString(),
     }));
   } catch (err) {
-    console.warn('[Cross-Object Resolver] Resolver query failed:', err instanceof Error ? err.message : err);
+    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
     return [];
   }
 }
@@ -275,7 +278,7 @@ async function resolveValidations(
         };
       });
   } catch (err) {
-    console.warn('[Cross-Object Resolver] Resolver query failed:', err instanceof Error ? err.message : err);
+    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
     return [];
   }
 }
@@ -310,7 +313,7 @@ async function resolveTasks(
       isOverdue: false,
     }));
   } catch (err) {
-    console.warn('[Cross-Object Resolver] Resolver query failed:', err instanceof Error ? err.message : err);
+    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
     return [];
   }
 }
@@ -371,7 +374,7 @@ async function resolveModulePlacements(
 
     return result;
   } catch (err) {
-    console.warn('[Cross-Object Resolver] Resolver query failed:', err instanceof Error ? err.message : err);
+    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
     return [];
   }
 }
@@ -415,7 +418,7 @@ async function resolveRecentActions(
         };
       });
   } catch (err) {
-    console.warn('[Cross-Object Resolver] Resolver query failed:', err instanceof Error ? err.message : err);
+    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
     return [];
   }
 }
@@ -531,9 +534,9 @@ async function resolveCmcSignals(
       contradictionCounts: counts,
     };
   } catch (err) {
-    console.warn(
-      '[Cross-Object Resolver] CMC signal query failed:',
-      err instanceof Error ? err.message : err,
+    logger.warn(
+      'CMC signal query failed',
+      { error: err instanceof Error ? err.message : err },
     );
     return empty;
   }
@@ -576,9 +579,9 @@ async function resolveLastSignalAt(
     if (ts instanceof Date) return ts.toISOString();
     return new Date(String(ts)).toISOString();
   } catch (err) {
-    console.warn(
-      '[Cross-Object Resolver] Last-signal query failed:',
-      err instanceof Error ? err.message : err,
+    logger.warn(
+      'Last-signal query failed',
+      { error: err instanceof Error ? err.message : err },
     );
     return null;
   }
@@ -616,7 +619,7 @@ async function resolveEvidence(
       };
     });
   } catch (err) {
-    console.warn('[Cross-Object Resolver] Resolver query failed:', err instanceof Error ? err.message : err);
+    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
     return [];
   }
 }

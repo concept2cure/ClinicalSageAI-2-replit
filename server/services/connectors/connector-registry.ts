@@ -38,27 +38,44 @@ import { EllucianBannerConnector } from './ellucian-banner.js';
 // ENCRYPTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const ENCRYPTION_KEY_FROM_ENV =
-  process.env.CONNECTOR_ENCRYPTION_KEY || process.env.JWT_SECRET;
+// Dedicated key only. Reusing JWT_SECRET as the AES key couples two unrelated
+// trust domains: a JWT-signing leak would also expose stored connector
+// credentials and vice versa. Require CONNECTOR_ENCRYPTION_KEY and refuse to
+// silently fall back to JWT_SECRET or a hardcoded value.
+const ENCRYPTION_KEY_FROM_ENV = process.env.CONNECTOR_ENCRYPTION_KEY;
 
-// Production must supply a real key. Refuse to load with a hardcoded
-// fallback so encrypted connector credentials cannot be trivially
-// decrypted by anyone with code access. JWT_SECRET reuse is preserved
-// for backwards compatibility with already-encrypted records but is its
-// own hardening task — connectors should have a dedicated key.
+// Production must supply a real, dedicated key. Refuse to load with a hardcoded
+// fallback so encrypted connector credentials cannot be trivially decrypted by
+// anyone with code access.
 if (!ENCRYPTION_KEY_FROM_ENV && process.env.NODE_ENV === 'production') {
   throw new Error(
-    'Connector credential encryption requires CONNECTOR_ENCRYPTION_KEY ' +
-      '(preferred) or JWT_SECRET in production. Refusing to start with a ' +
-      'hardcoded fallback.'
+    'Connector credential encryption requires a dedicated CONNECTOR_ENCRYPTION_KEY ' +
+      'in production. Refusing to start without one (JWT_SECRET reuse and hardcoded ' +
+      'fallbacks are not permitted).'
   );
 }
 
 const ENCRYPTION_KEY = ENCRYPTION_KEY_FROM_ENV || 'default-dev-key-change-in-prod';
 
+// Derive the AES key once per process. scryptSync is an intentionally expensive
+// KDF; recomputing it on every encrypt/decrypt was pure overhead since the
+// secret and salt are fixed. Cache keyed by the secret so a config change (or
+// test that mutates the secret) still derives correctly. Salt/derivation are
+// unchanged, so existing ciphertext remains decryptable.
+const derivedKeyCache = new Map<string, Buffer>();
+
+function getDerivedKey(secret: string): Buffer {
+  let key = derivedKeyCache.get(secret);
+  if (!key) {
+    key = crypto.scryptSync(secret, 'salt', 32);
+    derivedKeyCache.set(secret, key);
+  }
+  return key;
+}
+
 function encrypt(text: string): string {
   const iv = crypto.randomBytes(16);
-  const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);
+  const key = getDerivedKey(ENCRYPTION_KEY);
   const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
@@ -70,7 +87,7 @@ function decrypt(text: string): string {
   const [ivHex, authTagHex, encryptedHex] = text.split(':');
   const iv = Buffer.from(ivHex, 'hex');
   const authTag = Buffer.from(authTagHex, 'hex');
-  const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);
+  const key = getDerivedKey(ENCRYPTION_KEY);
   const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
   decipher.setAuthTag(authTag);
   let decrypted = decipher.update(encryptedHex, 'hex', 'utf8');

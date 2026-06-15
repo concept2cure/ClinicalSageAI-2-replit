@@ -97,7 +97,7 @@ function setupMetricsEndpoint() {
   return metricsApp;
 }
 
-export { setupMetricsEndpoint };
+export { setupMetricsEndpoint, register };
 export const metrics = {
   cerJobsTotal,
   cerJobDuration,

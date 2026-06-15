@@ -17,6 +17,9 @@ import { users, organizations, notificationPreferences } from '../../shared/sche
 import { config } from '../config/environment';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { isDevAuthAllowed } from '../auth/dev-auth-policy.js';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('users-routes');
 
 /** Login: 10 attempts per 15 minutes per IP */
 const loginLimiter = rateLimit({
@@ -689,7 +692,13 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     db.update(users)
       .set({ lastLogin: new Date() })
       .where(eq(users.id, userData.id))
-      .catch(() => {});
+      .catch((err: unknown) => {
+        // Non-blocking: login still succeeds, but surface the failure.
+        log.error('Failed to update lastLogin after successful login', {
+          userId: String(userData.id),
+          err: err instanceof Error ? err.message : String(err),
+        });
+      });
 
     res.json({
       id: userData.id,

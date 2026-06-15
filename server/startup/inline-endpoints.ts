@@ -311,6 +311,21 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* scheduler not loaded yet — skip */
       }
 
+      // prom-client metrics — CER job SLO metrics (server/metrics.js, custom
+      // registry) plus globally-registered counters (e.g. RLS tenant-session
+      // observability on client.register). Merge both registries so these are
+      // actually scraped here; there is no separate metrics server/port.
+      try {
+        const client = (await import('prom-client')).default;
+        const { register: cerRegister } = (await import('../metrics.js')) as unknown as {
+          register: import('prom-client').Registry;
+        };
+        const merged = client.Registry.merge([cerRegister, client.register]);
+        lines.push((await merged.metrics()).trimEnd());
+      } catch {
+        /* prom-client metrics not available yet — skip */
+      }
+
       res.set('Content-Type', 'text/plain; version=0.0.4');
       res.send(lines.join('\n') + '\n');
     } catch (_err: any) {
