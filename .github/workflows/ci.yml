@@ -159,6 +159,75 @@ jobs:
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
           TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
 
+  coverage:
+    name: Coverage (advisory)
+    runs-on: ubuntu-latest
+    needs: lint
+    # Closes the GA testing finding "never measures coverage". Runs the vitest
+    # suite with the v8 coverage provider against a real Postgres so the
+    # DB-backed paths are counted, and reports the numbers every run. Advisory
+    # for now (thresholds overridden to 0 in test:coverage so it never blocks) —
+    # the 70/60/70/70 target in vitest.config.ts is the goal; once the suite
+    # reaches it, drop the threshold overrides in test:coverage to enforce.
+    services:
+      postgres:
+        image: pgvector/pgvector:pg15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: concept2cure-ri_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Postgres client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Apply GCC migrations
+        run: |
+          for migration in $(ls db/migrations/*_gcc_*.sql | sort); do
+            echo "Applying $migration"
+            PAGER=cat psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
+          done
+        env:
+          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+
+      # @vitest/coverage-v8 is an OPTIONAL peer of vitest, so `npm ci` does not
+      # install it. Install it transiently (--no-save keeps package.json and the
+      # lockfile untouched / in sync for every other job) just for this advisory
+      # coverage run.
+      - name: Install coverage provider
+        run: npm install --no-save @vitest/coverage-v8@4.1.7
+
+      - name: Measure coverage
+        run: npm run test:coverage
+        env:
+          CI: true
+          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+          TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          if-no-files-found: ignore
+
   security-tests:
     name: Security Contract Tests
     runs-on: ubuntu-latest
