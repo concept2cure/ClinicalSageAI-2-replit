@@ -21,6 +21,11 @@ services:
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      # Shared-secret bearer token for internal service-to-service auth. The API
+      # fails closed (503) when this is unset, so it must be provided here and to
+      # the E2E test runner with the SAME value. A throwaway default keeps the
+      # harness self-contained when the runner doesn't export one.
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-e2e-internal-service-token}
     depends_on:
       - redis
 

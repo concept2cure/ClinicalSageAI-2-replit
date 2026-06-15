@@ -9,6 +9,11 @@ on:
 jobs:
   test-generator:
     runs-on: ubuntu-latest
+    env:
+      # The generation API fails closed (503) without a service token. Provide
+      # the same throwaway value to docker-compose (api container) and to the
+      # host-side pytest steps so the E2E client and server agree on the secret.
+      INTERNAL_SERVICE_TOKEN: e2e-internal-service-token
     steps:
       - name: Checkout
         uses: actions/checkout@v4
