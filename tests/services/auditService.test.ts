@@ -41,6 +41,10 @@ const {
   mockFrom,
   mockSelect,
   mockDb,
+  mockClientQuery,
+  mockClientRelease,
+  mockConnect,
+  mockPool,
 } = vi.hoisted(() => {
   const mockInsertValues = vi.fn().mockResolvedValue(undefined);
   const mockInsert = vi.fn(() => ({ values: mockInsertValues }));
@@ -49,6 +53,17 @@ const {
   const mockWhere = vi.fn(() => ({ orderBy: mockOrderBy }));
   const mockFrom = vi.fn(() => ({ where: mockWhere, orderBy: mockOrderBy }));
   const mockSelect = vi.fn(() => ({ from: mockFrom }));
+  // logAction now writes the canonical audit_logs row via a raw pg client
+  // transaction (BEGIN → SELECT FOR UPDATE → INSERT → COMMIT) so the row is
+  // sha256-chained + HMAC-sealed. The SELECT FOR UPDATE must return rows:[] so
+  // computeAuditChainSealed treats this as the genesis link.
+  const mockClientQuery = vi.fn().mockResolvedValue({ rows: [] });
+  const mockClientRelease = vi.fn();
+  const mockConnect = vi.fn().mockResolvedValue({
+    query: mockClientQuery,
+    release: mockClientRelease,
+  });
+  const mockPool = { connect: mockConnect };
   return {
     mockInsertValues,
     mockInsert,
@@ -58,12 +73,16 @@ const {
     mockFrom,
     mockSelect,
     mockDb: { insert: mockInsert, select: mockSelect },
+    mockClientQuery,
+    mockClientRelease,
+    mockConnect,
+    mockPool,
   };
 });
 
 vi.mock('../../server/db', () => ({
   db: mockDb,
-  pool: null, // No pool so tamper-proof log stays null
+  pool: mockPool,
 }));
 
 // ---------------------------------------------------------------------------
@@ -151,7 +170,20 @@ describe('AuditService', () => {
   // -------------------------------------------------------------------------
 
   describe('logAction — persistence', () => {
-    it('should insert an audit row via Drizzle with object-form entry', async () => {
+    // logAction writes the canonical audit_logs row through a raw pg client
+    // transaction (BEGIN → SELECT FOR UPDATE → chained+sealed INSERT → COMMIT).
+    // The INSERT is a parameterized query; columns map to params in order:
+    //   $1 id, $2 tenant_id, $3 user_id, $4 action, $5 table_name, $6 record_id,
+    //   $7 actor_id, $8 target, $9 payload_hash, $10 sha256_chain, $11 occurred_at,
+    //   $12 hmac_seal, $13 old_values, $14 new_values, $15 ip_address, $16 user_agent
+    function insertParams(): unknown[] | undefined {
+      const call = mockClientQuery.mock.calls.find(
+        (c: unknown[]) => typeof c[0] === 'string' && (c[0] as string).includes('INSERT INTO audit_logs'),
+      );
+      return call?.[1] as unknown[] | undefined;
+    }
+
+    it('should insert a chained+sealed audit row with object-form entry', async () => {
       await audit.logAction({
         tenantId: 1,
         userId: 42,
@@ -163,31 +195,34 @@ describe('AuditService', () => {
         userAgent: 'Mozilla/5.0',
       });
 
-      expect(mockInsert).toHaveBeenCalledWith(mockAuditLogs);
-      expect(mockInsertValues).toHaveBeenCalledWith(
-        expect.objectContaining({
-          tenantId: 1,
-          userId: 42,
-          action: 'create',
-          tableName: 'document',
-          recordId: 'doc-999',
-          ipAddress: '10.0.0.1',
-          userAgent: 'Mozilla/5.0',
-        }),
-      );
+      // BEGIN/SELECT FOR UPDATE/INSERT/COMMIT all went through the client, and
+      // the connection was released.
+      expect(mockConnect).toHaveBeenCalled();
+      expect(mockClientQuery).toHaveBeenCalledWith('BEGIN');
+      expect(mockClientQuery).toHaveBeenCalledWith('COMMIT');
+      expect(mockClientRelease).toHaveBeenCalled();
+
+      const params = insertParams();
+      expect(params).toBeDefined();
+      expect(params![1]).toBe(1); // tenant_id
+      expect(params![2]).toBe(42); // user_id / actor_id
+      expect(params![3]).toBe('create'); // action
+      expect(params![4]).toBe('document'); // table_name
+      expect(params![5]).toBe('doc-999'); // record_id
+      expect(params![9]).toMatch(/^[0-9a-f]{64}$/); // sha256_chain
+      expect(params![14]).toBe('10.0.0.1'); // ip_address
+      expect(params![15]).toBe('Mozilla/5.0'); // user_agent
     });
 
     it('should accept positional-form arguments for backward compatibility', async () => {
       await audit.logAction('org-5', 7, 'update', 'project', 'proj-1', { note: 'changed status' });
 
-      expect(mockInsert).toHaveBeenCalledWith(mockAuditLogs);
-      expect(mockInsertValues).toHaveBeenCalledWith(
-        expect.objectContaining({
-          action: 'update',
-          tableName: 'project',
-          recordId: 'proj-1',
-        }),
-      );
+      const params = insertParams();
+      expect(params).toBeDefined();
+      expect(params![3]).toBe('update'); // action
+      expect(params![4]).toBe('project'); // table_name
+      expect(params![5]).toBe('proj-1'); // record_id
+      expect(params![2]).toBe(7); // actor_id
     });
 
     it('should resolve tenantId from organizationId alias', async () => {
@@ -198,17 +233,17 @@ describe('AuditService', () => {
         resourceType: 'submission',
       });
 
-      expect(mockInsertValues).toHaveBeenCalledWith(
-        expect.objectContaining({
-          tenantId: 77,
-        }),
-      );
+      const params = insertParams();
+      expect(params).toBeDefined();
+      expect(params![1]).toBe(77); // tenant_id resolved from organizationId
     });
 
-    it('should not throw when DB insert fails (non-fatal)', async () => {
-      mockInsertValues.mockRejectedValueOnce(new Error('unique constraint'));
+    it('should not throw when the DB write fails (non-fatal)', async () => {
+      // First client query (BEGIN) rejects → the whole audit write fails, but
+      // logAction must swallow it (an audit-trail outage must not break the
+      // action it records).
+      mockClientQuery.mockRejectedValueOnce(new Error('connection reset'));
 
-      // Should complete without throwing
       await expect(
         audit.logAction({
           tenantId: 1,
@@ -217,6 +252,9 @@ describe('AuditService', () => {
           resourceType: 'user',
         }),
       ).resolves.toBeUndefined();
+
+      // The connection is always released even on failure.
+      expect(mockClientRelease).toHaveBeenCalled();
     });
   });
 
