@@ -1,9 +1,9 @@
 {
   "target": "server/index.ts,server/bootstrap/register-*.ts,server/startup/routes.ts,server/startup/inline-endpoints.ts,server/startup/middleware.ts",
-  "generatedAt": "2026-06-14T22:24:36.896Z",
-  "mounts": 241,
+  "generatedAt": "2026-06-15T04:48:24.984Z",
+  "mounts": 244,
   "errors": 8,
-  "warnings": 5,
+  "warnings": 6,
   "issues": {
     "errors": [
       {
@@ -70,6 +70,11 @@
       },
       {
         "type": "multi-use-prefix",
+        "path": "/api/etmf",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
         "path": "/api/mdx",
         "key": null
       }
@@ -100,6 +105,16 @@
       "prefix": "/api/reports",
       "owner": "Reporting Intelligence",
       "contact": "server/routes/reports*.ts"
+    },
+    {
+      "prefix": "/api/device-cockpit",
+      "owner": "Device & Diagnostics",
+      "contact": "server/routes/device-cockpit.ts"
+    },
+    {
+      "prefix": "/api/global-markets",
+      "owner": "Device & Diagnostics",
+      "contact": "server/routes/global-markets.ts"
     },
     {
       "prefix": "/api/ind",

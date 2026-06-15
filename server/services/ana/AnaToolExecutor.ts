@@ -35,6 +35,18 @@ import { assessRegulatoryLandscape } from '../integrations/landscape.js';
 import { getIntegrationStatuses, summarizeStatuses } from '../integrations/integration-status.js';
 import { getAllEnabledTools } from './AnaToolDefinitions.js';
 import {
+  adviseDeviceReadiness,
+  adviseGlobalMarketStrategy,
+  adviseGlobalSubmissionPlan,
+  advisePmaReadiness,
+  adviseEuTechnicalFileReadiness,
+  type DeviceReadinessAdviceInput,
+  type GlobalMarketAdviceInput,
+  type SubmissionPlanAdviceInput,
+  type PmaReadinessAdviceInput,
+  type EuTechDocAdviceInput,
+} from '../ana-advisory';
+import {
   recordToolOutcome,
   recordContractViolation,
   recordToolSurface,
@@ -627,6 +639,64 @@ registerToolHandler('advise_data_integrity', async (input) => {
     return JSON.stringify({ source: 'AnA Data-Integrity Advisor', catalog: listDataIntegrity(), ...adviseDataIntegrity({}) });
   }
   return JSON.stringify({ source: 'AnA Data-Integrity Advisor', ...adviseDataIntegrity({ requirement, description }) });
+});
+
+// Device/IVD eSTAR submission-readiness advisor (grounded, non-LLM). Never
+// claims a submittable artifact the platform cannot produce, nor transmission.
+registerToolHandler('advise_device_readiness', async (input) => {
+  return JSON.stringify({
+    source: 'AnA Device-Readiness Advisor',
+    ...adviseDeviceReadiness(input as unknown as DeviceReadinessAdviceInput),
+  });
+});
+
+// Global market-entry strategy advisor (ranked, honest; never claims transmission).
+registerToolHandler('advise_global_market_strategy', async (input) => {
+  const rawProfile = input.profile && typeof input.profile === 'object' ? (input.profile as Record<string, unknown>) : {};
+  const profile = {
+    isIvd: rawProfile.isIvd === true,
+    availableArtifacts: Array.isArray(rawProfile.availableArtifacts) ? (rawProfile.availableArtifacts as string[]) : [],
+  };
+  const candidateMarkets = Array.isArray(input.candidateMarkets) ? (input.candidateMarkets as string[]) : undefined;
+  return JSON.stringify({
+    source: 'AnA Global-Market Strategy Advisor',
+    ...adviseGlobalMarketStrategy({ profile, candidateMarkets } as unknown as GlobalMarketAdviceInput),
+  });
+});
+
+// EU MDR/IVDR technical-file readiness advisor (grounded; never claims NB
+// conformity or CE marking).
+registerToolHandler('advise_eu_technical_file_readiness', async (input) => {
+  return JSON.stringify({
+    source: 'AnA EU Technical-File Readiness Advisor',
+    ...adviseEuTechnicalFileReadiness(input as unknown as EuTechDocAdviceInput),
+  });
+});
+
+// PMA (Class III) filing-readiness advisor (grounded; never claims a fileable PMA
+// when required modules are missing, nor transmission).
+registerToolHandler('advise_pma_readiness', async (input) => {
+  return JSON.stringify({
+    source: 'AnA PMA-Readiness Advisor',
+    ...advisePmaReadiness(input as unknown as PmaReadinessAdviceInput),
+  });
+});
+
+// Global multi-market submission-plan advisor (grounded; never claims transmission).
+registerToolHandler('advise_global_submission_plan', async (input) => {
+  const rawProfile = input.profile && typeof input.profile === 'object' ? (input.profile as Record<string, unknown>) : {};
+  const profile = {
+    name: typeof rawProfile.name === 'string' ? rawProfile.name : 'Unnamed device',
+    isIvd: rawProfile.isIvd === true,
+    riskTier: typeof rawProfile.riskTier === 'string' ? rawProfile.riskTier : undefined,
+    intendedUse: typeof rawProfile.intendedUse === 'string' ? rawProfile.intendedUse : undefined,
+    availableArtifacts: Array.isArray(rawProfile.availableArtifacts) ? (rawProfile.availableArtifacts as string[]) : [],
+  };
+  const targetMarkets = Array.isArray(input.targetMarkets) ? (input.targetMarkets as string[]) : [];
+  return JSON.stringify({
+    source: 'AnA Global-Submission-Plan Advisor',
+    ...adviseGlobalSubmissionPlan({ profile, targetMarkets } as unknown as SubmissionPlanAdviceInput),
+  });
 });
 
 // Real-world-evidence study-design advisor.
