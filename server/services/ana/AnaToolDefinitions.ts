@@ -10,6 +10,7 @@
  */
 
 import type { AnaTool, AnthropicServerTool, AnyAnaTool } from '../ai-gateway/types';
+import { ANA_ADVISORY_TOOL_SPECS } from '../ana-advisory';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -6065,6 +6066,10 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   IND_GET_STATUS,
   RASTERIZE_PAGE,
   PDF_OVERLAY,
+  // AnA device/IVD + global-market advisory (grounded, non-LLM; honest about
+  // assemble/transmit limits). Handlers registered in AnaToolExecutor; specs
+  // authored in services/ana-advisory.
+  ...(ANA_ADVISORY_TOOL_SPECS as unknown as AnaTool[]),
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

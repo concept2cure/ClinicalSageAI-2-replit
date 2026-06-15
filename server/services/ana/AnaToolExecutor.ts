@@ -35,6 +35,12 @@ import { assessRegulatoryLandscape } from '../integrations/landscape.js';
 import { getIntegrationStatuses, summarizeStatuses } from '../integrations/integration-status.js';
 import { getAllEnabledTools } from './AnaToolDefinitions.js';
 import {
+  adviseDeviceReadiness,
+  adviseGlobalMarketStrategy,
+  type DeviceReadinessAdviceInput,
+  type GlobalMarketAdviceInput,
+} from '../ana-advisory';
+import {
   recordToolOutcome,
   recordContractViolation,
   recordToolSurface,
@@ -627,6 +633,29 @@ registerToolHandler('advise_data_integrity', async (input) => {
     return JSON.stringify({ source: 'AnA Data-Integrity Advisor', catalog: listDataIntegrity(), ...adviseDataIntegrity({}) });
   }
   return JSON.stringify({ source: 'AnA Data-Integrity Advisor', ...adviseDataIntegrity({ requirement, description }) });
+});
+
+// Device/IVD eSTAR submission-readiness advisor (grounded, non-LLM). Never
+// claims a submittable artifact the platform cannot produce, nor transmission.
+registerToolHandler('advise_device_readiness', async (input) => {
+  return JSON.stringify({
+    source: 'AnA Device-Readiness Advisor',
+    ...adviseDeviceReadiness(input as unknown as DeviceReadinessAdviceInput),
+  });
+});
+
+// Global market-entry strategy advisor (ranked, honest; never claims transmission).
+registerToolHandler('advise_global_market_strategy', async (input) => {
+  const rawProfile = input.profile && typeof input.profile === 'object' ? (input.profile as Record<string, unknown>) : {};
+  const profile = {
+    isIvd: rawProfile.isIvd === true,
+    availableArtifacts: Array.isArray(rawProfile.availableArtifacts) ? (rawProfile.availableArtifacts as string[]) : [],
+  };
+  const candidateMarkets = Array.isArray(input.candidateMarkets) ? (input.candidateMarkets as string[]) : undefined;
+  return JSON.stringify({
+    source: 'AnA Global-Market Strategy Advisor',
+    ...adviseGlobalMarketStrategy({ profile, candidateMarkets } as unknown as GlobalMarketAdviceInput),
+  });
 });
 
 // Real-world-evidence study-design advisor.
