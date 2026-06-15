@@ -384,6 +384,16 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount CDISC Validation routes:', error);
   }
 
+  // Global Regulatory Intelligence — cross-market RA strategy (Module 1
+  // requirements, review timelines, expedited programs, pathway advice).
+  try {
+    const globalRiModule = await import('../routes/global-ri.routes');
+    app.use('/api/global-ri', authMiddleware, globalRiModule.default);
+    console.info('✅ Global RI routes mounted (/api/global-ri)');
+  } catch (error) {
+    console.error('❌ Failed to mount Global RI routes:', error);
+  }
+
   // eGrants / funder-milestone management (2 CFR 200; SBIR/STTR; pre→post-award).
   try {
     const grantsModule = await import('../routes/grants');
