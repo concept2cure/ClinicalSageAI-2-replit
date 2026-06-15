@@ -351,19 +351,25 @@ export class FdaEsgGateway implements SubmissionGateway {
         // streams the file by path.
         await readVerifiedBundle(req.bundle);
         const result = await transmitViaSftp(creds, req.bundle.path, applicationId, sequence);
+        // An SFTP PUT only deposits the bundle in FDA's /incoming/ directory —
+        // it is NOT an acknowledgment. FDA picks the file up asynchronously and
+        // emits ack1/ack2/ack3 over /outgoing/ later (see the ack notes at the
+        // top of this file). The honest post-upload state is therefore
+        // `in_transit` with NO ack timestamp; marking it `received` with an
+        // ackReceivedAt of `now` would fabricate an FDA acknowledgment that
+        // never arrived. checkStatus() reconciles the real ack once it lands.
         await updateTransmittal(transmittalId, {
-          status: 'received',
+          status: 'in_transit',
           transmissionId: result.transmissionId,
-          ackReceivedAt: new Date(),
         });
         return {
           transmittalId,
           transmissionId: result.transmissionId,
-          status: 'received',
+          status: 'in_transit',
           transport: 'sftp',
           httpStatus: null,
-          ackReceivedAt: new Date(),
-          message: `FDA ESG SFTP transmit accepted. Tracking: ${result.transmissionId}.`,
+          ackReceivedAt: null,
+          message: `FDA ESG SFTP upload complete; awaiting FDA receipt. Tracking: ${result.transmissionId}.`,
         };
       }
 
