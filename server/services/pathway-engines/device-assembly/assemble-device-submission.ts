@@ -92,8 +92,10 @@ export function assembleDeviceSubmission(
     requireTemplate,
   });
 
+  // tryAssessMarketReadiness returns null for an unknown market; normalize to
+  // undefined so the result field stays `MarketReadinessResult | undefined`.
   const market = input.market
-    ? tryAssessMarketReadiness(input.market, input.availableArtifacts ?? [])
+    ? (tryAssessMarketReadiness(input.market, input.availableArtifacts ?? []) ?? undefined)
     : undefined;
 
   const blockers: string[] = [];
