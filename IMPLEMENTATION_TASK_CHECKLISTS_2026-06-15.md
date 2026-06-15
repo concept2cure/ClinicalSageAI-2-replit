@@ -57,4 +57,3 @@ These are the two **first slices** — the cheapest paths to the two biggest tru
 - Device Slices 2–4 (De Novo, PMA-on-eCTD, MDR/IVDR end-to-end) — sequenced in the device spec.
 - Procurement items (eValidator license, eCTD DTDs, ESG/EUDAMED creds) — tracked separately; the code seams exist behind opt-in flags.
 - Global-agency assembly beyond FDA/EMA/PMDA — roadmap, not a slice.
-</content>

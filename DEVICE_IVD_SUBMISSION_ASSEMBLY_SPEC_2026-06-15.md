@@ -127,4 +127,3 @@ A **canonical Device & IVD submission-assembly path** that, for a given project 
 - Pharma spine to mirror: `server/services/ectd/{assemble-from-core,dispatch-gate,dispatch-readiness}.ts`, `server/services/submission-gateways/regional-packager.ts`
 - Global advisory (out of scope for assembly): `server/services/ivd-knowledge/**`, `server/services/regulatory/global-pathways.ts`
 - eValidator/DTD seams: `EVALIDATOR_INTEGRATION_SPEC.md`, `server/services/ectd/dtd-bundler.ts`
-</content>

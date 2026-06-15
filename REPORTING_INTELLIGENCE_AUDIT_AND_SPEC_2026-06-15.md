@@ -282,5 +282,4 @@ A single **Report Workspace** where a user:
 - Submissions/global/IVD: `server/services/submission-gateways/regional-packager.ts`, `server/services/region-profiles/region-profile-service.ts`, `server/services/ivd-knowledge/**`, `server/services/cer/index.ts`
 - Prior plan this supersedes/extends: `docs/plans/REPORT_OS_ARCHITECTURE_AND_IMPLEMENTATION_SLICE_2026-03-30.md`
 - Prior whole-platform audit: `GA_GAP_AUDIT_2026-06-10.md`
-</content>
 </invoke>
