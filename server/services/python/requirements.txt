@@ -3,10 +3,10 @@
 fastapi==0.136.3
 uvicorn[standard]==0.47.0
 pydantic[email]==2.13.4
-pydantic-settings>=2.14.1
+pydantic-settings==2.14.1
 python-multipart==0.0.29
-starlette>=1.0.0
-websockets>=16.0
+starlette==1.0.0
+websockets==16.0
 
 # Database dependencies
 psycopg2-binary==2.9.12
@@ -76,5 +76,5 @@ bcrypt==5.0.0
 
 # Monitoring and logging
 structlog==25.5.0
-prometheus-client>=0.25.0
-prometheus-fastapi-instrumentator>=7.1.0
+prometheus-client==0.25.0
+prometheus-fastapi-instrumentator==7.1.0
