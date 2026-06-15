@@ -132,3 +132,39 @@ describe('HA meetings', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('special designations', () => {
+  it('GET /designations/criteria/:market → 200', async () => {
+    const res = await request(app).get('/api/global-ri/designations/criteria/FDA');
+    expect(res.status).toBe(200);
+    expect(res.body.market).toBe('FDA');
+  });
+
+  it('POST /designations/assess → 200 orphan-eligible for low US prevalence', async () => {
+    const res = await request(app).post('/api/global-ri/designations/assess').send({ market: 'FDA', usPrevalence: 150000 });
+    expect(res.status).toBe(200);
+    expect(res.body.orphan.eligible).toBe(true);
+  });
+
+  it('POST /designations/assess → 400 without market', async () => {
+    const res = await request(app).post('/api/global-ri/designations/assess').send({});
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('strategy brief', () => {
+  it('POST /strategy-brief → 200 cross-market brief', async () => {
+    const res = await request(app)
+      .post('/api/global-ri/strategy-brief')
+      .send({ productType: 'biologic', targetMarkets: ['US', 'EU'], nextMilestone: 'pre_ind', disease: { usPrevalence: 150000, seriousOrLifeThreatening: true, unmetMedicalNeed: true } });
+    expect(res.status).toBe(200);
+    expect(res.body.markets.length).toBe(2);
+    expect(res.body.markets[0].agency).toBe('FDA');
+    expect(res.body.summary).toHaveProperty('orphanEligibleMarkets');
+  });
+
+  it('POST /strategy-brief → 400 without productType/targetMarkets', async () => {
+    const res = await request(app).post('/api/global-ri/strategy-brief').send({ productType: 'biologic' });
+    expect(res.status).toBe(400);
+  });
+});

@@ -23,6 +23,8 @@ import { projectReviewTimeline } from '../services/global-ri/global-review-timel
 import { matchExpeditedPrograms, EXPEDITED_PROGRAMS } from '../services/global-ri/expedited-programs';
 import { recommendPathway } from '../services/global-ri/regulatory-pathway-advisor';
 import { recommendMeetings, meetingsForMarket, MEETING_CATALOG, type MeetingMarket } from '../services/global-ri/ha-meetings';
+import { assessDesignationEligibility, getDesignationCriteria } from '../services/global-ri/special-designations';
+import { buildStrategyBrief } from '../services/global-ri/regulatory-strategy-brief';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('global-ri-routes');
@@ -142,6 +144,53 @@ router.post('/meetings/recommend', limiter, requireRole(AUTHOR), (req: Request, 
   }
   try {
     res.json(recommendMeetings({ market: b.market, milestone: b.milestone }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Special designations (orphan / pediatric) ─────────────────────────────────
+
+/** A market's orphan/pediatric designation criteria reference. */
+router.get('/designations/criteria/:market', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const market = String(Array.isArray(req.params.market) ? req.params.market[0] : req.params.market);
+  const criteria = getDesignationCriteria(market as any);
+  if (!criteria) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No designation criteria modeled for "${market}".` } });
+  }
+  res.json({ market, criteria });
+});
+
+/**
+ * Assess orphan + pediatric designation eligibility for a market.
+ * Body: { market, usPrevalence?, euPrevalencePer10k?, jpPrevalence?, ... }.
+ */
+router.post('/designations/assess', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!b.market) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'market is required.' } });
+  }
+  try {
+    res.json(assessDesignationEligibility(b));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Regulatory strategy brief (cross-market orchestration) ─────────────────────
+
+/**
+ * Build a cross-market regulatory strategy brief: pathway + designations +
+ * expedited programs + HA meetings + Module 1 per target market.
+ * Body: { productType, targetMarkets, developmentPhase?, nextMilestone?, disease?, pediatricDevelopment? }.
+ */
+router.post('/strategy-brief', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!b.productType || !Array.isArray(b.targetMarkets)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'productType and targetMarkets[] are required.' } });
+  }
+  try {
+    res.json(buildStrategyBrief(b));
   } catch (err) {
     fail(res, err);
   }
