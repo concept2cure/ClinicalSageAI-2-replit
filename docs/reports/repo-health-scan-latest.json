@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-06-15T02:47:10.966Z",
+  "generatedAt": "2026-06-15T04:36:52.608Z",
   "git": {
-    "sha": "f041871c1f4fa593a14b80968b76c29daee7d9b9",
-    "branch": "concept2cure-v2"
+    "sha": "5ae5b10c2f48d09a48d8a5d5a003abfc03cc1a2c",
+    "branch": "claude/medical-device-audit-spec-9w994x"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 85,
+        "count": 89,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -50,6 +50,7 @@
           "server/services/ai-governance/classification/index.ts",
           "server/services/ai-governance/index.ts",
           "server/services/ai/index.ts",
+          "server/services/ana-advisory/index.ts",
           "server/services/ana-biostats/index.ts",
           "server/services/ana-ri/index.ts",
           "server/services/ana/index.ts",
@@ -64,8 +65,10 @@
           "server/services/cortex/index.ts",
           "server/services/csr/index.ts",
           "server/services/documents/index.ts",
+          "server/services/entitlements/index.ts",
           "server/services/fda/index.ts",
           "server/services/foresight/index.ts",
+          "server/services/global-markets/index.ts",
           "server/services/grdhe/exportGenerators/index.ts",
           "server/services/grdhe/index.ts",
           "server/services/ind-forms/index.ts",
@@ -77,6 +80,7 @@
           "server/services/intelligence/index.ts",
           "server/services/ivd-knowledge/index.ts",
           "server/services/living-record/index.ts",
+          "server/services/mdx-submission-planner/index.ts",
           "server/services/ocr/index.ts",
           "server/services/orchestration/index.ts",
           "server/services/pathway-engines/index.ts",
@@ -191,7 +195,7 @@
       },
       {
         "basename": "types",
-        "count": 27,
+        "count": 31,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/components/concept2cure-projects/types.ts",
@@ -203,6 +207,7 @@
           "server/config/types.ts",
           "server/services/ai-gateway/types.ts",
           "server/services/ai-governance/classification/types.ts",
+          "server/services/ana-advisory/types.ts",
           "server/services/ana-biostats/types.ts",
           "server/services/ana/therapeutic-area-profiles/types.ts",
           "server/services/biostatistics-judgment/types.ts",
@@ -210,9 +215,12 @@
           "server/services/cognitive-ecosystem/types.ts",
           "server/services/compute/types.ts",
           "server/services/conversation-os/types.ts",
+          "server/services/entitlements/types.ts",
+          "server/services/global-markets/types.ts",
           "server/services/grdhe/types.ts",
           "server/services/intelligence-engine/types.ts",
           "server/services/ivd-knowledge/types.ts",
+          "server/services/mdx-submission-planner/types.ts",
           "server/services/reasoning-engine/types.ts",
           "server/services/rules-engine/types.ts",
           "server/services/sentinel/types.ts",
@@ -2105,15 +2113,15 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "bytes": 682929
+        "bytes": 683289
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 454448
+        "bytes": 457674
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 330991
+        "bytes": 331520
       },
       {
         "file": "server/statistics-service.ts",
@@ -2121,11 +2129,11 @@
       },
       {
         "file": "server/routes/ana-features.ts",
-        "bytes": 179955
+        "bytes": 179637
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 175378
+        "bytes": 175783
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2163,11 +2171,11 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "lines": 18364
+        "lines": 18370
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 9198
+        "lines": 9268
       },
       {
         "file": "server/statistics-service.ts",
@@ -2175,15 +2183,15 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 6155
+        "lines": 6163
       },
       {
         "file": "server/routes/ana-features.ts",
-        "lines": 5558
+        "lines": 5431
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 5394
+        "lines": 5404
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2246,6 +2254,10 @@
         "lines": 1937
       },
       {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 1852
+      },
+      {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
         "lines": 1849
       },
@@ -2274,10 +2286,6 @@
         "lines": 1785
       },
       {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 1779
-      },
-      {
         "file": "server/services/ana-ri/orchestrator.ts",
         "lines": 1764
       },
@@ -2287,7 +2295,7 @@
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 1712
+        "lines": 1715
       },
       {
         "file": "server/routes/fda510k-routes.ts",
@@ -2335,11 +2343,18 @@
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": 0
+    }
+  },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 313,
+      "duplicateGroups": 321,
       "largeByBytes": 11,
       "largeByLines": 34
     },
