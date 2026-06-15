@@ -11,6 +11,7 @@ import { evaluateRegulatoryClock } from '../../services/ind-lifecycle/ind-regula
 import { buildIndTimeline } from '../../services/ind-lifecycle/ind-timeline-service';
 import { validateSequenceLeaves } from '../../services/ind-lifecycle/ind-sequence-validation';
 import { deriveIndActionItems } from '../../services/ind-lifecycle/ind-action-items';
+import { validateSequenceTypeTransition } from '../../services/ind-lifecycle/ind-sequence-lifecycle-validator';
 import { AUTHOR, limiter, body, fail, readinessFrom, validationFrom } from './shared';
 
 const router = Router();
@@ -105,6 +106,24 @@ router.post('/sequence/validate', limiter, requireRole(AUTHOR), (req, res) => {
   }
   try {
     res.json(validateSequenceLeaves({ filingType: b.filingType, leaves: b.leaves }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Validate a proposed eCTD sequence TYPE against the submission's history (pure):
+ * the first sequence must be an original; amendment/response/variation/annual/
+ * withdrawal require a prior original; no second original; withdrawal is terminal.
+ * Body: { existingSequenceTypes: string[], proposedType }.
+ */
+router.post('/sequence/lifecycle-validate', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = body(req);
+  if (!Array.isArray(b.existingSequenceTypes) || !b.proposedType) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'existingSequenceTypes[] and proposedType are required.' } });
+  }
+  try {
+    res.json(validateSequenceTypeTransition({ existingSequenceTypes: b.existingSequenceTypes, proposedType: b.proposedType }));
   } catch (err) {
     fail(res, err);
   }
