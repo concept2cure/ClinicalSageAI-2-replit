@@ -24,6 +24,7 @@ import { getLabelingRequirements, type LabelingSection, type LabelMarket } from 
 import { estimateFees, type FeeEstimate, type FeeMarket } from './regulatory-fee-estimator';
 import { computeExclusivity, type ExclusivityResult, type ExclusivityMarket, type ProductClass } from './exclusivity-periods';
 import { assessPediatricPlan, type PediatricMarket, type PediatricPlanAssessment } from './pediatric-requirements';
+import { getPvObligations, type PvMarket, type PvObligations } from './pharmacovigilance-obligations';
 
 /** Agency/region code a target market maps to across the RI services. */
 const MARKET_AGENCY: Record<Market, string> = {
@@ -44,6 +45,7 @@ const LABELING_MARKETS = new Set(['FDA', 'EMA', 'PMDA']);
 const FEE_MARKETS = new Set(['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA']);
 const EXCLUSIVITY_MARKETS = new Set(['FDA', 'EMA', 'PMDA']);
 const PEDIATRIC_PLAN_MARKETS = new Set(['FDA', 'EMA', 'PMDA']);
+const PV_MARKETS = new Set(['FDA', 'EMA', 'PMDA']);
 
 /** Map a product type to the exclusivity regime's product class. */
 const PRODUCT_CLASS_BY_TYPE: Record<ProductType, ProductClass> = {
@@ -88,6 +90,7 @@ export interface MarketStrategy {
   feeEstimate: FeeEstimate | null;
   exclusivity: ExclusivityResult | null;
   pediatricRequirements: PediatricPlanAssessment | null;
+  pharmacovigilance: PvObligations | null;
 }
 
 export interface RegulatoryStrategyBrief {
@@ -186,6 +189,10 @@ export function buildStrategyBrief(input: StrategyBriefInput): RegulatoryStrateg
         ? assessPediatricPlan({ market: agency as PediatricMarket, triggersRequirement: true })
         : null;
 
+    // Post-approval pharmacovigilance obligations (FDA/EMA/PMDA) — the lifecycle
+    // safety commitments that attach once the product is authorised.
+    const pharmacovigilance = PV_MARKETS.has(agency) ? getPvObligations(agency as PvMarket) : null;
+
     return {
       market,
       agency,
@@ -201,6 +208,7 @@ export function buildStrategyBrief(input: StrategyBriefInput): RegulatoryStrateg
       feeEstimate,
       exclusivity,
       pediatricRequirements,
+      pharmacovigilance,
     };
   });
 

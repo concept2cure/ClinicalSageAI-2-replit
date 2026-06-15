@@ -38,6 +38,10 @@ import { getSubmissionFormat, assessSubmissionReadiness, SUBMISSION_MARKETS, typ
 import { getInspectionProfile, getReadinessDomains, assessInspectionReadiness, INSPECTION_MARKETS, type InspectionMarket } from '../services/global-ri/inspection-readiness';
 import { getGuidanceFor, listGuidanceTopics } from '../services/global-ri/regulatory-guidance-map';
 import { projectSubmissionEconomics } from '../services/global-ri/submission-economics';
+import { getCombinationFramework, classifyCombinationProduct, COMBINATION_REGIONS, type CombinationRegion } from '../services/global-ri/combination-product-classification';
+import { getPvObligations, getPvElements, assessPvReadiness, PV_MARKETS, type PvMarket } from '../services/global-ri/pharmacovigilance-obligations';
+import { getDisclosureRequirements, computeDisclosureDeadlines, DISCLOSURE_MARKETS, type DisclosureMarket } from '../services/global-ri/clinical-trial-disclosure';
+import { RELIANCE_PATHWAYS, RELIANCE_PATHWAY_IDS, getReliancePathway, recommendReliancePathways } from '../services/global-ri/reliance-pathways';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('global-ri-routes');
@@ -537,6 +541,114 @@ router.post('/submission-economics', limiter, requireRole(AUTHOR), (req: Request
   } catch (err) {
     // Unknown market/procedure → 400 validation (propagated from the timeline projector).
     return res.status(400).json({ error: { code: 'VALIDATION', message: err instanceof Error ? err.message : 'Invalid submission-economics request.' } });
+  }
+});
+
+// ── Combination-product / drug-device classification ──────────────────────────
+
+/** A region's combination-product classification framework. */
+router.get('/combination/framework/:region', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const region = String(Array.isArray(req.params.region) ? req.params.region[0] : req.params.region) as CombinationRegion;
+  if (!COMBINATION_REGIONS.includes(region)) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No combination-product framework modeled for "${region}".` } });
+  }
+  res.json({ region, framework: getCombinationFramework(region) });
+});
+
+/**
+ * Classify a combination product to its lead authority / regulatory route.
+ * Body: { region, primaryModeOfAction?, integral? }.
+ */
+router.post('/combination/classify', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!b.region) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'region is required.' } });
+  }
+  try {
+    res.json(classifyCombinationProduct(b));
+  } catch (err) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: err instanceof Error ? err.message : 'Invalid region.' } });
+  }
+});
+
+// ── Pharmacovigilance obligations ─────────────────────────────────────────────
+
+/** A market's post-approval pharmacovigilance obligations. */
+router.get('/pharmacovigilance/obligations/:market', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const market = String(Array.isArray(req.params.market) ? req.params.market[0] : req.params.market) as PvMarket;
+  if (getPvElements(market).length === 0) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No pharmacovigilance obligations modeled for "${market}".` } });
+  }
+  res.json({ market, markets: PV_MARKETS, obligations: getPvObligations(market) });
+});
+
+/** Assess PV readiness against a market's required elements. Body: { market, providedElements }. */
+router.post('/pharmacovigilance/assess', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!b.market || !Array.isArray(b.providedElements)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'market and providedElements[] are required.' } });
+  }
+  try {
+    res.json(assessPvReadiness({ market: b.market, providedElements: b.providedElements }));
+  } catch (err) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: err instanceof Error ? err.message : 'Invalid market.' } });
+  }
+});
+
+// ── Clinical-trial disclosure (registration + results posting) ────────────────
+
+/** A market's clinical-trial registration & results-disclosure requirements. */
+router.get('/disclosure/requirements/:market', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const market = String(Array.isArray(req.params.market) ? req.params.market[0] : req.params.market) as DisclosureMarket;
+  if (!DISCLOSURE_MARKETS.includes(market)) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No disclosure requirements modeled for "${market}".` } });
+  }
+  res.json({ market, markets: DISCLOSURE_MARKETS, requirements: getDisclosureRequirements(market) });
+});
+
+/**
+ * Compute registration + results-posting deadlines for a trial.
+ * Body: { market, firstEnrollmentDate?, primaryCompletionDate?, pediatric? }.
+ */
+router.post('/disclosure/deadlines', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!b.market) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'market is required.' } });
+  }
+  try {
+    res.json(computeDisclosureDeadlines(b));
+  } catch (err) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: err instanceof Error ? err.message : 'Invalid disclosure request.' } });
+  }
+});
+
+// ── Reliance / work-sharing / collaborative registration pathways ─────────────
+
+/** The catalog of international reliance pathways (ids + full entries). */
+router.get('/reliance-pathways', limiter, requireRole(AUTHOR), (_req: Request, res: Response) => {
+  res.json({ ids: RELIANCE_PATHWAY_IDS, pathways: RELIANCE_PATHWAYS });
+});
+
+/** A single reliance pathway by id. */
+router.get('/reliance-pathways/:id', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const id = String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
+  const pathway = getReliancePathway(id);
+  if (!pathway) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No reliance pathway "${id}".` } });
+  }
+  res.json(pathway);
+});
+
+/**
+ * Recommend reliance pathways for a program profile.
+ * Body: { isOncology?, targetMarkets?, globalHealth? }.
+ */
+router.post('/reliance-pathways/recommend', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  try {
+    res.json(recommendReliancePathways(b));
+  } catch (err) {
+    fail(res, err);
   }
 });
 
