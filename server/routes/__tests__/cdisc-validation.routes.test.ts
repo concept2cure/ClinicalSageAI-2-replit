@@ -140,3 +140,37 @@ describe('dataset-package readiness', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('SEND domain + controlled terminology', () => {
+  it('SEND conformance → 200 with a verdict', async () => {
+    const res = await request(app)
+      .post('/api/cdisc-validation/send-domain/conformance')
+      .send({ domain: 'BW', variables: [{ name: 'STUDYID', dataType: 'Char' }] });
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('ready');
+    expect(res.body.domain).toBe('BW');
+  });
+
+  it('SEND conformance → 400 without domain/variables', async () => {
+    const res = await request(app).post('/api/cdisc-validation/send-domain/conformance').send({ domain: 'BW' });
+    expect(res.status).toBe(400);
+  });
+
+  it('GET /controlled-terminology/codelists → 200 list', async () => {
+    const res = await request(app).get('/api/cdisc-validation/controlled-terminology/codelists');
+    expect(res.status).toBe(200);
+    expect(res.body.codelists.length).toBeGreaterThan(0);
+  });
+
+  it('CT validate → 200 invalid value flagged', async () => {
+    const res = await request(app).post('/api/cdisc-validation/controlled-terminology/validate').send({ codelist: 'SEX', values: ['M', 'X'] });
+    expect(res.status).toBe(200);
+    expect(res.body.valid).toBe(false);
+    expect(res.body.invalidValues).toContain('X');
+  });
+
+  it('CT validate → 400 without codelist/values', async () => {
+    const res = await request(app).post('/api/cdisc-validation/controlled-terminology/validate').send({ codelist: 'SEX' });
+    expect(res.status).toBe(400);
+  });
+});
