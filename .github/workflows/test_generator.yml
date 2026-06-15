@@ -73,7 +73,7 @@ jobs:
             exit 1
           fi
 
-      - name: Debug: query Celery worker state
+      - name: "Debug: query Celery worker state"
         if: always()
         run: |
           set -e
