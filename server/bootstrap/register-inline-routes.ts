@@ -404,6 +404,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount eTMF routes:', error);
   }
 
+  // Regulatory assessments — durable RI/CDISC/eTMF verdict snapshots per program.
+  try {
+    const assessmentsModule = await import('../routes/regulatory-assessments.routes');
+    app.use('/api/regulatory-assessments', authMiddleware, assessmentsModule.default);
+    console.info('✅ Regulatory assessments routes mounted (/api/regulatory-assessments)');
+  } catch (error) {
+    console.error('❌ Failed to mount Regulatory assessments routes:', error);
+  }
+
   // eGrants / funder-milestone management (2 CFR 200; SBIR/STTR; pre→post-award).
   try {
     const grantsModule = await import('../routes/grants');
