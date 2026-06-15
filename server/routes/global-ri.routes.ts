@@ -30,6 +30,12 @@ import { assessLabeling, getLabelingRequirements, type LabelMarket } from '../se
 import { assessCtaReadiness, getCtaRequirements, type CtaMarket } from '../services/global-ri/clinical-trial-application-requirements';
 import { classifyChange, getChangeVehicles, CHANGE_CATEGORIES, type ChangeMarket } from '../services/global-ri/post-approval-changes';
 import { ICH_GUIDELINES, getGuideline, guidelinesByCategory, searchGuidelines, listCategories } from '../services/global-ri/ich-guideline-catalog';
+import { computeExclusivity, getExclusivityRules, PRODUCT_CLASSES, type ExclusivityMarket } from '../services/global-ri/exclusivity-periods';
+import { classifyDossier, getLegalBases, type DossierRegion } from '../services/global-ri/dossier-classifier';
+import { getPediatricObligation, assessPediatricPlan, PEDIATRIC_MARKETS, type PediatricMarket } from '../services/global-ri/pediatric-requirements';
+import { getNonclinicalRequirements, recommendToxDuration, NONCLINICAL_PHASES, type NonclinicalPhase } from '../services/global-ri/nonclinical-requirements';
+import { getSubmissionFormat, assessSubmissionReadiness, SUBMISSION_MARKETS, type SubmissionMarket } from '../services/global-ri/electronic-submission-format';
+import { getInspectionProfile, getReadinessDomains, assessInspectionReadiness, INSPECTION_MARKETS, type InspectionMarket } from '../services/global-ri/inspection-readiness';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('global-ri-routes');
@@ -328,6 +334,172 @@ router.get('/ich-guidelines/:code', limiter, requireRole(AUTHOR), (req: Request,
     return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No ICH guideline "${code}".` } });
   }
   res.json(guideline);
+});
+
+// ── Regulatory exclusivity & loss-of-exclusivity (LOE) ────────────────────────
+
+/** A market's modeled exclusivity rules (base regime per product class + orphan). */
+router.get('/exclusivity/rules/:market', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const market = String(Array.isArray(req.params.market) ? req.params.market[0] : req.params.market) as ExclusivityMarket;
+  const rules = getExclusivityRules(market);
+  if (!rules) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No exclusivity rules modeled for "${market}".` } });
+  }
+  res.json({ market, productClasses: PRODUCT_CLASSES, ...rules });
+});
+
+/**
+ * Compute the binding regulatory exclusivity and project the LOE date.
+ * Body: { market, productClass, orphan?, pediatricExtension?, approvalDate? }.
+ */
+router.post('/exclusivity/compute', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!b.market || !b.productClass) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'market and productClass are required.' } });
+  }
+  try {
+    res.json(computeExclusivity(b));
+  } catch (err) {
+    // Unmodeled market/class or invalid approvalDate → 400 validation.
+    return res.status(400).json({ error: { code: 'VALIDATION', message: err instanceof Error ? err.message : 'Invalid exclusivity request.' } });
+  }
+});
+
+// ── Marketing-application legal-basis / dossier-type classifier ────────────────
+
+/** The modeled legal bases for a region (reference catalog). */
+router.get('/dossier/legal-bases/:region', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const region = String(Array.isArray(req.params.region) ? req.params.region[0] : req.params.region) as DossierRegion;
+  const legalBases = getLegalBases(region);
+  if (!legalBases) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No legal bases modeled for region "${region}".` } });
+  }
+  res.json({ region, legalBases });
+});
+
+/**
+ * Classify a product's marketing-application legal basis for a region.
+ * Body: { region, isBiologic?, referencesApprovedProduct?, reliesOnOthersData?, differsFromReference?, ... }.
+ */
+router.post('/dossier/classify', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!b.region) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'region is required.' } });
+  }
+  try {
+    res.json(classifyDossier(b));
+  } catch (err) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: err instanceof Error ? err.message : 'Invalid region.' } });
+  }
+});
+
+// ── Pediatric study-plan obligations (PREA iPSP / EMA PIP) ────────────────────
+
+/** A market's pediatric study-plan obligation reference. */
+router.get('/pediatric/obligation/:market', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const market = String(Array.isArray(req.params.market) ? req.params.market[0] : req.params.market) as PediatricMarket;
+  if (!PEDIATRIC_MARKETS.includes(market)) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No pediatric obligation modeled for "${market}".` } });
+  }
+  res.json({ market, obligation: getPediatricObligation(market) });
+});
+
+/**
+ * Assess a product's pediatric study-plan status for a market.
+ * Body: { market, triggersRequirement?, planSubmitted?, waiverRequested?, deferralRequested? }.
+ */
+router.post('/pediatric/assess', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!b.market) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'market is required.' } });
+  }
+  try {
+    res.json(assessPediatricPlan(b));
+  } catch (err) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: err instanceof Error ? err.message : 'Invalid market.' } });
+  }
+});
+
+// ── Nonclinical requirements (ICH M3(R2)) ─────────────────────────────────────
+
+/** The nonclinical package generally expected to support a clinical phase. */
+router.get('/nonclinical/requirements/:phase', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const phase = String(Array.isArray(req.params.phase) ? req.params.phase[0] : req.params.phase) as NonclinicalPhase;
+  if (!NONCLINICAL_PHASES.includes(phase)) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No nonclinical requirements modeled for phase "${phase}".` } });
+  }
+  res.json(getNonclinicalRequirements(phase));
+});
+
+/**
+ * Recommend the minimum repeat-dose toxicity study duration for an intended
+ * clinical-trial dosing duration (ICH M3(R2) Table 1). Body: { clinicalDurationDays }.
+ */
+router.post('/nonclinical/tox-duration', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (typeof b.clinicalDurationDays !== 'number') {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'clinicalDurationDays (number) is required.' } });
+  }
+  try {
+    res.json(recommendToxDuration(b.clinicalDurationDays));
+  } catch (err) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: err instanceof Error ? err.message : 'Invalid clinicalDurationDays.' } });
+  }
+});
+
+// ── Electronic submission format (eCTD / gateway / validation) ─────────────────
+
+/** A market's electronic submission format + gateway + validation profile. */
+router.get('/submission-format/:market', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const market = String(Array.isArray(req.params.market) ? req.params.market[0] : req.params.market) as SubmissionMarket;
+  const format = getSubmissionFormat(market);
+  if (!format) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No submission format modeled for "${market}".` } });
+  }
+  res.json({ market, format, markets: SUBMISSION_MARKETS });
+});
+
+/**
+ * Assess electronic-submission readiness for a market.
+ * Body: { market, format?, gatewayEnrolled?, validationPassed? }.
+ */
+router.post('/submission-format/assess', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!b.market) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'market is required.' } });
+  }
+  try {
+    res.json(assessSubmissionReadiness(b));
+  } catch (err) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: err instanceof Error ? err.message : 'Invalid market.' } });
+  }
+});
+
+// ── Inspection readiness (PAI / GMP / BIMO) ───────────────────────────────────
+
+/** A market's inspection profile (inspection types + readiness domains). */
+router.get('/inspection/profile/:market', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const market = String(Array.isArray(req.params.market) ? req.params.market[0] : req.params.market) as InspectionMarket;
+  if (getReadinessDomains(market).length === 0) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No inspection profile modeled for "${market}".` } });
+  }
+  res.json({ market, markets: INSPECTION_MARKETS, profile: getInspectionProfile(market) });
+});
+
+/**
+ * Assess inspection readiness against a market's required readiness domains.
+ * Body: { market, providedDomains: string[] }.
+ */
+router.post('/inspection/assess', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!b.market || !Array.isArray(b.providedDomains)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'market and providedDomains[] are required.' } });
+  }
+  try {
+    res.json(assessInspectionReadiness({ market: b.market, providedDomains: b.providedDomains }));
+  } catch (err) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: err instanceof Error ? err.message : 'Invalid market.' } });
+  }
 });
 
 export default router;
