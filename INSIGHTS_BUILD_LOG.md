@@ -13,14 +13,14 @@ four §8 decisions on 2026-06-15:
 | Step | Title | Status |
 |---|---|---|
 | 0 | Foundations, guardrails, truthfulness contract | Foundation landed (gate built + tested); criticalBlockers now severity-tagged through orchestrator → run → render; run-lifecycle finalize wiring pending DB-backed test |
-| 1 | Canonical insight/aggregation layer (read model) | Interface + registry + pure helpers landed + tested; DB-backed providers + orchestrator integration next |
+| 1 | Canonical insight/aggregation layer (read model) | Registry + pure helpers + DB-backed core providers (artifact_state, submission_readiness, compliance_audit) + registerCoreProviders landed; tested (compute() is DB-coupled, typecheck-only) |
 | 2 | Report content/render model | Pure model + renderer landed + tested; live read endpoint GET /runs/:id/rendered wired (typecheck-only, needs DB-backed CI test) |
 | 3 | Governed visualization system | 6 governed charts + ChartBlock dispatcher + reduced-motion/data-table a11y landed (typecheck-clean; needs browser/design QA) |
 | 4 | Insights UI surface (chat-first, scope-aware) | Surface landed (ScopeSwitcher, ReportCatalog, ReportView, ReportBlockView with provenance + disclosure + truthfulness banner, InsightsSurface, Ask-AnA affordance); typecheck-clean, needs browser/design QA + mount into ZenApp layoutMode |
 | 5 | Prediction reports (package the honest models) | Pure assembler + mandatory-disclosure guardrail landed + tested; wiring real model services next |
-| 6 | Scheduling, subscriptions, delivery | Core logic landed + tested (cadence, subscription model, e-sign/watermark delivery gate); Bull worker + subscriptions table next (DB/Redis) |
+| 6 | Scheduling, subscriptions, delivery | Core logic + report_subscriptions table/migration + subscription-service (CRUD, listDueSubscriptions, markRun) landed; Bull worker registration next (Redis) |
 | 7 | Enterprise / portfolio rollup reporting | Pure aggregator (board pack) + cross-region/harmonization engine landed + tested; DB-backed member fetch next |
-| 8 | Governance, audit, e-sign, Part 11 for reports | Core sealing logic landed + tested (canonical hash, provenance atoms, tamper-evident verifySeal, AI-disclosure detection); DB-backed immutable-record wiring next |
+| 8 | Governance, audit, e-sign, Part 11 for reports | Sealing core + POST /runs/:id/finalize endpoint (gate-enforced: 409 unless final-eligible; seals report, marks run final, persists seal to snapshot) landed; full immutableReportRecords row + e-sign capture next |
 | 9 | Observability, quality, rollout | Quality core landed + tested (Brier score, calibration buckets/quality, provider freshness rollup); admin quality view + metrics wiring next |
 
 ## Notes

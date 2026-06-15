@@ -21,6 +21,7 @@ import { GLOBAL_REPORT_TYPE_SEED } from '../services/report-os/taxonomy-global';
 import { resolveScope } from '../services/report-os/scope-model';
 import { computeInitialRun } from '../services/report-os/orchestrator';
 import { renderReport, type RenderInput } from '../services/report-os/render/render';
+import { buildSealedRecord } from '../services/report-os/sealing/seal';
 import {
   evaluateTruthfulness,
   type TruthfulnessRules,
@@ -1218,17 +1219,68 @@ router.get('/runs/:id/export.pdf', async (req: Request, res: Response) => {
 });
 
 /**
+ * Build the rendered report document + truthfulness evaluation for a stored run.
+ * Pure given the run + report-type rows (shared by the rendered and finalize
+ * endpoints so they never disagree). `forceRequestStatus` lets the finalize path
+ * test eligibility for `final` regardless of the stored run status. Critical
+ * blockers are read from the severity-tagged value persisted at run creation,
+ * falling back (for older runs) to treating every blocker as critical when the
+ * type forbids final on missing critical evidence.
+ */
+function buildRenderedFromRun(
+  run: typeof reportRuns.$inferSelect,
+  reportType: { label: string | null; truthfulnessRules: unknown } | undefined,
+  forceRequestStatus?: ReportRunStatus
+): {
+  rendered: ReturnType<typeof renderReport>;
+  truthfulness: ReturnType<typeof evaluateTruthfulness>;
+} {
+  const dependencySummary = (run.dependencySummary ?? {}) as Record<string, unknown>;
+  const providers = Array.isArray(dependencySummary.providers)
+    ? (dependencySummary.providers as RenderInput['providers'])
+    : [];
+  const summary = (dependencySummary.summary ?? {}) as Record<string, unknown>;
+  const blockers = toBlockerArray(run.blockers);
+  const rules = (reportType?.truthfulnessRules ?? {}) as TruthfulnessRules;
+  const storedCritical = Array.isArray(dependencySummary.criticalBlockers)
+    ? (dependencySummary.criticalBlockers as string[])
+    : null;
+  const criticalBlockers =
+    storedCritical ?? (rules.forbidFinalIfMissingCritical ? blockers : []);
+  const requestedStatus: ReportRunStatus =
+    forceRequestStatus ?? (run.status === 'completed' ? 'final' : 'partial');
+  const truthfulness = evaluateTruthfulness(
+    {
+      requestedStatus,
+      confidence: run.confidence ?? 0,
+      blockers,
+      criticalBlockers,
+      gapsSection: true,
+    },
+    rules
+  );
+  const rendered = renderReport({
+    reportTypeId: run.reportTypeId,
+    reportTypeLabel: reportType?.label || run.reportTypeId,
+    scopeType: run.scopeType,
+    scopeId: run.scopeId,
+    providers,
+    confidence: run.confidence ?? 0,
+    blockers,
+    summary,
+    status: truthfulness.allowedStatus,
+    truthfulness,
+  });
+  return { rendered, truthfulness };
+}
+
+/**
  * GET /runs/:id/rendered
  *
  * Render a stored run into the provenance-linked report document model and apply
  * the truthfulness gate. Read-only and org-scoped (JWT-bound; cross-tenant ids
- * 404). The gate is evaluated against a `final` request so the UI can show
- * whether the report is eligible to be finalized/sealed and, if not, why.
- *
- * NOTE: the run's stored blockers are not yet tagged with severity, so when the
- * report type forbids final on missing critical evidence we conservatively treat
- * every outstanding blocker as critical. Surfacing per-blocker severity from the
- * orchestrator will sharpen this; the gate contract is unchanged.
+ * 404). The gate is evaluated so the UI can show whether the report is eligible
+ * to be finalized/sealed and, if not, why.
  */
 router.get('/runs/:id/rendered', async (req: Request, res: Response) => {
   try {
@@ -1254,50 +1306,88 @@ router.get('/runs/:id/rendered', async (req: Request, res: Response) => {
       .where(eq(reportTypeRegistry.typeId, run.reportTypeId))
       .limit(1);
 
-    const dependencySummary = (run.dependencySummary ?? {}) as Record<string, unknown>;
-    const providers = Array.isArray(dependencySummary.providers)
-      ? (dependencySummary.providers as RenderInput['providers'])
-      : [];
-    const summary = (dependencySummary.summary ?? {}) as Record<string, unknown>;
-    const blockers = toBlockerArray(run.blockers);
-    const rules = (reportType?.truthfulnessRules ?? {}) as TruthfulnessRules;
-
-    // Prefer the severity-tagged critical blockers persisted at run creation.
-    // Fall back (for runs created before this field existed) to the conservative
-    // posture of treating every blocker as critical when the type forbids final
-    // on missing critical evidence.
-    const storedCritical = Array.isArray(dependencySummary.criticalBlockers)
-      ? (dependencySummary.criticalBlockers as string[])
-      : null;
-    const criticalBlockers =
-      storedCritical ?? (rules.forbidFinalIfMissingCritical ? blockers : []);
-
-    const requestedStatus: ReportRunStatus = run.status === 'completed' ? 'final' : 'partial';
-    const truthfulness = evaluateTruthfulness(
-      {
-        requestedStatus,
-        confidence: run.confidence ?? 0,
-        blockers,
-        criticalBlockers,
-        gapsSection: true,
-      },
-      rules
-    );
-
-    const rendered = renderReport({
-      reportTypeId: run.reportTypeId,
-      reportTypeLabel: reportType?.label || run.reportTypeId,
-      scopeType: run.scopeType,
-      scopeId: run.scopeId,
-      providers,
-      confidence: run.confidence ?? 0,
-      blockers,
-      summary,
-      status: truthfulness.allowedStatus,
-      truthfulness,
-    });
-
+    const { rendered } = buildRenderedFromRun(run, reportType);
     return res.json({ data: rendered });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /runs/:id/finalize
+ *
+ * Finalize and seal a run. Org-scoped (JWT-bound; cross-tenant ids 404). The
+ * truthfulness gate is evaluated against a `final` request: if the type's rules
+ * do not allow final (e.g. an unmet critical blocker), the endpoint refuses with
+ * 409 and the reasons — a final report can never be issued over blocking gaps.
+ * On success the rendered report is sealed (sha256 content hash + provenance
+ * atoms), the run is marked final, and the seal is persisted onto the latest
+ * snapshot's metadata.
+ */
+router.post('/runs/:id/finalize', async (req: Request, res: Response) => {
+  try {
+    const runId = Number(req.params.id);
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+    if (!Number.isFinite(runId) || runId <= 0) {
+      return res.status(400).json({ error: 'Invalid run id' });
+    }
+
+    const [run] = await db
+      .select()
+      .from(reportRuns)
+      .where(and(eq(reportRuns.id, runId), eq(reportRuns.organizationId, organizationId)))
+      .limit(1);
+    if (!run) return res.status(404).json({ error: 'Run not found' });
+
+    const [reportType] = await db
+      .select({ label: reportTypeRegistry.label, truthfulnessRules: reportTypeRegistry.truthfulnessRules })
+      .from(reportTypeRegistry)
+      .where(eq(reportTypeRegistry.typeId, run.reportTypeId))
+      .limit(1);
+
+    const { rendered, truthfulness } = buildRenderedFromRun(run, reportType, 'final');
+    if (truthfulness.allowedStatus !== 'final') {
+      return res.status(409).json({
+        error: 'Report is not eligible to be finalized',
+        downgradedTo: truthfulness.allowedStatus,
+        reasons: truthfulness.reasons,
+      });
+    }
+
+    const seal = buildSealedRecord(rendered);
+
+    await db
+      .update(reportRuns)
+      .set({ status: 'final', completedAt: new Date(), updatedAt: new Date() })
+      .where(and(eq(reportRuns.id, runId), eq(reportRuns.organizationId, organizationId)));
+
+    const [snapshot] = await db
+      .select()
+      .from(reportSnapshots)
+      .where(
+        and(
+          eq(reportSnapshots.runId, runId),
+          eq(reportSnapshots.organizationId, organizationId),
+          eq(reportSnapshots.isLatest, true)
+        )
+      )
+      .limit(1);
+    if (snapshot) {
+      const mergedMetadata = {
+        ...((snapshot.snapshotMetadata ?? {}) as Record<string, unknown>),
+        seal,
+        finalizedAt: new Date().toISOString(),
+      };
+      await db
+        .update(reportSnapshots)
+        .set({ snapshotMetadata: mergedMetadata })
+        .where(eq(reportSnapshots.id, snapshot.id));
+    }
+
+    return res.json({ data: { runId, status: 'final', seal } });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }
