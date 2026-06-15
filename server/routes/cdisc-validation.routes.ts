@@ -15,6 +15,7 @@ import { Router, Request, Response } from 'express';
 import { requireRole } from '../middleware/auth';
 import { createRateLimiter } from '../middleware/rateLimiter';
 import { checkSdtmDomainConformance } from '../services/cdisc/sdtm-domain-conformance-checker';
+import { generateDefineXml } from '../services/cdisc/define-xml-generator';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('cdisc-validation-routes');
@@ -42,6 +43,30 @@ router.post('/sdtm-domain/conformance', limiter, requireRole(AUTHOR), (req: Requ
   }
   try {
     res.json(checkSdtmDomainConformance({ domain: b.domain, variables: b.variables }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Generate a CDISC Define-XML v2.1 document from dataset/variable/codelist
+ * metadata. Body: { studyName, standard?, datasets: DefineDataset[], codelists? }.
+ * JSON (gaps + counts + xml) by default; `?format=xml` returns the define.xml.
+ */
+router.post('/define-xml', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (typeof b.studyName !== 'string' || !b.studyName.trim() || !Array.isArray(b.datasets)) {
+    return res
+      .status(400)
+      .json({ error: { code: 'VALIDATION', message: 'studyName (string) and datasets[] are required.' } });
+  }
+  try {
+    const result = generateDefineXml({ studyName: b.studyName, studyOID: b.studyOID, standard: b.standard, datasets: b.datasets, codelists: b.codelists });
+    if (String(req.query.format).toLowerCase() === 'xml') {
+      res.setHeader('Content-Type', 'application/xml');
+      return res.status(200).send(result.xml);
+    }
+    res.json(result);
   } catch (err) {
     fail(res, err);
   }
