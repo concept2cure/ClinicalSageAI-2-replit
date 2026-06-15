@@ -89,9 +89,24 @@ gated on a DBA/architecture review because it touches the production audit schem
 
 ---
 
+## Wave 2 (PR #809) — additional findings closed
+
+A second remediation wave (off the merged base) closed further MEDIUM/HIGH items, all verified (`tsc` 0 errors; contract/security tests pass):
+
+- **Security:** rate limiter fails **closed** for sensitive categories (auth/governed); dedicated `CONNECTOR_ENCRYPTION_KEY` (no `JWT_SECRET` reuse) + memoized KDF; SAML `LogoutResponse` signature validation (fail closed) + a `/api/v1` API-key coverage contract test; `secure_runner.py` sandbox hardened (`--read-only`+tmpfs, `--cap-drop ALL`, `no-new-privileges`, `--pids-limit`, symlink-confined mounts); pre-gate `/api/time` `/api/diag` moved behind the gate; firecrawl/Stripe webhooks confirmed fail-closed (+ test).
+- **Reliability:** `clients-routes` unbounded fan-out bounded; idempotency-store Redis degradation made observable + bounded.
+- **Performance:** default `LIMIT` cap on unbounded `findMany`; bounded in-flight AI-gateway concurrency semaphore.
+- **Observability:** CER SLO metrics confirmed live on `/api/metrics`; 101 `console.*` calls migrated to the redacting logger.
+- **Supply chain:** all loose (`>=`) Python deps pinned to exact versions.
+- **Docs:** OpenAPI submission-center spec +44 operations reconciled.
+
+This brings the running total to **13/16 blockers** and **~30/37 HIGH** closed across PRs #805 (merged) and #809.
+
+---
+
 ## Remaining backlog (tracked in sections 01–09)
 
-~24 HIGH, 45 MEDIUM, 28 LOW remain, plus two CI-infrastructure items that gate the
+~7 HIGH, ~40 MEDIUM, ~26 LOW remain, plus two CI-infrastructure items that gate the
 audit's own assurance:
 
 - **Provision Postgres in the CI `Test` job + enforce `--coverage`** (Testing HIGH) — the
@@ -99,8 +114,10 @@ audit's own assurance:
   self-skip without a DB, so they "pass" by skipping. This is a CI-workflow change.
 - **Flip `RLS_ENFORCE=on`** as the DB backstop behind tenant scoping, after burning down
   the 28 baseline unscoped query sites (DB/ops workstream).
-- OpenAPI ↔ implementation reconciliation (API H4); `console.*`→redacting-logger migration
-  across remaining prod paths (Observability); eCTD ZIP streaming (Performance);
+- The **audit-trail unification (B10–B12)** DB migration + transaction-threading (designed above).
+- Remaining MEDIUM/LOW: `console.*` migration across the rest of the prod paths;
+  eCTD ZIP streaming (Performance); broader idempotency-key adoption; API error-shape
+  consistency.
   Celery retry/idempotency/dead-letter (Python).
 
 ## CI state of this PR
