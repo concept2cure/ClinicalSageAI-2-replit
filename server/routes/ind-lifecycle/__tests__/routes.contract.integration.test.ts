@@ -195,6 +195,35 @@ describe('document routes', () => {
     expect(res.status).toBe(400);
   });
 
+  it('POST /safety-report/icsr/message → 200 transmittable message + readiness', async () => {
+    const res = await request(app).post('/api/ind-lifecycle/safety-report/icsr/message').send({
+      event: reportableEvent(),
+      gateway: 'FDA_FAERS',
+      senderId: 'C2C',
+      messageNumber: 'MSG-0001',
+      icsr: { worldwideUniqueId: 'US-C2C-2026-000123', senderType: 'sponsor' },
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.gateway).toBe('FDA_FAERS');
+    expect(res.body.receiverId).toBe('ZZFDA');
+    expect(typeof res.body.transmitReady).toBe('boolean');
+    expect(res.body.message).toContain('<ichicsrMessage');
+  });
+
+  it('POST /safety-report/icsr/message?format=xml → 200 application/xml', async () => {
+    const res = await request(app).post('/api/ind-lifecycle/safety-report/icsr/message?format=xml').send({
+      event: reportableEvent(), gateway: 'EMA_EUDRAVIGILANCE', senderId: 'C2C', messageNumber: 'MSG-0002',
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('xml');
+    expect(res.text).toContain('<ichicsrMessage');
+  });
+
+  it('POST /safety-report/icsr/message → 400 without gateway/senderId/messageNumber', async () => {
+    const res = await request(app).post('/api/ind-lifecycle/safety-report/icsr/message').send({ event: reportableEvent() });
+    expect(res.status).toBe(400);
+  });
+
   it('POST /annual-report/line-listing → 200 with rows + tabulation', async () => {
     const res = await request(app)
       .post('/api/ind-lifecycle/annual-report/line-listing')

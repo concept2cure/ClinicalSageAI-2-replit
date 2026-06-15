@@ -57,6 +57,7 @@ const SUMMARIES: Record<string, string> = {
   'POST /api/ind-lifecycle/safety-report/pdf': 'Render the IND Safety Report to PDF',
   'POST /api/ind-lifecycle/safety-report/file': 'File the IND Safety Report as an eCTD amendment sequence',
   'POST /api/ind-lifecycle/safety-report/icsr': 'Compose the ICH E2B(R3) ICSR (initial/follow-up/nullification; ?format=xml for XML)',
+  'POST /api/ind-lifecycle/safety-report/icsr/message': 'Build the transmittable E2B(R3) ICSR message + transmit-readiness (FAERS/EudraVigilance)',
   'POST /api/ind-lifecycle/annual-report': 'IND Annual Report / DSUR model (312.33)',
   'POST /api/ind-lifecycle/annual-report/line-listing': 'Aggregate serious-AE line listing + tabulation (312.33(b); ?format=csv)',
   'POST /api/ind-lifecycle/annual-report/pdf': 'Render the IND Annual Report to PDF',

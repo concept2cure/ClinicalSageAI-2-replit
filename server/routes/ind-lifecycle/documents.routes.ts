@@ -10,6 +10,7 @@ import {
   classifyIndSafetyReport,
 } from '../../services/ind-lifecycle/ind-safety-report-service';
 import { composeE2bR3Icsr } from '../../services/ind-lifecycle/e2b-icsr-composer';
+import { buildIcsrTransmission, type IcsrGateway } from '../../services/ind-lifecycle/e2b-icsr-message';
 import { assembleIndAnnualReport } from '../../services/ind-lifecycle/ind-annual-report-service';
 import { buildSaeLineListing, saeLineListingToCsv } from '../../services/ind-lifecycle/ind-sae-line-listing';
 import { planIndAmendment } from '../../services/ind-lifecycle/ind-amendment-service';
@@ -107,6 +108,54 @@ router.post('/safety-report/icsr', limiter, requireRole(AUTHOR), (req, res) => {
       return res.status(200).send(result.xml);
     }
     res.json({ icsr: result.icsr, lifecycle: result.lifecycle, gaps: result.gaps, completeness: result.completeness });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Build the transmittable ICH E2B(R3) ICSR message (batch + message header) for
+ * a 312.32 case, gated on transmit-readiness. Body: { event, icsr?, gateway
+ * ('FDA_FAERS'|'EMA_EUDRAVIGILANCE'), senderId, messageNumber, receiverId?,
+ * expedited?, nullificationReason?, mostRecentInfoDate?, now? }. JSON
+ * (transmitReady + gaps + metadata) by default; `?format=xml` returns the
+ * message XML.
+ */
+router.post('/safety-report/icsr/message', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = body(req);
+  const VALID_GATEWAYS = ['FDA_FAERS', 'EMA_EUDRAVIGILANCE'];
+  if (!b.event) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'event (AdverseEvent) is required.' } });
+  }
+  if (!VALID_GATEWAYS.includes(b.gateway) || !b.senderId || !b.messageNumber) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'gateway (FDA_FAERS|EMA_EUDRAVIGILANCE), senderId and messageNumber are required.' } });
+  }
+  try {
+    const result = composeE2bR3Icsr(coerceEventDates(b.event), {
+      icsr: b.icsr ?? null,
+      expedited: typeof b.expedited === 'boolean' ? b.expedited : undefined,
+      nullificationReason: b.nullificationReason,
+      mostRecentInfoDate: b.mostRecentInfoDate,
+      now: b.now ? new Date(b.now) : undefined,
+    });
+    const transmission = buildIcsrTransmission(result, {
+      gateway: b.gateway as IcsrGateway,
+      senderId: String(b.senderId),
+      receiverId: b.receiverId,
+      messageNumber: String(b.messageNumber),
+      messageDate: b.now ? new Date(b.now) : undefined,
+    });
+    if (String(req.query.format).toLowerCase() === 'xml') {
+      res.setHeader('Content-Type', 'application/xml');
+      return res.status(200).send(transmission.message);
+    }
+    res.json({
+      transmitReady: transmission.transmitReady,
+      gateway: transmission.gateway,
+      receiverId: transmission.receiverId,
+      gaps: transmission.gaps,
+      message: transmission.message,
+    });
   } catch (err) {
     fail(res, err);
   }
