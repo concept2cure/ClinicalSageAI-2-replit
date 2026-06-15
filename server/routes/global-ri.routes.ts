@@ -36,6 +36,7 @@ import { getPediatricObligation, assessPediatricPlan, PEDIATRIC_MARKETS, type Pe
 import { getNonclinicalRequirements, recommendToxDuration, NONCLINICAL_PHASES, type NonclinicalPhase } from '../services/global-ri/nonclinical-requirements';
 import { getSubmissionFormat, assessSubmissionReadiness, SUBMISSION_MARKETS, type SubmissionMarket } from '../services/global-ri/electronic-submission-format';
 import { getInspectionProfile, getReadinessDomains, assessInspectionReadiness, INSPECTION_MARKETS, type InspectionMarket } from '../services/global-ri/inspection-readiness';
+import { getGuidanceFor, listGuidanceTopics } from '../services/global-ri/regulatory-guidance-map';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('global-ri-routes');
@@ -500,6 +501,23 @@ router.post('/inspection/assess', limiter, requireRole(AUTHOR), (req: Request, r
   } catch (err) {
     return res.status(400).json({ error: { code: 'VALIDATION', message: err instanceof Error ? err.message : 'Invalid market.' } });
   }
+});
+
+// ── Regulatory guidance map (grounding) ───────────────────────────────────────
+
+/** The list of modeled guidance topics. */
+router.get('/guidance/topics', limiter, requireRole(AUTHOR), (_req: Request, res: Response) => {
+  res.json({ topics: listGuidanceTopics() });
+});
+
+/** Governing ICH guidelines + regulations for a topic. 404 when unmodeled. */
+router.get('/guidance/:topic', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const topic = String(Array.isArray(req.params.topic) ? req.params.topic[0] : req.params.topic);
+  const guidance = getGuidanceFor(topic);
+  if (!guidance.found) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No guidance modeled for topic "${topic}".` } });
+  }
+  res.json(guidance);
 });
 
 export default router;

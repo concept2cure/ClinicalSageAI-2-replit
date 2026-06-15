@@ -282,3 +282,22 @@ describe('ICH guideline catalog', () => {
     expect((await request(app).get('/api/global-ri/ich-guidelines/ZZ99')).status).toBe(404);
   });
 });
+
+describe('regulatory guidance map', () => {
+  it('GET /guidance/topics → 200 list', async () => {
+    const res = await request(app).get('/api/global-ri/guidance/topics');
+    expect(res.status).toBe(200);
+    expect(res.body.topics.length).toBeGreaterThan(10);
+  });
+
+  it('GET /guidance/:topic → 200 grounds CSR in E3', async () => {
+    const res = await request(app).get('/api/global-ri/guidance/clinical_study_report');
+    expect(res.status).toBe(200);
+    expect(res.body.found).toBe(true);
+    expect(res.body.ichGuidelines.map((g: any) => g.code)).toContain('E3');
+  });
+
+  it('GET /guidance/:topic → 404 for an unmodeled topic', async () => {
+    expect((await request(app).get('/api/global-ri/guidance/not_a_topic')).status).toBe(404);
+  });
+});
