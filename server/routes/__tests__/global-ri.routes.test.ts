@@ -237,3 +237,29 @@ describe('clinical-trial-application requirements', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('post-approval changes', () => {
+  it('GET /changes/vehicles/:market → 200 with categories + vehicles', async () => {
+    const res = await request(app).get('/api/global-ri/changes/vehicles/FDA');
+    expect(res.status).toBe(200);
+    expect(res.body.categories.length).toBeGreaterThan(0);
+    expect(res.body.vehicles.manufacturing_process_major.reportingCategory).toBe('PAS');
+  });
+
+  it('POST /changes/classify → 200 (EMA major → Type II)', async () => {
+    const res = await request(app).post('/api/global-ri/changes/classify').send({ market: 'EMA', category: 'manufacturing_process_major' });
+    expect(res.status).toBe(200);
+    expect(res.body.vehicle.reportingCategory).toBe('Type II');
+    expect(res.body.vehicle.priorApprovalRequired).toBe(true);
+  });
+
+  it('POST /changes/classify → 400 for an unknown category', async () => {
+    const res = await request(app).post('/api/global-ri/changes/classify').send({ market: 'FDA', category: 'not_a_change' });
+    expect(res.status).toBe(400);
+  });
+
+  it('POST /changes/classify → 400 without market/category', async () => {
+    const res = await request(app).post('/api/global-ri/changes/classify').send({ market: 'FDA' });
+    expect(res.status).toBe(400);
+  });
+});

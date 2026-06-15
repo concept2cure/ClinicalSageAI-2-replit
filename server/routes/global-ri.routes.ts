@@ -28,6 +28,7 @@ import { buildStrategyBrief } from '../services/global-ri/regulatory-strategy-br
 import { estimateFees, getFeeSchedule, type FeeMarket } from '../services/global-ri/regulatory-fee-estimator';
 import { assessLabeling, getLabelingRequirements, type LabelMarket } from '../services/global-ri/labeling-requirements';
 import { assessCtaReadiness, getCtaRequirements, type CtaMarket } from '../services/global-ri/clinical-trial-application-requirements';
+import { classifyChange, getChangeVehicles, CHANGE_CATEGORIES, type ChangeMarket } from '../services/global-ri/post-approval-changes';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('global-ri-routes');
@@ -274,6 +275,35 @@ router.post('/cta/assess', limiter, requireRole(AUTHOR), (req: Request, res: Res
     res.json(assessCtaReadiness({ market: b.market, providedComponents: b.providedComponents }));
   } catch (err) {
     fail(res, err);
+  }
+});
+
+// ── Post-approval changes / variations ────────────────────────────────────────
+
+/** The modeled change-category list + a market's change-vehicle catalog. */
+router.get('/changes/vehicles/:market', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const market = String(Array.isArray(req.params.market) ? req.params.market[0] : req.params.market) as ChangeMarket;
+  const vehicles = getChangeVehicles(market);
+  if (!vehicles) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No change vehicles modeled for "${market}".` } });
+  }
+  res.json({ market, categories: CHANGE_CATEGORIES, vehicles });
+});
+
+/**
+ * Classify a post-approval change into the correct regulatory vehicle.
+ * Body: { market, category }.
+ */
+router.post('/changes/classify', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!b.market || !b.category) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'market and category are required.' } });
+  }
+  try {
+    res.json(classifyChange({ market: b.market, category: b.category }));
+  } catch (err) {
+    // Unmodeled market/category → 400 validation.
+    return res.status(400).json({ error: { code: 'VALIDATION', message: err instanceof Error ? err.message : 'Invalid change.' } });
   }
 });
 
