@@ -38,9 +38,11 @@ import {
   adviseDeviceReadiness,
   adviseGlobalMarketStrategy,
   adviseGlobalSubmissionPlan,
+  advisePmaReadiness,
   type DeviceReadinessAdviceInput,
   type GlobalMarketAdviceInput,
   type SubmissionPlanAdviceInput,
+  type PmaReadinessAdviceInput,
 } from '../ana-advisory';
 import {
   recordToolOutcome,
@@ -657,6 +659,15 @@ registerToolHandler('advise_global_market_strategy', async (input) => {
   return JSON.stringify({
     source: 'AnA Global-Market Strategy Advisor',
     ...adviseGlobalMarketStrategy({ profile, candidateMarkets } as unknown as GlobalMarketAdviceInput),
+  });
+});
+
+// PMA (Class III) filing-readiness advisor (grounded; never claims a fileable PMA
+// when required modules are missing, nor transmission).
+registerToolHandler('advise_pma_readiness', async (input) => {
+  return JSON.stringify({
+    source: 'AnA PMA-Readiness Advisor',
+    ...advisePmaReadiness(input as unknown as PmaReadinessAdviceInput),
   });
 });
 
