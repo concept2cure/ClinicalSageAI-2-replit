@@ -19,6 +19,12 @@ import { z } from 'zod';
 import { REPORT_TYPE_SEED } from '../services/report-os/taxonomy';
 import { resolveScope } from '../services/report-os/scope-model';
 import { computeInitialRun } from '../services/report-os/orchestrator';
+import { renderReport, type RenderInput } from '../services/report-os/render/render';
+import {
+  evaluateTruthfulness,
+  type TruthfulnessRules,
+  type ReportRunStatus,
+} from '../services/report-os/truthfulness';
 import { evaluateReadiness } from '../services/regulatory/readinessEvaluator.js';
 import { buildPackageManifest } from '../services/regulatory/submissionPackageBuilder.js';
 import { resolveRegistryId } from '../services/regulatory/registry/legacySubmissionTypeMapper.js';
@@ -1200,6 +1206,82 @@ router.get('/runs/:id/export.pdf', async (req: Request, res: Response) => {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="report-run-${runId}.pdf"`);
     return res.send(buffer);
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /runs/:id/rendered
+ *
+ * Render a stored run into the provenance-linked report document model and apply
+ * the truthfulness gate. Read-only and org-scoped (JWT-bound; cross-tenant ids
+ * 404). The gate is evaluated against a `final` request so the UI can show
+ * whether the report is eligible to be finalized/sealed and, if not, why.
+ *
+ * NOTE: the run's stored blockers are not yet tagged with severity, so when the
+ * report type forbids final on missing critical evidence we conservatively treat
+ * every outstanding blocker as critical. Surfacing per-blocker severity from the
+ * orchestrator will sharpen this; the gate contract is unchanged.
+ */
+router.get('/runs/:id/rendered', async (req: Request, res: Response) => {
+  try {
+    const runId = Number(req.params.id);
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+    if (!Number.isFinite(runId) || runId <= 0) {
+      return res.status(400).json({ error: 'Invalid run id' });
+    }
+
+    const [run] = await db
+      .select()
+      .from(reportRuns)
+      .where(and(eq(reportRuns.id, runId), eq(reportRuns.organizationId, organizationId)))
+      .limit(1);
+    if (!run) return res.status(404).json({ error: 'Run not found' });
+
+    const [reportType] = await db
+      .select({ label: reportTypeRegistry.label, truthfulnessRules: reportTypeRegistry.truthfulnessRules })
+      .from(reportTypeRegistry)
+      .where(eq(reportTypeRegistry.typeId, run.reportTypeId))
+      .limit(1);
+
+    const dependencySummary = (run.dependencySummary ?? {}) as Record<string, unknown>;
+    const providers = Array.isArray(dependencySummary.providers)
+      ? (dependencySummary.providers as RenderInput['providers'])
+      : [];
+    const summary = (dependencySummary.summary ?? {}) as Record<string, unknown>;
+    const blockers = toBlockerArray(run.blockers);
+    const rules = (reportType?.truthfulnessRules ?? {}) as TruthfulnessRules;
+
+    const requestedStatus: ReportRunStatus = run.status === 'completed' ? 'final' : 'partial';
+    const truthfulness = evaluateTruthfulness(
+      {
+        requestedStatus,
+        confidence: run.confidence ?? 0,
+        blockers,
+        criticalBlockers: rules.forbidFinalIfMissingCritical ? blockers : [],
+        gapsSection: true,
+      },
+      rules
+    );
+
+    const rendered = renderReport({
+      reportTypeId: run.reportTypeId,
+      reportTypeLabel: reportType?.label || run.reportTypeId,
+      scopeType: run.scopeType,
+      scopeId: run.scopeId,
+      providers,
+      confidence: run.confidence ?? 0,
+      blockers,
+      summary,
+      status: truthfulness.allowedStatus,
+      truthfulness,
+    });
+
+    return res.json({ data: rendered });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }

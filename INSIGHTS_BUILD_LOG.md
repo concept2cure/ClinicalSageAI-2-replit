@@ -14,7 +14,7 @@ four §8 decisions on 2026-06-15:
 |---|---|---|
 | 0 | Foundations, guardrails, truthfulness contract | Foundation landed (gate built + tested); run-lifecycle wiring pending DB-backed integration test |
 | 1 | Canonical insight/aggregation layer (read model) | Interface + registry + pure helpers landed + tested; DB-backed providers + orchestrator integration next |
-| 2 | Report content/render model | In progress |
+| 2 | Report content/render model | Pure model + renderer landed + tested; live read endpoint GET /runs/:id/rendered wired (typecheck-only, needs DB-backed CI test) |
 | 3 | Governed visualization system | Not started |
 | 4 | Insights UI surface (chat-first, scope-aware) | Not started |
 | 5 | Prediction reports (package the honest models) | Pure assembler + mandatory-disclosure guardrail landed + tested; wiring real model services next |
