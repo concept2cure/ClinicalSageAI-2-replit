@@ -61,7 +61,7 @@ export function computeNextRun(schedule: ReportSchedule, from: Date): Date {
   if (schedule.cadence === 'weekly') {
     const targetDow = normalizeDayOfWeek(schedule.dayOfWeek);
     const currentDow = from.getUTCDay();
-    let deltaDays = (targetDow - currentDow + 7) % 7;
+    const deltaDays = (targetDow - currentDow + 7) % 7;
     let candidate = utcAt(year, month, date + deltaDays, hour, minute);
     if (candidate.getTime() <= from.getTime()) {
       // Same weekday today but the time has already passed (deltaDays === 0),
