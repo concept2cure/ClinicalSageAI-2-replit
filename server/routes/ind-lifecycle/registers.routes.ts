@@ -41,6 +41,14 @@ import {
   createAmendmentDraft,
   listAmendments,
 } from '../../services/ind-lifecycle/ind-amendment-persistence';
+import {
+  prepareIcsrTransmission,
+  listIcsrTransmissions,
+  markIcsrTransmitted,
+  recordIcsrAcknowledgment,
+  IcsrTransmissionError,
+} from '../../services/ind-lifecycle/ind-icsr-transmission-persistence';
+import type { IcsrGateway } from '../../services/ind-lifecycle/e2b-icsr-message';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, coerceEventDates } from './shared';
 
 const router = Router();
@@ -356,6 +364,92 @@ router.get('/submission/:id/amendments', limiter, requireRole(AUTHOR), async (re
   try {
     res.json(await listAmendments(submissionId, ctx));
   } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Persisted ICSR transmissions (ICH E2B(R3) → FAERS / EudraVigilance) ────────
+
+const VALID_GATEWAYS = ['FDA_FAERS', 'EMA_EUDRAVIGILANCE'];
+
+/**
+ * Prepare + persist an E2B(R3) ICSR transmission for a submission: compose the
+ * ICSR, build the transmittable message, and store it as 'prepared'. Body:
+ * { event, icsr?, gateway, senderId, messageNumber, receiverId?, now? }.
+ */
+router.post('/submission/:id/icsr-transmissions', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const submissionId = submissionIdOf(req.params.id);
+  if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
+  const b = body(req);
+  if (!b.event || !VALID_GATEWAYS.includes(b.gateway) || !b.senderId || !b.messageNumber) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'event, gateway (FDA_FAERS|EMA_EUDRAVIGILANCE), senderId and messageNumber are required.' } });
+  }
+  try {
+    const row = await prepareIcsrTransmission(
+      {
+        submissionId,
+        event: coerceEventDates(b.event),
+        icsr: b.icsr ?? null,
+        gateway: b.gateway as IcsrGateway,
+        senderId: String(b.senderId),
+        messageNumber: String(b.messageNumber),
+        receiverId: b.receiverId,
+        now: b.now ? new Date(b.now) : undefined,
+      },
+      ctx,
+    );
+    res.status(201).json(row);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** List a submission's ICSR transmissions. */
+router.get('/submission/:id/icsr-transmissions', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const submissionId = submissionIdOf(req.params.id);
+  if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
+  try {
+    res.json(await listIcsrTransmissions(submissionId, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** Mark a prepared ICSR transmission as transmitted (422 if not transmit-ready). */
+router.post('/icsr-transmissions/:txId/transmit', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const id = String(Array.isArray(req.params.txId) ? req.params.txId[0] : req.params.txId);
+  try {
+    res.json(await markIcsrTransmitted(id, ctx));
+  } catch (err) {
+    if (err instanceof IcsrTransmissionError) {
+      const status = err.code === 'NOT_FOUND' ? 404 : 422;
+      return res.status(status).json({ error: { code: err.code, message: err.message } });
+    }
+    fail(res, err);
+  }
+});
+
+/** Record an agency acknowledgment (ACK) against a transmission. Body: { ackXml }. */
+router.post('/icsr-transmissions/:txId/acknowledge', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const id = String(Array.isArray(req.params.txId) ? req.params.txId[0] : req.params.txId);
+  const b = body(req);
+  if (typeof b.ackXml !== 'string' || b.ackXml.length === 0) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'ackXml (string) is required.' } });
+  }
+  try {
+    res.json(await recordIcsrAcknowledgment(id, b.ackXml, ctx));
+  } catch (err) {
+    if (err instanceof IcsrTransmissionError) {
+      return res.status(404).json({ error: { code: err.code, message: err.message } });
+    }
     fail(res, err);
   }
 });

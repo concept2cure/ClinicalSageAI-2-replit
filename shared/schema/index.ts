@@ -431,6 +431,11 @@ export * from './ind-annual-reports';
 // migration: migrations/20260615_ind_amendments.sql.
 export * from './ind-amendments';
 
+// IND ICSR transmissions — durable E2B(R3) safety-message records (prepared →
+// transmitted → acknowledged). Service: ind-icsr-transmission-persistence;
+// migration: migrations/20260615_ind_icsr_transmissions.sql.
+export * from './ind-icsr-transmissions';
+
 // Clinical investigator financial disclosure — 21 CFR 54 (C2C-01) + the generic
 // ALCOA+ provenance spine seed (C2C-02). Forms FDA 3454/3455 → Module 1.
 // Service: server/services/financial-disclosures; migration: migrations/20260610_financial_disclosure_21cfr54.sql.
