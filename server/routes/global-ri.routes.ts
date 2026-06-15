@@ -25,6 +25,7 @@ import { recommendPathway } from '../services/global-ri/regulatory-pathway-advis
 import { recommendMeetings, meetingsForMarket, MEETING_CATALOG, type MeetingMarket } from '../services/global-ri/ha-meetings';
 import { assessDesignationEligibility, getDesignationCriteria } from '../services/global-ri/special-designations';
 import { buildStrategyBrief } from '../services/global-ri/regulatory-strategy-brief';
+import { estimateFees, getFeeSchedule, type FeeMarket } from '../services/global-ri/regulatory-fee-estimator';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('global-ri-routes');
@@ -191,6 +192,34 @@ router.post('/strategy-brief', limiter, requireRole(AUTHOR), (req: Request, res:
   }
   try {
     res.json(buildStrategyBrief(b));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Regulatory fee estimation ─────────────────────────────────────────────────
+
+/** A market's indicative fee schedule. */
+router.get('/fees/schedule/:market', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const market = String(Array.isArray(req.params.market) ? req.params.market[0] : req.params.market) as FeeMarket;
+  const schedule = getFeeSchedule(market);
+  if (!schedule) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No fee schedule modeled for "${market}".` } });
+  }
+  res.json({ market, schedule });
+});
+
+/**
+ * Estimate agency fees for a marketing application, applying waivers.
+ * Body: { market, requiresClinicalData?, orphan?, smallBusiness?, programYears?, feeScheduleOverride? }.
+ */
+router.post('/fees/estimate', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!b.market) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'market is required.' } });
+  }
+  try {
+    res.json(estimateFees(b));
   } catch (err) {
     fail(res, err);
   }

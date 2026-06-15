@@ -168,3 +168,33 @@ describe('strategy brief', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('regulatory fees', () => {
+  it('GET /fees/schedule/:market → 200', async () => {
+    const res = await request(app).get('/api/global-ri/fees/schedule/FDA');
+    expect(res.status).toBe(200);
+    expect(res.body.schedule.currency).toBe('USD');
+  });
+
+  it('GET /fees/schedule/:market → 404 for an unmodeled market', async () => {
+    const res = await request(app).get('/api/global-ri/fees/schedule/ZZZ');
+    expect(res.status).toBe(404);
+  });
+
+  it('POST /fees/estimate → 200 with a total', async () => {
+    const res = await request(app).post('/api/global-ri/fees/estimate').send({ market: 'FDA' });
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBeGreaterThan(0);
+    expect(res.body.caveats.length).toBeGreaterThan(0);
+  });
+
+  it('POST /fees/estimate → orphan waives to zero', async () => {
+    const res = await request(app).post('/api/global-ri/fees/estimate').send({ market: 'FDA', orphan: true });
+    expect(res.body.total).toBe(0);
+  });
+
+  it('POST /fees/estimate → 400 without market', async () => {
+    const res = await request(app).post('/api/global-ri/fees/estimate').send({});
+    expect(res.status).toBe(400);
+  });
+});
