@@ -10,7 +10,7 @@
  */
 
 import type { AnaTool, AnthropicServerTool, AnyAnaTool } from '../ai-gateway/types';
-import { ANA_ADVISORY_TOOL_SPECS, SUBMISSION_PLAN_TOOL_SPEC, PMA_ADVISORY_TOOL_SPEC } from '../ana-advisory';
+import { ANA_ADVISORY_TOOL_SPECS, SUBMISSION_PLAN_TOOL_SPEC, PMA_ADVISORY_TOOL_SPEC, EU_TECHDOC_TOOL_SPEC } from '../ana-advisory';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -6072,6 +6072,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ...(ANA_ADVISORY_TOOL_SPECS as unknown as AnaTool[]),
   SUBMISSION_PLAN_TOOL_SPEC as unknown as AnaTool,
   PMA_ADVISORY_TOOL_SPEC as unknown as AnaTool,
+  EU_TECHDOC_TOOL_SPEC as unknown as AnaTool,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

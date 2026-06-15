@@ -39,10 +39,12 @@ import {
   adviseGlobalMarketStrategy,
   adviseGlobalSubmissionPlan,
   advisePmaReadiness,
+  adviseEuTechnicalFileReadiness,
   type DeviceReadinessAdviceInput,
   type GlobalMarketAdviceInput,
   type SubmissionPlanAdviceInput,
   type PmaReadinessAdviceInput,
+  type EuTechDocAdviceInput,
 } from '../ana-advisory';
 import {
   recordToolOutcome,
@@ -659,6 +661,15 @@ registerToolHandler('advise_global_market_strategy', async (input) => {
   return JSON.stringify({
     source: 'AnA Global-Market Strategy Advisor',
     ...adviseGlobalMarketStrategy({ profile, candidateMarkets } as unknown as GlobalMarketAdviceInput),
+  });
+});
+
+// EU MDR/IVDR technical-file readiness advisor (grounded; never claims NB
+// conformity or CE marking).
+registerToolHandler('advise_eu_technical_file_readiness', async (input) => {
+  return JSON.stringify({
+    source: 'AnA EU Technical-File Readiness Advisor',
+    ...adviseEuTechnicalFileReadiness(input as unknown as EuTechDocAdviceInput),
   });
 });
 
