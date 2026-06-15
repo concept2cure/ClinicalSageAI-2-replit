@@ -17,11 +17,11 @@ four §8 decisions on 2026-06-15:
 | 2 | Report content/render model | Pure model + renderer landed + tested; live read endpoint GET /runs/:id/rendered wired (typecheck-only, needs DB-backed CI test) |
 | 3 | Governed visualization system | 6 governed charts + ChartBlock dispatcher + reduced-motion/data-table a11y landed (typecheck-clean; needs browser/design QA) |
 | 4 | Insights UI surface (chat-first, scope-aware) | Surface landed (ScopeSwitcher, ReportCatalog, ReportView, ReportBlockView with provenance + disclosure + truthfulness banner, InsightsSurface, Ask-AnA affordance); typecheck-clean, needs browser/design QA + mount into ZenApp layoutMode |
-| 5 | Prediction reports (package the honest models) | Pure assembler + mandatory-disclosure guardrail landed + tested; wiring real model services next |
+| 5 | Prediction reports (package the honest models) | Assembler + 3 prediction report types (registered in seed) + POST /api/insights/predictions endpoint landed; real model-service inputs next |
 | 6 | Scheduling, subscriptions, delivery | Core logic + report_subscriptions table/migration + subscription-service (CRUD, listDueSubscriptions, markRun) landed; Bull worker registration next (Redis) |
 | 7 | Enterprise / portfolio rollup reporting | Pure aggregator (board pack) + cross-region/harmonization engine landed + tested; DB-backed member fetch next |
 | 8 | Governance, audit, e-sign, Part 11 for reports | Sealing core + POST /runs/:id/finalize endpoint (gate-enforced: 409 unless final-eligible; seals report, marks run final, persists seal to snapshot) landed; full immutableReportRecords row + e-sign capture next |
-| 9 | Observability, quality, rollout | Quality core landed + tested (Brier score, calibration buckets/quality, provider freshness rollup); admin quality view + metrics wiring next |
+| 9 | Observability, quality, rollout | Quality core + GET /api/insights/quality (admin-gated) landed; metrics/observability wiring next |
 
 ## Notes
 
