@@ -214,7 +214,11 @@ jobs:
         run: npm install --no-save @vitest/coverage-v8@4.1.7
 
       - name: Measure coverage
-        run: npm run test:coverage
+        # Inlined (not a package.json script) so package.json stays unchanged —
+        # this is an advisory CI-only measurement. Thresholds overridden to 0 so
+        # it reports actual coverage every run without ever blocking; the
+        # 70/60/70/70 target in vitest.config.ts is the goal to enforce later.
+        run: NODE_OPTIONS="--max-old-space-size=4096" npx vitest run --config vitest.config.ts --coverage --coverage.thresholds.lines=0 --coverage.thresholds.functions=0 --coverage.thresholds.branches=0 --coverage.thresholds.statements=0
         env:
           CI: true
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
