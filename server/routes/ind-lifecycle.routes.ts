@@ -23,6 +23,7 @@ import filingRoutes from './ind-lifecycle/filing.routes';
 import computeRoutes from './ind-lifecycle/compute.routes';
 import sequenceRoutes from './ind-lifecycle/sequence.routes';
 import submissionRoutes from './ind-lifecycle/submission.routes';
+import registersRoutes from './ind-lifecycle/registers.routes';
 import { buildIndLifecycleOpenApi } from './ind-lifecycle/openapi';
 
 const router = Router();
@@ -36,5 +37,6 @@ router.use(filingRoutes);
 router.use(computeRoutes);
 router.use(sequenceRoutes);
 router.use(submissionRoutes);
+router.use(registersRoutes);
 
 export default router;

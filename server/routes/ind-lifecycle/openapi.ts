@@ -15,6 +15,7 @@ import filingRoutes from './filing.routes';
 import computeRoutes from './compute.routes';
 import sequenceRoutes from './sequence.routes';
 import submissionRoutes from './submission.routes';
+import registersRoutes from './registers.routes';
 
 const BASE = '/api/ind-lifecycle';
 
@@ -40,7 +41,7 @@ function collectRoutes(router: Router): RouteRef[] {
 
 /** All IND lifecycle routes across the five sub-routers. */
 export function indLifecycleRoutes(): RouteRef[] {
-  return [documentsRoutes, filingRoutes, computeRoutes, sequenceRoutes, submissionRoutes].flatMap((r) =>
+  return [documentsRoutes, filingRoutes, computeRoutes, sequenceRoutes, submissionRoutes, registersRoutes].flatMap((r) =>
     collectRoutes(r as unknown as Router),
   );
 }
