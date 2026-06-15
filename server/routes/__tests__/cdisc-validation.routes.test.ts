@@ -121,3 +121,22 @@ describe('ADaM BDS + OCCDS conformance', () => {
     expect((await request(app).post('/api/cdisc-validation/adam-occds/conformance').send({})).status).toBe(400);
   });
 });
+
+describe('dataset-package readiness', () => {
+  it('200 rolls up a mixed package verdict', async () => {
+    const res = await request(app).post('/api/cdisc-validation/package/readiness').send({
+      studyName: 'C2C-001',
+      datasets: [
+        { name: 'ADSL', standard: 'ADaM', domainOrClass: 'ADSL', variables: [{ name: 'STUDYID', dataType: 'Char' }, { name: 'USUBJID', dataType: 'Char' }] },
+      ],
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.summary.datasetCount).toBe(1);
+    expect(res.body).toHaveProperty('ready');
+  });
+
+  it('400 without datasets[]', async () => {
+    const res = await request(app).post('/api/cdisc-validation/package/readiness').send({});
+    expect(res.status).toBe(400);
+  });
+});

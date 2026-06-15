@@ -19,6 +19,7 @@ import { generateDefineXml } from '../services/cdisc/define-xml-generator';
 import { checkAdamAdslConformance } from '../services/cdisc/adam-adsl-conformance-checker';
 import { checkAdamBdsConformance } from '../services/cdisc/adam-bds-conformance-checker';
 import { checkAdamOccdsConformance } from '../services/cdisc/adam-occds-conformance-checker';
+import { assessPackageReadiness } from '../services/cdisc/cdisc-package-readiness';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('cdisc-validation-routes');
@@ -113,6 +114,22 @@ router.post('/adam-occds/conformance', limiter, requireRole(AUTHOR), (req: Reque
   }
   try {
     res.json(checkAdamOccdsConformance({ variables: b.variables }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Dataset-package readiness — dispatch each dataset (SDTM domain / ADaM class)
+ * to the right checker and roll up one verdict. Body: { studyName?, datasets[] }.
+ */
+router.post('/package/readiness', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!Array.isArray(b.datasets)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'datasets[] is required.' } });
+  }
+  try {
+    res.json(assessPackageReadiness({ studyName: b.studyName, datasets: b.datasets }));
   } catch (err) {
     fail(res, err);
   }
