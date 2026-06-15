@@ -185,6 +185,7 @@ export async function registerInlineLitCommerceRoutes({
     },
     { path: '/api/billing', mod: '../routes/billing-dashboard.js', name: 'Billing Dashboard' },
     { path: '/api/report-os', mod: '../routes/report-os.js', name: 'Report OS' },
+    { path: '/api/device-cockpit', mod: '../routes/device-cockpit.js', name: 'Device Cockpit' },
   ] as const;
   const litIntResults = await Promise.allSettled(litIntConfig.map(c => import(c.mod)));
   litIntResults.forEach((r, i) => {
