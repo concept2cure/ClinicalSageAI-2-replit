@@ -24,6 +24,7 @@ import { ZenSignup, ZenAuthLayout } from '../auth';
 import { Concept2CureLogin } from '../components/concept2cure-auth';
 import { ZenApp } from '../ZenApp';
 import MdxRoute from '../mdx/MdxRoute';
+import { InsightsSurface } from '../insights/surface';
 import { ProjectProvider } from '../context/ProjectContext';
 import {
   AuthProvider as PortalAuthProvider,
@@ -194,6 +195,19 @@ export const ZenRouter: React.FC = () => {
               <ProtectedRoute>
                 <PageTransition>
                   <MdxRoute />
+                </PageTransition>
+              </ProtectedRoute>
+            )}
+          </Route>
+
+          {/* Insights — reporting, analytics & prediction surface. Mounted before
+              the ZenApp catch-all so it is reachable at its own URL while the rail
+              integration into ZenApp lands separately. */}
+          <Route path="/concept2cure/insights">
+            {() => (
+              <ProtectedRoute>
+                <PageTransition>
+                  <InsightsSurface />
                 </PageTransition>
               </ProtectedRoute>
             )}

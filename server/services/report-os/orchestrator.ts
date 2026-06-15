@@ -25,6 +25,8 @@ export interface RunComputationResult {
   providers: ProviderResult[];
   confidence: number;
   blockers: string[];
+  /** Subset of blockers tagged critical (regional gaps with severity 'critical'). */
+  criticalBlockers: string[];
   summary: Record<string, unknown>;
 }
 
@@ -40,6 +42,7 @@ export async function computeInitialRun(
 ): Promise<RunComputationResult> {
   const providers: ProviderResult[] = [];
   const blockers: string[] = [];
+  const criticalBlockers: string[] = [];
 
   // Provider 1: artifact availability
   let artifactCount = 0;
@@ -277,12 +280,12 @@ export async function computeInitialRun(
               : undefined,
         });
         if (readiness.gaps.length > 0) {
-          blockers.push(
-            ...readiness.gaps
-              .filter(gap => gap.severity === 'critical')
-              .slice(0, 4)
-              .map(gap => `${gap.title}: ${gap.message}`)
-          );
+          const criticalGapMessages = readiness.gaps
+            .filter(gap => gap.severity === 'critical')
+            .slice(0, 4)
+            .map(gap => `${gap.title}: ${gap.message}`);
+          blockers.push(...criticalGapMessages);
+          criticalBlockers.push(...criticalGapMessages);
         }
 
         providers.push({
@@ -317,6 +320,7 @@ export async function computeInitialRun(
           providers,
           confidence: Math.max(25, Math.min(95, confidence)),
           blockers,
+          criticalBlockers,
           summary: {
             scopeType,
             scopeId,
@@ -339,6 +343,7 @@ export async function computeInitialRun(
     providers,
     confidence,
     blockers,
+    criticalBlockers,
     summary: {
       scopeType,
       scopeId,

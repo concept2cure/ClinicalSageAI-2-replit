@@ -185,6 +185,51 @@ export const reportRunDependencies = pgTable(
   })
 );
 
+/**
+ * Stored shape of a subscription schedule. Structurally equivalent to the
+ * `ReportSchedule` type in server/services/report-os/scheduling/types.ts; kept
+ * local so `shared/` stays free of a `server/` import (and the import cycle that
+ * would create, since that module imports `ReportScope` from this file). The
+ * service casts rows back to its `ReportSchedule` type for cadence math.
+ */
+export interface ReportScheduleJson {
+  cadence: 'daily' | 'weekly' | 'monthly';
+  hour: number;
+  minute?: number;
+  dayOfWeek?: number;
+  dayOfMonth?: number;
+  timeZoneOffsetMinutes?: number;
+}
+
+export const reportSubscriptions = pgTable(
+  'report_subscriptions',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    clientWorkspaceId: integer('client_workspace_id').references(() => clientWorkspaces.id, { onDelete: 'set null' }),
+    reportTypeId: text('report_type_id')
+      .notNull()
+      .references(() => reportTypeRegistry.typeId, { onDelete: 'restrict' }),
+    scopeType: text('scope_type').notNull(),
+    scopeId: text('scope_id').notNull(),
+    schedule: json('schedule').$type<ReportScheduleJson>().notNull(),
+    recipients: json('recipients').$type<string[]>().default(sql`'[]'::json`),
+    format: text('format').notNull().default('pdf'),
+    channel: text('channel').notNull().default('platform'),
+    persona: text('persona'),
+    enabled: boolean('enabled').notNull().default(true),
+    lastRunAt: timestamp('last_run_at'),
+    nextRunAt: timestamp('next_run_at'),
+    createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('report_subscriptions_org_idx').on(table.organizationId),
+    enabledIdx: index('report_subscriptions_enabled_idx').on(table.enabled),
+  })
+);
+
 export const reportProgramGroupsRelations = relations(reportProgramGroups, ({ many }) => ({
   projects: many(reportProgramGroupProjects),
   snapshots: many(reportProgramGroupSnapshots),
@@ -214,3 +259,4 @@ export const reportProgramGroupSnapshotsRelations = relations(
 export type ReportProgramGroup = InferSelectModel<typeof reportProgramGroups>;
 export type ReportRun = InferSelectModel<typeof reportRuns>;
 export type ReportSnapshot = InferSelectModel<typeof reportSnapshots>;
+export type ReportSubscriptionRow = InferSelectModel<typeof reportSubscriptions>;
