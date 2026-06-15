@@ -29,6 +29,7 @@ export default {
     'renderSafeMarkdown\\.test\\.ts$',
     'schemaValidator\\.test\\.ts$',
     'cspNonce\\.test\\.ts$',
+    'reportOsClient\\.test\\.ts$',
   ],
   transformIgnorePatterns: ['/node_modules/(?!wouter)'],
   transform: {
