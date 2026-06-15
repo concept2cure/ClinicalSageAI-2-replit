@@ -32,6 +32,11 @@ import {
   listOverdueSafetyReports,
   SafetyReportError,
 } from '../../services/ind-lifecycle/ind-safety-report-persistence';
+import {
+  createAnnualReportDraft,
+  listAnnualReports,
+  listOverdueAnnualReports,
+} from '../../services/ind-lifecycle/ind-annual-report-persistence';
 import { assembleLetterOfAuthorization, buildLoaLeafIntent } from '../../services/ind-lifecycle/ind-loa-service';
 import { renderLetterOfAuthorizationPdf } from '../../services/ind-lifecycle/ind-document-renderer';
 import { persistCrossReferenceFiling } from '../../services/ind-lifecycle/ind-lifecycle-persistence';
@@ -487,6 +492,58 @@ router.get('/submission/:id/safety-reports/overdue', limiter, requireRole(AUTHOR
   try {
     const asOf = typeof req.query.asOf === 'string' ? new Date(req.query.asOf) : undefined;
     res.json(await listOverdueSafetyReports(submissionId, ctx, asOf));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Persisted IND annual reports (21 CFR 312.33) ──────────────────────────────
+
+/**
+ * Draft a 312.33 IND Annual Report / DSUR for a submission: assemble the section
+ * model and persist it as a tracked draft. Body: { report: IndAnnualReportInput,
+ * indEffectiveDate? }. The optional indEffectiveDate drives the 60-day due date.
+ */
+router.post('/submission/:id/annual-reports', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const submissionId = submissionIdOf(req.params.id);
+  if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
+  const b = body(req);
+  const report = b.report ?? b;
+  if (!report?.indNumber || !report?.productName) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'report.indNumber and report.productName are required.' } });
+  }
+  try {
+    const row = await createAnnualReportDraft({ submissionId, report, indEffectiveDate: b.indEffectiveDate }, ctx);
+    res.status(201).json(row);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** List a submission's annual reports. */
+router.get('/submission/:id/annual-reports', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const submissionId = submissionIdOf(req.params.id);
+  if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
+  try {
+    res.json(await listAnnualReports(submissionId, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** The submission's overdue (unfiled, past 60-day-deadline) annual reports. */
+router.get('/submission/:id/annual-reports/overdue', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const submissionId = submissionIdOf(req.params.id);
+  if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
+  try {
+    const asOf = typeof req.query.asOf === 'string' ? new Date(req.query.asOf) : undefined;
+    res.json(await listOverdueAnnualReports(submissionId, ctx, asOf));
   } catch (err) {
     fail(res, err);
   }

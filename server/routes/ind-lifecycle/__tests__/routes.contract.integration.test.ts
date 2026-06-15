@@ -14,6 +14,12 @@ import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness'
 const holder = vi.hoisted(() => ({ db: null as any }));
 vi.mock('../../../db', () => ({ get db() { return holder.db; } }));
 vi.mock('../../../services/auditService', () => ({ default: { logAction: vi.fn(async () => {}) } }));
+// Contract tests exercise route logic, not rate limiting; pass-through the limiter
+// so the volume of requests in this suite doesn't trip a 429.
+vi.mock('../../../middleware/rateLimiter', () => ({
+  createRateLimiter: () => (_req: any, _res: any, next: any) => next(),
+  default: (_req: any, _res: any, next: any) => next(),
+}));
 
 import indLifecycleRouter from '../../ind-lifecycle.routes';
 import { createSubmission } from '../../../services/submission-service/submission-service';
@@ -519,5 +525,57 @@ describe('persisted IND safety reports (21 CFR 312.32)', () => {
     const res = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/safety-reports`);
     expect(res.body.map((r: any) => r.id)).not.toContain(draftId);
     currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
+  });
+});
+
+describe('persisted IND annual reports (21 CFR 312.33)', () => {
+  let draftId: string;
+  const report = () => ({
+    projectId: 'proj-1',
+    indNumber: '123456',
+    productName: 'C2C-001',
+    reportingPeriodStart: '2026-01-01T00:00:00.000Z',
+    reportingPeriodEnd: '2026-12-31T00:00:00.000Z',
+    studyStatuses: [],
+    safetyReportsInPeriod: [],
+    ibChanges: [],
+  });
+
+  it('POST /submission/:id/annual-reports → 201 drafts a tracked report with a due date', async () => {
+    const res = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/annual-reports`)
+      .send({ report: report(), indEffectiveDate: '2026-01-01' });
+    expect(res.status).toBe(201);
+    expect(res.body.status).toBe('draft');
+    expect(res.body.indNumber).toBe('123456');
+    expect(res.body.dueDate).toBeTruthy();
+    expect(typeof res.body.gapCount).toBe('number');
+    draftId = res.body.id;
+  });
+
+  it('POST /annual-reports → 400 without indNumber/productName', async () => {
+    const res = await request(app).post(`/api/ind-lifecycle/submission/${seededSubmissionId}/annual-reports`).send({ report: { indNumber: '1' } });
+    expect(res.status).toBe(400);
+  });
+
+  it('GET /annual-reports → 200 lists the draft', async () => {
+    const res = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/annual-reports`);
+    expect(res.status).toBe(200);
+    expect(res.body.map((r: any) => r.id)).toContain(draftId);
+  });
+
+  it('overdue with a far-future asOf includes it; filing then drops it', async () => {
+    const before = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/annual-reports/overdue?asOf=2030-01-01`);
+    expect(before.body.map((r: any) => r.id)).toContain(draftId);
+
+    const filed = await request(app)
+      .post('/api/ind-lifecycle/annual-report/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0012', draftId });
+    expect(filed.status).toBe(201);
+    expect(filed.body.draft.status).toBe('filed');
+    expect(filed.body.draft.sequenceId).toBe(filed.body.sequence.id);
+
+    const after = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/annual-reports/overdue?asOf=2030-01-01`);
+    expect(after.body.map((r: any) => r.id)).not.toContain(draftId);
   });
 });

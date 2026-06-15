@@ -128,6 +128,25 @@ CREATE TABLE IF NOT EXISTS ind_safety_reports (
   created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at            TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS ind_annual_reports (
+  id                     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id        INTEGER NOT NULL,
+  submission_id          INTEGER NOT NULL,
+  ind_number             TEXT NOT NULL,
+  product_name           TEXT NOT NULL,
+  reporting_period_start TIMESTAMPTZ,
+  reporting_period_end   TIMESTAMPTZ,
+  due_date               TIMESTAMPTZ,
+  status                 TEXT NOT NULL DEFAULT 'draft',
+  sequence_id            INTEGER,
+  filed_at               TIMESTAMPTZ,
+  gap_count              INTEGER NOT NULL DEFAULT 0,
+  model                  JSONB NOT NULL,
+  created_by             INTEGER,
+  created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at             TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `;
 
 /**

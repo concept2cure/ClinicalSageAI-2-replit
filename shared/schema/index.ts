@@ -421,6 +421,11 @@ export * from './ind-cross-references';
 // migration: migrations/20260614_ind_safety_reports.sql.
 export * from './ind-safety-reports';
 
+// IND annual reports — durable 312.33 annual-report / DSUR drafts (draft → filed).
+// Service: server/services/ind-lifecycle/ind-annual-report-persistence;
+// migration: migrations/20260615_ind_annual_reports.sql.
+export * from './ind-annual-reports';
+
 // Clinical investigator financial disclosure — 21 CFR 54 (C2C-01) + the generic
 // ALCOA+ provenance spine seed (C2C-02). Forms FDA 3454/3455 → Module 1.
 // Service: server/services/financial-disclosures; migration: migrations/20260610_financial_disclosure_21cfr54.sql.

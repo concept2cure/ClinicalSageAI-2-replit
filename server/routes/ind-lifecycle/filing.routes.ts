@@ -10,6 +10,7 @@ import { requireRole } from '../../middleware/auth';
 import { assembleIndSafetyReport } from '../../services/ind-lifecycle/ind-safety-report-service';
 import { composeE2bR3Icsr } from '../../services/ind-lifecycle/e2b-icsr-composer';
 import { markSafetyReportFiled, SafetyReportError } from '../../services/ind-lifecycle/ind-safety-report-persistence';
+import { markAnnualReportFiled, AnnualReportError } from '../../services/ind-lifecycle/ind-annual-report-persistence';
 import { assembleIndAnnualReport } from '../../services/ind-lifecycle/ind-annual-report-service';
 import { planIndAmendment } from '../../services/ind-lifecycle/ind-amendment-service';
 import {
@@ -103,7 +104,17 @@ router.post('/annual-report/file', limiter, requireRole(AUTHOR), async (req, res
       const pdf = await renderIndAnnualReportPdf(assembleIndAnnualReport(b));
       checksum = createHash('md5').update(pdf).digest('hex');
     }
-    res.status(201).json(await persistAnnualReport(Number(b.submissionId), String(b.sequenceNumber), ctx, checksum));
+    const filed = await persistAnnualReport(Number(b.submissionId), String(b.sequenceNumber), ctx, checksum);
+    // When filing a tracked draft, mark it filed + link the sequence.
+    let draft;
+    if (b.draftId) {
+      try {
+        draft = await markAnnualReportFiled(String(b.draftId), filed.sequence.id, ctx);
+      } catch (e) {
+        if (!(e instanceof AnnualReportError)) throw e; // unknown/foreign draft id is non-fatal
+      }
+    }
+    res.status(201).json({ ...filed, ...(draft ? { draft } : {}) });
   } catch (err) {
     fail(res, err);
   }
