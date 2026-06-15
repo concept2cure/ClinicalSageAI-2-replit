@@ -19,7 +19,7 @@ four §8 decisions on 2026-06-15:
 | 4 | Insights UI surface (chat-first, scope-aware) | Not started |
 | 5 | Prediction reports (package the honest models) | Pure assembler + mandatory-disclosure guardrail landed + tested; wiring real model services next |
 | 6 | Scheduling, subscriptions, delivery | Not started |
-| 7 | Enterprise / portfolio rollup reporting | Not started |
+| 7 | Enterprise / portfolio rollup reporting | Pure aggregator (board pack) + cross-region/harmonization engine landed + tested; DB-backed member fetch next |
 | 8 | Governance, audit, e-sign, Part 11 for reports | Not started |
 | 9 | Observability, quality, rollout | Not started |
 
