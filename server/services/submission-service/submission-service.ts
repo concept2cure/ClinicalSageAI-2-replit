@@ -588,6 +588,33 @@ export async function upsertLeaf(
     }
   }
 
+  // A lifecycle op that supersedes a prior leaf (replace|append|delete) carries a
+  // parentLeafId — the GUID of the leaf it acts on. That parent MUST belong to the
+  // caller's org AND live in THIS sequence; otherwise the eCTD lifecycle chain
+  // would link a modified-file operation to a leaf the tenant doesn't own or that
+  // sits in another sequence, corrupting the index. (The document pointer above is
+  // checked the same way; parentLeafId must not be the weaker link.)
+  if (input.parentLeafId != null) {
+    const [parent] = await db
+      .select({ id: submissionLeaves.id })
+      .from(submissionLeaves)
+      .where(
+        and(
+          eq(submissionLeaves.id, input.parentLeafId),
+          eq(submissionLeaves.sequenceId, input.sequenceId),
+          eq(submissionLeaves.organizationId, ctx.organizationId),
+          isNull(submissionLeaves.deletedAt)
+        )
+      )
+      .limit(1);
+    if (!parent) {
+      throw new SubmissionError(
+        'FORBIDDEN',
+        'parentLeafId must reference a leaf in this sequence owned by this organization.'
+      );
+    }
+  }
+
   if (input.leafId) {
     const [row] = await db
       .update(submissionLeaves)
