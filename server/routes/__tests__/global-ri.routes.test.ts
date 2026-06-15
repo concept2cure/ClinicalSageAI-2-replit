@@ -198,3 +198,42 @@ describe('regulatory fees', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('cross-market labeling', () => {
+  it('GET /labeling/requirements/:market → 200', async () => {
+    const res = await request(app).get('/api/global-ri/labeling/requirements/FDA');
+    expect(res.status).toBe(200);
+    expect(res.body.sections.length).toBeGreaterThan(0);
+  });
+
+  it('POST /labeling/assess → 200 not-ready when a section is missing', async () => {
+    const res = await request(app).post('/api/global-ri/labeling/assess').send({ market: 'FDA', providedSections: [] });
+    expect(res.status).toBe(200);
+    expect(res.body.ready).toBe(false);
+    expect(res.body.missing.length).toBeGreaterThan(0);
+  });
+
+  it('POST /labeling/assess → 400 without market/providedSections', async () => {
+    const res = await request(app).post('/api/global-ri/labeling/assess').send({ market: 'FDA' });
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('clinical-trial-application requirements', () => {
+  it('GET /cta/requirements/:market → 200', async () => {
+    const res = await request(app).get('/api/global-ri/cta/requirements/FDA');
+    expect(res.status).toBe(200);
+    expect(res.body.requirements.length).toBeGreaterThan(0);
+  });
+
+  it('POST /cta/assess → 200 not-ready when a component is missing', async () => {
+    const res = await request(app).post('/api/global-ri/cta/assess').send({ market: 'FDA', providedComponents: [] });
+    expect(res.status).toBe(200);
+    expect(res.body.ready).toBe(false);
+  });
+
+  it('POST /cta/assess → 400 without required fields', async () => {
+    const res = await request(app).post('/api/global-ri/cta/assess').send({ market: 'FDA' });
+    expect(res.status).toBe(400);
+  });
+});

@@ -26,6 +26,8 @@ import { recommendMeetings, meetingsForMarket, MEETING_CATALOG, type MeetingMark
 import { assessDesignationEligibility, getDesignationCriteria } from '../services/global-ri/special-designations';
 import { buildStrategyBrief } from '../services/global-ri/regulatory-strategy-brief';
 import { estimateFees, getFeeSchedule, type FeeMarket } from '../services/global-ri/regulatory-fee-estimator';
+import { assessLabeling, getLabelingRequirements, type LabelMarket } from '../services/global-ri/labeling-requirements';
+import { assessCtaReadiness, getCtaRequirements, type CtaMarket } from '../services/global-ri/clinical-trial-application-requirements';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('global-ri-routes');
@@ -220,6 +222,56 @@ router.post('/fees/estimate', limiter, requireRole(AUTHOR), (req: Request, res: 
   }
   try {
     res.json(estimateFees(b));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Cross-market labeling (PI / SmPC / package insert) ────────────────────────
+
+/** A market's required labeling sections. */
+router.get('/labeling/requirements/:market', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const market = String(Array.isArray(req.params.market) ? req.params.market[0] : req.params.market) as LabelMarket;
+  const sections = getLabelingRequirements(market);
+  if (sections.length === 0) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No labeling requirements modeled for "${market}".` } });
+  }
+  res.json({ market, sections });
+});
+
+/** Assess provided labeling sections against a market's required set. Body: { market, providedSections }. */
+router.post('/labeling/assess', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!b.market || !Array.isArray(b.providedSections)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'market and providedSections[] are required.' } });
+  }
+  try {
+    res.json(assessLabeling({ market: b.market, providedSections: b.providedSections }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Clinical-trial-application requirements (IND / CTA / CTN) ──────────────────
+
+/** A market's required clinical-trial-application components. */
+router.get('/cta/requirements/:market', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const market = String(Array.isArray(req.params.market) ? req.params.market[0] : req.params.market) as CtaMarket;
+  const requirements = getCtaRequirements(market);
+  if (requirements.length === 0) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No CTA requirements modeled for "${market}".` } });
+  }
+  res.json({ market, requirements });
+});
+
+/** Assess CTA readiness for a market. Body: { market, providedComponents }. */
+router.post('/cta/assess', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!b.market || !Array.isArray(b.providedComponents)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'market and providedComponents[] are required.' } });
+  }
+  try {
+    res.json(assessCtaReadiness({ market: b.market, providedComponents: b.providedComponents }));
   } catch (err) {
     fail(res, err);
   }
