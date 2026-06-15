@@ -97,3 +97,27 @@ describe('ADaM ADSL conformance', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('ADaM BDS + OCCDS conformance', () => {
+  it('BDS → 200 with a verdict', async () => {
+    const res = await request(app)
+      .post('/api/cdisc-validation/adam-bds/conformance')
+      .send({ variables: [{ name: 'STUDYID', dataType: 'Char' }, { name: 'USUBJID', dataType: 'Char' }, { name: 'PARAMCD', dataType: 'Char' }, { name: 'PARAM', dataType: 'Char' }, { name: 'AVAL', dataType: 'Num' }] });
+    expect(res.status).toBe(200);
+    expect(res.body.datasetName).toBe('BDS');
+    expect(res.body).toHaveProperty('ready');
+  });
+
+  it('OCCDS → 200 with a verdict', async () => {
+    const res = await request(app)
+      .post('/api/cdisc-validation/adam-occds/conformance')
+      .send({ variables: [{ name: 'STUDYID', dataType: 'Char' }, { name: 'USUBJID', dataType: 'Char' }, { name: 'AEDECOD', dataType: 'Char' }, { name: 'TRTA', dataType: 'Char' }] });
+    expect(res.status).toBe(200);
+    expect(res.body.datasetName).toBe('OCCDS');
+  });
+
+  it('BDS/OCCDS → 400 without variables[]', async () => {
+    expect((await request(app).post('/api/cdisc-validation/adam-bds/conformance').send({})).status).toBe(400);
+    expect((await request(app).post('/api/cdisc-validation/adam-occds/conformance').send({})).status).toBe(400);
+  });
+});

@@ -17,6 +17,8 @@ import { createRateLimiter } from '../middleware/rateLimiter';
 import { checkSdtmDomainConformance } from '../services/cdisc/sdtm-domain-conformance-checker';
 import { generateDefineXml } from '../services/cdisc/define-xml-generator';
 import { checkAdamAdslConformance } from '../services/cdisc/adam-adsl-conformance-checker';
+import { checkAdamBdsConformance } from '../services/cdisc/adam-bds-conformance-checker';
+import { checkAdamOccdsConformance } from '../services/cdisc/adam-occds-conformance-checker';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('cdisc-validation-routes');
@@ -85,6 +87,32 @@ router.post('/adam-adsl/conformance', limiter, requireRole(AUTHOR), (req: Reques
   }
   try {
     res.json(checkAdamAdslConformance({ variables: b.variables }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** ADaM BDS (Basic Data Structure) conformance check (ADaM IG v1.1). Body: { variables }. */
+router.post('/adam-bds/conformance', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!Array.isArray(b.variables)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'variables[] (BDS variable metadata) is required.' } });
+  }
+  try {
+    res.json(checkAdamBdsConformance({ variables: b.variables }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** ADaM OCCDS (Occurrence Data Structure, e.g. ADAE) conformance check. Body: { variables }. */
+router.post('/adam-occds/conformance', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!Array.isArray(b.variables)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'variables[] (OCCDS variable metadata) is required.' } });
+  }
+  try {
+    res.json(checkAdamOccdsConformance({ variables: b.variables }));
   } catch (err) {
     fail(res, err);
   }
