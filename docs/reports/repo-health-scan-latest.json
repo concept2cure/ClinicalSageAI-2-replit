@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-15T04:49:49.303Z",
+  "generatedAt": "2026-06-15T15:47:22.794Z",
   "git": {
-    "sha": "58fec5c755951dfeed713aaf25ad16a6e2901f9f",
+    "sha": "35f8135257cfcd164b0a7713a5c561d4aa1c4730",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 215,
+    "duplicateBasenames": 216,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -2046,6 +2046,14 @@
         ]
       },
       {
+        "basename": "technical-file-packager.test",
+        "count": 2,
+        "paths": [
+          "server/services/pathway-engines/__tests__/technical-file-packager.test.ts",
+          "server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts"
+        ]
+      },
+      {
         "basename": "templateregistry",
         "count": 2,
         "paths": [
@@ -2153,11 +2161,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 457674
+        "bytes": 458022
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 331520
+        "bytes": 331594
       },
       {
         "file": "server/statistics-service.ts",
@@ -2211,7 +2219,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 9268
+        "lines": 9278
       },
       {
         "file": "server/statistics-service.ts",
@@ -2219,7 +2227,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 6163
+        "lines": 6164
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2383,7 +2391,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 331,
+      "duplicateGroups": 333,
       "largeByBytes": 11,
       "largeByLines": 34
     },
