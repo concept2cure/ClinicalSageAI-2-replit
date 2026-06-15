@@ -29,6 +29,9 @@ import { eq, and, desc, sql } from 'drizzle-orm';
 import auditService from './auditService';
 import crypto from 'crypto';
 
+import { createScopedLogger } from '../utils/logger';
+const logger = createScopedLogger('medical-device');
+
 class MedicalDeviceService {
   private initialized = false;
   private getDb() {
@@ -90,7 +93,7 @@ class MedicalDeviceService {
 
       return newDevice[0];
     } catch (error) {
-      console.error('Error creating medical device:', error);
+      logger.error('Error creating medical device:', { error: error });
       throw error;
     }
   }
@@ -109,7 +112,7 @@ class MedicalDeviceService {
 
       return devices;
     } catch (error) {
-      console.error('Error fetching medical devices:', error);
+      logger.error('Error fetching medical devices:', { error: error });
       throw error;
     }
   }
@@ -130,7 +133,7 @@ class MedicalDeviceService {
 
       return device[0];
     } catch (error) {
-      console.error('Error fetching medical device:', error);
+      logger.error('Error fetching medical device:', { error: error });
       throw error;
     }
   }
@@ -183,7 +186,7 @@ class MedicalDeviceService {
 
       return updatedDevice[0];
     } catch (error) {
-      console.error('Error updating medical device:', error);
+      logger.error('Error updating medical device:', { error: error });
       throw error;
     }
   }
@@ -244,7 +247,7 @@ class MedicalDeviceService {
 
       return new510k[0];
     } catch (error) {
-      console.error('Error creating 510(k) submission:', error);
+      logger.error('Error creating 510(k) submission:', { error: error });
       throw error;
     }
   }
@@ -267,7 +270,7 @@ class MedicalDeviceService {
 
       return submissions;
     } catch (error) {
-      console.error('Error fetching 510(k) submissions:', error);
+      logger.error('Error fetching 510(k) submissions:', { error: error });
       throw error;
     }
   }
@@ -306,7 +309,7 @@ class MedicalDeviceService {
 
       return submission[0];
     } catch (error) {
-      console.error('Error fetching 510(k) submission:', error);
+      logger.error('Error fetching 510(k) submission:', { error: error });
       throw error;
     }
   }
@@ -385,7 +388,7 @@ class MedicalDeviceService {
 
       return updated510k[0];
     } catch (error) {
-      console.error('Error updating 510(k) submission:', error);
+      logger.error('Error updating 510(k) submission:', { error: error });
       throw error;
     }
   }
@@ -451,7 +454,7 @@ class MedicalDeviceService {
 
       return { success: true, message: '510(k) submission sent to FDA successfully' };
     } catch (error) {
-      console.error('Error submitting 510(k) to FDA:', error);
+      logger.error('Error submitting 510(k) to FDA:', { error: error });
 
       // Log failed integration
       await this.logFDAIntegration(
@@ -524,7 +527,7 @@ class MedicalDeviceService {
 
       return newPMA[0];
     } catch (error) {
-      console.error('Error creating PMA submission:', error);
+      logger.error('Error creating PMA submission:', { error: error });
       throw error;
     }
   }
@@ -547,7 +550,7 @@ class MedicalDeviceService {
 
       return submissions;
     } catch (error) {
-      console.error('Error fetching PMA submissions:', error);
+      logger.error('Error fetching PMA submissions:', { error: error });
       throw error;
     }
   }
@@ -609,7 +612,7 @@ class MedicalDeviceService {
 
       return newDoc[0];
     } catch (error) {
-      console.error('Error adding submission document:', error);
+      logger.error('Error adding submission document:', { error: error });
       throw error;
     }
   }
@@ -638,7 +641,7 @@ class MedicalDeviceService {
 
       return documents;
     } catch (error) {
-      console.error('Error fetching submission documents:', error);
+      logger.error('Error fetching submission documents:', { error: error });
       throw error;
     }
   }
@@ -682,7 +685,7 @@ class MedicalDeviceService {
 
       return newWorkflow[0];
     } catch (error) {
-      console.error('Error creating workflow:', error);
+      logger.error('Error creating workflow:', { error: error });
       throw error;
     }
   }
@@ -707,7 +710,7 @@ class MedicalDeviceService {
 
       return workflow[0];
     } catch (error) {
-      console.error('Error fetching workflow:', error);
+      logger.error('Error fetching workflow:', { error: error });
       throw error;
     }
   }
@@ -758,7 +761,7 @@ class MedicalDeviceService {
 
       return updatedWorkflow[0];
     } catch (error) {
-      console.error('Error updating workflow status:', error);
+      logger.error('Error updating workflow status:', { error: error });
       throw error;
     }
   }
@@ -857,7 +860,7 @@ class MedicalDeviceService {
         dataIntegrityCheck: this.generateIntegrityCheck(newValues),
       });
     } catch (error) {
-      console.error('Error logging audit trail:', error);
+      logger.error('Error logging audit trail:', { error: error });
       // Don't throw - audit logging should not break the main operation
     }
   }
@@ -891,7 +894,7 @@ class MedicalDeviceService {
         createdAt: new Date(),
       });
     } catch (error) {
-      console.error('Error logging FDA integration:', error);
+      logger.error('Error logging FDA integration:', { error: error });
       // Don't throw - logging should not break the main operation
     }
   }
@@ -948,7 +951,7 @@ class MedicalDeviceService {
 
       return updated[0];
     } catch (error) {
-      console.error('Error linking CER to device:', error);
+      logger.error('Error linking CER to device:', { error: error });
       throw error;
     }
   }
@@ -969,7 +972,7 @@ class MedicalDeviceService {
 
       return projects;
     } catch (error) {
-      console.error('Error fetching CER projects for device:', error);
+      logger.error('Error fetching CER projects for device:', { error: error });
       throw error;
     }
   }

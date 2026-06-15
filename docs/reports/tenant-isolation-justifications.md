@@ -8,7 +8,9 @@ received real org scoping and five stale fingerprints were removed with their
 dead files. A scanner-accuracy pass (2026-06-11) replaced the regex string
 extractor with a quote-context-aware lexer: this revealed ~7 queries the old
 extractor could not see (several were real cross-tenant leaks, fixed the same
-day) and cleared several false positives. Current baseline: **26 entries**,
+day) and cleared several false positives. A 2026-06-15 GA pass landed three
+more genuine scoping fixes (billing-dashboard, deep-research updateJobProgress,
+the RAG neighbour-window fetch) — see Resolved. Current baseline: **24 entries**,
 every one enumerated here. **Policy: a new baseline entry requires a row in
 this table — enforced by `scripts/ci/check-baseline-justifications.mjs`.**
 
@@ -19,19 +21,35 @@ this table — enforced by `scripts/ci/check-baseline-justifications.mjs`.**
 | `server/db/bootstrap/seed-default-org.ts:75, 87` | bootstrap | Pre-tenant seed inside the schema-migration transaction; no org exists yet. |
 | `server/routes/esignature.ts:45, 173` | self-lookup | Part 11 re-auth / signer denormalization reads the **session user's own row**; `users` has no org column by design (tenancy lives in `organization_users`). |
 | `server/services/billing.ts:632, 672, 678` | webhook | Stripe webhook idempotency/processing keyed by globally-unique `evt_…` id; signature-verified; org resolved asynchronously (`stripe_events.organization_id` nullable by design). |
-| `server/routes/billing-dashboard.ts:620` | transitive | `customer_id` read from the authed org's own row first; adding a nullable org filter would drop unresolved-webhook rows. |
 | `server/routes/tenant-users.ts:233, 265` | provisioning | Org-admin-gated invite dedupe by globally-unique email; `users` has no org column. (Cross-org **profile mutation** during dedupe was removed in wave 7.) |
 | `server/services/atomicQuotaService.js:172, 202` | provisioning | Same dedupe pattern inside the org-quota transaction. |
 | `server/routes/part11-compliance.ts:263` | self-lookup | bcrypt verify against the session user behind a policy guard; only `{valid}` is returned. |
 | `server/services/ana-ri/command-executor.ts:1000` | self-lookup | Reads the authenticated `ctx.userId`'s own row. |
 | `server/services/securityHealth.ts:337` | diagnostics | System security-health counters (24h event-type counts, no row data). |
-| `server/services/connectors/veeva-vault.ts:54` | false positive | VQL sent to the external Veeva REST API — `documents` is Veeva's object, not a local table. |
 | `server/storage.ts:2177, 2189, 2205, 2240, 2255` | users CRUD | `users` carries no tenant column (`shared/schema.ts` — only `default_organization_id`); tenancy is enforced through `organization_users` at the route layer. |
 | `server/services/advancedRAGPipeline.ts` (vault arms) | RLS | Vault retrieval arms (dense + lexical) **and the small-to-big neighbour-window fetch** on `vault.document_chunks` run inside `withTenantContext(pool, organizationUuid, …)` — isolation is enforced by Postgres RLS session context, not a WHERE clause the static scanner can see. |
-| `server/services/advancedRAGPipeline.ts` (rag_chunks arms) | conditional scope / transitive | rag_chunks retrieval arms (dense + lexical) append `AND d.organization_id = $N` via an interpolated filter variable when tenant context is provided (the scanner cannot resolve the variable; every route-facing caller passes the org). The **small-to-big neighbour-window fetch** scopes by `document_id`: a document belongs to one org, and neighbours are only fetched for a chunk already retrieved under org scope, so the document id is a tenant boundary (transitive). |
-| `server/services/deep-research-orchestrator.ts:462` | system job | Worker progress callback updates `deep_research_jobs` by primary key; the job id originates from an org-scoped enqueue in the same orchestrator (transitive). |
+| `server/services/advancedRAGPipeline.ts` (rag_chunks arms) | conditional scope | rag_chunks retrieval arms (dense + lexical) append `AND d.organization_id = $N` via an interpolated filter variable when tenant context is provided (the scanner cannot resolve the variable; every route-facing caller passes the org). The small-to-big neighbour-window fetch is now **explicitly** org-scoped (see Resolved). |
 
 ## Resolved (no longer in baseline)
+
+### 2026-06-15 GA remediation — genuine scoping fixes (PR #809)
+
+- `server/routes/billing-dashboard.ts:620` — the recent-Stripe-events query
+  filtered `WHERE customer_id = $1` and selected `data`, **neither column
+  exists** on `stripe_events` (it was unscoped AND a latent runtime bug).
+  Rewritten to `WHERE organization_id = $1` (passing the authed `orgId`) and
+  `SELECT … payload …` — now properly tenant-scoped and functional.
+- `server/services/deep-research-orchestrator.ts` (`updateJobProgress`) — the
+  one `deep_research_jobs` UPDATE without an org predicate (the other four
+  carry `AND organization_id = $n`). Threaded `organizationId` through the
+  helper + all five call sites and added `AND organization_id = $4`.
+- `server/services/advancedRAGPipeline.ts` (rag_chunks neighbour-window fetch,
+  ~L763) — was scoped only transitively by `document_id`; now joins
+  `rag_documents` and filters `AND rd.organization_id = $4` (explicit
+  defense-in-depth; the integer org id is threaded into `expandContext`).
+- `server/services/connectors/veeva-vault.ts:54` — no longer flagged after the
+  connector hardening reshaped the VQL builder; it was always a false positive
+  (external Veeva REST query, not a local table).
 
 ### 2026-06-11 scanner-accuracy pass — leaks found by the new lexer, fixed
 

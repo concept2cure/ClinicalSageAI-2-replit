@@ -11,6 +11,9 @@ import * as jose from 'jose';
 import { getPool } from '../db';
 import auditService from '../services/auditService';
 import { authedOrgId } from '../utils/authedOrgId';
+import { createScopedLogger } from '../utils/logger';
+
+const logger = createScopedLogger('authoring-router');
 
 const router = Router();
 
@@ -4146,7 +4149,14 @@ router.post(
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ cite_id: citeId }),
             }
-          ).catch(() => {});
+          ).catch((err: unknown) => {
+            logger.warn('Citation token refresh request failed during change-request apply', {
+              sectionId: cr.section_id,
+              crId: cr.cr_id,
+              citeId,
+              err: err instanceof Error ? err.message : String(err),
+            });
+          });
         }
       } else if (cr.apply_kind === 'TOKEN_REPLACE') {
         // For now: replace by deleting + inserting new citation (left as future work)

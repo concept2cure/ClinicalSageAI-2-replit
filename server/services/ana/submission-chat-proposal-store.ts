@@ -22,6 +22,9 @@
  */
 import crypto from 'node:crypto';
 import { getPool } from '../../db/runtime.js';
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('submission-chat-proposal-store');
 
 export type ProposalStatus = 'pending' | 'applied' | 'superseded' | 'expired';
 
@@ -215,7 +218,14 @@ export async function getActiveProposalForThreadArtifact(
             WHERE id = $1 AND status = 'pending'`,
           [record.id]
         )
-        .catch(() => {});
+        .catch((err: unknown) => {
+          logger.warn('Failed to lazy-expire stale rewrite proposal', {
+            proposalId: record.id,
+            threadId,
+            artifactId,
+            err: err instanceof Error ? err.message : String(err),
+          });
+        });
       return null;
     }
     return record;

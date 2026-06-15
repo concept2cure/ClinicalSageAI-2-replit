@@ -23,6 +23,30 @@
 import { pool } from '../db.js';
 
 // ---------------------------------------------------------------------------
+// Safe default result cap (performance / GA hardening)
+//
+//   findMany calls where `take` is optional could previously load an entire
+//   table into memory if a caller forgot a limit. We apply a sane default
+//   maximum so an unbounded query can never page the whole table. When a
+//   caller passes an explicit `take`, that value is respected unchanged.
+//
+//   Override via PRISMA_FIND_MANY_DEFAULT_LIMIT if a deployment legitimately
+//   needs a larger default (e.g. a large export job that pages through a
+//   tenant's full audit trail). Large exports should still prefer passing an
+//   explicit `take` so the cap is a deliberate choice, not an accident.
+// ---------------------------------------------------------------------------
+const DEFAULT_FIND_MANY_LIMIT = (() => {
+  const raw = Number.parseInt(process.env.PRISMA_FIND_MANY_DEFAULT_LIMIT ?? '', 10);
+  return Number.isFinite(raw) && raw > 0 ? raw : 1000;
+})();
+
+// Resolve the effective LIMIT for a findMany call: honor an explicit `take`,
+// otherwise fall back to the safe default cap.
+function resolveTake(take) {
+  return take !== undefined && take !== null ? take : DEFAULT_FIND_MANY_LIMIT;
+}
+
+// ---------------------------------------------------------------------------
 // Helper: execute a raw query against the pg pool (returns rows)
 // ---------------------------------------------------------------------------
 async function rawQuery(text, params = []) {
@@ -84,10 +108,10 @@ const audit_log = {
     }
     if (clauses.length) sql += ' WHERE ' + clauses.join(' AND ');
     sql += ' ORDER BY created_at DESC';
-    if (take) {
-      params.push(take);
-      sql += ` LIMIT $${params.length}`;
-    }
+    // Always apply a LIMIT: explicit `take` when provided, else the safe
+    // default cap so an unbounded read can't load the whole table.
+    params.push(resolveTake(take));
+    sql += ` LIMIT $${params.length}`;
     return rawQuery(sql, params);
   },
 };
@@ -145,10 +169,10 @@ const document = {
     }
     if (clauses.length) sql += ' WHERE ' + clauses.join(' AND ');
     sql += ' ORDER BY created_at DESC';
-    if (take) {
-      params.push(take);
-      sql += ` LIMIT $${params.length}`;
-    }
+    // Always apply a LIMIT: explicit `take` when provided, else the safe
+    // default cap so an unbounded read can't load the whole table.
+    params.push(resolveTake(take));
+    sql += ` LIMIT $${params.length}`;
     return rawQuery(sql, params);
   },
 
@@ -255,10 +279,10 @@ const signature = {
     }
     if (clauses.length) sql += ' WHERE ' + clauses.join(' AND ');
     sql += ' ORDER BY signed_at DESC';
-    if (take) {
-      params.push(take);
-      sql += ` LIMIT $${params.length}`;
-    }
+    // Always apply a LIMIT: explicit `take` when provided, else the safe
+    // default cap so an unbounded read can't load the whole table.
+    params.push(resolveTake(take));
+    sql += ` LIMIT $${params.length}`;
     return rawQuery(sql, params);
   },
 };

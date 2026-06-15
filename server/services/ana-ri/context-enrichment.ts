@@ -45,6 +45,9 @@ import { buildWorkflowContext } from './workflow-orchestration.js';
 import { detectDocumentType, buildDocumentGenerationContext } from './document-routing.js';
 import { getFeedbackSummary } from '../intelligence/learning-loop-service.js';
 import type { CanonicalGovernedState } from '../../../shared/types/governed-document-fabric.js';
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('enrichment');
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -440,7 +443,7 @@ async function enrichWithProjectMemory(
     }).join('\n');
 
     return `\n\n## ${label}\n${description}\n${items}`;
-  } catch (e: unknown) { console.warn("[enrichment] Query failed:", e instanceof Error ? e.message : String(e));
+  } catch (e: unknown) { logger.warn("Query failed", { error: e instanceof Error ? e.message : String(e) });
     return '';
   }
 }
@@ -464,7 +467,7 @@ async function enrichWithForesight(projectId: string | number, orgId?: number): 
       }
     } catch (e: unknown) {
       // Fallback: live signals unavailable — memory-only path below
-      console.warn('[enrichment] Live foresight signals failed:', e instanceof Error ? e.message : String(e));
+      logger.warn('Live foresight signals failed', { error: e instanceof Error ? e.message : String(e) });
     }
   }
 
@@ -523,7 +526,7 @@ async function enrichWithPrecedents(projectId: string | number, orgId?: number):
 
     return `\n\n## PROJECT PRECEDENT INTELLIGENCE\nIdentified precedents and comparators. Reference these for similar products/devices.\n\n${sections}`;
   } catch (e: unknown) {
-    console.warn('[enrichment] Precedent query failed:', e instanceof Error ? e.message : String(e));
+    logger.warn('Precedent query failed', { error: e instanceof Error ? e.message : String(e) });
     return '';
   }
 }
@@ -547,7 +550,7 @@ async function enrichWithCRLRTF(projectId: string | number, orgId?: number): Pro
       }
     } catch (e: unknown) {
       // Fallback: live patterns unavailable — memory-only path below
-      console.warn('[enrichment] Live CRLRTF patterns failed:', e instanceof Error ? e.message : String(e));
+      logger.warn('Live CRLRTF patterns failed', { error: e instanceof Error ? e.message : String(e) });
     }
   }
 
@@ -581,7 +584,7 @@ async function enrichWithReadiness(projectId: string | number, orgId?: number): 
 
       return `\n\n## Live Readiness Assessment\n**Overall Score: ${score.overallScore}/100** | Trend: ${score.trend?.direction || 'unknown'}\n\n**Predictions:** Approval probability ~${score.predictions?.approvalProbability ?? '—'}% | Est. ${score.predictions?.estimatedDeficiencies ?? '—'} deficiencies | ~${score.predictions?.estimatedReviewDays ?? '—'} review days\n\n| Dimension | Score |\n|---|---|\n${dimLines}\n\n**Top Gaps (${score.gaps.length} total):**\n${gapLines || '- None identified'}\n\nPresent these scores directly. Be specific about gaps and remediation steps.`;
     } catch (e: unknown) {
-      console.warn('[enrichment] Live readiness failed, falling back to memory:', e instanceof Error ? e.message : 'unknown error');
+      logger.warn('Live readiness failed, falling back to memory', { error: e instanceof Error ? e.message : 'unknown error' });
     }
   }
   // Fallback to stored memory
@@ -676,7 +679,7 @@ async function enrichWithClaims(projectId: string | number, orgId?: number): Pro
 
       return `\n\n## Evidence & Claims Analysis\n**Evidence Chain Strength:** ${chain.chainStrength} | **Confidence:** ${confidence}/100\n**Factors:** ${Object.entries(factors).map(([k, v]) => `${k}: ${v}`).join(', ')}\n\n**Evidence Entries:**\n${entryLines}\n\nAnalyze the strength of evidence chains. Flag any claims with weak or missing evidence support.`;
     }
-  } catch (e: unknown) { console.warn("[enrichment] Query failed:", e instanceof Error ? e.message : String(e));
+  } catch (e: unknown) { logger.warn("Query failed", { error: e instanceof Error ? e.message : String(e) });
     // Fall through
   }
   return enrichWithProjectMemory(
@@ -718,7 +721,7 @@ async function enrichWithSignals(projectId: string | number, orgId?: number): Pr
           .join('\n');
         return `\n\n## RIM Intelligence Signals (Live)\n**${summary.totalSignals} signals** accumulated for this project.\n\nTrend: **${summary.overallTrend}** (${summary.trendConfidence}, n=${summary.trendSampleSize})\nAverage score: **${summary.averageScore}**\nTop patterns: ${summary.topPatternIds.slice(0, 6).join(', ') || 'none'}\n\n### By risk\n${byRisk || '- none'}\n\nSummarize patterns, highlight recurring risks, and note trend directions.`;
       }
-    } catch (e: unknown) { console.warn("[enrichment] Query failed:", e instanceof Error ? e.message : String(e));
+    } catch (e: unknown) { logger.warn("Query failed", { error: e instanceof Error ? e.message : String(e) });
       // Fall through to memory
     }
   }
@@ -751,7 +754,7 @@ async function enrichWithDeficiencies(submissionType?: string): Promise<string> 
       .join('\n');
 
     return `\n\n## Deficiency Taxonomy for ${type.toUpperCase()}\n**${critical.length} critical** out of ${deficiencies.length} known deficiency patterns.\n\n**Critical Deficiencies:**\n${criticalLines}\n\n**Other Patterns:**\n${otherLines}\n\nUse these to preempt reviewer deficiency findings. Be specific about which patterns apply to the user's current work.`;
-  } catch (e: unknown) { console.warn("[enrichment] Query failed:", e instanceof Error ? e.message : String(e));
+  } catch (e: unknown) { logger.warn("Query failed", { error: e instanceof Error ? e.message : String(e) });
     return '';
   }
 }
@@ -775,7 +778,7 @@ async function enrichWithKnowledgeSearch(query: string, projectId: string | numb
     ).join('\n');
 
     return `\n\n## Knowledge Base Search Results\n**${result.rows.length} entries** found in project knowledge.\n\n${entries}\n\nReference these knowledge atoms when answering. Cite the category and confidence level.`;
-  } catch (e: unknown) { console.warn("[enrichment] Query failed:", e instanceof Error ? e.message : String(e));
+  } catch (e: unknown) { logger.warn("Query failed", { error: e instanceof Error ? e.message : String(e) });
     return '';
   }
 }
@@ -997,7 +1000,7 @@ async function enrichWithProjectSummary(projectId: string | number, orgId?: numb
     parts.push(`\n**Documents:** ${intel.documentStats.totalIngested} ingested | ${intel.memoryEntryCount} memory atoms`);
 
     return '\n\n' + parts.join('\n') + '\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.';
-  } catch (e: unknown) { console.warn("[enrichment] Query failed:", e instanceof Error ? e.message : String(e));
+  } catch (e: unknown) { logger.warn("Query failed", { error: e instanceof Error ? e.message : String(e) });
     return '';
   }
 }

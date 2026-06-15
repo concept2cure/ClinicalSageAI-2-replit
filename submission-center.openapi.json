@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Concept2Cure Submission Center API",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Endpoints for the Submission Center (spec §4 workspaces). All require an authenticated bearer token (Authorization: Bearer); organization/user are resolved server-side and never accepted in the body. TypeScript shapes: shared/types/submission-api.ts. Human map: SUBMISSION_CENTER_API.md."
   },
   "servers": [
@@ -93,6 +93,786 @@
               }
             }
           }
+        }
+      }
+    },
+    "/api/submissions/validation-rules": {
+      "get": {
+        "tags": ["Validation"],
+        "summary": "eCTD validation rule corpus (reference data)",
+        "description": "Named, sourced eCTD validation criteria the gate checks against. Static reference data. Requires role regulatory-author.",
+        "parameters": [
+          {
+            "name": "region",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["fda", "eu", "jp", "ca", "au", "ch"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rule corpus (summary + rules)",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/market-specs": {
+      "get": {
+        "tags": ["Market Specs"],
+        "summary": "Per-market submission specifications (reference data)",
+        "parameters": [
+          { "name": "market", "in": "query", "schema": { "type": "string" } },
+          { "name": "family", "in": "query", "schema": { "type": "string", "enum": ["ectd", "estar", "eu_mdr", "eu_ivdr", "ctis"] } }
+        ],
+        "responses": {
+          "200": { "description": "Specs (summary + specs)", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/market-specs/{specId}": {
+      "parameters": [{ "name": "specId", "in": "path", "required": true, "schema": { "type": "string" } }],
+      "get": {
+        "tags": ["Market Specs"],
+        "summary": "One market submission spec",
+        "responses": {
+          "200": { "description": "Spec", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/market-specs/{specId}/validate": {
+      "parameters": [{ "name": "specId", "in": "path", "required": true, "schema": { "type": "string" } }],
+      "post": {
+        "tags": ["Market Specs"],
+        "summary": "Validate file descriptors against a market spec's formatting rules (does not transmit)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["leaves"],
+                "properties": {
+                  "leaves": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["fileName"],
+                      "properties": {
+                        "fileName": { "type": "string" },
+                        "filePath": { "type": "string" },
+                        "fileSizeBytes": { "type": "integer" },
+                        "fileFormat": { "type": "string" },
+                        "encrypted": { "type": "boolean" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Formatting validation result", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/document-templates": {
+      "get": {
+        "tags": ["Market Specs"],
+        "summary": "Document template structures (canonical section skeletons)",
+        "parameters": [{ "name": "family", "in": "query", "schema": { "type": "string", "enum": ["ectd", "estar", "eu_mdr", "eu_ivdr", "ctis"] } }],
+        "responses": {
+          "200": { "description": "Templates", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/document-templates/{templateId}": {
+      "parameters": [{ "name": "templateId", "in": "path", "required": true, "schema": { "type": "string" } }],
+      "get": {
+        "tags": ["Market Specs"],
+        "summary": "One document template structure",
+        "responses": {
+          "200": { "description": "Template", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/requirements": {
+      "get": {
+        "tags": ["Planner"],
+        "summary": "Submission requirements matrix (reference data)",
+        "parameters": [{ "name": "market", "in": "query", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Requirements", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/api/submissions/requirements/{type}": {
+      "parameters": [{ "name": "type", "in": "path", "required": true, "schema": { "type": "string" } }],
+      "get": {
+        "tags": ["Planner"],
+        "summary": "Requirements for one submission type",
+        "responses": {
+          "200": { "description": "Requirements", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/requirements/{type}/assess": {
+      "parameters": [{ "name": "type", "in": "path", "required": true, "schema": { "type": "string" } }],
+      "post": {
+        "tags": ["Planner"],
+        "summary": "Deterministic requirements gap assessment for a submission type",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "templateIds": { "type": "array", "items": { "type": "string" } },
+                  "documentNames": { "type": "array", "items": { "type": "string" } },
+                  "forms": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Gap assessment", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/designations": {
+      "get": {
+        "tags": ["Planner"],
+        "summary": "Expedited-pathway / special designation criteria (reference data)",
+        "parameters": [{ "name": "market", "in": "query", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Designations", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/api/submissions/designations/{id}/assess": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+      "post": {
+        "tags": ["Planner"],
+        "summary": "Deterministic eligibility assessment for a designation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "answers": { "type": "object", "additionalProperties": { "type": "boolean" } } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Eligibility assessment", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/change-categories": {
+      "get": {
+        "tags": ["Lifecycle"],
+        "summary": "Post-submission change category catalog (FDA supplement / EU variation)",
+        "parameters": [{ "name": "market", "in": "query", "schema": { "type": "string", "enum": ["us", "eu"] } }],
+        "responses": {
+          "200": { "description": "Change categories", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/change-categories/classify": {
+      "post": {
+        "tags": ["Lifecycle"],
+        "summary": "Flag-driven change classifier (category + canonical sequence type)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["market"],
+                "properties": {
+                  "market": { "type": "string", "enum": ["us", "eu"] },
+                  "flags": { "type": "object", "additionalProperties": { "type": "boolean" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Recommended change category", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/device/cer/structure": {
+      "get": {
+        "tags": ["Device"],
+        "summary": "CER structure (MEDDEV 2.7/1 / MDR Annex XIV)",
+        "responses": { "200": { "description": "Stages + sections", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/api/submissions/device/cer/assess": {
+      "post": {
+        "tags": ["Device"],
+        "summary": "Deterministic CER structure gap assessment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "presentSectionIds": { "type": "array", "items": { "type": "string" } },
+                  "equivalenceClaimed": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Assessment", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/device/cer/{reportId}/assess-stored": {
+      "parameters": [{ "name": "reportId", "in": "path", "required": true, "schema": { "type": "string" } }],
+      "get": {
+        "tags": ["Device"],
+        "summary": "Gap-check a stored CER (cer_reports/cer_sections) — tenant-scoped",
+        "parameters": [{ "name": "equivalenceClaimed", "in": "query", "schema": { "type": "boolean" } }],
+        "responses": {
+          "200": { "description": "Assessment", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/device/per/structure": {
+      "get": {
+        "tags": ["Device"],
+        "summary": "PER structure (IVDR Annex XIII)",
+        "responses": { "200": { "description": "Pillars + metrics + sections", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/api/submissions/device/per/assess": {
+      "post": {
+        "tags": ["Device"],
+        "summary": "Deterministic PER structure gap assessment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "properties": { "presentSectionIds": { "type": "array", "items": { "type": "string" } } } }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Assessment", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/device/classify": {
+      "post": {
+        "tags": ["Device"],
+        "summary": "Device classification engine (MDR / IVDR / FDA)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["framework"],
+                "properties": {
+                  "framework": { "type": "string", "enum": ["mdr", "ivdr", "fda"] },
+                  "facts": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Classification", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/device/reviewer-checklist": {
+      "get": {
+        "tags": ["Device"],
+        "summary": "Reverse-workflow reviewer checklist for a submission type",
+        "parameters": [{ "name": "type", "in": "query", "required": true, "schema": { "type": "string", "enum": ["510k", "de_novo", "pma", "cer", "per"] } }],
+        "responses": {
+          "200": { "description": "Checklist", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/device/risk-management/structure": {
+      "get": {
+        "tags": ["Device"],
+        "summary": "Risk management file structure (ISO 14971)",
+        "responses": { "200": { "description": "Sections", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/api/submissions/device/risk-management/assess": {
+      "post": {
+        "tags": ["Device"],
+        "summary": "Deterministic RMF structure gap assessment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "properties": { "presentSectionIds": { "type": "array", "items": { "type": "string" } } } }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Assessment", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/device/biocompatibility": {
+      "post": {
+        "tags": ["Device"],
+        "summary": "Required biocompatibility endpoints (ISO 10993) from contact nature/duration",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["nature", "duration"],
+                "properties": {
+                  "nature": { "type": "string", "enum": ["skin", "mucosal_membrane", "breached_surface", "blood_path_indirect", "tissue_bone_dentin", "circulating_blood", "implant_tissue_bone", "implant_blood"] },
+                  "duration": { "type": "string", "enum": ["limited", "prolonged", "long_term"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Required endpoints", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/device/software/classify": {
+      "post": {
+        "tags": ["Device"],
+        "summary": "Software safety classification + deliverables (IEC 62304)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "canContributeToDeathOrSeriousInjury": { "type": "boolean" },
+                  "canContributeToNonSeriousInjury": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Classification + deliverables", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/device/blueprint": {
+      "post": {
+        "tags": ["Device"],
+        "summary": "Unified reverse-workflow device blueprint + readiness scorecard",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["submissionType"],
+                "properties": {
+                  "submissionType": { "type": "string", "enum": ["510k", "de_novo", "pma", "mdr_td", "ivdr_td"] },
+                  "classification": { "type": "object" },
+                  "contact": { "type": "object" },
+                  "software": { "type": "object" },
+                  "electrical": { "type": "object" },
+                  "sterilization": { "type": "object" },
+                  "present": { "type": "object" },
+                  "equivalenceClaimed": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Blueprint + scorecard", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/device/global-strategy": {
+      "get": {
+        "tags": ["Device"],
+        "summary": "Global multi-region device strategy (build once, file many)",
+        "parameters": [
+          { "name": "kind", "in": "query", "required": true, "schema": { "type": "string", "enum": ["device", "ivd"] } },
+          { "name": "regions", "in": "query", "schema": { "type": "string" }, "description": "Comma-separated region list" }
+        ],
+        "responses": {
+          "200": { "description": "Strategy", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/device/timeline": {
+      "get": {
+        "tags": ["Device"],
+        "summary": "Regulatory timeline for a pathway",
+        "parameters": [{ "name": "pathway", "in": "query", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Timeline", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/device/udi/validate": {
+      "post": {
+        "tags": ["Device"],
+        "summary": "UDI validation (GS1 check digit + AI parsing → GUDID/EUDAMED components)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "required": ["udi"], "properties": { "udi": { "type": "string" } } }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Validation result", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/device/electrical-safety": {
+      "post": {
+        "tags": ["Device"],
+        "summary": "Applicable electrical safety standards (IEC 60601) from device facts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "electricallyPowered": { "type": "boolean" },
+                  "hasAlarms": { "type": "boolean" },
+                  "closedLoopControl": { "type": "boolean" },
+                  "homeUse": { "type": "boolean" },
+                  "emsUse": { "type": "boolean" },
+                  "hasParticularStandard": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Applicable standards", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/device/sterilization": {
+      "post": {
+        "tags": ["Device"],
+        "summary": "Sterilization requirements (ISO 11135/11137/17665) from device facts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sterile": { "type": "boolean" },
+                  "method": { "type": "string", "enum": ["eo", "radiation", "steam", "dry_heat", "vh2o2", "aseptic", "unknown"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Requirements", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/device/qms/structure": {
+      "get": {
+        "tags": ["Device"],
+        "summary": "QMS structure (ISO 13485 ↔ FDA QMSR)",
+        "responses": { "200": { "description": "Clauses + FDA note", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/api/submissions/device/qms/assess": {
+      "post": {
+        "tags": ["Device"],
+        "summary": "Deterministic QMS readiness assessment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "properties": { "presentClauseIds": { "type": "array", "items": { "type": "string" } } } }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Readiness", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/device/labeling": {
+      "post": {
+        "tags": ["Device"],
+        "summary": "Device labeling requirements (21 CFR 801 / MDR Annex I §23 / ISO 15223-1)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sterile": { "type": "boolean" },
+                  "singleUse": { "type": "boolean" },
+                  "reusable": { "type": "boolean" },
+                  "implantable": { "type": "boolean" },
+                  "prescriptionOnly": { "type": "boolean" },
+                  "forClinicalInvestigation": { "type": "boolean" },
+                  "hasExpiry": { "type": "boolean" },
+                  "containsMedicinalSubstance": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Labeling requirements", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/regulatory-capabilities": {
+      "get": {
+        "tags": ["Device"],
+        "summary": "Regulatory capabilities index (discover the whole device/IVD layer)",
+        "responses": { "200": { "description": "Capabilities index", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/api/submissions/combination-product/assess": {
+      "post": {
+        "tags": ["Device"],
+        "summary": "Combination product assessment (21 CFR Part 3 PMOA → lead center)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["components"],
+                "properties": {
+                  "components": { "type": "array", "items": { "type": "string", "enum": ["drug", "biologic", "device"] } },
+                  "primaryModeOfAction": { "type": "string", "enum": ["drug", "biologic", "device"] },
+                  "combinationType": { "type": "string", "enum": ["single_entity", "co_packaged", "cross_labeled"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Assessment", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/sequences/{seqId}/pathway-readiness": {
+      "parameters": [{ "$ref": "#/components/parameters/SeqId" }],
+      "get": {
+        "tags": ["Pathways"],
+        "summary": "Pathway readiness projection (CTIS / MDR / IVDR / eSTAR) — deterministic, never transmits",
+        "parameters": [
+          { "name": "pathway", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "memberStates", "in": "query", "schema": { "type": "string" }, "description": "Comma-separated member-state list" }
+        ],
+        "responses": {
+          "200": { "description": "Gap/readiness report", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/sequences/{seqId}/pathway-manifest": {
+      "parameters": [{ "$ref": "#/components/parameters/SeqId" }],
+      "get": {
+        "tags": ["Pathways"],
+        "summary": "Universal pathway manifest (assembled ToC for any non-eCTD pathway)",
+        "parameters": [
+          { "name": "pathway", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "memberStates", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Manifest", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/sequences/{seqId}/technical-file": {
+      "parameters": [{ "$ref": "#/components/parameters/SeqId" }],
+      "get": {
+        "tags": ["Device"],
+        "summary": "Device technical-file manifest (EU MDR/IVDR assemble structure)",
+        "parameters": [{ "name": "regulation", "in": "query", "required": true, "schema": { "type": "string", "enum": ["mdr", "ivdr"] } }],
+        "responses": {
+          "200": { "description": "Technical-file ToC", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/sequences/{seqId}/technical-file/assemble": {
+      "parameters": [{ "$ref": "#/components/parameters/SeqId" }],
+      "post": {
+        "tags": ["Dispatch"],
+        "summary": "Materialize the MDR/IVDR technical-file ZIP (does NOT transmit)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["regulation"],
+                "properties": {
+                  "regulation": { "type": "string", "enum": ["mdr", "ivdr"] },
+                  "applicationId": { "type": "string" },
+                  "productName": { "type": "string" },
+                  "manufacturer": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Sanitized bundle descriptor (sha256, size, fileCount)", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/sequences/{seqId}/assemble": {
+      "parameters": [{ "$ref": "#/components/parameters/SeqId" }],
+      "post": {
+        "tags": ["Dispatch"],
+        "summary": "Assemble step (drives the eCTD publisher off canonical leaves; does NOT transmit)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "applicationId": { "type": "string" },
+                  "sponsorId": { "type": "string" },
+                  "sponsorName": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Sanitized package descriptor (sha256, format, size)", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/sequences/{seqId}/dispatch-readiness": {
+      "parameters": [{ "$ref": "#/components/parameters/SeqId" }],
+      "get": {
+        "tags": ["Dispatch"],
+        "summary": "Server-computed, tamper-proof dispatch gate inputs (read-only; does NOT transmit)",
+        "responses": {
+          "200": { "description": "Dispatch readiness assessment", "content": { "application/json": { "schema": { "type": "object" } } } }
+        }
+      }
+    },
+    "/api/submissions/sequences/{seqId}/freeze": {
+      "parameters": [{ "$ref": "#/components/parameters/SeqId" }],
+      "post": {
+        "tags": ["Dispatch"],
+        "summary": "Governed freeze (requires Part 11 e-signature actionId; applies e-sign + dispatch gate atomically)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "required": ["signatureActionId"], "properties": { "signatureActionId": { "type": "string" } } }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated sequence", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EctdSequence" } } } },
+          "400": { "$ref": "#/components/responses/Error" },
+          "403": { "$ref": "#/components/responses/Error" },
+          "422": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/sequences/{seqId}/dispatch": {
+      "parameters": [{ "$ref": "#/components/parameters/SeqId" }],
+      "post": {
+        "tags": ["Dispatch"],
+        "summary": "Governed dispatch (requires Part 11 e-signature actionId; applies e-sign + dispatch gate atomically; does NOT transmit)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "required": ["signatureActionId"], "properties": { "signatureActionId": { "type": "string" } } }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated sequence", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EctdSequence" } } } },
+          "400": { "$ref": "#/components/responses/Error" },
+          "403": { "$ref": "#/components/responses/Error" },
+          "422": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/submissions/sequences/{seqId}/transmit": {
+      "parameters": [{ "$ref": "#/components/parameters/SeqId" }],
+      "post": {
+        "tags": ["Dispatch"],
+        "summary": "Transmit (assemble → send to agency gateway). Requires dispatched sequence, Part 11 e-signature, clear gate. Real transmission only when gateway credentials exist.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["signatureActionId"],
+                "properties": {
+                  "signatureActionId": { "type": "string" },
+                  "environment": { "type": "string", "enum": ["staging", "production"] },
+                  "applicationId": { "type": "string" },
+                  "sponsorId": { "type": "string" },
+                  "sponsorName": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Transmit result (transmitted flag + reason when not configured)", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "$ref": "#/components/responses/Error" },
+          "403": { "$ref": "#/components/responses/Error" },
+          "422": { "$ref": "#/components/responses/Error" }
         }
       }
     },

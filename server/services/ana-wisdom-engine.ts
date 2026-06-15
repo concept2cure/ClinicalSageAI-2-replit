@@ -27,6 +27,9 @@ import {
   type AnaClientObjective,
 } from 'shared/schema/ana-intelligence';
 import { eq, and, desc, sql, gte, inArray } from 'drizzle-orm';
+import { createScopedLogger } from '../utils/logger';
+
+const logger = createScopedLogger('ana-wisdom-engine');
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -159,7 +162,7 @@ export async function captureProjectLesson(params: CaptureProjectLessonParams): 
       .limit(1);
 
     if (!profile) {
-      console.warn(`[ana-wisdom-engine] No project intelligence profile found for project ${projectId}, skipping lesson capture`);
+      logger.warn(`No project intelligence profile found for project ${projectId}, skipping lesson capture`);
       return;
     }
 
@@ -196,7 +199,7 @@ export async function captureProjectLesson(params: CaptureProjectLessonParams): 
       lessonsLearned: lessonContent,
     });
   } catch (err) {
-    console.error('[ana-wisdom-engine] captureProjectLesson failed:', err);
+    logger.error('captureProjectLesson failed', { error: err });
   }
 }
 
@@ -256,7 +259,7 @@ export async function promoteToClientWisdom(organizationId: number): Promise<num
       .limit(1);
 
     if (!clientProfile) {
-      console.warn(`[ana-wisdom-engine] No client intelligence profile for org ${organizationId}`);
+      logger.warn(`No client intelligence profile for org ${organizationId}`);
       return 0;
     }
 
@@ -329,7 +332,7 @@ export async function promoteToClientWisdom(organizationId: number): Promise<num
       }
     }
   } catch (err) {
-    console.error('[ana-wisdom-engine] promoteToClientWisdom failed:', err);
+    logger.error('promoteToClientWisdom failed', { error: err });
   }
   return promoted;
 }
@@ -421,7 +424,7 @@ export async function promoteToPlatformWisdom(): Promise<number> {
       }
     }
   } catch (err) {
-    console.error('[ana-wisdom-engine] promoteToPlatformWisdom failed:', err);
+    logger.error('promoteToPlatformWisdom failed', { error: err });
   }
   return promoted;
 }
@@ -559,7 +562,7 @@ export async function detectProjectRisks(projectId: number): Promise<RiskAlert[]
       return sev !== 0 ? sev : b.confidenceScore - a.confidenceScore;
     });
   } catch (err) {
-    console.error('[ana-wisdom-engine] detectProjectRisks failed:', err);
+    logger.error('detectProjectRisks failed', { error: err });
   }
   return risks;
 }
@@ -662,7 +665,7 @@ export async function buildWisdomContext(
       block.recommendedNextAction = platformInsight.recommendation.slice(0, 200);
     }
   } catch (err) {
-    console.error('[ana-wisdom-engine] buildWisdomContext failed:', err);
+    logger.error('buildWisdomContext failed', { error: err });
   }
 
   return block;
@@ -770,7 +773,7 @@ export async function processUserFeedback(
       } else if (feedback === 'edited' && editDelta) {
         // Capture the edit delta as a refinement signal in project memory
         if (!outcome.projectId) {
-          console.warn(`[ana-wisdom-engine] Edit delta dropped for outcome ${outcomeId} — projectId is null`);
+          logger.warn(`Edit delta dropped for outcome ${outcomeId} — projectId is null`);
         } else if (outcome.projectId) {
           // Fire-and-forget lesson capture with the edit context
           captureProjectLesson({
@@ -783,13 +786,13 @@ export async function processUserFeedback(
             regulatoryBody: outcome.regulatoryBody ?? undefined,
             projectType: outcome.projectType ?? undefined,
           }).catch(err => {
-            console.error('[ana-wisdom-engine] edit delta lesson capture failed:', err);
+            logger.error('edit delta lesson capture failed', { error: err });
           });
         }
       }
     }
   } catch (err) {
-    console.error('[ana-wisdom-engine] processUserFeedback failed:', err);
+    logger.error('processUserFeedback failed', { error: err });
   }
 }
 
@@ -827,7 +830,7 @@ export async function getObjectiveProgress(
 
     return objectives;
   } catch (err) {
-    console.error('[ana-wisdom-engine] getObjectiveProgress failed:', err);
+    logger.error('getObjectiveProgress failed', { error: err });
     return [];
   }
 }
@@ -903,7 +906,7 @@ export async function checkObjectiveImpact(
       });
     }
   } catch (err) {
-    console.error('[ana-wisdom-engine] checkObjectiveImpact failed:', err);
+    logger.error('checkObjectiveImpact failed', { error: err });
   }
   return impacts;
 }

@@ -7,6 +7,9 @@ import * as openaiServiceModule from './openai-service';
 import { eq } from 'drizzle-orm';
 import { getOpenAIClient } from './openai-client';
 
+import { createScopedLogger } from '../utils/logger';
+const logger = createScopedLogger('csr-extractor');
+
 const openaiService: any = openaiServiceModule;
 
 // Constants
@@ -155,7 +158,7 @@ class CSRExtractorService {
         this.mappingTemplate.csr_id = '';
       }
     } catch (error) {
-      console.error('Error loading CSR mapping template:', error);
+      logger.error('Error loading CSR mapping template:', { error: error });
       throw new Error('Failed to initialize CSR mapping template');
     }
   }
@@ -321,7 +324,7 @@ if __name__ == "__main__":
         sections: extractionResult.sections || {},
       };
     } catch (error) {
-      console.error('Error extracting text from PDF:', error);
+      logger.error('Error extracting text from PDF:', { error: error });
       // Return empty result on error
       return {
         fullText: '',
@@ -380,10 +383,10 @@ ${text.slice(0, 8000)}
         if (response.choices && response.choices.length > 0) {
           summaries[section] = response.choices[0].message.content || '';
         } else {
-          console.warn(`No summary generated for section: ${section}`);
+          logger.warn(`No summary generated for section: ${section}`);
         }
       } catch (error) {
-        console.error(`Error generating summary for section ${section}:`, error);
+        logger.error(`Error generating summary for section ${section}:`, { error: error });
         summaries[section] = 'Error generating summary';
       }
     });
@@ -502,7 +505,7 @@ ${context}
         throw new Error('No extraction results received from OpenAI');
       }
     } catch (error) {
-      console.error('Error extracting structured information:', error);
+      logger.error('Error extracting structured information:', { error: error });
       return {
         semantic: {},
         pharmacology: {},
@@ -600,7 +603,7 @@ ${context}
 
       // Check if we have the PDF file path to extract more detailed information
       if (report.file_path && fs.existsSync(report.file_path)) {
-        console.log(`Processing PDF file: ${report.file_path}`);
+        logger.info(`Processing PDF file: ${report.file_path}`);
 
         try {
           // Extract text with section identification from the PDF
@@ -689,7 +692,7 @@ ${context}
             stats_traceability: 0.87,
           };
         } catch (error) {
-          console.error(`Error in enhanced CSR extraction for ${reportId}:`, error);
+          logger.error(`Error in enhanced CSR extraction for ${reportId}:`, { error: error });
           // Continue with basic extraction if enhanced fails
         }
       }
@@ -737,7 +740,7 @@ ${context}
               mappedData.population.inclusion_criteria = details.inclusionCriteria;
             }
           } catch (err) {
-            console.error('Error processing inclusion criteria:', err);
+            logger.error('Error processing inclusion criteria:', { error: err });
           }
         }
 
@@ -753,7 +756,7 @@ ${context}
               mappedData.population.exclusion_criteria = details.exclusionCriteria;
             }
           } catch (err) {
-            console.error('Error processing exclusion criteria:', err);
+            logger.error('Error processing exclusion criteria:', { error: err });
           }
         }
 
@@ -789,7 +792,7 @@ ${context}
               }
             }
           } catch (err) {
-            console.error('Error processing endpoints:', err);
+            logger.error('Error processing endpoints:', { error: err });
           }
         }
 
@@ -803,7 +806,7 @@ ${context}
               mappedData.design.arms = Object.keys(details.treatmentArms).length;
             }
           } catch (err) {
-            console.error('Error processing treatment arms:', err);
+            logger.error('Error processing treatment arms:', { error: err });
           }
         }
 
@@ -824,7 +827,7 @@ ${context}
               mappedData.results.secondary = results.secondary.join('; ');
             }
           } catch (err) {
-            console.error('Error processing results:', err);
+            logger.error('Error processing results:', { error: err });
           }
         }
 
@@ -881,7 +884,7 @@ ${context}
               mappedData.safety.discontinuations = discontinuations;
             }
           } catch (err) {
-            console.error('Error processing safety data:', err);
+            logger.error('Error processing safety data:', { error: err });
           }
         }
       }
@@ -926,7 +929,7 @@ ${context}
           mappedData.vector_embedding = embedding;
         }
       } catch (error) {
-        console.error('Error generating embedding for CSR:', error);
+        logger.error('Error generating embedding for CSR:', { error: error });
         mappedData.vector_embedding = [];
       }
 
@@ -944,7 +947,7 @@ ${context}
 
       return mappedData;
     } catch (error) {
-      console.error(`Error processing CSR with ID ${reportId}:`, error);
+      logger.error(`Error processing CSR with ID ${reportId}:`, { error: error });
       throw error;
     }
   }
@@ -965,7 +968,7 @@ ${context}
       `);
       const unprocessedCSRs = unprocessedResult.rows;
 
-      console.log(`Found ${unprocessedCSRs.length} unprocessed CSRs to process`);
+      logger.info(`Found ${unprocessedCSRs.length} unprocessed CSRs to process`);
 
       // Process each CSR
       let processedCount = 0;
@@ -974,13 +977,13 @@ ${context}
           await this.processCSR(csr.report_id);
           processedCount++;
         } catch (error) {
-          console.error(`Error processing CSR with ID ${csr.report_id}:`, error);
+          logger.error(`Error processing CSR with ID ${csr.report_id}:`, { error: error });
         }
       }
 
       return processedCount;
     } catch (error) {
-      console.error('Error processing unprocessed CSRs:', error);
+      logger.error('Error processing unprocessed CSRs:', { error: error });
       throw error;
     }
   }
@@ -1005,7 +1008,7 @@ ${context}
 
       return { total, processed, unprocessed };
     } catch (error) {
-      console.error('Error getting CSR processing stats:', error);
+      logger.error('Error getting CSR processing stats:', { error: error });
       throw error;
     }
   }
@@ -1018,7 +1021,7 @@ ${context}
       const files = fs.readdirSync(PROCESSED_CSR_DIR);
       return files.filter(file => file.endsWith('.json')).length;
     } catch (error) {
-      console.error('Error counting processed CSR files:', error);
+      logger.error('Error counting processed CSR files:', { error: error });
       return 0;
     }
   }
@@ -1042,7 +1045,7 @@ ${context}
     try {
       processed = await this.processUnprocessedCSRs(batchSize);
     } catch (error) {
-      console.error('Error in batch processing:', error);
+      logger.error('Error in batch processing:', { error: error });
       status = 'error';
     }
 

@@ -486,7 +486,8 @@ export class AdvancedRAGPipeline {
       candidates = await this.expandContext(
         candidates,
         options.contextWindow ?? 1,
-        options.organizationUuid
+        options.organizationUuid,
+        options.organizationId
       );
     }
 
@@ -738,7 +739,8 @@ export class AdvancedRAGPipeline {
   private async expandContext(
     documents: RetrievedDocument[],
     window: number,
-    organizationUuid?: string
+    organizationUuid?: string,
+    organizationId?: number
   ): Promise<RetrievedDocument[]> {
     if (window <= 0) return documents;
     return Promise.all(
@@ -759,11 +761,18 @@ export class AdvancedRAGPipeline {
               return rows.map(r => r.chunk_text || '').filter(Boolean);
             });
           } else if (doc.atomType === 'rag_chunk') {
+            // Tenant-scoped: rag_chunks is not RLS-scoped, so join rag_documents
+            // and filter by the caller's org (rag_documents.organization_id) —
+            // defense-in-depth over the document_id that upstream retrieval
+            // already org-vetted. Conditional ($4 NULL → no filter) preserves
+            // internal callers that don't pass an org id.
             const { rows } = await this.pool.query<{ content: string | null }>(
-              `SELECT content FROM rag_chunks
-               WHERE document_id = $1 AND chunk_index BETWEEN $2 AND $3
-               ORDER BY chunk_index`,
-              [doc.documentId, lo, hi]
+              `SELECT rc.content FROM rag_chunks rc
+               JOIN rag_documents rd ON rd.id = rc.document_id
+               WHERE rc.document_id = $1 AND rc.chunk_index BETWEEN $2 AND $3
+                 AND ($4::int IS NULL OR rd.organization_id = $4)
+               ORDER BY rc.chunk_index`,
+              [doc.documentId, lo, hi, organizationId ?? null]
             );
             texts = rows.map(r => r.content || '').filter(Boolean);
           } else {
