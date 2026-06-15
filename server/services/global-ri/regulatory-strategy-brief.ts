@@ -19,6 +19,9 @@ import { assessDesignationEligibility, type DesignationResult } from './special-
 import { matchExpeditedPrograms, type Region as ExpeditedRegion } from './expedited-programs';
 import { recommendMeetings, type DevelopmentMilestone, type MeetingType } from './ha-meetings';
 import { getRegionalModule1Requirements, type Module1Component, type RegulatoryMarket } from './regional-module1-requirements';
+import { getCtaRequirements, type CtaComponent, type CtaMarket } from './clinical-trial-application-requirements';
+import { getLabelingRequirements, type LabelingSection, type LabelMarket } from './labeling-requirements';
+import { estimateFees, type FeeEstimate, type FeeMarket } from './regulatory-fee-estimator';
 
 /** Agency/region code a target market maps to across the RI services. */
 const MARKET_AGENCY: Record<Market, string> = {
@@ -34,6 +37,9 @@ const DESIGNATION_MARKETS = new Set(['FDA', 'EMA', 'PMDA']);
 const EXPEDITED_REGIONS = new Set(['FDA', 'EMA', 'PMDA']);
 const MEETING_MARKETS = new Set(['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA']);
 const MODULE1_MARKETS = new Set(['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA', 'MHRA', 'TGA', 'NMPA']);
+const CTA_MARKETS = new Set(['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA', 'MHRA']);
+const LABELING_MARKETS = new Set(['FDA', 'EMA', 'PMDA']);
+const FEE_MARKETS = new Set(['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA']);
 
 export interface DiseaseProfile {
   usPrevalence?: number;
@@ -63,6 +69,9 @@ export interface MarketStrategy {
   expeditedPrograms: { eligible: { name: string }[]; count: number } | null;
   recommendedMeetings: MeetingType[];
   module1Checklist: Module1Component[];
+  ctaRequirements: CtaComponent[];
+  labelingRequirements: LabelingSection[];
+  feeEstimate: FeeEstimate | null;
 }
 
 export interface RegulatoryStrategyBrief {
@@ -133,6 +142,13 @@ export function buildStrategyBrief(input: StrategyBriefInput): RegulatoryStrateg
       ? getRegionalModule1Requirements(agency as RegulatoryMarket)
       : [];
 
+    // CTA/IND requirements, labeling sections, and an indicative fee estimate.
+    const ctaRequirements = CTA_MARKETS.has(agency) ? getCtaRequirements(agency as CtaMarket) : [];
+    const labelingRequirements = LABELING_MARKETS.has(agency) ? getLabelingRequirements(agency as LabelMarket) : [];
+    const feeEstimate = FEE_MARKETS.has(agency)
+      ? estimateFees({ market: agency as FeeMarket, orphan: designations?.orphan.eligible })
+      : null;
+
     return {
       market,
       agency,
@@ -143,6 +159,9 @@ export function buildStrategyBrief(input: StrategyBriefInput): RegulatoryStrateg
       expeditedPrograms,
       recommendedMeetings,
       module1Checklist,
+      ctaRequirements,
+      labelingRequirements,
+      feeEstimate,
     };
   });
 

@@ -52,6 +52,15 @@ describe('buildStrategyBrief', () => {
     expect(brief.markets[0].module1Checklist.length).toBeGreaterThan(0);
   });
 
+  it('includes CTA requirements, labeling sections, and an orphan-waived fee estimate', () => {
+    const brief = buildStrategyBrief(input()); // US orphan-eligible (prevalence 150k)
+    const us = brief.markets[0];
+    expect(us.ctaRequirements.length).toBeGreaterThan(0); // FDA IND components
+    expect(us.labelingRequirements.length).toBeGreaterThan(0); // US PI sections
+    expect(us.feeEstimate).toBeTruthy();
+    expect(us.feeEstimate?.total).toBe(0); // orphan-eligible → fees waived
+  });
+
   it('handles a market without designation modeling (AU) gracefully', () => {
     const brief = buildStrategyBrief(input({ targetMarkets: ['AU'] }));
     const au = brief.markets[0];
