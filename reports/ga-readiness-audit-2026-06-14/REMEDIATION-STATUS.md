@@ -44,9 +44,13 @@ not applied blind to a regulated audit trail.
 - **API:** `/api/cmc/test-event` injector now auth-gated + production-blocked + body-validated; route-mount CI audit de-vacuumed (sees 241 real mounts; baseline regenerated).
 - **Performance:** `tenantCache` bounded with LRU + real TTL; per-request `readFileSync`+`JSON.parse` in CMC handlers memoized.
 - **Observability:** `/readyz` checks Redis/worker deps; `/api/metrics` + `/api/health/full` auth/token-gated; request-logger uses the redacting logger.
+- **API input validation:** typed zod schemas on sensitive mutations — `authEnterprise` (MFA code/email/password formats), `ai-actions` dispatch; `billing` and `api-keys` already had full schemas.
+- **Audit actor identity (anti-forgery):** actor/author derived from the verified JWT (`req.user`), never `x-user-id`/body, across esgSubmission, 510k-workflow, fda-forms, authoring.router (also fixed: that router now populates `req.user` from its JWT middleware), document-data-center; 401 when absent.
+- **Outbound HTTP timeouts:** Veeva Vault integration client bounded (others already had timeouts).
+- **Compliance — AI artifact promotion gate:** promoting an AI artifact to `approved`/governed-submission now requires an authenticated human with an approval-capable role (no AI/automated self-approval), an explicit approval reason + confirmation, records approver identity/role/reason/timestamp, and awaits an audit row. *(Adds a required `approvalReason`+confirmation to the promote contract — small UI follow-up; `electronic_signatures` binding left as a tracked TODO.)*
+- **Python — Celery worker reliability:** `task_acks_late`, `task_reject_on_worker_lost`, `prefetch=1`, soft/hard time limits, `task_track_started`; per-task retry with backoff/jitter for transient (`RunnerError`) failures only — the eCTD "source data required" error stays non-retryable; a `ReliableTask.on_failure` drives exhausted/failed jobs to a terminal `FAILED` state (no more stuck `PROCESSING`).
 
-**In progress (this session):** API input validation on billing/api-keys/MFA/ai-actions;
-audit actor identity from JWT (anti-forgery); outbound HTTP timeouts (GROBID/OpenSearch/OPA/Veeva/Ellucian/OpenAI).
+**~24 HIGH closed; ~13 HIGH remain** (OpenAPI reconciliation, full `console.*` migration, eCTD ZIP streaming, the CI test-job DB provisioning, etc.).
 
 ---
 
