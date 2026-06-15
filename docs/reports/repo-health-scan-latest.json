@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-06-15T04:49:49.303Z",
+  "generatedAt": "2026-06-15T19:58:17.533Z",
   "git": {
-    "sha": "58fec5c755951dfeed713aaf25ad16a6e2901f9f",
-    "branch": "concept2cure-v2"
+    "sha": "6179d73077cc0e8ed4f459e65cd844615563ca12",
+    "branch": "claude/ana-clinical-trial-learning-lkwcsa"
   },
   "thresholds": {
     "maxBytes": 100000,
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 215,
+    "duplicateBasenames": 216,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -2046,6 +2046,14 @@
         ]
       },
       {
+        "basename": "technical-file-packager.test",
+        "count": 2,
+        "paths": [
+          "server/services/pathway-engines/__tests__/technical-file-packager.test.ts",
+          "server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts"
+        ]
+      },
+      {
         "basename": "templateregistry",
         "count": 2,
         "paths": [
@@ -2153,11 +2161,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 457674
+        "bytes": 458022
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 331520
+        "bytes": 331594
       },
       {
         "file": "server/statistics-service.ts",
@@ -2211,7 +2219,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 9268
+        "lines": 9278
       },
       {
         "file": "server/statistics-service.ts",
@@ -2219,7 +2227,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 6163
+        "lines": 6164
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2379,11 +2387,18 @@
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": 0
+    }
+  },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 331,
+      "duplicateGroups": 333,
       "largeByBytes": 11,
       "largeByLines": 34
     },
