@@ -436,6 +436,11 @@ export * from './ind-amendments';
 // migration: migrations/20260615_ind_icsr_transmissions.sql.
 export * from './ind-icsr-transmissions';
 
+// Regulatory assessments — durable RI/CDISC/eTMF verdict snapshots per program.
+// Service: regulatory-assessments/regulatory-assessment-persistence;
+// migration: migrations/20260615_regulatory_assessments.sql.
+export * from './regulatory-assessments';
+
 // Clinical investigator financial disclosure — 21 CFR 54 (C2C-01) + the generic
 // ALCOA+ provenance spine seed (C2C-02). Forms FDA 3454/3455 → Module 1.
 // Service: server/services/financial-disclosures; migration: migrations/20260610_financial_disclosure_21cfr54.sql.

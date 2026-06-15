@@ -2400,7 +2400,7 @@ router.post('/projects', async (req: Request, res: Response) => {
           }
         }
       })(),
-    ]).catch(() => {});
+    ]).catch(() => {}); // intentional: each task already logs its own failure; this is a non-blocking guard
 
     return sendSuccess(res.status(201), response);
   } catch (error: any) {
@@ -7259,7 +7259,13 @@ router.post(
               data.metadata?.generationMethod === 'ai' ? 'ai_generation' : 'manual_edit',
             createdById: userId,
             metadata: { contentHash, version: 1 },
-          }).catch(() => {});
+          }).catch((err: unknown) => {
+            logger.warn('Failed to record artifact lineage (conversation -> artifact)', {
+              artifactId,
+              conversationId: data.conversationId,
+              err: err instanceof Error ? err.message : String(err),
+            });
+          });
         }
       } catch {
         /* non-blocking */

@@ -263,3 +263,22 @@ describe('post-approval changes', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('ICH guideline catalog', () => {
+  it('GET /ich-guidelines → 200 catalog; ?q= searches; ?category= filters', async () => {
+    const all = await request(app).get('/api/global-ri/ich-guidelines');
+    expect(all.status).toBe(200);
+    expect(all.body.guidelines.length).toBeGreaterThan(0);
+    const search = await request(app).get('/api/global-ri/ich-guidelines?q=stability');
+    expect(search.body.guidelines.some((g: any) => g.code === 'Q1')).toBe(true);
+    const cat = await request(app).get('/api/global-ri/ich-guidelines?category=Efficacy');
+    expect(cat.body.guidelines.every((g: any) => g.category === 'Efficacy')).toBe(true);
+  });
+
+  it('GET /ich-guidelines/:code → 200 (E6 = GCP); unknown → 404', async () => {
+    const e6 = await request(app).get('/api/global-ri/ich-guidelines/E6');
+    expect(e6.status).toBe(200);
+    expect(e6.body.title.toLowerCase()).toContain('clinical practice');
+    expect((await request(app).get('/api/global-ri/ich-guidelines/ZZ99')).status).toBe(404);
+  });
+});

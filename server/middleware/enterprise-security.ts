@@ -216,9 +216,25 @@ export const securityHeaders = config.isDevelopment
           ],
           styleSrcAttr: ["'unsafe-inline'"],
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+          // imgSrc deliberately allows any https: origin. The app renders
+          // user/tenant-supplied imagery (uploaded logos, document thumbnails,
+          // remote-fetched preview images, external avatar URLs) whose hosts
+          // are not known ahead of time. Narrowing this to an explicit
+          // allowlist would require enumerating every CDN/storage/proxy host
+          // those assets can come from; until that inventory exists, tightening
+          // here would silently break image rendering. 'data:'/'blob:' cover
+          // inline + client-generated images (e.g. canvas/PDF previews).
           imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
-          // Only wss:// in production. ws:// would let a MITM observer see
-          // socket traffic from a downgraded page — production has TLS.
+          // connectSrc: 'self' + a few known API hosts, plus a broad wss:.
+          // Only wss:// (never ws://) — ws:// would let a MITM observer see
+          // socket traffic from a downgraded page; production has TLS.
+          // wss: is left broad because outbound fetch/websocket targets span
+          // many external APIs (AI providers, data connectors, integrations)
+          // that are configured per-tenant at runtime. A tighter policy would
+          // need a complete, centrally-maintained registry of every outbound
+          // host the platform may call; absent that, restricting this risks
+          // breaking live integrations. Revisit once the connector registry
+          // can emit the canonical host list.
           connectSrc: ["'self'", 'https://api.openai.com', 'https://*.neon.tech', 'wss:'],
           frameSrc: ["'self'"],
           objectSrc: ["'none'"],

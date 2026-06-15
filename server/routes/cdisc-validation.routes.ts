@@ -20,6 +20,8 @@ import { checkAdamAdslConformance } from '../services/cdisc/adam-adsl-conformanc
 import { checkAdamBdsConformance } from '../services/cdisc/adam-bds-conformance-checker';
 import { checkAdamOccdsConformance } from '../services/cdisc/adam-occds-conformance-checker';
 import { assessPackageReadiness } from '../services/cdisc/cdisc-package-readiness';
+import { checkSendDomainConformance } from '../services/cdisc/send-domain-conformance-checker';
+import { validateControlledTerms, listCodelists, getCodelist } from '../services/cdisc/controlled-terminology-validator';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('cdisc-validation-routes');
@@ -130,6 +132,37 @@ router.post('/package/readiness', limiter, requireRole(AUTHOR), (req: Request, r
   }
   try {
     res.json(assessPackageReadiness({ studyName: b.studyName, datasets: b.datasets }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** SEND (nonclinical) domain conformance check (SEND-IG v3.1). Body: { domain, variables }. */
+router.post('/send-domain/conformance', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (typeof b.domain !== 'string' || !b.domain.trim() || !Array.isArray(b.variables)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'domain (string) and variables[] are required.' } });
+  }
+  try {
+    res.json(checkSendDomainConformance({ domain: b.domain, variables: b.variables }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** List the modeled CDISC controlled-terminology codelists. */
+router.get('/controlled-terminology/codelists', limiter, requireRole(AUTHOR), (_req: Request, res: Response) => {
+  res.json({ codelists: listCodelists().map((code) => ({ code, ...getCodelist(code) })) });
+});
+
+/** Validate values against a CDISC controlled-terminology codelist. Body: { codelist, values }. */
+router.post('/controlled-terminology/validate', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (typeof b.codelist !== 'string' || !Array.isArray(b.values)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'codelist (string) and values[] are required.' } });
+  }
+  try {
+    res.json(validateControlledTerms({ codelist: b.codelist, values: b.values }));
   } catch (err) {
     fail(res, err);
   }

@@ -2,6 +2,9 @@ import { Request, Response } from 'express';
 import { eq, and, ilike, desc } from 'drizzle-orm';
 import { db } from '../db';
 import { ectdTemplates } from '../../shared/schema';
+import { createScopedLogger } from '../utils/logger';
+
+const logger = createScopedLogger('templateService');
 
 /**
  * Template Service for eCTD Document Templates Management
@@ -75,7 +78,7 @@ export class TemplateService {
         regions: this.getAvailableRegions(transformedTemplates),
       };
     } catch (error) {
-      console.error('Error fetching templates:', error);
+      logger.error('Error fetching templates', { error });
       throw new Error('Failed to fetch templates');
     }
   }
@@ -279,7 +282,7 @@ export class TemplateService {
         fileUrl: template.wordTemplate,
       };
     } catch (error) {
-      console.error('Error fetching template by ID:', error);
+      logger.error('Error fetching template by ID', { error });
       throw new Error('Failed to fetch template');
     }
   }
@@ -334,7 +337,7 @@ export class TemplateService {
         success: true,
       };
     } catch (error) {
-      console.error('Error creating template:', error);
+      logger.error('Error creating template', { error });
       throw new Error('Failed to create template');
     }
   }
@@ -365,7 +368,7 @@ export class TemplateService {
 
       return { success: true };
     } catch (error) {
-      console.error('Error tracking template usage:', error);
+      logger.error('Error tracking template usage', { error });
       throw new Error('Failed to track template usage');
     }
   }
@@ -378,7 +381,7 @@ export class TemplateService {
       // Return empty array since we don't have a recent documents table yet
       return { documents: [] };
     } catch (error) {
-      console.error('Error fetching recent documents:', error);
+      logger.error('Error fetching recent documents', { error });
       throw new Error('Failed to fetch recent documents');
     }
   }
@@ -409,7 +412,7 @@ export class TemplateService {
 
       return { templates: transformedTemplates };
     } catch (error) {
-      console.error('Error fetching featured templates:', error);
+      logger.error('Error fetching featured templates', { error });
       throw new Error('Failed to fetch featured templates');
     }
   }
@@ -490,7 +493,7 @@ export class TemplateService {
         count: defaultTemplates.length,
       };
     } catch (error) {
-      console.error('Error initializing default templates:', error);
+      logger.error('Error initializing default templates', { error });
       throw new Error('Failed to initialize default templates');
     }
   }
@@ -550,7 +553,7 @@ export class TemplateService {
         success: true,
       };
     } catch (error) {
-      console.error('Error updating template:', error);
+      logger.error('Error updating template', { error });
       throw new Error('Failed to update template');
     }
   }
@@ -575,7 +578,7 @@ export class TemplateService {
 
       return deletedTemplate ? { success: true } : null;
     } catch (error) {
-      console.error('Error deleting template:', error);
+      logger.error('Error deleting template', { error });
       throw new Error('Failed to delete template');
     }
   }
@@ -627,7 +630,7 @@ export class TemplateService {
         success: true,
       };
     } catch (error) {
-      console.error('Error duplicating template:', error);
+      logger.error('Error duplicating template', { error });
       throw new Error('Failed to duplicate template');
     }
   }

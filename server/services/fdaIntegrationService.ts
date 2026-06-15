@@ -27,6 +27,9 @@ import axios from 'axios';
 import crypto from 'crypto';
 // @ts-ignore — xml2js has no bundled types
 import xml2js from 'xml2js';
+import { createScopedLogger } from '../utils/logger';
+
+const logger = createScopedLogger('fdaIntegrationService');
 
 class FDAIntegrationService {
   private fdaApiBase: string;
@@ -115,7 +118,7 @@ class FDAIntegrationService {
         certExpiry: certExpiry.expiryDate
       };
     } catch (error: any) {
-      console.error('Error validating FDA credentials:', error);
+      logger.error('Error validating FDA credentials', { error });
       return {
         valid: false,
         message: 'Error validating FDA credentials',
@@ -161,7 +164,7 @@ class FDAIntegrationService {
         devices: []
       };
     } catch (error: any) {
-      console.error('Error searching openFDA:', error);
+      logger.error('Error searching openFDA', { error });
       return {
         success: false,
         error: error.message,
@@ -212,7 +215,7 @@ class FDAIntegrationService {
         message: 'UDI not found in FDA database'
       };
     } catch (error: any) {
-      console.error('Error retrieving UDI information:', error);
+      logger.error('Error retrieving UDI information', { error });
       return {
         success: false,
         error: error.message
@@ -298,7 +301,7 @@ class FDAIntegrationService {
         checksum: this.calculateChecksum(envelope)
       };
     } catch (error: any) {
-      console.error('Error packaging PMA submission:', error);
+      logger.error('Error packaging PMA submission', { error });
       await this.logIntegration(organizationId, 'PMA_PACKAGING', 'error', {
         submissionId,
         error: error.message
@@ -385,7 +388,7 @@ class FDAIntegrationService {
         checksum: this.calculateChecksum(envelope)
       };
     } catch (error: any) {
-      console.error('Error packaging 510(k) submission:', error);
+      logger.error('Error packaging 510(k) submission', { error });
       await this.logIntegration(organizationId, '510K_PACKAGING', 'error', {
         submissionId,
         error: error.message
@@ -445,7 +448,7 @@ class FDAIntegrationService {
         message: 'Submission sent to FDA successfully'
       };
     } catch (error: any) {
-      console.error('Error submitting to FDA:', error);
+      logger.error('Error submitting to FDA', { error });
       await this.logIntegration(organizationId, 'FDA_SUBMISSION', 'error', {
         error: error.message
       });
@@ -490,7 +493,7 @@ class FDAIntegrationService {
         actions: (statusUpdate as any).requiredActions || []
       };
     } catch (error: any) {
-      console.error('Error checking submission status:', error);
+      logger.error('Error checking submission status', { error });
       return {
         success: false,
         error: error.message
@@ -533,7 +536,7 @@ class FDAIntegrationService {
         predicates: []
       };
     } catch (error: any) {
-      console.error('Error retrieving predicate devices:', error);
+      logger.error('Error retrieving predicate devices', { error });
       return {
         success: false,
         error: error.message,
@@ -798,8 +801,8 @@ class FDAIntegrationService {
         // queryESGStatus fails closed when ESG is not configured. Stop polling
         // rather than spin forever or leak an unhandled rejection.
         clearInterval(interval);
-        console.error(`[FDA ESG] Status polling stopped for ${trackingId}:`,
-          error instanceof Error ? error.message : String(error));
+        logger.error(`[FDA ESG] Status polling stopped for ${trackingId}`,
+          { error: error instanceof Error ? error.message : String(error) });
       }
     }, this.statusPollingInterval);
   }
@@ -817,7 +820,7 @@ class FDAIntegrationService {
         timestamp: new Date()
       } as any);
     } catch (error) {
-      console.error('Error logging FDA integration:', error);
+      logger.error('Error logging FDA integration', { error });
     }
   }
 }

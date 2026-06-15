@@ -616,21 +616,25 @@ router.get('/activity', authenticateToken, async (req: Request, res: Response) =
     // Fetch recent Stripe events for this org
     let stripeEvents: any[] = [];
     if (stripeCustomerId) {
+      // Tenant-scoped by organization_id (the real tenant key on stripe_events).
+      // The previous query filtered `WHERE customer_id = $1` and selected `data`,
+      // neither of which exist on stripe_events — it was both unscoped and a
+      // latent runtime bug. The actual columns are organization_id + payload.
       const eventsResult = await pool.query(
-        `SELECT id, event_type, data, created_at
+        `SELECT id, event_type, payload, created_at
          FROM stripe_events
-         WHERE customer_id = $1
+         WHERE organization_id = $1
          ORDER BY created_at DESC
          LIMIT $2`,
-        [stripeCustomerId, limit],
+        [orgId, limit],
       );
       stripeEvents = eventsResult.rows.map((r: any) => ({
         id: `stripe_${r.id}`,
         type: r.event_type,
         source: 'stripe',
-        message: formatStripeEventMessage(r.event_type, r.data),
+        message: formatStripeEventMessage(r.event_type, r.payload),
         timestamp: r.created_at,
-        data: r.data,
+        data: r.payload,
       }));
     }
 

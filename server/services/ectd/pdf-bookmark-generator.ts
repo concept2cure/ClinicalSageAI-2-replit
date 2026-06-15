@@ -115,7 +115,11 @@ export async function addBookmarks(
   pdfBytes: Uint8Array,
   nodes: OutlineNode[]
 ): Promise<Uint8Array> {
-  const doc = await PDFDocument.load(pdfBytes);
+  // updateMetadata:false — pdf-lib's default (true) overwrites ModDate with the
+  // CURRENT wall-clock time on load, which destroys byte-determinism (two renders
+  // a clock-tick apart produce different bytes; breaks the eCTD md5 contract and
+  // intermittently fails the renderer determinism tests in CI).
+  const doc = await PDFDocument.load(pdfBytes, { updateMetadata: false });
   const context = doc.context;
   const pages = doc.getPages();
 
@@ -217,7 +221,11 @@ export async function addTocLinks(
   pdfBytes: Uint8Array,
   nodes: TocLinkNode[]
 ): Promise<Uint8Array> {
-  const doc = await PDFDocument.load(pdfBytes);
+  // updateMetadata:false — pdf-lib's default (true) overwrites ModDate with the
+  // CURRENT wall-clock time on load, which destroys byte-determinism (two renders
+  // a clock-tick apart produce different bytes; breaks the eCTD md5 contract and
+  // intermittently fails the renderer determinism tests in CI).
+  const doc = await PDFDocument.load(pdfBytes, { updateMetadata: false });
   const context = doc.context;
   const pages = doc.getPages();
   if (pages.length === 0) {

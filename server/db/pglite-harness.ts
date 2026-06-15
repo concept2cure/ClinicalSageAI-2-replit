@@ -187,6 +187,18 @@ CREATE TABLE IF NOT EXISTS ind_icsr_transmissions (
   created_at                  TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at                  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS regulatory_assessments (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id  INTEGER NOT NULL,
+  submission_id    INTEGER NOT NULL,
+  assessment_type  TEXT NOT NULL,
+  ready            BOOLEAN,
+  summary          JSONB NOT NULL DEFAULT '{}'::jsonb,
+  result           JSONB NOT NULL,
+  created_by       INTEGER,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `;
 
 /**

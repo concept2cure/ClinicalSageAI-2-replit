@@ -86,12 +86,13 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
           style={{ marginLeft: 8 }}
           onClick={() =>
             onAskAna(
-              `Export the eSTAR package for ${program?.code ?? 'this project'} ready for FDA filing — ` +
-                `Module 6 PDF + Form FDA 3514, packaged as a ZIP with the required attachments.`,
+              `Assemble the 510(k) content package for ${program?.code ?? 'this project'} as a draft ZIP — ` +
+                `Module 6 PDF + Form FDA 3514 + required attachments. Note: this is a content package, ` +
+                `not the official FDA eSTAR PDF that CDRH ingests.`,
             )
           }
         >
-          Export eSTAR {I.download}
+          Export 510(k) package {I.download}
         </button>
       </div>
 

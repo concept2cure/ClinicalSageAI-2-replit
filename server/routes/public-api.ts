@@ -285,7 +285,11 @@ router.get('/csr/search', requireScope('csr:read'), requireQuota('api_csr_search
       recordUsage(req.apiOrganizationId, 0, 'api_csr_search', 1, {
         apiKeyId: req.apiKeyId,
         query: { indication, phase, endpoint, sponsor },
-      }).catch(() => {});
+      }).catch((err: unknown) => {
+        log.error('[public-api] recordUsage failed (api_csr_search)', {
+          err: err instanceof Error ? err.message : String(err),
+        });
+      });
     }
 
     const searchResults = await csrSearchService.searchCSRs({
@@ -320,7 +324,11 @@ router.get('/regulatory/pathways', requireScope('regulatory:read'), requireQuota
     if (req.apiOrganizationId) {
       recordUsage(req.apiOrganizationId, 0, 'api_regulatory_pathways', 1, {
         apiKeyId: req.apiKeyId,
-      }).catch(() => {});
+      }).catch((err: unknown) => {
+        log.error('[public-api] recordUsage failed (api_regulatory_pathways)', {
+          err: err instanceof Error ? err.message : String(err),
+        });
+      });
     }
 
     const agencies = targetAgencies
@@ -359,7 +367,11 @@ router.get('/endpoints/recommend', requireScope('endpoints:read'), requireQuota(
     if (req.apiOrganizationId) {
       recordUsage(req.apiOrganizationId, 0, 'api_endpoint_recommend', 1, {
         apiKeyId: req.apiKeyId,
-      }).catch(() => {});
+      }).catch((err: unknown) => {
+        log.error('[public-api] recordUsage failed (api_endpoint_recommend)', {
+          err: err instanceof Error ? err.message : String(err),
+        });
+      });
     }
 
     const recommender = getEndpointRecommenderService();
@@ -398,7 +410,11 @@ router.get('/precedent/search', requireScope('precedent:read'), requireQuota('ap
     if (req.apiOrganizationId) {
       recordUsage(req.apiOrganizationId, 0, 'api_precedent_search', 1, {
         apiKeyId: req.apiKeyId,
-      }).catch(() => {});
+      }).catch((err: unknown) => {
+        log.error('[public-api] recordUsage failed (api_precedent_search)', {
+          err: err instanceof Error ? err.message : String(err),
+        });
+      });
     }
 
     let precedents = await precedentEngine.search({
@@ -442,7 +458,11 @@ router.get('/trial-design/suggest', requireScope('trial-design:read'), requireQu
     if (req.apiOrganizationId) {
       recordUsage(req.apiOrganizationId, 0, 'api_trial_design', 1, {
         apiKeyId: req.apiKeyId,
-      }).catch(() => {});
+      }).catch((err: unknown) => {
+        log.error('[public-api] recordUsage failed (api_trial_design)', {
+          err: err instanceof Error ? err.message : String(err),
+        });
+      });
     }
 
     // Combine precedent strategy + endpoint recommendations for trial design suggestions

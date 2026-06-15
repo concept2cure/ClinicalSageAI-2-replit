@@ -22,6 +22,8 @@ import { getRegionalModule1Requirements, type Module1Component, type RegulatoryM
 import { getCtaRequirements, type CtaComponent, type CtaMarket } from './clinical-trial-application-requirements';
 import { getLabelingRequirements, type LabelingSection, type LabelMarket } from './labeling-requirements';
 import { estimateFees, type FeeEstimate, type FeeMarket } from './regulatory-fee-estimator';
+import { computeExclusivity, type ExclusivityResult, type ExclusivityMarket, type ProductClass } from './exclusivity-periods';
+import { assessPediatricPlan, type PediatricMarket, type PediatricPlanAssessment } from './pediatric-requirements';
 
 /** Agency/region code a target market maps to across the RI services. */
 const MARKET_AGENCY: Record<Market, string> = {
@@ -40,6 +42,18 @@ const MODULE1_MARKETS = new Set(['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA', 'MHRA', 
 const CTA_MARKETS = new Set(['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA', 'MHRA']);
 const LABELING_MARKETS = new Set(['FDA', 'EMA', 'PMDA']);
 const FEE_MARKETS = new Set(['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA']);
+const EXCLUSIVITY_MARKETS = new Set(['FDA', 'EMA', 'PMDA']);
+const PEDIATRIC_PLAN_MARKETS = new Set(['FDA', 'EMA', 'PMDA']);
+
+/** Map a product type to the exclusivity regime's product class. */
+const PRODUCT_CLASS_BY_TYPE: Record<ProductType, ProductClass> = {
+  small_molecule_nce: 'new_chemical_entity',
+  biologic: 'biologic',
+  vaccine: 'biologic',
+  cell_gene_therapy: 'biologic',
+  biosimilar: 'generic_or_biosimilar',
+  generic: 'generic_or_biosimilar',
+};
 
 export interface DiseaseProfile {
   usPrevalence?: number;
@@ -72,6 +86,8 @@ export interface MarketStrategy {
   ctaRequirements: CtaComponent[];
   labelingRequirements: LabelingSection[];
   feeEstimate: FeeEstimate | null;
+  exclusivity: ExclusivityResult | null;
+  pediatricRequirements: PediatricPlanAssessment | null;
 }
 
 export interface RegulatoryStrategyBrief {
@@ -82,6 +98,8 @@ export interface RegulatoryStrategyBrief {
     marketCount: number;
     orphanEligibleMarkets: string[];
     totalExpeditedPrograms: number;
+    /** The longest binding exclusivity across markets (months), or 0 if none modeled. */
+    maxExclusivityMonths: number;
   };
   generalNotes: string[];
 }
@@ -149,6 +167,25 @@ export function buildStrategyBrief(input: StrategyBriefInput): RegulatoryStrateg
       ? estimateFees({ market: agency as FeeMarket, orphan: designations?.orphan.eligible })
       : null;
 
+    // Regulatory exclusivity + projected LOE (FDA/EMA/PMDA). Orphan status flows
+    // from the per-market designation result; pediatric extension follows the
+    // declared pediatric-development intent.
+    const exclusivity = EXCLUSIVITY_MARKETS.has(agency)
+      ? computeExclusivity({
+          market: agency as ExclusivityMarket,
+          productClass: PRODUCT_CLASS_BY_TYPE[input.productType],
+          orphan: designations?.orphan.eligible,
+          pediatricExtension: input.pediatricDevelopment,
+        })
+      : null;
+
+    // Pediatric study-plan obligation (PREA iPSP / EMA PIP) when pediatric
+    // development is declared — surfaces the plan requirement, timing, and status.
+    const pediatricRequirements =
+      input.pediatricDevelopment && PEDIATRIC_PLAN_MARKETS.has(agency)
+        ? assessPediatricPlan({ market: agency as PediatricMarket, triggersRequirement: true })
+        : null;
+
     return {
       market,
       agency,
@@ -162,11 +199,14 @@ export function buildStrategyBrief(input: StrategyBriefInput): RegulatoryStrateg
       ctaRequirements,
       labelingRequirements,
       feeEstimate,
+      exclusivity,
+      pediatricRequirements,
     };
   });
 
   const orphanEligibleMarkets = markets.filter((m) => m.designations?.orphan.eligible).map((m) => m.agency);
   const totalExpeditedPrograms = markets.reduce((n, m) => n + (m.expeditedPrograms?.count ?? 0), 0);
+  const maxExclusivityMonths = markets.reduce((n, m) => Math.max(n, m.exclusivity?.bindingMonths ?? 0), 0);
 
   return {
     productType: input.productType,
@@ -176,6 +216,7 @@ export function buildStrategyBrief(input: StrategyBriefInput): RegulatoryStrateg
       marketCount: markets.length,
       orphanEligibleMarkets,
       totalExpeditedPrograms,
+      maxExclusivityMonths,
     },
     generalNotes: pathway.generalNotes ?? [],
   };

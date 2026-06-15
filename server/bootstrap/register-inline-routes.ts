@@ -185,6 +185,8 @@ export async function registerInlineLitCommerceRoutes({
     },
     { path: '/api/billing', mod: '../routes/billing-dashboard.js', name: 'Billing Dashboard' },
     { path: '/api/report-os', mod: '../routes/report-os.js', name: 'Report OS' },
+    { path: '/api/device-cockpit', mod: '../routes/device-cockpit.js', name: 'Device Cockpit' },
+    { path: '/api/global-markets', mod: '../routes/global-markets.js', name: 'Global Markets' },
     { path: '/api/insights', mod: '../routes/report-os-insights.js', name: 'Insights' },
   ] as const;
   const litIntResults = await Promise.allSettled(litIntConfig.map(c => import(c.mod)));
@@ -393,6 +395,24 @@ export async function registerInlineAiWorkflowRoutes({
     console.info('✅ Global RI routes mounted (/api/global-ri)');
   } catch (error) {
     console.error('❌ Failed to mount Global RI routes:', error);
+  }
+
+  // eTMF — Trial Master File completeness / inspection-readiness (DIA TMF RM).
+  try {
+    const etmfModule = await import('../routes/etmf.routes');
+    app.use('/api/etmf', authMiddleware, etmfModule.default);
+    console.info('✅ eTMF routes mounted (/api/etmf)');
+  } catch (error) {
+    console.error('❌ Failed to mount eTMF routes:', error);
+  }
+
+  // Regulatory assessments — durable RI/CDISC/eTMF verdict snapshots per program.
+  try {
+    const assessmentsModule = await import('../routes/regulatory-assessments.routes');
+    app.use('/api/regulatory-assessments', authMiddleware, assessmentsModule.default);
+    console.info('✅ Regulatory assessments routes mounted (/api/regulatory-assessments)');
+  } catch (error) {
+    console.error('❌ Failed to mount Regulatory assessments routes:', error);
   }
 
   // eGrants / funder-milestone management (2 CFR 200; SBIR/STTR; pre→post-award).
