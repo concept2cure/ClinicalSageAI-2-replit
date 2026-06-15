@@ -40,11 +40,13 @@ import {
   adviseGlobalSubmissionPlan,
   advisePmaReadiness,
   adviseEuTechnicalFileReadiness,
+  lookupIvdKnowledge,
   type DeviceReadinessAdviceInput,
   type GlobalMarketAdviceInput,
   type SubmissionPlanAdviceInput,
   type PmaReadinessAdviceInput,
   type EuTechDocAdviceInput,
+  type IvdKnowledgeLookupInput,
 } from '../ana-advisory';
 import {
   recordToolOutcome,
@@ -661,6 +663,14 @@ registerToolHandler('advise_global_market_strategy', async (input) => {
   return JSON.stringify({
     source: 'AnA Global-Market Strategy Advisor',
     ...adviseGlobalMarketStrategy({ profile, candidateMarkets } as unknown as GlobalMarketAdviceInput),
+  });
+});
+
+// IVD knowledge grounded lookup (curated, citation-backed corpus; no fabrication).
+registerToolHandler('ivd_knowledge_lookup', async (input) => {
+  return JSON.stringify({
+    source: 'AnA IVD Knowledge Base',
+    ...lookupIvdKnowledge(input as unknown as IvdKnowledgeLookupInput),
   });
 });
 
