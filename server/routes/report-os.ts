@@ -17,6 +17,7 @@ import { projectIntelligenceProfiles, projectMemoryEntries, projects } from '@sh
 import { createHash, randomUUID } from 'crypto';
 import { z } from 'zod';
 import { REPORT_TYPE_SEED } from '../services/report-os/taxonomy';
+import { GLOBAL_REPORT_TYPE_SEED } from '../services/report-os/taxonomy-global';
 import { resolveScope } from '../services/report-os/scope-model';
 import { computeInitialRun } from '../services/report-os/orchestrator';
 import { renderReport, type RenderInput } from '../services/report-os/render/render';
@@ -721,7 +722,11 @@ router.post('/taxonomy/seed', async (_req: Request, res: Response) => {
     }
   }
   try {
-    for (const row of REPORT_TYPE_SEED) {
+    // The base seed plus the global-markets seed (FDA/EMA/PMDA/HC/MHRA/TGA/NMPA/
+    // MFDS/Swissmedic/ANVISA + EU MDR/IVDR + PV) register together so every market
+    // is available; typeIds are unique across both sets.
+    const allSeed = [...REPORT_TYPE_SEED, ...GLOBAL_REPORT_TYPE_SEED];
+    for (const row of allSeed) {
       await db
         .insert(reportTypeRegistry)
         .values(row)
@@ -744,7 +749,7 @@ router.post('/taxonomy/seed', async (_req: Request, res: Response) => {
           },
         });
     }
-    return res.json({ success: true, seeded: REPORT_TYPE_SEED.length });
+    return res.json({ success: true, seeded: allSeed.length });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }
