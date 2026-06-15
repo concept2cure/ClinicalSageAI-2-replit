@@ -37,6 +37,10 @@ import {
   listAnnualReports,
   listOverdueAnnualReports,
 } from '../../services/ind-lifecycle/ind-annual-report-persistence';
+import {
+  createAmendmentDraft,
+  listAmendments,
+} from '../../services/ind-lifecycle/ind-amendment-persistence';
 import { assembleLetterOfAuthorization, buildLoaLeafIntent } from '../../services/ind-lifecycle/ind-loa-service';
 import { renderLetterOfAuthorizationPdf } from '../../services/ind-lifecycle/ind-document-renderer';
 import { persistCrossReferenceFiling } from '../../services/ind-lifecycle/ind-lifecycle-persistence';
@@ -544,6 +548,52 @@ router.get('/submission/:id/annual-reports/overdue', limiter, requireRole(AUTHOR
   try {
     const asOf = typeof req.query.asOf === 'string' ? new Date(req.query.asOf) : undefined;
     res.json(await listOverdueAnnualReports(submissionId, ctx, asOf));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Persisted IND amendments (21 CFR 312.30 / 312.31) ─────────────────────────
+
+/**
+ * Draft a 312.30 / 312.31 amendment for a submission: plan the eCTD leaves from
+ * the changed documents and persist the plan as a tracked draft. Body:
+ * { projectId, indNumber, changedDocuments }. 400 when no documents are supplied.
+ */
+router.post('/submission/:id/amendments', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const submissionId = submissionIdOf(req.params.id);
+  if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
+  const b = body(req);
+  if (!b.indNumber || !b.projectId) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'indNumber and projectId are required.' } });
+  }
+  if (!Array.isArray(b.changedDocuments) || b.changedDocuments.length === 0) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'changedDocuments must be a non-empty array.' } });
+  }
+  try {
+    const row = await createAmendmentDraft(
+      {
+        submissionId,
+        amendment: { projectId: b.projectId, indNumber: b.indNumber, changedDocuments: b.changedDocuments },
+      },
+      ctx,
+    );
+    res.status(201).json(row);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** List a submission's amendments. */
+router.get('/submission/:id/amendments', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const submissionId = submissionIdOf(req.params.id);
+  if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
+  try {
+    res.json(await listAmendments(submissionId, ctx));
   } catch (err) {
     fail(res, err);
   }

@@ -147,6 +147,24 @@ CREATE TABLE IF NOT EXISTS ind_annual_reports (
   created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at             TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS ind_amendments (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id   INTEGER NOT NULL,
+  submission_id     INTEGER NOT NULL,
+  ind_number        TEXT NOT NULL,
+  project_id        TEXT NOT NULL,
+  amendment_classes JSONB NOT NULL DEFAULT '[]'::jsonb,
+  status            TEXT NOT NULL DEFAULT 'draft',
+  sequence_id       INTEGER,
+  filed_at          TIMESTAMPTZ,
+  leaf_count        INTEGER NOT NULL DEFAULT 0,
+  warning_count     INTEGER NOT NULL DEFAULT 0,
+  plan              JSONB NOT NULL,
+  created_by        INTEGER,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `;
 
 /**

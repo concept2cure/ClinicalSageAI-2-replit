@@ -579,3 +579,66 @@ describe('persisted IND annual reports (21 CFR 312.33)', () => {
     expect(after.body.map((r: any) => r.id)).not.toContain(draftId);
   });
 });
+
+describe('persisted IND amendments (21 CFR 312.30 / 312.31)', () => {
+  let draftId: string;
+  const amendment = () => ({
+    projectId: 'proj-1',
+    indNumber: '123456',
+    changedDocuments: [
+      { documentId: 'doc-1', title: 'Amended Protocol v2', category: 'protocol', changeKind: 'revised', replacesLeafGuid: 'guid-1' },
+      { documentId: 'doc-2', title: 'Updated CMC', category: 'cmc', changeKind: 'added' },
+    ],
+  });
+
+  it('POST /submission/:id/amendments → 201 drafts a tracked amendment plan', async () => {
+    const res = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/amendments`)
+      .send(amendment());
+    expect(res.status).toBe(201);
+    expect(res.body.status).toBe('draft');
+    expect(res.body.indNumber).toBe('123456');
+    expect(res.body.organizationId).toBe(1);
+    // protocol + information + the auto-added cover letter leaf.
+    expect(res.body.amendmentClasses).toEqual(['information', 'protocol']);
+    expect(res.body.leafCount).toBeGreaterThanOrEqual(3);
+    draftId = res.body.id;
+  });
+
+  it('POST /amendments → 400 without changedDocuments', async () => {
+    const res = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/amendments`)
+      .send({ projectId: 'proj-1', indNumber: '123456', changedDocuments: [] });
+    expect(res.status).toBe(400);
+  });
+
+  it('POST /amendments → 400 without indNumber/projectId', async () => {
+    const res = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/amendments`)
+      .send({ changedDocuments: amendment().changedDocuments });
+    expect(res.status).toBe(400);
+  });
+
+  it('GET /amendments → 200 lists the draft', async () => {
+    const res = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/amendments`);
+    expect(res.status).toBe(200);
+    expect(res.body.map((r: any) => r.id)).toContain(draftId);
+  });
+
+  it('filing with draftId marks it filed and links the sequence', async () => {
+    const filed = await request(app)
+      .post('/api/ind-lifecycle/amendment/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0013', draftId, ...amendment() });
+    expect(filed.status).toBe(201);
+    expect(filed.body.sequence.type).toBe('amendment');
+    expect(filed.body.draft.status).toBe('filed');
+    expect(filed.body.draft.sequenceId).toBe(filed.body.sequence.id);
+  });
+
+  it('does not leak another org\'s amendments', async () => {
+    currentUser = { id: 9, organizationId: 2, roles: ['regulatory-author'] };
+    const res = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/amendments`);
+    expect(res.body.map((r: any) => r.id)).not.toContain(draftId);
+    currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
+  });
+});
