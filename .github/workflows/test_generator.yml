@@ -9,6 +9,12 @@ on:
 jobs:
   test-generator:
     runs-on: ubuntu-latest
+    # The generation service fails closed without INTERNAL_SERVICE_TOKEN (returns
+    # 503). The same throwaway value is injected into the api container via
+    # docker-compose (${INTERNAL_SERVICE_TOKEN}) and read by the E2E test client,
+    # so the bearer token the test presents matches what the service expects.
+    env:
+      INTERNAL_SERVICE_TOKEN: e2e-internal-service-token
     steps:
       - name: Checkout
         uses: actions/checkout@v4

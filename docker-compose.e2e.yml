@@ -21,6 +21,9 @@ services:
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      # Shared-secret bearer token the API requires (fails closed when unset).
+      # Sourced from the host/CI env so it matches the token the E2E test presents.
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-}
     depends_on:
       - redis
 
