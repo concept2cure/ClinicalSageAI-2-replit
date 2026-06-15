@@ -22,11 +22,24 @@ import { submissionLeaves, ectdSequences } from '../../../shared/schema/submissi
 import { shadowReviewFindings, shadowReviewRuns } from '../../../shared/schema/shadow-review';
 import { getSubmissionRegionProfile } from '../region-profiles/region-profile-service';
 import { computeDispatchReadiness, type DispatchReadinessReport } from './dispatch-readiness';
-import { evaluateDispatchGate, type DispatchGateResult } from './dispatch-gate';
+import { evaluateDispatchGate, mergeDispatchGates, type DispatchGateResult } from './dispatch-gate';
+import {
+  resolveExternalValidator,
+  evaluateExternalValidationGate,
+  evalidatorRequiredFromEnv,
+  type ExternalValidationReport,
+} from './external-validator';
 
 export interface AssessDispatchReadinessParams {
   sequenceId: number;
   organizationId: number;
+  /**
+   * An already-run external (agency-grade) validation report for this sequence,
+   * if the caller materialized + validated the unzipped package. This DB-bound
+   * assessor cannot run the validator itself (no package dir), so when absent the
+   * fail-closed rule applies under ECTD_REQUIRE_EVALIDATOR in production.
+   */
+  externalValidationReport?: ExternalValidationReport | null;
 }
 
 export interface DispatchReadinessAssessment {
@@ -40,7 +53,19 @@ export interface DispatchReadinessAssessment {
   shadowReviewRunCount: number;
   /** Gate clear but no Shadow Review has run — dispatch allowed, never reviewed. */
   shadowReviewMissing: boolean;
-  /** Hard gate verdict over the server-computed inputs. */
+  /** External agency-grade (eValidator) gate contribution (P0-4). */
+  externalValidation: {
+    /** A licensed engine is configured. */
+    configured: boolean;
+    /** An external validation actually ran (report supplied). */
+    ran: boolean;
+    /** Error-severity findings from the external (agency-grade) validator. */
+    errorCount: number;
+    /** This gate adds no blocker. */
+    cleared: boolean;
+    blockers: string[];
+  };
+  /** Hard gate verdict — structural + shadow + external, composed. */
   gate: DispatchGateResult;
   /** Full structural breakdown (errors + non-blocking warnings/infos). */
   readiness: DispatchReadinessReport;
@@ -144,10 +169,29 @@ export async function assessSequenceDispatchReadiness(
     );
   const shadowReviewRunCount = shadowRunCount ?? 0;
 
-  // 5. Hard gate over the server-computed inputs.
-  const gate = evaluateDispatchGate({
+  // 5. External agency-grade validation gate (P0-4), composed with the structural
+  //    + shadow gate. Default-off: behavior is identical to before unless
+  //    ECTD_REQUIRE_EVALIDATOR is set in production. The external validator runs
+  //    against an unzipped package (not available in this DB-bound assessor), so a
+  //    caller that already ran it passes the report in; otherwise the fail-closed
+  //    "could not run" rule blocks a required production dispatch.
+  const externalValidator = await resolveExternalValidator();
+  const externalConfigured = externalValidator.name !== 'noop';
+  const externalGate = evaluateExternalValidationGate({
+    report: params.externalValidationReport ?? null,
+    configured: externalConfigured,
+    requireEvalidator: evalidatorRequiredFromEnv(),
+    environment: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
+  });
+
+  // 6. Hard gate over the server-computed inputs, composed with the external gate.
+  const structuralGate = evaluateDispatchGate({
     validationErrors: readiness.errors,
     unacknowledgedShadowCriticals,
+  });
+  const gate = mergeDispatchGates(structuralGate, {
+    cleared: externalGate.cleared,
+    blockers: externalGate.blockers,
   });
 
   return {
@@ -157,6 +201,13 @@ export async function assessSequenceDispatchReadiness(
     validationErrors: readiness.errors,
     unacknowledgedShadowCriticals,
     shadowReviewRunCount,
+    externalValidation: {
+      configured: externalConfigured,
+      ran: externalGate.ran,
+      errorCount: externalGate.externalErrorCount,
+      cleared: externalGate.cleared,
+      blockers: externalGate.blockers,
+    },
     /** True when the gate is clear but no Shadow Review has run — dispatch is
      *  permitted, but the dossier was never adversarially reviewed. */
     shadowReviewMissing: gate.cleared && shadowReviewRunCount === 0,

@@ -42,4 +42,14 @@ export function evaluateDispatchGate(input: DispatchGateInput): DispatchGateResu
   return { cleared: blockers.length === 0, blockers };
 }
 
-export default { evaluateDispatchGate };
+/**
+ * Compose multiple gate verdicts into one (e.g. the structural+shadow gate with
+ * the external-validation gate). Cleared only when EVERY gate is cleared; blockers
+ * are the union, order-preserved for stable messaging. Pure.
+ */
+export function mergeDispatchGates(...gates: DispatchGateResult[]): DispatchGateResult {
+  const blockers = gates.flatMap((g) => g.blockers);
+  return { cleared: gates.every((g) => g.cleared), blockers };
+}
+
+export default { evaluateDispatchGate, mergeDispatchGates };
