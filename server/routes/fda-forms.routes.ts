@@ -22,6 +22,21 @@ function requireOrgId(req: Request, res: Response): number | null {
   }
   return orgId;
 }
+
+/**
+ * SECURITY (21 CFR Part 11): the actor recorded as document createdBy/updatedBy
+ * must come from the verified JWT, never from a client-supplied x-user-id header.
+ * Returns the JWT actor id (number) or null after sending a 401.
+ */
+function requireActorId(req: Request, res: Response): number | null {
+  const actorId = (req as any).user?.id ?? (req as any).user?.userId;
+  const numericId = Number(actorId);
+  if (actorId === undefined || actorId === null || actorId === '' || Number.isNaN(numericId)) {
+    res.status(401).json({ error: 'Authentication required' });
+    return null;
+  }
+  return numericId;
+}
 const formsRegistry = new FDAFormsRegistryClass();
 
 // Get forms registry
@@ -119,13 +134,17 @@ router.post('/project/:projectId/generate/:formType', async (req: Request, res: 
   const projectId = String(req.params.projectId);
   const formType = String(req.params.formType);
   const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
-  const userId = req.headers['x-user-id'] as string;
+  const actorId = requireActorId(req, res);
+  if (actorId === null) return;
 
   try {
     const formGenerator = new FDAFormGenerator();
-    
+
     // Fetch project and workflow data
-    const projectData = await fetchProjectData(parseInt(projectId));
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+    const projectData = await fetchProjectData(parseInt(projectId), organizationId);
     if (!projectData) {
       return res.status(404).json({ error: 'Project not found' });
     }
@@ -160,8 +179,8 @@ router.post('/project/:projectId/generate/:formType', async (req: Request, res: 
       version: 1,
       status: 'draft',
       complianceScore: generatedForm.completeness,
-      createdBy: parseInt(userId),
-      updatedBy: parseInt(userId),
+      createdBy: actorId,
+      updatedBy: actorId,
       organizationId,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -222,11 +241,17 @@ router.post('/project/:projectId/generate/:formType', async (req: Request, res: 
 router.post('/project/:projectId/generate-all', async (req: Request, res: Response) => {
   const projectId = String(req.params.projectId);
   const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
-  const userId = req.headers['x-user-id'] as string;
+  // SECURITY (21 CFR Part 11): actor for document generation must come from the
+  // verified JWT, never from a client-supplied x-user-id header.
+  const actorIdRaw = (req as any).user?.id ?? (req as any).user?.userId;
+  if (actorIdRaw === undefined || actorIdRaw === null || actorIdRaw === '') {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  const userId = String(actorIdRaw);
 
   try {
     const orchestrationService = new DocumentOrchestrationService();
-    
+
     // Orchestrate generation of all documents
     const result = await orchestrationService.orchestrateDocumentGeneration(
       projectId,
@@ -251,13 +276,18 @@ router.post('/project/:projectId/generate-smart/:formId', async (req: Request, r
   const projectId = String(req.params.projectId);
   const formId = String(req.params.formId);
   const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
-  const userId = req.headers['x-user-id'] as string;
+  const actorId = requireActorId(req, res);
+  if (actorId === null) return;
 
   try {
     const formGenerator = new FDAFormGenerator();
-    
-    // Fetch project and workflow data
-    const projectData = await fetchProjectData(parseInt(projectId));
+
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+
+    // Fetch project and workflow data — scoped to the caller's org
+    const projectData = await fetchProjectData(parseInt(projectId), organizationId);
     if (!projectData) {
       return res.status(404).json({ error: 'Project not found' });
     }
@@ -277,8 +307,8 @@ router.post('/project/:projectId/generate-smart/:formId', async (req: Request, r
         version: 1,
         status: 'draft',
         complianceScore: generatedForm.completeness,
-        createdBy: parseInt(userId),
-        updatedBy: parseInt(userId),
+        createdBy: actorId,
+        updatedBy: actorId,
         organizationId,
         createdAt: new Date(),
         updatedAt: new Date()
@@ -335,13 +365,18 @@ router.post('/project/:projectId/generate-smart/:formId', async (req: Request, r
 router.post('/project/:projectId/auto-generate', async (req: Request, res: Response) => {
   const projectId = String(req.params.projectId);
   const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
-  const userId = req.headers['x-user-id'] as string;
+  const actorId = requireActorId(req, res);
+  if (actorId === null) return;
 
   try {
     const formGenerator = new FDAFormGenerator();
-    
-    // Fetch project and workflow data
-    const projectData = await fetchProjectData(parseInt(projectId));
+
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+
+    // Fetch project and workflow data — scoped to the caller's org
+    const projectData = await fetchProjectData(parseInt(projectId), organizationId);
     if (!projectData) {
       return res.status(404).json({ error: 'Project not found' });
     }
@@ -379,8 +414,8 @@ router.post('/project/:projectId/auto-generate', async (req: Request, res: Respo
             version: 1,
             status: 'draft',
             complianceScore: generatedForm.completeness,
-            createdBy: parseInt(userId),
-            updatedBy: parseInt(userId),
+            createdBy: actorId,
+            updatedBy: actorId,
             organizationId,
             createdAt: new Date(),
             updatedAt: new Date()
@@ -482,8 +517,12 @@ router.post('/project/:projectId/generate-stage/:stage', async (req: Request, re
   try {
     const projectId = String(req.params.projectId);
     const stage = String(req.params.stage);
+    const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
     const formGenerator = new FDAFormGenerator();
-    
+
     // Map stages to relevant forms
     const stageFormMap: { [key: string]: string[] } = {
       '0': ['form_3514', 'form_3601'],
@@ -498,12 +537,12 @@ router.post('/project/:projectId/generate-stage/:stage', async (req: Request, re
     const formsToGenerate = stageFormMap[stage] || [];
     const results = [];
     
-    // Fetch project data once
-    const projectData = await fetchProjectData(parseInt(projectId));
+    // Fetch project data once — scoped to the caller's org
+    const projectData = await fetchProjectData(parseInt(projectId), organizationId);
     if (!projectData) {
       return res.status(404).json({ error: 'Project not found' });
     }
-    
+
     // Generate each stage form
     for (const formId of formsToGenerate) {
       try {
@@ -538,13 +577,19 @@ router.post('/project/:projectId/generate-stage/:stage', async (req: Request, re
 });
 
 // Helper function to fetch all project data
-async function fetchProjectData(projectId: number) {
+async function fetchProjectData(projectId: number, organizationId: number) {
   try {
-    // Fetch FDA 510k project
+    // Fetch FDA 510k project — scoped to the caller's org to prevent
+    // cross-tenant IDOR. A project in another org returns null (-> 404).
     const [fda510kProject] = await db
       .select()
       .from(fda510kProjects)
-      .where(eq(fda510kProjects.projectId, projectId))
+      .where(
+        and(
+          eq(fda510kProjects.projectId, projectId),
+          eq(fda510kProjects.organizationId, organizationId)
+        )
+      )
       .limit(1);
 
     if (!fda510kProject) {

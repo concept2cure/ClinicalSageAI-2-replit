@@ -193,7 +193,16 @@ router.post('/connectors', requireTier('professional'), async (req: Request, res
       return res.status(400).json({ error: 'connectorId and credentials are required' });
     }
 
-    await storeCredentials(Number(orgId), connectorId, credentials);
+    try {
+      await storeCredentials(Number(orgId), connectorId, credentials);
+    } catch (storeErr) {
+      const msg = storeErr instanceof Error ? storeErr.message : String(storeErr);
+      // SSRF guard rejections (unsafe baseUrl/tokenEndpoint) are client errors.
+      if (/public https URL|metadata|non-https/i.test(msg)) {
+        return res.status(400).json({ error: msg });
+      }
+      throw storeErr;
+    }
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: String(err) });

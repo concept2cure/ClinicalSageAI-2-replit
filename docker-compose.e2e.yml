@@ -30,6 +30,14 @@ services:
       dockerfile: services/worker.Dockerfile
     volumes:
       - ./test_shared:/shared_data
+      # SECURITY: mounting the host Docker socket grants this container full
+      # root-equivalent control of the host (container escape). It is here so
+      # the worker can launch sibling containers for E2E jobs. Removing it would
+      # break that harness, so it is retained only in this throwaway E2E compose
+      # and must never appear in staging/prod.
+      # TODO(GA-blocker): replace docker.sock with a rootless/sysbox runner or a
+      # scoped docker-socket-proxy (tecnativa/docker-socket-proxy) exposing only
+      # the container APIs the worker actually needs.
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0

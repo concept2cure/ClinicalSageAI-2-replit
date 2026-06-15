@@ -123,21 +123,32 @@ class ESGSubmissionService {
     userId: number,
     organizationId: number
   ): Promise<SubmissionPackage> {
-    // Fetch all documents for the project
-    const documents = await db!
-      .select()
-      .from(fda510kDocuments)
-      .where(eq(fda510kDocuments.projectId, projectId));
-
-    // Fetch project details
+    // Fetch project details — scoped to the caller's organization to prevent
+    // cross-tenant IDOR on an irreversible FDA submission.
     const [project] = await db!
       .select()
       .from(fda510kProjects)
-      .where(eq(fda510kProjects.id, projectId));
+      .where(
+        and(
+          eq(fda510kProjects.id, projectId),
+          eq(fda510kProjects.organizationId, organizationId)
+        )
+      );
 
     if (!project) {
       throw new Error('Project not found');
     }
+
+    // Fetch all documents for the project, also scoped to the org
+    const documents = await db!
+      .select()
+      .from(fda510kDocuments)
+      .where(
+        and(
+          eq(fda510kDocuments.projectId, projectId),
+          eq(fda510kDocuments.organizationId, organizationId)
+        )
+      );
 
     // metadata is an untyped JSON column; narrow it at this boundary
     const projectMetadata = (project.metadata ?? {}) as {

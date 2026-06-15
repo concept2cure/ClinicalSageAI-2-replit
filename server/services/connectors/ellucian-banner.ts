@@ -18,6 +18,7 @@ import {
   ConnectorDocument,
   ConnectorCredentials,
 } from './connector-interface.js';
+import { assertSafePublicUrl } from '../../utils/ssrfGuard.js';
 
 export class EllucianBannerConnector implements DataConnector {
   id = 'ellucian_banner';
@@ -31,8 +32,26 @@ export class EllucianBannerConnector implements DataConnector {
   private token: string | null = null;
   private tokenAt = 0;
 
+  /**
+   * SSRF guard at the outbound sink. baseUrl is tenant-supplied and reused for
+   * every request — re-validate the effective URL before each fetch so a
+   * private/loopback/metadata host (incl. one reached via DNS rebinding after
+   * storage) can never be hit. Throws if unsafe.
+   */
+  private safeFetch(url: string, init?: RequestInit): Promise<Response> {
+    assertSafePublicUrl(url, 'Ellucian Banner request');
+    // Bound every outbound Ethos call so a hung Banner instance can't pin the
+    // worker indefinitely (override via BANNER_TIMEOUT_MS, default 15s).
+    // Respect a caller-supplied signal if one is provided.
+    const timeoutMs = Number(process.env.BANNER_TIMEOUT_MS || 15000);
+    const signal = init?.signal ?? AbortSignal.timeout(timeoutMs);
+    return fetch(url, { ...init, signal });
+  }
+
   async authenticate(credentials: ConnectorCredentials): Promise<void> {
     if (!credentials.baseUrl || !credentials.apiKey) throw new Error('Ellucian Banner connector requires baseUrl and apiKey.');
+    // SSRF guard: reject a private/metadata base URL before any outbound call.
+    assertSafePublicUrl(credentials.baseUrl, 'Ellucian Banner base URL');
     this.baseUrl = credentials.baseUrl.replace(/\/+$/, '');
     this.apiKey = credentials.apiKey;
     this.token = null;
@@ -43,7 +62,7 @@ export class EllucianBannerConnector implements DataConnector {
   private async getToken(): Promise<string> {
     if (!this.baseUrl || !this.apiKey) throw new Error('Ellucian Banner connector is not authenticated.');
     if (this.token && Date.now() - this.tokenAt < 4 * 60 * 1000) return this.token;
-    const res = await fetch(`${this.baseUrl}/auth`, { method: 'POST', headers: { Authorization: `Bearer ${this.apiKey}` } });
+    const res = await this.safeFetch(`${this.baseUrl}/auth`, { method: 'POST', headers: { Authorization: `Bearer ${this.apiKey}` } });
     if (!res.ok) throw new Error(`Ethos /auth failed: ${res.status}`);
     this.token = (await res.text()).trim();
     this.tokenAt = Date.now();
@@ -69,7 +88,7 @@ export class EllucianBannerConnector implements DataConnector {
     const params = new URLSearchParams({ offset: '0', limit: String(query.limit || 25) });
     if (query.sponsor) params.set('criteria', JSON.stringify({ names: [{ fullName: query.sponsor }] }));
 
-    const res = await fetch(`${this.baseUrl}/api/${resource}?${params}`, {
+    const res = await this.safeFetch(`${this.baseUrl}/api/${resource}?${params}`, {
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.hedtech.integration.v12+json' },
     });
     if (!res.ok) throw new Error(`Ethos ${resource} read error: ${res.status}`);
@@ -94,7 +113,7 @@ export class EllucianBannerConnector implements DataConnector {
     const token = await this.getToken();
     // resourceId may be "persons/{guid}" or just a guid (defaults to persons).
     const path = resourceId.includes('/') ? resourceId : `persons/${resourceId}`;
-    const res = await fetch(`${this.baseUrl}/api/${path}`, {
+    const res = await this.safeFetch(`${this.baseUrl}/api/${path}`, {
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.hedtech.integration.v12+json' },
     });
     if (!res.ok) throw new Error(`Ethos record ${resourceId} not found`);

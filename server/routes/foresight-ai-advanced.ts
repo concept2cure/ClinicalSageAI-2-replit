@@ -24,8 +24,17 @@ import {
   indNarrativeSections 
 } from '@shared/schema';
 import { eq, and, or, desc, sql } from 'drizzle-orm';
+import { mapWithConcurrency } from '../services/ana/agentic-loop';
 
 const router = Router();
+
+// PERF: these list endpoints fan a per-parent SELECT (and per-cohort SELECT)
+// out across every row returned for an org. Left unbounded, one large tenant's
+// request could open hundreds of concurrent DB queries and exhaust the shared
+// connection pool, starving every other tenant. Bound the fan-out so each
+// request uses at most DB_FANOUT_CONCURRENCY connections at a time. The runner
+// preserves input order, so response shape/ordering is unchanged.
+const DB_FANOUT_CONCURRENCY = 5;
 const aiEngine = new ForesightAIEngine();
 
 /**
@@ -435,8 +444,9 @@ router.get('/dose-escalation/studies', async (req, res) => {
     
     // For each study, try to fetch related cohorts and their DLT events
     // Using raw SQL queries for more flexibility with our table structure
-    const studiesWithDetails = await Promise.all(
-      studies.map(async (study) => {
+    const studiesWithDetails = await mapWithConcurrency(
+      studies,
+      async (study) => {
         try {
           // Fetch cohorts using raw SQL to avoid schema mismatch
           const cohortsResult = await db!.execute(sql`
@@ -455,8 +465,9 @@ router.get('/dose-escalation/studies', async (req, res) => {
           const cohorts = cohortsResult.rows || [];
           
           // For each cohort, fetch DLT events
-          const cohortsWithDlts = await Promise.all(
-            cohorts.map(async (cohort: any) => {
+          const cohortsWithDlts = await mapWithConcurrency(
+            cohorts,
+            async (cohort: any) => {
               const dltResult = await db!.execute(sql`
                 SELECT id, study_id, cohort_id, patient_id, event_date,
                        ctcae_grade, system_organ_class, preferred_term,
@@ -473,9 +484,10 @@ router.get('/dose-escalation/studies', async (req, res) => {
                 ...cohort,
                 dltEvents: dltResult.rows || []
               };
-            })
+            },
+            DB_FANOUT_CONCURRENCY
           );
-          
+
           return {
             ...study,
             cohorts: cohortsWithDlts,
@@ -492,9 +504,10 @@ router.get('/dose-escalation/studies', async (req, res) => {
             totalDlts: 0
           };
         }
-      })
+      },
+      DB_FANOUT_CONCURRENCY
     );
-    
+
     res.json(studiesWithDetails);
   } catch (error) {
     console.error('Error fetching dose escalation studies:', error);
@@ -522,8 +535,9 @@ router.get('/ind-narratives', async (req, res) => {
     
     // For each narrative, try to fetch related sections
     // Using raw SQL queries for more flexibility with our table structure
-    const narrativesWithSections = await Promise.all(
-      narratives.map(async (narrative) => {
+    const narrativesWithSections = await mapWithConcurrency(
+      narratives,
+      async (narrative) => {
         try {
           const sectionsResult = await db!.execute(sql`
             SELECT id, narrative_id, section_number, section_title, section_type,
@@ -551,9 +565,10 @@ router.get('/ind-narratives', async (req, res) => {
             totalSections: 0
           };
         }
-      })
+      },
+      DB_FANOUT_CONCURRENCY
     );
-    
+
     res.json(narrativesWithSections);
   } catch (error) {
     console.error('Error fetching IND narratives:', error);
@@ -641,8 +656,9 @@ router.get('/cross-species/analyses', async (req, res) => {
     
     // For each analysis, try to fetch related species comparisons
     // Using raw SQL queries for more flexibility with our table structure
-    const analysesWithComparisons = await Promise.all(
-      analyses.map(async (analysis) => {
+    const analysesWithComparisons = await mapWithConcurrency(
+      analyses,
+      async (analysis) => {
         try {
           const comparisonsResult = await db!.execute(sql`
             SELECT id, analysis_id, species, body_weight, dose_administered,
@@ -671,9 +687,10 @@ router.get('/cross-species/analyses', async (req, res) => {
             totalSpecies: 0
           };
         }
-      })
+      },
+      DB_FANOUT_CONCURRENCY
     );
-    
+
     res.json(analysesWithComparisons);
   } catch (error) {
     console.error('Error fetching cross-species analyses:', error);

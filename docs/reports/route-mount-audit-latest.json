@@ -1,12 +1,79 @@
 {
-  "target": "server/index.ts",
-  "generatedAt": "2026-05-28T20:17:06.548Z",
-  "mounts": 0,
-  "errors": 0,
-  "warnings": 0,
+  "target": "server/index.ts,server/bootstrap/register-*.ts,server/startup/routes.ts,server/startup/inline-endpoints.ts,server/startup/middleware.ts",
+  "generatedAt": "2026-06-14T22:26:06.555Z",
+  "mounts": 241,
+  "errors": 8,
+  "warnings": 5,
   "issues": {
-    "errors": [],
-    "warnings": []
+    "errors": [
+      {
+        "type": "duplicate-method-route",
+        "path": null,
+        "key": "get:/healthz"
+      },
+      {
+        "type": "duplicate-method-route",
+        "path": null,
+        "key": "get:/readyz"
+      },
+      {
+        "type": "duplicate-method-route",
+        "path": null,
+        "key": "get:/api/health"
+      },
+      {
+        "type": "duplicate-method-route",
+        "path": null,
+        "key": "get:/api/health/full"
+      },
+      {
+        "type": "duplicate-method-route",
+        "path": null,
+        "key": "get:/api/metrics"
+      },
+      {
+        "type": "duplicate-method-route",
+        "path": null,
+        "key": "get:/api/ai-gateway/health"
+      },
+      {
+        "type": "duplicate-method-route",
+        "path": null,
+        "key": "get:/api/time"
+      },
+      {
+        "type": "duplicate-method-route",
+        "path": null,
+        "key": "get:/api/diag"
+      }
+    ],
+    "warnings": [
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/ai",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/concept2cure",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/cmc",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/cmc/module3-os",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/mdx",
+        "key": null
+      }
+    ]
   },
   "ownership": [
     {

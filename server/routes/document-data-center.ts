@@ -15,8 +15,13 @@ router.post('/upload',
   async (req, res) => {
     try {
       const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
-      const userId = req.headers['x-user-id'] as string || 'user';
-      
+      // SECURITY (21 CFR Part 11): the document author/actor must come from the
+      // verified JWT, never from a client-supplied x-user-id header.
+      const userId = String((req as any).user?.id ?? (req as any).user?.userId ?? '');
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
       if (!req.file) {
         return res.status(400).json({ error: 'No file provided' });
       }
@@ -96,7 +101,12 @@ router.patch('/files/:id/tags', async (req, res) => {
   try {
     const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
     const documentId = parseInt(req.params.id);
-    const userId = req.headers['x-user-id'] as string || 'user';
+    // SECURITY (21 CFR Part 11): the actor recorded against this tag mutation
+    // must come from the verified JWT, never from a client-supplied header.
+    const userId = String((req as any).user?.id ?? (req as any).user?.userId ?? '');
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
 
     const result = await documentDataCenterService.updateDocumentTags(
       organizationId,

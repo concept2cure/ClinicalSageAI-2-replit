@@ -25,9 +25,12 @@ services:
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_USER: ros_admin
-      POSTGRES_PASSWORD: ros_staging_secret
-      POSTGRES_DB: regulatory_db
+      POSTGRES_USER: ${POSTGRES_USER:-ros_admin}
+      # Required env var with NO insecure default — compose fails closed if
+      # POSTGRES_PASSWORD is unset. Source it from the managed secret store /
+      # gitignored staging .env, never a committed literal.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set (managed secret)}
+      POSTGRES_DB: ${POSTGRES_DB:-regulatory_db}
     ports:
       - "5432:5432"
     volumes:
@@ -65,7 +68,8 @@ services:
   neo4j:
     image: neo4j:5-enterprise
     environment:
-      NEO4J_AUTH: neo4j/ros-staging
+      # Required env var with NO insecure default — fails closed if unset.
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:?NEO4J_PASSWORD must be set (managed secret)}
       NEO4J_ACCEPT_LICENSE_AGREEMENT: yes
     ports:
       - "7474:7474"
@@ -93,6 +97,14 @@ services:
   # Alternative: Run ROS components directly in Docker Compose for speed
   kind:
     image: kindest/node:v1.29.0
+    # SECURITY: privileged:true gives this container full host capabilities
+    # (effective container escape). KinD runs a nested containerd+kubelet and
+    # genuinely requires it, so it cannot simply be dropped without breaking the
+    # Helm-deploy harness. It is confined to this local staging compose and must
+    # never be used in a real staging/prod cluster.
+    # TODO(GA-blocker): replace privileged:true with the minimal cap set KinD
+    # needs (or move K8s testing to an ephemeral managed/rootless cluster) so a
+    # compromised test container cannot escape to the host.
     privileged: true
     volumes:
       - kind_data:/var/lib/docker
@@ -104,7 +116,8 @@ services:
     image: apache/airflow:2.8.0
     environment:
       - AIRFLOW__CORE__LOAD_EXAMPLES=false
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://ros_admin:ros_staging_secret@postgres:5432/airflow
+      # Uses the same env-driven Postgres credentials as the postgres service.
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER:-ros_admin}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set (managed secret)}@postgres:5432/airflow
     volumes:
       - ./dags:/opt/airflow/dags
     networks:

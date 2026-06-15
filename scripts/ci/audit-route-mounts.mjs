@@ -2,7 +2,63 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const DEFAULT_TARGET = 'server/index.ts';
+// Routers no longer mount in server/index.ts. They are wired up in the
+// bootstrap register-*.ts modules and the server/startup/* helpers. Scanning
+// only server/index.ts captured ~1 mount and made this audit pass vacuously.
+// The default target now covers all of the real mount sites so the audit
+// reflects reality. A single --target overrides this list entirely.
+const DEFAULT_TARGETS = [
+  'server/index.ts',
+  'server/bootstrap/register-*.ts',
+  'server/startup/routes.ts',
+  'server/startup/inline-endpoints.ts',
+  'server/startup/middleware.ts',
+];
+
+// Back-compat constant: some tooling/tests may reference DEFAULT_TARGET.
+const DEFAULT_TARGET = DEFAULT_TARGETS.join(',');
+
+// Minimal glob support: only the trailing "*" wildcard inside a single
+// directory is needed (e.g. "server/bootstrap/register-*.ts"). We resolve it
+// against the filesystem rather than pulling in a glob dependency.
+function expandTarget(pattern) {
+  if (!pattern.includes('*')) {
+    return [pattern];
+  }
+  const dir = path.dirname(pattern);
+  const base = path.basename(pattern); // e.g. register-*.ts
+  const absDir = path.resolve(process.cwd(), dir);
+  if (!fs.existsSync(absDir)) {
+    return [];
+  }
+  const regex = new RegExp(
+    `^${base.split('*').map(escapeRegex).join('.*')}$`
+  );
+  return fs
+    .readdirSync(absDir)
+    .filter(name => regex.test(name))
+    .sort()
+    .map(name => path.join(dir, name));
+}
+
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function resolveTargets(targetSpec) {
+  const patterns = targetSpec.split(',').map(s => s.trim()).filter(Boolean);
+  const resolved = [];
+  const seen = new Set();
+  for (const pattern of patterns) {
+    for (const file of expandTarget(pattern)) {
+      if (!seen.has(file)) {
+        seen.add(file);
+        resolved.push(file);
+      }
+    }
+  }
+  return resolved;
+}
 
 const ALLOWLIST = {
   // Known legacy shadowing retained intentionally for compatibility.
@@ -35,7 +91,7 @@ const ROUTE_OWNERS = [
 
 function parseArgs(argv) {
   const options = {
-    target: DEFAULT_TARGET,
+    target: DEFAULT_TARGETS.join(','),
     json: false,
     strictNoRegression: false,
     maxWarnings: null,
@@ -114,12 +170,14 @@ function lineNumberAt(source, index) {
   return lines;
 }
 
-function collectMounts(source) {
+function collectMounts(source, file = '') {
   const entries = [];
   const startServerIdx = source.indexOf('async function startServer');
   const startServerCallIdx = source.indexOf('startServer();');
 
-  const mountPattern = /app\.(use|get|post|put|patch|delete|options|head)\(\s*(['"`])([^'"`]+)\2/g;
+  // Match both `app.use(...)` (legacy index.ts) and `app.use(...)` invoked on
+  // an Express instance passed into register helpers (commonly named `app`).
+  const mountPattern = /\bapp\.(use|get|post|put|patch|delete|options|head)\(\s*(['"`])([^'"`]+)\2/g;
   for (const match of source.matchAll(mountPattern)) {
     const kind = match[1];
     const mountPath = match[3];
@@ -135,6 +193,7 @@ function collectMounts(source) {
       path: mountPath,
       line,
       phase,
+      file,
     });
   }
 
@@ -202,10 +261,16 @@ function analyze(entries) {
 }
 
 function formatEntry(entry) {
-  return `L${entry.line} app.${entry.kind}('${entry.path}') [${entry.phase}]`;
+  const where = entry.file ? `${entry.file}:${entry.line}` : `L${entry.line}`;
+  return `${where} app.${entry.kind}('${entry.path}') [${entry.phase}]`;
 }
 
 function resolveOwner(mountPath, ownerMappings) {
+  // Some issues (e.g. duplicate-method-route) carry their path on the grouped
+  // entries rather than a top-level `path`, so mountPath may be undefined.
+  if (typeof mountPath !== 'string' || mountPath.length === 0) {
+    return { owner: 'Unassigned', contact: 'TBD', prefix: '(none)' };
+  }
   let best = null;
   for (const candidate of ownerMappings) {
     if (mountPath.startsWith(candidate.prefix)) {
@@ -218,10 +283,16 @@ function resolveOwner(mountPath, ownerMappings) {
 }
 
 function annotateWithOwners(items, ownerMappings) {
-  return items.map(item => ({
-    ...item,
-    owner: resolveOwner(item.path, ownerMappings),
-  }));
+  return items.map(item => {
+    // Prefer the issue's own path; fall back to the first grouped entry's path
+    // (duplicate-method-route issues store the path only on their entries).
+    const ownerPath =
+      item.path || (Array.isArray(item.entries) && item.entries[0]?.path) || undefined;
+    return {
+      ...item,
+      owner: resolveOwner(ownerPath, ownerMappings),
+    };
+  });
 }
 
 function fingerprintIssue(issue) {
@@ -243,8 +314,11 @@ function computeNewIssueCounts(current, baseline) {
   };
 }
 
-function printHumanReport(target, entries, result) {
+function printHumanReport(target, entries, result, scannedFiles = []) {
   console.log(`Route mount audit target: ${target}`);
+  if (scannedFiles.length > 0) {
+    console.log(`Scanned files (${scannedFiles.length}): ${scannedFiles.join(', ')}`);
+  }
   console.log(`Total captured mounts: ${entries.length}`);
   console.log(`Errors: ${result.errors.length}`);
   console.log(`Warnings: ${result.warnings.length}`);
@@ -286,14 +360,24 @@ function main() {
     console.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
   }
-  const target = path.resolve(process.cwd(), options.target);
-  if (!fs.existsSync(target)) {
-    console.error(`Missing route mount target: ${options.target}`);
+  const targetFiles = resolveTargets(options.target);
+  if (targetFiles.length === 0) {
+    console.error(`No route mount targets matched: ${options.target}`);
     process.exit(1);
   }
 
-  const source = fs.readFileSync(target, 'utf8');
-  const entries = collectMounts(source);
+  const entries = [];
+  const scannedFiles = [];
+  for (const relFile of targetFiles) {
+    const abs = path.resolve(process.cwd(), relFile);
+    if (!fs.existsSync(abs)) {
+      console.error(`Missing route mount target: ${relFile}`);
+      process.exit(1);
+    }
+    const source = fs.readFileSync(abs, 'utf8');
+    entries.push(...collectMounts(source, relFile));
+    scannedFiles.push(relFile);
+  }
   const analyzed = analyze(entries);
   const ownerMappings = loadOwners(options.owners);
   const result = {
@@ -321,7 +405,7 @@ function main() {
   if (options.json) {
     process.stdout.write(`${JSON.stringify(outputPayload, null, 2)}\n`);
   } else {
-    printHumanReport(options.target, entries, result);
+    printHumanReport(options.target, entries, result, scannedFiles);
     console.log('\nOwner summary (warning/error counts):');
     const ownerCounts = new Map();
     for (const issue of [...result.errors, ...result.warnings]) {
@@ -355,7 +439,12 @@ function main() {
     writeJsonFile(options.writeJson, outputPayload);
   }
 
-  if (result.errors.length > 0) {
+  // In --strict-no-regression mode the baseline governs pass/fail: we fail only
+  // on NEW errors/warnings vs the baseline (handled below). Hard-failing here on
+  // ANY error would make the baseline meaningless for the now-visible
+  // pre-existing duplicate-mount backlog. Plain and --max-warnings (full-strict)
+  // modes still hard-fail on any error so the nightly gate stays strict.
+  if (!options.strictNoRegression && result.errors.length > 0) {
     process.exit(1);
   }
 

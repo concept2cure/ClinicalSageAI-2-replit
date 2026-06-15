@@ -18,6 +18,7 @@
 
 import { Router, raw } from 'express';
 import type { Request, Response } from 'express';
+import { z } from 'zod';
 import Stripe from 'stripe';
 import {
   createCheckoutSession,
@@ -35,6 +36,53 @@ const logger = createScopedLogger('billing');
 const router = Router();
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Validation schemas (financial mutation inputs)
+//
+// NOTE: organizationId is intentionally NOT part of any schema — it is always
+// derived from the authenticated JWT / tenant context, never from the body.
+// Optional URL fields are constrained to absolute http(s) URLs to avoid
+// open-redirect style abuse via Stripe success/cancel redirects.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const redirectUrlSchema = z.string().url().startsWith('http', {
+  message: 'must be an absolute http(s) URL',
+});
+
+const checkoutBodySchema = z.object({
+  tier: z.enum(['standard', 'professional', 'enterprise']),
+  billingCycle: z.enum(['monthly', 'annual']),
+  seats: z.coerce.number().int().min(1).max(10000).optional(),
+  successUrl: redirectUrlSchema.optional(),
+  cancelUrl: redirectUrlSchema.optional(),
+});
+
+const portalBodySchema = z.object({
+  returnUrl: redirectUrlSchema.optional(),
+});
+
+const dtcCheckoutBodySchema = z.object({
+  tier: z.enum(['standard', 'professional', 'enterprise']).optional(),
+  billingCycle: z.enum(['monthly', 'annual']).optional(),
+  currency: z
+    .string()
+    .regex(/^[A-Za-z]{3}$/, 'currency must be a 3-letter ISO code')
+    .optional(),
+  successUrl: redirectUrlSchema.optional(),
+  cancelUrl: redirectUrlSchema.optional(),
+});
+
+function respondValidationError(res: Response, error: z.ZodError) {
+  return res.status(400).json({
+    error: 'Validation Error',
+    details: error.errors.map(e => ({
+      field: e.path.join('.'),
+      message: e.message,
+      code: e.code,
+    })),
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // POST /checkout — Create Stripe Checkout Session with Link
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/checkout', authenticateToken, async (req: Request, res: Response) => {
@@ -46,22 +94,11 @@ router.post('/checkout', authenticateToken, async (req: Request, res: Response) 
       return res.status(401).json({ error: 'Organization context required' });
     }
 
-    const { tier, billingCycle, seats, successUrl, cancelUrl } = req.body;
-
-    if (!tier || !billingCycle) {
-      return res.status(400).json({
-        error: 'Missing required fields',
-        required: ['tier', 'billingCycle'],
-      });
+    const parsed = checkoutBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return respondValidationError(res, parsed.error);
     }
-
-    if (!['monthly', 'annual'].includes(billingCycle)) {
-      return res.status(400).json({ error: 'billingCycle must be "monthly" or "annual"' });
-    }
-
-    if (!['standard', 'professional', 'enterprise'].includes(tier)) {
-      return res.status(400).json({ error: 'tier must be "standard", "professional", or "enterprise"' });
-    }
+    const { tier, billingCycle, seats, successUrl, cancelUrl } = parsed.data;
 
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     const checkoutSuccessUrl =
@@ -104,8 +141,13 @@ router.post('/portal', authenticateToken, async (req: Request, res: Response) =>
       return res.status(401).json({ error: 'Organization context required' });
     }
 
+    const parsed = portalBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return respondValidationError(res, parsed.error);
+    }
+
     const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const returnUrl = req.body.returnUrl || `${baseUrl}/settings/billing`;
+    const returnUrl = parsed.data.returnUrl || `${baseUrl}/settings/billing`;
 
     const portalUrl = await createPortalSession(Number(orgId), returnUrl);
 
@@ -175,7 +217,11 @@ router.post('/dtc-checkout', authenticateToken, async (req: Request, res: Respon
       return res.status(401).json({ error: 'Organization context required' });
     }
 
-    const { tier, billingCycle, currency } = req.body;
+    const parsed = dtcCheckoutBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return respondValidationError(res, parsed.error);
+    }
+    const { tier, billingCycle, currency, successUrl, cancelUrl } = parsed.data;
     const baseUrl = `${req.protocol}://${req.get('host')}`;
 
     const result = await createDTCCheckoutSession({
@@ -183,9 +229,9 @@ router.post('/dtc-checkout', authenticateToken, async (req: Request, res: Respon
       tier: tier || 'standard',
       billingCycle: billingCycle || 'monthly',
       successUrl:
-        req.body.successUrl ||
+        successUrl ||
         `${baseUrl}/concept2cure/billing?checkout=success&welcome=true`,
-      cancelUrl: req.body.cancelUrl || `${baseUrl}/concept2cure/signup`,
+      cancelUrl: cancelUrl || `${baseUrl}/concept2cure/signup`,
       currency,
     });
 

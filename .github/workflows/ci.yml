@@ -334,7 +334,8 @@ jobs:
         run: node scripts/ci/audit-with-allowlist.mjs
 
       - name: Trivy filesystem scan (deps + secrets)
-        continue-on-error: true
+        # Blocking gate: fails the job on HIGH/CRITICAL findings so they cannot
+        # be merged. (severity threshold + exit-code 1; no continue-on-error.)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
@@ -344,6 +345,12 @@ jobs:
           format: table
 
       - name: Trivy config scan (Dockerfile/IaC)
+        # Advisory (continue-on-error) for now: the IaC estate has a pre-existing
+        # backlog of HIGH/CRITICAL misconfigs (e.g. AVD-AWS-0164 public-IP-on-launch
+        # in modules/vpc-secure) that must be baselined before this can block.
+        # TODO(security): baseline existing findings into .trivyignore, then flip
+        # this to a blocking gate (exit-code 1, no continue-on-error). The
+        # filesystem scan above (deps + secrets) remains blocking.
         continue-on-error: true
         uses: aquasecurity/trivy-action@v0.36.0
         with:

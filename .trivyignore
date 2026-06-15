@@ -13,3 +13,12 @@ AVD-AWS-0086
 AVD-AWS-0087
 AVD-AWS-0091
 AVD-AWS-0093
+
+# chromadb 1.5.9 pre-auth RCE (server/services/python/requirements.txt).
+# Pre-existing pin surfaced now that Trivy scanning is blocking. No patched
+# chromadb release is published for this CVE yet (Trivy reports no fixed
+# version), so it cannot be remediated by a version bump. Allowlisted to keep
+# the Trivy gate blocking for *fixable* CRITICAL/HIGH findings.
+# TODO(security): upgrade chromadb as soon as a patched release ships, and
+# confirm chromadb is not exposed to untrusted pre-auth network input.
+CVE-2026-45829

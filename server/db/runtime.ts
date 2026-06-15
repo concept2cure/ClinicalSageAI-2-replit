@@ -187,16 +187,40 @@ export async function transaction<T>(callback: (client: any) => Promise<T>): Pro
   }
 
   const client = await pool.connect();
+  // Tracks whether the connection is likely poisoned (e.g. a failed ROLLBACK
+  // on a broken socket). A poisoned client must be EVICTED from the pool, not
+  // returned to it, or subsequent borrowers inherit a wedged connection.
+  let rollbackFailed: Error | null = null;
   try {
     await client.query('BEGIN');
     const result = await callback(client);
     await client.query('COMMIT');
     return result;
   } catch (error) {
-    await client.query('ROLLBACK');
+    // Roll back in its own try/catch so a failed ROLLBACK does NOT mask the
+    // ORIGINAL error. If the rollback throws, the connection is presumed
+    // broken; log it and flag the client for eviction below.
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackError: any) {
+      rollbackFailed = rollbackError;
+      logger.error('Transaction ROLLBACK failed; evicting connection from pool', {
+        rollbackError: rollbackError?.message || String(rollbackError),
+        originalError: (error as any)?.message || String(error),
+      });
+    }
+    // Always propagate the ORIGINAL error, never the rollback failure.
     throw error;
   } finally {
-    client.release();
+    // node-pg: calling release() with a truthy argument (an Error or `true`)
+    // destroys the underlying connection instead of returning it to the pool.
+    // Use that path only when the rollback failed (connection likely broken);
+    // otherwise return the healthy connection normally.
+    if (rollbackFailed) {
+      client.release(rollbackFailed);
+    } else {
+      client.release();
+    }
   }
 }
 

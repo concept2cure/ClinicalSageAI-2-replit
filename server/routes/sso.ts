@@ -5,7 +5,7 @@ import * as crypto from 'crypto';
 import { config } from '../config/environment';
 import { db } from '../db';
 import { eq } from 'drizzle-orm';
-import { users, organizationUsers } from '../../shared/schema';
+import { users, organizationUsers, organizations } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import {
@@ -51,6 +51,37 @@ function decodeRelayState(relayState: unknown): { org: string; returnTo?: string
   } catch {
     return { org: 'default' };
   }
+}
+
+/**
+ * Raised when the org that owns the SAML config (identified by the callback's
+ * orgSlug) cannot be mapped to a real organization row. We fail closed rather
+ * than silently provisioning the user into a hardcoded default org (org 1),
+ * which would cross tenant boundaries.
+ */
+class SamlOrgResolutionError extends Error {
+  constructor(orgSlug: string) {
+    super(`No organization found for SAML org slug "${orgSlug}"`);
+    this.name = 'SamlOrgResolutionError';
+  }
+}
+
+/**
+ * Resolve the org slug used for the SAML callback (from RelayState / SAML_TENANTS)
+ * to the owning organization's numeric id. The slug maps 1:1 to
+ * `organizations.slug`. Throws {@link SamlOrgResolutionError} when no matching
+ * organization exists so JIT provisioning never falls back to a hardcoded org.
+ */
+async function resolveOrgIdForSlug(orgSlug: string): Promise<number> {
+  const rows = await db
+    .select({ id: organizations.id })
+    .from(organizations)
+    .where(eq(organizations.slug, orgSlug))
+    .limit(1);
+  if (rows.length === 0) {
+    throw new SamlOrgResolutionError(orgSlug);
+  }
+  return rows[0].id;
 }
 
 /**
@@ -255,8 +286,13 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
       });
     }
 
+    // Resolve the org that owns this SAML config. JIT/unassociated users are
+    // placed in THIS org, not a hardcoded default. Fail closed if it can't be
+    // resolved (see SamlOrgResolutionError handling below).
+    const configOrgId = await resolveOrgIdForSlug(orgSlug);
+
     // Find or create user in the database
-    const { user: dbUser, organizationId } = await findOrCreateSamlUser(samlUser);
+    const { user: dbUser, organizationId } = await findOrCreateSamlUser(samlUser, configOrgId);
 
     // Issue JWT
     // SECURITY: JWT must include organizationId so downstream tenant middleware
@@ -309,6 +345,17 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
         success: false,
         error: 'SAML_VALIDATION_FAILED',
         message: err.message,
+      });
+    }
+
+    if (err instanceof SamlOrgResolutionError) {
+      // Fail closed: do not provision into a default org we can't verify.
+      logger.error(`SAML org resolution failed: ${err.message}`);
+      return res.status(403).json({
+        success: false,
+        error: 'SAML_ORG_NOT_RESOLVED',
+        message:
+          'Could not resolve the organization for this SAML login. Please contact your administrator.',
       });
     }
 
@@ -486,10 +533,15 @@ interface DbUserResult {
 
 /**
  * Finds an existing user by email or creates a new one via Just-In-Time (JIT) provisioning.
- * Associates the user with the default organization if not already associated.
+ *
+ * New/unassociated users are placed in `configOrgId` — the organization that owns
+ * the SAML config used for this callback (resolved from the orgSlug) — NOT a
+ * hardcoded default. The caller resolves and fails closed if the org is unknown,
+ * so this function is only ever handed a verified org id.
  */
 async function findOrCreateSamlUser(
-  samlUser: import('../services/saml-provider').SAMLUser
+  samlUser: import('../services/saml-provider').SAMLUser,
+  configOrgId: number
 ): Promise<DbUserResult> {
   const email = samlUser.email.toLowerCase().trim();
 
@@ -506,7 +558,9 @@ async function findOrCreateSamlUser(
       .where(eq(organizationUsers.userId, user.id))
       .limit(1);
 
-    const organizationId = orgAssoc.length > 0 ? orgAssoc[0].organizationId : 1;
+    // Existing user keeps their current org association; an unassociated user is
+    // bound to the SAML config's org (configOrgId), not a hardcoded default.
+    const organizationId = orgAssoc.length > 0 ? orgAssoc[0].organizationId : configOrgId;
     const orgRole = orgAssoc.length > 0 ? orgAssoc[0].role : 'member';
 
     // Update name if it was empty and SAML provides first/last name
@@ -550,19 +604,19 @@ async function findOrCreateSamlUser(
     })
     .returning();
 
-  // Associate with default organization (org ID 1)
-  // In production, org mapping would be determined by SAML config or attribute
-  const defaultOrgId = 1;
+  // Associate with the organization that owns the SAML config used for this
+  // login (configOrgId), resolved from the callback's orgSlug — never a
+  // hardcoded org 1.
   try {
-     
+
     await (db.insert(organizationUsers) as any).values({
       userId: newUser.id,
-      organizationId: defaultOrgId,
+      organizationId: configOrgId,
       role: 'member',
     });
   } catch (orgErr) {
     logger.warn(
-      `Failed to associate SAML user ${email} with org ${defaultOrgId}`,
+      `Failed to associate SAML user ${email} with org ${configOrgId}`,
       orgErr as Record<string, unknown>
     );
   }
@@ -574,7 +628,7 @@ async function findOrCreateSamlUser(
       name: newUser.name,
       orgRole: 'member',
     },
-    organizationId: defaultOrgId,
+    organizationId: configOrgId,
   };
 }
 

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import type { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { fda510kStageProgress, fda510kProjects } from '@shared/schema';
 import { getSecureOrgId } from '../utils/tenantContext';
 import { TemplateMapper } from '../services/documentTemplateMapper';
@@ -20,10 +20,24 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
   // POST /:projectId — save workflow data
   router.post('/:projectId', async (req, res) => {
     const { projectId } = req.params;
-    const { organizationId, stage, section, data, completedSteps, validationCheckpoints } =
-      req.body;
+    const { stage, section, data, completedSteps, validationCheckpoints } = req.body;
 
-    if (!organizationId || !stage || !data) {
+    // SECURITY: derive org from the JWT, never from the request body, to prevent
+    // cross-tenant writes (IDOR). Body-supplied organizationId is ignored.
+    const organizationId = getSecureOrgId(req);
+    if (!organizationId) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
+
+    // SECURITY (21 CFR Part 11): the actor for audit/version attribution must
+    // come from the verified JWT, never from a client-supplied x-user-id header.
+    const actorId = (req as any).user?.id ?? (req as any).user?.userId;
+    if (actorId === undefined || actorId === null || actorId === '') {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+    const actorIdStr = String(actorId);
+
+    if (!stage || !data) {
       return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
 
@@ -40,7 +54,7 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
           stage,
           section,
           action: 'SAVE',
-          userId: parseInt((req.headers['x-user-id'] as string) || ''),
+          userId: parseInt(actorIdStr),
           organizationId: parseInt(organizationId),
           data,
           metadata: {
@@ -75,14 +89,36 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
       const isDemoProject = parseInt(projectId) >= 500;
 
       if (!isDemoProject) {
-        // Check if project exists in fda510kProjects table for real projects
+        // SECURITY: scope the existence check to the caller's org. If a project
+        // with this projectId exists under a DIFFERENT org, do not disclose it
+        // or write to it — return 404 (cross-tenant IDOR guard).
+        const crossOrgProject = await db
+          .select()
+          .from(fda510kProjects)
+          .where(
+            and(
+              eq(fda510kProjects.projectId, parseInt(projectId)),
+              sql`${fda510kProjects.organizationId} <> ${parseInt(organizationId)}`
+            )
+          );
+        if (crossOrgProject.length > 0) {
+          return res.status(404).json({ success: false, error: 'Project not found' });
+        }
+
+        // Check if project exists in fda510kProjects table for THIS org
         const existingProjects = await db
           .select()
           .from(fda510kProjects)
-          .where(eq(fda510kProjects.projectId, parseInt(projectId)));
+          .where(
+            and(
+              eq(fda510kProjects.projectId, parseInt(projectId)),
+              eq(fda510kProjects.organizationId, parseInt(organizationId))
+            )
+          );
 
         if (existingProjects.length === 0) {
-          // Create the project in fda510kProjects if it doesn't exist
+          // Create the project in fda510kProjects if it doesn't exist.
+          // Owner is always the JWT org, never a body-supplied value.
           console.log(`Creating FDA 510(k) project entry for project ${projectId}`);
           try {
             await db.insert(fda510kProjects).values({
@@ -187,7 +223,7 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
         await FDA510kComplianceTracker.createDocumentVersion({
           documentId: `510K_${projectId}`,
           projectId,
-          userId: parseInt((req.headers['x-user-id'] as string) || ''),
+          userId: parseInt(actorIdStr),
           organizationId: parseInt(organizationId),
           content: data,
           changeDescription: `Updated ${stage} - ${section || 'default'}`,
@@ -210,7 +246,7 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
         const orchestrationService = new DocumentOrchestrationService();
         const orchestrationResult = await orchestrationService.orchestrateDocumentGeneration(
           projectId,
-          req.headers['x-user-id'] as string,
+          actorIdStr,
           organizationId
         );
         autoPopulated = true;
@@ -222,7 +258,7 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
 
       void auditService.logAction({
         tenantId: parseInt(organizationId) || 0,
-        userId: parseInt((req.headers['x-user-id'] as string) || '') || undefined,
+        userId: parseInt(actorIdStr) || undefined,
         action: 'k510_workflow.transition',
         resourceType: 'fda_510k_project',
         resourceId: String(projectId),

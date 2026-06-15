@@ -529,8 +529,11 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
       await ensureTables();
       const { studyId } = req.params;
       const result = await pool.query(
-        `SELECT * FROM clinical_ops.enrollment_records WHERE study_id = $1 ORDER BY period`,
-        [studyId],
+        `SELECT * FROM clinical_ops.enrollment_records
+         WHERE study_id = $1
+           AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($2::TEXT IS NULL OR s.org_id = $2))
+         ORDER BY period`,
+        [studyId, getOrgId(req)],
       );
 
       // Calculate rates
@@ -598,8 +601,10 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
       const { studyId } = req.params;
       const { status } = req.query;
 
-      let sql = `SELECT * FROM clinical_ops.monitoring_visits WHERE study_id = $1`;
-      const params: any[] = [studyId];
+      let sql = `SELECT * FROM clinical_ops.monitoring_visits
+        WHERE study_id = $1
+          AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($2::TEXT IS NULL OR s.org_id = $2))`;
+      const params: any[] = [studyId, getOrgId(req)];
 
       if (status) {
         params.push(status);
@@ -681,8 +686,10 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
       const { studyId } = req.params;
       const { category, status: devStatus } = req.query;
 
-      let sql = `SELECT * FROM clinical_ops.deviations WHERE study_id = $1`;
-      const params: any[] = [studyId];
+      let sql = `SELECT * FROM clinical_ops.deviations
+        WHERE study_id = $1
+          AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($2::TEXT IS NULL OR s.org_id = $2))`;
+      const params: any[] = [studyId, getOrgId(req)];
 
       if (category) {
         params.push(category);
@@ -765,8 +772,11 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
       await ensureTables();
       const { studyId } = req.params;
       const result = await pool.query(
-        `SELECT * FROM clinical_ops.milestones WHERE study_id = $1 ORDER BY target_date`,
-        [studyId],
+        `SELECT * FROM clinical_ops.milestones
+         WHERE study_id = $1
+           AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($2::TEXT IS NULL OR s.org_id = $2))
+         ORDER BY target_date`,
+        [studyId, getOrgId(req)],
       );
       res.json({ success: true, data: result.rows, total: result.rows.length });
     } catch (error) {
@@ -837,9 +847,20 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
       await ensureTables();
       const { studyId } = req.params;
 
+      const orgId = getOrgId(req);
       const [studyResult, enrollmentResult] = await Promise.all([
-        pool.query(`SELECT target_enrollment, enrolled, start_date FROM clinical_ops.studies WHERE id = $1`, [studyId]),
-        pool.query(`SELECT period, actual_count FROM clinical_ops.enrollment_records WHERE study_id = $1 ORDER BY period`, [studyId]),
+        pool.query(
+          `SELECT target_enrollment, enrolled, start_date FROM clinical_ops.studies
+           WHERE id = $1 AND ($2::TEXT IS NULL OR org_id = $2)`,
+          [studyId, orgId],
+        ),
+        pool.query(
+          `SELECT period, actual_count FROM clinical_ops.enrollment_records
+           WHERE study_id = $1
+             AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($2::TEXT IS NULL OR s.org_id = $2))
+           ORDER BY period`,
+          [studyId, orgId],
+        ),
       ]);
 
       if (studyResult.rows.length === 0) {

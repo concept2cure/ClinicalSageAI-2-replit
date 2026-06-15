@@ -18,7 +18,21 @@ const memoryStore = new Map<string, StoredCredentialRecord>();
 let tableInitialized = false;
 
 function getEncryptionKey(): Buffer {
-  const raw = process.env.INTEGRATION_CREDENTIAL_ENCRYPTION_KEY || process.env.AUDIT_SIGNING_KEY || 'dev-integration-credential-key-change-me';
+  const fromEnv =
+    process.env.INTEGRATION_CREDENTIAL_ENCRYPTION_KEY || process.env.AUDIT_SIGNING_KEY;
+
+  // Production must supply a real key. Refuse to fall back to a hardcoded
+  // literal so encrypted integration credentials cannot be trivially
+  // decrypted by anyone with code access.
+  if (!fromEnv && process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'Integration credential encryption requires ' +
+        'INTEGRATION_CREDENTIAL_ENCRYPTION_KEY (preferred) or AUDIT_SIGNING_KEY ' +
+        'in production. Refusing to use a hardcoded fallback.'
+    );
+  }
+
+  const raw = fromEnv || 'dev-integration-credential-key-change-me';
   return crypto.createHash('sha256').update(raw).digest();
 }
 

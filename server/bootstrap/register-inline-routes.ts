@@ -17,8 +17,6 @@
 
 import type { Express, Request, Response } from 'express';
 import type { Pool } from 'pg';
-import express from 'express';
-import fs from 'fs';
 
 import { authMiddleware } from '../auth.js';
 import { sanitizeAskAnaInput } from '../routes/ask-ana-utils';
@@ -219,10 +217,11 @@ export function registerInlinePlatformFacadesRoutes({
   app,
   pool,
 }: InlineRouteContext): void {
-  // Static uploads.
-  const UPDIR = '/tmp/uploads';
-  if (!fs.existsSync(UPDIR)) fs.mkdirSync(UPDIR, { recursive: true });
-  app.use('/uploads', express.static(UPDIR));
+  // NOTE: The previous unauthenticated `/uploads` static mount over
+  // `/tmp/uploads` was removed (security B-5). Real uploads are written to
+  // `process.cwd()/uploads/...` and served through authenticated `/api`
+  // routes; the `/tmp/uploads` directory was never written to and the mount
+  // sat outside the `/api` auth gate, exposing an unauthenticated file root.
 
   // CSR intelligence + analytics routers (extracted from inline).
   app.use('/api', createCsrIntelligenceRoutes(pool, csrSearchService));

@@ -59,6 +59,26 @@ router.use(async (req: Request, res: Response, next: any) => {
       if (claims.tenant_id) {
         (req.headers as any)['x-tenant-id'] = parseInt(claims.tenant_id);
       }
+
+      // SECURITY (21 CFR Part 11): expose the verified JWT principal on
+      // req.user so actor-identity helpers (getActorId / getActorEmail) derive
+      // attribution from the token only. This router is mounted without the
+      // shared authenticateToken middleware, so it must populate req.user here.
+      const subject = claims.userId ?? claims.id ?? claims.sub;
+      if (subject !== undefined && subject !== null && subject !== '') {
+        req.user = {
+          id: subject,
+          userId: subject,
+          email: claims.email ? String(claims.email).toLowerCase() : undefined,
+          role: claims.role,
+          roles: Array.isArray(claims.roles)
+            ? claims.roles
+            : claims.roles
+              ? String(claims.roles).split(',')
+              : undefined,
+          organizationId: claims.organizationId ?? claims.orgId ?? claims.tenant_id,
+        };
+      }
     }
   } catch (error) {
     console.error('JWT middleware error:', error);
@@ -167,6 +187,37 @@ const getTenantId = (req: Request): number => {
     throw new Error('Tenant context required');
   }
   return tenantId;
+};
+
+// Source the actor identity used for attribution / audit (created_by,
+// updated_by, resolved_by, etc.) from the verified JWT only. Client-supplied
+// `req.body.created_by` / `x-user-id` headers were attacker-controlled and let
+// a user attribute authored content to another user or "system" (21 CFR Part
+// 11 audit-trail integrity gap). Returns null when unauthenticated so the
+// caller can respond 401.
+const getActorId = (req: Request): string | null => {
+  const subject = req.user?.id ?? req.user?.userId;
+  if (subject === undefined || subject === null || subject === '') {
+    return null;
+  }
+  return String(subject);
+};
+
+// Email-based actor attribution (created_by/submitted_by columns that store an
+// email string). Sourced from the verified JWT only — never from
+// `x-user-email` / `req.body.*` which were attacker-controlled. Returns null
+// when the JWT carries no email/subject so the caller can respond 401.
+const getActorEmail = (req: Request): string | null => {
+  if (req.user?.email) {
+    return String(req.user.email);
+  }
+  // Fall back to the JWT subject id so attribution is still tied to the
+  // authenticated principal when the token omits an email claim.
+  const subject = req.user?.id ?? req.user?.userId;
+  if (subject === undefined || subject === null || subject === '') {
+    return null;
+  }
+  return String(subject);
 };
 
 // Helper function to compute document hash for signatures
@@ -680,7 +731,10 @@ router.post(
         metadata,
       } = req.body;
       const tenantId = getTenantId(req);
-      const createdBy = req.headers['x-user-email'] || 'system';
+      const createdBy = getActorEmail(req);
+      if (!createdBy) {
+        return res.status(401).json({ success: false, error: 'Authentication required' });
+      }
 
       const result = await pool.query(
         `INSERT INTO authoring_templates
@@ -928,7 +982,10 @@ router.post('/docs', async (req: Request, res: Response) => {
     const { title, module = 'M3', product_code, locale = 'en-US', template_id } = req.body;
     const tenantId = getTenantId(req);
     const docId = crypto.randomUUID();
-    const createdBy = req.body.created_by || req.headers['x-user-id'] || 'system';
+    const createdBy = getActorId(req);
+    if (!createdBy) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
 
     if (!title) {
       return res.status(400).json({
@@ -1056,7 +1113,10 @@ router.post('/sections', async (req: Request, res: Response) => {
     const { doc_id, code, title, content = '', order_index = 0 } = req.body;
     const tenantId = getTenantId(req);
     const sectionId = crypto.randomUUID();
-    const createdBy = req.body.created_by || req.headers['x-user-id'] || 'system';
+    const createdBy = getActorId(req);
+    if (!createdBy) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
 
     if (!doc_id || !code || !title) {
       return res.status(400).json({
@@ -1095,9 +1155,12 @@ router.post('/sections', async (req: Request, res: Response) => {
 router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
   try {
     const { sectionId } = req.params;
-    const { content, track_changes, updated_by, title, code } = req.body;
+    const { content, track_changes, title, code } = req.body;
     const tenantId = getTenantId(req);
-    const updatedByUser = updated_by || req.headers['x-user-id'] || 'system';
+    const updatedByUser = getActorId(req);
+    if (!updatedByUser) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
 
     // Get current section data for revision
     const currentSection = await pool.query(
@@ -1218,7 +1281,10 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
     const { sectionId } = req.params;
     const { rev_id } = req.body;
     const tenantId = getTenantId(req);
-    const revertedBy = req.body.reverted_by || req.headers['x-user-id'] || 'system';
+    const revertedBy = getActorId(req);
+    if (!revertedBy) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
 
     if (!rev_id) {
       return res.status(400).json({
@@ -1286,7 +1352,10 @@ router.post('/sections/:sectionId/comment', async (req: Request, res: Response) 
     const { body, anchor, doc_id } = req.body;
     const tenantId = getTenantId(req);
     const commentId = crypto.randomUUID();
-    const createdBy = req.body.created_by || req.headers['x-user-id'] || 'system';
+    const createdBy = getActorId(req);
+    if (!createdBy) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
 
     if (!body) {
       return res.status(400).json({
@@ -1324,7 +1393,10 @@ router.patch('/comments/:commentId', async (req: Request, res: Response) => {
     const { commentId } = req.params;
     const { status, resolution_note } = req.body;
     const tenantId = getTenantId(req);
-    const resolvedBy = req.body.resolved_by || req.headers['x-user-id'] || 'system';
+    const resolvedBy = getActorId(req);
+    if (!resolvedBy) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
 
     const validStatuses = ['open', 'resolved', 'dismissed', 'in_review'];
     if (status && !validStatuses.includes(status)) {
@@ -1397,7 +1469,10 @@ router.post('/sections/:sectionId/cite', async (req: Request, res: Response) => 
     const { source, anchor, citation_text, reference_id } = req.body;
     const tenantId = getTenantId(req);
     const citationId = crypto.randomUUID();
-    const createdBy = req.body.created_by || req.headers['x-user-id'] || 'system';
+    const createdBy = getActorId(req);
+    if (!createdBy) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
 
     if (!source) {
       return res.status(400).json({
@@ -1546,10 +1621,13 @@ router.post('/comments', async (req: Request, res: Response) => {
   try {
     const { doc_id, section_id, body, anchor, parent_comment_id, position_data } = req.body;
     const tenantId = getTenantId(req);
-    const userId = (req.headers['x-user-id'] as string) || 'user-' + Date.now();
-    const userName =
-      (req.headers['x-user-name'] as string) || req.body.user_name || 'Anonymous User';
-    const userEmail = (req.headers['x-user-email'] as string) || req.body.user_email;
+    // SECURITY (21 CFR Part 11): comment author must come from the verified JWT.
+    const userId = getActorId(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+    const userEmail = req.user?.email ?? null;
+    const userName = userEmail || userId;
     const commentId = crypto.randomUUID();
 
     const result = await pool.query(
@@ -1609,8 +1687,12 @@ router.put('/comments/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     const { body, status, resolution_note } = req.body;
     const tenantId = getTenantId(req);
-    const userId = (req.headers['x-user-id'] as string) || 'system';
-    const userName = (req.headers['x-user-name'] as string) || 'System';
+    // SECURITY (21 CFR Part 11): resolver attribution must come from the JWT.
+    const userId = getActorId(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+    const userName = req.user?.email || userId;
 
     // Build dynamic update query
     const updates = [];
@@ -1704,8 +1786,12 @@ router.delete('/comments/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const tenantId = getTenantId(req);
-    const userId = (req.headers['x-user-id'] as string) || 'system';
-    const userName = (req.headers['x-user-name'] as string) || 'System';
+    // SECURITY (21 CFR Part 11): activity-log actor must come from the JWT.
+    const userId = getActorId(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+    const userName = req.user?.email || userId;
 
     // Get comment details before deletion for activity log
     const commentResult = await pool.query(
@@ -1793,11 +1879,15 @@ router.post('/documents/:id/review', async (req: Request, res: Response) => {
     const { id } = req.params;
     const { review_status, review_comments } = req.body;
     const tenantId = getTenantId(req);
-    const reviewerId =
-      (req.headers['x-user-id'] as string) || req.body.reviewer_id || 'reviewer-' + Date.now();
-    const reviewerName =
-      (req.headers['x-user-name'] as string) || req.body.reviewer_name || 'Anonymous Reviewer';
-    const reviewerEmail = (req.headers['x-user-email'] as string) || req.body.reviewer_email;
+    // SECURITY (21 CFR Part 11): reviewer identity must come from the verified
+    // JWT, never from headers / req.body — a review sign-off cannot be
+    // attributed to another user.
+    const reviewerId = getActorId(req);
+    if (!reviewerId) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+    const reviewerEmail = req.user?.email ?? null;
+    const reviewerName = reviewerEmail || reviewerId;
 
     // Check if reviewer already has a review
     const existingReview = await pool.query(
@@ -4250,7 +4340,13 @@ router.post('/docs/:docId/submit', async (req: Request, res: Response) => {
     const { docId } = req.params;
     const { workflow_steps = [{ role: 'QA' }, { role: 'RA_CMC' }] } = req.body;
     const tenantId = getTenantId(req);
-    const submittedBy = req.headers['x-user-email'] || req.body.submitted_by || 'system';
+    // SECURITY (21 CFR Part 11): the document submitter recorded in the audit
+    // event must come from the verified JWT, never from x-user-email /
+    // req.body.submitted_by.
+    const submittedBy = getActorEmail(req);
+    if (!submittedBy) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
 
     // Check document exists and is in DRAFT status
     const docResult = await pool.query(
@@ -5144,8 +5240,13 @@ router.post('/documents/:id/tracked-change-decisions', async (req: Request, res:
     const { id: artifactId } = req.params;
     const { changeId, decision } = req.body;
     const tenantId = getTenantId(req);
-    const userId = (req.headers['x-user-id'] as string) || 'unknown';
-    const userName = (req.headers['x-user-name'] as string) || 'Unknown';
+    // SECURITY (21 CFR Part 11): the actor who accepted/rejected a tracked
+    // change must come from the verified JWT, never from headers.
+    const userId = getActorId(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+    const userName = req.user?.email || userId;
 
     if (!changeId || !decision) {
       return res.status(400).json({
@@ -5203,8 +5304,13 @@ router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request,
     const { id: artifactId } = req.params;
     const { changeIds, decision } = req.body;
     const tenantId = getTenantId(req);
-    const userId = (req.headers['x-user-id'] as string) || 'unknown';
-    const userName = (req.headers['x-user-name'] as string) || 'Unknown';
+    // SECURITY (21 CFR Part 11): the actor who accepted/rejected tracked
+    // changes must come from the verified JWT, never from headers.
+    const userId = getActorId(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+    const userName = req.user?.email || userId;
 
     if (!Array.isArray(changeIds) || changeIds.length === 0 || !decision) {
       return res.status(400).json({

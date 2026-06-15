@@ -14,6 +14,18 @@ type CacheStats = {
   evictions: number;
 };
 
+// Bounded LRU cache: the Map preserves insertion order, so we treat the first
+// key as the least-recently-used entry and re-insert on access to mark recency.
+const MAX_ENTRIES = 1000;
+// A sane default TTL used when callers omit a ttl or pass a non-positive/invalid
+// value. Some call sites historically passed a tiny value (e.g. `2`) intending a
+// "priority" hint, which would otherwise expire entries almost immediately.
+const DEFAULT_TTL_MS = 60_000;
+// Minimum meaningful TTL. A sub-second TTL makes a cache entry effectively
+// useless and only ever results from a misuse (e.g. the legacy `2` "priority"
+// hint), so anything below this floor is treated as "use the default".
+const MIN_TTL_MS = 1_000;
+
 const cacheStore = new Map<CacheKey, CacheEntry<unknown>>();
 let hits = 0;
 let misses = 0;
@@ -31,6 +43,18 @@ function isExpired(entry: CacheEntry<unknown>): boolean {
   return entry.expiresAt !== undefined && Date.now() > entry.expiresAt;
 }
 
+// Evict least-recently-used entries until the store is within the size cap.
+function enforceSizeLimit(): void {
+  while (cacheStore.size > MAX_ENTRIES) {
+    const lruKey = cacheStore.keys().next().value;
+    if (lruKey === undefined) {
+      break;
+    }
+    cacheStore.delete(lruKey);
+    evictions += 1;
+  }
+}
+
 export function storeInCache<T>(
   tenantId: number | string,
   entityType: string,
@@ -38,13 +62,25 @@ export function storeInCache<T>(
   value: T,
   ttlMs?: number
 ): void {
+  // Treat a missing, non-numeric, non-positive, or sub-second ttl as the default
+  // TTL rather than as "never expires" (which would leak stale data forever) or
+  // an almost-immediate expiry (which would make the entry useless).
+  const effectiveTtl =
+    typeof ttlMs === 'number' && Number.isFinite(ttlMs) && ttlMs >= MIN_TTL_MS
+      ? ttlMs
+      : DEFAULT_TTL_MS;
+
   const entry: CacheEntry<T> = {
     value,
     createdAt: Date.now(),
-    expiresAt: ttlMs ? Date.now() + ttlMs : undefined,
+    expiresAt: Date.now() + effectiveTtl,
   };
 
-  cacheStore.set(buildKey(tenantId, entityType, entityId), entry);
+  const key = buildKey(tenantId, entityType, entityId);
+  // Delete-then-set so the key moves to the most-recently-used position.
+  cacheStore.delete(key);
+  cacheStore.set(key, entry);
+  enforceSizeLimit();
 }
 
 export function getFromCache<T>(
@@ -68,6 +104,9 @@ export function getFromCache<T>(
   }
 
   hits += 1;
+  // Mark as most-recently-used by re-inserting at the end of the Map.
+  cacheStore.delete(key);
+  cacheStore.set(key, entry);
   return entry.value as T;
 }
 
