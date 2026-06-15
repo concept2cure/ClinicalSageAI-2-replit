@@ -111,3 +111,24 @@ describe('pathway advice', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('HA meetings', () => {
+  it('GET /meetings → 200 catalog; ?market=FDA filters', async () => {
+    const all = await request(app).get('/api/global-ri/meetings');
+    expect(all.status).toBe(200);
+    expect(all.body.meetings.length).toBeGreaterThan(0);
+    const fda = await request(app).get('/api/global-ri/meetings?market=FDA');
+    expect(fda.body.meetings.every((m: any) => m.market === 'FDA')).toBe(true);
+  });
+
+  it('POST /meetings/recommend → 200 with a Pre-IND meeting', async () => {
+    const res = await request(app).post('/api/global-ri/meetings/recommend').send({ market: 'FDA', milestone: 'pre_ind' });
+    expect(res.status).toBe(200);
+    expect(res.body.recommended.length).toBeGreaterThan(0);
+  });
+
+  it('POST /meetings/recommend → 400 without market/milestone', async () => {
+    const res = await request(app).post('/api/global-ri/meetings/recommend').send({ market: 'FDA' });
+    expect(res.status).toBe(400);
+  });
+});

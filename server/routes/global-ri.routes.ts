@@ -22,6 +22,7 @@ import {
 import { projectReviewTimeline } from '../services/global-ri/global-review-timeline';
 import { matchExpeditedPrograms, EXPEDITED_PROGRAMS } from '../services/global-ri/expedited-programs';
 import { recommendPathway } from '../services/global-ri/regulatory-pathway-advisor';
+import { recommendMeetings, meetingsForMarket, MEETING_CATALOG, type MeetingMarket } from '../services/global-ri/ha-meetings';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('global-ri-routes');
@@ -117,6 +118,30 @@ router.post('/pathway', limiter, requireRole(AUTHOR), (req: Request, res: Respon
   }
   try {
     res.json(recommendPathway({ productType: b.productType, targetMarkets: b.targetMarkets, developmentPhase: b.developmentPhase }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Health Authority meetings ─────────────────────────────────────────────────
+
+/** The full modeled HA meeting catalog (optionally filtered by ?market=). */
+router.get('/meetings', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const market = typeof req.query.market === 'string' ? (req.query.market as MeetingMarket) : null;
+  res.json({ meetings: market ? meetingsForMarket(market) : MEETING_CATALOG });
+});
+
+/**
+ * Recommend the appropriate HA meeting(s) for a market + development milestone.
+ * Body: { market, milestone }.
+ */
+router.post('/meetings/recommend', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!b.market || !b.milestone) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'market and milestone are required.' } });
+  }
+  try {
+    res.json(recommendMeetings({ market: b.market, milestone: b.milestone }));
   } catch (err) {
     fail(res, err);
   }
