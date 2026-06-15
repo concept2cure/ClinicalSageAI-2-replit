@@ -193,6 +193,48 @@ describe('regional eCTD rule catalog — cross-region invariants', () => {
   });
 });
 
+describe('EMA (EU) package validator — application-number format (EMA-CESP-002)', () => {
+  const euCtx = (applicationNumber: string) => ({
+    region: 'EU' as const,
+    applicationNumber,
+    sequenceNumber: '0000',
+    submissionType: 'initial',
+  });
+  const leaves = [
+    { sectionCode: 'm1', filePath: 'm1/eu/eu-regional.xml', mimeType: 'application/xml', fileSize: 10 },
+  ];
+  const hasAppNumberFinding = (applicationNumber: string) =>
+    validateRegionalPackage(euCtx(applicationNumber), leaves).some((f) => f.ruleId === 'EMA-CESP-002');
+
+  it('accepts the canonical 6-digit centralised number (EMEA/H/C/005012)', () => {
+    // Rule EMA-CESP-002 cites the "[6-digit]" centralised format; this is the
+    // form used throughout the product (e.g. EMEA/H/C/005012, /005612). It must
+    // not be flagged as malformed.
+    expect(hasAppNumberFinding('EMEA/H/C/005012')).toBe(false);
+  });
+
+  it('accepts shorter centralised fixtures (4–5 digit)', () => {
+    expect(hasAppNumberFinding('EMEA/H/C/12345')).toBe(false);
+    expect(hasAppNumberFinding('EMEA/H/C/0001')).toBe(false);
+  });
+
+  it('accepts a national (MRP/DCP) number', () => {
+    expect(hasAppNumberFinding('GB/H/12345/2024')).toBe(false);
+  });
+
+  it('rejects non-conformant numbers with trailing characters (anchored)', () => {
+    // The pattern must be anchored at both ends: a valid prefix followed by
+    // garbage is NOT a conformant EU application number and must be flagged.
+    expect(hasAppNumberFinding('EMEA/H/C/12345-bogus-trailing')).toBe(true);
+    expect(hasAppNumberFinding('EMEA/H/C/1234567890')).toBe(true);
+    expect(hasAppNumberFinding('GB/H/12345/2024/extra')).toBe(true);
+  });
+
+  it('rejects an obviously invalid number', () => {
+    expect(hasAppNumberFinding('NOT-VALID')).toBe(true);
+  });
+});
+
 describe('Health Canada (CA) package validator', () => {
   it('uses distinct rule ids for a bad application number vs a missing backbone', () => {
     const findings = validateRegionalPackage(
